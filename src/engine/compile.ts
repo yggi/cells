@@ -1208,13 +1208,28 @@ export function shiftedUnits(result: CompileResult, name: string, shift: number,
   });
 }
 
-/** The cell as a lookup table: its numbers in order (chords contribute each member). */
-export function entries(result: CompileResult, name: string, shift: number): Entry[] {
+/**
+ * `entries` is asked for the same table at the same shift over and over (every note of every glyph that reads
+ * through it, on every flush: issue #41). It is a pure function of (program, cell, shift), so the answers are
+ * kept per compiled program (a new compile starts empty and the old one's go with it), a few hundred at most.
+ */
+const ENTRY_CACHE = 256;
+const entryCache = new WeakMap<CompileResult, Map<string, readonly Entry[]>>();
+
+/** The cell as a lookup table: its numbers in order (chords contribute each member). Shared: don't change it. */
+export function entries(result: CompileResult, name: string, shift: number): readonly Entry[] {
+  let cache = entryCache.get(result);
+  if (!cache) entryCache.set(result, (cache = new Map()));
+  const key = `${name}|${shift}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
   const out: Entry[] = [];
   for (const { atom: a } of shiftedUnits(result, name, shift)) {
     if (a.kind === 'note') out.push({ value: a.value, alter: a.alter });
     else if (a.kind === 'chord') a.notes.forEach((v, j) => out.push({ value: v, alter: a.alters[j] }));
   }
+  if (cache.size >= ENTRY_CACHE) cache.delete(cache.keys().next().value!); // (the oldest)
+  cache.set(key, out);
   return out;
 }
 
