@@ -13,16 +13,33 @@ Output is cells too. A chord of sounds is a mix, and a cell with `map=sample` is
 &out loop=SAMPLE_RATE map=sample &mix &mix      # the sound card: two channels, the same mix
 ```
 
-## Pitches and signals
+## The algebra of a mix
 
-Two kinds of things in a mix: *pitches* (semitone streams — melodies, vibratos — and numbers inside a pitch sum) and *signals* (voices):
+A mix is written with `+` and `*`, and three sorts of things meet in it ([decision 006](../decisions/006-mix-algebra.md)):
 
-- pitch + pitch → pitch: semitones add (`-` subtracts); `(&pedal + 12)` transposes
-- signal + signal → signal: voices mix (`,` inside the chord does the same)
-- pitch * signal → signal: the voice plays at that pitch, rate × 2^(p/12)
-- a number in a product is a gain: `&theme * &lead * 1.2`
+- **pitches**: semitone streams, such as a melody, a cell reading a table, or a vibrato
+- **volumes**: cells with `map=amp`, `map=db` or `map=adsr` (an envelope)
+- **signals**: sound. A cell is a signal by what it is, not where it is written: it has a sound parameter (`s=`, `lpf=` …), or its braid turns at an audio rate (`loop=C4`, `loop=440`), or it is a mix (an instrument), a pattern read through a kit, or a read head of a sound tape.
 
-The voice is the last non-number factor of a product. Two laws make grouping safe: `(a + b) * s = a * (b * s)` and `a * (s + t) = a * s + a * t`.
+A **plain value**, a number or a `map=lin` cell, has no sort of its own. It takes its operator's: semitones in a sum, where 0 changes nothing, and a volume (a gain) in a product, where 1 changes nothing. `(&pedal + 12)` is an octave up; `12 * &lead` and `&lead * 12` are twelve times louder.
+
+| | `+` | `*` |
+|---|---|---|
+| pitch, pitch | a pitch: semitones add | the same: transposing twice adds |
+| volume, volume | — | a volume: they multiply |
+| pitch or volume, signal | — | the signal at that pitch and volume |
+| signal, signal | a mix | — |
+
+`-` subtracts pitches only. A dash (—) is an error that names the sorts.
+
+**Laws.** These hold wherever both sides mean something; `algebra.test.ts` checks each one on what plays:
+
+- `a + b = b + a` and `a * b = b * a`. Order doesn't matter: the voice is whichever factor is a signal, so `&lead * &theme` is `&theme * &lead`.
+- `(a + b) + c = a + (b + c)` and `(a * b) * c = a * (b * c)`. Grouping doesn't matter.
+- `x * (s + t) = x * s + x * t`. A pitch or volume acting on a mix acts on each voice in it (an instrument, below).
+- `(p + q) * s = p * (q * s) = (p * q) * s` for pitches `p`, `q`: transposing twice adds.
+
+The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is a gain. To transpose by a constant in a product, write the sum: `(&theme + 12) * &lead`.
 
 ## The sound card
 

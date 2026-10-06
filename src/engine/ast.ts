@@ -57,7 +57,15 @@ export type Atom =
   | { readonly kind: 'choice'; readonly values: readonly number[]; readonly alters: readonly number[] }
   /** transpose: grid steps up (or down) after its tables: &subject^7, &subject^-12. */
   | { readonly kind: 'ref'; readonly name: string; readonly pick: Pick | null; readonly shift: number; readonly transpose?: number }
-  | { readonly kind: 'mix'; readonly bindings: readonly Binding[] };
+  /** A mix chord `[&theme * &lead, …]`: its expressions as written; compile types them (algebra.ts). */
+  | { readonly kind: 'mix'; readonly exprs: readonly Expr[] };
+
+/** An expression in a mix chord, as written: sums and products of cells and numbers. */
+export type Expr =
+  | { readonly k: 'ref'; readonly ref: Ref }
+  | { readonly k: 'num'; readonly value: number; readonly span: Span }
+  | { readonly k: 'sum'; readonly items: readonly { readonly e: Expr; readonly sign: 1 | -1 }[]; readonly span: Span }
+  | { readonly k: 'prod'; readonly factors: readonly Expr[]; readonly span: Span };
 
 /**
  * One step of a braid, with Strudel-style modifiers:
@@ -221,14 +229,12 @@ export interface Term {
 }
 
 /**
- * One voice of a mix chord, with everything acting on it (after distributing):
+ * One voice of a mix chord, with everything acting on it (after distributing, algebra.ts):
  *
  *   &mix [(&theme + &vibrato) * &lead * 1.2, &pedal * &bass * 0.8]
  *
- * Two kinds: pitches (semitone streams, and numbers inside pitch sums) and
- * signals (voices). pitch + pitch adds semitones; signal + signal mixes;
- * pitch * signal plays the signal at that pitch; a number in a product is a
- * gain. The voice is the last non-number factor of a product.
+ * The voice is the factor that is a sound, wherever it is written; the pitches and
+ * volumes acting on it are its terms; numbers are semitones in a sum, a gain in a product.
  */
 export interface Binding {
   readonly voice: Ref;

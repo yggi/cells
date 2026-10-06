@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { parse, pieceMeta } from './parser';
-import { pickLabel, refLabel } from './ast';
+import { pickLabel, refLabel, type Atom, type Binding } from './ast';
+import { distribute } from './algebra';
+
+/** The parser keeps a mix as written; typed here as compile would, the voices of these tests being sounds. */
+const SOUNDS = /^(lead|bass|organ|cello|v|w|v2)$/;
+const typed = (a: Atom | null): Binding[] => (a?.kind === 'mix' ? a.exprs.flatMap((e) => distribute(e, (n) => (SOUNDS.test(n) ? 'signal' : 'pitch'))) : []);
 
 const one = (src: string) => {
   const r = parse(src);
@@ -169,7 +174,7 @@ describe('parse: mixes', () => {
     expect(r.diagnostics).toEqual([]);
     const a = r.cells[0].braid.kind === 'list' ? r.cells[0].braid.tokens[0].atom : null;
     if (a?.kind !== 'mix') throw new Error('not a mix');
-    return a.bindings.map(
+    return typed(a).map(
       (b) =>
         `${b.voice.name}<${b.pitches.map((t) => (t.sign > 0 ? '' : '-') + t.ref.name + refLabel(t.ref)).join(' ')}${b.offset ? ' ' + b.offset : ''}>${b.gain !== 1 ? '×' + b.gain : ''}`,
     );
@@ -209,11 +214,8 @@ describe('parse: mixes', () => {
     expect(c.step).toMatchObject({ whole: true, kind: 'rate', perSecond: 44000 });
   });
 
-  it('type errors say what to write', () => {
+  it('what the parser itself refuses (the sorts are compile’s: algebra.test.ts)', () => {
     const msg = (s: string) => parse(s).diagnostics[0]?.message ?? '';
-    expect(msg('&m [&theme * (&lead * &vibrato) * &x]')).toMatch(/A pitch acts on a voice/);
-    expect(msg('&m [&lead - &bass]')).toMatch(/no subtracting a voice/);
-    expect(msg('&m [&a * 2 * 3, 12]')).toMatch(/needs a voice/);
     expect(msg('&m [gate(&r) * &theme * &lead]')).toMatch(/planned/);
     expect(msg('&m [&a * &b &c]')).toMatch(/',' or '\]'/);
   });
@@ -245,7 +247,7 @@ describe('parse: picks', () => {
   it('pitch arithmetic and picks read apart', () => {
     const c = one('&m [(&tenor[1:] - 7) * &cello]');
     const a = c.braid.kind === 'list' ? c.braid.tokens[0].atom : null;
-    expect(a?.kind === 'mix' && a.bindings[0]).toMatchObject({ voice: { name: 'cello' }, pitches: [{ ref: { name: 'tenor', pick: { kind: 'slice', from: 1 } } }], offset: -7 });
+    expect(typed(a)[0]).toMatchObject({ voice: { name: 'cello' }, pitches: [{ ref: { name: 'tenor', pick: { kind: 'slice', from: 1 } } }], offset: -7 });
   });
 });
 
@@ -270,7 +272,7 @@ describe('parse: shifts in brackets', () => {
   it('the short form reads as written', () => {
     const c = one('&m [(&alto[<<] - 7) * &cello]');
     const a = c.braid.kind === 'list' ? c.braid.tokens[0].atom : null;
-    expect(a?.kind === 'mix' && a.bindings[0]).toMatchObject({ pitches: [{ ref: { name: 'alto', shift: -1, pick: null } }], offset: -7 });
+    expect(typed(a)[0]).toMatchObject({ pitches: [{ ref: { name: 'alto', shift: -1, pick: null } }], offset: -7 });
   });
   it('the glued form now offers all four readings', () => {
     expect(parse('&a 0 &b-1').diagnostics[0].message).toMatch(/&b\^-1 to transpose it \(in a braid\), &b - 1 to add pitch \(in a mix\), &b\[<<\] to shift it/);

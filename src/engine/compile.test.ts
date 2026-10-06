@@ -192,7 +192,7 @@ describe('step=, loop=, clocks and voices', () => {
     expect(r.outputs[0]).toMatchObject({ voice: 'kit', kit: true, cell: 'd', gains: [0.6, 0.6] });
     // the old form explains the new one
     const old = compileSource('&bd s=sine loop=55\n&kit &bd\n&m step=1\n&d step=&m 0\n&mix loop=SAMPLE_RATE map=sample [&d * &kit]');
-    expect(old.diagnostics.map((x) => x.message).join()).toMatch(/A kit is a table of voices: read the pattern through it, &drums over=&kit/);
+    expect(old.diagnostics.map((x) => x.message).join()).toMatch(/&kit is a kit, a table of voices: read a pattern through it \(&drums over=&kit\) and mix that/);
   });
 
   it('&mix_ [(&theme + &mod - &x) * &v: the first term triggers, the rest modulate]\n&out_ loop=44k map=sample &mix_', () => {
@@ -263,10 +263,16 @@ describe('mix expressions: typing and articulation (rule 2)', () => {
     expect(msgs('&mix_ [(&vib + &up) * &x]\n&out_ loop=44k map=sample &mix_')).toMatch(/Nothing starts notes on &x/);
   });
 
-  it('catches a pitch in the voice’s place', () => {
-    const msgs = (s: string) => compileSource(base + s).diagnostics.map((d) => d.message).join('\n');
-    expect(msgs('&mix_ [&x * &a]\n&out_ loop=44k map=sample &mix_')).toMatch(/In a product the voice comes last/);
-    expect(msgs('&mix_ [&a * (&x + &vib)]\n&out_ loop=44k map=sample &mix_')).toMatch(/&vib loops at 5 Hz, below hearing/);
+  it('the voice is the factor that is a sound, wherever it is written', () => {
+    const r = (s: string) => compileSource(base + s + '\n&out_ loop=44k map=sample &mix_');
+    const same = (a: string, b: string) => expect(r(a).outputs.map((o) => [o.voice, o.cell, o.offset, o.gains])).toEqual(r(b).outputs.map((o) => [o.voice, o.cell, o.offset, o.gains]));
+    same('&mix_ [&x * &a]', '&mix_ [&a * &x]');
+    same('&mix_ [.5 * &x * &a]', '&mix_ [&a * &x * .5]');
+    expect(r('&mix_ [&x * &a]').diagnostics).toEqual([]);
+    const msgs = (s: string) => r(s).diagnostics.map((d) => d.message).join('\n');
+    expect(msgs('&mix_ [&a * (&x + &vib)]')).toMatch(/A pitch or a volume can't be added to a sound/);
+    expect(msgs('&mix_ [&a * &vib]')).toMatch(/&a \* &vib has no voice.*&vib loops at 5 Hz, below hearing: a pitch/);
+    expect(msgs('&mix_ [&a * &x * &y]')).toMatch(/Two sounds can't multiply \(&x \* &y\)/);
   });
 });
 

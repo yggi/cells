@@ -26,7 +26,7 @@
  * Comments: `//` anywhere, or `#` at the start of a line or after a space
  * (a `#` glued to a number is a sharp). Errors are collected per line.
  */
-import type { Atom, Binding, Braid, CellDecl, Diagnostic, FreeSpec, MapSpec, ParamCells, ParseResult, Pick, Ref, Span, StepSpec, Term, Token } from './ast';
+import type { Atom, Braid, CellDecl, Diagnostic, Expr, FreeSpec, MapSpec, ParamCells, ParseResult, Pick, Ref, Span, StepSpec, Token } from './ast';
 import { RETIRED_PARAMS, TIME_PARAMS, canonical, isDoughParam } from './dough-params';
 import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from './attributes';
 import { agogic as agogicPositions, even as evenPositions, intervals } from '../theory/modes';
@@ -305,16 +305,16 @@ function isMixChord(text: string, at: number): boolean {
 
 function parseMixChord(s: LineScanner): Atom {
   s.i++; // [
-  const bindings: Binding[] = [];
+  const exprs: Expr[] = [];
   for (;;) {
-    bindings.push(...asSignal(parseExpr(s)));
+    exprs.push(parseExpr(s));
     s.skipSpace();
     if (s.peek() === ',') {
       s.i++;
       continue;
     }
     s.expect(']', `',' or ']' in the mix`);
-    return { kind: 'mix', bindings };
+    return { kind: 'mix', exprs };
   }
 }
 
@@ -970,15 +970,8 @@ function parseBody(s: LineScanner, head: Ref): CellDecl {
   return { name: head.name, span: head.span, over, shift, off, step, map, stride, cycle, env, pitch, show, label, title, tags, about: about ?? undefined, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks, braid, frees: [...s.frees] };
 }
 
-// ---- out = … : parse to a small tree, then type and distribute
+// ---- a mix chord: parsed to a small tree; compile types it and distributes it (algebra.ts)
 
-type Expr =
-  | { readonly k: 'ref'; readonly ref: Ref }
-  | { readonly k: 'num'; readonly value: number; readonly span: Span }
-  | { readonly k: 'sum'; readonly items: readonly { readonly e: Expr; readonly sign: 1 | -1 }[]; readonly span: Span }
-  | { readonly k: 'prod'; readonly factors: readonly Expr[]; readonly span: Span };
-
-const spanOf = (e: Expr): Span => (e.k === 'ref' ? e.ref.span : e.span);
 
 function parseExpr(s: LineScanner): Expr {
   const start = s.i;
@@ -1025,47 +1018,6 @@ function parseFactor(s: LineScanner): Expr {
   if (n !== null) return { k: 'num', value: parseFloat(n), span: s.span(start) };
   if (s.match(/gate\(/y)) s.fail('gate(…) is planned but not built yet: for now a step= term articulates, loop= terms bend', start, 5);
   return s.fail(`Expected a cell, a number or '(' here`);
-}
-
-/** A pitch-typed expression: a sum of cells and numbers. */
-function asPitch(e: Expr, sign: 1 | -1 = 1, inSum = false): { terms: Term[]; offset: number } {
-  if (e.k === 'ref') return { terms: [{ ref: e.ref, sign, inSum }], offset: 0 };
-  if (e.k === 'num') return { terms: [], offset: sign * e.value };
-  if (e.k === 'sum') {
-    const out = { terms: [] as Term[], offset: 0 };
-    for (const it of e.items) {
-      const p = asPitch(it.e, (sign * it.sign) as 1 | -1, true);
-      out.terms.push(...p.terms);
-      out.offset += p.offset;
-    }
-    return out;
-  }
-  throw new LineError('A pitch acts on a voice, not on a pitch: in a product the voice comes last (&theme * &lead)', spanOf(e).col - 1, spanOf(e).len);
-}
-
-/** A signal-typed expression: distribute into one binding per voice. */
-function asSignal(e: Expr): Binding[] {
-  if (e.k === 'ref') return [{ voice: e.ref, pitches: [], offset: 0, gain: 1 }];
-  if (e.k === 'num')
-    throw new LineError('A number is a gain or a pitch: it needs a voice (&theme * &lead * 0.8)', e.span.col - 1, e.span.len);
-  if (e.k === 'sum') {
-    const out: Binding[] = [];
-    for (const it of e.items) {
-      if (it.sign < 0) throw new LineError("Sounds mix with +; there's no subtracting a voice", spanOf(it.e).col - 1, spanOf(it.e).len);
-      out.push(...asSignal(it.e));
-    }
-    return out;
-  }
-  // product: numbers are gains; the last other factor is the signal, the rest pitch
-  const gain = e.factors.reduce((g, f) => (f.k === 'num' ? g * f.value : g), 1);
-  const others = e.factors.filter((f) => f.k !== 'num');
-  if (others.length === 0) throw new LineError('A product of numbers needs a voice', e.span.col - 1, e.span.len);
-  let bound = asSignal(others[others.length - 1]).map((b) => ({ ...b, gain: b.gain * gain }));
-  for (const f of others.slice(0, -1).reverse()) {
-    const p = asPitch(f);
-    bound = bound.map((b) => ({ ...b, pitches: [...p.terms, ...b.pitches], offset: b.offset + p.offset }));
-  }
-  return bound;
 }
 
 export function parse(source: string): ParseResult {

@@ -405,7 +405,7 @@ describe('volume streams (map=amp)', () => {
     const r = compileSource(base + '&a map=amp .5\n&b map=amp .5\n' + out('&mix [&t * &a * &b * &v]'));
     expect(events(r, 0, 0.9)[0].levels).toEqual([{ at: 0, level: 0.25 }]);
     const bad = compileSource(base + '&a map=amp .5\n' + out('&mix [(&t - &a) * &v]'));
-    expect(bad.diagnostics.map((d) => d.message).join()).toMatch(/can't be subtracted/);
+    expect(bad.diagnostics.map((d) => d.message).join()).toMatch(/&a is a volume: it multiplies, it can't be added/);
   });
   it('draws the volume into the voice with ×', () => {
     const g = buildGraph(compileSource(base + '&vol map=amp step=&m 1\n' + out('&mix [&t * &vol * &v]')));
@@ -546,7 +546,7 @@ describe('map=adsr: an envelope per note', () => {
     expect(msgs('&e map=adsr .1 .2\n&mix loop=SAMPLE_RATE map=sample [&t * &e * &v]')).toMatch(/map=adsr takes four numbers/);
     expect(msgs('&e map=adsr .1 .2 1.5 .3')).toMatch(/sustain a level/);
     expect(msgs('&e map=adsr .1 .2 .5 .3\n&f map=adsr .1 .2 .5 .3\n&mix loop=SAMPLE_RATE map=sample [&t * &e * &f * &v]')).toMatch(/One envelope per note/);
-    expect(msgs('&e map=adsr .1 .2 .5 .3\n&mix loop=SAMPLE_RATE map=sample [(&t + &e) * &v]')).toMatch(/keep it out of pitch sums/);
+    expect(msgs('&e map=adsr .1 .2 .5 .3\n&mix loop=SAMPLE_RATE map=sample [(&t + &e) * &v]')).toMatch(/&e is a volume: it multiplies, it can't be added/);
   });
 });
 
