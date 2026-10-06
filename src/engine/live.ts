@@ -36,6 +36,8 @@ export interface LiveState {
   readonly voices: ReadonlySet<string>;
   /** Bar count per clocked meter (0-based). */
   readonly bars: ReadonlyMap<string, number>;
+  /** Where each clock is in its cycle, in beats (0 … beats, fractional): a meter's wheel turns by it. */
+  readonly beatAt: ReadonlyMap<string, number>;
   /** How far each clocked cell is through its current step, 0…1 (drives the pulses on edges). */
   readonly phases: ReadonlyMap<string, number>;
 }
@@ -50,6 +52,7 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
   const cells = new Map<string, LiveCell>();
   const voices = new Set<string>();
   const bars = new Map<string, number>();
+  const beatAt = new Map<string, number>();
   const played = playedCells(result);
   const now = shiftsAt(result, statics, seconds, played);
   const clk = clocking(result, statics, seconds);
@@ -94,6 +97,7 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
     const k = clk.map(name).beats;
     mark(name).entries.add(mod(beat, k));
     bars.set(name, Math.floor(beat / k));
+    beatAt.set(name, mod(clk.stepOf(name), k));
   }
 
   const active: Output[] = [];
@@ -200,5 +204,5 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
     members: (o) => members.get(o) ?? [],
   };
   const { nodes, edges } = liveRouting(result, muted, active, how);
-  return { seconds, shifts: now, cells, nodes, edges, voices, bars, phases };
+  return { seconds, shifts: now, cells, nodes, edges, voices, bars, beatAt, phases };
 }
