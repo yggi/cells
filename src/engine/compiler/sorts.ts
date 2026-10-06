@@ -34,13 +34,14 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     const tape = typeof d.params.play === 'string' ? decls.get(d.params.play) : undefined;
     if (
       Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) || // a sound parameter
-      audioRate(d) || // looped at an audio rate
       isMixDecl(d) || // a mix (an instrument)
       isKitDecl(over) || // a pattern read through a kit
       (over?.braid.kind === 'list' && over.braid.tokens.length > 0 && over.braid.tokens.every((t) => t.atom.kind === 'ref' && isMixDecl(decls.get(t.atom.name)))) || // a selector of mixes
       (tape && typeof tape.params.write === 'string' && isMixDecl(decls.get(tape.params.write))) // a read head of a sound tape
     )
       return 'signal';
+    // a braid turning at an audio rate, with no sound of its own: a sound alone, a pitch beside one
+    if (audioRate(d)) return 'wave';
     const m = d.map?.kind;
     return m === 'amp' || m === 'db' || m === 'adsr' ? 'volume' : m === 'lin' ? 'plain' : 'pitch';
   };

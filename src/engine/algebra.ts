@@ -11,8 +11,18 @@
  */
 import type { Binding, Expr, Ref, Span, Term } from './ast';
 
-/** What a cell is, as far as a mix cares. `plain`: a map=lin cell (its operator decides). */
-export type Sort = 'signal' | 'volume' | 'plain' | 'pitch';
+/**
+ * What a cell is, as far as a mix cares. `plain`: a map=lin cell (its operator decides). `wave`: a braid
+ * turning at an audio rate with no sound parameter — a sound where it is the only one (a waveform voice),
+ * a pitch in a pitch sum or beside another sound (a fast vibrato: FM).
+ */
+export type Sort = 'signal' | 'volume' | 'plain' | 'pitch' | 'wave';
+
+/** How a wave is read where it stands: as a sound unless the context makes it a pitch. */
+type Mode = 'auto' | 'pitch';
+/** Does an expression hold a sound by itself (a cell whose sort is signal)? */
+const holds = (e: Expr, sortOf: (name: string) => Sort, sorts: readonly Sort[]): boolean =>
+  e.k === 'ref' ? sorts.includes(sortOf(e.ref.name)) : e.k === 'num' ? false : e.k === 'prod' ? e.factors.some((f) => holds(f, sortOf, sorts)) : e.items.some((it) => holds(it.e, sortOf, sorts));
 
 export class AlgebraError extends Error {
   constructor(message: string, readonly span: Span) {
@@ -55,16 +65,20 @@ export function distribute(e: Expr, sortOf: (name: string) => Sort, why?: (names
   );
 }
 
-function typeOf(e: Expr, sortOf: (name: string) => Sort): Typed {
+function typeOf(e: Expr, sortOf: (name: string) => Sort, mode: Mode = 'auto'): Typed {
   if (e.k === 'num') return { k: 'num', value: e.value };
   if (e.k === 'ref') {
     const s = sortOf(e.ref.name);
-    if (s === 'signal') return { k: 'signal', bindings: [{ voice: e.ref, pitches: [], offset: 0, gain: 1 }] };
+    if (s === 'signal' || (s === 'wave' && mode === 'auto')) return { k: 'signal', bindings: [{ voice: e.ref, pitches: [], offset: 0, gain: 1 }] };
     if (s === 'plain') return { ...ACT, plain: [e.ref] };
     return { ...ACT, terms: [{ ref: e.ref, sign: 1, inSum: false }] };
   }
-  if (e.k === 'prod') return e.factors.map((f) => typeOf(f, sortOf)).reduce((a, b, i) => times(a, b, spanOf(e.factors[i])));
-  return sum(e, sortOf);
+  if (e.k === 'prod') {
+    // beside a sound, a wave is a pitch (it modulates it); alone, it is the sound
+    const m: Mode = mode === 'pitch' || holds(e, sortOf, ['signal']) ? 'pitch' : 'auto';
+    return e.factors.map((f) => typeOf(f, sortOf, m)).reduce((a, b, i) => times(a, b, spanOf(e.factors[i])));
+  }
+  return sum(e, sortOf, mode);
 }
 
 /** a * b: commutative and associative — the voice is whichever is a signal. */
@@ -99,8 +113,10 @@ function times(a: Typed, b: Typed, at: Span): Typed {
 }
 
 /** a + b: signals mix; pitches add (a number in a pitch sum is semitones); volumes don't add. */
-function sum(e: Extract<Expr, { k: 'sum' }>, sortOf: (name: string) => Sort): Typed {
-  const items = e.items.map((it) => ({ t: typeOf(it.e, sortOf), sign: it.sign, span: spanOf(it.e) }));
+function sum(e: Extract<Expr, { k: 'sum' }>, sortOf: (name: string) => Sort, mode: Mode): Typed {
+  // sounds mix; a sum with a pitch in it and no sound is a pitch sum, where a wave is a pitch too
+  const m: Mode = mode === 'pitch' || (!holds(e, sortOf, ['signal']) && holds(e, sortOf, ['pitch', 'plain'])) ? 'pitch' : 'auto';
+  const items = e.items.map((it) => ({ t: typeOf(it.e, sortOf, m), sign: it.sign, span: spanOf(it.e) }));
   if (items.every((x) => x.t.k === 'num')) return { k: 'num', value: items.reduce((s, x) => s + x.sign * (x.t as { value: number }).value, 0) };
   if (items.some((x) => x.t.k === 'signal')) {
     const bindings: Binding[] = [];

@@ -39,3 +39,7 @@ Mixes are typed by sort, in `compile` (`src/engine/algebra.ts`); the parser keep
   - a pattern multiplied by its own kit (`&drums * &kit`). The error says to mix `&drums` alone.
 - **Signal × signal must commute if it is ever defined.** That fits ring modulation and not FM, so FM keeps `fm=` (#28).
 - **Typing is a phase of its own in `compile`,** a step towards #9's split.
+
+## Amended: waves (#28)
+
+Rule 1 made every braid turning at an audio rate a signal, so a fast vibrato (`(&theme + &vib)` with `&vib loop=30`) was refused, while the same cell as `pitch=&vib` played. A braid at audio rate with no sound parameter is now a **wave**: a sound where it is the only one in its product, a pitch in a pitch sum or beside another sound (FM, written in the algebra), and a sound wherever it also plays as a voice in the piece. This depends on which factors are there and on the piece, never on their order, so the laws hold. No example changed.

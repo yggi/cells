@@ -15,6 +15,7 @@ const CELLS = `&m step=4
 &up 12
 &acc map=amp step=&m 1 .5 .8
 &swell map=lin loop=.5 .2 1
+&fast loop=30 0 .3 0 -.3
 &v s=saw
 &w s=sine
 `;
@@ -100,6 +101,14 @@ describe('the laws of the mix', () => {
       same(`(${p} + ${q}) * &v`, `${p} * (${q} * &v)`);
       same(`(${p} + ${q}) * &v`, `(${p} * ${q}) * &v`);
     }
+  });
+
+  test('a braid at audio rate with no sound of its own: a pitch beside a sound (FM), the sound alone', () => {
+    same('(&a + &fast) * &v', '&a * &fast * &v');
+    same('(&a + &fast) * &v', '&v * (&fast * &a)');
+    same('(&a + &fast) * &v', '&a * (&fast * &v)');
+    same('&a * &fast', '&fast * &a'); // alone, it is the voice (a waveform)
+    expect(sounds('&a * &fast').every((n) => JSON.parse(n)[2] === 'fast')).toBe(true);
   });
 
   test('a number takes its operator’s sort: semitones in a sum, a gain in a product', () => {

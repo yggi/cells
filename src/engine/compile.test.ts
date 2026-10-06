@@ -272,7 +272,10 @@ describe('mix expressions: typing and articulation (rule 2)', () => {
     same('&mix_ [.5 * &x * &a]', '&mix_ [&a * &x * .5]');
     expect(r('&mix_ [&x * &a]').diagnostics).toEqual([]);
     const msgs = (s: string) => r(s).diagnostics.map((d) => d.message).join('\n');
-    expect(msgs('&mix_ [&a * (&x + &vib)]')).toMatch(/A pitch or a volume can't be added to a sound/);
+    // a sound (a sound parameter) and a pitch don't add …
+    expect(msgs('&mix_ [&a * (&(s=saw loop=220) + &vib)]')).toMatch(/A pitch or a volume can't be added to a sound/);
+    // … but a braid at audio rate with no sound of its own is a pitch in a pitch sum (a fast vibrato: FM)
+    expect(msgs('&mix_ [&a * (&x + &vib)]')).toMatch(/has no voice/);
     expect(msgs('&mix_ [&a * &vib]')).toMatch(/&a \* &vib has no voice.*&vib loops at 5 Hz, below hearing: a pitch/);
     expect(msgs('&mix_ [&a * &x * &y]')).toMatch(/Two sounds can't multiply \(&x \* &y\)/);
   });
@@ -615,5 +618,22 @@ describe('about=: a note links to the cells it explains', () => {
   it('is checked: an unknown cell, and a cell that is not a note', () => {
     expect(errors('&hint label="x" about=&nope')).toEqual(['Unknown cell &nope']);
     expect(errors('&a 0 1\n&b step=&a label="x" 0 about=&a').join(' ')).toMatch(/about= belongs on a note/);
+  });
+
+  it('a table is its numbers: cells spliced into one are skipped when it is read, and that says so', () => {
+    const src = (tunes: string) =>
+      `&bar step=1\n&major scan(2 2 1 2 2 2 1)\n&a over=&major 0 1\n&b over=&major 4 5\n${tunes}\n&solo over=&tunes step=&bar 0 1\n&v s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [&solo * &v]`;
+    const msgs = (t: string) => compileSource(src(t)).diagnostics.map((d) => d.message);
+    expect(msgs('&tunes &a &b')).toEqual([
+      "&tunes is read as a table, but its cells (&a &b) aren't entries: a table is its numbers. To play cells one after another, splice them into a braid (&solo &a &b); choosing a melody per step isn't built yet (#29)",
+    ]);
+    expect(msgs('&tunes over=&major 0 &a 5')[0]).toMatch(/its cells \(&a\) aren't entries/);
+    expect(msgs('&tunes over=&major 0 1 4 5')).toEqual([]); // numbers: a table
+  });
+
+  it('a fast vibrato (a braid at audio rate, no sound of its own) is a pitch in a pitch sum (#28)', () => {
+    const r = compileSource('&m step=4\n&t step=&m 0 2\n&vib loop=30 0 .3 0 -.3\n&lead s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [(&t + &vib) * &lead]');
+    expect(r.diagnostics).toEqual([]);
+    expect(r.outputs[0]).toMatchObject({ voice: 'lead', cell: 't', mods: [{ cell: 'vib' }] });
   });
 });

@@ -19,7 +19,8 @@ A mix is written with `+` and `*`, and three sorts of things meet in it ([decisi
 
 - **pitches**: semitone streams, such as a melody, a cell reading a table, or a vibrato
 - **volumes**: cells with `map=amp`, `map=db` or `map=adsr` (an envelope)
-- **signals**: sound. A cell is a signal by what it is, not where it is written: it has a sound parameter (`s=`, `lpf=` …), or its braid turns at an audio rate (`loop=C4`, `loop=440`), or it is a mix (an instrument), a pattern read through a kit, or a read head of a sound tape.
+- **signals**: sound. A cell is a signal by what it is, not where it is written: it has a sound parameter (`s=`, `lpf=` …), or it is a mix (an instrument), a pattern read through a kit, or a read head of a sound tape.
+- **waves**: a braid turning at an audio rate (`loop=440`, `loop=C4`) with no sound parameter of its own. Alone in a product it is the sound (a waveform voice: `&tune * &square`); in a pitch sum, or beside another sound, it is a pitch that moves at audio rate: a fast vibrato, which is FM (`(&tune + &op) * &lead`). One that plays as a voice in the piece stays a sound everywhere.
 
 A **plain value**, a number or a `map=lin` cell, has no sort of its own. It takes its operator's: semitones in a sum, where 0 changes nothing, and a volume (a gain) in a product, where 1 changes nothing. `(&pedal + 12)` is an octave up; `12 * &lead` and `&lead * 12` are twelve times louder.
 

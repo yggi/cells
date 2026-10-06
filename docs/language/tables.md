@@ -2,7 +2,7 @@
 
 Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's numbers index into.
 
-- **`over=&t`** — a number x means entry x of &t; past the end it climbs a lap. Without `over=`, a cell reads through the table of whoever splices it.
+- **`over=&t`** — a number x means entry x of &t; past the end it climbs a lap. Without `over=`, a cell reads through the table of whoever splices it. A table is its numbers: cells spliced into it aren't entries, and reading through one says so (unless it's a kit, a table of voices, or a selector's table of mixes: [time.md](time.md)).
 - **`over=scale(tonic, phase)`** is shorthand for two unnamed cells: exactly `over=&(scan(…) over=&(shift=tonic))` with the scan of `phase`. `scale(0,2)` is C Aeolian, `scale(2,3)` D Dorian, `scale(7,5)` G Ionian; the phase runs from 0, the darkest mode, to 6, the brightest. Write the key and scale as named cells when you want to turn or step them.
 - **`shift=n`** rotates the braid by n; wrapped entries climb a lap. On a table it turns what reads through it ([time.md](time.md) for a moving shift).
 - **Picks and shifts of a table** (`over=&scale[<<]`) are on [braid.md](braid.md).

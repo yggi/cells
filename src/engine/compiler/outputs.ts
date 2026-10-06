@@ -79,7 +79,9 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       .filter((x) => x.c);
     const voiced = terms.filter((x) => x.c.voice);
     if (voiced.length) {
-      error(`&${voiced[0].c.name} is a voice, not a pitch`, voiced[0].t.ref.span);
+      // (a braid at audio rate beside a sound reads as a pitch, FM: unless it plays as a voice in the piece,
+      // then it is a sound here too)
+      error(`Two sounds can't multiply (&${voiced[0].c.name} * &${voice.name}): &${voiced[0].c.name} plays as a voice — mix them with + or ,`, voiced[0].t.ref.span);
       continue;
     }
     // volume streams: map=amp cells in the product are levels, not pitches
