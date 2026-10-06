@@ -1,0 +1,18 @@
+&piece title="Meter and rhythm: the tresillo" tags="world, basics, rhythm" label="The tresillo over a meter of its own, with hats, triplets and chords on the beat."
+# A meter is a scan: the intervals between its beats, adding up to the bar.
+# scan(27 23 26 24): beats at 0 27 50 76 % — the first long, the third leaning.
+&bar scan(27 23 26 24) step=free(100bpm, 70..140)             # 4/4, bent
+&tresillo label="tresillo: **x..x..x.**" scan(3 3 2) step=75bpm               # x..x..x. — its lap (8) is its bar
+
+# volumes (map=amp) as gates: their steps start the notes, their values set the level
+&kick map=amp step=&tresillo 1
+&hats map=amp step=&bar/2 1 .3 .6 .3                # eighths, accented on the beat
+&shake label="triplets: three against two" map=amp step=&bar*2/3 .5 .2 .2               # triplets: three per two beats
+&chord label="chords: {notes}" over=scale(0,2) step=&bar*2 [0,2,4] [-2,0,2]
+
+# each voice with its envelope (env=, map=adsr: attack decay sustain release)
+&bd s=sine loop=A1 penv=24 pdec=.05 env=&(map=adsr 0 .3 0 .05)
+&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&sh s=white hpf=4000 env=&(map=adsr 0 .02 0 .02)
+&keys s=saw loop=C4 lpf=900 env=&(map=adsr .02 .4 .3 .3)
+&mix level=3 loop=SAMPLE_RATE map=sample [&kick * &bd, &hats * &hh * 0.4, &shake * &sh * 0.3, &chord * &keys * 0.5]

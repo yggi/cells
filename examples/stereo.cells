@@ -1,0 +1,12 @@
+&piece title="Stereo: Mary Had a Little Lamb" tags="world, folk, basics, pentatonic, stereo" label="Mary Had a Little Lamb across two channels: a mix for each side."
+# The sound card's two channels are two mixes: the same voices, balanced
+# differently left and right.
+&bar scan(27 23 26 24) step=free(andante)   # a tempo marking: 76–108 bpm
+&high label="*Mary had a little lamb*" over=scale(0,5) step=&bar 2 1 0 1 2 2 2@2
+&low over=scale(0,5) step=&bar*2 0 3 4 0
+
+&bell s=sine loop=C5 env=&(map=adsr .01 .6 .2 .6)
+&cello s=saw loop=C3 lpf=900 env=&(map=adsr .03 .4 .6 .4)
+&left label="left"  [&high * &bell, &low * &cello * 0.3]
+&right label="right" [&high * &bell * 0.3, &low * &cello]
+&out level=1.5 loop=SAMPLE_RATE map=sample &left &right

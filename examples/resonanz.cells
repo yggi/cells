@@ -1,0 +1,24 @@
+&about title="Baustelle II: Resonanz" tags="experimental, electronic, Neubauten, industrial, sound" label="The building site again — now the metal itself rings. A plate is hammered where the pattern says, a beam struck, a low wire plucked, a spring kicked on the accents; a tape loop records the site, and its heads drive two pipes — the site resonating with itself. Tap the metal to strike it, hold to damp, drag across it to bow."
+# Baustelle II: Resonanz — resonators (body=) struck by notes: a note's value is where (0 … 7).
+# &site goes onto a tape (write=); its heads, mixed into &echo, drive the pipes (excite=) —
+# sound into bodies. The pipes aren't recorded: no loop through the tape and back.
+&bar scan(1 1 1 1) step=104bpm
+&reel step=104bpm motor=1.4 mass=1 friction=.1 wow=.02 0
+&hammer step=&bar/2 label="the hammer: where on the plate" 1 ~ 5 ~ ~ 3 7 ~ 1 ~ ~ 6 ~ 2 ~ 4
+&beam step=&bar label="the beam" 4 ~ ~ 0 ~ 4 ~ ~
+&kick step=&bar*2 label="the spring, kicked" 3 ~ ~ 3?
+&pluck step=&bar label="the wire" 2 ~ 2 2 ~ ~ 6 ~
+&plate body=plate loop=D3 ring=3 hard=.85 board=none 0
+&girder body=bar loop=G2 ring=2.5 hard=.9 board=none 0
+&spring body=spring loop=100 ring=2.5 hard=.7 board=none 0
+&wire body=wire loop=D1 ring=3 hard=.6 board=none 0
+&site [&hammer * &plate * .35, &beam * &girder * .4, &kick * &spring * .3, &pluck * &wire * .4]
+
+&tape step=&reel write=&site length=5 erase=.3 tone=2400 drive=.4 hiss=.008 label="the tape: five seconds of the site"
+&h1 play=&tape at=1.15 label="head 1"
+&h2 play=&tape at=2.3 wander=.05 wanderhz=.11 label="head 2, wandering"
+&echo [&h1 * .5, &h2 * .5]
+&pipeA body=pipe loop=D2 ring=4 board=none excite=&echo label="a pipe, driven by the tape" 0
+&pipeB body=pipe loop=A2 ring=4 board=none excite=&echo label="another" 0
+
+&out level=-9 loop=SAMPLE_RATE map=sample [&site, &pipeA * .4, &h1 * .2] [&site, &pipeB * .4, &h2 * .2]

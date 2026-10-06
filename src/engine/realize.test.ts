@@ -3,7 +3,7 @@ import { waveform } from './wave';
 import { setFree } from './edit';
 import { meterLevels } from './parser';
 import { parse } from './parser';
-import bwv847Reference from './bwv847.reference.json';
+import bwv847Reference from '../../tools/bwv847.reference.json';
 import { codeShifts, compileSource } from './compile';
 import { eventsBetween, flatten, liveAt, plan, routedNodes, shiftsAt, timeMap } from './realize';
 import { buildGraph, structureKey } from './graph';

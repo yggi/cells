@@ -1,0 +1,24 @@
+&about title="5 to 12" tags="experimental, Stockhausen, modal, sound" label="A day of music, anchored to the clock: it begins at 11:55 and plays where the day stands. Twelve blocks of two hours, a mode each — down from Ionian to the Locrian nadir, up again to the Lydian zenith; twelve keys of ten minutes, by fifths going down, by fourths coming up (a new dawn: strange, full of hope). Every bar sounds all seven notes, on its mode's 12/8 bell; five dimensions in counterpoint — melody, rhythm, harmony, dynamics, space."
+# 5 to 12 — law=fiveto12 computes every note of the day: 84 steps a minute, 70 bars of 12/8 to a
+# key, each key's row derived from it. Phrase by phrase, the five operations — translation,
+# rotation, inversion, retrograde, multiplication (the Apple: ×5 mod 7) — each move their own
+# dimension; the second half of every key mirrors the first. anchor=11.55: play starts where the
+# clock stands (Reset: back to 11:55). &sun shows the day (stopped, turn it to choose the moment).
+&cycle law=fiveto12 anchor=11.55 step=84bpm label="the law: a day"
+&sun sun=&cycle label="the sun: noon above, midnight below — east, west"
+&glass s=tri loop=C4 lpf=3200 env=&(map=adsr .004 .9 .25 1.2) label="the voice"
+&present [&cycle * &glass * .3]
+
+# memories and messages: a tape of the last two minutes — a head a minute back (seven bars,
+# exactly), a head twelve bars back, wandering
+&reel step=84bpm 0
+&memory step=&reel write=&present length=120 erase=.3 tone=2200 drive=.3 hiss=.003 label="the tape: memories and messages"
+&recall play=&memory at=60 label="a memory: a minute ago"
+&message play=&memory at=102.857 wander=.04 wanderhz=.07 label="a message: twelve bars ago"
+
+# reflection and inspiration: strings on every semitone, on one board — the music rings them
+# (whatever the key), a hand plays them
+&strings body=wire loop=C2 ring=5 hard=.4 board=none excite=&present label="the strings: reflection (tap them: inspiration)"
+&light scope=spectrum label="the tonal spectrum: the mode, the key, the harmony" &glass
+
+&out level=6 loop=SAMPLE_RATE map=sample [&present, &recall * .35, &strings * .3] [&present, &message * .35, &strings * .3]

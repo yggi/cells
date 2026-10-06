@@ -1,0 +1,25 @@
+&piece title="Cell Tines" tags="electronic, diatonic, FM, sound" label="FM, after the DX7: an electric piano of two pairs (a body at 1:1, a tine at 14:1 that barks on the attack), bells at 3.5:1, a punchy FM bass. Each brightness is an index under an envelope: bright on the attack, mellowing as it rings. Fmaj7 · Em7 · Dm7 · Cmaj7."
+# Cell Tines — frequency modulation: a modulator (a voice with ratio=) swings its carrier's
+# frequency (fm=&op) by index × its own frequency. Whole-number ratios sound harmonic
+# (pianos, basses), others not (bells). The index moves: index=lo..hi * &envelope.
+&bar scan(1 1 1 1) step=free(84bpm, 60..110)
+&major scan(2 2 1 2 2 2 1)
+&cF [3,5,7,9]@3 [3,5,7,9] ~@2 [3,5,7,9]@2
+&cE [2,4,6,8]@3 [2,4,6,8] ~@2 [2,4,6,8]@2
+&cD [1,3,5,7]@3 [1,3,5,7] ~@2 [1,3,5,7]@2
+&cC [0,2,4,6]@3 [0,2,4,6] ~@2 [0,2,4,6]@2
+&comp over=&major step=&bar/2 label="the piano: Fmaj7 · Em7 · Dm7 · Cmaj7" &cF &cE &cD &cC
+&tune over=&major step=&bar/2 label="the bells" ~@2 9 11 12@4 ~@2 11 9 8@4 ~@2 7 8 9 8 7 5 4@4 ~@4
+&low over=&major step=&bar -11 ~ -11 -10 -12 ~ -12 -11 -13 ~ -13 -12 -14 ~ -14 -10
+
+&m1 s=sine ratio=1
+&m2 s=sine ratio=14
+&m3 s=sine ratio=3.5
+&m4 s=sine ratio=1
+&body s=sine loop=C4 fm=&m1 index=.3..2.6 * &(map=adsr .002 .9 .3 .6) room=.3 env=&(map=adsr .002 1.6 .35 .8)
+&tine s=sine loop=C4 fm=&m2 index=0..2.2 * &(map=adsr .001 .1 0 .1) env=&(map=adsr .001 .45 0 .3)
+&bell s=sine loop=C5 fm=&m3 index=.8..6 * &(map=adsr .001 1.4 .15 1.2) room=.5 delaytime=&bar*3/4 delay=.3 delayfeedback=.35 env=&(map=adsr .002 3 0 2.5)
+&fmbass s=sine loop=C2 fm=&m4 index=.6..5 * &(map=adsr .001 .18 .15 .1) env=&(map=adsr .003 .4 .5 .1)
+
+&out level=13 loop=SAMPLE_RATE map=sample [&comp * &body * .055, &comp * &tine * .03, &tune * &bell * .12, &low * &fmbass * .35] [
+                                  &comp * &body * .055, &comp * &tine * .02, &tune * &bell * .09, &low * &fmbass * .35]

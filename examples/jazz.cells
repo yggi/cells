@@ -1,0 +1,28 @@
+&piece title="Swing blues: 12 bars in C" tags="jazz, blues, rhythm" label="A 12-bar blues with swung eighths (the swing a slider): the blues scale and the minor pentatonic as scans."
+# A 12-bar blues in C, swung. The eighths are a meter of their own: long, short —
+# their ratio is free (1 straight, 2 the triplet swing, 3 hard). Two scales, both scans:
+# the blues scale for the riff, the minor pentatonic for the turnaround.
+&bar scan(1 1 1 1) step=free(132bpm, 80..220)
+&swing scan(free(2, 1..3) 1) step=&bar/2               # two eighths a beat: long : short
+
+&blues scan(3 2 1 1 3 2)                               # C Eb F F# G Bb
+&penta scan(3 2 2 3 2)                                 # C Eb F G Bb
+&changes loop=&bar*48 0 0 0 0 5 5 0 0 7 5 0 7          # I I I I · IV IV I I · V IV I V, a bar each
+
+&riff 0 1 2 3 4 ~ 5 4 ~ ~ 2 1 0 ~@3                    # two bars — it stays put over the IV, as a blues riff does
+&turn over=&penta 3 ~ 4 3 2 1 0 ~ 2 ~@3 1 0 ~ ~ 0 ~ 1 2 3 ~ 5 ~ 4 3 2 1 0@4
+&lick over=&blues step=&swing &riff!4 &turn
+
+&walk step=&bar 0 4 7 10                               # root, 3rd, 5th, flat 7th — moved by the changes
+&comp step=&swing ~@3 [4,10] ~@3 [4,10]                # shells (3rd and 7th) on the and of 2 and 4
+&ride map=amp step=&swing .9 ~ .6 .5 .9 ~ .6 .5        # ding, ding-a ding, ding-a
+
+&horn s=saw loop=C4 lpf=1600 room=.3 env=&(map=adsr .02 .15 .6 .12)
+&bass s=tri loop=C2 env=&(map=adsr .005 .25 .5 .1)
+&keys s=sine loop=C4 env=&(map=adsr .005 .3 .2 .2)
+&cym s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
+
+&mix level=5 loop=SAMPLE_RATE map=sample [&lick * &horn * .5,
+                                  (&walk + &changes) * &bass * .8,
+                                  (&comp + &changes) * &keys * .35,
+                                  &ride * &cym * .25]

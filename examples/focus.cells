@@ -1,0 +1,21 @@
+&piece title="Cell in Focus" tags="electronic, Aphex Twin, diatonic, ambient" label="Slow, serene, looping. Four soft chords breathe through a filter; a bell arpeggio drifts above them, thinning by chance; a low root under each. Nothing hurries."
+# Cell in Focus — in the spirit of a slow, glowing Aphex Twin loop: an original. D major,
+# four chords of four bars: Dmaj7, Bm9, Gmaj7, A6. The arpeggio reads each chord's
+# tones an octave up; a few notes rest by chance, differently every time round.
+&bar scan(1 1 1 1) step=free(62bpm, 48..80)
+&major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
+&chords over=&major step=&bar*16 label="Dmaj7 · Bm9 · Gmaj7 · A6" [0,2,4,6] [-2,0,2,4,8] [-4,-2,0,2] [-3,-1,1,2]
+&roots over=&major step=&bar*16 -7 -9 -11 -10
+&a1 7 9? 11 13?.6
+&a2 5 7? 9 11?.6
+&a3 3 5? 7 9?.6
+&a4 4 6? 8 9?.6
+&arp over=&major step=&bar/2 label="the bells" &a1!8 &a2!8 &a3!8 &a4!8
+&breath map=lin loop=&bar*24 .15 .8 .35 .15
+
+&pad s=saw loop=D3 lpf=300..1800 * &breath room=.6 env=&(map=adsr 2.5 1 .8 4) pitch=&(map=lin loop=.11 0 .06 0 -.06 0)
+&bell s=sine loop=D4 room=.7 delaytime=&bar*3/4 delay=.35 delayfeedback=.45 env=&(map=adsr .004 1.4 0 2.2)
+&low s=tri loop=D3 lpf=500 env=&(map=adsr 1.5 1 .9 3)
+
+&out level=10.5 loop=SAMPLE_RATE map=sample [&chords * &pad * .08, &arp * &bell * .16, &roots * &low * .3] [
+                                  &chords * &pad * .08, &arp * &bell * .1, &roots * &low * .3]

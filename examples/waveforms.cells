@@ -1,0 +1,20 @@
+&piece title="Sound: voices, waveforms, envelopes" tags="electronic, basics, sound" label="Voices made of braids: square, triangle, saw and sine, with envelopes and a vibrato."
+# A voice is a cell looped at audio rate: one turn of its braid is one cycle
+# of its waveform. Its pitch and its volume are cells too.
+&bar scan(27 23 26 24) step=free(100bpm, 70..140)
+&tune over=scale(0,5) step=&bar/2 0 2 4 7 4 2 0 ~ 4 5 7 9 7 5 4 ~
+&roots over=scale(0,5) step=&bar*4 0 3 4 0
+
+&square label="square: two values, held" loop=C4 0 1                          # held, lerped to −1…1: a square
+&tri label="triangle: the same, ramped" loop=C4 map=lin 0 1                     # the same two values, ramped: a triangle
+&sine label="sine: sin(12)" loop=C4 sin(12)                        # one cycle of a sine in 12 steps
+&saw label="saw: 0…11, ramped" loop=C2 map=lin env=&(map=adsr .04 .3 .6 .5)   # no braid: 0…11 of the grid, ramped: a saw — with its envelope
+
+&vibrato label="vibrato: ±0.3, gliding" map=lin loop=6 0 .3 0 -.3 0         # a pitch, added, gliding
+&pluck label="a volume, per note" map=lin loop=&tune 1 .4 0             # a volume, one shape per note of &tune
+
+# an instrument: a mix used like a voice — the saw, and a sine an octave below
+&bass [&saw, &(loop=C1 sin(12)) * 0.6]
+
+&mix level=0 loop=SAMPLE_RATE map=sample [(&tune + &vibrato) * &pluck * &square,   # try &tri or &sine
+                                  &roots * &bass]

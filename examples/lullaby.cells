@@ -1,0 +1,21 @@
+&piece title="Lullaby: Brahms, Wiegenlied" tags="classical, Brahms, tonal, diatonic" label="Brahms' lullaby on a music box, its notes ringing on."
+# Brahms, Wiegenlied (1868). A music box over a slow 3/4. The second phrase is
+# the first read a step lower (&scale[<<]): a sequence, as Brahms wrote it.
+&bar scan(28 37 35) step=free(56bpm, 40..72)
+&scale over=scale(0,5)                       # C major, as a table we can shift
+
+&rock 4@3 2 2@2 4@3 2 4@2                    # lul-la-by and good night
+&rise 7@2 6@3 5 5@2 4@2 1 2                  # with ro-ses be-dight
+&sink over=&scale[<<] &rock                  # the first phrase, a step down
+&turn 6@2 5 4@2 6 7@4 0 0
+&high 7@3 5 3@2 4@3 2 0@2                    # sung twice
+&home 3@2 2@2 1@2 0@4 2 2                    # … and the next pickup
+&song over=&scale step=&bar/2 &rock &rise &sink &turn &high 3@2 4@2 5@2 4@4 0 0 &high &home
+
+&roots over=&scale step=&bar*3 0!3 4!4 0 3 0 4 0 3 0 4 0
+
+&ring map=lin loop=&song 1 .35 .1           # each note rings and fades away: a ramped volume
+&box s=sine loop=C5 room=.5 env=&(map=adsr .005 .1 1 .9)
+&low s=tri loop=C3 env=&(map=adsr .05 .6 .4 .6)
+&mix level=7.5 loop=SAMPLE_RATE map=sample [&song * &ring * &box, &roots * &low * 0.5]
+&roll scope=waterfall label="a piano roll: the tune above, its roots below" &song &roots

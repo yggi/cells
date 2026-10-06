@@ -3,8 +3,8 @@ Write the BWV 847 example from the encoding, with its structure: the prelude's
 figuration as one figure read through two turning tables of four notes a bar;
 its later sections as cells; the fugue as its subject and countersubject,
 entered in each voice at their transpositions, with the free counterpoint
-between them as cells of their own. Writes the example's source and the
-reference the tests check it against.
+between them as cells of their own. Writes examples/bwv847.cells and the
+reference the tests check it against (tools/bwv847.reference.json).
 """
 import json, sys
 from collections import Counter
@@ -135,7 +135,7 @@ ref = {
     'rh': [[on, d, p] for on, d, ps in rh for p in ps], 'lh': [[on, d, p] for on, d, ps in lh for p in ps],
     **{v: [[on + F0, d, p] for on, d, ps in V[v] for p in ps] for v in V},
 }
-json.dump(ref, open('src/engine/bwv847.reference.json', 'w'))
+json.dump(ref, open('tools/bwv847.reference.json', 'w'))
 
 src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered Clavier I),
 # in full — on an old-school synthesizer, after Wendy Carlos' Switched-On Bach.
@@ -193,8 +193,6 @@ for v in ['soprano', 'alto', 'bass']:
     column(v, [x[1:] for x in lines[v] if x.startswith('&') and x[1:].split('^')[0] not in ('subject', 'counter')], 4.3)
 deepest = max(y for _, y in layout.values())
 layout.update({'subject': (2.1, deepest + 1.3), 'counter': (4.1, deepest + 1.2)})
-json.dump({k: [round(x, 2), round(y, 2)] for k, (x, y) in layout.items()}, open('/tmp/bwv847.layout.json', 'w'))
-
-print(src)
+open('examples/bwv847.cells', 'w').write(src + '\n')
 print('subjects:', [(s[0], s[1] // 16 + 1, s[3], s[4]) for s in subs], file=sys.stderr)
 print('counters:', [(c[0], c[1] // 16 + 1, c[3], c[4]) for c in cnts], file=sys.stderr)

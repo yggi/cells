@@ -1,0 +1,13 @@
+&piece title="Bach, Prelude in C: for Wendy" tags="classical, electronic, Bach, Wendy Carlos, tonal" label="Bach's Prelude in C (bars 1–19) as one figure reading a table of chords, on an old-school synthesizer."
+# J. S. Bach, Prelude in C major (Well-Tempered Clavier I), bars 1–19 — on an
+# old-school synthesizer, in homage to Wendy Carlos. The whole prelude is one
+# figure reading a table of chords that turns once a bar, five notes at a time.
+&bar scan(1 1 1 1) step=free(66bpm, 40..100)
+&chords step=&bar*4 stride=5 cycle=95 0 4 7 12 16  0 2 9 14 17  -1 2 7 14 17  0 4 7 12 16  0 4 9 16 21  0 2 6 9 14  -1 2 7 14 19  -1 0 4 7 12  -3 0 4 7 12  -10 -3 2 6 12  -5 -1 2 7 11  -5 -2 4 7 13  -7 -3 2 9 14  -7 -4 2 5 11  -8 -5 0 7 12  -8 -7 -3 0 5  -10 -7 -3 0 5  -17 -10 -5 -1 5  -12 -8 -5 0 4
+&figure over=&chords step=&bar/4 0 1 2 3 4 2 3 4      # the figure: twice a bar, in sixteenths
+
+&saw s=saw loop=C4 lpf=1600 lpq=7 env=&(map=adsr .002 .3 .4 .25)    # a resonant sawtooth …
+&sub s=square loop=C3 lpf=900 env=&(map=adsr .002 .3 .4 .25)       # … and a square an octave down
+&moog [&saw, &sub * .35]
+
+&mix level=6.5 loop=SAMPLE_RATE map=sample [&figure * &moog * .5]

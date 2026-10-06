@@ -1,0 +1,25 @@
+&piece title="Study after Studie II: 25 steps to 5:1" tags="experimental, electronic, Stockhausen, microtonal, tuning" label="Sine mixtures on Stockhausen's scale of 25 equal steps to 5:1, with durations from the same series."
+# An original study in the system of Stockhausen's Studie II (1954): sine tones on
+# a scale of 25 equal steps to 5:1 from 100 Hz — not octaves — sounding as tone
+# mixtures, five sines a fixed number of steps apart. The durations come from the
+# same series (geo: 5^(k/25), k = 0 10 5 20 15), the intensities in decibels.
+# One player goes forward, swelling; the other plays it backwards, eight steps higher, fading.
+&time scan(geo(5, 25, 0 10 5 20 15)) step=free(24bpm, 12..48)  # five durations: 5^(k/25)
+&dyn map=db step=&time 0 -10 -4 -16 -8                           # their intensities, in decibels
+&steps cycle=25 map=ed(5)                                        # 25 steps to 5:1
+
+# the five mixtures: five sines, 1 to 5 steps apart …
+&m1 label="mixture: 1 step apart" [0,1,2,3,4]
+&m2 label="mixture: 2 steps apart" [0,2,4,6,8]
+&m3 label="mixture: 3 steps apart" [0,3,6,9,12]
+&m4 label="mixture: 4 steps apart" [0,4,8,12,16]
+&m5 label="mixture: 5 steps apart" [0,5,10,15,20]
+&mixtures &m1 &m2^30 &m3^12 &m4^50 &m5^20                       # … each on its step of the scale
+&forward over=&steps step=&time &mixtures
+&backward over=&steps step=&time &mixtures[::-1]^8              # retrograde, eight steps higher
+
+&swell s=sine loop=100 env=&(map=adsr 1.5 .5 .8 1.5)            # 100 Hz: the scale's first tone
+&fade s=sine loop=100 env=&(map=adsr .01 1.5 .3 1.5)
+
+&out level=15 loop=SAMPLE_RATE map=sample [&forward * &dyn * &swell * .07, &backward * &fade * .02] [
+                                  &forward * &dyn * &swell * .02, &backward * &fade * .07]

@@ -1,0 +1,42 @@
+&piece title="Hypercell" tags="electronic, Scooter, diatonic, dance, arrangement" label="90s happy hardcore and eurodance, an original: four-on-the-floor at 160, offbeat octave bass, rave stabs, a euphoric hook on two detuned saws, risers and snare rolls into every drop. Fifteen sections of eight bars: three minutes, then it ends."
+# Hypercell — Am F C G, a bar each; everything in semitones from C. The hook is our own.
+&bar scan(1 1 1 1) step=free(160bpm, 140..180)
+&prog tags="bass" loop=&bar*16 9 5 0 7                                   # A F C G: the bass moves with it
+&off tags="bass" step=&bar/2 ~ 0 ~ 0 ~ 0 ~ 0                             # the eurodance bass: on the offbeats
+&sAm tags="synths" ~ [9,12,16]
+&sF tags="synths" ~ [5,9,12]
+&sC tags="synths" ~ [0,4,7]
+&sG tags="synths" ~ [7,11,14]
+&stabs tags="synths" step=&bar/2 label="rave stabs" &sAm!4 &sF!4 &sC!4 &sG!4
+&hook tags="synths" step=&bar/2 label="the hook" 16!2 19 16 14 12 14@2 12!2 16 12 11 9 11@2 12!2 16 19 21 19 16@2 14 12 11 12 14@4
+&held tags="synths" step=&bar*4 [9,12,16] [5,9,12] [0,4,7] [7,11,14]
+&kick tags="drums" step=&bar 0!4
+&hats tags="drums" step=&bar/2 ~ 0 ~ 0 ~ 0 ~ 0
+&clap tags="drums" step=&bar ~ 0 ~ 0
+&roll tags="drums" step=&bar 0!8 0*2!4 0*4!6 0*8!13 ~
+&lift tags="rise" step=&bar*32 0
+&up tags="rise" map=lin loop=&bar*32 0 .2 .45 1 0
+
+&bd tags="drums" s=sine loop=A1 penv=30 pdec=.05 distort=.2 env=&(map=adsr 0 .28 0 .05)
+&hh tags="drums" s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
+&cp tags="drums" s=white hpf=1400 room=.2 env=&(map=adsr 0 .12 0 .06)
+&sn tags="drums" s=white hpf=900 env=&(map=adsr 0 .07 0 .03)
+&bass tags="bass" s=saw loop=C2 lpf=900 lpq=4 env=&(map=adsr .003 .12 .6 .05)
+&stab tags="synths" s=square loop=C4 lpf=2800 room=.25 env=&(map=adsr .002 .14 .1 .1)
+&sawA tags="synths" s=saw loop=C5 lpf=5200 room=.3 delaytime=&bar*3/8 delay=.2 delayfeedback=.3 env=&(map=adsr .01 .2 .7 .2)
+&sawB tags="synths" s=saw loop=527.4 lpf=5200 room=.3 env=&(map=adsr .01 .2 .7 .2)
+&padv tags="synths" s=saw loop=C4 lpf=1600 room=.5 env=&(map=adsr .8 .5 .8 1.5)
+&riser tags="rise" s=white lpf=300..9000 * &up lpq=6 env=&(map=adsr 1 .5 .9 .5)
+
+&beat [&kick * &bd * .8, &hats * &hh * .2, &clap * &cp * .35]
+&bassPart [(&off + &prog) * &bass * .35]
+&stabPart [&stabs * &stab * .1]
+&hookPart [&hook * &sawA * .13, &hook * &sawB * .13]
+&risePart [&lift * &riser * .12]
+&padPart [&held * &padv * .08]
+&rollPart [&roll * &sn * .25]
+&parts &beat &bassPart &stabPart &hookPart &risePart &padPart &rollPart
+&song over=&parts step=&bar*32 laps=1 label="intro · groove · build · drop · drop · break · build · drop · drop · bass · break · build · drop · drop · out" [0] [0,1] [0,1,4,6] [0,1,2,3]!2 [5,3] [5,4,6] [0,1,2,3]!2 [0,1] 5 [5,4,6] [0,1,2,3]!2 0
+
+&out level=3 loop=SAMPLE_RATE map=sample &song
+&eq scope=spectrum bins=20 label="the whole track, in 20 bands" &beat &bassPart &hookPart &padPart

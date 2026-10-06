@@ -1,0 +1,12 @@
+&about title="Metronome: any meter" tags="electronic, basics, rhythm" label="A bar and the clicks it plays. Choose the time signature and the grid — a click on every beat, eighth, sixteenth or triplet — the tempo and the swing. The bar's own steps carry their levels (the downbeat, the beats, the subdivisions): the clicks read them through a kit."
+# The bar is a meter: meter(signature, steps a beat) writes it as levels — 0 the downbeat (*),
+# 1 a beat (+), 2 a half (-), 3 a subdivision (.), 4 finer (,). Its bpm counts beats, however fine
+# its steps. Read through &clicks (a drum kit), each level has its own sound: kick, snare, tom, hats.
+&bar meter(free(2, 0..7, "2/4 3/4 4/4 5/4 6/8 7/8 9/8 12/8"), free(0, 0..3, "1 2 3 4")) step=free(100bpm, 40..208) swing=free(.5, .5...75) over=&clicks label="**{tempo}** beats a minute"
+&clicks &down &beatc &half &sub &fine
+&down s=sine loop=A1 penv=24 pdec=.04 env=&(map=adsr 0 .28 0 .05)
+&beatc s=white hpf=1400 env=&(map=adsr 0 .09 0 .04)
+&half s=sine loop=E3 penv=12 pdec=.05 env=&(map=adsr 0 .12 0 .04)
+&sub s=white hpf=7000 env=&(map=adsr 0 .035 0 .02)
+&fine s=white hpf=9500 env=&(map=adsr 0 .012 0 .008)
+&mix level=-4.5 loop=SAMPLE_RATE map=sample [&bar * .8]

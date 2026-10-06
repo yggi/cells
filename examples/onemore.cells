@@ -1,0 +1,32 @@
+&piece title="One more Cell" tags="electronic, Daft Punk, diatonic, dance" label="French filter house, an original: parallel maj7 chords chopped in a funky sixteenth rhythm, F G A B♭, under one long filter sweep, pumping on every beat; disco octaves, a robotic lead, four-on-the-floor. A loop: open it up and let it ride."
+# One more Cell — the chords are one shape (maj7) moved F G A B♭ (&prog): parallel, as the
+# filter-house records did. The pump: the chords duck on every beat (a volume stream).
+&bar scan(1 1 1 1) step=free(122bpm, 110..130)
+&prog tags="chords" loop=&bar*32 0 2 4 5                                     # F G A B♭, two bars each
+&c tags="chords" [0,4,7,11]
+&chop tags="chords" step=&bar/4 label="the chop" &c ~ &c!2 ~ &c ~ &c ~ &c!2 ~ &c ~ &c!2
+&pump tags="chords" map=amp step=&bar .35 .55 .75 .95
+&disco tags="bass" step=&bar/2 0 12 0 12 0 12 0 12
+&robot tags="robot" step=&bar/2 label="the robot" ~ 12 14 16 ~ 16 14 12 ~ 14 16 17 ~ 16 14 ~ ~ 12 14 16 ~ 19 17 16 14@2 12@2 9@4
+&filt tags="chords" map=lin loop=&bar*32 .06 .3 1 .7 .06
+&kick tags="groove" step=&bar 0!4
+&clap tags="groove" step=&bar ~ 0 ~ 0
+&open tags="groove" step=&bar/2 ~ 0 ~ 0 ~ 0 ~ 0
+&shake tags="groove" step=&bar/4 0? 0?.3 0? 0?.3
+
+&keys tags="chords" s=square loop=F3 lpf=200..6500 * &filt lpq=5 env=&(map=adsr .003 .12 .5 .06)
+&bass tags="bass" s=square loop=F1 lpf=700 env=&(map=adsr .004 .15 .6 .05)
+&lead tags="robot" s=square loop=F4 lpf=1400 lpq=9 delaytime=&bar*3/4 delay=.25 delayfeedback=.3 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=6 0 .08 0 -.08 0)
+&bd tags="groove" s=sine loop=A1 penv=26 pdec=.05 env=&(map=adsr 0 .3 0 .05)
+&cp tags="groove" s=white hpf=1300 room=.25 env=&(map=adsr 0 .14 0 .06)
+&oh tags="groove" s=white hpf=7000 env=&(map=adsr 0 .18 0 .08)
+&sh tags="groove" s=white hpf=10000 env=&(map=adsr 0 .03 0 .02)
+
+&groove tags="groove" [&kick * &bd * .8, &clap * &cp * .3, &open * &oh * .15, &shake * &sh * .1]
+&choppy tags="chords" [(&chop + &prog) * &pump * &keys * .07]
+&disc tags="bass" [(&disco + &prog) * &bass * .35]
+&rob tags="robot" [&robot * &lead * .1]
+&parts &groove &choppy &disc &rob
+&song over=&parts step=&bar*32 label="filtered · groove · lead · breakdown" [0,1] [0,1,2] [0,1,2,3] [1,3]
+
+&out level=0 loop=SAMPLE_RATE map=sample &song

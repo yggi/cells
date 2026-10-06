@@ -1,0 +1,28 @@
+&about title="Test Tones on Tape" tags="experimental, electronic, ambient, sound" label="For the test bench, in the spirit of Hainbach: old sine generators holding drifting tones on a harmonic dial, a beeping test oscillator, swells from a noise sweep — all onto seven seconds of worn tape that hardly erases. Three heads, two of them wandering; hiss, print-through, dropouts. Everything piles up into ghosts. Hold the reel to bend it all; at the end the motor dies, and the tape stops."
+# Test Tones on Tape — an original. The tape (&loop) records the bench (&bench, a mix): 7 tape-
+# seconds that keep 84% each lap (erase=.16), worn (tone=), driven, hissing, printing through,
+# dropping out. Two heads wander (flying heads). The reel is a motor with wow; its spring
+# (wind=) gives out after two and a half minutes: the tape stop is the ending. &scope, the test
+# bench's oscilloscope, shows what goes on the tape and what two of its heads read back.
+&reel step=60bpm motor=1 mass=1.4 friction=.2 wow=.025 wind=150 0
+&bar scan(1 1 1 1) step=60bpm
+&dial map=ratios 1 1.5 2 2.25 3 3.75 4.5 6 8 label="the dial: a harmonic series, on 110 Hz"
+&drones over=&dial step=&bar*4 label="the sine generator: long tones" 0 ~ [1,4] ~ 2 [0,5] ~ 3 ~ [2,6] ~ ~
+&drift map=lin loop=.031 0 .08 0 -.11 0
+&beeps over=&dial step=&bar/2 label="the test oscillator" 7? ~ ~ ~ 8?.3 ~ ~ ~ ~ 6? ~ ~ ~ ~ ~ ~
+&swells step=&bar*8 label="the noise sweep" 0 ~ ~ 0
+&sweep map=lin loop=.0625 .05 1 .2 .05
+
+&gen s=sine loop=110 env=&(map=adsr 2 1 .9 3)
+&osc s=sine loop=110 env=&(map=adsr .005 .18 0 .1)
+&noise s=pink lpf=200..3000 * &sweep lpq=8 env=&(map=adsr 3 2 .7 4)
+&bench [(&drones + &drift) * &gen * .16, &beeps * &osc * .06, &swells * &noise * .12]
+
+&loop step=&reel write=&bench length=7 erase=.22 tone=1900 drive=.55 hiss=.004 print=.03 printgap=.7 dropout=.25 label="the tape: seven seconds, worn"
+&scope scope=split label="the oscilloscope: the bench, the first head, the far one" &bench &first &third
+&first play=&loop at=1.1 label="head 1"
+&second play=&loop at=2.9 wander=.06 wanderhz=.13 label="head 2, wandering"
+&third play=&loop at=5.3 wander=.15 wanderhz=.07 label="head 3, wandering further"
+
+&out level=26 loop=SAMPLE_RATE map=sample [&bench * .35, &first * .5, &third * .45] [
+                                  &bench * .35, &second * .5, &third * .45]

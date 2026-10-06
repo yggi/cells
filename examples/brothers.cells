@@ -1,0 +1,39 @@
+&piece title="Cellular Brothers" tags="electronic, Chemical Brothers, modal, dance, arrangement" label="Big beat, an original in the manner of the Chemical Brothers: a gritty, crushed breakbeat; an acid line; a distorted stab riff in E minor; a siren; builds with snare rolls and a riser. About two and a half minutes, then it ends."
+# Cellular Brothers — the break is a kit read in sixteenths; the acid line opens its filter
+# on every note, further on the accents. Everything in semitones from E.
+&bar scan(1 1 1 1) step=free(112bpm, 96..132)
+&b1 tags="break" 0 ~ 2 ~ 1 ~ 2 0 ~ 0 1 ~ 2 0 1 2
+&b2 tags="break" 0 ~ 2 0 1 ~ 2 ~ 0 0 ~ 2 1 ~ 1*2 2
+&break tags="break" over=&kit step=&bar/4 label="the break" &b1 &b2
+&acid tags="acid" step=&bar/4 label="the acid" 0 0 12 0 3 0 ~ 0 7 0 10 ~ 0 12 3 5
+&accent tags="acid" map=amp step=&bar/4 1 .5 .9 .5 .8 .5 0 .5 1 .5 .8 0 .5 1 .7 .9
+&riff tags="riff" step=&bar/2 label="the riff" [0,7] ~ [0,7] [3,10] ~ [5,12] ~ [3,10]
+&siren tags="siren" step=&bar*8 0
+&wail tags="siren" map=lin loop=&bar 0 12 0
+&sub tags="sub" step=&bar 0 ~ 0 [-2|0]
+&roll tags="build" step=&bar 0!4 0*2!4 0*4!4 0*8!4
+&lift tags="build" step=&bar*32 0
+&up tags="build" map=lin loop=&bar*32 0 .3 1 0
+
+&bd tags="break" s=sine loop=A1 penv=24 pdec=.06 distort=.5 env=&(map=adsr 0 .3 0 .05)
+&sd tags="break" s=white hpf=900 distort=.6 crush=7 env=&(map=adsr 0 .12 0 .05)
+&ch tags="break" s=white hpf=7000 crush=6 env=&(map=adsr 0 .03 0 .02)
+&kit tags="break" &bd &sd &ch
+&tb tags="acid" s=saw loop=E2 lpf=120..3600 * &(map=adsr .003 .17 .1 .06) * &accent lpq=14 distort=.3 env=&(map=adsr .002 .14 .6 .05)
+&stab tags="riff" s=square loop=E3 distort=.9 lpf=2600 room=.2 env=&(map=adsr .003 .2 .3 .1)
+&siren1 tags="siren" s=sine loop=E5 delaytime=&bar*3/4 delay=.3 delayfeedback=.35 env=&(map=adsr .3 .5 .9 .6)
+&subv tags="sub" s=sine loop=E1 env=&(map=adsr .005 .4 .6 .1)
+&sn tags="build" s=white hpf=1000 distort=.4 env=&(map=adsr 0 .06 0 .03)
+&riser tags="build" s=white lpf=400..8000 * &up lpq=5 crush=8 env=&(map=adsr 1 .5 .9 .5)
+
+&breakPart tags="break" [&break * .7]
+&acidPart tags="acid" [&acid * &accent * &tb * .3]
+&riffPart tags="riff" [&riff * &stab * .1]
+&sirenPart tags="siren" [(&siren + &wail) * &siren1 * .08]
+&buildPart tags="build" [&roll * &sn * .3, &lift * &riser * .14]
+&subPart tags="sub" [&sub * &subv * .5]
+&parts &breakPart &acidPart &riffPart &sirenPart &buildPart &subPart
+&song over=&parts step=&bar*32 laps=1 label="break · bass · acid · build · riff · all · siren · build · all" [0] [0,5] [0,1,5] 4 [0,1,2,5] [0,1,2,3,5] [3,1] 4 [0,1,2,3,5]
+
+&out level=0 loop=SAMPLE_RATE map=sample &song
+&tracker scope=waterfall label="the break, as a tracker" &break

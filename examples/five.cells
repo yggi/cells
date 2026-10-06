@@ -1,0 +1,28 @@
+&piece title="Five: an original tune in 5/4" tags="jazz, modal, rhythm" label="An original tune in 5/4, felt as 3 + 2, after the groove of Take Five."
+# Five: an original tune in 5/4, the bar felt as 3 + 2 — after the groove of Take Five.
+# It builds on the blues: the same swing meter, the minor pentatonic (here on Eb).
+&bar scan(1 1 1 1 1) step=free(172bpm, 120..220)    # five beats
+&swing scan(free(2, 1..3) 1) step=&bar/2           # swung eighths, as in the blues: ratio free
+&penta scan(3 2 2 3 2)                             # Eb Gb Ab Bb Db (the voices sit on Eb)
+&harmony loop=&bar*5 0 0 0 -5 -5                   # 3 + 2: the minor chord for three beats, the minor fifth for two
+
+&call 4 3 2@2 0 ~ 1 2 ~@2                          # one bar of swung eighths
+&answer over=&penta[>>] &call                      # … answered a step up the scale
+&tune over=&penta step=&swing &call &answer &call 4 ~ 3 2 0@6
+
+&walk step=&bar 0 3 7 -5 -2                        # a bass that walks the 3 + 2
+&comp step=&swing [0,3,7]@3!2 [0,3,10]@3 [0,3,10]
+&ride map=amp step=&swing .9 ~ .6 .5 .9 ~ .6 .5 .8 .4
+&rim map=amp step=&bar ~ ~ .7 ~ .5                 # a click on 3 and 5: the seams of 3 + 2
+
+&horn s=saw loop=Eb4 lpf=1400 room=.3 env=&(map=adsr .02 .15 .6 .15)
+&piano s=tri loop=Eb4 env=&(map=adsr .005 .35 .15 .2)
+&bass s=tri loop=Eb2 env=&(map=adsr .005 .3 .5 .1)
+&cym s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
+&click s=white hpf=3000 env=&(map=adsr 0 .03 0 .02)
+
+&mix level=4 loop=SAMPLE_RATE map=sample [&tune * &horn * .45,
+                                  &walk * &bass * .8,
+                                  (&comp + &harmony) * &piano * .3,
+                                  &ride * &cym * .22,
+                                  &rim * &click * .3]
