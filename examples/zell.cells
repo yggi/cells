@@ -3,9 +3,9 @@
 # semitones down, F); the arpeggio by reading the scale shifted (over=&minor[>>5]: the
 # same shape on its sixth step) — chromatic and diatonic, side by side. A slow filter
 # sweep over the arpeggio; a plain melody with echoes in time.
-&about title="Zelluläre Aktivität" tags="genre:electronic, artist:Kraftwerk, diatonic, arrangement" label="**Zelluläre Aktivität** — it builds, layer by layer, and ends." about=&out
+&piece title="Zelluläre Aktivität" tags="genre:electronic, artist:Kraftwerk, diatonic, arrangement" label="**Zelluläre Aktivität** — it builds, layer by layer, and ends." about=&out
 &aufbauNote label="It builds, layer by layer: &lied reads the parts, eight bars a step." about=&lied
-&progression label="Am – F – C – G." about=(&bassline &arp)
+&progressionNote label="Am – F – C – G." about=(&bassline &arp)
 &bassNote label="Bass: octaves, transposed (^n)." about=&bassline
 &arpNote label="Arpeggio: one shape, read on the chord's step of the scale." about=(&shape &arp)
 &melodyNote label="Melody: plain, with echoes in time (delaytime=&bar)." about=(&melody &lead)

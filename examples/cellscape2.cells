@@ -1,7 +1,7 @@
 &piece title="Cellscape II feat. Stockhausen" tags="genre:experimental, genre:electronic, artist:Stockhausen, microtonal, genre:ambient" label="No octaves, no beat, no instruments: sines and noise on Stockhausen's 25 steps to 5:1." about=&out
-&ownTime label="Every layer keeps its own time and a prime number of steps." about=(&constellations &glints &ripples)
+&ownTimeNote label="Every layer keeps its own time and a prime number of steps." about=(&constellations &glints &ripples)
 &chanceNote label="Chance thins and chooses, a little differently every time round, the same every time you play it." about=(&constellations &glints &ripples)
-&glintSlider label="The glints' chance is a slider." about=&glints
+&glintSliderNote label="The glints' chance is a slider." about=&glints
 # Cellscape II, after Stockhausen's Studie II: the scale is 25 equal steps to 5:1 from
 # 100 Hz, and never meets an octave. Nothing keeps a beat: each layer has a clock of its
 # own (step= in steps a second) and a prime number of steps — 11, 7, 13 — and the slow

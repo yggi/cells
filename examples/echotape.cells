@@ -1,4 +1,4 @@
-&about title="Echo Tape" tags="genre:experimental, genre:electronic, sound" label="A tape loop of notes: a write head records the tune and read heads play it back, echoing." about=&out
+&piece title="Echo Tape" tags="genre:experimental, genre:electronic, sound" label="A tape loop of notes: a write head records the tune and read heads play it back, echoing." about=&out
 &headsNote label="Three read heads play it back .375, .75 and 1.5 tape-seconds on." about=(&near &mid &far)
 &ghostNote label="Every pass under the write head erases a little less than half — ghosts of older phrases fade round the loop." about=&tape
 &reelNote label="The reel wows; hold it, and the echoes slow and sag in pitch." about=&reel
@@ -8,7 +8,7 @@
 &reel step=84bpm motor=1.5 mass=1 friction=.1 wow=.015 0
 &bar scan(1 1 1 1) step=84bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
-&tune over=&major step=&bar/2 label="the tune" 0 ~ 4 ~ 7 ~ ~ ~ 11 ~ 9 ~ 7 ~ ~ ~ 4 ~ 5 ~ 4 2 ~ ~ 0 ~ ~ ~ ~ ~ ~ ~
+&tune over=&major step=&bar/2 label="the tune" 0 ~ 4 ~ 7 ~!3 11 ~ 9 ~ 7 ~!3 4 ~ 5 ~ 4 2 ~!2 0 ~!7
 &tape step=&reel write=&tune length=6 erase=.45 varispeed=1 label="the tape: 6 s, a loop"
 &near play=&tape at=.375 label="head 1"
 &mid play=&tape at=.75 label="head 2"

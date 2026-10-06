@@ -1,4 +1,4 @@
-&about title="Test Tones on Tape" tags="genre:experimental, genre:electronic, genre:ambient, sound" label="For the test bench, in the spirit of Hainbach: old sine generators, a beeping oscillator and a noise sweep, all onto worn tape." about=&out
+&piece title="Test Tones on Tape" tags="genre:experimental, genre:electronic, genre:ambient, sound" label="For the test bench, in the spirit of Hainbach: old sine generators, a beeping oscillator and a noise sweep, all onto worn tape." about=&out
 &generatorNote label="Old sine generators holding drifting tones on a harmonic dial." about=(&drones &dial &drift)
 &beepNote label="A beeping test oscillator." about=&beeps
 &swellNote label="Swells from a noise sweep." about=&swells
@@ -15,7 +15,7 @@
 &dial map=ratios 1 1.5 2 2.25 3 3.75 4.5 6 8 label="the dial: a harmonic series, on 110 Hz"
 &drones over=&dial step=&bar*4 label="the sine generator: long tones" 0 ~ [1,4] ~ 2 [0,5] ~ 3 ~ [2,6] ~ ~
 &drift map=lin loop=.031 0 .08 0 -.11 0
-&beeps over=&dial step=&bar/2 label="the test oscillator" 7? ~ ~ ~ 8?.3 ~ ~ ~ ~ 6? ~ ~ ~ ~ ~ ~
+&beeps over=&dial step=&bar/2 label="the test oscillator" 7? ~!3 8?.3 ~!4 6? ~!6
 &swells step=&bar*8 label="the noise sweep" 0 ~ ~ 0
 &sweep map=lin loop=.0625 .05 1 .2 .05
 

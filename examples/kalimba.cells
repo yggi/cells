@@ -1,4 +1,4 @@
-&about title="Kalimba" tags="genre:world, basics, sound" label="The smallest tuned instrument: one resonator, its braid its tines, eight of them on a shared board." about=&out
+&piece title="Kalimba" tags="genre:world, basics, sound" label="The smallest tuned instrument: one resonator, its braid its tines, eight of them on a shared board." about=&out
 &pluckNote label="A tune plucks them, each note the tine nearest its pitch." about=(&tune &kalimba)
 &boardNote label="The board carries every one to the others, which answer faintly." about=&kalimba
 &padNote label="Tap the pads round it to play along; hold it to stop it ringing." about=&kalimba
@@ -7,7 +7,7 @@
 # and each rings the others through it. A note plucks the tine nearest its pitch.
 &bar scan(1 1 1 1) step=92bpm
 &notes 0 2 4 7 9 12 14 16
-&tune over=&notes step=&bar/2 label="the tune" 0 2 4 ~ 3 4 5 ~ 4 2 1 ~ 0 ~ ~ ~ 5 ~ 4 3 2 ~ 1 2 0 ~ ~ ~ 7 6 5 ~
+&tune over=&notes step=&bar/2 label="the tune" 0 2 4 ~ 3 4 5 ~ 4 2 1 ~ 0 ~!3 5 ~ 4 3 2 ~ 1 2 0 ~!3 7 6 5 ~
 &kalimba body=tine loop=C4 ring=3 hard=.3 coupling=.06 label="the kalimba: eight tines on one board" 0 2 4 7 9 12 14 16
 
 &out level=-15.5 loop=SAMPLE_RATE map=sample [&tune * &kalimba * .5] [&tune * &kalimba * .5]

@@ -2,7 +2,7 @@
 &chordsNote label="Parallel maj7 chords chopped in a funky sixteenth rhythm, F G A B♭." about=(&chop &prog)
 &sweepNote label="One long filter sweep, pumping on every beat." about=(&filt &pump)
 &discoNote label="Disco octaves and a robotic lead." about=(&disco &robot)
-&fourFloor label="Four-on-the-floor." about=&kick
+&fourFloorNote label="Four-on-the-floor." about=&kick
 &loopNote label="A loop: open it up and let it ride." about=&song
 # One more Cell — the chords are one shape (maj7) moved F G A B♭ (&prog): parallel, as the
 # filter-house records did. The pump: the chords duck on every beat (a volume stream).

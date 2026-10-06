@@ -1,6 +1,6 @@
 &piece title="Hypercell" tags="genre:electronic, artist:Scooter, diatonic, genre:dance, arrangement" label="90s happy hardcore and eurodance, an original: three minutes of euphoric drops, then it ends." about=&out
-&fourFloor label="Four-on-the-floor at 160." about=&kick
-&offbeatBass label="Offbeat octave bass." about=(&off &bass)
+&fourFloorNote label="Four-on-the-floor at 160." about=&kick
+&offbeatBassNote label="Offbeat octave bass." about=(&off &bass)
 &stabsNote label="Rave stabs." about=(&stabs &stab)
 &hookNote label="A euphoric hook on two detuned saws." about=(&hook &sawA &sawB)
 &dropsNote label="Risers and snare rolls into every drop." about=(&roll &riser)

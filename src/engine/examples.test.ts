@@ -30,6 +30,15 @@ describe('examples/*.cells', () => {
     });
   }
 
+  for (const [key, p] of Object.entries(PRESETS)) {
+    test(`${key}: the card is the first cell, named piece, and its notes are named …Note`, () => {
+      const lines = p.source.split('\n');
+      const first = lines.find((l) => l.startsWith('&'));
+      expect(first, 'the first cell').toMatch(/^&piece title="/);
+      const r = compileSource(p.source);
+      for (const c of r.cells.values()) if (c.note && c.name !== 'piece') expect(c.name, `note &${c.name}`).toMatch(/Note$/);
+    });
+  }
   test('the build-time index lists every example in order, as compiling each file says', () => {
     expect(built.map((e) => (e as { key: string }).key)).toEqual([...ORDER]);
     expect(built).toEqual(buildExamplesIndex());
