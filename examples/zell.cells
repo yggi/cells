@@ -45,4 +45,4 @@
 &teile &ticksPart &beatPart &bassPart &arpPart &melodyPart
 &lied over=&teile step=&bar*32 laps=1 label="Aufbau: Klick · Bass · Takt · Arpeggio · Melodie · Pause · alles · Klick" 0 [0,2] [0,1,2] [0,1,2,3] [0,1,2,3,4] [2,3] [0,1,2,3,4] 0
 
-&out level=14 loop=SAMPLE_RATE map=sample &lied
+&out level=5 loop=SAMPLE_RATE map=sample &lied

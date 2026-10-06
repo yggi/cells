@@ -35,4 +35,4 @@
 &parts &hatsPart &beatPart &bassPart &keysPart &hookPart &endPart
 &song over=&parts step=&bar*16 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [0,3] [0,1,2,3]!2 [0,1,2,3,4]!2 [3,4] [0,1,2,3,4]!2 [3] 5
 
-&out level=6 loop=SAMPLE_RATE map=sample &song
+&out level=5 loop=SAMPLE_RATE map=sample &song
