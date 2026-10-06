@@ -188,6 +188,8 @@ export interface CellDecl {
   readonly title?: string | null;
   /** On a note: the piece's tags, comma-separated. */
   readonly tags?: string | null;
+  /** On a note: the cells it explains, drawn as links from the note (`about=&fenv`, `about=(&fenv &accent)`). */
+  readonly about?: readonly Ref[];
   /**
    * Sound parameters that move: lpf=&sweep (the cell's values are the parameter's),
    * lpf=200..3000 * &fenv * &accent (a range, scaled by cells from 0 to 1 — an

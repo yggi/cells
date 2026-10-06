@@ -746,6 +746,7 @@ function parseBody(s: LineScanner, head: Ref): CellDecl {
   let laps: number | null = null;
   let title: string | null = null;
   let tags: string | null = null;
+  let about: Ref[] | null = null;
   let chance: number | null = null;
   let seed: number | null = null;
   let size: number | null = null;
@@ -803,6 +804,22 @@ function parseBody(s: LineScanner, head: Ref): CellDecl {
         if (q === null) s.fail(`${word}= takes a text in quotes: ${word === 'title' ? 'title="Swing blues"' : 'tags="jazz, blues"'}`);
         if (word === 'title') title = q!.slice(1, -1);
         else tags = q!.slice(1, -1);
+      } else if (word === 'about') {
+        // a note's links: the cells it explains. One cell, or several in parentheses: about=(&fenv &accent)
+        if (about !== null) twice();
+        const what = 'a cell after about=, like about=&fenv or about=(&fenv &accent)';
+        about = [];
+        if (s.peek() === '(') {
+          s.i++;
+          s.skipSpace();
+          while (s.peek() !== ')') {
+            if (s.done()) s.fail(`')' to close about=(…)`);
+            about.push(s.ref(what));
+            s.skipSpace();
+          }
+          s.i++;
+          if (about.length === 0) s.fail(what, at, word.length + 1);
+        } else about.push(s.ref(what));
       } else if (word === 'laps') {
         // laps=n: n laps, then silence — a piece that ends
         if (laps !== null) twice();
@@ -938,7 +955,7 @@ function parseBody(s: LineScanner, head: Ref): CellDecl {
   }
 
   const braid: Braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
-  return { name: head.name, span: head.span, over, shift, off, step, map, stride, cycle, env, pitch, show, label, title, tags, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks, braid, frees: [...s.frees] };
+  return { name: head.name, span: head.span, over, shift, off, step, map, stride, cycle, env, pitch, show, label, title, tags, about: about ?? undefined, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks, braid, frees: [...s.frees] };
 }
 
 // ---- out = … : parse to a small tree, then type and distribute

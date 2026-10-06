@@ -293,6 +293,21 @@ describe('a piece’s card: title= and tags= on a note', () => {
   });
 });
 
+describe('about=: a note’s links to the cells it explains', () => {
+  const about = (src: string) => parse(src).cells.find((c) => c.name === 'hint')?.about?.map((r) => r.name);
+  it('one cell, or several in parentheses', () => {
+    expect(about('&hint label="x" about=&fenv\n&fenv map=adsr .1 .2 .3 .4')).toEqual(['fenv']);
+    expect(about('&hint label="x" about=(&a &b  &c)')).toEqual(['a', 'b', 'c']);
+    expect(parse('&hint label="x"').cells[0].about).toBeUndefined();
+  });
+  it('says what it expects', () => {
+    expect(parse('&hint label="x" about=7').diagnostics[0].message).toMatch(/a cell after about=/);
+    expect(parse('&hint label="x" about=()').diagnostics[0].message).toMatch(/a cell after about=/);
+    expect(parse('&hint label="x" about=(&a').diagnostics[0].message).toMatch(/to close about=/);
+    expect(parse('&hint label="x" about=&a about=&b').diagnostics[0].message).toMatch(/given twice/);
+  });
+});
+
 describe('euclid(k, n, shift): Bjorklund’s rhythms', () => {
   const hits = (src: string) => {
     const b = parse(`&t ${src}`).cells[0].braid;

@@ -83,6 +83,8 @@ export interface ResolvedCell {
   readonly size: number;
   /** tags= on a cell: its clusters in the graph (on the piece's card, tags= are the piece's). */
   readonly tags: readonly string[];
+  /** On a note: the cells it explains (about=), drawn as links from the note. */
+  readonly about: readonly string[];
   /** Steps a beat (beat=, or from meter(…)): a meter's bpm counts beats, 1 = every step a beat. */
   readonly beat: number;
   /** Written as levels (meter(…)): its values are 3 the bar, 2 a beat, 1 a subdivision, 0 finer. */
@@ -494,6 +496,7 @@ export function compile(parsed: ParseResult, env: Env = DEFAULT_ENV): CompileRes
       seed: d.seed ?? 0,
       size: d.size ?? 1,
       tags: (d.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
+      about: (d.about ?? []).map((r) => r.name),
       beat: typeof d.params.beat === 'number' ? d.params.beat : ((d.braid as { perBeat?: number }).perBeat ?? 1),
       leveled: (d.braid as { perBeat?: number }).perBeat !== undefined,
       label: d.label ?? null,
@@ -726,6 +729,10 @@ export function compile(parsed: ParseResult, env: Env = DEFAULT_ENV): CompileRes
     const c = cells.get(name);
     if (!c) continue;
     if (c.map?.kind === 'table' && !decls.has(c.map.table)) error(`Unknown cell &${c.map.table}`, d.map!.span);
+    if (d.about) {
+      if (!c.note) error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
+      for (const r of d.about) if (!decls.has(r.name)) error(`Unknown cell &${r.name}`, r.span);
+    }
     if (!c.voice) continue;
     const src = d.params.s;
     if (src !== undefined && !(String(src) in DOUGH_SOURCES))

@@ -585,3 +585,26 @@ describe('transposing a reference: &x^n', () => {
     expect(g.edges.find((e) => e.source === 'cell:t' && e.target === 'cell:m')!.pick).toBe('^7');
   });
 });
+
+describe('about=: a note links to the cells it explains', () => {
+  const src = `&hint label="the filter opens on every note" about=(&fenv &accent)
+&fenv map=adsr .003 .18 .1 .06
+&accent map=amp 1 .4`;
+  // (a piece with no sound card only warns that nothing plays)
+  const errors = (text: string) => compileSource(text).diagnostics.filter((d) => d.severity === 'error').map((d) => d.message);
+  it('draws one edge from the note to each cell, and the note stays a note', () => {
+    const r = compileSource(src);
+    expect(errors(src)).toEqual([]);
+    const hint = r.cells.get('hint')!;
+    expect([hint.note, hint.about]).toEqual([true, ['fenv', 'accent']]);
+    const g = buildGraph(r);
+    expect(g.edges.filter((e) => e.kind === 'about').map((e) => [e.source, e.target])).toEqual([
+      ['cell:hint', 'cell:fenv'],
+      ['cell:hint', 'cell:accent'],
+    ]);
+  });
+  it('is checked: an unknown cell, and a cell that is not a note', () => {
+    expect(errors('&hint label="x" about=&nope')).toEqual(['Unknown cell &nope']);
+    expect(errors('&a 0 1\n&b step=&a label="x" 0 about=&a').join(' ')).toMatch(/about= belongs on a note/);
+  });
+});

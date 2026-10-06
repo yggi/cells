@@ -38,7 +38,7 @@ export interface GraphEdge {
   readonly id: string;
   readonly source: string;
   readonly target: string;
-  readonly kind: 'over' | 'ref' | 'step' | 'out' | 'mix';
+  readonly kind: 'over' | 'ref' | 'step' | 'out' | 'mix' | 'about';
   /** How many slots of the source play the target (refs). */
   readonly count: number;
   /** Pick written on the reference, if any (`[-1:]`). */
@@ -124,6 +124,8 @@ export function buildGraph(result: CompileResult): GraphModel {
       const ups = [...new Set(c.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === child && u.atom.transpose ? [u.atom.transpose] : [])))];
       link({ id: edgeId(id, cellId(child)), source: id, target: cellId(child), kind: 'ref', count, pick: ups.map((n) => `^${n}`).join(' ') });
     }
+    // a note's links: what it explains
+    for (const target of c.about) if (result.cells.has(target)) link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), kind: 'about', count: 1, pick: '' });
     if (c.step)
       // (a belt says so: the cell follows through a spring, not rigidly)
       link({ id: stepEdgeId(id, cellId(c.step.driver)), source: id, target: cellId(c.step.driver), kind: 'step', count: 1, pick: '', label: typeof c.params.belt === 'number' ? `${c.step.label} · belt` : c.step.label });

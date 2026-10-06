@@ -7,6 +7,7 @@ How a cell is shown and described: names, labels, notes, the piece's card, `show
 - **label="text"** a name shown instead of `&name`. **title="…"** and **tags="a, b"** take quoted text too; each may be given once per cell.
 - **tags=** on a cell clusters it in the graph, the first tag grouping it; a tag is also a chip in the library.
 - **A note**: a cell with a `label=` or `title=` and nothing else (no braid, `step=`, `over=`, `map=`, `shift=`, `off`, sound parameters). It does nothing; it explains. It floats at the top, beside the sound card, and is never clustered.
+- **about=&cell** (or **about=(&a &b)**) on a note links it to the cells it explains: a fine dotted line from the note to each. The links are annotation only: they don't change the layout's rows or count as crossings, and a cell that is not a note can't have them. Keep a piece's card to one sentence and put the how-to-listen details in notes next to the cells they are about.
 
 Label templates fill from the cell as it is now, so a key that turns renames itself: `{notes}` (up to 16, then …), `{tonic}`, `{mode}`, `{steps}`, `{tempo}` (beats a minute), `{shift}`, `{name}`, and `{&key:tonic}` for another cell's field (a note has none of its own). `**bold**`, `*italic*`, `\n` a new line; other text is escaped and unknown fields stay as written.
 
@@ -14,6 +15,7 @@ Label templates fill from the cell as it is now, so a key that turns renames its
 &piece title="Swing blues" tags="genre:jazz, genre:blues, rhythm" label="A **12-bar** blues sketch.\nSwung, in C."
 &bar scan(1 1 1 1) step=100bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}: {notes}"
+&hint label="The major scale: 2 2 1 2 2 2 1." about=&major
 &tune over=&major step=&bar/2 show=notes:flats size=1.5 label="the tune" 0 2 4 5
 &v s=sine loop=C4
 &out level=-6 loop=SAMPLE_RATE map=sample [&tune * &v * .3]
