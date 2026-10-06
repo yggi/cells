@@ -15,7 +15,7 @@ Output is cells too. A chord of sounds is a mix, and a cell with `map=sample` is
 
 ## The algebra of a mix
 
-A mix is written with `+` and `*`, and three sorts of things meet in it ([decision 006](../decisions/006-mix-algebra.md)):
+A mix is written with `+` and `*`, and these sorts of things meet in it ([decision 006](../decisions/006-mix-algebra.md); the exact rules, in the order they decide, are in the [reference](reference.md#sorts-what-a-cell-is-in-a-mix)):
 
 - **pitches**: semitone streams, such as a melody, a cell reading a table, or a vibrato
 - **volumes**: cells with `map=amp`, `map=db` or `map=adsr` (an envelope)

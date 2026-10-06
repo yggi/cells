@@ -2,7 +2,7 @@
 
 Every form the parser reads, what it means and an example: generated from the parser's own tables (`src/engine/parser/`, with `src/engine/attributes.ts`), so it says what the parser does. The topic pages explain at length; each entry links its page. Don't edit this page: change the tables and record it with `UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts`. Every example here is parsed by that test.
 
-[Lines](#lines) · [Steps](#steps) · [Modifiers](#modifiers) · [References](#references) · [Generators](#generators) · [free(): left to the performer](#free-left-to-the-performer) · [step= and loop=](#step--and-loop-) · [map=](#map-) · [Attributes](#attributes) · [Parameters](#parameters) · [Mixes](#mixes)
+[Lines](#lines) · [Steps](#steps) · [Modifiers](#modifiers) · [References](#references) · [Generators](#generators) · [free(): left to the performer](#free-left-to-the-performer) · [step= and loop=](#step--and-loop-) · [map=](#map-) · [Attributes](#attributes) · [Parameters](#parameters) · [Sorts: what a cell is in a mix](#sorts-what-a-cell-is-in-a-mix) · [Mixes](#mixes)
 
 ## Lines
 
@@ -157,6 +157,20 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `law=word`: A law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music) — on a law (law=) [→](time.md)
 - `anchor=n` · `anchor=free(n, lo..hi)`: A law: the time of day it starts (hours.minutes — 11.55); play begins where the clock stands — on a law (law=) [→](time.md)
 - `sun=&cell`: The sun of a day (sun=&cycle): a 24-hour dial — noon at the top, midnight at the bottom; stopped, turn it to choose the moment. [→](time.md)
+
+## Sorts: what a cell is in a mix
+
+Every cell has a sort, decided by its own line, never by where it is written in a mix; the first rule that holds decides (`src/engine/compiler/sorts.ts`). How the sorts combine with `+` and `*` is on [mix.md](mix.md#the-algebra-of-a-mix).
+
+- `signal`: A sound parameter (s=, lpf= …): a voice. [→](mix.md) `&lead s=saw loop=C4`
+- `signal`: A mix: an instrument. [→](mix.md) `&organ [&a, &b]`
+- `signal`: A pattern read through a kit (a table of voices). [→](mix.md) `&drums over=&kit step=4 0 1 0 1`
+- `signal`: A selector: a cell reading a table of mixes, each step choosing one. [→](mix.md) `&pick over=&parts step=1 0 1`
+- `signal`: A read head of a sound tape (a tape that records a mix). [→](mix.md) `&head play=&tape at=1`
+- `wave`: A braid turning at an audio rate (20 Hz and up) with no sound of its own. Alone in a product it is the sound (a waveform); in a pitch sum, or beside a sound, a pitch that moves at audio rate (FM). One that plays as a voice in the piece is a sound everywhere. [→](mix.md) `&square loop=220 0 1`
+- `volume`: map=amp, map=db or map=adsr (an envelope). [→](mix.md) `&accent map=amp step=2 1 .5`
+- `plain`: map=lin: as a number, it takes its operator's sort — a volume in a product, a pitch in a sum. [→](mix.md) `&swell map=lin loop=.25 .2 1`
+- `pitch`: Anything else: a melody, a cell reading a table, a loop below hearing (a vibrato). In semitones. [→](mix.md) `&vibrato loop=5 0 .1 -.1`
 
 ## Mixes
 

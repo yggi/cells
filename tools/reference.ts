@@ -16,6 +16,7 @@ import { REFERENCE_SYNTAX } from '../src/engine/parser/scanner';
 import { SECTIONS, syntax, type Section, type Syntax } from '../src/engine/parser/syntax';
 import { MAP_KINDS, MAP_SYNTAX, RATE_UNITS, STEP_SYNTAX as RATE_SYNTAX } from '../src/engine/parser/values';
 import { SHOW_MEANING } from '../src/layout/show';
+import { SORT_SYNTAX } from '../src/engine/compiler/sorts';
 
 const sentence = (s: string) => s[0].toUpperCase() + s.slice(1) + (/[.)]$/.test(s) ? '' : '.');
 const meaning = (a: Attribute) => sentence(`${a.help}${a.on ? ` — on ${rolesText(a.on)}` : ''}${a.voice ? '; it makes the cell a voice' : ''}`);
@@ -52,6 +53,7 @@ export function entries(): Syntax[] {
     ...MAP_SYNTAX,
     ...(Object.keys(CORE) as (keyof typeof CORE)[]).map(attribute),
     ...Object.entries(PARAMS).map(parameter),
+    ...SORT_SYNTAX,
     ...MIX_SYNTAX,
   ];
 }
@@ -84,6 +86,11 @@ export function renderReference(): string {
         `Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Dough's other names still read, with a warning: ${Object.entries(DOUGH_ALIASES)
           .map(([k, v]) => `\`${k}\` → \`${v}\``)
           .join(', ')}.`,
+        '',
+      );
+    if (section === 'sort')
+      out.push(
+        "Every cell has a sort, decided by its own line, never by where it is written in a mix; the first rule that holds decides (`src/engine/compiler/sorts.ts`). How the sorts combine with `+` and `*` is on [mix.md](mix.md#the-algebra-of-a-mix).",
         '',
       );
     for (const e of all.filter((x) => x.section === section)) {

@@ -17,6 +17,7 @@ export const SECTIONS = {
   map: 'map=',
   attribute: 'Attributes',
   parameter: 'Parameters',
+  sort: 'Sorts: what a cell is in a mix',
   mix: 'Mixes',
 } as const;
 export type Section = keyof typeof SECTIONS;
