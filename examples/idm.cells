@@ -1,4 +1,6 @@
-&piece title="IDM: drill, after Aphex Twin" tags="genre:electronic, artist:Aphex Twin, chromatic, rhythm" label="A breakbeat backwards every other bar, ratchets, hats seven against four; one harmony and one breath for pad, acid and lead."
+&piece title="IDM: drill, after Aphex Twin" tags="genre:electronic, artist:Aphex Twin, chromatic, rhythm" label="A breakbeat backwards every other bar, with ratchets and hats." about=&mix
+&hatsNote label="The hats run seven against four." about=&hats
+&harmonyNote label="One harmony and one breath for pad, acid and lead." about=(&lydian &breath)
 # Intelligent dance music, in the manner of Aphex Twin — an original. A breakbeat
 # read through a kit, every other bar its retrograde ([::-1]); ratchets (2*3: a
 # sixteenth split in three); hats seven against four. One harmony for all: the

@@ -1,4 +1,5 @@
-&piece title="Swing blues: 12 bars in C" tags="genre:jazz, genre:blues, rhythm" label="A 12-bar blues with swung eighths (the swing a slider): the blues scale and the minor pentatonic as scans."
+&piece title="Swing blues: 12 bars in C" tags="genre:jazz, genre:blues, rhythm" label="A 12-bar blues with swung eighths: the blues scale and the minor pentatonic as scans." about=&mix
+&swingNote label="The swing is a slider." about=&swing
 # A 12-bar blues in C, swung. The eighths are a meter of their own: long, short —
 # their ratio is free (1 straight, 2 the triplet swing, 3 hard). Two scales, both scans:
 # the blues scale for the riff, the minor pentatonic for the turnaround.

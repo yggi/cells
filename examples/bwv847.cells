@@ -2,7 +2,10 @@
 # in full — on an old-school synthesizer, after Wendy Carlos' Switched-On Bach.
 # The notes: the CCARH Humdrum encoding (Bach-Gesellschaft edition, vol. xiv),
 # as semitones from C4, a sixteenth a step; tools/bwv847.py writes this from it.
-&about title="Bach, Prelude and Fugue in C minor: for Wendy" tags="genre:classical, genre:electronic, artist:Bach, artist:Wendy Carlos, tonal, counterpoint" label="**Prelude and Fugue in C minor**, BWV 847 — in full. The prelude: one figure, twice a bar in both hands, through 24 bars of changing chords; then it breaks free — *Presto*, *Adagio*, *Allegro*. The fugue, in three voices: the subject enters in the alto, is answered by the soprano, then the bass — and returns, in every voice, through the keys."
+&about title="Bach, Prelude and Fugue in C minor: for Wendy" tags="genre:classical, genre:electronic, artist:Bach, artist:Wendy Carlos, tonal, counterpoint" label="**Prelude and Fugue in C minor**, BWV 847 — in full: a prelude of one figure, then a fugue in three voices." about=&out
+&preludeFigure label="The prelude: one figure, twice a bar in both hands, through 24 bars of changing chords." about=(&rhFigure &lhFigure)
+&preludeBreaks label="Then it breaks free — *Presto*, *Adagio*, *Allegro*." about=(&rhPresto &rhAdagio &rhAllegro)
+&fugueEntries label="The fugue, in three voices: the subject enters in the alto, is answered by the soprano, then the bass — and returns, in every voice, through the keys." about=(&alto &soprano &bass)
 
 # one tempo map for both: a sixteenth a step, each section at its pace; laps=1 — the piece ends with the fugue
 &tempo scan(1!432 .72!96 2!17 .86!64 1.6!15 1.5!496) step=free(89bpm, 60..120) beat=4 laps=1 label="tempo map: ♩=108 · *Presto* · *Adagio* · *Allegro* · fugue ♩=72"

@@ -25,6 +25,8 @@ Label templates fill from the cell as it is now, so a key that turns renames its
 
 The first cell with `title=` is the piece's card: its title names the piece (and the saved file), its `label=` is the description (fields dropped, formatting stripped, `\n` a space; an opening that repeats the title is cut), its `tags=` the piece's (split on commas, each once whatever the case). The picker shows each piece as one wheel: its graph inside, tags round the rim.
 
+**The convention for examples**: the card's label is one sentence (what the piece is, no `&names`, no instructions) and the card links to the sound card with `about=` (the cell with `map=sample`); how it works and what to try go into notes beside the cells they explain (`&filter label="…" about=(&fenv &accent)`), a topic each.
+
 **Tags have kinds**, told apart by a prefix: `genre:jazz` (a style), `artist:Bach` (whose music it is after or about), and a tag without one is a **topic** (a technique or an idea: `rhythm`, `canon`, `tuning`). The library shows the name only and groups by kind; the five main genres (`genre:classical`, `genre:jazz`, `genre:electronic`, `genre:experimental`, `genre:world`) are the rim of its wheel. A piece saved before the prefixes keeps working: a bare `jazz` or `Bach` is read as `genre:jazz` and `artist:Bach`, and any other bare tag is a topic. The examples use only the tags of `VOCABULARY` in `src/engine/tags.ts` (a test fails on any other): to add a tag, add it there. (A cell's own `tags=` inside a piece are clusters, not kinds.)
 
 ## show=

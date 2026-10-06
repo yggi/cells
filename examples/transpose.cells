@@ -1,4 +1,5 @@
-&piece title="Key and mode: one theme, two wheels" tags="genre:classical, basics, modal, diatonic, harmony" label="One theme, read through a mode and a key: turn either, and the theme follows."
+&piece title="Key and mode: one theme, two wheels" tags="genre:classical, basics, modal, diatonic, harmony" label="One theme, read through a mode and a key." about=&mix
+&turnNote label="Turn either, and the theme follows." about=(&key &mode)
 # The mechanism on its own: a theme read through two wheels.
 # Tap &key or &mode and turn it — the theme follows at the next note.
 &bar scan(27 23 26 24) step=free(96bpm, 60..160)

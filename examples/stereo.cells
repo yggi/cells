@@ -1,4 +1,4 @@
-&piece title="Stereo: Mary Had a Little Lamb" tags="genre:world, genre:folk, basics, pentatonic, stereo" label="Mary Had a Little Lamb across two channels: a mix for each side."
+&piece title="Stereo: Mary Had a Little Lamb" tags="genre:world, genre:folk, basics, pentatonic, stereo" label="Mary Had a Little Lamb across two channels: a mix for each side." about=&out
 # The sound card's two channels are two mixes: the same voices, balanced
 # differently left and right.
 &bar scan(27 23 26 24) step=free(andante)   # a tempo marking: 76–108 bpm

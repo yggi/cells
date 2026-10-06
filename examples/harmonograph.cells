@@ -1,4 +1,6 @@
-&about title="Harmonograph" tags="genre:experimental, basics, sound" label="Two tuning forks, a tonic and its fifth (0 and 7), struck together; each drives one axis of an oscilloscope, x and y, and the figure they draw is a Lissajous curve — 3 : 2, slowly turning (the fifth is tempered), shrinking as they ring away. The tonic sounds left, the fifth right."
+&about title="Harmonograph" tags="genre:experimental, basics, sound" label="Two tuning forks, struck together, each draw one axis of an oscilloscope: a Lissajous curve." about=&out
+&forksNote label="A tonic and its fifth (0 and 7), struck together; the tonic sounds left, the fifth right." about=(&tonic &fifth)
+&figureNote label="Each fork drives one axis of an oscilloscope, x and y, and the figure they draw is a Lissajous curve — 3 : 2, slowly turning (the fifth is tempered), shrinking as they ring away." about=&screen
 # Harmonograph — two resonators (forks), struck together every six seconds. &screen is an
 # oscilloscope (scope=xy): its first channel across, its second up. A fifth draws a 3 : 2 figure.
 &bar scan(1 1 1 1) step=60bpm

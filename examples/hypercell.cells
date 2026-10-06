@@ -1,4 +1,10 @@
-&piece title="Hypercell" tags="genre:electronic, artist:Scooter, diatonic, genre:dance, arrangement" label="90s happy hardcore and eurodance, an original: four-on-the-floor at 160, offbeat octave bass, rave stabs, a euphoric hook on two detuned saws, risers and snare rolls into every drop. Fifteen sections of eight bars: three minutes, then it ends."
+&piece title="Hypercell" tags="genre:electronic, artist:Scooter, diatonic, genre:dance, arrangement" label="90s happy hardcore and eurodance, an original: three minutes of euphoric drops, then it ends." about=&out
+&fourFloor label="Four-on-the-floor at 160." about=&kick
+&offbeatBass label="Offbeat octave bass." about=(&off &bass)
+&stabsNote label="Rave stabs." about=(&stabs &stab)
+&hookNote label="A euphoric hook on two detuned saws." about=(&hook &sawA &sawB)
+&dropsNote label="Risers and snare rolls into every drop." about=(&roll &riser)
+&songNote label="Fifteen sections of eight bars: three minutes, then it ends." about=&song
 # Hypercell — Am F C G, a bar each; everything in semitones from C. The hook is our own.
 &bar scan(1 1 1 1) step=free(160bpm, 140..180)
 &prog tags="bass" loop=&bar*16 9 5 0 7                                   # A F C G: the bass moves with it

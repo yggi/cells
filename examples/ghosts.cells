@@ -1,4 +1,8 @@
-&piece title="Ghost-Cells" tags="genre:experimental, genre:electronic, artist:Nine Inch Nails, modal, genre:ambient, genre:industrial" label="Dark and looping, in the manner of an instrumental Nine Inch Nails record: a prepared-piano phrase of seven eighths over a bar of eight, drifting a step each time round; a distorted drone; crushed noise drifting on prime periods; heavy, sparse percussion and glitches, by chance."
+&piece title="Ghost-Cells" tags="genre:experimental, genre:electronic, artist:Nine Inch Nails, modal, genre:ambient, genre:industrial" label="Dark and looping, in the manner of an instrumental Nine Inch Nails record." about=&out
+&pianoNote label="A prepared-piano phrase of seven eighths over a bar of eight, drifting a step each time round." about=(&phrase &piano)
+&droneNote label="A distorted drone." about=(&drone &low)
+&noiseNote label="Crushed noise drifting on prime periods." about=(&hiss &noise &grit &haze)
+&percNote label="Heavy, sparse percussion and glitches, by chance." about=(&kick &metal &glitch)
 # Ghost-Cells — D minor. The piano phrase is seven eighths long and the bar eight: it comes
 # back a step later every bar, and lines up again only after seven bars.
 &bar scan(1 1 1 1) step=free(76bpm, 60..96)

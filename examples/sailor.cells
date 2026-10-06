@@ -1,4 +1,4 @@
-&piece title="Drunken Sailor: D Dorian, with a kit" tags="genre:world, genre:folk, modal, rhythm" label="Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit."
+&piece title="Drunken Sailor: D Dorian, with a kit" tags="genre:world, genre:folk, modal, rhythm" label="Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit." about=&mix
 # D Dorian. The second line is the first, read one step lower (&lead[<<]).
 &bar scan(3 3 3 3) step=free(112bpm, 90..140)
 &lead over=scale(2,3)

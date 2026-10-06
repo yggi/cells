@@ -1,4 +1,7 @@
-&about title="Baustelle II: Resonanz" tags="genre:experimental, genre:electronic, artist:Neubauten, genre:industrial, sound" label="The building site again — now the metal itself rings. A plate is hammered where the pattern says, a beam struck, a low wire plucked, a spring kicked on the accents; a tape loop records the site, and its heads drive two pipes — the site resonating with itself. Tap the metal to strike it, hold to damp, drag across it to bow."
+&about title="Baustelle II: Resonanz" tags="genre:experimental, genre:electronic, artist:Neubauten, genre:industrial, sound" label="The building site again, now the metal itself rings: struck plate, beam, wire and spring, and pipes driven by a tape of the site." about=&out
+&strikeNote label="A plate is hammered where the pattern says, a beam struck, a low wire plucked, a spring kicked on the accents." about=(&hammer &plate &beam &girder &pluck &wire &kick &spring)
+&siteTapeNote label="A tape loop records the site, and its heads drive two pipes — the site resonating with itself." about=(&tape &pipeA &pipeB)
+&touchNote label="Tap the metal to strike it, hold to damp, drag across it to bow." about=(&plate &girder &spring &wire)
 # Baustelle II: Resonanz — resonators (body=) struck by notes: a note's value is where (0 … 7).
 # &site goes onto a tape (write=); its heads, mixed into &echo, drive the pipes (excite=) —
 # sound into bodies. The pipes aren't recorded: no loop through the tape and back.

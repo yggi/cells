@@ -1,4 +1,4 @@
-&piece title="Lullaby: Brahms, Wiegenlied" tags="genre:classical, artist:Brahms, tonal, diatonic" label="Brahms' lullaby on a music box, its notes ringing on."
+&piece title="Lullaby: Brahms, Wiegenlied" tags="genre:classical, artist:Brahms, tonal, diatonic" label="Brahms' lullaby on a music box, its notes ringing on." about=&mix
 # Brahms, Wiegenlied (1868). A music box over a slow 3/4. The second phrase is
 # the first read a step lower (&scale[<<]): a sequence, as Brahms wrote it.
 &bar scan(28 37 35) step=free(56bpm, 40..72)

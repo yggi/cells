@@ -3,7 +3,12 @@
 # semitones down, F); the arpeggio by reading the scale shifted (over=&minor[>>5]: the
 # same shape on its sixth step) — chromatic and diatonic, side by side. A slow filter
 # sweep over the arpeggio; a plain melody with echoes in time.
-&about title="Zelluläre Aktivität" tags="genre:electronic, artist:Kraftwerk, diatonic, arrangement" label="**Zelluläre Aktivität**\nIt builds, layer by layer (&lied reads the parts, eight bars a step), and ends. Am – F – C – G. Bass: octaves, transposed (^n). Arpeggio: one shape, read on the chord's step of the scale. Melody: plain, with echoes in time (delaytime=&bar)."
+&about title="Zelluläre Aktivität" tags="genre:electronic, artist:Kraftwerk, diatonic, arrangement" label="**Zelluläre Aktivität** — it builds, layer by layer, and ends." about=&out
+&aufbauNote label="It builds, layer by layer: &lied reads the parts, eight bars a step." about=&lied
+&progression label="Am – F – C – G." about=(&bassline &arp)
+&bassNote label="Bass: octaves, transposed (^n)." about=&bassline
+&arpNote label="Arpeggio: one shape, read on the chord's step of the scale." about=(&shape &arp)
+&melodyNote label="Melody: plain, with echoes in time (delaytime=&bar)." about=(&melody &lead)
 &bar scan(1 1 1 1) step=free(112bpm, 90..140)
 &minor scan(2 1 2 2 1 2 2)                                   # A minor (the voices sit on A)
 
