@@ -9,14 +9,16 @@ export interface Preset {
   readonly layout?: Readonly<Record<string, readonly [number, number]>>;
 }
 
-/** The library's order (the files themselves sort by name). */
-const ORDER = ['metronome', 'transpose', 'rhythm', 'twinkle', 'fifths', 'canon', 'waveforms', 'stereo', 'lullaby', 'jazz', 'five', 'waltz', 'sailor', 'royal', 'pertonos', 'ricercar', 'korobeiniki', 'coltrane', 'bossa', 'bell', 'prelude', 'pachelbel', 'pop', 'idm', 'alpha', 'studie', 'just', 'bwv847', 'acid', 'zell', 'cellscape', 'cellscape2', 'baustelle', 'focus', 'hypercell', 'onemore', 'brothers', 'ghosts', 'tines', 'phase', 'dtmf', 'musicbox', 'tape', 'automaton', 'echotape', 'soundtape', 'testtones', 'forks', 'resonanz', 'kalimba', 'harmonograph', 'fiveto12'] as const;
+import { ORDER, type PresetKey } from './order';
 
-export type PresetKey = (typeof ORDER)[number];
+export type { PresetKey };
 
 const files = import.meta.glob('/examples/*.cells', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 /**
+ * Every example's source, read eagerly: for the tests. The app loads pieces on demand
+ * (src/examples.ts: an index made at build time, a source fetched when a piece opens).
+ *
  * Examples, from one feature at a time (key and mode, rhythm, motifs, a
  * turning table, canon, sound, stereo) to the full pieces: one file each in
  * examples/<key>.cells, the same text a user saves.

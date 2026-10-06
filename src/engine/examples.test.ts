@@ -3,6 +3,9 @@ import { readdirSync } from 'node:fs';
 import { PRESETS } from './presets';
 import { compileSource } from './compile';
 import { pieceMeta } from './parser';
+import built from 'virtual:examples-index';
+import { buildExamplesIndex, examplesIndexModule } from '../../tools/examples-index';
+import { ORDER } from './order';
 
 describe('examples/*.cells', () => {
   test('every file is listed, and every listed piece has a file', () => {
@@ -19,4 +22,19 @@ describe('examples/*.cells', () => {
       expect(p.source, 'level=').toMatch(/\blevel=/);
     });
   }
+
+  test('the build-time index lists every example in order, as compiling each file says', () => {
+    expect(built.map((e) => (e as { key: string }).key)).toEqual([...ORDER]);
+    expect(built).toEqual(buildExamplesIndex());
+    for (const e of buildExamplesIndex()) {
+      const m = pieceMeta(PRESETS[e.key].source);
+      expect([e.title, e.description, e.tags]).toEqual([m?.title, m?.description, m?.tags]);
+      expect(e.size, `${e.key}: size`).toBeGreaterThan(0);
+    }
+  });
+  test('the index module keeps an endless cycle (JSON would make it null)', () => {
+    const [first] = buildExamplesIndex();
+    const text = examplesIndexModule([{ ...first, time: { ends: null, cycle: Infinity, chance: false, longest: null } }]);
+    expect(text).toContain('"cycle":Infinity');
+  });
 });
