@@ -22,7 +22,7 @@
 &keys tags="chords" s=square loop=F3 lpf=200..6500 * &filt lpq=5 env=&(map=adsr .003 .12 .5 .06)
 &bass tags="bass" s=square loop=F1 lpf=700 env=&(map=adsr .004 .15 .6 .05)
 &lead tags="robot" s=square loop=F4 lpf=1400 lpq=9 delaytime=&bar*3/4 delay=.25 delayfeedback=.3 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=6 0 .08 0 -.08 0)
-&bd tags="groove" s=sine loop=A1 penv=26 pdec=.05 env=&(map=adsr 0 .3 0 .05)
+&bd tags="groove" s=sine loop=A1 pitch=0..26 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
 &cp tags="groove" s=white hpf=1300 room=.25 env=&(map=adsr 0 .14 0 .06)
 &oh tags="groove" s=white hpf=7000 env=&(map=adsr 0 .18 0 .08)
 &sh tags="groove" s=white hpf=10000 env=&(map=adsr 0 .03 0 .02)

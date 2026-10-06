@@ -19,7 +19,7 @@
 
 &breath map=lin loop=&bar*8 .15 1 .15                       # one breath, for pad and lead
 
-&bd s=sine loop=A1 penv=36 pdec=.03 env=&(map=adsr 0 .2 0 .05)
+&bd s=sine loop=A1 pitch=0..36 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)
 &sd s=white hpf=900 env=&(map=adsr 0 .1 0 .04)
 &ch s=white hpf=9000 env=&(map=adsr 0 .025 0 .01)
 &kit &bd &sd &ch

@@ -55,7 +55,7 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   show: core('how it’s shown: notes, do, scale, pattern … (and everything below it)', 'display.md'),
   label: core('a name to show, in quotes — alone on a cell, a note in the graph', 'display.md'),
   env: core('a voice’s own volume on every note: an envelope', 'sound.md', ['voice']),
-  pitch: core('a voice’s own pitch on every note: a vibrato', 'sound.md', ['voice']),
+  pitch: { ...core('a voice’s own pitch on every note: a vibrato, or a shape in semitones (pitch=0..30 * &(map=adsr 0 .04 0 0): a drop)', 'sound.md', ['voice']), moves: true },
   cycle: core('where it wraps: turning past this many steps starts again (a grid’s size is map=edo)', 'tables.md'),
   size: core('how large it’s drawn, against the others: 2 twice, .5 half', 'display.md'),
   laps: core('how many laps it plays, then it ends', 'time.md'),
@@ -142,8 +142,8 @@ export const CELL_PARAMS: ReadonlySet<string> = new Set(Object.keys(PARAMS).filt
 /** Parameters that are times: they take a clock as well as seconds (delaytime=&bar/2). */
 export const TIME_PARAMS: ReadonlySet<string> = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].clock));
 
-/** Parameters that can move (given by cells): lpf=&sweep, lpf=200..3000 * &fenv. */
-export const MOVING_PARAMS: ReadonlySet<string> = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].moves));
+/** Attributes that can move (given by cells): lpf=&sweep, lpf=200..3000 * &fenv, pitch=0..30 * &drop. */
+export const MOVING_PARAMS: ReadonlySet<string> = new Set(Object.keys(ATTRIBUTES).filter((k) => ATTRIBUTES[k].moves));
 
 /** Parameters that make a cell a voice; the rest are a physical cell's (motor=, write=, scope= …) and make none. */
 export const VOICE_PARAMS: ReadonlySet<string> = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].voice));

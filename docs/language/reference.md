@@ -90,7 +90,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 - `show=kind` · `show=notes:convention` · `show=do:convention`: How it’s shown: notes, do, scale, pattern … (and everything below it) [→](display.md) `&tune show=notes step=2 0 2 4` · `&tune show=notes:german step=2 0 2 4` · `&tune show=do:movable step=2 0 2 4`
 - `label="text"`: A name to show, in quotes — alone on a cell, a note in the graph. [→](display.md) `&theme label="the King's theme" step=2 0 2 4` · `&note label="A note in the graph: alone on its cell."`
 - `env=&envelope`: A voice’s own volume on every note: an envelope — on a voice. [→](sound.md) `&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)`
-- `pitch=&vibrato`: A voice’s own pitch on every note: a vibrato — on a voice. [→](sound.md) `&lead s=saw loop=C4 pitch=&(loop=5 0 .1 -.1)`
+- `pitch=&vibrato` · `pitch=lo..hi * &shape`: A voice’s own pitch on every note: a vibrato, or a shape in semitones (pitch=0..30 * &(map=adsr 0 .04 0 0): a drop) — on a voice. [→](sound.md) `&lead s=saw loop=C4 pitch=&(loop=5 0 .1 -.1)` · `&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0)`
 - `cycle=n`: Where it wraps: turning past this many steps starts again (a grid’s size is map=edo) [→](tables.md) `&key step=cycle(&theme) stride=7 cycle=12` · `&edo19 cycle=19 map=edo`
 - `size=x`: How large it’s drawn, against the others: 2 twice, .5 half. [→](display.md) `&theme size=2 step=2 0 2 4`
 - `laps=n`: How many laps it plays, then it ends. [→](time.md) `&bar scan(4 4 4 4) step=84bpm laps=30`

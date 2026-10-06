@@ -106,7 +106,12 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   },
   label: { form: 'label="text"', examples: ['&theme label="the King\'s theme" step=2 0 2 4', '&note label="A note in the graph: alone on its cell."'], read: text('label', 'label="the King\'s theme"') },
   env: { form: 'env=&envelope', examples: ['&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)'], read: voiceOwn('env') },
-  pitch: { form: 'pitch=&vibrato', examples: ['&lead s=saw loop=C4 pitch=&(loop=5 0 .1 -.1)'], read: voiceOwn('pitch') },
+  pitch: {
+    form: 'pitch=&vibrato · pitch=lo..hi * &shape',
+    examples: ['&lead s=saw loop=C4 pitch=&(loop=5 0 .1 -.1)', '&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0)'],
+    // a pitch stream added to every note — or, a range first, a shape in semitones (a drop), read as a moving parameter
+    read: (s, b, word, at) => (/^[0-9.]+\.\./.test(s.text.slice(s.i)) ? readParam(s, b, word) : voiceOwn('pitch')(s, b, word, at)),
+  },
   cycle: {
     form: 'cycle=n',
     examples: ['&key step=cycle(&theme) stride=7 cycle=12', '&edo19 cycle=19 map=edo'],

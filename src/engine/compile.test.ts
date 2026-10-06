@@ -636,4 +636,18 @@ describe('about=: a note links to the cells it explains', () => {
     expect(r.diagnostics).toEqual([]);
     expect(r.outputs[0]).toMatchObject({ voice: 'lead', cell: 't', mods: [{ cell: 'vib' }] });
   });
+
+  it('a pitch shape: pitch=lo..hi * &(map=adsr …) is a drop in semitones, as penv= pdec= were (#30)', () => {
+    const src = (bd: string) => `&m step=4\n&t step=&m 0 0\n${bd}\n&out loop=SAMPLE_RATE map=sample [&t * &bd]`;
+    const r = compileSource(src('&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)'));
+    expect(r.diagnostics).toEqual([]);
+    const e = eventsBetween(plan(r, codeShifts(r)), 0, 0.5)[0];
+    expect(e.params?.pitch).toEqual({ kind: 'env', from: 0, peak: 30, attack: 0, decay: 0.04, sustain: 0, release: 0 });
+    // a vibrato is still pitch=&cell
+    expect(compileSource(src('&bd s=sine loop=A1 pitch=&(loop=5 0 .1 -.1)')).diagnostics).toEqual([]);
+    // penv= pdec= still play, and say what replaces them
+    expect(compileSource(src('&bd s=sine loop=A1 penv=30 pdec=.04')).diagnostics.map((d) => d.message)).toEqual([
+      'penv= and pdec= are retiring: the same drop is pitch=0..30 * &(map=adsr 0 0.04 0 0)',
+    ]);
+  });
 });

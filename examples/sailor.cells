@@ -18,7 +18,7 @@
 
 &fiddle s=saw loop=C5 lpf=3000 env=&(map=adsr .01 .15 .5 .1)
 &bass s=square loop=C2 lpf=600 env=&(map=adsr .005 .25 0 .05)
-&bd s=sine loop=A1 penv=24 pdec=.05 env=&(map=adsr 0 .3 0 .05)
+&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
 &sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .04)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh

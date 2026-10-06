@@ -20,7 +20,7 @@ Sound parameters use dough's names; any of them makes a cell a voice:
 | `hpf=` `hpq=` | high-pass cutoff (Hz) and resonance; both can move |
 | `room=` | reverb send, 0–1; can move |
 | `delay=` `delaytime=` `delayfeedback=` | echo send (0–1, can move), time (seconds or a clock), feedback (0–1) |
-| `penv=` `pdec=` | a pitch drop on each note: its depth (semitones) and decay (seconds) |
+| `penv=` `pdec=` | retiring: a pitch drop (depth in semitones, decay in seconds) is now `pitch=0..30 * &(map=adsr 0 .04 0 0)`, below; they still play, with a warning |
 | `distort=` | distortion: 0 clean, .3 gritty, 1 and more harsh |
 | `crush=` | bit depth: 16 clean, 8 grainy, 3 and fewer rubble |
 
@@ -58,6 +58,12 @@ Envelopes are cells. A cell with **`map=adsr`** holds attack, decay, sustain and
 ```
 
 Written in place they hang as petals of the voice; named, one envelope serves several voices (`&pluck map=adsr .005 .3 0 .2`, then `env=&pluck`). They're exactly what the same cells would be in the mix (`&tune * &env * &lead`, `(&tune + &vibrato) * &lead`) — written once, on the instrument. As a factor it shapes each note it multiplies, from the note's start through its release.
+
+**A pitch shape** is written the way moving parameters are (below): a range in semitones scaled by an envelope, `pitch=lo..hi * &(map=adsr …)`. Each note's pitch follows the envelope from `lo` to `hi` and back, in seconds, whatever the note's length. With no attack it starts at the top: a drop, the click of a kick drum.
+
+```cells
+&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
+```
 
 ## Volume streams
 

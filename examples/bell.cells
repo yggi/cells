@@ -13,7 +13,7 @@
 
 &gankogui s=square loop=C6 lpf=4000 env=&(map=adsr 0 .08 0 .05)
 &voice s=tri loop=C4 env=&(map=adsr .02 .2 .6 .2)
-&dundun s=sine loop=C2 penv=12 pdec=.04 env=&(map=adsr 0 .25 0 .1)
+&dundun s=sine loop=C2 pitch=0..12 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .25 0 .1)
 &shekere s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
 
 &mix level=2 loop=SAMPLE_RATE map=sample [&strokes * &gankogui * .25, &song * &voice * .45,

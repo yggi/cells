@@ -21,7 +21,7 @@
 &open map=amp step=&bar/2 ~ .5
 
 &tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*3/4 delay=.22 delayfeedback=.35 env=&(map=adsr .002 .15 .6 .05)
-&bd s=sine loop=A1 penv=30 pdec=.04 env=&(map=adsr 0 .3 0 .05)
+&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
 &cp s=white hpf=1500 env=&(map=adsr 0 .12 0 .06) room=.2
 &hh s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)
 &oh s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)

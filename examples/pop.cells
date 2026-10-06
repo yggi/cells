@@ -18,7 +18,7 @@
 &lead tags="hook" s=square loop=C5 lpf=3000 env=&(map=adsr .01 .2 .6 .2) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
 &keys tags="keys" s=tri loop=C4 env=&(map=adsr .005 .3 .3 .2)
 &bass tags="bass" s=square loop=C2 lpf=500 env=&(map=adsr .005 .15 .5 .05)
-&bd tags="drums" s=sine loop=A1 penv=24 pdec=.04 env=&(map=adsr 0 .3 0 .05)
+&bd tags="drums" s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
 &sd tags="drums" s=white hpf=1200 env=&(map=adsr 0 .15 0 .05)
 &hh tags="drums" s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
 

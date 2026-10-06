@@ -14,7 +14,7 @@
 
 &bell s=sine loop=C5 fm=&bm index=.3..2 * &(map=adsr .001 .1 .1 .1) room=.3 env=&(map=adsr .002 .9 0 .6)
 &bm s=sine ratio=3.5
-&bd s=sine loop=A1 penv=20 pdec=.05 env=&(map=adsr 0 .25 0 .05)
+&bd s=sine loop=A1 pitch=0..20 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
 &sd s=white hpf=1200 env=&(map=adsr 0 .08 0 .04)
 &kit &bd &sd
 &blk s=square loop=C6 hpf=900 lpf=3000 env=&(map=adsr 0 .03 0 .02)
