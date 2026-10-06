@@ -74,8 +74,6 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   lpq: sound('low-pass resonance', { moves: true }),
   hpf: sound('high-pass cutoff, Hz', { moves: true }),
   hpq: sound('high-pass resonance', { moves: true }),
-  penv: sound('pitch envelope depth, semitones'),
-  pdec: sound('pitch envelope decay, seconds'),
   room: sound('reverb send 0–1', { moves: true }),
   delay: sound('delay send 0–1', { moves: true }),
   delaytime: sound('echo time, seconds — or a clock: &bar/2 (an eighth at the tempo)', { clock: true }),

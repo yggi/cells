@@ -1030,7 +1030,7 @@ describe('sound parameters that move', () => {
     expect(msg('&v s=saw lpf=&nope')).toMatch(/Unknown cell &nope/);
     expect(msg('&v s=saw lpf=&(map=adsr .01 .1 .5 .1)')).toMatch(/give it a range: lpf=200..3000 \* &env/);
     expect(msg('&e1 map=adsr .01 .1 .5 .1\n&e2 map=adsr .01 .1 .5 .1\n&v s=saw lpf=1..2 * &e1 * &e2')).toMatch(/one envelope \(map=adsr\) at most/);
-    expect(msg('&c step=&bar 1\n&v s=saw penv=&c')).toMatch(/penv= can't move/);
+    expect(msg('&c step=&bar 1\n&v s=saw crush=&c')).toMatch(/crush= can't move/);
     expect(parse('&v lpf=200..3000').diagnostics[0].message).toMatch(/a range is scaled by cells/);
   });
   it('delaytime=&clock: one step of it in seconds — following the tempo', () => {

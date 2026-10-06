@@ -20,7 +20,6 @@ Sound parameters use dough's names; any of them makes a cell a voice:
 | `hpf=` `hpq=` | high-pass cutoff (Hz) and resonance; both can move |
 | `room=` | reverb send, 0–1; can move |
 | `delay=` `delaytime=` `delayfeedback=` | echo send (0–1, can move), time (seconds or a clock), feedback (0–1) |
-| `penv=` `pdec=` | retiring: a pitch drop (depth in semitones, decay in seconds) is now `pitch=0..30 * &(map=adsr 0 .04 0 0)`, below; they still play, with a warning |
 | `distort=` | distortion: 0 clean, .3 gritty, 1 and more harsh |
 | `crush=` | bit depth: 16 clean, 8 grainy, 3 and fewer rubble |
 

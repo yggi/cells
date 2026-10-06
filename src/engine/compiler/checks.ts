@@ -67,15 +67,6 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
     }
   for (const d of decls.values())
     if (d.stride !== null && d.step?.kind !== 'driven') warn(`stride= only matters with step=&cell`, d.span);
-  // penv= and pdec= retire (#30): the same drop is a pitch shape, an envelope in semitones
-  for (const d of decls.values()) {
-    const depth = d.params.penv, decay = d.params.pdec;
-    if (depth === undefined && decay === undefined) continue;
-    warn(
-      `penv= and pdec= are retiring: the same drop is pitch=0..${typeof depth === 'number' ? depth : 0} * &(map=adsr 0 ${typeof decay === 'number' ? decay : 0.05} 0 0)`,
-      d.paramSpans.penv ?? d.paramSpans.pdec ?? d.span,
-    );
-  }
   for (const d of decls.values()) {
     for (const [key, r] of [['env', d.env], ['pitch', d.pitch]] as const) {
       if (!r) continue;

@@ -109,8 +109,6 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `lpq=n` · `lpq=free(n, lo..hi)` · `lpq=&x` · `lpq=lo..hi * &a * &b`: Low-pass resonance — on a voice; it makes the cell a voice. [→](sound.md)
 - `hpf=n` · `hpf=free(n, lo..hi)` · `hpf=&x` · `hpf=lo..hi * &a * &b`: High-pass cutoff, Hz — on a voice; it makes the cell a voice. [→](sound.md)
 - `hpq=n` · `hpq=free(n, lo..hi)` · `hpq=&x` · `hpq=lo..hi * &a * &b`: High-pass resonance — on a voice; it makes the cell a voice. [→](sound.md)
-- `penv=n` · `penv=free(n, lo..hi)`: Pitch envelope depth, semitones — on a voice; it makes the cell a voice. [→](sound.md)
-- `pdec=n` · `pdec=free(n, lo..hi)`: Pitch envelope decay, seconds — on a voice; it makes the cell a voice. [→](sound.md)
 - `room=n` · `room=free(n, lo..hi)` · `room=&x` · `room=lo..hi * &a * &b`: Reverb send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `delay=n` · `delay=free(n, lo..hi)` · `delay=&x` · `delay=lo..hi * &a * &b`: Delay send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar/2 (an eighth at the tempo) — on a voice; it makes the cell a voice. [→](sound.md)

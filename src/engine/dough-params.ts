@@ -42,6 +42,8 @@ export const canonical = (key: string) => DOUGH_ALIASES[key] ?? key;
 /** Parameters that are gone, and what says the same thing now. */
 const ENVELOPE = (k: string) =>
   `${k}= is gone: an envelope is a cell — in the mix, &theme * &(map=adsr .01 .3 .5 .4) * &lead, or an instrument, &lead [&(map=adsr .01 .3 .5 .4) * &saw]`;
+const PITCH_DROP = (k: string) =>
+  `${k}= is gone: a pitch drop is a pitch shape, an envelope in semitones — penv=30 pdec=.04 is pitch=0..30 * &(map=adsr 0 .04 0 0)`;
 export const RETIRED_PARAMS: Readonly<Record<string, string>> = {
   attack: ENVELOPE('attack'),
   decay: ENVELOPE('decay'),
@@ -49,4 +51,6 @@ export const RETIRED_PARAMS: Readonly<Record<string, string>> = {
   release: ENVELOPE('release'),
   gain: 'gain= is gone: set the level in the mix, &theme * &lead * 0.8',
   pan: 'pan= is gone: balance with two mixes, &out … map=sample &left &right',
+  penv: PITCH_DROP('penv'),
+  pdec: PITCH_DROP('pdec'),
 };
