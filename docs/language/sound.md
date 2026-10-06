@@ -20,7 +20,7 @@ With no braid a voice holds 0…11 of the 12 grid: a 12-step saw. Or name a buil
 &lead s=saw loop=261.63 lpf=2200
 ```
 
-A braid of voices (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar/2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum.
+A braid of voices (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar/2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it.
 
 ## Parameters as cells
 

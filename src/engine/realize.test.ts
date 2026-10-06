@@ -55,6 +55,26 @@ describe('sound', () => {
     expect(events(r, 0, 4).map((e) => [e.voice, e.freq])).toEqual([['bd', 55], ['sd', 261.63], ['bd', 55], ['sd', 261.63]]);
   });
 
+  it("a kit's members bring their own env= (a member without one plays with the voice's default)", () => {
+    const r = compileSource(
+      '&m step=1\n&d over=&kit step=&m 0 1 2\n&bd s=sine loop=55 env=&(map=adsr 0 .28 0 .05)\n&sd s=white\n&hh s=white env=&(map=adsr 0 .04 0 .02)\n&kit &bd &sd &hh\n&mix loop=SAMPLE_RATE map=sample [&d]',
+    );
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    const ev = events(r, 0, 3);
+    expect(ev.map((e) => [e.voice, e.env])).toEqual([
+      ['bd', { attack: 0, decay: 0.28, sustain: 0, release: 0.05 }],
+      ['sd', undefined],
+      ['hh', { attack: 0, decay: 0.04, sustain: 0, release: 0.02 }],
+    ]);
+  });
+
+  it("an envelope in the product wins over a kit member's own", () => {
+    const r = compileSource(
+      '&m step=1\n&d over=&kit step=&m 0 1\n&bd s=sine loop=55 env=&(map=adsr 0 .28 0 .05)\n&sd s=white\n&kit &bd &sd\n&e map=adsr .01 .5 .5 .2\n&mix loop=SAMPLE_RATE map=sample [&e * &d]',
+    );
+    expect(events(r, 0, 2).map((e) => e.env)).toEqual([{ attack: 0.01, decay: 0.5, sustain: 0.5, release: 0.2 }, { attack: 0.01, decay: 0.5, sustain: 0.5, release: 0.2 }]);
+  });
+
   it('ratios: ÷2 plays twice per beat, ×2 once per two beats', () => {
     const r = compileSource(`&m scan(27 23 26 24) step=60bpm\n&f step=&m/2 0 1 2 3\n&s step=&m*2 0 1\n${VOICE}&u s=tri\n&mix_ [&f * &v, &s * &u]\n&out_ loop=44k map=sample &mix_`);
     const ev = events(r, 0, 3.9);

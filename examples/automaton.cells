@@ -14,5 +14,5 @@
 &kit &bd &sd
 &blk s=square loop=C6 hpf=900 lpf=3000 env=&(map=adsr 0 .03 0 .02)
 
-&out level=1.5 loop=SAMPLE_RATE map=sample [&bells * &bell * .14, &drums * .6, &wood * &blk * .05] [
+&out level=-0.5 loop=SAMPLE_RATE map=sample [&bells * &bell * .14, &drums * .6, &wood * &blk * .05] [
                                   &bells * &bell * .1, &drums * .6, &wood * &blk * .07]
