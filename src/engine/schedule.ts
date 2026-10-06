@@ -72,6 +72,7 @@ export function retime(w: Window, time: number, scale: number): { events: Played
     events: w.events.map((e) => ({
       ...e,
       at: at(e.at),
+      code: e.code ?? e.at,
       dur: e.dur * scale,
       bends: e.bends.map((b) => ({ at: at(b.at), cents: b.cents, ramp: b.ramp })),
       levels: e.levels.map((l) => ({ at: at(l.at), level: l.level, ramp: l.ramp })),

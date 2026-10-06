@@ -306,6 +306,8 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
 export interface Played {
   /** Absolute start in seconds at the code's rates. */
   readonly at: number;
+  /** Its start in the code's seconds when `at` is on another clock (`retime` keeps it): what a note's own chance is keyed on, so a live play and a render agree. */
+  readonly code?: number;
   readonly dur: number;
   /** Voice cell that sounds it, and at what frequency (modulation at the start included). */
   readonly voice: string;

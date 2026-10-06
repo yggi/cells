@@ -4,6 +4,9 @@ import { createHost, planOf } from './host';
 import { eventsBetween } from './realize';
 import { retime, tapeSpeeds, windowAt, type Window } from './schedule';
 
+/** A window's events retimed once (to retime them again: `code` must survive). */
+const r0 = (w: Window) => retime(w, 10, 0.5).events;
+
 describe('schedule: what to play next, as plain data', () => {
   it('a window holds the notes eventsBetween gives for it', () => {
     for (const key of ['bwv847', 'echotape', 'soundtape', 'hypercell'] as const) {
@@ -55,6 +58,9 @@ describe('schedule: what to play next, as plain data', () => {
     const r = retime(w, 10, 0.5);
     const e = r.events[0];
     expect(e.at).toBeCloseTo(10.05, 12);
+    // (its start in the code's seconds stays: what a noise note's start is keyed on, the same live and rendered)
+    expect(e.code).toBe(4.1);
+    expect(retime({ ...w, events: r0(w) }, 20, 2).events[0].code).toBe(4.1);
     expect(e.dur).toBeCloseTo(0.1, 12);
     expect(e.bends[0].at).toBeCloseTo(10.075, 12);
     expect(e.levels[0].at).toBeCloseTo(10.05, 12);
