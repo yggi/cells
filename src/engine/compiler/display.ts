@@ -1,9 +1,10 @@
 /** Phase 7: how cells are shown — a cell without over= through its first player's table; a resonator's exciters. */
-import { ROOT, type Exciter } from '../compile';
-import type { Ctx } from './context';
+import { ROOT, type Exciter } from '../program';
+import type { Cells } from './context';
 
-export function displayCells(state: Ctx): void {
-  const { cells } = state;
+/** Each cell's display table, and a resonator's exciters, set on a copy of the cells it is given. */
+export function displayCells(given: Cells): Cells {
+  const cells = new Map(given);
   // ---- display context: a cell without over= is shown through the table of its first player
   const ctx = new Map<string, string>();
   for (const c of cells.values()) if (c.root || c.over) ctx.set(c.name, c.root ? c.name : c.over!);
@@ -34,4 +35,5 @@ export function displayCells(state: Ctx): void {
     }
     cells.set(c.name, { ...c, exciters: exciters.length ? exciters : Array.from({ length: 12 }, (_, i) => ({ shift: i, params: {} })) });
   }
+  return cells;
 }

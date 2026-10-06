@@ -1,12 +1,12 @@
 /** Phase 6: the outputs — one per voice binding, articulated (the step= term starts notes; loop= terms bend). */
-import type { Span } from '../ast';
-import { adsrOf, pickSteps, pickText, type Output, type Resonance, type ResolvedCell, type TapeReturn } from '../compile';
+import type { CellDecl, Span } from '../ast';
+import { adsrOf, pickSteps, pickText, type Output, type Resonance, type ResolvedCell, type TapeReturn } from '../program';
 import { IMPLICIT } from './tables';
 import type { Bound } from './bindings';
-import type { Ctx } from './context';
+import type { Cells, Ctx } from './context';
 
-export function outputsOf(ctx: Ctx, { sinks, bindings, soundHead }: Bound) {
-  const { parsed, decls, cells, error, warn } = ctx;
+export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, { sinks, bindings, soundHead }: Bound) {
+  const { parsed, error, warn } = ctx;
   // ---- outputs: one per voice binding. Articulation (rule 2): the step= term
   // starts notes; loop= terms bend them; terms that don't move hold (transpose).
   const outputs: Output[] = [];

@@ -1,9 +1,11 @@
 /**
- * compile(): a parsed piece as cells over grids, clocks and outputs, in phases that each take and
- * refine one shared context (context.ts), in this order — the order of the diagnostics too.
+ * compile(): a parsed piece as cells over grids, clocks and outputs, in phases run in this order
+ * (the order of the diagnostics too). Each takes what it reads and returns what it makes; the cells
+ * pass from phase to phase, each refining phase handing on a new map. They share only the
+ * diagnostics and the environment (context.ts).
  */
 import type { ParseResult } from '../ast';
-import type { AudioTape, CompileResult, Env, ResolvedCell } from '../compile';
+import type { AudioTape, CompileResult, Env, ResolvedCell } from '../program';
 import { context } from './context';
 import { declare } from './declare';
 import { sorts } from './sorts';
@@ -17,17 +19,19 @@ import { checkRoles } from './roles';
 
 export function compile(parsed: ParseResult, env: Env): CompileResult {
   const ctx = context(parsed, env);
-  const overOk = declare(ctx);
-  const typed = sorts(ctx);
-  resolveCells(ctx, overOk, typed);
-  const bound = bindVoices(ctx, typed);
-  clockCells(ctx);
-  checkCells(ctx);
-  const { outputs, returns, resonances } = outputsOf(ctx, bound);
-  displayCells(ctx);
-  checkRoles(ctx);
+  const declared = declare(ctx);
+  const { decls } = declared;
+  const typed = sorts(ctx, decls);
+  const resolved = resolveCells(ctx, declared, typed);
+  const bound = bindVoices(ctx, decls, resolved, typed);
+  const timed = clockCells(ctx, decls, bound.cells);
+  const { clocks } = timed;
+  checkCells(ctx, decls, timed.cells);
+  const { outputs, returns, resonances } = outputsOf(ctx, decls, timed.cells, bound);
+  const cells = displayCells(timed.cells);
+  checkRoles(ctx, declared, cells, clocks);
 
-  const { diagnostics, cells, clocks } = ctx;
+  const { diagnostics } = ctx;
   const ok = !diagnostics.some((x) => x.severity === 'error');
   diagnostics.sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
   const off = new Set([...cells.values()].filter((c) => c.off).map((c) => `cell:${c.name}`));

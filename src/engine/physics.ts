@@ -11,7 +11,7 @@
  * so a step due at nominal second s sounds when the clock has come that far.
  * Deterministic: fixed steps of 2 ms, the same every time.
  */
-import type { CompileResult } from './compile';
+import type { CompileResult } from './program';
 
 export interface Warp {
   /** Nominal seconds covered at real second t. */

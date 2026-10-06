@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { codeShifts, compileSource, type CompileResult } from './compile';
+import { compileSource } from './compile';
+import { codeShifts, type CompileResult } from './program';
 import { buildGraph } from './graph';
 import { eventsBetween, plan } from './realize';
 import { liveAt } from './live';

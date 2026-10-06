@@ -5,7 +5,8 @@
  * The gates are the scheduler's: an output plays until its end (laps=), and while every selector
  * it goes through picks it.
  */
-import { ROOT, pickIndices, resolveIn, type CompileResult, type Output, type ResolvedCell, type Shifts } from './compile';
+import { ROOT, pickIndices, type CompileResult, type Output, type ResolvedCell, type Shifts } from './program';
+import { resolveIn } from './helix';
 import { clocking, playedCells, selects, shiftsAt } from './clocking';
 import { stepsOf, unitsFor } from './flatten';
 import { cellId, edgeId } from './ids';

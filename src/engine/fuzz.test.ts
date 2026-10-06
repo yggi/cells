@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { PRESETS } from './presets';
-import { codeShifts, compileSource } from './compile';
+import { compileSource } from './compile';
+import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 
 // Half-typed code is the normal state of the editor: every example, with a token or a

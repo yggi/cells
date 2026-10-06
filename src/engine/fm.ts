@@ -5,7 +5,7 @@
  * modulated itself expands the same way, inside: e^{ikθ} = Σₙ Jₙ(k·I) e^{inθₘ} …
  * Negative frequencies fold back, their sign turned.
  */
-import type { CompileResult } from './compile';
+import type { CompileResult } from './program';
 
 /** J_n(x), Bessel's function of the first kind (the power series; accurate for the |x| FM uses, < ~25). */
 export function besselJ(n: number, x: number): number {

@@ -3,7 +3,7 @@
  * their place among the code's free()s (the first, the second … in reading order), so rewriting the
  * code around them can't lose them.
  */
-import type { CompileResult } from './compile';
+import type { CompileResult } from './program';
 import { setFree } from './edit';
 
 /** Held values by their place among the code's free()s. */

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { shorten, shortenAll } from './compress';
 import { eventsBetween, plan } from './realize';
-import { codeShifts } from './compile';
+import { codeShifts } from './program';
 import { PRESETS } from './presets';
 
 const tail = '\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';

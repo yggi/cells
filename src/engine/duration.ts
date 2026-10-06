@@ -5,7 +5,7 @@
  * chance, the notes still differ every time round. Estimates, at the tempo as set.
  */
 import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from './fiveto12';
-import { codeShifts, type CompileResult } from './compile';
+import { codeShifts, type CompileResult } from './program';
 import type { FreeSpec } from './ast';
 import { clocking } from './clocking';
 import { plan } from './realize';

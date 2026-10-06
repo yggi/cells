@@ -1,9 +1,13 @@
 /** Phase 4: time — clocks (cells moved at a rate), every cell's steps per step of its clock, times given as clocks. */
-import { isPositional } from '../compile';
-import type { Ctx } from './context';
+import type { CellDecl } from '../ast';
+import { isPositional, type Clock } from '../program';
+import type { Cells, Ctx } from './context';
 
-export function clockCells(ctx: Ctx): void {
-  const { decls, cells, clocks, rateOf, error, warn } = ctx;
+/** The clocks; each cell's clock, rate and times given as clocks, set on a copy of the cells it is given. */
+export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells): { cells: Cells; clocks: ReadonlyMap<string, Clock> } {
+  const { rateOf, error, warn } = ctx;
+  const cells = new Map(given);
+  const clocks = new Map<string, Clock>();
   // ---- clocks: non-voice cells moved at a rate
   for (const [name, d] of decls) {
     const c = cells.get(name);
@@ -85,4 +89,5 @@ export function clockCells(ctx: Ctx): void {
       const perSecond = clocks.get(drv.clock)!.perSecond * drv.rate * st.ratio;
       cells.set(d.name, { ...c, params: { ...c.params, [key]: +(1 / perSecond).toFixed(6) } });
     }
+  return { cells, clocks };
 }

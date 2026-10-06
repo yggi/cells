@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { codeShifts, compileSource } from './compile';
+import { compileSource } from './compile';
+import { codeShifts } from './program';
 import { harmonics, waveform } from './wave';
 
 const wave = (src: string, name = 'v') => {

@@ -1,10 +1,11 @@
 /** Phase 5: what the physical and sounding cells refer to, and what their values say — resonators, tapes, FM, moving parameters, envelopes, grids. */
-import { BODIES } from '../compile';
+import { BODIES } from '../program';
 import { MOVING_PARAMS } from '../dough-params';
-import type { Ctx } from './context';
+import type { CellDecl } from '../ast';
+import type { Cells, Ctx } from './context';
 
-export function checkCells(ctx: Ctx): void {
-  const { decls, cells, error, warn } = ctx;
+export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells): void {
+  const { error, warn } = ctx;
   // resonators: body= one of the known bodies; couple= another resonator; excite= a mix
   for (const c of cells.values()) {
     const span = (k: string) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name)!.span;

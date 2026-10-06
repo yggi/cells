@@ -5,7 +5,8 @@
  * step= chain steps). Nothing loops by itself: every stepped cell's shift is a
  * function of time.
  */
-import { period, shiftedUnits, type CompileResult, type Clock, type Shifts } from './compile';
+import type { CompileResult, Clock, Shifts } from './program';
+import { period, shiftedUnits } from './helix';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
 import { mod } from '../theory/modes';
 

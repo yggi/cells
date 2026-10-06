@@ -75,7 +75,8 @@ describe('the law of a key: use all 7, 2 times, full circle, in 5 different ways
 
 describe('5 to 12 in the studio: law=fiveto12 plays the day', () => {
   it('the first bar (11:55): C Ionian, 7 onsets; a day long, in twelve blocks', async () => {
-    const { codeShifts, compileSource } = await import('./compile');
+    const { compileSource } = await import('./compile');
+    const { codeShifts } = await import('./program');
     const { eventsBetween, plan } = await import('./realize');
     const { pieceTime, sections } = await import('./duration');
     const { PRESETS } = await import('./presets');

@@ -1,11 +1,12 @@
 /** Phase 8: attributes where they do nothing — each acts on some roles only (attributes.ts): warnings. */
 import type { Span } from '../ast';
 import { ATTRIBUTES, rolesText, type Role } from '../attributes';
-import type { ResolvedCell } from '../compile';
-import type { Ctx } from './context';
+import type { Clock, ResolvedCell } from '../program';
+import type { Cells, Ctx } from './context';
+import type { Declared } from './declare';
 
-export function checkRoles(ctx: Ctx): void {
-  const { decls, cells, clocks, implicit, warn } = ctx;
+export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells, clocks: ReadonlyMap<string, Clock>): void {
+  const { warn } = ctx;
   // ---- attributes where they do nothing: each acts on some roles only (attributes.ts)
   const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
   const roles = (c: ResolvedCell): Set<Role> => {

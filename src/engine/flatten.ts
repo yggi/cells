@@ -4,7 +4,8 @@
  * plan, the live view, labels, Shorten.
  */
 import type { Pick } from './ast';
-import { ROOT, MAX_EVENTS, pickIndices, pickSteps, shiftedUnits, type CompileResult, type Shifts } from './compile';
+import { ROOT, MAX_EVENTS, pickIndices, pickSteps, type CompileResult, type Shifts } from './program';
+import { shiftedUnits } from './helix';
 
 /** A cell's units as played: rotated by its shift (plus a [<<]/[>>] shift) — or, for a pick, as written. */
 export function unitsFor(result: CompileResult, name: string, shifts: Shifts, pick: Pick | null, table?: string, extra = 0) {

@@ -5,7 +5,7 @@
  * they sound (audio/voices.ts). Plain data on purpose: a window can be worked out anywhere — in this
  * thread, in a worker (audio/engine.worker.ts), offline (audio/render.ts) — and passed on by structured clone.
  */
-import type { CompileResult } from './compile';
+import type { CompileResult } from './program';
 import { clocking, tapeMotion } from './clocking';
 import { eventsBetween, type Plan, type Played } from './realize';
 

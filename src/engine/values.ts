@@ -3,7 +3,7 @@
  * envelope): its braid flattened once per program, shifts and cell, and read
  * where its clock says it is.
  */
-import type { CompileResult, Shifts } from './compile';
+import type { CompileResult, Shifts } from './program';
 import { clocking, type Clocking } from './clocking';
 import { flatten, type StepEvent } from './flatten';
 

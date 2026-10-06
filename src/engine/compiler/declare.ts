@@ -1,18 +1,31 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
-import { ROOT } from '../compile';
+import type { CellDecl } from '../ast';
+import { ROOT } from '../program';
 import { even as evenPositions, intervals } from '../../theory/modes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import type { Ctx } from './context';
 
-/** Fills ctx.decls; returns which cells' over= chains are sound. */
-export function declare(ctx: Ctx): Map<string, boolean> {
-  const { parsed, decls, implicit, error } = ctx;
+/** The declarations, as declare() hands them on. */
+export interface Declared {
+  /** Every cell's declaration by name, the implicit ones (the default grid, scale() tables) included. */
+  readonly decls: ReadonlyMap<string, CellDecl>;
+  /** Cells added for a scale(tonic, phase) shorthand: not drawn. */
+  readonly implicit: ReadonlySet<string>;
+  /** The default grid wasn't declared, so it was added. */
+  readonly implicitRoot: boolean;
+  /** Which cells' over= chains are sound (known, acyclic). */
+  readonly overOk: ReadonlyMap<string, boolean>;
+}
+
+export function declare(ctx: Ctx): Declared {
+  const { parsed, error } = ctx;
+  const decls = new Map<string, CellDecl>();
+  const implicit = new Set<string>();
   for (const c of parsed.cells) {
     if (decls.has(c.name)) error(`&${c.name} is already defined on line ${decls.get(c.name)!.span.line}`, c.span);
     else decls.set(c.name, c);
   }
-  ctx.implicitRoot = !decls.has(ROOT);
-  const implicitRoot = ctx.implicitRoot;
+  const implicitRoot = !decls.has(ROOT);
   // scale(tonic, phase) shorthands: the two tables they stand for, not drawn
   for (const d of [...decls.values()]) {
     const m = d.over && /^scale:(-?\d+):(\d+)$/.exec(d.over.name);
@@ -70,5 +83,5 @@ export function declare(ctx: Ctx): Map<string, boolean> {
     return ok;
   };
   for (const name of decls.keys()) checkOver(name, []);
-  return overOk;
+  return { decls, implicit, implicitRoot, overOk };
 }

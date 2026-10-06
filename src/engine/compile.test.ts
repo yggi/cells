@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { setFree } from './edit';
-import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, noteFrequency, codeShifts, compileSource, entries, lookup, resolveIn, resolvePitch, shiftedUnits, type Shifts } from './compile';
+import { compileSource } from './compile';
+import { noteFrequency, codeShifts, type Shifts } from './program';
+import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entries, lookup, resolveIn, resolvePitch, shiftedUnits } from './helix';
 import { flatten } from './flatten';
 import { eventsBetween, plan } from './realize';
 import { parse } from './parser';

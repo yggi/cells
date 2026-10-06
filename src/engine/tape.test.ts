@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { codeShifts, compileSource } from './compile';
+import { compileSource } from './compile';
+import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 
 const base = (tape: string, head: string, mix: string) =>

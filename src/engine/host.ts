@@ -11,7 +11,8 @@
  *
  * Replies come in the order asked; a window asked after a load is of the piece loaded.
  */
-import { codeShifts, compileSource, type Env } from './compile';
+import { compileSource } from './compile';
+import { codeShifts, type Env } from './program';
 import { grab, resetPhysics } from './physics';
 import { physicsOf } from './clocking';
 import { plan, type Plan } from './realize';

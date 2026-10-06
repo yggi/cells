@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { codeShifts, compileSource } from './compile';
+import { compileSource } from './compile';
+import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { distribute, type Sort } from './algebra';
 import { parse } from './parser';

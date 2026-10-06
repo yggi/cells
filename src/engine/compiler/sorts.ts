@@ -5,8 +5,10 @@ import { AlgebraError, distribute, type Sort } from '../algebra';
 import type { Ctx } from './context';
 
 /** typed(atom): a mix chord's bindings, typed and distributed once (errors reported once). */
-export function sorts(ctx: Ctx): (atom: Extract<Atom, { kind: 'mix' }>) => Binding[] {
-  const { decls, rateOf, error } = ctx;
+export type Typed = (atom: Extract<Atom, { kind: 'mix' }>) => Binding[];
+
+export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
+  const { rateOf, error } = ctx;
   // ---- the mix algebra (algebra.ts): what each cell is, from its own line — never from where it's written
   const isMixDecl = (d: CellDecl | undefined) =>
     !!d && d.map?.kind !== 'sample' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';

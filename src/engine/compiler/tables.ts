@@ -1,6 +1,6 @@
 /** Reading declarations as tables: which table a cell reads, how many entries it has, its braid as units. */
 import type { Atom, CellDecl, Span } from '../ast';
-import { ROOT, type Unit } from '../compile';
+import { ROOT, type Unit } from '../program';
 import { scan as scanOf } from '../../theory/modes';
 
 /** Where compile's own messages point when nothing was written (the default grid). */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildGraph } from './graph';
-import { codeShifts, compileSource } from './compile';
+import { compileSource } from './compile';
+import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 
 const piece = (meter: string, extra = '') =>

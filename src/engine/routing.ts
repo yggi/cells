@@ -16,7 +16,8 @@
  * liveAt` is what does now (the same gates the scheduler uses: laps, what a selector picks), within
  * the routing. `stateOf` turns both into what the graph draws.
  */
-import { ROOT, tableChain, type CompileResult, type Output, type ResolvedCell } from './compile';
+import { ROOT, type CompileResult, type Output, type ResolvedCell } from './program';
+import { tableChain } from './helix';
 import { selects } from './clocking';
 import { cellId, edgeId, stepEdgeId } from './ids';
 import { chainMuted, outputSounds } from './realize';

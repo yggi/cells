@@ -15,7 +15,9 @@
  *
  * Each suggestion carries its rewrite; its saving is measured on the result.
  */
-import { codeShifts, compileSource, period } from './compile';
+import { compileSource } from './compile';
+import { codeShifts } from './program';
+import { period } from './helix';
 import { attrsOf, declLine, declWords, deleteCell, freshName, setAttr, setBraid, spansLines } from './edit';
 import { flatten } from './flatten';
 

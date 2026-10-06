@@ -9,7 +9,8 @@
  * A sine is a braid too: sin(12).
  */
 import { flatten, type StepEvent } from './flatten';
-import { lookup, type CompileResult, type Shifts } from './compile';
+import type { CompileResult, Shifts } from './program';
+import { lookup } from './helix';
 
 export function waveform(result: CompileResult, voice: string, shifts: Shifts, samples = 256): Float32Array {
   const c = result.cells.get(voice)!;

@@ -1,15 +1,18 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
-import type { Atom, Binding, Span } from '../ast';
-import { DEFAULT_FREQ, ROOT, pickSteps, pickText, type ResolvedCell } from '../compile';
+import type { Span } from '../ast';
+import { DEFAULT_FREQ, ROOT, pickSteps, pickText, type ResolvedCell } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { scan as scanOf } from '../../theory/modes';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
-import type { Ctx } from './context';
+import type { Cells, Ctx } from './context';
+import type { Declared } from './declare';
+import type { Typed } from './sorts';
 
 class Abort extends Error {}
 
-export function resolveCells(ctx: Ctx, overOk: ReadonlyMap<string, boolean>, typed: (atom: Extract<Atom, { kind: 'mix' }>) => Binding[]): void {
-  const { decls, cells, implicit, implicitRoot, rateOf, error, warn } = ctx;
+export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }: Declared, typed: Typed): Cells {
+  const { rateOf, error, warn } = ctx;
+  const cells = new Map<string, ResolvedCell>();
   const lengthOf = (name: string) => lengthIn(decls, name);
   const unitsOf = (d: Parameters<typeof unitsIn>[1]) => unitsIn(decls, d);
   // ---- &refs (time structure), with cycle detection
@@ -153,4 +156,5 @@ export function resolveCells(ctx: Ctx, overOk: ReadonlyMap<string, boolean>, typ
     if (!cells.get(o)?.root && d.braid.kind === 'list' && d.braid.tokens.some((t) => t.atom.kind === 'note' && !Number.isInteger(t.atom.value)))
       warn(`&${o} is a table, so decimal indexes are rounded down`, d.span);
   }
+  return cells;
 }

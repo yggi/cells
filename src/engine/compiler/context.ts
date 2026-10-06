@@ -1,6 +1,6 @@
-/** What every phase of compile() shares: the diagnostics, the declarations, the cells and clocks as they are built. */
+/** What every phase of compile() shares: where diagnostics go, and the environment (rates read from it). Everything else a phase takes as arguments and returns. */
 import type { CellDecl, Diagnostic, ParseResult, Span } from '../ast';
-import { noteFrequency, type Clock, type Env, type ResolvedCell } from '../compile';
+import { noteFrequency, type Env, type ResolvedCell } from '../program';
 
 export interface Ctx {
   readonly parsed: ParseResult;
@@ -10,17 +10,10 @@ export interface Ctx {
   readonly warn: (message: string, span: Span) => void;
   /** A rate written as a number, or read from the environment (an unknown name is an error, once). */
   readonly rateOf: (st: CellDecl['step']) => number | null;
-  /** Every cell's declaration by name, the implicit ones (the default grid, scale() tables) included. */
-  readonly decls: Map<string, CellDecl>;
-  /** Cells added for a scale(tonic, phase) shorthand: not drawn. */
-  readonly implicit: Set<string>;
-  /** The default grid wasn't declared, so it was added. */
-  implicitRoot: boolean;
-  /** The cells, as each phase refines them. */
-  readonly cells: Map<string, ResolvedCell>;
-  /** The clocks: cells moved at a rate (and driven meters, belts). */
-  readonly clocks: Map<string, Clock>;
 }
+
+/** Cells, by name, as a phase hands them on. */
+export type Cells = ReadonlyMap<string, ResolvedCell>;
 
 export function context(parsed: ParseResult, env: Env): Ctx {
   const diagnostics: Diagnostic[] = [...parsed.diagnostics];
@@ -40,5 +33,5 @@ export function context(parsed: ParseResult, env: Env): Ctx {
     }
     return null;
   };
-  return { parsed, env, diagnostics, error, warn, rateOf, decls: new Map(), implicit: new Set(), implicitRoot: false, cells: new Map(), clocks: new Map() };
+  return { parsed, env, diagnostics, error, warn, rateOf };
 }

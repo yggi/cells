@@ -6,7 +6,7 @@
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
 import { effectiveShow } from '../layout/show';
-import type { CompileResult, ResolvedCell } from './compile';
+import type { CompileResult, ResolvedCell } from './program';
 import { refLabel, shiftLabel } from './ast';
 import { cellId, edgeId, stepEdgeId } from './ids';
 

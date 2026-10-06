@@ -5,7 +5,7 @@
  * UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts
  */
 import { CORE, PARAMS, rolesText, type Attribute } from '../src/engine/attributes';
-import { BODIES } from '../src/engine/compile';
+import { BODIES } from '../src/engine/program';
 import { DOUGH_ALIASES, DOUGH_SOURCES } from '../src/engine/dough-params';
 import { CHANCE_SYNTAX, MODIFIERS, STEP_SYNTAX } from '../src/engine/parser/braid';
 import { KEYS, LINE_SYNTAX, SHOWS, SHOW_CONVENTIONS } from '../src/engine/parser/cell';

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { codeShifts, compileSource, entries, lookup } from './compile';
+import { compileSource } from './compile';
+import { codeShifts } from './program';
+import { entries, lookup } from './helix';
 import { cellView } from '../layout/cellview';
 import { setAttr } from './edit';
 import { PRESETS } from './presets';

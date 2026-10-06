@@ -3,7 +3,7 @@
  * volume stream, a voice's moving parameter), and how a stream is sampled over
  * one note. Tables are looked up as they stand at each moment (`pitchOf`).
  */
-import { resolveIn, semitones } from './compile';
+import { resolveIn, semitones } from './helix';
 import { clocking, EPS, shiftsAt } from './clocking';
 import type { StepEvent } from './flatten';
 import type { Plan } from './realize';

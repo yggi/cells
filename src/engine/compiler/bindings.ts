@@ -1,12 +1,15 @@
 /** Phase 3: who plays what — kits, the sound card's channels, mixes expanded (instruments, selectors, sends), voices marked. */
-import type { Atom, Binding, Span } from '../ast';
+import type { Binding, CellDecl, Span } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
 import { ATTRIBUTES, VOICE_PARAMS } from '../attributes';
-import type { ResolvedCell } from '../compile';
-import type { Ctx } from './context';
+import type { ResolvedCell } from '../program';
+import type { Cells, Ctx } from './context';
+import type { Typed } from './sorts';
 
-export function bindVoices(ctx: Ctx, typed: (atom: Extract<Atom, { kind: 'mix' }>) => Binding[]) {
-  const { decls, cells, error, warn } = ctx;
+/** Marks kits and voices on a copy of the cells it is given; returns it with the sound card's bindings. */
+export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells, typed: Typed) {
+  const { error, warn } = ctx;
+  const cells = new Map(given);
   // ---- voices: the signal of every binding (the factor that is a sound: algebra.ts), and cells with sound parameters.
   // A cell made only of &refs to voices is a kit: numbers pick a voice.
   const hasParams = (n: string) => Object.keys(decls.get(n)?.params ?? {}).length > 0;
@@ -172,6 +175,6 @@ export function bindVoices(ctx: Ctx, typed: (atom: Extract<Atom, { kind: 'mix' }
     if (d.step?.kind === 'driven') error(`A voice moves at a rate — its pitch, like loop=C4${why}`, d.step.span);
     else if (d.step && !d.step.whole) error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4${why}`, d.step.span);
   }
-  return { sinks, bindings, soundHead };
+  return { cells: cells as Cells, sinks, bindings, soundHead };
 }
 export type Bound = ReturnType<typeof bindVoices>;
