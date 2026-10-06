@@ -6,6 +6,7 @@ import { pieceMeta } from './parser';
 import built from 'virtual:examples-index';
 import { buildExamplesIndex, examplesIndexModule } from '../../tools/examples-index';
 import { ORDER } from './order';
+import { miniature } from '../layout/miniature';
 import { canonicalTag, parseTag, VOCABULARY } from './tags';
 
 describe('examples/*.cells', () => {
@@ -40,12 +41,16 @@ describe('examples/*.cells', () => {
     });
   }
   test('the build-time index lists every example in order, as compiling each file says', () => {
+    const fresh = buildExamplesIndex();
     expect(built.map((e) => (e as { key: string }).key)).toEqual([...ORDER]);
-    expect(built).toEqual(buildExamplesIndex());
-    for (const e of buildExamplesIndex()) {
+    expect(built).toEqual(fresh);
+    for (const e of fresh) {
       const m = pieceMeta(PRESETS[e.key].source);
       expect([e.title, e.description, e.tags]).toEqual([m?.title, m?.description, m?.tags]); // (the tags are written canonical: checked above)
       expect(e.size, `${e.key}: size`).toBeGreaterThan(0);
+      // its miniature: what the browser would work out from its text, one node per cell drawn
+      expect(e.miniature, `${e.key}: miniature`).toEqual(miniature(PRESETS[e.key].source));
+      expect(e.miniature?.nodes, `${e.key}: miniature`).toHaveLength(e.size);
     }
   });
   test('the index module keeps an endless cycle (JSON would make it null)', () => {
