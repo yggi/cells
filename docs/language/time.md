@@ -30,8 +30,24 @@ A meter is a cell whose braid is a `scan`: `scan(27 23 26 24)` is a bent 4/4 bar
 ## Laps and selectors
 
 - **`laps=n`** — a clock plays n laps, then nothing it drives sounds: a piece that ends. The transport stops at the end.
-- **A selector** is a stepped cell reading a table of parts — an arrangement: it picks which part plays, and each part restarts on its pick (`&theme * &(over=&band step=… 0 1 2)`). The Pop song, Swing blues and 5 to 12 examples are arranged by selectors.
 
 ```cells-fragment
-&bar scan(27 23 26 24) step=free(66bpm, 40..96) laps=30
+&bar scan(27 23 26 24) step=free(66bpm, 40..96) laps=30   # thirty bars, then it ends
 ```
+
+- **A selector** is a stepped cell reading a table of parts — an arrangement. A part is a cell holding a mix; a table lists the parts; the selector steps through the table, a section per step, and each entry names the parts that play (a chord of numbers plays several together). A part picked starts from its top. Pop song and 8-bit: Korobeiniki are arranged this way.
+
+```cells
+&bar scan(1 1 1 1) step=100bpm
+&lead s=saw loop=C4
+&bass s=saw loop=C2
+&tune step=&bar 0 2 4 5
+&roots step=&bar 0
+&tunePart [&tune * &lead * .3]
+&bassPart [&roots * &bass * .5]
+&parts &tunePart &bassPart
+&song over=&parts step=&bar*4 laps=1 [1] [0,1] [0,1]
+&out loop=SAMPLE_RATE map=sample &song
+```
+
+The transport marks a selector's sections and jumps to them ([../ui/transport.md](../ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](../limits.md)).

@@ -22,6 +22,19 @@ With no braid a voice holds 0…11 of the 12 grid: a 12-step saw. Or name a buil
 
 A braid of voices (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar/2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum.
 
+## Parameters as cells
+
+A sound parameter can be a range times cells, so it moves with the music: `lpf=110..3800 * &fenv * &accent * &knob` sweeps the filter from 110 to 3800 Hz by an envelope per note (`map=adsr`), accents (`map=amp`) and a slow knob (`map=lin`); `lpq=&res` takes a cell too. Parameters that are times take a clock as well as seconds: `delaytime=&bar*3/4` is a dotted eighth at whatever the tempo is.
+
+```cells
+&bar scan(4 4 4 4) step=120bpm
+&accent map=amp step=&bar/4 1 .4 .8 .4
+&fenv map=adsr .003 .18 .1 .06
+&knob map=lin loop=&bar*16 .2 1 .35 .2
+&res map=lin loop=&bar*32 6 19 6
+&tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*3/4 delay=.22 delayfeedback=.35
+```
+
 ## Envelopes: env= and pitch=
 
 Envelopes are cells. A cell with **`map=adsr`** holds attack, decay, sustain and release (seconds; sustain a level). A voice carries it with **`env=`** — a volume acting on every note it plays — and its vibrato with **`pitch=`**, added to every note:

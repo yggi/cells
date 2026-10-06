@@ -13,6 +13,7 @@ The anatomy of one line of code: a cell is `&name`, attributes, and a braid, in 
 - **Steps**: numbers (`.5` is fine, `9/8` a fraction), `~` (a rest), `[0,2,4]` (a chord), `&cell`, `&cell[i]`, `&cell[a:b]`.
 - **Modifiers**: `!n` repeats a step n times, `*n` plays it n times within its time (a ratchet), `@n` holds it for n steps. `0!4` is `0 0 0 0`; `4@2` lasts as long as two.
 - **Accidentals**: `6#` raises a step, `3b` lowers it.
+- **Chance**: `x?p` sounds a step with probability p (`9?`, `13?.6`); a bare `?` takes the cell's **`chance=p`** (or `chance=free(.3, 0..1)`, a slider). **`seed=n`** picks the cell's sequence of chance; the default comes from its name. Each time round draws anew, but the draws are seeded: the piece is the same every time you play it.
 - **`&( … )`** is an unnamed cell, written where it's used, with the same body as a declaration:
 
 ```cells-fragment
