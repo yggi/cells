@@ -61,7 +61,7 @@ The detail sheet describes a cell in one sentence with its cells as links ("Play
 
 ## level=
 
-**level=dB** on the sound card sets the overall level (0 as it is, −6 about half). Examples carry it from a loudness check: render to WAV (it reports the average and peak), or in the console `await cellStudio.measure(seconds?)` returns `{rms, peak, clipped}` in dB below full scale. Gains belong to the mix: [mix.md](mix.md).
+**level=dB** on the sound card sets the overall level (0 as it is, −6 about half). Examples carry it from a loudness check (the convention: about −24 dB average, the median of the library, and a peak under −1 dB; a piece that can't have both, like a crushed big beat, keeps the peak): render to WAV (it reports the average and peak), or in the console `await cellStudio.measure(seconds?)` returns `{rms, peak, clipped}` in dB below full scale. Gains belong to the mix: [mix.md](mix.md).
 
 ## Limits
 

@@ -35,5 +35,5 @@
 &parts &breakPart &acidPart &riffPart &sirenPart &buildPart &subPart
 &song over=&parts step=&bar*32 laps=1 label="break · bass · acid · build · riff · all · siren · build · all" [0] [0,5] [0,1,5] 4 [0,1,2,5] [0,1,2,3,5] [3,1] 4 [0,1,2,3,5]
 
-&out level=0 loop=SAMPLE_RATE map=sample &song
+&out level=-3 loop=SAMPLE_RATE map=sample &song
 &tracker scope=waterfall label="the break, as a tracker" &break

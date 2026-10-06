@@ -16,5 +16,5 @@
 # an instrument: a mix used like a voice — the saw, and a sine an octave below
 &bass [&saw, &(loop=C1 sin(12)) * 0.6]
 
-&mix level=0 loop=SAMPLE_RATE map=sample [(&tune + &vibrato) * &pluck * &square,   # try &tri or &sine
+&mix level=0.5 loop=SAMPLE_RATE map=sample [(&tune + &vibrato) * &pluck * &square,   # try &tri or &sine
                                   &roots * &bass]
