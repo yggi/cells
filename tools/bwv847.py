@@ -5,13 +5,28 @@ its later sections as cells; the fugue as its subject and countersubject,
 entered in each voice at their transpositions, with the free counterpoint
 between them as cells of their own. Writes examples/bwv847.cells and the
 reference the tests check it against (tools/bwv847.reference.json).
+
+The notes are the CCARH Humdrum encoding (humdrum-tools/bach-wtc on GitHub),
+fetched into $BACH_WTC (default /tmp/bach-wtc) when it isn't there yet.
+Needs music21: pip install -r tools/dev-requirements.txt
 """
-import json, sys
+import json, os, sys, urllib.request
 from collections import Counter
 sys.path.insert(0, 'tools')
 from kern2cells import lines_of
 from music21 import converter
 from fractions import Fraction
+
+KERN = 'https://raw.githubusercontent.com/humdrum-tools/bach-wtc/master/kern/'
+CACHE = os.environ.get('BACH_WTC', '/tmp/bach-wtc')
+
+def kern(name):
+    """The path of a kern file, downloaded first if it isn't cached."""
+    path = os.path.join(CACHE, name)
+    if not os.path.exists(path):
+        os.makedirs(CACHE, exist_ok=True)
+        urllib.request.urlretrieve(KERN + name, path)
+    return path
 
 PRE, BREATH, FUG = 609, 15, 496          # sixteenths; together 1120 = 70 bars, so turning tables realign each pass
 F0 = PRE + BREATH
@@ -42,8 +57,8 @@ def tokens(ev, start, end):
     if end > t: out.append('~' if end - t == 1 else f'~@{end - t}')
     return ' '.join(out)
 
-rh, lh = notes('/tmp/bach-wtc/kern/wtc1p02.krn')
-sop, alt, bas = notes('/tmp/bach-wtc/kern/wtc1f02.krn')
+rh, lh = notes(kern('wtc1p02.krn'))
+sop, alt, bas = notes(kern('wtc1f02.krn'))
 
 # ---- the prelude: bars 1–24 are one figure, twice a bar, in both hands
 FIG = [0, 1, 2, 1, 3, 1, 2, 1]
