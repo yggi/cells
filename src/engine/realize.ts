@@ -196,7 +196,9 @@ export function outputSounds(result: CompileResult, o: Output, muted: ReadonlySe
   return g[0] > 0 || g[1] > 0;
 }
 
+/** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<string> = new Set()): Plan {
+  if (!result.ok) return { result, statics, muted, tracks: [], played: new Set(), voiceParams: new Map(), end: Infinity };
   const tracks: PlanTrack[] = [];
   const voiceParams = new Map<string, Record<string, VoiceParam>>();
   for (const o of result.outputs) {
