@@ -3,14 +3,14 @@ Write the BWV 847 example from the encoding, with its structure: the prelude's
 figuration as one figure read through two turning tables of four notes a bar;
 its later sections as cells; the fugue as its subject and countersubject,
 entered in each voice at their transpositions, with the free counterpoint
-between them as cells of their own. Writes examples/bwv847.cells and the
+between them as cells of their own. Writes examples/bwv847.cells (written in full, then shortened by tools/shorten.mjs) and the
 reference the tests check it against (tools/bwv847.reference.json).
 
 The notes are the CCARH Humdrum encoding (humdrum-tools/bach-wtc on GitHub),
 fetched into $BACH_WTC (default /tmp/bach-wtc) when it isn't there yet.
 Needs music21: pip install -r tools/dev-requirements.txt
 """
-import json, os, sys, urllib.request
+import json, os, subprocess, sys, urllib.request
 from collections import Counter
 sys.path.insert(0, 'tools')
 from kern2cells import lines_of
@@ -156,7 +156,10 @@ src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered
 # in full — on an old-school synthesizer, after Wendy Carlos' Switched-On Bach.
 # The notes: the CCARH Humdrum encoding (Bach-Gesellschaft edition, vol. xiv),
 # as semitones from C4, a sixteenth a step; tools/bwv847.py writes this from it.
-&about title="Bach, Prelude and Fugue in C minor: for Wendy" tags="classical, electronic, Bach, Wendy Carlos, tonal, counterpoint" label="**Prelude and Fugue in C minor**, BWV 847 — in full. The prelude: one figure, twice a bar in both hands, through 24 bars of changing chords; then it breaks free — *Presto*, *Adagio*, *Allegro*. The fugue, in three voices: the subject enters in the alto, is answered by the soprano, then the bass — and returns, in every voice, through the keys."
+&piece title="Bach, Prelude and Fugue in C minor: for Wendy" tags="genre:classical, genre:electronic, artist:Bach, artist:Wendy Carlos, tonal, counterpoint" label="**Prelude and Fugue in C minor**, BWV 847 — in full: a prelude of one figure, then a fugue in three voices." about=&out
+&preludeFigureNote label="The prelude: one figure, twice a bar in both hands, through 24 bars of changing chords." about=(&rhFigure &lhFigure)
+&preludeBreaksNote label="Then it breaks free — *Presto*, *Adagio*, *Allegro*." about=(&rhPresto &rhAdagio &rhAllegro)
+&fugueEntriesNote label="The fugue, in three voices: the subject enters in the alto, is answered by the soprano, then the bass — and returns, in every voice, through the keys." about=(&alto &soprano &bass)
 
 # one tempo map for both: a sixteenth a step, each section at its pace; laps=1 — the piece ends with the fugue
 &tempo scan(1!432 .72!96 2!17 .86!64 1.6!15 1.5!496) step=free(89bpm, 60..120) beat=4 laps=1 label="tempo map: ♩=108 · *Presto* · *Adagio* · *Allegro* · fugue ♩=72"
@@ -195,7 +198,7 @@ src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered
 # ---- a layout that shows the structure: the lines in a row, each line's parts below it in order (time reads
 # downward), shared material where the parts that use it can reach it
 X = {'rh': -4.4, 'lh': -2.3, 'soprano': 0.4, 'alto': 3.0, 'bass': 5.6}
-layout = {'out': (0.6, 0), 'about': (5.4, -0.7), 'tempo': (-6.3, 2.0),
+layout = {'out': (0.6, 0), 'piece': (5.4, -0.7), 'tempo': (-6.3, 2.0),
           'saw': (X['rh'], 1.3), 'pulse': (X['lh'], 1.3), 'reed': (X['soprano'], 1.3), 'brass': (X['alto'], 1.3), 'moog': (X['bass'], 1.3)}
 for v in X: layout[v] = (X[v], 2.6)
 def column(v, names, y0):
@@ -208,6 +211,10 @@ for v in ['soprano', 'alto', 'bass']:
     column(v, [x[1:] for x in lines[v] if x.startswith('&') and x[1:].split('^')[0] not in ('subject', 'counter')], 4.3)
 deepest = max(y for _, y in layout.values())
 layout.update({'subject': (2.1, deepest + 1.3), 'counter': (4.1, deepest + 1.2)})
-open('examples/bwv847.cells', 'w').write(src + '\n')
+# the longhand is then shortened by the studio's own Shorten (runs as !n, repeated phrases as cells of their
+# own, used exactly or transposed): the same notes — realize.test.ts checks them against the reference — in less text
+short = subprocess.run(['node', 'tools/shorten.mjs', '--within', r'^(soprano|alto|bass|rh|lh)'], input=src + '\n', capture_output=True, text=True, check=True)
+print(f'shortened: {len(src) + 1} -> {len(short.stdout)} characters', file=sys.stderr)
+open('examples/bwv847.cells', 'w').write(short.stdout)
 print('subjects:', [(s[0], s[1] // 16 + 1, s[3], s[4]) for s in subs], file=sys.stderr)
 print('counters:', [(c[0], c[1] // 16 + 1, c[3], c[4]) for c in cnts], file=sys.stderr)
