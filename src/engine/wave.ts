@@ -8,7 +8,7 @@
  * With no braid a voice holds the identity of its grid, 0…11: a 12-step saw.
  * A sine is a braid too: sin(12).
  */
-import { flatten, type StepEvent } from './realize';
+import { flatten, type StepEvent } from './flatten';
 import { lookup, type CompileResult, type Shifts } from './compile';
 
 export function waveform(result: CompileResult, voice: string, shifts: Shifts, samples = 256): Float32Array {

@@ -6,7 +6,10 @@
  * it goes through picks it.
  */
 import { ROOT, pickIndices, resolveIn, type CompileResult, type Output, type ResolvedCell, type Shifts } from './compile';
-import { cellId, clocking, edgeId, endOf, outputSounds, picksNow, playedCells, selects, shiftsAt, stepsOf, unitsFor, voiceFor } from './realize';
+import { clocking, playedCells, selects, shiftsAt } from './clocking';
+import { stepsOf, unitsFor } from './flatten';
+import { cellId, edgeId } from './ids';
+import { endOf, outputSounds, picksNow, voiceFor } from './realize';
 import { liveRouting, type NotesOf, type RouteAcc } from './routing';
 import { mod } from '../theory/modes';
 

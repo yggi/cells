@@ -64,7 +64,7 @@ describe('a resonator’s braid is its exciters — semitones from its fundament
 
 describe('a scope reads notes exactly: which sound now, and how long ago each began', () => {
   it('notesAt: a note a second — at 0.25 s the first, begun 0.25 s ago', async () => {
-    const { notesAt } = await import('./realize');
+    const { notesAt } = await import('./values');
     const r = compileSource('&bar scan(1 1 1 1) step=60bpm\n&tune step=&bar 0 4 7\n&v s=sine\n&out loop=SAMPLE_RATE map=sample [&tune * &v * .5]');
     const n = notesAt(r, codeShifts(r), 'tune', 0.25);
     expect(n.map((x) => x.value)).toEqual([0]);

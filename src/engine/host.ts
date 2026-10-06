@@ -13,7 +13,8 @@
  */
 import { codeShifts, compileSource, type Env } from './compile';
 import { grab, resetPhysics } from './physics';
-import { physicsOf, plan, type Plan } from './realize';
+import { physicsOf } from './clocking';
+import { plan, type Plan } from './realize';
 import { windowAt, type Window } from './schedule';
 
 export type ToEngine =

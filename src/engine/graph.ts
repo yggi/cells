@@ -8,7 +8,7 @@
 import { effectiveShow } from '../layout/show';
 import type { CompileResult, ResolvedCell } from './compile';
 import { refLabel, shiftLabel } from './ast';
-import { cellId, edgeId, stepEdgeId } from './realize';
+import { cellId, edgeId, stepEdgeId } from './ids';
 
 export type GraphNode =
   | {

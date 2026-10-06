@@ -17,7 +17,7 @@
  */
 import { codeShifts, compileSource, period } from './compile';
 import { attrsOf, declLine, declWords, deleteCell, freshName, setAttr, setBraid, spansLines } from './edit';
-import { flatten } from './realize';
+import { flatten } from './flatten';
 
 export interface Suggestion {
   readonly id: string;

@@ -17,7 +17,9 @@
  * the routing. `stateOf` turns both into what the graph draws.
  */
 import { ROOT, tableChain, type CompileResult, type Output, type ResolvedCell } from './compile';
-import { cellId, chainMuted, edgeId, outputSounds, selects, stepEdgeId } from './realize';
+import { selects } from './clocking';
+import { cellId, edgeId, stepEdgeId } from './ids';
+import { chainMuted, outputSounds } from './realize';
 import type { GraphModel } from './graph';
 
 export interface Routing {

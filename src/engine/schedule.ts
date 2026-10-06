@@ -6,7 +6,8 @@
  * thread, in a worker (audio/engine.worker.ts), offline (audio/render.ts) — and passed on by structured clone.
  */
 import type { CompileResult } from './compile';
-import { clocking, eventsBetween, tapeMotion, type Plan, type Played } from './realize';
+import { clocking, tapeMotion } from './clocking';
+import { eventsBetween, type Plan, type Played } from './realize';
 
 /** A sound tape's speed (1 on tempo) at moments through a window: its delays follow it. */
 export interface TapeSpeed {

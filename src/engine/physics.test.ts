@@ -147,7 +147,7 @@ describe('Tape Machine and Automaton', () => {
 
 describe('a hand on a turntable (live only: grab, let go, forgotten on the next play)', () => {
   it('held still from 2 s: what comes after waits, what came before is untouched; let go, the motor takes over', async () => {
-    const { physicsOf } = await import('./realize');
+    const { physicsOf } = await import('./clocking');
     const { grab, resetPhysics } = await import('./physics');
     const src = piece('motor=2 mass=1');
     const r = compileSource(src);
@@ -165,7 +165,7 @@ describe('a hand on a turntable (live only: grab, let go, forgotten on the next 
     expect(again).toEqual(plain); // the next play: as written
   });
   it('a hand on the meter reaches a belted cell through its belt', async () => {
-    const { physicsOf } = await import('./realize');
+    const { physicsOf } = await import('./clocking');
     const { grab } = await import('./physics');
     const r = compileSource(piece('motor=2 mass=1', 'belt=200 '));
     const before = eventsBetween(plan(r, codeShifts(r)), 0, 6).map((e) => e.at);
@@ -177,7 +177,7 @@ describe('a hand on a turntable (live only: grab, let go, forgotten on the next 
 
 describe('a hand stays stable, whatever it holds', () => {
   it('on a very stiff belt, dragged backwards: every time finite, every note in order', async () => {
-    const { physicsOf } = await import('./realize');
+    const { physicsOf } = await import('./clocking');
     const { grab } = await import('./physics');
     const r = compileSource(piece('motor=2 mass=1', 'belt=3000 '));
     const w = physicsOf(r, codeShifts(r), 't')!;

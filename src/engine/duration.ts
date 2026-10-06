@@ -7,7 +7,8 @@
 import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from './fiveto12';
 import { codeShifts, type CompileResult } from './compile';
 import type { FreeSpec } from './ast';
-import { clocking, plan } from './realize';
+import { clocking } from './clocking';
+import { plan } from './realize';
 
 export interface PieceTime {
   /** It ends: after this many seconds (laps=). */
@@ -155,4 +156,13 @@ export function mainTempo(result: CompileResult): { cell: string; free: FreeSpec
     name = c.step?.driver;
   }
   return null;
+}
+
+/** A piece anchored to the clock (anchor=11.55, hours.minutes): where the day stands in it at `now`, in seconds; null without an anchor. */
+export function anchoredAt(result: CompileResult, now: Date): number | null {
+  const anchor = [...result.cells.values()].find((c) => typeof c.params.anchor === 'number')?.params.anchor as number | undefined;
+  if (anchor === undefined) return null;
+  const sec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const at = Math.floor(anchor) * 3600 + Math.round((anchor % 1) * 100) * 60;
+  return (((sec - at) % 86400) + 86400) % 86400;
 }

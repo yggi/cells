@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { setFree } from './edit';
 import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, noteFrequency, codeShifts, compileSource, entries, lookup, resolveIn, resolvePitch, shiftedUnits, type Shifts } from './compile';
-import { eventsBetween, flatten, plan } from './realize';
+import { flatten } from './flatten';
+import { eventsBetween, plan } from './realize';
 import { parse } from './parser';
 import { buildGraph } from './graph';
 import { PRESETS } from './presets';
