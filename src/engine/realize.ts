@@ -369,7 +369,7 @@ export interface Plan {
  * When an output stops: laps= on its cell, the chain of cells that step it, its
  * clock, or a selector it plays through — the earliest of those. Infinity: it loops.
  */
-function endOf(result: CompileResult, statics: Shifts, o: Output): number {
+export function endOf(result: CompileResult, statics: Shifts, o: Output): number {
   const clk = clocking(result, statics);
   const seen = new Set<string>();
   const ends: number[] = [];
@@ -418,13 +418,13 @@ function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number):
 }
 
 /** Is it a selector (a cell reading a table whose entries are parts)? */
-function selects(result: CompileResult, name: string): boolean {
+export function selects(result: CompileResult, name: string): boolean {
   const t = result.cells.get(result.cells.get(name)?.over ?? '');
   return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && !!result.cells.get(u.atom.name)?.mix && !result.cells.get(u.atom.name)?.sink);
 }
 
 /** The entries a selector picks right now. */
-function picksNow(result: CompileResult, statics: Shifts, name: string, seconds: number): Set<number> {
+export function picksNow(result: CompileResult, statics: Shifts, name: string, seconds: number): Set<number> {
   const c = result.cells.get(name);
   const entries = result.cells.get(c?.over ?? '')?.units.length ?? 0;
   if (!c?.clock || entries === 0) return new Set();
@@ -475,7 +475,7 @@ export type ParamTrack =
   | { readonly kind: 'points'; readonly points: readonly { readonly at: number; readonly value: number; readonly ramp?: boolean }[] }
   | { readonly kind: 'env'; readonly from: number; readonly peak: number; readonly attack: number; readonly decay: number; readonly sustain: number; readonly release: number };
 
-const chainMuted = (result: CompileResult, table: string, muted: ReadonlySet<string>) =>
+export const chainMuted = (result: CompileResult, table: string, muted: ReadonlySet<string>) =>
   tableChain(result, table).some((c) => muted.has(cellId(c)));
 
 /** Is anything in a cell's chain of step= drivers switched off (&t steps by &swing, &swing by &bar …)? */
@@ -737,7 +737,7 @@ function memberEnvelope(result: CompileResult, voice: string) {
 }
 
 /** Which voice a number plays on, and that voice's base frequency. */
-function voiceFor(result: CompileResult, o: Output, value: number): { voice: string; freq: number } | null {
+export function voiceFor(result: CompileResult, o: Output, value: number): { voice: string; freq: number } | null {
   if (!o.kit) return { voice: o.voice, freq: result.cells.get(o.voice)!.freq };
   const kit = result.cells.get(o.voice)!;
   const u = kit.units[mod(Math.round(value), kit.units.length)];
@@ -940,266 +940,6 @@ function plainEvents(p: Plan, from: number, to: number): Played[] {
   }
   return out.sort((a, b) => a.at - b.at);
 }
-
-// ---------------------------------------------------------------- live view
-
-export interface LiveCell {
-  /** Playhead inside the instance being played, in this cell's steps (braids). */
-  local: number | null;
-  /** Table entries being looked up right now. */
-  entries: Set<number>;
-}
-
-export interface LiveState {
-  readonly seconds: number;
-  /** Shifts as they stand now (stepped tables turned). */
-  readonly shifts: Shifts;
-  readonly cells: ReadonlyMap<string, LiveCell>;
-  readonly edges: ReadonlySet<string>;
-  readonly voices: ReadonlySet<string>;
-  /** Bar count per clocked meter (0-based). */
-  readonly bars: ReadonlyMap<string, number>;
-  /** How far each clocked cell is through its current step, 0…1 (drives the pulses on edges). */
-  readonly phases: ReadonlyMap<string, number>;
-}
-
-export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySet<string>, seconds: number): LiveState {
-  const cells = new Map<string, LiveCell>();
-  const edges = new Set<string>();
-  const voices = new Set<string>();
-  const bars = new Map<string, number>();
-  const played = playedCells(result);
-  const now = shiftsAt(result, statics, seconds, played);
-  const clk = clocking(result, statics, seconds);
-  const mark = (name: string): LiveCell => {
-    let c = cells.get(name);
-    if (!c) cells.set(name, (c = { local: null, entries: new Set() }));
-    return c;
-  };
-  const markChain = (from: string, table: string, tableShift: number, value: number, alter: number) => {
-    let prev = from;
-    for (const p of resolveIn(result, table, tableShift, value, alter, now).path) {
-      mark(p.cell).entries.add(p.index);
-      edges.add(edgeId(cellId(prev), cellId(p.cell)));
-      prev = p.cell;
-    }
-  };
-
-  // selectors: where in their sections the playhead is, and which parts they pick now (until they end)
-  for (const c of result.cells.values()) {
-    const t = c.over ? result.cells.get(c.over) : undefined;
-    if (!c.clock || !t || t.units.length === 0) continue;
-    if (!t.units.every((u) => u.atom.kind === 'ref' && !!result.cells.get(u.atom.name)?.mix && !result.cells.get(u.atom.name)?.sink)) continue;
-    const period = Math.max(1, stepsOf(result, c.name, null));
-    const at = clk.stepOf(c.clock) * c.rate;
-    if (c.laps && at >= c.laps * period) continue;
-    const live = mark(c.name);
-    live.local = mod(at, period);
-    for (const k of picksNow(result, statics, c.name, seconds)) live.entries.add(k);
-  }
-
-  // what oscillates (loop=, played by nothing, moving something): where in its cycle it is
-  for (const c of result.cells.values()) {
-    if (!c.loops || !c.clock || c.voice || c.mix || c.sink || played.has(c.name)) continue;
-    const period = Math.max(1, stepsOf(result, c.name, null));
-    const live = mark(c.name);
-    if (live.local === null) live.local = mod(clk.stepOf(c.clock) * c.rate, period);
-  }
-
-  // clocks: the beat under the playhead, and the bar count
-  for (const name of result.clocks.keys()) {
-    const beat = Math.floor(clk.stepOf(name) + EPS);
-    const k = clk.map(name).beats;
-    mark(name).entries.add(mod(beat, k));
-    bars.set(name, Math.floor(beat / k));
-  }
-
-  for (const o of result.outputs) {
-    if (!outputSounds(result, o, muted)) continue;
-    // after its end, nothing; picked by selectors, only while they pick it
-    if (seconds >= endOf(result, statics, o)) continue;
-    if (o.select.length && !o.select.every((x) => picksNow(result, statics, x.cell, seconds).has(x.entry))) continue;
-    const top = result.cells.get(o.cell)!;
-    voices.add(cellId(o.voice));
-    mark(o.voice);
-    edges.add(edgeId(cellId(o.cell), cellId(o.voice)));
-    // the mix and the sound card it goes through
-    for (const v of o.via) if (!muted.has(cellId(v))) mark(v);
-    for (const v of o.via)
-      if (result.cells.get(v)?.mix && !muted.has(cellId(v))) {
-        edges.add(edgeId(cellId(o.voice), cellId(v)));
-        for (const sink of o.via) if (sink !== v && result.cells.get(sink)?.sink) edges.add(edgeId(cellId(sink), cellId(v)));
-      }
-    for (const m of [...o.mods, ...o.levels]) {
-      if (muted.has(cellId(m.cell))) continue;
-      const mc = result.cells.get(m.cell)!;
-      const live = mark(m.cell);
-      if (mc.clock) live.local = mod(clk.stepOf(mc.clock) * mc.rate, Math.max(1, mc.steps));
-      edges.add(edgeId(cellId(m.cell), cellId(o.voice)));
-    }
-    for (let at: string | null = o.cell, g = 0; at && g < 64; g++) {
-      const st: ResolvedCell['step'] = result.cells.get(at)?.step ?? null;
-      if (!st) break;
-      edges.add(stepEdgeId(cellId(at), cellId(st.driver)));
-      at = st.driver;
-    }
-
-    // descend the braid to the step under the playhead
-    let at = o.cell;
-    let pick = o.pick;
-    let extra = o.shift;
-    let local = mod(clk.stepOf(top.clock!) * top.rate, Math.max(1, stepsOf(result, o.cell, o.pick)));
-    let ctx = ROOT;
-    let ctxShift = 0;
-    for (let guard = 0; guard < 64; guard++) {
-      if (muted.has(cellId(at))) break;
-      const cell = result.cells.get(at)!;
-      const table = cell.root ? at : (cell.over ?? ctx);
-      const tShift = cell.root ? 0 : cell.over ? cell.overShift : ctxShift;
-      // a pick is drawn on the whole cell: offset the playhead to where the pick starts
-      const before = pick ? (pickIndices(cell.units.length, pick)?.[0] ?? 0) : 0;
-      const offset = cell.unitSteps.slice(0, before).reduce((x, y) => x + y, 0);
-      mark(at).local = pick ? offset + local : local;
-      let base = 0;
-      let hit: { atom: (typeof cell.units)[number]['atom']; offset: number; dur: number } | null = null;
-      for (const u of unitsFor(result, at, statics, pick, table, extra)) {
-        const unit = u.atom.kind === 'ref' ? stepsOf(result, u.atom.name, u.atom.pick) || 1 : 1;
-        const foot = unit * u.elongate;
-        const dur = foot / u.subdivide;
-        const span = foot * u.repeat;
-        if (local >= base - EPS && local < base + span - EPS) {
-          const lapIn = Math.floor((local - base) / foot + EPS);
-          const slot = Math.floor(mod(local - base, foot) / dur + EPS);
-          hit = { atom: u.atom, offset: base + lapIn * foot + slot * dur, dur };
-          break;
-        }
-        base += span;
-      }
-      if (!hit) break;
-      const a = hit.atom;
-      if (a.kind === 'note' || a.kind === 'chord') {
-        if (o.kit && a.kind === 'note') {
-          const v = voiceFor(result, o, a.value);
-          if (v) {
-            mark(v.voice);
-            voices.add(cellId(v.voice));
-            edges.add(edgeId(cellId(o.voice), cellId(v.voice)));
-          }
-        } else if (!o.kit && !chainMuted(result, table, muted)) {
-          if (a.kind === 'note') markChain(at, table, tShift, a.value, a.alter);
-          else a.notes.forEach((v, j) => markChain(at, table, tShift, v, a.alters[j]));
-        }
-        break;
-      }
-      if (a.kind !== 'ref') break;
-      edges.add(edgeId(cellId(at), cellId(a.name)));
-      const span = stepsOf(result, a.name, a.pick) || 1;
-      local = Math.min(span - EPS, Math.max(0, ((local - hit.offset) / hit.dur) * span));
-      at = a.name;
-      pick = a.pick;
-      extra = a.shift;
-      ctx = table;
-      ctxShift = tShift;
-    }
-  }
-  const phases = new Map<string, number>();
-  for (const c of result.cells.values())
-    if (c.clock && !c.voice) {
-      const s = clk.stepOf(c.clock) * c.rate;
-      phases.set(c.name, s - Math.floor(s));
-    }
-  // an edge with a switched-off end is never live, whichever path marked it
-  for (const id of [...edges]) {
-    const [a, b] = id.split(/->|~>/);
-    if (muted.has(a) || muted.has(b)) edges.delete(id);
-  }
-  return { seconds, shifts: now, cells, edges, voices, bars, phases };
-}
-
-/** Node ids that contribute to some sounding output (for dimming the rest). */
-export function routedNodes(result: CompileResult, muted: ReadonlySet<string>): Set<string> {
-  const out = new Set<string>();
-  for (const o of result.outputs) {
-    if (!outputSounds(result, o, muted)) continue;
-    const found = new Set<string>();
-    let sounding = false;
-    const seen = new Set<string>();
-    const walk = (n: string, ctx: string) => {
-      const cell = result.cells.get(n)!;
-      const table = cell.root ? n : (cell.over ?? ctx);
-      if (seen.has(`${n}|${table}`) || muted.has(cellId(n))) return;
-      seen.add(`${n}|${table}`);
-      if (cell.hasValues) {
-        if (chainMuted(result, table, muted)) return;
-        for (const t of tableChain(result, table)) found.add(cellId(t));
-        sounding = true;
-      }
-      found.add(cellId(n));
-      for (const child of cell.children.keys()) walk(child, table);
-    };
-    walk(o.cell, ROOT);
-    if (!sounding) continue;
-    for (const id of found) out.add(id);
-    out.add(cellId(o.voice));
-    for (const t of o.through) out.add(cellId(t));
-    if (o.envelopeCell && !muted.has(cellId(o.envelopeCell))) out.add(cellId(o.envelopeCell));
-    for (const part of o.parts)
-      if (!muted.has(cellId(part.mix)) && !muted.has(cellId(part.sink))) out.add(cellId(part.mix)).add(cellId(part.sink));
-    // picked by a selector: it, its table of parts and the part are on the way
-    for (const x of o.select) {
-      out.add(cellId(x.cell)).add(cellId(result.cells.get(x.cell)!.over!)).add(cellId(x.part));
-      // and what its steps are spliced from (a score it reads: &leftEar … &scenes)
-      for (const child of result.cells.get(x.cell)!.children.keys()) if (!muted.has(cellId(child))) out.add(cellId(child));
-    }
-    for (const m of [...o.mods, ...o.levels])
-      if (!muted.has(cellId(m.cell))) {
-        out.add(cellId(m.cell));
-        const mc = result.cells.get(m.cell)!;
-        for (const t of tableChain(result, mc.over ?? mc.context)) out.add(cellId(t));
-        if (mc.clock) for (const t of tableChain(result, mc.clock)) out.add(cellId(t));
-      }
-    if (o.kit)
-      for (const k of result.cells.get(o.voice)!.children.keys()) {
-        if (muted.has(cellId(k))) continue;
-        out.add(cellId(k));
-        // (a member's own envelope is on the way too)
-        const env = result.cells.get(k)?.env;
-        if (env && !muted.has(cellId(env))) out.add(cellId(env));
-      }
-    // the step= chain that moves it, down to its clock
-    for (let at: string | null = o.cell, g = 0; at && g < 64; g++) {
-      const st: ResolvedCell['step'] = result.cells.get(at)?.step ?? null;
-      if (!st) break;
-      out.add(cellId(st.driver));
-      at = st.driver;
-    }
-    const clock = result.cells.get(o.cell)!.clock!;
-    for (const t of tableChain(result, clock)) out.add(cellId(t));
-  }
-  // tapes: a note tape's output — its read head and its tape (and what moves the tape); a sound
-  // tape's read heads in mixes — the head, the tape, what moves it, what it records, the sound card
-  const chain = (n: string) => {
-    for (let at: string | null = n, g = 0; at && g < 64; g++) {
-      if (muted.has(cellId(at))) break;
-      out.add(cellId(at));
-      at = result.cells.get(at)?.step?.driver ?? null;
-    }
-  };
-  for (const o of result.outputs)
-    if (o.tape && out.has(cellId(o.cell)) && !muted.has(cellId(o.tape.head))) {
-      out.add(cellId(o.tape.head));
-      chain(o.tape.tape);
-    }
-  for (const r of result.returns) {
-    const tp = result.tapes.find((t) => t.name === r.tape);
-    if (!tp || muted.has(cellId(r.head)) || muted.has(cellId(r.tape)) || !out.has(cellId(tp.source))) continue;
-    out.add(cellId(r.head));
-    chain(r.tape);
-    for (const c of result.cells.values()) if (c.sink && !muted.has(cellId(c.name))) out.add(cellId(c.name));
-  }
-  return out;
-}
-
 
 /**
  * A cell's value at real second t (for an oscilloscope): the entry of its braid it's at, its clock

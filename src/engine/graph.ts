@@ -50,6 +50,8 @@ export interface GraphEdge {
 export interface GraphModel {
   readonly nodes: readonly GraphNode[];
   readonly edges: readonly GraphEdge[];
+  /** An edge drawn under another id (through a petal: to its parent), by its own id; undefined: not drawn. */
+  readonly alias: ReadonlyMap<string, string | undefined>;
 }
 
 export function buildGraph(result: CompileResult): GraphModel {
@@ -223,6 +225,8 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
   const pairs = new Set<string>();
   const key = (a: string, b: string) => [a, b].sort().join('|');
   for (const e of edges) if (!parentOf.has(e.source) && !parentOf.has(e.target)) pairs.add(key(e.source, e.target));
+  // (an edge redrawn, or left out because one is drawn between the same two already: drawn as that one)
+  const redrawn: { id: string; pair: string | null }[] = [];
   for (const e of edges) {
     const source = up(e.source);
     const target = up(e.target);
@@ -230,11 +234,17 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
       out.push(e);
       continue;
     }
+    redrawn.push({ id: e.id, pair: source === target ? null : key(source, target) });
     if (source === target || pairs.has(key(source, target))) continue;
     pairs.add(key(source, target));
     out.push({ ...e, id: edgeId(source, target) + (e.kind === 'step' ? '~' : ''), source, target });
   }
-  return { nodes: nodes.map((n) => (parentOf.has(n.id) ? { ...n, petalOf: parentOf.get(n.id) } : n)), edges: out };
+  const byPair = new Map<string, string>();
+  for (const e of out) if (!byPair.has(key(e.source, e.target))) byPair.set(key(e.source, e.target), e.id);
+  const alias = new Map<string, string | undefined>();
+  for (const r of redrawn) alias.set(r.id, r.pair === null ? undefined : byPair.get(r.pair));
+  for (const e of allEdges) if (hidden.has(e.source) || hidden.has(e.target)) alias.set(e.id, undefined);
+  return { nodes: nodes.map((n) => (parentOf.has(n.id) ? { ...n, petalOf: parentOf.get(n.id) } : n)), edges: out, alias };
 }
 
 /** Changes only when the set of nodes or edges changes — not when contents do. */

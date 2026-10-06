@@ -5,7 +5,9 @@ import { meterLevels } from './parser';
 import { parse } from './parser';
 import bwv847Reference from '../../tools/bwv847.reference.json';
 import { codeShifts, compileSource } from './compile';
-import { eventsBetween, flatten, liveAt, plan, routedNodes, shiftsAt, timeMap } from './realize';
+import { eventsBetween, flatten, plan, shiftsAt, timeMap } from './realize';
+import { liveAt } from './live';
+import { routing } from './routing';
 import { buildGraph, structureKey } from './graph';
 import { PRESETS } from './presets';
 
@@ -165,10 +167,14 @@ describe('live view', () => {
     expect(at.edges.has('cell:theme->cell:lead')).toBe(true);
     expect(at.bars.get('bar')).toBe(2);
   });
-  it('routedNodes follows sounding outputs only', () => {
-    const on = routedNodes(r, new Set(['cell:lead']));
-    expect(on.has('cell:pedal') && on.has('cell:scale') && on.has('cell:bar') && on.has('cell:bass')).toBe(true);
-    expect(on.has('cell:theme')).toBe(false);
+  it('routing follows sounding outputs only', () => {
+    const on = routing(r, new Set(['cell:lead']));
+    expect(['pedal', 'scale', 'bar', 'bass'].every((c) => on.nodes.has(`cell:${c}`))).toBe(true);
+    // the theme is silent, but still turns the key the pedal is read through (step=cycle(&theme))
+    expect(on.edges.has('cell:theme->cell:lead')).toBe(false);
+    expect(on.edges.has('cell:theme->cell:scale')).toBe(false);
+    expect(on.edges.has('cell:key~>cell:theme')).toBe(true);
+    expect(on.nodes.has('cell:theme')).toBe(true);
   });
 });
 
@@ -463,7 +469,7 @@ describe('switching off', () => {
       const r = compileSource(p.source);
       const g = buildGraph(r);
       for (const n of g.nodes) {
-        const routed = routedNodes(r, new Set([n.id]));
+        const routed = routing(r, new Set([n.id])).nodes;
         expect(routed.has(n.id), `${key}: ${n.id} switched off but routed`).toBe(false);
       }
     }
@@ -1291,7 +1297,7 @@ describe('Cellscape: a cycle of twelve', () => {
     }
   });
   it('the score both barrels read is reached, not dimmed', () => {
-    expect(routedNodes(r, new Set()).has('cell:scenes')).toBe(true);
+    expect(routing(r, new Set()).nodes.has('cell:scenes')).toBe(true);
   });
   it('one score, read for each ear: the leader mostly left, the follower mostly right', () => {
     const g = (voice: string) => r.outputs.filter((o) => o.voice === voice).reduce((a, o) => [a[0] + o.gains[0], a[1] + o.gains[1]], [0, 0]);
