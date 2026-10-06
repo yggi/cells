@@ -1,4 +1,4 @@
-&piece title="Sound: voices, waveforms, envelopes" tags="electronic, basics, sound" label="Voices made of braids: square, triangle, saw and sine, with envelopes and a vibrato."
+&piece title="Sound: voices, waveforms, envelopes" tags="genre:electronic, basics, sound" label="Voices made of braids: square, triangle, saw and sine, with envelopes and a vibrato."
 # A voice is a cell looped at audio rate: one turn of its braid is one cycle
 # of its waveform. Its pitch and its volume are cells too.
 &bar scan(27 23 26 24) step=free(100bpm, 70..140)

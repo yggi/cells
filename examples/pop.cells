@@ -1,4 +1,4 @@
-&piece title="Pop song: four chords, arranged" tags="electronic, diatonic, harmony, arrangement" label="I – V – vi – IV, arranged by a selector: intro, verses, choruses, a break, an outro, an end."
+&piece title="Pop song: four chords, arranged" tags="genre:electronic, diatonic, harmony, arrangement" label="I – V – vi – IV, arranged by a selector: intro, verses, choruses, a break, an outro, an end."
 # The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees
 # over the major scale, each chord comes out the right kind: C, G, Am, F.
 # Arranged: &song reads a table of parts, a section a step — intro, verses,

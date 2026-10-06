@@ -11,7 +11,7 @@ How a cell is shown and described: names, labels, notes, the piece's card, `show
 Label templates fill from the cell as it is now, so a key that turns renames itself: `{notes}` (up to 16, then …), `{tonic}`, `{mode}`, `{steps}`, `{tempo}` (beats a minute), `{shift}`, `{name}`, and `{&key:tonic}` for another cell's field (a note has none of its own). `**bold**`, `*italic*`, `\n` a new line; other text is escaped and unknown fields stay as written.
 
 ```cells
-&piece title="Swing blues" tags="jazz, blues" label="A **12-bar** blues sketch.\nSwung, in C."
+&piece title="Swing blues" tags="genre:jazz, genre:blues, rhythm" label="A **12-bar** blues sketch.\nSwung, in C."
 &bar scan(1 1 1 1) step=100bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}: {notes}"
 &tune over=&major step=&bar/2 show=notes:flats size=1.5 label="the tune" 0 2 4 5
@@ -22,6 +22,8 @@ Label templates fill from the cell as it is now, so a key that turns renames its
 ## A piece's card
 
 The first cell with `title=` is the piece's card: its title names the piece (and the saved file), its `label=` is the description (fields dropped, formatting stripped, `\n` a space; an opening that repeats the title is cut), its `tags=` the piece's (split on commas, each once whatever the case). The picker shows each piece as one wheel: its graph inside, tags round the rim.
+
+**Tags have kinds**, told apart by a prefix: `genre:jazz` (a style), `artist:Bach` (whose music it is after or about), and a tag without one is a **topic** (a technique or an idea: `rhythm`, `canon`, `tuning`). The library shows the name only and groups by kind; the five main genres (`genre:classical`, `genre:jazz`, `genre:electronic`, `genre:experimental`, `genre:world`) are the rim of its wheel. A piece saved before the prefixes keeps working: a bare `jazz` or `Bach` is read as `genre:jazz` and `artist:Bach`, and any other bare tag is a topic. The examples use only the tags of `VOCABULARY` in `src/engine/tags.ts` (a test fails on any other): to add a tag, add it there. (A cell's own `tags=` inside a piece are clusters, not kinds.)
 
 ## show=
 

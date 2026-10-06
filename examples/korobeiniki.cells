@@ -2,7 +2,7 @@
 # 1980s console would play it: pulse waves are braids, the bass a stepped triangle,
 # chords are arpeggios too fast to hear apart. In the game's form: the song (A),
 # then a slower middle section (B, our own), then the song again — and round.
-&about title="8-bit: Korobeiniki, in Tetris form" tags="world, electronic, folk, tonal, 8-bit, arrangement" label="**Korobeiniki**, in the form of the puzzle game's music: A · A · B · B · A, and round again. A is the folk song; B, slower, in half notes, is our own. &tetris picks the parts, eight bars a step."
+&about title="8-bit: Korobeiniki, in Tetris form" tags="genre:world, genre:electronic, genre:folk, tonal, genre:8-bit, arrangement" label="**Korobeiniki**, in the form of the puzzle game's music: A · A · B · B · A, and round again. A is the folk song; B, slower, in half notes, is our own. &tetris picks the parts, eight bars a step."
 &bar scan(1 1 1 1) step=free(144bpm, 100..200)
 
 &a tags="lead" 7@2 2 3 5@2 3 2 0@2 0 3 7@2 5 3                 # in A minor (A = 0); two bars

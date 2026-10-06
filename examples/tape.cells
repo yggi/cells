@@ -1,4 +1,4 @@
-&piece title="Tape Machine" tags="electronic, ambient, sound" label="A tape loop on a machine that turns: it spins up from rest (the pitch glides up with it), wows gently, the hats on a slack belt dragging behind. Hold the capstan with your finger: a tape stop, the pitch diving; let go and it spins back up. At the end the spring gives out and the tape stops for good."
+&piece title="Tape Machine" tags="genre:electronic, genre:ambient, sound" label="A tape loop on a machine that turns: it spins up from rest (the pitch glides up with it), wows gently, the hats on a slack belt dragging behind. Hold the capstan with your finger: a tape stop, the pitch diving; let go and it spins back up. At the end the spring gives out and the tape stops for good."
 # Tape Machine — the meter is the capstan: a motor (spinning up from rest), a little wow (its
 # speed swings 0.55 times a second), varispeed=1 (pitch follows speed, as on tape), and a spring
 # that holds for 40 s, then gives out: a tape stop. The hats ride a slack belt: they lag, then swing.

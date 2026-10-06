@@ -1,4 +1,4 @@
-&about title="Two Tuning Forks" tags="experimental, basics, sound" label="Two forks on one table. The first is struck now and then; the second, tuned the same, never is — but the table carries the vibration, and it begins to sing. Detune it with its slider and they beat. Tap a fork to strike it (where you tap is how it rings), hold to damp it, drag across it to bow."
+&about title="Two Tuning Forks" tags="genre:experimental, basics, sound" label="Two forks on one table. The first is struck now and then; the second, tuned the same, never is — but the table carries the vibration, and it begins to sing. Detune it with its slider and they beat. Tap a fork to strike it (where you tap is how it rings), hold to damp it, drag across it to bow."
 # Two Tuning Forks — resonators (body=): persistent objects with their modes (a fork: its tone, and
 # a clang 6.27× higher that dies at once). Notes strike them; a note's value is where (0 … 7).
 # couple= sets one ringing from the other, both ways, through the table (coupling= how much).

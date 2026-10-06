@@ -1,4 +1,4 @@
-&piece title="Cellular Brothers" tags="electronic, Chemical Brothers, modal, dance, arrangement" label="Big beat, an original in the manner of the Chemical Brothers: a gritty, crushed breakbeat; an acid line; a distorted stab riff in E minor; a siren; builds with snare rolls and a riser. About two and a half minutes, then it ends."
+&piece title="Cellular Brothers" tags="genre:electronic, artist:Chemical Brothers, modal, genre:dance, arrangement" label="Big beat, an original in the manner of the Chemical Brothers: a gritty, crushed breakbeat; an acid line; a distorted stab riff in E minor; a siren; builds with snare rolls and a riser. About two and a half minutes, then it ends."
 # Cellular Brothers — the break is a kit read in sixteenths; the acid line opens its filter
 # on every note, further on the accents. Everything in semitones from E.
 &bar scan(1 1 1 1) step=free(112bpm, 96..132)

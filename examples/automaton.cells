@@ -1,4 +1,4 @@
-&piece title="Automaton" tags="experimental, rhythm, sound" label="A mechanical band on belts: the drum (the meter, a motor) turns them all — the bells on a taut belt, exact; the drummer's arm on a slack one, lagging and swinging; the woodblock's arm slipping when the drum jerks, a step behind for good. Grab the big drum and shove it: watch the belts stretch, hear the arms drag and the woodblock slip."
+&piece title="Automaton" tags="genre:experimental, rhythm, sound" label="A mechanical band on belts: the drum (the meter, a motor) turns them all — the bells on a taut belt, exact; the drummer's arm on a slack one, lagging and swinging; the woodblock's arm slipping when the drum jerks, a step behind for good. Grab the big drum and shove it: watch the belts stretch, hear the arms drag and the woodblock slip."
 # Automaton — one motor, belts of different give. belt= stiffness (taut 3000, slack 25),
 # mass= the arm, slip= its grip: past it the belt slips and the arm falls behind for good.
 &bar scan(1 1 1 1) step=104bpm motor=4 mass=1 friction=.2

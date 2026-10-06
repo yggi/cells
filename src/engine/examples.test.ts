@@ -6,6 +6,7 @@ import { pieceMeta } from './parser';
 import built from 'virtual:examples-index';
 import { buildExamplesIndex, examplesIndexModule } from '../../tools/examples-index';
 import { ORDER } from './order';
+import { canonicalTag, parseTag, VOCABULARY } from './tags';
 
 describe('examples/*.cells', () => {
   test('every file is listed, and every listed piece has a file', () => {
@@ -19,6 +20,12 @@ describe('examples/*.cells', () => {
       const m = pieceMeta(p.source);
       expect(m?.title, 'title=').toBeTruthy();
       expect(m?.tags.length, 'tags=').toBeGreaterThan(0);
+      // tags are the vocabulary's, written with their kind (genre:jazz, artist:Bach; a topic bare)
+      for (const t of m?.tags ?? []) {
+        const { kind, name } = parseTag(t);
+        expect(VOCABULARY[kind], `tag ${t}: not in the vocabulary (src/engine/tags.ts)`).toContain(name);
+        expect(canonicalTag(t), `tag ${t}: written ${canonicalTag(t)}`).toBe(t);
+      }
       expect(p.source, 'level=').toMatch(/\blevel=/);
     });
   }
@@ -28,7 +35,7 @@ describe('examples/*.cells', () => {
     expect(built).toEqual(buildExamplesIndex());
     for (const e of buildExamplesIndex()) {
       const m = pieceMeta(PRESETS[e.key].source);
-      expect([e.title, e.description, e.tags]).toEqual([m?.title, m?.description, m?.tags]);
+      expect([e.title, e.description, e.tags]).toEqual([m?.title, m?.description, m?.tags]); // (the tags are written canonical: checked above)
       expect(e.size, `${e.key}: size`).toBeGreaterThan(0);
     }
   });

@@ -1,4 +1,4 @@
-&piece title="Motifs and reuse: Twinkle Twinkle" tags="classical, folk, basics, diatonic, motifs" label="Twinkle Twinkle from three motifs, one of them read a step up the scale, in solfège."
+&piece title="Motifs and reuse: Twinkle Twinkle" tags="genre:classical, genre:folk, basics, diatonic, motifs" label="Twinkle Twinkle from three motifs, one of them read a step up the scale, in solfège."
 # Three motifs make the whole tune. The middle line is &down again,
 # read through the scale shifted up a step (&scale[>>]).
 &bar scan(27 23 26 24) step=free(96bpm, 60..160)

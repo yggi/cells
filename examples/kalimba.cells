@@ -1,4 +1,4 @@
-&about title="Kalimba" tags="world, basics, sound" label="The smallest tuned instrument: one resonator, its braid its tines — eight of them, all on the board they share. A tune plucks them, each note the tine nearest its pitch; the board carries every one to the others, which answer faintly. Tap the pads round it to play along; hold it to stop it ringing."
+&about title="Kalimba" tags="genre:world, basics, sound" label="The smallest tuned instrument: one resonator, its braid its tines — eight of them, all on the board they share. A tune plucks them, each note the tine nearest its pitch; the board carries every one to the others, which answer faintly. Tap the pads round it to play along; hold it to stop it ringing."
 # Kalimba — a resonator's braid is its exciters: 0 2 4 7 9 12 14 16, semitones from its fundamental
 # (none written: the twelve). body=tine is what each is; they share a board (a box, an octave down)
 # and each rings the others through it. A note plucks the tine nearest its pitch.

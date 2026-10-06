@@ -1,4 +1,4 @@
-&piece title="One more Cell" tags="electronic, Daft Punk, diatonic, dance" label="French filter house, an original: parallel maj7 chords chopped in a funky sixteenth rhythm, F G A B♭, under one long filter sweep, pumping on every beat; disco octaves, a robotic lead, four-on-the-floor. A loop: open it up and let it ride."
+&piece title="One more Cell" tags="genre:electronic, artist:Daft Punk, diatonic, genre:dance" label="French filter house, an original: parallel maj7 chords chopped in a funky sixteenth rhythm, F G A B♭, under one long filter sweep, pumping on every beat; disco octaves, a robotic lead, four-on-the-floor. A loop: open it up and let it ride."
 # One more Cell — the chords are one shape (maj7) moved F G A B♭ (&prog): parallel, as the
 # filter-house records did. The pump: the chords duck on every beat (a volume stream).
 &bar scan(1 1 1 1) step=free(122bpm, 110..130)

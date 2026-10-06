@@ -7,7 +7,7 @@
 &equal label="tempered: {notes}" scan(2 2 1 2 2 2 1)                            # C major, in equal steps
 
 &chords [0,2,4] [3,5,7] [1,3,5] [4,6,8]               # I IV ii V, as scale degrees
-&listen title="Just intonation: pure and tempered" tags="experimental, basics, microtonal, tuning, harmony" label="Left: just — thirds 5/4, fifths 3/2. Right: tempered — listen to it beat. In ii (D F A) the just fifth is 40/27: out of tune."
+&listen title="Just intonation: pure and tempered" tags="genre:experimental, basics, microtonal, tuning, harmony" label="Left: just — thirds 5/4, fifths 3/2. Right: tempered — listen to it beat. In ii (D F A) the just fifth is 40/27: out of tune."
 &pure over=&just step=&bar*4 &chords
 &tempered over=&equal step=&bar*4 &chords
 

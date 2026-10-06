@@ -1,4 +1,4 @@
-&piece title="Cell Tines" tags="electronic, diatonic, FM, sound" label="FM, after the DX7: an electric piano of two pairs (a body at 1:1, a tine at 14:1 that barks on the attack), bells at 3.5:1, a punchy FM bass. Each brightness is an index under an envelope: bright on the attack, mellowing as it rings. Fmaj7 · Em7 · Dm7 · Cmaj7."
+&piece title="Cell Tines" tags="genre:electronic, diatonic, FM, sound" label="FM, after the DX7: an electric piano of two pairs (a body at 1:1, a tine at 14:1 that barks on the attack), bells at 3.5:1, a punchy FM bass. Each brightness is an index under an envelope: bright on the attack, mellowing as it rings. Fmaj7 · Em7 · Dm7 · Cmaj7."
 # Cell Tines — frequency modulation: a modulator (a voice with ratio=) swings its carrier's
 # frequency (fm=&op) by index × its own frequency. Whole-number ratios sound harmonic
 # (pianos, basses), others not (bells). The index moves: index=lo..hi * &envelope.

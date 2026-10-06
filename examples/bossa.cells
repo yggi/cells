@@ -1,4 +1,4 @@
-&piece title="Bossa nova: the clave" tags="world, jazz, tonal, rhythm" label="A bossa nova whose guitar strums on the clave's five strokes, over Dm9 and G13."
+&piece title="Bossa nova: the clave" tags="genre:world, genre:jazz, tonal, rhythm" label="A bossa nova whose guitar strums on the clave's five strokes, over Dm9 and G13."
 # Bossa nova. The clave is a meter: five strokes over a bar of sixteenths,
 # scan(3 3 4 3 3) — x..x..x...x..x.. — and the guitar strums on its strokes.
 &bar scan(1 1 1 1) step=free(128bpm, 90..170)
