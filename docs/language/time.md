@@ -25,7 +25,22 @@ Driven forms take a chain of `*n` (once per n) and `/n` (n per one), read left t
 
 ## Meters
 
-A meter is a cell whose braid is a `scan`: `scan(27 23 26 24)` is a bent 4/4 bar, `scan(3 3 2)` the tresillo. A generated meter places its steps within the bar; other clocks step evenly.
+A meter is a cell whose braid is a `scan`: `scan(27 23 26 24)` is a bent 4/4 bar, `scan(3 3 2)` the tresillo. A scan places its steps within the bar; other clocks step evenly.
+
+**`meter(signature, steps a beat)`** writes a bar as levels, one per step: 0 the downbeat, 1 a beat, then finer subdivisions. `meter("4/4", 2)` is eight steps, `*.+.+.+.`; `meter("6/8")` six; levels can be written directly, `meter("*.+.+..")`. Read through a kit, each level picks its own sound (the Metronome).
+
+- **`beat=n`** — how many of a meter's steps make a beat: its bpm counts beats, so `beat=4` steps in sixteenths at a quarter-note tempo. `meter(…)` sets it from its second number.
+- **`swing=r`** — of each pair of steps, the second starts r of the way through the pair (.5 straight, .67 a triplet swing). It swings a meter written as a list or `meter(…)`; a `scan` places its steps itself, so its swing is written into it (`scan(2 1)`, as in the blues).
+
+```cells
+&bar meter("4/4", 2) step=100bpm swing=.6
+&tick s=sine loop=A5 env=&(map=adsr 0 .03 0 .02)
+&out loop=SAMPLE_RATE map=sample [&bar * &tick]
+```
+
+## Laws
+
+A cell with **`law=`** has its notes computed by a law instead of written: `law=fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`). **`anchor=hh.mm`** is the time of day it starts (`anchor=11.55`); play begins where the clock stands. A cell with **`sun=&law`** draws that law's day as a 24-hour dial, noon at the top. See the example *5 to 12*.
 
 ## Laps and selectors
 

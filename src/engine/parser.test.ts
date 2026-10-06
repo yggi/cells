@@ -94,14 +94,23 @@ describe('parse: rates, stride and voices', () => {
     expect(one('&key step=cycle(&theme) stride=7').stride).toBe(7);
   });
 
-  it('reads dough parameters on voices, with aliases', () => {
-    const c = one('&lead s=saw step=261.63 lpf=1800 lpq=2 reverb=.4');
+  it('reads dough parameters on voices; an alias still works, with a warning', () => {
+    const c = one('&lead s=saw step=261.63 lpf=1800 lpq=2 room=.4');
     expect(c.params).toEqual({ s: 'saw', lpf: 1800, lpq: 2, room: 0.4 });
+    const r = parse('&lead s=saw reverb=.4');
+    expect(r.cells[0].params).toEqual({ s: 'saw', room: 0.4 });
+    expect(r.diagnostics).toEqual([{ severity: 'warning', message: "reverb= is dough's other name for room=: write room=", span: { line: 1, col: 13, len: 6 } }]);
+    // inside an unnamed cell too
+    expect(parse('&a [&t * &(s=saw cutoff=300)]').diagnostics.map((d) => d.message)).toEqual(["cutoff= is dough's other name for lpf=: write lpf="]);
     // envelopes are cells now
     for (const k of ['attack', 'decay', 'sustain', 'release'])
       expect(parse(`&lead s=saw ${k}=.3`).diagnostics[0].message).toMatch(new RegExp(`${k}= is gone: an envelope is a cell.*map=adsr`));
     expect(parse('&a lpf=1 cutoff=2').diagnostics[0].message).toMatch(/twice/);
     expect(parse('&a fmh=2').diagnostics[0].message).toMatch(/Unknown attribute fmh=/);
+    // a misspelling: the nearest attribute, then all of them
+    expect(parse('&a stpe=4').diagnostics[0].message).toMatch(/^Unknown attribute stpe= — did you mean step=\? \(a cell: over step .* sun\)$/);
+    expect(parse('&a lpff=300').diagnostics[0].message).toMatch(/did you mean lpf=\?/);
+    expect(parse('&a zzzzzz=1').diagnostics[0].message).not.toMatch(/did you mean/);
   });
 });
 

@@ -10,7 +10,21 @@ A voice is a cell looped at audio rate: `loop=440` plays its braid 440 times a s
 - **`lin`** — the same, ramping from each value to the next: `0 1` is a triangle, the default braid a saw
 - **`&table`** — look each value up first, then amp
 
-With no braid a voice holds 0…11 of the 12 grid: a 12-step saw. Or name a built-in waveform with dough's **`s=`** (sine tri saw square pulse white pink brown). Sound parameters use dough's names: `lpf lpq hpf hpq penv pdec room delay` (levels and stereo are the mix's job; envelopes are cells, `map=adsr`). A voice with no envelope in its product plays quick and full. Rendering uses Tone.js.
+With no braid a voice holds 0…11 of the 12 grid: a 12-step saw. Or name a built-in waveform with dough's **`s=`** (sine tri saw square pulse white pink brown). Levels and stereo are the mix's job; envelopes are cells, `map=adsr`. A voice with no envelope in its product plays quick and full. Rendering uses Tone.js.
+
+Sound parameters use dough's names; any of them makes a cell a voice:
+
+| parameter | what |
+|---|---|
+| `lpf=` `lpq=` | low-pass cutoff (Hz) and resonance; both can move |
+| `hpf=` `hpq=` | high-pass cutoff (Hz) and resonance; both can move |
+| `room=` | reverb send, 0–1; can move |
+| `delay=` `delaytime=` `delayfeedback=` | echo send (0–1, can move), time (seconds or a clock), feedback (0–1) |
+| `penv=` `pdec=` | a pitch drop on each note: its depth (semitones) and decay (seconds) |
+| `distort=` | distortion: 0 clean, .3 gritty, 1 and more harsh |
+| `crush=` | bit depth: 16 clean, 8 grainy, 3 and fewer rubble |
+
+FM (`fm=` `ratio=` `index=`) and resonators (`body=` `ring=` `hard=`) are on [physics.md](physics.md). Dough's other names for these (`cutoff`, `reverb` …) still read, with a warning naming ours. Each parameter's meaning, and what it acts on, is in one table in the code, `src/engine/attributes.ts`; on a cell where it does nothing it is a warning.
 
 ```cells
 &square loop=220 0 1

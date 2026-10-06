@@ -30,6 +30,7 @@
 import type { Atom, Binding, Braid, CellDecl, Diagnostic, FreeSpec, ParseResult, Pick, Span } from './ast';
 import { parse } from './parser';
 import { DOUGH_SOURCES, MOVING_PARAMS } from './dough-params';
+import { ATTRIBUTES, VOICE_PARAMS, rolesText, type Role } from './attributes';
 import { even as evenPositions, intervals, mod, scan as scanOf } from '../theory/modes';
 
 export const ROOT = 'fifths12TET';
@@ -179,13 +180,12 @@ export interface Exciter {
 }
 
 /** What isn't a voice's: the sound card's level, and a clock's physics. */
-const PHYSICS = ['level', 'motor', 'mass', 'friction', 'wind', 'belt', 'damping', 'slip', 'varispeed', 'wow', 'beat', 'swing', 'write', 'play', 'length', 'at', 'erase', 'tone', 'drive', 'hiss', 'print', 'printgap', 'dropout', 'wander', 'wanderhz', 'couple', 'coupling', 'excite', 'board', 'scope', 'fold', 'bins', 'channels', 'law', 'anchor', 'sun'];
 
 export interface Clock {
   readonly cell: string;
   /** Steps per second. */
   readonly perSecond: number;
-  /** A generated meter (agogic, even): its entries place its steps within the bar. */
+  /** A positional meter (a scan, a grid): its entries place its steps within the bar. */
   readonly positional: boolean;
   /** A belt (belt= on a driven cell): it follows its driver at this ratio through a spring, not rigidly. */
   readonly belt?: { readonly driver: string; readonly rate: number };
@@ -554,8 +554,8 @@ export function compile(parsed: ParseResult, env: Env = DEFAULT_ENV): CompileRes
       stride: d.stride ?? 1,
       params: d.params,
       paramCells: Object.fromEntries(Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name) }])),
-      // (level= is the sound card's own; motor= mass= friction= wind= a clock's physics: none makes a voice)
-      voice: Object.keys(d.params).some((k) => !PHYSICS.includes(k)),
+      // a sound parameter makes a voice; a physical cell's (motor=, write=, level= on the sound card …) doesn't
+      voice: Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
       freq: d.step?.kind === 'rate' || d.step?.kind === 'env' ? (d.step.whole ? (rateOf(d.step) ?? DEFAULT_FREQ) : (rateOf(d.step) ?? DEFAULT_FREQ) / Math.max(1, steps)) : DEFAULT_FREQ,
       kit: false,
     };
@@ -738,9 +738,12 @@ export function compile(parsed: ParseResult, env: Env = DEFAULT_ENV): CompileRes
     if (src !== undefined && !(String(src) in DOUGH_SOURCES))
       error(`Unknown sound '${src}' (${Object.keys(DOUGH_SOURCES).join(', ')})`, d.paramSpans.s ?? d.span);
     if (src !== undefined && d.braid.kind !== 'blank') warn(`s=${src} plays a built-in waveform; the braid is ignored`, d.paramSpans.s);
-    for (const [k, v] of Object.entries(d.params)) if (!['s', 'fm', 'write', 'play', 'body', 'couple', 'excite', 'board', 'scope', 'channels', 'law', 'sun'].includes(k) && typeof v !== 'number') error(`${k}= takes a number`, d.paramSpans[k]);
-    if (d.step?.kind === 'driven') error(`A voice moves at a rate — its pitch, like loop=C4`, d.step.span);
-    else if (d.step && !d.step.whole) error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4`, d.step.span);
+    for (const [k, v] of Object.entries(d.params)) if (ATTRIBUTES[k]?.value === 'number' && typeof v !== 'number') error(`${k}= takes a number`, d.paramSpans[k]);
+    // a voice by its sound parameters, written as a clock: say which parameter made it one
+    const made = Object.keys(d.params).find((k) => VOICE_PARAMS.has(k));
+    const why = made ? ` (${made}= makes &${name} a voice; a meter takes none)` : '';
+    if (d.step?.kind === 'driven') error(`A voice moves at a rate — its pitch, like loop=C4${why}`, d.step.span);
+    else if (d.step && !d.step.whole) error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4${why}`, d.step.span);
   }
 
   // ---- clocks: non-voice cells moved at a rate
@@ -1019,7 +1022,7 @@ export function compile(parsed: ParseResult, env: Env = DEFAULT_ENV): CompileRes
       error(
         terms.length
           ? `Nothing starts notes on &${voice.name}: give a pitch or a volume (map=amp) step= timing (step=&bar); loop= terms only bend`
-          : `&${voice.name} has nothing to play: &melody * &${voice.name}`,
+          : `&${voice.name} has nothing to play: a melody goes before it, like &melody * &${voice.name}`,
         span,
       );
       continue;
@@ -1063,7 +1066,7 @@ export function compile(parsed: ParseResult, env: Env = DEFAULT_ENV): CompileRes
     });
   }
   if (sinks.length === 0 && parsed.cells.length > 0)
-    warn('Nothing plays yet — add a mix and the sound card: &mix [&melody * &voice] and &out loop=44k map=sample &mix &mix', IMPLICIT);
+    warn('Nothing plays yet — add a mix and the sound card: &mix [&melody * &voice] and &out loop=SAMPLE_RATE map=sample &mix &mix', IMPLICIT);
 
   // ---- display context: a cell without over= is shown through the table of its first player
   const ctx = new Map<string, string>();
@@ -1094,6 +1097,45 @@ export function compile(parsed: ParseResult, env: Env = DEFAULT_ENV): CompileRes
       } else if (u.atom.kind === 'chord') for (const [j, v] of u.atom.notes.entries()) exciters.push({ shift: v + u.atom.alters[j], params: {} });
     }
     cells.set(c.name, { ...c, exciters: exciters.length ? exciters : Array.from({ length: 12 }, (_, i) => ({ shift: i, params: {} })) });
+  }
+
+  // ---- attributes where they do nothing: each acts on some roles only (attributes.ts)
+  const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
+  const roles = (c: ResolvedCell): Set<Role> => {
+    const r = new Set<Role>();
+    if (c.voice) r.add('voice');
+    if (clocks.get(c.name) && !clocks.get(c.name)!.belt) r.add('clock');
+    if (c.step) r.add('driven');
+    if (typeof c.params.motor === 'number') r.add('motor');
+    if (typeof c.params.write === 'string') r.add('tape');
+    if (typeof c.params.play === 'string') r.add('head');
+    if (typeof c.params.body === 'string') r.add('resonator');
+    if (typeof c.params.scope === 'string') r.add('scope');
+    if (typeof c.params.law === 'string') r.add('law');
+    if (c.sink) r.add('card');
+    if (c.note) r.add('note');
+    if (typeof c.params.fm === 'string') r.add('carrier');
+    if (modulators.has(c.name)) r.add('modulator');
+    return r;
+  };
+  for (const d of decls.values()) {
+    const c = cells.get(d.name);
+    if (!c || implicit.has(d.name)) continue;
+    const has = roles(c);
+    const written: [string, Span][] = [
+      ...Object.keys(d.params).map((k): [string, Span] => [k, d.paramSpans[k] ?? d.span]),
+      ...Object.entries(d.paramCells ?? {}).map(([k, pc]): [string, Span] => [k, pc.span]),
+      ...Object.entries(d.paramClocks ?? {}).map(([k, st]): [string, Span] => [k, st.span]),
+      ...(['env', 'pitch', 'title'] as const).filter((k) => d[k]).map((k): [string, Span] => [k, k === 'title' ? d.span : d[k]!.span]),
+    ];
+    for (const [k, span] of written) {
+      const a = ATTRIBUTES[k];
+      if (a?.on && !a.on.some((r) => has.has(r))) warn(`${k}= acts on ${rolesText(a.on)}: on &${d.name} it does nothing`, span);
+      else if (a?.value === 'number' && !c.voice && typeof d.params[k] === 'string') warn(`${k}= takes a number: '${d.params[k]}' does nothing`, span);
+    }
+    // swing pairs the steps of a list; a scan places its own
+    if (typeof d.params.swing === 'number' && has.has('clock') && clocks.get(d.name)?.positional)
+      warn(`swing= swings a meter written as a list or meter(…); a scan(…) places its steps itself — write the swing into it`, d.paramSpans.swing ?? d.span);
   }
 
   const ok = !diagnostics.some((x) => x.severity === 'error');
@@ -1163,7 +1205,7 @@ export function adsrOf(c: ResolvedCell): { attack: number; decay: number; sustai
   return { attack: v[0], decay: v[1], sustain: Math.min(1, v[2]), release: v[3] };
 }
 
-/** Generated meters (agogic, even) and grids place their steps within the bar; a plain list steps evenly. */
+/** Scans (meters) and grids place their steps within the bar; a plain list steps evenly. */
 export function isPositional(c: ResolvedCell): boolean {
   return c.root || c.scan !== null;
 }

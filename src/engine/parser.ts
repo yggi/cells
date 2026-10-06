@@ -3,11 +3,13 @@
  *
  *   cell     := REF item*                         (REF here: a name, &theme)
  *   item     := 'over=' (REF | 'scale(' INT ',' INT ')') | 'shift=' INT | 'cycle=' INT | ('step=' | 'loop=') STEP | 'stride=' INT
- *             | 'map=' ('amp' | 'sin' | REF) | 'off' | VOICE '=' (NUM | IDENT) | generator | token
+ *             | 'map=' (MAP | REF) | 'off' | KEY '=' VALUE | generator | token
+ *               KEY and VALUE: every attribute is in attributes.ts (what it takes, what it acts on)
  *   STEP     := (REF | 'cycle(' REF ')') (('*' | '/') NUM)*   driven by another cell (*2/3: three per two)
  *             | NUM ('bpm' | 'hz' | 'k')?                     a rate per second
  *             | ENV                                          provided by the environment: SAMPLE_RATE, A4, C#3, Bb2 …
- *   generator:= 'scan(' (NUM ('!' INT)? | 'geo(' NUM ',' INT ',' NUM+ ')')+ ')' | 'sin(' INT ')'
+ *   generator:= 'scan(' (NUM ('!' INT)? | 'geo(' NUM ',' INT ',' NUM+ ')')+ ')' | 'sin(' INT ')' | 'euclid(' INT ',' INT (',' INT)? ')'
+ *             | 'meter(' … ')' | 'spell(' … ')'
  *               scan: running totals of intervals (scales, meters); geo(r, n, k…): intervals r^(k/n)
  *   token    := atom (('!' | '*' | '@') INT)*     each modifier at most once
  *   atom     := REF | '~' | NUM | '[' NUM (','? NUM)* ']' | '[' EXPR (',' EXPR)* ']'    the last: a mix
@@ -26,6 +28,7 @@
  */
 import type { Atom, Binding, Braid, CellDecl, Diagnostic, FreeSpec, MapSpec, ParamCells, ParseResult, Pick, Ref, Span, StepSpec, Term, Token } from './ast';
 import { RETIRED_PARAMS, TIME_PARAMS, canonical, isDoughParam } from './dough-params';
+import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from './attributes';
 import { agogic as agogicPositions, even as evenPositions, intervals } from '../theory/modes';
 
 const IDENT = /[A-Za-z_][A-Za-z0-9_]*/y;
@@ -55,7 +58,12 @@ class LineScanner {
     readonly lambdas: CellDecl[] = [],
     /** Where each original line starts in a joined (continued) line: to place a span in the source. */
     readonly parts: readonly { line: number; start: number }[] = [{ line, start: 0 }],
+    /** Warnings found so far (shared with the unnamed cells inside). */
+    readonly warnings: Diagnostic[] = [],
   ) {}
+  warn(message: string, start: number, len: number): void {
+    this.warnings.push({ severity: 'warning', message, span: { ...this.place(start), len } });
+  }
   /** The source position of text from `start` to here (across continued lines). */
   place(start: number): Span {
     const at = start + this.offset;
@@ -134,7 +142,7 @@ class LineScanner {
     }
     if (close < 0) this.fail(`')' to close &( … )`, open);
     const name = `λ${this.line}_${open + this.offset}`;
-    const inner = new LineScanner(this.text.slice(open + 1, close), this.line, this.offset + open + 1, this.lambdas, this.parts);
+    const inner = new LineScanner(this.text.slice(open + 1, close), this.line, this.offset + open + 1, this.lambdas, this.parts, this.warnings);
     const decl = parseBody(inner, { name, pick: null, shift: 0, span: { line: this.line, col: open + this.offset, len: close - open + 2 } });
     this.lambdas.push({ ...decl, lambda: this.text.slice(open + 1, close).trim() });
     this.i = close + 1;
@@ -869,7 +877,7 @@ function parseBody(s: LineScanner, head: Ref): CellDecl {
       } else if (word === 'stride') {
         if (stride !== null) twice();
         stride = s.text.startsWith('free(', s.i) ? Math.round(parseFree(s, 'stride', false).value) : s.int('a whole number after stride=');
-      } else if (word === 'fm' || word === 'write' || word === 'play' || word === 'couple' || word === 'excite' || word === 'sun') {
+      } else if (CELL_PARAMS.has(word)) {
         // a cell named: fm= its modulator; write= a tape's source; play= a read head's tape
         if (word in params) twice();
         const r = s.ref(
@@ -885,6 +893,7 @@ function parseBody(s: LineScanner, head: Ref): CellDecl {
       } else if (isDoughParam(word)) {
         const key = canonical(word);
         if (key in params || key in paramCells || key in paramClocks) twice();
+        if (key !== word) s.warn(`${word}= is dough's other name for ${key}=: write ${key}=`, at, word.length);
         const vs = s.i;
         // a time as a clock: delaytime=&bar/2
         if (s.peek() === '&' && TIME_PARAMS.has(key)) {
@@ -935,7 +944,10 @@ function parseBody(s: LineScanner, head: Ref): CellDecl {
       } else if (word === 'init') s.fail('init= is now shift=', at, word.length);
       else if (word === 'out' || word === 'time') s.fail(`${word}= is now a command: out(voice, &cell) / step(&meter, bpm=…)`, at, word.length);
       else if (word in RETIRED_PARAMS) s.fail(RETIRED_PARAMS[word], at, word.length);
-      else s.fail(`Unknown attribute ${word}= (over, shift, step, loop, stride, map, cycle, env, pitch, show, label, title, tags, laps, chance, seed, size, or a voice parameter: s lpf lpq hpf hpq penv pdec room delay)`, at, word.length);
+      else {
+        const near = nearestAttribute(word);
+        s.fail(`Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`, at, word.length);
+      }
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
       continue;
     }
@@ -1076,14 +1088,14 @@ export function parse(source: string): ParseResult {
   });
   if (carry) lines.push(carry);
   lines.forEach(({ text, line: lineNo, parts }) => {
-    const s: LineScanner = new LineScanner(text, lineNo, 0, [], parts);
+    const s: LineScanner = new LineScanner(text, lineNo, 0, [], parts, diagnostics);
     if (s.done()) return;
     try {
       const start = s.i;
       const word = s.match(IDENT);
-      if (word === 'step' && s.peek() === '(') s.fail('step(…) is now a rate on the meter: &meter agogic(4,4) step=84bpm', start, 4);
+      if (word === 'step' && s.peek() === '(') s.fail('step(…) is now a rate on the meter: &meter scan(27 23 26 24) step=84bpm', start, 4);
       else if (word === 'out' && /^\s*[(=]/.test(s.text.slice(s.i)))
-        s.fail('out is a cell now: &mix [&theme * &lead, …] and &out loop=44k map=sample &mix &mix', start, 3);
+        s.fail('out is a cell now: &mix [&theme * &lead, …] and &out loop=SAMPLE_RATE map=sample &mix &mix', start, 3);
       else if (word === 'cell') s.fail('The cell keyword is gone: a line starting with &name declares a cell', start, 4);
       else if (word === null) {
         s.i = start;
