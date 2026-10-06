@@ -30,5 +30,6 @@ Everything is indexing and moving a helix.
 | [sound.md](sound.md) | voices, waveforms, envelopes, volumes, articulation |
 | [physics.md](physics.md) | motors, belts, tape, resonators, FM |
 | [display.md](display.md) | titles, tags, labels, `show=`, `level=` |
+| [reference.md](reference.md) | the syntax reference: every form the parser reads, with an example (generated from the parser) |
 
 The code is the single source of truth: the graph draws exactly what is written, and every edit made in it is a rewrite of a cell's line ([../architecture.md](../architecture.md)).
