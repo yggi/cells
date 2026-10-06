@@ -53,13 +53,18 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     );
     const first = states(r, 0.5);
     expect(['partA', 'parts', 'song', 'out', 'v'].map((n) => first.get(n))).toEqual(['live', 'live', 'live', 'live', 'live']);
-    expect(Object.fromEntries(['v->partA', 'parts->partA', 'song->parts', 'out->song'].map((k) => [k, first.get(k)]))).toEqual({ 'v->partA': 'live', 'parts->partA': 'live', 'song->parts': 'live', 'out->song': 'live' });
+    expect(Object.fromEntries(['v->partA', 'parts->partA', 'song->parts', 'out->song'].map((k) => [k, first.get(k)]))).toEqual({
+      'v->partA': 'live',
+      'parts->partA': 'live',
+      'song->parts': 'live',
+      'out->song': 'live',
+    });
     // &v is in both parts: only the edge its notes take now is live
     expect([first.get('partB'), first.get('w'), first.get('v->partB'), first.get('parts->partB')]).toEqual(['idle', 'idle', 'idle', 'idle']);
     const second = states(r, 4.5);
     expect([second.get('v->partB'), second.get('v->partA'), second.get('partA')]).toEqual(['live', 'idle', 'idle']);
   });
-  it("a kit: its members are part of the sound, and the one struck now is live", () => {
+  it('a kit: its members are part of the sound, and the one struck now is live', () => {
     const r = compileSource(PRESETS.sailor.source);
     expect(['bd', 'sd', 'hh', 'kit', 'drums'].every((n) => on(r).nodes.has(`cell:${n}`))).toBe(true);
     const s = states(r, 0.05); // the kick
@@ -68,7 +73,8 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
   it('an instrument (a mix used like a voice) and a sound tape it records: all on the way while it plays', () => {
     const r = compileSource(PRESETS.soundtape.source);
     const s = states(r, 3);
-    for (const k of ['dry', 'tape', 'left', 'right', 'far', 'reel', 'pluck->dry', 'dry->out', 'dry->tape', 'tape->left', 'left->out', 'tape~>reel']) expect(s.get(k), k).toBe('live');
+    for (const k of ['dry', 'tape', 'left', 'right', 'far', 'reel', 'pluck->dry', 'dry->out', 'dry->tape', 'tape->left', 'left->out', 'tape~>reel'])
+      expect(s.get(k), k).toBe('live');
   });
   it('a resonator excited by tape heads, and the heads into the sound card', () => {
     const r = compileSource(PRESETS.resonanz.source);
@@ -76,7 +82,15 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     for (const k of ['site->tape', 'tape->h1', 'h1->echo', 'echo->pipeA', 'pipeA->out', 'hammer->plate', 'plate->site']) expect(s.get(k), k).toBe('live');
   });
   it('a sound tape nothing hears is not part of the sound (nor what it records)', () => {
-    const r = src('&bar step=1', '&mel step=&bar 0', '&v s=sine loop=C4', '&send [&mel * &v]', '&tape step=&bar write=&send length=2', '&head play=&tape at=.5', `${OUT} [&mel * &v]`);
+    const r = src(
+      '&bar step=1',
+      '&mel step=&bar 0',
+      '&v s=sine loop=C4',
+      '&send [&mel * &v]',
+      '&tape step=&bar write=&send length=2',
+      '&head play=&tape at=.5',
+      `${OUT} [&mel * &v]`,
+    );
     const n = on(r).nodes;
     expect([n.has('cell:tape'), n.has('cell:head'), n.has('cell:send')]).toEqual([false, false, false]);
     expect(n.has('cell:v')).toBe(true);
@@ -138,7 +152,12 @@ describe('routing, every example', () => {
       for (const o of r.outputs)
         if (all.nodes.has(`cell:${o.voice}`) && events.some((e) => e.voice === o.voice)) {
           const v = r.cells.get(o.voice)!;
-          const movers = [...o.mods, ...o.levels].map((m) => m.cell).concat(Object.values(v.paramCells ?? {}).flatMap((pc) => pc.factors), o.envelopeCell ?? []);
+          const movers = [...o.mods, ...o.levels]
+            .map((m) => m.cell)
+            .concat(
+              Object.values(v.paramCells ?? {}).flatMap((pc) => pc.factors),
+              o.envelopeCell ?? [],
+            );
           for (const m of movers) if (!r.off.has(`cell:${m}`)) expect(all.nodes.has(`cell:${m}`), `&${m} moves &${o.voice}, not routed`).toBe(true);
         }
     });

@@ -16,9 +16,8 @@ import type { CellDecl, Diagnostic, ParseResult } from '../ast';
 import { IDENT, LineError, LineScanner, stripComment } from './scanner';
 import { parseCell } from './cell';
 
-export { TEMPI } from './free';
-export { bjorklund, meterLevels } from './generators';
-export { SHOWS, SHOW_CONVENTIONS } from './cell';
+export { meterLevels } from './generators';
+export { SHOWS } from './cell';
 
 export function parse(source: string): ParseResult {
   const cells: CellDecl[] = [];
@@ -46,8 +45,7 @@ export function parse(source: string): ParseResult {
       const start = s.i;
       const word = s.match(IDENT);
       if (word === 'step' && s.peek() === '(') s.fail('step(…) is now a rate on the meter: &meter scan(27 23 26 24) step=84bpm', start, 4);
-      else if (word === 'out' && /^\s*[(=]/.test(s.text.slice(s.i)))
-        s.fail('out is a cell now: &mix [&theme * &lead, …] and &out loop=SAMPLE_RATE map=sample &mix &mix', start, 3);
+      else if (word === 'out' && /^\s*[(=]/.test(s.text.slice(s.i))) s.fail('out is a cell now: &mix [&theme * &lead, …] and &out loop=SAMPLE_RATE map=sample &mix &mix', start, 3);
       else if (word === 'cell') s.fail('The cell keyword is gone: a line starting with &name declares a cell', start, 4);
       else if (word === null) {
         s.i = start;
@@ -61,7 +59,6 @@ export function parse(source: string): ParseResult {
   });
   return { cells, diagnostics };
 }
-
 
 /** A piece's card: the first note with a title= — its title, its description (the label, as plain text), its tags. */
 export interface PieceMeta {

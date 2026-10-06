@@ -1,6 +1,6 @@
 /** Phase 5: what the physical and sounding cells refer to, and what their values say — resonators, tapes, FM, moving parameters, envelopes, grids. */
 import { BODIES } from '../program';
-import { MOVING_PARAMS } from '../dough-params';
+import { MOVING_PARAMS } from '../attributes';
 import type { CellDecl } from '../ast';
 import type { Cells, Ctx } from './context';
 
@@ -10,7 +10,8 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
   for (const c of cells.values()) {
     const span = (k: string) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name)!.span;
     if (typeof c.params.body === 'string' && !(c.params.body in BODIES)) error(`body=${c.params.body}: one of ${Object.keys(BODIES).join(', ')}`, span('body'));
-    if (typeof c.params.board === 'string' && c.params.board !== 'none' && !(c.params.board in BODIES)) error(`board=${c.params.board}: none, or one of ${Object.keys(BODIES).join(', ')}`, span('board'));
+    if (typeof c.params.board === 'string' && c.params.board !== 'none' && !(c.params.board in BODIES))
+      error(`board=${c.params.board}: none, or one of ${Object.keys(BODIES).join(', ')}`, span('board'));
     if (typeof c.params.couple === 'string') {
       const o = cells.get(c.params.couple);
       if (!o) error(`Unknown cell &${c.params.couple}`, span('couple'));
@@ -65,10 +66,12 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
       if (envs > 1) error(`${key}=: one envelope (map=adsr) at most — the other factors scale it`, pc.span);
       if (envs && !pc.range) error(`${key}=&env: an envelope runs 0 to 1 — give it a range: ${key}=200..3000 * &env`, pc.span);
     }
-  for (const d of decls.values())
-    if (d.stride !== null && d.step?.kind !== 'driven') warn(`stride= only matters with step=&cell`, d.span);
+  for (const d of decls.values()) if (d.stride !== null && d.step?.kind !== 'driven') warn(`stride= only matters with step=&cell`, d.span);
   for (const d of decls.values()) {
-    for (const [key, r] of [['env', d.env], ['pitch', d.pitch]] as const) {
+    for (const [key, r] of [
+      ['env', d.env],
+      ['pitch', d.pitch],
+    ] as const) {
       if (!r) continue;
       const t = cells.get(r.name);
       if (!t) error(`Unknown cell &${r.name}`, r.span);

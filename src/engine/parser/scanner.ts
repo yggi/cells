@@ -7,20 +7,42 @@ import { syntax, type Syntax } from './syntax';
 export const REFERENCE_SYNTAX: readonly Syntax[] = [
   syntax('reference', '&name', 'A cell, by name: in a braid (spliced in), after an attribute (over=&scale), in a mix.', ['&theme step=2 &motif 0'], 'cell.md'),
   syntax('reference', '&name[i]', 'One entry of its braid as written, counted from 0; negative from the end (&x[-1] the last).', ['&tune step=2 &motif[0] &motif[-1]'], 'braid.md'),
-  syntax('reference', '&name[a:b] · &name[a:b:s]', 'A slice, Python-style: from a up to b (either may be left out), every s-th; [::-1] backwards (retrograde).', ['&tune step=2 &motif[1:3] &motif[:-1] &motif[::-1] &motif[::2]'], 'braid.md'),
-  syntax('reference', '&name[<<n] · &name[>>n]', 'Shifted back or forward n places (1 if left out), on top of its own shift=: rotating it, climbing the helix.', ['&canon step=2 &theme[>>4]', '&mode over=&scale[<<] 0 2 4'], 'braid.md'),
+  syntax(
+    'reference',
+    '&name[a:b] · &name[a:b:s]',
+    'A slice, Python-style: from a up to b (either may be left out), every s-th; [::-1] backwards (retrograde).',
+    ['&tune step=2 &motif[1:3] &motif[:-1] &motif[::-1] &motif[::2]'],
+    'braid.md',
+  ),
+  syntax(
+    'reference',
+    '&name[<<n] · &name[>>n]',
+    'Shifted back or forward n places (1 if left out), on top of its own shift=: rotating it, climbing the helix.',
+    ['&canon step=2 &theme[>>4]', '&mode over=&scale[<<] 0 2 4'],
+    'braid.md',
+  ),
   syntax('reference', '&name^n', 'In a braid, transposed: what it plays, n grid steps up (^-n down) through its tables.', ['&answer step=2 &subject^7 &subject^-12'], 'braid.md'),
-  syntax('reference', '&( … )', 'An unnamed cell, written where it is used, with attributes and a braid of its own.', ['&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)'], 'cell.md'),
+  syntax(
+    'reference',
+    '&( … )',
+    'An unnamed cell, written where it is used, with attributes and a braid of its own.',
+    ['&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)'],
+    'cell.md',
+  ),
 ];
 
 export const IDENT = /[A-Za-z_][A-Za-z0-9_]*/y;
-export const INT = /-?[0-9]+/y;
+const INT = /-?[0-9]+/y;
 export const NUM = /-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y;
 // a long rest is legitimate (a voice waiting out a whole prelude: ~@617); this only guards against typos
 export const MAX_REPS = 4096;
 
 export class LineError extends Error {
-  constructor(message: string, readonly col: number, readonly len = 1) {
+  constructor(
+    message: string,
+    readonly col: number,
+    readonly len = 1,
+  ) {
     super(message);
   }
 }

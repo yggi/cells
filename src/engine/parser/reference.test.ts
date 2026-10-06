@@ -15,8 +15,7 @@ const PAGE = 'docs/language/reference.md';
 
 describe('the syntax reference', () => {
   test('every example in it parses, with no diagnostics', () => {
-    for (const e of entries())
-      for (const ex of e.examples) expect(parse(ex).diagnostics, `${e.form}: ${ex}`).toEqual([]);
+    for (const e of entries()) for (const ex of e.examples) expect(parse(ex).diagnostics, `${e.form}: ${ex}`).toEqual([]);
   });
 
   test('it covers what the parser dispatches on', () => {

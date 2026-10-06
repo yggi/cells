@@ -43,8 +43,7 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     const what = st.whole ? 'loop=' : 'step=';
     let result: { clock: string; rate: number } | null = null;
     if (!decls.has(drv)) error(`Unknown cell &${drv}`, st.driver.span);
-    else if (stepping.includes(drv) || drv === name)
-      error(`${what} loops back: ${[...stepping.slice(stepping.indexOf(drv)), name, drv].map((n) => '&' + n).join(' → ')}`, st.span);
+    else if (stepping.includes(drv) || drv === name) error(`${what} loops back: ${[...stepping.slice(stepping.indexOf(drv)), name, drv].map((n) => '&' + n).join(' → ')}`, st.span);
     else if (cells.get(drv)?.voice) error(`&${drv} is a voice: it moves at audio rate`, st.driver.span);
     else {
       stepping.push(name);

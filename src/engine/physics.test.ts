@@ -4,8 +4,7 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 
-const piece = (meter: string, extra = '') =>
-  `&bar step=120bpm ${meter} 0 0 0 0\n&t step=&bar ${extra}0\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`;
+const piece = (meter: string, extra = '') => `&bar step=120bpm ${meter} 0 0 0 0\n&t step=&bar ${extra}0\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`;
 const beats = (src: string, seconds = 20) => {
   const r = compileSource(src);
   expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
@@ -52,7 +51,9 @@ describe('Music Box: a spring that runs down', () => {
     const src = (PRESETS as Record<string, { source: string }>).musicbox.source;
     const r = compileSource(src);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
-    const ticks = eventsBetween(plan(r, codeShifts(r)), 0, 600).filter((e) => e.voice === 'tickv').map((e) => e.at);
+    const ticks = eventsBetween(plan(r, codeShifts(r)), 0, 600)
+      .filter((e) => e.voice === 'tickv')
+      .map((e) => e.at);
     const gap = (i: number) => ticks[i + 1] - ticks[i];
     expect(gap(0)).toBeGreaterThan(gap(10)); // spinning up: the first ticks come slowly
     // up to speed: 96 a minute, sagging a little under its drag (motor / (motor + friction))

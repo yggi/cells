@@ -11,7 +11,9 @@ import { canonicalTag, parseTag, VOCABULARY } from './tags';
 
 describe('examples/*.cells', () => {
   test('every file is listed, and every listed piece has a file', () => {
-    const files = readdirSync('examples').filter((f) => f.endsWith('.cells')).map((f) => f.slice(0, -6));
+    const files = readdirSync('examples')
+      .filter((f) => f.endsWith('.cells'))
+      .map((f) => f.slice(0, -6));
     expect(Object.keys(PRESETS).sort()).toEqual(files.sort());
   });
   for (const [key, p] of Object.entries(PRESETS)) {

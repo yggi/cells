@@ -17,18 +17,14 @@ export interface Diagnostic {
  * `&x[::-1]` backwards (retrograde), `&x[::2]` every other.
  */
 export type Pick =
-  | { readonly kind: 'at'; readonly i: number }
-  | { readonly kind: 'slice'; readonly from: number | null; readonly to: number | null; readonly step?: number | null };
+  { readonly kind: 'at'; readonly i: number } | { readonly kind: 'slice'; readonly from: number | null; readonly to: number | null; readonly step?: number | null };
 
-export const pickLabel = (p: Pick | null): string =>
-  !p ? '' : p.kind === 'at' ? `[${p.i}]` : `[${p.from ?? ''}:${p.to ?? ''}${p.step ? `:${p.step}` : ''}]`;
+export const pickLabel = (p: Pick | null): string => (!p ? '' : p.kind === 'at' ? `[${p.i}]` : `[${p.from ?? ''}:${p.to ?? ''}${p.step ? `:${p.step}` : ''}]`);
 
 /** `[<<n]` / `[>>n]` (n defaults to 1): shifted back / forward, on top of the cell's own rotation. */
-export const shiftLabel = (shift: number): string =>
-  shift === 0 ? '' : `[${shift < 0 ? '<<' : '>>'}${Math.abs(shift) === 1 ? '' : Math.abs(shift)}]`;
+export const shiftLabel = (shift: number): string => (shift === 0 ? '' : `[${shift < 0 ? '<<' : '>>'}${Math.abs(shift) === 1 ? '' : Math.abs(shift)}]`);
 
-export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: number }) =>
-  (pickLabel(r.pick) || shiftLabel(r.shift)) + (r.transpose ? `^${r.transpose}` : '');
+export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: number }) => (pickLabel(r.pick) || shiftLabel(r.shift)) + (r.transpose ? `^${r.transpose}` : '');
 
 /**
  * `&name`, optionally viewed through brackets: a pick from the braid as

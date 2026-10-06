@@ -8,7 +8,10 @@ describe('the attribute table', () => {
   test('the parser reads every attribute in it', () => {
     for (const k of Object.keys(ATTRIBUTES)) {
       const ms = parse(`&a ${k}=1`).diagnostics.map((d) => d.message);
-      expect(ms.filter((m) => m.startsWith('Unknown attribute')), k).toEqual([]);
+      expect(
+        ms.filter((m) => m.startsWith('Unknown attribute')),
+        k,
+      ).toEqual([]);
     }
   });
 
@@ -54,7 +57,11 @@ describe('an attribute where it does nothing is a warning', () => {
     ['ratio= on a voice no fm= names', '&t step=4 0 1' + tail.replace('s=saw', 's=saw ratio=2'), 'ratio= acts on a voice another’s fm= names: on &v it does nothing'],
     ['title= on a cell that plays', '&t step=4 title="x" 0 1' + tail, 'title= acts on a note (a label= and nothing else): on &t it does nothing'],
     ['a word for a number, not on a voice', '&m step=90bpm motor=strong\n&t step=&m 0 1' + tail, "motor= takes a number: 'strong' does nothing"],
-    ['swing= on a scan', '&m scan(3 3 3 3) step=90bpm swing=.6\n&t step=&m 0 1' + tail, 'swing= swings a meter written as a list or meter(…); a scan(…) places its steps itself — write the swing into it'],
+    [
+      'swing= on a scan',
+      '&m scan(3 3 3 3) step=90bpm swing=.6\n&t step=&m 0 1' + tail,
+      'swing= swings a meter written as a list or meter(…); a scan(…) places its steps itself — write the swing into it',
+    ],
   ])('%s', (_, source, message) => {
     expect(warnings(source)).toEqual([message]);
   });

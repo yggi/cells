@@ -89,7 +89,12 @@ describe('host: the engine behind messages (what runs in the worker)', () => {
     host({ type: 'load', code: src });
     const here = planOf(src);
     // a hand holds the music box's barrel still from second 2, lets go at 3
-    for (const [t, speed] of [[2, 0], [2.3, 0], [2.6, 0], [3, null]] as const) {
+    for (const [t, speed] of [
+      [2, 0],
+      [2.3, 0],
+      [2.6, 0],
+      [3, null],
+    ] as const) {
       host({ type: 'grab', cell: 'bar', t, speed });
       grabIn(here, 'bar', t, speed);
     }

@@ -49,7 +49,10 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       continue;
     }
     if (!voice.params.s && voice.freq < 20)
-      warn(`&${voice.name} loops at ${+voice.freq.toFixed(2)} Hz, below hearing — is it a pitch? Then leave out its sound parameters: (&theme + &${voice.name}) * &lead`, b.voice.span);
+      warn(
+        `&${voice.name} loops at ${+voice.freq.toFixed(2)} Hz, below hearing — is it a pitch? Then leave out its sound parameters: (&theme + &${voice.name}) * &lead`,
+        b.voice.span,
+      );
     // the voice's own env= (a volume) and pitch= (added, as in a pitch sum) join every product it's in
     const own = [
       ...(voice.env ? [{ ref: decls.get(voice.name)!.env!, sign: 1 as const, inSum: false }] : []),

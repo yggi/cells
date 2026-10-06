@@ -193,7 +193,6 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
   };
 }
 
-
 /** Is it a selector (a cell reading a table whose entries are parts)? */
 export function selects(result: CompileResult, name: string): boolean {
   const t = result.cells.get(result.cells.get(name)?.over ?? '');
@@ -214,4 +213,3 @@ export function tapeMotion(result: CompileResult, clk: Clocking, tape: string) {
   const speed = (x: number) => Math.max(1e-3, (pos(x + 0.01) - pos(Math.max(0, x - 0.01))) / (x + 0.01 - Math.max(0, x - 0.01)));
   return { pos, real, speed, moving };
 }
-

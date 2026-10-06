@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { setFree } from './edit';
-import { compileSource } from './compile';
-import { noteFrequency, codeShifts, type Shifts } from './program';
-import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entries, lookup, resolveIn, resolvePitch, shiftedUnits } from './helix';
-import { flatten } from './flatten';
-import { eventsBetween, plan } from './realize';
-import { parse } from './parser';
-import { buildGraph } from './graph';
-import { PRESETS } from './presets';
-import { modeName } from '../theory/modes';
+import { setFree } from '../edit';
+import { compileSource } from '../compile';
+import { noteFrequency, codeShifts, type Shifts } from '../program';
+import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entries, lookup, resolveIn, resolvePitch, shiftedUnits } from '../helix';
+import { flatten } from '../flatten';
+import { eventsBetween, plan } from '../realize';
+import { parse } from '../parser';
+import { buildGraph } from '../graph';
+import { PRESETS } from '../presets';
+import { modeName } from '../../theory/modes';
 
 type R = ReturnType<typeof compileSource>;
 const with_ =
@@ -124,12 +124,20 @@ describe('motifs and shifted references', () => {
   it('picks keep their modifiers and step lengths', () => {
     const r2 = compileSource('&a 5 6\n&bar 0@2 &a!2 3*2\n&foo &bar[1] &bar[-1]');
     expect(flatten(r2, 'foo', codeShifts(r2)).map((e) => [e.step, e.duration, e.value])).toEqual([
-      [0, 1, 5], [1, 1, 6], [2, 1, 5], [3, 1, 6], [4, 0.5, 3], [4.5, 0.5, 3],
+      [0, 1, 5],
+      [1, 1, 6],
+      [2, 1, 5],
+      [3, 1, 6],
+      [4, 0.5, 3],
+      [4.5, 0.5, 3],
     ]);
   });
 
   it('out-of-range picks and picks on tables are errors', () => {
-    const msgs = (src: string) => compileSource(src).diagnostics.map((d) => d.message).join('\n');
+    const msgs = (src: string) =>
+      compileSource(src)
+        .diagnostics.map((d) => d.message)
+        .join('\n');
     expect(msgs('&bar 0 1\n&foo &bar[5]')).toMatch(/&bar\[5\] picks nothing — &bar has 2 steps/);
     expect(msgs('&bar 0 1\n&foo &bar[2:]')).toMatch(/picks nothing/);
     expect(msgs('&s 0 1\n&x over=&s[0] 0')).toMatch(/over= takes a whole table/);
@@ -200,11 +208,21 @@ describe('step=, loop=, clocks and voices', () => {
   it('&mix_ [(&theme + &mod - &x) * &v: the first term triggers, the rest modulate]\n&out_ loop=44k map=sample &mix_', () => {
     const r = compileSource('&m step=1\n&t step=&m 0\n&vib loop=5 0 .1\n&x 1\n&v loop=440\n&mix_ [(&t + &vib - &x) * &v]\n&out_ loop=44k map=sample &mix_');
     expect(r.ok).toBe(true);
-    expect(r.outputs[0]).toMatchObject({ voice: 'v', cell: 't', mods: [{ cell: 'vib', sign: 1 }, { cell: 'x', sign: -1 }] });
+    expect(r.outputs[0]).toMatchObject({
+      voice: 'v',
+      cell: 't',
+      mods: [
+        { cell: 'vib', sign: 1 },
+        { cell: 'x', sign: -1 },
+      ],
+    });
   });
 
   it('reports loops, still drivers, unmoving outputs, bad voices', () => {
-    const msgs = (s: string) => compileSource(s).diagnostics.map((d) => d.message).join('\n');
+    const msgs = (s: string) =>
+      compileSource(s)
+        .diagnostics.map((d) => d.message)
+        .join('\n');
     expect(msgs('&a step=&b 0\n&b step=&a 1')).toMatch(/loops back/);
     expect(msgs('&a step=&nope 0')).toMatch(/Unknown cell &nope/);
     expect(msgs('&m scan(27 23 26 24)\n&a step=&m 0\n&v s=saw\n&mix_ [&a * &v]\n&out_ loop=44k map=sample &mix_')).toMatch(/&m never moves/);
@@ -219,7 +237,10 @@ describe('step=, loop=, clocks and voices', () => {
 });
 
 describe('errors', () => {
-  const msgs = (src: string) => compileSource(src).diagnostics.map((d) => d.message).join('\n');
+  const msgs = (src: string) =>
+    compileSource(src)
+      .diagnostics.map((d) => d.message)
+      .join('\n');
   it('reports unknown and looping over=, circular refs, duplicates', () => {
     expect(msgs('&a over=&nope 0')).toMatch(/Unknown cell &nope/);
     expect(msgs('&a over=&b 0\n&b over=&a 1')).toMatch(/over= loops/);
@@ -260,18 +281,25 @@ describe('mix expressions: typing and articulation (rule 2)', () => {
   });
 
   it('two step= terms on one voice, or none, is an error', () => {
-    const msgs = (s: string) => compileSource(base + s).diagnostics.map((d) => d.message).join('\n');
+    const msgs = (s: string) =>
+      compileSource(base + s)
+        .diagnostics.map((d) => d.message)
+        .join('\n');
     expect(msgs('&mix_ [(&a + &b) * &x]\n&out_ loop=44k map=sample &mix_')).toMatch(/Both &a and &b would start notes on &x/);
     expect(msgs('&mix_ [(&vib + &up) * &x]\n&out_ loop=44k map=sample &mix_')).toMatch(/Nothing starts notes on &x/);
   });
 
   it('the voice is the factor that is a sound, wherever it is written', () => {
     const r = (s: string) => compileSource(base + s + '\n&out_ loop=44k map=sample &mix_');
-    const same = (a: string, b: string) => expect(r(a).outputs.map((o) => [o.voice, o.cell, o.offset, o.gains])).toEqual(r(b).outputs.map((o) => [o.voice, o.cell, o.offset, o.gains]));
+    const same = (a: string, b: string) =>
+      expect(r(a).outputs.map((o) => [o.voice, o.cell, o.offset, o.gains])).toEqual(r(b).outputs.map((o) => [o.voice, o.cell, o.offset, o.gains]));
     same('&mix_ [&x * &a]', '&mix_ [&a * &x]');
     same('&mix_ [.5 * &x * &a]', '&mix_ [&a * &x * .5]');
     expect(r('&mix_ [&x * &a]').diagnostics).toEqual([]);
-    const msgs = (s: string) => r(s).diagnostics.map((d) => d.message).join('\n');
+    const msgs = (s: string) =>
+      r(s)
+        .diagnostics.map((d) => d.message)
+        .join('\n');
     // a sound (a sound parameter) and a pitch don't add …
     expect(msgs('&mix_ [&a * (&(s=saw loop=220) + &vib)]')).toMatch(/A pitch or a volume can't be added to a sound/);
     // … but a braid at audio rate with no sound of its own is a pitch in a pitch sum (a fast vibrato: FM)
@@ -303,11 +331,18 @@ describe('the sound card: &out loop=44k map=sample &left &right', () => {
     expect(r.clocks.get('out')!.perSecond).toBe(88200);
   });
   it('reports what a sound card and a mix need', () => {
-    const msgs = (s: string) => compileSource(base + s).diagnostics.map((d) => d.message).join('\n');
+    const msgs = (s: string) =>
+      compileSource(base + s)
+        .diagnostics.map((d) => d.message)
+        .join('\n');
     expect(msgs('&mix [&a * &x]\n&out map=sample &mix &mix &mix')).toMatch(/one channel \(mono\) or two/);
     expect(msgs('&out map=sample &a')).toMatch(/A channel of the sound card is a mix/);
     expect(msgs('&mix [&a * &x] 0')).toMatch(/A mix is one chord of sounds/);
-    expect(compileSource('&a 0').diagnostics.map((d) => d.message).join()).toMatch(/map=sample/);
+    expect(
+      compileSource('&a 0')
+        .diagnostics.map((d) => d.message)
+        .join(),
+    ).toMatch(/map=sample/);
   });
 });
 
@@ -361,7 +396,11 @@ describe('note names as rates', () => {
     expect(r.cells.get('v')!.freq).toBeCloseTo(261.63, 2);
     expect(r.cells.get('w')!.freq).toBeCloseTo(116.54, 2);
     expect(compileSource(src, { SAMPLE_RATE: 48000, A4: 432 }).cells.get('v')!.freq).toBeCloseTo(256.87, 2);
-    expect(compileSource('&v loop=H4').diagnostics.map((d) => d.message).join()).toMatch(/note names like C4/);
+    expect(
+      compileSource('&v loop=H4')
+        .diagnostics.map((d) => d.message)
+        .join(),
+    ).toMatch(/note names like C4/);
   });
 });
 
@@ -398,7 +437,10 @@ describe('map=edo: grids say so; cycle= has one job', () => {
     expect(r.cells.get('edo19')).toMatchObject({ root: true, cycle: 19 });
   });
   it('a grid reads nothing and has no braid', () => {
-    const msgs = (s: string) => compileSource(s).diagnostics.map((d) => d.message).join();
+    const msgs = (s: string) =>
+      compileSource(s)
+        .diagnostics.map((d) => d.message)
+        .join();
     expect(msgs('&g cycle=7 map=edo 0 1 2')).toMatch(/A grid \(map=edo, map=ed\(r\)\) reads nothing and has no braid/);
     expect(msgs('&s scan(1 2 2 1 2 2 2)\n&g over=&s map=edo')).toMatch(/A grid \(map=edo/);
   });
@@ -422,9 +464,19 @@ describe('retrograde: slices with a step', () => {
   it('a retrograde keeps each step’s length: &a then &a backwards is a palindrome', () => {
     const r = compileSource('&a 0 1@2 2\n&foo &a[::-1] 9 &a');
     expect(flatten(r, 'foo', codeShifts(r)).map((e) => [e.value, e.duration])).toEqual([
-      [2, 1], [1, 2], [0, 1], [9, 1], [0, 1], [1, 2], [2, 1],
+      [2, 1],
+      [1, 2],
+      [0, 1],
+      [9, 1],
+      [0, 1],
+      [1, 2],
+      [2, 1],
     ]);
-    expect(compileSource('&a 0 1\n&b &a[::0]').diagnostics.map((d) => d.message).join()).toMatch(/step of 0 never moves/);
+    expect(
+      compileSource('&a 0 1\n&b &a[::0]')
+        .diagnostics.map((d) => d.message)
+        .join(),
+    ).toMatch(/step of 0 never moves/);
   });
 });
 
@@ -441,7 +493,10 @@ describe('free(…): numbers left to the performer', () => {
     expect(r.clocks.get('bar')!.perSecond).toBe(1.5);
     expect(r.cells.get('bar')!.frees).toMatchObject([{ key: 'step', value: 90, unit: 'bpm', lo: 60, hi: 240 }]);
     expect(r.cells.get('s')!.frees).toMatchObject([{ key: 'shift', value: 0, lo: 0, hi: 6 }]);
-    expect(r.cells.get('mix')!.frees.map((f) => [f.key, f.value])).toEqual([['gain', 0.8], ['gain', 0.3]]);
+    expect(r.cells.get('mix')!.frees.map((f) => [f.key, f.value])).toEqual([
+      ['gain', 0.8],
+      ['gain', 0.3],
+    ]);
     expect(r.outputs[0].gains).toEqual([1.1, 1.1]); // .8 + .3 — the same voice and pitches twice
   });
   it('writes back where it stands — on a continued line too', () => {
@@ -463,7 +518,10 @@ describe('free(…): numbers left to the performer', () => {
     expect(setFree('&bar scan(3 3 3 3) step=free(adagio)', f, 70)).toBe('&bar scan(3 3 3 3) step=free(70bpm, 66..76)');
   });
   it('says what it needs', () => {
-    const msg = (s: string) => compileSource(s).diagnostics.map((d) => d.message).join();
+    const msg = (s: string) =>
+      compileSource(s)
+        .diagnostics.map((d) => d.message)
+        .join();
     expect(msg('&a step=free(90bpm) 0')).toMatch(/then the range/);
     expect(msg('&a step=free(300bpm, 60..240) 0')).toMatch(/outside 60\.\.240/);
     expect(msg('&a shift=free(adagio) 0')).toMatch(/for a rate/);
@@ -522,7 +580,10 @@ describe('ratios grids, geometric intervals, decibels; colours and names on a vo
     };
     expect([0, 2, 4, 5, 7, 9].map((v) => +ratio(v).toFixed(6))).toEqual([1, 1.25, 1.5, 1.666667, 2, 2.5]);
     expect(positionOf(r, 'just', 12 * Math.log2(1.5))).toBeCloseTo(4); // the inverse
-    const msg = (s: string) => compileSource(s).diagnostics.map((d) => d.message).join();
+    const msg = (s: string) =>
+      compileSource(s)
+        .diagnostics.map((d) => d.message)
+        .join();
     expect(msg('&g map=ratios 1 5/4 9/8 2')).toMatch(/rising ratios/);
     expect(msg('&g map=ratios 2')).toMatch(/rising ratios/);
   });
@@ -562,7 +623,7 @@ describe('transposing a reference: &x^n', () => {
   function flattenPitches(r: ReturnType<typeof compileSource>, cell: string) {
     return flatten(r, cell, codeShifts(r), null).map((e) => {
       const p = resolveIn(r, e.table, e.tableShift, e.value, e.alter, codeShifts(r));
-      return +(semitones(r, p.root, p.position + (e.transpose ?? 0))).toFixed(4);
+      return +semitones(r, p.root, p.position + (e.transpose ?? 0)).toFixed(4);
     });
   }
   it('reads ^n and ^-n, also after a bracket', () => {
@@ -603,7 +664,10 @@ describe('about=: a note links to the cells it explains', () => {
 &fenv map=adsr .003 .18 .1 .06
 &accent map=amp 1 .4`;
   // (a piece with no sound card only warns that nothing plays)
-  const errors = (text: string) => compileSource(text).diagnostics.filter((d) => d.severity === 'error').map((d) => d.message);
+  const errors = (text: string) =>
+    compileSource(text)
+      .diagnostics.filter((d) => d.severity === 'error')
+      .map((d) => d.message);
   it('draws one edge from the note to each cell, and the note stays a note', () => {
     const r = compileSource(src);
     expect(errors(src)).toEqual([]);

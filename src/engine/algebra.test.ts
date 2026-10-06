@@ -22,11 +22,22 @@ const CELLS = `&m step=4
 
 function sounds(mix: string) {
   const r = compileSource(`${CELLS}&out loop=SAMPLE_RATE map=sample [${mix}]`);
-  expect(r.diagnostics.filter((d) => d.severity === 'error'), mix).toEqual([]);
+  expect(
+    r.diagnostics.filter((d) => d.severity === 'error'),
+    mix,
+  ).toEqual([]);
   const n = (x: number) => Math.round(x * 1e9) / 1e9;
   return eventsBetween(plan(r, codeShifts(r)), 0, 3)
     .map((e) =>
-      JSON.stringify([n(e.at), n(e.dur), e.voice, n(e.freq), e.gains.map(n), e.bends.map((b) => [n(b.at), n(b.cents), !!b.ramp]), e.levels.map((l) => [n(l.at), n(l.level), !!l.ramp])]),
+      JSON.stringify([
+        n(e.at),
+        n(e.dur),
+        e.voice,
+        n(e.freq),
+        e.gains.map(n),
+        e.bends.map((b) => [n(b.at), n(b.cents), !!b.ramp]),
+        e.levels.map((l) => [n(l.at), n(l.level), !!l.ramp]),
+      ]),
     )
     .sort();
 }
@@ -97,7 +108,12 @@ describe('the laws of the mix', () => {
   });
 
   test('(p + q) * s = p * (q * s) = (p * q) * s for pitches: transposing twice adds', () => {
-    for (const [p, q] of [['&a', '&up'], ['&a', '&vib'], ['&a', '(&up + 7)'], ['(&a + 7)', '&vib']]) {
+    for (const [p, q] of [
+      ['&a', '&up'],
+      ['&a', '&vib'],
+      ['&a', '(&up + 7)'],
+      ['(&a + 7)', '&vib'],
+    ]) {
       same(`(${p} + ${q}) * &v`, `${p} * (${q} * &v)`);
       same(`(${p} + ${q}) * &v`, `(${p} * ${q}) * &v`);
     }

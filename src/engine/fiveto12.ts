@@ -20,9 +20,9 @@
  * Everything is a function of the step of the day: nothing to play through, any moment computed.
  */
 
-export const STEPS_PER_MINUTE = 84;
+const STEPS_PER_MINUTE = 84;
 export const BAR = 12;
-export const BARS_PER_KEY = 70;
+const BARS_PER_KEY = 70;
 export const KEY = BAR * BARS_PER_KEY; // 840
 export const BLOCK = KEY * 12; // 10 080
 export const DAY = BLOCK * 12; // 120 960 — 24 hours at 84 a minute
@@ -92,7 +92,7 @@ export interface Onset {
 }
 
 /** The bell of a mode: its 7 onsets in the 12 — where its notes sit. */
-export function bellOf(mode: number): number[] {
+function bellOf(mode: number): number[] {
   return modeSemis(mode);
 }
 
@@ -129,9 +129,7 @@ export function barOf(block: number, key: number, bar: number): Onset[] {
   if (bar < 35) return stated(row, mode, bar);
   // the mirror: bar 69 − b's onsets, backwards in time, its degrees inverted about the tonic
   const src = stated(row, mode, 69 - bar);
-  return src
-    .map((o) => ({ ...o, at: BAR - (o.at + o.dur), degree: mod(-o.degree, 7) }))
-    .sort((a, b) => a.at - b.at);
+  return src.map((o) => ({ ...o, at: BAR - (o.at + o.dur), degree: mod(-o.degree, 7) })).sort((a, b) => a.at - b.at);
 }
 
 /** A note to sound: its step of the day, length in steps, semitones above C4, level, pan (−1 … 1). */

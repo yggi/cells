@@ -132,13 +132,48 @@ export interface ResolvedCell {
  * (1 : 2.756 : 5.404 : 8.933); a plate (dense, inharmonic); a box (a few low, short modes).
  */
 export const BODIES: Record<string, readonly (readonly [number, number, number])[]> = {
-  fork: [[1, 1, 1], [6.27, 0.03, 0.35]],
-  bell: [[0.5, 1, 0.5], [1, 0.8, 1], [1.2, 0.6, 0.7], [1.5, 0.5, 0.45], [2, 0.45, 0.6], [2.5, 0.3, 0.35], [2.67, 0.28, 0.3], [3, 0.22, 0.25]],
-  bar: [[1, 1, 1], [2.756, 0.45, 0.5], [5.404, 0.22, 0.3], [8.933, 0.12, 0.18]],
-  plate: [[1, 1, 0.8], [1.58, 0.8, 0.7], [2.24, 0.7, 0.6], [2.92, 0.55, 0.55], [3.15, 0.5, 0.5], [3.88, 0.4, 0.4], [4.47, 0.35, 0.35], [5, 0.3, 0.3]],
-  box: [[1, 1, 1], [1.42, 0.7, 0.6], [1.91, 0.5, 0.45], [2.53, 0.35, 0.3]],
+  fork: [
+    [1, 1, 1],
+    [6.27, 0.03, 0.35],
+  ],
+  bell: [
+    [0.5, 1, 0.5],
+    [1, 0.8, 1],
+    [1.2, 0.6, 0.7],
+    [1.5, 0.5, 0.45],
+    [2, 0.45, 0.6],
+    [2.5, 0.3, 0.35],
+    [2.67, 0.28, 0.3],
+    [3, 0.22, 0.25],
+  ],
+  bar: [
+    [1, 1, 1],
+    [2.756, 0.45, 0.5],
+    [5.404, 0.22, 0.3],
+    [8.933, 0.12, 0.18],
+  ],
+  plate: [
+    [1, 1, 0.8],
+    [1.58, 0.8, 0.7],
+    [2.24, 0.7, 0.6],
+    [2.92, 0.55, 0.55],
+    [3.15, 0.5, 0.5],
+    [3.88, 0.4, 0.4],
+    [4.47, 0.35, 0.35],
+    [5, 0.3, 0.3],
+  ],
+  box: [
+    [1, 1, 1],
+    [1.42, 0.7, 0.6],
+    [1.91, 0.5, 0.45],
+    [2.53, 0.35, 0.3],
+  ],
   // a tine (a bar clamped at one end, a kalimba's): its tone, and overtones near 5.9× and 17.6× that die at once
-  tine: [[1, 1, 1], [5.93, 0.12, 0.35], [17.6, 0.03, 0.12]],
+  tine: [
+    [1, 1, 1],
+    [5.93, 0.12, 0.35],
+    [17.6, 0.03, 0.12],
+  ],
   // a pipe closed at one end: odd harmonics only, the higher dying sooner
   pipe: [1, 3, 5, 7, 9, 11, 13].map((n) => [n, 1 / Math.sqrt(n), 1 / n] as const),
   // a stiff wire: harmonics, stretched a little sharp (fₙ = n f √(1 + B n²), B .0006)
@@ -167,7 +202,7 @@ export interface Clock {
 }
 
 /** A pitch term of an out sum. */
-export interface PitchTerm {
+interface PitchTerm {
   readonly cell: string;
   readonly pick: Pick | null;
   readonly shift: number;

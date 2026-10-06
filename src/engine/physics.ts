@@ -186,7 +186,6 @@ function makeWarp(result: CompileResult, clock: string): Warp | null {
   });
 }
 
-
 /**
  * A belt: the driven cell is a body (mass=) pulled towards where its driver would put it (x, in the
  * driver's nominal seconds) by a spring (belt=, its stiffness) with damping (damping=). Past its grip

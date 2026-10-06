@@ -67,7 +67,7 @@ function parseScan(s: LineScanner, start: number): Braid {
  * Bjorklund's algorithm: k hits and n − k rests, the leftovers paired again and again until
  * one group is left — the Euclidean rhythms in their usual form (Toussaint): 3 in 8 x..x..x.
  */
-export function bjorklund(k: number, n: number): boolean[] {
+function bjorklund(k: number, n: number): boolean[] {
   if (k <= 0) return Array(n).fill(false);
   let a: boolean[][] = Array.from({ length: k }, () => [true]);
   let b: boolean[][] = Array.from({ length: n - k }, () => [false]);
@@ -122,7 +122,7 @@ function parseSpell(s: LineScanner, start: number): Braid {
 }
 
 /** A time signature's bar as levels: * the bar, + a beat, . a subdivision, , a finer one. */
-export const SIGNATURES: Record<string, number[]> = {
+const SIGNATURES: Record<string, number[]> = {
   // x/4: beats; x/8: eighths in groups (a beat a group)
   '2/4': [1, 1],
   '3/4': [1, 1, 1],
@@ -190,7 +190,8 @@ function parseMeter(s: LineScanner, start: number): Braid {
   const span = s.span(start);
   if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
   const levels = meterLevels(sig, sub);
-  if (!levels) s.fail(`meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}) or levels like "*.+.+.+." (* bar, + beat, . subdivision, , finer)`, start, span.len);
+  if (!levels)
+    s.fail(`meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}) or levels like "*.+.+.+." (* bar, + beat, . subdivision, , finer)`, start, span.len);
   // 0-based: the downbeat is the bar's tonic — * 0, + 1 (a beat), - 2, . 3, , 4 (finer and finer)
   const value = (ch: string) => Math.max(0, '*+-.,'.indexOf(ch));
   const tokens = [...levels].map((ch) => ({ atom: { kind: 'note' as const, value: value(ch), alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
@@ -219,7 +220,8 @@ function numbers(s: LineScanner, name: string, start: number): { args: number[];
 function parseEuclid(s: LineScanner, start: number): Braid {
   const { args, span } = numbers(s, 'euclid', start);
   const [k, n, shift = 0] = args;
-  if (args.length < 2 || args.length > 3 || !(n >= 1) || !(k >= 0 && k <= n)) s.fail('euclid(k, n): k hits spread evenly over n steps (0 ≤ k ≤ n), euclid(k, n, shift) turned', start, span.len);
+  if (args.length < 2 || args.length > 3 || !(n >= 1) || !(k >= 0 && k <= n))
+    s.fail('euclid(k, n): k hits spread evenly over n steps (0 ≤ k ≤ n), euclid(k, n, shift) turned', start, span.len);
   const pattern = bjorklund(k, n);
   const tokens = Array.from({ length: n }, (_, j) => {
     const i = (((j + shift) % n) + n) % n;
@@ -252,7 +254,13 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
   },
   euclid: {
     parse: parseEuclid,
-    syntax: syntax('generator', 'euclid(k, n) · euclid(k, n, shift)', 'k hits spread as evenly as they go over n steps (the Euclidean rhythms), turned by shift.', ['&tresillo euclid(3, 8)', '&clave euclid(5, 16, 2)'], 'braid.md'),
+    syntax: syntax(
+      'generator',
+      'euclid(k, n) · euclid(k, n, shift)',
+      'k hits spread as evenly as they go over n steps (the Euclidean rhythms), turned by shift.',
+      ['&tresillo euclid(3, 8)', '&clave euclid(5, 16, 2)'],
+      'braid.md',
+    ),
   },
   sin: {
     parse: parseSin,
@@ -263,7 +271,7 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     syntax: syntax(
       'generator',
       'meter("sig") · meter("sig", sub) · meter("levels")',
-      `A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (${Object.keys(SIGNATURES).join(' ')}) with sub steps a beat, or levels written out (\* bar, + beat, - half, . subdivision, , finer). Its bpm counts beats. Each argument can be free(…).`,
+      `A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (${Object.keys(SIGNATURES).join(' ')}) with sub steps a beat, or levels written out (* bar, + beat, - half, . subdivision, , finer). Its bpm counts beats. Each argument can be free(…).`,
       ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("*.+.+..") step=90bpm'],
       'time.md',
     ),
@@ -281,12 +289,18 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
 };
 
 /** Generators that are gone: reading one says what to write instead. */
-export const RETIRED_GENERATORS: Readonly<Record<string, Generator>> = {
+const RETIRED_GENERATORS: Readonly<Record<string, Generator>> = {
   even: (s, start) => {
     const { args, span } = numbers(s, 'even', start);
     const [k, n = 12, phase = 0] = args;
     const steps = k >= 1 && n >= k ? intervals(evenPositions(k, n, phase), n) : null;
-    return s.fail(steps ? `even(…) is gone: for a scale write scan(${steps.join(' ')}); for a rhythm, euclid(${k}, ${n}${phase ? `, ${phase}` : ''})` : 'even(…) is gone: write the intervals, scan(2 2 1 2 2 2 1), or a rhythm, euclid(3, 8)', start, span.len);
+    return s.fail(
+      steps
+        ? `even(…) is gone: for a scale write scan(${steps.join(' ')}); for a rhythm, euclid(${k}, ${n}${phase ? `, ${phase}` : ''})`
+        : 'even(…) is gone: write the intervals, scan(2 2 1 2 2 2 1), or a rhythm, euclid(3, 8)',
+      start,
+      span.len,
+    );
   },
   agogic: (s, start) => {
     const { args, span } = numbers(s, 'agogic', start);

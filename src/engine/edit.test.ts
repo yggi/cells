@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { setAttr, addCell, attrsOf, declLine, declWords, deleteCell, nameProblem, renameCell, setBraid, setOff, setShift, setTiming, splitComment, splitToken, splitWords, usersOf } from './edit';
+import {
+  setAttr,
+  addCell,
+  attrsOf,
+  declLine,
+  declWords,
+  deleteCell,
+  nameProblem,
+  renameCell,
+  setBraid,
+  setOff,
+  setShift,
+  setTiming,
+  splitComment,
+  splitToken,
+  splitWords,
+  usersOf,
+} from './edit';
 import { compileSource } from './compile';
 import { PRESETS } from './presets';
 
@@ -66,7 +83,11 @@ describe('editor operations', () => {
       attrs: ['over=scale(0,2)', 'step=&bar'],
       braid: ['0@2', '[0, 4, 7]', '&m[<<]', '~'],
     });
-    expect([...attrsOf(src, 'lead')]).toEqual([['s', 'saw'], ['loop', '261.63'], ['off', '']]);
+    expect([...attrsOf(src, 'lead')]).toEqual([
+      ['s', 'saw'],
+      ['loop', '261.63'],
+      ['off', ''],
+    ]);
   });
 
   it('replaces a braid, keeping attributes and the comment', () => {

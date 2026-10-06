@@ -25,7 +25,7 @@ export interface Window {
 }
 
 /** How finely a tape's speed is sampled (seconds). */
-export const SPEED_STEP = 0.05;
+const SPEED_STEP = 0.05;
 
 /**
  * Each moving tape's speed from `from` to `to` (inclusive), every SPEED_STEP seconds. Tapes that run
@@ -78,8 +78,7 @@ export function retime(w: Window, time: number, scale: number): { events: Played
       bends: e.bends.map((b) => ({ at: at(b.at), cents: b.cents, ramp: b.ramp })),
       levels: e.levels.map((l) => ({ at: at(l.at), level: l.level, ramp: l.ramp })),
       params:
-        e.params &&
-        Object.fromEntries(Object.entries(e.params).map(([k, t]) => [k, t.kind === 'points' ? { ...t, points: t.points.map((x) => ({ ...x, at: at(x.at) })) } : t])),
+        e.params && Object.fromEntries(Object.entries(e.params).map(([k, t]) => [k, t.kind === 'points' ? { ...t, points: t.points.map((x) => ({ ...x, at: at(x.at) })) } : t])),
     })),
     tapes: w.tapes.map((t) => ({ tape: t.tape, points: t.points.map((p) => ({ at: at(p.at), speed: p.speed })) })),
   };

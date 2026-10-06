@@ -44,7 +44,7 @@ export function even(k: number, n: number, phase = 0, i?: number): number[] {
  * bar (fractional), i.e. where each beat really falls. Known profiles bend
  * straight time; anything else is straight.
  */
-export const AGOGIC: Readonly<Record<string, readonly number[]>> = {
+const AGOGIC: Readonly<Record<string, readonly number[]>> = {
   // * . + .  — beats 2 and 4 lean late (given as 0 27 50 76 % of the bar)
   '4/4': [0, 3.24, 6, 9.12],
   // Viennese waltz: beat 2 anticipated — short first beat, long second
@@ -78,7 +78,7 @@ export function noteName(freq: number): string {
  * inverse of a scan.
  */
 export function intervals(positions: readonly number[], lap: number): number[] {
-  return positions.map((p, i) => +(((i + 1 < positions.length ? positions[i + 1] : positions[0] + lap) - p).toFixed(6)));
+  return positions.map((p, i) => +((i + 1 < positions.length ? positions[i + 1] : positions[0] + lap) - p).toFixed(6));
 }
 
 /** A scan: running totals from 0 (the positions), and their sum (the lap). */

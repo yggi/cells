@@ -172,8 +172,7 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number): { at:
   const out: { at: number; level: number }[] = [{ at: from, level: levelAt(c0) }];
   const edges = new Set<number>();
   for (let lap = Math.floor(c0 / m.period); lap * m.period < c1; lap++)
-    for (const e of m.events)
-      for (const s of [lap * m.period + e.step, lap * m.period + e.step + e.duration]) if (s > c0 + EPS && s < c1 - EPS) edges.add(s);
+    for (const e of m.events) for (const s of [lap * m.period + e.step, lap * m.period + e.step + e.duration]) if (s > c0 + EPS && s < c1 - EPS) edges.add(s);
   for (const s of [...edges].sort((a, b) => a - b)) {
     const level = levelAt(s + EPS * 10);
     if (level !== out[out.length - 1].level) out.push({ at: tm.q(s / m.rate), level });

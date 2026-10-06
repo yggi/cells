@@ -54,7 +54,7 @@ export function setAttr(source: string, name: string, key: string, value: string
 }
 
 /** Add or remove a bare flag (`off`) on &name. */
-export function setFlag(source: string, name: string, flag: string, on: boolean): string {
+function setFlag(source: string, name: string, flag: string, on: boolean): string {
   return editDecl(source, name, (code, head) => {
     const re = new RegExp(`\\s${flag}(?=\\s|$)`);
     if (re.test(code)) return on ? code : code.replace(re, '');
@@ -209,7 +209,7 @@ export function splitToken(token: string): [string, string] {
 }
 
 /** Replace the text at a span (1-based line and column) of the source. */
-export function replaceSpan(source: string, span: { line: number; col: number; len: number }, text: string): string {
+function replaceSpan(source: string, span: { line: number; col: number; len: number }, text: string): string {
   const lines = source.split('\n');
   const l = lines[span.line - 1];
   if (l === undefined) return source;

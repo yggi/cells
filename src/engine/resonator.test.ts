@@ -20,7 +20,10 @@ describe('resonators: persistent bodies — notes strike them, their value is wh
     expect(ev[0].value).toBe(4);
   });
   it('says what’s wrong', () => {
-    const msgs = (code: string) => compileSource(code).diagnostics.map((d) => d.message).join(' | ');
+    const msgs = (code: string) =>
+      compileSource(code)
+        .diagnostics.map((d) => d.message)
+        .join(' | ');
     expect(msgs(src.replace('body=fork loop=A4', 'body=gong loop=A4'))).toMatch(/body=gong: one of fork, bell, bar, plate, box/);
     expect(msgs(src.replace('couple=&forkB', 'couple=&hits'))).toMatch(/couples to another resonator/);
     expect(msgs(src.replace('couple=&forkB', 'excite=&hits'))).toMatch(/driven by sound — a mix/);
@@ -36,7 +39,9 @@ describe('bodies driven by sound: sends, springs, pipes, wires', () => {
     expect(r.returns.map((x) => x.head).sort()).toEqual(['h1', 'h2']);
   });
   it('a mix only a resonator hears (excite=) still plays — as a silent send', () => {
-    const r = compileSource('&bar scan(1 1 1 1) step=60bpm\n&n step=&bar*4 0\n&hiss s=pink\n&noise [&n * &hiss * .3]\n&pl body=plate loop=D3 excite=&noise\n&out loop=SAMPLE_RATE map=sample [&pl * .5]');
+    const r = compileSource(
+      '&bar scan(1 1 1 1) step=60bpm\n&n step=&bar*4 0\n&hiss s=pink\n&noise [&n * &hiss * .3]\n&pl body=plate loop=D3 excite=&noise\n&out loop=SAMPLE_RATE map=sample [&pl * .5]',
+    );
     expect(r.outputs.map((o) => [o.voice, o.silent])).toEqual([['hiss', true]]);
     expect(eventsBetween(plan(r, codeShifts(r)), 0, 1).map((e) => e.voice)).toEqual(['hiss']);
   });
@@ -59,7 +64,11 @@ describe('a resonator’s braid is its exciters — semitones from its fundament
     expect(r.cells.get('kalimba')!.exciters!.map((x) => x.shift)).toEqual([0, 2, 4, 7, 9, 12, 14, 16]);
   });
   it('board= none, or a body', () => {
-    expect(compileSource('&f body=fork loop=A4 board=gong 0').diagnostics.map((d) => d.message).join()).toMatch(/board=gong: none, or one of/);
+    expect(
+      compileSource('&f body=fork loop=A4 board=gong 0')
+        .diagnostics.map((d) => d.message)
+        .join(),
+    ).toMatch(/board=gong: none, or one of/);
   });
 });
 

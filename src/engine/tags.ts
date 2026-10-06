@@ -9,8 +9,41 @@ export type TagKind = 'genre' | 'artist' | 'topic';
 /** The tags the examples use, by kind: a test fails on any other (a piece of your own may use any). */
 export const VOCABULARY: Readonly<Record<TagKind, readonly string[]>> = {
   genre: ['classical', 'jazz', 'electronic', 'experimental', 'world', 'folk', 'ambient', 'dance', 'industrial', 'blues', 'minimal', '8-bit'],
-  artist: ['Bach', 'Wendy Carlos', 'Stockhausen', 'Neubauten', 'Aphex Twin', 'Brahms', 'Coltrane', 'Pachelbel', 'Kraftwerk', 'Scooter', 'Daft Punk', 'Chemical Brothers', 'Nine Inch Nails', 'Steve Reich'],
-  topic: ['basics', 'sound', 'rhythm', 'harmony', 'diatonic', 'tonal', 'modal', 'chromatic', 'microtonal', 'tuning', 'arrangement', 'canon', 'counterpoint', 'motifs', 'pentatonic', 'stereo', 'FM'],
+  artist: [
+    'Bach',
+    'Wendy Carlos',
+    'Stockhausen',
+    'Neubauten',
+    'Aphex Twin',
+    'Brahms',
+    'Coltrane',
+    'Pachelbel',
+    'Kraftwerk',
+    'Scooter',
+    'Daft Punk',
+    'Chemical Brothers',
+    'Nine Inch Nails',
+    'Steve Reich',
+  ],
+  topic: [
+    'basics',
+    'sound',
+    'rhythm',
+    'harmony',
+    'diatonic',
+    'tonal',
+    'modal',
+    'chromatic',
+    'microtonal',
+    'tuning',
+    'arrangement',
+    'canon',
+    'counterpoint',
+    'motifs',
+    'pentatonic',
+    'stereo',
+    'FM',
+  ],
 };
 
 /** A tag's kind and name: `genre:jazz` → genre, jazz; no prefix → a topic. */

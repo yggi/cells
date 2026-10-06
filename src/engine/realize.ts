@@ -10,7 +10,7 @@ import type { Pick } from './ast';
 import { SECONDS_PER_STEP as LAW_SPS, notesBetween as lawNotes } from './fiveto12';
 import { adsrOf, type CompileResult, type Output, type Shifts } from './program';
 import { tableChain } from './helix';
-import { clocking, EPS, playedCells, selects, tapeMotion, varispeedOf } from './clocking';
+import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from './clocking';
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { levelSeries, modulation, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
@@ -127,8 +127,7 @@ export function picksNow(result: CompileResult, statics: Shifts, name: string, s
   const period = Math.max(1, stepsOf(result, name, null));
   const local = mod(clocking(result, statics).map(c.clock).stepAt(seconds) * c.rate, period);
   const out = new Set<number>();
-  for (const e of flatten(result, name, statics, null))
-    if (local >= e.step - EPS && local < e.step + e.duration - EPS) out.add(mod(Math.round(e.value + e.alter), entries));
+  for (const e of flatten(result, name, statics, null)) if (local >= e.step - EPS && local < e.step + e.duration - EPS) out.add(mod(Math.round(e.value + e.alter), entries));
   return out;
 }
 
@@ -157,8 +156,7 @@ function windowsOf(p: Plan, sel: PlanTrack['selects'][number], from: number, to:
   return out.sort((x, y) => x.a - y.a);
 }
 
-export const chainMuted = (result: CompileResult, table: string, muted: ReadonlySet<string>) =>
-  tableChain(result, table).some((c) => muted.has(cellId(c)));
+export const chainMuted = (result: CompileResult, table: string, muted: ReadonlySet<string>) => tableChain(result, table).some((c) => muted.has(cellId(c)));
 
 /** Is anything in a cell's chain of step= drivers switched off (&t steps by &swing, &swing by &bar …)? */
 const driverMuted = (result: CompileResult, name: string, muted: ReadonlySet<string>) => {
@@ -207,9 +205,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     const c = result.cells.get(o.cell)!;
     const series = (cell: string, pick: Pick | null, shift: number, sign: 1 | -1): Series => {
       const m = result.cells.get(cell)!;
-      const events = muted.has(cellId(cell))
-        ? []
-        : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
+      const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
       return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, period: Math.max(1, stepsOf(result, cell, pick)), events };
     };
     try {
@@ -337,7 +333,11 @@ export function eventsBetween(p: Plan, from: number, to: number): Played[] {
           levels: e.levels.map((l) => ({ ...l, at: through(l.at) })),
           gains: [e.gains[0] * g, e.gains[1] * g],
           ...(e.params
-            ? { params: Object.fromEntries(Object.entries(e.params).map(([key, tr]) => [key, tr.kind === 'points' ? { ...tr, points: tr.points.map((x) => ({ ...x, at: through(x.at) })) } : tr])) }
+            ? {
+                params: Object.fromEntries(
+                  Object.entries(e.params).map(([key, tr]) => [key, tr.kind === 'points' ? { ...tr, points: tr.points.map((x) => ({ ...x, at: through(x.at) })) } : tr]),
+                ),
+              }
             : {}),
         });
       }
@@ -359,62 +359,75 @@ function plainEvents(p: Plan, from: number, to: number): Played[] {
     if (!Number.isFinite(c0) || !Number.isFinite(c1) || c1 <= c0) continue; // (a clock gone wild: nothing from it)
     // a note at step s, lasting until step `upto` (a window's end cuts it)
     const emit = (s: number, e: StepEvent, upto: number) => {
-        const at = tm.q(s / t.rate);
-        if (!Number.isFinite(at)) return; // (a clock run down: this step never comes)
-        if (at >= t.end - EPS) return;
-        // (a note whose clock stops beneath it never reaches its end: it rings 8 s at most)
-        const ends = Math.min(tm.q(upto / t.rate), t.end);
-        const dur = Number.isFinite(ends) ? ends - at : 8;
-        const v = voiceFor(result, t.output, e.value);
-        if (!v || p.muted.has(cellId(v.voice))) return;
-        // a gate starts notes at pitch 0, at its own level
-        let semis = t.output.kit || t.output.gate ? t.output.offset : t.sign * pitchOf(p, e, at) + t.output.offset;
-        // modulation: the sum at the start sets the pitch; later changes become bends
-        const bends: { at: number; cents: number; ramp?: boolean }[] = [];
-        if (!t.output.kit && t.mods.length) {
-          const series = t.mods.map((m) => modulation(p, m, at, at + dur));
-          const start = series.reduce((a, s) => a + s[0].semis, 0);
-          semis += start;
-          const times = [...new Set(series.flatMap((s) => s.slice(1).map((x) => x.at)))].sort((a, b) => a - b);
-          for (const time of times) {
-            // a ramped term ramps the whole sum to here; held ones step
-            const ramp = series.some((s) => s.some((x) => x.ramp && Math.abs(x.at - time) < EPS));
-            const total = series.reduce((a, s) => a + valueThen(s, time, (x) => x.semis), 0);
-            bends.push({ at: time, cents: 100 * (total - start), ...(ramp ? { ramp } : {}) });
+      const at = tm.q(s / t.rate);
+      if (!Number.isFinite(at)) return; // (a clock run down: this step never comes)
+      if (at >= t.end - EPS) return;
+      // (a note whose clock stops beneath it never reaches its end: it rings 8 s at most)
+      const ends = Math.min(tm.q(upto / t.rate), t.end);
+      const dur = Number.isFinite(ends) ? ends - at : 8;
+      const v = voiceFor(result, t.output, e.value);
+      if (!v || p.muted.has(cellId(v.voice))) return;
+      // a gate starts notes at pitch 0, at its own level
+      let semis = t.output.kit || t.output.gate ? t.output.offset : t.sign * pitchOf(p, e, at) + t.output.offset;
+      // modulation: the sum at the start sets the pitch; later changes become bends
+      const bends: { at: number; cents: number; ramp?: boolean }[] = [];
+      if (!t.output.kit && t.mods.length) {
+        const series = t.mods.map((m) => modulation(p, m, at, at + dur));
+        const start = series.reduce((a, s) => a + s[0].semis, 0);
+        semis += start;
+        const times = [...new Set(series.flatMap((s) => s.slice(1).map((x) => x.at)))].sort((a, b) => a - b);
+        for (const time of times) {
+          // a ramped term ramps the whole sum to here; held ones step
+          const ramp = series.some((s) => s.some((x) => x.ramp && Math.abs(x.at - time) < EPS));
+          const total = series.reduce((a, s) => a + valueThen(s, time, (x) => x.semis), 0);
+          bends.push({ at: time, cents: 100 * (total - start), ...(ramp ? { ramp } : {}) });
+        }
+      }
+      // varispeed: on a physical clock that asks for it, pitch follows its speed — as tape does
+      const vs = varispeedOf(result, t.clock);
+      if (vs && tm.speed && !t.output.kit && !t.output.gate) {
+        const sp = (x: number) => Math.max(1e-3, tm.speed!(x));
+        const s0 = sp(at);
+        if (s0 < 0.05) return; // (tape at a standstill: nothing sounds)
+        semis += 12 * vs * Math.log2(s0);
+        if (!bends.length)
+          for (let x = at + 0.04, n = 0; x < at + dur && n < 400; x += 0.04, n++) {
+            const cents = 1200 * vs * Math.log2(sp(x) / s0);
+            if (Math.abs(cents) > 1) bends.push({ at: x, cents, ramp: true });
           }
-        }
-        // varispeed: on a physical clock that asks for it, pitch follows its speed — as tape does
-        const vs = varispeedOf(result, t.clock);
-        if (vs && tm.speed && !t.output.kit && !t.output.gate) {
-          const sp = (x: number) => Math.max(1e-3, tm.speed!(x));
-          const s0 = sp(at);
-          if (s0 < 0.05) return; // (tape at a standstill: nothing sounds)
-          semis += 12 * vs * Math.log2(s0);
-          if (!bends.length)
-            for (let x = at + 0.04, n = 0; x < at + dur && n < 400; x += 0.04, n++) {
-              const cents = 1200 * vs * Math.log2(sp(x) / s0);
-              if (Math.abs(cents) > 1) bends.push({ at: x, cents, ramp: true });
-            }
-        }
-        // volume: the product of the streams (and a gate's own value), over the note
-        const own = t.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter);
-        const level: { at: number; level: number; ramp?: boolean }[] = [{ at, level: t.output.gate ? own : 1 }];
-        if (t.levels.length) {
-          const series = t.levels.map((m) => levelSeries(p, m, at, at + dur));
-          const times = [...new Set(series.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
-          const base = level[0].level;
-          level.length = 0;
-          for (const time of times)
-            level.push({
-              at: time,
-              level: base * series.reduce((a, s) => a * valueThen(s, time, (x) => x.level), 1),
-              ...(series.some((s) => s.some((x) => x.ramp && Math.abs(x.at - time) < EPS)) ? { ramp: true } : {}),
-            });
-        }
-        const freq = v.freq * Math.pow(2, semis / 12);
-        const params = paramTracks(p, v.voice, at, dur);
-        const env = t.output.envelope ?? (t.output.kit ? memberEnvelope(result, v.voice) : null);
-        if (freq > 0 && freq < 20000 && level.some((l) => l.level > 0)) out.push({ at, dur, voice: v.voice, freq, bends, value: e.value + e.alter, gains: liveGains(t.output, p.muted), levels: level, ...(env ? { env } : {}), ...(t.output.through.length ? { instrument: t.output.through[0] } : {}), ...(params ? { params } : {}) });
+      }
+      // volume: the product of the streams (and a gate's own value), over the note
+      const own = t.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter);
+      const level: { at: number; level: number; ramp?: boolean }[] = [{ at, level: t.output.gate ? own : 1 }];
+      if (t.levels.length) {
+        const series = t.levels.map((m) => levelSeries(p, m, at, at + dur));
+        const times = [...new Set(series.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
+        const base = level[0].level;
+        level.length = 0;
+        for (const time of times)
+          level.push({
+            at: time,
+            level: base * series.reduce((a, s) => a * valueThen(s, time, (x) => x.level), 1),
+            ...(series.some((s) => s.some((x) => x.ramp && Math.abs(x.at - time) < EPS)) ? { ramp: true } : {}),
+          });
+      }
+      const freq = v.freq * Math.pow(2, semis / 12);
+      const params = paramTracks(p, v.voice, at, dur);
+      const env = t.output.envelope ?? (t.output.kit ? memberEnvelope(result, v.voice) : null);
+      if (freq > 0 && freq < 20000 && level.some((l) => l.level > 0))
+        out.push({
+          at,
+          dur,
+          voice: v.voice,
+          freq,
+          bends,
+          value: e.value + e.alter,
+          gains: liveGains(t.output, p.muted),
+          levels: level,
+          ...(env ? { env } : {}),
+          ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
+          ...(params ? { params } : {}),
+        });
     };
     if (t.selects.length === 0) {
       for (let lap = Math.floor(c0 / t.period) - 1; lap * t.period < c1; lap++)

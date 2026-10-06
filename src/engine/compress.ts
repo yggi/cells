@@ -73,7 +73,7 @@ function runs(source: string, cells: ReturnType<typeof candidates>['cells']): Su
   for (const c of cells) {
     const next: string[] = [];
     const shown: string[] = [];
-    for (let i = 0; i < c.tokens.length; ) {
+    for (let i = 0; i < c.tokens.length;) {
       let k = 1;
       while (i + k < c.tokens.length && c.tokens[i + k] === c.tokens[i]) k++;
       const t = c.tokens[i];
@@ -165,9 +165,7 @@ function phrases(source: string, cells: ReturnType<typeof candidates>['cells']):
         for (let k = 1; k < L; k++)
           for (const dir of ['>>', '<<'] as const) {
             const turned =
-              dir === '>>'
-                ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))]
-                : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
+              dir === '>>' ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))] : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
             if (turned.some((t) => t === null)) continue;
             const tkey = turned.join(' ');
             if (tkey === key) continue;
@@ -237,7 +235,10 @@ function sameNotes(a: string, b: string, names: readonly string[]): boolean {
     const ra = compileSource(a);
     const rb = compileSource(b);
     if (!rb.ok) return false;
-    const notes = (r: typeof ra, n: string) => flatten(r, n, codeShifts(r)).map((e) => `${e.step.toFixed(6)}:${e.duration.toFixed(6)}:${e.value + e.alter + (e.transpose ?? 0)}:${e.table}`).join(' ');
+    const notes = (r: typeof ra, n: string) =>
+      flatten(r, n, codeShifts(r))
+        .map((e) => `${e.step.toFixed(6)}:${e.duration.toFixed(6)}:${e.value + e.alter + (e.transpose ?? 0)}:${e.table}`)
+        .join(' ');
     return names.every((n) => notes(ra, n) === notes(rb, n));
   } catch {
     return false;
@@ -253,7 +254,10 @@ function sameCells(source: string, result: ReturnType<typeof compileSource>): Su
     // (what a mix plays directly stays itself: merged, two outputs would become one at double gain)
     if (result.outputs.some((o) => o.cell === c.name)) continue;
     const line = source.split('\n')[declLine(source, c.name)] ?? '';
-    const body = line.replace(/^&[A-Za-z_][A-Za-z0-9_]*\s*/, '').replace(/\s+#.*$/, '').trim();
+    const body = line
+      .replace(/^&[A-Za-z_][A-Za-z0-9_]*\s*/, '')
+      .replace(/\s+#.*$/, '')
+      .trim();
     if (!body || /[?|]/.test(body)) continue; // (chance keys on names: merging would throw differently)
     byText.set(body, [...(byText.get(body) ?? []), c.name]);
   }

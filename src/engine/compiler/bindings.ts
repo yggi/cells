@@ -55,9 +55,14 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         return [];
       }
       return parts.flatMap((part, entry) =>
-        cells.get(part)!.mix!.flatMap((inner) =>
-          expand({ voice: inner.voice, pitches: [...b.pitches, ...inner.pitches], offset: b.offset + inner.offset, gain: b.gain * inner.gain }, through, [...select, { cell: v.name, entry, part }]),
-        ),
+        cells
+          .get(part)!
+          .mix!.flatMap((inner) =>
+            expand({ voice: inner.voice, pitches: [...b.pitches, ...inner.pitches], offset: b.offset + inner.offset, gain: b.gain * inner.gain }, through, [
+              ...select,
+              { cell: v.name, entry, part },
+            ]),
+          ),
       );
     }
     if (!v?.mix || v.sink) return [{ b, through, select }];
@@ -140,9 +145,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   }
   const bindings = [...gathered.values()].map((g) => {
     const kit = throughKit(g.b.voice.name);
-    return kit
-      ? { ...g, b: { ...g.b, voice: { name: kit, pick: null, shift: 0, span: g.b.voice.span }, pitches: [{ ref: g.b.voice, sign: 1 as const }, ...g.b.pitches] } }
-      : g;
+    return kit ? { ...g, b: { ...g.b, voice: { name: kit, pick: null, shift: 0, span: g.b.voice.span }, pitches: [{ ref: g.b.voice, sign: 1 as const }, ...g.b.pitches] } } : g;
   });
   // a read head of a sound tape (write= a mix) is sound already: in a mix it's a return, not a voice
   const soundHead = (name: string) => {
@@ -165,8 +168,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     }
     if (!c.voice) continue;
     const src = d.params.s;
-    if (src !== undefined && !(String(src) in DOUGH_SOURCES))
-      error(`Unknown sound '${src}' (${Object.keys(DOUGH_SOURCES).join(', ')})`, d.paramSpans.s ?? d.span);
+    if (src !== undefined && !(String(src) in DOUGH_SOURCES)) error(`Unknown sound '${src}' (${Object.keys(DOUGH_SOURCES).join(', ')})`, d.paramSpans.s ?? d.span);
     if (src !== undefined && d.braid.kind !== 'blank') warn(`s=${src} plays a built-in waveform; the braid is ignored`, d.paramSpans.s);
     for (const [k, v] of Object.entries(d.params)) if (ATTRIBUTES[k]?.value === 'number' && typeof v !== 'number') error(`${k}= takes a number`, d.paramSpans[k]);
     // a voice by its sound parameters, written as a clock: say which parameter made it one

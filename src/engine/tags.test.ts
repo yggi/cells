@@ -22,7 +22,9 @@ describe('tags by kind', () => {
     for (const t of ['genre:folk', 'artist:Steve Reich', 'tuning']) expect(canonicalTag(t)).toBe(t);
   });
   test('the vocabulary has each name once, whatever the kind', () => {
-    const all = Object.values(VOCABULARY).flat().map((t) => t.toLowerCase());
+    const all = Object.values(VOCABULARY)
+      .flat()
+      .map((t) => t.toLowerCase());
     expect(new Set(all).size).toBe(all.length);
   });
 });

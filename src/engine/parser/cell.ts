@@ -1,6 +1,7 @@
 /** A cell's line: its name, then attributes and its braid, in any order. */
 import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, Token } from '../ast';
-import { RETIRED_PARAMS, TIME_PARAMS, canonical, isDoughParam } from '../dough-params';
+import { TIME_PARAMS } from '../attributes';
+import { RETIRED_PARAMS, canonical, isDoughParam } from '../dough-params';
 import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from '../attributes';
 import { IDENT, type LineScanner } from './scanner';
 import { parseToken } from './braid';
@@ -45,21 +46,50 @@ interface Key {
 }
 
 /** How a cell is shown (never how it sounds); the default for everything below it. Meanings: layout/show.ts. */
-export const SHOWS = ['braid', 'pattern', 'notes', 'midi', 'do', 'degrees', 'table', 'scale', 'mode', 'key', 'grid', 'meter', 'spectrum', 'wave', 'levels', 'adsr', 'mix', 'note', 'petal', 'off', 'matrix', 'lfo'] as const;
+export const SHOWS = [
+  'braid',
+  'pattern',
+  'notes',
+  'midi',
+  'do',
+  'degrees',
+  'table',
+  'scale',
+  'mode',
+  'key',
+  'grid',
+  'meter',
+  'spectrum',
+  'wave',
+  'levels',
+  'adsr',
+  'mix',
+  'note',
+  'petal',
+  'off',
+  'matrix',
+  'lfo',
+] as const;
 /** Naming conventions, after a colon: show=notes:flats. */
 export const SHOW_CONVENTIONS: Readonly<Record<string, readonly string[]>> = { notes: ['flats', 'sharps', 'german'], do: ['fixed', 'movable'] };
 
-const whole = (key: 'shift' | 'stride'): Reader => (s, b) => {
-  b[key] = s.text.startsWith('free(', s.i) ? Math.round(parseFree(s, key, false).value) : s.int(`a whole number after ${key}=`);
-};
-const text = (key: 'title' | 'tags' | 'label', example: string): Reader => (s, b) => {
-  const q = s.match(/"([^"]*)"/y);
-  if (q === null) s.fail(`${key}= takes a text in quotes: ${example}`);
-  b[key] = q!.slice(1, -1);
-};
-const voiceOwn = (key: 'env' | 'pitch'): Reader => (s, b) => {
-  b[key] = s.ref(`a cell after ${key}=, like ${key}=&pluck or ${key}=&(map=adsr .01 .3 .5 .4)`);
-};
+const whole =
+  (key: 'shift' | 'stride'): Reader =>
+  (s, b) => {
+    b[key] = s.text.startsWith('free(', s.i) ? Math.round(parseFree(s, key, false).value) : s.int(`a whole number after ${key}=`);
+  };
+const text =
+  (key: 'title' | 'tags' | 'label', example: string): Reader =>
+  (s, b) => {
+    const q = s.match(/"([^"]*)"/y);
+    if (q === null) s.fail(`${key}= takes a text in quotes: ${example}`);
+    b[key] = q!.slice(1, -1);
+  };
+const voiceOwn =
+  (key: 'env' | 'pitch'): Reader =>
+  (s, b) => {
+    b[key] = s.ref(`a cell after ${key}=, like ${key}=&pluck or ${key}=&(map=adsr .01 .3 .5 .4)`);
+  };
 const timing: Reader = (s, b, word) => {
   b.step = parseStep(s, word === 'loop');
 };
@@ -104,7 +134,11 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       b.show = w + conv;
     },
   },
-  label: { form: 'label="text"', examples: ['&theme label="the King\'s theme" step=2 0 2 4', '&note label="A note in the graph: alone on its cell."'], read: text('label', 'label="the King\'s theme"') },
+  label: {
+    form: 'label="text"',
+    examples: ['&theme label="the King\'s theme" step=2 0 2 4', '&note label="A note in the graph: alone on its cell."'],
+    read: text('label', 'label="the King\'s theme"'),
+  },
   env: { form: 'env=&envelope', examples: ['&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)'], read: voiceOwn('env') },
   pitch: {
     form: 'pitch=&vibrato · pitch=lo..hi * &shape',
@@ -158,7 +192,11 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   },
   seed: { form: 'seed=n', examples: ['&ghost seed=7 step=4 0? 0? 0? 0?'], read: (s, b) => (b.seed = s.int('a whole number after seed=')) },
   title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, basics" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
-  tags: { form: 'tags="tag, tag"', examples: ['&piece title="Swing blues" tags="genre:jazz, basics"', '&lead tags="melody" s=saw loop=C4'], read: text('tags', 'tags="jazz, blues"') },
+  tags: {
+    form: 'tags="tag, tag"',
+    examples: ['&piece title="Swing blues" tags="genre:jazz, basics"', '&lead tags="melody" s=saw loop=C4'],
+    read: text('tags', 'tags="jazz, blues"'),
+  },
   about: {
     form: 'about=&cell · about=(&a &b …)',
     examples: ['&fenvNote label="The filter opens on every note." about=&fenv', '&why label="Two cells at once." about=(&fenv &accent)'],
@@ -258,10 +296,34 @@ const RETIRED_KEYS: Readonly<Record<string, string>> = {
 
 /** The lines' own syntax: what a line is, comments, continuing, off. */
 export const LINE_SYNTAX: readonly Syntax[] = [
-  syntax('line', '&name …', 'A cell: one per line, its name first, then its attributes (key=value) and its braid, in any order.', ['&theme over=&major step=&bar 0 2 4 5'], 'cell.md'),
-  syntax('line', '&name label="…"', 'A note: a cell with only a label= (and title=, tags=, about=) explains, in the graph; it does nothing.', ['&why label="The bass walks down a fifth each bar."'], 'display.md'),
-  syntax('line', 'off', 'Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph).', ['&drums off over=&kit step=&bar 0 1'], 'cell.md'),
-  syntax('line', '# … · // …', 'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.', ['&tune step=2 0 2 4  # the opening'], 'cell.md'),
+  syntax(
+    'line',
+    '&name …',
+    'A cell: one per line, its name first, then its attributes (key=value) and its braid, in any order.',
+    ['&theme over=&major step=&bar 0 2 4 5'],
+    'cell.md',
+  ),
+  syntax(
+    'line',
+    '&name label="…"',
+    'A note: a cell with only a label= (and title=, tags=, about=) explains, in the graph; it does nothing.',
+    ['&why label="The bass walks down a fifth each bar."'],
+    'display.md',
+  ),
+  syntax(
+    'line',
+    'off',
+    'Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph).',
+    ['&drums off over=&kit step=&bar 0 1'],
+    'cell.md',
+  ),
+  syntax(
+    'line',
+    '# … · // …',
+    'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.',
+    ['&tune step=2 0 2 4  # the opening'],
+    'cell.md',
+  ),
   syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
 ];
 
@@ -304,7 +366,11 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       if (key === null) {
         if (word in RETIRED_KEYS) s.fail(RETIRED_KEYS[word], at, word.length);
         const near = nearestAttribute(word);
-        s.fail(`Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`, at, word.length);
+        s.fail(
+          `Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`,
+          at,
+          word.length,
+        );
       }
       // each at most once (step= and loop= are one setting)
       const slot = key === 'loop' ? 'step' : key;
@@ -334,15 +400,41 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
 
   const braid: Braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
   const { over, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } = b;
-  return { name: head.name, span: head.span, over, shift, off, step, map, stride, cycle, env, pitch, show, label, title, tags, about: about ?? undefined, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks, braid, frees: [...s.frees] };
+  return {
+    name: head.name,
+    span: head.span,
+    over,
+    shift,
+    off,
+    step,
+    map,
+    stride,
+    cycle,
+    env,
+    pitch,
+    show,
+    label,
+    title,
+    tags,
+    about: about ?? undefined,
+    laps,
+    chance,
+    seed,
+    size,
+    params,
+    paramSpans,
+    paramCells,
+    paramClocks,
+    braid,
+    frees: [...s.frees],
+  };
 }
 
 export function parseCell(s: LineScanner): CellDecl {
   s.skipSpace();
   if (s.text.startsWith('&(', s.i)) s.fail('An unnamed cell &( … ) goes where a cell is used; a line declares a named one: &name …');
   const head = s.ref('a cell name like &theme');
-  if (head.pick || head.shift)
-    s.fail('Brackets go where a cell is used (&x[0], &x[<<]), not where it is named — use shift= here', head.span.col - 1, head.span.len);
+  if (head.pick || head.shift) s.fail('Brackets go where a cell is used (&x[0], &x[<<]), not where it is named — use shift= here', head.span.col - 1, head.span.len);
   if (s.peek() === '(') s.fail(`&name(…) is gone — write over=&…`);
   return parseBody(s, head);
 }

@@ -22,10 +22,19 @@ export type Sort = 'signal' | 'volume' | 'plain' | 'pitch' | 'wave';
 type Mode = 'auto' | 'pitch';
 /** Does an expression hold a sound by itself (a cell whose sort is signal)? */
 const holds = (e: Expr, sortOf: (name: string) => Sort, sorts: readonly Sort[]): boolean =>
-  e.k === 'ref' ? sorts.includes(sortOf(e.ref.name)) : e.k === 'num' ? false : e.k === 'prod' ? e.factors.some((f) => holds(f, sortOf, sorts)) : e.items.some((it) => holds(it.e, sortOf, sorts));
+  e.k === 'ref'
+    ? sorts.includes(sortOf(e.ref.name))
+    : e.k === 'num'
+      ? false
+      : e.k === 'prod'
+        ? e.factors.some((f) => holds(f, sortOf, sorts))
+        : e.items.some((it) => holds(it.e, sortOf, sorts));
 
 export class AlgebraError extends Error {
-  constructor(message: string, readonly span: Span) {
+  constructor(
+    message: string,
+    readonly span: Span,
+  ) {
     super(message);
   }
 }

@@ -6,16 +6,34 @@ import { syntax, type Syntax } from './syntax';
 
 /** What a braid's steps can be. */
 export const STEP_SYNTAX: readonly Syntax[] = [
-  syntax('step', 'n', 'A number: an index into the table it reads (over=), or a value (a volume, a waveform\'s level). Negative and decimal numbers work.', ['&tune step=2 0 2 4 -1 .5'], 'cell.md'),
-  syntax('step', 'n# · nb', 'A number with accidentals: one step up (#) or down (b) on the grid below the table it reads — 6# over a scale is its 7th degree raised a semitone.', ['&tune over=&major step=2 0 4 6# 7 3b'], 'tables.md'),
+  syntax(
+    'step',
+    'n',
+    "A number: an index into the table it reads (over=), or a value (a volume, a waveform's level). Negative and decimal numbers work.",
+    ['&tune step=2 0 2 4 -1 .5'],
+    'cell.md',
+  ),
+  syntax(
+    'step',
+    'n# · nb',
+    'A number with accidentals: one step up (#) or down (b) on the grid below the table it reads — 6# over a scale is its 7th degree raised a semitone.',
+    ['&tune over=&major step=2 0 4 6# 7 3b'],
+    'tables.md',
+  ),
   syntax('step', 'n/d', 'A fraction: 9/8, 3/2 (the ratios of a map=ratios grid).', ['&just map=ratios 1 9/8 5/4 3/2 2'], 'tuning.md'),
   syntax('step', '~', 'A rest: a step that plays nothing.', ['&tune step=2 0 ~ 4 ~'], 'cell.md'),
   syntax('step', '[a, b, c] · [a b c]', 'A chord: the numbers sound together, in one step.', ['&chords step=1 [0,2,4] [3 5 7]'], 'time.md'),
   syntax('step', '[a|b|c]', 'A choice: one of them, chosen afresh each time round (the same every time it is played).', ['&tune step=2 0 [2|4|7] 4'], 'braid.md'),
-  syntax('step', '&x', 'A cell, spliced in: its braid plays in this one\'s step (as long as its own steps). Picks, shifts and transposing are under References.', ['&theme step=2 &motif &motif^7 0'], 'braid.md'),
+  syntax(
+    'step',
+    '&x',
+    "A cell, spliced in: its braid plays in this one's step (as long as its own steps). Picks, shifts and transposing are under References.",
+    ['&theme step=2 &motif &motif^7 0'],
+    'braid.md',
+  ),
 ];
 
-export function parseAtom(s: LineScanner): Atom {
+function parseAtom(s: LineScanner): Atom {
   const c = s.peek();
   if (c === '&') {
     const r = s.ref('a cell like &motif');
@@ -83,7 +101,13 @@ export const MODIFIERS = {
   '@': { field: 'elongate', syntax: syntax('modifier', 'x@n', 'Hold: the step lasts n steps.', ['&tune step=2 0@2 2 4@3'], 'cell.md') },
 } as const;
 type ModKey = keyof typeof MODIFIERS;
-export const CHANCE_SYNTAX = syntax('modifier', 'x? · x?p', 'Chance: the step sounds with probability p (x? alone: the cell\'s chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence.', ['&hats step=4 0 0? 0?.3 0', '&ghost chance=.2 step=4 0? 0? 0? 0?'], 'cell.md');
+export const CHANCE_SYNTAX = syntax(
+  'modifier',
+  'x? · x?p',
+  "Chance: the step sounds with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence.",
+  ['&hats step=4 0 0? 0?.3 0', '&ghost chance=.2 step=4 0? 0? 0? 0?'],
+  'cell.md',
+);
 
 export function parseToken(s: LineScanner): Token {
   const start = s.i;

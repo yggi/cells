@@ -81,7 +81,7 @@ function flowsOf(result: CompileResult): Map<string, Flow[]> {
 const keeps = (result: CompileResult, name: string) => result.tapes.some((t) => t.name === name) || typeof result.cells.get(name)?.params.body === 'string';
 
 /** What its mixes name: the voice, or a kit's stream (&drums, read through the kit). */
-export const sourceOf = (o: Output) => (o.kit ? o.cell : o.voice);
+const sourceOf = (o: Output) => (o.kit ? o.cell : o.voice);
 
 const playable = (c: ResolvedCell) => c.units.some((u) => u.atom.kind === 'note' || u.atom.kind === 'chord' || u.atom.kind === 'choice');
 
@@ -248,15 +248,14 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
   // what keeps sound (tapes, bodies): fed by a mix the outputs reach, struck by one, or holding its own;
   // from there, wherever it goes
   const queue: string[] = [];
-  for (const c of result.cells.values())
-    if (keeps(result, c.name) && !acc.off(c.name) && (keeping(c.name) || acc.nodes.has(cellId(c.name)))) queue.push(c.name);
+  for (const c of result.cells.values()) if (keeps(result, c.name) && !acc.off(c.name) && (keeping(c.name) || acc.nodes.has(cellId(c.name)))) queue.push(c.name);
   for (const n of [...acc.nodes])
     for (const f of flows.get(n.slice('cell:'.length)) ?? [])
       if (keeps(result, f.to) && !acc.off(f.to)) {
         acc.edge(f.from, f.to, f.id);
         queue.push(f.to);
       }
-  for (const done = new Set<string>(); queue.length; ) {
+  for (const done = new Set<string>(); queue.length;) {
     const n = queue.pop()!;
     if (done.has(n)) continue;
     done.add(n);
@@ -269,7 +268,7 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
   // only what reaches a sound card
   const heard = new Set<string>();
   for (const c of result.cells.values()) if (c.sink && acc.nodes.has(cellId(c.name))) heard.add(c.name);
-  for (let grew = true; grew; ) {
+  for (let grew = true; grew;) {
     grew = false;
     for (const [from, fs] of flows)
       if (!heard.has(from) && acc.nodes.has(cellId(from)) && fs.some((f) => heard.has(f.to) && acc.edges.has(f.id))) {
@@ -285,9 +284,7 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
   for (const n of heard) if (keeps(result, n)) sound.clock(n);
   // an oscilloscope watches: on when what it watches is
   for (const c of result.cells.values())
-    if (typeof c.params.scope === 'string' && !sound.off(c.name))
-      for (const k of c.children.keys())
-        if (sound.nodes.has(cellId(k))) sound.edge(c.name, k);
+    if (typeof c.params.scope === 'string' && !sound.off(c.name)) for (const k of c.children.keys()) if (sound.nodes.has(cellId(k))) sound.edge(c.name, k);
   return sound;
 }
 
@@ -356,7 +353,12 @@ export function nodeStateOf(id: string, muted: ReadonlySet<string>, routed: Rout
 }
 
 /** What an edge is drawn as: off with either end; otherwise as the routing says (drawn ids: see `drawn`). */
-export function edgeStateOf(e: { readonly id: string; readonly source: string; readonly target: string }, muted: ReadonlySet<string>, routed: Routing, live: Routing | null): State {
+export function edgeStateOf(
+  e: { readonly id: string; readonly source: string; readonly target: string },
+  muted: ReadonlySet<string>,
+  routed: Routing,
+  live: Routing | null,
+): State {
   if (muted.has(e.source) || muted.has(e.target)) return 'off';
   if (!routed.edges.has(e.id)) return 'unrouted';
   if (!live) return 'on';

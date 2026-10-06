@@ -6,7 +6,6 @@ import type { CompileResult, ResolvedCell, Shifts, Unit } from './program';
 import { ROOT, codeShifts } from './program';
 import { mod } from '../theory/modes';
 
-
 export interface Entry {
   readonly value: number;
   readonly alter: number;

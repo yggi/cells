@@ -18,8 +18,18 @@ describe('the 5 to 12 cycle: the arithmetic', () => {
   });
   it('the modes of the day: down from Ionian to Locrian, up from Phrygian to Lydian', () => {
     expect(DAY_MODES.map((m) => MODE_NAMES[m])).toEqual([
-      'Ionian', 'Mixolydian', 'Dorian', 'Aeolian', 'Phrygian', 'Locrian',
-      'Phrygian', 'Aeolian', 'Dorian', 'Mixolydian', 'Ionian', 'Lydian',
+      'Ionian',
+      'Mixolydian',
+      'Dorian',
+      'Aeolian',
+      'Phrygian',
+      'Locrian',
+      'Phrygian',
+      'Aeolian',
+      'Dorian',
+      'Mixolydian',
+      'Ionian',
+      'Lydian',
     ]);
   });
   it('the keys: by fifths going down, by fourths coming up — all twelve each block, every block from C', () => {
@@ -58,7 +68,15 @@ describe('the law of a key: use all 7, 2 times, full circle, in 5 different ways
     const row = rowOf(2, 4);
     const firsts = Array.from({ length: 7 }, (_, b) => barOf(2, 4, 7 + b)[0]);
     expect(firsts.map((o) => o.at)).toEqual(new Array(7).fill(0));
-    expect(new Set(Array.from({ length: 7 }, (_, b) => barOf(2, 4, 14 + b).map((o) => o.degree).join(''))).size).toBe(7);
+    expect(
+      new Set(
+        Array.from({ length: 7 }, (_, b) =>
+          barOf(2, 4, 14 + b)
+            .map((o) => o.degree)
+            .join(''),
+        ),
+      ).size,
+    ).toBe(7);
     expect(row).toHaveLength(7);
   });
   it('5 ways: each phrase moves its own dimension (harmony inverted in phrase 3)', () => {
@@ -84,7 +102,7 @@ describe('5 to 12 in the studio: law=fiveto12 plays the day', () => {
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     const ev = eventsBetween(plan(r, codeShifts(r)), 0, 12 * SECONDS_PER_STEP - 1e-6);
     expect(new Set(ev.map((e) => e.at.toFixed(3))).size).toBe(7);
-    expect([...new Set(ev.map((e) => (((Math.round(12 * Math.log2(e.freq / 261.63)) % 12) + 12) % 12)))].sort((a, b) => a - b)).toEqual([0, 2, 4, 5, 7, 9, 11]);
+    expect([...new Set(ev.map((e) => ((Math.round(12 * Math.log2(e.freq / 261.63)) % 12) + 12) % 12))].sort((a, b) => a - b)).toEqual([0, 2, 4, 5, 7, 9, 11]);
     expect(pieceTime(r).ends).toBe(86400);
     expect(sections(r)!.map((s) => s.label.split(' · ')[0])).toEqual(DAY_MODES.map((m) => MODE_NAMES[m]));
   });

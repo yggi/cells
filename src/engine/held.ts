@@ -10,8 +10,7 @@ import { setFree } from './edit';
 export type Held = ReadonlyMap<number, number | string>;
 
 /** Every free() in the code, in reading order. */
-export const freeList = (r: CompileResult) =>
-  [...r.cells.values()].flatMap((c) => c.frees).sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
+export const freeList = (r: CompileResult) => [...r.cells.values()].flatMap((c) => c.frees).sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
 
 /** The place of the free() written at a span, or −1. */
 export const freeIndex = (r: CompileResult, spec: { span: { line: number; col: number } }) =>

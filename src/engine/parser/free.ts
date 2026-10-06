@@ -5,7 +5,7 @@ import { UNIT } from './values';
 import { syntax, type Syntax } from './syntax';
 
 /** Tempo markings for free(…): a range in bpm, centred. */
-export const TEMPI: Readonly<Record<string, readonly [number, number]>> = {
+const TEMPI: Readonly<Record<string, readonly [number, number]>> = {
   largo: [40, 60],
   larghetto: [60, 66],
   adagio: [66, 76],
@@ -18,9 +18,29 @@ export const TEMPI: Readonly<Record<string, readonly [number, number]>> = {
 
 /** free(…)'s forms. */
 export const FREE_SYNTAX: readonly Syntax[] = [
-  syntax('free', 'free(v, lo..hi)', 'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number goes in an attribute (a rate with its units: free(90bpm, 60..240)), in a scan, or as a gain in a mix.', ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'], 'free.md'),
-  syntax('free', 'free(marking)', `A rate as a tempo marking, a slider over its range: ${Object.entries(TEMPI).map(([k, [lo, hi]]) => `${k} ${lo}–${hi}`).join(', ')} (bpm).`, ['&bar scan(4 4 4 4) step=free(andante)'], 'free.md'),
-  syntax('free', 'free(v, lo..hi, "names")', 'Named choices: the names spread evenly over the range (one per value, or every 2nd …), shown instead of the numbers.', ['&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm'], 'free.md'),
+  syntax(
+    'free',
+    'free(v, lo..hi)',
+    'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number goes in an attribute (a rate with its units: free(90bpm, 60..240)), in a scan, or as a gain in a mix.',
+    ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'],
+    'free.md',
+  ),
+  syntax(
+    'free',
+    'free(marking)',
+    `A rate as a tempo marking, a slider over its range: ${Object.entries(TEMPI)
+      .map(([k, [lo, hi]]) => `${k} ${lo}–${hi}`)
+      .join(', ')} (bpm).`,
+    ['&bar scan(4 4 4 4) step=free(andante)'],
+    'free.md',
+  ),
+  syntax(
+    'free',
+    'free(v, lo..hi, "names")',
+    'Named choices: the names spread evenly over the range (one per value, or every 2nd …), shown instead of the numbers.',
+    ['&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm'],
+    'free.md',
+  ),
   syntax('free', 'free("text")', 'A text left to the performer: a field to type in (for spell(…)).', ['&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")'], 'free.md'),
 ];
 
@@ -83,7 +103,11 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean):
     // the names spread evenly over the range: one per value, or every 2nd (chords of two in a table) …
     const gap = labels.length > 1 ? (hi - lo) / (labels.length - 1) : 0;
     if (!Number.isInteger(lo) || !Number.isInteger(hi) || labels.length < 2 || !Number.isInteger(gap) || gap < 1)
-      s.fail(`free(…, "${labels.join(' ')}"): the names spread evenly over ${lo}..${hi} — ${labels.length} names need ${labels.length - 1} equal whole steps (${lo}..${lo + labels.length - 1}, or every 2nd: ${lo}..${lo + 2 * (labels.length - 1)})`, start, s.i - start);
+      s.fail(
+        `free(…, "${labels.join(' ')}"): the names spread evenly over ${lo}..${hi} — ${labels.length} names need ${labels.length - 1} equal whole steps (${lo}..${lo + labels.length - 1}, or every 2nd: ${lo}..${lo + 2 * (labels.length - 1)})`,
+        start,
+        s.i - start,
+      );
     s.skipSpace();
   }
   s.expect(')', `')' to close free(…)`);

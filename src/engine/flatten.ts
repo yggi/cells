@@ -77,8 +77,7 @@ export function flatten(
             const odds = u.chance === undefined ? {} : { chance: u.chance === null ? (cell.chance ?? 0.5) : u.chance };
             if (a.kind === 'note') out.push({ ...ev, value: a.value, alter: a.alter, ...odds });
             else if (a.kind === 'chord') a.notes.forEach((v, j) => out.push({ ...ev, value: v, alter: a.alters[j], ...odds }));
-            else if (a.kind === 'choice')
-              out.push({ ...ev, value: a.values[0], alter: a.alters[0], ...odds, options: a.values.map((v, j) => ({ value: v, alter: a.alters[j] })) });
+            else if (a.kind === 'choice') out.push({ ...ev, value: a.values[0], alter: a.alters[0], ...odds, options: a.values.map((v, j) => ({ value: v, alter: a.alters[j] })) });
             else if (a.kind === 'ref') {
               const k = dur / (stepsOf(result, a.name, a.pick) || 1);
               const up = a.transpose ?? 0;

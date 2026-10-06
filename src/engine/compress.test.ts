@@ -65,15 +65,19 @@ describe('shorten', () => {
 
 describe('shorten, on every example: every suggestion sounds the same, and is shorter', () => {
   for (const [key, p] of Object.entries(PRESETS)) {
-    it(key, () => {
-      const suggestions = shorten(p.source);
-      const before = sounds(p.source);
-      for (const s of suggestions) {
-        const next = s.apply(p.source);
-        expect(next.length, s.title).toBeLessThan(p.source.length);
-        expect(sounds(next), `${key}: ${s.title}`).toEqual(before);
-      }
-    }, 60_000);
+    it(
+      key,
+      () => {
+        const suggestions = shorten(p.source);
+        const before = sounds(p.source);
+        for (const s of suggestions) {
+          const next = s.apply(p.source);
+          expect(next.length, s.title).toBeLessThan(p.source.length);
+          expect(sounds(next), `${key}: ${s.title}`).toEqual(before);
+        }
+      },
+      60_000,
+    );
   }
 });
 

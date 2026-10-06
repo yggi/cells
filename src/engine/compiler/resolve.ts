@@ -72,7 +72,10 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
       chance: d.chance ?? 0.5,
       seed: d.seed ?? 0,
       size: d.size ?? 1,
-      tags: (d.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
+      tags: (d.tags ?? '')
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
       about: (d.about ?? []).map((r) => r.name),
       beat: typeof d.params.beat === 'number' ? d.params.beat : ((d.braid as { perBeat?: number }).perBeat ?? 1),
       leveled: (d.braid as { perBeat?: number }).perBeat !== undefined,
@@ -87,7 +90,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
         d.shift === null &&
         d.stride === null &&
         !d.off &&
-        !(d.frees?.length) &&
+        !d.frees?.length &&
         !d.env &&
         !d.pitch &&
         Object.keys(d.params).length === 0,
@@ -133,7 +136,12 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
       paramCells: Object.fromEntries(Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name) }])),
       // a sound parameter makes a voice; a physical cell's (motor=, write=, level= on the sound card …) doesn't
       voice: Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
-      freq: d.step?.kind === 'rate' || d.step?.kind === 'env' ? (d.step.whole ? (rateOf(d.step) ?? DEFAULT_FREQ) : (rateOf(d.step) ?? DEFAULT_FREQ) / Math.max(1, steps)) : DEFAULT_FREQ,
+      freq:
+        d.step?.kind === 'rate' || d.step?.kind === 'env'
+          ? d.step.whole
+            ? (rateOf(d.step) ?? DEFAULT_FREQ)
+            : (rateOf(d.step) ?? DEFAULT_FREQ) / Math.max(1, steps)
+          : DEFAULT_FREQ,
       kit: false,
     };
     cells.set(name, cell);

@@ -21,7 +21,9 @@ describe('tapes: a write head records, read heads play it back — through the t
   });
   it('a loop: again every length, (1 − erase) as loud each pass — ghosts', () => {
     // (the tune once only — laps=1 — so each pass of its C is the only C then)
-    const ev = notes(base('&tape write=&tune length=2 erase=.5', '&echo play=&tape at=.5', '&echo * &w').replace('&tune step=&bar ', '&tune step=&bar laps=1 '), 6).filter((e) => Math.abs(e.freq - 261.63) < 0.5);
+    const ev = notes(base('&tape write=&tune length=2 erase=.5', '&echo play=&tape at=.5', '&echo * &w').replace('&tune step=&bar ', '&tune step=&bar laps=1 '), 6).filter(
+      (e) => Math.abs(e.freq - 261.63) < 0.5,
+    );
     // the first note (C) at 0: passes the read head at .5, 2.5, 4.5 … each half as loud
     const at = ev.map((e) => [+e.at.toFixed(6), +e.gains[0].toFixed(6)]);
     expect(at.slice(0, 3).map((x) => x[0])).toEqual([0.5, 2.5, 4.5].map((x) => +x.toFixed(6)));
@@ -47,7 +49,10 @@ describe('tapes: a write head records, read heads play it back — through the t
     expect(first.freq).toBeGreaterThan(261.63 * 1.05);
   });
   it('says what’s wrong', () => {
-    const msgs = (code: string) => compileSource(code).diagnostics.map((d) => d.message).join(' | ');
+    const msgs = (code: string) =>
+      compileSource(code)
+        .diagnostics.map((d) => d.message)
+        .join(' | ');
     expect(msgs(base('&tape 0', '&echo play=&tape at=.5', '&echo * &w'))).toMatch(/a read head plays a tape/);
     expect(msgs(base('&tape write=&v', '&echo play=&tape', '&echo * &w'))).toMatch(/a tape records what plays/);
   });
@@ -98,7 +103,10 @@ describe('sound tapes: write= a mix — a delay network, the heads returns', () 
   it('an elastic tape: belt= on the tape, and its echoes lag and swing as the strip stretches', () => {
     const tight = compileSource(base('&tape write=&tune', '&echo play=&tape at=.5', '&echo * &w'));
     const slack = compileSource(base('&tape step=&bar belt=15 write=&tune', '&echo play=&tape at=.5', '&echo * &w'));
-    const at = (r: typeof tight) => eventsBetween(plan(r, codeShifts(r)), 0, 4).filter((e) => e.voice === 'w').map((e) => e.at);
+    const at = (r: typeof tight) =>
+      eventsBetween(plan(r, codeShifts(r)), 0, 4)
+        .filter((e) => e.voice === 'w')
+        .map((e) => e.at);
     expect(at(slack)[0]).toBeGreaterThan(at(tight)[0] + 0.02); // the strip stretches as it starts: the echo comes late
   });
   it('a tape of a melody stays a value tape (not a sound tape)', () => {

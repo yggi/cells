@@ -16,7 +16,7 @@ import { mod } from '../theory/modes';
 
 const EPS = 1e-9;
 
-export interface LiveCell {
+interface LiveCell {
   /** Playhead inside the instance being played, in this cell's steps (braids). */
   local: number | null;
   /** Table entries being looked up right now. */

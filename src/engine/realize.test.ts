@@ -34,7 +34,11 @@ describe('time', () => {
   it('stepAt inverts q across bars; a shifted meter moves the downbeat', () => {
     const tm = timeMap(r, r.clocks.get('meter')!, codeShifts(r));
     for (const s of [0, 0.5, 1, 2.25, 3.9, 7, 13.5]) expect(tm.stepAt(tm.q(s))).toBeCloseTo(s);
-    expect(+timeMap(r, r.clocks.get('meter')!, () => 1).q(1).toFixed(2)).toBe(0.92);
+    expect(
+      +timeMap(r, r.clocks.get('meter')!, () => 1)
+        .q(1)
+        .toFixed(2),
+    ).toBe(0.92);
   });
   it('a clock without positions steps evenly at its rate', () => {
     const r2 = compileSource('&c step=4 5 3\n&x step=&c 0 1 2 3\n' + VOICE + '&mix_ [&x * &v]\n&out_ loop=44k map=sample &mix_');
@@ -46,7 +50,15 @@ describe('sound', () => {
   it('flattens &refs with !, * and @', () => {
     const r = compileSource('&b 1 2\n&a &b 0*2 5@2 &b!2');
     expect(flatten(r, 'a', codeShifts(r)).map((e) => [e.step, e.duration, e.value])).toEqual([
-      [0, 1, 1], [1, 1, 2], [2, 0.5, 0], [2.5, 0.5, 0], [3, 2, 5], [5, 1, 1], [6, 1, 2], [7, 1, 1], [8, 1, 2],
+      [0, 1, 1],
+      [1, 1, 2],
+      [2, 0.5, 0],
+      [2.5, 0.5, 0],
+      [3, 2, 5],
+      [5, 1, 1],
+      [6, 1, 2],
+      [7, 1, 1],
+      [8, 1, 2],
     ]);
   });
 
@@ -57,7 +69,12 @@ describe('sound', () => {
 
   it('kits take the number as an index into their voices', () => {
     const r = compileSource('&m step=1\n&d over=&kit step=&m 0 1 2 3\n&bd s=sine loop=55\n&sd s=white\n&kit &bd &sd\n&mix loop=SAMPLE_RATE map=sample [&d]');
-    expect(events(r, 0, 4).map((e) => [e.voice, e.freq])).toEqual([['bd', 55], ['sd', 261.63], ['bd', 55], ['sd', 261.63]]);
+    expect(events(r, 0, 4).map((e) => [e.voice, e.freq])).toEqual([
+      ['bd', 55],
+      ['sd', 261.63],
+      ['bd', 55],
+      ['sd', 261.63],
+    ]);
   });
 
   it("a kit's members bring their own env= (a member without one plays with the voice's default)", () => {
@@ -77,7 +94,10 @@ describe('sound', () => {
     const r = compileSource(
       '&m step=1\n&d over=&kit step=&m 0 1\n&bd s=sine loop=55 env=&(map=adsr 0 .28 0 .05)\n&sd s=white\n&kit &bd &sd\n&e map=adsr .01 .5 .5 .2\n&mix loop=SAMPLE_RATE map=sample [&e * &d]',
     );
-    expect(events(r, 0, 2).map((e) => e.env)).toEqual([{ attack: 0.01, decay: 0.5, sustain: 0.5, release: 0.2 }, { attack: 0.01, decay: 0.5, sustain: 0.5, release: 0.2 }]);
+    expect(events(r, 0, 2).map((e) => e.env)).toEqual([
+      { attack: 0.01, decay: 0.5, sustain: 0.5, release: 0.2 },
+      { attack: 0.01, decay: 0.5, sustain: 0.5, release: 0.2 },
+    ]);
   });
 
   it('ratios: ÷2 plays twice per beat, ×2 once per two beats', () => {
@@ -124,8 +144,21 @@ describe('sound', () => {
       expect(r.diagnostics, key).toEqual([]);
       // within 12 s — or longer, for a piece that unfolds (BWV 847's fugue waits out the prelude; the Ricercar adds a voice a pass;
       // the arranged songs bring their parts in section by section)
-      const ev = events(r, 0, ({ bwv847: 200, ricercar: 120, pop: 100, zell: 140, korobeiniki: 60, cellscape: 330, baustelle: 110, hypercell: 75, onemore: 80, brothers: 120, ghosts: 60 } as Record<string, number>)[key] ?? 12);
-      for (const o of r.outputs) expect(ev.some((e) => e.voice === o.voice || r.cells.get(o.voice)!.kit), `${key}/${o.voice}`).toBe(true);
+      const ev = events(
+        r,
+        0,
+        (
+          { bwv847: 200, ricercar: 120, pop: 100, zell: 140, korobeiniki: 60, cellscape: 330, baustelle: 110, hypercell: 75, onemore: 80, brothers: 120, ghosts: 60 } as Record<
+            string,
+            number
+          >
+        )[key] ?? 12,
+      );
+      for (const o of r.outputs)
+        expect(
+          ev.some((e) => e.voice === o.voice || r.cells.get(o.voice)!.kit),
+          `${key}/${o.voice}`,
+        ).toBe(true);
     }
   });
 });
@@ -133,7 +166,10 @@ describe('sound', () => {
 describe('royal: every key in fifths, then every mode', () => {
   const r = compileSource(PRESETS.royal.source);
   const pass = (20 * 60) / 84;
-  const theme = (n: number) => events(r, n * pass, (n + 1) * pass).filter((e) => e.voice === 'lead').map((e) => NAMES[midi(e.freq) % 12]);
+  const theme = (n: number) =>
+    events(r, n * pass, (n + 1) * pass)
+      .filter((e) => e.voice === 'lead')
+      .map((e) => NAMES[midi(e.freq) % 12]);
 
   it('pass 1 is C minor, then up the circle of fifths: G, D, A …', () => {
     expect(theme(0).join(' ')).toBe('C Eb G Ab B C B Bb A Ab G');
@@ -188,9 +224,12 @@ describe('graph', () => {
     const vibrato = g.nodes.find((n) => n.cell.lambda?.startsWith('map=lin'))!;
     expect(vibrato.cell.lambda).toBe('map=lin loop=5 0 .15 0 -.15 0');
     // named cells (the vibrato and the envelopes are unnamed: petals of the mix)
-    expect(g.nodes.filter((n) => !n.petalOf && !n.cell.note).map((n) => `${n.kind}:${n.id}`).sort()).toEqual(
-      ['cell:cell:bar', 'cell:cell:key', 'cell:cell:mix', 'cell:cell:pedal', 'cell:cell:scale', 'cell:cell:theme', 'voice:cell:bass', 'voice:cell:lead'].sort(),
-    );
+    expect(
+      g.nodes
+        .filter((n) => !n.petalOf && !n.cell.note)
+        .map((n) => `${n.kind}:${n.id}`)
+        .sort(),
+    ).toEqual(['cell:cell:bar', 'cell:cell:key', 'cell:cell:mix', 'cell:cell:pedal', 'cell:cell:scale', 'cell:cell:theme', 'voice:cell:bass', 'voice:cell:lead'].sort());
     // … the lead's own (pitch=): drawn as a petal of the lead, without edges of its own
     expect(vibrato.petalOf).toBe('cell:lead');
     expect(g.edges.some((e) => e.source === vibrato.id || e.target === vibrato.id)).toBe(false);
@@ -229,7 +268,11 @@ describe('modulation: &mix_ [(&theme + &vibrato) * &voice]\n&out_ loop=44k map=s
     const ev = events(r, 0, 2);
     expect(ev.map((e) => +e.freq.toFixed(2))).toEqual([440, 659.26]);
     // four values per quarter second: +50, 0, −50 cents relative to the start, then the next lap
-    expect(ev[0].bends.slice(0, 3).map((b) => [b.at, Math.round(b.cents)])).toEqual([[0.0625, 50], [0.125, 0], [0.1875, -50]]);
+    expect(ev[0].bends.slice(0, 3).map((b) => [b.at, Math.round(b.cents)])).toEqual([
+      [0.0625, 50],
+      [0.125, 0],
+      [0.1875, -50],
+    ]);
   });
   it('a static term transposes', () => {
     const r2 = compileSource('&m step=1\n&t step=&m 0\n&up 12\n&v loop=100\n&mix_ [(&t + &up) * &v]\n&out_ loop=44k map=sample &mix_');
@@ -258,13 +301,16 @@ describe('canon: Brother John', () => {
 
   it('one theme, four motifs: C D E C · E F G · G A G F E C · C G C', () => {
     const tune = line('v1', 0, 8 * bar).map(([, s]) => NAMES[((s % 12) + 12) % 12]);
-    expect(tune.join(' ')).toBe(
-      'C D E C C D E C E F G E F G G A G F E C G A G F E C C G C C G C',
-    );
+    expect(tune.join(' ')).toBe('C D E C C D E C E F G E F G G A G F E C G A G F E C C G C C G C');
   });
 
   it('each voice is the one before, two bars later', () => {
-    for (const [a, b] of [['v1', 'v2'], ['v2', 'v3'], ['v3', 'v4']]) expect(line(b, 2 * bar, 10 * bar)).toEqual(line(a, 0, 8 * bar));
+    for (const [a, b] of [
+      ['v1', 'v2'],
+      ['v2', 'v3'],
+      ['v3', 'v4'],
+    ])
+      expect(line(b, 2 * bar, 10 * bar)).toEqual(line(a, 0, 8 * bar));
   });
 
   it('all four sound together from the first bar', () => {
@@ -299,15 +345,18 @@ describe('canon per tonos', () => {
         .map((e) => ((midi(e.freq) % 12) + 12) % 12);
     for (let b = 0; b < 20; b++) {
       const v = sounding(b * beat + 0.01);
-      for (let i = 0; i < v.length; i++)
-        for (let j = i + 1; j < v.length; j++) expect([1, 11], `beat ${b + 1}`).not.toContain((v[i] - v[j] + 12) % 12);
+      for (let i = 0; i < v.length; i++) for (let j = i + 1; j < v.length; j++) expect([1, 11], `beat ${b + 1}`).not.toContain((v[i] - v[j] + 12) % 12);
     }
   });
 
   it('rises a whole tone every pass: C D E F# G# A#', () => {
     const first = (n: number) => pcs(n * pass, (n + 1) * pass, 'reed')[0][1];
     expect([0, 1, 2, 3, 4, 5].map(first)).toEqual(['C', 'D', 'E', 'F#', 'Ab', 'Bb']);
-    expect(pcs(pass, 2 * pass, 'reed').map(([, n]) => n).join(' ')).toBe('D F A Bb C# D C# C B Bb A');
+    expect(
+      pcs(pass, 2 * pass, 'reed')
+        .map(([, n]) => n)
+        .join(' '),
+    ).toBe('D F A Bb C# D C# C B Bb A');
   });
 });
 
@@ -346,9 +395,7 @@ describe('twinkle: motifs and reuse', () => {
     const notes = events(r, 0, 48 * bar - 0.01)
       .filter((e) => e.voice === 'lead')
       .map((e) => NAMES[((midi(e.freq) % 12) + 12) % 12]);
-    expect(notes.join(' ')).toBe(
-      'C C G G A A G F F E E D D C G G F F E E D G G F F E E D C C G G A A G F F E E D D C',
-    );
+    expect(notes.join(' ')).toBe('C C G G A A G F F E E D D C G G F F E E D G G F F E E D C C G G A A G F F E E D D C');
   });
 });
 
@@ -381,16 +428,32 @@ describe('volume streams (map=amp)', () => {
     expect(r.diagnostics).toEqual([]);
     const e = events(r, 0, 1.9);
     expect(e.map((x) => x.levels.map((l) => [+l.at.toFixed(2), l.level]))).toEqual([
-      [[0, 1], [0.25, 0.5], [0.5, 0], [0.75, 0.25]],
-      [[1, 1], [1.25, 0.5], [1.5, 0], [1.75, 0.25]],
+      [
+        [0, 1],
+        [0.25, 0.5],
+        [0.5, 0],
+        [0.75, 0.25],
+      ],
+      [
+        [1, 1],
+        [1.25, 0.5],
+        [1.5, 0],
+        [1.75, 0.25],
+      ],
     ]);
   });
   it('an envelope is a volume looped once per note: loop=&theme', () => {
     const r = compileSource(base + '&env map=amp loop=&t 1 .5\n' + out('&mix [&t * &env * &v]'));
     // two values per step of &t: full, then half
     expect(events(r, 0, 1.9).map((x) => x.levels.map((l) => [+l.at.toFixed(2), l.level]))).toEqual([
-      [[0, 1], [0.5, 0.5]],
-      [[1, 1], [1.5, 0.5]],
+      [
+        [0, 1],
+        [0.5, 0.5],
+      ],
+      [
+        [1, 1],
+        [1.5, 0.5],
+      ],
     ]);
   });
   it('a gate: with no pitch moving, the volume starts the notes, at its own level', () => {
@@ -415,7 +478,8 @@ describe('volume streams (map=amp)', () => {
 });
 
 describe('turning climbs; cycle= wraps', () => {
-  const src = (cycle: string) => `&m step=1\n&t step=&m 0\n&k step=cycle(&t) stride=7 ${cycle}\n&u over=&k step=&m 0\n&v s=tri loop=C4\n&mix [&u * &v]\n&out loop=SAMPLE_RATE map=sample &mix`;
+  const src = (cycle: string) =>
+    `&m step=1\n&t step=&m 0\n&k step=cycle(&t) stride=7 ${cycle}\n&u over=&k step=&m 0\n&v s=tri loop=C4\n&mix [&u * &v]\n&out loop=SAMPLE_RATE map=sample &mix`;
   const pitches = (r: R) => events(r, 0, 3.9).map((e) => midi(e.freq) - 60);
   it('without cycle= a stepped table keeps climbing: 0, 7, 14, 21', () => {
     expect(pitches(compileSource(src('')))).toEqual([0, 7, 14, 21]);
@@ -440,7 +504,12 @@ describe('unnamed cells &( … )', () => {
 &mix [(&t + &(loop=5 0 .1)) * &v]
 &out loop=SAMPLE_RATE map=sample &mix`);
     expect(r.diagnostics).toEqual([]);
-    expect([...r.cells.values()].filter((c) => c.lambda).map((c) => c.lambda).sort()).toEqual(['4 5', 'loop=5 0 .1', 'scan(2 2 1 2 2 2 1) over=&(shift=7)', 'shift=7', 'step=2']);
+    expect(
+      [...r.cells.values()]
+        .filter((c) => c.lambda)
+        .map((c) => c.lambda)
+        .sort(),
+    ).toEqual(['4 5', 'loop=5 0 .1', 'scan(2 2 1 2 2 2 1) over=&(shift=7)', 'shift=7', 'step=2']);
     // G major (the inner unnamed key), two steps a second, and the last part shifted back: 5 4
     const notes = events(r, 0, 2.4).map((e) => NAMES[midi(e.freq) % 12]);
     expect(notes).toEqual(['G', 'A', 'B', 'E', 'D']);
@@ -543,7 +612,10 @@ describe('map=adsr: an envelope per note', () => {
     expect(g.nodes.find((n) => n.cell.lambda)!.petalOf).toBe('cell:mix');
   });
   it('takes four numbers; one per note; not a pitch', () => {
-    const msgs = (s: string) => compileSource(base + s).diagnostics.map((d) => d.message).join('\n');
+    const msgs = (s: string) =>
+      compileSource(base + s)
+        .diagnostics.map((d) => d.message)
+        .join('\n');
     expect(msgs('&e map=adsr .1 .2\n&mix loop=SAMPLE_RATE map=sample [&t * &e * &v]')).toMatch(/map=adsr takes four numbers/);
     expect(msgs('&e map=adsr .1 .2 1.5 .3')).toMatch(/sustain a level/);
     expect(msgs('&e map=adsr .1 .2 .5 .3\n&f map=adsr .1 .2 .5 .3\n&mix loop=SAMPLE_RATE map=sample [&t * &e * &f * &v]')).toMatch(/One envelope per note/);
@@ -665,7 +737,10 @@ describe('a voice’s own env= and pitch=', () => {
   });
   it('one named envelope, shared by two voices', () => {
     const r = compileSource(base + '&pluck map=adsr .005 .3 0 .2\n&a s=tri loop=C4 env=&pluck\n&b s=saw loop=C3 env=&pluck\n&mix loop=SAMPLE_RATE map=sample [&t * &a, &u * &b]');
-    expect(r.outputs.map((o) => [o.voice, o.envelope?.decay])).toEqual([['a', 0.3], ['b', 0.3]]);
+    expect(r.outputs.map((o) => [o.voice, o.envelope?.decay])).toEqual([
+      ['a', 0.3],
+      ['b', 0.3],
+    ]);
   });
   it('pitch= is added to every note: a vibrato that belongs to the instrument', () => {
     const r = compileSource(base + '&v s=tri loop=C4 pitch=&(map=lin loop=4 0 .5 0 -.5 0)\n&mix loop=SAMPLE_RATE map=sample [&t * &v]');
@@ -675,7 +750,10 @@ describe('a voice’s own env= and pitch=', () => {
     expect(e.bends.some((b) => b.ramp)).toBe(true);
   });
   it('take the right kind of cell', () => {
-    const msgs = (s: string) => compileSource(base + s).diagnostics.map((d) => d.message).join('\n');
+    const msgs = (s: string) =>
+      compileSource(base + s)
+        .diagnostics.map((d) => d.message)
+        .join('\n');
     expect(msgs('&p 0 1\n&v s=tri env=&p')).toMatch(/env= takes a volume/);
     expect(msgs('&v s=tri pitch=&(map=adsr .1 .1 .5 .1)')).toMatch(/pitch= takes a pitch/);
     expect(msgs('&v s=tri env=&nope')).toMatch(/Unknown cell &nope/);
@@ -783,7 +861,9 @@ describe('Metronome: any meter — the bar written as levels (meter(…)), read 
 describe('five more examples', () => {
   const P = PRESETS as Record<string, { source: string }>;
   const notes = (r: R, voice: string, from: number, to: number) =>
-    events(r, from, to).filter((e) => e.voice === voice).map((e) => NAMES[((midi(e.freq) % 12) + 12) % 12]);
+    events(r, from, to)
+      .filter((e) => e.voice === voice)
+      .map((e) => NAMES[((midi(e.freq) % 12) + 12) % 12]);
 
   it('Korobeiniki: the tune on a 25% pulse; an arpeggio on the chords', () => {
     const r = compileSource(P.korobeiniki.source);
@@ -793,7 +873,12 @@ describe('five more examples', () => {
     const w = waveform(r, 'pulse', codeShifts(r), 64);
     expect(w.filter((x) => x > 0).length / w.length).toBeCloseTo(0.25, 1); // high a quarter of the cycle
     // the chords move it (the changes), and its own pitch= arpeggiates them
-    expect(r.outputs.find((o) => o.voice === 'square')!.mods.map((m) => m.cell.startsWith('λ') ? 'arpeggio' : m.cell).sort()).toEqual(['arpeggio', 'changes']);
+    expect(
+      r.outputs
+        .find((o) => o.voice === 'square')!
+        .mods.map((m) => (m.cell.startsWith('λ') ? 'arpeggio' : m.cell))
+        .sort(),
+    ).toEqual(['arpeggio', 'changes']);
   });
 
   it('Coltrane changes: the keys turn B → G → Eb → B, a bar each', () => {
@@ -810,7 +895,10 @@ describe('five more examples', () => {
     const r = compileSource(P.bossa.source);
     expect(r.diagnostics).toEqual([]);
     const sixteenth = 60 / 128 / 4;
-    const at = (voice: string) => events(r, 0, 32 * sixteenth - 1e-3).filter((e) => e.voice === voice).map((e) => Math.round(e.at / sixteenth));
+    const at = (voice: string) =>
+      events(r, 0, 32 * sixteenth - 1e-3)
+        .filter((e) => e.voice === voice)
+        .map((e) => Math.round(e.at / sixteenth));
     expect(at('click')).toEqual([0, 3, 6, 10, 13, 16, 19, 22, 26, 29]);
     expect([...new Set(at('guitar'))]).toEqual([0, 3, 6, 10, 13, 16, 19, 22, 26, 29]);
   });
@@ -819,7 +907,9 @@ describe('five more examples', () => {
     const r = compileSource(P.bell.source);
     expect(r.diagnostics).toEqual([]);
     const pulse = 60 / 100 / 3;
-    const strokes = events(r, 0, 12 * pulse - 1e-3).filter((e) => e.voice === 'gankogui').map((e) => Math.round(e.at / pulse));
+    const strokes = events(r, 0, 12 * pulse - 1e-3)
+      .filter((e) => e.voice === 'gankogui')
+      .map((e) => Math.round(e.at / pulse));
     expect(strokes).toEqual([0, 2, 4, 5, 7, 9, 11]); // x.x.xx.x.x.x
     const song = events(r, 0, 24 * pulse - 1e-3).filter((e) => e.voice === 'voice');
     // the melody lands on the bell's strokes …
@@ -834,7 +924,10 @@ describe('five more examples', () => {
     const r = compileSource(P.prelude.source);
     expect(r.diagnostics).toEqual([]);
     const bar = (4 * 60) / 66;
-    const fig = (n: number) => events(r, n * bar, n * bar + bar / 2 - 1e-3).filter((e) => e.voice === 'saw').map((e) => midi(e.freq) - 60);
+    const fig = (n: number) =>
+      events(r, n * bar, n * bar + bar / 2 - 1e-3)
+        .filter((e) => e.voice === 'saw')
+        .map((e) => midi(e.freq) - 60);
     expect(fig(0)).toEqual([0, 4, 7, 12, 16, 7, 12, 16]); // C E G C E G C E
     expect(fig(1)).toEqual([0, 2, 9, 14, 17, 9, 14, 17]); // C D A D F A D F
     expect(fig(11)).toEqual([-5, -2, 4, 7, 13, 4, 7, 13]); // G Bb E G C#
@@ -871,7 +964,10 @@ describe('three more: Pachelbel, pop, IDM', () => {
     const inBar = (voice: string, n: number) => events(r, chorus + n * bar, chorus + (n + 1) * bar - 1e-3).filter((e) => e.voice === voice);
     expect([0, 1, 2, 3].map((n) => pc(inBar('bass', n)[0].freq))).toEqual(['C', 'G', 'A', 'F']);
     expect(new Set(inBar('keys', 2).map((e) => pc(e.freq)))).toEqual(new Set(['A', 'C', 'E'])); // A minor
-    const hook = (n: number) => inBar('lead', n).slice(0, 4).map((e) => pc(e.freq));
+    const hook = (n: number) =>
+      inBar('lead', n)
+        .slice(0, 4)
+        .map((e) => pc(e.freq));
     expect(hook(0)).toEqual(['G', 'G', 'A', 'G']); // degrees 4 4 5 4
     expect(hook(2)).toEqual(['A', 'A', 'B', 'A']); // the same hook, a step up the scale
   });
@@ -903,7 +999,10 @@ describe('other grids: Carlos’ alpha, a study after Studie II', () => {
   it('Alpha: triads that ring true — 5 steps ≈ 5:4, 9 = 3:2 — and no octave', () => {
     const r = compileSource(P.alpha.source);
     expect(r.diagnostics).toEqual([]);
-    const first = events(r, 0, 0.1).filter((e) => e.voice === 'pad').map((e) => e.freq).sort((a, b) => a - b);
+    const first = events(r, 0, 0.1)
+      .filter((e) => e.voice === 'pad')
+      .map((e) => e.freq)
+      .sort((a, b) => a - b);
     expect(first[1] / first[0]).toBeCloseTo(Math.pow(1.5, 5 / 9), 6); // ≈ 1.253 (5:4 is 1.25)
     expect(first[2] / first[0]).toBeCloseTo(1.5, 6); // a pure fifth
   });
@@ -913,7 +1012,10 @@ describe('other grids: Carlos’ alpha, a study after Studie II', () => {
     const step = Math.pow(5, 1 / 25);
     const fwd = events(r, 0, 60).filter((e) => e.voice === 'swell');
     // the first sound: a mixture of five sines one step apart, from 100 Hz
-    const firstMix = fwd.filter((e) => e.at === fwd[0].at).map((e) => e.freq).sort((a, b) => a - b);
+    const firstMix = fwd
+      .filter((e) => e.at === fwd[0].at)
+      .map((e) => e.freq)
+      .sort((a, b) => a - b);
     expect(firstMix).toHaveLength(5);
     firstMix.forEach((f, i) => expect(f).toBeCloseTo(100 * Math.pow(step, i), 6));
     // durations in the ratios of the series
@@ -921,7 +1023,10 @@ describe('other grids: Carlos’ alpha, a study after Studie II', () => {
     const durs = starts.slice(1).map((t, i) => t - starts[i]);
     expect(durs.map((d) => +(d / durs[0]).toFixed(2))).toEqual([1, 1.9, 1.38, 3.62, 2.63]);
     // the second player: the last mixture first (spacing 5, from step 20), eight steps up
-    const bwd = events(r, 0, 1).filter((e) => e.voice === 'fade').map((e) => e.freq).sort((a, b) => a - b);
+    const bwd = events(r, 0, 1)
+      .filter((e) => e.voice === 'fade')
+      .map((e) => e.freq)
+      .sort((a, b) => a - b);
     expect(bwd[0]).toBeCloseTo(100 * Math.pow(step, 28), 6);
     expect(bwd[1] / bwd[0]).toBeCloseTo(Math.pow(step, 5), 6);
   });
@@ -975,7 +1080,7 @@ describe('Bach, Prelude and Fugue in C minor, BWV 847: every note, against the e
   it('compiles clean', () => expect(r.diagnostics).toEqual([]));
   // what sounds, voice by voice: onset and length in sixteenths (back through the tempo map), semitones from C4
   const tm = timeMap(r, r.clocks.get('tempo')!, codeShifts(r));
-  const lap = (tm.q(1120) - tm.q(0)) - 1e-3;
+  const lap = tm.q(1120) - tm.q(0) - 1e-3;
   const sounding = events(r, 0, lap);
   const VOICE: Record<string, string> = { rh: 'saw', lh: 'pulse', soprano: 'reed', alto: 'brass', bass: 'moog' };
   for (const line of ['rh', 'lh', 'soprano', 'alto', 'bass']) {
@@ -1018,7 +1123,9 @@ describe('sound parameters that move', () => {
   });
   it('a range times an envelope: per note, from the bottom to the top — the top scaled by an accent', () => {
     const e = play(base + '&acc step=&bar 1 .5 1 .25\n&v s=saw lpf=200..3200 * &(map=adsr .005 .2 .1 .1) * &acc' + mix);
-    expect(e.map((x) => x.params!.lpf)).toEqual([1, 0.5, 1, 0.25].map((a) => ({ kind: 'env', from: 200, peak: 200 + 3000 * a, attack: 0.005, decay: 0.2, sustain: 0.1, release: 0.1 })));
+    expect(e.map((x) => x.params!.lpf)).toEqual(
+      [1, 0.5, 1, 0.25].map((a) => ({ kind: 'env', from: 200, peak: 200 + 3000 * a, attack: 0.005, decay: 0.2, sustain: 0.1, release: 0.1 })),
+    );
   });
   it('several parameters at once, and resonance too', () => {
     const e = play(base + '&q step=&bar 2 12 2 12\n&v s=saw lpf=200..3200 * &(map=adsr .005 .2 .1 .1) lpq=&q' + mix);
@@ -1026,7 +1133,10 @@ describe('sound parameters that move', () => {
     expect(e.map((x) => (x.params!.lpq.kind === 'points' ? x.params!.lpq.points[0].value : null))).toEqual([2, 12, 2, 12]);
   });
   it('says what it needs', () => {
-    const msg = (s: string) => compileSource(base + s + mix).diagnostics.map((d) => d.message).join(' | ');
+    const msg = (s: string) =>
+      compileSource(base + s + mix)
+        .diagnostics.map((d) => d.message)
+        .join(' | ');
     expect(msg('&v s=saw lpf=&nope')).toMatch(/Unknown cell &nope/);
     expect(msg('&v s=saw lpf=&(map=adsr .01 .1 .5 .1)')).toMatch(/give it a range: lpf=200..3000 \* &env/);
     expect(msg('&e1 map=adsr .01 .1 .5 .1\n&e2 map=adsr .01 .1 .5 .1\n&v s=saw lpf=1..2 * &e1 * &e2')).toMatch(/one envelope \(map=adsr\) at most/);
@@ -1058,9 +1168,21 @@ describe('IDM, Acid-Cell, Zelluläre Aktivität: parameters that move, in pieces
       const chord = new Set(ev.filter((e) => e.voice === 'pad1').map((e) => pc(e.freq)));
       const lead = ev.filter((e) => e.voice === 'bleep').map((e) => pc(e.freq));
       expect(lead.length).toBeGreaterThan(0);
-      expect(lead.every((n) => chord.has(n)), `bars ${twoBars * 2 + 1}–${twoBars * 2 + 2}: ${lead} in ${[...chord]}`).toBe(true);
+      expect(
+        lead.every((n) => chord.has(n)),
+        `bars ${twoBars * 2 + 1}–${twoBars * 2 + 2}: ${lead} in ${[...chord]}`,
+      ).toBe(true);
     }
-    const chordAt = (n: number) => [...new Set(events(r, n * 2 * bar, n * 2 * bar + 0.1).filter((e) => e.voice === 'pad1').map((e) => pc(e.freq)))].sort().join(' ');
+    const chordAt = (n: number) =>
+      [
+        ...new Set(
+          events(r, n * 2 * bar, n * 2 * bar + 0.1)
+            .filter((e) => e.voice === 'pad1')
+            .map((e) => pc(e.freq)),
+        ),
+      ]
+        .sort()
+        .join(' ');
     expect(chordAt(0)).not.toBe(chordAt(1));
     const acid = events(r, 0, bar - 1e-3).filter((e) => e.voice === 'saw303');
     expect(acid.every((e) => e.params?.lpf.kind === 'env')).toBe(true);
@@ -1092,9 +1214,18 @@ describe('IDM, Acid-Cell, Zelluläre Aktivität: parameters that move, in pieces
     const full = 4 * 8 * bar; // the fifth section: everything plays (each section starts the parts again)
     const first = (voice: string, n: number) => pc(events(r, full + n * bar, full + (n + 1) * bar - 1e-3).find((e) => e.voice === voice)!.freq);
     expect([0, 2, 4, 6].map((n) => first('bass', n))).toEqual(['A', 'F', 'C', 'G']);
-    const chords = [['A', 'C', 'E'], ['F', 'A', 'C'], ['C', 'E', 'G'], ['G', 'B', 'D']];
+    const chords = [
+      ['A', 'C', 'E'],
+      ['F', 'A', 'C'],
+      ['C', 'E', 'G'],
+      ['G', 'B', 'D'],
+    ];
     chords.forEach((chord, k) => {
-      const notes = new Set(events(r, full + 2 * k * bar, full + (2 * k + 2) * bar - 1e-3).filter((e) => e.voice === 'arpeggio').map((e) => pc(e.freq)));
+      const notes = new Set(
+        events(r, full + 2 * k * bar, full + (2 * k + 2) * bar - 1e-3)
+          .filter((e) => e.voice === 'arpeggio')
+          .map((e) => pc(e.freq)),
+      );
       expect([...notes].sort()).toEqual([...chord].sort());
     });
     expect(r.cells.get('lead')!.params.delaytime).toBeCloseTo(60 / 112, 5); // an echo a beat later
@@ -1160,7 +1291,9 @@ describe('selectors: reading a table of parts splices', () => {
 &w s=sine loop=C4
 &out loop=SAMPLE_RATE map=sample &song`;
   const notes = (r: R, from: number, to: number, voice: string) =>
-    events(r, from, to - 1e-3).filter((e) => e.voice === voice).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + 0); // (+ 0: no −0)
+    events(r, from, to - 1e-3)
+      .filter((e) => e.voice === voice)
+      .map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + 0); // (+ 0: no −0)
   it('picks parts by number; a chord layers them; a rest is silence', () => {
     const r = compileSource(src('0 [0,1] ~ 1'));
     expect(r.diagnostics).toEqual([]);
@@ -1229,18 +1362,20 @@ describe('Korobeiniki in Tetris form', () => {
   const pc = (f: number) => NAMES[((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12];
   it('A · A · B · B · A — and round again', () => {
     const who = (n: number) => [...new Set(events(r, n * sec, (n + 1) * sec - 1e-3).map((e) => e.voice))].sort().join(' ');
-    expect([0, 1, 2, 3, 4, 5].map(who)).toEqual([
-      'pulse tri',
-      'noise pulse square tri',
-      'pulse50 square tri',
-      'noise pulse50 square tri',
-      'noise pulse square tri',
-      'pulse tri',
-    ]);
+    expect([0, 1, 2, 3, 4, 5].map(who)).toEqual(['pulse tri', 'noise pulse square tri', 'pulse50 square tri', 'noise pulse50 square tri', 'noise pulse square tri', 'pulse tri']);
   });
   it('B, our own: half notes, each bar’s first note in its chord (Am, Em …)', () => {
     const bar = sec / 8;
-    const chords = [['A', 'C', 'E'], ['E', 'G', 'B'], ['A', 'C', 'E'], ['E', 'G', 'B'], ['A', 'C', 'E'], ['E', 'G', 'B'], ['A', 'C', 'E'], ['A', 'C', 'E']];
+    const chords = [
+      ['A', 'C', 'E'],
+      ['E', 'G', 'B'],
+      ['A', 'C', 'E'],
+      ['E', 'G', 'B'],
+      ['A', 'C', 'E'],
+      ['E', 'G', 'B'],
+      ['A', 'C', 'E'],
+      ['A', 'C', 'E'],
+    ];
     const lead = events(r, 2 * sec, 3 * sec - 1e-3).filter((e) => e.voice === 'pulse50');
     expect(lead).toHaveLength(15);
     // the bar's first note sits in its chord (bar 2's A over Em: a suspension, resolving to G)
@@ -1281,7 +1416,14 @@ describe('Cellscape: a cycle of twelve', () => {
     expect(who(12)).toBe(who(0));
   });
   it('each scene a fifth from the last: all twelve keys, and home', () => {
-    const root = (n: number) => pc(Math.min(...events(r, n * sec, n * sec + 0.1).filter((e) => e.voice === 'padv').map((e) => e.freq)));
+    const root = (n: number) =>
+      pc(
+        Math.min(
+          ...events(r, n * sec, n * sec + 0.1)
+            .filter((e) => e.voice === 'padv')
+            .map((e) => e.freq),
+        ),
+      );
     expect(Array.from({ length: 13 }, (_, n) => root(n))).toEqual(['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'Ab', 'Eb', 'Bb', 'F', 'C']);
   });
   it('the canon agrees with itself wherever its voices start notes (in every key it passes)', () => {
@@ -1336,7 +1478,14 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
     const b = play('0? 4? 7? 11?', 50).ev.map((e) => [e.at, e.freq]);
     expect(a).toEqual(b);
     const { ev } = play('0? 4? 7? 11?', 50);
-    const lapsSeen = new Set(Array.from({ length: 50 }, (_, lap) => ev.filter((e) => Math.floor(e.at / 0.4 + 1e-9) === lap).map((e) => semis(e.freq)).join(' ')));
+    const lapsSeen = new Set(
+      Array.from({ length: 50 }, (_, lap) =>
+        ev
+          .filter((e) => Math.floor(e.at / 0.4 + 1e-9) === lap)
+          .map((e) => semis(e.freq))
+          .join(' '),
+      ),
+    );
     expect(lapsSeen.size).toBeGreaterThan(8);
     // a seed throws differently
     const seeded = play('0? 4? 7? 11?', 50, ' seed=7').ev.map((e) => [e.at, e.freq]);
@@ -1395,16 +1544,26 @@ describe('Cellscape II feat. Stockhausen', () => {
     expect(new Set(['constellations', 'glints', 'ripples'].map((n) => r.cells.get(n)!.clock)).size).toBe(3);
   });
   it('chance: the mixtures differ from pass to pass — and every playing is the same', () => {
-    const pass = (k: number) => events(r, k * 100, (k + 1) * 100 - 1e-6).filter((e) => e.voice === 'sine' && e.gains[0] > 0).map((e) => `${(e.at - k * 100).toFixed(2)}:${e.freq.toFixed(1)}`).join(' ');
+    const pass = (k: number) =>
+      events(r, k * 100, (k + 1) * 100 - 1e-6)
+        .filter((e) => e.voice === 'sine' && e.gains[0] > 0)
+        .map((e) => `${(e.at - k * 100).toFixed(2)}:${e.freq.toFixed(1)}`)
+        .join(' ');
     expect(new Set([0, 1, 2, 3].map(pass)).size).toBeGreaterThan(1);
     expect(events(compileSource(src), 0, 240).map((e) => e.freq)).toEqual(ev.map((e) => e.freq));
   });
   it('the mirror: the mixtures backwards, 8 steps higher (when it sounds, its first is the last, raised)', () => {
-    const first = events(r, 0, 9).filter((e) => e.voice === 'sine' && e.gains[1] > 0).map((e) => Math.round(25 * Math.log(e.freq / 100) / Math.log(5)));
+    const first = events(r, 0, 9)
+      .filter((e) => e.voice === 'sine' && e.gains[1] > 0)
+      .map((e) => Math.round((25 * Math.log(e.freq / 100)) / Math.log(5)));
     if (first.length) expect(first.sort((a, b) => a - b)).toEqual([9, 13, 17, 21, 25]); // [1,5,9,13,17] + 8
   });
   it('the glints’ chance is a slider', () => {
-    expect(parse(src).cells.find((c) => c.name === 'glints')!.frees!.map((f) => f.key)).toEqual(['chance']);
+    expect(
+      parse(src)
+        .cells.find((c) => c.name === 'glints')!
+        .frees!.map((f) => f.key),
+    ).toEqual(['chance']);
   });
 });
 
@@ -1423,7 +1582,13 @@ describe('Baustelle', () => {
   });
   it('each metal rings at its own partials (inharmonic: no octaves in a beam)', () => {
     const chord = (voice: string, n: number) => {
-      const fs = [...new Set(events(r, 3 * sec, 4 * sec).filter((e) => e.voice === voice).map((e) => +e.freq.toFixed(3)))].sort((a, b) => a - b);
+      const fs = [
+        ...new Set(
+          events(r, 3 * sec, 4 * sec)
+            .filter((e) => e.voice === voice)
+            .map((e) => +e.freq.toFixed(3)),
+        ),
+      ].sort((a, b) => a - b);
       return fs.slice(0, n).map((f) => +(f / fs[0]).toFixed(3));
     };
     expect(chord('beamv', 4)).toEqual([1, 2.756, 5.404, 8.933]);
@@ -1437,7 +1602,11 @@ describe('Baustelle', () => {
   });
   it('the hand: the metal varies from bar to bar (chance), the same every playing', () => {
     const bar = sec / 4;
-    const hits = (k: number) => events(r, k * bar, (k + 1) * bar - 1e-6).filter((e) => e.voice === 'beamv').map((e) => (e.at - k * bar).toFixed(3)).join(' ');
+    const hits = (k: number) =>
+      events(r, k * bar, (k + 1) * bar - 1e-6)
+        .filter((e) => e.voice === 'beamv')
+        .map((e) => (e.at - k * bar).toFixed(3))
+        .join(' ');
     expect(new Set([0, 1, 2, 3, 4, 5, 6, 7].map(hits)).size).toBeGreaterThan(1);
     expect(events(compileSource((PRESETS as Record<string, { source: string }>).baustelle.source), 0, 20).length).toBe(events(r, 0, 20).length);
   });
@@ -1456,11 +1625,21 @@ describe('five more: Cell in Focus, Hypercell, One more Cell, Cellular Brothers,
   it('Cell in Focus: the bells play the chord under them (Dmaj7 · Bm9 · Gmaj7 · A6), and it loops', () => {
     const r = R('focus');
     const four = (16 * 60) / 62;
-    const chords = [['D', 'F#', 'A', 'C#'], ['B', 'D', 'F#', 'A', 'C#'], ['G', 'B', 'D', 'F#'], ['A', 'C#', 'E', 'F#']];
+    const chords = [
+      ['D', 'F#', 'A', 'C#'],
+      ['B', 'D', 'F#', 'A', 'C#'],
+      ['G', 'B', 'D', 'F#'],
+      ['A', 'C#', 'E', 'F#'],
+    ];
     chords.forEach((c, k) => {
-      const bells = events(r, k * four, (k + 1) * four - 1e-3).filter((e) => e.voice === 'bell').map((e) => pc(e.freq));
+      const bells = events(r, k * four, (k + 1) * four - 1e-3)
+        .filter((e) => e.voice === 'bell')
+        .map((e) => pc(e.freq));
       expect(bells.length).toBeGreaterThan(10);
-      expect(bells.every((n) => c.includes(n)), `chord ${k + 1}: ${[...new Set(bells)]}`).toBe(true);
+      expect(
+        bells.every((n) => c.includes(n)),
+        `chord ${k + 1}: ${[...new Set(bells)]}`,
+      ).toBe(true);
     });
     expect(plan(r, codeShifts(r)).end).toBe(Infinity);
   });
@@ -1477,11 +1656,19 @@ describe('five more: Cell in Focus, Hypercell, One more Cell, Cellular Brothers,
     const r = R('onemore');
     const bar = 240 / 122;
     ['F', 'G', 'A', 'Bb'].forEach((root, k) => {
-      const c = [...new Set(events(r, 2 * k * bar, 2 * k * bar + bar / 4 - 1e-3).filter((e) => e.voice === 'keys').map((e) => pc(e.freq)))];
+      const c = [
+        ...new Set(
+          events(r, 2 * k * bar, 2 * k * bar + bar / 4 - 1e-3)
+            .filter((e) => e.voice === 'keys')
+            .map((e) => pc(e.freq)),
+        ),
+      ];
       const i = NAMES.indexOf(root);
       expect(c.sort()).toEqual([0, 4, 7, 11].map((d) => NAMES[(i + d) % 12]).sort());
     });
-    const levels = events(r, 0, bar - 1e-3).filter((e) => e.voice === 'keys').map((e) => e.levels[0].level);
+    const levels = events(r, 0, bar - 1e-3)
+      .filter((e) => e.voice === 'keys')
+      .map((e) => e.levels[0].level);
     expect(Math.max(...levels)).toBeGreaterThan(2 * Math.min(...levels)); // ducked on the beat, open after
   });
   it('Cellular Brothers: break, bass, acid, builds, all — and it ends', () => {
@@ -1529,7 +1716,11 @@ describe('FM: fm=&op, ratio=, index=', () => {
     expect(compileSource(base + '&a s=sine ratio=2\n&b s=sine ratio=1 fm=&a\n&car s=sine fm=&b' + mix).diagnostics).toEqual([]);
     const loop = compileSource(base + '&a s=sine ratio=2 fm=&car\n&car s=sine fm=&a' + mix);
     expect(loop.diagnostics.map((d) => d.message).join()).toMatch(/FM chains can't loop/);
-    expect(compileSource(base + '&car s=sine fm=&t' + mix).diagnostics.map((d) => d.message).join()).toMatch(/a modulator is a voice/);
+    expect(
+      compileSource(base + '&car s=sine fm=&t' + mix)
+        .diagnostics.map((d) => d.message)
+        .join(),
+    ).toMatch(/a modulator is a voice/);
   });
   it('Cell Tines compiles clean, and every voice sounds', () => {
     const r = compileSource((PRESETS as Record<string, { source: string }>).tines.source);
@@ -1542,7 +1733,10 @@ describe('Cell Phase: a ratio of clocks, not a nudged tempo', () => {
   const r = compileSource((PRESETS as Record<string, { source: string }>).phase.source);
   it('compiles clean', () => expect(r.diagnostics).toEqual([]));
   it('the right player is a note ahead every 81 of its notes, and in unison again after 81 rounds', () => {
-    const at = (voice: string) => events(r, 0, 200).filter((e) => e.voice === voice).map((e) => e.at);
+    const at = (voice: string) =>
+      events(r, 0, 200)
+        .filter((e) => e.voice === voice)
+        .map((e) => e.at);
     const L = at('pianoL');
     const R = at('pianoR');
     expect(R[81]).toBeCloseTo(L[80], 9); // 81 of the right's notes take as long as 80 of the left's
@@ -1599,6 +1793,10 @@ describe('DTMF: a number typed, then dialled — spell(free("…"), &keys, "name
     expect(r.cells.get('k')!.frees[0].labels).toEqual(['a', 'b', 'c', 'd']);
     const errors = (code: string) => compileSource(code).diagnostics.filter((d) => d.severity === 'error');
     expect(errors('&k shift=free(0, 0..6, "a b c d") 0 1 2 3')).toEqual([]); // every 2nd
-    expect(errors('&k shift=free(0, 0..4, "a b c d") 0 1 2 3').map((d) => d.message).join()).toMatch(/4 names need 3 equal whole steps/);
+    expect(
+      errors('&k shift=free(0, 0..4, "a b c d") 0 1 2 3')
+        .map((d) => d.message)
+        .join(),
+    ).toMatch(/4 names need 3 equal whole steps/);
   });
 });

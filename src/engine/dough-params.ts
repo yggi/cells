@@ -1,7 +1,5 @@
 import { PARAMS } from './attributes';
 
-export { MOVING_PARAMS, TIME_PARAMS } from './attributes';
-
 /**
  * The parameters voices and physical cells understand, with what each means (from the table in
  * attributes.ts). Written as attributes: `&lead s=saw lpf=1800 room=.3` (its envelope is a cell:
@@ -42,8 +40,7 @@ export const canonical = (key: string) => DOUGH_ALIASES[key] ?? key;
 /** Parameters that are gone, and what says the same thing now. */
 const ENVELOPE = (k: string) =>
   `${k}= is gone: an envelope is a cell — in the mix, &theme * &(map=adsr .01 .3 .5 .4) * &lead, or an instrument, &lead [&(map=adsr .01 .3 .5 .4) * &saw]`;
-const PITCH_DROP = (k: string) =>
-  `${k}= is gone: a pitch drop is a pitch shape, an envelope in semitones — penv=30 pdec=.04 is pitch=0..30 * &(map=adsr 0 .04 0 0)`;
+const PITCH_DROP = (k: string) => `${k}= is gone: a pitch drop is a pitch shape, an envelope in semitones — penv=30 pdec=.04 is pitch=0..30 * &(map=adsr 0 .04 0 0)`;
 export const RETIRED_PARAMS: Readonly<Record<string, string>> = {
   attack: ENVELOPE('attack'),
   decay: ENVELOPE('decay'),

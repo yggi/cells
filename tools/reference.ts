@@ -37,8 +37,7 @@ export function entries(): Syntax[] {
     const a = CORE[key];
     return syntax('attribute', KEYS[key].form, meaning(a), KEYS[key].examples, a.doc);
   };
-  const parameter = ([key, a]: [string, Attribute]): Syntax =>
-    syntax('parameter', paramForm(key, a), meaning(a), [], a.doc);
+  const parameter = ([key, a]: [string, Attribute]): Syntax => syntax('parameter', paramForm(key, a), meaning(a), [], a.doc);
   return [
     ...LINE_SYNTAX,
     ...STEP_SYNTAX,
@@ -68,29 +67,41 @@ export function renderReference(): string {
   const out = [
     '# Syntax reference',
     '',
-    'Every form the parser reads, what it means and an example: generated from the parser\'s own tables (`src/engine/parser/`, with `src/engine/attributes.ts`), so it says what the parser does. The topic pages explain at length; each entry links its page. Don\'t edit this page: change the tables and record it with `UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts`. Every example here is parsed by that test.',
+    "Every form the parser reads, what it means and an example: generated from the parser's own tables (`src/engine/parser/`, with `src/engine/attributes.ts`), so it says what the parser does. The topic pages explain at length; each entry links its page. Don't edit this page: change the tables and record it with `UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts`. Every example here is parsed by that test.",
     '',
-    (Object.keys(SECTIONS) as Section[]).map((s) => `[${SECTIONS[s]}](#${SECTIONS[s].toLowerCase().replace(/[^a-z0-9 =-]/g, '').replace(/[ =]/g, '-')})`).join(' · '),
+    (Object.keys(SECTIONS) as Section[])
+      .map(
+        (s) =>
+          `[${SECTIONS[s]}](#${SECTIONS[s]
+            .toLowerCase()
+            .replace(/[^a-z0-9 =-]/g, '')
+            .replace(/[ =]/g, '-')})`,
+      )
+      .join(' · '),
   ];
   for (const section of Object.keys(SECTIONS) as Section[]) {
     out.push('', `## ${SECTIONS[section]}`, '');
     if (section === 'attribute')
       out.push(
-        `An attribute is \`key=value\`, anywhere on a cell's line, each at most once (\`step=\` and \`loop=\` are one setting). What the values of \`step=\`, \`loop=\` and \`map=\` can be is above. \`show=\` takes one of: ${SHOWS.map((k) => `\`${k}\` (${SHOW_MEANING[k]})`).join(', ')}; ${Object.entries(SHOW_CONVENTIONS)
+        `An attribute is \`key=value\`, anywhere on a cell's line, each at most once (\`step=\` and \`loop=\` are one setting). What the values of \`step=\`, \`loop=\` and \`map=\` can be is above. \`show=\` takes one of: ${SHOWS.map((k) => `\`${k}\` (${SHOW_MEANING[k]})`).join(', ')}; ${Object.entries(
+          SHOW_CONVENTIONS,
+        )
           .map(([k, cs]) => `\`${k}:\` ${cs.map(code).join(', ')}`)
           .join('; ')}.`,
         '',
       );
     if (section === 'parameter')
       out.push(
-        `Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Dough's other names still read, with a warning: ${Object.entries(DOUGH_ALIASES)
+        `Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Dough's other names still read, with a warning: ${Object.entries(
+          DOUGH_ALIASES,
+        )
           .map(([k, v]) => `\`${k}\` → \`${v}\``)
           .join(', ')}.`,
         '',
       );
     if (section === 'sort')
       out.push(
-        "Every cell has a sort, decided by its own line, never by where it is written in a mix; the first rule that holds decides (`src/engine/compiler/sorts.ts`). How the sorts combine with `+` and `*` is on [mix.md](mix.md#the-algebra-of-a-mix).",
+        'Every cell has a sort, decided by its own line, never by where it is written in a mix; the first rule that holds decides (`src/engine/compiler/sorts.ts`). How the sorts combine with `+` and `*` is on [mix.md](mix.md#the-algebra-of-a-mix).',
         '',
       );
     for (const e of all.filter((x) => x.section === section)) {
@@ -100,4 +111,3 @@ export function renderReference(): string {
   }
   return out.join('\n') + '\n';
 }
-

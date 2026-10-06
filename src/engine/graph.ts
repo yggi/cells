@@ -119,8 +119,7 @@ export function buildGraph(result: CompileResult): GraphModel {
       link({ id: edgeId(cellId(c.params.fm), id), source: cellId(c.params.fm), target: id, kind: 'out', count: 1, pick: 'fm' });
     // a voice's moving parameters: their cells feed it (lpf, lpq …)
     for (const [key, pc] of Object.entries(c.paramCells ?? {}))
-      for (const f of pc.factors)
-        if (result.cells.has(f)) link({ id: edgeId(cellId(f), id), source: cellId(f), target: id, kind: 'out', count: 1, pick: key });
+      for (const f of pc.factors) if (result.cells.has(f)) link({ id: edgeId(cellId(f), id), source: cellId(f), target: id, kind: 'out', count: 1, pick: key });
     for (const [child, count] of c.children) {
       // its transpositions (^n), as written in this cell's steps
       const ups = [...new Set(c.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === child && u.atom.transpose ? [u.atom.transpose] : [])))];
@@ -130,7 +129,15 @@ export function buildGraph(result: CompileResult): GraphModel {
     for (const target of c.about) if (result.cells.has(target)) link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), kind: 'about', count: 1, pick: '' });
     if (c.step)
       // (a belt says so: the cell follows through a spring, not rigidly)
-      link({ id: stepEdgeId(id, cellId(c.step.driver)), source: id, target: cellId(c.step.driver), kind: 'step', count: 1, pick: '', label: typeof c.params.belt === 'number' ? `${c.step.label} · belt` : c.step.label });
+      link({
+        id: stepEdgeId(id, cellId(c.step.driver)),
+        source: id,
+        target: cellId(c.step.driver),
+        kind: 'step',
+        count: 1,
+        pick: '',
+        label: typeof c.params.belt === 'number' ? `${c.step.label} · belt` : c.step.label,
+      });
   }
   // voices into their mixes (labelled with the gain when it isn't 1)
   for (const c of result.cells.values())

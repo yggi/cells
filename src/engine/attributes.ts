@@ -85,7 +85,10 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   ratio: sound('as a modulator: its frequency against its carrier’s (1 the same, 3.5 a bell)', { doc: 'physics.md', on: ['modulator'] }),
   index: sound('FM depth: how far the modulator swings the frequency (0 none … 10 bright); it can move', { doc: 'physics.md', on: ['carrier'], moves: true }),
   // resonators (voices too)
-  body: sound('a resonator: what its exciters are — fork, bell, bar, plate, box, tine, pipe, wire, spring; its braid lists them (semitones; the twelve by default), a note plucks the nearest', { doc: 'physics.md', value: 'word' }),
+  body: sound(
+    'a resonator: what its exciters are — fork, bell, bar, plate, box, tine, pipe, wire, spring; its braid lists them (semitones; the twelve by default), a note plucks the nearest',
+    { doc: 'physics.md', value: 'word' },
+  ),
   ring: sound('a resonator: how long it rings, in seconds', { doc: 'physics.md' }),
   hard: sound('a resonator: the mallet — 0 felt (dark), 1 steel (bright)', { doc: 'physics.md' }),
   board: physics('a resonator: the body its exciters share (box by default, an octave below; none: no board)', ['resonator'], { value: 'word' }),
@@ -121,9 +124,19 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   wander: physics('a read head: how far it wanders either way (tape-seconds) — a flying head', ['head']),
   wanderhz: physics('a read head: how fast it wanders (times a second)', ['head']),
   // scopes
-  scope: { help: 'a scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels', doc: 'display.md', value: 'word', on: ['scope'] },
+  scope: {
+    help: 'a scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels',
+    doc: 'display.md',
+    value: 'word',
+    on: ['scope'],
+  },
   fold: { help: 'a spectrum or waterfall: pitches folded by this stride into as many bins (12: by pitch class, the default)', doc: 'display.md', value: 'number', on: ['scope'] },
-  bins: { help: 'a spectrum or waterfall without a fold: this many bands, low to high (1 a meter, 3 low-mid-high, 20 an equaliser)', doc: 'display.md', value: 'number', on: ['scope'] },
+  bins: {
+    help: 'a spectrum or waterfall without a fold: this many bands, low to high (1 a meter, 3 low-mid-high, 20 an equaliser)',
+    doc: 'display.md',
+    value: 'number',
+    on: ['scope'],
+  },
   channels: { help: 'a spectrum or waterfall: sum (one, the default) or split (each channel its own)', doc: 'display.md', value: 'word', on: ['scope'] },
   // laws
   law: { help: 'a law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music)', doc: 'time.md', value: 'word', on: ['law'] },

@@ -46,7 +46,10 @@ function readAt(result: CompileResult, statics: Shifts, name: string, t: number,
 export function valueAt(result: CompileResult, statics: Shifts, name: string, t: number, clk?: Clocking): number | null {
   const r = readAt(result, statics, name, t, clk);
   if (!r) return null;
-  const { s, hit: { flat } } = r;
+  const {
+    s,
+    hit: { flat },
+  } = r;
   const i = flat.findIndex((e) => s >= e.step && s < e.step + e.duration);
   if (i < 0) return null;
   const e = flat[i];
