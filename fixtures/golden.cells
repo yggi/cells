@@ -3,11 +3,11 @@
 &bar scan(27 23 26 24) step=free(96bpm, 60..160)
 &key shift=free(0, -6..6)
 &mode over=&key scan(2 2 1 2 2 2 1)
-&blues scan(3 2 1 1 3 2)
+&blues scan(3 2 1 1 3 2) show=brightness
 &alpha cycle=9 map=ed(3/2)
 # melodies, a pattern of levels, a slow wobble
 &up 0 0 4 4 5 5 4@2
-&theme over=&mode step=&bar 0 2 4 7 4 2 0@2
+&theme over=&mode step=&bar 0 2 [0,4] 7 4 2 [0,2,4]@2
 &tune over=scale(0,5) step=96bpm show=do &up &up
 &walk over=&blues step=96bpm 0 1 2 3
 &drone over=&alpha step=48bpm 0 3 6
@@ -31,8 +31,8 @@
 &near play=&tape at=.375
 &hits step=24bpm 1 ~ ~ ~
 &forkA body=fork loop=A4 ring=10 hard=.35 board=none 0
-# the day, and a scope on the voice
-&cycle law=fiveto12 anchor=11.55 step=84bpm
-&sun sun=&cycle
+# the day (a day meter, drawn as the sun) and the law that reads it; a scope on the voice
+&day scan(1!24) loop=1d anchor=11.55 show=sun
+&cycle law=fiveto12 over=&day step=84bpm
 &light scope=spectrum &flute
 &out level=4 loop=SAMPLE_RATE map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&tetris, &hits * &forkA * .5, &hats * &hh * .1]

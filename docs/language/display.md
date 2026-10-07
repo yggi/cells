@@ -37,10 +37,10 @@ The first cell with `title=` is the piece's card: its title names the piece (and
 
 | kind | shows (first is plain) |
 |---|---|
-| voice | `spectrum` `wave` (one cycle) `petal` `off` |
+| voice | `wave` (its waveform: one cycle, the sound while it plays) `spectrum` `petal` `off` |
 | braid | `braid` `pattern` `notes` `midi` `do` `degrees` `petal` `off` |
-| table | `table` `scale` `mode` `key` + the note shows |
-| meter | `meter` `pattern` · grid: `grid` `table` · envelope: `adsr` `table` |
+| table | `table` `scale` `mode` `key` `brightness` (each segment shaded by how bright its mode is) + the note shows |
+| meter | `meter` `pattern` `sun` (a day meter as a 24-hour dial, noon at the top) · grid: `grid` `table` · envelope: `adsr` `table` |
 | volume | `levels` (bars) `braid` `pattern` · oscillation: `lfo` `levels` `braid` |
 | selector | `matrix` (a ring per part, a pin where it plays) `braid` `pattern` |
 

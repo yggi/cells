@@ -140,8 +140,12 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   channels: { help: 'a spectrum or waterfall: sum (one, the default) or split (each channel its own)', doc: 'display.md', value: 'word', on: ['scope'] },
   // laws
   law: { help: 'a law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music)', doc: 'time.md', value: 'word', on: ['law'] },
-  anchor: { help: 'a law: the time of day it starts (hours.minutes — 11.55); play begins where the clock stands', doc: 'time.md', value: 'number', on: ['law'] },
-  sun: { help: 'the sun of a day (sun=&cycle): a 24-hour dial — noon at the top, midnight at the bottom; stopped, turn it to choose the moment', doc: 'time.md', value: 'cell' },
+  anchor: {
+    help: 'a clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands',
+    doc: 'time.md',
+    value: 'number',
+    on: ['clock'],
+  },
 };
 
 /** Every attribute: the core ones, then the parameters. */

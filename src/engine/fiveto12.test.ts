@@ -106,4 +106,18 @@ describe('5 to 12 in the studio: law=fiveto12 plays the day', () => {
     expect(pieceTime(r).ends).toBe(86400);
     expect(sections(r)!.map((s) => s.label.split(' · ')[0])).toEqual(DAY_MODES.map((m) => MODE_NAMES[m]));
   });
+
+  it('reads the day it plays in (over=&day): a day anchored two hours on plays the law two hours on', async () => {
+    const { compileSource } = await import('./compile');
+    const { codeShifts } = await import('./program');
+    const { eventsBetween, plan } = await import('./realize');
+    const piece = (anchor: string) =>
+      `&day scan(1!24) loop=1d anchor=${anchor}\n&cycle law=fiveto12 over=&day step=84bpm\n&v s=tri loop=C4\n&out loop=SAMPLE_RATE map=sample [&cycle * &v]`;
+    const at = (src: string, from: number) => {
+      const r = compileSource(src);
+      expect(r.diagnostics).toEqual([]);
+      return eventsBetween(plan(r, codeShifts(r)), from, from + 12 * SECONDS_PER_STEP - 1e-6).map((e) => [+(e.at - from).toFixed(6), +e.freq.toFixed(3)]);
+    };
+    expect(at(piece('13.55'), 0)).toEqual(at(piece('11.55'), 7200));
+  });
 });

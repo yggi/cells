@@ -63,6 +63,10 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `step=free(r, lo..hi)` · `step=free(marking)`: A rate left free: a slider, with units (free(90bpm, 60..240)), or a tempo marking (free(adagio)). [→](free.md) `&bar scan(4 4 4 4) step=free(90bpm, 60..240)` · `&bar scan(4 4 4 4) step=free(adagio)`
 - `nbpm`: n a minute: beats on a meter (its steps, unless beat= or meter(…) say how many make a beat). [→](time.md) `&bar scan(4 4 4 4) step=84bpm`
 - `nhz`: n a second (a plain number says the same). [→](time.md) `&a loop=440hz`
+- `nmin`: n a minute (wall-clock time: loop=1min turns once a minute). [→](time.md) `&tick scan(1!60) loop=1min`
+- `nh`: n an hour. [→](time.md) `&hour scan(1!60) loop=1h`
+- `nd`: n a day: a day meter, loop=1d (anchor= where it stands when play starts). [→](time.md) `&day scan(1!24) loop=1d anchor=11.55`
+- `nwk`: n a week. [→](time.md) `&week scan(1!7) loop=1wk`
 - `nk`: n thousand a second: a sample rate. [→](mix.md) `&out loop=44.1k map=sample &mix`
 
 ## map=
@@ -79,7 +83,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 
 ## Attributes
 
-An attribute is `key=value`, anywhere on a cell's line, each at most once (`step=` and `loop=` are one setting). What the values of `step=`, `loop=` and `map=` can be is above. `show=` takes one of: `braid` (steps, coloured by pitch), `pattern` (rhythm only: hits and rests), `notes` (note names: C4 D4 E4), `midi` (MIDI numbers: 60 62 64), `do` (movable do: do re mi from the tonic), `degrees` (scale degrees: 1 2 3), `table` (its entries as numbers), `scale` (a scale: its mode on its tonic), `mode` (its mode: major, minor, Dorian …), `key` (a key: its tonic), `grid` (a grid: steps to its period), `meter` (a meter: beats to the bar), `spectrum` (the sound: a spectral waterfall), `wave` (one cycle of its waveform), `levels` (its levels, as bars), `adsr` (an envelope curve), `mix` (the voices it mixes), `note` (a note in the graph: its label), `petal` (small, hung from the cell that uses it), `off` (hidden from the graph), `matrix` (a barrel of pins: a ring per part, a pin where it plays), `lfo` (one cycle of its movement, round the ring, at its rate); `notes:` `flats`, `sharps`, `german`; `do:` `fixed`, `movable`.
+An attribute is `key=value`, anywhere on a cell's line, each at most once (`step=` and `loop=` are one setting). What the values of `step=`, `loop=` and `map=` can be is above. `show=` takes one of: `braid` (steps, coloured by pitch), `pattern` (rhythm only: hits and rests), `notes` (note names: C4 D4 E4), `midi` (MIDI numbers: 60 62 64), `do` (movable do: do re mi from the tonic), `degrees` (scale degrees: 1 2 3), `table` (its entries as numbers), `scale` (a scale: its mode on its tonic), `mode` (its mode: major, minor, Dorian …), `key` (a key: its tonic), `grid` (a grid: steps to its period), `meter` (a meter: beats to the bar), `spectrum` (the sound: a spectral waterfall), `wave` (its waveform: one cycle, and the sound itself while it plays), `levels` (its levels, as bars), `adsr` (an envelope curve), `mix` (the voices it mixes), `note` (a note in the graph: its label), `petal` (small, hung from the cell that uses it), `off` (hidden from the graph), `matrix` (a barrel of pins: a ring per part, a pin where it plays), `lfo` (one cycle of its movement, round the ring, at its rate), `sun` (a day meter as the sun: a 24-hour dial, noon at the top), `brightness` (its modes by brightness: each degree shaded by the mode that starts on it (Lydian bright … Locrian dark)); `notes:` `flats`, `sharps`, `german`; `do:` `fixed`, `movable`.
 
 - `over=&table` · `over=&table[<<n]` · `over=scale(tonic, phase)`: The table its numbers read. [→](tables.md) `&tune over=&major step=2 0 2 4` · `&mode over=&major[<<2] 0 2 4` · `&tune over=scale(9, 2) step=2 0 2 4`
 - `step=…`: What moves it, step by step. [→](time.md) `&tune step=&bar 0 2 4`
@@ -155,8 +159,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `bins=n` · `bins=free(n, lo..hi)`: A spectrum or waterfall without a fold: this many bands, low to high (1 a meter, 3 low-mid-high, 20 an equaliser) — on a scope (scope=) [→](display.md)
 - `channels=word`: A spectrum or waterfall: sum (one, the default) or split (each channel its own) — on a scope (scope=) [→](display.md)
 - `law=word`: A law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music) — on a law (law=) [→](time.md)
-- `anchor=n` · `anchor=free(n, lo..hi)`: A law: the time of day it starts (hours.minutes — 11.55); play begins where the clock stands — on a law (law=) [→](time.md)
-- `sun=&cell`: The sun of a day (sun=&cycle): a 24-hour dial — noon at the top, midnight at the bottom; stopped, turn it to choose the moment. [→](time.md)
+- `anchor=n` · `anchor=free(n, lo..hi)`: A clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands — on a meter (step= a rate) [→](time.md)
 
 ## Sorts: what a cell is in a mix
 

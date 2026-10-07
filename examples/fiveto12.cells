@@ -6,10 +6,12 @@
 # 5 to 12 — law=fiveto12 computes every note of the day: 84 steps a minute, 70 bars of 12/8 to a
 # key, each key's row derived from it. Phrase by phrase, the five operations — translation,
 # rotation, inversion, retrograde, multiplication (the Apple: ×5 mod 7) — each move their own
-# dimension; the second half of every key mirrors the first. anchor=11.55: play starts where the
-# clock stands (Reset: back to 11:55). &sun shows the day (stopped, turn it to choose the moment).
-&cycle law=fiveto12 anchor=11.55 step=84bpm label="the law: a day"
-&sun sun=&cycle label="the sun: noon above, midnight below — east, west"
+# dimension; the second half of every key mirrors the first. &day is the day it reads (over=&day): a
+# meter of 24 hours, turning once a day (loop=1d), standing at 11:55 when play starts from the top
+# (anchor=11.55: else where the clock stands; Reset: back to 11:55). Drawn as the sun (show=sun):
+# stopped, turn it to choose the moment.
+&day scan(1!24) loop=1d anchor=11.55 show=sun label="the sun: noon above, midnight below — east, west"
+&cycle law=fiveto12 over=&day step=84bpm label="the law: a day"
 &glass s=tri loop=C4 lpf=3200 env=&(map=adsr .004 .9 .25 1.2) label="the voice"
 &present [&cycle * &glass * .3]
 

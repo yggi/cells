@@ -268,6 +268,18 @@ export function voiceFor(result: CompileResult, o: Output, value: number): { voi
 }
 
 /**
+ * A law's steps ahead of play (law=fiveto12 over=&day): where its day stands when play starts, against 11:55, the
+ * moment its day begins; 0 without a day, or with a day that starts there.
+ */
+function lawOffset(result: Plan['result'], cell: string): number {
+  const day = result.cells.get(result.cells.get(cell)?.over ?? '');
+  const anchor = day?.params.anchor;
+  if (typeof anchor !== 'number') return 0;
+  const sec = (h: number) => Math.floor(h) * 3600 + Math.round((h % 1) * 100) * 60;
+  return Math.round(((((sec(anchor) - sec(11.55)) % 86400) + 86400) % 86400) / LAW_SPS);
+}
+
+/**
  * Everything that starts in [from, to). The triggering term's pitch (tables as
  * they stand at that moment) plus every modulating term sets the voice's rate:
  * freq = voice rate × 2^(semitones / 12). Kits take the number as an index.
@@ -284,8 +296,10 @@ export function eventsBetween(p: Plan, from: number, to: number): Played[] {
     const g = liveGains(o, p.muted);
     if (!(g[0] > 0 || g[1] > 0)) continue;
     const base = p.result.cells.get(o.voice)?.freq || 261.63;
-    for (const n of lawNotes(Math.ceil(from / LAW_SPS - 1e-9), Math.ceil(to / LAW_SPS - 1e-9))) {
-      const at = n.step * LAW_SPS;
+    // (it reads the day it plays in, over=&day: where that day stands when play starts, against the law's own 11:55)
+    const off = lawOffset(p.result, o.cell);
+    for (const n of lawNotes(Math.ceil(from / LAW_SPS - 1e-9) + off, Math.ceil(to / LAW_SPS - 1e-9) + off)) {
+      const at = (n.step - off) * LAW_SPS;
       out.push({
         at,
         dur: n.dur * LAW_SPS,
