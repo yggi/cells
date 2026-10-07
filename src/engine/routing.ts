@@ -18,10 +18,10 @@
  */
 import { ROOT, type CompileResult, type Output, type ResolvedCell } from './program';
 import { tableChain } from './helix';
-import { selects } from './clocking';
 import { cellId, edgeId, stepEdgeId } from './ids';
 import { chainMuted, outputSounds } from './realize';
 import type { GraphModel } from './graph';
+import { flows } from './flows';
 
 export interface Routing {
   /** Node ids (`cell:name`). */
@@ -32,50 +32,6 @@ export interface Routing {
 
 /** A node's or an edge's state: switched off, not part of anything that sounds, part of it (stopped), not now (playing), now. */
 export type State = 'off' | 'unrouted' | 'on' | 'idle' | 'live';
-
-/** A way sound goes: from a voice (a mix, a tape head, a body) into what hears it. */
-interface Flow {
-  readonly id: string;
-  readonly from: string;
-  readonly to: string;
-}
-
-const flowCache = new WeakMap<CompileResult, Map<string, Flow[]>>();
-
-/** Every way sound can go, by where it comes from. */
-function flowsOf(result: CompileResult): Map<string, Flow[]> {
-  let hit = flowCache.get(result);
-  if (hit) return hit;
-  const out = new Map<string, Flow[]>();
-  const add = (from: string, to: string, id = edgeId(cellId(from), cellId(to))) => {
-    if (!result.cells.has(from) || !result.cells.has(to)) return;
-    (out.get(from) ?? out.set(from, []).get(from)!).push({ id, from, to });
-  };
-  const soundTapes = new Set(result.tapes.map((t) => t.name));
-  for (const c of result.cells.values()) {
-    // into a mix (a voice, an instrument, a head, a body, a mix)
-    for (const b of c.mix ?? []) add(b.voice.name, c.name);
-    // a sound card's channels, named (&out &left &right, &out &song)
-    if (c.sink) for (const k of c.children.keys()) add(k, c.name, edgeId(cellId(c.name), cellId(k)));
-    // a selector: its parts into its table of parts, the table into it
-    if (selects(result, c.name)) {
-      add(c.over!, c.name, edgeId(cellId(c.name), cellId(c.over!)));
-      for (const k of result.cells.get(c.over!)!.children.keys()) add(k, c.over!, edgeId(cellId(c.over!), cellId(k)));
-    }
-    // a sound tape: a mix onto it, the tape under each read head
-    const p = c.params;
-    if (typeof p.write === 'string' && soundTapes.has(c.name)) add(p.write, c.name);
-    if (typeof p.play === 'string' && soundTapes.has(p.play)) add(p.play, c.name);
-    // a body: a mix's sound drives it; coupled bodies ring into each other
-    if (typeof p.excite === 'string') add(p.excite, c.name);
-    if (typeof p.couple === 'string' && result.cells.has(p.couple)) {
-      add(c.name, p.couple);
-      add(p.couple, c.name, edgeId(cellId(c.name), cellId(p.couple)));
-    }
-  }
-  flowCache.set(result, (hit = out));
-  return hit;
-}
 
 /** What keeps sound: a sound tape (its loop), a resonator (its ring). */
 const keeps = (result: CompileResult, name: string) => result.tapes.some((t) => t.name === name) || typeof result.cells.get(name)?.params.body === 'string';
@@ -201,10 +157,10 @@ export interface NotesOf {
 /** The way an output's sound goes: the mixes it goes through, and the edges between them. */
 function soundOf(acc: RouteAcc, o: Output) {
   const on = new Set([sourceOf(o), ...o.through, ...o.via, ...o.select.flatMap((x) => [x.cell, acc.result.cells.get(x.cell)!.over!, x.part])]);
-  const flows = flowsOf(acc.result);
+  const from = flows(acc.result).from;
   for (const n of on) {
     acc.node(n);
-    for (const f of flows.get(n) ?? []) if (on.has(f.to)) acc.edge(f.from, f.to, f.id);
+    for (const f of from.get(n) ?? []) if (on.has(f.to)) acc.edge(f.from, f.to, f.id);
   }
 }
 
@@ -243,14 +199,14 @@ function notesOf(acc: RouteAcc, o: Output, how: NotesOf) {
  */
 function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly Output[], how: NotesOf, keeping: (name: string) => boolean): Routing {
   const acc = new RouteAcc(result, muted);
-  const flows = flowsOf(result);
+  const flowsFrom = flows(result).from;
   for (const o of outs) soundOf(acc, o);
   // what keeps sound (tapes, bodies): fed by a mix the outputs reach, struck by one, or holding its own;
   // from there, wherever it goes
   const queue: string[] = [];
   for (const c of result.cells.values()) if (keeps(result, c.name) && !acc.off(c.name) && (keeping(c.name) || acc.nodes.has(cellId(c.name)))) queue.push(c.name);
   for (const n of [...acc.nodes])
-    for (const f of flows.get(n.slice('cell:'.length)) ?? [])
+    for (const f of flowsFrom.get(n.slice('cell:'.length)) ?? [])
       if (keeps(result, f.to) && !acc.off(f.to)) {
         acc.edge(f.from, f.to, f.id);
         queue.push(f.to);
@@ -259,7 +215,7 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
     const n = queue.pop()!;
     if (done.has(n)) continue;
     done.add(n);
-    for (const f of flows.get(n) ?? [])
+    for (const f of flowsFrom.get(n) ?? [])
       if (!acc.off(f.to)) {
         acc.edge(f.from, f.to, f.id);
         queue.push(f.to);
@@ -270,7 +226,7 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
   for (const c of result.cells.values()) if (c.sink && acc.nodes.has(cellId(c.name))) heard.add(c.name);
   for (let grew = true; grew;) {
     grew = false;
-    for (const [from, fs] of flows)
+    for (const [from, fs] of flowsFrom)
       if (!heard.has(from) && acc.nodes.has(cellId(from)) && fs.some((f) => heard.has(f.to) && acc.edges.has(f.id))) {
         heard.add(from);
         grew = true;
@@ -278,7 +234,7 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
   }
   const sound = new RouteAcc(result, muted);
   for (const n of heard) sound.node(n);
-  for (const [from, fs] of flows) for (const f of fs) if (heard.has(from) && heard.has(f.to) && acc.edges.has(f.id)) sound.edges.add(f.id);
+  for (const [from, fs] of flowsFrom) for (const f of fs) if (heard.has(from) && heard.has(f.to) && acc.edges.has(f.id)) sound.edges.add(f.id);
   // the notes of what's heard, and what moves the tapes that are
   for (const o of outs) if (heard.has(sourceOf(o))) notesOf(sound, o, how);
   for (const n of heard) if (keeps(result, n)) sound.clock(n);
