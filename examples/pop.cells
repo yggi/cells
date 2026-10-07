@@ -9,7 +9,7 @@
 &roots tags="bass" over=&major step=&bar/2 0!8 4!8 5!8 3!8
 
 &hook tags="hook" 4 4 5 4                                             # the hook …
-&tune tags="hook" over=&major step=&bar/2 &hook 2@2 0@2 &hook 2@2 ~@2 &(over=&major[>>] &hook) 4@2 2@2 3 3 2 1 0@4   # … a step up in bar 3
+&tune tags="hook" over=&major step=&bar/2 &hook 2@2 0@2 &hook 2@2 ~@2 degree(&hook, 1) 4@2 2@2 3 3 2 1 0@4           # … a step up in bar 3
 
 &kick tags="drums" map=amp step=&bar 1 ~ 1 ~
 &snare tags="drums" map=amp step=&bar ~ 1 ~ 1
@@ -35,4 +35,4 @@
 &parts &hatsPart &beatPart &bassPart &keysPart &hookPart &endPart
 &song over=&parts step=&bar*16 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [0,3] [0,1,2,3]!2 [0,1,2,3,4]!2 [3,4] [0,1,2,3,4]!2 [3] 5
 
-&out level=5 loop=SAMPLE_RATE map=sample &song
+&out level=5 map=sample &song

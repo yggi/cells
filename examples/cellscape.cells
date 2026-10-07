@@ -5,12 +5,12 @@
 &bellsNote label="Bells drifting out of tune." about=&bells
 &pulseNote label="A pulse." about=&pulse
 &glassNote label="A glass shimmer." about=&shimmer
-&earsNote label="One score, read once for each ear." about=(&leftEar &rightEar)
+&earsNote label="One score of twelve scenes; each layer has its place in stereo." about=&scenes
 # Cellscape — an ambient cycle of twelve, after Bach (the canon, the circle of keys)
 # and Kraftwerk (the sequence, the filters). Every layer reads one Lydian scale, and
 # the scale's key turns a fifth with each scene: C G D A E B F# C# G# D# A# F, and home.
 &bar scan(1 1 1 1) step=free(72bpm, 50..96)
-&key step=&bar*32 stride=7 cycle=12 label="**{tonic}**, a fifth each scene"
+&key step=&bar*32 stride=7 label="**{tonic}**, a fifth each scene"
 &lydian over=&key scan(2 2 2 1 2 2 1) label="{mode} on {tonic}"
 
 # slow hands on the filters
@@ -29,31 +29,23 @@
 &shimmer tags="glass" over=&lydian step=&bar*16 label="glass" [11,13]
 
 &padv tags="drone" s=saw loop=C3 lpf=280..2400 * &breath lpq=3 room=.45 env=&(map=adsr 2 1 .8 3) pitch=&(map=lin loop=.13 0 .08 0 -.08 0)
-&arpv tags="sequence" s=square loop=C4 lpf=240..3400 * &sweep lpq=7 delaytime=&bar*3/4 delay=.35 delayfeedback=.45 env=&(map=adsr .002 .12 .2 .08)
-&voiceA tags="canon" s=tri loop=C5 lpf=2600 room=.35 env=&(map=adsr .05 .3 .7 .6)
-&voiceB tags="canon" s=saw loop=C5 lpf=1500 room=.4 env=&(map=adsr .08 .3 .7 .8)
-&bell tags="bells" s=sine loop=C5 room=.6 delaytime=&bar*3/2 delay=.4 delayfeedback=.5 env=&(map=adsr .005 1.2 0 2.5) pitch=&(map=lin loop=.07 0 .3 0 -.3 0)
+&arpv tags="sequence" pan=.18 s=square loop=C4 lpf=240..3400 * &sweep lpq=7 delaytime=&bar*3/4 delay=.35 delayfeedback=.45 env=&(map=adsr .002 .12 .2 .08)
+&voiceA tags="canon" pan=.18 s=tri loop=C5 lpf=2600 room=.35 env=&(map=adsr .05 .3 .7 .6)
+&voiceB tags="canon" pan=.82 s=saw loop=C5 lpf=1500 room=.4 env=&(map=adsr .08 .3 .7 .8)
+&bell tags="bells" pan=.83 s=sine loop=C5 room=.6 delaytime=&bar*3/2 delay=.4 delayfeedback=.5 env=&(map=adsr .005 1.2 0 2.5) pitch=&(map=lin loop=.07 0 .3 0 -.3 0)
 &bass tags="pulse" s=tri loop=C2 lpf=400..1400 * &breath env=&(map=adsr .005 .2 .4 .1)
-&glass tags="glass" s=sine loop=C5 room=.7 env=&(map=adsr 3 1 .7 4) pitch=&(map=lin loop=.11 0 .25 0 -.25 0)
+&glass tags="glass" pan=.21 s=sine loop=C5 room=.7 env=&(map=adsr 3 1 .7 4) pitch=&(map=lin loop=.11 0 .25 0 -.25 0)
 
 # the score: which layers play in each of the twelve scenes (0 drone 1 sequence 2 leader
-# 3 follower 4 bells 5 pulse 6 glass) — and two barrels reading it, one for each ear
-&scenes [0] [0,4] [0,1,4] [0,1,2] [0,1,2,3] [0,1,2,3,5] [0,2,3,4,5,6] [0,1,2,3,4,5,6] [0,3,4,6] [0,1,5,6] [0,4,6] [0,6]
+# 3 follower 4 bells 5 pulse 6 glass), a barrel turning a scene each 32 bars
 &drone tags="drone" [&pad * &padv * .14]
-&sL tags="sequence" [&arp * &arpv * .14]
-&aL tags="canon" [&melody * &voiceA * .2]
-&fL tags="canon" [&canon * &voiceB * .07]
-&bL tags="bells" [&bells * &bell * .03]
+&sequence tags="sequence" [&arp * &arpv * .14]
+&leader tags="canon" [&melody * &voiceA * .2]
+&follower tags="canon" [&canon * &voiceB * .2]
+&chimes tags="bells" [&bells * &bell * .09]
 &pulses tags="pulse" [&pulse * &bass * .25]
-&gL tags="glass" [&shimmer * &glass * .07]
-&sR tags="sequence" [&arp * &arpv * .05]
-&aR tags="canon" [&melody * &voiceA * .07]
-&fR tags="canon" [&canon * &voiceB * .2]
-&bR tags="bells" [&bells * &bell * .09]
-&gR tags="glass" [&shimmer * &glass * .03]
-&leftLayers &drone &sL &aL &fL &bL &pulses &gL
-&rightLayers &drone &sR &aR &fR &bR &pulses &gR
-&leftEar over=&leftLayers step=&bar*32 label="left ear" &scenes
-&rightEar over=&rightLayers step=&bar*32 label="right ear" &scenes
+&shine tags="glass" [&shimmer * &glass * .07]
+&layers &drone &sequence &leader &follower &chimes &pulses &shine
+&scenes over=&layers step=&bar*32 label="the scenes" [0] [0,4] [0,1,4] [0,1,2] [0,1,2,3] [0,1,2,3,5] [0,2,3,4,5,6] [0,1,2,3,4,5,6] [0,3,4,6] [0,1,5,6] [0,4,6] [0,6]
 
-&out level=8 loop=SAMPLE_RATE map=sample &leftEar &rightEar
+&out level=8 map=sample &scenes

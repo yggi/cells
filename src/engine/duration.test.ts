@@ -42,3 +42,16 @@ describe('a piece anchored to the clock', () => {
     expect(anchoredAt(compileSource(PRESETS.metronome.source), new Date())).toBeNull();
   });
 });
+
+describe('a turning table’s loop: where its turns wrap (its cycle=, else its own number of steps)', () => {
+  const piece = (table: string) => `&bar step=1 0\n${table}\n&t over=&k step=&bar 0\n&v s=sine loop=C4\n&out map=sample [&t * &v]`;
+  it('a braid of three chords, a step a second: home after three', () => {
+    expect(pieceTime(compileSource(piece('&k step=&bar [0,4,7] [2,5,9] [4,7,11]'))).cycle).toBe(3);
+  });
+  it('cycle=2 on a scale of seven: home after two, not seven', () => {
+    expect(pieceTime(compileSource(piece('&k scan(2 2 1 2 2 2 1) step=&bar stride=1 cycle=2'))).cycle).toBe(2);
+  });
+  it('a whole tone a turn with cycle=24: home after twelve (an octave after six is not home)', () => {
+    expect(pieceTime(compileSource(piece('&k step=&bar stride=2 cycle=24'))).cycle).toBe(12);
+  });
+});

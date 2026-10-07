@@ -1,19 +1,18 @@
 &piece title="Motifs and reuse: Twinkle Twinkle" tags="genre:classical, genre:folk, basics, diatonic, motifs" label="Twinkle Twinkle from three motifs, one of them read a step up the scale, in solfège." about=&mix
 # Three motifs make the whole tune. The middle line is &down again,
-# read through the scale shifted up a step (&scale[>>]).
+# a step up the scale: degree(&down, 1).
 &bar scan(27 23 26 24) step=free(96bpm, 60..160)
-&scale label="**{mode}** on {tonic}" over=scale(0,5)                 # C major, as a table we can shift
+&scale label="**{mode}** on {tonic}" over=scale(0,5)                 # C major
 
 &up label="*twinkle twinkle, little star*" 0 0 4 4 5 5 4@2                    # twin-kle twin-kle lit-tle star
 &down label="*how I wonder what you are*" 3 3 2 2 1 1 0@2                  # how I won-der what you are
-&mid label="*up above the world so high*" over=&scale[>>] &down             # up a-bove the world so high
-&tune over=&scale step=&bar show=do &up &down &mid &mid &up &down    # show=do: in solfège, motifs and all
+&mid label="*up above the world so high*" degree(&down, 1)                # up a-bove the world so high
+&tune over=&scale step=&bar show=do &up &down &mid!2 &up &down       # show=do: in solfège, motifs and all
 
 &bu 0 0 3 0
 &bd 3 0 4 0
-&bm over=&scale[>>] &bu                # the bass reuses the same trick
-&roots over=&scale step=&bar*2 &bu &bd &bm!2 &bu &bd
+&roots over=&scale step=&bar*2 &bu &bd degree(&bu, 1)!2 &bu &bd   # the bass moves the same way
 
 &lead s=tri loop=C5 env=&(map=adsr .01 .3 .4 .3)
 &bass s=sine loop=C3 env=&(map=adsr .005 .5 .5 .1)
-&mix level=4 loop=SAMPLE_RATE map=sample [&tune * &lead, &roots * &bass * 0.8]
+&mix level=4 map=sample [&tune * &lead, &roots * &bass * 0.8]

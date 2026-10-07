@@ -1,5 +1,5 @@
 /** A braid's steps: numbers, rests, chords, choices, cells (picked, shifted, transposed) and their modifiers. */
-import type { Atom, Token } from '../ast';
+import type { Atom, Token, ValueMap } from '../ast';
 import { MAX_REPS, type LineScanner } from './scanner';
 import { isMixChord, parseMixChord } from './mix';
 import { syntax, type Syntax } from './syntax';
@@ -31,14 +31,58 @@ export const STEP_SYNTAX: readonly Syntax[] = [
     ['&theme step=2 &motif &motif^7 0'],
     'braid.md',
   ),
+  syntax(
+    'step',
+    '&voice (stepped)',
+    'In a stepped braid of voices (and rests), each step plays its voice: a drum pattern by name. Chords of voices sound together, [&bd, &hh]; modifiers work as on any step. Unstepped, a braid of voices is a kit, read by number.',
+    ['&groove step=4 &bd ~ &hh [&bd, &sd] &hh*2 ~'],
+    'sound.md',
+  ),
 ];
 
-function parseAtom(s: LineScanner): Atom {
-  const c = s.peek();
-  if (c === '&') {
+/** Operations on a reference's values, by name: degree(&x, n), inverse(&x) — nested as you like. */
+export const OPERATIONS = ['degree', 'inverse'] as const;
+const OPERATION = /(degree|inverse)\(/y;
+
+type RefAtom = Extract<Atom, { kind: 'ref' }>;
+
+/** &x, or an operation on one: its values moved before its tables read them (v → mul·v + add, the outer after the inner). */
+function parseRefOrOperation(s: LineScanner): RefAtom {
+  const op = s.match(OPERATION);
+  if (op === null) {
     const r = s.ref('a cell like &motif');
     return { kind: 'ref', name: r.name, pick: r.pick, shift: r.shift, ...(r.transpose ? { transpose: r.transpose } : {}) };
   }
+  const name = op.slice(0, -1);
+  s.skipSpace();
+  if (s.peek() !== '&' && !s.text.startsWith('degree(', s.i) && !s.text.startsWith('inverse(', s.i))
+    s.fail(name === 'degree' ? 'degree(&cell, n): a cell, then how many steps of its table up (−n down)' : 'inverse(&cell): a cell, mirrored round 0', s.i);
+  const inner = parseRefOrOperation(s);
+  s.skipSpace();
+  const was: ValueMap = inner.values ?? { mul: 1, add: 0 };
+  let m: ValueMap;
+  if (name === 'degree') {
+    s.expect(',', `',' then the steps: degree(&${inner.name}, 1)`);
+    s.skipSpace();
+    const n = s.match(/-?[0-9]+(?![0-9.])/y);
+    if (n === null) s.fail(`degree(&${inner.name}, n) moves it n whole steps of its table: degree(&${inner.name}, 1), degree(&${inner.name}, -2)`, s.i);
+    m = { mul: was.mul, add: was.add + parseInt(n!, 10) };
+  } else m = { mul: was.mul === 1 ? -1 : 1, add: -was.add };
+  s.skipSpace();
+  s.expect(')', `')' to close ${name}(…)`);
+  return {
+    kind: 'ref',
+    name: inner.name,
+    pick: inner.pick,
+    shift: inner.shift,
+    ...(inner.transpose ? { transpose: inner.transpose } : {}),
+    ...(m.mul === 1 && m.add === 0 ? {} : { values: m }),
+  };
+}
+
+function parseAtom(s: LineScanner): Atom {
+  const c = s.peek();
+  if (c === '&' || s.text.startsWith('degree(', s.i) || s.text.startsWith('inverse(', s.i)) return parseRefOrOperation(s);
   if (c === '~') {
     s.i++;
     return { kind: 'rest' };

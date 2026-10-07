@@ -83,7 +83,9 @@ export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
     const turn = secondsOf(c.clock, 1 / c.rate);
     if (!turn) continue;
     const stride = Math.max(1, Math.abs(Math.round(c.stride || 1)));
-    const turns = c.cycle / Number(gcd(BigInt(c.cycle), BigInt(stride)));
+    // (where its turns wrap: its cycle=, else its own number of steps — as shiftsAt turns it)
+    const wrap = Math.max(1, Math.round(c.wrap ?? (c.units.length || c.cycle)));
+    const turns = wrap / Number(gcd(BigInt(wrap), BigInt(stride)));
     periods.push(turn * turns);
   }
   seen?.push(...periods);

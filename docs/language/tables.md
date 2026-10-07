@@ -6,7 +6,7 @@ Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's
 - **`over=scale(tonic, phase)`** is shorthand for two unnamed cells: exactly `over=&(scan(…) over=&(shift=tonic))` with the scan of `phase`. `scale(0,2)` is C Aeolian, `scale(2,3)` D Dorian, `scale(7,5)` G Ionian; the phase runs from 0, the darkest mode, to 6, the brightest (beyond is an error); the tonic is a pitch class, 0 to 11 (beyond an octave, a warning). Write the key and scale as named cells when you want to turn or step them.
 - **`shift=n`** rotates the braid by n; wrapped entries climb a lap. On a table it turns what reads through it ([time.md](time.md) for a moving shift).
 - **Picks and shifts of a table** (`over=&scale[<<]`) are on [braid.md](braid.md).
-- **Turning climbs**, like every other shift: a stepped table goes up a lap each time round. **`cycle=n`** has one job everywhere — how many before it comes round: `&key … stride=7 cycle=12` goes round the circle of fifths; per tonos' `&key … stride=2 cycle=24` rises two octaves, then starts again.
+- **A turning table comes round after its own length**: a stepped key of 12 after 12 turns (`&key … stride=7` goes round the circle of fifths), a scale after its 7, a braid of chords after its chords. Within that, a turn that wraps climbs a lap, like every shift. **`cycle=n`** has one job everywhere — how many before it comes round — and says otherwise: per tonos' `&key … stride=2 cycle=24` rises two octaves, then starts again; IDM's `cycle=2` turns twice and back ([decision 008](../decisions/008-tables-come-round.md)).
 
 ```cells
 &line step=1 over=&scale 0 2 4 2 0

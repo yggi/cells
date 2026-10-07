@@ -31,3 +31,20 @@ These read a braid *as written* or moved. They go where a braid is used — brai
 &canon [&theme * &lead, &theme[<<] * &lead, &theme[<<2] * &lead]
 &back &theme[::-1]
 ```
+
+## Operations: degrees and inversion
+
+A reference's numbers are indices into the table it is read through, so they can move before the table reads them. Two operations do that, by name; they go where a step goes, in a braid:
+
+- **`degree(&x, n)`** — &x moved n steps of its table: a degree up the scale (`degree(&x, -1)` one down, past the tonic into the octave below). Not `&x^n`, which moves grid steps after the table: over C major, `degree(&m, 1)` makes C D E into D E F, `&m^1` into C♯ D♯ F.
+- **`inverse(&x)`** — &x mirrored round its table's first entry: inversion within the scale, its steps kept (C D E into C B A). An accidental is mirrored with its note.
+- They nest, innermost first: `degree(inverse(&x), 4)` is 4 − each value, mirrored round the third degree; `inverse(inverse(&x))` is `&x`. Picks and modifiers work as on any reference: `degree(&x[::-1], 2)!2`.
+
+```cells
+&major scan(2 2 1 2 2 2 1)
+&motif 0 1 2 4
+&tune over=&major step=4 &motif degree(&motif, 1) inverse(&motif) degree(inverse(&motif), 4)
+```
+
+`degree(&x, k)` plays what a cell reading a shifted table plays (`&y over=&scale[>>k] &x`), without the cell. Mixes move pitch in semitones instead (`(&x + 12) * &lead`, [mix.md](mix.md)). The operators that may one day spell these shorter are decided together, in one pass (#10).
+

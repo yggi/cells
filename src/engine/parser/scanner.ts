@@ -24,6 +24,20 @@ export const REFERENCE_SYNTAX: readonly Syntax[] = [
   syntax('reference', '&name^n', 'In a braid, transposed: what it plays, n grid steps up (^-n down) through its tables.', ['&answer step=2 &subject^7 &subject^-12'], 'braid.md'),
   syntax(
     'reference',
+    'degree(&name, n)',
+    'In a braid, moved n steps of the table it is read through (degrees, in a scale): its values plus n, before the table reads them. n may be negative.',
+    ['&tune over=&major step=2 &motif degree(&motif, 1) degree(&motif, -2)'],
+    'braid.md',
+  ),
+  syntax(
+    'reference',
+    'inverse(&name)',
+    'In a braid, mirrored: its values negated before the table reads them (inversion within the scale, round its first degree). Operations nest: degree(inverse(&x), 4) mirrors round the third degree.',
+    ['&tune over=&major step=2 &motif inverse(&motif) degree(inverse(&motif), 4)'],
+    'braid.md',
+  ),
+  syntax(
+    'reference',
     '&( … )',
     'An unnamed cell, written where it is used, with attributes and a braid of its own.',
     ['&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)'],

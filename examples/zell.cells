@@ -1,7 +1,7 @@
 # Zelluläre Aktivität — in the manner of Kraftwerk, an original. Am – F – C – G, two
 # bars each. The bass's octaves move through the chords by transposing (&oct^-4: four
-# semitones down, F); the arpeggio by reading the scale shifted (over=&minor[>>5]: the
-# same shape on its sixth step) — chromatic and diatonic, side by side. A slow filter
+# semitones down, F); the arpeggio by moving its shape up the scale (degree(&shape, 5):
+# the same shape on its sixth step) — chromatic and diatonic, side by side. A slow filter
 # sweep over the arpeggio; a plain melody with echoes in time.
 &piece title="Zelluläre Aktivität" tags="genre:electronic, artist:Kraftwerk, diatonic, arrangement" label="**Zelluläre Aktivität** — it builds, layer by layer, and ends." about=&out
 &aufbauNote label="It builds, layer by layer: &lied reads the parts, eight bars a step." about=&lied
@@ -16,11 +16,7 @@
 &bassline tags="bass" step=&bar/2 label="Bass: Oktaven" &oct!2 &oct^-4!2 &oct^3!2 &oct^-2!2   # A · F · C · G
 
 &shape tags="arpeggio" 0 2 4 7                                               # a chord's tones, up (degrees)
-&am tags="arpeggio" over=&minor &shape!4
-&f tags="arpeggio" over=&minor[>>5] &shape!4                                 # the same shape on F
-&c tags="arpeggio" over=&minor[>>2] &shape!4                                 # … on C
-&g tags="arpeggio" over=&minor[>>6] &shape!4                                 # … on G
-&arp tags="arpeggio" step=&bar/4 label="Arpeggio" &am!2 &f!2 &c!2 &g!2
+&arp tags="arpeggio" over=&minor step=&bar/4 label="Arpeggio" &shape!8 degree(&shape, 5)!8 degree(&shape, 2)!8 degree(&shape, 6)!8   # on A, F, C, G
 &sweep tags="arpeggio" map=lin loop=&bar*16 .1 1 .1
 
 &melody tags="melody" over=&minor step=&bar label="Melodie" 4@2 2 1 0@4 5@2 4 2 4@4 2@2 1 0 1@4 6@2 4 3 4@4
@@ -45,4 +41,4 @@
 &teile &ticksPart &beatPart &bassPart &arpPart &melodyPart
 &lied over=&teile step=&bar*32 laps=1 label="Aufbau: Klick · Bass · Takt · Arpeggio · Melodie · Pause · alles · Klick" 0 [0,2] [0,1,2] [0,1,2,3] [0,1,2,3,4] [2,3] [0,1,2,3,4] 0
 
-&out level=5 loop=SAMPLE_RATE map=sample &lied
+&out level=5 map=sample &lied

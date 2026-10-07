@@ -21,6 +21,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `[a, b, c]` · `[a b c]`: A chord: the numbers sound together, in one step. [→](time.md) `&chords step=1 [0,2,4] [3 5 7]`
 - `[a|b|c]`: A choice: one of them, chosen afresh each time round (the same every time it is played). [→](braid.md) `&tune step=2 0 [2|4|7] 4`
 - `&x`: A cell, spliced in: its braid plays in this one's step (as long as its own steps). Picks, shifts and transposing are under References. [→](braid.md) `&theme step=2 &motif &motif^7 0`
+- `&voice (stepped)`: In a stepped braid of voices (and rests), each step plays its voice: a drum pattern by name. Chords of voices sound together, [&bd, &hh]; modifiers work as on any step. Unstepped, a braid of voices is a kit, read by number. [→](sound.md) `&groove step=4 &bd ~ &hh [&bd, &sd] &hh*2 ~`
 
 ## Modifiers
 
@@ -36,6 +37,8 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `&name[a:b]` · `&name[a:b:s]`: A slice, Python-style: from a up to b (either may be left out), every s-th; [::-1] backwards (retrograde). [→](braid.md) `&tune step=2 &motif[1:3] &motif[:-1] &motif[::-1] &motif[::2]`
 - `&name[<<n]` · `&name[>>n]`: Shifted back or forward n places (1 if left out), on top of its own shift=: rotating it, climbing the helix. [→](braid.md) `&canon step=2 &theme[>>4]` · `&mode over=&scale[<<] 0 2 4`
 - `&name^n`: In a braid, transposed: what it plays, n grid steps up (^-n down) through its tables. [→](braid.md) `&answer step=2 &subject^7 &subject^-12`
+- `degree(&name, n)`: In a braid, moved n steps of the table it is read through (degrees, in a scale): its values plus n, before the table reads them. n may be negative. [→](braid.md) `&tune over=&major step=2 &motif degree(&motif, 1) degree(&motif, -2)`
+- `inverse(&name)`: In a braid, mirrored: its values negated before the table reads them (inversion within the scale, round its first degree). Operations nest: degree(inverse(&x), 4) mirrors round the third degree. [→](braid.md) `&tune over=&major step=2 &motif inverse(&motif) degree(inverse(&motif), 4)`
 - `&( … )`: An unnamed cell, written where it is used, with attributes and a braid of its own. [→](cell.md) `&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)`
 
 ## Generators
@@ -117,6 +120,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `delay=n` · `delay=free(n, lo..hi)` · `delay=&x` · `delay=lo..hi * &a * &b`: Delay send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar/2 (an eighth at the tempo) — on a voice; it makes the cell a voice. [→](sound.md)
 - `delayfeedback=n` · `delayfeedback=free(n, lo..hi)`: Echo feedback 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
+- `pan=n` · `pan=free(n, lo..hi)`: Where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades — on a voice; it makes the cell a voice. [→](sound.md)
 - `distort=n` · `distort=free(n, lo..hi)`: Distortion: 0 clean, .3 gritty, 1 and more harsh — on a voice; it makes the cell a voice. [→](sound.md)
 - `crush=n` · `crush=free(n, lo..hi)`: Bit depth: 16 clean, 8 grainy, 3 and fewer: rubble — on a voice; it makes the cell a voice. [→](sound.md)
 - `fm=&cell`: Frequency modulation: the voice that modulates this one (fm=&op); it may have its own fm= — on a voice; it makes the cell a voice. [→](physics.md)

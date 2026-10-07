@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SAILOR_WITH_KIT } from './fixtures';
 import { waveform } from './wave';
 import { setFree } from './edit';
 import { meterLevels } from './parser';
@@ -244,7 +245,7 @@ describe('graph', () => {
   });
 
   it('labels shifted references; containers sit outside their parts; voices outermost', () => {
-    const g = buildGraph(compileSource(PRESETS.sailor.source));
+    const g = buildGraph(compileSource(SAILOR_WITH_KIT));
     expect(g.edges.find((e) => e.id === 'cell:B->cell:lead')!.pick).toBe('[<<]');
     const g2 = buildGraph(compileSource('&m step=1\n&x step=&m 0 1 2\n&v loop=440\n&mix_ [&x[1:] * &v]\n&out_ loop=44k map=sample &mix_'));
     expect(g2.edges.find((e) => e.id === 'cell:x->cell:v')!.pick).toBe('[1:]');
@@ -477,15 +478,28 @@ describe('volume streams (map=amp)', () => {
   });
 });
 
-describe('turning climbs; cycle= wraps', () => {
+describe('a turning table comes round after its own length; cycle= says otherwise (#10 F6)', () => {
   const src = (cycle: string) =>
     `&m step=1\n&t step=&m 0\n&k step=cycle(&t) stride=7 ${cycle}\n&u over=&k step=&m 0\n&v s=tri loop=C4\n&mix [&u * &v]\n&out loop=SAMPLE_RATE map=sample &mix`;
   const pitches = (r: R) => events(r, 0, 3.9).map((e) => midi(e.freq) - 60);
-  it('without cycle= a stepped table keeps climbing: 0, 7, 14, 21', () => {
-    expect(pitches(compileSource(src('')))).toEqual([0, 7, 14, 21]);
-  });
-  it('with cycle=12 it wraps round: 0, 7, 2, 9', () => {
+  it('without cycle= the 12 comes round after 12: 0, 7, 2, 9 — the same as cycle=12', () => {
+    expect(pitches(compileSource(src('')))).toEqual([0, 7, 2, 9]);
     expect(pitches(compileSource(src('cycle=12')))).toEqual([0, 7, 2, 9]);
+  });
+  it('cycle=24 climbs a lap on the way round: 0, 7, 14, 21', () => {
+    expect(pitches(compileSource(src('cycle=24')))).toEqual([0, 7, 14, 21]);
+  });
+  it('a braid of chords comes round after its chords: the Prelude without its cycle=', () => {
+    // (as the Prelude was written before: one table of 95 numbers, turned five at a time, cycle= its length)
+    const p = PRESETS.prelude.source;
+    const line = /^&chords step=&bar\*4 (\[.*)$/m.exec(p)!;
+    const n = line[1]
+      .replace(/[[\],]/g, ' ')
+      .trim()
+      .split(/\s+/);
+    const strided = p.replace(line[0], `&chords step=&bar*4 stride=5 cycle=${n.length} ${n.join(' ')}`);
+    const all = (src: string) => events(compileSource(src), 0, 150).map((e) => `${e.at.toFixed(4)} ${e.freq.toFixed(2)}`);
+    expect(all(p)).toEqual(all(strided));
   });
   it('per tonos rises a whole tone a pass — and an octave after six', () => {
     const r = compileSource(PRESETS.pertonos.source);

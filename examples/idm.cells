@@ -2,15 +2,15 @@
 &hatsNote label="The hats run seven against four." about=&hats
 &harmonyNote label="One harmony and one breath for pad, acid and lead." about=(&lydian &breath)
 # Intelligent dance music, in the manner of Aphex Twin — an original. A breakbeat
-# read through a kit, every other bar its retrograde ([::-1]); ratchets (2*3: a
+# of voices, every other bar its retrograde ([::-1]); ratchets (&ch*3: a
 # sixteenth split in three); hats seven against four. One harmony for all: the
 # Lydian scale turns a step every two bars, and pad, acid and lead all read it;
 # one breath: a slow filter sweep moves the pad and the lead together.
 &bar scan(1 1 1 1) step=free(160bpm, 110..200)
 &lydian scan(2 2 2 1 2 2 1) step=&bar*8 stride=1 cycle=2 label="the harmony: **{mode}** on {tonic}"   # C, then D: a step every two bars
 
-&pat 0 ~ 2 2*2 1 ~ 0 2 ~ 0 1 2*3 ~ 0 1*4 1*4               # 0 kick, 1 snare, 2 hat — a bar of sixteenths
-&break over=&kit step=&bar/4 &pat &pat[::-1]               # … then the same bar backwards
+&pat &bd ~ &ch &ch*2 &sd ~ &bd &ch ~ &bd &sd &ch*3 ~ &bd &sd*4!2   # a bar of sixteenths
+&break step=&bar/4 &pat &pat[::-1]                         # … then the same bar backwards
 &hats map=amp step=&bar*4/7 .6 .3 .4 .3 .5 .3 .4           # seven to the bar
 &pad over=&lydian step=&bar*8 [0,2,4,6]                    # the chord, as the scale turns
 &bleeps over=&lydian step=&bar/3 7 ~ 9 11 ~ 13 ~ 11 ~ ~ 9 ~ # the lead: the chord's own tones, in triplets
@@ -22,11 +22,10 @@
 &bd s=sine loop=A1 pitch=0..36 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)
 &sd s=white hpf=900 env=&(map=adsr 0 .1 0 .04)
 &ch s=white hpf=9000 env=&(map=adsr 0 .025 0 .01)
-&kit &bd &sd &ch
 &tick s=white hpf=11000 env=&(map=adsr 0 .015 0 .01)
 &bleep s=tri loop=C5 lpf=800..5000 * &breath delaytime=&bar*3/4 delay=.3 delayfeedback=.4 room=.25 env=&(map=adsr .003 .12 .3 .1)
 &saw303 s=saw loop=C2 lpf=150..2600 * &(map=adsr .002 .16 .12 .06) * &accent lpq=12 env=&(map=adsr .002 .12 .4 .05)
 &pad1 s=saw loop=C4 lpf=500..2200 * &breath env=&(map=adsr 1.2 .5 .7 2) pitch=&(map=lin loop=.3 0 .15 0 -.15 0)
 
-&mix level=-0.5 loop=SAMPLE_RATE map=sample [&break * .7, &hats * &tick * .2, &bleeps * &bleep * .3,
+&mix level=-0.5 map=sample [&break * .7, &hats * &tick * .2, &bleeps * &bleep * .3,
                                   &acid * &accent * &saw303 * .4, &pad * &pad1 * .14]

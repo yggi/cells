@@ -8,7 +8,7 @@
 
 &blues scan(3 2 1 1 3 2)                               # C Eb F F# G Bb
 &penta scan(3 2 2 3 2)                                 # C Eb F G Bb
-&changes loop=&bar*48 0 0 0 0 5 5 0 0 7 5 0 7          # I I I I · IV IV I I · V IV I V, a bar each
+&changes step=&bar*4 0!4 5!2 0!2 7 5 0 7               # I I I I · IV IV I I · V IV I V, a bar each
 
 &riff 0 1 2 3 4 ~ 5 4 ~ ~ 2 1 0 ~@3                    # two bars — it stays put over the IV, as a blues riff does
 &turn over=&penta 3 ~ 4 3 2 1 0 ~ 2 ~@3 1 0 ~ ~ 0 ~ 1 2 3 ~ 5 ~ 4 3 2 1 0@4
@@ -23,7 +23,7 @@
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .2 .2)
 &cym s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
 
-&mix level=5 loop=SAMPLE_RATE map=sample [&lick * &horn * .5,
+&mix level=5 map=sample [&lick * &horn * .5,
                                   (&walk + &changes) * &bass * .8,
                                   (&comp + &changes) * &keys * .35,
                                   &ride * &cym * .25]

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SAILOR_WITH_KIT } from './fixtures';
 import { compileSource } from './compile';
 import { codeShifts, type CompileResult } from './program';
 import { buildGraph } from './graph';
@@ -65,7 +66,7 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     expect([second.get('v->partB'), second.get('v->partA'), second.get('partA')]).toEqual(['live', 'idle', 'idle']);
   });
   it('a kit: its members are part of the sound, and the one struck now is live', () => {
-    const r = compileSource(PRESETS.sailor.source);
+    const r = compileSource(SAILOR_WITH_KIT);
     expect(['bd', 'sd', 'hh', 'kit', 'drums'].every((n) => on(r).nodes.has(`cell:${n}`))).toBe(true);
     const s = states(r, 0.05); // the kick
     expect([s.get('kit->bd'), s.get('bd'), s.get('kit->hh'), s.get('hh')]).toEqual(['live', 'live', 'idle', 'idle']);

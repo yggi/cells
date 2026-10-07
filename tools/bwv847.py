@@ -1,6 +1,6 @@
 """
 Write the BWV 847 example from the encoding, with its structure: the prelude's
-figuration as one figure read through two turning tables of four notes a bar;
+figuration as one figure read through two braids of four-note chords, one a bar;
 its later sections as cells; the fugue as its subject and countersubject,
 entered in each voice at their transpositions, with the free counterpoint
 between them as cells of their own. Writes examples/bwv847.cells (written in full, then shortened by tools/shorten.mjs) and the
@@ -44,6 +44,10 @@ def notes(path):
             ev.append((on, d, ps))
         out.append((sum(sum(x[2]) / len(x[2]) for x in ev) / len(ev), sorted(ev)))
     return [e for _, e in sorted(out, key=lambda x: -x[0])]
+
+def chords(shapes, k=4):
+    """A table of chords, k notes each, as a braid of chords: a figure reads the one under it by index."""
+    return ' '.join('[' + ','.join(map(str, shapes[i:i + k])) + ']' for i in range(0, len(shapes), k))
 
 def tokens(ev, start, end):
     """Notes (onset, dur, pitches) in [start, end) as braid tokens, rests filled."""
@@ -168,8 +172,8 @@ src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered
 
 # ---- the prelude
 &figure tags="figuration" 0 1 2 1 3 1 2 1                          # the figure: top, middle, low, middle, bottom, middle, low, middle
-&rhShapes tags="figuration" step=&tempo*16 stride=4 cycle=280 show=notes label="right hand: four notes a bar" {' '.join(map(str, rhS))}
-&lhShapes tags="figuration" step=&tempo*16 stride=4 cycle=280 show=notes label="left hand: four notes a bar" {' '.join(map(str, lhS))}
+&rhShapes tags="figuration" step=&tempo*16 show=notes label="right hand: four notes a bar" {chords(rhS)}
+&lhShapes tags="figuration" step=&tempo*16 show=notes label="left hand: four notes a bar" {chords(lhS)}
 &rhFigure tags="right hand" over=&rhShapes label="bars 1–24, right hand: the figure, twice a bar" &figure!48
 &lhFigure tags="left hand" over=&lhShapes label="bars 1–24, left hand" &figure!48
 """ + '\n'.join(f'&rh{n} tags="right hand" label="right hand · {lab}" {tokens(rh, a, b)}' for n, a, b, lab in SECTIONS) + '\n' + \
@@ -187,14 +191,13 @@ src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered
 &bass tags="bass" step=&tempo label="fugue · bass" &tacetPrelude {' '.join(lines['bass'])}
 
 # the synthesizer: a voice for each line, as Carlos gave each its own patch
-&saw s=saw loop=C4 lpf=2600 lpq=6 env=&(map=adsr .002 .15 .45 .12)
-&pulse loop=C4 lpf=1800 env=&(map=adsr .002 .15 .5 .1) 0 0 0 1
-&reed s=square loop=C4 lpf=2000 env=&(map=adsr .01 .2 .6 .15) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
-&brass s=saw loop=C4 lpf=1500 lpq=4 env=&(map=adsr .02 .2 .7 .15)
-&moog s=saw loop=C4 lpf=700 lpq=10 env=&(map=adsr .005 .25 .5 .1)
+&saw pan=.2 s=saw loop=C4 lpf=2600 lpq=6 env=&(map=adsr .002 .15 .45 .12)
+&pulse pan=.8 loop=C4 lpf=1800 env=&(map=adsr .002 .15 .5 .1) 0 0 0 1
+&reed pan=.2 s=square loop=C4 lpf=2000 env=&(map=adsr .01 .2 .6 .15) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
+&brass pan=.73 s=saw loop=C4 lpf=1500 lpq=4 env=&(map=adsr .02 .2 .7 .15)
+&moog pan=.67 s=saw loop=C4 lpf=700 lpq=10 env=&(map=adsr .005 .25 .5 .1)
 
-&out level=10 loop=SAMPLE_RATE map=sample [&rh * &saw * .3, &lh * &pulse * .12, &soprano * &reed * .25, &alto * &brass * .12, &bass * &moog * .2] [
-                                  &rh * &saw * .12, &lh * &pulse * .3, &soprano * &reed * .1, &alto * &brass * .22, &bass * &moog * .3]"""
+&out level=10 map=sample [&rh * &saw * .3, &lh * &pulse * .3, &soprano * &reed * .25, &alto * &brass * .22, &bass * &moog * .3]"""
 # ---- a layout that shows the structure: the lines in a row, each line's parts below it in order (time reads
 # downward), shared material where the parts that use it can reach it
 X = {'rh': -4.4, 'lh': -2.3, 'soprano': 0.4, 'alto': 3.0, 'bass': 5.6}

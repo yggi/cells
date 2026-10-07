@@ -19,4 +19,4 @@
 # stereo: two mixes for the two channels of the sound card
 &left  [&theme * &reed * 0.45, &alto * &viola * 0.3, (&alto[<<] - 7) * &cello * 0.35]
 &right [&theme * &reed * 0.25, &alto * &viola * 0.12, (&alto[<<] - 7) * &cello * 0.9]
-&out level=2.5 loop=SAMPLE_RATE map=sample &left &right      # the cello a bar behind, a fifth below
+&out level=2.5 map=sample &left &right                       # the cello a bar behind, a fifth below

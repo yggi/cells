@@ -18,8 +18,7 @@
 &lower step=&bar/2 ~@80 &under ~@80 &under                     # the bass: in pass 3, and again under the free line
 
 &organ loop=C4 map=lin 0 1 env=&(map=adsr .03 .25 .7 .6)        # one pipe, one breath: the theme
-&flute s=sine loop=C4 env=&(map=adsr .03 .1 .8 .2) pitch=&(map=lin loop=5 0 .08 0 -.08 0)
-&bourdon s=tri loop=C4 lpf=900 env=&(map=adsr .02 .15 .8 .3)
+&flute pan=.28 s=sine loop=C4 env=&(map=adsr .03 .1 .8 .2) pitch=&(map=lin loop=5 0 .08 0 -.08 0)
+&bourdon pan=.7 s=tri loop=C4 lpf=900 env=&(map=adsr .02 .15 .8 .3)
 
-&out level=10 loop=SAMPLE_RATE map=sample [&theme * &organ * .5, &upper * &flute * .45, &lower * &bourdon * .3] [
-                                  &theme * &organ * .5, &upper * &flute * .25, &lower * &bourdon * .5]
+&out level=10 map=sample [&theme * &organ * .5, &upper * &flute * .45, &lower * &bourdon * .5]

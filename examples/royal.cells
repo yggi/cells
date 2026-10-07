@@ -2,8 +2,8 @@
 # Bach's royal theme. Every pass of &theme moves &key a fifth (C G D A …);
 # every full circle of &key (12 passes) moves &scale one degree.
 &bar scan(27 23 26 24) step=free(84bpm, 60..120)               # the clock: 4/4, bent * . + .
-&key step=cycle(&theme) stride=7 cycle=12   # the 12, a fifth per pass, round the circle
-&scale over=&key scan(2 1 2 2 1 2 2) step=cycle(&key) cycle=7   # Aeolian, a degree per circle, all seven
+&key step=cycle(&theme) stride=7            # the 12, a fifth per pass, round the circle
+&scale over=&key scan(2 1 2 2 1 2 2) step=cycle(&key)           # Aeolian, a degree per circle, all seven
 
 &theme over=&scale step=&bar 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
 &pedal over=&scale step=&bar*2 0              # one note every two beats
@@ -12,4 +12,4 @@
 &lead s=saw loop=C4 lpf=2200 lpq=2 room=.3 env=&(map=adsr .01 .3 .4 .4) pitch=&(map=lin loop=5 0 .15 0 -.15 0)
 &bass s=tri loop=C2 env=&(map=adsr .01 .5 .5 .3)
 
-&mix level=8 loop=SAMPLE_RATE map=sample [&theme * &lead * 0.6, &pedal * &bass * 0.7]         # the sound card: two channels, the same mix
+&mix level=8 map=sample [&theme * &lead * 0.6, &pedal * &bass * 0.7]                          # the sound card: two channels, the same mix

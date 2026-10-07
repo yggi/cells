@@ -20,6 +20,7 @@ Sound parameters use dough's names; any of them makes a cell a voice. Dough's ot
 | `hpf=` `hpq=` | high-pass cutoff (Hz) and resonance; both can move |
 | `room=` | reverb send, 0–1; can move |
 | `delay=` `delaytime=` `delayfeedback=` | echo send (0–1, can move), time (seconds or a clock), feedback (0–1) |
+| `pan=` | where it sits in stereo: 0 left, .5 centre (as without it), 1 right; the far side fades, the near one stays full |
 | `distort=` | distortion: 0 clean, .3 gritty, 1 and more harsh |
 | `crush=` | bit depth: 16 clean, 8 grainy, 3 and fewer rubble |
 
@@ -33,7 +34,18 @@ FM (`fm=` `ratio=` `index=`) and resonators (`body=` `ring=` `hard=`) are on [ph
 &lead s=saw loop=261.63 lpf=2200
 ```
 
-A braid of voices (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar/2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it.
+**A stepped braid of voices plays them:** `&groove step=&bar/4 &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh*2` is a drum pattern by name, mixed as it is (`[&groove * .6]`); a chord of voices sounds together, and repeats, ratchets, holds and chance work as on any step. A braid of voices without `step=` that a groove splices is a drum motif: `&fill &sd &sd*2 ~ &hh`, then `&groove step=&bar/4 &bd ~ &fill &fill[::-1]` (spliced, reversed, nested as any braid). It is the pattern below, read through a kit of its voices, without writing the kit; a braid of voices that something reads with `over=` stays that kit.
+
+```cells
+&bar scan(1 1 1 1) step=120bpm
+&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
+&sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .04)
+&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&groove step=&bar/2 &bd &hh [&bd,&sd] &hh &bd &bd [&hh,&sd] &hh*2
+&out map=sample [&groove * .6]
+```
+
+A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar/2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it.
 
 ## Parameters as cells
 
@@ -74,6 +86,6 @@ Values ramp to the next instead of holding: a voice's waveform (round its cycle)
 
 ## Articulation
 
-Among the pitches acting on a voice, the one with `step=` timing starts notes; `loop=` terms bend them while they sound (vibrato); terms that don't move transpose.
+Among the pitches acting on a voice, the one with `step=` timing starts notes; `loop=` terms bend them while they sound (vibrato); terms that don't move transpose. Of several with `step=` timing, the finest starts notes and the coarser ones hold under it, as a melody moves over its harmony: `(&walk + &changes) * &bass` with `&walk step=&bar` and `&changes step=&bar*4 0 0 5 0` walks a bar at a time, each bar transposed by its change. Two at the same rate are an error (which one starts the notes?).
 
 Filters are one per voice (as on a monosynth): overlapping notes share the last envelope; see [../limits.md](../limits.md).

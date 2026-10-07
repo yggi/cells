@@ -17,8 +17,7 @@
 &breath map=lin loop=&bar*24 .15 .8 .35 .15
 
 &pad s=saw loop=D3 lpf=300..1800 * &breath room=.6 env=&(map=adsr 2.5 1 .8 4) pitch=&(map=lin loop=.11 0 .06 0 -.06 0)
-&bell s=sine loop=D4 room=.7 delaytime=&bar*3/4 delay=.35 delayfeedback=.45 env=&(map=adsr .004 1.4 0 2.2)
+&bell pan=.31 s=sine loop=D4 room=.7 delaytime=&bar*3/4 delay=.35 delayfeedback=.45 env=&(map=adsr .004 1.4 0 2.2)
 &low s=tri loop=D3 lpf=500 env=&(map=adsr 1.5 1 .9 3)
 
-&out level=10.5 loop=SAMPLE_RATE map=sample [&chords * &pad * .08, &arp * &bell * .16, &roots * &low * .3] [
-                                  &chords * &pad * .08, &arp * &bell * .1, &roots * &low * .3]
+&out level=10.5 map=sample [&chords * &pad * .08, &arp * &bell * .16, &roots * &low * .3]

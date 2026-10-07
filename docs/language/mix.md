@@ -44,7 +44,16 @@ The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is 
 
 ## The sound card
 
-**`map=sample`** makes a cell the sound card. It can hold its mix directly: `&mix loop=SAMPLE_RATE map=sample [&tune * &lead, &bass * 0.5]` — one chord is mono, two chords `[…] [left] […] [right]` are stereo. `loop=SAMPLE_RATE` turns its braid once per sample (`SAMPLE_RATE` is provided by the environment: the audio device's rate, 48000 until audio starts; plain numbers like `44.1k` work too), and its entries are the channels — one (mono) or two (left, right). Different mixes per channel are stereo:
+**`map=sample`** makes a cell the sound card. It can hold its mix directly: `&mix loop=SAMPLE_RATE map=sample [&tune * &lead, &bass * 0.5]` — one chord is mono, two chords `[…] [left] […] [right]` are stereo. `loop=SAMPLE_RATE` turns its braid once per sample (`SAMPLE_RATE` is provided by the environment: the audio device's rate, 48000 until audio starts; plain numbers like `44.1k` work too), and its entries are the channels — one (mono) or two (left, right). Different mixes per channel are stereo; or one chord, and each voice placed with its own **`pan=`** (0 left, .5 centre, 1 right: [sound.md](sound.md)), which plays exactly what two chords with the voice's gains scaled play ([decision 007](../decisions/007-pan-is-back.md)):
+
+```cells
+&theme step=1 0 2 4 5
+&reed s=square loop=220 pan=.3
+&cello s=saw loop=110 pan=.8
+&out loop=SAMPLE_RATE map=sample [&theme * &reed, &theme * &cello * 0.4]
+```
+
+Two mixes, one for each channel:
 
 ```cells
 &theme step=1 0 2 4 5

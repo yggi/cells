@@ -7,7 +7,7 @@
 # One more Cell — the chords are one shape (maj7) moved F G A B♭ (&prog): parallel, as the
 # filter-house records did. The pump: the chords duck on every beat (a volume stream).
 &bar scan(1 1 1 1) step=free(122bpm, 110..130)
-&prog tags="chords" loop=&bar*32 0 2 4 5                                     # F G A B♭, two bars each
+&prog step=&bar*8 tags="chords" 0 2 4 5                                      # F G A B♭, two bars each
 &c tags="chords" [0,4,7,11]
 &chop tags="chords" step=&bar/4 label="the chop" &c ~ &c!2 ~ &c ~ &c ~ &c!2 ~ &c ~ &c!2
 &pump tags="chords" map=amp step=&bar .35 .55 .75 .95
@@ -34,4 +34,4 @@
 &parts &groove &choppy &disc &rob
 &song over=&parts step=&bar*32 label="filtered · groove · lead · breakdown" [0,1] [0,1,2] [0,1,2,3] [1,3]
 
-&out level=-0.5 loop=SAMPLE_RATE map=sample &song
+&out level=-0.5 map=sample &song

@@ -7,7 +7,7 @@
  */
 import { effectiveShow } from '../layout/show';
 import type { CompileResult, ResolvedCell } from './program';
-import { refLabel, shiftLabel } from './ast';
+import { refLabel, shiftLabel, valueMapLabel } from './ast';
 import { cellId, edgeId, stepEdgeId } from './ids';
 
 export type GraphNode =
@@ -172,6 +172,24 @@ export function buildGraph(result: CompileResult): GraphModel {
         pick: shiftLabel(c.overShift),
         ...wire('over', 'cv', id, cellId(c.over), entries(result, c.over), true, true),
       });
+    // a stepped braid of voices reads an unnamed kit of them: its voices are written on its own line
+    const voiceKit = c.over ? result.cells.get(c.over) : undefined;
+    if (voiceKit?.implicit && voiceKit.kit) {
+      const members = voiceKit.units.map((u) => (u.atom.kind === 'ref' ? u.atom.name : ''));
+      const written = new Map<string, number>();
+      for (const u of c.units)
+        for (const i of u.atom.kind === 'note' ? [u.atom.value] : u.atom.kind === 'chord' ? u.atom.notes : []) written.set(members[i], (written.get(members[i]) ?? 0) + 1);
+      for (const [child, count] of written)
+        link({
+          id: edgeId(id, cellId(child)),
+          source: id,
+          target: cellId(child),
+          kind: 'ref',
+          count,
+          pick: '',
+          ...wire('braid', 'cv', id, cellId(child), 1, true, true),
+        });
+    }
     // resonators: coupled through the table (couple=), and what excites them
     if (typeof c.params.couple === 'string' && result.cells.has(c.params.couple))
       link({
@@ -222,15 +240,23 @@ export function buildGraph(result: CompileResult): GraphModel {
       for (const f of pc.factors)
         if (result.cells.has(f)) link({ id: edgeId(cellId(f), id), source: cellId(f), target: id, kind: 'out', count: 1, pick: key, ...wire(key, 'cv', cellId(f), id) });
     for (const [child, count] of c.children) {
-      // its transpositions (^n), as written in this cell's steps
-      const ups = [...new Set(c.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === child && u.atom.transpose ? [u.atom.transpose] : [])))];
+      // its transpositions (^n) and operations (degree, inverse), as written in this cell's steps
+      const ups = [
+        ...new Set(
+          c.units.flatMap((u) =>
+            u.atom.kind === 'ref' && u.atom.name === child && (u.atom.transpose || u.atom.values)
+              ? [[valueMapLabel(u.atom.values), u.atom.transpose ? `^${u.atom.transpose}` : ''].filter(Boolean).join(' ')]
+              : [],
+          ),
+        ),
+      ];
       link({
         id: edgeId(id, cellId(child)),
         source: id,
         target: cellId(child),
         kind: 'ref',
         count,
-        pick: ups.map((n) => `^${n}`).join(' '),
+        pick: ups.join(' '),
         ...wire('braid', 'cv', id, cellId(child), chord(child), true, true),
       });
     }

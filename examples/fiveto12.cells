@@ -27,4 +27,4 @@
 &strings body=wire loop=C2 ring=5 hard=.4 board=none excite=&present label="the strings: reflection (tap them: inspiration)"
 &light scope=spectrum label="the tonal spectrum: the mode, the key, the harmony" &glass
 
-&out level=6 loop=SAMPLE_RATE map=sample [&present, &recall * .35, &strings * .3] [&present, &message * .35, &strings * .3]
+&out level=6 map=sample [&present, &recall * .35, &strings * .3] [&present, &message * .35, &strings * .3]

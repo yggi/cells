@@ -9,4 +9,4 @@
 &fifth body=fork loop=A3 ring=7 hard=.3 board=none label="its fifth" 7
 &screen scope=xy label="x: the tonic · y: its fifth" &tonic &fifth
 
-&out level=-3 loop=SAMPLE_RATE map=sample [&strike * &tonic * .5] [&strike * &fifth * .5]
+&out level=-3 map=sample [&strike * &tonic * .5] [&strike * &fifth * .5]

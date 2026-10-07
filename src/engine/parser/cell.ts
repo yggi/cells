@@ -5,7 +5,7 @@ import { RETIRED_PARAMS } from '../dough-params';
 import { LABEL_FIELDS } from '../program';
 import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from '../attributes';
 import { IDENT, type LineScanner } from './scanner';
-import { parseToken } from './braid';
+import { OPERATIONS, parseToken } from './braid';
 import { parseFree } from './free';
 import { isGenerator, parseGenerator } from './generators';
 import { parseMap, parseStep } from './values';
@@ -405,6 +405,13 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     if (word !== null && isGenerator(word) && s.peek() === '(') {
       if (generator || tokens.length) s.fail('A cell has one braid: a generator or a list of steps', at, word.length);
       generator = parseGenerator(s, word, at);
+      continue;
+    }
+    if (word !== null && (OPERATIONS as readonly string[]).includes(word) && s.peek() === '(') {
+      // degree(&x, n), inverse(&x): a step, read with its modifiers
+      if (generator) s.fail('A cell has one braid: a generator or a list of steps');
+      s.i = at;
+      tokens.push(parseToken(s));
       continue;
     }
     if (word === 'off' && s.atBoundary()) {

@@ -28,7 +28,7 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
   const timed = clockCells(ctx, decls, bound.cells);
   const { clocks } = timed;
   checkCells(ctx, decls, timed.cells);
-  const { outputs, returns, resonances } = outputsOf(ctx, decls, timed.cells, bound);
+  const { outputs, returns, resonances } = outputsOf(ctx, decls, timed.cells, clocks, bound);
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
   const cells = displayCells(timed.cells);
   checkRoles(ctx, declared, cells, clocks);

@@ -78,6 +78,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   delay: sound('delay send 0–1', { moves: true }),
   delaytime: sound('echo time, seconds — or a clock: &bar/2 (an eighth at the tempo)', { clock: true }),
   delayfeedback: sound('echo feedback 0–1'),
+  pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades'),
   distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
   crush: sound('bit depth: 16 clean, 8 grainy, 3 and fewer: rubble'),
   // FM

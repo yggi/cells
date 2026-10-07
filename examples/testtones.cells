@@ -30,5 +30,5 @@
 &second play=&loop at=2.9 wander=.06 wanderhz=.13 label="head 2, wandering"
 &third play=&loop at=5.3 wander=.15 wanderhz=.07 label="head 3, wandering further"
 
-&out level=26 loop=SAMPLE_RATE map=sample [&bench * .35, &first * .5, &third * .45] [
+&out level=26 map=sample [&bench * .35, &first * .5, &third * .45] [
                                   &bench * .35, &second * .5, &third * .45]

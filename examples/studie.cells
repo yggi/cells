@@ -18,8 +18,7 @@
 &forward over=&steps step=&time &mixtures
 &backward over=&steps step=&time &mixtures[::-1]^8              # retrograde, eight steps higher
 
-&swell s=sine loop=100 env=&(map=adsr 1.5 .5 .8 1.5)            # 100 Hz: the scale's first tone
-&fade s=sine loop=100 env=&(map=adsr .01 1.5 .3 1.5)
+&swell pan=.14 s=sine loop=100 env=&(map=adsr 1.5 .5 .8 1.5)            # 100 Hz: the scale's first tone
+&fade pan=.86 s=sine loop=100 env=&(map=adsr .01 1.5 .3 1.5)
 
-&out level=15 loop=SAMPLE_RATE map=sample [&forward * &dyn * &swell * .07, &backward * &fade * .02] [
-                                  &forward * &dyn * &swell * .02, &backward * &fade * .07]
+&out level=15 map=sample [&forward * &dyn * &swell * .07, &backward * &fade * .07]

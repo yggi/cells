@@ -14,8 +14,8 @@
 
 # ---- the prelude
 &figure tags="figuration" 0 1 2 1 3 1 2 1                          # the figure: top, middle, low, middle, bottom, middle, low, middle
-&rhShapes tags="figuration" step=&tempo*16 stride=4 cycle=280 show=notes label="right hand: four notes a bar" 12 3 2 0 8 5 4 0 11 5 3 2 12 7 5 3 15 8 7 3 14 6 4 2 14 7 6 2 12 4 2 0 12 5 4 0 10 5 3 2 10 7 5 3 8 7 5 3 8 2 0 -2 7 -2 -4 3 5 0 -2 -3 5 2 0 -1 5 2 0 -1 3 0 -1 -5 -7 3 2 5 -6 0 -1 3 3 0 -1 -5 6 0 -1 -3 7 0 -1 2 8 0 -1 2
-&lhShapes tags="figuration" step=&tempo*16 stride=4 cycle=280 show=notes label="left hand: four notes a bar" -12 -5 -7 -9 -12 -4 -5 -7 -12 -4 -5 -7 -12 -9 -10 -5 -12 0 -2 -4 -12 -3 -5 -6 -14 -2 -3 -5 -14 -5 -7 -8 -16 -4 -5 -7 -16 -10 -12 -7 -17 -9 -10 -5 -12 -9 -10 -4 -10 -7 -9 -4 -9 -5 -7 -4 -9 -3 -5 -7 -10 -7 -9 -4 -12 -7 -8 -4 -12 -9 -10 -7 -16 -12 -13 -10 -15 -9 -10 -12 -17 -9 -10 -7 -17 -9 -10 -12 -17 -9 -10 -7 -17 -9 -10 -7
+&rhShapes tags="figuration" step=&tempo*16 show=notes label="right hand: four notes a bar" [12,3,2,0] [8,5,4,0] [11,5,3,2] [12,7,5,3] [15,8,7,3] [14,6,4,2] [14,7,6,2] [12,4,2,0] [12,5,4,0] [10,5,3,2] [10,7,5,3] [8,7,5,3] [8,2,0,-2] [7,-2,-4,3] [5,0,-2,-3] [5,2,0,-1] [5,2,0,-1] [3,0,-1,-5] [-7,3,2,5] [-6,0,-1,3] [3,0,-1,-5] [6,0,-1,-3] [7,0,-1,2] [8,0,-1,2]
+&lhShapes tags="figuration" step=&tempo*16 show=notes label="left hand: four notes a bar" [-12,-5,-7,-9] [-12,-4,-5,-7] [-12,-4,-5,-7] [-12,-9,-10,-5] [-12,0,-2,-4] [-12,-3,-5,-6] [-14,-2,-3,-5] [-14,-5,-7,-8] [-16,-4,-5,-7] [-16,-10,-12,-7] [-17,-9,-10,-5] [-12,-9,-10,-4] [-10,-7,-9,-4] [-9,-5,-7,-4] [-9,-3,-5,-7] [-10,-7,-9,-4] [-12,-7,-8,-4] [-12,-9,-10,-7] [-16,-12,-13,-10] [-15,-9,-10,-12] [-17,-9,-10,-7] [-17,-9,-10,-12] [-17,-9,-10,-7] [-17,-9,-10,-7]
 &rhFigure tags="right hand" over=&rhShapes label="bars 1–24, right hand: the figure, twice a bar" &figure!48
 &lhFigure tags="left hand" over=&lhShapes label="bars 1–24, left hand" &figure!48
 &rhBars tags="right hand" label="right hand · bars 25–27" ~@48
@@ -66,11 +66,10 @@
 &bass tags="bass" step=&tempo label="fugue · bass" &tacetPrelude ~@2 ~@32 ~@64 &subject^-12 &bass1 &bass2 &bass3 &bass4 &s26b &bass5
 
 # the synthesizer: a voice for each line, as Carlos gave each its own patch
-&saw s=saw loop=C4 lpf=2600 lpq=6 env=&(map=adsr .002 .15 .45 .12)
-&pulse loop=C4 lpf=1800 env=&(map=adsr .002 .15 .5 .1) 0 0 0 1
-&reed s=square loop=C4 lpf=2000 env=&(map=adsr .01 .2 .6 .15) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
-&brass s=saw loop=C4 lpf=1500 lpq=4 env=&(map=adsr .02 .2 .7 .15)
-&moog s=saw loop=C4 lpf=700 lpq=10 env=&(map=adsr .005 .25 .5 .1)
+&saw pan=.2 s=saw loop=C4 lpf=2600 lpq=6 env=&(map=adsr .002 .15 .45 .12)
+&pulse pan=.8 loop=C4 lpf=1800 env=&(map=adsr .002 .15 .5 .1) 0 0 0 1
+&reed pan=.2 s=square loop=C4 lpf=2000 env=&(map=adsr .01 .2 .6 .15) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
+&brass pan=.73 s=saw loop=C4 lpf=1500 lpq=4 env=&(map=adsr .02 .2 .7 .15)
+&moog pan=.67 s=saw loop=C4 lpf=700 lpq=10 env=&(map=adsr .005 .25 .5 .1)
 
-&out level=10 loop=SAMPLE_RATE map=sample [&rh * &saw * .3, &lh * &pulse * .12, &soprano * &reed * .25, &alto * &brass * .12, &bass * &moog * .2] [
-                                  &rh * &saw * .12, &lh * &pulse * .3, &soprano * &reed * .1, &alto * &brass * .22, &bass * &moog * .3]
+&out level=10 map=sample [&rh * &saw * .3, &lh * &pulse * .3, &soprano * &reed * .25, &alto * &brass * .22, &bass * &moog * .3]

@@ -24,6 +24,20 @@ export const pickLabel = (p: Pick | null): string => (!p ? '' : p.kind === 'at' 
 /** `[<<n]` / `[>>n]` (n defaults to 1): shifted back / forward, on top of the cell's own rotation. */
 export const shiftLabel = (shift: number): string => (shift === 0 ? '' : `[${shift < 0 ? '<<' : '>>'}${Math.abs(shift) === 1 ? '' : Math.abs(shift)}]`);
 
+/**
+ * What an operation does to a reference's values before its tables read them: each value v becomes
+ * mul·v + add. degree(&x, n) adds n (n steps up the table it is read through: degrees in a scale);
+ * inverse(&x) negates (mirrored round 0). Nested, they compose: degree(inverse(&x), 4) is 4 − v.
+ */
+export interface ValueMap {
+  readonly mul: 1 | -1;
+  readonly add: number;
+}
+
+/** The operations as written: degree(…, n), inverse(…), innermost first applied. */
+export const valueMapLabel = (m: ValueMap | undefined): string =>
+  !m ? '' : `${m.mul < 0 ? 'inverse' : ''}${m.mul < 0 && m.add ? ' ' : ''}${m.add ? `degree ${m.add > 0 ? '+' : ''}${m.add}` : ''}`;
+
 export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: number }) => (pickLabel(r.pick) || shiftLabel(r.shift)) + (r.transpose ? `^${r.transpose}` : '');
 
 /**
@@ -52,7 +66,8 @@ export type Atom =
   /** [a|b|c]: one of them, chosen afresh each time round (reproducibly). */
   | { readonly kind: 'choice'; readonly values: readonly number[]; readonly alters: readonly number[] }
   /** transpose: grid steps up (or down) after its tables: &subject^7, &subject^-12. */
-  | { readonly kind: 'ref'; readonly name: string; readonly pick: Pick | null; readonly shift: number; readonly transpose?: number }
+  /** values: degree(…) / inverse(…) around it — its values moved before its tables read them. */
+  | { readonly kind: 'ref'; readonly name: string; readonly pick: Pick | null; readonly shift: number; readonly transpose?: number; readonly values?: ValueMap }
   /** A mix chord `[&theme * &lead, …]`: its expressions as written; compile types them (algebra.ts). */
   | { readonly kind: 'mix'; readonly exprs: readonly Expr[] };
 

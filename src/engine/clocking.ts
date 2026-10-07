@@ -172,8 +172,8 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
 /**
  * Shifts at a moment: the static shift, plus — for stepped cells that are
  * looked through rather than played — the turns their step= chain has made,
- * times their stride. Turns climb (a lap each time round) unless the cell
- * declares cycle=, where they wrap.
+ * times their stride. They come round after the table's own length, or
+ * where cycle= says (more laps climb on the way).
  */
 export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number, played: ReadonlySet<string> = playedCells(result)): Shifts {
   const clk = clocking(result, statics, seconds);
@@ -187,9 +187,11 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
     if (!c || !c.step || !c.clock || played.has(name) || result.clocks.has(name) || selects(result, name) || c.loops) return base;
     let s = steps.get(c.clock);
     if (s === undefined) steps.set(c.clock, (s = clk.stepOf(c.clock)));
-    // turns climb, like every shift; a cell that declares cycle= wraps there instead
+    // a turning table comes round after its own length (a key of 12 after 12, a scale after 7, a
+    // braid of chords after its chords); cycle= says otherwise (cycle=24: two laps, climbing, then round)
     const turns = Math.floor(c.rate * s + EPS) * c.stride;
-    return base + (c.wrap ? mod(turns, c.wrap) : turns);
+    const wrap = c.wrap ?? (c.units.length || c.cycle);
+    return base + (wrap > 0 ? mod(turns, wrap) : turns);
   };
 }
 

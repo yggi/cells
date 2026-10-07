@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SAILOR_WITH_KIT } from '../fixtures';
 import { setFree } from '../edit';
 import { compileSource } from '../compile';
 import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, MAX_SPLICE_DEPTH, type Shifts } from '../program';
@@ -83,7 +84,7 @@ describe('pitch: lookups all the way down', () => {
 });
 
 describe('motifs and shifted references', () => {
-  const r = compileSource(PRESETS.sailor.source);
+  const r = compileSource(SAILOR_WITH_KIT);
   it('motifs read through the table of whoever splices them; a shifted table steps it down', () => {
     expect(r.cells.get('m1')).toMatchObject({ over: null, context: 'lead' });
     expect(spell(r, 'A')).toBe('A A A A A A D F');
@@ -289,6 +290,22 @@ describe('mix expressions: typing and articulation (rule 2)', () => {
         .join('\n');
     expect(msgs('&mix_ [(&a + &b) * &x]\n&out_ loop=44k map=sample &mix_')).toMatch(/Both &a and &b would start notes on &x/);
     expect(msgs('&mix_ [(&vib + &up) * &x]\n&out_ loop=44k map=sample &mix_')).toMatch(/Nothing starts notes on &x/);
+  });
+
+  it('of two step= terms, the finer starts notes and the coarser holds under it, as a loop= term would (#10)', () => {
+    const tail = '\n&walk step=&bar 0 4 7 10\n&v s=sine loop=C4\n&out map=sample [(&walk + &changes) * &v]';
+    const notes = (s: string) => {
+      const r = compileSource('&bar scan(1 1 1 1) step=120bpm\n' + s + tail);
+      expect(r.diagnostics).toEqual([]);
+      expect(r.outputs.map((o) => [o.cell, o.mods.map((m) => m.cell)])).toEqual([['walk', ['changes']]]);
+      return eventsBetween(plan(r, codeShifts(r)), 0, 8).map((e) => `${e.at.toFixed(3)} ${e.dur.toFixed(3)} ${e.freq.toFixed(2)}`);
+    };
+    const stepped = notes('&changes step=&bar*4 0 5');
+    expect(stepped).toEqual(notes('&changes loop=&bar*8 0 5'));
+    expect(stepped[4].endsWith('349.23')).toBe(true); // bar 2: the walk on F
+    // (written either way round: + commutes)
+    const r = compileSource('&bar scan(1 1 1 1) step=120bpm\n&changes step=&bar*4 0 5' + tail.replace('(&walk + &changes)', '(&changes + &walk)'));
+    expect(r.outputs[0].cell).toBe('walk');
   });
 
   it('the voice is the factor that is a sound, wherever it is written', () => {

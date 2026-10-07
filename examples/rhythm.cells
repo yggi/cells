@@ -2,7 +2,7 @@
 # A meter is a scan: the intervals between its beats, adding up to the bar.
 # scan(27 23 26 24): beats at 0 27 50 76 % — the first long, the third leaning.
 &bar scan(27 23 26 24) step=free(100bpm, 70..140)             # 4/4, bent
-&tresillo label="tresillo: **x..x..x.**" scan(3 3 2) step=75bpm               # x..x..x. — its lap (8) is its bar
+&tresillo label="tresillo: **x..x..x.**" scan(3 3 2) step=&bar*4/3          # x..x..x. — three strokes a bar: its lap (8) is the bar
 
 # volumes (map=amp) as gates: their steps start the notes, their values set the level
 &kick map=amp step=&tresillo 1
@@ -15,4 +15,4 @@
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &sh s=white hpf=4000 env=&(map=adsr 0 .02 0 .02)
 &keys s=saw loop=C4 lpf=900 env=&(map=adsr .02 .4 .3 .3)
-&mix level=3 loop=SAMPLE_RATE map=sample [&kick * &bd, &hats * &hh * 0.4, &shake * &sh * 0.3, &chord * &keys * 0.5]
+&mix level=3 map=sample [&kick * &bd, &hats * &hh * 0.4, &shake * &sh * 0.3, &chord * &keys * 0.5]

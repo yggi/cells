@@ -26,5 +26,5 @@
 &hh s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)
 &oh s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
 
-&mix level=0.5 loop=SAMPLE_RATE map=sample [&line * &accent * &tb303 * .45, &kick * &bd * .8, &clap * &cp * .35,
+&mix level=0.5 map=sample [&line * &accent * &tb303 * .45, &kick * &bd * .8, &clap * &cp * .35,
                                   &closed * &hh * .25, &open * &oh * .2]

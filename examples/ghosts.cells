@@ -17,13 +17,12 @@
 &metal step=&bar/4 ~!2 0?.25 ~!4 0?.4 ~!3 0?.2 ~ 0?.3 ~!2
 &glitch step=&bar/8 [0|7|12]?.06
 
-&piano s=tri loop=D4 lpf=3000 room=.45 delaytime=&bar*3/4 delay=.2 delayfeedback=.35 env=&(map=adsr .002 1.6 0 1.8) pitch=&(map=lin loop=.19 0 .05 0 -.05 0)
-&cello s=saw loop=D3 lpf=700 room=.5 env=&(map=adsr .6 1 .8 2)
+&piano pan=.36 s=tri loop=D4 lpf=3000 room=.45 delaytime=&bar*3/4 delay=.2 delayfeedback=.35 env=&(map=adsr .002 1.6 0 1.8) pitch=&(map=lin loop=.19 0 .05 0 -.05 0)
+&cello pan=.62 s=saw loop=D3 lpf=700 room=.5 env=&(map=adsr .6 1 .8 2)
 &low s=saw loop=D1 distort=.8 lpf=120..600 * &grit lpq=3 env=&(map=adsr 4 2 .9 6)
 &noise s=brown crush=5 lpf=200..2400 * &haze hpf=80 room=.4 env=&(map=adsr 6 2 .8 8)
 &bd s=sine loop=D1 pitch=0..20 * &(map=adsr 0 .08 0 0) distort=.9 env=&(map=adsr 0 .5 0 .1)
-&tick s=square loop=D6 hpf=4000 crush=4 env=&(map=adsr 0 .03 0 .02)
-&blip s=sine loop=D6 crush=3 env=&(map=adsr 0 .05 0 .03)
+&tick pan=.7 s=square loop=D6 hpf=4000 crush=4 env=&(map=adsr 0 .03 0 .02)
+&blip pan=.64 s=sine loop=D6 crush=3 env=&(map=adsr 0 .05 0 .03)
 
-&out level=-1 loop=SAMPLE_RATE map=sample [&phrase * &piano * .22, &answer * &cello * .12, &drone * &low * .18, &hiss * &noise * .25, &kick * &bd * .55, &metal * &tick * .06, &glitch * &blip * .05] [
-                                  &phrase * &piano * .16, &answer * &cello * .16, &drone * &low * .18, &hiss * &noise * .25, &kick * &bd * .55, &metal * &tick * .1, &glitch * &blip * .07]
+&out level=-1 map=sample [&phrase * &piano * .22, &answer * &cello * .16, &drone * &low * .18, &hiss * &noise * .25, &kick * &bd * .55, &metal * &tick * .1, &glitch * &blip * .07]

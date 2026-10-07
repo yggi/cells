@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
-import { shortenAll } from './compress';
+import { shortenAll } from './shorten';
 import { PRESETS } from './presets';
 
 const sounds = (src: string, seconds = 20) => {

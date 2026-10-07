@@ -19,4 +19,4 @@
 &right play=&tape at=1.5 label="head 2"
 &far play=&tape at=2.75 label="head 3"
 
-&out level=22 loop=SAMPLE_RATE map=sample [&dry, &left * .5, &far * .35] [&dry, &right * .5, &far * .35]
+&out level=22 map=sample [&dry, &left * .5, &far * .35] [&dry, &right * .5, &far * .35]

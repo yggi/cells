@@ -81,8 +81,19 @@ export function flatten(
             else if (a.kind === 'ref') {
               const k = dur / (stepsOf(result, a.name, a.pick) || 1);
               const up = a.transpose ?? 0;
+              // degree(…) / inverse(…): its values moved before its tables read them (accidentals mirrored with them)
+              const m = a.values;
+              const moved = (e: StepEvent): StepEvent =>
+                !m
+                  ? e
+                  : {
+                      ...e,
+                      value: m.mul * e.value + m.add,
+                      alter: m.mul * e.alter,
+                      ...(e.options ? { options: e.options.map((o) => ({ value: m.mul * o.value + m.add, alter: m.mul * o.alter })) } : {}),
+                    };
               for (const e of walk(a.name, a.pick, a.shift, table, tShift))
-                out.push({ ...e, step: at + e.step * k, duration: e.duration * k, ...(up || e.transpose ? { transpose: (e.transpose ?? 0) + up } : {}) });
+                out.push({ ...moved(e), step: at + e.step * k, duration: e.duration * k, ...(up || e.transpose ? { transpose: (e.transpose ?? 0) + up } : {}) });
             }
             if (out.length > MAX_EVENTS) throw new ExpansionLimit(name);
           }

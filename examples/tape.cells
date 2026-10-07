@@ -12,10 +12,9 @@
 &hats step=&bar/2 belt=30 mass=1.5 label="the hats, on a slack belt" ~ 0 ~ 0 ~ 0 ~ 0
 &kick step=&bar 0 ~ 0 ~
 
-&keys s=tri loop=D4 lpf=2200 room=.4 delaytime=&bar*3/4 delay=.3 delayfeedback=.4 env=&(map=adsr .004 .5 .3 .4)
+&keys pan=.375 s=tri loop=D4 lpf=2200 room=.4 delaytime=&bar*3/4 delay=.3 delayfeedback=.4 env=&(map=adsr .004 .5 .3 .4)
 &pad s=saw loop=D3 lpf=700 room=.6 env=&(map=adsr 1 1 .8 2)
-&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&hh pan=.6 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &bd s=sine loop=D1 pitch=0..16 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
 
-&out level=7 loop=SAMPLE_RATE map=sample [&loop * &keys * .16, &chords * &pad * .05, &hats * &hh * .08, &kick * &bd * .5] [
-                                  &loop * &keys * .12, &chords * &pad * .05, &hats * &hh * .1, &kick * &bd * .5]
+&out level=7 map=sample [&loop * &keys * .16, &chords * &pad * .05, &hats * &hh * .1, &kick * &bd * .5]

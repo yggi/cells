@@ -9,4 +9,4 @@
 &cello s=saw loop=C3 lpf=900 env=&(map=adsr .03 .4 .6 .4)
 &left label="left"  [&high * &bell, &low * &cello * 0.3]
 &right label="right" [&high * &bell * 0.3, &low * &cello]
-&out level=1.5 loop=SAMPLE_RATE map=sample &left &right
+&out level=1.5 map=sample &left &right

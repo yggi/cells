@@ -4,7 +4,7 @@
 # 1-2-3-5 in it, then the dominant of the next key. The line is our own.
 &bar scan(1 1 1 1) step=free(220bpm, 140..320)
 &swing scan(free(2, 1..3) 1) step=&bar/2
-&key shift=-1 step=&bar*4 stride=-4 cycle=12             # B, then G, then Eb, then B …
+&key shift=-1 step=&bar*4 stride=-4                      # B, then G, then Eb, then B …
 
 &line over=&key step=&swing 0 2 4 7 3 7 10 13           # 1 2 3 5 · the next key's V7: 1 3 5 b7
 &walk over=&key step=&bar 0 4 3 10                       # root, third · the V7's root, its fifth
@@ -16,4 +16,4 @@
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .3 .2)
 &cym s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
 
-&mix level=3.5 loop=SAMPLE_RATE map=sample [&line * &sax * .4, &walk * &bass * .8, &comp * &keys * .3, &ride * &cym * .22]
+&mix level=3.5 map=sample [&line * &sax * .4, &walk * &bass * .8, &comp * &keys * .3, &ride * &cym * .22]

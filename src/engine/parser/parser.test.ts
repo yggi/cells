@@ -72,7 +72,7 @@ describe('parse: cells', () => {
     expect(msg('&a map=1')).toMatch(/map= takes amp, lin, db, adsr, sample, edo, ratios, ed\(r\) or a table/);
     expect(msg('cell &a 0')).toMatch(/cell keyword is gone/);
     expect(msg('&v s=saw gain=.5')).toMatch(/set the level in the mix/);
-    expect(msg('&v s=saw pan=.2')).toMatch(/two mixes/);
+    expect(parse('&v s=saw pan=.2').diagnostics).toEqual([]); // (pan= is back: decision 007)
     expect(msg('out = &a * &b')).toMatch(/out is a cell now/);
     expect(msg('&a step={&b} 0')).toMatch(/cycle\(&x\)/);
     expect(msg('&a[1] 0')).toMatch(/where a cell is used/);
