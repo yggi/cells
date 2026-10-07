@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { setFree } from '../edit';
 import { compileSource } from '../compile';
-import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, type Shifts } from '../program';
+import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, MAX_SPLICE_DEPTH, type Shifts } from '../program';
 import { MAX_NESTING } from '../parser/scanner';
 import { START as LAW_START } from '../fiveto12';
 import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entries, lookup, resolveIn, resolvePitch, shiftedUnits } from '../helix';
@@ -755,6 +755,40 @@ describe('diagnostics: nothing plays, or the wrong thing, without a word (#143)'
       ]);
       expect(() => eventsBetween(plan(r!, codeShifts(r!)), 0, 4)).not.toThrow();
     }
+  });
+
+  it(`parentheses in a mix nest ${MAX_NESTING} deep at most: deeper is an error, never a stack overflow (#160)`, () => {
+    const grouped = (n: number) => `&tune step=120bpm 0 1\n&pluck s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [${'('.repeat(n)}&tune * &pluck${')'.repeat(n)}]`;
+    expect(compileSource(grouped(MAX_NESTING)).diagnostics).toEqual([]);
+    for (const n of [MAX_NESTING + 1, 5000]) {
+      let r: R | undefined;
+      expect(() => (r = compileSource(grouped(n)))).not.toThrow();
+      // (the sound card's own line failed: no "Nothing plays yet" beside its error)
+      expect(r!.diagnostics.map((d) => [d.severity, d.span.line, d.message])).toEqual([
+        ['error', 3, `Parentheses in a mix nest ${MAX_NESTING} deep at most: name a part (&part [ … ]) and use it`],
+      ]);
+      expect(() => eventsBetween(plan(r!, codeShifts(r!)), 0, 4)).not.toThrow();
+    }
+  });
+
+  it(`cells splice into each other ${MAX_SPLICE_DEPTH} deep at most: deeper is one error, never a stack overflow (#160)`, () => {
+    const chain = (n: number) => [...Array.from({ length: n }, (_, i) => `&c${i} ${i === n - 1 ? '0 1' : `&c${i + 1}`}`), '&tune step=120bpm &c0'].join('\n');
+    expect(said(piece(chain(MAX_SPLICE_DEPTH)))).toEqual([]);
+    for (const n of [MAX_SPLICE_DEPTH + 1, 5000]) {
+      let r: R | undefined;
+      expect(() => (r = compileSource(piece(chain(n))))).not.toThrow();
+      const errors = r!.diagnostics.filter((d) => d.severity === 'error');
+      expect(errors.map((d) => d.message)).toEqual([expect.stringMatching(new RegExp(`^&c0 splices cells into each other more than ${MAX_SPLICE_DEPTH} deep`))]);
+      expect(() => eventsBetween(plan(r!, codeShifts(r!)), 0, 4)).not.toThrow();
+      expect(() => buildGraph(r!)).not.toThrow();
+    }
+  });
+
+  it('a cap says what the user wrote: an unnamed cell as such, a rate past counting as unbounded (#163)', () => {
+    expect(said(`&a 0!4000\n${piece('&tune step=4 &(&a!4000)')}`).map((d) => [d[1], d[3]])).toEqual([
+      [2, expect.stringMatching(/^An unnamed cell &\( … \) expands to 16,000,000 notes/)],
+    ]);
+    expect(said(piece(`&tune step=${'9'.repeat(400)} 0 1`)).map((d) => d[3])).toEqual([expect.stringMatching(/^&tune would start unboundedly many notes a second/)]);
   });
 
   it("a cell whose line failed isn't reported again where it is used", () => {

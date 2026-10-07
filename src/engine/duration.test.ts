@@ -32,6 +32,12 @@ describe('a piece anchored to the clock', () => {
     // (before the anchor: the day before's run, still going)
     expect(anchoredAt(r, new Date(2026, 0, 1, 11, 54, 0))).toBe(86400 - 60);
   });
+  it("reads a clock's anchor, not one left on a law (#160)", () => {
+    const law = (day: string) =>
+      `&day scan(1!24) loop=1d ${day}\n&cycle law=fiveto12 over=&day step=84bpm anchor=13.55\n&v s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [&cycle * &v]`;
+    expect(anchoredAt(compileSource(law('anchor=11.55')), new Date(2026, 0, 1, 12, 0, 30))).toBe(330);
+    expect(anchoredAt(compileSource(law('')), new Date(2026, 0, 1, 12, 0, 30))).toBeNull();
+  });
   it('has no anchor otherwise', () => {
     expect(anchoredAt(compileSource(PRESETS.metronome.source), new Date())).toBeNull();
   });

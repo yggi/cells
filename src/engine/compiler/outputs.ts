@@ -162,7 +162,8 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       span,
     });
   }
-  if (sinks.length === 0 && parsed.cells.length > 0)
+  // (not when a line failed: that may be the sound card's own, and its error says what's wrong)
+  if (sinks.length === 0 && parsed.cells.length > 0 && !parsed.broken?.length)
     warn('Nothing plays yet — add a mix and the sound card: &mix [&melody * &voice] and &out loop=SAMPLE_RATE map=sample &mix &mix', IMPLICIT);
   return { outputs, returns, resonances };
 }

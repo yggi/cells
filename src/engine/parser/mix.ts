@@ -1,6 +1,6 @@
 /** A mix chord, `[&theme * &lead, …]`: sums and products of cells and numbers, kept as written (compile types them: algebra.ts). */
 import type { Atom, Expr } from '../ast';
-import { NUM, type LineScanner } from './scanner';
+import { MAX_NESTING, NUM, type LineScanner } from './scanner';
 import { parseFree } from './free';
 import { syntax, type Syntax } from './syntax';
 
@@ -53,7 +53,7 @@ export function parseMixChord(s: LineScanner): Atom {
   s.i++; // [
   const exprs: Expr[] = [];
   for (;;) {
-    exprs.push(parseExpr(s));
+    exprs.push(parseExpr(s, 0));
     s.skipSpace();
     if (s.peek() === ',') {
       s.i++;
@@ -64,38 +64,39 @@ export function parseMixChord(s: LineScanner): Atom {
   }
 }
 
-function parseExpr(s: LineScanner): Expr {
+function parseExpr(s: LineScanner, depth: number): Expr {
   const start = s.i;
-  const items: { e: Expr; sign: 1 | -1 }[] = [{ e: parseProduct(s), sign: 1 }];
+  const items: { e: Expr; sign: 1 | -1 }[] = [{ e: parseProduct(s, depth), sign: 1 }];
   for (;;) {
     s.skipSpace();
     const op = s.peek();
     if (op !== '+' && op !== '-') break;
     s.i++;
-    items.push({ e: parseProduct(s), sign: op === '-' ? -1 : 1 });
+    items.push({ e: parseProduct(s, depth), sign: op === '-' ? -1 : 1 });
   }
   return items.length === 1 ? items[0].e : { k: 'sum', items, span: s.span(start) };
 }
 
-function parseProduct(s: LineScanner): Expr {
+function parseProduct(s: LineScanner, depth: number): Expr {
   s.skipSpace();
   const start = s.i;
-  const factors: Expr[] = [parseFactor(s)];
+  const factors: Expr[] = [parseFactor(s, depth)];
   for (;;) {
     s.skipSpace();
     if (s.peek() !== '*') break;
     s.i++;
-    factors.push(parseFactor(s));
+    factors.push(parseFactor(s, depth));
   }
   return factors.length === 1 ? factors[0] : { k: 'prod', factors, span: s.span(start) };
 }
 
-function parseFactor(s: LineScanner): Expr {
+function parseFactor(s: LineScanner, depth: number): Expr {
   s.skipSpace();
   const start = s.i;
   if (s.peek() === '(') {
+    if (depth >= MAX_NESTING) s.fail(`Parentheses in a mix nest ${MAX_NESTING} deep at most: name a part (&part [ … ]) and use it`, start);
     s.i++;
-    const e = parseExpr(s);
+    const e = parseExpr(s, depth + 1);
     s.skipSpace();
     s.expect(')', `')' to close the group`);
     return e;

@@ -37,8 +37,9 @@ export const NUM = /-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y;
 // a long rest is legitimate (a voice waiting out a whole prelude: ~@617); this only guards against typos
 export const MAX_REPS = 4096;
 /**
- * How deep unnamed cells &( … ) may nest, one inside another: deeper is an error (reading 1,500 deep overflowed the
- * stack). The examples nest one deep (an envelope in a voice's line); 32 leaves room for any written by hand.
+ * How deep unnamed cells &( … ) may nest, one inside another, and parentheses in a mix: deeper is an error (reading
+ * 1,500 deep, or 5,000 parentheses, overflowed the stack). The examples nest one deep (an envelope in a voice's line,
+ * a sum in a product); 32 leaves room for any written by hand.
  */
 export const MAX_NESTING = 32;
 

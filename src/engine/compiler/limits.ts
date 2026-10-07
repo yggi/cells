@@ -7,7 +7,9 @@ import type { CellDecl, Span } from '../ast';
 import { MAX_EVENTS, MAX_NOTES_PER_SECOND, pickIndices, type Clock, type Output } from '../program';
 import type { Cells, Ctx } from './context';
 
-const many = (n: number) => Math.round(n).toLocaleString('en');
+const many = (n: number) => (Number.isFinite(n) ? Math.round(n).toLocaleString('en') : 'unboundedly many');
+// (an unnamed cell &( … ) by what the user wrote, not its generated name)
+const named = (c: { name: string; lambda: string | null }) => (c.lambda ? 'An unnamed cell &( … )' : `&${c.name}`);
 
 export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, clocks: ReadonlyMap<string, Clock>, outputs: readonly Output[]): void {
   const { error } = ctx;
@@ -46,7 +48,7 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
     let sum = 0;
     const at = counts.findIndex((n) => (sum += n) > MAX_EVENTS);
     const span: Span = toks[at]?.span ?? c.span;
-    error(`&${c.name} expands to ${many(total)} notes: more than ${many(MAX_EVENTS)}, the most a cell can hold — repeat less (!n), or let a clock repeat it`, span);
+    error(`${named(c)} expands to ${many(total)} notes: more than ${many(MAX_EVENTS)}, the most a cell can hold — repeat less (!n), or let a clock repeat it`, span);
   }
   // ---- rate: the notes a second a played cell starts (its clock's steps a second, its notes a lap)
   const reported = new Set<string>();
@@ -61,6 +63,6 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
     reported.add(c.name);
     const d = decls.get(c.name);
     const span = d?.step?.span ?? decls.get(c.clock)?.step?.span ?? c.span;
-    error(`&${c.name} would start ${many(perSecond)} notes a second: more than ${many(MAX_NOTES_PER_SECOND)}, the most a cell can play — slow its step= or loop=`, span);
+    error(`${named(c)} would start ${many(perSecond)} notes a second: more than ${many(MAX_NOTES_PER_SECOND)}, the most a cell can play — slow its step= or loop=`, span);
   }
 }

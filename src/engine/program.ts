@@ -18,6 +18,11 @@ export const MAX_EVENTS = 50_000;
  * start no notes and aren't counted.
  */
 export const MAX_NOTES_PER_SECOND = 2_000;
+/**
+ * How deep cells may be spliced into each other (`&a &b`, `&b &c` …, a chain of &refs): deeper is a compile error
+ * (5,000 deep overflowed the stack). The deepest in examples/ is 4 (the Lullaby's &roll).
+ */
+export const MAX_SPLICE_DEPTH = 256;
 /** The fields a label= can hold, {tempo} or {&key:tonic} (filled in by layout/labels.ts); any other is a warning. */
 export const LABEL_FIELDS = ['name', 'notes', 'tonic', 'mode', 'steps', 'tempo', 'shift'] as const;
 /** A voice without a rate loops at middle C. */

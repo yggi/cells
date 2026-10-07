@@ -1,6 +1,6 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
 import type { Span } from '../ast';
-import { DEFAULT_FREQ, ROOT, pickSteps, pickText, type ResolvedCell } from '../program';
+import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickSteps, pickText, type ResolvedCell } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { scan as scanOf } from '../../theory/modes';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
@@ -17,10 +17,26 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
   const unitsOf = (d: Parameters<typeof unitsIn>[1]) => unitsIn(decls, d);
   // ---- &refs (time structure), with cycle detection
   const visiting: string[] = [];
+  // (cells on a chain spliced too deep: said once, at the link that goes over, and not walked again from each link)
+  const tooDeep = new Set<string>();
   const resolve = (name: string, at: Span): ResolvedCell => {
     const done = cells.get(name);
     if (done) return done;
+    if (tooDeep.has(name)) {
+      for (const v of visiting) (tooDeep.add(v), broken.add(v));
+      throw new Abort();
+    }
     const d = decls.get(name)!;
+    if (visiting.length >= MAX_SPLICE_DEPTH) {
+      // (once: a chain of thousands would otherwise be reported once per 256 of its links)
+      if (!tooDeep.size)
+        error(
+          `&${visiting[0]} splices cells into each other more than ${MAX_SPLICE_DEPTH} deep (&${visiting[0]} → &${visiting[1]} → … → &${name}): write a long chain as one braid`,
+          at,
+        );
+      for (const v of [...visiting, name]) (tooDeep.add(v), broken.add(v));
+      throw new Abort();
+    }
     if (visiting.includes(name)) {
       error(`Circular reference: ${[...visiting.slice(visiting.indexOf(name)), name].map((n) => '&' + n).join(' → ')}`, at);
       throw new Abort();

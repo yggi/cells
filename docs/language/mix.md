@@ -31,7 +31,7 @@ A **plain value**, a number or a `map=lin` cell, has no sort of its own. It take
 | pitch or volume, signal | — | the signal at that pitch and volume |
 | signal, signal | a mix | — |
 
-`-` subtracts pitches only. A dash (—) is an error that names the sorts.
+`-` subtracts pitches only. Parentheses group, 32 deep at most. A dash (—) is an error that names the sorts.
 
 **Laws.** These hold wherever both sides mean something; `algebra.test.ts` checks each one on what plays:
 
