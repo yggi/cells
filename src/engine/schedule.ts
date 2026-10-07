@@ -18,7 +18,7 @@ export interface TapeSpeed {
 export interface Window {
   readonly from: number;
   readonly to: number;
-  /** The notes that start in [from, to), in order. */
+  /** The notes that start in [from, to), in order, each naming its output (which mixes' wheels hear it). */
   readonly events: readonly Played[];
   /** Tapes whose speed moves (a moving clock, dropouts, wandering heads): sampled every SPEED_STEP. */
   readonly tapes: readonly TapeSpeed[];
@@ -50,7 +50,7 @@ export function tapeSpeeds(p: Plan, from: number, to: number): TapeSpeed[] {
  * so the last point of one window meets the first of the next).
  */
 export function windowAt(p: Plan, from: number, length: number): Window {
-  return { from, to: from + length, events: eventsBetween(p, from, from + length), tapes: tapeSpeeds(p, from, from + length + 1e-9) };
+  return { from, to: from + length, events: eventsBetween(p, from, from + length, true), tapes: tapeSpeeds(p, from, from + length + 1e-9) };
 }
 
 /**

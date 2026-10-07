@@ -40,6 +40,8 @@ export interface Played {
   readonly value?: number;
   /** Its envelope (map=adsr, seconds), or absent for the voice's own. */
   readonly env?: { readonly attack: number; readonly decay: number; readonly sustain: number; readonly release: number };
+  /** The output it comes from (`Output.id`), when asked for (`eventsBetween(…, true)`): which mixes' wheels hear it (audio/wiring.ts `taps`). */
+  readonly output?: string;
 }
 
 interface PlanTrack extends Series {
@@ -293,13 +295,15 @@ function lawOffset(result: Plan['result'], cell: string): number {
  * Everything that starts in [from, to). The triggering term's pitch (tables as
  * they stand at that moment) plus every modulating term sets the voice's rate:
  * freq = voice rate × 2^(semitones / 12). Kits take the number as an index.
+ * `outputs`: each note names the output it comes from (for the audio: which mixes' wheels hear it); left out,
+ * a note is only what sounds.
  */
-export function eventsBetween(p: Plan, from: number, to: number): Played[] {
+export function eventsBetween(p: Plan, from: number, to: number, outputs = false): Played[] {
   // (a law's cell plays only what its law computes — not its steps counted as values)
   const lawful = (t: PlanTrack) => p.result.cells.get(t.output.cell)?.params.law !== undefined;
   const plain = p.tracks.filter((t) => !t.output.tape && !lawful(t));
   const taped = p.tracks.filter((t) => t.output.tape);
-  const out = plainEvents({ ...p, tracks: plain }, from, to);
+  const out = plainEvents({ ...p, tracks: plain }, from, to, outputs);
   // a law (law=fiveto12): its notes computed, not written — any moment of its day at once
   for (const o of p.result.outputs) {
     if (p.result.cells.get(o.cell)?.params.law !== 'fiveto12') continue;
@@ -318,6 +322,7 @@ export function eventsBetween(p: Plan, from: number, to: number): Played[] {
         bends: [],
         gains: [g[0] * Math.min(1, 1 - n.pan), g[1] * Math.min(1, 1 + n.pan)],
         levels: [{ at, level: n.level }],
+        ...(outputs ? { output: o.id } : {}),
       });
     }
   }
@@ -341,7 +346,7 @@ export function eventsBetween(p: Plan, from: number, to: number): Played[] {
       const s1 = real(pos(to) - shift);
       if (!(s1 > 0) || !Number.isFinite(s1)) continue;
       const through = (x: number) => real(pos(x) + shift);
-      for (const e of plainEvents({ ...p, tracks: [source] }, Math.max(0, s0), s1)) {
+      for (const e of plainEvents({ ...p, tracks: [source] }, Math.max(0, s0), s1, outputs)) {
         const at = through(e.at);
         if (!(at >= from && at < to) || !Number.isFinite(at)) continue;
         const end = through(e.at + e.dur);
@@ -370,7 +375,7 @@ export function eventsBetween(p: Plan, from: number, to: number): Played[] {
   return out.sort((a, b) => a.at - b.at);
 }
 
-function plainEvents(p: Plan, from: number, to: number): Played[] {
+function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Played[] {
   const out: Played[] = [];
   const { result, statics } = p;
   const clk = clocking(result, statics);
@@ -457,6 +462,7 @@ function plainEvents(p: Plan, from: number, to: number): Played[] {
           ...(env ? { env } : {}),
           ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
           ...(params ? { params } : {}),
+          ...(outputs ? { output: t.output.id } : {}),
         });
     };
     if (t.selects.length === 0) {

@@ -8,11 +8,12 @@ import { retime, tapeSpeeds, windowAt, type Window } from './schedule';
 const r0 = (w: Window) => retime(w, 10, 0.5).events;
 
 describe('schedule: what to play next, as plain data', () => {
-  it('a window holds the notes eventsBetween gives for it', () => {
+  it('a window holds the notes eventsBetween gives for it, each naming its output', () => {
     for (const key of ['bwv847', 'echotape', 'soundtape', 'hypercell'] as const) {
       const p = planOf(PRESETS[key].source);
       const w = windowAt(p, 2, 0.25);
-      expect(w.events).toEqual(eventsBetween(p, 2, 2.25));
+      expect(w.events).toEqual(eventsBetween(p, 2, 2.25, true));
+      expect(w.events.map(({ output, ...e }) => (expect(output).toBeTruthy(), e))).toEqual(eventsBetween(p, 2, 2.25));
       expect([w.from, w.to]).toEqual([2, 2.25]);
     }
   });
