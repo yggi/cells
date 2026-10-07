@@ -6,7 +6,7 @@ import type { Bound } from './bindings';
 import type { Cells, Ctx } from './context';
 
 export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, { sinks, bindings, soundHead }: Bound) {
-  const { parsed, error, warn } = ctx;
+  const { parsed, error, warn, unknownCell } = ctx;
   // ---- outputs: one per voice binding. Articulation (rule 2): the step= term
   // starts notes; loop= terms bend them; terms that don't move hold (transpose).
   const outputs: Output[] = [];
@@ -16,10 +16,12 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
   for (const { b, span, gains, via, parts, through, select, silent } of bindings) {
     const known = (r: { name: string; span: Span }) => {
       if (decls.has(r.name)) return true;
-      error(`Unknown cell &${r.name}`, r.span);
+      unknownCell(r.name, r.span);
       return false;
     };
     if (![b.voice, ...b.pitches.map((t) => t.ref)].every(known)) continue;
+    // (a term whose line failed, or that uses one: its own error says why; nothing more about this product)
+    if ([b.voice, ...b.pitches.map((t) => t.ref)].some((r) => ctx.broken.has(r.name))) continue;
     // a sound tape's read head in a mix: its tap returns to the sound card at these levels
     if (soundHead(b.voice.name) && b.pitches.length === 0) {
       returns.push({ head: b.voice.name, tape: cells.get(b.voice.name)!.params.play as string, gains: [gains[0], gains[1]] });

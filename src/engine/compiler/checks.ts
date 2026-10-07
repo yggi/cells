@@ -5,7 +5,7 @@ import type { CellDecl } from '../ast';
 import type { Cells, Ctx } from './context';
 
 export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells): void {
-  const { error, warn } = ctx;
+  const { error, warn, unknownCell } = ctx;
   // resonators: body= one of the known bodies; couple= another resonator; excite= a mix
   for (const c of cells.values()) {
     const span = (k: string) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name)!.span;
@@ -14,7 +14,7 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
       error(`board=${c.params.board}: none, or one of ${Object.keys(BODIES).join(', ')}`, span('board'));
     if (typeof c.params.couple === 'string') {
       const o = cells.get(c.params.couple);
-      if (!o) error(`Unknown cell &${c.params.couple}`, span('couple'));
+      if (!o) unknownCell(c.params.couple, span('couple'));
       else if (typeof o.params.body !== 'string') error(`couple=&${o.name}: it couples to another resonator (a cell with body=)`, span('couple'));
     }
     if (typeof c.params.excite === 'string' && !cells.get(c.params.excite)?.mix) error(`excite=&${c.params.excite}: a resonator is driven by sound — a mix`, span('excite'));
@@ -24,12 +24,12 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
     const span = (k: string) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name)!.span;
     if (typeof c.params.write === 'string') {
       const w = cells.get(c.params.write);
-      if (!w) error(`Unknown cell &${c.params.write}`, span('write'));
+      if (!w) unknownCell(c.params.write, span('write'));
       else if (w.voice) error(`write=&${w.name}: a tape records what plays — a melody, not a voice`, span('write'));
     }
     if (typeof c.params.play === 'string') {
       const t = cells.get(c.params.play);
-      if (!t) error(`Unknown cell &${c.params.play}`, span('play'));
+      if (!t) unknownCell(c.params.play, span('play'));
       else if (typeof t.params.write !== 'string') error(`play=&${t.name}: a read head plays a tape — a cell with write= (what it records)`, span('play'));
     }
   }
@@ -39,7 +39,7 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
     if (typeof first !== 'string') continue;
     const span = decls.get(c.name)?.paramSpans?.fm ?? decls.get(c.name)!.span;
     const m = cells.get(first);
-    if (!m) error(`Unknown cell &${first}`, span);
+    if (!m) unknownCell(first, span);
     else if (!m.voice) error(`fm=&${first}: a modulator is a voice (s=sine ratio=…)`, span);
     else {
       const seen = new Set([c.name]);
@@ -60,7 +60,7 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
       let envs = 0;
       for (const f of pc.factors) {
         const fc = cells.get(f.name);
-        if (!fc) error(`Unknown cell &${f.name}`, f.span);
+        if (!fc) unknownCell(f.name, f.span);
         else if (fc.map?.kind === 'adsr') envs++;
       }
       if (envs > 1) error(`${key}=: one envelope (map=adsr) at most — the other factors scale it`, pc.span);
@@ -74,7 +74,7 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
     ] as const) {
       if (!r) continue;
       const t = cells.get(r.name);
-      if (!t) error(`Unknown cell &${r.name}`, r.span);
+      if (!t) unknownCell(r.name, r.span);
       else if (key === 'env' && t.map?.kind !== 'adsr' && t.map?.kind !== 'amp' && t.map?.kind !== 'lin' && t.map?.kind !== 'db')
         error(`env= takes a volume: a cell with map=adsr (an envelope), map=amp, map=db or map=lin`, r.span);
       else if (key === 'pitch' && (t.map?.kind === 'adsr' || t.map?.kind === 'amp' || t.map?.kind === 'db'))

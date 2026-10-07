@@ -8,7 +8,7 @@ import type { Typed } from './sorts';
 
 /** Marks kits and voices on a copy of the cells it is given; returns it with the sound card's bindings. */
 export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells, typed: Typed) {
-  const { error, warn } = ctx;
+  const { error, warn, unknownCell } = ctx;
   const cells = new Map(given);
   // ---- voices: the signal of every binding (the factor that is a sound: algebra.ts), and cells with sound parameters.
   // A cell made only of &refs to voices is a kit: numbers pick a voice.
@@ -161,10 +161,10 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   for (const [name, d] of decls) {
     const c = cells.get(name);
     if (!c) continue;
-    if (c.map?.kind === 'table' && !decls.has(c.map.table)) error(`Unknown cell &${c.map.table}`, d.map!.span);
+    if (c.map?.kind === 'table' && !decls.has(c.map.table)) unknownCell(c.map.table, d.map!.span);
     if (d.about) {
       if (!c.note) error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
-      for (const r of d.about) if (!decls.has(r.name)) error(`Unknown cell &${r.name}`, r.span);
+      for (const r of d.about) if (!decls.has(r.name)) unknownCell(r.name, r.span);
     }
     if (!c.voice) continue;
     const src = d.params.s;

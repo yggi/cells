@@ -36,6 +36,11 @@ const INT = /-?[0-9]+/y;
 export const NUM = /-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y;
 // a long rest is legitimate (a voice waiting out a whole prelude: ~@617); this only guards against typos
 export const MAX_REPS = 4096;
+/**
+ * How deep unnamed cells &( … ) may nest, one inside another: deeper is an error (reading 1,500 deep overflowed the
+ * stack). The examples nest one deep (an envelope in a voice's line); 32 leaves room for any written by hand.
+ */
+export const MAX_NESTING = 32;
 
 export class LineError extends Error {
   constructor(
@@ -64,6 +69,8 @@ export class LineScanner {
     readonly parts: readonly { line: number; start: number }[] = [{ line, start: 0 }],
     /** Warnings found so far (shared with the unnamed cells inside). */
     readonly warnings: Diagnostic[] = [],
+    /** How many unnamed cells &( … ) this text is inside. */
+    readonly depth = 0,
   ) {}
   warn(message: string, start: number, len: number): void {
     this.warnings.push({ severity: 'warning', message, span: { ...this.place(start), len } });
@@ -135,6 +142,7 @@ export class LineScanner {
    */
   lambda(): string {
     const open = this.i;
+    if (this.depth >= MAX_NESTING) this.fail(`Unnamed cells &( … ) nest ${MAX_NESTING} deep at most: name the inner ones (&env …) and refer to them`, open - 1, 2);
     let depth = 0;
     let close = -1;
     for (let k = open; k < this.text.length; k++) {
@@ -146,7 +154,7 @@ export class LineScanner {
     }
     if (close < 0) this.fail(`')' to close &( … )`, open);
     const name = `λ${this.line}_${open + this.offset}`;
-    const inner = new LineScanner(this.text.slice(open + 1, close), this.line, this.offset + open + 1, this.lambdas, this.parts, this.warnings);
+    const inner = new LineScanner(this.text.slice(open + 1, close), this.line, this.offset + open + 1, this.lambdas, this.parts, this.warnings, this.depth + 1);
     const decl = parseBody(inner, { name, pick: null, shift: 0, span: { line: this.line, col: open + this.offset, len: close - open + 2 } });
     this.lambdas.push({ ...decl, lambda: this.text.slice(open + 1, close).trim() });
     this.i = close + 1;

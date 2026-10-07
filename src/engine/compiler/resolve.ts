@@ -11,7 +11,7 @@ import type { Typed } from './sorts';
 class Abort extends Error {}
 
 export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }: Declared, typed: Typed): Cells {
-  const { rateOf, error, warn } = ctx;
+  const { rateOf, error, warn, broken, unknownCell } = ctx;
   const cells = new Map<string, ResolvedCell>();
   const lengthOf = (name: string) => lengthIn(decls, name);
   const unitsOf = (d: Parameters<typeof unitsIn>[1]) => unitsIn(decls, d);
@@ -36,7 +36,9 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
         const ref = u.atom.name;
         const span = toks[i]?.span ?? d.span;
         if (!decls.has(ref)) {
-          error(`Unknown cell &${ref}`, span);
+          // (a cell whose line failed: what uses it can't resolve either, and says nothing more)
+          if (broken.has(ref)) for (const v of visiting) broken.add(v);
+          unknownCell(ref, span);
           throw new Abort();
         }
         const child = resolve(ref, span);

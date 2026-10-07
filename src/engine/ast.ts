@@ -244,4 +244,6 @@ export interface Binding {
 export interface ParseResult {
   readonly cells: readonly CellDecl[];
   readonly diagnostics: readonly Diagnostic[];
+  /** Cells whose line failed (an error says why): where they're used, not reported again as unknown. */
+  readonly broken?: readonly string[];
 }

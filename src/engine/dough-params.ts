@@ -8,7 +8,7 @@ import { PARAMS } from './attributes';
  */
 export const DOUGH_PARAMS: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(PARAMS).map(([k, a]) => [k, a.help]));
 
-/** Aliases dough accepts for the same parameters. */
+/** Dough's other names for the same parameters: not read here (#143); writing one is an error that names ours. */
 export const DOUGH_ALIASES: Readonly<Record<string, string>> = {
   sound: 's',
   cutoff: 'lpf',
@@ -34,9 +34,6 @@ export const DOUGH_SOURCES: Readonly<Record<string, 'sine' | 'triangle' | 'sawto
   brown: 'brown',
 };
 
-export const isDoughParam = (key: string) => key in PARAMS || key in DOUGH_ALIASES;
-export const canonical = (key: string) => DOUGH_ALIASES[key] ?? key;
-
 /** Parameters that are gone, and what says the same thing now. */
 const ENVELOPE = (k: string) =>
   `${k}= is gone: an envelope is a cell — in the mix, &theme * &(map=adsr .01 .3 .5 .4) * &lead, or an instrument, &lead [&(map=adsr .01 .3 .5 .4) * &saw]`;
@@ -50,4 +47,5 @@ export const RETIRED_PARAMS: Readonly<Record<string, string>> = {
   pan: 'pan= is gone: balance with two mixes, &out … map=sample &left &right',
   penv: PITCH_DROP('penv'),
   pdec: PITCH_DROP('pdec'),
+  ...Object.fromEntries(Object.entries(DOUGH_ALIASES).map(([k, ours]) => [k, `${k}= is dough's other name for ${ours}=, and isn't read here: write ${ours}=`])),
 };

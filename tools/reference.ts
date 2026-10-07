@@ -92,11 +92,11 @@ export function renderReference(): string {
       );
     if (section === 'parameter')
       out.push(
-        `Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Dough's other names still read, with a warning: ${Object.entries(
+        `Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Dough's other names aren't read: writing one is an error that names ours (${Object.entries(
           DOUGH_ALIASES,
         )
           .map(([k, v]) => `\`${k}\` → \`${v}\``)
-          .join(', ')}.`,
+          .join(', ')}).`,
         '',
       );
     if (section === 'sort')

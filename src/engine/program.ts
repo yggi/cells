@@ -7,7 +7,19 @@
 import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, Span } from './ast';
 
 export const ROOT = 'fifths12TET';
+/**
+ * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
+ * more is a compile error. The largest in examples/ is 1,120 (bwv847's &tempo).
+ */
 export const MAX_EVENTS = 50_000;
+/**
+ * The most notes a second a played cell may start (`step=1000000` would plan millions for a few seconds): more is a
+ * compile error. The busiest in examples/ is 84 a second (dtmf's &dial); audio-rate cells (voices, wave shapes)
+ * start no notes and aren't counted.
+ */
+export const MAX_NOTES_PER_SECOND = 2_000;
+/** The fields a label= can hold, {tempo} or {&key:tonic} (filled in by layout/labels.ts); any other is a warning. */
+export const LABEL_FIELDS = ['name', 'notes', 'tonic', 'mode', 'steps', 'tempo', 'shift'] as const;
 /** A voice without a rate loops at middle C. */
 export const DEFAULT_FREQ = 261.63;
 

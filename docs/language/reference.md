@@ -106,7 +106,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 
 ## Parameters
 
-Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Dough's other names still read, with a warning: `sound` → `s`, `cutoff` → `lpf`, `resonance` → `lpq`, `hcutoff` → `hpf`, `hresonance` → `hpq`, `verb` → `room`, `reverb` → `room`, `delayt` → `delaytime`, `delayfb` → `delayfeedback`.
+Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Dough's other names aren't read: writing one is an error that names ours (`sound` → `s`, `cutoff` → `lpf`, `resonance` → `lpq`, `hcutoff` → `hpf`, `hresonance` → `hpq`, `verb` → `room`, `reverb` → `room`, `delayt` → `delaytime`, `delayfb` → `delayfeedback`).
 
 - `s=sine|tri|triangle|saw|sawtooth|square|pulse|white|pink|brown`: Sound source: sine tri saw square pulse white pink brown — on a voice; it makes the cell a voice. [→](sound.md)
 - `lpf=n` · `lpf=free(n, lo..hi)` · `lpf=&x` · `lpf=lo..hi * &a * &b`: Low-pass cutoff, Hz — on a voice; it makes the cell a voice. [→](sound.md)

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parse, pieceMeta } from './index';
 import { pickLabel, refLabel, type Atom, type Binding } from '../ast';
 import { distribute } from '../algebra';
+import { DOUGH_ALIASES } from '../dough-params';
 
 /** The parser keeps a mix as written; typed here as compile would, the voices of these tests being sounds. */
 const SOUNDS = /^(lead|bass|organ|cello|v|w|v2)$/;
@@ -99,18 +100,23 @@ describe('parse: rates, stride and voices', () => {
     expect(one('&key step=cycle(&theme) stride=7').stride).toBe(7);
   });
 
-  it('reads dough parameters on voices; an alias still works, with a warning', () => {
+  it("reads dough parameters on voices; dough's other names are errors that name ours", () => {
     const c = one('&lead s=saw step=261.63 lpf=1800 lpq=2 room=.4');
     expect(c.params).toEqual({ s: 'saw', lpf: 1800, lpq: 2, room: 0.4 });
     const r = parse('&lead s=saw reverb=.4');
-    expect(r.cells[0].params).toEqual({ s: 'saw', room: 0.4 });
-    expect(r.diagnostics).toEqual([{ severity: 'warning', message: "reverb= is dough's other name for room=: write room=", span: { line: 1, col: 13, len: 6 } }]);
-    // inside an unnamed cell too
-    expect(parse('&a [&t * &(s=saw cutoff=300)]').diagnostics.map((d) => d.message)).toEqual(["cutoff= is dough's other name for lpf=: write lpf="]);
+    expect(r.cells).toEqual([]);
+    expect(r.diagnostics).toEqual([
+      { severity: 'error', message: "reverb= is dough's other name for room=, and isn't read here: write room=", span: { line: 1, col: 13, len: 6 } },
+    ]);
+    // every one of them, inside an unnamed cell too
+    for (const [alias, ours] of Object.entries(DOUGH_ALIASES))
+      expect(parse(`&a [&t * &(s=saw ${alias}=300)]`).diagnostics.map((d) => [d.severity, d.message])).toEqual([
+        ['error', `${alias}= is dough's other name for ${ours}=, and isn't read here: write ${ours}=`],
+      ]);
     // envelopes are cells now
     for (const k of ['attack', 'decay', 'sustain', 'release'])
       expect(parse(`&lead s=saw ${k}=.3`).diagnostics[0].message).toMatch(new RegExp(`${k}= is gone: an envelope is a cell.*map=adsr`));
-    expect(parse('&a lpf=1 cutoff=2').diagnostics[0].message).toMatch(/twice/);
+    expect(parse('&a lpf=1 lpf=2').diagnostics[0].message).toMatch(/twice/);
     expect(parse('&a fmh=2').diagnostics[0].message).toMatch(/Unknown attribute fmh=/);
     // a misspelling: the nearest attribute, then all of them
     expect(parse('&a stpe=4').diagnostics[0].message).toMatch(/^Unknown attribute stpe= — did you mean step=\? \(a cell: over step .* anchor\)$/);

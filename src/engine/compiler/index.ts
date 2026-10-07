@@ -16,6 +16,7 @@ import { checkCells } from './checks';
 import { outputsOf } from './outputs';
 import { displayCells } from './display';
 import { checkRoles } from './roles';
+import { checkLimits } from './limits';
 
 export function compile(parsed: ParseResult, env: Env): CompileResult {
   const ctx = context(parsed, env);
@@ -28,6 +29,7 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
   const { clocks } = timed;
   checkCells(ctx, decls, timed.cells);
   const { outputs, returns, resonances } = outputsOf(ctx, decls, timed.cells, bound);
+  checkLimits(ctx, decls, timed.cells, clocks, outputs);
   const cells = displayCells(timed.cells);
   checkRoles(ctx, declared, cells, clocks);
 

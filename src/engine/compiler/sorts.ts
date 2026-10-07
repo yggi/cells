@@ -1,5 +1,5 @@
 /** The mix algebra's view of the cells (algebra.ts): what each cell is, from its own line; a mix's expressions typed. */
-import type { Atom, Binding, CellDecl } from '../ast';
+import type { Atom, Binding, CellDecl, Expr } from '../ast';
 import { VOICE_PARAMS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
 import { syntax, type Syntax } from '../parser/syntax';
@@ -107,6 +107,9 @@ export const SORT_RULES: readonly SortRule[] = [
 /** The rules as reference entries (docs/language/reference.md). */
 export const SORT_SYNTAX: readonly Syntax[] = SORT_RULES.map((r) => syntax('sort', r.sort, r.is, [r.example[r.example.length - 1]], 'mix.md'));
 
+/** The cells an expression names. */
+const refsOf = (e: Expr): string[] => (e.k === 'ref' ? [e.ref.name] : e.k === 'sum' ? e.items.flatMap((x) => refsOf(x.e)) : e.k === 'prod' ? e.factors.flatMap(refsOf) : []);
+
 /** sortOf(name): what the cell is in a mix (SORT_RULES). */
 export function sortOfCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): (name: string) => Sort {
   const seen: Seen = { decls, rateOf: ctx.rateOf };
@@ -144,7 +147,8 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
         else out.push(...bs);
       } catch (x) {
         if (!(x instanceof AlgebraError)) throw x;
-        error(x.message, x.span);
+        // (a cell whose line failed has no sort to speak of: its own error says why)
+        if (!refsOf(e).some((n) => ctx.broken.has(n))) error(x.message, x.span);
       }
     typedMixes.set(atom, out);
     return out;

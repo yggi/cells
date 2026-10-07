@@ -5,7 +5,7 @@ import type { Cells, Ctx } from './context';
 
 /** The clocks; each cell's clock, rate and times given as clocks, set on a copy of the cells it is given. */
 export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells): { cells: Cells; clocks: ReadonlyMap<string, Clock> } {
-  const { rateOf, error, warn } = ctx;
+  const { rateOf, error, warn, unknownCell } = ctx;
   const cells = new Map(given);
   const clocks = new Map<string, Clock>();
   // ---- clocks: non-voice cells moved at a rate
@@ -42,7 +42,7 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     const drv = st.driver.name;
     const what = st.whole ? 'loop=' : 'step=';
     let result: { clock: string; rate: number } | null = null;
-    if (!decls.has(drv)) error(`Unknown cell &${drv}`, st.driver.span);
+    if (!decls.has(drv)) unknownCell(drv, st.driver.span);
     else if (stepping.includes(drv) || drv === name) error(`${what} loops back: ${[...stepping.slice(stepping.indexOf(drv)), name, drv].map((n) => '&' + n).join(' → ')}`, st.span);
     else if (cells.get(drv)?.voice) error(`&${drv} is a voice: it moves at audio rate`, st.driver.span);
     else {

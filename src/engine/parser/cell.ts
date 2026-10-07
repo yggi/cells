@@ -1,7 +1,8 @@
 /** A cell's line: its name, then attributes and its braid, in any order. */
 import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, Token } from '../ast';
 import { TIME_PARAMS } from '../attributes';
-import { RETIRED_PARAMS, canonical, isDoughParam } from '../dough-params';
+import { RETIRED_PARAMS } from '../dough-params';
+import { LABEL_FIELDS } from '../program';
 import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from '../attributes';
 import { IDENT, type LineScanner } from './scanner';
 import { parseToken } from './braid';
@@ -83,9 +84,15 @@ const whole =
 const text =
   (key: 'title' | 'tags' | 'label', example: string): Reader =>
   (s, b) => {
+    const at = s.i;
     const q = s.match(/"([^"]*)"/y);
     if (q === null) s.fail(`${key}= takes a text in quotes: ${example}`);
     b[key] = q!.slice(1, -1);
+    // a label's fields: {tempo}, {&key:tonic} — any other would show as written
+    if (key === 'label')
+      for (const m of q!.matchAll(/\{(?:&[A-Za-z_][A-Za-z0-9_]*:)?([A-Za-z_][A-Za-z0-9_]*)\}/g))
+        if (!(LABEL_FIELDS as readonly string[]).includes(m[1]))
+          s.warn(`{${m[1]}} isn't a label field: it shows as written (the fields: ${LABEL_FIELDS.map((f) => `{${f}}`).join(' ')})`, at + m.index, m[0].length);
   };
 const voiceOwn =
   (key: 'env' | 'pitch'): Reader =>
@@ -106,7 +113,20 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       if (sc) {
         // scale(tonic, phase): the 12 shifted to the tonic, even(7,12,phase) over it — written once
         const [, tonic, phase] = /scale\(\s*(-?[0-9]+)\s*,\s*([0-9]+)\s*\)/.exec(sc)!;
-        b.over = { name: `scale:${parseInt(tonic, 10)}:${parseInt(phase, 10)}`, pick: null, shift: 0, span: s.span(at + 5) };
+        const t = parseInt(tonic, 10);
+        const p = parseInt(phase, 10);
+        // the phase is one of the seven modes; the tonic a pitch class (beyond an octave it still climbs: a warning)
+        if (p > 6)
+          s.fail(`scale(tonic, phase): the phase is a mode, 0 (the darkest, Locrian) to 6 (the brightest, Lydian) — not ${p}`, at + 5 + sc.lastIndexOf(phase), phase.length);
+        if (Math.abs(t) > 11) {
+          const octaves = Math.trunc(t / 12);
+          s.warn(
+            `scale(${t}, …): the tonic is a pitch class, 0 (C) to 11 (B); ${t} is ${Math.abs(octaves)} octave${Math.abs(octaves) === 1 ? '' : 's'} ${t > 0 ? 'up' : 'down'} from ${t - 12 * octaves}`,
+            at + 5 + sc.indexOf(tonic, 6),
+            tonic.length,
+          );
+        }
+        b.over = { name: `scale:${t}:${p}`, pick: null, shift: 0, span: s.span(at + 5) };
       } else if (s.match(/scale\(/y)) s.fail('scale(tonic, phase): like scale(0,2) for C Aeolian');
       else b.over = s.ref('a cell or scale(tonic, phase) after over=, like over=&scale');
       if (b.over!.pick) s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over!.span.col - 1, b.over!.span.len);
@@ -239,13 +259,12 @@ const readCellParam: Reader = (s, b, word) => {
 };
 
 /** A parameter's value: a number or a word, free(…), a clock (a time), or cells it moves with. */
-function readParam(s: LineScanner, b: Body, word: string): void {
-  const key = canonical(word);
+function readParam(s: LineScanner, b: Body, key: string): void {
   const vs = s.i;
   // a time as a clock: delaytime=&bar/2
   if (s.peek() === '&' && TIME_PARAMS.has(key)) {
     const st = parseStep(s, false);
-    if (st.kind !== 'driven') s.fail(`${word}= takes seconds, or a clock: ${word}=&bar/2`, vs, s.i - vs);
+    if (st.kind !== 'driven') s.fail(`${key}= takes seconds, or a clock: ${key}=&bar/2`, vs, s.i - vs);
     b.paramClocks[key] = st;
     b.paramSpans[key] = s.span(vs);
     return;
@@ -263,7 +282,7 @@ function readParam(s: LineScanner, b: Body, word: string): void {
   if (s.peek() === '&' || range) {
     if (range) s.i += range[0].length;
     const factors: Ref[] = [];
-    if (!range) factors.push(s.ref(`a cell after ${word}=`));
+    if (!range) factors.push(s.ref(`a cell after ${key}=`));
     for (;;) {
       const save = s.i;
       s.skipSpace();
@@ -273,16 +292,16 @@ function readParam(s: LineScanner, b: Body, word: string): void {
       }
       s.i++;
       s.skipSpace();
-      factors.push(s.ref(`a cell after *, like ${word}=200..3000 * &fenv`));
+      factors.push(s.ref(`a cell after *, like ${key}=200..3000 * &fenv`));
     }
-    if (range && factors.length === 0) s.fail(`${word}=${range[0]}: a range is scaled by cells — ${word}=${range[0]} * &fenv`, vs, s.i - vs);
-    if (!range && factors.length > 1) s.fail(`${word}=: several cells multiply a range — ${word}=200..3000 * &a * &b`, vs, s.i - vs);
+    if (range && factors.length === 0) s.fail(`${key}=${range[0]}: a range is scaled by cells — ${key}=${range[0]} * &fenv`, vs, s.i - vs);
+    if (!range && factors.length > 1) s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
     b.paramCells[key] = { range: range ? [parseFloat(range[1]), parseFloat(range[2])] : null, factors, span: s.span(vs) };
     b.paramSpans[key] = s.span(vs);
     return;
   }
   const v = s.match(/-?[A-Za-z0-9_.]+/y);
-  if (v === null) s.fail(`Expected a value after ${word}=`);
+  if (v === null) s.fail(`Expected a value after ${key}=`);
   b.params[key] = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(v) ? parseFloat(v) : v;
   b.paramSpans[key] = s.span(vs);
 }
@@ -363,7 +382,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     const word = s.match(IDENT);
     if (word !== null && s.peek() === '=') {
       s.i++;
-      const key = word in KEYS ? word : CELL_PARAMS.has(word) ? word : isDoughParam(word) ? canonical(word) : null;
+      const key = word in KEYS || word in PARAMS ? word : null;
       if (key === null) {
         if (word in RETIRED_KEYS) s.fail(RETIRED_KEYS[word], at, word.length);
         const near = nearestAttribute(word);
@@ -378,7 +397,6 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       if (seen.has(slot))
         s.fail(slot === 'step' && b.step!.whole !== (word === 'loop') ? 'step= and loop= say the same thing two ways — pick one' : `${word}= is given twice`, at, word.length);
       seen.add(slot);
-      if (key !== word) s.warn(`${word}= is dough's other name for ${key}=: write ${key}=`, at, word.length);
       const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (CELL_PARAMS.has(key) ? readCellParam : readParam);
       read(s, b, word, at);
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);

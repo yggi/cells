@@ -27,6 +27,8 @@ export const KEY = BAR * BARS_PER_KEY; // 840
 export const BLOCK = KEY * 12; // 10 080
 export const DAY = BLOCK * 12; // 120 960 — 24 hours at 84 a minute
 export const SECONDS_PER_STEP = 60 / STEPS_PER_MINUTE;
+/** When the law's day begins: 11:55, in seconds of the day (its first block, the false zenith, starts here). */
+export const START = 11 * 3600 + 55 * 60;
 
 /** The modes, as rotations of the major scale's steps: 0 Ionian … 6 Locrian. */
 export const MODE_NAMES = ['Ionian', 'Dorian', 'Phrygian', 'Lydian', 'Mixolydian', 'Aeolian', 'Locrian'];

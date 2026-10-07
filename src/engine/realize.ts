@@ -7,7 +7,7 @@
  * numbers in `flatten.ts`, streams of values over a note in `series.ts`.
  */
 import type { Pick } from './ast';
-import { SECONDS_PER_STEP as LAW_SPS, notesBetween as lawNotes } from './fiveto12';
+import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from './fiveto12';
 import { adsrOf, type CompileResult, type Output, type Shifts } from './program';
 import { tableChain } from './helix';
 import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from './clocking';
@@ -276,7 +276,7 @@ function lawOffset(result: Plan['result'], cell: string): number {
   const anchor = day?.params.anchor;
   if (typeof anchor !== 'number') return 0;
   const sec = (h: number) => Math.floor(h) * 3600 + Math.round((h % 1) * 100) * 60;
-  return Math.round(((((sec(anchor) - sec(11.55)) % 86400) + 86400) % 86400) / LAW_SPS);
+  return Math.round(((((sec(anchor) - LAW_START) % 86400) + 86400) % 86400) / LAW_SPS);
 }
 
 /**

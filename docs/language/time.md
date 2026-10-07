@@ -13,6 +13,8 @@ What moves a cell: `step=` and `loop=`, the chains that scale them, `stride=`, m
 
 Driven forms take a chain of `*n` (once per n) and `/n` (n per one), read left to right, n any positive number: `step=&bar*2/3` is triplets — three steps per two.
 
+A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/engine/program.ts`): faster, `step=1000000`, is an error, and the player keeps the last piece that compiled. Cells at audio rate that start no notes (a voice's wave, a vibrato) aren't counted.
+
 - **`stride=n`** — each step moves a stepped table n places (`stride=7`: fifths).
 - **`cycle=n`** — how many before it comes round; see [tables.md](tables.md).
 - Rates can be a **free** number: `step=free(90bpm, 60..240)`; see [free.md](free.md).
@@ -40,7 +42,7 @@ A meter is a cell whose braid is a `scan`: `scan(27 23 26 24)` is a bent 4/4 bar
 
 ## Laws
 
-A cell with **`law=`** has its notes computed by a law instead of written: `law=fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`). The law reads the day through **`over=&day`**: a day meter, a clock whose loop is a day, `&day scan(1!24) loop=1d`. **`anchor=hh.mm`** on that clock is the time of day it stands at when play starts (`anchor=11.55`). Drawn **`show=sun`**, the day meter is a 24-hour dial, noon at the top. Rates take time units: `min` `h` `d` `wk` (`loop=1d` is one lap a day). See the example *5 to 12*.
+A cell with **`law=`** has its notes computed by a law instead of written: `law=fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`). The law reads the day through **`over=&day`**: a day meter, a clock whose loop is a day, `&day scan(1!24) loop=1d`. **`anchor=hh.mm`** on that clock is the time of day it stands at when play starts (`anchor=11.55`); written on the law itself, it is a warning that says where it goes. Drawn **`show=sun`**, the day meter is a 24-hour dial, noon at the top. Rates take time units: `min` `h` `d` `wk` (`loop=1d` is one lap a day). See the example *5 to 12*.
 
 ## Laps and selectors
 

@@ -18,7 +18,7 @@ export interface Declared {
 }
 
 export function declare(ctx: Ctx): Declared {
-  const { parsed, error } = ctx;
+  const { parsed, error, unknownCell } = ctx;
   const decls = new Map<string, CellDecl>();
   const implicit = new Set<string>();
   for (const c of parsed.cells) {
@@ -72,7 +72,7 @@ export function declare(ctx: Ctx): Declared {
     let ok = true;
     if (o !== null) {
       if (!decls.has(o)) {
-        error(`Unknown cell &${o}`, d.over!.span);
+        unknownCell(o, d.over!.span);
         ok = false;
       } else if (seen.includes(o)) {
         error(`over= loops: ${[...seen.slice(seen.indexOf(o)), name, o].map((n) => '&' + n).join(' → ')}`, d.over?.span ?? d.span);

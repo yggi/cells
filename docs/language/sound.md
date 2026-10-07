@@ -12,7 +12,7 @@ A voice is a cell looped at audio rate: `loop=440` plays its braid 440 times a s
 
 With no braid a voice holds 0…11 of the 12 grid: a 12-step saw. Or name a built-in waveform with dough's **`s=`** (sine tri saw square pulse white pink brown). Levels and stereo are the mix's job; envelopes are cells, `map=adsr`. A voice with no envelope in its product plays quick and full. Rendering uses Tone.js.
 
-Sound parameters use dough's names; any of them makes a cell a voice:
+Sound parameters use dough's names; any of them makes a cell a voice. Dough's other names for them (`cutoff=`, `verb=` …, listed in [reference.md](reference.md)) aren't read: each is an error that names ours.
 
 | parameter | what |
 |---|---|

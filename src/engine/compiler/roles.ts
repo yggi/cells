@@ -38,7 +38,13 @@ export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells
     ];
     for (const [k, span] of written) {
       const a = ATTRIBUTES[k];
-      if (a?.on && !a.on.some((r) => has.has(r))) warn(`${k}= acts on ${rolesText(a.on)}: on &${d.name} it does nothing`, span);
+      // anchor= on a law: it belongs on the clock the law reads its day through (over=&day)
+      if (k === 'anchor' && has.has('law'))
+        warn(
+          `anchor= sets the clock a law reads, not the law: write it on ${c.over ? `&${c.over}` : 'its day (over=&day, a clock loop=1d)'} — the law on &${d.name} doesn't read it`,
+          span,
+        );
+      else if (a?.on && !a.on.some((r) => has.has(r))) warn(`${k}= acts on ${rolesText(a.on)}: on &${d.name} it does nothing`, span);
       else if (a?.value === 'number' && !c.voice && typeof d.params[k] === 'string') warn(`${k}= takes a number: '${d.params[k]}' does nothing`, span);
     }
     // swing pairs the steps of a list; a scan places its own

@@ -22,6 +22,7 @@ export { SHOWS } from './cell';
 export function parse(source: string): ParseResult {
   const cells: CellDecl[] = [];
   const diagnostics: Diagnostic[] = [];
+  const broken: string[] = [];
   // a line ending in + * , or [ (outside comments) continues on the next one
   const lines: { text: string; line: number; parts: { line: number; start: number }[] }[] = [];
   let carry: { text: string; line: number; parts: { line: number; start: number }[] } | null = null;
@@ -55,9 +56,11 @@ export function parse(source: string): ParseResult {
     } catch (e) {
       if (!(e instanceof LineError)) throw e;
       diagnostics.push({ severity: 'error', message: e.message, span: { line: lineNo, col: e.col + 1, len: e.len } });
+      const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(text)?.[1];
+      if (name) broken.push(name);
     }
   });
-  return { cells, diagnostics };
+  return { cells, diagnostics, broken };
 }
 
 /** A piece's card: the first note with a title= — its title, its description (the label, as plain text), its tags. */

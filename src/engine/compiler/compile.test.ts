@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { setFree } from '../edit';
 import { compileSource } from '../compile';
-import { noteFrequency, codeShifts, type Shifts } from '../program';
+import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, type Shifts } from '../program';
+import { MAX_NESTING } from '../parser/scanner';
+import { START as LAW_START } from '../fiveto12';
 import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entries, lookup, resolveIn, resolvePitch, shiftedUnits } from '../helix';
 import { flatten } from '../flatten';
 import { eventsBetween, plan } from '../realize';
@@ -711,5 +713,88 @@ describe('about=: a note links to the cells it explains', () => {
     expect(compileSource(src('&bd s=sine loop=A1 pitch=&(loop=5 0 .1 -.1)')).diagnostics).toEqual([]);
     // penv= pdec= are gone, and say what replaces them
     expect(compileSource(src('&bd s=sine loop=A1 penv=30 pdec=.04')).diagnostics[0].message).toMatch(/penv= is gone: .* is pitch=0\.\.30 \* &\(map=adsr 0 \.04 0 0\)/);
+  });
+});
+
+describe('diagnostics: nothing plays, or the wrong thing, without a word (#143)', () => {
+  // a played melody, &tune, through a voice into the sound card
+  const piece = (tune: string) => `${tune}\n&pluck s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&tune * &pluck]`;
+  // what it says (but "Nothing plays yet", which a lone line always gets)
+  const said = (src: string) =>
+    compileSource(src)
+      .diagnostics.filter((d) => !d.message.startsWith('Nothing plays yet'))
+      .map((d) => [d.severity, d.span.line, d.span.col, d.message] as const);
+
+  it('a cell that expands beyond MAX_EVENTS is an error at the step that does it, naming the cap', () => {
+    expect(said(piece('&a 0!4000\n&tune step=120bpm 0 &a!4000'))).toEqual([
+      ['error', 2, 21, `&tune expands to 16,000,001 notes: more than ${MAX_EVENTS.toLocaleString('en')}, the most a cell can hold — repeat less (!n), or let a clock repeat it`],
+    ]);
+    // reported once, where it first goes over: not again on what plays it
+    expect(said('&a 0!4000\n&b &a!4000\n&c &b &b').filter(([s]) => s === 'error')).toHaveLength(1);
+    expect(compileSource(piece('&a 0!40\n&tune step=120bpm &a!40')).ok).toBe(true);
+  });
+
+  it('a played cell faster than MAX_NOTES_PER_SECOND is an error at its step=, naming the cap', () => {
+    expect(said(piece('&tune 0 1 2 step=1000000'))).toEqual([
+      ['error', 1, 18, `&tune would start 1,000,000 notes a second: more than ${MAX_NOTES_PER_SECOND.toLocaleString('en')}, the most a cell can play — slow its step= or loop=`],
+    ]);
+    // through a clock too: its rate times the ratio
+    expect(said(piece('&bar step=120bpm 0\n&tune step=&bar/2000 0 1 2')).map((d) => d[3])).toEqual([expect.stringMatching(/^&tune would start 4,000 notes a second/)]);
+    // audio-rate cells start no notes: a voice's wave, a sound card
+    expect(compileSource(piece('&tune step=120bpm 0 1 2')).diagnostics).toEqual([]);
+  });
+
+  it(`unnamed cells nest ${MAX_NESTING} deep at most: deeper is an error, never a stack overflow`, () => {
+    const nested = (n: number) => piece(`&tune step=120bpm ${'&('.repeat(n)}0${')'.repeat(n)}`);
+    expect(compileSource(nested(MAX_NESTING)).ok).toBe(true);
+    for (const n of [MAX_NESTING + 1, 1500]) {
+      let r: R | undefined;
+      expect(() => (r = compileSource(nested(n)))).not.toThrow();
+      expect(r!.diagnostics.map((d) => [d.severity, d.span.line, d.message])).toEqual([
+        ['error', 1, `Unnamed cells &( … ) nest ${MAX_NESTING} deep at most: name the inner ones (&env …) and refer to them`],
+      ]);
+      expect(() => eventsBetween(plan(r!, codeShifts(r!)), 0, 4)).not.toThrow();
+    }
+  });
+
+  it("a cell whose line failed isn't reported again where it is used", () => {
+    expect(said(piece('&a 0 1 (\n&tune step=120bpm &a &a\n&c over=&a 0'))).toEqual([['error', 1, 8, "Unexpected '(' — expected a number, ~, [chord], &cell or key=value"]]);
+    expect(said('&a 0 1 (\n&m [&a]')).toEqual([['error', 1, 8, "Unexpected '(' — expected a number, ~, [chord], &cell or key=value"]]);
+    // a cell that is simply missing still is
+    expect(said(piece('&tune step=120bpm &a')).map((d) => d[3])).toContain('Unknown cell &a');
+  });
+
+  it('anchor= on a law says it belongs on the clock the law reads', () => {
+    const law = (cycle: string) => `&day scan(1!24) loop=1d anchor=11.55\n${cycle}\n&bell s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&cycle * &bell]`;
+    expect(compileSource(law('&cycle law=fiveto12 over=&day step=84bpm')).diagnostics).toEqual([]);
+    expect(said(law('&cycle law=fiveto12 over=&day step=84bpm anchor=13.00'))).toEqual([
+      ['warning', 2, 49, "anchor= sets the clock a law reads, not the law: write it on &day — the law on &cycle doesn't read it"],
+    ]);
+  });
+
+  it('the law keeps its own start: 11:55', () => {
+    expect(LAW_START).toBe(11 * 3600 + 55 * 60);
+  });
+
+  it('an unknown field in a label is a warning that lists the fields ({lap} is not built yet, #29)', () => {
+    const fields = LABEL_FIELDS.map((f) => `{${f}}`).join(' ');
+    expect(said('&a step=2 0 1 label="lap {lap}, {tempi}"')).toEqual([
+      ['warning', 1, 26, `{lap} isn't a label field: it shows as written (the fields: ${fields})`],
+      ['warning', 1, 33, `{tempi} isn't a label field: it shows as written (the fields: ${fields})`],
+    ]);
+    expect(said('&k shift=2\n&a step=2 0 1 label="{tempo} {&k:tonic} {&k:lap}"').map((d) => d[3])).toEqual([
+      `{lap} isn't a label field: it shows as written (the fields: ${fields})`,
+    ]);
+    for (const f of LABEL_FIELDS) expect(said(`&a step=2 0 1 label="{${f}}"`)).toEqual([]);
+  });
+
+  it('scale(tonic, phase): a phase beyond the seven modes is an error, a tonic beyond the octave a warning', () => {
+    expect(said('&a over=scale(0,99) 0 1 2')).toEqual([
+      ['error', 1, 17, 'scale(tonic, phase): the phase is a mode, 0 (the darkest, Locrian) to 6 (the brightest, Lydian) — not 99'],
+    ]);
+    expect(said('&a over=scale(0,7) 0')[0][0]).toBe('error');
+    expect(said('&a over=scale(99,0) 0 1 2')).toEqual([['warning', 1, 15, 'scale(99, …): the tonic is a pitch class, 0 (C) to 11 (B); 99 is 8 octaves up from 3']]);
+    expect(said('&a over=scale(-13,0) 0')[0][3]).toMatch(/-13 is 1 octave down from -1/);
+    for (const s of ['scale(0,0)', 'scale(11,6)', 'scale(-11,3)']) expect(said(`&a over=${s} 0 1 2`)).toEqual([]);
   });
 });
