@@ -1,5 +1,5 @@
 /** The values with a syntax of their own: step= and loop= (rates, clocks, chains), map= (kinds, grids, tables). */
-import type { MapSpec, StepSpec } from '../ast';
+import type { MapSpec, RateOp, StepSpec } from '../ast';
 import type { LineScanner } from './scanner';
 import { parseFree } from './free';
 import { syntax, type Syntax } from './syntax';
@@ -92,16 +92,16 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   if (cycle) s.expect(')', `')' to close cycle(&${driver.name})`);
   // a chain of *n and /n, read left to right: *2 once per two steps, /2 twice per step, *2/3 three per two
   let ratio = 1;
-  let label = '';
+  const chain: RateOp[] = [];
   while (s.peek() === '*' || s.peek() === '/') {
     const op = s.text[s.i++];
     const at = s.i;
     const n = s.match(/[0-9]+(?:\.[0-9]+)?|\.[0-9]+/y);
     if (n === null || !(parseFloat(n) > 0)) s.fail(`a positive number after ${op}`, at);
     ratio = op === '*' ? ratio / parseFloat(n) : ratio * parseFloat(n);
-    label += `${op === '*' ? '×' : '÷'}${n}`;
+    chain.push({ op: op === '*' ? '×' : '÷', n: parseFloat(n!) });
   }
-  return { whole, kind: 'driven', driver, cycle, ratio, label, span: s.span(start) };
+  return { whole, kind: 'driven', driver, cycle, ratio, chain, span: s.span(start) };
 }
 
 type MapWord = Exclude<MapSpec['kind'], 'table' | 'edo'> | 'edo';

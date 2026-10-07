@@ -10,6 +10,7 @@ import { flatten } from '../flatten';
 import { eventsBetween, plan } from '../realize';
 import { parse } from '../parser';
 import { buildGraph } from '../graph';
+import { edgeLabel } from '../transform';
 import { PRESETS } from '../presets';
 import { modeName } from '../../theory/modes';
 
@@ -674,7 +675,7 @@ describe('transposing a reference: &x^n', () => {
   });
   it('the graph labels the reference with it', () => {
     const g = buildGraph(compileSource('&m 0 4\n&t step=1 &m^7\n&v s=tri\n&mix loop=SAMPLE_RATE map=sample [&t * &v]'));
-    expect(g.edges.find((e) => e.source === 'cell:t' && e.target === 'cell:m')!.pick).toBe('^7');
+    expect(edgeLabel(g.edges.find((e) => e.source === 'cell:t' && e.target === 'cell:m')!)).toBe('^7');
   });
 });
 
@@ -693,7 +694,7 @@ describe('about=: a note links to the cells it explains', () => {
     const hint = r.cells.get('hint')!;
     expect([hint.note, hint.about]).toEqual([true, ['fenv', 'accent']]);
     const g = buildGraph(r);
-    expect(g.edges.filter((e) => e.kind === 'about').map((e) => [e.source, e.target])).toEqual([
+    expect(g.edges.filter((e) => e.port === 'about').map((e) => [e.source, e.target])).toEqual([
       ['cell:hint', 'cell:fenv'],
       ['cell:hint', 'cell:accent'],
     ]);

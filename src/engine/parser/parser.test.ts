@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parse, pieceMeta } from './index';
 import { pickLabel, refLabel, type Atom, type Binding } from '../ast';
 import { distribute } from '../algebra';
+import { rateChain } from '../transform';
 import { DOUGH_ALIASES } from '../dough-params';
 
 /** The parser keeps a mix as written; typed here as compile would, the voices of these tests being sounds. */
@@ -138,7 +139,7 @@ describe('parse: loop, cycle(), map and sums', () => {
   it('reads the six step / loop forms', () => {
     const r = parse(`&a step=1\n&b loop=1\n&c step=&x\n&d loop=&x\n&e step=cycle(&x)\n&f loop=cycle(&x)*2\n&g step=&x/5`);
     expect(r.diagnostics).toEqual([]);
-    expect(r.cells.map((c) => [c.step?.whole, c.step?.kind, c.step?.kind === 'driven' ? [c.step.cycle, c.step.label || null, c.step.ratio] : null])).toEqual([
+    expect(r.cells.map((c) => [c.step?.whole, c.step?.kind, c.step?.kind === 'driven' ? [c.step.cycle, rateChain(c.step.chain) || null, c.step.ratio] : null])).toEqual([
       [false, 'rate', null],
       [true, 'rate', null],
       [false, 'driven', [false, null, 1]],
@@ -153,7 +154,7 @@ describe('parse: loop, cycle(), map and sums', () => {
   it('reads ratio chains, left to right, any positive number', () => {
     const ratio = (t: string) => {
       const c = one(`&a step=${t} 0`);
-      return c.step?.kind === 'driven' ? [c.step.ratio, c.step.label] : null;
+      return c.step?.kind === 'driven' ? [c.step.ratio, rateChain(c.step.chain)] : null;
     };
     expect(ratio('&x*2/3')).toEqual([1.5, '×2÷3']); // three per two
     expect(ratio('&x/3*2')).toEqual([1.5, '÷3×2']);

@@ -32,7 +32,7 @@ describe('a stepped braid of voices plays them (#10 F4)', () => {
     const r = compileSource(voices + '&groove step=&bar/2 &bd &hh &bd &sd\n&out map=sample [&groove]');
     const g = buildGraph(r);
     expect(g.nodes.some((n) => n.cell.name.startsWith('kit:'))).toBe(false);
-    expect(g.edges.filter((e) => e.kind === 'ref' && e.source === 'cell:groove').map((e) => [e.target, e.count])).toEqual([
+    expect(g.edges.filter((e) => e.port === 'braid' && e.source === 'cell:groove').map((e) => [e.target, e.count])).toEqual([
       ['cell:bd', 2],
       ['cell:hh', 1],
       ['cell:sd', 1],

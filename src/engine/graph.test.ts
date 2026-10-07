@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { compileSource } from './compile';
 import { buildGraph, type GraphEdge } from './graph';
+import { cellId, edgeId, stepEdgeId } from './ids';
+import { transformLabel } from './transform';
 import { PRESETS } from './presets';
 
 // An edge as a wire (docs/notes/nets.md): its port, band, width and the way the values flow.
@@ -66,6 +68,12 @@ describe('edges as wires', () => {
     expect(g.nets.some((n) => n.owner === 'cell:alpha')).toBe(false);
   });
 
+  it('into a sound card of two channels: a pair (L R); into a mono one, one wire', () => {
+    expect(wireOf(g.edges, 'hh', 'out')).toMatchObject({ port: 'mix', width: 2 }); // [ … ] [ … ]
+    const mono = buildGraph(compileSource('&t step=1 0 2\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]'));
+    expect(wireOf(mono.edges, 'v', 'out')).toMatchObject({ port: 'mix', width: 1 });
+  });
+
   it('every edge of every example has a port and a band, and its ends are the edge’s', () => {
     for (const [key, p] of Object.entries(PRESETS)) {
       for (const e of buildGraph(compileSource(p.source)).edges) {
@@ -75,5 +83,217 @@ describe('edges as wires', () => {
         expect([e.source, e.target].sort()).toEqual([e.from, e.to].sort());
       }
     }
+  });
+});
+
+describe('a wire carries its transform', () => {
+  const edge = (src: string, from: string, to: string) => buildGraph(compileSource(src)).edges.find((e) => e.from === `cell:${from}` && e.to === `cell:${to}`)!;
+
+  it('a canon: each voice its melody delayed, in steps, and its gain into the mix', () => {
+    const src = PRESETS.canon.source;
+    expect(edge(src, 'john', 'v1').transforms).toEqual([[]]);
+    expect(edge(src, 'john', 'v2').transforms).toEqual([[{ kind: 'delay', by: 1, unit: 'step' }]]);
+    expect(edge(src, 'john', 'v4').transforms).toEqual([[{ kind: 'delay', by: 3, unit: 'step' }]]);
+    expect(edge(src, 'v2', 'left').transforms).toEqual([[{ kind: 'gain', by: 0.4 }]]);
+  });
+
+  it('a tape: each read head its delay, in tape-seconds', () => {
+    const src = PRESETS.echotape.source;
+    expect(edge(src, 'tape', 'near').transforms).toEqual([[{ kind: 'delay', by: 0.375, unit: 'second' }]]);
+    expect(edge(src, 'tape', 'far').transforms).toEqual([[{ kind: 'delay', by: 1.5, unit: 'second' }]]);
+    expect(edge(src, 'tune', 'tape').transforms).toEqual([[]]); // (the write head)
+  });
+
+  it('a pitch sum: a number transposes by semitones, a subtracted term is negated', () => {
+    expect(edge(PRESETS.pertonos.source, 'alto', 'cello').transforms).toEqual([
+      [
+        { kind: 'delay', by: 1, unit: 'step' },
+        { kind: 'transpose', by: -7, unit: 'semitone' },
+      ],
+    ]);
+    const sum = '&t step=1 0 2\n&w loop=5 0 .2 0 -.2\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [(&t - &w[1:]) * &v]';
+    expect(edge(sum, 'w', 'v')).toMatchObject({ port: 'pitch', transforms: [[{ kind: 'pick', pick: { kind: 'slice', from: 1, to: null } }, { kind: 'negate' }]] });
+  });
+
+  it('a step: its rate as written, per cycle, the whole braid, through a belt', () => {
+    expect(edge(PRESETS.echotape.source, 'bar', 'tune').transforms).toEqual([[{ kind: 'rate', by: [{ op: '÷', n: 2 }], per: 'step', whole: false }]]);
+    expect(edge(PRESETS.fifths.source, 'tune', 'key').transforms).toEqual([[{ kind: 'rate', by: [], per: 'cycle', whole: false }]]);
+    expect(edge(PRESETS.automaton.source, 'bar', 'bells').transforms).toEqual([[{ kind: 'rate', by: [{ op: '÷', n: 2 }], per: 'step', whole: false, belt: 3000 }]]);
+    expect(edge(PRESETS.waveforms.source, 'tune', 'pluck').transforms).toEqual([[{ kind: 'rate', by: [], per: 'step', whole: true }]]);
+    expect(edge('&m step=1 0\n&t step=&m*2/3 0', 'm', 't').transforms).toEqual([
+      [
+        {
+          kind: 'rate',
+          by: [
+            { op: '×', n: 2 },
+            { op: '÷', n: 3 },
+          ],
+          per: 'step',
+          whole: false,
+        },
+      ],
+    ]);
+  });
+
+  it('a ref written several times: one transform each, in order', () => {
+    const e = edge('&m 0 4\n&t step=1 &m &m^7 &m[1:] &m[<<2]', 'm', 't');
+    expect(e.count).toBe(4);
+    expect(e.transforms).toEqual([
+      [],
+      [{ kind: 'transpose', by: 7, unit: 'grid' }],
+      [{ kind: 'pick', pick: { kind: 'slice', from: 1, to: null } }],
+      [{ kind: 'delay', by: 2, unit: 'step' }],
+    ]);
+    expect(edge('&s scan(2 2 1 2 2 2 1)\n&t over=&s[>>2] step=1 0', 's', 't').transforms).toEqual([[{ kind: 'delay', by: -2, unit: 'step' }]]);
+  });
+});
+
+/** A `&name` written on a cell's line, read back from the text: where it is written, and the transform written with it, as a label spells it. */
+interface Token {
+  readonly name: string;
+  /** The attribute it is the value of (`over`, `step`, `lpf` …), `braid` (a step of the cell) or `mix` (in a mix's brackets). */
+  readonly where: string;
+  readonly written: string;
+}
+
+/** The lines of a piece, each with the lines it continues onto (a line ending in +, *, a comma or [ goes on). */
+function linesOf(source: string): Map<number, string> {
+  const lines = source.split('\n');
+  const out = new Map<number, string>();
+  for (let i = 0; i < lines.length; i++) {
+    const start = i;
+    let text = lines[i];
+    while (/[+*,[]\s*$/.test(text.replace(/#.*$/, '')) && i + 1 < lines.length) text += ' ' + lines[++i];
+    out.set(start + 1, text);
+  }
+  return out;
+}
+
+/**
+ * The tokens on a line, its own name aside. Strings, comments and unnamed cells (`&( … )`: their tokens are on their own
+ * lines in the graph) are left out. Independent of the parser: a name the graph drops shows up here.
+ */
+function tokensOn(line: string): Token[] {
+  let text = line.replace(/"[^"]*"/g, '""').replace(/#.*$/, '');
+  for (let i = text.indexOf('&('); i >= 0; i = text.indexOf('&(')) {
+    let depth = 0;
+    let j = i + 1;
+    for (; j < text.length; j++)
+      if (text[j] === '(') depth++;
+      else if (text[j] === ')' && --depth === 0) break;
+    text = text.slice(0, i) + '_' + text.slice(j + 1);
+  }
+  const at = /\bat=([\d.]+)/.exec(text)?.[1];
+  const belt = /\bbelt=/.test(text);
+  const out: Token[] = [];
+  const re = /((?:degree\(|inverse\()*)&([A-Za-z_][A-Za-z0-9_]*)(\[[^\]]*\])?(\^-?\d+)?/g;
+  let first = true;
+  for (let m = re.exec(text); m; m = re.exec(text)) {
+    if (first && m.index === text.search(/\S/)) {
+      first = false;
+      continue;
+    }
+    first = false;
+    // what is written after it: the operations' closing (innermost first), a rate's chain
+    let rest = text.slice(m.index + m[0].length);
+    let mul = 1;
+    let add = 0;
+    for (const w of (m[1].match(/degree\(|inverse\(/g) ?? []).reverse()) {
+      if (w === 'inverse(') {
+        [mul, add] = [-mul, -add];
+        rest = rest.replace(/^\s*\)/, '');
+      } else {
+        const n = /^\s*,\s*(-?\d+)\s*\)/.exec(rest);
+        add += +(n?.[1] ?? 0);
+        rest = rest.slice(n?.[0].length ?? 0);
+      }
+    }
+    // where: the attribute whose value it is (through ranges, products and parentheses), else the braid or a mix
+    let before = text.slice(0, m.index - m[1].length);
+    let where: string | undefined;
+    for (let guard = 0; guard < 20 && where === undefined; guard++) {
+      const attr = /([a-z]+)=(?:[a-z]+\()?\(?$/.exec(before);
+      if (attr) where = attr[1];
+      else if (/[*+]\s*$/.test(before)) before = before.replace(/[^\s=]+\s*[*+]\s*$/, '');
+      else if (/\b([a-z]+)=\([^)]*$/.test(before)) where = /\b([a-z]+)=\([^)]*$/.exec(before)![1];
+      else break;
+    }
+    const inMix = (text.slice(0, m.index).match(/\[/g)?.length ?? 0) > (text.slice(0, m.index).match(/\]/g)?.length ?? 0);
+    const shift = m[3] && /^\[(<<|>>)(\d*)\]$/.exec(m[3]);
+    const chain = (/^([*/][\d.]+)+/.exec(rest.replace(/^\)/, ''))?.[0] ?? '').replace(/\*/g, '×').replace(/\//g, '÷');
+    const cycle = /cycle\($/.test(text.slice(0, m.index));
+    // (an argument of a generator, spell(…, &keys, …): the steps it makes are its, not written)
+    const call = !['', 'degree', 'inverse', 'cycle'].includes(openCall(text.slice(0, m.index - m[1].length)) ?? '');
+    where = inMix ? 'mix' : (where ?? (call ? 'generated' : 'braid'));
+    const written =
+      where === 'step' || where === 'loop'
+        ? [where === 'loop' ? 'loop' : '', (cycle ? '⟳' : '') + chain, belt ? '· belt' : '']
+        : [
+            m[3] && !shift ? m[3] : '',
+            shift ? `[${shift[1]}${shift[2] && shift[2] !== '1' ? shift[2] : ''}]` : '',
+            mul < 0 ? 'inverse' : '',
+            add ? `degree ${add > 0 ? '+' : ''}${add}` : '',
+            m[4] ?? '',
+            where === 'play' && at ? `at=${+at}` : '',
+          ];
+    out.push({ name: m[2], where, written: written.filter(Boolean).join(' ') });
+  }
+  return out;
+}
+
+/** The function whose parentheses are open at the end of a text (`spell(free(…), ` → spell; `about=(` → ''), if any. */
+function openCall(text: string): string | undefined {
+  let depth = 0;
+  for (let i = text.length - 1; i >= 0; i--)
+    if (text[i] === ')') depth++;
+    else if (text[i] === '(' && depth-- === 0) return /[a-z]*$/.exec(text.slice(0, i))![0];
+  return undefined;
+}
+
+/** Attributes that read a cell the graph doesn't draw yet: a delay's time from a clock (`delaytime=&bar*3/4`). */
+const UNDRAWN = new Set(['delaytime']);
+
+/** The port a name written as the value of an attribute is read through. */
+const PORT: Readonly<Record<string, string>> = { loop: 'step', generated: 'braid' };
+
+describe('every name written is a wire carrying the transform it writes', () => {
+  const all = { ...Object.fromEntries(Object.entries(PRESETS).map(([k, p]) => [k, p.source])), golden: readFileSync('tools/gallery/golden/golden.cells', 'utf8') };
+
+  it.each(Object.entries(all))('%s', (_, source) => {
+    const program = compileSource(source);
+    const model = buildGraph(program);
+    const lines = linesOf(source);
+    const missing: string[] = [];
+    let wires = 0;
+    for (const c of program.cells.values()) {
+      if (c.lambda || c.implicit) continue;
+      const tokens = tokensOn(lines.get(c.span.line) ?? '').filter((t) => t.where !== 'mix' && !UNDRAWN.has(t.where) && program.cells.has(t.name));
+      // each place a name is written in the braid is one of its wire's transforms, in order
+      const written = new Map<string, Token[]>();
+      for (const t of tokens) {
+        const port = PORT[t.where] ?? t.where;
+        const key = `${t.name}|${port}`;
+        written.set(key, [...(written.get(key) ?? []), t]);
+      }
+      for (const [key, ts] of written) {
+        const [name, port] = key.split('|');
+        // (along the flow: into the cell whose line it is, but a note's link points from the note)
+        const [from, to] = port === 'about' ? [c.name, name] : [name, c.name];
+        const e = model.edges.find((x) => x.from === cellId(from) && x.to === cellId(to) && x.port === port);
+        if (!e) {
+          // (drawn through a petal, hidden by show=off, or a name the graph reads elsewhere: a kit's voice, a sun's law)
+          const ids = [edgeId(cellId(c.name), cellId(name)), edgeId(cellId(name), cellId(c.name)), stepEdgeId(cellId(c.name), cellId(name))];
+          if (!ids.some((id) => model.alias.has(id))) missing.push(`&${c.name}: &${name} (${port})`);
+          continue;
+        }
+        wires++;
+        const labels = e.transforms.map(transformLabel);
+        if (ts[0].where === 'generated') continue;
+        if (port === 'braid') expect(labels, `&${c.name}: &${name}`).toEqual(ts.map((t) => t.written));
+        else expect(labels, `&${c.name}: ${port}=&${name}`).toEqual([ts[0].written]);
+      }
+    }
+    expect(missing).toEqual([]);
+    expect(wires).toBeGreaterThan(0);
   });
 });

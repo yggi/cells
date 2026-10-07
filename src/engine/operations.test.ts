@@ -3,6 +3,7 @@ import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
 import { buildGraph } from './graph';
+import { edgeLabel } from './transform';
 
 const tail = '\n&v s=sine loop=C4\n&out map=sample [&t * &v]';
 /** What &t plays: onset, length and frequency of each note, in order. */
@@ -78,7 +79,8 @@ describe('degree(&x, n) and inverse(&x): a reference’s values moved before its
   });
   it('the graph labels the reference with its operation', () => {
     const r = compileSource(motif + '&t over=scale(0,5) step=2 degree(&m, 1) degree(inverse(&m), 4)' + tail);
-    const edge = buildGraph(r).edges.find((e) => e.kind === 'ref' && e.target.endsWith('m'));
-    expect(edge?.pick).toBe('degree +1 inverse degree +4');
+    const edge = buildGraph(r).edges.find((e) => e.port === 'braid' && e.target.endsWith('m'))!;
+    expect(edge.transforms).toEqual([[{ kind: 'degree', by: 1 }], [{ kind: 'inverse' }, { kind: 'degree', by: 4 }]]);
+    expect(edgeLabel(edge)).toBe('×2 degree +1 inverse degree +4');
   });
 });

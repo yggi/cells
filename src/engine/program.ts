@@ -4,7 +4,7 @@
  * makes one (compile.ts, compiler/); helix.ts reads it through the shifts. What the cells mean is
  * on the language pages (docs/language/overview.md).
  */
-import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, Span } from './ast';
+import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span } from './ast';
 
 export const ROOT = 'fifths12TET';
 /**
@@ -113,8 +113,8 @@ export interface ResolvedCell {
   readonly hasValues: boolean;
   /** How far each step moves it (stride=), 1 by default. */
   readonly stride: number;
-  /** step=/loop= driven by another cell: the driver, and the label for the edge. */
-  readonly step: { readonly driver: string; readonly cycle: boolean; readonly whole: boolean; readonly label: string } | null;
+  /** step=/loop= driven by another cell: the driver, and its ratio as written (the edge's rate). */
+  readonly step: { readonly driver: string; readonly cycle: boolean; readonly whole: boolean; readonly chain: readonly RateOp[] } | null;
   /** map= (how values become output): amp, sin or a table. */
   readonly map:
     | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'db' }

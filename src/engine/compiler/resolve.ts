@@ -129,7 +129,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
               driver: d.step.driver.name,
               cycle: d.step.cycle,
               whole: d.step.whole,
-              label: (d.step.whole ? 'loop ' : '') + (d.step.cycle ? '⟳' : '') + d.step.label,
+              chain: d.step.chain,
             }
           : null,
       map: d.map

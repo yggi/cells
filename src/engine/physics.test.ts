@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildGraph } from './graph';
+import { edgeLabel } from './transform';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -143,7 +144,7 @@ describe('Tape Machine and Automaton', () => {
     const r = compileSource((PRESETS as Record<string, { source: string }>).automaton.source);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     const g = buildGraph(r);
-    expect(g.edges.find((e) => e.kind === 'step' && e.source === 'cell:wood')!.label).toMatch(/belt/);
+    expect(edgeLabel(g.edges.find((e) => e.port === 'step' && e.source === 'cell:wood')!)).toMatch(/belt/);
   });
 });
 

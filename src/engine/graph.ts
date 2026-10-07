@@ -7,8 +7,9 @@
  */
 import { effectiveShow } from '../layout/show';
 import type { CompileResult, ResolvedCell } from './program';
-import { refLabel, shiftLabel, valueMapLabel } from './ast';
+import type { Pick, ValueMap } from './ast';
 import { cellId, edgeId, stepEdgeId } from './ids';
+import type { Transform } from './transform';
 
 export type GraphNode =
   | {
@@ -63,13 +64,34 @@ export interface GraphEdge extends Wire {
   readonly belt?: 'spring' | 'rigid';
   readonly source: string;
   readonly target: string;
-  readonly kind: 'over' | 'ref' | 'step' | 'out' | 'mix' | 'about';
   /** How many slots of the source play the target (refs). */
   readonly count: number;
-  /** Pick written on the reference, if any (`[-1:]`). */
-  readonly pick: string;
-  /** step= ratio label: ⟳ per cycle, ×n / ÷n. */
-  readonly label?: string;
+  /**
+   * What the tap does to what it carries (engine/transform.ts), for each place the name is written on the reader's line,
+   * in order: a ref written three times has three (`&tune &up &up^7`: none, none, ^7), most wires one. A voice in a mix
+   * keeps the first entry's gain, a melody into a voice the first output's (until products are junctions: nets.md, step 4).
+   */
+  readonly transforms: readonly Transform[];
+}
+
+/** The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's entry, a note's link. */
+const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'about']);
+/** A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples, writes or plays it. */
+export const feeds = (e: { readonly port: string }) => !STRUCTURE.has(e.port);
+
+/** Nothing written: a wire that carries its source as it is. */
+const AS_IS: readonly Transform[] = [[]];
+
+/** What a reference does, as written: a pick or a shift (a delay, in steps), its values' operations, a transposition. */
+function refTransform(r: { readonly pick: Pick | null; readonly shift: number; readonly transpose?: number; readonly values?: ValueMap; readonly sign?: 1 | -1 }): Transform {
+  return [
+    ...(r.pick ? [{ kind: 'pick', pick: r.pick } as const] : []),
+    ...(r.shift ? [{ kind: 'delay', by: -r.shift, unit: 'step' } as const] : []),
+    ...(r.values && r.values.mul < 0 ? [{ kind: 'inverse' } as const] : []),
+    ...(r.values?.add ? [{ kind: 'degree', by: r.values.add } as const] : []),
+    ...(r.transpose ? [{ kind: 'transpose', by: r.transpose, unit: 'grid' } as const] : []),
+    ...(r.sign === -1 ? [{ kind: 'negate' } as const] : []),
+  ];
 }
 
 /**
@@ -167,9 +189,8 @@ export function buildGraph(result: CompileResult): GraphModel {
         id: edgeId(id, cellId(c.over)),
         source: id,
         target: cellId(c.over),
-        kind: 'over',
         count: 1,
-        pick: shiftLabel(c.overShift),
+        transforms: [c.overShift ? [{ kind: 'delay', by: -c.overShift, unit: 'step' }] : []],
         ...wire('over', 'cv', id, cellId(c.over), entries(result, c.over), true, true),
       });
     // a stepped braid of voices reads an unnamed kit of them: its voices are written on its own line
@@ -184,9 +205,8 @@ export function buildGraph(result: CompileResult): GraphModel {
           id: edgeId(id, cellId(child)),
           source: id,
           target: cellId(child),
-          kind: 'ref',
           count,
-          pick: '',
+          transforms: Array.from({ length: count }, () => []),
           ...wire('braid', 'cv', id, cellId(child), 1, true, true),
         });
     }
@@ -196,9 +216,8 @@ export function buildGraph(result: CompileResult): GraphModel {
         id: edgeId(id, cellId(c.params.couple)),
         source: id,
         target: cellId(c.params.couple),
-        kind: 'out',
         count: 1,
-        pick: 'couple',
+        transforms: AS_IS,
         ...wire('couple', 'audio', id, cellId(c.params.couple), 1, true),
       });
     if (typeof c.params.excite === 'string' && result.cells.has(c.params.excite))
@@ -206,9 +225,8 @@ export function buildGraph(result: CompileResult): GraphModel {
         id: edgeId(cellId(c.params.excite), id),
         source: cellId(c.params.excite),
         target: id,
-        kind: 'out',
         count: 1,
-        pick: 'excite',
+        transforms: AS_IS,
         ...wire('excite', 'audio', cellId(c.params.excite), id),
       });
     // tapes: the source into the tape (written), the tape into each read head (played)
@@ -217,9 +235,8 @@ export function buildGraph(result: CompileResult): GraphModel {
         id: edgeId(cellId(c.params.write), id),
         source: cellId(c.params.write),
         target: id,
-        kind: 'out',
         count: 1,
-        pick: 'write',
+        transforms: AS_IS,
         ...wire('write', sounds(c.params.write) ? 'audio' : 'cv', cellId(c.params.write), id, chord(c.params.write)),
       });
     if (typeof c.params.play === 'string' && result.cells.has(c.params.play))
@@ -227,58 +244,45 @@ export function buildGraph(result: CompileResult): GraphModel {
         id: edgeId(cellId(c.params.play), id),
         source: cellId(c.params.play),
         target: id,
-        kind: 'out',
         count: 1,
-        pick: 'play',
+        transforms: typeof c.params.at === 'number' ? [[{ kind: 'delay', by: c.params.at, unit: 'second' }]] : AS_IS,
         ...wire('play', sounds(c.params.play) ? 'audio' : 'cv', cellId(c.params.play), id, chord(c.params.play)),
       });
     // FM: the modulator feeds its carrier
     if (typeof c.params.fm === 'string' && result.cells.has(c.params.fm))
-      link({ id: edgeId(cellId(c.params.fm), id), source: cellId(c.params.fm), target: id, kind: 'out', count: 1, pick: 'fm', ...wire('fm', 'audio', cellId(c.params.fm), id) });
+      link({ id: edgeId(cellId(c.params.fm), id), source: cellId(c.params.fm), target: id, count: 1, transforms: AS_IS, ...wire('fm', 'audio', cellId(c.params.fm), id) });
     // a voice's moving parameters: their cells feed it (lpf, lpq …)
     for (const [key, pc] of Object.entries(c.paramCells ?? {}))
       for (const f of pc.factors)
-        if (result.cells.has(f)) link({ id: edgeId(cellId(f), id), source: cellId(f), target: id, kind: 'out', count: 1, pick: key, ...wire(key, 'cv', cellId(f), id) });
+        if (result.cells.has(f)) link({ id: edgeId(cellId(f), id), source: cellId(f), target: id, count: 1, transforms: AS_IS, ...wire(key, 'cv', cellId(f), id) });
     for (const [child, count] of c.children) {
-      // its transpositions (^n) and operations (degree, inverse), as written in this cell's steps
-      const ups = [
-        ...new Set(
-          c.units.flatMap((u) =>
-            u.atom.kind === 'ref' && u.atom.name === child && (u.atom.transpose || u.atom.values)
-              ? [[valueMapLabel(u.atom.values), u.atom.transpose ? `^${u.atom.transpose}` : ''].filter(Boolean).join(' ')]
-              : [],
-          ),
-        ),
-      ];
       link({
         id: edgeId(id, cellId(child)),
         source: id,
         target: cellId(child),
-        kind: 'ref',
         count,
-        pick: ups.join(' '),
+        // (each place it is written in this cell's steps: its pick or shift, operations, transposition)
+        transforms: c.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === child ? [refTransform(u.atom)] : [])),
         ...wire('braid', 'cv', id, cellId(child), chord(child), true, true),
       });
     }
     // a note's links: what it explains
     for (const target of c.about)
       if (result.cells.has(target))
-        link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), kind: 'about', count: 1, pick: '', ...wire('about', 'none', id, cellId(target)) });
+        link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), count: 1, transforms: AS_IS, ...wire('about', 'none', id, cellId(target)) });
     if (c.step)
       // (a belt says so: the cell follows through a spring, not rigidly)
       link({
         id: stepEdgeId(id, cellId(c.step.driver)),
         source: id,
         target: cellId(c.step.driver),
-        kind: 'step',
         count: 1,
-        pick: '',
-        label: typeof c.params.belt === 'number' ? `${c.step.label} · belt` : c.step.label,
+        transforms: [rateOf(c)],
         ...beltOf(c, result.cells.get(c.step.driver)),
         ...wire('step', 'sync', id, cellId(c.step.driver), 1, true),
       });
   }
-  // voices into their mixes (labelled with the gain when it isn't 1)
+  // voices into their mixes (labelled with the gain when it isn't 1); into a sound card of two channels, a pair (L R)
   for (const c of result.cells.values())
     for (const b of c.mix ?? [])
       if (result.cells.has(b.voice.name))
@@ -286,20 +290,17 @@ export function buildGraph(result: CompileResult): GraphModel {
           id: edgeId(cellId(b.voice.name), cellId(c.name)),
           source: cellId(b.voice.name),
           target: cellId(c.name),
-          kind: 'mix',
           count: 1,
-          pick: '',
-          label: b.gain !== 1 ? `×${+b.gain.toFixed(3)}` : undefined,
-          ...wire('mix', 'audio', cellId(b.voice.name), cellId(c.name)),
+          transforms: [b.gain !== 1 ? [{ kind: 'gain', by: b.gain }] : []],
+          ...wire('mix', 'audio', cellId(b.voice.name), cellId(c.name), c.sink && c.units.length === 2 ? 2 : 1),
         });
   for (const o of result.outputs) {
     link({
       id: edgeId(cellId(from(o)), cellId(o.voice)),
       source: cellId(from(o)),
       target: cellId(o.voice),
-      kind: 'out',
       count: 1,
-      pick: refLabel(o),
+      transforms: [[...refTransform(o), ...(o.offset ? [{ kind: 'transpose', by: o.offset, unit: 'semitone' } as const] : [])]],
       ...wire('voice', 'cv', cellId(from(o)), cellId(o.voice), tines(result, o.voice) || chord(from(o))),
     });
     if (o.envelopeCell)
@@ -307,10 +308,8 @@ export function buildGraph(result: CompileResult): GraphModel {
         id: edgeId(cellId(o.envelopeCell), cellId(o.voice)),
         source: cellId(o.envelopeCell),
         target: cellId(o.voice),
-        kind: 'out',
         count: 1,
-        pick: '',
-        label: '×',
+        transforms: AS_IS,
         ...wire('env', 'cv', cellId(o.envelopeCell), cellId(o.voice)),
       });
     for (const m of o.levels)
@@ -318,10 +317,8 @@ export function buildGraph(result: CompileResult): GraphModel {
         id: edgeId(cellId(m.cell), cellId(o.voice)),
         source: cellId(m.cell),
         target: cellId(o.voice),
-        kind: 'out',
         count: 1,
-        pick: refLabel(m),
-        label: '×',
+        transforms: [refTransform({ ...m, sign: 1 })],
         ...wire('level', 'cv', cellId(m.cell), cellId(o.voice), chord(m.cell)),
       });
     for (const m of o.mods)
@@ -329,10 +326,8 @@ export function buildGraph(result: CompileResult): GraphModel {
         id: edgeId(cellId(m.cell), cellId(o.voice)),
         source: cellId(m.cell),
         target: cellId(o.voice),
-        kind: 'out',
         count: 1,
-        pick: refLabel(m),
-        label: m.sign > 0 ? '+' : '−',
+        transforms: [refTransform(m)],
         // (a wave in a pitch sum moves the pitch at audio rate: FM)
         ...wire('pitch', isWave(result, m.cell) ? 'audio' : 'cv', cellId(m.cell), cellId(o.voice), chord(m.cell)),
       });
@@ -352,6 +347,14 @@ export function buildGraph(result: CompileResult): GraphModel {
     return { ...n, pan: l + r > 0 ? (r - l) / (l + r) : 0, order: Math.max(0, order.indexOf(n.cell.name)) } as GraphNode;
   });
   return petals(result, placed, edges);
+}
+
+/** A step's rate as written (step=&x*2/3, cycle(&x), loop=, belt=); nothing when it is the driver's own. */
+function rateOf(c: ResolvedCell): Transform {
+  const belt = typeof c.params.belt === 'number' ? c.params.belt : undefined;
+  const s = c.step!;
+  if (!s.chain.length && !s.cycle && !s.whole && belt === undefined) return [];
+  return [{ kind: 'rate', by: s.chain, per: s.cycle ? 'cycle' : 'step', whole: s.whole, ...(belt !== undefined ? { belt } : {}) }];
 }
 
 /** A step's belt, if it is one (GraphEdge.belt). */
@@ -416,8 +419,7 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
     } else if (effectiveShow(result, n.cell.name).show === 'petal') {
       // show=petal: hung from the cell that uses it (a voice: the mix it's in)
       const user =
-        edges.find((e) => e.target === n.id && (e.kind === 'ref' || e.kind === 'over'))?.source ??
-        edges.find((e) => e.source === n.id && (e.kind === 'mix' || e.kind === 'out'))?.target;
+        edges.find((e) => e.target === n.id && (e.port === 'braid' || e.port === 'over'))?.source ?? edges.find((e) => e.source === n.id && (e.port === 'mix' || feeds(e)))?.target;
       if (user) parentOf.set(n.id, user);
     }
   }
@@ -438,7 +440,7 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
     redrawn.push({ id: e.id, pair: source === target ? null : key(source, target) });
     if (source === target || pairs.has(key(source, target))) continue;
     pairs.add(key(source, target));
-    out.push({ ...e, id: edgeId(source, target) + (e.kind === 'step' ? '~' : ''), source, target, from: up(e.from), to: up(e.to) });
+    out.push({ ...e, id: edgeId(source, target) + (e.port === 'step' ? '~' : ''), source, target, from: up(e.from), to: up(e.to) });
   }
   const byPair = new Map<string, string>();
   for (const e of out) if (!byPair.has(key(e.source, e.target))) byPair.set(key(e.source, e.target), e.id);
@@ -463,7 +465,7 @@ function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): Graph
   const meters = new Set(nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.id] : [])));
   const groups = new Map<string, GraphEdge[]>();
   for (const e of edges) {
-    const port = BUS_PORTS.has(e.port) ? e.port : e.kind === 'step' && !e.belt && meters.has(e.target) ? 'step' : null;
+    const port = BUS_PORTS.has(e.port) ? e.port : e.port === 'step' && !e.belt && meters.has(e.target) ? 'step' : null;
     if (port) groups.set(`${e.from}|${port}`, [...(groups.get(`${e.from}|${port}`) ?? []), e]);
   }
   return [...groups.values()]
