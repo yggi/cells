@@ -172,8 +172,18 @@ const driverMuted = (result: CompileResult, name: string, muted: ReadonlySet<str
 export function liveGains(o: Output, muted: ReadonlySet<string>): [number, number] {
   // a send (a mix played only into a resonator or a tape): its own gain, unless its mix is off
   if (o.silent) return [...o.via].some((m) => muted.has(cellId(m))) ? [0, 0] : [o.gains[0], o.gains[1]];
+  return partsGains(o.parts, muted);
+}
+
+/** What a read head's return or a resonator ringing alone in a mix reaches the sound card at, with what is switched off. */
+export function returnGains(x: { readonly parts: Output['parts']; readonly through: Output['through'] }, muted: ReadonlySet<string>): [number, number] {
+  return x.through.some((t) => muted.has(cellId(t))) ? [0, 0] : partsGains(x.parts, muted);
+}
+
+/** Gains summed over the mixes and sound cards they go through that are on (an output's, a read head's return, a resonator ringing in a mix). */
+function partsGains(parts: Output['parts'], muted: ReadonlySet<string>): [number, number] {
   const g: [number, number] = [0, 0];
-  for (const p of o.parts)
+  for (const p of parts)
     if (!muted.has(cellId(p.mix)) && !muted.has(cellId(p.sink))) {
       g[0] += p.gains[0];
       g[1] += p.gains[1];

@@ -24,14 +24,14 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     if ([b.voice, ...b.pitches.map((t) => t.ref)].some((r) => ctx.broken.has(r.name))) continue;
     // a sound tape's read head in a mix: its tap returns to the sound card at these levels
     if (soundHead(b.voice.name) && b.pitches.length === 0) {
-      returns.push({ head: b.voice.name, tape: cells.get(b.voice.name)!.params.play as string, gains: [gains[0], gains[1]] });
+      returns.push({ head: b.voice.name, tape: cells.get(b.voice.name)!.params.play as string, gains: [gains[0], gains[1]], parts, through: [...through] });
       continue;
     }
     const voice = cells.get(b.voice.name);
     if (!voice) continue;
     // a resonator alone in a mix: heard ringing (from a hand, a neighbour, what drives it)
     if (typeof voice.params.body === 'string' && b.pitches.length === 0) {
-      resonances.push({ cell: voice.name, gains: [gains[0], gains[1]] });
+      resonances.push({ cell: voice.name, gains: [gains[0], gains[1]], parts, through: [...through] });
       continue;
     }
     if (voice.kit && !b.pitches.some((t) => decls.get(t.ref.name)?.over?.name === voice.name)) {

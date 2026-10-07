@@ -89,8 +89,8 @@ describe('sound tapes: write= a mix — a delay network, the heads returns', () 
       },
     ]);
     expect(r.returns).toEqual([
-      { head: 'h1', tape: 'tape', gains: [0.4, 0] },
-      { head: 'h2', tape: 'tape', gains: [0, 0.3] },
+      { head: 'h1', tape: 'tape', gains: [0.4, 0], parts: [{ mix: 'out', sink: 'out', gains: [0.4, 0] }], through: [] },
+      { head: 'h2', tape: 'tape', gains: [0, 0.3], parts: [{ mix: 'out', sink: 'out', gains: [0, 0.3] }], through: [] },
     ]);
     expect(r.cells.get('h1')!.voice).toBe(false); // (sound already: not a voice)
   });
