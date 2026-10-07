@@ -7,7 +7,7 @@ import built from 'virtual:examples-index';
 import { buildExamplesIndex, examplesIndexModule } from '../../tools/examples-index';
 import { ORDER } from './order';
 import { miniature } from '../layout/miniature';
-import { rowsKey } from '../layout/physics';
+import { rowsKey } from '../layout/start';
 import { buildGraph } from './graph';
 import { canonicalTag, parseTag, VOCABULARY } from './tags';
 
