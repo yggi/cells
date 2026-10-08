@@ -138,14 +138,22 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   stride: { form: 'stride=n · stride=free(n, lo..hi)', examples: ['&key step=cycle(&theme) stride=7'], read: whole('stride') },
   map: { form: 'map=…', examples: ['&accent map=amp step=&bar 1 .5'], read: (s, b) => (b.map = parseMap(s)) },
   show: {
-    form: `show=kind · show=notes:convention · show=do:convention`,
-    examples: ['&tune show=notes step=2 0 2 4', '&tune show=notes:german step=2 0 2 4', '&tune show=do:movable step=2 0 2 4'],
+    form: `show=kind · show=notes:convention · show=do:convention · show=mix:&grid`,
+    examples: ['&tune show=notes step=2 0 2 4', '&tune show=notes:german step=2 0 2 4', '&tune show=do:movable step=2 0 2 4', '&band show=mix:&edo19 [&a, &b]'],
     read: (s, b) => {
       const at2 = s.i;
       const w = s.match(/[a-z]+/y);
       if (w === null || !(SHOWS as readonly string[]).includes(w)) s.fail(`show= takes one of: ${SHOWS.join(' ')}`, at2, Math.max(1, (w ?? '').length));
       // a naming convention: notes:flats, notes:sharps, notes:german, do:fixed
       let conv = '';
+      // a mix's colours: the grid it follows (show=mix:&edo19), whatever grids its voices are on
+      if (w === 'mix' && s.text.startsWith(':&', s.i)) {
+        s.i += 2;
+        const g = s.match(IDENT);
+        if (g === null) s.fail('show=mix:&grid: the grid whose colours the mix wears, like show=mix:&edo19', at2, s.i - at2);
+        b.show = `mix:&${g}`;
+        return;
+      }
       if (s.peek() === ':') {
         s.i++;
         const cw = s.match(/[a-z]+/y) ?? '';

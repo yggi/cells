@@ -19,6 +19,15 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
     }
     if (typeof c.params.excite === 'string' && !cells.get(c.params.excite)?.mix) error(`excite=&${c.params.excite}: a resonator is driven by sound — a mix`, span('excite'));
   }
+  // show=mix:&grid names the grid a mix's colours follow (layout/show.ts heardGrid)
+  for (const c of cells.values()) {
+    const named = c.show?.startsWith('mix:&') ? c.show.slice('mix:&'.length) : null;
+    if (named === null) continue;
+    const span = decls.get(c.name)!.span;
+    const g = cells.get(named);
+    if (!g) unknownCell(named, span);
+    else if (!g.root) warn(`show=mix:&${named}: a mix's colours follow a grid (a cell with cycle= or map=edo), not &${named}`, span);
+  }
   // tapes: write= names what it records (not a voice); play= names a tape (a cell with write=)
   for (const c of cells.values()) {
     const span = (k: string) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name)!.span;

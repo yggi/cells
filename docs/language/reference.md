@@ -94,7 +94,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 - `shift=n` · `shift=free(n, lo..hi)`: How far it is turned. [→](tables.md) `&mode over=&major shift=5 0 2 4` · `&key shift=free(0, 0..11)`
 - `stride=n` · `stride=free(n, lo..hi)`: How far each step turns it. [→](time.md) `&key step=cycle(&theme) stride=7`
 - `map=…`: How its values sound. [→](sound.md) `&accent map=amp step=&bar 1 .5`
-- `show=kind` · `show=notes:convention` · `show=do:convention`: How it’s shown: notes, do, scale, pattern … (and everything below it) [→](display.md) `&tune show=notes step=2 0 2 4` · `&tune show=notes:german step=2 0 2 4` · `&tune show=do:movable step=2 0 2 4`
+- `show=kind` · `show=notes:convention` · `show=do:convention` · `show=mix:&grid`: How it’s shown: notes, do, scale, pattern … (and everything below it) [→](display.md) `&tune show=notes step=2 0 2 4` · `&tune show=notes:german step=2 0 2 4` · `&tune show=do:movable step=2 0 2 4` · `&band show=mix:&edo19 [&a, &b]`
 - `label="text"`: A name to show, in quotes — alone on a cell, a note in the graph. [→](display.md) `&theme label="the King's theme" step=2 0 2 4` · `&note label="A note in the graph: alone on its cell."`
 - `env=&envelope`: A voice’s own volume on every note: an envelope — on a voice. [→](sound.md) `&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)`
 - `pitch=&vibrato` · `pitch=lo..hi * &shape`: A voice’s own pitch on every note: a vibrato, or a shape in semitones (pitch=0..30 * &(map=adsr 0 .04 0 0): a drop) — on a voice. [→](sound.md) `&lead s=saw loop=C4 pitch=&(loop=5 0 .1 -.1)` · `&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0)`
