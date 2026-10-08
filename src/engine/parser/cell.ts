@@ -71,7 +71,6 @@ export const SHOWS = [
   'off',
   'matrix',
   'lfo',
-  'sun',
   'brightness',
 ] as const;
 /** Naming conventions, after a colon: show=notes:flats. */
@@ -144,7 +143,8 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     read: (s, b) => {
       const at2 = s.i;
       const w = s.match(/[a-z]+/y);
-      if (w === null || !(SHOWS as readonly string[]).includes(w)) s.fail(`show= takes one of: ${SHOWS.join(' ')}`, at2, Math.max(1, (w ?? '').length));
+      // (a word: whether it is one of SHOWS or a plugin the piece carries is compile's to say: it knows the plugins)
+      if (w === null) s.fail(`show= takes one of: ${SHOWS.join(' ')}, or a plugin of the piece`, at2, 1);
       // a naming convention: notes:flats, notes:sharps, notes:german, do:fixed
       let conv = '';
       // a mix's colours: the grid it follows (show=mix:&edo19), whatever grids its voices are on

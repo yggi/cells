@@ -14,14 +14,18 @@
  */
 import type { CellDecl, Diagnostic, ParseResult } from '../ast';
 import { IDENT, LineError, LineScanner, stripComment } from './scanner';
-import { parseCell } from './cell';
+import { parseCell, SHOWS } from './cell';
+import { splitPlugins } from '../plugins';
+import { BUILTIN_PLUGINS } from '../builtinPlugins';
 
 export { meterLevels } from './generators';
 export { SHOWS } from './cell';
 
-export function parse(source: string): ParseResult {
+export function parse(whole: string): ParseResult {
   const cells: CellDecl[] = [];
-  const diagnostics: Diagnostic[] = [];
+  // (plugin blocks are not cells: split off and blanked, so the lines keep their numbers)
+  const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole, [...SHOWS, ...BUILTIN_PLUGINS.map((p) => p.name)]);
+  const diagnostics: Diagnostic[] = [...pluginDiagnostics];
   const broken: string[] = [];
   // a line ending in + * , or [ (outside comments) continues on the next one
   const lines: { text: string; line: number; parts: { line: number; start: number }[] }[] = [];
@@ -60,7 +64,7 @@ export function parse(source: string): ParseResult {
       if (name) broken.push(name);
     }
   });
-  return { cells, diagnostics, broken };
+  return { cells, diagnostics, broken, plugins };
 }
 
 /** A piece's card: the first note with a title= — its title, its description (the label, as plain text), its tags. */

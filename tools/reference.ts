@@ -9,6 +9,7 @@ import { BODIES } from '../src/engine/program';
 import { DOUGH_ALIASES, DOUGH_SOURCES } from '../src/engine/dough-params';
 import { CHANCE_SYNTAX, MODIFIERS, STEP_SYNTAX } from '../src/engine/parser/braid';
 import { KEYS, LINE_SYNTAX, SHOWS, SHOW_CONVENTIONS } from '../src/engine/parser/cell';
+import { BUILTIN_PLUGINS } from '../src/engine/builtinPlugins';
 import { FREE_SYNTAX } from '../src/engine/parser/free';
 import { GENERATORS } from '../src/engine/parser/generators';
 import { MIX_SYNTAX } from '../src/engine/parser/mix';
@@ -83,7 +84,7 @@ export function renderReference(): string {
     out.push('', `## ${SECTIONS[section]}`, '');
     if (section === 'attribute')
       out.push(
-        `An attribute is \`key=value\`, anywhere on a cell's line, each at most once (\`step=\` and \`loop=\` are one setting). What the values of \`step=\`, \`loop=\` and \`map=\` can be is above. \`show=\` takes one of: ${SHOWS.map((k) => `\`${k}\` (${SHOW_MEANING[k]})`).join(', ')}; ${Object.entries(
+        `An attribute is \`key=value\`, anywhere on a cell's line, each at most once (\`step=\` and \`loop=\` are one setting). What the values of \`step=\`, \`loop=\` and \`map=\` can be is above. \`show=\` takes one of: ${SHOWS.map((k) => `\`${k}\` (${SHOW_MEANING[k]})`).join(', ')}, or a plugin ([plugins.md](plugins.md)): ${BUILTIN_PLUGINS.map((p) => `\`${p.name}\` (built in: ${p.meaning})`).join(', ')}, or one the piece carries; ${Object.entries(
           SHOW_CONVENTIONS,
         )
           .map(([k, cs]) => `\`${k}:\` ${cs.map(code).join(', ')}`)

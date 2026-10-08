@@ -1,11 +1,13 @@
 /** Phase 8: attributes where they do nothing — each acts on some roles only (attributes.ts): warnings. */
 import type { Span } from '../ast';
+import { SHOWS } from '../parser/cell';
 import { ATTRIBUTES, rolesText, type Role } from '../attributes';
+import { PLUGIN_SYNTAX, type ShowPlugin } from '../plugins';
 import type { Clock, ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
 
-export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells, clocks: ReadonlyMap<string, Clock>): void {
+export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells, clocks: ReadonlyMap<string, Clock>, plugins: ReadonlyMap<string, ShowPlugin>): void {
   const { warn } = ctx;
   // ---- attributes where they do nothing: each acts on some roles only (attributes.ts)
   const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
@@ -29,6 +31,16 @@ export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells
   for (const d of decls.values()) {
     const c = cells.get(d.name);
     if (!c || implicit.has(d.name)) continue;
+    // show=: one of the shows, or a plugin the piece carries (the parser reads any word)
+    const show = d.show?.split(':')[0];
+    if (show && !(SHOWS as readonly string[]).includes(show) && !plugins.has(show))
+      ctx.error(
+        `show=${show}: not a show (${SHOWS.join(' ')}), not one of the built-in plugins (${[...plugins.values()]
+          .filter((p) => p.builtin)
+          .map((p) => p.name)
+          .join(' ')}), and the piece carries no plugin of that name (${PLUGIN_SYNTAX})`,
+        d.span,
+      );
     const has = roles(c);
     const written: [string, Span][] = [
       ...Object.keys(d.params).map((k): [string, Span] => [k, d.paramSpans[k] ?? d.span]),

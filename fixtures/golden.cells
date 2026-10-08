@@ -31,8 +31,19 @@
 &near play=&tape at=.375
 &hits step=24bpm 1 ~ ~ ~
 &forkA body=fork loop=A4 ring=10 hard=.35 board=none 0
-# the day (a day meter, drawn as the sun) and the law that reads it; a scope on the voice
-&day scan(1!24) loop=1d anchor=11.55 show=sun
+# the day (a day meter, drawn by a plugin of this piece: a ring and the time) and the law that reads it; a scope on the voice
+&day scan(1!24) loop=1d anchor=11.55 show=ring
 &cycle law=fiveto12 over=&day step=84bpm
 &light scope=spectrum &flute
 &out level=4 loop=SAMPLE_RATE map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&tetris, &hits * &forkA * .5, &hats * &hh * .1]
+
+=== plugin ring ===
+{ "fits": ["meter"], "size": 220, "rim": false, "dial": { "label": "The day", "turn": 86400, "key": 3600 }, "tokens": { "ring": "#e3a25a" } }
+function describe(view) {
+  return { text: 'the day', now: 0, min: 0, max: 1 };
+}
+function draw(view, h) {
+  const R = view.size / 2;
+  return [h('circle', { cx: R, cy: R, r: R - 4, fill: 'none', stroke: view.tokens.ring, 'stroke-width': 3 }), h('text', { x: R, y: R, 'text-anchor': 'middle', fill: view.tokens.ring }, Math.floor(view.time.seconds / 3600) + 'h')];
+}
+=== end ===

@@ -1,3 +1,5 @@
+import type { ShowPlugin } from './plugins';
+
 /** Source location, 1-based line and column. */
 export interface Span {
   readonly line: number;
@@ -265,4 +267,6 @@ export interface ParseResult {
   readonly diagnostics: readonly Diagnostic[];
   /** Cells whose line failed (an error says why): where they're used, not reported again as unknown. */
   readonly broken?: readonly string[];
+  /** The `show=` plugins the text carries (plugins.ts). */
+  readonly plugins?: readonly ShowPlugin[];
 }

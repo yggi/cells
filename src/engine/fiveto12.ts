@@ -52,6 +52,25 @@ export const BLOCK_NAMES = [
 
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 
+/** How bright each mode is: Lydian 1 … Locrian 0, by mode index (Ionian … Locrian). */
+const MODE_BRIGHTNESS = [5, 3, 1, 6, 4, 2, 0].map((b) => b / 6);
+
+/**
+ * The law's day as plain data, for a view of it (a plugin's `view.law`): when each block and key begins, in seconds
+ * of the day from `start`; each block's mode and brightness; each key's tonic (0 = C), block by block.
+ */
+export function dayLaw() {
+  return {
+    start: START,
+    blockSeconds: BLOCK * SECONDS_PER_STEP,
+    keySeconds: KEY * SECONDS_PER_STEP,
+    modeNames: [...MODE_NAMES],
+    blockNames: [...BLOCK_NAMES],
+    blocks: DAY_MODES.map((mode) => ({ mode, brightness: MODE_BRIGHTNESS[mode] })),
+    tonics: DAY_MODES.map((_, block) => Array.from({ length: 12 }, (__, key) => tonicOf(block, key))),
+  };
+}
+
 /** A mode's degrees as semitones above its tonic (parallel: on the same tonic). */
 export function modeSemis(mode: number): number[] {
   const s = [0];

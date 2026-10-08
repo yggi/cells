@@ -6,6 +6,8 @@
  */
 import type { ParseResult } from '../ast';
 import type { AudioTape, CompileResult, Env, ResolvedCell } from '../program';
+import { BUILTIN_PLUGINS } from '../builtinPlugins';
+import type { ShowPlugin } from '../plugins';
 import { context } from './context';
 import { declare } from './declare';
 import { sorts } from './sorts';
@@ -17,6 +19,9 @@ import { outputsOf } from './outputs';
 import { displayCells } from './display';
 import { checkRoles } from './roles';
 import { checkLimits } from './limits';
+
+/** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
+const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
 
 export function compile(parsed: ParseResult, env: Env): CompileResult {
   const ctx = context(parsed, env);
@@ -31,7 +36,7 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
   const { outputs, returns, resonances } = outputsOf(ctx, decls, timed.cells, clocks, bound);
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
   const cells = displayCells(timed.cells);
-  checkRoles(ctx, declared, cells, clocks);
+  checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed));
 
   const { diagnostics } = ctx;
   const ok = !diagnostics.some((x) => x.severity === 'error');
@@ -56,5 +61,6 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
         .filter((h) => h.params.play === c.name)
         .map((h) => ({ head: h.name, at: num(h, 'at', 0), wander: num(h, 'wander', 0), wanderhz: num(h, 'wanderhz', 0.2) })),
     }));
-  return { ok, cells, clocks, outputs, off, diagnostics, tapes, returns, resonances };
+  const plugins = pluginsOf(parsed);
+  return { ok, cells, clocks, outputs, off, diagnostics, tapes, returns, resonances, plugins };
 }

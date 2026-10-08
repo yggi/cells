@@ -42,7 +42,7 @@ A meter is a cell whose braid is a `scan`: `scan(27 23 26 24)` is a bent 4/4 bar
 
 ## Laws
 
-A cell with **`law=`** has its notes computed by a law instead of written: `law=fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`). The law reads the day through **`over=&day`**: a day meter, a clock whose loop is a day, `&day scan(1!24) loop=1d`. **`anchor=hh.mm`** on that clock is the time of day it stands at when play starts (`anchor=11.55`); written on the law itself, it is a warning that says where it goes. Drawn **`show=sun`**, the day meter is a 24-hour dial, noon at the top. Rates take time units: `min` `h` `d` `wk` (`loop=1d` is one lap a day). See the example *5 to 12*.
+A cell with **`law=`** has its notes computed by a law instead of written: `law=fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`). The law reads the day through **`over=&day`**: a day meter, a clock whose loop is a day, `&day scan(1!24) loop=1d`. **`anchor=hh.mm`** on that clock is the time of day it stands at when play starts (`anchor=11.55`); written on the law itself, it is a warning that says where it goes. Drawn **`show=sun`** (a built-in plugin: [plugins.md](plugins.md)), the day meter is a 24-hour dial, noon at the top. Rates take time units: `min` `h` `d` `wk` (`loop=1d` is one lap a day). See the example *5 to 12*.
 
 ## Laps and selectors
 

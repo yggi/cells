@@ -39,14 +39,14 @@ Each rung introduces one concept and uses only what the rungs before it introduc
 
 ## show=
 
-**show=name** says how a cell is drawn. It is the default for everything below the cell (its parts, `&refs`, its tables), wherever it fits; `step=` drivers are not below. An unfit show is ignored. `petal` and `off` belong to the cell alone.
+**show=name** says how a cell is drawn. It is the default for everything below the cell (its parts, `&refs`, its tables), wherever it fits; `step=` drivers are not below. An unfit show is ignored. `petal` and `off` belong to the cell alone, and so does a **plugin's** show: a piece can carry the code for a show of its own ([plugins.md](plugins.md)).
 
 | kind | shows (first is plain) |
 |---|---|
 | voice | `wave` (its waveform: one cycle, the sound while it plays) `spectrum` `petal` `off` |
 | braid | `braid` `pattern` `notes` `midi` `do` `degrees` `petal` `off` |
 | table | `table` `scale` `mode` `key` `brightness` (each segment shaded by how bright its mode is) + the note shows |
-| meter | `meter` `pattern` `sun` (a day meter as a 24-hour dial, noon at the top) · grid: `grid` `table` · envelope: `adsr` `table` |
+| meter | `meter` `pattern` `sun` (a built-in plugin: a day meter as a 24-hour dial, noon at the top) · grid: `grid` `table` · envelope: `adsr` `table` |
 | volume | `levels` (bars) `braid` `pattern` · oscillation: `lfo` `levels` `braid` |
 | selector | `matrix` (a ring per part, a pin where it plays) `braid` `pattern` |
 
