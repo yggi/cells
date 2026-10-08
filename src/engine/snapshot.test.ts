@@ -58,7 +58,9 @@ describe('time: what a plan plays does not depend on how it is asked', () => {
     expect(plain(eventsBetween(plan(result, shifts), 0, 30))).toEqual(plain(eventsBetween(played, 0, 30)));
   });
   it.each(pieces.map((p) => [p.key, p] as const))('%s: 0–30 s and 30–60 s are 0–60 s', (_, { played }) => {
+    // (as sets: a law's notes come after the written ones in each answer, so two answers interleave them differently)
+    const set = (es: unknown[]) => es.map((e) => JSON.stringify(plain(e))).sort();
     const split = [...eventsBetween(played, 0, 30), ...eventsBetween(played, 30, 60)];
-    expect(plain(split)).toEqual(plain(eventsBetween(played, 0, 60)));
+    expect(set(split)).toEqual(set(eventsBetween(played, 0, 60)));
   });
 });

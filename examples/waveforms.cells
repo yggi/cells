@@ -1,7 +1,7 @@
-&piece title="Sound: voices, waveforms, envelopes" tags="genre:electronic, basics, sound" label="Voices made of braids: square, triangle, saw and sine, with envelopes and a vibrato." about=&mix
+&piece title="Sound: voices, waveforms, envelopes" tags="tutorial, genre:electronic, sound" rung=17 label="Voices made of braids: square, triangle, saw and sine, with envelopes and a vibrato." about=&mix
 # A voice is a cell looped at audio rate: one turn of its braid is one cycle
 # of its waveform. Its pitch and its volume are cells too.
-&bar scan(27 23 26 24) step=free(100bpm, 70..140)
+&bar scan(1 1 1 1) step=100bpm
 &tune over=scale(0,5) step=&bar/2 0 2 4 7 4 2 0 ~ 4 5 7 9 7 5 4 ~
 &roots over=scale(0,5) step=&bar*4 0 3 4 0
 
@@ -10,7 +10,11 @@
 &sine label="sine: sin(12)" loop=C4 sin(12)                        # one cycle of a sine in 12 steps
 &saw label="saw: 0…11, ramped" loop=C2 map=lin env=&(map=adsr .04 .3 .6 .5)   # no braid: 0…11 of the grid, ramped: a saw — with its envelope
 
-&vibrato label="vibrato: ±0.3, gliding" map=lin loop=6 0 .3 0 -.3 0         # a pitch, added, gliding
+&curve 0 1 .3 -1
+&shaped label="map=&curve: each value looked up in &curve" loop=262hz map=&curve 0 1 2 3   # 262 times a second: a C
+&chip label="step=8k: a braid as samples, eight thousand a second" step=8k 1!2 -1!2    # 2000 Hz, square
+
+&vibrato label="vibrato: ±0.3, gliding" map=lin loop=5 0 .3 0 -.3 0         # a pitch, added, gliding
 &pluck label="a volume, per note" map=lin loop=&tune 1 .4 0             # a volume, one shape per note of &tune
 
 # an instrument: a mix used like a voice — the saw, and a sine an octave below

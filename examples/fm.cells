@@ -1,0 +1,14 @@
+&piece title="FM: one voice bends another" tags="tutorial, sound" rung=21 label="A bell and an electric piano, each a sine whose frequency another sine swings." about=&out
+&fmNote label="fm=&bm: &bm swings the bell's frequency. ratio= is the modulator's frequency against the carrier's (3.5: a bell, not a harmonic); index= how far it swings, 0 a plain sine." about=(&bell &bm)
+&moveNote label="index= can move: on the piano it falls on every note, bright when struck and a sine as it rings." about=&epiano
+&bar scan(1 1 1 1) step=free(andante)
+&major over=scale(0,5)
+
+&tune over=&major step=&bar 7 4 5 2 4 0 2@2 7 9 8 7 4@4
+&chords over=&major step=&bar*4 [0,2,4] [3,5,7] [1,3,5] [0,2,4]
+
+&bm s=sine ratio=3.5
+&bell s=sine loop=C5 fm=&bm index=3 env=&(map=adsr .001 1.6 0 1.2)
+&em s=sine ratio=1
+&epiano s=sine loop=C4 fm=&em index=.2..3 * &(map=adsr .001 .4 .1 .3) env=&(map=adsr .002 1 .3 .5)
+&out map=sample level=18 [&tune * &bell * .15, &chords * &epiano * .1]

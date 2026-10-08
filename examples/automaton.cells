@@ -1,15 +1,15 @@
-&piece title="Automaton" tags="genre:experimental, rhythm, sound" label="A mechanical band on belts, all turned by one drum: bells, a drummer and a woodblock, each on a belt of different give." about=&out
+&piece title="Automaton" tags="tutorial, genre:experimental, rhythm, sound" rung=23 label="A mechanical band on belts, all turned by one drum: bells, a drummer and a woodblock, each on a belt of different give." about=&out
 &drumMotorNote label="The drum (the meter, a motor) turns them all." about=&bar
 &bellsNote label="The bells on a taut belt, exact." about=&bells
 &drummerNote label="The drummer's arm on a slack belt, lagging and swinging." about=&drums
 &woodNote label="The woodblock's arm slips when the drum jerks, a step behind for good." about=&wood
 &shoveNote label="Grab the big drum and shove it: watch the belts stretch, hear the arms drag and the woodblock slip." about=&bar
 # Automaton — one motor, belts of different give. belt= stiffness (taut 3000, slack 25),
-# mass= the arm, slip= its grip: past it the belt slips and the arm falls behind for good.
+# mass= the arm, damping= how soon it stops swinging (3 is what it is anyway: a little bounce), slip= its grip: past it the belt slips and the arm falls behind for good.
 &bar scan(1 1 1 1) step=104bpm motor=4 mass=1 friction=.2
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
 &bells over=&major step=&bar/2 belt=3000 label="the bells: a taut belt" 0 4 7 4 9 7 4 2 0 4 7 9 11 9 7 4
-&drums step=&bar/4 belt=25 mass=1 label="the drummer" &bd ~ &sd &bd ~ &bd &sd ~ &bd ~ &sd &bd ~ &bd &sd &sd
+&drums step=&bar/4 belt=25 mass=1 damping=3 label="the drummer" &bd ~ &sd &bd ~ &bd &sd ~ &bd ~ &sd &bd ~ &bd &sd &sd
 &wood step=&bar/2 belt=400 mass=1.5 slip=.4 label="the woodblock: it slips" 0 0 ~ 0 0 ~ 0 ~
 
 &bell pan=.36 s=sine loop=C5 fm=&bm index=.3..2 * &(map=adsr .001 .1 .1 .1) room=.3 env=&(map=adsr .002 .9 0 .6)

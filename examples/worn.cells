@@ -1,0 +1,16 @@
+&piece title="Sound on a worn tape" tags="tutorial, sound" rung=28 label="A flute recorded onto a worn tape loop and played back by two heads, one of them wandering." about=&out
+&wornNote label="A tape that records a mix records its sound: tone= darkens it each pass, drive= saturates it, hiss= is its noise; print= a faint pre-echo printgap= ahead; dropout= brief gaps." about=&tape
+&wanderNote label="wander= lets a head drift either way along the tape, wanderhz= times a second: a flying head." about=&far
+&reel step=72bpm motor=1 mass=1 friction=.1 wow=.02 0
+&bar scan(1 1 1 1) step=72bpm
+&minor over=scale(2,2)
+
+&tune over=&minor step=&bar/2 0 ~ 4 ~ 7 ~!3 6 ~ 4 ~ 2 ~!3 0 ~ 1 2 4 ~!3
+
+&flute s=tri loop=D4 env=&(map=adsr .02 .4 .3 .4)
+&dry [&tune * &flute * .3]
+&tape step=&reel write=&dry length=4 erase=.35 tone=2600 drive=.4 hiss=.005 print=.03 printgap=.6 dropout=.2
+&near play=&tape at=1
+&far play=&tape at=2.5 wander=.08 wanderhz=.15
+
+&out map=sample level=20 [&dry, &near * .5] [&dry, &far * .5]

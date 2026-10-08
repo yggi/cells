@@ -68,6 +68,8 @@ export interface PieceMeta {
   readonly title: string;
   readonly description: string;
   readonly tags: readonly string[];
+  /** Its place in the tutorial (rung=), if it is one of its pieces. */
+  readonly rung: number | null;
   /** The note it's on. */
   readonly cell: string;
 }
@@ -90,5 +92,5 @@ export function pieceMeta(source: string): PieceMeta | null {
     .filter((t, i, all) => all.findIndex((u) => u.toLowerCase() === t.toLowerCase()) === i);
   // (a description that opens with the title doesn't need to say it twice)
   const description = plain.toLowerCase().startsWith(d.title!.toLowerCase()) ? plain.slice(d.title!.length).replace(/^[\s,.:;—–-]+/, '') : plain;
-  return { title: d.title!, description, tags: [...new Set(tags)], cell: d.name };
+  return { title: d.title!, description, tags: [...new Set(tags)], rung: d.rung ?? null, cell: d.name };
 }

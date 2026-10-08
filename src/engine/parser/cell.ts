@@ -26,6 +26,7 @@ interface Body {
   laps: number | null;
   title: string | null;
   tags: string | null;
+  rung: number | null;
   about: Ref[] | null;
   chance: number | null;
   seed: number | null;
@@ -221,11 +222,21 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     },
   },
   seed: { form: 'seed=n', examples: ['&ghost seed=7 step=4 0? 0? 0? 0?'], read: (s, b) => (b.seed = s.int('a whole number after seed=')) },
-  title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, basics" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
+  title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
   tags: {
     form: 'tags="tag, tag"',
-    examples: ['&piece title="Swing blues" tags="genre:jazz, basics"', '&lead tags="melody" s=saw loop=C4'],
+    examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm"', '&lead tags="melody" s=saw loop=C4'],
     read: text('tags', 'tags="jazz, blues"'),
+  },
+  rung: {
+    form: 'rung=n',
+    examples: ['&piece title="Steps: a tune on one line" tags="tutorial" rung=1 label="Numbers, rests, holds and repeats."'],
+    read: (s, b, word, at) => {
+      // its place in the tutorial: 1, 2, 3 …
+      const n = s.match(/[0-9]+(?![0-9.])/y);
+      if (n === null || !(parseInt(n, 10) >= 1)) s.fail('rung= is a place in the tutorial, 1 or more: rung=1', at, word.length + 1);
+      b.rung = parseInt(n!, 10);
+    },
   },
   about: {
     form: 'about=&cell · about=(&a &b …)',
@@ -371,6 +382,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     laps: null,
     title: null,
     tags: null,
+    rung: null,
     about: null,
     chance: null,
     seed: null,
@@ -433,7 +445,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   }
 
   const braid: Braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
-  const { over, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } = b;
+  const { over, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, rung, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } = b;
   return {
     name: head.name,
     span: head.span,
@@ -450,6 +462,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     label,
     title,
     tags,
+    rung,
     about: about ?? undefined,
     laps,
     chance,

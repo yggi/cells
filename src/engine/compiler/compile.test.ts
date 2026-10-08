@@ -390,13 +390,25 @@ describe('scale(tonic, phase)', () => {
   });
 });
 
+describe('rung=: a place in the tutorial', () => {
+  it('belongs on the card', () => {
+    const errors = (src: string) =>
+      compileSource(src)
+        .diagnostics.filter((d) => d.severity === 'error')
+        .map((d) => d.message);
+    expect(errors('&p label="x" rung=2')).toEqual(['rung= belongs on a piece’s card: the note with its title=']);
+    expect(errors('&p title="x" rung=2')).toEqual([]);
+  });
+});
+
 describe('transpose example', () => {
   const r = compileSource(PRESETS.transpose.source);
   it('turning &key transposes the theme, turning &mode starts the scale elsewhere', () => {
     expect(r.diagnostics).toEqual([]);
-    expect(spell(r, 'theme')).toBe('C E G C G E C');
-    expect(spell(r, 'theme', with_(r, { key: 2 }))).toBe('D F# A D A F# D');
-    expect(spell(r, 'theme', with_(r, { mode: 1 }))).toBe('D F A D A F D'); // Dorian on D, same notes as C major
+    expect(spell(r, 'theme')).toBe('E G B E B G E'); // as written: D major's Dorian, on E
+    expect(spell(r, 'theme', with_(r, { key: 0, mode: 0 }))).toBe('C E G C G E C');
+    expect(spell(r, 'theme', with_(r, { key: 2, mode: 0 }))).toBe('D F# A D A F# D');
+    expect(spell(r, 'theme', with_(r, { key: 0, mode: 1 }))).toBe('D F A D A F D'); // Dorian on D, same notes as C major
   });
 });
 

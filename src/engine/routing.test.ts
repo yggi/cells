@@ -71,6 +71,11 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     const s = states(r, 0.05); // the kick
     expect([s.get('kit->bd'), s.get('bd'), s.get('kit->hh'), s.get('hh')]).toEqual(['live', 'live', 'idle', 'idle']);
   });
+  it('a groove: a chord of voices lights each of them while it sounds', () => {
+    const r = src('&g step=2 [&bd, &hh] ~', '&bd s=sine loop=A1', '&hh s=white', `${OUT} [&g]`);
+    const live = liveAt(r, codeShifts(r), r.off, 0.1);
+    expect(['bd', 'hh'].map((n) => live.nodes.has(`cell:${n}`))).toEqual([true, true]);
+  });
   it('an instrument (a mix used like a voice) and a sound tape it records: all on the way while it plays', () => {
     const r = compileSource(PRESETS.soundtape.source);
     const s = states(r, 3);

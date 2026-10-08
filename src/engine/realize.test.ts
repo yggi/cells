@@ -150,10 +150,20 @@ describe('sound', () => {
         r,
         0,
         (
-          { bwv847: 200, ricercar: 120, pop: 100, zell: 140, korobeiniki: 60, cellscape: 330, baustelle: 110, hypercell: 75, onemore: 80, brothers: 120, ghosts: 60 } as Record<
-            string,
-            number
-          >
+          {
+            bwv847: 200,
+            ricercar: 120,
+            pop: 100,
+            arrangement: 40,
+            zell: 140,
+            korobeiniki: 60,
+            cellscape: 330,
+            baustelle: 110,
+            hypercell: 75,
+            onemore: 80,
+            brothers: 120,
+            ghosts: 60,
+          } as Record<string, number>
         )[key] ?? 12,
       );
       for (const o of r.outputs)
@@ -564,9 +574,9 @@ describe('switching off', () => {
     }
   });
   it('switching off one channel’s mix silences only that channel', () => {
-    const r = compileSource(PRESETS.stereo.source);
+    const r = compileSource(PRESETS.canon.source);
     const p = plan(r, codeShifts(r), new Set(['cell:left']));
-    const e = eventsBetween(p, 0, 2).find((x) => (x.instrument ?? x.voice) === 'bell')!;
+    const e = eventsBetween(p, 0, 2).find((x) => (x.instrument ?? x.voice) === 'v1')!;
     expect(e.gains[0]).toBe(0);
     expect(e.gains[1]).toBeGreaterThan(0);
     // and the sound card off silences everything

@@ -103,9 +103,10 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 - `laps=n`: How many laps it plays, then it ends. [→](time.md) `&bar scan(4 4 4 4) step=84bpm laps=30`
 - `chance=p` · `chance=free(p, 0..1)`: What a bare x? means here: a probability, or free() for a slider. [→](cell.md) `&ghost chance=.2 step=4 0? 0? 0? 0?` · `&ghost chance=free(.3, 0..1) step=4 0? 0?`
 - `seed=n`: A different sequence of chance. [→](cell.md) `&ghost seed=7 step=4 0? 0? 0? 0?`
-- `title="text"`: On a note: the piece’s title (its card) — on a note (a label= and nothing else) [→](display.md) `&piece title="Swing blues" tags="genre:jazz, basics" label="A blues in F."`
-- `tags="tag, tag"`: On a note: the piece’s tags, comma-separated; on a cell, its clusters in the graph. [→](display.md) `&piece title="Swing blues" tags="genre:jazz, basics"` · `&lead tags="melody" s=saw loop=C4`
+- `title="text"`: On a note: the piece’s title (its card) — on a note (a label= and nothing else) [→](display.md) `&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."`
+- `tags="tag, tag"`: On a note: the piece’s tags, comma-separated; on a cell, its clusters in the graph. [→](display.md) `&piece title="Swing blues" tags="genre:jazz, rhythm"` · `&lead tags="melody" s=saw loop=C4`
 - `about=&cell` · `about=(&a &b …)`: On a note: the cells it explains — on a note (a label= and nothing else) [→](display.md) `&fenvNote label="The filter opens on every note." about=&fenv` · `&why label="Two cells at once." about=(&fenv &accent)`
+- `rung=n`: On a piece’s card: its place in the tutorial, the ladder of basics (1 the first) — on a note (a label= and nothing else) [→](display.md) `&piece title="Steps: a tune on one line" tags="tutorial" rung=1 label="Numbers, rests, holds and repeats."`
 
 ## Parameters
 

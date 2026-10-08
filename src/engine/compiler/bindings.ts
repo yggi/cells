@@ -166,6 +166,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       if (!c.note) error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
       for (const r of d.about) if (!decls.has(r.name)) unknownCell(r.name, r.span);
     }
+    if (d.rung != null && !d.title) error('rung= belongs on a piece’s card: the note with its title=', d.paramSpans.rung ?? d.span);
     if (!c.voice) continue;
     const src = d.params.s;
     if (src !== undefined && !(String(src) in DOUGH_SOURCES)) error(`Unknown sound '${src}' (${Object.keys(DOUGH_SOURCES).join(', ')})`, d.paramSpans.s ?? d.span);

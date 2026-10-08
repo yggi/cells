@@ -29,7 +29,13 @@ The first cell with `title=` is the piece's card: its title names the piece (and
 
 **The order of the cells** (judgment, nothing checks it): clock → harmony → parts → voices → mix → arrangement → out. An arrangement is the selector that chooses between mixes (`&song`, `&tetris`, the section tables); it comes after the mixes and before the sound card. A table may sit beside the part that reads it. Reordering lines does not change the sound.
 
-**Tags have kinds**, told apart by a prefix: `genre:jazz` (a style), `artist:Bach` (whose music it is after or about), and a tag without one is a **topic** (a technique or an idea: `rhythm`, `canon`, `tuning`). The library shows the name only and groups by kind; the five main genres (`genre:classical`, `genre:jazz`, `genre:electronic`, `genre:experimental`, `genre:world`) are the rim of its wheel. A piece saved before the prefixes keeps working: a bare `jazz` or `Bach` is read as `genre:jazz` and `artist:Bach`, and any other bare tag is a topic. The examples use only the tags of `VOCABULARY` in `src/engine/tags.ts` (a test fails on any other): to add a tag, add it there. (A cell's own `tags=` inside a piece are clusters, not kinds.)
+**Tags have kinds**, told apart by a prefix: `genre:jazz` (a style), `artist:Bach` (whose music it is after or about), and a tag without one is a **topic** (a technique or an idea: `rhythm`, `canon`, `tuning`). **`tutorial`** is a kind of its own and its only tag: the piece is a rung of the tutorial (below). The library shows the name only and groups by kind; the five main genres (`genre:classical`, `genre:jazz`, `genre:electronic`, `genre:experimental`, `genre:world`) are the rim of its wheel. A piece saved before the prefixes keeps working: a bare `jazz` or `Bach` is read as `genre:jazz` and `artist:Bach`, `basics` as `tutorial`, and any other bare tag is a topic. The examples use only the tags of `VOCABULARY` in `src/engine/tags.ts` (a test fails on any other): to add a tag, add it there. (A cell's own `tags=` inside a piece are clusters, not kinds.)
+
+## The tutorial: rung=
+
+**rung=n** on a piece's card is its place in the tutorial, a ladder of small pieces from the first steps to physics: `&piece title="Steps: a tune on one line" tags="tutorial" rung=1 …`. The library draws the tutorial as a cell of its own beside the wheel of pieces, its rungs in order; a piece with `rung=` carries the `tutorial` tag. Only a card takes it (anywhere else it is an error).
+
+Each rung introduces one concept and uses only what the rungs before it introduced, and together they cover every form of the [reference](reference.md), each on exactly one rung. `LADDER` in `src/engine/ladder.ts` says which forms each rung introduces; its test reads what every rung's piece uses and fails on a form used before its rung, a rung that doesn't use all of its own, or a form on no rung. A new form in the reference needs a rung (and the rung's piece needs to use it).
 
 ## show=
 

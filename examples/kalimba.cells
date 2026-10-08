@@ -1,14 +1,13 @@
-&piece title="Kalimba" tags="genre:world, basics, sound" label="The smallest tuned instrument: one resonator, its braid its tines, eight of them on a shared board." about=&out
+&piece title="Kalimba" tags="tutorial, genre:world, sound" rung=24 label="The smallest tuned instrument: one resonator, its braid its tines, eight of them on a shared board." about=&out
 &pluckNote label="A tune reads the tines and plucks them: each note a tine, by its place." about=(&tune &kalimba)
 &boardNote label="The board carries every one to the others, which answer faintly." about=&kalimba
 &padNote label="Tap the pads round it to play along; hold it to stop it ringing." about=&kalimba
 # Kalimba — a resonator's braid is its exciters: 0 2 4 7 9 12 14 16, semitones from its fundamental
-# (none written: the twelve). body=tine is what each is; they share a board (a box, an octave down)
+# (none written: the twelve). body=tine is what each is; they share a board (board=box: a box, an octave down, as without it)
 # and each rings the others through it. The tune reads through the kalimba (over=&kalimba): its tines are
 # its table, and a note plucks the tine at its place.
 &bar scan(1 1 1 1) step=92bpm
 &tune over=&kalimba step=&bar/2 label="the tune" 0 2 4 ~ 3 4 5 ~ 4 2 1 ~ 0 ~!3 5 ~ 4 3 2 ~ 1 2 0 ~!3 7 6 5 ~
-&kalimba body=tine loop=C4 ring=3 hard=.3 coupling=.06 label="the kalimba: eight tines on one board" 0 2 4 7 9 12 14 16
+&kalimba body=tine loop=C4 ring=3 hard=.3 board=box coupling=.06 label="the kalimba: eight tines on one board" 0 2 4 7 9 12 14 16
 
 &out level=-15.5 map=sample [&tune * &kalimba * .5]
-&ring scope=spectrum label="the kalimba ringing: every tine" &kalimba

@@ -122,7 +122,7 @@ const VOICE_KIT = 'kit:voices';
  * with over= is a kit, by number). Their voices in the order first written, and each one's steps as
  * numbers into them — or null when the piece has none.
  */
-function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Ref[]; cells: Map<string, Token[]> } | null {
+export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Ref[]; cells: Map<string, Token[]> } | null {
   const sounds = (d: CellDecl | undefined) => Object.keys(d?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
   const isVoiceDecl = (n: string) => sounds(decls.get(n));
   const plain = (r: { pick: unknown; shift: number; transpose?: number; values?: unknown }) => !r.pick && !r.shift && !r.transpose && !r.values;

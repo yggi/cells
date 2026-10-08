@@ -304,10 +304,16 @@ describe('a piece’s card: title= and tags= on a note', () => {
       title: 'Swing blues',
       description: 'A 12-bar blues in C, swung — key . Two scales.',
       tags: ['Jazz', 'blues', 'swing'], // (as written, once each whatever the case)
+      rung: null,
       cell: 'piece',
     });
+    expect(pieceMeta('&piece title="Steps" tags="tutorial" rung=3')?.rung).toBe(3);
     expect(pieceMeta('&bar step=1 0')).toBeNull();
     expect(parse('&p title=hello').diagnostics[0].message).toMatch(/title= takes a text in quotes/);
+  });
+  it('rung= is a place in the tutorial: 1 or more', () => {
+    expect(parse('&p title="x" rung=0').diagnostics[0].message).toMatch(/rung= is a place in the tutorial/);
+    expect(parse('&p title="x" rung=2').diagnostics).toEqual([]);
   });
 });
 

@@ -1,0 +1,14 @@
+&piece title="A voice: a source and an envelope" tags="tutorial, sound" rung=3 label="Four voices, each a source and an envelope: a pluck, a swell, a bass and a breath." about=&out
+&sourceNote label="s= is the source: sine, tri, saw, square, pulse, or a noise (white, pink, brown); loop=C4 is its note." about=(&pluck &pad &low &air)
+&envNote label="env= is its volume on every note: map=adsr, attack, decay and release in seconds, sustain a level. Written where it is used, &( … ) is a cell without a name." about=&pluck
+&bar scan(1 1 1 1) step=free(moderato)
+
+&tune step=&bar/2 0 4 7 12 7 4 0 ~ 2 5 9 14 9 5 2 ~
+&line step=&bar*2 7 9 5 7
+&bass step=&bar 0 0 7 0 2 2 9 2
+
+&pluck s=tri loop=C4 env=&(map=adsr .005 .3 .1 .2)        # quick to start, quick to fade: a pluck
+&pad s=saw loop=C4 env=&(map=adsr .5 .3 .6 .8)            # slow in, held, slow out: a swell
+&low s=square loop=C2 env=&(map=adsr .005 .2 .6 .1)
+&air s=pink env=&(map=adsr .3 .2 .5 .6)                   # a noise: no note of its own
+&out map=sample level=16 [&tune * &pluck * .3, &line * &pad * .06, &bass * &low * .12, &line * &air * .04]

@@ -1,0 +1,12 @@
+&piece title="A clock: one bar drives every part" tags="tutorial, rhythm" rung=2 label="A bar sets the tempo, and every part steps with it: on the beat, twice as fast, or once every two beats." about=&out
+&barNote label="&bar is the clock: scan(1 1 1 1) is four even beats; step=free(andante) a tempo marking, a slider from 76 to 108 beats a minute." about=&bar
+&ratesNote label="step=&bar moves a part a step a beat; &bar/2 two steps a beat; &bar*2 a step every two beats." about=(&tune &eighths &bass)
+&bar scan(1 1 1 1) step=free(andante)          # four beats, andante
+
+&tune step=&bar 0 4 7 4 5 9 7@2 4 7 5 2 0@4     # a step a beat
+&eighths step=&bar/2 12 7 16 7 12 7 16 7 12 9 17 9 14 7 12 ~   # two steps a beat
+&bass step=&bar*2 -12 -7 -12 -5               # a step every two beats
+
+&high s=sine loop=C5
+&low s=sine loop=C3
+&out map=sample level=3 [&tune * &high * .35, &eighths * &high * .12, &bass * &low * .6]

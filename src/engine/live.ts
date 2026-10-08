@@ -164,14 +164,17 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
       if (!hit) break;
       const a = hit.atom;
       if (a.kind === 'note' || a.kind === 'chord') {
-        if (o.kit && a.kind === 'note') {
-          const v = voiceFor(result, o, a.value);
-          if (v) {
-            mark(v.voice);
-            voices.add(cellId(v.voice));
-            hits.push(v.voice);
+        if (o.kit) {
+          // (a chord through a kit sounds each of its voices: [&bd, &hh] in a groove)
+          for (const value of a.kind === 'note' ? [a.value] : a.notes) {
+            const v = voiceFor(result, o, value);
+            if (v) {
+              mark(v.voice);
+              voices.add(cellId(v.voice));
+              hits.push(v.voice);
+            }
           }
-        } else if (!o.kit) {
+        } else {
           if (a.kind === 'note') markChain(way, tFrom, table, tShift, a.value, a.alter);
           else a.notes.forEach((v, j) => markChain(way, tFrom, table, tShift, v, a.alters[j]));
         }

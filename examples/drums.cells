@@ -1,0 +1,22 @@
+&piece title="Drums: a groove of voices" tags="tutorial, rhythm" rung=9 label="A drum part written with the drums' names: a beat, a fill with ratchets, a Euclidean rhythm and a kit." about=&out
+&grooveNote label="A stepped braid of voices plays them: &bd ~ &hh is kick, rest, hat. &beat and &fill are drum motifs, spliced into &groove like any other." about=&groove
+&ratchetNote label="&sd*3 plays the snare three times in one step: a ratchet." about=&fill
+&euclidNote label="euclid(5, 16): five hits spread as evenly as they go over sixteen steps." about=&clave
+&kitNote label="A braid of voices read with over= is a kit: its numbers pick the voices, 0 the first." about=(&kit &toms)
+&bar scan(1 1 1 1) step=free(moderato)
+
+&beat &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]
+&fill &sd &sd*2 &sd &sd*3
+&groove step=&bar/2 &beat!3 &bd ~ &hh ~ &fill
+&clave step=&bar/4 euclid(5, 16)
+&kit &lo &mid &hi
+&toms over=&kit step=&bar/4 ~!12 0 1 2 1
+
+&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
+&sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .05)
+&hh s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
+&rim s=sine loop=E5 env=&(map=adsr 0 .03 0 .02)
+&lo s=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
+&mid s=sine loop=C3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .2 0 .05)
+&hi s=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .15 0 .05)
+&out map=sample level=-0.5 [&groove * .6, &clave * &rim * .15, &toms * .4]

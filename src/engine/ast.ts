@@ -209,6 +209,8 @@ export interface CellDecl {
   readonly title?: string | null;
   /** On a note: the piece's tags, comma-separated. */
   readonly tags?: string | null;
+  /** On a piece's card: its place in the tutorial (the ladder of basics), 1 the first. */
+  readonly rung?: number | null;
   /** On a note: the cells it explains, drawn as links from the note (`about=&fenv`, `about=(&fenv &accent)`). */
   readonly about?: readonly Ref[];
   /**

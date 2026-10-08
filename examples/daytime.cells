@@ -1,0 +1,18 @@
+&piece title="Clock time: a minute, an hour, a day" tags="tutorial, modal" rung=30 label="Music on the clock on the wall: a tick each second, a chime each minute, a day of music anchored to the time." about=&out
+&unitsNote label="Rates in clock time: loop=1min turns once a minute, 1h an hour, 1d a day, 1wk a week." about=(&minute &hour &day &week)
+&anchorNote label="anchor=11.55: where the day stands when play starts, at 11:55 (hours.minutes); then it keeps the time." about=&day
+&lawNote label="law=fiveto12: notes computed by a law, not written: the 5 to 12 cycle, a day of music read through the day." about=&cycle
+&minute scan(1!60) loop=1min label="a minute: sixty seconds"
+&hour scan(1!60) loop=1h label="an hour: sixty minutes"
+&day scan(1!24) loop=1d anchor=11.55 show=sun label="the day"
+&week scan(1!7) loop=1wk label="a week: seven days"
+
+&tick step=&minute 0                                # each second
+&chime step=&hour 12                                # each minute
+&daily over=scale(0,5) step=&week 0 1 2 3 4 5 6       # the chime a step higher each day
+&cycle law=fiveto12 over=&day step=84bpm label="the law: a day"
+
+&click s=sine loop=C6 env=&(map=adsr 0 .01 0 .01)
+&bell s=sine loop=C5 env=&(map=adsr .002 2 0 1.5)
+&glass s=tri loop=C4 lpf=3200 env=&(map=adsr .004 .9 .25 1.2)
+&out map=sample level=9.5 [&cycle * &glass * .3, &tick * &click * .05, (&chime + &daily) * &bell * .2]

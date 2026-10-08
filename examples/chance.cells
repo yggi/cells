@@ -1,0 +1,14 @@
+&piece title="Chance and choice" tags="tutorial, rhythm" rung=13 label="A line that is never quite the same twice round: steps that may not sound, and choices between notes." about=&out
+&chanceNote label="0?.3 sounds three times in ten; a bare 0? takes the cell's chance=. It is the same every time you play the piece; seed= picks another sequence." about=(&ghosts &hats)
+&choiceNote label="[4|5|7]: one of them, chosen afresh each time round." about=&tune
+&bar scan(1 1 1 1) step=free(moderato)
+&major over=scale(0,5)
+
+&tune over=&major step=&bar/2 0 2 [4|5|7] 4 [2|7] 0 [4|9] ~
+&hats step=&bar/4 0 0? 0 0?.3 0 0? 0 0?.8
+&ghosts chance=.25 seed=3 step=&bar/4 0?!8
+
+&lead s=tri loop=C5 env=&(map=adsr .005 .2 .3 .2)
+&hh s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)
+&sd s=white hpf=1500 env=&(map=adsr 0 .08 0 .04)
+&out map=sample level=4 [&tune * &lead * .3, &hats * &hh * .1, &ghosts * &sd * .1]

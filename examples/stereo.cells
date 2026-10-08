@@ -1,12 +1,10 @@
-&piece title="Stereo: Mary Had a Little Lamb" tags="genre:world, genre:folk, basics, pentatonic, stereo" label="Mary Had a Little Lamb across two channels: a mix for each side." about=&out
-# The sound card's two channels are two mixes: the same voices, balanced
-# differently left and right.
-&bar scan(27 23 26 24) step=free(andante)   # a tempo marking: 76–108 bpm
+&piece title="Stereo: Mary Had a Little Lamb" tags="tutorial, genre:world, genre:folk, pentatonic, stereo" rung=16 label="Mary Had a Little Lamb across two channels: the bell on the left, the cello on the right." about=&out
+# pan= places a voice between the sound card's two channels: 0 left, .5 the centre (as
+# without it), 1 right; the far side fades. .15: the left full, the right at .3.
+&bar scan(27 23 26 24) step=92bpm
 &high label="*Mary had a little lamb*" over=scale(0,5) step=&bar 2 1 0 1 2 2 2@2
 &low over=scale(0,5) step=&bar*2 0 3 4 0
 
-&bell s=sine loop=C5 env=&(map=adsr .01 .6 .2 .6)
-&cello s=saw loop=C3 lpf=900 env=&(map=adsr .03 .4 .6 .4)
-&left label="left"  [&high * &bell, &low * &cello * 0.3]
-&right label="right" [&high * &bell * 0.3, &low * &cello]
-&out level=1.5 map=sample &left &right
+&bell s=sine loop=C5 pan=.15 env=&(map=adsr .01 .6 .2 .6)
+&cello s=saw loop=C3 lpf=900 pan=.85 env=&(map=adsr .03 .4 .6 .4)
+&out level=1.5 map=sample [&high * &bell, &low * &cello]

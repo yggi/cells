@@ -50,7 +50,7 @@ describe('examples/*.cells', () => {
     expect(built).toEqual(fresh);
     for (const e of fresh) {
       const m = pieceMeta(PRESETS[e.key].source);
-      expect([e.title, e.description, e.tags]).toEqual([m?.title, m?.description, m?.tags]); // (the tags are written canonical: checked above)
+      expect([e.title, e.description, e.tags, e.rung]).toEqual([m?.title, m?.description, m?.tags, m?.rung]); // (the tags are written canonical: checked above)
       expect(e.size, `${e.key}: size`).toBeGreaterThan(0);
       // its miniature: what the browser would work out from its text, one node per cell drawn
       expect(e.miniature, `${e.key}: miniature`).toEqual(miniature(PRESETS[e.key].source));

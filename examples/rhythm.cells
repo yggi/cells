@@ -1,7 +1,7 @@
-&piece title="Meter and rhythm: the tresillo" tags="genre:world, basics, rhythm" label="The tresillo over a meter of its own, with hats, triplets and chords on the beat." about=&mix
+&piece title="Meter and rhythm: the tresillo" tags="tutorial, genre:world, rhythm" rung=8 label="The tresillo over a meter of its own, with hats, triplets and chords on the beat." about=&mix
 # A meter is a scan: the intervals between its beats, adding up to the bar.
 # scan(27 23 26 24): beats at 0 27 50 76 % — the first long, the third leaning.
-&bar scan(27 23 26 24) step=free(100bpm, 70..140)             # 4/4, bent
+&bar scan(27 23 26 24) step=100bpm             # 4/4, bent
 &tresillo label="tresillo: **x..x..x.**" scan(3 3 2) step=&bar*4/3          # x..x..x. — three strokes a bar: its lap (8) is the bar
 
 # volumes (map=amp) as gates: their steps start the notes, their values set the level

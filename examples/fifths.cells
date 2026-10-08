@@ -1,7 +1,7 @@
-&piece title="A table that turns: the circle of fifths" tags="genre:classical, basics, tonal, chromatic, harmony" label="A key that turns a fifth each pass: round the circle of fifths and home." about=&mix
+&piece title="A table that turns: the circle of fifths" tags="tutorial, genre:classical, tonal, chromatic, harmony" rung=14 label="A key that turns a fifth each pass: round the circle of fifths and home." about=&mix
 # &key turns once per pass of &tune, a fifth at a time (stride=7): C G D A E …
 # After twelve fifths it is home: a table that turns comes round after its own length.
-&bar scan(27 23 26 24) step=free(110bpm, 80..160)
+&bar scan(27 23 26 24) step=110bpm
 &key label="key: **{tonic}** — a fifth up each pass" step=cycle(&tune) stride=7
 &tune over=&key step=&bar 0 4 7 12 7 4 0@2     # chromatic numbers: a major arpeggio
 
