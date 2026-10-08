@@ -51,6 +51,7 @@ interface Key {
 export const SHOWS = [
   'braid',
   'pattern',
+  'equal',
   'notes',
   'midi',
   'do',

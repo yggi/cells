@@ -7,7 +7,7 @@
 # Lydian scale turns a step every two bars, and pad, acid and lead all read it;
 # one breath: a slow filter sweep moves the pad and the lead together.
 &bar scan(1 1 1 1) step=free(160bpm, 110..200)
-&lydian scan(2 2 2 1 2 2 1) step=&bar*8 stride=1 cycle=2 label="the harmony: **{mode}** on {tonic}"   # C, then D: a step every two bars
+&lydian scan(2 2 2 1 2 2 1) step=&bar*8 stride=1 cycle=2 label="the harmony: {mode} on {tonic}"   # C, then D: a step every two bars
 
 &pat &bd ~ &ch &ch*2 &sd ~ &bd &ch ~ &bd &sd &ch*3 ~ &bd &sd*4!2   # a bar of sixteenths
 &break step=&bar/4 &pat &pat[::-1]                         # … then the same bar backwards

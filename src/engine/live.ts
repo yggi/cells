@@ -5,7 +5,7 @@
  * The gates are the scheduler's: an output plays until its end (laps=), and while every selector
  * it goes through picks it.
  */
-import { ROOT, pickIndices, type CompileResult, type Output, type ResolvedCell, type Shifts } from './program';
+import { ROOT, pickedUnits, type CompileResult, type Output, type ResolvedCell, type Shifts } from './program';
 import { resolveIn } from './helix';
 import { clocking, playedCells, selects, shiftsAt } from './clocking';
 import { stepsOf, unitsFor } from './flatten';
@@ -142,9 +142,11 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
       const table = cell.root ? at : (cell.over ?? ctx);
       const tShift = cell.root ? 0 : cell.over ? cell.overShift : ctxShift;
       const tFrom: string | null = cell.root ? null : cell.over ? at : ctxFrom;
-      // a pick is drawn on the whole cell: offset the playhead to where the pick starts
-      const before = pick ? (pickIndices(cell.units.length, pick)?.[0] ?? 0) : 0;
-      const offset = cell.unitSteps.slice(0, before).reduce((x, y) => x + y, 0);
+      // a pick is drawn on the whole cell, as it is turned: offset the playhead to where the pick starts there
+      const k = cell.units.length;
+      const turn = statics(at);
+      const first = pick ? (pickedUnits(k, pick, turn)?.[0] ?? 0) : 0;
+      const offset = Array.from({ length: k ? mod(first - turn, k) : 0 }, (_, q) => cell.unitSteps[mod(q + turn, k)]).reduce((x, y) => x + y, 0);
       mark(at).local = pick ? offset + local : local;
       let base = 0;
       let hit: { atom: (typeof cell.units)[number]['atom']; offset: number; dur: number } | null = null;

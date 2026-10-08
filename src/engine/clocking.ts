@@ -6,7 +6,7 @@
  * function of time.
  */
 import type { CompileResult, Clock, Shifts } from './program';
-import { period, shiftedUnits } from './helix';
+import { isPicked, period, shiftedUnits } from './helix';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
 import { mod } from '../theory/modes';
 
@@ -82,12 +82,15 @@ export function playedCells(result: CompileResult): Set<string> {
   const walk = (n: string) => {
     if (out.has(n)) return;
     out.add(n);
-    for (const k of result.cells.get(n)?.children.keys() ?? []) walk(k);
+    const c = result.cells.get(n);
+    for (const k of c?.children.keys() ?? []) {
+      // (a cell only picked from, &k[0] &k[$0], isn't played: it is a table, turning under its taps)
+      const refs = c!.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === k ? [u.atom] : []));
+      if (!refs.length || !refs.every((r) => isPicked(result, k, r.pick))) walk(k);
+    }
   };
-  for (const o of result.outputs) {
-    walk(o.cell);
-    for (const m of [...o.mods, ...o.levels]) walk(m.cell);
-  }
+  // (a mix plays a cell on its own clock, picked or not)
+  for (const o of result.outputs) for (const t of [o, ...o.mods, ...o.levels]) walk(t.cell);
   return out;
 }
 

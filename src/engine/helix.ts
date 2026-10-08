@@ -2,6 +2,7 @@
  * Helix arithmetic: pure functions of a compiled program and the shifts — a cell's entries as
  * turned, a number resolved through its tables down to a grid, positions as pitches and colours.
  */
+import type { Pick } from './ast';
 import type { CompileResult, ResolvedCell, Shifts, Unit } from './program';
 import { ROOT, codeShifts } from './program';
 import { mod } from '../theory/modes';
@@ -236,3 +237,13 @@ export function tableChain(result: CompileResult, table: string): string[] {
   }
   return out;
 }
+
+/**
+ * A relative pick of plain numbers (a table, a motif) is a fixed tap: what it plays is entry i of the cell as it
+ * stands when the note sounds, so it follows the cell while it turns (a stepped or free key).
+ */
+export const isTap = (result: CompileResult, name: string, pick: Pick | null) => !!pick && !pick.abs && isPicked(result, name, pick);
+
+/** A pick of plain numbers, relative or absolute ($): read from the cell, not played; the cell is a table. */
+export const isPicked = (result: CompileResult, name: string, pick: Pick | null) =>
+  !!pick && result.cells.get(name)!.units.every((u) => u.atom.kind === 'note' && u.repeat === 1 && u.subdivide === 1 && u.chance === undefined);

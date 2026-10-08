@@ -115,7 +115,10 @@ function parseSpell(s: LineScanner, start: number): Braid {
   const tokens = [...text].flatMap((ch) => {
     const k = names.indexOf(ch);
     if (k < 0) return [rest, rest]; // (a space — or anything not on the keys — rests as long as a key)
-    return [{ atom: { kind: 'ref' as const, name: table.name, pick: { kind: 'at' as const, i: k }, shift: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }, rest];
+    return [
+      { atom: { kind: 'ref' as const, name: table.name, pick: { kind: 'at' as const, i: k, abs: true as const }, shift: 0 }, repeat: 1, subdivide: 1, elongate: 1, span },
+      rest,
+    ];
   });
   if (!tokens.length) tokens.push(rest);
   return { kind: 'list', tokens, span } as Braid;

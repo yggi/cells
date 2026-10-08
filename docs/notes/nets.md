@@ -393,3 +393,7 @@ Considered, not built: locking a copy's tap to the leader's wheel n steps behind
 3. **The time source** (decision 11): its name and attributes, and how a tap names its unit.
 4. **The law and the day:** decided, `over=&day` (built).
 5. **Junctions in the layout:** decided, the readers are the junctions (built); no node of its own.
+
+## The wheels pass (2026-10-08)
+
+The loom of 20 and 284 is replaced: strands leave their taps onto tracks round the wheel (a ring), one loom per wheel with a band per bus; a hop goes on flat out of the reader's hub; the pitch rim moved into the hub of a table that selects (with the gear); a turned table turns, under a fixed marker. What it is now: [../ui/graph.md](../ui/graph.md); picks as taps: [decision 012](../decisions/012-picks-are-taps.md).

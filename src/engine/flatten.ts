@@ -3,21 +3,24 @@
  * shifts applied (`flatten`). What every reading of a braid starts from — the
  * plan, the live view, labels, Shorten.
  */
-import type { Pick } from './ast';
+import { pickLabel, type Pick } from './ast';
 import { ROOT, MAX_EVENTS, pickIndices, pickSteps, type CompileResult, type Shifts } from './program';
-import { shiftedUnits } from './helix';
+import { isTap, shiftedUnits } from './helix';
 
-/** A cell's units as played: rotated by its shift (plus a [<<]/[>>] shift) — or, for a pick, as written. */
+/**
+ * A cell's units as played: rotated by its shift (plus a [<<]/[>>] shift); a pick takes from them as they are turned
+ * (wrapped entries climbing a lap), or as written (`$`).
+ */
 export function unitsFor(result: CompileResult, name: string, shifts: Shifts, pick: Pick | null, table?: string, extra = 0) {
   if (!pick) return shiftedUnits(result, name, shifts(name) + extra, table);
-  const all = shiftedUnits(result, name, 0, table);
+  const all = shiftedUnits(result, name, pick.abs ? 0 : shifts(name), table);
   return (pickIndices(all.length, pick) ?? []).map((i) => all[i]);
 }
 
 /** Steps taken by a (picked) cell. */
 export const stepsOf = (result: CompileResult, name: string, pick: Pick | null) => pickSteps(result.cells.get(name)!, pick) ?? 0;
 
-const pickKey = (p: Pick | null, shift = 0) => (!p ? `>${shift}` : p.kind === 'at' ? `@${p.i}` : `${p.from}:${p.to}`);
+const pickKey = (p: Pick | null, shift = 0) => (!p ? `>${shift}` : pickLabel(p));
 
 export interface StepEvent {
   readonly step: number;
@@ -31,6 +34,11 @@ export interface StepEvent {
   readonly tableShift: number;
   /** Grid steps it's transposed by (the ^n of every reference it was spliced through). */
   readonly transpose?: number;
+  /**
+   * A relative pick's tap: the value is entry `index` of `cell` turned as it stands when it sounds (read in `ctx`,
+   * for its lap), times mul plus add (degree(…), inverse(…)); `value` is that entry as the code has it.
+   */
+  readonly via?: { readonly cell: string; readonly index: number; readonly ctx: string; readonly mul: 1 | -1; readonly add: number };
   /** x?p: the probability it sounds (each time round, reproducibly). */
   readonly chance?: number;
   /** [a|b|c]: what it chooses from (value is the first, for drawing). */
@@ -64,7 +72,9 @@ export function flatten(
     const out: StepEvent[] = [];
     if (!silent(name)) {
       let base = 0;
-      for (const u of unitsFor(result, name, shifts, pick, table, extra)) {
+      // a relative pick of plain numbers: which entry each is, looked up again as the cell turns (StepEvent.via)
+      const taps = isTap(result, name, pick) ? pickIndices(result.cells.get(name)!.units.length, pick) : null;
+      for (const [n, u] of unitsFor(result, name, shifts, pick, table, extra).entries()) {
         const a = u.atom;
         const unit = a.kind === 'ref' ? stepsOf(result, a.name, a.pick) || 1 : 1;
         const foot = unit * u.elongate;
@@ -72,7 +82,14 @@ export function flatten(
         for (let r = 0; r < u.repeat; r++) {
           for (let s = 0; s < u.subdivide; s++) {
             const at = base + s * dur;
-            const ev = { step: at, duration: dur, cell: name, table, tableShift: tShift };
+            const ev = {
+              step: at,
+              duration: dur,
+              cell: name,
+              table,
+              tableShift: tShift,
+              ...(taps ? { via: { cell: name, index: taps[n], ctx: table, mul: 1 as const, add: 0 } } : {}),
+            };
             // x?p: its probability (a bare ? takes the cell's chance=)
             const odds = u.chance === undefined ? {} : { chance: u.chance === null ? (cell.chance ?? 0.5) : u.chance };
             if (a.kind === 'note') out.push({ ...ev, value: a.value, alter: a.alter, ...odds });
@@ -91,6 +108,7 @@ export function flatten(
                       value: m.mul * e.value + m.add,
                       alter: m.mul * e.alter,
                       ...(e.options ? { options: e.options.map((o) => ({ value: m.mul * o.value + m.add, alter: m.mul * o.alter })) } : {}),
+                      ...(e.via ? { via: { ...e.via, mul: (m.mul * e.via.mul) as 1 | -1, add: m.mul * e.via.add + m.add } } : {}),
                     };
               for (const e of walk(a.name, a.pick, a.shift, table, tShift))
                 out.push({ ...moved(e), step: at + e.step * k, duration: e.duration * k, ...(up || e.transpose ? { transpose: (e.transpose ?? 0) + up } : {}) });
@@ -105,4 +123,12 @@ export function flatten(
     return out;
   };
   return [...walk(root, rootPick, rootShift, rootCtx, 0)].sort((a, b) => a.step - b.step || a.value - b.value);
+}
+
+/** A step event's value and accidental: a relative pick's entry as its cell stands now (StepEvent.via), else as written. */
+export function tapped(result: CompileResult, e: StepEvent, shifts: Shifts): { value: number; alter: number } {
+  if (!e.via) return { value: e.value, alter: e.alter };
+  const u = shiftedUnits(result, e.via.cell, shifts(e.via.cell), e.via.ctx)[e.via.index];
+  // (the entry under the tap now, its accidental with it: mirrored with it by inverse(…))
+  return u?.atom.kind === 'note' ? { value: e.via.mul * u.atom.value + e.via.add, alter: e.via.mul * u.atom.alter } : { value: e.value, alter: e.alter };
 }

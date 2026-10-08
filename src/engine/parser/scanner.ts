@@ -6,11 +6,17 @@ import { syntax, type Syntax } from './syntax';
 /** References to a cell, and how they pick from it, turn it and transpose it. */
 export const REFERENCE_SYNTAX: readonly Syntax[] = [
   syntax('reference', '&name', 'A cell, by name: in a braid (spliced in), after an attribute (over=&scale), in a mix.', ['&theme step=2 &motif 0'], 'cell.md'),
-  syntax('reference', '&name[i]', 'One entry of its braid as written, counted from 0; negative from the end (&x[-1] the last).', ['&tune step=2 &motif[0] &motif[-1]'], 'braid.md'),
+  syntax(
+    'reference',
+    '&name[i]',
+    'One entry of its braid as it is turned now (a fixed tap: it follows shift=), counted from 0; negative from the end (&x[-1] the last). &name[$i]: as written.',
+    ['&tune step=2 &motif[0] &motif[-1] &key[$0]'],
+    'braid.md',
+  ),
   syntax(
     'reference',
     '&name[a:b] · &name[a:b:s]',
-    'A slice, Python-style: from a up to b (either may be left out), every s-th; [::-1] backwards (retrograde).',
+    'A slice, Python-style: from a up to b (either may be left out), every s-th; [::-1] backwards (retrograde). As turned; [$a:b] as written.',
     ['&tune step=2 &motif[1:3] &motif[:-1] &motif[::-1] &motif[::2]'],
     'braid.md',
   ),
@@ -176,7 +182,7 @@ export class LineScanner {
     return name;
   }
 
-  /** `&name`, optionally picked: `&name[0]`, `&name[1:]`. */
+  /** `&name`, optionally picked: `&name[0]`, `&name[1:]` (as turned), `&name[$0]` (as written). */
   ref(what: string): Ref {
     const at = this.i;
     this.expect('&', what);
@@ -195,6 +201,9 @@ export class LineScanner {
         this.expect(']', `']' to close &${name}[${dir}…]`);
         return { name, pick, shift, ...this.transposition(name), span: this.span(at) };
       }
+      // $: as written (absolute); without, as the cell is turned now
+      const abs = this.peek() === '$' ? (this.i++, this.skipSpace(), true) : false;
+      const $ = abs ? ({ abs: true } as const) : {};
       const a = this.match(INT);
       this.skipSpace();
       if (this.peek() === ':') {
@@ -213,10 +222,10 @@ export class LineScanner {
           step = st === null ? null : parseInt(st, 10);
           this.skipSpace();
         }
-        pick = { kind: 'slice', from: a === null ? null : parseInt(a, 10), to: b === null ? null : parseInt(b, 10), ...(step !== null ? { step } : {}) };
+        pick = { kind: 'slice', from: a === null ? null : parseInt(a, 10), to: b === null ? null : parseInt(b, 10), ...(step !== null ? { step } : {}), ...$ };
       } else {
-        if (a === null) this.fail(`Expected an index like &${name}[0], or a slice like &${name}[1:]`);
-        pick = { kind: 'at', i: parseInt(a, 10) };
+        if (a === null) this.fail(`Expected an index like &${name}[0] (&${name}[$0] as written), or a slice like &${name}[1:]`);
+        pick = { kind: 'at', i: parseInt(a, 10), ...$ };
       }
       this.expect(']', `']' to close &${name}[…]`);
     } else if ((this.peek() === '+' || this.peek() === '-') && /[0-9]/.test(this.text[this.i + 1] ?? '')) {

@@ -14,14 +14,19 @@ export interface Diagnostic {
 }
 
 /**
- * A pick from a braid as written (ignoring any rotation), Python-style:
- * `&x[0]` first token, `&x[-1]` last, `&x[1:3]`, `&x[-1:]`, `&x[:-1]` slices,
- * `&x[::-1]` backwards (retrograde), `&x[::2]` every other.
+ * A pick from a braid, Python-style: `&x[0]` first token, `&x[-1]` last, `&x[1:3]`, `&x[-1:]`, `&x[:-1]` slices,
+ * `&x[::-1]` backwards (retrograde), `&x[::2]` every other. Relative: from the braid as it is turned now (a fixed
+ * tap reads whatever has turned under it; a wrapped entry climbs a lap). `abs` (`&x[$0]`): as written.
  */
-export type Pick =
-  { readonly kind: 'at'; readonly i: number } | { readonly kind: 'slice'; readonly from: number | null; readonly to: number | null; readonly step?: number | null };
+export type Pick = (
+  { readonly kind: 'at'; readonly i: number } | { readonly kind: 'slice'; readonly from: number | null; readonly to: number | null; readonly step?: number | null }
+) & { readonly abs?: true };
 
-export const pickLabel = (p: Pick | null): string => (!p ? '' : p.kind === 'at' ? `[${p.i}]` : `[${p.from ?? ''}:${p.to ?? ''}${p.step ? `:${p.step}` : ''}]`);
+export const pickLabel = (p: Pick | null): string => {
+  if (!p) return '';
+  const $ = p.abs ? '$' : '';
+  return p.kind === 'at' ? `[${$}${p.i}]` : `[${$}${p.from ?? ''}:${p.to ?? ''}${p.step ? `:${p.step}` : ''}]`;
+};
 
 /** `[<<n]` / `[>>n]` (n defaults to 1): shifted back / forward, on top of the cell's own rotation. */
 export const shiftLabel = (shift: number): string => (shift === 0 ? '' : `[${shift < 0 ? '<<' : '>>'}${Math.abs(shift) === 1 ? '' : Math.abs(shift)}]`);
@@ -40,7 +45,7 @@ export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: numb
 
 /**
  * `&name`, optionally viewed through brackets: a pick from the braid as
- * written (`&name[0]`, `&name[-1:]`) or a relative shift (`&name[<<]`,
+ * turned (`&name[0]`, `&name[-1:]`) or as written (`&name[$0]`), or a relative shift (`&name[<<]`,
  * `&name[>>2]`) — one or the other.
  */
 export interface Ref {
@@ -55,7 +60,7 @@ export interface Ref {
 /**
  * A number is an index into the cell's `over` (decimals allowed on a root).
  * Accidentals (`6#`, `3b`) move one step on the grid below that.
- * `&cell` splices the cell's braid; `&cell[i]`, `&cell[a:b]` splice part of it as written.
+ * `&cell` splices the cell's braid; `&cell[i]`, `&cell[a:b]` splice part of it as turned (`&cell[$i]`: as written).
  */
 export type Atom =
   | { readonly kind: 'note'; readonly value: number; readonly alter: number }

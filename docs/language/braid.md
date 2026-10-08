@@ -21,7 +21,8 @@ What goes inside a cell: generators, and how to pick from, shift and transpose a
 
 These read a braid *as written* or moved. They go where a braid is used — braids, `out`, and (shifts only) `over=`; `step=` and `map=` take whole cells.
 
-- **`&t[i]`**, **`&t[a:b]`**, **`&t[a:b:step]`** pick from the braid *as written* (rotation ignored), Python-style: `&x[0]` first, `&x[-1]` last, `&x[1:3]`, `&x[:-1]`; `&x[::-1]` is the retrograde, `&x[::2]` every other. A pick keeps each token's modifiers and length.
+- **`&t[i]`**, **`&t[a:b]`**, **`&t[a:b:step]`** pick from the braid *as it is turned*, Python-style: `&x[0]` first, `&x[-1]` last, `&x[1:3]`, `&x[:-1]`; `&x[::-1]` is the retrograde, `&x[::2]` every other. A pick keeps each token's modifiers and length. A pick is a fixed tap on a turning wheel: with `&key shift=2`, `&key[0]` is D and `&key[0] &key[4] &key[7]` D F♯ A; an entry that wraps climbs a lap (`&key[10]` is the C above). It follows the shift as it stands when the note sounds — a stepped key, a `free()` one — when the cell it picks from is plain numbers and is read in another cell's braid (in a mix a cell plays on its own clock, picked or not).
+- **`&t[$i]`**, **`&t[$a:b]`** pick *as written*, whatever the shift: with `&key shift=2`, `&key[$0] &key[$4] &key[$7]` is C E G.
 - **`&t[<<n]`**, **`&t[>>n]`** — &t shifted back / forward by n (default 1), on top of its own rotation; wrapped entries climb a lap. `&john[<<]` is the theme one unit behind; `over=&scale[<<]` reads one step lower. In `out` the brackets keep shifts apart from pitch arithmetic: `(&alto[<<] - 7) * &cello` — a bar behind, a fifth below.
 - Slices rotate too, without the climb: `&x[-1:] &x[:-1]`.
 - **`&x^n`** transposes a reference in place by n grid steps (after its tables): `&m^7`.
@@ -30,6 +31,13 @@ These read a braid *as written* or moved. They go where a braid is used — brai
 ```cells-fragment
 &canon [&theme * &lead, &theme[<<] * &lead, &theme[<<2] * &lead]
 &back &theme[::-1]
+```
+
+```cells
+&key shift=2
+&tonic &key[0]
+&major &key[0] &key[4] &key[7]
+&cmajor &key[$0] &key[$4] &key[$7]
 ```
 
 ## Operations: degrees and inversion

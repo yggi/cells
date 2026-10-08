@@ -5,7 +5,7 @@
 &bar scan(1 1 1 1) step=96bpm
 
 &key label="key: **{tonic}**" shift=2 size=1.5                # the 12, turned two: D. Turning it transposes
-&mode label="**{mode}** on {tonic}: {notes}" over=&key scan(2 2 1 2 2 2 1) shift=1   # turned one: it walks the modes
+&mode label="{mode} on {tonic}\n{notes}" over=&key scan(2 2 1 2 2 2 1) shift=1   # turned one: it walks the modes
 &theme label="the theme: {notes}" show=notes over=&mode step=&bar 0 2 4 7 4 2 0@2
 
 &flute s=tri loop=C4 room=.3 env=&(map=adsr .02 .3 .5 .3)

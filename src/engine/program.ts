@@ -363,8 +363,6 @@ export function noteFrequency(name: string, a4 = 440): number | null {
   return a4 * Math.pow(2, semis / 12);
 }
 
-export const pickText = (p: Pick | null) => (!p ? '' : p.kind === 'at' ? `[${p.i}]` : `[${p.from ?? ''}:${p.to ?? ''}${p.step ? `:${p.step}` : ''}]`);
-
 /** Unit indices a pick selects from n units, Python-style; null if it selects nothing (or is out of range). */
 export function pickIndices(n: number, pick: Pick | null): number[] | null {
   if (!pick) return Array.from({ length: n }, (_, i) => i);
@@ -388,10 +386,19 @@ export function pickIndices(n: number, pick: Pick | null): number[] | null {
   return out.length ? out : null;
 }
 
-/** Steps taken by a pick from a cell (the whole cell when there's no pick). */
+/**
+ * The units a pick takes, as indices into the braid as written: a relative pick counts from the braid turned by
+ * `shift` (its entry i is the written unit i + shift, round the braid), an absolute one (`$`) as written.
+ */
+export function pickedUnits(n: number, pick: Pick | null, shift: number): number[] | null {
+  const idx = pickIndices(n, pick);
+  return !idx || !pick || pick.abs || !n ? idx : idx.map((i) => (((i + shift) % n) + n) % n);
+}
+
+/** Steps taken by a pick from a cell (the whole cell when there's no pick), turned as the code has it. */
 export function pickSteps(c: ResolvedCell, pick: Pick | null): number | null {
   if (!pick) return c.steps;
-  const idx = pickIndices(c.units.length, pick);
+  const idx = pickedUnits(c.units.length, pick, c.shift);
   return idx ? idx.reduce((a, i) => a + c.unitSteps[i], 0) : null;
 }
 

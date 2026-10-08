@@ -85,11 +85,16 @@ const NAMED = 3;
 /**
  * An edge's label: how many slots of it are written (`×2`), the attribute it feeds, what each place it is written does
  * (the different ones, in order: the first three, then …), and how its port combines it. Undefined when there is nothing to say.
+ * A relative pick into a braid isn't said: its strand leaves the tap it reads; an absolute one ([$0]) is, on its wire from the hub.
  */
 export function edgeLabel(e: { readonly port: string; readonly count: number; readonly transforms: readonly Transform[] }): string | undefined {
-  const each = [...new Set(e.transforms.map(transformLabel))].filter(Boolean);
+  // (a relative pick into a braid is drawn: a strand from its tap — it needs no words, nor does how many there are)
+  const drawn = (st: Transform[number]) => e.port === 'braid' && st.kind === 'pick' && !st.pick.abs;
+  const told = e.transforms.map((t) => t.filter((st) => !drawn(st)));
+  const each = [...new Set(told.map(transformLabel))].filter(Boolean);
+  const tapped = e.transforms.length > 0 && e.transforms.every((t) => t.length > 0 && t.every(drawn));
   const parts = [
-    e.count > 1 ? `×${e.count}` : '',
+    e.count > 1 && !tapped ? `×${e.count}` : '',
     isAttribute(e.port) ? e.port : '',
     ...each.slice(0, NAMED),
     each.length > NAMED ? '…' : '',

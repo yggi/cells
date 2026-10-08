@@ -4,7 +4,7 @@
 &piece title="Bell and scale: 12/8, one scan for both" tags="genre:world, diatonic, rhythm" label="The bell, x.x.xx.x.x.x, has the major scale's intervals: 2 2 1 2 2 2 1." about=&mix
 &oneScanNote label="One scan is both — the melody steps with it, and reads it as its scale." about=(&bell &song)
 &beat scan(1 1 1 1) step=free(100bpm, 70..140)       # four dotted-quarter beats: 12/8
-&bell label="**{mode}** · x.x.xx.x.x.x" scan(2 2 1 2 2 2 1) step=&beat*4/7             # seven strokes a bar, over the twelve pulses
+&bell label="{mode} · x.x.xx.x.x.x" scan(2 2 1 2 2 2 1) step=&beat*4/7             # seven strokes a bar, over the twelve pulses
 
 &strokes map=amp step=&bell 1 .5 .7 .5 .6 .5 .7      # the bell, as a rhythm
 &song over=&bell step=&bell 4 4 5 4 2 1 0 2 2 1 2 0 ~ ~    # … and as a scale: C major

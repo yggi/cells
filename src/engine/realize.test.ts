@@ -524,6 +524,19 @@ describe('a turning table comes round after its own length; cycle= says otherwis
     expect(pitches(compileSource(src('')))).toEqual([0, 7, 2, 9]);
     expect(pitches(compileSource(src('cycle=12')))).toEqual([0, 7, 2, 9]);
   });
+  it('a pick is a fixed tap: &k[0] follows the key as it turns, &k[$0] stays', () => {
+    const tap = (pick: string) => src('').replace('&u over=&k step=&m 0', `&u step=&m ${pick}`);
+    expect(pitches(compileSource(tap('&k[0]')))).toEqual([0, 7, 2, 9]);
+    expect(pitches(compileSource(tap('&k[$0]')))).toEqual([0, 0, 0, 0]);
+    expect(pitches(compileSource(tap('degree(&k[0], 1)')))).toEqual([1, 8, 3, 10]);
+  });
+  it('a tap that follows a turning table takes the accidental of the entry it lands on', () => {
+    const r = compileSource(
+      '&m step=1\n&t step=&m 0\n&k step=cycle(&t) stride=1 0 2# 4 5b\n&u step=&m &k[0]\n&v s=tri loop=C4\n&mix [&u * &v]\n&out loop=SAMPLE_RATE map=sample &mix',
+    );
+    // (as the whole cell turned plays its first entry: 0, 3, 4, 4, then round)
+    expect(events(r, 0, 5.9).map((e) => midi(e.freq) - 60)).toEqual([0, 3, 4, 4, 0, 3]);
+  });
   it('cycle=24 climbs a lap on the way round: 0, 7, 14, 21', () => {
     expect(pitches(compileSource(src('cycle=24')))).toEqual([0, 7, 14, 21]);
   });

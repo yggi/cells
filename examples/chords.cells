@@ -2,7 +2,7 @@
 &chordNote label="[0,2,4] is a chord: three steps at once, in the scale the cell reads. 6# raises the seventh a semitone: the dominant E major." about=&chords
 &sumNote label="&chords + &strike: a sum of pitches. The finer one, &strike, starts the notes; the chords hold under it and move it." about=&strike
 &bar scan(1 1 1 1) step=free(andante)
-&minor over=scale(9,2) label="**{mode}** on {tonic}"     # A minor
+&minor over=scale(9,2) label="{mode} on {tonic}"     # A minor
 
 &chords over=&minor step=&bar*4 [0,2,4] [3,5,7] [4,6#,8] [0,2,4]     # i – iv – V – i
 &strike step=&bar 0 0 12 0                                         # on the beat, an octave up on three

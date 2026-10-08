@@ -93,18 +93,44 @@ describe('motifs and shifted references', () => {
     expect(spell(r, 'C')).toBe('G F D D D D');
   });
 
-  it('&x[i] and &x[a:b] pick from the braid as written, Python-style', () => {
+  it('&x[i] and &x[a:b] pick from the braid, Python-style', () => {
     const r2 = compileSource('&bar 0 1 2 3\n&foo &bar[-1] &bar[1] &bar[1:3] &bar[:-2] &bar[-1:]');
     expect(r2.ok).toBe(true);
     expect(flatten(r2, 'foo', codeShifts(r2)).map((e) => e.value)).toEqual([3, 1, 1, 2, 0, 1, 3]);
     expect(r2.cells.get('foo')!.steps).toBe(7);
   });
 
-  it('picks ignore rotation: a shifted cell is picked as written', () => {
-    const r2 = compileSource('&bar shift=1 0 1 2 3\n&foo &bar[0] &bar[-1]');
-    expect(flatten(r2, 'foo', codeShifts(r2)).map((e) => e.value)).toEqual([0, 3]);
-    // while the whole cell plays rotated (and the wrapped entry climbs)
+  it('a pick reads the cell as it is turned (a wrapped entry climbs); $ as written', () => {
+    const r2 = compileSource('&bar shift=1 0 1 2 3\n&foo &bar[0] &bar[-1]\n&abs &bar[$0] &bar[$-1]');
+    expect(spell(r2, 'foo')).toBe('C# C');
+    expect(flatten(r2, 'foo', codeShifts(r2)).map((e) => e.value)).toEqual([1, 12]);
+    expect(flatten(r2, 'abs', codeShifts(r2)).map((e) => e.value)).toEqual([0, 3]);
+    expect(spell(r2, 'abs')).toBe('C Eb');
+    // as the whole cell plays it
     expect(flatten(r2, 'bar', codeShifts(r2)).map((e) => e.value)).toEqual([1, 2, 3, 12]);
+  });
+
+  it('the base case: a key turned two, its picks relative, $ absolute', () => {
+    const r2 = compileSource(
+      '&key shift=2\n&mode over=&key scan(2 2 1 2 2 2 1) shift=1\n&tonic &key[0]\n&maj &key[0] &key[4] &key[7]\n&cmaj &key[$0] &key[$4] &key[$7]\n&first &mode[0]\n&top &key[10]',
+    );
+    expect(r2.ok).toBe(true);
+    expect(spell(r2, 'tonic')).toBe('D');
+    expect(spell(r2, 'maj')).toBe('D F# A');
+    expect(spell(r2, 'cmaj')).toBe('C E G');
+    expect(spell(r2, 'first')).toBe('E');
+    // (past the turn's end: a lap up)
+    expect(resolveIn(r2, 'key', 0, 10, 0, codeShifts(r2)).position).toBe(12);
+    // a pick follows its table as it turns: under another shift, another note
+    const turned: Shifts = (n) => (n === 'key' ? 7 : codeShifts(r2)(n));
+    expect(spell(r2, 'maj', turned)).toBe('G B D');
+    expect(spell(r2, 'cmaj', turned)).toBe('C E G');
+  });
+
+  it('slices are relative too, [$a:b] as written', () => {
+    const r2 = compileSource('&bar shift=2 0 1 2 3\n&rel &bar[0:2]\n&abs &bar[$0:2]');
+    expect(spell(r2, 'rel')).toBe('D Eb');
+    expect(spell(r2, 'abs')).toBe('C C#');
   });
 
   it('a rotation is two slices (without the climb); [>>] is the shift (with it)', () => {
@@ -114,10 +140,11 @@ describe('motifs and shifted references', () => {
     expect(flatten(r2, 'back', codeShifts(r2)).map((e) => e.value)).toEqual([-9, 0, 1, 2]);
   });
 
-  it('[<<] adds to the cell’s own rotation; picks ignore both', () => {
-    const r2 = compileSource('&bar shift=1 0 1 2 3\n&a &bar[<<]\n&b &bar[0]');
+  it('[<<] adds to the cell’s own rotation; a pick reads the cell’s own', () => {
+    const r2 = compileSource('&bar shift=1 0 1 2 3\n&a &bar[<<]\n&b &bar[0]\n&c &bar[$0]');
     expect(flatten(r2, 'a', codeShifts(r2)).map((e) => e.value)).toEqual([0, 1, 2, 3]);
-    expect(flatten(r2, 'b', codeShifts(r2)).map((e) => e.value)).toEqual([0]);
+    expect(spell(r2, 'b')).toBe('C#');
+    expect(spell(r2, 'c')).toBe('C');
   });
 
   it('a shifted table reference transposes through it: over=&s[>>2]', () => {
