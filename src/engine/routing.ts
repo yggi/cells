@@ -139,6 +139,11 @@ export class RouteAcc {
     this.node(name);
     // its own volume and pitch (env=, pitch=: on every note it plays; drawn as its petals, no edge)
     for (const own of [v.env, v.pitch]) if (own && !this.off(own)) this.stream(own);
+    // its wave's table (map=&curve: its values looked up in it, every cycle)
+    if (v.map?.kind === 'table' && !this.off(v.map.table)) {
+      this.edge(v.map.table, name, clockTapId(cellId(v.map.table), cellId(name), 'map'));
+      this.stream(v.map.table);
+    }
     this.timed(name);
     for (const pc of Object.values(v.paramCells ?? {}))
       for (const f of pc.factors)

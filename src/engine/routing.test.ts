@@ -30,6 +30,15 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     const s = states(r, 0.2);
     expect([s.get('sweep'), s.get('sweep->v')]).toEqual(['live', 'live']);
   });
+  it("a voice's wave table (map=&curve) is part of its sound: one wire, from the table into the voice (#182)", () => {
+    const r = src('&bar step=1', '&mel step=&bar 0 2', '&curve 0 1 .3 -1', '&v loop=C4 map=&curve 0 1 2 3', `${OUT} [&mel * &v]`);
+    const e = buildGraph(r).edges.filter((x) => x.port === 'map');
+    expect(e.map((x) => [x.from, x.to, x.band, x.width, x.pointer])).toEqual([['cell:curve', 'cell:v', 'cv', 4, true]]);
+    const s = states(r, 0.2);
+    expect([s.get('curve'), s.get('curve~map>v')]).toEqual(['live', 'live']);
+    // (a built-in map is no wire)
+    expect(buildGraph(src('&v loop=C4 map=lin 0 1', `${OUT} &v`)).edges.filter((x) => x.port === 'map')).toEqual([]);
+  });
   it('a braid of chance choices plays, so it is routed', () => {
     const r = src('&bar step=4', '&g step=&bar [0|2|4]? ~ [5|7]?', '&v s=sine loop=C4', `${OUT} [&g * &v]`);
     expect(on(r).nodes.has('cell:g')).toBe(true);
