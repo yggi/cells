@@ -314,6 +314,7 @@ describe('a piece’s card: title= and tags= on a note', () => {
   it('rung= is a place in the tutorial: 1 or more', () => {
     expect(parse('&p title="x" rung=0').diagnostics[0].message).toMatch(/rung= is a place in the tutorial/);
     expect(parse('&p title="x" rung=2').diagnostics).toEqual([]);
+    expect(parse('&p title="x" rung=99999999999999999999').diagnostics[0].message).toMatch(/rung= is a place in the tutorial/);
   });
 });
 

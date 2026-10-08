@@ -234,7 +234,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     read: (s, b, word, at) => {
       // its place in the tutorial: 1, 2, 3 …
       const n = s.match(/[0-9]+(?![0-9.])/y);
-      if (n === null || !(parseInt(n, 10) >= 1)) s.fail('rung= is a place in the tutorial, 1 or more: rung=1', at, word.length + 1);
+      if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999)) s.fail('rung= is a place in the tutorial, 1 to 9999: rung=1', at, word.length + 1);
       b.rung = parseInt(n!, 10);
     },
   },

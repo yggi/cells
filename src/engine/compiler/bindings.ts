@@ -2,6 +2,7 @@
 import type { Binding, CellDecl, Span } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
 import { ATTRIBUTES, VOICE_PARAMS } from '../attributes';
+import { canonicalTag, TUTORIAL } from '../tags';
 import type { ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 import type { Typed } from './sorts';
@@ -166,6 +167,8 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       if (!c.note) error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
       for (const r of d.about) if (!decls.has(r.name)) unknownCell(r.name, r.span);
     }
+    if (d.rung != null && d.title && !(d.tags ?? '').split(',').some((t) => canonicalTag(t.trim()) === TUTORIAL))
+      warn('rung= places a piece in the tutorial; without tags="tutorial" it is ignored', d.paramSpans.rung ?? d.span);
     if (d.rung != null && !d.title) error('rung= belongs on a piece’s card: the note with its title=', d.paramSpans.rung ?? d.span);
     if (!c.voice) continue;
     const src = d.params.s;
