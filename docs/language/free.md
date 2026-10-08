@@ -18,4 +18,4 @@ A tempo marking is its range, centred: `step=free(adagio)` (largo larghetto adag
 &swing scan(free(2, 1..3) 1) step=free(120bpm, 60..200)
 ```
 
-The graph's sliders are described on [../ui/editor.md](../ui/editor.md).
+The graph's sliders are described on [../ui/editor.md](../ui/editor.md); a MIDI controller's knob can move them too ([../ui/midi.md](../ui/midi.md#midi-learn)).

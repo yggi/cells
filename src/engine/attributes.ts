@@ -38,6 +38,8 @@ export interface Attribute {
   readonly moves?: true;
   /** It is a time: seconds, or a clock (delaytime=&bar/2). */
   readonly clock?: true;
+  /** It is a frequency or a rate, in Hz (lpf=1200, wanderhz=.5): its slider over a wide range runs on a log scale. */
+  readonly hz?: true;
 }
 
 const core = (help: string, doc: string, on?: readonly Role[]): Attribute => ({ help, doc, value: 'syntax', ...(on ? { on } : {}) });
@@ -71,9 +73,9 @@ export const CORE: Readonly<Record<string, Attribute>> = {
 export const PARAMS: Readonly<Record<string, Attribute>> = {
   // sound (dough's names: https://dough.strudel.cc)
   s: sound('sound source: sine tri saw square pulse white pink brown', { value: 'word' }),
-  lpf: sound('low-pass cutoff, Hz', { moves: true }),
+  lpf: sound('low-pass cutoff, Hz', { moves: true, hz: true }),
   lpq: sound('low-pass resonance', { moves: true }),
-  hpf: sound('high-pass cutoff, Hz', { moves: true }),
+  hpf: sound('high-pass cutoff, Hz', { moves: true, hz: true }),
   hpq: sound('high-pass resonance', { moves: true }),
   room: sound('reverb send 0–1', { moves: true }),
   delay: sound('delay send 0–1', { moves: true }),
@@ -115,16 +117,16 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   write: physics('a tape: what its write head records (write=&melody); it moves with its step=', ['tape'], { value: 'cell' }),
   length: physics('a tape: how long its loop is, in seconds of tape (or a clock: length=&bar*4); none, an open reel', ['tape'], { clock: true }),
   erase: physics('a tape: how much of what was there each pass under the write head wipes (1 all, .3 leaves ghosts)', ['tape']),
-  tone: physics('a sound tape: its loss — each pass through the loop darker (Hz: 7000 bright, 1500 worn)', ['tape']),
+  tone: physics('a sound tape: its loss — each pass through the loop darker (Hz: 7000 bright, 1500 worn)', ['tape'], { hz: true }),
   drive: physics('a sound tape: how hard it saturates each pass (0 clean, .5 warm, 1 crushed)', ['tape']),
   hiss: physics('a sound tape: its noise floor (0 none, .02 a cassette)', ['tape']),
   print: physics('a sound tape: print-through — a faint pre-echo before each head (.03 a whisper)', ['tape']),
   printgap: physics('a sound tape: how far before each head the print-through sits (tape-seconds, .6)', ['tape']),
-  dropout: physics('a sound tape: brief gaps in the playback, about this many a second', ['tape']),
+  dropout: physics('a sound tape: brief gaps in the playback, about this many a second', ['tape'], { hz: true }),
   play: physics('a read head: the tape it reads (play=&tape), at= tape-seconds after the write head', ['head'], { value: 'cell' }),
   at: physics('a read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar)', ['head'], { clock: true }),
   wander: physics('a read head: how far it wanders either way (tape-seconds) — a flying head', ['head']),
-  wanderhz: physics('a read head: how fast it wanders (times a second)', ['head']),
+  wanderhz: physics('a read head: how fast it wanders (times a second)', ['head'], { hz: true }),
   // scopes
   scope: {
     help: 'a scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels',
