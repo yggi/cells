@@ -29,7 +29,8 @@ describe('edges as wires', () => {
   it('flow from what is read to the cell that reads it, whichever way the edge points', () => {
     expect(wireOf(g, 'bar', 'theme')).toMatchObject({ port: 'step', band: 'sync' }); // step=&bar
     expect(wireOf(g, 'mode', 'theme')).toMatchObject({ port: 'over', band: 'cv', pointer: true }); // over=&mode
-    expect(wireOf(g, 'up', 'tune')).toMatchObject({ port: 'braid', band: 'cv', pointer: true }); // &tune … &up &up
+    expect(wireOf(g, 'leadA', 'parts')).toMatchObject({ port: 'braid', band: 'cv', pointer: true }); // &parts … &leadA
+    expect(g.bulbs.get('up')).toBe('tune'); // &tune … &up &up: read there only, a bulb on its track (#221)
     expect(wireOf(g, 'capstan', 'tape')).toMatchObject({ port: 'step', band: 'sync' });
   });
 

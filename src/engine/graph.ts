@@ -6,7 +6,8 @@
  * Depth grows outward from the roots: a cell sits one ring beyond the table
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
-import { effectiveShow } from '../layout/show';
+import { effectiveShow, pluginOf } from '../layout/show';
+import { trackRoom } from '../layout/track';
 import type { CompileResult, ResolvedCell } from './program';
 import type { Pick, ValueMap } from './ast';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
@@ -20,6 +21,11 @@ export type GraphNode =
       readonly cell: ResolvedCell;
       readonly isMeter: boolean;
       readonly petalOf?: string;
+      /**
+       * A braid's bulbs (#221), at its size in the graph: how far they reach past its wheel (px, the layout's room for
+       * them), and below it (where its name goes).
+       */
+      readonly reach?: { readonly room: number; readonly below: number };
       /** An instrument's place in stereo and in the mix (as for voices). */
       readonly pan?: number;
       readonly order?: number;
@@ -163,13 +169,19 @@ export interface GraphModel {
    * written pair drawn through a product's junction: its wires say so, `routes`).
    */
   readonly alias: ReadonlyMap<string, string | undefined>;
+  /**
+   * The cells drawn as bulbs on another's track, by name: each to the cell that splices it (#221). A cell spliced into
+   * one braid only, and read nowhere else, has no node of its own; its edges are drawn from that braid.
+   */
+  readonly bulbs: ReadonlyMap<string, string>;
 }
 
 /** A cell drawn as a turntable: a motor, a belted cell, a tape, a resonator's body. */
 export const isTurntable = (c: ResolvedCell) =>
   typeof c.params.motor === 'number' || typeof c.params.belt === 'number' || typeof c.params.write === 'string' || typeof c.params.body === 'string';
 
-export function buildGraph(result: CompileResult): GraphModel {
+/** `bulbs: false`: every cell its own node, splices used once too (the layout's tests of parts beside their players). */
+export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boolean } = {}): GraphModel {
   const edges: GraphEdge[] = [];
   const depth = new Map<string, number>();
   // meters: clocks whose entries place beats in a bar (agogic, even) — not a vibrato looping at a rate
@@ -447,7 +459,7 @@ export function buildGraph(result: CompileResult): GraphModel {
     const [l, r] = pans.get(n.cell.name)!;
     return { ...n, pan: l + r > 0 ? (r - l) / (l + r) : 0, order: Math.max(0, order.indexOf(n.cell.name)) } as GraphNode;
   });
-  return petals(result, [...placed, ...junctions], edges, through);
+  return petals(result, [...placed, ...junctions], edges, through, opts.bulbs ?? true);
 }
 
 /** In a product, a volume rather than a pitch: map=amp or db, or map=lin as a bare factor (algebra.ts). */
@@ -519,15 +531,18 @@ const isWave = (result: CompileResult, name: string) => {
  * parent or repeat an edge already there. `through`: the written pairs drawn through a product's junction (not drawn
  * themselves: their wires at the junction stand for them).
  */
-function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdge[], through: ReadonlySet<string>): GraphModel {
+function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdge[], through: ReadonlySet<string>, withBulbs: boolean): GraphModel {
   // show=off: not in the graph at all (nor a product in a mix that isn't)
   const off = (n: GraphNode) => effectiveShow(result, n.kind === 'junction' ? n.mix : n.cell.name).show === 'off';
   const hidden = new Set(allNodes.filter(off).map((n) => n.id));
   const nodes = allNodes.filter((n) => !hidden.has(n.id));
   const edges = allEdges.filter((e) => !hidden.has(e.source) && !hidden.has(e.target));
   const parentOf = new Map<string, string>();
+  // a splice used once: a bulb on its host's track (#221)
+  const bulbs = withBulbs ? bulbsOf(result, nodes, edges) : new Map<string, string>();
+  for (const [id, host] of bulbs) parentOf.set(id, host);
   for (const n of nodes) {
-    if (n.kind === 'junction') continue;
+    if (n.kind === 'junction' || bulbs.has(n.id)) continue;
     if (n.cell.lambda) {
       const line = /^λ(\d+)_/.exec(n.cell.name)?.[1];
       const parent = [...result.cells.values()].find((c) => !c.lambda && !c.implicit && c.span.line === +(line ?? -1));
@@ -542,7 +557,11 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
       if (user) parentOf.set(n.id, user);
     }
   }
-  const up = (id: string) => parentOf.get(id) ?? id;
+  // (a bulb's host may be a bulb itself: up to the one drawn)
+  const up = (id: string) => {
+    for (let guard = 0; parentOf.has(id) && guard < 64; guard++) id = parentOf.get(id)!;
+    return id;
+  };
   const out: GraphEdge[] = [];
   const pairs = new Set<string>();
   const key = (a: string, b: string) => [a, b].sort().join('|');
@@ -568,7 +587,59 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
   for (const e of allEdges) if (hidden.has(e.source) || hidden.has(e.target)) alias.set(e.id, undefined);
   const drawnIds = new Set(out.map((e) => e.id));
   for (const id of through) if (!drawnIds.has(id) && !alias.has(id)) alias.set(id, undefined);
-  return { nodes: nodes.map((n) => (n.kind !== 'junction' && parentOf.has(n.id) ? { ...n, petalOf: parentOf.get(n.id) } : n)), edges: out, nets: netsOf(nodes, out), alias };
+  const drawn = nodes.filter((n) => !bulbs.has(n.id)).map((n) => (n.kind !== 'junction' && parentOf.has(n.id) ? { ...n, petalOf: up(n.id) } : n));
+  const names = (id: string) => id.slice('cell:'.length);
+  const byName = new Map([...bulbs].map(([id, host]) => [names(id), names(host)]));
+  // (a braid's wheel is 128 px across, size= scaling it: ui/flownode.ts)
+  const reached = drawn.map((n) => {
+    if (n.kind !== 'cell' || n.petalOf || !isTrack(result, n)) return n;
+    const reach = trackRoom(result, n.cell.name, byName, 128 * n.cell.size);
+    return reach ? { ...n, reach } : n;
+  });
+  return { nodes: reached, edges: out, nets: netsOf(reached, out), alias, bulbs: byName };
+}
+
+/** The shows that draw a cell as a track of steps in time (where a splice can be a bulb). */
+const TRACKS: ReadonlySet<string> = new Set(['braid', 'pattern', 'notes', 'midi', 'do', 'degrees']);
+
+/** A cell's node drawn as a track of steps (CellGlyph's braid): not a meter, a table, a mix, a scope, a plugin's wheel. */
+const isTrack = (result: CompileResult, n: GraphNode) =>
+  n.kind === 'cell' &&
+  !n.isMeter &&
+  !n.cell.root &&
+  !n.cell.scan &&
+  !n.cell.mix &&
+  !n.cell.kit &&
+  !n.cell.sink &&
+  !n.cell.note &&
+  typeof n.cell.params.scope !== 'string' &&
+  !pluginOf(result, n.cell.name) &&
+  TRACKS.has(effectiveShow(result, n.cell.name).show);
+
+/**
+ * The splices drawn as bulbs (#221), by node id, each to its host's: a cell read by one edge only, a ref without a pick
+ * or a delay (a tap, a canon's copy: a net), both it and the braid that splices it drawn as tracks.
+ */
+function bulbsOf(result: CompileResult, nodes: readonly GraphNode[], edges: readonly GraphEdge[]): Map<string, string> {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const reads = new Map<string, GraphEdge[]>();
+  for (const e of edges) reads.set(e.from, [...(reads.get(e.from) ?? []), e]);
+  const track = (n: GraphNode | undefined) => !!n && isTrack(result, n);
+  const out = new Map<string, string>();
+  for (const n of nodes) {
+    const r = reads.get(n.id) ?? [];
+    if (r.length !== 1 || r[0].port !== 'braid' || r[0].transforms.some((t) => t.some((x) => x.kind === 'pick' || x.kind === 'delay'))) continue;
+    if (track(n) && track(byId.get(r[0].to))) out.set(n.id, r[0].to);
+  }
+  return out;
+}
+
+const bulbMemo = new WeakMap<CompileResult, ReadonlyMap<string, string>>();
+/** The cells drawn as bulbs, by name, each to the cell that splices it (GraphModel.bulbs), for drawing a wheel. */
+export function bulbHosts(result: CompileResult): ReadonlyMap<string, string> {
+  let hit = bulbMemo.get(result);
+  if (!hit) bulbMemo.set(result, (hit = buildGraph(result).bulbs));
+  return hit;
 }
 
 /**

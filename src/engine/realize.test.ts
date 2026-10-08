@@ -279,12 +279,15 @@ describe('graph', () => {
 
   it('labels shifted references; containers sit outside their parts; voices outermost', () => {
     const g = buildGraph(compileSource(SAILOR_WITH_KIT));
-    expect(edgeLabel(g.edges.find((e) => e.id === 'cell:B->cell:lead')!)).toBe('[<<]');
+    // (&B, spliced once into &tune, is a bulb on its track: its over= is drawn from &tune, #221)
+    expect(g.bulbs.get('B')).toBe('tune');
+    expect(g.edges.some((e) => e.id === 'cell:tune->cell:lead')).toBe(true);
     const g2 = buildGraph(compileSource('&m step=1\n&x step=&m 0 1 2\n&v loop=440\n&mix_ [&x[1:] * &v]\n&out_ loop=44k map=sample &mix_'));
     expect(edgeLabel(intoProduct(g2, 'x', 'v')!)).toBe('[1:]');
     const d = Object.fromEntries(g.nodes.map((n) => [n.id, n.depth]));
-    expect(d['cell:tune']).toBeGreaterThan(d['cell:A']);
-    expect(d['cell:A']).toBeGreaterThan(d['cell:m1']);
+    // (&A is a bulb on &tune's track, &m3 on &C's on it, #221: no nodes of their own; &m1, in &A and &B, has one)
+    expect([g.bulbs.get('A'), g.bulbs.get('m3'), g.bulbs.get('m1')]).toEqual(['tune', 'C', undefined]);
+    expect(d['cell:tune']).toBeGreaterThan(d['cell:m1']);
     expect(d['cell:fiddle']).toBeGreaterThan(d['cell:tune']);
   });
 

@@ -78,8 +78,9 @@ describe('degree(&x, n) and inverse(&x): a reference’s values moved before its
     expect(errors('&m 0 1\n&t step=2 inverse(&m')[0]).toMatch(/'\)'/);
   });
   it('the graph labels the reference with its operation', () => {
-    const r = compileSource(motif + '&t over=scale(0,5) step=2 degree(&m, 1) degree(inverse(&m), 4)' + tail);
-    const edge = buildGraph(r).edges.find((e) => e.port === 'braid' && e.target.endsWith('m'))!;
+    // (&m read by another too: a net-ref, its edge drawn; read by &t alone it would be a bulb, #221)
+    const r = compileSource(motif + '&t over=scale(0,5) step=2 degree(&m, 1) degree(inverse(&m), 4)\n&u step=2 &m' + tail);
+    const edge = buildGraph(r).edges.find((e) => e.port === 'braid' && e.source === 'cell:t' && e.target.endsWith('m'))!;
     expect(edge.transforms).toEqual([[{ kind: 'degree', by: 1 }], [{ kind: 'inverse' }, { kind: 'degree', by: 4 }]]);
     expect(edgeLabel(edge)).toBe('×2 degree +1 inverse degree +4');
   });

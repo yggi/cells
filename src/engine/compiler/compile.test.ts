@@ -723,7 +723,7 @@ describe('transposing a reference: &x^n', () => {
     expect(r.diagnostics.map((d) => d.message).join()).toMatch(/transposing \(\^\) is for braids — in a mix, add pitch: &t \+ 7/);
   });
   it('the graph labels the reference with it', () => {
-    const g = buildGraph(compileSource('&m 0 4\n&t step=1 &m^7\n&v s=tri\n&mix loop=SAMPLE_RATE map=sample [&t * &v]'));
+    const g = buildGraph(compileSource('&m 0 4\n&t step=1 &m^7\n&u step=1 &m\n&v s=tri\n&mix loop=SAMPLE_RATE map=sample [&t * &v]'));
     expect(edgeLabel(g.edges.find((e) => e.source === 'cell:t' && e.target === 'cell:m')!)).toBe('^7');
   });
 });
