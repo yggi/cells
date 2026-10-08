@@ -107,6 +107,12 @@ interface GraphNet {
   readonly band: Band;
   /** Its edges, one a reader (the layout lays them as a ratsnest: ForceLayout.taps). */
   readonly taps: readonly string[];
+  /**
+   * Its taps read it at a delay (docs/decisions/010-canon-copies.md): a canon's copies (`&john[<<1]`), a tape's heads
+   * (`at=`). Each delay counts from the owner, so each tap leaves the owner (a star, as a tape's heads leave the tape),
+   * never from another reader, where its label would read as a delay from there.
+   */
+  readonly delayed: boolean;
 }
 
 export interface GraphModel {
@@ -452,25 +458,33 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
 
 /**
  * The ports whose edges from one cell to several make a net laid as a bus: a table read through over=, a melody
- * playing several voices, a voice into several mixes (the sound card's channels). A tape's heads are not: each is
- * its own place on the tape, which is their junction already.
+ * playing several voices, a voice into several mixes (the sound card's channels).
  */
 const BUS_PORTS = new Set(['over', 'voice', 'mix']);
+/**
+ * The ports whose edges make a net only when a tap is delayed: a cell spliced into several, one of them a copy a step
+ * later (`&john[<<1]`); a tape's heads (`play=` … `at=`). Refs without a delay stay edges of their own.
+ */
+const DELAY_PORTS = new Set(['braid', 'play']);
+
+/** A tap that reads at a delay: a copy (`[<<n]`, steps) or a tape's head (`at=`, seconds). */
+const isDelayed = (e: GraphEdge) => e.transforms.some((t) => t.some((s) => s.kind === 'delay'));
 
 /**
- * The nets among the edges: a table read by two or more (over=), a melody or a voice by two or more, and each meter's ticks to every cell it steps (a
- * step into a meter, not through a belt: a belt is a body, drawn).
+ * The nets among the edges: a table read by two or more (over=), a melody or a voice by two or more, a cell read at
+ * delays (a canon's copies, a tape's heads: docs/decisions/010-canon-copies.md), and each meter's ticks to every cell
+ * it steps (a step into a meter, not through a belt: a belt is a body, drawn).
  */
 function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): GraphNet[] {
   const meters = new Set(nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.id] : [])));
   const groups = new Map<string, GraphEdge[]>();
   for (const e of edges) {
-    const port = BUS_PORTS.has(e.port) ? e.port : e.port === 'step' && !e.belt && meters.has(e.target) ? 'step' : null;
+    const port = BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.port === 'step' && !e.belt && meters.has(e.target) ? 'step' : null;
     if (port) groups.set(`${e.from}|${port}`, [...(groups.get(`${e.from}|${port}`) ?? []), e]);
   }
   return [...groups.values()]
-    .filter((g) => g.length > 1 || g[0].port === 'step')
-    .map((g) => ({ id: `net:${g[0].from}:${g[0].port}`, owner: g[0].from, port: g[0].port, band: g[0].band, taps: g.map((e) => e.id) }));
+    .filter((g) => (g.length > 1 || g[0].port === 'step') && (!DELAY_PORTS.has(g[0].port) || g.some(isDelayed)))
+    .map((g) => ({ id: `net:${g[0].from}:${g[0].port}`, owner: g[0].from, port: g[0].port, band: g[0].band, taps: g.map((e) => e.id), delayed: g.some(isDelayed) }));
 }
 
 /** Changes only when the set of nodes or edges changes — not when contents do. */

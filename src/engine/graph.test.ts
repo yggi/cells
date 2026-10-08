@@ -68,6 +68,49 @@ describe('edges as wires', () => {
     expect(g.nets.some((n) => n.owner === 'cell:alpha')).toBe(false);
   });
 
+  // docs/decisions/010-canon-copies.md: a canon's copies and a tape's heads are one net with taps at a delay
+  const delays = (model: ReturnType<typeof buildGraph>, owner: string) => {
+    const net = model.nets.find((n) => n.owner === `cell:${owner}`)!;
+    return net.taps.map((id) => {
+      const e = model.edges.find((x) => x.id === id)!;
+      return [e.to.slice('cell:'.length), transformLabel(e.transforms[0])];
+    });
+  };
+
+  it('a canon is one net from its leader, a tap at a delay for each copy (Frère Jacques)', () => {
+    const canon = buildGraph(compileSource(PRESETS.canon.source));
+    expect(canon.nets.find((n) => n.owner === 'cell:john')).toMatchObject({ port: 'voice', band: 'cv', delayed: true });
+    expect(delays(canon, 'john')).toEqual([
+      ['v1', ''],
+      ['v2', '[<<]'],
+      ['v3', '[<<2]'],
+      ['v4', '[<<3]'],
+    ]);
+  });
+
+  it('copies spliced into several cells are a net too; plain refs stay edges of their own', () => {
+    const src = (b: string) => `&m step=1 0 2 4\n&p &m\n&q ${b}\n&v s=sine loop=C4\n&w s=tri loop=C4\n&out loop=SAMPLE_RATE map=sample [&p * &v, &q * &w]`;
+    const copies = buildGraph(compileSource(src('&m[<<1]')));
+    expect(copies.nets.find((n) => n.owner === 'cell:m')).toMatchObject({ port: 'braid', delayed: true });
+    expect(delays(copies, 'm')).toEqual([
+      ['p', ''],
+      ['q', '[<<]'],
+    ]);
+    expect(buildGraph(compileSource(src('&m'))).nets.some((n) => n.owner === 'cell:m')).toBe(false);
+  });
+
+  it('a tape’s heads are its net’s taps, each at its delay in seconds', () => {
+    const tape = buildGraph(compileSource(PRESETS.echotape.source));
+    expect(tape.nets.find((n) => n.owner === 'cell:tape')).toMatchObject({ port: 'play', delayed: true });
+    expect(delays(tape, 'tape')).toEqual([
+      ['near', 'at=0.375'],
+      ['mid', 'at=0.75'],
+      ['far', 'at=1.5'],
+    ]);
+    // (a melody playing several voices as written, no delay: a bus, laid reader to reader)
+    expect(g.nets.find((n) => n.owner === 'cell:mode')?.delayed).toBe(false);
+  });
+
   it('into a sound card of two channels: a pair (L R); into a mono one, one wire', () => {
     expect(wireOf(g.edges, 'hh', 'out')).toMatchObject({ port: 'mix', width: 2 }); // [ … ] [ … ]
     const mono = buildGraph(compileSource('&t step=1 0 2\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]'));

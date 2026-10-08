@@ -1,6 +1,6 @@
 # Nets: what an edge is
 
-**2026-10-07 · open: decided in part (below), steps 1–2 and 5 built (1 with its transforms, #146), 3 begun, belts counted, ends locked, buses gathered · #9, #10, #27, on top of PR #136 (the gallery)**
+**2026-10-07 · open: decided in part (below), steps 1–2 and 5 built (1 with its transforms, #146), 3 begun, 6 decided and drawn (#147), belts counted, ends locked, buses gathered · #9, #10, #27, on top of PR #136 (the gallery)**
 
 The golden graph (`node tools/gallery.mjs golden`, PR #136) puts every kind of wheel and edge into one picture, so the flaws of the edge model show up together. This note collects what it shows, proposes one model under all of them, and splits the work into small steps. The owner's input that started it: **nets and buses** (an edge carrying `[0,4,7]` is a 3-wire bus); **edges by the signal they carry** (sync, CV, audio); **a palette that maps values to colours**; **named networks with in and out**, which unify tape heads and the meter's net, where today's edge syntax is the anonymous shorthand (like `&( )` cells).
 
@@ -167,7 +167,7 @@ Each step is its own PR, each visible in the golden graph and the edge sheet (be
 3. **Bands and palette. Built** (#34). In `PulseEdge` and `edges.css`, sync is dotted, audio is a wave (`ripplePath`), and CV is solid; the step edge's accent tint and the `over` edge's dashes are gone. Every colour is now the palette's (`src/ui/palette.ts`, §6): a live edge takes its value's colour (a ref or a melody the note under the playhead, a level the neutral hue, a step the tick's level, sound its fundamental, a mix's sound neutral: it carries several), the pulse dot its edge's, a belt the clock's tick between the edge at rest and `--meter-0` as it pulls (a slip `--danger`, a state), an `about=` link the edge at rest (it carries nothing). `excite` had no colour of its own: it is sound, coloured as sound. A meter's net keeps its meter's own colour at rest (the ring its cells wear, its name: an identity, not a kind) and flashes to the tick's level token on each step. The spectrum wheels of voices, mixes and the sound card colour their bands through the palette too, by the owner's rule (`heardGrid`). Open: the meter tokens are both a meter's identity (rings, names) and the sync levels; with two meters, the second's ring (teal) and its net's downbeat flash (gold) differ.
 4. **Junctions.** Products become small anonymous nodes, and voices become definitions. This is the biggest layout change: watch the golden graph's crossings and the library's overlap count ([limits.md](../limits.md)).
 5. **Buses.** Built for tables and chords: an `over=` edge is a bus, a strand per entry in the colours its wheel gives them (at most 12), and while it plays the entries looked up now are lit, the others dim. A CV edge carrying chords (melody → voice, a ref) is a strand per note: stopped, neutral; playing, the notes under the playhead of the cell it comes from, in the colours of that wheel's rings (the rest dim). A kit's strands are grey: its entries are voices. The golden graph's facets now include the band and the bus (`facets.ts`), so its `&theme` has two chords. Still to come: stereo, and the owner's style for its net (decision 8).
-6. **Named nets.** The meter's net comes from the engine. Tape heads and a canon get one drawing. Then the language question, `[<<n]` and `play= at=`, goes to a decision record.
+6. **Named nets. Built** (#147). The meter's net comes from the engine (#138). Tape heads and a canon get one drawing: a net at delays (`GraphNet.delayed`), each tap straight from the owner with its delay on it, below. The language question went to [decision 010](../decisions/010-canon-copies.md): `[<<n]` is a copy, `play= at=` reads what was recorded, a tap of what was played waits for `&<` (#149).
 7. **Belts counted. Built.** `drawnCrossings` (`quality.ts`) takes a belt as drawn: its two runs, over the wheels, each counted against every edge and every wheel but its own two. The layout keeps belts short (a stiff, short spring) and places a meter with a belt where the belt crosses least (`placeMeters`: its length, with every crossing ×4 per run, beside the net's cost). The golden graph went 6 → 26 when belts were first counted, and is back at 6 with the placement. The library went 74 → 86, and is now 75: *Tape Machine* is tighter with the same crossings, and *Automaton* has one more.
 8. **Angular locking. Built** for refs and tables. A ref's edge meets the wheel of the cell it is spliced into at the segment where it sits, once per time it is written (`&tune &up &up`: two strokes, at 3 and 9 o'clock). A table's strands leave its wheel from their own entries. The ends arrive along the radius from outside (`radialPath`), as a tape's head meets its reel, because edges are drawn under the wheels. The layout still bends edges between centres, so a locked end can swing round its wheel; to come: the layout knowing the ends.
 
@@ -280,7 +280,7 @@ The owner: the law reads the day via `over=&day`. Built as refined above: `RATE_
 The owner: with the ratsnest, cells become the junctions and the crossings of the nets they're on (a safe crossing: a meter's net and a scale's meet at a cell and flare out of it); the loom and the strands were mangled by the T-junctions; `&up`'s edges to `&tune` a bus. Built:
 
 - **A net's tree** (`ForceLayout.netTree`): the readers are its junctions, each joined to the one nearest it already joined (Prim's), a join through a wheel costing as much again per wheel. A bus leaves its owner once (to the reader nearest it); a meter's ground joins it wherever is nearest. No T in mid-air: a tap comes on from a reader, out of its wheel (`taps()`, a hop, drawn as a short loom flared over the rim facing the next reader, the strands in the table's order). In the golden graph `&mode`'s net runs `&mode` → `&motif` → `&theme`.
-- **The meter's net is in the model**: `GraphModel.nets` holds every net — `over`, `voice` (a melody playing several voices), `mix` (a voice into several mixes: the sound card's channels) and `step` (a meter's ground). `meters.ts: groundsOf` reads the ground from there; the layout no longer works out which edges are ground. A tape's heads are not a net: each is its own place on the tape, which is their junction already. The meter's traces are still laid at rest by `meterNet` (Kruskal, costed by what they cross).
+- **The meter's net is in the model**: `GraphModel.nets` holds every net — `over`, `voice` (a melody playing several voices), `mix` (a voice into several mixes: the sound card's channels) and `step` (a meter's ground). `meters.ts: groundsOf` reads the ground from there; the layout no longer works out which edges are ground. A tape's heads are not a net: each is its own place on the tape, which is their junction already. (Since #147 they are a net at delays, drawn as before: below.) The meter's traces are still laid at rest by `meterNet` (Kruskal, costed by what they cross).
 - **The loom, again**: strands on the near half leave at a right angle and come round into the bundle; strands on the far half run straight under the wheel; the places across the bundle are in the order the strands sit across its way, so none cross. A ref written more than once (`&up` in `&tune`) is a bus: a strand to each place.
 - **Nets in the forces** (`stepNets`): each join of a net's tree is a spring (a bus's as a part's edge, a meter's as its ground), instead of the owner's star; the tree is laid again every tick. `netClear` (a wheel on a join pushed off it) is built and off: it made it worse; the tree's cost already keeps joins off wheels.
 - **The quality gate is the mean of three seeds**: one start is noise (HEAD's 83 crossings was seed 0; its six seeds run 83 to 115).
@@ -353,6 +353,27 @@ A bug on the way: the tree's cost for a join through a wheel (`netTree`) clamped
 
 The gate (three seeds): crossings 63 → 45.5, cost 87 → 64, intruders 71 → 60, read heads' aim 38 → 30; overlapping clusters 35 → 36; area the same. The price is time when a piece opens: the two trials (node, `performance.now`, before the faster tree): BWV 847 0.37 → 0.77 s, Baustelle 0.49 → 1.11 s, Cellscape 0.42 → 1.14 s, Twinkle 25 → 85 ms. Edits don't pay it (only a fresh graph). Building the examples' index (their miniatures) takes 8 → 20 s. Not measured in the browser. Then each example's order is chosen when the index is built (`ExampleInfo.rows`, by the graph's shape: `rowsKey`) and the graph is given them (`rowOrders`): an example opens without the trials (Baustelle 0.41 s against 0.40 s with the sweeps alone and 1.01 s with the trials); a piece of one's own, or an example edited out of its shape, still tries both.
 
+### Built: nets at delays; a canon's copies are copies (2026-10-07, #147)
+
+The owner: **copy, not tap** ([decision 010](../decisions/010-canon-copies.md)); a tap's delay is labelled in the transform's own spelling (#146's `edgeLabel`: `[<<1]` in steps, `at=.375` in seconds).
+
+What the graph showed before: *Frère Jacques*'s melody playing four voices was already a net (a melody into several voices, #138), but laid reader to reader as a bus is: `&john` → `&v2`, then `&v2` → `&v3` labelled `[<<2]`, `&v3` → `&v4` labelled `[<<3]`, so each delay seemed to count from the voice before. *Per tonos* the same: `&viola` → `&cello` labelled `[<<] −7`, where the cello is the alto's copy.
+
+Built: a net whose taps read it at a delay is `delayed` (`GraphNet`, `graph.ts`), and laid as a star from its owner (`netTree`): each tap leaves the owner with its delay on it, as a tape's heads leave the tape. Three cases make such a net: a melody playing several voices at delays (the canon), a cell spliced into several cells with one a copy (`&p &m` and `&q &m[<<1]`: port `braid`; refs without a delay stay edges of their own, as before), and a tape's heads (`play`, `at=`; drawn as before, out of their heads). Its springs in the layout are the edges' own, not the net's (`stepNets` skips it): a star is what its edges already are.
+
+Measured over the library, the gate's three seeds (crossings / cost; intruders, clusters, aim, area unchanged):
+
+| | crossings | cost | canon | per tonos |
+|---|---|---|---|---|
+| before | 37.5 | 51.3 | 1 | 0.7 |
+| star, with the net's springs | 37.8 | 51.6 | 1.7 | 0.3 |
+| + a tape's heads as a net | 38.1 | 51.9 | 1.7 | 0.3 |
+| **star, the edges' own springs** (with or without the tapes) | **36.1** | **49.9** | **0** | **0.3** |
+
+Recorded in `quality.baseline.json`; only *Frère Jacques* (crossings 1 → 0, a little taller: 966 → 1041 px) and *Per tonos* (0.7 → 0.3, narrower) change. The tape pieces are laid out exactly as before. Seen in the gallery (`node tools/gallery.mjs golden 3 canon pertonos echotape`, which now draws named examples in the real Graph): the edge sheet and the golden graph unchanged; at seed 0 *Frère Jacques*'s `&v2` tap runs under `&v4`'s wheel and its label hides there, which the layout doesn't yet weigh.
+
+Considered, not built: locking a copy's tap to the leader's wheel n steps behind its playhead, as a tape's head sits on the tape. A cell's wheel stands still and its hand turns, so a copy's place moves with the hand: it would be a second hand on the leader (a wheel change), not a fixed place for an edge.
+
 ### Order
 
 1. The weights table and weighted crossings: measurable against the baseline, no change to the model.
@@ -362,7 +383,7 @@ The gate (three seeds): crossings 63 → 45.5, cost 87 → 64, intruders 71 → 
 
 ## Open questions
 
-1. **The canon's clean form** (decision 6): a canon is one net, `&john`, with three taps at a delay. As copies today, `&john[<<1]`. Once `&<` exists, as taps of what was played. Which of the two the Frère Jacques example shows is to be decided when `&<` comes.
+1. **The canon's clean form** (decision 6): decided, [decision 010](../decisions/010-canon-copies.md) (owner, #147). A canon is one net, `&john`, with taps at a delay, and `&john[<<1]` stays a copy (the score replayed), which is what every example means. A tap of what was played is `&<` (#149), built only if the difference is heard in a real piece.
 2. **The net's style** (decision 9): which styles (strands or one line, a pulse or still, coloured or neutral), and the spelling of the attribute and of the decorator.
 3. **The time source** (decision 11): its name and attributes, and how a tap names its unit.
 4. **The law and the day:** decided, `over=&day` (built).
