@@ -18,6 +18,8 @@ import {
   usersOf,
 } from './edit';
 import { compileSource } from './compile';
+import { buildGraph } from './graph';
+import { readFileSync } from 'node:fs';
 import { PRESETS } from './presets';
 
 describe('source edits', () => {
@@ -156,6 +158,30 @@ describe('attributes with parentheses', () => {
     expect(code(setAttr(src, 's', 'shift', '3'))).toBe('&s scan(2 2 1 2 2 2 1) shift=3 step=cycle(&key)*2');
     expect(code(setAttr(src, 's', 'step', null))).toBe('&s scan(2 2 1 2 2 2 1) shift=free(0, 0..6)');
     expect(setAttr(src, 's', 'shift', '3').indexOf('#')).toBe(src.indexOf('#')); // the comment keeps its column
+  });
+});
+
+describe('a product’s junction is not a cell (graph.ts)', () => {
+  it('no edit by its id, or by what a cell id would make of it, changes the code', () => {
+    const src = readFileSync('tools/gallery/golden/golden.cells', 'utf8');
+    const junctions = buildGraph(compileSource(src)).nodes.filter((n) => n.kind === 'junction');
+    expect(junctions.length).toBeGreaterThan(0);
+    for (const { id } of junctions)
+      for (const name of [id, id.slice('cell:'.length), id.slice('junction:'.length)]) {
+        expect(declLine(src, name)).toBe(-1);
+        expect(declWords(src, name)).toBeNull();
+        expect(usersOf(src, name)).toEqual([]);
+        for (const edited of [
+          setOff(src, name, true),
+          setShift(src, name, 3),
+          setAttr(src, name, 'level', '.5'),
+          setTiming(src, name, 'step', '&bar'),
+          setBraid(src, name, ['0']),
+          deleteCell(src, name),
+          renameCell(src, name, 'renamed'),
+        ])
+          expect(edited).toBe(src);
+      }
   });
 });
 

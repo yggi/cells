@@ -1,14 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { compileSource } from './compile';
-import { buildGraph, type GraphEdge } from './graph';
+import { buildGraph, type GraphModel } from './graph';
 import { cellId, edgeId, stepEdgeId } from './ids';
 import { transformLabel } from './transform';
 import { PRESETS } from './presets';
 
+/** The edge between two cells along the flow; through a product's junction (graph.ts) when they meet there: into a product whose voice is `to`, out of one whose voice is `from`. */
+const between = (model: GraphModel, from: string, to: string) => {
+  const voiceOf = (id: string) => model.nodes.flatMap((n) => (n.id === id && n.kind === 'junction' ? [n.voice] : []))[0];
+  return (
+    model.edges.find((x) => x.from === `cell:${from}` && x.to === `cell:${to}`) ??
+    model.edges.find((x) => x.from === `cell:${from}` && voiceOf(x.to) === to) ??
+    model.edges.find((x) => voiceOf(x.from) === from && x.to === `cell:${to}`)
+  );
+};
+
 // An edge as a wire (docs/notes/nets.md): its port, band, width and the way the values flow.
-const wireOf = (edges: readonly GraphEdge[], from: string, to: string) => {
-  const e = edges.find((x) => x.from === `cell:${from}` && x.to === `cell:${to}`);
+const wireOf = (model: GraphModel, from: string, to: string) => {
+  const e = between(model, from, to);
   return e && { port: e.port, band: e.band, width: e.width, pointer: e.pointer };
 };
 
@@ -16,48 +26,48 @@ describe('edges as wires', () => {
   const g = buildGraph(compileSource(readFileSync('tools/gallery/golden/golden.cells', 'utf8')));
 
   it('flow from what is read to the cell that reads it, whichever way the edge points', () => {
-    expect(wireOf(g.edges, 'bar', 'theme')).toMatchObject({ port: 'step', band: 'sync' }); // step=&bar
-    expect(wireOf(g.edges, 'mode', 'theme')).toMatchObject({ port: 'over', band: 'cv', pointer: true }); // over=&mode
-    expect(wireOf(g.edges, 'up', 'tune')).toMatchObject({ port: 'braid', band: 'cv', pointer: true }); // &tune … &up &up
-    expect(wireOf(g.edges, 'capstan', 'tape')).toMatchObject({ port: 'step', band: 'sync' });
+    expect(wireOf(g, 'bar', 'theme')).toMatchObject({ port: 'step', band: 'sync' }); // step=&bar
+    expect(wireOf(g, 'mode', 'theme')).toMatchObject({ port: 'over', band: 'cv', pointer: true }); // over=&mode
+    expect(wireOf(g, 'up', 'tune')).toMatchObject({ port: 'braid', band: 'cv', pointer: true }); // &tune … &up &up
+    expect(wireOf(g, 'capstan', 'tape')).toMatchObject({ port: 'step', band: 'sync' });
   });
 
   it('take their band from the port: values, ticks or sound', () => {
-    expect(wireOf(g.edges, 'motif', 'tape')).toMatchObject({ port: 'write', band: 'cv' }); // a tape of notes
-    expect(wireOf(g.edges, 'tape', 'near')).toMatchObject({ port: 'play', band: 'cv' });
-    expect(wireOf(g.edges, 'accent', 'flute')).toMatchObject({ port: 'level', band: 'cv' });
-    expect(wireOf(g.edges, 'vibrato', 'flute')).toMatchObject({ port: 'pitch', band: 'cv' });
-    expect(wireOf(g.edges, 'theme', 'flute')).toMatchObject({ port: 'voice', band: 'cv' });
-    expect(wireOf(g.edges, 'leadA', 'parts')).toMatchObject({ port: 'braid', pointer: true });
-    expect(wireOf(g.edges, 'hh', 'out')).toMatchObject({ port: 'mix', band: 'audio', pointer: false });
-    expect(wireOf(g.edges, 'piece', 'out')).toMatchObject({ port: 'about', band: 'none' });
+    expect(wireOf(g, 'motif', 'tape')).toMatchObject({ port: 'write', band: 'cv' }); // a tape of notes
+    expect(wireOf(g, 'tape', 'near')).toMatchObject({ port: 'play', band: 'cv' });
+    expect(wireOf(g, 'accent', 'flute')).toMatchObject({ port: 'level', band: 'cv' });
+    expect(wireOf(g, 'vibrato', 'flute')).toMatchObject({ port: 'pitch', band: 'cv' });
+    expect(wireOf(g, 'theme', 'flute')).toMatchObject({ port: 'voice', band: 'cv' });
+    expect(wireOf(g, 'leadA', 'parts')).toMatchObject({ port: 'braid', pointer: true });
+    expect(wireOf(g, 'hh', 'out')).toMatchObject({ port: 'mix', band: 'audio', pointer: false });
+    expect(wireOf(g, 'piece', 'out')).toMatchObject({ port: 'about', band: 'none' });
   });
 
   it('are as wide as the values they carry at once: a table its entries, a chord its notes', () => {
-    expect(wireOf(g.edges, 'mode', 'theme')?.width).toBe(7);
-    expect(wireOf(g.edges, 'blues', 'walk')?.width).toBe(6);
+    expect(wireOf(g, 'mode', 'theme')?.width).toBe(7);
+    expect(wireOf(g, 'blues', 'walk')?.width).toBe(6);
     const chords = buildGraph(compileSource('&c step=1 [0,4,7] 2\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&c * &v]'));
-    expect(wireOf(chords.edges, 'c', 'v')).toMatchObject({ port: 'voice', width: 3 });
+    expect(wireOf(chords, 'c', 'v')).toMatchObject({ port: 'voice', width: 3 });
   });
 
   it('into a resonator with tines: as wide as its tines (a note picks one)', () => {
     const tines =
       '&bar scan(1 1 1 1) step=92bpm\n&notes 0 2 4 7 9 12 14 16\n&tune over=&notes step=&bar/2 0 2 4\n&k body=tine loop=C4 0 2 4 7 9 12 14 16\n&out loop=SAMPLE_RATE map=sample [&tune * &k * .5]';
-    expect(wireOf(buildGraph(compileSource(tines)).edges, 'tune', 'k')).toMatchObject({ port: 'voice', width: 8 });
+    expect(wireOf(buildGraph(compileSource(tines)), 'tune', 'k')).toMatchObject({ port: 'voice', width: 8 });
     // the Kalimba reads through its tines and plays them: one wire between them (the same id), its tines wide
-    expect(wireOf(buildGraph(compileSource(PRESETS.kalimba.source)).edges, 'kalimba', 'tune')).toMatchObject({ port: 'over', width: 8 });
+    expect(wireOf(buildGraph(compileSource(PRESETS.kalimba.source)), 'kalimba', 'tune')).toMatchObject({ port: 'over', width: 8 });
   });
 
   it('carry sound where the source is a sound: a mix written to tape, a modulator, a wave in a pitch sum (FM)', () => {
     const sound = buildGraph(compileSource(PRESETS.soundtape.source)).edges;
-    expect(wireOf(sound, 'dry', 'tape')).toMatchObject({ port: 'write', band: 'audio' });
+    expect(wireOf(buildGraph(compileSource(PRESETS.soundtape.source)), 'dry', 'tape')).toMatchObject({ port: 'write', band: 'audio' });
     expect(sound.filter((e) => e.port === 'play').map((e) => e.band)).toEqual(expect.arrayContaining(['audio']));
     expect(sound.filter((e) => e.port === 'play' && e.band !== 'audio')).toEqual([]);
     const notes = buildGraph(compileSource(PRESETS.echotape.source)).edges;
     expect(notes.filter((e) => e.port === 'write' || e.port === 'play').map((e) => e.band)).toEqual(expect.arrayContaining(['cv']));
     expect(notes.filter((e) => (e.port === 'write' || e.port === 'play') && e.band !== 'cv')).toEqual([]);
     const fm = buildGraph(compileSource('&t step=1 0 2\n&op loop=40 0 1 0 -1\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [(&t + &op) * &v]'));
-    expect(wireOf(fm.edges, 'op', 'v')).toMatchObject({ port: 'pitch', band: 'audio' });
+    expect(wireOf(fm, 'op', 'v')).toMatchObject({ port: 'pitch', band: 'audio' });
   });
 
   it('a table read by several is a net: one trunk, a tap for each reader', () => {
@@ -73,19 +83,23 @@ describe('edges as wires', () => {
     const net = model.nets.find((n) => n.owner === `cell:${owner}`)!;
     return net.taps.map((id) => {
       const e = model.edges.find((x) => x.id === id)!;
-      return [e.to.slice('cell:'.length), transformLabel(e.transforms[0])];
+      // (into a product: the voice it is)
+      const to = model.nodes.find((n) => n.id === e.to);
+      return [to?.kind === 'junction' ? to.voice : e.to.slice('cell:'.length), transformLabel(e.transforms[0])];
     });
   };
 
   it('a canon is one net from its leader, a tap at a delay for each copy (Frère Jacques)', () => {
     const canon = buildGraph(compileSource(PRESETS.canon.source));
     expect(canon.nets.find((n) => n.owner === 'cell:john')).toMatchObject({ port: 'voice', band: 'cv', delayed: true });
-    expect(delays(canon, 'john')).toEqual([
+    // (each product written is a tap: the four voices in the left channel's mix, then in the right's)
+    const copies = [
       ['v1', ''],
       ['v2', '[<<]'],
       ['v3', '[<<2]'],
       ['v4', '[<<3]'],
-    ]);
+    ];
+    expect(delays(canon, 'john')).toEqual([...copies, ...copies]);
   });
 
   it('copies spliced into several cells are a net too; plain refs stay edges of their own', () => {
@@ -111,10 +125,11 @@ describe('edges as wires', () => {
     expect(g.nets.find((n) => n.owner === 'cell:mode')?.delayed).toBe(false);
   });
 
-  it('into a sound card of two channels: a pair (L R); into a mono one, one wire', () => {
-    expect(wireOf(g.edges, 'hh', 'out')).toMatchObject({ port: 'mix', width: 2 }); // [ … ] [ … ]
+  it('into a sound card of two channels: a sound in both, a pair (L R); a product into one, one wire; into a mono one, one wire', () => {
+    expect(wireOf(buildGraph(compileSource(PRESETS.soundtape.source)), 'dry', 'out')).toMatchObject({ port: 'mix', width: 2 }); // [&dry …] [&dry …]
+    expect(wireOf(g, 'hh', 'out')).toMatchObject({ port: 'mix', width: 1 }); // [ … ] [ … &hats * &hh * .1]
     const mono = buildGraph(compileSource('&t step=1 0 2\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]'));
-    expect(wireOf(mono.edges, 'v', 'out')).toMatchObject({ port: 'mix', width: 1 });
+    expect(wireOf(mono, 'v', 'out')).toMatchObject({ port: 'mix', width: 1 });
   });
 
   it('every edge of every example has a port and a band, and its ends are the edge’s', () => {
@@ -129,8 +144,65 @@ describe('edges as wires', () => {
   });
 });
 
+describe('a product is a junction (docs/notes/nets.md, decision 2)', () => {
+  const g = buildGraph(compileSource(readFileSync('tools/gallery/golden/golden.cells', 'utf8')));
+  const junctionsOf = (model: GraphModel, voice: string) => model.nodes.filter((n) => n.kind === 'junction' && n.voice === voice);
+
+  it('its terms go in, the voice is its definition, its sound goes out into the mix: no edge from a melody to its voice', () => {
+    const m = buildGraph(compileSource('&t step=1 0 2\n&acc map=amp step=1 1 .5\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &acc * &v * .4]'));
+    expect(m.nodes.filter((n) => n.kind === 'junction')).toEqual([expect.objectContaining({ id: 'junction:out:0', mix: 'out', entry: 0, voice: 'v' })]);
+    const wires = m.edges.map((e) => [e.from, e.to, e.port, e.band, transformLabel(e.transforms[0])]);
+    expect(wires).toEqual(
+      expect.arrayContaining([
+        ['cell:t', 'junction:out:0', 'voice', 'cv', ''],
+        ['cell:acc', 'junction:out:0', 'level', 'cv', ''],
+        ['cell:v', 'junction:out:0', 'is', 'none', ''],
+        ['junction:out:0', 'cell:out', 'mix', 'audio', '×0.4'],
+      ]),
+    );
+    expect(m.edges.some((e) => e.from === 'cell:t' && e.to === 'cell:v')).toBe(false);
+    expect(m.edges.some((e) => e.from === 'cell:v' && e.to === 'cell:out')).toBe(false);
+  });
+
+  it('a voice stops being a hub: in the golden graph &lead has no melody in and no mix out, only its products', () => {
+    expect(g.edges.filter((e) => e.to === 'cell:lead')).toEqual([]);
+    expect(g.edges.filter((e) => e.from === 'cell:lead').map((e) => e.port)).toEqual(['is', 'is', 'is', 'is', 'is']);
+    // which melody goes to which mix: each product says
+    for (const j of junctionsOf(g, 'lead'))
+      expect(
+        g.edges.filter((e) => e.to === j.id && e.port === 'voice'),
+        j.id,
+      ).toHaveLength(1);
+    expect(
+      junctionsOf(g, 'lead')
+        .map((j) => (j.kind === 'junction' ? j.mix : ''))
+        .sort(),
+    ).toEqual(['leadA', 'leadB', 'out', 'out', 'out']);
+  });
+
+  it('a voice in several products is a definition of each, not a net; a sound alone goes into its mix as it is', () => {
+    // (each junction sits on its voice's rim: layout/junctions.ts)
+    expect(g.nets.find((n) => n.owner === 'cell:lead')).toBeUndefined();
+    expect(g.edges.filter((e) => e.from === 'cell:lead' && e.port === 'is')).toHaveLength(5);
+    expect(wireOf(g, 'tetris', 'out')).toMatchObject({ port: 'mix', band: 'audio' }); // [&tetris, …]
+  });
+
+  it('an instrument in a product is its voice; a kit’s pattern is its sound', () => {
+    const w = buildGraph(compileSource(PRESETS.waveforms.source));
+    expect(junctionsOf(w, 'bass')).toHaveLength(1);
+    expect(wireOf(w, 'roots', 'bass')).toMatchObject({ port: 'voice' });
+  });
+
+  it('the routing’s pairs it stands for: the melody into each voice it plays on, the voice into the mix', () => {
+    const e = between(g, 'theme', 'flute')!;
+    expect(e.routes).toEqual([['cell:theme->cell:flute'], ['cell:flute->cell:out']]);
+    expect(g.alias.get('cell:theme->cell:flute')).toBeUndefined();
+    expect(g.alias.has('cell:theme->cell:flute')).toBe(true);
+  });
+});
+
 describe('a wire carries its transform', () => {
-  const edge = (src: string, from: string, to: string) => buildGraph(compileSource(src)).edges.find((e) => e.from === `cell:${from}` && e.to === `cell:${to}`)!;
+  const edge = (src: string, from: string, to: string) => between(buildGraph(compileSource(src)), from, to)!;
 
   it('a canon: each voice its melody delayed, in steps, and its gain into the mix', () => {
     const src = PRESETS.canon.source;
@@ -203,10 +275,12 @@ interface Token {
 function linesOf(source: string): Map<number, string> {
   const lines = source.split('\n');
   const out = new Map<number, string>();
+  // (each line without its comment, so a comment on a line that goes on doesn't hide the next: strings blanked first)
+  const bare = (line: string) => line.replace(/"[^"]*"/g, '""').replace(/#.*$/, '');
   for (let i = 0; i < lines.length; i++) {
     const start = i;
-    let text = lines[i];
-    while (/[+*,[]\s*$/.test(text.replace(/#.*$/, '')) && i + 1 < lines.length) text += ' ' + lines[++i];
+    let text = bare(lines[i]);
+    while (/[+*,[]\s*$/.test(text) && i + 1 < lines.length) text += ' ' + bare(lines[++i]);
     out.set(start + 1, text);
   }
   return out;
@@ -299,7 +373,7 @@ const UNDRAWN = new Set(['delaytime', 'map']);
 /** The port a name written as the value of an attribute is read through. */
 const PORT: Readonly<Record<string, string>> = { loop: 'step', generated: 'braid' };
 
-describe('every name written is a wire carrying the transform it writes', () => {
+describe('every name written is one wire carrying the transform it writes, and every wire a name written', () => {
   const all = { ...Object.fromEntries(Object.entries(PRESETS).map(([k, p]) => [k, p.source])), golden: readFileSync('tools/gallery/golden/golden.cells', 'utf8') };
 
   it.each(Object.entries(all))('%s', (_, source) => {
@@ -307,6 +381,9 @@ describe('every name written is a wire carrying the transform it writes', () => 
     const model = buildGraph(program);
     const lines = linesOf(source);
     const missing: string[] = [];
+    // (a wire, by the line it is written on, the name written and the port: what the tokens matched)
+    const matched = new Set<string>();
+    const junctions = new Map(model.nodes.flatMap((n) => (n.kind === 'junction' ? [[n.id, n] as const] : [])));
     let wires = 0;
     for (const c of program.cells.values()) {
       if (c.lambda || c.implicit) continue;
@@ -314,7 +391,7 @@ describe('every name written is a wire carrying the transform it writes', () => 
       const groove = c.over === 'kit:voices';
       const tokens = tokensOn(lines.get(c.span.line) ?? '')
         .map((t) => (groove && t.where === 'mix' ? { ...t, where: 'braid' } : t))
-        .filter((t) => t.where !== 'mix' && !UNDRAWN.has(t.where) && program.cells.has(t.name));
+        .filter((t) => !UNDRAWN.has(t.where) && program.cells.has(t.name));
       // each place a name is written in the braid is one of its wire's transforms, in order
       const written = new Map<string, Token[]>();
       for (const t of tokens) {
@@ -324,16 +401,40 @@ describe('every name written is a wire carrying the transform it writes', () => 
       }
       for (const [key, ts] of written) {
         const [name, port] = key.split('|');
+        if (port === 'mix') {
+          // in a mix: a sound alone goes in as it is; in a product, each name is one wire into that product's junction
+          // (its voice, `is`; a term, with the transform written on it), one for each product it is written in
+          const into = model.edges.filter((x) => x.from === cellId(name) && junctions.get(x.to)?.mix === c.name);
+          const alone = model.edges.find((x) => x.from === cellId(name) && x.to === cellId(c.name) && x.port === 'mix');
+          const count = into.reduce((a, x) => a + x.count, 0) + (alone ? 1 : 0);
+          // (a sound alone in both channels of a sound card is one wire, a pair: L R)
+          const pair = alone && alone.width === 2 && ts.length === count + 1;
+          // (no exceptions: only a cell show=off hides, and then it is not in the graph at all)
+          if (count === 0 && model.nodes.some((n) => n.id === cellId(name))) missing.push(`&${c.name}: &${name} (in the mix)`);
+          else if (count) expect(pair ? count + 1 : count, `&${c.name}: &${name}, written ${ts.length} times in the mix`).toBe(ts.length);
+          // each wire carries what is written on the name in its product: a pick, a shift (a number in the sum is the
+          // product's: its label goes on after it), each token's once
+          const left = ts.map((t) => t.written);
+          for (const l of into.flatMap((x) => x.transforms.map(transformLabel))) {
+            const at = left.reduce((best, w, i) => (l.startsWith(w) && (best < 0 || w.length > left[best].length) ? i : best), -1);
+            expect(at, `&${c.name}: &${name} → ${l}, written ${left.join(', ')}`).toBeGreaterThanOrEqual(0);
+            left.splice(at, 1);
+          }
+          if (count) matched.add(`${c.name}|${name}|mix`);
+          wires += count;
+          continue;
+        }
         // (along the flow: into the cell whose line it is, but a note's link points from the note)
         const [from, to] = port === 'about' ? [c.name, name] : [name, c.name];
         const e = model.edges.find((x) => x.from === cellId(from) && x.to === cellId(to) && x.port === port);
         if (!e) {
-          // (drawn through a petal, hidden by show=off, or a name the graph reads elsewhere: a kit's voice, a sun's law)
+          // (drawn through a petal, hidden by show=off, or a name the graph reads elsewhere: a kit's voice)
           const ids = [edgeId(cellId(c.name), cellId(name)), edgeId(cellId(name), cellId(c.name)), stepEdgeId(cellId(c.name), cellId(name))];
           if (!ids.some((id) => model.alias.has(id))) missing.push(`&${c.name}: &${name} (${port})`);
           continue;
         }
         wires++;
+        matched.add(`${c.name}|${name}|${port}`);
         const labels = e.transforms.map(transformLabel);
         if (ts[0].where === 'generated') continue;
         if (port === 'braid') expect(labels, `&${c.name}: &${name}`).toEqual(ts.map((t) => t.written));
@@ -342,5 +443,20 @@ describe('every name written is a wire carrying the transform it writes', () => 
     }
     expect(missing).toEqual([]);
     expect(wires).toBeGreaterThan(0);
+    // the other way: every wire is a name written, on the line of the cell that reads it (a note's link: the note's;
+    // into a product: its mix's). Not a name: a product's own sound into its mix (the product is the entry), and a wire
+    // drawn for a petal (its names are inside the &( … )).
+    const forPetals = new Set([...model.alias.values()].filter(Boolean));
+    const nameOf = (id: string) => id.slice('cell:'.length);
+    const unwritten = model.edges.flatMap((e) => {
+      if (junctions.has(e.from) || forPetals.has(e.id)) return [];
+      const key = junctions.has(e.to)
+        ? `${junctions.get(e.to)!.mix}|${nameOf(e.from)}|mix`
+        : e.port === 'about'
+          ? `${nameOf(e.from)}|${nameOf(e.to)}|about`
+          : `${nameOf(e.to)}|${nameOf(e.from)}|${e.port}`;
+      return matched.has(key) ? [] : [`${e.id} (${e.port})`];
+    });
+    expect(unwritten).toEqual([]);
   });
 });

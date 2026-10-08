@@ -1,14 +1,15 @@
 /**
  * Library-agnostic graph of a program: exactly the cells written in the code
  * (the implicit default grid stays hidden), with exactly the links written:
- * over=, &refs, step= and out(…). Voice cells are drawn as voices.
+ * over=, &refs, step= and a mix's entries. Voice cells are drawn as voices; a product in a mix
+ * (`&theme * &flute * .4`) is a junction, an unnamed node of its own (docs/notes/nets.md, decision 2).
  * Depth grows outward from the roots: a cell sits one ring beyond the table
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
 import { effectiveShow } from '../layout/show';
 import type { CompileResult, ResolvedCell } from './program';
 import type { Pick, ValueMap } from './ast';
-import { cellId, edgeId, stepEdgeId } from './ids';
+import { cellId, edgeId, junctionId, stepEdgeId } from './ids';
 import type { Transform } from './transform';
 
 export type GraphNode =
@@ -33,7 +34,32 @@ export type GraphNode =
       readonly pan?: number;
       /** Its place in the mix, as written (first = 0). */
       readonly order?: number;
+    }
+  | {
+      /**
+       * A product in a mix (`&theme * &flute * .4`): an unnamed node, as `&( … )` is an unnamed cell (docs/notes/nets.md,
+       * decision 2). Its terms go in (the melody, levels, pitches, an envelope), the voice is its definition (an `is`
+       * wire, dotted), and its sound goes out into the mix. Not a cell: nothing to open, turn or switch off.
+       */
+      readonly id: string;
+      readonly kind: 'junction';
+      readonly depth: number;
+      /** The mix whose line writes it, and its place among that mix's entries (first = 0). */
+      readonly mix: string;
+      readonly entry: number;
+      /** The sound it is: the voice (or an instrument, a kit's pattern) written in the product. */
+      readonly voice: string;
+      /** Its mix's tags (else its voice's): the cluster it is laid out in. */
+      readonly tags: readonly string[];
+      readonly cell?: undefined;
+      readonly petalOf?: undefined;
+      readonly pan?: undefined;
+      readonly order?: undefined;
     };
+
+/** A cell's node (not a product's junction). */
+type CellNode = Exclude<GraphNode, { kind: 'junction' }>;
+export const isCellNode = (n: GraphNode): n is CellNode => n.kind !== 'junction';
 
 /**
  * What a wire carries (docs/notes/nets.md): ticks (a clock, a gate), values (pitch, level, a table) or sound.
@@ -43,7 +69,10 @@ type Band = 'sync' | 'cv' | 'audio' | 'none';
 
 /** What an edge is as a wire, read from the code: from the cell whose values travel, into a port of the cell that takes them. */
 interface Wire {
-  /** Where the code reads it: `over`, `step`, `braid` (a ref), `voice` (a melody playing it), `env`, `level`, `pitch`, `mix`, `about`, or the attribute (`lpf`, `fm`, `write`, `play` …). */
+  /**
+   * Where the code reads it: `over`, `step`, `braid` (a ref), `voice` (a melody playing it), `env`, `level`, `pitch`, `mix`,
+   * `is` (a product's voice, its definition), `about`, or the attribute (`lpf`, `fm`, `write`, `play` …).
+   */
   readonly port: string;
   readonly band: Band;
   /** The reader indexes or splices the cell itself (over=, a ref), rather than taking its signal. */
@@ -68,14 +97,21 @@ export interface GraphEdge extends Wire {
   readonly count: number;
   /**
    * What the tap does to what it carries (engine/transform.ts), for each place the name is written on the reader's line,
-   * in order: a ref written three times has three (`&tune &up &up^7`: none, none, ^7), most wires one. A voice in a mix
-   * keeps the first entry's gain, a melody into a voice the first output's (until products are junctions: nets.md, step 4).
+   * in order: a ref written three times has three (`&tune &up &up^7`: none, none, ^7), most wires one. A product's
+   * terms carry theirs into its junction, its gain is on the wire out of it.
    */
   readonly transforms: readonly Transform[];
+  /** At a product's junction: the voice whose sound it carries or makes (what its pulse and colour follow). */
+  readonly sound?: string;
+  /**
+   * A wire at a product's junction stands for written pairs the routing knows (engine/routing.ts: the melody into its
+   * voice, the voice into the mix): it is routed (and live) when, of each group, one of these is (`drawn`).
+   */
+  readonly routes?: readonly (readonly string[])[];
 }
 
-/** The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's entry, a note's link. */
-const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'about']);
+/** The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's entry, a product's voice, a note's link. */
+const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'is', 'about']);
 /** A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples, writes or plays it. */
 export const feeds = (e: { readonly port: string }) => !STRUCTURE.has(e.port);
 
@@ -119,7 +155,10 @@ export interface GraphModel {
   readonly nodes: readonly GraphNode[];
   readonly edges: readonly GraphEdge[];
   readonly nets: readonly GraphNet[];
-  /** An edge drawn under another id (through a petal: to its parent), by its own id; undefined: not drawn. */
+  /**
+   * An edge drawn under another id (through a petal: to its parent), by its own id; undefined: not drawn (hidden, or a
+   * written pair drawn through a product's junction: its wires say so, `routes`).
+   */
   readonly alias: ReadonlyMap<string, string | undefined>;
 }
 
@@ -254,6 +293,13 @@ export function buildGraph(result: CompileResult): GraphModel {
         transforms: typeof c.params.at === 'number' ? [[{ kind: 'delay', by: c.params.at, unit: 'second' }]] : AS_IS,
         ...wire('play', sounds(c.params.play) ? 'audio' : 'cv', cellId(c.params.play), id, chord(c.params.play)),
       });
+    // a voice's own envelope and pitch (env=, pitch=: on every note it plays)
+    for (const [port, own] of [
+      ['env', c.env],
+      ['pitch', c.pitch],
+    ] as const)
+      if (own && result.cells.has(own))
+        link({ id: edgeId(cellId(own), id), source: cellId(own), target: id, count: 1, transforms: AS_IS, ...wire(port, 'cv', cellId(own), id, chord(own)) });
     // FM: the modulator feeds its carrier
     if (typeof c.params.fm === 'string' && result.cells.has(c.params.fm))
       link({ id: edgeId(cellId(c.params.fm), id), source: cellId(c.params.fm), target: id, count: 1, transforms: AS_IS, ...wire('fm', 'audio', cellId(c.params.fm), id) });
@@ -288,56 +334,76 @@ export function buildGraph(result: CompileResult): GraphModel {
         ...wire('step', 'sync', id, cellId(c.step.driver), 1, true),
       });
   }
-  // voices into their mixes (labelled with the gain when it isn't 1); into a sound card of two channels, a pair (L R)
+  // a mix's entries (docs/notes/nets.md, decision 2). A sound alone goes in as it is (labelled with its gain when it isn't
+  // 1); a product is a junction, an unnamed node as `&( … )` is an unnamed cell: each term written in it goes in (the
+  // melody that plays it, levels, pitches, an envelope, with what is written on it), the voice is its definition (`is`),
+  // and its sound goes out into the mix. Into a sound card of two channels, a pair (L R).
+  const junctions: GraphNode[] = [];
+  /** Written pairs the routing knows that are drawn through a junction (its wires' `routes`). */
+  const through = new Set<string>();
   for (const c of result.cells.values())
-    for (const b of c.mix ?? [])
-      if (result.cells.has(b.voice.name))
-        link({
-          id: edgeId(cellId(b.voice.name), cellId(c.name)),
-          source: cellId(b.voice.name),
-          target: cellId(c.name),
-          count: 1,
-          transforms: [b.gain !== 1 ? [{ kind: 'gain', by: b.gain }] : []],
-          ...wire('mix', 'audio', cellId(b.voice.name), cellId(c.name), c.sink && c.units.length === 2 ? 2 : 1),
+    (c.mix ?? []).forEach((b, entry) => {
+      if (!result.cells.has(b.voice.name)) return;
+      const voice = cellId(b.voice.name);
+      const into = cellId(c.name);
+      const width = c.sink && c.units.length === 2 ? 2 : 1;
+      const gain: readonly Transform[] = [b.gain !== 1 ? [{ kind: 'gain', by: b.gain }] : []];
+      // (the routing's flow from the sound into the mix: flows.ts)
+      const flow = edgeId(voice, into);
+      const terms = b.pitches.filter((t) => result.cells.has(t.ref.name));
+      if (!terms.length) {
+        link({ id: flow, source: voice, target: into, count: 1, transforms: gain, ...wire('mix', 'audio', voice, into, width) });
+        return;
+      }
+      const j = junctionId(c.name, entry);
+      const tags = c.tags.length ? c.tags : (result.cells.get(b.voice.name)?.tags ?? []);
+      junctions.push({ id: j, kind: 'junction', depth: depthOf(b.voice.name), mix: c.name, entry, voice: b.voice.name, tags });
+      through.add(flow);
+      const sound = b.voice.name;
+      // (the voices the routing plays it on: an instrument's own, a kit for a pattern read through one)
+      const voices = soundsOf(result, b.voice.name);
+      const byTerm = new Map<string, typeof terms>();
+      for (const t of terms) byTerm.set(t.ref.name, [...(byTerm.get(t.ref.name) ?? []), t]);
+      // the term that starts notes: an output's, where it is written (a product written again, in another mix, is the
+      // same output: its term by name)
+      const startsAt = (t: (typeof terms)[number]) =>
+        result.outputs.some((o) => {
+          const at = `${o.voice}:${o.cell}:${t.ref.span.line}:${t.ref.span.col}`;
+          return o.id === at || o.id.startsWith(at + '@');
         });
-  for (const o of result.outputs) {
-    link({
-      id: edgeId(cellId(from(o)), cellId(o.voice)),
-      source: cellId(from(o)),
-      target: cellId(o.voice),
-      count: 1,
-      transforms: [[...refTransform(o), ...(o.offset ? [{ kind: 'transpose', by: o.offset, unit: 'semitone' } as const] : [])]],
-      ...wire('voice', 'cv', cellId(from(o)), cellId(o.voice), tines(result, o.voice) || chord(from(o))),
+      const starter = terms.find(startsAt) ?? terms.find((t) => result.outputs.some((o) => voices.includes(o.voice) && (o.tape?.head ?? o.cell) === t.ref.name && !o.gate));
+      for (const [name, ts] of byTerm) {
+        const t = ts[0];
+        const c0 = result.cells.get(name)!;
+        // what the term is in the product: the one that starts notes, an envelope, a level, a pitch
+        const lead = !!starter && starter.ref.name === name;
+        const port = lead ? 'voice' : c0.map?.kind === 'adsr' ? 'env' : isLevel(c0, !!t.inSum) ? 'level' : 'pitch';
+        const pairs = voices.map((v) => edgeId(cellId(name), cellId(v)));
+        for (const id of pairs) through.add(id);
+        link({
+          id: edgeId(cellId(name), j),
+          source: cellId(name),
+          target: j,
+          count: ts.length,
+          transforms: ts.map((x) => [
+            ...refTransform({ ...x.ref, sign: port === 'level' || port === 'env' ? 1 : x.sign }),
+            ...(lead && x === t && b.offset ? [{ kind: 'transpose', by: b.offset, unit: 'semitone' } as const] : []),
+          ]),
+          sound,
+          routes: [pairs, [flow]],
+          ...wire(
+            port,
+            port === 'pitch' && isWave(result, name) ? 'audio' : 'cv',
+            cellId(name),
+            j,
+            lead ? tines(result, b.voice.name) || chord(name) : port === 'env' ? 1 : chord(name),
+          ),
+        });
+      }
+      link({ id: edgeId(voice, j), source: voice, target: j, count: 1, transforms: AS_IS, sound, routes: [[flow]], ...wire('is', 'none', voice, j, 1, false, true) });
+      // (a product goes into one channel: one wire)
+      link({ id: edgeId(j, into), source: j, target: into, count: 1, transforms: gain, sound, routes: [[flow]], ...wire('mix', 'audio', j, into) });
     });
-    if (o.envelopeCell)
-      link({
-        id: edgeId(cellId(o.envelopeCell), cellId(o.voice)),
-        source: cellId(o.envelopeCell),
-        target: cellId(o.voice),
-        count: 1,
-        transforms: AS_IS,
-        ...wire('env', 'cv', cellId(o.envelopeCell), cellId(o.voice)),
-      });
-    for (const m of o.levels)
-      link({
-        id: edgeId(cellId(m.cell), cellId(o.voice)),
-        source: cellId(m.cell),
-        target: cellId(o.voice),
-        count: 1,
-        transforms: [refTransform({ ...m, sign: 1 })],
-        ...wire('level', 'cv', cellId(m.cell), cellId(o.voice), chord(m.cell)),
-      });
-    for (const m of o.mods)
-      link({
-        id: edgeId(cellId(m.cell), cellId(o.voice)),
-        source: cellId(m.cell),
-        target: cellId(o.voice),
-        count: 1,
-        transforms: [refTransform(m)],
-        // (a wave in a pitch sum moves the pitch at audio rate: FM)
-        ...wire('pitch', isWave(result, m.cell) ? 'audio' : 'cv', cellId(m.cell), cellId(o.voice), chord(m.cell)),
-      });
-  }
   // voices: where they sit in stereo, and in what order the mix names them
   // (an instrument — a mix used like a voice — is what sits in the stereo field, not the voices inside it)
   const sounding = (o: (typeof result.outputs)[number]) => o.through[0] ?? o.voice;
@@ -348,11 +414,22 @@ export function buildGraph(result: CompileResult): GraphModel {
   });
   const order = [...new Set(result.outputs.map(sounding))];
   const placed = nodes.map((n): GraphNode => {
-    if (!pans.has(n.cell.name)) return n;
+    if (!n.cell || !pans.has(n.cell.name)) return n;
     const [l, r] = pans.get(n.cell.name)!;
     return { ...n, pan: l + r > 0 ? (r - l) / (l + r) : 0, order: Math.max(0, order.indexOf(n.cell.name)) } as GraphNode;
   });
-  return petals(result, placed, edges);
+  return petals(result, [...placed, ...junctions], edges, through);
+}
+
+/** In a product, a volume rather than a pitch: map=amp or db, or map=lin as a bare factor (algebra.ts). */
+const isLevel = (c: ResolvedCell, inSum: boolean) => c.map?.kind === 'amp' || c.map?.kind === 'db' || (c.map?.kind === 'lin' && !inSum);
+
+/** The voices a mix's entry plays on (as compile expands it): an instrument's own, the kit a pattern is read through. */
+function soundsOf(result: CompileResult, name: string, guard = 0): string[] {
+  const c = result.cells.get(name);
+  if (c?.mix && !c.sink && guard < 16) return c.mix.flatMap((b) => soundsOf(result, b.voice.name, guard + 1));
+  const kit = c?.over ? result.cells.get(c.over) : undefined;
+  return [kit?.kit ? kit.name : name];
 }
 
 /** A step's rate as written (step=&x*2/3, cycle(&x), loop=, belt=); nothing when it is the driver's own. */
@@ -409,23 +486,29 @@ const isWave = (result: CompileResult, name: string) => {
  * Unnamed cells (&( … )) are drawn as petals of the named cell on their line:
  * small, hung from it, without edges of their own. An edge that went through a
  * petal is drawn to its parent instead — unless that would loop back to the
- * parent or repeat an edge already there.
+ * parent or repeat an edge already there. `through`: the written pairs drawn through a product's junction (not drawn
+ * themselves: their wires at the junction stand for them).
  */
-function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdge[]): GraphModel {
-  // show=off: not in the graph at all
-  const hidden = new Set(allNodes.filter((n) => effectiveShow(result, n.cell.name).show === 'off').map((n) => n.id));
+function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdge[], through: ReadonlySet<string>): GraphModel {
+  // show=off: not in the graph at all (nor a product in a mix that isn't)
+  const off = (n: GraphNode) => effectiveShow(result, n.kind === 'junction' ? n.mix : n.cell.name).show === 'off';
+  const hidden = new Set(allNodes.filter(off).map((n) => n.id));
   const nodes = allNodes.filter((n) => !hidden.has(n.id));
   const edges = allEdges.filter((e) => !hidden.has(e.source) && !hidden.has(e.target));
   const parentOf = new Map<string, string>();
   for (const n of nodes) {
+    if (n.kind === 'junction') continue;
     if (n.cell.lambda) {
       const line = /^λ(\d+)_/.exec(n.cell.name)?.[1];
       const parent = [...result.cells.values()].find((c) => !c.lambda && !c.implicit && c.span.line === +(line ?? -1));
       if (parent) parentOf.set(n.id, cellId(parent.name));
     } else if (effectiveShow(result, n.cell.name).show === 'petal') {
-      // show=petal: hung from the cell that uses it (a voice: the mix it's in)
+      // show=petal: hung from the cell that uses it (a voice: the mix it's in, or the mix of a product it is)
+      const product = nodes.find((j) => j.kind === 'junction' && edges.some((e) => e.source === n.id && e.target === j.id && e.port === 'is'));
       const user =
-        edges.find((e) => e.target === n.id && (e.port === 'braid' || e.port === 'over'))?.source ?? edges.find((e) => e.source === n.id && (e.port === 'mix' || feeds(e)))?.target;
+        edges.find((e) => e.target === n.id && (e.port === 'braid' || e.port === 'over'))?.source ??
+        edges.find((e) => e.source === n.id && (e.port === 'mix' || feeds(e)))?.target ??
+        (product?.kind === 'junction' ? cellId(product.mix) : undefined);
       if (user) parentOf.set(n.id, user);
     }
   }
@@ -453,12 +536,14 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
   const alias = new Map<string, string | undefined>();
   for (const r of redrawn) alias.set(r.id, r.pair === null ? undefined : byPair.get(r.pair));
   for (const e of allEdges) if (hidden.has(e.source) || hidden.has(e.target)) alias.set(e.id, undefined);
-  return { nodes: nodes.map((n) => (parentOf.has(n.id) ? { ...n, petalOf: parentOf.get(n.id) } : n)), edges: out, nets: netsOf(nodes, out), alias };
+  const drawnIds = new Set(out.map((e) => e.id));
+  for (const id of through) if (!drawnIds.has(id) && !alias.has(id)) alias.set(id, undefined);
+  return { nodes: nodes.map((n) => (n.kind !== 'junction' && parentOf.has(n.id) ? { ...n, petalOf: parentOf.get(n.id) } : n)), edges: out, nets: netsOf(nodes, out), alias };
 }
 
 /**
  * The ports whose edges from one cell to several make a net laid as a bus: a table read through over=, a melody
- * playing several voices, a voice into several mixes (the sound card's channels).
+ * playing several voices, a voice into several mixes (the sound card's channels), a voice that several products are.
  */
 const BUS_PORTS = new Set(['over', 'voice', 'mix']);
 /**
@@ -475,7 +560,7 @@ const isDelayed = (e: GraphEdge) => e.transforms.some((t) => t.some((s) => s.kin
  * delays (a canon's copies, a tape's heads: docs/decisions/010-canon-copies.md), and each meter's ticks to every cell
  * it steps (a step into a meter, not through a belt: a belt is a body, drawn).
  */
-function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): GraphNet[] {
+export function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): GraphNet[] {
   const meters = new Set(nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.id] : [])));
   const groups = new Map<string, GraphEdge[]>();
   for (const e of edges) {

@@ -12,14 +12,15 @@ import { mainLength, pieceTime } from './duration';
 const OUT = '&out loop=SAMPLE_RATE map=sample';
 const src = (...lines: string[]) => compileSource(lines.join('\n'));
 const on = (r: CompileResult, muted: ReadonlySet<string> = r.off) => routing(r, muted);
-/** States as drawn, by short name: nodes `name`, edges `a->b` (step edges `a~>b`). */
+/** States as drawn, by short name: nodes `name`, edges `a->b` (step edges `a~>b`); a product's junction `*mix:entry`. */
 function states(r: CompileResult, t: number | null, muted: ReadonlySet<string> = r.off) {
   const g = buildGraph(r);
   const routed = drawn(g, routing(r, muted));
   const live = t === null ? null : drawn(g, liveAt(r, codeShifts(r), muted, t));
   const out = new Map<string, string>();
-  for (const n of g.nodes) out.set(n.id.slice(5), nodeStateOf(n.id, muted, routed, live));
-  for (const e of g.edges) out.set(e.id.replace(/cell:/g, ''), edgeStateOf(e, muted, routed, live));
+  const short = (id: string) => id.replace(/cell:/g, '').replace(/junction:/g, '*');
+  for (const n of g.nodes) out.set(short(n.id), nodeStateOf(n.id, muted, routed, live));
+  for (const e of g.edges) out.set(short(e.id), edgeStateOf(e, muted, routed, live));
   return out;
 }
 
@@ -32,7 +33,7 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
   it('a braid of chance choices plays, so it is routed', () => {
     const r = src('&bar step=4', '&g step=&bar [0|2|4]? ~ [5|7]?', '&v s=sine loop=C4', `${OUT} [&g * &v]`);
     expect(on(r).nodes.has('cell:g')).toBe(true);
-    expect(states(r, null).get('g->v')).toBe('on');
+    expect(states(r, null).get('g->*out:0')).toBe('on');
   });
   it('the step= chain moves what it drives: routed, and live while it plays', () => {
     const r = src('&bar step=2', '&half step=&bar/2 0', '&mel step=&half 0 2', '&v s=sine loop=C4', `${OUT} [&mel * &v]`);
@@ -54,16 +55,26 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     );
     const first = states(r, 0.5);
     expect(['partA', 'parts', 'song', 'out', 'v'].map((n) => first.get(n))).toEqual(['live', 'live', 'live', 'live', 'live']);
-    expect(Object.fromEntries(['v->partA', 'parts->partA', 'song->parts', 'out->song'].map((k) => [k, first.get(k)]))).toEqual({
-      'v->partA': 'live',
+    // (a product is a junction: the melody and the voice into it, its sound into the part)
+    expect(Object.fromEntries(['a->*partA:0', 'v->*partA:0', '*partA:0', '*partA:0->partA', 'parts->partA', 'song->parts', 'out->song'].map((k) => [k, first.get(k)]))).toEqual({
+      'a->*partA:0': 'live',
+      'v->*partA:0': 'live',
+      '*partA:0': 'live',
+      '*partA:0->partA': 'live',
       'parts->partA': 'live',
       'song->parts': 'live',
       'out->song': 'live',
     });
     // &v is in both parts: only the edge its notes take now is live
-    expect([first.get('partB'), first.get('w'), first.get('v->partB'), first.get('parts->partB')]).toEqual(['idle', 'idle', 'idle', 'idle']);
+    expect([first.get('partB'), first.get('w'), first.get('v->*partB:1'), first.get('*partB:1->partB'), first.get('parts->partB')]).toEqual([
+      'idle',
+      'idle',
+      'idle',
+      'idle',
+      'idle',
+    ]);
     const second = states(r, 4.5);
-    expect([second.get('v->partB'), second.get('v->partA'), second.get('partA')]).toEqual(['live', 'idle', 'idle']);
+    expect([second.get('*partB:1->partB'), second.get('v->*partB:1'), second.get('*partA:0->partA'), second.get('partA')]).toEqual(['live', 'live', 'idle', 'idle']);
   });
   it('a kit: its members are part of the sound, and the one struck now is live', () => {
     const r = compileSource(SAILOR_WITH_KIT);
@@ -79,13 +90,28 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
   it('an instrument (a mix used like a voice) and a sound tape it records: all on the way while it plays', () => {
     const r = compileSource(PRESETS.soundtape.source);
     const s = states(r, 3);
-    for (const k of ['dry', 'tape', 'left', 'right', 'far', 'reel', 'pluck->dry', 'dry->out', 'dry->tape', 'tape->left', 'left->out', 'tape~>reel'])
+    for (const k of [
+      'dry',
+      'tape',
+      'left',
+      'right',
+      'far',
+      'reel',
+      'tune->*dry:0',
+      'pluck->*dry:0',
+      '*dry:0->dry',
+      'dry->out',
+      'dry->tape',
+      'tape->left',
+      'left->out',
+      'tape~>reel',
+    ])
       expect(s.get(k), k).toBe('live');
   });
   it('a resonator excited by tape heads, and the heads into the sound card', () => {
     const r = compileSource(PRESETS.resonanz.source);
     const s = states(r, 2);
-    for (const k of ['site->tape', 'tape->h1', 'h1->echo', 'echo->pipeA', 'pipeA->out', 'hammer->plate', 'plate->site']) expect(s.get(k), k).toBe('live');
+    for (const k of ['site->tape', 'tape->h1', 'h1->echo', 'echo->pipeA', 'pipeA->out', 'hammer->*site:0', 'plate->*site:0', '*site:0->site']) expect(s.get(k), k).toBe('live');
   });
   it('a sound tape nothing hears is not part of the sound (nor what it records)', () => {
     const r = src(
@@ -104,7 +130,7 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
   it('switched off: a mix off silences what only goes through it; its voices and their melodies are not routed', () => {
     const r = src('&bar step=1', '&mel step=&bar 0', '&v s=sine loop=C4', '&m [&mel * &v]', `${OUT} &m`);
     const s = states(r, 0.2, new Set(['cell:m']));
-    expect([s.get('m'), s.get('v'), s.get('mel'), s.get('mel->v'), s.get('v->m')]).toEqual(['off', 'unrouted', 'unrouted', 'unrouted', 'off']);
+    expect([s.get('m'), s.get('v'), s.get('mel'), s.get('mel->*m:0'), s.get('v->*m:0'), s.get('*m:0->m')]).toEqual(['off', 'unrouted', 'unrouted', 'unrouted', 'unrouted', 'off']);
   });
   it('a table read only through a turning table: what turns it is on the way', () => {
     const r = compileSource(PRESETS.royal.source);

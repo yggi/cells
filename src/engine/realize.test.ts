@@ -12,7 +12,7 @@ import { flatten } from './flatten';
 import { eventsBetween, plan } from './realize';
 import { liveAt } from './live';
 import { routing } from './routing';
-import { buildGraph, structureKey } from './graph';
+import { buildGraph, structureKey, type GraphModel } from './graph';
 import { edgeLabel } from './transform';
 import { PRESETS } from './presets';
 
@@ -229,25 +229,47 @@ describe('live view', () => {
   });
 });
 
+/** The wire from a cell into a product whose voice is `voice` (a junction: graph.ts). */
+const intoProduct = (g: GraphModel, from: string, voice: string) =>
+  g.edges.find((e) => e.source === `cell:${from}` && g.nodes.some((n) => n.id === e.target && n.kind === 'junction' && n.voice === voice));
+
 describe('graph', () => {
   it('shows exactly the code: no implicit grid, voices as voices, written links only', () => {
     const g = buildGraph(compileSource(PRESETS.royal.source));
     // the vibrato is an unnamed cell, written inside the mix: drawn, under a name of its own
-    const vibrato = g.nodes.find((n) => n.cell.lambda?.startsWith('map=lin'))!;
-    expect(vibrato.cell.lambda).toBe('map=lin loop=5 0 .15 0 -.15 0');
+    const vibrato = g.nodes.find((n) => n.cell?.lambda?.startsWith('map=lin'))!;
+    expect(vibrato.cell?.lambda).toBe('map=lin loop=5 0 .15 0 -.15 0');
     // named cells (the vibrato and the envelopes are unnamed: petals of the mix)
     expect(
       g.nodes
-        .filter((n) => !n.petalOf && !n.cell.note)
+        .filter((n) => !n.petalOf && !n.cell?.note)
         .map((n) => `${n.kind}:${n.id}`)
         .sort(),
-    ).toEqual(['cell:cell:bar', 'cell:cell:key', 'cell:cell:mix', 'cell:cell:pedal', 'cell:cell:scale', 'cell:cell:theme', 'voice:cell:bass', 'voice:cell:lead'].sort());
+    ).toEqual(
+      [
+        'cell:cell:bar',
+        'cell:cell:key',
+        'cell:cell:mix',
+        'cell:cell:pedal',
+        'cell:cell:scale',
+        'cell:cell:theme',
+        'voice:cell:bass',
+        'voice:cell:lead',
+        // (each product in the mix: a junction)
+        'junction:junction:mix:0',
+        'junction:junction:mix:1',
+      ].sort(),
+    );
     // … the lead's own (pitch=): drawn as a petal of the lead, without edges of its own
     expect(vibrato.petalOf).toBe('cell:lead');
     expect(g.edges.some((e) => e.source === vibrato.id || e.target === vibrato.id)).toBe(false);
     const ids = g.edges.map((e) => e.id);
     expect(ids).toContain('cell:theme->cell:scale');
-    expect(ids).toContain('cell:theme->cell:lead');
+    // (the theme into the product it plays, the lead its voice, the product into the mix: no edge from the theme to the lead)
+    expect(ids).toContain('cell:theme->junction:mix:0');
+    expect(ids).toContain('cell:lead->junction:mix:0');
+    expect(ids).toContain('junction:mix:0->cell:mix');
+    expect(ids).not.toContain('cell:theme->cell:lead');
     expect(ids).toContain('cell:theme~>cell:bar');
     expect(ids).toContain('cell:scale->cell:key');
     expect(ids).toContain('cell:scale~>cell:key');
@@ -259,7 +281,7 @@ describe('graph', () => {
     const g = buildGraph(compileSource(SAILOR_WITH_KIT));
     expect(edgeLabel(g.edges.find((e) => e.id === 'cell:B->cell:lead')!)).toBe('[<<]');
     const g2 = buildGraph(compileSource('&m step=1\n&x step=&m 0 1 2\n&v loop=440\n&mix_ [&x[1:] * &v]\n&out_ loop=44k map=sample &mix_'));
-    expect(edgeLabel(g2.edges.find((e) => e.id === 'cell:x->cell:v')!)).toBe('[1:]');
+    expect(edgeLabel(intoProduct(g2, 'x', 'v')!)).toBe('[1:]');
     const d = Object.fromEntries(g.nodes.map((n) => [n.id, n.depth]));
     expect(d['cell:tune']).toBeGreaterThan(d['cell:A']);
     expect(d['cell:A']).toBeGreaterThan(d['cell:m1']);
@@ -297,7 +319,7 @@ describe('modulation: &mix_ [(&theme + &vibrato) * &voice]\n&out_ loop=44k map=s
   });
   it('draws the modulator into the voice', () => {
     const g = buildGraph(r);
-    const vib = g.edges.find((e) => e.id === 'cell:vib->cell:v')!;
+    const vib = intoProduct(g, 'vib', 'v')!;
     expect([vib.port, edgeLabel(vib)]).toEqual(['pitch', '+']);
   });
 });
@@ -381,10 +403,13 @@ describe('stereo from two mixes', () => {
     expect(g.cello[1]).toBeGreaterThan(g.cello[0]);
     expect(events(r, 0, 4).find((e) => (e.instrument ?? e.voice) === 'cello')!.gains).toEqual(g.cello);
   });
-  it('draws voices into their mix, and the mix into the sound card', () => {
-    const ids = buildGraph(compileSource(PRESETS.pertonos.source)).edges.map((e) => e.id);
-    expect(ids).toContain('cell:reed->cell:left');
-    expect(ids).toContain('cell:cello->cell:right');
+  it('draws voices into their mix (each product a junction), and the mix into the sound card', () => {
+    const g = buildGraph(compileSource(PRESETS.pertonos.source));
+    const ids = g.edges.map((e) => e.id);
+    expect(ids).toContain('cell:reed->junction:left:0');
+    expect(ids).toContain('junction:left:0->cell:left');
+    expect(ids).toContain('cell:cello->junction:right:2');
+    expect(ids).toContain('junction:right:2->cell:right');
     expect(ids).toContain('cell:out->cell:left');
   });
 });
@@ -486,7 +511,7 @@ describe('volume streams (map=amp)', () => {
   });
   it('draws the volume into the voice with ×', () => {
     const g = buildGraph(compileSource(base + '&vol map=amp step=&m 1\n' + out('&mix [&t * &vol * &v]')));
-    const vol = g.edges.find((e) => e.id === 'cell:vol->cell:v')!;
+    const vol = intoProduct(g, 'vol', 'v')!;
     expect([vol.port, edgeLabel(vol)]).toEqual(['level', '×']);
   });
 });
@@ -636,7 +661,7 @@ describe('map=adsr: an envelope per note', () => {
     ]);
     // written inside the mix: a petal of it
     const g = buildGraph(r);
-    expect(g.nodes.find((n) => n.cell.lambda)!.petalOf).toBe('cell:mix');
+    expect(g.nodes.find((n) => n.cell?.lambda)!.petalOf).toBe('cell:mix');
   });
   it('takes four numbers; one per note; not a pitch', () => {
     const msgs = (s: string) =>
@@ -742,12 +767,17 @@ describe('Ricercar: a study in counterpoint, from strict to free', () => {
 
 describe('petals', () => {
   it('an edge through a petal is drawn to its parent — unless it loops back or repeats', () => {
-    // &organ holds an unnamed pipe: &theme plays it, so the graph draws &theme → &organ
+    // &organ holds an unnamed envelope (env=&( … )): a petal of the organ, its edge to the organ would loop back
     const g = buildGraph(compileSource(PRESETS.ricercar.source));
     const petals = g.nodes.filter((n) => n.petalOf);
     expect(petals.length).toBeGreaterThan(0);
     expect(g.edges.some((e) => petals.some((p) => p.id === e.source || p.id === e.target))).toBe(false);
-    expect(g.edges.some((e) => e.source === 'cell:theme' && e.target === 'cell:organ')).toBe(true);
+    expect(intoProduct(g, 'theme', 'organ')).toBeDefined();
+    // an unnamed melody in a product (&( … ) * &v): drawn as its mix's petal; its wire into the product would repeat the
+    // product's own into the mix, so it is drawn as that one
+    const inPlace = buildGraph(compileSource('&m step=1\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&(step=&m 0 2) * &v]'));
+    expect(inPlace.nodes.find((n) => n.petalOf)?.petalOf).toBe('cell:out');
+    expect(inPlace.edges.map((e) => e.id).sort()).toEqual(['cell:v->junction:out:0', 'junction:out:0->cell:out', 'cell:out->cell:m~'].sort());
     expect(g.edges.some((e) => e.source === e.target)).toBe(false);
   });
 });
@@ -760,7 +790,7 @@ describe('a voice’s own env= and pitch=', () => {
     expect(own.diagnostics).toEqual([]);
     expect(events(own, 0, 1.9).map((e) => e.env)).toEqual(events(mixed, 0, 1.9).map((e) => e.env));
     // written in place, the envelope hangs as a petal of the voice
-    expect(buildGraph(own).nodes.find((n) => n.cell.lambda)!.petalOf).toBe('cell:v');
+    expect(buildGraph(own).nodes.find((n) => n.cell?.lambda)!.petalOf).toBe('cell:v');
   });
   it('one named envelope, shared by two voices', () => {
     const r = compileSource(base + '&pluck map=adsr .005 .3 0 .2\n&a s=tri loop=C4 env=&pluck\n&b s=saw loop=C3 env=&pluck\n&mix loop=SAMPLE_RATE map=sample [&t * &a, &u * &b]');

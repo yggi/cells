@@ -52,13 +52,14 @@ describe('examples/*.cells', () => {
       const m = pieceMeta(PRESETS[e.key].source);
       expect([e.title, e.description, e.tags, e.rung]).toEqual([m?.title, m?.description, m?.tags, m?.rung]); // (the tags are written canonical: checked above)
       expect(e.size, `${e.key}: size`).toBeGreaterThan(0);
-      // its miniature: what the browser would work out from its text, one node per cell drawn
+      // its miniature: what the browser would work out from its text, one node per cell drawn and a dot per product
       expect(e.miniature, `${e.key}: miniature`).toEqual(miniature(PRESETS[e.key].source));
-      expect(e.miniature?.nodes, `${e.key}: miniature`).toHaveLength(e.size);
+      const products = buildGraph(compileSource(PRESETS[e.key].source)).nodes.filter((n) => n.kind === 'junction').length;
+      expect(e.miniature?.nodes, `${e.key}: miniature`).toHaveLength(e.size + products);
       // (laid out with the rows' order the index keeps, as the browser lays it out choosing afresh: the same order)
       expect(e.rows.key, `${e.key}: its graph's shape`).toBe(rowsKey(buildGraph(compileSource(PRESETS[e.key].source))));
     }
-  }, 60_000); // (it works every miniature out again, each laid out twice first to choose its rows: about 10 s alone, 20 s on a loaded machine)
+  }, 180_000); // (it works every miniature out again, each laid out twice first to choose its rows, junctions folded in: about 30 s alone on a quiet machine, 60 s or more on a loaded one)
   test('the index module keeps an endless cycle (JSON would make it null)', () => {
     // (the first entry of the index as built: working every miniature out again only to take one is slow)
     const [first] = built as ReturnType<typeof buildExamplesIndex>;
