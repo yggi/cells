@@ -5,9 +5,9 @@
 &swing scan(2 1) step=&bar                       # long, short: a pair a beat
 &bar2 1!8 step=free(moderato) beat=2 swing=.67   # the same, written on the bar
 
-&walk over=scale(7,5) step=&bar 0 2 4 5 7 5 4 2
+&walk over=scale(major, G) step=&bar 0 2 4 5 7 5 4 2
 &ride step=&swing 12!3 ~ 12!3 ~
-&comp over=scale(7,5) step=&bar2 ~ [2,4,6] ~!3 [2,4,6] ~ [2,4,6]
+&comp over=scale(major, G) step=&bar2 ~ [2,4,6] ~!3 [2,4,6] ~ [2,4,6]
 
 &bass s=sine loop=G2 env=&(map=adsr .01 .4 .5 .1)
 &cymbal s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)

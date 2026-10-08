@@ -9,8 +9,8 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   syntax(
     'step',
     'n',
-    "A number: an index into the table it reads (over=), or a value (a volume, a waveform's level). Negative and decimal numbers work.",
-    ['&tune step=2 0 2 4 -1 .5'],
+    "A number: an index into the table it reads (over=), or a value (a volume, a waveform's level). Negative and decimal numbers work. A note by name (C, F#, Bb3; octave 4 left out) is a pitch instead: a place on the grid at the root of its tables, whatever they are.",
+    ['&tune step=2 0 2 4 -1 .5', '&tune step=2 C E G C5'],
     'cell.md',
   ),
   syntax(
@@ -22,7 +22,13 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   ),
   syntax('step', 'n/d', 'A fraction: 9/8, 3/2 (the ratios of a map=ratios grid).', ['&just map=ratios 1 9/8 5/4 3/2 2'], 'tuning.md'),
   syntax('step', '~', 'A rest: a step that plays nothing.', ['&tune step=2 0 ~ 4 ~'], 'cell.md'),
-  syntax('step', '[a, b, c] · [a b c]', 'A chord: the numbers sound together, in one step.', ['&chords step=1 [0,2,4] [3 5 7]'], 'time.md'),
+  syntax(
+    'step',
+    '[a, b, c] · [a b c]',
+    'A chord: the numbers sound together, in one step. Its notes can be names, pitches whatever the tables: [C, E, G].',
+    ['&chords step=1 [0,2,4] [3 5 7]', '&chords step=1 [C, E, G] [F, A, C5]'],
+    'time.md',
+  ),
   syntax('step', '[a|b|c]', 'A choice: one of them, chosen afresh each time round (the same every time it is played).', ['&tune step=2 0 [2|4|7] 4'], 'braid.md'),
   syntax(
     'step',
@@ -124,6 +130,7 @@ function parseAtom(s: LineScanner): Atom {
     s.i++;
     const notes: number[] = [];
     const alters: number[] = [];
+    const pitched: boolean[] = [];
     for (;;) {
       s.skipSpace();
       if (s.peek() === ']') break;
@@ -131,19 +138,25 @@ function parseAtom(s: LineScanner): Atom {
         s.i++;
         s.skipSpace();
       }
-      const n = s.num('a number in chord');
+      // a number (an index into the table) or a note by name (a pitch): [0, 2, 4], [C, E, G]
+      const name = s.noteName();
+      const n = name === null ? s.num('a number or a note name in a chord') : { value: name, alter: 0 };
       notes.push(n.value);
       alters.push(n.alter);
+      pitched.push(name !== null);
     }
     s.i++;
     if (notes.length === 0) s.fail('Chord is empty', start, s.i - start);
-    return { kind: 'chord', notes, alters };
+    return { kind: 'chord', notes, alters, ...(pitched.some(Boolean) ? { pitched } : {}) };
   }
   if (c === '-' || c === '.' || (c >= '0' && c <= '9')) {
     const n = s.num('a number');
     return { kind: 'note', value: n.value, alter: n.alter };
   }
-  return s.fail(`Unexpected '${c}' — expected a number, ~, [chord], &cell or key=value`);
+  // a note by name: a pitch, whatever the tables (C, F#, Bb3; octave 4 left out)
+  const name = s.noteName();
+  if (name !== null) return { kind: 'note', value: name, alter: 0, pitched: true };
+  return s.fail(`Unexpected '${c}' — expected a number, a note name (C, F#), ~, [chord], &cell or key=value`);
 }
 
 /** A step's modifiers, each at most once; the parser reads them through this table (and ? for chance). */

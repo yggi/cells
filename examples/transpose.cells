@@ -6,6 +6,7 @@
 
 &key label="key: **{tonic}**" shift=2 size=1.5                # the 12, turned two: D. Turning it transposes
 &mode label="{mode} on {tonic}\n{notes}" over=&key scan(2 2 1 2 2 2 1) shift=1   # turned one: it walks the modes
+&fixed label="fixed for a piece, in one line: {mode} on {tonic}" scale(dorian, E)   # the same seven notes: a key and a mode in one, the tonic its argument
 &theme label="the theme: {notes}" show=notes over=&mode step=&bar 0 2 4 7 4 2 0@2
 
 &flute s=tri loop=C4 room=.3 env=&(map=adsr .02 .3 .5 .3)

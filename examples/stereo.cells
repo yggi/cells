@@ -2,8 +2,8 @@
 # pan= places a voice between the sound card's two channels: 0 left, .5 the centre (as
 # without it), 1 right; the far side fades. .15: the left full, the right at .3.
 &bar scan(27 23 26 24) step=92bpm
-&high label="*Mary had a little lamb*" over=scale(0,5) step=&bar 2 1 0 1 2 2 2@2
-&low over=scale(0,5) step=&bar*2 0 3 4 0
+&high label="*Mary had a little lamb*" over=scale(major) step=&bar 2 1 0 1 2 2 2@2
+&low over=scale(major) step=&bar*2 0 3 4 0
 
 &bell s=sine loop=C5 pan=.15 env=&(map=adsr .01 .6 .2 .6)
 &cello s=saw loop=C3 lpf=900 pan=.85 env=&(map=adsr .03 .4 .6 .4)

@@ -21,11 +21,42 @@ export const MODES: readonly Mode[] = [
   { name: 'Lydian', intervals: [0, 2, 4, 6, 7, 9, 11] },
 ];
 
-/** Name a 7-note set by its shape above its first note, if it's a diatonic mode. */
+/**
+ * The scales `scale(name, tonic)` knows, by name: each its steps up the 12 (a scan), and the name it is shown by. The
+ * seven modes by their own names, the two everyone knows by theirs, and a few beyond the diatonic.
+ */
+export const SCALES: Readonly<Record<string, { readonly steps: readonly number[]; readonly name: string }>> = {
+  major: { steps: [2, 2, 1, 2, 2, 2, 1], name: 'Ionian' },
+  minor: { steps: [2, 1, 2, 2, 1, 2, 2], name: 'Aeolian' },
+  ionian: { steps: [2, 2, 1, 2, 2, 2, 1], name: 'Ionian' },
+  dorian: { steps: [2, 1, 2, 2, 2, 1, 2], name: 'Dorian' },
+  phrygian: { steps: [1, 2, 2, 2, 1, 2, 2], name: 'Phrygian' },
+  lydian: { steps: [2, 2, 2, 1, 2, 2, 1], name: 'Lydian' },
+  mixolydian: { steps: [2, 2, 1, 2, 2, 1, 2], name: 'Mixolydian' },
+  aeolian: { steps: [2, 1, 2, 2, 1, 2, 2], name: 'Aeolian' },
+  locrian: { steps: [1, 2, 2, 1, 2, 2, 2], name: 'Locrian' },
+  harmonic: { steps: [2, 1, 2, 2, 1, 3, 1], name: 'Harmonic minor' },
+  melodic: { steps: [2, 1, 2, 2, 2, 2, 1], name: 'Melodic minor' },
+  pentatonic: { steps: [2, 2, 3, 2, 3], name: 'Pentatonic' },
+  minorpentatonic: { steps: [3, 2, 2, 3, 2], name: 'Minor pentatonic' },
+  blues: { steps: [3, 2, 1, 1, 3, 2], name: 'Blues' },
+  wholetone: { steps: [2, 2, 2, 2, 2, 2], name: 'Whole tone' },
+};
+
+/** A scale's name for a phase of the seven modes (0 the darkest): what `scale(tonic, phase)` is now written as. */
+export function scaleOfPhase(phase: number): string {
+  const mode = MODES[phase]?.name.toLowerCase() ?? 'major';
+  return mode === 'ionian' ? 'major' : mode === 'aeolian' ? 'minor' : mode;
+}
+
+/** Name a set by its shape above its first note: a diatonic mode, or one of the scales beyond it (Blues …). */
 export function modeName(values: readonly number[]): string | null {
-  if (values.length !== 7) return null;
   const shape = values.map((v) => v - values[0]).join();
-  return MODES.find((m) => m.intervals.join() === shape)?.name ?? null;
+  if (values.length === 7) {
+    const m = MODES.find((x) => x.intervals.join() === shape);
+    if (m) return m.name;
+  }
+  return Object.values(SCALES).find((x) => scan(x.steps).positions.join() === shape)?.name ?? null;
 }
 
 /**
@@ -90,4 +121,15 @@ export function scan(steps: readonly number[]): { positions: number[]; lap: numb
     at += s;
   }
   return { positions, lap: +at.toFixed(6) };
+}
+
+/**
+ * A note by name, as semitones from C4: `C` (octave 4 when left out), `F#`, `Bb3`, `C5`. Null if it isn't one. In a
+ * braid a name is a pitch (where a number is an index into the cell's table); as a tonic, a pitch class.
+ */
+export function pitchOfName(name: string): number | null {
+  const m = /^([A-G])(#|b)?(-?[0-9]+)?$/.exec(name);
+  if (!m) return null;
+  const letter = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]]!;
+  return letter + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + 12 * ((m[3] === undefined ? 4 : parseInt(m[3], 10)) - 4);
 }

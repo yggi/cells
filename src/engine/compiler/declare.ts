@@ -2,7 +2,6 @@
 import type { Atom, CellDecl, Ref, Token } from '../ast';
 import { MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { VOICE_PARAMS } from '../attributes';
-import { even as evenPositions, intervals } from '../../theory/modes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import type { Ctx } from './context';
 
@@ -27,25 +26,8 @@ export function declare(ctx: Ctx): Declared {
     else decls.set(c.name, c);
   }
   const implicitRoot = !decls.has(ROOT);
-  // scale(tonic, phase) shorthands: the two tables they stand for, not drawn
-  for (const d of [...decls.values()]) {
-    const m = d.over && /^scale:(-?\d+):(\d+)$/.exec(d.over.name);
-    if (!m || decls.has(d.over!.name)) continue;
-    const [, tonic, phase] = m;
-    const key = `key:${tonic}`;
-    const span = d.over!.span;
-    const blank = { over: null, off: false, step: null, map: null, stride: null, cycle: null, params: {}, paramSpans: {} };
-    if (!decls.has(key)) decls.set(key, { ...blank, name: key, span, shift: parseInt(tonic, 10), braid: { kind: 'blank' } });
-    decls.set(d.over!.name, {
-      ...blank,
-      name: d.over!.name,
-      span,
-      shift: null,
-      over: { name: key, pick: null, shift: 0, span },
-      braid: { kind: 'scan', steps: intervals(evenPositions(7, 12, parseInt(phase, 10)), 12), span },
-    });
-    implicit.add(key).add(d.over!.name);
-  }
+  // scale(name, tonic): the key and the table it declares, unnamed and not drawn
+  for (const name of decls.keys()) if (name.startsWith('key:') || name.startsWith('scale:')) implicit.add(name);
   // a stepped braid of voices (&groove step=&bar/4 &bd ~ &hh [&bd,&hh]) plays them, and so do the unstepped
   // braids of voices it splices (drum motifs: &groove … &fill &fill[::-1]): each is a pattern of numbers read
   // through one kit of all their voices, in the order first written (that kit unnamed, not drawn)

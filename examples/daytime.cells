@@ -9,7 +9,7 @@
 
 &tick step=&minute 0                                # each second
 &chime step=&hour 12                                # each minute
-&daily over=scale(0,5) step=&week 0 1 2 3 4 5 6       # the chime a step higher each day
+&daily over=scale(major) step=&week 0 1 2 3 4 5 6       # the chime a step higher each day
 &cycle law=fiveto12 over=&day step=84bpm label="the law: a day"
 
 &click s=sine loop=C6 env=&(map=adsr 0 .01 0 .01)

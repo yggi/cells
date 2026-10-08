@@ -2,7 +2,7 @@
 &fmNote label="fm=&bm: &bm swings the bell's frequency. ratio= is the modulator's frequency against the carrier's (3.5: a bell, not a harmonic); index= how far it swings, 0 a plain sine." about=(&bell &bm)
 &moveNote label="index= can move: on the piano it falls on every note, bright when struck and a sine as it rings." about=&epiano
 &bar scan(1 1 1 1) step=free(andante)
-&major over=scale(0,5)
+&major scale(major)
 
 &tune over=&major step=&bar 7 4 5 2 4 0 2@2 7 9 8 7 4@4
 &chords over=&major step=&bar*4 [0,2,4] [3,5,7] [1,3,5] [0,2,4]

@@ -1,6 +1,6 @@
 # 002 · `scale(tonic, phase)` stays as shorthand for two unnamed cells
 
-**Date:** 2026-10-06 · **Status:** accepted (recorded from TODO.md)
+**Date:** 2026-10-06 · **Status:** superseded by [013](013-scale-generator.md) (recorded from TODO.md)
 
 ## Decision
 

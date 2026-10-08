@@ -8,7 +8,7 @@
 # melodies, a pattern of levels, a slow wobble
 &up 0 0 4 4 5 5 4@2
 &theme over=&mode step=&bar 0 2 [0,4] 7 4 2 [0,2,4]@2
-&tune over=scale(0,5) step=96bpm show=do &up &up
+&tune over=scale(major) step=96bpm show=do &up &up
 &walk over=&blues step=96bpm 0 1 2 3
 &drone over=&alpha step=48bpm 0 3 6
 &line step=96bpm show=notes 12 11 12@2 7@2 8@2

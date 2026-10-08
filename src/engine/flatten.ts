@@ -5,7 +5,7 @@
  */
 import { pickLabel, type Pick } from './ast';
 import { ROOT, MAX_EVENTS, pickIndices, pickSteps, type CompileResult, type Shifts } from './program';
-import { isTap, shiftedUnits } from './helix';
+import { isTap, positionOf, rootOf, shiftedUnits } from './helix';
 
 /**
  * A cell's units as played: rotated by its shift (plus a [<<]/[>>] shift); a pick takes from them as they are turned
@@ -92,8 +92,16 @@ export function flatten(
             };
             // x?p: its probability (a bare ? takes the cell's chance=)
             const odds = u.chance === undefined ? {} : { chance: u.chance === null ? (cell.chance ?? 0.5) : u.chance };
-            if (a.kind === 'note') out.push({ ...ev, value: a.value, alter: a.alter, ...odds });
-            else if (a.kind === 'chord') a.notes.forEach((v, j) => out.push({ ...ev, value: v, alter: a.alters[j], ...odds }));
+            // (a note by name is a pitch: a place on the grid at the root of its tables, not an index into them)
+            const pitch = (semis: number) => ({
+              ...ev,
+              table: rootOf(result, table),
+              tableShift: 0,
+              value: Math.round(positionOf(result, rootOf(result, table), semis) * 1e6) / 1e6,
+              alter: 0,
+            });
+            if (a.kind === 'note') out.push(a.pitched ? { ...pitch(a.value), ...odds } : { ...ev, value: a.value, alter: a.alter, ...odds });
+            else if (a.kind === 'chord') a.notes.forEach((v, j) => out.push(a.pitched?.[j] ? { ...pitch(v), ...odds } : { ...ev, value: v, alter: a.alters[j], ...odds }));
             else if (a.kind === 'choice') out.push({ ...ev, value: a.values[0], alter: a.alters[0], ...odds, options: a.values.map((v, j) => ({ value: v, alter: a.alters[j] })) });
             else if (a.kind === 'ref') {
               const k = dur / (stepsOf(result, a.name, a.pick) || 1);

@@ -2,7 +2,7 @@
 # Three motifs make the whole tune. The middle line is &down again,
 # a step up the scale: &down^1.
 &bar scan(1 1 1 1) step=96bpm
-&scale label="{mode} on {tonic}" over=scale(0,5)                 # C major
+&scale label="{mode} on {tonic}" scale(major)                 # C major
 
 &up label="*twinkle twinkle, little star*" 0 0 4 4 5 5 4@2                    # twin-kle twin-kle lit-tle star
 &down label="*how I wonder what you are*" 3 3 2 2 1 1 0@2                  # how I won-der what you are

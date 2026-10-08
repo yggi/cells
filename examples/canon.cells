@@ -7,7 +7,7 @@
 &b 2@2 3@2 4@4                         # bro-ther John
 &c 4 5 4 3 2@2 0@2                     # morn-ing bells are ring-ing
 &d 0@2 -3@2 0@4                        # ding, dang, dong
-&john over=scale(0,5) step=&bar/2 &a!2 &b!2 &c!2 &d!2      # C Ionian
+&john over=scale(major) step=&bar/2 &a!2 &b!2 &c!2 &d!2      # C Ionian
 
 &v1 s=tri loop=C5 env=&(map=adsr .005 .3 .5 .2)
 &v2 s=square loop=C4 lpf=1800 env=&(map=adsr .005 .3 .4 .1)

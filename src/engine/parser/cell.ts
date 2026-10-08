@@ -7,7 +7,7 @@ import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from '../attributes';
 import { IDENT, type LineScanner } from './scanner';
 import { OPERATIONS, parseToken } from './braid';
 import { parseFree } from './free';
-import { isGenerator, parseGenerator } from './generators';
+import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
 import { parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
 
@@ -104,32 +104,24 @@ const timing: Reader = (s, b, word) => {
   b.step = parseStep(s, word === 'loop');
 };
 
+/** An unnamed table a shorthand declares (over=scale(…)): nothing set but what it's given. */
+const BLANK_TABLE = { over: null, shift: null, off: false, step: null, map: null, stride: null, cycle: null, params: {}, paramSpans: {} } as const;
+
 /** The core attributes, each with a syntax of its own: the parser reads a cell's line through this table. */
 export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   over: {
-    form: 'over=&table · over=&table[<<n] · over=scale(tonic, phase)',
-    examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(9, 2) step=2 0 2 4'],
-    read: (s, b, _, at) => {
-      const sc = s.match(/scale\(\s*(-?[0-9]+)\s*,\s*([0-9]+)\s*\)/y);
-      if (sc) {
-        // scale(tonic, phase): the 12 shifted to the tonic, even(7,12,phase) over it — written once
-        const [, tonic, phase] = /scale\(\s*(-?[0-9]+)\s*,\s*([0-9]+)\s*\)/.exec(sc)!;
-        const t = parseInt(tonic, 10);
-        const p = parseInt(phase, 10);
-        // the phase is one of the seven modes; the tonic a pitch class (beyond an octave it still climbs: a warning)
-        if (p > 6)
-          s.fail(`scale(tonic, phase): the phase is a mode, 0 (the darkest, Locrian) to 6 (the brightest, Lydian) — not ${p}`, at + 5 + sc.lastIndexOf(phase), phase.length);
-        if (Math.abs(t) > 11) {
-          const octaves = Math.trunc(t / 12);
-          s.warn(
-            `scale(${t}, …): the tonic is a pitch class, 0 (C) to 11 (B); ${t} is ${Math.abs(octaves)} octave${Math.abs(octaves) === 1 ? '' : 's'} ${t > 0 ? 'up' : 'down'} from ${t - 12 * octaves}`,
-            at + 5 + sc.indexOf(tonic, 6),
-            tonic.length,
-          );
-        }
-        b.over = { name: `scale:${t}:${p}`, pick: null, shift: 0, span: s.span(at + 5) };
-      } else if (s.match(/scale\(/y)) s.fail('scale(tonic, phase): like scale(0,2) for C Aeolian');
-      else b.over = s.ref('a cell or scale(tonic, phase) after over=, like over=&scale');
+    form: 'over=&table · over=&table[<<n] · over=scale(name, tonic)',
+    examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4'],
+    read: (s, b) => {
+      if (s.text.startsWith('scale(', s.i)) {
+        // over=scale(name, tonic): a table of its own, unnamed and not drawn — the scale's scan over its key
+        const at0 = s.i;
+        s.i += 5;
+        const sc = parseScale(s, at0);
+        const name = `scale:λ${s.line}_${at0 + s.offset}`;
+        s.lambdas.push({ ...BLANK_TABLE, name, span: sc.span, lambda: s.text.slice(at0, s.i), over: sc.key, braid: { kind: 'scan', steps: sc.steps, span: sc.span } });
+        b.over = { name, pick: null, shift: 0, span: sc.span };
+      } else b.over = s.ref('a cell or scale(name, tonic) after over=, like over=&scale or over=scale(minor, A)');
       if (b.over!.pick) s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over!.span.col - 1, b.over!.span.len);
     },
   },
@@ -397,6 +389,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   let off = false;
   const tokens: Token[] = [];
   let generator: Braid | null = null;
+  let scaleKey: Ref | null = null;
+  let fifthsShift: number | null = null;
 
   while (!s.done()) {
     const at = s.i;
@@ -425,7 +419,17 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     }
     if (word !== null && isGenerator(word) && s.peek() === '(') {
       if (generator || tokens.length) s.fail('A cell has one braid: a generator or a list of steps', at, word.length);
-      generator = parseGenerator(s, word, at);
+      if (word === 'fifths') {
+        // fifths(n): the circle, turned n fifths round (the cell's shift)
+        const f = parseFifths(s, at);
+        generator = f.braid;
+        fifthsShift = f.shift;
+      } else if (word === 'scale') {
+        // scale(name, tonic): its steps the cell's braid, read through the key it brings
+        const sc = parseScale(s, at);
+        generator = { kind: 'scan', steps: sc.steps, span: sc.span };
+        scaleKey = sc.key;
+      } else generator = parseGenerator(s, word, at);
       continue;
     }
     if (word !== null && (OPERATIONS as readonly string[]).includes(word) && s.peek() === '(') {
@@ -440,12 +444,22 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       off = true;
       continue;
     }
-    if (word !== null) s.fail(`Unexpected '${word}'`, at, word.length);
+    // a note by name is a step (C, Bb3): read again as one
+    if (word !== null && /^[A-G](?:b?-?[0-9]*)$/.test(word)) s.i = at;
+    else if (word !== null) s.fail(`Unexpected '${word}'`, at, word.length);
     if (generator) s.fail('A cell has one braid: a generator or a list of steps');
     tokens.push(parseToken(s));
   }
 
   const braid: Braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
+  if (fifthsShift !== null && fifthsShift !== 0) {
+    if (b.shift !== null) s.fail('fifths(n) turns it already: write fifths() and shift=, or fifths(n) alone');
+    b.shift = fifthsShift;
+  }
+  if (scaleKey) {
+    if (b.over) s.fail('scale(…) reads through a key of its own: drop over=, or write the key as a cell (&mode over=&key scan(…))', b.over.span.col - 1, b.over.span.len);
+    b.over = scaleKey;
+  }
   const { over, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, rung, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } = b;
   return {
     name: head.name,

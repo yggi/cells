@@ -2,7 +2,7 @@
 # Brahms, Wiegenlied (1868). A music box over a slow 3/4. The second phrase is
 # the first a step lower (&rock^-1): a sequence, as Brahms wrote it.
 &bar scan(28 37 35) step=free(56bpm, 40..72)
-&scale over=scale(0,5)                       # C major
+&scale scale(major)                       # C major
 
 &rock 4@3 2 2@2 4@3 2 4@2                    # lul-la-by and good night
 &rise 7@2 6@3 5 5@2 4@2 1 2                  # with ro-ses be-dight

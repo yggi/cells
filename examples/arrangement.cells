@@ -2,7 +2,7 @@
 &partsNote label="A part is a mix with a name. &parts lists them; &song reads it, a section a step: a number picks one part, a chord several." about=(&parts &song)
 &lapsNote label="laps=1: the song plays once, then ends. off switches a cell off, and everything that plays it: take it from &click to hear the beat." about=&song
 &bar scan(1 1 1 1) step=free(moderato)
-&major over=scale(0,5)
+&major scale(major)
 
 &chords over=&major step=&bar*4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
 &tune over=&major step=&bar/2 4 4 5 7 7 5 4 2 0 0 2 4 4@2 2@2

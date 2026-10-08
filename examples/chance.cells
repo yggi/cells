@@ -2,7 +2,7 @@
 &chanceNote label="0?.3 sounds three times in ten; a bare 0? takes the cell's chance=. It is the same every time you play the piece; seed= picks another sequence." about=(&ghosts &hats)
 &choiceNote label="[4|5|7]: one of them, chosen afresh each time round." about=&tune
 &bar scan(1 1 1 1) step=free(moderato)
-&major over=scale(0,5)
+&major scale(major)
 
 &tune over=&major step=&bar/2 0 2 [4|5|7] 4 [2|7] 0 [4|9] ~
 &hats step=&bar/4 0 0? 0 0?.3 0 0? 0 0?.8

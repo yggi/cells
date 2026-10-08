@@ -2,7 +2,7 @@
 &coupleNote label="couple=&forkB: the two forks share a table, and coupling= says how strongly; only &forkA is struck." about=(&forkA &forkB)
 &exciteNote label="excite=&played: the flute's sound drives the strings, which ring where it meets their notes." about=&strings
 &bar scan(1 1 1 1) step=72bpm
-&minor over=scale(9,2)
+&minor scale(minor, A)
 
 &hits step=&bar*8 0
 &tune over=&minor step=&bar 4 ~ 2 ~ 0@2 ~@2 2 4 7 ~ 4@4

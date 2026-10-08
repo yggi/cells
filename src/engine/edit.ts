@@ -62,8 +62,25 @@ function setFlag(source: string, name: string, flag: string, on: boolean): strin
   });
 }
 
-/** shift=n on &name (0 removes it). */
-export const setShift = (source: string, name: string, shift: number) => setAttr(source, name, 'shift', shift === 0 ? null : String(shift));
+/** The circle of fifths' notes, its n-th first (fifths(n), fifths(G)). */
+const FIFTHS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'Ab', 'Eb', 'Bb', 'F'];
+
+/**
+ * shift=n on &name (0 removes it). A circle of fifths turned by its own argument (`fifths(1)`, `fifths(G)`, no `shift=`)
+ * is turned there: by name if it was written by name, `fifths()` at 0.
+ */
+export function setShift(source: string, name: string, shift: number): string {
+  let circle = false;
+  const turned = editDecl(source, name, (code) => {
+    const m = /\bfifths\(([^)]*)\)/.exec(code);
+    if (!m || /\sshift=/.test(code)) return code;
+    circle = true;
+    const byName = /^\s*[A-G]/.test(m[1]);
+    const arg = shift === 0 && !byName ? '' : byName ? FIFTHS[((shift % 12) + 12) % 12] : String(shift);
+    return code.replace(m[0], `fifths(${arg})`);
+  });
+  return circle ? turned : setAttr(source, name, 'shift', shift === 0 ? null : String(shift));
+}
 
 /** `off` on &name. */
 export const setOff = (source: string, name: string, off: boolean) => setFlag(source, name, 'off', off);
@@ -220,12 +237,18 @@ function replaceSpan(source: string, span: { line: number; col: number; len: num
 /** A free(…) with a new value, written back where it stands (a marking becomes explicit). */
 export function setFree(
   source: string,
-  spec: { value: number; unit: string; lo: number; hi: number; span: { line: number; col: number; len: number }; labels?: readonly string[]; text?: string },
+  spec: { value: number; unit: string; lo: number; hi: number; span: { line: number; col: number; len: number }; labels?: readonly string[]; text?: string; byName?: true },
   value: number | string,
 ): string {
   // a text: free("…") (quotes can't be inside: they're dropped)
   if (typeof value === 'string') return replaceSpan(source, spec.span, `free("${value.replace(/"/g, '')}")`);
   const v = Math.min(spec.hi, Math.max(spec.lo, value));
+  // (a pitch class written by name stays one: free(D) → free(E))
+  if (spec.byName) {
+    const names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+    const own = spec.labels && spec.labels.join(' ') !== names.join(' ') ? `, "${spec.labels.join(' ')}"` : '';
+    return replaceSpan(source, spec.span, `free(${names[Math.round(v) % 12]}${own})`);
+  }
   const range = spec.hi - spec.lo;
   const digits = spec.labels ? 0 : range >= 20 ? 0 : range >= 2 ? 1 : 2;
   const named = spec.labels ? `, "${spec.labels.join(' ')}"` : '';

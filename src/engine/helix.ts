@@ -247,3 +247,14 @@ export const isTap = (result: CompileResult, name: string, pick: Pick | null) =>
 /** A pick of plain numbers, relative or absolute ($): read from the cell, not played; the cell is a table. */
 export const isPicked = (result: CompileResult, name: string, pick: Pick | null) =>
   !!pick && result.cells.get(name)!.units.every((u) => u.atom.kind === 'note' && u.repeat === 1 && u.subdivide === 1 && u.chance === undefined);
+
+/** The grid at the root of a table's chain (over=, else the context it is read in): where a pitch by name is placed. */
+export function rootOf(result: CompileResult, table: string): string {
+  let at = table;
+  for (let guard = 0; guard < 64; guard++) {
+    const c = result.cells.get(at);
+    if (!c || c.root) return at;
+    at = c.over ?? c.context;
+  }
+  return at;
+}

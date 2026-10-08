@@ -2,6 +2,7 @@
 import type { CellDecl, Diagnostic, FreeSpec, Pick, Ref, Span } from '../ast';
 import { parseBody } from './cell';
 import { syntax, type Syntax } from './syntax';
+import { pitchOfName } from '../../theory/modes';
 
 /** References to a cell, and how they pick from it, turn it and transpose it. */
 export const REFERENCE_SYNTAX: readonly Syntax[] = [
@@ -157,6 +158,11 @@ export class LineScanner {
     let alter = 0;
     while (this.peek() === '#' || this.peek() === 'b') alter += this.text[this.i++] === '#' ? 1 : -1;
     return { value, alter };
+  }
+  /** A note by name here (`C`, `F#`, `Bb3`), as semitones from C4; null (nothing read) if there isn't one. */
+  noteName(): number | null {
+    const m = this.match(/[A-G](?:#|b)?(?:-?[0-9]+)?(?![A-Za-z0-9_])/y);
+    return m === null ? null : pitchOfName(m);
   }
   expect(ch: string, what: string): void {
     if (this.peek() !== ch) this.fail(`Expected ${what}`);
