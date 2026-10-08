@@ -330,11 +330,11 @@ export function drawn(model: GraphModel, r: Routing): Routing {
   return hit;
 }
 
-/** What a node (by id) is drawn as. `live`: null while stopped. */
+/** What a node (by id) is drawn as. `live`: null at rest (stopped): nothing is dimmed, whatever sounds. */
 export function nodeStateOf(id: string, muted: ReadonlySet<string>, routed: Routing, live: Routing | null): State {
   if (muted.has(id)) return 'off';
-  if (!routed.nodes.has(id)) return 'unrouted';
   if (!live) return 'on';
+  if (!routed.nodes.has(id)) return 'unrouted';
   return live.nodes.has(id) ? 'live' : 'idle';
 }
 
@@ -346,7 +346,7 @@ export function edgeStateOf(
   live: Routing | null,
 ): State {
   if (muted.has(e.source) || muted.has(e.target)) return 'off';
-  if (!routed.edges.has(e.id)) return 'unrouted';
   if (!live) return 'on';
+  if (!routed.edges.has(e.id)) return 'unrouted';
   return live.edges.has(e.id) ? 'live' : 'idle';
 }

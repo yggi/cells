@@ -204,3 +204,32 @@ describe('routing, every example', () => {
     });
   }
 });
+
+describe('at rest, nothing is dimmed (#201)', () => {
+  it('a cell and an edge that no sound reaches are on while stopped, unrouted once the transport is not', () => {
+    const r = src('&bar step=1', '&mel step=&bar 0 2', '&lonely 0 1 2', '&v s=saw loop=C3', `${OUT} [&mel * &v]`);
+    expect(states(r, null).get('lonely')).toBe('on');
+    // paused or playing: the state at that moment
+    expect(states(r, 0).get('lonely')).toBe('unrouted');
+  });
+  it('every example, stopped: every node and edge is on or off, never unrouted, idle or live', () => {
+    const bad: string[] = [];
+    for (const [key, p] of Object.entries(PRESETS)) {
+      const s = states(compileSource(p.source), null);
+      for (const [k, v] of s) if (v !== 'on' && v !== 'off') bad.push(`${key}: ${k} ${v}`);
+    }
+    expect(bad).toEqual([]);
+  });
+  it('the heads at rest (the live state at time 0) are worked out for every example, and fast', () => {
+    const t0 = performance.now();
+    let n = 0;
+    for (const p of Object.values(PRESETS)) {
+      const r = compileSource(p.source);
+      const heads = liveAt(r, codeShifts(r), r.off, 0);
+      expect(heads.seconds).toBe(0);
+      n++;
+    }
+    // (a piece is opened or edited and this runs once: no budget to hold to, but a sign if one example is slow)
+    expect((performance.now() - t0) / n).toBeLessThan(50);
+  });
+});
