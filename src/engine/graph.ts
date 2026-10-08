@@ -9,7 +9,7 @@
 import { effectiveShow } from '../layout/show';
 import type { CompileResult, ResolvedCell } from './program';
 import type { Pick, ValueMap } from './ast';
-import { cellId, edgeId, junctionId, stepEdgeId } from './ids';
+import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
 import type { Transform } from './transform';
 
 export type GraphNode =
@@ -112,8 +112,11 @@ export interface GraphEdge extends Wire {
 
 /** The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's entry, a product's voice, a note's link. */
 const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'is', 'about']);
-/** A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples, writes or plays it. */
-export const feeds = (e: { readonly port: string }) => !STRUCTURE.has(e.port);
+/**
+ * A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples,
+ * writes or plays it. Not ticks: a parameter's clock (`delaytime=&bar*3/4`) is timing, as a step is.
+ */
+export const feeds = (e: { readonly port: string; readonly band: string }) => !STRUCTURE.has(e.port) && e.band !== 'sync';
 
 /** Nothing written: a wire that carries its source as it is. */
 const AS_IS: readonly Transform[] = [[]];
@@ -333,6 +336,18 @@ export function buildGraph(result: CompileResult): GraphModel {
         ...beltOf(c, result.cells.get(c.step.driver)),
         ...wire('step', 'sync', id, cellId(c.step.driver), 1, true),
       });
+    // a parameter given as a clock (delaytime=&bar*3/4, length=, at=): a tap of the clock's ticks, at its rate as written;
+    // into a meter, a tap of its net (ground), as a step is
+    for (const [key, k] of Object.entries(c.paramClocks))
+      if (result.cells.has(k.driver))
+        link({
+          id: clockTapId(id, cellId(k.driver), key),
+          source: id,
+          target: cellId(k.driver),
+          count: 1,
+          transforms: [rateTransform(k)],
+          ...wire(key, 'sync', id, cellId(k.driver), 1, true),
+        });
   }
   // a mix's entries (docs/notes/nets.md, decision 2). A sound alone goes in as it is (labelled with its gain when it isn't
   // 1); a product is a junction, an unnamed node as `&( … )` is an unnamed cell: each term written in it goes in (the
@@ -433,9 +448,10 @@ function soundsOf(result: CompileResult, name: string, guard = 0): string[] {
 }
 
 /** A step's rate as written (step=&x*2/3, cycle(&x), loop=, belt=); nothing when it is the driver's own. */
-function rateOf(c: ResolvedCell): Transform {
-  const belt = typeof c.params.belt === 'number' ? c.params.belt : undefined;
-  const s = c.step!;
+const rateOf = (c: ResolvedCell): Transform => rateTransform(c.step!, typeof c.params.belt === 'number' ? c.params.belt : undefined);
+
+/** A clock's rate as written (`&x*2/3`, `cycle(&x)`, the whole braid, through a belt); nothing when it is the clock's own. */
+function rateTransform(s: NonNullable<ResolvedCell['step']>, belt?: number): Transform {
   if (!s.chain.length && !s.cycle && !s.whole && belt === undefined) return [];
   return [{ kind: 'rate', by: s.chain, per: s.cycle ? 'cycle' : 'step', whole: s.whole, ...(belt !== undefined ? { belt } : {}) }];
 }
@@ -558,18 +574,22 @@ const isDelayed = (e: GraphEdge) => e.transforms.some((t) => t.some((s) => s.kin
 /**
  * The nets among the edges: a table read by two or more (over=), a melody or a voice by two or more, a cell read at
  * delays (a canon's copies, a tape's heads: docs/decisions/010-canon-copies.md), and each meter's ticks to every cell
- * it steps (a step into a meter, not through a belt: a belt is a body, drawn).
+ * it steps or that takes a time from it (a step or a parameter's clock into a meter, `delaytime=&bar*3/4`; not through
+ * a belt: a belt is a body, drawn). A meter's net is its `step` net, whichever port each tap reads it through.
  */
 export function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): GraphNet[] {
   const meters = new Set(nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.id] : [])));
-  const groups = new Map<string, GraphEdge[]>();
+  const groups = new Map<string, { port: string; taps: GraphEdge[] }>();
   for (const e of edges) {
-    const port = BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.port === 'step' && !e.belt && meters.has(e.target) ? 'step' : null;
-    if (port) groups.set(`${e.from}|${port}`, [...(groups.get(`${e.from}|${port}`) ?? []), e]);
+    const port = BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.band === 'sync' && !e.belt && meters.has(e.target) ? 'step' : null;
+    if (!port) continue;
+    const g = groups.get(`${e.from}|${port}`) ?? { port, taps: [] };
+    g.taps.push(e);
+    groups.set(`${e.from}|${port}`, g);
   }
   return [...groups.values()]
-    .filter((g) => (g.length > 1 || g[0].port === 'step') && (!DELAY_PORTS.has(g[0].port) || g.some(isDelayed)))
-    .map((g) => ({ id: `net:${g[0].from}:${g[0].port}`, owner: g[0].from, port: g[0].port, band: g[0].band, taps: g.map((e) => e.id), delayed: g.some(isDelayed) }));
+    .filter(({ port, taps }) => (taps.length > 1 || port === 'step') && (!DELAY_PORTS.has(port) || taps.some(isDelayed)))
+    .map(({ port, taps }) => ({ id: `net:${taps[0].from}:${port}`, owner: taps[0].from, port, band: taps[0].band, taps: taps.map((e) => e.id), delayed: taps.some(isDelayed) }));
 }
 
 /** Changes only when the set of nodes or edges changes — not when contents do. */

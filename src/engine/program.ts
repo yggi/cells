@@ -115,6 +115,11 @@ export interface ResolvedCell {
   readonly stride: number;
   /** step=/loop= driven by another cell: the driver, and its ratio as written (the edge's rate). */
   readonly step: { readonly driver: string; readonly cycle: boolean; readonly whole: boolean; readonly chain: readonly RateOp[] } | null;
+  /**
+   * Parameters given as a clock (`delaytime=&bar*3/4`, `length=`, `at=`: attributes.ts TIME_PARAMS), by key: the clock
+   * tapped and its ratio as written (as step=). Compiled to seconds in `params`; kept for the graph's wire (a tap of the clock).
+   */
+  readonly paramClocks: Readonly<Record<string, NonNullable<ResolvedCell['step']>>>;
   /** map= (how values become output): amp, sin or a table. */
   readonly map:
     | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'db' }

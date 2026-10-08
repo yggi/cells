@@ -132,6 +132,11 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
               chain: d.step.chain,
             }
           : null,
+      paramClocks: Object.fromEntries(
+        Object.entries(d.paramClocks ?? {}).flatMap(([k, st]) =>
+          st.kind === 'driven' ? [[k, { driver: st.driver.name, cycle: st.cycle, whole: st.whole, chain: st.chain }]] : [],
+        ),
+      ),
       map: d.map
         ? d.map.kind === 'table'
           ? { kind: 'table', table: d.map.table.name }

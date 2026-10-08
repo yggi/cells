@@ -18,7 +18,7 @@
  */
 import { ROOT, type CompileResult, type Output, type ResolvedCell } from './program';
 import { tableChain } from './helix';
-import { cellId, edgeId, isJunction, stepEdgeId } from './ids';
+import { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from './ids';
 import { chainMuted, outputSounds } from './realize';
 import type { GraphModel } from './graph';
 import { flows } from './flows';
@@ -87,6 +87,15 @@ export class RouteAcc {
     }
     const clock = this.result.cells.get(name)?.clock;
     if (clock && !this.off(clock)) this.tables(clock);
+    this.timed(name);
+  }
+  /** The clocks its parameters take their times from (delaytime=&bar*3/4, a tape's length=, a head's at=). */
+  timed(name: string) {
+    for (const [key, k] of Object.entries(this.result.cells.get(name)?.paramClocks ?? {}))
+      if (!this.off(k.driver)) {
+        this.edge(name, k.driver, clockTapId(cellId(name), cellId(k.driver), key));
+        this.clock(k.driver);
+      }
   }
   /**
    * A braid, all the way down: the cells it splices and the tables their notes resolve through
@@ -130,6 +139,7 @@ export class RouteAcc {
     this.node(name);
     // its own volume and pitch (env=, pitch=: on every note it plays; drawn as its petals, no edge)
     for (const own of [v.env, v.pitch]) if (own && !this.off(own)) this.stream(own);
+    this.timed(name);
     for (const pc of Object.values(v.paramCells ?? {}))
       for (const f of pc.factors)
         if (!this.off(f)) {
@@ -174,6 +184,7 @@ function notesOf(acc: RouteAcc, o: Output, how: NotesOf) {
     acc.edge(o.tape.tape, o.tape.head);
     acc.edge(o.tape.head, o.voice);
     acc.clock(o.tape.tape);
+    acc.timed(o.tape.head);
   } else acc.edge(o.cell, o.voice);
   for (const m of [...o.mods, ...o.levels])
     if (!acc.off(m.cell)) {
