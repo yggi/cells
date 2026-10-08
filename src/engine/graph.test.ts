@@ -312,13 +312,14 @@ describe('a wire carries its transform', () => {
   });
 
   it('a ref written several times: one transform each, in order', () => {
-    const e = edge('&m 0 4\n&t step=1 &m &m^7 &m[1:] &m[<<2]', 'm', 't');
-    expect(e.count).toBe(4);
+    const e = edge('&m 0 4\n&t step=1 &m &m^$7 &m[1:] &m[<<2] &m^2', 'm', 't');
+    expect(e.count).toBe(5);
     expect(e.transforms).toEqual([
       [],
       [{ kind: 'transpose', by: 7, unit: 'grid' }],
       [{ kind: 'pick', pick: { kind: 'slice', from: 1, to: null } }],
       [{ kind: 'delay', by: 2, unit: 'step' }],
+      [{ kind: 'degree', by: 2 }],
     ]);
     expect(edge('&s scan(2 2 1 2 2 2 1)\n&t over=&s[>>2] step=1 0', 's', 't').transforms).toEqual([[{ kind: 'delay', by: -2, unit: 'step' }]]);
   });
@@ -364,7 +365,7 @@ function tokensOn(line: string): Token[] {
   const at = /\bat=([\d.]+)/.exec(text)?.[1];
   const belt = /\bbelt=/.test(text);
   const out: Token[] = [];
-  const re = /((?:degree\(|inverse\()*)&([A-Za-z_][A-Za-z0-9_]*)(\[[^\]]*\])?(\^-?\d+)?/g;
+  const re = /((?:degree\(|inverse\()*)&([A-Za-z_][A-Za-z0-9_]*)(\[[^\]]*\])?(\^\$?-?\d+)?/g;
   let first = true;
   for (let m = re.exec(text); m; m = re.exec(text)) {
     if (first && m.index === text.search(/\S/)) {
@@ -375,7 +376,9 @@ function tokensOn(line: string): Token[] {
     // what is written after it: the operations' closing (innermost first), a rate's chain
     let rest = text.slice(m.index + m[0].length);
     let mul = 1;
-    let add = 0;
+    // (^n is a degree, as degree(&x, n): the innermost; ^$n a transposition after the tables)
+    const degree = m[4] && !m[4].startsWith('^$');
+    let add = degree ? +m[4].slice(1) : 0;
     for (const w of (m[1].match(/degree\(|inverse\(/g) ?? []).reverse()) {
       if (w === 'inverse(') {
         [mul, add] = [-mul, -add];
@@ -412,8 +415,8 @@ function tokensOn(line: string): Token[] {
               m[3] && !shift ? m[3] : '',
               shift ? `[${shift[1]}${shift[2] && shift[2] !== '1' ? shift[2] : ''}]` : '',
               mul < 0 ? 'inverse' : '',
-              add ? `degree ${add > 0 ? '+' : ''}${add}` : '',
-              m[4] ?? '',
+              add ? `^${add}` : '',
+              degree ? '' : (m[4] ?? ''),
               where === 'play' && at ? `at=${+at}` : '',
             ];
     out.push({ name: m[2], where, written: written.filter(Boolean).join(' ') });

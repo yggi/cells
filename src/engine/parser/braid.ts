@@ -28,7 +28,7 @@ export const STEP_SYNTAX: readonly Syntax[] = [
     'step',
     '&x',
     "A cell, spliced in: its braid plays in this one's step (as long as its own steps). Picks, shifts and transposing are under References.",
-    ['&theme step=2 &motif &motif^7 0'],
+    ['&theme step=2 &motif &motif^$7 0'],
     'braid.md',
   ),
   syntax(
@@ -51,7 +51,15 @@ function parseRefOrOperation(s: LineScanner): RefAtom {
   const op = s.match(OPERATION);
   if (op === null) {
     const r = s.ref('a cell like &motif');
-    return { kind: 'ref', name: r.name, pick: r.pick, shift: r.shift, ...(r.transpose ? { transpose: r.transpose } : {}) };
+    // (^n: a degree, as degree(&x, n) is)
+    return {
+      kind: 'ref',
+      name: r.name,
+      pick: r.pick,
+      shift: r.shift,
+      ...(r.transpose ? { transpose: r.transpose } : {}),
+      ...(r.degree ? { values: { mul: 1, add: r.degree } } : {}),
+    };
   }
   const name = op.slice(0, -1);
   s.skipSpace();

@@ -80,7 +80,7 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
     ],
   },
   { concept: 'tables: over=, scale(), shift=; show= and size=', forms: ['attribute over', 'attribute shift', 'attribute show', 'attribute size'] },
-  { concept: 'motifs: splicing, reuse, degree()', forms: ['step &x', 'reference degree(&name, n)'] },
+  { concept: 'motifs: splicing, reuse, degrees (^n)', forms: ['step &x', 'reference &name^n'] },
   { concept: 'chords and a progression: accidentals, a sum of pitches', forms: ['step [a, b, c]', 'step n#', 'mix a + b', 'mix ( … )'] },
   { concept: 'meter and feel: a bent bar, gates', forms: ['map map=amp', 'sort volume: map=amp, map=db or map=adsr'] },
   {
@@ -89,7 +89,10 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
   },
   { concept: 'swing: a swing clock, swing= and beat=', forms: ['parameter swing', 'parameter beat'] },
   { concept: 'canon: a theme shifted', forms: ['reference &name[<<n]'] },
-  { concept: 'mirrors: retrograde, slices, picks, transposing, inverse()', forms: ['reference &name[i]', 'reference &name[a:b]', 'reference &name^n', 'reference inverse(&name)'] },
+  {
+    concept: 'mirrors: retrograde, slices, picks, transposing, inverse()',
+    forms: ['reference &name[i]', 'reference &name[a:b]', 'reference &name^$n', 'reference inverse(&name)'],
+  },
   { concept: 'chance and choice', forms: ['modifier x?', 'step [a|b|c]', 'attribute chance', 'attribute seed'] },
   { concept: 'turning tables: stride=, cycle(&x)', forms: ['attribute stride', 'rate step=cycle(&x)'] },
   { concept: 'arrangement: parts, a selector, laps=, off', forms: ['sort signal: a selector', 'attribute laps', 'line off', 'line … +'] },
@@ -166,8 +169,8 @@ export function formsUsed(source: string): Set<string> {
     if (r.pick?.kind === 'at') use('reference &name[i]');
     if (r.pick?.kind === 'slice') use('reference &name[a:b]');
     if (r.shift) use('reference &name[<<n]');
-    if (r.transpose) use('reference &name^n');
-    if (r.values?.add) use('reference degree(&name, n)');
+    if (r.transpose) use('reference &name^$n');
+    if (r.values?.add) use('reference &name^n');
     if (r.values && r.values.mul < 0) use('reference inverse(&name)');
   };
   const isMix = (name: string) => {

@@ -30,7 +30,7 @@
 &lh tags="left hand" step=&tempo label="prelude · left hand" &lhFigure &lhBars &lhPresto &lhAdagio &lhAllegro &tacetFugue
 
 # ---- the fugue: its subject and countersubject (as the alto first has them), entered at their transpositions —
-#      exact entries in place (&subject^-12: an octave down), bent ones written out
+#      exact entries in place (&subject^$-12: an octave down), bent ones written out
 &subject tags="subject" show=notes label="the subject" 12 11 12@2 7@2 8@2 12 11 12@2 14@2 7@2 12 11 12@2 14@2 5 7 8@4 7 5 3
 &counter tags="subject" show=notes label="the countersubject" 11 9 7 5 3 2 0@2 15@2 14@2 12@2 10@2 9@2 10@2 12@2 6@2 7@2
 &s3s tags="soprano" label="bar 3 · **answer**\nsoprano, a fifth up (bent)" 19 18 19@2 12@2 15@2 19 18 19@2 21@2 14@2 19 18 19@2 21@2 12 14 15@4 14 12 10@2
@@ -55,15 +55,15 @@
 &alto7 tags="alto" label="alto · free, bars 26–29" ~@4 5@2 3@2 8@2 7@2 5@2 3@2 2@2 3@2 5@2 -1@2 0@2 2@2 -1@2!2 0@2 ~@2 0@2 5 2 3 0@3 -1@2 0@4
 &alto8 tags="alto" label="alto · free, bars 29–31" ~@2 4@2 5@4 ~@2 [5,8]@2 5@2 3 2 3@2 [5,8]@2 [-1,2]@2 ~@2 [-1,2]@2 ~@2 [-5,0]@8
 &m1 -12 -14 -16 -17 -19
-&bass1 tags="bass" label="bass · free, bars 9–11" 0 -1 -3 &m1^7 -10 -9 -10 &m1 -2 -4 &m1^7 -14 -12 -10 &m1 -21 -4
-&bass2 tags="bass" label="bass · free, bars 11–15" -5 &m1^5 -16@2 0@2 -2@2 -4@2 -5@2 -7@2 -5@2 -4@2 -10@2 -9@2 -7@2 -10@2 -9@2 -4@2 -5@2 -7@2 -5@2 -9@2 -10@2 -12@2 -10@2 -2@2 -4@2 -5@2 -4@2 -7@2 -9@2 -10@2 -9@2
+&bass1 tags="bass" label="bass · free, bars 9–11" 0 -1 -3 &m1^$7 -10 -9 -10 &m1 -2 -4 &m1^$7 -14 -12 -10 &m1 -21 -4
+&bass2 tags="bass" label="bass · free, bars 11–15" -5 &m1^$5 -16@2 0@2 -2@2 -4@2 -5@2 -7@2 -5@2 -4@2 -10@2 -9@2 -7@2 -10@2 -9@2 -4@2 -5@2 -7@2 -5@2 -9@2 -10@2 -12@2 -10@2 -2@2 -4@2 -5@2 -4@2 -7@2 -9@2 -10@2 -9@2
 &bass3 tags="bass" label="bass · free, bars 15–20" ~@8 -12@2 -14@2 -15@2 ~@2 -9@2 -10@2 -12@2 -10@2 -12 -14 -12@2 -10@2 -17@2 -2 -3 -2@2 -10@2 -9@2 0 -2 0@2 -8@2 -7@2 2 0 2@2 -6@2 -5@4 ~ -17 -15 -13 -12 -10 -9@3 -15 -14 -12 -10 -9 -7@3 -13 -12 -10 -9@2
-&bass4 tags="bass" label="bass · free, bars 20–26" ~@4 -8@2 -7@2 -19@2 -21@2 -22@2 ~@2 -16@2 -17@2 -19@2 -17@2 -19 -21 -19@2 -17@2 -12 -10 -9 -10 &m1 -2 -4 &m1^7 -14 -12 -10 &m1 -21 -4 &m1^7 -14 -16 -14 &m1 -21 -22 &m1^7 -13 -15 -17@4 ~@5 -17 -15 -13 -12 -10 -9 -7 -5 -7 -4 &m1^7 -13@2
+&bass4 tags="bass" label="bass · free, bars 20–26" ~@4 -8@2 -7@2 -19@2 -21@2 -22@2 ~@2 -16@2 -17@2 -19@2 -17@2 -19 -21 -19@2 -17@2 -12 -10 -9 -10 &m1 -2 -4 &m1^$7 -14 -12 -10 &m1 -21 -4 &m1^$7 -14 -16 -14 &m1 -21 -22 &m1^$7 -13 -15 -17@4 ~@5 -17 -15 -13 -12 -10 -9 -7 -5 -7 -4 &m1^$7 -13@2
 &s26b tags="bass" label="bar 26 · **subject**\nbass, two octaves down (held longer)" -12 -13 -12@2 -17@2 -16@2 -12 -13 -12@2 -10@2 -17@2 -12 -13 -12@2 -10@2 -19 -17 -16@4 -17 -19 -21@4
 &bass5 tags="bass" label="bass · free, bars 28–31" ~@2 -9@2 -10@2 -12@2 -5@2 -17@2 [-24,-12]@40
 &soprano tags="soprano" step=&tempo label="fugue · soprano" &tacetPrelude ~@2 ~@32 &s3s &soprano1 &c7s &soprano2 &s11s &soprano3 &soprano4 &s20s &soprano5 &soprano6 &s29s
 &alto tags="alto" step=&tempo label="fugue · alto" &tacetPrelude ~@2 &subject &alto1 &counter &alto2 &alto3 &alto4 &s15a &alto5 &c20a &alto6 &alto7 &alto8
-&bass tags="bass" step=&tempo label="fugue · bass" &tacetPrelude ~@2 ~@32 ~@64 &subject^-12 &bass1 &bass2 &bass3 &bass4 &s26b &bass5
+&bass tags="bass" step=&tempo label="fugue · bass" &tacetPrelude ~@2 ~@32 ~@64 &subject^$-12 &bass1 &bass2 &bass3 &bass4 &s26b &bass5
 
 # the synthesizer: a voice for each line, as Carlos gave each its own patch
 &saw pan=.2 s=saw loop=C4 lpf=2600 lpq=6 env=&(map=adsr .002 .15 .45 .12)

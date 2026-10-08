@@ -41,7 +41,8 @@ export interface ValueMap {
   readonly add: number;
 }
 
-export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: number }) => (pickLabel(r.pick) || shiftLabel(r.shift)) + (r.transpose ? `^${r.transpose}` : '');
+export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: number; degree?: number }) =>
+  (pickLabel(r.pick) || shiftLabel(r.shift)) + (r.degree ? `^${r.degree}` : '') + (r.transpose ? `^$${r.transpose}` : '');
 
 /**
  * `&name`, optionally viewed through brackets: a pick from the braid as
@@ -52,8 +53,10 @@ export interface Ref {
   readonly name: string;
   readonly pick: Pick | null;
   readonly shift: number;
-  /** ^n: what it plays, n grid steps up (^-n down), after its tables. */
+  /** ^$n: what it plays, n grid steps up (^$-n down), after its tables (absolute: a semitone on the 12). */
   readonly transpose?: number;
+  /** ^n: its values n steps of its table up (^-n down), before the table reads them: degree(&x, n). */
+  readonly degree?: number;
   readonly span: Span;
 }
 
@@ -68,7 +71,7 @@ export type Atom =
   | { readonly kind: 'chord'; readonly notes: readonly number[]; readonly alters: readonly number[] }
   /** [a|b|c]: one of them, chosen afresh each time round (reproducibly). */
   | { readonly kind: 'choice'; readonly values: readonly number[]; readonly alters: readonly number[] }
-  /** transpose: grid steps up (or down) after its tables: &subject^7, &subject^-12. */
+  /** transpose: grid steps up (or down) after its tables, absolute: &subject^$7, &subject^$-12 (&subject^1 is a degree: values). */
   /** values: degree(…) / inverse(…) around it — its values moved before its tables read them. */
   | { readonly kind: 'ref'; readonly name: string; readonly pick: Pick | null; readonly shift: number; readonly transpose?: number; readonly values?: ValueMap }
   /** A mix chord `[&theme * &lead, …]`: its expressions as written; compile types them (algebra.ts). */

@@ -103,7 +103,7 @@ export interface GraphEdge extends Wire {
   readonly count: number;
   /**
    * What the tap does to what it carries (engine/transform.ts), for each place the name is written on the reader's line,
-   * in order: a ref written three times has three (`&tune &up &up^7`: none, none, ^7), most wires one. A product's
+   * in order: a ref written three times has three (`&tune &up &up^$7`: none, none, ^$7), most wires one. A product's
    * terms carry theirs into its junction, its gain is on the wire out of it.
    */
   readonly transforms: readonly Transform[];

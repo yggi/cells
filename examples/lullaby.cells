@@ -1,6 +1,6 @@
 &piece title="Lullaby: Brahms, Wiegenlied" tags="genre:classical, artist:Brahms, tonal, diatonic" label="Brahms' lullaby on a music box, its notes ringing on." about=&mix
 # Brahms, Wiegenlied (1868). A music box over a slow 3/4. The second phrase is
-# the first a step lower (degree(&rock, -1)): a sequence, as Brahms wrote it.
+# the first a step lower (&rock^-1): a sequence, as Brahms wrote it.
 &bar scan(28 37 35) step=free(56bpm, 40..72)
 &scale over=scale(0,5)                       # C major
 
@@ -9,7 +9,7 @@
 &turn 6@2 5 4@2 6 7@4 0 0
 &high 7@3 5 3@2 4@3 2 0@2                    # sung twice
 &home 3@2 2@2 1@2 0@4 2 2                    # … and the next pickup
-&song over=&scale step=&bar/2 &rock &rise degree(&rock, -1) &turn &high 3@2 4@2 5@2 4@4 0 0 &high &home
+&song over=&scale step=&bar/2 &rock &rise &rock^-1 &turn &high 3@2 4@2 5@2 4@4 0 0 &high &home
 
 &roots over=&scale step=&bar*3 0!3 4!4 0 3 0 4 0 3 0 4 0
 

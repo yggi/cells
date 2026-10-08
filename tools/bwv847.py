@@ -136,8 +136,8 @@ for v in ['soprano', 'alto', 'bass']:
         model = subject if kind == 'subject' else counter
         exact = bent == 0 and mono[v][occ[5] + len(model) - 1][1] == model[-1][1]   # the last note as long, too
         if exact:
-            # an exact entry: written where it enters, transposed in place (&subject^-12)
-            parts.append(f'&{kind}' + (f'^{sh}' if sh else ''))
+            # an exact entry: written where it enters, transposed in place (&subject^$-12)
+            parts.append(f'&{kind}' + (f'^${sh}' if sh else ''))
             t = b
             continue
         else:
@@ -182,7 +182,7 @@ src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered
 &lh tags="left hand" step=&tempo label="prelude · left hand" &lhFigure {' '.join(f'&lh{n}' for n, *_ in SECTIONS)} &tacetFugue
 
 # ---- the fugue: its subject and countersubject (as the alto first has them), entered at their transpositions —
-#      exact entries in place (&subject^-12: an octave down), bent ones written out
+#      exact entries in place (&subject^$-12: an octave down), bent ones written out
 &subject tags="subject" show=notes label="the subject" {tokens([(on - 2, d, [p]) for on, d, p in subject], 0, subject[-1][0] + subject[-1][1] - 2)}
 &counter tags="subject" show=notes label="the countersubject" {tokens([(on - counter[0][0], d, [p]) for on, d, p in counter], 0, counter[-1][0] + counter[-1][1] - counter[0][0])}
 """ + '\n'.join(cells) + f"""

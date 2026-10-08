@@ -76,8 +76,14 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       ...(voice.env ? [{ ref: decls.get(voice.name)!.env!, sign: 1 as const, inSum: false }] : []),
       ...(voice.pitch ? [{ ref: decls.get(voice.name)!.pitch!, sign: 1 as const, inSum: true }] : []),
     ];
-    const moved = b.pitches.find((t) => t.ref.transpose);
-    if (moved) error(`&${moved.ref.name}^${moved.ref.transpose}: transposing (^) is for braids — in a mix, add pitch: &${moved.ref.name} + ${moved.ref.transpose}`, moved.ref.span);
+    const moved = b.pitches.find((t) => t.ref.transpose || t.ref.degree);
+    if (moved?.ref.transpose)
+      error(`&${moved.ref.name}^$${moved.ref.transpose}: transposing (^$) is for braids — in a mix, add pitch: &${moved.ref.name} + ${moved.ref.transpose}`, moved.ref.span);
+    else if (moved)
+      error(
+        `&${moved.ref.name}^${moved.ref.degree}: moving by degrees (^) is for braids — in a mix, write a cell that plays it: &u step=&bar &${moved.ref.name}^${moved.ref.degree}`,
+        moved.ref.span,
+      );
     // a read head plays its tape: what the tape's write head recorded, retimed through the tape
     const tapeOf = new Map<unknown, NonNullable<Output['tape']>>();
     const terms = [...b.pitches, ...own]

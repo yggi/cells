@@ -1,8 +1,8 @@
 /**
  * Phrases: a phrase written twice or more (anywhere) becomes a cell of its own, used
  * where it was: exactly (&m), backwards (&m[::-1]), or — where the numbers are steps of
- * a grid — transposed (&m^7), or where they are steps of a table, moved by degrees
- * (degree(&m, 2): the same shape two steps up the scale), or turned round its helix (&m[>>2]: begun two steps on,
+ * a grid — transposed (&m^$7), or where they are steps of a table, moved by degrees
+ * (&m^2: the same shape two steps up the scale), or turned round its helix (&m[>>2]: begun two steps on,
  * the steps that wrap round climbing a lap).
  */
 import { period } from '../helix';
@@ -14,9 +14,9 @@ const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/; // a plain step: a whole number, perh
 const MIN_PHRASE = 4;
 /** … and saves at least this much beyond its own line: a new name is something to look up (a toll for reading). */
 const TOLL = 12;
-/** An occurrence moved by degrees (its ref is written degree(&m, d), not a suffix). */
-const DEGREE = '°';
-const use = (name: string, ref: string) => (ref.startsWith(DEGREE) ? `degree(&${name}, ${ref.slice(1)})` : `&${name}${ref}`);
+const use = (name: string, ref: string) => `&${name}${ref}`;
+/** An occurrence moved by degrees (`^d`), not grid steps (`^$d`). */
+const isDegree = (ref: string) => ref.startsWith('^') && !ref.startsWith('^$');
 
 /** Phrases written more than once (exactly, backwards, or transposed): one cell, used where they were. */
 export function phrases(source: string, cells: readonly Candidate[], result: Result): Suggestion[] {
@@ -96,7 +96,7 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
       for (const o of byShape.get(sh.key) ?? []) {
         const d = o.first - sh.first;
         // (grid steps where the numbers are a grid's, wherever the cell is read; else steps of its table: degrees)
-        if (d !== 0) take(o.cell, o.at, grid.get(o.cell) ? `^${d}` : `${DEGREE}${d}`);
+        if (d !== 0) take(o.cell, o.at, grid.get(o.cell) ? `^$${d}` : `^${d}`);
       }
     if (occs.length < 2) continue;
     // a rough saving, to rank (each is measured exactly once it's a suggestion)
@@ -138,16 +138,16 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
             ? 'as written'
             : o.ref === '[::-1]'
               ? 'backwards'
-              : o.ref.startsWith('^')
+              : o.ref.startsWith('^$')
                 ? `transposed ${o.ref}`
-                : o.ref.startsWith(DEGREE)
+                : isDegree(o.ref)
                   ? `${o.ref.slice(1)} degrees`
                   : `turned ${o.ref}`,
         ),
       ),
     ];
     // (a turn's climb, and a degree's step, depend on the table it's read through: checked note for note)
-    const turnedAny = f.occs.some((o) => o.ref.startsWith('[>>') || o.ref.startsWith('[<<') || o.ref.startsWith(DEGREE));
+    const turnedAny = f.occs.some((o) => o.ref.startsWith('[>>') || o.ref.startsWith('[<<') || isDegree(o.ref));
     const s = measured(source, {
       id: `phrase:${f.key}`,
       kind: 'phrase',

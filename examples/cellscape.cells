@@ -23,7 +23,7 @@
 &m1 tags="canon" 0@2 2@2 4@3 6
 &m2 tags="canon" 7@2 4@2 6@3 4                           # against &m1: octaves and thirds only (they stay consonant turned upside down)
 &melody tags="canon" over=&lydian step=&bar label="canon: the leader" &m1 &m2
-&canon tags="canon" over=&lydian step=&bar label="canon: the follower, an octave down, two bars behind" &melody[<<]^-12
+&canon tags="canon" over=&lydian step=&bar label="canon: the follower, an octave down, two bars behind" &melody[<<]^$-12
 &bells tags="bells" over=&lydian step=&bar label="bells" ~@3 11 ~@4 9 ~@3 13 ~@5 11 ~@4 6 ~@6 ~@2
 &pulse tags="pulse" over=&lydian step=&bar/2 label="pulse" 0 ~ 0 0 ~ 0 0 ~
 &shimmer tags="glass" over=&lydian step=&bar*16 label="glass" [11,13]

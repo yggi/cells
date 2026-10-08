@@ -37,24 +37,25 @@ describe('shorten', () => {
     expect(s.apply(src)).toContain('[::-1]');
     expect(sounds(s.apply(src))).toEqual(sounds(src));
   });
-  it('transposed, where the numbers are steps of a grid: &m^7', () => {
+  it('transposed, where the numbers are steps of a grid: &m^$7', () => {
     const src = '&t step=4 0 4 7 11 14 17 21 17 14 11 7 4 7 11 14 18 21 24 28 24 21 18 14 11' + tail;
     const s = shorten(src).find((x) => x.kind === 'phrase' && x.title.includes('transposed'))!;
-    expect(s.apply(src)).toMatch(/\^-?7/); // (either one, transposed to the other)
+    expect(s.apply(src)).toMatch(/\^\$-?7/); // (either one, transposed to the other)
     expect(sounds(s.apply(src))).toEqual(sounds(src));
   });
-  it('… and through a scale, by degrees: degree(&m, k), not ^k (#10)', () => {
+  it('… and through a scale, by degrees: &m^k, not ^$k (#10, #179)', () => {
     const src = '&major scan(2 2 1 2 2 2 1)\n&t over=&major step=4 0 2 4 5 7 9 7 5 4 2 0 -1 0 2 9 2 4 6 7 9 11 9 7 6 4 2 1 2 4 8 -1 1 3 4 6 8 6 4 3 1 -1 -2 -1 1' + tail;
     expect(shorten(src).some((x) => x.title.includes('transposed'))).toBe(false);
     const s = shorten(src).find((x) => x.kind === 'phrase' && x.title.includes('degrees'))!;
-    expect(s.apply(src)).toMatch(/degree\(&m1?, -?[123]\)/);
+    expect(s.apply(src)).toMatch(/&m1?\^-?[123](?![0-9])/);
+    expect(s.apply(src)).not.toMatch(/\^\$/);
     expect(sounds(s.apply(src))).toEqual(sounds(src));
   });
   it('a motif without over= read through its player’s scale is moved by degrees, not grid steps', () => {
     const src =
       '&major scan(2 2 1 2 2 2 1)\n&a 0 2 4 5 7 9 7 5 4 2 0 -1 0 2\n&b 1 3 5 6 8 10 8 6 5 3 1 0 1 3\n&c 3 5 7 8 10 12 10 8 7 5 3 2 3 5\n&t over=&major step=4 &a &b &c' + tail;
     const s = shorten(src).find((x) => x.kind === 'phrase')!;
-    expect(s.apply(src)).not.toMatch(/\^/);
+    expect(s.apply(src)).not.toMatch(/\^\$/);
     expect(sounds(s.apply(src))).toEqual(sounds(src));
   });
   it('fractions: every step held twice — divide by 2, step twice as slow', () => {
@@ -134,18 +135,18 @@ describe('shorten all the way, on every example: it sounds the same, and is done
 });
 
 describe('shorten: whole lines (#10)', () => {
-  it('a cell that only reads a motif through a shifted table: degree(&motif, k) where it is used', () => {
+  it('a cell that only reads a motif through a shifted table: &motif^k where it is used', () => {
     const src = '&scale over=scale(0,5)\n&down 3 3 2 2 1 1 0@2\n&mid over=&scale[>>] &down\n&t over=&scale step=4 &down &mid &mid' + tail;
     const s = shorten(src).find((x) => x.kind === 'degree')!;
     const next = s.apply(src);
     expect(next).not.toMatch(/^&mid/m);
-    expect(next).toContain('&t over=&scale step=4 &down degree(&down, 1) degree(&down, 1)');
+    expect(next).toContain('&t over=&scale step=4 &down &down^1 &down^1');
     expect(sounds(next)).toEqual(sounds(src));
   });
   it('… written in place, &(over=&major[>>] &hook), too', () => {
     const src = '&major scan(2 2 1 2 2 2 1)\n&hook 4 4 5 4\n&t over=&major step=4 &hook 2 &(over=&major[>>] &hook) 0' + tail;
     const s = shorten(src).find((x) => x.kind === 'degree')!;
-    expect(s.apply(src)).toContain('&hook 2 degree(&hook, 1) 0');
+    expect(s.apply(src)).toContain('&hook 2 &hook^1 0');
     expect(sounds(s.apply(src))).toEqual(sounds(src));
   });
   it('… but not one with a label (it says something), nor one read by a cell on another table', () => {

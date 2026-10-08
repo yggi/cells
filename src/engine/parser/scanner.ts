@@ -27,12 +27,18 @@ export const REFERENCE_SYNTAX: readonly Syntax[] = [
     ['&canon step=2 &theme[>>4]', '&mode over=&scale[<<] 0 2 4'],
     'braid.md',
   ),
-  syntax('reference', '&name^n', 'In a braid, transposed: what it plays, n grid steps up (^-n down) through its tables.', ['&answer step=2 &subject^7 &subject^-12'], 'braid.md'),
   syntax(
     'reference',
-    'degree(&name, n)',
-    'In a braid, moved n steps of the table it is read through (degrees, in a scale): its values plus n, before the table reads them. n may be negative.',
-    ['&tune over=&major step=2 &motif degree(&motif, 1) degree(&motif, -2)'],
+    '&name^n · degree(&name, n)',
+    'In a braid, moved n steps of the table it is read through (degrees, in a scale; relative): its values plus n, before the table reads them. n may be negative. &name^n is the short form.',
+    ['&tune over=&major step=2 &motif &motif^1 &motif^-2', '&tune over=&major step=2 degree(inverse(&motif), 4)'],
+    'braid.md',
+  ),
+  syntax(
+    'reference',
+    '&name^$n',
+    'In a braid, transposed: what it plays, n grid steps up (^$-n down) after its tables (absolute: semitones on the 12).',
+    ['&answer step=2 &subject^$7 &subject^$-12'],
     'braid.md',
   ),
   syntax(
@@ -232,21 +238,27 @@ export class LineScanner {
       const sign = this.peek();
       const n = /[0-9]+/.exec(this.text.slice(this.i + 1))![0];
       this.fail(
-        `&${name}${sign}${n}: write &${name}^${sign === '-' ? '-' : ''}${n} to transpose it (in a braid), &${name} ${sign} ${n} to add pitch (in a mix), &${name}[${sign === '-' ? '<<' : '>>'}${n === '1' ? '' : n}] to shift it, or &${name}[…] to pick from it`,
+        `&${name}${sign}${n}: write &${name}^${sign === '-' ? '-' : ''}${n} to move it by its table's steps (in a braid; ^$${sign === '-' ? '-' : ''}${n}: by semitones), &${name} ${sign} ${n} to add pitch (in a mix), &${name}[${sign === '-' ? '<<' : '>>'}${n === '1' ? '' : n}] to shift it, or &${name}[…] to pick from it`,
         at,
         this.i - at + 1 + n.length,
       );
     }
     return { name, pick, shift, ...this.transposition(name), span: this.span(at) };
   }
-  /** `^n` after a reference: what it plays, n grid steps up (^-n down). */
-  transposition(name: string): { transpose?: number } {
+  /**
+   * After a reference: `^n` moves it n steps of the table it is read through (a degree, relative: degree(&x, n)); `^$n`
+   * n steps of the grid after its tables (absolute: semitones on the 12).
+   */
+  transposition(name: string): { transpose?: number; degree?: number } {
     if (this.peek() !== '^') return {};
     const at = this.i;
     this.i++;
+    const abs = this.peek() === '$';
+    if (abs) this.i++;
     const n = this.match(/-?[0-9]+/y);
-    if (n === null) this.fail(`&${name}^n transposes by n grid steps: &${name}^7, &${name}^-12`, at, 1);
-    return parseInt(n!, 10) ? { transpose: parseInt(n!, 10) } : {};
+    if (n === null) this.fail(`&${name}^n moves it n steps of its table (&${name}^1, a degree up), &${name}^$n n semitones (&${name}^$7, &${name}^$-12)`, at, 1);
+    const k = parseInt(n!, 10);
+    return !k ? {} : abs ? { transpose: k } : { degree: k };
   }
   atBoundary(): boolean {
     const c = this.peek();

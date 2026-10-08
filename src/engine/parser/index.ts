@@ -4,7 +4,7 @@
  * drops its cell, the rest is read). Every form it reads is in docs/language/reference.md,
  * generated from the tables in these modules (syntax.ts):
  *
- *   scanner.ts     a line: names, numbers, references (picks, shifts, ^n), unnamed cells &( … )
+ *   scanner.ts     a line: names, numbers, references (picks, shifts, ^n, ^$n), unnamed cells &( … )
  *   cell.ts        a cell's line: the attributes (KEYS, then parameters) and its braid
  *   braid.ts       steps (numbers, rests, chords, choices, cells) and their modifiers
  *   generators.ts  scan(…), euclid(…), sin(…), meter(…), spell(…)

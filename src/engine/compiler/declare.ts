@@ -125,7 +125,7 @@ const VOICE_KIT = 'kit:voices';
 export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Ref[]; cells: Map<string, Token[]> } | null {
   const sounds = (d: CellDecl | undefined) => Object.keys(d?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
   const isVoiceDecl = (n: string) => sounds(decls.get(n));
-  const plain = (r: { pick: unknown; shift: number; transpose?: number; values?: unknown }) => !r.pick && !r.shift && !r.transpose && !r.values;
+  const plain = (r: { pick: unknown; shift: number; transpose?: number; degree?: number; values?: unknown }) => !r.pick && !r.shift && !r.transpose && !r.degree && !r.values;
   const asTable = new Set([...decls.values()].flatMap((d) => (d.over ? [d.over.name] : [])));
   // what a cell may hold to be a groove or a motif: rests, voices, chords of voices, and references to motifs
   const shape = (d: CellDecl | undefined, seen: readonly string[]): boolean => {

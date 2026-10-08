@@ -282,7 +282,9 @@ describe('parse: shifts in brackets', () => {
     expect(typed(a)[0]).toMatchObject({ pitches: [{ ref: { name: 'alto', shift: -1, pick: null } }], offset: -7 });
   });
   it('the glued form now offers all four readings', () => {
-    expect(parse('&a 0 &b-1').diagnostics[0].message).toMatch(/&b\^-1 to transpose it \(in a braid\), &b - 1 to add pitch \(in a mix\), &b\[<<\] to shift it/);
+    expect(parse('&a 0 &b-1').diagnostics[0].message).toMatch(
+      /&b\^-1 to move it by its table's steps \(in a braid; \^\$-1: by semitones\), &b - 1 to add pitch \(in a mix\), &b\[<<\] to shift it/,
+    );
   });
 });
 

@@ -10,7 +10,7 @@
  *  - defaults.ts:  an attribute that says what would be so anyway (loop=SAMPLE_RATE, cycle= its length, pan=.5)
  *  - progressions.ts: a transposing loop=&x*N with the bars multiplied out — step=&x*(N/k)
  *  - stereo.ts:    a sound card's two chords that differ only in gains — one chord, and pan= on each voice
- *  - wrappers.ts:  a cell that only reads motifs through a shifted table — degree(&motif, k) where it's used
+ *  - wrappers.ts:  a cell that only reads motifs through a shifted table — &motif^k where it's used
  *
  * Each suggestion carries its rewrite; its saving is measured on the result
  * (harness.ts: the cells a rule may touch, the measure, the note-for-note check).

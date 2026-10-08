@@ -7,7 +7,7 @@
 &harmony step=&bar 0!3 -5!2                        # 3 + 2: the minor chord for three beats, the minor fifth for two
 
 &call 4 3 2@2 0 ~ 1 2 ~@2                          # one bar of swung eighths
-&tune over=&penta step=&swing &call degree(&call, 1) &call 4 ~ 3 2 0@6   # the call, answered a step up the scale
+&tune over=&penta step=&swing &call &call^1 &call 4 ~ 3 2 0@6   # the call, answered a step up the scale
 
 &walk step=&bar 0 3 7 -5 -2                        # a bass that walks the 3 + 2
 &comp step=&swing [0,3,7]@3!2 [0,3,10]@3 [0,3,10]

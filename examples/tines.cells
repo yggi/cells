@@ -10,7 +10,7 @@
 &bar scan(1 1 1 1) step=free(84bpm, 60..110)
 &major scan(2 2 1 2 2 2 1)
 &chord [0,2,4,6]@3 [0,2,4,6] ~@2 [0,2,4,6]@2                    # a seventh chord, in its rhythm
-&comp over=&major step=&bar/2 label="the piano: Fmaj7 · Em7 · Dm7 · Cmaj7" degree(&chord, 3) degree(&chord, 2) degree(&chord, 1) &chord
+&comp over=&major step=&bar/2 label="the piano: Fmaj7 · Em7 · Dm7 · Cmaj7" &chord^3 &chord^2 &chord^1 &chord
 &tune over=&major step=&bar/2 label="the bells" ~@2 9 11 12@4 ~@2 11 9 8@4 ~@2 7 8 9 8 7 5 4@4 ~@4
 &low over=&major step=&bar -11 ~ -11 -10 -12 ~ -12 -11 -13 ~ -13 -12 -14 ~ -14 -10
 

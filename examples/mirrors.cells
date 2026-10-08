@@ -1,11 +1,11 @@
 &piece title="Mirrors: backwards, upside down, in pieces" tags="tutorial, motifs, counterpoint" rung=12 label="One motif heard forwards, backwards, higher, upside down, and taken apart." about=&out
-&sliceNote label="&m[::-1] is the motif backwards (its retrograde); &m[0:4] its first four steps; &m[-1] its last; &m^7 all of it seven steps of the grid up (on the twelve, a fifth)." about=&tune
+&sliceNote label="&m[::-1] is the motif backwards (its retrograde); &m[0:4] its first four steps; &m[-1] its last; &m^$7 all of it seven steps of the grid up (on the twelve, a fifth)." about=&tune
 &inverseNote label="inverse(&m) mirrors it within the scale, round its first degree: up becomes down. Played against the tune from the start: a mirror for the motif, and degree(…, 4) for its reverse." about=&answer
 &bar scan(1 1 1 1) step=free(andante)
 &dorian over=scale(2,3) label="{mode} on {tonic}"
 
 &m 0 1 2 4 3 1 2@2
-&tune over=&dorian step=&bar/2 &m &m[::-1] &m^7 &m[0:4]!2 &m[-1]@4
+&tune over=&dorian step=&bar/2 &m &m[::-1] &m^$7 &m[0:4]!2 &m[-1]@4
 &answer over=&dorian step=&bar/2 inverse(&m) degree(inverse(&m), 4) inverse(&m) degree(inverse(&m), 4) 0@8
 
 &flute s=tri loop=D4 env=&(map=adsr .02 .3 .5 .3)

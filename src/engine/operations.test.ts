@@ -34,8 +34,9 @@ describe('degree(&x, n) and inverse(&x): a reference’s values moved before its
   it('nested, they compose: degree(inverse(&m), 4) mirrors round the third degree: C D E → G F E', () => {
     expect(hz(motif + '&t over=scale(0,5) step=2 degree(inverse(&m), 4)' + tail)).toEqual([392, 349, 330]);
   });
-  it('degree is in the table’s steps, ^n in the grid’s: over a scale they differ', () => {
-    expect(hz(motif + '&t over=scale(0,5) step=2 &m^1' + tail)).toEqual([277, 311, 349]);
+  it('degree is in the table’s steps, ^$n in the grid’s: over a scale they differ; ^n is degree(…)', () => {
+    expect(hz(motif + '&t over=scale(0,5) step=2 &m^$1' + tail)).toEqual([277, 311, 349]);
+    expect(hz(motif + '&t over=scale(0,5) step=2 &m^1' + tail)).toEqual(hz(motif + '&t over=scale(0,5) step=2 degree(&m, 1)' + tail));
   });
   it('a step like any other: picks inside, modifiers after', () => {
     expect(hz(motif + '&t over=scale(0,5) step=2 degree(&m[::-1], 2)!2' + tail, 2.9)).toEqual([392, 349, 330, 392, 349, 330]);
@@ -82,6 +83,6 @@ describe('degree(&x, n) and inverse(&x): a reference’s values moved before its
     const r = compileSource(motif + '&t over=scale(0,5) step=2 degree(&m, 1) degree(inverse(&m), 4)\n&u step=2 &m' + tail);
     const edge = buildGraph(r).edges.find((e) => e.port === 'braid' && e.source === 'cell:t' && e.target.endsWith('m'))!;
     expect(edge.transforms).toEqual([[{ kind: 'degree', by: 1 }], [{ kind: 'inverse' }, { kind: 'degree', by: 4 }]]);
-    expect(edgeLabel(edge)).toBe('×2 degree +1 inverse degree +4');
+    expect(edgeLabel(edge)).toBe('×2 ^1 inverse ^4');
   });
 });

@@ -20,7 +20,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `~`: A rest: a step that plays nothing. [→](cell.md) `&tune step=2 0 ~ 4 ~`
 - `[a, b, c]` · `[a b c]`: A chord: the numbers sound together, in one step. [→](time.md) `&chords step=1 [0,2,4] [3 5 7]`
 - `[a|b|c]`: A choice: one of them, chosen afresh each time round (the same every time it is played). [→](braid.md) `&tune step=2 0 [2|4|7] 4`
-- `&x`: A cell, spliced in: its braid plays in this one's step (as long as its own steps). Picks, shifts and transposing are under References. [→](braid.md) `&theme step=2 &motif &motif^7 0`
+- `&x`: A cell, spliced in: its braid plays in this one's step (as long as its own steps). Picks, shifts and transposing are under References. [→](braid.md) `&theme step=2 &motif &motif^$7 0`
 - `&voice (stepped)`: In a stepped braid of voices (and rests), each step plays its voice: a drum pattern by name. Chords of voices sound together, [&bd, &hh]; modifiers work as on any step. Unstepped, a braid of voices is a kit, read by number. [→](sound.md) `&groove step=4 &bd ~ &hh [&bd, &sd] &hh*2 ~`
 
 ## Modifiers
@@ -36,8 +36,8 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `&name[i]`: One entry of its braid as it is turned now (a fixed tap: it follows shift=), counted from 0; negative from the end (&x[-1] the last). &name[$i]: as written. [→](braid.md) `&tune step=2 &motif[0] &motif[-1] &key[$0]`
 - `&name[a:b]` · `&name[a:b:s]`: A slice, Python-style: from a up to b (either may be left out), every s-th; [::-1] backwards (retrograde). As turned; [$a:b] as written. [→](braid.md) `&tune step=2 &motif[1:3] &motif[:-1] &motif[::-1] &motif[::2]`
 - `&name[<<n]` · `&name[>>n]`: Shifted back or forward n places (1 if left out), on top of its own shift=: rotating it, climbing the helix. [→](braid.md) `&canon step=2 &theme[>>4]` · `&mode over=&scale[<<] 0 2 4`
-- `&name^n`: In a braid, transposed: what it plays, n grid steps up (^-n down) through its tables. [→](braid.md) `&answer step=2 &subject^7 &subject^-12`
-- `degree(&name, n)`: In a braid, moved n steps of the table it is read through (degrees, in a scale): its values plus n, before the table reads them. n may be negative. [→](braid.md) `&tune over=&major step=2 &motif degree(&motif, 1) degree(&motif, -2)`
+- `&name^n` · `degree(&name, n)`: In a braid, moved n steps of the table it is read through (degrees, in a scale; relative): its values plus n, before the table reads them. n may be negative. &name^n is the short form. [→](braid.md) `&tune over=&major step=2 &motif &motif^1 &motif^-2` · `&tune over=&major step=2 degree(inverse(&motif), 4)`
+- `&name^$n`: In a braid, transposed: what it plays, n grid steps up (^$-n down) after its tables (absolute: semitones on the 12). [→](braid.md) `&answer step=2 &subject^$7 &subject^$-12`
 - `inverse(&name)`: In a braid, mirrored: its values negated before the table reads them (inversion within the scale, round its first degree). Operations nest: degree(inverse(&x), 4) mirrors round the third degree. [→](braid.md) `&tune over=&major step=2 &motif inverse(&motif) degree(inverse(&motif), 4)`
 - `&( … )`: An unnamed cell, written where it is used, with attributes and a braid of its own. [→](cell.md) `&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)`
 

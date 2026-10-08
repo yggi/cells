@@ -14,9 +14,9 @@
 &m3 label="mixture: 3 steps apart" [0,3,6,9,12]
 &m4 label="mixture: 4 steps apart" [0,4,8,12,16]
 &m5 label="mixture: 5 steps apart" [0,5,10,15,20]
-&mixtures &m1 &m2^30 &m3^12 &m4^50 &m5^20                       # … each on its step of the scale
+&mixtures &m1 &m2^$30 &m3^$12 &m4^$50 &m5^$20                       # … each on its step of the scale
 &forward over=&steps step=&time &mixtures
-&backward over=&steps step=&time &mixtures[::-1]^8              # retrograde, eight steps higher
+&backward over=&steps step=&time &mixtures[::-1]^$8              # retrograde, eight steps higher
 
 &swell pan=.14 s=sine loop=100 env=&(map=adsr 1.5 .5 .8 1.5)            # 100 Hz: the scale's first tone
 &fade pan=.86 s=sine loop=100 env=&(map=adsr .01 1.5 .3 1.5)

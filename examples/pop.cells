@@ -9,7 +9,7 @@
 &roots tags="bass" over=&major step=&bar/2 0!8 4!8 5!8 3!8
 
 &hook tags="hook" 4 4 5 4                                             # the hook …
-&tune tags="hook" over=&major step=&bar/2 &hook 2@2 0@2 &hook 2@2 ~@2 degree(&hook, 1) 4@2 2@2 3 3 2 1 0@4           # … a step up in bar 3
+&tune tags="hook" over=&major step=&bar/2 &hook 2@2 0@2 &hook 2@2 ~@2 &hook^1 4@2 2@2 3 3 2 1 0@4           # … a step up in bar 3
 
 &kick tags="drums" map=amp step=&bar 1 ~ 1 ~
 &snare tags="drums" map=amp step=&bar ~ 1 ~ 1

@@ -69,7 +69,7 @@ export function pitchOf(p: Plan, e: StepEvent, at: number): number {
   const now = shiftsAt(p.result, p.statics, at + EPS, p.played);
   const t = tapped(p.result, e, now);
   const found = resolveIn(p.result, e.table, e.tableShift, t.value, t.alter, now);
-  const r = e.transpose ? { ...found, position: found.position + e.transpose } : found; // ^n: grid steps up
+  const r = e.transpose ? { ...found, position: found.position + e.transpose } : found; // ^$n: grid steps up
   return semitones(p.result, r.root, r.position);
 }
 

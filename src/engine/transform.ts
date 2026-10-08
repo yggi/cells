@@ -18,7 +18,7 @@ export type TransformStep =
   | { readonly kind: 'degree'; readonly by: number }
   /** `inverse(…)`: the values mirrored round 0, before the tables read them. */
   | { readonly kind: 'inverse' }
-  /** A transposition after the tables: `^n` grid steps, or `+n` semitones (a number in a pitch sum). */
+  /** A transposition after the tables: `^$n` grid steps, or `+n` semitones (a number in a pitch sum). */
   | { readonly kind: 'transpose'; readonly by: number; readonly unit: 'grid' | 'semitone' }
   /** Subtracted in a pitch sum (`− &x`). */
   | { readonly kind: 'negate' }
@@ -51,11 +51,11 @@ export function stepLabel(s: TransformStep): string {
     case 'delay':
       return s.unit === 'step' ? shiftLabel(-s.by) : `at=${+s.by.toFixed(3)}`;
     case 'degree':
-      return `degree ${s.by > 0 ? '+' : ''}${s.by}`;
+      return `^${s.by}`;
     case 'inverse':
       return 'inverse';
     case 'transpose':
-      return s.unit === 'grid' ? `^${s.by}` : signed(s.by);
+      return s.unit === 'grid' ? `^$${s.by}` : signed(s.by);
     case 'negate':
       return '−';
     case 'gain':

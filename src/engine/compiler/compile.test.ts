@@ -682,45 +682,59 @@ describe('ratios grids, geometric intervals, decibels; colours and names on a vo
   });
 });
 
-describe('transposing a reference: &x^n', () => {
+describe('moving a reference: &x^n by its table (degrees), &x^$n by the grid (#179)', () => {
   const sounds = (src: string, cell = 't') => {
     const r = compileSource(src);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     return flattenPitches(r, cell);
   };
-  // what a cell plays, as grid positions after its tables and every ^n
+  // what a cell plays, as grid positions after its tables and every ^$n
   function flattenPitches(r: ReturnType<typeof compileSource>, cell: string) {
     return flatten(r, cell, codeShifts(r), null).map((e) => {
       const p = resolveIn(r, e.table, e.tableShift, e.value, e.alter, codeShifts(r));
       return +semitones(r, p.root, p.position + (e.transpose ?? 0)).toFixed(4);
     });
   }
-  it('reads ^n and ^-n, also after a bracket', () => {
-    const atoms = parse('&t &m^7 &m^-12 &m[::-1]^2 &m[>>]^1').cells[0].braid;
-    expect(atoms.kind === 'list' && atoms.tokens.map((t) => (t.atom.kind === 'ref' ? [t.atom.transpose, t.atom.shift, !!t.atom.pick] : null))).toEqual([
-      [7, 0, false],
-      [-12, 0, false],
-      [2, 0, true],
-      [1, 1, false],
+  it('reads ^n, ^-n, ^$n and ^$-n, also after a bracket', () => {
+    const atoms = parse('&t &m^$7 &m^$-12 &m[::-1]^$2 &m[>>]^$1 &m^1 &m[0]^-2').cells[0].braid;
+    expect(atoms.kind === 'list' && atoms.tokens.map((t) => (t.atom.kind === 'ref' ? [t.atom.transpose, t.atom.values?.add, t.atom.shift, !!t.atom.pick] : null))).toEqual([
+      [7, undefined, 0, false],
+      [-12, undefined, 0, false],
+      [2, undefined, 0, true],
+      [1, undefined, 1, false],
+      [undefined, 1, 0, false],
+      [undefined, -2, 0, true],
     ]);
-    expect(parse('&t &m^').diagnostics[0].message).toMatch(/transposes by n grid steps/);
+    expect(parse('&t &m^').diagnostics[0].message).toMatch(/moves it n steps of its table/);
+    expect(parse('&t &m^$').diagnostics[0].message).toMatch(/n semitones/);
   });
-  it('on the 12-tone grid, ^n is n semitones', () => {
-    expect(sounds('&m 0 4 7\n&t &m &m^7 &m^-12')).toEqual([0, 4, 7, 7, 11, 14, -12, -8, -5]);
+  it('on the 12-tone grid, ^$n is n semitones', () => {
+    expect(sounds('&m 0 4 7\n&t &m &m^$7 &m^$-12')).toEqual([0, 4, 7, 7, 11, 14, -12, -8, -5]);
   });
-  it('after the tables: a motif in scale degrees keeps its shape, n grid steps higher', () => {
-    expect(sounds('&major scan(2 2 1 2 2 2 1)\n&m 0 2 4\n&t over=&major &m &m^7')).toEqual([0, 4, 7, 7, 11, 14]);
+  it('^$n after the tables: a motif in scale degrees keeps its shape, n grid steps higher', () => {
+    expect(sounds('&major scan(2 2 1 2 2 2 1)\n&m 0 2 4\n&t over=&major &m &m^$7')).toEqual([0, 4, 7, 7, 11, 14]);
   });
-  it('on another grid, ^n is n of its steps: Studie II, 8 steps up the 5:1 grid', () => {
-    const ps = sounds('&steps cycle=25 map=ed(5)\n&m 0 1\n&t over=&steps &m &m^8');
+  it('^n before the table: n degrees, as degree(&m, n) is — over a scale they differ', () => {
+    const scale = '&major scan(2 2 1 2 2 2 1)\n&m 0 2 4\n';
+    expect(sounds(scale + '&t over=&major &m^1 &m^-1')).toEqual([2, 5, 9, -1, 2, 5]);
+    expect(sounds(scale + '&t over=&major &m^1')).toEqual(sounds(scale + '&t over=&major degree(&m, 1)'));
+    expect(sounds(scale + '&t over=&major &m^$1')).toEqual([1, 5, 8]);
+    // (on the 12 they agree)
+    expect(sounds('&m 0 4\n&t &m^3')).toEqual(sounds('&m 0 4\n&t &m^$3'));
+  });
+  it('on another grid, ^$n is n of its steps: Studie II, 8 steps up the 5:1 grid', () => {
+    const ps = sounds('&steps cycle=25 map=ed(5)\n&m 0 1\n&t over=&steps &m &m^$8');
     expect(Math.pow(2, ps[2] / 12)).toBeCloseTo(Math.pow(5, 8 / 25), 5);
   });
   it('nested: the steps add up', () => {
-    expect(sounds('&a 0\n&b &a^2\n&t &b^3 &b')).toEqual([5, 2]);
+    expect(sounds('&a 0\n&b &a^$2\n&t &b^$3 &b')).toEqual([5, 2]);
+    expect(sounds('&major scan(2 2 1 2 2 2 1)\n&a 0\n&b &a^2\n&t over=&major &b^1 &b')).toEqual([5, 4]);
   });
-  it('in a mix, it says to add pitch instead', () => {
-    const r = compileSource('&m step=1\n&t step=&m 0\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t^7 * &v]');
-    expect(r.diagnostics.map((d) => d.message).join()).toMatch(/transposing \(\^\) is for braids — in a mix, add pitch: &t \+ 7/);
+  it('in a mix, it says what to write instead', () => {
+    const r = compileSource('&m step=1\n&t step=&m 0\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t^$7 * &v]');
+    expect(r.diagnostics.map((d) => d.message).join()).toMatch(/transposing \(\^\$\) is for braids — in a mix, add pitch: &t \+ 7/);
+    const d = compileSource('&m step=1\n&t step=&m 0\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t^1 * &v]');
+    expect(d.diagnostics.map((x) => x.message).join()).toMatch(/moving by degrees \(\^\) is for braids/);
   });
   it('the graph labels the reference with it', () => {
     const g = buildGraph(compileSource('&m 0 4\n&t step=1 &m^7\n&u step=1 &m\n&v s=tri\n&mix loop=SAMPLE_RATE map=sample [&t * &v]'));

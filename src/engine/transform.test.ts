@@ -11,11 +11,11 @@ describe('a transform, spelt as written', () => {
     expect(stepLabel({ kind: 'delay', by: 3, unit: 'step' })).toBe('[<<3]');
     expect(stepLabel({ kind: 'delay', by: -2, unit: 'step' })).toBe('[>>2]');
     expect(stepLabel({ kind: 'delay', by: 0.375, unit: 'second' })).toBe('at=0.375');
-    expect(stepLabel({ kind: 'degree', by: 1 })).toBe('degree +1');
-    expect(stepLabel({ kind: 'degree', by: -2 })).toBe('degree -2');
+    expect(stepLabel({ kind: 'degree', by: 1 })).toBe('^1');
+    expect(stepLabel({ kind: 'degree', by: -2 })).toBe('^-2');
     expect(stepLabel({ kind: 'inverse' })).toBe('inverse');
-    expect(stepLabel({ kind: 'transpose', by: 7, unit: 'grid' })).toBe('^7');
-    expect(stepLabel({ kind: 'transpose', by: -12, unit: 'grid' })).toBe('^-12');
+    expect(stepLabel({ kind: 'transpose', by: 7, unit: 'grid' })).toBe('^$7');
+    expect(stepLabel({ kind: 'transpose', by: -12, unit: 'grid' })).toBe('^$-12');
     expect(stepLabel({ kind: 'transpose', by: -7, unit: 'semitone' })).toBe('−7');
     expect(stepLabel({ kind: 'transpose', by: 5, unit: 'semitone' })).toBe('+5');
     expect(stepLabel({ kind: 'negate' })).toBe('−');
@@ -47,7 +47,7 @@ describe('a transform, spelt as written', () => {
         { kind: 'degree', by: 4 },
         { kind: 'transpose', by: 8, unit: 'grid' },
       ]),
-    ).toBe('[::-1] inverse degree +4 ^8');
+    ).toBe('[::-1] inverse ^4 ^$8');
     expect(transformLabel([])).toBe('');
   });
 });
@@ -71,8 +71,8 @@ describe('an edge’s label', () => {
 
   it('a ref written several times: its count, and each different transform once (three at most, then …)', () => {
     const up = (n: number): Transform => [{ kind: 'transpose', by: n, unit: 'grid' }];
-    expect(edgeLabel(wire('braid', [[], up(7), up(7)], 3))).toBe('×3 ^7');
-    expect(edgeLabel(wire('braid', [up(-4), up(3), up(-2)], 3))).toBe('×3 ^-4 ^3 ^-2');
-    expect(edgeLabel(wire('braid', [up(1), up(2), up(3), up(4)], 4))).toBe('×4 ^1 ^2 ^3 …');
+    expect(edgeLabel(wire('braid', [[], up(7), up(7)], 3))).toBe('×3 ^$7');
+    expect(edgeLabel(wire('braid', [up(-4), up(3), up(-2)], 3))).toBe('×3 ^$-4 ^$3 ^$-2');
+    expect(edgeLabel(wire('braid', [up(1), up(2), up(3), up(4)], 4))).toBe('×4 ^$1 ^$2 ^$3 …');
   });
 });

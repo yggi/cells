@@ -32,7 +32,7 @@ export interface StepEvent {
   /** Table it indexes (the cell's over=, else its player's), with that reference's shift. */
   readonly table: string;
   readonly tableShift: number;
-  /** Grid steps it's transposed by (the ^n of every reference it was spliced through). */
+  /** Grid steps it's transposed by (the ^$n of every reference it was spliced through). */
   readonly transpose?: number;
   /**
    * A relative pick's tap: the value is entry `index` of `cell` turned as it stands when it sounds (read in `ctx`,

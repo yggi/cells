@@ -1,6 +1,6 @@
 /**
  * Wrappers: a cell whose only job is to read motifs through a shifted table (&mid over=&scale[>>] &down)
- * is those motifs moved by degrees where it is used: degree(&down, 1). Offered when every cell that
+ * is those motifs moved by degrees where it is used: &down^1. Offered when every cell that
  * splices it reads the same table unshifted, and it has nothing else to say (no label, no step).
  */
 import { declWords, deleteCell, setBraid, spansLines } from '../edit';
@@ -20,7 +20,7 @@ export function wrappers(source: string, result: Result): Suggestion[] {
     if (words.length - motifs.length !== 1 || motifs.length === 0) continue;
     if (!motifs.every((x) => PLAIN_REF.test(x) && !result.cells.get(PLAIN_REF.exec(x)![1])?.over)) continue;
     const k = w.overShift;
-    const moved = motifs.map((x) => `degree(${x}, ${k})`);
+    const moved = motifs.map((x) => `${x}^${k}`);
     // where it is spliced: every user reads w's table unshifted, and writes it as a step of its own
     const token = w.lambda ? `&(${w.lambda})` : `&${w.name}`;
     const users = [...result.cells.values()].filter((u) => u.units.some((x) => x.atom.kind === 'ref' && x.atom.name === w.name));
