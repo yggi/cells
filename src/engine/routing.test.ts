@@ -20,6 +20,8 @@ function states(r: CompileResult, t: number | null, muted: ReadonlySet<string> =
   const out = new Map<string, string>();
   const short = (id: string) => id.replace(/cell:/g, '').replace(/junction:/g, '*');
   for (const n of g.nodes) out.set(short(n.id), nodeStateOf(n.id, muted, routed, live));
+  // (a bulb is its cell, drawn on its host's wheel: its state, as the wheel draws it)
+  for (const b of g.bulbs.keys()) out.set(b, nodeStateOf(`cell:${b}`, muted, routed, live));
   for (const e of g.edges) out.set(short(e.id), edgeStateOf(e, muted, routed, live));
   return out;
 }
@@ -120,28 +122,13 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
   it('an instrument (a mix used like a voice) and a sound tape it records: all on the way while it plays', () => {
     const r = compileSource(PRESETS.soundtape.source);
     const s = states(r, 3);
-    for (const k of [
-      'dry',
-      'tape',
-      'left',
-      'right',
-      'far',
-      'reel',
-      'tune->*dry:0',
-      'pluck->*dry:0',
-      '*dry:0->dry',
-      'dry->out',
-      'dry->tape',
-      'tape->left',
-      'left->out',
-      'tape~>reel',
-    ])
+    for (const k of ['dry', 'tape', 'left', 'right', 'far', 'reel', 'tune->*dry:0', 'pluck->*dry:0', '*dry:0->dry', 'dry->out', 'dry->tape', 'left->out', 'tape~>reel'])
       expect(s.get(k), k).toBe('live');
   });
   it('a resonator excited by tape heads, and the heads into the sound card', () => {
     const r = compileSource(PRESETS.resonanz.source);
     const s = states(r, 2);
-    for (const k of ['site->tape', 'tape->h1', 'h1->echo', 'echo->pipeA', 'pipeA->out', 'hammer->*site:0', 'plate->*site:0', '*site:0->site']) expect(s.get(k), k).toBe('live');
+    for (const k of ['site->tape', 'h1', 'h1->echo', 'echo->pipeA', 'pipeA->out', 'hammer->*site:0', 'plate->*site:0', '*site:0->site']) expect(s.get(k), k).toBe('live');
   });
   it('a sound tape nothing hears is not part of the sound (nor what it records)', () => {
     const r = src(

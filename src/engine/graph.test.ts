@@ -45,7 +45,12 @@ describe('edges as wires', () => {
 
   it('take their band from the port: values, ticks or sound', () => {
     expect(wireOf(g, 'motif', 'tape')).toMatchObject({ port: 'write', band: 'cv' }); // a tape of notes
-    expect(wireOf(g, 'tape', 'near')).toMatchObject({ port: 'play', band: 'cv' });
+    // (a read head is a bulb on its tape, decision 021: every cell its own node, the wire)
+    expect(wireOf(buildGraph(compileSource(readFileSync('tools/gallery/golden/golden.cells', 'utf8')), { bulbs: false }), 'tape', 'near')).toMatchObject({
+      port: 'play',
+      band: 'cv',
+    });
+    expect(wireOf(g, 'tape', 'near')).toBeUndefined();
     expect(wireOf(g, 'accent', 'flute')).toMatchObject({ port: 'level', band: 'cv' });
     expect(wireOf(g, 'vibrato', 'flute')).toMatchObject({ port: 'pitch', band: 'cv' });
     expect(wireOf(g, 'theme', 'flute')).toMatchObject({ port: 'voice', band: 'cv' });
@@ -70,7 +75,7 @@ describe('edges as wires', () => {
   });
 
   it('carry sound where the source is a sound: a mix written to tape, a modulator, a wave in a pitch sum (FM)', () => {
-    const sound = buildGraph(compileSource(PRESETS.soundtape.source)).edges;
+    const sound = buildGraph(compileSource(PRESETS.soundtape.source), { bulbs: false }).edges;
     expect(wireOf(buildGraph(compileSource(PRESETS.soundtape.source)), 'dry', 'tape')).toMatchObject({ port: 'write', band: 'audio' });
     expect(sound.filter((e) => e.port === 'play').map((e) => e.band)).toEqual(expect.arrayContaining(['audio']));
     expect(sound.filter((e) => e.port === 'play' && e.band !== 'audio')).toEqual([]);
@@ -125,7 +130,8 @@ describe('edges as wires', () => {
   });
 
   it('a tape’s heads are its net’s taps, each at its delay in seconds', () => {
-    const tape = buildGraph(compileSource(PRESETS.echotape.source));
+    // (every cell its own node: drawn, the heads are bulbs on the tape — decision 021)
+    const tape = buildGraph(compileSource(PRESETS.echotape.source), { bulbs: false });
     expect(tape.nets.find((n) => n.owner === 'cell:tape')).toMatchObject({ port: 'play', delayed: true });
     expect(delays(tape, 'tape')).toEqual([
       ['near', 'at=0.375'],
@@ -152,6 +158,58 @@ describe('edges as wires', () => {
         expect([e.source, e.target].sort()).toEqual([e.from, e.to].sort());
       }
     }
+  });
+});
+
+describe('a tape’s read heads are bulbs on it (decision 021)', () => {
+  it('a head that takes nothing but its tape: no node, its edges out leaving from its bulb, the tape turned with it', () => {
+    const g = buildGraph(compileSource(PRESETS.echotape.source));
+    expect(['near', 'mid', 'far'].map((h) => g.bulbs.get(h))).toEqual(['tape', 'tape', 'tape']);
+    expect(g.nodes.some((n) => n.id === 'cell:near')).toBe(false);
+    expect(g.edges.some((e) => e.port === 'play')).toBe(false); // (the tape into its head: inside the wheel)
+    const out = g.edges.filter((e) => e.bulb === 'near');
+    expect(out.length).toBeGreaterThan(0);
+    for (const e of out) expect(e).toMatchObject({ from: 'cell:tape', bulbAt: { r: expect.any(Number) } });
+    // (unturned, the write head on top: a head an eighth of the way round sits up and to the right, outside the rim)
+    const at = out[0].bulbAt!;
+    expect(at.y).toBeLessThan(0);
+    expect(at.x).toBeGreaterThan(0);
+    expect(Math.hypot(at.x, at.y)).toBeGreaterThan(70);
+    expect(g.nodes.find((n) => n.id === 'cell:tape')).toMatchObject({ reach: { room: expect.any(Number) } });
+  });
+
+  it('a head that takes more than its tape, or reads at a clock, stays a node of its own', () => {
+    const src = (head: string) =>
+      ['&reel motor=1', '&mel step=1 0 2', '&v loop=C4', '&lfo loop=1 0 1', '&tape step=&reel write=&mel length=4', head, '&out loop=44k map=sample [&h * &v]'].join('\n');
+    expect(buildGraph(compileSource(src('&h play=&tape at=1'))).bulbs.get('h')).toBe('tape');
+    expect(buildGraph(compileSource(src('&h play=&tape at=1 level=&lfo'))).bulbs.has('h')).toBe(false);
+    expect(buildGraph(compileSource(src('&h play=&tape at=&reel'))).bulbs.has('h')).toBe(false);
+  });
+
+  it('heads with no room for their bulbs stay nodes: two at one place, one on the write head, one the tape records', () => {
+    const src = (...heads: string[]) =>
+      [
+        '&reel motor=1',
+        '&mel step=1 0 2',
+        '&v loop=C4',
+        '&tape step=&reel write=&mel length=6',
+        ...heads,
+        `&out loop=44k map=sample [${heads.map((h) => `${h.split(' ')[0]} * &v`).join(', ')}]`,
+      ].join('\n');
+    // (a stereo pair at one place: the first a bulb, the second a node of its own, so each can be tapped)
+    const pair = buildGraph(compileSource(src('&l play=&tape at=2', '&r play=&tape at=2')));
+    expect([pair.bulbs.get('l'), pair.bulbs.has('r')]).toEqual(['tape', false]);
+    expect(pair.edges.some((e) => e.port === 'play' && e.to === 'cell:r')).toBe(true);
+    // (on the write head: at=0, or a whole length round)
+    for (const at of ['0', '6']) expect(buildGraph(compileSource(src(`&h play=&tape at=${at}`))).bulbs.has('h')).toBe(false);
+    // (a head the tape records, a loop: its write edge and its play edge are both drawn)
+    const loop = buildGraph(
+      compileSource(['&reel motor=1', '&v loop=C4', '&a play=&tape at=1', '&tape step=&reel write=&a length=4', '&out loop=44k map=sample [&a * &v]'].join('\n')),
+    );
+    expect(loop.bulbs.has('a')).toBe(false);
+    expect(loop.edges.filter((e) => e.port === 'write' || e.port === 'play').map((e) => `${e.from}->${e.to}:${e.port}`)).toEqual(
+      expect.arrayContaining(['cell:a->cell:tape:write', 'cell:tape->cell:a:play']),
+    );
   });
 });
 
@@ -265,7 +323,7 @@ describe('a parameter that takes a clock is a tap of it (delaytime=&bar*3/4, len
 });
 
 describe('a wire carries its transform', () => {
-  const edge = (src: string, from: string, to: string) => between(buildGraph(compileSource(src)), from, to)!;
+  const edge = (src: string, from: string, to: string) => between(buildGraph(compileSource(src), { bulbs: false }), from, to)!;
 
   it('a canon: each voice its melody delayed, in steps, and its gain into the mix', () => {
     const src = PRESETS.canon.source;

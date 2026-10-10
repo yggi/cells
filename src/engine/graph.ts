@@ -8,6 +8,7 @@
  */
 import { effectiveShow, pluginOf } from '../layout/show';
 import { bulbHub, trackRoom } from '../layout/track';
+import { drawnAsTape, headBulbs, TAPE_SIZE, UNTURNED } from '../layout/tape';
 import { gateRoom } from '../layout/gate';
 import { isMidiCard, type CompileResult, type ResolvedCell } from './program';
 import type { Binding, Pick, ValueMap } from './ast';
@@ -647,10 +648,11 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
     for (let guard = 0; parentOf.has(id) && guard < 64; guard++) id = parentOf.get(id)!;
     return id;
   };
-  // (a tap drawn as a bulb on its table, by its node id: its name)
+  // (a bulb its edges out leave from, by its node id: its name — a tap on its table, a read head on its tape)
   const tapBulb = (id: string) => {
     const name = id.slice('cell:'.length);
-    return bulbs.has(id) && result.taps?.get(name) !== undefined ? name : undefined;
+    const host = result.cells.get(bulbs.get(id)?.slice('cell:'.length) ?? '');
+    return bulbs.has(id) && (result.taps?.get(name) !== undefined || (host && headOf(result, host, name))) ? name : undefined;
   };
   const out: GraphEdge[] = [];
   const pairs = new Set<string>();
@@ -665,10 +667,12 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
       out.push(e);
       continue;
     }
-    // (a tap's steps leave from its bulb on its table: each its own wire, the tap's sub-net — decision 016)
+    // (a tap's steps leave from its bulb on its table: each its own wire, the tap's sub-net — decision 016; a read
+    // head's edges from its bulb on its tape — decision 021)
     const tap = tapBulb(e.from);
     if (tap && source !== target) {
-      const id = `${edgeId(cellId(tap), up(e.to))}~`;
+      // (a head's keeps its own id: what it is drawn as is the same edge, from its bulb)
+      const id = result.taps?.get(tap) !== undefined ? `${edgeId(cellId(tap), up(e.to))}~` : e.id;
       redrawn.push({ id: e.id, pair: id });
       out.push({ ...e, id, source, target, from: up(e.from), to: up(e.to), bulb: tap });
       continue;
@@ -696,14 +700,28 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
       const room = gateRoom(128 * n.cell.size, (n.cell.mix ?? []).length);
       return room ? { ...n, reach: { room, below: 0 } } : n;
     }
+    // (a tape's head bulbs round its wheel: their room all round, whichever way the layout turns it — decision 021)
+    if (n.kind === 'cell' && !n.petalOf && drawnAsTape(n.cell) && [...byName.values()].includes(n.cell.name)) {
+      const h = headBulbs(n.cell, result.cells.values(), TAPE_SIZE * n.cell.size)[0];
+      const room = h ? h.dist + h.r - (TAPE_SIZE * n.cell.size) / 2 : 0;
+      return room ? { ...n, reach: { room, below: room } } : n;
+    }
     if (n.kind !== 'cell' || n.petalOf || !isTrack(result, n)) return n;
     const reach = trackRoom(result, n.cell.name, byName, 128 * n.cell.size);
     return reach ? { ...n, reach } : n;
   });
   // (a tap's sub-net leaves from its bulb: where that is on its table's wheel)
   const sizes = new Map(reached.map((n) => [n.id, n.kind === 'cell' ? 128 * n.cell.size : 0]));
+  // (a read head's, on its tape as it stands unturned: the layout turns it with the tape)
+  const headAt = (tape: string, head: string) => {
+    const host = result.cells.get(tape);
+    const h = host && headOf(result, host, head);
+    if (!h) return null;
+    const a = ((UNTURNED + h.offset) * Math.PI) / 180;
+    return { x: Math.cos(a) * h.dist, y: Math.sin(a) * h.dist, r: h.r };
+  };
   const anchored = out.map((e) => {
-    const at = e.bulb ? bulbHub(result, names(e.from), e.bulb, byName, sizes.get(e.from) ?? 128) : null;
+    const at = e.bulb ? (headAt(names(e.from), e.bulb) ?? bulbHub(result, names(e.from), e.bulb, byName, sizes.get(e.from) ?? 128)) : null;
     return at ? { ...e, bulbAt: at } : e;
   });
   return { nodes: reached, edges: anchored, nets: netsOf(reached, anchored), alias, bulbs: byName };
@@ -731,7 +749,8 @@ const isTrack = (result: CompileResult, n: GraphNode): boolean =>
 /**
  * The splices drawn as bulbs (#221), by node id, each to its host's: a cell read by one edge only, a ref without a pick
  * or a delay (a tap, a canon's copy: a net), both it and the braid that splices it drawn as tracks; a tap of a meter's
- * bus, on its table (decision 016); a voice only a gate plays, on the gate (#234).
+ * bus, on its table (decision 016); a voice only a gate plays, on the gate (#234); a tape's read head that takes
+ * nothing but the tape, on the tape (decision 021).
  */
 function bulbsOf(result: CompileResult, nodes: readonly GraphNode[], edges: readonly GraphEdge[]): Map<string, string> {
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -746,6 +765,19 @@ function bulbsOf(result: CompileResult, nodes: readonly GraphNode[], edges: read
       out.set(n.id, cellId(table));
       continue;
     }
+    // a tape's read head that takes nothing but the tape: a bulb on it, where the head is (decision 021); not one the
+    // tape also records (a loop of its own: what it writes is an edge to draw)
+    const tape = n.kind === 'cell' && typeof n.cell.params.play === 'string' ? byId.get(cellId(n.cell.params.play)) : undefined;
+    if (
+      tape?.kind === 'cell' &&
+      n.kind === 'cell' &&
+      tape.cell.params.write !== n.cell.name &&
+      headOf(result, tape.cell, n.cell.name) &&
+      !edges.some((e) => e.to === n.id && e.from !== tape.id && e.port !== 'about')
+    ) {
+      out.set(n.id, tape.id);
+      continue;
+    }
     const r = reads.get(n.id) ?? [];
     if (r.length !== 1 || r[0].port !== 'braid' || r[0].transforms.some((t) => t.some((x) => x.kind === 'pick' || x.kind === 'delay'))) continue;
     // a voice only a gate plays: a bulb on the gate's wheel (#234, the gate wheel)
@@ -754,6 +786,11 @@ function bulbsOf(result: CompileResult, nodes: readonly GraphNode[], edges: read
     else if (track(n) && track(host)) out.set(n.id, r[0].to);
   }
   return out;
+}
+
+/** A read head of a tape drawn as a tape's wheel, at its size in the graph, if it is one drawn as a bulb there. */
+function headOf(result: CompileResult, tape: ResolvedCell, head: string) {
+  return drawnAsTape(tape) ? headBulbs(tape, result.cells.values(), TAPE_SIZE * tape.size).find((h) => h.name === head) : undefined;
 }
 
 const bulbMemo = new WeakMap<CompileResult, ReadonlyMap<string, string>>();
