@@ -6,8 +6,8 @@ How a cell is shown and described: names, labels, notes, the piece's card, `show
 
 - **label="text"** a name shown instead of `&name`. **title="…"** and **tags="a, b"** take quoted text too; each may be given once per cell.
 - **tags=** on a cell clusters it in the graph, the first tag grouping it; a tag is also a chip in the library.
-- **A note**: a cell with a `label=` or `title=` and nothing else (no braid, `step=`, `over=`, `map=`, `shift=`, `off`, sound parameters). It does nothing; it explains. It floats at the top, beside the sound card, and is never clustered.
-- **about=&cell** (or **about=(&a &b)**) on a note links it to the cells it explains: a fine dotted line from the note to each. The links are annotation only: they don't change the layout's rows or count as crossings, and a cell that is not a note can't have them. Keep a piece's card to one sentence and put the how-to-listen details in notes next to the cells they are about.
+- **A note**: a cell with a `label=` or `title=` and nothing else (no braid, `step=`, `over=`, `map=`, `shift=`, `off`, sound parameters). It does nothing; it explains. It is read in the graph's margin, not among the cells, numbered in the order the piece writes notes, and is never clustered ([../ui/graph.md](../ui/graph.md): the margin).
+- **about=&cell** (or **about=(&a &b)**) on a note links it to the cells it explains: each wears the note's number on its rim. The links are annotation only: they don't change the layout, and a cell that is not a note can't have them. Keep a piece's card to one sentence and put the how-to-listen details in notes next to the cells they are about.
 
 Label templates fill from the cell as it is now, so a key that turns renames itself: `{notes}` (up to 16, then …), `{tonic}`, `{mode}` (bold, the common name first: **Minor** (*Aeolian*)), `{steps}`, `{tempo}` (beats a minute), `{shift}`, `{name}`, and `{&key:tonic}` for another cell's field (a note has none of its own). `**bold**`, `*italic*`, `\n` a new line; other text is escaped. Any other field (`{lap}`, a misspelt `{tempi}`) stays as written, with a warning that lists these.
 
@@ -60,7 +60,7 @@ Without `show=` it is inferred (a table of 12 is a `key`, a recognised mode a `s
 
 ## Scopes
 
-**scope=** makes a cell a screen; its braid lists its channels, `&a &b`. `stack` overlays, `split` a band each, `xy` draws the first against the second (a Lissajous figure). A sound shows its waveform; a stepped or gliding cell its value over the last two seconds. `spectrum` and `waterfall` show frequency: **fold=n** pitches folded by stride (12, by pitch class, default), **bins=n** that many bands without a fold, **channels=sum|split**.
+**scope=** makes a cell a screen; its braid lists its channels, `&a &b`. A scope is read in the graph's margin, and each cell it watches wears a dot in its channel's colour ([../ui/graph.md](../ui/graph.md): the margin). `stack` overlays, `split` a band each, `xy` draws the first against the second (a Lissajous figure). A sound shows its waveform; a stepped or gliding cell its value over the last two seconds. `spectrum` and `waterfall` show frequency: **fold=n** pitches folded by stride (12, by pitch class, default), **bins=n** that many bands without a fold, **channels=sum|split**.
 
 ```cells
 &bar scan(1 1 1 1) step=60bpm
