@@ -4,9 +4,9 @@ import { TIME_PARAMS } from '../attributes';
 import { RETIRED_PARAMS } from '../dough-params';
 import { LABEL_FIELDS } from '../program';
 import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from '../attributes';
-import { IDENT, type LineScanner } from './scanner';
+import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken } from './braid';
-import { parseFree } from './free';
+import { FREE_BRAID_WHOLE, parseFree } from './free';
 import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
 import { parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
@@ -373,6 +373,36 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   ),
 ];
 
+/**
+ * free(0 2 4 ~ …) at the scanner (it's at 'free'): a braid left to the performer, the cell's whole braid. Its steps are
+ * numbers (accidentals and names too), rests and chords, with their modifiers; its length in steps is the frame a
+ * recording fills (`hi`). Its free() is pushed with the scanner's others, so it is held, kept and reverted as they are.
+ */
+function parseFreeBraid(s: LineScanner): Braid {
+  const start = s.i;
+  s.i += 'free('.length;
+  if (s.peek() === '"') s.fail('free("…") is a text, for spell(…): a braid left free is steps, free(0 2 4 ~)', start, 6);
+  // (a braid of steps has no parentheses: the first ')' closes it)
+  const close = s.text.indexOf(')', s.i);
+  if (close < 0) s.fail(`')' to close free(…)`, start, s.i - start);
+  const inner = new LineScanner(s.text.slice(s.i, close), s.line, s.offset + s.i, s.lambdas, s.parts, s.warnings, s.depth);
+  const tokens: Token[] = [];
+  for (;;) {
+    inner.skipSpace();
+    if (inner.done()) break;
+    const at = inner.i;
+    const t = parseToken(inner);
+    if (t.atom.kind !== 'note' && t.atom.kind !== 'rest' && t.atom.kind !== 'chord')
+      inner.fail('A braid left free holds steps: numbers, rests (~) and chords ([0,4]), held (@n) or repeated (!n)', at, inner.i - at);
+    tokens.push(t);
+  }
+  if (!tokens.length) s.fail('free(…) around a braid needs steps: free(0 2 4 ~)', start, close - start + 1);
+  s.i = close + 1;
+  const length = tokens.reduce((n, t) => n + t.repeat * t.elongate, 0);
+  s.frees.push({ key: 'braid', value: 0, unit: '', lo: 0, hi: length, span: s.place(start), braid: inner.text.trim().replace(/\s+/g, ' ') });
+  return { kind: 'list', tokens };
+}
+
 /** A cell's body: attributes and braid, up to the end of the scanner's text. */
 export function parseBody(s: LineScanner, head: Ref): CellDecl {
   const b: Body = {
@@ -405,6 +435,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   let generator: Braid | null = null;
   let scaleKey: Ref | null = null;
   let fifthsShift: number | null = null;
+  // the braid is free(…): nothing else may be braid
+  let freeBraid = false;
 
   while (!s.done()) {
     const at = s.i;
@@ -431,8 +463,16 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
       continue;
     }
+    if (word === 'free' && s.peek() === '(') {
+      // free(0 2 4 ~ …): a braid left to the performer, the cell's whole braid
+      if (generator || tokens.length) s.fail(FREE_BRAID_WHOLE, at, word.length);
+      s.i = at;
+      generator = parseFreeBraid(s);
+      freeBraid = true;
+      continue;
+    }
     if (word !== null && isGenerator(word) && s.peek() === '(') {
-      if (generator || tokens.length) s.fail('A cell has one braid: a generator or a list of steps', at, word.length);
+      if (generator || tokens.length) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
       if (word === 'fifths') {
         // fifths(n): the circle, turned n fifths round (the cell's shift)
         const f = parseFifths(s, at);
@@ -448,7 +488,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     }
     if (word !== null && (OPERATIONS as readonly string[]).includes(word) && s.peek() === '(') {
       // degree(&x, n), inverse(&x): a step, read with its modifiers
-      if (generator) s.fail('A cell has one braid: a generator or a list of steps');
+      if (generator) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps');
       s.i = at;
       tokens.push(parseToken(s));
       continue;
@@ -461,7 +501,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     // a note by name is a step (C, Bb3): read again as one
     if (word !== null && /^[A-G](?:b?-?[0-9]*)$/.test(word)) s.i = at;
     else if (word !== null) s.fail(`Unexpected '${word}'`, at, word.length);
-    if (generator) s.fail('A cell has one braid: a generator or a list of steps');
+    if (generator) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
     tokens.push(parseToken(s));
   }
 

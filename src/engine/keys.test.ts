@@ -41,8 +41,18 @@ describe('a key on a melody: the nearest pitch its table can play', () => {
   });
 
   it('as played (a setting): every key at its own pitch, tuned from A4', () => {
-    const k = voiceKeys(compiled(PENTA), 'tune', { mode: 'played' });
+    const k = voiceKeys(compiled(PENTA), 'tune', { mode: 'allow' });
     for (let note = 0; note <= 127; note++) expect(k.key(note)).toBeCloseTo(440 * Math.pow(2, (note - 69) / 12), 9);
+  });
+
+  it('ignore (a setting): a key on the table sounds, one off it nothing, every key over the keyboard', () => {
+    const k = voiceKeys(compiled(PENTA), 'tune', { mode: 'ignore' });
+    const scale = new Set([0, 2, 4, 7, 9]);
+    for (let note = 24; note <= 108; note++) {
+      const on = scale.has((((note - 60) % 12) + 12) % 12);
+      if (on) expect(fromC4(k.key(note)), `key ${note}`).toBeCloseTo(note - 60, 9);
+      else expect(k.key(note), `key ${note}`).toBeNull();
+    }
   });
 
   it('on 19-EDO, a key takes the nearest step of the table over the grid, every key over the keyboard', () => {
@@ -78,7 +88,7 @@ describe('a key on a melody: the nearest pitch its table can play', () => {
   it('follows A4: a piece tuned to 432 plays its keys from 432', () => {
     const r = compiled(PENTA, 432);
     expect(voiceKeys(r, 'tune').key(60)).toBeCloseTo(432 * Math.pow(2, -9 / 12), 9);
-    expect(voiceKeys(r, 'tune', { a4: 432, mode: 'played' }).key(69)).toBeCloseTo(432, 9);
+    expect(voiceKeys(r, 'tune', { a4: 432, mode: 'allow' }).key(69)).toBeCloseTo(432, 9);
   });
 
   it('the voice armed plays through the melody that plays it; a voice nobody plays, as played', () => {

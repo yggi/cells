@@ -128,6 +128,7 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
   { concept: 'text: spell()', forms: ['generator spell("text", &table, "names")', 'free free("text")'] },
   { concept: 'clock time and a law', forms: ['rate nmin', 'rate nh', 'rate nd', 'rate nwk', 'parameter anchor', 'parameter law'] },
   { concept: 'a gate: a product with a name', forms: ['parameter trigger', 'parameter velocity', 'parameter gate', 'parameter gain'] },
+  { concept: 'a braid left to the performer: free(0 2 4 ~), recorded from the keys', forms: ['free free(0 2 4 ~ …)'] },
 ];
 
 const TEMPO_MARKINGS = /free\(\s*(largo|larghetto|adagio|andante|moderato|allegro|vivace|presto)\s*\)/;
@@ -300,7 +301,8 @@ export function formsUsed(source: string): Set<string> {
     else if (m) use(`map map=${m.kind === 'adsr' ? 'adsr a d s r' : m.kind}`);
     // free(…)
     for (const f of d.frees ?? []) {
-      if (f.labels) use('free free(v, lo..hi, "names")');
+      if (f.key === 'braid') use('free free(0 2 4 ~ …)');
+      else if (f.labels) use('free free(v, lo..hi, "names")');
       else if (f.text !== undefined) use('free free("text")');
       else if (f.key === 'gain') use('mix free(v, lo..hi)');
       else if (!TEMPO_MARKINGS.test(textOf(f.span))) use('free free(v, lo..hi)');

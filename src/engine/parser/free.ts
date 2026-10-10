@@ -1,4 +1,4 @@
-/** free(…): a number left to the performer — a slider, a tempo marking, named choices, a text. */
+/** free(…): a number left to the performer — a slider, a tempo marking, named choices, a text; and a braid (parsed with the cell, cell.ts). */
 import type { FreeSpec } from '../ast';
 import type { LineScanner } from './scanner';
 import { UNIT } from './values';
@@ -41,8 +41,18 @@ export const FREE_SYNTAX: readonly Syntax[] = [
     ['&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm'],
     'free.md',
   ),
+  syntax(
+    'free',
+    'free(0 2 4 ~ …)',
+    "A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n).",
+    ['&riff over=&key step=&bar/4 free(0 2 4 ~ 4 2 0 ~)'],
+    'free.md',
+  ),
   syntax('free', 'free("text")', 'A text left to the performer: a field to type in (for spell(…)).', ['&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")'], 'free.md'),
 ];
+
+/** Why a braid left free stands only as a cell's whole braid (decision 018). */
+export const FREE_BRAID_WHOLE = "free(0 2 4 ~ …), a braid left to the performer, is a cell's whole braid: &riff over=&key free(0 2 4 ~), with nothing else as its braid";
 
 /**
  * free(default, lo..hi) or free(marking) at the scanner (it's at 'free'):
@@ -62,6 +72,8 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean):
     s.frees.push(spec);
     return spec;
   }
+  // a braid left free (free(0 2 4 ~)) belongs to a cell's whole braid, not here (a mix, a pick, spell(…), an attribute)
+  if (/(?:~|\[|-?[0-9.]+[#b]*(?:[@!*][0-9]+)?\s+[^\s,])/y.test(s.text.slice(s.i)) || /^-?[0-9.]+[#b]*\)/.test(s.text.slice(s.i))) s.fail(FREE_BRAID_WHOLE, start, s.i - start);
   // a key, a tonic, a turn of the 12 by name: free(D) — a pitch class, chosen from the twelve by their names
   const at = s.i;
   const named = key === 'shift' || key === 'tonic' ? s.noteName() : null;

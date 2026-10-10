@@ -359,3 +359,32 @@ describe('euclid(k, n, shift): Bjorklund’s rhythms', () => {
     expect(parse('&t even(3, 8)').diagnostics[0].message).toMatch(/euclid\(3, 8\)/);
   });
 });
+
+describe('free(…) around a braid (#210): a braid left to the performer', () => {
+  const err = (src: string) => parse(src).diagnostics.find((d) => d.severity === 'error')?.message ?? '';
+  it("is the cell's whole braid: its steps as written, its length the frame, its free() with the others", () => {
+    const r = parse('&riff over=&key step=&bar/4 free(0 2  4 ~ 4@2 [0,4] 6# 1!2)');
+    const c = r.cells[0];
+    expect(c.braid.kind === 'list' && c.braid.tokens.map((t) => t.atom.kind)).toEqual(['note', 'note', 'note', 'rest', 'note', 'chord', 'note', 'note']);
+    expect(c.frees).toEqual([{ key: 'braid', value: 0, unit: '', lo: 0, hi: 10, span: { line: 1, col: 29, len: 31 }, braid: '0 2 4 ~ 4@2 [0,4] 6# 1!2' }]);
+    // (attributes may follow it)
+    expect(err('&riff free(0 2) over=&key')).toBe('');
+  });
+  it('stands alone: not beside other steps or a generator', () => {
+    for (const src of ['&r 0 free(0 2)', '&r free(0 2) 4', '&r free(0 2) scan(1 2)', '&r scan(1 2) free(0 2)']) expect(err(src), src).toMatch(/a cell's whole braid/);
+  });
+  it('not inside a mix, a pick or spell(…), nor where a number goes', () => {
+    expect(err('&v s=sine\n&out map=sample [&v * free(0 2 4)]')).toMatch(/a cell's whole braid/);
+    expect(err('&x 0 2\n&r &x[free(1 2)]')).toMatch(/picks by a number written in place/);
+    expect(err('&k 0 1\n&d spell(free(0 2 4), &k, "a b")')).toMatch(/a cell's whole braid/);
+    expect(err('&b scan(1 1) step=free(1 2)')).toMatch(/a cell's whole braid/);
+    // (a number left free is as it was)
+    expect(err('&b scan(1 1) step=free(90bpm, 60..120)')).toBe('');
+  });
+  it('holds steps only: numbers, rests and chords; something to hold', () => {
+    expect(err('&r free(&x 2)')).toMatch(/holds steps/);
+    expect(err('&r free(0 [2|4])')).toMatch(/holds steps/);
+    expect(err('&r free()')).toMatch(/needs steps/);
+    expect(err('&r free("0 2")')).toMatch(/is a text/);
+  });
+});

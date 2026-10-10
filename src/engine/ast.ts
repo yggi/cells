@@ -176,7 +176,7 @@ export type MapSpec =
  */
 export interface FreeSpec {
   /** What it sets: a rate (step / loop), shift, stride, or a gain in a mix. */
-  readonly key: 'step' | 'loop' | 'shift' | 'stride' | 'gain' | 'interval' | 'chance' | 'text' | 'choice' | 'param' | 'tonic';
+  readonly key: 'step' | 'loop' | 'shift' | 'stride' | 'gain' | 'interval' | 'chance' | 'text' | 'choice' | 'param' | 'tonic' | 'braid';
   /** For key 'param': which setting (lpf, swing …) it is. */
   readonly param?: string;
   readonly value: number;
@@ -192,6 +192,11 @@ export interface FreeSpec {
   readonly byName?: true;
   /** A text left free (free("867 5309")): drawn as a text field (key 'text'). */
   readonly text?: string;
+  /**
+   * A braid left free (free(0 2 4 ~ …), key 'braid'): its steps as written, the cell's whole braid. `hi` is its length in
+   * steps (`lo` 0), the frame a recording fills, as `lo..hi` is a number's range.
+   */
+  readonly braid?: string;
 }
 
 export interface CellDecl {

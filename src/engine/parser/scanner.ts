@@ -214,6 +214,8 @@ export class LineScanner {
         return { name, pick, shift, ...this.transposition(name), span: this.span(at) };
       }
       // $: as written (absolute); without, as the cell is turned now
+      if (this.text.startsWith('free(', this.i))
+        this.fail(`&${name}[…] picks by a number written in place: free(…) is a cell's whole braid (free(0 2 4 ~)), or a number in an attribute`, this.i, 5);
       const abs = this.peek() === '$' ? (this.i++, this.skipSpace(), true) : false;
       const $ = abs ? ({ abs: true } as const) : {};
       const a = this.match(INT);

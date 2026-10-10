@@ -57,6 +57,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `free(v, lo..hi)`: A number left to the performer: a slider from lo to hi, starting at v. Wherever a number goes in an attribute (a rate with its units: free(90bpm, 60..240)), in a scan, or as a gain in a mix. [→](free.md) `&bar scan(4 4 4 4) step=free(90bpm, 60..240)` · `&lead s=saw loop=C4 lpf=free(1200, 200..5000)` · `&key step=cycle(&theme) shift=free(0, 0..11)`
 - `free(marking)`: A rate as a tempo marking, a slider over its range: largo 40–60, larghetto 60–66, adagio 66–76, andante 76–108, moderato 108–120, allegro 120–156, vivace 156–176, presto 168–200 (bpm). [→](free.md) `&bar scan(4 4 4 4) step=free(andante)`
 - `free(v, lo..hi, "names")`: Named choices: the names spread evenly over the range (one per value, or every 2nd …), shown instead of the numbers. [→](free.md) `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm`
+- `free(0 2 4 ~ …)`: A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n). [→](free.md) `&riff over=&key step=&bar/4 free(0 2 4 ~ 4 2 0 ~)`
 - `free("text")`: A text left to the performer: a field to type in (for spell(…)). [→](free.md) `&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")`
 
 ## step= and loop=

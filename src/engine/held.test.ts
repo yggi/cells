@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { freeIndex, freeList, withHeld } from './held';
+import { setBraid } from './edit';
 
 const src = ['&s scan(2 2 1 2 2 2 1) shift=free(0, 0..6)', '&t 0 2 4 over=&s step=free(120bpm, 60..240)'].join('\n');
 
@@ -27,5 +28,26 @@ describe('held free() values', () => {
       ]),
     );
     expect(both.split('\n')[0]).toMatch(/free\(3, 0\.\.6\)/);
+  });
+});
+
+describe('a braid left free, held (#210)', () => {
+  const braid = '&key scan(2 2 1 2 2 2 1)\n&riff over=&key step=4 free(0 2 4 ~) shift=free(0, 0..6) # the riff';
+  it('writes a take in its place, as text; the slider after it stays where it is', () => {
+    const r = compileSource(braid);
+    expect(freeList(r).map((f) => f.key)).toEqual(['braid', 'shift']);
+    const out = withHeld(
+      braid,
+      r,
+      new Map<number, number | string>([
+        [0, '0 4 7 5 ~ 4@2 [0,4]'],
+        [1, 2],
+      ]),
+    );
+    expect(out.split('\n')[1]).toBe('&riff over=&key step=4 free(0 4 7 5 ~ 4@2 [0,4]) shift=free(2, 0..6) # the riff');
+    expect(compileSource(out).ok).toBe(true);
+  });
+  it('setBraid rewrites its default and keeps it free', () => {
+    expect(setBraid(braid, 'riff', ['0', '2@2', '~']).split('\n')[1]).toBe('&riff over=&key step=4 shift=free(0, 0..6) free(0 2@2 ~) # the riff');
   });
 });

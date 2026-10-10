@@ -8,9 +8,13 @@ import type { CompileResult, Output, Shifts } from './program';
 import { resolvePitch, semitones } from './helix';
 import { kitNotes } from './midi';
 import { voiceFor } from './realize';
+import { tableReader, type OutOfTable } from './capture';
 
-/** What a key outside the melody's table does: the nearest entry sounds, or the key as played (tuned from A4). */
-export type KeyMode = 'nearest' | 'played';
+/**
+ * What a key outside the melody's table does, one setting for playing and recording (#210, `capture.ts`): 'allow' sounds
+ * it as played (tuned from A4; a take writes an accidental), 'snap' the nearest entry, 'ignore' nothing.
+ */
+export type KeyMode = OutOfTable;
 
 /** A cell a keyboard can play: a voice or a kit an out plays (not a send), or a melody that plays one. */
 export interface Armable {
@@ -106,10 +110,10 @@ function pitches(result: CompileResult, melody: string, o: Output, shifts: Shift
 
 /**
  * What a keyboard plays on a cell: a kit, its members by drum note; a melody, the voice it plays, each key at the
- * nearest pitch the melody can play (`mode` 'played': as played); a voice, the voice, through the first melody that
+ * nearest pitch the melody can play (`mode` 'allow': as played; 'ignore': a key off the table plays nothing); a voice, the voice, through the first melody that
  * plays it, or as played when none does. Null: the cell plays nothing (a clock, a table, a mix, a send).
  */
-export function keyboardOf(result: CompileResult, cell: string, shifts: Shifts, { a4 = 440, mode = 'nearest' }: { a4?: number; mode?: KeyMode } = {}): Keyboard | null {
+export function keyboardOf(result: CompileResult, cell: string, shifts: Shifts, { a4 = 440, mode = 'snap' }: { a4?: number; mode?: KeyMode } = {}): Keyboard | null {
   const c = result.cells.get(cell);
   if (!c) return null;
   const arm = armable(result).find((a) => a.cell === cell);
@@ -128,8 +132,21 @@ export function keyboardOf(result: CompileResult, cell: string, shifts: Shifts, 
   const voice = arm?.voice ?? cell;
   const melody = melodyOf(result, cell, arm);
   const played = (note: number) => keyFrequency(note, a4);
-  if (mode === 'played' || !melody) return { kind: 'voice', cell, voice, key: played };
+  if (mode === 'allow' || !melody) return { kind: 'voice', cell, voice, key: played };
   const { o, base } = melody;
+  if (mode === 'ignore') {
+    // (the table's own pitch for a key on it, nothing for one off it: as a take writes it)
+    const reader = tableReader(result, o, shifts);
+    return {
+      kind: 'voice',
+      cell,
+      voice,
+      key: (note) => {
+        const w = reader.read(12 * Math.log2(played(note) / base), 'ignore');
+        return w === null ? null : base * Math.pow(2, w.semis / 12);
+      },
+    };
+  }
   // (worked out at the first key, not when asked which cells can play)
   let ladder: number[] | null = null;
   return {

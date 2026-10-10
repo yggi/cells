@@ -164,13 +164,17 @@ export function attrsOf(source: string, name: string): Map<string, string> {
   return out;
 }
 
-/** Replace &name's braid with these tokens (attributes and comment stay). An empty list leaves it blank. */
+/**
+ * Replace &name's braid with these tokens (attributes and comment stay). An empty list leaves it blank. A braid left
+ * free stays free: `free(0 2 4)` becomes `free(<tokens>)`, its default rewritten.
+ */
 export function setBraid(source: string, name: string, braid: readonly string[]): string {
   const w = declWords(source, name);
   if (!w || spansLines(source, name)) return source;
+  const free = w.braid.length === 1 && /^free\(\s*[^"\s]/.test(w.braid[0]) && braid.length > 0;
   return editDecl(source, name, (code) => {
     const indent = /^\s*/.exec(code)![0];
-    return indent + [...w.head, ...w.attrs, ...braid].join(' ');
+    return indent + [...w.head, ...w.attrs, ...(free ? [`free(${braid.join(' ')})`] : braid)].join(' ');
   });
 }
 
@@ -264,9 +268,21 @@ function replaceSpan(source: string, span: { line: number; col: number; len: num
 /** A free(…) with a new value, written back where it stands (a marking becomes explicit). */
 export function setFree(
   source: string,
-  spec: { value: number; unit: string; lo: number; hi: number; span: { line: number; col: number; len: number }; labels?: readonly string[]; text?: string; byName?: true },
+  spec: {
+    value: number;
+    unit: string;
+    lo: number;
+    hi: number;
+    span: { line: number; col: number; len: number };
+    labels?: readonly string[];
+    text?: string;
+    byName?: true;
+    braid?: string;
+  },
   value: number | string,
 ): string {
+  // a braid: free(0 4 7 ~), its steps as given (a take, or a default rewritten)
+  if (spec.braid !== undefined) return replaceSpan(source, spec.span, `free(${String(value).replace(/[()]/g, '').trim() || spec.braid})`);
   // a text: free("…") (quotes can't be inside: they're dropped)
   if (typeof value === 'string') return replaceSpan(source, spec.span, `free("${value.replace(/"/g, '')}")`);
   const v = Math.min(spec.hi, Math.max(spec.lo, value));
