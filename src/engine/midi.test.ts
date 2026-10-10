@@ -184,6 +184,21 @@ describe('channels', () => {
     ]);
   });
 
+  it('a gate is one part: its receivers on its channel, a kit gate on 10', () => {
+    const r = compileSource(PRESETS.gate.source);
+    const t = channelTable(r);
+    // (&leadOut plays &lead and &bell; &bass is played directly; &drumOut plays the kit)
+    expect(t.voices).toEqual([
+      { voice: 'bass', channel: 1 },
+      { voice: 'leadOut', channel: 2 },
+    ]);
+    expect(t.kit.map((k) => k.member)).toEqual(['bd', 'sd', 'hh']);
+    const route = router(r, channelTable(r, { leadOut: 7 }));
+    const events = eventsBetween(planOf(PRESETS.gate.source), 0, 4, true);
+    for (const v of ['lead', 'bell']) expect(route(events.find((e) => e.voice === v)!)).toEqual({ channel: 7, drum: null });
+    expect(route(events.find((e) => e.voice === 'bd')!)).toEqual({ channel: 10, drum: 36 });
+  });
+
   it('rotation takes a free channel, the one free longest, else the first to free', () => {
     const rot = new Rotation([2, 3, 4]);
     expect([rot.take(1), rot.take(1), rot.take(2)]).toEqual([2, 3, 4]);

@@ -51,7 +51,9 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       });
       continue;
     }
-    if (voice.kit && !b.pitches.some((t) => decls.get(t.ref.name)?.over?.name === voice.name)) {
+    // (a kit is played by a pattern read through it, or as a gate's receiver, picked by its trigger)
+    const gateKit = [...via, ...through].some((n) => cells.get(n)?.params.trigger !== undefined && b.pitches.some((t) => t.ref.name === cells.get(n)!.params.trigger));
+    if (voice.kit && !gateKit && !b.pitches.some((t) => decls.get(t.ref.name)?.over?.name === voice.name)) {
       error(`A kit is a table of voices: read the pattern through it, &drums over=&${voice.name}, and mix &drums`, b.voice.span);
       continue;
     }

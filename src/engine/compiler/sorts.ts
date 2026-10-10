@@ -138,9 +138,11 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     let out = typedMixes.get(atom);
     if (out) return out;
     out = [];
+    // (a gate's kit receiver is its voice: the trigger's numbers pick the member, as a pattern read through it does)
+    const sort = atom.gate ? (n: string) => (isKitDecl(decls.get(n), seen) ? 'signal' : sortOf(n)) : sortOf;
     for (const e of atom.exprs)
       try {
-        const bs = distribute(e, sortOf, noVoice);
+        const bs = distribute(e, sort, noVoice);
         const kit = bs.flatMap((b) => b.pitches).find((t) => isKitDecl(decls.get(t.ref.name), seen));
         if (kit) error(`&${kit.ref.name} is a kit, a table of voices: a pattern read through it is the sound — mix the pattern alone`, kit.ref.span);
         else out.push(...bs);

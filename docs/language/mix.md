@@ -59,9 +59,25 @@ It is read as the product it stands for, one for each receiver, so it sounds as 
 &out loop=SAMPLE_RATE map=sample [&leadOut]
 ```
 
+Every receiver plays every note: `&lead &bell` doubles the line. A **kit** among the receivers (a table of voices,
+`&kit &bd &sd &hh`: [sound.md](sound.md)) is played as a pattern read through it: the trigger's numbers pick the
+member, 0 the first. So `&drums trigger=&beat &kit` plays what `&beat over=&kit` plays; a trigger that reads the kit
+already plays it as well:
+
+```cells
+&bar scan(1 1 1 1) step=120bpm
+&bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
+&sd s=white env=&(map=adsr 0 .15 0 .05)
+&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&kit &bd &sd &hh
+&beat step=&bar/2 0 2 1 2
+&drums trigger=&beat gain=.6 &kit                 # each number picks the drum: 0 the kick, 1 the snare, 2 the hat
+&out loop=SAMPLE_RATE map=sample [&drums]
+```
+
 A gate is where notes become sound, named: the graph draws it as a node of its own, its receivers as dim as the gate is
-closed. The next steps (#234: a kit's or a MIDI channel's receivers) land on it. The anonymous
-product, `[&tune * &accent * &solo * &lead * .5]`, stays its short form.
+closed. On a MIDI card a gate is an entry as any mix is (`&synth map=midi &leadOut ~!8 &drums`: all its receivers on that channel, a kit's by drum note, [midi.md](midi.md)); without a card, MIDI out sends each gate as one part. The anonymous product,
+`[&tune * &accent * &solo * &lead * .5]`, stays its short form.
 
 ## The sound card
 

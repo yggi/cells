@@ -37,8 +37,8 @@ export type State = 'off' | 'unrouted' | 'on' | 'idle' | 'live';
 /** What keeps sound: a sound tape (its loop), a resonator (its ring). */
 const keeps = (result: CompileResult, name: string) => result.tapes.some((t) => t.name === name) || typeof result.cells.get(name)?.params.body === 'string';
 
-/** What its mixes name: the voice, or a kit's stream (&drums, read through the kit). */
-const sourceOf = (o: Output) => (o.kit ? o.cell : o.voice);
+/** What its mixes name: the voice, or a kit's stream (&drums, read through the kit); a gate names the kit it plays. */
+const sourceOf = (result: CompileResult, o: Output) => (o.kit && result.cells.get(o.cell)?.over === o.voice ? o.cell : o.voice);
 
 const playable = (c: ResolvedCell) => c.units.some((u) => u.atom.kind === 'note' || u.atom.kind === 'chord' || u.atom.kind === 'choice');
 
@@ -177,7 +177,7 @@ export interface NotesOf {
 
 /** The way an output's sound goes: the mixes it goes through, and the edges between them. */
 function soundOf(acc: RouteAcc, o: Output) {
-  const on = new Set([sourceOf(o), ...o.through, ...o.via, ...o.select.flatMap((x) => [x.cell, acc.result.cells.get(x.cell)!.over!, x.part])]);
+  const on = new Set([sourceOf(acc.result, o), ...o.through, ...o.via, ...o.select.flatMap((x) => [x.cell, acc.result.cells.get(x.cell)!.over!, x.part])]);
   const from = flows(acc.result).from;
   for (const n of on) {
     acc.node(n);
@@ -258,7 +258,7 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
   for (const n of heard) sound.node(n);
   for (const [from, fs] of flowsFrom) for (const f of fs) if (heard.has(from) && heard.has(f.to) && acc.edges.has(f.id)) sound.edges.add(f.id);
   // the notes of what's heard, and what moves the tapes that are
-  for (const o of outs) if (heard.has(sourceOf(o))) notesOf(sound, o, how);
+  for (const o of outs) if (heard.has(sourceOf(result, o))) notesOf(sound, o, how);
   for (const n of heard) if (keeps(result, n)) sound.clock(n);
   // a read head's at= clock, as a tape's length=: a tap of the clock (the head sounds, not a tape of notes: notesOf has no say)
   for (const n of heard) sound.timed(n);

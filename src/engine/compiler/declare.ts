@@ -198,11 +198,12 @@ function gates(decls: Map<string, CellDecl>, error: Ctx['error']): void {
         ref(trigger, d.paramSpans.trigger ?? d.span),
         ...(typeof velocity === 'string' ? [ref(velocity, d.paramSpans.velocity ?? d.span)] : []),
         ...(typeof open === 'string' ? [ref(open, d.paramSpans.gate ?? d.span)] : []),
-        ref(r.name, r.span),
+        // (a trigger read through the kit it plays is its sound already: &drums over=&kit, then &out trigger=&drums &kit)
+        ...(decls.get(trigger)?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
         ...(typeof gain === 'number' ? [{ k: 'num', value: gain, span: d.paramSpans.gain ?? d.span } as Expr] : []),
       ],
     }));
-    decls.set(d.name, { ...d, braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] } });
+    decls.set(d.name, { ...d, braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs, gate: d.name }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] } });
   }
 }
 
