@@ -114,9 +114,7 @@ export function keyboardOf(result: CompileResult, cell: string, shifts: Shifts, 
   if (!c) return null;
   const arm = armable(result).find((a) => a.cell === cell);
   if (c.kit || arm?.kit) {
-    const kit = arm?.voice ?? cell;
-    const members = (result.cells.get(kit)?.units ?? []).flatMap((u) => (u.atom.kind === 'ref' && result.cells.get(u.atom.name)?.voice ? [u.atom.name] : []));
-    const notes = [...kitNotes(members)];
+    const notes = [...kitNotes(kitMembers(result, cell, arm))];
     return {
       kind: 'kit',
       cell,
@@ -128,10 +126,10 @@ export function keyboardOf(result: CompileResult, cell: string, shifts: Shifts, 
   }
   if (!arm && !c.voice) return null;
   const voice = arm?.voice ?? cell;
-  const o = result.outputs.find((x) => !x.silent && !x.tape && !x.gate && x.voice === voice && (arm?.cell === voice || x.cell === cell));
+  const melody = melodyOf(result, cell, arm);
   const played = (note: number) => keyFrequency(note, a4);
-  const base = result.cells.get(voice)!.freq;
-  if (mode === 'played' || !o || o.cell === voice || !(base > 0)) return { kind: 'voice', cell, voice, key: played };
+  if (mode === 'played' || !melody) return { kind: 'voice', cell, voice, key: played };
+  const { o, base } = melody;
   // (worked out at the first key, not when asked which cells can play)
   let ladder: number[] | null = null;
   return {
@@ -144,6 +142,62 @@ export function keyboardOf(result: CompileResult, cell: string, shifts: Shifts, 
       return s === null ? null : base * Math.pow(2, s / 12);
     },
   };
+}
+
+// a kit's members, as its braid names them (a melody that plays a kit: the kit's); a member named twice, twice
+function kitMembers(result: CompileResult, cell: string, arm: Armable | undefined): string[] {
+  const kit = arm?.voice ?? cell;
+  return (result.cells.get(kit)?.units ?? []).flatMap((u) => (u.atom.kind === 'ref' && result.cells.get(u.atom.name)?.voice ? [u.atom.name] : []));
+}
+
+// the out a melody plays its voice through, and the voice's pitch: null for a voice no melody plays (keys sound as played)
+function melodyOf(result: CompileResult, cell: string, arm: Armable | undefined): { o: Output; base: number } | null {
+  const voice = arm?.voice ?? cell;
+  const o = result.outputs.find((x) => !x.silent && !x.tape && !x.gate && x.voice === voice && (arm?.cell === voice || x.cell === cell));
+  const base = result.cells.get(voice)?.freq ?? 0;
+  return !o || o.cell === voice || !(base > 0) ? null : { o, base };
+}
+
+/** A drum pad (the on-screen pads, #255): a kit's member and the General MIDI note that plays it (`kitNotes`). */
+export interface Pad {
+  readonly member: string;
+  readonly note: number;
+}
+
+/**
+ * The pads of a kit (or of the melody that plays one): one per member, in the order the kit first names them, each
+ * with the General MIDI drum note a key on channel 10 plays it by. Empty: the cell is no kit.
+ */
+export function kitPads(result: CompileResult, cell: string): Pad[] {
+  const c = result.cells.get(cell);
+  const arm = armable(result).find((a) => a.cell === cell);
+  if (!c || !(c.kit || arm?.kit)) return [];
+  const members = [...new Set(kitMembers(result, cell, arm))];
+  const notes = kitNotes(members);
+  return members.flatMap((member) => {
+    const note = notes.get(member);
+    return note === undefined ? [] : [{ member, note }];
+  });
+}
+
+/**
+ * The keys (MIDI notes 0 … 127) a melody's scale can play, for the dots on the on-screen keys (#255): every pitch it
+ * can play (its table, down to its grid's tuning, as a key plays it in `keyboardOf`) on the key nearest it, from A4. A
+ * voice no melody plays, a kit, or a cell that plays nothing: null (no scale to show; every key sounds as played).
+ */
+export function scaleKeys(result: CompileResult, cell: string, shifts: Shifts, a4 = 440): ReadonlySet<number> | null {
+  const c = result.cells.get(cell);
+  if (!c) return null;
+  const arm = armable(result).find((a) => a.cell === cell);
+  if (c.kit || arm?.kit || (!arm && !c.voice)) return null;
+  const melody = melodyOf(result, cell, arm);
+  if (!melody) return null;
+  const out = new Set<number>();
+  for (const s of pitches(result, melody.o.cell, melody.o, shifts)) {
+    const note = Math.round(69 + 12 * Math.log2((melody.base * Math.pow(2, s / 12)) / a4) + 1e-9);
+    if (note >= 0 && note <= 127) out.add(note);
+  }
+  return out;
 }
 
 /**

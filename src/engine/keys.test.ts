@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts, type CompileResult } from './program';
-import { armable, keyboardOf, keyFrequency, keyLevel, rowNote, type Keyboard } from './keys';
+import { armable, keyboardOf, keyFrequency, keyLevel, kitPads, rowNote, scaleKeys, type Keyboard } from './keys';
 import { velocityOf } from './midi';
 
 const compiled = (src: string, A4 = 440) => {
@@ -162,5 +162,86 @@ describe('rowNote: a row of a cell as the note it plays (the piano roll, #211)',
     expect(rowNote(r, 'drums', 0, codeShifts(r))).toEqual({ voice: 'bd', freq: 55 });
     expect(rowNote(r, 'drums', 2, codeShifts(r))?.voice).toBe('sd');
     expect(rowNote(r, 'bar', 0, codeShifts(r))).toBeNull();
+  });
+});
+
+describe('scaleKeys: the dots on the on-screen keys (#255)', () => {
+  it('a pentatonic on 12-EDO: exactly its pitch classes, over every key 0 … 127', () => {
+    const r = compiled(PENTA);
+    const dots = scaleKeys(r, 'tune', codeShifts(r))!;
+    const want = [...Array(128).keys()].filter((n) => [0, 2, 4, 7, 9].includes(n % 12));
+    expect([...dots].sort((a, b) => a - b)).toEqual(want);
+  });
+
+  it('every dotted key plays itself and every key without one plays another (the dots agree with keyboardOf), over 12-EDO and 19-EDO', () => {
+    for (const src of [PENTA, `&edo19 cycle=19 map=edo\n&v s=sine loop=C4\n&s over=&edo19 0 3 6 8 11 14 17\n&tune over=&s step=2 0 1 2\n&mix map=sample [&tune * &v]`]) {
+      const r = compiled(src);
+      const dots = scaleKeys(r, 'tune', codeShifts(r))!;
+      const k = voiceKeys(r, 'tune');
+      for (let note = 24; note <= 108; note++) {
+        // (the key a pitch is nearest: the one whose own pitch it is within half a semitone of)
+        const near = Math.abs(fromC4(k.key(note)) - (note - 60)) <= 0.5 + 1e-9;
+        if (dots.has(note)) expect(near, `key ${note}`).toBe(true);
+        else expect(Math.abs(fromC4(k.key(note)) - (note - 60)), `key ${note}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('a 7-step scale on 19-EDO: seven keys an octave', () => {
+    const r = compiled(`&edo19 cycle=19 map=edo\n&v s=sine loop=C4\n&s over=&edo19 0 3 6 8 11 14 17\n&tune over=&s step=2 0 1 2\n&mix map=sample [&tune * &v]`);
+    const dots = scaleKeys(r, 'tune', codeShifts(r))!;
+    expect([...dots].filter((n) => n >= 60 && n < 72)).toHaveLength(7);
+  });
+
+  it('follows the voice through its melody; a melody on the bare 12 dots every key; no scale for a table, a kit, or a cell that plays nothing', () => {
+    const r = compiled(PENTA);
+    expect(scaleKeys(r, 'v', codeShifts(r))).toEqual(scaleKeys(r, 'tune', codeShifts(r)));
+    expect(scaleKeys(r, 'penta', codeShifts(r))).toBeNull();
+    expect(scaleKeys(r, 'nothing', codeShifts(r))).toBeNull();
+    const g = compiled(`&v s=sine loop=C4\n&tune step=2 0 4 7\n&mix map=sample [&tune * &v]`);
+    expect(scaleKeys(g, 'tune', codeShifts(g))?.size).toBe(128);
+    const k = compiled(`&bar step=4\n&drums step=&bar &bd &hh\n&bd s=sine loop=A1\n&hh s=white\n&mix map=sample [&drums]`);
+    expect(scaleKeys(k, 'drums', codeShifts(k))).toBeNull();
+  });
+
+  it('follows A4: at 432 the pentatonic still dots its own keys (the keys are named from A4)', () => {
+    const r = compiled(PENTA, 432);
+    const dots = scaleKeys(r, 'tune', codeShifts(r), 432)!;
+    expect([...dots].filter((n) => n >= 60 && n < 72)).toEqual([60, 62, 64, 67, 69]);
+  });
+});
+
+describe('kitPads: one pad per member of a kit (#255)', () => {
+  const KIT = `&bar step=4
+&drums step=&bar &bd &hh &sd &hh &tick
+&bd s=sine loop=A1
+&sd s=white
+&hh s=white hpf=7000
+&tick s=white
+&lead s=sine loop=C4
+&tune step=&bar 0 4
+&mix map=sample [&drums, &tune * &lead]`;
+  it('in the order the kit first names them, a member named twice once, each with the note channel 10 plays it by', () => {
+    const r = compiled(KIT);
+    expect(kitPads(r, 'drums')).toEqual([
+      { member: 'bd', note: 36 },
+      { member: 'hh', note: 42 },
+      { member: 'sd', note: 38 },
+      { member: 'tick', note: 37 },
+    ]);
+  });
+
+  it('each pad note plays its member through the keyboard of the kit (the path the pads press)', () => {
+    const r = compiled(KIT);
+    const k = keyboardOf(r, 'drums', codeShifts(r));
+    if (k?.kind !== 'kit') throw new Error('not a kit');
+    for (const p of kitPads(r, 'drums')) expect(k.drum([p.note])?.voice).toBe(p.member);
+  });
+
+  it('no kit, no pads', () => {
+    const r = compiled(KIT);
+    expect(kitPads(r, 'lead')).toEqual([]);
+    expect(kitPads(r, 'bar')).toEqual([]);
+    expect(kitPads(r, 'nothing')).toEqual([]);
   });
 });
