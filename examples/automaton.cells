@@ -1,4 +1,4 @@
-&piece title="Automaton" tags="tutorial, genre:experimental, rhythm, sound" rung=23 label="A mechanical band on belts, all turned by one drum: bells, a drummer and a woodblock, each on a belt of different give." about=&out
+&piece title="Automaton" tags="tutorial, genre:experimental, rhythm, sound" tier=7 label="A mechanical band on belts, all turned by one drum: bells, a drummer and a woodblock, each on a belt of different give." about=&out
 &drumMotorNote label="The drum (the meter, a motor) turns them all." about=&bar
 &bellsNote label="The bells on a taut belt, exact." about=&bells
 &drummerNote label="The drummer's arm on a slack belt, lagging and swinging." about=&drums

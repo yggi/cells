@@ -21,5 +21,5 @@ A generator writes a braid, and the mask *is* the braid; an attribute (`mode=`) 
 ## Consequences
 
 - Every example plays the same notes (the event snapshot; the hashes of values and the live view move with the unnamed cells' names).
-- The tutorial's rung 5 (tables) shows the one-line form beside the key and mode written out.
+- The tutorial's tier 3 (tables, motifs and chords) shows the one-line form beside the key and mode written out.
 - Open for #179: `shift=$n` (turn the frame below, i.e. transpose) would make the tonic argument its shorthand.

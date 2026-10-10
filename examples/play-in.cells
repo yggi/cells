@@ -1,4 +1,4 @@
-&piece title="Play in: a braid left to the performer" tags="tutorial, diatonic" rung=32 label="A riff left to the performer: free(…) around a braid. It plays as written until you play in." about=&out
+&piece title="Play in: a braid left to the performer" tags="tutorial, diatonic" tier=9 label="A riff left to the performer: free(…) around a braid. It plays as written until you play in." about=&out
 &recordNote label="Press ● (record) and play one pass of the riff on the keys: a MIDI keyboard, the computer's (a setting) or the on-screen ones. The take is held in its place; Save writes it into the code, Revert goes back." about=&riff
 &lengthNote label="Its length is the frame a take fills: sixteen steps here, a bar of sixteenths." about=&riff
 &key scan(2 2 1 2 2 2 1)

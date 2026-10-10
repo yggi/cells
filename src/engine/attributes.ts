@@ -67,7 +67,7 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   title: core('on a note: the piece’s title (its card)', 'display.md', ['note']),
   tags: core('on a note: the piece’s tags, comma-separated; on a cell, its clusters in the graph', 'display.md'),
   about: core('on a note: the cells it explains', 'display.md', ['note']),
-  rung: core('on a piece’s card: its place in the tutorial, the ladder of basics (1 the first)', 'display.md', ['note']),
+  tier: core('on a piece’s card: its tier of the tutorial (1 the first); the pieces of a tier keep the library’s order', 'display.md', ['note']),
 };
 
 /** Parameters: `key=value`, a number (or free()), a word or a cell — the voice's, and the physical cells'. */

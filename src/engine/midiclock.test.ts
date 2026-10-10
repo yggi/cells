@@ -42,7 +42,7 @@ describe('the main meter', () => {
       const r = compileSource(readFileSync(`examples/${f}`, 'utf8'));
       if (r.ok && !mainMeter(r)) none.push(f);
     }
-    expect(none).toEqual(['cellscape2.cells', 'daytime.cells', 'dtmf.cells', 'fiveto12.cells', 'steps.cells']);
+    expect(none).toEqual(['cellscape2.cells', 'daytime.cells', 'dtmf.cells', 'fiveto12.cells', 'rests.cells', 'semitones.cells', 'steps.cells', 'tone.cells', 'twovoices.cells']);
   });
 });
 

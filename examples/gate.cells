@@ -1,4 +1,4 @@
-&piece title="A gate: a product with a name" tags="tutorial, diatonic" rung=31 label="Where notes become sound, named: a gate plays its voices with each note of what triggers it." about=&out
+&piece title="A gate: a product with a name" tags="tutorial, diatonic" tier=9 label="Where notes become sound, named: a gate plays its voices with each note of what triggers it." about=&out
 &gateNote label="&leadOut is a gate: each note of &tune plays the voices in its braid, &lead and &bell, at three levels of one family: &accent per note, &duck over time, gain=.4 fixed. It is read as [&tune * &accent * &duck * &lead * .4, …]." about=&leadOut
 &duckNote label="gate=&duck: how open the gate is, a bar at a time: open, open, ducked to a quarter, open." about=&duck
 &productNote label="The bass is the same thing unnamed: a product in the sound card." about=&bass

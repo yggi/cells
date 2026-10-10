@@ -1,4 +1,4 @@
-&piece title="Chance and choice" tags="tutorial, rhythm" rung=13 label="A line that is never quite the same twice round: steps that may not sound, and choices between notes." about=&out
+&piece title="Chance and choice" tags="tutorial, rhythm" tier=5 label="A line that is never quite the same twice round: steps that may not sound, and choices between notes." about=&out
 &chanceNote label="0?.3 sounds three times in ten; a bare 0? takes the cell's chance=. It is the same every time you play the piece; seed= picks another sequence." about=(&ghosts &hats)
 &choiceNote label="[4|5|7]: one of them, chosen afresh each time round." about=&tune
 &bar scan(1 1 1 1) step=free(moderato)

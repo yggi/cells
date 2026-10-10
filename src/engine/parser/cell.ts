@@ -26,7 +26,7 @@ interface Body {
   laps: number | null;
   title: string | null;
   tags: string | null;
-  rung: number | null;
+  tier: number | null;
   about: Ref[] | null;
   chance: number | null;
   seed: number | null;
@@ -225,14 +225,14 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm"', '&lead tags="melody" s=saw loop=C4'],
     read: text('tags', 'tags="jazz, blues"'),
   },
-  rung: {
-    form: 'rung=n',
-    examples: ['&piece title="Steps: a tune on one line" tags="tutorial" rung=1 label="Numbers, rests, holds and repeats."'],
+  tier: {
+    form: 'tier=n',
+    examples: ['&piece title="Steps: a tune on one line" tags="tutorial" tier=1 label="Numbers, rests, holds and repeats."'],
     read: (s, b, word, at) => {
-      // its place in the tutorial: 1, 2, 3 …
+      // its tier of the tutorial: 1, 2, 3 …
       const n = s.match(/[0-9]+(?![0-9.])/y);
-      if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999)) s.fail('rung= is a place in the tutorial, 1 to 9999: rung=1', at, word.length + 1);
-      b.rung = parseInt(n!, 10);
+      if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999)) s.fail('tier= is a tier of the tutorial, 1 to 9999: tier=1', at, word.length + 1);
+      b.tier = parseInt(n!, 10);
     },
   },
   about: {
@@ -419,7 +419,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     laps: null,
     title: null,
     tags: null,
-    rung: null,
+    tier: null,
     about: null,
     chance: null,
     seed: null,
@@ -519,7 +519,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     if (b.over) s.fail('scale(…) reads through a key of its own: drop over=, or write the key as a cell (&mode over=&key scan(…))', b.over.span.col - 1, b.over.span.len);
     b.over = scaleKey;
   }
-  const { over, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, rung, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } = b;
+  const { over, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } = b;
   return {
     name: head.name,
     span: head.span,
@@ -536,7 +536,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     label,
     title,
     tags,
-    rung,
+    tier,
     about: about ?? undefined,
     laps,
     chance,

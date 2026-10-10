@@ -1,4 +1,4 @@
-&piece title="Drums: a groove of voices" tags="tutorial, rhythm" rung=9 label="A drum part written with the drums' names: a beat, a fill with ratchets, a Euclidean rhythm and a kit." about=&out
+&piece title="Drums: a groove of voices" tags="tutorial, rhythm" tier=4 label="A drum part written with the drums' names: a beat, a fill with ratchets, a Euclidean rhythm and a kit." about=&out
 &grooveNote label="A stepped braid of voices plays them: &bd ~ &hh is kick, rest, hat. &beat and &fill are drum motifs, spliced into &groove like any other." about=&groove
 &ratchetNote label="&sd*3 plays the snare three times in one step: a ratchet." about=&fill
 &euclidNote label="euclid(5, 16): five hits spread as evenly as they go over sixteen steps." about=&clave

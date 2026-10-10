@@ -1,13 +1,13 @@
 /**
  * The tags of a piece's card (`tags="genre:jazz, artist:Bach, rhythm"`): four kinds. `genre:` and
  * `artist:` say what kind of tag it is by a prefix; `tutorial` is a kind and its one tag at once (a
- * piece of the tutorial, the ladder of basics: its card's rung= says where); a tag without a prefix is
+ * piece of the tutorial, whose tiers its card's tier= says); a tag without a prefix is
  * a topic (a technique or idea: rhythm, canon, tuning), the kind a person types without thinking
  * about it. The library shows the name only and groups by kind. Pure text: no UI.
  */
 export type TagKind = 'genre' | 'artist' | 'tutorial' | 'topic';
 
-/** The tutorial's tag: its pieces are the ladder of basics, a cell of their own in the library. */
+/** The tutorial's tag: its pieces are the tutorial's, in tiers, a cell of their own in the library. */
 export const TUTORIAL = 'tutorial';
 
 /** The tags the examples use, by kind: a test fails on any other (a piece of your own may use any). */

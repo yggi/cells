@@ -1,4 +1,4 @@
-&piece title="A clock: one bar drives every part" tags="tutorial, rhythm" rung=2 label="A bar sets the tempo, and every part steps with it: on the beat, twice as fast, or once every two beats." about=&out
+&piece title="A clock: one bar drives every part" tags="tutorial, rhythm" tier=2 label="A bar sets the tempo, and every part steps with it: on the beat, twice as fast, or once every two beats." about=&out
 &barNote label="&bar is the clock: scan(1 1 1 1) is four even beats; step=free(andante) a tempo marking, a slider from 76 to 108 beats a minute." about=&bar
 &ratesNote label="step=&bar moves a part a step a beat; &bar/2 two steps a beat; &bar*2 a step every two beats." about=(&tune &eighths &bass)
 &bar scan(1 1 1 1) step=free(andante)          # four beats, andante

@@ -1,4 +1,4 @@
-&piece title="Chords and a progression" tags="tutorial, harmony, diatonic" rung=7 label="Four chords in A minor, struck on the beat, and the bass that follows them." about=&out
+&piece title="Chords and a progression" tags="tutorial, harmony, diatonic" tier=3 label="Four chords in A minor, struck on the beat, and the bass that follows them." about=&out
 &chordNote label="[0,2,4] is a chord: three steps at once, in the scale the cell reads. 6# raises the seventh a semitone: the dominant E major." about=&chords
 &sumNote label="&chords + &strike: a sum of pitches. The finer one, &strike, starts the notes; the chords hold under it and move it." about=&strike
 &bar scan(1 1 1 1) step=free(andante)

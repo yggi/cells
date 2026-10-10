@@ -1,6 +1,6 @@
 # 009 · The tutorial: a ladder of pieces, `rung=` on the card, its own cell in the library
 
-**Date:** 2026-10-07 · **Status:** accepted (owner, #170)
+**Date:** 2026-10-07 · **Status:** accepted (owner, #170); the rungs are superseded by [020](020-tutorial-tiers.md): the ladder became eight tiers, `rung=` became `tier=`
 
 ## Decision
 

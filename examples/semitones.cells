@@ -1,0 +1,6 @@
+&piece title="Semitones: a scale up and down" tags="tutorial" tier=1 label="A number is a note: so many semitones above the voice's own. Up the C major scale and back." about=&out
+&semitonesNote label="0 is the voice's note, 1 a semitone above it, 12 an octave; a minus goes below. The scale skips the semitones between E and F and between B and C." about=&climb
+
+&climb step=6 0 2 4 5 7 9 11 12 11 9 7 5 4 2 0 -5 0@2   # the scale, then the fifth below C and home
+&voice s=sine loop=C4
+&out map=sample level=6 [&climb * &voice * .5]

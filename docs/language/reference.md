@@ -112,7 +112,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 - `title="text"`: On a note: the piece’s title (its card) — on a note (a label= and nothing else) [→](display.md) `&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."`
 - `tags="tag, tag"`: On a note: the piece’s tags, comma-separated; on a cell, its clusters in the graph. [→](display.md) `&piece title="Swing blues" tags="genre:jazz, rhythm"` · `&lead tags="melody" s=saw loop=C4`
 - `about=&cell` · `about=(&a &b …)`: On a note: the cells it explains — on a note (a label= and nothing else) [→](display.md) `&fenvNote label="The filter opens on every note." about=&fenv` · `&why label="Two cells at once." about=(&fenv &accent)`
-- `rung=n`: On a piece’s card: its place in the tutorial, the ladder of basics (1 the first) — on a note (a label= and nothing else) [→](display.md) `&piece title="Steps: a tune on one line" tags="tutorial" rung=1 label="Numbers, rests, holds and repeats."`
+- `tier=n`: On a piece’s card: its tier of the tutorial (1 the first); the pieces of a tier keep the library’s order — on a note (a label= and nothing else) [→](display.md) `&piece title="Steps: a tune on one line" tags="tutorial" tier=1 label="Numbers, rests, holds and repeats."`
 
 ## Parameters
 

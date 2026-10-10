@@ -1,4 +1,4 @@
-&piece title="Sympathy: resonators that answer" tags="tutorial, sound" rung=25 label="A struck fork sets its twin singing, and a harp's strings answer a flute they are never plucked by." about=&out
+&piece title="Sympathy: resonators that answer" tags="tutorial, sound" tier=7 label="A struck fork sets its twin singing, and a harp's strings answer a flute they are never plucked by." about=&out
 &coupleNote label="couple=&forkB: the two forks share a table, and coupling= says how strongly; only &forkA is struck." about=(&forkA &forkB)
 &exciteNote label="excite=&played: the flute's sound drives the strings, which ring where it meets their notes." about=&strings
 &bar scan(1 1 1 1) step=72bpm

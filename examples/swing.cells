@@ -1,4 +1,4 @@
-&piece title="Swing: the long and the short" tags="tutorial, rhythm" rung=10 label="Eighths played long and short: a swing clock, and the same feel from swing= on the bar." about=&out
+&piece title="Swing: the long and the short" tags="tutorial, rhythm" tier=4 label="Eighths played long and short: a swing clock, and the same feel from swing= on the bar." about=&out
 &clockNote label="&swing is a clock of its own: scan(2 1), a long step and a short, two to a beat. What steps with it swings." about=&swing
 &swingNote label="swing=.67 on a bar says the same: of each pair of steps, the second comes two thirds of the way through. beat=2: two of the bar's steps make a beat." about=&bar2
 &bar scan(1 1 1 1) step=free(moderato)

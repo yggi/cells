@@ -1,4 +1,4 @@
-&piece title="Clock time: a minute, an hour, a day" tags="tutorial, modal" rung=30 label="Music on the clock on the wall: a tick each second, a chime each minute, a day of music anchored to the time." about=&out
+&piece title="Clock time: a minute, an hour, a day" tags="tutorial, modal" tier=8 label="Music on the clock on the wall: a tick each second, a chime each minute, a day of music anchored to the time." about=&out
 &unitsNote label="Rates in clock time: loop=1min turns once a minute, 1h an hour, 1d a day, 1wk a week." about=(&minute &hour &day &week)
 &anchorNote label="anchor=11.55: where the day stands when play starts, at 11:55 (hours.minutes); then it keeps the time." about=&day
 &lawNote label="law=fiveto12: notes computed by a law, not written: the 5 to 12 cycle, a day of music read through the day." about=&cycle

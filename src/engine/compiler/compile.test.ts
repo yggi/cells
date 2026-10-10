@@ -482,24 +482,24 @@ describe('scale(name, tonic)', () => {
   });
 });
 
-describe('rung=: a place in the tutorial', () => {
+describe('tier=: a tier of the tutorial', () => {
   it('belongs on the card', () => {
     const errors = (src: string) =>
       compileSource(src)
         .diagnostics.filter((d) => d.severity === 'error')
         .map((d) => d.message);
-    expect(errors('&p label="x" rung=2')).toEqual(['rung= belongs on a piece’s card: the note with its title=']);
-    expect(errors('&p title="x" rung=2')).toEqual([]);
+    expect(errors('&p label="x" tier=2')).toEqual(['tier= belongs on a piece’s card: the note with its title=']);
+    expect(errors('&p title="x" tier=2')).toEqual([]);
   });
   it('warns on a card that is not in the tutorial', () => {
     const warnings = (src: string) =>
       compileSource(src)
         .diagnostics.filter((d) => d.severity === 'warning')
         .map((d) => d.message)
-        .filter((m) => m.startsWith('rung='));
-    expect(warnings('&p title="x" rung=2')).toHaveLength(1);
-    expect(warnings('&p title="x" tags="tutorial" rung=2')).toEqual([]);
-    expect(warnings('&p title="x" tags="basics, rhythm" rung=2')).toEqual([]);
+        .filter((m) => m.startsWith('tier='));
+    expect(warnings('&p title="x" tier=2')).toHaveLength(1);
+    expect(warnings('&p title="x" tags="tutorial" tier=2')).toEqual([]);
+    expect(warnings('&p title="x" tags="basics, rhythm" tier=2')).toEqual([]);
   });
 });
 

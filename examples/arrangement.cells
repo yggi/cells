@@ -1,4 +1,4 @@
-&piece title="Arrangement: parts and a song" tags="tutorial, arrangement" rung=15 label="Three parts, and a song that picks which of them play: an intro, a verse, a chorus, an end." about=&out
+&piece title="Arrangement: parts and a song" tags="tutorial, arrangement" tier=5 label="Three parts, and a song that picks which of them play: an intro, a verse, a chorus, an end." about=&out
 &partsNote label="A part is a tap of the bar: &parts names them (step=&bar), and what a part steps plays while &song picks it, a section a step, from its top: a number picks one part, a chord several." about=(&parts &song)
 &lapsNote label="laps=1: the song plays once, then ends. off switches a cell off, and everything that plays it: take it from &click to hear the beat." about=&song
 &bar scan(1 1 1 1) step=free(moderato)

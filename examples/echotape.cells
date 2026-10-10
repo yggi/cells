@@ -1,4 +1,4 @@
-&piece title="Echo Tape" tags="tutorial, genre:experimental, genre:electronic, sound" rung=27 label="A tape loop of notes: a write head records the tune and read heads play it back, echoing." about=&out
+&piece title="Echo Tape" tags="tutorial, genre:experimental, genre:electronic, sound" tier=8 label="A tape loop of notes: a write head records the tune and read heads play it back, echoing." about=&out
 &headsNote label="Three read heads play it back .375, .75 and 1.5 tape-seconds on." about=(&near &mid &far)
 &ghostNote label="Every pass under the write head erases a little less than half — ghosts of older phrases fade round the loop." about=&tape
 &reelNote label="The reel wows; hold it, and the echoes slow and sag in pitch." about=&reel

@@ -1,9 +1,9 @@
 /**
- * The tutorial as a ladder (#170): each piece of it (a card with `tags="tutorial"` and `rung=n`)
- * introduces one concept, and uses only what the rungs before it introduced. A concept is a set of
- * the forms of docs/language/reference.md, and every form is some rung's: together the rungs cover
- * the language, each form once. `formsUsed` reads which forms a piece uses from what it parses to;
- * the ladder's test (ladder.test.ts) checks each form is first used on the rung that introduces it.
+ * The tutorial in tiers (#170): each piece of it (a card with `tags="tutorial"` and `tier=n`) belongs
+ * to a tier, and uses only what its tier and the tiers before it introduce. A tier is a set of the
+ * forms of docs/language/reference.md, and every form is some tier's: together the tiers cover the
+ * language, each form once, and the pieces of a tier together show all of its forms. `formsUsed`
+ * reads which forms a piece uses from what it parses to; the tiers' test (ladder.test.ts) checks it.
  */
 import type { Atom, Expr, Ref, Span, Token } from './ast';
 import { compileSource } from './compile';
@@ -25,10 +25,16 @@ export function formKey(e: { readonly section: string; readonly form: string; re
   return `${e.section} ${e.form.split(' · ')[0]}`;
 }
 
-/** The rungs: what each introduces, as forms (formKey). The order is the tutorial's; rung n is LADDER[n − 1]. */
-export const LADDER: readonly { readonly concept: string; readonly forms: readonly string[] }[] = [
+/**
+ * The tiers: what each introduces, as forms (formKey). The order is the tutorial's; tier n is TIERS[n − 1], and
+ * the numbers are stable (a tier is added at the end, never between). The pieces of a tier (several, in the
+ * library's order) together use every form the tier introduces; none uses a form of a later tier. A piece
+ * added to a tier for a variation changes no number.
+ */
+export const TIERS: readonly { readonly name: string; readonly concept: string; readonly forms: readonly string[] }[] = [
   {
-    concept: 'steps: numbers, rests, holds, repeats, a rate; a voice and the sound card',
+    name: 'Steps and sound',
+    concept: 'a voice and the sound card; steps: numbers, rests, holds, repeats, a rate; notes on the cells',
     forms: [
       'line &name …',
       'line &name label="…"',
@@ -45,7 +51,7 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
       'attribute title',
       'attribute tags',
       'attribute about',
-      'attribute rung',
+      'attribute tier',
       'rate step=r',
       'rate loop=NAME',
       'map map=sample',
@@ -59,13 +65,21 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
     ],
   },
   {
-    concept: 'a clock: a bar, step=&bar, /2 and *2, a tempo marking',
-    forms: ['generator scan(i …)', 'rate nbpm', 'rate step=&x', 'rate step=&x*n', 'rate step=free(r, lo..hi)', 'free free(marking)'],
-  },
-  { concept: 'a voice: a source and an envelope', forms: ['attribute env', 'reference &( … )', 'map map=adsr a d s r'] },
-  {
-    concept: 'filters and effects; a vibrato',
+    name: 'Time and voice',
+    concept: 'a clock: a bar, step=&bar, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
     forms: [
+      // a clock
+      'generator scan(i …)',
+      'rate nbpm',
+      'rate step=&x',
+      'rate step=&x*n',
+      'rate step=free(r, lo..hi)',
+      'free free(marking)',
+      // a voice
+      'attribute env',
+      'reference &( … )',
+      'map map=adsr a d s r',
+      // filters and effects
       'attribute pitch',
       'parameter lpf',
       'parameter lpq',
@@ -79,41 +93,148 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
       'parameter crush',
     ],
   },
-  { concept: 'tables: over=, scale(), shift=; show= and size=', forms: ['attribute over', 'attribute shift', 'attribute show', 'attribute size', 'generator scale(name)'] },
-  { concept: 'motifs: splicing, reuse, degrees (^n)', forms: ['step &x', 'reference &name^n'] },
-  { concept: 'chords and a progression: accidentals, a sum of pitches', forms: ['step [a, b, c]', 'step n#', 'mix a + b', 'mix ( … )'] },
-  { concept: 'meter and feel: a bent bar, gates', forms: ['map map=amp', 'sort volume: map=amp, map=db or map=adsr'] },
   {
-    concept: 'drums: a groove of voices, ratchets, euclid, a kit',
-    forms: ['step &voice (stepped)', 'modifier x*n', 'generator euclid(k, n)', 'sort signal: a pattern read through a kit'],
-  },
-  { concept: 'swing: a swing clock, swing= and beat=', forms: ['parameter swing', 'parameter beat'] },
-  { concept: 'canon: a theme shifted', forms: ['reference &name[<<n]'] },
-  {
-    concept: 'mirrors: retrograde, slices, picks, transposing, inverse()',
-    forms: ['reference &name[i]', 'reference &name[a:b]', 'reference &name^$n', 'reference inverse(&name)'],
-  },
-  { concept: 'chance and choice', forms: ['modifier x?', 'step [a|b|c]', 'attribute chance', 'attribute seed'] },
-  { concept: 'turning tables: stride=, cycle(&x); the circle of fifths', forms: ['attribute stride', 'rate step=cycle(&x)', 'generator fifths()'] },
-  { concept: 'arrangement: parts as taps of the bar, a selector, laps=, off', forms: ['line &parts step=&bar &a &b', 'attribute laps', 'line off', 'line … +'] },
-  { concept: 'stereo: pan=', forms: ['parameter pan'] },
-  {
-    concept: 'waveforms from braids: audio rates, sin(), ramps, tables, an instrument',
-    forms: ['sort wave: a braid turning at an audio rate', 'generator sin(n)', 'map map=lin', 'sort plain: map=lin', 'map map=&table', 'rate nhz', 'rate nk', 'sort signal: a mix'],
-  },
-  { concept: 'moving parameters: a filter that opens, a fade in decibels', forms: ['map map=db'] },
-  { concept: 'tuning: grids', forms: ['map map=edo', 'map map=ed(r)', 'map map=ratios', 'step n/d', 'attribute cycle'] },
-  { concept: 'free(): sliders and named choices; meter()', forms: ['free free(v, lo..hi)', 'free free(v, lo..hi, "names")', 'mix free(v, lo..hi)', 'generator meter("sig")'] },
-  { concept: 'FM', forms: ['parameter fm', 'parameter ratio', 'parameter index'] },
-  { concept: 'a motor', forms: ['parameter motor', 'parameter mass', 'parameter friction', 'parameter wind'] },
-  { concept: 'a belt', forms: ['parameter belt', 'parameter damping', 'parameter slip'] },
-  { concept: 'a resonator', forms: ['parameter body', 'parameter ring', 'parameter hard', 'parameter board', 'parameter coupling'] },
-  { concept: 'resonators that answer: coupled, excited', forms: ['parameter couple', 'parameter excite'] },
-  { concept: 'a scope', forms: ['parameter scope', 'parameter fold', 'parameter bins', 'parameter channels'] },
-  { concept: 'a tape', forms: ['parameter write', 'parameter length', 'parameter erase', 'parameter play', 'parameter at', 'parameter wow', 'parameter varispeed'] },
-  {
-    concept: 'a sound tape: worn, wandering heads',
+    name: 'Melody and harmony',
+    concept: 'tables: over=, scale(), shift=; show= and size=; motifs: splicing, reuse, degrees (^n); chords and a progression: accidentals, a sum of pitches',
     forms: [
+      // tables
+      'attribute over',
+      'attribute shift',
+      'attribute show',
+      'attribute size',
+      'generator scale(name)',
+      // motifs
+      'step &x',
+      'reference &name^n',
+      // chords
+      'step [a, b, c]',
+      'step n#',
+      'mix a + b',
+      'mix ( … )',
+    ],
+  },
+  {
+    name: 'Rhythm and feel',
+    concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, euclid, a kit; swing: a swing clock, swing= and beat=',
+    forms: [
+      // meter and feel
+      'map map=amp',
+      'sort volume: map=amp, map=db or map=adsr',
+      // drums
+      'step &voice (stepped)',
+      'modifier x*n',
+      'generator euclid(k, n)',
+      'sort signal: a pattern read through a kit',
+      // swing
+      'parameter swing',
+      'parameter beat',
+    ],
+  },
+  {
+    name: 'Development',
+    concept:
+      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: parts as taps of the bar, a selector, laps=, off',
+    forms: [
+      // canon
+      'reference &name[<<n]',
+      // mirrors
+      'reference &name[i]',
+      'reference &name[a:b]',
+      'reference &name^$n',
+      'reference inverse(&name)',
+      // chance
+      'modifier x?',
+      'step [a|b|c]',
+      'attribute chance',
+      'attribute seed',
+      // turning tables
+      'attribute stride',
+      'rate step=cycle(&x)',
+      'generator fifths()',
+      // arrangement
+      'line &parts step=&bar &a &b',
+      'attribute laps',
+      'line off',
+      'line … +',
+    ],
+  },
+  {
+    name: 'Sound and tuning',
+    concept:
+      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; meter()',
+    forms: [
+      // stereo
+      'parameter pan',
+      // waveforms
+      'sort wave: a braid turning at an audio rate',
+      'generator sin(n)',
+      'map map=lin',
+      'sort plain: map=lin',
+      'map map=&table',
+      'rate nhz',
+      'rate nk',
+      'sort signal: a mix',
+      // moving parameters
+      'map map=db',
+      // tuning
+      'map map=edo',
+      'map map=ed(r)',
+      'map map=ratios',
+      'step n/d',
+      'attribute cycle',
+      // free
+      'free free(v, lo..hi)',
+      'free free(v, lo..hi, "names")',
+      'mix free(v, lo..hi)',
+      'generator meter("sig")',
+    ],
+  },
+  {
+    name: 'Physics',
+    concept: 'FM; a motor; a belt; a resonator; resonators that answer: coupled, excited; a scope',
+    forms: [
+      // FM
+      'parameter fm',
+      'parameter ratio',
+      'parameter index',
+      // a motor
+      'parameter motor',
+      'parameter mass',
+      'parameter friction',
+      'parameter wind',
+      // a belt
+      'parameter belt',
+      'parameter damping',
+      'parameter slip',
+      // a resonator
+      'parameter body',
+      'parameter ring',
+      'parameter hard',
+      'parameter board',
+      'parameter coupling',
+      // resonators that answer
+      'parameter couple',
+      'parameter excite',
+      // a scope
+      'parameter scope',
+      'parameter fold',
+      'parameter bins',
+      'parameter channels',
+    ],
+  },
+  {
+    name: 'Tape, text and time',
+    concept: 'a tape; a sound tape: worn, wandering heads; text: spell(); clock time and a law',
+    forms: [
+      // a tape
+      'parameter write',
+      'parameter length',
+      'parameter erase',
+      'parameter play',
+      'parameter at',
+      'parameter wow',
+      'parameter varispeed',
+      // a sound tape
       'sort signal: a read head of a sound tape',
       'parameter tone',
       'parameter drive',
@@ -123,13 +244,34 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
       'parameter dropout',
       'parameter wander',
       'parameter wanderhz',
+      // text
+      'generator spell("text", &table, "names")',
+      'free free("text")',
+      // clock time
+      'rate nmin',
+      'rate nh',
+      'rate nd',
+      'rate nwk',
+      'parameter anchor',
+      'parameter law',
     ],
   },
-  { concept: 'text: spell()', forms: ['generator spell("text", &table, "names")', 'free free("text")'] },
-  { concept: 'clock time and a law', forms: ['rate nmin', 'rate nh', 'rate nd', 'rate nwk', 'parameter anchor', 'parameter law'] },
-  { concept: 'a gate: a product with a name', forms: ['parameter trigger', 'parameter velocity', 'parameter gate', 'parameter gain'] },
-  { concept: 'a braid left to the performer: free(0 2 4 ~), recorded from the keys', forms: ['free free(0 2 4 ~ …)'] },
-  { concept: 'MIDI out: a MIDI card, its entries channels', forms: ['map map=midi', 'map map=midi(c)'] },
+  {
+    name: 'Gates, performing and MIDI',
+    concept: 'a gate: a product with a name; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
+    forms: [
+      // a gate
+      'parameter trigger',
+      'parameter velocity',
+      'parameter gate',
+      'parameter gain',
+      // a braid left to the performer
+      'free free(0 2 4 ~ …)',
+      // MIDI out
+      'map map=midi',
+      'map map=midi(c)',
+    ],
+  },
 ];
 
 const TEMPO_MARKINGS = /free\(\s*(largo|larghetto|adagio|andante|moderato|allegro|vivace|presto)\s*\)/;
@@ -271,7 +413,7 @@ export function formsUsed(source: string): Set<string> {
       ['title', d.title],
       ['tags', d.tags],
       ['about', d.about],
-      ['rung', d.rung],
+      ['tier', d.tier],
     ] as const)
       if (v !== null && v !== undefined) use(`attribute ${k}`);
     if (d.env) ref(d.env);
