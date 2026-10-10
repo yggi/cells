@@ -243,7 +243,7 @@ Rates are a table (`RATE_UNITS`: `bpm`, `hz`, `k`, each n per so many seconds). 
 
 ### Built: mass and strength (2026-10-07)
 
-`layout/weights.ts`: `massOf` (turntable 3, meter 2.5, a net's owner 2, a sound 1.5, a cell 1, a petal .5) and `strengthOf` (belt 3, sync 2, a bus 1 + log₂(width)/3, a wire 1, a note's link .3). The quality report gains `cost`, the crossings weighed by what they cross (the product of the two strengths; a belt over a wheel its own), recorded in the baseline and guarded by the library test. Measured over the library (crossings / cost):
+`layout/weights.ts`: `crossingCost` (what a crossing of two edges costs: the product of their strengths, doubled when both are of one band; the measure and the push use it), `massOf` (turntable 3, meter 2.5, a net's owner 2, a sound 1.5, a cell 1, a petal .5) and `strengthOf` (belt 3, sync 2, a bus 1 + log₂(width)/3, a wire 1, a note's link .3). The quality report gains `cost`, the crossings weighed by what they cross (the product of the two strengths; a belt over a wheel its own), recorded in the baseline and guarded by the library test. Measured over the library (crossings / cost):
 
 | | crossings | cost |
 |---|---|---|
