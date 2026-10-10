@@ -144,14 +144,18 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
             ? { kind: 'edo', period: d.map.period }
             : d.map.kind === 'ratios'
               ? { kind: 'ratios', ratios: d.braid.kind === 'list' ? d.braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [] }
-              : { kind: d.map.kind }
+              : d.map.kind === 'midi'
+                ? { kind: 'midi', channel: d.map.channel, port: d.map.port }
+                : { kind: d.map.kind }
         : null,
-      // a mix: one chord of sounds — or, on a sound card, its channels written in place (all their voices)
+      // a mix: one chord of sounds — or, on a sound card, its channels written in place (all their voices); a MIDI
+      // card's entries are channels of notes, not a mix (bindings.ts reads them)
       mix:
-        units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample')
+        units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
           ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
           : null,
       sink: d.map?.kind === 'sample',
+      ...(d.map?.kind === 'midi' ? { chords: units.map((u) => (u.atom.kind === 'mix' ? typed(u.atom) : null)) } : {}),
       clock: null,
       rate: 0,
       stride: d.stride ?? 1,

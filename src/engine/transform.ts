@@ -68,8 +68,8 @@ export function stepLabel(s: TransformStep): string {
 /** A transform as the label shows it: its steps in order. */
 export const transformLabel = (t: Transform): string => t.map(stepLabel).filter(Boolean).join(' ');
 
-/** Ports a label doesn't name: the structure (a table, a ref, a step, a mix, a product's voice, a note's link) and what plays a voice. Any other is an attribute (`fm`, `lpf`, `write` …), named. */
-const UNNAMED = new Set(['over', 'braid', 'step', 'mix', 'is', 'about', 'voice', 'env', 'level', 'pitch']);
+/** Ports a label doesn't name: the structure (a table, a ref, a step, a mix, a MIDI card's entry, a product's voice, a note's link) and what plays a voice. Any other is an attribute (`fm`, `lpf`, `write` …), named. */
+const UNNAMED = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'voice', 'env', 'level', 'pitch']);
 /** A port that is an attribute of the reader (`fm=`, `lpf=`, `write=` …): its label names it. */
 export const isAttribute = (port: string) => !UNNAMED.has(port);
 /** How a port combines what it carries with the rest: an envelope and a level multiply, a pitch adds (a negated one: its `−` says so). */

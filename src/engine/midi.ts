@@ -2,11 +2,15 @@
  * MIDI out, the pure part (#205): a played note (`Played`, realize.ts) as MIDI — its note and the cents it is off a
  * key, its velocity, its pitch bends — and which channel each voice of a piece goes to, with a kit's members on
  * channel 10 under General MIDI drum notes picked by their names. Sending it, at the right moment and with the
- * note-offs worked out, is the browser's business (`src/midi/out.ts`). Nothing here is written into a piece: the
- * channel table is app state, kept in this browser (docs/ui/midi.md).
+ * note-offs worked out, is the browser's business (`src/midi/out.ts`).
+ *
+ * Two ways a piece's notes find their channels (decision 019): a piece with MIDI cards (map=midi) says it — each note
+ * goes where its cards' entries say (`Played.midi`), on their channels and output slots, and nothing else is sent; a
+ * piece with none goes out as the app's default output, every voice heard on a channel of its own in the order the
+ * piece declares them, which the dialog can change and this browser keeps (docs/ui/midi.md).
  */
 import type { Played } from './realize';
-import type { CompileResult, Output } from './program';
+import { isMidiCard, type CompileResult, type Output } from './program';
 
 /** The channel a kit's members play on (General MIDI drums), 1–16. */
 const DRUM_CHANNEL = 10;
@@ -37,12 +41,13 @@ export function bendValue(cents: number, range = DEFAULT_BEND_RANGE): number {
 export const bendMessage = (channel: number, value: number): number[] => [0xe0 | ((channel - 1) & 15), value & 0x7f, (value >> 7) & 0x7f];
 
 /**
- * How hard a note is struck, 1 … 127: its level at its start times the louder of its two channels' gains. Synths
+ * How hard a note is struck, 1 … 127: its level at its start times the louder of its two channels' gains (on a MIDI
+ * card, the gain of its product there). Synths
  * mostly turn velocity into amplitude on a square law, so the velocity is the square root of that amplitude.
  */
-export function velocityOf(e: Pick<Played, 'gains' | 'levels'>): number {
+export function velocityOf(e: Pick<Played, 'gains' | 'levels'>, gain = Math.max(e.gains[0], e.gains[1])): number {
   const level = e.levels[0]?.level ?? 1;
-  const amp = Math.max(0, level * Math.max(e.gains[0], e.gains[1]));
+  const amp = Math.max(0, level * gain);
   const v = Math.round(127 * Math.sqrt(Math.min(1, amp)));
   return Math.max(1, Math.min(127, Number.isFinite(v) ? v : 1));
 }
@@ -104,11 +109,21 @@ export function kitNotes(members: readonly string[]): Map<string, number> {
 
 /** Where a piece's notes go: each voice it plays directly on a channel, each kit member on channel 10 with a note. */
 export interface ChannelTable {
-  /** The voices played directly, in the order the piece declares them, each on its channel (1–16). */
-  readonly voices: readonly { readonly voice: string; readonly channel: number }[];
+  /**
+   * The voices played directly, in the order the piece declares them, each on its channel (1–16); set by the piece
+   * (its MIDI cards), each on every channel and output slot (1 the default output) its cards put it on.
+   */
+  readonly voices: readonly { readonly voice: string; readonly channel: number; readonly port?: number }[];
   /** The kits' members, in the order the piece declares them, each with its General MIDI drum note. */
   readonly kit: readonly { readonly member: string; readonly note: number }[];
+  /** Set by the piece: its MIDI cards say where each note goes (the channels above can't be chosen by hand). */
+  readonly byPiece?: true;
+  /** The output slots its MIDI cards name, in order (none: the default output alone). */
+  readonly ports?: readonly number[];
 }
+
+/** Does the piece name its MIDI channels itself (a MIDI card, map=midi)? */
+const hasMidiCards = (result: CompileResult): boolean => [...result.cells.values()].some((c) => isMidiCard(c));
 
 const byPlace = (result: CompileResult) => (a: string, b: string) => {
   const sa = result.cells.get(a)?.span;
@@ -131,6 +146,7 @@ const membersOf = (result: CompileResult, o: Output): string[] => (result.cells.
  * A send (a voice played only into a resonator or a tape) is not heard from itself and is left out.
  */
 export function channelTable(result: CompileResult, kept: Readonly<Record<string, number>> = {}): ChannelTable {
+  if (hasMidiCards(result)) return cardTable(result);
   const voices = new Set<string>();
   const members = new Set<string>();
   for (const o of result.outputs) {
@@ -146,16 +162,61 @@ export function channelTable(result: CompileResult, kept: Readonly<Record<string
   };
 }
 
+/**
+ * The channel table a piece's MIDI cards set: every voice they name on each of its channels and output slots, a kit's
+ * members with their drum notes (on the channel its card gives the kit, 10 or another). What no card names isn't sent.
+ */
+function cardTable(result: CompileResult): ChannelTable {
+  const order = byPlace(result);
+  const voices = new Map<string, { voice: string; channel: number; port: number }>();
+  const members = new Set<string>();
+  const ports = new Set<number>();
+  for (const o of result.outputs)
+    for (const m of o.midi ?? []) {
+      ports.add(m.port);
+      if (o.kit) for (const k of membersOf(result, o)) members.add(k);
+      else voices.set(`${o.voice}|${m.channel}|${m.port}`, { voice: o.voice, channel: m.channel, port: m.port });
+    }
+  for (const c of result.cells.values()) if (c.map?.kind === 'midi') ports.add(c.map.port);
+  const notes = kitNotes([...members].sort(order));
+  return {
+    voices: [...voices.values()].sort((a, b) => order(a.voice, b.voice) || a.port - b.port || a.channel - b.channel),
+    kit: [...notes].map(([member, note]) => ({ member, note })),
+    byPiece: true,
+    ports: [...ports].sort((a, b) => a - b),
+  };
+}
+
 const validChannel = (c: number | undefined) => (typeof c === 'number' && Number.isInteger(c) && c >= 1 && c <= 16 ? c : null);
 
-/** Where one note goes: a channel (1–16), and for a kit's member its drum note. Null: it isn't sent. */
-export type Route = { readonly channel: number; readonly drum: number | null } | null;
+/**
+ * Where one note goes: a channel (1–16), and for a kit's member its drum note; on a MIDI card, its output slot and the
+ * gain of its product there (velocity reads it instead of the sound card's gains). Null: it isn't sent.
+ */
+export type Route = { readonly channel: number; readonly drum: number | null; readonly port?: number; readonly gain?: number } | null;
 
-/** A piece's routing: where each played note goes, from its channel table. */
-export function router(result: CompileResult, table: ChannelTable): (e: Played) => Route {
+/** Where a note goes: one place, none (null), or, on MIDI cards, every entry it is on. */
+export type Routes = Route | readonly NonNullable<Route>[];
+
+/** Where a note goes, as a list: every place, none for a note that isn't sent. */
+export const routesOf = (r: Routes): readonly NonNullable<Route>[] => (r === null ? [] : Array.isArray(r) ? r : [r as NonNullable<Route>]);
+
+/**
+ * A piece's routing: where each played note goes, from its channel table. Set by the piece (MIDI cards): each entry
+ * the note is on (`Played.midi`, those switched on), a kit's member as its drum note, and nothing for a note on none.
+ */
+export function router(result: CompileResult, table: ChannelTable): (e: Played) => Routes {
   const outputs = new Map(result.outputs.map((o) => [o.id, o]));
   const channels = new Map(table.voices.map((v) => [v.voice, v.channel]));
   const drums = new Map(table.kit.map((k) => [k.member, k.note]));
+  if (table.byPiece)
+    return (e) => {
+      if (!e.midi?.length) return null;
+      const o = e.output === undefined ? undefined : outputs.get(e.output);
+      const drum = o?.kit ? drums.get(e.voice) : null;
+      if (drum === undefined) return null;
+      return e.midi.map((m) => ({ channel: m.channel, drum, port: m.port, gain: m.gain }));
+    };
   return (e) => {
     const o = e.output === undefined ? undefined : outputs.get(e.output);
     if (o?.silent) return null;
@@ -187,7 +248,7 @@ export interface MidiNote {
  * note no MIDI key can play (below note 0 or above 127, or no frequency).
  */
 export function midiNote(e: Played, route: NonNullable<Route>, bendRange = DEFAULT_BEND_RANGE, a4 = 440): MidiNote | null {
-  const velocity = velocityOf(e);
+  const velocity = velocityOf(e, route.gain);
   const end = e.at + Math.max(0, e.dur);
   if (route.drum !== null) return { channel: route.channel, note: route.drum, velocity, at: e.at, end, bend: BEND_CENTRE, bends: [] };
   if (!(e.freq > 0) || !Number.isFinite(e.freq)) return null;

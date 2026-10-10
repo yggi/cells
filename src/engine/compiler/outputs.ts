@@ -2,10 +2,11 @@
 import { type CellDecl, type Span } from '../ast';
 import { adsrOf, balance, pickProblem, pickSteps, type Clock, type Output, type Resonance, type ResolvedCell, type TapeReturn } from '../program';
 import { IMPLICIT } from './tables';
+import { VOICE_PARAMS } from '../attributes';
 import type { Bound } from './bindings';
 import type { Cells, Ctx } from './context';
 
-export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, clocks: ReadonlyMap<string, Clock>, { sinks, bindings, soundHead }: Bound) {
+export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, clocks: ReadonlyMap<string, Clock>, { sinks, cards, bindings, soundHead }: Bound) {
   const { parsed, error, warn, unknownCell } = ctx;
   // ---- outputs: one per voice binding. Articulation (rule 2): the step= term
   // starts notes — of several, the finest (a melody over its harmony: the coarser
@@ -22,7 +23,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     const [a, b] = [stepsPerSecond(by[0].c), stepsPerSecond(by[1].c)];
     return a - b > 1e-9 * Math.max(a, b) ? by[0] : null;
   };
-  for (const { b, span, gains, via, parts, through, select, silent } of bindings) {
+  for (const { b, span, gains, via, parts, through, select, silent, midi } of bindings) {
     const known = (r: { name: string; span: Span }) => {
       if (decls.has(r.name)) return true;
       unknownCell(r.name, r.span);
@@ -186,6 +187,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       select,
       ...(tapeOf.has(t) ? { tape: tapeOf.get(t)! } : {}),
       ...(silent ? { silent: true } : {}),
+      ...(midi?.length ? { midi } : {}),
       through: [...through],
       envelope: env,
       envelopeCell: envelopes[0]?.c.name ?? null,
@@ -194,7 +196,20 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     });
   }
   // (not when a line failed: that may be the sound card's own, and its error says what's wrong)
-  if (sinks.length === 0 && parsed.cells.length > 0 && !parsed.broken?.length)
+  // a voice only on MIDI cards: its sound isn't sent (MIDI carries notes, velocity and bends), said once for the piece
+  const heardVoice = (v: string) => outputs.some((o) => o.voice === v && (o.parts.length || o.silent));
+  const sentOnly = outputs.find(
+    (o) => o.midi && !o.parts.length && !o.silent && !o.kit && !heardVoice(o.voice) && Object.keys(decls.get(o.voice)?.params ?? {}).some((k) => VOICE_PARAMS.has(k)),
+  );
+  if (sentOnly) {
+    const d = decls.get(sentOnly.voice)!;
+    const sound = Object.keys(d.params).filter((k) => VOICE_PARAMS.has(k));
+    warn(
+      `&${sentOnly.voice} is only on a MIDI card: its sound (${sound.map((k) => `${k}=`).join(' ')}) isn't sent — MIDI carries its notes, velocity and bends; the device makes the sound`,
+      d.paramSpans[sound[0]] ?? d.span,
+    );
+  }
+  if (sinks.length === 0 && cards.length === 0 && parsed.cells.length > 0 && !parsed.broken?.length)
     warn('Nothing plays yet — add a mix and the sound card: &mix [&melody * &voice] and &out loop=SAMPLE_RATE map=sample &mix &mix', IMPLICIT);
   return { outputs, returns, resonances };
 }

@@ -33,6 +33,7 @@ export const ORDER = [
   'daytime',
   'gate',
   'play-in',
+  'midi-out',
   // the pieces
   'lullaby',
   'jazz',

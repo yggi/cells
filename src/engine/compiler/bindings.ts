@@ -1,9 +1,9 @@
-/** Phase 3: who plays what — kits, the sound card's channels, mixes expanded (instruments, selectors, sends), voices marked. */
+/** Phase 3: who plays what — kits, the sound card's channels, MIDI cards' channels, mixes expanded (instruments, selectors, sends), voices marked. */
 import type { Binding, CellDecl, Span } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
 import { ATTRIBUTES, VOICE_PARAMS } from '../attributes';
 import { canonicalTag, TUTORIAL } from '../tags';
-import type { ResolvedCell } from '../program';
+import { isMidiCard, type MidiDest, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 import type { Typed } from './sorts';
 
@@ -20,7 +20,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   const sinks = [...cells.values()].filter((c) => c.sink);
   for (const [name, d] of decls) {
     const c = cells.get(name);
-    if (c && !c.mix && c.units.some((u) => u.atom.kind === 'mix'))
+    if (c && !c.mix && !isMidiCard(c) && c.units.some((u) => u.atom.kind === 'mix'))
       error(c.sink ? `A sound card's channels are all mixes: [left …] [right …], or &left &right` : `A mix is one chord of sounds: &${name} [&a * &v, &b * &w]`, d.span);
   }
   /** A selector: a cell reading a table whose entries are mixes (parts): its numbers pick which play. */
@@ -41,6 +41,8 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     through: Set<string>;
     /** Played, but not heard: a mix that only excites a resonator or feeds a tape (a send). */
     silent?: boolean;
+    /** The MIDI cards' entries it goes out on. */
+    midi?: MidiDest[];
   };
   /**
    * A mix used like a voice (an instrument: `[&(map=adsr …) * &saw]`) distributes:
@@ -144,6 +146,65 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       }
     }
   }
+  // MIDI cards (map=midi): their entries are channels, in order (or all on one), each a mix written in place, a mix
+  // cell, or a pattern read through a kit; ~ skips a channel. What a card names goes out as notes on its channel; a
+  // binding a sound card plays too is the same output (heard and sent), one only a card names is sent, not heard.
+  const cards = [...cells.values()].filter((c) => isMidiCard(c));
+  for (const card of cards) {
+    const d = decls.get(card.name)!;
+    const map = card.map as Extract<ResolvedCell['map'], { kind: 'midi' }>;
+    if (d.step) error(`A MIDI card doesn't turn: leave out ${d.step.whole ? 'loop' : 'step'}= (&${card.name} map=midi …)`, d.step.span);
+    const toks = d.braid.kind === 'list' ? d.braid.tokens : [];
+    const bad = card.units.findIndex((u) => u.subdivide !== 1 || u.elongate !== 1);
+    if (bad >= 0) {
+      error(`A MIDI card's entries are channels: x!n repeats one on n channels, but * and @ mean nothing here`, toks[bad]?.span ?? d.span);
+      continue;
+    }
+    const count = card.units.reduce((n, u) => n + u.repeat, 0);
+    if (map.channel === null && count > 16) {
+      error(`A MIDI card has 16 channels, and &${card.name} names ${count}: ~ skips one, map=midi(10) puts them all on one`, d.span);
+      continue;
+    }
+    if (count === 0) warn(`&${card.name} is a MIDI card with no channels: write what goes on each, map=midi [&theme * &reed] ~ &groove`, d.map!.span);
+    let at = 0;
+    card.units.forEach((u, i) => {
+      const span = toks[i]?.span ?? d.span;
+      const first = at;
+      at += u.repeat;
+      if (u.atom.kind === 'rest') return;
+      let entry: { bindings: readonly Binding[]; mix: string | null };
+      if (u.atom.kind === 'mix') entry = { bindings: card.chords?.[i] ?? [], mix: null };
+      else if (u.atom.kind === 'ref') {
+        const name = u.atom.name;
+        const c = cells.get(name);
+        if (!c) return;
+        const alone = { voice: { name, pick: u.atom.pick, shift: u.atom.shift, span }, pitches: [], offset: 0, gain: 1 };
+        if (c.mix && !c.sink) entry = { bindings: c.mix, mix: name };
+        else if (partsOf(c) || throughKit(name) || c.voice || c.kit) entry = { bindings: [alone], mix: null };
+        else {
+          error(`&${name} is a melody without a voice: a MIDI channel plays notes on a voice, [&${name} * &voice]`, span);
+          return;
+        }
+      } else {
+        error(`A MIDI card's entries are channels: a mix ([&theme * &reed]), a mix cell, a pattern read through a kit, or ~ to skip one`, span);
+        return;
+      }
+      const { bindings: named, mix } = entry;
+      for (let k = 0; k < u.repeat; k++) {
+        const channel = map.channel ?? first + k + 1;
+        for (const { b, through, select } of named.flatMap((x) => expand(x))) {
+          const key = termKey(b, select);
+          let g = gathered.get(key) ?? [...gathered.values()].find((x) => termKey(x.b, x.select) === key);
+          if (!g) gathered.set(key, (g = { b, span: card.span, gains: [0, 0], via: new Set(), parts: [], through: new Set(), select: [...select] }));
+          for (const t of through) g.through.add(t);
+          (g.midi ??= []).push({ card: card.name, mix, channel, port: map.port, gain: b.gain });
+          g.via.add(card.name);
+          if (mix) g.via.add(mix);
+          for (const x of select) g.via.add(x.cell).add(cells.get(x.cell)!.over!).add(x.part);
+        }
+      }
+    });
+  }
   const bindings = [...gathered.values()].map((g) => {
     const kit = throughKit(g.b.voice.name);
     return kit ? { ...g, b: { ...g.b, voice: { name: kit, pick: null, shift: 0, span: g.b.voice.span }, pitches: [{ ref: g.b.voice, sign: 1 as const }, ...g.b.pitches] } } : g;
@@ -181,6 +242,6 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     if (d.step?.kind === 'driven') error(`A voice moves at a rate — its pitch, like loop=C4${why}`, d.step.span);
     else if (d.step && !d.step.whole) error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4${why}`, d.step.span);
   }
-  return { cells: cells as Cells, sinks, bindings, soundHead };
+  return { cells: cells as Cells, sinks, cards, bindings, soundHead };
 }
 export type Bound = ReturnType<typeof bindVoices>;

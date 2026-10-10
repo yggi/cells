@@ -10,7 +10,7 @@ import { resolveIn } from './helix';
 import { clocking, playedCells, selects, shiftsAt } from './clocking';
 import { stepsOf, unitsFor } from './flatten';
 import { cellId, edgeId } from './ids';
-import { endOf, outputSounds, picksNow, voiceFor } from './realize';
+import { endOf, outputPlays, picksNow, voiceFor } from './realize';
 import { liveRouting, type NotesOf, type RouteAcc } from './routing';
 import { mod } from '../theory/modes';
 
@@ -108,7 +108,7 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
   const ways = new Map<Output, Descent>();
   const members = new Map<Output, string[]>();
   for (const o of result.outputs) {
-    if (!outputSounds(result, o, muted)) continue;
+    if (!outputPlays(result, o, muted)) continue;
     // after its end, nothing; picked by selectors, only while they pick it
     if (seconds >= endOf(result, statics, o)) continue;
     if (o.select.length && !o.select.every((x) => picksNow(result, statics, x.cell, seconds).has(x.entry))) continue;

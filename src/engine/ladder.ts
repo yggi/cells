@@ -129,6 +129,7 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
   { concept: 'clock time and a law', forms: ['rate nmin', 'rate nh', 'rate nd', 'rate nwk', 'parameter anchor', 'parameter law'] },
   { concept: 'a gate: a product with a name', forms: ['parameter trigger', 'parameter velocity', 'parameter gate', 'parameter gain'] },
   { concept: 'a braid left to the performer: free(0 2 4 ~), recorded from the keys', forms: ['free free(0 2 4 ~ …)'] },
+  { concept: 'MIDI out: a MIDI card, its entries channels', forms: ['map map=midi', 'map map=midi(c)'] },
 ];
 
 const TEMPO_MARKINGS = /free\(\s*(largo|larghetto|adagio|andante|moderato|allegro|vivace|presto)\s*\)/;
@@ -224,7 +225,7 @@ export function formsUsed(source: string): Set<string> {
       use('step [a|b|c]');
       if (a.alters.some(Boolean)) use('step n#');
     } else if (a.kind === 'ref' && card) {
-      // (the sound card's entries are its channels: a mix there is a channel, not an instrument)
+      // (a sound card's or a MIDI card's entries are its channels: a mix there is a channel, not an instrument)
       ref(a);
       if (!isMix(a.name)) sortOf(a.name);
     } else if (a.kind === 'ref') {
@@ -298,6 +299,7 @@ export function formsUsed(source: string): Set<string> {
       use('map map=&table');
       ref(m.table);
     } else if (m?.kind === 'edo') use(/^ed\(/.test(textOf(m.span)) ? 'map map=ed(r)' : 'map map=edo');
+    else if (m?.kind === 'midi') use(m.channel === null ? 'map map=midi' : 'map map=midi(c)');
     else if (m) use(`map map=${m.kind === 'adsr' ? 'adsr a d s r' : m.kind}`);
     // free(…)
     for (const f of d.frees ?? []) {
@@ -313,7 +315,7 @@ export function formsUsed(source: string): Set<string> {
     }
     // the braid
     const groove = !!grooves?.cells.has(d.name);
-    if (d.braid.kind === 'list') for (const t of d.braid.tokens) token(t, groove, d.map?.kind === 'sample');
+    if (d.braid.kind === 'list') for (const t of d.braid.tokens) token(t, groove, d.map?.kind === 'sample' || d.map?.kind === 'midi');
   }
   return used;
 }

@@ -104,7 +104,7 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   return { whole, kind: 'driven', driver, cycle, ratio, chain, span: s.span(start) };
 }
 
-type MapWord = Exclude<MapSpec['kind'], 'table' | 'edo'> | 'edo';
+type MapWord = Exclude<MapSpec['kind'], 'table' | 'edo' | 'midi'> | 'edo' | 'midi';
 /** map=: how a cell's values sound (or what kind of cell it is). The parser reads the words from this table. */
 export const MAP_KINDS: Readonly<Record<MapWord, Syntax>> = {
   amp: syntax(
@@ -124,6 +124,13 @@ export const MAP_KINDS: Readonly<Record<MapWord, Syntax>> = {
   db: syntax('map', 'map=db', 'A volume in decibels (0 as it is, −6 about half).', ['&fade map=db step=&bar 0 -6 -12'], 'sound.md'),
   adsr: syntax('map', 'map=adsr a d s r', 'An envelope: attack, decay, release in seconds, sustain a level; one per note.', ['&pluck map=adsr .01 .3 .5 .4'], 'sound.md'),
   sample: syntax('map', 'map=sample', 'The sound card: its entries are channels, one (mono) or two (left, right).', ['&out loop=SAMPLE_RATE map=sample &left &right'], 'mix.md'),
+  midi: syntax(
+    'map',
+    'map=midi',
+    'A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent, not heard.',
+    ['&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove'],
+    'midi.md',
+  ),
   edo: syntax('map', 'map=edo', 'A grid: cycle= equal steps to the octave.', ['&edo19 cycle=19 map=edo'], 'tuning.md'),
   ratios: syntax('map', 'map=ratios', "A grid of ratios: one period's tones, then the period (the last).", ['&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2'], 'tuning.md'),
 };
@@ -135,6 +142,13 @@ export const MAP_SYNTAX: readonly Syntax[] = [
     'A grid: cycle= equal steps to the ratio r (a number or a fraction): ed(2) the octave, ed(3/2) the fifth.',
     ['&bp cycle=13 map=ed(3)', '&fifths cycle=7 map=ed(3/2)'],
     'tuning.md',
+  ),
+  syntax(
+    'map',
+    'map=midi(c) · map=midi(c, p)',
+    'A MIDI card on one channel c (1–16), and on output slot p (1–16; the MIDI dialog maps it to a device, 1 the default output).',
+    ['&drums map=midi(10) &groove', '&keys map=midi(1, 2) [&theme * &reed]'],
+    'midi.md',
   ),
   syntax('map', 'map=&table', 'Each value looked up in a table cell first, then sounded as amp.', ['&shaped loop=220 map=&curve 0 1 2 3'], 'sound.md'),
 ];
@@ -164,7 +178,26 @@ export function parseMap(s: LineScanner): MapSpec {
     return { kind: 'edo', period, span: s.span(start) };
   }
   const w = s.match(MAP_WORD);
-  if (w === null) s.fail(`map= takes ${Object.keys(MAP_KINDS).join(', ')}, ed(r) or a table cell (&curve)`);
+  if (w === null) s.fail(`map= takes ${Object.keys(MAP_KINDS).join(', ')}, ed(r), midi(c, p) or a table cell (&curve)`);
   if (w === 'edo') return { kind: 'edo', period: 2, span: s.span(start) };
+  if (w === 'midi') return parseMidi(s, start);
   return { kind: w as 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db', span: s.span(start) };
+}
+
+/** midi, midi(c) or midi(c, p): a MIDI card, its channel (1–16) when all its entries share one, its output slot (1–16, 1 by default). */
+function parseMidi(s: LineScanner, start: number): MapSpec {
+  if (s.peek() !== '(') return { kind: 'midi', channel: null, port: 1, span: s.span(start) };
+  s.i++;
+  const whole = (what: string, example: string) => {
+    const at = s.i;
+    const n = s.match(/[0-9]+(?:\.[0-9]+)?/y);
+    const v = n === null ? NaN : parseFloat(n);
+    if (!(Number.isInteger(v) && v >= 1 && v <= 16)) s.fail(`${what} is a whole number from 1 to 16: ${example}`, at, Math.max(1, n?.length ?? 1));
+    return v;
+  };
+  const channel = whole('A MIDI channel', 'map=midi(10)');
+  let port = 1;
+  if (s.match(/\s*,\s*/y) !== null) port = whole('A MIDI output slot', 'map=midi(10, 2)');
+  s.expect(')', `')' to close midi(…)`);
+  return { kind: 'midi', channel, port, span: s.span(start) };
 }

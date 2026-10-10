@@ -14,7 +14,8 @@ interface Seen {
   readonly rateOf: Ctx['rateOf'];
 }
 
-const isMixDecl = (d: CellDecl | undefined) => !!d && d.map?.kind !== 'sample' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
+const isMixDecl = (d: CellDecl | undefined) =>
+  !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
 const isKitDecl = (d: CellDecl | undefined, { decls }: Seen) =>
   !!d &&
   !Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) &&

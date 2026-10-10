@@ -40,6 +40,10 @@ export interface Played {
   readonly value?: number;
   /** Its envelope (map=adsr, seconds), or absent for the voice's own. */
   readonly env?: { readonly attack: number; readonly decay: number; readonly sustain: number; readonly release: number };
+  /** Sent on a MIDI card, and heard on no sound card: the voices leave it out, MIDI out sends it. */
+  readonly unheard?: true;
+  /** The MIDI cards' entries it goes out on (those switched on): MIDI out sends it there and nowhere else. */
+  readonly midi?: Output['midi'];
   /** The output it comes from (`Output.id`), when asked for (`eventsBetween(…, true)`): which mixes' wheels hear it (audio/wiring.ts `taps`). */
   readonly output?: string;
 }
@@ -173,7 +177,8 @@ const driverMuted = (result: CompileResult, name: string, muted: ReadonlySet<str
 /** An output's level per channel, leaving out mixes (or sound cards) that are switched off. */
 export function liveGains(o: Output, muted: ReadonlySet<string>): [number, number] {
   // a send (a mix played only into a resonator or a tape): its own gain, unless its mix is off
-  if (o.silent) return [...o.via].some((m) => muted.has(cellId(m))) ? [0, 0] : [o.gains[0], o.gains[1]];
+  // (a MIDI card it is also on takes nothing away from what it feeds)
+  if (o.silent) return o.via.some((m) => muted.has(cellId(m)) && !o.midi?.some((d) => d.card === m)) ? [0, 0] : [o.gains[0], o.gains[1]];
   return partsGains(o.parts, muted);
 }
 
@@ -193,7 +198,28 @@ function partsGains(parts: Output['parts'], muted: ReadonlySet<string>): [number
   return g;
 }
 
+/** Is it heard: on, and reaching a sound card through what is on (a send: into what it feeds)? */
 export function outputSounds(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean {
+  if (!outputOn(result, o, muted)) return false;
+  const g = liveGains(o, muted);
+  return g[0] > 0 || g[1] > 0;
+}
+
+/** Does it play at all: heard (`outputSounds`), or sent on a MIDI card that is on (`outputSent`)? What the plan plays. */
+export function outputPlays(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean {
+  if (!outputOn(result, o, muted)) return false;
+  const g = liveGains(o, muted);
+  return g[0] > 0 || g[1] > 0 || outputSent(o, muted);
+}
+
+/** Its MIDI cards' entries that are on (the card, and a mix named as the entry); none: it isn't sent. */
+function liveMidi(o: Output, muted: ReadonlySet<string>): NonNullable<Output['midi']> {
+  return (o.midi ?? []).filter((m) => !muted.has(cellId(m.card)) && !(m.mix && muted.has(cellId(m.mix))));
+}
+const outputSent = (o: Output, muted: ReadonlySet<string>) => liveMidi(o, muted).length > 0;
+
+/** Its notes can play: nothing they need (its cells, clocks, instruments, envelope, selectors) is switched off. */
+function outputOn(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean {
   if (muted.has(cellId(o.voice)) || muted.has(cellId(o.cell))) return false;
   const c = result.cells.get(o.cell);
   if (!c?.clock || chainMuted(result, c.clock, muted) || driverMuted(result, o.cell, muted)) return false;
@@ -203,8 +229,7 @@ export function outputSounds(result: CompileResult, o: Output, muted: ReadonlySe
   if (o.select.some((x) => muted.has(cellId(x.cell)) || muted.has(cellId(x.part)) || muted.has(cellId(result.cells.get(x.cell)!.over!)))) return false;
   // … or the score it reads (what its steps are spliced from)
   if (o.select.some((x) => [...result.cells.get(x.cell)!.children.keys()].some((c) => muted.has(cellId(c))))) return false;
-  const g = liveGains(o, muted);
-  return g[0] > 0 || g[1] > 0;
+  return true;
 }
 
 /** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
@@ -213,7 +238,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
   const tracks: PlanTrack[] = [];
   const voiceParams = new Map<string, Record<string, VoiceParam>>();
   for (const o of result.outputs) {
-    if (!outputSounds(result, o, muted)) continue;
+    if (!outputPlays(result, o, muted)) continue;
     const c = result.cells.get(o.cell)!;
     const series = (cell: string, pick: Pick | null, shift: number, sign: 1 | -1): Series => {
       const m = result.cells.get(cell)!;
@@ -308,7 +333,10 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
   for (const o of p.result.outputs) {
     if (p.result.cells.get(o.cell)?.params.law !== 'fiveto12') continue;
     const g = liveGains(o, p.muted);
-    if (!(g[0] > 0 || g[1] > 0)) continue;
+    // (on a MIDI card too: its notes are sent there, and heard only if a sound card hears them)
+    const midi = o.midi ? liveMidi(o, p.muted) : [];
+    const heard = g[0] > 0 || g[1] > 0;
+    if (!heard && !midi.length) continue;
     const base = p.result.cells.get(o.voice)?.freq || 261.63;
     // (it reads the day it plays in, over=&day: where that day stands when play starts, against the law's own 11:55)
     const off = lawOffset(p.result, o.cell);
@@ -322,6 +350,8 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
         bends: [],
         gains: [g[0] * Math.min(1, 1 - n.pan), g[1] * Math.min(1, 1 + n.pan)],
         levels: [{ at, level: n.level }],
+        ...(heard ? {} : { unheard: true as const }),
+        ...(midi.length ? { midi } : {}),
         ...(outputs ? { output: o.id } : {}),
       });
     }
@@ -449,6 +479,8 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         const [l, r] = balance(result.cells.get(v.voice)?.params.pan);
         return [g[0] * l, g[1] * r];
       };
+      const gains = memberPan(liveGains(t.output, p.muted));
+      const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
       if (freq > 0 && freq < 20000 && level.some((l) => l.level > 0))
         out.push({
           at,
@@ -457,8 +489,11 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
           freq,
           bends,
           value: e.value + e.alter,
-          gains: memberPan(liveGains(t.output, p.muted)),
+          gains,
           levels: level,
+          // (on MIDI cards only, or its sound card switched off: sent, not heard)
+          ...(!t.output.silent && !(gains[0] > 0 || gains[1] > 0) ? { unheard: true as const } : {}),
+          ...(midi.length ? { midi } : {}),
           ...(env ? { env } : {}),
           ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
           ...(params ? { params } : {}),

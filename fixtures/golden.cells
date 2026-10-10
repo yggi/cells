@@ -37,6 +37,9 @@
 &light scope=spectrum &flute
 &out level=4 loop=SAMPLE_RATE map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&leadA, &leadB, &hits * &forkA * .5, &hats * &hh * .1]
 
+# a MIDI card: the law's notes on the flute sent on channel 1 too, a note bus into it
+&synth map=midi [&cycle * &flute]
+
 === plugin ring ===
 { "fits": ["meter"], "size": 220, "rim": false, "dial": { "label": "The day", "turn": 86400, "key": 3600 }, "tokens": { "ring": "#e3a25a" } }
 function describe(view) {

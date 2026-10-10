@@ -10,16 +10,17 @@
  *    mixes the output goes through (compile's `via`, `through`), so a voice in two mixes lights only
  *    the one its notes take.
  * Sound tapes and resonators keep sound (a tape's loop, a body's ring): fed by what reaches them,
- * they pass it on wherever their heads and mixes go. Only what reaches a sound card counts.
+ * they pass it on wherever their heads and mixes go. Only what reaches a sound card or a MIDI card
+ * (its notes, sent: flows.ts `midi`) counts.
  *
- * `routing` is everything that can sound (the same test the plan uses, `outputSounds`); `live/
+ * `routing` is everything that can play (the same test the plan uses, `outputPlays`); `live/
  * liveAt` is what does now (the same gates the scheduler uses: laps, what a selector picks), within
  * the routing. `stateOf` turns both into what the graph draws.
  */
-import { ROOT, type CompileResult, type Output, type ResolvedCell } from './program';
+import { isMidiCard, ROOT, type CompileResult, type Output, type ResolvedCell } from './program';
 import { tableChain } from './helix';
 import { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from './ids';
-import { chainMuted, outputSounds } from './realize';
+import { chainMuted, outputPlays } from './realize';
 import type { GraphModel } from './graph';
 import { flows } from './flows';
 
@@ -242,9 +243,9 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
         queue.push(f.to);
       }
   }
-  // only what reaches a sound card
+  // only what reaches a sound card, or a MIDI card (sent)
   const heard = new Set<string>();
-  for (const c of result.cells.values()) if (c.sink && acc.nodes.has(cellId(c.name))) heard.add(c.name);
+  for (const c of result.cells.values()) if ((c.sink || isMidiCard(c)) && acc.nodes.has(cellId(c.name))) heard.add(c.name);
   for (let grew = true; grew;) {
     grew = false;
     for (const [from, fs] of flowsFrom)
@@ -281,7 +282,7 @@ export function routing(result: CompileResult, muted: ReadonlySet<string>): Rout
   if (!byMuted) routingCache.set(result, (byMuted = new Map()));
   const hit = byMuted.get(key);
   if (hit) return hit;
-  const outs = result.outputs.filter((o) => outputSounds(result, o, muted) && plays(result, muted, o));
+  const outs = result.outputs.filter((o) => outputPlays(result, o, muted) && plays(result, muted, o));
   const all: NotesOf = {
     braid: (acc, o) => void acc.braid(o.cell, ROOT),
     members: (o) => [...(result.cells.get(o.voice)?.children.keys() ?? [])],

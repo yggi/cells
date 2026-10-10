@@ -473,7 +473,7 @@ describe('every name written is one wire carrying the transform it writes, and e
           // in a mix: a sound alone goes in as it is; in a product, each name is one wire into that product's junction
           // (its voice, `is`; a term, with the transform written on it), one for each product it is written in
           const into = model.edges.filter((x) => x.from === cellId(name) && junctions.get(x.to)?.mix === c.name);
-          const alone = model.edges.find((x) => x.from === cellId(name) && x.to === cellId(c.name) && x.port === 'mix');
+          const alone = model.edges.find((x) => x.from === cellId(name) && x.to === cellId(c.name) && (x.port === 'mix' || x.port === 'midi'));
           const count = into.reduce((a, x) => a + x.count, 0) + (alone ? 1 : 0);
           // (a sound alone in both channels of a sound card is one wire, a pair: L R)
           const pair = alone && alone.width === 2 && ts.length === count + 1;
@@ -494,7 +494,9 @@ describe('every name written is one wire carrying the transform it writes, and e
         }
         // (along the flow: into the cell whose line it is, but a note's link points from the note)
         const [from, to] = port === 'about' ? [c.name, name] : [name, c.name];
-        const e = model.edges.find((x) => x.from === cellId(from) && x.to === cellId(to) && x.port === port);
+        // (a cell named on a MIDI card is its entry: a note bus into it, #208)
+        const as = port === 'braid' && c.map?.kind === 'midi' ? 'midi' : port;
+        const e = model.edges.find((x) => x.from === cellId(from) && x.to === cellId(to) && x.port === as);
         if (!e) {
           // (drawn through a petal, hidden by show=off, or a name the graph reads elsewhere: a kit's voice)
           const ids = [edgeId(cellId(c.name), cellId(name)), edgeId(cellId(name), cellId(c.name)), stepEdgeId(cellId(c.name), cellId(name))];
@@ -502,9 +504,10 @@ describe('every name written is one wire carrying the transform it writes, and e
           continue;
         }
         wires++;
-        matched.add(`${c.name}|${name}|${port}`);
+        matched.add(`${c.name}|${name}|${as}`);
         const labels = e.transforms.map(transformLabel);
         if (ts[0].where === 'generated') continue;
+        if (as === 'midi') continue;
         if (port === 'braid') expect(labels, `&${c.name}: &${name}`).toEqual(ts.map((t) => t.written));
         else expect(labels, `&${c.name}: ${port}=&${name}`).toEqual([ts[0].written]);
       }

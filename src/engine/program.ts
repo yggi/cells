@@ -129,11 +129,15 @@ export interface ResolvedCell {
     /** A grid of ratios: one period's tones, then the period (the last). */
     | { readonly kind: 'ratios'; readonly ratios: readonly number[] }
     | { readonly kind: 'table'; readonly table: string }
+    /** A MIDI card (map=midi): its entries are channels in order, or all on `channel`; sent to output slot `port`. */
+    | { readonly kind: 'midi'; readonly channel: number | null; readonly port: number }
     | null;
   /** A mix cell (`&mix [&theme * &lead, …]`): its voices, as written. */
   readonly mix: readonly Binding[] | null;
   /** The sound card (`map=sample`): its entries are channels. */
   readonly sink: boolean;
+  /** A MIDI card's (map=midi) products written on it, typed, unit by unit (null: a unit that isn't a chord of them). */
+  readonly chords?: readonly (readonly Binding[] | null)[];
   /** The clock this cell's stepping comes from, and its shifts per clock step. */
   readonly clock: string | null;
   readonly rate: number;
@@ -281,10 +285,28 @@ export interface Output {
   readonly select: readonly { readonly cell: string; readonly entry: number; readonly part: string }[];
   /** A send: played into what it feeds (a resonator, a tape), not heard from its voice itself. */
   readonly silent?: boolean;
+  /** Where it goes out as MIDI (map=midi cards); absent: on no MIDI card. Only here, and on no sound card: sent, not heard. */
+  readonly midi?: readonly MidiDest[];
   /** Played off a tape: its source's notes, through the tape (a read head at= after the write head). */
   readonly tape?: { readonly head: string; readonly tape: string; readonly at: number; readonly length: number; readonly erase: number };
   readonly span: Span;
 }
+
+/** One place an output goes out as MIDI: a MIDI card's entry, its channel and output slot, at the gain of its product there. */
+export interface MidiDest {
+  /** The MIDI card (map=midi). */
+  readonly card: string;
+  /** A mix named as the entry (`&synth map=midi &lead`), whose switching off takes it away; null: written on the card. */
+  readonly mix: string | null;
+  readonly channel: number;
+  /** The output slot (1 the default output). */
+  readonly port: number;
+  /** The numbers in its product on the card (velocity reads them, as it reads a sound card's gains). */
+  readonly gain: number;
+}
+
+/** A MIDI card: a cell with map=midi, whose entries are MIDI channels. */
+export const isMidiCard = (c: { readonly map: ResolvedCell['map'] } | undefined): boolean => c?.map?.kind === 'midi';
 
 /** A tape that records sound (write= a mix): its loop and colour, for the audio. */
 export interface AudioTape {

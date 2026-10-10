@@ -1,6 +1,6 @@
 # Mixes and the sound card
 
-Output is cells too. A chord of sounds is a mix, and a cell with `map=sample` is the sound card.
+Output is cells too. A chord of sounds is a mix, and a cell with `map=sample` is the sound card. Its sibling, a cell with `map=midi`, is a MIDI card, whose entries are MIDI channels: [midi.md](midi.md).
 
 ```cells
 &theme step=1 0 2 4 5
