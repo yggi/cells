@@ -105,6 +105,11 @@ describe('source edits', () => {
     expect(compileSource(setOff(setShift(setShift(base, 'key', 5), 'key', 0), 'theme', false).replace(/\s+$/gm, '')).cells.get('key')!.shift).toBe(0);
   });
 
+  it('splitComment leaves a quoted # or // alone, and setBraid keeps the label', () => {
+    expect(splitComment('&m label="Intro # 1" 0 2 # c')).toEqual(['&m label="Intro # 1" 0 2 ', '# c']);
+    expect(splitComment('&m label="a // b" 0')).toEqual(['&m label="a // b" 0', '']);
+    expect(setBraid('&m step=4 label="Intro # 1" 0 2 4', 'm', ['0', '2', '5'])).toBe('&m step=4 label="Intro # 1" 0 2 5');
+  });
   it('splitComment knows # from a sharp', () => {
     expect(splitComment('&a 6# 7 # comment')).toEqual(['&a 6# 7 ', '# comment']);
     expect(splitComment('&a 0 // x # y')).toEqual(['&a 0 ', '// x # y']);
@@ -142,6 +147,15 @@ describe('editor operations', () => {
     expect(compileSource(setBraid(src, 'theme', ['0', '2', '4'])).cells.get('theme')!.units).toHaveLength(3);
     expect(setBraid(src, 'theme', []).split('\n')[1]).toMatch(/^&theme over=scale\(0,2\) step=&bar\s+\/\/ tune$/);
     expect(setBraid(src, 'mix', ['0'])).toBe(src); // a mix over several lines is left alone
+  });
+
+  it('keeps a CRLF file’s line endings, with or without a comment', () => {
+    const crlf = '&bar scan(1 1) step=90bpm\r\n&tune step=&bar 0 2 4\r\n&low step=&bar 0 # a pedal\r\n&last step=&bar 1';
+    const a = setBraid(crlf, 'tune', ['0', '2', '4', '7']);
+    expect(a).toBe('&bar scan(1 1) step=90bpm\r\n&tune step=&bar 0 2 4 7\r\n&low step=&bar 0 # a pedal\r\n&last step=&bar 1');
+    expect(setBraid(crlf, 'low', ['5'])).toBe('&bar scan(1 1) step=90bpm\r\n&tune step=&bar 0 2 4\r\n&low step=&bar 5 # a pedal\r\n&last step=&bar 1');
+    expect(setBraid(crlf, 'last', ['2'])).toBe(crlf.replace(/1$/, '2'));
+    expect(setAttr(crlf, 'tune', 'label', '"t"').split('\n')[1]).toBe('&tune label="t" step=&bar 0 2 4\r');
   });
 
   it('step and loop are one setting', () => {

@@ -5,16 +5,15 @@
  * the line as written. Pure string → string, so the code view stays 1:1.
  */
 
-/** Split a line into code and its trailing comment (`//`, or `#` at start / after a space). */
+/** Split a line into code and its trailing comment (`//`, or `#` at start / after a space; neither inside quotes). */
 export function splitComment(line: string): [string, string] {
-  let cut = line.indexOf('//');
-  if (cut < 0) cut = line.length;
-  for (let i = 0; i < cut; i++)
-    if (line[i] === '#' && (i === 0 || /\s/.test(line[i - 1]))) {
-      cut = i;
-      break;
-    }
-  return [line.slice(0, cut), line.slice(cut)];
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') quoted = !quoted;
+    else if (!quoted && ((c === '/' && line[i + 1] === '/') || (c === '#' && (i === 0 || /\s/.test(line[i - 1]))))) return [line.slice(0, i), line.slice(i)];
+  }
+  return [line, ''];
 }
 
 const headOf = (name: string) => new RegExp(`^(\\s*&${name})(?=\\s|$)`);
@@ -52,7 +51,9 @@ function editDecl(source: string, name: string, f: (code: string, head: RegExp) 
     lines.splice(tap + 1, 0, `&${name}${lines[tap].endsWith('\r') ? '\r' : ''}`);
     i = tap + 1;
   }
-  const [code, comment] = splitComment(lines[i]);
+  // (a CRLF file: the line's \r stays at its end, whatever the edit rebuilds)
+  const cr = lines[i].endsWith('\r') ? '\r' : '';
+  const [code, comment] = splitComment(cr ? lines[i].slice(0, -1) : lines[i]);
   let next = f(code, headOf(name));
   if (tap >= 0 && !comment && next.trim() === `&${name}`) {
     lines.splice(i, 1);
@@ -64,7 +65,7 @@ function editDecl(source: string, name: string, f: (code: string, head: RegExp) 
     const trimmed = next.replace(/\s+$/, '');
     next = trimmed + ' '.repeat(Math.max(1, before - trimmed.length));
   }
-  lines[i] = next + comment;
+  lines[i] = next + comment + cr;
   return lines.join('\n');
 }
 
