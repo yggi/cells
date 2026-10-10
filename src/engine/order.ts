@@ -31,6 +31,7 @@ export const ORDER = [
   'worn',
   'dtmf',
   'daytime',
+  'gate',
   // the pieces
   'lullaby',
   'jazz',

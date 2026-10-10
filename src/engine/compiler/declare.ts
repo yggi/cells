@@ -1,5 +1,5 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
-import type { Atom, CellDecl, Ref, Token } from '../ast';
+import type { Atom, CellDecl, Expr, Ref, Span, Token } from '../ast';
 import { MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
@@ -31,6 +31,7 @@ export function declare(ctx: Ctx): Declared {
     else decls.set(c.name, c);
   }
   const taps = tapTables(decls, error);
+  gates(decls, error);
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
   for (const name of decls.keys()) if (name.startsWith('key:') || name.startsWith('scale:')) implicit.add(name);
@@ -167,6 +168,42 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
   };
   for (const d of [...decls.values()]) if (grooves.includes(d)) rewrite(d);
   return { voices, cells };
+}
+
+/**
+ * Gates (#234, the gate node): a named junction. `&leadOut trigger=&tune velocity=&accent gate=&solo gain=.5 &lead`
+ * plays its receivers (the voices in its braid) with each note of its trigger, at three levels of one family: the
+ * velocity's (per note), the gate's (how open it is over time) and the gain (fixed). Exactly the product
+ * `&leadOut [&tune * &accent * &solo * &lead * .5]`, which is what it is read as (one product per receiver).
+ * So it sounds, routes and draws as that named mix does; the product stays its anonymous form.
+ */
+function gates(decls: Map<string, CellDecl>, error: Ctx['error']): void {
+  for (const d of [...decls.values()]) {
+    const trigger = d.params.trigger;
+    if (typeof trigger !== 'string') continue;
+    const tokens = d.braid.kind === 'list' ? d.braid.tokens : [];
+    const receivers = tokens.flatMap((t) => (t.atom.kind === 'ref' && !t.atom.pick ? [{ name: t.atom.name, span: t.span }] : []));
+    if (!receivers.length || receivers.length !== tokens.length) {
+      error(`&${d.name} is a gate (trigger=): its braid lists what it plays, voices (&${d.name} trigger=&${trigger} &lead)`, d.span);
+      continue;
+    }
+    const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
+    const velocity = d.params.velocity;
+    const open = d.params.gate;
+    const gain = d.params.gain;
+    const exprs: Expr[] = receivers.map((r) => ({
+      k: 'prod',
+      span: r.span,
+      factors: [
+        ref(trigger, d.paramSpans.trigger ?? d.span),
+        ...(typeof velocity === 'string' ? [ref(velocity, d.paramSpans.velocity ?? d.span)] : []),
+        ...(typeof open === 'string' ? [ref(open, d.paramSpans.gate ?? d.span)] : []),
+        ref(r.name, r.span),
+        ...(typeof gain === 'number' ? [{ k: 'num', value: gain, span: d.paramSpans.gain ?? d.span } as Expr] : []),
+      ],
+    }));
+    decls.set(d.name, { ...d, braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] } });
+  }
 }
 
 /**

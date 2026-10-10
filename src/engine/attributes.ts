@@ -21,7 +21,8 @@ export type Role =
   | 'card' // the sound card (map=sample)
   | 'note' // a label and nothing else: an explanation in the graph
   | 'carrier' // a voice with fm=
-  | 'modulator'; // a voice another's fm= names
+  | 'modulator' // a voice another's fm= names
+  | 'gate'; // trigger=: a named junction, where notes become sound (#234)
 
 export interface Attribute {
   /** What it means, as the node editor shows it. */
@@ -127,6 +128,16 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   at: physics('a read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar)', ['head'], { clock: true }),
   wander: physics('a read head: how far it wanders either way (tape-seconds) — a flying head', ['head']),
   wanderhz: physics('a read head: how fast it wanders (times a second)', ['head'], { hz: true }),
+  // a gate: a named junction (docs/language/mix.md: a gate)
+  trigger: { help: 'a gate: what plays through it — each note of this cell plays the receivers in its braid (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'] },
+  gate: {
+    help: 'a gate: how open it is over time, a level on all it lets through (gate=&solo: 1 open, 0 closed, .3 ducked); velocity= is per note, gain= fixed',
+    doc: 'mix.md',
+    value: 'cell',
+    on: ['gate'],
+  },
+  velocity: { help: 'a gate: a level on each note it lets through, as a product’s level (velocity=&accent)', doc: 'mix.md', value: 'cell', on: ['gate'] },
+  gain: { help: 'a gate: a fixed level on what it lets through, as a product’s number (gain=.5)', doc: 'mix.md', value: 'number', on: ['gate'] },
   // scopes
   scope: {
     help: 'a scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels',
@@ -183,6 +194,7 @@ export function rolesText(on: readonly Role[]): string {
     note: 'a note (a label= and nothing else)',
     carrier: 'a voice with fm=',
     modulator: 'a voice another’s fm= names',
+    gate: 'a gate (trigger=)',
   };
   const ws = on.map((r) => NAMES[r]);
   return ws.length < 2 ? (ws[0] ?? '') : `${ws.slice(0, -1).join(', ')} or ${ws[ws.length - 1]}`;

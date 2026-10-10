@@ -127,3 +127,11 @@ describe('a rate left free(…)', () => {
     expect(freeList(r)[0].hi).toBe(240);
   });
 });
+
+describe('a gate given a number', () => {
+  it('says what trigger=, velocity= and gate= want', () => {
+    expect(messages('&g trigger=3 &v')[0]).toMatch(/Expected the melody .* trigger=&tune/);
+    expect(messages('&g velocity=.5 &v')[0]).toMatch(/Expected a level cell, like velocity=&accent/);
+    expect(messages('&g gate=3 &v')[0]).toMatch(/Expected a level cell, like gate=&duck/);
+  });
+});

@@ -127,6 +127,7 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
   },
   { concept: 'text: spell()', forms: ['generator spell("text", &table, "names")', 'free free("text")'] },
   { concept: 'clock time and a law', forms: ['rate nmin', 'rate nh', 'rate nd', 'rate nwk', 'parameter anchor', 'parameter law'] },
+  { concept: 'a gate: a product with a name', forms: ['parameter trigger', 'parameter velocity', 'parameter gate', 'parameter gain'] },
 ];
 
 const TEMPO_MARKINGS = /free\(\s*(largo|larghetto|adagio|andante|moderato|allegro|vivace|presto)\s*\)/;

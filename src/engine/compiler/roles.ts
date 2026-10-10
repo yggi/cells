@@ -22,6 +22,7 @@ export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells
     if (typeof c.params.body === 'string') r.add('resonator');
     if (typeof c.params.scope === 'string') r.add('scope');
     if (typeof c.params.law === 'string') r.add('law');
+    if (typeof c.params.trigger === 'string') r.add('gate');
     if (c.sink) r.add('card');
     if (c.note) r.add('note');
     if (typeof c.params.fm === 'string') r.add('carrier');

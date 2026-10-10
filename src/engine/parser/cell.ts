@@ -265,6 +265,9 @@ const CELL_WANTS: Readonly<Record<string, string>> = {
   play: 'the tape it reads, like play=&tape',
   couple: 'the resonator it shares a table with, like couple=&fork',
   excite: 'what drives it, like excite=&mix',
+  trigger: 'the melody whose notes it plays with, like trigger=&tune',
+  velocity: 'a level cell, like velocity=&accent',
+  gate: 'a level cell, like gate=&duck',
 };
 
 /** A parameter naming a cell: fm= its modulator; write= a tape's source; play= a read head's tape … */
@@ -463,6 +466,11 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   }
 
   const braid: Braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
+  // (gain= is a gate's level, on the line of a gate (trigger=) only; anywhere else it is dough's, retired)
+  if ('gain' in b.params && !('trigger' in b.params)) {
+    const at = b.paramSpans.gain;
+    s.fail(RETIRED_PARAMS.gain, at ? at.col - 1 : 0, 4);
+  }
   if (fifthsShift !== null && fifthsShift !== 0) {
     if (b.shift !== null) s.fail('fifths(n) turns it already: write fifths() and shift=, or fifths(n) alone');
     b.shift = fifthsShift;
