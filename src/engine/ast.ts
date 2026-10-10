@@ -166,7 +166,7 @@ export type StepSpec = { readonly whole: boolean } & (
  *   db      a volume in decibels: 0 full, −6 about half, −20 a tenth (rests silent)
  *   adsr    an envelope: attack decay sustain release (seconds; sustain a level) for each note
  *   midi    the cell is a MIDI card: its entries are MIDI channels, in order; midi(c) all on channel c,
- *           midi(c, p) on output slot p (a device the MIDI dialog maps it to; slot 1 the default output)
+ *           midi(c, p) on output slot p (a device the MIDI page maps it to; slot 1 the default output)
  */
 export type MapSpec =
   | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db'; readonly span: Span }

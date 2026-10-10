@@ -172,6 +172,19 @@ describe('channels', () => {
     expect(route(events.find((e) => e.voice === 'rim')!)).toEqual({ channel: 1, drum: null });
   });
 
+  it('a kit put on another channel: its members go there, and voices skip it instead of 10', () => {
+    const r = compileSource(PRESETS.drums.source);
+    const t = channelTable(r, {}, 1);
+    expect(t.kitChannel).toBe(1);
+    expect(t.voices).toEqual([{ voice: 'rim', channel: 2 }]);
+    const route = router(r, t);
+    const events = eventsBetween(planOf(PRESETS.drums.source), 0, 4, true);
+    expect(route(events.find((e) => e.voice === 'bd')!)).toEqual({ channel: 1, drum: 36 });
+    expect(Array.from({ length: 5 }, (_, i) => melodicChannel(i, 3))).toEqual([1, 2, 4, 5, 6]);
+    expect(rotationChannels(1, 4, true, 3)).toEqual([1, 2, 4]);
+    expect(channelTable(r, {}, 99).kitChannel).toBe(10);
+  });
+
   it('a channel chosen by hand wins; one out of range does not', () => {
     const r = compileSource(PRESETS.sailor.source);
     expect(channelTable(r).voices).toEqual([

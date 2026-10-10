@@ -7,7 +7,7 @@
  * Two ways a piece's notes find their channels (decision 019): a piece with MIDI cards (map=midi) says it — each note
  * goes where its cards' entries say (`Played.midi`), on their channels and output slots, and nothing else is sent; a
  * piece with none goes out as the app's default output, every voice heard on a channel of its own in the order the
- * piece declares them, which the dialog can change and this browser keeps (docs/ui/midi.md).
+ * piece declares them, which the MIDI page can change and this browser keeps (docs/ui/midi.md).
  */
 import type { Played } from './realize';
 import { isMidiCard, type CompileResult, type Output } from './program';
@@ -109,7 +109,7 @@ export function kitNotes(members: readonly string[]): Map<string, number> {
 
 /**
  * Where a piece's notes go: each gate (all its receivers) and each voice it plays directly on a channel, each kit member
- * on channel 10 with a note.
+ * on the kit's channel (10 unless chosen) with a note.
  */
 export interface ChannelTable {
   /**
@@ -119,6 +119,8 @@ export interface ChannelTable {
   readonly voices: readonly { readonly voice: string; readonly channel: number; readonly port?: number }[];
   /** The kits' members, in the order the piece declares them, each with its General MIDI drum note. */
   readonly kit: readonly { readonly member: string; readonly note: number }[];
+  /** The channel the kits' members go on (1–16; 10, General MIDI's, unless chosen). Absent on a piece's MIDI cards: they say it. */
+  readonly kitChannel?: number;
   /** Set by the piece: its MIDI cards say where each note goes (the channels above can't be chosen by hand). */
   readonly byPiece?: true;
   /** The output slots its MIDI cards name, in order (none: the default output alone). */
@@ -134,10 +136,10 @@ const byPlace = (result: CompileResult) => (a: string, b: string) => {
   return (sa?.line ?? Infinity) - (sb?.line ?? Infinity) || (sa?.col ?? 0) - (sb?.col ?? 0);
 };
 
-/** The melodic channels in the order voices take them: 1, 2, 3 … skipping 10, round again past 16. */
-export const melodicChannel = (i: number): number => {
+/** The melodic channels in the order voices take them: 1, 2, 3 … skipping the kit's (10), round again past 16. */
+export const melodicChannel = (i: number, kit: number = DRUM_CHANNEL): number => {
   const k = i % 15;
-  return k < DRUM_CHANNEL - 1 ? k + 1 : k + 2;
+  return k < kit - 1 ? k + 1 : k + 2;
 };
 
 /** A kit's members, as the voices its braid names. */
@@ -151,11 +153,12 @@ const channelKey = (result: CompileResult, o: Output): string => gateOf(result, 
 
 /**
  * The channel table of a piece: the gates and the voices it plays directly (a gate's receivers go out on its channel,
- * as one part: a doubling is the synth's to layer) numbered 1, 2, 3 … in the order it declares them,
- * skipping 10, which its kits' members share. `kept`: channels chosen by hand for some voices (the dialog), which win.
- * A send (a voice played only into a resonator or a tape) is not heard from itself and is left out.
+ * as one part: a doubling is the synth's to layer) numbered 1, 2, 3 … in the order it declares them, skipping the kit's
+ * channel, which its kits' members share (10, or `kitChannel`: chosen in the MIDI page). `kept`: channels chosen by hand
+ * for some voices (the page), which win. A send (a voice played only into a resonator or a tape) is not heard from itself
+ * and is left out.
  */
-export function channelTable(result: CompileResult, kept: Readonly<Record<string, number>> = {}): ChannelTable {
+export function channelTable(result: CompileResult, kept: Readonly<Record<string, number>> = {}, kitChannel: number = DRUM_CHANNEL): ChannelTable {
   if (hasMidiCards(result)) return cardTable(result);
   const voices = new Set<string>();
   const members = new Set<string>();
@@ -166,9 +169,11 @@ export function channelTable(result: CompileResult, kept: Readonly<Record<string
   }
   const order = byPlace(result);
   const notes = kitNotes([...members].sort(order));
+  const kit = validChannel(kitChannel) ?? DRUM_CHANNEL;
   return {
-    voices: [...voices].sort(order).map((voice, i) => ({ voice, channel: validChannel(kept[voice]) ?? melodicChannel(i) })),
+    voices: [...voices].sort(order).map((voice, i) => ({ voice, channel: validChannel(kept[voice]) ?? melodicChannel(i, kit) })),
     kit: [...notes].map(([member, note]) => ({ member, note })),
+    kitChannel: kit,
   };
 }
 
@@ -219,6 +224,7 @@ export function router(result: CompileResult, table: ChannelTable): (e: Played) 
   const outputs = new Map(result.outputs.map((o) => [o.id, o]));
   const channels = new Map(table.voices.map((v) => [v.voice, v.channel]));
   const drums = new Map(table.kit.map((k) => [k.member, k.note]));
+  const kitChannel = table.kitChannel ?? DRUM_CHANNEL;
   if (table.byPiece)
     return (e) => {
       if (!e.midi?.length) return null;
@@ -232,7 +238,7 @@ export function router(result: CompileResult, table: ChannelTable): (e: Played) 
     if (o?.silent) return null;
     if (o?.kit) {
       const note = drums.get(e.voice);
-      return note === undefined ? null : { channel: DRUM_CHANNEL, drum: note };
+      return note === undefined ? null : { channel: kitChannel, drum: note };
     }
     const channel = channels.get(o ? channelKey(result, o) : e.voice);
     return channel === undefined ? null : { channel, drum: null };
@@ -304,9 +310,9 @@ export class Rotation {
   }
 }
 
-/** The channels a rotation runs over: `from` … `to` (1–16), without 10 where the piece has a kit. */
-export function rotationChannels(from: number, to: number, kit: boolean): number[] {
+/** The channels a rotation runs over: `from` … `to` (1–16), without the kit's (10 unless chosen) where the piece has a kit. */
+export function rotationChannels(from: number, to: number, kit: boolean, kitChannel: number = DRUM_CHANNEL): number[] {
   const out: number[] = [];
-  for (let c = Math.max(1, Math.min(from, to)); c <= Math.min(16, Math.max(from, to)); c++) if (!(kit && c === DRUM_CHANNEL)) out.push(c);
+  for (let c = Math.max(1, Math.min(from, to)); c <= Math.min(16, Math.max(from, to)); c++) if (!(kit && c === kitChannel)) out.push(c);
   return out.length ? out : [1];
 }
