@@ -1,6 +1,6 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
-import { pickLabel, type Span } from '../ast';
-import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickSteps, type ResolvedCell } from '../program';
+import { type Span } from '../ast';
+import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { scan as scanOf } from '../../theory/modes';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
@@ -60,7 +60,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
         const child = resolve(ref, span);
         const picked = pickSteps(child, u.atom.pick);
         if (picked === null) {
-          error(`&${ref}${pickLabel(u.atom.pick)} picks nothing — &${ref} has ${child.units.length} steps`, span);
+          error(pickProblem(ref, u.atom.pick, child.units.length), span);
           throw new Abort();
         }
         unit = picked;

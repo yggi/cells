@@ -13,7 +13,7 @@ What moves a cell: `step=` and `loop=`, the chains that scale them, `stride=`, m
 
 Driven forms take a chain of `*n` (once per n) and `/n` (n per one), read left to right, n any positive number: `step=&bar*2/3` is triplets — three steps per two.
 
-A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/engine/program.ts`): faster, `step=1000000`, is an error, and the player keeps the last piece that compiled. Cells at audio rate that start no notes (a voice's wave, a vibrato) aren't counted.
+A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/engine/program.ts`): faster, `step=1000000`, is an error, and the player keeps the last piece that compiled. A rate left `free(…)` has its slider stop where the cap does, with a warning when its written range goes past it (`step=free(100bpm, 60..9999999)`). Cells at audio rate that start no notes (a voice's wave, a vibrato) aren't counted.
 
 - **`stride=n`** — each step moves a stepped table n places (`stride=7`: fifths).
 - **`cycle=n`** — how many before it comes round; see [tables.md](tables.md).

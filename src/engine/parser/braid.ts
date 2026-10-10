@@ -78,9 +78,10 @@ function parseRefOrOperation(s: LineScanner): RefAtom {
   if (name === 'degree') {
     s.expect(',', `',' then the steps: degree(&${inner.name}, 1)`);
     s.skipSpace();
-    const n = s.match(/-?[0-9]+(?![0-9.])/y);
-    if (n === null) s.fail(`degree(&${inner.name}, n) moves it n whole steps of its table: degree(&${inner.name}, 1), degree(&${inner.name}, -2)`, s.i);
-    m = { mul: was.mul, add: was.add + parseInt(n!, 10) };
+    // (a sign may stand apart from its number, as the spaces round the whole are free)
+    const n = s.match(/[-+]?\s*[0-9]+(?![0-9.])/y);
+    if (n === null) s.fail(`degree(&${inner.name}, n) moves it n whole steps of its table, a whole number: degree(&${inner.name}, 1), degree(&${inner.name}, -2)`, s.i);
+    m = { mul: was.mul, add: was.add + parseInt(n!.replace(/\s+/g, ''), 10) };
   } else m = { mul: was.mul === 1 ? -1 : 1, add: -was.add };
   s.skipSpace();
   s.expect(')', `')' to close ${name}(…)`);

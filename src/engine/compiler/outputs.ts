@@ -1,6 +1,6 @@
 /** Phase 6: the outputs — one per voice binding, articulated (the finest step= term starts notes; the others and loop= terms bend or hold). */
-import { pickLabel, type CellDecl, type Span } from '../ast';
-import { adsrOf, balance, pickSteps, type Clock, type Output, type Resonance, type ResolvedCell, type TapeReturn } from '../program';
+import { type CellDecl, type Span } from '../ast';
+import { adsrOf, balance, pickProblem, pickSteps, type Clock, type Output, type Resonance, type ResolvedCell, type TapeReturn } from '../program';
 import { IMPLICIT } from './tables';
 import type { Bound } from './bindings';
 import type { Cells, Ctx } from './context';
@@ -160,7 +160,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     const { t, c: cell } = lead[0];
     const badPick = terms.find((x) => pickSteps(x.c, x.t.ref.pick) === null);
     if (badPick) {
-      error(`&${badPick.c.name}${pickLabel(badPick.t.ref.pick)} picks nothing — &${badPick.c.name} has ${badPick.c.units.length} steps`, badPick.t.ref.span);
+      error(pickProblem(badPick.c.name, badPick.t.ref.pick, badPick.c.units.length), badPick.t.ref.span);
       continue;
     }
     if (pickSteps(cell, t.ref.pick) === 0) {

@@ -8,9 +8,10 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { shortenAll } from './shorten';
+import { SAMENESS_SECONDS } from './shorten/harness';
 import { PRESETS } from './presets';
 
-const sounds = (src: string, seconds = 20) => {
+const sounds = (src: string, seconds = SAMENESS_SECONDS) => {
   const r = compileSource(src);
   expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   return eventsBetween(plan(r, codeShifts(r)), 0, seconds);

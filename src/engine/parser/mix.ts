@@ -59,6 +59,12 @@ export function parseMixChord(s: LineScanner): Atom {
       s.i++;
       continue;
     }
+    // (what was probably meant, when something else follows a term)
+    const next = s.peek();
+    if (next === '|')
+      s.fail("',' or ']' in the mix: a mix lists its terms with commas ([&a, &b]); a choice [a|b] picks between numbers in a braid (&x [0|2]), not between cells", s.i, 1);
+    if (next === '[' || next === '&')
+      s.fail("',' or ']' in the mix: a mix lists its terms with commas ([&a, &b]); cells can't be subdivided in a mix (&a [&b &c]): subdivide numbers in a braid", s.i, 1);
     s.expect(']', `',' or ']' in the mix`);
     return { kind: 'mix', exprs };
   }

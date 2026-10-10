@@ -141,11 +141,14 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       // a naming convention: notes:flats, notes:sharps, notes:german, do:fixed
       let conv = '';
       // a mix's colours: the grid it follows (show=mix:&edo19), whatever grids its voices are on
+      if (w === 'mix' && s.peek() === ':' && !s.text.startsWith(':&', s.i))
+        s.fail('show=mix:&grid: the grid whose colours the mix wears, like show=mix:&edo19 (no space after the colon)', at2, s.i + 1 - at2);
       if (w === 'mix' && s.text.startsWith(':&', s.i)) {
         s.i += 2;
         const g = s.match(IDENT);
         if (g === null) s.fail('show=mix:&grid: the grid whose colours the mix wears, like show=mix:&edo19', at2, s.i - at2);
         b.show = `mix:&${g}`;
+        b.paramSpans.show = s.span(at2);
         return;
       }
       if (s.peek() === ':') {
@@ -156,6 +159,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
         conv = `:${cw}`;
       }
       b.show = w + conv;
+      b.paramSpans.show = s.span(at2);
     },
   },
   label: {

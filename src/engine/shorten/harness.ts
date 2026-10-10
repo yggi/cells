@@ -91,8 +91,14 @@ function readsGrid(r: Result, name: string, path: readonly string[] = []): boole
   return users.length === 0 ? !!r.cells.get(ROOT)?.root : users.every((u) => readsGrid(r, u.name, [...path, name]));
 }
 
+/**
+ * How many seconds two spellings are compared over: Shorten's check and the tests of equal spellings use the same. A minute is
+ * the longest cycle of most pieces (the longest layers, a day in the sun pieces or twenty minutes in Royal, are never run to the end).
+ */
+export const SAMENESS_SECONDS = 60;
+
 /** Does the whole piece play the same notes (voice, onset, length, pitch, level per channel, bends, volumes, moving parameters, envelope) in both, for its first minute? */
-export function samePiece(a: string, b: string, until = 60): boolean {
+export function samePiece(a: string, b: string, until = SAMENESS_SECONDS): boolean {
   try {
     const play = (src: string) => {
       const r = compileSource(src);

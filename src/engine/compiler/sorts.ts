@@ -119,6 +119,13 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     const name = names[names.length - 1];
     const d = decls.get(name);
     if (!d) return null;
+    // a groove that was meant, with a number or a pick of a voice in it: it holds voices, rests and chords of voices only
+    if (d.braid.kind === 'list') {
+      const voiceRef = (t: { atom: Atom }) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+      const odd = (t: { atom: Atom }) => t.atom.kind === 'note' || (t.atom.kind === 'ref' && voiceRef(t) && (t.atom.pick || t.atom.shift || t.atom.transpose || t.atom.values));
+      if (d.braid.tokens.some(voiceRef) && d.braid.tokens.some(odd))
+        return `&${name} mixes voices with numbers or picks: a groove holds only voices, rests and chords of voices (&bd &hh ~ [&bd, &hh]); to play numbers through voices, read them with over= a kit`;
+    }
     if (isKitDecl(d, seen)) return `&${name} is a kit, a table of voices: read a pattern through it (&drums over=&${name}) and mix that`;
     const r = turns(d, seen);
     if (r !== null && r < 20) return `&${name} loops at ${+r.toFixed(2)} Hz, below hearing: a pitch. A voice loops at an audio rate (loop=C4) or has a sound (s=saw)`;

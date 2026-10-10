@@ -25,6 +25,13 @@ function plain(x: unknown): unknown {
   if (x && typeof x === 'object') return Object.fromEntries(Object.entries(x).map(([k, v]) => [k, plain(v)]));
   return x;
 }
+/**
+ * The notes of a piece apart from how its tables spell them: voice, onset, length and pitch. `events` also holds each
+ * note's table index and value (which respelling a piece may change without changing a sound), and its level, pan,
+ * bend, parameters and envelope (which are audible): a change in `events` alone needs a look, one in `notes` is a
+ * change in what plays.
+ */
+const notesOf = (events: ReturnType<typeof eventsBetween>) => events.map((e) => [e.voice, e.at, e.dur, e.freq]);
 const hash = (x: unknown) =>
   createHash('sha256')
     .update(JSON.stringify(plain(x)))
@@ -47,9 +54,22 @@ describe('every example plays what it played (snapshot.txt)', () => {
       const names = [...result.cells.keys()].sort();
       const values = VALUE_TIMES.map((t) => names.map((n) => [n, valuesAt(result, shifts, n, t), notesAt(result, shifts, n, t)]));
       const live = LIVE_TIMES.map((t) => liveAt(result, shifts, new Set(), t));
-      return `${key}  ${events.length} notes  events ${hash(events)}  values ${hash(values)}  live ${hash(live)}`;
+      return `${key}  ${events.length} notes  notes ${hash(notesOf(events))}  events ${hash(events)}  values ${hash(values)}  live ${hash(live)}`;
     });
     await expect(lines.join('\n') + '\n').toMatchFileSnapshot('./snapshot.txt');
+  });
+});
+
+describe('the notes column holds what is heard, not how the tables spell it', () => {
+  it('the same notes with another value: events differ, notes do not', () => {
+    const events = eventsBetween(pieces[0].played, 0, 10);
+    const respelled = events.map((e) => ({ ...e, value: (e.value ?? 0) + 12 }));
+    expect(hash(respelled)).not.toBe(hash(events));
+    expect(hash(notesOf(respelled as typeof events))).toBe(hash(notesOf(events)));
+  });
+  it('another pitch is another note', () => {
+    const events = eventsBetween(pieces[0].played, 0, 10);
+    expect(hash(notesOf(events.map((e) => ({ ...e, freq: e.freq * 2 }))))).not.toBe(hash(notesOf(events)));
   });
 });
 

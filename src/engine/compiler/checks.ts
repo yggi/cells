@@ -26,9 +26,10 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
   for (const c of cells.values()) {
     const named = c.show?.startsWith('mix:&') ? c.show.slice('mix:&'.length) : null;
     if (named === null) continue;
-    const span = decls.get(c.name)!.span;
+    const span = decls.get(c.name)?.paramSpans?.show ?? decls.get(c.name)!.span;
     const g = cells.get(named);
-    if (!g) unknownCell(named, span);
+    if (!c.mix) warn(`show=mix:&${named} does nothing on &${c.name}: it names the grid a mix's colours follow, and &${c.name} isn't a mix`, span);
+    else if (!g) unknownCell(named, span);
     else if (!g.root) warn(`show=mix:&${named}: a mix's colours follow a grid (a cell with cycle= or map=edo), not &${named}`, span);
   }
   // tapes: write= names what it records (not a voice); play= names a tape (a cell with write=)
@@ -137,4 +138,31 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
   for (const [tap, table] of taps)
     if (![...cells.values()].some((c) => c.step?.driver === tap || Object.values(c.paramClocks).some((p) => p.driver === tap)))
       warn(`&${tap} is a tap of &${table}, but nothing is stepped by it: step=&${tap} on what it should play (or a name mistyped)`, decls.get(tap)!.span);
+  // a degree or a shift that carries notes out of hearing: they are dropped (above 20 kHz), or climb a lap of the grid for every turn
+  // (the limit counts grid steps, so it grows with the biggest grid's cycle: a 1200 step grid has far more steps to an octave)
+  const farDegrees = Math.max(12, ...[...cells.values()].filter((c) => c.root).map((c) => c.cycle)) * FAR_OCTAVES;
+  for (const c of cells.values()) {
+    const d = decls.get(c.name);
+    if (!d || c.implicit) continue;
+    const toks = d.braid.kind === 'list' ? d.braid.tokens : [];
+    c.units.forEach((u, i) => {
+      const a = u.atom;
+      if (a.kind !== 'ref' || !a.values || Math.abs(a.values.add) <= farDegrees) return;
+      warn(
+        `degree(&${a.name}, ${a.values.add}) moves it ${Math.abs(a.values.add).toLocaleString('en')} steps, over a hundred octaves: ${a.values.add > 0 ? 'its notes land above 20 kHz and are dropped' : 'its notes fall below hearing'}, nothing plays`,
+        toks[i]?.span ?? c.span,
+      );
+    });
+    const laps = Math.abs(c.shift) / Math.max(1, c.units.length);
+    if (laps > FAR_LAPS)
+      warn(
+        `shift=${c.shift} turns &${c.name} about ${Math.round(laps).toLocaleString('en')} laps, and every lap climbs a lap of the grid: its notes leave hearing`,
+        d.paramSpans?.shift ?? d.span,
+      );
+  }
 }
+
+/** A degree this many octaves of the grid (its cycle a time) moves a note out of hearing for any voice. */
+const FAR_OCTAVES = 100;
+/** A shift past this many laps of its braid climbs past twenty octaves. */
+const FAR_LAPS = 20;

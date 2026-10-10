@@ -4,6 +4,7 @@
  * makes one (compile.ts, compiler/); helix.ts reads it through the shifts. What the cells mean is
  * on the language pages (docs/language/overview.md).
  */
+import { pickLabel } from './ast';
 import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span } from './ast';
 import type { ShowPlugin } from './plugins';
 
@@ -402,6 +403,17 @@ export function pickSteps(c: ResolvedCell, pick: Pick | null): number | null {
   if (!pick) return c.steps;
   const idx = pickedUnits(c.units.length, pick, c.shift);
   return idx ? idx.reduce((a, i) => a + c.unitSteps[i], 0) : null;
+}
+
+/** Why a pick takes nothing, in words: an index past the end, a slice that starts past it, a slice that ends before it starts. */
+export function pickProblem(name: string, pick: Pick | null, steps: number): string {
+  const at = `&${name}${pickLabel(pick)}`;
+  const has = `&${name} has ${steps} step${steps === 1 ? '' : 's'}`;
+  if (!pick || pick.kind === 'at') return `${at} picks nothing: past the end, ${has}`;
+  const step = pick.step ?? 1;
+  const norm = (x: number) => (x < 0 ? steps + x : x);
+  if (step > 0 && pick.from !== null && norm(pick.from) >= steps) return `${at} picks nothing: it starts past the end, ${has}`;
+  return `${at} picks nothing: ${step > 0 ? 'it ends before it starts (a slice runs forwards unless its step is negative: [::-1])' : 'it ends after it starts (a negative step runs backwards)'}, ${has}`;
 }
 
 /** The envelope a map=adsr cell writes (its four values), or null if it isn't one. */

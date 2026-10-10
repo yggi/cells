@@ -3,7 +3,7 @@
  * than it can schedule. Each is an error that names its cap; the player keeps the last good compile meanwhile.
  * (The third cap, how deep unnamed cells &( … ) nest, is the parser's: MAX_NESTING in parser/scanner.ts.)
  */
-import type { CellDecl, Span } from '../ast';
+import type { CellDecl, FreeSpec, Span } from '../ast';
 import { MAX_EVENTS, MAX_NOTES_PER_SECOND, pickIndices, type Clock, type Output } from '../program';
 import type { Cells, Ctx } from './context';
 
@@ -12,7 +12,7 @@ const many = (n: number) => (Number.isFinite(n) ? Math.round(n).toLocaleString('
 const named = (c: { name: string; lambda: string | null }) => (c.lambda ? 'An unnamed cell &( … )' : `&${c.name}`);
 
 export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, clocks: ReadonlyMap<string, Clock>, outputs: readonly Output[]): void {
-  const { error } = ctx;
+  const { error, warn } = ctx;
   // ---- expansion: the notes a cell's braid stands for, every &ref spliced in (what flatten() makes)
   const unitCounts = new Map<string, number[]>();
   const visiting = new Set<string>();
@@ -52,6 +52,8 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
   }
   // ---- rate: the notes a second a played cell starts (its clock's steps a second, its notes a lap)
   const reported = new Set<string>();
+  // the fastest a played cell starts notes, by clock: what a rate left free(…) may be moved up to
+  const fastest = new Map<string, number>();
   for (const o of outputs) {
     const c = cells.get(o.cell);
     if (!c?.clock || over.has(c.name) || reported.has(c.name) || c.params.law !== undefined) continue;
@@ -59,10 +61,25 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
     if (!clock) continue;
     const lap = Math.max(1, c.steps);
     const perSecond = (clock.perSecond * c.rate * expansion(c.name)) / lap;
+    if (perSecond > (fastest.get(c.clock) ?? 0)) fastest.set(c.clock, perSecond);
     if (!(perSecond > MAX_NOTES_PER_SECOND)) continue;
     reported.add(c.name);
     const d = decls.get(c.name);
     const span = d?.step?.span ?? decls.get(c.clock)?.step?.span ?? c.span;
     error(`${named(c)} would start ${many(perSecond)} notes a second: more than ${many(MAX_NOTES_PER_SECOND)}, the most a cell can play — slow its step= or loop=`, span);
+  }
+  // a rate left free(…): its slider stops where the cap does (a value past it would be an error, and the player would keep the last piece that compiled, silently)
+  for (const [name, perSecond] of fastest) {
+    const c = cells.get(name);
+    if (!c || !(perSecond > 0) || !Number.isFinite(perSecond)) continue;
+    const top = (spec: FreeSpec) => Math.floor((spec.value * MAX_NOTES_PER_SECOND) / perSecond);
+    const over = c.frees.filter((f) => (f.key === 'step' || f.key === 'loop') && f.value > 0 && f.hi > top(f) && top(f) >= f.value);
+    if (!over.length) continue;
+    (c as { frees: readonly FreeSpec[] }).frees = c.frees.map((f) => (over.includes(f) ? { ...f, hi: top(f) } : f));
+    for (const f of over)
+      warn(
+        `${f.key}=free(…): moved up to ${many(f.hi)}, a cell &${name} clocks would start more than ${many(MAX_NOTES_PER_SECOND)} notes a second, the most a cell can play: the slider stops at ${many(top(f))}`,
+        f.span,
+      );
   }
 }

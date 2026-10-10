@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../compile';
 import { shorten, shortenAll } from '.';
-import { size } from './harness';
+import { SAMENESS_SECONDS, size } from './harness';
 import { eventsBetween, plan } from '../realize';
 import { codeShifts } from '../program';
 import { PRESETS } from '../presets';
 
 const tail = '\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
-const sounds = (src: string, until = 20) => {
+const sounds = (src: string, until = SAMENESS_SECONDS) => {
   const r = compileSource(src);
   expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   return eventsBetween(plan(r, codeShifts(r)), 0, until)

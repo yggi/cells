@@ -169,8 +169,9 @@ describe('motifs and shifted references', () => {
       compileSource(src)
         .diagnostics.map((d) => d.message)
         .join('\n');
-    expect(msgs('&bar 0 1\n&foo &bar[5]')).toMatch(/&bar\[5\] picks nothing — &bar has 2 steps/);
-    expect(msgs('&bar 0 1\n&foo &bar[2:]')).toMatch(/picks nothing/);
+    expect(msgs('&bar 0 1\n&foo &bar[5]')).toMatch(/&bar\[5\] picks nothing: past the end, &bar has 2 steps/);
+    expect(msgs('&bar 0 1\n&foo &bar[2:]')).toMatch(/&bar\[2:\] picks nothing: it starts past the end, &bar has 2 steps/);
+    expect(msgs('&bar 0 1 2\n&foo &bar[2:1]')).toMatch(/&bar\[2:1\] picks nothing: it ends before it starts/);
     expect(msgs('&s 0 1\n&x over=&s[0] 0')).toMatch(/over= takes a whole table/);
   });
 
