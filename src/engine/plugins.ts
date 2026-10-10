@@ -57,7 +57,8 @@ const COLOUR = /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20}|(?:rgb|rgba|hsl|hsla)\(\s*[-0
 
 /** What a plugin is trusted by: all of it, manifest and code (the manifest feeds the drawing too). */
 export const pluginKey = (p: Pick<ShowPlugin, 'fits' | 'size' | 'rim' | 'meaning' | 'dial' | 'tokens' | 'code'>): string =>
-  JSON.stringify([p.fits, p.size, p.rim, p.meaning, p.dial, Object.entries(p.tokens)]) + '\n' + p.code;
+  // (line endings don't count: a copy saved with CRLF is the same plugin)
+  JSON.stringify([p.fits, p.size, p.rim, p.meaning, p.dial, Object.entries(p.tokens)]) + '\n' + p.code.replace(/\r\n?/g, '\n');
 
 const OPEN = /^=== plugin ([a-z]+) ===\s*$/;
 const CLOSE = /^=== end ===\s*$/;
@@ -150,6 +151,8 @@ function readBlock(name: string, body: string, line: number, builtin: boolean): 
     const t = o.tokens as Record<string, unknown> | null;
     if (!t || typeof t !== 'object' || Object.values(t).some((v) => typeof v !== 'string' || !COLOUR.test(v)))
       return '"tokens" maps names to colours (#rgb, rgb(…), hsl(…), a name, var(--x)): { "sun": "#ffd84a" }';
+    // (a token called __proto__ would set the object's prototype and be dropped without a word: it is refused)
+    if (Object.keys(t).includes('__proto__')) return '"tokens": a token can\'t be called __proto__';
     Object.assign(tokens, t);
   }
   return {

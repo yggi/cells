@@ -259,6 +259,8 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
   // the notes of what's heard, and what moves the tapes that are
   for (const o of outs) if (heard.has(sourceOf(o))) notesOf(sound, o, how);
   for (const n of heard) if (keeps(result, n)) sound.clock(n);
+  // a read head's at= clock, as a tape's length=: a tap of the clock (the head sounds, not a tape of notes: notesOf has no say)
+  for (const n of heard) sound.timed(n);
   // an oscilloscope watches: on when what it watches is
   for (const c of result.cells.values())
     if (typeof c.params.scope === 'string' && !sound.off(c.name)) for (const k of c.children.keys()) if (sound.nodes.has(cellId(k))) sound.edge(c.name, k);

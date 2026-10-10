@@ -116,4 +116,6 @@ function draw(view, h, g) {
 `;
 
 /** Every built-in plugin (the sun …), in the bundle's order. */
-export const BUILTIN_PLUGINS: readonly ShowPlugin[] = splitPlugins(BUNDLE, [], true).plugins;
+export const BUILTIN_PLUGINS: readonly ShowPlugin[] = Object.freeze(
+  splitPlugins(BUNDLE, [], true).plugins.map((p) => Object.freeze({ ...p, tokens: Object.freeze({ ...p.tokens }) })),
+);

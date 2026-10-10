@@ -24,6 +24,27 @@ function states(r: CompileResult, t: number | null, muted: ReadonlySet<string> =
   return out;
 }
 
+describe('routing: the clocks a parameter reads are wires too (#188, #193)', () => {
+  // Baustelle II with a tape and a head that read the bar: `length=&bar*4`, `at=&bar*3/2`
+  const resonanz = () => compileSource(PRESETS.resonanz.source.replace('length=5', 'length=&bar*4').replace('at=1.15', 'at=&bar*3/2'));
+  it("a read head's at= clock is lit with the head, as the tape's length= is", () => {
+    const r = resonanz();
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(on(r).edges.has('cell:h1~at>cell:bar')).toBe(true);
+    const static_ = states(r, null);
+    const live = states(r, 3.3);
+    for (const s of [static_, live]) expect(['on', 'live', 'idle']).toContain(s.get('tape~length>bar'));
+    expect(['on', 'live', 'idle']).toContain(static_.get('h1~at>bar'));
+    expect(['live', 'idle']).toContain(live.get('h1~at>bar'));
+  });
+  it("a voice's map=&table in a mix is one wire into the voice, lit with it", () => {
+    const r = src('&bar step=1', '&mel step=&bar 0 2', '&curve 0 1 .3 -1', '&v loop=C4 map=&curve 0 1 2 3', '&w loop=C3', `${OUT} [&mel * &v, &mel * &w]`);
+    const s = states(r, 0.2);
+    expect([s.get('curve'), s.get('curve~map>v')]).toEqual(['live', 'live']);
+    expect(s.has('curve~map>w')).toBe(false);
+  });
+});
+
 describe('routing: one model for what the graph draws as part of the sound (#11)', () => {
   it('a cell that only moves a voice (a filter, a pitch) is part of the sound', () => {
     const r = src('&bar step=1', '&mel step=&bar 0 2', '&sweep map=lin loop=.5 0 1', '&v s=saw loop=C3 lpf=200..2000 * &sweep', `${OUT} [&mel * &v]`);
