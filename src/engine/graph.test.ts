@@ -29,9 +29,9 @@ describe('edges as wires', () => {
   it('flow from what is read to the cell that reads it, whichever way the edge points', () => {
     expect(wireOf(g, 'bar', 'theme')).toMatchObject({ port: 'step', band: 'sync' }); // step=&bar
     expect(wireOf(g, 'mode', 'theme')).toMatchObject({ port: 'over', band: 'cv', pointer: true }); // over=&mode
-    expect(wireOf(g, 'walkBar', 'parts')).toMatchObject({ port: 'braid', band: 'cv', pointer: true }); // &parts … &walkBar (a tap)
-    expect(wireOf(g, 'bar', 'parts')).toMatchObject({ port: 'step', band: 'sync' }); // &parts step=&bar: the bus, once (decision 016)
-    expect(wireOf(g, 'walkBar', 'walk')).toMatchObject({ port: 'step', band: 'sync' }); // step=&walkBar
+    expect(g.bulbs.get('walkBar')).toBe('parts'); // &parts … &walkBar: a tap, a bulb on its table (decision 016)
+    expect(wireOf(g, 'bar', 'parts')).toMatchObject({ port: 'step', band: 'sync' }); // &parts step=&bar: the bus, once
+    expect(between(g, 'parts', 'walk')).toMatchObject({ port: 'step', band: 'sync', bulb: 'walkBar' }); // step=&walkBar: from its bulb
     expect(g.bulbs.get('up')).toBe('tune'); // &tune … &up &up: read there only, a bulb on its track (#221)
     expect(wireOf(g, 'capstan', 'tape')).toMatchObject({ port: 'step', band: 'sync' });
   });
@@ -49,7 +49,7 @@ describe('edges as wires', () => {
     expect(wireOf(g, 'accent', 'flute')).toMatchObject({ port: 'level', band: 'cv' });
     expect(wireOf(g, 'vibrato', 'flute')).toMatchObject({ port: 'pitch', band: 'cv' });
     expect(wireOf(g, 'theme', 'flute')).toMatchObject({ port: 'voice', band: 'cv' });
-    expect(wireOf(g, 'walkBar', 'parts')).toMatchObject({ port: 'braid', pointer: true });
+    expect(wireOf(g, 'up', 'tune')).toBeUndefined(); // (a bulb's splice is its host's track, not a wire)
     expect(wireOf(g, 'hh', 'out')).toMatchObject({ port: 'mix', band: 'audio', pointer: false });
     expect(wireOf(g, 'piece', 'out')).toMatchObject({ port: 'about', band: 'none' });
   });

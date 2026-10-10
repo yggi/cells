@@ -14,7 +14,16 @@ A selector read a table of parts (mixes) and their sound went through it to the 
 4. **Switched on, a section restarts** from its top; switched off, it stands still.
 5. **A section owns only what is stepped or looped from its tap.** A vibrato on `loop=6`, a drone on its own clock, a tape's motor go on.
 6. **The old form is removed:** a selector reading a table of mixes is an error, and Shorten rewrites it at the input, checked to play the same notes. Every example arranged that way (10) rewrote automatically to the same notes.
-7. **Two mechanisms, for now:** the switch on the meter's bus (time: whether a section moves) and the gate node (output: whether what it plays passes), which may converge (the gate-node note, [#240](https://github.com/yggi/cell-studio/pull/240)).
+7. **Drawn as sub-wheels:** a tap is a bulb on its table's wheel ([decision 014](014-splices-are-bulbs.md), amended), the meter's bus into the table once and each tap's sub-net out of its bulb to what it steps; tapped, a bulb opens its cell, held, it switches it off. A tap may have a line of its own with attributes only (`&hookBar off`, `label=`, `tags=`): the editor writes it there, and takes the line away when it says nothing more.
+8. **Two mechanisms, for now:** the switch on the meter's bus (time: whether a section moves) and the gate node (output: whether what it plays passes), which may converge (the gate-node note, [#240](https://github.com/yggi/cell-studio/pull/240)).
+
+![the parts' wheel: the taps as separate wheels (before), as bulbs on &parts (after); Pop song](016-taps-as-bulbs.jpg)
+
+*Pop song, the taps as wheels of their own and as bulbs on `&parts`: `node tools/gallery.mjs golden 0 pop`.*
+
+![the table's wheel close up, stopped and playing: Pop, Korobeiniki, Baustelle, Arrangement, Hypercell, Zelluläre Aktivität](016-taps-detail.jpg)
+
+*Close up, stopped and playing (`ZOOM=parts node tools/gallery.mjs zoom 3 pop …`): each tap a ring in its part's colour on the selector's barrel, named by its cell less what all of them end in (`&hatsBar`: hats); playing, the selector's cursor points into each tap it has on, the rest dimmed; the selector reads the table through one plain wire from below.*
 
 ## Why
 

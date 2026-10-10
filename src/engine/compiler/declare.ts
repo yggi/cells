@@ -30,7 +30,7 @@ export function declare(ctx: Ctx): Declared {
     if (decls.has(c.name)) error(`&${c.name} is already defined on line ${decls.get(c.name)!.span.line}`, c.span);
     else decls.set(c.name, c);
   }
-  const taps = tapTables(decls);
+  const taps = tapTables(decls, error);
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
   for (const name of decls.keys()) if (name.startsWith('key:') || name.startsWith('scale:')) implicit.add(name);
@@ -170,17 +170,22 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
 }
 
 /**
- * Tables of taps (decision 016): a stepped cell whose steps are plain names, each one either not declared or a cell
- * stepped by something (a tap written out: its own line wins), at least one not declared and one something is stepped
- * by. Each undeclared name is
- * declared as a tap, stepped as the table was (one step, a clock); the table loses its step= and is a table. A name
- * not declared is an error otherwise, so no piece that compiled before changes meaning. Each tap, to its table.
+ * Tables of taps (decision 016): a stepped cell whose steps are plain names, each one either not declared, declared
+ * bare (a line of attributes only, no steps and no clock: `&hookBar off`, where the editor writes a tap's off, label=,
+ * show=), or a cell stepped by something (a tap written out: its own line wins), at least one not declared or bare and
+ * one something is stepped by. Each undeclared or bare name is a tap, stepped as the table was (one step, a clock),
+ * keeping its own line's attributes; the table loses its step= and is a table. A name not declared is an error
+ * otherwise, and a bare line was a cell of no steps, so no piece that compiled before changes meaning. Each tap, to its
+ * table.
  */
-function tapTables(decls: Map<string, CellDecl>): Map<string, string> {
+function tapTables(decls: Map<string, CellDecl>, error: Ctx['error']): Map<string, string> {
   const taps = new Map<string, string>();
   // (the names something is stepped by: a table of taps needs one of them, so a stepped braid of a mistyped name is
   // still "Unknown cell", as before)
   const clocks = new Set([...decls.values()].flatMap((d) => (d.step?.kind === 'driven' ? [d.step.driver.name] : [])));
+  // (a line of attributes only: `&hookBar off`; a shift= turns its one step, which changes nothing, and the sheet's turn
+  // writes one)
+  const bare = (k: CellDecl | undefined) => !!k && !k.step && !k.over && !k.map && (k.braid.kind === 'blank' || (k.braid.kind === 'list' && !k.braid.tokens.length));
   for (const d of [...decls.values()]) {
     if (!d.step || d.over || d.map || d.braid.kind !== 'list' || !d.braid.tokens.length) continue;
     const names: string[] = [];
@@ -188,28 +193,28 @@ function tapTables(decls: Map<string, CellDecl>): Map<string, string> {
       const a = t.atom;
       if (a.kind !== 'ref' || a.pick || a.shift || a.transpose || a.values || t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1) break;
       const known = decls.get(a.name);
-      if (known && (!known.step || taps.has(a.name))) break;
+      if (known && !bare(known) && (!known.step || taps.has(a.name))) {
+        // (a tap given a line of steps or a table: the table would be a braid of unknown names — say which line)
+        const rest = d.braid.tokens.map((x) => (x.atom.kind === 'ref' ? x.atom.name : '')).filter((n) => n !== a.name);
+        if (!known.step && rest.some((n) => n && !decls.has(n) && clocks.has(n)))
+          error(`&${a.name} is a tap of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=), not steps or a table of its own`, known.span);
+        break;
+      }
       names.push(a.name);
     }
-    if (names.length !== d.braid.tokens.length || names.every((n) => decls.has(n)) || !names.some((n) => clocks.has(n))) continue;
+    if (names.length !== d.braid.tokens.length || names.every((n) => decls.has(n) && !bare(decls.get(n))) || !names.some((n) => clocks.has(n))) continue;
     for (const [i, name] of names.entries()) {
       taps.set(name, d.name);
-      if (decls.has(name)) continue;
+      const own = decls.get(name);
+      if (own && !bare(own)) continue;
       const span = d.braid.tokens[i].span;
-      decls.set(name, {
+      const braid: CellDecl['braid'] = { kind: 'list', tokens: [{ atom: { kind: 'note', value: 0, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }] };
+      decls.set(
         name,
-        span,
-        over: null,
-        shift: null,
-        off: false,
-        step: d.step,
-        map: null,
-        stride: null,
-        cycle: null,
-        params: {},
-        paramSpans: {},
-        braid: { kind: 'list', tokens: [{ atom: { kind: 'note', value: 0, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }] },
-      });
+        own
+          ? { ...own, step: d.step, braid }
+          : { name, span, over: null, shift: null, off: false, step: d.step, map: null, stride: null, cycle: null, params: {}, paramSpans: {}, braid },
+      );
     }
     decls.set(d.name, { ...d, step: null });
   }

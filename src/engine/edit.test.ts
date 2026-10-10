@@ -76,6 +76,26 @@ describe('source edits', () => {
     expect(setOff(a, 'scale', false)).toBe(src);
   });
 
+  it('a tap without a line of its own gets one under its table, and loses it when it says nothing (decision 016)', () => {
+    const song = PRESETS.pop.source;
+    const off = setOff(song, 'hookBar', true);
+    const lines = off.split('\n');
+    expect(lines[lines.findIndex((l) => l.startsWith('&parts ')) + 1]).toBe('&hookBar off');
+    expect(compileSource(off).off.has('cell:hookBar')).toBe(true);
+    expect(compileSource(off).diagnostics).toEqual([]);
+    expect(setOff(off, 'hookBar', false)).toBe(song);
+    expect(setAttr(song, 'hookBar', 'label', '"the hook"')).toMatch(/^&hookBar label="the hook"$/m);
+    // (not a tap, not a cell: nothing to edit)
+    expect(setOff(song, 'nowhere', true)).toBe(song);
+    // a tap's sheet turning it (it has nothing to turn): still a tap, nothing wrong
+    expect(compileSource(setShift(song, 'hookBar', 3)).diagnostics).toEqual([]);
+    // a CRLF file stays CRLF, and comes back as it was
+    const crlf = song.replace(/\n/g, '\r\n');
+    const crlfOff = setOff(crlf, 'hookBar', true);
+    expect(crlfOff.split('\n').every((l, i, all) => i === all.length - 1 || l.endsWith('\r'))).toBe(true);
+    expect(setOff(crlfOff, 'hookBar', false)).toBe(crlf);
+  });
+
   it('round-trips through the compiler: what the graph sets is what the code says', () => {
     const base = PRESETS.royal.source;
     const r = compileSource(setOff(setShift(base, 'key', 5), 'theme', true));

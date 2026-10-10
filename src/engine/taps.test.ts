@@ -24,7 +24,7 @@ const SONG = `
 const SECTION = 8;
 const played = (src: string, from: number, to: number) => {
   const r = compileSource(src);
-  return eventsBetween(plan(r, codeShifts(r)), from, to);
+  return eventsBetween(plan(r, codeShifts(r), r.off), from, to); // (what is off, as the app plays it)
 };
 const voices = (src: string, section: number) => new Set(played(src, section * SECTION, (section + 1) * SECTION - 0.01).map((e) => e.voice));
 
@@ -57,6 +57,22 @@ describe('arranging at the input (decision 016)', () => {
     const r = compileSource('&bar scan(1 1 1 1) step=120bpm\n&a 0 1\n&b 2 3\n&both step=&bar &a &b\n&v s=sine loop=C4\n&out map=sample [&both * &v]');
     expect(r.ok).toBe(true);
     expect(r.cells.get('both')?.clock).toBe('bar');
+  });
+
+  it('a tap may have a line of its own, of attributes only: off silences what it steps, in every section', () => {
+    const off = SONG.replace('&parts step=&bar &keysBar &tuneBar &drumBar', '&parts step=&bar &keysBar &tuneBar &drumBar\n&drumBar off label="the drums"');
+    const r = compileSource(off);
+    expect(r.diagnostics.map((d) => d.message)).toEqual([]);
+    expect([r.taps?.get('drumBar'), r.cells.get('drumBar')?.clock, r.cells.get('drumBar')?.label]).toEqual(['parts', 'bar', 'the drums']);
+    expect(voices(off, 1)).toEqual(new Set(['keys'])); // [0,2]: the keys; the drums are off
+    expect(voices(off, 2)).toEqual(new Set(['keys', 'lead']));
+    // a tap's line with steps of its own: the error says which line, not that the other taps are unknown
+    const stepped = compileSource(SONG.replace('&parts step=&bar &keysBar &tuneBar &drumBar', '&parts step=&bar &keysBar &tuneBar &drumBar\n&drumBar 0 1'));
+    expect(stepped.diagnostics.map((d) => d.message)).toContain(
+      '&drumBar is a tap of &parts, so its line can carry attributes only (off, label=, tags=, show=), not steps or a table of its own',
+    );
+    // (a bare line of a name no table names is a cell of no steps, as before)
+    expect(compileSource('&x off').cells.get('x')?.clock).toBeFalsy();
   });
 
   it('a tap nothing is stepped by warns: a section with nothing in it, or a name mistyped', () => {

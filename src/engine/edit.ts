@@ -25,13 +25,39 @@ export function declLine(source: string, name: string): number {
   return source.split('\n').findIndex((l) => head.test(splitComment(l)[0]));
 }
 
-/** Rewrite the code part of &name's line; comments and other lines untouched. */
+/**
+ * 0-based index of the line of a table of taps naming &name as a tap (decision 016: `&parts step=&bar &keysBar …`), or
+ * -1: a stepped line whose words after its attributes are plain names, &name among them.
+ */
+function tapLine(lines: readonly string[], name: string): number {
+  return lines.findIndex((l) => {
+    const words = splitWords(splitComment(l)[0]);
+    if (!/^&\w+$/.test(words[0] ?? '') || !words.some((w) => w.startsWith('step='))) return false;
+    const rest = words.slice(1).filter((w) => !isAttrWord(w));
+    return rest.length > 0 && rest.every((w) => /^&\w+$/.test(w)) && rest.includes(`&${name}`);
+  });
+}
+
+/**
+ * Rewrite the code part of &name's line; comments and other lines untouched. A tap without a line of its own gets one,
+ * under its table's (`&keysBar off`); a tap's line left with nothing but its name goes again.
+ */
 function editDecl(source: string, name: string, f: (code: string, head: RegExp) => string): string {
   const lines = source.split('\n');
-  const i = declLine(source, name);
-  if (i < 0) return source;
+  let i = declLine(source, name);
+  const tap = tapLine(lines, name);
+  if (i < 0) {
+    if (tap < 0) return source;
+    // (with the table's line ending: a CRLF file stays CRLF)
+    lines.splice(tap + 1, 0, `&${name}${lines[tap].endsWith('\r') ? '\r' : ''}`);
+    i = tap + 1;
+  }
   const [code, comment] = splitComment(lines[i]);
   let next = f(code, headOf(name));
+  if (tap >= 0 && !comment && next.trim() === `&${name}`) {
+    lines.splice(i, 1);
+    return lines.join('\n');
+  }
   // keep a comment's alignment where possible: pad or trim spaces before it
   if (comment) {
     const before = code.length;

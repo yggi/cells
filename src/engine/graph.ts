@@ -7,7 +7,7 @@
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
 import { effectiveShow, pluginOf } from '../layout/show';
-import { trackRoom } from '../layout/track';
+import { bulbHub, trackRoom } from '../layout/track';
 import type { CompileResult, ResolvedCell } from './program';
 import type { Pick, ValueMap } from './ast';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
@@ -114,6 +114,13 @@ export interface GraphEdge extends Wire {
    * voice, the voice into the mix): it is routed (and live) when, of each group, one of these is (`drawn`).
    */
   readonly routes?: readonly (readonly string[])[];
+  /**
+   * The bulb on its source's wheel it leaves from (a cell's name): a tap of a meter's bus drawn on its table (decision 016),
+   * what it steps a sub-net from there.
+   */
+  readonly bulb?: string;
+  /** Where that bulb's hub is from its wheel's centre (px, the wheel at its size in the graph), and its disc's radius. */
+  readonly bulbAt?: { readonly x: number; readonly y: number; readonly r: number };
 }
 
 /** The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's entry, a product's voice, a note's link. */
@@ -158,6 +165,10 @@ interface GraphNet {
    * never from another reader, where its label would read as a delay from there.
    */
   readonly delayed: boolean;
+  /** The bulb on the owner's wheel it leaves from (GraphEdge.bulb): a tap's sub-net, from its place on its table. */
+  readonly bulb?: string;
+  /** Where that bulb's hub is from the owner's centre, and its disc's radius (GraphEdge.bulbAt). */
+  readonly bulbAt?: { readonly x: number; readonly y: number; readonly r: number };
 }
 
 export interface GraphModel {
@@ -577,6 +588,11 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
     for (let guard = 0; parentOf.has(id) && guard < 64; guard++) id = parentOf.get(id)!;
     return id;
   };
+  // (a tap drawn as a bulb on its table, by its node id: its name)
+  const tapBulb = (id: string) => {
+    const name = id.slice('cell:'.length);
+    return bulbs.has(id) && result.taps?.get(name) !== undefined ? name : undefined;
+  };
   const out: GraphEdge[] = [];
   const pairs = new Set<string>();
   const key = (a: string, b: string) => [a, b].sort().join('|');
@@ -590,6 +606,14 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
       out.push(e);
       continue;
     }
+    // (a tap's steps leave from its bulb on its table: each its own wire, the tap's sub-net — decision 016)
+    const tap = tapBulb(e.from);
+    if (tap && source !== target) {
+      const id = `${edgeId(cellId(tap), up(e.to))}~`;
+      redrawn.push({ id: e.id, pair: id });
+      out.push({ ...e, id, source, target, from: up(e.from), to: up(e.to), bulb: tap });
+      continue;
+    }
     redrawn.push({ id: e.id, pair: source === target ? null : key(source, target) });
     if (source === target || pairs.has(key(source, target))) continue;
     pairs.add(key(source, target));
@@ -597,8 +621,9 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
   }
   const byPair = new Map<string, string>();
   for (const e of out) if (!byPair.has(key(e.source, e.target))) byPair.set(key(e.source, e.target), e.id);
+  const ids = new Set(out.map((e) => e.id));
   const alias = new Map<string, string | undefined>();
-  for (const r of redrawn) alias.set(r.id, r.pair === null ? undefined : byPair.get(r.pair));
+  for (const r of redrawn) alias.set(r.id, r.pair === null ? undefined : ids.has(r.pair) ? r.pair : byPair.get(r.pair));
   for (const e of allEdges) if (hidden.has(e.source) || hidden.has(e.target)) alias.set(e.id, undefined);
   const drawnIds = new Set(out.map((e) => e.id));
   for (const id of through) if (!drawnIds.has(id) && !alias.has(id)) alias.set(id, undefined);
@@ -611,29 +636,38 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
     const reach = trackRoom(result, n.cell.name, byName, 128 * n.cell.size);
     return reach ? { ...n, reach } : n;
   });
-  return { nodes: reached, edges: out, nets: netsOf(reached, out), alias, bulbs: byName };
+  // (a tap's sub-net leaves from its bulb: where that is on its table's wheel)
+  const sizes = new Map(reached.map((n) => [n.id, n.kind === 'cell' ? 128 * n.cell.size : 0]));
+  const anchored = out.map((e) => {
+    const at = e.bulb ? bulbHub(result, names(e.from), e.bulb, byName, sizes.get(e.from) ?? 128) : null;
+    return at ? { ...e, bulbAt: at } : e;
+  });
+  return { nodes: reached, edges: anchored, nets: netsOf(reached, anchored), alias, bulbs: byName };
 }
 
 /** The shows that draw a cell as a track of steps in time (where a splice can be a bulb). */
 const TRACKS: ReadonlySet<string> = new Set(['braid', 'pattern', 'notes', 'midi', 'do', 'degrees']);
 
 /** A cell's node drawn as a track of steps (CellGlyph's braid): not a meter, a table, a mix, a scope, a plugin's wheel. */
-const isTrack = (result: CompileResult, n: GraphNode) =>
-  n.kind === 'cell' &&
-  !n.isMeter &&
-  !n.cell.root &&
-  !n.cell.scan &&
-  !n.cell.mix &&
-  !n.cell.kit &&
-  !n.cell.sink &&
-  !n.cell.note &&
-  typeof n.cell.params.scope !== 'string' &&
-  !pluginOf(result, n.cell.name) &&
-  TRACKS.has(effectiveShow(result, n.cell.name).show);
+const isTrack = (result: CompileResult, n: GraphNode): boolean =>
+  // (a table of taps: its taps are bulbs on it, decision 016)
+  (n.kind === 'cell' && [...(result.taps?.values() ?? [])].includes(n.cell.name)) ||
+  (n.kind === 'cell' &&
+    !n.isMeter &&
+    !n.cell.root &&
+    !n.cell.scan &&
+    !n.cell.mix &&
+    !n.cell.kit &&
+    !n.cell.sink &&
+    !n.cell.note &&
+    typeof n.cell.params.scope !== 'string' &&
+    !pluginOf(result, n.cell.name) &&
+    TRACKS.has(effectiveShow(result, n.cell.name).show));
 
 /**
  * The splices drawn as bulbs (#221), by node id, each to its host's: a cell read by one edge only, a ref without a pick
- * or a delay (a tap, a canon's copy: a net), both it and the braid that splices it drawn as tracks.
+ * or a delay (a tap, a canon's copy: a net), both it and the braid that splices it drawn as tracks; and a tap of a
+ * meter's bus, on its table (decision 016).
  */
 function bulbsOf(result: CompileResult, nodes: readonly GraphNode[], edges: readonly GraphEdge[]): Map<string, string> {
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -642,6 +676,12 @@ function bulbsOf(result: CompileResult, nodes: readonly GraphNode[], edges: read
   const track = (n: GraphNode | undefined) => !!n && isTrack(result, n);
   const out = new Map<string, string>();
   for (const n of nodes) {
+    // a tap of a meter's bus: a bulb on its table (decision 016), whatever it steps leaving from there
+    const table = n.kind === 'cell' ? result.taps?.get(n.cell.name) : undefined;
+    if (table && byId.has(cellId(table))) {
+      out.set(n.id, cellId(table));
+      continue;
+    }
     const r = reads.get(n.id) ?? [];
     if (r.length !== 1 || r[0].port !== 'braid' || r[0].transforms.some((t) => t.some((x) => x.kind === 'pick' || x.kind === 'delay'))) continue;
     if (track(n) && track(byId.get(r[0].to))) out.set(n.id, r[0].to);
@@ -681,15 +721,30 @@ export function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[])
   const meters = new Set(nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.id] : [])));
   const groups = new Map<string, { port: string; taps: GraphEdge[] }>();
   for (const e of edges) {
-    const port = BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.band === 'sync' && !e.belt && meters.has(e.target) ? 'step' : null;
+    // (a tap's steps, from its bulb on its table: a sub-net of the meter's bus, decision 016)
+    const port =
+      BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.band === 'sync' && !e.belt && (meters.has(e.target) || (e.bulb && e.port === 'step')) ? 'step' : null;
     if (!port) continue;
-    const g = groups.get(`${e.from}|${port}`) ?? { port, taps: [] };
+    const at = `${e.from}|${port}|${e.bulb ?? ''}`;
+    const g = groups.get(at) ?? { port, taps: [] };
     g.taps.push(e);
-    groups.set(`${e.from}|${port}`, g);
+    groups.set(at, g);
   }
   return [...groups.values()]
     .filter(({ port, taps }) => (taps.length > 1 || port === 'step') && (!DELAY_PORTS.has(port) || taps.some(isDelayed)))
-    .map(({ port, taps }) => ({ id: `net:${taps[0].from}:${port}`, owner: taps[0].from, port, band: taps[0].band, taps: taps.map((e) => e.id), delayed: taps.some(isDelayed) }));
+    .map(({ port, taps }) => {
+      const { bulb, bulbAt } = taps[0];
+      return {
+        id: `net:${taps[0].from}:${port}${bulb ? `:${bulb}` : ''}`,
+        owner: taps[0].from,
+        port,
+        band: taps[0].band,
+        taps: taps.map((e) => e.id),
+        delayed: taps.some(isDelayed),
+        ...(bulb ? { bulb } : {}),
+        ...(bulbAt ? { bulbAt } : {}),
+      };
+    });
 }
 
 /** Changes only when the set of nodes or edges changes — not when contents do. */

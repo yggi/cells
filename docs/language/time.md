@@ -65,6 +65,6 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 &out loop=SAMPLE_RATE map=sample [&tune * &lead * .3, &roots * &bass * .5]
 ```
 
-A name the table declares must step something (`step=&tuneBar`), or the compiler says so; a table of names none of which steps anything is a braid of cells as before (an unknown name an error). The old form, a selector reading a table of mixes and their sound through it, is an error now; Shorten rewrites it at the input, checked to play the same notes.
+A tap may have a line of its own with attributes only, and stays a tap (`&tuneBar off` switches the tune's part off in every section; holding its bulb in the graph writes that line). A name the table declares must step something (`step=&tuneBar`), or the compiler says so; a table of names none of which steps anything is a braid of cells as before (an unknown name an error). The old form, a selector reading a table of mixes and their sound through it, is an error now; Shorten rewrites it at the input, checked to play the same notes.
 
 The transport marks a selector's sections and jumps to them ([../ui/transport.md](../ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](../limits.md)).
