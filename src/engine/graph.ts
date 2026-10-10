@@ -110,7 +110,10 @@ export interface GraphEdge extends Wire {
    * terms carry theirs into its junction, its gain is on the wire out of it.
    */
   readonly transforms: readonly Transform[];
-  /** At a product's junction: the voice whose sound it carries or makes (what its pulse and colour follow). */
+  /**
+   * At a product's junction: the voice whose sound it carries or makes (what its pulse and colour follow). On a pattern
+   * of voices spliced into another (a braid wire of sound): the first voice it splices in.
+   */
   readonly sound?: string;
   /**
    * A wire at a product's junction stands for written pairs the routing knows (engine/routing.ts: the melody into its
@@ -255,9 +258,39 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
     to: back ? source : target,
   });
   const chord = chordWidth(result);
-  const sounds = (name: string) => {
+  // What sounds: a wire out of it carries sound — into a tape, a read head, or spliced into a reader: a mix into the
+  // sound card or a scope, a voice into a pattern of voices, and so on up (#238): a cell whose braid splices in
+  // something that sounds sounds too (a pattern of voices spliced into another, &break &pat &pat[::-1])
+  const soundsItself = (c: ResolvedCell) => c.voice || !!c.mix || c.kit || result.tapes.some((t) => t.name === c.name) || result.returns.some((r) => r.head === c.name);
+  // (what a cell's braid splices in: its refs, and the voices of an unnamed kit it reads, `over=&(&bd &sd)`)
+  const spliced = (c: ResolvedCell): string[] => {
+    const kit = c.over ? result.cells.get(c.over) : undefined;
+    return [...c.children.keys(), ...(kit?.implicit && kit.kit ? kit.units.flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : [])) : [])];
+  };
+  const heard = new Set([...result.cells.values()].filter(soundsItself).map((c) => c.name));
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const c of result.cells.values())
+      if (!heard.has(c.name) && spliced(c).some((k) => heard.has(k))) {
+        heard.add(c.name);
+        grew = true;
+      }
+  }
+  const sounds = (name: string) => heard.has(name);
+  // (the sound a wire out of a pattern carries, for its colour: the first voice, mix or tape it splices in, however deep)
+  const soundOf = (name: string, seen = new Set<string>()): string | undefined => {
     const c = result.cells.get(name);
-    return !!c && (c.voice || !!c.mix || c.kit || result.tapes.some((t) => t.name === name) || result.returns.some((r) => r.head === name));
+    if (!c || seen.has(name)) return undefined;
+    if (soundsItself(c)) return name;
+    seen.add(name);
+    for (const k of spliced(c)) if (heard.has(k)) return soundOf(k, seen);
+    return undefined;
+  };
+  // (a braid wire's band, and the sound it carries when that isn't its source's own: a pattern's first voice)
+  const spliceBand = (child: string): Band => (sounds(child) ? 'audio' : 'cv');
+  const spliceSound = (child: string) => {
+    const sound = sounds(child) ? soundOf(child) : undefined;
+    return sound && sound !== child ? { sound } : {};
   };
   for (const c of result.cells.values()) {
     if (!shown(c.name)) continue;
@@ -287,7 +320,8 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
           target: cellId(child),
           count,
           transforms: Array.from({ length: count }, () => []),
-          ...wire('braid', 'cv', id, cellId(child), 1, true, true),
+          ...spliceSound(child),
+          ...wire('braid', spliceBand(child), id, cellId(child), 1, true, true),
         });
     }
     // resonators: coupled through the table (couple=), and what excites them
@@ -369,7 +403,8 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
         count,
         // (each place it is written in this cell's steps: its pick or shift, operations, transposition)
         transforms: c.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === child ? [refTransform(u.atom)] : [])),
-        ...wire('braid', 'cv', id, cellId(child), chord(child), true, true),
+        ...spliceSound(child),
+        ...wire('braid', spliceBand(child), id, cellId(child), chord(child), true, true),
       });
     }
     // a note's links: what it explains
