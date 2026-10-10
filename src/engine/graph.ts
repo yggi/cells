@@ -220,6 +220,8 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
   const shown = (name: string) => !result.cells.get(name)?.implicit;
   const nodes: GraphNode[] = [];
   const seen = new Set<string>();
+  // (the tables of taps whose bus is drawn already)
+  const buses = new Set<string>();
   const link = (e: GraphEdge) => {
     if (seen.has(e.id) || !shown(e.target.slice('cell:'.length))) return;
     seen.add(e.id);
@@ -351,7 +353,20 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
     for (const target of c.about)
       if (result.cells.has(target))
         link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), count: 1, transforms: AS_IS, ...wire('about', 'none', id, cellId(target)) });
-    if (c.step)
+    // a tap's clock is written once, on its table's line (`&parts step=&bar`): one wire, the meter's bus into the table
+    // (decision 016); the taps are the table's
+    const table = result.taps?.get(c.name);
+    if (c.step && table && !buses.has(table)) {
+      buses.add(table);
+      link({
+        id: stepEdgeId(cellId(table), cellId(c.step.driver)),
+        source: cellId(table),
+        target: cellId(c.step.driver),
+        count: 1,
+        transforms: [rateOf(c)],
+        ...wire('step', 'sync', cellId(table), cellId(c.step.driver), 1, true),
+      });
+    } else if (c.step && !table)
       // (a belt says so: the cell follows through a spring, not rigidly)
       link({
         id: stepEdgeId(id, cellId(c.step.driver)),

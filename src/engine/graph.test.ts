@@ -29,7 +29,9 @@ describe('edges as wires', () => {
   it('flow from what is read to the cell that reads it, whichever way the edge points', () => {
     expect(wireOf(g, 'bar', 'theme')).toMatchObject({ port: 'step', band: 'sync' }); // step=&bar
     expect(wireOf(g, 'mode', 'theme')).toMatchObject({ port: 'over', band: 'cv', pointer: true }); // over=&mode
-    expect(wireOf(g, 'leadA', 'parts')).toMatchObject({ port: 'braid', band: 'cv', pointer: true }); // &parts … &leadA
+    expect(wireOf(g, 'walkBar', 'parts')).toMatchObject({ port: 'braid', band: 'cv', pointer: true }); // &parts … &walkBar (a tap)
+    expect(wireOf(g, 'bar', 'parts')).toMatchObject({ port: 'step', band: 'sync' }); // &parts step=&bar: the bus, once (decision 016)
+    expect(wireOf(g, 'walkBar', 'walk')).toMatchObject({ port: 'step', band: 'sync' }); // step=&walkBar
     expect(g.bulbs.get('up')).toBe('tune'); // &tune … &up &up: read there only, a bulb on its track (#221)
     expect(wireOf(g, 'capstan', 'tape')).toMatchObject({ port: 'step', band: 'sync' });
   });
@@ -47,7 +49,7 @@ describe('edges as wires', () => {
     expect(wireOf(g, 'accent', 'flute')).toMatchObject({ port: 'level', band: 'cv' });
     expect(wireOf(g, 'vibrato', 'flute')).toMatchObject({ port: 'pitch', band: 'cv' });
     expect(wireOf(g, 'theme', 'flute')).toMatchObject({ port: 'voice', band: 'cv' });
-    expect(wireOf(g, 'leadA', 'parts')).toMatchObject({ port: 'braid', pointer: true });
+    expect(wireOf(g, 'walkBar', 'parts')).toMatchObject({ port: 'braid', pointer: true });
     expect(wireOf(g, 'hh', 'out')).toMatchObject({ port: 'mix', band: 'audio', pointer: false });
     expect(wireOf(g, 'piece', 'out')).toMatchObject({ port: 'about', band: 'none' });
   });
@@ -193,7 +195,7 @@ describe('a product is a junction (docs/notes/nets.md, decision 2)', () => {
     // (each junction sits on its voice's rim: layout/junctions.ts)
     expect(g.nets.find((n) => n.owner === 'cell:lead')).toBeUndefined();
     expect(g.edges.filter((e) => e.from === 'cell:lead' && e.port === 'is')).toHaveLength(5);
-    expect(wireOf(g, 'tetris', 'out')).toMatchObject({ port: 'mix', band: 'audio' }); // [&tetris, …]
+    expect(wireOf(g, 'leadA', 'out')).toMatchObject({ port: 'mix', band: 'audio' }); // [&leadA, …]
   });
 
   it('an instrument in a product is its voice; a kit’s pattern is its sound', () => {
@@ -450,6 +452,9 @@ describe('every name written is one wire carrying the transform it writes, and e
     let wires = 0;
     for (const c of program.cells.values()) {
       if (c.lambda || c.implicit) continue;
+      // (a tap its table declares has no line of its own: its name is written on the table's, decision 016)
+      const table = program.taps?.get(c.name);
+      if (table && program.cells.get(table)?.span.line === c.span.line) continue;
       // (in a groove or a drum motif, read through the voices' kit, a chord of voices [&bd, &hh] is steps of its braid, not a mix)
       const groove = c.over === 'kit:voices';
       const tokens = tokensOn(lines.get(c.span.line) ?? '')

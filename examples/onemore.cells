@@ -9,15 +9,15 @@
 &bar scan(1 1 1 1) step=free(122bpm, 110..130)
 &prog step=&bar*8 tags="chords" 0 2 4 5                                      # F G A B♭, two bars each
 &c tags="chords" [0,4,7,11]
-&chop tags="chords" step=&bar/4 label="the chop" &c ~ &c!2 ~ &c ~ &c ~ &c!2 ~ &c ~ &c!2
+&chop tags="chords" step=&choppyBar/4 label="the chop" &c ~ &c!2 ~ &c ~ &c ~ &c!2 ~ &c ~ &c!2
 &pump tags="chords" map=amp step=&bar .35 .55 .75 .95
-&disco tags="bass" step=&bar/2 0 12 0 12 0 12 0 12
-&robot tags="robot" step=&bar/2 label="the robot" ~ 12 14 16 ~ 16 14 12 ~ 14 16 17 ~ 16 14 ~ ~ 12 14 16 ~ 19 17 16 14@2 12@2 9@4
+&disco tags="bass" step=&discBar/2 0 12 0 12 0 12 0 12
+&robot tags="robot" step=&robBar/2 label="the robot" ~ 12 14 16 ~ 16 14 12 ~ 14 16 17 ~ 16 14 ~ ~ 12 14 16 ~ 19 17 16 14@2 12@2 9@4
 &filt tags="chords" map=lin loop=&bar*32 .06 .3 1 .7 .06
-&kick tags="groove" step=&bar 0!4
-&clap tags="groove" step=&bar ~ 0 ~ 0
-&open tags="groove" step=&bar/2 ~ 0 ~ 0 ~ 0 ~ 0
-&shake tags="groove" step=&bar/4 0? 0?.3 0? 0?.3
+&kick tags="groove" step=&grooveBar 0!4
+&clap tags="groove" step=&grooveBar ~ 0 ~ 0
+&open tags="groove" step=&grooveBar/2 ~ 0 ~ 0 ~ 0 ~ 0
+&shake tags="groove" step=&grooveBar/4 0? 0?.3 0? 0?.3
 
 &keys tags="chords" s=square loop=F3 lpf=200..6500 * &filt lpq=5 env=&(map=adsr .003 .12 .5 .06)
 &bass tags="bass" s=square loop=F1 lpf=700 env=&(map=adsr .004 .15 .6 .05)
@@ -31,7 +31,7 @@
 &choppy tags="chords" [(&chop + &prog) * &pump * &keys * .07]
 &disc tags="bass" [(&disco + &prog) * &bass * .35]
 &rob tags="robot" [&robot * &lead * .1]
-&parts &groove &choppy &disc &rob
+&parts step=&bar &grooveBar &choppyBar &discBar &robBar
 &song over=&parts step=&bar*32 label="filtered · groove · lead · breakdown" [0,1] [0,1,2] [0,1,2,3] [1,3]
 
-&out level=-0.5 map=sample &song
+&out level=-0.5 map=sample [&groove, &choppy, &disc, &rob]

@@ -18,15 +18,15 @@
 &sweep tags="sequence" map=lin loop=&bar*16 .1 .9 .2
 
 # the layers
-&pad tags="drone" over=&lydian step=&bar*8 label="drone: an open ninth" [0,4,6,9]
-&arp tags="sequence" over=&lydian step=&bar/4 label="the sequence" 0 4 6 9 7 4 2 4
+&pad tags="drone" over=&lydian step=&droneBar*8 label="drone: an open ninth" [0,4,6,9]
+&arp tags="sequence" over=&lydian step=&sequenceBar/4 label="the sequence" 0 4 6 9 7 4 2 4
 &m1 tags="canon" 0@2 2@2 4@3 6
 &m2 tags="canon" 7@2 4@2 6@3 4                           # against &m1: octaves and thirds only (they stay consonant turned upside down)
-&melody tags="canon" over=&lydian step=&bar label="canon: the leader" &m1 &m2
-&canon tags="canon" over=&lydian step=&bar label="canon: the follower, an octave down, two bars behind" &melody[<<]^$-12
-&bells tags="bells" over=&lydian step=&bar label="bells" ~@3 11 ~@4 9 ~@3 13 ~@5 11 ~@4 6 ~@6 ~@2
-&pulse tags="pulse" over=&lydian step=&bar/2 label="pulse" 0 ~ 0 0 ~ 0 0 ~
-&shimmer tags="glass" over=&lydian step=&bar*16 label="glass" [11,13]
+&melody tags="canon" over=&lydian step=&leaderBar label="canon: the leader" &m1 &m2
+&canon tags="canon" over=&lydian step=&followerBar label="canon: the follower, an octave down, two bars behind" &melody[<<]^$-12
+&bells tags="bells" over=&lydian step=&chimesBar label="bells" ~@3 11 ~@4 9 ~@3 13 ~@5 11 ~@4 6 ~@6 ~@2
+&pulse tags="pulse" over=&lydian step=&pulsesBar/2 label="pulse" 0 ~ 0 0 ~ 0 0 ~
+&shimmer tags="glass" over=&lydian step=&shineBar*16 label="glass" [11,13]
 
 &padv tags="drone" s=saw loop=C3 lpf=280..2400 * &breath lpq=3 room=.45 env=&(map=adsr 2 1 .8 3) pitch=&(map=lin loop=.13 0 .08 0 -.08 0)
 &arpv tags="sequence" pan=.18 s=square loop=C4 lpf=240..3400 * &sweep lpq=7 delaytime=&bar*3/4 delay=.35 delayfeedback=.45 env=&(map=adsr .002 .12 .2 .08)
@@ -45,7 +45,7 @@
 &chimes tags="bells" [&bells * &bell * .09]
 &pulses tags="pulse" [&pulse * &bass * .25]
 &shine tags="glass" [&shimmer * &glass * .07]
-&layers &drone &sequence &leader &follower &chimes &pulses &shine
+&layers step=&bar &droneBar &sequenceBar &leaderBar &followerBar &chimesBar &pulsesBar &shineBar
 &scenes over=&layers step=&bar*32 label="the scenes" [0] [0,4] [0,1,4] [0,1,2] [0,1,2,3] [0,1,2,3,5] [0,2,3,4,5,6] [0,1,2,3,4,5,6] [0,3,4,6] [0,1,5,6] [0,4,6] [0,6]
 
-&out level=8 map=sample &scenes
+&out level=8 map=sample [&drone, &sequence, &leader, &follower, &chimes, &pulses, &shine]

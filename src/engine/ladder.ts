@@ -95,7 +95,7 @@ export const LADDER: readonly { readonly concept: string; readonly forms: readon
   },
   { concept: 'chance and choice', forms: ['modifier x?', 'step [a|b|c]', 'attribute chance', 'attribute seed'] },
   { concept: 'turning tables: stride=, cycle(&x); the circle of fifths', forms: ['attribute stride', 'rate step=cycle(&x)', 'generator fifths()'] },
-  { concept: 'arrangement: parts, a selector, laps=, off', forms: ['sort signal: a selector', 'attribute laps', 'line off', 'line … +'] },
+  { concept: 'arrangement: parts as taps of the bar, a selector, laps=, off', forms: ['line &parts step=&bar &a &b', 'attribute laps', 'line off', 'line … +'] },
   { concept: 'stereo: pan=', forms: ['parameter pan'] },
   {
     concept: 'waveforms from braids: audio rates, sin(), ramps, tables, an instrument',
@@ -243,6 +243,8 @@ export function formsUsed(source: string): Set<string> {
     use('line &name …');
     if (c?.note) use('line &name label="…"');
     if (d.off) use('line off');
+    // (a stepped table of names that declares taps: decision 016)
+    if ([...(compiled.taps?.values() ?? [])].includes(d.name)) use('line &parts step=&bar &a &b');
     if (d.lambda) use('reference &( … )');
     // attributes
     if (d.over) {

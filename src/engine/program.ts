@@ -336,6 +336,8 @@ export interface CompileResult {
   readonly diagnostics: readonly Diagnostic[];
   /** The `show=` plugins the piece carries, by name (plugins.ts). */
   readonly plugins: ReadonlyMap<string, ShowPlugin>;
+  /** Taps of a meter's bus (decision 016), each to its table: what a selector reading the table switches. */
+  readonly taps?: ReadonlyMap<string, string>;
 }
 
 /** Shift of every cell; missing names use the code's shift=. */

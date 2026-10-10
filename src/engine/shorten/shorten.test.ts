@@ -201,3 +201,28 @@ describe('shorten: stereo twins → one chord and pan= (#10, decision 007)', () 
     none('&m [&t * &a]\n&out loop=SAMPLE_RATE map=sample [&t * &a * .2, &m] [&t * &a * .1, &m]');
   });
 });
+
+describe('a selector of mixes, written before decision 016: the one suggestion is its rewrite at the input', () => {
+  const old = `&bar step=120bpm 0 0 0 0
+&a step=&bar 0 2 4 5 7
+&b step=&bar 12
+&partA [&a * &v]
+&partB [&b * &w]
+&parts &partA &partB
+&song over=&parts step=&bar*4 laps=1 0 [0,1] ~ 1
+&v s=tri loop=C4
+&w s=sine loop=C4
+&out loop=SAMPLE_RATE map=sample &song`;
+  it('an error that says so, and Shorten rewrites it to the same notes', () => {
+    expect(compileSource(old).diagnostics.map((d) => d.message)).toEqual([expect.stringMatching(/decision 016.*Shorten rewrites it/)]);
+    const [s, ...more] = shorten(old);
+    expect([s.kind, more]).toEqual(['arrange', []]);
+    expect(s.before).toBe('&a step=&bar 0 2 4 5 7');
+    const next = s.apply(old);
+    expect(next).toMatch(/^&parts step=&bar &partABar &partBBar$/m);
+    const r = compileSource(next);
+    expect(r.diagnostics).toEqual([]);
+    const notes = (x: typeof r) => eventsBetween(plan(x, codeShifts(x)), 0, 10).map((e) => `${e.voice} ${e.at.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains}`);
+    expect(notes(r)).toEqual(notes({ ...compileSource(old), ok: true }));
+  });
+});

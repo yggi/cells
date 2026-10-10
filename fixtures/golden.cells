@@ -9,8 +9,8 @@
 &up 0 0 4 4 5 5 4@2
 &theme over=&mode step=&bar 0 2 [0,4] 7 4 2 [0,2,4]@2
 &tune over=scale(major) step=96bpm show=do &up &up
-&walk over=&blues step=96bpm 0 1 2 3
-&drone over=&alpha step=48bpm 0 3 6
+&walk over=&blues step=&walkBar 0 1 2 3
+&drone over=&alpha step=&droneBar*2 0 3 6
 &line step=96bpm show=notes 12 11 12@2 7@2 8@2
 &accent map=amp step=&bar/4 1 .4 .8 .4
 &vibrato map=lin loop=6 0 .3 0 -.3 0
@@ -18,11 +18,11 @@
 &flute s=tri loop=C4 room=.3 env=&(map=adsr .02 .3 .5 .3)
 &lead s=tri loop=C5 env=&(map=adsr .01 .3 .4 .3)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
-# two instruments, and the matrix that picks between them
+# two instruments, and the taps of the bar that switch them
 &leadA [&walk * &lead * .3]
 &leadB [&drone * &lead * .3]
-&parts &leadA &leadB
-&tetris over=&parts step=3bpm [0,1] [1] [0]
+&parts step=&bar &walkBar &droneBar
+&tetris over=&parts step=&bar*32 [0,1] [1] [0]
 # a motor with a belt, a tape it turns, a fork that rings
 &capstan scan(1 1 1 1) step=96bpm motor=1.4 mass=1 friction=.1 wow=.015 varispeed=1
 &hats step=&capstan/2 belt=30 mass=1.5 ~ 0 ~ 0 ~ 0 ~ 0
@@ -35,7 +35,7 @@
 &day scan(1!24) loop=1d anchor=11.55 show=ring
 &cycle law=fiveto12 over=&day step=84bpm
 &light scope=spectrum &flute
-&out level=4 loop=SAMPLE_RATE map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&tetris, &hits * &forkA * .5, &hats * &hh * .1]
+&out level=4 loop=SAMPLE_RATE map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&leadA, &leadB, &hits * &forkA * .5, &hats * &hh * .1]
 
 === plugin ring ===
 { "fits": ["meter"], "size": 220, "rim": false, "dial": { "label": "The day", "turn": 86400, "key": 3600 }, "tokens": { "ring": "#e3a25a" } }

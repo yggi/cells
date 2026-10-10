@@ -1,19 +1,19 @@
 &piece title="Pop song: four chords, arranged" tags="genre:electronic, diatonic, harmony, arrangement" label="I – V – vi – IV, arranged by a selector: intro, verses, choruses, a break, an outro, an end." about=&out
 # The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees
 # over the major scale, each chord comes out the right kind: C, G, Am, F.
-# Arranged: &song reads a table of parts, a section a step — intro, verses,
-# choruses, a break, an outro and an end.
+# Arranged: each part is a tap of the bar, and &song switches the taps, a section a
+# step — intro, verses, choruses, a break, an outro and an end.
 &bar scan(1 1 1 1) step=free(100bpm, 70..140)
 &major scan(2 2 1 2 2 2 1)
-&chords tags="keys" over=&major step=&bar/2 [0,2,4]!8 [4,6,8]!8 [5,7,9]!8 [3,5,7]!8
-&roots tags="bass" over=&major step=&bar/2 0!8 4!8 5!8 3!8
+&chords tags="keys" over=&major step=&keysBar/2 [0,2,4]!8 [4,6,8]!8 [5,7,9]!8 [3,5,7]!8
+&roots tags="bass" over=&major step=&bassBar/2 0!8 4!8 5!8 3!8
 
 &hook tags="hook" 4 4 5 4                                             # the hook …
-&tune tags="hook" over=&major step=&bar/2 &hook 2@2 0@2 &hook 2@2 ~@2 &hook^1 4@2 2@2 3 3 2 1 0@4           # … a step up in bar 3
+&tune tags="hook" over=&major step=&hookBar/2 &hook 2@2 0@2 &hook 2@2 ~@2 &hook^1 4@2 2@2 3 3 2 1 0@4           # … a step up in bar 3
 
-&kick tags="drums" map=amp step=&bar 1 ~ 1 ~
-&snare tags="drums" map=amp step=&bar ~ 1 ~ 1
-&hats tags="drums" map=amp step=&bar/2 .5 .25 .5 .25 .5 .25 .5 .3
+&kick tags="drums" map=amp step=&beatBar 1 ~ 1 ~
+&snare tags="drums" map=amp step=&beatBar ~ 1 ~ 1
+&hats tags="drums" map=amp step=&hatsBar/2 .5 .25 .5 .25 .5 .25 .5 .3
 
 &lead tags="hook" s=square loop=C5 lpf=3000 env=&(map=adsr .01 .2 .6 .2) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
 &keys tags="keys" s=tri loop=C4 env=&(map=adsr .005 .3 .3 .2)
@@ -22,9 +22,9 @@
 &sd tags="drums" s=white hpf=1200 env=&(map=adsr 0 .15 0 .05)
 &hh tags="drums" s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
 
-&final tags="keys" over=&major step=&bar [0,2,4,7]@4                  # the last chord: C
+&final tags="keys" over=&major step=&endBar [0,2,4,7]@4                  # the last chord: C
 
-# the parts, and the song that arranges them: a section (four bars) a step — a part
+# the parts' sound, and the taps the song switches: a section (four bars) a step — a part
 # picked starts from its top; a chord of parts plays them together; laps=1: it ends
 &hatsPart tags="drums" [&hats * &hh * .2]
 &beatPart tags="drums" [&kick * &bd * .8, &snare * &sd * .4]
@@ -32,7 +32,7 @@
 &keysPart tags="keys" [&chords * &keys * .15]
 &hookPart tags="hook" [&tune * &lead * .35]
 &endPart tags="keys" [&final * &keys * .2]
-&parts &hatsPart &beatPart &bassPart &keysPart &hookPart &endPart
+&parts step=&bar &hatsBar &beatBar &bassBar &keysBar &hookBar &endBar
 &song over=&parts step=&bar*16 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [0,3] [0,1,2,3]!2 [0,1,2,3,4]!2 [3,4] [0,1,2,3,4]!2 [3] 5
 
-&out level=5 map=sample &song
+&out level=5 map=sample [&hatsPart, &beatPart, &bassPart, &keysPart, &hookPart, &endPart]

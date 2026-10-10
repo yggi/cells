@@ -11,6 +11,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `off`: Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph). [→](cell.md) `&drums off over=&kit step=&bar 0 1`
 - `# …` · `// …`: A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere. [→](cell.md) `&tune step=2 0 2 4  # the opening`
 - `… +` · `… *` · `… ,` · `… [`: A line ending in +, *, a comma or [ continues on the next one (a long mix). [→](cell.md)
+- `&parts step=&bar &a &b`: Taps of a meter's bus (decision 016): a stepped table of names declares them, each stepped as the table is. What a tap steps plays while a selector reading the table picks it (`over=&parts`), from its top each time: an arrangement. [→](time.md) `&parts step=&bar &verseBar &chorusBar`
 
 ## Steps
 
@@ -175,7 +176,6 @@ Every cell has a sort, decided by its own line, never by where it is written in 
 - `signal`: A sound parameter (s=, lpf= …): a voice. [→](mix.md) `&lead s=saw loop=C4`
 - `signal`: A mix: an instrument. [→](mix.md) `&organ [&a, &b]`
 - `signal`: A pattern read through a kit (a table of voices). [→](mix.md) `&drums over=&kit step=4 0 1 0 1`
-- `signal`: A selector: a cell reading a table of mixes, each step choosing one. [→](mix.md) `&pick over=&parts step=1 0 1`
 - `signal`: A read head of a sound tape (a tape that records a mix). [→](mix.md) `&head play=&tape at=1`
 - `wave`: A braid turning at an audio rate (20 Hz and up) with no sound of its own. Alone in a product it is the sound (a waveform); in a pitch sum, or beside a sound, a pitch that moves at audio rate (FM). One that plays as a voice in the piece is a sound everywhere. [→](mix.md) `&square loop=220 0 1`
 - `volume`: map=amp, map=db or map=adsr (an envelope). [→](mix.md) `&accent map=amp step=2 1 .5`

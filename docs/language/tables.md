@@ -2,7 +2,7 @@
 
 Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's numbers index into.
 
-- **`over=&t`** — a number x means entry x of &t; past the end it climbs a lap. Without `over=`, a cell reads through the table of whoever splices it. A table is its numbers: cells spliced into it aren't entries, and reading through one says so (unless it's a kit, a table of voices, or a selector's table of mixes: [time.md](time.md)).
+- **`over=&t`** — a number x means entry x of &t; past the end it climbs a lap. Without `over=`, a cell reads through the table of whoever splices it. A table is its numbers: cells spliced into it aren't entries, and reading through one says so (unless it's a kit, a table of voices, or a table of taps a selector switches: [time.md](time.md)).
 - **`scale(name, tonic)`** is a scale by name over the 12 turned to its tonic: a key and a mode in one, for when the mode is fixed. It is exactly two cells, the key (`shift=` the tonic) and the scale's `scan(…)` over it ([decision 013](../decisions/013-scale-generator.md)).
   - In a braid the cell is the scale: `&scale scale(minor, D)` is D minor. Its `shift=` walks its modes, as on any cell; the tonic argument transposes. The tonic is a note name (`D`, `F#`, `Bb`), a number, or `free(…)` (the cell's own slider, its *tonic*; `free(D)` chooses among the twelve by name, and is written back by name); left out, C. `shift=free(G)` turns a key the same way.
   - After `over=` it is a table of its own, unnamed: `&tune over=scale(major, G) 0 2 4`.

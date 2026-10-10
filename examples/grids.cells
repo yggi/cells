@@ -6,14 +6,14 @@
 &fifths cycle=7 map=ed(3/2)
 &just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2
 
-&a over=&edo19 step=&bar/2 0 3 6 8 11 8 6 3 0@4 ~@4
-&b over=&fifths step=&bar/2 0 1 2 3 4 3 2 1 0@4 ~@4
-&c over=&just step=&bar/2 0 2 4 5 4 2 1 0 0@4 ~@4
+&a over=&edo19 step=&edoBar/2 0 3 6 8 11 8 6 3 0@4 ~@4
+&b over=&fifths step=&fifthsBar/2 0 1 2 3 4 3 2 1 0@4 ~@4
+&c over=&just step=&justBar/2 0 2 4 5 4 2 1 0 0@4 ~@4
 
 &pluck s=tri loop=C4 env=&(map=adsr .01 .4 .3 .3)
 &edoPart [&a * &pluck * .3]
 &fifthsPart [&b * &pluck * .3]
 &justPart [&c * &pluck * .3]
-&grids &edoPart &fifthsPart &justPart
+&grids step=&bar &edoBar &fifthsBar &justBar
 &turns over=&grids step=&bar*2 0 1 2                  # a grid every two bars, in turn
-&out map=sample level=16 &turns
+&out map=sample level=16 [&edoPart, &fifthsPart, &justPart]

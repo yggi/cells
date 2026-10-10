@@ -8,7 +8,7 @@
  * flows listed here.
  */
 import type { CompileResult } from './program';
-import { selects } from './clocking';
+import { selectsSound } from './clocking';
 import { cellId, edgeId } from './ids';
 
 /**
@@ -58,7 +58,7 @@ export function flows(result: CompileResult): Flows {
     // a sound card's channels, named (&out &left &right, &out &song)
     if (c.sink) for (const k of c.children.keys()) add('channel', k, c.name, edgeId(cellId(c.name), cellId(k)));
     // a selector: its parts into its table of parts, the table into it
-    if (selects(result, c.name)) {
+    if (selectsSound(result, c.name)) {
       add('part', c.over!, c.name, edgeId(cellId(c.name), cellId(c.over!)));
       for (const k of result.cells.get(c.over!)!.children.keys()) add('part', k, c.over!, edgeId(cellId(c.over!), cellId(k)));
     }

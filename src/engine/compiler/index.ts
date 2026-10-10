@@ -19,6 +19,7 @@ import { outputsOf } from './outputs';
 import { displayCells } from './display';
 import { checkRoles } from './roles';
 import { checkLimits } from './limits';
+import { tapped } from './taps';
 
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
@@ -32,8 +33,11 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
   const bound = bindVoices(ctx, decls, resolved, typed);
   const timed = clockCells(ctx, decls, bound.cells);
   const { clocks } = timed;
-  checkCells(ctx, decls, timed.cells);
-  const { outputs, returns, resonances } = outputsOf(ctx, decls, timed.cells, clocks, bound);
+  checkCells(ctx, decls, timed.cells, declared.taps);
+  const made = outputsOf(ctx, decls, timed.cells, clocks, bound);
+  const { returns, resonances } = made;
+  // (decision 016) what a tap steps plays while a selector reading its table picks it
+  const outputs = tapped(made.outputs, timed.cells, declared.taps);
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
   const cells = displayCells(timed.cells);
   checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed));
@@ -62,5 +66,5 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
         .map((h) => ({ head: h.name, at: num(h, 'at', 0), wander: num(h, 'wander', 0), wanderhz: num(h, 'wanderhz', 0.2) })),
     }));
   const plugins = pluginsOf(parsed);
-  return { ok, cells, clocks, outputs, off, diagnostics, tapes, returns, resonances, plugins };
+  return { ok, cells, clocks, outputs, off, diagnostics, tapes, returns, resonances, plugins, taps: declared.taps };
 }

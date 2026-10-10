@@ -15,6 +15,11 @@ export interface Declared {
   readonly implicitRoot: boolean;
   /** Which cells' over= chains are sound (known, acyclic). */
   readonly overOk: ReadonlyMap<string, boolean>;
+  /**
+   * Taps of a meter's bus (decision 016), each to its table: a stepped table of names (`&parts step=&bar &keys &drums`)
+   * declares the names it doesn't find as its taps, each stepped as the table was; the table is then a table.
+   */
+  readonly taps: ReadonlyMap<string, string>;
 }
 
 export function declare(ctx: Ctx): Declared {
@@ -25,6 +30,7 @@ export function declare(ctx: Ctx): Declared {
     if (decls.has(c.name)) error(`&${c.name} is already defined on line ${decls.get(c.name)!.span.line}`, c.span);
     else decls.set(c.name, c);
   }
+  const taps = tapTables(decls);
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
   for (const name of decls.keys()) if (name.startsWith('key:') || name.startsWith('scale:')) implicit.add(name);
@@ -92,7 +98,7 @@ export function declare(ctx: Ctx): Declared {
     return ok;
   };
   for (const name of decls.keys()) checkOver(name, []);
-  return { decls, implicit, implicitRoot, overOk };
+  return { decls, implicit, implicitRoot, overOk, taps };
 }
 
 /** The kit that grooves and their motifs read: every voice they name. */
@@ -161,4 +167,51 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
   };
   for (const d of [...decls.values()]) if (grooves.includes(d)) rewrite(d);
   return { voices, cells };
+}
+
+/**
+ * Tables of taps (decision 016): a stepped cell whose steps are plain names, each one either not declared or a cell
+ * stepped by something (a tap written out: its own line wins), at least one not declared and one something is stepped
+ * by. Each undeclared name is
+ * declared as a tap, stepped as the table was (one step, a clock); the table loses its step= and is a table. A name
+ * not declared is an error otherwise, so no piece that compiled before changes meaning. Each tap, to its table.
+ */
+function tapTables(decls: Map<string, CellDecl>): Map<string, string> {
+  const taps = new Map<string, string>();
+  // (the names something is stepped by: a table of taps needs one of them, so a stepped braid of a mistyped name is
+  // still "Unknown cell", as before)
+  const clocks = new Set([...decls.values()].flatMap((d) => (d.step?.kind === 'driven' ? [d.step.driver.name] : [])));
+  for (const d of [...decls.values()]) {
+    if (!d.step || d.over || d.map || d.braid.kind !== 'list' || !d.braid.tokens.length) continue;
+    const names: string[] = [];
+    for (const t of d.braid.tokens) {
+      const a = t.atom;
+      if (a.kind !== 'ref' || a.pick || a.shift || a.transpose || a.values || t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1) break;
+      const known = decls.get(a.name);
+      if (known && (!known.step || taps.has(a.name))) break;
+      names.push(a.name);
+    }
+    if (names.length !== d.braid.tokens.length || names.every((n) => decls.has(n)) || !names.some((n) => clocks.has(n))) continue;
+    for (const [i, name] of names.entries()) {
+      taps.set(name, d.name);
+      if (decls.has(name)) continue;
+      const span = d.braid.tokens[i].span;
+      decls.set(name, {
+        name,
+        span,
+        over: null,
+        shift: null,
+        off: false,
+        step: d.step,
+        map: null,
+        stride: null,
+        cycle: null,
+        params: {},
+        paramSpans: {},
+        braid: { kind: 'list', tokens: [{ atom: { kind: 'note', value: 0, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }] },
+      });
+    }
+    decls.set(d.name, { ...d, step: null });
+  }
+  return taps;
 }

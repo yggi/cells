@@ -1352,17 +1352,15 @@ describe('arranged: the pop song and Zelluläre Aktivität, section by section',
 });
 
 describe('selectors: reading a table of parts splices', () => {
-  // two parts; a selector reading them, a section (two seconds) a step
+  // two parts, taps of the bar (decision 016); a selector switching them, a section (two seconds) a step
   const src = (song: string) => `&bar step=120bpm 0 0 0 0
-&a step=&bar 0 2 4 5 7
-&b step=&bar 12
-&partA [&a * &v]
-&partB [&b * &w]
-&parts &partA &partB
+&a step=&aBar 0 2 4 5 7
+&b step=&bBar 12
+&parts step=&bar &aBar &bBar
 &song over=&parts step=&bar*4 ${song}
 &v s=tri loop=C4
 &w s=sine loop=C4
-&out loop=SAMPLE_RATE map=sample &song`;
+&out loop=SAMPLE_RATE map=sample [&a * &v, &b * &w]`;
   const notes = (r: R, from: number, to: number, voice: string) =>
     events(r, from, to - 1e-3)
       .filter((e) => e.voice === voice)
@@ -1390,7 +1388,7 @@ describe('selectors: reading a table of parts splices', () => {
     expect(notes(gated, 2, 4, 'v')).toEqual([7, 0, 2, 4]); // it kept running: the fifth note, then round again
   });
   it('a note is cut where its section ends', () => {
-    const r = compileSource(src('0 1').replace('&a step=&bar 0 2 4 5 7', '&a step=&bar 0@8'));
+    const r = compileSource(src('0 1').replace('&a step=&aBar 0 2 4 5 7', '&a step=&aBar 0@8'));
     const e = events(r, 0, 1.9).filter((x) => x.voice === 'v');
     expect(e[0].dur).toBeCloseTo(2, 6); // eight beats long, but the section is four
   });
@@ -1411,21 +1409,19 @@ describe('selectors: reading a table of parts splices', () => {
 describe('selectors, live', () => {
   it('a part is live only while the selector picks it; nothing after the end', () => {
     const r = compileSource(`&bar step=120bpm 0 0 0 0
-&a step=&bar 0 2 4 5
-&b step=&bar 12
-&partA [&a * &v]
-&partB [&b * &w]
-&parts &partA &partB
+&a step=&aBar 0 2 4 5
+&b step=&bBar 12
+&parts step=&bar &aBar &bBar
 &song over=&parts step=&bar*4 laps=1 0 1
 &v s=tri loop=C4
 &w s=sine loop=C4
-&out loop=SAMPLE_RATE map=sample &song`);
+&out loop=SAMPLE_RATE map=sample [&a * &v, &b * &w]`);
     const live = (t: number) => [...liveAt(r, codeShifts(r), new Set(), t).voices].sort();
     expect(live(0.5)).toEqual(['cell:v']);
     expect(live(2.5)).toEqual(['cell:w']);
     expect(live(4.5)).toEqual([]);
-    // the selector, its table and the part are on the way: the graph draws them reached
-    expect(r.outputs.find((o) => o.voice === 'v')!.via).toEqual(expect.arrayContaining(['song', 'parts', 'partA']));
+    // the selector, its table and the tap are on the way: the graph draws them reached
+    expect(r.outputs.find((o) => o.voice === 'v')!.via).toEqual(expect.arrayContaining(['song', 'parts', 'aBar']));
   });
 });
 

@@ -198,10 +198,20 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
   };
 }
 
-/** Is it a selector (a cell reading a table whose entries are parts)? */
+/** Is it a selector (a cell reading a table of taps, decision 016, or, the old form, a table of mixes)? */
 export function selects(result: CompileResult, name: string): boolean {
+  const table = result.cells.get(name)?.over ?? '';
+  const t = result.cells.get(table);
+  return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && (result.taps?.get(u.atom.name) === table || isPart(result, u.atom.name)));
+}
+
+/** A part of the old form (a mix in a table of mixes), whose sound a selector passes on. */
+const isPart = (result: CompileResult, name: string) => !!result.cells.get(name)?.mix && !result.cells.get(name)?.sink;
+
+/** Does a selector pass its parts' sound on (the old form: a table of mixes), rather than switch taps? */
+export function selectsSound(result: CompileResult, name: string): boolean {
   const t = result.cells.get(result.cells.get(name)?.over ?? '');
-  return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && !!result.cells.get(u.atom.name)?.mix && !result.cells.get(u.atom.name)?.sink);
+  return selects(result, name) && !!t && t.units.every((u) => u.atom.kind === 'ref' && isPart(result, u.atom.name));
 }
 
 /**

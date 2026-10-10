@@ -52,19 +52,19 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 &bar scan(27 23 26 24) step=free(66bpm, 40..96) laps=30   # thirty bars, then it ends
 ```
 
-- **A selector** is a stepped cell reading a table of parts — an arrangement. A part is a cell holding a mix; a table lists the parts; the selector steps through the table, a section per step, and each entry names the parts that play (a chord of numbers plays several together). A part picked starts from its top. Pop song and 8-bit: Korobeiniki are arranged this way.
+- **A selector** switches the taps of a meter's bus: an arrangement ([decision 016](../decisions/016-arranging-at-the-input.md)). A stepped table of names (`&parts step=&bar &verse &chorus`) declares them as its **taps**, each stepped as the table is; a part's cells are stepped by its tap (`step=&verse/2`); the selector reads the table (`over=&parts`) and steps through it, a section per step, each entry naming the taps that are on (a chord of numbers turns several on together). What a tap steps plays while it is on, from its top each time it is turned on; the rest stands still. A tap steps only what is stepped or looped from it: a drone on a clock of its own plays on. The parts' sound goes straight to the sound card. Pop song and 8-bit: Korobeiniki are arranged this way.
 
 ```cells
 &bar scan(1 1 1 1) step=100bpm
 &lead s=saw loop=C4
 &bass s=saw loop=C2
-&tune step=&bar 0 2 4 5
-&roots step=&bar 0
-&tunePart [&tune * &lead * .3]
-&bassPart [&roots * &bass * .5]
-&parts &tunePart &bassPart
+&parts step=&bar &tuneBar &bassBar
+&tune step=&tuneBar 0 2 4 5
+&roots step=&bassBar 0
 &song over=&parts step=&bar*4 laps=1 [1] [0,1] [0,1]
-&out loop=SAMPLE_RATE map=sample &song
+&out loop=SAMPLE_RATE map=sample [&tune * &lead * .3, &roots * &bass * .5]
 ```
+
+A name the table declares must step something (`step=&tuneBar`), or the compiler says so; a table of names none of which steps anything is a braid of cells as before (an unknown name an error). The old form, a selector reading a table of mixes and their sound through it, is an error now; Shorten rewrites it at the input, checked to play the same notes.
 
 The transport marks a selector's sections and jumps to them ([../ui/transport.md](../ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](../limits.md)).

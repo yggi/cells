@@ -7,7 +7,7 @@
 import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from './fiveto12';
 import { codeShifts, type CompileResult } from './program';
 import type { FreeSpec } from './ast';
-import { clocking } from './clocking';
+import { clocking, selects } from './clocking';
 import { plan } from './realize';
 
 export interface PieceTime {
@@ -120,7 +120,7 @@ export function durationText(seconds: number): string {
 }
 
 /**
- * The piece's sections, if an arrangement plays it (a selector: a cell reading a table of mixes):
+ * The piece's sections, if an arrangement plays it (a selector: a cell reading a table of taps, `selects`):
  * where each begins (seconds, within one lap) and what it's called — from the selector's label,
  * split at ·, when the names match the sections; else numbered.
  */
@@ -130,10 +130,7 @@ export function sections(result: CompileResult): { at: number; label: string }[]
   const statics = codeShifts(result);
   const clk = clocking(result, statics);
   for (const c of result.cells.values()) {
-    const table = result.cells.get(c.over ?? '');
-    const isSelector =
-      !!table && table.units.length > 0 && table.units.every((u) => u.atom.kind === 'ref' && !!result.cells.get(u.atom.name)?.mix && !result.cells.get(u.atom.name)?.sink);
-    if (!isSelector || !c.clock || !c.steps) continue;
+    if (!selects(result, c.name) || !c.clock || !c.steps) continue;
     const tm = clk.map(c.clock);
     const t0 = tm.q(0);
     const names = (c.label ?? '')

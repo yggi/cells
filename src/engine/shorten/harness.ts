@@ -11,13 +11,13 @@ import { flatten } from '../flatten';
 
 export interface Suggestion {
   readonly id: string;
-  readonly kind: 'run' | 'phrase' | 'fraction' | 'same' | 'default' | 'progression' | 'degree' | 'pan';
+  readonly kind: 'run' | 'phrase' | 'fraction' | 'same' | 'default' | 'progression' | 'degree' | 'pan' | 'arrange';
   /** In a sentence: what it does. */
   readonly title: string;
   /** What was written, and what it becomes (short excerpts). */
   readonly before: string;
   readonly after: string;
-  /** Characters saved. */
+  /** Characters saved (a migration, `arrange`, may cost some). */
   readonly saving: number;
   readonly apply: (source: string) => string;
 }

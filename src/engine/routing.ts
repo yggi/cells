@@ -82,7 +82,12 @@ export class RouteAcc {
     for (let g = 0; at && g < 64; g++) {
       const st: ResolvedCell['step'] = this.result.cells.get(at)?.step ?? null;
       if (!st || this.off(st.driver)) break;
-      this.edge(at, st.driver, stepEdgeId(cellId(at), cellId(st.driver)));
+      // (a tap's clock is its table's bus, decision 016: the table reads the tap, the bus clocks the table)
+      const table = this.result.taps?.get(at);
+      if (table && !this.off(table)) {
+        this.edge(table, at);
+        this.edge(table, st.driver, stepEdgeId(cellId(table), cellId(st.driver)));
+      } else if (!table) this.edge(at, st.driver, stepEdgeId(cellId(at), cellId(st.driver)));
       at = st.driver;
     }
     const clock = this.result.cells.get(name)?.clock;

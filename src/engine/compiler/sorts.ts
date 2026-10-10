@@ -62,15 +62,6 @@ export const SORT_RULES: readonly SortRule[] = [
   },
   {
     sort: 'signal',
-    is: 'A selector: a cell reading a table of mixes, each step choosing one.',
-    example: ['&lead s=saw loop=C4', '&a [&lead]', '&b [&lead * 0.5]', '&parts &a &b', '&pick over=&parts step=1 0 1'],
-    holds: (d, seen) => {
-      const t = over(d, seen);
-      return t?.braid.kind === 'list' && t.braid.tokens.length > 0 && t.braid.tokens.every((x) => x.atom.kind === 'ref' && isMixDecl(seen.decls.get(x.atom.name)));
-    },
-  },
-  {
-    sort: 'signal',
     is: 'A read head of a sound tape (a tape that records a mix).',
     example: ['&lead s=saw loop=C4', '&mix [&lead]', '&tape write=&mix step=1 length=4', '&head play=&tape at=1'],
     holds: (d, { decls }) => {
