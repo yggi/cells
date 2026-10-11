@@ -64,3 +64,60 @@ export function waterfall(samples: Float32Array, rate: number, { frames = 512, s
   }
   return { freqs, times, rows };
 }
+
+/** A note as the waterfall's owners need it: when, how long, at what pitch, by which voice, how loud. */
+export interface Sounding {
+  readonly at: number;
+  readonly dur: number;
+  readonly freq: number;
+  readonly voice: string;
+  readonly gains?: readonly [number, number];
+}
+
+/**
+ * Whose each band of each frame of a waterfall is, as far as the notes say: `owner[band * frames + frame]`, the
+ * index in `voices` + 1 of the voice whose note puts the most into that band then, 0 where no note does (a drum,
+ * noise, an effect's tail). A note puts its harmonics k·f there, k = 1 to `harmonics` (a pulse wave's reach far up),
+ * each weighed level/k, sounding a `tail` of seconds past its end (a release). Ties go to the earlier voice; at most
+ * 254 voices are told apart.
+ */
+export function owners(w: Waterfall, notes: readonly Sounding[], voices: readonly string[], { harmonics = 32, tail = 0.15 } = {}): Uint8Array {
+  const bands = w.freqs.length;
+  const frames = w.times.length;
+  const owner = new Uint8Array(bands * frames);
+  if (!bands || !frames) return owner;
+  const best = new Float32Array(bands * frames);
+  const index = new Map(voices.slice(0, 254).map((v, i) => [v, i + 1]));
+  const perOctave = Math.log(2) / Math.log(w.freqs[1] / w.freqs[0] || 2);
+  /** The first frame at or after `t`. */
+  const frameAt = (t: number) => {
+    let lo = 0;
+    let hi = frames;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (w.times[mid] < t) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  };
+  for (const e of notes) {
+    const who = index.get(e.voice);
+    if (!who || !(e.freq > 0)) continue;
+    const level = e.gains ? (e.gains[0] + e.gains[1]) / 2 || 1 : 1;
+    const to = frameAt(e.at + e.dur + tail);
+    for (let k = 1; k <= harmonics; k++) {
+      const b = Math.round(Math.log2((k * e.freq) / w.freqs[0]) * perOctave);
+      if (b < 0) continue;
+      if (b >= bands) break;
+      const weight = level / k;
+      for (let f = frameAt(e.at); f < to; f++) {
+        const at = b * frames + f;
+        if (weight > best[at]) {
+          best[at] = weight;
+          owner[at] = who;
+        }
+      }
+    }
+  }
+  return owner;
+}

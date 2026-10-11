@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { fft } from './fft';
-import { grid } from './wavelet';
+import { grid, ridges } from './wavelet';
 import { sampled, scalograms, type Onset } from './signals';
 import { cones, score, sectionsOver, swells } from './boundaries';
 import { alike, canonical, foldings, maximallyEven, pitchClasses, pulseOf, rhythm, steps } from './necklace';
-import { peaks, waterfall } from './spectrogram';
+import { owners, peaks, waterfall } from './spectrogram';
 
 const note = (at: number, voice = 'v', freq = 440, dur = 0.1): Onset => ({ at, dur, voice, freq, gains: [1, 1] });
 /** The period whose row is loudest on average, away from the window's edges. */
@@ -128,6 +128,17 @@ describe('the foldings', () => {
   });
 });
 
+describe('the levels heard', () => {
+  it('a beat and its bar stand out as ridges', () => {
+    const g = grid(32, 50);
+    const notes = Array.from({ length: 64 }, (_, i) => note(i * 0.5, 'v', 440, i % 4 ? 0.1 : 0.4));
+    const s = scalograms(notes, g, ['envelope']).envelope!;
+    const found = ridges(s).map((r) => r.period);
+    expect(found.some((p) => Math.abs(Math.log2(p / 0.5)) < 0.1)).toBe(true);
+    expect(Math.abs(Math.log2(found[0] / 2))).toBeLessThan(0.1);
+  });
+});
+
 describe('the sound', () => {
   it('has a sine in its band, and its peaks', () => {
     const rate = 8000;
@@ -138,6 +149,25 @@ describe('the sound', () => {
     const p = peaks(x, 4);
     expect(p[0]).toBeCloseTo(-0.5, 2);
     expect(p[1]).toBeCloseTo(0.5, 2);
+  });
+  it('tells whose each band is: a note’s harmonics its voice’s, the rest no one’s', () => {
+    // (bands a semitone apart from 110 Hz, three frames a second apart: only the harmonics' own bands are claimed)
+    const freqs = Array.from({ length: 48 }, (_, b) => 110 * Math.pow(2, b / 12));
+    const o = owners(
+      { freqs, times: [0.5, 1.5, 2.5], rows: [] },
+      [
+        { at: 0, dur: 1, freq: 110, voice: 'bass' },
+        { at: 1, dur: 1, freq: 440, voice: 'lead' },
+      ],
+      ['bass', 'lead'],
+      { tail: 0 },
+    );
+    const at = (hz: number, frame: number) => o[Math.round(12 * Math.log2(hz / 110)) * 3 + frame];
+    expect([at(110, 0), at(220, 0), at(330, 0), at(440, 0)]).toEqual([1, 1, 1, 1]);
+    expect(at(440, 1)).toBe(2);
+    expect(at(110, 1)).toBe(0);
+    expect(at(116.5, 0)).toBe(0);
+    expect(at(110, 2)).toBe(0);
   });
 });
 
@@ -181,5 +211,39 @@ describe('the splices', () => {
     for (const t of [20.21, 60.21, 86.88]) expect(halves.some((h) => Math.abs(h - t) < 0.01)).toBe(true);
     // (the B sections, 26.7 to 53.3 s, play another part: no splice of the tune heard there)
     expect(s.some((x) => x.at > 27 && x.at < 53)).toBe(false);
+  });
+});
+
+describe('folding three rounds into one', () => {
+  it('averages the rounds where the window leaves them clear, and leaves the rest unheard', async () => {
+    const { fold } = await import('./wavelet');
+    // (a fast period: clear everywhere but the first and last columns; a slow one: covered nearly everywhere)
+    const fast = Float32Array.from({ length: 300 }, (_, c) => (c < 100 ? 1 : c < 200 ? 2 : 3));
+    const slow = Float32Array.from({ length: 300 }, (_, c) => (c < 100 ? 10 : c < 200 ? 20 : 30));
+    const f = fold({ window: 30, periods: [0.01, 40], rows: [fast, slow] }, 10, 3);
+    expect(f.window).toBe(10);
+    expect(f.rows[0]).toHaveLength(100);
+    expect(f.rows[0][50]).toBeCloseTo(2);
+    expect(f.rows[1][50]).toBeNaN();
+  });
+});
+
+describe('a loop, transformed circularly', () => {
+  it('has no edges: a pulse is as loud at the start as in the middle', async () => {
+    const { grid, transform } = await import('./wavelet');
+    const { sampled } = await import('./signals');
+    const g = grid(30, 50, true);
+    const n = Math.round(g.window * g.rate);
+    expect(n & (n - 1)).toBe(0);
+    const x = sampled(
+      Array.from({ length: 60 }, (_, i) => note(i * 0.5)),
+      g,
+      ['impulses'],
+    ).impulses!;
+    const s = transform(x, g);
+    const row = s.rows[s.periods.findIndex((p) => p >= 0.5)];
+    const mid = row[Math.floor(row.length / 2)];
+    expect(row[2] / mid).toBeGreaterThan(0.8);
+    expect(row[row.length - 3] / mid).toBeGreaterThan(0.8);
   });
 });

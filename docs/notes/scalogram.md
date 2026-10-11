@@ -220,6 +220,26 @@ pulse, the notes and the waterfall in the audible, the waveform at the top. Pict
 
 ![Hypercell in the time view](scalogram-time-hypercell.png)
 
+## One round, the waterfall by voice, the meter
+
+- **A loop shown as one round.** Three rounds side by side were three of the same picture. A loop goes round, so its
+  scalogram is now transformed circularly (`grid(…, periodic)`: no padding, the samples a power of two, the onsets'
+  deposits wrapped): no edges, nothing veiled. Without chance one round is all three; with chance three rounds are
+  listened to and folded into one (`fold`: each moment the mean of the rounds). Folding linear transforms left a rim
+  where each round's window edge fell (Phase, its slow rows), even with the edges dropped; the circular transform has
+  none. What stays at Phase's start and end is real: the slow change round the pianos' unison, which now joins across
+  the wrap. Korobeiniki's scalogram takes 1.6 s (it was 6.2 s over three rounds), its sound 12.3 s (21.4 s); Phase's
+  sound 22 s (83 s).
+- **The waterfall by voice** (`owners`, `engine/time/spectrogram.ts`): each band of each frame the voice whose note's
+  harmonics put the most there (k·f to the 32nd, level/k), from the notes as rendered; grey where none does. An
+  attribution from the notes, not stems: a band two voices share goes to the louder harmonic. Korobeiniki's form shows
+  in it: A red (the `pulse` lead), B teal (`pulse50`); Pop's keys green, bass yellow, lead magenta, drums grey. Exact
+  stems (each voice rendered with the others muted) would cost a render a voice: later, if the attribution misleads.
+- **The meter on the scalogram**: the beat and the bar (the tempo cell's step and turn) and the sections' median gap as
+  dashed lines; the scalogram's ridges (`ridges`, `engine/time/wavelet.ts`: peaks of each row's mean power, periods the
+  window holds six times) named after a cell's step or turn within a semitone's ratio. Korobeiniki: 0.21 s `tune step`;
+  Pop: 0.30 s `chords step`, 0.59 s the beat; 5 to 12: 17 s `cycle turn`.
+
 ## Foldings and motifs (the machinery, beyond boundaries)
 
 `tools/probe/foldings.test.ts`, over the library:

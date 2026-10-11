@@ -36,10 +36,14 @@ export function sampled(
   which: readonly Signal[] = SIGNALS,
 ): Partial<Record<Exclude<Signal, 'voices'>, Float64Array>> & { byVoice?: Float64Array[] } {
   const n = Math.max(1, Math.round(g.window * g.rate));
+  // (on a periodic grid, a Gaussian at the end goes round to the start)
   const put = (x: Float64Array, t: number, w: number) => {
     const c = t * g.rate;
-    for (let k = Math.max(0, Math.floor(c - 3 * SIGMA)); k <= Math.min(n - 1, Math.ceil(c + 3 * SIGMA)); k++)
-      x[k] += (w * Math.exp(-(((k - c) / SIGMA) ** 2) / 2)) / (SIGMA * Math.sqrt(2 * Math.PI));
+    for (let k = Math.floor(c - 3 * SIGMA); k <= Math.ceil(c + 3 * SIGMA); k++) {
+      const at = g.periodic ? ((k % n) + n) % n : k;
+      if (at < 0 || at >= n) continue;
+      x[at] += (w * Math.exp(-(((k - c) / SIGMA) ** 2) / 2)) / (SIGMA * Math.sqrt(2 * Math.PI));
+    }
   };
   const want = new Set(which);
   const inside = events.filter((e) => e.at >= 0 && e.at < g.window).sort((a, b) => a.at - b.at);
