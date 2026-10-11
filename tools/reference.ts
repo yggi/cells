@@ -12,7 +12,7 @@ import { KEYS, LINE_SYNTAX, SHOWS, SHOW_CONVENTIONS } from '../src/engine/parser
 import { BUILTIN_PLUGINS } from '../src/engine/builtinPlugins';
 import { FREE_SYNTAX } from '../src/engine/parser/free';
 import { GENERATORS } from '../src/engine/parser/generators';
-import { MIX_SYNTAX } from '../src/engine/parser/mix';
+import { GATE_SYNTAX, MIX_SYNTAX } from '../src/engine/parser/mix';
 import { REFERENCE_SYNTAX } from '../src/engine/parser/scanner';
 import { SECTIONS, syntax, type Section, type Syntax } from '../src/engine/parser/syntax';
 import { MAP_KINDS, MAP_SYNTAX, RATE_UNITS, STEP_SYNTAX as RATE_SYNTAX } from '../src/engine/parser/values';
@@ -52,9 +52,12 @@ export function entries(): Syntax[] {
     ...Object.values(MAP_KINDS),
     ...MAP_SYNTAX,
     ...(Object.keys(CORE) as (keyof typeof CORE)[]).map(attribute),
-    ...Object.entries(PARAMS).map(parameter),
+    ...Object.entries(PARAMS)
+      .filter(([, a]) => !a.old)
+      .map(parameter),
     ...SORT_SYNTAX,
     ...MIX_SYNTAX,
+    ...GATE_SYNTAX,
   ];
 }
 

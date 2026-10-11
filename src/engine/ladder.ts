@@ -260,11 +260,10 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
     name: 'Gates, performing and MIDI',
     concept: 'a gate: a product with a name; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
     forms: [
-      // a gate
-      'parameter trigger',
-      'parameter velocity',
-      'parameter gate',
-      'parameter gain',
+      // a gate (decision 023): play= with a braid, its level a product, its voices a chord
+      'gate play=&x',
+      'gate level=&a*&b*n',
+      'gate [&a, &b]',
       // a braid left to the performer
       'free free(0 2 4 ~ …)',
       // MIDI out
@@ -420,7 +419,15 @@ export function formsUsed(source: string): Set<string> {
     if (d.pitch) ref(d.pitch);
     for (const r of d.about ?? []) ref(r);
     // parameters
-    for (const k of [...Object.keys(d.params), ...Object.keys(d.paramCells ?? {}), ...Object.keys(d.paramClocks ?? {})]) if (k !== 'pitch') use(`parameter ${k}`);
+    // (a gate, play= with a braid: its own forms, not a read head's play= nor the sound card's level=)
+    const gate = typeof d.params.play === 'string' && d.braid.kind === 'list' && d.braid.tokens.length > 0;
+    if (gate) {
+      use('gate play=&x');
+      if (d.paramCells?.level) use('gate level=&a*&b*n');
+      if (d.braid.kind === 'list' && d.braid.tokens.some((t) => t.atom.kind === 'mix')) use('gate [&a, &b]');
+    }
+    for (const k of [...Object.keys(d.params), ...Object.keys(d.paramCells ?? {}), ...Object.keys(d.paramClocks ?? {})])
+      if (k !== 'pitch' && !(gate && (k === 'play' || k === 'level'))) use(`parameter ${k}`);
     for (const pc of Object.values(d.paramCells ?? {})) for (const r of pc.factors) ref(r);
     for (const st of Object.values(d.paramClocks ?? {})) if (st.kind === 'driven') ref(st.driver);
     // step= and loop=

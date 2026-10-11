@@ -146,7 +146,7 @@ export const melodicChannel = (i: number, kit: number = DRUM_CHANNEL): number =>
 const membersOf = (result: CompileResult, o: Output): string[] => (result.cells.get(o.voice)?.units ?? []).flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : []));
 
 /** The gate an output plays through (docs/language/mix.md: a gate), if any: its notes go out as the gate's. */
-const gateOf = (result: CompileResult, o: Output): string | undefined => [...o.through, ...o.via].find((n) => typeof result.cells.get(n)?.params.trigger === 'string');
+const gateOf = (result: CompileResult, o: Output): string | undefined => [...o.through, ...o.via].find((n) => !!result.cells.get(n)?.gate);
 
 /** What an output's channel is kept under: its gate, else its voice. */
 const channelKey = (result: CompileResult, o: Output): string => gateOf(result, o) ?? o.voice;

@@ -262,7 +262,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
 const CELL_WANTS: Readonly<Record<string, string>> = {
   fm: 'a voice after fm=, like fm=&op',
   write: 'what the tape records, like write=&melody',
-  play: 'the tape it reads, like play=&tape',
+  play: 'the tape it reads, like play=&tape, or the notes a gate plays, like play=&tune',
   couple: 'the resonator it shares a table with, like couple=&fork',
   excite: 'what drives it, like excite=&mix',
   trigger: 'the melody whose notes it plays with, like trigger=&tune',
@@ -280,6 +280,30 @@ const readCellParam: Reader = (s, b, word) => {
 /** A parameter's value: a number or a word, free(…), a clock (a time), or cells it moves with. */
 function readParam(s: LineScanner, b: Body, key: string): void {
   const vs = s.i;
+  // a gate's level: a product of level cells and numbers, level=&accent*&duck*.4 (a number alone, level=.4, is read below)
+  if (key === 'level' && (s.peek() === '&' || /^(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\s*\*/.test(s.text.slice(s.i)))) {
+    const factors: Ref[] = [];
+    let gain = 1;
+    for (let first = true; ; first = false) {
+      const save = s.i;
+      if (!first) {
+        s.skipSpace();
+        if (s.peek() !== '*') {
+          s.i = save;
+          break;
+        }
+        s.i++;
+        s.skipSpace();
+      }
+      const n = s.match(/(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+      if (n !== null) gain *= parseFloat(n);
+      else factors.push(s.ref('a level cell or a number, like level=&accent*&duck*.4'));
+    }
+    b.paramCells[key] = { range: null, factors, span: s.span(vs) };
+    if (gain !== 1) b.params[key] = gain;
+    b.paramSpans[key] = s.span(vs);
+    return;
+  }
   // a time as a clock: delaytime=&bar/2
   if (s.peek() === '&' && TIME_PARAMS.has(key)) {
     const st = parseStep(s, false);

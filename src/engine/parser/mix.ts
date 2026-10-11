@@ -38,6 +38,31 @@ export const MIX_SYNTAX: readonly Syntax[] = [
   syntax('mix', '( … )', "Grouping. By the laws, grouping and order don't change what plays.", ['&mix [&theme * (&lead + &organ) * 0.5]'], 'mix.md'),
 ];
 
+/** A gate (decision 023: docs/language/mix.md, a gate): a product with a name, its notes, its level, what it plays. */
+export const GATE_SYNTAX: readonly Syntax[] = [
+  syntax(
+    'gate',
+    'play=&x',
+    'A gate: it plays the notes of &x on the voices in its braid (one voice, a kit, or several), as the product [&x * &voice] does. On a cell with no braid, play= is a read head.',
+    ['&leadOut play=&tune &lead'],
+    'mix.md',
+  ),
+  syntax(
+    'gate',
+    'level=&a*&b*n',
+    'How loud a gate plays: the product of its level cells and a gain (level=.4 a gain alone).',
+    ['&leadOut play=&tune level=&accent*&duck*.4 &lead'],
+    'mix.md',
+  ),
+  syntax(
+    'gate',
+    '[&a, &b]',
+    'A gate plays a chord of voices all at once; several bare voices (&a &b) are a kit, its notes picking one.',
+    ['&leadOut play=&tune [&lead, &bell]'],
+    'mix.md',
+  ),
+];
+
 /** A chord holding cells (`[&theme * &lead, …]`) is a mix of sounds, not a chord of numbers. */
 export function isMixChord(text: string, at: number): boolean {
   let depth = 0;

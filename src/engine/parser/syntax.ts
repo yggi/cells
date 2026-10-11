@@ -19,6 +19,7 @@ export const SECTIONS = {
   parameter: 'Parameters',
   sort: 'Sorts: what a cell is in a mix',
   mix: 'Mixes',
+  gate: 'Gates: a product with a name',
 } as const;
 export type Section = keyof typeof SECTIONS;
 

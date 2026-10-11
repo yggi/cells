@@ -22,7 +22,7 @@ export type Role =
   | 'note' // a label and nothing else: an explanation in the graph
   | 'carrier' // a voice with fm=
   | 'modulator' // a voice another's fm= names
-  | 'gate'; // trigger=: a named junction, where notes become sound (#234)
+  | 'gate'; // play= with a braid: a named junction, where notes become sound (#234)
 
 export interface Attribute {
   /** What it means, as the node editor shows it. */
@@ -41,6 +41,8 @@ export interface Attribute {
   readonly clock?: true;
   /** It is a frequency or a rate, in Hz (lpf=1200, wanderhz=.5): its slider over a wide range runs on a log scale. */
   readonly hz?: true;
+  /** An old spelling, still read and rewritten by Shorten: what says it now. Not in the reference. */
+  readonly old?: string;
 }
 
 const core = (help: string, doc: string, on?: readonly Role[]): Attribute => ({ help, doc, value: 'syntax', ...(on ? { on } : {}) });
@@ -101,7 +103,12 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   coupling: physics('a resonator: how strongly it is coupled (.01 faint, .05 strong)', ['resonator']),
   excite: physics('a resonator: sound that drives it (excite=&mix) — it answers where the sound meets its modes', ['resonator'], { value: 'cell' }),
   // the sound card
-  level: { help: 'on the sound card: the overall level in dB (0 as it is, −6 about half)', doc: 'display.md', value: 'number', on: ['card'] },
+  level: {
+    help: 'on the sound card: the overall level in dB (0 as it is, −6 about half); on a gate: how loud, a product of level cells and a gain (level=&accent*&duck*.4)',
+    doc: 'display.md',
+    value: 'number',
+    on: ['card', 'gate'],
+  },
   // meters and their physics
   beat: { help: 'on a meter: how many of its steps make a beat — its bpm counts beats (beat=4: steps in sixteenths)', doc: 'time.md', value: 'number', on: ['clock'] },
   swing: { help: 'on a meter: of each pair of steps, the second comes this far through (.5 straight, .67 triplet swing)', doc: 'time.md', value: 'number', on: ['clock'] },
@@ -124,20 +131,20 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   print: physics('a sound tape: print-through — a faint pre-echo before each head (.03 a whisper)', ['tape']),
   printgap: physics('a sound tape: how far before each head the print-through sits (tape-seconds, .6)', ['tape']),
   dropout: physics('a sound tape: brief gaps in the playback, about this many a second', ['tape'], { hz: true }),
-  play: physics('a read head: the tape it reads (play=&tape), at= tape-seconds after the write head', ['head'], { value: 'cell' }),
+  play: physics(
+    'a read head: the tape it reads (play=&tape), at= tape-seconds after the write head; a gate: the notes it plays on the voices in its braid (play=&tune)',
+    ['head', 'gate'],
+    { value: 'cell' },
+  ),
   at: physics('a read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar)', ['head'], { clock: true }),
   wander: physics('a read head: how far it wanders either way (tape-seconds) — a flying head', ['head']),
   wanderhz: physics('a read head: how fast it wanders (times a second)', ['head'], { hz: true }),
   // a gate: a named junction (docs/language/mix.md: a gate)
-  trigger: { help: 'a gate: what plays through it — each note of this cell plays the receivers in its braid (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'] },
-  gate: {
-    help: 'a gate: how open it is over time, a level on all it lets through (gate=&solo: 1 open, 0 closed, .3 ducked); velocity= is per note, gain= fixed',
-    doc: 'mix.md',
-    value: 'cell',
-    on: ['gate'],
-  },
-  velocity: { help: 'a gate: a level on each note it lets through, as a product’s level (velocity=&accent)', doc: 'mix.md', value: 'cell', on: ['gate'] },
-  gain: { help: 'a gate: a fixed level on what it lets through, as a product’s number (gain=.5)', doc: 'mix.md', value: 'number', on: ['gate'] },
+  // (the old spelling of a gate, still read; Shorten rewrites it: decision 023)
+  trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
+  gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
+  velocity: { help: 'a gate, the old spelling: a level, one factor of level= (velocity=&accent)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
+  gain: { help: 'a gate, the old spelling: its gain, the number in level= (gain=.5)', doc: 'mix.md', value: 'number', on: ['gate'], old: 'level=' },
   // scopes
   scope: {
     help: 'a scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels',
@@ -194,7 +201,7 @@ export function rolesText(on: readonly Role[]): string {
     note: 'a note (a label= and nothing else)',
     carrier: 'a voice with fm=',
     modulator: 'a voice another’s fm= names',
-    gate: 'a gate (trigger=)',
+    gate: 'a gate (play= with a braid)',
   };
   const ws = on.map((r) => NAMES[r]);
   return ws.length < 2 ? (ws[0] ?? '') : `${ws.slice(0, -1).join(', ')} or ${ws[ws.length - 1]}`;

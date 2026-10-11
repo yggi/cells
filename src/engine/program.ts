@@ -5,7 +5,7 @@
  * on the language pages (docs/language/overview.md).
  */
 import { pickLabel } from './ast';
-import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span } from './ast';
+import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, GateSpec } from './ast';
 import type { ShowPlugin } from './plugins';
 
 export const ROOT = 'fifths12TET';
@@ -151,6 +151,8 @@ export interface ResolvedCell {
   readonly freq: number;
   /** A braid of voices only: indexed by number, like a drum kit. */
   readonly kit: boolean;
+  /** A gate (#234): whose notes it plays, its levels and gain, its receivers (declare.ts). */
+  readonly gate?: GateSpec;
 }
 
 /** A cell moved at a rate (step=84bpm, loop=2). */

@@ -26,7 +26,7 @@ describe('the syntax reference', () => {
     for (const u of Object.keys(RATE_UNITS)) expect(has(`n${u}`), u).toBe(true);
     for (const m of Object.keys(MODIFIERS)) expect(has(`x${m}n`), m).toBe(true);
     for (const k of Object.keys(CORE)) expect(KEYS[k as keyof typeof KEYS].form, k).toMatch(new RegExp(`^${k}=`));
-    for (const k of Object.keys(PARAMS)) expect(has(`${k}=`), k).toBe(true);
+    for (const [k, a] of Object.entries(PARAMS)) if (!a.old) expect(has(`${k}=`), k).toBe(true);
   });
 
   test(`${PAGE} is current`, () => {

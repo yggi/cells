@@ -105,6 +105,22 @@ export interface Token {
 }
 
 /** What sits in a cell's grid. */
+/**
+ * A gate (#234, docs/language/mix.md: a gate; decision 023): `&leadOut play=&tune level=&accent*&duck*.4 [&lead, &bell]`.
+ * Whose notes it plays, the cells its level multiplies (each with the port it was written on: `level`, or the old
+ * `velocity`, `gate`), its gain (the numbers in its level), and the voices it plays them on (a chord of voices: all of
+ * them; several bare voices: a kit, the notes pick one). Read from either spelling (the old `trigger=` too).
+ */
+export interface GateSpec {
+  readonly notes: string;
+  /** The port it was written on: `play` (or the old `trigger`). */
+  readonly port: 'play' | 'trigger';
+  readonly levels: readonly { readonly name: string; readonly port: string }[];
+  readonly gain: number;
+  /** The voices (or a kit) it plays, as drawn: a kit of bare voices it made, by its members. */
+  readonly receivers: readonly string[];
+}
+
 export type Braid =
   | { readonly kind: 'blank' }
   | { readonly kind: 'list'; readonly tokens: readonly Token[]; readonly perBeat?: number }
@@ -244,6 +260,8 @@ export interface CellDecl {
    * envelope among them shapes each note).
    */
   readonly paramCells?: Readonly<Record<string, ParamCells>>;
+  /** A gate (#234): what it plays, how loud, on what (declare.ts reads it from play= or trigger=). */
+  readonly gate?: GateSpec;
   /** laps=n: it plays n laps, then nothing it drives sounds (a piece that ends). */
   readonly laps?: number | null;
   /** size=: how large it's drawn (and how much room the layout gives it), against the others (1). */

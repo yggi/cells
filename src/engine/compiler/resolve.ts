@@ -170,6 +170,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
             : (rateOf(d.step) ?? DEFAULT_FREQ) / Math.max(1, steps)
           : DEFAULT_FREQ,
       kit: false,
+      ...(d.gate ? { gate: d.gate } : {}),
     };
     cells.set(name, cell);
     return cell;

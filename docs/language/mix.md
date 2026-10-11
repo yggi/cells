@@ -44,10 +44,10 @@ The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is 
 
 ## A gate: a product with a name
 
-A product that plays a voice can be written as a cell of its own, a **gate**: `trigger=` names what plays through it,
-and its braid lists the voices it plays (its receivers). Three levels of one family say how much passes: `velocity=` on
-each note, `gate=` over time (how open it is: 1 open, 0 closed, .3 ducked; a solo, a break, a fade) and `gain=` fixed.
-It is read as the product it stands for, one for each receiver, so it sounds as the product does:
+A product that plays a voice can be written as a cell of its own, a **gate** ([decision 023](../decisions/023-gate-spelling.md)):
+`play=` names the notes it plays, its braid what it plays them on, and `level=` how loud: a product of level cells and
+a gain, each as in a product (per note, over time, fixed: how fast a factor moves is in its cell, not its name). It is
+read as the product it stands for, one for each voice it plays, so it sounds as the product does:
 
 ```cells
 &bar scan(1 1 1 1) step=120bpm
@@ -55,14 +55,14 @@ It is read as the product it stands for, one for each receiver, so it sounds as 
 &accent map=amp step=&bar 1 .5 .8 .5
 &solo map=amp step=&bar*4 1 .3                                   # open, then ducked
 &lead s=tri loop=C4 env=&(map=adsr .01 .2 .4 .2)
-&leadOut trigger=&tune velocity=&accent gate=&solo gain=.5 &lead      # is [&tune * &accent * &solo * &lead * .5]
+&leadOut play=&tune level=&accent*&solo*.5 &lead       # is [&tune * &accent * &solo * &lead * .5]
 &out loop=SAMPLE_RATE map=sample [&leadOut]
 ```
 
-Every receiver plays every note: `&lead &bell` doubles the line. A **kit** among the receivers (a table of voices,
-`&kit &bd &sd &hh`: [sound.md](sound.md)) is played as a pattern read through it: the trigger's numbers pick the
-member, 0 the first. So `&drums trigger=&beat &kit` plays what `&beat over=&kit` plays; a trigger that reads the kit
-already plays it as well:
+Its braid reads as any braid of voices does. A **chord of voices** plays all of them: `[&lead, &bell]` doubles the
+line. A **kit** (a table of voices, `&kit &bd &sd &hh`: [sound.md](sound.md)) is played as a pattern read through it:
+the notes' numbers pick the member, 0 the first. So `&drums play=&beat &kit` plays what `&beat over=&kit` plays; notes
+that read the kit already play it as well. Several bare voices (`&lead &bell`) are a kit of them, the notes picking one:
 
 ```cells
 &bar scan(1 1 1 1) step=120bpm
@@ -71,13 +71,18 @@ already plays it as well:
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh
 &beat step=&bar/2 0 2 1 2
-&drums trigger=&beat gain=.6 &kit                 # each number picks the drum: 0 the kick, 1 the snare, 2 the hat
+&drums play=&beat level=.6 &kit                 # each number picks the drum: 0 the kick, 1 the snare, 2 the hat
 &out loop=SAMPLE_RATE map=sample [&drums]
 ```
 
-A gate is where notes become sound, named: the graph draws it as a node of its own, its receivers as dim as the gate is
-closed. On a MIDI card a gate is an entry as any mix is (`&synth map=midi &leadOut ~!8 &drums`: all its receivers on that channel, a kit's by drum note, [midi.md](midi.md)); without a card, MIDI out sends each gate as one part. The anonymous product,
-`[&tune * &accent * &solo * &lead * .5]`, stays its short form.
+`play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
+still reads (`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
+played), and Shorten rewrites it.
+
+A gate is where notes become sound, named: the graph draws it as a level meter, a bar per note in its colour, as tall as
+its level, its notes going out to the voices it plays and their sound on from them ([graph.md](../ui/graph.md),
+[decision 022](../decisions/022-gates-send-notes.md)). On a MIDI card a gate is an entry as any mix is (`&synth map=midi &leadOut ~!8 &drums`: all its voices on that channel, a kit's by drum note, [midi.md](midi.md)); without a card, MIDI out sends each gate as one part. The anonymous product,
+`[&tune * &accent * &solo * &lead * .5]`, stays its short form, drawn as a small gate meter.
 
 ## The sound card
 

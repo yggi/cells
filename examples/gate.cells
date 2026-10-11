@@ -1,6 +1,5 @@
-&piece title="A gate: a product with a name" tags="tutorial, diatonic" tier=9 label="Where notes become sound, named: a gate plays its voices with each note of what triggers it." about=&out
-&gateNote label="&leadOut is a gate: each note of &tune plays the voices in its braid, &lead and &bell, at three levels of one family: &accent per note, &duck over time, gain=.4 fixed. It is read as [&tune * &accent * &duck * &lead * .4, …]." about=&leadOut
-&duckNote label="gate=&duck: how open the gate is, a bar at a time: open, open, ducked to a quarter, open." about=&duck
+&piece title="A gate: a product with a name" tags="tutorial, diatonic" tier=9 label="Where notes become sound, named: a gate plays its voices with each note of what it plays." about=&out
+&gateNote label="&leadOut is a gate: it plays each note of &tune on the voices in its braid, both of them ([&lead, &bell], a chord), as loud as level= says: &accent per note times .4. It is read as [&tune * &accent * &lead * .4, …]." about=&leadOut
 &drumNote label="&drumOut plays a kit: each number of &beat picks the drum, 0 the kick, 1 the snare, 2 the hat, as &beat over=&kit would." about=&drumOut
 &productNote label="The bass is the same thing unnamed: a product in the sound card." about=&bass
 &bar scan(1 1 1 1) step=free(96bpm, 60..140)
@@ -8,7 +7,6 @@
 
 &tune over=&major step=&bar/2 0 2 4 2 5 4 2@2 4 5 7 5 4 2 0@2
 &accent map=amp step=&bar/2 1 .5 .8 .5
-&duck map=amp step=&bar*4 1 1 .25 1
 &roots over=&major step=&bar*2 0 3 4 0
 
 &lead s=tri loop=C5 env=&(map=adsr .01 .2 .4 .2)
@@ -20,6 +18,6 @@
 &kit &bd &sd &hh
 &beat step=&bar/2 0 2 1 2
 
-&leadOut trigger=&tune velocity=&accent gate=&duck gain=.4 &lead &bell
-&drumOut trigger=&beat gain=.5 &kit
+&leadOut play=&tune level=&accent*.4 [&lead, &bell]
+&drumOut play=&beat level=.5 &kit
 &out map=sample level=0 [&leadOut, &drumOut, &roots * &bass * .5]

@@ -31,7 +31,7 @@ export function declare(ctx: Ctx): Declared {
     else decls.set(c.name, c);
   }
   const taps = tapTables(decls, error);
-  gates(decls, error);
+  gates(decls, implicit, error);
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
   for (const name of decls.keys()) if (name.startsWith('key:') || name.startsWith('scale:')) implicit.add(name);
@@ -171,39 +171,91 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
 }
 
 /**
- * Gates (#234, the gate node): a named junction. `&leadOut trigger=&tune velocity=&accent gate=&solo gain=.5 &lead`
- * plays its receivers (the voices in its braid) with each note of its trigger, at three levels of one family: the
- * velocity's (per note), the gate's (how open it is over time) and the gain (fixed). Exactly the product
- * `&leadOut [&tune * &accent * &solo * &lead * .5]`, which is what it is read as (one product per receiver).
- * So it sounds, routes and draws as that named mix does; the product stays its anonymous form.
+ * Gates (#234, the gate node; decision 023): a named junction. `&leadOut play=&tune level=&accent*&duck*.4 [&lead, &bell]`
+ * plays its receivers with each note of `play=`, at its level: the product of its level cells and numbers. Its braid
+ * reads as any braid of voices reads: a chord of voices (`[&lead, &bell]`) plays all of them, one voice (or a kit)
+ * plays that, several bare voices (`&lead &bell`) are a kit the notes pick from. Exactly the product
+ * `&leadOut [&tune * &accent * &duck * &lead * .4, …]`, which is what it is read as (one product per receiver), so it
+ * sounds, routes and draws as that named mix does; the product stays its anonymous form.
+ *
+ * The old spelling still reads (`trigger=` for play=, `velocity=` `gate=` `gain=` for level=, several bare voices all
+ * played), and Shorten rewrites it (shorten/gates.ts). Either way the gate's spec is `CellDecl.gate`, and the
+ * parameters it was written with are taken off the cell (a gate's play= is no tape's read head).
  */
-function gates(decls: Map<string, CellDecl>, error: Ctx['error']): void {
+function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error']): void {
+  const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
   for (const d of [...decls.values()]) {
-    const trigger = d.params.trigger;
-    if (typeof trigger !== 'string') continue;
+    const p = d.params;
     const tokens = d.braid.kind === 'list' ? d.braid.tokens : [];
-    const receivers = tokens.flatMap((t) => (t.atom.kind === 'ref' && !t.atom.pick ? [{ name: t.atom.name, span: t.span }] : []));
-    if (!receivers.length || receivers.length !== tokens.length) {
-      error(`&${d.name} is a gate (trigger=): its braid lists what it plays, voices (&${d.name} trigger=&${trigger} &lead)`, d.span);
+    // play= on a cell with a braid is a gate (a read head has none); trigger= is the old spelling
+    const old = typeof p.trigger === 'string';
+    const notes = old ? (p.trigger as string) : typeof p.play === 'string' && tokens.length ? p.play : null;
+    if (notes === null) continue;
+    const port = old ? 'trigger' : 'play';
+    const notesSpan = d.paramSpans[port] ?? d.span;
+    // what it plays: a chord of voices (all), one voice or kit, or several bare voices (a kit; the old spelling: all)
+    const plain = (a: Atom) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
+    const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;
+    const bare = tokens.every((t) => plain(t.atom) && t.repeat === 1 && t.subdivide === 1 && t.elongate === 1);
+    if (!chord && !bare) {
+      error(
+        `&${d.name} is a gate (${port}=): its braid is what it plays: a voice, a kit, a chord of voices [&lead, &bell], or voices to pick from (&${d.name} ${port}=&${notes} &lead)`,
+        d.span,
+      );
       continue;
     }
-    const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
-    const velocity = d.params.velocity;
-    const open = d.params.gate;
-    const gain = d.params.gain;
-    const exprs: Expr[] = receivers.map((r) => ({
+    const named = chord
+      ? chord.flatMap((e) => (e.k === 'ref' ? [{ name: e.ref.name, span: e.ref.span }] : []))
+      : tokens.flatMap((t) => (t.atom.kind === 'ref' ? [{ name: t.atom.name, span: t.span }] : []));
+    // (several bare voices, written the new way: a kit of them, which the notes pick from)
+    let played = named;
+    if (!chord && !old && named.length > 1) {
+      const kit = `${d.name}:kit`;
+      decls.set(kit, {
+        name: kit,
+        span: d.span,
+        over: null,
+        shift: null,
+        off: false,
+        step: null,
+        map: null,
+        stride: null,
+        cycle: null,
+        params: {},
+        paramSpans: {},
+        braid: d.braid,
+      });
+      implicit.add(kit);
+      played = [{ name: kit, span: d.span }];
+    }
+    // its level: level=&a*&b*.4 (cells and a gain), or the old velocity= gate= gain=
+    const levels = old
+      ? (['velocity', 'gate'] as const).flatMap((k) => (typeof p[k] === 'string' ? [{ name: p[k] as string, port: k, span: d.paramSpans[k] ?? d.span }] : []))
+      : (d.paramCells?.level?.factors ?? []).map((f) => ({ name: f.name, port: 'level', span: f.span }));
+    const gainOf = old ? p.gain : p.level;
+    const gain = typeof gainOf === 'number' ? gainOf : 1;
+    const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
+    const exprs: Expr[] = played.map((r) => ({
       k: 'prod',
       span: r.span,
       factors: [
-        ref(trigger, d.paramSpans.trigger ?? d.span),
-        ...(typeof velocity === 'string' ? [ref(velocity, d.paramSpans.velocity ?? d.span)] : []),
-        ...(typeof open === 'string' ? [ref(open, d.paramSpans.gate ?? d.span)] : []),
-        // (a trigger read through the kit it plays is its sound already: &drums over=&kit, then &out trigger=&drums &kit)
-        ...(decls.get(trigger)?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
-        ...(typeof gain === 'number' ? [{ k: 'num', value: gain, span: d.paramSpans.gain ?? d.span } as Expr] : []),
+        ref(notes, notesSpan),
+        ...levels.map((l) => ref(l.name, l.span)),
+        // (notes read through the kit it plays are its sound already: &drums over=&kit, then &out play=&drums &kit)
+        ...(decls.get(notes)?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
+        ...(gain !== 1 ? [{ k: 'num', value: gain, span: gainSpan } as Expr] : []),
       ],
     }));
-    decls.set(d.name, { ...d, braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs, gate: d.name }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] } });
+    // (the parameters it was written with are the gate's now: none is a tape's, a sound card's or a voice's)
+    const params = Object.fromEntries(Object.entries(p).filter(([k]) => !['play', 'trigger', 'velocity', 'gate', 'gain', 'level'].includes(k)));
+    const paramCells = Object.fromEntries(Object.entries(d.paramCells ?? {}).filter(([k]) => k !== 'level'));
+    decls.set(d.name, {
+      ...d,
+      params,
+      paramCells,
+      gate: { notes, port, levels: levels.map(({ name, port }) => ({ name, port })), gain, receivers: named.map((r) => r.name) },
+      braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs, gate: d.name }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] },
+    });
   }
 }
 

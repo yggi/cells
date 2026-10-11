@@ -2,7 +2,7 @@
 
 Every form the parser reads, what it means and an example: generated from the parser's own tables (`src/engine/parser/`, with `src/engine/attributes.ts`), so it says what the parser does. The topic pages explain at length; each entry links its page. Don't edit this page: change the tables and record it with `UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts`. Every example here is parsed by that test.
 
-[Lines](#lines) · [Steps](#steps) · [Modifiers](#modifiers) · [References](#references) · [Generators](#generators) · [free(): left to the performer](#free-left-to-the-performer) · [step= and loop=](#step--and-loop-) · [map=](#map-) · [Attributes](#attributes) · [Parameters](#parameters) · [Sorts: what a cell is in a mix](#sorts-what-a-cell-is-in-a-mix) · [Mixes](#mixes)
+[Lines](#lines) · [Steps](#steps) · [Modifiers](#modifiers) · [References](#references) · [Generators](#generators) · [free(): left to the performer](#free-left-to-the-performer) · [step= and loop=](#step--and-loop-) · [map=](#map-) · [Attributes](#attributes) · [Parameters](#parameters) · [Sorts: what a cell is in a mix](#sorts-what-a-cell-is-in-a-mix) · [Mixes](#mixes) · [Gates: a product with a name](#gates-a-product-with-a-name)
 
 ## Lines
 
@@ -140,7 +140,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `couple=&cell`: A resonator: another it shares a table with (couple=&other) — each sets the other ringing — on a resonator (body=) [→](physics.md)
 - `coupling=n` · `coupling=free(n, lo..hi)`: A resonator: how strongly it is coupled (.01 faint, .05 strong) — on a resonator (body=) [→](physics.md)
 - `excite=&cell`: A resonator: sound that drives it (excite=&mix) — it answers where the sound meets its modes — on a resonator (body=) [→](physics.md)
-- `level=n` · `level=free(n, lo..hi)`: On the sound card: the overall level in dB (0 as it is, −6 about half) — on the sound card (map=sample) [→](display.md)
+- `level=n` · `level=free(n, lo..hi)`: On the sound card: the overall level in dB (0 as it is, −6 about half); on a gate: how loud, a product of level cells and a gain (level=&accent*&duck*.4) — on the sound card (map=sample) or a gate (play= with a braid) [→](display.md)
 - `beat=n` · `beat=free(n, lo..hi)`: On a meter: how many of its steps make a beat — its bpm counts beats (beat=4: steps in sixteenths) — on a meter (step= a rate) [→](time.md)
 - `swing=n` · `swing=free(n, lo..hi)`: On a meter: of each pair of steps, the second comes this far through (.5 straight, .67 triplet swing) — on a meter (step= a rate) [→](time.md)
 - `motor=n` · `motor=free(n, lo..hi)`: On a meter: it turns physically — a motor this strong pulls it to its tempo (from rest) — on a meter (step= a rate) [→](physics.md)
@@ -161,14 +161,10 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `print=n` · `print=free(n, lo..hi)`: A sound tape: print-through — a faint pre-echo before each head (.03 a whisper) — on a tape (write=) [→](physics.md)
 - `printgap=n` · `printgap=free(n, lo..hi)`: A sound tape: how far before each head the print-through sits (tape-seconds, .6) — on a tape (write=) [→](physics.md)
 - `dropout=n` · `dropout=free(n, lo..hi)`: A sound tape: brief gaps in the playback, about this many a second — on a tape (write=) [→](physics.md)
-- `play=&cell`: A read head: the tape it reads (play=&tape), at= tape-seconds after the write head — on a read head (play=) [→](physics.md)
+- `play=&cell`: A read head: the tape it reads (play=&tape), at= tape-seconds after the write head; a gate: the notes it plays on the voices in its braid (play=&tune) — on a read head (play=) or a gate (play= with a braid) [→](physics.md)
 - `at=n` · `at=free(n, lo..hi)` · `at=&clock/n`: A read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar) — on a read head (play=) [→](physics.md)
 - `wander=n` · `wander=free(n, lo..hi)`: A read head: how far it wanders either way (tape-seconds) — a flying head — on a read head (play=) [→](physics.md)
 - `wanderhz=n` · `wanderhz=free(n, lo..hi)`: A read head: how fast it wanders (times a second) — on a read head (play=) [→](physics.md)
-- `trigger=&cell`: A gate: what plays through it — each note of this cell plays the receivers in its braid (trigger=&tune) — on a gate (trigger=) [→](mix.md)
-- `gate=&cell`: A gate: how open it is over time, a level on all it lets through (gate=&solo: 1 open, 0 closed, .3 ducked); velocity= is per note, gain= fixed — on a gate (trigger=) [→](mix.md)
-- `velocity=&cell`: A gate: a level on each note it lets through, as a product’s level (velocity=&accent) — on a gate (trigger=) [→](mix.md)
-- `gain=n` · `gain=free(n, lo..hi)`: A gate: a fixed level on what it lets through, as a product’s number (gain=.5) — on a gate (trigger=) [→](mix.md)
 - `scope=word`: A scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels — on a scope (scope=) [→](display.md)
 - `fold=n` · `fold=free(n, lo..hi)`: A spectrum or waterfall: pitches folded by this stride into as many bins (12: by pitch class, the default) — on a scope (scope=) [→](display.md)
 - `bins=n` · `bins=free(n, lo..hi)`: A spectrum or waterfall without a fold: this many bands, low to high (1 a meter, 3 low-mid-high, 20 an equaliser) — on a scope (scope=) [→](display.md)
@@ -197,3 +193,9 @@ Every cell has a sort, decided by its own line, never by where it is written in 
 - `n`: A number takes its operator's sort: semitones in a sum (0 changes nothing), a gain in a product (1 changes nothing). [→](mix.md) `&mix [(&pedal + 12) * &bass * 0.8]`
 - `free(v, lo..hi)`: A gain left to the performer. [→](free.md) `&mix [&theme * &lead * free(.8, 0..1)]`
 - `( … )`: Grouping. By the laws, grouping and order don't change what plays. [→](mix.md) `&mix [&theme * (&lead + &organ) * 0.5]`
+
+## Gates: a product with a name
+
+- `play=&x`: A gate: it plays the notes of &x on the voices in its braid (one voice, a kit, or several), as the product [&x * &voice] does. On a cell with no braid, play= is a read head. [→](mix.md) `&leadOut play=&tune &lead`
+- `level=&a*&b*n`: How loud a gate plays: the product of its level cells and a gain (level=.4 a gain alone). [→](mix.md) `&leadOut play=&tune level=&accent*&duck*.4 &lead`
+- `[&a, &b]`: A gate plays a chord of voices all at once; several bare voices (&a &b) are a kit, its notes picking one. [→](mix.md) `&leadOut play=&tune [&lead, &bell]`

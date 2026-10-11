@@ -213,10 +213,11 @@ describe('a MIDI card in the flows, the routing and the graph', () => {
     const model = buildGraph(compileSource(src));
     expect(model.nodes.find((n) => n.id === cellId('synth'))?.kind).toBe('cell');
     const into = model.edges.filter((e) => e.to === cellId('synth'));
+    // (a product's notes go to its voice, which goes out on the card: #234)
     expect(into.map((e) => [e.port, e.band, e.from]).sort()).toEqual([
       ['midi', 'cv', 'cell:groove'],
-      ['midi', 'cv', 'junction:synth:0'],
-      ['midi', 'cv', 'junction:synth:1'],
+      ['midi', 'cv', 'cell:reed'],
+      ['midi', 'cv', 'cell:sub'],
     ]);
     // (the melody into the product, its voice the product's definition, as in a mix)
     expect(model.edges.some((e) => e.from === cellId('bass') && e.to === 'junction:synth:1' && e.port === 'voice')).toBe(true);

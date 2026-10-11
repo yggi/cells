@@ -79,13 +79,66 @@ describe('a gate (trigger=): a product with a name', () => {
   });
 
   it('its braid lists receivers only', () => {
-    expect(errors('&leadOut trigger=&tune &lead 3\n&out map=sample &leadOut').join()).toMatch(/is a gate \(trigger=\): its braid lists what it plays/);
+    expect(errors('&leadOut trigger=&tune &lead 3\n&out map=sample &leadOut').join()).toMatch(/is a gate \(trigger=\): its braid is what it plays/);
   });
 
   it('is a node of its own in the graph, its trigger, levels and receivers wired in', () => {
     const r = compileSource(BASE + '&beat step=&bar/2 0 2 1 2\n&drums trigger=&beat velocity=&accent &kit\n&out map=sample &drums');
     const g = buildGraph(r);
     const into = g.edges.filter((e) => e.to === 'cell:drums').map((e) => `${e.from} ${e.port}`);
-    expect(into).toEqual(expect.arrayContaining(['cell:beat trigger', 'cell:accent velocity', 'cell:kit braid']));
+    expect(into).toEqual(expect.arrayContaining(['cell:beat trigger', 'cell:accent velocity']));
+    // (its notes out to what it plays, whose sound goes on into the card)
+    expect(g.edges.filter((e) => e.from === 'cell:drums').map((e) => `${e.to} ${e.port}`)).toEqual(['cell:kit voice']);
+    expect(g.edges.some((e) => e.from === 'cell:kit' && e.to === 'cell:out' && e.band === 'audio')).toBe(true);
+  });
+});
+
+describe('a gate (play=, level=): decision 023', () => {
+  it('play= is what it plays, level= a product of levels and a gain: the old spelling’s product', () => {
+    const duck = '&duck map=amp step=&bar 1 .25\n';
+    expect(played(duck + '&leadOut play=&tune level=&accent*&duck*.4 &lead\n&out map=sample &leadOut')).toEqual(
+      played(duck + '&leadOut trigger=&tune velocity=&accent gate=&duck gain=.4 &lead\n&out map=sample &leadOut'),
+    );
+    expect(played('&leadOut play=&tune level=.4 &lead\n&out map=sample &leadOut')).toEqual(played('&leadOut [&tune * &lead * .4]\n&out map=sample &leadOut'));
+    expect(played('&leadOut play=&tune level=.5*&accent &lead\n&out map=sample &leadOut')).toEqual(played('&leadOut [&tune * &accent * &lead * .5]\n&out map=sample &leadOut'));
+  });
+
+  it('a chord of voices plays all of them', () => {
+    expect(played('&leadOut play=&tune [&lead, &bell]\n&out map=sample &leadOut')).toEqual(played('&leadOut [&tune * &lead, &tune * &bell]\n&out map=sample &leadOut'));
+  });
+
+  it('several bare voices are a kit: its notes pick one', () => {
+    const picks = played('&steps step=&bar/2 0 1 1 0\n&g play=&steps &lead &bell\n&out map=sample &g').map((e) => e.split(' ')[0]);
+    expect(picks).toEqual(['lead', 'bell', 'bell', 'lead', 'lead', 'bell', 'bell', 'lead']);
+    // (as a kit written out: &k &lead &bell, played by the same steps)
+    expect(played('&steps step=&bar/2 0 1 1 0\n&g play=&steps &lead &bell\n&out map=sample &g')).toEqual(
+      played('&k &lead &bell\n&steps step=&bar/2 0 1 1 0\n&g play=&steps &k\n&out map=sample &g'),
+    );
+  });
+
+  it('a gate’s play= is no read head, and its cells are wired into it as written', () => {
+    const r = compileSource(BASE + '&duck map=amp step=&bar 1 .25\n&leadOut play=&tune level=&accent*&duck*.4 [&lead, &bell]\n&out map=sample &leadOut');
+    expect(r.diagnostics.filter((d) => d.severity === 'error').map((d) => d.message)).toEqual([]);
+    expect(r.cells.get('leadOut')!.gate).toEqual({
+      notes: 'tune',
+      port: 'play',
+      levels: [
+        { name: 'accent', port: 'level' },
+        { name: 'duck', port: 'level' },
+      ],
+      gain: 0.4,
+      receivers: ['lead', 'bell'],
+    });
+    expect(r.tapes).toEqual([]);
+    const g = buildGraph(r);
+    expect(g.edges.filter((e) => e.to === 'cell:leadOut').map((e) => `${e.from} ${e.port}`)).toEqual(['cell:tune play', 'cell:accent level', 'cell:duck level']);
+    expect(g.edges.filter((e) => e.from === 'cell:leadOut').map((e) => `${e.to} ${e.port}`)).toEqual(['cell:lead voice', 'cell:bell voice']);
+  });
+
+  it('a kit it made of bare voices: the bus to each voice, their sound into the mix', () => {
+    const g = buildGraph(compileSource(BASE + '&steps step=&bar/2 0 1\n&g play=&steps &lead &bell\n&out map=sample [&g]'));
+    expect(g.edges.filter((e) => e.from === 'cell:g').map((e) => e.to)).toEqual(['cell:lead', 'cell:bell']);
+    expect(g.edges.filter((e) => e.to === 'cell:out').map((e) => e.from)).toEqual(['cell:lead', 'cell:bell']);
+    expect(g.nodes.some((n) => n.id === 'cell:g:kit')).toBe(false);
   });
 });

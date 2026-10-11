@@ -17,7 +17,7 @@
 # voices
 &flute s=tri loop=C4 room=.3 env=&(map=adsr .02 .3 .5 .3)
 &lead s=tri loop=C5 env=&(map=adsr .01 .3 .4 .3)
-&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02) lpf=3000..9000 * &(map=adsr 0 .03 0 .02)
 # two instruments, and the taps of the bar that switch them
 &leadA [&walk * &lead * .3]
 &leadB [&drone * &lead * .3]

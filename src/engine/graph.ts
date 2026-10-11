@@ -6,10 +6,8 @@
  * Depth grows outward from the roots: a cell sits one ring beyond the table
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
-import { effectiveShow, pluginOf } from '../layout/show';
-import { bulbHub, trackRoom } from '../layout/track';
-import { drawnAsTape, headBulbs, TAPE_SIZE, UNTURNED } from '../layout/tape';
-import { gateRoom } from '../layout/gate';
+import { effectiveShow } from '../layout/show';
+import { bulbAt, leavesFromBulb, reachOf, subWheels } from '../layout/subwheels';
 import { isMidiCard, type CompileResult, type ResolvedCell } from './program';
 import type { Binding, Pick, ValueMap } from './ast';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
@@ -46,8 +44,9 @@ export type GraphNode =
   | {
       /**
        * A product in a mix (`&theme * &flute * .4`): an unnamed node, as `&( … )` is an unnamed cell (docs/notes/nets.md,
-       * decision 2). Its terms go in (the melody, levels, pitches, an envelope), the voice is its definition (an `is`
-       * wire, dotted), and its sound goes out into the mix. Not a cell: nothing to open, turn or switch off.
+       * decision 2), drawn as an unnamed gate (#234): its terms go in (the melody, levels, pitches, an envelope), its
+       * notes go out to its voice (an `is` wire), and the voice's sound goes on into the mix from the voice. Not a cell:
+       * nothing to open, turn or switch off.
        */
       readonly id: string;
       readonly kind: 'junction';
@@ -59,6 +58,10 @@ export type GraphNode =
       readonly voice: string;
       /** Its mix's tags (else its voice's): the cluster it is laid out in. */
       readonly tags: readonly string[];
+      /** What it plays, as a gate's meter draws it (#234): the term that starts its notes, its levels, its gain. */
+      readonly notes: string | null;
+      readonly levels: readonly string[];
+      readonly gain: number;
       readonly cell?: undefined;
       readonly petalOf?: undefined;
       readonly pan?: undefined;
@@ -115,6 +118,8 @@ export interface GraphEdge extends Wire {
    * of voices spliced into another (a braid wire of sound): the first voice it splices in.
    */
   readonly sound?: string;
+  /** A note wire out of a gate or a product's junction (#234): the cell whose notes it carries (its steps pulse along it). */
+  readonly notes?: string;
   /**
    * A wire at a product's junction stands for written pairs the routing knows (engine/routing.ts: the melody into its
    * voice, the voice into the mix): it is routed (and live) when, of each group, one of these is (`drawn`).
@@ -258,6 +263,8 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
     to: back ? source : target,
   });
   const chord = chordWidth(result);
+  /** Written pairs the routing knows that are drawn through a junction (its wires' `routes`). */
+  const through = new Set<string>();
   // What sounds: a wire out of it carries sound — into a tape, a read head, or spliced into a reader: a mix into the
   // sound card or a scope, a voice into a pattern of voices, and so on up (#238): a cell whose braid splices in
   // something that sounds sounds too (a pattern of voices spliced into another, &break &pat &pat[::-1])
@@ -396,6 +403,25 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
         link({ id: edgeId(id, cellId(child)), source: id, target: cellId(child), count, transforms: AS_IS, ...wire('midi', 'cv', id, cellId(child), 1, true) });
         continue;
       }
+      // a gate spliced in (`&out map=sample &drums`): its sound is the voices it plays, each in from its own wheel (#234)
+      const gate = result.cells.get(child);
+      if (gate?.gate && spliceBand(child) === 'audio') {
+        through.add(edgeId(id, cellId(child)));
+        for (const r of gateVoices(result, gate)) {
+          const v = cellId(r.name);
+          link({
+            id: edgeId(id, v),
+            source: id,
+            target: v,
+            count,
+            transforms: AS_IS,
+            sound: r.name,
+            routes: [[edgeId(cellId(r.via), cellId(child))], [edgeId(id, cellId(child))]],
+            ...wire('braid', 'audio', id, v, 1, true),
+          });
+        }
+        continue;
+      }
       link({
         id: edgeId(id, cellId(child)),
         source: id,
@@ -453,46 +479,47 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
   // melody that plays it, levels, pitches, an envelope, with what is written on it), the voice is its definition (`is`),
   // and its sound goes out into the mix. Into a sound card of two channels, a pair (L R).
   const junctions: GraphNode[] = [];
-  /** Written pairs the routing knows that are drawn through a junction (its wires' `routes`). */
-  const through = new Set<string>();
-  // a gate (trigger=, #234): a named junction, drawn as a node of its own — its trigger and velocity in on ports of
-  // their own, its receivers (the voices in its braid) as its braid; no junction for each of its products
-  const isGate = (c: ResolvedCell) => typeof c.params.trigger === 'string';
+  // a gate (play=, #234, decision 022): a named junction, drawn as a node of its own — its notes and levels in on ports
+  // of their own, its notes out to the voices it plays; no junction for each of its products
   for (const c of result.cells.values()) {
-    if (!isGate(c)) continue;
+    const g = c.gate;
+    if (!g) continue;
     const into = cellId(c.name);
-    const receivers = (c.mix ?? []).filter((b) => result.cells.has(b.voice.name));
+    const receivers = gateVoices(result, c);
     // (the written pairs the routing knows: each term into each voice it plays, each voice into the gate)
-    const flows = receivers.map((b) => edgeId(cellId(b.voice.name), into));
+    const flows = [...new Set(receivers.map((r) => edgeId(cellId(r.via), into)))];
     for (const f of flows) through.add(f);
-    for (const key of ['trigger', 'velocity', 'gate'] as const) {
-      const name = c.params[key];
-      if (typeof name !== 'string' || !result.cells.has(name)) continue;
-      const pairs = receivers.flatMap((b) => soundsOf(result, b.voice.name).map((v) => edgeId(cellId(name), cellId(v))));
+    for (const { name, port } of [{ name: g.notes, port: g.port as string }, ...g.levels]) {
+      if (!result.cells.has(name)) continue;
+      const pairs = receivers.flatMap((r) => soundsOf(result, r.via).map((v) => edgeId(cellId(name), cellId(v))));
       for (const id of pairs) through.add(id);
-      const b0 = receivers[0];
       link({
         id: edgeId(cellId(name), into),
         source: cellId(name),
         target: into,
         count: 1,
         transforms: AS_IS,
-        ...(b0 ? { sound: b0.voice.name } : {}),
+        ...(receivers[0] ? { sound: receivers[0].name } : {}),
         routes: [pairs, flows],
-        ...wire(key, 'cv', cellId(name), into, key === 'trigger' ? chord(name) : 1),
+        ...wire(port, 'cv', cellId(name), into, name === g.notes ? chord(name) : 1),
       });
     }
-    for (const b of receivers) {
-      const v = cellId(b.voice.name);
+    // its one output: a note bus to the voices it plays (a strand per note at once, its notes' chords), each voice
+    // reading its notes there; their sound leaves from the voices themselves (below, `product`), not from the gate
+    const notes = result.cells.has(g.notes) ? g.notes : null;
+    for (const r of receivers) {
+      const v = cellId(r.name);
+      const pairs = notes ? soundsOf(result, r.via).map((x) => edgeId(cellId(notes), cellId(x))) : [];
       link({
-        id: edgeId(v, into),
-        source: v,
-        target: into,
+        id: edgeId(into, v),
+        source: into,
+        target: v,
         count: 1,
         transforms: AS_IS,
-        sound: b.voice.name,
-        routes: [[edgeId(v, into)]],
-        ...wire('braid', 'none', v, into, 1, false, true),
+        sound: r.name,
+        ...(notes ? { notes } : {}),
+        routes: pairs.length ? [pairs, [edgeId(cellId(r.via), into)]] : [[edgeId(cellId(r.via), into)]],
+        ...wire('voice', 'cv', into, v, notes ? chord(notes) : 1),
       });
     }
   }
@@ -508,13 +535,32 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
     // (the routing's flow from the sound into the mix: flows.ts)
     const flow = edgeId(voice, into);
     const terms = b.pitches.filter((t) => result.cells.has(t.ref.name));
+    // a gate into a mix: its sound is the voices it plays, so each of them goes in, from its own wheel (the gate sends
+    // them notes, above); the written pairs are the voice into the gate and the gate into the mix
+    const gate = result.cells.get(b.voice.name)!;
+    if (!terms.length && port === 'mix' && gate.gate) {
+      through.add(flow);
+      for (const r of gateVoices(result, gate)) {
+        const v = cellId(r.name);
+        link({
+          id: edgeId(v, into),
+          source: v,
+          target: into,
+          count: 1,
+          transforms: gain,
+          sound: r.name,
+          routes: [[edgeId(cellId(r.via), voice)], [flow]],
+          ...wire(port, band, v, into, width),
+        });
+      }
+      return;
+    }
     if (!terms.length) {
       link({ id: flow, source: voice, target: into, count: 1, transforms: gain, ...wire(port, band, voice, into, width) });
       return;
     }
     const j = junctionId(c.name, entry);
     const tags = c.tags.length ? c.tags : (result.cells.get(b.voice.name)?.tags ?? []);
-    junctions.push({ id: j, kind: 'junction', depth: depthOf(b.voice.name), mix: c.name, entry, voice: b.voice.name, tags });
     through.add(flow);
     const sound = b.voice.name;
     // (the voices the routing plays it on: an instrument's own, a kit for a pattern read through one)
@@ -529,12 +575,28 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
         return o.id === at || o.id.startsWith(at + '@');
       });
     const starter = terms.find(startsAt) ?? terms.find((t) => result.outputs.some((o) => voices.includes(o.voice) && (o.tape?.head ?? o.cell) === t.ref.name && !o.gate));
+    // what each term is in the product: the one that starts notes, an envelope, a level, a pitch
+    const portOf = (name: string, inSum: boolean) => {
+      const c0 = result.cells.get(name)!;
+      return starter?.ref.name === name ? 'voice' : c0.map?.kind === 'adsr' ? 'env' : isLevel(c0, inSum) ? 'level' : 'pitch';
+    };
+    const levels = [...byTerm].flatMap(([name, ts]) => (portOf(name, !!ts[0].inSum) === 'level' ? [name] : []));
+    junctions.push({
+      id: j,
+      kind: 'junction',
+      depth: depthOf(b.voice.name),
+      mix: c.name,
+      entry,
+      voice: b.voice.name,
+      tags,
+      notes: starter?.ref.name ?? null,
+      levels,
+      gain: b.gain,
+    });
     for (const [name, ts] of byTerm) {
       const t = ts[0];
-      const c0 = result.cells.get(name)!;
-      // what the term is in the product: the one that starts notes, an envelope, a level, a pitch
       const lead = !!starter && starter.ref.name === name;
-      const port = lead ? 'voice' : c0.map?.kind === 'adsr' ? 'env' : isLevel(c0, !!t.inSum) ? 'level' : 'pitch';
+      const port = portOf(name, !!t.inSum);
       const pairs = voices.map((v) => edgeId(cellId(name), cellId(v)));
       for (const id of pairs) through.add(id);
       link({
@@ -557,12 +619,27 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
         ),
       });
     }
-    link({ id: edgeId(voice, j), source: voice, target: j, count: 1, transforms: AS_IS, sound, routes: [[flow]], ...wire('is', 'none', voice, j, 1, false, true) });
-    // (a product goes into one channel: one wire)
-    link({ id: edgeId(j, into), source: j, target: into, count: 1, transforms: gain, sound, routes: [[flow]], ...wire(port, band, j, into) });
+    // its notes out to its voice (the junction is the voice played: `is`), as wide as its notes at once; the voice's sound
+    // goes on into the mix from the voice's own wheel
+    const notesWidth = starter ? tines(result, b.voice.name) || chord(starter.ref.name) : 1;
+    link({
+      id: edgeId(j, voice),
+      source: j,
+      target: voice,
+      count: 1,
+      transforms: AS_IS,
+      sound,
+      ...(starter ? { notes: starter.ref.name } : {}),
+      routes: [[flow]],
+      ...wire('is', 'cv', j, voice, notesWidth),
+    });
+    // (one wire from a voice into a mix, however many of its products go in: its gain on it only when it is one)
+    const twins = (port === 'midi' ? (c.chords ?? []).flatMap((bs) => bs ?? []) : (c.mix ?? [])).filter((x) => x.voice.name === b.voice.name).length;
+    through.delete(flow);
+    link({ id: flow, source: voice, target: into, count: 1, transforms: twins > 1 ? AS_IS : gain, sound, routes: [[flow]], ...wire(port, band, voice, into) });
   };
   for (const c of result.cells.values()) {
-    if (!isGate(c)) (c.mix ?? []).forEach((b, entry) => product(c, b, entry, 'mix'));
+    if (!c.gate) (c.mix ?? []).forEach((b, entry) => product(c, b, entry, 'mix'));
     // (a MIDI card's products, numbered on from its own: their junctions are its entries)
     (c.chords ?? []).flatMap((bs) => bs ?? []).forEach((b, entry) => product(c, b, entry, 'midi'));
   }
@@ -587,6 +664,16 @@ export function buildGraph(result: CompileResult, opts: { readonly bulbs?: boole
 const isLevel = (c: ResolvedCell, inSum: boolean) => c.map?.kind === 'amp' || c.map?.kind === 'db' || (c.map?.kind === 'lin' && !inSum);
 
 /** The voices a mix's entry plays on (as compile expands it): an instrument's own, the kit a pattern is read through. */
+/**
+ * The voices a gate plays, as drawn (decision 022): each receiver it names, with the voice its product plays (`via`):
+ * the receiver itself, or the kit it made of several bare voices (declare.ts: gates).
+ */
+function gateVoices(result: CompileResult, c: ResolvedCell): { name: string; via: string }[] {
+  const vias = new Set((c.mix ?? []).map((b) => b.voice.name));
+  const kit = `${c.name}:kit`;
+  return (c.gate?.receivers ?? []).filter((r) => result.cells.has(r)).map((name) => ({ name, via: vias.has(name) ? name : vias.has(kit) ? kit : name }));
+}
+
 function soundsOf(result: CompileResult, name: string, guard = 0): string[] {
   const c = result.cells.get(name);
   if (c?.mix && !c.sink && guard < 16) return c.mix.flatMap((b) => soundsOf(result, b.voice.name, guard + 1));
@@ -660,7 +747,7 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
   const edges = allEdges.filter((e) => !hidden.has(e.source) && !hidden.has(e.target));
   const parentOf = new Map<string, string>();
   // a splice used once: a bulb on its host's track (#221)
-  const bulbs = withBulbs ? bulbsOf(result, nodes, edges) : new Map<string, string>();
+  const bulbs = withBulbs ? subWheels(result, nodes, edges) : new Map<string, string>();
   for (const [id, host] of bulbs) parentOf.set(id, host);
   for (const n of nodes) {
     if (n.kind === 'junction' || bulbs.has(n.id)) continue;
@@ -670,7 +757,7 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
       if (parent) parentOf.set(n.id, cellId(parent.name));
     } else if (effectiveShow(result, n.cell.name).show === 'petal') {
       // show=petal: hung from the cell that uses it (a voice: the mix it's in, or the mix of a product it is)
-      const product = nodes.find((j) => j.kind === 'junction' && edges.some((e) => e.source === n.id && e.target === j.id && e.port === 'is'));
+      const product = nodes.find((j) => j.kind === 'junction' && edges.some((e) => e.source === j.id && e.target === n.id && e.port === 'is'));
       const user =
         edges.find((e) => e.target === n.id && (e.port === 'braid' || e.port === 'over'))?.source ??
         edges.find((e) => e.source === n.id && (e.port === 'mix' || feeds(e)))?.target ??
@@ -686,8 +773,8 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
   // (a bulb its edges out leave from, by its node id: its name — a tap on its table, a read head on its tape)
   const tapBulb = (id: string) => {
     const name = id.slice('cell:'.length);
-    const host = result.cells.get(bulbs.get(id)?.slice('cell:'.length) ?? '');
-    return bulbs.has(id) && (result.taps?.get(name) !== undefined || (host && headOf(result, host, name))) ? name : undefined;
+    const host = bulbs.get(id)?.slice('cell:'.length);
+    return host && leavesFromBulb(result, host, name) ? name : undefined;
   };
   const out: GraphEdge[] = [];
   const pairs = new Set<string>();
@@ -728,104 +815,18 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
   const drawn = nodes.filter((n) => !bulbs.has(n.id)).map((n) => (n.kind !== 'junction' && parentOf.has(n.id) ? { ...n, petalOf: up(n.id) } : n));
   const names = (id: string) => id.slice('cell:'.length);
   const byName = new Map([...bulbs].map(([id, host]) => [names(id), names(host)]));
-  // (a braid's wheel is 128 px across, size= scaling it: ui/flownode.ts)
+  // (the room a host's bulbs take round its wheel, and where each bulb's edges leave from: subwheels.ts)
   const reached = drawn.map((n) => {
-    // (a gate: its receivers fanned over its top, #234)
-    if (n.kind === 'cell' && !n.petalOf && typeof n.cell.params.trigger === 'string') {
-      const room = gateRoom(128 * n.cell.size, (n.cell.mix ?? []).length);
-      return room ? { ...n, reach: { room, below: 0 } } : n;
-    }
-    // (a tape's head bulbs round its wheel: their room all round, whichever way the layout turns it — decision 021)
-    if (n.kind === 'cell' && !n.petalOf && drawnAsTape(n.cell) && [...byName.values()].includes(n.cell.name)) {
-      const h = headBulbs(n.cell, result.cells.values(), TAPE_SIZE * n.cell.size)[0];
-      const room = h ? h.dist + h.r - (TAPE_SIZE * n.cell.size) / 2 : 0;
-      return room ? { ...n, reach: { room, below: room } } : n;
-    }
-    if (n.kind !== 'cell' || n.petalOf || !isTrack(result, n)) return n;
-    const reach = trackRoom(result, n.cell.name, byName, 128 * n.cell.size);
+    const reach = n.kind === 'junction' ? null : reachOf(result, n, byName);
     return reach ? { ...n, reach } : n;
   });
-  // (a tap's sub-net leaves from its bulb: where that is on its table's wheel)
+  // (a braid's wheel is 128 px across, size= scaling it: ui/flownode.ts)
   const sizes = new Map(reached.map((n) => [n.id, n.kind === 'cell' ? 128 * n.cell.size : 0]));
-  // (a read head's, on its tape as it stands unturned: the layout turns it with the tape)
-  const headAt = (tape: string, head: string) => {
-    const host = result.cells.get(tape);
-    const h = host && headOf(result, host, head);
-    if (!h) return null;
-    const a = ((UNTURNED + h.offset) * Math.PI) / 180;
-    return { x: Math.cos(a) * h.dist, y: Math.sin(a) * h.dist, r: h.r };
-  };
   const anchored = out.map((e) => {
-    const at = e.bulb ? (headAt(names(e.from), e.bulb) ?? bulbHub(result, names(e.from), e.bulb, byName, sizes.get(e.from) ?? 128)) : null;
+    const at = e.bulb ? bulbAt(result, names(e.from), e.bulb, byName, sizes.get(e.from) ?? 128) : null;
     return at ? { ...e, bulbAt: at } : e;
   });
   return { nodes: reached, edges: anchored, nets: netsOf(reached, anchored), alias, bulbs: byName };
-}
-
-/** The shows that draw a cell as a track of steps in time (where a splice can be a bulb). */
-const TRACKS: ReadonlySet<string> = new Set(['braid', 'pattern', 'notes', 'midi', 'do', 'degrees']);
-
-/** A cell's node drawn as a track of steps (CellGlyph's braid): not a meter, a table, a mix, a scope, a plugin's wheel. */
-const isTrack = (result: CompileResult, n: GraphNode): boolean =>
-  // (a table of taps: its taps are bulbs on it, decision 016)
-  (n.kind === 'cell' && [...(result.taps?.values() ?? [])].includes(n.cell.name)) ||
-  (n.kind === 'cell' &&
-    !n.isMeter &&
-    !n.cell.root &&
-    !n.cell.scan &&
-    !n.cell.mix &&
-    !n.cell.kit &&
-    !n.cell.sink &&
-    !n.cell.note &&
-    typeof n.cell.params.scope !== 'string' &&
-    !pluginOf(result, n.cell.name) &&
-    TRACKS.has(effectiveShow(result, n.cell.name).show));
-
-/**
- * The splices drawn as bulbs (#221), by node id, each to its host's: a cell read by one edge only, a ref without a pick
- * or a delay (a tap, a canon's copy: a net), both it and the braid that splices it drawn as tracks; a tap of a meter's
- * bus, on its table (decision 016); a voice only a gate plays, on the gate (#234); a tape's read head that takes
- * nothing but the tape, on the tape (decision 021).
- */
-function bulbsOf(result: CompileResult, nodes: readonly GraphNode[], edges: readonly GraphEdge[]): Map<string, string> {
-  const byId = new Map(nodes.map((n) => [n.id, n]));
-  const reads = new Map<string, GraphEdge[]>();
-  for (const e of edges) reads.set(e.from, [...(reads.get(e.from) ?? []), e]);
-  const track = (n: GraphNode | undefined) => !!n && isTrack(result, n);
-  const out = new Map<string, string>();
-  for (const n of nodes) {
-    // a tap of a meter's bus: a bulb on its table (decision 016), whatever it steps leaving from there
-    const table = n.kind === 'cell' ? result.taps?.get(n.cell.name) : undefined;
-    if (table && byId.has(cellId(table))) {
-      out.set(n.id, cellId(table));
-      continue;
-    }
-    // a tape's read head that takes nothing but the tape: a bulb on it, where the head is (decision 021); not one the
-    // tape also records (a loop of its own: what it writes is an edge to draw)
-    const tape = n.kind === 'cell' && typeof n.cell.params.play === 'string' ? byId.get(cellId(n.cell.params.play)) : undefined;
-    if (
-      tape?.kind === 'cell' &&
-      n.kind === 'cell' &&
-      tape.cell.params.write !== n.cell.name &&
-      headOf(result, tape.cell, n.cell.name) &&
-      !edges.some((e) => e.to === n.id && e.from !== tape.id && e.port !== 'about')
-    ) {
-      out.set(n.id, tape.id);
-      continue;
-    }
-    const r = reads.get(n.id) ?? [];
-    if (r.length !== 1 || r[0].port !== 'braid' || r[0].transforms.some((t) => t.some((x) => x.kind === 'pick' || x.kind === 'delay'))) continue;
-    // a voice only a gate plays: a bulb on the gate's wheel (#234, the gate wheel)
-    const host = byId.get(r[0].to);
-    if (n.kind === 'voice' && host?.kind === 'cell' && typeof host.cell.params.trigger === 'string') out.set(n.id, r[0].to);
-    else if (track(n) && track(host)) out.set(n.id, r[0].to);
-  }
-  return out;
-}
-
-/** A read head of a tape drawn as a tape's wheel, at its size in the graph, if it is one drawn as a bulb there. */
-function headOf(result: CompileResult, tape: ResolvedCell, head: string) {
-  return drawnAsTape(tape) ? headBulbs(tape, result.cells.values(), TAPE_SIZE * tape.size).find((h) => h.name === head) : undefined;
 }
 
 const bulbMemo = new WeakMap<CompileResult, ReadonlyMap<string, string>>();

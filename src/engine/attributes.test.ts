@@ -52,7 +52,7 @@ describe('an attribute where it does nothing is a warning', () => {
   };
   test.each([
     ['swing= on a voice', '&t step=4 0 1' + tail.replace('s=saw', 's=saw swing=.6'), 'swing= acts on a meter (step= a rate): on &v it does nothing'],
-    ['level= off the sound card', '&t step=4 level=-3 0 1' + tail, 'level= acts on the sound card (map=sample): on &t it does nothing'],
+    ['level= off the sound card', '&t step=4 level=-3 0 1' + tail, 'level= acts on the sound card (map=sample) or a gate (play= with a braid): on &t it does nothing'],
     ['wow= without a motor', '&m step=90bpm wow=.01\n&t step=&m 0 1' + tail, 'wow= acts on a meter with a motor=: on &m it does nothing'],
     ['ratio= on a voice no fm= names', '&t step=4 0 1' + tail.replace('s=saw', 's=saw ratio=2'), 'ratio= acts on a voice another’s fm= names: on &v it does nothing'],
     ['title= on a cell that plays', '&t step=4 title="x" 0 1' + tail, 'title= acts on a note (a label= and nothing else): on &t it does nothing'],

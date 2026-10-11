@@ -265,10 +265,11 @@ describe('graph', () => {
     expect(g.edges.some((e) => e.source === vibrato.id || e.target === vibrato.id)).toBe(false);
     const ids = g.edges.map((e) => e.id);
     expect(ids).toContain('cell:theme->cell:scale');
-    // (the theme into the product it plays, the lead its voice, the product into the mix: no edge from the theme to the lead)
+    // (the theme into the product it plays, its notes to the lead, the lead's sound into the mix: no edge from the theme
+    // to the lead)
     expect(ids).toContain('cell:theme->junction:mix:0');
-    expect(ids).toContain('cell:lead->junction:mix:0');
-    expect(ids).toContain('junction:mix:0->cell:mix');
+    expect(ids).toContain('junction:mix:0->cell:lead');
+    expect(ids).toContain('cell:lead->cell:mix');
     expect(ids).not.toContain('cell:theme->cell:lead');
     expect(ids).toContain('cell:theme~>cell:bar');
     expect(ids).toContain('cell:scale->cell:key');
@@ -409,10 +410,10 @@ describe('stereo from two mixes', () => {
   it('draws voices into their mix (each product a junction), and the mix into the sound card', () => {
     const g = buildGraph(compileSource(PRESETS.pertonos.source));
     const ids = g.edges.map((e) => e.id);
-    expect(ids).toContain('cell:reed->junction:left:0');
-    expect(ids).toContain('junction:left:0->cell:left');
-    expect(ids).toContain('cell:cello->junction:right:2');
-    expect(ids).toContain('junction:right:2->cell:right');
+    expect(ids).toContain('junction:left:0->cell:reed');
+    expect(ids).toContain('cell:reed->cell:left');
+    expect(ids).toContain('junction:right:2->cell:cello');
+    expect(ids).toContain('cell:cello->cell:right');
     expect(ids).toContain('cell:out->cell:left');
   });
 });
@@ -789,11 +790,11 @@ describe('petals', () => {
     expect(petals.length).toBeGreaterThan(0);
     expect(g.edges.some((e) => petals.some((p) => p.id === e.source || p.id === e.target))).toBe(false);
     expect(intoProduct(g, 'theme', 'organ')).toBeDefined();
-    // an unnamed melody in a product (&( … ) * &v): drawn as its mix's petal; its wire into the product would repeat the
-    // product's own into the mix, so it is drawn as that one
+    // an unnamed melody in a product (&( … ) * &v): drawn as its mix's petal, its wire into the product from the mix
+    // (the product's notes go to the voice, whose sound goes into the mix: #234)
     const inPlace = buildGraph(compileSource('&m step=1\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&(step=&m 0 2) * &v]'));
     expect(inPlace.nodes.find((n) => n.petalOf)?.petalOf).toBe('cell:out');
-    expect(inPlace.edges.map((e) => e.id).sort()).toEqual(['cell:v->junction:out:0', 'junction:out:0->cell:out', 'cell:out->cell:m~'].sort());
+    expect(inPlace.edges.map((e) => e.id).sort()).toEqual(['cell:out->junction:out:0', 'junction:out:0->cell:v', 'cell:v->cell:out', 'cell:out->cell:m~'].sort());
     expect(g.edges.some((e) => e.source === e.target)).toBe(false);
   });
 });

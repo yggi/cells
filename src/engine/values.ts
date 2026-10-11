@@ -74,3 +74,23 @@ export function notesAt(result: CompileResult, statics: Shifts, name: string, t:
   const perStep = 1 / Math.max(1e-9, (result.clocks.get(c.clock!)?.perSecond ?? 1) * (c.clock === name ? 1 : c.rate));
   return r.hit.flat.filter((e) => r.s >= e.step && r.s < e.step + e.duration).map((e) => ({ value: e.value + e.alter, since: (r.s - e.step) * perStep }));
 }
+
+/**
+ * The note a cell sounds at real second t, or the last one it sounded before (its release may still be ringing): how
+ * long ago it began and how long it is (seconds), or null if it sounds none. For an envelope drawn live.
+ */
+export function lastNoteAt(result: CompileResult, statics: Shifts, name: string, t: number, clk?: Clocking): { since: number; length: number } | null {
+  const r = readAt(result, statics, name, t, clk);
+  if (!r) return null;
+  const c = result.cells.get(name)!;
+  const perStep = 1 / Math.max(1e-9, (result.clocks.get(c.clock!)?.perSecond ?? 1) * (c.clock === name ? 1 : c.rate));
+  const { flat, lap } = r.hit;
+  // (the latest onset at or before now, this lap or, wrapping, the last of the lap before)
+  let best: { step: number; duration: number } | null = null;
+  let ago = Infinity;
+  for (const e of flat) {
+    const d = (((r.s - e.step) % lap) + lap) % lap;
+    if (d < ago) [ago, best] = [d, e];
+  }
+  return best ? { since: ago * perStep, length: best.duration * perStep } : null;
+}
