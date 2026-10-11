@@ -59,6 +59,7 @@ export function velocityOf(e: Pick<Played, 'gains' | 'levels'>, gain = Math.max(
 const GM_DRUMS: Readonly<Record<string, number>> = {
   bd: 36,
   kick: 36,
+  kd: 36,
   rim: 37,
   rs: 37,
   sd: 38,

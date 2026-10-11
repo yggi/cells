@@ -8,34 +8,46 @@
 # melodies, a pattern of levels, a slow wobble
 &up 0 0 4 4 5 5 4@2
 &theme over=&mode step=&bar 0 2 [0,4] 7 4 2 [0,2,4]@2
-&tune over=scale(major) step=96bpm show=do &up &up
+&tune over=scale(major) step=96bpm show=do &up!2
 &walk over=&blues step=&walkBar 0 1 2 3
 &drone over=&alpha step=&droneBar*2 0 3 6
 &line step=96bpm show=notes 12 11 12@2 7@2 8@2
+&comp over=&mode step=&bar [0,2,4]@2 [1,3,5] [-1,1,4]
 &accent map=amp step=&bar/4 1 .4 .8 .4
 &vibrato map=lin loop=6 0 .3 0 -.3 0
 # voices
 &flute s=tri loop=C4 room=.3 env=&(map=adsr .02 .3 .5 .3)
 &lead s=tri loop=C5 env=&(map=adsr .01 .3 .4 .3)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02) lpf=3000..9000 * &(map=adsr 0 .03 0 .02)
+# a drum kit (its pieces by name) and a gate that plays it; a gate that plays chords on a chord of voices, one with no envelope
+&kd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
+&sd s=white env=&(map=adsr 0 .15 0 .05)
+&oh s=white hpf=6000 env=&(map=adsr 0 .3 0 .1)
+&kit &kd &sd &oh
+&beat step=&bar/2 0 1 0 2
+&drums play=&beat level=.5 &kit
+&bell s=sine loop=C6
+&pluck map=adsr .005 .3 0 .2
+&pad s=saw loop=C4 lpf=1800 env=&pluck
+&compOut play=&comp level=&accent*.3 [&bell, &pad]
 # two instruments, and the taps of the bar that switch them
 &leadA [&walk * &lead * .3]
 &leadB [&drone * &lead * .3]
 &parts step=&bar &walkBar &droneBar
 &tetris over=&parts step=&bar*32 [0,1] [1] [0]
-# a motor with a belt, a tape it turns, a fork that rings
+# a motor with a belt, a tape it turns; a kalimba, its tines on one board
 &capstan scan(1 1 1 1) step=96bpm motor=1.4 mass=1 friction=.1 wow=.015 varispeed=1
 &hats step=&capstan/2 belt=30 mass=1.5 ~ 0 ~ 0 ~ 0 ~ 0
 &motif over=&mode step=192bpm 0 ~ 4 ~ 7 ~!3 11 ~ 9
 &tape step=&capstan write=&motif length=6 erase=.45 varispeed=1
 &near play=&tape at=.375
-&hits step=24bpm 1 ~ ~ ~
-&forkA body=fork loop=A4 ring=10 hard=.35 board=none 0
+&plucks over=&kalimba step=&bar/2 0 2 4 ~ 3 1
+&kalimba body=tine loop=C5 ring=3 hard=.3 coupling=.06 0 2 4 7 9 12
 # the day (a day meter, drawn by a plugin of this piece: a ring and the time) and the law that reads it; a scope on the voice
 &day scan(1!24) loop=1d anchor=11.55 show=ring
 &cycle law=fiveto12 over=&day step=84bpm
 &light scope=spectrum &flute
-&out level=4 loop=SAMPLE_RATE map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&leadA, &leadB, &hits * &forkA * .5, &hats * &hh * .1]
+&out level=4 map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &compOut, &drums, &(step=&bar 0 4) * &flute * .1, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&leadA, &leadB, &plucks * &kalimba * .3, &hats * &hh * .1]
 
 # a MIDI card: the law's notes on the flute sent on channel 1 too, a note bus into it
 &synth map=midi [&cycle * &flute]

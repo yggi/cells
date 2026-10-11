@@ -812,7 +812,11 @@ function petals(result: CompileResult, allNodes: GraphNode[], allEdges: GraphEdg
   for (const e of allEdges) if (hidden.has(e.source) || hidden.has(e.target)) alias.set(e.id, undefined);
   const drawnIds = new Set(out.map((e) => e.id));
   for (const id of through) if (!drawnIds.has(id) && !alias.has(id)) alias.set(id, undefined);
-  const drawn = nodes.filter((n) => !bulbs.has(n.id)).map((n) => (n.kind !== 'junction' && parentOf.has(n.id) ? { ...n, petalOf: up(n.id) } : n));
+  // (an unnamed cell written on a voice's line, its envelope and its other modifiers, is drawn as part of the voice's
+  // wheel: no node of its own — layout/voice.ts)
+  const voices = new Set(nodes.flatMap((n) => (n.kind === 'voice' ? [n.id] : [])));
+  const inVoice = (n: GraphNode) => n.kind !== 'junction' && voices.has(parentOf.get(n.id) ?? '');
+  const drawn = nodes.filter((n) => !bulbs.has(n.id) && !inVoice(n)).map((n) => (n.kind !== 'junction' && parentOf.has(n.id) ? { ...n, petalOf: up(n.id) } : n));
   const names = (id: string) => id.slice('cell:'.length);
   const byName = new Map([...bulbs].map(([id, host]) => [names(id), names(host)]));
   // (the room a host's bulbs take round its wheel, and where each bulb's edges leave from: subwheels.ts)
