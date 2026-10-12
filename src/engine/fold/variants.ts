@@ -37,23 +37,26 @@ export const variants: Tool = (f: Folded) => {
 
   /** How a window compares with another: the steps that differ (null: too many, or not all steps there). */
   const compare = (p: At, q: At, n: number): { diff: boolean[]; by: number } | null => {
-    const a = lines[p.line];
-    const b = lines[q.line];
+    const a = lines[p.line]!;
+    const b = lines[q.line]!;
+    const ua = used[p.line]!;
+    const ub = used[q.line]!;
     if (p.i + n > a.length || q.i + n > b.length) return null;
     const most = CHANGES(n);
     // (shapes first: most places differ in a few steps, and stop there)
     let shapes = 0;
+    // (every step of both windows is there: checked above)
     for (let j = 0; j < n; j++) {
-      const x = a[p.i + j];
-      const y = b[q.i + j];
-      if (!isElement(x.key) || !isElement(y.key) || used[p.line][p.i + j] || used[q.line][q.i + j]) return null;
+      const x = a[p.i + j]!;
+      const y = b[q.i + j]!;
+      if (!isElement(x.key) || !isElement(y.key) || ua[p.i + j] || ub[q.i + j]) return null;
       if (x.key !== y.key && ++shapes > most) return null;
     }
     // the transposition: what most steps of the same shape agree on
     const votes = new Map<number, number>();
     for (let j = 0; j < n; j++) {
-      const x = a[p.i + j];
-      const y = b[q.i + j];
+      const x = a[p.i + j]!;
+      const y = b[q.i + j]!;
       if (x.key === y.key && x.base !== null && y.base !== null) votes.set(y.base - x.base, (votes.get(y.base - x.base) ?? 0) + 1);
     }
     let by = 0;
@@ -62,8 +65,8 @@ export const variants: Tool = (f: Folded) => {
     let changed = 0;
     const diff = new Array<boolean>(n);
     for (let j = 0; j < n; j++) {
-      const x = a[p.i + j];
-      const y = b[q.i + j];
+      const x = a[p.i + j]!;
+      const y = b[q.i + j]!;
       diff[j] = x.key !== y.key || (x.base === null) !== (y.base === null) || (x.base !== null && y.base! - x.base !== by);
       if (diff[j] && ++changed > most) return null;
     }
@@ -76,7 +79,7 @@ export const variants: Tool = (f: Folded) => {
     lines.forEach((toks, line) => {
       for (let i = 0; i + SEED <= toks.length; i++) {
         const w = toks.slice(i, i + SEED);
-        if (w.some((t, j) => !isElement(t.key) || used[line][i + j])) continue;
+        if (w.some((t, j) => !isElement(t.key) || used[line]![i + j])) continue;
         const b0 = w.find((t) => t.base !== null)?.base ?? 0;
         const key = w.map((t) => `${t.key}/${t.base === null ? '' : t.base - b0}`).join(' ');
         seeds.set(key, [...(seeds.get(key) ?? []), { line, i }]);
@@ -87,18 +90,18 @@ export const variants: Tool = (f: Folded) => {
     const found = new Map<string, { proto: At; n: number; score: number }>();
     for (const places of seeds.values()) {
       if (places.length < 2 || places.length > COMMON) continue;
-      const proto = places[0];
-      const a = lines[proto.line];
+      const proto = places[0]!;
+      const a = lines[proto.line]!;
       for (const q of places.slice(1)) {
         if (q.line === proto.line && q.i < proto.i + SEED) continue;
-        const b = lines[q.line];
+        const b = lines[q.line]!;
         const pitched = a.slice(proto.i, proto.i + SEED).findIndex((t) => t.base !== null);
-        const by = pitched < 0 ? 0 : b[q.i + pitched].base! - a[proto.i + pitched].base!;
+        const by = pitched < 0 ? 0 : b[q.i + pitched]!.base! - a[proto.i + pitched]!.base!;
         let n = SEED;
         let changed = 0;
         for (;;) {
           const [x, y] = [a[proto.i + n], b[q.i + n]];
-          if (!x || !y || !isElement(x.key) || !isElement(y.key) || used[proto.line][proto.i + n] || used[q.line][q.i + n]) break;
+          if (!x || !y || !isElement(x.key) || !isElement(y.key) || used[proto.line]![proto.i + n] || used[q.line]![q.i + n]) break;
           if (q.line === proto.line && proto.i + n + 1 > q.i) break;
           const differs = x.key !== y.key || (x.base === null) !== (y.base === null) || (x.base !== null && y.base! - x.base !== by);
           if (differs && changed + 1 > CHANGES(n + 1)) break;
@@ -130,11 +133,11 @@ export const variants: Tool = (f: Folded) => {
     };
     /** What writing a phrase once and its returns as it (or copies of it) saves, in characters. */
     const gainOf = (proto: At, n: number, returns: readonly { at: At; diff: boolean[]; by: number }[]) => {
-      const written = lines[proto.line].slice(proto.i, proto.i + n).reduce((m, t) => m + text(t), 0);
+      const written = lines[proto.line]!.slice(proto.i, proto.i + n).reduce((m, t) => m + text(t), 0);
       const cost = returns.reduce(
         (m, r) => {
           const changed = r.diff.filter(Boolean).length;
-          return m + (changed ? 22 + 6 * changed + lines[r.at.line].slice(r.at.i, r.at.i + n).reduce((k, t, j) => k + (r.diff[j] ? text(t) : 0), 0) : 9);
+          return m + (changed ? 22 + 6 * changed + lines[r.at.line]!.slice(r.at.i, r.at.i + n).reduce((k, t, j) => k + (r.diff[j] ? text(t) : 0), 0) : 9);
         },
         9 + written + 6,
       );
@@ -149,7 +152,7 @@ export const variants: Tool = (f: Folded) => {
         let pick: { proto: At; returns: { at: At; diff: boolean[]; by: number }[]; apart: number } | null = null;
         for (const o of [proto, ...returns.map((r) => r.at)]) {
           const p = { line: o.line, i: o.i + shift };
-          if (p.i < 0 || p.i + n > lines[p.line].length) continue;
+          if (p.i < 0 || p.i + n > lines[p.line]!.length) continue;
           const rs = returnsOf(p, n);
           const apart = rs.reduce((m, r) => m + r.diff.filter(Boolean).length, 0);
           if (!pick || rs.length > pick.returns.length || (rs.length === pick.returns.length && apart < pick.apart)) pick = { proto: p, returns: rs, apart };
@@ -182,14 +185,14 @@ export const variants: Tool = (f: Folded) => {
     if (!best) break;
     // the phrase as a cell, its returns as it or copies of it
     const { proto, n } = best;
-    const steps = lines[proto.line].slice(proto.i, proto.i + n);
+    const steps = lines[proto.line]!.slice(proto.i, proto.i + n);
     const base = steps.find((t) => t.base !== null)?.base ?? null;
     const kidsOf = (toks: readonly Tok[], b: number | null) => toks.map((t) => ({ key: t.key, off: t.base === null ? null : t.base - (b ?? 0) }));
     const phrase: Rule = { key: `s${next++}`, kids: kidsOf(steps, base) };
     rules.set(phrase.key, phrase);
     const replace: { at: At; tok: Tok }[] = [{ at: proto, tok: { key: phrase.key, base } }];
     for (const r of best.returns) {
-      const toks = lines[r.at.line].slice(r.at.i, r.at.i + n);
+      const toks = lines[r.at.line]!.slice(r.at.i, r.at.i + n);
       if (!r.diff.some(Boolean)) {
         replace.push({ at: r.at, tok: { key: phrase.key, base: base === null ? null : base + r.by } });
         continue;
@@ -201,10 +204,10 @@ export const variants: Tool = (f: Folded) => {
     }
     // (later places first, so earlier ones keep their indices)
     for (const { at, tok } of replace.sort((x, y) => y.at.line - x.at.line || y.at.i - x.at.i)) {
-      lines[at.line].splice(at.i, n, tok);
-      used[at.line].splice(at.i, n, true);
+      lines[at.line]!.splice(at.i, n, tok);
+      used[at.line]!.splice(at.i, n, true);
     }
     made++;
   }
-  return made ? { ...f, lines: f.lines.map((l, i) => ({ ...l, toks: lines[i] })), rules } : null;
+  return made ? { ...f, lines: f.lines.map((l, i) => ({ ...l, toks: lines[i]! })), rules } : null;
 };

@@ -93,7 +93,7 @@ function nameOf(raw: string | undefined, fallback: string): string {
     .replace(/[̀-ͯ]/g, '')
     .split(/[^A-Za-z0-9]+/)
     .filter(Boolean);
-  let name = words.map((w, i) => (i ? w[0].toUpperCase() + w.slice(1) : w[0].toLowerCase() + w.slice(1))).join('');
+  let name = words.map((w, i) => (i ? w[0]!.toUpperCase() + w.slice(1) : w[0]!.toLowerCase() + w.slice(1))).join('');
   if (!name || !/^[A-Za-z]/.test(name)) name = fallback;
   return name.slice(0, 24);
 }
@@ -120,7 +120,7 @@ function braidOf(chords: readonly Chord[], length: number): string {
   const rest = (n: number) => n > 0 && out.push(n === 1 ? '~' : `~@${n}`);
   for (const c of chords) {
     rest(c.at - now);
-    const v = c.values.length === 1 ? c.values[0] : `[${c.values.join(',')}]`;
+    const v = c.values.length === 1 ? c.values[0]! : `[${c.values.join(',')}]`;
     out.push(c.dur === 1 ? v : `${v}@${c.dur}`);
     now = c.at + c.dur;
   }
@@ -151,13 +151,13 @@ export function cellsFromMidi(smf: Smf, title: string, { free = true, shorten = 
   const lengths = Array.from({ length }, (_, k) => secondsAt(smf, (k + 1) * step) - secondsAt(smf, k * step));
   const counts = new Map<string, number>();
   for (const l of lengths) counts.set(short(l, 6), (counts.get(short(l, 6)) ?? 0) + 1);
-  const common = Number([...counts].sort((a, b) => b[1] - a[1])[0][0]);
+  const common = Number([...counts].sort((a, b) => b[1] - a[1])[0]![0]);
   const weights = lengths.map((l) => short(l / common));
   const runs: string[] = [];
   for (let k = 0; k < length;) {
     let n = 1;
     while (k + n < length && weights[k + n] === weights[k]) n++;
-    runs.push(n === 1 ? weights[k] : `${weights[k]}!${n}`);
+    runs.push(n === 1 ? weights[k]! : `${weights[k]}!${n}`);
     k += n;
   }
   // (the scan's steps are its weights against their mean: the bpm makes the whole as long as the file)
@@ -194,7 +194,8 @@ export function cellsFromMidi(smf: Smf, title: string, { free = true, shorten = 
       const dur = Math.max(1, at(n.end) - s);
       const token = p.drums ? `&${value}` : value;
       const layer = layers.find((l) => {
-        const last = l[l.length - 1];
+        // (a layer is never empty: made with its first chord)
+        const last = l[l.length - 1]!;
         return (last.at === s && last.dur === dur && !last.values.includes(token)) || last.at + last.dur <= s;
       });
       const last = layer?.[layer.length - 1];
@@ -206,7 +207,7 @@ export function cellsFromMidi(smf: Smf, title: string, { free = true, shorten = 
     if (!layers.length) continue;
     const voice = p.drums ? null : unique(`${p.name}Voice`);
     const names = layers.map(() => unique(p.name));
-    layers.forEach((chords, i) => lines.push({ name: names[i], chords, length }));
+    layers.forEach((chords, i) => lines.push({ name: names[i]!, chords, length }));
     if (voice) voices.push(`&${voice} s=tri loop=C4 env=&(map=adsr .005 .2 .6 .15)`);
     for (const n of names) mix.push(voice ? `&${n} * &${voice} * .25` : `&${n} * .4`);
   }

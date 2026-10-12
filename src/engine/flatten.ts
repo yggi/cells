@@ -14,7 +14,8 @@ import { isTap, positionOf, rootOf, shiftedUnits } from './helix';
 export function unitsFor(result: CompileResult, name: string, shifts: Shifts, pick: Pick | null, table?: string, extra = 0) {
   if (!pick) return shiftedUnits(result, name, shifts(name) + extra, table);
   const all = shiftedUnits(result, name, pick.abs ? 0 : shifts(name), table);
-  return (pickIndices(all.length, pick) ?? []).map((i) => all[i]);
+  // (a pick's indices are in range: pickIndices counts them over `all`)
+  return (pickIndices(all.length, pick) ?? []).map((i) => all[i]!);
 }
 
 /** Steps taken by a (picked) cell. */

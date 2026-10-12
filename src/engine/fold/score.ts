@@ -50,8 +50,8 @@ export function same(a: { key: number; at: number }[], b: { key: number; at: num
 }
 export function differ(a: { key: number; at: number }[], b: { key: number; at: number }[]): string {
   if (a.length !== b.length) return `${b.length} notes for ${a.length}`;
-  const keys = a.filter((n, i) => n.key !== b[i].key).length;
-  const late = a.reduce((m, n, i) => Math.max(m, Math.abs(n.at - b[i].at)), 0);
+  const keys = a.filter((n, i) => n.key !== b[i]!.key).length;
+  const late = a.reduce((m, n, i) => Math.max(m, Math.abs(n.at - b[i]!.at)), 0);
   return keys ? `${keys} keys` : late >= 0.01 ? `off by ${Math.round(late * 1000)} ms` : '';
 }
 
@@ -76,11 +76,11 @@ export function phrases(source: string): Map<string, string> {
     }
     const line = [...top.values()].sort((a, b) => a.step - b.step);
     if (line.length < PHRASE) continue;
-    const s0 = line[0].step;
+    const s0 = line[0]!.step;
     const rhythm = line.map((n) => `${+(n.step - s0).toFixed(4)}:${+n.duration.toFixed(4)}`).join(' ');
     const contour = line
       .slice(1)
-      .map((n, i) => Math.sign(n.value - line[i].value))
+      .map((n, i) => Math.sign(n.value - line[i]!.value))
       .join('');
     out.set(c.name, `${rhythm}|${contour}`);
   }

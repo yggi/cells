@@ -20,7 +20,7 @@ function runs(texts: readonly string[]): string {
   for (let i = 0; i < texts.length;) {
     let n = 1;
     while (i + n < texts.length && texts[i + n] === texts[i]) n++;
-    out.push(n === 1 ? texts[i] : `${texts[i]}!${n}`);
+    out.push(n === 1 ? texts[i]! : `${texts[i]}!${n}`);
     i += n;
   }
   return out.join(' ');
@@ -34,8 +34,8 @@ const braid = (toks: readonly Tok[], names: ReadonlyMap<string, string>): string
  * over the phrase's, `_` for each it keeps (`_!n`), the changed ones as they sound; nothing after the last change.
  */
 function variantText(v: Rule, phrase: Rule, names: ReadonlyMap<string, string>): string {
-  const j = v.kids.findIndex((k, i) => !v.patched![i] && k.off !== null && phrase.kids[i].off !== null);
-  const by = j < 0 ? 0 : v.kids[j].off! - phrase.kids[j].off!;
+  const j = v.kids.findIndex((k, i) => !v.patched![i] && k.off !== null && phrase.kids[i]!.off !== null);
+  const by = j < 0 ? 0 : v.kids[j]!.off! - phrase.kids[j]!.off!;
   const steps = v.kids.map((k, i) => (v.patched![i] ? tokText({ key: k.key, base: k.off }, names) : '_'));
   while (steps.length && steps[steps.length - 1] === '_') steps.pop();
   return `base=&${names.get(phrase.key) ?? phrase.key}${by ? `^$${by}` : ''} ${runs(steps)}`;
@@ -77,7 +77,7 @@ export function printFolded(f: Folded, prefix = 'm', clock = '&tempo'): { defs: 
     let k = 1;
     for (let d = 2; d <= look.pattern.length; d++) {
       const p = look.pattern.length / d;
-      if (Number.isInteger(p) && look.pattern.every((t, i) => t.key === look.pattern[i % p].key && t.base === look.pattern[i % p].base)) k = d;
+      if (Number.isInteger(p) && look.pattern.every((t, i) => t.key === look.pattern[i % p]!.key && t.base === look.pattern[i % p]!.base)) k = d;
     }
     const figure = braid(look.pattern.slice(0, look.pattern.length / k), names);
     if (!figures.has(figure)) {

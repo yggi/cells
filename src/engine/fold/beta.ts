@@ -16,7 +16,7 @@ function uses(f: Folded): Map<string, number[]> {
       if (isElement(t.key) || isLook(t.key)) return;
       const runs = n.get(t.key) ?? [];
       const prev = toks[i - 1];
-      if (prev && prev.key === t.key && prev.base === t.base) runs[runs.length - 1]++;
+      if (prev && prev.key === t.key && prev.base === t.base) runs[runs.length - 1]!++;
       else runs.push(1);
       n.set(t.key, runs);
     });

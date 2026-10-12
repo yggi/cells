@@ -40,6 +40,6 @@ export function elementText(key: string, base: number | null): string {
   const dur = Number(m[2]);
   const hold = dur === 1 ? '' : `@${dur}`;
   if (m[1] === 'r') return `~${hold}`;
-  const values = m[1] === 'd' ? m[3].split(',') : m[3].split(',').map((v) => String(Number(v) + (base ?? 0)));
+  const values = m[1] === 'd' ? m[3]!.split(',') : m[3]!.split(',').map((v) => String(Number(v) + (base ?? 0)));
   return `${values.length === 1 ? values[0] : `[${values.join(',')}]`}${hold}`;
 }

@@ -22,7 +22,7 @@ function commonest(lines: readonly (readonly Tok[])[]): { key: string; count: nu
     let last = '';
     let lastAt = -2;
     for (let i = 0; i + 1 < toks.length; i++) {
-      const k = pairOf(toks[i], toks[i + 1]).key;
+      const k = pairOf(toks[i]!, toks[i + 1]!).key;
       if (k === last && lastAt === i - 1) continue;
       counts.set(k, (counts.get(k) ?? 0) + 1);
       last = k;
@@ -54,13 +54,13 @@ export const pairs: Tool = (f: Folded) => {
       const out: Tok[] = [];
       for (let i = 0; i < toks.length; i++) {
         if (i + 1 < toks.length) {
-          const p = pairOf(toks[i], toks[i + 1]);
+          const p = pairOf(toks[i]!, toks[i + 1]!);
           if (p.key === best!.key) {
             rule ??= {
               key: name,
               kids: [
-                { key: toks[i].key, off: p.offA },
-                { key: toks[i + 1].key, off: p.offB },
+                { key: toks[i]!.key, off: p.offA },
+                { key: toks[i + 1]!.key, off: p.offB },
               ],
             };
             out.push({ key: name, base: p.base });
@@ -68,7 +68,7 @@ export const pairs: Tool = (f: Folded) => {
             continue;
           }
         }
-        out.push(toks[i]);
+        out.push(toks[i]!);
       }
       return out;
     });
@@ -76,6 +76,6 @@ export const pairs: Tool = (f: Folded) => {
     made++;
   }
   if (!made) return null;
-  inside.forEach((k, i) => rules.set(k, { key: k, kids: seqs[f.lines.length + i].map((t) => ({ key: t.key, off: t.base })) }));
-  return { lines: f.lines.map((l, i) => ({ ...l, toks: seqs[i] })), rules, looks: f.looks };
+  inside.forEach((k, i) => rules.set(k, { key: k, kids: seqs[f.lines.length + i]!.map((t) => ({ key: t.key, off: t.base })) }));
+  return { lines: f.lines.map((l, i) => ({ ...l, toks: seqs[i]! })), rules, looks: f.looks };
 };
