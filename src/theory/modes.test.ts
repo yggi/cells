@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MODES, agogic, even, midiOf, modeName, noteName, pitchHue } from './modes';
+import { MODES, agogic, even, midiOf, modeBrightness, modeName, noteName, pitchHue } from './modes';
 
 describe('even (Bresenham)', () => {
   it('walks the diatonic modes darkest → brightest as the phase rises', () => {
@@ -57,4 +57,15 @@ describe('noteName', () => {
   it('names frequencies, A4 = 440 Hz', () => {
     expect([440, 261.63, 65.41, 523.25, 55, 466.16, 27.5].map(noteName)).toEqual(['A4', 'C4', 'C2', 'C5', 'A1', 'B♭4', 'A0']);
   });
+});
+
+describe('modeBrightness', () => {
+  it('the major scale: Lydian (on its fourth) brightest, Locrian (on its seventh) darkest', () => {
+    const b = modeBrightness([0, 2, 4, 5, 7, 9, 11], 12);
+    expect(b.indexOf(1)).toBe(3);
+    expect(b.indexOf(0)).toBe(6);
+    // (Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian: by steps up from each)
+    expect(b.map((v) => +v.toFixed(3))).toEqual([0.833, 0.5, 0.167, 1, 0.667, 0.333, 0]);
+  });
+  it('all alike: half', () => expect(modeBrightness([0, 4, 8], 12)).toEqual([0.5, 0.5, 0.5]));
 });

@@ -117,6 +117,17 @@ export function intervals(positions: readonly number[], lap: number): number[] {
   return positions.map((p, i) => +((i + 1 < positions.length ? positions[i + 1]! : positions[0]! + lap) - p).toFixed(6));
 }
 
+/**
+ * How bright the mode that starts on each of a set's positions is, against the others': the sum of its steps up from
+ * there round the lap, scaled 0 (darkest: Locrian of the major scale's seven) … 1 (brightest: Lydian); all 0.5 when
+ * they are alike.
+ */
+export function modeBrightness(positions: readonly number[], lap: number): number[] {
+  const sums = positions.map((p) => positions.reduce((sum, q) => sum + mod(q - p, lap), 0));
+  const [lo, hi] = [Math.min(...sums), Math.max(...sums)];
+  return sums.map((v) => (hi > lo ? (v - lo) / (hi - lo) : 0.5));
+}
+
 /** A scan: running totals from 0 (the positions), and their sum (the lap). */
 export function scan(steps: readonly number[]): { positions: number[]; lap: number } {
   const positions: number[] = [];
