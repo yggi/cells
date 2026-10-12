@@ -19,6 +19,7 @@
 import { secondsAt, type Smf, type SmfNote } from './midifile';
 import { fold, printFolded, type Chord, type Line, type Stage } from './fold';
 import type { Folded } from './fold/ir';
+import { bestKey, inDegrees, keyName, scaleText } from './fold/degrees';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -36,6 +37,8 @@ export interface Imported {
   readonly dropped: number;
   /** Folded (engine/fold): what comes back written as cells of its own; else every note written out. */
   readonly folded: boolean;
+  /** Folded in degrees of this key (`C minor`), its lines reading through it (#344); null: in semitones. */
+  readonly inKey: string | null;
 }
 
 /** Steps a quarter the grid may have, coarsest first. */
@@ -133,7 +136,7 @@ function braidOf(chords: readonly Chord[], length: number): string {
  * A MIDI file as a piece's source: every note it plays, flat; `shorten`, folded (engine/fold) where that plays the same
  * and is shorter. `free`: its tempo a slider (else fixed). `watch`: the fold as it runs, each move the piece as it is
  * by then (a thunk: printed only if wanted), the last the fold taken (`done`; the piece returned is that, or the flat
- * one where the fold doesn't play the same). `credit`: lines said as comments under the card (where the file came from).
+ * one where the fold doesn't play the same). `credit`: lines said as comments under the card (where the file came from). `pitches`: folded in semitones, in degrees of the piece's key (#344), or both and the shorter taken (`auto`).
  */
 export function cellsFromMidi(
   smf: Smf,
@@ -142,8 +145,15 @@ export function cellsFromMidi(
     free = true,
     shorten = false,
     credit = [],
+    pitches = 'auto',
     watch,
-  }: { free?: boolean; shorten?: boolean; credit?: readonly string[]; watch?: (source: () => string, stage: Stage) => void } = {},
+  }: {
+    free?: boolean;
+    shorten?: boolean;
+    credit?: readonly string[];
+    pitches?: 'auto' | 'semitones' | 'degrees';
+    watch?: (source: () => string, stage: Stage) => void;
+  } = {},
 ): Imported {
   // the parts: a track's notes by channel
   const parts: { name: string; drums: boolean; notes: SmfNote[] }[] = [];
@@ -250,7 +260,10 @@ export function cellsFromMidi(
   );
   let source = flat;
   let folded = false;
+  let inKey: string | null = null;
   if (shorten && lines.length) {
+    // (a move of a fold is told with which fold it is; each fold's end is `folded`, the one taken `done`, below)
+    const label = (tool: string, round: number, how: string) => (tool === 'done' ? 'folded' : round ? `${tool}, ${how}` : tool);
     // (the folder, engine/fold: its symbols as cells above the lines; taken only if it plays the same notes, and is shorter)
     const printed = (f: Folded) => {
       const { defs, lines: braids, scales } = printFolded(f);
@@ -265,10 +278,51 @@ export function cellsFromMidi(
         'folded (engine/fold)',
       );
     };
-    const candidate = printed(fold(lines, watch && ((now, stage) => watch(() => printed(now()), stage))));
-    if (candidate.length < flat.length && sameNotes(flat, candidate)) [source, folded] = [candidate, true];
+    const candidates: { source: string; key: string | null }[] = [];
+    if (pitches !== 'degrees')
+      candidates.push({
+        source: printed(fold(lines, watch && ((now, stage) => watch(() => printed(now()), { ...stage, tool: label(stage.tool, stage.round, 'in semitones') })))),
+        key: null,
+      });
+    // and in degrees of the piece's key (#344): a sequence, a step of the scale higher each time, is one phrase moved
+    const key = bestKey(lines);
+    if (pitches !== 'semitones' && key && lines.some((l) => l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))))) {
+      const name = unique('key');
+      const printedIn = (f: Folded) => {
+        const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^');
+        return write(
+          [
+            `# the key: the lines read through it, a note its degree (0 the tonic; 6# the seventh raised a semitone)`,
+            `&${name} ${scaleText(key)}`,
+            '',
+            '# what comes back, as cells of its own (a phrase, a phrase made of phrases, …); ^n: n degrees up',
+            ...defs,
+            '',
+            `# every note, a line a track; melodies as degrees of ${keyName(key)}`,
+            ...lines.map(
+              (l) =>
+                `&${l.name} step=&tempo${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`}${l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))) ? ` over=&${name}` : ''} ${braids.get(l.name)}`,
+            ),
+          ],
+          `folded in degrees of ${keyName(key)} (engine/fold)`,
+        );
+      };
+      const tune = inDegrees(lines, key);
+      const folds = fold(tune, watch && ((now, stage) => watch(() => printedIn(now()), { ...stage, tool: label(stage.tool, stage.round, `in degrees of ${keyName(key)}`) })), {
+        degrees: true,
+      });
+      candidates.push({ source: printedIn(folds), key: keyName(key) });
+    }
+    // (the shorter first; each taken only if it is shorter than the notes written out and plays them)
+    for (const c of candidates.sort((a, b) => a.source.length - b.source.length))
+      if (c.source.length < flat.length && sameNotes(flat, c.source)) {
+        [source, folded, inKey] = [c.source, true, c.key];
+        break;
+      }
+    const taken = source;
+    watch?.(() => taken, { tool: 'done', round: 0 });
   }
-  return { source, notes: count, lines: lines.length, perQuarter, moved, dropped, folded };
+  return { source, notes: count, lines: lines.length, perQuarter, moved, dropped, folded, inKey };
 }
 
 /** Do two sources play the same notes (keys, starts and lengths within a millisecond)? */

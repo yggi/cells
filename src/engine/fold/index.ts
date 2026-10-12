@@ -52,9 +52,9 @@ export interface Stage {
 /** Watches a fold: each move as it's made, the lines as they are by then (a thunk), and where it is. */
 type Watch = (now: () => Folded, stage: Stage) => void;
 
-/** The characters the folded lines print as. */
-const sizeOf = (f: Folded) => {
-  const { defs, lines } = printFolded(f);
+/** The characters the folded lines print as (`caret`: how a symbol moves, `^$` semitones or `^` degrees). */
+const sizeOf = (f: Folded, caret: string) => {
+  const { defs, lines } = printFolded(f, 'm', '&tempo', caret);
   return [...defs, ...lines.values()].reduce((n, s) => n + s.length + 1, 0);
 };
 
@@ -63,11 +63,11 @@ const sizeOf = (f: Folded) => {
 const STRUCTURE = 1.15;
 
 /** Lines folded by a set of tools, round after round while the printed piece gets shorter. */
-function run(lines: readonly Line[], tools: readonly Tool[], watch?: Watch): { f: Folded; size: number } {
+function run(lines: readonly Line[], tools: readonly Tool[], caret: string, watch?: Watch): { f: Folded; size: number } {
   let f: Folded = { lines: lines.map((l) => ({ name: l.name, toks: tokensOf(l) })), rules: new Map() };
   const start = f;
   watch?.(() => start, { tool: 'start', round: 0 });
-  let size = sizeOf(f);
+  let size = sizeOf(f, caret);
   for (let round = 0; round < 8; round++) {
     let next = f;
     for (const tool of tools) {
@@ -79,7 +79,7 @@ function run(lines: readonly Line[], tools: readonly Tool[], watch?: Watch): { f
         see?.(() => made);
       }
     }
-    const s = sizeOf(next);
+    const s = sizeOf(next, caret);
     if (s >= size) break;
     [f, size] = [next, s];
   }
@@ -89,13 +89,17 @@ function run(lines: readonly Line[], tools: readonly Tool[], watch?: Watch): { f
 /**
  * Lines folded: their tokens and the symbols they share, as short as the tools make them — with variants where they
  * cost little (`STRUCTURE`), else without. Watched (`watch`): the fold with variants, each move as it's made, then the
- * one taken (`done`).
+ * one taken (`done`). `degrees`: the lines' values are degrees of a scale (`6#`: a degree and its accidental, #344), a
+ * symbol moves by degrees (`&m^2`), and figurations aren't looked for (their tables are chords in semitones).
  */
-export function fold(lines: readonly Line[], watch?: Watch): Folded {
-  const said = run(lines, TOOLS, watch);
+export function fold(lines: readonly Line[], watch?: Watch, { degrees = false }: { degrees?: boolean } = {}): Folded {
+  const caret = degrees ? '^' : '^$';
+  const tools = degrees ? TOOLS.filter((t) => t !== figure) : TOOLS;
+  const said = run(lines, tools, caret, watch);
   const plain = run(
     lines,
-    TOOLS.filter((t) => t !== variants),
+    tools.filter((t) => t !== variants),
+    caret,
   );
   const f = said.size <= plain.size * STRUCTURE ? said.f : plain.f;
   watch?.(() => f, { tool: 'done', round: 0 });

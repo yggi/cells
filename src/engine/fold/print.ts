@@ -6,12 +6,13 @@
 import type { Folded, Rule, Tok } from './ir';
 import { elementText, isElement, isLook } from './transpose';
 
-/** A token as braid text at its base: an element, or a symbol or a figuration spliced (`&s3`, `&s3^$-5`). */
-export function tokText(t: Tok, names: ReadonlyMap<string, string>): string {
+/** A token as braid text at its base: an element, or a symbol or a figuration spliced (`&s3`, `&s3^$-5`; in degrees,
+ * `caret` `^`: `&s3^2`). */
+export function tokText(t: Tok, names: ReadonlyMap<string, string>, caret = '^$'): string {
   if (isElement(t.key)) return elementText(t.key, t.base);
   if (isLook(t.key)) return `&${names.get(t.key) ?? t.key}`;
   const name = names.get(t.key) ?? t.key;
-  return t.base ? `&${name}^$${t.base}` : `&${name}`;
+  return t.base ? `&${name}${caret}${t.base}` : `&${name}`;
 }
 
 /** Texts as a braid, a run of one written `x!n`. */
@@ -27,18 +28,18 @@ function runs(texts: readonly string[]): string {
 }
 
 /** Tokens as a braid: their texts, a run of one written `x!n`. */
-const braid = (toks: readonly Tok[], names: ReadonlyMap<string, string>): string => runs(toks.map((t) => tokText(t, names)));
+const braid = (toks: readonly Tok[], names: ReadonlyMap<string, string>, caret = '^$'): string => runs(toks.map((t) => tokText(t, names, caret)));
 
 /**
  * A variant as a copy of its phrase (decision 026): `base=&m1` (`^$n` where its own base sits elsewhere), then its steps
  * over the phrase's, `=` for each it keeps (`=!n`), the changed ones as they sound; nothing after the last change.
  */
-function variantText(v: Rule, phrase: Rule, names: ReadonlyMap<string, string>): string {
+function variantText(v: Rule, phrase: Rule, names: ReadonlyMap<string, string>, caret: string): string {
   const j = v.kids.findIndex((k, i) => !v.patched![i] && k.off !== null && phrase.kids[i]!.off !== null);
   const by = j < 0 ? 0 : v.kids[j]!.off! - phrase.kids[j]!.off!;
-  const steps = v.kids.map((k, i) => (v.patched![i] ? tokText({ key: k.key, base: k.off }, names) : '='));
+  const steps = v.kids.map((k, i) => (v.patched![i] ? tokText({ key: k.key, base: k.off }, names, caret) : '='));
   while (steps.length && steps[steps.length - 1] === '=') steps.pop();
-  return `base=&${names.get(phrase.key) ?? phrase.key}${by ? `^$${by}` : ''} ${runs(steps)}`;
+  return `base=&${names.get(phrase.key) ?? phrase.key}${by ? `${caret}${by}` : ''} ${runs(steps)}`;
 }
 
 /** A symbol's children as tokens at their offsets (its base 0). */
@@ -48,8 +49,9 @@ export const kidsOf = (r: Rule): Tok[] => r.kids.map((k) => ({ key: k.key, base:
  * The folded lines as cells: the symbols in the order they are first used (each before the lines, named `prefix`1, 2 …
  * in that order), each figuration as its figure (one cell for figures alike), its table stepped a block at a time on
  * `clock` and the run reading it, and each line's braid and its clock (a step every k grid steps: `step=&tempo/k`).
+ * `caret`: how a symbol moves, `^$` semitones (the grid) or `^` degrees (lines folded over a scale).
  */
-export function printFolded(f: Folded, prefix = 'm', clock = '&tempo'): { defs: string[]; lines: Map<string, string>; scales: Map<string, number> } {
+export function printFolded(f: Folded, prefix = 'm', clock = '&tempo', caret = '^$'): { defs: string[]; lines: Map<string, string>; scales: Map<string, number> } {
   const order: string[] = [];
   const seen = new Set<string>();
   const visit = (toks: readonly Tok[]) => {
@@ -66,7 +68,7 @@ export function printFolded(f: Folded, prefix = 'm', clock = '&tempo'): { defs: 
   const names = new Map(order.map((k, i) => [k, `${prefix}${i + 1}`]));
   const defs = order.map((k) => {
     const r = f.rules.get(k)!;
-    return `&${names.get(k)} ${r.of ? variantText(r, f.rules.get(r.of)!, names) : braid(kidsOf(r), names)}`;
+    return `&${names.get(k)} ${r.of ? variantText(r, f.rules.get(r.of)!, names, caret) : braid(kidsOf(r), names, caret)}`;
   });
   // the figurations: a figure cell for each figure, a table and a run for each
   const figures = new Map<string, string>();
@@ -94,5 +96,5 @@ export function printFolded(f: Folded, prefix = 'm', clock = '&tempo'): { defs: 
     names.set(key, `run${n}`);
     defs.push(`&run${n} over=&${table} &${figures.get(figure)}!${look.chords.length * k}`);
   }
-  return { defs, lines: new Map(f.lines.map((l) => [l.name, braid(l.toks, names)])), scales: new Map(f.lines.map((l) => [l.name, l.scale ?? 1])) };
+  return { defs, lines: new Map(f.lines.map((l) => [l.name, braid(l.toks, names, caret)])), scales: new Map(f.lines.map((l) => [l.name, l.scale ?? 1])) };
 }

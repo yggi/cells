@@ -111,6 +111,26 @@ MIDI library, and its ratchet (`ratchet.midi.json`). Folded as today's folder do
 - The minuets fold little (Anh. 114: 92 %) because their repeats are played once in Mutopia's files (LilyPond writes
   a repeat once unless it is unfolded): a dance's form is mostly in its repeats.
 
+## Degrees (#344, decision 033)
+
+`degrees.ts` writes the lines in degrees of the piece's key (the scale of the twelve tonics × major, minor, harmonic minor
+whose accidentals over the notes are fewest; a tie to the tonic the bass ends on), each note its degree and accidental
+(`6#`). The tokens carry the accidental in their key (`n2:0,2#`), so a phrase compares a degree apart and moves by
+`^n`, its accidentals with it. `cellsFromMidi` folds both spellings and keeps the shorter that plays the same
+(`pitches: 'auto'`; `'semitones'`, `'degrees'` for a probe). Figures are looked for in semitones only.
+
+- **The examples through MIDI: 55,974 → 51,810 characters (−7.4 %), phrases back 62 → 67**, notes kept by the same
+  64. Korobeiniki 1,949 → 1,043, Zell 1,342 → 733, Cellscape 3,043 → 1,824, Pop 819 → 640: pieces written in degrees
+  come back in degrees.
+- **The WTC: 120,755 → 118,353 (−2.0 %)**, every fold taken; 13 of the 37 come out shorter in degrees (the C major and
+  C♯ major fugues, the D♯ minor fugue, the E minor prelude …), 23 in semitones, one the same (the chromatic B minor
+  fugue is 18 % longer in degrees). The keys found are mostly the pieces' own (A minor for the A minor fugue, B minor
+  for the B minor); the F minor fugue comes out in E♭ major, its accidentals fewest there.
+- **The Inventions and Sinfonias: 57,672 → 56,917 (−1.3 %); Anna Magdalena unchanged (16,160).** The whole MIDI
+  library 194,587 → 191,430, the same 81 folds taken.
+- Why not more on the WTC: a fugue's voices sit in two hands' lines, mixed into chords (the WTC run above), and its
+  modulations need accidentals in one key for the piece (option 3a). A key per section (#346) is the next measure.
+
 ## What was tried and left out (measured on seven pieces)
 
 - **Repeats as a tool of their own** (a block k times in a row, `&r!k`), before pairs: Pachelbel 3,309 → 7,951,
@@ -124,9 +144,7 @@ MIDI library, and its ratchet (`ratchet.midi.json`). Folded as today's folder do
 
 ## Next (step 5 and after)
 
-- **Degrees** (the WTC run): Bach's sequences come back a step of the scale higher, not a fixed number of semitones, so
-  `^$k` misses them. Lines over the key's scale (`over=scale(minor, C)`) would fold a sequence as `&m^1`, but a note
-  outside the scale needs a way to be written there (a chromatic step over a degree table).
+- **Degrees**: done (above, #344); next, a key per section (#346) where a piece modulates.
 - **Lengths**: a quarter of what's written out is `@n`; a phrase at half speed inside a line (below) is half of it.
 
 - **Variants' cost**: 8.1 s for the library against 2.8 s; folding twice and the search per round are where it goes.

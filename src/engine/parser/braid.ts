@@ -15,9 +15,9 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   ),
   syntax(
     'step',
-    'n# · nb',
-    'A number with accidentals: one step up (#) or down (b) on the grid below the table it reads — 6# over a scale is its 7th degree raised a semitone.',
-    ['&tune over=&major step=2 0 4 6# 7 3b'],
+    'n# · nb · ns · nf',
+    'A number with accidentals: one step up (# or s) or down (b or f) on the grid below the table it reads — 6# over a scale is its 7th degree raised a semitone; s and f are Strudel’s spelling of the same, mixed and repeated as it allows (6s, 2sb).',
+    ['&tune over=&major step=2 0 4 6# 7 3b', '&tune over=&major step=2 0 4 6s 7 3f'],
     'tables.md',
   ),
   syntax('step', 'n/d', 'A fraction: 9/8, 3/2 (the ratios of a map=ratios grid).', ['&just map=ratios 1 9/8 5/4 3/2 2'], 'tuning.md'),
@@ -133,7 +133,10 @@ function parseAtom(s: LineScanner, depth: number): Atom {
   }
   if (c === '-' || c === '.' || (c >= '0' && c <= '9')) {
     const n = s.num('a number');
-    return { kind: 'note', value: n.value, alter: n.alter };
+    // (Strudel's other spelling of an accidental on a degree: s a sharp, f a flat, mixed with # and b: `6s`, `7f`)
+    const more = s.match(/[#bsf]+(?![A-Za-z0-9_])/y) ?? '';
+    const alter = n.alter + [...more].reduce((a, ch) => a + (ch === '#' || ch === 's' ? 1 : -1), 0);
+    return { kind: 'note', value: n.value, alter };
   }
   // a note by name: a pitch, whatever the tables (C, F#, Bb3; octave 4 left out)
   const name = s.noteName();

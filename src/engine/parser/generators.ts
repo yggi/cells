@@ -243,6 +243,14 @@ function parseSin(s: LineScanner, start: number): Braid {
 
 /** A tonic as a note name: C, F#, Bb (a pitch class). */
 const TONICS: Readonly<Record<string, number>> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+/** Strudel's (tonal's) names for the scales that ours spell in one word. */
+const STRUDEL_NAMES: Readonly<Record<string, string>> = {
+  'harmonic minor': 'harmonic',
+  'melodic minor': 'melodic',
+  'major pentatonic': 'pentatonic',
+  'minor pentatonic': 'minorpentatonic',
+  'whole tone': 'wholetone',
+};
 const tonicName = (pc: number) => ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][((pc % 12) + 12) % 12];
 
 /**
@@ -259,7 +267,27 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
   let tonic = 0;
   let tonicText = '0';
   const legacy = s.match(/-?[0-9]+/y);
-  if (legacy !== null) {
+  const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
+  if (quoted !== null) {
+    // Strudel's spelling (decision 027): "D:minor", "F#:harmonic:minor", the tonic first, the name's words after colons
+    const m = /^"([A-G](?:#|b)?)([0-9]*)((?::[a-z]+)+)"$/.exec(quoted);
+    if (!m) s.fail('scale("tonic:name"): a tonic and a scale\'s name, as in Strudel — scale("D:minor"), scale("F#:harmonic:minor")', start, s.i - start);
+    if (m![2]) s.fail(`scale("${m![1]}${m![2]}:…"): the octave is the voice's (loop=), not the scale's: scale("${m![1]}${m![3]}")`, start, s.i - start);
+    const name = STRUDEL_NAMES[m![3]!.slice(1).replace(/:/g, ' ')] ?? m![3]!.slice(1).replace(/:/g, '');
+    const scale = SCALES[name];
+    if (!scale)
+      s.fail(
+        `scale("…${m![3]}"): a scale by name — ${Object.keys(SCALES).join(' ')}, or Strudel's harmonic:minor, melodic:minor, major:pentatonic, minor:pentatonic, whole:tone`,
+        start,
+        s.i - start,
+      );
+    steps = [...scale!.steps];
+    const note = m![1]!;
+    tonic = (((TONICS[note[0]!]! + (note[1] === '#' ? 1 : note[1] === 'b' ? -1 : 0)) % 12) + 12) % 12;
+    tonicText = String(tonic);
+    s.skipSpace();
+    s.expect(')', "')' to close scale(…)");
+  } else if (legacy !== null) {
     // scale(tonic, phase): the mode by its number, darkest first
     s.skipSpace();
     s.expect(',', "',' then the mode — better by name: scale(minor, A)");
@@ -378,9 +406,9 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     parse: (s, start) => s.fail('scale(…) is read by its cell', start, 5),
     syntax: syntax(
       'generator',
-      'scale(name) · scale(name, tonic)',
-      `A scale by name over the 12, turned to its tonic (a note name, a number or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}.`,
-      ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))'],
+      'scale(name) · scale(name, tonic) · scale("tonic:name")',
+      `A scale by name over the 12, turned to its tonic (a note name, a number or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")); the octave is the voice's, not the scale's.`,
+      ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))', '&scale scale("F#:harmonic:minor")'],
       'tables.md',
     ),
   },

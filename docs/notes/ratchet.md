@@ -9,7 +9,9 @@ structure (fold.md): 74 pieces, notes kept by 64, the score 56,125 characters, *
 `shortenAll` 58). After the run on the WTC ([fold.md](fold.md#the-wtc-run-333)): the score 55,974, phrases back 62; and
 the MIDI library has a ratchet of its own (`src/engine/fold/midi.test.ts`, `ratchet.midi.json`): 37 files, every fold
 taken, the score 120,755. With the Inventions and Sinfonias and the Anna Magdalena Notebook (fold.md): 86 files, 81
-folds taken, the score 194,587.
+folds taken, the score 194,587. Folding in degrees too (decision 033): the examples 51,810, phrases back 67;
+the MIDI library 191,430 (the WTC 118,353, the Inventions and Sinfonias 56,917, Anna Magdalena 16,160), 81 folds
+taken.
 
 `tools/probe/ratchet.test.ts` takes every example the way a MIDI file comes into the app (saved as MIDI and opened
 again: `pieceMidi` → `writeMidi` → `readMidi` → `cellsFromMidi`), folds it with today's Shorten (`shortenAll`), and scores

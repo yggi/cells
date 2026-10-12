@@ -5,15 +5,22 @@
  */
 import type { Chord, Line, Tok } from './ir';
 
-/** An element's key: a rest `r<dur>`, drums `d<dur>:&bd,&hh`, a chord `n<dur>:0,4,7` (above its base). */
+/** An element's key: a rest `r<dur>`, drums `d<dur>:&bd,&hh`, a chord `n<dur>:0,4,7` (above its base; in degrees, each
+ * with its accidental, `n2:0,2#`, which moves with it). */
 const restKey = (dur: number) => `r${dur}`;
+
+/** A value: a number and its accidental (`6#`, `-2b`: degrees over a table), or null for a drum (`&bd`). */
+const pitchOf = (v: string): { n: number; acc: string } | null => {
+  const m = /^(-?\d+)([#b]*)$/.exec(v);
+  return m ? { n: Number(m[1]), acc: m[2]! } : null;
+};
 
 /** A chord as a token: its shape and its base. */
 function chordTok(c: Chord): Tok {
-  const nums = c.values.map(Number);
-  if (nums.some((v) => !Number.isFinite(v))) return { key: `d${c.dur}:${[...c.values].sort().join(',')}`, base: null };
-  const base = Math.min(...nums);
-  return { key: `n${c.dur}:${nums.map((v) => v - base).join(',')}`, base };
+  const ps = c.values.map(pitchOf);
+  if (ps.some((p) => p === null)) return { key: `d${c.dur}:${[...c.values].sort().join(',')}`, base: null };
+  const base = Math.min(...ps.map((p) => p!.n));
+  return { key: `n${c.dur}:${ps.map((p) => `${p!.n - base}${p!.acc}`).join(',')}`, base };
 }
 
 /** A line as tokens: its chords, the rests between them, and the rest to its end. */
@@ -40,6 +47,12 @@ export function elementText(key: string, base: number | null): string {
   const dur = Number(m[2]);
   const hold = dur === 1 ? '' : `@${dur}`;
   if (m[1] === 'r') return `~${hold}`;
-  const values = m[1] === 'd' ? m[3]!.split(',') : m[3]!.split(',').map((v) => String(Number(v) + (base ?? 0)));
+  const values =
+    m[1] === 'd'
+      ? m[3]!.split(',')
+      : m[3]!.split(',').map((v) => {
+          const p = pitchOf(v)!;
+          return `${p.n + (base ?? 0)}${p.acc}`;
+        });
   return `${values.length === 1 ? values[0] : `[${values.join(',')}]`}${hold}`;
 }
