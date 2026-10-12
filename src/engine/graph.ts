@@ -222,7 +222,8 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
   const playedBy = new Map<string, string[]>();
   // (an output played off a tape comes from its read head, not the tape's source)
   const from = (o: (typeof result.outputs)[number]) => (o.tape ? o.tape.head : o.cell);
-  for (const o of result.outputs) playedBy.set(o.voice, [...(playedBy.get(o.voice) ?? []), from(o)]);
+  // (a drone plays its voice alone: nothing plays it)
+  for (const o of result.outputs) if (!o.drone) playedBy.set(o.voice, [...(playedBy.get(o.voice) ?? []), from(o)]);
 
   const depthOf = (name: string, guard = 0): number => {
     const hit = depth.get(name);

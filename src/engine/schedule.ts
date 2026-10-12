@@ -7,7 +7,7 @@
  */
 import type { CompileResult } from './program';
 import { clocking, tapeMotion } from './clocking';
-import { eventsBetween, type Plan, type Played } from './realize';
+import { eventsBetween, type Held, type Plan, type Played } from './realize';
 import { ticksBetween, type ClockTicks } from './midiclock';
 
 /** A sound tape's speed (1 on tempo) at moments through a window: its delays follow it. */
@@ -50,13 +50,14 @@ export function tapeSpeeds(p: Plan, from: number, to: number): TapeSpeed[] {
 
 /**
  * The window [from, from + length): its notes, and its moving tapes' speeds (sampled a hair past the end,
- * so the last point of one window meets the first of the next).
+ * so the last point of one window meets the first of the next). `held`: where the run of windows began (a drone's
+ * note starts there: decision 028) and where its listener stops.
  */
-export function windowAt(p: Plan, from: number, length: number): Window {
+export function windowAt(p: Plan, from: number, length: number, held: Held = {}): Window {
   return {
     from,
     to: from + length,
-    events: eventsBetween(p, from, from + length, true),
+    events: eventsBetween(p, from, from + length, true, held),
     tapes: tapeSpeeds(p, from, from + length + 1e-9),
     clock: ticksBetween(p, from, from + length),
   };

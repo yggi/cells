@@ -26,7 +26,8 @@ export function pieceMidi(result: CompileResult, shifts: Shifts, muted: Readonly
   const p = plan(result, shifts, muted);
   const seconds = Math.min(LONGEST, Number.isFinite(p.end) ? p.end : (mainLength(pieceTime(result)) ?? 60));
   // (each note with its output: the router reads a kit's from it)
-  const events = eventsBetween(p, 0, seconds, true);
+  // (a drone's note held to the file's end: decision 028)
+  const events = eventsBetween(p, 0, seconds, true, { until: seconds });
 
   // the meter's steps, through its time map, as far as the last note sounds (or eighths at 120 bpm), each a fixed
   // number of ticks (a beat a quarter note) and the tempo its length: a note on a step falls on the grid

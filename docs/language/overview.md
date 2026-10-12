@@ -2,6 +2,14 @@
 
 A minimal language for music where everything is a **cell**: a helix (pitch classes over octaves, beats over bars) with a **braid** sitting in its grid. This page is the map; each topic has one page.
 
+The smallest piece that sounds is one line ([decision 028](../decisions/028-the-smallest-piece.md)):
+
+```cells
+&a loop=A4                # an oscillator: its braid turned 440 times a second
+```
+
+A cell looped at an audio rate is a voice, and a voice alone plays its own pitch, held as long as the piece plays: here a 12-step staircase saw at 440 Hz (the blank braid, the 12 of the grid). With no sound card written, it is heard through a built-in one ([mix.md](mix.md#the-sound-card)). (Strudel's smallest piece is an event, `note("a4")`; ours is an oscillator.)
+
 One cell per line; attributes go anywhere.
 
 ```cells

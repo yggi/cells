@@ -10,6 +10,7 @@ import { BUILTIN_PLUGINS } from '../builtinPlugins';
 import type { ShowPlugin } from '../plugins';
 import { context } from './context';
 import { declare } from './declare';
+import { builtinCard } from './builtin';
 import { sorts } from './sorts';
 import { resolveCells } from './resolve';
 import { bindVoices } from './bindings';
@@ -26,8 +27,9 @@ const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new 
 
 export function compile(parsed: ParseResult, env: Env): CompileResult {
   const ctx = context(parsed, env);
-  const declared = declare(ctx);
-  const { decls } = declared;
+  // (no card written: the built-in one, decision 028)
+  const declared = builtinCard(ctx, declare(ctx));
+  const { decls, builtin } = declared;
   const typed = sorts(ctx, decls);
   const resolved = resolveCells(ctx, declared, typed);
   const bound = bindVoices(ctx, decls, resolved, typed);
@@ -66,5 +68,5 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
         .map((h) => ({ head: h.name, at: num(h, 'at', 0), wander: num(h, 'wander', 0), wanderhz: num(h, 'wanderhz', 0.2) })),
     }));
   const plugins = pluginsOf(parsed);
-  return { ok, cells, clocks, outputs, off, diagnostics, tapes, returns, resonances, plugins, taps: declared.taps };
+  return { ok, cells, clocks, outputs, off, diagnostics, tapes, returns, resonances, plugins, taps: declared.taps, ...(builtin ? { builtinCard: builtin } : {}) };
 }

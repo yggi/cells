@@ -259,7 +259,8 @@ describe('step=, loop=, clocks and voices', () => {
     expect(msgs('&a step=&nope 0')).toMatch(/Unknown cell &nope/);
     expect(msgs('&m scan(27 23 26 24)\n&a step=&m 0\n&v s=saw\n&mix_ [&a * &v]\n&out_ loop=44k map=sample &mix_')).toMatch(/&m never moves/);
     expect(msgs('&a 0\n&v s=saw\n&mix_ [&a * &v]\n&out_ loop=44k map=sample &mix_')).toMatch(/Nothing starts notes on &v/);
-    expect(msgs('&v s=saw\n&mix_ [&v]\n&out_ loop=44k map=sample &mix_')).toMatch(/nothing to play/);
+    // (a voice alone plays its own pitch, held: decision 028)
+    expect(msgs('&v s=saw\n&mix_ [&v]\n&out_ loop=44k map=sample &mix_')).toBe('');
     expect(msgs('&v s=kazoo')).toMatch(/Unknown sound 'kazoo'/);
     expect(msgs('&m step=1\n&v s=saw step=&m')).toMatch(/moves at a rate/);
     expect(msgs('&v s=saw lpf=high')).toMatch(/lpf= takes a number/);
@@ -390,7 +391,7 @@ describe('the sound card: &out loop=44k map=sample &left &right', () => {
       compileSource('&a 0')
         .diagnostics.map((d) => d.message)
         .join(),
-    ).toMatch(/map=sample/);
+    ).toMatch(/Nothing plays yet/);
   });
 });
 

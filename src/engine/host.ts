@@ -5,7 +5,7 @@
  * in this thread, or in node.
  *
  *   load   { code, env }                 compile and plan the piece (as the app does: code shifts, offs)
- *   window { id, from, length }          → { type: 'window', id, window }   (engine/schedule.ts)
+ *   window { id, from, length, begins }  → { type: 'window', id, window }   (engine/schedule.ts; begins: where play began)
  *   grab   { cell, t, speed }            a hand on a physical cell at transport second t (null lets go)
  *   reset                                every hand forgotten (Reset)
  *
@@ -20,7 +20,7 @@ import { windowAt, type Window } from './schedule';
 
 export type ToEngine =
   | { type: 'load'; code: string; env?: Env }
-  | { type: 'window'; id: number; from: number; length: number }
+  | { type: 'window'; id: number; from: number; length: number; begins?: number }
   | { type: 'grab'; cell: string; t: number; speed: number | null }
   | { type: 'reset' };
 
@@ -51,7 +51,7 @@ export function createHost(now: () => number = () => performance.now()) {
       }
       case 'window': {
         const t0 = now();
-        const window = p ? windowAt(p, m.from, m.length) : emptyWindow(m.from, m.length);
+        const window = p ? windowAt(p, m.from, m.length, { begins: m.begins }) : emptyWindow(m.from, m.length);
         return { type: 'window', id: m.id, window, ms: now() - t0 };
       }
       case 'grab':

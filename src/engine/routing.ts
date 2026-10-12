@@ -188,6 +188,17 @@ function soundOf(acc: RouteAcc, o: Output) {
 
 /** An output's notes: what they need. */
 function notesOf(acc: RouteAcc, o: Output, how: NotesOf) {
+  // a drone (a voice alone, decision 028): no notes to start, only what moves it
+  if (o.drone) {
+    for (const m of [...o.mods, ...o.levels])
+      if (!acc.off(m.cell)) {
+        acc.edge(m.cell, o.voice);
+        acc.stream(m.cell);
+      }
+    if (o.envelopeCell) acc.edge(o.envelopeCell, o.voice);
+    acc.voice(o.voice);
+    return;
+  }
   how.braid(acc, o);
   acc.clock(o.cell);
   // played off a tape: its source onto the tape, the tape under the head, the head into the voice (and what moves the tape)
@@ -271,7 +282,7 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
 
 /** Does it play at all (anything in its braid, through tables that are on)? */
 function plays(result: CompileResult, muted: ReadonlySet<string>, o: Output): boolean {
-  return new RouteAcc(result, muted).braid(o.cell, ROOT);
+  return !!o.drone || new RouteAcc(result, muted).braid(o.cell, ROOT);
 }
 
 const routingCache = new WeakMap<CompileResult, Map<string, Routing>>();

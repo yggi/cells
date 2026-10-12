@@ -140,6 +140,42 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     let lead = pitches.filter((x) => articulates(x.c));
     const gate = lead.length === 0;
     if (gate) lead = levels.filter((x) => articulates(x.c));
+    // pan= on the voice: its channel gains (a kit's members are placed note by note, in realize)
+    const [pl, pr] = voice.kit ? [1, 1] : balance(voice.params.pan);
+    const term = (x: (typeof terms)[number]) => ({ cell: x.c.name, pick: x.t.ref.pick, shift: x.t.ref.shift, sign: x.t.sign });
+    const common = {
+      voice: voice.name,
+      kit: voice.kit,
+      offset: b.offset,
+      gains: [gains[0] * pl, gains[1] * pr] as const,
+      parts: parts.map((x) => ({ ...x, gains: [x.gains[0] * pl, x.gains[1] * pr] as [number, number] })),
+      select,
+      ...(silent ? { silent: true } : {}),
+      ...(midi?.length ? { midi } : {}),
+      through: [...through],
+      envelope: env,
+      envelopeCell: envelopes[0]?.c.name ?? null,
+      via: [...via],
+      span,
+    };
+    // a voice alone (no pitch in its product but its own pitch=, nothing that starts notes): its own pitch, held as long
+    // as the piece plays — the pitch identity, as a missing volume is 1 (decision 028)
+    const ownTerms = new Set<unknown>(own);
+    if (lead.length === 0 && !voice.kit && !select.length && pitches.every((x) => ownTerms.has(x.t))) {
+      outputs.push({
+        id: `${voice.name}:${voice.name}:${b.voice.span.line}:${b.voice.span.col}`,
+        ...common,
+        cell: voice.name,
+        pick: null,
+        shift: 0,
+        sign: 1,
+        gate: false,
+        drone: true,
+        mods: pitches.map(term),
+        levels: levels.map(term),
+      });
+      continue;
+    }
     if (lead.length === 0) {
       error(
         terms.length
@@ -170,31 +206,17 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       error(`&${cell.name} has no steps to play`, t.ref.span);
       continue;
     }
-    // pan= on the voice: its channel gains (a kit's members are placed note by note, in realize)
-    const [pl, pr] = voice.kit ? [1, 1] : balance(voice.params.pan);
     outputs.push({
       id: `${voice.name}:${cell.name}:${t.ref.span.line}:${t.ref.span.col}${select.map((x) => `@${x.cell}:${x.entry}`).join('')}`,
-      voice: voice.name,
-      kit: voice.kit,
+      ...common,
       cell: cell.name,
       pick: t.ref.pick,
       shift: t.ref.shift,
       sign: t.sign,
       gate,
-      mods: pitches.filter((x) => x !== lead[0]).map((x) => ({ cell: x.c.name, pick: x.t.ref.pick, shift: x.t.ref.shift, sign: x.t.sign })),
-      levels: levels.filter((x) => x !== lead[0]).map((x) => ({ cell: x.c.name, pick: x.t.ref.pick, shift: x.t.ref.shift, sign: x.t.sign })),
-      offset: b.offset,
-      gains: [gains[0] * pl, gains[1] * pr],
-      parts: parts.map((x) => ({ ...x, gains: [x.gains[0] * pl, x.gains[1] * pr] as [number, number] })),
-      select,
+      mods: pitches.filter((x) => x !== lead[0]).map(term),
+      levels: levels.filter((x) => x !== lead[0]).map(term),
       ...(tapeOf.has(t) ? { tape: tapeOf.get(t)! } : {}),
-      ...(silent ? { silent: true } : {}),
-      ...(midi?.length ? { midi } : {}),
-      through: [...through],
-      envelope: env,
-      envelopeCell: envelopes[0]?.c.name ?? null,
-      via: [...via],
-      span,
     });
   }
   // (not when a line failed: that may be the sound card's own, and its error says what's wrong)
@@ -212,6 +234,6 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     );
   }
   if (sinks.length === 0 && cards.length === 0 && parsed.cells.length > 0 && !parsed.broken?.length)
-    warn('Nothing plays yet — add a mix and the sound card: &mix [&melody * &voice] and &out loop=SAMPLE_RATE map=sample &mix &mix', IMPLICIT);
+    warn('Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])', IMPLICIT);
   return { outputs, returns, resonances };
 }

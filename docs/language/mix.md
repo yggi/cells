@@ -107,6 +107,17 @@ Two mixes, one for each channel:
 &out loop=SAMPLE_RATE map=sample &left &right
 ```
 
+**No card written: the built-in card** ([decision 028](../decisions/028-the-smallest-piece.md)). A piece that writes no card (neither `map=sample` nor a MIDI card) is heard through one of its own: every sound that nothing else reads (a voice, a waveform, a mix, a gate, a pattern read through a kit, a tape's read head that no mix, splice, `over=`, `env=`, `pitch=`, `fm=`, `play=`, `write=`, `excite=`, `about=` … names) goes to it, a fader each, at Strudel's default gain, **0.8**, on both sides. It is in no line and the graph draws no node for it; a piece that writes its card keeps exactly that card, and one that writes only MIDI cards sends what they name and sounds nothing else ([midi.md](midi.md)). So two voices alone are both heard, each held at its own pitch ([sound.md](sound.md)), and a mix nothing reads is heard as it is:
+
+```cells
+&tune step=2 0 2 4 7
+&lead s=tri loop=C4 env=&(map=adsr .01 .2 .4 .2)
+&drone s=sine loop=C3
+&melody [&tune * &lead * .5]
+```
+
+Here `&melody` (and `&lead` through it) and `&drone` go to the built-in card, each at .8 (`&melody` at .8 × .5). Until the card's level is one control ([#150](https://github.com/yggi/cell-studio/issues/150)), its master is folded into each fader.
+
 ## Instruments
 
 A mix can be used like a voice — an instrument: the pitches, volumes and gain acting on it act on each of its voices (`a * (s + t) = a * s + a * t`):

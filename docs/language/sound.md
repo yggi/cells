@@ -10,7 +10,9 @@ A voice is a cell looped at audio rate: `loop=440` plays its braid 440 times a s
 - **`lin`** — the same, ramping from each value to the next: `0 1` is a triangle, the default braid a saw
 - **`&table`** — look each value up first, then amp
 
-With no braid a voice holds 0…11 of the 12 grid: a 12-step saw. Or name a built-in waveform with dough's **`s=`** (sine tri saw square pulse white pink brown). Levels and stereo are the mix's job; envelopes are cells, `map=adsr`. A voice with no envelope in its product plays quick and full. Rendering uses Tone.js.
+With no braid a voice holds 0…11 of the 12 grid: a 12-step saw.
+
+**A voice alone plays its own pitch, held** ([decision 028](../decisions/028-the-smallest-piece.md)): in a product with nothing that starts notes (no pitch term, no volume with `step=` timing), the missing pitch is the pitch identity, as a missing volume is 1. So `&a loop=A4` alone, or `[&a * .5]`, is an oscillator: one note at the voice's own frequency from where play starts until it stops or the piece ends (`laps=` elsewhere), its own `env=` attacking once and holding at its sustain, its own `pitch=` bending it (a vibrato), and the levels in its product moving its volume (`[&a * &swell]` with `&swell map=lin loop=.25 0 1`). It doesn't end the piece or give it a length of its own. A kit, a resonator and a tape's read head alone keep their own meaning. Or name a built-in waveform with dough's **`s=`** (sine tri saw square pulse white pink brown). Levels and stereo are the mix's job; envelopes are cells, `map=adsr`. A voice with no envelope in its product plays quick and full. Rendering uses Tone.js.
 
 Sound parameters use dough's names; any of them makes a cell a voice. Strudel's and dough's other names for them (`cutoff=`, `verb=` …, listed in [reference.md](reference.md)) aren't read: each is an error that names ours.
 

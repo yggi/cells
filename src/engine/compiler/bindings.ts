@@ -103,10 +103,12 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         error(`A channel of the sound card is a mix: &mix, or [&theme * &lead] written in place`, d.span);
         return;
       }
-      for (const { b, through, select } of bindings.flatMap((x) => expand(x))) {
+      for (const { b, through, select, top } of bindings.flatMap((x) => expand(x).map((e) => ({ ...e, top: x })))) {
         const key = termKey(b, select);
         let g = gathered.get(key);
-        if (!g) gathered.set(key, (g = { b, span: mix.span, gains: [0, 0], via: new Set(), parts: [], through: new Set(), select: [...select] }));
+        // (the built-in card is in no line: what is said about a sound it hears is said on the sound's own line)
+        const span = sink.implicit ? top.voice.span : mix.span;
+        if (!g) gathered.set(key, (g = { b, span, gains: [0, 0], via: new Set(), parts: [], through: new Set(), select: [...select] }));
         for (const t of through) g.through.add(t);
         // mono: one channel feeds both sides
         const part: [number, number] = channels.length === 1 ? [b.gain, b.gain] : ch === 0 ? [b.gain, 0] : [0, b.gain];

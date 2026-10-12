@@ -22,7 +22,7 @@ export interface Splice {
  */
 export function splices(p: Plan, until: number): Splice[] {
   const clk = clocking(p.result, p.statics);
-  const notes = eventsBetween(p, 0, until, true);
+  const notes = eventsBetween(p, 0, until, true, { until });
   const heard = new Map<string, number[]>();
   for (const e of notes) {
     if (!e.output) continue;

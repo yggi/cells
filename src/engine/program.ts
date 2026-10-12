@@ -268,6 +268,11 @@ export interface Output {
   readonly levels: readonly PitchTerm[];
   /** The term that starts notes is a volume stream, not a pitch: notes sound at pitch 0, at its level. */
   readonly gate: boolean;
+  /**
+   * A voice alone (decision 028): nothing in its product starts notes, so it plays one note at its own pitch, held from
+   * where play starts until play stops or the piece ends. `cell` is the voice itself (it has no clock: nothing steps it).
+   */
+  readonly drone?: true;
   /** Constant semitones from numbers in pitch sums. */
   readonly offset: number;
   /** Level per channel [left, right], from the gains in the mixes the sound card plays. */
@@ -365,6 +370,11 @@ export interface CompileResult {
   readonly plugins: ReadonlyMap<string, ShowPlugin>;
   /** Taps of a meter's bus (decision 016), each to its table: what a selector reading the table switches. */
   readonly taps?: ReadonlyMap<string, string>;
+  /**
+   * The built-in card's name, when the piece writes no card (decision 028): a sound card (`map=sample`) compile added,
+   * which every sound nothing reads goes to. It is in `cells` (implicit: not drawn, in no line, never edited).
+   */
+  readonly builtinCard?: string;
 }
 
 /** Shift of every cell; missing names use the code's shift=. */

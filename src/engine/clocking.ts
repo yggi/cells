@@ -90,7 +90,8 @@ export function playedCells(result: CompileResult): Set<string> {
     }
   };
   // (a mix plays a cell on its own clock, picked or not)
-  for (const o of result.outputs) for (const t of [o, ...o.mods, ...o.levels]) walk(t.cell);
+  // (a drone's cell is its voice: a waveform, not a braid played)
+  for (const o of result.outputs) for (const t of [...(o.drone ? [] : [o]), ...o.mods, ...o.levels]) walk(t.cell);
   return out;
 }
 

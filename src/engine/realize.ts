@@ -47,6 +47,28 @@ export interface Played {
   readonly midi?: Output['midi'];
   /** The output it comes from (`Output.id`), when asked for (`eventsBetween(…, true)`): which mixes' wheels hear it (audio/wiring.ts `taps`). */
   readonly output?: string;
+  /**
+   * A drone's note (a voice alone, decision 028): held from where play starts until play stops or the piece ends, so it
+   * isn't articulated (no gate shortened under it); `dur` is to the piece's end, to where the asker stops listening, or
+   * HELD at most (then it is struck again).
+   */
+  readonly held?: true;
+}
+
+/** How long a drone's note is held at a time, at most (s): ten minutes, then it is struck again. What moves in it (a vibrato, a level, a moving parameter) is worked out a note at a time, so this bounds that work. */
+export const HELD = 600;
+
+/** Where a run of windows began and where its listener stops: a drone's note starts at `begins` (0, the piece's start, by default) and is held to `until` at most. */
+export interface Held {
+  readonly begins?: number;
+  readonly until?: number;
+}
+
+/** A drone: a voice alone, its own pitch held (its own pitch= and the levels in its product move it). */
+interface DroneTrack {
+  readonly output: Output;
+  readonly mods: readonly Series[];
+  readonly levels: readonly Series[];
 }
 
 interface PlanTrack extends Series {
@@ -67,6 +89,8 @@ export interface Plan {
   readonly statics: Shifts;
   readonly muted: ReadonlySet<string>;
   readonly tracks: readonly PlanTrack[];
+  /** Drones (decision 028): voices alone, each one held note; they don't end the piece or give it a length. */
+  readonly drones: readonly DroneTrack[];
   readonly played: ReadonlySet<string>;
   /** Each voice's moving parameters: their cells as series (an envelope among them, apart). */
   readonly voiceParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
@@ -95,6 +119,12 @@ export function endOf(result: CompileResult, statics: Shifts, o: Output): number
   visit(o.cell);
   for (const x of o.select) visit(x.cell);
   return ends.length ? Math.min(...ends) : Infinity;
+}
+
+/** Where a drone stops (decision 028): where the rest of the piece ends (laps=), or never — a drone alone doesn't end it. */
+export function droneEnd(result: CompileResult, statics: Shifts): number {
+  const ends = result.outputs.filter((o) => !o.drone).map((o) => endOf(result, statics, o));
+  return ends.length ? Math.max(...ends) : Infinity;
 }
 
 /** A number in [0, 1) from a text: the same text, the same number (cyrb53). */
@@ -222,6 +252,8 @@ const outputSent = (o: Output, muted: ReadonlySet<string>) => liveMidi(o, muted)
 /** Its notes can play: nothing they need (its cells, clocks, instruments, envelope, selectors) is switched off. */
 function outputOn(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean {
   if (muted.has(cellId(o.voice)) || muted.has(cellId(o.cell))) return false;
+  // (a drone: nothing steps it, so no clock to need)
+  if (o.drone) return !o.through.some((t) => muted.has(cellId(t))) && !(o.envelopeCell && muted.has(cellId(o.envelopeCell)));
   const c = result.cells.get(o.cell);
   if (!c?.clock || chainMuted(result, c.clock, muted) || driverMuted(result, o.cell, muted)) return false;
   // the instruments it plays through (and its envelope) must be on, and it has to reach a sound card through a mix that's on
@@ -235,8 +267,9 @@ function outputOn(result: CompileResult, o: Output, muted: ReadonlySet<string>):
 
 /** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<string> = new Set()): Plan {
-  if (!result.ok) return { result, statics, muted, tracks: [], played: new Set(), voiceParams: new Map(), end: Infinity };
+  if (!result.ok) return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), end: Infinity };
   const tracks: PlanTrack[] = [];
+  const drones: DroneTrack[] = [];
   const voiceParams = new Map<string, Record<string, VoiceParam>>();
   for (const o of result.outputs) {
     if (!outputPlays(result, o, muted)) continue;
@@ -247,7 +280,6 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
       return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, period: Math.max(1, stepsOf(result, cell, pick)), events };
     };
     try {
-      const main = series(o.cell, o.pick, o.shift, o.sign);
       // the voices' moving parameters (lpf=200..3000 * &fenv …): their cells, as series
       for (const voice of o.kit ? refsOf(result.cells.get(o.voice)) : [o.voice]) {
         if (voiceParams.has(voice)) continue;
@@ -263,6 +295,15 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
         }
         voiceParams.set(voice, out);
       }
+      if (o.drone) {
+        drones.push({
+          output: o,
+          mods: o.mods.map((t) => series(t.cell, t.pick, t.shift, t.sign)).filter((m) => m.events.length > 0),
+          levels: o.levels.map((t) => series(t.cell, t.pick, t.shift, t.sign)),
+        });
+        continue;
+      }
+      const main = series(o.cell, o.pick, o.shift, o.sign);
       const mods = o.mods.map((t) => series(t.cell, t.pick, t.shift, t.sign)).filter((m) => m.events.length > 0);
       const levels = o.levels.map((t) => series(t.cell, t.pick, t.shift, t.sign));
       const selects = o.select.map((x) => ({
@@ -283,7 +324,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     if (at != null) stops = Math.max(stops, at);
   }
   const lapsEnd = ends.length ? Math.max(...ends) : Infinity;
-  return { result, statics, muted, tracks, played: playedCells(result), voiceParams, end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity) };
+  return { result, statics, muted, tracks, drones, played: playedCells(result), voiceParams, end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity) };
 }
 
 /**
@@ -324,12 +365,16 @@ function lawOffset(result: Plan['result'], cell: string): number {
  * `outputs`: each note names the output it comes from (for the audio: which mixes' wheels hear it); left out,
  * a note is only what sounds.
  */
-export function eventsBetween(p: Plan, from: number, to: number, outputs = false): Played[] {
+export function eventsBetween(p: Plan, from: number, to: number, outputs = false, held: Held = {}): Played[] {
   // (a law's cell plays only what its law computes — not its steps counted as values)
   const lawful = (t: PlanTrack) => p.result.cells.get(t.output.cell)?.params.law !== undefined;
   const plain = p.tracks.filter((t) => !t.output.tape && !lawful(t));
   const taped = p.tracks.filter((t) => t.output.tape);
   const out = plainEvents({ ...p, tracks: plain }, from, to, outputs);
+  if (p.drones.length) {
+    out.push(...droneEvents(p, from, to, outputs, held));
+    out.sort((a, b) => a.at - b.at);
+  }
   // a law (law=fiveto12): its notes computed, not written — any moment of its day at once
   for (const o of p.result.outputs) {
     if (p.result.cells.get(o.cell)?.params.law !== 'fiveto12') continue;
@@ -533,4 +578,99 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     }
   }
   return out.sort((a, b) => a.at - b.at);
+}
+
+/**
+ * Several streams over one note as one: their value at each moment any of them changes, `combine` folding the values
+ * (a sum of semitones, a product of levels); ramped where one ramps there. In one pass over the points (a drone's note
+ * is long: `valueThen` at each point would be quadratic).
+ */
+function merged<T extends { at: number; ramp?: boolean }>(
+  series: readonly (readonly T[])[],
+  v: (x: T) => number,
+  combine: (a: number, b: number) => number,
+  unit: number,
+): { at: number; value: number; ramp?: boolean }[] {
+  const times = [...new Set(series.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
+  const idx = series.map(() => 0);
+  const out: { at: number; value: number; ramp?: boolean }[] = [];
+  for (const time of times) {
+    let value = unit;
+    let ramp = false;
+    series.forEach((s, k) => {
+      let i = idx[k];
+      while (i + 1 < s.length && s[i + 1].at <= time + EPS) i++;
+      idx[k] = i;
+      const a = s[i];
+      const next = s[i + 1];
+      const x = !next?.ramp || Math.abs(a.at - time) < EPS ? v(a) : v(a) + ((v(next) - v(a)) * (time - a.at)) / Math.max(EPS, next.at - a.at);
+      value = combine(value, x);
+      if (a.ramp && Math.abs(a.at - time) < EPS) ramp = true;
+    });
+    out.push({ at: time, value, ...(ramp ? { ramp } : {}) });
+  }
+  return out;
+}
+
+/**
+ * The drones' notes in [from, to) (decision 028): each voice alone sounds one note at its own pitch from where play
+ * began (`held.begins`), struck again every HELD seconds, until the piece ends (laps=) or the listener stops
+ * (`held.until`): at the voice's own frequency, moved by the numbers in its product; its own pitch= bends it, the levels
+ * in its product move its volume, and its envelope attacks once and holds.
+ */
+function droneEvents(p: Plan, from: number, to: number, outputs: boolean, held: Held): Played[] {
+  const begins = Math.max(0, held.begins ?? 0);
+  const ends = Math.min(p.end, held.until ?? Infinity);
+  const out: Played[] = [];
+  for (let k = Math.max(0, Math.floor((from - begins) / HELD)); begins + k * HELD < Math.min(to, ends); k++) {
+    const at = begins + k * HELD;
+    if (at < from - EPS) continue;
+    const dur = Math.min(HELD, ends - at);
+    if (!(dur > 0)) continue;
+    for (const d of p.drones) {
+      const o = d.output;
+      const voice = p.result.cells.get(o.voice);
+      if (!voice) continue;
+      const mods = d.mods.map((m) => modulation(p, m, at, at + dur));
+      // (as any note's: the sum at the start sets its pitch, later changes are bends)
+      const bend = merged(
+        mods,
+        (x) => x.semis,
+        (a, b) => a + b,
+        0,
+      );
+      const start = bend[0]?.value ?? 0;
+      const bends = bend.slice(1).map((x) => ({ at: x.at, cents: 100 * (x.value - start), ...(x.ramp ? { ramp: true } : {}) }));
+      const levels = d.levels.length
+        ? merged(
+            d.levels.map((m) => levelSeries(p, m, at, at + dur)),
+            (x) => x.level,
+            (a, b) => a * b,
+            1,
+          ).map((x) => ({ at: x.at, level: x.value, ...(x.ramp ? { ramp: true } : {}) }))
+        : [{ at, level: 1 }];
+      const freq = voice.freq * Math.pow(2, (o.offset + start) / 12);
+      if (!(freq > 0 && freq < 20000) || !levels.some((l) => l.level > 0)) continue;
+      const gains = liveGains(o, p.muted);
+      const midi = o.midi ? liveMidi(o, p.muted) : [];
+      const params = paramTracks(p, o.voice, at, dur);
+      out.push({
+        at,
+        dur,
+        voice: o.voice,
+        freq,
+        bends,
+        gains,
+        levels,
+        held: true,
+        ...(!o.silent && !(gains[0] > 0 || gains[1] > 0) ? { unheard: true as const } : {}),
+        ...(midi.length ? { midi } : {}),
+        ...(o.envelope ? { env: o.envelope } : {}),
+        ...(o.through.length ? { instrument: o.through[0] } : {}),
+        ...(params ? { params } : {}),
+        ...(outputs ? { output: o.id } : {}),
+      });
+    }
+  }
+  return out;
 }
