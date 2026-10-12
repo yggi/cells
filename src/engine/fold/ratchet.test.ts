@@ -3,7 +3,7 @@
 // size (fold/score.ts: `bare`), its phrases back. Recorded in ratchet.baseline.json, piece by piece, so each PR's diff of
 // it shows what it did; the library may not get worse: no piece that kept its notes loses them, the phrases back don't
 // fall, the score doesn't grow by more than 1 %. A change that makes it better records the new numbers.
-// The MIDI library's ratchet is wtc.test.ts.
+// The MIDI library's ratchet is midi.test.ts.
 // Record: UPDATE_RATCHET=1 npx vitest run src/engine/fold/ratchet.test.ts
 import { describe, expect, it } from 'vitest';
 import { readFileSync, writeFileSync } from 'node:fs';

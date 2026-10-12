@@ -1,0 +1,192 @@
+[
+  {
+    "key": "anh113-minuet",
+    "title": "Minuet in F major",
+    "opus": "BWV Anh. 113",
+    "original": "Menuet",
+    "maintainer": "Allen Garvin",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2013/01/06-74",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh113/anna-magdalena-03/"
+  },
+  {
+    "key": "anh114-minuet",
+    "title": "Minuet in G major",
+    "opus": "BWV Anh. 114",
+    "original": "Menuet",
+    "maintainer": "Allen Garvin",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2017/01/19-75",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh114/anna-magdalena-04/"
+  },
+  {
+    "key": "anh115-minuet",
+    "title": "Minuet in G minor",
+    "opus": "BWV Anh. 115",
+    "original": "Menuet",
+    "maintainer": "Allen Garvin",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2015/08/21-76",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh115/anna-magdalena-05/"
+  },
+  {
+    "key": "anh116-minuet",
+    "title": "Minuet in G major (Anh. 116)",
+    "opus": "BWV Anh. 116",
+    "original": "Menuet",
+    "maintainer": "Allen Garvin",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2013/01/06-77",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh116/anna-magdalena-07/"
+  },
+  {
+    "key": "anh117b-polonaise",
+    "title": "Polonaise in F major",
+    "opus": "BWV Anh. 117b",
+    "original": "Polonaise in F major",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2007/07/30-1015",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh117b/BWV-117b/"
+  },
+  {
+    "key": "anh118-minuet",
+    "title": "Minuet in B♭ major",
+    "opus": "BWV Anh. 118",
+    "original": "Minuet in B-flat major",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2007/07/30-1014",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh118/BWV-118/"
+  },
+  {
+    "key": "anh119-polonaise",
+    "title": "Polonaise in G minor",
+    "opus": "BWV Anh. 119",
+    "original": "Polonaise in G minor",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2007/07/30-1016",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh119/BWV-119/"
+  },
+  {
+    "key": "anh120-minuet",
+    "title": "Minuet in A minor",
+    "opus": "BWV Anh. 120",
+    "original": "Minuet in A minor",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2009/01/06-1612",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh120/BWV-120/"
+  },
+  {
+    "key": "anh121-minuet",
+    "title": "Minuet in C minor",
+    "opus": "BWV Anh. 121",
+    "original": "Minuet in C minor",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2011/06/15-1613",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh121/BWV-121/"
+  },
+  {
+    "key": "anh126-musette",
+    "title": "Musette (Anh. 126)",
+    "opus": "BWV Anh. 126",
+    "original": "Musette",
+    "maintainer": "Allen Garvin",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2013/01/06-79",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh126/anna-magdalena-22/"
+  },
+  {
+    "key": "anh127-march",
+    "title": "March in E♭ major",
+    "opus": "BWV Anh. 127",
+    "original": "March in E-flat major",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2009/01/06-1614",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh127/BWV-127/"
+  },
+  {
+    "key": "anh128-polonaise",
+    "title": "Polonaise in D minor",
+    "opus": "BWV Anh. 128",
+    "original": "Polonaise in D minor",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2009/01/06-1615",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh128/BWV-128/"
+  },
+  {
+    "key": "anh131-air",
+    "title": "Air",
+    "opus": "BWV Anh. 131",
+    "original": "Air",
+    "maintainer": "Anonymous",
+    "licence": "Creative Commons Attribution-ShareAlike 2.5",
+    "mutopia": "Mutopia-2006/05/17-767",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh131/air/"
+  },
+  {
+    "key": "bwv691-chorale-prelude",
+    "title": "Wer nur den lieben Gott läßt walten",
+    "opus": "BWV Anh. 691",
+    "original": "Chorale prelude “Wer nur den lieben Gott läßt walten”",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2009/01/06-1616",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWVAnh691/BWV-691/"
+  },
+  {
+    "key": "bwv510-chorale",
+    "title": "Gib dich zufrieden in F major",
+    "opus": "BWV 510",
+    "original": "Chorale setting \"Gib dich zufrieden und sei stille\" in F major",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2007/07/22-1006",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWV510/BWV-510/"
+  },
+  {
+    "key": "bwv511-chorale",
+    "title": "Gib dich zufrieden in D minor",
+    "opus": "BWV 511",
+    "original": "Chorale setting \"Gib dich zufrieden und sei stille\" in D minor",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2007/07/24-1009",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWV511/BWV-511/"
+  },
+  {
+    "key": "bwv512-chorale",
+    "title": "Gib dich zufrieden in E minor",
+    "opus": "BWV 512",
+    "original": "Chorale setting \"Gib dich zufrieden und sei stille\" in E minor",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2007/07/24-1010",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWV512/BWV-512/"
+  },
+  {
+    "key": "bwv515-aria",
+    "title": "Aria (BWV 515)",
+    "opus": "BWV 515",
+    "original": "Aria",
+    "maintainer": "Allen Garvin",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2013/01/22-78",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWV515/anna-magdalena-20a/"
+  },
+  {
+    "key": "bwv516-aria",
+    "title": "Warum betrübst du dich",
+    "opus": "BWV 516",
+    "original": "Aria “Warum betrübst du dich”",
+    "maintainer": "Steven McDougall",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2009/01/12-1622",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWV516/BWV-516/"
+  }
+]

@@ -1,23 +1,26 @@
-// The ratchet over the MIDI library (midi/wtc: Bach's Well-Tempered Clavier, #333; docs/notes/ratchet.md): the files
-// as they come, each folded (`cellsFromMidi`, `shorten`), whether its fold was taken (it plays the file's notes) and its
-// score's size (fold/score.ts `bare`) in ratchet.wtc.json. No file whose fold was taken loses it; the score doesn't
+// The ratchet over the MIDI library (midi/<set>: Bach's Well-Tempered Clavier, Inventions and Sinfonias, the Anna
+// Magdalena Notebook; #333, docs/notes/ratchet.md): the files as they come, each folded (`cellsFromMidi`, `shorten`), whether its fold was taken (it plays the file's notes) and its
+// score's size (fold/score.ts `bare`) in ratchet.midi.json. No file whose fold was taken loses it; the score doesn't
 // grow by more than 1 %. A change that makes it better records the new numbers.
-// Record: UPDATE_RATCHET=1 npx vitest run src/engine/fold/wtc.test.ts
+// Record: UPDATE_RATCHET=1 npx vitest run src/engine/fold/midi.test.ts
 import { describe, expect, it } from 'vitest';
-import { readFileSync, writeFileSync } from 'node:fs';
-import index from '../../../midi/wtc/index.json';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { readMidi } from '../midifile';
 import { cellsFromMidi } from '../midiimport';
 import { bare } from './score';
 
-const PATH = 'src/engine/fold/ratchet.wtc.json';
+const PATH = 'src/engine/fold/ratchet.midi.json';
 type Row = { taken: boolean; score: number };
 
 describe('the ratchet: the MIDI library, folded', () => {
   it('is no worse than the baseline', () => {
     const now: Record<string, Row> = {};
-    for (const m of index) {
-      const made = cellsFromMidi(readMidi(new Uint8Array(readFileSync(`midi/wtc/${m.key}.mid`))), m.title, { shorten: true });
+    // (every collection's files, as its index lists them)
+    const files = readdirSync('midi').flatMap((set) =>
+      (JSON.parse(readFileSync(`midi/${set}/index.json`, 'utf8')) as { key: string; title: string }[]).map((m) => ({ set, ...m })),
+    );
+    for (const m of files) {
+      const made = cellsFromMidi(readMidi(new Uint8Array(readFileSync(`midi/${m.set}/${m.key}.mid`))), m.title, { shorten: true });
       now[m.key] = { taken: made.folded, score: bare(made.source) };
     }
     if (process.env.UPDATE_RATCHET)
