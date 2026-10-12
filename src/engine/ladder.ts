@@ -127,6 +127,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'step [a b c]',
       'generator euclid(k, n)',
       'sort signal: a pattern read through a kit',
+      'line oneshot',
+      'modifier &x:0:gain',
       // swing
       'parameter swing',
       'parameter beat',
@@ -137,6 +139,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
     concept:
       'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: parts as taps of the bar, a selector, laps=, off',
     forms: [
+      // a kit's balance: a voice's own gain
+      'parameter gain',
       // canon
       'reference &name[<<n]',
       // mirrors
@@ -170,6 +174,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
     forms: [
       // stereo
       'parameter pan',
+      // how a voice plays its notes
+      'parameter glide',
       // waveforms
       'sort wave: a braid turning at an audio rate',
       'generator sin(n)',
@@ -361,6 +367,7 @@ export function formsUsed(source: string): Set<string> {
     if (t.subdivide > 1) use('modifier x*n');
     if (t.elongate !== 1) use('modifier x@n');
     if (t.chance !== undefined) use('modifier x?');
+    if (t.level !== undefined) use('modifier &x:0:gain');
     const a = t.atom;
     if (a.kind === 'note') {
       use('step n');
@@ -398,6 +405,7 @@ export function formsUsed(source: string): Set<string> {
     use('line &name …');
     if (c?.note) use('line &name label="…"');
     if (d.off) use('line off');
+    if (d.oneshot) use('line oneshot');
     // (a stepped table of names that declares taps: decision 016)
     if ([...(compiled.taps?.values() ?? [])].includes(d.name)) use('line &parts step=&bar &a &b');
     if (d.lambda) use('reference &( … )');

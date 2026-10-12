@@ -11,9 +11,8 @@
 &c over=&just step=&justBar*2 0 2 4 5 4 2 1 0 0@4 ~@4
 
 &pluck s=tri loop=C4 env=&(map=adsr .01 .4 .3 .3)
-&edoPart [&a * &pluck * .3]
-&fifthsPart [&b * &pluck * .3]
-&justPart [&c * &pluck * .3]
 &grids step=&bar &edoBar &fifthsBar &justBar
 &turns over=&grids step=&bar/2 0 1 2                  # a grid every two bars, in turn
-&out map=sample level=16 [&edoPart, &fifthsPart, &justPart]
+&out map=sample level=16 [&a * &pluck * .3,
+                          &b * &pluck * .3,
+                          &c * &pluck * .3]

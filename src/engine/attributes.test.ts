@@ -16,7 +16,7 @@ describe('the attribute table', () => {
   });
 
   test('… and nothing else (the retired ones say what replaced them)', () => {
-    expect(parse('&a gain=1').diagnostics[0].message).toMatch(/gain= is gone/);
+    expect(parse('&a attack=1').diagnostics[0].message).toMatch(/attack= is gone/);
     expect(parse('&a fmh=1').diagnostics[0].message).toMatch(/^Unknown attribute fmh=/);
   });
 
@@ -32,7 +32,7 @@ describe('the attribute table', () => {
     expect([...VOICE_PARAMS].sort()).toEqual(
       ['s', 'lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay', 'delaytime', 'delayfeedback', 'pan', 'distort', 'crush', 'fm', 'ratio', 'index', 'body', 'ring', 'hard'].sort(),
     );
-    expect(Object.keys(PARAMS).length).toBe(57);
+    expect(Object.keys(PARAMS).length).toBe(58);
   });
 
   test('a misspelling finds its nearest attribute', () => {

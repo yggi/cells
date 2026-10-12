@@ -43,7 +43,6 @@ export const RETIRED_PARAMS: Readonly<Record<string, string>> = {
   decay: ENVELOPE('decay'),
   sustain: ENVELOPE('sustain'),
   release: ENVELOPE('release'),
-  gain: 'gain= is gone: set the level in the mix, &theme * &lead * 0.8, or on a gate (play=&theme level=.8 &lead)',
   penv: PITCH_DROP('penv'),
   pdec: PITCH_DROP('pdec'),
   ...Object.fromEntries(Object.entries(DOUGH_ALIASES).map(([k, ours]) => [k, `${k}= is Strudel's or dough's name for ${ours}=, and isn't read here: write ${ours}=`])),

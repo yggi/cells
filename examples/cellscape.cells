@@ -38,14 +38,13 @@
 
 # the score: which layers play in each of the twelve scenes (0 drone 1 sequence 2 leader
 # 3 follower 4 bells 5 pulse 6 glass), a barrel turning a scene each 32 bars
-&drone tags="drone" [&pad * &padv * .14]
-&sequence tags="sequence" [&arp * &arpv * .14]
-&leader tags="canon" [&melody * &voiceA * .2]
-&follower tags="canon" [&canon * &voiceB * .2]
-&chimes tags="bells" [&bells * &bell * .09]
-&pulses tags="pulse" [&pulse * &bass * .25]
-&shine tags="glass" [&shimmer * &glass * .07]
 &layers step=&bar &droneBar &sequenceBar &leaderBar &followerBar &chimesBar &pulsesBar &shineBar
 &scenes over=&layers step=&bar/32 label="the scenes" [0] [0,4] [0,1,4] [0,1,2] [0,1,2,3] [0,1,2,3,5] [0,2,3,4,5,6] [0,1,2,3,4,5,6] [0,3,4,6] [0,1,5,6] [0,4,6] [0,6]
 
-&out level=8 map=sample [&drone, &sequence, &leader, &follower, &chimes, &pulses, &shine]
+&out level=8 map=sample [&pad * &padv * .14,
+                         &arp * &arpv * .14,
+                         &melody * &voiceA * .2,
+                         &canon * &voiceB * .2,
+                         &bells * &bell * .09,
+                         &pulse * &bass * .25,
+                         &shimmer * &glass * .07]

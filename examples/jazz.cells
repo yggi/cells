@@ -16,14 +16,14 @@
 
 &walk step=&bar 0 4 7 10                               # root, 3rd, 5th, flat 7th — moved by the changes
 &comp step=&swing ~@3 [4,10] ~@3 [4,10]                # shells (3rd and 7th) on the and of 2 and 4
-&ride map=amp step=&swing .9 ~ .6 .5 .9 ~ .6 .5        # ding, ding-a ding, ding-a
+&ride step=&swing &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 &cym:0:.9 ~ &cym:0:.6 &cym:0:.5   # ding, ding-a ding, ding-a
 
 &horn s=saw loop=C4 lpf=1600 room=.3 env=&(map=adsr .02 .15 .6 .12)
 &bass s=tri loop=C2 env=&(map=adsr .005 .25 .5 .1)
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .2 .2)
-&cym s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
+&cym gain=.25 s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
 
 &mix level=5 map=sample [&lick * &horn * .5,
                                   (&walk + &changes) * &bass * .8,
                                   (&comp + &changes) * &keys * .35,
-                                  &ride * &cym * .25]
+                                  &ride]

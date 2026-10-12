@@ -15,16 +15,14 @@
 &knob map=lin loop=&bar/16 .2 1 .35 .2 label="cutoff knob"
 &res map=lin loop=&bar/32 6 19 6 label="resonance knob"
 
-&kick map=amp step=&bar 1 1 1 1
-&clap map=amp step=&bar ~ 1 ~ 1
-&closed map=amp step=&bar*4 .3 .2 .5 .2
-&open map=amp step=&bar*2 ~ .5
+&b1 [&bd,&hh:0:.3] &hh:0:.2 [&hh:0:.5,&oh:0:.5] &hh:0:.2                    # a beat: the kick, the closed hat's accents, the open hat on the and
+&b2 [&bd,&cp,&hh:0:.3] &hh:0:.2 [&hh:0:.5,&oh:0:.5] &hh:0:.2                # … with the clap
+&beat step=&bar*4 &b1 &b2 &b1 &b2
 
 &tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35 env=&(map=adsr .002 .15 .6 .05)
-&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
-&cp s=white hpf=1500 env=&(map=adsr 0 .12 0 .06) room=.2
-&hh s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)
-&oh s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
+&bd gain=.8 oneshot s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
+&cp gain=.35 oneshot s=white hpf=1500 env=&(map=adsr 0 .12 0 .06) room=.2
+&hh gain=.25 s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)
+&oh gain=.2 oneshot s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
 
-&mix level=0.5 map=sample [&line * &accent * &tb303 * .45, &kick * &bd * .8, &clap * &cp * .35,
-                                  &closed * &hh * .25, &open * &oh * .2]
+&mix level=0.5 map=sample [&line * &accent * &tb303 * .45, &beat]

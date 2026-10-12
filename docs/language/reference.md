@@ -9,6 +9,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `&name …`: A cell: one per line, its name first, then its attributes (key=value) and its braid, in any order. [→](cell.md) `&theme over=&major step=&bar 0 2 4 5`
 - `&name label="…"`: A note: a cell with only a label= (and title=, tags=, about=) explains, in the graph; it does nothing. [→](display.md) `&why label="The bass walks down a fifth each bar."`
 - `off`: Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph). [→](cell.md) `&drums off over=&kit step=&bar 0 1`
+- `oneshot`: On a voice: each note plays its envelope through (its attack and decay), whatever its step: a drum hit on any grid. [→](sound.md) `&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)`
 - `# …` · `// …`: A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere. [→](cell.md) `&tune step=2 0 2 4  # the opening`
 - `… +` · `… *` · `… ,` · `… [`: A line ending in +, *, a comma or [ continues on the next one (a long mix). [→](cell.md)
 - `&parts step=&bar &a &b`: Taps of a meter's bus (decision 016): a stepped table of names declares them, each stepped as the table is. What a tap steps plays while a selector reading the table picks it (`over=&parts`), from its top each time: an arrangement. [→](time.md) `&parts step=&bar &verseBar &chorusBar`
@@ -33,6 +34,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `x*n`: Ratchet: the step played n times within its own length. [→](cell.md) `&hats step=2 0 0*2 0 0*3`
 - `x@n`: Hold: the step lasts n steps. [→](cell.md) `&tune step=2 0@2 2 4@3`
 - `x?` · `x?p`: Chance, as Strudel's degradeBy: the step is dropped with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence. [→](cell.md) `&hats step=4 0 0? 0?.3 0` · `&ghost chance=.8 step=4 0? 0? 0? 0?`
+- `&x:0:gain`: A hit's own gain, as Strudel spells a sound's fields (s("hh:0:.4")): its number in its table (0; a pitched hit is not yet), then its gain, linear (1 as it is). In a groove, and in its chords: [&bd, &hh:0:.4]. [→](cell.md) `&beat step=8 [&bd,&hh] &hh:0:.4 [&sd,&hh] &hh:0:.4`
 
 ## References
 
@@ -131,6 +133,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `delay=n` · `delay=free(n, lo..hi)` · `delay=&x` · `delay=lo..hi * &a * &b`: Delay send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — on a voice; it makes the cell a voice. [→](sound.md)
 - `delayfeedback=n` · `delayfeedback=free(n, lo..hi)`: Echo feedback 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
+- `glide=n` · `glide=free(n, lo..hi)`: Tied notes (each starting as the one before ends) play as one: its envelope once, each next a slide there over this many seconds (dough’s glide; 0 or none: each note its own) — on a voice. [→](sound.md)
 - `pan=n` · `pan=free(n, lo..hi)`: Where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades — on a voice; it makes the cell a voice. [→](sound.md)
 - `distort=n` · `distort=free(n, lo..hi)`: Distortion: 0 clean, .3 gritty, 1 and more harsh — on a voice; it makes the cell a voice. [→](sound.md)
 - `crush=n` · `crush=free(n, lo..hi)`: Bit depth: 16 clean, 8 grainy, 3 and fewer: rubble — on a voice; it makes the cell a voice. [→](sound.md)
@@ -169,6 +172,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `at=n` · `at=free(n, lo..hi)` · `at=&clock/n`: A read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar) — on a read head (play=) [→](physics.md)
 - `wander=n` · `wander=free(n, lo..hi)`: A read head: how far it wanders either way (tape-seconds) — a flying head — on a read head (play=) [→](physics.md)
 - `wanderhz=n` · `wanderhz=free(n, lo..hi)`: A read head: how fast it wanders (times a second) — on a read head (play=) [→](physics.md)
+- `gain=n` · `gain=free(n, lo..hi)`: On a voice: its own gain, dough’s, times every gain it is played at (1 by default; a kit member’s balance); on a gate written the old way (trigger=): the number in level= — on a voice or a gate (play= with a braid) [→](sound.md)
 - `scope=word`: A scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels — on a scope (scope=) [→](display.md)
 - `fold=n` · `fold=free(n, lo..hi)`: A spectrum or waterfall: pitches folded by this stride into as many bins (12: by pitch class, the default) — on a scope (scope=) [→](display.md)
 - `bins=n` · `bins=free(n, lo..hi)`: A spectrum or waterfall without a fold: this many bands, low to high (1 a meter, 3 low-mid-high, 20 an equaliser) — on a scope (scope=) [→](display.md)

@@ -6,15 +6,13 @@
 &beat scan(1 1 1 1) step=free(100bpm, 70..140)       # four dotted-quarter beats: 12/8
 &bell label="{mode} · x.x.xx.x.x.x" scan(2 2 1 2 2 2 1) step=&beat*7/4             # seven strokes a bar, over the twelve pulses
 
-&strokes map=amp step=&bell 1 .5 .7 .5 .6 .5 .7      # the bell, as a rhythm
+&strokes step=&bell &gankogui &gankogui:0:.5 &gankogui:0:.7 &gankogui:0:.5 &gankogui:0:.6 &gankogui:0:.5 &gankogui:0:.7      # the bell, as a rhythm
 &song over=&bell step=&bell 4 4 5 4 2 1 0 2 2 1 2 0 ~ ~    # … and as a scale: C major
-&drum map=amp step=&beat 1 .5 .8 .5                  # the low drum on the beats
-&pulse map=amp step=&beat*3 .5 .2 .3                 # the twelve pulses
+&drums step=&beat*3 [&dundun,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [&dundun:0:.5,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [&dundun:0:.8,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [&dundun:0:.5,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3   # the twelve pulses, the low drum on the beats
 
-&gankogui s=square loop=C6 lpf=4000 env=&(map=adsr 0 .08 0 .05)
+&gankogui gain=.25 s=square loop=C6 lpf=4000 env=&(map=adsr 0 .08 0 .05)
 &voice s=tri loop=C4 env=&(map=adsr .02 .2 .6 .2)
-&dundun s=sine loop=C2 pitch=0..12 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .25 0 .1)
-&shekere s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
+&dundun gain=.7 oneshot s=sine loop=C2 pitch=0..12 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .25 0 .1)
+&shekere gain=.15 s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
 
-&mix level=2 map=sample [&strokes * &gankogui * .25, &song * &voice * .45,
-                                  &drum * &dundun * .7, &pulse * &shekere * .15]
+&mix level=2 map=sample [&strokes, &song * &voice * .45, &drums]

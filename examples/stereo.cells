@@ -1,4 +1,5 @@
 &piece title="Stereo: Mary Had a Little Lamb" tags="tutorial, genre:world, genre:folk, pentatonic, stereo" tier=6 label="Mary Had a Little Lamb across two channels: the bell on the left, the cello on the right." about=&out
+&glideNote label="glide=.12: the cello bows its line, each note sliding on from the last in .12 s, its envelope once (no new attack). A rest or a chord would end the run." about=&cello
 # pan= places a voice between the sound card's two channels: 0 left, .5 the centre (as
 # without it), 1 right; the far side fades. .15: the left full, the right at .3.
 &bar scan(27 23 26 24) step=92bpm
@@ -6,5 +7,5 @@
 &low over=scale(major) step=&bar/2 0 3 4 0
 
 &bell s=sine loop=C5 pan=.15 env=&(map=adsr .01 .6 .2 .6)
-&cello s=saw loop=C3 lpf=900 pan=.85 env=&(map=adsr .03 .4 .6 .4)
+&cello glide=.12 s=saw loop=C3 lpf=900 pan=.85 env=&(map=adsr .03 .4 .6 .4)
 &out level=1.5 map=sample [&high * &bell, &low * &cello]

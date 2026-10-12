@@ -12,11 +12,36 @@ import { stepsOf, unitsFor } from './flatten';
 import { slots, type Slot } from './subseq';
 import type { Atom } from './ast';
 import { cellId, edgeId } from './ids';
-import { droneEnd, endOf, outputPlays, picksNow, voiceFor } from './realize';
+import { droneEnd, endOf, eventsBetween, outputPlays, picksNow, plan, voiceFor, type Plan } from './realize';
 import { liveRouting, type NotesOf, type RouteAcc } from './routing';
 import { mod } from '../theory/modes';
 
 const EPS = 1e-9;
+
+// (a oneshot drum rings past its step: what sounds now is asked of the plan, made once a piece)
+const plans = new WeakMap<CompileResult, WeakMap<Shifts, WeakMap<ReadonlySet<string>, Plan>>>();
+function planOf(result: CompileResult, statics: Shifts, muted: ReadonlySet<string>): Plan {
+  let a = plans.get(result);
+  if (!a) plans.set(result, (a = new WeakMap()));
+  let b = a.get(statics);
+  if (!b) a.set(statics, (b = new WeakMap()));
+  let p = b.get(muted);
+  if (!p) b.set(muted, (p = plan(result, statics, muted)));
+  return p;
+}
+/** The longest a oneshot voice played through a kit rings (its envelope's attack and decay), 0: none. */
+function oneshotRing(result: CompileResult): number {
+  let ring = 0;
+  for (const o of result.outputs)
+    if (o.kit)
+      for (const u of result.cells.get(o.voice)?.units ?? []) {
+        const v = u.atom.kind === 'ref' ? result.cells.get(u.atom.name) : undefined;
+        const env = v?.oneshot && v.env ? result.cells.get(v.env) : undefined;
+        const n = env?.units.map((x) => (x.atom.kind === 'note' ? x.atom.value : 0)) ?? [];
+        if (n.length >= 2) ring = Math.max(ring, n[0] + n[1]);
+      }
+  return ring;
+}
 
 interface LiveCell {
   /** Playhead inside the instance being played, in this cell's steps (braids). */
@@ -201,6 +226,18 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
       ctxFrom = tFrom;
     }
   }
+  // a oneshot drum still ringing from an earlier step: live, and its output's member while it rings
+  const ring = oneshotRing(result);
+  if (ring > 0)
+    for (const e of eventsBetween(planOf(result, statics, muted), Math.max(0, seconds - ring - EPS), seconds + EPS, true)) {
+      if (!(e.at <= seconds && seconds < e.at + e.dur) || !result.cells.get(e.voice)?.oneshot) continue;
+      const o = active.find((x) => x.id === e.output);
+      if (!o) continue;
+      mark(e.voice);
+      voices.add(cellId(e.voice));
+      const hits = members.get(o);
+      if (hits && !hits.includes(e.voice)) hits.push(e.voice);
+    }
   const phases = new Map<string, number>();
   for (const c of result.cells.values())
     if (c.clock && !c.voice) {

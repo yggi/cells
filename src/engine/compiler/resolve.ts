@@ -125,6 +125,8 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
       scan: b.kind === 'scan' ? { lap: scanOf(b.steps).lap, steps: b.steps } : null,
       shift: d.shift ?? 0,
       off: d.off,
+      oneshot: !!d.oneshot,
+      glide: typeof d.params.glide === 'number' && d.params.glide > 0 ? d.params.glide : 0,
       children,
       steps,
       unitSteps,

@@ -206,6 +206,13 @@ const driverMuted = (result: CompileResult, name: string, muted: ReadonlySet<str
 };
 
 /** An output's level per channel, leaving out mixes (or sound cards) that are switched off. */
+/** A voice's own gain (`level=` on a voice: a number, 1 by default), times every gain it is played at. */
+function voiceGain(result: CompileResult, voice: string): number {
+  const c = result.cells.get(voice);
+  const l = c?.voice ? c.params.gain : undefined;
+  return typeof l === 'number' && Number.isFinite(l) && l >= 0 ? l : 1;
+}
+
 export function liveGains(o: Output, muted: ReadonlySet<string>): [number, number] {
   // a send (a mix played only into a resonator or a tape): its own gain, unless its mix is off
   // (a MIDI card it is also on takes nothing away from what it feeds)
@@ -358,6 +365,9 @@ function lawOffset(result: Plan['result'], cell: string): number {
   return Math.round(((((sec(anchor) - LAW_START) % 86400) + 86400) % 86400) / LAW_SPS);
 }
 
+/** A glide's run's most notes: it starts again after this many (an endless tie, a loop with no rest, ends). */
+const RUN = 256;
+
 /**
  * Everything that starts in [from, to). The triggering term's pitch (tables as
  * they stand at that moment) plus every modulating term sets the voice's rate:
@@ -394,7 +404,7 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
         voice: o.voice,
         freq: base * Math.pow(2, n.semis / 12),
         bends: [],
-        gains: [g[0] * Math.min(1, 1 - n.pan), g[1] * Math.min(1, 1 + n.pan)],
+        gains: [g[0] * Math.min(1, 1 - n.pan) * voiceGain(p.result, o.voice), g[1] * Math.min(1, 1 + n.pan) * voiceGain(p.result, o.voice)],
         levels: [{ at, level: n.level }],
         ...(heard ? {} : { unheard: true as const }),
         ...(midi.length ? { midi } : {}),
@@ -463,15 +473,17 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     const c1 = tm.stepAt(Math.max(0, until)) * t.rate;
     if (!Number.isFinite(c0) || !Number.isFinite(c1) || c1 <= c0) continue; // (a clock gone wild: nothing from it)
     // a note at step s, lasting until step `upto` (a window's end cuts it)
-    const emit = (s: number, e: StepEvent, upto: number) => {
+    const make = (s: number, e: StepEvent, upto: number): Played | null => {
       const at = tm.q(s / t.rate);
-      if (!Number.isFinite(at)) return; // (a clock run down: this step never comes)
-      if (at >= t.end - EPS) return;
+      if (!Number.isFinite(at)) return null; // (a clock run down: this step never comes)
+      if (at >= t.end - EPS) return null;
       // (a note whose clock stops beneath it never reaches its end: it rings 8 s at most)
       const ends = Math.min(tm.q(upto / t.rate), t.end);
-      const dur = Number.isFinite(ends) ? ends - at : 8;
       const v = voiceFor(result, t.output, e.value);
-      if (!v || p.muted.has(cellId(v.voice))) return;
+      if (!v || p.muted.has(cellId(v.voice))) return null;
+      // (a oneshot voice: a hit, as long as its envelope's attack and decay, whatever its step)
+      const hit = result.cells.get(v.voice)?.oneshot ? (t.output.envelope ?? memberEnvelope(result, v.voice)) : null;
+      const dur = hit ? hit.attack + hit.decay : Number.isFinite(ends) ? ends - at : 8;
       // a gate starts notes at pitch 0, at its own level
       let semis = t.output.kit || t.output.gate ? t.output.offset : t.sign * pitchOf(p, e, at) + t.output.offset;
       // modulation: the sum at the start sets the pitch; later changes become bends
@@ -493,7 +505,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       if (vs && tm.speed && !t.output.kit && !t.output.gate) {
         const sp = (x: number) => Math.max(1e-3, tm.speed!(x));
         const s0 = sp(at);
-        if (s0 < 0.05) return; // (tape at a standstill: nothing sounds)
+        if (s0 < 0.05) return null; // (tape at a standstill: nothing sounds)
         semis += 12 * vs * Math.log2(s0);
         if (!bends.length)
           for (let x = at + 0.04, n = 0; x < at + dur && n < 400; x += 0.04, n++) {
@@ -503,7 +515,8 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       }
       // volume: the product of the streams (and a gate's own value), over the note
       const own = t.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter);
-      const level: { at: number; level: number; ramp?: boolean }[] = [{ at, level: t.output.gate ? own : 1 }];
+      // (&x:0:g: the hit's own gain)
+      const level: { at: number; level: number; ramp?: boolean }[] = [{ at, level: (t.output.gate ? own : 1) * (e.level ?? 1) }];
       if (t.levels.length) {
         const series = t.levels.map((m) => levelSeries(p, m, at, at + dur));
         const times = [...new Set(series.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
@@ -519,40 +532,95 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       const freq = v.freq * Math.pow(2, semis / 12);
       const params = paramTracks(p, v.voice, at, dur);
       const env = t.output.envelope ?? (t.output.kit ? memberEnvelope(result, v.voice) : null);
-      // a kit's member placed by its own pan= (a voice's own is in its output's gains already)
+      // a kit's member placed by its own pan= (a voice's own is in its output's gains already); every voice at its own
+      // level= (a kit member's balance)
       const memberPan = (g: [number, number]): [number, number] => {
-        if (!t.output.kit) return g;
+        const k = voiceGain(result, v.voice);
+        if (!t.output.kit) return [g[0] * k, g[1] * k];
         const [l, r] = balance(result.cells.get(v.voice)?.params.pan);
-        return [g[0] * l, g[1] * r];
+        return [g[0] * l * k, g[1] * r * k];
       };
       const gains = memberPan(liveGains(t.output, p.muted));
       const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
-      if (freq > 0 && freq < 20000 && level.some((l) => l.level > 0))
-        out.push({
-          at,
-          dur,
-          voice: v.voice,
-          freq,
-          bends,
-          value: e.value + e.alter,
-          gains,
-          levels: level,
-          // (on MIDI cards only, or its sound card switched off: sent, not heard)
-          ...(!t.output.silent && !(gains[0] > 0 || gains[1] > 0) ? { unheard: true as const } : {}),
-          ...(midi.length ? { midi } : {}),
-          ...(env ? { env } : {}),
-          ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
-          ...(params ? { params } : {}),
-          ...(outputs ? { output: t.output.id } : {}),
-        });
+      if (!(freq > 0 && freq < 20000 && level.some((l) => l.level > 0))) return null;
+      return {
+        at,
+        dur,
+        voice: v.voice,
+        freq,
+        bends,
+        value: e.value + e.alter,
+        gains,
+        levels: level,
+        // (on MIDI cards only, or its sound card switched off: sent, not heard)
+        ...(!t.output.silent && !(gains[0] > 0 || gains[1] > 0) ? { unheard: true as const } : {}),
+        ...(midi.length ? { midi } : {}),
+        ...(env ? { env } : {}),
+        ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
+        ...(params ? { params } : {}),
+        ...(outputs ? { output: t.output.id } : {}),
+      };
+    };
+    // glide (a voice's `glide=`, dough's): a run of single notes, each starting as the one before ends, is one note:
+    // its envelope once, each later note a slide there over the glide's time. Each run is played from its first note,
+    // whatever window it falls in (looked ahead along the track's own steps), and a note tied to the one before plays
+    // nothing of its own.
+    const glide = t.output.kit || t.output.gate ? 0 : (result.cells.get(t.output.voice)?.glide ?? 0);
+    const tie = glide > 0;
+    const n = t.events.length;
+    // (a step with one note on it: a chord isn't tied)
+    const single = (i: number) => (i === 0 || t.events[i - 1].step !== t.events[i].step) && (i === n - 1 || t.events[i + 1].step !== t.events[i].step);
+    // (the note before event i of lap `lap`, its lap, and whether it ends where i starts)
+    const before = (i: number, lap: number): [number, number] => (i > 0 ? [i - 1, lap] : [n - 1, lap - 1]);
+    // (`minLap`: in a selector's window, from its start, no note before lap 0 plays)
+    // (a run starts again every RUN notes along the track, the same wherever a window cuts it: an endless tie ends)
+    const tied = (i: number, lap: number, minLap: number): boolean => {
+      if (!tie || !single(i) || mod(lap * n + i, RUN) === 0) return false;
+      const [k, kl] = before(i, lap);
+      const end = kl * t.period + t.events[k].step + t.events[k].duration;
+      const start = lap * t.period + t.events[i].step;
+      return single(k) && kl >= minLap && Math.abs(end - start) < EPS && !!thrown(result, t, t.events[k], kl);
+    };
+    // emit: a note, or (glide) the run it starts, up to `bound` (its window's end; `base` the window's first step)
+    const emit = (s: number, e: StepEvent, upto: number, i = -1, lap = 0, base = 0, minLap = 0, bound = Infinity) => {
+      if (i >= 0 && tied(i, lap, minLap)) return;
+      const first = make(s, e, upto);
+      if (!first) return;
+      if (i < 0 || !tie || !single(i)) return void out.push(first);
+      let run: Played = first;
+      let [j, jl] = [i, lap];
+      for (let guard = 0; guard < RUN; guard++) {
+        [j, jl] = j < n - 1 ? [j + 1, jl] : [0, jl + 1];
+        const sj = base + jl * t.period + t.events[j].step;
+        if (sj >= bound - EPS || !tied(j, jl, minLap)) break;
+        const r = thrown(result, t, t.events[j], jl);
+        const next = r && make(sj, r, Math.min(sj + t.events[j].duration, bound));
+        if (!next) break;
+        const cents = 1200 * Math.log2(next.freq / run.freq);
+        // (from where it was, held to the next note, then a slide there, at most the note's length)
+        const was = run.bends.length ? run.bends[run.bends.length - 1].cents : 0;
+        const slide = Math.min(glide, next.dur);
+        run = {
+          ...run,
+          dur: next.at + next.dur - run.at,
+          bends: [
+            ...run.bends,
+            { at: next.at, cents: was },
+            { at: next.at + slide, cents, ramp: true },
+            ...next.bends.map((b) => ({ ...b, at: Math.max(b.at, next.at + slide), cents: b.cents + cents })),
+          ],
+          levels: [...run.levels, ...next.levels.filter((l) => l.at >= next.at)],
+        };
+      }
+      out.push(run);
     };
     if (t.selects.length === 0) {
       for (let lap = Math.floor(c0 / t.period) - 1; lap * t.period < c1; lap++)
-        for (const e of t.events) {
+        for (const [i, e] of t.events.entries()) {
           const s = lap * t.period + e.step;
           if (s < c0 - EPS || s >= c1 - EPS) continue;
           const r = thrown(result, t, e, lap);
-          if (r) emit(s, r, s + e.duration);
+          if (r) emit(s, r, s + e.duration, i, lap);
         }
       continue;
     }
@@ -569,11 +637,11 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       const hi = Math.min(c1, sB);
       if (hi <= lo) continue;
       for (let lap = Math.floor((lo - sA) / t.period) - 1; sA + lap * t.period < hi; lap++)
-        for (const e of t.events) {
+        for (const [i, e] of t.events.entries()) {
           const s = sA + lap * t.period + e.step;
           if (lap < 0 || s < lo - EPS || s >= hi - EPS) continue;
           const r = thrown(result, t, e, lap);
-          if (r) emit(s, r, Math.min(s + e.duration, sB));
+          if (r) emit(s, r, Math.min(s + e.duration, sB), i, lap, sA, 0, sB);
         }
     }
   }

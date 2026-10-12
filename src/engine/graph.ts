@@ -10,6 +10,7 @@ import { isMidiCard, type CompileResult, type ResolvedCell } from './program';
 import type { Atom, Binding, Pick, ValueMap } from './ast';
 import { leaves } from './subseq';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
+import { VOICE_KIT } from './compiler/declare';
 import { refsOf } from './readers';
 import type { Transform } from './transform';
 
@@ -255,7 +256,9 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
     return d;
   };
 
-  const shown = (name: string) => !result.cells.get(name)?.implicit;
+  // (the implicit cells stay hidden, but for the kit the grooves read: drawn as the piece's drum kit, the voices only
+  // grooves play its pieces, each name a groove writes a wire into its piece; decision 021; docs/ui/graph.md)
+  const shown = (name: string) => !result.cells.get(name)?.implicit || name === VOICE_KIT;
   const nodes: GraphNode[] = [];
   const seen = new Set<string>();
   // (the tables of taps whose bus is drawn already)
@@ -316,7 +319,8 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
     const id = cellId(c.name);
     if (c.voice) nodes.push({ id, kind: 'voice', depth: depthOf(c.name), cell: c });
     else nodes.push({ id, kind: 'cell', depth: depthOf(c.name), cell: c, isMeter: meters.has(c.name) });
-    if (c.over)
+    // (a groove reads the drums' kit, but writes no over=: its wires are the names it writes, below)
+    if (c.over && c.over !== VOICE_KIT)
       link({
         id: edgeId(id, cellId(c.over)),
         source: id,

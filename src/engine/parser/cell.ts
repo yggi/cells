@@ -392,6 +392,13 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   ),
   syntax(
     'line',
+    'oneshot',
+    'On a voice: each note plays its envelope through (its attack and decay), whatever its step: a drum hit on any grid.',
+    ['&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)'],
+    'sound.md',
+  ),
+  syntax(
+    'line',
     '# … · // …',
     'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.',
     ['&tune step=2 0 2 4  # the opening'],
@@ -466,6 +473,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   };
   const seen = new Set<string>();
   let off = false;
+  let oneshot = false;
   const tokens: Token[] = [];
   let generator: Braid | null = null;
   let scaleKey: Ref | null = null;
@@ -533,6 +541,11 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       off = true;
       continue;
     }
+    if (word === 'oneshot' && s.atBoundary()) {
+      if (oneshot) s.fail('oneshot is given twice', at, word.length);
+      oneshot = true;
+      continue;
+    }
     // a note by name is a step (C, Bb3): read again as one
     // (and _, the step before it held one longer)
     if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_')) s.i = at;
@@ -542,10 +555,10 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   }
 
   const braid: Braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
-  // (gain= is a gate's level, on the line of a gate (trigger=) only; anywhere else it is dough's, retired)
-  if ('gain' in b.params && !('trigger' in b.params)) {
-    const at = b.paramSpans.gain;
-    s.fail(RETIRED_PARAMS.gain, at ? at.col - 1 : 0, 4);
+  // (a voice plays its notes one way: each through, or tied as one)
+  if (oneshot && typeof b.params.glide === 'number' && b.params.glide > 0) {
+    const at = b.paramSpans.glide;
+    s.fail('oneshot or glide=: a voice plays each note through, or ties them as one', at ? at.col - 1 : 0, 5);
   }
   if (fifthsShift !== null && fifthsShift !== 0) {
     if (b.shift !== null) s.fail('fifths(n) turns it already: write fifths() and shift=, or fifths(n) alone');
@@ -564,6 +577,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     ...(base ? { base } : {}),
     shift,
     off,
+    ...(oneshot ? { oneshot } : {}),
     step,
     map,
     stride,

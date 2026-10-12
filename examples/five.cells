@@ -11,17 +11,15 @@
 
 &walk step=&bar 0 3 7 -5 -2                        # a bass that walks the 3 + 2
 &comp step=&swing [0,3,7]@3!2 [0,3,10]@3 [0,3,10]
-&ride map=amp step=&swing .9 ~ .6 .5 .9 ~ .6 .5 .8 .4
-&rim map=amp step=&bar ~ ~ .7 ~ .5                 # a click on 3 and 5: the seams of 3 + 2
+&ride step=&swing &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 [&cym:0:.9,&click:0:.7] ~ &cym:0:.6 &cym:0:.5 [&cym:0:.8,&click:0:.5] &cym:0:.4   # the ride, and a click on 3 and 5: the seams of 3 + 2
 
 &horn s=saw loop=Eb4 lpf=1400 room=.3 env=&(map=adsr .02 .15 .6 .15)
 &piano s=tri loop=Eb4 env=&(map=adsr .005 .35 .15 .2)
 &bass s=tri loop=Eb2 env=&(map=adsr .005 .3 .5 .1)
-&cym s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
-&click s=white hpf=3000 env=&(map=adsr 0 .03 0 .02)
+&cym gain=.22 s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
+&click gain=.3 oneshot s=white hpf=3000 env=&(map=adsr 0 .03 0 .02)
 
 &mix level=4 map=sample [&tune * &horn * .45,
                                   &walk * &bass * .8,
                                   (&comp + &harmony) * &piano * .3,
-                                  &ride * &cym * .22,
-                                  &rim * &click * .3]
+                                  &ride]

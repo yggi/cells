@@ -1,4 +1,5 @@
 /** A mix chord, `[&theme * &lead, …]`: sums and products of cells and numbers, kept as written (compile types them: algebra.ts). */
+import { parseFields } from './level';
 import type { Atom, Expr } from '../ast';
 import { MAX_NESTING, NUM, type LineScanner } from './scanner';
 import { parseFree } from './free';
@@ -160,7 +161,12 @@ function parseFactor(s: LineScanner, depth: number): Expr {
     s.expect(')', `')' to close the group`);
     return e;
   }
-  if (s.peek() === '&') return { k: 'ref', ref: s.ref('a cell, like &theme') };
+  if (s.peek() === '&') {
+    const ref = s.ref('a cell, like &theme');
+    // (a drum's own gain in a groove's chord, [&bd, &hh:0:.4]: Strudel's fields)
+    const level = parseFields(s);
+    return level === undefined ? { k: 'ref', ref } : { k: 'ref', ref, level };
+  }
   if (s.text.startsWith('free(', s.i)) {
     const f = parseFree(s, 'gain', false);
     return { k: 'num', value: f.value, span: s.span(start) };

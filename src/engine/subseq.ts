@@ -15,6 +15,8 @@ interface Step {
   readonly subdivide: number;
   readonly elongate: number;
   readonly chance?: number | null;
+  /** &x:0:g: a hit's own gain. */
+  readonly level?: number;
 }
 
 /** What a step holds at the bottom, in order (a subsequence's steps, layer by layer, nested ones opened). */
@@ -48,6 +50,8 @@ export interface Slot {
   readonly chances: readonly (number | null)[];
   /** The step of the braid it is in (its index in `units`). */
   readonly top: number;
+  /** Its gain (&x:0:g), times the gains of the steps it is in; none written: absent. */
+  readonly level?: number;
 }
 
 /**
@@ -61,28 +65,29 @@ export function slots(units: readonly Step[], unit: (a: Leaf) => number): Slot[]
   let base = 0;
   units.forEach((u, top) => {
     const foot = (u.atom.kind === 'seq' ? 1 : unit(u.atom)) * u.elongate;
-    place(u, base, foot, [], top, out);
+    place(u, base, foot, [], top, out, undefined);
     base += foot * u.repeat;
   });
   return out;
 }
 
-function place(u: Step, at: number, foot: number, chances: readonly (number | null)[], top: number, out: Slot[]): void {
+function place(u: Step, at: number, foot: number, chances: readonly (number | null)[], top: number, out: Slot[], level: number | undefined): void {
   const dur = foot / u.subdivide;
   const odds = u.chance === undefined ? chances : [...chances, u.chance];
+  const lv = u.level === undefined ? level : u.level * (level ?? 1);
   const a = u.atom;
   for (let r = 0; r < u.repeat; r++)
     for (let s = 0; s < u.subdivide; s++) {
       const from = at + r * foot + s * dur;
       if (a.kind !== 'seq') {
-        out.push({ atom: a, at: from, dur, chances: odds, top });
+        out.push({ atom: a, at: from, dur, chances: odds, top, ...(lv === undefined ? {} : { level: lv }) });
         continue;
       }
       for (const layer of a.layers) {
         const whole = layer.reduce((x, t) => x + t.elongate * t.repeat, 0);
         let b = 0;
         for (const t of layer) {
-          place(t, from + (b * dur) / whole, (t.elongate * dur) / whole, odds, top, out);
+          place(t, from + (b * dur) / whole, (t.elongate * dur) / whole, odds, top, out, lv);
           b += t.elongate * t.repeat;
         }
       }

@@ -28,14 +28,17 @@ describe('a stepped braid of voices plays them (#10 F4)', () => {
     expect(r.outputs).toHaveLength(1);
     expect(r.outputs[0].levels.map((l) => l.cell)).toEqual(['acc']);
   });
-  it('draws what is written: an edge from the pattern to each voice, and no kit', () => {
+  it("draws what is written: a wire from each voice named to the pattern, from its piece on the drums' kit", () => {
     const r = compileSource(voices + '&groove step=&bar*2 &bd &hh &bd &sd\n&out map=sample [&groove]');
     const g = buildGraph(r);
-    expect(g.nodes.some((n) => n.cell?.name.startsWith('kit:'))).toBe(false);
-    expect(g.edges.filter((e) => e.port === 'braid' && e.source === 'cell:groove').map((e) => [e.target, e.count])).toEqual([
-      ['cell:bd', 2],
-      ['cell:hh', 1],
-      ['cell:sd', 1],
+    // (the kit the grooves read is drawn, the voices only they play its pieces: no node of their own)
+    expect(g.nodes.some((n) => n.id === 'cell:kit:voices')).toBe(true);
+    expect(['bd', 'hh', 'sd'].every((v) => g.bulbs.get(v) === 'kit:voices')).toBe(true);
+    // (each name written is still one wire, from its piece)
+    expect(g.edges.filter((e) => e.port === 'braid' && e.to === 'cell:groove').map((e) => [e.bulb, e.count])).toEqual([
+      ['bd', 2],
+      ['hh', 1],
+      ['sd', 1],
     ]);
   });
   it('an unstepped braid of voices is still a kit, and a stepped braid of anything else is still a melody', () => {

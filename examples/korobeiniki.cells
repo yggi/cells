@@ -4,7 +4,7 @@
 # then a slower middle section (B, our own), then the song again — and round.
 &piece title="8-bit: Korobeiniki, in Tetris form" tags="genre:world, genre:electronic, genre:folk, tonal, genre:8-bit, arrangement" label="**Korobeiniki**, in the form of the puzzle game's music: A · A · B · B · A, and round again." about=&out
 &formNote label="&tetris picks the parts, eight bars a step." about=&tetris
-&sectionsNote label="A is the folk song; B, slower, in half notes, is our own." about=(&leadA &leadB)
+&sectionsNote label="A is the folk song; B, slower, in half notes, is our own." about=(&tune &chorale)
 &bar scan(1 1 1 1) step=free(144bpm, 100..200)
 
 &a tags="lead" 7@2 2 3 5@2 3 2 0@2 0 3 7@2 5 3                 # in A minor (A = 0); two bars
@@ -21,27 +21,26 @@
 &hold tags="harmony" 0                                # one chord a bar …
 &chordsAHold tags="harmony" step=&chordsABar/4 &hold
 &chordsBHold tags="harmony" step=&chordsBBar/4 &hold
-&hats tags="drums" map=amp step=&drumsBar*2 .5 .15 1 .15 .5 .15 1 .15
+&hats tags="drums" step=&drumsBar*2 &noise:0:.5 &noise:0:.15 &noise &noise:0:.15 &noise:0:.5 &noise:0:.15 &noise &noise:0:.15
 
 &pulse tags="lead" loop=A4 0 0 0 1 env=&(map=adsr .002 .05 .8 .05)              # a 25% pulse: the lead
 &tri tags="bass" loop=A2 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0   # a stepped triangle
 &square tags="harmony" loop=A3 0 1 pitch=&(loop=20 0 3 7) env=&(map=adsr .002 .1 .7 .1)   # … arpeggiated, 60 notes a second
-&noise tags="drums" s=white hpf=5000 env=&(map=adsr 0 .05 0 .02)
+&noise tags="drums" gain=.2 s=white hpf=5000 env=&(map=adsr 0 .05 0 .02)
 
 # B: half notes over Am and Em — our own (the game's middle section is its composer's)
 &chorale tags="lead" step=&leadBBar/2 3 2 0 -2 0 2 3 2 0 3 7 5 3 2 0@2
 &changesB tags="harmony" loop=&bar/32 0 -5 0 -5 0 -5 0 0                  # Am Em Am Em Am Em Am Am
 &pulse50 tags="lead" loop=A4 0 1 env=&(map=adsr .01 .1 .8 .2)              # a 50% pulse, softer: for B
 
-# the parts' sound, and the taps &tetris switches: eight bars a step, A A B B A, round again
-&leadA tags="lead" [&tune * &pulse * .3]
-&leadB tags="lead" [&chorale * &pulse50 * .28]
-&bassA tags="bass" [(&bassAOctaves + &changes) * &tri * .6]
-&bassB tags="bass" [(&bassBOctaves + &changesB) * &tri * .6]
-&chordsA tags="harmony" [(&chordsAHold + &changes) * &square * .12]
-&chordsB tags="harmony" [(&chordsBHold + &changesB) * &square * .12]
-&drums tags="drums" [&hats * &noise * .2]
+# the taps &tetris switches: eight bars a step, A A B B A, round again
 &parts step=&bar &leadABar &leadBBar &bassABar &bassBBar &chordsABar &chordsBBar &drumsBar
 &tetris over=&parts step=&bar/32 label="A · A · B · B · A" [0,2] [0,2,4,6] [1,3,5] [1,3,5,6] [0,2,4,6]
 
-&out level=5 map=sample [&leadA, &leadB, &bassA, &bassB, &chordsA, &chordsB, &drums]
+&out level=5 map=sample [&tune * &pulse * .3,
+                         &chorale * &pulse50 * .28,
+                         (&bassAOctaves + &changes) * &tri * .6,
+                         (&bassBOctaves + &changesB) * &tri * .6,
+                         (&chordsAHold + &changes) * &square * .12,
+                         (&chordsBHold + &changesB) * &square * .12,
+                         &hats]

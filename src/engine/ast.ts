@@ -72,7 +72,7 @@ export type Atom =
   // (keep: =, the base's step, for parser/base.ts; hold: _, merged into the step before it by the parser)
   | { readonly kind: 'rest'; readonly keep?: true; readonly hold?: true }
   /** `[0, 4, 7]`: numbers (or names) sounding together, in one step. */
-  | { readonly kind: 'chord'; readonly notes: readonly number[]; readonly alters: readonly number[]; readonly pitched?: readonly boolean[] }
+  | { readonly kind: 'chord'; readonly notes: readonly number[]; readonly alters: readonly number[]; readonly pitched?: readonly boolean[]; readonly levels?: readonly number[] }
   /**
    * `[a b c]`: a subsequence (Strudel's mini-notation, decision 027), its steps squeezed into the one step it takes, each
    * as long as its modifiers say (`[0 2@2]`: a third and two thirds), nested as deep as wanted. With commas it is a stack,
@@ -93,7 +93,7 @@ export type Atom =
 
 /** An expression in a mix chord, as written: sums and products of cells and numbers. */
 export type Expr =
-  | { readonly k: 'ref'; readonly ref: Ref }
+  | { readonly k: 'ref'; readonly ref: Ref; readonly level?: number }
   | { readonly k: 'num'; readonly value: number; readonly span: Span }
   | { readonly k: 'sum'; readonly items: readonly { readonly e: Expr; readonly sign: 1 | -1 }[]; readonly span: Span }
   | { readonly k: 'prod'; readonly factors: readonly Expr[]; readonly span: Span };
@@ -111,6 +111,8 @@ export interface Token {
   readonly elongate: number;
   /** x?p: it is dropped with probability p (x? alone: the cell's chance=, else ½). */
   readonly chance?: number | null;
+  /** &x:0:g: a hit's own gain (Strudel's sound fields: &hh:0:.5 half). */
+  readonly level?: number;
   readonly span: Span;
 }
 
@@ -248,6 +250,8 @@ export interface CellDecl {
   readonly shift: number | null;
   /** `off`: switched off — silences it and everything that reads through it or plays it. */
   readonly off: boolean;
+  /** `oneshot`: a voice plays each note as long as its envelope's attack and decay, whatever its step (a drum hit). */
+  readonly oneshot?: boolean;
   readonly step: StepSpec | null;
   readonly map: MapSpec | null;
   /** How far each step moves a stepped table (stride=7 walks a 12-cycle in fifths). */

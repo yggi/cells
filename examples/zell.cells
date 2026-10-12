@@ -21,24 +21,22 @@
 
 &melody tags="melody" over=&minor step=&melodyBar label="Melodie" 4@2 2 1 0@4 5@2 4 2 4@4 2@2 1 0 1@4 6@2 4 3 4@4
 
-&kick tags="beat" map=amp step=&beatBar 1 ~ 1 ~
-&snare tags="beat" map=amp step=&beatBar ~ 1 ~ 1
+&beat tags="beat" step=&beatBar &bd &sd &bd &sd
 &ticks tags="beat" map=amp step=&ticksBar*4 .5 .2 .3 .2 .5 .2 .3 .6
 
 &bass tags="bass" s=square loop=A1 lpf=600 env=&(map=adsr .005 .12 .5 .05)
 &arpeggio tags="arpeggio" s=square loop=A3 lpf=300..4000 * &sweep lpq=4 env=&(map=adsr .002 .1 .2 .05)
 &lead tags="melody" s=saw loop=A4 lpf=2200 delaytime=&bar delay=.3 delayfeedback=.3 room=.2 env=&(map=adsr .03 .2 .7 .2)
-&bd tags="beat" s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
-&sd tags="beat" s=white hpf=1200 env=&(map=adsr 0 .14 0 .05)
+&bd tags="beat" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
+&sd tags="beat" gain=.35 s=white hpf=1200 env=&(map=adsr 0 .14 0 .05)
 &metal tags="beat" s=square loop=A7 hpf=5000 env=&(map=adsr 0 .03 0 .02)
 
-# Aufbau: the parts' sound, and the taps the song stacks — eight bars (the progression) a step
-&ticksPart tags="beat" [&ticks * &metal * .12]
-&beatPart tags="beat" [&kick * &bd * .8, &snare * &sd * .35]
-&bassPart tags="bass" [&bassline * &bass * .5]
-&arpPart tags="arpeggio" [&arp * &arpeggio * .18]
-&melodyPart tags="melody" [&melody * &lead * .3]
+# Aufbau: the taps the song stacks — eight bars (the progression) a step
 &teile step=&bar &ticksBar &beatBar &bassBar &arpBar &melodyBar
 &lied over=&teile step=&bar/32 laps=1 label="Aufbau: Klick · Bass · Takt · Arpeggio · Melodie · Pause · alles · Klick" 0 [0,2] [0,1,2] [0,1,2,3] [0,1,2,3,4] [2,3] [0,1,2,3,4] 0
 
-&out level=5 map=sample [&ticksPart, &beatPart, &bassPart, &arpPart, &melodyPart]
+&out level=5 map=sample [&ticks * &metal * .12,
+                         &beat,
+                         &bassline * &bass * .5,
+                         &arp * &arpeggio * .18,
+                         &melody * &lead * .3]

@@ -36,7 +36,14 @@ export const unitsOf = (decls: ReadonlyMap<string, CellDecl>, d: CellDecl): Unit
   const o = tableOf(d);
   if (o === null) return Array.from({ length: gridSteps(d) }, (_, i) => note(i));
   if (b.kind === 'list')
-    return b.tokens.map(({ atom, repeat, subdivide, elongate, chance }) => ({ atom, repeat, subdivide, elongate, ...(chance !== undefined ? { chance } : {}) }));
+    return b.tokens.map(({ atom, repeat, subdivide, elongate, chance, level }) => ({
+      atom,
+      repeat,
+      subdivide,
+      elongate,
+      ...(chance !== undefined ? { chance } : {}),
+      ...(level !== undefined ? { level } : {}),
+    }));
   if (b.kind === 'scan') return scanOf(b.steps).positions.map(note);
   if (b.kind === 'sin') return Array.from({ length: b.n }, (_, i) => note(+Math.sin((2 * Math.PI * i) / b.n).toFixed(6)));
   // blank: the identity of the table below — entry i is index i

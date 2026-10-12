@@ -38,7 +38,7 @@ export function declare(ctx: Ctx): Declared {
   for (const name of decls.keys()) if (name.startsWith('key:') || name.startsWith('scale:')) implicit.add(name);
   // a stepped braid of voices (&groove step=&bar*4 &bd ~ &hh [&bd,&hh]) plays them, and so do the unstepped
   // braids of voices it splices (drum motifs: &groove … &fill &fill[::-1]): each is a pattern of numbers read
-  // through one kit of all their voices, in the order first written (that kit unnamed, not drawn)
+  // through one kit of all their voices, in the order first written (that kit unnamed; the graph draws it as the piece's drum kit, the grooves reading it)
   const grooves = voiceGrooves(decls);
   if (grooves) {
     decls.set(VOICE_KIT, {
@@ -104,7 +104,7 @@ export function declare(ctx: Ctx): Declared {
 }
 
 /** The kit that grooves and their motifs read: every voice they name. */
-const VOICE_KIT = 'kit:voices';
+export const VOICE_KIT = 'kit:voices';
 
 /**
  * Grooves: stepped cells whose steps are voices, rests, chords of voices and drum motifs; drum motifs:
@@ -160,8 +160,11 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
       if (a.kind === 'ref' && isVoiceDecl(a.name)) atom = { kind: 'note', value: index(a.name, t.span), alter: 0 };
       else if (a.kind === 'ref') rewrite(decls.get(a.name)!);
       else if (a.kind === 'mix') {
-        const notes = a.exprs.map((e) => index((e as { ref: Ref }).ref.name, t.span));
-        atom = { kind: 'chord', notes, alters: notes.map(() => 0) };
+        const refs = a.exprs as readonly { ref: Ref; level?: number }[];
+        const notes = refs.map((e) => index(e.ref.name, t.span));
+        // (a drum's own gain in the chord, [&bd, &hh:0:.4])
+        const levels = refs.some((e) => e.level !== undefined) ? refs.map((e) => e.level ?? 1) : undefined;
+        atom = { kind: 'chord', notes, alters: notes.map(() => 0), ...(levels ? { levels } : {}) };
       } else if (a.kind === 'seq') atom = { ...a, layers: a.layers.map((l) => l.map(step)) };
       return { ...t, atom };
     };

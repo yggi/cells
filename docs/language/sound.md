@@ -47,7 +47,19 @@ FM (`fm=` `ratio=` `index=`) and resonators (`body=` `ring=` `hard=`) are on [ph
 &out map=sample [&groove * .6]
 ```
 
-A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar*2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it.
+A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar*2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it. Each member brings its own balance too: **`gain=` on a voice** is its own gain (dough's `gain`, linear), times every gain it is played at (1 by default), so `&bd gain=.8` and `&sd gain=.4` in one kit play as `[&kick * &bd * .8, &snare * &sd * .4]` did, a pattern a drum.
+
+**`oneshot`** on a voice's line makes it a hit: each note plays its envelope through (its attack and decay), whatever its step, as a drum machine's does. Without it a note lasts its step, so a kick with a .3 s decay on a grid of .125 s eighths is cut short; with it, kicks and hats can share one fine grid (`&beat step=&bar*2 &bd &hh [&bd,&cp] &hh`) and the kick still rings. It is opt-in: a voice without it plays as before.
+
+**`glide=t`** on a voice (dough's `glide`) is the other way round: a run of single notes, each starting as the one before ends, is played as one note: its envelope once (no new attack), the pitch sliding to each next note over `t` seconds, as a bowed or blown line does. A rest or a chord ends the run, a hold (`@`) is part of it. `&lead glide=.1 s=tri …` with `&tune step=&bar*2 0 2 4 ~ 5 4 2@2` plays two phrases, each one breath. `glide=0` or none: each note its own. A voice is `oneshot` or gliding or neither, not both. (Strudel's `legato`, a note's length against its step, is another thing; cells has no `legato=` yet.) (A run starts again after 256 notes: a loop with no rest is still breathed now and then.)
+
+```cells
+&bar scan(1 1 1 1) step=120bpm
+&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)
+&hh oneshot s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&beat step=&bar*2 &bd &hh &bd &hh
+&out map=sample [&beat * .6]
+```
 
 ## Parameters as cells
 

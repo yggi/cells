@@ -5,17 +5,17 @@
 &clave scan(3 3 4 3 3) step=&bar*5/4                  # five strokes a bar
 &dorian scan(2 1 2 2 2 1 2)                            # D Dorian (the voices sit on D)
 
-&rim map=amp step=&clave 1 .8 .9 1 .8
+&rim step=&clave &click &click:0:.8 &click:0:.9 &click &click:0:.8
 &strum step=&clave [3,7,10,14]!3 [3,9,14]!2                                # Dm9 · G13, on the clave
 &bassline step=&bar 0 7 -7 0                           # root and fifth: D A under Dm9, G D under G13
-&shaker map=amp step=&bar*4 .5 .2 .3 .2
+&shaker step=&bar*4 &shh:0:.5 &shh:0:.2 &shh:0:.3 &shh:0:.2
 &melody over=&dorian step=&bar*2 4@3 3 2@2 ~@2 0 1 2@3 ~@3
 
 &guitar s=tri loop=D3 lpf=2200 env=&(map=adsr .003 .5 .15 .3)
 &bass s=sine loop=D2 env=&(map=adsr .01 .4 .5 .2)
-&flute s=sine loop=D4 env=&(map=adsr .06 .2 .7 .4) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
-&click s=white hpf=2500 env=&(map=adsr 0 .03 0 .02)
-&shh s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
+&flute glide=.08 s=sine loop=D4 env=&(map=adsr .06 .2 .7 .4) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
+&click gain=.3 s=white hpf=2500 env=&(map=adsr 0 .03 0 .02)
+&shh gain=.12 s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
 
 &mix level=4 map=sample [&strum * &guitar * .25, &bassline * &bass * .7, &melody * &flute * .4,
-                                  &rim * &click * .3, &shaker * &shh * .12]
+                                  &rim, &shaker]

@@ -6,15 +6,15 @@
 
 &chords over=&major step=&keysBar/4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
 &tune over=&major step=&tuneBar*2 4 4 5 7 7 5 4 2 0 0 2 4 4@2 2@2
-&kick step=&drumBar 0 ~ 0 ~
-&click off step=&drumBar 12 0 0 0                     # a click on the beat, switched off
+&kick step=&drumBar &bd ~ &bd ~
+&click off step=&drumBar 12 0!3                       # a click on the beat, switched off
 
 &keys s=tri loop=C4 env=&(map=adsr .01 .5 .3 .3)
 &lead s=square loop=C5 lpf=2500 env=&(map=adsr .01 .2 .5 .2)
 &rim s=sine loop=E5 env=&(map=adsr 0 .03 0 .02)
-&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
+&bd gain=.6 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
 
 &parts step=&bar &keysBar &tuneBar &drumBar
 &song over=&parts step=&bar/16 laps=1 label="intro · verse · chorus · end" 0 [0,2] [0,1,2] 0
 &out map=sample level=6 [&chords * &keys * .15, &tune * &lead * .2,
-                         &kick * &bd * .6, &click * &rim * .1]   # a long line can go on: it ends with a comma
+                         &kick, &click * &rim * .1]   # a long line can go on: it ends with a comma

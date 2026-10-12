@@ -11,8 +11,8 @@
 &tick step=&bar label="the escapement" 0!3
 
 &m s=sine ratio=7.1
-&comb pan=.36 s=sine loop=C5 fm=&m index=.2..1.6 * &(map=adsr .001 .06 .1 .1) room=.35 env=&(map=adsr .001 1.1 0 1)
-&combLow pan=.61 s=sine loop=C5 fm=&m index=.1...8 * &(map=adsr .001 .06 .1 .1) env=&(map=adsr .001 1.4 0 1.2)
+&comb oneshot pan=.36 s=sine loop=C5 fm=&m index=.2..1.6 * &(map=adsr .001 .06 .1 .1) room=.35 env=&(map=adsr .001 1.1 0 1)
+&combLow oneshot pan=.61 s=sine loop=C5 fm=&m index=.1...8 * &(map=adsr .001 .06 .1 .1) env=&(map=adsr .001 1.4 0 1.2)
 &tickv s=white hpf=6500 env=&(map=adsr 0 .012 0 .01)
 
 &out level=7 map=sample [&tune * &comb * .22, &low * &combLow * .18, &tick * &tickv * .05]

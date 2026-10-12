@@ -7,7 +7,7 @@
 import { CORE, PARAMS, rolesText, type Attribute } from '../src/engine/attributes';
 import { BODIES } from '../src/engine/program';
 import { DOUGH_ALIASES, DOUGH_SOURCES } from '../src/engine/dough-params';
-import { CHANCE_SYNTAX, MODIFIERS, STEP_SYNTAX } from '../src/engine/parser/braid';
+import { CHANCE_SYNTAX, LEVEL_SYNTAX, MODIFIERS, STEP_SYNTAX } from '../src/engine/parser/braid';
 import { KEYS, LINE_SYNTAX, SHOWS, SHOW_CONVENTIONS } from '../src/engine/parser/cell';
 import { BUILTIN_PLUGINS } from '../src/engine/builtinPlugins';
 import { FREE_SYNTAX } from '../src/engine/parser/free';
@@ -45,6 +45,7 @@ export function entries(): Syntax[] {
     ...STEP_SYNTAX,
     ...Object.values(MODIFIERS).map((m) => m.syntax),
     CHANCE_SYNTAX,
+    LEVEL_SYNTAX,
     ...REFERENCE_SYNTAX,
     ...Object.values(GENERATORS).map((g) => g.syntax),
     ...FREE_SYNTAX,
