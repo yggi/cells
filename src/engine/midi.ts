@@ -11,6 +11,7 @@
  */
 import type { Played } from './realize';
 import { isMidiCard, type CompileResult, type Output } from './program';
+import { refsOf } from './readers';
 
 /** The channel a kit's members play on (General MIDI drums), 1–16. */
 const DRUM_CHANNEL = 10;
@@ -144,7 +145,7 @@ export const melodicChannel = (i: number, kit: number = DRUM_CHANNEL): number =>
 };
 
 /** A kit's members, as the voices its braid names. */
-const membersOf = (result: CompileResult, o: Output): string[] => (result.cells.get(o.voice)?.units ?? []).flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : []));
+const membersOf = (result: CompileResult, o: Output): string[] => refsOf(result.cells.get(o.voice));
 
 /** The gate an output plays through (docs/language/mix.md: a gate), if any: its notes go out as the gate's. */
 const gateOf = (result: CompileResult, o: Output): string | undefined => [...o.through, ...o.via].find((n) => !!result.cells.get(n)?.gate);

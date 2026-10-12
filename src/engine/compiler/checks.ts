@@ -1,6 +1,7 @@
 /** Phase 5: what the physical and sounding cells refer to, and what their values say — resonators, tapes, FM, moving parameters, envelopes, grids. */
 import { BODIES } from '../program';
 import { MOVING_PARAMS } from '../attributes';
+import { refsOf } from '../readers';
 import type { CellDecl } from '../ast';
 import type { Cells, Ctx } from './context';
 
@@ -115,7 +116,7 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
   for (const d of decls.values()) {
     const t = d.over ? cells.get(d.over.name) : undefined;
     if (!t || t.kit) continue;
-    const refs = t.units.flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : []));
+    const refs = refsOf(t);
     if (!refs.length || refs.every((r) => cells.get(r)?.mix && !cells.get(r)?.sink)) continue;
     // (a table of taps: its entries are clocks, a selector switches them: decision 016)
     if (refs.every((r) => taps.get(r) === t.name)) continue;

@@ -6,6 +6,7 @@
 import type { CompileResult, Shifts } from './program';
 import { clocking, type Clocking } from './clocking';
 import { flatten, type StepEvent } from './flatten';
+import { ownRate, stepsAt } from './readers';
 
 interface Flat {
   readonly statics: Shifts;
@@ -32,7 +33,7 @@ function flatOf(result: CompileResult, statics: Shifts, name: string): Flat {
 function readAt(result: CompileResult, statics: Shifts, name: string, t: number, clk?: Clocking): { s: number; hit: Flat } | null {
   const c = result.cells.get(name);
   if (!c?.clock) return null;
-  const steps = (clk ?? clocking(result, statics, t)).stepOf(c.clock) * (c.clock === name ? 1 : c.rate);
+  const steps = stepsAt(clk ?? clocking(result, statics, t), c);
   if (!Number.isFinite(steps)) return null;
   const hit = flatOf(result, statics, name);
   if (!hit.flat.length || !(hit.lap > 0)) return null;
@@ -71,7 +72,7 @@ export function notesAt(result: CompileResult, statics: Shifts, name: string, t:
   const r = readAt(result, statics, name, t, clk);
   if (!r) return [];
   const c = result.cells.get(name)!;
-  const perStep = 1 / Math.max(1e-9, (result.clocks.get(c.clock!)?.perSecond ?? 1) * (c.clock === name ? 1 : c.rate));
+  const perStep = 1 / Math.max(1e-9, (result.clocks.get(c.clock!)?.perSecond ?? 1) * ownRate(c));
   return r.hit.flat.filter((e) => r.s >= e.step && r.s < e.step + e.duration).map((e) => ({ value: e.value + e.alter, since: (r.s - e.step) * perStep }));
 }
 
@@ -83,7 +84,7 @@ export function lastNoteAt(result: CompileResult, statics: Shifts, name: string,
   const r = readAt(result, statics, name, t, clk);
   if (!r) return null;
   const c = result.cells.get(name)!;
-  const perStep = 1 / Math.max(1e-9, (result.clocks.get(c.clock!)?.perSecond ?? 1) * (c.clock === name ? 1 : c.rate));
+  const perStep = 1 / Math.max(1e-9, (result.clocks.get(c.clock!)?.perSecond ?? 1) * ownRate(c));
   const { flat, lap } = r.hit;
   // (the latest onset at or before now, this lap or, wrapping, the last of the lap before)
   let best: { step: number; duration: number } | null = null;

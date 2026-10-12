@@ -96,10 +96,15 @@ export function pitchHue(semitones: number): number {
   return mod(Math.round(semitones), 12) * 30;
 }
 
+/** A frequency as a MIDI note number, A4 = 440 Hz = 69, unrounded: 261.63 → 60.0, 450 → 69.39. */
+export function midiOf(freq: number): number {
+  return 69 + 12 * Math.log2(freq / 440);
+}
+
 /** Scientific pitch name of a frequency, A4 = 440 Hz: 261.63 → C4, 65.41 → C2. Sharps as ♯. */
 export function noteName(freq: number): string {
   if (!(freq > 0)) return '';
-  const m = Math.round(69 + 12 * Math.log2(freq / 440));
+  const m = Math.round(midiOf(freq));
   return `${NOTE_NAMES[mod(m, 12)]}${Math.floor(m / 12) - 1}`;
 }
 

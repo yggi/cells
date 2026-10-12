@@ -106,6 +106,12 @@ export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
   return { ends, cycle, chance, longest };
 }
 
+/** A time on a clock face, as the transport shows it: m:ss, or h:mm:ss with `hours` (seconds rounded down). */
+export function clockText(seconds: number, hours = false): string {
+  const ss = String(Math.floor(seconds % 60)).padStart(2, '0');
+  return hours ? `${Math.floor(seconds / 3600)}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${ss}` : `${Math.floor(seconds / 60)}:${ss}`;
+}
+
 /** A duration in words: 0:13, 5:20, 3 h 12 min, 4 days, 2,300 years, 10^14 years. */
 export function durationText(seconds: number): string {
   if (!Number.isFinite(seconds)) return 'longer than the universe has been around';

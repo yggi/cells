@@ -5,7 +5,7 @@
 import type { Pick } from './ast';
 import type { CompileResult, ResolvedCell, Shifts, Unit } from './program';
 import { ROOT, codeShifts } from './program';
-import { mod } from '../theory/modes';
+import { midiOf, mod } from '../theory/modes';
 
 export interface Entry {
   readonly value: number;
@@ -215,7 +215,7 @@ export function gridName(result: CompileResult, voice: string, freq: number): { 
   const root = voiceGrid(result, voice);
   const g = result.cells.get(root);
   if (!g || (g.cycle === 12 && g.map?.kind === 'edo' && g.map.period === 2)) return null;
-  const midi = 69 + 12 * Math.log2(freq / 440);
+  const midi = midiOf(freq);
   const m = Math.round(midi);
   const NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
   return {

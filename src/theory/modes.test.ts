@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MODES, agogic, even, modeName, noteName, pitchHue } from './modes';
+import { MODES, agogic, even, midiOf, modeName, noteName, pitchHue } from './modes';
 
 describe('even (Bresenham)', () => {
   it('walks the diatonic modes darkest → brightest as the phase rises', () => {
@@ -41,6 +41,15 @@ describe('naming and colour', () => {
   it('colours a rainbow per octave: C red, D yellow, E green, G light blue, A blue', () => {
     expect([0, 2, 4, 7, 9].map(pitchHue)).toEqual([0, 60, 120, 210, 270]);
     expect(pitchHue(-12)).toBe(0);
+  });
+});
+
+describe('midiOf', () => {
+  it('a frequency as a MIDI note, unrounded', () => {
+    expect(midiOf(440)).toBe(69);
+    expect(midiOf(261.63)).toBeCloseTo(60, 2);
+    expect(midiOf(880)).toBe(81);
+    expect(midiOf(450)).toBeCloseTo(69.39, 2);
   });
 });
 

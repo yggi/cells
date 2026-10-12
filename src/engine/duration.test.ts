@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
-import { anchoredAt, durationText, pieceTime } from './duration';
+import { anchoredAt, clockText, durationText, pieceTime } from './duration';
 import { PRESETS } from './presets';
 
 const time = (key: string) => pieceTime(compileSource((PRESETS as Record<string, { source: string }>)[key].source));
@@ -53,5 +53,15 @@ describe('a turning table’s loop: where its turns wrap (its cycle=, else its o
   });
   it('a whole tone a turn with cycle=24: home after twelve (an octave after six is not home)', () => {
     expect(pieceTime(compileSource(piece('&k step=&bar stride=2 cycle=24'))).cycle).toBe(12);
+  });
+});
+
+describe('the transport time', () => {
+  it('m:ss, or h:mm:ss when asked for hours; seconds rounded down', () => {
+    expect(clockText(0)).toBe('0:00');
+    expect(clockText(65.9)).toBe('1:05');
+    expect(clockText(3725)).toBe('62:05');
+    expect(clockText(3725, true)).toBe('1:02:05');
+    expect(clockText(59.99, true)).toBe('0:00:59');
   });
 });

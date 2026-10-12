@@ -13,6 +13,7 @@ import { tableChain } from './helix';
 import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from './clocking';
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
+import { refsOf } from './readers';
 import { levelSeries, modulation, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
 import { mod } from '../theory/modes';
@@ -248,7 +249,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     try {
       const main = series(o.cell, o.pick, o.shift, o.sign);
       // the voices' moving parameters (lpf=200..3000 * &fenv …): their cells, as series
-      for (const voice of o.kit ? (result.cells.get(o.voice)?.units ?? []).flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : [])) : [o.voice]) {
+      for (const voice of o.kit ? refsOf(result.cells.get(o.voice)) : [o.voice]) {
         if (voiceParams.has(voice)) continue;
         const vc = result.cells.get(voice);
         const out: Record<string, VoiceParam> = {};
