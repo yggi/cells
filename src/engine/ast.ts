@@ -68,7 +68,8 @@ export interface Ref {
  */
 export type Atom =
   | { readonly kind: 'note'; readonly value: number; readonly alter: number; readonly pitched?: true }
-  | { readonly kind: 'rest' }
+  /** `~`; `_` in a cell with base= is `keep`: the base's step, as it is there (parser/base.ts replaces it). */
+  | { readonly kind: 'rest'; readonly keep?: true }
   | { readonly kind: 'chord'; readonly notes: readonly number[]; readonly alters: readonly number[]; readonly pitched?: readonly boolean[] }
   /** [a|b|c]: one of them, chosen afresh each time round (reproducibly). */
   | { readonly kind: 'choice'; readonly values: readonly number[]; readonly alters: readonly number[] }
@@ -230,6 +231,11 @@ export interface CellDecl {
   /** An unnamed cell, written where it's used (`&( … )`): its body as written. */
   readonly lambda?: string;
   readonly over: Ref | null;
+  /**
+   * base=&x: this cell is a copy of &x, changed where it says (decision 026): its braid over &x's step by step (`_`
+   * keeps one), what it doesn't set taken from &x. Resolved when parsed (parser/base.ts): compile sees plain cells.
+   */
+  readonly base?: Ref | null;
   readonly shift: number | null;
   /** `off`: switched off — silences it and everything that reads through it or plays it. */
   readonly off: boolean;

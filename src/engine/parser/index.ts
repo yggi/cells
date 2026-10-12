@@ -12,6 +12,7 @@
  *   values.ts      step= / loop= (rates, units, clocks) and map= (kinds, grids, tables)
  *   mix.ts         a mix chord, kept as an expression (compile types it: algebra.ts)
  */
+import { applyBases } from './base';
 import type { CellDecl, Diagnostic, ParseResult } from '../ast';
 import { IDENT, LineError, LineScanner, stripComment } from './scanner';
 import { parseBody, parseCell, SHOWS } from './cell';
@@ -64,7 +65,8 @@ export function parse(whole: string): ParseResult {
       if (name) broken.push(name);
     }
   });
-  return { cells, diagnostics, broken, plugins };
+  // (base=: each copy resolved into a plain cell, decision 026)
+  return applyBases({ cells, diagnostics, broken, plugins });
 }
 
 /** A piece's card: the first note with a title= — its title, its description (the label, as plain text), its tags. */

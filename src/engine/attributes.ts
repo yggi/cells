@@ -52,6 +52,7 @@ const physics = (help: string, on: readonly Role[], extra: Partial<Attribute> = 
 /** The attributes with a syntax of their own (the parser reads each): every cell can carry these. */
 export const CORE: Readonly<Record<string, Attribute>> = {
   over: core('the table its numbers read', 'tables.md'),
+  base: core('the cell it is a copy of, changed where it says: its braid step by step over the base’s (_ keeps a step), its attributes where it sets none', 'braid.md'),
   step: core('what moves it, step by step', 'time.md'),
   loop: core('what moves it, the whole braid at a time', 'time.md'),
   shift: core('how far it is turned', 'tables.md'),

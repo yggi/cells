@@ -17,6 +17,10 @@
  *   triangle), controllers.
  */
 import { secondsAt, type Smf, type SmfNote } from './midifile';
+import { fold, printFolded, type Chord, type Line } from './fold';
+import { compileSource } from './compile';
+import { codeShifts } from './program';
+import { eventsBetween, plan } from './realize';
 
 /** A file as a piece, and what was made of it. */
 export interface Imported {
@@ -29,6 +33,8 @@ export interface Imported {
   /** Notes moved onto the grid (a file played in); drum notes no drum voice is for. */
   readonly moved: number;
   readonly dropped: number;
+  /** Folded (engine/fold): what comes back written as cells of its own; else every note written out. */
+  readonly folded: boolean;
 }
 
 /** Steps a quarter the grid may have, coarsest first. */
@@ -108,7 +114,7 @@ function gridOf(ppq: number, starts: readonly number[]): { step: number; perQuar
 }
 
 /** A line's notes (steps), as a braid's tokens, `length` steps long. */
-function braidOf(chords: readonly { at: number; dur: number; values: string[] }[], length: number): string {
+function braidOf(chords: readonly Chord[], length: number): string {
   const out: string[] = [];
   let now = 0;
   const rest = (n: number) => n > 0 && out.push(n === 1 ? '~' : `~@${n}`);
@@ -122,8 +128,11 @@ function braidOf(chords: readonly { at: number; dur: number; values: string[] }[
   return out.join(' ');
 }
 
-/** A MIDI file as a piece's source: every note it plays, flat. `free`: its tempo a slider (else fixed). */
-export function cellsFromMidi(smf: Smf, title: string, { free = true }: { free?: boolean } = {}): Imported {
+/**
+ * A MIDI file as a piece's source: every note it plays, flat; `shorten`, folded (engine/fold) where that plays the same
+ * and is shorter. `free`: its tempo a slider (else fixed).
+ */
+export function cellsFromMidi(smf: Smf, title: string, { free = true, shorten = false }: { free?: boolean; shorten?: boolean } = {}): Imported {
   // the parts: a track's notes by channel
   const parts: { name: string; drums: boolean; notes: SmfNote[] }[] = [];
   smf.tracks.forEach((t, i) => {
@@ -166,14 +175,14 @@ export function cellsFromMidi(smf: Smf, title: string, { free = true }: { free?:
     taken.add(n);
     return n;
   };
-  const lines: string[] = [];
+  const lines: Line[] = [];
   const mix: string[] = [];
   const voices: string[] = [];
   const drumsUsed = new Set<string>();
   let dropped = 0;
   let count = 0;
   for (const p of parts) {
-    const layers: { at: number; dur: number; values: string[] }[][] = [];
+    const layers: Chord[][] = [];
     for (const n of [...p.notes].sort((a, b) => a.tick - b.tick || a.key - b.key)) {
       const value = p.drums ? DRUM_OF[n.key] : String(n.key - 60);
       if (value === undefined) {
@@ -189,7 +198,7 @@ export function cellsFromMidi(smf: Smf, title: string, { free = true }: { free?:
         return (last.at === s && last.dur === dur && !last.values.includes(token)) || last.at + last.dur <= s;
       });
       const last = layer?.[layer.length - 1];
-      if (layer && last!.at === s && last!.dur === dur) last!.values.push(token);
+      if (layer && last!.at === s && last!.dur === dur) layer[layer.length - 1] = { ...last!, values: [...last!.values, token] };
       else if (layer) layer.push({ at: s, dur, values: [token] });
       else layers.push([{ at: s, dur, values: [token] }]);
       count++;
@@ -197,24 +206,63 @@ export function cellsFromMidi(smf: Smf, title: string, { free = true }: { free?:
     if (!layers.length) continue;
     const voice = p.drums ? null : unique(`${p.name}Voice`);
     const names = layers.map(() => unique(p.name));
-    layers.forEach((l, i) => lines.push(`&${names[i]} step=&tempo ${braidOf(l, length)}`));
+    layers.forEach((chords, i) => lines.push({ name: names[i], chords, length }));
     if (voice) voices.push(`&${voice} s=tri loop=C4 env=&(map=adsr .005 .2 .6 .15)`);
     for (const n of names) mix.push(voice ? `&${n} * &${voice} * .25` : `&${n} * .4`);
   }
-  const label = `Opened from a MIDI file: ${count} notes in ${lines.length} line${lines.length === 1 ? '' : 's'}, ${perQuarter} steps a quarter note, written out in full: Shorten folds it.`;
-  const source = [
-    `&piece title="${title.replace(/"/g, "'")}" tags="midi" label="${label}" about=&out`,
-    '',
-    `# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`,
-    tempo,
-    '',
-    '# every note, a line a track (and one beside for notes that overlap); melodies as semitones from C4',
-    ...lines,
-    '',
-    ...voices,
-    ...[...drumsUsed].sort().map((d) => `&${d} ${DRUMS[d]}`),
-    `&out map=sample [${mix.join(', ')}]`,
-    '',
-  ].join('\n');
-  return { source, notes: count, lines: lines.length, perQuarter, moved, dropped };
+  const write = (body: string[], how: string) => {
+    const label = `Opened from a MIDI file: ${count} notes in ${lines.length} line${lines.length === 1 ? '' : 's'}, ${perQuarter} steps a quarter note, ${how}.`;
+    return [
+      `&piece title="${title.replace(/"/g, "'")}" tags="midi" label="${label}" about=&out`,
+      '',
+      `# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`,
+      tempo,
+      '',
+      ...body,
+      '',
+      ...voices,
+      ...[...drumsUsed].sort().map((d) => `&${d} ${DRUMS[d]}`),
+      `&out map=sample [${mix.join(', ')}]`,
+      '',
+    ].join('\n');
+  };
+  const flat = write(
+    [
+      '# every note, a line a track (and one beside for notes that overlap); melodies as semitones from C4',
+      ...lines.map((l) => `&${l.name} step=&tempo ${braidOf(l.chords, l.length)}`),
+    ],
+    'written out in full: Shorten folds it',
+  );
+  let source = flat;
+  let folded = false;
+  if (shorten && lines.length) {
+    // (the folder, engine/fold: its symbols as cells above the lines; taken only if it plays the same notes, and is shorter)
+    const { defs, lines: braids, scales } = printFolded(fold(lines));
+    const candidate = write(
+      [
+        '# what comes back, as cells of its own (a phrase, a phrase made of phrases, …); ^$n: n semitones up',
+        ...defs,
+        '',
+        '# every note, a line a track; melodies as semitones from C4',
+        ...lines.map((l) => `&${l.name} step=&tempo${scales.get(l.name) === 1 ? '' : `*${scales.get(l.name)}`} ${braids.get(l.name)}`),
+      ],
+      'folded (engine/fold)',
+    );
+    if (candidate.length < flat.length && sameNotes(flat, candidate)) [source, folded] = [candidate, true];
+  }
+  return { source, notes: count, lines: lines.length, perQuarter, moved, dropped, folded };
+}
+
+/** Do two sources play the same notes (keys, starts and lengths within a millisecond)? */
+function sameNotes(a: string, b: string): boolean {
+  const notes = (s: string) => {
+    const r = compileSource(s);
+    if (!r.ok) return null;
+    const p = plan(r, codeShifts(r), r.off);
+    return eventsBetween(p, 0, p.end)
+      .map((e) => `${e.at.toFixed(3)} ${e.dur.toFixed(3)} ${e.voice} ${e.freq.toFixed(2)}`)
+      .sort();
+  };
+  const [x, y] = [notes(a), notes(b)];
+  return !!x && !!y && x.length === y.length && x.every((n, i) => n === y[i]);
 }

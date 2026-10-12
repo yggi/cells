@@ -139,3 +139,19 @@ describe('a MIDI file as a piece', () => {
     expect(worst('dur')).toBeLessThan(0.01);
   });
 });
+
+describe('a MIDI file folded (engine/fold)', () => {
+  it('BWV 847: the prelude as one figure over its chords, both hands, every note as before', () => {
+    const result = compileSource(PRESETS.bwv847.source);
+    const smf = readMidi(writeMidi(pieceMidi(result, codeShifts(result)).smf));
+    const flat = cellsFromMidi(smf, 'BWV 847');
+    const folded = cellsFromMidi(smf, 'BWV 847', { shorten: true });
+    expect(folded.folded).toBe(true);
+    expect(folded.source.length).toBeLessThan(0.75 * flat.source.length);
+    expect(folded.source).toContain('&figure1 0 1 2 1 3 1 2 1\n');
+    expect(folded.source).toMatch(/&chords1 step=&tempo\*16 \[12,3,2,0\] \[8,5,4,0\] \[11,5,3,2\]/);
+    expect(folded.source).toMatch(/over=&chords\d &figure1!48[\s\S]*over=&chords\d &figure1!48/);
+    const [a, b] = [notesOf(flat.source), notesOf(folded.source)];
+    expect(b.map((n) => `${n.key} ${n.at.toFixed(4)} ${n.dur.toFixed(4)}`)).toEqual(a.map((n) => `${n.key} ${n.at.toFixed(4)} ${n.dur.toFixed(4)}`));
+  });
+});

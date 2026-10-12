@@ -224,6 +224,8 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     const c = cells.get(name);
     if (!c) continue;
     if (c.map?.kind === 'table' && !decls.has(c.map.table)) unknownCell(c.map.table, d.map!.span);
+    // (a base= the parser couldn't resolve names no cell: parser/base.ts left it here to be said once, as any unknown)
+    if (d.base && !decls.has(d.base.name)) unknownCell(d.base.name, d.base.span);
     if (d.about) {
       if (!c.note) error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
       for (const r of d.about) if (!decls.has(r.name)) unknownCell(r.name, r.span);

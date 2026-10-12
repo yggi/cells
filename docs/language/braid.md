@@ -56,3 +56,30 @@ A reference's numbers are indices into the table it is read through, so they can
 
 `&x^k` plays what a cell reading a shifted table plays (`&y over=&scale[>>k] &x`), without the cell. Mixes move pitch in semitones instead (`(&x + 12) * &lead`, [mix.md](mix.md)). The other operators are decided together, in one pass (#179).
 
+
+## A copy, changed: base=
+
+**`base=&x`** makes a cell a copy of &x, changed where it says ([decision 026](../decisions/026-base.md)): an overdub,
+a delta. A fugue's entries are this: one subject, each entry a little bent.
+
+- **Its braid goes over the base's, step by step.** `_` keeps the base's step as it is there; a value in its place
+  changes it; `_!n` keeps n steps, `_@n` keeps one's pitch held n; what goes past the base's end is added, and nothing
+  written is the base as it is. A run in the base (`x!3`) counts as its steps.
+- **Transposed:** `base=&x^$n` moves what it keeps n steps of the grid (a cell that reads no table: semitones), `base=&x^n`
+  n steps of its table. What the cell writes itself is what it plays.
+- **Its attributes:** what it doesn't set, the base's (its table, its clock, its shift, a voice's sound); its label,
+  notes, `laps=` and `off` are its own. `&lead2 base=&lead lpf=2000` is the lead, brighter.
+- A copy of a copy works; one that comes round to itself is an error on `base=`.
+
+```cells
+&bar scan(1 1 1 1) step=90bpm
+&subject 0 -1 0@2 -5@2 -4@2 0 -1 0 2 -5@4
+&answer base=&subject^$7 _!3 0@2
+&last base=&subject^$-12 _!9 _@8
+&tune step=&bar/4 &subject &answer &last
+&v s=tri loop=C4
+&out map=sample [&tune * &v * .4]
+```
+
+The folder (`engine/fold`, [notes/fold.md](../notes/fold.md)) writes what returns nearly the same this way when a MIDI
+file is converted to cells: BWV 847's subject and its bent entries.

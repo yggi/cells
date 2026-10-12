@@ -132,8 +132,8 @@ export interface GraphEdge extends Wire {
   readonly bulbAt?: { readonly x: number; readonly y: number; readonly r: number };
 }
 
-/** The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's or a MIDI card's entry, a product's voice, a note's link. */
-const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about']);
+/** The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's or a MIDI card's entry, a product's voice, a note's link, a copy's base. */
+const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base']);
 /**
  * A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples,
  * writes or plays it. Not ticks: a parameter's clock (`delaytime=&bar*3/4`) is timing, as a step is.
@@ -446,6 +446,17 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
     for (const target of c.about)
       if (result.cells.has(target))
         link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), count: 1, transforms: AS_IS, ...wire('about', 'none', id, cellId(target)) });
+    // a copy's base (base=, decision 026): the cell it copies, into it, with the transposition written on it
+    if (c.base && result.cells.has(c.base.name)) {
+      const from = cellId(c.base.name);
+      const ref = {
+        pick: null,
+        shift: 0,
+        ...(c.base.transpose ? { transpose: c.base.transpose } : {}),
+        ...(c.base.degree ? { values: { mul: 1 as const, add: c.base.degree } } : {}),
+      };
+      link({ id: edgeId(from, id), source: from, target: id, count: 1, transforms: [refTransform(ref)], ...wire('base', 'none', from, id, 1, false, true) });
+    }
     // a tap's clock is written once, on its table's line (`&parts step=&bar`): one wire, the meter's bus into the table
     // (decision 016); the taps are the table's
     const table = result.taps?.get(c.name);

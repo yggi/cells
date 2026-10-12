@@ -95,6 +95,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
         .map((t) => t.trim())
         .filter(Boolean),
       about: (d.about ?? []).map((r) => r.name),
+      ...(d.base ? { base: { name: d.base.name, ...(d.base.transpose ? { transpose: d.base.transpose } : {}), ...(d.base.degree ? { degree: d.base.degree } : {}) } } : {}),
       beat: typeof d.params.beat === 'number' ? d.params.beat : ((d.braid as { perBeat?: number }).perBeat ?? 1),
       leveled: (d.braid as { perBeat?: number }).perBeat !== undefined,
       label: d.label ?? null,

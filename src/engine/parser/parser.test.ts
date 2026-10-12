@@ -120,7 +120,7 @@ describe('parse: rates, stride and voices', () => {
     expect(parse('&a lpf=1 lpf=2').diagnostics[0].message).toMatch(/twice/);
     expect(parse('&a fmh=2').diagnostics[0].message).toMatch(/Unknown attribute fmh=/);
     // a misspelling: the nearest attribute, then all of them
-    expect(parse('&a stpe=4').diagnostics[0].message).toMatch(/^Unknown attribute stpe= — did you mean step=\? \(a cell: over step .* anchor\)$/);
+    expect(parse('&a stpe=4').diagnostics[0].message).toMatch(/^Unknown attribute stpe= — did you mean step=\? \(a cell: over base step .* anchor\)$/);
     expect(parse('&a lpff=300').diagnostics[0].message).toMatch(/did you mean lpf=\?/);
     expect(parse('&a zzzzzz=1').diagnostics[0].message).not.toMatch(/did you mean/);
   });

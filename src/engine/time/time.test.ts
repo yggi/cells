@@ -247,3 +247,22 @@ describe('a loop, transformed circularly', () => {
     expect(row[row.length - 3] / mid).toBeGreaterThan(0.8);
   });
 });
+
+describe('the structure', () => {
+  it('is every cell where it plays, nested, lap after lap', async () => {
+    const { structure } = await import('./structure');
+    const { compileSource } = await import('../compile');
+    const { codeShifts } = await import('../program');
+    const { plan } = await import('../realize');
+    const src = '&bar scan(1 1 1 1) step=60bpm\n&a 0 2\n&b &a 4 4\n&c base=&b _ _ 7\n&tune step=&bar &b &c\n&v s=tri\n&out map=sample [&tune * &v]';
+    const r = compileSource(src);
+    const nodes = structure(plan(r, codeShifts(r), r.off), 8);
+    const at = (cell: string) => nodes.filter((n) => n.cell === cell).map((n) => `${n.at}-${n.to}/${n.depth}`);
+    // (a step a second: &b and &c four steps each, &a two inside each; the line round again at 8 s)
+    expect(at('tune')).toEqual(['0-8/0']);
+    expect(at('b')).toEqual(['0-4/1']);
+    expect(at('c')).toEqual(['4-8/1']);
+    expect(at('a')).toEqual(['0-2/2', '4-6/2']);
+    expect(nodes.find((n) => n.cell === 'c')?.base).toBe('b');
+  });
+});

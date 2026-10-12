@@ -14,6 +14,7 @@ import { syntax, type Syntax } from './syntax';
 /** What a cell's attributes have set so far, as its line is read. */
 interface Body {
   over: Ref | null;
+  base: Ref | null;
   shift: number | null;
   cycle: number | null;
   step: StepSpec | null;
@@ -123,6 +124,14 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
         b.over = { name, pick: null, shift: 0, span: sc.span };
       } else b.over = s.ref('a cell or scale(name, tonic) after over=, like over=&scale or over=scale(minor, A)');
       if (b.over!.pick) s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over!.span.col - 1, b.over!.span.len);
+    },
+  },
+  base: {
+    form: 'base=&cell · base=&cell^$n · base=&cell^n',
+    examples: ['&answer base=&subject^$7 _!3 12@2', '&last base=&subject _!21 3@2'],
+    read: (s, b) => {
+      b.base = s.ref('a cell after base=, like base=&subject or base=&subject^$7');
+      if (b.base.pick) s.fail('base= takes a whole cell (transposing it is fine: base=&subject^$7)', b.base.span.col - 1, b.base.span.len);
     },
   },
   step: { form: 'step=…', examples: ['&tune step=&bar 0 2 4'], read: timing },
@@ -431,6 +440,7 @@ function parseFreeBraid(s: LineScanner): Braid {
 export function parseBody(s: LineScanner, head: Ref): CellDecl {
   const b: Body = {
     over: null,
+    base: null,
     shift: null,
     cycle: null,
     step: null,
@@ -523,7 +533,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       continue;
     }
     // a note by name is a step (C, Bb3): read again as one
-    if (word !== null && /^[A-G](?:b?-?[0-9]*)$/.test(word)) s.i = at;
+    // (and _, a step kept from the base: parser/base.ts)
+    if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_')) s.i = at;
     else if (word !== null) s.fail(`Unexpected '${word}'`, at, word.length);
     if (generator) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
     tokens.push(parseToken(s));
@@ -543,11 +554,13 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     if (b.over) s.fail('scale(…) reads through a key of its own: drop over=, or write the key as a cell (&mode over=&key scan(…))', b.over.span.col - 1, b.over.span.len);
     b.over = scaleKey;
   }
-  const { over, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } = b;
+  const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } =
+    b;
   return {
     name: head.name,
     span: head.span,
     over,
+    ...(base ? { base } : {}),
     shift,
     off,
     step,

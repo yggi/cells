@@ -78,6 +78,8 @@ export interface ResolvedCell {
   readonly tags: readonly string[];
   /** On a note: the cells it explains (about=), drawn as links from the note. */
   readonly about: readonly string[];
+  /** base=: the cell it is a copy of (decision 026; resolved when parsed), and the transposition written with it. */
+  readonly base?: { readonly name: string; readonly transpose?: number; readonly degree?: number };
   /** Steps a beat (beat=, or from meter(…)): a meter's bpm counts beats, 1 = every step a beat. */
   readonly beat: number;
   /** Written as levels (meter(…)): its values are 3 the bar, 2 a beat, 1 a subdivision, 0 finer. */

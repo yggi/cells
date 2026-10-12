@@ -17,6 +17,7 @@ export const ORDER = [
   'swing',
   'canon',
   'mirrors',
+  'variations',
   'chance',
   'fifths',
   'arrangement',

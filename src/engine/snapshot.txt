@@ -14,6 +14,7 @@ drums  297 notes  notes 6575f5071859be02  events e8ad4e861bd2f082  values be0622
 swing  304 notes  notes 70d25be4e13ad342  events bcedbaa406a7fc30  values c9b8af01107a2d97  live a488ef5227db472c
 canon  320 notes  notes 375d44f193024265  events dc690ef9ec9f54f6  values a930d18483749c61  live 832ee3308941a4d3
 mirrors  183 notes  notes 2fd36ffb7cfe49e9  events 70a6d4ffca101a9a  values 4ceec05374a8cc82  live a668f65679e8d106
+variations  144 notes  notes c9bc5a525f3c6d55  events 3b65f4da8fefd65d  values 265bdfd43a3e3ad7  live 1c6ca2eec127b835
 chance  450 notes  notes 786b8106a5942bb3  events 573f902c58f1939e  values f679daa9dafd12aa  live 202331141f5ed57d
 fifths  65 notes  notes c338371cdcec0309  events 0a0b836bbe21e877  values 4c080439524573f0  live 84e6d94be194267d
 arrangement  124 notes  notes 8cce0f21954cb4b4  events baacd7d5ec458cb4  values ccebc515d801d9f0  live 7aeb01ec14531c61

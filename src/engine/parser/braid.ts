@@ -24,6 +24,13 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   syntax('step', '~', 'A rest: a step that plays nothing.', ['&tune step=2 0 ~ 4 ~'], 'cell.md'),
   syntax(
     'step',
+    '_',
+    "In a cell with base=: the base's step here, as it is there (_@2: its pitch, held 2; _!n: n of them). A value in its place changes that step.",
+    ['&answer base=&subject^$7 _!3 12@2'],
+    'braid.md',
+  ),
+  syntax(
+    'step',
     '[a, b, c] · [a b c]',
     'A chord: the numbers sound together, in one step. Its notes can be names, pitches whatever the tables: [C, E, G].',
     ['&chords step=1 [0,2,4] [3 5 7]', '&chords step=1 [C, E, G] [F, A, C5]'],
@@ -101,6 +108,11 @@ function parseAtom(s: LineScanner): Atom {
   if (c === '~') {
     s.i++;
     return { kind: 'rest' };
+  }
+  // (_: the base's step, in a cell with base=: parser/base.ts puts it there)
+  if (c === '_') {
+    s.i++;
+    return { kind: 'rest', keep: true };
   }
   if (c === '[') {
     const start = s.i;
