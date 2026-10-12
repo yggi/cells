@@ -60,5 +60,10 @@ export interface Folded {
   readonly looks?: ReadonlyMap<string, Look>;
 }
 
-/** A tool: one move at any scale. It returns the folded lines changed, or null when it finds nothing to do. */
-export type Tool = (f: Folded) => Folded | null;
+/** A tool: one move at any scale. It returns the folded lines changed, or null when it finds nothing to do. A tool that
+ * makes its move many times over (a pair, a phrase, a symbol taken back) shows each time to `see`, if it's given, the
+ * lines as they are by then (a thunk: made only if wanted): the fold watched as it runs. */
+export type Tool = (f: Folded, see?: See) => Folded | null;
+
+/** Shown a fold on its way (`Tool`). */
+export type See = (now: () => Folded) => void;

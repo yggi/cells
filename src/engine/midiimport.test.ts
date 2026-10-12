@@ -7,6 +7,7 @@ import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { noteOf } from './midi';
 import { PRESETS } from './presets';
+import { readFileSync } from 'node:fs';
 
 /** A piece's notes as (key, start, length), in order: what a file must give back. */
 function notesOf(source: string) {
@@ -153,5 +154,24 @@ describe('a MIDI file folded (engine/fold)', () => {
     expect(folded.source).toMatch(/over=&chords\d &figure1!48[\s\S]*over=&chords\d &figure1!48/);
     const [a, b] = [notesOf(flat.source), notesOf(folded.source)];
     expect(b.map((n) => `${n.key} ${n.at.toFixed(4)} ${n.dur.toFixed(4)}`)).toEqual(a.map((n) => `${n.key} ${n.at.toFixed(4)} ${n.dur.toFixed(4)}`));
+  });
+});
+
+describe('the fold watched as it runs (Convert to cells, live)', () => {
+  it('shows the piece at each move, each one playing the file’s notes, from the flat piece to the fold taken', () => {
+    const smf = readMidi(new Uint8Array(readFileSync('midi/wtc/wtc1-02-fugue.mid')));
+    const steps: { source: string; tool: string; round: number }[] = [];
+    const made = cellsFromMidi(smf, 'I/2 Fugue in C minor', { shorten: true, watch: (source, { tool, round }) => steps.push({ source: source(), tool, round }) });
+    expect(made.folded).toBe(true);
+    expect(steps.length).toBeGreaterThan(20);
+    expect(steps[0].tool).toBe('start');
+    expect(steps.at(-1)).toMatchObject({ tool: 'done', source: made.source });
+    // (the first: every note written out, nothing folded yet; the last shorter)
+    expect(steps[0].source).not.toMatch(/^&m\d/m);
+    expect(steps.at(-1)!.source.length).toBeLessThan(steps[0].source.length);
+    expect(new Set(steps.map((s) => s.tool))).toEqual(new Set(['start', 'phrases and their variants', 'pairs', 'taking back what doesn’t pay', 'done']));
+    // every step a piece that plays the same notes (a dozen of them, spread over the fold)
+    const flat = JSON.stringify(notesOf(steps[0].source));
+    for (let i = 0; i < steps.length; i += Math.ceil(steps.length / 12)) expect(JSON.stringify(notesOf(steps[i].source)), `${i}: ${steps[i].tool}`).toBe(flat);
   });
 });

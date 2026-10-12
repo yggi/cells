@@ -10,6 +10,9 @@ export type TagKind = 'genre' | 'artist' | 'tutorial' | 'topic';
 /** The tutorial's tag: its pieces are the tutorial's, in tiers, a cell of their own in the library. */
 export const TUTORIAL = 'tutorial';
 
+/** The MIDI library's tag (src/corpus.ts): its files are a cell of their own in the library, as the tutorial's pieces are. */
+export const MIDI_FILE = 'MIDI file';
+
 /** The tags the examples use, by kind: a test fails on any other (a piece of your own may use any). */
 export const VOCABULARY: Readonly<Record<TagKind, readonly string[]>> = {
   genre: ['classical', 'jazz', 'electronic', 'experimental', 'world', 'folk', 'ambient', 'dance', 'industrial', 'blues', 'minimal', '8-bit'],

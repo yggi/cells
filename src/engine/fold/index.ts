@@ -17,9 +17,10 @@
  *  - print.ts      the symbols as cells (`&m3^$5`), runs as `x!n`; and the cost model β judges by
  *
  * The judge is the description length (characters, as Shorten's `size`) and, where the folder is used
- * (`engine/midiimport.ts`), the notes: a fold that doesn't play the same is not taken. Pure.
+ * (`engine/midiimport.ts`), the notes: a fold that doesn't play the same is not taken. It can be watched as it runs
+ * (`Watch`): each move as it is made, the piece as it is by then. Pure.
  */
-import type { Folded, Line, Tool } from './ir';
+import type { Folded, Line, See, Tool } from './ir';
 import { tokensOf } from './transpose';
 import { pairs } from './pairs';
 import { figure } from './figure';
@@ -34,6 +35,22 @@ export { printFolded } from './print';
 /** The tools in the order they're tried, each round: dilate (a line's clock), look up (figurations), phrases and their
  * variants, pairs, then take back what doesn't pay (β). */
 const TOOLS: readonly Tool[] = [dilate, figure, variants, pairs, beta];
+/** Each tool's name, as a step is told. */
+const NAMES = new Map<Tool, string>([
+  [dilate, 'clocks'],
+  [figure, 'figures'],
+  [variants, 'phrases and their variants'],
+  [pairs, 'pairs'],
+  [beta, 'taking back what doesn’t pay'],
+]);
+
+/** Where a fold is: the tool at work (or `start`, `done`), the round. */
+export interface Stage {
+  readonly tool: string;
+  readonly round: number;
+}
+/** Watches a fold: each move as it's made, the lines as they are by then (a thunk), and where it is. */
+type Watch = (now: () => Folded, stage: Stage) => void;
 
 /** The characters the folded lines print as. */
 const sizeOf = (f: Folded) => {
@@ -46,12 +63,22 @@ const sizeOf = (f: Folded) => {
 const STRUCTURE = 1.15;
 
 /** Lines folded by a set of tools, round after round while the printed piece gets shorter. */
-function run(lines: readonly Line[], tools: readonly Tool[]): { f: Folded; size: number } {
+function run(lines: readonly Line[], tools: readonly Tool[], watch?: Watch): { f: Folded; size: number } {
   let f: Folded = { lines: lines.map((l) => ({ name: l.name, toks: tokensOf(l) })), rules: new Map() };
+  const start = f;
+  watch?.(() => start, { tool: 'start', round: 0 });
   let size = sizeOf(f);
   for (let round = 0; round < 8; round++) {
     let next = f;
-    for (const tool of tools) next = tool(next) ?? next;
+    for (const tool of tools) {
+      const stage = { tool: NAMES.get(tool) ?? 'a tool', round: round + 1 };
+      const see: See | undefined = watch && ((now) => watch(now, stage));
+      const made = tool(next, see);
+      if (made && made !== next) {
+        next = made;
+        see?.(() => made);
+      }
+    }
     const s = sizeOf(next);
     if (s >= size) break;
     [f, size] = [next, s];
@@ -61,13 +88,16 @@ function run(lines: readonly Line[], tools: readonly Tool[]): { f: Folded; size:
 
 /**
  * Lines folded: their tokens and the symbols they share, as short as the tools make them — with variants where they
- * cost little (`STRUCTURE`), else without.
+ * cost little (`STRUCTURE`), else without. Watched (`watch`): the fold with variants, each move as it's made, then the
+ * one taken (`done`).
  */
-export function fold(lines: readonly Line[]): Folded {
+export function fold(lines: readonly Line[], watch?: Watch): Folded {
+  const said = run(lines, TOOLS, watch);
   const plain = run(
     lines,
     TOOLS.filter((t) => t !== variants),
   );
-  const said = run(lines, TOOLS);
-  return said.size <= plain.size * STRUCTURE ? said.f : plain.f;
+  const f = said.size <= plain.size * STRUCTURE ? said.f : plain.f;
+  watch?.(() => f, { tool: 'done', round: 0 });
+  return f;
 }

@@ -4,6 +4,7 @@
  *
  * ```
  * midi format=1 ppq=480 name="Bach, Prelude and Fugue in C minor"
+ * copyright "Typeset by … (CC BY-SA 4.0)"   (the file's copyright notice, if it has one)
  * tempo 1:1:0 107.9
  * meter 1:1:0 4/4
  *
@@ -35,6 +36,17 @@ export function keyOf(word: string): number | null {
   if (!m) return null;
   const key = STEPS[m[1].toUpperCase()] + [...m[2]].reduce((a, c) => a + (c === '#' ? 1 : -1), 0) + 12 * (Number(m[3]) + 1);
   return key >= 0 && key <= 127 ? key : null;
+}
+
+/** A line without its comment: from a `#` at its start or after a space, not one in quotes (a name, a notice) nor in a
+ * key (`C#4`). */
+function uncommented(line: string): string {
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') quoted = !quoted;
+    else if (line[i] === '#' && !quoted && (i === 0 || /\s/.test(line[i - 1]!))) return line.slice(0, i);
+  }
+  return line;
 }
 
 /** Is this text a MIDI file's (its first line that isn't blank or a comment starts `midi`)? */
@@ -101,6 +113,7 @@ export function midiText(smf: Smf, file?: string): string {
     `# ${file ? `${file}: ` : ''}a MIDI file, as text: a line a note (where in bar:beat:tick, its channel, key, ticks and velocity).`,
     '# It plays as it is; edit it, save it (a .mid again), or convert it to cells: a piece written out, for Shorten to fold.',
     `midi format=${smf.format} ppq=${smf.ppq}${smf.name !== undefined ? ` name=${quote(smf.name)}` : ''}`,
+    ...(smf.copyright !== undefined ? [`copyright ${quote(smf.copyright)}`] : []),
     ...smf.tempos.map((t) => `tempo ${bars.place(t.tick)} ${+(60e6 / t.micros).toFixed(4)}`),
     ...smf.meters.map((m) => `meter ${bars.place(m.tick)} ${m.num}/${m.den}`),
   ];
@@ -127,6 +140,7 @@ export function parseMidiText(text: string): { smf: Smf; diagnostics: Diagnostic
   let format = 1;
   let ppq = 480;
   let name: string | undefined;
+  let copyright: string | undefined;
   const tempos: { tick: number; micros: number }[] = [];
   const meters: { tick: number; num: number; den: number }[] = [];
   const tracks: { name?: string; notes: SmfNote[]; bends: SmfTrack['bends'][number][]; programs: SmfTrack['programs'][number][] }[] = [];
@@ -135,7 +149,7 @@ export function parseMidiText(text: string): { smf: Smf; diagnostics: Diagnostic
   const lines = text.split('\n');
   lines.forEach((raw, i) => {
     const n = i + 1;
-    const line = raw.replace(/(^|\s)#.*$/, '').trim();
+    const line = uncommented(raw).trim();
     if (!line) return;
     const words = line.split(/\s+/);
     const len = raw.trimEnd().length || 1;
@@ -150,6 +164,11 @@ export function parseMidiText(text: string): { smf: Smf; diagnostics: Diagnostic
       }
       name = quoted;
       bars = new Bars(ppq, []);
+      return;
+    }
+    if (words[0] === 'copyright') {
+      if (quoted === undefined) return error(n, 'copyright "…": the notice in quotes', len);
+      copyright = quoted;
       return;
     }
     if (!bars) {
@@ -208,5 +227,5 @@ export function parseMidiText(text: string): { smf: Smf; diagnostics: Diagnostic
   });
   for (const t of tracks) t.notes.sort((a, b) => a.tick - b.tick || a.channel - b.channel || a.key - b.key);
   tempos.sort((a, b) => a.tick - b.tick);
-  return { smf: { format, ppq, ...(name !== undefined ? { name } : {}), tracks, tempos, meters }, diagnostics };
+  return { smf: { format, ppq, ...(name !== undefined ? { name } : {}), ...(copyright !== undefined ? { copyright } : {}), tracks, tempos, meters }, diagnostics };
 }

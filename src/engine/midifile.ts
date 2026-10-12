@@ -2,10 +2,10 @@
  * Standard MIDI Files (#307), the pure part: a file's bytes into its notes, tempos and meters by track, and back. Format
  * 0 and 1 are read (2, independent sequences, as if 1); format 1 is written, a conductor track (tempos, meters, the
  * piece's name) first. What is read: notes (note-on with velocity 0 ends one, as note-off does; a key struck again
- * before it is let go ends the earlier strike), pitch bends, program changes, tempos, time signatures, track names.
- * Everything else (controllers, sysex, other metas) is skipped; format 1's conductor track (only tempos, meters, a name)
- * is the file's header, not a track. Times are ticks; `secondsAt` lays them through the
- * tempo map.
+ * before it is let go ends the earlier strike), pitch bends, program changes, tempos, time signatures, track names, the
+ * copyright notice. Everything else (controllers, sysex, other metas) is skipped; format 1's conductor track (only
+ * tempos, meters, a name, a copyright) is the file's header, not a track. Text is written as UTF-8 and read as UTF-8
+ * where it is that, else as Latin-1 (an older file's). Times are ticks; `secondsAt` lays them through the tempo map.
  */
 
 /** A note: on a channel (1–16), a key (0–127) struck at a velocity (1–127), from one tick to another. */
@@ -33,6 +33,8 @@ export interface Smf {
   readonly format: number;
   readonly ppq: number;
   readonly name?: string;
+  /** Its copyright notice (the copyright meta event): who made it and on what terms. */
+  readonly copyright?: string;
   readonly tracks: readonly SmfTrack[];
   readonly tempos: readonly { readonly tick: number; readonly micros: number }[];
   readonly meters: readonly { readonly tick: number; readonly num: number; readonly den: number }[];
@@ -68,7 +70,13 @@ export function readMidi(bytes: Uint8Array): Smf {
   };
   const text = (n: number) => {
     need(n);
-    const s = new TextDecoder('latin1').decode(bytes.subarray(at, at + n));
+    const raw = bytes.subarray(at, at + n);
+    let s: string;
+    try {
+      s = new TextDecoder('utf-8', { fatal: true }).decode(raw);
+    } catch {
+      s = new TextDecoder('latin1').decode(raw);
+    }
     at += n;
     return s;
   };
@@ -88,6 +96,7 @@ export function readMidi(bytes: Uint8Array): Smf {
   const tempos: { tick: number; micros: number }[] = smpte ? [{ tick: 0, micros: 1_000_000 }] : [];
   const meters: { tick: number; num: number; den: number }[] = [];
   let name: string | undefined;
+  let copyright: string | undefined;
   for (let t = 0; t < count && at < bytes.length; t++) {
     const kind = tag();
     const length = u32();
@@ -126,7 +135,8 @@ export function readMidi(bytes: Uint8Array): Smf {
           const den = 2 ** u8();
           meters.push({ tick, num, den });
           at += n - 2;
-        } else if (type === 0x03) {
+        } else if (type === 0x02) copyright ??= text(n);
+        else if (type === 0x03) {
           const s = text(n);
           trackName ??= s;
           if (t === 0) name ??= s;
@@ -193,10 +203,10 @@ export function readMidi(bytes: Uint8Array): Smf {
   // (format 1's first track with nothing but metas is its conductor: its tempos, meters and name are the file's)
   const first = tracks[0];
   if (format === 1 && first && !first.notes.length && !first.bends.length && !first.programs.length) tracks.shift();
-  return { format, ppq, ...(name !== undefined ? { name } : {}), tracks, tempos, meters };
+  return { format, ppq, ...(name !== undefined ? { name } : {}), ...(copyright !== undefined ? { copyright } : {}), tracks, tempos, meters };
 }
 
-/** A Smf as the bytes of a format 1 file: a conductor track (the name, tempos, meters), then each track. */
+/** A Smf as the bytes of a format 1 file: a conductor track (the name, the copyright, tempos, meters), then each track. */
 export function writeMidi(smf: Smf): Uint8Array {
   const out: number[] = [];
   const u16 = (v: number) => out.push((v >> 8) & 0xff, v & 0xff);
@@ -207,6 +217,7 @@ export function writeMidi(smf: Smf): Uint8Array {
     to.push(...bytes);
   };
   const latin1 = (s: string) => Array.from(s, (c) => c.charCodeAt(0) & 0xff);
+  const utf8 = (s: string) => [...new TextEncoder().encode(s)];
   /** One track's events (tick, order at that tick, bytes) as an MTrk chunk. */
   const chunk = (events: { tick: number; order: number; bytes: number[] }[]) => {
     events.sort((a, b) => a.tick - b.tick || a.order - b.order);
@@ -234,7 +245,8 @@ export function writeMidi(smf: Smf): Uint8Array {
   u16(smf.tracks.length + 1);
   u16(Math.max(1, Math.min(0x7fff, Math.round(smf.ppq))));
   const conductor = [
-    ...(smf.name !== undefined ? [{ tick: 0, order: 0, bytes: meta(0x03, latin1(smf.name)) }] : []),
+    ...(smf.name !== undefined ? [{ tick: 0, order: 0, bytes: meta(0x03, utf8(smf.name)) }] : []),
+    ...(smf.copyright !== undefined ? [{ tick: 0, order: 0, bytes: meta(0x02, utf8(smf.copyright)) }] : []),
     ...smf.tempos.map((t) => {
       const m = Math.max(1, Math.min(0xffffff, Math.round(t.micros)));
       return { tick: t.tick, order: 1, bytes: meta(0x51, [(m >> 16) & 0xff, (m >> 8) & 0xff, m & 0xff]) };
@@ -245,7 +257,7 @@ export function writeMidi(smf: Smf): Uint8Array {
   for (const t of smf.tracks) {
     const ch = (c: number) => (Math.max(1, Math.min(16, c)) - 1) & 0x0f;
     chunk([
-      ...(t.name !== undefined ? [{ tick: 0, order: 0, bytes: meta(0x03, latin1(t.name)) }] : []),
+      ...(t.name !== undefined ? [{ tick: 0, order: 0, bytes: meta(0x03, utf8(t.name)) }] : []),
       ...t.programs.map((p) => ({ tick: p.tick, order: 1, bytes: [0xc0 | ch(p.channel), p.program & 0x7f] })),
       // (at one tick: notes end, then bends move, then notes start: a bend for a note sits before it)
       ...t.notes.map((n) => ({ tick: n.end, order: 2, bytes: [0x80 | ch(n.channel), n.key & 0x7f, 0x40] })),

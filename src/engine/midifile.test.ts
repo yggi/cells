@@ -52,6 +52,22 @@ describe('reading a MIDI file', () => {
 });
 
 describe('writing a MIDI file', () => {
+  it('keeps a copyright notice in its field, and text as UTF-8 (a Latin-1 one, as older files write it, read too)', () => {
+    const smf: Smf = {
+      format: 1,
+      ppq: 96,
+      name: 'I/3 Prelude in C♯ major',
+      copyright: 'Typeset by Ü. Ńame (CC BY-SA 4.0)',
+      tracks: [{ name: 'Füße', notes: [], bends: [], programs: [] }],
+      tempos: [],
+      meters: [],
+    };
+    const back = readMidi(writeMidi(smf));
+    expect([back.name, back.copyright, back.tracks[0].name]).toEqual([smf.name, smf.copyright, 'Füße']);
+    // (0xa9 alone is no UTF-8: ©, as Latin-1)
+    const latin = Uint8Array.from([...HAND.subarray(0, 18), 0, 0, 0, 40, 0x00, 0xff, 0x02, 0x05, 0xa9, 0x20, 0x31, 0x37, 0x32, ...HAND.subarray(22)]);
+    expect(readMidi(latin).copyright).toBe('© 172');
+  });
   it('reads back what it wrote: notes, bends, programs, names, tempos, meters', () => {
     const smf: Smf = {
       format: 1,

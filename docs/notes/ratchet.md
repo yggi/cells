@@ -6,7 +6,9 @@ Date: 2026-10-12 · Status: open (the baseline steps 4–5 must not make worse) 
 gate now: `src/engine/fold/ratchet.test.ts` scores the folder alone in `npm test` (12 s) against
 `src/engine/fold/ratchet.baseline.json` ([testing.md](../testing.md)). Its first record, with the preference for
 structure (fold.md): 74 pieces, notes kept by 64, the score 56,125 characters, **phrases back 62 of 191** (58 before it,
-`shortenAll` 58).
+`shortenAll` 58). After the run on the WTC ([fold.md](fold.md#the-wtc-run-333)): the score 55,974, phrases back 62; and
+the MIDI library has a ratchet of its own (`src/engine/fold/wtc.test.ts`, `ratchet.wtc.json`): 37 files, every fold
+taken, the score 120,755.
 
 `tools/probe/ratchet.test.ts` takes every example the way a MIDI file comes into the app (saved as MIDI and opened
 again: `pieceMidi` → `writeMidi` → `readMidi` → `cellsFromMidi`), folds it with today's Shorten (`shortenAll`), and scores

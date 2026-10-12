@@ -7,6 +7,23 @@ import { codeShifts } from './program';
 import { PRESETS } from './presets';
 
 describe('a MIDI file as text', () => {
+  it('says a copyright notice on a line of its own, and keeps a # in quotes', () => {
+    const smf: Smf = {
+      format: 1,
+      ppq: 96,
+      name: 'No. #2',
+      copyright: 'Typeset by A. B. #1 (CC BY-SA 4.0)',
+      tracks: [{ notes: [{ channel: 1, key: 61, velocity: 90, tick: 0, end: 96 }], bends: [], programs: [] }],
+      tempos: [],
+      meters: [],
+    };
+    const text = midiText(smf);
+    expect(text).toContain('copyright "Typeset by A. B. #1 (CC BY-SA 4.0)"');
+    const { smf: back, diagnostics } = parseMidiText(`${text}# a comment\n`);
+    expect(diagnostics).toEqual([]);
+    expect([back.name, back.copyright, back.tracks[0].notes[0].key]).toEqual(['No. #2', smf.copyright, 61]);
+    expect(parseMidiText('midi ppq=96\ncopyright none').diagnostics.map((d) => d.message)).toEqual(['copyright "…": the notice in quotes']);
+  });
   it('names keys and reads them back, sharps and flats alike', () => {
     expect([60, 61, 63, 21, 127].map(keyName)).toEqual(['C4', 'C#4', 'Eb4', 'A0', 'G9']);
     expect(['C4', 'c#4', 'Db4', 'B#3', 'Cb4', '64', 'H4', 'C10'].map(keyOf)).toEqual([60, 61, 61, 60, 59, 64, null, null]);

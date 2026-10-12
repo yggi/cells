@@ -74,6 +74,31 @@ variants, 73 pieces: 207 %, 2.8 s.)
   arrangements whose parts come back transposed and at other places, where `shortenAll`'s phrases of 4 to 16 tokens
   with `^$k` win over Re-Pair's binary symbols.
 
+## The WTC run (#333)
+
+The MIDI library (`midi/wtc`, 37 preludes and fugues, 34,200 notes) folded as the files come
+(`tools/probe/wtc.test.ts`; `src/engine/fold/wtc.test.ts` is its ratchet). **Before: the score 153,783 characters flat,
+123,735 folded (80.5 %), every fold taken, 633 cells, 212 of them copies; 29 s. After: 120,755 (78.5 %), every fold
+taken, 626 cells, 159 copies; 30 s.** The examples' ratchet at the same time: 56,125 → 55,974, phrases back 62 → 62.
+
+- **Pairs inside a copied phrase** (`pairs.ts`): before, a phrase that variants copy was left alone (`base=` counts its
+  steps as written). Now a pair is folded there where every copy keeps both steps, and in each copy too, one kept step
+  for two; β takes a symbol back out of the copies' kept steps as out of the phrase. The fold with variants gets as
+  short as the one without, nearly (WTC −1.8 %).
+- **Phrases of 12 steps or more, a quarter of them changed at most** (`variants.ts`, from 8 and a sixth): fewer, longer
+  families (WTC −1 %, the examples a little shorter, the phrases back the same).
+- *Measured and left*: the other knobs move the total by under 1 % (seeds of 4 or 6, phrases up to 128 steps, a
+  sixth or an eighth changed, `STRUCTURE` 1.3). `STRUCTURE` 1 (no preference for structure) folds the WTC 4 % shorter
+  but keeps 3 copies of 212, and brings back 58 of the examples' phrases, not 62: the preference stays.
+- *Tried and left out*: **voices apart** (a hand's notes split into lines by voice-leading, each note to the nearest
+  free voice, none crossing): the subject sits in one line, but every voice's line pays for its rests: with a new voice
+  only where none is free, the flat score 7 % larger and the fold 6.6 % larger than with chords; with a new voice for a
+  leap of 9, 27 % and 35 %. **Overlaps by pitch** (a note that overlaps goes to the free line nearest in pitch, not the first):
+  8 % larger. Dense lines fold shorter than voice-true ones while a rest costs characters.
+- *Where the characters are* (after): 93 K in the lines, 28 K in the cells they splice; of the lines, 72 K are notes
+  written out (16,820 of them), 18 K of that their lengths (`@2`). Counterpoint that never comes back at a chromatic
+  transposition is most of it.
+
 ## What was tried and left out (measured on seven pieces)
 
 - **Repeats as a tool of their own** (a block k times in a row, `&r!k`), before pairs: Pachelbel 3,309 → 7,951,
@@ -86,6 +111,11 @@ variants, 73 pieces: 207 %, 2.8 s.)
   hundreds of `0`s; the rule that the harmony must move took Pachelbel 3,245 → 1,485 and Cellscape 8,956 → 5,005 (whole files).
 
 ## Next (step 5 and after)
+
+- **Degrees** (the WTC run): Bach's sequences come back a step of the scale higher, not a fixed number of semitones, so
+  `^$k` misses them. Lines over the key's scale (`over=scale(minor, C)`) would fold a sequence as `&m^1`, but a note
+  outside the scale needs a way to be written there (a chromatic step over a degree table).
+- **Lengths**: a quarter of what's written out is `@n`; a phrase at half speed inside a line (below) is half of it.
 
 - **Variants' cost**: 8.1 s for the library against 2.8 s; folding twice and the search per round are where it goes.
 - **Phrases with `^$k` at their right length**: Re-Pair's symbols are binary; a phrase of five is three symbols. A
