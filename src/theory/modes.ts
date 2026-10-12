@@ -51,7 +51,7 @@ export function scaleOfPhase(phase: number): string {
 
 /** Name a set by its shape above its first note: a diatonic mode, or one of the scales beyond it (Blues …). */
 export function modeName(values: readonly number[]): string | null {
-  const shape = values.map((v) => v - values[0]).join();
+  const shape = values.map((v) => v - values[0]!).join();
   if (values.length === 7) {
     const m = MODES.find((x) => x.intervals.join() === shape);
     if (m) return m.name;
@@ -109,7 +109,7 @@ export function noteName(freq: number): string {
  * inverse of a scan.
  */
 export function intervals(positions: readonly number[], lap: number): number[] {
-  return positions.map((p, i) => +((i + 1 < positions.length ? positions[i + 1] : positions[0] + lap) - p).toFixed(6));
+  return positions.map((p, i) => +((i + 1 < positions.length ? positions[i + 1]! : positions[0]! + lap) - p).toFixed(6));
 }
 
 /** A scan: running totals from 0 (the positions), and their sum (the lap). */
@@ -130,6 +130,6 @@ export function scan(steps: readonly number[]): { positions: number[]; lap: numb
 export function pitchOfName(name: string): number | null {
   const m = /^([A-G])(#|b)?(-?[0-9]+)?$/.exec(name);
   if (!m) return null;
-  const letter = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]]!;
+  const letter = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]!]!;
   return letter + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + 12 * ((m[3] === undefined ? 4 : parseInt(m[3], 10)) - 4);
 }
