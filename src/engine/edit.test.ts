@@ -21,7 +21,7 @@ import {
 import { compileSource } from './compile';
 import { flatten, tapped } from './flatten';
 import { codeShifts } from './program';
-import { buildGraph } from './graph';
+import { buildGraph } from '../layout/drawn';
 import { readFileSync } from 'node:fs';
 import { PRESETS } from './presets';
 

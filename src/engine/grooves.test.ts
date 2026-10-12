@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
-import { buildGraph } from './graph';
+import { buildGraph } from '../layout/drawn';
 import { shorten } from './shorten';
 
 const voices =

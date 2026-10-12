@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SAILOR_WITH_KIT } from './fixtures';
 import { compileSource } from './compile';
 import { codeShifts, type CompileResult } from './program';
-import { buildGraph } from './graph';
+import { buildGraph } from '../layout/drawn';
 import { eventsBetween, plan } from './realize';
 import { liveAt } from './live';
 import { drawn, edgeStateOf, nodeStateOf, routing } from './routing';

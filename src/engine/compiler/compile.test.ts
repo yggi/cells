@@ -9,7 +9,7 @@ import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entri
 import { flatten } from '../flatten';
 import { eventsBetween, plan } from '../realize';
 import { parse } from '../parser';
-import { buildGraph } from '../graph';
+import { buildGraph } from '../../layout/drawn';
 import { edgeLabel } from '../transform';
 import { PRESETS } from '../presets';
 import { modeName } from '../../theory/modes';

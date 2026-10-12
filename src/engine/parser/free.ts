@@ -1,7 +1,7 @@
 /** free(…): a number left to the performer — a slider, a tempo marking, named choices, a text; and a braid (parsed with the cell, cell.ts). */
 import type { FreeSpec } from '../ast';
 import type { LineScanner } from './scanner';
-import { UNIT } from './values';
+import { UNIT } from './units';
 import { syntax, type Syntax } from './syntax';
 
 /** Tempo markings for free(…): a range in bpm, centred. */

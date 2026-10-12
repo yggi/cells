@@ -14,7 +14,7 @@
  */
 import type { CellDecl, Diagnostic, ParseResult } from '../ast';
 import { IDENT, LineError, LineScanner, stripComment } from './scanner';
-import { parseCell, SHOWS } from './cell';
+import { parseBody, parseCell, SHOWS } from './cell';
 import { splitPlugins } from '../plugins';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
 
@@ -44,7 +44,7 @@ export function parse(whole: string): ParseResult {
   });
   if (carry) lines.push(carry);
   lines.forEach(({ text, line: lineNo, parts }) => {
-    const s: LineScanner = new LineScanner(text, lineNo, 0, [], parts, diagnostics);
+    const s: LineScanner = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
     if (s.done()) return;
     try {
       const start = s.i;

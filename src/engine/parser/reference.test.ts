@@ -6,7 +6,8 @@ import { parse } from './index';
 import { MODIFIERS } from './braid';
 import { KEYS } from './cell';
 import { GENERATORS } from './generators';
-import { MAP_KINDS, RATE_UNITS } from './values';
+import { MAP_KINDS } from './values';
+import { RATE_UNITS } from './units';
 
 // docs/language/reference.md is generated from the parser's tables (tools/reference.ts). Record it:
 // UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts

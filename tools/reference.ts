@@ -15,7 +15,8 @@ import { GENERATORS } from '../src/engine/parser/generators';
 import { GATE_SYNTAX, MIX_SYNTAX } from '../src/engine/parser/mix';
 import { REFERENCE_SYNTAX } from '../src/engine/parser/scanner';
 import { SECTIONS, syntax, type Section, type Syntax } from '../src/engine/parser/syntax';
-import { MAP_KINDS, MAP_SYNTAX, RATE_UNITS, STEP_SYNTAX as RATE_SYNTAX } from '../src/engine/parser/values';
+import { MAP_KINDS, MAP_SYNTAX, STEP_SYNTAX as RATE_SYNTAX } from '../src/engine/parser/values';
+import { RATE_UNITS } from '../src/engine/parser/units';
 import { SHOW_MEANING } from '../src/layout/show';
 import { SORT_SYNTAX } from '../src/engine/compiler/sorts';
 

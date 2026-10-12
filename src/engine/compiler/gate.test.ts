@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from '../compile';
 import { codeShifts } from '../program';
 import { eventsBetween, plan } from '../realize';
-import { buildGraph } from '../graph';
+import { buildGraph } from '../../layout/drawn';
 import { routing } from '../routing';
 import { channelTable, router, routesOf } from '../midi';
 

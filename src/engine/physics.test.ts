@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGraph } from './graph';
+import { buildGraph } from '../layout/drawn';
 import { edgeLabel } from './transform';
 import { compileSource } from './compile';
 import { codeShifts } from './program';

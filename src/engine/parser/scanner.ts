@@ -1,6 +1,5 @@
 /** The scanner: one line of a piece (continued lines joined), read left to right. */
 import type { CellDecl, Diagnostic, FreeSpec, Pick, Ref, Span } from '../ast';
-import { parseBody } from './cell';
 import { syntax, type Syntax } from './syntax';
 import { pitchOfName } from '../../theory/modes';
 
@@ -99,7 +98,13 @@ export class LineScanner {
     readonly warnings: Diagnostic[] = [],
     /** How many unnamed cells &( … ) this text is inside. */
     readonly depth = 0,
+    /** Reads a cell's body (parser/cell.ts `parseBody`): what an unnamed cell &( … ) is. Given here, not imported, so the scanner and the cell parser don't import each other. */
+    readonly body?: (s: LineScanner, head: Ref) => CellDecl,
   ) {}
+  /** A scanner over part of this text (from `start`, its `depth` unnamed cells in), sharing what is found so far. */
+  within(text: string, start: number, depth = this.depth): LineScanner {
+    return new LineScanner(text, this.line, this.offset + start, this.lambdas, this.parts, this.warnings, depth, this.body);
+  }
   warn(message: string, start: number, len: number): void {
     this.warnings.push({ severity: 'warning', message, span: { ...this.place(start), len } });
   }
@@ -187,8 +192,9 @@ export class LineScanner {
     }
     if (close < 0) this.fail(`')' to close &( … )`, open);
     const name = `λ${this.line}_${open + this.offset}`;
-    const inner = new LineScanner(this.text.slice(open + 1, close), this.line, this.offset + open + 1, this.lambdas, this.parts, this.warnings, this.depth + 1);
-    const decl = parseBody(inner, { name, pick: null, shift: 0, span: { line: this.line, col: open + this.offset, len: close - open + 2 } });
+    if (!this.body) this.fail('An unnamed cell &( … ) here has no parser for its body', open - 1, 2);
+    const inner = this.within(this.text.slice(open + 1, close), open + 1, this.depth + 1);
+    const decl = this.body(inner, { name, pick: null, shift: 0, span: { line: this.line, col: open + this.offset, len: close - open + 2 } });
     this.lambdas.push({ ...decl, lambda: this.text.slice(open + 1, close).trim() });
     this.i = close + 1;
     return name;

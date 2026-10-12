@@ -7,7 +7,7 @@ import { eventsBetween, outputPlays, outputSounds, plan } from './realize';
 import { channelTable, midiNote, router, routesOf } from './midi';
 import { flows } from './flows';
 import { routing } from './routing';
-import { buildGraph } from './graph';
+import { buildGraph } from '../layout/drawn';
 import { cellId, edgeId } from './ids';
 import { PRESETS } from './presets';
 

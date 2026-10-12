@@ -8,7 +8,7 @@ import { buildExamplesIndex, examplesIndexModule } from '../../tools/examples-in
 import { ORDER } from './order';
 import { miniature } from '../layout/miniature';
 import { rowsKey } from '../layout/start';
-import { buildGraph } from './graph';
+import { buildGraph } from '../layout/drawn';
 import { canonicalTag, parseTag, VOCABULARY } from './tags';
 
 describe('examples/*.cells', () => {

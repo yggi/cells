@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { compileSource } from './compile';
-import { buildGraph, type GraphModel } from './graph';
+import { type GraphModel } from './graph';
+import { buildGraph } from '../layout/drawn';
 import { cellId, edgeId, stepEdgeId } from './ids';
 import { transformLabel } from './transform';
 import { PRESETS } from './presets';

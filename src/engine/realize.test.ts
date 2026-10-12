@@ -12,7 +12,8 @@ import { flatten } from './flatten';
 import { eventsBetween, plan } from './realize';
 import { liveAt } from './live';
 import { routing } from './routing';
-import { buildGraph, structureKey, type GraphModel } from './graph';
+import { structureKey, type GraphModel } from './graph';
+import { buildGraph } from '../layout/drawn';
 import { edgeLabel } from './transform';
 import { PRESETS } from './presets';
 

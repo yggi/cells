@@ -409,7 +409,7 @@ function parseFreeBraid(s: LineScanner): Braid {
   // (a braid of steps has no parentheses: the first ')' closes it)
   const close = s.text.indexOf(')', s.i);
   if (close < 0) s.fail(`')' to close free(…)`, start, s.i - start);
-  const inner = new LineScanner(s.text.slice(s.i, close), s.line, s.offset + s.i, s.lambdas, s.parts, s.warnings, s.depth);
+  const inner = s.within(s.text.slice(s.i, close), s.i);
   const tokens: Token[] = [];
   for (;;) {
     inner.skipSpace();
