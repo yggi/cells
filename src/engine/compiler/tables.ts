@@ -2,6 +2,7 @@
 import type { Atom, CellDecl, Span } from '../ast';
 import { ROOT, type Unit } from '../program';
 import { scan as scanOf } from '../../theory/modes';
+import { leaves } from '../subseq';
 
 /** Where compile's own messages point when nothing was written (the default grid). */
 export const IMPLICIT: Span = { line: 1, col: 1, len: 1 };
@@ -21,7 +22,8 @@ export const lengthOf = (decls: ReadonlyMap<string, CellDecl>, name: string, gua
   const b = d.braid;
   if (b.kind === 'scan') return b.steps.length;
   if (b.kind === 'sin') return b.n;
-  if (b.kind === 'list') return b.tokens.reduce((s, t) => s + (t.atom.kind === 'note' ? 1 : t.atom.kind === 'chord' ? t.atom.notes.length : 0), 0);
+  // (its numbers, as entries() reads them: a chord's each, a subsequence's in order)
+  if (b.kind === 'list') return b.tokens.reduce((s, t) => s + leaves(t.atom).reduce((n, a) => n + (a.kind === 'note' ? 1 : a.kind === 'chord' ? a.notes.length : 0), 0), 0);
   // blank: as long as the table below (cycle= here is only where its turning wraps)
   return lengthOf(decls, tableOf(d)!, guard + 1);
 };

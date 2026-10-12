@@ -11,7 +11,7 @@ What moves a cell: `step=` and `loop=`, the chains that scale them, `stride=`, m
 | `step=`  | one step per second          | one per step of &x | one per cycle of &x    |
 | `loop=`  | whole braid per second       | whole braid per step of &x | whole braid per cycle of &x |
 
-Driven forms take a chain of `*n` (once per n) and `/n` (n per one), read left to right, n any positive number: `step=&bar*2/3` is triplets — three steps per two.
+Driven forms take a chain of `*n` (n per one: faster) and `/n` (one per n: slower), read left to right, n any positive number: `step=&bar*4` is four steps per step of `&bar`, `&bar/2` one per two, `&bar*3/2` triplets — three steps per two. The signs mean what they mean on a step (`x*n`, a ratchet) and in Strudel (`fast`, `slow`). On a parameter that takes a time from a clock (`delaytime=`, a tape's `length=`, a head's `at=`), the time is one step of the clock so made: `delaytime=&bar*2` is half a step of `&bar`, `length=&bar/4` four steps.
 
 A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/engine/program.ts`): faster, `step=1000000`, is an error, and the player keeps the last piece that compiled. A rate left `free(…)` has its slider stop where the cap does, with a warning when its written range goes past it (`step=free(100bpm, 60..9999999)`). Cells at audio rate that start no notes (a voice's wave, a vibrato) aren't counted.
 
@@ -21,8 +21,8 @@ A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/
 
 ```cells
 &bar scan(4 4 4 4) step=84bpm
-&tune step=&bar*2/3 0 2 4
-&fast step=&bar/2 0 1
+&tune step=&bar*3/2 0 2 4
+&fast step=&bar*2 0 1
 ```
 
 ## Meters
@@ -52,7 +52,7 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 &bar scan(27 23 26 24) step=free(66bpm, 40..96) laps=30   # thirty bars, then it ends
 ```
 
-- **A selector** switches the taps of a meter's bus: an arrangement ([decision 016](../decisions/016-arranging-at-the-input.md)). A stepped table of names (`&parts step=&bar &verse &chorus`) declares them as its **taps**, each stepped as the table is; a part's cells are stepped by its tap (`step=&verse/2`); the selector reads the table (`over=&parts`) and steps through it, a section per step, each entry naming the taps that are on (a chord of numbers turns several on together). What a tap steps plays while it is on, from its top each time it is turned on; the rest stands still. A tap steps only what is stepped or looped from it: a drone on a clock of its own plays on. The parts' sound goes straight to the sound card. Pop song and 8-bit: Korobeiniki are arranged this way.
+- **A selector** switches the taps of a meter's bus: an arrangement ([decision 016](../decisions/016-arranging-at-the-input.md)). A stepped table of names (`&parts step=&bar &verse &chorus`) declares them as its **taps**, each stepped as the table is; a part's cells are stepped by its tap (`step=&verse*2`); the selector reads the table (`over=&parts`) and steps through it, a section per step, each entry naming the taps that are on (a chord of numbers turns several on together). What a tap steps plays while it is on, from its top each time it is turned on; the rest stands still. A tap steps only what is stepped or looped from it: a drone on a clock of its own plays on. The parts' sound goes straight to the sound card. Pop song and 8-bit: Korobeiniki are arranged this way.
 
 ```cells
 &bar scan(1 1 1 1) step=100bpm
@@ -61,7 +61,7 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 &parts step=&bar &tuneBar &bassBar
 &tune step=&tuneBar 0 2 4 5
 &roots step=&bassBar 0
-&song over=&parts step=&bar*4 laps=1 [1] [0,1] [0,1]
+&song over=&parts step=&bar/4 laps=1 [1] [0,1] [0,1]
 &out loop=SAMPLE_RATE map=sample [&tune * &lead * .3, &roots * &bass * .5]
 ```
 

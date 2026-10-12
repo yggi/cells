@@ -14,8 +14,8 @@ const BASE = `&bar scan(1 1 1 1) step=120bpm
 &kit &bd &sd &hh
 &lead s=tri loop=C5
 &bell s=sine loop=C6
-&tune over=&major step=&bar/2 0 2 4 2
-&accent map=amp step=&bar/2 1 .5 .8 .5
+&tune over=&major step=&bar*2 0 2 4 2
+&accent map=amp step=&bar*2 1 .5 .8 .5
 `;
 
 // what plays in the first two seconds: voice, onset, pitch and gain
@@ -44,26 +44,26 @@ describe('a gate (trigger=): a product with a name', () => {
   });
 
   it('a kit among its receivers is played as a pattern read through it: the trigger’s numbers pick the member', () => {
-    const through = played('&beat over=&kit step=&bar/2 0 2 1 2\n&out map=sample [&beat * .6]');
+    const through = played('&beat over=&kit step=&bar*2 0 2 1 2\n&out map=sample [&beat * .6]');
     expect(through.map((e) => e.split(' ')[0])).toEqual(['bd', 'hh', 'sd', 'hh', 'bd', 'hh', 'sd', 'hh']);
-    expect(played('&beat step=&bar/2 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample &drums')).toEqual(through);
+    expect(played('&beat step=&bar*2 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample &drums')).toEqual(through);
     // (inside the sound card's own mix, as beside other sounds)
-    expect(played('&beat step=&bar/2 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample [&drums, &tune * &lead * 0]').filter((e) => !e.startsWith('lead'))).toEqual(
+    expect(played('&beat step=&bar*2 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample [&drums, &tune * &lead * 0]').filter((e) => !e.startsWith('lead'))).toEqual(
       through,
     );
     // (a trigger read through the kit already: the kit adds nothing)
-    expect(played('&beat over=&kit step=&bar/2 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample &drums')).toEqual(through);
+    expect(played('&beat over=&kit step=&bar*2 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample &drums')).toEqual(through);
   });
 
   it('routes what a kit gate plays: its trigger, the kit and its members', () => {
-    const r = compileSource(BASE + '&beat step=&bar/2 0 2 1 2\n&drums trigger=&beat &kit\n&out map=sample [&drums]');
+    const r = compileSource(BASE + '&beat step=&bar*2 0 2 1 2\n&drums trigger=&beat &kit\n&out map=sample [&drums]');
     const on = routing(r, new Set()).nodes;
     for (const n of ['beat', 'kit', 'bd', 'sd', 'hh', 'drums']) expect(on.has(`cell:${n}`), n).toBe(true);
   });
 
   it('a MIDI card takes a gate as an entry, as any mix: its receivers on that channel, a kit gate by drum note', () => {
     const r = compileSource(
-      BASE + '&beat step=&bar/2 0 2 1 2\n&drums trigger=&beat &kit\n&leadOut trigger=&tune &lead &bell\n&out map=sample [&leadOut, &drums]\n&synth map=midi &leadOut ~!8 &drums',
+      BASE + '&beat step=&bar*2 0 2 1 2\n&drums trigger=&beat &kit\n&leadOut trigger=&tune &lead &bell\n&out map=sample [&leadOut, &drums]\n&synth map=midi &leadOut ~!8 &drums',
     );
     expect(r.diagnostics.filter((d) => d.severity === 'error').map((d) => d.message)).toEqual([]);
     const route = router(r, channelTable(r));
@@ -75,7 +75,7 @@ describe('a gate (trigger=): a product with a name', () => {
   });
 
   it('a kit is still no voice in a product of its own', () => {
-    expect(errors('&beat step=&bar/2 0 2 1 2\n&out map=sample [&beat * &kit]').join()).toMatch(/&kit is a kit, a table of voices/);
+    expect(errors('&beat step=&bar*2 0 2 1 2\n&out map=sample [&beat * &kit]').join()).toMatch(/&kit is a kit, a table of voices/);
   });
 
   it('its braid lists receivers only', () => {
@@ -83,7 +83,7 @@ describe('a gate (trigger=): a product with a name', () => {
   });
 
   it('is a node of its own in the graph, its trigger, levels and receivers wired in', () => {
-    const r = compileSource(BASE + '&beat step=&bar/2 0 2 1 2\n&drums trigger=&beat velocity=&accent &kit\n&out map=sample &drums');
+    const r = compileSource(BASE + '&beat step=&bar*2 0 2 1 2\n&drums trigger=&beat velocity=&accent &kit\n&out map=sample &drums');
     const g = buildGraph(r);
     const into = g.edges.filter((e) => e.to === 'cell:drums').map((e) => `${e.from} ${e.port}`);
     expect(into).toEqual(expect.arrayContaining(['cell:beat trigger', 'cell:accent velocity']));
@@ -108,11 +108,11 @@ describe('a gate (play=, level=): decision 023', () => {
   });
 
   it('several bare voices are a kit: its notes pick one', () => {
-    const picks = played('&steps step=&bar/2 0 1 1 0\n&g play=&steps &lead &bell\n&out map=sample &g').map((e) => e.split(' ')[0]);
+    const picks = played('&steps step=&bar*2 0 1 1 0\n&g play=&steps &lead &bell\n&out map=sample &g').map((e) => e.split(' ')[0]);
     expect(picks).toEqual(['lead', 'bell', 'bell', 'lead', 'lead', 'bell', 'bell', 'lead']);
     // (as a kit written out: &k &lead &bell, played by the same steps)
-    expect(played('&steps step=&bar/2 0 1 1 0\n&g play=&steps &lead &bell\n&out map=sample &g')).toEqual(
-      played('&k &lead &bell\n&steps step=&bar/2 0 1 1 0\n&g play=&steps &k\n&out map=sample &g'),
+    expect(played('&steps step=&bar*2 0 1 1 0\n&g play=&steps &lead &bell\n&out map=sample &g')).toEqual(
+      played('&k &lead &bell\n&steps step=&bar*2 0 1 1 0\n&g play=&steps &k\n&out map=sample &g'),
     );
   });
 
@@ -136,7 +136,7 @@ describe('a gate (play=, level=): decision 023', () => {
   });
 
   it('a kit it made of bare voices: the bus to each voice, their sound into the mix', () => {
-    const g = buildGraph(compileSource(BASE + '&steps step=&bar/2 0 1\n&g play=&steps &lead &bell\n&out map=sample [&g]'));
+    const g = buildGraph(compileSource(BASE + '&steps step=&bar*2 0 1\n&g play=&steps &lead &bell\n&out map=sample [&g]'));
     expect(g.edges.filter((e) => e.from === 'cell:g').map((e) => e.to)).toEqual(['cell:lead', 'cell:bell']);
     expect(g.edges.filter((e) => e.to === 'cell:out').map((e) => e.from)).toEqual(['cell:lead', 'cell:bell']);
     expect(g.nodes.some((n) => n.id === 'cell:g:kit')).toBe(false);

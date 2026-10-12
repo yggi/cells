@@ -9,10 +9,10 @@
 &m4 0@2!2
 &A &m1 &m2
 &C &m3 &m4
-&tune over=&dorian step=&bar/2 &A &A^-1 &A &C
+&tune over=&dorian step=&bar*2 &A &A^-1 &A &C
 
 &bassline over=&dorian step=&bar 4!4 3!4
-&drums step=&bar/2 &bd &hh &sd &hh!4       # kick, hat, snare, hat
+&drums step=&bar*2 &bd &hh &sd &hh!4       # kick, hat, snare, hat
 
 &fiddle s=saw loop=C5 lpf=3000 env=&(map=adsr .01 .15 .5 .1)
 &bass s=square loop=C2 lpf=600 env=&(map=adsr .005 .25 0 .05)

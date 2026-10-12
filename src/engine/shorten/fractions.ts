@@ -1,6 +1,6 @@
 /**
  * Fractions: every step's length shares a factor (4@2 2@2 0@4) — divide it out, and
- * slow the clock to match (4 2 0@2, step=&bar*2).
+ * slow the clock to match (4 2 0@2, step=&bar/2).
  */
 import { attrsOf, setAttr, setBraid } from '../edit';
 import { measured, type Candidate, type Result, type Suggestion } from './harness';
@@ -29,25 +29,27 @@ export function fractions(source: string, cells: readonly Candidate[], result: R
     const attrs = attrsOf(source, c.name);
     const step = attrs.get('step');
     if (!cell || !step || attrs.has('stride') || attrs.has('cycle') || cell.loops) continue;
+    // (a step's own hold: after its bracket, if it is one — a hold inside a subsequence is its own business)
+    const cut = (t: string) => t.lastIndexOf(']') + 1;
     const held = c.tokens.map((t) => {
-      const m = /@([0-9]+)/.exec(t);
+      const m = /@([0-9]+)/.exec(t.slice(cut(t)));
       return m ? +m[1] : 1;
     });
     const g = held.reduce(gcd);
     if (g < 2) continue;
-    // the clock, slowed by g: &x*n/d becomes &x*(n·g)/d, reduced; a plain rate divides
+    // the clock, slowed by g: &x*n/d becomes &x*n/(d·g), reduced; a plain rate divides
     let slower: string | null = null;
     const driven = /^&([A-Za-z_][A-Za-z0-9_]*)(?:\*([0-9]+))?(?:\/([0-9]+))?$/.exec(step);
     if (driven) {
-      let n = (driven[2] ? +driven[2] : 1) * g;
-      let d = driven[3] ? +driven[3] : 1;
+      let n = driven[2] ? +driven[2] : 1;
+      let d = (driven[3] ? +driven[3] : 1) * g;
       const k = gcd(n, d);
       n /= k;
       d /= k;
       slower = `&${driven[1]}${n > 1 ? `*${n}` : ''}${d > 1 ? `/${d}` : ''}`;
     } else if (/^[0-9]*\.?[0-9]+$/.test(step)) slower = String(+(+step / g).toFixed(6));
     if (!slower) continue;
-    const next = c.tokens.map((t, i) => t.replace(/@[0-9]+/, held[i] / g > 1 ? `@${held[i] / g}` : ''));
+    const next = c.tokens.map((t, i) => t.slice(0, cut(t)) + t.slice(cut(t)).replace(/@[0-9]+/, held[i] / g > 1 ? `@${held[i] / g}` : ''));
     const s = measured(source, {
       id: `fraction:${c.name}`,
       kind: 'fraction',

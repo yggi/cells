@@ -17,6 +17,7 @@
  * liveAt` is what does now (the same gates the scheduler uses: laps, what a selector picks), within
  * the routing. `stateOf` turns both into what the graph draws.
  */
+import { leaves } from './subseq';
 import { isMidiCard, ROOT, type CompileResult, type Output, type ResolvedCell } from './program';
 import { tableChain } from './helix';
 import { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from './ids';
@@ -40,7 +41,7 @@ const keeps = (result: CompileResult, name: string) => result.tapes.some((t) => 
 /** What its mixes name: the voice, or a kit's stream (&drums, read through the kit); a gate names the kit it plays. */
 const sourceOf = (result: CompileResult, o: Output) => (o.kit && result.cells.get(o.cell)?.over === o.voice ? o.cell : o.voice);
 
-const playable = (c: ResolvedCell) => c.units.some((u) => u.atom.kind === 'note' || u.atom.kind === 'chord' || u.atom.kind === 'choice');
+const playable = (c: ResolvedCell) => c.units.some((u) => leaves(u.atom).some((a) => a.kind === 'note' || a.kind === 'chord' || a.kind === 'choice'));
 
 /** A routing being gathered: nodes and edges by name, nothing switched off. */
 export class RouteAcc {
@@ -95,7 +96,7 @@ export class RouteAcc {
     if (clock && !this.off(clock)) this.tables(clock);
     this.timed(name);
   }
-  /** The clocks its parameters take their times from (delaytime=&bar*3/4, a tape's length=, a head's at=). */
+  /** The clocks its parameters take their times from (delaytime=&bar*4/3, a tape's length=, a head's at=). */
   timed(name: string) {
     for (const [key, k] of Object.entries(this.result.cells.get(name)?.paramClocks ?? {}))
       if (!this.off(k.driver)) {

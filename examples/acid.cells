@@ -9,18 +9,18 @@
 
 &riff 0 0 7 0 ~ 0 4 0 6 ~ 0 7 0 2 3 4                      # a bar of sixteenths
 &turn 0 0 7 0 ~ 7 6 4 2 ~ 0 4 6 7 9 7                      # … and its answer
-&line over=&minor step=&bar/4 &riff &turn &riff &riff^$-2   # the last bar a whole tone down
-&accent map=amp step=&bar/4 1 .4 .8 .4 0 .4 1 .4 .6 0 .4 1 .4 .5 .4 .4
+&line over=&minor step=&bar*4 &riff &turn &riff &riff^$-2   # the last bar a whole tone down
+&accent map=amp step=&bar*4 1 .4 .8 .4 0 .4 1 .4 .6 0 .4 1 .4 .5 .4 .4
 &fenv map=adsr .003 .18 .1 .06 label="filter envelope"
-&knob map=lin loop=&bar*16 .2 1 .35 .2 label="cutoff knob"
-&res map=lin loop=&bar*32 6 19 6 label="resonance knob"
+&knob map=lin loop=&bar/16 .2 1 .35 .2 label="cutoff knob"
+&res map=lin loop=&bar/32 6 19 6 label="resonance knob"
 
 &kick map=amp step=&bar 1 1 1 1
 &clap map=amp step=&bar ~ 1 ~ 1
-&closed map=amp step=&bar/4 .3 .2 .5 .2
-&open map=amp step=&bar/2 ~ .5
+&closed map=amp step=&bar*4 .3 .2 .5 .2
+&open map=amp step=&bar*2 ~ .5
 
-&tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*3/4 delay=.22 delayfeedback=.35 env=&(map=adsr .002 .15 .6 .05)
+&tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35 env=&(map=adsr .002 .15 .6 .05)
 &bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
 &cp s=white hpf=1500 env=&(map=adsr 0 .12 0 .06) room=.2
 &hh s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)

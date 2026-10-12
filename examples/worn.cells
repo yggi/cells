@@ -5,7 +5,7 @@
 &bar scan(1 1 1 1) step=72bpm
 &minor scale(minor, D)
 
-&tune over=&minor step=&bar/2 0 ~ 4 ~ 7 ~!3 6 ~ 4 ~ 2 ~!3 0 ~ 1 2 4 ~!3
+&tune over=&minor step=&bar*2 0 ~ 4 ~ 7 ~!3 6 ~ 4 ~ 2 ~!3 0 ~ 1 2 4 ~!3
 
 &flute s=tri loop=D4 env=&(map=adsr .02 .4 .3 .4)
 &dry [&tune * &flute * .3]

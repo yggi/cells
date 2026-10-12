@@ -4,7 +4,7 @@
 &key scan(2 2 1 2 2 2 1)
 &bar scan(1 1 1 1) step=96bpm
 
-&riff over=&key step=&bar/4 free(0 2 4 ~ 4 2 0 ~ 0 2 4 ~ 7@2 ~ ~)
+&riff over=&key step=&bar*4 free(0 2 4 ~ 4 2 0 ~ 0 2 4 ~ 7@2 ~ ~)
 &bassline over=&key step=&bar 0 3 4 0
 
 &lead s=tri loop=C4 env=&(map=adsr .01 .2 .4 .15)

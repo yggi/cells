@@ -5,9 +5,9 @@
 &bar scan(1 1 1 1) step=free(96bpm, 60..140)
 &major scale(major)
 
-&tune over=&major step=&bar/2 0 2 4 2 5 4 2@2 4 5 7 5 4 2 0@2
-&accent map=amp step=&bar/2 1 .5 .8 .5
-&roots over=&major step=&bar*2 0 3 4 0
+&tune over=&major step=&bar*2 0 2 4 2 5 4 2@2 4 5 7 5 4 2 0@2
+&accent map=amp step=&bar*2 1 .5 .8 .5
+&roots over=&major step=&bar/2 0 3 4 0
 
 &lead s=tri loop=C5 env=&(map=adsr .01 .2 .4 .2)
 &bell s=sine loop=C6 env=&(map=adsr 0 .6 0 .3)
@@ -16,7 +16,7 @@
 &sd s=white env=&(map=adsr 0 .15 0 .05)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh
-&beat step=&bar/2 0 2 1 2
+&beat step=&bar*2 0 2 1 2
 
 &leadOut play=&tune level=&accent*.4 [&lead, &bell]
 &drumOut play=&beat level=.5 &kit

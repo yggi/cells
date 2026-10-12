@@ -36,7 +36,7 @@ export interface Unit {
   readonly repeat: number;
   readonly subdivide: number;
   readonly elongate: number;
-  /** x?p: its probability; null: the cell's chance=. */
+  /** x?p: the probability it is dropped; null: the cell's chance=. */
   readonly chance?: number | null;
 }
 
@@ -68,7 +68,7 @@ export interface ResolvedCell {
   readonly laps: number | null;
   /** loop=: it turns its whole braid at its rate (an oscillation), rather than stepping. */
   readonly loops: boolean;
-  /** What a bare x? means here (½ unless chance= says). */
+  /** What a bare x? means here: the probability it is dropped (½ unless chance= says). */
   readonly chance: number;
   /** Its sequence of chance (seed=, else from its name). */
   readonly seed: number;
@@ -120,7 +120,7 @@ export interface ResolvedCell {
   /** step=/loop= driven by another cell: the driver, and its ratio as written (the edge's rate). */
   readonly step: { readonly driver: string; readonly cycle: boolean; readonly whole: boolean; readonly chain: readonly RateOp[] } | null;
   /**
-   * Parameters given as a clock (`delaytime=&bar*3/4`, `length=`, `at=`: attributes.ts TIME_PARAMS), by key: the clock
+   * Parameters given as a clock (`delaytime=&bar*4/3`, `length=`, `at=`: attributes.ts TIME_PARAMS), by key: the clock
    * tapped and its ratio as written (as step=). Compiled to seconds in `params`; kept for the graph's wire (a tap of the clock).
    */
   readonly paramClocks: Readonly<Record<string, NonNullable<ResolvedCell['step']>>>;

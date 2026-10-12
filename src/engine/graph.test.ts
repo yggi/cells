@@ -69,7 +69,7 @@ describe('edges as wires', () => {
 
   it('into a resonator with tines: as wide as its tines (a note picks one)', () => {
     const tines =
-      '&bar scan(1 1 1 1) step=92bpm\n&notes 0 2 4 7 9 12 14 16\n&tune over=&notes step=&bar/2 0 2 4\n&k body=tine loop=C4 0 2 4 7 9 12 14 16\n&out loop=SAMPLE_RATE map=sample [&tune * &k * .5]';
+      '&bar scan(1 1 1 1) step=92bpm\n&notes 0 2 4 7 9 12 14 16\n&tune over=&notes step=&bar*2 0 2 4\n&k body=tine loop=C4 0 2 4 7 9 12 14 16\n&out loop=SAMPLE_RATE map=sample [&tune * &k * .5]';
     expect(wireOf(buildGraph(compileSource(tines)), 'tune', 'k')).toMatchObject({ port: 'voice', width: 8 });
     // the Kalimba reads through its tines and plays them: one wire between them (the same id), its tines wide
     expect(wireOf(buildGraph(compileSource(PRESETS.kalimba.source)), 'kalimba', 'tune')).toMatchObject({ port: 'over', width: 8 });
@@ -292,7 +292,7 @@ describe('a product is a junction (docs/notes/nets.md, decision 2)', () => {
   });
 });
 
-describe('a parameter that takes a clock is a tap of it (delaytime=&bar*3/4, length=, at=)', () => {
+describe('a parameter that takes a clock is a tap of it (delaytime=&bar*4/3, length=, at=)', () => {
   const tapOf = (model: GraphModel, from: string, to: string, port: string) => model.edges.find((e) => e.from === `cell:${from}` && e.to === `cell:${to}` && e.port === port);
 
   it('a sync wire from the clock to the cell, carrying its rate as written', () => {
@@ -304,15 +304,15 @@ describe('a parameter that takes a clock is a tap of it (delaytime=&bar*3/4, len
         {
           kind: 'rate',
           by: [
-            { op: '×', n: 3 },
-            { op: '÷', n: 4 },
+            { op: '×', n: 4 },
+            { op: '÷', n: 3 },
           ],
           per: 'step',
           whole: false,
         },
       ],
     ]);
-    expect(transformLabel(e.transforms[0])).toBe('×3÷4');
+    expect(transformLabel(e.transforms[0])).toBe('×4÷3');
   });
 
   it('into a meter: a tap of its net (ground), as a step is, so it blinks with it and isn’t drawn as an edge of its own', () => {
@@ -327,19 +327,19 @@ describe('a parameter that takes a clock is a tap of it (delaytime=&bar*3/4, len
   it('beside a step from the same clock: a wire each', () => {
     const m = buildGraph(
       compileSource(
-        '&bar scan(1 1 1 1) step=120bpm\n&t step=&bar 0 2\n&v s=sine loop=C4 delaytime=&bar/2 delay=.3\n&w step=&bar length=&bar*4 write=&t\n&h play=&w at=&bar\n&out loop=SAMPLE_RATE map=sample [&h * &v]',
+        '&bar scan(1 1 1 1) step=120bpm\n&t step=&bar 0 2\n&v s=sine loop=C4 delaytime=&bar*2 delay=.3\n&w step=&bar length=&bar/4 write=&t\n&h play=&w at=&bar\n&out loop=SAMPLE_RATE map=sample [&h * &v]',
       ),
     );
-    expect(tapOf(m, 'bar', 'v', 'delaytime')?.transforms.map(transformLabel)).toEqual(['÷2']);
+    expect(tapOf(m, 'bar', 'v', 'delaytime')?.transforms.map(transformLabel)).toEqual(['×2']);
     expect(tapOf(m, 'bar', 'w', 'step')).toBeDefined();
-    expect(tapOf(m, 'bar', 'w', 'length')?.transforms.map(transformLabel)).toEqual(['×4']);
+    expect(tapOf(m, 'bar', 'w', 'length')?.transforms.map(transformLabel)).toEqual(['÷4']);
     expect(tapOf(m, 'bar', 'h', 'at')?.transforms.map(transformLabel)).toEqual(['']);
     expect(m.nets.find((n) => n.owner === 'cell:bar')!.taps).toHaveLength(5);
   });
 
   it('from a clock that is not a meter: an edge drawn, not a net', () => {
-    const m = buildGraph(compileSource('&lfo map=lin loop=2 0 1\n&t step=1 0 2\n&v s=sine loop=C4 delaytime=&lfo*2 delay=.3\n&out loop=SAMPLE_RATE map=sample [&t * &v]'));
-    expect(tapOf(m, 'lfo', 'v', 'delaytime')).toMatchObject({ band: 'sync', transforms: [[{ kind: 'rate', by: [{ op: '×', n: 2 }] }]] });
+    const m = buildGraph(compileSource('&lfo map=lin loop=2 0 1\n&t step=1 0 2\n&v s=sine loop=C4 delaytime=&lfo/2 delay=.3\n&out loop=SAMPLE_RATE map=sample [&t * &v]'));
+    expect(tapOf(m, 'lfo', 'v', 'delaytime')).toMatchObject({ band: 'sync', transforms: [[{ kind: 'rate', by: [{ op: '÷', n: 2 }] }]] });
     expect(m.nets.some((n) => n.owner === 'cell:lfo')).toBe(false);
   });
 });
@@ -374,17 +374,17 @@ describe('a wire carries its transform', () => {
   });
 
   it('a step: its rate as written, per cycle, the whole braid, through a belt', () => {
-    expect(edge(PRESETS.echotape.source, 'bar', 'tune').transforms).toEqual([[{ kind: 'rate', by: [{ op: '÷', n: 2 }], per: 'step', whole: false }]]);
+    expect(edge(PRESETS.echotape.source, 'bar', 'tune').transforms).toEqual([[{ kind: 'rate', by: [{ op: '×', n: 2 }], per: 'step', whole: false }]]);
     expect(edge(PRESETS.fifths.source, 'tune', 'key').transforms).toEqual([[{ kind: 'rate', by: [], per: 'cycle', whole: false }]]);
-    expect(edge(PRESETS.automaton.source, 'bar', 'bells').transforms).toEqual([[{ kind: 'rate', by: [{ op: '÷', n: 2 }], per: 'step', whole: false, belt: 3000 }]]);
+    expect(edge(PRESETS.automaton.source, 'bar', 'bells').transforms).toEqual([[{ kind: 'rate', by: [{ op: '×', n: 2 }], per: 'step', whole: false, belt: 3000 }]]);
     expect(edge(PRESETS.waveforms.source, 'tune', 'pluck').transforms).toEqual([[{ kind: 'rate', by: [], per: 'step', whole: true }]]);
-    expect(edge('&m step=1 0\n&t step=&m*2/3 0', 'm', 't').transforms).toEqual([
+    expect(edge('&m step=1 0\n&t step=&m*3/2 0', 'm', 't').transforms).toEqual([
       [
         {
           kind: 'rate',
           by: [
-            { op: '×', n: 2 },
-            { op: '÷', n: 3 },
+            { op: '×', n: 3 },
+            { op: '÷', n: 2 },
           ],
           per: 'step',
           whole: false,

@@ -2,8 +2,8 @@
 # A voice is a cell looped at audio rate: one turn of its braid is one cycle
 # of its waveform. Its pitch and its volume are cells too.
 &bar scan(1 1 1 1) step=100bpm
-&tune over=scale(major) step=&bar/2 0 2 4 7 4 2 0 ~ 4 5 7 9 7 5 4 ~
-&roots over=scale(major) step=&bar*4 0 3 4 0
+&tune over=scale(major) step=&bar*2 0 2 4 7 4 2 0 ~ 4 5 7 9 7 5 4 ~
+&roots over=scale(major) step=&bar/4 0 3 4 0
 
 &square label="square: two values, held" loop=C4 0 1                          # held, lerped to −1…1: a square
 &tri label="triangle: the same, ramped" loop=C4 map=lin 0 1                     # the same two values, ramped: a triangle

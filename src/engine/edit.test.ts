@@ -210,9 +210,9 @@ describe('renaming and splitting', () => {
 
 describe('attributes with parentheses', () => {
   it('replaces or removes a value like free(0, 0..6) whole', () => {
-    const src = '&s scan(2 2 1 2 2 2 1) shift=free(0, 0..6) step=cycle(&key)*2   # modes';
+    const src = '&s scan(2 2 1 2 2 2 1) shift=free(0, 0..6) step=cycle(&key)/2   # modes';
     const code = (t: string) => t.replace(/\s*#.*$/, '');
-    expect(code(setAttr(src, 's', 'shift', '3'))).toBe('&s scan(2 2 1 2 2 2 1) shift=3 step=cycle(&key)*2');
+    expect(code(setAttr(src, 's', 'shift', '3'))).toBe('&s scan(2 2 1 2 2 2 1) shift=3 step=cycle(&key)/2');
     expect(code(setAttr(src, 's', 'step', null))).toBe('&s scan(2 2 1 2 2 2 1) shift=free(0, 0..6)');
     expect(setAttr(src, 's', 'shift', '3').indexOf('#')).toBe(src.indexOf('#')); // the comment keeps its column
   });

@@ -6,6 +6,7 @@ import type { Pick } from './ast';
 import type { CompileResult, ResolvedCell, Shifts, Unit } from './program';
 import { ROOT, codeShifts } from './program';
 import { midiOf, mod } from '../theory/modes';
+import { leaves, mapLeaves } from './subseq';
 
 export interface Entry {
   readonly value: number;
@@ -36,17 +37,18 @@ export function shiftedUnits(result: CompileResult, name: string, shift: number,
   return Array.from({ length: k }, (_, i) => {
     const u = c.units[(i + r) % k];
     const climb = p * (lap + (i + r >= k ? 1 : 0));
-    const a = u.atom;
-    if (climb === 0 || a.kind === 'rest' || a.kind === 'ref' || a.kind === 'mix') return u;
-    return {
-      ...u,
-      atom:
-        a.kind === 'note'
-          ? { ...a, value: a.value + climb }
-          : a.kind === 'choice'
-            ? { ...a, values: a.values.map((x) => x + climb) }
-            : { ...a, notes: a.notes.map((x) => x + climb) },
-    };
+    if (climb === 0) return u;
+    // (a subsequence climbs with every number in it)
+    const atom = mapLeaves(u.atom, (a) =>
+      a.kind === 'note'
+        ? { ...a, value: a.value + climb }
+        : a.kind === 'choice'
+          ? { ...a, values: a.values.map((x) => x + climb) }
+          : a.kind === 'chord'
+            ? { ...a, notes: a.notes.map((x) => x + climb) }
+            : a,
+    );
+    return atom === u.atom ? u : { ...u, atom };
   });
 }
 
@@ -58,7 +60,7 @@ export function shiftedUnits(result: CompileResult, name: string, shift: number,
 const ENTRY_CACHE = 256;
 const entryCache = new WeakMap<CompileResult, Map<string, readonly Entry[]>>();
 
-/** The cell as a lookup table: its numbers in order (chords contribute each member). Shared: don't change it. */
+/** The cell as a lookup table: its numbers in order (chords contribute each member, subsequences theirs in order). Shared: don't change it. */
 export function entries(result: CompileResult, name: string, shift: number): readonly Entry[] {
   let cache = entryCache.get(result);
   if (!cache) entryCache.set(result, (cache = new Map()));
@@ -66,7 +68,7 @@ export function entries(result: CompileResult, name: string, shift: number): rea
   const hit = cache.get(key);
   if (hit) return hit;
   const out: Entry[] = [];
-  for (const { atom: a } of shiftedUnits(result, name, shift)) {
+  for (const a of shiftedUnits(result, name, shift).flatMap((u) => leaves(u.atom))) {
     if (a.kind === 'note') out.push({ value: a.value, alter: a.alter });
     else if (a.kind === 'chord') a.notes.forEach((v, j) => out.push({ value: v, alter: a.alters[j] }));
   }

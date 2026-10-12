@@ -11,8 +11,8 @@
 &equal label="tempered: {notes}" scan(2 2 1 2 2 2 1)                            # C major, in equal steps
 
 &chords [0,2,4] [3,5,7] [1,3,5] [4,6,8]               # I IV ii V, as scale degrees
-&pure over=&just step=&bar*4 &chords
-&tempered over=&equal step=&bar*4 &chords
+&pure over=&just step=&bar/4 &chords
+&tempered over=&equal step=&bar/4 &chords
 
 &organ s=saw loop=C3 lpf=1800 env=&(map=adsr .3 .3 .9 .8)
 &out level=6 map=sample [&pure * &organ * .3] [&tempered * &organ * .3]

@@ -1,11 +1,12 @@
 /** A cell's line: its name, then attributes and its braid, in any order. */
+import { leaves } from '../subseq';
 import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, Token } from '../ast';
 import { TIME_PARAMS } from '../attributes';
 import { RETIRED_PARAMS } from '../dough-params';
 import { LABEL_FIELDS } from '../program';
 import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from '../attributes';
 import { IDENT, LineScanner } from './scanner';
-import { OPERATIONS, parseToken } from './braid';
+import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE, parseFree } from './free';
 import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
 import { parseMap, parseStep } from './values';
@@ -128,7 +129,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   },
   base: {
     form: 'base=&cell · base=&cell^$n · base=&cell^n',
-    examples: ['&answer base=&subject^$7 _!3 12@2', '&last base=&subject _!21 3@2'],
+    examples: ['&answer base=&subject^$7 =!3 12@2', '&last base=&subject =!21 3@2'],
     read: (s, b) => {
       b.base = s.ref('a cell after base=, like base=&subject or base=&subject^$7');
       if (b.base.pick) s.fail('base= takes a whole cell (transposing it is fine: base=&subject^$7)', b.base.span.col - 1, b.base.span.len);
@@ -215,9 +216,9 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   },
   chance: {
     form: 'chance=p · chance=free(p, 0..1)',
-    examples: ['&ghost chance=.2 step=4 0? 0? 0? 0?', '&ghost chance=free(.3, 0..1) step=4 0? 0?'],
+    examples: ['&ghost chance=.8 step=4 0? 0? 0? 0?', '&ghost chance=free(.7, 0..1) step=4 0? 0?'],
     read: (s, b) => {
-      // what a bare x? means in this cell: a probability, or a slider for one
+      // what a bare x? means in this cell: the probability it is dropped, or a slider for one
       if (s.text.startsWith('free(', s.i)) b.chance = parseFree(s, 'chance', false).value;
       else {
         const at2 = s.i;
@@ -313,10 +314,10 @@ function readParam(s: LineScanner, b: Body, key: string): void {
     b.paramSpans[key] = s.span(vs);
     return;
   }
-  // a time as a clock: delaytime=&bar/2
+  // a time as a clock: delaytime=&bar*2
   if (s.peek() === '&' && TIME_PARAMS.has(key)) {
     const st = parseStep(s, false);
-    if (st.kind !== 'driven') s.fail(`${key}= takes seconds, or a clock: ${key}=&bar/2`, vs, s.i - vs);
+    if (st.kind !== 'driven') s.fail(`${key}= takes seconds, or a clock: ${key}=&bar*2`, vs, s.i - vs);
     b.paramClocks[key] = st;
     b.paramSpans[key] = s.span(vs);
     return;
@@ -408,7 +409,7 @@ export const LINE_SYNTAX: readonly Syntax[] = [
 
 /**
  * free(0 2 4 ~ …) at the scanner (it's at 'free'): a braid left to the performer, the cell's whole braid. Its steps are
- * numbers (accidentals and names too), rests and chords, with their modifiers; its length in steps is the frame a
+ * numbers (accidentals and names too), rests, chords and subsequences of them, with their modifiers; its length in steps is the frame a
  * recording fills (`hi`). Its free() is pushed with the scanner's others, so it is held, kept and reverted as they are.
  */
 function parseFreeBraid(s: LineScanner): Braid {
@@ -425,9 +426,9 @@ function parseFreeBraid(s: LineScanner): Braid {
     if (inner.done()) break;
     const at = inner.i;
     const t = parseToken(inner);
-    if (t.atom.kind !== 'note' && t.atom.kind !== 'rest' && t.atom.kind !== 'chord')
-      inner.fail('A braid left free holds steps: numbers, rests (~) and chords ([0,4]), held (@n) or repeated (!n)', at, inner.i - at);
-    tokens.push(t);
+    if (leaves(t.atom).some((a) => a.kind !== 'note' && a.kind !== 'rest' && a.kind !== 'chord'))
+      inner.fail('A braid left free holds steps: numbers, rests (~), chords ([0,4]) and subsequences of them ([0 2]), held (@n) or repeated (!n)', at, inner.i - at);
+    pushStep(inner, tokens, t);
   }
   if (!tokens.length) s.fail('free(…) around a braid needs steps: free(0 2 4 ~)', start, close - start + 1);
   s.i = close + 1;
@@ -524,7 +525,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       // degree(&x, n), inverse(&x): a step, read with its modifiers
       if (generator) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps');
       s.i = at;
-      tokens.push(parseToken(s));
+      pushStep(s, tokens, parseToken(s));
       continue;
     }
     if (word === 'off' && s.atBoundary()) {
@@ -533,11 +534,11 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       continue;
     }
     // a note by name is a step (C, Bb3): read again as one
-    // (and _, a step kept from the base: parser/base.ts)
+    // (and _, the step before it held one longer)
     if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_')) s.i = at;
     else if (word !== null) s.fail(`Unexpected '${word}'`, at, word.length);
     if (generator) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
-    tokens.push(parseToken(s));
+    pushStep(s, tokens, parseToken(s));
   }
 
   const braid: Braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });

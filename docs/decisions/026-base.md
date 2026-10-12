@@ -4,6 +4,8 @@
 delta-copy of any other cell, prototype or template … `&foo base=&bar`") · Issues: #307, #10 (the examples pass, item
 4: "a motif with a change"), #234
 
+**Since [decision 027](027-on-top-of-strudel.md):** the sign that keeps a step of the base is `=`, not `_` (Strudel's `_` elongates).
+
 ## Context
 
 BWV 847 writes its subject seven times, because each entry changes one step (a tonal answer, a modulation) or holds the
@@ -31,7 +33,7 @@ it in the parser keeps the compiler, the graph and the engine as they are.
 
 ## Consequences
 
-- The graph shows a copy as the plain cell it resolves to: no edge to its base yet (a follow-up: draw `base=` as a link).
+- The graph draws a copy's base as a wire from the base into the copy, the transposition written on it (`engine/graph.ts`); the copy's node is the plain cell it resolves to.
 - Free values (`free(…)`) in a base aren't copied as sliders of their own: the copy plays the base's written value.
 - The folder writes variants this way (`engine/fold/variants.ts`); BWV 847 converted from MIDI has its subject as one
   cell and its bent entries as copies.

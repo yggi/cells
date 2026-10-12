@@ -11,7 +11,7 @@
 
 &bu 0 0 3 0
 &bd 3 0 4 0
-&roots over=&scale step=&bar*2 &bu &bd &bu^1!2 &bu &bd   # the bass moves the same way
+&roots over=&scale step=&bar/2 &bu &bd &bu^1!2 &bu &bd   # the bass moves the same way
 
 &lead s=tri loop=C5 env=&(map=adsr .01 .3 .4 .3)
 &bass s=sine loop=C3 env=&(map=adsr .005 .5 .5 .1)

@@ -16,7 +16,7 @@ Label templates fill from the cell as it is now, so a key that turns renames its
 &bar scan(1 1 1 1) step=100bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}: {notes}"
 &hint label="The major scale: 2 2 1 2 2 2 1." about=&major
-&tune over=&major step=&bar/2 show=notes:flats size=1.5 label="the tune" 0 2 4 5
+&tune over=&major step=&bar*2 show=notes:flats size=1.5 label="the tune" 0 2 4 5
 &v s=sine loop=C4
 &out level=-6 loop=SAMPLE_RATE map=sample [&tune * &v * .3]
 ```
@@ -64,7 +64,7 @@ Without `show=` it is inferred (a table of 12 is a `key`, a recognised mode a `s
 
 ```cells
 &bar scan(1 1 1 1) step=60bpm
-&strike step=&bar*6 0
+&strike step=&bar/6 0
 &tonic body=fork loop=A3 ring=7 board=none 0
 &fifth body=fork loop=A3 ring=7 board=none 7
 &screen scope=xy label="x: the tonic · y: its fifth" &tonic &fifth

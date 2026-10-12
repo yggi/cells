@@ -63,15 +63,43 @@ export const GATE_SYNTAX: readonly Syntax[] = [
   ),
 ];
 
-/** A chord holding cells (`[&theme * &lead, …]`) is a mix of sounds, not a chord of numbers. */
+/**
+ * A bracket holding cells (`[&theme * &lead, …]`, `[&bd, &sd]`) is a mix of sounds, not steps — unless one of its
+ * comma-separated parts is several steps side by side, which makes it a subsequence or a stack of them (decision 027):
+ * `[&a &b]`, `[&bd [&hh &hh]]`, `[&bd, &hh &hh]`. A part is a mix's term when it is one item, or its items are joined by
+ * operators (`&a * &b`, `(&x + 12) * &v`).
+ */
 export function isMixChord(text: string, at: number): boolean {
   let depth = 0;
+  let cells = false;
+  // the bracket's top-level parts, each as its items (split at spaces outside brackets and parentheses)
+  const parts: string[][] = [[]];
+  let item = '';
+  const end = () => {
+    if (item) parts[parts.length - 1].push(item);
+    item = '';
+  };
   for (let i = at; i < text.length; i++) {
-    if (text[i] === '[') depth++;
-    else if (text[i] === ']' && --depth === 0) return false;
-    else if (text[i] === '&') return true;
+    const c = text[i];
+    if (c === '&') cells = true;
+    if (c === '[' || c === '(') {
+      if (depth++ === 0) continue;
+    } else if (c === ']' || c === ')') {
+      if (--depth === 0) break;
+    } else if (depth === 1 && c === ',') {
+      end();
+      parts.push([]);
+      continue;
+    } else if (depth === 1 && /\s/.test(c)) {
+      end();
+      continue;
+    }
+    item += c;
   }
-  return false;
+  end();
+  if (!cells) return false;
+  const operator = (x: string) => /^[*+(-]|[*+-]$/.test(x);
+  return !parts.some((p) => (p.length > 1 && !p.some(operator)) || (p.length === 1 && p[0].startsWith('[')));
 }
 
 export function parseMixChord(s: LineScanner): Atom {
@@ -89,7 +117,7 @@ export function parseMixChord(s: LineScanner): Atom {
     if (next === '|')
       s.fail("',' or ']' in the mix: a mix lists its terms with commas ([&a, &b]); a choice [a|b] picks between numbers in a braid (&x [0|2]), not between cells", s.i, 1);
     if (next === '[' || next === '&')
-      s.fail("',' or ']' in the mix: a mix lists its terms with commas ([&a, &b]); cells can't be subdivided in a mix (&a [&b &c]): subdivide numbers in a braid", s.i, 1);
+      s.fail("',' or ']' in the mix: a mix lists its terms with commas ([&a, &b]); one term is a product or a sum, its parts joined by * or +", s.i, 1);
     s.expect(']', `',' or ']' in the mix`);
     return { kind: 'mix', exprs };
   }

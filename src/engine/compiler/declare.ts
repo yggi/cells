@@ -3,6 +3,7 @@ import type { Atom, CellDecl, Expr, Ref, Span, Token } from '../ast';
 import { MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
+import { leaves } from '../subseq';
 import type { Ctx } from './context';
 
 /** The declarations, as declare() hands them on. */
@@ -35,7 +36,7 @@ export function declare(ctx: Ctx): Declared {
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
   for (const name of decls.keys()) if (name.startsWith('key:') || name.startsWith('scale:')) implicit.add(name);
-  // a stepped braid of voices (&groove step=&bar/4 &bd ~ &hh [&bd,&hh]) plays them, and so do the unstepped
+  // a stepped braid of voices (&groove step=&bar*4 &bd ~ &hh [&bd,&hh]) plays them, and so do the unstepped
   // braids of voices it splices (drum motifs: &groove … &fill &fill[::-1]): each is a pattern of numbers read
   // through one kit of all their voices, in the order first written (that kit unnamed, not drawn)
   const grooves = voiceGrooves(decls);
@@ -121,8 +122,8 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
     // (no deeper than a splice may go: past that it is an error of its own, and no groove)
     if (!d || d.over || d.map || sounds(d) || d.braid.kind !== 'list' || d.braid.tokens.length === 0 || seen.length > MAX_SPLICE_DEPTH || seen.includes(d.name)) return false;
     let voiced = false;
-    for (const t of d.braid.tokens) {
-      const a = t.atom;
+    // (a subsequence of them too: &bd [&hh &hh], its steps each one of these)
+    for (const a of d.braid.tokens.flatMap((t) => leaves(t.atom))) {
       if (a.kind === 'rest') continue;
       if (a.kind === 'ref' && isVoiceDecl(a.name) && plain(a)) voiced = true;
       else if (a.kind === 'ref' && !a.shift && !a.transpose && !a.values && motif(a.name, [...seen, d.name])) voiced = true;
@@ -153,7 +154,7 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
   const rewrite = (d: CellDecl) => {
     if (cells.has(d.name) || d.braid.kind !== 'list') return;
     cells.set(d.name, []);
-    const tokens = d.braid.tokens.map((t): Token => {
+    const step = (t: Token): Token => {
       const a = t.atom;
       let atom: Atom = a;
       if (a.kind === 'ref' && isVoiceDecl(a.name)) atom = { kind: 'note', value: index(a.name, t.span), alter: 0 };
@@ -161,9 +162,10 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
       else if (a.kind === 'mix') {
         const notes = a.exprs.map((e) => index((e as { ref: Ref }).ref.name, t.span));
         atom = { kind: 'chord', notes, alters: notes.map(() => 0) };
-      }
+      } else if (a.kind === 'seq') atom = { ...a, layers: a.layers.map((l) => l.map(step)) };
       return { ...t, atom };
-    });
+    };
+    const tokens = d.braid.tokens.map(step);
     cells.set(d.name, tokens);
   };
   for (const d of [...decls.values()]) if (grooves.includes(d)) rewrite(d);

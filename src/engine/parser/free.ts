@@ -45,7 +45,7 @@ export const FREE_SYNTAX: readonly Syntax[] = [
     'free',
     'free(0 2 4 ~ …)',
     "A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n).",
-    ['&riff over=&key step=&bar/4 free(0 2 4 ~ 4 2 0 ~)'],
+    ['&riff over=&key step=&bar*4 free(0 2 4 ~ 4 2 0 ~)'],
     'free.md',
   ),
   syntax('free', 'free("text")', 'A text left to the performer: a field to type in (for spell(…)).', ['&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")'], 'free.md'),

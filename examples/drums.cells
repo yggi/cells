@@ -1,16 +1,16 @@
-&piece title="Drums: a groove of voices" tags="tutorial, rhythm" tier=4 label="A drum part written with the drums' names: a beat, a fill with ratchets, a Euclidean rhythm and a kit." about=&out
+&piece title="Drums: a groove of voices" tags="tutorial, rhythm" tier=4 label="A drum part written with the drums' names: a beat, a fill with ratchets and a subsequence, a Euclidean rhythm and a kit." about=&out
 &grooveNote label="A stepped braid of voices plays them: &bd ~ &hh is kick, rest, hat. &beat and &fill are drum motifs, spliced into &groove like any other." about=&groove
-&ratchetNote label="&sd*3 plays the snare three times in one step: a ratchet." about=&fill
+&ratchetNote label="&sd*3 plays the snare three times in one step: a ratchet. [&sd &sd] squeezes two steps into one: a subsequence." about=&fill
 &euclidNote label="euclid(5, 16): five hits spread as evenly as they go over sixteen steps." about=&clave
 &kitNote label="A braid of voices read with over= is a kit: its numbers pick the voices, 0 the first." about=(&kit &toms)
 &bar scan(1 1 1 1) step=free(moderato)
 
 &beat &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]
-&fill &sd &sd*2 &sd &sd*3
-&groove step=&bar/2 &beat!3 &bd ~ &hh ~ &fill
-&clave step=&bar/4 euclid(5, 16)
+&fill &sd [&sd &sd] &sd &sd*3
+&groove step=&bar*2 &beat!3 &bd ~ &hh ~ &fill
+&clave step=&bar*4 euclid(5, 16)
 &kit &lo &mid &hi
-&toms over=&kit step=&bar/4 ~!12 0 1 2 1
+&toms over=&kit step=&bar*4 ~!12 0 1 2 1
 
 &bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
 &sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .05)

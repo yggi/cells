@@ -5,8 +5,8 @@
 &bar scan(1 1 1 1) step=free(84bpm, 50..120)
 &alpha cycle=9 map=ed(3/2)                          # nine equal steps to 3:2
 
-&chords over=&alpha step=&bar*4 [0,5,9] [4,8,13] [9,14,18] [5,9,14]   # major · minor · major · minor
-&tune over=&alpha step=&bar/2 9 14 18 14 13 8 4 8 18 23 27 23 22 18 14 9 14 18 23 18 14 13 9@2 5 9 14 18 14 9@3
+&chords over=&alpha step=&bar/4 [0,5,9] [4,8,13] [9,14,18] [5,9,14]   # major · minor · major · minor
+&tune over=&alpha step=&bar*2 9 14 18 14 13 8 4 8 18 23 27 23 22 18 14 9 14 18 23 18 14 13 9@2 5 9 14 18 14 9@3
 
 &brass s=saw loop=C4 lpf=2200 lpq=3 env=&(map=adsr .04 .2 .7 .3) pitch=&(map=lin loop=5 0 .08 0 -.08 0)
 &pad s=tri loop=C3 env=&(map=adsr .4 .3 .8 .8)

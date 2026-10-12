@@ -10,9 +10,9 @@ const SONG = `
 &bar scan(1 1 1 1) step=120bpm
 &major scale(major)
 &parts step=&bar &keysBar &tuneBar &drumBar
-&song over=&parts step=&bar*16 laps=1 0 [0,2] [0,1,2] 0
-&chords over=&major step=&keysBar*4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
-&tune over=&major step=&tuneBar/2 4 4 5 7
+&song over=&parts step=&bar/16 laps=1 0 [0,2] [0,1,2] 0
+&chords over=&major step=&keysBar/4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
+&tune over=&major step=&tuneBar*2 4 4 5 7
 &kick step=&drumBar 0 ~ 0 ~
 &keys s=tri loop=C4
 &lead s=square loop=C5

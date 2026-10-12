@@ -3,10 +3,10 @@
 &dbNote label="map=db: a volume in decibels, 0 as it is, −6 about half." about=&fade
 &bar scan(1 1 1 1) step=free(moderato)
 
-&line step=&bar/4 0 0 12 0 ~ 0 10 0 0 3 0 ~ 7 0 12 ~
-&accent map=amp step=&bar/4 1 .5 .9 .5 0 .6 1 .5 .8 .5 .7 0 1 .5 .9 0
-&swell map=lin loop=&bar*4 .2 1 .2
-&fade map=db step=&bar*4 0 -3 -6 -3
+&line step=&bar*4 0 0 12 0 ~ 0 10 0 0 3 0 ~ 7 0 12 ~
+&accent map=amp step=&bar*4 1 .5 .9 .5 0 .6 1 .5 .8 .5 .7 0 1 .5 .9 0
+&swell map=lin loop=&bar/4 .2 1 .2
+&fade map=db step=&bar/4 0 -3 -6 -3
 
 &acid s=saw loop=C2 lpf=150..2800 * &(map=adsr .002 .15 .1 .05) * &swell lpq=10 env=&(map=adsr .002 .12 .4 .05)
 &out map=sample level=16 [&line * &acid * &accent * &fade * .4]

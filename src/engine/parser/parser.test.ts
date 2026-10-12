@@ -101,18 +101,18 @@ describe('parse: rates, stride and voices', () => {
     expect(one('&key step=cycle(&theme) stride=7').stride).toBe(7);
   });
 
-  it("reads dough parameters on voices; dough's other names are errors that name ours", () => {
+  it("reads dough parameters on voices; Strudel's and dough's other names are errors that name ours", () => {
     const c = one('&lead s=saw step=261.63 lpf=1800 lpq=2 room=.4');
     expect(c.params).toEqual({ s: 'saw', lpf: 1800, lpq: 2, room: 0.4 });
     const r = parse('&lead s=saw reverb=.4');
     expect(r.cells).toEqual([]);
     expect(r.diagnostics).toEqual([
-      { severity: 'error', message: "reverb= is dough's other name for room=, and isn't read here: write room=", span: { line: 1, col: 13, len: 6 } },
+      { severity: 'error', message: "reverb= is Strudel's or dough's name for room=, and isn't read here: write room=", span: { line: 1, col: 13, len: 6 } },
     ]);
     // every one of them, inside an unnamed cell too
     for (const [alias, ours] of Object.entries(DOUGH_ALIASES))
       expect(parse(`&a [&t * &(s=saw ${alias}=300)]`).diagnostics.map((d) => [d.severity, d.message])).toEqual([
-        ['error', `${alias}= is dough's other name for ${ours}=, and isn't read here: write ${ours}=`],
+        ['error', `${alias}= is Strudel's or dough's name for ${ours}=, and isn't read here: write ${ours}=`],
       ]);
     // envelopes are cells now
     for (const k of ['attack', 'decay', 'sustain', 'release'])
@@ -137,7 +137,7 @@ describe('parse: off', () => {
 
 describe('parse: loop, cycle(), map and sums', () => {
   it('reads the six step / loop forms', () => {
-    const r = parse(`&a step=1\n&b loop=1\n&c step=&x\n&d loop=&x\n&e step=cycle(&x)\n&f loop=cycle(&x)*2\n&g step=&x/5`);
+    const r = parse(`&a step=1\n&b loop=1\n&c step=&x\n&d loop=&x\n&e step=cycle(&x)\n&f loop=cycle(&x)/2\n&g step=&x*5`);
     expect(r.diagnostics).toEqual([]);
     expect(r.cells.map((c) => [c.step?.whole, c.step?.kind, c.step?.kind === 'driven' ? [c.step.cycle, rateChain(c.step.chain) || null, c.step.ratio] : null])).toEqual([
       [false, 'rate', null],
@@ -145,21 +145,23 @@ describe('parse: loop, cycle(), map and sums', () => {
       [false, 'driven', [false, null, 1]],
       [true, 'driven', [false, null, 1]],
       [false, 'driven', [true, null, 1]],
-      [true, 'driven', [true, '×2', 0.5]],
-      [false, 'driven', [false, '÷5', 5]],
+      [true, 'driven', [true, '÷2', 0.5]],
+      [false, 'driven', [false, '×5', 5]],
     ]);
     expect(parse('&a step=1 loop=2').diagnostics[0].message).toMatch(/two ways/);
   });
 
-  it('reads ratio chains, left to right, any positive number', () => {
+  it('reads ratio chains, left to right, any positive number: * faster, / slower (Strudel’s fast and slow)', () => {
     const ratio = (t: string) => {
       const c = one(`&a step=${t} 0`);
       return c.step?.kind === 'driven' ? [c.step.ratio, rateChain(c.step.chain)] : null;
     };
-    expect(ratio('&x*2/3')).toEqual([1.5, '×2÷3']); // three per two
-    expect(ratio('&x/3*2')).toEqual([1.5, '÷3×2']);
-    expect(ratio('&x*1.5')).toEqual([1 / 1.5, '×1.5']);
-    expect(parse('&a step=&x*0 0').diagnostics[0].message).toMatch(/positive number/);
+    expect(ratio('&x*3/2')).toEqual([1.5, '×3÷2']); // three per two
+    expect(ratio('&x/2*3')).toEqual([1.5, '÷2×3']);
+    expect(ratio('&x*4')).toEqual([4, '×4']); // four per step
+    expect(ratio('&x/2')).toEqual([0.5, '÷2']); // one per two
+    expect(ratio('&x/1.5')).toEqual([1 / 1.5, '÷1.5']);
+    expect(parse('&a step=&x/0 0').diagnostics[0].message).toMatch(/positive number/);
   });
 
   it('reads map=', () => {
@@ -350,8 +352,32 @@ describe('euclid(k, n, shift): Bjorklund’s rhythms', () => {
     expect(hits('euclid(0, 4)')).toBe('....');
     expect(hits('euclid(4, 4)')).toBe('xxxx');
   });
-  it('shift turns it', () => {
-    expect(hits('euclid(3, 8, 1)')).toBe('..x..x.x');
+  it('shift turns it right, as Strudel’s (k, n, r)', () => {
+    expect(hits('euclid(3, 8, 1)')).toBe('.x..x..x');
+    expect(hits('euclid(3, 8, 2)')).toBe('x.x..x..');
+  });
+  it('is Strudel’s euclidRot for every k ≤ n ≤ 16 and r from 0 to n', () => {
+    // Strudel's own algorithm (@strudel/core euclid.mjs, util.mjs), ported: bjorklund, then rotate(b, -r)
+    type Pair = [number[][], number[][]];
+    const zip = (xs: number[][], ys: number[][]) => xs.map((x, i) => x.concat(ys[i]));
+    const left = ([ons, offs]: number[], [xs, ys]: Pair): [number[], Pair] => [
+      [offs, ons - offs],
+      [zip(xs.slice(0, offs), ys), xs.slice(offs)],
+    ];
+    const right = ([ons, offs]: number[], [xs, ys]: Pair): [number[], Pair] => [
+      [ons, offs - ons],
+      [zip(xs, ys.slice(0, ons)), ys.slice(ons)],
+    ];
+    const go = (n: number[], x: Pair): [number[], Pair] => (Math.min(n[0], n[1]) <= 1 ? [n, x] : go(...(n[0] > n[1] ? left(n, x) : right(n, x))));
+    const bjorklund = (ons: number, steps: number) => {
+      const [, [a, b]] = go([ons, steps - ons], [Array(ons).fill([1]), Array(steps - ons).fill([0])]);
+      return [...a.flat(), ...b.flat()];
+    };
+    const rotate = (arr: number[], n: number) => arr.slice(n).concat(arr.slice(0, n));
+    const strudel = (k: number, n: number, r: number) => (r ? rotate(bjorklund(k, n), -r) : bjorklund(k, n)).map((h) => (h ? 'x' : '.')).join('');
+    expect(strudel(3, 8, 2)).toBe('x.x..x..');
+    for (let n = 1; n <= 16; n++)
+      for (let k = 0; k <= n; k++) for (let r = 0; r <= n; r++) expect(hits(`euclid(${k}, ${n}, ${r})`), `euclid(${k}, ${n}, ${r})`).toBe(strudel(k, n, r));
   });
   it('a written braid like any other: steps to read through a kit, or to play', () => {
     expect(parse('&t step=4 euclid(3, 8)').diagnostics).toEqual([]);
@@ -363,7 +389,7 @@ describe('euclid(k, n, shift): Bjorklund’s rhythms', () => {
 describe('free(…) around a braid (#210): a braid left to the performer', () => {
   const err = (src: string) => parse(src).diagnostics.find((d) => d.severity === 'error')?.message ?? '';
   it("is the cell's whole braid: its steps as written, its length the frame, its free() with the others", () => {
-    const r = parse('&riff over=&key step=&bar/4 free(0 2  4 ~ 4@2 [0,4] 6# 1!2)');
+    const r = parse('&riff over=&key step=&bar*4 free(0 2  4 ~ 4@2 [0,4] 6# 1!2)');
     const c = r.cells[0];
     expect(c.braid.kind === 'list' && c.braid.tokens.map((t) => t.atom.kind)).toEqual(['note', 'note', 'note', 'rest', 'note', 'chord', 'note', 'note']);
     expect(c.frees).toEqual([{ key: 'braid', value: 0, unit: '', lo: 0, hi: 10, span: { line: 1, col: 29, len: 31 }, braid: '0 2 4 ~ 4@2 [0,4] 6# 1!2' }]);

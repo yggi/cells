@@ -2,7 +2,7 @@
 # Five: an original tune in 5/4, the bar felt as 3 + 2 — after the groove of Take Five.
 # It builds on the blues: the same swing meter, the minor pentatonic (here on Eb).
 &bar scan(1 1 1 1 1) step=free(172bpm, 120..220)    # five beats
-&swing scan(free(2, 1..3) 1) step=&bar/2           # swung eighths, as in the blues: ratio free
+&swing scan(free(2, 1..3) 1) step=&bar*2           # swung eighths, as in the blues: ratio free
 &penta scan(3 2 2 3 2)                             # Eb Gb Ab Bb Db (the voices sit on Eb)
 &harmony step=&bar 0!3 -5!2                        # 3 + 2: the minor chord for three beats, the minor fifth for two
 

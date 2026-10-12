@@ -9,8 +9,8 @@
 &reel step=72bpm motor=1.2 mass=1 friction=.05 wow=.02 0
 &bar scan(1 1 1 1) step=72bpm
 &minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"
-&tune over=&minor step=&bar/2 label="the tune" 0 ~ 7 ~!2 4 ~!2 2 ~!7 9 ~ 7 ~ 4 ~!3 2 ~ 0 ~!5
-&pad over=&minor step=&bar*8 label="the pad" [0,2,4] [-2,0,2]
+&tune over=&minor step=&bar*2 label="the tune" 0 ~ 7 ~!2 4 ~!2 2 ~!7 9 ~ 7 ~ 4 ~!3 2 ~ 0 ~!5
+&pad over=&minor step=&bar/8 label="the pad" [0,2,4] [-2,0,2]
 &pluck s=tri loop=D4 lpf=2600 env=&(map=adsr .003 .5 0 .4)
 &soft s=saw loop=D3 lpf=700 env=&(map=adsr 1.5 1 .8 3)
 &dry [&tune * &pluck * .25, &pad * &soft * .05]

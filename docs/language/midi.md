@@ -8,7 +8,7 @@ A piece can say where its notes go on MIDI: which voice on which channel, and vo
 &bass step=2 0 ~ 5 4
 &sub loop=55
 &bar scan(1 1 1 1) step=2
-&groove step=&bar/2 &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh
+&groove step=&bar*2 &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh
 &bd s=sine loop=A1
 &sd s=white
 &hh s=white hpf=8000

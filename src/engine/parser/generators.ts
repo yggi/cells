@@ -219,7 +219,7 @@ function numbers(s: LineScanner, name: string, start: number): { args: number[];
   return { args, span };
 }
 
-/** k hits as evenly as they go over n steps (Bjorklund's rhythms: euclid(3,8) the tresillo); shift turns it. */
+/** k hits as evenly as they go over n steps (Bjorklund's rhythms: euclid(3,8) the tresillo); shift turns it right, as Strudel's (k,n,r). */
 function parseEuclid(s: LineScanner, start: number): Braid {
   const { args, span } = numbers(s, 'euclid', start);
   const [k, n, shift = 0] = args;
@@ -227,7 +227,7 @@ function parseEuclid(s: LineScanner, start: number): Braid {
     s.fail('euclid(k, n): k hits spread evenly over n steps (0 ≤ k ≤ n), euclid(k, n, shift) turned', start, span.len);
   const pattern = bjorklund(k, n);
   const tokens = Array.from({ length: n }, (_, j) => {
-    const i = (((j + shift) % n) + n) % n;
+    const i = (((j - shift) % n) + n) % n;
     const hit = pattern[i];
     return { atom: hit ? { kind: 'note' as const, value: 0, alter: 0 } : { kind: 'rest' as const }, repeat: 1, subdivide: 1, elongate: 1, span };
   });
@@ -364,7 +364,7 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     syntax: syntax(
       'generator',
       'euclid(k, n) · euclid(k, n, shift)',
-      'k hits spread as evenly as they go over n steps (the Euclidean rhythms), turned by shift.',
+      "k hits spread as evenly as they go over n steps (the Euclidean rhythms), turned right by shift steps, as Strudel's (k, n, r).",
       ['&tresillo euclid(3, 8)', '&clave euclid(5, 16, 2)'],
       'braid.md',
     ),

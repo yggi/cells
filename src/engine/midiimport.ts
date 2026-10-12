@@ -245,7 +245,7 @@ export function cellsFromMidi(smf: Smf, title: string, { free = true, shorten = 
         ...defs,
         '',
         '# every note, a line a track; melodies as semitones from C4',
-        ...lines.map((l) => `&${l.name} step=&tempo${scales.get(l.name) === 1 ? '' : `*${scales.get(l.name)}`} ${braids.get(l.name)}`),
+        ...lines.map((l) => `&${l.name} step=&tempo${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`} ${braids.get(l.name)}`),
       ],
       'folded (engine/fold)',
     );

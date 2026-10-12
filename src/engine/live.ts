@@ -9,6 +9,8 @@ import { ROOT, pickedUnits, type CompileResult, type Output, type ResolvedCell, 
 import { resolveIn } from './helix';
 import { clocking, playedCells, selects, shiftsAt } from './clocking';
 import { stepsOf, unitsFor } from './flatten';
+import { slots, type Slot } from './subseq';
+import type { Atom } from './ast';
 import { cellId, edgeId } from './ids';
 import { endOf, outputPlays, picksNow, voiceFor } from './realize';
 import { liveRouting, type NotesOf, type RouteAcc } from './routing';
@@ -148,24 +150,24 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
       const first = pick ? (pickedUnits(k, pick, turn)?.[0] ?? 0) : 0;
       const offset = Array.from({ length: k ? mod(first - turn, k) : 0 }, (_, q) => cell.unitSteps[mod(q + turn, k)]).reduce((x, y) => x + y, 0);
       mark(at).local = pick ? offset + local : local;
+      // what plays now: a step, or (inside a subsequence, a stack) each leaf of it sounding at this moment
+      const unitOf = (x: Atom) => (x.kind === 'ref' ? stepsOf(result, x.name, x.pick) || 1 : 1);
       let base = 0;
-      let hit: { atom: (typeof cell.units)[number]['atom']; offset: number; dur: number } | null = null;
+      let now: Slot[] = [];
       for (const u of unitsFor(result, at, statics, pick, table, extra)) {
-        const unit = u.atom.kind === 'ref' ? stepsOf(result, u.atom.name, u.atom.pick) || 1 : 1;
-        const foot = unit * u.elongate;
-        const dur = foot / u.subdivide;
-        const span = foot * u.repeat;
+        const span = (u.atom.kind === 'seq' ? 1 : unitOf(u.atom)) * u.elongate * u.repeat;
         if (local >= base - EPS && local < base + span - EPS) {
-          const lapIn = Math.floor((local - base) / foot + EPS);
-          const slot = Math.floor(mod(local - base, foot) / dur + EPS);
-          hit = { atom: u.atom, offset: base + lapIn * foot + slot * dur, dur };
+          const from = base;
+          now = slots([u], unitOf)
+            .map((x) => ({ ...x, at: x.at + from }))
+            .filter((x) => local >= x.at - EPS && local < x.at + x.dur - EPS);
           break;
         }
         base += span;
       }
-      if (!hit) break;
-      const a = hit.atom;
-      if (a.kind === 'note' || a.kind === 'chord') {
+      if (!now.length) break;
+      for (const { atom: a } of now) {
+        if (a.kind !== 'note' && a.kind !== 'chord') continue;
         if (o.kit) {
           // (a chord through a kit sounds each of its voices: [&bd, &hh] in a groove)
           for (const value of a.kind === 'note' ? [a.value] : a.notes) {
@@ -180,12 +182,15 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
           if (a.kind === 'note') markChain(way, tFrom, table, tShift, a.value, a.alter);
           else a.notes.forEach((v, j) => markChain(way, tFrom, table, tShift, v, a.alters[j]));
         }
-        break;
       }
+      // (a splice sounding now: followed down; one at a time)
+      const hit = now.find((x) => x.atom.kind === 'ref');
+      if (!hit) break;
+      const a = hit.atom;
       if (a.kind !== 'ref') break;
       way.push({ from: at, to: a.name });
       const span = stepsOf(result, a.name, a.pick) || 1;
-      local = Math.min(span - EPS, Math.max(0, ((local - hit.offset) / hit.dur) * span));
+      local = Math.min(span - EPS, Math.max(0, ((local - hit.at) / hit.dur) * span));
       at = a.name;
       pick = a.pick;
       extra = a.shift;

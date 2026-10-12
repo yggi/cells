@@ -6,7 +6,7 @@
 # Everything it drives slows with it — the tune, the bass, the tick of the escapement.
 &bar scan(1 1 1) step=96bpm motor=6 mass=1.2 friction=.4 wind=36
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
-&tune over=&major step=&bar/2 label="the comb" 4 2 0 2 4 4 4@2 3 2 1 2 3 1 -1 1 3 3 3@2 2 1 0@2
+&tune over=&major step=&bar*2 label="the comb" 4 2 0 2 4 4 4@2 3 2 1 2 3 1 -1 1 3 3 3@2 2 1 0@2
 &low over=&major step=&bar label="the bass" -14 -12 -10 -14 -12 -10!2 -8 -6 -10 -8 -6
 &tick step=&bar label="the escapement" 0!3
 

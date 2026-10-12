@@ -13,7 +13,7 @@ const compiled = (src: string) => {
 
 const SRC = `&bar scan(4) step=120bpm
 &a 0 1 2
-&b step=&bar*2 &a 3 &a!2
+&b step=&bar/2 &a 3 &a!2
 &c step=&bar 0 1
 &kit &bd &sd
 &bd s=sine

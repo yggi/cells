@@ -192,12 +192,12 @@ describe('step=, loop=, clocks and voices', () => {
   it('rates multiply along the chain: per step, ×n, ÷n, per cycle', () => {
     const r = compileSource(`&m scan(27 23 26 24) step=90bpm
 &a step=&m 0 1 2 3 4
-&b step=&m*2 0
-&c step=&m/3 0
+&b step=&m/2 0
+&c step=&m*3 0
 &d step=cycle(&a) 0
-&e step=cycle(&a)*2 0
-&f step=cycle(&a)/2 0
-&g step=&d/5 0`);
+&e step=cycle(&a)/2 0
+&f step=cycle(&a)*2 0
+&g step=&d*5 0`);
     expect(r.ok).toBe(true);
     const rate = (n: string) => r.cells.get(n)!.rate;
     expect([rate('m'), rate('a'), rate('b'), rate('c')]).toEqual([1, 1, 1 / 2, 3]);
@@ -329,11 +329,11 @@ describe('mix expressions: typing and articulation (rule 2)', () => {
       expect(r.outputs.map((o) => [o.cell, o.mods.map((m) => m.cell)])).toEqual([['walk', ['changes']]]);
       return eventsBetween(plan(r, codeShifts(r)), 0, 8).map((e) => `${e.at.toFixed(3)} ${e.dur.toFixed(3)} ${e.freq.toFixed(2)}`);
     };
-    const stepped = notes('&changes step=&bar*4 0 5');
-    expect(stepped).toEqual(notes('&changes loop=&bar*8 0 5'));
+    const stepped = notes('&changes step=&bar/4 0 5');
+    expect(stepped).toEqual(notes('&changes loop=&bar/8 0 5'));
     expect(stepped[4].endsWith('349.23')).toBe(true); // bar 2: the walk on F
     // (written either way round: + commutes)
-    const r = compileSource('&bar scan(1 1 1 1) step=120bpm\n&changes step=&bar*4 0 5' + tail.replace('(&walk + &changes)', '(&changes + &walk)'));
+    const r = compileSource('&bar scan(1 1 1 1) step=120bpm\n&changes step=&bar/4 0 5' + tail.replace('(&walk + &changes)', '(&changes + &walk)'));
     expect(r.outputs[0].cell).toBe('walk');
   });
 
@@ -728,7 +728,7 @@ describe('ratios grids, geometric intervals, decibels; colours and names on a vo
     expect(steps.map((x) => +x.toFixed(4))).toEqual([1, 1.9037, 1.3797, 3.6239, 2.6265, 1]);
   });
   it('map=db: decibels — 0 full, −6 about half, −20 a tenth, a rest silent', () => {
-    const r = compileSource('&m step=1\n&t step=&m 0\n&v s=tri loop=C4\n&vol map=db step=&m/4 0 -6 -20 ~\n&mix loop=SAMPLE_RATE map=sample [&t * &vol * &v]');
+    const r = compileSource('&m step=1\n&t step=&m 0\n&v s=tri loop=C4\n&vol map=db step=&m*4 0 -6 -20 ~\n&mix loop=SAMPLE_RATE map=sample [&t * &vol * &v]');
     expect(r.diagnostics).toEqual([]);
     const e = eventsBetween(plan(r, codeShifts(r)), 0, 0.9)[0];
     expect(e.levels.map((l) => +l.level.toFixed(3))).toEqual([1, 0.501, 0.1, 0]);
@@ -885,7 +885,7 @@ describe('diagnostics: nothing plays, or the wrong thing, without a word (#143)'
       ['error', 1, 18, `&tune would start 1,000,000 notes a second: more than ${MAX_NOTES_PER_SECOND.toLocaleString('en')}, the most a cell can play — slow its step= or loop=`],
     ]);
     // through a clock too: its rate times the ratio
-    expect(said(piece('&bar step=120bpm 0\n&tune step=&bar/2000 0 1 2')).map((d) => d[3])).toEqual([expect.stringMatching(/^&tune would start 4,000 notes a second/)]);
+    expect(said(piece('&bar step=120bpm 0\n&tune step=&bar*2000 0 1 2')).map((d) => d[3])).toEqual([expect.stringMatching(/^&tune would start 4,000 notes a second/)]);
     // audio-rate cells start no notes: a voice's wave, a sound card
     expect(compileSource(piece('&tune step=120bpm 0 1 2')).diagnostics).toEqual([]);
   });

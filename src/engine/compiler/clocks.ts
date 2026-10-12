@@ -75,7 +75,7 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     const t = timeOf(c.name);
     if (t) cells.set(c.name, { ...c, clock: t.clock, rate: t.rate });
   }
-  // times given as a clock (delaytime=&bar/2): one step of it, in seconds, at the clock's tempo
+  // times given as a clock (delaytime=&bar*2): one step of it, in seconds, at the clock's tempo
   for (const d of decls.values())
     for (const [key, st] of Object.entries(d.paramClocks ?? {})) {
       if (st.kind !== 'driven') continue;

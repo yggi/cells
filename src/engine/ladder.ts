@@ -42,6 +42,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'step n',
       'step ~',
       'modifier x@n',
+      'step _',
       'modifier x!n',
       'reference &name',
       'attribute step',
@@ -115,7 +116,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   },
   {
     name: 'Rhythm and feel',
-    concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, euclid, a kit; swing: a swing clock, swing= and beat=',
+    concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: a swing clock, swing= and beat=',
     forms: [
       // meter and feel
       'map map=amp',
@@ -123,6 +124,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       // drums
       'step &voice (stepped)',
       'modifier x*n',
+      'step [a b c]',
       'generator euclid(k, n)',
       'sort signal: a pattern read through a kit',
       // swing
@@ -133,7 +135,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Development',
     concept:
-      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, _); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: parts as taps of the bar, a selector, laps=, off',
+      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: parts as taps of the bar, a selector, laps=, off',
     forms: [
       // canon
       'reference &name[<<n]',
@@ -144,7 +146,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'reference inverse(&name)',
       // variations: a copy, changed where it says
       'attribute base',
-      'step _',
+      'step =',
       // chance
       'modifier x?',
       'step [a|b|c]',
@@ -296,8 +298,9 @@ export function formsUsed(source: string): Set<string> {
     if (/[+*,[]\s*$/.test(line)) use('line … +');
     code += line.replace(/"[^"]*"/g, '""') + '\n';
   }
-  // (_, a step kept from the base: gone once parsed, so read from the text)
-  if (/(^|\s)_(?=[\s!@]|$)/m.test(code)) use('step _');
+  // (_, a step held one longer, and =, a step kept from the base: both gone once parsed, so read from the text)
+  if (/(^|\s)_(?=\s|]|$)/m.test(code)) use('step _');
+  if (/(^|\s)=(?=[\s!@]|$)/m.test(code)) use('step =');
   for (const [word, form] of [
     ['scan', 'scan(i …)'],
     ['euclid', 'euclid(k, n)'],
@@ -370,6 +373,9 @@ export function formsUsed(source: string): Set<string> {
     } else if (a.kind === 'choice') {
       use('step [a|b|c]');
       if (a.alters.some(Boolean)) use('step n#');
+    } else if (a.kind === 'seq') {
+      use('step [a b c]');
+      for (const l of a.layers) for (const x of l) token(x, groove, card);
     } else if (a.kind === 'ref' && card) {
       // (a sound card's or a MIDI card's entries are its channels: a mix there is a channel, not an instrument)
       ref(a);

@@ -69,8 +69,17 @@ export interface Ref {
 export type Atom =
   | { readonly kind: 'note'; readonly value: number; readonly alter: number; readonly pitched?: true }
   /** `~`; `_` in a cell with base= is `keep`: the base's step, as it is there (parser/base.ts replaces it). */
-  | { readonly kind: 'rest'; readonly keep?: true }
+  // (keep: =, the base's step, for parser/base.ts; hold: _, merged into the step before it by the parser)
+  | { readonly kind: 'rest'; readonly keep?: true; readonly hold?: true }
+  /** `[0, 4, 7]`: numbers (or names) sounding together, in one step. */
   | { readonly kind: 'chord'; readonly notes: readonly number[]; readonly alters: readonly number[]; readonly pitched?: readonly boolean[] }
+  /**
+   * `[a b c]`: a subsequence (Strudel's mini-notation, decision 027), its steps squeezed into the one step it takes, each
+   * as long as its modifiers say (`[0 2@2]`: a third and two thirds), nested as deep as wanted. With commas it is a stack,
+   * every layer spanning the step: `[0 2, 4]`. A splice inside lasts its slot, not its own steps. (Commas between plain
+   * numbers alone are a `chord`.)
+   */
+  | { readonly kind: 'seq'; readonly layers: readonly (readonly Token[])[] }
   /** [a|b|c]: one of them, chosen afresh each time round (reproducibly). */
   | { readonly kind: 'choice'; readonly values: readonly number[]; readonly alters: readonly number[] }
   /** transpose: grid steps up (or down) after its tables, absolute: &subject^$7, &subject^$-12 (&subject^1 is a degree: values). */
@@ -100,7 +109,7 @@ export interface Token {
   readonly repeat: number;
   readonly subdivide: number;
   readonly elongate: number;
-  /** x?p: it sounds with probability p (x? alone: the cell's chance=, else ½). */
+  /** x?p: it is dropped with probability p (x? alone: the cell's chance=, else ½). */
   readonly chance?: number | null;
   readonly span: Span;
 }
@@ -138,8 +147,8 @@ export type Braid =
  *   step=&x / loop=&x             one step / the whole braid per step of &x
  *   step=cycle(&x) / loop=cycle(&x)   … per full cycle of &x
  *
- * Driven forms take a chain of `*n` (once per n) and `/n` (n per one), n any
- * positive number, read left to right: `*2/3` is three steps per two.
+ * Driven forms take a chain of `*n` (n per one, faster) and `/n` (once per n, slower), n any
+ * positive number, read left to right: `*3/2` is three steps per two.
  */
 /** A parameter given by cells: a range scaled by them, or (no range) one cell's values as they are. */
 export interface ParamCells {
@@ -159,9 +168,9 @@ export type StepSpec = { readonly whole: boolean } & (
       readonly kind: 'driven';
       readonly driver: Ref;
       readonly cycle: boolean;
-      /** Steps per driver step (or cycle): `*2` ½, `/2` 2, `*2/3` 1.5. */
+      /** Steps per driver step (or cycle): `*2` 2, `/2` ½, `*3/2` 1.5. */
       readonly ratio: number;
-      /** The ratio as written, factor by factor (`*2/3`: ×2, ÷3), for drawing. */
+      /** The ratio as written, factor by factor (`*3/2`: ×3, ÷2), for drawing. */
       readonly chain: readonly RateOp[];
       readonly span: Span;
     }
@@ -272,11 +281,11 @@ export interface CellDecl {
   readonly laps?: number | null;
   /** size=: how large it's drawn (and how much room the layout gives it), against the others (1). */
   readonly size?: number | null;
-  /** What a bare x? means here: its probability (½ unless set; free() makes it a slider). */
+  /** What a bare x? means here: the probability it is dropped (½ unless set; free() makes it a slider). */
   readonly chance?: number | null;
   /** A different sequence of chance for this cell. */
   readonly seed?: number | null;
-  /** Times given as a clock: delaytime=&bar/2 (an eighth, at whatever the tempo is). */
+  /** Times given as a clock: delaytime=&bar*2 (an eighth, at whatever the tempo is). */
   readonly paramClocks?: Readonly<Record<string, StepSpec>>;
   /** dough parameters (s=saw lpf=1800 …): a cell with any of these is a voice. */
   readonly params: Readonly<Record<string, number | string>>;

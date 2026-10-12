@@ -87,8 +87,8 @@ describe('a mix with something else between its terms', () => {
   it('a choice of cells says a choice is for numbers', () => {
     expect(messages('&a s=sine\n&b s=sine\n&g [&a|&b]')[0]).toMatch(/a choice \[a\|b\] picks between numbers in a braid/);
   });
-  it('a subdivision of cells says to subdivide numbers', () => {
-    expect(messages('&a s=sine\n&b s=sine\n&c s=sine\n&g &a [&b &c]')[0]).toMatch(/cells can't be subdivided in a mix/);
+  it('cells side by side in a term say a mix lists its terms with commas', () => {
+    expect(messages('&a s=sine\n&b s=sine\n&c s=sine\n&g [&a * &b &c]')[0]).toMatch(/a mix lists its terms with commas/);
   });
 });
 

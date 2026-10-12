@@ -5,13 +5,14 @@
  */
 import type { Clocking } from './clocking';
 import type { CompileResult, ResolvedCell } from './program';
+import { leaves } from './subseq';
 
 /**
  * The cells a braid splices in (its `&ref`s), in order and as often as written: a kit's members, a scope's channels,
- * a table's entries. A missing cell has none.
+ * a table's entries; those inside a subsequence too. A missing cell has none.
  */
 export function refsOf(cell: ResolvedCell | undefined): string[] {
-  return (cell?.units ?? []).flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : []));
+  return (cell?.units ?? []).flatMap((u) => leaves(u.atom).flatMap((a) => (a.kind === 'ref' ? [a.name] : [])));
 }
 
 /** Its own steps per step of its clock: 1 when it is its own clock (a meter), else its rate (step=). */

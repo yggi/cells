@@ -1,4 +1,5 @@
 /** The mix algebra's view of the cells (algebra.ts): what each cell is, from its own line; a mix's expressions typed. */
+import { leaves } from '../subseq';
 import type { Atom, Binding, CellDecl, Expr } from '../ast';
 import { VOICE_PARAMS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
@@ -124,7 +125,8 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     if (d.braid.kind === 'list') {
       const voiceRef = (t: { atom: Atom }) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
       const odd = (t: { atom: Atom }) => t.atom.kind === 'note' || (t.atom.kind === 'ref' && voiceRef(t) && (t.atom.pick || t.atom.shift || t.atom.transpose || t.atom.values));
-      if (d.braid.tokens.some(voiceRef) && d.braid.tokens.some(odd))
+      const steps = d.braid.tokens.flatMap((t) => leaves(t.atom).map((atom) => ({ atom })));
+      if (steps.some(voiceRef) && steps.some(odd))
         return `&${name} mixes voices with numbers or picks: a groove holds only voices, rests and chords of voices (&bd &hh ~ [&bd, &hh]); to play numbers through voices, read them with over= a kit`;
     }
     if (isKitDecl(d, seen)) return `&${name} is a kit, a table of voices: read a pattern through it (&drums over=&${name}) and mix that`;

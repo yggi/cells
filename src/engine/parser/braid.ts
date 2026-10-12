@@ -1,6 +1,6 @@
-/** A braid's steps: numbers, rests, chords, choices, cells (picked, shifted, transposed) and their modifiers. */
+/** A braid's steps: numbers, rests, chords, subsequences, choices, cells (picked, shifted, transposed) and their modifiers. */
 import type { Atom, Token, ValueMap } from '../ast';
-import { MAX_REPS, type LineScanner } from './scanner';
+import { MAX_NESTING, MAX_REPS, type LineScanner } from './scanner';
 import { isMixChord, parseMixChord } from './mix';
 import { syntax, type Syntax } from './syntax';
 
@@ -22,19 +22,27 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   ),
   syntax('step', 'n/d', 'A fraction: 9/8, 3/2 (the ratios of a map=ratios grid).', ['&just map=ratios 1 9/8 5/4 3/2 2'], 'tuning.md'),
   syntax('step', '~', 'A rest: a step that plays nothing.', ['&tune step=2 0 ~ 4 ~'], 'cell.md'),
+  syntax('step', '_', "The step before it, one step longer, as Strudel's elongation: 0 _ _ is 0@3 (inside brackets too: [0 _ 2]).", ['&tune step=2 0 _ _ 2 4 _'], 'cell.md'),
   syntax(
     'step',
-    '_',
-    "In a cell with base=: the base's step here, as it is there (_@2: its pitch, held 2; _!n: n of them). A value in its place changes that step.",
-    ['&answer base=&subject^$7 _!3 12@2'],
+    '=',
+    "In a cell with base=: the base's step here, as it is there (=@2: its pitch, held 2; =!n: n of them). A value in its place changes that step.",
+    ['&answer base=&subject^$7 =!3 12@2'],
     'braid.md',
   ),
   syntax(
     'step',
-    '[a, b, c] · [a b c]',
-    'A chord: the numbers sound together, in one step. Its notes can be names, pitches whatever the tables: [C, E, G].',
-    ['&chords step=1 [0,2,4] [3 5 7]', '&chords step=1 [C, E, G] [F, A, C5]'],
+    '[a, b, c]',
+    'A chord: the numbers sound together, in one step, commas between them. Its notes can be names, pitches whatever the tables: [C, E, G].',
+    ['&chords step=1 [0,2,4] [3, 5, 7]', '&chords step=1 [C, E, G] [F, A, C5]'],
     'time.md',
+  ),
+  syntax(
+    'step',
+    '[a b c] · [a b, c]',
+    "A subsequence, as in Strudel's mini-notation: its steps squeezed into the one step it takes, each as long as its modifiers say ([0 2@2]: a third, then two thirds), nested as deep as you like. A modifier on the bracket acts on all of it ([0 2]*2: twice in the step). Commas stack them, each spanning the step: [0 2, 4]. A cell spliced inside lasts its slot, its steps squeezed into it.",
+    ['&tune step=1 0 [2 4] [5 [7 9]] [0 2@2]', '&tune step=1 [0 ~ 4]!2 [0 2]*2 [0 2, 7]', '&groove step=2 &bd [&hh &hh] &sd [&hh ~ &hh]'],
+    'cell.md',
   ),
   syntax('step', '[a|b|c]', 'A choice: one of them, chosen afresh each time round (the same every time it is played).', ['&tune step=2 0 [2|4|7] 4'], 'braid.md'),
   syntax(
@@ -47,7 +55,7 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   syntax(
     'step',
     '&voice (stepped)',
-    'In a stepped braid of voices (and rests), each step plays its voice: a drum pattern by name. Chords of voices sound together, [&bd, &hh]; modifiers work as on any step. Unstepped, a braid of voices is a kit, read by number.',
+    'In a stepped braid of voices (and rests), each step plays its voice: a drum pattern by name. Chords of voices sound together, [&bd, &hh]; a subsequence squeezes them into one step, [&hh &hh]; modifiers work as on any step. Unstepped, a braid of voices is a kit, read by number.',
     ['&groove step=4 &bd ~ &hh [&bd, &sd] &hh*2 ~'],
     'sound.md',
   ),
@@ -102,65 +110,26 @@ function parseRefOrOperation(s: LineScanner): RefAtom {
   };
 }
 
-function parseAtom(s: LineScanner): Atom {
+function parseAtom(s: LineScanner, depth: number): Atom {
   const c = s.peek();
   if (c === '&' || s.text.startsWith('degree(', s.i) || s.text.startsWith('inverse(', s.i)) return parseRefOrOperation(s);
   if (c === '~') {
     s.i++;
     return { kind: 'rest' };
   }
-  // (_: the base's step, in a cell with base=: parser/base.ts puts it there)
-  if (c === '_') {
+  // (=: the base's step, in a cell with base=: parser/base.ts puts it there)
+  if (c === '=') {
     s.i++;
     return { kind: 'rest', keep: true };
   }
+  // (_: the step before it, one step longer, as in Strudel: pushStep merges it)
+  if (c === '_') {
+    s.i++;
+    return { kind: 'rest', hold: true };
+  }
   if (c === '[') {
-    const start = s.i;
     if (isMixChord(s.text, s.i)) return parseMixChord(s);
-    // [a|b|c]: one of them, each time round
-    const close = s.text.indexOf(']', s.i);
-    if (s.text.slice(s.i, close < 0 ? undefined : close).includes('|')) {
-      s.i++;
-      const values: number[] = [];
-      const alters: number[] = [];
-      for (;;) {
-        s.skipSpace();
-        const n = s.num('a number to choose from, like [0|4|7]');
-        values.push(n.value);
-        alters.push(n.alter);
-        s.skipSpace();
-        if (s.peek() === '|') {
-          s.i++;
-          continue;
-        }
-        if (s.peek() !== ']') s.fail(`A choice is numbers between bars, closed: [0|4|7]`, start, s.i - start + 1);
-        s.i++;
-        break;
-      }
-      if (values.length < 2) s.fail('A choice needs at least two: [0|4]', start, s.i - start);
-      return { kind: 'choice', values, alters };
-    }
-    s.i++;
-    const notes: number[] = [];
-    const alters: number[] = [];
-    const pitched: boolean[] = [];
-    for (;;) {
-      s.skipSpace();
-      if (s.peek() === ']') break;
-      if (notes.length > 0 && s.peek() === ',') {
-        s.i++;
-        s.skipSpace();
-      }
-      // a number (an index into the table) or a note by name (a pitch): [0, 2, 4], [C, E, G]
-      const name = s.noteName();
-      const n = name === null ? s.num('a number or a note name in a chord') : { value: name, alter: 0 };
-      notes.push(n.value);
-      alters.push(n.alter);
-      pitched.push(name !== null);
-    }
-    s.i++;
-    if (notes.length === 0) s.fail('Chord is empty', start, s.i - start);
-    return { kind: 'chord', notes, alters, ...(pitched.some(Boolean) ? { pitched } : {}) };
+    return parseBracket(s, depth);
   }
   if (c === '-' || c === '.' || (c >= '0' && c <= '9')) {
     const n = s.num('a number');
@@ -170,6 +139,72 @@ function parseAtom(s: LineScanner): Atom {
   const name = s.noteName();
   if (name !== null) return { kind: 'note', value: name, alter: 0, pitched: true };
   return s.fail(`Unexpected '${c}' — expected a number, a note name (C, F#), ~, [chord], &cell or key=value`);
+}
+
+/**
+ * A bracket of steps, as Strudel's mini-notation reads it (decision 027): `[a b c]` a subsequence, the steps squeezed into
+ * one; `[a, b, c]` a chord (plain numbers or names), `[a b, c]` a stack of subsequences; `[a|b|c]` a choice of numbers.
+ */
+function parseBracket(s: LineScanner, depth: number): Atom {
+  const start = s.i;
+  if (depth >= MAX_NESTING) s.fail(`Brackets nest ${MAX_NESTING} deep at most: name the inner steps (&inner 0 2) and splice them`, start, 1);
+  s.i++;
+  const layers: Token[][] = [[]];
+  let sep: ',' | '|' | null = null;
+  for (;;) {
+    s.skipSpace();
+    const c = s.peek();
+    if (c === ']') break;
+    if (c === '') s.fail(sep === '|' ? `']' to close the choice: [0|4|7]` : `']' to close the bracket: [0 2] · [0, 4]`, start, s.i - start);
+    if (c === ',' || c === '|') {
+      if (sep !== null && sep !== c) s.fail('A bracket is a chord or a stack (commas) or a choice (bars), not both: [0, 4] · [0|4]', s.i, 1);
+      if (!layers[layers.length - 1].length) s.fail(c === ',' ? 'A step before the comma: [0, 4]' : 'A number before the bar: [0|4]', s.i, 1);
+      sep = c;
+      layers.push([]);
+      s.i++;
+      continue;
+    }
+    pushStep(s, layers[layers.length - 1], parseToken(s, depth + 1));
+  }
+  s.i++;
+  if (!layers[layers.length - 1].length)
+    s.fail(
+      sep === null ? 'Empty brackets: [0 2] is a subsequence, [0, 2] a chord' : sep === ',' ? 'A step after the comma: [0, 4]' : 'A number after the bar: [0|4]',
+      start,
+      s.i - start,
+    );
+  const plain = (t: Token) => t.repeat === 1 && t.subdivide === 1 && t.elongate === 1 && t.chance === undefined;
+  const single = layers.every((l) => l.length === 1 && plain(l[0]) && l[0].atom.kind === 'note');
+  const notes = layers.map((l) => l[0].atom as Extract<Atom, { kind: 'note' }>);
+  // [a|b|c]: one of them, each time round (numbers only: a choice of sequences, [0 2|4], is not read yet)
+  if (sep === '|') {
+    if (!single || notes.some((n) => n.pitched)) s.fail('A choice is numbers between bars, closed: [0|4|7]', start, s.i - start);
+    return { kind: 'choice', values: notes.map((n) => n.value), alters: notes.map((n) => n.alter) };
+  }
+  // [0, 4, 7] (and [0]): a chord of plain numbers or names; anything else is a subsequence, or a stack of them
+  if (single) {
+    const pitched = notes.map((n) => !!n.pitched);
+    return { kind: 'chord', notes: notes.map((n) => n.value), alters: notes.map((n) => n.alter), ...(pitched.some(Boolean) ? { pitched } : {}) };
+  }
+  return { kind: 'seq', layers };
+}
+
+/**
+ * Adds a step to a list, or, for `_`, lengthens the step before it by one (Strudel's elongation: `0 _ _` is `0@3`;
+ * decision 027).
+ */
+export function pushStep(s: LineScanner, tokens: Token[], t: Token): void {
+  if (!(t.atom.kind === 'rest' && t.atom.hold)) {
+    tokens.push(t);
+    return;
+  }
+  const at = t.span.col - 1 - s.offset;
+  const prev = tokens[tokens.length - 1];
+  if (t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1 || t.chance !== undefined)
+    s.fail('_ lengthens the step before it by one, and takes no modifiers: 0 _ _ is 0@3', at, t.span.len);
+  if (!prev) s.fail('_ lengthens the step before it: 0 _ _ is 0@3 (in a cell with base=, = keeps a step of the base)', at, t.span.len);
+  if (prev.repeat !== 1) s.fail('_ after x!n would lengthen only the last copy: write the copies out, or x@n', at, t.span.len);
+  tokens[tokens.length - 1] = { ...prev, elongate: prev.elongate + 1, span: { ...prev.span, len: t.span.col - prev.span.col + t.span.len } };
 }
 
 /** A step's modifiers, each at most once; the parser reads them through this table (and ? for chance). */
@@ -182,20 +217,20 @@ type ModKey = keyof typeof MODIFIERS;
 export const CHANCE_SYNTAX = syntax(
   'modifier',
   'x? · x?p',
-  "Chance: the step sounds with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence.",
-  ['&hats step=4 0 0? 0?.3 0', '&ghost chance=.2 step=4 0? 0? 0? 0?'],
+  "Chance, as Strudel's degradeBy: the step is dropped with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence.",
+  ['&hats step=4 0 0? 0?.3 0', '&ghost chance=.8 step=4 0? 0? 0? 0?'],
   'cell.md',
 );
 
-export function parseToken(s: LineScanner): Token {
+export function parseToken(s: LineScanner, depth = 0): Token {
   const start = s.i;
-  const atom = parseAtom(s);
+  const atom = parseAtom(s, depth);
   const mods = { repeat: 1, subdivide: 1, elongate: 1 };
   let chance: number | null | undefined;
   const seen = new Set<string>();
   while (s.peek() in MODIFIERS || s.peek() === '?') {
     if (s.peek() === '?') {
-      // x?p: it sounds with probability p; x? alone: the cell's chance=
+      // x?p: it is dropped with probability p; x? alone: the cell's chance=
       if (chance !== undefined) s.fail(`'?' can only appear once per step`);
       s.i++;
       const at = s.i;
@@ -213,6 +248,7 @@ export function parseToken(s: LineScanner): Token {
     if (n < 1 || n > MAX_REPS) s.fail(`Count must be between 1 and ${MAX_REPS}`, at, s.i - at);
     mods[MODIFIERS[op].field] = n;
   }
-  if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}' — separate steps with spaces`);
+  // (inside brackets a step ends at the bracket, a comma or a bar too)
+  if (!s.atBoundary() && !(depth > 0 && /[\],|]/.test(s.peek()))) s.fail(`Unexpected '${s.peek()}' — separate steps with spaces`);
   return { atom, ...mods, ...(chance !== undefined ? { chance } : {}), span: s.span(start) };
 }

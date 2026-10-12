@@ -25,7 +25,7 @@ A tempo marking is its range, centred: `step=free(adagio)` (largo larghetto adag
 ```cells
 &key scan(2 2 1 2 2 2 1)
 &bar scan(1 1 1 1) step=96bpm
-&riff over=&key step=&bar/4 free(0 2 4 ~ 4 2 0 ~)
+&riff over=&key step=&bar*4 free(0 2 4 ~ 4 2 0 ~)
 ```
 
 - **It plays as written** until a take is held in its place. Its **length** (8 steps here) is the frame a take fills, as `lo..hi` is a number's range.

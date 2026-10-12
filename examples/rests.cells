@@ -1,6 +1,6 @@
 &piece title="Rests, holds and repeats: a rhythm on one note" tags="tutorial" tier=1 label="One note, played as a rhythm: some steps rest, some are held, some are played twice." about=&out
-&restsNote label="~ is a rest, @2 holds a step for two, !2 plays it twice. step=4 moves four steps a second." about=&rhythm
+&restsNote label="~ is a rest, @2 holds a step for two, _ holds the one before it a step longer (0 _ _ is 0@3), !2 plays it twice. step=4 moves four steps a second." about=&rhythm
 
-&rhythm step=4 0 ~ 0 ~ 0!2 ~ 0@2 ~ ~ 0 0 ~ 0@3   # one note, in time
+&rhythm step=4 0 ~ 0 ~ 0!2 ~ 0@2 ~ ~ 0 0 ~ 0 _ _   # one note, in time
 &voice s=tri loop=C3
 &out map=sample level=6 [&rhythm * &voice * .5]

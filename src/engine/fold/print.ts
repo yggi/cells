@@ -31,13 +31,13 @@ const braid = (toks: readonly Tok[], names: ReadonlyMap<string, string>): string
 
 /**
  * A variant as a copy of its phrase (decision 026): `base=&m1` (`^$n` where its own base sits elsewhere), then its steps
- * over the phrase's, `_` for each it keeps (`_!n`), the changed ones as they sound; nothing after the last change.
+ * over the phrase's, `=` for each it keeps (`=!n`), the changed ones as they sound; nothing after the last change.
  */
 function variantText(v: Rule, phrase: Rule, names: ReadonlyMap<string, string>): string {
   const j = v.kids.findIndex((k, i) => !v.patched![i] && k.off !== null && phrase.kids[i]!.off !== null);
   const by = j < 0 ? 0 : v.kids[j]!.off! - phrase.kids[j]!.off!;
-  const steps = v.kids.map((k, i) => (v.patched![i] ? tokText({ key: k.key, base: k.off }, names) : '_'));
-  while (steps.length && steps[steps.length - 1] === '_') steps.pop();
+  const steps = v.kids.map((k, i) => (v.patched![i] ? tokText({ key: k.key, base: k.off }, names) : '='));
+  while (steps.length && steps[steps.length - 1] === '=') steps.pop();
   return `base=&${names.get(phrase.key) ?? phrase.key}${by ? `^$${by}` : ''} ${runs(steps)}`;
 }
 
@@ -47,7 +47,7 @@ export const kidsOf = (r: Rule): Tok[] => r.kids.map((k) => ({ key: k.key, base:
 /**
  * The folded lines as cells: the symbols in the order they are first used (each before the lines, named `prefix`1, 2 …
  * in that order), each figuration as its figure (one cell for figures alike), its table stepped a block at a time on
- * `clock` and the run reading it, and each line's braid and its clock (grid steps a step: `step=&tempo*k`).
+ * `clock` and the run reading it, and each line's braid and its clock (a step every k grid steps: `step=&tempo/k`).
  */
 export function printFolded(f: Folded, prefix = 'm', clock = '&tempo'): { defs: string[]; lines: Map<string, string>; scales: Map<string, number> } {
   const order: string[] = [];
@@ -90,7 +90,7 @@ export function printFolded(f: Folded, prefix = 'm', clock = '&tempo'): { defs: 
     const chords = [...Array<string>(pad).fill('0'), ...look.chords.map(chord)];
     const table = `chords${n}`;
     // (each written out: a table counts entries, and `x!n` or `x@n` in one is one entry)
-    defs.push(`&${table} step=${clock}*${look.dur * (look.scale ?? 1)} ${chords.join(' ')}`);
+    defs.push(`&${table} step=${clock}/${look.dur * (look.scale ?? 1)} ${chords.join(' ')}`);
     names.set(key, `run${n}`);
     defs.push(`&run${n} over=&${table} &${figures.get(figure)}!${look.chords.length * k}`);
   }

@@ -40,7 +40,7 @@ describe('bodies driven by sound: sends, springs, pipes, wires', () => {
   });
   it('a mix only a resonator hears (excite=) still plays — as a silent send', () => {
     const r = compileSource(
-      '&bar scan(1 1 1 1) step=60bpm\n&n step=&bar*4 0\n&hiss s=pink\n&noise [&n * &hiss * .3]\n&pl body=plate loop=D3 excite=&noise\n&out loop=SAMPLE_RATE map=sample [&pl * .5]',
+      '&bar scan(1 1 1 1) step=60bpm\n&n step=&bar/4 0\n&hiss s=pink\n&noise [&n * &hiss * .3]\n&pl body=plate loop=D3 excite=&noise\n&out loop=SAMPLE_RATE map=sample [&pl * .5]',
     );
     expect(r.outputs.map((o) => [o.voice, o.silent])).toEqual([['hiss', true]]);
     expect(eventsBetween(plan(r, codeShifts(r)), 0, 1).map((e) => e.voice)).toEqual(['hiss']);

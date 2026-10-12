@@ -112,7 +112,7 @@ export function chanceOf(text: string): number {
 }
 
 /**
- * Chance, thrown: does this step sound this time round (x?p), and which does it
+ * Chance, thrown: is this step dropped this time round (x?p: it sounds if the throw is under 1 − p), and which does it
  * choose ([a|b|c])? Reproducible — the same cell, voice, lap and step always
  * throw the same — and different each lap. A chord's notes share their step,
  * so they sound or rest together.
@@ -120,7 +120,7 @@ export function chanceOf(text: string): number {
 function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number): StepEvent | null {
   if (e.chance === undefined && !e.options) return e;
   const key = `${result.cells.get(t.output.cell)?.seed ?? 0}|${t.output.cell}|${t.output.voice}|${lap}|${e.step.toFixed(6)}`;
-  if (e.chance !== undefined && chanceOf(`${key}|sounds`) >= e.chance) return null;
+  if (e.chance !== undefined && chanceOf(`${key}|sounds`) >= 1 - e.chance) return null;
   if (!e.options) return e;
   const o = e.options[Math.floor(chanceOf(`${key}|picks`) * e.options.length)];
   return { ...e, value: o.value, alter: o.alter };

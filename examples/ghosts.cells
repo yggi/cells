@@ -7,17 +7,17 @@
 # back a step later every bar, and lines up again only after seven bars.
 &bar scan(1 1 1 1) step=free(76bpm, 60..96)
 &minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"
-&phrase over=&minor step=&bar/2 label="the piano: seven against eight" 0 4 3 ~ 7 5 ~
-&answer over=&minor step=&bar*8 label="its shadow, low" -7@2 -5 -4 -7@2 -9 -10
-&drone step=&bar*16 [0,7]
+&phrase over=&minor step=&bar*2 label="the piano: seven against eight" 0 4 3 ~ 7 5 ~
+&answer over=&minor step=&bar/8 label="its shadow, low" -7@2 -5 -4 -7@2 -9 -10
+&drone step=&bar/16 [0,7]
 &grit map=lin loop=.0435 .15 .7 .3 .15                       # 23 s
 &haze map=lin loop=.0345 .1 .5 .9 .1                         # 29 s
-&hiss step=&bar*16 0
-&kick step=&bar/2 0 ~ ~ 0? ~ ~ 0?.3 ~
-&metal step=&bar/4 ~!2 0?.25 ~!4 0?.4 ~!3 0?.2 ~ 0?.3 ~!2
-&glitch step=&bar/8 [0|7|12]?.06
+&hiss step=&bar/16 0
+&kick step=&bar*2 0 ~ ~ 0? ~ ~ 0?.7 ~
+&metal step=&bar*4 ~!2 0?.75 ~!4 0?.6 ~!3 0?.8 ~ 0?.7 ~!2
+&glitch step=&bar*8 [0|7|12]?.94
 
-&piano pan=.36 s=tri loop=D4 lpf=3000 room=.45 delaytime=&bar*3/4 delay=.2 delayfeedback=.35 env=&(map=adsr .002 1.6 0 1.8) pitch=&(map=lin loop=.19 0 .05 0 -.05 0)
+&piano pan=.36 s=tri loop=D4 lpf=3000 room=.45 delaytime=&bar*4/3 delay=.2 delayfeedback=.35 env=&(map=adsr .002 1.6 0 1.8) pitch=&(map=lin loop=.19 0 .05 0 -.05 0)
 &cello pan=.62 s=saw loop=D3 lpf=700 room=.5 env=&(map=adsr .6 1 .8 2)
 &low s=saw loop=D1 distort=.8 lpf=120..600 * &grit lpq=3 env=&(map=adsr 4 2 .9 6)
 &noise s=brown crush=5 lpf=200..2400 * &haze hpf=80 room=.4 env=&(map=adsr 6 2 .8 8)

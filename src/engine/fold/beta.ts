@@ -47,7 +47,7 @@ export const beta: Tool = (f: Folded) => {
     for (const [key, r] of now.rules) {
       const body = written(kidsOf(r), names);
       const ref = 4 + 1 + (r.kids.some((c) => c.off !== null) ? 4 : 0);
-      // (a variant is written as its changes over its phrase: `base=&m1 _!3 12@2`)
+      // (a variant is written as its changes over its phrase: `base=&m1 =!3 12@2`)
       const def = r.of
         ? 22 +
           written(

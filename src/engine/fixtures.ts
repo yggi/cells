@@ -19,11 +19,11 @@ export const SAILOR_WITH_KIT = `&piece title="Drunken Sailor: D Dorian, with a k
 &A over=&lead &m1 &m2
 &B over=&lead[<<] &m1 &m2
 &C over=&lead &m3 &m4
-&tune step=&bar/2 &A &B &A &C
+&tune step=&bar*2 &A &B &A &C
 
 &b over=&lead 4@2!4 3@2!4
-&bassline step=&bar/2 &b!2
-&drums over=&kit step=&bar/2 0 2 1 2!4     # read through the kit: 0 kick, 1 snare, 2 hat
+&bassline step=&bar*2 &b!2
+&drums over=&kit step=&bar*2 0 2 1 2!4     # read through the kit: 0 kick, 1 snare, 2 hat
 
 &fiddle s=saw loop=C5 lpf=3000 env=&(map=adsr .01 .15 .5 .1)
 &bass s=square loop=C2 lpf=600 env=&(map=adsr .005 .25 0 .05)

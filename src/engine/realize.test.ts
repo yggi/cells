@@ -103,8 +103,8 @@ describe('sound', () => {
     ]);
   });
 
-  it('ratios: ÷2 plays twice per beat, ×2 once per two beats', () => {
-    const r = compileSource(`&m scan(27 23 26 24) step=60bpm\n&f step=&m/2 0 1 2 3\n&s step=&m*2 0 1\n${VOICE}&u s=tri\n&mix_ [&f * &v, &s * &u]\n&out_ loop=44k map=sample &mix_`);
+  it('ratios: ×2 plays twice per beat, ÷2 once per two beats', () => {
+    const r = compileSource(`&m scan(27 23 26 24) step=60bpm\n&f step=&m*2 0 1 2 3\n&s step=&m/2 0 1\n${VOICE}&u s=tri\n&mix_ [&f * &v, &s * &u]\n&out_ loop=44k map=sample &mix_`);
     const ev = events(r, 0, 3.9);
     expect(ev.filter((e) => e.voice === 'v').map((e) => +e.at.toFixed(2))).toEqual([0, 0.54, 1.08, 1.54, 2, 2.52, 3.04, 3.52]);
     expect(ev.filter((e) => e.voice === 'u').map((e) => +e.at.toFixed(2))).toEqual([0, 2]);
@@ -419,7 +419,7 @@ describe('stereo from two mixes', () => {
 
 describe('pulses', () => {
   it('phases: how far each clocked cell is through its step', () => {
-    const r = compileSource('&m step=2\n&a step=&m 0 1\n&b step=&m/2 0\n&c step=&m*2 0\n&v loop=440\n&mix [&a * &v]\n&out loop=SAMPLE_RATE map=sample &mix');
+    const r = compileSource('&m step=2\n&a step=&m 0 1\n&b step=&m*2 0\n&c step=&m/2 0\n&v loop=440\n&mix [&a * &v]\n&out loop=SAMPLE_RATE map=sample &mix');
     const at = liveAt(r, codeShifts(r), new Set(), 0.125); // a quarter of a step of &m
     expect(at.phases.get('m')).toBeCloseTo(0.25);
     expect(at.phases.get('a')).toBeCloseTo(0.25);
@@ -465,7 +465,7 @@ describe('volume streams (map=amp)', () => {
   const base = '&m step=1\n&t step=&m 0 7\n&v s=tri loop=C4\n';
   const out = (mix: string) => `${mix}\n&out loop=SAMPLE_RATE map=sample &mix`;
   it('multiply the level while a note sounds; a rest is silence', () => {
-    const r = compileSource(base + '&vol map=amp step=&m/4 1 .5 ~ .25\n' + out('&mix [&t * &vol * &v]'));
+    const r = compileSource(base + '&vol map=amp step=&m*4 1 .5 ~ .25\n' + out('&mix [&t * &vol * &v]'));
     expect(r.diagnostics).toEqual([]);
     const e = events(r, 0, 1.9);
     expect(e.map((x) => x.levels.map((l) => [+l.at.toFixed(2), l.level]))).toEqual([
@@ -546,12 +546,12 @@ describe('a turning table comes round after its own length; cycle= says otherwis
   it('a braid of chords comes round after its chords: the Prelude without its cycle=', () => {
     // (as the Prelude was written before: one table of 95 numbers, turned five at a time, cycle= its length)
     const p = PRESETS.prelude.source;
-    const line = /^&chords step=&bar\*4 (\[.*)$/m.exec(p)!;
+    const line = /^&chords step=&bar\/4 (\[.*)$/m.exec(p)!;
     const n = line[1]
       .replace(/[[\],]/g, ' ')
       .trim()
       .split(/\s+/);
-    const strided = p.replace(line[0], `&chords step=&bar*4 stride=5 cycle=${n.length} ${n.join(' ')}`);
+    const strided = p.replace(line[0], `&chords step=&bar/4 stride=5 cycle=${n.length} ${n.join(' ')}`);
     const all = (src: string) => events(compileSource(src), 0, 150).map((e) => `${e.at.toFixed(4)} ${e.freq.toFixed(2)}`);
     expect(all(p)).toEqual(all(strided));
   });
@@ -590,8 +590,8 @@ describe('unnamed cells &( … )', () => {
 });
 
 describe('fractional ratios', () => {
-  it('step=&m*2/3: triplets, three steps per two', () => {
-    const r = compileSource('&m step=1\n&tri map=amp step=&m*2/3 1\n&hh s=white\n&mix [&tri * &hh]\n&out loop=SAMPLE_RATE map=sample &mix');
+  it('step=&m*3/2: triplets, three steps per two', () => {
+    const r = compileSource('&m step=1\n&tri map=amp step=&m*3/2 1\n&hh s=white\n&mix [&tri * &hh]\n&out loop=SAMPLE_RATE map=sample &mix');
     expect(events(r, 0, 1.99).map((e) => +e.at.toFixed(3))).toEqual([0, 0.667, 1.333]);
   });
 });
@@ -832,7 +832,7 @@ describe('a voice’s own env= and pitch=', () => {
 });
 
 describe('swing: a meter driven by the bar, its intervals free', () => {
-  const src = '&bar scan(1 1 1 1) step=120bpm\n&swing scan(free(2, 1..3) 1) step=&bar/2\n&t step=&swing 0 1 2 3\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t * &v]';
+  const src = '&bar scan(1 1 1 1) step=120bpm\n&swing scan(free(2, 1..3) 1) step=&bar*2\n&t step=&swing 0 1 2 3\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t * &v]';
   it('two eighths a beat, long then short: 2:1 is the triplet swing', () => {
     const r = compileSource(src);
     expect(r.diagnostics).toEqual([]);
@@ -1215,10 +1215,10 @@ describe('sound parameters that move', () => {
     expect(parse('&v lpf=200..3000').diagnostics[0].message).toMatch(/a range is scaled by cells/);
   });
   it('delaytime=&clock: one step of it in seconds — following the tempo', () => {
-    const at = (bpm: number) => compileSource(`&bar step=${bpm}bpm 0 0 0 0\n&v s=saw delaytime=&bar/2 delayfeedback=.4`).cells.get('v')!.params;
+    const at = (bpm: number) => compileSource(`&bar step=${bpm}bpm 0 0 0 0\n&v s=saw delaytime=&bar*2 delayfeedback=.4`).cells.get('v')!.params;
     expect(at(120)).toMatchObject({ delaytime: 0.25, delayfeedback: 0.4 }); // an eighth at 120
     expect(at(90).delaytime).toBeCloseTo(1 / 3, 5);
-    expect(compileSource('&bar step=120bpm 0\n&v s=saw delaytime=&bar*3/4').cells.get('v')!.params.delaytime).toBeCloseTo(0.375, 6); // a dotted eighth
+    expect(compileSource('&bar step=120bpm 0\n&v s=saw delaytime=&bar*4/3').cells.get('v')!.params.delaytime).toBeCloseTo(0.375, 6); // a dotted eighth
   });
   it('the graph: parameter cells feed their voice, labelled', () => {
     const g = buildGraph(compileSource(base + '&cut step=&bar 400 800\n&v s=saw lpf=&cut' + mix));
@@ -1355,7 +1355,7 @@ describe('selectors: reading a table of parts splices', () => {
 &a step=&aBar 0 2 4 5 7
 &b step=&bBar 12
 &parts step=&bar &aBar &bBar
-&song over=&parts step=&bar*4 ${song}
+&song over=&parts step=&bar/4 ${song}
 &v s=tri loop=C4
 &w s=sine loop=C4
 &out loop=SAMPLE_RATE map=sample [&a * &v, &b * &w]`;
@@ -1380,7 +1380,7 @@ describe('selectors: reading a table of parts splices', () => {
   it('… where a gate lets a part run on', () => {
     const gated = compileSource(`&bar step=120bpm 0 0 0 0
 &a step=&bar 0 2 4 5 7
-&g map=amp step=&bar*4 1 1
+&g map=amp step=&bar/4 1 1
 &v s=tri loop=C4
 &out loop=SAMPLE_RATE map=sample [&a * &g * &v]`);
     expect(notes(gated, 2, 4, 'v')).toEqual([7, 0, 2, 4]); // it kept running: the fifth note, then round again
@@ -1391,7 +1391,7 @@ describe('selectors: reading a table of parts splices', () => {
     expect(e[0].dur).toBeCloseTo(2, 6); // eight beats long, but the section is four
   });
   it('laps=1: the piece ends — nothing after, and the plan knows when', () => {
-    const r = compileSource(src('0 [0,1] ~ 1').replace('step=&bar*4 0 [0,1]', 'step=&bar*4 laps=1 0 [0,1]'));
+    const r = compileSource(src('0 [0,1] ~ 1').replace('step=&bar/4 0 [0,1]', 'step=&bar/4 laps=1 0 [0,1]'));
     expect(r.diagnostics).toEqual([]);
     expect(notes(r, 6, 8, 'w')).toEqual([12, 12, 12, 12]);
     expect(events(r, 8, 20)).toEqual([]);
@@ -1410,7 +1410,7 @@ describe('selectors, live', () => {
 &a step=&aBar 0 2 4 5
 &b step=&bBar 12
 &parts step=&bar &aBar &bBar
-&song over=&parts step=&bar*4 laps=1 0 1
+&song over=&parts step=&bar/4 laps=1 0 1
 &v s=tri loop=C4
 &w s=sine loop=C4
 &out loop=SAMPLE_RATE map=sample [&a * &v, &b * &w]`);
@@ -1526,8 +1526,8 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
     return { r, ev: events(r, 0, (laps * steps) / 10 - 1e-6), steps };
   };
   const semis = (f: number) => Math.round(12 * Math.log2(f / 261.6256)) + 0;
-  it('x?p sounds about p of the time; x? about half; the rest always', () => {
-    const { ev } = play('0 4?.25 7?', 800);
+  it('x?p is dropped about p of the time (Strudel’s degradeBy); x? about half; the rest always', () => {
+    const { ev } = play('0 4?.75 7?', 800);
     const count = (n: number) => ev.filter((e) => semis(e.freq) === n).length / 800;
     expect(count(0)).toBe(1);
     expect(count(4)).toBeGreaterThan(0.2);
@@ -1535,8 +1535,8 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
     expect(count(7)).toBeGreaterThan(0.44);
     expect(count(7)).toBeLessThan(0.56);
   });
-  it('chance= sets what a bare ? means', () => {
-    const { ev } = play('0? 4?', 800, ' chance=.1');
+  it('chance= sets what a bare ? means: how often it is dropped', () => {
+    const { ev } = play('0? 4?', 800, ' chance=.9');
     expect(ev.length / 1600).toBeLessThan(0.14);
     expect(ev.length / 1600).toBeGreaterThan(0.06);
   });
@@ -1572,7 +1572,7 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
     for (const e of ev) perStep.set(+e.at.toFixed(6), (perStep.get(+e.at.toFixed(6)) ?? 0) + 1);
     expect([...perStep.values()].every((n) => n === 3)).toBe(true);
   });
-  it('chance=free(…): a slider for how often', () => {
+  it('chance=free(…): a slider for how often it is dropped', () => {
     const src = '&t step=10 chance=free(.3, 0..1) 0? 4?\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
     const r = compileSource(src);
     expect(r.cells.get('t')!.chance).toBe(0.3);

@@ -19,18 +19,20 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `n#` · `nb`: A number with accidentals: one step up (#) or down (b) on the grid below the table it reads — 6# over a scale is its 7th degree raised a semitone. [→](tables.md) `&tune over=&major step=2 0 4 6# 7 3b`
 - `n/d`: A fraction: 9/8, 3/2 (the ratios of a map=ratios grid). [→](tuning.md) `&just map=ratios 1 9/8 5/4 3/2 2`
 - `~`: A rest: a step that plays nothing. [→](cell.md) `&tune step=2 0 ~ 4 ~`
-- `_`: In a cell with base=: the base's step here, as it is there (_@2: its pitch, held 2; _!n: n of them). A value in its place changes that step. [→](braid.md) `&answer base=&subject^$7 _!3 12@2`
-- `[a, b, c]` · `[a b c]`: A chord: the numbers sound together, in one step. Its notes can be names, pitches whatever the tables: [C, E, G]. [→](time.md) `&chords step=1 [0,2,4] [3 5 7]` · `&chords step=1 [C, E, G] [F, A, C5]`
+- `_`: The step before it, one step longer, as Strudel's elongation: 0 _ _ is 0@3 (inside brackets too: [0 _ 2]). [→](cell.md) `&tune step=2 0 _ _ 2 4 _`
+- `=`: In a cell with base=: the base's step here, as it is there (=@2: its pitch, held 2; =!n: n of them). A value in its place changes that step. [→](braid.md) `&answer base=&subject^$7 =!3 12@2`
+- `[a, b, c]`: A chord: the numbers sound together, in one step, commas between them. Its notes can be names, pitches whatever the tables: [C, E, G]. [→](time.md) `&chords step=1 [0,2,4] [3, 5, 7]` · `&chords step=1 [C, E, G] [F, A, C5]`
+- `[a b c]` · `[a b, c]`: A subsequence, as in Strudel's mini-notation: its steps squeezed into the one step it takes, each as long as its modifiers say ([0 2@2]: a third, then two thirds), nested as deep as you like. A modifier on the bracket acts on all of it ([0 2]*2: twice in the step). Commas stack them, each spanning the step: [0 2, 4]. A cell spliced inside lasts its slot, its steps squeezed into it. [→](cell.md) `&tune step=1 0 [2 4] [5 [7 9]] [0 2@2]` · `&tune step=1 [0 ~ 4]!2 [0 2]*2 [0 2, 7]` · `&groove step=2 &bd [&hh &hh] &sd [&hh ~ &hh]`
 - `[a|b|c]`: A choice: one of them, chosen afresh each time round (the same every time it is played). [→](braid.md) `&tune step=2 0 [2|4|7] 4`
 - `&x`: A cell, spliced in: its braid plays in this one's step (as long as its own steps). Picks, shifts and transposing are under References. [→](braid.md) `&theme step=2 &motif &motif^$7 0`
-- `&voice (stepped)`: In a stepped braid of voices (and rests), each step plays its voice: a drum pattern by name. Chords of voices sound together, [&bd, &hh]; modifiers work as on any step. Unstepped, a braid of voices is a kit, read by number. [→](sound.md) `&groove step=4 &bd ~ &hh [&bd, &sd] &hh*2 ~`
+- `&voice (stepped)`: In a stepped braid of voices (and rests), each step plays its voice: a drum pattern by name. Chords of voices sound together, [&bd, &hh]; a subsequence squeezes them into one step, [&hh &hh]; modifiers work as on any step. Unstepped, a braid of voices is a kit, read by number. [→](sound.md) `&groove step=4 &bd ~ &hh [&bd, &sd] &hh*2 ~`
 
 ## Modifiers
 
 - `x!n`: Repeat: n copies of the step, each as long as one. [→](cell.md) `&beat step=4 0!4 2!2`
 - `x*n`: Ratchet: the step played n times within its own length. [→](cell.md) `&hats step=2 0 0*2 0 0*3`
 - `x@n`: Hold: the step lasts n steps. [→](cell.md) `&tune step=2 0@2 2 4@3`
-- `x?` · `x?p`: Chance: the step sounds with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence. [→](cell.md) `&hats step=4 0 0? 0?.3 0` · `&ghost chance=.2 step=4 0? 0? 0? 0?`
+- `x?` · `x?p`: Chance, as Strudel's degradeBy: the step is dropped with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence. [→](cell.md) `&hats step=4 0 0? 0?.3 0` · `&ghost chance=.8 step=4 0? 0? 0? 0?`
 
 ## References
 
@@ -46,7 +48,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 ## Generators
 
 - `scan(i …)`: Running totals of intervals: a scale or a meter. An interval can repeat (`1!4`), be geometric (`geo(r, n, k …)`: r^(k/n) for each k) or be `free(…)`. [→](braid.md) `&major scan(2 2 1 2 2 2 1)` · `&bar scan(27 23 26 24) step=84bpm` · `&tempo scan(1!4 .5!2)` · `&series scan(geo(5, 25, 0 10 5))` · `&swing scan(free(2, 1..3) 1)`
-- `euclid(k, n)` · `euclid(k, n, shift)`: k hits spread as evenly as they go over n steps (the Euclidean rhythms), turned by shift. [→](braid.md) `&tresillo euclid(3, 8)` · `&clave euclid(5, 16, 2)`
+- `euclid(k, n)` · `euclid(k, n, shift)`: k hits spread as evenly as they go over n steps (the Euclidean rhythms), turned right by shift steps, as Strudel's (k, n, r). [→](braid.md) `&tresillo euclid(3, 8)` · `&clave euclid(5, 16, 2)`
 - `sin(n)`: One cycle of a sine in n steps, from −1 to 1: a waveform, or a slow swell. [→](braid.md) `&sine loop=220 sin(12)`
 - `scale(name)` · `scale(name, tonic)`: A scale by name over the 12, turned to its tonic (a note name, a number or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: major minor ionian dorian phrygian lydian mixolydian aeolian locrian harmonic melodic pentatonic minorpentatonic blues wholetone. [→](tables.md) `&scale scale(minor, D)` · `&blues scale(blues)` · `&scale scale(dorian, free(2, 0..11))`
 - `fifths()` · `fifths(n)` · `fifths(note)`: The circle of fifths: the twelve pitch classes a fifth apart, C G D A E B F# C# Ab Eb Bb F, as written from C; turned n fifths round, or to start on a note (its shift=: [0] is where it starts, [$0] is C). Drawn round its wheel in its own order. [→](tables.md) `&circle fifths()` · `&circleG fifths(1)` · `&circleG fifths(G)`
@@ -58,7 +60,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `free(v, lo..hi)`: A number left to the performer: a slider from lo to hi, starting at v. Wherever a number goes in an attribute (a rate with its units: free(90bpm, 60..240)), in a scan, or as a gain in a mix. [→](free.md) `&bar scan(4 4 4 4) step=free(90bpm, 60..240)` · `&lead s=saw loop=C4 lpf=free(1200, 200..5000)` · `&key step=cycle(&theme) shift=free(0, 0..11)`
 - `free(marking)`: A rate as a tempo marking, a slider over its range: largo 40–60, larghetto 60–66, adagio 66–76, andante 76–108, moderato 108–120, allegro 120–156, vivace 156–176, presto 168–200 (bpm). [→](free.md) `&bar scan(4 4 4 4) step=free(andante)`
 - `free(v, lo..hi, "names")`: Named choices: the names spread evenly over the range (one per value, or every 2nd …), shown instead of the numbers. [→](free.md) `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm`
-- `free(0 2 4 ~ …)`: A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n). [→](free.md) `&riff over=&key step=&bar/4 free(0 2 4 ~ 4 2 0 ~)`
+- `free(0 2 4 ~ …)`: A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n). [→](free.md) `&riff over=&key step=&bar*4 free(0 2 4 ~ 4 2 0 ~)`
 - `free("text")`: A text left to the performer: a field to type in (for spell(…)). [→](free.md) `&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")`
 
 ## step= and loop=
@@ -67,7 +69,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `loop=NAME`: A value from the environment: SAMPLE_RATE, A4, or a note name (C4, F#3, Bb2) as its frequency. [→](time.md) `&lead s=saw loop=C4` · `&out loop=SAMPLE_RATE map=sample &mix`
 - `step=&x` · `loop=&x`: Driven by another cell: a step (or a whole turn) per step of &x. [→](time.md) `&tune step=&bar 0 2 4`
 - `step=cycle(&x)`: A step per cycle of &x (each time its braid comes round). [→](time.md) `&key step=cycle(&theme) stride=7`
-- `step=&x*n` · `step=&x/n` · `step=&x*n/d`: A chain read left to right: *n once per n steps of &x, /n n times per step; *2/3 is three per two (triplets). [→](time.md) `&fast step=&bar/2 0 1` · `&trip step=&bar*2/3 0 2 4`
+- `step=&x*n` · `step=&x/n` · `step=&x*n/d`: A chain read left to right, as Strudel's fast and slow: *n n steps per step of &x, /n one per n steps; *3/2 is three per two (triplets). [→](time.md) `&fast step=&bar*2 0 1` · `&trip step=&bar*3/2 0 2 4`
 - `step=free(r, lo..hi)` · `step=free(marking)`: A rate left free: a slider, with units (free(90bpm, 60..240)), or a tempo marking (free(adagio)). [→](free.md) `&bar scan(4 4 4 4) step=free(90bpm, 60..240)` · `&bar scan(4 4 4 4) step=free(adagio)`
 - `nbpm`: n a minute: beats on a meter (its steps, unless beat= or meter(…) say how many make a beat). [→](time.md) `&bar scan(4 4 4 4) step=84bpm`
 - `nhz`: n a second (a plain number says the same). [→](time.md) `&a loop=440hz`
@@ -79,8 +81,8 @@ Every form the parser reads, what it means and an example: generated from the pa
 
 ## map=
 
-- `map=amp`: A volume: its values multiply the level (on a voice, the braid as a waveform, its range onto −1…1; the default). [→](sound.md) `&accent map=amp step=&bar/4 1 .4 .8 .4`
-- `map=lin`: As amp, ramping from each value to the next: a glide, a triangle. In a mix it is plain: a volume in a product, a pitch in a sum. [→](sound.md) `&swell map=lin loop=&bar*8 .2 1`
+- `map=amp`: A volume: its values multiply the level (on a voice, the braid as a waveform, its range onto −1…1; the default). [→](sound.md) `&accent map=amp step=&bar*4 1 .4 .8 .4`
+- `map=lin`: As amp, ramping from each value to the next: a glide, a triangle. In a mix it is plain: a volume in a product, a pitch in a sum. [→](sound.md) `&swell map=lin loop=&bar/8 .2 1`
 - `map=db`: A volume in decibels (0 as it is, −6 about half). [→](sound.md) `&fade map=db step=&bar 0 -6 -12`
 - `map=adsr a d s r`: An envelope: attack, decay, release in seconds, sustain a level; one per note. [→](sound.md) `&pluck map=adsr .01 .3 .5 .4`
 - `map=sample`: The sound card: its entries are channels, one (mono) or two (left, right). [→](mix.md) `&out loop=SAMPLE_RATE map=sample &left &right`
@@ -96,7 +98,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 An attribute is `key=value`, anywhere on a cell's line, each at most once (`step=` and `loop=` are one setting). What the values of `step=`, `loop=` and `map=` can be is above. `show=` takes one of: `braid` (steps, coloured by pitch), `pattern` (rhythm only: hits and rests), `equal` (its entries evenly round the ring, wired from the slots they take: the taps stay put as it turns), `notes` (note names: C4 D4 E4), `midi` (MIDI numbers: 60 62 64), `do` (movable do: do re mi from the tonic), `degrees` (scale degrees: 1 2 3), `table` (its entries as numbers), `scale` (a scale: its mode on its tonic), `mode` (its mode: major, minor, Dorian …), `key` (a key: its tonic), `grid` (a grid: steps to its period), `meter` (a meter: beats to the bar), `spectrum` (the sound: a spectral waterfall), `wave` (its waveform: one cycle, and the sound itself while it plays), `levels` (its levels, as bars), `adsr` (an envelope curve), `mix` (the voices it mixes), `note` (a note in the graph: its label), `petal` (small, hung from the cell that uses it), `off` (hidden from the graph), `matrix` (a barrel of pins: a ring per part, a pin where it plays), `lfo` (one cycle of its movement, round the ring, at its rate), `brightness` (its modes by brightness: each degree shaded by the mode that starts on it (Lydian bright … Locrian dark)), or a plugin ([plugins.md](plugins.md)): `sun` (built in: a day meter as the sun: a 24-hour dial, noon at the top), or one the piece carries; `notes:` `flats`, `sharps`, `german`; `do:` `fixed`, `movable`.
 
 - `over=&table` · `over=&table[<<n]` · `over=scale(name, tonic)`: The table its numbers read. [→](tables.md) `&tune over=&major step=2 0 2 4` · `&mode over=&major[<<2] 0 2 4` · `&tune over=scale(minor, A) step=2 0 2 4`
-- `base=&cell` · `base=&cell^$n` · `base=&cell^n`: The cell it is a copy of, changed where it says: its braid step by step over the base’s (_ keeps a step), its attributes where it sets none. [→](braid.md) `&answer base=&subject^$7 _!3 12@2` · `&last base=&subject _!21 3@2`
+- `base=&cell` · `base=&cell^$n` · `base=&cell^n`: The cell it is a copy of, changed where it says: its braid step by step over the base’s (= keeps a step), its attributes where it sets none. [→](braid.md) `&answer base=&subject^$7 =!3 12@2` · `&last base=&subject =!21 3@2`
 - `step=…`: What moves it, step by step. [→](time.md) `&tune step=&bar 0 2 4`
 - `loop=…`: What moves it, the whole braid at a time. [→](time.md) `&lead s=saw loop=C4`
 - `shift=n` · `shift=free(n, lo..hi)`: How far it is turned. [→](tables.md) `&mode over=&major shift=5 0 2 4` · `&key shift=free(0, 0..11)`
@@ -109,7 +111,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 - `cycle=n`: Where it wraps: turning past this many steps starts again (a grid’s size is map=edo) [→](tables.md) `&key step=cycle(&theme) stride=7 cycle=12` · `&edo19 cycle=19 map=edo`
 - `size=x`: How large it’s drawn, against the others: 2 twice, .5 half. [→](display.md) `&theme size=2 step=2 0 2 4`
 - `laps=n`: How many laps it plays, then it ends. [→](time.md) `&bar scan(4 4 4 4) step=84bpm laps=30`
-- `chance=p` · `chance=free(p, 0..1)`: What a bare x? means here: a probability, or free() for a slider. [→](cell.md) `&ghost chance=.2 step=4 0? 0? 0? 0?` · `&ghost chance=free(.3, 0..1) step=4 0? 0?`
+- `chance=p` · `chance=free(p, 0..1)`: What a bare x? means here: the probability it is dropped, or free() for a slider. [→](cell.md) `&ghost chance=.8 step=4 0? 0? 0? 0?` · `&ghost chance=free(.7, 0..1) step=4 0? 0?`
 - `seed=n`: A different sequence of chance. [→](cell.md) `&ghost seed=7 step=4 0? 0? 0? 0?`
 - `title="text"`: On a note: the piece’s title (its card) — on a note (a label= and nothing else) [→](display.md) `&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."`
 - `tags="tag, tag"`: On a note: the piece’s tags, comma-separated; on a cell, its clusters in the graph. [→](display.md) `&piece title="Swing blues" tags="genre:jazz, rhythm"` · `&lead tags="melody" s=saw loop=C4`
@@ -118,7 +120,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 
 ## Parameters
 
-Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Dough's other names aren't read: writing one is an error that names ours (`sound` → `s`, `cutoff` → `lpf`, `resonance` → `lpq`, `hcutoff` → `hpf`, `hresonance` → `hpq`, `verb` → `room`, `reverb` → `room`, `delayt` → `delaytime`, `delayfb` → `delayfeedback`).
+Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Strudel's and dough's other names aren't read: writing one is an error that names ours (`sound` → `s`, `cutoff` → `lpf`, `resonance` → `lpq`, `hcutoff` → `hpf`, `hresonance` → `hpq`, `verb` → `room`, `reverb` → `room`, `delayt` → `delaytime`, `delayfb` → `delayfeedback`).
 
 - `s=sine|tri|triangle|saw|sawtooth|square|pulse|white|pink|brown`: Sound source: sine tri saw square pulse white pink brown — on a voice; it makes the cell a voice. [→](sound.md)
 - `lpf=n` · `lpf=free(n, lo..hi)` · `lpf=&x` · `lpf=lo..hi * &a * &b`: Low-pass cutoff, Hz — on a voice; it makes the cell a voice. [→](sound.md)
@@ -127,7 +129,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `hpq=n` · `hpq=free(n, lo..hi)` · `hpq=&x` · `hpq=lo..hi * &a * &b`: High-pass resonance — on a voice; it makes the cell a voice. [→](sound.md)
 - `room=n` · `room=free(n, lo..hi)` · `room=&x` · `room=lo..hi * &a * &b`: Reverb send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `delay=n` · `delay=free(n, lo..hi)` · `delay=&x` · `delay=lo..hi * &a * &b`: Delay send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
-- `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar/2 (an eighth at the tempo) — on a voice; it makes the cell a voice. [→](sound.md)
+- `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — on a voice; it makes the cell a voice. [→](sound.md)
 - `delayfeedback=n` · `delayfeedback=free(n, lo..hi)`: Echo feedback 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `pan=n` · `pan=free(n, lo..hi)`: Where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades — on a voice; it makes the cell a voice. [→](sound.md)
 - `distort=n` · `distort=free(n, lo..hi)`: Distortion: 0 clean, .3 gritty, 1 and more harsh — on a voice; it makes the cell a voice. [→](sound.md)
@@ -155,7 +157,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `damping=n` · `damping=free(n, lo..hi)`: A belt’s damping: how soon its swinging dies (0 rings on, high creeps) — on a driven cell (step=&x) [→](physics.md)
 - `slip=n` · `slip=free(n, lo..hi)`: A belt’s grip: past this pull it slips, and the cell falls behind for good — on a driven cell (step=&x) [→](physics.md)
 - `write=&cell`: A tape: what its write head records (write=&melody); it moves with its step= — on a tape (write=) [→](physics.md)
-- `length=n` · `length=free(n, lo..hi)` · `length=&clock/n`: A tape: how long its loop is, in seconds of tape (or a clock: length=&bar*4); none, an open reel — on a tape (write=) [→](physics.md)
+- `length=n` · `length=free(n, lo..hi)` · `length=&clock/n`: A tape: how long its loop is, in seconds of tape (or a clock: length=&bar/4); none, an open reel — on a tape (write=) [→](physics.md)
 - `erase=n` · `erase=free(n, lo..hi)`: A tape: how much of what was there each pass under the write head wipes (1 all, .3 leaves ghosts) — on a tape (write=) [→](physics.md)
 - `tone=n` · `tone=free(n, lo..hi)`: A sound tape: its loss — each pass through the loop darker (Hz: 7000 bright, 1500 worn) — on a tape (write=) [→](physics.md)
 - `drive=n` · `drive=free(n, lo..hi)`: A sound tape: how hard it saturates each pass (0 clean, .5 warm, 1 crushed) — on a tape (write=) [→](physics.md)

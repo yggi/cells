@@ -10,7 +10,7 @@ import { effectiveShow } from '../layout/show';
 
 // entries() is memoised per compiled program (issue #41): the answers must always be the ones a fresh
 // computation gives, whatever was asked before, in which order, on which program.
-const SRC = '&scale 0 2 3 5 7 8 10\n&theme over=scale [0 2 4 6]';
+const SRC = '&scale 0 2 3 5 7 8 10\n&theme over=scale [0, 2, 4, 6]';
 const fresh = (name: string, shift: number) => entries(compileSource(SRC), name, shift);
 
 describe('entries cache', () => {

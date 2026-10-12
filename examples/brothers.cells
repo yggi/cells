@@ -9,23 +9,23 @@
 &bar scan(1 1 1 1) step=free(112bpm, 96..132)
 &b1 tags="break" &bd ~ &ch ~ &sd ~ &ch &bd ~ &bd &sd ~ &ch &bd &sd &ch
 &b2 tags="break" &bd ~ &ch &bd &sd ~ &ch ~ &bd &bd ~ &ch &sd ~ &sd*2 &ch
-&break tags="break" step=&breakBar/4 label="the break" &b1 &b2
-&acid tags="acid" step=&acidBar/4 label="the acid" 0 0 12 0 3 0 ~ 0 7 0 10 ~ 0 12 3 5
-&accent tags="acid" map=amp step=&bar/4 1 .5 .9 .5 .8 .5 0 .5 1 .5 .8 0 .5 1 .7 .9
-&riff tags="riff" step=&riffBar/2 label="the riff" [0,7] ~ [0,7] [3,10] ~ [5,12] ~ [3,10]
-&siren tags="siren" step=&sirenBar*8 0
+&break tags="break" step=&breakBar*4 label="the break" &b1 &b2
+&acid tags="acid" step=&acidBar*4 label="the acid" 0 0 12 0 3 0 ~ 0 7 0 10 ~ 0 12 3 5
+&accent tags="acid" map=amp step=&bar*4 1 .5 .9 .5 .8 .5 0 .5 1 .5 .8 0 .5 1 .7 .9
+&riff tags="riff" step=&riffBar*2 label="the riff" [0,7] ~ [0,7] [3,10] ~ [5,12] ~ [3,10]
+&siren tags="siren" step=&sirenBar/8 0
 &wail tags="siren" map=lin loop=&bar 0 12 0
 &sub tags="sub" step=&subBar 0 ~ 0 [-2|0]
 &roll tags="build" step=&buildBar 0!4 0*2!4 0*4!4 0*8!4
-&lift tags="build" step=&buildBar*32 0
-&up tags="build" map=lin loop=&bar*32 0 .3 1 0
+&lift tags="build" step=&buildBar/32 0
+&up tags="build" map=lin loop=&bar/32 0 .3 1 0
 
 &bd tags="break" s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .06 0 0) distort=.5 env=&(map=adsr 0 .3 0 .05)
 &sd tags="break" s=white hpf=900 distort=.6 crush=7 env=&(map=adsr 0 .12 0 .05)
 &ch tags="break" s=white hpf=7000 crush=6 env=&(map=adsr 0 .03 0 .02)
 &tb tags="acid" s=saw loop=E2 lpf=120..3600 * &(map=adsr .003 .17 .1 .06) * &accent lpq=14 distort=.3 env=&(map=adsr .002 .14 .6 .05)
 &stab tags="riff" s=square loop=E3 distort=.9 lpf=2600 room=.2 env=&(map=adsr .003 .2 .3 .1)
-&siren1 tags="siren" s=sine loop=E5 delaytime=&bar*3/4 delay=.3 delayfeedback=.35 env=&(map=adsr .3 .5 .9 .6)
+&siren1 tags="siren" s=sine loop=E5 delaytime=&bar*4/3 delay=.3 delayfeedback=.35 env=&(map=adsr .3 .5 .9 .6)
 &subv tags="sub" s=sine loop=E1 env=&(map=adsr .005 .4 .6 .1)
 &sn tags="build" s=white hpf=1000 distort=.4 env=&(map=adsr 0 .06 0 .03)
 &riser tags="build" s=white lpf=400..8000 * &up lpq=5 crush=8 env=&(map=adsr 1 .5 .9 .5)
@@ -37,7 +37,7 @@
 &buildPart tags="build" [&roll * &sn * .3, &lift * &riser * .14]
 &subPart tags="sub" [&sub * &subv * .5]
 &parts step=&bar &breakBar &acidBar &riffBar &sirenBar &buildBar &subBar
-&song over=&parts step=&bar*32 laps=1 label="break · bass · acid · build · riff · all · siren · build · all" [0] [0,5] [0,1,5] 4 [0,1,2,5] [0,1,2,3,5] [3,1] 4 [0,1,2,3,5]
+&song over=&parts step=&bar/32 laps=1 label="break · bass · acid · build · riff · all · siren · build · all" [0] [0,5] [0,1,5] 4 [0,1,2,5] [0,1,2,3,5] [3,1] 4 [0,1,2,3,5]
 
 &out level=-3 map=sample [&breakPart, &acidPart, &riffPart, &sirenPart, &buildPart, &subPart]
 &tracker scope=waterfall label="the break, as a tracker" &break

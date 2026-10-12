@@ -5,8 +5,8 @@
 &dorian scale(dorian, D) label="{mode} on {tonic}"
 
 &m 0 1 2 4 3 1 2@2
-&tune over=&dorian step=&bar/2 &m &m[::-1] &m^$7 &m[0:4]!2 &m[-1]@4
-&answer over=&dorian step=&bar/2 inverse(&m) degree(inverse(&m), 4) inverse(&m) degree(inverse(&m), 4) 0@8
+&tune over=&dorian step=&bar*2 &m &m[::-1] &m^$7 &m[0:4]!2 &m[-1]@4
+&answer over=&dorian step=&bar*2 inverse(&m) degree(inverse(&m), 4) inverse(&m) degree(inverse(&m), 4) 0@8
 
 &flute s=tri loop=D4 env=&(map=adsr .02 .3 .5 .3)
 &cello s=saw loop=D3 lpf=1200 env=&(map=adsr .03 .3 .6 .3)

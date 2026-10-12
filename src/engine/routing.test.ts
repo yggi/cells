@@ -27,8 +27,8 @@ function states(r: CompileResult, t: number | null, muted: ReadonlySet<string> =
 }
 
 describe('routing: the clocks a parameter reads are wires too (#188, #193)', () => {
-  // Baustelle II with a tape and a head that read the bar: `length=&bar*4`, `at=&bar*3/2`
-  const resonanz = () => compileSource(PRESETS.resonanz.source.replace('length=5', 'length=&bar*4').replace('at=1.15', 'at=&bar*3/2'));
+  // Baustelle II with a tape and a head that read the bar: `length=&bar/4`, `at=&bar*2/3`
+  const resonanz = () => compileSource(PRESETS.resonanz.source.replace('length=5', 'length=&bar/4').replace('at=1.15', 'at=&bar*2/3'));
   it("a read head's at= clock is lit with the head, as the tape's length= is", () => {
     const r = resonanz();
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
@@ -68,7 +68,7 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     expect(states(r, null).get('g->*out:0')).toBe('on');
   });
   it('the step= chain moves what it drives: routed, and live while it plays', () => {
-    const r = src('&bar step=2', '&half step=&bar/2 0', '&mel step=&half 0 2', '&v s=sine loop=C4', `${OUT} [&mel * &v]`);
+    const r = src('&bar step=2', '&half step=&bar*2 0', '&mel step=&half 0 2', '&v s=sine loop=C4', `${OUT} [&mel * &v]`);
     const s = states(r, 0.1);
     expect([s.get('mel~>half'), s.get('half~>bar')]).toEqual(['live', 'live']);
   });
@@ -82,7 +82,7 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
       '&partA [&a * &v]',
       '&partB [&b * &w, &b * &v]',
       '&parts &partA &partB',
-      '&song over=&parts step=&bar*4 0 1',
+      '&song over=&parts step=&bar/4 0 1',
       `${OUT} &song`,
     );
     const first = states(r, 0.5);

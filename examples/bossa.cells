@@ -2,14 +2,14 @@
 # Bossa nova. The clave is a meter: five strokes over a bar of sixteenths,
 # scan(3 3 4 3 3) — x..x..x...x..x.. — and the guitar strums on its strokes.
 &bar scan(1 1 1 1) step=free(128bpm, 90..170)
-&clave scan(3 3 4 3 3) step=&bar*4/5                  # five strokes a bar
+&clave scan(3 3 4 3 3) step=&bar*5/4                  # five strokes a bar
 &dorian scan(2 1 2 2 2 1 2)                            # D Dorian (the voices sit on D)
 
 &rim map=amp step=&clave 1 .8 .9 1 .8
 &strum step=&clave [3,7,10,14]!3 [3,9,14]!2                                # Dm9 · G13, on the clave
 &bassline step=&bar 0 7 -7 0                           # root and fifth: D A under Dm9, G D under G13
-&shaker map=amp step=&bar/4 .5 .2 .3 .2
-&melody over=&dorian step=&bar/2 4@3 3 2@2 ~@2 0 1 2@3 ~@3
+&shaker map=amp step=&bar*4 .5 .2 .3 .2
+&melody over=&dorian step=&bar*2 4@3 3 2@2 ~@2 0 1 2@3 ~@3
 
 &guitar s=tri loop=D3 lpf=2200 env=&(map=adsr .003 .5 .15 .3)
 &bass s=sine loop=D2 env=&(map=adsr .01 .4 .5 .2)

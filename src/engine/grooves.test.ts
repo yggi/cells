@@ -17,19 +17,19 @@ const plays = (src: string) => {
 
 describe('a stepped braid of voices plays them (#10 F4)', () => {
   it('plays what the same pattern read by number through a kit plays: chords, ratchets, rests, chance', () => {
-    const groove = plays(voices + '&groove step=&bar/2 &bd &hh [&bd,&sd] &hh*2 ~ &hh &sd? &hh!2\n&out map=sample [&groove * .6]');
-    const kit = plays(voices + '&kit &bd &hh &sd\n&groove over=&kit step=&bar/2 0 1 [0,2] 1*2 ~ 1 2? 1!2\n&out map=sample [&groove * .6]');
+    const groove = plays(voices + '&groove step=&bar*2 &bd &hh [&bd,&sd] &hh*2 ~ &hh &sd? &hh!2\n&out map=sample [&groove * .6]');
+    const kit = plays(voices + '&kit &bd &hh &sd\n&groove over=&kit step=&bar*2 0 1 [0,2] 1*2 ~ 1 2? 1!2\n&out map=sample [&groove * .6]');
     expect(groove).toEqual(kit);
     expect(groove.some((e) => e.startsWith('sd '))).toBe(true);
   });
   it('is a signal: mixed as it is, with volumes acting on it', () => {
-    const r = compileSource(voices + '&acc map=amp step=&bar/2 1 .5\n&groove step=&bar/2 &bd &hh\n&out map=sample [&groove * &acc * .5]');
+    const r = compileSource(voices + '&acc map=amp step=&bar*2 1 .5\n&groove step=&bar*2 &bd &hh\n&out map=sample [&groove * &acc * .5]');
     expect(r.diagnostics).toEqual([]);
     expect(r.outputs).toHaveLength(1);
     expect(r.outputs[0].levels.map((l) => l.cell)).toEqual(['acc']);
   });
   it('draws what is written: an edge from the pattern to each voice, and no kit', () => {
-    const r = compileSource(voices + '&groove step=&bar/2 &bd &hh &bd &sd\n&out map=sample [&groove]');
+    const r = compileSource(voices + '&groove step=&bar*2 &bd &hh &bd &sd\n&out map=sample [&groove]');
     const g = buildGraph(r);
     expect(g.nodes.some((n) => n.cell?.name.startsWith('kit:'))).toBe(false);
     expect(g.edges.filter((e) => e.port === 'braid' && e.source === 'cell:groove').map((e) => [e.target, e.count])).toEqual([
@@ -46,11 +46,11 @@ describe('a stepped braid of voices plays them (#10 F4)', () => {
   });
   it('drum motifs: an unstepped braid of voices a groove splices, reversed or not, nested, shared by two grooves', () => {
     const grooves = plays(
-      voices + '&fill &sd &sd*2 ~ &hh\n&bar2 &bd ~ &fill\n&a step=&bar/4 &bar2 &fill[::-1]\n&b step=&bar/2 [&bd,&hh] &fill\n&out map=sample [&a * .6, &b * .3]',
+      voices + '&fill &sd &sd*2 ~ &hh\n&bar2 &bd ~ &fill\n&a step=&bar*4 &bar2 &fill[::-1]\n&b step=&bar*2 [&bd,&hh] &fill\n&out map=sample [&a * .6, &b * .3]',
     );
     const kit = plays(
       voices +
-        '&kit &sd &hh &bd\n&fill 0 0*2 ~ 1\n&bar2 2 ~ &fill\n&a over=&kit step=&bar/4 &bar2 &fill[::-1]\n&b over=&kit step=&bar/2 [2,1] &fill\n&out map=sample [&a * .6, &b * .3]',
+        '&kit &sd &hh &bd\n&fill 0 0*2 ~ 1\n&bar2 2 ~ &fill\n&a over=&kit step=&bar*4 &bar2 &fill[::-1]\n&b over=&kit step=&bar*2 [2,1] &fill\n&out map=sample [&a * .6, &b * .3]',
     );
     expect(grooves).toEqual(kit);
   });
@@ -61,7 +61,7 @@ describe('a stepped braid of voices plays them (#10 F4)', () => {
     expect(r.cells.get('d')!.over).toBe('kit');
   });
   it('Shorten leaves its steps alone (they are names, not numbers)', () => {
-    const src = voices + '&groove step=&bar/4 &bd ~ &hh ~ &sd ~ &hh ~ &bd ~ &hh ~ &sd ~ &hh ~ &bd &bd\n&out map=sample [&groove]';
+    const src = voices + '&groove step=&bar*4 &bd ~ &hh ~ &sd ~ &hh ~ &bd ~ &hh ~ &sd ~ &hh ~ &bd &bd\n&out map=sample [&groove]';
     expect(shorten(src)).toEqual([]);
   });
 });
@@ -86,7 +86,7 @@ describe('pan= on a voice: where it sits in stereo (#10 F3)', () => {
     expect(one).toEqual(two);
   });
   it('a kit’s members each sit where their pan= says', () => {
-    const g = gains(voices.replace('hpf=8000', 'hpf=8000 pan=1') + '&groove step=&bar/2 &bd &hh\n&out map=sample [&groove * .6]');
+    const g = gains(voices.replace('hpf=8000', 'hpf=8000 pan=1') + '&groove step=&bar*2 &bd &hh\n&out map=sample [&groove * .6]');
     expect(g.slice(0, 2)).toEqual(['bd 0.6000,0.6000', 'hh 0.0000,0.6000']);
   });
 });

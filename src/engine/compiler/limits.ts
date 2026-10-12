@@ -3,6 +3,7 @@
  * than it can schedule. Each is an error that names its cap; the player keeps the last good compile meanwhile.
  * (The third cap, how deep unnamed cells &( … ) nest, is the parser's: MAX_NESTING in parser/scanner.ts.)
  */
+import { countOf } from '../subseq';
 import type { CellDecl, FreeSpec, Span } from '../ast';
 import { MAX_EVENTS, MAX_NOTES_PER_SECOND, pickIndices, type Clock, type Output } from '../program';
 import type { Cells, Ctx } from './context';
@@ -21,11 +22,10 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
     if (known) return known;
     if (visiting.has(name)) return []; // (a loop is resolve's error)
     visiting.add(name);
-    const out = (cells.get(name)?.units ?? []).map((u) => {
-      const a = u.atom;
-      const each = a.kind === 'note' || a.kind === 'choice' ? 1 : a.kind === 'chord' ? a.notes.length : a.kind === 'ref' ? expansion(a.name, a.pick) : 0;
-      return u.repeat * u.subdivide * each;
-    });
+    // (a subsequence: what its steps stand for, nested ones opened)
+    const out = (cells.get(name)?.units ?? []).map((u) =>
+      countOf(u, (a) => (a.kind === 'note' || a.kind === 'choice' ? 1 : a.kind === 'chord' ? a.notes.length : a.kind === 'ref' ? expansion(a.name, a.pick) : 0)),
+    );
     visiting.delete(name);
     unitCounts.set(name, out);
     return out;

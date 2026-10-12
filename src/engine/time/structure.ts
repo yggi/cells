@@ -8,6 +8,7 @@
 import type { Pick } from '../ast';
 import { clocking } from '../clocking';
 import { stepsOf, unitsFor } from '../flatten';
+import { slots } from '../subseq';
 import type { CompileResult, Shifts } from '../program';
 import type { Plan } from '../realize';
 
@@ -32,24 +33,16 @@ function nodesOf(result: CompileResult, shifts: Shifts, root: string, pick: Pick
     const cell = result.cells.get(name);
     if (!cell || out.length > MOST || seen.includes(name)) return;
     const table = cell.root ? name : (cell.over ?? ctx);
-    let base = 0;
-    for (const u of unitsFor(result, name, shifts, p, table, extra)) {
-      const a = u.atom;
-      const unit = a.kind === 'ref' ? stepsOf(result, a.name, a.pick) || 1 : 1;
-      const foot = unit * u.elongate;
-      const dur = foot / u.subdivide;
-      for (let r = 0; r < u.repeat; r++) {
-        for (let s = 0; s < u.subdivide; s++) {
-          if (a.kind !== 'ref') continue;
-          const child = result.cells.get(a.name);
-          // (a voice or a kit named in a braid is a sound, not a phrase)
-          if (!child || child.voice || child.kit || child.mix) continue;
-          const from = at + (base + s * dur) * k;
-          out.push({ cell: a.name, from, len: dur * k, depth: depth + 1 });
-          walk(a.name, a.pick, a.shift, table, from, (dur * k) / (stepsOf(result, a.name, a.pick) || 1), depth + 1, [...seen, name]);
-        }
-        base += foot;
-      }
+    // (each splice where it plays, inside subsequences too: subseq.ts)
+    const units = unitsFor(result, name, shifts, p, table, extra);
+    for (const { atom: a, at: t, dur } of slots(units, (x) => (x.kind === 'ref' ? stepsOf(result, x.name, x.pick) || 1 : 1))) {
+      if (a.kind !== 'ref') continue;
+      const child = result.cells.get(a.name);
+      // (a voice or a kit named in a braid is a sound, not a phrase)
+      if (!child || child.voice || child.kit || child.mix) continue;
+      const from = at + t * k;
+      out.push({ cell: a.name, from, len: dur * k, depth: depth + 1 });
+      walk(a.name, a.pick, a.shift, table, from, (dur * k) / (stepsOf(result, a.name, a.pick) || 1), depth + 1, [...seen, name]);
     }
   };
   out.push({ cell: root, from: 0, len: Math.max(1, stepsOf(result, root, pick)), depth: 0 });

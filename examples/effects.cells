@@ -4,12 +4,12 @@
 &vibratoNote label="pitch= is a voice's own pitch on every note: here a vibrato, a cell that turns three times a beat, in semitones." about=&warm
 &bar scan(1 1 1 1) step=free(moderato)
 
-&tune step=&bar/2 0 4 7 12 7 4 0 ~ 2 5 9 14 9 5 2 ~
-&line step=&bar*2 7 9 5 7
+&tune step=&bar*2 0 4 7 12 7 4 0 ~ 2 5 9 14 9 5 2 ~
+&line step=&bar/2 7 9 5 7
 &bass step=&bar 0 0 7 0 2 2 9 2
-&sparkle step=&bar*4 12 14
+&sparkle step=&bar/4 12 14
 
-&warm s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .08 .2 .7 .4) pitch=&(loop=&bar/3 0 .15 0 -.15)
+&warm s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .08 .2 .7 .4) pitch=&(loop=&bar*3 0 .15 0 -.15)
 &thin s=saw loop=C4 hpf=2500 hpq=3 env=&(map=adsr .005 .2 .2 .2)
 &glass s=sine loop=C5 room=.6 delay=.4 delaytime=.33 delayfeedback=.5 env=&(map=adsr .01 .8 0 .8)
 &grit s=square loop=C2 lpf=900 distort=.3 crush=8 env=&(map=adsr .005 .2 .6 .1)

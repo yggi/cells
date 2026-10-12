@@ -6,7 +6,7 @@
 &scale over=&key scan(2 1 2 2 1 2 2) step=cycle(&key)           # Aeolian, a degree per circle, all seven
 
 &theme over=&scale step=&bar 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
-&pedal over=&scale step=&bar*2 0              # one note every two beats
+&pedal over=&scale step=&bar/2 0              # one note every two beats
 
 # voices: loop= is pitch 0 (turns per second); sound in dough notation
 &lead s=saw loop=C4 lpf=2200 lpq=2 room=.3 env=&(map=adsr .01 .3 .4 .4) pitch=&(map=lin loop=5 0 .15 0 -.15 0)

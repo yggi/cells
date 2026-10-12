@@ -6,6 +6,7 @@
 import { pickLabel, type Pick } from './ast';
 import { ROOT, MAX_EVENTS, pickIndices, pickSteps, type CompileResult, type Shifts } from './program';
 import { isTap, positionOf, rootOf, shiftedUnits } from './helix';
+import { slots } from './subseq';
 
 /**
  * A cell's units as played: rotated by its shift (plus a [<<]/[>>] shift); a pick takes from them as they are turned
@@ -40,7 +41,7 @@ export interface StepEvent {
    * for its lap), times mul plus add (degree(…), inverse(…)); `value` is that entry as the code has it.
    */
   readonly via?: { readonly cell: string; readonly index: number; readonly ctx: string; readonly mul: 1 | -1; readonly add: number };
-  /** x?p: the probability it sounds (each time round, reproducibly). */
+  /** x?p: the probability it is dropped (each time round, reproducibly). */
   readonly chance?: number;
   /** [a|b|c]: what it chooses from (value is the first, for drawing). */
   readonly options?: readonly { readonly value: number; readonly alter: number }[];
@@ -72,60 +73,52 @@ export function flatten(
     if (hit) return hit;
     const out: StepEvent[] = [];
     if (!silent(name)) {
-      let base = 0;
       // a relative pick of plain numbers: which entry each is, looked up again as the cell turns (StepEvent.via)
       const taps = isTap(result, name, pick) ? pickIndices(result.cells.get(name)!.units.length, pick) : null;
-      for (const [n, u] of unitsFor(result, name, shifts, pick, table, extra).entries()) {
-        const a = u.atom;
-        const unit = a.kind === 'ref' ? stepsOf(result, a.name, a.pick) || 1 : 1;
-        const foot = unit * u.elongate;
-        const dur = foot / u.subdivide;
-        for (let r = 0; r < u.repeat; r++) {
-          for (let s = 0; s < u.subdivide; s++) {
-            const at = base + s * dur;
-            const ev = {
-              step: at,
-              duration: dur,
-              cell: name,
-              table,
-              tableShift: tShift,
-              ...(taps ? { via: { cell: name, index: taps[n], ctx: table, mul: 1 as const, add: 0 } } : {}),
-            };
-            // x?p: its probability (a bare ? takes the cell's chance=)
-            const odds = u.chance === undefined ? {} : { chance: u.chance === null ? (cell.chance ?? 0.5) : u.chance };
-            // (a note by name is a pitch: a place on the grid at the root of its tables, not an index into them)
-            const pitch = (semis: number) => ({
-              ...ev,
-              table: rootOf(result, table),
-              tableShift: 0,
-              value: Math.round(positionOf(result, rootOf(result, table), semis) * 1e6) / 1e6,
-              alter: 0,
-            });
-            if (a.kind === 'note') out.push(a.pitched ? { ...pitch(a.value), ...odds } : { ...ev, value: a.value, alter: a.alter, ...odds });
-            else if (a.kind === 'chord') a.notes.forEach((v, j) => out.push(a.pitched?.[j] ? { ...pitch(v), ...odds } : { ...ev, value: v, alter: a.alters[j], ...odds }));
-            else if (a.kind === 'choice') out.push({ ...ev, value: a.values[0], alter: a.alters[0], ...odds, options: a.values.map((v, j) => ({ value: v, alter: a.alters[j] })) });
-            else if (a.kind === 'ref') {
-              const k = dur / (stepsOf(result, a.name, a.pick) || 1);
-              const up = a.transpose ?? 0;
-              // degree(…) / inverse(…): its values moved before its tables read them (accidentals mirrored with them)
-              const m = a.values;
-              const moved = (e: StepEvent): StepEvent =>
-                !m
-                  ? e
-                  : {
-                      ...e,
-                      value: m.mul * e.value + m.add,
-                      alter: m.mul * e.alter,
-                      ...(e.options ? { options: e.options.map((o) => ({ value: m.mul * o.value + m.add, alter: m.mul * o.alter })) } : {}),
-                      ...(e.via ? { via: { ...e.via, mul: (m.mul * e.via.mul) as 1 | -1, add: m.mul * e.via.add + m.add } } : {}),
-                    };
-              for (const e of walk(a.name, a.pick, a.shift, table, tShift))
-                out.push({ ...moved(e), step: at + e.step * k, duration: e.duration * k, ...(up || e.transpose ? { transpose: (e.transpose ?? 0) + up } : {}) });
-            }
-            if (out.length > MAX_EVENTS) throw new ExpansionLimit(name);
-          }
-          base += foot;
+      const units = unitsFor(result, name, shifts, pick, table, extra);
+      // (each leaf where it plays: a subsequence's steps squeezed into its one: subseq.ts)
+      for (const { atom: a, at, dur, chances, top } of slots(units, (x) => (x.kind === 'ref' ? stepsOf(result, x.name, x.pick) || 1 : 1))) {
+        const ev = {
+          step: at,
+          duration: dur,
+          cell: name,
+          table,
+          tableShift: tShift,
+          ...(taps ? { via: { cell: name, index: taps[top], ctx: table, mul: 1 as const, add: 0 } } : {}),
+        };
+        // x?p: the probability it is dropped (a bare ? takes the cell's chance=; inside a subsequence, each bracket's too: it sounds if none drops it)
+        const drop = chances.map((c) => (c === null ? (cell.chance ?? 0.5) : c));
+        const odds = !drop.length ? {} : { chance: drop.length === 1 ? drop[0] : 1 - drop.reduce((keep, c) => keep * (1 - c), 1) };
+        // (a note by name is a pitch: a place on the grid at the root of its tables, not an index into them)
+        const pitch = (semis: number) => ({
+          ...ev,
+          table: rootOf(result, table),
+          tableShift: 0,
+          value: Math.round(positionOf(result, rootOf(result, table), semis) * 1e6) / 1e6,
+          alter: 0,
+        });
+        if (a.kind === 'note') out.push(a.pitched ? { ...pitch(a.value), ...odds } : { ...ev, value: a.value, alter: a.alter, ...odds });
+        else if (a.kind === 'chord') a.notes.forEach((v, j) => out.push(a.pitched?.[j] ? { ...pitch(v), ...odds } : { ...ev, value: v, alter: a.alters[j], ...odds }));
+        else if (a.kind === 'choice') out.push({ ...ev, value: a.values[0], alter: a.alters[0], ...odds, options: a.values.map((v, j) => ({ value: v, alter: a.alters[j] })) });
+        else if (a.kind === 'ref') {
+          const k = dur / (stepsOf(result, a.name, a.pick) || 1);
+          const up = a.transpose ?? 0;
+          // degree(…) / inverse(…): its values moved before its tables read them (accidentals mirrored with them)
+          const m = a.values;
+          const moved = (e: StepEvent): StepEvent =>
+            !m
+              ? e
+              : {
+                  ...e,
+                  value: m.mul * e.value + m.add,
+                  alter: m.mul * e.alter,
+                  ...(e.options ? { options: e.options.map((o) => ({ value: m.mul * o.value + m.add, alter: m.mul * o.alter })) } : {}),
+                  ...(e.via ? { via: { ...e.via, mul: (m.mul * e.via.mul) as 1 | -1, add: m.mul * e.via.add + m.add } } : {}),
+                };
+          for (const e of walk(a.name, a.pick, a.shift, table, tShift))
+            out.push({ ...moved(e), step: at + e.step * k, duration: e.duration * k, ...(up || e.transpose ? { transpose: (e.transpose ?? 0) + up } : {}) });
         }
+        if (out.length > MAX_EVENTS) throw new ExpansionLimit(name);
       }
     }
     memo.set(key, out);

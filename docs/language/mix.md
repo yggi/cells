@@ -53,7 +53,7 @@ read as the product it stands for, one for each voice it plays, so it sounds as 
 &bar scan(1 1 1 1) step=120bpm
 &tune step=&bar 0 2 4 7
 &accent map=amp step=&bar 1 .5 .8 .5
-&solo map=amp step=&bar*4 1 .3                                   # open, then ducked
+&solo map=amp step=&bar/4 1 .3                                   # open, then ducked
 &lead s=tri loop=C4 env=&(map=adsr .01 .2 .4 .2)
 &leadOut play=&tune level=&accent*&solo*.5 &lead       # is [&tune * &accent * &solo * &lead * .5]
 &out loop=SAMPLE_RATE map=sample [&leadOut]
@@ -70,7 +70,7 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 &sd s=white env=&(map=adsr 0 .15 0 .05)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh
-&beat step=&bar/2 0 2 1 2
+&beat step=&bar*2 0 2 1 2
 &drums play=&beat level=.6 &kit                 # each number picks the drum: 0 the kick, 1 the snare, 2 the hat
 &out loop=SAMPLE_RATE map=sample [&drums]
 ```

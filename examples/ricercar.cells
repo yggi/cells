@@ -14,8 +14,8 @@
 &third over=&key label="4 : 1 — *third species*" 19 17 19 20 19 17 19 21 19 20 19 21 23 21 22 24 23 21 22 20 ~@2 19 21 23 21 19 17 21 24 23 21 22 20 22 19 ~@4
 &florid over=&key label="free, over the bass" 19 17 19 20 19 17 19 20 19 21 22 24 17 20 22 24 23 24 26 23 ~@2 21 24 23 21 19 22 24 22 20 22 24 22 20 19 ~@4
 
-&upper step=&bar/2 ~@40 &first ~@40 &second &third &florid    # a pass each: alone · above · (below) · 2:1 · 4:1 · free
-&lower step=&bar/2 ~@80 &under ~@80 &under                     # the bass: in pass 3, and again under the free line
+&upper step=&bar*2 ~@40 &first ~@40 &second &third &florid    # a pass each: alone · above · (below) · 2:1 · 4:1 · free
+&lower step=&bar*2 ~@80 &under ~@80 &under                     # the bass: in pass 3, and again under the free line
 
 &organ loop=C4 map=lin 0 1 env=&(map=adsr .03 .25 .7 .6)        # one pipe, one breath: the theme
 &flute pan=.28 s=sine loop=C4 env=&(map=adsr .03 .1 .8 .2) pitch=&(map=lin loop=5 0 .08 0 -.08 0)

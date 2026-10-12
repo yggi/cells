@@ -1,6 +1,7 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
-import { type Span } from '../ast';
-import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell } from '../program';
+import { type Span, type Token } from '../ast';
+import { innerSteps, leaves } from '../subseq';
+import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { scan as scanOf } from '../../theory/modes';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
@@ -46,26 +47,30 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
     const children = new Map<string, number>();
     const unitSteps: number[] = [];
     const toks = d.braid.kind === 'list' ? d.braid.tokens : [];
+    // a splice: its cell resolved (a loop or an unknown name is an error), what it takes of it checked
+    const splice = (a: Extract<Unit['atom'], { kind: 'ref' }>, span: Span, times: number): number => {
+      const ref = a.name;
+      if (!decls.has(ref)) {
+        // (a cell whose line failed: what uses it can't resolve either, and says nothing more)
+        if (broken.has(ref)) for (const v of visiting) broken.add(v);
+        unknownCell(ref, span);
+        throw new Abort();
+      }
+      const child = resolve(ref, span);
+      const picked = pickSteps(child, a.pick);
+      if (picked === null) {
+        error(pickProblem(ref, a.pick, child.units.length), span);
+        throw new Abort();
+      }
+      children.set(ref, (children.get(ref) ?? 0) + times);
+      return picked;
+    };
     units.forEach((u, i) => {
       let unit = 1;
-      if (u.atom.kind === 'ref') {
-        const ref = u.atom.name;
-        const span = toks[i]?.span ?? d.span;
-        if (!decls.has(ref)) {
-          // (a cell whose line failed: what uses it can't resolve either, and says nothing more)
-          if (broken.has(ref)) for (const v of visiting) broken.add(v);
-          unknownCell(ref, span);
-          throw new Abort();
-        }
-        const child = resolve(ref, span);
-        const picked = pickSteps(child, u.atom.pick);
-        if (picked === null) {
-          error(pickProblem(ref, u.atom.pick, child.units.length), span);
-          throw new Abort();
-        }
-        unit = picked;
-        children.set(ref, (children.get(ref) ?? 0) + u.repeat * u.subdivide);
-      }
+      const span = toks[i]?.span ?? d.span;
+      if (u.atom.kind === 'ref') unit = splice(u.atom, span, u.repeat * u.subdivide);
+      // (a splice inside a subsequence takes its slot, whatever its length: the step stays one)
+      for (const t of innerSteps<Token>(u.atom)) if (t.atom.kind === 'ref') splice(t.atom, t.span ?? span, t.repeat * t.subdivide);
       unitSteps.push(unit * u.elongate * u.repeat);
     });
     const steps = unitSteps.reduce((a, b) => a + b, 0);
@@ -123,7 +128,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
       children,
       steps,
       unitSteps,
-      hasValues: units.some((u) => u.atom.kind === 'note' || u.atom.kind === 'chord'),
+      hasValues: units.some((u) => leaves(u.atom).some((a) => a.kind === 'note' || a.kind === 'chord')),
       step:
         d.step?.kind === 'driven'
           ? {

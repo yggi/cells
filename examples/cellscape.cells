@@ -10,29 +10,29 @@
 # and Kraftwerk (the sequence, the filters). Every layer reads one Lydian scale, and
 # the scale's key turns a fifth with each scene: C G D A E B F# C# G# D# A# F, and home.
 &bar scan(1 1 1 1) step=free(72bpm, 50..96)
-&key step=&bar*32 stride=7 label="**{tonic}**, a fifth each scene"
+&key step=&bar/32 stride=7 label="**{tonic}**, a fifth each scene"
 &lydian over=&key scan(2 2 2 1 2 2 1) label="{mode} on {tonic}"
 
 # slow hands on the filters
-&breath tags="drone" map=lin loop=&bar*24 .1 1 .3 .1
-&sweep tags="sequence" map=lin loop=&bar*16 .1 .9 .2
+&breath tags="drone" map=lin loop=&bar/24 .1 1 .3 .1
+&sweep tags="sequence" map=lin loop=&bar/16 .1 .9 .2
 
 # the layers
-&pad tags="drone" over=&lydian step=&droneBar*8 label="drone: an open ninth" [0,4,6,9]
-&arp tags="sequence" over=&lydian step=&sequenceBar/4 label="the sequence" 0 4 6 9 7 4 2 4
+&pad tags="drone" over=&lydian step=&droneBar/8 label="drone: an open ninth" [0,4,6,9]
+&arp tags="sequence" over=&lydian step=&sequenceBar*4 label="the sequence" 0 4 6 9 7 4 2 4
 &m1 tags="canon" 0@2 2@2 4@3 6
 &m2 tags="canon" 7@2 4@2 6@3 4                           # against &m1: octaves and thirds only (they stay consonant turned upside down)
 &melody tags="canon" over=&lydian step=&leaderBar label="canon: the leader" &m1 &m2
 &canon tags="canon" over=&lydian step=&followerBar label="canon: the follower, an octave down, two bars behind" &melody[<<]^$-12
 &bells tags="bells" over=&lydian step=&chimesBar label="bells" ~@3 11 ~@4 9 ~@3 13 ~@5 11 ~@4 6 ~@6 ~@2
-&pulse tags="pulse" over=&lydian step=&pulsesBar/2 label="pulse" 0 ~ 0 0 ~ 0 0 ~
-&shimmer tags="glass" over=&lydian step=&shineBar*16 label="glass" [11,13]
+&pulse tags="pulse" over=&lydian step=&pulsesBar*2 label="pulse" 0 ~ 0 0 ~ 0 0 ~
+&shimmer tags="glass" over=&lydian step=&shineBar/16 label="glass" [11,13]
 
 &padv tags="drone" s=saw loop=C3 lpf=280..2400 * &breath lpq=3 room=.45 env=&(map=adsr 2 1 .8 3) pitch=&(map=lin loop=.13 0 .08 0 -.08 0)
-&arpv tags="sequence" pan=.18 s=square loop=C4 lpf=240..3400 * &sweep lpq=7 delaytime=&bar*3/4 delay=.35 delayfeedback=.45 env=&(map=adsr .002 .12 .2 .08)
+&arpv tags="sequence" pan=.18 s=square loop=C4 lpf=240..3400 * &sweep lpq=7 delaytime=&bar*4/3 delay=.35 delayfeedback=.45 env=&(map=adsr .002 .12 .2 .08)
 &voiceA tags="canon" pan=.18 s=tri loop=C5 lpf=2600 room=.35 env=&(map=adsr .05 .3 .7 .6)
 &voiceB tags="canon" pan=.82 s=saw loop=C5 lpf=1500 room=.4 env=&(map=adsr .08 .3 .7 .8)
-&bell tags="bells" pan=.83 s=sine loop=C5 room=.6 delaytime=&bar*3/2 delay=.4 delayfeedback=.5 env=&(map=adsr .005 1.2 0 2.5) pitch=&(map=lin loop=.07 0 .3 0 -.3 0)
+&bell tags="bells" pan=.83 s=sine loop=C5 room=.6 delaytime=&bar*2/3 delay=.4 delayfeedback=.5 env=&(map=adsr .005 1.2 0 2.5) pitch=&(map=lin loop=.07 0 .3 0 -.3 0)
 &bass tags="pulse" s=tri loop=C2 lpf=400..1400 * &breath env=&(map=adsr .005 .2 .4 .1)
 &glass tags="glass" pan=.21 s=sine loop=C5 room=.7 env=&(map=adsr 3 1 .7 4) pitch=&(map=lin loop=.11 0 .25 0 -.25 0)
 
@@ -46,6 +46,6 @@
 &pulses tags="pulse" [&pulse * &bass * .25]
 &shine tags="glass" [&shimmer * &glass * .07]
 &layers step=&bar &droneBar &sequenceBar &leaderBar &followerBar &chimesBar &pulsesBar &shineBar
-&scenes over=&layers step=&bar*32 label="the scenes" [0] [0,4] [0,1,4] [0,1,2] [0,1,2,3] [0,1,2,3,5] [0,2,3,4,5,6] [0,1,2,3,4,5,6] [0,3,4,6] [0,1,5,6] [0,4,6] [0,6]
+&scenes over=&layers step=&bar/32 label="the scenes" [0] [0,4] [0,1,4] [0,1,2] [0,1,2,3] [0,1,2,3,5] [0,2,3,4,5,6] [0,1,2,3,4,5,6] [0,3,4,6] [0,1,5,6] [0,4,6] [0,6]
 
 &out level=8 map=sample [&drone, &sequence, &leader, &follower, &chimes, &pulses, &shine]

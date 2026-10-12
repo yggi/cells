@@ -172,8 +172,8 @@ src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered
 
 # ---- the prelude
 &figure tags="figuration" 0 1 2 1 3 1 2 1                          # the figure: top, middle, low, middle, bottom, middle, low, middle
-&rhShapes tags="figuration" step=&tempo*16 show=notes label="right hand: four notes a bar" {chords(rhS)}
-&lhShapes tags="figuration" step=&tempo*16 show=notes label="left hand: four notes a bar" {chords(lhS)}
+&rhShapes tags="figuration" step=&tempo/16 show=notes label="right hand: four notes a bar" {chords(rhS)}
+&lhShapes tags="figuration" step=&tempo/16 show=notes label="left hand: four notes a bar" {chords(lhS)}
 &rhFigure tags="right hand" over=&rhShapes label="bars 1–24, right hand: the figure, twice a bar" &figure!48
 &lhFigure tags="left hand" over=&lhShapes label="bars 1–24, left hand" &figure!48
 """ + '\n'.join(f'&rh{n} tags="right hand" label="right hand · {lab}" {tokens(rh, a, b)}' for n, a, b, lab in SECTIONS) + '\n' + \

@@ -29,7 +29,7 @@ function plays(lines: Line[]): string[] {
   const source = [
     `&tempo scan(1!${Math.max(...lines.map((l) => l.length))}) step=600bpm laps=1`,
     ...defs,
-    ...lines.map((l) => `&${l.name} step=&tempo*${scales.get(l.name)} ${braids.get(l.name)}`),
+    ...lines.map((l) => `&${l.name} step=&tempo/${scales.get(l.name)} ${braids.get(l.name)}`),
     '&v s=tri loop=C4',
     `&out map=sample [${lines.map((l) => `&${l.name} * &v`).join(', ')}]`,
   ].join('\n');
@@ -92,7 +92,7 @@ describe('the folder', () => {
     const { defs, lines } = printFolded(f);
     expect(defs).toEqual([
       '&figure1 0 1 2 1 3 1 2 1',
-      `&chords1 step=&tempo*8 ${Array(6).fill('[12,3,2,0] [8,5,4,0] [11,5,3,2] [12,7,5,3]').join(' ')}`,
+      `&chords1 step=&tempo/8 ${Array(6).fill('[12,3,2,0] [8,5,4,0] [11,5,3,2] [12,7,5,3]').join(' ')}`,
       '&run1 over=&chords1 &figure1!24',
     ]);
     expect(lines.get('rh')).toBe('&run1');
@@ -114,7 +114,7 @@ describe('the folder', () => {
     const { defs } = printFolded(f);
     // (the subject at its full length, the answer a copy of it written in its own frame: the line splices it a fifth
     // up, so -7 sounds as the answer's 12)
-    expect(defs).toEqual(['&m1 0 -1 0 -5 -4 0 -1 0 2 -5 0 -1 0 2 -7 -5 -4 -5 -7 -9', '&m2 base=&m1 _!3 -7']);
+    expect(defs).toEqual(['&m1 0 -1 0 -5 -4 0 -1 0 2 -5 0 -1 0 2 -7 -5 -4 -5 -7 -9', '&m2 base=&m1 =!3 -7']);
     expect(plays(lines)).toEqual(expected(lines));
   });
 

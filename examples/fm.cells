@@ -5,7 +5,7 @@
 &major scale(major)
 
 &tune over=&major step=&bar 7 4 5 2 4 0 2@2 7 9 8 7 4@4
-&chords over=&major step=&bar*4 [0,2,4] [3,5,7] [1,3,5] [0,2,4]
+&chords over=&major step=&bar/4 [0,2,4] [3,5,7] [1,3,5] [0,2,4]
 
 &bm s=sine ratio=3.5
 &bell s=sine loop=C5 fm=&bm index=3 env=&(map=adsr .001 1.6 0 1.2)

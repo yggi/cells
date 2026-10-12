@@ -6,7 +6,7 @@ What goes inside a cell: generators, and how to pick from, shift and transpose a
 
 - **`scan(intervals)`** — running totals, its lap their sum. `scan(2 2 1 2 2 2 1)` is the major scale (0 2 4 5 7 9 11, lap 12); `scan(3 3 2)` the tresillo (lap 8); `scan(27 23 26 24)` a bent 4/4 bar (beats at 0 27 50 76 % of a lap of 100). Turning a scan walks its modes.
 - An interval can be **`geo(r, n, k …)`**: r^(k/n) for each k, a geometric series; `x!n` repeats it n times.
-- **`euclid(k, n)`** — k hits spread evenly over n steps (`euclid(3, 8)` is the tresillo); `euclid(k, n, shift)` turned.
+- **`euclid(k, n)`** — k hits spread evenly over n steps (`euclid(3, 8)` is the tresillo); `euclid(k, n, shift)` turned right by shift steps, as Strudel's `(k, n, r)`: `euclid(3, 8, 2)` is `x.x..x..`.
 - **`sin(n)`** — one cycle of a sine in n steps (a voice's waveform).
 - **A root** is a bare grid: `&edo19 cycle=19` ([tuning.md](tuning.md)).
 
@@ -21,7 +21,7 @@ What goes inside a cell: generators, and how to pick from, shift and transpose a
 
 These read a braid *as written* or moved. They go where a braid is used — braids, `out`, and (shifts only) `over=`; `step=` and `map=` take whole cells.
 
-- **`&t[i]`**, **`&t[a:b]`**, **`&t[a:b:step]`** pick from the braid *as it is turned*, Python-style: `&x[0]` first, `&x[-1]` last, `&x[1:3]`, `&x[:-1]`; `&x[::-1]` is the retrograde, `&x[::2]` every other. A pick keeps each token's modifiers and length. A pick is a fixed tap on a turning wheel: with `&key shift=2`, `&key[0]` is D and `&key[0] &key[4] &key[7]` D F♯ A; an entry that wraps climbs a lap (`&key[10]` is the C above). It follows the shift as it stands when the note sounds — a stepped key, a `free()` one — when the cell it picks from is plain numbers and is read in another cell's braid (in a mix a cell plays on its own clock, picked or not).
+- **`&t[i]`**, **`&t[a:b]`**, **`&t[a:b:step]`** pick from the braid *as it is turned*, Python-style: `&x[0]` first, `&x[-1]` last, `&x[1:3]`, `&x[:-1]`; `&x[::-1]` is the retrograde, `&x[::2]` every other. A pick keeps each token's modifiers and length; a subsequence (`[2 4]`) is one token. A pick is a fixed tap on a turning wheel: with `&key shift=2`, `&key[0]` is D and `&key[0] &key[4] &key[7]` D F♯ A; an entry that wraps climbs a lap (`&key[10]` is the C above). It follows the shift as it stands when the note sounds — a stepped key, a `free()` one — when the cell it picks from is plain numbers and is read in another cell's braid (in a mix a cell plays on its own clock, picked or not).
 - **`&t[$i]`**, **`&t[$a:b]`** pick *as written*, whatever the shift: with `&key shift=2`, `&key[$0] &key[$4] &key[$7]` is C E G.
 - **`&t[<<n]`**, **`&t[>>n]`** — &t shifted back / forward by n (default 1), on top of its own rotation; wrapped entries climb a lap. `&john[<<]` is the theme one unit behind; `over=&scale[<<]` reads one step lower. In `out` the brackets keep shifts apart from pitch arithmetic: `(&alto[<<] - 7) * &cello` — a bar behind, a fifth below.
 - Slices rotate too, without the climb: `&x[-1:] &x[:-1]`.
@@ -62,8 +62,8 @@ A reference's numbers are indices into the table it is read through, so they can
 **`base=&x`** makes a cell a copy of &x, changed where it says ([decision 026](../decisions/026-base.md)): an overdub,
 a delta. A fugue's entries are this: one subject, each entry a little bent.
 
-- **Its braid goes over the base's, step by step.** `_` keeps the base's step as it is there; a value in its place
-  changes it; `_!n` keeps n steps, `_@n` keeps one's pitch held n; what goes past the base's end is added, and nothing
+- **Its braid goes over the base's, step by step.** `=` keeps the base's step as it is there (read "the same"); a value
+  in its place changes it; `=!n` keeps n steps, `=@n` keeps one's pitch held n; what goes past the base's end is added, and nothing
   written is the base as it is. A run in the base (`x!3`) counts as its steps.
 - **Transposed:** `base=&x^$n` moves what it keeps n steps of the grid (a cell that reads no table: semitones), `base=&x^n`
   n steps of its table. What the cell writes itself is what it plays.
@@ -74,9 +74,9 @@ a delta. A fugue's entries are this: one subject, each entry a little bent.
 ```cells
 &bar scan(1 1 1 1) step=90bpm
 &subject 0 -1 0@2 -5@2 -4@2 0 -1 0 2 -5@4
-&answer base=&subject^$7 _!3 0@2
-&last base=&subject^$-12 _!9 _@8
-&tune step=&bar/4 &subject &answer &last
+&answer base=&subject^$7 =!3 0@2
+&last base=&subject^$-12 =!9 =@8
+&tune step=&bar*4 &subject &answer &last
 &v s=tri loop=C4
 &out map=sample [&tune * &v * .4]
 ```

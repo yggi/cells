@@ -80,8 +80,8 @@ describe('belts: step=&x through a spring (belt=, damping=, slip=)', () => {
     const n = Math.min(slack.length, rigid.length) - 1;
     expect(Math.abs(slack[n] - rigid[n])).toBeLessThan(0.02); // … and runs on time once the swing has died
   });
-  it('a belt at a ratio (step=&bar/4): its steps four to the driver’s, as without the belt', () => {
-    const r = compileSource('&bar step=120bpm 0 0 0 0\n&t step=&bar/4 belt=5000 0\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]');
+  it('a belt at a ratio (step=&bar*4): its steps four to the driver’s, as without the belt', () => {
+    const r = compileSource('&bar step=120bpm 0 0 0 0\n&t step=&bar*4 belt=5000 0\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]');
     const ev = eventsBetween(plan(r, codeShifts(r)), 0, 2).map((e) => e.at);
     expect(ev.length).toBeGreaterThan(14); // sixteenths at 120: eight a second
     expect(ev[8] - ev[7]).toBeCloseTo(0.125, 2);

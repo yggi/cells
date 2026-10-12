@@ -7,12 +7,12 @@
 # that holds for 40 s, then gives out: a tape stop. The hats ride a slack belt: they lag, then swing.
 &bar scan(1 1 1 1) step=78bpm motor=1.4 mass=1 friction=.3 wow=.012 wind=40 varispeed=1
 &minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"
-&loop over=&minor step=&bar/2 label="the loop" 4 ~ 2 0 ~ 2 4 7@2 ~ 6 4 2 ~ 4@2 -1 ~
-&chords over=&minor step=&bar*4 label="i · VI" [0,2,4,6] [-2,0,2,4]
-&hats step=&bar/2 belt=30 mass=1.5 label="the hats, on a slack belt" ~ 0 ~ 0 ~ 0 ~ 0
+&loop over=&minor step=&bar*2 label="the loop" 4 ~ 2 0 ~ 2 4 7@2 ~ 6 4 2 ~ 4@2 -1 ~
+&chords over=&minor step=&bar/4 label="i · VI" [0,2,4,6] [-2,0,2,4]
+&hats step=&bar*2 belt=30 mass=1.5 label="the hats, on a slack belt" ~ 0 ~ 0 ~ 0 ~ 0
 &kick step=&bar 0 ~ 0 ~
 
-&keys pan=.375 s=tri loop=D4 lpf=2200 room=.4 delaytime=&bar*3/4 delay=.3 delayfeedback=.4 env=&(map=adsr .004 .5 .3 .4)
+&keys pan=.375 s=tri loop=D4 lpf=2200 room=.4 delaytime=&bar*4/3 delay=.3 delayfeedback=.4 env=&(map=adsr .004 .5 .3 .4)
 &pad s=saw loop=D3 lpf=700 room=.6 env=&(map=adsr 1 1 .8 2)
 &hh pan=.6 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &bd s=sine loop=D1 pitch=0..16 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)

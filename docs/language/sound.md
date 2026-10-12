@@ -12,7 +12,7 @@ A voice is a cell looped at audio rate: `loop=440` plays its braid 440 times a s
 
 With no braid a voice holds 0…11 of the 12 grid: a 12-step saw. Or name a built-in waveform with dough's **`s=`** (sine tri saw square pulse white pink brown). Levels and stereo are the mix's job; envelopes are cells, `map=adsr`. A voice with no envelope in its product plays quick and full. Rendering uses Tone.js.
 
-Sound parameters use dough's names; any of them makes a cell a voice. Dough's other names for them (`cutoff=`, `verb=` …, listed in [reference.md](reference.md)) aren't read: each is an error that names ours.
+Sound parameters use dough's names; any of them makes a cell a voice. Strudel's and dough's other names for them (`cutoff=`, `verb=` …, listed in [reference.md](reference.md)) aren't read: each is an error that names ours.
 
 | parameter | what |
 |---|---|
@@ -24,7 +24,7 @@ Sound parameters use dough's names; any of them makes a cell a voice. Dough's ot
 | `distort=` | distortion: 0 clean, .3 gritty, 1 and more harsh |
 | `crush=` | bit depth: 16 clean, 8 grainy, 3 and fewer rubble |
 
-FM (`fm=` `ratio=` `index=`) and resonators (`body=` `ring=` `hard=`) are on [physics.md](physics.md). Dough's other names for these (`cutoff`, `reverb` …) still read, with a warning naming ours. Each parameter's meaning, and what it acts on, is in one table in the code, `src/engine/attributes.ts`; on a cell where it does nothing it is a warning.
+FM (`fm=` `ratio=` `index=`) and resonators (`body=` `ring=` `hard=`) are on [physics.md](physics.md). Each parameter's meaning, and what it acts on, is in one table in the code, `src/engine/attributes.ts`; on a cell where it does nothing it is a warning.
 
 ```cells
 &square loop=220 0 1
@@ -34,30 +34,30 @@ FM (`fm=` `ratio=` `index=`) and resonators (`body=` `ring=` `hard=`) are on [ph
 &lead s=saw loop=261.63 lpf=2200
 ```
 
-**A stepped braid of voices plays them:** `&groove step=&bar/4 &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh*2` is a drum pattern by name, mixed as it is (`[&groove * .6]`); a chord of voices sounds together, and repeats, ratchets, holds and chance work as on any step. A braid of voices without `step=` that a groove splices is a drum motif: `&fill &sd &sd*2 ~ &hh`, then `&groove step=&bar/4 &bd ~ &fill &fill[::-1]` (spliced, reversed, nested as any braid). It is the pattern below, read through a kit of its voices, without writing the kit; a braid of voices that something reads with `over=` stays that kit.
+**A stepped braid of voices plays them:** `&groove step=&bar*4 &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh*2` is a drum pattern by name, mixed as it is (`[&groove * .6]`); a chord of voices sounds together, a subsequence squeezes them into a step (`&bd [&hh &hh]`, `[&hh ~ &hh, &bd]`), and repeats, ratchets, holds and chance work as on any step. A braid of voices without `step=` that a groove splices is a drum motif: `&fill &sd &sd*2 ~ &hh`, then `&groove step=&bar*4 &bd ~ &fill &fill[::-1]` (spliced, reversed, nested as any braid). It is the pattern below, read through a kit of its voices, without writing the kit; a braid of voices that something reads with `over=` stays that kit.
 
 ```cells
 &bar scan(1 1 1 1) step=120bpm
 &bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
 &sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .04)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
-&groove step=&bar/2 &bd &hh [&bd,&sd] &hh &bd &bd [&hh,&sd] &hh*2
+&groove step=&bar*2 &bd &hh [&bd,&sd] &hh &bd &bd [&hh,&sd] &hh*2
 &out map=sample [&groove * .6]
 ```
 
-A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar/2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it.
+A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=&bar*2 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it.
 
 ## Parameters as cells
 
-A sound parameter can be a range times cells, so it moves with the music: `lpf=110..3800 * &fenv * &accent * &knob` sweeps the filter from 110 to 3800 Hz by an envelope per note (`map=adsr`), accents (`map=amp`) and a slow knob (`map=lin`); `lpq=&res` takes a cell too. Parameters that are times take a clock as well as seconds: `delaytime=&bar*3/4` is a dotted eighth at whatever the tempo is.
+A sound parameter can be a range times cells, so it moves with the music: `lpf=110..3800 * &fenv * &accent * &knob` sweeps the filter from 110 to 3800 Hz by an envelope per note (`map=adsr`), accents (`map=amp`) and a slow knob (`map=lin`); `lpq=&res` takes a cell too. Parameters that are times take a clock as well as seconds: `delaytime=&bar*4/3` is a dotted eighth at whatever the tempo is.
 
 ```cells
 &bar scan(4 4 4 4) step=120bpm
-&accent map=amp step=&bar/4 1 .4 .8 .4
+&accent map=amp step=&bar*4 1 .4 .8 .4
 &fenv map=adsr .003 .18 .1 .06
-&knob map=lin loop=&bar*16 .2 1 .35 .2
-&res map=lin loop=&bar*32 6 19 6
-&tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*3/4 delay=.22 delayfeedback=.35
+&knob map=lin loop=&bar/16 .2 1 .35 .2
+&res map=lin loop=&bar/32 6 19 6
+&tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35
 ```
 
 ## Envelopes: env= and pitch=
@@ -78,7 +78,7 @@ Written in place they hang as petals of the voice; named, one envelope serves se
 
 ## Volume streams
 
-`map=db` takes decibels: 0 full, −6 about half. A cell with **`map=amp`** in a product is a volume, not a pitch: its values multiply the level while notes sound (1 full, 0 silent; a rest is silence). `&accent map=amp step=&bar/2 1 .3 .6 .3` accents eighths; `&env map=amp loop=&theme 1 .7 .5 .3 0` is an envelope — one shape per note. With no moving pitch, a volume with `step=` starts the notes itself (a gate): `&mix [&hats * &hh]` plays a hi-hat on its steps, at their levels. (Planned: `gate(&rhythm) * …` to articulate explicitly; see [../roadmap.md](../roadmap.md).)
+`map=db` takes decibels: 0 full, −6 about half. A cell with **`map=amp`** in a product is a volume, not a pitch: its values multiply the level while notes sound (1 full, 0 silent; a rest is silence). `&accent map=amp step=&bar*2 1 .3 .6 .3` accents eighths; `&env map=amp loop=&theme 1 .7 .5 .3 0` is an envelope — one shape per note. With no moving pitch, a volume with `step=` starts the notes itself (a gate): `&mix [&hats * &hh]` plays a hi-hat on its steps, at their levels. (Planned: `gate(&rhythm) * …` to articulate explicitly; see [../roadmap.md](../roadmap.md).)
 
 ## map=lin everywhere
 
@@ -86,6 +86,6 @@ Values ramp to the next instead of holding: a voice's waveform (round its cycle)
 
 ## Articulation
 
-Among the pitches acting on a voice, the one with `step=` timing starts notes; `loop=` terms bend them while they sound (vibrato); terms that don't move transpose. Of several with `step=` timing, the finest starts notes and the coarser ones hold under it, as a melody moves over its harmony: `(&walk + &changes) * &bass` with `&walk step=&bar` and `&changes step=&bar*4 0 0 5 0` walks a bar at a time, each bar transposed by its change. Two at the same rate are an error (which one starts the notes?).
+Among the pitches acting on a voice, the one with `step=` timing starts notes; `loop=` terms bend them while they sound (vibrato); terms that don't move transpose. Of several with `step=` timing, the finest starts notes and the coarser ones hold under it, as a melody moves over its harmony: `(&walk + &changes) * &bass` with `&walk step=&bar` and `&changes step=&bar/4 0 0 5 0` walks a bar at a time, each bar transposed by its change. Two at the same rate are an error (which one starts the notes?).
 
 Filters are one per voice (as on a monosynth): overlapping notes share the last envelope; see [../limits.md](../limits.md).

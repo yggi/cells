@@ -254,7 +254,7 @@ describe('the structure', () => {
     const { compileSource } = await import('../compile');
     const { codeShifts } = await import('../program');
     const { plan } = await import('../realize');
-    const src = '&bar scan(1 1 1 1) step=60bpm\n&a 0 2\n&b &a 4 4\n&c base=&b _ _ 7\n&tune step=&bar &b &c\n&v s=tri\n&out map=sample [&tune * &v]';
+    const src = '&bar scan(1 1 1 1) step=60bpm\n&a 0 2\n&b &a 4 4\n&c base=&b = = 7\n&tune step=&bar &b &c\n&v s=tri\n&out map=sample [&tune * &v]';
     const r = compileSource(src);
     const nodes = structure(plan(r, codeShifts(r), r.off), 8);
     const at = (cell: string) => nodes.filter((n) => n.cell === cell).map((n) => `${n.at}-${n.to}/${n.depth}`);

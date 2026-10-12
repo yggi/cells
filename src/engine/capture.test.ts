@@ -74,16 +74,16 @@ function capture(r: CompileResult, mode: OutOfTable = 'allow'): string[] {
 const sounds = (r: CompileResult) => [...new Set(play(r).notes.map((n) => `${n.at.toFixed(6)} ${n.dur.toFixed(6)} ${n.freq.toFixed(4)}`))].sort();
 
 const SETTINGS = [
-  { name: 'a major scale', head: '&key scan(2 2 1 2 2 2 1)\n&bar scan(1 1 1 1) step=90bpm', riff: 'over=&key step=&bar/4', entries: 7 },
-  { name: 'a scale on 19-EDO', head: '&g cycle=19 map=edo\n&key over=&g scan(3 3 2 3 3 3 2)\n&bar scan(1 1 1 1) step=90bpm', riff: 'over=&key step=&bar/4', entries: 7 },
+  { name: 'a major scale', head: '&key scan(2 2 1 2 2 2 1)\n&bar scan(1 1 1 1) step=90bpm', riff: 'over=&key step=&bar*4', entries: 7 },
+  { name: 'a scale on 19-EDO', head: '&g cycle=19 map=edo\n&key over=&g scan(3 3 2 3 3 3 2)\n&bar scan(1 1 1 1) step=90bpm', riff: 'over=&key step=&bar*4', entries: 7 },
   { name: 'a swung clock', head: '&key scan(2 2 1 2 2 2 1)\n&bar 1!8 step=100bpm swing=.67', riff: 'over=&key step=&bar', entries: 7 },
   {
     name: 'a motor spinning up (a moving clock)',
     head: '&key scan(2 1 2 2 1 2 2)\n&bar scan(1 1 1 1) step=104bpm motor=4 mass=1 friction=.2',
-    riff: 'over=&key step=&bar/4',
+    riff: 'over=&key step=&bar*4',
     entries: 7,
   },
-  { name: 'semitones, no table', head: '&bar scan(1 1 1 1) step=120bpm', riff: 'step=&bar/4', entries: 12 },
+  { name: 'semitones, no table', head: '&bar scan(1 1 1 1) step=120bpm', riff: 'step=&bar*4', entries: 12 },
 ];
 const CASES = 250;
 

@@ -5,7 +5,7 @@
 &ground step=&bar 0 -5 -3 -8 -7 -12 -7 -5                 # D A B F# G D G A — two bars, forever
 
 # the line: three variations of two bars each (D = 0)
-&line step=&bar/2 show=notes &(16@2 14@2 12@2 11@2 9@2 7@2 9@2 11@2) &(12@2 11@2 9@2 7@2 5@2 4@2 5@2 2@2) &(0 4 7 5 4 0 4 2 0 -3 0 7 5 9 7 5)
+&line step=&bar*2 show=notes &(16@2 14@2 12@2 11@2 9@2 7@2 9@2 11@2) &(12@2 11@2 9@2 7@2 5@2 4@2 5@2 2@2) &(0 4 7 5 4 0 4 2 0 -3 0 7 5 9 7 5)
 
 &cello s=saw loop=D3 lpf=900 env=&(map=adsr .03 .3 .7 .3)
 &violin s=saw loop=D4 lpf=2600 env=&(map=adsr .08 .2 .8 .4) pitch=&(map=lin loop=5 0 .12 0 -.12 0)

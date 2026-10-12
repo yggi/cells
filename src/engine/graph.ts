@@ -7,7 +7,8 @@
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
 import { isMidiCard, type CompileResult, type ResolvedCell } from './program';
-import type { Binding, Pick, ValueMap } from './ast';
+import type { Atom, Binding, Pick, ValueMap } from './ast';
+import { leaves } from './subseq';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
 import { refsOf } from './readers';
 import type { Transform } from './transform';
@@ -137,7 +138,7 @@ export interface GraphEdge extends Wire {
 const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base']);
 /**
  * A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples,
- * writes or plays it. Not ticks: a parameter's clock (`delaytime=&bar*3/4`) is timing, as a step is.
+ * writes or plays it. Not ticks: a parameter's clock (`delaytime=&bar*4/3`) is timing, as a step is.
  */
 export const feeds = (e: { readonly port: string; readonly band: string }) => !STRUCTURE.has(e.port) && e.band !== 'sync';
 
@@ -328,8 +329,8 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
     if (voiceKit?.implicit && voiceKit.kit) {
       const members = voiceKit.units.map((u) => (u.atom.kind === 'ref' ? u.atom.name : ''));
       const written = new Map<string, number>();
-      for (const u of c.units)
-        for (const i of u.atom.kind === 'note' ? [u.atom.value] : u.atom.kind === 'chord' ? u.atom.notes : []) written.set(members[i], (written.get(members[i]) ?? 0) + 1);
+      for (const a of c.units.flatMap((u) => leaves(u.atom)))
+        for (const i of a.kind === 'note' ? [a.value] : a.kind === 'chord' ? a.notes : []) written.set(members[i], (written.get(members[i]) ?? 0) + 1);
       for (const [child, count] of written)
         link({
           id: edgeId(id, cellId(child)),
@@ -438,7 +439,7 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
         target: cellId(child),
         count,
         // (each place it is written in this cell's steps: its pick or shift, operations, transposition)
-        transforms: c.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === child ? [refTransform(u.atom)] : [])),
+        transforms: c.units.flatMap((u) => leaves(u.atom).flatMap((a) => (a.kind === 'ref' && a.name === child ? [refTransform(a)] : []))),
         ...spliceSound(child),
         ...wire('braid', spliceBand(child), id, cellId(child), chord(child), true, true),
       });
@@ -482,7 +483,7 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
         ...beltOf(c, result.cells.get(c.step.driver)),
         ...wire('step', 'sync', id, cellId(c.step.driver), 1, true),
       });
-    // a parameter given as a clock (delaytime=&bar*3/4, length=, at=): a tap of the clock's ticks, at its rate as written;
+    // a parameter given as a clock (delaytime=&bar*4/3, length=, at=): a tap of the clock's ticks, at its rate as written;
     // into a meter, a tap of its net (ground), as a step is
     for (const [key, k] of Object.entries(c.paramClocks))
       if (result.cells.has(k.driver))
@@ -702,10 +703,10 @@ function soundsOf(result: CompileResult, name: string, guard = 0): string[] {
   return [kit?.kit ? kit.name : name];
 }
 
-/** A step's rate as written (step=&x*2/3, cycle(&x), loop=, belt=); nothing when it is the driver's own. */
+/** A step's rate as written (step=&x*3/2, cycle(&x), loop=, belt=); nothing when it is the driver's own. */
 const rateOf = (c: ResolvedCell): Transform => rateTransform(c.step!, typeof c.params.belt === 'number' ? c.params.belt : undefined);
 
-/** A clock's rate as written (`&x*2/3`, `cycle(&x)`, the whole braid, through a belt); nothing when it is the clock's own. */
+/** A clock's rate as written (`&x*3/2`, `cycle(&x)`, the whole braid, through a belt); nothing when it is the clock's own. */
 function rateTransform(s: NonNullable<ResolvedCell['step']>, belt?: number): Transform {
   if (!s.chain.length && !s.cycle && !s.whole && belt === undefined) return [];
   return [{ kind: 'rate', by: s.chain, per: s.cycle ? 'cycle' : 'step', whole: s.whole, ...(belt !== undefined ? { belt } : {}) }];
@@ -729,11 +730,17 @@ function chordWidth(result: CompileResult): (name: string) => number {
   const of = (name: string, guard = 0): number => {
     const hit = memo.get(name);
     if (hit !== undefined) return hit;
+    // (a stack, [0 2, 4], as wide as its layers side by side; a subsequence as its widest step)
+    const width = (a: Atom): number =>
+      a.kind === 'chord'
+        ? a.notes.length
+        : a.kind === 'ref' && guard < 64
+          ? of(a.name, guard + 1)
+          : a.kind === 'seq'
+            ? a.layers.reduce((n, l) => n + Math.max(1, ...l.map((t) => width(t.atom))), 0)
+            : 1;
     let w = 1;
-    for (const u of result.cells.get(name)?.units ?? []) {
-      if (u.atom.kind === 'chord') w = Math.max(w, u.atom.notes.length);
-      else if (u.atom.kind === 'ref' && guard < 64) w = Math.max(w, of(u.atom.name, guard + 1));
-    }
+    for (const u of result.cells.get(name)?.units ?? []) w = Math.max(w, width(u.atom));
     memo.set(name, w);
     return w;
   };
@@ -770,7 +777,7 @@ const isDelayed = (e: GraphEdge) => e.transforms.some((t) => t.some((s) => s.kin
 /**
  * The nets among the edges: a table read by two or more (over=), a melody or a voice by two or more, a cell read at
  * delays (a canon's copies, a tape's heads: docs/decisions/010-canon-copies.md), and each meter's ticks to every cell
- * it steps or that takes a time from it (a step or a parameter's clock into a meter, `delaytime=&bar*3/4`; not through
+ * it steps or that takes a time from it (a step or a parameter's clock into a meter, `delaytime=&bar*4/3`; not through
  * a belt: a belt is a body, drawn). A meter's net is its `step` net, whichever port each tap reads it through.
  */
 export function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): GraphNet[] {

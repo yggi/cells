@@ -26,8 +26,8 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   syntax(
     'rate',
     'step=&x*n · step=&x/n · step=&x*n/d',
-    'A chain read left to right: *n once per n steps of &x, /n n times per step; *2/3 is three per two (triplets).',
-    ['&fast step=&bar/2 0 1', '&trip step=&bar*2/3 0 2 4'],
+    "A chain read left to right, as Strudel's fast and slow: *n n steps per step of &x, /n one per n steps; *3/2 is three per two (triplets).",
+    ['&fast step=&bar*2 0 1', '&trip step=&bar*3/2 0 2 4'],
     'time.md',
   ),
   syntax(
@@ -61,7 +61,7 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   const driver = s.ref(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`);
   if (driver.pick || driver.shift) s.fail(`${what}= takes a whole cell`, driver.span.col - 1, driver.span.len);
   if (cycle) s.expect(')', `')' to close cycle(&${driver.name})`);
-  // a chain of *n and /n, read left to right: *2 once per two steps, /2 twice per step, *2/3 three per two
+  // a chain of *n and /n, read left to right: *2 twice per step, /2 once per two steps, *3/2 three per two
   let ratio = 1;
   const chain: RateOp[] = [];
   while (s.peek() === '*' || s.peek() === '/') {
@@ -69,7 +69,7 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
     const at = s.i;
     const n = s.match(/[0-9]+(?:\.[0-9]+)?|\.[0-9]+/y);
     if (n === null || !(parseFloat(n) > 0)) s.fail(`a positive number after ${op}`, at);
-    ratio = op === '*' ? ratio / parseFloat(n) : ratio * parseFloat(n);
+    ratio = op === '*' ? ratio * parseFloat(n) : ratio / parseFloat(n);
     chain.push({ op: op === '*' ? '×' : '÷', n: parseFloat(n!) });
   }
   return { whole, kind: 'driven', driver, cycle, ratio, chain, span: s.span(start) };
@@ -82,14 +82,14 @@ export const MAP_KINDS: Readonly<Record<MapWord, Syntax>> = {
     'map',
     'map=amp',
     'A volume: its values multiply the level (on a voice, the braid as a waveform, its range onto −1…1; the default).',
-    ['&accent map=amp step=&bar/4 1 .4 .8 .4'],
+    ['&accent map=amp step=&bar*4 1 .4 .8 .4'],
     'sound.md',
   ),
   lin: syntax(
     'map',
     'map=lin',
     'As amp, ramping from each value to the next: a glide, a triangle. In a mix it is plain: a volume in a product, a pitch in a sum.',
-    ['&swell map=lin loop=&bar*8 .2 1'],
+    ['&swell map=lin loop=&bar/8 .2 1'],
     'sound.md',
   ),
   db: syntax('map', 'map=db', 'A volume in decibels (0 as it is, −6 about half).', ['&fade map=db step=&bar 0 -6 -12'], 'sound.md'),

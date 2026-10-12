@@ -37,7 +37,7 @@ export interface Attribute {
   readonly voice?: true;
   /** It can move: lpf=&sweep, lpf=200..3000 * &fenv. */
   readonly moves?: true;
-  /** It is a time: seconds, or a clock (delaytime=&bar/2). */
+  /** It is a time: seconds, or a clock (delaytime=&bar*2). */
   readonly clock?: true;
   /** It is a frequency or a rate, in Hz (lpf=1200, wanderhz=.5): its slider over a wide range runs on a log scale. */
   readonly hz?: true;
@@ -52,7 +52,7 @@ const physics = (help: string, on: readonly Role[], extra: Partial<Attribute> = 
 /** The attributes with a syntax of their own (the parser reads each): every cell can carry these. */
 export const CORE: Readonly<Record<string, Attribute>> = {
   over: core('the table its numbers read', 'tables.md'),
-  base: core('the cell it is a copy of, changed where it says: its braid step by step over the base’s (_ keeps a step), its attributes where it sets none', 'braid.md'),
+  base: core('the cell it is a copy of, changed where it says: its braid step by step over the base’s (= keeps a step), its attributes where it sets none', 'braid.md'),
   step: core('what moves it, step by step', 'time.md'),
   loop: core('what moves it, the whole braid at a time', 'time.md'),
   shift: core('how far it is turned', 'tables.md'),
@@ -65,7 +65,7 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   cycle: core('where it wraps: turning past this many steps starts again (a grid’s size is map=edo)', 'tables.md'),
   size: core('how large it’s drawn, against the others: 2 twice, .5 half', 'display.md'),
   laps: core('how many laps it plays, then it ends', 'time.md'),
-  chance: core('what a bare x? means here: a probability, or free() for a slider', 'cell.md'),
+  chance: core('what a bare x? means here: the probability it is dropped, or free() for a slider', 'cell.md'),
   seed: core('a different sequence of chance', 'cell.md'),
   title: core('on a note: the piece’s title (its card)', 'display.md', ['note']),
   tags: core('on a note: the piece’s tags, comma-separated; on a cell, its clusters in the graph', 'display.md'),
@@ -83,7 +83,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   hpq: sound('high-pass resonance', { moves: true }),
   room: sound('reverb send 0–1', { moves: true }),
   delay: sound('delay send 0–1', { moves: true }),
-  delaytime: sound('echo time, seconds — or a clock: &bar/2 (an eighth at the tempo)', { clock: true }),
+  delaytime: sound('echo time, seconds — or a clock: &bar*2 (an eighth at the tempo)', { clock: true }),
   delayfeedback: sound('echo feedback 0–1'),
   pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades'),
   distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
@@ -124,7 +124,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   slip: physics('a belt’s grip: past this pull it slips, and the cell falls behind for good', ['driven']),
   // tapes and their heads
   write: physics('a tape: what its write head records (write=&melody); it moves with its step=', ['tape'], { value: 'cell' }),
-  length: physics('a tape: how long its loop is, in seconds of tape (or a clock: length=&bar*4); none, an open reel', ['tape'], { clock: true }),
+  length: physics('a tape: how long its loop is, in seconds of tape (or a clock: length=&bar/4); none, an open reel', ['tape'], { clock: true }),
   erase: physics('a tape: how much of what was there each pass under the write head wipes (1 all, .3 leaves ghosts)', ['tape']),
   tone: physics('a sound tape: its loss — each pass through the loop darker (Hz: 7000 bright, 1500 worn)', ['tape'], { hz: true }),
   drive: physics('a sound tape: how hard it saturates each pass (0 clean, .5 warm, 1 crushed)', ['tape']),
@@ -177,7 +177,7 @@ export const ATTRIBUTES: Readonly<Record<string, Attribute>> = { ...CORE, ...PAR
 /** Parameters that name a cell (fm=&op, write=&melody …): the parser reads a reference. */
 export const CELL_PARAMS: ReadonlySet<string> = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].value === 'cell'));
 
-/** Parameters that are times: they take a clock as well as seconds (delaytime=&bar/2). */
+/** Parameters that are times: they take a clock as well as seconds (delaytime=&bar*2). */
 export const TIME_PARAMS: ReadonlySet<string> = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].clock));
 
 /** Attributes that can move (given by cells): lpf=&sweep, lpf=200..3000 * &fenv, pitch=0..30 * &drop. */

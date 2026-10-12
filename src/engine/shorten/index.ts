@@ -8,7 +8,7 @@
  *  - fractions.ts: every step's length shares a factor — divide it out, slow the clock
  *  - same.ts:      two cells written exactly alike — one, used by both names' users
  *  - defaults.ts:  an attribute that says what would be so anyway (loop=SAMPLE_RATE, cycle= its length, pan=.5)
- *  - progressions.ts: a transposing loop=&x*N with the bars multiplied out — step=&x*(N/k)
+ *  - progressions.ts: a transposing loop=&x/N with the bars multiplied out — step=&x/(N/k)
  *  - stereo.ts:    a sound card's two chords that differ only in gains — one chord, and pan= on each voice
  *  - wrappers.ts:  a cell that only reads motifs through a shifted table — &motif^k where it's used
  *  - arrange.ts:   not shorter, a migration: a selector of mixes (an error now) rewritten at the input (decision 016)
