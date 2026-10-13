@@ -54,7 +54,7 @@ export interface Imported {
 }
 
 /** A frame of a fold's story: the piece by then, and a line on what came. */
-interface StoryStep {
+export interface StoryStep {
   readonly source: string;
   readonly says: string;
 }
