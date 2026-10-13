@@ -156,7 +156,8 @@ describe('channels', () => {
   it('a piece: its voices in the order it declares them, its kit members on 10 with their notes', () => {
     const r = compileSource(PRESETS.drums.source);
     const t = channelTable(r);
-    expect(t.voices).toEqual([{ voice: 'rim', channel: 1 }]);
+    expect(t.voices).toEqual([{ voice: 'rim', channel: 1, port: 1 }]);
+    expect(t.kits).toEqual([{ port: 1, channel: 10 }]);
     expect(t.kit).toEqual([
       { member: 'bd', note: 36 },
       { member: 'sd', note: 38 },
@@ -168,32 +169,32 @@ describe('channels', () => {
     const route = router(r, t);
     const events = eventsBetween(planOf(PRESETS.drums.source), 0, 4, true);
     const kick = events.find((e) => e.voice === 'bd')!;
-    expect(route(kick)).toEqual({ channel: 10, drum: 36 });
-    expect(route(events.find((e) => e.voice === 'rim')!)).toEqual({ channel: 1, drum: null });
+    expect(route(kick)).toEqual([{ channel: 10, drum: 36, port: 1 }]);
+    expect(route(events.find((e) => e.voice === 'rim')!)).toEqual([{ channel: 1, drum: null, port: 1 }]);
   });
 
   it('a kit put on another channel: its members go there, and voices skip it instead of 10', () => {
     const r = compileSource(PRESETS.drums.source);
-    const t = channelTable(r, {}, 1);
-    expect(t.kitChannel).toBe(1);
-    expect(t.voices).toEqual([{ voice: 'rim', channel: 2 }]);
+    const t = channelTable(r, [{ kit: 1 }]);
+    expect(t.kits).toEqual([{ port: 1, channel: 1 }]);
+    expect(t.voices).toEqual([{ voice: 'rim', channel: 2, port: 1 }]);
     const route = router(r, t);
     const events = eventsBetween(planOf(PRESETS.drums.source), 0, 4, true);
-    expect(route(events.find((e) => e.voice === 'bd')!)).toEqual({ channel: 1, drum: 36 });
+    expect(route(events.find((e) => e.voice === 'bd')!)).toEqual([{ channel: 1, drum: 36, port: 1 }]);
     expect(Array.from({ length: 5 }, (_, i) => melodicChannel(i, 3))).toEqual([1, 2, 4, 5, 6]);
     expect(rotationChannels(1, 4, true, 3)).toEqual([1, 2, 4]);
-    expect(channelTable(r, {}, 99).kitChannel).toBe(10);
+    expect(channelTable(r, [{ kit: 99 }]).kits).toEqual([{ port: 1, channel: 10 }]);
   });
 
   it('a channel chosen by hand wins; one out of range does not', () => {
     const r = compileSource(PRESETS.sailor.source);
     expect(channelTable(r).voices).toEqual([
-      { voice: 'fiddle', channel: 1 },
-      { voice: 'bass', channel: 2 },
+      { voice: 'fiddle', channel: 1, port: 1 },
+      { voice: 'bass', channel: 2, port: 1 },
     ]);
-    expect(channelTable(r, { bass: 5, fiddle: 17 }).voices).toEqual([
-      { voice: 'fiddle', channel: 1 },
-      { voice: 'bass', channel: 5 },
+    expect(channelTable(r, [{ voices: { bass: 5, fiddle: 17 } }]).voices).toEqual([
+      { voice: 'fiddle', channel: 1, port: 1 },
+      { voice: 'bass', channel: 5, port: 1 },
     ]);
   });
 
@@ -202,14 +203,40 @@ describe('channels', () => {
     const t = channelTable(r);
     // (&leadOut plays &lead and &bell; &bass is played directly; &drumOut plays the kit)
     expect(t.voices).toEqual([
-      { voice: 'bass', channel: 1 },
-      { voice: 'leadOut', channel: 2 },
+      { voice: 'bass', channel: 1, port: 1 },
+      { voice: 'leadOut', channel: 2, port: 1 },
     ]);
     expect(t.kit.map((k) => k.member)).toEqual(['bd', 'sd', 'hh']);
-    const route = router(r, channelTable(r, { leadOut: 7 }));
+    const route = router(r, channelTable(r, [{ voices: { leadOut: 7 } }]));
     const events = eventsBetween(planOf(PRESETS.gate.source), 0, 4, true);
-    for (const v of ['lead', 'bell']) expect(route(events.find((e) => e.voice === v)!)).toEqual({ channel: 7, drum: null });
-    expect(route(events.find((e) => e.voice === 'bd')!)).toEqual({ channel: 10, drum: 36 });
+    for (const v of ['lead', 'bell']) expect(route(events.find((e) => e.voice === v)!)).toEqual([{ channel: 7, drum: null, port: 1 }]);
+    expect(route(events.find((e) => e.voice === 'bd')!)).toEqual([{ channel: 10, drum: 36, port: 1 }]);
+  });
+
+  it('a matrix of outputs: a voice on any output and channel, 0 not sent; outputs after the first send nothing unless chosen', () => {
+    const r = compileSource(PRESETS.drums.source);
+    expect(channelTable(r, [{}, {}]).voices).toEqual([{ voice: 'rim', channel: 1, port: 1 }]);
+    const t = channelTable(r, [{ voices: { rim: 0 } }, { voices: { rim: 4 }, kit: 10 }, { voices: { rim: 2 } }]);
+    expect(t.voices).toEqual([
+      { voice: 'rim', channel: 4, port: 2 },
+      { voice: 'rim', channel: 2, port: 3 },
+    ]);
+    expect(t.kits).toEqual([
+      { port: 1, channel: 10 },
+      { port: 2, channel: 10 },
+    ]);
+    const route = router(r, t);
+    const events = eventsBetween(planOf(PRESETS.drums.source), 0, 4, true);
+    expect(route(events.find((e) => e.voice === 'rim')!)).toEqual([
+      { channel: 4, drum: null, port: 2 },
+      { channel: 2, drum: null, port: 3 },
+    ]);
+    expect(route(events.find((e) => e.voice === 'bd')!)).toEqual([
+      { channel: 10, drum: 36, port: 1 },
+      { channel: 10, drum: 36, port: 2 },
+    ]);
+    // (the kit off the first output: nothing of it goes there)
+    expect(channelTable(r, [{ kit: 0 }]).kits).toEqual([]);
   });
 
   it('rotation takes a free channel, the one free longest, else the first to free', () => {

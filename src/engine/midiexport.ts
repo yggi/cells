@@ -94,7 +94,7 @@ export function pieceMidi(result: CompileResult, shifts: Shifts, muted: Readonly
   }
   const names = new Map<number, string[]>();
   for (const v of table.voices) names.set(v.channel, [...(names.get(v.channel) ?? []), v.voice]);
-  if (table.kit.length) names.set(table.kitChannel ?? 10, [...(names.get(table.kitChannel ?? 10) ?? []), table.kit.map((k) => k.member).join(' ')]);
+  for (const k of table.kits) names.set(k.channel, [...(names.get(k.channel) ?? []), table.kit.map((m) => m.member).join(' ')]);
   const tracks: SmfTrack[] = [...byChannel]
     .sort(([a], [b]) => a - b)
     .map(([channel, t]) => ({

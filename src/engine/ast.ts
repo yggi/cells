@@ -194,13 +194,13 @@ export type StepSpec = { readonly whole: boolean } & (
  *   db      a volume in decibels: 0 full, −6 about half, −20 a tenth (rests silent)
  *   adsr    an envelope: attack decay sustain release (seconds; sustain a level) for each note
  *   midi    the cell is a MIDI card: its entries are MIDI channels, in order; midi(c) all on channel c,
- *           midi(c, p) on output slot p (a device the MIDI page maps it to; slot 1 the default output)
+ *           midi(c, p) on output slot p (the MIDI page's pth output; slot 1 the first)
  */
 export type MapSpec =
   | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db'; readonly span: Span }
   /** A grid: cycle= equal steps to the period — 2 (an octave) for map=edo, r for map=ed(r). */
   | { readonly kind: 'edo'; readonly period: number; readonly span: Span }
-  /** A MIDI card: each entry a channel in order (channel null), or all on one channel; on an output slot (1 the default output). */
+  /** A MIDI card: each entry a channel in order (channel null), or all on one channel; on an output slot (the MIDI page's output of that number, 1 the first). */
   | { readonly kind: 'midi'; readonly channel: number | null; readonly port: number; readonly span: Span }
   | { readonly kind: 'table'; readonly table: Ref; readonly span: Span };
 

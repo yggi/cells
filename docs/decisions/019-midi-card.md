@@ -30,4 +30,5 @@ MIDI out began as an app setting (#205): every voice heard mirrored to one port,
 - No saved piece changes: `map=midi` was an error before.
 - A kit on a card off channel 10 (`map=midi(3) &groove`) is sent on that channel. MIDI in's keys and the on-screen pads still take channel 10 as the kit's (#207, #255).
 - The slots a piece uses are per piece title in this browser, as the channel table is: a renamed piece starts with slot 1 alone mapped.
+- *Since the routing matrix:* slot n is the MIDI page's nth output, one list of outputs for every piece (a device is the browser's, not the piece's), so a renamed piece keeps its slots; the per-piece slot devices kept before were read into that list once ([../ui/midi.md](../ui/midi.md)).
 - CC out for moving parameters and a program change per entry are follow-ups (#203).

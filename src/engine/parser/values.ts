@@ -117,7 +117,7 @@ export const MAP_SYNTAX: readonly Syntax[] = [
   syntax(
     'map',
     'map=midi(c) · map=midi(c, p)',
-    'A MIDI card on one channel c (1–16), and on output slot p (1–16; the MIDI page maps it to a device, 1 the default output).',
+    'A MIDI card on one channel c (1–16), and on output slot p (1–16; the nth output of the MIDI page, 1 the first).',
     ['&drums map=midi(10) &groove', '&keys map=midi(1, 2) [&theme * &reed]'],
     'midi.md',
   ),

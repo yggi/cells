@@ -142,7 +142,7 @@ describe('MIDI out from a card: the channel table and the router', () => {
   const card = `${BAND}\n${OUT}\n&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove\n&more map=midi(5, 2) [&theme * &reed * .5]`;
   it("set by the piece: what its cards name, on their channels and slots; a kit's members with their drum notes", () => {
     const r = compileSource(card);
-    const t = channelTable(r, { reed: 9 });
+    const t = channelTable(r, [{ voices: { reed: 9 } }]);
     expect(t.byPiece).toBe(true);
     expect(t.ports).toEqual([1, 2]);
     expect(t.voices).toEqual([
