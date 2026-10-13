@@ -17,8 +17,9 @@ over a table takes an accidental (`over=scale(minor, C) 0 1 2 6# 7`), and `&m^1`
 2. **An accidental under `^n` (option 2a): it stays with its note.** `&m^1` makes `6#` a `7#`: shift with carry, the
    alteration riding along, as `inverse()` mirrors an accidental with its note. Strudel's `scaleTranspose` throws on a
    note outside the scale, so this adds a meaning and changes none (decision 027).
-3. **Modulation (option 3a): one key for the piece**, accidentals where it modulates; a key per section (#346) or a
-   turning key only if the ratchet asks for it.
+3. **Modulation (option 3a): one key for the piece**, accidentals where it modulates; since #346 also a key per
+   section where the piece reads as its key areas (taken for reading, at most 15 % longer: `docs/notes/fold.md`,
+   *Sections by key*); a turning key only if the ratchet asks for it.
 4. **Strudel's spellings, with it** (decision 027's superset rule): `s` and `f` on a number are `#` and `b` (`6s`,
    `7f`, mixed and repeated as Strudel allows); `scale("C:minor")`, `scale("F#:harmonic:minor")` are
    `scale(minor, C)` and `scale(harmonic, F#)`. A tonic with an octave is an error (the octave is the voice's).

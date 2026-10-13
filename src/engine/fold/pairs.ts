@@ -12,7 +12,9 @@ function pairOf(a: Tok, b: Tok): { key: string; base: number | null; offA: numbe
   const base = a.base ?? b.base;
   const offA = a.base === null ? null : a.base - base!;
   const offB = b.base === null ? null : b.base - base!;
-  return { key: `${a.key}/${offA}|${b.key}/${offB}`, base, offA, offB };
+  // (a symbol spliced slower is another token than the same at its own speed)
+  const at = (t: Tok) => (t.stretch ? `${t.key}@${t.stretch}` : t.key);
+  return { key: `${at(a)}/${offA}|${at(b)}/${offB}`, base, offA, offB };
 }
 
 /** The pair that comes most often (not overlapping itself: a a a is one a a), and how often; never a pair with a step
@@ -48,7 +50,10 @@ export const pairs: Tool = (f: Folded, see) => {
   for (const r of f.rules.values()) if (r.of) copiesOf.set(r.of, [...(copiesOf.get(r.of) ?? []), r]);
   const inside = [...f.rules.values()].filter((r) => !r.of).map((r) => r.key);
   // (the lines, then the symbols' steps as tokens at their offsets)
-  let seqs: Tok[][] = [...f.lines.map((l) => [...l.toks]), ...inside.map((k) => f.rules.get(k)!.kids.map((c) => ({ key: c.key, base: c.off })))];
+  let seqs: Tok[][] = [
+    ...f.lines.map((l) => [...l.toks]),
+    ...inside.map((k) => f.rules.get(k)!.kids.map((c) => ({ key: c.key, base: c.off, ...(c.stretch ? { stretch: c.stretch } : {}) }))),
+  ];
   // (a copied phrase's steps that one of its copies changes are held: no pair takes them)
   let held: (boolean[] | null)[] = [
     ...f.lines.map(() => null),
@@ -79,8 +84,8 @@ export const pairs: Tool = (f: Folded, see) => {
             rule ??= {
               key: name,
               kids: [
-                { key: toks[i]!.key, off: p.offA },
-                { key: toks[i + 1]!.key, off: p.offB },
+                { key: toks[i]!.key, off: p.offA, ...(toks[i]!.stretch ? { stretch: toks[i]!.stretch } : {}) },
+                { key: toks[i + 1]!.key, off: p.offB, ...(toks[i + 1]!.stretch ? { stretch: toks[i + 1]!.stretch } : {}) },
               ],
             };
             out.push({ key: name, base: p.base });
@@ -117,7 +122,7 @@ export const pairs: Tool = (f: Folded, see) => {
   /** The lines and the symbols as folded so far. */
   function now(): Folded {
     const out = new Map(rules);
-    inside.forEach((k, i) => out.set(k, { key: k, kids: seqs[f.lines.length + i]!.map((t) => ({ key: t.key, off: t.base })) }));
+    inside.forEach((k, i) => out.set(k, { key: k, kids: seqs[f.lines.length + i]!.map((t) => ({ key: t.key, off: t.base, ...(t.stretch ? { stretch: t.stretch } : {}) })) }));
     for (const vs of copies.values()) for (const v of vs) out.set(v.key, { ...v, kids: [...v.kids], patched: [...v.patched!] });
     return { lines: f.lines.map((l, i) => ({ ...l, toks: seqs[i]! })), rules: out, looks: f.looks };
   }

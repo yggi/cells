@@ -3,7 +3,7 @@ import { bestKey, degreeOf, degreeText, inDegrees, keyName, pitchOf, scaleText, 
 import type { Line } from './ir';
 
 // (a key as bestKey makes them: its degrees' steps above the tonic)
-const STEPS = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], harmonic: [0, 2, 3, 5, 7, 8, 11] };
+const STEPS = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], harmonic: [0, 2, 3, 5, 7, 8, 11], melodic: [0, 2, 3, 5, 7, 9, 11] };
 const keyOfScale = (name: Key['name'], tonic: number): Key => ({ name, tonic, positions: STEPS[name] });
 const line = (pitches: number[]): Line => ({ name: 'l', length: pitches.length, chords: pitches.map((p, i) => ({ at: i, dur: 1, values: [String(p)] })) });
 

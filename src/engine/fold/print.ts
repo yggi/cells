@@ -12,7 +12,7 @@ export function tokText(t: Tok, names: ReadonlyMap<string, string>, caret = '^$'
   if (isElement(t.key)) return elementText(t.key, t.base);
   if (isLook(t.key)) return `&${names.get(t.key) ?? t.key}`;
   const name = names.get(t.key) ?? t.key;
-  return t.base ? `&${name}${caret}${t.base}` : `&${name}`;
+  return `&${name}${t.base ? `${caret}${t.base}` : ''}${t.stretch && t.stretch !== 1 ? `@${t.stretch}` : ''}`;
 }
 
 /** Texts as a braid, a run of one written `x!n`. */
@@ -43,7 +43,7 @@ function variantText(v: Rule, phrase: Rule, names: ReadonlyMap<string, string>, 
 }
 
 /** A symbol's children as tokens at their offsets (its base 0). */
-export const kidsOf = (r: Rule): Tok[] => r.kids.map((k) => ({ key: k.key, base: k.off }));
+export const kidsOf = (r: Rule): Tok[] => r.kids.map((k) => ({ key: k.key, base: k.off, ...(k.stretch ? { stretch: k.stretch } : {}) }));
 
 /**
  * The folded lines as cells: the symbols in the order they are first used (each before the lines, named `prefix`1, 2 …

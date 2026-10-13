@@ -9,7 +9,7 @@ import type { Line } from './ir';
 
 /** A key: its scale's name (`scale(name, tonic)`), its tonic (a pitch class) and its degrees' steps above the tonic. */
 export interface Key {
-  readonly name: 'major' | 'minor' | 'harmonic';
+  readonly name: 'major' | 'minor' | 'harmonic' | 'melodic';
   readonly tonic: number;
   readonly positions: readonly number[];
 }
@@ -18,7 +18,7 @@ export interface Key {
 const NAMES: readonly Key['name'][] = ['major', 'minor', 'harmonic'];
 const TONICS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-const keyOf = (name: Key['name'], tonic: number): Key => {
+export const keyOf = (name: Key['name'], tonic: number): Key => {
   const positions = [0];
   for (const step of SCALES[name]!.steps.slice(0, -1)) positions.push(positions[positions.length - 1]! + step);
   return { name, tonic, positions };
@@ -27,7 +27,7 @@ const keyOf = (name: Key['name'], tonic: number): Key => {
 /** A key as the cell that is it: `scale(minor, C)`. */
 export const scaleText = (k: Key): string => `scale(${k.name}, ${TONICS[k.tonic]})`;
 /** A key as words: `C minor`, `C harmonic minor`. */
-export const keyName = (k: Key): string => `${TONICS[k.tonic]} ${k.name === 'harmonic' ? 'harmonic minor' : k.name}`;
+export const keyName = (k: Key): string => `${TONICS[k.tonic]} ${k.name === 'harmonic' || k.name === 'melodic' ? `${k.name} minor` : k.name}`;
 
 /** A degree's pitch (semitones from C4), as a line reading through the key plays it (the tonic in the octave above
  * C4, each seven degrees an octave). */

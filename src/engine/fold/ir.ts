@@ -24,6 +24,16 @@ export interface Line {
 export interface Tok {
   readonly key: string;
   readonly base: number | null;
+  /** A symbol spliced k times slower (`&m@2`, `stretch.ts`): each of its steps k long. Never on an element (its own
+   * length says it). */
+  readonly stretch?: number;
+}
+
+/** A symbol's child: a token at an offset from the symbol's base (null: no pitch). */
+export interface Kid {
+  readonly key: string;
+  readonly off: number | null;
+  readonly stretch?: number;
 }
 
 /**
@@ -33,7 +43,7 @@ export interface Tok {
  */
 export interface Rule {
   readonly key: string;
-  readonly kids: readonly { readonly key: string; readonly off: number | null }[];
+  readonly kids: readonly Kid[];
   readonly of?: string;
   readonly patched?: readonly boolean[];
 }

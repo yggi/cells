@@ -7,6 +7,9 @@
  *                  compare as shapes (a shift with carry)
  *  - dilate.ts     an isometry: a line whose lengths share a factor on a clock that much slower (a phrase at two
  *                  speeds is then one cell)
+ *  - stretch.ts    the same inside a line: a passage whose lengths share a factor, a cell at its own speed spliced
+ *                  slower (`&m@2`); the same passage at two speeds one cell (augmentation)
+ *  - degrees.ts    a disentangler: the pitches as degrees of the piece's key, so a sequence is a phrase moved (`&m^1`)
  *  - figure.ts     an isometry by look-up: a run of blocks alike through their own chords, one figure read over a table
  *                  of chords (BWV 847's prelude)
  *  - variants.ts   a disentangler (lifting: predict and residual): a long phrase that returns nearly the same, one
@@ -25,6 +28,7 @@ import { tokensOf } from './transpose';
 import { pairs } from './pairs';
 import { figure } from './figure';
 import { dilate } from './dilate';
+import { stretch } from './stretch';
 import { variants } from './variants';
 import { beta } from './beta';
 import { printFolded } from './print';
@@ -32,15 +36,16 @@ import { printFolded } from './print';
 export type { Chord, Line } from './ir';
 export { printFolded } from './print';
 
-/** The tools in the order they're tried, each round: dilate (a line's clock), look up (figurations), phrases and their
- * variants, pairs, then take back what doesn't pay (β). */
-const TOOLS: readonly Tool[] = [dilate, figure, variants, pairs, beta];
+/** The tools in the order they're tried, each round: dilate (a line's clock), look up (figurations), passages at another
+ * speed (`&m@2`), phrases and their variants, pairs, then take back what doesn't pay (β). */
+const TOOLS: readonly Tool[] = [dilate, figure, stretch, variants, pairs, beta];
 /** Each tool's name, as a step is told. */
 const NAMES = new Map<Tool, string>([
   [dilate, 'clocks'],
   [figure, 'figures'],
   [variants, 'phrases and their variants'],
   [pairs, 'pairs'],
+  [stretch, 'passages at another speed'],
   [beta, 'taking back what doesn’t pay'],
 ]);
 

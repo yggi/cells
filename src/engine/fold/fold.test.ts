@@ -147,3 +147,34 @@ describe('the folder', () => {
     expect(plays(lines)).toEqual(expected(lines));
   });
 });
+
+describe('a passage at another speed (stretch.ts, #345)', () => {
+  const PHRASE = [0, 2, 4, 5, 7, 5, 4, 2, 0, -1, 0, 2];
+  it('folds a passage in longer notes into a cell at its own speed, spliced slower, playing the same', () => {
+    // (a line of sixteenths with the phrase in eighths in its middle: not a whole line dilate.ts could slow)
+    const notes: [number, number, number][] = [];
+    let at = 0;
+    for (const p of [9, 11, 12, 14]) notes.push([at++, 1, p]);
+    for (const p of PHRASE) (notes.push([at, 2, p]), (at += 2));
+    for (const p of [14, 12, 11, 9]) notes.push([at++, 1, p]);
+    const lines = [line('a', notes, at)];
+    const { lines: braids } = printFolded(fold(lines));
+    expect(braids.get('a')).toMatch(/&m\d+@2/);
+    expect(plays(lines)).toEqual(expected(lines));
+  });
+  it('splices the same passage at two speeds from one cell (augmentation)', () => {
+    const notes: [number, number, number][] = [];
+    let at = 0;
+    for (const p of PHRASE) (notes.push([at, 2, p]), (at += 2));
+    notes.push([at++, 1, 19]);
+    for (const p of PHRASE) (notes.push([at, 4, p + 7]), (at += 4));
+    notes.push([at++, 1, 19]);
+    const lines = [line('a', notes, at)];
+    const { defs, lines: braids } = printFolded(fold(lines));
+    const used = [...braids.get('a')!.matchAll(/&(m\d+)(?:\^\$-?\d+)?@(\d)/g)].map((m) => [m[1], m[2]]);
+    expect(used.map(([, k]) => k)).toEqual(['2', '4']);
+    expect(used[0]![0]).toBe(used[1]![0]);
+    expect(defs.join('\n')).toContain(`&${used[0]![0]} `);
+    expect(plays(lines)).toEqual(expected(lines));
+  });
+});

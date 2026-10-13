@@ -169,11 +169,12 @@ describe('the fold watched as it runs (Convert to cells, live)', () => {
     // (the first: every note written out, nothing folded yet; the last shorter)
     expect(steps[0].source).not.toMatch(/^&m\d/m);
     expect(steps.at(-1)!.source.length).toBeLessThan(steps[0].source.length);
-    // (two folds, in semitones and in degrees of its key, each to its end; then the one taken)
+    // (three folds, in semitones, in degrees of its key and in sections by key, each to its end; then the one taken)
     expect(new Set(steps.map((s) => s.tool.replace(/, in .*$/, '')))).toEqual(
-      new Set(['start', 'phrases and their variants', 'pairs', 'taking back what doesn’t pay', 'folded', 'done']),
+      new Set(['start', 'clocks', 'passages at another speed', 'phrases and their variants', 'pairs', 'taking back what doesn’t pay', 'folded', 'done']),
     );
     expect(steps.some((s) => s.tool.endsWith('in degrees of C minor'))).toBe(true);
+    expect(steps.some((s) => / sections by key$/.test(s.tool))).toBe(true);
     // every step a piece that plays the same notes (a dozen of them, spread over the fold)
     const flat = JSON.stringify(notesOf(steps[0].source));
     for (let i = 0; i < steps.length; i += Math.ceil(steps.length / 12)) expect(JSON.stringify(notesOf(steps[i].source)), `${i}: ${steps[i].tool}`).toBe(flat);

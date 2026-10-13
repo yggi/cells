@@ -20,6 +20,7 @@ import { secondsAt, type Smf, type SmfNote } from './midifile';
 import { fold, printFolded, type Chord, type Line, type Stage } from './fold';
 import type { Folded } from './fold/ir';
 import { bestKey, inDegrees, keyName, scaleText } from './fold/degrees';
+import { cutLines, keyAreas } from './fold/sections';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -136,7 +137,7 @@ function braidOf(chords: readonly Chord[], length: number): string {
  * A MIDI file as a piece's source: every note it plays, flat; `shorten`, folded (engine/fold) where that plays the same
  * and is shorter. `free`: its tempo a slider (else fixed). `watch`: the fold as it runs, each move the piece as it is
  * by then (a thunk: printed only if wanted), the last the fold taken (`done`; the piece returned is that, or the flat
- * one where the fold doesn't play the same). `credit`: lines said as comments under the card (where the file came from). `pitches`: folded in semitones, in degrees of the piece's key (#344), or both and the shorter taken (`auto`).
+ * one where the fold doesn't play the same). `credit`: lines said as comments under the card (where the file came from). `pitches`: folded in semitones, in degrees of the piece's key (#344), in sections by key (#346), or each and the shortest taken (`auto`).
  */
 export function cellsFromMidi(
   smf: Smf,
@@ -151,7 +152,7 @@ export function cellsFromMidi(
     free?: boolean;
     shorten?: boolean;
     credit?: readonly string[];
-    pitches?: 'auto' | 'semitones' | 'degrees';
+    pitches?: 'auto' | 'semitones' | 'degrees' | 'sections';
     watch?: (source: () => string, stage: Stage) => void;
   } = {},
 ): Imported {
@@ -234,7 +235,7 @@ export function cellsFromMidi(
     for (const n of names) mix.push(voice ? `&${n} * &${voice} * .25` : `&${n} * .4`);
   }
   const write = (body: string[], how: string) => {
-    const label = `Opened from a MIDI file: ${count} notes in ${lines.length} line${lines.length === 1 ? '' : 's'}, ${perQuarter} steps a quarter note, ${how}.`;
+    const label = `Opened from a MIDI file: ${count} notes in ${lines.length} line${lines.length === 1 ? '' : 's'}, ${perQuarter} step${perQuarter === 1 ? '' : 's'} a quarter note, ${how}.`;
     return [
       `&piece title="${title.replace(/"/g, "'")}" tags="midi" label="${label}" about=&out`,
       // (where the file came from and on what terms: comments the piece keeps)
@@ -278,8 +279,8 @@ export function cellsFromMidi(
         'folded (engine/fold)',
       );
     };
-    const candidates: { source: string; key: string | null }[] = [];
-    if (pitches !== 'degrees')
+    const candidates: { source: string; key: string | null; allowance?: number }[] = [];
+    if (pitches === 'auto' || pitches === 'semitones')
       candidates.push({
         source: printed(fold(lines, watch && ((now, stage) => watch(() => printed(now()), { ...stage, tool: label(stage.tool, stage.round, 'in semitones') })))),
         key: null,
@@ -307,14 +308,82 @@ export function cellsFromMidi(
           `folded in degrees of ${keyName(key)} (engine/fold)`,
         );
       };
-      const tune = inDegrees(lines, key);
-      const folds = fold(tune, watch && ((now, stage) => watch(() => printedIn(now()), { ...stage, tool: label(stage.tool, stage.round, `in degrees of ${keyName(key)}`) })), {
-        degrees: true,
-      });
-      candidates.push({ source: printedIn(folds), key: keyName(key) });
+      if (pitches === 'auto' || pitches === 'degrees') {
+        const tune = inDegrees(lines, key);
+        const folds = fold(tune, watch && ((now, stage) => watch(() => printedIn(now()), { ...stage, tool: label(stage.tool, stage.round, `in degrees of ${keyName(key)}`) })), {
+          degrees: true,
+        });
+        candidates.push({ source: printedIn(folds), key: keyName(key) });
+      }
+      // and in sections (#346): cut where the key changes, each part of a line a cell in degrees of its section's key
+      const meter = smf.meters[0] ?? { num: 4, den: 4 };
+      const bar = Math.max(1, Math.round((perQuarter * 4 * meter.num) / meter.den));
+      const sections = pitches === 'auto' || pitches === 'sections' ? keyAreas(lines, bar) : [];
+      if (sections.length > 1) {
+        const parts = cutLines(lines, sections, bar);
+        const tune = parts.map((p) => inDegrees([p.part], sections[p.section]!.key)[0]!);
+        const keys = [...new Set(sections.map((x) => scaleText(x.key)))];
+        const keyNames = new Map(keys.map((k, i) => [k, unique(`key${i + 1}`)]));
+        const partNames = new Map<string, string>();
+        const printedSections = (f: Folded) => {
+          const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^');
+          // (a part as a cell read through its section's key, spliced as slow as its clock; one written alike, the same cell)
+          const cells = new Map<string, string>();
+          const sectionDefs: string[] = [];
+          const spliced = new Map<string, string[]>(lines.map((l) => [l.name, []]));
+          for (const p of parts) {
+            const braid = braids.get(p.part.name)!;
+            const scale = scales.get(p.part.name) ?? 1;
+            const stretched = scale === 1 ? '' : `@${scale}`;
+            // (a part all rest is a rest in the line, one with the rests beside it)
+            if (/^~(@\d+)?(!\d+)?$/.test(braid)) {
+              const steps = spliced.get(p.line)!;
+              const before = /^~(?:@(\d+))?$/.exec(steps[steps.length - 1] ?? '');
+              const n = p.part.length + (before ? Number(before[1] ?? 1) : 0);
+              if (before) steps.pop();
+              steps.push(n === 1 ? '~' : `~@${n}`);
+              continue;
+            }
+            const over = keyNames.get(scaleText(sections[p.section]!.key))!;
+            const id = `${over} ${braid}`;
+            let name = cells.get(id);
+            if (!name) {
+              name = partNames.get(`${p.line}§${p.section}`) ?? unique(`${p.line}${String.fromCharCode(65 + (p.section % 26))}`);
+              partNames.set(`${p.line}§${p.section}`, name);
+              cells.set(id, name);
+              sectionDefs.push(`&${name} over=&${over} ${braid}`);
+            }
+            spliced.get(p.line)!.push(`&${name}${stretched}`);
+          }
+          return write(
+            [
+              `# the keys: a section a key, cut where the key changes; a note its degree (0 the tonic; 6# the seventh raised a semitone)`,
+              ...keys.map((k) => `&${keyNames.get(k)} ${k}`),
+              '',
+              '# what comes back, as cells of its own (a phrase, a phrase made of phrases, …); ^n: n degrees up',
+              ...defs,
+              '',
+              `# the sections, a cell each part of a line, read through its section's key: ${sections.map((x) => keyName(x.key)).join(', ')}`,
+              ...sectionDefs,
+              '',
+              '# every note, a line a track: its sections in order',
+              // (a section's cell, then the same again: x!n, as the printer writes a run)
+              ...lines.map((l) => `&${l.name} step=&tempo ${runsOf(spliced.get(l.name)!)}`),
+            ],
+            `folded in ${sections.length} sections by key (engine/fold)`,
+          );
+        };
+        const sectioned = fold(
+          tune,
+          watch && ((now, stage) => watch(() => printedSections(now()), { ...stage, tool: label(stage.tool, stage.round, `in ${sections.length} sections by key`) })),
+          { degrees: true },
+        );
+        candidates.push({ allowance: SECTIONS, source: printedSections(sectioned), key: `${sections.length} sections by key (${sections.map((x) => keyName(x.key)).join(', ')})` });
+      }
     }
-    // (the shorter first; each taken only if it is shorter than the notes written out and plays them)
-    for (const c of candidates.sort((a, b) => a.source.length - b.source.length))
+    // (the shorter first, sections counted at their allowance; each taken only if it is shorter than the notes written
+    // out and plays them)
+    for (const c of candidates.sort((a, b) => a.source.length / (a.allowance ?? 1) - b.source.length / (b.allowance ?? 1)))
       if (c.source.length < flat.length && sameNotes(flat, c.source)) {
         [source, folded, inKey] = [c.source, true, c.key];
         break;
@@ -323,6 +392,23 @@ export function cellsFromMidi(
     watch?.(() => taken, { tool: 'done', round: 0 });
   }
   return { source, notes: count, lines: lines.length, perQuarter, moved, dropped, folded, inKey };
+}
+
+/** A piece in sections (#346) reads as its form: taken when at most this much longer than the shortest fold without, as
+ * a phrase said as a phrase is (`STRUCTURE`, engine/fold). Measured: at 1.05 one piece of the MIDI library takes
+ * sections, at 1.15 seven (the library 1 % longer), at 1.2 eleven (and the examples 3 % longer). */
+const SECTIONS = 1.15;
+
+/** Steps as a braid, a run of one written `x!n`. */
+function runsOf(steps: readonly string[]): string {
+  const out: string[] = [];
+  for (let i = 0; i < steps.length;) {
+    let n = 1;
+    while (i + n < steps.length && steps[i + n] === steps[i]) n++;
+    out.push(n === 1 ? steps[i]! : `${steps[i]}!${n}`);
+    i += n;
+  }
+  return out.join(' ');
 }
 
 /** Do two sources play the same notes (keys, starts and lengths within a millisecond)? */

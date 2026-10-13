@@ -36,6 +36,9 @@ export function tokensOf(line: Line): Tok[] {
   return out;
 }
 
+/** An element k times as long: its length (and a rest's) times k. */
+export const scaled = (key: string, k: number): string => key.replace(/^([rdn])(\d+)/, (_, kind: string, d: string) => `${kind}${Number(d) * k}`);
+
 /** Is this key an element's (a chord, drums, a rest), not a symbol's? */
 export const isElement = (key: string): boolean => /^[rdn]\d/.test(key);
 /** Is this key a figuration's (`figure.ts`)? */

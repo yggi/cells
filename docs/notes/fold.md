@@ -131,6 +131,47 @@ whose accidentals over the notes are fewest; a tie to the tonic the bass ends on
 - Why not more on the WTC: a fugue's voices sit in two hands' lines, mixed into chords (the WTC run above), and its
   modulations need accidentals in one key for the piece (option 3a). A key per section (#346) is the next measure.
 
+## A passage at another speed (#345)
+
+`stretch.ts`: a run of 12 steps or more whose lengths all share a factor k (a passage in eighths among sixteenths) is a
+cell of those steps at its own speed, spliced k times slower: `&m3^$-7@2` (the language plays a splice `@k` as its steps
+each k long). A run written alike is spliced from the same cell, at whatever speed, so a phrase and its augmentation
+are one cell. A token carries its stretch (`Tok.stretch`), pairs take a stretched token as another than the same at its
+own speed, β writes a stretched use out at its full length when it judges and when it takes a symbol back. The tool
+runs before the variants and pairs, on the notes as written.
+
+- **The MIDI library: 191,430 → 183,046 (−4.4 %); folds taken 81 → 84** (three Anna Magdalena pieces fold now: the
+  chorale BWV 510 opens each hand on a passage at half speed, `&m1^$5@2`, `&m3^$-7@2`). The WTC 118,353 → 112,818
+  (−4.7 %), the Inventions and Sinfonias 56,917 → 55,129, Anna Magdalena 16,160 → 15,099.
+- **The examples: 56,513 → 56,422, phrases back the same 65**, notes kept by the same 56 (the baseline as the examples pass,
+  #351, left it).
+- *Measured and left*: after pairs, it finds little (the lines are symbols by then: −38 characters); before them with
+  runs from 4 steps, the MIDI library −4.1 % but the examples lose 6 phrases back (a stretched run hides a phrase from the
+  variants); between variants and pairs, −2.9 %. Runs from 10 steps fold as 12 do; from 16, less.
+
+## Sections by key (#346)
+
+`sections.ts`: the piece's key areas, a bar a time, each bar's notes priced in accidentals in each of 36 collections (the
+twelve major scales with their relative minors, the twelve harmonic and twelve melodic minors), the path of fewest with a
+change of key costing 12 (a Viterbi path: a key where it lasts, not for a chord), areas under two bars their neighbours'.
+Each is named in its collection (a major scale's notes as its major or its relative minor, by the tonic the bass starts or
+ends on; on one tonic a minor natural, harmonic or melodic is one key). Each line is cut at each area's start, or where a
+note is held across it, at the nearest step within a bar where none is; each part is a cell read through its section's key
+(`&upB over=&key2`), the line splices its parts (`&up step=&tempo &upA &upB@2 &upC &upD &upE`), a part all rest a rest,
+a part written alike the same cell. The parts are folded together in degrees of their own keys, so an entry in the
+dominant is the same degrees as the one in the tonic.
+
+- **It doesn't pay in characters.** On every piece with more than one key area it is 2–45 % longer than the best fold
+  without (the key cells, a cell a part, and phrases that can't fold across a cut). So it is taken for reading, with an
+  allowance as variants are (`SECTIONS` in `midiimport.ts`, 1.15 as `STRUCTURE`): **7 pieces of the MIDI library come
+  out in sections** (the G major fugue as G major, E minor, B minor, G major; Sinfonia 2 as C minor, G minor, C minor;
+  the E♭ major prelude of book I, the F minor, A minor and B minor fugues, Sinfonia 7), **the library 183,046 → 184,880
+  (+1.0 %)**, none of the examples (they modulate little through MIDI), their ratchet unchanged.
+- *Measured*: at 1.05 one piece takes sections, at 1.2 eleven (the examples then 3 % longer, phrases back 65 → 66). A
+  change costing 24 instead of 12 makes fewer, longer areas and saves little.
+- *Next*: sections at the boundaries the time engine hears (the swells, `time/boundaries.ts`), where a piece repeats
+  itself in one key (a dance's halves, a pop song's verse and chorus).
+
 ## What was tried and left out (measured on seven pieces)
 
 - **Repeats as a tool of their own** (a block k times in a row, `&r!k`), before pairs: Pachelbel 3,309 → 7,951,
@@ -145,7 +186,7 @@ whose accidentals over the notes are fewest; a tie to the tonic the bass ends on
 ## Next (step 5 and after)
 
 - **Degrees**: done (above, #344); next, a key per section (#346) where a piece modulates.
-- **Lengths**: a quarter of what's written out is `@n`; a phrase at half speed inside a line (below) is half of it.
+- **Lengths**: done for passages (above, #345); a note's own `@n` stays where its neighbours don't share it.
 
 - **Variants' cost**: 8.1 s for the library against 2.8 s; folding twice and the search per round are where it goes.
 - **Phrases with `^$k` at their right length**: Re-Pair's symbols are binary; a phrase of five is three symbols. A
