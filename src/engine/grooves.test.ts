@@ -30,18 +30,19 @@ describe('a stepped braid of voices plays them (#10 F4)', () => {
     expect(r.outputs).toHaveLength(1);
     expect(r.outputs[0].levels.map((l) => l.cell)).toEqual(['acc']);
   });
-  it("draws what is written: a wire from each voice named to the pattern, from its piece on the drums' kit", () => {
-    const r = compileSource(voices + '&groove step=&bar*2 &bd &hh &bd &sd\n&out map=sample [&groove]');
+  it("draws the drums as one kit: each groove's one wire into it, its one wire out to the mix", () => {
+    const r = compileSource(voices + '&groove step=&bar*2 &bd &hh &bd &sd\n&beat step=&bar &bd ~ &sd ~\n&out map=sample [&groove, &beat]');
     const g = buildGraph(r);
     // (the kit the grooves read is drawn, the voices only they play its pieces: no node of their own)
     expect(g.nodes.some((n) => n.id === 'cell:kit:voices')).toBe(true);
     expect(['bd', 'hh', 'sd'].every((v) => g.bulbs.get(v) === 'kit:voices')).toBe(true);
-    // (each name written is still one wire, from its piece)
-    expect(g.edges.filter((e) => e.port === 'braid' && e.to === 'cell:groove').map((e) => [e.bulb, e.count])).toEqual([
-      ['bd', 2],
-      ['hh', 1],
-      ['sd', 1],
-    ]);
+    // (no wire a drum named: each groove reads the kit by one)
+    expect(g.edges.filter((e) => e.port === 'braid' && ['cell:groove', 'cell:beat'].includes(e.to))).toEqual([]);
+    for (const groove of ['groove', 'beat']) expect(g.edges.filter((e) => e.source === `cell:${groove}` && e.target === 'cell:kit:voices').map((e) => e.port)).toEqual(['over']);
+    // (the drums' sound: one wire from the kit, the grooves sending none of their own)
+    expect(g.edges.filter((e) => e.to === 'cell:out').map((e) => e.from)).toEqual(['cell:kit:voices']);
+    // (each groove's entry in the mix drawn as the kit's one wire)
+    for (const groove of ['groove', 'beat']) expect(g.alias.get(`cell:${groove}->cell:out`)).toBe('cell:kit:voices->cell:out');
   });
   it('an unstepped braid of voices is still a kit, and a stepped braid of anything else is still a melody', () => {
     expect(compileSource(voices + '&kit &bd &hh\n&d over=&kit step=&bar 0 1\n&out map=sample [&d]').diagnostics).toEqual([]);

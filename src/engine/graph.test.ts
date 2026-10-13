@@ -565,7 +565,14 @@ describe('every name written is one wire carrying the transform it writes, and e
           // (a gate in a mix goes in as the voices it plays, each from its own wheel: #234)
           const gate = program.cells.get(name);
           const voices = gate?.gate?.receivers ?? [];
-          if (voices.length)
+          // (a groove in a mix goes in as the drums' kit it plays: one wire from the kit, however many grooves)
+          if (gate?.over === 'kit:voices') {
+            expect(
+              model.edges.some((x) => x.from === cellId('kit:voices') && x.to === cellId(c.name)),
+              `&${c.name}: &${name} from the drums' kit`,
+            ).toBe(true);
+            matched.add(`${c.name}|${name}|mix`);
+          } else if (voices.length)
             expect(
               voices.every((v) => model.edges.some((x) => x.from === cellId(v) && x.to === cellId(c.name))),
               `&${c.name}: &${name}'s voices`,
@@ -625,6 +632,9 @@ describe('every name written is one wire carrying the transform it writes, and e
       if (e.port === 'voice' && gateOf(nameOf(e.from))) return [];
       const into = program.cells.get(nameOf(e.to));
       if (e.port === 'mix' && into?.mix?.some((b) => gateOf(b.voice.name) && program.cells.get(b.voice.name)!.gate!.receivers.includes(nameOf(e.from)))) return [];
+      // (the drums' kit: a groove's one wire into it, the names it writes; and its one wire into a mix a groove is in)
+      const groove = (n: string) => program.cells.get(n)?.over === 'kit:voices';
+      if (nameOf(e.from) === 'kit:voices' && ((e.port === 'over' && groove(nameOf(e.to))) || (e.port === 'mix' && into?.mix?.some((b) => groove(b.voice.name))))) return [];
       const key = junctions.has(e.to)
         ? `${junctions.get(e.to)!.mix}|${nameOf(e.from)}|mix`
         : e.port === 'about'
