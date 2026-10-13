@@ -1,7 +1,7 @@
 /**
  * The ratchet's measures (#307, docs/notes/ratchet.md): what a piece plays, the size of its score, and its phrases, so a
  * piece written by hand and the same notes folded by a tool can be compared. Shared by the gate
- * (`fold/ratchet.test.ts`) and the probe (`tools/probe/ratchet.test.ts`). Pure.
+ * (`fold/ratchet.slow.test.ts`) and the probe (`tools/probe/ratchet.test.ts`). Pure.
  */
 import { compileSource } from '../compile';
 import { codeShifts } from '../program';

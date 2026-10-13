@@ -15,7 +15,7 @@ const SHORTEST = 12;
 const CHANGES = (n: number) => Math.max(2, Math.floor(n / 4));
 /**
  * A phrase said as a phrase is worth this much (characters, a step a return it explains) beyond what it saves: the
- * preference for structure. Measured by the ratchet (`fold/ratchet.test.ts`): 2 brings BWV 847's whole subject back
+ * preference for structure. Measured by the ratchet (`fold/ratchet.slow.test.ts`): 2 brings BWV 847's whole subject back
  * (its head, where the entries bend, included), more changes nothing.
  */
 const SAID = 2;

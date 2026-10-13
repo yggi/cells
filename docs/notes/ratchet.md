@@ -3,11 +3,11 @@
 Date: 2026-10-12 · Status: open (the baseline steps 4–5 must not make worse) · Issue: #307 (part of #234)
 
 **Since:** the folder (step 4, [fold.md](fold.md)) is scored beside `shortenAll` by the same probe. And the ratchet is a
-gate now: `src/engine/fold/ratchet.test.ts` scores the folder alone in `npm test` (12 s) against
+gate now: `src/engine/fold/ratchet.slow.test.ts` scores the folder alone in `npm test` (12 s) against
 `src/engine/fold/ratchet.baseline.json` ([testing.md](../testing.md)). Its first record, with the preference for
 structure (fold.md): 74 pieces, notes kept by 64, the score 56,125 characters, **phrases back 62 of 191** (58 before it,
 `shortenAll` 58). After the run on the WTC ([fold.md](fold.md#the-wtc-run-333)): the score 55,974, phrases back 62; and
-the MIDI library has a ratchet of its own (`src/engine/fold/midi.test.ts`, `ratchet.midi.json`): 37 files, every fold
+the MIDI library has a ratchet of its own (`src/engine/fold/midiRatchet.ts`, `ratchet.midi.<set>.json`): 37 files, every fold
 taken, the score 120,755. With the Inventions and Sinfonias and the Anna Magdalena Notebook (fold.md): 86 files, 81
 folds taken, the score 194,587. Folding in degrees too (decision 033): the examples 51,810, phrases back 67;
 the MIDI library 191,430 (the WTC 118,353, the Inventions and Sinfonias 56,917, Anna Magdalena 16,160), 81 folds

@@ -77,7 +77,7 @@ variants, 73 pieces: 207 %, 2.8 s.)
 ## The WTC run (#333)
 
 The MIDI library (`midi/wtc`, 37 preludes and fugues, 34,200 notes) folded as the files come
-(`tools/probe/midi.test.ts`; `src/engine/fold/midi.test.ts` is its ratchet, over every collection since). **Before: the score 153,783 characters flat,
+(`tools/probe/midi.test.ts`; `src/engine/fold/midiRatchet.ts` is its ratchet, over every collection since). **Before: the score 153,783 characters flat,
 123,735 folded (80.5 %), every fold taken, 633 cells, 212 of them copies; 29 s. After: 120,755 (78.5 %), every fold
 taken, 626 cells, 159 copies; 30 s.** The examples' ratchet at the same time: 56,125 → 55,974, phrases back 62 → 62.
 
@@ -102,7 +102,7 @@ taken, 626 cells, 159 copies; 30 s.** The examples' ratchet at the same time: 56
 ## Two more collections (#333)
 
 The Inventions and Sinfonias (30 files, 17,439 notes) and the Anna Magdalena Notebook (19 files, 3,467 notes) joined the
-MIDI library, and its ratchet (`ratchet.midi.json`). Folded as today's folder does, with nothing tuned for them:
+MIDI library, and its ratchet (`ratchet.midi.<set>.json`). Folded as today's folder does, with nothing tuned for them:
 
 - **Inventions and Sinfonias:** 72,413 characters flat, 57,672 folded (**79.6 %**), every fold taken; 334 cells, 82 of
   them copies; 10.5 s.

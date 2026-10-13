@@ -1,6 +1,6 @@
 # 026 · A cell can be a copy of another, changed where it says: base=
 
-**Date:** 2026-10-12 · **Status:** proposed (the owner's syntax, on #307: "a syntax for overdubbing a cell: a
+**Date:** 2026-10-12 · **Status:** accepted (owner, on #332; the owner's syntax, on #307: "a syntax for overdubbing a cell: a
 delta-copy of any other cell, prototype or template … `&foo base=&bar`") · Issues: #307, #10 (the examples pass, item
 4: "a motif with a change"), #234
 

@@ -208,14 +208,14 @@ const driverMuted = (result: CompileResult, name: string, muted: ReadonlySet<str
   return false;
 };
 
-/** An output's level per channel, leaving out mixes (or sound cards) that are switched off. */
-/** A voice's own gain (`level=` on a voice: a number, 1 by default), times every gain it is played at. */
+/** A voice's own gain (`gain=` on a voice: a number, 1 by default), times every gain it is played at. */
 function voiceGain(result: CompileResult, voice: string): number {
   const c = result.cells.get(voice);
   const l = c?.voice ? c.params.gain : undefined;
   return typeof l === 'number' && Number.isFinite(l) && l >= 0 ? l : 1;
 }
 
+/** An output's level per channel, leaving out mixes (or sound cards) that are switched off. */
 export function liveGains(o: Output, muted: ReadonlySet<string>): [number, number] {
   // a send (a mix played only into a resonator or a tape): its own gain, unless its mix is off
   // (a MIDI card it is also on takes nothing away from what it feeds)
@@ -552,7 +552,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       const params = paramTracks(p, v.voice, at, dur);
       const env = t.output.envelope ?? (t.output.kit ? memberEnvelope(result, v.voice) : null);
       // a kit's member placed by its own pan= (a voice's own is in its output's gains already); every voice at its own
-      // level= (a kit member's balance)
+      // gain= (a kit member's balance)
       const memberPan = (g: [number, number]): [number, number] => {
         const k = voiceGain(result, v.voice);
         if (!t.output.kit) return [g[0] * k, g[1] * k];
