@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { entries } from '../../tools/reference';
-import { formKey, formsUsed, TIERS } from './ladder';
+import { formKey, formsUsed, STUBS, TIERS } from './ladder';
 import { pieceMeta } from './parser';
 import { ORDER } from './order';
 import { PRESETS } from './presets';
@@ -35,7 +35,7 @@ describe('the tutorial, in tiers', () => {
       'not in the reference',
     ).toEqual([]);
     expect(
-      keys.filter((k) => !declared.includes(k)),
+      keys.filter((k) => !declared.includes(k) && !STUBS.has(k)),
       'on no tier',
     ).toEqual([]);
   });

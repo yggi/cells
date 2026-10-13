@@ -17,5 +17,5 @@
 &click gain=.3 s=white hpf=2500 env=&(map=adsr 0 .03 0 .02)
 &shh gain=.12 s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
 
-&mix level=4 map=sample [&strum * &guitar * .25, &bassline * &bass * .7, &melody * &flute * .4,
+&mix postgain=1.58 map=sample [&strum * &guitar * .25, &bassline * &bass * .7, &melody * &flute * .4,
                                   &rim, &shaker]

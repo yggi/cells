@@ -7,4 +7,4 @@
 &tune over=&key step=&bar 0 4 7 12 7 4 0@2     # chromatic numbers: a major arpeggio
 
 &pluck s=tri loop=C4 env=&(map=adsr .01 .4 .3 .3)
-&mix level=7.5 map=sample [&tune * &pluck]
+&mix postgain=2.37 map=sample [&tune * &pluck]

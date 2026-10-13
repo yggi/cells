@@ -9,4 +9,4 @@
 
 &high s=sine loop=C5
 &low s=sine loop=C3
-&out map=sample level=3 [&tune * &high * .35, &eighths * &high * .12, &bass * &low * .6]
+&out map=sample postgain=1.41 [&tune * &high * .35, &eighths * &high * .12, &bass * &low * .6]

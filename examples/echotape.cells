@@ -18,5 +18,5 @@
 &bell s=sine loop=G4 fm=&m index=.2..1.4 * &(map=adsr .001 .15 .1 .1) room=.3 env=&(map=adsr .002 1.2 0 .8)
 &soft s=tri loop=G4 lpf=1800 room=.5 env=&(map=adsr .004 .9 0 .6)
 
-&out level=17 map=sample [&tune * &bell * .22, &near * &soft * .12, &far * &soft * .08] [
+&out postgain=7.08 map=sample [&tune * &bell * .22, &near * &soft * .12, &far * &soft * .08] [
                                   &tune * &bell * .22, &mid * &soft * .12, &far * &soft * .08]

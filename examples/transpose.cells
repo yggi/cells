@@ -10,4 +10,4 @@
 &theme label="the theme: {notes}" show=notes over=&mode step=&bar 0 2 4 7 4 2 0@2
 
 &flute s=tri loop=C4 room=.3 env=&(map=adsr .02 .3 .5 .3)
-&mix level=6.5 map=sample [&theme * &flute]
+&mix postgain=2.11 map=sample [&theme * &flute]

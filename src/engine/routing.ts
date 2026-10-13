@@ -38,8 +38,11 @@ export type State = 'off' | 'unrouted' | 'on' | 'idle' | 'live';
 /** What keeps sound: a sound tape (its loop), a resonator (its ring). */
 const keeps = (result: CompileResult, name: string) => result.tapes.some((t) => t.name === name) || typeof result.cells.get(name)?.params.body === 'string';
 
-/** What its mixes name: the voice, or a kit's stream (&drums, read through the kit); a gate names the kit it plays. */
-const sourceOf = (result: CompileResult, o: Output) => (o.kit && result.cells.get(o.cell)?.over === o.voice ? o.cell : o.voice);
+/** What its mixes name: the voice, or a kit's stream (&drums, read through the kit, maybe held under a melody); a gate names the kit it plays. */
+const sourceOf = (result: CompileResult, o: Output) => {
+  const read = o.mods.find((m) => m.picks)?.cell ?? o.cell;
+  return o.kit && result.cells.get(read)?.over === o.voice ? read : o.voice;
+};
 
 const playable = (c: ResolvedCell) => c.units.some((u) => leaves(u.atom).some((a) => a.kind === 'note' || a.kind === 'chord' || a.kind === 'choice'));
 

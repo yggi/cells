@@ -10,4 +10,4 @@
 &tune over=&kalimba step=&bar*2 label="the tune" 0 2 4 ~ 3 4 5 ~ 4 2 1 ~ 0 ~!3 5 ~ 4 3 2 ~ 1 2 0 ~!3 7 6 5 ~
 &kalimba body=tine loop=C4 ring=3 hard=.3 board=box coupling=.06 label="the kalimba: eight tines on one board" 0 2 4 7 9 12 14 16
 
-&out level=-15.5 map=sample [&tune * &kalimba * .5]
+&out postgain=.168 map=sample [&tune * &kalimba * .5]

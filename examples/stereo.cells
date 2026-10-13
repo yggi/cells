@@ -8,4 +8,4 @@
 
 &bell s=sine loop=C5 pan=.15 env=&(map=adsr .01 .6 .2 .6)
 &cello glide=.12 s=saw loop=C3 lpf=900 pan=.85 env=&(map=adsr .03 .4 .6 .4)
-&out level=1.5 map=sample [&high * &bell, &low * &cello]
+&out postgain=1.19 map=sample [&high * &bell, &low * &cello]

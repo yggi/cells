@@ -14,5 +14,5 @@
 &flute s=tri loop=C4 room=.4 env=&(map=adsr .03 .2 .6 .3)
 &tuba s=sine loop=C2 env=&(map=adsr .005 .4 0 .1)
 &strings s=square loop=C4 lpf=1200 room=.5 env=&(map=adsr .02 .15 .3 .2)
-&mix level=2 map=sample [&tune * &flute, &oom * &tuba, &pah * &strings * free(.4, 0..1)]
+&mix postgain=1.26 map=sample [&tune * &flute, &oom * &tuba, &pah * &strings * free(.4, 0..1)]
 &oompah scope=spectrum label="oom-pah: the bass and the chords, one tonal spectrum" &oom &pah

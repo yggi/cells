@@ -1,6 +1,7 @@
 /** The library's order (the files themselves sort by name). */
 export const ORDER = [
   // the tutorial, tier by tier (a piece added to a tier goes where it reads best: no numbers change)
+  'oscillator',
   'tone',
   'rests',
   'semitones',

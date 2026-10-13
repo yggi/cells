@@ -17,4 +17,4 @@
 &hh pan=.6 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &bd s=sine loop=D1 pitch=0..16 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
 
-&out level=7 map=sample [&loop * &keys * .16, &chords * &pad * .05, &hats * &hh * .1, &kick * &bd * .5]
+&out postgain=2.24 map=sample [&loop * &keys * .16, &chords * &pad * .05, &hats * &hh * .1, &kick * &bd * .5]

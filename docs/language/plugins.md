@@ -32,7 +32,7 @@ The name is lower-case letters (not one of the shows or the built-in plugins). T
 &bar scan(1 1 1 1) step=90bpm show=ring
 &v s=sine loop=C4
 &tune step=&bar 0 4 7 4
-&out level=-12 loop=SAMPLE_RATE map=sample [&tune * &v * .3]
+&out postgain=.251 loop=SAMPLE_RATE map=sample [&tune * &v * .3]
 === plugin ring ===
 { "fits": ["meter"], "size": 160, "tokens": { "ring": "#e3a25a" } }
 function draw(view, h) {

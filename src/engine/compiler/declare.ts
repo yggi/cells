@@ -292,7 +292,7 @@ function tapTables(decls: Map<string, CellDecl>, error: Ctx['error']): Map<strin
         // (a tap given a line of steps or a table: the table would be a braid of unknown names — say which line)
         const rest = d.braid.tokens.map((x) => (x.atom.kind === 'ref' ? x.atom.name : '')).filter((n) => n !== a.name);
         if (!known.step && rest.some((n) => n && !decls.has(n) && clocks.has(n)))
-          error(`&${a.name} is a tap of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=), not steps or a table of its own`, known.span);
+          error(`&${a.name} is a tap of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=, restart=), not steps or a table of its own`, known.span);
         break;
       }
       names.push(a.name);

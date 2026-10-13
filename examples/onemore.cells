@@ -28,7 +28,7 @@
 &parts step=&bar &grooveBar &choppyBar &discBar &robBar
 &song over=&parts step=&bar/32 label="filtered · groove · lead · breakdown" [0,1] [0,1,2] [0,1,2,3] [1,3]
 
-&out level=-0.5 map=sample [&beat, &shake * &sh * .1,
+&out postgain=.944 map=sample [&beat, &shake * &sh * .1,
                             (&chop + &prog) * &pump * &keys * .07,
                             (&disco + &prog) * &bass * .35,
                             &robot * &lead * .1]

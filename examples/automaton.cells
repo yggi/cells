@@ -18,4 +18,4 @@
 &sd s=white hpf=1200 env=&(map=adsr 0 .08 0 .04)
 &blk pan=.64 s=square loop=C6 hpf=900 lpf=3000 env=&(map=adsr 0 .03 0 .02)
 
-&out level=-0.5 map=sample [&bells * &bell * .14, &drums * .6, &wood * &blk * .07]
+&out postgain=.944 map=sample [&bells * &bell * .14, &drums * .6, &wood * &blk * .07]

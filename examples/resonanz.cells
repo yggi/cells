@@ -24,4 +24,4 @@
 &pipeA body=pipe loop=D2 ring=4 board=none excite=&echo label="a pipe, driven by the tape" 0
 &pipeB body=pipe loop=A2 ring=4 board=none excite=&echo label="another" 0
 
-&out level=-9 map=sample [&site, &pipeA * .4, &h1 * .2] [&site, &pipeB * .4, &h2 * .2]
+&out postgain=.355 map=sample [&site, &pipeA * .4, &h1 * .2] [&site, &pipeB * .4, &h2 * .2]

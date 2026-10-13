@@ -35,7 +35,7 @@
 &teile step=&bar &ticksBar &beatBar &bassBar &arpBar &melodyBar
 &lied over=&teile step=&bar/32 laps=1 label="Aufbau: Klick · Bass · Takt · Arpeggio · Melodie · Pause · alles · Klick" 0 [0,2] [0,1,2] [0,1,2,3] [0,1,2,3,4] [2,3] [0,1,2,3,4] 0
 
-&out level=5 map=sample [&ticks * &metal * .12,
+&out postgain=1.78 map=sample [&ticks * &metal * .12,
                          &beat,
                          &bassline * &bass * .5,
                          &arp * &arpeggio * .18,

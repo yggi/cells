@@ -89,13 +89,8 @@ export function modulation(p: Plan, m: Series, from: number, to: number): { at: 
   if (!Number.isFinite(c0)) c0 = 0;
   if (!Number.isFinite(c1)) c1 = c0;
   const out: { at: number; semis: number }[] = [];
-  // the value in force at `from`: the last event starting at or before c0
   const lap0 = Math.floor(c0 / m.period);
-  let last: StepEvent | null = null;
-  for (const lap of [lap0, lap0 - 1]) {
-    for (const e of m.events) if (lap * m.period + e.step <= c0 + EPS) last = e;
-    if (last) break;
-  }
+  const last = inForce(m, c0);
   out.push({ at: from, semis: last ? m.sign * pitchOf(p, last, from) : 0 });
   for (let lap = lap0; lap * m.period < c1; lap++) {
     for (const e of m.events) {
@@ -106,6 +101,28 @@ export function modulation(p: Plan, m: Series, from: number, to: number): { at: 
     }
   }
   return out;
+}
+
+/** The step in force at step c of a series: the last one starting at or before it (this lap or the one before). */
+function inForce(m: Series, c: number): StepEvent | null {
+  const lap0 = Math.floor(c / m.period);
+  let last: StepEvent | null = null;
+  for (const lap of [lap0, lap0 - 1]) {
+    for (const e of m.events) if (lap * m.period + e.step <= c + EPS) last = e;
+    if (last) break;
+  }
+  return last;
+}
+
+/**
+ * A held series' step in force at a time (a kit read under the term that starts notes: the number that picks the
+ * member, decision 029); a static one holds its first.
+ */
+export function heldAt(p: Plan, m: Series, at: number): StepEvent | null {
+  if (m.events.length === 0) return null;
+  if (!m.clock) return m.events[0];
+  const c = clocking(p.result, p.statics).map(m.clock).stepAt(Math.max(0, at)) * m.rate;
+  return inForce(m, Number.isFinite(c) ? c : 0);
 }
 
 /**

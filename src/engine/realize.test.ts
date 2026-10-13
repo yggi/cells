@@ -159,6 +159,7 @@ describe('sound', () => {
             zell: 140,
             korobeiniki: 60,
             cellscape: 330,
+            cellscape2: 40, // its glints are rare (dropped at .82): none in the first 12 s since decision 031
             baustelle: 110,
             hypercell: 75,
             onemore: 80,
@@ -1557,6 +1558,25 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
     // a seed throws differently
     const seeded = play('0? 4? 7? 11?', 50, ' seed=7').ev.map((e) => [e.at, e.freq]);
     expect(seeded).not.toEqual(a);
+  });
+  it('the dice are keyed on the cell, the lap and the step, not the voice (decision 031)', () => {
+    const onsets = (src: string) => {
+      const r = compileSource(src);
+      expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+      return events(r, 0, 40).map((e) => [+e.at.toFixed(6), semis(e.freq) % 12]);
+    };
+    const body = '0? 0? 0? 0? 0? 0? 0? [0|4|7]';
+    const onV = onsets(`&t step=10 ${body}\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`);
+    const onW = onsets(`&t step=10 ${body}\n&w s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &w]`);
+    expect(onV.length).toBeGreaterThan(100);
+    expect(onV.length).toBeLessThan(300);
+    expect(onW).toEqual(onV);
+    // moved onto a kit: its numbers pick the member, the same steps sound (what they pick is the kit's business)
+    const kit = compileSource(`&t step=10 over=&kit 0? 0? 0? 0? 0? 0? 0? 0?\n&kit &v &w\n&v s=sine loop=C4\n&w s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * .5]`);
+    expect(kit.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    const plain = compileSource(`&t step=10 0? 0? 0? 0? 0? 0? 0? 0?\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`);
+    const at = (r: R) => events(r, 0, 40).map((e) => +e.at.toFixed(6));
+    expect(at(kit)).toEqual(at(plain));
   });
   it('[a|b|c] chooses each, about evenly', () => {
     const { ev } = play('[0|4|7]', 900);

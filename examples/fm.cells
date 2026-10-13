@@ -11,4 +11,4 @@
 &bell s=sine loop=C5 fm=&bm index=3 env=&(map=adsr .001 1.6 0 1.2)
 &em s=sine ratio=1
 &epiano s=sine loop=C4 fm=&em index=.2..3 * &(map=adsr .001 .4 .1 .3) env=&(map=adsr .002 1 .3 .5)
-&out map=sample level=18 [&tune * &bell * .15, &chords * &epiano * .1]
+&out map=sample postgain=7.94 [&tune * &bell * .15, &chords * &epiano * .1]

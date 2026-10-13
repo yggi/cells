@@ -9,4 +9,4 @@
 &fade map=db step=&bar/4 0 -3 -6 -3
 
 &acid s=saw loop=C2 lpf=150..2800 * &(map=adsr .002 .15 .1 .05) * &swell lpq=10 env=&(map=adsr .002 .12 .4 .05)
-&out map=sample level=16 [&line * &acid * &accent * &fade * .4]
+&out map=sample postgain=6.31 [&line * &acid * &accent * &fade * .4]

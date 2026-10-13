@@ -3,4 +3,4 @@
 
 &note step=1 0
 &voice s=sine loop=A4
-&out map=sample level=6 [&note * &voice]
+&out map=sample postgain=2 [&note * &voice]

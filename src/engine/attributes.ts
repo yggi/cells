@@ -22,7 +22,9 @@ export type Role =
   | 'note' // a label and nothing else: an explanation in the graph
   | 'carrier' // a voice with fm=
   | 'modulator' // a voice another's fm= names
-  | 'gate'; // play= with a braid: a named junction, where notes become sound (#234)
+  | 'gate' // play= with a braid: a named junction, where notes become sound (#234)
+  | 'tap' // a tap of a meter's bus: a name a stepped table of names declares (decision 016)
+  | 'selector'; // a cell reading a table of taps (over=&parts): it switches them
 
 export interface Attribute {
   /** What it means, as the node editor shows it. */
@@ -43,6 +45,8 @@ export interface Attribute {
   readonly hz?: true;
   /** An old spelling, still read and rewritten by Shorten: what says it now. Not in the reference. */
   readonly old?: string;
+  /** Named before it is built (some of its values warn and play as the default): in the reference, taught on no tier yet. */
+  readonly stub?: true;
 }
 
 const core = (help: string, doc: string, on?: readonly Role[]): Attribute => ({ help, doc, value: 'syntax', ...(on ? { on } : {}) });
@@ -110,11 +114,11 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   coupling: physics('a resonator: how strongly it is coupled (.01 faint, .05 strong)', ['resonator']),
   excite: physics('a resonator: sound that drives it (excite=&mix) — it answers where the sound meets its modes', ['resonator'], { value: 'cell' }),
   // the sound card
-  level: {
-    help: 'on the sound card: the overall level in dB (0 as it is, −6 about half); on a gate: how loud, a product of level cells and a gain (level=&accent*&duck*.4)',
-    doc: 'display.md',
+  postgain: {
+    help: 'on the sound card: its master, a linear gain after everything (Strudel’s postgain: 1 as it is, .5 half; free(.8, 0..1) a slider)',
+    doc: 'mix.md',
     value: 'number',
-    on: ['card', 'gate'],
+    on: ['card'],
   },
   // meters and their physics
   beat: { help: 'on a meter: how many of its steps make a beat — its bpm counts beats (beat=4: steps in sixteenths)', doc: 'time.md', value: 'number', on: ['clock'] },
@@ -147,6 +151,12 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   wander: physics('a read head: how far it wanders either way (tape-seconds) — a flying head', ['head']),
   wanderhz: physics('a read head: how fast it wanders (times a second)', ['head'], { hz: true }),
   // a gate: a named junction (docs/language/mix.md: a gate)
+  level: {
+    help: 'on a gate: how loud, a product of level cells and a gain (level=&accent*&duck*.4)',
+    doc: 'mix.md',
+    value: 'number',
+    on: ['gate'],
+  },
   // (the old spelling of a gate, still read; Shorten rewrites it: decision 023)
   trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
   gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
@@ -172,6 +182,14 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     on: ['scope'],
   },
   channels: { help: 'a spectrum or waterfall: sum (one, the default) or split (each channel its own)', doc: 'display.md', value: 'word', on: ['scope'] },
+  // arranging: what switching a part on does to its time (decision 032)
+  restart: {
+    help: 'what switching a part on does to its time (on a selector: for all its taps) — restart (from its top, the default), resume (where it stopped; not yet built), free (its time runs on, only its sound is switched; not yet built)',
+    doc: 'time.md',
+    value: 'word',
+    on: ['tap', 'selector'],
+    stub: true,
+  },
   // laws
   law: { help: 'a law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music)', doc: 'time.md', value: 'word', on: ['law'] },
   anchor: {
@@ -214,6 +232,8 @@ export function rolesText(on: readonly Role[]): string {
     carrier: 'a voice with fm=',
     modulator: 'a voice another’s fm= names',
     gate: 'a gate (play= with a braid)',
+    tap: 'a tap (a name a stepped table of names declares)',
+    selector: 'a selector (over= a table of taps)',
   };
   const ws = on.map((r) => NAMES[r]);
   return ws.length < 2 ? (ws[0] ?? '') : `${ws.slice(0, -1).join(', ')} or ${ws[ws.length - 1]}`;

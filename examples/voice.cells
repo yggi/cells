@@ -11,4 +11,4 @@
 &pad s=saw loop=C4 env=&(map=adsr .5 .3 .6 .8)            # slow in, held, slow out: a swell
 &low s=square loop=C2 env=&(map=adsr .005 .2 .6 .1)
 &air s=pink env=&(map=adsr .3 .2 .5 .6)                   # a noise: no note of its own
-&out map=sample level=16 [&tune * &pluck * .3, &line * &pad * .06, &bass * &low * .12, &line * &air * .04]
+&out map=sample postgain=6.31 [&tune * &pluck * .3, &line * &pad * .06, &bass * &low * .12, &line * &air * .04]

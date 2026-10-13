@@ -52,8 +52,10 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       continue;
     }
     // (a kit is played by a pattern read through it, or as a gate's receiver, picked by its trigger)
-    const gateKit = [...via, ...through].some((n) => !!cells.get(n)?.gate && b.pitches.some((t) => t.ref.name === cells.get(n)!.gate!.notes));
-    if (voice.kit && !gateKit && !b.pitches.some((t) => decls.get(t.ref.name)?.over?.name === voice.name)) {
+    const gateNotes = [...via, ...through].map((n) => cells.get(n)?.gate?.notes).find((n) => !!n && b.pitches.some((t) => t.ref.name === n));
+    // (the term that reads the kit: its numbers pick the member, decision 029; the rest of the product acts on it)
+    const kitRead = voice.kit ? b.pitches.find((t) => decls.get(t.ref.name)?.over?.name === voice.name || t.ref.name === gateNotes) : undefined;
+    if (voice.kit && !kitRead) {
       error(`A kit is a table of voices: read the pattern through it, &drums over=&${voice.name}, and mix &drums`, b.voice.span);
       continue;
     }
@@ -142,7 +144,13 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     if (gate) lead = levels.filter((x) => articulates(x.c));
     // pan= on the voice: its channel gains (a kit's members are placed note by note, in realize)
     const [pl, pr] = voice.kit ? [1, 1] : balance(voice.params.pan);
-    const term = (x: (typeof terms)[number]) => ({ cell: x.c.name, pick: x.t.ref.pick, shift: x.t.ref.shift, sign: x.t.sign });
+    const term = (x: (typeof terms)[number]) => ({
+      cell: x.c.name,
+      pick: x.t.ref.pick,
+      shift: x.t.ref.shift,
+      sign: x.t.sign,
+      ...(x.t === kitRead ? { picks: true as const } : {}),
+    });
     const common = {
       voice: voice.name,
       kit: voice.kit,

@@ -17,13 +17,15 @@ const messages = (r: CompileResult) => r.diagnostics.map((d) => d.message);
 const brief = (e: Played) => ({ at: e.at, dur: e.dur, voice: e.voice, freq: +e.freq.toFixed(3), gains: e.gains, held: e.held });
 
 describe('the smallest piece: &a loop=A4', () => {
-  it('compiles clean and holds one note at 440 Hz, through the built-in card at .8 on both sides', () => {
+  it('compiles clean and holds one note at 440 Hz, through the built-in card: a fader at 1 on both sides, its master postgain .8', () => {
     const r = compileSource('&a loop=A4');
     expect(r.ok).toBe(true);
     expect(r.diagnostics).toEqual([]);
     expect(r.builtinCard).toBeDefined();
+    // (the master is the card's, applied after the mix as a written card's postgain= is: not in the notes' gains)
+    expect(r.cells.get(r.builtinCard!)?.params.postgain).toBe(0.8);
     const all = notes(r);
-    expect(all.map(brief)).toEqual([{ at: 0, dur: HELD, voice: 'a', freq: 440, gains: [0.8, 0.8], held: true }]);
+    expect(all.map(brief)).toEqual([{ at: 0, dur: HELD, voice: 'a', freq: 440, gains: [1, 1], held: true }]);
     // (its own pitch, held: no bends, no levels that move, no envelope but the voice's own)
     expect(all[0].bends).toEqual([]);
     expect(all[0].levels).toEqual([{ at: 0, level: 1 }]);
@@ -59,7 +61,7 @@ describe('the smallest piece: &a loop=A4', () => {
     const r = compileSource('&swell map=lin loop=.5 0 1\n&a loop=A4\n&m [&a * &swell * .5]');
     expect(messages(r)).toEqual([]);
     const [e] = notes(r, 0, 1);
-    expect(e.gains).toEqual([0.4, 0.4]);
+    expect(e.gains).toEqual([0.5, 0.5]);
     expect(e.levels.length).toBeGreaterThan(2);
     expect(e.levels[0]).toEqual({ at: 0, level: 0 });
   });
@@ -67,8 +69,8 @@ describe('the smallest piece: &a loop=A4', () => {
     const r = compileSource('&a loop=A4\n&b s=sine loop=E5');
     expect(messages(r)).toEqual([]);
     expect(notes(r).map((e) => [e.voice, +e.freq.toFixed(2), e.gains])).toEqual([
-      ['a', 440, [0.8, 0.8]],
-      ['b', 659.26, [0.8, 0.8]],
+      ['a', 440, [1, 1]],
+      ['b', 659.26, [1, 1]],
     ]);
   });
   it('a voice a mix reads is heard through the mix, once: on the built-in card, or on a card written', () => {
@@ -80,7 +82,7 @@ describe('the smallest piece: &a loop=A4', () => {
     }
     // (the built-in card hears the mix, not the voice in it)
     const r = compileSource('&a loop=A4\n&m [&a * .5]');
-    expect(notes(r)[0].gains).toEqual([0.4, 0.4]);
+    expect(notes(r)[0].gains).toEqual([0.5, 0.5]);
     expect(r.outputs[0].through).toEqual(['m']);
   });
   it('a melody on a voice plays as before; a voice beside it, alone, holds', () => {
@@ -92,7 +94,7 @@ describe('the smallest piece: &a loop=A4', () => {
       ['lead', 1, false],
     ]);
   });
-  it('whatever reads a sound keeps it off the built-in card: fm=, a splice, about=', () => {
+  it('whatever reads a sound keeps it off the built-in card: fm=, a splice; a note’s about= doesn’t', () => {
     expect(notes(compileSource('&op s=sine loop=A5\n&c s=sine loop=A4 fm=&op')).map((e) => e.voice)).toEqual(['c']);
     // (a groove reads its voices; it is heard, they aren't on their own)
     const groove = compileSource('&bd s=sine loop=A1 env=&(map=adsr 0 .2 0 .1)\n&hh s=white env=&(map=adsr 0 .04 0 .02)\n&g step=2 &bd &hh');
@@ -101,9 +103,10 @@ describe('the smallest piece: &a loop=A4', () => {
       ['bd', 0, false],
       ['hh', 0.5, false],
     ]);
+    // (but not about=: a note's links are annotation only, so the oscillator a note explains is heard)
     const noted = compileSource('&a loop=A4\n&why label="the oscillator" about=&a');
-    expect(noted.builtinCard).toBeUndefined();
-    expect(messages(noted).join()).toMatch(/Nothing plays yet/);
+    expect(messages(noted)).toEqual([]);
+    expect(notes(noted).map((e) => e.voice)).toEqual(['a']);
   });
   it('"Nothing plays yet" only when nothing sounds', () => {
     expect(messages(compileSource('&t step=1 0 2 4')).join()).toMatch(/Nothing plays yet/);
@@ -124,7 +127,7 @@ describe('the smallest piece: &a loop=A4', () => {
     const card = r.builtinCard!;
     expect(r.cells.get(card)?.implicit).toBe(true);
     expect(r.cells.get(card)?.sink).toBe(true);
-    expect(setAttr(src, card, 'level', '-6')).toBe(src);
+    expect(setAttr(src, card, 'postgain', '.5')).toBe(src);
     // (drawn without a card node: the voice, and nothing else)
     const g = writtenGraph(r);
     expect(g.nodes.map((n) => n.id)).toEqual([cellId('a')]);

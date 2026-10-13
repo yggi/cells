@@ -15,4 +15,4 @@
 
 &lead s=tri loop=C5 env=&(map=adsr .01 .3 .4 .3)
 &bass s=sine loop=C3 env=&(map=adsr .005 .5 .5 .1)
-&mix level=4 map=sample [&tune * &lead, &roots * &bass * 0.8]
+&mix postgain=1.58 map=sample [&tune * &lead, &roots * &bass * 0.8]

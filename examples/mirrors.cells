@@ -10,4 +10,4 @@
 
 &flute s=tri loop=D4 env=&(map=adsr .02 .3 .5 .3)
 &cello s=saw loop=D3 lpf=1200 env=&(map=adsr .03 .3 .6 .3)
-&out map=sample level=12.5 [&tune * &flute * .35, &answer * &cello * .25]
+&out map=sample postgain=4.22 [&tune * &flute * .35, &answer * &cello * .25]

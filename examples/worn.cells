@@ -13,4 +13,4 @@
 &near play=&tape at=1
 &far play=&tape at=2.5 wander=.08 wanderhz=.15
 
-&out map=sample level=20 [&dry, &near * .5] [&dry, &far * .5]
+&out map=sample postgain=10 [&dry, &near * .5] [&dry, &far * .5]

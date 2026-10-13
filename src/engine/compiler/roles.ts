@@ -7,7 +7,10 @@ import { isMidiCard, type Clock, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
 
-export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells, clocks: ReadonlyMap<string, Clock>, plugins: ReadonlyMap<string, ShowPlugin>): void {
+/** What switching a part on does to its time (decision 032): from its top, where it stopped, or running on. */
+const RESTARTS: readonly string[] = ['restart', 'resume', 'free'];
+
+export function checkRoles(ctx: Ctx, { decls, implicit, taps }: Declared, cells: Cells, clocks: ReadonlyMap<string, Clock>, plugins: ReadonlyMap<string, ShowPlugin>): void {
   const { warn } = ctx;
   // ---- attributes where they do nothing: each acts on some roles only (attributes.ts)
   const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
@@ -27,6 +30,8 @@ export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells
     if (c.note) r.add('note');
     if (typeof c.params.fm === 'string') r.add('carrier');
     if (modulators.has(c.name)) r.add('modulator');
+    if (taps.has(c.name)) r.add('tap');
+    if (c.over && [...taps.values()].includes(c.over)) r.add('selector');
     return r;
   };
   for (const d of decls.values()) {
@@ -65,6 +70,10 @@ export function checkRoles(ctx: Ctx, { decls, implicit }: Declared, cells: Cells
       else if (k === 'pan' && typeof d.params.pan === 'number' && (d.params.pan < 0 || d.params.pan > 1))
         warn(`pan=${d.params.pan}: pan runs from 0 (left) to 1 (right); ${d.params.pan < 0 ? 'this plays hard left' : 'this plays hard right'}`, span);
       else if (a?.on && !a.on.some((r) => has.has(r))) warn(`${k}= acts on ${rolesText(a.on)}: on &${d.name} it does nothing`, span);
+      // restart= (decision 032): restart, resume or free; the last two are named, not yet built
+      else if (k === 'restart' && !RESTARTS.includes(d.params.restart as string))
+        warn(`restart=${d.params.restart}: what switching a part on does to its time is restart, resume or free — this plays as restart`, span);
+      else if (k === 'restart' && d.params.restart !== 'restart') warn(`restart=${d.params.restart} is not yet implemented: plays as restart`, span);
       else if (a?.value === 'number' && !c.voice && typeof d.params[k] === 'string') warn(`${k}= takes a number: '${d.params[k]}' does nothing`, span);
     }
     // swing pairs the steps of a list; a scan places its own

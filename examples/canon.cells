@@ -16,4 +16,4 @@
 
 &left  [&john * &v1 * 0.6, &john[<<] * &v2 * 0.4, &john[<<2] * &v3 * 0.1, &john[<<3] * &v4 * 0.8]
 &right [&john * &v1 * 0.6, &john[<<] * &v2 * 0.1, &john[<<2] * &v3 * 0.4, &john[<<3] * &v4 * 0.8]
-&out level=2.5 map=sample &left &right
+&out postgain=1.33 map=sample &left &right

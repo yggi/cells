@@ -27,5 +27,5 @@
 &saw303 s=saw loop=C2 lpf=150..2600 * &(map=adsr .002 .16 .12 .06) * &accent lpq=12 env=&(map=adsr .002 .12 .4 .05)
 &pad1 s=saw loop=C4 lpf=500..2200 * &breath env=&(map=adsr 1.2 .5 .7 2) pitch=&(map=lin loop=.3 0 .15 0 -.15 0)
 
-&mix level=-0.5 map=sample [&break * .7, &hats, &bleeps * &bleep * .3,
+&mix postgain=.944 map=sample [&break * .7, &hats, &bleeps * &bleep * .3,
                                   &acid * &accent * &saw303 * .4, &pad * &pad1 * .14]

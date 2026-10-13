@@ -9,4 +9,4 @@
 
 &lead s=tri loop=C4 env=&(map=adsr .01 .2 .4 .15)
 &bass s=sine loop=C2 env=&(map=adsr .01 .3 .6 .2)
-&out map=sample level=8 [&riff * &lead * .5, &bassline * &bass * .6]
+&out map=sample postgain=2.51 [&riff * &lead * .5, &bassline * &bass * .6]

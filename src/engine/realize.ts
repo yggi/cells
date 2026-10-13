@@ -14,7 +14,7 @@ import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from './clocking'
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { refsOf } from './readers';
-import { levelSeries, modulation, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
+import { heldAt, levelSeries, modulation, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
 import { mod } from '../theory/modes';
 
@@ -75,6 +75,8 @@ interface PlanTrack extends Series {
   readonly output: Output;
   readonly clock: string;
   readonly mods: readonly Series[];
+  /** A kit read held under the term that starts notes: its number picks the member (decision 029). */
+  readonly picker?: Series;
   /** Volume streams (map=amp). */
   readonly levels: readonly Series[];
   /** The selectors it plays through, with the entry that picks it (and how many entries they read). */
@@ -143,13 +145,14 @@ export function chanceOf(text: string): number {
 
 /**
  * Chance, thrown: is this step dropped this time round (x?p: it sounds if the throw is under 1 − p), and which does it
- * choose ([a|b|c])? Reproducible — the same cell, voice, lap and step always
- * throw the same — and different each lap. A chord's notes share their step,
- * so they sound or rest together.
+ * choose ([a|b|c])? Reproducible — the same seed, cell, lap and step always
+ * throw the same — and different each lap. Not the voice (decision 031): a pattern
+ * moved onto another voice or a kit keeps its dice. A chord's notes share their
+ * step, so they sound or rest together.
  */
 function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number): StepEvent | null {
   if (e.chance === undefined && !e.options) return e;
-  const key = `${result.cells.get(t.output.cell)?.seed ?? 0}|${t.output.cell}|${t.output.voice}|${lap}|${e.step.toFixed(6)}`;
+  const key = `${result.cells.get(t.output.cell)?.seed ?? 0}|${t.output.cell}|${lap}|${e.step.toFixed(6)}`;
   if (e.chance !== undefined && chanceOf(`${key}|sounds`) >= 1 - e.chance) return null;
   if (!e.options) return e;
   const o = e.options[Math.floor(chanceOf(`${key}|picks`) * e.options.length)];
@@ -311,14 +314,19 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
         continue;
       }
       const main = series(o.cell, o.pick, o.shift, o.sign);
-      const mods = o.mods.map((t) => series(t.cell, t.pick, t.shift, t.sign)).filter((m) => m.events.length > 0);
+      const mods = o.mods
+        .filter((t) => !t.picks)
+        .map((t) => series(t.cell, t.pick, t.shift, t.sign))
+        .filter((m) => m.events.length > 0);
+      const picks = o.mods.find((t) => t.picks);
+      const picker = picks ? series(picks.cell, picks.pick, picks.shift, 1) : undefined;
       const levels = o.levels.map((t) => series(t.cell, t.pick, t.shift, t.sign));
       const selects = o.select.map((x) => ({
         series: series(x.cell, null, 0, 1),
         entry: x.entry,
         entries: result.cells.get(result.cells.get(x.cell)!.over!)!.units.length,
       }));
-      if (main.events.length) tracks.push({ ...main, output: o, clock: c.clock!, mods, levels, selects, end: endOf(result, statics, o) });
+      if (main.events.length) tracks.push({ ...main, output: o, clock: c.clock!, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o) });
     } catch (e) {
       if (!(e instanceof ExpansionLimit)) throw e;
     }
@@ -353,6 +361,13 @@ export function voiceFor(result: CompileResult, o: Output, value: number): { voi
   return { voice: u.atom.name, freq: result.cells.get(u.atom.name)!.freq };
 }
 
+/** The member a kit read held under a melody picks at a moment (decision 029); null: none, or the output has no such read. */
+export function kitPickAt(p: Plan, o: Output, at: number): string | null {
+  const t = p.tracks.find((x) => x.output === o);
+  const e = t?.picker && heldAt(p, t.picker, at);
+  return (e && voiceFor(p.result, o, e.value)?.voice) ?? null;
+}
+
 /**
  * A law's steps ahead of play (law=fiveto12 over=&day): where its day stands when play starts, against 11:55, the
  * moment its day begins; 0 without a day, or with a day that starts there.
@@ -371,7 +386,7 @@ const RUN = 256;
 /**
  * Everything that starts in [from, to). The triggering term's pitch (tables as
  * they stand at that moment) plus every modulating term sets the voice's rate:
- * freq = voice rate × 2^(semitones / 12). Kits take the number as an index.
+ * freq = voice rate × 2^(semitones / 12). A kit read takes its number as an index and adds no pitch (decision 029).
  * `outputs`: each note names the output it comes from (for the audio: which mixes' wheels hear it); left out,
  * a note is only what sounds.
  */
@@ -479,16 +494,20 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       if (at >= t.end - EPS) return null;
       // (a note whose clock stops beneath it never reaches its end: it rings 8 s at most)
       const ends = Math.min(tm.q(upto / t.rate), t.end);
-      const v = voiceFor(result, t.output, e.value);
+      // (a kit read held under a melody picks the member by its number then; the melody's step starts the note)
+      const by = t.picker ? heldAt(p, t.picker, at) : e;
+      const v = by && voiceFor(result, t.output, by.value);
       if (!v || p.muted.has(cellId(v.voice))) return null;
       // (a oneshot voice: a hit, as long as its envelope's attack and decay, whatever its step)
       const hit = result.cells.get(v.voice)?.oneshot ? (t.output.envelope ?? memberEnvelope(result, v.voice)) : null;
       const dur = hit ? hit.attack + hit.decay : Number.isFinite(ends) ? ends - at : 8;
-      // a gate starts notes at pitch 0, at its own level
-      let semis = t.output.kit || t.output.gate ? t.output.offset : t.sign * pitchOf(p, e, at) + t.output.offset;
+      // a gate starts notes at pitch 0, at its own level; a kit read only selects, adding no pitch (decision 029): the
+      // member picked plays at its own, moved by the rest of the product as any voice is
+      const selects = t.output.kit && !t.picker;
+      let semis = selects || t.output.gate ? t.output.offset : t.sign * pitchOf(p, e, at) + t.output.offset;
       // modulation: the sum at the start sets the pitch; later changes become bends
       const bends: { at: number; cents: number; ramp?: boolean }[] = [];
-      if (!t.output.kit && t.mods.length) {
+      if (t.mods.length) {
         const series = t.mods.map((m) => modulation(p, m, at, at + dur));
         const start = series.reduce((a, s) => a + s[0].semis, 0);
         semis += start;
@@ -502,7 +521,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       }
       // varispeed: on a physical clock that asks for it, pitch follows its speed — as tape does
       const vs = varispeedOf(result, t.clock);
-      if (vs && tm.speed && !t.output.kit && !t.output.gate) {
+      if (vs && tm.speed && !t.output.gate) {
         const sp = (x: number) => Math.max(1e-3, tm.speed!(x));
         const s0 = sp(at);
         if (s0 < 0.05) return null; // (tape at a standstill: nothing sounds)

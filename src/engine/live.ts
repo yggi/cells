@@ -12,7 +12,7 @@ import { stepsOf, unitsFor } from './flatten';
 import { slots, type Slot } from './subseq';
 import type { Atom } from './ast';
 import { cellId, edgeId } from './ids';
-import { droneEnd, endOf, eventsBetween, outputPlays, picksNow, plan, voiceFor, type Plan } from './realize';
+import { droneEnd, endOf, eventsBetween, kitPickAt, outputPlays, picksNow, plan, voiceFor, type Plan } from './realize';
 import { liveRouting, type NotesOf, type RouteAcc } from './routing';
 import { mod } from '../theory/modes';
 
@@ -154,6 +154,16 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
       const live = mark(m.cell);
       if (mc.clock) live.local = mod(clk.stepOf(mc.clock) * mc.rate, Math.max(1, mc.steps));
     }
+    // (a kit read held under a melody: the member it picks now, decision 029; the melody's braid is descended as any)
+    const picked = o.kit && o.mods.some((m) => m.picks);
+    if (picked) {
+      const v = kitPickAt(planOf(result, statics, muted), o, seconds);
+      if (v && !muted.has(cellId(v))) {
+        mark(v);
+        voices.add(cellId(v));
+        hits.push(v);
+      }
+    }
     // (a drone, a voice alone: no braid of notes to descend, it holds its own pitch)
     if (o.drone) continue;
 
@@ -195,7 +205,7 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
       if (!now.length) break;
       for (const { atom: a } of now) {
         if (a.kind !== 'note' && a.kind !== 'chord') continue;
-        if (o.kit) {
+        if (o.kit && !picked) {
           // (a chord through a kit sounds each of its voices: [&bd, &hh] in a groove)
           for (const value of a.kind === 'note' ? [a.value] : a.notes) {
             const v = voiceFor(result, o, value);

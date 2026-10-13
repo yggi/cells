@@ -13,6 +13,17 @@ import { SORT_RULES } from './compiler/sorts';
 import { parse } from './parser';
 import { stripComment } from './parser/scanner';
 import { DEFAULT_ENV } from './program';
+import { CORE, PARAMS } from './attributes';
+
+/** Forms named before they are built (an attribute's `stub`, restart=: decision 032): in the reference, on no tier until they are. */
+export const STUBS: ReadonlySet<string> = new Set([
+  ...Object.keys(CORE)
+    .filter((k) => CORE[k].stub)
+    .map((k) => `attribute ${k}`),
+  ...Object.keys(PARAMS)
+    .filter((k) => PARAMS[k].stub)
+    .map((k) => `parameter ${k}`),
+]);
 
 /**
  * A form's key, from its reference entry: an attribute or a parameter by its word (`over`, `lpf`);
@@ -57,7 +68,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'rate loop=NAME',
       'map map=sample',
       'parameter s',
-      'parameter level',
+      'parameter postgain',
       'mix [a, b, …]',
       'mix p * s',
       'mix n',
@@ -274,6 +285,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       // a gate (decision 023): play= with a braid, its level a product, its voices a chord
       'gate play=&x',
       'gate level=&a*&b*n',
+      'parameter level',
       'gate [&a, &b]',
       // a braid left to the performer
       'free free(0 2 4 ~ …)',
@@ -442,11 +454,13 @@ export function formsUsed(source: string): Set<string> {
     if (d.pitch) ref(d.pitch);
     for (const r of d.about ?? []) ref(r);
     // parameters
-    // (a gate, play= with a braid: its own forms, not a read head's play= nor the sound card's level=)
+    // (a gate, play= with a braid: its own forms, not a read head's play=)
     const gate = typeof d.params.play === 'string' && d.braid.kind === 'list' && d.braid.tokens.length > 0;
     if (gate) {
       use('gate play=&x');
       if (d.paramCells?.level) use('gate level=&a*&b*n');
+      // (a gain alone, level=.5: the parameter)
+      else if (typeof d.params.level === 'number') use('parameter level');
       if (d.braid.kind === 'list' && d.braid.tokens.some((t) => t.atom.kind === 'mix')) use('gate [&a, &b]');
     }
     for (const k of [...Object.keys(d.params), ...Object.keys(d.paramCells ?? {}), ...Object.keys(d.paramClocks ?? {})])

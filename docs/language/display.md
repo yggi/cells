@@ -1,6 +1,6 @@
 # Display and description
 
-How a cell is shown and described: names, labels, notes, the piece's card, `show=`, `size=`, scopes and the sound card's `level=`. None of it changes how a piece sounds.
+How a cell is shown and described: names, labels, notes, the piece's card, `show=`, `size=`, scopes, and how loud an example is (the sound card's `postgain=`, from a loudness check). Apart from that last, none of it changes how a piece sounds.
 
 ## Names and notes
 
@@ -18,7 +18,7 @@ Label templates fill from the cell as it is now, so a key that turns renames its
 &hint label="The major scale: 2 2 1 2 2 2 1." about=&major
 &tune over=&major step=&bar*2 show=notes:flats size=1.5 label="the tune" 0 2 4 5
 &v s=sine loop=C4
-&out level=-6 loop=SAMPLE_RATE map=sample [&tune * &v * .3]
+&out postgain=.501 loop=SAMPLE_RATE map=sample [&tune * &v * .3]
 ```
 
 ## A piece's card
@@ -75,9 +75,9 @@ Without `show=` it is inferred (a table of 12 is a `key`, a recognised mode a `s
 
 The detail sheet describes a cell in one sentence with its cells as links ("Plays 20 steps through &scale, stepped by &bar, on &lead."), then its connections by relation: reads, stepped by, made of, plays on, played by, shaped by, goes to, picks, moves, steps, used by.
 
-## level=
+## Loudness: the card's postgain=
 
-**level=dB** on the sound card sets the overall level (0 as it is, −6 about half). Examples carry it from a loudness check (the convention: about −24 dB average, the median of the library, and a peak under −1 dB; a piece that can't have both, like a crushed big beat, keeps the peak): render to WAV (it reports the average and peak), or in the console `await cellStudio.measure(seconds?)` returns `{rms, peak, clipped}` in dB below full scale. Gains belong to the mix: [mix.md](mix.md); a voice's own gain (`gain=.8` on a voice: linear, a kit member's balance) is in [sound.md](sound.md).
+The sound card's **`postgain=`** is its master, a linear gain (1 as it is, .5 about −6 dB): [mix.md](mix.md#the-sound-card). Examples set it from a loudness check (the convention: about −24 dB average, the median of the library, and a peak under −1 dB; a piece that can't have both, like a crushed big beat, keeps the peak): render to WAV (it reports the average and peak), or in the console `await cellStudio.measure(seconds?)` returns `{rms, peak, clipped}` in dB below full scale. A check that finds 1 leaves it out; a piece with no card written is heard through the built-in card, at .8. To turn a dB figure into it: `10^(dB/20)` (+6 dB is 2, −6 dB .5). Gains belong to the mix: [mix.md](mix.md); a voice's own gain (`gain=.8` on a voice: linear, a kit member's balance) is in [sound.md](sound.md); a gate's intensity (`level=`, linear) is in [mix.md](mix.md#a-gate-a-product-with-a-name).
 
 ## Limits
 

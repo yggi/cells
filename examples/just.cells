@@ -15,4 +15,4 @@
 &tempered over=&equal step=&bar/4 &chords
 
 &organ s=saw loop=C3 lpf=1800 env=&(map=adsr .3 .3 .9 .8)
-&out level=6 map=sample [&pure * &organ * .3] [&tempered * &organ * .3]
+&out postgain=2 map=sample [&pure * &organ * .3] [&tempered * &organ * .3]

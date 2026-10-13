@@ -10,4 +10,4 @@
 &sub s=square loop=C3 lpf=900 env=&(map=adsr .002 .3 .4 .25)       # … and a square an octave down
 &moog [&saw, &sub * .35]
 
-&mix level=6.5 map=sample [&figure * &moog * .5]
+&mix postgain=2.11 map=sample [&figure * &moog * .5]

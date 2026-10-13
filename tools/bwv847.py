@@ -197,7 +197,7 @@ src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered
 &brass pan=.73 s=saw loop=C4 lpf=1500 lpq=4 env=&(map=adsr .02 .2 .7 .15)
 &moog pan=.67 s=saw loop=C4 lpf=700 lpq=10 env=&(map=adsr .005 .25 .5 .1)
 
-&out level=10 map=sample [&rh * &saw * .3, &lh * &pulse * .3, &soprano * &reed * .25, &alto * &brass * .22, &bass * &moog * .3]"""
+&out postgain=3.16 map=sample [&rh * &saw * .3, &lh * &pulse * .3, &soprano * &reed * .25, &alto * &brass * .22, &bass * &moog * .3]"""
 # ---- a layout that shows the structure: the lines in a row, each line's parts below it in order (time reads
 # downward), shared material where the parts that use it can reach it
 X = {'rh': -4.4, 'lh': -2.3, 'soprano': 0.4, 'alto': 3.0, 'bass': 5.6}

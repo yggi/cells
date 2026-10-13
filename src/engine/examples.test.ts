@@ -19,7 +19,7 @@ describe('examples/*.cells', () => {
     expect(Object.keys(PRESETS).sort()).toEqual(files.sort());
   });
   for (const [key, p] of Object.entries(PRESETS)) {
-    test(`${key}: compiles without diagnostics, has a title, tags and a level`, () => {
+    test(`${key}: compiles without diagnostics, has a title, tags, and its card's postgain= or the built-in card`, () => {
       const r = compileSource(p.source);
       expect(r.diagnostics).toEqual([]);
       const m = pieceMeta(p.source);
@@ -31,7 +31,12 @@ describe('examples/*.cells', () => {
         expect(VOCABULARY[kind], `tag ${t}: not in the vocabulary (src/engine/tags.ts)`).toContain(name);
         expect(canonicalTag(t), `tag ${t}: written ${canonicalTag(t)}`).toBe(t);
       }
-      expect(p.source, 'level=').toMatch(/\blevel=/);
+      // its level: a card written with its postgain= (linear, from the loudness check: display.md; left out where that
+      // found 1, the default), or no card written and the built-in card's .8 (decision 028)
+      const cards = [...r.cells.values()].filter((c) => c.sink && !c.implicit);
+      expect(cards.length, 'sound cards').toBeLessThanOrEqual(1);
+      for (const c of cards) if (c.params.postgain !== undefined) expect(c.params.postgain, `&${c.name} postgain=`).toBeGreaterThan(0);
+      if (!cards.length) expect(r.builtinCard, 'no card written: the built-in card').toBeDefined();
     });
   }
 

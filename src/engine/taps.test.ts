@@ -69,7 +69,7 @@ describe('arranging at the input (decision 016)', () => {
     // a tap's line with steps of its own: the error says which line, not that the other taps are unknown
     const stepped = compileSource(SONG.replace('&parts step=&bar &keysBar &tuneBar &drumBar', '&parts step=&bar &keysBar &tuneBar &drumBar\n&drumBar 0 1'));
     expect(stepped.diagnostics.map((d) => d.message)).toContain(
-      '&drumBar is a tap of &parts, so its line can carry attributes only (off, label=, tags=, show=), not steps or a table of its own',
+      '&drumBar is a tap of &parts, so its line can carry attributes only (off, label=, tags=, show=, restart=), not steps or a table of its own',
     );
     // (a bare line of a name no table names is a cell of no steps, as before)
     expect(compileSource('&x off').cells.get('x')?.clock).toBeFalsy();
@@ -104,5 +104,34 @@ describe('the examples arranged at the input play the same', () => {
     expect(after.end).toBe(before.end);
     expect(after.notes.length).toBe(before.notes.length);
     expect(after.notes).toEqual(before.notes);
+  });
+});
+
+// Decision 032: restart= names what switching a part on does to its time; resume and free are stubs.
+describe('restart= on a tap or a selector (decision 032)', () => {
+  const messages = (src: string) => compileSource(src).diagnostics.map((d) => `${d.severity}: ${d.message}`);
+  const onTap = (policy: string) => SONG + `&tuneBar restart=${policy}\n`;
+  const onSelector = (policy: string) => SONG.replace('&song over=&parts', `&song over=&parts restart=${policy}`);
+  it('restart (the default) parses on a tap and on a selector, says nothing and plays as without it', () => {
+    for (const src of [onTap('restart'), onSelector('restart')]) {
+      expect(messages(src)).toEqual([]);
+      expect(played(src, 0, 40)).toEqual(played(SONG, 0, 40));
+    }
+    expect(compileSource(onTap('restart')).cells.get('tuneBar')?.params.restart).toBe('restart');
+  });
+  it.each(['resume', 'free'])('restart=%s parses, warns that it is not yet implemented, and plays as restart', (policy) => {
+    for (const src of [onTap(policy), onSelector(policy)]) {
+      expect(messages(src)).toEqual([`warning: restart=${policy} is not yet implemented: plays as restart`]);
+      expect(played(src, 0, 40)).toEqual(played(SONG, 0, 40));
+    }
+  });
+  it('a tap with restart= stays a tap', () => {
+    expect(compileSource(onTap('resume')).cells.get('tuneBar')?.clock).toBe('bar');
+  });
+  it('another word, or another cell, says so', () => {
+    expect(messages(onTap('again'))).toEqual(['warning: restart=again: what switching a part on does to its time is restart, resume or free — this plays as restart']);
+    expect(messages(SONG.replace('&lead s=square', '&lead restart=resume s=square'))).toEqual([
+      'warning: restart= acts on a tap (a name a stepped table of names declares) or a selector (over= a table of taps): on &lead it does nothing',
+    ]);
   });
 });

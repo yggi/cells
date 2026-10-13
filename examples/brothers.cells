@@ -33,7 +33,7 @@
 &parts step=&bar &breakBar &acidBar &riffBar &sirenBar &buildBar &subBar
 &song over=&parts step=&bar/32 laps=1 label="break · bass · acid · build · riff · all · siren · build · all" [0] [0,5] [0,1,5] 4 [0,1,2,5] [0,1,2,3,5] [3,1] 4 [0,1,2,3,5]
 
-&out level=-3 map=sample [&break * .7,
+&out postgain=.708 map=sample [&break * .7,
                           &acid * &accent * &tb * .3,
                           &riff * &stab * .1,
                           (&siren + &wail) * &siren1 * .08,

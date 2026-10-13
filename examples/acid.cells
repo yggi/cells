@@ -25,4 +25,4 @@
 &hh gain=.25 s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)
 &oh gain=.2 oneshot s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
 
-&mix level=0.5 map=sample [&line * &accent * &tb303 * .45, &beat]
+&mix postgain=1.06 map=sample [&line * &accent * &tb303 * .45, &beat]

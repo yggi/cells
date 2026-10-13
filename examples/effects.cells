@@ -13,4 +13,4 @@
 &thin s=saw loop=C4 hpf=2500 hpq=3 env=&(map=adsr .005 .2 .2 .2)
 &glass s=sine loop=C5 room=.6 delay=.4 delaytime=.33 delayfeedback=.5 env=&(map=adsr .01 .8 0 .8)
 &grit s=square loop=C2 lpf=900 distort=.3 crush=8 env=&(map=adsr .005 .2 .6 .1)
-&out map=sample level=4.5 [&tune * &thin * .2, &line * &warm * .15, &sparkle * &glass * .2, &bass * &grit * .3]
+&out map=sample postgain=1.68 [&tune * &thin * .2, &line * &warm * .15, &sparkle * &glass * .2, &bass * &grit * .3]

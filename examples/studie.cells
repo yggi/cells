@@ -21,4 +21,4 @@
 &swell pan=.14 s=sine loop=100 env=&(map=adsr 1.5 .5 .8 1.5)            # 100 Hz: the scale's first tone
 &fade pan=.86 s=sine loop=100 env=&(map=adsr .01 1.5 .3 1.5)
 
-&out level=15 map=sample [&forward * &dyn * &swell * .07, &backward * &fade * .07]
+&out postgain=5.62 map=sample [&forward * &dyn * &swell * .07, &backward * &fade * .07]

@@ -25,4 +25,4 @@
 &tick pan=.7 s=square loop=D6 hpf=4000 crush=4 env=&(map=adsr 0 .03 0 .02)
 &blip pan=.64 s=sine loop=D6 crush=3 env=&(map=adsr 0 .05 0 .03)
 
-&out level=-1 map=sample [&phrase * &piano * .22, &answer * &cello * .16, &drone * &low * .18, &hiss * &noise * .25, &kick * &bd * .55, &metal * &tick * .1, &glitch * &blip * .07]
+&out postgain=.891 map=sample [&phrase * &piano * .22, &answer * &cello * .16, &drone * &low * .18, &hiss * &noise * .25, &kick * &bd * .55, &metal * &tick * .1, &glitch * &blip * .07]

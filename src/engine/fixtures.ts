@@ -31,5 +31,5 @@ export const SAILOR_WITH_KIT = `&piece title="Drunken Sailor: D Dorian, with a k
 &sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .04)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh
-&mix level=5 loop=SAMPLE_RATE map=sample [&tune * &fiddle * 0.6, &bassline * &bass * 0.8, &drums * 0.6]
+&mix postgain=1.78 loop=SAMPLE_RATE map=sample [&tune * &fiddle * 0.6, &bassline * &bass * 0.8, &drums * 0.6]
 `;

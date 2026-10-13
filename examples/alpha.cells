@@ -11,4 +11,4 @@
 &brass s=saw loop=C4 lpf=2200 lpq=3 env=&(map=adsr .04 .2 .7 .3) pitch=&(map=lin loop=5 0 .08 0 -.08 0)
 &pad s=tri loop=C3 env=&(map=adsr .4 .3 .8 .8)
 
-&mix level=7.5 map=sample [&tune * &brass * .35, &chords * &pad * .3]
+&mix postgain=2.37 map=sample [&tune * &brass * .35, &chords * &pad * .3]

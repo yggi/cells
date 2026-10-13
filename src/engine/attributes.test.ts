@@ -32,7 +32,7 @@ describe('the attribute table', () => {
     expect([...VOICE_PARAMS].sort()).toEqual(
       ['s', 'lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay', 'delaytime', 'delayfeedback', 'pan', 'distort', 'crush', 'fm', 'ratio', 'index', 'body', 'ring', 'hard'].sort(),
     );
-    expect(Object.keys(PARAMS).length).toBe(58);
+    expect(Object.keys(PARAMS).length).toBe(60);
   });
 
   test('a misspelling finds its nearest attribute', () => {
@@ -52,7 +52,14 @@ describe('an attribute where it does nothing is a warning', () => {
   };
   test.each([
     ['swing= on a voice', '&t step=4 0 1' + tail.replace('s=saw', 's=saw swing=.6'), 'swing= acts on a meter (step= a rate): on &v it does nothing'],
-    ['level= off the sound card', '&t step=4 level=-3 0 1' + tail, 'level= acts on the sound card (map=sample) or a gate (play= with a braid): on &t it does nothing'],
+    ['level= off a gate', '&t step=4 level=.5 0 1' + tail, 'level= acts on a gate (play= with a braid): on &t it does nothing'],
+    [
+      'level= on the sound card (its level is postgain=)',
+      '&t step=4 0 1' + tail.replace('&out', '&out level=-3'),
+      'level= acts on a gate (play= with a braid): on &out it does nothing',
+    ],
+    ['postgain= takes no unit: linear, not dB', '&t step=4 0 1' + tail.replace('&out', '&out postgain=-6db'), "postgain= takes a number: '-6db' does nothing"],
+    ['postgain= off the sound card', '&t step=4 postgain=.5 0 1' + tail, 'postgain= acts on the sound card (map=sample): on &t it does nothing'],
     ['wow= without a motor', '&m step=90bpm wow=.01\n&t step=&m 0 1' + tail, 'wow= acts on a meter with a motor=: on &m it does nothing'],
     ['ratio= on a voice no fm= names', '&t step=4 0 1' + tail.replace('s=saw', 's=saw ratio=2'), 'ratio= acts on a voice another’s fm= names: on &v it does nothing'],
     ['title= on a cell that plays', '&t step=4 title="x" 0 1' + tail, 'title= acts on a note (a label= and nothing else): on &t it does nothing'],
@@ -67,7 +74,7 @@ describe('an attribute where it does nothing is a warning', () => {
   });
 
   test('in their place, none', () => {
-    expect(warnings('&m step=90bpm motor=1 wow=.01 swing=.6 0 1 2 3\n&t step=&m 0 1' + tail.replace('&out', '&out level=-3'))).toEqual([]);
+    expect(warnings('&m step=90bpm motor=1 wow=.01 swing=.6 0 1 2 3\n&t step=&m 0 1' + tail.replace('&out', '&out postgain=free(.8, 0..1)'))).toEqual([]);
     expect(warnings('&op s=sine ratio=2\n&t step=4 0 1' + tail.replace('s=saw', 's=sine fm=&op index=3'))).toEqual([]);
   });
 

@@ -15,4 +15,4 @@
 &click s=sine loop=C6 env=&(map=adsr 0 .01 0 .01)
 &bell s=sine loop=C5 env=&(map=adsr .002 2 0 1.5)
 &glass s=tri loop=C4 lpf=3200 env=&(map=adsr .004 .9 .25 1.2)
-&out map=sample level=9.5 [&cycle * &glass * .3, &tick * &click * .05, (&chime + &daily) * &bell * .2]
+&out map=sample postgain=2.99 [&cycle * &glass * .3, &tick * &click * .05, (&chime + &daily) * &bell * .2]

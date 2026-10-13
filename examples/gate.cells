@@ -20,4 +20,4 @@
 
 &leadOut play=&tune level=&accent*.4 [&lead, &bell]
 &drumOut play=&beat level=.5 &kit
-&out map=sample level=0 [&leadOut, &drumOut, &roots * &bass * .5]
+&out map=sample [&leadOut, &drumOut, &roots * &bass * .5]

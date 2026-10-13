@@ -1,6 +1,7 @@
 /**
  * Phase 1b: the built-in card (decision 028). A piece that writes no card (neither `map=sample` nor `map=midi`) is heard
- * through one of its own: every sound that nothing else reads goes to it, a fader each, at Strudel's default gain, 0.8.
+ * through one of its own: every sound that nothing else reads goes to it, a fader each (at 1), and its master, postgain=,
+ * Strudel's default gain, 0.8, applied where a written card's is (in the audio, after the mix).
  * It is a declaration the parser never saw, under a name no line can write, implicit (not drawn, never edited): the
  * phases after this one route, wire and play it as any card.
  */
@@ -13,8 +14,8 @@ import type { Ctx } from './context';
 
 /** The built-in card's name: with a colon, which no cell's name can have, so it never meets one. */
 const BUILTIN_CARD = 'card:builtin';
-/** Its master: Strudel's default gain (superdough's `gain`, 0.8), on every fader. */
-const BUILTIN_GAIN = 0.8;
+/** Its master, its postgain=: Strudel's default gain (superdough's `gain`, 0.8). */
+const BUILTIN_POSTGAIN = 0.8;
 
 /** The cells an expression in a mix names. */
 const exprRefs = (e: Expr): string[] => (e.k === 'ref' ? [e.ref.name] : e.k === 'sum' ? e.items.flatMap((x) => exprRefs(x.e)) : e.k === 'prod' ? e.factors.flatMap(exprRefs) : []);
@@ -24,14 +25,14 @@ const atomRefs = (a: Atom): string[] =>
 
 /**
  * Every cell a declaration reads, in any position: its braid (splices, a mix's or a card's terms), over=, base=, a
- * step=/loop= driver, a map= table, env= and pitch=, about=, a parameter's cells and clocks, and the parameters that
- * take a cell (play= write= excite= couple= fm= …: attributes.ts).
+ * step=/loop= driver, a map= table, env= and pitch=, a parameter's cells and clocks, and the parameters that
+ * take a cell (play= write= excite= couple= fm= …: attributes.ts). Not about=: a note's links are annotation only, so a
+ * piece's card that explains its oscillator (`&piece … about=&a`) leaves it heard.
  */
 function readsOf(d: CellDecl): string[] {
   const out: string[] = [];
   if (d.braid.kind === 'list') for (const t of d.braid.tokens) out.push(...atomRefs(t.atom));
   for (const r of [d.over, d.base, d.env, d.pitch, d.map?.kind === 'table' ? d.map.table : null, d.step?.kind === 'driven' ? d.step.driver : null]) if (r) out.push(r.name);
-  for (const r of d.about ?? []) out.push(r.name);
   for (const pc of Object.values(d.paramCells ?? {})) out.push(...pc.factors.map((f) => f.name));
   for (const st of Object.values(d.paramClocks ?? {})) if (st.kind === 'driven') out.push(st.driver.name);
   for (const [k, v] of Object.entries(d.params)) if (typeof v === 'string' && ATTRIBUTES[k]?.value === 'cell') out.push(v);
@@ -57,14 +58,7 @@ export function builtinCard(ctx: Ctx, declared: Declared): Declared & { readonly
   if (!sounds.length) return none;
   const span = IMPLICIT;
   // (each term on its sound's own line: what is said about it is said there)
-  const exprs: Expr[] = sounds.map((d) => ({
-    k: 'prod',
-    span: d.span,
-    factors: [
-      { k: 'ref', ref: { name: d.name, pick: null, shift: 0, span: d.span } },
-      { k: 'num', value: BUILTIN_GAIN, span: d.span },
-    ],
-  }));
+  const exprs: Expr[] = sounds.map((d) => ({ k: 'ref', ref: { name: d.name, pick: null, shift: 0, span: d.span } }));
   const card: CellDecl = {
     name: BUILTIN_CARD,
     span,
@@ -75,7 +69,7 @@ export function builtinCard(ctx: Ctx, declared: Declared): Declared & { readonly
     map: { kind: 'sample', span },
     stride: null,
     cycle: null,
-    params: {},
+    params: { postgain: BUILTIN_POSTGAIN },
     paramSpans: {},
     braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs }, repeat: 1, subdivide: 1, elongate: 1, span }] },
   };

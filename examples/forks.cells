@@ -10,4 +10,4 @@
 &forkA pan=.35 body=fork loop=A4 ring=10 hard=.35 board=none couple=&forkB coupling=.1 label="fork A: struck" 0
 &forkB pan=.65 body=fork loop=free(440hz, 434..446) ring=10 hard=.35 board=none label="fork B: only the table rings it" 0
 
-&out level=-8 map=sample [&hits * &forkA * .5, &forkB * .5]
+&out postgain=.398 map=sample [&hits * &forkA * .5, &forkB * .5]

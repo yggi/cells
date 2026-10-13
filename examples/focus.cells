@@ -20,4 +20,4 @@
 &bell pan=.31 s=sine loop=D4 room=.7 delaytime=&bar*4/3 delay=.35 delayfeedback=.45 env=&(map=adsr .004 1.4 0 2.2)
 &low s=tri loop=D3 lpf=500 env=&(map=adsr 1.5 1 .9 3)
 
-&out level=10.5 map=sample [&chords * &pad * .08, &arp * &bell * .16, &roots * &low * .3]
+&out postgain=3.35 map=sample [&chords * &pad * .08, &arp * &bell * .16, &roots * &low * .3]

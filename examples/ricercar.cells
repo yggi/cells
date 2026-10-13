@@ -21,4 +21,4 @@
 &flute pan=.28 s=sine loop=C4 env=&(map=adsr .03 .1 .8 .2) pitch=&(map=lin loop=5 0 .08 0 -.08 0)
 &bourdon pan=.7 s=tri loop=C4 lpf=900 env=&(map=adsr .02 .15 .8 .3)
 
-&out level=10 map=sample [&theme * &organ * .5, &upper * &flute * .45, &lower * &bourdon * .5]
+&out postgain=3.16 map=sample [&theme * &organ * .5, &upper * &flute * .45, &lower * &bourdon * .5]

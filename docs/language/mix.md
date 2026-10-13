@@ -42,6 +42,18 @@ A **plain value**, a number or a `map=lin` cell, has no sort of its own. It take
 
 The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is a gain. To transpose by a constant in a product, write the sum: `(&theme + 12) * &lead`.
 
+**A kit read only selects** ([decision 029](../decisions/029-kits-pass-pitch.md)). A pattern read through a kit picks a member by its number and adds no pitch; the rest of the product acts on the member picked as on any voice: its pitch terms transpose it, its volumes scale it, a clock's varispeed bends it. With no other pitch term (plain drums) each member plays at its own pitch. Of the terms that step, the finest starts notes, as in any product: a melody over a slower kit read plays on the voice the read picks, held while it lasts (orchestration):
+
+```cells
+&bar scan(1 1 1 1) step=120bpm
+&lead s=saw loop=C4 env=&(map=adsr .01 .2 .4 .2)
+&organ s=square loop=C3 lpf=1500
+&band &lead &organ
+&orch over=&band step=&bar/4 0 1                # a bar on the lead, a bar on the organ
+&theme step=&bar 0 2 4 7
+&out loop=SAMPLE_RATE map=sample [&theme * &orch * .3]
+```
+
 ## A gate: a product with a name
 
 A product that plays a voice can be written as a cell of its own, a **gate** ([decision 023](../decisions/023-gate-spelling.md)):
@@ -107,7 +119,15 @@ Two mixes, one for each channel:
 &out loop=SAMPLE_RATE map=sample &left &right
 ```
 
-**No card written: the built-in card** ([decision 028](../decisions/028-the-smallest-piece.md)). A piece that writes no card (neither `map=sample` nor a MIDI card) is heard through one of its own: every sound that nothing else reads (a voice, a waveform, a mix, a gate, a pattern read through a kit, a tape's read head that no mix, splice, `over=`, `env=`, `pitch=`, `fm=`, `play=`, `write=`, `excite=`, `about=` … names) goes to it, a fader each, at Strudel's default gain, **0.8**, on both sides. It is in no line and the graph draws no node for it; a piece that writes its card keeps exactly that card, and one that writes only MIDI cards sends what they name and sounds nothing else ([midi.md](midi.md)). So two voices alone are both heard, each held at its own pitch ([sound.md](sound.md)), and a mix nothing reads is heard as it is:
+**`postgain=`** is the card's master: Strudel's `postgain`, a linear gain on everything the card plays, after the mix (1 by default, .5 about −6 dB, 2 about +6 dB). It is a number, so `postgain=free(.8, 0..1)` makes it a slider: the master fader. It takes no unit (`postgain=-6db` is not read: the dB of a loudness check go in as `10^(dB/20)`, [display.md](display.md#loudness-the-cards-postgain)). Each voice's own level is its `gain=` ([sound.md](sound.md)), a gate's is its `level=` (above); a card has neither.
+
+```cells
+&theme step=1 0 2 4 5
+&reed s=square loop=220
+&out map=sample postgain=free(.8, 0..1) [&theme * &reed * .5]
+```
+
+**No card written: the built-in card** ([decision 028](../decisions/028-the-smallest-piece.md)). A piece that writes no card (neither `map=sample` nor a MIDI card) is heard through one of its own: every sound that nothing else reads (a voice, a waveform, a mix, a gate, a pattern read through a kit, a tape's read head that no mix, splice, `over=`, `env=`, `pitch=`, `fm=`, `play=`, `write=`, `excite=` … names; a note's `about=` is not a read) goes to it, a fader each (at 1, on both sides), and its master, its `postgain=`, is Strudel's default gain, **0.8**. It is in no line and the graph draws no node for it; a piece that writes its card keeps exactly that card, and one that writes only MIDI cards sends what they name and sounds nothing else ([midi.md](midi.md)). So two voices alone are both heard, each held at its own pitch ([sound.md](sound.md)), and a mix nothing reads is heard as it is:
 
 ```cells
 &tune step=2 0 2 4 7
@@ -116,7 +136,7 @@ Two mixes, one for each channel:
 &melody [&tune * &lead * .5]
 ```
 
-Here `&melody` (and `&lead` through it) and `&drone` go to the built-in card, each at .8 (`&melody` at .8 × .5). Until the card's level is one control ([#150](https://github.com/yggi/cell-studio/issues/150)), its master is folded into each fader.
+Here `&melody` (and `&lead` through it) and `&drone` go to the built-in card, each on a fader at 1 (`&melody`'s voice at .5), all of it through the master at .8. A piece whose card explains its oscillator (`&piece … about=&a`) leaves it heard: `about=` is annotation.
 
 ## Instruments
 

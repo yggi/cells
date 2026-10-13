@@ -13,4 +13,4 @@
 &played [&tune * &flute * .2]
 &strings body=wire loop=A2 ring=4 board=none excite=&played 0 7 12 19
 
-&out map=sample level=-7.5 [&hits * &forkA * .4, &forkB * .4, &played, &strings * .3]
+&out map=sample postgain=.422 [&hits * &forkA * .4, &forkB * .4, &played, &strings * .3]

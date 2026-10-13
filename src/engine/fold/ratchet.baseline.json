@@ -1,4 +1,5 @@
 {
+  "oscillator": {"kept":true,"score":80,"back":0,"of":0},
   "tone": {"kept":true,"score":80,"back":0,"of":0},
   "rests": {"kept":true,"score":125,"back":1,"of":1},
   "semitones": {"kept":true,"score":117,"back":1,"of":1},

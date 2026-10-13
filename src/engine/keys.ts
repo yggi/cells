@@ -225,11 +225,17 @@ export function scaleKeys(result: CompileResult, cell: string, shifts: Shifts, a
  */
 export function rowNote(result: CompileResult, cell: string, value: number, shifts: Shifts): { readonly voice: string; readonly freq: number } | null {
   const plays = (x: Output) => !x.silent && !x.tape && !x.gate;
+  // (a kit read held under a melody, decision 029: its rows pick the member, as a kit pattern's do)
+  const read = result.outputs.find((x) => plays(x) && x.kit && x.mods.some((m) => m.picks && m.cell === cell));
+  if (read) return voiceFor(result, read, value);
   const o = result.outputs.find((x) => plays(x) && x.cell === cell) ?? result.outputs.find((x) => plays(x) && x.voice === cell);
   if (!o) return null;
-  if (o.kit) return voiceFor(result, o, value);
-  const base = result.cells.get(o.voice)?.freq ?? 0;
+  const picked = o.kit && o.mods.some((m) => m.picks);
+  if (o.kit && !picked) return voiceFor(result, o, value);
+  // (a melody on the voices a kit read picks: shown on its first member)
+  const on = picked ? voiceFor(result, o, 0) : { voice: o.voice, freq: result.cells.get(o.voice)?.freq ?? 0 };
+  if (!on) return null;
   const r = resolvePitch(result, o.cell, value, 0, shifts);
-  const freq = base * Math.pow(2, (o.sign * semitones(result, r.root, r.position) + o.offset) / 12);
-  return freq > 0 && Number.isFinite(freq) ? { voice: o.voice, freq } : null;
+  const freq = on.freq * Math.pow(2, (o.sign * semitones(result, r.root, r.position) + o.offset) / 12);
+  return freq > 0 && Number.isFinite(freq) ? { voice: on.voice, freq } : null;
 }

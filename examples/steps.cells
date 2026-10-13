@@ -5,4 +5,4 @@
 &tune step=4 0 2 4 0 0 2 4 0 4 5 7@2 4 5 7@2 7 9 7 5 4 ~ 0 ~ 7 9 7 5 4 ~ 0 ~ 0!2 -5 0@2 0!2 -5 0@2
 
 &voice s=sine loop=C4                           # a voice: a sine, on C4
-&out loop=SAMPLE_RATE map=sample level=6 [&tune * &voice * .5]
+&out loop=SAMPLE_RATE map=sample postgain=2 [&tune * &voice * .5]

@@ -13,6 +13,6 @@
 &pluck s=tri loop=C4 env=&(map=adsr .01 .4 .3 .3)
 &grids step=&bar &edoBar &fifthsBar &justBar
 &turns over=&grids step=&bar/2 0 1 2                  # a grid every two bars, in turn
-&out map=sample level=16 [&a * &pluck * .3,
+&out map=sample postgain=6.31 [&a * &pluck * .3,
                           &b * &pluck * .3,
                           &c * &pluck * .3]

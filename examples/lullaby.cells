@@ -16,5 +16,5 @@
 &ring map=lin loop=&song 1 .35 .1           # each note rings and fades away: a ramped volume
 &box s=sine loop=C5 room=.5 env=&(map=adsr .005 .1 1 .9)
 &low s=tri loop=C3 env=&(map=adsr .05 .6 .4 .6)
-&mix level=7.5 map=sample [&song * &ring * &box, &roots * &low * 0.5]
+&mix postgain=2.37 map=sample [&song * &ring * &box, &roots * &low * 0.5]
 &roll scope=waterfall label="a piano roll: the tune above, its roots below" &song &roots

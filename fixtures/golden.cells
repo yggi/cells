@@ -47,7 +47,7 @@
 &day scan(1!24) loop=1d anchor=11.55 show=ring
 &cycle law=fiveto12 over=&day step=84bpm
 &light scope=spectrum &flute
-&out level=4 map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &compOut, &drums, &(step=&bar 0 4) * &flute * .1, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&leadA, &leadB, &plucks * &kalimba * .3, &hats * &hh * .1]
+&out postgain=1.58 map=sample [(&theme + &vibrato) * &accent * &flute * .4, &tune * &lead * .3, &line * &lead * .2, &compOut, &drums, &(step=&bar 0 4) * &flute * .1, &near * &flute * .1, &motif * &lead * .2, &cycle * &flute * .2] [&leadA, &leadB, &plucks * &kalimba * .3, &hats * &hh * .1]
 
 # a MIDI card: the law's notes on the flute sent on channel 1 too, a note bus into it
 &synth map=midi [&cycle * &flute]

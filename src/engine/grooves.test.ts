@@ -4,6 +4,8 @@ import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
 import { buildGraph } from '../layout/drawn';
 import { shorten } from './shorten';
+import { liveAt } from './live';
+import { cellId } from './ids';
 
 const voices =
   '&bar scan(1 1 1 1) step=120bpm\n&bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)\n&hh s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)\n&sd s=white hpf=1500 env=&(map=adsr 0 .1 0 .04)\n';
@@ -91,5 +93,51 @@ describe('pan= on a voice: where it sits in stereo (#10 F3)', () => {
   it('a kit’s members each sit where their pan= says', () => {
     const g = gains(voices.replace('hpf=8000', 'hpf=8000 pan=1') + '&groove step=&bar*2 &bd &hh\n&out map=sample [&groove * .6]');
     expect(g.slice(0, 2)).toEqual(['bd 0.6000,0.6000', 'hh 0.0000,0.6000']);
+  });
+});
+
+describe('a kit read only selects: the rest of the product acts on the member it picks (decision 029)', () => {
+  const notes = (src: string, to = 4) => {
+    const r = compileSource(src);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    return eventsBetween(plan(r, codeShifts(r)), 0, to - 1e-6).map((e) => `${e.voice} ${e.at.toFixed(2)} ${e.freq.toFixed(2)}`);
+  };
+  const band = '&bar scan(1 1 1 1) step=120bpm\n&lead s=saw loop=C4\n&organ s=square loop=C3\n&band &lead &organ\n';
+  it('orchestration: a melody played on the voice a kit pattern picks (#29), the finer term starting notes', () => {
+    const src = band + '&orch over=&band step=&bar/4 0 1\n&theme step=&bar 0 2 4 5\n&out map=sample [&theme * &orch * .5]';
+    expect(notes(src)).toEqual([
+      'lead 0.00 261.63',
+      'lead 0.50 293.66',
+      'lead 1.00 329.63',
+      'lead 1.50 349.23',
+      'organ 2.00 130.81',
+      'organ 2.50 146.83',
+      'organ 3.00 164.81',
+      'organ 3.50 174.61',
+    ]);
+    // the factors commute
+    expect(notes(src.replace('[&theme * &orch * .5]', '[.5 * &orch * &theme]'))).toEqual(notes(src));
+    // the live view lights the member the kit read picks now
+    const r = compileSource(src);
+    const live = (t: number) => [...liveAt(r, codeShifts(r), new Set(), t).voices].filter((v) => v.includes('lead') || v.includes('organ'));
+    expect(live(0.7)).toEqual([cellId('lead')]);
+    expect(live(2.7)).toEqual([cellId('organ')]);
+  });
+  it('a pitch held under a drum pattern transposes the member it picks; a number in the sum too', () => {
+    const src = voices + '&kit &bd &hh\n&drums over=&kit step=&bar 0 0 0 0\n&key step=&bar/4 0 7\n&out map=sample [&drums * &key]';
+    const bd = (f: number) => (55 * Math.pow(2, f / 12)).toFixed(2);
+    expect(notes(src).map((n) => n.split(' ')[2])).toEqual([0, 0, 0, 0, 7, 7, 7, 7].map(bd));
+    expect(notes(src.replace('[&drums * &key]', '[(&key + 12) * &drums]')).map((n) => n.split(' ')[2])).toEqual([12, 12, 12, 12, 19, 19, 19, 19].map(bd));
+  });
+  it('varispeed on a clock bends a kit member as it bends the voice played alone', () => {
+    const tape = '&bar scan(1 1 1 1) step=78bpm motor=1.4 mass=1 friction=.3 varispeed=1\n&bd s=sine loop=A1\n&hh s=white\n';
+    const groove = notes(tape + '&g step=&bar &bd &bd &hh &bd\n&out map=sample [&g * .5]', 6).filter((n) => n.startsWith('bd'));
+    const alone = notes(tape + '&k step=&bar 0 0 ~ 0\n&out map=sample [&k * &bd * .5]', 6);
+    expect(groove).toEqual(alone);
+    expect(groove[0]).not.toBe('bd 0.00 55.00'); // (spinning up from rest: below its pitch)
+  });
+  it('plain drums: nothing changes, each member at its own pitch', () => {
+    const src = voices + '&kit &bd &hh\n&drums over=&kit step=&bar 0 1 0 1\n&out map=sample [&drums * .6]';
+    expect(notes(src, 2)).toEqual(['bd 0.00 55.00', 'hh 0.50 261.63', 'bd 1.00 55.00', 'hh 1.50 261.63']);
   });
 });

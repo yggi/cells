@@ -255,6 +255,11 @@ interface PitchTerm {
   readonly pick: Pick | null;
   readonly shift: number;
   readonly sign: 1 | -1;
+  /**
+   * A kit read that doesn't start notes (decision 029): held under the term that does, its number picks the kit's
+   * member; it adds no pitch.
+   */
+  readonly picks?: true;
 }
 
 /** A resolved out(&voice, &theme + &mod …). */

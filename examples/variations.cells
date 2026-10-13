@@ -13,4 +13,4 @@
 &flute s=tri loop=C5 env=&(map=adsr .02 .3 .5 .3)
 &reed s=tri loop=C4 env=&(map=adsr .02 .3 .5 .3)
 &cello s=saw loop=C3 lpf=1200 env=&(map=adsr .03 .3 .6 .3)
-&out map=sample level=12 [&soprano * &flute * .3, &alto * &reed * .3, &bass * &cello * .25]
+&out map=sample postgain=3.98 [&soprano * &flute * .3, &alto * &reed * .3, &bass * &cello * .25]

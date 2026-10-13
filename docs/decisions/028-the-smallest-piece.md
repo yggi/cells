@@ -11,7 +11,7 @@ A cell looped at an audio rate is a voice ([sound.md](../language/sound.md)), so
 ## Decision
 
 1. **A voice alone plays its own pitch, held.** In a product, a missing pitch factor is the pitch identity (0 semitones), as a missing volume is 1. This is decision 006's algebra with its identities. `[&a]` is `&a` at its own pitch, held as long as the piece plays: an oscillator, not a note.
-2. **No card written: a built-in one.** When a piece writes no sound card (`map=sample`), every sound that nothing else reads goes to a card of its own, the **built-in mixer**: a fader each, and a master at Strudel's default gain, **0.8**. It is in no line of the text; a piece that writes its card keeps exactly that card.
+2. **No card written: a built-in one.** When a piece writes no sound card (`map=sample`), every sound that nothing else reads goes to a card of its own, the **built-in mixer**: a fader each, and a master at Strudel's default gain, **0.8**. It is in no line of the text; a piece that writes its card keeps exactly that card. A note's `about=` doesn't count as reading a sound: it explains, it doesn't listen (so *An oscillator*, whose card note is `about=&a`, sounds).
 3. **The staircase stays.** A blank braid is the identity of the 12, so `&a loop=A4` sounds a 12-step staircase saw at 440 Hz. A voice's default sound is not a spelling, so decision 027 doesn't ask for dough's triangle.
 
 ## Why

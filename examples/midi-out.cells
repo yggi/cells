@@ -13,6 +13,6 @@
 &sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .05)
 &hh s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
 
-&out map=sample level=-1 [&theme * &reed * .5, &groove * .6]
+&out map=sample postgain=.891 [&theme * &reed * .5, &groove * .6]
 &synth map=midi [&theme * &reed] [&bass * &sub]
 &drums map=midi(10) &groove

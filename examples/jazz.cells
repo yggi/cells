@@ -23,7 +23,7 @@
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .2 .2)
 &cym gain=.25 s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
 
-&mix level=5 map=sample [&lick * &horn * .5,
+&mix postgain=1.78 map=sample [&lick * &horn * .5,
                                   (&walk + &changes) * &bass * .8,
                                   (&comp + &changes) * &keys * .35,
                                   &ride]

@@ -67,4 +67,6 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 
 A tap may have a line of its own with attributes only, and stays a tap (`&tuneBar off` switches the tune's part off in every section; holding its bulb in the graph writes that line). A name the table declares must step something (`step=&tuneBar`), or the compiler says so; a table of names none of which steps anything is a braid of cells as before (an unknown name an error). The old form, a selector reading a table of mixes and their sound through it, is an error now; Shorten rewrites it at the input, checked to play the same notes.
 
+**`restart=`** names what switching a part on does to its time ([decision 032](../decisions/032-restart-policies.md)), on a tap's line (`&tuneBar restart=restart`) or on the selector, for all its taps: **`restart`**, from its top (the default, what plays today); **`resume`**, its time paused while it is off, going on where it stopped; **`free`**, its time running on global time and only its sound switched (Strudel's default). `resume` and `free` are named but not yet built: they warn and play as `restart`.
+
 The transport marks a selector's sections and jumps to them ([../ui/transport.md](../ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](../limits.md)).

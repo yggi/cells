@@ -28,7 +28,7 @@
 &parts step=&bar &hatsBar &beatBar &bassBar &keysBar &hookBar &endBar
 &song over=&parts step=&bar/16 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [0,3] [0,1,2,3]!2 [0,1,2,3,4]!2 [3,4] [0,1,2,3,4]!2 [3] 5
 
-&out level=5 map=sample [&hats,
+&out postgain=1.78 map=sample [&hats,
                          &beat,
                          &roots * &bass * .5,
                          &chords * &keys * .15,
