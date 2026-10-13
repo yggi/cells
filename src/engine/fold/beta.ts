@@ -47,6 +47,31 @@ const kidOf = (t: Tok): Kid => ({ key: t.key, off: t.base, ...(t.stretch ? { str
 /** Characters: a token list as written (each followed by a space). */
 const written = (toks: readonly Tok[], names: ReadonlyMap<string, string>) => toks.reduce((n, t) => n + tokText(t, names).length + 1, 0);
 
+/** A symbol written back where it is used (in the lines and in other symbols), and gone: what β does to one that
+ * doesn't pay, and a fold's story (fold/story.ts) to each in turn. */
+export function inline(f: Folded, key: string): Folded {
+  const gone = f.rules.get(key)!;
+  const out = (toks: readonly Tok[]): Tok[] => toks.flatMap((t) => (t.key === key ? expand(gone, t.base, t.stretch ?? 1) : [t]));
+  const rules = new Map<string, Rule>();
+  for (const [k, r] of f.rules) {
+    if (k === key) continue;
+    if (r.of) {
+      // (a symbol that goes from a phrase goes from its copies' kept steps too, each step of it kept; a variant of
+      // what goes is written out: its steps are all there)
+      const kids: Rule['kids'][number][] = [];
+      const patched: boolean[] = [];
+      r.kids.forEach((c, i) => {
+        for (const t of c.key === key ? expand(gone, c.off, c.stretch ?? 1) : [{ key: c.key, base: c.off, ...(c.stretch ? { stretch: c.stretch } : {}) }]) {
+          kids.push(kidOf(t));
+          patched.push(r.patched![i]!);
+        }
+      });
+      rules.set(k, r.of === key ? { key: k, kids } : { ...r, kids, patched });
+    } else rules.set(k, { key: k, kids: out(kidsOf(r)).map(kidOf) });
+  }
+  return { ...f, lines: f.lines.map((l) => ({ ...l, toks: out(l.toks) })), rules };
+}
+
 /** Inline every symbol that doesn't pay, the cheapest saving first, until all that is left pays. */
 export const beta: Tool = (f: Folded, see) => {
   let now = f;
@@ -74,26 +99,7 @@ export const beta: Tool = (f: Folded, see) => {
       if (gain <= 0 && (!worst || gain < worst.gain)) worst = { key, gain };
     }
     if (!worst) break;
-    const gone = now.rules.get(worst.key)!;
-    const inline = (toks: readonly Tok[]): Tok[] => toks.flatMap((t) => (t.key === worst!.key ? expand(gone, t.base, t.stretch ?? 1) : [t]));
-    const rules = new Map<string, Rule>();
-    for (const [key, r] of now.rules) {
-      if (key === worst.key) continue;
-      if (r.of) {
-        // (a symbol that goes from a phrase goes from its copies' kept steps too, each step of it kept; a variant of
-        // what goes is written out: its steps are all there)
-        const kids: Rule['kids'][number][] = [];
-        const patched: boolean[] = [];
-        r.kids.forEach((k, i) => {
-          for (const t of k.key === worst!.key ? expand(gone, k.off, k.stretch ?? 1) : [{ key: k.key, base: k.off, ...(k.stretch ? { stretch: k.stretch } : {}) }]) {
-            kids.push(kidOf(t));
-            patched.push(r.patched![i]!);
-          }
-        });
-        rules.set(key, r.of === worst.key ? { key, kids } : { ...r, kids, patched });
-      } else rules.set(key, { key, kids: inline(kidsOf(r)).map(kidOf) });
-    }
-    now = { lines: now.lines.map((l) => ({ ...l, toks: inline(l.toks) })), rules, looks: now.looks };
+    now = inline(now, worst.key);
     changed = true;
     const seen = now;
     see?.(() => seen);

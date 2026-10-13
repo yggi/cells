@@ -225,3 +225,14 @@ one voice, a line a voice (`byVoice`), and takes the shorter (`split: 'auto'`). 
 - **Dilation inside a line** (a phrase at half speed among others) needs a way to splice a cell at another rate.
 - **Sections** (cutting a line where the time engine hears boundaries) for reading, not for size.
 - The folder in a worker: 2.8 s for the library, 1 s for Cellscape on the main thread when converting.
+
+## The story of a fold (#390)
+
+`fold/story.ts` tells how a fold comes about from its **result**, not from the folder's moves (`Watch`, which start
+over for each spelling and take back most pairs: Anh. 113 makes 694 moves to reach 19 cells). β's move (`inline`)
+undoes the fold one cell at a time, from the top, and the frames are read backwards. So the cells come lowest first,
+motifs before the phrases made of them, and copies after what they copy. Each frame is printed with the finished
+fold's names (`printFolded(…, fixed)`), so a cell keeps its name from the frame it comes in to the end. Every frame
+plays the same notes (`fold/story.slow.test.ts`). `cellsFromMidi(…, { story: true })` returns the frames of the fold
+taken, each with a line on what came (`&m4 · 14 steps · in 2 places`): 12 to 19 frames for Anh. 113, Invention 1 and
+WTC I/1 and I/2.

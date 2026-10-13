@@ -19,6 +19,8 @@
  */
 import { secondsAt, type Smf, type SmfNote } from './midifile';
 import { fold, printFolded, type Chord, type Line, type Stage } from './fold';
+import { storyOf } from './fold/story';
+import { useOrder } from './fold/print';
 import type { Folded } from './fold/ir';
 import { bestKey, inDegrees, keyName, scaleText } from './fold/degrees';
 import { cutLines, keyAreas } from './fold/sections';
@@ -44,6 +46,17 @@ export interface Imported {
   readonly folded: boolean;
   /** Folded in degrees of this key (`C minor`), its lines reading through it (#344); null: in semitones. */
   readonly inKey: string | null;
+  /**
+   * How the fold comes about (asked for: `story`), as frames to replay (fold/story.ts): the lines written out, then a
+   * cell at a time to the piece folded, the last frame `source`. Each plays the same notes. What each frame did, `says`.
+   */
+  readonly story?: readonly StoryStep[];
+}
+
+/** A frame of a fold's story: the piece by then, and a line on what came. */
+interface StoryStep {
+  readonly source: string;
+  readonly says: string;
 }
 
 /** Steps a quarter the grid may have, coarsest first. */
@@ -190,6 +203,7 @@ export function cellsFromMidi(
     pitches = 'auto',
     split = 'auto',
     watch,
+    story = false,
   }: {
     free?: boolean;
     shorten?: boolean;
@@ -197,6 +211,8 @@ export function cellsFromMidi(
     pitches?: 'auto' | 'semitones' | 'degrees' | 'sections';
     split?: 'auto' | 'tracks' | 'voices';
     watch?: (source: () => string, stage: Stage) => void;
+    /** Tell how the fold taken comes about (`Imported.story`). */
+    story?: boolean;
   } = {},
 ): Imported {
   // a line a track, and a line a voice where a track holds several (a fugue's hands): the shorter fold taken, told
@@ -205,7 +221,7 @@ export function cellsFromMidi(
     const apart = byVoice(smf);
     const told = (how: string) =>
       watch && ((source: () => string, stage: Stage) => stage.tool !== 'done' && watch(source, how ? { ...stage, tool: `${stage.tool}, ${how}` } : stage));
-    const options = { free, shorten, credit, pitches, split: 'tracks' as const };
+    const options = { free, shorten, credit, pitches, story, split: 'tracks' as const };
     const inTracks = split === 'voices' && apart ? null : cellsFromMidi(smf, title, { ...options, watch: told('') });
     const inVoices = apart && cellsFromMidi(apart, title, { ...options, watch: told('in voices') });
     const taken = inVoices?.folded && (!inTracks || !inTracks.folded || inVoices.source.length < inTracks.source.length) ? inVoices : inTracks!;
@@ -339,12 +355,13 @@ export function cellsFromMidi(
   let source = flat;
   let folded = false;
   let inKey: string | null = null;
+  let told: StoryStep[] | undefined;
   if (shorten && lines.length) {
     // (a move of a fold is told with which fold it is; each fold's end is `folded`, the one taken `done`, below)
     const label = (tool: string, round: number, how: string) => (tool === 'done' ? 'folded' : round ? `${tool}, ${how}` : tool);
     // (the folder, engine/fold: its symbols as cells above the lines; taken only if it plays the same notes, and is shorter)
-    const printed = (f: Folded) => {
-      const { defs, lines: braids, scales } = printFolded(f);
+    const printed = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
+      const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^$', fixed);
       return write(
         [
           '# what comes back, as cells of its own (a phrase, a phrase made of phrases, …); ^$n: n semitones up',
@@ -356,18 +373,19 @@ export function cellsFromMidi(
         'folded (engine/fold)',
       );
     };
-    const candidates: { source: string; key: string | null; allowance?: number }[] = [];
-    if (pitches === 'auto' || pitches === 'semitones')
-      candidates.push({
-        source: printed(fold(lines, watch && ((now, stage) => watch(() => printed(now()), { ...stage, tool: label(stage.tool, stage.round, 'in semitones') })))),
-        key: null,
-      });
+    // (each with what it folded, the fold and its printer: the one taken can tell its story)
+    type Print = (f: Folded, fixed?: ReadonlyMap<string, string>) => string;
+    const candidates: { source: string; key: string | null; allowance?: number; from: readonly Line[]; folded: Folded; print: Print; how: string }[] = [];
+    if (pitches === 'auto' || pitches === 'semitones') {
+      const folds = fold(lines, watch && ((now, stage) => watch(() => printed(now()), { ...stage, tool: label(stage.tool, stage.round, 'in semitones') })));
+      candidates.push({ source: printed(folds), key: null, from: lines, folded: folds, print: printed, how: 'Every note written out, as semitones from C4' });
+    }
     // and in degrees of the piece's key (#344): a sequence, a step of the scale higher each time, is one phrase moved
     const key = bestKey(lines);
     if (pitches !== 'semitones' && key && lines.some((l) => l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))))) {
       const name = unique('key');
-      const printedIn = (f: Folded) => {
-        const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^');
+      const printedIn = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
+        const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^', fixed);
         return write(
           [
             `# the key: the lines read through it, a note its degree (0 the tonic; 6# the seventh raised a semitone)`,
@@ -390,7 +408,7 @@ export function cellsFromMidi(
         const folds = fold(tune, watch && ((now, stage) => watch(() => printedIn(now()), { ...stage, tool: label(stage.tool, stage.round, `in degrees of ${keyName(key)}`) })), {
           degrees: true,
         });
-        candidates.push({ source: printedIn(folds), key: keyName(key) });
+        candidates.push({ source: printedIn(folds), key: keyName(key), from: tune, folded: folds, print: printedIn, how: `Every note written out, as degrees of ${keyName(key)}` });
       }
       // and in sections (#346): cut where the key changes, each part of a line a cell in degrees of its section's key
       const meter = smf.meters[0] ?? { num: 4, den: 4 };
@@ -402,8 +420,8 @@ export function cellsFromMidi(
         const keys = [...new Set(sections.map((x) => scaleText(x.key)))];
         const keyNames = new Map(keys.map((k, i) => [k, unique(`key${i + 1}`)]));
         const partNames = new Map<string, string>();
-        const printedSections = (f: Folded) => {
-          const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^');
+        const printedSections = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
+          const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^', fixed);
           // (a part as a cell read through its section's key, spliced as slow as its clock; one written alike, the same cell)
           const cells = new Map<string, string>();
           const sectionDefs: string[] = [];
@@ -455,20 +473,56 @@ export function cellsFromMidi(
           watch && ((now, stage) => watch(() => printedSections(now()), { ...stage, tool: label(stage.tool, stage.round, `in ${sections.length} sections by key`) })),
           { degrees: true },
         );
-        candidates.push({ allowance: SECTIONS, source: printedSections(sectioned), key: `${sections.length} sections by key (${sections.map((x) => keyName(x.key)).join(', ')})` });
+        candidates.push({
+          allowance: SECTIONS,
+          source: printedSections(sectioned),
+          key: `${sections.length} sections by key (${sections.map((x) => keyName(x.key)).join(', ')})`,
+          from: tune,
+          folded: sectioned,
+          print: printedSections,
+          how: `Every note written out, in ${sections.length} sections by key`,
+        });
       }
     }
+    // (a fold's story, fold/story.ts: each frame printed with the names the fold itself gives its cells, so a cell keeps
+    // its name, and its node in the graph, from the frame it comes in to the end)
+    const tell = (c: (typeof candidates)[number]): StoryStep[] => {
+      const fixed = new Map(useOrder(c.folded).map((k, i) => [k, `m${i + 1}`]));
+      return storyOf(c.from, c.folded).map((fr, i) => {
+        const r = fr.came === null ? null : c.folded.rules.get(fr.came)!;
+        const places = `in ${fr.uses} place${fr.uses === 1 ? '' : 's'}`;
+        const says = !r
+          ? i === 0
+            ? c.how
+            : 'The lines on their own clocks, figures read over chords'
+          : r.of
+            ? `&${fixed.get(fr.came!)} · a copy of &${fixed.get(r.of)}, changed · ${places}`
+            : `&${fixed.get(fr.came!)} · ${r.kids.length} steps · ${places}`;
+        return { source: c.print(fr.folded, fixed), says };
+      });
+    };
     // (the shorter first, sections counted at their allowance; each taken only if it is shorter than the notes written
     // out and plays them)
     for (const c of candidates.sort((a, b) => a.source.length / (a.allowance ?? 1) - b.source.length / (b.allowance ?? 1)))
       if (c.source.length < flat.length && sameNotes(flat, c.source)) {
         [source, folded, inKey] = [c.source, true, c.key];
+        if (story) told = tell(c);
         break;
       }
     const taken = source;
     watch?.(() => taken, { tool: 'done', round: 0 });
   }
-  return { source, notes: count, lines: lines.length, perQuarter, moved, dropped, folded, inKey };
+  return {
+    source,
+    notes: count,
+    lines: lines.length,
+    perQuarter,
+    moved,
+    dropped,
+    folded,
+    inKey,
+    ...(story ? { story: told ?? [{ source, says: 'Every note written out' }] } : {}),
+  };
 }
 
 /**
