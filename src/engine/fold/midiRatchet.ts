@@ -1,5 +1,5 @@
 // The ratchet over the MIDI library (midi/<set>: Bach's Well-Tempered Clavier, Inventions and Sinfonias, the Anna
-// Magdalena Notebook; #333, docs/notes/ratchet.md): the files as they come, each folded (`cellsFromMidi`, `shorten`),
+// Magdalena Notebook, the Musical Offering's ricercars; #333, #367, docs/notes/ratchet.md): the files as they come, each folded (`cellsFromMidi`, `shorten`),
 // whether its fold was taken (it plays the file's notes) and its score's size (fold/score.ts `bare`), in
 // ratchet.midi.<set>.json. No file whose fold was taken loses it; the set's score doesn't grow by more than 1 %. A change
 // that makes it better records the new numbers. One test file per set, `midi.<set>.slow.test.ts` (the sets fold side by

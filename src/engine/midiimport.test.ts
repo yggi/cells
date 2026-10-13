@@ -158,6 +158,24 @@ describe('a MIDI file as a piece', () => {
   });
 });
 
+describe('a long rest (a voice that enters late in a long piece)', () => {
+  it('is written in holds the parser takes, and plays', () => {
+    const smf: Smf = {
+      format: 1,
+      ppq: 4,
+      tracks: [
+        { name: 'early', notes: [{ channel: 1, key: 60, velocity: 90, tick: 0, end: 4 }], bends: [], programs: [] },
+        { name: 'late', notes: [{ channel: 1, key: 67, velocity: 90, tick: 4999, end: 5000 }], bends: [], programs: [] },
+      ],
+      tempos: [],
+      meters: [],
+    };
+    const made = cellsFromMidi(smf, 'late');
+    expect(made.source).toMatch(/&late step=&tempo ~@4096 ~@903 7/);
+    expect(compileSource(made.source).ok).toBe(true);
+  });
+});
+
 describe('a glide’s run through MIDI and back (#334)', () => {
   it('reads a legato line (each note held into the next by one slide) as a run on a gliding voice, the same notes', () => {
     for (const [key, glide] of [

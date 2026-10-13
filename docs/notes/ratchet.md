@@ -16,7 +16,10 @@ taken. With sections by key taken for reading (#346, at 15 % longer at most): th
 unchanged. With a kit's drums read back as the piece's own (#334, the kit's track named after its members and
 their pitches): notes kept by 65 of 75 (57 before: jazz, five, korobeiniki, coltrane, bossa, bell, hypercell and the
 metronome), the score 56,490 (56,374 before), phrases back 65. With a `glide=` run sent legato and read back as one
-(#334): notes kept by 66 (stereo's cello), the score 53,236 (stereo 3,454 → 186), phrases back 66 (bossa's flute).
+(#334): notes kept by 66 (stereo's cello), the score 53,236 (stereo 3,454 → 186), phrases back 66 (bossa's flute). With the disassembler's corpus (#367, [disassembler.md](disassembler.md)): repeats played (21 files rebuilt
+from their LilyPond sources) and the Musical Offering's two ricercars, 88 files, **every fold taken**, the score 204,121
+(Anna Magdalena 15,099 → 16,032 for nearly twice the notes). A line a voice where shorter (#366): the MIDI library
+198,859, the examples 53,148 (phrases back 66, notes kept by 66).
 
 `tools/probe/ratchet.test.ts` takes every example the way a MIDI file comes into the app (saved as MIDI and opened
 again: `pieceMidi` → `writeMidi` → `readMidi` → `cellsFromMidi`), folds it with today's Shorten (`shortenAll`), and scores

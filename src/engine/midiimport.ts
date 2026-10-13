@@ -22,7 +22,9 @@ import { fold, printFolded, type Chord, type Line, type Stage } from './fold';
 import type { Folded } from './fold/ir';
 import { bestKey, inDegrees, keyName, scaleText } from './fold/degrees';
 import { cutLines, keyAreas } from './fold/sections';
+import { voicesOf } from './fold/voices';
 import { compileSource } from './compile';
+import { MAX_REPS } from './parser/scanner';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { gmDrumNote, kitNotes } from './midi';
@@ -155,7 +157,11 @@ function gridOf(ppq: number, starts: readonly number[]): { step: number; perQuar
 function braidOf(chords: readonly Chord[], length: number): string {
   const out: string[] = [];
   let now = 0;
-  const rest = (n: number) => n > 0 && out.push(n === 1 ? '~' : `~@${n}`);
+  // (a rest longer than a step may be held (`MAX_REPS`) in pieces: a voice that enters late in a long piece)
+  const rest = (n: number) => {
+    for (; n > MAX_REPS; n -= MAX_REPS) out.push(`~@${MAX_REPS}`);
+    if (n > 0) out.push(n === 1 ? '~' : `~@${n}`);
+  };
   for (const c of chords) {
     rest(c.at - now);
     const v = c.values.length === 1 ? c.values[0]! : `[${c.values.join(',')}]`;
@@ -171,6 +177,8 @@ function braidOf(chords: readonly Chord[], length: number): string {
  * and is shorter. `free`: its tempo a slider (else fixed). `watch`: the fold as it runs, each move the piece as it is
  * by then (a thunk: printed only if wanted), the last the fold taken (`done`; the piece returned is that, or the flat
  * one where the fold doesn't play the same). `credit`: lines said as comments under the card (where the file came from). `pitches`: folded in semitones, in degrees of the piece's key (#344), in sections by key (#346), or each and the shortest taken (`auto`).
+ * `split`: a line a track (`tracks`), a line a voice (`voices`: a keyboard part's notes as the voices a fugue is
+ * written in, `fold/voices.ts`), or each and the shorter fold taken (`auto`).
  */
 export function cellsFromMidi(
   smf: Smf,
@@ -180,15 +188,30 @@ export function cellsFromMidi(
     shorten = false,
     credit = [],
     pitches = 'auto',
+    split = 'auto',
     watch,
   }: {
     free?: boolean;
     shorten?: boolean;
     credit?: readonly string[];
     pitches?: 'auto' | 'semitones' | 'degrees' | 'sections';
+    split?: 'auto' | 'tracks' | 'voices';
     watch?: (source: () => string, stage: Stage) => void;
   } = {},
 ): Imported {
+  // a line a track, and a line a voice where a track holds several (a fugue's hands): the shorter fold taken, told
+  // as one fold (each one's moves, then the one taken, `done`)
+  if (shorten && split !== 'tracks') {
+    const apart = byVoice(smf);
+    const told = (how: string) =>
+      watch && ((source: () => string, stage: Stage) => stage.tool !== 'done' && watch(source, how ? { ...stage, tool: `${stage.tool}, ${how}` } : stage));
+    const options = { free, shorten, credit, pitches, split: 'tracks' as const };
+    const inTracks = split === 'voices' && apart ? null : cellsFromMidi(smf, title, { ...options, watch: told('') });
+    const inVoices = apart && cellsFromMidi(apart, title, { ...options, watch: told('in voices') });
+    const taken = inVoices?.folded && (!inTracks || !inTracks.folded || inVoices.source.length < inTracks.source.length) ? inVoices : inTracks!;
+    watch?.(() => taken.source, { tool: 'done', round: 0 });
+    return taken;
+  }
   // the parts: a track's notes by channel
   const parts: { name: string; drums: boolean; notes: SmfNote[]; kit?: Map<number, { member: string; sound: string }> | null }[] = [];
   smf.tracks.forEach((t, i) => {
@@ -477,6 +500,35 @@ function legatoOf(notes: readonly SmfNote[], smf: Smf): { notes: SmfNote[]; glid
 
 /** How far two overlaps of a legato line may differ (s): a few ticks, where a file's ticks round its seconds. */
 const LEGATO_EPS = 0.004;
+
+/** Voices' names, by how many (a line a voice, `byVoice`); more than four are numbered. */
+const VOICE_NAMES: Readonly<Record<number, readonly string[]>> = {
+  2: ['upper', 'lower'],
+  3: ['upper', 'middle', 'lower'],
+  4: ['soprano', 'alto', 'tenor', 'bass'],
+};
+/** At most this many voices: a texture of more is chords, not counterpoint. */
+const MOST_VOICES = 8;
+
+/**
+ * A file's melodic notes a track a voice (`fold/voices.ts`), its drums as they were: where the tracks are one instrument
+ * (a program) and some track holds more than one voice (a keyboard part's hands). Null where there is nothing to split,
+ * or a track is a legato line (its overlaps a glide's, not voices).
+ */
+export function byVoice(smf: Smf): Smf | null {
+  const melodic = smf.tracks.map((t) => t.notes.filter((n) => n.channel !== 10)).filter((ns) => ns.length);
+  const programs = new Set(smf.tracks.filter((t) => t.notes.some((n) => n.channel !== 10)).map((t) => t.programs[0]?.program ?? 0));
+  // (one instrument; and no legato line, a glide's run, whose overlaps aren't voices: #334)
+  if (programs.size > 1 || melodic.some((ns) => legatoOf(ns, smf))) return null;
+  const notes = melodic.flat().sort((a, b) => a.tick - b.tick || b.key - a.key);
+  const { voice, count } = voicesOf(notes.map((n) => ({ start: n.tick, end: n.end, key: n.key })));
+  if (count <= melodic.length || count > MOST_VOICES) return null;
+  const names = VOICE_NAMES[count] ?? Array.from({ length: count }, (_, v) => `voice${v + 1}`);
+  const channel = notes[0]!.channel;
+  const voices = names.map((name, v) => ({ name, notes: notes.filter((_, i) => voice[i] === v).map((n) => ({ ...n, channel })), bends: [], programs: [] }));
+  const drums = smf.tracks.flatMap((t) => (t.notes.some((n) => n.channel === 10) ? [{ ...t, notes: t.notes.filter((n) => n.channel === 10) }] : []));
+  return { ...smf, tracks: [...voices.filter((v) => v.notes.length), ...drums] };
+}
 
 /** A piece in sections (#346) reads as its form: taken when at most this much longer than the shortest fold without, as
  * a phrase said as a phrase is (`STRUCTURE`, engine/fold). Measured: at 1.05 one piece of the MIDI library takes

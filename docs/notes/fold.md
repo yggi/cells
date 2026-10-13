@@ -94,7 +94,8 @@ taken, 626 cells, 159 copies; 30 s.** The examples' ratchet at the same time: 56
   free voice, none crossing): the subject sits in one line, but every voice's line pays for its rests: with a new voice
   only where none is free, the flat score 7 % larger and the fold 6.6 % larger than with chords; with a new voice for a
   leap of 9, 27 % and 35 %. **Overlaps by pitch** (a note that overlaps goes to the free line nearest in pitch, not the first):
-  8 % larger. Dense lines fold shorter than voice-true ones while a rest costs characters.
+  8 % larger. Dense lines fold shorter than voice-true ones while a rest costs characters. *(Since revisited, #366,
+  below: the split was what failed, not the voices.)*
 - *Where the characters are* (after): 93 K in the lines, 28 K in the cells they splice; of the lines, 72 K are notes
   written out (16,820 of them), 18 K of that their lengths (`@2`). Counterpoint that never comes back at a chromatic
   transposition is most of it.
@@ -171,6 +172,35 @@ dominant is the same degrees as the one in the tonic.
   change costing 24 instead of 12 makes fewer, longer areas and saves little.
 - *Next*: sections at the boundaries the time engine hears (the swells, `time/boundaries.ts`), where a piece repeats
   itself in one key (a dance's halves, a pop song's verse and chorus).
+
+## Voices (#366)
+
+`voices.ts` gives each note a voice, after Chew & Wu's contig mapping (2004), on line:
+- **How many voices:** as many as notes sound at once, but for the thickest 6 % of the time, so a cadence's chord
+  doesn't add one.
+- **At each onset:** the notes that start go to the voices free then, in order (the highest note to the highest free
+  voice).
+- **Which order:** the one that moves each voice least. Crossing a sounding voice costs 12; a voice not heard yet
+  starts from its register (its pitch the first moment all voices sound) and costs 7 more.
+
+`cellsFromMidi` folds the file a line a track and, where the tracks are one instrument and some track holds more than
+one voice, a line a voice (`byVoice`), and takes the shorter (`split: 'auto'`). The live fold shows both
+(`…, in voices`).
+
+- **Against the voices written** (the disassembler's bench, [disassembler.md](disassembler.md); 29 pieces of three
+  voices or more whose typesetters wrote clean voices): 96 % of pairs of notes one after the other in a voice found are
+  in one voice written (precision), 93 % the other way (recall). At most-ever-sounding instead of 6 %: 96 / 91, and five
+  fugues get a voice too many.
+- **The MIDI library: 204,121 → 198,859 (−2.6 %)**, every fold taken. Voices are taken in the Ricercar a 3 (7,859 → 7,060), 12 of the Sinfonias (3 to 14), the WTC I/3, I/8,
+  I/11, I/12 and I/20 fugues and the I/24 prelude (I/8 5,459 → 4,737, I/12 6,751 → 5,812). The examples: 53,236 → 53,148, phrases back the same 66, notes kept by the same 66.
+- What perfect voices would give (the typesetters', folded): 6.1 % shorter on the 64 clean files. The voices found are
+  not always taken: a voice that holds a note across another's start makes the importer add a line beside it
+  (`upper2`), and Sinfonias 1 and 2 stay in hands for that.
+- **A rest of more than 4,096 steps** (a voice entering late in a long piece) was written `~@n` past the parser's
+  limit, so the flat piece didn't compile and no fold could be checked against it (the Ricercar a 3's voices). It is written in holds the parser
+  takes now (`~@4096 ~@903`).
+- *Cost*: every polyphonic file is folded twice: the library's ratchet (a set a worker, `midiRatchet.ts`) about
+  twice as long, the WTC's the longest.
 
 ## What was tried and left out (measured on seven pieces)
 

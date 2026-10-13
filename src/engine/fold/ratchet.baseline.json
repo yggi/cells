@@ -34,7 +34,7 @@
   "echotape": {"kept":false,"score":513,"back":0,"of":1},
   "worn": {"kept":true,"score":119,"back":1,"of":1},
   "dtmf": {"kept":false,"score":206,"back":0,"of":1},
-  "gate": {"kept":true,"score":320,"back":1,"of":1},
+  "gate": {"kept":true,"score":232,"back":1,"of":1},
   "play-in": {"kept":true,"score":150,"back":0,"of":0},
   "midi-out": {"kept":true,"score":224,"back":0,"of":1},
   "lullaby": {"kept":true,"score":2610,"back":0,"of":8},

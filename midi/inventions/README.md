@@ -2,7 +2,7 @@
 
 MIDI files the app comes with: a collection of its MIDI library, a cell of its own in the library ([docs/ui/midi.md](../../docs/ui/midi.md#the-midi-library)). All 30: the fifteen two-part Inventions and the fifteen three-part Sinfonias.
 
-Each is the file as the [Mutopia Project](https://www.mutopiaproject.org/) publishes it, renamed; [index.json](index.json) says the same as this table, for the app, which shows each file's credit in its details, puts it in the copyright field of a `.mid` saved from it and writes it as comments into the cells it converts to.
+Each is the file as the [Mutopia Project](https://www.mutopiaproject.org/) publishes it, renamed; [invention-06.mid](invention-06.mid) is built from its LilyPond source with its repeats played (`tools/mutopia.py staff`: Mutopia's own MIDI plays a repeat once); [index.json](index.json) says the same as this table, for the app, which shows each file's credit in its details, puts it in the copyright field of a `.mid` saved from it and writes it as comments into the cells it converts to. [voices/](voices/) has each piece again with a track a voice, built from its LilyPond source (`tools/mutopia.py voice`): the voices as the typesetter wrote them, the ground truth the disassembler's voice separation is measured against ([docs/notes/disassembler.md](../../docs/notes/disassembler.md)); not in the app.
 
 The music is in the public domain. A typesetting under Creative Commons Attribution-ShareAlike (CC BY-SA 2.5, 3.0 or 4.0) is used here under that licence: credit to its typesetter and to the Mutopia Project, and what is made from the file itself shares it alike.
 
