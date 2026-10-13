@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { planOf } from './host';
 import { eventsBetween, type Played } from './realize';
-import { BEND_CENTRE, bendValue, channelTable, gmDrumNote, kitNotes, melodicChannel, midiNote, noteOf, Rotation, rotationChannels, router, velocityOf } from './midi';
+import { BEND_CENTRE, bendValue, channelTable, gmDrumNote, kitNotes, legatoNotes, melodicChannel, midiNote, noteOf, Rotation, rotationChannels, router, velocityOf } from './midi';
 import { PRESETS } from './presets';
+import { codeShifts } from './program';
+import { pieceMidi } from './midiexport';
 
 const played = (e: Partial<Played>): Played => ({ at: 0, dur: 1, voice: 'v', freq: 440, bends: [], gains: [1, 1], levels: [{ at: 0, level: 1 }], ...e });
 
@@ -239,6 +241,32 @@ describe('channels', () => {
     expect(channelTable(r, [{ kit: 0 }]).kits).toEqual([]);
   });
 
+  // decision 029, #356: a kit read beside a pitch term transposes the member it picks, so it goes out at its pitch
+  const orch =
+    '&bar scan(1 1 1 1) step=120bpm\n&lead s=saw loop=C4\n&organ s=square loop=C3\n&band &lead &organ\n' +
+    '&orch over=&band step=&bar/2 0 1\n&theme step=&bar 0 2 4 7\n&out loop=SAMPLE_RATE map=sample [&theme * &orch * .3]';
+  const keysOf = (src: string) =>
+    pieceMidi(compileSource(src), codeShifts(compileSource(src))).smf.tracks.map((t) => ({ name: t.name, notes: t.notes.slice(0, 8).map((n) => `${n.channel}:${n.key}`) }));
+
+  it('orchestration exported: the theme at its pitches, each member on its own channel', () => {
+    expect(keysOf(orch)).toEqual([
+      { name: 'lead', notes: ['1:60', '1:62'] },
+      { name: 'organ', notes: ['2:52', '2:55'] },
+    ]);
+    const r = compileSource(orch);
+    expect(channelTable(r).kits).toEqual([]);
+    expect(channelTable(r).voices.map((v) => `${v.voice}:${v.channel}`)).toEqual(['lead:1', 'organ:2']);
+  });
+
+  it('a kit transposed on a MIDI card: at its pitch on the entry channel; plain drums stay drum notes', () => {
+    const card = orch + '\n&synth map=midi(3) [&theme * &orch]';
+    expect(keysOf(card)).toEqual([{ name: 'lead organ', notes: ['3:60', '3:62', '3:52', '3:55'] }]);
+    const drums = '&bar scan(1 1 1 1) step=120bpm\n&bd s=sine loop=A1\n&hh s=white\n&kit &bd &hh\n&g over=&kit step=&bar 0 1 0 1\n';
+    expect(keysOf(drums + '&out loop=SAMPLE_RATE map=sample [&g * .5]')[0].notes.slice(0, 2)).toEqual(['10:36', '10:42']);
+    // (a pitch held under the drums transposes them: the kick (A1) a fifth up, at its pitch, on a channel of its own)
+    expect(keysOf(drums + '&key step=&bar/4 7\n&out loop=SAMPLE_RATE map=sample [&g * &key * .5]')[0].notes.slice(0, 1)).toEqual(['1:40']);
+  });
+
   it('rotation takes a free channel, the one free longest, else the first to free', () => {
     const rot = new Rotation([2, 3, 4]);
     expect([rot.take(1), rot.take(1), rot.take(2)]).toEqual([2, 3, 4]);
@@ -247,5 +275,24 @@ describe('channels', () => {
     expect(rot.take(3)).toBe(3);
     expect(rotationChannels(2, 16, true)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16]);
     expect(rotationChannels(9, 11, false)).toEqual([9, 10, 11]);
+  });
+});
+
+describe('a glide’s run as MIDI (#334)', () => {
+  it('sends the run’s notes, each held into the next by the slide, into a repeat of its key only up to it', () => {
+    // (a run of four: C, F, G, then C again, a step each; the voice slides .1 s)
+    const run = eventsBetween(planOf('&t step=60bpm 0 5 7 7 0 ~\n&v glide=.1 s=saw loop=C3\n&out map=sample [&t * &v]'), 0, 6).filter((e) => e.legato);
+    expect(run).toHaveLength(1);
+    const notes = legatoNotes(run[0]!);
+    expect(notes.map((n) => [n.at, Number(n.dur.toFixed(3)), noteOf(n.freq).note])).toEqual([
+      [0, 1.1, 48],
+      [1, 1.1, 53],
+      [2, 1, 55],
+      [3, 1.1, 55],
+      [4, 1, 48],
+    ]);
+    // (a note alone is itself)
+    const one = { ...run[0]!, legato: undefined };
+    expect(legatoNotes(one)).toEqual([one]);
   });
 });

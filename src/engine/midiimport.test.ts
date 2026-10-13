@@ -107,6 +107,24 @@ describe('a MIDI file as a piece', () => {
     expect(notesOf(source).map((n) => `${n.voice}@${n.at.toFixed(2)}`)).toEqual(['bd@0.00', 'hh@0.00', 'sd@0.25']);
   });
 
+  it('brings back the drums of a file the app saved as the piece’s own, at their pitches (#334)', () => {
+    const src =
+      '&beat scan(1 1 1 1) step=120bpm\n&dundun oneshot s=sine loop=C2 env=&(map=adsr 0 .25 0 .1)\n&bd s=sine loop=G1\n&shekere s=white hpf=6000\n' +
+      '&ting s=square loop=527.4\n&drums step=&beat [&dundun,&shekere] &shekere &bd &ting\n&out map=sample [&drums]';
+    const r = compileSource(src);
+    const smf = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
+    expect(smf.tracks.map((t) => t.name)).toEqual(['bd(G1) dundun(C2) shekere ting(527.4)']);
+    const { source, dropped } = cellsFromMidi(smf, 'test');
+    expect(dropped).toBe(0);
+    expect(source).toContain('&dundun s=sine loop=C2');
+    expect(source).toContain('&bd s=sine loop=G1');
+    const keys = (s: string) => notesOf(s).map((n) => `${n.voice}:${n.key}@${n.at.toFixed(2)}`);
+    expect(keys(source)).toEqual(keys(src).slice(0, 5));
+    // (another program's drum track, named otherwise: General MIDI's drums, as before)
+    const other = cellsFromMidi({ ...smf, tracks: smf.tracks.map((t) => ({ ...t, name: 'Drums' })) }, 'test');
+    expect(other.source).not.toContain('&dundun');
+  });
+
   it('moves the notes of a file played in onto sixteenths, and says how many', () => {
     const smf = file([
       {
@@ -137,5 +155,35 @@ describe('a MIDI file as a piece', () => {
     const worst = (k: 'at' | 'dur') => back.reduce((m, n, i) => Math.max(m, Math.abs(n[k] - original[i][k])), 0);
     expect(worst('at')).toBeLessThan(0.01);
     expect(worst('dur')).toBeLessThan(0.01);
+  });
+});
+
+describe('a glide’s run through MIDI and back (#334)', () => {
+  it('reads a legato line (each note held into the next by one slide) as a run on a gliding voice, the same notes', () => {
+    for (const [key, glide] of [
+      ['stereo', 0.12],
+      ['bossa', 0.08],
+    ] as const) {
+      const r = compileSource(PRESETS[key]!.source);
+      const smf = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
+      const made = cellsFromMidi(smf, key);
+      expect(made.source, key).toContain(` glide=${glide} `);
+      const p = plan(compileSource(made.source), codeShifts(compileSource(made.source)));
+      const seconds = p.end;
+      const notes = (source: string) =>
+        notesOf(source)
+          .filter((n) => n.at < seconds - 1e-6)
+          .map((n) => `${n.key} ${n.at.toFixed(2)}`);
+      expect(notes(made.source), key).toEqual(notes(PRESETS[key]!.source));
+    }
+  });
+  it('leaves a line whose overlaps differ (played in) as it is', () => {
+    const notes = [
+      [0, 110, 60],
+      [100, 230, 62],
+      [200, 300, 64],
+    ].map(([tick, end, key]) => ({ channel: 1, key: key!, velocity: 90, tick: tick!, end: end! }));
+    const made = cellsFromMidi({ format: 1, ppq: 100, tracks: [{ name: 'lead', notes, bends: [], programs: [] }], tempos: [], meters: [] }, 'played');
+    expect(made.source).not.toContain('glide=');
   });
 });

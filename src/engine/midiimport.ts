@@ -11,7 +11,8 @@
  * - **The lines**: a line a track and channel (a format 0 file's channels apart), named after the track. Notes that start
  *   and end together are a chord; one that overlaps another goes in a line of its own beside it (`&lead2`), so every
  *   note is written. A melodic note is its key in semitones from C4, on a voice at C4; channel 10 is drums, each note
- *   a drum voice by its General MIDI name (`&bd`, `&sd`, `&hh` …). Each line is as long as the piece (a rest at its
+ *   a drum voice by its General MIDI name (`&bd`, `&sd`, `&hh` …), or, on a drum track the app saved, the kit its name
+ *   lists (`bd(A1) dundun(C2) shekere`: each member at its pitch, #334). Each line is as long as the piece (a rest at its
  *   end), so nothing comes round again.
  * - **What is not kept**: velocities (each line at one level), bends, programs (every melodic line one voice, a
  *   triangle), controllers.
@@ -24,6 +25,7 @@ import { cutLines, keyAreas } from './fold/sections';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
+import { gmDrumNote, kitNotes } from './midi';
 
 /** A file as a piece, and what was made of it. */
 export interface Imported {
@@ -85,6 +87,37 @@ const DRUMS: Record<string, string> = {
   crash: 's=white hpf=5000 env=&(map=adsr 0 .8 0 .3)',
   ride: 's=white hpf=9000 env=&(map=adsr 0 .4 0 .2)',
 };
+/** A drum this importer has no sound for: a tuned one (a sine at its pitch), else a noise. */
+const TUNED = 's=sine env=&(map=adsr 0 .3 0 .05)';
+const NOISE = 's=white hpf=6000 env=&(map=adsr 0 .1 0 .05)';
+
+/**
+ * The kit a drum track the app saved names (`midiexport.ts`): its members in order, each with its pitch where it has
+ * one (`dundun(C2) shekere`), their notes as MIDI out gave them (`kitNotes`). Null for a name that isn't such a list,
+ * or one some note of the track has no member for (another program's file: General MIDI's drums, below).
+ */
+function kitOf(name: string | undefined, notes: readonly SmfNote[]): Map<number, { member: string; sound: string }> | null {
+  const words = (name ?? '').trim().split(/\s+/);
+  const members: { member: string; pitch: string | null }[] = [];
+  for (const w of words) {
+    const m = /^([A-Za-z][A-Za-z0-9]*)(?:\(([A-G][#b]?-?\d|\d+(?:\.\d+)?)\))?$/.exec(w);
+    if (!m) return null;
+    members.push({ member: m[1]!, pitch: m[2] ?? null });
+  }
+  const keys = kitNotes(members.map((m) => m.member));
+  const out = new Map<number, { member: string; sound: string }>();
+  for (const { member, pitch } of members) {
+    const key = keys.get(member);
+    if (key === undefined) continue;
+    // (a General MIDI name: that drum's sound, at the member's pitch; else a sine at its pitch, or a noise)
+    const gm = gmDrumNote(member);
+    const own = gm === null ? undefined : DRUMS[DRUM_OF[gm] ?? ''];
+    const sound = own ? own.replace(/ ?loop=\S+/, '') : pitch ? TUNED : NOISE;
+    out.set(key, { member, sound: pitch ? sound.replace(/^(s=\S+)/, `$1 loop=${pitch}`) : sound });
+  }
+  return notes.every((n) => out.has(n.key)) ? out : null;
+}
+
 /** Names a line can't take: the piece's own cells, and the drums'. */
 const TAKEN = new Set(['out', 'piece', 'tempo', ...Object.keys(DRUMS)]);
 
@@ -157,12 +190,16 @@ export function cellsFromMidi(
   } = {},
 ): Imported {
   // the parts: a track's notes by channel
-  const parts: { name: string; drums: boolean; notes: SmfNote[] }[] = [];
+  const parts: { name: string; drums: boolean; notes: SmfNote[]; kit?: Map<number, { member: string; sound: string }> | null }[] = [];
   smf.tracks.forEach((t, i) => {
     const channels = [...new Set(t.notes.map((n) => n.channel))].sort((a, b) => a - b);
     for (const c of channels) {
       const base = nameOf(t.name, `track${i + 1}`);
-      parts.push({ name: channels.length > 1 ? `${base}Ch${c}` : base, drums: c === 10, notes: t.notes.filter((n) => n.channel === c) });
+      const notes = t.notes.filter((n) => n.channel === c);
+      // (the app's own drum track names its kit: its members come back as the piece's drums, at their pitches)
+      const kit = c === 10 ? kitOf(t.name, notes) : null;
+      const name = kit ? nameOf([...new Set([...kit.values()].map((k) => k.member))].join(' '), `track${i + 1}`) : base;
+      parts.push({ name: channels.length > 1 ? `${name}Ch${c}` : name, drums: c === 10, notes, kit });
     }
   });
   const all = parts.flatMap((p) => p.notes);
@@ -202,17 +239,33 @@ export function cellsFromMidi(
   const mix: string[] = [];
   const voices: string[] = [];
   const drumsUsed = new Set<string>();
+  // (the kits' members, as voices: a name each, the same sound under one name)
+  const members = new Map<string, string>();
+  // (a member may take a General MIDI drum's name, `bd`, unless a track of another program's drums writes that voice)
+  const gmToo = parts.some((p) => p.drums && !p.kit);
+  const memberVoice = (member: string, sound: string): string => {
+    for (const [name, def] of members) if (def === sound && name.replace(/\d+$/, '') === member) return name;
+    let name = member;
+    for (let i = 2; members.has(name) || (taken.has(name) && (gmToo || !(name in DRUMS))); i++) name = `${member}${i}`;
+    taken.add(name);
+    members.set(name, sound);
+    return name;
+  };
+  const kits = parts.map((p) => (p.kit ? new Map([...p.kit].map(([key, k]) => [key, memberVoice(k.member, k.sound)])) : null));
   let dropped = 0;
   let count = 0;
-  for (const p of parts) {
+  for (const [pi, p] of parts.entries()) {
     const layers: Chord[][] = [];
-    for (const n of [...p.notes].sort((a, b) => a.tick - b.tick || a.key - b.key)) {
-      const value = p.drums ? DRUM_OF[n.key] : String(n.key - 60);
+    const kit = kits[pi];
+    // (a legato line, each note held into the next by one slide: a glide's run, its notes tied, the voice gliding)
+    const legato = p.drums ? null : legatoOf(p.notes, smf);
+    for (const n of legato?.notes ?? [...p.notes].sort((a, b) => a.tick - b.tick || a.key - b.key)) {
+      const value = kit ? kit.get(n.key) : p.drums ? DRUM_OF[n.key] : String(n.key - 60);
       if (value === undefined) {
         dropped++;
         continue;
       }
-      if (p.drums) drumsUsed.add(value);
+      if (p.drums && !kit) drumsUsed.add(value);
       const s = at(n.tick);
       const dur = Math.max(1, at(n.end) - s);
       const token = p.drums ? `&${value}` : value;
@@ -231,7 +284,7 @@ export function cellsFromMidi(
     const voice = p.drums ? null : unique(`${p.name}Voice`);
     const names = layers.map(() => unique(p.name));
     layers.forEach((chords, i) => lines.push({ name: names[i]!, chords, length }));
-    if (voice) voices.push(`&${voice} s=tri loop=C4 env=&(map=adsr .005 .2 .6 .15)`);
+    if (voice) voices.push(`&${voice} s=tri loop=C4${legato ? ` glide=${legato.glide}` : ''} env=&(map=adsr .005 .2 .6 .15)`);
     for (const n of names) mix.push(voice ? `&${n} * &${voice} * .25` : `&${n} * .4`);
   }
   const write = (body: string[], how: string) => {
@@ -248,6 +301,7 @@ export function cellsFromMidi(
       '',
       ...voices,
       ...[...drumsUsed].sort().map((d) => `&${d} ${DRUMS[d]}`),
+      ...[...members].map(([name, sound]) => `&${name} ${sound}`),
       `&out map=sample [${mix.join(', ')}]`,
       '',
     ].join('\n');
@@ -393,6 +447,36 @@ export function cellsFromMidi(
   }
   return { source, notes: count, lines: lines.length, perQuarter, moved, dropped, folded, inKey };
 }
+
+/**
+ * A line played legato (#334): single notes, each held into the next by one slide in seconds (or by the next one's
+ * length, where that is shorter; one on the same key only meets it), as MIDI out sends a glide's run (`legatoNotes`,
+ * engine/midi.ts). Its notes each ending where the next starts (tied, as the run was written), and the slide (its
+ * voice's `glide=`, to the millisecond); null for a line that isn't (no overlaps, a chord, or overlaps that differ: a
+ * file played in).
+ */
+function legatoOf(notes: readonly SmfNote[], smf: Smf): { notes: SmfNote[]; glide: number } | null {
+  const ns = [...notes].sort((a, b) => a.tick - b.tick || a.key - b.key);
+  if (ns.some((n, i) => i > 0 && n.tick === ns[i - 1]!.tick)) return null;
+  const sec = (tick: number) => secondsAt(smf, tick);
+  // (each overlap, and how long the note it overlaps into sounds: to the next start, or its own end; in seconds, as
+  // the slide is, whatever the tempo map does to it in ticks)
+  const overlaps = ns.flatMap((n, i) => {
+    const next = ns[i + 1];
+    if (!next || n.end <= next.tick) return [];
+    const after = ns[i + 2];
+    const room = (after && after.tick < next.end ? sec(after.tick) : sec(next.end)) - sec(next.tick);
+    return [{ i, by: sec(n.end) - sec(next.tick), room }];
+  });
+  if (overlaps.length < 2) return null;
+  const slide = Math.max(...overlaps.map((o) => o.by));
+  if (!overlaps.every((o) => Math.abs(o.by - Math.min(slide, o.room)) <= LEGATO_EPS)) return null;
+  const at = new Set(overlaps.map((x) => x.i));
+  return { notes: ns.map((n, i) => (at.has(i) ? { ...n, end: ns[i + 1]!.tick } : n)), glide: Math.round(slide * 1000) / 1000 };
+}
+
+/** How far two overlaps of a legato line may differ (s): a few ticks, where a file's ticks round its seconds. */
+const LEGATO_EPS = 0.004;
 
 /** A piece in sections (#346) reads as its form: taken when at most this much longer than the shortest fold without, as
  * a phrase said as a phrase is (`STRUCTURE`, engine/fold). Measured: at 1.05 one piece of the MIDI library takes

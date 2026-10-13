@@ -53,6 +53,20 @@ export interface Played {
    * HELD at most (then it is struck again).
    */
   readonly held?: true;
+  /**
+   * A glide's run (`glide=`, its voice's): the notes it is made of, each as it would sound alone (its start, length,
+   * frequency and its own bends), and the slide's time. The run plays as one note; MIDI out sends its notes, each
+   * overlapping the next by the slide (#334: a synth hears a legato run, and Convert to cells reads it back).
+   */
+  readonly legato?: { readonly glide: number; readonly notes: readonly RunNote[] };
+}
+
+/** A note of a glide's run, as it would sound alone (`Played.legato`). */
+interface RunNote {
+  readonly at: number;
+  readonly dur: number;
+  readonly freq: number;
+  readonly bends: Played['bends'];
 }
 
 /** How long a drone's note is held at a time, at most (s): ten minutes, then it is struck again. What moves in it (a vibrato, a level, a moving parameter) is worked out a note at a time, so this bounds that work. */
@@ -607,6 +621,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       if (!first) return;
       if (i < 0 || !tie || !single(i)) return void out.push(first);
       let run: Played = first;
+      const notes: RunNote[] = [{ at: first.at, dur: first.dur, freq: first.freq, bends: first.bends }];
       let [j, jl] = [i, lap];
       for (let guard = 0; guard < RUN; guard++) {
         [j, jl] = j < n - 1 ? [j + 1, jl] : [0, jl + 1];
@@ -630,8 +645,9 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
           ],
           levels: [...run.levels, ...next.levels.filter((l) => l.at >= next.at)],
         };
+        notes.push({ at: next.at, dur: next.dur, freq: next.freq, bends: next.bends });
       }
-      out.push(run);
+      out.push(notes.length > 1 ? { ...run, legato: { glide, notes } } : run);
     };
     if (t.selects.length === 0) {
       for (let lap = Math.floor(c0 / t.period) - 1; lap * t.period < c1; lap++)

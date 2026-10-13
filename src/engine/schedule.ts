@@ -89,6 +89,13 @@ export function retime(w: Window, time: number, scale: number): { events: Played
       levels: e.levels.map((l) => ({ at: at(l.at), level: l.level, ramp: l.ramp })),
       params:
         e.params && Object.fromEntries(Object.entries(e.params).map(([k, t]) => [k, t.kind === 'points' ? { ...t, points: t.points.map((x) => ({ ...x, at: at(x.at) })) } : t])),
+      // (a glide's run's notes, which MIDI out sends: on the same clock)
+      ...(e.legato && {
+        legato: {
+          glide: e.legato.glide * scale,
+          notes: e.legato.notes.map((n) => ({ ...n, at: at(n.at), dur: n.dur * scale, bends: n.bends.map((b) => ({ ...b, at: at(b.at) })) })),
+        },
+      }),
     })),
     tapes: w.tapes.map((t) => ({ tape: t.tape, points: t.points.map((p) => ({ at: at(p.at), speed: p.speed })) })),
     clock: w.clock ? { first: w.clock.first, at: w.clock.at.map(at), before: at(w.clock.before) } : null,

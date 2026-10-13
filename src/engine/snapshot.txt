@@ -19,7 +19,7 @@ variations  144 notes  notes c9bc5a525f3c6d55  events 3b65f4da8fefd65d  values 2
 chance  440 notes  notes cf80b35d615d46e2  events 94c4b78d4fbf36b7  values f679daa9dafd12aa  live 202331141f5ed57d
 fifths  65 notes  notes c338371cdcec0309  events 0a0b836bbe21e877  values 4c080439524573f0  live 84e6d94be194267d
 arrangement  124 notes  notes 8cce0f21954cb4b4  events baacd7d5ec458cb4  values 6594c993dd84b51d  live 2a98ebde22114cea
-stereo  56 notes  notes d23210bd260e6335  events d78667f9a009d2ce  values 3734b553f899a531  live fdefca5e9c942488
+stereo  56 notes  notes d23210bd260e6335  events e9c10974daf63589  values 3734b553f899a531  live fdefca5e9c942488
 waveforms  152 notes  notes ba941fa73dc45374  events f9a1c3f1783c83a3  values ff0e3cc755041b16  live 13e6a97d9ec03d32
 moving  247 notes  notes 19baf812baae7e0d  events 917f77ca04804aa7  values f6f7ef984d4743f3  live c51cceeb89311a50
 grids  123 notes  notes c48b619498fae94e  events d4a05490c582e2a3  values 6555935a47a6cf9a  live d73e9fdeb63b838f
@@ -47,7 +47,7 @@ pertonos  122 notes  notes 5c1f87d2168584ee  events 11b032af06f5692e  values 361
 ricercar  37 notes  notes 9d985d1b2b865b8d  events bb3db98e69cf37d2  values 70e97f70d1021e6e  live e1520089f7d4a34c
 korobeiniki  361 notes  notes a5982f87bacf4976  events bee2c7742baf46f9  values 3b7b925b0efe41ec  live d55544738a10ea7a
 coltrane  808 notes  notes f763a951c05a6a9c  events 32c78476bb5c102c  values dab4363cfed5cc51  live 658d79ee12eafa61
-bossa  943 notes  notes 8c238c3ebf485d72  events b992d26f39136a56  values 31e26408dcc1e5a8  live 8cc20ca3e6ab7700
+bossa  943 notes  notes 8c238c3ebf485d72  events 3ed6f13055f35e33  values 31e26408dcc1e5a8  live 8cc20ca3e6ab7700
 bell  485 notes  notes bab5d3d500badd23  events bbb4d1729f8f6ecb  values f54454cb97ab16f5  live 422a55427013d6f0
 prelude  352 notes  notes ff10d06dff1e66dd  events 3e9740ef869e4c0b  values 10e4fedcd20c3ca4  live 1ab59a411f8dcd54
 pachelbel  184 notes  notes 2f5dfcbc11df1662  events 6ec757fa11bf74e6  values db4e03720ddcc12e  live 2299b814ea99b890

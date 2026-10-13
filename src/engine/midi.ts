@@ -1,7 +1,8 @@
 /**
  * MIDI out, the pure part (#205): a played note (`Played`, realize.ts) as MIDI — its note and the cents it is off a
  * key, its velocity, its pitch bends — and which channel each voice of a piece goes to, with a kit's members on
- * channel 10 under General MIDI drum notes picked by their names. Sending it, at the right moment and with the
+ * channel 10 under General MIDI drum notes picked by their names (a kit read beside a pitch term is transposed, decision
+ * 029: its members go out at their pitch, as voices). Sending it, at the right moment and with the
  * note-offs worked out, is the browser's business (`src/midi/out.ts`).
  *
  * Two ways a piece's notes find their channels (decision 019): a piece with MIDI cards (map=midi) says it — each note
@@ -165,6 +166,16 @@ const gateOf = (result: CompileResult, o: Output): string | undefined => [...o.t
 const channelKey = (result: CompileResult, o: Output): string => gateOf(result, o) ?? o.voice;
 
 /**
+ * A kit read beside a pitch term (decision 029: a melody it is held under, another pitch term, a number in the sum):
+ * the member it picks is transposed, so its notes go out at their pitch, as the member's own, not as its drum note.
+ * A kit read alone (plain drums) is a drum part.
+ */
+const pitchedKit = (o: Output): boolean => o.kit && (o.mods.length > 0 || o.offset !== 0);
+
+/** Does an output send drum notes (a kit read, not transposed)? */
+const drumKit = (o: Output): boolean => o.kit && !pitchedKit(o);
+
+/**
  * The gates and voices of a piece without MIDI cards that can be routed, in the order it declares them (a gate's
  * receivers go out on its channel, as one part: a doubling is the synth's to layer), and its kits' members. A send (a
  * voice played only into a resonator or a tape) is not heard from itself and is left out.
@@ -174,7 +185,9 @@ export function routable(result: CompileResult): { voices: string[]; members: st
   const members = new Set<string>();
   for (const o of result.outputs) {
     if (o.silent) continue;
-    if (o.kit) for (const m of membersOf(result, o)) members.add(m);
+    if (drumKit(o)) for (const m of membersOf(result, o)) members.add(m);
+    // (a transposed kit's members are voices: each on its own row, or its gate's)
+    else if (o.kit) for (const m of membersOf(result, o)) voices.add(gateOf(result, o) ?? m);
     else voices.add(channelKey(result, o));
   }
   const order = byPlace(result);
@@ -233,10 +246,10 @@ function cardTable(result: CompileResult): ChannelTable {
   for (const o of result.outputs)
     for (const m of o.midi ?? []) {
       ports.add(m.port);
-      if (o.kit) {
+      if (drumKit(o)) {
         for (const k of membersOf(result, o)) members.add(k);
         kits.set(`${m.port}|${m.channel}`, { port: m.port, channel: m.channel });
-      } else voices.set(`${o.voice}|${m.channel}|${m.port}`, { voice: o.voice, channel: m.channel, port: m.port });
+      } else for (const v of o.kit ? membersOf(result, o) : [o.voice]) voices.set(`${v}|${m.channel}|${m.port}`, { voice: v, channel: m.channel, port: m.port });
     }
   for (const c of result.cells.values()) if (c.map?.kind === 'midi') ports.add(c.map.port);
   const notes = kitNotes([...members].sort(order));
@@ -279,18 +292,20 @@ export function router(result: CompileResult, table: ChannelTable): (e: Played) 
     return (e) => {
       if (!e.midi?.length) return null;
       const o = e.output === undefined ? undefined : outputs.get(e.output);
-      const drum = o?.kit ? drums.get(e.voice) : null;
+      const drum = o && drumKit(o) ? drums.get(e.voice) : null;
       if (drum === undefined) return null;
       return e.midi.map((m) => ({ channel: m.channel, drum, port: m.port, gain: m.gain }));
     };
   return (e) => {
     const o = e.output === undefined ? undefined : outputs.get(e.output);
     if (o?.silent) return null;
-    if (o?.kit) {
+    if (o && drumKit(o)) {
       const note = drums.get(e.voice);
       return note === undefined ? null : table.kits.map((k) => ({ channel: k.channel, drum: note, port: k.port }));
     }
-    return (channels.get(o ? channelKey(result, o) : e.voice) ?? []).map((c) => ({ channel: c.channel, drum: null, port: c.port }));
+    // (a transposed kit's member: on its own row, or its gate's)
+    const key = !o ? e.voice : o.kit ? (gateOf(result, o) ?? e.voice) : channelKey(result, o);
+    return (channels.get(key) ?? []).map((c) => ({ channel: c.channel, drum: null, port: c.port }));
   };
 }
 
@@ -305,6 +320,23 @@ export interface MidiNote {
   readonly bend: number;
   /** Bends while it sounds (its `bends`, ramps sampled every BEND_STEP), each a change from the one before. */
   readonly bends: readonly { readonly at: number; readonly value: number }[];
+}
+
+/**
+ * A played note as the notes MIDI sends: itself, or a glide's run (`Played.legato`, #334) as the notes it is made of,
+ * each held into the next by the slide (at most the next one's length; into one on the same key, up to it): the
+ * overlap a synth glides on (legato), and Convert to cells reads back as `glide=`.
+ */
+export function legatoNotes(e: Played): Played[] {
+  if (!e.legato) return [e];
+  const { legato, ...one } = e;
+  const ns = legato.notes;
+  return ns.map((n, k) => {
+    const next = ns[k + 1];
+    // (a note into the next on the same key only meets it: a key can't overlap itself, its note-on would end the first)
+    const into = next && noteOf(next.freq).note !== noteOf(n.freq).note ? Math.min(legato.glide, next.dur) : 0;
+    return { ...one, at: n.at, dur: next ? next.at - n.at + into : n.dur, freq: n.freq, bends: n.bends };
+  });
 }
 
 /**

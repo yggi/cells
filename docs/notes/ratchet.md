@@ -13,7 +13,10 @@ folds taken, the score 194,587. Folding in degrees too (decision 033): the examp
 the MIDI library 191,430 (the WTC 118,353, the Inventions and Sinfonias 56,917, Anna Magdalena 16,160), 81 folds
 taken. With passages at another speed (#345): the examples 56,422 (56,513 after #351), phrases back 65; the MIDI library 183,046, 84 folds
 taken. With sections by key taken for reading (#346, at 15 % longer at most): the MIDI library 184,880, the examples
-unchanged.
+unchanged. With a kit's drums read back as the piece's own (#334, the kit's track named after its members and
+their pitches): notes kept by 65 of 75 (57 before: jazz, five, korobeiniki, coltrane, bossa, bell, hypercell and the
+metronome), the score 56,490 (56,374 before), phrases back 65. With a `glide=` run sent legato and read back as one
+(#334): notes kept by 66 (stereo's cello), the score 53,236 (stereo 3,454 → 186), phrases back 66 (bossa's flute).
 
 `tools/probe/ratchet.test.ts` takes every example the way a MIDI file comes into the app (saved as MIDI and opened
 again: `pieceMidi` → `writeMidi` → `readMidi` → `cellsFromMidi`), folds it with today's Shorten (`shortenAll`), and scores
