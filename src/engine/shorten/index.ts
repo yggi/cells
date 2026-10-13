@@ -11,7 +11,7 @@
  *  - progressions.ts: a transposing loop=&x/N with the bars multiplied out — step=&x/(N/k)
  *  - stereo.ts:    a sound card's two chords that differ only in gains — one chord, and pan= on each voice
  *  - wrappers.ts:  a cell that only reads motifs through a shifted table — &motif^k where it's used
- *  - arrange.ts:   not shorter, a migration: a selector of mixes (an error now) rewritten at the input (decision 016)
+ *  - aliases.ts:   Strudel's or dough's name for a parameter where ours is shorter: cutoff= → lpf= (decision 027)
  *  - gates.ts:     a migration: a gate written the old way (trigger=, velocity=, gate=, gain=) as play= and level= (decision 023)
  *
  * Each suggestion carries its rewrite; its saving is measured on the result
@@ -26,15 +26,15 @@ import { defaults } from './defaults';
 import { progressions } from './progressions';
 import { wrappers } from './wrappers';
 import { stereo } from './stereo';
-import { arrangeAtInput } from './arrange';
 import { gates } from './gates';
+import { aliases } from './aliases';
 
 export type { Suggestion } from './harness';
 
 /** Everything that could be written shorter, the largest saving first. */
 export function shorten(source: string): Suggestion[] {
   const { result, cells } = candidates(source);
-  if (!result.ok) return arranged(source);
+  if (!result.ok) return [];
   return [
     ...runs(source, cells),
     ...phrases(source, cells, result),
@@ -45,28 +45,8 @@ export function shorten(source: string): Suggestion[] {
     ...wrappers(source, result),
     ...stereo(source, result),
     ...gates(source, result),
+    ...aliases(source, result),
   ].sort((a, b) => b.saving - a.saving);
-}
-
-/**
- * A piece written before decision 016 (a selector of mixes, an error now): its rewrite at the input, the one
- * suggestion offered, whatever its length — it plays the same notes (arrange.ts checks).
- */
-function arranged(source: string): Suggestion[] {
-  const next = arrangeAtInput(source).source;
-  if (next === null) return [];
-  const [was, now] = [source.split('\n'), next.split('\n')];
-  return [
-    {
-      id: 'arrange',
-      kind: 'arrange',
-      title: "Arrange at the input: the selector switches taps of the bar, each part's cells stepped by its tap, the parts played straight into the sound card",
-      before: was.find((l) => !now.includes(l)) ?? '',
-      after: now.find((l) => !was.includes(l)) ?? '',
-      saving: size(source) - size(next),
-      apply: (s) => (s === source ? next : (arrangeAtInput(s).source ?? s)),
-    },
-  ];
 }
 
 /** Shorten again and again — the best each time — until nothing more pays. */

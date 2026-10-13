@@ -79,7 +79,22 @@ export type Atom =
    * every layer spanning the step: `[0 2, 4]`. A splice inside lasts its slot, not its own steps. (Commas between plain
    * numbers alone are a `chord`.)
    */
-  | { readonly kind: 'seq'; readonly layers: readonly (readonly Token[])[] }
+  | {
+      readonly kind: 'seq';
+      readonly layers: readonly (readonly Token[])[];
+      /**
+       * How its layers play, as Strudel's mini-notation reads them (decision 027, #337): stacked (absent: `[a b, c]`);
+       * `alt`, `<a b c>`, each layer one step per lap, as `[a b c]/3` (commas stack them, `<a b, c d e>`); `choose`,
+       * `[a b | c]`, one layer each time round, drawn as a choice is.
+       */
+      readonly mode?: 'alt' | 'choose';
+      /** `x(k,n,r)`: struck where Bjorklund's k hits in n fall (turned right by r), each hit 1/n long, what it holds there. */
+      readonly euclid?: Euclid;
+      /** `x/n`: its part of what it holds played n times slower: `[0 2]/2` 0 on one lap, 2 on the next. */
+      readonly slow?: number;
+      /** A modifier's step written without brackets (`&x/2`, `&bd(3,8)`): it lasts as that step would (a splice: its steps). */
+      readonly bare?: true;
+    }
   /** [a|b|c]: one of them, chosen afresh each time round (reproducibly). */
   | { readonly kind: 'choice'; readonly values: readonly number[]; readonly alters: readonly number[] }
   /** transpose: grid steps up (or down) after its tables, absolute: &subject^$7, &subject^$-12 (&subject^1 is a degree: values). */
@@ -90,6 +105,14 @@ export type Atom =
    * stands for (`declare.ts: gates`): a kit among its receivers is played as its voice, picked by the trigger.
    */
   | { readonly kind: 'mix'; readonly exprs: readonly Expr[]; readonly gate?: string };
+
+/** `x(k,n,r)` on a step: its hits (the steps of n struck, turned right by r), as Strudel's euclidRot. */
+export interface Euclid {
+  readonly k: number;
+  readonly n: number;
+  readonly r: number;
+  readonly hits: readonly number[];
+}
 
 /** An expression in a mix chord, as written: sums and products of cells and numbers. */
 export type Expr =
@@ -138,8 +161,11 @@ export type Braid =
   | { readonly kind: 'list'; readonly tokens: readonly Token[]; readonly perBeat?: number }
   /** Running totals of intervals: scan(2 2 1 2 2 2 1) → 0 2 4 5 7 9 11, lap 12. Scales, meters, rhythms. */
   | { readonly kind: 'scan'; readonly steps: readonly number[]; readonly span: Span }
-  /** One cycle of a sine in n steps: sin(2πi/n), −1 … 1. */
-  | { readonly kind: 'sin'; readonly n: number; readonly span: Span };
+  /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
+  | { readonly kind: 'wave'; readonly shape: WaveShape; readonly n: number; readonly span: Span };
+
+/** The waveforms a braid can be written as (sin(n), saw(n), tri(n), square(n)). */
+export type WaveShape = 'sin' | 'saw' | 'tri' | 'square';
 
 /**
  * How a cell moves. `step=` counts single steps, `loop=` whole turns of the braid:

@@ -49,6 +49,19 @@ describe('source edits', () => {
     expect(setShift(src, 'nope', 1)).toBe(src);
   });
 
+  it('leaves a circle whose argument is no turn written there (fifths(free(G))) as it is', () => {
+    expect(setShift('&c fifths(free(G))', 'c', 2)).toBe('&c fifths(free(G))');
+  });
+
+  it('writes no turn on a tap: one step, stepped as its table is, a turn changes nothing', () => {
+    const src = '&bar step=1\n&parts step=&bar &keysBar &tuneBar\n&song over=&parts step=&bar/4 0 1\n&keys step=&keysBar 0 2\n&tune step=&tuneBar 4';
+    expect(setShift(src, 'keysBar', 1)).toBe(src);
+    // (a tap's own line of attributes gets none either; one it already has can be taken back)
+    const off = src.replace('&song', '&keysBar off\n&song');
+    expect(setShift(off, 'keysBar', 1)).toBe(off);
+    expect(setShift(off.replace('&keysBar off', '&keysBar off shift=1'), 'keysBar', 0)).toBe(off);
+  });
+
   it('turns a circle of fifths by its own argument: by name if it was written by name (shift= alongside is an error)', () => {
     expect(setShift('&c fifths(G)', 'c', 2)).toBe('&c fifths(D)');
     expect(setShift('&c fifths(G)', 'c', 0)).toBe('&c fifths(C)');

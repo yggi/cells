@@ -94,6 +94,8 @@ export interface ResolvedCell {
   readonly exciters?: readonly Exciter[];
   /** show= as written: how it's shown (the layout decides what fits). */
   readonly show: string | null;
+  /** Where show= is written (a warning about it points there). */
+  readonly showSpan?: Span;
   /** label= as written: a name to show, or (alone) a note in the graph. */
   readonly label: string | null;
   /** Only a label: an explanatory note, not a cell that does anything. */
@@ -299,7 +301,7 @@ export interface Output {
   /** Where its level comes from: each mix and sound card it's in, and what that mix adds per channel. */
   readonly parts: readonly { readonly mix: string; readonly sink: string; readonly gains: readonly [number, number] }[];
   /**
-   * Selectors it plays through (a cell reading a table of parts): it sounds while each picks its
+   * Selectors it plays through (a cell reading a table of taps, the tap that steps it: decision 016): it sounds while each picks its
    * entry, and starts again from its beginning each time it's picked — reading a table splices.
    */
   readonly select: readonly { readonly cell: string; readonly entry: number; readonly part: string }[];
@@ -456,7 +458,7 @@ export function pickSteps(c: ResolvedCell, pick: Pick | null): number | null {
 export function pickProblem(name: string, pick: Pick | null, steps: number): string {
   const at = `&${name}${pickLabel(pick)}`;
   const has = `&${name} has ${steps} step${steps === 1 ? '' : 's'}`;
-  if (!pick || pick.kind === 'at') return `${at} picks nothing: past the end, ${has}`;
+  if (!pick || pick.kind === 'at') return `${at} picks nothing: ${pick && pick.i < 0 ? 'before the start' : 'past the end'}, ${has}`;
   const step = pick.step ?? 1;
   const norm = (x: number) => (x < 0 ? steps + x : x);
   if (step > 0 && pick.from !== null && norm(pick.from) >= steps) return `${at} picks nothing: it starts past the end, ${has}`;

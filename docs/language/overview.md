@@ -41,3 +41,35 @@ Everything is indexing and moving a helix.
 | [reference.md](reference.md) | the syntax reference: every form the parser reads, with an example (generated from the parser) |
 
 The code is the single source of truth: the graph draws exactly what is written, and every edit made in it is a rewrite of a cell's line ([../architecture.md](../architecture.md)).
+
+## For Strudel users
+
+Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decision 027](../decisions/027-on-top-of-strudel.md)): a step form spelled as in Strudel's mini-notation means what it means there (`~` `x!n` `x@n` `x*n` `_` `[a b]` `[a, b]` `[a|b]` `x?p` `euclid(k, n, r)`), and a sound parameter keeps dough's or Strudel's name only where it means the same (their other names read as ours: [sound.md](sound.md#voices)). The rest is a different model, not another spelling:
+
+| Strudel | cells | |
+|---|---|---|
+| `n("0 2 4")` | `0 2 4` | a number is an index into the table the cell reads ([cell.md](cell.md)) |
+| `note("c e g")` | `C E G` | a name is a pitch; left out, the octave is 4 (Strudel's is 3) |
+| `.scale("C:minor")` | `over=scale("C:minor")` | every scale name tonal knows, and ours ([tables.md](tables.md)) |
+| `.scaleTranspose(n)` · `.transpose(n)` | `&x^n` · `&x^$n` | degrees of the table · steps of the grid ([braid.md](braid.md)) |
+| `.early(1/4)` | `&x[1:] &x[:1]` | a rotation (of four steps); `&x[<<n]` turns too, but what wraps climbs a lap |
+| `.rev()` | `&x[::-1]` | a slice, Python-style |
+| `sine2` `saw2` `tri2` `square2` | `sin(n)` `saw(n)` `tri(n)` `square(n)` | a cycle in n steps, a braid: a waveform or a swell |
+| `.range(lo, hi)` | `lpf=lo..hi * &x` | a range a cell moves ([sound.md](sound.md)) |
+| `.pick(…)` · `.inhabit(…)` | a selector, `over=&parts` | switches whole parts on a meter's bus ([time.md](time.md)) |
+| `.bank("tr808")` | a kit, `&kit &bd &sd &hh` | a table of voices, its numbers pick the drum ([sound.md](sound.md)) |
+| `setcps(.5)` | `loop=` on a meter | every cell has a clock of its own; there is no global cps ([time.md](time.md)) |
+| `.fm(n)` `.fmh(r)` | `fm=&op` `ratio=` `index=` | FM names a modulator cell, for now ([decision 030](../decisions/030-fm-feedback.md) will align it) |
+| `.gain()` · `.postgain()` · `.velocity()` | `gain=` · the card's `postgain=` · a gate's `level=` | loudness is a product: a voice's own, the master, a gate's ([mix.md](mix.md)) |
+| `s("hh:0:.5")` | `&hh:0:.5` | a hit's own gain |
+| `.lpq(q)` | `lpq=` | Strudel's Q, not dough's 0–1 |
+| `.distort(d)` | `distort=` | on a scale of its own: 0 clean, 1 harsh |
+| `.legato(n)` | — | a note's length against its step isn't read yet; a tie that slides is dough's `glide=` ([sound.md](sound.md)) |
+| `s("bd")` and samples | voices made of braids, `s=saw` | no samples |
+
+```cells
+&bar scan(1 1 1 1) step=120bpm                                 # setcps(.5): this meter's own clock
+&tune over=scale("C:minor:pentatonic") step=&bar*2 0 2 4 2 [3 4] ~ 4 _
+&lead sound=saw loop=C4 cutoff=1200                           # sound= and cutoff= read as s= and lpf=
+&mix [&tune * &lead, &tune^2 * &lead * .5]                     # n(…).scaleTranspose(2), quieter
+```

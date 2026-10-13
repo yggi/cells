@@ -165,8 +165,14 @@ export function chanceOf(text: string): number {
  * step, so they sound or rest together.
  */
 function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number): StepEvent | null {
+  // <a b>, x/n: not its lap
+  if (e.laps && mod(lap, e.laps.of) !== e.laps.is) return null;
+  if (e.chance === undefined && !e.options && !e.chosen) return e;
+  const seed = `${result.cells.get(t.output.cell)?.seed ?? 0}|${t.output.cell}`;
+  // [a b|c]: each choice it is in drawn once a lap of its own frame (keyed where that lap begins), as [a|b|c] is
+  for (const c of e.chosen ?? []) if (Math.floor(chanceOf(`${seed}|${lap + c.lap}|${c.at.toFixed(6)}|${c.id}|picks`) * c.of) !== c.is) return null;
   if (e.chance === undefined && !e.options) return e;
-  const key = `${result.cells.get(t.output.cell)?.seed ?? 0}|${t.output.cell}|${lap}|${e.step.toFixed(6)}`;
+  const key = `${seed}|${lap}|${e.step.toFixed(6)}`;
   if (e.chance !== undefined && chanceOf(`${key}|sounds`) >= 1 - e.chance) return null;
   if (!e.options) return e;
   const o = e.options[Math.floor(chanceOf(`${key}|picks`) * e.options.length)];
@@ -186,8 +192,8 @@ export function picksNow(result: CompileResult, statics: Shifts, name: string, s
 }
 
 /**
- * When a selector picks an entry, in [from, to): its windows, in seconds. Reading a
- * table of parts splices: each window is where the picked part starts again.
+ * When a selector picks an entry, in [from, to): its windows, in seconds. Switching a
+ * tap restarts: each window is where the picked part starts again.
  */
 function windowsOf(p: Plan, sel: PlanTrack['selects'][number], from: number, to: number): { a: number; b: number }[] {
   const m = sel.series;

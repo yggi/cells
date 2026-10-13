@@ -1,9 +1,10 @@
-/** Generators: a braid written as a rule — scan(…), euclid(…), sin(…), scale(…), fifths(…), meter(…), spell(…). */
-import type { Braid, Ref, Span } from '../ast';
+/** Generators: a braid written as a rule — scan(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
+import type { Braid, Ref, Span, WaveShape } from '../ast';
 import { syntax, type Syntax } from './syntax';
 import type { LineScanner } from './scanner';
 import { parseFree } from './free';
 import { agogic as agogicPositions, even as evenPositions, intervals, SCALES, scaleOfPhase } from '../../theory/modes';
+import { TONAL_SCALES } from '../../theory/tonal';
 
 /** scan(…): intervals, separated by spaces or commas; any positive numbers. */
 function parseScan(s: LineScanner, start: number): Braid {
@@ -67,7 +68,7 @@ function parseScan(s: LineScanner, start: number): Braid {
  * Bjorklund's algorithm: k hits and n − k rests, the leftovers paired again and again until
  * one group is left — the Euclidean rhythms in their usual form (Toussaint): 3 in 8 x..x..x.
  */
-function bjorklund(k: number, n: number): boolean[] {
+export function bjorklund(k: number, n: number): boolean[] {
   if (k <= 0) return Array(n).fill(false);
   let a: boolean[][] = Array.from({ length: k }, () => [true]);
   let b: boolean[][] = Array.from({ length: n - k }, () => [false]);
@@ -100,7 +101,7 @@ function parseSpell(s: LineScanner, start: number): Braid {
   s.skipSpace();
   s.expect(',', `',' then the table, like spell("867", &keys, "1 2 3 …")`);
   s.skipSpace();
-  const table = s.ref('the table its characters pick from, like &keys');
+  const table = s.cellRef('the table its characters pick from, like &keys', 'in spell(…)');
   s.skipSpace();
   s.expect(',', `',' then the names of the table's entries, in quotes`);
   s.skipSpace();
@@ -234,23 +235,34 @@ function parseEuclid(s: LineScanner, start: number): Braid {
   return { kind: 'list', tokens, span } as Braid;
 }
 
-function parseSin(s: LineScanner, start: number): Braid {
-  const { args, span } = numbers(s, 'sin', start);
-  const [n] = args;
-  if (args.length !== 1 || n < 2) s.fail('sin(n): one cycle of a sine in n steps, n ≥ 2', start, span.len);
-  return { kind: 'sin', n, span };
+type Generator = (s: LineScanner, start: number) => Braid;
+
+/** What each waveform is, in words. */
+const WAVE_NAMES: Readonly<Record<WaveShape, string>> = { sin: 'a sine', saw: 'a saw', tri: 'a triangle', square: 'a square' };
+
+/** sin(n), saw(n), tri(n), square(n): one cycle of a waveform in n steps. */
+const parseWave =
+  (shape: WaveShape): Generator =>
+  (s, start) => {
+    const { args, span } = numbers(s, shape, start);
+    const [n] = args;
+    if (args.length !== 1 || n < 2) s.fail(`${shape}(n): one cycle of ${WAVE_NAMES[shape]} in n steps, n ≥ 2`, start, span.len);
+    return { kind: 'wave', shape, n, span };
+  };
+
+/**
+ * A waveform's n values, −1 … 1: Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step's start, i/n of
+ * the cycle — a sine from 0 up, a saw from −1 up to just short of 1, a triangle from −1 up to 1 at the half and back,
+ * a square −1 for the first half and 1 for the second.
+ */
+export function waveValues(shape: WaveShape, n: number): number[] {
+  const at = (t: number) =>
+    shape === 'sin' ? Math.sin(2 * Math.PI * t) : shape === 'saw' ? 2 * t - 1 : shape === 'tri' ? (t < 0.5 ? 4 * t - 1 : 3 - 4 * t) : Math.floor(2 * t) % 2 ? 1 : -1;
+  return Array.from({ length: n }, (_, i) => +at(i / n).toFixed(6) + 0);
 }
 
 /** A tonic as a note name: C, F#, Bb (a pitch class). */
 const TONICS: Readonly<Record<string, number>> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-/** Strudel's (tonal's) names for the scales that ours spell in one word. */
-const STRUDEL_NAMES: Readonly<Record<string, string>> = {
-  'harmonic minor': 'harmonic',
-  'melodic minor': 'melodic',
-  'major pentatonic': 'pentatonic',
-  'minor pentatonic': 'minorpentatonic',
-  'whole tone': 'wholetone',
-};
 const tonicName = (pc: number) => ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][((pc % 12) + 12) % 12];
 
 /**
@@ -269,19 +281,22 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
   const legacy = s.match(/-?[0-9]+/y);
   const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
   if (quoted !== null) {
-    // Strudel's spelling (decision 027): "D:minor", "F#:harmonic:minor", the tonic first, the name's words after colons
-    const m = /^"([A-G](?:#|b)?)([0-9]*)((?::[a-z]+)+)"$/.exec(quoted);
+    // Strudel's spelling (decision 027): "D:minor", "F#:harmonic:minor", the tonic first, the name's words after colons:
+    // a name of tonal's, as Strudel reads it (whole:tone, bebop:major, messiaen's:mode:#2), or one of ours (minorpentatonic)
+    const m = /^"([A-G](?:#|b)?)([0-9]*)((?::[a-z0-9#'-]+)+)"$/.exec(quoted);
     if (!m) s.fail('scale("tonic:name"): a tonic and a scale\'s name, as in Strudel — scale("D:minor"), scale("F#:harmonic:minor")', start, s.i - start);
     if (m![2]) s.fail(`scale("${m![1]}${m![2]}:…"): the octave is the voice's (loop=), not the scale's: scale("${m![1]}${m![3]}")`, start, s.i - start);
-    const name = STRUDEL_NAMES[m![3]!.slice(1).replace(/:/g, ' ')] ?? m![3]!.slice(1).replace(/:/g, '');
-    const scale = SCALES[name];
+    const words = m![3]!.slice(1).split(':');
+    // (own names only: not "C:constructor")
+    const [tonal, ours] = [words.join(' '), words.join('')];
+    const scale = Object.hasOwn(TONAL_SCALES, tonal) ? TONAL_SCALES[tonal] : Object.hasOwn(SCALES, ours) ? SCALES[ours]!.steps : undefined;
     if (!scale)
       s.fail(
-        `scale("…${m![3]}"): a scale by name — ${Object.keys(SCALES).join(' ')}, or Strudel's harmonic:minor, melodic:minor, major:pentatonic, minor:pentatonic, whole:tone`,
+        `scale("…${m![3]}"): a scale by name — ours (${Object.keys(SCALES).join(' ')}) or tonal's, as Strudel reads them (harmonic:minor, minor:pentatonic, whole:tone, diminished, chromatic, bebop … listed in tables.md)`,
         start,
         s.i - start,
       );
-    steps = [...scale!.steps];
+    steps = [...scale!];
     const note = m![1]!;
     tonic = (((TONICS[note[0]!]! + (note[1] === '#' ? 1 : note[1] === 'b' ? -1 : 0)) % 12) + 12) % 12;
     tonicText = String(tonic);
@@ -364,7 +379,17 @@ export function parseFifths(s: LineScanner, start: number): { braid: Braid; shif
     const name = s.noteName();
     if (name !== null) shift = ((((name % 12) + 12) % 12) * 7) % 12;
     else shift = s.int('how many fifths round it starts (fifths(1): on G), or the note it starts on: fifths(G)');
-    if (name === null && Math.abs(shift) > 11) s.warn(`fifths(${shift}): the circle comes round after 12`, at, s.i - at);
+    if (name === null && Math.abs(shift) > 11) {
+      // (a turn past a lap climbs one, as every shift= does; a note's name is a pitch class and never climbs)
+      const laps = Math.trunc(shift / 12);
+      const rest = shift % 12;
+      const note = 'C G D A E B F# C# Ab Eb Bb F'.split(' ')[(rest + 12) % 12];
+      s.warn(
+        `fifths(${shift}): the circle comes round after 12, and a turn past a lap climbs one, as every shift does: fifths(${rest}) ${laps > 0 ? 'up' : 'down'} ${Math.abs(laps)} octave${Math.abs(laps) === 1 ? '' : 's'}${rest ? ` (fifths(${note}) names the note, no octave)` : ''}`,
+        at,
+        s.i - at,
+      );
+    }
     s.skipSpace();
   }
   s.expect(')', "')' to close fifths(…)");
@@ -373,7 +398,14 @@ export function parseFifths(s: LineScanner, start: number): { braid: Braid; shif
   return { braid: { kind: 'list', tokens, span } as Braid, shift };
 }
 
-type Generator = (s: LineScanner, start: number) => Braid;
+/** The waveforms share one entry of the reference (one form, sin(n), on the tutorial's ladder). */
+const WAVE_SYNTAX = syntax(
+  'generator',
+  'sin(n) · saw(n) · tri(n) · square(n)',
+  "One cycle of a waveform in n steps, from −1 to 1, as Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step: a sine from 0, a saw rising from −1, a triangle rising from −1 to 1 at the half and falling back, a square −1 then 1. A waveform, or a slow swell.",
+  ['&sine loop=220 sin(12)', '&ramp loop=220 saw(8)', '&swell map=lin loop=.25 tri(4)', '&pulse loop=110 square(2)'],
+  'braid.md',
+);
 
 /** The generators: a braid written as a rule. The parser reads a cell's braid through this table. */
 export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; readonly syntax: Syntax }>> = {
@@ -397,17 +429,17 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
       'braid.md',
     ),
   },
-  sin: {
-    parse: parseSin,
-    syntax: syntax('generator', 'sin(n)', 'One cycle of a sine in n steps, from −1 to 1: a waveform, or a slow swell.', ['&sine loop=220 sin(12)'], 'braid.md'),
-  },
+  sin: { parse: parseWave('sin'), syntax: WAVE_SYNTAX },
+  saw: { parse: parseWave('saw'), syntax: WAVE_SYNTAX },
+  tri: { parse: parseWave('tri'), syntax: WAVE_SYNTAX },
+  square: { parse: parseWave('square'), syntax: WAVE_SYNTAX },
   scale: {
     // (read by the cell itself, which takes the key it brings: parseScale)
     parse: (s, start) => s.fail('scale(…) is read by its cell', start, 5),
     syntax: syntax(
       'generator',
       'scale(name) · scale(name, tonic) · scale("tonic:name")',
-      `A scale by name over the 12, turned to its tonic (a note name, a number or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")); the octave is the voice's, not the scale's.`,
+      `A scale by name over the 12, turned to its tonic (a note name, a number or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`,
       ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))', '&scale scale("F#:harmonic:minor")'],
       'tables.md',
     ),

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { entries } from '../../tools/reference';
-import { formKey, formsUsed, STUBS, TIERS } from './ladder';
+import { formKey, formsUsed, PENDING, STUBS, TIERS } from './ladder';
 import { pieceMeta } from './parser';
 import { ORDER } from './order';
 import { PRESETS } from './presets';
@@ -35,9 +35,11 @@ describe('the tutorial, in tiers', () => {
       'not in the reference',
     ).toEqual([]);
     expect(
-      keys.filter((k) => !declared.includes(k) && !STUBS.has(k)),
+      keys.filter((k) => !declared.includes(k) && !STUBS.has(k) && !PENDING.has(k)),
       'on no tier',
     ).toEqual([]);
+    // (a form waiting for its piece is in the reference, and on no tier until it has one)
+    expect([...PENDING].filter((k) => !keys.includes(k) || declared.includes(k))).toEqual([]);
   });
 
   test('the pieces of a tier use only its forms and those of the tiers before it, and show all of its own', () => {

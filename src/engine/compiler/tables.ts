@@ -3,6 +3,7 @@ import type { Atom, CellDecl, Span } from '../ast';
 import { ROOT, type Unit } from '../program';
 import { scan as scanOf } from '../../theory/modes';
 import { leaves } from '../subseq';
+import { waveValues } from '../parser/generators';
 
 /** Where compile's own messages point when nothing was written (the default grid). */
 export const IMPLICIT: Span = { line: 1, col: 1, len: 1 };
@@ -21,7 +22,7 @@ export const lengthOf = (decls: ReadonlyMap<string, CellDecl>, name: string, gua
   if (tableOf(d) === null) return gridSteps(d);
   const b = d.braid;
   if (b.kind === 'scan') return b.steps.length;
-  if (b.kind === 'sin') return b.n;
+  if (b.kind === 'wave') return b.n;
   // (its numbers, as entries() reads them: a chord's each, a subsequence's in order)
   if (b.kind === 'list') return b.tokens.reduce((s, t) => s + leaves(t.atom).reduce((n, a) => n + (a.kind === 'note' ? 1 : a.kind === 'chord' ? a.notes.length : 0), 0), 0);
   // blank: as long as the table below (cycle= here is only where its turning wraps)
@@ -45,7 +46,7 @@ export const unitsOf = (decls: ReadonlyMap<string, CellDecl>, d: CellDecl): Unit
       ...(level !== undefined ? { level } : {}),
     }));
   if (b.kind === 'scan') return scanOf(b.steps).positions.map(note);
-  if (b.kind === 'sin') return Array.from({ length: b.n }, (_, i) => note(+Math.sin((2 * Math.PI * i) / b.n).toFixed(6)));
+  if (b.kind === 'wave') return waveValues(b.shape, b.n).map(note);
   // blank: the identity of the table below — entry i is index i
   return Array.from({ length: lengthOf(decls, o) }, (_, i) => note(i));
 };

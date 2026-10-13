@@ -6,7 +6,7 @@
  *  - notes: its braid and the tables it reads through, the step= chain and clock that move it, what
  *    moves its voice (pitch and volume streams, the envelope, parameter cells, FM modulators), a kit's
  *    members, a note tape's write and play;
- *  - sound: voice → instruments → mix → part → table of parts → selector → sound card, exactly the
+ *  - sound: voice → instruments → mix → sound card, exactly the
  *    mixes the output goes through (compile's `via`, `through`), so a voice in two mixes lights only
  *    the one its notes take.
  * Sound tapes and resonators keep sound (a tape's loop, a body's ring): fed by what reaches them,

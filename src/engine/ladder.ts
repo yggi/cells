@@ -26,6 +26,13 @@ export const STUBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Forms read and played but on no tier yet (#337: Strudel's `<a b>`, `x/n`, `x(k,n,r)`): a tier's pieces must show its
+ * forms, and no tutorial piece can show these without changing the notes it plays. They go on a tier (4, rhythm, or 5,
+ * development) with the piece that shows them.
+ */
+export const PENDING: ReadonlySet<string> = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)']);
+
+/**
  * A form's key, from its reference entry: an attribute or a parameter by its word (`over`, `lpf`);
  * a sort by its sort and what makes it one (`signal: a mix`); anything else by its first spelling
  * (`x!n`, `step=&x`), each after its section (`modifier x!n`).
@@ -323,6 +330,10 @@ export function formsUsed(source: string): Set<string> {
     ['scan', 'scan(i …)'],
     ['euclid', 'euclid(k, n)'],
     ['sin', 'sin(n)'],
+    // (the waveforms are one form: saw(n), tri(n), square(n) beside sin(n))
+    ['saw', 'sin(n)'],
+    ['tri', 'sin(n)'],
+    ['square', 'sin(n)'],
     ['meter', 'meter("sig")'],
     ['spell', 'spell("text", &table, "names")'],
     ['scale', 'scale(name)'],
@@ -393,7 +404,12 @@ export function formsUsed(source: string): Set<string> {
       use('step [a|b|c]');
       if (a.alters.some(Boolean)) use('step n#');
     } else if (a.kind === 'seq') {
-      use('step [a b c]');
+      // (a modifier's step written bare, &bd(3,8), [0]/2's [0] aside: brackets of its own)
+      if (a.mode === 'alt') use('step <a b c>');
+      else if (a.mode === 'choose') use('step [a|b|c]');
+      else if (!a.bare) use('step [a b c]');
+      if (a.slow !== undefined) use('modifier x/n');
+      if (a.euclid) use('modifier x(k,n,r)');
       for (const l of a.layers) for (const x of l) token(x, groove, card);
     } else if (a.kind === 'ref' && card) {
       // (a sound card's or a MIDI card's entries are its channels: a mix there is a channel, not an instrument)

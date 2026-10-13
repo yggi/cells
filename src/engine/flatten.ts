@@ -3,10 +3,13 @@
  * shifts applied (`flatten`). What every reading of a braid starts from — the
  * plan, the live view, labels, Shorten.
  */
-import { pickLabel, type Pick } from './ast';
+import { pickLabel, type Atom, type Pick } from './ast';
 import { ROOT, MAX_EVENTS, pickIndices, pickSteps, type CompileResult, type Shifts } from './program';
 import { isTap, positionOf, rootOf, shiftedUnits } from './helix';
-import { slots } from './subseq';
+import { placed, whole, type Chosen, type Hit, type Laps, type Leaf } from './subseq';
+
+/** What a slot holds as flatten reads it: a leaf, or a note of a cell spliced in (by the reference that splices it). */
+type Held = Leaf | { readonly kind: 'spliced'; readonly e: StepEvent; readonly ref: Extract<Atom, { kind: 'ref' }> };
 
 /**
  * A cell's units as played: rotated by its shift (plus a [<<]/[>>] shift); a pick takes from them as they are turned
@@ -47,6 +50,10 @@ export interface StepEvent {
   readonly level?: number;
   /** [a|b|c]: what it chooses from (value is the first, for drawing). */
   readonly options?: readonly { readonly value: number; readonly alter: number }[];
+  /** `<a b>`, `x/n`: it plays on the laps (of the cell played) where lap mod `of` is `is`; absent, on every lap. */
+  readonly laps?: Laps;
+  /** `[a b|c]`: the choices it is in; it plays when each draws its option (realize.ts `thrown`). */
+  readonly chosen?: readonly Chosen[];
 }
 
 export class ExpansionLimit extends Error {}
@@ -78,8 +85,23 @@ export function flatten(
       // a relative pick of plain numbers: which entry each is, looked up again as the cell turns (StepEvent.via)
       const taps = isTap(result, name, pick) ? pickIndices(result.cells.get(name)!.units.length, pick) : null;
       const units = unitsFor(result, name, shifts, pick, table, extra);
-      // (each leaf where it plays: a subsequence's steps squeezed into its one: subseq.ts)
-      for (const { atom: a, at, dur, chances, top, level } of slots(units, (x) => (x.kind === 'ref' ? stepsOf(result, x.name, x.pick) || 1 : 1))) {
+      const unit = (x: Leaf) => (x.kind === 'ref' ? stepsOf(result, x.name, x.pick) || 1 : 1);
+      // (a splice's own notes, as hits in its step's frame: what holds it — <…>, /n, *n, (k,n,r) — plays them as it does a note)
+      const leaf = (x: Leaf, at: number, dur: number): readonly Hit<Held>[] => {
+        if (x.kind !== 'ref') return whole<Held>(x, at, dur);
+        const k = dur / unit(x);
+        return walk(x.name, x.pick, x.shift, table, tShift).map((e) => ({
+          atom: { kind: 'spliced', e, ref: x },
+          at: at + e.step * k,
+          dur: e.duration * k,
+          of: e.laps?.of ?? 1,
+          is: e.laps?.is ?? 0,
+          chances: [],
+          picks: (e.chosen ?? []).map((c) => ({ ...c, at: at + c.at * k })),
+        }));
+      };
+      // (each leaf where it plays: a subsequence's steps squeezed into its one, on the laps it plays: subseq.ts)
+      for (const { atom: a, at, dur, chances, top, level, laps, chosen } of placed(units, unit, leaf, `${name}:`)) {
         const ev = {
           step: at,
           duration: dur,
@@ -87,6 +109,9 @@ export function flatten(
           table,
           tableShift: tShift,
           ...(taps ? { via: { cell: name, index: taps[top], ctx: table, mul: 1 as const, add: 0 } } : {}),
+          // <a b>, x/n: the laps it plays on; [a b|c]: the choices it is in
+          ...(laps ? { laps } : {}),
+          ...(chosen ? { chosen } : {}),
         };
         // x?p: the probability it is dropped (a bare ? takes the cell's chance=; inside a subsequence, each bracket's too: it sounds if none drops it)
         const drop = chances.map((c) => (c === null ? (cell.chance ?? 0.5) : c));
@@ -112,30 +137,31 @@ export function flatten(
             out.push(a.pitched?.[j] ? { ...pitch(v), ...odds, ...lv } : { ...ev, value: v, alter: a.alters[j], ...odds, ...lv });
           });
         else if (a.kind === 'choice') out.push({ ...ev, value: a.values[0], alter: a.alters[0], ...odds, options: a.values.map((v, j) => ({ value: v, alter: a.alters[j] })) });
-        else if (a.kind === 'ref') {
-          const k = dur / (stepsOf(result, a.name, a.pick) || 1);
-          const up = a.transpose ?? 0;
+        else if (a.kind === 'spliced') {
+          const { e, ref } = a;
+          const up = ref.transpose ?? 0;
           // degree(…) / inverse(…): its values moved before its tables read them (accidentals mirrored with them)
-          const m = a.values;
-          const moved = (e: StepEvent): StepEvent =>
-            !m
-              ? e
-              : {
-                  ...e,
+          const m = ref.values;
+          // (its laps and choices are the ones placed() worked out, through what holds it)
+          const { laps: _laps, chosen: _chosen, ...own } = e;
+          out.push({
+            ...own,
+            ...(m
+              ? {
                   value: m.mul * e.value + m.add,
                   alter: m.mul * e.alter,
                   ...(e.options ? { options: e.options.map((o) => ({ value: m.mul * o.value + m.add, alter: m.mul * o.alter })) } : {}),
                   ...(e.via ? { via: { ...e.via, mul: (m.mul * e.via.mul) as 1 | -1, add: m.mul * e.via.add + m.add } } : {}),
-                };
-          for (const e of walk(a.name, a.pick, a.shift, table, tShift))
-            out.push({
-              ...moved(e),
-              step: at + e.step * k,
-              duration: e.duration * k,
-              ...(up || e.transpose ? { transpose: (e.transpose ?? 0) + up } : {}),
-              // (a splice at a gain, &fill:0:.5: every step of it at that gain too)
-              ...(level !== undefined ? { level: (e.level ?? 1) * level } : {}),
-            });
+                }
+              : {}),
+            step: at,
+            duration: dur,
+            ...(laps ? { laps } : {}),
+            ...(chosen ? { chosen } : {}),
+            ...(up || e.transpose ? { transpose: (e.transpose ?? 0) + up } : {}),
+            // (a splice at a gain, &fill:0:.5: every step of it at that gain too)
+            ...(level !== undefined ? { level: (e.level ?? 1) * level } : {}),
+          });
         }
         if (out.length > MAX_EVENTS) throw new ExpansionLimit(name);
       }

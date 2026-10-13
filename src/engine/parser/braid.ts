@@ -1,5 +1,7 @@
 /** A braid's steps: numbers, rests, chords, subsequences, choices, cells (picked, shifted, transposed) and their modifiers. */
-import type { Atom, Token, ValueMap } from '../ast';
+import type { Atom, Euclid, Token, ValueMap } from '../ast';
+import { lapsOf } from '../subseq';
+import { bjorklund } from './generators';
 import { MAX_NESTING, MAX_REPS, type LineScanner } from './scanner';
 import { parseFields } from './level';
 import { isMixChord, parseMixChord } from './mix';
@@ -45,7 +47,20 @@ export const STEP_SYNTAX: readonly Syntax[] = [
     ['&tune step=1 0 [2 4] [5 [7 9]] [0 2@2]', '&tune step=1 [0 ~ 4]!2 [0 2]*2 [0 2, 7]', '&groove step=2 &bd [&hh &hh] &sd [&hh ~ &hh]'],
     'cell.md',
   ),
-  syntax('step', '[a|b|c]', 'A choice: one of them, chosen afresh each time round (the same every time it is played).', ['&tune step=2 0 [2|4|7] 4'], 'braid.md'),
+  syntax(
+    'step',
+    '[a|b|c] · [a b|c]',
+    'A choice: one of them, chosen afresh each time round (the same every time it is played). As in Strudel, what goes between the bars can be sequences, each spanning the step: [0 2|4] plays 0 2 or a 4.',
+    ['&tune step=2 0 [2|4|7] 4', '&tune step=2 0 [2 4|7] [5 ~ 4|2]'],
+    'braid.md',
+  ),
+  syntax(
+    'step',
+    '<a b c>',
+    "An alternation, as Strudel's <…>: one of its steps each lap of the cell, in turn (<0 2 4> is Strudel's [0 2 4]/3: a step held @n lasts n laps). It nests with brackets, <0 [2 4]>, [0 <2 4>]; commas stack alternations, <0 2, 4 5 7>; modifiers work on it as on any step (<0 2>*2: both in one lap).",
+    ['&tune step=2 0 <2 4 7> 4 <5 [7 9]>', '&tune step=2 <0 <2 4>> <0 2>!2 <0 2>*2'],
+    'cell.md',
+  ),
   syntax(
     'step',
     '&x',
@@ -132,6 +147,7 @@ function parseAtom(s: LineScanner, depth: number): Atom {
     if (isMixChord(s.text, s.i)) return parseMixChord(s);
     return parseBracket(s, depth);
   }
+  if (c === '<') return parseAngle(s, depth);
   if (c === '-' || c === '.' || (c >= '0' && c <= '9')) {
     const n = s.num('a number');
     // (Strudel's other spelling of an accidental on a degree: s a sharp, f a flat, mixed with # and b: `6s`, `7f`)
@@ -162,7 +178,7 @@ function parseBracket(s: LineScanner, depth: number): Atom {
     if (c === '') s.fail(sep === '|' ? `']' to close the choice: [0|4|7]` : `']' to close the bracket: [0 2] · [0, 4]`, start, s.i - start);
     if (c === ',' || c === '|') {
       if (sep !== null && sep !== c) s.fail('A bracket is a chord or a stack (commas) or a choice (bars), not both: [0, 4] · [0|4]', s.i, 1);
-      if (!layers[layers.length - 1].length) s.fail(c === ',' ? 'A step before the comma: [0, 4]' : 'A number before the bar: [0|4]', s.i, 1);
+      if (!layers[layers.length - 1].length) s.fail(c === ',' ? 'A step before the comma: [0, 4]' : 'A step before the bar: [0|4] · [0 2|4]', s.i, 1);
       sep = c;
       layers.push([]);
       s.i++;
@@ -173,17 +189,17 @@ function parseBracket(s: LineScanner, depth: number): Atom {
   s.i++;
   if (!layers[layers.length - 1].length)
     s.fail(
-      sep === null ? 'Empty brackets: [0 2] is a subsequence, [0, 2] a chord' : sep === ',' ? 'A step after the comma: [0, 4]' : 'A number after the bar: [0|4]',
+      sep === null ? 'Empty brackets: [0 2] is a subsequence, [0, 2] a chord' : sep === ',' ? 'A step after the comma: [0, 4]' : 'A step after the bar: [0|4] · [0 2|4]',
       start,
       s.i - start,
     );
   const plain = (t: Token) => t.repeat === 1 && t.subdivide === 1 && t.elongate === 1 && t.chance === undefined;
   const single = layers.every((l) => l.length === 1 && plain(l[0]) && l[0].atom.kind === 'note');
   const notes = layers.map((l) => l[0].atom as Extract<Atom, { kind: 'note' }>);
-  // [a|b|c]: one of them, each time round (numbers only: a choice of sequences, [0 2|4], is not read yet)
+  // [a|b|c]: one of them, each time round; [0 2|4]: a choice of sequences, one of them each time round (Strudel's `|`)
   if (sep === '|') {
-    if (!single || notes.some((n) => n.pitched)) s.fail('A choice is numbers between bars, closed: [0|4|7]', start, s.i - start);
-    return { kind: 'choice', values: notes.map((n) => n.value), alters: notes.map((n) => n.alter) };
+    if (single && !notes.some((n) => n.pitched)) return { kind: 'choice', values: notes.map((n) => n.value), alters: notes.map((n) => n.alter) };
+    return { kind: 'seq', layers, mode: 'choose' };
   }
   // [0, 4, 7] (and [0]): a chord of plain numbers or names; anything else is a subsequence, or a stack of them
   if (single) {
@@ -192,6 +208,58 @@ function parseBracket(s: LineScanner, depth: number): Atom {
   }
   return { kind: 'seq', layers };
 }
+
+/**
+ * `<a b c>`, as Strudel's mini-notation reads it (#337): one of its steps a lap, in turn — `[a b c]/3`, so a step held
+ * `@n` (or `_`) lasts n laps and a subsequence plays whole in its lap. Commas stack alternations, `<0 2, 4 5 7>`.
+ */
+function parseAngle(s: LineScanner, depth: number): Atom {
+  const start = s.i;
+  if (depth >= MAX_NESTING) s.fail(`Brackets nest ${MAX_NESTING} deep at most: name the inner steps (&inner 0 2) and splice them`, start, 1);
+  s.i++;
+  const layers: Token[][] = [[]];
+  for (;;) {
+    s.skipSpace();
+    const c = s.peek();
+    if (c === '>') break;
+    if (c === '') s.fail(`'>' to close the alternation: <0 2 4>`, start, s.i - start);
+    if (c === '|') s.fail('An alternation takes steps, stacked with commas (<0 2, 4 5>); a choice goes in square brackets: [0 2|4]', s.i, 1);
+    if (c === ',') {
+      if (!layers[layers.length - 1].length) s.fail('A step before the comma: <0 2, 4 5>', s.i, 1);
+      layers.push([]);
+      s.i++;
+      continue;
+    }
+    pushStep(s, layers[layers.length - 1], parseToken(s, depth + 1));
+  }
+  s.i++;
+  if (!layers[layers.length - 1].length)
+    s.fail(layers.length > 1 ? 'A step after the comma: <0 2, 4 5>' : 'An empty alternation: <0 2 4> plays one of its steps a lap', start, s.i - start);
+  return { kind: 'seq', layers, mode: 'alt' };
+}
+
+/** `x(k,n,r)` after a step: its euclid, as Strudel's euclidRot (r turns it right, as `euclid(k, n, r)` does). The scanner is at `(`. */
+function parseEuclidOn(s: LineScanner): Euclid {
+  const at = s.i;
+  s.i++;
+  const args: number[] = [];
+  for (;;) {
+    s.skipSpace();
+    args.push(s.int('a whole number in x(k, n, r)'));
+    s.skipSpace();
+    if (s.peek() !== ',') break;
+    s.i++;
+  }
+  s.expect(')', `')' to close x(k, n, r)`);
+  const [k, n, r = 0] = args;
+  if (args.length < 2 || args.length > 3 || !(n >= 1 && n <= MAX_REPS) || !(k >= 0 && k <= n))
+    s.fail('x(k, n, r): k hits spread evenly over n parts of the step (0 ≤ k ≤ n), turned right by r: 0(3,8), &bd(3,8,2)', at, s.i - at);
+  const p = bjorklund(k, n);
+  return { k, n, r, hits: Array.from({ length: n }, (_, j) => j).filter((j) => p[(((j - r) % n) + n) % n]) };
+}
+
+/** How many laps a step's alternations and slowings may take to come round, at most (lapsOf). */
+const MAX_LAPS = 10_000;
 
 /**
  * Adds a step to a list, or, for `_`, lengthens the step before it by one (Strudel's elongation: `0 _ _` is `0@3`;
@@ -218,6 +286,20 @@ export const MODIFIERS = {
   '@': { field: 'elongate', syntax: syntax('modifier', 'x@n', 'Hold: the step lasts n steps.', ['&tune step=2 0@2 2 4@3'], 'cell.md') },
 } as const;
 type ModKey = keyof typeof MODIFIERS;
+export const SLOW_SYNTAX = syntax(
+  'modifier',
+  'x/n',
+  "Slow, as Strudel's x/n: the step plays its part of what it holds stretched over n laps — [0 2]/2 is 0 on one lap and 2 the next; a lone note, [0]/2, sounds every other lap, held as long as n steps (a number's own n/d is a fraction).",
+  ['&tune step=2 [0 2]/2 4 [5 7 9]/3', '&tune step=2 [0]/2 2 <4 5>/2'],
+  'cell.md',
+);
+export const EUCLID_SYNTAX = syntax(
+  'modifier',
+  'x(k,n,r)',
+  "A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers.",
+  ['&groove step=1 &bd(3,8) &hh(5,8,2)', '&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)'],
+  'cell.md',
+);
 export const CHANCE_SYNTAX = syntax(
   'modifier',
   'x? · x?p',
@@ -236,14 +318,28 @@ export const LEVEL_SYNTAX = syntax(
 
 export function parseToken(s: LineScanner, depth = 0): Token {
   const start = s.i;
-  const atom = parseAtom(s, depth);
+  let atom = parseAtom(s, depth);
+  const atomSpan = s.span(start);
   const mods = { repeat: 1, subdivide: 1, elongate: 1 };
   let chance: number | null | undefined;
   let level: number | undefined;
+  let slow: number | undefined;
   const seen = new Set<string>();
   // (a voice's hit fields, &hh:0:.4: its gain)
   if (atom.kind === 'ref') level = parseFields(s);
-  while (s.peek() in MODIFIERS || s.peek() === '?') {
+  // x(k,n,r): struck by a euclid, straight after the step (then its other modifiers)
+  const euclid = s.peek() === '(' ? parseEuclidOn(s) : undefined;
+  while (s.peek() in MODIFIERS || s.peek() === '?' || s.peek() === '/') {
+    if (s.peek() === '/') {
+      // x/n: slowed over n laps (a number's own n/d is a fraction: [0]/2 slows a lone number)
+      if (slow !== undefined) s.fail(`'/' can only appear once per step`);
+      s.i++;
+      const at = s.i;
+      const n = s.int('a count after /');
+      if (n < 1 || n > MAX_REPS) s.fail(`Count must be between 1 and ${MAX_REPS}`, at, s.i - at);
+      slow = n;
+      continue;
+    }
     if (s.peek() === '?') {
       // x?p: it is dropped with probability p; x? alone: the cell's chance=
       if (chance !== undefined) s.fail(`'?' can only appear once per step`);
@@ -263,7 +359,16 @@ export function parseToken(s: LineScanner, depth = 0): Token {
     if (n < 1 || n > MAX_REPS) s.fail(`Count must be between 1 and ${MAX_REPS}`, at, s.i - at);
     mods[MODIFIERS[op].field] = n;
   }
+  if (s.peek() === '(') s.fail('A euclid goes straight after its step, before its other modifiers: 0(3,8)*2');
   // (inside brackets a step ends at the bracket, a comma or a bar too)
-  if (!s.atBoundary() && !(depth > 0 && /[\],|]/.test(s.peek()))) s.fail(`Unexpected '${s.peek()}' — separate steps with spaces`);
+  if (!s.atBoundary() && !(depth > 0 && /[\],|>]/.test(s.peek()))) s.fail(`Unexpected '${s.peek()}' — separate steps with spaces`);
+  // x(k,n,r), x/n: on a subsequence's own; any other step held in one, bare (it lasts as long as it would)
+  if (euclid || slow !== undefined) {
+    if (atom.kind === 'rest' && (atom.hold || atom.keep)) s.fail(`${atom.hold ? '_' : '='} takes no euclid and no /n: put them on the step it stands for`, start, s.i - start);
+    const how = { ...(euclid ? { euclid } : {}), ...(slow !== undefined ? { slow } : {}) };
+    atom =
+      atom.kind === 'seq' && !atom.bare ? { ...atom, ...how } : { kind: 'seq', layers: [[{ atom, repeat: 1, subdivide: 1, elongate: 1, span: atomSpan }]], ...how, bare: true };
+  }
+  if (lapsOf(atom) > MAX_LAPS) s.fail(`A step comes round after ${MAX_LAPS.toLocaleString('en')} laps at most: its <…> and /n multiplied out`, start, s.i - start);
   return { atom, ...mods, ...(chance !== undefined ? { chance } : {}), ...(level !== undefined ? { level } : {}), span: s.span(start) };
 }

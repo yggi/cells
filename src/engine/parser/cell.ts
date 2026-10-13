@@ -3,8 +3,8 @@ import { leaves } from '../subseq';
 import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, Token } from '../ast';
 import { TIME_PARAMS } from '../attributes';
 import { RETIRED_PARAMS } from '../dough-params';
-import { LABEL_FIELDS } from '../program';
-import { CELL_PARAMS, CORE, PARAMS, nearestAttribute } from '../attributes';
+import { LABEL_FIELDS, MAX_EVENTS } from '../program';
+import { CELL_PARAMS, CORE, PARAMS, PARAM_ALIASES, nearestAttribute } from '../attributes';
 import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE, parseFree } from './free';
@@ -81,8 +81,10 @@ export const SHOW_CONVENTIONS: Readonly<Record<string, readonly string[]>> = { n
 
 const whole =
   (key: 'shift' | 'stride'): Reader =>
-  (s, b) => {
+  (s, b, _word, at) => {
     b[key] = s.text.startsWith('free(', s.i) ? Math.round(parseFree(s, key, false).value) : s.int(`a whole number after ${key}=`);
+    // (where it is written: a warning about it points there, compiler/checks.ts)
+    b.paramSpans[key] = s.place(at);
   };
 const text =
   (key: 'title' | 'tags' | 'label', example: string): Reader =>
@@ -100,7 +102,7 @@ const text =
 const voiceOwn =
   (key: 'env' | 'pitch'): Reader =>
   (s, b) => {
-    b[key] = s.ref(`a cell after ${key}=, like ${key}=&pluck or ${key}=&(map=adsr .01 .3 .5 .4)`);
+    b[key] = s.cellRef(`a cell after ${key}=, like ${key}=&pluck or ${key}=&(map=adsr .01 .3 .5 .4)`, `after ${key}=`);
   };
 const timing: Reader = (s, b, word) => {
   b.step = parseStep(s, word === 'loop');
@@ -123,7 +125,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
         const name = `scale:λ${s.line}_${at0 + s.offset}`;
         s.lambdas.push({ ...BLANK_TABLE, name, span: sc.span, lambda: s.text.slice(at0, s.i), over: sc.key, braid: { kind: 'scan', steps: sc.steps, span: sc.span } });
         b.over = { name, pick: null, shift: 0, span: sc.span };
-      } else b.over = s.ref('a cell or scale(name, tonic) after over=, like over=&scale or over=scale(minor, A)');
+      } else b.over = s.cellRef('a cell or scale(name, tonic) after over=, like over=&scale or over=scale(minor, A)', 'after over=');
       if (b.over!.pick) s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over!.span.col - 1, b.over!.span.len);
     },
   },
@@ -191,6 +193,13 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       const vs = s.i;
       b.cycle = s.int('a whole number after cycle=');
       if (b.cycle < 1) s.fail('cycle must be at least 1', vs, s.i - vs);
+      // (a grid of that many steps is built step by step: past the cap it would run out of memory before saying so)
+      if (b.cycle > MAX_EVENTS)
+        s.fail(
+          `cycle=${b.cycle}: at most ${MAX_EVENTS.toLocaleString('en')}, the most steps a cell can hold (a grid's to its period, a table's turns before it comes round)`,
+          vs,
+          s.i - vs,
+        );
     },
   },
   size: {
@@ -258,12 +267,12 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
         s.skipSpace();
         while (s.peek() !== ')') {
           if (s.done()) s.fail(`')' to close about=(…)`);
-          about.push(s.ref(what));
+          about.push(s.cellRef(what, 'in about='));
           s.skipSpace();
         }
         s.i++;
         if (about.length === 0) s.fail(what, at, word.length + 1);
-      } else about.push(s.ref(what));
+      } else about.push(s.cellRef(what, 'in about='));
     },
   },
 };
@@ -282,7 +291,7 @@ const CELL_WANTS: Readonly<Record<string, string>> = {
 
 /** A parameter naming a cell: fm= its modulator; write= a tape's source; play= a read head's tape … */
 const readCellParam: Reader = (s, b, word) => {
-  const r = s.ref(CELL_WANTS[word]);
+  const r = s.cellRef(CELL_WANTS[word], `after ${word}=`);
   b.params[word] = r.name;
   b.paramSpans[word] = r.span;
 };
@@ -307,7 +316,7 @@ function readParam(s: LineScanner, b: Body, key: string): void {
       }
       const n = s.match(/(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
       if (n !== null) gain *= parseFloat(n);
-      else factors.push(s.ref('a level cell or a number, like level=&accent*&duck*.4'));
+      else factors.push(s.cellRef('a level cell or a number, like level=&accent*&duck*.4', 'in level='));
     }
     b.paramCells[key] = { range: null, factors, span: s.span(vs) };
     if (gain !== 1) b.params[key] = gain;
@@ -335,7 +344,7 @@ function readParam(s: LineScanner, b: Body, key: string): void {
   if (s.peek() === '&' || range) {
     if (range) s.i += range[0].length;
     const factors: Ref[] = [];
-    if (!range) factors.push(s.ref(`a cell after ${key}=`));
+    if (!range) factors.push(s.cellRef(`a cell after ${key}=`, `in ${key}=`));
     for (;;) {
       const save = s.i;
       s.skipSpace();
@@ -345,7 +354,7 @@ function readParam(s: LineScanner, b: Body, key: string): void {
       }
       s.i++;
       s.skipSpace();
-      factors.push(s.ref(`a cell after *, like ${key}=200..3000 * &fenv`));
+      factors.push(s.cellRef(`a cell after *, like ${key}=200..3000 * &fenv`, `in ${key}=`));
     }
     if (range && factors.length === 0) s.fail(`${key}=${range[0]}: a range is scaled by cells — ${key}=${range[0]} * &fenv`, vs, s.i - vs);
     if (!range && factors.length > 1) s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
@@ -364,6 +373,7 @@ const RETIRED_KEYS: Readonly<Record<string, string>> = {
   init: 'init= is now shift=',
   out: 'out= is now a command: out(voice, &cell) / step(&meter, bpm=…)',
   time: 'time= is now a command: out(voice, &cell) / step(&meter, bpm=…)',
+  rung: 'rung= is now tier= (decision 020): the tutorial is in tiers, tier=1 to tier=9',
   ...RETIRED_PARAMS,
 };
 
@@ -471,7 +481,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     paramCells: {},
     paramClocks: {},
   };
-  const seen = new Set<string>();
+  // each setting, as it was first written
+  const seen = new Map<string, string>();
   let off = false;
   let oneshot = false;
   const tokens: Token[] = [];
@@ -480,13 +491,17 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   let fifthsShift: number | null = null;
   // the braid is free(…): nothing else may be braid
   let freeBraid = false;
+  // (where it ends, and its steps as written: a stray ')' or a modifier after it says what it is)
+  let freeEnd = -1;
+  let freeSteps = '';
 
   while (!s.done()) {
     const at = s.i;
     const word = s.match(IDENT);
     if (word !== null && s.peek() === '=') {
       s.i++;
-      const key = word in KEYS || word in PARAMS ? word : null;
+      // (an alias, Strudel's or dough's other name, reads as ours: cutoff= is lpf=)
+      const key = word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
       if (key === null) {
         if (word in RETIRED_KEYS) s.fail(RETIRED_KEYS[word], at, word.length);
         const near = nearestAttribute(word);
@@ -498,11 +513,21 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       }
       // each at most once (step= and loop= are one setting)
       const slot = key === 'loop' ? 'step' : key;
-      if (seen.has(slot))
-        s.fail(slot === 'step' && b.step!.whole !== (word === 'loop') ? 'step= and loop= say the same thing two ways — pick one' : `${word}= is given twice`, at, word.length);
-      seen.add(slot);
+      if (seen.has(slot)) {
+        const first = seen.get(slot)!;
+        s.fail(
+          slot === 'step' && b.step!.whole !== (word === 'loop')
+            ? 'step= and loop= say the same thing two ways — pick one'
+            : first !== word
+              ? `${word}= and ${first}= are one parameter, ${key}= — given twice`
+              : `${word}= is given twice`,
+          at,
+          word.length,
+        );
+      }
+      seen.set(slot, word);
       const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (CELL_PARAMS.has(key) ? readCellParam : readParam);
-      read(s, b, word, at);
+      read(s, b, key, at);
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
       continue;
     }
@@ -512,6 +537,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       s.i = at;
       generator = parseFreeBraid(s);
       freeBraid = true;
+      freeEnd = s.i;
+      freeSteps = s.text.slice(at + 'free('.length, s.i - 1).trim();
       continue;
     }
     if (word !== null && isGenerator(word) && s.peek() === '(') {
@@ -550,6 +577,11 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     // (and _, the step before it held one longer)
     if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_')) s.i = at;
     else if (word !== null) s.fail(`Unexpected '${word}'`, at, word.length);
+    if (generator && freeBraid && s.peek() === ')') s.fail(`A ')' with nothing to close: free(${freeSteps}) ends at its first ')'`, at, 1);
+    if (generator && at === freeEnd && /[@!*/?:]/.test(s.peek())) {
+      const mod = /^\S+/.exec(s.text.slice(at))![0];
+      s.fail(`free(${freeSteps})${mod}: a modifier goes on its steps, inside the parentheses: free([${freeSteps}]${mod})`, at, mod.length);
+    }
     if (generator) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
     pushStep(s, tokens, parseToken(s));
   }
@@ -606,7 +638,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
 export function parseCell(s: LineScanner): CellDecl {
   s.skipSpace();
   if (s.text.startsWith('&(', s.i)) s.fail('An unnamed cell &( … ) goes where a cell is used; a line declares a named one: &name …');
-  const head = s.ref('a cell name like &theme');
+  const head = s.cellRef('a cell name like &theme', 'names the line');
   if (head.pick || head.shift) s.fail('Brackets go where a cell is used (&x[0], &x[<<]), not where it is named — use shift= here', head.span.col - 1, head.span.len);
   if (s.peek() === '(') s.fail(`&name(…) is gone — write over=&…`);
   return parseBody(s, head);

@@ -68,6 +68,14 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
     const span = d?.step?.span ?? decls.get(c.clock)?.step?.span ?? c.span;
     error(`${named(c)} would start ${many(perSecond)} notes a second: more than ${many(MAX_NOTES_PER_SECOND)}, the most a cell can play — slow its step= or loop=`, span);
   }
+  const unplayed = new Set<string>();
+  // (a clock nothing plays, its own rate left free: what it moves, a parameter or a volume, takes a value at each of its steps)
+  for (const c of cells.values()) {
+    const clock = clocks.get(c.name);
+    if (!clock || fastest.has(c.name) || !c.frees.some((f) => f.key === 'step' || f.key === 'loop')) continue;
+    fastest.set(c.name, (clock.perSecond * expansion(c.name)) / Math.max(1, c.steps));
+    unplayed.add(c.name);
+  }
   // a rate left free(…): its slider stops where the cap does (a value past it would be an error, and the player would keep the last piece that compiled, silently)
   for (const [name, perSecond] of fastest) {
     const c = cells.get(name);
@@ -78,7 +86,9 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
     (c as { frees: readonly FreeSpec[] }).frees = c.frees.map((f) => (over.includes(f) ? { ...f, hi: top(f) } : f));
     for (const f of over)
       warn(
-        `${f.key}=free(…): moved up to ${many(f.hi)}, a cell &${name} clocks would start more than ${many(MAX_NOTES_PER_SECOND)} notes a second, the most a cell can play: the slider stops at ${many(top(f))}`,
+        unplayed.has(name)
+          ? `${f.key}=free(…): moved up to ${many(f.hi)}, &${name} would move what it moves more than ${many(MAX_NOTES_PER_SECOND)} times a second, the most a cell can play: the slider stops at ${many(top(f))}`
+          : `${f.key}=free(…): moved up to ${many(f.hi)}, a cell &${name} clocks would start more than ${many(MAX_NOTES_PER_SECOND)} notes a second, the most a cell can play: the slider stops at ${many(top(f))}`,
         f.span,
       );
   }

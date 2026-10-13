@@ -66,11 +66,16 @@ describe('arranging at the input (decision 016)', () => {
     expect([r.taps?.get('drumBar'), r.cells.get('drumBar')?.clock, r.cells.get('drumBar')?.label]).toEqual(['parts', 'bar', 'the drums']);
     expect(voices(off, 1)).toEqual(new Set(['keys'])); // [0,2]: the keys; the drums are off
     expect(voices(off, 2)).toEqual(new Set(['keys', 'lead']));
-    // a tap's line with steps of its own: the error says which line, not that the other taps are unknown
-    const stepped = compileSource(SONG.replace('&parts step=&bar &keysBar &tuneBar &drumBar', '&parts step=&bar &keysBar &tuneBar &drumBar\n&drumBar 0 1'));
-    expect(stepped.diagnostics.map((d) => d.message)).toContain(
-      '&drumBar is a tap of &parts, so its line can carry attributes only (off, label=, tags=, show=, restart=), not steps or a table of its own',
-    );
+    // a tap's line with steps or a table of its own: the error says which line, and only that (not that the other taps
+    // are unknown, nor what they step stands still)
+    for (const [tap, line] of [
+      ['drumBar', '&drumBar 0 1'],
+      ['keysBar', '&keysBar 0 1'],
+      ['tuneBar', '&tuneBar over=&major'],
+    ])
+      expect(
+        compileSource(SONG.replace('&parts step=&bar &keysBar &tuneBar &drumBar', `&parts step=&bar &keysBar &tuneBar &drumBar\n${line}`)).diagnostics.map((d) => d.message),
+      ).toEqual([`&${tap} is a tap of &parts, so its line can carry attributes only (off, label=, tags=, show=, size=, shift=, restart=), not steps or a table of its own`]);
     // (a bare line of a name no table names is a cell of no steps, as before)
     expect(compileSource('&x off').cells.get('x')?.clock).toBeFalsy();
   });
@@ -80,6 +85,30 @@ describe('arranging at the input (decision 016)', () => {
     expect(r.ok).toBe(false); // &drumsBar is no cell
     const typo = compileSource(SONG.replace('&parts step=&bar &keysBar &tuneBar &drumBar', '&parts step=&bar &keysBar &tuneBar &drumBar &fillBar'));
     expect(typo.diagnostics.some((d) => d.message.startsWith('&fillBar is a tap of &parts, but nothing is stepped by it'))).toBe(true);
+  });
+});
+
+describe('a selector of mixes (the form before decision 016)', () => {
+  const old = (out: string) => `&bar step=120bpm 0 0 0 0
+&a step=&bar 0 2 4 5 7
+&b step=&bar 12
+&partA [&a * &v]
+&partB [&b * &w]
+&parts &partA &partB
+&song over=&parts step=&bar/4 laps=1 0 [0,1] ~ 1
+&song2 over=&parts step=&bar/4 laps=1 0
+&v s=tri loop=C4
+&w s=sine loop=C4
+&out loop=SAMPLE_RATE map=sample ${out}`;
+  it.each(['&song', '[&song]', '[&song * .8]', '[&song, &song2]'])('&out %s: one error per selector, which says what to write, and nothing cascades', (out) => {
+    const r = compileSource(old(out));
+    expect(r.ok).toBe(false);
+    expect(r.diagnostics.map((d) => d.message)).toEqual(
+      ['song', 'song2'].map(
+        (s) =>
+          `A selector switches taps of a meter's bus (decision 016): &${s} over=&parts reads mixes. Write &parts step=&bar with a tap per part (&parts step=&bar &keysBar &drumBar), step each part's cells by its tap (step=&keysBar), and play the parts straight into the sound card`,
+      ),
+    );
   });
 });
 

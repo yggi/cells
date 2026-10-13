@@ -34,4 +34,5 @@ The selector is the slowest thing in a piece, and its job is the form: it belong
 - A saved piece with a selector of mixes stops playing until rewritten: the error says how, and Shorten does it (CHANGELOG).
 - A melody played in two parts (Korobeiniki's bass in A and B) becomes a motif with a player per part (`&bassAOctaves step=&bassABar/2 &octaves`): one clock can't be two taps.
 - The machinery of the old form (`partsOf` and its expansion in `compiler/bindings.ts`, the `part` flow, the mixes exception in the table check) is removed in a follow-up; until then Shorten's rewrite reads old pieces through it.
+- *Amended (#261):* the machinery is removed, and Shorten's rewrite with it (`shorten/arrange.ts`): by [decision 027](027-on-top-of-strudel.md)'s clean cut an old form needs no migration. The old form is one error per selector, which says what to write; nothing cascades from it.
 - #29's "a part picked starts from its top" is item 4; resume, for a cadenza's band, is open.

@@ -33,6 +33,7 @@ export function declare(ctx: Ctx): Declared {
   }
   const taps = tapTables(decls, error);
   gates(decls, implicit, error);
+  mixSelectors(ctx, decls);
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
   for (const name of decls.keys()) if (name.startsWith('key:') || name.startsWith('scale:')) implicit.add(name);
@@ -265,6 +266,24 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
 }
 
 /**
+ * A selector reading a table of mixes (the form before decision 016) is an error, said once here: the selector is then
+ * broken, so where its sound is used (`&out &song`, `[&song * .8]`) says nothing more (context.ts: `broken`).
+ */
+function mixSelectors(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): void {
+  const isMix = (d: CellDecl | undefined) =>
+    !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
+  for (const d of decls.values()) {
+    const t = d.over ? decls.get(d.over.name) : undefined;
+    if (!t || t.braid.kind !== 'list' || !t.braid.tokens.length || !t.braid.tokens.every((x) => x.atom.kind === 'ref' && isMix(decls.get(x.atom.name)))) continue;
+    ctx.error(
+      `A selector switches taps of a meter's bus (decision 016): &${d.name} over=&${t.name} reads mixes. Write &${t.name} step=&bar with a tap per part (&${t.name} step=&bar &keysBar &drumBar), step each part's cells by its tap (step=&keysBar), and play the parts straight into the sound card`,
+      d.over!.span,
+    );
+    ctx.broken.add(d.name);
+  }
+}
+
+/**
  * Tables of taps (decision 016): a stepped cell whose steps are plain names, each one either not declared, declared
  * bare (a line of attributes only, no steps and no clock: `&hookBar off`, where the editor writes a tap's off, label=,
  * show=), or a cell stepped by something (a tap written out: its own line wins), at least one not declared or bare and
@@ -289,11 +308,15 @@ function tapTables(decls: Map<string, CellDecl>, error: Ctx['error']): Map<strin
       if (a.kind !== 'ref' || a.pick || a.shift || a.transpose || a.values || t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1) break;
       const known = decls.get(a.name);
       if (known && !bare(known) && (!known.step || taps.has(a.name))) {
-        // (a tap given a line of steps or a table: the table would be a braid of unknown names — say which line)
+        // (a tap given a line of steps or a table: the table would be a braid of unknown names — say which line, and
+        // read it as the tap it was meant to be, its steps and table left out, so that is the one error)
         const rest = d.braid.tokens.map((x) => (x.atom.kind === 'ref' ? x.atom.name : '')).filter((n) => n !== a.name);
-        if (!known.step && rest.some((n) => n && !decls.has(n) && clocks.has(n)))
-          error(`&${a.name} is a tap of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=, restart=), not steps or a table of its own`, known.span);
-        break;
+        if (known.step || !rest.some((n) => n && !decls.has(n) && clocks.has(n))) break;
+        error(
+          `&${a.name} is a tap of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=, size=, shift=, restart=), not steps or a table of its own`,
+          known.span,
+        );
+        decls.set(a.name, { ...known, over: null, map: null, braid: { kind: 'blank' } });
       }
       names.push(a.name);
     }

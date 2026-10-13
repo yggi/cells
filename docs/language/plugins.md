@@ -42,7 +42,7 @@ function draw(view, h) {
 === end ===
 ```
 
-A plugin's show is a wheel for its own cell: it isn't passed down to the cells below it as `notes` or `do` are, and it applies only to the kinds of cell it says it fits.
+A plugin's show is a wheel for its own cell: it isn't passed down to the cells below it as `notes` or `do` are, and it applies only to the kinds of cell it says it fits: on another kind it is drawn as that kind, and the editor warns.
 
 ## The manifest
 

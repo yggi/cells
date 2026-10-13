@@ -14,7 +14,7 @@ With no braid a voice holds 0…11 of the 12 grid: a 12-step saw.
 
 **A voice alone plays its own pitch, held** ([decision 028](../decisions/028-the-smallest-piece.md)): in a product with nothing that starts notes (no pitch term, no volume with `step=` timing), the missing pitch is the pitch identity, as a missing volume is 1. So `&a loop=A4` alone, or `[&a * .5]`, is an oscillator: one note at the voice's own frequency from where play starts until it stops or the piece ends (`laps=` elsewhere), its own `env=` attacking once and holding at its sustain, its own `pitch=` bending it (a vibrato), and the levels in its product moving its volume (`[&a * &swell]` with `&swell map=lin loop=.25 0 1`). It doesn't end the piece or give it a length of its own. A kit, a resonator and a tape's read head alone keep their own meaning. Or name a built-in waveform with dough's **`s=`** (sine tri saw square pulse white pink brown). Levels and stereo are the mix's job; envelopes are cells, `map=adsr`. A voice with no envelope in its product plays quick and full. Rendering uses Tone.js.
 
-Sound parameters use dough's names; any of them makes a cell a voice. Strudel's and dough's other names for them (`cutoff=`, `verb=` …, listed in [reference.md](reference.md)) aren't read: each is an error that names ours.
+Sound parameters use dough's names; any of them makes a cell a voice. Strudel's and dough's other names for them read as ours where they mean the same in the same units (`sound=`, `cutoff=`, `verb=`, `dt=` …, listed in [reference.md](reference.md#parameters); [decision 027](../decisions/027-on-top-of-strudel.md)): the text keeps what you wrote, an alias beside ours is the parameter given twice, and Shorten offers ours where it is shorter. Not read, as their meaning or scale differs here: `size=` (a reverb's size; ours is how large a cell is drawn), `dist=` (another scale than our `distort=`), `fmi=` `fmh=` (FM is a cell here: [physics.md](physics.md)), `vel=` `att=` `legato=` and the envelopes (an envelope is a cell; a tie is `glide=`).
 
 | parameter | what |
 |---|---|
@@ -22,7 +22,7 @@ Sound parameters use dough's names; any of them makes a cell a voice. Strudel's 
 | `hpf=` `hpq=` | high-pass cutoff (Hz) and resonance; both can move |
 | `room=` | reverb send, 0–1; can move |
 | `delay=` `delaytime=` `delayfeedback=` | echo send (0–1, can move), time (seconds or a clock), feedback (0–1) |
-| `pan=` | where it sits in stereo: 0 left, .5 centre (as without it), 1 right; the far side fades, the near one stays full |
+| `pan=` | where it sits in stereo: 0 left, .5 centre (as without it), 1 right; the far side fades, the near one stays full. Past 0 or 1 it plays hard left or right, and warns; on a mix or the sound card it does nothing, and warns |
 | `distort=` | distortion: 0 clean, .3 gritty, 1 and more harsh |
 | `crush=` | bit depth: 16 clean, 8 grainy, 3 and fewer rubble |
 

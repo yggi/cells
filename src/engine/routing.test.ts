@@ -72,35 +72,27 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     const s = states(r, 0.1);
     expect([s.get('mel~>half'), s.get('half~>bar')]).toEqual(['live', 'live']);
   });
-  it('a selector: the part it picks lights its way to the sound card, the others wait (a voice in two parts too)', () => {
+  it('a selector: the tap it has on lights what it steps, the others wait (a voice in two parts too: decision 016)', () => {
     const r = src(
       '&bar step=1',
-      '&a step=&bar 0',
-      '&b step=&bar 7',
+      '&parts step=&bar &aBar &bBar',
+      '&a step=&aBar 0',
+      '&b step=&bBar 7',
       '&v s=tri loop=C4',
       '&w s=sine loop=C4',
-      '&partA [&a * &v]',
-      '&partB [&b * &w, &b * &v]',
-      '&parts &partA &partB',
       '&song over=&parts step=&bar/4 0 1',
-      `${OUT} &song`,
+      `${OUT} [&a * &v, &b * &w, &b * &v]`,
     );
-    const first = states(r, 0.5);
-    expect(['partA', 'parts', 'song', 'out', 'v'].map((n) => first.get(n))).toEqual(['live', 'live', 'live', 'live', 'live']);
-    // (a product is a junction, an unnamed gate: the melody into it, its notes to the voice, the voice's sound into the part)
-    expect(Object.fromEntries(['a->*partA:0', '*partA:0->v', '*partA:0', 'v->partA', 'parts->partA', 'song->parts', 'out->song'].map((k) => [k, first.get(k)]))).toEqual({
-      'a->*partA:0': 'live',
-      '*partA:0->v': 'live',
-      '*partA:0': 'live',
-      'v->partA': 'live',
-      'parts->partA': 'live',
-      'song->parts': 'live',
-      'out->song': 'live',
-    });
-    // &v is in both parts: only the edge its notes take now is live
-    expect([first.get('partB'), first.get('w'), first.get('*partB:1->v'), first.get('v->partB'), first.get('parts->partB')]).toEqual(['idle', 'idle', 'idle', 'idle', 'idle']);
-    const second = states(r, 4.5);
-    expect([second.get('v->partB'), second.get('*partB:1->v'), second.get('v->partA'), second.get('partA')]).toEqual(['live', 'live', 'idle', 'idle']);
+    expect(r.diagnostics).toEqual([]);
+    const keys = ['song', 'song->parts', 'parts', 'aBar', 'aBar->a~', 'a', 'a->*out:0', 'v', 'v->out', 'bBar', 'bBar->b~', 'b', 'b->*out:1', 'w', 'w->out'];
+    const at = (t: number) => Object.fromEntries(keys.map((k) => [k, states(r, t).get(k)]));
+    const [a, b] = [
+      ['aBar', 'aBar->a~', 'a', 'a->*out:0'],
+      ['bBar', 'bBar->b~', 'b', 'b->*out:1', 'w', 'w->out'],
+    ];
+    const both = { song: 'live', 'song->parts': 'live', parts: 'live', v: 'live', 'v->out': 'live' };
+    expect(at(0.5)).toEqual({ ...both, ...Object.fromEntries(a.map((k) => [k, 'live'])), ...Object.fromEntries(b.map((k) => [k, 'idle'])) });
+    expect(at(4.5)).toEqual({ ...both, ...Object.fromEntries(a.map((k) => [k, 'idle'])), ...Object.fromEntries(b.map((k) => [k, 'live'])) });
   });
   it('a kit: its members are part of the sound, and the one struck now is live', () => {
     const r = compileSource(SAILOR_WITH_KIT);

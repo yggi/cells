@@ -3,7 +3,7 @@ import { parse, pieceMeta } from './index';
 import { pickLabel, refLabel, type Atom, type Binding } from '../ast';
 import { distribute } from '../algebra';
 import { rateChain } from '../transform';
-import { DOUGH_ALIASES } from '../dough-params';
+import { PARAM_ALIASES } from '../attributes';
 
 /** The parser keeps a mix as written; typed here as compile would, the voices of these tests being sounds. */
 const SOUNDS = /^(lead|bass|organ|cello|v|w|v2)$/;
@@ -100,19 +100,29 @@ describe('parse: rates, stride and voices', () => {
     expect(one('&key step=cycle(&theme) stride=7').stride).toBe(7);
   });
 
-  it("reads dough parameters on voices; Strudel's and dough's other names are errors that name ours", () => {
+  it("reads dough parameters on voices; Strudel's and dough's other names read as ours", () => {
     const c = one('&lead s=saw step=261.63 lpf=1800 lpq=2 room=.4');
     expect(c.params).toEqual({ s: 'saw', lpf: 1800, lpq: 2, room: 0.4 });
-    const r = parse('&lead s=saw reverb=.4');
-    expect(r.cells).toEqual([]);
-    expect(r.diagnostics).toEqual([
-      { severity: 'error', message: "reverb= is Strudel's or dough's name for room=, and isn't read here: write room=", span: { line: 1, col: 13, len: 6 } },
-    ]);
-    // every one of them, inside an unnamed cell too
-    for (const [alias, ours] of Object.entries(DOUGH_ALIASES))
-      expect(parse(`&a [&t * &(s=saw ${alias}=300)]`).diagnostics.map((d) => [d.severity, d.message])).toEqual([
-        ['error', `${alias}= is Strudel's or dough's name for ${ours}=, and isn't read here: write ${ours}=`],
-      ]);
+    // an alias reads as ours, in every form a parameter takes (decision 027, #337)
+    const a = one('&lead sound=saw step=261.63 cutoff=1800 resonance=2 verb=.4 delayt=&bar*2 dfb=.3 hp=free(200, 20..2000)');
+    expect(a.params).toEqual({ s: 'saw', lpf: 1800, lpq: 2, room: 0.4, delayfeedback: 0.3, hpf: 200 });
+    expect(Object.keys(a.paramClocks ?? {})).toEqual(['delaytime']);
+    expect((a.frees ?? []).map((f) => (f as { param?: string }).param)).toEqual(['hpf']);
+    // (its span is the value's, as ours)
+    expect(a.paramSpans.lpf).toEqual({ line: 1, col: 36, len: 4 });
+    expect(one('&a ctf=200..3000 * &env').paramCells?.lpf?.range).toEqual([200, 3000]);
+    for (const [alias, ours] of Object.entries(PARAM_ALIASES)) {
+      const value = ours === 's' ? 'saw' : '300';
+      const r = parse(`&a [&t * &(s=saw ${alias}=${value})]`.replace('s=saw sound=saw', 'sound=saw'));
+      expect(r.diagnostics, alias).toEqual([]);
+      expect(r.cells.find((d) => d.name !== 'a')?.params[ours], alias).toBe(ours === 's' ? 'saw' : 300);
+      // an alias and its name on one line: one parameter, given twice
+      expect(parse(`&b ${ours}=${value} ${alias}=${value}`).diagnostics.map((d) => d.message)).toEqual([`${alias}= and ${ours}= are one parameter, ${ours}= — given twice`]);
+    }
+    expect(parse('&a cutoff=300 lp=400').diagnostics[0].message).toBe('lp= and cutoff= are one parameter, lpf= — given twice');
+    // not an alias where the meaning or the scale differs: size= is how large a cell is drawn, dist= is unknown
+    expect(one('&a s=saw size=2').params).toEqual({ s: 'saw' });
+    expect(parse('&a s=saw dist=.3').diagnostics[0].message).toMatch(/Unknown attribute dist=/);
     // envelopes are cells now
     for (const k of ['attack', 'decay', 'sustain', 'release'])
       expect(parse(`&lead s=saw ${k}=.3`).diagnostics[0].message).toMatch(new RegExp(`${k}= is gone: an envelope is a cell.*map=adsr`));

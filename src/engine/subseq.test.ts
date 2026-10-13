@@ -171,13 +171,13 @@ describe('[a, b] a chord, [a b, c] a stack', () => {
     ]);
   });
 
-  it('a choice stays numbers between bars; a choice of sequences says so', () => {
+  it('a choice of numbers stays one; a choice of sequences is read (strudel.test.ts)', () => {
     expect(steps('[0|4|7]')).toEqual([[0, 1, 0]]);
     expect(steps('[0 [2|4]]').map((e) => e.slice(0, 2))).toEqual([
       [0, 0.5],
       [0.5, 0.5],
     ]);
-    expect(err('&t [0 2|4]')).toMatch(/A choice is numbers between bars/);
+    expect(err('&t [0 2|4]')).toBe('');
     expect(err('&t [0, 2|4]')).toMatch(/not both/);
   });
 

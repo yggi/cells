@@ -1,4 +1,4 @@
-/** Phase 3: who plays what — kits, the sound card's channels, MIDI cards' channels, mixes expanded (instruments, selectors, sends), voices marked. */
+/** Phase 3: who plays what — kits, the sound card's channels, MIDI cards' channels, mixes expanded (instruments, sends), voices marked. */
 import type { Binding, CellDecl, Span } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
 import { ATTRIBUTES, VOICE_PARAMS } from '../attributes';
@@ -23,16 +23,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     if (c && !c.mix && !isMidiCard(c) && c.units.some((u) => u.atom.kind === 'mix'))
       error(c.sink ? `A sound card's channels are all mixes: [left …] [right …], or &left &right` : `A mix is one chord of sounds: &${name} [&a * &v, &b * &w]`, d.span);
   }
-  /** A selector: a cell reading a table whose entries are mixes (parts): its numbers pick which play. */
-  const partsOf = (c: ResolvedCell | undefined): string[] | null => {
-    const t = c?.over ? cells.get(c.over) : undefined;
-    if (!t || !t.units.length) return null;
-    const names = t.units.map((u) => (u.atom.kind === 'ref' ? u.atom.name : null));
-    return names.every((n) => n !== null && cells.get(n)?.mix && !cells.get(n)?.sink) ? (names as string[]) : null;
-  };
-  type Sel = { cell: string; entry: number; part: string };
   type Gathered = {
-    select: Sel[];
     b: Binding;
     span: Span;
     gains: [number, number];
@@ -48,38 +39,19 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
    * A mix used like a voice (an instrument: `[&(map=adsr …) * &saw]`) distributes:
    * the pitches, volumes and gain acting on it act on each of its voices.
    */
-  const expand = (b: Binding, through: readonly string[] = [], select: readonly Sel[] = []): { b: Binding; through: readonly string[]; select: readonly Sel[] }[] => {
+  const expand = (b: Binding, through: readonly string[] = []): { b: Binding; through: readonly string[] }[] => {
     const v = cells.get(b.voice.name);
-    // a selector: each of its parts, as if in the mix — sounding when picked
-    const parts = partsOf(v);
-    if (v && parts) {
-      if (select.some((x) => x.cell === v.name) || select.length > 8) {
-        error(`&${v.name} selects itself`, v.span);
-        return [];
-      }
-      return parts.flatMap((part, entry) =>
-        cells
-          .get(part)!
-          .mix!.flatMap((inner) =>
-            expand({ voice: inner.voice, pitches: [...b.pitches, ...inner.pitches], offset: b.offset + inner.offset, gain: b.gain * inner.gain }, through, [
-              ...select,
-              { cell: v.name, entry, part },
-            ]),
-          ),
-      );
-    }
-    if (!v?.mix || v.sink) return [{ b, through, select }];
+    if (!v?.mix || v.sink) return [{ b, through }];
     if (through.includes(v.name) || through.length > 16) {
       error(`&${v.name} plays itself through its mixes`, v.span);
       return [];
     }
     return v.mix.flatMap((inner) =>
-      expand({ voice: inner.voice, pitches: [...b.pitches, ...inner.pitches], offset: b.offset + inner.offset, gain: b.gain * inner.gain }, [...through, v.name], select),
+      expand({ voice: inner.voice, pitches: [...b.pitches, ...inner.pitches], offset: b.offset + inner.offset, gain: b.gain * inner.gain }, [...through, v.name]),
     );
   };
   const gathered = new Map<string, Gathered>();
-  const termKey = (b: Binding, select: readonly Sel[] = []) =>
-    [b.voice.name, b.offset, ...b.pitches.map((t) => `${t.sign}${t.ref.name}${JSON.stringify(t.ref.pick)}${t.ref.shift}`), ...select.map((x) => `@${x.cell}:${x.entry}`)].join('|');
+  const termKey = (b: Binding) => [b.voice.name, b.offset, ...b.pitches.map((t) => `${t.sign}${t.ref.name}${JSON.stringify(t.ref.pick)}${t.ref.shift}`)].join('|');
   for (const sink of sinks) {
     const d = decls.get(sink.name)!;
     const channels = sink.units;
@@ -91,24 +63,19 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       // a channel is a mix cell (&left), or a mix written in place on the sound card itself
       const inPlace = u.atom.kind === 'mix' ? typed(u.atom) : null;
       const mix = u.atom.kind === 'ref' ? cells.get(u.atom.name) : inPlace ? sink : undefined;
-      // (a selector as a channel: its parts, as they're picked)
-      const bindings =
-        inPlace ??
-        (u.atom.kind === 'ref' && mix?.mix && !mix.sink
-          ? mix.mix
-          : u.atom.kind === 'ref' && partsOf(mix)
-            ? [{ voice: { name: u.atom.name, pick: null, shift: 0, span: mix!.span }, pitches: [], offset: 0, gain: 1 }]
-            : null);
+      const bindings = inPlace ?? (u.atom.kind === 'ref' && mix?.mix && !mix.sink ? mix.mix : null);
       if (!mix || !bindings) {
+        // (a cell whose line failed: its own error says why)
+        if (u.atom.kind === 'ref' && ctx.broken.has(u.atom.name)) return;
         error(`A channel of the sound card is a mix: &mix, or [&theme * &lead] written in place`, d.span);
         return;
       }
-      for (const { b, through, select, top } of bindings.flatMap((x) => expand(x).map((e) => ({ ...e, top: x })))) {
-        const key = termKey(b, select);
+      for (const { b, through, top } of bindings.flatMap((x) => expand(x).map((e) => ({ ...e, top: x })))) {
+        const key = termKey(b);
         let g = gathered.get(key);
         // (the built-in card is in no line: what is said about a sound it hears is said on the sound's own line)
         const span = sink.implicit ? top.voice.span : mix.span;
-        if (!g) gathered.set(key, (g = { b, span, gains: [0, 0], via: new Set(), parts: [], through: new Set(), select: [...select] }));
+        if (!g) gathered.set(key, (g = { b, span, gains: [0, 0], via: new Set(), parts: [], through: new Set() }));
         for (const t of through) g.through.add(t);
         // mono: one channel feeds both sides
         const part: [number, number] = channels.length === 1 ? [b.gain, b.gain] : ch === 0 ? [b.gain, 0] : [0, b.gain];
@@ -116,8 +83,6 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         g.gains[1] += part[1];
         g.parts.push({ mix: mix.name, sink: sink.name, gains: part });
         g.via.add(mix.name).add(sink.name);
-        // (picked by a selector: the selector, its table of parts and the part are on its way too)
-        for (const x of select) g.via.add(x.cell).add(cells.get(x.cell)!.over!).add(x.part);
       }
     });
   }
@@ -139,12 +104,12 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       }
     for (const name of sends) {
       const mix = cells.get(name)!;
-      for (const { b, through, select } of mix.mix!.flatMap((x) => expand(x))) {
+      for (const { b, through } of mix.mix!.flatMap((x) => expand(x))) {
         // (a tape head in it drives what it feeds directly — it isn't a note to play)
         if (typeof cells.get(b.voice.name)?.params.play === 'string') continue;
-        const key = 'send:' + termKey(b, select);
-        if (gathered.has(key) || [...gathered.values()].some((g) => termKey(g.b, g.select) === termKey(b, select))) continue;
-        gathered.set(key, { b, span: mix.span, gains: [b.gain, b.gain], via: new Set([name]), parts: [], through: new Set(through), select: [...select], silent: true });
+        const key = 'send:' + termKey(b);
+        if (gathered.has(key) || [...gathered.values()].some((g) => termKey(g.b) === termKey(b))) continue;
+        gathered.set(key, { b, span: mix.span, gains: [b.gain, b.gain], via: new Set([name]), parts: [], through: new Set(through), silent: true });
       }
     }
   }
@@ -182,9 +147,14 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         if (!c) return;
         const alone = { voice: { name, pick: u.atom.pick, shift: u.atom.shift, span }, pitches: [], offset: 0, gain: 1 };
         if (c.mix && !c.sink) entry = { bindings: c.mix, mix: name };
-        else if (partsOf(c) || throughKit(name) || c.voice || c.kit) entry = { bindings: [alone], mix: null };
+        else if (throughKit(name) || c.voice || c.kit) entry = { bindings: [alone], mix: null };
         else {
-          error(`&${name} is a melody without a voice: a MIDI channel plays notes on a voice, [&${name} * &voice]`, span);
+          error(
+            isMidiCard(c)
+              ? `&${name} is a MIDI card: a card's entries are what it sends (a mix, a mix cell, a pattern read through a kit), not another card — name &${name}'s entries here`
+              : `&${name} is a melody without a voice: a MIDI channel plays notes on a voice, [&${name} * &voice]`,
+            span,
+          );
           return;
         }
       } else {
@@ -194,15 +164,14 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       const { bindings: named, mix } = entry;
       for (let k = 0; k < u.repeat; k++) {
         const channel = map.channel ?? first + k + 1;
-        for (const { b, through, select } of named.flatMap((x) => expand(x))) {
-          const key = termKey(b, select);
-          let g = gathered.get(key) ?? [...gathered.values()].find((x) => termKey(x.b, x.select) === key);
-          if (!g) gathered.set(key, (g = { b, span: card.span, gains: [0, 0], via: new Set(), parts: [], through: new Set(), select: [...select] }));
+        for (const { b, through } of named.flatMap((x) => expand(x))) {
+          const key = termKey(b);
+          let g = gathered.get(key) ?? [...gathered.values()].find((x) => termKey(x.b) === key);
+          if (!g) gathered.set(key, (g = { b, span: card.span, gains: [0, 0], via: new Set(), parts: [], through: new Set() }));
           for (const t of through) g.through.add(t);
           (g.midi ??= []).push({ card: card.name, mix, channel, port: map.port, gain: b.gain });
           g.via.add(card.name);
           if (mix) g.via.add(mix);
-          for (const x of select) g.via.add(x.cell).add(cells.get(x.cell)!.over!).add(x.part);
         }
       }
     });

@@ -752,7 +752,7 @@ function chordWidth(result: CompileResult): (name: string) => number {
   return (name) => of(name);
 }
 
-/** A table's entries: its cycle, or (a kit, a table of parts) the entries written. */
+/** A table's entries: its cycle, or (a kit, a table of taps) the entries written. */
 const entries = (result: CompileResult, name: string) => {
   const c = result.cells.get(name);
   return Math.max(1, c?.cycle || c?.units.length || 1);

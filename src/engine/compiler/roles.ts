@@ -76,6 +76,25 @@ export function checkRoles(ctx: Ctx, { decls, implicit, taps }: Declared, cells:
       else if (k === 'restart' && d.params.restart !== 'restart') warn(`restart=${d.params.restart} is not yet implemented: plays as restart`, span);
       else if (a?.value === 'number' && !c.voice && typeof d.params[k] === 'string') warn(`${k}= takes a number: '${d.params[k]}' does nothing`, span);
     }
+    // a gate is its notes (play=), its level and what it plays: its timing and tables are its notes', so these are ignored
+    if (d.gate) {
+      const timing = d.step ? (d.step.whole ? 'loop' : 'step') : null;
+      for (const [k, span] of [
+        ['over', d.over?.span],
+        [timing, d.step?.span],
+        ['shift', d.shift !== null ? d.paramSpans.shift : undefined],
+        ['stride', d.stride !== null ? d.paramSpans.stride : undefined],
+        ['map', d.map?.span],
+        ['cycle', d.cycle !== null ? d.span : undefined],
+      ] as const)
+        if (k && span)
+          warn(`${k}= on a gate does nothing: a gate plays with each note of play=&${d.gate.notes}, so it times and reads nothing itself — put it on &${d.gate.notes}`, span);
+      if (d.gate.gain < 0)
+        warn(
+          `${d.gate.port === 'trigger' ? 'gain' : 'level'}=${d.gate.gain}: a level is 0 or more, and a negative one doesn't play softer — write ${-d.gate.gain}`,
+          d.paramSpans[d.gate.port === 'trigger' ? 'gain' : 'level'] ?? d.span,
+        );
+    }
     // swing pairs the steps of a list; a scan places its own
     if (typeof d.params.swing === 'number' && has.has('clock') && clocks.get(d.name)?.positional)
       warn(`swing= swings a meter written as a list or meter(…); a scan(…) places its steps itself — write the swing into it`, d.paramSpans.swing ?? d.span);

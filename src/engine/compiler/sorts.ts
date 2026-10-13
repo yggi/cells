@@ -1,6 +1,6 @@
 /** The mix algebra's view of the cells (algebra.ts): what each cell is, from its own line; a mix's expressions typed. */
 import { leaves } from '../subseq';
-import type { Atom, Binding, CellDecl, Expr } from '../ast';
+import type { Atom, Binding, CellDecl, Expr, Ref } from '../ast';
 import { VOICE_PARAMS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
 import { syntax, type Syntax } from '../parser/syntax';
@@ -28,7 +28,7 @@ const turns = (d: CellDecl, { rateOf }: Seen): number | null => {
   if (!d.step || d.step.kind === 'driven') return null;
   const r = rateOf(d.step);
   const b = d.braid;
-  const k = b.kind === 'list' ? b.tokens.length : b.kind === 'scan' ? b.steps.length : b.kind === 'sin' ? b.n : 1;
+  const k = b.kind === 'list' ? b.tokens.length : b.kind === 'scan' ? b.steps.length : b.kind === 'wave' ? b.n : 1;
   return r === null ? null : d.step.whole ? r : r / Math.max(1, k);
 };
 const over = (d: CellDecl, { decls }: Seen) => (d.over ? decls.get(d.over.name) : undefined);
@@ -101,7 +101,8 @@ export const SORT_RULES: readonly SortRule[] = [
 export const SORT_SYNTAX: readonly Syntax[] = SORT_RULES.map((r) => syntax('sort', r.sort, r.is, [r.example[r.example.length - 1]], 'mix.md'));
 
 /** The cells an expression names. */
-const refsOf = (e: Expr): string[] => (e.k === 'ref' ? [e.ref.name] : e.k === 'sum' ? e.items.flatMap((x) => refsOf(x.e)) : e.k === 'prod' ? e.factors.flatMap(refsOf) : []);
+const refsIn = (e: Expr): Ref[] => (e.k === 'ref' ? [e.ref] : e.k === 'sum' ? e.items.flatMap((x) => refsIn(x.e)) : e.k === 'prod' ? e.factors.flatMap(refsIn) : []);
+const refsOf = (e: Expr): string[] => refsIn(e).map((r) => r.name);
 
 /** sortOf(name): what the cell is in a mix (SORT_RULES). */
 export function sortOfCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): (name: string) => Sort {
@@ -129,6 +130,7 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
       if (steps.some(voiceRef) && steps.some(odd))
         return `&${name} mixes voices with numbers or picks: a groove holds only voices, rests and chords of voices (&bd &hh ~ [&bd, &hh]); to play numbers through voices, read them with over= a kit`;
     }
+    if (d.map?.kind === 'midi') return `&${name} is a MIDI card: it sends what it names to a device, and is no sound to mix or play`;
     if (isKitDecl(d, seen)) return `&${name} is a kit, a table of voices: read a pattern through it (&drums over=&${name}) and mix that`;
     const r = turns(d, seen);
     if (r !== null && r < 20) return `&${name} loops at ${+r.toFixed(2)} Hz, below hearing: a pitch. A voice loops at an audio rate (loop=C4) or has a sound (s=saw)`;
@@ -142,8 +144,32 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     out = [];
     // (a gate's kit receiver is its voice: the trigger's numbers pick the member, as a pattern read through it does)
     const sort = atom.gate ? (n: string) => (isKitDecl(decls.get(n), seen) ? 'signal' : sortOf(n)) : sortOf;
+    // (a gate's notes and levels that are sounds: said by the port they were written on, not as the product it reads as)
+    const spec = atom.gate ? decls.get(atom.gate)?.gate : undefined;
+    const ref = (name: string) => atom.exprs.flatMap(refsIn).find((r) => r.name === name);
+    // (a voice, a mix or a gate: a pattern read through a kit is a sound too, and the notes a gate plays may be one)
+    const sound = (n: string) => {
+      const d = decls.get(n);
+      return !!d && (!!d.gate || isMixDecl(d) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
+    };
+    const sounding = spec && [{ name: spec.notes, port: spec.port }, ...spec.levels].find((x) => sound(x.name));
+    if (spec && sounding) {
+      const wants = sounding.name === spec.notes ? 'the notes it plays (a melody, &tune)' : 'a level (a volume: a cell with map=amp, map=db or map=lin)';
+      error(
+        `${sounding.port}=&${sounding.name}: a gate's ${sounding.port}= takes ${wants}, and &${sounding.name} is a sound (${decls.get(sounding.name)?.gate ? 'a gate' : isMixDecl(decls.get(sounding.name)) ? 'a mix' : 'a voice'})`,
+        ref(sounding.name)?.span ?? decls.get(atom.gate!)!.span,
+      );
+      typedMixes.set(atom, out);
+      return out;
+    }
     for (const e of atom.exprs)
       try {
+        // (a name no line declares: that is what's wrong with the product, not its voice)
+        const unknown = refsIn(e).filter((r) => !decls.has(r.name));
+        if (unknown.length) {
+          for (const r of unknown) ctx.unknownCell(r.name, r.span);
+          continue;
+        }
         const bs = distribute(e, sort, noVoice);
         const kit = bs.flatMap((b) => b.pitches).find((t) => isKitDecl(decls.get(t.ref.name), seen));
         if (kit) error(`&${kit.ref.name} is a kit, a table of voices: a pattern read through it is the sound — mix the pattern alone`, kit.ref.span);

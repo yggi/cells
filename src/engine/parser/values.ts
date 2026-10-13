@@ -58,7 +58,7 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   if (s.peek() === '{') s.fail('{&x} is now written cycle(&x)');
   const cycle = s.match(/cycle\(/y) !== null;
   const what = whole ? 'loop' : 'step';
-  const driver = s.ref(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`);
+  const driver = s.cellRef(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`, `in ${what}=`);
   if (driver.pick || driver.shift) s.fail(`${what}= takes a whole cell`, driver.span.col - 1, driver.span.len);
   if (cycle) s.expect(')', `')' to close cycle(&${driver.name})`);
   // a chain of *n and /n, read left to right: *2 twice per step, /2 once per two steps, *3/2 three per two
@@ -133,7 +133,7 @@ const MAP_WORD = new RegExp(
 export function parseMap(s: LineScanner): MapSpec {
   const start = s.i;
   if (s.peek() === '&') {
-    const table = s.ref('a table cell, like map=&curve');
+    const table = s.cellRef('a table cell, like map=&curve', 'after map=');
     if (table.pick || table.shift) s.fail('map= takes a whole table', table.span.col - 1, table.span.len);
     return { kind: 'table', table, span: s.span(start) };
   }

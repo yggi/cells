@@ -80,6 +80,11 @@ export function setAttr(source: string, name: string, key: string, value: string
   });
 }
 
+/** Respell a `key=` on &name as `to=`, its value and place kept (an alias as ours: cutoff=800 → lpf=800). */
+export function renameAttr(source: string, name: string, from: string, to: string): string {
+  return editDecl(source, name, (code) => code.replace(new RegExp(`(\\s)${from}=`), `$1${to}=`));
+}
+
 /** Add or remove a bare flag (`off`) on &name. */
 function setFlag(source: string, name: string, flag: string, on: boolean): string {
   return editDecl(source, name, (code, head) => {
@@ -97,11 +102,17 @@ const FIFTHS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'Ab', 'Eb', 'Bb', 'F']
  * is turned there: by name if it was written by name, `fifths()` at 0.
  */
 export function setShift(source: string, name: string, shift: number): string {
+  // (a tap is one step, stepped as its table is: a turn changes nothing, so none is written; one already written can go)
+  const lines = source.split('\n');
+  const own = declLine(source, name);
+  if (tapLine(lines, name) >= 0 && (own < 0 || (splitWords(splitComment(lines[own])[0]).slice(1).every(isAttrWord) && !/\sshift=/.test(lines[own])))) return source;
   let circle = false;
   const turned = editDecl(source, name, (code) => {
     const m = /\bfifths\(([^)]*)\)/.exec(code);
     if (!m || /\sshift=/.test(code)) return code;
     circle = true;
+    // (an argument with parentheses of its own, fifths(free(G)): not a turn written here, so not one to rewrite)
+    if (m[1].includes('(')) return code;
     const byName = /^\s*[A-G]/.test(m[1]);
     const arg = shift === 0 && !byName ? '' : byName ? FIFTHS[((shift % 12) + 12) % 12] : String(shift);
     return code.replace(m[0], `fifths(${arg})`);
@@ -114,10 +125,12 @@ export const setOff = (source: string, name: string, off: boolean) => setFlag(so
 
 // ------------------------------------------------------------------ whole-line edits
 
-/** Split code into words at whitespace outside brackets, parentheses and quotes (`[0, 4, 7]`, `label="a b"` stay one word). */
+/** Split code into words at whitespace outside brackets, parentheses, alternations and quotes (`[0, 4, 7]`, `<0 2>`, `label="a b"` stay one word). */
 export function splitWords(code: string): string[] {
   const out: string[] = [];
   let depth = 0;
+  // (<…>: counted only outside brackets, where &x[<<] has its own)
+  let angle = 0;
   let quoted = false;
   let cur = '';
   for (const ch of code) {
@@ -125,7 +138,9 @@ export function splitWords(code: string): string[] {
     if (ch === '"') quoted = !quoted;
     if (!quoted && (ch === '[' || ch === '(')) depth++;
     if (!quoted && (ch === ']' || ch === ')')) depth = Math.max(0, depth - 1);
-    if (/\s/.test(ch) && depth === 0 && !quoted) {
+    if (!quoted && depth === 0 && ch === '<') angle++;
+    if (!quoted && depth === 0 && ch === '>') angle = Math.max(0, angle - 1);
+    if (/\s/.test(ch) && depth === 0 && angle === 0 && !quoted) {
       if (cur) out.push(cur);
       cur = '';
     } else cur += ch;

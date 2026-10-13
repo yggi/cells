@@ -71,7 +71,7 @@ Pieces will look and sound different when this is done. Before any of that, each
 |---|---|
 | `&groove step=&bar/2 &bd &hh &bd &hh` (a braid of voices, stepped) | an error: "&groove is a kit … read a pattern through it" |
 | `swing=.67` on `scan(1 1 1 1)` | a warning, no swing; on a list meter or `meter()` it swings |
-| `&up^1` over a scale | a semitone (`^` is chromatic, after the tables), not a degree |
+| `&up^1` over a scale | a semitone (`^` is chromatic, after the tables), not a degree *(reversed since by [decision 015](../decisions/015-caret-is-degrees.md): `&up^1` is a degree, `&up^$1` the semitone)* |
 | `&m+1` in a braid | an error that lists the other three spellings |
 | `pan=` | an error since the seed: "pan= is gone: balance with two mixes" |
 | `&b &a` (a copy of a voice) | a kit of one, not a second instrument |

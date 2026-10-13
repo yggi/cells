@@ -125,7 +125,7 @@ export function levelsOf(spans: readonly { readonly name: string; readonly step:
     for (const pulse of pulses) {
       const n = Math.round(c.turn / pulse);
       if (n < 3 || n > most || Math.abs(n * pulse - c.turn) > 0.02 * pulse) continue;
-      if (!out.some((l) => Math.abs(l.cycle - c.turn) < 1e-6 && Math.abs(l.pulse - pulse) < 1e-6)) out.push({ name: `&${c.name}/${n}`, cycle: c.turn, pulse });
+      if (!out.some((l) => Math.abs(l.cycle - c.turn) < 1e-6 && Math.abs(l.pulse - pulse) < 1e-6)) out.push({ name: `&${c.name} in ${n}`, cycle: c.turn, pulse });
     }
   }
   return out;

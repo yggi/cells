@@ -1,6 +1,7 @@
 /** Phase 6: the outputs — one per voice binding, articulated (the finest step= term starts notes; the others and loop= terms bend or hold). */
-import { type CellDecl, type Span } from '../ast';
-import { adsrOf, balance, pickProblem, pickSteps, type Clock, type Output, type Resonance, type ResolvedCell, type TapeReturn } from '../program';
+import { pickLabel, type Atom, type CellDecl, type Pick, type Span } from '../ast';
+import { leaves } from '../subseq';
+import { adsrOf, balance, pickedUnits, pickProblem, pickSteps, type Clock, type Output, type Resonance, type ResolvedCell, type TapeReturn } from '../program';
 import { IMPLICIT } from './tables';
 import { VOICE_PARAMS } from '../attributes';
 import type { Bound } from './bindings';
@@ -23,7 +24,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     const [a, b] = [stepsPerSecond(by[0].c), stepsPerSecond(by[1].c)];
     return a - b > 1e-9 * Math.max(a, b) ? by[0] : null;
   };
-  for (const { b, span, gains, via, parts, through, select, silent, midi } of bindings) {
+  for (const { b, span, gains, via, parts, through, silent, midi } of bindings) {
     const known = (r: { name: string; span: Span }) => {
       if (decls.has(r.name)) return true;
       unknownCell(r.name, r.span);
@@ -157,7 +158,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       offset: b.offset,
       gains: [gains[0] * pl, gains[1] * pr] as const,
       parts: parts.map((x) => ({ ...x, gains: [x.gains[0] * pl, x.gains[1] * pr] as [number, number] })),
-      select,
+      select: [],
       ...(silent ? { silent: true } : {}),
       ...(midi?.length ? { midi } : {}),
       through: [...through],
@@ -169,7 +170,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     // a voice alone (no pitch in its product but its own pitch=, nothing that starts notes): its own pitch, held as long
     // as the piece plays — the pitch identity, as a missing volume is 1 (decision 028)
     const ownTerms = new Set<unknown>(own);
-    if (lead.length === 0 && !voice.kit && !select.length && pitches.every((x) => ownTerms.has(x.t))) {
+    if (lead.length === 0 && !voice.kit && pitches.every((x) => ownTerms.has(x.t))) {
       outputs.push({
         id: `${voice.name}:${voice.name}:${b.voice.span.line}:${b.voice.span.col}`,
         ...common,
@@ -214,8 +215,11 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       error(`&${cell.name} has no steps to play`, t.ref.span);
       continue;
     }
+    // (a melody of rests only, its splices and picks followed: &e ~, then &mel &e[0]; not a braid left free for a take)
+    if (!tapeOf.has(t) && onlyRests(cells, cell, t.ref.pick))
+      warn(`&${cell.name}${t.ref.pick ? pickLabel(t.ref.pick) : ''} plays only rests (~): nothing sounds on &${voice.name}`, t.ref.span);
     outputs.push({
-      id: `${voice.name}:${cell.name}:${t.ref.span.line}:${t.ref.span.col}${select.map((x) => `@${x.cell}:${x.entry}`).join('')}`,
+      id: `${voice.name}:${cell.name}:${t.ref.span.line}:${t.ref.span.col}`,
       ...common,
       cell: cell.name,
       pick: t.ref.pick,
@@ -244,4 +248,18 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
   if (sinks.length === 0 && cards.length === 0 && parsed.cells.length > 0 && !parsed.broken?.length)
     warn('Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])', IMPLICIT);
   return { outputs, returns, resonances };
+}
+
+/** Whether a cell, as a pick takes it, holds rests and nothing else, its splices followed (a free braid waits for a take: no). */
+function onlyRests(cells: Cells, c: ResolvedCell, pick: Pick | null, seen: readonly string[] = []): boolean {
+  if (seen.includes(c.name) || c.frees.some((f) => f.key === 'braid')) return false;
+  const idx = pickedUnits(c.units.length, pick, c.shift);
+  if (!idx?.length) return false;
+  const rest = (a: Atom): boolean => {
+    if (a.kind === 'rest') return true;
+    if (a.kind === 'seq') return leaves(a).every(rest);
+    const child = a.kind === 'ref' ? cells.get(a.name) : undefined;
+    return !!child && a.kind === 'ref' && onlyRests(cells, child, a.pick, [...seen, c.name]);
+  };
+  return idx.every((i) => rest(c.units[i].atom));
 }

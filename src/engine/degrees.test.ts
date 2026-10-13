@@ -10,7 +10,7 @@ import { eventsBetween, plan } from './realize';
 function plays(source: string): number[] {
   const r = compileSource(source);
   expect(r.diagnostics.filter((d) => d.severity === 'error').map((d) => d.message)).toEqual([]);
-  return eventsBetween(plan(r, codeShifts(r), r.off), 0, 60).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)));
+  return eventsBetween(plan(r, codeShifts(r), r.off), 0, 60).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + 0); // (+ 0: no −0)
 }
 const piece = (line: string) => `&bar scan(1!12) step=600bpm laps=1\n&v s=tri loop=C4\n${line}\n&out map=sample [&m * &v]`;
 const errors = (line: string) =>
@@ -34,9 +34,24 @@ describe('degrees, as Strudel spells them', () => {
     expect(plays(piece('&key scale("E:minor")\n&m over=&key step=&bar 0 2 4 6#')).slice(0, 4)).toEqual([4, 7, 11, 15]);
   });
 
+  it('reads every scale tonal knows, as Strudel does (#337): its words after colons, ours kept', () => {
+    const tune = (scale: string) => plays(piece(`&m over=${scale} step=&bar 0 1 2 3 4 5 6 7 8 9 10 11`));
+    expect(tune('scale("D:minor:pentatonic")')).toEqual(tune('scale(minorpentatonic, D)'));
+    expect(tune('scale("D:minorpentatonic")')).toEqual(tune('scale(minorpentatonic, D)'));
+    expect(tune('scale("C:whole:tone")')).toEqual(tune('scale(wholetone, C)'));
+    expect(tune('scale("C:chromatic")')).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    expect(tune('scale("C:diminished")').slice(0, 9)).toEqual([0, 2, 3, 5, 6, 8, 9, 11, 12]);
+    expect(tune('scale("A:bebop:major")').slice(0, 9)).toEqual([9, 11, 13, 14, 16, 17, 18, 20, 21]);
+    // (words with a dash, a sharp or an apostrophe, as tonal spells them)
+    expect(tune('scale("C:in-sen")').slice(0, 5)).toEqual([0, 1, 5, 7, 10]);
+    expect(tune('scale("C:lydian:#9")').slice(0, 7)).toEqual([0, 3, 4, 6, 7, 9, 11]);
+    expect(tune('scale("C:messiaen\'s:mode:#2")').slice(0, 8)).toEqual(tune('scale("C:half-whole:diminished")').slice(0, 8));
+  });
+
   it('says what it can’t read', () => {
     expect(errors('&m over=scale("C4:minor") 0')).toMatch(/the octave is the voice's/);
     expect(errors('&m over=scale("C:nothing") 0')).toMatch(/a scale by name/);
+    expect(errors('&m over=scale("C:constructor") 0')).toMatch(/a scale by name/);
     expect(errors('&m over=scale("minor") 0')).toMatch(/a tonic and a scale's name/);
   });
 

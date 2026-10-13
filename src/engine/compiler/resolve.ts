@@ -1,6 +1,6 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
-import { type Span, type Token } from '../ast';
-import { innerSteps, leaves } from '../subseq';
+import { type Atom, type Span, type Token } from '../ast';
+import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { scan as scanOf } from '../../theory/modes';
@@ -69,8 +69,10 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
       let unit = 1;
       const span = toks[i]?.span ?? d.span;
       if (u.atom.kind === 'ref') unit = splice(u.atom, span, u.repeat * u.subdivide);
-      // (a splice inside a subsequence takes its slot, whatever its length: the step stays one)
-      for (const t of innerSteps<Token>(u.atom)) if (t.atom.kind === 'ref') splice(t.atom, t.span ?? span, t.repeat * t.subdivide);
+      // (a splice inside a subsequence takes its slot, whatever its length: the step stays one; written bare, &x/2, its own steps)
+      const inner = new Map<Atom, number>();
+      for (const t of innerSteps<Token>(u.atom)) if (t.atom.kind === 'ref') inner.set(t.atom, splice(t.atom, t.span ?? span, t.repeat * t.subdivide));
+      if (u.atom.kind === 'seq') unit = footOf(u.atom, (x) => inner.get(x) || 1);
       unitSteps.push(unit * u.elongate * u.repeat);
     });
     const steps = unitSteps.reduce((a, b) => a + b, 0);
@@ -90,6 +92,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
       lambda: d.lambda ?? null,
       frees: d.frees ?? [],
       show: d.show ?? null,
+      ...(d.paramSpans?.show ? { showSpan: d.paramSpans.show } : {}),
       laps: d.laps ?? null,
       loops: !!d.step?.whole,
       chance: d.chance ?? 0.5,

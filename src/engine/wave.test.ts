@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { harmonics, waveform } from './wave';
+import { parse } from './parser';
+import { waveValues } from './parser/generators';
 
 const wave = (src: string, name = 'v') => {
   const r = compileSource(src + `\n&m step=1\n&t step=&m 0\nout(&${name}, &t)`);
@@ -34,6 +36,24 @@ describe('waveforms from braids', () => {
     const m = mags(wave('&v loop=440 sin(12)'));
     expect(m[0]).toBeGreaterThan(0.95);
     for (let k = 1; k < 6; k++) expect(m[k]).toBeLessThan(0.02);
+  });
+
+  it("saw(n), tri(n), square(n) beside sin(n): one cycle in n steps, −1…1, as Strudel's bipolar signals at each step", () => {
+    expect(waveValues('sin', 4)).toEqual([0, 1, 0, -1]);
+    expect(waveValues('saw', 4)).toEqual([-1, -0.5, 0, 0.5]);
+    expect(waveValues('tri', 4)).toEqual([-1, 0, 1, 0]);
+    expect(waveValues('square', 4)).toEqual([-1, -1, 1, 1]);
+    expect(waveValues('square', 3)).toEqual([-1, -1, 1]);
+    // (sin(n) as it was: the sine at each step, to six places)
+    expect(waveValues('sin', 12)).toEqual(Array.from({ length: 12 }, (_, i) => +Math.sin((2 * Math.PI * i) / 12).toFixed(6)));
+    // as voices: square(2) is the braid 0 1; saw(12) the default braid's 12-step saw
+    expect(Array.from(wave('&v loop=440 square(2)'))).toEqual(Array.from(wave('&v loop=440 0 1')));
+    expect(Array.from(wave('&v loop=440 saw(12)'))).toEqual(Array.from(wave('&v loop=440')).map((x) => expect.closeTo(x, 5)));
+    // a triangle's harmonics are odd, falling like 1/k²
+    const m = mags(wave('&v loop=440 map=lin tri(2)'));
+    expect(m[1]).toBeLessThan(1e-6);
+    expect(m[2] / m[0]).toBeCloseTo(1 / 9, 2);
+    expect(parse('&v saw(1)').diagnostics[0]?.message).toBe('saw(n): one cycle of a saw in n steps, n ≥ 2');
   });
 
   it('rests are silence; chords average; map=&table looks values up first', () => {

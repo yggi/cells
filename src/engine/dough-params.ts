@@ -4,22 +4,10 @@ import { PARAMS } from './attributes';
  * The parameters voices and physical cells understand, with what each means (from the table in
  * attributes.ts). Written as attributes: `&lead s=saw lpf=1800 room=.3` (its envelope is a cell:
  * map=adsr). The sound parameters keep dough's names (https://dough.strudel.cc, as in dough.c /
- * Strudel); the physical cells' are ours.
+ * Strudel), and Strudel's and dough's other names for them read as ours (PARAM_ALIASES in attributes.ts); the
+ * physical cells' are ours.
  */
 export const DOUGH_PARAMS: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(PARAMS).map(([k, a]) => [k, a.help]));
-
-/** Strudel's and dough's other names for the same parameters (`cutoff` is Strudel's, `verb` dough's own): not read here (#143); writing one is an error that names ours. */
-export const DOUGH_ALIASES: Readonly<Record<string, string>> = {
-  sound: 's',
-  cutoff: 'lpf',
-  resonance: 'lpq',
-  hcutoff: 'hpf',
-  hresonance: 'hpq',
-  verb: 'room',
-  reverb: 'room',
-  delayt: 'delaytime',
-  delayfb: 'delayfeedback',
-};
 
 export const DOUGH_SOURCES: Readonly<Record<string, 'sine' | 'triangle' | 'sawtooth' | 'square' | 'white' | 'pink' | 'brown'>> = {
   sine: 'sine',
@@ -45,5 +33,4 @@ export const RETIRED_PARAMS: Readonly<Record<string, string>> = {
   release: ENVELOPE('release'),
   penv: PITCH_DROP('penv'),
   pdec: PITCH_DROP('pdec'),
-  ...Object.fromEntries(Object.entries(DOUGH_ALIASES).map(([k, ours]) => [k, `${k}= is Strudel's or dough's name for ${ours}=, and isn't read here: write ${ours}=`])),
 };

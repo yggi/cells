@@ -10,20 +10,18 @@
  */
 import type { Binding } from './ast';
 import type { CompileResult, ResolvedCell } from './program';
-import { selectsSound } from './clocking';
 import { cellId, edgeId } from './ids';
 
 /**
  * What a flow is:
  *  - `mix`: an entry of a mix (a voice, an instrument, a read head, a resonator, a mix) into it, at its gain;
  *  - `channel`: a sound card's named channel into it (`&out &left &right`);
- *  - `part`: a part into its table of parts, the table into the selector that reads it;
  *  - `write`: a mix onto the sound tape that records it; `play`: a sound tape under a read head;
  *  - `excite`: a mix's sound driving a resonator; `couple`: coupled resonators ringing into each other;
  *  - `midi`: an entry of a MIDI card (map=midi) into it: a voice of a product written on it, or a cell named as the
  *    entry (a mix, a pattern read through a kit), at its channel. It carries notes (gate and pitch), not sound.
  */
-type FlowKind = 'mix' | 'channel' | 'part' | 'write' | 'play' | 'excite' | 'couple' | 'midi';
+type FlowKind = 'mix' | 'channel' | 'write' | 'play' | 'excite' | 'couple' | 'midi';
 
 /** A way sound goes: from a cell (a voice, a mix, a tape head, a body) into what hears it. */
 export interface Flow {
@@ -61,17 +59,12 @@ export function flows(result: CompileResult): Flows {
   for (const c of result.cells.values()) {
     // into a mix (a voice, an instrument, a head, a body, a mix)
     for (const b of c.mix ?? []) add('mix', b.voice.name, c.name, undefined, { gain: b.gain });
-    // a sound card's channels, named (&out &left &right, &out &song)
+    // a sound card's channels, named (&out &left &right)
     if (c.sink) for (const k of c.children.keys()) add('channel', k, c.name, edgeId(cellId(c.name), cellId(k)));
     // a MIDI card's entries, channel by channel: a product written on it (its voice in, as into a mix), a cell named
     for (const e of midiEntries(c)) {
       if (e.ref) add('midi', e.ref, c.name, edgeId(cellId(c.name), cellId(e.ref)), { channel: e.channel });
       for (const b of e.bindings) add('midi', b.voice.name, c.name, undefined, { gain: b.gain, channel: e.channel });
-    }
-    // a selector: its parts into its table of parts, the table into it
-    if (selectsSound(result, c.name)) {
-      add('part', c.over!, c.name, edgeId(cellId(c.name), cellId(c.over!)));
-      for (const k of result.cells.get(c.over!)!.children.keys()) add('part', k, c.over!, edgeId(cellId(c.over!), cellId(k)));
     }
     // a sound tape: a mix onto it, the tape under each read head
     const p = c.params;

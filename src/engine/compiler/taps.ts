@@ -1,7 +1,7 @@
 /**
  * Taps of a meter's bus (decision 016, declare.ts: `taps`): a section is a tap, and a selector reading the table of taps
  * switches it. What a tap steps (its cell, or a cell stepped from a cell it steps) plays while a selector picks the tap,
- * starting again from its top each time it is picked: an output's `select`, as for a selector of mixes (realize.ts).
+ * starting again from its top each time it is picked: an output's `select` (realize.ts).
  */
 import type { Cells } from './context';
 import type { Output } from '../program';

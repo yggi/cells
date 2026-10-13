@@ -9,7 +9,7 @@ import { ROOT, pickedUnits, type CompileResult, type Output, type ResolvedCell, 
 import { resolveIn } from './helix';
 import { clocking, playedCells, selects, shiftsAt } from './clocking';
 import { stepsOf, unitsFor } from './flatten';
-import { slots, type Slot } from './subseq';
+import { footOf, slots, type Slot } from './subseq';
 import type { Atom } from './ast';
 import { cellId, edgeId } from './ids';
 import { droneEnd, endOf, eventsBetween, kitPickAt, outputPlays, picksNow, plan, voiceFor, type Plan } from './realize';
@@ -172,6 +172,8 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
     let pick = o.pick;
     let extra = o.shift;
     let local = mod(clk.stepOf(top.clock!) * top.rate, Math.max(1, stepsOf(result, o.cell, o.pick)));
+    // (the lap it is on: what <a b> and x/n play now, read with the same lap all the way down)
+    const lap = Math.floor((clk.stepOf(top.clock!) * top.rate) / Math.max(1, stepsOf(result, o.cell, o.pick)));
     let ctx = ROOT;
     let ctxShift = 0;
     let ctxFrom: string | null = null;
@@ -192,12 +194,12 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
       let base = 0;
       let now: Slot[] = [];
       for (const u of unitsFor(result, at, statics, pick, table, extra)) {
-        const span = (u.atom.kind === 'seq' ? 1 : unitOf(u.atom)) * u.elongate * u.repeat;
+        const span = footOf(u.atom, unitOf) * u.elongate * u.repeat;
         if (local >= base - EPS && local < base + span - EPS) {
           const from = base;
           now = slots([u], unitOf)
             .map((x) => ({ ...x, at: x.at + from }))
-            .filter((x) => local >= x.at - EPS && local < x.at + x.dur - EPS);
+            .filter((x) => local >= x.at - EPS && local < x.at + x.dur - EPS && (!x.laps || mod(lap, x.laps.of) === x.laps.is));
           break;
         }
         base += span;

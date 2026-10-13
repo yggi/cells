@@ -24,6 +24,6 @@ Two tools keep the author's piece theirs and still let the corpus converge.
 
 ## Consequences
 
-- Shorten's suggestions carry their kind (`Suggestion.kind`). A migration is shown as "a rewrite, the same notes", not as characters saved (`shorten/arrange.ts`, the first).
+- Shorten's suggestions carry their kind (`Suggestion.kind`). A migration is shown as "a rewrite, the same notes", not as characters saved (`shorten/arrange.ts` was the first, removed with the old selector in #261; `shorten/gates.ts`).
 - Normalise isn't built yet: when it is, it gets its list of canonical spellings (`docs/language/`) and a check that the examples are normal.
 - A duplicate that Normalise always rewrites is a candidate to remove from the language. Removing it is a decision of its own, which brings a migration.

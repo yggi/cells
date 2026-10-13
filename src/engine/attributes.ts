@@ -200,6 +200,36 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   },
 };
 
+/**
+ * Strudel's and dough's other names for parameters that mean the same here, in the same units (decision 027,
+ * #337): each reads as ours. The text keeps what was written; the parser and everything after it see ours, so an
+ * alias and its name on one line are one parameter given twice. Strudel's registerControl lists
+ * (`@strudel/core/controls.mjs`) and dough's (`dough.h`); left out, because the meaning or the scale differs:
+ * `size` `sz` `roomsize` `rsize` (a reverb's size; size= is how large a cell is drawn), `dist` (Strudel's
+ * distort, on another scale than ours), `fm` `fmi` `fmh` (Strudel's FM is a number on the carrier; ours names a
+ * cell, its ratio= on the modulator), `vel` `velocity` (a gate's old spelling here), `att` `dec` `sus` `rel` and
+ * the filter envelopes (an envelope is a cell), `legato` `clip` (a note's length; a tie is glide=).
+ */
+export const PARAM_ALIASES: Readonly<Record<string, string>> = {
+  sound: 's',
+  cutoff: 'lpf',
+  ctf: 'lpf',
+  lp: 'lpf',
+  resonance: 'lpq',
+  hcutoff: 'hpf',
+  hp: 'hpf',
+  hresonance: 'hpq',
+  verb: 'room',
+  reverb: 'room',
+  delayt: 'delaytime',
+  dt: 'delaytime',
+  delayfb: 'delayfeedback',
+  dfb: 'delayfeedback',
+};
+
+/** A parameter's own name for a key as written: ours for an alias (cutoff → lpf), the key itself otherwise. */
+export const canonicalParam = (key: string): string => PARAM_ALIASES[key] ?? key;
+
 /** Every attribute: the core ones, then the parameters. */
 export const ATTRIBUTES: Readonly<Record<string, Attribute>> = { ...CORE, ...PARAMS };
 

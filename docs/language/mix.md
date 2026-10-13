@@ -89,7 +89,9 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 
 `play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
 still reads (`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
-played), and Shorten rewrites it.
+played), and Shorten rewrites it. A gate times nothing itself: `over=`, `step=` and the like on it do nothing, and warn
+(they go on its notes). Its `level=` is 0 or more (a negative one warns), and its notes and level cells aren't sounds:
+`level=&otherGate` says so.
 
 A gate is where notes become sound, named: the graph draws it as a level meter, a bar per note in its colour, as tall as
 its level, its notes going out to the voices it plays and their sound on from them ([graph.md](../ui/graph.md),

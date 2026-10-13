@@ -52,7 +52,7 @@ The tiers' numbers are stable, and a piece has no number of its own: a variation
 | volume | `levels` (bars) `braid` `pattern` · oscillation: `lfo` `levels` `braid` |
 | selector | `matrix` (a ring per tap, a pin where it plays) `braid` `pattern` |
 
-Without `show=` it is inferred (a table of 12 is a `key`, a recognised mode a `scale`). **Conventions**: `notes:flats` `notes:sharps` `notes:german`, `do:fixed` `do:movable`. A mix (or the sound card) colours by the grid its voices are on, and shows no colour when they are on several; **`show=mix:&grid`** names the grid it follows instead (`&band show=mix:&edo19 [&a * &v, &b * &w]`; [tuning.md](tuning.md)). `petal` hangs a small cell from the one that uses it; `off` hides it from the graph (`off` alone also silences it).
+Without `show=` it is inferred (a table of 12 is a `key`, a recognised mode a `scale`). **Conventions**: `notes:flats` `notes:sharps` `notes:german`, `do:fixed` `do:movable`. A mix (or the sound card) colours by the grid its voices are on, and shows no colour when they are on several; **`show=mix:&grid`** names the grid it follows instead (`&band show=mix:&edo19 [&a * &v, &b * &w]`; [tuning.md](tuning.md)): the grid right after the colon, no space; on a cell that isn't a mix it does nothing, and warns. `petal` hangs a small cell from the one that uses it; `off` hides it from the graph (`off` alone also silences it).
 
 ## size=
 

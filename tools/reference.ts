@@ -4,10 +4,10 @@
  * the committed page current and parses every example; record it with
  * UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts
  */
-import { CORE, PARAMS, rolesText, type Attribute } from '../src/engine/attributes';
+import { CORE, PARAMS, PARAM_ALIASES, rolesText, type Attribute } from '../src/engine/attributes';
 import { BODIES } from '../src/engine/program';
-import { DOUGH_ALIASES, DOUGH_SOURCES } from '../src/engine/dough-params';
-import { CHANCE_SYNTAX, LEVEL_SYNTAX, MODIFIERS, STEP_SYNTAX } from '../src/engine/parser/braid';
+import { DOUGH_SOURCES } from '../src/engine/dough-params';
+import { CHANCE_SYNTAX, EUCLID_SYNTAX, LEVEL_SYNTAX, MODIFIERS, SLOW_SYNTAX, STEP_SYNTAX } from '../src/engine/parser/braid';
 import { KEYS, LINE_SYNTAX, SHOWS, SHOW_CONVENTIONS } from '../src/engine/parser/cell';
 import { BUILTIN_PLUGINS } from '../src/engine/builtinPlugins';
 import { FREE_SYNTAX } from '../src/engine/parser/free';
@@ -44,10 +44,13 @@ export function entries(): Syntax[] {
     ...LINE_SYNTAX,
     ...STEP_SYNTAX,
     ...Object.values(MODIFIERS).map((m) => m.syntax),
+    SLOW_SYNTAX,
+    EUCLID_SYNTAX,
     CHANCE_SYNTAX,
     LEVEL_SYNTAX,
     ...REFERENCE_SYNTAX,
-    ...Object.values(GENERATORS).map((g) => g.syntax),
+    // (the waveforms share one entry)
+    ...new Set(Object.values(GENERATORS).map((g) => g.syntax)),
     ...FREE_SYNTAX,
     ...RATE_SYNTAX,
     ...Object.values(RATE_UNITS).map((u) => u.syntax),
@@ -98,11 +101,11 @@ export function renderReference(): string {
       );
     if (section === 'parameter')
       out.push(
-        `Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Strudel's and dough's other names aren't read: writing one is an error that names ours (${Object.entries(
-          DOUGH_ALIASES,
+        `Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Strudel's and dough's other names for a parameter that means the same here read as ours (${Object.entries(
+          PARAM_ALIASES,
         )
           .map(([k, v]) => `\`${k}\` → \`${v}\``)
-          .join(', ')}).`,
+          .join(', ')}): the text keeps what is written, and an alias beside ours is the parameter given twice ([decision 027](../decisions/027-on-top-of-strudel.md)).`,
         '',
       );
     if (section === 'sort')

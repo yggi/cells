@@ -61,8 +61,10 @@ export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
   let chance = false;
   for (const t of p.tracks) {
     const lap = secondsOf(t.clock, t.period / t.rate);
-    if (lap) periods.push(lap);
-    if (t.events.some((e) => e.chance !== undefined || e.options)) chance = true;
+    // (<a b>, x/n: its laps come round after as many as they alternate over)
+    const laps = t.events.reduce((m, e) => (e.laps ? Number((BigInt(m) * BigInt(e.laps.of)) / gcd(BigInt(m), BigInt(e.laps.of))) : m), 1);
+    if (lap) periods.push(lap * laps);
+    if (t.events.some((e) => e.chance !== undefined || e.options || e.chosen)) chance = true;
     for (const m of [...t.mods, ...t.levels, ...t.selects.map((x) => x.series)]) {
       const s = m.clock ? secondsOf(m.clock, m.period / m.rate) : null;
       if (s) periods.push(s);

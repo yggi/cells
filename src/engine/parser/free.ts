@@ -123,9 +123,18 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean):
     const q = s.match(/"[^"]*"/y);
     if (q === null) s.fail('names for the choices, in quotes: free(0, 0..3, "a b c d")');
     labels = q!.slice(1, -1).trim().split(/\s+/).filter(Boolean);
-    // the names spread evenly over the range: one per value, or every 2nd (chords of two in a table) …
     const gap = labels.length > 1 ? (hi - lo) / (labels.length - 1) : 0;
-    if (!Number.isInteger(lo) || !Number.isInteger(hi) || labels.length < 2 || !Number.isInteger(gap) || gap < 1)
+    // a key by name has the twelve pitch names as its choices (names of its own would make a control of too few); other
+    // names spread evenly over the range: one per value, or every 2nd (chords of two in a table) …
+    if (named !== null) {
+      const comma = s.text.lastIndexOf(',', s.i - q!.length);
+      s.warn(
+        `free(${s.text.slice(at, comma).trim()}, ${q}): a key by name has the twelve pitch names as its choices, so these names are ignored (names of your own go on a range: free(3, 0..11, "…"))`,
+        comma,
+        s.i - comma,
+      );
+      labels = undefined;
+    } else if (!Number.isInteger(lo) || !Number.isInteger(hi) || labels.length < 2 || !Number.isInteger(gap) || gap < 1)
       s.fail(
         `free(…, "${labels.join(' ')}"): the names spread evenly over ${lo}..${hi} — ${labels.length} names need ${labels.length - 1} equal whole steps (${lo}..${lo + labels.length - 1}, or every 2nd: ${lo}..${lo + 2 * (labels.length - 1)})`,
         start,

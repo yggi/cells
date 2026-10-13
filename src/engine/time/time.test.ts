@@ -3,7 +3,7 @@ import { fft } from './fft';
 import { grid, ridges } from './wavelet';
 import { sampled, scalograms, type Onset } from './signals';
 import { cones, score, sectionsOver, swells } from './boundaries';
-import { alike, canonical, foldings, maximallyEven, pitchClasses, pulseOf, rhythm, steps } from './necklace';
+import { alike, canonical, foldings, levelsOf, maximallyEven, pitchClasses, pulseOf, rhythm, steps } from './necklace';
 import { owners, peaks, waterfall } from './spectrogram';
 
 const note = (at: number, voice = 'v', freq = 440, dur = 0.1): Onset => ({ at, dur, voice, freq, gains: [1, 1] });
@@ -110,6 +110,9 @@ describe('the foldings', () => {
     expect(maximallyEven(major)).toBe(true);
     expect(maximallyEven({ n: 8, marks: [0, 3, 6] })).toBe(true); // the tresillo
     expect(maximallyEven({ n: 16, marks: [0, 3, 6, 10, 12] })).toBe(false); // the son clave
+  });
+  it('name a level by its cell’s turn and the slots it is cut in, not as a clock (&bar/12 would read as one, slower)', () => {
+    expect(levelsOf([{ name: 'bar', step: 0.2, turn: 2.4 }], null, 10).map((l) => l.name)).toEqual(['&bar in 12']);
   });
   it('hear the pulse, and leave a pattern off the pulse alone', () => {
     expect(pulseOf([0, 0.2, 0.4, 0.6, 1.0])).toBeCloseTo(0.2);

@@ -260,6 +260,23 @@ export class LineScanner {
     return { name, pick, shift, ...this.transposition(name), span: this.span(at) };
   }
   /**
+   * A reference where `^n` and `^$n` mean nothing: an attribute's cell (over=&k, step=&bar, env=&adsr …) or a line's
+   * name. They move a cell a braid plays (and base='s copy); anywhere else they would be dropped, so this warns.
+   */
+  cellRef(what: string, where: string): Ref {
+    const at = this.i;
+    const r = this.ref(what);
+    // (the caret after the name, its pick or its unnamed body: never one inside &( … ))
+    const caret = this.text.lastIndexOf('^', this.i - 1);
+    if (caret >= at && caret > this.text.lastIndexOf(')', this.i - 1))
+      this.warn(
+        `${this.text.slice(at, this.i)} ${where}: ^ and ^$ move a cell a braid plays (and base=&cell^n, a copy); here it is the cell itself, so the move is ignored`,
+        caret,
+        this.i - caret,
+      );
+    return r;
+  }
+  /**
    * After a reference: `^n` moves it n steps of the table it is read through (a degree, relative: degree(&x, n)); `^$n`
    * n steps of the grid after its tables (absolute: semitones on the 12).
    */
@@ -271,6 +288,14 @@ export class LineScanner {
     if (abs) this.i++;
     const n = this.match(/-?[0-9]+/y);
     if (n === null) this.fail(`&${name}^n moves it n steps of its table (&${name}^1, a degree up), &${name}^$n n semitones (&${name}^$7, &${name}^$-12)`, at, 1);
+    if (this.peek() === '.' && /[0-9]/.test(this.text[this.i + 1] ?? ''))
+      this.fail(
+        `&${name}${this.text.slice(at, this.i)}…: ^ takes a whole number of steps (&${name}^1, &${name}^$-12)`,
+        at,
+        this.i - at + 1 + /^[0-9]+/.exec(this.text.slice(this.i + 1))![0].length,
+      );
+    if (this.peek() === '^')
+      this.fail(`&${name}${this.text.slice(at, this.i)}^…: one ^ per reference; nest with degree(…): degree(&${name}${this.text.slice(at, this.i)}, n)`, this.i, 1);
     const k = parseInt(n!, 10);
     return !k ? {} : abs ? { transpose: k } : { degree: k };
   }
