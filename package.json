@@ -34,7 +34,7 @@
     "test": "vitest run --project quick",
     "test:all": "vitest run",
     "test:slow": "vitest run --project slow",
-    "check": "tsc -p tsconfig.pure.json && tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.pure.json && tsc -p tsconfig.json && node tools/strict.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

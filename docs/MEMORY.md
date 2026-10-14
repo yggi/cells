@@ -12,6 +12,8 @@ The music projects share a hub, [yggi/music-commons](https://github.com/yggi/mus
 
 ## Map of src/
 
+The whole map, module by module: [architecture.md](architecture.md).
+
 - `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), the time analysis (`time/`)
 - `theory/` modes and tonal's scale names
 - `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>`

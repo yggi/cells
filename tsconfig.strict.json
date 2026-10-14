@@ -1,0 +1,5 @@
+{
+  // The strictness ratchet (tools/strict.mjs): the language's source with noUncheckedIndexedAccess. Tests are left out.
+  "extends": "./tsconfig.pure.json",
+  "compilerOptions": { "noUncheckedIndexedAccess": true }
+}
