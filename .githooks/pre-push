@@ -1,0 +1,7 @@
+#!/bin/sh
+# Every push runs what CI would: `npm run verify` (the purity gate, types, lint, format, knip, the quick tests).
+# A push that fails is blocked. Pushing a deletion (a branch removed) checks nothing.
+while read -r _local _sha _remote remote_sha; do
+  [ "$_sha" = "0000000000000000000000000000000000000000" ] && exit 0
+done
+exec npm run -s verify

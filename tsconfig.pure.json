@@ -1,0 +1,8 @@
+{
+  // The purity gate: the language as a package typechecks with no host at all (no DOM, no Node, no bundler types),
+  // so it runs in a browser, a worker, node or a device's JavaScript alike. Tests and the tools that read files are left out.
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "types": [] },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts", "src/engine/fold/midiRatchet.ts"]
+}

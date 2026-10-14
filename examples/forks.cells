@@ -1,0 +1,13 @@
+&piece title="Two Tuning Forks" tags="genre:experimental, sound" label="Two tuning forks on one table, one struck now and then, the other set singing by the table." about=&out
+&tableNote label="The second fork, tuned the same, is never struck — but the table carries the vibration, and it begins to sing." about=&forkB
+&detuneNote label="Detune it with its slider and they beat." about=&forkB
+&touchNote label="Tap a fork to strike it (where you tap is how it rings), hold to damp it, drag across it to bow." about=(&forkA &forkB)
+# Two Tuning Forks — resonators (body=): persistent objects with their modes (a fork: its tone, and
+# a clang 6.27× higher that dies at once). Notes strike them; a note's value is where (0 … 7).
+# couple= sets one ringing from the other, both ways, through the table (coupling= how much).
+&bar scan(1 1 1 1) step=60bpm
+&hits step=&bar/8 label="a strike, every eight seconds" 4
+&forkA pan=.35 body=fork loop=A4 ring=10 hard=.35 board=none couple=&forkB coupling=.1 label="fork A: struck" 0
+&forkB pan=.65 body=fork loop=free(440hz, 434..446) ring=10 hard=.35 board=none label="fork B: only the table rings it" 0
+
+&out postgain=.398 map=sample [&hits * &forkA * .5, &forkB * .5]

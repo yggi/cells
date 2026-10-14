@@ -1,0 +1,24 @@
+[
+  {
+    "key": "ricercar3",
+    "title": "Ricercar a 3",
+    "opus": "BWV 1079",
+    "tonality": "C minor",
+    "original": "Musikalisches Opfer, Ricercare",
+    "maintainer": "Arnaud Gossart",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2006/03/02-690",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWV1079/ricercare/"
+  },
+  {
+    "key": "ricercar6",
+    "title": "Ricercar a 6",
+    "opus": "BWV 1079",
+    "tonality": "C minor",
+    "original": "Musikalisches Opfer, Ricercare a 6",
+    "maintainer": "Arnaud Gossart",
+    "licence": "Public Domain",
+    "mutopia": "Mutopia-2006/03/23-702",
+    "source": "https://www.mutopiaproject.org/ftp/BachJS/BWV1079/ricercare6/"
+  }
+]
