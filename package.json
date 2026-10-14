@@ -5,9 +5,18 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./engine/*": "./src/engine/*.ts",
-    "./theory/*": "./src/theory/*.ts",
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./engine/*": {
+      "types": "./types/engine/*.d.ts",
+      "default": "./src/engine/*.ts"
+    },
+    "./theory/*": {
+      "types": "./types/theory/*.d.ts",
+      "default": "./src/theory/*.ts"
+    },
     "./examples/*": "./examples/*",
     "./midi/*": "./midi/*",
     "./package.json": "./package.json"
@@ -15,6 +24,7 @@
   "files": [
     "src",
     "!src/**/*.test.ts",
+    "types",
     "examples",
     "midi",
     "LICENSE",
@@ -30,7 +40,8 @@
     "format:check": "prettier --check .",
     "knip": "knip",
     "examples": "node --experimental-strip-types --no-warnings tools/examples.ts",
-    "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test"
+    "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test",
+    "types": "tsc -p tsconfig.types.json"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
