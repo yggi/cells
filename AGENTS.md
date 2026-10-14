@@ -7,6 +7,7 @@ The cells language as a package: a minimal music language where everything is a 
 - `npm run verify`: everything a push needs: `check` (the purity gate and the full typecheck), `lint`, `format:check`, `knip`, and the quick tests. A pre-push hook runs it (`.githooks/pre-push`; the session-start hook points git at it) and blocks a push that fails. Never bypass it with `--no-verify`.
 - `npm run test:all`: the quick and the slow tests (the folder over whole pieces and the MIDI library, about two minutes). Run it when you touch `src/engine/fold/`, `midiimport`, or anything the slow tests read.
 - `npm run examples`: rewrites `src/engine/examples.generated.ts` from `examples/*.cells`; a test fails when it is stale.
+- `npm run types`: rewrites `types/` (the declarations a frontend typechecks against, through the `types` condition of `exports`) from `src/`; a test fails when it is stale. Run it with any change to an exported signature.
 - One file while iterating: `npx vitest run src/engine/parser/parser.test.ts`.
 
 ## Rules

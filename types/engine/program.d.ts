@@ -1,0 +1,406 @@
+import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, GateSpec } from './ast';
+import type { ShowPlugin } from './plugins';
+export declare const ROOT = "fifths12TET";
+/**
+ * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
+ * more is a compile error. The largest in examples/ is 1,120 (bwv847's &tempo).
+ */
+export declare const MAX_EVENTS = 50000;
+/**
+ * The most notes a second a played cell may start (`step=1000000` would plan millions for a few seconds): more is a
+ * compile error. The busiest in examples/ is 84 a second (dtmf's &dial); audio-rate cells (voices, wave shapes)
+ * start no notes and aren't counted.
+ */
+export declare const MAX_NOTES_PER_SECOND = 2000;
+/**
+ * How deep cells may be spliced into each other (`&a &b`, `&b &c` …, a chain of &refs): deeper is a compile error
+ * (5,000 deep overflowed the stack). The deepest in examples/ is 4 (the Lullaby's &roll).
+ */
+export declare const MAX_SPLICE_DEPTH = 256;
+/** The fields a label= can hold, {tempo} or {&key:tonic} (filled in by layout/labels.ts); any other is a warning. */
+export declare const LABEL_FIELDS: readonly ["name", "notes", "tonic", "mode", "steps", "tempo", "shift"];
+/** A voice without a rate loops at middle C. */
+export declare const DEFAULT_FREQ = 261.63;
+/** A step of a braid as written (before shifting). */
+export interface Unit {
+    readonly atom: Atom;
+    readonly repeat: number;
+    readonly subdivide: number;
+    readonly elongate: number;
+    /** x?p: the probability it is dropped; null: the cell's chance=. */
+    readonly chance?: number | null;
+    /** &x:0:g: a hit's own gain (.5 half). */
+    readonly level?: number;
+}
+export interface ResolvedCell {
+    readonly name: string;
+    readonly span: Span;
+    /** A bare grid (root). */
+    readonly root: boolean;
+    /** The default grid, added because the code didn't declare it. Not drawn. */
+    readonly implicit: boolean;
+    /** Table its numbers index. null: a root, or no over= (it reads through whoever splices it). */
+    readonly over: string | null;
+    /** Shift on the over= reference (`over=&scale[<<]`). */
+    readonly overShift: number;
+    /** Table used to show the cell on its own: over, else its first player's, else the default grid. */
+    readonly context: string;
+    /** Grid size (roots) / number of entries (tables). */
+    readonly cycle: number;
+    /**
+     * cycle= as written: where a turning cell wraps. Without it a cell's turning
+     * comes round after its own length (decision 008); a larger cycle= keeps it climbing.
+     */
+    readonly wrap: number | null;
+    /** An unnamed cell (`&( … )`): its body as written. */
+    readonly lambda: string | null;
+    /** Numbers left free for the performer (free(…)): sliders on the node. */
+    readonly frees: readonly FreeSpec[];
+    /** laps=n: it plays n laps, then nothing it drives sounds. */
+    readonly laps: number | null;
+    /** loop=: it turns its whole braid at its rate (an oscillation), rather than stepping. */
+    readonly loops: boolean;
+    /** What a bare x? means here: the probability it is dropped (½ unless chance= says). */
+    readonly chance: number;
+    /** Its sequence of chance (seed=, else from its name). */
+    readonly seed: number;
+    /** size=: how large it's drawn, against the others (1). */
+    readonly size: number;
+    /** tags= on a cell: its clusters in the graph (on the piece's card, tags= are the piece's). */
+    readonly tags: readonly string[];
+    /** On a note: the cells it explains (about=), drawn as links from the note. */
+    readonly about: readonly string[];
+    /** base=: the cell it is a copy of (decision 026; resolved when parsed), and the transposition written with it. */
+    readonly base?: {
+        readonly name: string;
+        readonly transpose?: number;
+        readonly degree?: number;
+    };
+    /** Steps a beat (beat=, or from meter(…)): a meter's bpm counts beats, 1 = every step a beat. */
+    readonly beat: number;
+    /** Written as levels (meter(…)): its values are 3 the bar, 2 a beat, 1 a subdivision, 0 finer. */
+    readonly leveled: boolean;
+    /**
+     * A resonator's exciters (its braid): each a tuned element — a semitone shift from its fundamental,
+     * with settings of its own (from a cell it refers to: hard=, ring=, body=). None written: the twelve
+     * semitones, so every body plays chromatically.
+     */
+    readonly exciters?: readonly Exciter[];
+    /** show= as written: how it's shown (the layout decides what fits). */
+    readonly show: string | null;
+    /** Where show= is written (a warning about it points there). */
+    readonly showSpan?: Span;
+    /** label= as written: a name to show, or (alone) a note in the graph. */
+    readonly label: string | null;
+    /** Only a label: an explanatory note, not a cell that does anything. */
+    readonly note: boolean;
+    /** A voice's own volume (env=) and pitch (pitch=): acting on every note it plays. */
+    readonly env: string | null;
+    readonly pitch: string | null;
+    readonly braid: Braid['kind'];
+    readonly units: readonly Unit[];
+    /** A scan(…): its intervals, and its lap (their sum) — the cell climbs by that lap. */
+    readonly scan: {
+        readonly lap: number;
+        readonly steps: readonly number[];
+    } | null;
+    /** shift= as written. */
+    readonly shift: number;
+    /** `off` as written. */
+    readonly off: boolean;
+    /** `oneshot` as written: a voice's note lasts its envelope's attack and decay, not its step. */
+    readonly oneshot: boolean;
+    /** `glide=` as written, seconds (0 off): a run of tied notes is one note, its envelope once, each next sliding there (realize.ts). */
+    readonly glide: number;
+    /** Cells spliced in with &ref, with how many slots reference each. */
+    readonly children: ReadonlyMap<string, number>;
+    /** Length in steps (a &ref takes the referenced cell's steps). */
+    readonly steps: number;
+    /** Steps taken by each unit as written (for picks like &x[1:3]). */
+    readonly unitSteps: readonly number[];
+    /** Whether the braid has numbers of its own (vs. only &refs and rests). */
+    readonly hasValues: boolean;
+    /** How far each step moves it (stride=), 1 by default. */
+    readonly stride: number;
+    /** step=/loop= driven by another cell: the driver, and its ratio as written (the edge's rate). */
+    readonly step: {
+        readonly driver: string;
+        readonly cycle: boolean;
+        readonly whole: boolean;
+        readonly chain: readonly RateOp[];
+    } | null;
+    /**
+     * Parameters given as a clock (`delaytime=&bar*4/3`, `length=`, `at=`: attributes.ts TIME_PARAMS), by key: the clock
+     * tapped and its ratio as written (as step=). Compiled to seconds in `params`; kept for the graph's wire (a tap of the clock).
+     */
+    readonly paramClocks: Readonly<Record<string, NonNullable<ResolvedCell['step']>>>;
+    /** map= (how values become output): amp, sin or a table. */
+    readonly map: {
+        readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'db';
+    } | {
+        readonly kind: 'edo';
+        readonly period: number;
+    }
+    /** A grid of ratios: one period's tones, then the period (the last). */
+     | {
+        readonly kind: 'ratios';
+        readonly ratios: readonly number[];
+    } | {
+        readonly kind: 'table';
+        readonly table: string;
+    }
+    /** A MIDI card (map=midi): its entries are channels in order, or all on `channel`; sent to output slot `port`. */
+     | {
+        readonly kind: 'midi';
+        readonly channel: number | null;
+        readonly port: number;
+    } | null;
+    /** A mix cell (`&mix [&theme * &lead, …]`): its voices, as written. */
+    readonly mix: readonly Binding[] | null;
+    /** The sound card (`map=sample`): its entries are channels. */
+    readonly sink: boolean;
+    /** A MIDI card's (map=midi) products written on it, typed, unit by unit (null: a unit that isn't a chord of them). */
+    readonly chords?: readonly (readonly Binding[] | null)[];
+    /** The clock this cell's stepping comes from, and its shifts per clock step. */
+    readonly clock: string | null;
+    readonly rate: number;
+    /** dough sound parameters. */
+    readonly params: Readonly<Record<string, number | string>>;
+    /** Parameters that move: a range scaled by cells (or, no range, one cell's values as they are). */
+    readonly paramCells: Readonly<Record<string, {
+        readonly range: readonly [number, number] | null;
+        readonly factors: readonly string[];
+    }>>;
+    /** Used as the voice of an out(…), or has sound parameters. */
+    readonly voice: boolean;
+    /** Voice: turns of its braid per second at pitch 0 (loop=f, or step=r over its k steps). */
+    readonly freq: number;
+    /** A braid of voices only: indexed by number, like a drum kit. */
+    readonly kit: boolean;
+    /** A gate (#234): whose notes it plays, its levels and gain, its receivers (declare.ts). */
+    readonly gate?: GateSpec;
+}
+/** A cell moved at a rate (step=84bpm, loop=2). */
+/**
+ * Resonators' bodies: their modes — ratio to the fundamental, share of the ring, level. A fork: its
+ * tone and the clang (6.27×, gone at once); a bell: hum, prime, tierce, quint, nominal …; a free bar
+ * (1 : 2.756 : 5.404 : 8.933); a plate (dense, inharmonic); a box (a few low, short modes).
+ */
+export declare const BODIES: Record<string, readonly (readonly [number, number, number])[]>;
+export interface Exciter {
+    readonly shift: number;
+    readonly params: Readonly<Record<string, number | string>>;
+}
+/**
+ * pan= as channel gains: 0 left, .5 centre, 1 right, the far side fading while the near one stays full
+ * (a balance: centre is [1, 1], as without pan=). Any pair of channel gains is one gain and one pan.
+ */
+export declare function balance(pan: unknown): [number, number];
+/** What isn't a voice's: the sound card's level, and a clock's physics. */
+export interface Clock {
+    readonly cell: string;
+    /** Steps per second. */
+    readonly perSecond: number;
+    /** A positional meter (a scan, a grid): its entries place its steps within the bar. */
+    readonly positional: boolean;
+    /** A belt (belt= on a driven cell): it follows its driver at this ratio through a spring, not rigidly. */
+    readonly belt?: {
+        readonly driver: string;
+        readonly rate: number;
+    };
+    /** swing=: of each pair of steps, the second starts this far through (.5 straight, .67 triplet swing). */
+    readonly swing?: number;
+}
+/** A pitch term of an out sum. */
+interface PitchTerm {
+    readonly cell: string;
+    readonly pick: Pick | null;
+    readonly shift: number;
+    readonly sign: 1 | -1;
+    /**
+     * A kit read that doesn't start notes (decision 029): held under the term that does, its number picks the kit's
+     * member; it adds no pitch.
+     */
+    readonly picks?: true;
+}
+/** A resolved out(&voice, &theme + &mod …). */
+export interface Output {
+    readonly id: string;
+    /** Voice cell, or kit cell (numbers pick a voice). */
+    readonly voice: string;
+    readonly kit: boolean;
+    /** The term that triggers notes. */
+    readonly cell: string;
+    readonly pick: Pick | null;
+    readonly shift: number;
+    readonly sign: 1 | -1;
+    /** Further terms: their pitch is added while notes sound. */
+    readonly mods: readonly PitchTerm[];
+    /** Volume streams (map=amp): their values multiply the level while notes sound; rests are silence. */
+    readonly levels: readonly PitchTerm[];
+    /** The term that starts notes is a volume stream, not a pitch: notes sound at pitch 0, at its level. */
+    readonly gate: boolean;
+    /**
+     * A voice alone (decision 028): nothing in its product starts notes, so it plays one note at its own pitch, held from
+     * where play starts until play stops or the piece ends. `cell` is the voice itself (it has no clock: nothing steps it).
+     */
+    readonly drone?: true;
+    /** Constant semitones from numbers in pitch sums. */
+    readonly offset: number;
+    /** Level per channel [left, right], from the gains in the mixes the sound card plays. */
+    readonly gains: readonly [number, number];
+    /** The mix cells and sound card it goes through (for drawing). */
+    readonly via: readonly string[];
+    /** Instruments (mixes used like voices) it plays through. */
+    readonly through: readonly string[];
+    /** Per-note envelope from a map=adsr factor (seconds; sustain a level), or null for the voice's own. */
+    readonly envelope: {
+        readonly attack: number;
+        readonly decay: number;
+        readonly sustain: number;
+        readonly release: number;
+    } | null;
+    /** The map=adsr cell it comes from. */
+    readonly envelopeCell: string | null;
+    /** Where its level comes from: each mix and sound card it's in, and what that mix adds per channel. */
+    readonly parts: readonly {
+        readonly mix: string;
+        readonly sink: string;
+        readonly gains: readonly [number, number];
+    }[];
+    /**
+     * Selectors it plays through (a cell reading a table of taps, the tap that steps it: decision 016): it sounds while each picks its
+     * entry, and starts again from its beginning each time it's picked — reading a table splices.
+     */
+    readonly select: readonly {
+        readonly cell: string;
+        readonly entry: number;
+        readonly part: string;
+    }[];
+    /** A send: played into what it feeds (a resonator, a tape), not heard from its voice itself. */
+    readonly silent?: boolean;
+    /** Where it goes out as MIDI (map=midi cards); absent: on no MIDI card. Only here, and on no sound card: sent, not heard. */
+    readonly midi?: readonly MidiDest[];
+    /** Played off a tape: its source's notes, through the tape (a read head at= after the write head). */
+    readonly tape?: {
+        readonly head: string;
+        readonly tape: string;
+        readonly at: number;
+        readonly length: number;
+        readonly erase: number;
+    };
+    readonly span: Span;
+}
+/** One place an output goes out as MIDI: a MIDI card's entry, its channel and output slot, at the gain of its product there. */
+export interface MidiDest {
+    /** The MIDI card (map=midi). */
+    readonly card: string;
+    /** A mix named as the entry (`&synth map=midi &lead`), whose switching off takes it away; null: written on the card. */
+    readonly mix: string | null;
+    readonly channel: number;
+    /** The output slot (the MIDI page's output of that number, 1 the first). */
+    readonly port: number;
+    /** The numbers in its product on the card (velocity reads them, as it reads a sound card's gains). */
+    readonly gain: number;
+}
+/** A MIDI card: a cell with map=midi, whose entries are MIDI channels. */
+export declare const isMidiCard: (c: {
+    readonly map: ResolvedCell["map"];
+} | undefined) => boolean;
+/** A tape that records sound (write= a mix): its loop and colour, for the audio. */
+export interface AudioTape {
+    readonly name: string;
+    readonly source: string;
+    readonly length: number;
+    readonly erase: number;
+    /** The loss filter's corner (Hz), saturation drive, hiss level. */
+    readonly tone: number;
+    readonly drive: number;
+    readonly hiss: number;
+    /** Print-through: a faint pre-echo (its level), printgap= tape-seconds before each head. */
+    readonly print: number;
+    readonly printgap: number;
+    /** Dropouts: brief gaps in the playback, about this many a second. */
+    readonly dropout: number;
+    /** Each head: where it sits, and how far and fast it wanders (a flying head). */
+    readonly heads: readonly {
+        readonly head: string;
+        readonly at: number;
+        readonly wander: number;
+        readonly wanderhz: number;
+    }[];
+}
+/** A resonator in a mix on its own (not struck there): its ringing, at a level per channel. */
+export interface Resonance {
+    readonly cell: string;
+    readonly gains: readonly [number, number];
+    /** Its gains by the mix and sound card they go through (as an output's): muting either takes its share away. */
+    readonly parts: Output['parts'];
+    /** The mixes it plays through on the way (as an output's): one switched off silences it. */
+    readonly through: Output['through'];
+}
+/** A read head of a sound tape in a mix: its tap, at a level per channel. */
+export interface TapeReturn {
+    readonly head: string;
+    readonly tape: string;
+    readonly gains: readonly [number, number];
+    /** Its gains by the mix and sound card they go through (as an output's): muting either takes its share away. */
+    readonly parts: Output['parts'];
+    /** The mixes it plays through on the way (as an output's): one switched off silences it. */
+    readonly through: Output['through'];
+}
+export interface CompileResult {
+    readonly ok: boolean;
+    readonly tapes: readonly AudioTape[];
+    readonly returns: readonly TapeReturn[];
+    readonly resonances: readonly Resonance[];
+    readonly cells: ReadonlyMap<string, ResolvedCell>;
+    readonly clocks: ReadonlyMap<string, Clock>;
+    readonly outputs: readonly Output[];
+    /** Node ids of cells written `off`. */
+    readonly off: ReadonlySet<string>;
+    readonly diagnostics: readonly Diagnostic[];
+    /** The `show=` plugins the piece carries, by name (plugins.ts). */
+    readonly plugins: ReadonlyMap<string, ShowPlugin>;
+    /** Taps of a meter's bus (decision 016), each to its table: what a selector reading the table switches. */
+    readonly taps?: ReadonlyMap<string, string>;
+    /**
+     * The built-in card's name, when the piece writes no card (decision 028): a sound card (`map=sample`) compile added,
+     * which every sound nothing reads goes to. It is in `cells` (implicit: not drawn, in no line, never edited).
+     */
+    readonly builtinCard?: string;
+}
+/** Shift of every cell; missing names use the code's shift=. */
+export type Shifts = (name: string) => number;
+export declare const codeShifts: (result: CompileResult) => Shifts;
+/** Values the environment provides to the code (loop=SAMPLE_RATE, loop=A4). */
+export interface Env {
+    readonly SAMPLE_RATE: number;
+    /** Concert pitch: every note name (C4, C#3, Bb2 …) is tuned from it, equal-tempered. */
+    readonly A4: number;
+    readonly [name: string]: number;
+}
+export declare const DEFAULT_ENV: Env;
+/** Frequency of a note name (`A4`, `C#3`, `Bb2`, `E-1`) tuned from A4, or null if it isn't one. */
+export declare function noteFrequency(name: string, a4?: number): number | null;
+/** Unit indices a pick selects from n units, Python-style; null if it selects nothing (or is out of range). */
+export declare function pickIndices(n: number, pick: Pick | null): number[] | null;
+/**
+ * The units a pick takes, as indices into the braid as written: a relative pick counts from the braid turned by
+ * `shift` (its entry i is the written unit i + shift, round the braid), an absolute one (`$`) as written.
+ */
+export declare function pickedUnits(n: number, pick: Pick | null, shift: number): number[] | null;
+/** Steps taken by a pick from a cell (the whole cell when there's no pick), turned as the code has it. */
+export declare function pickSteps(c: ResolvedCell, pick: Pick | null): number | null;
+/** Why a pick takes nothing, in words: an index past the end, a slice that starts past it, a slice that ends before it starts. */
+export declare function pickProblem(name: string, pick: Pick | null, steps: number): string;
+/** The envelope a map=adsr cell writes (its four values), or null if it isn't one. */
+export declare function adsrOf(c: ResolvedCell): {
+    attack: number;
+    decay: number;
+    sustain: number;
+    release: number;
+} | null;
+/** Scans (meters) and grids place their steps within the bar; a plain list steps evenly. */
+export declare function isPositional(c: ResolvedCell): boolean;
+export {};

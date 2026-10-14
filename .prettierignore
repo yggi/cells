@@ -12,3 +12,4 @@ src/engine/examples.generated.ts
 package-lock.json
 .claude
 node_modules
+types
