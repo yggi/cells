@@ -33,7 +33,7 @@ The rulings about Jambot's own code stay on #309. The ones that bind the languag
 | `cycle=`, `grid=` | settled with the meter tree; open |
 | A cell's name | a word; a hash is the identity |
 | What a cell holds | chromatic behind the hash, degrees in the text |
-| Accent grades | cells': `* + .` |
+| Accent grades | cells': `* + - . ,` (a meter's levels, `meter("*.+.+..")`), which hold Jambot's `* + - .` and one finer grade (corrected 2026-10-14: the handshake's table had `* + .`, E31 in yggi/jambot found the parser's) |
 | Swing | settled with the meter tree; open |
 | Loudness | open: Jambot adds offsets, cells multiplies |
 | Score and playing | Jambot's, for the jam's stream: the text holds what is composed, and the playing (timing, dynamics) is the player's |

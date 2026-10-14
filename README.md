@@ -8,4 +8,4 @@ It is the shared core of [Cell studio](https://github.com/yggi/cell-studio), the
 "@yggi/cells": "github:yggi/cells#v0.1.0"
 ```
 
-Start with [docs/MEMORY.md](docs/MEMORY.md) and the [language overview](docs/language/overview.md). It came out of Cell studio with its history ([#1](https://github.com/yggi/cells/issues/1)). MIT.
+Start with [docs/MEMORY.md](https://github.com/yggi/cells/blob/main/docs/MEMORY.md) and the [language overview](https://github.com/yggi/cells/blob/main/docs/language/overview.md) (absolute links: the package ships no `docs/`). It came out of Cell studio with its history ([#1](https://github.com/yggi/cells/issues/1)). MIT.
