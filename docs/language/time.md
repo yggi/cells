@@ -69,4 +69,4 @@ A tap may have a line of its own with attributes only, and stays a tap (`&tuneBa
 
 **`restart=`** names what switching a part on does to its time ([decision 032](../decisions/032-restart-policies.md)), on a tap's line (`&tuneBar restart=restart`) or on the selector, for all its taps: **`restart`**, from its top (the default, what plays today); **`resume`**, its time paused while it is off, going on where it stopped; **`free`**, its time running on global time and only its sound switched (Strudel's default). `resume` and `free` are named but not yet built: they warn and play as `restart`.
 
-The transport marks a selector's sections and jumps to them ([../ui/transport.md](../ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](../limits.md)).
+The transport marks a selector's sections and jumps to them ([../ui/transport.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md)).

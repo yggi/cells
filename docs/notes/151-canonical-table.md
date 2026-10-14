@@ -4,7 +4,7 @@ Date: 2026-10-13 · Status: open (a draft for the owner, row by row) · Issue: [
 
 **The question.** Which spellings of the language mean the same thing, and which one should Normalise write (decision
 [017](../decisions/017-shorten-and-normalise.md))? **The method** ([multiscale.md](multiscale.md#disentanglers-towards-a-minimal-grammar-10-179),
-[10-language-pass.md](10-language-pass.md) §3 and §8): write every row of [reference.md](../language/reference.md) as one
+[10-language-pass.md](https://github.com/yggi/cell-studio/blob/main/docs/notes/10-language-pass.md) §3 and §8): write every row of [reference.md](../language/reference.md) as one
 of four primitives (**look up**, **dilate**, **shift with carry**, **combine**), or soft time, or a parameter of a voice, or
 nothing (display). Rows that land on one primitive with one meaning are a **family**. **The numbers** are over the
 library (77 pieces in `examples/`), by the probe `tools/probe/canonical.test.ts`:
@@ -182,7 +182,7 @@ Why-keys: **short** (fewer characters, never longer) · **Strudel** (decision 02
 | F17 | **trivial spellings** | N/P | comments `#` 355×63, `//` 0; `s=tri` 41×38, `s=saw` 44×31, `triangle` and `sawtooth` 0; the card `&out` 57×57, `&mix` 19×19 | `#`; `tri`, `saw`; the card's name with #150 | lib; #150 |
 
 | F18 | **loudness** | C | `map=amp` 16×10, `map=db` 2×2; a gain number in a product; `gain=` 28×13; `&x:0:g` 83×10; `level=` 2×1; `postgain=` 75×75 | waits on #150's bands (as #151 says); `map=amp` over `map=db` unless the numbers are decibels by nature | ⚖ #150 |
-| F19 | **a gate against a product** | C | products with a voice in a mix 230×73; a gate (`play=` with a braid) 2×1 (*gate*) | the product (shorter, Strudel's `n(…).s(…)`); a gate where its levels are named or it plays several voices | short, lib; ⚖ [gate-example.md](gate-example.md), 006 and 023 settle meaning and the gate's own spelling |
+| F19 | **a gate against a product** | C | products with a voice in a mix 230×73; a gate (`play=` with a braid) 2×1 (*gate*) | the product (shorter, Strudel's `n(…).s(…)`); a gate where its levels are named or it plays several voices | short, lib; ⚖ [gate-example.md](https://github.com/yggi/cell-studio/blob/main/docs/notes/gate-example.md), 006 and 023 settle meaning and the gate's own spelling |
 
 ### Caveats a decision should know
 

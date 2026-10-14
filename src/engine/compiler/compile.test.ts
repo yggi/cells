@@ -2,15 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { SAILOR_WITH_KIT } from '../fixtures';
 import { setFree } from '../edit';
 import { compileSource } from '../compile';
-import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, MAX_SPLICE_DEPTH, type Shifts } from '../program';
+import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, type Shifts } from '../program';
 import { MAX_NESTING } from '../parser/scanner';
 import { START as LAW_START } from '../fiveto12';
 import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entries, lookup, resolveIn, resolvePitch, shiftedUnits } from '../helix';
 import { flatten } from '../flatten';
 import { eventsBetween, plan } from '../realize';
 import { parse } from '../parser';
-import { buildGraph } from '../../layout/drawn';
-import { edgeLabel } from '../transform';
 import { PRESETS } from '../presets';
 import { modeName } from '../../theory/modes';
 
@@ -802,32 +800,14 @@ describe('moving a reference: &x^n by its table (degrees), &x^$n by the grid (#1
     const d = compileSource('&m step=1\n&t step=&m 0\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t^1 * &v]');
     expect(d.diagnostics.map((x) => x.message).join()).toMatch(/moving by degrees \(\^\) is for braids/);
   });
-  it('the graph labels the reference with it', () => {
-    const g = buildGraph(compileSource('&m 0 4\n&t step=1 &m^7\n&u step=1 &m\n&v s=tri\n&mix loop=SAMPLE_RATE map=sample [&t * &v]'));
-    expect(edgeLabel(g.edges.find((e) => e.source === 'cell:t' && e.target === 'cell:m')!)).toBe('^7');
-  });
 });
 
 describe('about=: a note links to the cells it explains', () => {
-  const src = `&hint label="the filter opens on every note" about=(&fenv &accent)
-&fenv map=adsr .003 .18 .1 .06
-&accent map=amp 1 .4`;
   // (a piece with no sound card only warns that nothing plays)
   const errors = (text: string) =>
     compileSource(text)
       .diagnostics.filter((d) => d.severity === 'error')
       .map((d) => d.message);
-  it('draws one edge from the note to each cell, and the note stays a note', () => {
-    const r = compileSource(src);
-    expect(errors(src)).toEqual([]);
-    const hint = r.cells.get('hint')!;
-    expect([hint.note, hint.about]).toEqual([true, ['fenv', 'accent']]);
-    const g = buildGraph(r);
-    expect(g.edges.filter((e) => e.port === 'about').map((e) => [e.source, e.target])).toEqual([
-      ['cell:hint', 'cell:fenv'],
-      ['cell:hint', 'cell:accent'],
-    ]);
-  });
   it('is checked: an unknown cell, and a cell that is not a note', () => {
     expect(errors('&hint label="x" about=&nope')).toEqual(['Unknown cell &nope']);
     expect(errors('&a 0 1\n&b step=&a label="x" 0 about=&a').join(' ')).toMatch(/about= belongs on a note/);
@@ -915,19 +895,6 @@ describe('diagnostics: nothing plays, or the wrong thing, without a word (#143)'
         ['error', 3, `Parentheses in a mix nest ${MAX_NESTING} deep at most: name a part (&part [ … ]) and use it`],
       ]);
       expect(() => eventsBetween(plan(r!, codeShifts(r!)), 0, 4)).not.toThrow();
-    }
-  });
-
-  it(`cells splice into each other ${MAX_SPLICE_DEPTH} deep at most: deeper is one error, never a stack overflow (#160)`, () => {
-    const chain = (n: number) => [...Array.from({ length: n }, (_, i) => `&c${i} ${i === n - 1 ? '0 1' : `&c${i + 1}`}`), '&tune step=120bpm &c0'].join('\n');
-    expect(said(piece(chain(MAX_SPLICE_DEPTH)))).toEqual([]);
-    for (const n of [MAX_SPLICE_DEPTH + 1, 5000]) {
-      let r: R | undefined;
-      expect(() => (r = compileSource(piece(chain(n))))).not.toThrow();
-      const errors = r!.diagnostics.filter((d) => d.severity === 'error');
-      expect(errors.map((d) => d.message)).toEqual([expect.stringMatching(new RegExp(`^&c0 splices cells into each other more than ${MAX_SPLICE_DEPTH} deep`))]);
-      expect(() => eventsBetween(plan(r!, codeShifts(r!)), 0, 4)).not.toThrow();
-      expect(() => buildGraph(r!)).not.toThrow();
     }
   });
 

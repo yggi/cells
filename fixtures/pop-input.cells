@@ -1,0 +1,26 @@
+# Lifted from yggi/cell-studio tools/probe/pieces/pop-input.cells @ e168c8d: the example arranged at the input (decision 016), for src/engine/taps.test.ts.
+&piece title="Pop song, arranged at the input (a probe)" tags="genre:electronic, diatonic, harmony, arrangement" label="Pop rewired at the input (decision 016): the song switches which tap of the bar each part is stepped by; the parts' sound goes straight out." about=&out
+&bar scan(1 1 1 1) step=free(100bpm, 70..140)
+&major scan(2 2 1 2 2 2 1)
+
+# the parts: taps of the bar, declared by the table; the song switches them, a section (four bars) a step
+&parts step=&bar &hatsBar &beatBar &bassBar &keysBar &hookBar &endBar
+&song over=&parts step=&bar/16 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [0,3] [0,1,2,3]!2 [0,1,2,3,4]!2 [3,4] [0,1,2,3,4]!2 [3] 5
+
+&chords tags="keys" over=&major step=&keysBar*2 [0,2,4]!8 [4,6,8]!8 [5,7,9]!8 [3,5,7]!8
+&roots tags="bass" over=&major step=&bassBar*2 0!8 4!8 5!8 3!8
+&hook tags="hook" 4 4 5 4
+&tune tags="hook" over=&major step=&hookBar*2 &hook 2@2 0@2 &hook 2@2 ~@2 &hook^1 4@2 2@2 3 3 2 1 0@4
+&kick tags="drums" map=amp step=&beatBar 1 ~ 1 ~
+&snare tags="drums" map=amp step=&beatBar ~ 1 ~ 1
+&hats tags="drums" map=amp step=&hatsBar*2 .5 .25 .5 .25 .5 .25 .5 .3
+&final tags="keys" over=&major step=&endBar [0,2,4,7]@4
+
+&lead tags="hook" s=square loop=C5 lpf=3000 env=&(map=adsr .01 .2 .6 .2) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
+&keys tags="keys" s=tri loop=C4 env=&(map=adsr .005 .3 .3 .2)
+&bass tags="bass" s=square loop=C2 lpf=500 env=&(map=adsr .005 .15 .5 .05)
+&bd tags="drums" s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
+&sd tags="drums" s=white hpf=1200 env=&(map=adsr 0 .15 0 .05)
+&hh tags="drums" s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
+
+&out postgain=1.78 map=sample [&hats * &hh * .2, &kick * &bd * .8, &snare * &sd * .4, &roots * &bass * .5, &chords * &keys * .15, &tune * &lead * .35, &final * &keys * .2]

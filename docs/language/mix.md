@@ -94,8 +94,8 @@ played), and Shorten rewrites it. A gate times nothing itself: `over=`, `step=` 
 `level=&otherGate` says so.
 
 A gate is where notes become sound, named: the graph draws it as a level meter, a bar per note in its colour, as tall as
-its level, its notes going out to the voices it plays and their sound on from them ([graph.md](../ui/graph.md),
-[decision 022](../decisions/022-gates-send-notes.md)). On a MIDI card a gate is an entry as any mix is (`&synth map=midi &leadOut ~!8 &drums`: all its voices on that channel, a kit's by drum note, [midi.md](midi.md)); without a card, MIDI out sends each gate as one part. The anonymous product,
+its level, its notes going out to the voices it plays and their sound on from them ([graph.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/graph.md),
+[decision 022](https://github.com/yggi/cell-studio/blob/main/docs/decisions/022-gates-send-notes.md)). On a MIDI card a gate is an entry as any mix is (`&synth map=midi &leadOut ~!8 &drums`: all its voices on that channel, a kit's by drum note, [midi.md](midi.md)); without a card, MIDI out sends each gate as one part. The anonymous product,
 `[&tune * &accent * &solo * &lead * .5]`, stays its short form, drawn as a small gate meter.
 
 ## The sound card

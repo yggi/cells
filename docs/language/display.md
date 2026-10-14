@@ -6,7 +6,7 @@ How a cell is shown and described: names, labels, notes, the piece's card, `show
 
 - **label="text"** a name shown instead of `&name`. **title="…"** and **tags="a, b"** take quoted text too; each may be given once per cell.
 - **tags=** on a cell clusters it in the graph, the first tag grouping it; a tag is also a chip in the library.
-- **A note**: a cell with a `label=` or `title=` and nothing else (no braid, `step=`, `over=`, `map=`, `shift=`, `off`, sound parameters). It does nothing; it explains. It is read in the graph's margin, not among the cells, numbered in the order the piece writes notes, and is never clustered ([../ui/graph.md](../ui/graph.md): the margin).
+- **A note**: a cell with a `label=` or `title=` and nothing else (no braid, `step=`, `over=`, `map=`, `shift=`, `off`, sound parameters). It does nothing; it explains. It is read in the graph's margin, not among the cells, numbered in the order the piece writes notes, and is never clustered ([../ui/graph.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/graph.md): the margin).
 - **about=&cell** (or **about=(&a &b)**) on a note links it to the cells it explains: each wears the note's number on its rim. The links are annotation only: they don't change the layout, and a cell that is not a note can't have them. Keep a piece's card to one sentence and put the how-to-listen details in notes next to the cells they are about.
 
 Label templates fill from the cell as it is now, so a key that turns renames itself: `{notes}` (up to 16, then …), `{tonic}`, `{mode}` (bold, the common name first: **Minor** (*Aeolian*)), `{steps}`, `{tempo}` (beats a minute), `{shift}`, `{name}`, and `{&key:tonic}` for another cell's field (a note has none of its own). `**bold**`, `*italic*`, `\n` a new line; other text is escaped. Any other field (`{lap}`, a misspelt `{tempi}`) stays as written, with a warning that lists these.
@@ -37,7 +37,7 @@ The first cell with `title=` is the piece's card: its title names the piece (and
 
 A tier is a stretch of the language: a set of forms of the [reference](reference.md), each form on exactly one tier. Its pieces, as many as it needs (the lowest tier has the most, and the smallest), together show every form the tier introduces, and none uses a form of a later tier. `TIERS` in `src/engine/ladder.ts` lists the forms of each tier and the tiers' names; its test reads what every piece uses and fails on a form used before its tier, a form of a tier that none of its pieces shows, or a form on no tier. A new form in the reference needs a tier (and a piece of that tier needs to use it).
 
-The tiers' numbers are stable, and a piece has no number of its own: a variation is a new file, listed in `ORDER` (`src/engine/order.ts`) where it reads best in its tier, and no card changes. A new tier goes at the end. The tiers and what they introduce are listed in [examples.md](../examples.md#tutorial).
+The tiers' numbers are stable, and a piece has no number of its own: a variation is a new file, listed in `ORDER` (`src/engine/order.ts`) where it reads best in its tier, and no card changes. A new tier goes at the end. The tiers and what they introduce are listed in [examples.md](https://github.com/yggi/cell-studio/blob/main/docs/examples.md#tutorial).
 
 ## show=
 
@@ -60,7 +60,7 @@ Without `show=` it is inferred (a table of 12 is a `key`, a recognised mode a `s
 
 ## Scopes
 
-**scope=** makes a cell a screen; its braid lists its channels, `&a &b`. A scope is read in the graph's margin, and each cell it watches wears a dot in its channel's colour ([../ui/graph.md](../ui/graph.md): the margin). `stack` overlays, `split` a band each, `xy` draws the first against the second (a Lissajous figure). A sound shows its waveform; a stepped or gliding cell its value over the last two seconds. `spectrum` and `waterfall` show frequency: **fold=n** pitches folded by stride (12, by pitch class, default), **bins=n** that many bands without a fold, **channels=sum|split**.
+**scope=** makes a cell a screen; its braid lists its channels, `&a &b`. A scope is read in the graph's margin, and each cell it watches wears a dot in its channel's colour ([../ui/graph.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/graph.md): the margin). `stack` overlays, `split` a band each, `xy` draws the first against the second (a Lissajous figure). A sound shows its waveform; a stepped or gliding cell its value over the last two seconds. `spectrum` and `waterfall` show frequency: **fold=n** pitches folded by stride (12, by pitch class, default), **bins=n** that many bands without a fold, **channels=sum|split**.
 
 ```cells
 &bar scan(1 1 1 1) step=60bpm
@@ -84,4 +84,4 @@ The sound card's **`postgain=`** is its master, a linear gain (1 as it is, .5 ab
 - A note cannot point at the cell it explains.
 - Tag clusters overlap in the largest pieces.
 - A restarted part's playhead shows the global clock, not its own ([braid.md](braid.md)).
-- Physical cells draw as turntables: [physics.md](physics.md). See [../limits.md](../limits.md).
+- Physical cells draw as turntables: [physics.md](physics.md). See [../limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md).

@@ -149,7 +149,7 @@ The Prelude (`stride=5 cycle=95`, 95 numbers) and BWV 847 (`stride=4 cycle=280`)
 
 ### F9 · Voices are instances; the same patch is written twice
 
-Cell Phase has `&mL`/`&mR` and `&pianoL`/`&pianoR`, identical lines, because two players need two instruments (filters are one per voice, [limits.md](../limits.md)); Tines has two identical modulators. `&pianoR &pianoL` makes a kit, not a copy. Shorten's "the same" rule rightly skips voices (merging them would share a filter).
+Cell Phase has `&mL`/`&mR` and `&pianoL`/`&pianoR`, identical lines, because two players need two instruments (filters are one per voice, [limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md)); Tines has two identical modulators. `&pianoR &pianoL` makes a kit, not a copy. Shorten's "the same" rule rightly skips voices (merging them would share a filter).
 
 - **No proposal yet:** whether a product (a junction, nets decision 2) is an instance of its voice is the nets thread's question. Recorded for #10 and limits.
 

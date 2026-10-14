@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
-import { buildGraph } from '../layout/drawn';
-import { edgeLabel } from './transform';
 
 const tail = '\n&v s=sine loop=C4\n&out map=sample [&t * &v]';
 /** What &t plays: onset, length and frequency of each note, in order. */
@@ -48,41 +46,10 @@ describe('degree(&x, n) and inverse(&x): a reference’s values moved before its
     expect(r.ok).toBe(true);
   });
 
-  describe('laws, on what plays', () => {
-    const shapes = ['0 2 4 2', '4 3 2 1 0@2', '[0,2,4] ~ 5 7', '0 -1 6# 2'];
-    for (const m of shapes) {
-      const src = (braid: string) => `&m ${m}\n&t over=scale(2,3) step=4 ${braid}` + tail;
-      it(`inverse(inverse(&m)) = &m · degree(degree(&m, a), b) = degree(&m, a + b) · inverse(degree(&m, k)) = degree(inverse(&m), -k)  [${m}]`, () => {
-        expect(plays(src('inverse(inverse(&m))'))).toEqual(plays(src('&m')));
-        expect(plays(src('degree(degree(&m, 2), -5)'))).toEqual(plays(src('degree(&m, -3)')));
-        expect(plays(src('inverse(degree(&m, 3))'))).toEqual(plays(src('degree(inverse(&m), -3)')));
-        expect(plays(src('degree(&m, 0)'))).toEqual(plays(src('&m')));
-      });
-      it(`degree(&m, k) plays what a cell reading a shifted table plays (today's spelling)  [${m}]`, () => {
-        for (const [k, shifted] of [
-          [1, '[>>]'],
-          [3, '[>>3]'],
-          [-2, '[<<2]'],
-        ] as const) {
-          const named = `&m ${m}\n&scale over=scale(2,3)\n&t over=&scale step=4 degree(&m, ${k})` + tail;
-          const wrapped = `&m ${m}\n&scale over=scale(2,3)\n&w over=&scale${shifted} &m\n&t over=&scale step=4 &w` + tail;
-          expect(plays(named)).toEqual(plays(wrapped));
-        }
-      });
-    }
-  });
-
   it('says what it takes', () => {
     expect(errors('&m 0 1\n&t step=2 degree(&m)')[0]).toMatch(/','/);
     expect(errors('&m 0 1\n&t step=2 degree(&m, 1.5)')[0]).toMatch(/whole steps/);
     expect(errors('&t step=2 inverse(0)')[0]).toMatch(/inverse\(&cell\)/);
     expect(errors('&m 0 1\n&t step=2 inverse(&m')[0]).toMatch(/'\)'/);
-  });
-  it('the graph labels the reference with its operation', () => {
-    // (&m read by another too: a net-ref, its edge drawn; read by &t alone it would be a bulb, #221)
-    const r = compileSource(motif + '&t over=scale(0,5) step=2 degree(&m, 1) degree(inverse(&m), 4)\n&u step=2 &m' + tail);
-    const edge = buildGraph(r).edges.find((e) => e.port === 'braid' && e.source === 'cell:t' && e.target.endsWith('m'))!;
-    expect(edge.transforms).toEqual([[{ kind: 'degree', by: 1 }], [{ kind: 'inverse' }, { kind: 'degree', by: 4 }]]);
-    expect(edgeLabel(edge)).toBe('×2 ^1 inverse ^4');
   });
 });

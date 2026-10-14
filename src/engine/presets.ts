@@ -13,11 +13,11 @@ import { ORDER, type PresetKey } from './order';
 
 export type { PresetKey };
 
-const files = import.meta.glob('/examples/*.cells', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+import { EXAMPLE_SOURCES } from './examples.generated';
 
 /**
- * Every example's source, read eagerly: for the tests. The app loads pieces on demand
- * (src/examples.ts: an index made at build time, a source fetched when a piece opens).
+ * Every example's source, read eagerly from the generated index (tools/examples.ts), with no file system or bundler: for
+ * the tests, and for any host that wants them all. A workbench may load pieces on demand instead.
  *
  * Examples, from one feature at a time (key and mode, rhythm, motifs, a
  * turning table, canon, sound, stereo) to the full pieces: one file each in
@@ -25,7 +25,7 @@ const files = import.meta.glob('/examples/*.cells', { query: '?raw', import: 'de
  */
 export const PRESETS = Object.fromEntries(
   ORDER.map((key) => {
-    const source = files[`/examples/${key}.cells`];
+    const source = EXAMPLE_SOURCES[key];
     if (source === undefined) throw new Error(`examples/${key}.cells is missing`);
     return [key, { source: source.replace(/\n$/, '') }];
   }),

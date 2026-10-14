@@ -92,7 +92,7 @@ Written in place they hang as petals of the voice; named, one envelope serves se
 
 ## Volume streams
 
-`map=db` takes decibels: 0 full, −6 about half. A cell with **`map=amp`** in a product is a volume, not a pitch: its values multiply the level while notes sound (1 full, 0 silent; a rest is silence). `&accent map=amp step=&bar*2 1 .3 .6 .3` accents eighths; `&env map=amp loop=&theme 1 .7 .5 .3 0` is an envelope — one shape per note. With no moving pitch, a volume with `step=` starts the notes itself (a gate): `&mix [&hats * &hh]` plays a hi-hat on its steps, at their levels. (Planned: `gate(&rhythm) * …` to articulate explicitly; see [../roadmap.md](../roadmap.md).)
+`map=db` takes decibels: 0 full, −6 about half. A cell with **`map=amp`** in a product is a volume, not a pitch: its values multiply the level while notes sound (1 full, 0 silent; a rest is silence). `&accent map=amp step=&bar*2 1 .3 .6 .3` accents eighths; `&env map=amp loop=&theme 1 .7 .5 .3 0` is an envelope — one shape per note. With no moving pitch, a volume with `step=` starts the notes itself (a gate): `&mix [&hats * &hh]` plays a hi-hat on its steps, at their levels. (Planned: `gate(&rhythm) * …` to articulate explicitly; see [../roadmap.md](https://github.com/yggi/cell-studio/blob/main/docs/roadmap.md).)
 
 ## map=lin everywhere
 
@@ -102,4 +102,4 @@ Values ramp to the next instead of holding: a voice's waveform (round its cycle)
 
 Among the pitches acting on a voice, the one with `step=` timing starts notes; `loop=` terms bend them while they sound (vibrato); terms that don't move transpose. Of several with `step=` timing, the finest starts notes and the coarser ones hold under it, as a melody moves over its harmony: `(&walk + &changes) * &bass` with `&walk step=&bar` and `&changes step=&bar/4 0 0 5 0` walks a bar at a time, each bar transposed by its change. Two at the same rate are an error (which one starts the notes?).
 
-Filters are one per voice (as on a monosynth): overlapping notes share the last envelope; see [../limits.md](../limits.md).
+Filters are one per voice (as on a monosynth): overlapping notes share the last envelope; see [../limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md).

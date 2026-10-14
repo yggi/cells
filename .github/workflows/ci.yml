@@ -1,0 +1,31 @@
+# A witness, not the gate: the gate is `npm run verify` in the pre-push hook, which costs no Actions minutes.
+# The family's CI budget (yggi/music-commons): one job, only on pull requests out of draft, a superseded run cancelled,
+# a timeout; the slow tests by hand (Run workflow, `slow: true`).
+name: ci
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      slow:
+        description: Run the slow tests too
+        type: boolean
+        default: false
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run verify
+      - if: inputs.slow
+        run: npm run test:slow

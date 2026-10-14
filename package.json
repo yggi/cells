@@ -1,0 +1,49 @@
+{
+  "name": "@yggi/cells",
+  "version": "0.1.0",
+  "description": "The cells language: parse, compile, realize, the headless engine, Shorten, the folder (MIDI to cells).",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./engine/*": "./src/engine/*.ts",
+    "./theory/*": "./src/theory/*.ts",
+    "./examples/*": "./examples/*",
+    "./midi/*": "./midi/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "examples",
+    "midi",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "vitest run --project quick",
+    "test:all": "vitest run",
+    "test:slow": "vitest run --project slow",
+    "check": "tsc -p tsconfig.pure.json && tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip",
+    "examples": "node --experimental-strip-types --no-warnings tools/examples.ts",
+    "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "knip": "^6.40.0",
+    "prettier": "^3.9.9",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

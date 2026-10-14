@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": ["Bash(npm run verify)", "Bash(npm test)", "Bash(npm run test:all)", "Bash(npm run examples)", "Bash(npx vitest run:*)"]
+  },
+  "hooks": {
+    "SessionStart": [{ "matcher": "startup|resume", "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh" }] }]
+  }
+}

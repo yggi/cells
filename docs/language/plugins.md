@@ -1,6 +1,6 @@
 # Plugins
 
-A **plugin** is a `show=` wheel beyond the language's own, drawn by code. The core stays lean: the app ships a bundle of **built-in plugins**, and a piece can carry one of its own. A plugin changes only how a cell is drawn, never how it sounds. Why, and what is not built yet: [decision 011](../decisions/011-plugins.md).
+A **plugin** is a `show=` wheel beyond the language's own, drawn by code. The core stays lean: the app ships a bundle of **built-in plugins**, and a piece can carry one of its own. A plugin changes only how a cell is drawn, never how it sounds. Why, and what is not built yet: [decision 011](https://github.com/yggi/cell-studio/blob/main/docs/decisions/011-plugins.md).
 
 ## Built in
 

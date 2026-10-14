@@ -1,6 +1,6 @@
 # 023 · A gate is `play=`, `level=` and what it plays: a voice, a kit, or a chord
 
-**Date:** 2026-10-11 · **Status:** accepted (owner: answers 1 and 3 on [the note](../notes/gate-example.md)) · Issues: #234, #10
+**Date:** 2026-10-11 · **Status:** accepted (owner: answers 1 and 3 on [the note](https://github.com/yggi/cell-studio/blob/main/docs/notes/gate-example.md)) · Issues: #234, #10
 
 ## Context
 

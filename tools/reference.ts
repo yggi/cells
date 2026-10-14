@@ -17,7 +17,7 @@ import { REFERENCE_SYNTAX } from '../src/engine/parser/scanner';
 import { SECTIONS, syntax, type Section, type Syntax } from '../src/engine/parser/syntax';
 import { MAP_KINDS, MAP_SYNTAX, STEP_SYNTAX as RATE_SYNTAX } from '../src/engine/parser/values';
 import { RATE_UNITS } from '../src/engine/parser/units';
-import { SHOW_MEANING } from '../src/layout/show';
+import { SHOW_MEANING } from '../src/engine/parser/showMeaning';
 import { SORT_SYNTAX } from '../src/engine/compiler/sorts';
 
 const sentence = (s: string) => s[0].toUpperCase() + s.slice(1) + (/[.)]$/.test(s) ? '' : '.');

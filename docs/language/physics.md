@@ -86,4 +86,4 @@ Metal is inharmonic: a `map=ratios` grid of a beam's partials (`1 2.756 5.404 8.
 
 - Belts do not pull back on their driver (load is static `mass=`/`friction=`); belts between non-meter cells in chains are not built. No flutter beside `wow=`.
 - Tape pitch under `varispeed=` is limited to two octaves either way; a tape at a standstill records nothing.
-- FM has no feedback, and no loops between operators. See [../limits.md](../limits.md).
+- FM has no feedback, and no loops between operators. See [../limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md).

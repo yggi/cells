@@ -25,5 +25,5 @@ Every example that writes `[<<n]` means a copy: *Frère Jacques* is a round of o
 ## Consequences
 
 - No piece changes: the events are the same (`src/engine/snapshot.test.ts` unchanged).
-- The graph draws both as one net with delayed taps (`GraphNet.delayed`): each tap leaves the owner with its delay on it, a star, as a tape's heads leave the tape, because each delay counts from the owner, not from the reader next to it ([ui/graph.md](../ui/graph.md)).
+- The graph draws both as one net with delayed taps (`GraphNet.delayed`): each tap leaves the owner with its delay on it, a star, as a tape's heads leave the tape, because each delay counts from the owner, not from the reader next to it ([ui/graph.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/graph.md)).
 - `&<` gets its own decision record when (if) it is built.

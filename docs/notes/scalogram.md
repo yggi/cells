@@ -215,7 +215,7 @@ Of the best swells of the three together (twice as many as boundaries), those th
 ## Into the app: engine/time and the time view
 
 The probe's arithmetic is now `src/engine/time/` (pure, tested; the probes use it), and its first consumer in the app
-is the **time view** ([ui/time.md](../ui/time.md)): time across, the tower's axis up, the scalogram in the slow and the
+is the **time view** ([ui/time.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/time.md)): time across, the tower's axis up, the scalogram in the slow and the
 pulse, the notes and the waterfall in the audible, the waveform at the top. Pictures: `node tools/gallery.mjs time`.
 
 ![Hypercell in the time view](scalogram-time-hypercell.png)

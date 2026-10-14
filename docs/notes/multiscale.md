@@ -146,7 +146,7 @@ The owner's idea: *every output not overridden by something else is hot and wire
 
 ### Shorten, the secret hero: a ratchet
 
-Shorten (`src/engine/shorten/`, [../ui/shorten.md](../ui/shorten.md)) is the one part of the app that goes from the boundary inwards: it reads what is written out and folds it, one rule a file (runs, phrases, fractions, same cells, wrappers …), measured by the code's length and checked note for note. That is renormalization by compression: a minimum-description-length step [Rissanen 1978]. `phrases.ts` (a phrase written twice becomes a cell) is the same idea as Sequitur's grammar induction [Nevill-Manning & Witten 1997]; a library of abstractions grown by compressing a corpus of solutions is DreamCoder's [Ellis et al. 2021].
+Shorten (`src/engine/shorten/`, [../ui/shorten.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/shorten.md)) is the one part of the app that goes from the boundary inwards: it reads what is written out and folds it, one rule a file (runs, phrases, fractions, same cells, wrappers …), measured by the code's length and checked note for note. That is renormalization by compression: a minimum-description-length step [Rissanen 1978]. `phrases.ts` (a phrase written twice becomes a cell) is the same idea as Sequitur's grammar induction [Nevill-Manning & Witten 1997]; a library of abstractions grown by compressing a corpus of solutions is DreamCoder's [Ellis et al. 2021].
 
 **The ratchet** (the owner's): can Shorten find the folded shape from the unfolded one? Each stage moves the input further out towards the boundary; each is scored over the library and recorded as a baseline that may not get worse, as the layout's is (`quality.baseline.json`):
 

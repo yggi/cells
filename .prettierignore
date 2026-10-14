@@ -1,0 +1,14 @@
+# Prose and the language's text: docs have ```cells blocks the tests compile, examples are the product's text
+docs
+examples
+midi
+fixtures
+*.md
+# Data that a test or a tool writes; formatting it would drift on the next record
+src/engine/fold/ratchet.baseline.json
+src/engine/fold/ratchet.midi.*.json
+tools/bwv847.reference.json
+src/engine/examples.generated.ts
+package-lock.json
+.claude
+node_modules

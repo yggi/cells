@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { buildGraph } from '../layout/drawn';
-import { edgeLabel } from './transform';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -138,13 +136,6 @@ describe('Tape Machine and Automaton', () => {
     expect(last.at).toBeGreaterThan(40);
     expect(Math.min(...keys.filter((k) => k.at > 42).map((k) => k.freq))).toBeLessThan(Math.min(...ref.map((k) => k.freq)));
     void same;
-  });
-  it('the automaton: its bells exact, its drummer behind them at first, its woodblock behind for good', async () => {
-    const { PRESETS } = await import('./presets');
-    const r = compileSource((PRESETS as Record<string, { source: string }>).automaton.source);
-    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
-    const g = buildGraph(r);
-    expect(edgeLabel(g.edges.find((e) => e.port === 'step' && e.source === 'cell:wood')!)).toMatch(/belt/);
   });
 });
 

@@ -16,7 +16,7 @@ A cell looped at an audio rate is a voice ([sound.md](../language/sound.md)), so
 
 ## Why
 
-- Every piece starts with one line: the smallest tower, one wheel turning at audio rate and the boundary it sounds into ([notes/10-language-pass.md](../notes/10-language-pass.md) §8).
+- Every piece starts with one line: the smallest tower, one wheel turning at audio rate and the boundary it sounds into ([notes/10-language-pass.md](https://github.com/yggi/cell-studio/blob/main/docs/notes/10-language-pass.md) §8).
 - Nothing new is invented. The pitch identity is the mix algebra's own, and the built-in card was multiscale.md's implicit `&out`, in the variant "only when no card is written", which changes no example.
 - Strudel's smallest piece is an event (`note("a4")`); ours is an oscillator. That is a difference of model, said in the docs for Strudel users.
 

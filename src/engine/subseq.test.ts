@@ -3,10 +3,7 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { flatten } from './flatten';
 import { eventsBetween, plan } from './realize';
-import { liveAt } from './live';
 import { parse } from './parser';
-import { buildGraph } from '../layout/drawn';
-import { cellView } from '../layout/cellview';
 
 // Brackets read as Strudel's mini-notation does (decision 027): `[a b]` a subsequence, `[a, b]` a chord, `[a b, c]` a stack.
 
@@ -210,26 +207,6 @@ describe('cells inside a subsequence', () => {
     ]);
   });
 
-  it('a splice inside is a splice: checked, drawn and lit', () => {
-    expect(
-      compileSource('&t [&nope 0]')
-        .diagnostics.map((d) => d.message)
-        .join(),
-    ).toMatch(/nope/);
-    expect(
-      compileSource('&a [&t 0]\n&t [0 &a]')
-        .diagnostics.map((d) => d.message)
-        .join(),
-    ).toMatch(/Circular reference/);
-    const r = clean('&a 0 2\n&t step=1 [&a^1 7] 9\n&v s=sine loop=C4\n&out map=sample [&t * &v]');
-    expect(r.cells.get('t')!.children.get('a')).toBe(1);
-    const g = buildGraph(r, { bulbs: false });
-    expect(g.edges.find((e) => e.source === 'cell:t' && e.target === 'cell:a')).toBeDefined();
-    // (at a quarter of the first second &a's second note plays: lit, through &a)
-    const live = liveAt(r, codeShifts(r), new Set(), 0.3);
-    expect(live.nodes.has('cell:a')).toBe(true);
-  });
-
   it('a pick takes a subsequence as one step', () => {
     expect(steps('&x[1] &x[1]', '&x 0 [2 4] 5\n')).toEqual([
       [0, 0.5, 2],
@@ -300,24 +277,6 @@ describe('cells inside a subsequence', () => {
     expect(kind('[&a &b]')).toBe('seq');
     expect(kind('[&a, &b &c]')).toBe('seq');
     expect(kind('[0 [&a, &b]]')).toBe('seq');
-  });
-});
-
-describe('subsequences drawn', () => {
-  it("the wheel splits a subsequence's step among its notes", () => {
-    const r = clean('&t [0 2] 4');
-    const v = cellView(r, 't', codeShifts(r), false)!;
-    expect(v.segments.map((s) => [s.t0, s.t1, s.index])).toEqual([
-      [0, 0.25, 0],
-      [0.25, 0.5, 0],
-      [0.5, 1, 1],
-    ]);
-    expect(v.detents).toBe(2);
-  });
-  it('a splice inside one is a bulb in its slot', () => {
-    const r = clean('&a 0 2\n&t step=1 [&a 7] 9\n&v s=sine loop=C4\n&out map=sample [&t * &v]');
-    const v = cellView(r, 't', codeShifts(r), false)!;
-    expect(v.bulbs?.map((b) => [b.name, b.t0, b.t1])).toEqual([['a', 0, 0.25]]);
   });
 });
 

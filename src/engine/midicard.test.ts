@@ -7,7 +7,6 @@ import { eventsBetween, outputPlays, outputSounds, plan } from './realize';
 import { channelTable, midiNote, router, routesOf } from './midi';
 import { flows } from './flows';
 import { routing } from './routing';
-import { buildGraph } from '../layout/drawn';
 import { cellId, edgeId } from './ids';
 import { PRESETS } from './presets';
 
@@ -207,20 +206,6 @@ describe('a MIDI card in the flows, the routing and the graph', () => {
     const off = routing(r, new Set([cellId('synth')]));
     for (const n of ['sub', 'bass']) expect(off.nodes.has(cellId(n)), n).toBe(false);
     expect(off.nodes.has(cellId('reed'))).toBe(true);
-  });
-
-  it('the graph draws the card as a node, its products as junctions into it, every wire a note bus', () => {
-    const model = buildGraph(compileSource(src));
-    expect(model.nodes.find((n) => n.id === cellId('synth'))?.kind).toBe('cell');
-    const into = model.edges.filter((e) => e.to === cellId('synth'));
-    // (a product's notes go to its voice, which goes out on the card: #234)
-    expect(into.map((e) => [e.port, e.band, e.from]).sort()).toEqual([
-      ['midi', 'cv', 'cell:groove'],
-      ['midi', 'cv', 'cell:reed'],
-      ['midi', 'cv', 'cell:sub'],
-    ]);
-    // (the melody into the product, its voice the product's definition, as in a mix)
-    expect(model.edges.some((e) => e.from === cellId('bass') && e.to === 'junction:synth:1' && e.port === 'voice')).toBe(true);
   });
 });
 
