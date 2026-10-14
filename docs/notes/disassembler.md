@@ -128,7 +128,7 @@ recovers, what exists, what's missing:
 | near the same | a tonal answer, a bent entry | `&m2 base=&m1 =!3 -7` | variants ✓ |
 | slower or faster | augmentation | `&m@2` | stretch, dilate ✓ |
 | one figure over slow chords (a fast cell reading a slow one) | BWV 847's prelude | `&run over=&chords &figure!24` | figure ✓ |
-| **a path of transpositions** (a fast cell moved by a slow one) | a sequence; the canon per tonos, the whole canon a tone higher each pass | a key cell stepped slowly, the lines read through a scale over it: `&key step=cycle(&theme) stride=2`, `&scale over=&key …` (`examples/pertonos.cells`) | found per line, not shared: through MIDI the example comes back as `&reed &m1 &m1^$8 &m1^$16`, `&viola &m3^$-5 &m3^$-1 &m3^$3 …` (+4 each), `&cello &m5^$-17 &m5^$-9 &m5^$-1`: each line's own path, in Re-Pair's binary pieces. That the three lines share one path, a key moving a tone a pass, isn't looked for |
+| **a path of transpositions** (a fast cell moved by a slow one) | a sequence; the canon per tonos, the whole canon a tone higher each pass | a key cell stepped slowly, the lines read through a scale over it: `&key step=cycle(&theme) stride=2`, `&scale over=&key …` (`examples/pertonos.cells`) | each line's own path, in Re-Pair's binary pieces; a path **shared by lines** is found over all the notes by `tools/disasm/paths.ts` (#381, *Shared paths* below) and measured as a key cell, not yet written by the folder |
 | one table read as a clock and as a scale | the bell: 2 2 2 1 2 2 1 is the standard bell and the major scale | one `scan` read by `step=` and by `over=` | heard by `time/necklace.ts` (5 to 12); **not** looked for by the folder |
 | inversion, retrograde | a canon per motum contrarium, cancrizans | no spelling | — (a language question) |
 | a voice copied later | a canon | `[<<n]` copies (decision 010) | across lines, as pairs ✓; the delay as such, no |
@@ -255,6 +255,50 @@ boundaries? This scores the swells of three scalograms against the phrases' star
 - A boundary heard by a key change (the scalogram's *harmony* signal, which found 5 to 12's keys) is the next
   signal to try on counterpoint.
 
+## Shared paths (#381)
+
+`tools/disasm/paths.ts` finds a passage that comes back again and again, each time moved by one step, over all the
+notes at once, voices and lines together. It is SIA's vector table (Meredith, Lemström & Wiggins 2002;
+[disassembler-literature.md](disassembler-literature.md), topic 1), written from its description:
+- **The points:** every note as (onset, pitch).
+- **SIA:** every vector between two notes, with the notes it maps onto notes (its maximal translatable pattern).
+- **A path:** the notes whose images under v, 2v … (K−1)v are all notes (SIATEC's translators, asked only of a
+  step's multiples), for K ≥ 3 passes, a step of at most an octave, the pattern in two lines or more.
+
+What a path is worth is measured, not estimated:
+- every note of a line in pass k is written k·Δp lower, from that line's own phase, since a canon's voices enter one
+  after another;
+- the folder folds that;
+- the key cells' text is added (`scan(2!12)` for a path from the start, as the example writes its key);
+- the result is set against the fold as it is.
+
+The bench reports, per file, the shared paths, the most repeated, and the best saving of the first three
+(`SET=examples` runs the examples through MIDI). It takes 0.07 s for the canon per tonos, 0.3 s for BWV 847 and 4 s
+for Pachelbel's 5,632 notes.
+
+| | files with shared paths | key cells that save | they save |
+|---|---|---|---|
+| the examples (75) | 9 | 1: the canon per tonos | 70 characters, of its notes' 332 (−21 %) |
+| the MIDI library (88) | 36 | 2: the WTC I/2 and I/11 fugues | 101, 14 |
+
+**What it shows:**
+- **The canon per tonos' plan is found as Bach wrote it.** Through MIDI, one pattern: every note of a pass (51) in
+  all three lines, twelve passes, each a whole tone up. As key cells its notes take 262 characters instead of 332.
+- **Bach's two-voice sequences are everywhere** (36 of the 88 files): a passage handed down a step three times across
+  both hands, the episodes' *Fortspinnung*. The finder names them, but as key cells they cost (−10 to −240): the fold
+  already writes three passes as three splices, which is cheaper than a key cell. A key cell pays for a long path,
+  not a short one.
+- **So the folder should write a key cell only where the measure says it saves.** Over today's corpus that is the
+  canon per tonos and two fugues. The measure is the gate, as for every other tool.
+- **The tempo map outweighs the notes** where a piece's bar is uneven: the canon per tonos' `&tempo` line is 1,613 of
+  its 1,945 characters, and over the examples the tempo lines are 41 % of the folded score (#404).
+
+**Not yet:**
+- the folder writing the key cell (the canon per tonos as its example writes it);
+- paths in degrees (Bach's sequences move by a step of the scale, not always the same semitones, so a chromatic
+  finder sees only those that happen to be exact);
+- naming the transformation a path repeats (#401).
+
 ## Known swamps (to confirm or rule out in #365)
 
 - **Polyphonic transcription from scratch.** Use a published model as a loader; ours is the analysis after it.
@@ -273,8 +317,9 @@ boundaries? This scores the swells of three scalograms against the phrases' star
   - voices in the importer;
   - keys per section on voices;
   - the heard metric as a ratchet once it settles.
-- **The folder's next higher-order tool:** a path shared by lines into a key cell (the canon per tonos), then a table
-  read as a clock and as a scale (the bell). Both are said by the language today.
+- **The folder's next higher-order tool:** the key cell written by the folder where it saves (*Shared paths* above:
+  the canon per tonos), paths in degrees, then a table read as a clock and as a scale (the bell). All are said by the
+  language today.
 - **⚖ the owner:**
   - inversion and retrograde, if the literature's canons need them.
 - **The loaders:**
