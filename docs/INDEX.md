@@ -3,6 +3,7 @@
 The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 
 - [MEMORY.md](MEMORY.md) — entrypoint: the project, the family, the map, the cheatsheet, decisions
+- [architecture.md](architecture.md) — what lives where in the engine, and how text becomes events
 
 ## language/
 
