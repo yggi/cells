@@ -1,0 +1,229 @@
+import { describe, expect, it } from 'vitest';
+import { SAILOR_WITH_KIT } from './fixtures';
+import { compileSource } from './compile';
+import { codeShifts, type CompileResult } from './program';
+import { buildGraph } from '../layout/drawn';
+import { eventsBetween, plan } from './realize';
+import { liveAt } from './live';
+import { drawn, edgeStateOf, nodeStateOf, routing } from './routing';
+import { PRESETS } from './presets';
+import { mainLength, pieceTime } from './duration';
+
+const OUT = '&out loop=SAMPLE_RATE map=sample';
+const src = (...lines: string[]) => compileSource(lines.join('\n'));
+const on = (r: CompileResult, muted: ReadonlySet<string> = r.off) => routing(r, muted);
+/** States as drawn, by short name: nodes `name`, edges `a->b` (step edges `a~>b`); a product's junction `*mix:entry`. */
+function states(r: CompileResult, t: number | null, muted: ReadonlySet<string> = r.off) {
+  const g = buildGraph(r);
+  const routed = drawn(g, routing(r, muted));
+  const live = t === null ? null : drawn(g, liveAt(r, codeShifts(r), muted, t));
+  const out = new Map<string, string>();
+  const short = (id: string) => id.replace(/cell:/g, '').replace(/junction:/g, '*');
+  for (const n of g.nodes) out.set(short(n.id), nodeStateOf(n.id, muted, routed, live));
+  // (a bulb is its cell, drawn on its host's wheel: its state, as the wheel draws it)
+  for (const b of g.bulbs.keys()) out.set(b, nodeStateOf(`cell:${b}`, muted, routed, live));
+  for (const e of g.edges) out.set(short(e.id), edgeStateOf(e, muted, routed, live));
+  return out;
+}
+
+describe('routing: the clocks a parameter reads are wires too (#188, #193)', () => {
+  // Baustelle II with a tape and a head that read the bar: `length=&bar/4`, `at=&bar*2/3`
+  const resonanz = () => compileSource(PRESETS.resonanz.source.replace('length=5', 'length=&bar/4').replace('at=1.15', 'at=&bar*2/3'));
+  it("a read head's at= clock is lit with the head, as the tape's length= is", () => {
+    const r = resonanz();
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(on(r).edges.has('cell:h1~at>cell:bar')).toBe(true);
+    const static_ = states(r, null);
+    const live = states(r, 3.3);
+    for (const s of [static_, live]) expect(['on', 'live', 'idle']).toContain(s.get('tape~length>bar'));
+    expect(['on', 'live', 'idle']).toContain(static_.get('h1~at>bar'));
+    expect(['live', 'idle']).toContain(live.get('h1~at>bar'));
+  });
+  it("a voice's map=&table in a mix is one wire into the voice, lit with it", () => {
+    const r = src('&bar step=1', '&mel step=&bar 0 2', '&curve 0 1 .3 -1', '&v loop=C4 map=&curve 0 1 2 3', '&w loop=C3', `${OUT} [&mel * &v, &mel * &w]`);
+    const s = states(r, 0.2);
+    expect([s.get('curve'), s.get('curve~map>v')]).toEqual(['live', 'live']);
+    expect(s.has('curve~map>w')).toBe(false);
+  });
+});
+
+describe('routing: one model for what the graph draws as part of the sound (#11)', () => {
+  it('a cell that only moves a voice (a filter, a pitch) is part of the sound', () => {
+    const r = src('&bar step=1', '&mel step=&bar 0 2', '&sweep map=lin loop=.5 0 1', '&v s=saw loop=C3 lpf=200..2000 * &sweep', `${OUT} [&mel * &v]`);
+    const s = states(r, 0.2);
+    expect([s.get('sweep'), s.get('sweep->v')]).toEqual(['live', 'live']);
+  });
+  it("a voice's wave table (map=&curve) is part of its sound: one wire, from the table into the voice (#182)", () => {
+    const r = src('&bar step=1', '&mel step=&bar 0 2', '&curve 0 1 .3 -1', '&v loop=C4 map=&curve 0 1 2 3', `${OUT} [&mel * &v]`);
+    const e = buildGraph(r).edges.filter((x) => x.port === 'map');
+    expect(e.map((x) => [x.from, x.to, x.band, x.width, x.pointer])).toEqual([['cell:curve', 'cell:v', 'cv', 4, true]]);
+    const s = states(r, 0.2);
+    expect([s.get('curve'), s.get('curve~map>v')]).toEqual(['live', 'live']);
+    // (a built-in map is no wire)
+    expect(buildGraph(src('&v loop=C4 map=lin 0 1', `${OUT} &v`)).edges.filter((x) => x.port === 'map')).toEqual([]);
+  });
+  it('a braid of chance choices plays, so it is routed', () => {
+    const r = src('&bar step=4', '&g step=&bar [0|2|4]? ~ [5|7]?', '&v s=sine loop=C4', `${OUT} [&g * &v]`);
+    expect(on(r).nodes.has('cell:g')).toBe(true);
+    expect(states(r, null).get('g->*out:0')).toBe('on');
+  });
+  it('the step= chain moves what it drives: routed, and live while it plays', () => {
+    const r = src('&bar step=2', '&half step=&bar*2 0', '&mel step=&half 0 2', '&v s=sine loop=C4', `${OUT} [&mel * &v]`);
+    const s = states(r, 0.1);
+    expect([s.get('mel~>half'), s.get('half~>bar')]).toEqual(['live', 'live']);
+  });
+  it('a selector: the tap it has on lights what it steps, the others wait (a voice in two parts too: decision 016)', () => {
+    const r = src(
+      '&bar step=1',
+      '&parts step=&bar &aBar &bBar',
+      '&a step=&aBar 0',
+      '&b step=&bBar 7',
+      '&v s=tri loop=C4',
+      '&w s=sine loop=C4',
+      '&song over=&parts step=&bar/4 0 1',
+      `${OUT} [&a * &v, &b * &w, &b * &v]`,
+    );
+    expect(r.diagnostics).toEqual([]);
+    const keys = ['song', 'song->parts', 'parts', 'aBar', 'aBar->a~', 'a', 'a->*out:0', 'v', 'v->out', 'bBar', 'bBar->b~', 'b', 'b->*out:1', 'w', 'w->out'];
+    const at = (t: number) => Object.fromEntries(keys.map((k) => [k, states(r, t).get(k)]));
+    const [a, b] = [
+      ['aBar', 'aBar->a~', 'a', 'a->*out:0'],
+      ['bBar', 'bBar->b~', 'b', 'b->*out:1', 'w', 'w->out'],
+    ];
+    const both = { song: 'live', 'song->parts': 'live', parts: 'live', v: 'live', 'v->out': 'live' };
+    expect(at(0.5)).toEqual({ ...both, ...Object.fromEntries(a.map((k) => [k, 'live'])), ...Object.fromEntries(b.map((k) => [k, 'idle'])) });
+    expect(at(4.5)).toEqual({ ...both, ...Object.fromEntries(a.map((k) => [k, 'idle'])), ...Object.fromEntries(b.map((k) => [k, 'live'])) });
+  });
+  it('a kit: its members are part of the sound, and the one struck now is live', () => {
+    const r = compileSource(SAILOR_WITH_KIT);
+    expect(['bd', 'sd', 'hh', 'kit', 'drums'].every((n) => on(r).nodes.has(`cell:${n}`))).toBe(true);
+    const s = states(r, 0.05); // the kick (each member a bulb on the kit: no edge of its own)
+    expect([s.get('kit->bd'), s.get('bd'), s.get('kit->hh'), s.get('hh')]).toEqual([undefined, 'live', undefined, 'idle']);
+  });
+  it('a groove: a chord of voices lights each of them while it sounds', () => {
+    const r = src('&g step=2 [&bd, &hh] ~', '&bd s=sine loop=A1', '&hh s=white', `${OUT} [&g]`);
+    const live = liveAt(r, codeShifts(r), r.off, 0.1);
+    expect(['bd', 'hh'].map((n) => live.nodes.has(`cell:${n}`))).toEqual([true, true]);
+  });
+  it('an instrument (a mix used like a voice) and a sound tape it records: all on the way while it plays', () => {
+    const r = compileSource(PRESETS.soundtape.source);
+    const s = states(r, 3);
+    for (const k of ['dry', 'tape', 'left', 'right', 'far', 'reel', 'tune->*dry:0', '*dry:0->pluck', 'pluck->dry', 'dry->out', 'dry->tape', 'left->out', 'tape~>reel'])
+      expect(s.get(k), k).toBe('live');
+  });
+  it('a resonator excited by tape heads, and the heads into the sound card', () => {
+    const r = compileSource(PRESETS.resonanz.source);
+    const s = states(r, 2);
+    for (const k of ['site->tape', 'h1', 'h1->echo', 'echo->pipeA', 'pipeA->out', 'hammer->*site:0', '*site:0->plate', 'plate->site']) expect(s.get(k), k).toBe('live');
+  });
+  it('a sound tape nothing hears is not part of the sound (nor what it records)', () => {
+    const r = src(
+      '&bar step=1',
+      '&mel step=&bar 0',
+      '&v s=sine loop=C4',
+      '&send [&mel * &v]',
+      '&tape step=&bar write=&send length=2',
+      '&head play=&tape at=.5',
+      `${OUT} [&mel * &v]`,
+    );
+    const n = on(r).nodes;
+    expect([n.has('cell:tape'), n.has('cell:head'), n.has('cell:send')]).toEqual([false, false, false]);
+    expect(n.has('cell:v')).toBe(true);
+  });
+  it('switched off: a mix off silences what only goes through it; its voices and their melodies are not routed', () => {
+    const r = src('&bar step=1', '&mel step=&bar 0', '&v s=sine loop=C4', '&m [&mel * &v]', `${OUT} &m`);
+    const s = states(r, 0.2, new Set(['cell:m']));
+    expect([s.get('m'), s.get('v'), s.get('mel'), s.get('mel->*m:0'), s.get('*m:0->v'), s.get('v->m')]).toEqual(['off', 'unrouted', 'unrouted', 'unrouted', 'unrouted', 'off']);
+  });
+  it('a table read only through a turning table: what turns it is on the way', () => {
+    const r = compileSource(PRESETS.royal.source);
+    const s = states(r, 1);
+    expect([s.get('key~>theme'), s.get('scale->key')]).toEqual(['live', 'live']);
+  });
+  it('a table lent by a cell that splices one with its own: only the table its notes read', () => {
+    const r = compileSource(PRESETS.cellscape.source);
+    expect(on(r).edges.has('cell:canon->cell:lydian')).toBe(false);
+    expect(on(r).edges.has('cell:melody->cell:lydian')).toBe(true);
+  });
+  it('an oscilloscope is on while what it watches is', () => {
+    const r = compileSource(PRESETS.harmonograph.source);
+    expect(on(r).nodes.has('cell:screen')).toBe(true);
+    expect(on(r, new Set(['cell:tonic', 'cell:fifth'])).nodes.has('cell:screen')).toBe(false);
+  });
+});
+
+describe('routing, every example', () => {
+  for (const [key, p] of Object.entries(PRESETS)) {
+    it(`${key}: the drawn states agree with each other and with what plays`, () => {
+      const r = compileSource(p.source);
+      const g = buildGraph(r);
+      const shifts = codeShifts(r);
+      const all = routing(r, r.off);
+      const routed = drawn(g, all);
+      const graphEdges = new Map(g.edges.map((e) => [e.id, e]));
+      // every routed edge is drawn, unless it goes to a cell that isn't (the implicit grid, show=off)
+      const shown = new Set(g.nodes.map((n) => n.id));
+      for (const id of all.edges) {
+        const [a, b] = id.split(/->|~>/);
+        if (shown.has(a) && shown.has(b) && !g.alias.has(id)) expect(graphEdges.has(id), `${id} is not an edge of the graph`).toBe(true);
+      }
+      // a routed edge's ends are routed
+      for (const id of routed.edges) {
+        const e = graphEdges.get(id)!;
+        expect(routed.nodes.has(e.source) && routed.nodes.has(e.target), `${id}: an end isn't routed`).toBe(true);
+      }
+      const pl = plan(r, shifts, r.off);
+      const length = Math.min(40, mainLength(pieceTime(r)) ?? 20, Number.isFinite(pl.end) ? pl.end : Infinity);
+      const events = eventsBetween(pl, 0, length);
+      // every voice that plays is routed; while one of its notes sounds, it's live
+      for (const e of events) expect(all.nodes.has(`cell:${e.voice}`), `&${e.voice} plays but isn't routed`).toBe(true);
+      for (let t = 0.05; t < length; t += length / 23) {
+        const live = liveAt(r, shifts, r.off, t);
+        for (const n of live.nodes) expect(all.nodes.has(n), `${n} live at ${t.toFixed(2)} s, not routed`).toBe(true);
+        for (const id of live.edges) expect(all.edges.has(id), `${id} live at ${t.toFixed(2)} s, not routed`).toBe(true);
+        for (const e of events) if (e.at <= t && t < e.at + e.dur) expect(live.nodes.has(`cell:${e.voice}`), `&${e.voice} sounds at ${t.toFixed(2)} s, not live`).toBe(true);
+      }
+      // what moves a voice that plays (pitch and volume streams, parameter cells, envelopes) is routed
+      for (const o of r.outputs)
+        if (all.nodes.has(`cell:${o.voice}`) && events.some((e) => e.voice === o.voice)) {
+          const v = r.cells.get(o.voice)!;
+          const movers = [...o.mods, ...o.levels]
+            .map((m) => m.cell)
+            .concat(
+              Object.values(v.paramCells ?? {}).flatMap((pc) => pc.factors),
+              o.envelopeCell ?? [],
+            );
+          for (const m of movers) if (!r.off.has(`cell:${m}`)) expect(all.nodes.has(`cell:${m}`), `&${m} moves &${o.voice}, not routed`).toBe(true);
+        }
+    });
+  }
+});
+
+describe('at rest, nothing is dimmed (#201)', () => {
+  it('a cell and an edge that no sound reaches are on while stopped, unrouted once the transport is not', () => {
+    const r = src('&bar step=1', '&mel step=&bar 0 2', '&lonely 0 1 2', '&v s=saw loop=C3', `${OUT} [&mel * &v]`);
+    expect(states(r, null).get('lonely')).toBe('on');
+    // paused or playing: the state at that moment
+    expect(states(r, 0).get('lonely')).toBe('unrouted');
+  });
+  it('every example, stopped: every node and edge is on or off, never unrouted, idle or live', () => {
+    const bad: string[] = [];
+    for (const [key, p] of Object.entries(PRESETS)) {
+      const s = states(compileSource(p.source), null);
+      for (const [k, v] of s) if (v !== 'on' && v !== 'off') bad.push(`${key}: ${k} ${v}`);
+    }
+    expect(bad).toEqual([]);
+  });
+  it('the heads at rest (the live state at time 0) are worked out for every example, and fast', () => {
+    const t0 = performance.now();
+    let n = 0;
+    for (const p of Object.values(PRESETS)) {
+      const r = compileSource(p.source);
+      const heads = liveAt(r, codeShifts(r), r.off, 0);
+      expect(heads.seconds).toBe(0);
+      n++;
+    }
+    // (a piece is opened or edited and this runs once: no budget to hold to, but a sign if one example is slow)
+    expect((performance.now() - t0) / n).toBeLessThan(50);
+  });
+});
