@@ -19,7 +19,7 @@ Nothing here changes what a piece means or how it sounds: since `v0.1.0`, `src/`
 - The laws of `degree()` and `inverse()` the split lost, and Cell studio's strictness ratchet (`tools/strict.mjs`, in `npm run check`), the engine's architecture and testing pages (#3).
 - The README links the docs on GitHub, since the package ships no `docs/` (#9).
 - The gates (#12, yggi/music-commons#4): a pre-push hook runs `npm run verify` and prints its test count, and a test holds the boot reading (`AGENTS.md` and `docs/MEMORY.md`) under 24 KB.
-- This changelog, and a pull request template.
+- This changelog, a pull request template, and issue templates (bug, design question, epic).
 
 ## v0.1.0 — 2026-10-14
 
