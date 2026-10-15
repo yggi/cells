@@ -77,3 +77,17 @@ describe('docs: the changelog', () => {
     expect(changelogMisses(read(resolve(DOCS, '../CHANGELOG.md')), version)).toEqual([]);
   });
 });
+
+/** The tags the README's pins name that aren't package.json's version: a release moves them together. */
+const stalePins = (text: string, version: string): string[] => [...text.matchAll(/github:yggi\/cells#v([\w.-]+)/g)].map((m) => m[1]).filter((v) => v !== version);
+
+describe('docs: the README', () => {
+  it('is shown firing: a pin on another version is stale', () => {
+    expect(stalePins('"@yggi/cells": "github:yggi/cells#v0.1.0"', '0.2.0')).toEqual(['0.1.0']);
+  });
+
+  it("pins package.json's version, the tag a release makes", () => {
+    const { version } = JSON.parse(read(resolve(DOCS, '../package.json')));
+    expect(stalePins(read(resolve(DOCS, '../README.md')), version)).toEqual([]);
+  });
+});

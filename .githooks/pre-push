@@ -1,19 +1,24 @@
 #!/bin/sh
 # Adapted from yggi/jambot .githooks/pre-push @ 8871429 (its docs-only path and the gh-pages exception left out).
 # Runs `npm run verify` (the purity gate, types, lint, format, knip, the quick tests) before any `git push` of a branch,
-# and blocks the push if it fails. CI is a witness; this is the gate. `.claude/hooks/session-start.sh` points
-# `core.hooksPath` here. Bypassing it with `--no-verify` is not for agents.
+# and blocks the push if it fails. CI is a witness; this is the gate. `npm run verify` (its `preverify`,
+# tools/verified.sh) and `.claude/hooks/session-start.sh` point `core.hooksPath` here. Bypassing it with `--no-verify` is
+# not for agents.
 #
 # - It verifies the working tree, and the push sends the commit, so a dirty tracked tree is refused: commit first, and
-#   push the branch checked out.
+#   push the branch checked out. So is an untracked file git doesn't ignore, unless the commit's tree passed verify
+#   already: verify would see it, and the commit lacks it (a new module left out of `git add` passes, then breaks main).
 # - A tree that passed is remembered by its hash in the git directory (`cells-verified`), so a push retried after a
 #   network failure, or made right after `npm run verify` by hand (its `postverify` stamps the tree,
-#   tools/verified.sh), doesn't run it again.
+#   tools/verified.sh), doesn't run it again. The hook stamps only the tree its own run saw (tools/verified.sh, `begin`
+#   before the check and `end` after a pass): when a file changed while the check ran, the push goes through unstamped.
 # - A run that passed prints one line, with the number of tests that passed, for the pull request to quote.
 # - A run that failed leaves its whole output in the git directory (`cells-verify-failed.log`), named in the message:
 #   the last 40 lines shown may not reach the failure.
 # - Deleting a ref and pushing a tag are not checked.
 # CELLS_VERIFY replaces the check, for tools/hooks.test.ts.
+# The untracked-file rule and the stamp of what the run saw: lifted from yggi/cell-studio .githooks/pre-push @ 90d1619.
+stamp_tool="$(cd "$(dirname "$0")/.." && pwd)/tools/verified.sh"
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
 # git hands the hook one line per ref: local ref, local sha, remote ref, remote sha.
@@ -47,9 +52,18 @@ if grep -qx "$tree" "$stamps" 2>/dev/null; then
   exit 0
 fi
 
+untracked=$(git ls-files --others --exclude-standard)
+if [ -n "$untracked" ]; then
+  echo 'pre-push: verify checks the working tree, and these untracked files are in it but not in the commit:' >&2
+  printf '%s\n' "$untracked" | head -10 | sed 's/^/  /' >&2
+  echo 'pre-push: commit them, ignore them or move them out, then push again (or push after `npm run verify` without them).' >&2
+  exit 1
+fi
+
 # In a linked worktree git hands the hook GIT_DIR and friends, and a check that makes a repository of its own (the
 # hook's tests do) would talk to this one instead.
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
+sh "$stamp_tool" begin
 log=$(mktemp)
 if ! sh -c "${CELLS_VERIFY:-npm run -s verify}" >"$log" 2>&1; then
   # The whole output is kept, since its last lines may miss the failure.
@@ -64,6 +78,12 @@ fi
 esc=$(printf '\033')
 count=$(sed "s/$esc\[[0-9;]*m//g" "$log" | sed -n 's/^ *Tests  *\([0-9][0-9]*\) passed.*/\1/p' | tail -1)
 rm -f "$log"
-grep -qx "$tree" "$stamps" 2>/dev/null || echo "$tree" >>"$stamps"
+# `postverify` has stamped the tree already when the check was `npm run verify`, and this `end` then finds nothing
+# begun. Neither stamps a tree a file changed in while the check ran.
+sh "$stamp_tool" end
+if ! grep -qx "$tree" "$stamps" 2>/dev/null; then
+  echo "pre-push: verify passed, ${count:-an unknown number of} tests, but a file changed while it ran: let through, not stamped" >&2
+  exit 0
+fi
 echo "pre-push: verify passed, ${count:-an unknown number of} tests; tree $short stamped" >&2
 exit 0

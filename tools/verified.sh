@@ -4,7 +4,9 @@
 # (`cells-verified`).
 #
 #   begin  (npm's `preverify`) records the tree verify is about to check: the checkout's files as they are, tracked or
-#          not, but not ignored, written as a git tree through a scratch index (the real index is left alone).
+#          not, but not ignored, written as a git tree through a scratch index (the real index is left alone). It also
+#          points `core.hooksPath` at .githooks when it points elsewhere, and says so, so a clone's first verify installs
+#          the pre-push gate: no install script may (a frontend installs cells from git, tools/hooks.test.ts).
 #   end    (npm's `postverify`, which npm runs only when verify passed) stamps that tree, unless a file changed while
 #          verify ran. A commit of exactly those files then has that tree, and the hook finds it.
 #
@@ -27,6 +29,10 @@ tree() {
 
 case "$1" in
   begin)
+    if [ "$(git config core.hooksPath)" != .githooks ]; then
+      git config core.hooksPath .githooks &&
+        echo 'verify: core.hooksPath now points at .githooks, so every push runs the pre-push gate (.githooks/pre-push)' >&2
+    fi
     tree >"$pending" 2>/dev/null || rm -f "$pending"
     ;;
   end)

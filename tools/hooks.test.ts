@@ -33,6 +33,8 @@ beforeAll(() => {
   git(base, 'init', '-q');
   git(base, 'config', 'user.email', 'hook@test');
   git(base, 'config', 'user.name', 'hook');
+  // As in a checkout whose hook runs: git runs .githooks/pre-push only when core.hooksPath points there.
+  git(base, 'config', 'core.hooksPath', '.githooks');
   writeFileSync(join(base, 'README.md'), 'a\n');
   git(base, 'add', '.');
   git(base, 'commit', '-qm', 'base');
@@ -133,10 +135,37 @@ describe('pre-push', () => {
     expect(stderr).toContain('uncommitted');
   });
 
-  it('is not troubled by an untracked file, which the push does not send', () => {
+  // Lifted from yggi/cell-studio tools/hooks.test.ts @ 90d1619: the untracked-file rule and the stamp of what the run saw.
+  it('refuses an untracked file git does not ignore, which verify would see and the commit lacks, and names it', () => {
     const dir = repoWith(['a.ts']);
+    writeFileSync(join(dir, 'helper.ts'), 'verify needs me\n');
+    const { status, stderr } = hook(dir);
+    expect(status).toBe(1);
+    expect(stderr).toContain('untracked files are in it but not in the commit');
+    expect(stderr).toContain('  helper.ts');
+  });
+
+  it('is not troubled by an ignored file', () => {
+    const dir = repoWith(['a.ts']);
+    writeFileSync(join(git(dir, 'rev-parse', '--absolute-git-dir'), 'info', 'exclude'), 'scratch.txt\n');
     writeFileSync(join(dir, 'scratch.txt'), 'x\n');
     expect(hook(dir).status).toBe(0);
+  });
+
+  it('is not troubled by an untracked file once the commit passed verify without it', () => {
+    const dir = repoWith(['a.ts']);
+    expect(hook(dir).status).toBe(0);
+    writeFileSync(join(dir, 'scratch.txt'), 'x\n');
+    expect(hook(dir, 'head', failing).status).toBe(0);
+  });
+
+  it('stamps the tree its own run saw, and nothing when a file changed while the check ran', () => {
+    const dir = repoWith(['a.ts']);
+    const { status, stderr } = hook(dir, 'head', 'echo edited > a.ts');
+    expect(status).toBe(0);
+    expect(stderr).toContain('a file changed while it ran: let through, not stamped');
+    git(dir, 'checkout', '--', 'a.ts');
+    expect(hook(dir, 'head', failing).status).toBe(1);
   });
 
   it('does not verify a tree twice, so a retried push is free, and says so', () => {
@@ -171,13 +200,26 @@ describe('pre-push', () => {
   it('is what a checkout runs: the session start points core.hooksPath at it', () => {
     expect(readFileSync(`${root}/.claude/hooks/session-start.sh`, 'utf8')).toContain('git config core.hooksPath .githooks');
   });
+
+  it('is what a clone runs after its first verify: preverify points core.hooksPath at it, and says so once', () => {
+    const dir = repoWith(['a.ts']);
+    const begin = () => spawnSync('sh', [`${root}/tools/verified.sh`, 'begin'], { cwd: dir, env, encoding: 'utf8' });
+    git(dir, 'config', '--unset', 'core.hooksPath');
+    expect(spawnSync('git', ['-C', dir, 'config', 'core.hooksPath'], { env }).status).toBe(1);
+    expect(begin().stderr).toContain('core.hooksPath now points at .githooks');
+    expect(git(dir, 'config', 'core.hooksPath')).toBe('.githooks');
+    expect(begin().stderr).toBe('');
+    git(dir, 'config', 'core.hooksPath', 'elsewhere');
+    begin();
+    expect(git(dir, 'config', 'core.hooksPath')).toBe('.githooks');
+  });
 });
 
 /**
  * The scripts a package manager runs when it installs cells from git, as each frontend does (`github:yggi/cells#vX.Y.Z`).
  * pnpm 10 (Jambot's) refuses such a git dependency unless the frontend allows its builds (ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED),
  * and npm (Cell studio's) installs all of cells' devDependencies to run one (pacote's git fetcher). So the hook can't be
- * set by a `prepare` script, as Cell studio's is: a human clone sets it once by hand (AGENTS.md).
+ * set by a `prepare` script, as Cell studio's is: a clone's first `npm run verify` sets it (`preverify`, tools/verified.sh).
  */
 const installScripts = (scripts: Record<string, string>) => ['preinstall', 'install', 'postinstall', 'prepare', 'prepack', 'build'].filter((name) => name in scripts);
 
