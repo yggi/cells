@@ -4,7 +4,7 @@
 
 ## Context
 
-Cells grew its step notation alongside Strudel's mini-notation and its sound parameters alongside dough's. Most spellings agree: `~` `x!n` `x@n` `x*n`, `[a, b]`, `[a|b]`, `euclid`, `s=`, `lpf` … But some are spelled the same and mean something else ([notes/10-language-pass.md](https://github.com/yggi/cell-studio/blob/main/docs/notes/10-language-pass.md) §2, checked against Strudel's and dough's source). The owner's direction: cells sits on top of Strudel and dough as TypeScript sits on JavaScript.
+Cells grew its step notation alongside Strudel's mini-notation and its sound parameters alongside dough's. Most spellings agree: `~` `x!n` `x@n` `x*n`, `[a, b]`, `[a|b]`, `euclid`, `s=`, `lpf` … But some are spelled the same and mean something else ([notes/10-language-pass.md](../notes/10-language-pass.md) §2, checked against Strudel's and dough's source). The owner's direction: cells sits on top of Strudel and dough as TypeScript sits on JavaScript.
 
 ## Decision
 
@@ -36,7 +36,7 @@ Cells grew its step notation alongside Strudel's mini-notation and its sound par
   - `[<<n]` climbing a lap
   - `fm=` naming a cell
   - loudness as products and `level=`
-- New spellings are checked against Strudel's before they land. The owner chose, on this decision's advice ([notes/10-language-pass.md](https://github.com/yggi/cell-studio/blob/main/docs/notes/10-language-pass.md) §7):
+- New spellings are checked against Strudel's before they land. The owner chose, on this decision's advice ([notes/10-language-pass.md](../notes/10-language-pass.md) §7):
   - **`_` is Strudel's elongation** (`0 _ _` is `0@3`), and the step a `base=` copy keeps is **`=`** (decision 026's `_`);
   - **#306's forms:** a tie that slides is dough's `glide=t` (not `legato`, which stays Strudel's note length × n); a hit's own level is a sound's `:` fields as in `s("bd:0:.3")`, `&bd:n:gain` (not `x%n`); a voice's own level is dough's `gain=` (not `level=`).
 - AGENTS.md's "stop before anything that could break saved pieces" reads, until the first release, as "stop before anything that changes how an example sounds".
