@@ -8,6 +8,7 @@ The cells language as a package: a minimal music language where everything is a 
 - `npm run test:all`: the quick and the slow tests (the folder over whole pieces and the MIDI library, about two minutes). Run it when you touch `src/engine/fold/`, `midiimport`, or anything the slow tests read.
 - `npm run examples`: rewrites `src/engine/examples.generated.ts` from `examples/*.cells`; a test fails when it is stale.
 - `npm run types`: rewrites `types/` (the declarations a frontend typechecks against, through the `types` condition of `exports`) from `src/`; a test fails when it is stale. Run it with any change to an exported signature.
+- Skills (`.claude/skills/`): `release` (verify `main`, the changelog and version, the owner's tag, the frontends' pins moved).
 - One file while iterating: `npx vitest run src/engine/parser/parser.test.ts`.
 
 ## Rules
