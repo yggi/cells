@@ -33,6 +33,8 @@ beforeAll(() => {
   git(base, 'init', '-q');
   git(base, 'config', 'user.email', 'hook@test');
   git(base, 'config', 'user.name', 'hook');
+  // As in a checkout whose hook runs: git runs .githooks/pre-push only when core.hooksPath points there.
+  git(base, 'config', 'core.hooksPath', '.githooks');
   writeFileSync(join(base, 'README.md'), 'a\n');
   git(base, 'add', '.');
   git(base, 'commit', '-qm', 'base');
@@ -133,10 +135,37 @@ describe('pre-push', () => {
     expect(stderr).toContain('uncommitted');
   });
 
-  it('is not troubled by an untracked file, which the push does not send', () => {
+  // Lifted from yggi/cell-studio tools/hooks.test.ts @ 90d1619: the untracked-file rule and the stamp of what the run saw.
+  it('refuses an untracked file git does not ignore, which verify would see and the commit lacks, and names it', () => {
     const dir = repoWith(['a.ts']);
+    writeFileSync(join(dir, 'helper.ts'), 'verify needs me\n');
+    const { status, stderr } = hook(dir);
+    expect(status).toBe(1);
+    expect(stderr).toContain('untracked files are in it but not in the commit');
+    expect(stderr).toContain('  helper.ts');
+  });
+
+  it('is not troubled by an ignored file', () => {
+    const dir = repoWith(['a.ts']);
+    writeFileSync(join(git(dir, 'rev-parse', '--absolute-git-dir'), 'info', 'exclude'), 'scratch.txt\n');
     writeFileSync(join(dir, 'scratch.txt'), 'x\n');
     expect(hook(dir).status).toBe(0);
+  });
+
+  it('is not troubled by an untracked file once the commit passed verify without it', () => {
+    const dir = repoWith(['a.ts']);
+    expect(hook(dir).status).toBe(0);
+    writeFileSync(join(dir, 'scratch.txt'), 'x\n');
+    expect(hook(dir, 'head', failing).status).toBe(0);
+  });
+
+  it('stamps the tree its own run saw, and nothing when a file changed while the check ran', () => {
+    const dir = repoWith(['a.ts']);
+    const { status, stderr } = hook(dir, 'head', 'echo edited > a.ts');
+    expect(status).toBe(0);
+    expect(stderr).toContain('a file changed while it ran: let through, not stamped');
+    git(dir, 'checkout', '--', 'a.ts');
+    expect(hook(dir, 'head', failing).status).toBe(1);
   });
 
   it('does not verify a tree twice, so a retried push is free, and says so', () => {
@@ -175,6 +204,7 @@ describe('pre-push', () => {
   it('is what a clone runs after its first verify: preverify points core.hooksPath at it, and says so once', () => {
     const dir = repoWith(['a.ts']);
     const begin = () => spawnSync('sh', [`${root}/tools/verified.sh`, 'begin'], { cwd: dir, env, encoding: 'utf8' });
+    git(dir, 'config', '--unset', 'core.hooksPath');
     expect(spawnSync('git', ['-C', dir, 'config', 'core.hooksPath'], { env }).status).toBe(1);
     expect(begin().stderr).toContain('core.hooksPath now points at .githooks');
     expect(git(dir, 'config', 'core.hooksPath')).toBe('.githooks');
