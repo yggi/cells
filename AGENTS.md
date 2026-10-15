@@ -27,5 +27,8 @@ Judgment (nothing checks these; you do):
 
 ## Working
 
-- Work on the branch the session gives you; never push to `main`; **agents don't merge**. Open a pull request (`Closes #n`; what and why, how verified, follow-ups); keep it a draft while it moves, out of draft when it is ready.
+- Work on the branch the session gives you; never push to `main`; **agents don't merge**. Open a pull request from the template (`Closes #n`, or `Part of #n` for one rung of an epic; what and why, the commit verified, follow-ups); keep it a draft while it moves, out of draft when it is ready.
+- **Just do, no comment:** typos, nits, a local rename, an added test, fixing a check you broke. **Do and say in the pull request:** a fix beside your change that it needs. **File an issue instead of widening it:** anything out of scope you notice. **Stop, push back, recommend:** anything that changes how a piece sounds or what it means (an event snapshot that moves, a form removed or respelled), a vector of the hub's contracts cells would stop meeting, a change to purity or to the source-of-truth rule, anything that could break a frontend at its next pin (its install, its typecheck), a scope far beyond the issue, anything irreversible or outward-facing (a tag). Lifted from yggi/cell-studio AGENTS.md @ 6de7ce4.
+- An issue meant for an agent states each bound as a number (a size, a count, a time), or says "choose it and name it".
+- A tool's module and its test live side by side in `tools/` (`tools/<name>.ts`, `tools/<name>.test.ts`); the language's tests sit beside its code in `src/`.
 - **CI is a witness, not the gate:** the workflow runs one job, only on pull requests out of draft, and the slow tests only by hand. The gate is `npm run verify` before the push, which costs no Actions minutes. Say in the pull request which commit you verified.
