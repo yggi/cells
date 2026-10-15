@@ -16,7 +16,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    # The switch (yggi/music-commons CI-BUDGET.md): runs only where Actions is free (public) or on (variable CI = on).
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.draft == false && (!github.event.repository.private || vars.CI == 'on'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
