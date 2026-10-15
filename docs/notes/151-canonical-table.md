@@ -4,13 +4,13 @@ Date: 2026-10-13 · Status: open (a draft for the owner, row by row) · Issue: [
 
 **The question.** Which spellings of the language mean the same thing, and which one should Normalise write (decision
 [017](../decisions/017-shorten-and-normalise.md))? **The method** ([multiscale.md](multiscale.md#disentanglers-towards-a-minimal-grammar-10-179),
-[10-language-pass.md](https://github.com/yggi/cell-studio/blob/main/docs/notes/10-language-pass.md) §3 and §8): write every row of [reference.md](../language/reference.md) as one
+[10-language-pass.md](10-language-pass.md) §3 and §8): write every row of [reference.md](../language/reference.md) as one
 of four primitives (**look up**, **dilate**, **shift with carry**, **combine**), or soft time, or a parameter of a voice, or
 nothing (display). Rows that land on one primitive with one meaning are a **family**. **The numbers** are over the
-library (77 pieces in `examples/`), by the probe `tools/probe/canonical.test.ts`:
+library (77 pieces in `examples/`), by the probe `tools/canonical.test.ts`:
 
 ```
-PROBE=out.txt npx vitest run tools/probe/canonical.test.ts && cat out.txt
+PROBE=out.txt npx vitest run tools/canonical.test.ts && cat out.txt
 ```
 
 Spelling is read from the text (the parser forgets `_`, `!2`, units); meaning from the parser's cells (which cells are
@@ -219,4 +219,4 @@ Why-keys: **short** (fewer characters, never longer) · **Strudel** (decision 02
   that the rewrite plays the same notes, which Normalise must make anyway (#244: the event snapshot). Counts depend on
   regular expressions over the text; a miscount of a few is possible in F11 and F15.
 - **Next.** The owner decides each open row; a decided row lands as one PR (#151's "What follows a decided row"). The probe
-  stays in `tools/probe/` to re-measure after each.
+  stays in `tools/` (`canonical.test.ts`) to re-measure after each.
