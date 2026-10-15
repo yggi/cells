@@ -20,6 +20,7 @@ Nothing here changes what a piece means or how it sounds: since `v0.1.0`, `src/`
 - The README links the docs on GitHub, since the package ships no `docs/` (#9).
 - The gates (#12, yggi/music-commons#4): a pre-push hook runs `npm run verify` and prints its test count, and a test holds the boot reading (`AGENTS.md` and `docs/MEMORY.md`) under 24 KB.
 - This changelog, a pull request template, and issue templates (bug, design question, epic).
+- A clone's first `npm run verify` points git at the pre-push gate (`preverify`), so a human clone has it without an install script (yggi/music-commons#4).
 
 ## v0.1.0 — 2026-10-14
 

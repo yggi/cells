@@ -171,13 +171,25 @@ describe('pre-push', () => {
   it('is what a checkout runs: the session start points core.hooksPath at it', () => {
     expect(readFileSync(`${root}/.claude/hooks/session-start.sh`, 'utf8')).toContain('git config core.hooksPath .githooks');
   });
+
+  it('is what a clone runs after its first verify: preverify points core.hooksPath at it, and says so once', () => {
+    const dir = repoWith(['a.ts']);
+    const begin = () => spawnSync('sh', [`${root}/tools/verified.sh`, 'begin'], { cwd: dir, env, encoding: 'utf8' });
+    expect(spawnSync('git', ['-C', dir, 'config', 'core.hooksPath'], { env }).status).toBe(1);
+    expect(begin().stderr).toContain('core.hooksPath now points at .githooks');
+    expect(git(dir, 'config', 'core.hooksPath')).toBe('.githooks');
+    expect(begin().stderr).toBe('');
+    git(dir, 'config', 'core.hooksPath', 'elsewhere');
+    begin();
+    expect(git(dir, 'config', 'core.hooksPath')).toBe('.githooks');
+  });
 });
 
 /**
  * The scripts a package manager runs when it installs cells from git, as each frontend does (`github:yggi/cells#vX.Y.Z`).
  * pnpm 10 (Jambot's) refuses such a git dependency unless the frontend allows its builds (ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED),
  * and npm (Cell studio's) installs all of cells' devDependencies to run one (pacote's git fetcher). So the hook can't be
- * set by a `prepare` script, as Cell studio's is: a human clone sets it once by hand (AGENTS.md).
+ * set by a `prepare` script, as Cell studio's is: a clone's first `npm run verify` sets it (`preverify`, tools/verified.sh).
  */
 const installScripts = (scripts: Record<string, string>) => ['preinstall', 'install', 'postinstall', 'prepare', 'prepack', 'build'].filter((name) => name in scripts);
 

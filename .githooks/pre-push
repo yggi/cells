@@ -1,8 +1,9 @@
 #!/bin/sh
 # Adapted from yggi/jambot .githooks/pre-push @ 8871429 (its docs-only path and the gh-pages exception left out).
 # Runs `npm run verify` (the purity gate, types, lint, format, knip, the quick tests) before any `git push` of a branch,
-# and blocks the push if it fails. CI is a witness; this is the gate. `.claude/hooks/session-start.sh` points
-# `core.hooksPath` here. Bypassing it with `--no-verify` is not for agents.
+# and blocks the push if it fails. CI is a witness; this is the gate. `npm run verify` (its `preverify`,
+# tools/verified.sh) and `.claude/hooks/session-start.sh` point `core.hooksPath` here. Bypassing it with `--no-verify` is
+# not for agents.
 #
 # - It verifies the working tree, and the push sends the commit, so a dirty tracked tree is refused: commit first, and
 #   push the branch checked out.
