@@ -1,7 +1,69 @@
 #!/bin/sh
-# Every push runs what CI would: `npm run verify` (the purity gate, types, lint, format, knip, the quick tests).
-# A push that fails is blocked. Pushing a deletion (a branch removed) checks nothing.
-while read -r _local _sha _remote remote_sha; do
-  [ "$_sha" = "0000000000000000000000000000000000000000" ] && exit 0
+# Adapted from yggi/jambot .githooks/pre-push @ 8871429 (its docs-only path and the gh-pages exception left out).
+# Runs `npm run verify` (the purity gate, types, lint, format, knip, the quick tests) before any `git push` of a branch,
+# and blocks the push if it fails. CI is a witness; this is the gate. `.claude/hooks/session-start.sh` points
+# `core.hooksPath` here. Bypassing it with `--no-verify` is not for agents.
+#
+# - It verifies the working tree, and the push sends the commit, so a dirty tracked tree is refused: commit first, and
+#   push the branch checked out.
+# - A tree that passed is remembered by its hash in the git directory (`cells-verified`), so a push retried after a
+#   network failure, or made right after `npm run verify` by hand (its `postverify` stamps the tree,
+#   tools/verified.sh), doesn't run it again.
+# - A run that passed prints one line, with the number of tests that passed, for the pull request to quote.
+# - A run that failed leaves its whole output in the git directory (`cells-verify-failed.log`), named in the message:
+#   the last 40 lines shown may not reach the failure.
+# - Deleting a ref and pushing a tag are not checked.
+# CELLS_VERIFY replaces the check, for tools/hooks.test.ts.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# git hands the hook one line per ref: local ref, local sha, remote ref, remote sha.
+head=$(git rev-parse HEAD)
+checked=
+while read -r local_ref local_sha remote_ref _; do
+  case "$remote_ref" in
+    refs/heads/*) ;;
+    *) continue ;;
+  esac
+  case "$local_sha" in *[!0]*) ;; *) continue ;; esac
+  if [ "$local_sha" != "$head" ]; then
+    echo "pre-push: $local_ref is not the checked out commit, and verify checks the tree. Check it out, then push." >&2
+    exit 1
+  fi
+  checked=1
 done
-exec npm run -s verify
+[ -n "$checked" ] || exit 0
+
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+  echo 'pre-push: tracked files have uncommitted changes, and verify checks the tree, not the commit. Commit them, then push again.' >&2
+  exit 1
+fi
+
+gitdir=$(git rev-parse --absolute-git-dir)
+stamps="$gitdir/cells-verified"
+tree=$(git rev-parse 'HEAD^{tree}')
+short=$(git rev-parse --short 'HEAD^{tree}')
+if grep -qx "$tree" "$stamps" 2>/dev/null; then
+  echo "pre-push: tree $short passed verify already, not run again" >&2
+  exit 0
+fi
+
+# In a linked worktree git hands the hook GIT_DIR and friends, and a check that makes a repository of its own (the
+# hook's tests do) would talk to this one instead.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
+log=$(mktemp)
+if ! sh -c "${CELLS_VERIFY:-npm run -s verify}" >"$log" 2>&1; then
+  # The whole output is kept, since its last lines may miss the failure.
+  kept="$gitdir/cells-verify-failed.log"
+  mv "$log" "$kept"
+  tail -40 "$kept" >&2
+  echo 'pre-push: verify failed, so the push was blocked. Fix it, commit, and push again.' >&2
+  echo "pre-push: full log: $kept" >&2
+  exit 1
+fi
+# vitest's summary line, `Tests  1234 passed (1234)`, colours stripped.
+esc=$(printf '\033')
+count=$(sed "s/$esc\[[0-9;]*m//g" "$log" | sed -n 's/^ *Tests  *\([0-9][0-9]*\) passed.*/\1/p' | tail -1)
+rm -f "$log"
+grep -qx "$tree" "$stamps" 2>/dev/null || echo "$tree" >>"$stamps"
+echo "pre-push: verify passed, ${count:-an unknown number of} tests; tree $short stamped" >&2
+exit 0

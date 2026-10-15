@@ -21,6 +21,10 @@ The whole map, module by module: [architecture.md](architecture.md).
 - `host.d.ts` the three host globals the language uses (the purity gate's whole allowance)
 - `../examples/` the pieces, the language's conformance suite; `../midi/` the folder's corpus (Mutopia's Bach); `../fixtures/` test pieces
 
+## Gates
+
+- Gates that show themselves only by failing, and what fixes each: a generated file gone stale, `src/engine/examples.generated.ts` (`npm run examples`), `types/` (`npm run types`, after any change to an exported signature) or `docs/language/reference.md` (`UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts`); a host global in `src/` beyond the three in `src/host.d.ts` (the purity typecheck, `tsconfig.pure.json`: no command, the code moves out); an unguarded index in a folder on the clean list of `tools/strict.mjs` (the strictness ratchet: narrow the value); a change in what an example plays (`src/engine/snapshot.txt`: `npx vitest run -u src/engine/snapshot.test.ts` when it is the point, named in the pull request); a vector of the hub's contracts cells no longer meets (`src/contracts.test.ts` over `fixtures/contracts/`: a decision, no command); a MIDI set without its slow test and ratchet file (`src/engine/fold/midi.sets.test.ts`); the folder's ratchets, in the slow tests only (`UPDATE_RATCHET=1`, [testing.md](testing.md)); the boot set, `AGENTS.md` with this page, over 24 KB (`tools/reading-list.ts`: condense it, as a change of its own).
+
 ## Language cheatsheet
 
 Details are on the linked pages; this list is only a pointer. → [language/overview.md](language/overview.md); every form at once: [language/reference.md](language/reference.md) (generated from the parser)
