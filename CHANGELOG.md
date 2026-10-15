@@ -8,7 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing here changes what a piece means or how it sounds: since `v0.1.0`, `src/` has changed only in its tests.
+Nothing here changes what a piece means or how it sounds: since `v0.1.0`, `src/` has changed only in its tests, and one example is rewritten (below).
+
+### Changed
+- **Canon per tonos places its voices with `pan=`** (yggi/cell-studio#418): the reed and the viola left, the cello right, each in the sound card's one chord, where two mixes made the two channels. It plays the same notes; how loud each is on each side moves a little (the pans rounded, the stereo panner's curve), the whole within 0.05 dB (60 s rendered: −23.94 dBFS rms against −23.90). A frontend now sees each instrument as its own out, leaning to its side. The language is unchanged; no other piece is touched.
 
 ### Added
 - **Declarations, `types/`** (#4): the `types` condition of `exports` points a frontend's TypeScript at them, so its own stricter settings (Jambot's `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`) don't fail on code it doesn't own. Runtimes (Vite, vitest, node) still take the source, and the import paths are the same: nothing to migrate.
