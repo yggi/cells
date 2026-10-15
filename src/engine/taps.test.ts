@@ -86,6 +86,16 @@ describe('arranging at the input (decision 016)', () => {
     const typo = compileSource(SONG.replace('&parts step=&bar &keysBar &tuneBar &drumBar', '&parts step=&bar &keysBar &tuneBar &drumBar &fillBar'));
     expect(typo.diagnostics.some((d) => d.message.startsWith('&fillBar is a tap of &parts, but nothing is stepped by it'))).toBe(true);
   });
+
+  it('two selectors over one table AND together: a tap plays only while both pick it', () => {
+    // &mute, a second selector over &parts at twice the rate: all three parts, then never the drums (half a section each)
+    const both = SONG.replace('&chords', '&mute over=&parts step=&bar/8 [0,1,2] [0,1]\n&chords');
+    expect(compileSource(both).diagnostics.map((d) => d.message)).toEqual([]);
+    const half = (n: number) => new Set(played(both, n * (SECTION / 2), (n + 1) * (SECTION / 2) - 0.01).map((e) => e.voice));
+    expect([half(2), half(3)]).toEqual([new Set(['keys', 'bd']), new Set(['keys'])]); // &song [0,2]: the drums only while &mute has them
+    expect([half(4), half(5)]).toEqual([new Set(['keys', 'lead', 'bd']), new Set(['keys', 'lead'])]); // [0,1,2]
+    expect(voices(both, 4)).toEqual(new Set()); // &mute picks all three, but &song has ended
+  });
 });
 
 describe('a selector of mixes (the form before decision 016)', () => {
