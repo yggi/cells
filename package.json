@@ -40,7 +40,9 @@
     "format:check": "prettier --check .",
     "knip": "knip",
     "examples": "node --experimental-strip-types --no-warnings tools/examples.ts",
+    "preverify": "sh tools/verified.sh begin",
     "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test",
+    "postverify": "sh tools/verified.sh end",
     "types": "tsc -p tsconfig.types.json"
   },
   "devDependencies": {
