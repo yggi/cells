@@ -173,6 +173,24 @@ describe('pre-push', () => {
   });
 });
 
+/**
+ * The scripts a package manager runs when it installs cells from git, as each frontend does (`github:yggi/cells#vX.Y.Z`).
+ * pnpm 10 (Jambot's) refuses such a git dependency unless the frontend allows its builds (ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED),
+ * and npm (Cell studio's) installs all of cells' devDependencies to run one (pacote's git fetcher). So the hook can't be
+ * set by a `prepare` script, as Cell studio's is: a human clone sets it once by hand (AGENTS.md).
+ */
+const installScripts = (scripts: Record<string, string>) => ['preinstall', 'install', 'postinstall', 'prepare', 'prepack', 'build'].filter((name) => name in scripts);
+
+describe('installing cells from git', () => {
+  it('is shown firing: a prepare script is one', () => {
+    expect(installScripts({ prepare: 'git config core.hooksPath .githooks', verify: 'npm test' })).toEqual(['prepare']);
+  });
+
+  it('runs no script of cells, so a frontend installs it without allowing builds', () => {
+    expect(installScripts(JSON.parse(readFileSync(`${root}/package.json`, 'utf8')).scripts)).toEqual([]);
+  });
+});
+
 describe('the stamp verify leaves (tools/verified.sh)', () => {
   it('is written by npm run verify: preverify begins it, postverify (only after a pass) ends it', () => {
     const scripts = JSON.parse(readFileSync(`${root}/package.json`, 'utf8')).scripts;

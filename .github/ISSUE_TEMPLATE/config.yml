@@ -1,0 +1,6 @@
+# Lifted from yggi/jambot .github/ISSUE_TEMPLATE/config.yml @ 6cc0437, with the hub for work across the projects.
+blank_issues_enabled: true
+contact_links:
+  - name: Across the music projects
+    url: https://github.com/yggi/music-commons/issues
+    about: A contract, a word or a change that spans cells, Cell studio and Jambot goes to the hub.
