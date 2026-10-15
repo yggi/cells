@@ -24,6 +24,7 @@ Nothing here changes what a piece means or how it sounds: since `v0.1.0`, `src/`
 - The pre-push hook refuses an untracked file git doesn't ignore (verify would see it, the commit lacks it) unless the commit's tree already passed, names it, and stamps only the tree its own run saw, as Cell studio's does.
 - A `release` skill: what was done by hand for `v0.1.0` and the frontends' pins, as steps; a test holds the README's pin to `package.json`'s version.
 - A `review` skill, lifted from Jambot's `review-pr`: a pull request in its own worktree, verified, its claims re-run, cells' rules walked; `tools/node-ts.mjs` lets Node run the source in this repository (a probe, a tool), not yet a frontend (#11).
+- A `pianoroll` skill and `tools/pianoroll.ts`: what a text plays as a piano roll, SVG and PNG, two texts (or one text under two versions of the language) side by side with what differs outlined.
 
 ## v0.1.0 — 2026-10-14
 
