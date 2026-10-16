@@ -5,7 +5,7 @@ The cells language: a minimal language for music where everything is a cell, a h
 It is the shared core of [Cell studio](https://github.com/yggi/cell-studio), the workbench, and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend, which depend on a tag:
 
 ```json
-"@yggi/cells": "github:yggi/cells#v0.1.0"
+"@yggi/cells": "github:yggi/cells#v0.2.0"
 ```
 
 Start with [docs/MEMORY.md](https://github.com/yggi/cells/blob/main/docs/MEMORY.md) and the [language overview](https://github.com/yggi/cells/blob/main/docs/language/overview.md) (absolute links: the package ships no `docs/`). It came out of Cell studio with its history ([#1](https://github.com/yggi/cells/issues/1)). MIT.

@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since `v0.2.0`.
+
+## v0.2.0 — 2026-10-16
+
 Since `v0.1.0`, no form means anything new: one example is rewritten (Canon per tonos, below), and one compiled field is renamed (`leveled` → `meter`), which a frontend reading it migrates.
 
 ### Changed
