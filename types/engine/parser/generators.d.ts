@@ -7,6 +7,8 @@ import type { LineScanner } from './scanner';
  * one group is left — the Euclidean rhythms in their usual form (Toussaint): 3 in 8 x..x..x.
  */
 export declare function bjorklund(k: number, n: number): boolean[];
+/** A time signature's bar as levels: * the bar, + a beat, . a subdivision, , a finer one. */
+export declare const SIGNATURES: Record<string, number[]>;
 export declare function meterLevels(sig: string, sub: number): string;
 type Generator = (s: LineScanner, start: number) => Braid;
 /**
