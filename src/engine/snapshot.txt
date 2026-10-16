@@ -43,7 +43,7 @@ five  745 notes  notes 19ae7b522ff682fa  events 43a5144a8e0e0841  values 28240b3
 waltz  339 notes  notes e83f3b157bbc8abe  events 4e66614aa3f6f3bf  values 669a0ef297b84e4b  live 6fe67c2fa273591b
 sailor  367 notes  notes f2551a73f8192fd1  events 42fe459b34cbd7eb  values 9fed229a8365fc79  live 4874f705f6f48451
 royal  60 notes  notes a8ba34895ddf5909  events a8d847f669808eb4  values b778cb13d18f34f5  live 7a9ae3e6fa820a27
-pertonos  122 notes  notes 5c1f87d2168584ee  events 11b032af06f5692e  values 361169c6bd857e05  live dd9f3cf3171bd19b
+pertonos  122 notes  notes 5c1f87d2168584ee  events 76d7ae346dec6b9b  values 0116cdf513e29826  live 1e9a5769575bc984
 ricercar  37 notes  notes 9d985d1b2b865b8d  events bb3db98e69cf37d2  values 70e97f70d1021e6e  live e1520089f7d4a34c
 korobeiniki  361 notes  notes a5982f87bacf4976  events bee2c7742baf46f9  values 3b7b925b0efe41ec  live d55544738a10ea7a
 coltrane  808 notes  notes f763a951c05a6a9c  events 32c78476bb5c102c  values dab4363cfed5cc51  live 658d79ee12eafa61
