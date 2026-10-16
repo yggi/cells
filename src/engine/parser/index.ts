@@ -19,7 +19,7 @@ import { parseBody, parseCell, SHOWS } from './cell';
 import { splitPlugins } from '../plugins';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
 
-export { meterLevels } from './generators';
+export { meterLevels, SIGNATURES } from './generators';
 export { SHOWS } from './cell';
 
 export function parse(whole: string): ParseResult {

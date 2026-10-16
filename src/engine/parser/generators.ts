@@ -126,7 +126,7 @@ function parseSpell(s: LineScanner, start: number): Braid {
 }
 
 /** A time signature's bar as levels: * the bar, + a beat, . a subdivision, , a finer one. */
-const SIGNATURES: Record<string, number[]> = {
+export const SIGNATURES: Record<string, number[]> = {
   // x/4: beats; x/8: eighths in groups (a beat a group)
   '2/4': [1, 1],
   '3/4': [1, 1, 1],

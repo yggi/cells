@@ -54,7 +54,7 @@ export function mainMeter(result: CompileResult): MainMeter | null {
   const cell = name ? result.cells.get(name) : undefined;
   if (root && cell && !root.belt) {
     const leads = [...result.cells.values()].some((c) => c.name !== cell.name && c.step?.driver === cell.name);
-    if (root.positional || cell.leveled || root.swing !== undefined || cell.beat !== 1 || leads) found = { cell: cell.name, beat: cell.beat > 0 ? cell.beat : 1 };
+    if (root.positional || cell.meter || root.swing !== undefined || cell.beat !== 1 || leads) found = { cell: cell.name, beat: cell.beat > 0 ? cell.beat : 1 };
   }
   meters.set(result, found);
   return found;

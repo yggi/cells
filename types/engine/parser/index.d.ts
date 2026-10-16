@@ -1,5 +1,5 @@
 import type { ParseResult } from '../ast';
-export { meterLevels } from './generators';
+export { meterLevels, SIGNATURES } from './generators';
 export { SHOWS } from './cell';
 export declare function parse(whole: string): ParseResult;
 /** A piece's card: the first note with a title= — its title, its description (the label, as plain text), its tags. */

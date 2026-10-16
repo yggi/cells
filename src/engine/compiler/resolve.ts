@@ -1,15 +1,23 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
-import { type Atom, type Span, type Token } from '../ast';
+import { type Atom, type Braid, type Span, type Token } from '../ast';
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { scan as scanOf } from '../../theory/modes';
+import { meterOfLevels, meterOfScan, type Meter } from '../meter';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
 import type { Typed } from './sorts';
 
 class Abort extends Error {}
+
+/** The Meter a braid is written as: meter(…) (a list of levels, with perBeat) or scan(…); none otherwise. */
+function meterOf(b: Braid): Meter | null {
+  if (b.kind === 'scan') return meterOfScan(b.steps);
+  if (b.kind === 'list' && b.perBeat !== undefined) return meterOfLevels(b.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : 0)));
+  return null;
+}
 
 export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }: Declared, typed: Typed): Cells {
   const { rateOf, error, warn, broken, unknownCell } = ctx;
@@ -105,7 +113,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
       about: (d.about ?? []).map((r) => r.name),
       ...(d.base ? { base: { name: d.base.name, ...(d.base.transpose ? { transpose: d.base.transpose } : {}), ...(d.base.degree ? { degree: d.base.degree } : {}) } } : {}),
       beat: typeof d.params.beat === 'number' ? d.params.beat : ((d.braid as { perBeat?: number }).perBeat ?? 1),
-      leveled: (d.braid as { perBeat?: number }).perBeat !== undefined,
+      meter: meterOf(d.braid),
       label: d.label ?? null,
       note:
         !!(d.label || d.title) &&
