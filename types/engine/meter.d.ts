@@ -14,6 +14,8 @@ export interface Meter {
     readonly positions: readonly number[];
     /** The bar's length in those positions. */
     readonly lap: number;
+    /** The form it was written as: `meter(…)` (levels, its steps even) or `scan(…)` (positions, every step level 1). */
+    readonly written: 'meter' | 'scan';
 }
 /** meter(…): steps by level, a bar whose steps are even. */
 export declare function meterOfLevels(levels: readonly number[]): Meter;
