@@ -10,6 +10,8 @@ The cells language: a minimal language for music where everything is a **cell**,
 
 The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells implements `euclid` (Bjorklund's set, a turn of the canonical one) and `notes` (C4 = 60, through A4 = 69), and passes version 1 of both: `src/contracts.test.ts` runs their vectors, copied into `fixtures/contracts/` with the hub's commit, and records where cells differs (it writes a mixed set of names, C# Eb F# Ab Bb, neither column whole; an attribute doesn't read a natural note in octave −1, `loop=C-1`).
 
+The language's open questions live in this tracker, [yggi/cells' issues](https://github.com/yggi/cells/issues); the frontends' trackers point here ([music-commons#14](https://github.com/yggi/music-commons/issues/14)).
+
 ## Map of src/
 
 The whole map, module by module: [architecture.md](architecture.md).
@@ -70,3 +72,4 @@ One line each; the record has the rationale. → [decisions/](decisions/README.m
 - 032 · `restart=` names what switching a part on does to its time: `restart` (default), `resume`, `free`; the last two parse and warn, not yet implemented · → decisions/032-restart-policies.md
 - 033 · The folder writes a converted piece in degrees of its key where that's shorter (`&key scale(minor, C)`, lines `over=&key`, phrases `&m^1`); an accidental moves with its note under `^n`; Strudel's `6s`/`7f` and `scale("C:minor")` read as ours · → decisions/033-degrees.md
 - 037 · The handshake with Jambot: cells owns the language and the repository of fragments, Jambot the composer and the jam; cells' spellings where they agree with Strudel, Jambot's meanings; Jambot's syntax in flight becomes cells'; a fragment's style is partial, without tempo and entropy · → decisions/037-the-handshake-with-jambot.md
+- 038 · Jambot's score rulings, carried over: each of yggi/jambot#7's (a)–(j), #116's (k)–(m) and ledger, and #63's E16, as it stands under 037: holds (where cells says it), overridden (by which row), or open (which issue carries it) · → decisions/038-jambot-rulings-carried-over.md
