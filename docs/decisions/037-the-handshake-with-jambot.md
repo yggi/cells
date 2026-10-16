@@ -16,7 +16,7 @@ The rulings about Jambot's own code stay on #309. The ones that bind the languag
 |---|---|
 | The language: parser, compiler, realize, Shorten, Normalise, the folder | cells |
 | The repository of fragments: format, canonical form, hash, index, queries | cells |
-| MIDI in and out, its clock, the keys and pads | one shared copy, merged from the two there are (Cell studio lifted Jambot's at 8cdb6b8); where it lives is settled when it is merged |
+| MIDI in and out, its clock, the keys and pads | one shared copy, merged from the two there are (Cell studio lifted Jambot's at 8cdb6b8); where it lives is settled when it is merged: yggi/webmidi ([039](039-midi-lives-in-webmidi.md)) |
 | The composer, the style space, sessions and the lobby | Jambot |
 | The Muse | hearing in Jambot (the phrase reader, confidence, recognition); writing in cells (the capture law, the folder) |
 | The theory primitive (Jambot's `even`, the helix) against cells' tables and `scan()` | one under both, spelled in cells; it moves into cells when the seam needs it |
