@@ -1,5 +1,6 @@
 import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, GateSpec } from './ast';
 import type { ShowPlugin } from './plugins';
+import type { Meter } from './meter';
 export declare const ROOT = "fifths12TET";
 /**
  * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
@@ -78,8 +79,8 @@ export interface ResolvedCell {
     };
     /** Steps a beat (beat=, or from meter(…)): a meter's bpm counts beats, 1 = every step a beat. */
     readonly beat: number;
-    /** Written as levels (meter(…)): its values are 3 the bar, 2 a beat, 1 a subdivision, 0 finer. */
-    readonly leveled: boolean;
+    /** A bar, meter(…) or scan(…), compiled: its groups by level (0 the bar, 1 a beat … 4 finest) and where its steps fall. */
+    readonly meter: Meter | null;
     /**
      * A resonator's exciters (its braid): each a tuned element — a semitone shift from its fundamental,
      * with settings of its own (from a cell it refers to: hard=, ring=, body=). None written: the twelve

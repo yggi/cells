@@ -10,6 +10,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Nothing here changes what a piece means or how it sounds: since `v0.1.0`, `src/` has changed only in its tests.
 
+### Changed
+- **One compiled `Meter`** (#16, part of #15): `meter(…)` and `scan(…)` compile to the same tree and time map (`src/engine/meter.ts`). `ResolvedCell.leveled` (boolean) becomes `ResolvedCell.meter` (`Meter | null`), and `SIGNATURES` is exported from the parser. No piece sounds different: migrate a read of `leveled` to `meter !== null`.
+
 ### Added
 - **Declarations, `types/`** (#4): the `types` condition of `exports` points a frontend's TypeScript at them, so its own stricter settings (Jambot's `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`) don't fail on code it doesn't own. Runtimes (Vite, vitest, node) still take the source, and the import paths are the same: nothing to migrate.
 - **The family's contracts** (#8): the hub's vectors for `euclid` and `notes`, version 1 (yggi/music-commons), run against cells in `src/contracts.test.ts`. Cells passes both, and two differences are recorded, not changed: it writes a mixed set of note names (C# Eb F# Ab Bb), and an attribute doesn't read a natural note in octave −1 (`loop=C-1`).
