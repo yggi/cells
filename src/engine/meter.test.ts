@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { meterOfLevels, meterOfScan } from './meter';
 import { meterLevels, SIGNATURES } from './parser';
+import { EXAMPLE_SOURCES } from './examples.generated';
 
 const meterOf = (src: string) => {
   const r = compileSource(src);
@@ -33,5 +34,25 @@ describe('Meter', () => {
       [1, 2, 4],
     ]);
     expect(t.groups[1].groups.map((g) => g.from)).toEqual([3]);
+  });
+  it('says which form it was written as: meter(…), scan(…), and none for a plain list', () => {
+    expect(meterOf('&m meter("4/4")').written).toBe('meter');
+    expect(meterOf('&m scan(1 1 1 1)').written).toBe('scan');
+    const r = compileSource('&m 0 1 2');
+    expect(r.ok && r.cells.get('m')!.meter).toBe(null);
+  });
+  it('in every example, a meter written as meter(…) is a list and one written as scan(…) a scan', () => {
+    const seen = { meter: 0, scan: 0 };
+    for (const [name, src] of Object.entries(EXAMPLE_SOURCES)) {
+      const r = compileSource(src);
+      if (!r.ok) continue;
+      for (const c of r.cells.values()) {
+        if (!c.meter) continue;
+        seen[c.meter.written]++;
+        expect(c.braid, `${name} &${c.name}`).toBe(c.meter.written === 'meter' ? 'list' : 'scan');
+      }
+    }
+    expect(seen.meter).toBeGreaterThan(0);
+    expect(seen.scan).toBeGreaterThan(0);
   });
 });

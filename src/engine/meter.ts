@@ -22,6 +22,8 @@ export interface Meter {
   readonly positions: readonly number[];
   /** The bar's length in those positions. */
   readonly lap: number;
+  /** The form it was written as: `meter(…)` (levels, its steps even) or `scan(…)` (positions, every step level 1). */
+  readonly written: 'meter' | 'scan';
 }
 
 /** meter(…): steps by level, a bar whose steps are even. */
@@ -38,12 +40,12 @@ export function meterOfLevels(levels: readonly number[]): Meter {
     open[open.length - 1].groups.push(group);
     open.push(group);
   }
-  return { tree: root, levels, positions: levels.map((_, i) => i), lap: n };
+  return { tree: root, levels, positions: levels.map((_, i) => i), lap: n, written: 'meter' };
 }
 
 /** scan(…): positions in the bar, no levels: a flat tree. */
 export function meterOfScan(steps: readonly number[]): Meter {
   const { positions, lap } = scanOf(steps);
   const groups = positions.map((_, i) => ({ level: 1, from: i, to: i + 1, groups: [] }));
-  return { tree: { level: 0, from: 0, to: positions.length, groups }, levels: positions.map(() => 1), positions, lap };
+  return { tree: { level: 0, from: 0, to: positions.length, groups }, levels: positions.map(() => 1), positions, lap, written: 'scan' };
 }
