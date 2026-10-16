@@ -4,20 +4,20 @@ about: A piece that parses, compiles, plays or folds wrongly, or a check that do
 labels: bug
 ---
 
-<!-- Lifted from yggi/jambot .github/ISSUE_TEMPLATE/bug.md @ 6cc0437. A frontend's own bug goes to its repository; this one is for what cells does with a text. -->
+<!-- Lifted from yggi/cells .github/ISSUE_TEMPLATE/bug.md @ e35c6ee, consolidated 2026-10-16 (yggi/music-commons#4). A frontend's own bug goes to its repository; this one is for what cells does with a text. -->
 
 ## What happens
 
-<!-- What you saw, and where: the text (the smallest piece that shows it), the diagnostics or the events, a test. -->
+<!-- What you saw: the diagnostics, the events, a failing check. -->
 
 ## What should happen
 
-<!-- And what says so: a language page in docs/language/, a decision, an example, a contract's vector. -->
+<!-- And what says so: a language page in docs/language/, a decision, an example, a contract's vector. Say whether the fix would move an event snapshot (src/engine/snapshot.txt): a fix that changes how a piece sounds is a recommendation first (AGENTS.md). -->
 
 ## To reproduce
 
-<!-- The piece, and the call (`compileSource`, `plan`, `windowAt`, `shorten`, `fold`), or a failing test. -->
+<!-- The smallest piece that shows it, and the call (`compileSource`, `plan`, `windowAt`, `shorten`, `fold`) or the command (`npx vitest run …`), or a failing test. -->
 
-## What it touches
+## Commit
 
-<!-- An example or event snapshot (src/engine/snapshot.txt) that would move with the fix, a contract vector, a frontend's piece; or "none". A fix that changes how a piece sounds is a recommendation first (AGENTS.md). -->
+<!-- The commit or tag it was seen at (`git rev-parse --short HEAD`, or a frontend's pin `#vX.Y.Z`). -->
