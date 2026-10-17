@@ -8,6 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+### Changed
+- **Swing on the bar** (#18's first rung, rung 2 of #81): `swing=8n:.67` on a meter leans one level of its bar, named by note value: of each pair of eighths the second starts .67 of the way through their beat, a group of three (6/8, 7/8's first beat) leans its second and third, and every beat and bar line stays where it is, so an odd bar no longer drifts. Taps are placed through it, whatever the meter's own steps (`meter("4/4") swing=8n:.67` swings `step=8n` and `step=pulse*2`); a division it doesn't hold stays even (`8t` under swung eighths). It swings a `scan(…)` too, which used to warn. Levels nest, coarse to fine: `swing=8n:.6,16n:.55`, which places Jambot's swing axis to 1e-9 (`fixtures/jambot-swing.json`). A level no beat divides into (`swing=4n:.67` in 4/4) leans nothing, with a warning.
+- **A bare `swing=.67` on a meter warns**: it reads as the level of the meter cell's own steps (`meter("4/4", 2) swing=.67` is `swing=8n:.67`, and plays as before), and Shorten names the level. On a list stepping at a rate it keeps its meaning, pairs of its steps. A bare swing that paired steps across a beat or a bar line plays differently: `meter("7/8") swing=.67` now leans each beat (it drifted across odd bars), `meter("4/4", 3) swing=.67` leans each beat's triplets (it paired them across beats). The Swing and Metronome examples are respelled (`swing=8n:.67`, `swing=8n:free(.5, .5...75)`) and play the same at their defaults; the Metronome's slider now leans eighths on every grid (it paired the grid's own steps: quarters, triplets across beats, sixteenths).
+- **`Clock.swung`** holds a swung meter's own steps (in its steps, a bar's); `Clock.swing` is only a list's pairs now. `Meter.swing` holds the levels (`SwingLevel`), `swingAt(meter, pulses)` places a position, and a decl's `swing` holds the levels as written. A tap reads its meter unswung and carries the swing in its positions.
+
 ### Corrected: what the v0.3.0 notes left out
 Cell studio and Jambot, moving onto v0.3.0, found more that a frontend sees. Nothing here changed since v0.3.0: the notes did.
 - **A `scan(…)` is a meter for `step=&bar`'s warning**, as for taps: `step=&bar*4` under `&bar scan(1 1 1 1)` warns, and Shorten rewrites it (`16n`).

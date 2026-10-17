@@ -36,6 +36,20 @@ export interface Meter {
   readonly beats: readonly number[];
   /** A scan with pulse= (its beats quarters, the last maybe cut): how many beats its bpm counts, a fraction where it ends mid-beat. */
   readonly counted?: number;
+  /** swing= (#18): the levels that lean, coarse to fine, each a division of a beat (`swingAt`). */
+  readonly swing?: readonly SwingLevel[];
+}
+
+/**
+ * A level of a meter that leans (#18, decision 040's `swing=8n:.67`): its divisions as a note value (`8n`), and the share
+ * of each of their nodes at which the second starts (.5 straight, .67 the triplet swing).
+ */
+export interface SwingLevel {
+  /** The note value as written: `8n`, `16n`, `8t`. */
+  readonly level: string;
+  /** Its length in whole notes (`8n`: 1/8). */
+  readonly whole: number;
+  readonly share: number;
 }
 
 /** How a time signature writes a meter: its pulses, its note value and its beats (in pulses), each pulse in `sub` steps. */
@@ -80,6 +94,115 @@ export function withBeats(m: Meter, n: number): Meter {
   const k = Math.max(1, Math.round(n));
   const { counted: _, ...rest } = m;
   return { ...rest, beats: Array.from({ length: k }, () => m.pulses / k) };
+}
+
+/** swing= on a meter: the levels that lean, those at .5 (straight) left out. */
+export function withSwing(m: Meter, levels: readonly SwingLevel[]): Meter {
+  const leaning = levels.filter((l) => l.share !== 0.5);
+  return leaning.length ? { ...m, swing: leaning } : m;
+}
+
+/** A note value from its length in whole notes (1/8: `8n`, 1/12: `8t`, 3/16: `8n.`), or null. */
+export function noteName(whole: number): string | null {
+  const near = (x: number) => Math.abs(x - Math.round(x)) < 1e-9 && Math.round(x) >= 1 && Number.isInteger(Math.log2(Math.round(x)));
+  if (near(1 / whole)) return `${Math.round(1 / whole)}n`;
+  if (near(2 / (3 * whole))) return `${Math.round(2 / (3 * whole))}t`;
+  if (near(3 / (2 * whole))) return `${Math.round(3 / (2 * whole))}n.`;
+  return null;
+}
+
+/** A bare swing= on a meter (`swing=.67`): the level of its own steps (`meter("4/4", 2)`: `8n`), or null. */
+export const bareSwingLevel = (m: Meter): string | null => noteName(1 / (m.unit * stepsPerPulse(m)));
+
+/**
+ * A level a meter can lean: one some beat divides into, two or more of them (swing never moves a beat: decision 040).
+ * What is wrong with it, or null.
+ */
+export function swingLevelProblem(m: Meter, whole: number): string | null {
+  const len = whole * m.unit;
+  const fits = m.beats.some((b) => {
+    const q = b / len;
+    return Math.abs(q - Math.round(q)) < 1e-9 && Math.round(q) >= 2;
+  });
+  return fits
+    ? null
+    : `no beat of this meter divides into two or more of ${noteName(whole) ?? 'them'} (its beats: ${m.beats.map((b) => noteName(b / m.unit) ?? b).join(' ')}), and swing never moves a beat`;
+}
+
+/** On a node's divisions, halved and halved again (a 16th under swung 8ths): v in units of its children. */
+const held = (v: number) => {
+  for (let k = 0, x = v; k <= 6; k++, x *= 2) if (Math.abs(x - Math.round(x)) < 1e-9) return true;
+  return false;
+};
+
+/**
+ * Where a node's children start, as shares of it: even, or leaning (#18). A pair's second starts at the share; a group of
+ * three leans its second and third (Jambot's ternary lean, `apps/web/src/meter/ternary.ts` there): the second moves as far
+ * as a pair's would, from a third (.67, a pair's triplet swing, puts it at a half: long, short, short), the third halfway
+ * between it and the end.
+ */
+function knotsOf(parts: number, share: number | null): number[] {
+  const even = Array.from({ length: parts + 1 }, (_, i) => i / parts);
+  if (share === null || (parts !== 2 && parts !== 3)) return even;
+  if (parts === 2) return [0, Math.min(0.95, Math.max(0.05, share)), 1];
+  const second = Math.min(0.95, Math.max(0.05, share - 1 / 6));
+  return [0, second, (second + 1) / 2, 1];
+}
+
+/**
+ * Where a position x within a beat of n pulses is played, its levels leaning (lengths in pulses, with their shares). The
+ * beat is a tree: its pulses where it holds several (a group of three eighths), then halves, down to the finest level
+ * that leans; each node keeps its ends and divides its span among its children, by a level's share where its children
+ * are that level, evenly otherwise. A position on the tree's divisions (or halves of them) is placed through it; one the
+ * tree doesn't hold (a triplet in a swung pair) is even within its node, not warped.
+ */
+function swungIn(x: number, n: number, levels: readonly { len: number; share: number }[]): number {
+  const finest = Math.min(...levels.map((l) => l.len));
+  let from = 0;
+  let len = n;
+  let at = 0;
+  let span = n;
+  for (let guard = 0; guard < 16; guard++) {
+    const q = len / finest;
+    const qi = Math.round(q);
+    if (Math.abs(q - qi) > 1e-9 || qi < 2) break;
+    // (two or three: the level's own node; more: a beat's pulses (thirds) or halves first)
+    const parts = qi === 2 || qi === 3 ? qi : qi % 3 === 0 ? 3 : qi % 2 === 0 ? 2 : qi;
+    const child = len / parts;
+    const rel = ((x - from) / len) * parts;
+    if (!held(rel)) break;
+    const knots = knotsOf(parts, levels.find((l) => Math.abs(l.len - child) < 1e-9)?.share ?? null);
+    const k = Math.min(parts - 1, Math.max(0, Math.floor(rel + 1e-9)));
+    from += k * child;
+    len = child;
+    at += knots[k] * span;
+    span *= knots[k + 1] - knots[k];
+  }
+  return at + ((x - from) / len) * span;
+}
+
+/**
+ * Where a position, in pulses from the first downbeat, is played under the meter's swing (#18): within its beat, through
+ * the beat's tree (`swungIn`). Every beat and every bar line stays where it is.
+ */
+export function swingAt(m: Meter, p: number): number {
+  if (!m.swing?.length) return p;
+  const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share }));
+  const P = m.pulses;
+  const bar = Math.floor(p / P + 1e-9);
+  const x = p - bar * P;
+  let at = 0;
+  let i = 0;
+  while (i < m.beats.length - 1 && at + m.beats[i] <= x + 1e-9) at += m.beats[i++];
+  const beat = m.beats[i] ?? P;
+  return bar * P + at + swungIn(x - at, beat, levels);
+}
+
+/** The meter's own steps under its swing, in steps of one bar; null where none moves. */
+export function swungSteps(m: Meter): number[] | null {
+  const per = stepsPerPulse(m);
+  const out = m.levels.map((_, i) => swingAt(m, i / per) * per);
+  return out.some((p, i) => Math.abs(p - i) > 1e-12) ? out : null;
 }
 
 /**

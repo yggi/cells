@@ -25,6 +25,19 @@ export interface Meter {
     readonly beats: readonly number[];
     /** A scan with pulse= (its beats quarters, the last maybe cut): how many beats its bpm counts, a fraction where it ends mid-beat. */
     readonly counted?: number;
+    /** swing= (#18): the levels that lean, coarse to fine, each a division of a beat (`swingAt`). */
+    readonly swing?: readonly SwingLevel[];
+}
+/**
+ * A level of a meter that leans (#18, decision 040's `swing=8n:.67`): its divisions as a note value (`8n`), and the share
+ * of each of their nodes at which the second starts (.5 straight, .67 the triplet swing).
+ */
+export interface SwingLevel {
+    /** The note value as written: `8n`, `16n`, `8t`. */
+    readonly level: string;
+    /** Its length in whole notes (`8n`: 1/8). */
+    readonly whole: number;
+    readonly share: number;
 }
 /** How a time signature writes a meter: its pulses, its note value and its beats (in pulses), each pulse in `sub` steps. */
 export interface Signature {
@@ -47,6 +60,24 @@ export declare function withPulse(m: Meter, whole: number): Meter;
 export declare const beatCount: (m: Meter) => number;
 /** beat=n on a meter: n equal beats over its pulses, in place of the beats it was written with (alla breve: `meter("4/4") beat=2`). */
 export declare function withBeats(m: Meter, n: number): Meter;
+/** swing= on a meter: the levels that lean, those at .5 (straight) left out. */
+export declare function withSwing(m: Meter, levels: readonly SwingLevel[]): Meter;
+/** A note value from its length in whole notes (1/8: `8n`, 1/12: `8t`, 3/16: `8n.`), or null. */
+export declare function noteName(whole: number): string | null;
+/** A bare swing= on a meter (`swing=.67`): the level of its own steps (`meter("4/4", 2)`: `8n`), or null. */
+export declare const bareSwingLevel: (m: Meter) => string | null;
+/**
+ * A level a meter can lean: one some beat divides into, two or more of them (swing never moves a beat: decision 040).
+ * What is wrong with it, or null.
+ */
+export declare function swingLevelProblem(m: Meter, whole: number): string | null;
+/**
+ * Where a position, in pulses from the first downbeat, is played under the meter's swing (#18): within its beat, through
+ * the beat's tree (`swungIn`). Every beat and every bar line stays where it is.
+ */
+export declare function swingAt(m: Meter, p: number): number;
+/** The meter's own steps under its swing, in steps of one bar; null where none moves. */
+export declare function swungSteps(m: Meter): number[] | null;
 /**
  * meter(…): steps by level, a bar whose steps are even. Its signature, when it was written as one (`meter("7/8")`), says
  * its pulses and beats; written as levels (`meter("*.+.+..")`), its steps are its pulses and its beats run from each

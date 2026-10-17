@@ -5,7 +5,7 @@
 # 1 a beat (+), 2 a half (-), 3 a subdivision (.), 4 finer (,). Its bpm counts beats, however fine
 # its steps. Read through &clicks (a kit), each level has its own click: a tonal tick, no noise —
 # the downbeat the highest and longest, each finer division lower and shorter.
-&bar meter(free(2, 0..7, "2/4 3/4 4/4 5/4 6/8 7/8 9/8 12/8"), free(0, 0..3, "1 2 3 4")) step=free(100bpm, 40..208) swing=free(.5, .5...75) over=&clicks label="**{tempo}** beats a minute"
+&bar meter(free(2, 0..7, "2/4 3/4 4/4 5/4 6/8 7/8 9/8 12/8"), free(0, 0..3, "1 2 3 4")) step=free(100bpm, 40..208) swing=8n:free(.5, .5...75) over=&clicks label="**{tempo}** beats a minute"
 &clicks &down &beatc &half &sub &fine
 &down s=sine loop=G6 pitch=0..7 * &(map=adsr 0 .008 0 0) env=&(map=adsr 0 .07 0 .03)
 &beatc s=sine loop=D6 pitch=0..5 * &(map=adsr 0 .006 0 0) env=&(map=adsr 0 .05 0 .025)

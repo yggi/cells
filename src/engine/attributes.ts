@@ -35,6 +35,8 @@ export interface Attribute {
   readonly value: 'number' | 'word' | 'cell' | 'syntax';
   /** The roles it acts on; anywhere else it does nothing (a warning). Absent: any cell. */
   readonly on?: readonly Role[];
+  /** How it is written, where that is more than its value (`swing=8n:.67`); absent: from `value`. */
+  readonly form?: string;
   /** It makes the cell a voice (a sound parameter). */
   readonly voice?: true;
   /** It can move: lpf=&sweep, lpf=200..3000 * &fenv. */
@@ -128,7 +130,13 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     value: 'word',
     on: ['clock', 'driven'],
   },
-  swing: { help: 'on a meter: of each pair of steps, the second comes this far through (.5 straight, .67 triplet swing)', doc: 'time.md', value: 'number', on: ['clock'] },
+  swing: {
+    help: 'on a meter: a level of its bar leans, named by note value — of each pair of its eighths (swing=8n:.67), the second comes this far through their beat (.5 straight, .67 triplet swing), a group of three leaning; every beat and bar line stays. Bare (swing=.6), on a list: pairs of its steps',
+    doc: 'time.md',
+    value: 'number',
+    on: ['clock'],
+    form: 'swing=8n:r · swing=8n:r,16n:r · swing=8n:free(r, lo..hi) · swing=r',
+  },
   motor: physics('on a meter: it turns physically — a motor this strong pulls it to its tempo (from rest)', ['clock']),
   mass: physics('physics: how heavy it turns (inertia); on a cell a meter drives, load', ['clock', 'driven']),
   friction: physics('physics: drag — the meter sags below its tempo, more with more load', ['clock', 'driven']),

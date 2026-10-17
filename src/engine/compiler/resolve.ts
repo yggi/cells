@@ -1,10 +1,10 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
-import { type Atom, type Braid, type Span, type Token } from '../ast';
+import { type Atom, type CellDecl, type Span, type Token } from '../ast';
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { scan as scanOf } from '../../theory/modes';
-import { beatCount, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, type Meter } from '../meter';
+import { beatCount, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel, type Meter } from '../meter';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
@@ -14,9 +14,12 @@ class Abort extends Error {}
 
 /**
  * The Meter a braid is written as: meter(…) (a list of levels, with perBeat) or scan(…); none otherwise. beat=n on it
- * states n equal beats (decision 040: alla breve, `meter("4/4") beat=2`).
+ * states n equal beats (decision 040: alla breve, `meter("4/4") beat=2`); swing= leans its levels (#18), a bare one the
+ * level of its own steps.
  */
-function meterOf(b: Braid, beat: number | string | undefined, pulse?: number | string): Meter | null {
+function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing'>): Meter | null {
+  const { braid: b, params } = d;
+  const { beat, pulse } = params;
   const written =
     b.kind === 'scan'
       ? meterOfScan(b.steps)
@@ -29,7 +32,16 @@ function meterOf(b: Braid, beat: number | string | undefined, pulse?: number | s
   // (pulse= on a scan: the note value of its entries, decision 040)
   const whole = b.kind === 'scan' && typeof pulse === 'string' ? noteValue(pulse) : null;
   const m = written && whole ? withPulse(written, whole) : written;
-  return m && typeof beat === 'number' && beat > 0 ? withBeats(m, beat) : m;
+  const felt = m && typeof beat === 'number' && beat > 0 ? withBeats(m, beat) : m;
+  if (!felt || typeof params.swing !== 'number') return felt;
+  const levels = d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }];
+  return withSwing(
+    felt,
+    levels.flatMap((l) => {
+      const whole = noteValue(l.level);
+      return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
+    }),
+  );
 }
 
 /** A meter's steps a beat: what its bpm is read through (1 when it has no meter). */
@@ -128,8 +140,8 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
         .filter(Boolean),
       about: (d.about ?? []).map((r) => r.name),
       ...(d.base ? { base: { name: d.base.name, ...(d.base.transpose ? { transpose: d.base.transpose } : {}), ...(d.base.degree ? { degree: d.base.degree } : {}) } } : {}),
-      beat: stepsPerBeat(meterOf(d.braid, d.params.beat, d.params.pulse)),
-      meter: meterOf(d.braid, d.params.beat, d.params.pulse),
+      beat: stepsPerBeat(meterOf(d)),
+      meter: meterOf(d),
       label: d.label ?? null,
       note:
         !!(d.label || d.title) &&

@@ -11,7 +11,7 @@ import { flatten } from '../flatten';
 
 export interface Suggestion {
   readonly id: string;
-  readonly kind: 'run' | 'phrase' | 'fraction' | 'same' | 'default' | 'progression' | 'degree' | 'pan' | 'gate' | 'alias' | 'tap';
+  readonly kind: 'run' | 'phrase' | 'fraction' | 'same' | 'default' | 'progression' | 'degree' | 'pan' | 'gate' | 'alias' | 'tap' | 'swing';
   /** In a sentence: what it does. */
   readonly title: string;
   /** What was written, and what it becomes (short excerpts). */

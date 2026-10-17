@@ -1,7 +1,7 @@
 /** Phase 4: time — clocks (cells moved at a rate), every cell's steps per step of its clock, times given as clocks. */
 import type { CellDecl, Tap } from '../ast';
 import { isPositional, type Clock } from '../program';
-import { noteValue, stepsPerPulse, tapPositions } from '../meter';
+import { bareSwingLevel, noteValue, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions } from '../meter';
 import type { Cells, Ctx } from './context';
 
 /** A tap's clock's name: the meter's, the tap and its bars (`bar:16n`, `bar:1n:4`); no cell can be called that. */
@@ -66,8 +66,37 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     // the bpm counts beats (decision 040): a meter's steps a beat, from its pulses and beats (beat= on it, or meter(…)) —
     // so a meter can step in eighths and still read 96 for its quarter notes, and 7/8 at 90 is a bar of 2 s
     const perSecond = (d.step.whole ? r * Math.max(1, c.steps) : r) * (d.step.whole ? 1 : c.beat);
-    const swing = typeof d.params.swing === 'number' && d.params.swing !== 0.5 ? d.params.swing : undefined;
-    clocks.set(name, { cell: name, perSecond, positional: isPositional(c), ...(swing !== undefined ? { swing } : {}) });
+    // swing= (#18): on a meter, levels of its bar (a bare one, the level of its own steps); on a list, pairs of its steps
+    const swingSpan = d.paramSpans?.swing ?? d.span;
+    let swing: number | undefined;
+    let swung: number[] | null = null;
+    const share = (x: number) => String(x).replace(/^0\./, '.');
+    if (typeof d.params.swing === 'number' && c.meter) {
+      const m = c.meter;
+      if (!d.swing) {
+        const level = bareSwingLevel(m);
+        const whole = level === null ? null : noteValue(level);
+        const leans = whole !== null && swingLevelProblem(m, whole) === null;
+        warn(
+          leans
+            ? `swing=${share(d.params.swing)} leans the meter cell's own steps: name the level it leans, swing=${level}:${share(d.params.swing)}`
+            : `swing=${share(d.params.swing)} leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:${share(d.params.swing)}`,
+          swingSpan,
+        );
+      }
+      for (const l of d.swing ?? []) {
+        const whole = noteValue(l.level);
+        const problem = whole === null ? `${l.level} is not a note value (8n, 16n, 8t)` : swingLevelProblem(m, whole);
+        if (problem) warn(`swing=${l.level}:${share(l.share)} leans nothing on &${name}: ${problem}`, swingSpan);
+      }
+      swung = swungSteps(m);
+    } else if (typeof d.params.swing === 'number' && d.swing)
+      warn(
+        `swing=${d.swing.map((l) => `${l.level}:${share(l.share)}`).join(',')} leans levels of a meter, and &${name} is not one: write swing=${share(d.params.swing)} (pairs of its steps)`,
+        swingSpan,
+      );
+    else if (typeof d.params.swing === 'number' && d.params.swing !== 0.5) swing = d.params.swing;
+    clocks.set(name, { cell: name, perSecond, positional: isPositional(c), ...(swing !== undefined ? { swing } : {}), ...(swung ? { swung } : {}) });
   }
 
   // ---- step= / loop= chains: every cell's steps per step of its clock
@@ -120,25 +149,32 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     }
     tapped.set(name, meter);
     const bars = Math.max(1, Math.round(decls.get(name)?.cycle ?? 1));
-    const key = tapClockName(meter, st.tap, bars);
+    // (a swung meter, #18: a chain of k on the tap is k steps between each two of its own, each placed through the swing,
+    //  so step=pulse*2 swings as step=8n does)
+    const split = m.swing && Number.isInteger(st.ratio) && st.ratio > 1 ? st.ratio : 1;
+    const key = tapClockName(meter, st.tap, bars) + (split > 1 ? `*${split}` : '');
     if (!clocks.has(key)) {
       const per = stepsPerPulse(m);
-      const positions = tapPositions(m, st.tap, bars).map((p) => p * per);
+      const plain = tapPositions(m, st.tap, bars);
+      const lapPulses = m.pulses * bars;
+      const fine = plain.flatMap((p, i) => Array.from({ length: split }, (_, k) => p + (k * ((plain[i + 1] ?? lapPulses) - p)) / split));
+      const positions = fine.map((p) => swingAt(m, p) * per);
       const lap = m.levels.length * bars;
       clocks.set(key, { cell: meter, perSecond: (clocks.get(meter)!.perSecond * positions.length) / lap, positional: false, tap: { meter, positions, lap } });
     }
+    const ratio = st.ratio / split;
     // (a scan tapped that drives others, scan(2 1) step=8n: a meter of its own, as one stepped by &bar is)
     const c = cells.get(name);
     if (c?.scan && drivers.has(name)) {
-      clocks.set(name, { cell: name, perSecond: clocks.get(key)!.perSecond * st.ratio, positional: true });
+      clocks.set(name, { cell: name, perSecond: clocks.get(key)!.perSecond * ratio, positional: true });
       return { clock: name, rate: 1 };
     }
     // (a belt on a tap: the cell follows the tap through a spring, as it follows a meter's steps)
     if (c && typeof decls.get(name)?.params.belt === 'number') {
-      clocks.set(name, { cell: name, perSecond: clocks.get(key)!.perSecond * st.ratio, positional: false, belt: { driver: key, rate: st.ratio } });
+      clocks.set(name, { cell: name, perSecond: clocks.get(key)!.perSecond * ratio, positional: false, belt: { driver: key, rate: ratio } });
       return { clock: name, rate: 1 };
     }
-    return { clock: key, rate: st.ratio };
+    return { clock: key, rate: ratio };
   };
   const timeOf = (name: string): { clock: string; rate: number } | null => {
     if (timing.has(name)) return timing.get(name)!;

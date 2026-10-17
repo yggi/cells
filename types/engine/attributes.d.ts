@@ -17,6 +17,8 @@ export interface Attribute {
     readonly value: 'number' | 'word' | 'cell' | 'syntax';
     /** The roles it acts on; anywhere else it does nothing (a warning). Absent: any cell. */
     readonly on?: readonly Role[];
+    /** How it is written, where that is more than its value (`swing=8n:.67`); absent: from `value`. */
+    readonly form?: string;
     /** It makes the cell a voice (a sound parameter). */
     readonly voice?: true;
     /** It can move: lpf=&sweep, lpf=200..3000 * &fenv. */

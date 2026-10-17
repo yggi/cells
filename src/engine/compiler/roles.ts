@@ -95,9 +95,6 @@ export function checkRoles(ctx: Ctx, { decls, implicit, taps }: Declared, cells:
           d.paramSpans[d.gate.port === 'trigger' ? 'gain' : 'level'] ?? d.span,
         );
     }
-    // swing pairs the steps of a list; a scan places its own
-    if (typeof d.params.swing === 'number' && has.has('clock') && clocks.get(d.name)?.positional)
-      warn(`swing= swings a meter written as a list or meter(…); a scan(…) places its steps itself — write the swing into it`, d.paramSpans.swing ?? d.span);
   }
   // a plugin the piece carries that no cell shows
   const shown = new Set([...decls.values()].flatMap((d) => (d.show ? [d.show.split(':')[0]] : [])));

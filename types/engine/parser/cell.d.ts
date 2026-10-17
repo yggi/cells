@@ -23,6 +23,10 @@ interface Body {
     chance: number | null;
     seed: number | null;
     size: number | null;
+    swing: {
+        level: string;
+        share: number;
+    }[] | null;
     readonly params: Record<string, number | string>;
     readonly paramSpans: Record<string, Span>;
     readonly paramCells: Record<string, ParamCells>;
