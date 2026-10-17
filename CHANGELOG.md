@@ -8,7 +8,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.4.0`.
+Node can import the package ([#11](https://github.com/yggi/cells/issues/11)). `exports` has a new `module` condition: it points at the `.ts` source, which Vite and Vitest resolve as before, and `default` now points at `dist/`, the same code as JavaScript with resolvable imports, so `import('@yggi/cells')` works under plain `node`, with no flags, from `node_modules`. No piece reads or sounds differently. A frontend whose bundler resolves neither `module` nor a TypeScript `default` (none today) would read `dist/`; the installed package grows by 0.8 MB.
 
 ## v0.4.0 — 2026-10-17
 

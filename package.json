@@ -7,19 +7,23 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "default": "./src/index.ts"
+      "module": "./src/index.ts",
+      "default": "./dist/index.js"
     },
     "./engine/*": {
       "types": "./types/engine/*.d.ts",
-      "default": "./src/engine/*.ts"
+      "module": "./src/engine/*.ts",
+      "default": "./dist/engine/*.js"
     },
     "./theory/*": {
       "types": "./types/theory/*.d.ts",
-      "default": "./src/theory/*.ts"
+      "module": "./src/theory/*.ts",
+      "default": "./dist/theory/*.js"
     },
     "./repository/*": {
       "types": "./types/repository/*.d.ts",
-      "default": "./src/repository/*.ts"
+      "module": "./src/repository/*.ts",
+      "default": "./dist/repository/*.js"
     },
     "./examples/*": "./examples/*",
     "./midi/*": "./midi/*",
@@ -28,6 +32,7 @@
   "files": [
     "src",
     "!src/**/*.test.ts",
+    "dist",
     "types",
     "examples",
     "docs/language",
@@ -49,7 +54,8 @@
     "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test -- --reporter=default --reporter=./tools/test-count.ts",
     "postverify": "sh tools/verified.sh end",
     "reference": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/reference.ts",
-    "types": "tsc -p tsconfig.types.json"
+    "types": "tsc -p tsconfig.types.json",
+    "dist": "node --experimental-strip-types --no-warnings tools/dist.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
