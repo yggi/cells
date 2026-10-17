@@ -262,7 +262,7 @@ export class LineScanner {
   /** At a ':' after the reference starting at `from`: a meter's tap (&bar:16n) is read by step= only, so it fails and says so. */
   rejectTap(from: number): void {
     if (this.peek() !== ':') return;
-    const tap = /^(?:pulse|beat)(?:\*\d+)?|^\d+[nt]\.?|^\d*m/.exec(this.text.slice(this.i + 1));
+    const tap = /^(?:(?:pulse|beat)(?:\*\d+)?|\d+[nt]\.?|\d*m)(?![\w.])/.exec(this.text.slice(this.i + 1));
     if (!tap) return;
     const as = this.text.slice(from, this.i + 1 + tap[0].length);
     this.fail(`${as} is a meter's tap, which only step= reads (step=${as}): here it names no cell`, from, as.length);

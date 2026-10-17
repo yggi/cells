@@ -210,6 +210,12 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
       ['in a braid', '&bar meter("4/4")\n&x 0 &bar:beat 2', '&x 0 '.length + 1],
       ['as an attribute’s value', '&bar meter("4/4")\n&x over=&bar:8n 0', '&x over='.length + 1],
     ];
+    // (only a whole tap: a name that begins like one, &k:mute or &x:m1, is not a tap and isn't called one)
+    for (const src of ['&k [&mute, &bd]\n&x step=1 &k:mute', '&x step=1 0 1\n&y &x:m1', '&x step=1 0\n&y &x:8nx'])
+      expect(
+        compileSource(src).diagnostics.some((d) => d.message.includes("meter's tap")),
+        src,
+      ).toBe(false);
     for (const [, src, col] of cases) {
       const tap = src.match(/&bar:\w+/)![0];
       const d = compileSource(src).diagnostics.filter((x) => x.message.includes(tap));
