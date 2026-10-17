@@ -1,6 +1,6 @@
 # Agents
 
-The cells language as a package: a minimal music language where everything is a cell, on top of Strudel's mini-notation; text in, events out, with no host of its own. Its frontends are [Cell studio](https://github.com/yggi/cell-studio) (the workbench) and [Jambot](https://github.com/yggi/jambot) (the interactive, multi-user frontend), each consuming a tag of this repository. **Start with [docs/MEMORY.md](docs/MEMORY.md)**; [docs/INDEX.md](docs/INDEX.md) lists every page. The family of music projects and its rules: [yggi/music-commons](https://github.com/yggi/music-commons).
+The cells language as a package: a minimal music language where everything is a cell, on top of Strudel's mini-notation; text in, events out, with no host of its own. Its frontends are [Cell studio](https://github.com/yggi/cell-studio) (the workbench) and [Jambot](https://github.com/yggi/jambot) (the interactive, multi-user frontend), each consuming a tag of this repository. **Start with [docs/MEMORY.md](docs/MEMORY.md)**; [docs/INDEX.md](docs/INDEX.md) lists every page. **What to do next:** look first at the central roadmap epic, [#81](https://github.com/yggi/cells/issues/81) (its twin is [yggi/jambot#358](https://github.com/yggi/jambot/issues/358)). The family of music projects and its rules: [yggi/music-commons](https://github.com/yggi/music-commons).
 
 ## Tools
 
