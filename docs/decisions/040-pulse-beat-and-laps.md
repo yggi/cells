@@ -23,6 +23,8 @@ The same discussion settled what happens past the end of a lap, for pitch and fo
 - A `scan(…)` meter has as many pulses as entries, each a quarter (its denominator is 4), and its beats are its entries.
 - `pulse=` states a scan's pulse value (`pulse=16n`: its entries sixteenths); its beats then count quarters (owner, 2026-10-17, on #79).
 - `beat=` on a meter states another feel (`meter("4/4") beat=2`, alla breve).
+- `bpm` with unequal beats: the bar lasts `beats / bpm` minutes and its beats keep their proportions (7/8 at 90 bpm: a 2 s bar, 0.86 s and two 0.57 s beats; owner, 2026-10-17, #88). Jambot's bpm counts the same beats (yggi/jambot#373).
+- A meter written as levels (`meter("*.+.+..")`) has eighths as its pulses, quarters when every step is a beat, sixteenths when every beat is four steps (owner, 2026-10-17, #88).
 
 **A line taps the meter by pulse, beat or note value**, never by the meter cell's own steps (a meter tap, not decision 016's section tap: [time.md](../language/time.md) names both):
 
@@ -52,7 +54,6 @@ The same discussion settled what happens past the end of a lap, for pitch and fo
 
 ## Open
 
-- `bpm` with unequal beats: the bar lasts `beats / bpm` minutes and its beats keep their proportions (7/8 at 90 bpm: a 2 s bar, 0.86 s and two 0.57 s beats). Confirm on the first rung.
 - A kit's default `cycle=` (a drum index past the last drum): `cycle=1` proposed; today's behaviour unchecked.
 
 ## Consequences
