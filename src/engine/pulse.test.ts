@@ -4,6 +4,7 @@ import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { tapPositions } from './meter';
 import { shorten } from './shorten';
+import { mainMeter } from './midiclock';
 
 // Decision 040: a meter knows its bar, its pulse (the numerator) and its beat (what is counted); a line taps it by pulse,
 // beat or note value, and a tap comes round at the bar.
@@ -154,6 +155,38 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     // scan(27 23 26 24): beats at 0 27 50 76 % of the bar
     expect(positions('scan(27 23 26 24)', 'pulse')).toEqual([0, 1.08, 2, 3.04]);
     expect(positions('scan(27 23 26 24)', '8n')).toEqual([0, 0.54, 1.08, 1.54, 2, 2.52, 3.04, 3.52]);
+  });
+
+  it('pulse= on a scan says what its entries are: step=pulse each entry, beat each quarter, bpm counting quarters', () => {
+    // twelve sixteenths at ♩ = 60: a beat a second, an entry a quarter of one
+    const src = (tap: string, scan = 'scan(1!12)') => `&bar ${scan} pulse=16n step=60bpm\n&x step=${tap} 0${VOICE}`;
+    const at = (tap: string, scan?: string) => eventsBetween(plan(compiled(src(tap, scan)), codeShifts(compiled(src(tap, scan)))), 0, 3 - 1e-6).map((e) => +e.at.toFixed(4));
+    expect(at('pulse')).toEqual([0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75]);
+    expect(at('16n')).toEqual(at('pulse'));
+    expect(at('beat')).toEqual([0, 1, 2]);
+    expect(at('4n')).toEqual([0, 1, 2]);
+    expect(at('8n')).toEqual([0, 0.5, 1, 1.5, 2, 2.5]);
+    const r = compiled(src('pulse'));
+    expect(r.cells.get('bar')!.meter).toMatchObject({ pulses: 12, unit: 16, beats: [4, 4, 4] });
+    expect(r.cells.get('bar')!.beat).toBe(4); // (its steps a beat: the MIDI clock's 24 ticks a quarter)
+    expect(mainMeter(r)).toEqual({ cell: 'bar', beat: 4 });
+    // (a scan that ends mid-beat: its bpm still counts quarters, the last beat its share)
+    const odd = compiled(src('pulse', 'scan(1!13)'));
+    expect(odd.cells.get('bar')!.meter!.beats).toEqual([4, 4, 4, 1]);
+    expect(odd.clocks.get('bar')!.perSecond).toBeCloseTo(4, 9);
+    // (the default, 4n: each entry a quarter and a beat, as before)
+    expect(compiled('&m scan(1 1 1)').cells.get('m')!.meter).toMatchObject({ unit: 4, beats: [1, 1, 1] });
+    // (not a scan, or not a note value: it says so)
+    expect(
+      compileSource('&m 1 1 pulse=16n step=60bpm')
+        .diagnostics.map((d) => d.message)
+        .filter((m) => !m.startsWith('Nothing plays')),
+    ).toEqual([expect.stringMatching(/pulse= says the note value of a scan's entries/)]);
+    expect(
+      compileSource('&m scan(1 1) pulse=fast step=60bpm')
+        .diagnostics.map((d) => d.message)
+        .filter((m) => !m.startsWith('Nothing plays')),
+    ).toEqual([expect.stringMatching(/fast is not one/)]);
   });
 
   it('bpm counts beats: with unequal beats the bar lasts beats / bpm and its beats keep their proportions (7/8 at 90: 2 s, 0.86 and two 0.57)', () => {

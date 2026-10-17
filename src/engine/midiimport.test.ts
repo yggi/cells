@@ -149,8 +149,7 @@ describe('a MIDI file as a piece', () => {
     const smf = readMidi(writeMidi(pieceMidi(result, codeShifts(result)).smf));
     const { source, notes: count, perQuarter } = cellsFromMidi(smf, 'BWV 847');
     expect(count).toBe(1765);
-    // (its tempo map's beats are its entries, decision 040: the file writes a sixteenth as a beat, so one step a quarter)
-    expect(perQuarter).toBe(1);
+    expect(perQuarter).toBe(4);
     const back = notesOf(source);
     expect(back.map((n) => n.key)).toEqual(original.map((n) => n.key));
     const worst = (k: 'at' | 'dur') => back.reduce((m, n, i) => Math.max(m, Math.abs(n[k] - original[i][k])), 0);

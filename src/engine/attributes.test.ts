@@ -32,7 +32,7 @@ describe('the attribute table', () => {
     expect([...VOICE_PARAMS].sort()).toEqual(
       ['s', 'lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay', 'delaytime', 'delayfeedback', 'pan', 'distort', 'crush', 'fm', 'ratio', 'index', 'body', 'ring', 'hard'].sort(),
     );
-    expect(Object.keys(PARAMS).length).toBe(60);
+    expect(Object.keys(PARAMS).length).toBe(61);
   });
 
   test('a misspelling finds its nearest attribute', () => {

@@ -5,8 +5,8 @@
  * - **The grid**: the coarsest step (a quarter note, an eighth, a triplet … down to a 64th) that every start falls on,
  *   within a 96th of a quarter (and an eighth of the step); a file played in, whose starts fall on none, is laid on sixteenths and says how many
  *   notes moved.
- * - **The time**: one meter for the whole piece, `&tempo scan(…) step=free(…bpm) laps=1`, a step each grid step (its
- *   bpm counts them: a scan's beats are its steps, decision 040), each as long as the file's tempo map makes it (a
+ * - **The time**: one meter for the whole piece, `&tempo scan(…) pulse=16n step=free(…bpm) laps=1`, a step each grid
+ *   step (`pulse=` its note value, so its bpm counts quarters: decision 040), each as long as the file's tempo map makes it (a
  *   scan's steps are its weights against their mean), so a tempo change is a change of weight, as BWV 847 writes its
  *   own; laps=1, so the piece ends. Every line taps it by the pulse (`step=pulse`, `step=pulse/2`).
  * - **The lines**: a line a track and channel (a format 0 file's channels apart), named after the track. Notes that start
@@ -262,11 +262,14 @@ export function cellsFromMidi(
   }
   // (the scan's steps are its weights against their mean: the bpm makes the whole as long as the file)
   const total = lengths.reduce((a, b) => a + b, 0);
-  // (its bpm counts its steps, grid steps a minute: decision 040, a scan's beats are its entries)
-  const bpm = (60 * length) / total;
+  // (its bpm counts quarters: its pulse= says what a step is, decision 040 — pulse=16n, sixteenths; 8t, triplet eighths)
+  const bpm = (60 * length) / (total * perQuarter);
+  const unit = 4 * perQuarter;
+  const pow2 = (x: number) => Number.isInteger(x) && Number.isInteger(Math.log2(x));
+  const pulse = unit === 4 ? '' : pow2(unit) ? ` pulse=${unit}n` : pow2((2 * unit) / 3) ? ` pulse=${(2 * unit) / 3}t` : ` pulse=${unit}n`;
   // (free: a slider; not, for a MIDI file played as it is, where nothing is kept)
   const rate = free ? `free(${short(bpm, 6)}bpm, ${Math.floor(bpm * 0.6)}..${Math.ceil(bpm * 1.5)})` : `${short(bpm, 6)}bpm`;
-  const tempo = `&tempo scan(${runs.join(' ')}) step=${rate} laps=1`;
+  const tempo = `&tempo scan(${runs.join(' ')})${pulse} step=${rate} laps=1`;
 
   // the lines: chords where notes start and end together, a line beside for a note that overlaps
   const taken = new Set(TAKEN);

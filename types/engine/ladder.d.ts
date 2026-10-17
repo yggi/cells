@@ -4,7 +4,7 @@ export declare const STUBS: ReadonlySet<string>;
  * Forms read and played but on no tier yet (#337: Strudel's `<a b>`, `x/n`, `x(k,n,r)`): a tier's pieces must show its
  * forms, and no tutorial piece can show these without changing the notes it plays. They go on a tier (4, rhythm, or 5,
  * development) with the piece that shows them. `beat=` (decision 040: a meter's beats, alla breve) lost its piece when
- * Swing moved to taps: it goes on tier 4 with one that shows it.
+ * Swing moved to taps: it goes on tier 4 with one that shows it; `pulse=` (a scan's note value: BWV 847's sixteenths) too.
  */
 export declare const PENDING: ReadonlySet<string>;
 /**

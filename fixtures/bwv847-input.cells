@@ -9,10 +9,10 @@
 &fugueEntriesNote label="The fugue, in three voices: the subject enters in the alto, is answered by the soprano, then the bass — and returns, in every voice, through the keys." about=(&alto &soprano &bass)
 
 # one tempo map for both: a sixteenth a step, each section at its pace; laps=1 — the piece ends with the fugue
-&tempo scan(1!432 .72!96 2!17 .86!64 1.6!15 1.5!496) step=free(356bpm, 240..480) laps=1 label="tempo map: ♩=108 · *Presto* · *Adagio* · *Allegro* · fugue ♩=72"
+&tempo scan(1!432 .72!96 2!17 .86!64 1.6!15 1.5!496) pulse=16n step=free(89bpm, 60..120) laps=1 label="tempo map: ♩=108 · *Presto* · *Adagio* · *Allegro* · fugue ♩=72"
 # the movements: two taps of the tempo map, switched by the form (decision 016), no tacets
-&movements step=4n &preludeTime &fugueTime
-&form over=&movements step=4n laps=1 label="prelude · a breath · fugue" 0@609 ~@15 1@496
+&movements step=pulse &preludeTime &fugueTime
+&form over=&movements step=pulse laps=1 label="prelude · a breath · fugue" 0@609 ~@15 1@496
 
 # ---- the prelude
 &figure tags="figuration" 0 1 2 1 3 1 2 1                          # the figure: top, middle, low, middle, bottom, middle, low, middle

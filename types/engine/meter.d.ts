@@ -23,6 +23,8 @@ export interface Meter {
     readonly unit: number;
     /** The beats, each its length in pulses: what is counted, what bpm counts (6/8: 3 3; 7/8: 3 2 2; 4/4: 1 1 1 1). */
     readonly beats: readonly number[];
+    /** A scan with pulse= (its beats quarters, the last maybe cut): how many beats its bpm counts, a fraction where it ends mid-beat. */
+    readonly counted?: number;
 }
 /** How a time signature writes a meter: its pulses, its note value and its beats (in pulses), each pulse in `sub` steps. */
 export interface Signature {
@@ -33,6 +35,16 @@ export interface Signature {
 }
 /** The meter's steps a pulse (meter("4/4", 2): 2; a scan: 1). */
 export declare const stepsPerPulse: (m: Meter) => number;
+/** A note value as written (`16n`, `8t`, `4n.`): its length in whole notes, or null. */
+export declare function noteValue(v: string): number | null;
+/**
+ * pulse= on a scan (decision 040): the note value of each of its entries (`pulse=16n`: sixteenths; a scan's are quarters
+ * unless it says). Its beats are then what musicians count, the quarter: so many pulses a beat, the last one cut where
+ * the scan ends (BWV 847's tempo map: 1,105 sixteenths, 276¼ beats).
+ */
+export declare function withPulse(m: Meter, whole: number): Meter;
+/** How many beats a meter's bpm counts in a bar: one each (7/8: three, unequal), or a scan's beats of `pulse=` (276¼). */
+export declare const beatCount: (m: Meter) => number;
 /** beat=n on a meter: n equal beats over its pulses, in place of the beats it was written with (alla breve: `meter("4/4") beat=2`). */
 export declare function withBeats(m: Meter, n: number): Meter;
 /**

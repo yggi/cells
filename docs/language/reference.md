@@ -155,6 +155,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `excite=&cell`: A resonator: sound that drives it (excite=&mix) — it answers where the sound meets its modes — on a resonator (body=) [→](physics.md)
 - `postgain=n` · `postgain=free(n, lo..hi)`: On the sound card: its master, a linear gain after everything (Strudel’s postgain: 1 as it is, .5 half; free(.8, 0..1) a slider) — on the sound card (map=sample) [→](mix.md)
 - `beat=n` · `beat=free(n, lo..hi)`: On a meter: how many beats it counts, equal (meter("4/4") beat=2: alla breve) — its bpm counts beats — on a meter (step= a rate) [→](time.md)
+- `pulse=word`: On a scan: the note value of its entries (pulse=16n: sixteenths) — its beats then count quarters, and its taps read note values by it — on a meter (step= a rate) or a driven cell (step=&x) [→](time.md)
 - `swing=n` · `swing=free(n, lo..hi)`: On a meter: of each pair of steps, the second comes this far through (.5 straight, .67 triplet swing) — on a meter (step= a rate) [→](time.md)
 - `motor=n` · `motor=free(n, lo..hi)`: On a meter: it turns physically — a motor this strong pulls it to its tempo (from rest) — on a meter (step= a rate) [→](physics.md)
 - `mass=n` · `mass=free(n, lo..hi)`: Physics: how heavy it turns (inertia); on a cell a meter drives, load — on a meter (step= a rate) or a driven cell (step=&x) [→](physics.md)

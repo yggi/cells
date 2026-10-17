@@ -21,6 +21,7 @@ The same discussion settled what happens past the end of a lap, for pitch and fo
 | **the tree** | groups and their proportions (swing, aksak, agogic) | | | 3+3 | 3+3+3 | 3+2+2 |
 
 - A `scan(…)` meter has as many pulses as entries, each a quarter (its denominator is 4), and its beats are its entries.
+- `pulse=` states a scan's pulse value (`pulse=16n`: its entries sixteenths); its beats then count quarters (owner, 2026-10-17, on #79).
 - `beat=` on a meter states another feel (`meter("4/4") beat=2`, alla breve).
 
 **A line taps the meter by pulse, beat or note value**, never by the meter cell's own steps:

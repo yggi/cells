@@ -34,6 +34,8 @@ export interface Meter {
   readonly unit: number;
   /** The beats, each its length in pulses: what is counted, what bpm counts (6/8: 3 3; 7/8: 3 2 2; 4/4: 1 1 1 1). */
   readonly beats: readonly number[];
+  /** A scan with pulse= (its beats quarters, the last maybe cut): how many beats its bpm counts, a fraction where it ends mid-beat. */
+  readonly counted?: number;
 }
 
 /** How a time signature writes a meter: its pulses, its note value and its beats (in pulses), each pulse in `sub` steps. */
@@ -47,10 +49,37 @@ export interface Signature {
 /** The meter's steps a pulse (meter("4/4", 2): 2; a scan: 1). */
 export const stepsPerPulse = (m: Meter): number => m.levels.length / Math.max(1, m.pulses);
 
+/** A note value as written (`16n`, `8t`, `4n.`): its length in whole notes, or null. */
+export function noteValue(v: string): number | null {
+  const m = /^([1-9][0-9]*)(n\.?|t)$/.exec(v);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  return m[2] === 'n.' ? 3 / (2 * n) : m[2] === 't' ? 2 / (3 * n) : 1 / n;
+}
+
+/**
+ * pulse= on a scan (decision 040): the note value of each of its entries (`pulse=16n`: sixteenths; a scan's are quarters
+ * unless it says). Its beats are then what musicians count, the quarter: so many pulses a beat, the last one cut where
+ * the scan ends (BWV 847's tempo map: 1,105 sixteenths, 276¼ beats).
+ */
+export function withPulse(m: Meter, whole: number): Meter {
+  const unit = 1 / whole;
+  const per = unit / 4; // (pulses a quarter)
+  if (!(per > 1)) return { ...m, unit };
+  const beats: number[] = [];
+  for (let at = 0; at < m.pulses - 1e-9; at += per) beats.push(Math.min(per, m.pulses - at));
+  // (a last beat cut short counts its share: the bpm reads quarters however the scan ends)
+  return { ...m, unit, beats, counted: m.pulses / per };
+}
+
+/** How many beats a meter's bpm counts in a bar: one each (7/8: three, unequal), or a scan's beats of `pulse=` (276¼). */
+export const beatCount = (m: Meter): number => m.counted ?? Math.max(1, m.beats.length);
+
 /** beat=n on a meter: n equal beats over its pulses, in place of the beats it was written with (alla breve: `meter("4/4") beat=2`). */
 export function withBeats(m: Meter, n: number): Meter {
   const k = Math.max(1, Math.round(n));
-  return { ...m, beats: Array.from({ length: k }, () => m.pulses / k) };
+  const { counted: _, ...rest } = m;
+  return { ...rest, beats: Array.from({ length: k }, () => m.pulses / k) };
 }
 
 /**

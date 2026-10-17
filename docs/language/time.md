@@ -40,7 +40,7 @@ A meter knows four things ([decision 040](../decisions/040-pulse-beat-and-laps.m
 | **beat** | what is counted, what `bpm` counts | 3 | 4 | 2 | 3 | 4 | 3, unequal (3+2+2) |
 | **the tree** | its groups and their proportions | | | 3+3 | 3+3+3 | 3+3+3+3 | 3+2+2 |
 
-A `scan(…)` has as many pulses as entries, each a quarter, and its beats are its entries. A meter written as levels counts its steps as pulses (eighths; quarters when every step is a beat, sixteenths when every beat is four), its beats from each `+` to the next.
+A `scan(…)` has as many pulses as entries, each a quarter, and its beats are its entries. **`pulse=`** says another note value for its entries: `scan(1!432 .72!96 …) pulse=16n` is a tempo map in sixteenths, its beats quarters (four entries each, the last cut where the scan ends) and its bpm counting them, as BWV 847's; its taps read note values by it (`16n` an entry, `4n` four). A meter written as levels counts its steps as pulses (eighths; quarters when every step is a beat, sixteenths when every beat is four), its beats from each `+` to the next.
 
 - **bpm counts beats**: `meter("6/8") step=60bpm` is two dotted quarters a second, a bar of 2 s. With unequal beats the bar lasts beats ÷ bpm and the beats keep their proportions: `meter("7/8") step=90bpm` is a bar of 2 s, beats of 0.86, 0.57 and 0.57 s.
 - **`beat=n`** — another feel: n equal beats over the pulses (`meter("4/4") beat=2`, alla breve: its bpm counts half notes). On a cell that is not a meter it does nothing (a warning).

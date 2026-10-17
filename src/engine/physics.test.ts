@@ -109,14 +109,12 @@ describe('varispeed: pitch follows the clock’s speed, as tape does', () => {
   });
 });
 
-// (decision 040: beat= no longer says steps a beat, and a scan's beats are its entries — so the tempo map's bpm counts its
-// sixteenths: 356, ♩ = 89. Open in #74's pull request: how a scan says its entries are sixteenths.)
-describe('BWV 847: the tempo map in sixteenths, its bpm counting them (♩ = 89 is 356 a minute)', () => {
-  it('the slider shows 356 bpm', async () => {
+describe('BWV 847: its beat a real beat (♩ = 89), the tempo map in sixteenths beneath it', () => {
+  it('the slider shows 89 bpm', async () => {
     const { PRESETS } = await import('./presets');
     const { mainTempo } = await import('./duration');
     const t = mainTempo(compileSource((PRESETS as Record<string, { source: string }>).bwv847.source))!;
-    expect([t.cell, t.free.value, t.free.unit]).toEqual(['tempo', 356, 'bpm']);
+    expect([t.cell, t.free.value, t.free.unit]).toEqual(['tempo', 89, 'bpm']); // (pulse=16n: its steps sixteenths, its bpm quarters)
   });
 });
 

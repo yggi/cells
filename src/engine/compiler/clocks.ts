@@ -1,7 +1,7 @@
 /** Phase 4: time — clocks (cells moved at a rate), every cell's steps per step of its clock, times given as clocks. */
 import type { CellDecl, Tap } from '../ast';
 import { isPositional, type Clock } from '../program';
-import { stepsPerPulse, tapPositions } from '../meter';
+import { noteValue, stepsPerPulse, tapPositions } from '../meter';
 import type { Cells, Ctx } from './context';
 
 /** A tap's clock's name: the meter's, the tap and its bars (`bar:16n`, `bar:1n:4`); no cell can be called that. */
@@ -58,6 +58,11 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     // (decision 040: beat= states a meter's beats; its old meaning, steps a beat, is gone)
     if (typeof d.params.beat === 'number' && !c.meter)
       warn(`beat= says how many beats a meter(…) or scan(…) counts (alla breve: meter("4/4") beat=2); on &${name}, a list, it does nothing`, d.paramSpans?.beat ?? d.span);
+    if (d.params.pulse !== undefined && (d.braid.kind !== 'scan' || typeof d.params.pulse !== 'string' || noteValue(d.params.pulse) === null))
+      warn(
+        `pulse= says the note value of a scan's entries (pulse=16n: sixteenths, its bpm counting quarters); ${d.braid.kind === 'scan' ? `${d.params.pulse} is not one (16n, 8t, 4n.)` : `on &${name}, not a scan, it does nothing`}`,
+        d.paramSpans?.pulse ?? d.span,
+      );
     // the bpm counts beats (decision 040): a meter's steps a beat, from its pulses and beats (beat= on it, or meter(…)) —
     // so a meter can step in eighths and still read 96 for its quarter notes, and 7/8 at 90 is a bar of 2 s
     const perSecond = (d.step.whole ? r * Math.max(1, c.steps) : r) * (d.step.whole ? 1 : c.beat);
