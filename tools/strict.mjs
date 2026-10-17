@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const CLEAN = [
   /^src\/theory\//,
+  /^src\/repository\//,
   // (the engine, a part at a time: new code goes on clean)
   /^src\/engine\/fold\//,
   /^src\/engine\/midiimport\.ts$/,

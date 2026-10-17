@@ -17,6 +17,10 @@
       "types": "./types/theory/*.d.ts",
       "default": "./src/theory/*.ts"
     },
+    "./repository/*": {
+      "types": "./types/repository/*.d.ts",
+      "default": "./src/repository/*.ts"
+    },
     "./examples/*": "./examples/*",
     "./midi/*": "./midi/*",
     "./package.json": "./package.json"
