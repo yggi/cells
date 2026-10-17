@@ -7,6 +7,7 @@ import type { LineScanner } from './scanner';
  */
 export function parseFields(s: LineScanner): number | undefined {
   if (s.peek() !== ':') return undefined;
+  s.rejectTap(s.text.slice(0, s.i).search(/&[^\s:,[\]()*+&]*$/));
   s.i++;
   const at = s.i;
   const n = s.match(/[0-9]+/y);
