@@ -46,7 +46,7 @@ export interface Played {
   readonly unheard?: true;
   /** The MIDI cards' entries it goes out on (those switched on): MIDI out sends it there and nowhere else. */
   readonly midi?: Output['midi'];
-  /** The output it comes from (`Output.id`), when asked for (`eventsBetween(…, true)`): which mixes' wheels hear it (audio/wiring.ts `taps`). */
+  /** The output it comes from (`Output.id`), when asked for (`eventsBetween(…, true)`): which mixes' wheels hear it (Cell studio's audio wiring). */
   readonly output?: string;
   /**
    * A drone's note (a voice alone, decision 028): held from where play starts until play stops or the piece ends, so it
@@ -186,7 +186,7 @@ function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number):
 }
 
 /**
- * What switching a part on does to its time (decision 032): the policy its tap's line states, else its selector's; with
+ * What switching a part on does to its time (decision 032): the policy its section's line states, else its selector's; with
  * several selectors on one track, the first that names one other than restart.
  */
 function restartOf(result: CompileResult, select: Output['select']): 'restart' | 'resume' | 'free' {
@@ -211,7 +211,7 @@ export function picksNow(result: CompileResult, statics: Shifts, name: string, s
 
 /**
  * When a selector picks an entry, in [from, to): its windows, in seconds. Switching a
- * tap restarts: each window is where the picked part starts again.
+ * section restarts: each window is where the picked part starts again.
  */
 function windowsOf(p: Plan, sel: PlanTrack['selects'][number], from: number, to: number): { a: number; b: number }[] {
   const m = sel.series;

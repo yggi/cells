@@ -14,7 +14,7 @@ export interface Diagnostic {
 /**
  * A pick from a braid, Python-style: `&x[0]` first token, `&x[-1]` last, `&x[1:3]`, `&x[-1:]`, `&x[:-1]` slices,
  * `&x[::-1]` backwards (retrograde), `&x[::2]` every other. Relative: from the braid as it is turned now (a fixed
- * tap reads whatever has turned under it; a wrapped entry climbs a lap). `abs` (`&x[$0]`): as written.
+ * reader reads whatever has turned under it; a wrapped entry climbs a lap). `abs` (`&x[$0]`): as written.
  */
 export type Pick = ({
     readonly kind: 'at';

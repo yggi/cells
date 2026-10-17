@@ -471,9 +471,9 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
   syntax(
     'line',
-    '&parts step=&bar &a &b',
-    "Taps of a meter's bus (decision 016): a stepped table of names declares them, each stepped as the table is. What a tap steps plays while a selector reading the table picks it (`over=&parts`), from its top each time: an arrangement.",
-    ['&parts step=&bar &verseBar &chorusBar'],
+    '&sections step=&bar &a &b',
+    'Sections of an arrangement (decision 016): a stepped table of names declares them, each stepped as the table is. What a section steps plays while a selector reading the table picks it (`over=&sections`), from its top each time.',
+    ['&sections step=&bar &verseBar &chorusBar'],
     'time.md',
   ),
 ];

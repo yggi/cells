@@ -52,7 +52,7 @@ export declare function clocking(result: CompileResult, statics: Shifts, seconds
  * where cycle= says (more laps climb on the way).
  */
 export declare function shiftsAt(result: CompileResult, statics: Shifts, seconds: number, played?: ReadonlySet<string>): Shifts;
-/** Is it a selector (a cell reading a table of taps: decision 016)? */
+/** Is it a selector (a cell reading a table of sections: decision 016)? */
 export declare function selects(result: CompileResult, name: string): boolean;
 /**
  * A tape's motion: how far it has moved (tape-seconds) at real second x, when it has moved u, and how

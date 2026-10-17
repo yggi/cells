@@ -17,10 +17,11 @@ export interface Declared {
   /** Which cells' over= chains are sound (known, acyclic). */
   readonly overOk: ReadonlyMap<string, boolean>;
   /**
-   * Taps of a meter's bus (decision 016), each to its table: a stepped table of names (`&parts step=&bar &keys &drums`)
-   * declares the names it doesn't find as its taps, each stepped as the table was; the table is then a table.
+   * Sections of an arrangement (decisions 016 and 044), each to its table: a stepped table of names
+   * (`&sections step=&bar &keys &drums`) declares the names it doesn't find as its sections, each stepped as the table
+   * was; the table is then a table.
    */
-  readonly taps: ReadonlyMap<string, string>;
+  readonly sections: ReadonlyMap<string, string>;
 }
 
 export function declare(ctx: Ctx): Declared {
@@ -31,7 +32,7 @@ export function declare(ctx: Ctx): Declared {
     if (decls.has(c.name)) error(`&${c.name} is already defined on line ${decls.get(c.name)!.span.line}`, c.span);
     else decls.set(c.name, c);
   }
-  const taps = tapTables(decls, error);
+  const sections = sectionTables(decls, error);
   gates(decls, implicit, error);
   mixSelectors(ctx, decls);
   const implicitRoot = !decls.has(ROOT);
@@ -101,7 +102,7 @@ export function declare(ctx: Ctx): Declared {
     return ok;
   };
   for (const name of decls.keys()) checkOver(name, []);
-  return { decls, implicit, implicitRoot, overOk, taps };
+  return { decls, implicit, implicitRoot, overOk, sections };
 }
 
 /** The kit that grooves and their motifs read: every voice they name. */
@@ -276,7 +277,7 @@ function mixSelectors(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): void {
     const t = d.over ? decls.get(d.over.name) : undefined;
     if (!t || t.braid.kind !== 'list' || !t.braid.tokens.length || !t.braid.tokens.every((x) => x.atom.kind === 'ref' && isMix(decls.get(x.atom.name)))) continue;
     ctx.error(
-      `A selector switches taps of a meter's bus (decision 016): &${d.name} over=&${t.name} reads mixes. Write &${t.name} step=4n with a tap per part (&${t.name} step=4n &keysBar &drumBar), step each part's cells by its tap (step=&keysBar), and play the parts straight into the sound card`,
+      `A selector switches sections (decision 016): &${d.name} over=&${t.name} reads mixes. Write &${t.name} step=4n with a section per part (&${t.name} step=4n &keysBar &drumBar), step each part's cells by its section (step=&keysBar), and play the parts straight into the sound card`,
       d.over!.span,
     );
     ctx.broken.add(d.name);
@@ -284,17 +285,17 @@ function mixSelectors(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): void {
 }
 
 /**
- * Tables of taps (decision 016): a stepped cell whose steps are plain names, each one either not declared, declared
- * bare (a line of attributes only, no steps and no clock: `&hookBar off`, where the editor writes a tap's off, label=,
- * show=), or a cell stepped by something (a tap written out: its own line wins), at least one not declared or bare and
- * one something is stepped by. Each undeclared or bare name is a tap, stepped as the table was (one step, a clock),
+ * Tables of sections (decision 016): a stepped cell whose steps are plain names, each one either not declared, declared
+ * bare (a line of attributes only, no steps and no clock: `&hookBar off`, where the editor writes a section's off,
+ * label=, show=), or a cell stepped by something (a section written out: its own line wins), at least one not declared
+ * or bare and one something is stepped by. Each undeclared or bare name is a section, stepped as the table was (one step, a clock),
  * keeping its own line's attributes; the table loses its step= and is a table. A name not declared is an error
- * otherwise, and a bare line was a cell of no steps, so no piece that compiled before changes meaning. Each tap, to its
- * table.
+ * otherwise, and a bare line was a cell of no steps, so no piece that compiled before changes meaning. Each section, to
+ * its table.
  */
-function tapTables(decls: Map<string, CellDecl>, error: Ctx['error']): Map<string, string> {
-  const taps = new Map<string, string>();
-  // (the names something is stepped by: a table of taps needs one of them, so a stepped braid of a mistyped name is
+function sectionTables(decls: Map<string, CellDecl>, error: Ctx['error']): Map<string, string> {
+  const sections = new Map<string, string>();
+  // (the names something is stepped by: a table of sections needs one of them, so a stepped braid of a mistyped name is
   // still "Unknown cell", as before)
   const clocks = new Set([...decls.values()].flatMap((d) => (d.step?.kind === 'driven' ? [d.step.driver.name] : [])));
   // (a line of attributes only: `&hookBar off`; a shift= turns its one step, which changes nothing, and the sheet's turn
@@ -307,13 +308,13 @@ function tapTables(decls: Map<string, CellDecl>, error: Ctx['error']): Map<strin
       const a = t.atom;
       if (a.kind !== 'ref' || a.pick || a.shift || a.transpose || a.values || t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1) break;
       const known = decls.get(a.name);
-      if (known && !bare(known) && (!known.step || taps.has(a.name))) {
-        // (a tap given a line of steps or a table: the table would be a braid of unknown names — say which line, and
-        // read it as the tap it was meant to be, its steps and table left out, so that is the one error)
+      if (known && !bare(known) && (!known.step || sections.has(a.name))) {
+        // (a section given a line of steps or a table: the table would be a braid of unknown names — say which line,
+        // and read it as the section it was meant to be, its steps and table left out, so that is the one error)
         const rest = d.braid.tokens.map((x) => (x.atom.kind === 'ref' ? x.atom.name : '')).filter((n) => n !== a.name);
         if (known.step || !rest.some((n) => n && !decls.has(n) && clocks.has(n))) break;
         error(
-          `&${a.name} is a tap of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=, size=, shift=, restart=), not steps or a table of its own`,
+          `&${a.name} is a section of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=, size=, shift=, restart=), not steps or a table of its own`,
           known.span,
         );
         decls.set(a.name, { ...known, over: null, map: null, braid: { kind: 'blank' } });
@@ -322,7 +323,7 @@ function tapTables(decls: Map<string, CellDecl>, error: Ctx['error']): Map<strin
     }
     if (names.length !== d.braid.tokens.length || names.every((n) => decls.has(n) && !bare(decls.get(n))) || !names.some((n) => clocks.has(n))) continue;
     for (const [i, name] of names.entries()) {
-      taps.set(name, d.name);
+      sections.set(name, d.name);
       const own = decls.get(name);
       if (own && !bare(own)) continue;
       const span = d.braid.tokens[i].span;
@@ -336,5 +337,5 @@ function tapTables(decls: Map<string, CellDecl>, error: Ctx['error']): Map<strin
     }
     decls.set(d.name, { ...d, step: null });
   }
-  return taps;
+  return sections;
 }

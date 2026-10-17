@@ -438,13 +438,13 @@ describe('a turning table comes round after its own length; cycle= says otherwis
     expect(pitches(compileSource(src('')))).toEqual([0, 7, 2, 9]);
     expect(pitches(compileSource(src('cycle=12')))).toEqual([0, 7, 2, 9]);
   });
-  it('a pick is a fixed tap: &k[0] follows the key as it turns, &k[$0] stays', () => {
-    const tap = (pick: string) => src('').replace('&u over=&k step=&m 0', `&u step=&m ${pick}`);
-    expect(pitches(compileSource(tap('&k[0]')))).toEqual([0, 7, 2, 9]);
-    expect(pitches(compileSource(tap('&k[$0]')))).toEqual([0, 0, 0, 0]);
-    expect(pitches(compileSource(tap('degree(&k[0], 1)')))).toEqual([1, 8, 3, 10]);
+  it('a pick is a fixed reader: &k[0] follows the key as it turns, &k[$0] stays', () => {
+    const picked = (pick: string) => src('').replace('&u over=&k step=&m 0', `&u step=&m ${pick}`);
+    expect(pitches(compileSource(picked('&k[0]')))).toEqual([0, 7, 2, 9]);
+    expect(pitches(compileSource(picked('&k[$0]')))).toEqual([0, 0, 0, 0]);
+    expect(pitches(compileSource(picked('degree(&k[0], 1)')))).toEqual([1, 8, 3, 10]);
   });
-  it('a tap that follows a turning table takes the accidental of the entry it lands on', () => {
+  it('a pick that follows a turning table takes the accidental of the entry it lands on', () => {
     const r = compileSource(
       '&m step=1\n&t step=&m 0\n&k step=cycle(&t) stride=1 0 2# 4 5b\n&u step=&m &k[0]\n&v s=tri loop=C4\n&mix [&u * &v]\n&out loop=SAMPLE_RATE map=sample &mix',
     );
@@ -1196,12 +1196,12 @@ describe('arranged: the pop song and Zelluläre Aktivität, section by section',
 });
 
 describe('selectors: reading a table of parts splices', () => {
-  // two parts, taps of the bar (decision 016); a selector switching them, a section (two seconds) a step
+  // two sections stepped by the bar (decision 016); a selector switching them, a step (two seconds) of the song at a time
   const src = (song: string) => `&bar step=120bpm 0 0 0 0
 &a step=&aBar 0 2 4 5 7
 &b step=&bBar 12
-&parts step=&bar &aBar &bBar
-&song over=&parts step=&bar/4 ${song}
+&sections step=&bar &aBar &bBar
+&song over=&sections step=&bar/4 ${song}
 &v s=tri loop=C4
 &w s=sine loop=C4
 &out loop=SAMPLE_RATE map=sample [&a * &v, &b * &w]`;
@@ -1255,8 +1255,8 @@ describe('selectors, live', () => {
     const r = compileSource(`&bar step=120bpm 0 0 0 0
 &a step=&aBar 0 2 4 5
 &b step=&bBar 12
-&parts step=&bar &aBar &bBar
-&song over=&parts step=&bar/4 laps=1 0 1
+&sections step=&bar &aBar &bBar
+&song over=&sections step=&bar/4 laps=1 0 1
 &v s=tri loop=C4
 &w s=sine loop=C4
 &out loop=SAMPLE_RATE map=sample [&a * &v, &b * &w]`);
@@ -1264,8 +1264,8 @@ describe('selectors, live', () => {
     expect(live(0.5)).toEqual(['cell:v']);
     expect(live(2.5)).toEqual(['cell:w']);
     expect(live(4.5)).toEqual([]);
-    // the selector, its table and the tap are on the way: the graph draws them reached
-    expect(r.outputs.find((o) => o.voice === 'v')!.via).toEqual(expect.arrayContaining(['song', 'parts', 'aBar']));
+    // the selector, its table and the section are on the way: the graph draws them reached
+    expect(r.outputs.find((o) => o.voice === 'v')!.via).toEqual(expect.arrayContaining(['song', 'sections', 'aBar']));
   });
 });
 

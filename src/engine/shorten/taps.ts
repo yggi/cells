@@ -27,8 +27,8 @@ export function taps(source: string, result: Result): Suggestion[] {
   const seen = new Set<string>();
   for (const c of result.cells.values()) {
     const tap = tapOfRaw(result, c.name);
-    // (a tap of a meter's bus, decision 016, is stepped as its table is: the table's line says it)
-    const line = result.taps?.get(c.name) ?? c.name;
+    // (a section, decision 016, is stepped as its table is: the table's line says it)
+    const line = result.sections?.get(c.name) ?? c.name;
     if (tap === null || seen.has(line) || declLine(source, line) < 0) continue;
     seen.add(line);
     const apply = (s: string) => setAttr(s, line, 'step', tap);

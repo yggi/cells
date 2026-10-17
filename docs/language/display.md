@@ -27,7 +27,7 @@ The first cell with `title=` is the piece's card: its title names the piece (and
 
 **The convention for examples** (a test checks the first two): the card is the first cell and is named `&piece`, its notes are named `&…Note`; the card's label is one sentence (what the piece is, no `&names`, no instructions) and the card links to the sound card with `about=` (the cell with `map=sample`); how it works and what to try go into notes beside the cells they explain (`&filter label="…" about=(&fenv &accent)`), a topic each.
 
-**The order of the cells** (judgment, nothing checks it): clock → harmony → parts → voices → mix → arrangement → out. An arrangement is the selector that chooses between the taps of a meter's bus (`&song`, `&tetris`, the section tables; decision 016); it comes after the parts and before the sound card. A table may sit beside the part that reads it. Reordering lines does not change the sound.
+**The order of the cells** (judgment, nothing checks it): clock → harmony → parts → voices → mix → arrangement → out. An arrangement is the selector that chooses between the sections of a table (`&song`, `&tetris` over `&sections`; decision 016); it comes after the parts and before the sound card. A table may sit beside the part that reads it. Reordering lines does not change the sound.
 
 **Tags have kinds**, told apart by a prefix: `genre:jazz` (a style), `artist:Bach` (whose music it is after or about), and a tag without one is a **topic** (a technique or an idea: `rhythm`, `canon`, `tuning`). **`tutorial`** is a kind of its own and its only tag: the piece is in a tier of the tutorial (below). The library shows the name only and groups by kind; the five main genres (`genre:classical`, `genre:jazz`, `genre:electronic`, `genre:experimental`, `genre:world`) are the rim of its wheel. A piece saved before the prefixes keeps working: a bare `jazz` or `Bach` is read as `genre:jazz` and `artist:Bach`, `basics` as `tutorial`, and any other bare tag is a topic. The examples use only the tags of `VOCABULARY` in `src/engine/tags.ts` (a test fails on any other): to add a tag, add it there. (A cell's own `tags=` inside a piece are clusters, not kinds.)
 
@@ -50,7 +50,7 @@ The tiers' numbers are stable, and a piece has no number of its own: a variation
 | table | `table` `scale` `mode` `key` `brightness` (each segment shaded by how bright its mode is) + the note shows |
 | meter | `meter` `pattern` `sun` (a built-in plugin: a day meter as a 24-hour dial, noon at the top) · grid: `grid` `table` · envelope: `adsr` `table` |
 | volume | `levels` (bars) `braid` `pattern` · oscillation: `lfo` `levels` `braid` |
-| selector | `matrix` (a ring per tap, a pin where it plays) `braid` `pattern` |
+| selector | `matrix` (a ring per section, a pin where it plays) `braid` `pattern` |
 
 Without `show=` it is inferred (a table of 12 is a `key`, a recognised mode a `scale`). **Conventions**: `notes:flats` `notes:sharps` `notes:german`, `do:fixed` `do:movable`. A mix (or the sound card) colours by the grid its voices are on, and shows no colour when they are on several; **`show=mix:&grid`** names the grid it follows instead (`&band show=mix:&edo19 [&a * &v, &b * &w]`; [tuning.md](tuning.md)): the grid right after the colon, no space; on a cell that isn't a mix it does nothing, and warns. `petal` hangs a small cell from the one that uses it; `off` hides it from the graph (`off` alone also silences it).
 

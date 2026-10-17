@@ -23,8 +23,8 @@ export type Role =
   | 'carrier' // a voice with fm=
   | 'modulator' // a voice another's fm= names
   | 'gate' // play= with a braid: a named junction, where notes become sound (#234)
-  | 'tap' // a tap of a meter's bus: a name a stepped table of names declares (decision 016)
-  | 'selector'; // a cell reading a table of taps (over=&parts): it switches them
+  | 'section' // a section of an arrangement: a name a stepped table of names declares (decision 016)
+  | 'selector'; // a cell reading a table of sections (over=&sections): it switches them
 
 export interface Attribute {
   /** What it means, as the node editor shows it. */
@@ -206,10 +206,10 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   channels: { help: 'a spectrum or waterfall: sum (one, the default) or split (each channel its own)', doc: 'display.md', value: 'word', on: ['scope'] },
   // arranging: what switching a part on does to its time (decision 032)
   restart: {
-    help: 'what switching a part on does to its time (on a selector: for all its taps) — restart (from its top, the default), resume (where it stopped), free (its time runs on, only its sound is switched)',
+    help: 'what switching a part on does to its time (on a selector: for all its sections) — restart (from its top, the default), resume (where it stopped), free (its time runs on, only its sound is switched)',
     doc: 'time.md',
     value: 'word',
-    on: ['tap', 'selector'],
+    on: ['section', 'selector'],
     stub: true,
   },
   // laws
@@ -285,8 +285,8 @@ export function rolesText(on: readonly Role[]): string {
     carrier: 'a voice with fm=',
     modulator: 'a voice another’s fm= names',
     gate: 'a gate (play= with a braid)',
-    tap: 'a tap (a name a stepped table of names declares)',
-    selector: 'a selector (over= a table of taps)',
+    section: 'a section (a name a stepped table of names declares)',
+    selector: 'a selector (over= a table of sections)',
   };
   const ws = on.map((r) => NAMES[r]);
   return ws.length < 2 ? (ws[0] ?? '') : `${ws.slice(0, -1).join(', ')} or ${ws[ws.length - 1]}`;

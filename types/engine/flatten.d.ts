@@ -26,7 +26,7 @@ export interface StepEvent {
     /** Grid steps it's transposed by (the ^$n of every reference it was spliced through). */
     readonly transpose?: number;
     /**
-     * A relative pick's tap: the value is entry `index` of `cell` turned as it stands when it sounds (read in `ctx`,
+     * A relative pick, a fixed reader: the value is entry `index` of `cell` turned as it stands when it sounds (read in `ctx`,
      * for its lap), times mul plus add (degree(…), inverse(…)); `value` is that entry as the code has it.
      */
     readonly via?: {

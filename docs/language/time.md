@@ -89,7 +89,7 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 
 ## Laps and selectors
 
-**"Tap" names two things.** A **section tap** is a part of an arrangement, a name in a selector's table that steps the part's cells ([decision 016](../decisions/016-arranging-at-the-input.md), `src/engine/compiler/taps.ts`); a **meter tap** is a line's step read off a meter by pulse, beat or note value (`step=beat`, `step=16n`: [decision 040](../decisions/040-pulse-beat-and-laps.md); `src/engine/compiler/clocks.ts` and `src/engine/clocking.ts`). A pick is a tap in decision 012's sense, a fixed point reading a turning cell ([braid.md](braid.md)).
+**Three words, three things** ([decision 044](../decisions/044-tap-reads-the-meter.md)). A **tap** reads a meter by pulse, beat or note value (`step=beat`, `step=16n`: [decision 040](../decisions/040-pulse-beat-and-laps.md); `src/engine/compiler/clocks.ts` and `src/engine/clocking.ts`). A **section** is a name in a selector's table that steps a part's cells ([decision 016](../decisions/016-arranging-at-the-input.md), `src/engine/compiler/sections.ts`). A **reader** reads a net: a canon's copy, a tape's head ([decision 010](../decisions/010-canon-copies.md)); a pick is a fixed reader on a turning cell ([braid.md](braid.md)).
 
 - **`laps=n`** — a clock plays n laps, then nothing it drives sounds: a piece that ends. The transport stops at the end.
 
@@ -97,32 +97,32 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 &bar scan(27 23 26 24) step=free(66bpm, 40..96) laps=30   # thirty bars, then it ends
 ```
 
-- **A selector** switches the taps of a meter's bus: an arrangement ([decision 016](../decisions/016-arranging-at-the-input.md)). A stepped table of names (`&parts step=4n &verse &chorus`) declares them as its **taps**, each stepped as the table is; a part's cells are stepped by its tap (`step=&verse*2`); the selector reads the table (`over=&parts`) and steps through it, a section per step, each entry naming the taps that are on (a chord of numbers turns several on together). What a tap steps plays while it is on, from its top each time it is turned on; the rest stands still. A tap steps only what is stepped or looped from it: a drone on a clock of its own plays on. Two selectors reading one table AND together: a tap is on only while every one of them has it on (`&song` the form, `&mute` a second selector over the same `&parts`, a tap plays where both pick it). The parts' sound goes straight to the sound card. Pop song and 8-bit: Korobeiniki are arranged this way.
+- **A selector** switches sections: an arrangement ([decision 016](../decisions/016-arranging-at-the-input.md)). A stepped table of names (`&sections step=4n &verse &chorus`) declares them as its **sections**, each stepped as the table is; a part's cells are stepped by its section (`step=&verse*2`); the selector reads the table (`over=&sections`) and steps through it, each of its steps naming the sections that are on (a chord of numbers turns several on together). What a section steps plays while it is on, from its top each time it is turned on; the rest stands still. A section steps only what is stepped or looped from it: a drone on a clock of its own plays on. Two selectors reading one table AND together: a section is on only while every one of them has it on (`&song` the form, `&mute` a second selector over the same `&sections`, a section plays where both pick it). The parts' sound goes straight to the sound card. Pop song and 8-bit: Korobeiniki are arranged this way.
 
 ```cells
 &bar scan(1 1 1 1) step=100bpm
 &lead s=saw loop=C4
 &bass s=saw loop=C2
-&parts step=4n &tuneBar &bassBar
+&sections step=4n &tuneBar &bassBar
 &tune step=&tuneBar 0 2 4 5
 &roots step=&bassBar 0
-&song over=&parts step=1m laps=1 [1] [0,1] [0,1]
+&song over=&sections step=1m laps=1 [1] [0,1] [0,1]
 &out loop=SAMPLE_RATE map=sample [&tune * &lead * .3, &roots * &bass * .5]
 ```
 
-A tap may have a line of its own with attributes only, and stays a tap (`&tuneBar off` switches the tune's part off in every section; holding its bulb in the graph writes that line). A name the table declares must step something (`step=&tuneBar`), or the compiler says so, and so does a table of taps no selector reads (every part would play all the time); a table of names none of which steps anything is a braid of cells as before (an unknown name an error). The old form, a selector reading a table of mixes and their sound through it, is an error now, and the error says what to write instead.
+A section may have a line of its own with attributes only, and stays a section (`&tuneBar off` switches the tune's part off in every step of the song; holding its bulb in the graph writes that line). A name the table declares must step something (`step=&tuneBar`), or the compiler says so, and so does a table of sections no selector reads (every part would play all the time); a table of names none of which steps anything is a braid of cells as before (an unknown name an error). The old form, a selector reading a table of mixes and their sound through it, is an error now, and the error says what to write instead.
 
-**`restart=`** names what switching a part on does to its time ([decision 032](../decisions/032-restart-policies.md)), on a tap's line (`&tuneBar restart=resume`) or on the selector, for all its taps (a tap's own line wins): **`restart`**, from its top each time (the default); **`resume`**, its time paused while it is off, going on where it stopped; **`free`**, its time running on as if never switched, only its sound gated (Strudel's default), so it lands where an unswitched copy would be. With several selectors on one part, the first that names a policy other than `restart` rules. [In C, a sketch](../../examples/in-c.cells) needs `resume`: each player repeats a cell until moving on, and one who sits out comes back where they left off.
+**`restart=`** names what switching a part on does to its time ([decision 032](../decisions/032-restart-policies.md)), on a section's line (`&tuneBar restart=resume`) or on the selector, for all its sections (a section's own line wins): **`restart`**, from its top each time (the default); **`resume`**, its time paused while it is off, going on where it stopped; **`free`**, its time running on as if never switched, only its sound gated (Strudel's default), so it lands where an unswitched copy would be. With several selectors on one part, the first that names a policy other than `restart` rules. [In C, a sketch](../../examples/in-c.cells) needs `resume`: each player repeats a cell until moving on, and one who sits out comes back where they left off.
 
 ```cells
 &bar meter("4/4") step=120bpm
 &major scale(major)
-&parts step=4n &mel
+&sections step=4n &mel
 &mel restart=resume
-&song over=&parts step=4n laps=1 0@2 ~@2 0@3 ~ 0 ~
+&song over=&sections step=4n laps=1 0@2 ~@2 0@3 ~ 0 ~
 &tune over=&major step=&mel 0 1 2 3 4 5 6 7 8 9 10 11
 &lead s=sine loop=C4
 &out map=sample [&tune * &lead]
 ```
 
-The transport marks a selector's sections and jumps to them ([../ui/transport.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md)).
+The transport marks a selector's steps and jumps to them ([../ui/transport.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md)).

@@ -51,10 +51,10 @@ describe('source edits', () => {
     expect(setShift('&c fifths(free(G))', 'c', 2)).toBe('&c fifths(free(G))');
   });
 
-  it('writes no turn on a tap: one step, stepped as its table is, a turn changes nothing', () => {
-    const src = '&bar step=1\n&parts step=&bar &keysBar &tuneBar\n&song over=&parts step=&bar/4 0 1\n&keys step=&keysBar 0 2\n&tune step=&tuneBar 4';
+  it('writes no turn on a section: one step, stepped as its table is, a turn changes nothing', () => {
+    const src = '&bar step=1\n&sections step=&bar &keysBar &tuneBar\n&song over=&sections step=&bar/4 0 1\n&keys step=&keysBar 0 2\n&tune step=&tuneBar 4';
     expect(setShift(src, 'keysBar', 1)).toBe(src);
-    // (a tap's own line of attributes gets none either; one it already has can be taken back)
+    // (a section's own line of attributes gets none either; one it already has can be taken back)
     const off = src.replace('&song', '&keysBar off\n&song');
     expect(setShift(off, 'keysBar', 1)).toBe(off);
     expect(setShift(off.replace('&keysBar off', '&keysBar off shift=1'), 'keysBar', 0)).toBe(off);
@@ -87,18 +87,18 @@ describe('source edits', () => {
     expect(setOff(a, 'scale', false)).toBe(src);
   });
 
-  it('a tap without a line of its own gets one under its table, and loses it when it says nothing (decision 016)', () => {
+  it('a section without a line of its own gets one under its table, and loses it when it says nothing (decision 016)', () => {
     const song = PRESETS.pop.source;
     const off = setOff(song, 'hookBar', true);
     const lines = off.split('\n');
-    expect(lines[lines.findIndex((l) => l.startsWith('&parts ')) + 1]).toBe('&hookBar off');
+    expect(lines[lines.findIndex((l) => l.startsWith('&sections ')) + 1]).toBe('&hookBar off');
     expect(compileSource(off).off.has('cell:hookBar')).toBe(true);
     expect(compileSource(off).diagnostics).toEqual([]);
     expect(setOff(off, 'hookBar', false)).toBe(song);
     expect(setAttr(song, 'hookBar', 'label', '"the hook"')).toMatch(/^&hookBar label="the hook"$/m);
-    // (not a tap, not a cell: nothing to edit)
+    // (not a section, not a cell: nothing to edit)
     expect(setOff(song, 'nowhere', true)).toBe(song);
-    // a tap's sheet turning it (it has nothing to turn): still a tap, nothing wrong
+    // a section's sheet turning it (it has nothing to turn): still a section, nothing wrong
     expect(compileSource(setShift(song, 'hookBar', 3)).diagnostics).toEqual([]);
     // a CRLF file stays CRLF, and comes back as it was
     const crlf = song.replace(/\n/g, '\r\n');

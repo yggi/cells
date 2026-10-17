@@ -1,6 +1,6 @@
 /**
- * What a tap does to what it carries (docs/notes/nets.md, "a tap is (net, transform)"): the transform written where a
- * name is read, as data. A wire of the graph (engine/graph.ts) carries one per place its name is written; its label is
+ * What a reader does to what it carries (docs/notes/nets.md, "a tap is (net, transform)", its tap a reader since decision
+ * 044): the transform written where a name is read, as data. A wire of the graph (engine/graph.ts) carries one per place its name is written; its label is
  * drawn from them (`edgeLabel`), so the label and the transform can't disagree.
  */
 import { pickLabel, shiftLabel, type Pick, type RateOp } from './ast';
@@ -87,16 +87,16 @@ const NAMED = 3;
 /**
  * An edge's label: how many slots of it are written (`×2`), the attribute it feeds, what each place it is written does
  * (the different ones, in order: the first three, then …), and how its port combines it. Undefined when there is nothing to say.
- * A relative pick into a braid isn't said: its strand leaves the tap it reads; an absolute one ([$0]) is, on its wire from the hub.
+ * A relative pick into a braid isn't said: its strand leaves the entry it reads; an absolute one ([$0]) is, on its wire from the hub.
  */
 export function edgeLabel(e: { readonly port: string; readonly count: number; readonly transforms: readonly Transform[] }): string | undefined {
-  // (a relative pick into a braid is drawn: a strand from its tap — it needs no words, nor does how many there are)
+  // (a relative pick into a braid is drawn: a strand from its entry — it needs no words, nor does how many there are)
   const drawn = (st: Transform[number]) => e.port === 'braid' && st.kind === 'pick' && !st.pick.abs;
   const told = e.transforms.map((t) => t.filter((st) => !drawn(st)));
   const each = [...new Set(told.map(transformLabel))].filter(Boolean);
-  const tapped = e.transforms.length > 0 && e.transforms.every((t) => t.length > 0 && t.every(drawn));
+  const picked = e.transforms.length > 0 && e.transforms.every((t) => t.length > 0 && t.every(drawn));
   const parts = [
-    e.count > 1 && !tapped ? `×${e.count}` : '',
+    e.count > 1 && !picked ? `×${e.count}` : '',
     isAttribute(e.port) ? e.port : '',
     ...each.slice(0, NAMED),
     each.length > NAMED ? '…' : '',

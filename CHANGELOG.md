@@ -8,7 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.4.0`.
+### Changed
+- **"Tap" means reading the meter** (#126, decision 044): a name a selector's table declares is a **section**, and a cell reading a net is a **reader**. No piece's notes move, and a piece that names its table `&parts` plays as before. What a frontend migrates:
+  - `CompileResult.taps` is **`CompileResult.sections`** (each section to its table), and `GraphNet.taps` is **`GraphNet.readers`** (a net's edges, one per reader);
+  - the module `engine/compiler/taps` is `engine/compiler/sections` (`tapped()` is `sectioned()`), and `engine/helix`'s `isTap` is `isRelativePick`;
+  - the attribute role `tap` is `section` (`ATTRIBUTES.restart.on` is `['section', 'selector']`), and the messages say so: `&x is a section of &sections`, `restart= acts on a section … or a selector (over= a table of sections)`, `&sections declares sections (…)`.
+- **The examples' table of sections is `&sections`**, not `&parts` (Jambot's word for a voice of the band): Shorten offers the rename as a migration where a table of sections is named `&parts` and nothing is named `&sections`, checked to play the same notes. Seven examples moved (Arrangement, Cellular Brothers, Hypercell, In C, Korobeiniki, One more Cell, Pop song): their notes and events are the same, only their names (the snapshot's `values` and `live` hashes).
 
 ## v0.4.0 — 2026-10-17
 

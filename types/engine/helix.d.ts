@@ -66,10 +66,10 @@ export declare function gridName(result: CompileResult, voice: string, freq: num
 /** A table and every table below it, down to its root. */
 export declare function tableChain(result: CompileResult, table: string): string[];
 /**
- * A relative pick of plain numbers (a table, a motif) is a fixed tap: what it plays is entry i of the cell as it
+ * A relative pick of plain numbers (a table, a motif) is a fixed reader: what it plays is entry i of the cell as it
  * stands when the note sounds, so it follows the cell while it turns (a stepped or free key).
  */
-export declare const isTap: (result: CompileResult, name: string, pick: Pick | null) => boolean;
+export declare const isRelativePick: (result: CompileResult, name: string, pick: Pick | null) => boolean;
 /** A pick of plain numbers, relative or absolute ($): read from the cell, not played; the cell is a table. */
 export declare const isPicked: (result: CompileResult, name: string, pick: Pick | null) => boolean;
 /** The grid at the root of a table's chain (over=, else the context it is read in): where a pitch by name is placed. */
