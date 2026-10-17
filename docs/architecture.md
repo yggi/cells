@@ -53,4 +53,4 @@ text
 The repository of fragments ([decision 041](decisions/041-fragments-by-style.md)), in memory; it reads no other module of the language.
 
 - `fragments.ts`: the format (`Fragment`: an id, cells text, an association of weighted style points), `fragmentProblems` (what is wrong with an entry), `createRepository` (throws on a malformed entry), its `query` (the k nearest to a style point), `pointDistance` and `fragmentDistance`.
-- `meters.ts`: `METER_FRAGMENTS`, the first library: nine meters, one line `&bar meter(…)` each, open on their tempo, associated by hand with Jambot's presets.
+- `meters.ts`: `METER_FRAGMENTS`, the first library: thirteen meters, one line `&bar meter(…)` each, open on their tempo, associated by hand with Jambot's presets; four are 4/4s swung as Jambot's presets swing.
