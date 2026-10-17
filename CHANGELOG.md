@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.4.0`.
+### Changed
+- **`over=` a braid of stacks reads the chord in force** (#125, #95; option 1 of #119, the owner's ruling): when every step of a table is a stack (`&harm over=&key step=1m [0,2,4] [5,7,9]`), a number read through it indexes the stack sounding at its onset, as Strudel's `n(…)` reads `.chord(…).voicing()`. **A change of meaning:** a saved piece that reads past a stack's last tone (or below its first) now plays the same chord a lap up (down), not the next chord's tones: over `[0,2,4,6] [4,6#,8,10]` in A minor, `4` under Am7 is A an octave up where it was E. Within the chord nothing changes, so no example's notes moved (*Prelude in C* and *BWV 847* read inside theirs). There is no migration Shorten can write: a piece that meant the next chord reads it with `over=&harm[>>]`. A braid that mixes stacks and single numbers reads as before, its numbers in order. Cells now plays every one of the 2,979 bass, pad and stab notes of Jambot's E33 over `over=&harm`, in its 384 bar texts and 23 section texts (`tools/chord-in-force.test.ts`).
+- **A stepped table turns by its braid's own steps** (#122): an entry held `@n` (or `_`) or repeated `!n` stays in force n steps, where it turned once a step whatever the braid said (`[0,2,4]!3 [5,7,9]` on `4n` read A F A F, now A A A F), and a subsequence's steps turn within its step (`<a b>` one a lap). It comes round after its braid's length in steps, and a shift of a table holding a subsequence counts that subsequence's steps each one. No example's turning table holds any of these, so none moved.
 
 ## v0.4.0 — 2026-10-17
 

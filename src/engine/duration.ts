@@ -7,7 +7,7 @@
 import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from './fiveto12';
 import { codeShifts, type CompileResult } from './program';
 import type { FreeSpec } from './ast';
-import { clocking, selects } from './clocking';
+import { clocking, ownLength, selects } from './clocking';
 import { plan } from './realize';
 
 export interface PieceTime {
@@ -86,7 +86,7 @@ export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
     if (!turn) continue;
     const stride = Math.max(1, Math.abs(Math.round(c.stride || 1)));
     // (where its turns wrap: its cycle=, else its own number of steps — as shiftsAt turns it)
-    const wrap = Math.max(1, Math.round(c.wrap ?? (c.units.length || c.cycle)));
+    const wrap = Math.max(1, Math.round(c.wrap ?? ownLength(result, c.name)));
     const turns = wrap / Number(gcd(BigInt(wrap), BigInt(stride)));
     periods.push(turn * turns);
   }
