@@ -1,6 +1,6 @@
 # 042 · A swing share is a decimal or a fraction
 
-**Date:** 2026-10-17 · **Status:** proposed (the question of #101; the owner decides) · Issues: #101, #82
+**Date:** 2026-10-17 · **Status:** accepted (the owner approved it on #101's pull request) · Issues: #101, #82
 
 ## Context
 
