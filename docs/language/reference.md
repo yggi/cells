@@ -1,6 +1,6 @@
 # Syntax reference
 
-Every form the parser reads, what it means and an example: generated from the parser's own tables (`src/engine/parser/`, with `src/engine/attributes.ts`), so it says what the parser does. The topic pages explain at length; each entry links its page. Don't edit this page: change the tables and record it with `UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts`. Every example here is parsed by that test.
+Every form the parser reads, what it means and an example: generated from the parser's own tables (`src/engine/parser/`, with `src/engine/attributes.ts`), so it says what the parser does. The topic pages explain at length; each entry links its page. Don't edit this page: change the tables and record it with `npm run reference`. Every example here is parsed by that test.
 
 [Lines](#lines) · [Steps](#steps) · [Modifiers](#modifiers) · [References](#references) · [Generators](#generators) · [free(): left to the performer](#free-left-to-the-performer) · [step= and loop=](#step--and-loop-) · [map=](#map-) · [Attributes](#attributes) · [Parameters](#parameters) · [Sorts: what a cell is in a mix](#sorts-what-a-cell-is-in-a-mix) · [Mixes](#mixes) · [Gates: a product with a name](#gates-a-product-with-a-name)
 

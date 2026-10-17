@@ -14,6 +14,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 - **`beat=` states a meter's beats** (alla breve: `meter("4/4") beat=2`), no longer its steps a beat; on a cell that is not a meter it does nothing, with a warning. `bpm` counts beats: with unequal beats the bar lasts beats ÷ bpm and the beats keep their proportions (7/8 at 90: a bar of 2 s, beats of 0.86, 0.57, 0.57 s). A piece that wrote `beat=` on a list or a scan migrates by hand: Swing's `&bar2 1!8 … beat=2` is `meter("4/4", 2)`, tapped `&bar2:8n` (it plays the same); a scan whose entries aren't quarters says so with **`pulse=`** (`pulse=16n`: sixteenths, its beats then quarters and its bpm counting them), so BWV 847's tempo map, `beat=4`, is `pulse=16n step=free(89bpm, 60..120)` (it plays the same, its slider, MIDI clock and MIDI file as before). The folder (MIDI → cells) writes its tempo map with `pulse=` (`16n`, or `8t` for triplets) where it wrote `beat=`, and its lines `step=pulse`.
 - **`meter("7/8")` groups 3+2+2** (was 2+2+3), as decision 040's table: the Metronome's 7/8 clicks move; no other example uses it.
 
+### Added
+- **The package ships `docs/language/`** (the topic pages and the generated syntax reference), and `npm run reference` rewrites the reference and the README's index of forms. No piece reads or sounds differently, and nothing in `src/` changes; an install is 119 KB larger unpacked (about 43 KB gzipped), the pages and the reference, and the package's tests hold it to at most 150 KB.
+
 ## v0.2.0 — 2026-10-16
 
 Since `v0.1.0`, no form means anything new: one example is rewritten (Canon per tonos, below), and one compiled field is renamed (`leveled` → `meter`), which a frontend reading it migrates.
