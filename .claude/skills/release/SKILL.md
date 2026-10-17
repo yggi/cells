@@ -73,6 +73,8 @@ Check it before going on: `git ls-remote --tags origin vX.Y.Z` names the merge c
 
 One in each frontend, on its own branch from its `main`, under its own rules (its `AGENTS.md`), `Part of yggi/cells#<the release's issue>`.
 Each reads cells' `CHANGELOG.md` from its old tag to the new one, and does the migrations it names.
+A new warning or a respelled form reaches every cells text the frontend holds, not only its pieces: tests, fixtures, the gallery's sheets, probe inputs and experiments; Shorten's migrations rewrite them where they play the same notes.
+A version string kept as an example (a build-info test, a page about versions) stays as it is.
 
 **yggi/cell-studio** (npm):
 
@@ -85,15 +87,16 @@ npm run build && CHROME_PATH=/opt/pw-browsers/chromium npm run smoke    # every 
 Move the tag where its docs name it (`AGENTS.md`, `docs/MEMORY.md`), and add a line under *Unreleased* in its `CHANGELOG.md`.
 The smoke test is the one check that builds the audio of every kind of voice, so a pin move runs it in full and says so in the pull request.
 
-**yggi/jambot** (pnpm; cells is a dependency of `packages/score`):
+**yggi/jambot** (pnpm; cells is a devDependency of `packages/score`, which only its tests and experiments import):
 
 ```sh
 pnpm --filter @jambot/score add github:yggi/cells#vX.Y.Z   # its package.json and pnpm-lock.yaml
 pnpm verify
-pnpm e2e    # when the release changes what a piece plays (the changelog says)
+pnpm e2e    # only once the app plays cells (today only packages/score's tests and experiments import it)
 ```
 
 Move the tag where its docs name it (`docs/memory/score-language.md`, `docs/memory/cell-studio.md`).
+Re-run the experiments that state cells text (E31 and E32, `packages/score/experiments/`) and keep `docs/language-experiments.md`'s numbers true; a number that moves says why in the pull request.
 
 A session needs both repositories attached to push; if one isn't, say so on the issue and leave that pin to a session that has it.
 Tick the issue's boxes as each pull request opens, and close it when both are merged.

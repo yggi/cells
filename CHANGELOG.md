@@ -8,7 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.3.0`.
+### Corrected: what the v0.3.0 notes left out
+Cell studio and Jambot, moving onto v0.3.0, found more that a frontend sees. Nothing here changed since v0.3.0: the notes did.
+- **A `scan(…)` is a meter for `step=&bar`'s warning**, as for taps: `step=&bar*4` under `&bar scan(1 1 1 1)` warns, and Shorten rewrites it (`16n`).
+- **A tap's clock is not positional** (`Clock.positional` is `false`): a view that shows a stepped cell's rate in beats reads it through the tap's meter (`clocks.get(c.clock).cell`).
+- **A belt on a tap is driven by the tap's clock at `rate: 1`** (`Clock.belt`): a pulley ratio against the meter is the tap's steps per the meter's, which the belt's `rate` no longer says.
+- **A tap's step edge carries no rate transform**, so its label (`edgeLabel`) no longer says `×2`; #92.
 
 ## v0.3.0 — 2026-10-17
 
