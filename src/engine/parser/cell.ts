@@ -9,7 +9,7 @@ import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE, parseFree } from './free';
 import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
-import { parseMap, parseStep } from './values';
+import { atTap, parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
 
 /** What a cell's attributes have set so far, as its line is read. */
@@ -377,10 +377,10 @@ function readParam(s: LineScanner, b: Body, key: string): void {
     b.paramSpans[key] = s.span(vs);
     return;
   }
-  // a time as a clock: delaytime=&bar*2
-  if (s.peek() === '&' && TIME_PARAMS.has(key)) {
+  // a time as a clock, or a tap's length: delaytime=&bar*2, delaytime=8n
+  if ((s.peek() === '&' || atTap(s)) && TIME_PARAMS.has(key)) {
     const st = parseStep(s, false);
-    if (st.kind !== 'driven') s.fail(`${key}= takes seconds, or a clock: ${key}=&bar*2`, vs, s.i - vs);
+    if (st.kind !== 'driven' && st.kind !== 'tap') s.fail(`${key}= takes seconds, a clock or a tap: ${key}=&bar*2, ${key}=8n`, vs, s.i - vs);
     b.paramClocks[key] = st;
     b.paramSpans[key] = s.span(vs);
     return;

@@ -120,17 +120,17 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   };
   // a tap of a meter (decision 040): a clock of its own, its steps where the tap puts them in the bar, through the
   // meter's time map; its chain steps it as a chain steps any clock
-  const tapOf = (name: string, st: Extract<NonNullable<CellDecl['step']>, { kind: 'tap' }>): { clock: string; rate: number } | null => {
+  // (the meter a tap reads: the one it names, or the main one; null, with the error said, when there is none to read)
+  const meterOfTap = (st: Extract<NonNullable<CellDecl['step']>, { kind: 'tap' }>, spelled: string, broke: () => void): string | null => {
     const meter = st.meter?.name ?? mainMeter();
-    const spelled = `step=${st.meter ? `&${st.meter.name}:` : ''}${st.tap.written}`;
     if (!meter) {
       error(`${spelled} taps the piece's main meter, and it has none: write one (&bar meter("4/4") step=100bpm)`, st.span);
-      broken.add(name); // (said once: what plays it isn't told again that nothing starts notes)
+      broke();
       return null;
     }
     if (!decls.has(meter)) {
       unknownCell(meter, st.meter!.span);
-      broken.add(name);
+      broke();
       return null;
     }
     if (stepping.includes(meter)) {
@@ -144,9 +144,16 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         `${spelled}: &${meter} is not a meter that keeps time — a tap reads a meter(…) or scan(…) with a tempo (&${meter} meter("4/4") step=100bpm)`,
         st.meter?.span ?? st.span,
       );
-      broken.add(name);
+      broke();
       return null;
     }
+    return meter;
+  };
+  const tapOf = (name: string, st: Extract<NonNullable<CellDecl['step']>, { kind: 'tap' }>): { clock: string; rate: number } | null => {
+    const spelled = `step=${st.meter ? `&${st.meter.name}:` : ''}${st.tap.written}`;
+    const meter = meterOfTap(st, spelled, () => broken.add(name)); // (said once: what plays it isn't told again that nothing starts notes)
+    if (!meter) return null;
+    const m = cells.get(meter)!.meter!;
     tapped.set(name, meter);
     const bars = Math.max(1, Math.round(decls.get(name)?.cycle ?? 1));
     // (a swung meter, #18: a chain of k on the tap is k steps between each two of its own, each placed through the swing,
@@ -248,6 +255,24 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   // times given as a clock (delaytime=&bar*2): one step of it, in seconds, at the clock's tempo
   for (const d of decls.values())
     for (const [key, st] of Object.entries(d.paramClocks ?? {})) {
+      // a tap as a length (#87): a note value is its own length at the meter's tempo; a pulse, a beat or the bar the mean of its
+      // steps over the bar (an unequal beat, 7/8's, has no one length); fixed as a clock's is, and a swing moves steps, not lengths
+      if (st.kind === 'tap') {
+        const c = cells.get(d.name);
+        const meter = meterOfTap(st, `${key}=${st.meter ? `&${st.meter.name}:` : ''}${st.tap.written}`, () => {});
+        if (!meter || !c) continue;
+        const m = cells.get(meter)!.meter!;
+        const barSeconds = m.levels.length / clocks.get(meter)!.perSecond;
+        // (a note value is its own length, whole notes of the bar's m.pulses / m.unit: 4n. is 3/8 even where the bar line cuts it)
+        const step = st.tap.kind === 'note' ? (st.tap.whole * m.unit * barSeconds) / m.pulses : barSeconds / tapPositions(m, st.tap, 1).length;
+        const perSecond = st.ratio / step;
+        cells.set(d.name, {
+          ...c,
+          params: { ...c.params, [key]: +(1 / perSecond).toFixed(6) },
+          paramClocks: { ...c.paramClocks, [key]: { driver: meter, cycle: false, whole: false, chain: st.chain, tap: st.tap.written } },
+        });
+        continue;
+      }
       if (st.kind !== 'driven') continue;
       const drv = timeOf(st.driver.name);
       const c = cells.get(d.name);
