@@ -8,7 +8,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-- **The package ships `docs/language/`** (the topic pages and the generated syntax reference), and `npm run reference` rewrites the reference and the README's index of forms. No piece reads or sounds differently, and nothing in `src/` changes; an install is about the size of the pages heavier (see the pull request).
+- **The package ships `docs/language/`** (the topic pages and the generated syntax reference), and `npm run reference` rewrites the reference and the README's index of forms. No piece reads or sounds differently, and nothing in `src/` changes; an install is 119 KB larger unpacked (about 43 KB gzipped), the pages and the reference, and the package's tests hold it to at most 150 KB.
 
 ## v0.2.0 — 2026-10-16
 
