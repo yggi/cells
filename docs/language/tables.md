@@ -3,6 +3,7 @@
 Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's numbers index into.
 
 - **`over=&t`** — a number x means entry x of &t; past the end it climbs a lap. Without `over=`, a cell reads through the table of whoever splices it. A table is its numbers: cells spliced into it aren't entries, and reading through one says so (unless it's a kit, a table of voices, or a table of taps a selector switches: [time.md](time.md)).
+- **Over a braid of stacks, the chord in force** ([#95](https://github.com/yggi/cells/issues/95)): when every step of the table is a stack, `over=` reads the stack sounding at the note's onset, as Strudel's `n(…)` reads `.chord(…).voicing()`. Over `&harm over=&key step=2n [0,2,4,6] [4,6#,8,10]` in A minor, `0 1 2 3` plays A C E G under the first stack and E G♯ B D under the second; past the chord's last tone it climbs to the same chord a lap up (`4` is A an octave up, not the next chord's E), below its first it falls a lap (`-1` is G below), and an accidental moves a degree of the table below (`0#` under Am7 is B). `over=&harm[>>]` reads the next chord, `[<<]` the one before; after the last the next is the first, a lap up. A braid that mixes stacks and single numbers is not a braid of stacks: it reads as any table, its numbers in order as turned.
 - **`over=key`**, bare, reads the piece's **main key**: the first cell in the text whose braid is `scale(…)`, whatever its name, as a bare tap reads the main meter ([time.md](time.md#taps), [#124](https://github.com/yggi/cells/issues/124)). A line written so names no key and plays in the key the piece holds: a fragment that leaves its key to the host, whose `&key scale(…)` comes first. `over=&key` still names a cell. An unnamed `scale(…)` (after `over=`, or in `&( … )`) or a copy (`base=`) is never the main key. With none, `over=key` is an error, "the piece has no main key", never a default key. It reads the key whole: to turn it, name it (`over=&key[<<2]`).
 - **`scale(name, tonic)`** is a scale by name over the 12 turned to its tonic: a key and a mode in one, for when the mode is fixed. It is exactly two cells, the key (`shift=` the tonic) and the scale's `scan(…)` over it ([decision 013](../decisions/013-scale-generator.md)).
   - In a braid the cell is the scale: `&scale scale(minor, D)` is D minor. Its `shift=` walks its modes, as on any cell; the tonic argument transposes. The tonic is a note name (`D`, `F#`, `Bb`), a number, or `free(…)` (the cell's own slider, its *tonic*; `free(D)` chooses among the twelve by name, and is written back by name); left out, C. `shift=free(G)` turns a key the same way.
@@ -14,12 +15,22 @@ Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's
 - **`fifths()`** is the circle of fifths: the twelve pitch classes a fifth apart, C G D A E B F# C# Ab Eb Bb F, as written from C. `fifths(1)` (or `fifths(G)`) turns it to start on G: it is its `shift=`, so `&circleG[0]` is G and `&circleG[$0]` C ([decision 012](../decisions/012-picks-are-taps.md)). A cell nothing plays whose entries are whole numbers, each once, within one lap, but in an order of their own (not the pitches'), is a table drawn evenly round its wheel in that order; its taps stay put as it turns. A curve of values (`0 1 .3 -1`, read by `map=`) or a motif with a repeat stays a braid, and so does a list with a decimal in it that nothing plays (`&k 0 .5 1`): entries are whole numbers. `fifths(n)` past a lap (`fifths(13)`) is a turn like any `shift=`: it climbs a lap, an octave, and warns; `fifths(G)` names the note and never climbs.
 - **`shift=n`** rotates the braid by n; wrapped entries climb a lap. On a table it turns what reads through it ([time.md](time.md) for a moving shift).
 - **Picks and shifts of a table** (`over=&scale[<<]`) are on [braid.md](braid.md).
-- **A turning table comes round after its own length**: a stepped key of 12 after 12 turns (`&key … stride=7` goes round the circle of fifths), a scale after its 7, a braid of chords after its chords. Within that, a turn that wraps climbs a lap, like every shift. **`cycle=n`** has one job everywhere — how many before it comes round — and says otherwise: per tonos' `&key … stride=2 cycle=24` rises two octaves, then starts again; IDM's `cycle=2` turns twice and back ([decision 008](../decisions/008-tables-come-round.md)).
+- **A stepped table turns by its braid's own steps** ([#122](https://github.com/yggi/cells/issues/122)): an entry held (`[0,2,4]@3`, or `[0,2,4] _ _`) or repeated (`[0,2,4]!3`) stays in force as many steps, and a subsequence's steps turn within its step (`[[5,7,9] [2,4,6]]` is one stack for the first half, the other for the second; `<a b>` one a lap), as the braid would play. A shift of such a table counts its entries, a subsequence's each one.
+- **A turning table comes round after its own length**, its braid's steps: a stepped key of 12 after 12 turns (`&key … stride=7` goes round the circle of fifths), a scale after its 7, a braid of chords after its chords, `[0,2,4]@3 [5,7,9]` after 4. Within that, a turn that wraps climbs a lap, like every shift. **`cycle=n`** has one job everywhere — how many before it comes round — and says otherwise: per tonos' `&key … stride=2 cycle=24` rises two octaves, then starts again; IDM's `cycle=2` turns twice and back ([decision 008](../decisions/008-tables-come-round.md)).
 
 ```cells
 &line step=1 over=&scale 0 2 4 2 0
 &scale over=&key scan(2 2 1 2 2 2 1) step=cycle(&line)
 &key step=cycle(&scale) stride=7 cycle=12
+```
+
+```cells
+&bar meter("4/4") step=120bpm
+&key scale(aeolian, A)
+&harm over=&key step=2n [0,2,4,6]@2 [3,5,7] [4,6#,8,10]
+&bass over=&harm step=8n 0 2 4 2
+&bassV loop=C2
+&out map=midi ~ [&bass * &bassV]
 ```
 
 ```cells
