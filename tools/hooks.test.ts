@@ -248,7 +248,7 @@ describe('installing cells from git', () => {
 describe('the stamp verify leaves (tools/verified.sh)', () => {
   it('is written by npm run verify: preverify begins it, postverify (only after a pass) ends it, its tests counted', () => {
     const scripts = JSON.parse(readFileSync(`${root}/package.json`, 'utf8')).scripts;
-    expect(scripts.preverify).toBe('sh tools/verified.sh begin');
+    expect(scripts.preverify).toBe('node tools/install-first.mjs && sh tools/verified.sh begin');
     expect(scripts.postverify).toBe('sh tools/verified.sh end');
     expect(scripts.verify).toMatch(/npm test -- --reporter=default --reporter=\.\/tools\/test-count\.ts$/);
   });
