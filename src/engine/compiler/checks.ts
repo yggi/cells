@@ -2,6 +2,7 @@
 import { BODIES, isMidiCard } from '../program';
 import { MOVING_PARAMS } from '../attributes';
 import { refsOf } from '../readers';
+import { leaves } from '../subseq';
 import type { CellDecl } from '../ast';
 import type { Cells, Ctx } from './context';
 
@@ -77,6 +78,27 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
       if (envs > 1) error(`${key}=: one envelope (map=adsr) at most — the other factors scale it`, pc.span);
       if (envs && !pc.range) error(`${key}=&env: an envelope runs 0 to 1 — give it a range: ${key}=200..3000 * &env`, pc.span);
     }
+  // legato= (#94): a share of each note's held length, above 0 — as written, left free, or each number of the cell it reads
+  for (const d of decls.values()) {
+    const share = d.params.legato;
+    const span = d.paramSpans.legato ?? d.span;
+    const free = d.frees?.find((f) => f.key === 'param' && f.param === 'legato');
+    const bad = (what: string) => error(`legato=${what}: a share of each note's held length is above 0 (.5 staccato, 1 as written, 1.5 into the next)`, span);
+    if (typeof share === 'string') error(`legato=${share}: a share (.5), free(.5, .25..2.5) or a cell of shares (&artic)`, span);
+    else if (typeof share === 'number' && !(share > 0)) bad(String(share));
+    else if (free && !(free.lo > 0)) bad(`free(${free.value}, ${free.lo}..${free.hi})`);
+    const pc = d.paramCells?.legato;
+    if (pc?.range && !(pc.range[0] > 0)) bad(`${pc.range[0]}..${pc.range[1]}`);
+    for (const f of pc && !pc.range ? pc.factors : []) {
+      const fd = decls.get(f.name);
+      const shares =
+        fd?.braid.kind === 'list'
+          ? fd.braid.tokens.flatMap((t) => leaves(t.atom)).flatMap((a) => (a.kind === 'note' ? [a.value + a.alter] : a.kind === 'chord' ? a.notes : []))
+          : [];
+      const low = shares.find((v) => !(v > 0));
+      if (low !== undefined) bad(`&${f.name}: its ${low}`);
+    }
+  }
   for (const d of decls.values())
     if (d.stride !== null && d.step?.kind !== 'driven' && d.step?.kind !== 'tap') warn(`stride= only matters with step=&cell or a tap (step=1m)`, d.paramSpans?.stride ?? d.span);
   for (const d of decls.values()) {

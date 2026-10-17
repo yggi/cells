@@ -97,6 +97,11 @@ interface PlanTrack extends Series {
   readonly selects: readonly { readonly series: Series; readonly entry: number; readonly entries: number }[];
   /** When it stops, in seconds (laps= on a cell that drives it); Infinity if it loops. */
   readonly end: number;
+  /**
+   * Its line's `legato=` (#94): the share of its held length each note sounds, a number (1: as written), or cells read at
+   * the note's onset (their product, scaled by a range when one is written).
+   */
+  readonly share: number | { readonly range: readonly [number, number] | null; readonly series: readonly Series[] };
 }
 
 /** The static part of playback (braids flattened); pitches are resolved per moment. */
@@ -346,7 +351,9 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
         entry: x.entry,
         entries: result.cells.get(result.cells.get(x.cell)!.over!)!.units.length,
       }));
-      if (main.events.length) tracks.push({ ...main, output: o, clock: c.clock!, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o) });
+      const lc = c.paramCells.legato;
+      const share = lc ? { range: lc.range, series: lc.factors.map((f) => series(f, null, 0, 1)) } : typeof c.params.legato === 'number' ? c.params.legato : 1;
+      if (main.events.length) tracks.push({ ...main, output: o, clock: c.clock!, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o), share });
     } catch (e) {
       if (!(e instanceof ExpansionLimit)) throw e;
     }
@@ -507,13 +514,27 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     const c0 = tm.stepAt(Math.max(0, from)) * t.rate;
     const c1 = tm.stepAt(Math.max(0, until)) * t.rate;
     if (!Number.isFinite(c0) || !Number.isFinite(c1) || c1 <= c0) continue; // (a clock gone wild: nothing from it)
-    // a note at step s, lasting until step `upto` (a window's end cuts it)
-    const make = (s: number, e: StepEvent, upto: number): Played | null => {
+    // legato= (#94): the share of its held length a note starting at step s sounds, read at its onset
+    const shareAt = (s: number): number => {
+      const l = t.share;
+      if (typeof l === 'number') return l;
+      const at = tm.q(s / t.rate);
+      const x = l.series.reduce((a, m) => {
+        const e = heldAt(p, m, at);
+        return a * (e ? e.value + e.alter : 1);
+      }, 1);
+      return l.range ? l.range[0] + (l.range[1] - l.range[0]) * x : x;
+    };
+    // a note at step s, held until step `upto` as written, sounding its share of that (legato=): past the bar line, into
+    // the next note, wherever it reaches; only a selector's window (`bound`, a step) and the line's end cut it
+    const make = (s: number, e: StepEvent, upto: number, bound = Infinity): Played | null => {
       const at = tm.q(s / t.rate);
       if (!Number.isFinite(at)) return null; // (a clock run down: this step never comes)
       if (at >= t.end - EPS) return null;
       // (a note whose clock stops beneath it never reaches its end: it rings 8 s at most)
-      const ends = Math.min(tm.q(upto / t.rate), t.end);
+      const share = shareAt(s);
+      const written = tm.q(upto / t.rate);
+      const ends = Math.min(share === 1 ? written : at + share * (written - at), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
       // (a kit read held under a melody picks the member by its number then; the melody's step starts the note)
       const by = t.picker ? heldAt(p, t.picker, at) : e;
       const v = by && voiceFor(result, t.output, by.value);
@@ -613,17 +634,18 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     const before = (i: number, lap: number): [number, number] => (i > 0 ? [i - 1, lap] : [n - 1, lap - 1]);
     // (`minLap`: in a selector's window, from its start, no note before lap 0 plays)
     // (a run starts again every RUN notes along the track, the same wherever a window cuts it: an endless tie ends)
-    const tied = (i: number, lap: number, minLap: number): boolean => {
+    // (and as sounded: a share under 1, legato=, leaves a gap, so the note before isn't tied)
+    const tied = (i: number, lap: number, minLap: number, base: number): boolean => {
       if (!tie || !single(i) || mod(lap * n + i, RUN) === 0) return false;
       const [k, kl] = before(i, lap);
       const end = kl * t.period + t.events[k].step + t.events[k].duration;
       const start = lap * t.period + t.events[i].step;
-      return single(k) && kl >= minLap && Math.abs(end - start) < EPS && !!thrown(result, t, t.events[k], kl);
+      return single(k) && kl >= minLap && Math.abs(end - start) < EPS && shareAt(base + kl * t.period + t.events[k].step) >= 1 - EPS && !!thrown(result, t, t.events[k], kl);
     };
     // emit: a note, or (glide) the run it starts, up to `bound` (its window's end; `base` the window's first step)
     const emit = (s: number, e: StepEvent, upto: number, i = -1, lap = 0, base = 0, minLap = 0, bound = Infinity) => {
-      if (i >= 0 && tied(i, lap, minLap)) return;
-      const first = make(s, e, upto);
+      if (i >= 0 && tied(i, lap, minLap, base)) return;
+      const first = make(s, e, upto, bound);
       if (!first) return;
       if (i < 0 || !tie || !single(i)) return void out.push(first);
       let run: Played = first;
@@ -632,9 +654,9 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       for (let guard = 0; guard < RUN; guard++) {
         [j, jl] = j < n - 1 ? [j + 1, jl] : [0, jl + 1];
         const sj = base + jl * t.period + t.events[j].step;
-        if (sj >= bound - EPS || !tied(j, jl, minLap)) break;
+        if (sj >= bound - EPS || !tied(j, jl, minLap, base)) break;
         const r = thrown(result, t, t.events[j], jl);
-        const next = r && make(sj, r, Math.min(sj + t.events[j].duration, bound));
+        const next = r && make(sj, r, sj + t.events[j].duration, bound);
         if (!next) break;
         const cents = 1200 * Math.log2(next.freq / run.freq);
         // (from where it was, held to the next note, then a slide there, at most the note's length)
@@ -682,7 +704,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
           const s = sA + lap * t.period + e.step;
           if (lap < 0 || s < lo - EPS || s >= hi - EPS) continue;
           const r = thrown(result, t, e, lap);
-          if (r) emit(s, r, Math.min(s + e.duration, sB), i, lap, sA, 0, sB);
+          if (r) emit(s, r, s + e.duration, i, lap, sA, 0, sB);
         }
     }
   }

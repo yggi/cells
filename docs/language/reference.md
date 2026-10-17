@@ -128,7 +128,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 
 ## Parameters
 
-Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Strudel's and dough's other names for a parameter that means the same here read as ours (`sound` → `s`, `cutoff` → `lpf`, `ctf` → `lpf`, `lp` → `lpf`, `resonance` → `lpq`, `hcutoff` → `hpf`, `hp` → `hpf`, `hresonance` → `hpq`, `verb` → `room`, `reverb` → `room`, `delayt` → `delaytime`, `dt` → `delaytime`, `delayfb` → `delayfeedback`, `dfb` → `delayfeedback`): the text keeps what is written, and an alias beside ours is the parameter given twice ([decision 027](../decisions/027-on-top-of-strudel.md)).
+Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Strudel's and dough's other names for a parameter that means the same here read as ours (`sound` → `s`, `cutoff` → `lpf`, `ctf` → `lpf`, `lp` → `lpf`, `resonance` → `lpq`, `hcutoff` → `hpf`, `hp` → `hpf`, `hresonance` → `hpq`, `verb` → `room`, `reverb` → `room`, `delayt` → `delaytime`, `dt` → `delaytime`, `delayfb` → `delayfeedback`, `dfb` → `delayfeedback`, `clip` → `legato`): the text keeps what is written, and an alias beside ours is the parameter given twice ([decision 027](../decisions/027-on-top-of-strudel.md)).
 
 - `s=sine|tri|triangle|saw|sawtooth|square|pulse|white|pink|brown`: Sound source: sine tri saw square pulse white pink brown — on a voice; it makes the cell a voice. [→](sound.md)
 - `lpf=n` · `lpf=free(n, lo..hi)` · `lpf=&x` · `lpf=lo..hi * &a * &b`: Low-pass cutoff, Hz — on a voice; it makes the cell a voice. [→](sound.md)
@@ -140,6 +140,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — on a voice; it makes the cell a voice. [→](sound.md)
 - `delayfeedback=n` · `delayfeedback=free(n, lo..hi)`: Echo feedback 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `glide=n` · `glide=free(n, lo..hi)`: Tied notes (each starting as the one before ends) play as one: its envelope once, each next a slide there over this many seconds (dough’s glide; 0 or none: each note its own) — on a voice. [→](sound.md)
+- `legato=n` · `legato=free(n, lo..hi)` · `legato=&x` · `legato=lo..hi * &a * &b`: On a line: each note sounds its held length (@n, _) times this share, Strudel’s legato (.5 staccato, 1 as written, 1.5 into the next): a number, free(), or a cell of shares read at each onset (legato=&artic); nothing cuts a note at the bar line — on a meter (step= a rate) or a driven cell (step=&x) [→](sound.md)
 - `pan=n` · `pan=free(n, lo..hi)`: Where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades — on a voice; it makes the cell a voice. [→](sound.md)
 - `distort=n` · `distort=free(n, lo..hi)`: Distortion: 0 clean, .3 gritty, 1 and more harsh — on a voice; it makes the cell a voice. [→](sound.md)
 - `crush=n` · `crush=free(n, lo..hi)`: Bit depth: 16 clean, 8 grainy, 3 and fewer: rubble — on a voice; it makes the cell a voice. [→](sound.md)
