@@ -77,7 +77,7 @@ a delta. A fugue's entries are this: one subject, each entry a little bent.
 &subject 0 -1 0@2 -5@2 -4@2 0 -1 0 2 -5@4
 &answer base=&subject^$7 =!3 0@2
 &last base=&subject^$-12 =!9 =@8
-&tune step=&bar*4 &subject &answer &last
+&tune step=16n &subject &answer &last
 &v s=tri loop=C4
 &out map=sample [&tune * &v * .4]
 ```

@@ -12,7 +12,7 @@ twinkle  88 notes  notes 0ccea2b71be068d4  events 0557c7ec4ab2733c  values 0bc4e
 chords  78 notes  notes 5e1aa7ec1a14a506  events 5124a5860b6c14d7  values ec1d31dc94585103  live 11a2a3918b9d1e9e
 rhythm  386 notes  notes 22b41b76626915b0  events 81bc7c0db5f5ebc8  values bc3157eac9a3092e  live e5fd58d972462a15
 drums  297 notes  notes a7f4dec41e1babc4  events 3c6ac407f7bf029b  values 46b2dd2fd4a393b3  live 4cae1420fcad9065
-swing  304 notes  notes 70d25be4e13ad342  events bcedbaa406a7fc30  values c9b8af01107a2d97  live a488ef5227db472c
+swing  304 notes  notes 70d25be4e13ad342  events bcedbaa406a7fc30  values 2d6d58768293b730  live a488ef5227db472c
 canon  320 notes  notes 375d44f193024265  events dc690ef9ec9f54f6  values a930d18483749c61  live 832ee3308941a4d3
 mirrors  183 notes  notes 2fd36ffb7cfe49e9  events 70a6d4ffca101a9a  values 4ceec05374a8cc82  live a668f65679e8d106
 variations  144 notes  notes c9bc5a525f3c6d55  events 3b65f4da8fefd65d  values 265bdfd43a3e3ad7  live 1c6ca2eec127b835
@@ -43,14 +43,14 @@ five  745 notes  notes 19ae7b522ff682fa  events 43a5144a8e0e0841  values 28240b3
 waltz  339 notes  notes e83f3b157bbc8abe  events 4e66614aa3f6f3bf  values 669a0ef297b84e4b  live 6fe67c2fa273591b
 sailor  367 notes  notes f2551a73f8192fd1  events 42fe459b34cbd7eb  values 9fed229a8365fc79  live 4874f705f6f48451
 royal  60 notes  notes a8ba34895ddf5909  events a8d847f669808eb4  values b778cb13d18f34f5  live 7a9ae3e6fa820a27
-pertonos  122 notes  notes 5c1f87d2168584ee  events 76d7ae346dec6b9b  values 0116cdf513e29826  live 1e9a5769575bc984
+pertonos  122 notes  notes 5c1f87d2168584ee  events 76d7ae346dec6b9b  values 6bbdd820bda507e5  live 7bddea4797c88c9b
 ricercar  37 notes  notes 9d985d1b2b865b8d  events bb3db98e69cf37d2  values 70e97f70d1021e6e  live e1520089f7d4a34c
 korobeiniki  361 notes  notes a5982f87bacf4976  events bee2c7742baf46f9  values 3b7b925b0efe41ec  live d55544738a10ea7a
 coltrane  808 notes  notes f763a951c05a6a9c  events 32c78476bb5c102c  values dab4363cfed5cc51  live 658d79ee12eafa61
 bossa  943 notes  notes 8c238c3ebf485d72  events 3ed6f13055f35e33  values 31e26408dcc1e5a8  live 8cc20ca3e6ab7700
 bell  485 notes  notes bab5d3d500badd23  events bbb4d1729f8f6ecb  values f54454cb97ab16f5  live 422a55427013d6f0
 prelude  352 notes  notes ff10d06dff1e66dd  events 3e9740ef869e4c0b  values 10e4fedcd20c3ca4  live 1ab59a411f8dcd54
-pachelbel  184 notes  notes 2f5dfcbc11df1662  events 6ec757fa11bf74e6  values db4e03720ddcc12e  live 2299b814ea99b890
+pachelbel  184 notes  notes 2f5dfcbc11df1662  events 6ec757fa11bf74e6  values 7182081ea6bee7b7  live d0fed54e2418fbdf
 pop  716 notes  notes ddcd32de8b30a67e  events 63bf112ea1956096  values 393a00fec358eba8  live 9ab3ad75f77fb977
 idm  1280 notes  notes 6f5d6cec8db585b8  events 6969db835d5693f5  values e050638337734c45  live 205261bfc0b7dd28
 alpha  145 notes  notes d1762cb599308645  events e8ba261043c10e16  values a743b6ec82c67cb5  live 5c07235181e44eaa

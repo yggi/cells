@@ -1,5 +1,6 @@
 /** Generators: a braid written as a rule — scan(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
 import type { Braid, Ref, Span, WaveShape } from '../ast';
+import type { Signature } from '../meter';
 import { type Syntax } from './syntax';
 import type { LineScanner } from './scanner';
 /**
@@ -9,6 +10,8 @@ import type { LineScanner } from './scanner';
 export declare function bjorklund(k: number, n: number): boolean[];
 /** A time signature's bar as levels: * the bar, + a beat, . a subdivision, , a finer one. */
 export declare const SIGNATURES: Record<string, number[]>;
+/** A time signature's pulses (the numerator), their note value (the denominator) and its beats in pulses (decision 040). */
+export declare function signatureOf(sig: string, sub: number): Signature;
 export declare function meterLevels(sig: string, sub: number): string;
 type Generator = (s: LineScanner, start: number) => Braid;
 /**

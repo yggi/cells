@@ -7,11 +7,11 @@
 &up label="*twinkle twinkle, little star*" 0 0 4 4 5 5 4@2                    # twin-kle twin-kle lit-tle star
 &down label="*how I wonder what you are*" 3 3 2 2 1 1 0@2                  # how I won-der what you are
 &mid label="*up above the world so high*" &down^1                # up a-bove the world so high
-&tune over=&scale step=&bar show=do &up &down &mid!2 &up &down       # show=do: in solfège, motifs and all
+&tune over=&scale step=4n show=do &up &down &mid!2 &up &down         # show=do: in solfège, motifs and all
 
 &bu 0 0 3 0
 &bd 3 0 4 0
-&roots over=&scale step=&bar/2 &bu &bd &bu^1!2 &bu &bd   # the bass moves the same way
+&roots over=&scale step=2n &bu &bd &bu^1!2 &bu &bd       # the bass moves the same way
 
 &lead s=tri loop=C5 env=&(map=adsr .01 .3 .4 .3)
 &bass s=sine loop=C3 env=&(map=adsr .005 .5 .5 .1)

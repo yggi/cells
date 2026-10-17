@@ -3,9 +3,9 @@
 &envNote label="env= is its volume on every note: map=adsr, attack, decay and release in seconds, sustain a level. Written where it is used, &( … ) is a cell without a name." about=&pluck
 &bar scan(1 1 1 1) step=free(moderato)
 
-&tune step=&bar*2 0 4 7 12 7 4 0 ~ 2 5 9 14 9 5 2 ~
-&line step=&bar/2 7 9 5 7
-&bass step=&bar 0 0 7 0 2 2 9 2
+&tune step=8n 0 4 7 12 7 4 0 ~ 2 5 9 14 9 5 2 ~
+&line step=2n 7 9 5 7
+&bass step=4n 0 0 7 0 2 2 9 2
 
 &pluck s=tri loop=C4 env=&(map=adsr .005 .3 .1 .2)        # quick to start, quick to fade: a pluck
 &pad s=saw loop=C4 env=&(map=adsr .5 .3 .6 .8)            # slow in, held, slow out: a swell

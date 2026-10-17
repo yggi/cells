@@ -28,7 +28,7 @@ describe('the main meter', () => {
     expect(mainMeter(piece('&bar scan(1 1 1 1) step=120bpm').result)).toEqual({ cell: 'bar', beat: 1 });
     expect(mainMeter(piece('&bar scan(1 1 1 1) step=120bpm\n&sw scan(2 1) step=&bar', '&tune step=&sw 0 2').result)).toEqual({ cell: 'bar', beat: 1 });
     expect(mainMeter(piece('&bar meter("4/4", 2) step=100bpm').result)).toEqual({ cell: 'bar', beat: 2 });
-    expect(mainMeter(piece('&bar 1!8 step=100bpm beat=2 swing=.67').result)).toEqual({ cell: 'bar', beat: 2 });
+    expect(mainMeter(piece('&bar meter("4/4", 2) step=100bpm swing=.67').result)).toEqual({ cell: 'bar', beat: 2 });
   });
 
   it('is none for a piece with no meter: a lone cell stepping at a rate', () => {
@@ -83,8 +83,8 @@ describe('the ticks', () => {
   });
 
   it('swing: the ticks inside a pair move, every beat stays where it was, and a bar still has 96', () => {
-    const straight = ticksBetween(piece('&bar 1!8 step=120bpm beat=2'), 0, 2)!.at;
-    const swung = ticksBetween(piece('&bar 1!8 step=120bpm beat=2 swing=.67'), 0, 2)!.at;
+    const straight = ticksBetween(piece('&bar meter("4/4", 2) step=120bpm'), 0, 2)!.at;
+    const swung = ticksBetween(piece('&bar meter("4/4", 2) step=120bpm swing=.67'), 0, 2)!.at;
     expect(swung).toHaveLength(96);
     for (let k = 0; k < 96; k += PPQN) expect(swung[k]).toBeCloseTo(straight[k], 12);
     // (the second step of a beat, tick 12, comes two thirds of the way through it)

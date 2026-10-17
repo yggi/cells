@@ -321,18 +321,18 @@ describe('mix expressions: typing and articulation (rule 2)', () => {
   });
 
   it('of two step= terms, the finer starts notes and the coarser holds under it, as a loop= term would (#10)', () => {
-    const tail = '\n&walk step=&bar 0 4 7 10\n&v s=sine loop=C4\n&out map=sample [(&walk + &changes) * &v]';
+    const tail = '\n&walk step=4n 0 4 7 10\n&v s=sine loop=C4\n&out map=sample [(&walk + &changes) * &v]';
     const notes = (s: string) => {
       const r = compileSource('&bar scan(1 1 1 1) step=120bpm\n' + s + tail);
       expect(r.diagnostics).toEqual([]);
       expect(r.outputs.map((o) => [o.cell, o.mods.map((m) => m.cell)])).toEqual([['walk', ['changes']]]);
       return eventsBetween(plan(r, codeShifts(r)), 0, 8).map((e) => `${e.at.toFixed(3)} ${e.dur.toFixed(3)} ${e.freq.toFixed(2)}`);
     };
-    const stepped = notes('&changes step=&bar/4 0 5');
+    const stepped = notes('&changes step=1m 0 5');
     expect(stepped).toEqual(notes('&changes loop=&bar/8 0 5'));
     expect(stepped[4].endsWith('349.23')).toBe(true); // bar 2: the walk on F
     // (written either way round: + commutes)
-    const r = compileSource('&bar scan(1 1 1 1) step=120bpm\n&changes step=&bar/4 0 5' + tail.replace('(&walk + &changes)', '(&changes + &walk)'));
+    const r = compileSource('&bar scan(1 1 1 1) step=120bpm\n&changes step=1m 0 5' + tail.replace('(&walk + &changes)', '(&changes + &walk)'));
     expect(r.outputs[0].cell).toBe('walk');
   });
 
@@ -615,7 +615,7 @@ describe('retrograde: slices with a step', () => {
 
 describe('free(…): numbers left to the performer', () => {
   const src = `&bar scan(27 23 26 24) step=free(90bpm, 60..240)
-&t over=&s step=&bar 0 2 4
+&t over=&s step=4n 0 2 4
 &s scan(2 2 1 2 2 2 1) shift=free(0, 0..6)
 &v s=tri loop=C4
 &mix loop=SAMPLE_RATE map=sample [&t * &v * free(.8, 0..1),

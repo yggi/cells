@@ -39,7 +39,7 @@ describe('a MIDI file as a piece', () => {
     const { source, perQuarter, lines } = cellsFromMidi(smf, 'test');
     expect(perQuarter).toBe(2);
     expect(lines).toBe(1);
-    expect(source).toContain('&leadSynth step=&tempo 0 [4,7] ~ 12');
+    expect(source).toContain('&leadSynth step=pulse 0 [4,7] ~ 12');
     const heard = notesOf(source);
     expect(heard.map((n) => `${n.key}@${n.at.toFixed(3)}`)).toEqual(['60@0.000', '64@0.250', '67@0.250', '72@0.750']);
   });
@@ -171,7 +171,7 @@ describe('a long rest (a voice that enters late in a long piece)', () => {
       meters: [],
     };
     const made = cellsFromMidi(smf, 'late');
-    expect(made.source).toMatch(/&late step=&tempo ~@4096 ~@903 7/);
+    expect(made.source).toMatch(/&late step=pulse ~@4096 ~@903 7/);
     expect(compileSource(made.source).ok).toBe(true);
   });
 });

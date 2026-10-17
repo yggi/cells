@@ -4,8 +4,8 @@ The anatomy of one line of code: a cell is `&name`, attributes, and a braid, in 
 
 ```cells
 &bar scan(4 4 4 4) step=84bpm
-&tune step=&bar 0 2 4 ~ 5@2
-&fill step=&bar 0 [2 4] [5 [4 2]] [0 2, 7]
+&tune step=4n 0 2 4 ~ 5@2
+&fill step=4n 0 [2 4] [5 [4 2]] [0 2, 7]
 ```
 
 - **One cell per line.** A line ending in `,` `[` `+` or `*` continues on the next. `#` starts a comment.

@@ -77,7 +77,8 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
       if (envs > 1) error(`${key}=: one envelope (map=adsr) at most — the other factors scale it`, pc.span);
       if (envs && !pc.range) error(`${key}=&env: an envelope runs 0 to 1 — give it a range: ${key}=200..3000 * &env`, pc.span);
     }
-  for (const d of decls.values()) if (d.stride !== null && d.step?.kind !== 'driven') warn(`stride= only matters with step=&cell`, d.paramSpans?.stride ?? d.span);
+  for (const d of decls.values())
+    if (d.stride !== null && d.step?.kind !== 'driven' && d.step?.kind !== 'tap') warn(`stride= only matters with step=&cell or a tap (step=1m)`, d.paramSpans?.stride ?? d.span);
   for (const d of decls.values()) {
     for (const [key, r] of [
       ['env', d.env],

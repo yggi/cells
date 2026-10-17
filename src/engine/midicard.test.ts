@@ -11,11 +11,11 @@ import { cellId, edgeId } from './ids';
 import { PRESETS } from './presets';
 
 const BAND = `&bar scan(1 1 1 1) step=2
-&theme step=&bar 0 2 4 5
+&theme step=4n 0 2 4 5
 &reed s=square loop=220
-&bass step=&bar/2 0 5
+&bass step=2n 0 5
 &sub loop=55
-&groove step=&bar*2 &bd ~ &hh ~
+&groove step=8n &bd ~ &hh ~
 &bd s=sine loop=A1
 &hh s=white hpf=8000`;
 const OUT = `&out map=sample [&theme * &reed, &groove]`;

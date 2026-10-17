@@ -18,41 +18,38 @@ const plays = (src: string) => {
 
 describe('a stepped braid of voices plays them (#10 F4)', () => {
   it('plays what the same pattern read by number through a kit plays: chords, ratchets, rests, chance', () => {
-    const groove = plays(voices + '&groove step=&bar*2 &bd &hh [&bd,&sd] &hh*2 ~ &hh &sd? &hh!2\n&out map=sample [&groove * .6]');
-    const kit = plays(voices + '&kit &bd &hh &sd\n&groove over=&kit step=&bar*2 0 1 [0,2] 1*2 ~ 1 2? 1!2\n&out map=sample [&groove * .6]');
+    const groove = plays(voices + '&groove step=8n &bd &hh [&bd,&sd] &hh*2 ~ &hh &sd? &hh!2\n&out map=sample [&groove * .6]');
+    const kit = plays(voices + '&kit &bd &hh &sd\n&groove over=&kit step=8n 0 1 [0,2] 1*2 ~ 1 2? 1!2\n&out map=sample [&groove * .6]');
     expect(groove).toEqual(kit);
     expect(groove.some((e) => e.startsWith('sd '))).toBe(true);
   });
   it('is a signal: mixed as it is, with volumes acting on it', () => {
-    const r = compileSource(voices + '&acc map=amp step=&bar*2 1 .5\n&groove step=&bar*2 &bd &hh\n&out map=sample [&groove * &acc * .5]');
+    const r = compileSource(voices + '&acc map=amp step=8n 1 .5\n&groove step=8n &bd &hh\n&out map=sample [&groove * &acc * .5]');
     expect(r.diagnostics).toEqual([]);
     expect(r.outputs).toHaveLength(1);
     expect(r.outputs[0].levels.map((l) => l.cell)).toEqual(['acc']);
   });
   it('an unstepped braid of voices is still a kit, and a stepped braid of anything else is still a melody', () => {
-    expect(compileSource(voices + '&kit &bd &hh\n&d over=&kit step=&bar 0 1\n&out map=sample [&d]').diagnostics).toEqual([]);
-    const melody = compileSource(voices + '&m 0 4\n&t step=&bar &m 7\n&out map=sample [&t * &bd]');
+    expect(compileSource(voices + '&kit &bd &hh\n&d over=&kit step=4n 0 1\n&out map=sample [&d]').diagnostics).toEqual([]);
+    const melody = compileSource(voices + '&m 0 4\n&t step=4n &m 7\n&out map=sample [&t * &bd]');
     expect(melody.diagnostics).toEqual([]);
     expect(melody.cells.get('t')!.over).toBeNull();
   });
   it('drum motifs: an unstepped braid of voices a groove splices, reversed or not, nested, shared by two grooves', () => {
-    const grooves = plays(
-      voices + '&fill &sd &sd*2 ~ &hh\n&bar2 &bd ~ &fill\n&a step=&bar*4 &bar2 &fill[::-1]\n&b step=&bar*2 [&bd,&hh] &fill\n&out map=sample [&a * .6, &b * .3]',
-    );
+    const grooves = plays(voices + '&fill &sd &sd*2 ~ &hh\n&bar2 &bd ~ &fill\n&a step=16n &bar2 &fill[::-1]\n&b step=8n [&bd,&hh] &fill\n&out map=sample [&a * .6, &b * .3]');
     const kit = plays(
-      voices +
-        '&kit &sd &hh &bd\n&fill 0 0*2 ~ 1\n&bar2 2 ~ &fill\n&a over=&kit step=&bar*4 &bar2 &fill[::-1]\n&b over=&kit step=&bar*2 [2,1] &fill\n&out map=sample [&a * .6, &b * .3]',
+      voices + '&kit &sd &hh &bd\n&fill 0 0*2 ~ 1\n&bar2 2 ~ &fill\n&a over=&kit step=16n &bar2 &fill[::-1]\n&b over=&kit step=8n [2,1] &fill\n&out map=sample [&a * .6, &b * .3]',
     );
     expect(grooves).toEqual(kit);
   });
   it('a braid of voices read with over= stays a kit, read by number', () => {
-    const r = compileSource(voices + '&kit &bd &hh\n&d over=&kit step=&bar 1 0\n&g step=&bar &hh &bd\n&out map=sample [&d, &g]');
+    const r = compileSource(voices + '&kit &bd &hh\n&d over=&kit step=4n 1 0\n&g step=4n &hh &bd\n&out map=sample [&d, &g]');
     expect(r.diagnostics).toEqual([]);
     expect(r.cells.get('kit')!.implicit).toBe(false);
     expect(r.cells.get('d')!.over).toBe('kit');
   });
   it('Shorten leaves its steps alone (they are names, not numbers)', () => {
-    const src = voices + '&groove step=&bar*4 &bd ~ &hh ~ &sd ~ &hh ~ &bd ~ &hh ~ &sd ~ &hh ~ &bd &bd\n&out map=sample [&groove]';
+    const src = voices + '&groove step=16n &bd ~ &hh ~ &sd ~ &hh ~ &bd ~ &hh ~ &sd ~ &hh ~ &bd &bd\n&out map=sample [&groove]';
     expect(shorten(src)).toEqual([]);
   });
 });
@@ -77,7 +74,7 @@ describe('pan= on a voice: where it sits in stereo (#10 F3)', () => {
     expect(one).toEqual(two);
   });
   it('a kit’s members each sit where their pan= says', () => {
-    const g = gains(voices.replace('hpf=8000', 'hpf=8000 pan=1') + '&groove step=&bar*2 &bd &hh\n&out map=sample [&groove * .6]');
+    const g = gains(voices.replace('hpf=8000', 'hpf=8000 pan=1') + '&groove step=8n &bd &hh\n&out map=sample [&groove * .6]');
     expect(g.slice(0, 2)).toEqual(['bd 0.6000,0.6000', 'hh 0.0000,0.6000']);
   });
 });
@@ -90,7 +87,7 @@ describe('a kit read only selects: the rest of the product acts on the member it
   };
   const band = '&bar scan(1 1 1 1) step=120bpm\n&lead s=saw loop=C4\n&organ s=square loop=C3\n&band &lead &organ\n';
   it('orchestration: a melody played on the voice a kit pattern picks (#29), the finer term starting notes', () => {
-    const src = band + '&orch over=&band step=&bar/4 0 1\n&theme step=&bar 0 2 4 5\n&out map=sample [&theme * &orch * .5]';
+    const src = band + '&orch over=&band step=1m 0 1\n&theme step=4n 0 2 4 5\n&out map=sample [&theme * &orch * .5]';
     expect(notes(src)).toEqual([
       'lead 0.00 261.63',
       'lead 0.50 293.66',
@@ -110,20 +107,20 @@ describe('a kit read only selects: the rest of the product acts on the member it
     expect(live(2.7)).toEqual([cellId('organ')]);
   });
   it('a pitch held under a drum pattern transposes the member it picks; a number in the sum too', () => {
-    const src = voices + '&kit &bd &hh\n&drums over=&kit step=&bar 0 0 0 0\n&key step=&bar/4 0 7\n&out map=sample [&drums * &key]';
+    const src = voices + '&kit &bd &hh\n&drums over=&kit step=4n 0 0 0 0\n&key step=1m 0 7\n&out map=sample [&drums * &key]';
     const bd = (f: number) => (55 * Math.pow(2, f / 12)).toFixed(2);
     expect(notes(src).map((n) => n.split(' ')[2])).toEqual([0, 0, 0, 0, 7, 7, 7, 7].map(bd));
     expect(notes(src.replace('[&drums * &key]', '[(&key + 12) * &drums]')).map((n) => n.split(' ')[2])).toEqual([12, 12, 12, 12, 19, 19, 19, 19].map(bd));
   });
   it('varispeed on a clock bends a kit member as it bends the voice played alone', () => {
     const tape = '&bar scan(1 1 1 1) step=78bpm motor=1.4 mass=1 friction=.3 varispeed=1\n&bd s=sine loop=A1\n&hh s=white\n';
-    const groove = notes(tape + '&g step=&bar &bd &bd &hh &bd\n&out map=sample [&g * .5]', 6).filter((n) => n.startsWith('bd'));
-    const alone = notes(tape + '&k step=&bar 0 0 ~ 0\n&out map=sample [&k * &bd * .5]', 6);
+    const groove = notes(tape + '&g step=4n &bd &bd &hh &bd\n&out map=sample [&g * .5]', 6).filter((n) => n.startsWith('bd'));
+    const alone = notes(tape + '&k step=4n 0 0 ~ 0\n&out map=sample [&k * &bd * .5]', 6);
     expect(groove).toEqual(alone);
     expect(groove[0]).not.toBe('bd 0.00 55.00'); // (spinning up from rest: below its pitch)
   });
   it('plain drums: nothing changes, each member at its own pitch', () => {
-    const src = voices + '&kit &bd &hh\n&drums over=&kit step=&bar 0 1 0 1\n&out map=sample [&drums * .6]';
+    const src = voices + '&kit &bd &hh\n&drums over=&kit step=4n 0 1 0 1\n&out map=sample [&drums * .6]';
     expect(notes(src, 2)).toEqual(['bd 0.00 55.00', 'hh 0.50 261.63', 'bd 1.00 55.00', 'hh 1.50 261.63']);
   });
 });

@@ -21,12 +21,12 @@
 # ---- the low end: a sub-bass kick, four on the floor; a crushed riff on E; the Bassfeder
 &kick tags="low" step=&subBar 0!4
 &riff tags="low" step=&riffBar*4 0 0 1 0 ~ 0 7 0 6 ~ 0 1 0 ~ 3 -2
-&accent tags="low" map=amp step=&bar*4 1 .5 .8 .5 0 .6 1 .5 .9 0 .6 .8 .5 0 1 .7
+&accent tags="low" map=amp step=16n 1 .5 .8 .5 0 .6 1 .5 .9 0 .6 .8 .5 0 1 .7
 &feder tags="low" step=&federBar*2 0 ~ ~ 0? 0 ~ [0|-5] ~
 
 # ---- tools: the grinder (noise that swells, now it can), the drill (a whine that wobbles)
 &grind tags="tools" step=&grindBar/2 0 0?.4
-&swell tags="tools" map=amp step=&bar*2 .2 .5 1 .7
+&swell tags="tools" map=amp step=8n .2 .5 1 .7
 &drill tags="tools" step=&drillBar 0? ~!3 0?.7 ~ 7? ~
 &edge tags="tools" map=lin loop=.37 .2 1 .4
 # ---- the scream: a saw sliding, and breath, through filters moving between vowels
@@ -54,8 +54,8 @@
 # ---- the parts, and the site's day: four bars a step; laps=1: it ends
 &metalPart [&beams * &beamv * .09, &pipes * &pipev * .07]
 &einsturz [&fall * &beamv * .14, &crashPlate * &platev * .08, &rubble * &crash * .25, &rubble * &sub * .6]
-&teile step=&bar &metalBar &plateBar &subBar &riffBar &federBar &grindBar &drillBar &schreiBar &einsturzBar
-&tag over=&teile step=&bar/16 laps=1 label="metal · grinder · spring · groove · drill · scream · break · spring · groove · all · all · collapse · Einsturz" [0] [0,5] [0,2,4] [0,1,2,3,4] [0,1,2,3,4,6] [0,1,2,3,4,5,7] [4,5,7] [4] [0,1,2,3,4,5] [0,1,2,3,4,5,6,7]!2 [5,7] 8
+&teile step=4n &metalBar &plateBar &subBar &riffBar &federBar &grindBar &drillBar &schreiBar &einsturzBar
+&tag over=&teile step=1m/4 laps=1 label="metal · grinder · spring · groove · drill · scream · break · spring · groove · all · all · collapse · Einsturz" [0] [0,5] [0,2,4] [0,1,2,3,4] [0,1,2,3,4,6] [0,1,2,3,4,5,7] [4,5,7] [4] [0,1,2,3,4,5] [0,1,2,3,4,5,6,7]!2 [5,7] 8
 
 &out postgain=.282 map=sample [&metalPart, &plates * &platev * .05, &kick * &sub * .55,
                            &riff * &accent * &grit * .2, &feder * &bassfeder * .3,

@@ -7,7 +7,7 @@
 &songNote label="Fifteen sections of eight bars: three minutes, then it ends." about=&song
 # Hypercell — Am F C G, a bar each; everything in semitones from C. The hook is our own.
 &bar scan(1 1 1 1) step=free(160bpm, 140..180)
-&prog step=&bar/4 tags="bass" 9 5 0 7                                    # A F C G: the bass moves with it
+&prog step=1m tags="bass" 9 5 0 7                                        # A F C G: the bass moves with it
 &off tags="bass" step=&bassBar*2 ~ 0 ~ 0 ~ 0 ~ 0                             # the eurodance bass: on the offbeats
 &sAm tags="synths" ~ [9,12,16]
 &sF tags="synths" ~ [5,9,12]
@@ -36,8 +36,8 @@
 &bassPart [(&off + &prog) * &bass * .35]
 &hookPart [&hook * &sawA * .13, &hook * &sawB * .13]
 &padPart [&held * &padv * .08]
-&parts step=&bar &bassBar &stabBar &hookBar &padBar &beatBar &rollBar &riseBar
-&song over=&parts step=&bar/32 laps=1 label="intro · groove · build · drop · drop · break · build · drop · drop · bass · break · build · drop · drop · out" [4] [0,4] [0,4,5,6] [0,1,2,4]!2 [2,3] [3,5,6] [0,1,2,4]!2 [0,4] 3 [3,5,6] [0,1,2,4]!2 4
+&parts step=4n &bassBar &stabBar &hookBar &padBar &beatBar &rollBar &riseBar
+&song over=&parts step=1m/8 laps=1 label="intro · groove · build · drop · drop · break · build · drop · drop · bass · break · build · drop · drop · out" [4] [0,4] [0,4,5,6] [0,1,2,4]!2 [2,3] [3,5,6] [0,1,2,4]!2 [0,4] 3 [3,5,6] [0,1,2,4]!2 4
 
 &out postgain=1.41 map=sample [&beat, &bassPart, &stabs * &stab * .1, &hookPart,
                          &lift * &riser * .12, &padPart, &roll]

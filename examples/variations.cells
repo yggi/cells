@@ -6,9 +6,9 @@
 &answer base=&subject^$7 =!3 0@2
 &low base=&subject^$-12 =!9 =@8
 
-&alto step=&bar*4 &subject ~@36
-&soprano step=&bar*4 ~@16 &answer ~@20
-&bass step=&bar*4 ~@32 &low
+&alto step=16n &subject ~@36
+&soprano step=16n ~@16 &answer ~@20
+&bass step=16n ~@32 &low
 
 &flute s=tri loop=C5 env=&(map=adsr .02 .3 .5 .3)
 &reed s=tri loop=C4 env=&(map=adsr .02 .3 .5 .3)

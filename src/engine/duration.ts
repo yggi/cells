@@ -158,7 +158,8 @@ export function mainTempo(result: CompileResult): { cell: string; free: FreeSpec
   const first = plan(result, statics).tracks[0];
   if (!first?.clock) return null;
   // the clock's own root: follow step drivers up to the meter that has a tempo
-  for (let name: string | undefined = first.clock, guard = 0; name && guard < 8; guard++) {
+  // (a tap's clock, step=16n, is its meter's)
+  for (let name: string | undefined = result.clocks.get(first.clock)?.cell ?? first.clock, guard = 0; name && guard < 8; guard++) {
     const c = result.cells.get(name);
     if (!c) break;
     const free = c.frees.find((f) => f.key === 'step');

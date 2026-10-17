@@ -13,6 +13,7 @@
  *  - wrappers.ts:  a cell that only reads motifs through a shifted table — &motif^k where it's used
  *  - aliases.ts:   Strudel's or dough's name for a parameter where ours is shorter: cutoff= → lpf= (decision 027)
  *  - gates.ts:     a migration: a gate written the old way (trigger=, velocity=, gate=, gain=) as play= and level= (decision 023)
+ *  - taps.ts:      a migration: a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
  *
  * Each suggestion carries its rewrite; its saving is measured on the result
  * (harness.ts: the cells a rule may touch, the measure, the note-for-note check).

@@ -34,7 +34,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - `&name … ` one cell per line; steps `0 2 ~ 4@2 0!4 [0,2,4]` → [cell](language/cell.md)
 - `scan(…)` `euclid(k,n)` `sin(n)`; `&t[i]` `&t[$i]` `&t[a:b]` `&t[<<n]` `&t^n` (degrees) `&t^$n` (grid steps) → [braid](language/braid.md)
 - `over=&t` `scale(name, tonic)` `shift=n` `cycle=n` → [tables](language/tables.md)
-- `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), `stride=`, `laps=` → [time](language/time.md)
+- `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), taps of a meter (`pulse` `beat` `16n` `4n.` `8t` `1m`, `&m:16n`, `cycle=n` bars), `beat=`, `stride=`, `laps=` → [time](language/time.md)
 - `map=edo|ed(r)|ratios`, note names → [tuning](language/tuning.md)
 - `free(default, lo..hi)`, `free(0 2 4 ~)` a braid, recorded → [free](language/free.md)
 - `[a * &voice, …]` mixes (sorts, `+` `*` commute), `map=sample` `postgain=` (its master, linear); a gate `&g play=&tune level=&a*.4 [&lead, &bell]` → [mix](language/mix.md)

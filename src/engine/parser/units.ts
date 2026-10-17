@@ -6,7 +6,13 @@ export const RATE_UNITS: Readonly<Record<string, { readonly times: number; reado
   bpm: {
     times: 1,
     per: 60,
-    syntax: syntax('rate', 'nbpm', 'n a minute: beats on a meter (its steps, unless beat= or meter(…) say how many make a beat).', ['&bar scan(4 4 4 4) step=84bpm'], 'time.md'),
+    syntax: syntax(
+      'rate',
+      'nbpm',
+      'n a minute: beats on a meter (a scan’s entries; meter(…)’s beats: 6/8 two, 7/8 three unequal; beat= says another count).',
+      ['&bar scan(4 4 4 4) step=84bpm'],
+      'time.md',
+    ),
   },
   hz: { times: 1, per: 1, syntax: syntax('rate', 'nhz', 'n a second (a plain number says the same).', ['&a loop=440hz'], 'time.md') },
   min: { times: 1, per: 60, syntax: syntax('rate', 'nmin', 'n a minute (wall-clock time: loop=1min turns once a minute).', ['&tick scan(1!60) loop=1min'], 'time.md') },

@@ -122,7 +122,9 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
   }
 
   // clocks: the beat under the playhead, and the bar count
-  for (const name of result.clocks.keys()) {
+  for (const [name, info] of result.clocks) {
+    // (a tap, step=16n, is a clock of its meter's, not a cell: its meter's beat and bar are the ones drawn)
+    if (info.tap) continue;
     const beat = Math.floor(clk.stepOf(name) + EPS);
     const k = clk.map(name).beats;
     mark(name).entries.add(mod(beat, k));

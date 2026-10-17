@@ -114,7 +114,7 @@ describe('BWV 847: its beat a real beat (♩ = 89), the tempo map in sixteenths 
     const { PRESETS } = await import('./presets');
     const { mainTempo } = await import('./duration');
     const t = mainTempo(compileSource((PRESETS as Record<string, { source: string }>).bwv847.source))!;
-    expect([t.cell, t.free.value, t.free.unit]).toEqual(['tempo', 89, 'bpm']); // (beat=4: its steps sixteenths, its bpm quarters)
+    expect([t.cell, t.free.value, t.free.unit]).toEqual(['tempo', 89, 'bpm']); // (pulse=16n: its steps sixteenths, its bpm quarters)
   });
 });
 

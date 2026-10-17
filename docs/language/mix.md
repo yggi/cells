@@ -49,8 +49,8 @@ The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is 
 &lead s=saw loop=C4 env=&(map=adsr .01 .2 .4 .2)
 &organ s=square loop=C3 lpf=1500
 &band &lead &organ
-&orch over=&band step=&bar/4 0 1                # a bar on the lead, a bar on the organ
-&theme step=&bar 0 2 4 7
+&orch over=&band step=1m 0 1                    # a bar on the lead, a bar on the organ
+&theme step=4n 0 2 4 7
 &out loop=SAMPLE_RATE map=sample [&theme * &orch * .3]
 ```
 
@@ -63,9 +63,9 @@ read as the product it stands for, one for each voice it plays, so it sounds as 
 
 ```cells
 &bar scan(1 1 1 1) step=120bpm
-&tune step=&bar 0 2 4 7
-&accent map=amp step=&bar 1 .5 .8 .5
-&solo map=amp step=&bar/4 1 .3                                   # open, then ducked
+&tune step=4n 0 2 4 7
+&accent map=amp step=4n 1 .5 .8 .5
+&solo map=amp step=1m 1 .3                                       # open, then ducked
 &lead s=tri loop=C4 env=&(map=adsr .01 .2 .4 .2)
 &leadOut play=&tune level=&accent*&solo*.5 &lead       # is [&tune * &accent * &solo * &lead * .5]
 &out loop=SAMPLE_RATE map=sample [&leadOut]
@@ -82,7 +82,7 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 &sd s=white env=&(map=adsr 0 .15 0 .05)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh
-&beat step=&bar*2 0 2 1 2
+&beat step=8n 0 2 1 2
 &drums play=&beat level=.6 &kit                 # each number picks the drum: 0 the kick, 1 the snare, 2 the hat
 &out loop=SAMPLE_RATE map=sample [&drums]
 ```

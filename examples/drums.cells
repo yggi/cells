@@ -9,10 +9,10 @@
 
 &beat &bd ~ &hh:0:.5 ~ &sd ~ &hh:0:.5 [&bd,&hh]
 &fill &sd [&sd &sd] &sd &sd*3
-&groove step=&bar*2 &beat!3 &bd ~ &hh ~ &fill
-&clave step=&bar*4 euclid(5, 16)
+&groove step=8n &beat!3 &bd ~ &hh ~ &fill
+&clave step=16n euclid(5, 16)
 &kit &lo &mid &hi
-&toms over=&kit step=&bar*4 ~!12 0 1 2 1
+&toms over=&kit step=16n ~!12 0 1 2 1
 
 &bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
 &sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .05)

@@ -25,7 +25,7 @@ const isKitDecl = (d: CellDecl | undefined, { decls }: Seen) =>
   d.braid.tokens.every((t) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).length > 0);
 /** How often its braid turns: loop=r, or step=r over its k steps. */
 const turns = (d: CellDecl, { rateOf }: Seen): number | null => {
-  if (!d.step || d.step.kind === 'driven') return null;
+  if (!d.step || d.step.kind === 'driven' || d.step.kind === 'tap') return null;
   const r = rateOf(d.step);
   const b = d.braid;
   const k = b.kind === 'list' ? b.tokens.length : b.kind === 'scan' ? b.steps.length : b.kind === 'wave' ? b.n : 1;

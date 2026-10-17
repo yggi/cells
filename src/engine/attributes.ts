@@ -121,7 +121,13 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     on: ['card'],
   },
   // meters and their physics
-  beat: { help: 'on a meter: how many of its steps make a beat — its bpm counts beats (beat=4: steps in sixteenths)', doc: 'time.md', value: 'number', on: ['clock'] },
+  beat: { help: 'on a meter: how many beats it counts, equal (meter("4/4") beat=2: alla breve) — its bpm counts beats', doc: 'time.md', value: 'number', on: ['clock'] },
+  pulse: {
+    help: 'on a scan: the note value of its entries (pulse=16n: sixteenths) — its beats then count quarters, and its taps read note values by it',
+    doc: 'time.md',
+    value: 'word',
+    on: ['clock', 'driven'],
+  },
   swing: { help: 'on a meter: of each pair of steps, the second comes this far through (.5 straight, .67 triplet swing)', doc: 'time.md', value: 'number', on: ['clock'] },
   motor: physics('on a meter: it turns physically — a motor this strong pulls it to its tempo (from rest)', ['clock']),
   mass: physics('physics: how heavy it turns (inertia); on a cell a meter drives, load', ['clock', 'driven']),

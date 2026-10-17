@@ -30,6 +30,7 @@ export interface TimeMap {
  * interpolate.
  */
 export function timeMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap {
+  if (clock.tap) return tapMap(clock.tap, timeMap(result, result.clocks.get(clock.tap.meter)!, shifts));
   if (!clock.positional && clock.swing !== undefined) {
     // swing: a pair of steps keeps its length, its second step starts sw of the way through
     const sw = Math.min(0.95, Math.max(0.05, clock.swing));
@@ -70,6 +71,37 @@ export function timeMap(result: CompileResult, clock: Clock, shifts: Shifts): Ti
     return j + (b > a ? (t - a) / (b - a) : 0);
   };
   return { beats: k, q, stepAt };
+}
+
+/**
+ * A tap's time map (decision 040): its step j at the position the tap gives it in its lap (the bar, or cycle= bars), in
+ * the meter's steps, and that laid through the meter's own map — so it swings, bends with a scan and runs with a motor
+ * as the meter does, and comes round at the bar. Fractional steps interpolate within the meter's steps.
+ */
+function tapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap): TimeMap {
+  const { positions, lap } = tap;
+  const k = Math.max(1, positions.length);
+  // even steps (16n in 4/4, pulse, 8t): a rate on the meter, worked out as one — the same floats as step=&bar*4 had
+  if (positions.every((p, i) => Math.abs(p - (i * lap) / k) < 1e-9))
+    return { beats: k, q: (j) => meter.q((j * lap) / k), stepAt: (t) => (meter.stepAt(t) * k) / lap, ...(meter.speed ? { speed: meter.speed } : {}) };
+  const at = (i: number) => (i < k ? positions[i] : lap);
+  const meterStep = (j: number) => {
+    const n = Math.floor(j);
+    const b = Math.floor(n / k);
+    const i = n - b * k;
+    return b * lap + at(i) + (j - n) * (at(i + 1) - at(i));
+  };
+  const stepAt = (t: number) => {
+    const m = meter.stepAt(t);
+    // (plain arithmetic, no snapping: a tap that says what step=&bar*2 said lands on the same floats)
+    const b = Math.floor(m / lap);
+    const r = m - b * lap;
+    let i = 0;
+    while (i + 1 < k && at(i + 1) <= r) i++;
+    const span = at(i + 1) - at(i);
+    return b * k + i + (span > 0 ? (r - at(i)) / span : 0);
+  };
+  return { beats: k, q: (j) => meter.q(meterStep(j)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
 }
 
 /**
@@ -141,7 +173,9 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
     let m = maps.get(clock);
     if (!m) {
       const info = result.clocks.get(clock)!;
-      if (info.belt) {
+      // a tap: through its meter's map as the meter moves (physics and all)
+      if (info.tap) m = tapMap(info.tap, map(info.tap.meter));
+      else if (info.belt) {
         // a belt: where its driver would put it (the driver's own map, physics and all), through a spring
         const drv = result.clocks.get(info.belt.driver)!;
         const idealD = timeMap(result, drv, statics);

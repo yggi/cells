@@ -212,7 +212,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     // a voice by its sound parameters, written as a clock: say which parameter made it one
     const made = Object.keys(d.params).find((k) => VOICE_PARAMS.has(k));
     const why = made ? ` (${made}= makes &${name} a voice; a meter takes none)` : '';
-    if (d.step?.kind === 'driven') error(`A voice moves at a rate — its pitch, like loop=C4${why}`, d.step.span);
+    if (d.step?.kind === 'driven' || d.step?.kind === 'tap') error(`A voice moves at a rate — its pitch, like loop=C4${why}`, d.step.span);
     else if (d.step && !d.step.whole) error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4${why}`, d.step.span);
   }
   return { cells: cells as Cells, sinks, cards, bindings, soundHead };

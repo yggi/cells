@@ -5,7 +5,7 @@
 # same series (geo: 5^(k/25), k = 0 10 5 20 15), the intensities in decibels.
 # One player goes forward, swelling; the other plays it backwards, eight steps higher, fading.
 &time scan(geo(5, 25, 0 10 5 20 15)) step=free(24bpm, 12..48)  # five durations: 5^(k/25)
-&dyn map=db step=&time 0 -10 -4 -16 -8                           # their intensities, in decibels
+&dyn map=db step=4n 0 -10 -4 -16 -8                              # their intensities, in decibels
 &steps cycle=25 map=ed(5)                                        # 25 steps to 5:1
 
 # the five mixtures: five sines, 1 to 5 steps apart …
@@ -15,8 +15,8 @@
 &m4 label="mixture: 4 steps apart" [0,4,8,12,16]
 &m5 label="mixture: 5 steps apart" [0,5,10,15,20]
 &mixtures &m1 &m2^$30 &m3^$12 &m4^$50 &m5^$20                       # … each on its step of the scale
-&forward over=&steps step=&time &mixtures
-&backward over=&steps step=&time &mixtures[::-1]^$8              # retrograde, eight steps higher
+&forward over=&steps step=4n &mixtures
+&backward over=&steps step=4n &mixtures[::-1]^$8                 # retrograde, eight steps higher
 
 &swell pan=.14 s=sine loop=100 env=&(map=adsr 1.5 .5 .8 1.5)            # 100 Hz: the scale's first tone
 &fade pan=.86 s=sine loop=100 env=&(map=adsr .01 1.5 .3 1.5)

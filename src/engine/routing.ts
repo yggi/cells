@@ -95,7 +95,9 @@ export class RouteAcc {
       } else if (!table) this.edge(at, st.driver, stepEdgeId(cellId(at), cellId(st.driver)));
       at = st.driver;
     }
-    const clock = this.result.cells.get(name)?.clock;
+    // (a tap's clock, step=16n, is its meter's: the meter is the cell)
+    const own = this.result.cells.get(name)?.clock;
+    const clock = own ? (this.result.clocks.get(own)?.cell ?? own) : null;
     if (clock && !this.off(clock)) this.tables(clock);
     this.timed(name);
   }

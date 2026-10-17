@@ -1,4 +1,5 @@
 import type { ShowPlugin } from './plugins';
+import type { Signature } from './meter';
 
 /** Source location, 1-based line and column. */
 export interface Span {
@@ -158,7 +159,8 @@ export interface GateSpec {
 
 export type Braid =
   | { readonly kind: 'blank' }
-  | { readonly kind: 'list'; readonly tokens: readonly Token[]; readonly perBeat?: number }
+  /** A list; written as meter(…), its steps a beat (`perBeat`) and, from a time signature, its pulses and beats (`signature`). */
+  | { readonly kind: 'list'; readonly tokens: readonly Token[]; readonly perBeat?: number; readonly signature?: Signature }
   /** Running totals of intervals: scan(2 2 1 2 2 2 1) → 0 2 4 5 7 9 11, lap 12. Scales, meters, rhythms. */
   | { readonly kind: 'scan'; readonly steps: readonly number[]; readonly span: Span }
   /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
@@ -191,6 +193,14 @@ export interface RateOp {
   readonly n: number;
 }
 
+/**
+ * What a tap of a meter counts (decision 040): its pulse, its beat, a note value (its length in whole notes: `16n`
+ * 1/16, `4n.` 3/8, `8t` 1/12) or the bar (`1m`). `written` is how it was spelled.
+ */
+export type Tap = { readonly written: string } & (
+  { readonly kind: 'pulse' } | { readonly kind: 'beat' } | { readonly kind: 'note'; readonly whole: number } | { readonly kind: 'bar' }
+);
+
 export type StepSpec = { readonly whole: boolean } & (
   | {
       readonly kind: 'driven';
@@ -203,6 +213,18 @@ export type StepSpec = { readonly whole: boolean } & (
       readonly span: Span;
     }
   | { readonly kind: 'rate'; readonly perSecond: number; readonly span: Span; readonly free?: FreeSpec }
+  /**
+   * A tap of a meter (decision 040): `step=16n`, `step=pulse*2`, `step=&bar2:beat`. The meter is the piece's main meter
+   * unless named; the chain is read as on a driven step, steps per step of the tap.
+   */
+  | {
+      readonly kind: 'tap';
+      readonly meter: Ref | null;
+      readonly tap: Tap;
+      readonly ratio: number;
+      readonly chain: readonly RateOp[];
+      readonly span: Span;
+    }
   /** A value the environment provides, like loop=SAMPLE_RATE. */
   | { readonly kind: 'env'; readonly name: string; readonly span: Span }
 );

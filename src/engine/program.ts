@@ -83,7 +83,7 @@ export interface ResolvedCell {
   readonly about: readonly string[];
   /** base=: the cell it is a copy of (decision 026; resolved when parsed), and the transposition written with it. */
   readonly base?: { readonly name: string; readonly transpose?: number; readonly degree?: number };
-  /** Steps a beat (beat=, or from meter(…)): a meter's bpm counts beats, 1 = every step a beat. */
+  /** Steps a beat, from its meter (its steps over its beats: beat=, or meter(…)): a meter's bpm counts beats, 1 = every step a beat. */
   readonly beat: number;
   /** A bar, meter(…) or scan(…), compiled: its groups by level (0 the bar, 1 a beat … 4 finest) and where its steps fall. */
   readonly meter: Meter | null;
@@ -126,8 +126,11 @@ export interface ResolvedCell {
   readonly hasValues: boolean;
   /** How far each step moves it (stride=), 1 by default. */
   readonly stride: number;
-  /** step=/loop= driven by another cell: the driver, and its ratio as written (the edge's rate). */
-  readonly step: { readonly driver: string; readonly cycle: boolean; readonly whole: boolean; readonly chain: readonly RateOp[] } | null;
+  /**
+   * step=/loop= driven by another cell: the driver, and its ratio as written (the edge's rate). A tap of a meter
+   * (`step=16n`, decision 040) names the meter as its driver, and the tap as written (`tap`: `16n`, `pulse`, `beat`).
+   */
+  readonly step: { readonly driver: string; readonly cycle: boolean; readonly whole: boolean; readonly chain: readonly RateOp[]; readonly tap?: string } | null;
   /**
    * Parameters given as a clock (`delaytime=&bar*4/3`, `length=`, `at=`: attributes.ts TIME_PARAMS), by key: the clock
    * tapped and its ratio as written (as step=). Compiled to seconds in `params`; kept for the graph's wire (a tap of the clock).
@@ -250,6 +253,11 @@ export interface Clock {
   readonly belt?: { readonly driver: string; readonly rate: number };
   /** swing=: of each pair of steps, the second starts this far through (.5 straight, .67 triplet swing). */
   readonly swing?: number;
+  /**
+   * A tap of a meter (decision 040: `step=16n`, `step=beat`): its steps at these positions, in the meter's steps, in a lap
+   * of `lap` of them (the bar, or cycle= bars), laid through the meter's time map. `cell` is the meter.
+   */
+  readonly tap?: { readonly meter: string; readonly positions: readonly number[]; readonly lap: number };
 }
 
 /** A pitch term of an out sum. */
@@ -384,6 +392,8 @@ export interface CompileResult {
   readonly plugins: ReadonlyMap<string, ShowPlugin>;
   /** Taps of a meter's bus (decision 016), each to its table: what a selector reading the table switches. */
   readonly taps?: ReadonlyMap<string, string>;
+  /** The meter a tap that names none reads (decision 040): the first meter in the text with a tempo of its own. */
+  readonly mainMeter?: string;
   /**
    * The built-in card's name, when the piece writes no card (decision 028): a sound card (`map=sample`) compile added,
    * which every sound nothing reads goes to. It is in `cells` (implicit: not drawn, in no line, never edited).

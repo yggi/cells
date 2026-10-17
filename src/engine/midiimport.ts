@@ -5,9 +5,10 @@
  * - **The grid**: the coarsest step (a quarter note, an eighth, a triplet … down to a 64th) that every start falls on,
  *   within a 96th of a quarter (and an eighth of the step); a file played in, whose starts fall on none, is laid on sixteenths and says how many
  *   notes moved.
- * - **The time**: one meter for the whole piece, `&tempo scan(…) step=free(…bpm) beat=… laps=1`, a step each grid step,
- *   each as long as the file's tempo map makes it (a scan's steps are its weights against their mean), so a tempo
- *   change is a change of weight, as BWV 847 writes its own; laps=1, so the piece ends.
+ * - **The time**: one meter for the whole piece, `&tempo scan(…) pulse=16n step=free(…bpm) laps=1`, a step each grid
+ *   step (`pulse=` its note value, so its bpm counts quarters: decision 040), each as long as the file's tempo map makes it (a
+ *   scan's steps are its weights against their mean), so a tempo change is a change of weight, as BWV 847 writes its
+ *   own; laps=1, so the piece ends. Every line taps it by the pulse (`step=pulse`, `step=pulse/2`).
  * - **The lines**: a line a track and channel (a format 0 file's channels apart), named after the track. Notes that start
  *   and end together are a chord; one that overlaps another goes in a line of its own beside it (`&lead2`), so every
  *   note is written. A melodic note is its key in semitones from C4, on a voice at C4; channel 10 is drums, each note
@@ -261,10 +262,14 @@ export function cellsFromMidi(
   }
   // (the scan's steps are its weights against their mean: the bpm makes the whole as long as the file)
   const total = lengths.reduce((a, b) => a + b, 0);
+  // (its bpm counts quarters: its pulse= says what a step is, decision 040 — pulse=16n, sixteenths; 8t, triplet eighths)
   const bpm = (60 * length) / (total * perQuarter);
+  const unit = 4 * perQuarter;
+  const pow2 = (x: number) => Number.isInteger(x) && Number.isInteger(Math.log2(x));
+  const pulse = unit === 4 ? '' : pow2(unit) ? ` pulse=${unit}n` : pow2((2 * unit) / 3) ? ` pulse=${(2 * unit) / 3}t` : ` pulse=${unit}n`;
   // (free: a slider; not, for a MIDI file played as it is, where nothing is kept)
   const rate = free ? `free(${short(bpm, 6)}bpm, ${Math.floor(bpm * 0.6)}..${Math.ceil(bpm * 1.5)})` : `${short(bpm, 6)}bpm`;
-  const tempo = `&tempo scan(${runs.join(' ')}) step=${rate} beat=${perQuarter} laps=1`;
+  const tempo = `&tempo scan(${runs.join(' ')})${pulse} step=${rate} laps=1`;
 
   // the lines: chords where notes start and end together, a line beside for a note that overlaps
   const taken = new Set(TAKEN);
@@ -348,7 +353,7 @@ export function cellsFromMidi(
   const flat = write(
     [
       '# every note, a line a track (and one beside for notes that overlap); melodies as semitones from C4',
-      ...lines.map((l) => `&${l.name} step=&tempo ${braidOf(l.chords, l.length)}`),
+      ...lines.map((l) => `&${l.name} step=pulse ${braidOf(l.chords, l.length)}`),
     ],
     'written out in full: Shorten folds it',
   );
@@ -361,14 +366,14 @@ export function cellsFromMidi(
     const label = (tool: string, round: number, how: string) => (tool === 'done' ? 'folded' : round ? `${tool}, ${how}` : tool);
     // (the folder, engine/fold: its symbols as cells above the lines; taken only if it plays the same notes, and is shorter)
     const printed = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
-      const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^$', fixed);
+      const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^$', fixed);
       return write(
         [
           '# what comes back, as cells of its own (a phrase, a phrase made of phrases, …); ^$n: n semitones up',
           ...defs,
           '',
           '# every note, a line a track; melodies as semitones from C4',
-          ...lines.map((l) => `&${l.name} step=&tempo${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`} ${braids.get(l.name)}`),
+          ...lines.map((l) => `&${l.name} step=pulse${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`} ${braids.get(l.name)}`),
         ],
         'folded (engine/fold)',
       );
@@ -385,7 +390,7 @@ export function cellsFromMidi(
     if (pitches !== 'semitones' && key && lines.some((l) => l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))))) {
       const name = unique('key');
       const printedIn = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
-        const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^', fixed);
+        const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^', fixed);
         return write(
           [
             `# the key: the lines read through it, a note its degree (0 the tonic; 6# the seventh raised a semitone)`,
@@ -397,7 +402,7 @@ export function cellsFromMidi(
             `# every note, a line a track; melodies as degrees of ${keyName(key)}`,
             ...lines.map(
               (l) =>
-                `&${l.name} step=&tempo${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`}${l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))) ? ` over=&${name}` : ''} ${braids.get(l.name)}`,
+                `&${l.name} step=pulse${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`}${l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))) ? ` over=&${name}` : ''} ${braids.get(l.name)}`,
             ),
           ],
           `folded in degrees of ${keyName(key)} (engine/fold)`,
@@ -421,7 +426,7 @@ export function cellsFromMidi(
         const keyNames = new Map(keys.map((k, i) => [k, unique(`key${i + 1}`)]));
         const partNames = new Map<string, string>();
         const printedSections = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
-          const { defs, lines: braids, scales } = printFolded(f, 'm', '&tempo', '^', fixed);
+          const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^', fixed);
           // (a part as a cell read through its section's key, spliced as slow as its clock; one written alike, the same cell)
           const cells = new Map<string, string>();
           const sectionDefs: string[] = [];
@@ -463,7 +468,7 @@ export function cellsFromMidi(
               '',
               '# every note, a line a track: its sections in order',
               // (a section's cell, then the same again: x!n, as the printer writes a run)
-              ...lines.map((l) => `&${l.name} step=&tempo ${runsOf(spliced.get(l.name)!)}`),
+              ...lines.map((l) => `&${l.name} step=pulse ${runsOf(spliced.get(l.name)!)}`),
             ],
             `folded in ${sections.length} sections by key (engine/fold)`,
           );

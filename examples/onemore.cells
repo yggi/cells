@@ -7,10 +7,10 @@
 # One more Cell — the chords are one shape (maj7) moved F G A B♭ (&prog): parallel, as the
 # filter-house records did. The pump: the chords duck on every beat (a volume stream).
 &bar scan(1 1 1 1) step=free(122bpm, 110..130)
-&prog step=&bar/8 tags="chords" 0 2 4 5                                      # F G A B♭, two bars each
+&prog step=1m/2 tags="chords" 0 2 4 5                                        # F G A B♭, two bars each
 &c tags="chords" [0,4,7,11]
 &chop tags="chords" step=&choppyBar*4 label="the chop" &c ~ &c!2 ~ &c ~ &c ~ &c!2 ~ &c ~ &c!2
-&pump tags="chords" map=amp step=&bar .35 .55 .75 .95
+&pump tags="chords" map=amp step=4n .35 .55 .75 .95
 &disco tags="bass" step=&discBar*2 0 12 0 12 0 12 0 12
 &robot tags="robot" step=&robBar*2 label="the robot" ~ 12 14 16 ~ 16 14 12 ~ 14 16 17 ~ 16 14 ~ ~ 12 14 16 ~ 19 17 16 14@2 12@2 9@4
 &filt tags="chords" map=lin loop=&bar/32 .06 .3 1 .7 .06
@@ -25,8 +25,8 @@
 &oh tags="groove" gain=.15 s=white hpf=7000 env=&(map=adsr 0 .18 0 .08)
 &sh tags="groove" s=white hpf=10000 env=&(map=adsr 0 .03 0 .02)
 
-&parts step=&bar &grooveBar &choppyBar &discBar &robBar
-&song over=&parts step=&bar/32 label="filtered · groove · lead · breakdown" [0,1] [0,1,2] [0,1,2,3] [1,3]
+&parts step=4n &grooveBar &choppyBar &discBar &robBar
+&song over=&parts step=1m/8 label="filtered · groove · lead · breakdown" [0,1] [0,1,2] [0,1,2,3] [1,3]
 
 &out postgain=.944 map=sample [&beat, &shake * &sh * .1,
                             (&chop + &prog) * &pump * &keys * .07,

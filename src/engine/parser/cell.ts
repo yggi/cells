@@ -137,7 +137,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       if (b.base.pick) s.fail('base= takes a whole cell (transposing it is fine: base=&subject^$7)', b.base.span.col - 1, b.base.span.len);
     },
   },
-  step: { form: 'step=…', examples: ['&tune step=&bar 0 2 4'], read: timing },
+  step: { form: 'step=…', examples: ['&tune step=4n 0 2 4', '&tune step=&clock 0 2 4'], read: timing },
   loop: { form: 'loop=…', examples: ['&lead s=saw loop=C4'], read: timing },
   shift: { form: 'shift=n · shift=free(n, lo..hi)', examples: ['&mode over=&major shift=5 0 2 4', '&key shift=free(0, 0..11)'], read: whole('shift') },
   stride: { form: 'stride=n · stride=free(n, lo..hi)', examples: ['&key step=cycle(&theme) stride=7'], read: whole('stride') },
