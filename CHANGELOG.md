@@ -8,6 +8,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since `v0.4.0`.
+
+## v0.4.0 — 2026-10-17
+
+A meter now carries its whole feel.
+- **Swing** leans one or several levels of the bar, named by note value: `swing=8n:2/3`, `swing=8n:.6,16n:.55`.
+- **Articulation:** `legato=` sounds each note a share of its held length, on a line or, as a default by level, on the meter.
+- **A first repository** holds meter fragments and finds them by their place in style space: 13 meters, the swung ones playing exactly the swing of Jambot's presets.
+
+Also new:
+- `meter("10/8")`, grouped 3+2+3+2;
+- a time parameter reads a tap (`delaytime=8n`);
+- a swing share may be a fraction;
+- a tap written outside `step=` says so.
+
+No example's notes moved.
+
+What a frontend migrates is named below:
+- a bare `swing=.67` on a meter warns, and Shorten rewrites it to a level;
+- a swung meter's own steps are `Clock.swung`, no longer `Clock.swing`;
+- `clip=` warns.
+
 ### Changed
 - **Swing on the bar** (#18's first rung, rung 2 of #81): `swing=8n:.67` on a meter leans one level of its bar, named by note value: of each pair of eighths the second starts .67 of the way through their beat, a group of three (6/8, 7/8's first beat) leans its second and third, and every beat and bar line stays where it is, so an odd bar no longer drifts. Taps are placed through it, whatever the meter's own steps (`meter("4/4") swing=8n:.67` swings `step=8n` and `step=pulse*2`); a division it doesn't hold stays even (`8t` under swung eighths). It swings a `scan(…)` too, which used to warn. Levels nest, coarse to fine: `swing=8n:.6,16n:.55`, which places Jambot's swing axis to 1e-9 (`fixtures/jambot-swing.json`). A level no beat divides into (`swing=4n:.67` in 4/4) leans nothing, with a warning.
 - **A bare `swing=.67` on a meter warns**: it reads as the level of the meter cell's own steps (`meter("4/4", 2) swing=.67` is `swing=8n:.67`, and plays as before), and Shorten names the level. On a list stepping at a rate it keeps its meaning, pairs of its steps. A bare swing that paired steps across a beat or a bar line plays differently: `meter("7/8") swing=.67` now leans each beat (it drifted across odd bars), `meter("4/4", 3) swing=.67` leans each beat's triplets (it paired them across beats). The Swing and Metronome examples are respelled (`swing=8n:.67`, `swing=8n:free(.5, .5...75)`) and play the same at their defaults; the Metronome's slider now leans eighths on every grid (it paired the grid's own steps: quarters, triplets across beats, sixteenths).
@@ -20,7 +42,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 - **v0.3.0 leftovers** (#92); none changes what a piece plays. **Shorten's `fractions` sees a tap**: `&t step=8n 4@2 2@2 0@2 5@2` offers `step=4n 4 2 0 5` (a note value, a triplet, `pulse*k`, `beat*k` and `1m/k` slow as written), and a line still stepped by a meter's own steps (`step=&bar*2`) is offered the tap (`step=4n`), not the old spelling that warns. **A tap on a belt names itself on its wire**: `step=8n belt=3000` is labelled `8n · belt` (`TransformStep` `rate` gains `tap`, the tap as written), as `step=&bar*2 belt=3000` was `×2 · belt`; a plain tap's wire stays unlabelled. **`SAILOR_WITH_KIT`** writes `step=8n`, so compiling it no longer warns three times.
 - **A swing share as a fraction** (#101, decision 042): `swing=8n:2/3` is the exact triplet swing (`.6666666666666666`), `swing=16n:31/60` is `.5166666666666667`; a share above 1 or over a zero denominator fails at the fraction. A decimal reads as before, so no piece changes; the swung meters are written with their fractions and play the same. A bare `swing=` and a `free(…)` share are decimals still.
 - **A tap written outside `step=` says so** (#103): `[&bar:16n * &tick]`, `&x 0 &bar:beat` or `over=&bar:8n` gave "&bar:16 would be a pitched hit", naming a cell the text doesn't have; the diagnostic now says that `&bar:16n` is a meter's tap which only `step=` reads, at the reference. Text that was an error stays an error; nothing that plays changes.
-- **`legato=`: a line's articulation** (#94, rung 9 of #81), Strudel's `legato` (`clip=` reads as it): each note sounds its held length (its step, `@n`, `_`) times a share, `.5` staccato, `1.5` into the next note. A number, `free(…)` or a cell of shares on its own tap, read at each note's onset; nothing cuts a note at the bar line, so a share over 1 sounds past it, whole, in the events and in MIDI out. A share of 0 or less is an error. Absent is 1: every piece reads and sounds as before. With `glide=`, notes tie where they meet as they sound. E33's 384 bars, stated with it, play every bass, pad and stab note at Jambot's articulated length within 1e-6 steps (`fixtures/jambot-legato.json`, lifted from yggi/jambot).
+- **`legato=`: a line's articulation** (#94, rung 9 of #81), Strudel's `legato` (`clip=` reads as it, with a warning: write `legato=`, and Normalise rewrites it): each note sounds its held length (its step, `@n`, `_`) times a share, `.5` staccato, `1.5` into the next note. A number, `free(…)` or a cell of shares on its own tap, read at each note's onset; nothing cuts a note at the bar line, so a share over 1 sounds past it, whole, in the events and in MIDI out. A share of 0 or less is an error. Absent is 1: every piece reads and sounds as before. With `glide=`, notes tie where they meet as they sound. E33's 384 bars, stated with it, play every bass, pad and stab note at Jambot's articulated length within 1e-6 steps (`fixtures/jambot-legato.json`, lifted from yggi/jambot).
 - **A meter's articulation, `legato=16n:.5` by level** (#94, the owner's option 3 tried): a line that taps the meter and states no `legato=` sounds its notes at the share of its tap's level, the finest at or above its step (`legato=16n:.5,4n:.8`); a line's own wins. With `swing=`, one meter fragment carries a feel. Its swing, its taps and its own steps are as without it; `Meter.legato` and `tapShare(meter, tap, ratio)` are new.
 - **A first repository: fragments found by their place in style space** (#82, decision 041, rung 5 of #81). `createRepository(fragments)` holds fragments, each cells text with an id and an association (weighted style points, axis names to numbers), and throws on a malformed entry; `query(point, k, axisWeights?)` returns the k nearest, ranked by a weighted distance over the axes the point and each association share, so an axis no fragment has is ignored. `METER_FRAGMENTS` are its first library, nine meters that need no swing (4/4, 4/4 alla breve, 2/4, 3/4, 6/8, 12/8, 5/4, 7/8 as 3+2+2, 10/8 as 3+2+3+2), each one line `&bar meter(…)` with no tempo, associated by hand with Jambot's eight presets (all of which find 4/4 until the swung meters land). New exports from the package and from `@yggi/cells/repository/<module>`; nothing a piece reads or plays changes.
 - **The swung meters** (#82, rung 5 of #81): four 4/4s that lean, each the meter some of Jambot's presets find first and playing exactly the swing Jambot plays there (every sixteenth within 1e-9 of its `leanMap`): `4/4 swung on 8n` (`swing=8n:.6666666666666666`, the triplet swing: Swing jazz), `4/4 leaning on 16n` (`16n:.65`: Lo-fi hip hop), `4/4 leaning lightly on 16n` (`16n:.6`: Deep house and Funk) and `4/4 leaning faintly on 16n` (`16n:.5166666666666667`: Ambient). Straight 4/4 keeps Synth-pop, Techno and Bossa nova. `METER_FRAGMENTS` holds thirteen meters; nothing a piece reads or plays changes.

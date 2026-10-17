@@ -26,9 +26,11 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 ## Directories
 
 - [decisions/](decisions/) — one record per decision; the one-line list is in MEMORY.md
-- [notes/](notes/) — the long threads the code cites: the folder, nets, the scalogram, the disassembler, the ratchet, multiscale, conversion, the canonical table, the corpus, the groove measure
+- [notes/](notes/) — the long threads the code cites: the folder, nets, the scalogram, the disassembler, the ratchet, multiscale, conversion, the canonical table, the corpus, the groove measure, open fragments
   - [notes/10-language-pass.md](notes/10-language-pass.md) — the language pass: the invariants, Strudel and dough, the four primitives (moved from Cell studio)
   - [notes/10-examples-pass.md](notes/10-examples-pass.md) — the examples pass: drums on a kit, no extra mixers (moved from Cell studio)
+  - [notes/22-open-fragments.md](notes/22-open-fragments.md) — open fragments: a fragment that leaves `&bar` and `&key` to the host, four options measured on three cases, and a recommendation (`tools/open-fragments.ts`, #22)
   - [notes/gate-node.md](notes/gate-node.md) — the gate node: what a gate gates, kits and MIDI as receivers, ports and bands (moved from Cell studio)
+  - [notes/95-chord-in-force.md](notes/95-chord-in-force.md) — the chord in force: how a line reads the chord sounding, four options measured on Jambot's E33 bars, a proposal (`tools/chord-in-force.ts`, #95)
   - [notes/groove-measure.md](notes/groove-measure.md) — swing, agogic and accent measured in the Groove MIDI Dataset, per style and level (`tools/groove.ts`, #19)
   - [notes/swing-research.md](notes/swing-research.md) — swing on several levels: the research, the drums' beat shapes, and a tree of proportions in the meter cell (#18)
