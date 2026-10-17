@@ -204,6 +204,39 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(bar('meter("4/4") step=60bpm')).toBeCloseTo(4, 9);
   });
 
+  it('a time parameter reads a tap as a length, as the same length in seconds does (#87)', () => {
+    const play = (meter: string, time: string) => {
+      const r = compiled(`${meter}\n&x step=pulse 0 2\n&v s=saw delaytime=${time} delayfeedback=.4\n&out map=sample [&x * &v]`);
+      return { time: r.cells.get('v')!.params.delaytime as number, events: eventsBetween(plan(r, codeShifts(r)), 0, 4).map((e) => ({ ...e })) };
+    };
+    const four = '&bar meter("4/4") step=120bpm';
+    // (at 120 bpm a beat is half a second)
+    for (const [tap, seconds] of [
+      ['8n', 0.25],
+      ['4n.', 0.75],
+      ['16n', 0.125],
+      ['8t', 1 / 6],
+      ['1m', 2],
+      ['pulse', 0.5],
+      ['beat*2', 0.25],
+    ] as const) {
+      const got = play(four, tap);
+      expect(got.time, tap).toBeCloseTo(seconds, 6);
+      expect(got.events, tap).toEqual(play(four, String(+seconds.toFixed(6))).events);
+    }
+    // (7/8 as 3+2+2 at 90 bpm: a bar of 2 s, three beats: a parameter is one number, so `beat` is their mean, 2/3 s)
+    expect(play('&bar meter("7/8") step=90bpm', 'beat').time).toBeCloseTo(2 / 3, 6);
+    // (a named meter, at its own tempo)
+    expect(play(`${four}\n&bar2 meter("3/4") step=60bpm`, '&bar2:4n').time).toBeCloseTo(1, 6);
+    // (a swing moves the steps and not their mean)
+    expect(play('&bar meter("4/4") step=120bpm swing=8n:2/3'.replace('2/3', '.67'), '8n').time).toBeCloseTo(0.25, 6);
+  });
+
+  it('a tap as a length needs a meter that keeps time, and says so', () => {
+    const d = compileSource('&v s=saw delaytime=8n').diagnostics.filter((x) => x.severity === 'error');
+    expect(d.map((x) => x.message)).toEqual([expect.stringContaining('delaytime=8n taps the piece')]);
+  });
+
   it('a tap reads the main meter, or the one it names; chains step it as they step any clock', () => {
     const two = `&bar meter("4/4") step=120bpm\n&bar2 meter("3/4") step=120bpm\n&x step=&bar2:pulse 0${VOICE}`;
     const r = compiled(two);
