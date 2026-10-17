@@ -8,7 +8,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.4.0`.
+- **A main key:** a bare `over=key` reads the piece's main key, the first cell in the text whose braid is `scale(…)`, as a bare tap reads its main meter (#124); `CompileResult.mainKey` names it. With none, `over=key` is an error, never a default key. An addition: every piece reads and sounds as before (`over=key` was an error), and no example's notes moved.
 
 ## v0.4.0 — 2026-10-17
 

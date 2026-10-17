@@ -16,6 +16,8 @@ export interface Declared {
      * declares the names it doesn't find as its taps, each stepped as the table was; the table is then a table.
      */
     readonly taps: ReadonlyMap<string, string>;
+    /** The piece's main key, which a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */
+    readonly mainKey?: string;
 }
 export declare function declare(ctx: Ctx): Declared;
 /** The kit that grooves and their motifs read: every voice they name. */

@@ -3,6 +3,7 @@
 Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's numbers index into.
 
 - **`over=&t`** — a number x means entry x of &t; past the end it climbs a lap. Without `over=`, a cell reads through the table of whoever splices it. A table is its numbers: cells spliced into it aren't entries, and reading through one says so (unless it's a kit, a table of voices, or a table of taps a selector switches: [time.md](time.md)).
+- **`over=key`**, bare, reads the piece's **main key**: the first cell in the text whose braid is `scale(…)`, whatever its name, as a bare tap reads the main meter ([time.md](time.md#taps), [#124](https://github.com/yggi/cells/issues/124)). A line written so names no key and plays in the key the piece holds: a fragment that leaves its key to the host, whose `&key scale(…)` comes first. `over=&key` still names a cell. An unnamed `scale(…)` (after `over=`, or in `&( … )`) or a copy (`base=`) is never the main key. With none, `over=key` is an error, "the piece has no main key", never a default key. It reads the key whole: to turn it, name it (`over=&key[<<2]`).
 - **`scale(name, tonic)`** is a scale by name over the 12 turned to its tonic: a key and a mode in one, for when the mode is fixed. It is exactly two cells, the key (`shift=` the tonic) and the scale's `scan(…)` over it ([decision 013](../decisions/013-scale-generator.md)).
   - In a braid the cell is the scale: `&scale scale(minor, D)` is D minor. Its `shift=` walks its modes, as on any cell; the tonic argument transposes. The tonic is a note name (`D`, `F#`, `Bb`), a number, or `free(…)` (the cell's own slider, its *tonic*; `free(D)` chooses among the twelve by name, and is written back by name); left out, C. `shift=free(G)` turns a key the same way.
   - After `over=` it is a table of its own, unnamed: `&tune over=scale(major, G) 0 2 4`.
@@ -19,6 +20,14 @@ Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's
 &line step=1 over=&scale 0 2 4 2 0
 &scale over=&key scan(2 2 1 2 2 2 1) step=cycle(&line)
 &key step=cycle(&scale) stride=7 cycle=12
+```
+
+```cells
+&bar meter("4/4") step=100bpm
+&key scale(dorian, D)
+&bass over=key step=8n 0 2 4 2
+&v s=sine loop=C3
+&out map=sample [&bass * &v]
 ```
 
 ```cells-fragment

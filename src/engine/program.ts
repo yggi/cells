@@ -11,6 +11,11 @@ import type { Meter } from './meter';
 
 export const ROOT = 'fifths12TET';
 /**
+ * What a bare `over=key` names until compile reads it as the piece's main key (#124, declare.ts): no cell can be called
+ * this, so a piece's own `&key` is never it.
+ */
+export const MAIN_KEY = 'key:main';
+/**
  * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
  * more is a compile error. The largest in examples/ is 1,120 (bwv847's &tempo).
  */
@@ -399,6 +404,8 @@ export interface CompileResult {
   readonly taps?: ReadonlyMap<string, string>;
   /** The meter a tap that names none reads (decision 040): the first meter in the text with a tempo of its own. */
   readonly mainMeter?: string;
+  /** The key a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */
+  readonly mainKey?: string;
   /**
    * The built-in card's name, when the piece writes no card (decision 028): a sound card (`map=sample`) compile added,
    * which every sound nothing reads goes to. It is in `cells` (implicit: not drawn, in no line, never edited).
