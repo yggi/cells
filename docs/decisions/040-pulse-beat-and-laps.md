@@ -32,7 +32,7 @@ The same discussion settled what happens past the end of a lap, for pitch and fo
 - They read the piece's main meter; another meter is named: `step=&bar2:16n`.
 - The tree's proportions place the steps; a division the tree doesn't hold is even within its node (measured in the note: no example moves).
 - **Swing never changes pulse or beat**, so it never changes what a tap means.
-- A raw `step=&bar` (the meter cell's own steps) is discouraged: a warning, and Shorten migrates it to a tap. Normalise, the corpus-wide command of [decision 017](017-shorten-and-normalise.md), is not built.
+- A raw `step=&bar` (the meter cell's own steps) is discouraged: a warning, and Shorten migrates it to a tap (`src/engine/shorten/taps.ts`). Normalise, the corpus-wide command of [decision 017](017-shorten-and-normalise.md), is not built.
 
 **`cycle=n` counts laps before it comes round:**
 
