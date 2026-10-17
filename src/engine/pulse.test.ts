@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SAILOR_WITH_KIT } from './fixtures';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -235,6 +236,31 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
   it('a tap as a length needs a meter that keeps time, and says so', () => {
     const d = compileSource('&v s=saw delaytime=8n').diagnostics.filter((x) => x.severity === 'error');
     expect(d.map((x) => x.message)).toEqual([expect.stringContaining('delaytime=8n taps the piece')]);
+  });
+
+  it('the Sailor fixture taps its meter and compiles without a warning about it (#92)', () => {
+    expect(compileSource(SAILOR_WITH_KIT).diagnostics.filter((d) => d.message.includes("meter cell's own steps"))).toEqual([]);
+  });
+
+  it('a tap written outside step= says that only step= reads it, and names it as written (#103)', () => {
+    const cases: [string, string, number][] = [
+      ['in a product', '&bar meter("4/4")\n&tick loop=A4\n&out map=sample [&bar:16n * &tick]', '&out map=sample ['.length + 1],
+      ['in a braid', '&bar meter("4/4")\n&x 0 &bar:beat 2', '&x 0 '.length + 1],
+      ['as an attribute’s value', '&bar meter("4/4")\n&x over=&bar:8n 0', '&x over='.length + 1],
+    ];
+    // (only a whole tap: a name that begins like one, &k:mute or &x:m1, is not a tap and isn't called one)
+    for (const src of ['&k [&mute, &bd]\n&x step=1 &k:mute', '&x step=1 0 1\n&y &x:m1', '&x step=1 0\n&y &x:8nx'])
+      expect(
+        compileSource(src).diagnostics.some((d) => d.message.includes("meter's tap")),
+        src,
+      ).toBe(false);
+    for (const [, src, col] of cases) {
+      const tap = src.match(/&bar:\w+/)![0];
+      const d = compileSource(src).diagnostics.filter((x) => x.message.includes(tap));
+      expect(d).toHaveLength(1);
+      expect(d[0]!.message).toBe(`${tap} is a meter's tap, which only step= reads (step=${tap}): here it names no cell`);
+      expect(d[0]!.span.col).toBe(col);
+    }
   });
 
   it('a tap reads the main meter, or the one it names; chains step it as they step any clock', () => {

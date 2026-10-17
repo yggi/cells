@@ -104,7 +104,7 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   if (s.peek() === '{') s.fail('{&x} is now written cycle(&x)');
   const cycle = s.match(/cycle\(/y) !== null;
   const what = whole ? 'loop' : 'step';
-  const driver = s.cellRef(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`, `in ${what}=`);
+  const driver = s.cellRef(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`, `in ${what}=`, true);
   if (driver.pick || driver.shift) s.fail(`${what}= takes a whole cell`, driver.span.col - 1, driver.span.len);
   if (cycle) s.expect(')', `')' to close cycle(&${driver.name})`);
   // a tap of a named meter: step=&bar2:16n
