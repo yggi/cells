@@ -30,6 +30,13 @@ Jambot owns the axes ([decision 037](037-the-handshake-with-jambot.md)), and the
 
 ## Consequences
 
-- The first library is the meters (`src/repository/meters.ts`, `METER_FRAGMENTS`): nine, the ones that need no swing. Straight 4/4 holds the points of Jambot's eight presets until the swung meters are built; each swung meter is then one entry, its association the presets that name it, taken from 4/4's.
+- The first library is the meters (`src/repository/meters.ts`, `METER_FRAGMENTS`): thirteen. Nine need no swing (4/4, 4/4 alla breve, 2/4, 3/4, 6/8, 12/8, 5/4, 7/8, 10/8); four are 4/4s that swing as Jambot's presets do, each one entry whose association is the presets that play its swing:
+  - `4/4 swung on 8n` (`swing=8n:.6666666666666666`): Swing jazz; a meter swung on `8n` brings in Jambot's jazz kit (yggi/jambot#360), so its id says so;
+  - `4/4 leaning on 16n` (`16n:.65`): Lo-fi hip hop;
+  - `4/4 leaning lightly on 16n` (`16n:.6`): Deep house and Funk;
+  - `4/4 leaning faintly on 16n` (`16n:.5166666666666667`): Ambient;
+  - straight `4/4`: Synth-pop, Techno, Bossa nova.
+- A swung meter's shares are Jambot's `swingShares` at its presets' swing, written as the shortest decimal that is that number, so it plays every onset where Jambot's `leanMap` does (to 1e-9). Two presets share a swung meter when their shares move no onset by 1e-9 or more, which today means equal.
+- With the presets split over five meters, a point halfway between two presets returns the meter of the preset nearest it, which is a third preset's for 11 of the 28 pairs (halfway between Synth-pop and Bossa nova is nearer Lo-fi hip hop); no other meter takes such a point.
 - Use moving weights, how often fragments are used together and queries that take the workbench's parts are later rungs of #81, on this format.
 - A fragment's id is a name, not its identity: the hash over the canonical form will be ([decision 037](037-the-handshake-with-jambot.md)'s D3).
