@@ -714,7 +714,9 @@ const rateOf = (c: ResolvedCell): Transform => rateTransform(c.step!, typeof c.p
 /** A clock's rate as written (`&x*3/2`, `cycle(&x)`, the whole braid, through a belt); nothing when it is the clock's own. */
 function rateTransform(s: NonNullable<ResolvedCell['step']>, belt?: number): Transform {
   if (!s.chain.length && !s.cycle && !s.whole && belt === undefined) return [];
-  return [{ kind: 'rate', by: s.chain, per: s.cycle ? 'cycle' : 'step', whole: s.whole, ...(belt !== undefined ? { belt } : {}) }];
+  // (a tap of a meter says itself where a belt is on its wire; a plain tap's wire stays unlabelled)
+  const tap = belt !== undefined ? s.tap : undefined;
+  return [{ kind: 'rate', by: s.chain, per: s.cycle ? 'cycle' : 'step', whole: s.whole, ...(belt !== undefined ? { belt } : {}), ...(tap ? { tap } : {}) }];
 }
 
 /** A step's belt, if it is one (GraphEdge.belt). */

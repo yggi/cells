@@ -54,6 +54,8 @@ export type TransformStep =
     readonly per: 'step' | 'cycle';
     readonly whole: boolean;
     readonly belt?: number;
+    /** The tap of a meter this step reads, as written (`8n`, `pulse*2`; the wire already goes to the meter it names): what a rate says in place of the driver's own steps. */
+    readonly tap?: string;
 };
 export type Transform = readonly TransformStep[];
 /** `×2÷3`: a rate's chain, as written. */

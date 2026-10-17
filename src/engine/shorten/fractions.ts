@@ -3,6 +3,7 @@
  * slow the clock to match (4 2 0@2, step=&bar/2).
  */
 import { attrsOf, setAttr, setBraid } from '../edit';
+import { tapOfRaw } from './taps';
 import { measured, type Candidate, type Result, type Suggestion } from './harness';
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -48,6 +49,9 @@ export function fractions(source: string, cells: readonly Candidate[], result: R
       d /= k;
       slower = `&${driven[1]}${n > 1 ? `*${n}` : ''}${d > 1 ? `/${d}` : ''}`;
     } else if (/^[0-9]*\.?[0-9]+$/.test(step)) slower = String(+(+step / g).toFixed(6));
+    // a meter's own steps (the old spelling) say the tap that says it, slowed; a tap is slowed as written
+    if (driven && tapOfRaw(result, c.name) !== null) slower = tapOfRaw(result, c.name, g);
+    else slower = slowerTap(step, g) ?? slower;
     if (!slower) continue;
     const next = c.tokens.map((t, i) => t.slice(0, cut(t)) + t.slice(cut(t)).replace(/@[0-9]+/, held[i] / g > 1 ? `@${held[i] / g}` : ''));
     const s = measured(source, {
@@ -61,4 +65,18 @@ export function fractions(source: string, cells: readonly Candidate[], result: R
     if (s) out.push(s);
   }
   return out;
+}
+
+/** A tap (decision 040), written `step=`'s way and slowed g times, or null when it has no such tap: 8n → 4n, 8t → 4t, pulse*4 → pulse*2, 1m/2 → 1m/4. */
+function slowerTap(step: string, g: number): string | null {
+  const m = /^((?:&[A-Za-z_][A-Za-z0-9_]*:)?)(?:([0-9]+)(n\.?|t)|(pulse|beat)(?:\*([0-9]+))?|1m(?:\/([0-9]+))?)$/.exec(step);
+  if (!m) return null;
+  const [, of = '', count, unit, word, times, bars] = m;
+  if (count !== undefined) return +count % g === 0 ? `${of}${+count / g}${unit}` : null;
+  if (word !== undefined) {
+    const k = times === undefined ? 1 : +times;
+    return k % g === 0 ? `${of}${word}${k / g > 1 ? `*${k / g}` : ''}` : null;
+  }
+  const d = (bars === undefined ? 1 : +bars) * g;
+  return `${of}${d > 1 ? `1m/${d}` : '1m'}`;
 }

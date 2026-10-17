@@ -34,6 +34,8 @@ export type TransformStep =
       readonly per: 'step' | 'cycle';
       readonly whole: boolean;
       readonly belt?: number;
+      /** The tap of a meter this step reads, as written (`8n`, `pulse*2`; the wire already goes to the meter it names): what a rate says in place of the driver's own steps. */
+      readonly tap?: string;
     };
 
 export type Transform = readonly TransformStep[];
@@ -61,7 +63,7 @@ export function stepLabel(s: TransformStep): string {
     case 'gain':
       return `×${+s.by.toFixed(3)}`;
     case 'rate':
-      return [s.whole ? 'loop' : '', (s.per === 'cycle' ? '⟳' : '') + rateChain(s.by), s.belt !== undefined ? '· belt' : ''].filter(Boolean).join(' ');
+      return [s.whole ? 'loop' : '', s.tap ?? '', (s.per === 'cycle' ? '⟳' : '') + rateChain(s.by), s.belt !== undefined ? '· belt' : ''].filter(Boolean).join(' ');
   }
 }
 
