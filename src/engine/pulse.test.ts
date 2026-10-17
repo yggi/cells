@@ -285,6 +285,8 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
       );
       expect([e!.span.col, e!.span.len], tap).toEqual(['&x step='.length + 1, tap.length]);
     }
+    // (a loop reads no tap, and says so)
+    expect(compileSource('&x loop=3n 0').diagnostics.map((d) => d.message)).toContain('loop=3n is no rate: a number with its unit (loop=100bpm, loop=2hz)');
     // (a rate with its unit is still a rate)
     expect(errors('120bpm')).toEqual([]);
   });

@@ -102,7 +102,9 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
     if (/[A-Za-z.]/.test(s.peek())) {
       const token = /^[^\s,\])]+/.exec(s.text.slice(start))![0];
       s.fail(
-        `${what}=${token} is no rate or tap: a tap reads a note value (1n 2n 4n 8n 16n 32n), a triplet (4t 8t 16t), a dotted one (2n. 4n. 8n.), 1m, pulse, beat, or another meter's (&bar2:16n)`,
+        whole
+          ? `${what}=${token} is no rate: a number with its unit (loop=100bpm, loop=2hz)`
+          : `${what}=${token} is no rate or tap: a tap reads a note value (1n 2n 4n 8n 16n 32n), a triplet (4t 8t 16t), a dotted one (2n. 4n. 8n.), 1m, pulse, beat, or another meter's (&bar2:16n)`,
         start,
         token.length,
       );
