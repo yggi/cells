@@ -78,6 +78,15 @@ describe('the meter fragments', () => {
   });
 
   // (the owner's ruling on yggi/jambot#360: a meter swung on 8n brings in the jazz kit, so the id tells it from a 16n lean)
+  it('10/8 plays the same events as the levels it used to be written as', () => {
+    const events = (text: string) => {
+      const r = compileSource(inFrame(text, true));
+      expect(r.diagnostics).toEqual([]);
+      return eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-6).map((e) => e.at);
+    };
+    expect(events(METER_FRAGMENTS.find((f) => f.id === '10/8')!.text)).toEqual(events('&bar meter("*..+.+..+.")'));
+  });
+
   it.each(ids)('%s says in its id whether it swings on 8n or leans on 16n', (id) => {
     const levels = (compileSource(inFrame(METER_FRAGMENTS.find((f) => f.id === id)!.text)).cells.get('bar')!.meter!.swing ?? []).map((l) => l.level);
     expect(id.includes('swung on 8n')).toBe(levels.includes('8n'));

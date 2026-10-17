@@ -118,6 +118,7 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(m('meter("9/8")')).toEqual({ pulses: 9, unit: 8, beats: [3, 3, 3] });
     expect(m('meter("12/8")')).toEqual({ pulses: 12, unit: 8, beats: [3, 3, 3, 3] });
     expect(m('meter("7/8")')).toEqual({ pulses: 7, unit: 8, beats: [3, 2, 2] });
+    expect(m('meter("10/8")')).toEqual({ pulses: 10, unit: 8, beats: [3, 2, 3, 2] });
     // (a scan: its entries its pulses, each a quarter, and its beats)
     expect(m('scan(27 23 26 24)')).toEqual({ pulses: 4, unit: 4, beats: [1, 1, 1, 1] });
     // (beat= states another feel: alla breve)
@@ -202,6 +203,17 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(bar('meter("6/8") step=60bpm')).toBeCloseTo(2, 9);
     expect(bar('meter("4/4") step=60bpm beat=2')).toBeCloseTo(2, 9);
     expect(bar('meter("4/4") step=60bpm')).toBeCloseTo(4, 9);
+  });
+
+  it('10/8 is grouped 3+2+3+2: its beats at 90 bpm last 3/10, 2/10, 3/10 and 2/10 of the bar, and its levels are the ones the repository wrote by hand', () => {
+    const r = compiled(`&bar meter("10/8") step=90bpm\n&x step=beat 0${VOICE}`);
+    const at = eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-6).map((e) => e.at);
+    const bar = 4 / 1.5; // (4 beats at 90 bpm)
+    expect(at.slice(0, 4).map((t) => +(t / bar).toFixed(6))).toEqual([0, 0.3, 0.5, 0.8]);
+    expect([at[1] - at[0], at[2] - at[1], at[3] - at[2], bar - at[3]].map((d) => +(d / bar).toFixed(6))).toEqual([0.3, 0.2, 0.3, 0.2]);
+    expect(positions('meter("10/8")', 'pulse')).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(positions('meter("10/8")', 'beat')).toEqual([0, 3, 5, 8]);
+    expect(compiled('&m meter("10/8")').cells.get('m')!.meter!.beats).toEqual(compiled('&m meter("*..+.+..+.")').cells.get('m')!.meter!.beats);
   });
 
   it('a tap reads the main meter, or the one it names; chains step it as they step any clock', () => {

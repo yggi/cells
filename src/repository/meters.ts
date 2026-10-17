@@ -60,6 +60,6 @@ export const METER_FRAGMENTS: readonly Fragment[] = [
   { id: '5/4', text: '&bar meter("5/4")', association: weighted(at(0.4, 0.9, 0.5, 0.3)) },
   // (3+2+2, a Balkan dance: off the beat, short and dense)
   { id: '7/8', text: '&bar meter("7/8")', association: weighted(at(0.8, 0.6, 1, 1)) },
-  // (3+2+3+2, written as levels: no time signature groups 10/8 so)
-  { id: '10/8', text: '&bar meter("*..+.+..+.")', association: weighted(at(0.6, 0.9, 0.8, 0.9)) },
+  // (3+2+3+2)
+  { id: '10/8', text: '&bar meter("10/8")', association: weighted(at(0.6, 0.9, 0.8, 0.9)) },
 ];
