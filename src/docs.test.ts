@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { compileSource } from './engine/compile';
+import * as cells from './index';
+import { EXAMPLE_SOURCES } from './engine/examples.generated';
 
 const DOCS = resolve(import.meta.dirname, '../docs');
 const markdown = (dir: string): string[] =>
@@ -89,5 +91,44 @@ describe('docs: the README', () => {
   it("pins package.json's version, the tag a release makes", () => {
     const { version } = JSON.parse(read(resolve(DOCS, '../package.json')));
     expect(stalePins(read(resolve(DOCS, '../README.md')), version)).toEqual([]);
+  });
+});
+
+describe('docs: the README shows the language as it is', () => {
+  const readme = read(resolve(DOCS, '../README.md'));
+
+  it('its piece compiles, and is lines of an example', () => {
+    const [piece = ''] = blocks(readme);
+    expect(compileSource(piece).diagnostics).toEqual([]);
+    const lines = piece.split('\n').filter(Boolean);
+    expect(lines.length).toBeLessThanOrEqual(10);
+    const source = Object.values(EXAMPLE_SOURCES).find((src) => lines.every((l) => src.split('\n').includes(l)));
+    expect(source, 'every line of the README piece is in one examples/*.cells').toBeDefined();
+  });
+
+  it('what its TypeScript block imports is exported, and it runs', () => {
+    const [, names = '', body = ''] = /^```ts\nimport \{([^}]*)\} from '@yggi\/cells';\n([\s\S]*?)^```/m.exec(readme) ?? [];
+    expect(body.split('\n').length, 'the block is at most 15 lines').toBeLessThanOrEqual(15);
+    for (const n of names.split(',').map((x) => x.trim())) expect(cells, n).toHaveProperty(n);
+    const source = blocks(readme)[0] ?? '';
+    expect(cells.compileSource(source).ok).toBe(true);
+    expect(cells.windowAt(cells.planOf(source), 0, 1).events.length).toBeGreaterThan(0);
+  });
+
+  it('is at most 120 lines, and links the reference and the overview', () => {
+    expect(readme.split('\n').length).toBeLessThanOrEqual(120);
+    expect(readme).toContain('](docs/language/reference.md)');
+    expect(readme).toContain('](docs/language/overview.md)');
+  });
+
+  it('what the package ships of docs/language/ is at most 150 KB unpacked (#76: the pages and the reference)', () => {
+    const bytes = readdirSync(join(DOCS, 'language')).reduce((n, f) => n + statSync(join(DOCS, 'language', f)).size, 0);
+    expect(bytes / 1000).toBeLessThanOrEqual(150);
+  });
+
+  it("links every topic page it ships: docs/language/ is in package.json's files", () => {
+    const { files } = JSON.parse(read(resolve(DOCS, '../package.json'))) as { files: string[] };
+    expect(files).toContain('docs/language');
+    for (const m of readme.matchAll(/\]\((docs\/[^)#\s]+)/g)) expect(m[1]).toMatch(/^docs\/language\//);
   });
 });

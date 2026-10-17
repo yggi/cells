@@ -51,6 +51,7 @@ On a branch from `origin/main`, one commit:
 - `package.json` and `package-lock.json`: `"version": "X.Y.Z"` (`npm version X.Y.Z --no-git-tag-version` writes both and tags nothing).
   `src/docs.test.ts` fails when the changelog has no heading for that version.
 - `README.md`: the pin it shows, `github:yggi/cells#vX.Y.Z` (`src/docs.test.ts` fails when it names another version).
+- Then `npm run reference`: it leaves the reference and the README's index of forms as the parser has them at this version (a clean `git status` when nothing moved since the last PR).
 
 `npm run verify`, push, and open the pull request from the template, `Part of #<the release's issue>`, saying the version and why (the entries that decided it).
 Agents don't merge.
