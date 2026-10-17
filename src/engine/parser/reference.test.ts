@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { entries, renderReference } from '../../../tools/reference';
+import { readFileSync } from 'node:fs';
+import { PAGE, README, entries, renderReadme, renderReference } from '../../../tools/reference';
 import { CORE, PARAMS } from '../attributes';
 import { parse } from './index';
 import { MODIFIERS } from './braid';
@@ -10,9 +10,9 @@ import { MAP_KINDS } from './values';
 import { RATE_UNITS } from './units';
 
 // docs/language/reference.md is generated from the parser's tables (tools/reference.ts). Record it:
-// UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts
+// npm run reference (it also rewrites the README's index of forms)
 
-const PAGE = 'docs/language/reference.md';
+const RECORD = 'record it: npm run reference';
 
 describe('the syntax reference', () => {
   test('every example in it parses, with no diagnostics', () => {
@@ -31,8 +31,20 @@ describe('the syntax reference', () => {
   });
 
   test(`${PAGE} is current`, () => {
-    const page = renderReference();
-    if (process.env.UPDATE_REFERENCE) writeFileSync(PAGE, page);
-    expect(readFileSync(PAGE, 'utf8'), 'record it: UPDATE_REFERENCE=1 npx vitest run src/engine/parser/reference.test.ts').toBe(page);
+    expect(readFileSync(PAGE, 'utf8'), RECORD).toBe(renderReference());
+  });
+
+  test(`the index of forms in ${README} is current`, () => {
+    const text = readFileSync(README, 'utf8');
+    expect(text, RECORD).toBe(renderReadme(text));
+  });
+
+  test('a README without the markers is refused', () => {
+    expect(() => renderReadme('# cells\n')).toThrow(/markers/);
+  });
+
+  test('the README index is written by the command: a changed count is put back', () => {
+    const text = readFileSync(README, 'utf8');
+    expect(renderReadme(text.replace(/: \d+ forms/, ': 0 forms'))).toBe(text);
   });
 });

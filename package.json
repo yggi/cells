@@ -26,6 +26,7 @@
     "!src/**/*.test.ts",
     "types",
     "examples",
+    "docs/language",
     "midi",
     "LICENSE",
     "README.md"
@@ -43,6 +44,7 @@
     "preverify": "sh tools/verified.sh begin",
     "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test",
     "postverify": "sh tools/verified.sh end",
+    "reference": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/reference.ts",
     "types": "tsc -p tsconfig.types.json"
   },
   "devDependencies": {
