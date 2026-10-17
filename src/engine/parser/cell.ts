@@ -574,7 +574,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       seen.set(slot, word);
       // (clip= is Strudel's other name for legato=: read as legato=, and said, since cells keeps one spelling: Normalise
       // writes legato=, #94)
-      if (word === 'clip') s.warn('clip= is Strudel\'s name for legato= — write legato= (Normalise rewrites it)', at, word.length);
+      if (word === 'clip') s.warn("clip= is Strudel's name for legato= — write legato= (Normalise rewrites it)", at, word.length);
       const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (key === 'swing' || key === 'legato' ? readLevels : CELL_PARAMS.has(key) ? readCellParam : readParam);
       read(s, b, key, at);
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
