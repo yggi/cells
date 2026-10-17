@@ -25,6 +25,30 @@ const onsets = (meter: string, tap: string, bars = 1) => {
 const rounded = (xs: number[]) => xs.map((x) => +x.toFixed(4));
 
 describe('swing on the bar: one level of the meter leans, named by note value', () => {
+  it('a share written as a fraction (decision 042) is that share: 8n:2/3 is 8n:.6666666666666666, 16n:31/60 is 16n:.5166666666666667, and it nests', () => {
+    const share = (src: string) =>
+      compiled(`&bar ${src}`)
+        .cells.get('bar')!
+        .meter!.swing!.map((l) => [l.level, l.share]);
+    expect(share('meter("4/4") swing=8n:2/3')).toEqual(share('meter("4/4") swing=8n:.6666666666666666'));
+    expect(share('meter("4/4") swing=16n:31/60')).toEqual(share('meter("4/4") swing=16n:.5166666666666667'));
+    expect(share('meter("4/4") swing=8n:3/5,16n:11/20')).toEqual([
+      ['8n', 0.6],
+      ['16n', 0.55],
+    ]);
+    expect(share('meter("4/4") swing=8n:1/1')).toEqual([['8n', 1]]);
+    expect(onsets('meter("4/4") swing=8n:2/3', '8n')).toEqual(onsets('meter("4/4") swing=8n:.6666666666666666', '8n'));
+  });
+
+  it('a fraction above 1 or over zero fails, at the fraction, and a fraction is a share of a level only', () => {
+    const fail = (src: string) => compileSource(src).diagnostics.filter((d) => d.severity === 'error');
+    const above = fail('&bar meter("4/4") swing=8n:3/2');
+    expect(above.map((d) => d.message)).toEqual([expect.stringContaining('3/2 is above it')]);
+    expect(above[0]!.span.col).toBe('&bar meter("4/4") swing=8n:'.length + 1);
+    expect(fail('&bar meter("4/4") swing=8n:1/0').map((d) => d.message)).toEqual([expect.stringContaining('denominator')]);
+    expect(fail('&bar meter("4/4") swing=8n:2/3.5')).not.toEqual([]);
+  });
+
   it('swing=8n:.67 in 4/4: the second eighth of each beat two thirds through, every beat where it was', () => {
     expect(rounded(onsets('meter("4/4") swing=8n:.67', '8n'))).toEqual([0, 0.67, 1, 1.67, 2, 2.67, 3, 3.67]);
     expect(rounded(onsets('meter("4/4") swing=8n:.67', 'beat'))).toEqual([0, 1, 2, 3]);
