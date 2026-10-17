@@ -83,6 +83,9 @@ function verified(dir: string, step: 'begin' | 'end') {
   expect(run.status, run.stderr).toBe(0);
 }
 
+/** The count of tests passed that verify's reporter (tools/test-count.ts) keeps in `dir`'s git directory. */
+const counted = (dir: string) => join(git(dir, 'rev-parse', '--absolute-git-dir'), 'cells-tests-passed');
+
 describe('pre-push', () => {
   it('blocks a push when verify fails, and says why', () => {
     const { status, stderr } = hook(repoWith(['a.ts']), 'head', failing);
@@ -168,12 +171,21 @@ describe('pre-push', () => {
     expect(hook(dir, 'head', failing).status).toBe(1);
   });
 
-  it('does not verify a tree twice, so a retried push is free, and says so', () => {
+  it('does not verify a tree twice, so a retried push is free, and says so with the count of tests that passed', () => {
     const dir = repoWith(['a.ts']);
-    expect(hook(dir).status).toBe(0);
+    expect(hook(dir, 'head', `echo '      Tests  12 passed (12)'`).status).toBe(0);
     const again = hook(dir, 'head', failing);
     expect(again.status).toBe(0);
-    expect(again.stderr).toContain('passed verify already');
+    const commit = git(dir, 'rev-parse', '--short', 'HEAD');
+    expect(again.stderr.trim()).toBe(`pre-push: ${commit} passed npm run verify already (12 tests passed); not run again`);
+  });
+
+  it('reads a stamp of a tree alone, from before the count was kept, as a count unknown', () => {
+    const dir = repoWith(['a.ts']);
+    writeFileSync(join(git(dir, 'rev-parse', '--absolute-git-dir'), 'cells-verified'), `${git(dir, 'rev-parse', 'HEAD^{tree}')}\n`);
+    const { status, stderr } = hook(dir, 'head', failing);
+    expect(status).toBe(0);
+    expect(stderr).toContain('passed npm run verify already (? tests passed)');
   });
 
   it('verifies again once the tree changes', () => {
@@ -234,10 +246,28 @@ describe('installing cells from git', () => {
 });
 
 describe('the stamp verify leaves (tools/verified.sh)', () => {
-  it('is written by npm run verify: preverify begins it, postverify (only after a pass) ends it', () => {
+  it('is written by npm run verify: preverify begins it, postverify (only after a pass) ends it, its tests counted', () => {
     const scripts = JSON.parse(readFileSync(`${root}/package.json`, 'utf8')).scripts;
     expect(scripts.preverify).toBe('sh tools/verified.sh begin');
     expect(scripts.postverify).toBe('sh tools/verified.sh end');
+    expect(scripts.verify).toMatch(/npm test -- --reporter=default --reporter=\.\/tools\/test-count\.ts$/);
+  });
+
+  it("keeps the count verify's reporter left with the stamp, so the push of that tree says it", () => {
+    const dir = repoWith(['a.ts']);
+    verified(dir, 'begin');
+    writeFileSync(counted(dir), '1938\n');
+    verified(dir, 'end');
+    expect(existsSync(counted(dir))).toBe(false);
+    expect(hook(dir, 'head', failing).stderr).toContain('passed npm run verify already (1938 tests passed)');
+  });
+
+  it("does not take a count an earlier test run left for this run's", () => {
+    const dir = repoWith(['a.ts']);
+    writeFileSync(counted(dir), '5\n');
+    verified(dir, 'begin');
+    verified(dir, 'end');
+    expect(hook(dir, 'head', failing).stderr).toContain('passed npm run verify already (? tests passed)');
   });
 
   it('lets the push of the files it saw through without verifying again, even if they were committed after', () => {
@@ -250,7 +280,7 @@ describe('the stamp verify leaves (tools/verified.sh)', () => {
     git(dir, 'commit', '-qm', 'what verify saw');
     const { status, stderr } = hook(dir, 'head', failing);
     expect(status).toBe(0);
-    expect(stderr).toContain('passed verify already');
+    expect(stderr).toContain('passed npm run verify already');
   });
 
   it('stamps nothing when a file changed while verify ran, since verify may have read either version', () => {

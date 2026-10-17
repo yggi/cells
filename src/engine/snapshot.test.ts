@@ -1,8 +1,9 @@
 /**
  * What every example plays, as one line per piece in `snapshot.txt` (#142): its notes over the first 40 s,
  * the values its cells hold at a few moments, and the live view at a few more, hashed. A change to what a
- * piece plays fails here and names the piece; when it is meant, refresh with `npx vitest run -u
- * src/engine/snapshot.test.ts` and say in the PR which pieces changed and why (docs/testing.md).
+ * piece plays fails here and names the piece; when it is meant, refresh with `npx vitest run
+ * src/engine/snapshot.test.ts -u` (the flag after the path) and say in the PR which pieces changed and why
+ * (docs/testing.md).
  *
  * Beside it, two promises about time that hold for every example: two plans are the same, and a plan's
  * events over two windows are its events over one.
