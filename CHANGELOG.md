@@ -13,6 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ### Changed
 - **A tap that is no note value says what a tap reads** (#85): `step=3n`, `step=16x` and `step=4n..` gave `Unexpected 'n'`; they now say that the token is no rate or tap and list what a tap reads (note values, triplets, dotted, `1m`, `pulse`, `beat`, `&meter:<tap>`), at the token. Text that was an error stays one; nothing that plays changes.
+- **`npm run verify` installs first** (#58): in a checkout with no `node_modules`, as a fresh git worktree, it runs `npm ci` before the checks. Tooling only; the package and the language are as before.
 
 ## v0.4.0 — 2026-10-17
 
