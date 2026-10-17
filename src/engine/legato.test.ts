@@ -97,8 +97,11 @@ describe('legato=: each note sounds its held length times a share', () => {
     expect(notes(moved, 1)[0][1]).toBeCloseTo(1.5, 9);
   });
 
-  it('Strudel’s clip= is its legato=, read as ours', () => {
+  it('Strudel’s clip= is its legato=, read as ours, with a warning that names legato= (Normalise rewrites it)', () => {
     expect(notes(`${BAR}&x step=4n clip=.5 0 2${VOICE}`)).toEqual(notes(`${BAR}&x step=4n legato=.5 0 2${VOICE}`));
+    const warned = compileSource(`${BAR}&x step=4n clip=.5 0 2${VOICE}`).diagnostics.filter((d) => d.severity === 'warning');
+    expect(warned.map((d) => d.message)).toContainEqual(expect.stringContaining('write legato='));
+    expect(compileSource(`${BAR}&x step=4n legato=.5 0 2${VOICE}`).diagnostics.some((d) => /clip=/.test(d.message))).toBe(false);
   });
 
   it('a share of 0 or less is an error: as written, left free, in a range, or in the cell it reads', () => {

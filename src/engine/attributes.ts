@@ -230,7 +230,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
  * `size` `sz` `roomsize` `rsize` (a reverb's size; size= is how large a cell is drawn), `dist` (Strudel's
  * distort, on another scale than ours), `fm` `fmi` `fmh` (Strudel's FM is a number on the carrier; ours names a
  * cell, its ratio= on the modulator), `vel` `velocity` (a gate's old spelling here), `att` `dec` `sus` `rel` and
- * the filter envelopes (an envelope is a cell). Strudel's `clip` is its `legato`, read as ours (#94).
+ * the filter envelopes (an envelope is a cell). Strudel's `clip` is its `legato`, read as ours with a warning (the parser), for Normalise to rewrite (#94, #28).
  */
 export const PARAM_ALIASES: Readonly<Record<string, string>> = {
   sound: 's',
