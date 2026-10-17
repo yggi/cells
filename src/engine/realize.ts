@@ -16,6 +16,7 @@ import { cellId } from './ids';
 import { refsOf } from './readers';
 import { heldAt, levelSeries, modulation, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
+import { tapShare } from './meter';
 import { mod } from '../theory/modes';
 
 export interface Played {
@@ -352,7 +353,16 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
         entries: result.cells.get(result.cells.get(x.cell)!.over!)!.units.length,
       }));
       const lc = c.paramCells.legato;
-      const share = lc ? { range: lc.range, series: lc.factors.map((f) => series(f, null, 0, 1)) } : typeof c.params.legato === 'number' ? c.params.legato : 1;
+      // (none of its own: a tap's meter's, for its level, #94)
+      const tapped = c.step?.tap ? result.cells.get(c.step.driver)?.meter : null;
+      const ratio = c.step?.chain.reduce((r, x) => (x.op === '×' ? r * x.n : r / x.n), 1) ?? 1;
+      const share = lc
+        ? { range: lc.range, series: lc.factors.map((f) => series(f, null, 0, 1)) }
+        : typeof c.params.legato === 'number'
+          ? c.params.legato
+          : tapped
+            ? tapShare(tapped, c.step!.tap!, ratio)
+            : 1;
       if (main.events.length) tracks.push({ ...main, output: o, clock: c.clock!, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o), share });
     } catch (e) {
       if (!(e instanceof ExpansionLimit)) throw e;

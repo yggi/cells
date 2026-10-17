@@ -57,6 +57,7 @@ A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a p
 - **A number**, `legato=.32`, from .25 to 2.5 for the shares Jambot writes; above that plays, with no warning. A share of 0 or less is an error.
 - **Left free**, `legato=free(.32, .25..2.5)`: the style's or the player's licence, a slider ([free.md](free.md)).
 - **A cell of shares**, stepped on its own tap: `legato=&artic` with `&artic step=8n .5 1` sounds the notes in each first eighth at half their length, those in each second whole. The share is the one in force at the note's onset. A range scaled by cells reads as any moving parameter's: `legato=.5..1.5 * &k`.
+- **The meter's default**: a line that taps a meter carrying `legato=16n:.5` (by level, [time.md](time.md#meters)) and states none sounds at the meter's share for its tap.
 - It acts on the line that starts the notes (through a gate, its `play=` line), not on a voice; a `oneshot` voice plays its envelope through, whatever the share.
 
 ```cells

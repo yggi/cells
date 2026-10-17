@@ -156,3 +156,47 @@ describe('E33’s 384 bars, stated with legato= (fixtures/jambot-legato.json)', 
     expect({ notes, past }).toEqual({ notes: 2979, past: 46 });
   });
 });
+
+describe('a meter’s articulation: legato= by level, the default of the lines that tap it', () => {
+  /** The length of the first note of a line on `step` under a 4/4 meter (60 bpm) carrying `meter`, in its own step's lengths. */
+  const share = (meter: string, step: string, line = '', sig = '4/4') => {
+    const r = compiled(`&bar meter("${sig}") step=60bpm ${meter}\n&x step=${step} ${line}0${VOICE}`);
+    const [first, second] = eventsBetween(plan(r, codeShifts(r)), 0, 8);
+    return +(first.dur / (second.at - first.at)).toFixed(9);
+  };
+
+  it('a line on the level’s tap sounds the meter’s share; one coarser than every level, as written', () => {
+    expect(share('legato=16n:.5', '16n')).toBe(0.5);
+    expect(share('legato=16n:.5', '8n')).toBe(1);
+    expect(share('legato=16n:.5', '1m')).toBe(1);
+  });
+
+  it('several levels: the finest at or above the tap’s step, by note value, pulse, beat or a chain', () => {
+    const m = 'legato=16n:.5,4n:.8';
+    expect([share(m, '32n'), share(m, '16n'), share(m, '8n'), share(m, '8t'), share(m, '4n'), share(m, '2n')]).toEqual([0.5, 0.5, 0.8, 0.8, 0.8, 1]);
+    expect([share(m, 'pulse'), share(m, 'beat'), share(m, 'pulse*4'), share(m, '16n*2'), share(m, '4n/2')]).toEqual([0.8, 0.8, 0.5, 0.5, 1]);
+    // (7/8: its pulse an eighth, its beat 3+2+2 eighths, read by its longest)
+    expect([share('legato=8n:.6,4n.:.9', 'pulse', '', '7/8'), share('legato=8n:.6,4n.:.9', 'beat', '', '7/8')]).toEqual([0.6, 0.9]);
+  });
+
+  it('a line’s own legato= wins; a line not tapping the meter keeps 1', () => {
+    expect(share('legato=16n:.5', '16n', 'legato=1 ')).toBe(1);
+    expect(share('legato=16n:.5', '16n', 'legato=1.5 ')).toBe(1.5);
+    expect(notes(`&bar meter("4/4") step=60bpm legato=4n:.5\n&x step=1 0${VOICE}`, 1)[0][1]).toBe(1);
+  });
+
+  it('the meter’s own steps, its swing and its taps are as without it', () => {
+    const base = '&bar meter("4/4") step=60bpm swing=8n:.67';
+    const at = (meter: string) => notes(`${meter}\n&x step=16n 0${VOICE}`).map(([a]) => a);
+    expect(at(`${base} legato=16n:.5`)).toEqual(at(base));
+    expect(share('swing=8n:.67 legato=8n:.5', '8n')).toBeCloseTo(0.5, 9);
+  });
+
+  it('left free in one level; a share of 0 or less is an error, on a cell that is not a meter a warning', () => {
+    const src = `${BAR.trim()} legato=16n:free(.5, .25..1)\n&x step=16n 0${VOICE}`;
+    expect(notes(src, 0.5)[0][1]).toBeCloseTo(0.125, 9);
+    expect(notes(withHeld(src, compiled(src), new Map([[0, 0.75]])), 0.5)[0][1]).toBeCloseTo(0.1875, 9);
+    expect(messages(`${BAR.trim()} legato=16n:0\n&x step=16n 0${VOICE}`).join('; ')).toMatch(/legato=16n:0: .*above 0/);
+    expect(messages(`${BAR}&x step=16n legato=16n:.5 0${VOICE}`).join('; ')).toMatch(/&x is not a meter, so it does nothing/);
+  });
+});

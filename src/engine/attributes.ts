@@ -103,6 +103,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     value: 'number',
     on: ['clock', 'driven'],
     moves: true,
+    form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
   },
   pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades'),
   distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),

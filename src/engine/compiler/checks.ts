@@ -87,6 +87,11 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
     if (typeof share === 'string') error(`legato=${share}: a share (.5), free(.5, .25..2.5) or a cell of shares (&artic)`, span);
     else if (typeof share === 'number' && !(share > 0)) bad(String(share));
     else if (free && !(free.lo > 0)) bad(`free(${free.value}, ${free.lo}..${free.hi})`);
+    // (by level, on a meter: its lines' default)
+    const low = d.legato?.find((l) => !(l.share > 0));
+    if (low) bad(`${low.level}:${low.share}`);
+    if (d.legato && !cells.get(d.name)?.meter)
+      warn(`legato=${d.legato.map((l) => `${l.level}:${l.share}`).join(',')} gives the lines tapping a meter their share: &${d.name} is not a meter, so it does nothing`, span);
     const pc = d.paramCells?.legato;
     if (pc?.range && !(pc.range[0] > 0)) bad(`${pc.range[0]}..${pc.range[1]}`);
     for (const f of pc && !pc.range ? pc.factors : []) {

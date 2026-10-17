@@ -17,7 +17,7 @@ class Abort extends Error {}
  * states n equal beats (decision 040: alla breve, `meter("4/4") beat=2`); swing= leans its levels (#18), a bare one the
  * level of its own steps.
  */
-function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing'>): Meter | null {
+function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato'>): Meter | null {
   const { braid: b, params } = d;
   const { beat, pulse } = params;
   const written =
@@ -32,7 +32,9 @@ function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing'>): Meter | null 
   // (pulse= on a scan: the note value of its entries, decision 040)
   const whole = b.kind === 'scan' && typeof pulse === 'string' ? noteValue(pulse) : null;
   const m = written && whole ? withPulse(written, whole) : written;
-  const felt = m && typeof beat === 'number' && beat > 0 ? withBeats(m, beat) : m;
+  const beaten = m && typeof beat === 'number' && beat > 0 ? withBeats(m, beat) : m;
+  // (legato= by level, #94: its lines' default share)
+  const felt = beaten && d.legato ? { ...beaten, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level)! }])) } : beaten;
   if (!felt || typeof params.swing !== 'number') return felt;
   const levels = d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }];
   return withSwing(
