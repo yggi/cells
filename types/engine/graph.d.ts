@@ -101,7 +101,7 @@ export interface GraphEdge extends Wire {
     /** How many slots of the source play the target (refs). */
     readonly count: number;
     /**
-     * What the tap does to what it carries (engine/transform.ts), for each place the name is written on the reader's line,
+     * What the reader does to what it carries (engine/transform.ts), for each place the name is written on the reader's line,
      * in order: a ref written three times has three (`&tune &up &up^$7`: none, none, ^$7), most wires one. A product's
      * terms carry theirs into its junction, its gain is on the wire out of it.
      */
@@ -119,8 +119,8 @@ export interface GraphEdge extends Wire {
      */
     readonly routes?: readonly (readonly string[])[];
     /**
-     * The bulb on its source's wheel it leaves from (a cell's name): a tap of a meter's bus drawn on its table (decision 016),
-     * what it steps a sub-net from there.
+     * The bulb on its source's wheel it leaves from (a cell's name): a section drawn on its table (decision 016), what it
+     * steps a sub-net from there.
      */
     readonly bulb?: string;
     /** Where that bulb's hub is from its wheel's centre (px, the wheel at its size in the graph), and its disc's radius. */
@@ -149,15 +149,15 @@ interface GraphNet {
     readonly owner: string;
     readonly port: string;
     readonly band: Band;
-    /** Its edges, one a reader (the layout lays them as a ratsnest: ForceLayout.taps). */
-    readonly taps: readonly string[];
+    /** Its readers, an edge each (the layout lays them as a ratsnest). */
+    readonly readers: readonly string[];
     /**
-     * Its taps read it at a delay (docs/decisions/010-canon-copies.md): a canon's copies (`&john[<<1]`), a tape's heads
-     * (`at=`). Each delay counts from the owner, so each tap leaves the owner (a star, as a tape's heads leave the tape),
+     * Its readers read it at a delay (docs/decisions/010-canon-copies.md): a canon's copies (`&john[<<1]`), a tape's heads
+     * (`at=`). Each delay counts from the owner, so each reader leaves the owner (a star, as a tape's heads leave the tape),
      * never from another reader, where its label would read as a delay from there.
      */
     readonly delayed: boolean;
-    /** The bulb on the owner's wheel it leaves from (GraphEdge.bulb): a tap's sub-net, from its place on its table. */
+    /** The bulb on the owner's wheel it leaves from (GraphEdge.bulb): a section's sub-net, from its place on its table. */
     readonly bulb?: string;
     /** Where that bulb's hub is from the owner's centre, and its disc's radius (GraphEdge.bulbAt). */
     readonly bulbAt?: {
@@ -199,7 +199,7 @@ export declare function writtenGraph(result: CompileResult): WrittenGraph;
  * The nets among the edges: a table read by two or more (over=), a melody or a voice by two or more, a cell read at
  * delays (a canon's copies, a tape's heads: docs/decisions/010-canon-copies.md), and each meter's ticks to every cell
  * it steps or that takes a time from it (a step or a parameter's clock into a meter, `delaytime=&bar*4/3`; not through
- * a belt: a belt is a body, drawn). A meter's net is its `step` net, whichever port each tap reads it through.
+ * a belt: a belt is a body, drawn). A meter's net is its `step` net, whichever port each reader reads it through.
  */
 export declare function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): GraphNet[];
 /** Changes only when the set of nodes or edges changes — not when contents do. */

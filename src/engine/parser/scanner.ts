@@ -9,7 +9,7 @@ export const REFERENCE_SYNTAX: readonly Syntax[] = [
   syntax(
     'reference',
     '&name[i]',
-    'One entry of its braid as it is turned now (a fixed tap: it follows shift=), counted from 0; negative from the end (&x[-1] the last). &name[$i]: as written.',
+    'One entry of its braid as it is turned now (a fixed reader: it follows shift=), counted from 0; negative from the end (&x[-1] the last). &name[$i]: as written.',
     ['&tune step=2 &motif[0] &motif[-1] &key[$0]'],
     'braid.md',
   ),

@@ -241,10 +241,10 @@ export function tableChain(result: CompileResult, table: string): string[] {
 }
 
 /**
- * A relative pick of plain numbers (a table, a motif) is a fixed tap: what it plays is entry i of the cell as it
+ * A relative pick of plain numbers (a table, a motif) is a fixed reader: what it plays is entry i of the cell as it
  * stands when the note sounds, so it follows the cell while it turns (a stepped or free key).
  */
-export const isTap = (result: CompileResult, name: string, pick: Pick | null) => !!pick && !pick.abs && isPicked(result, name, pick);
+export const isRelativePick = (result: CompileResult, name: string, pick: Pick | null) => !!pick && !pick.abs && isPicked(result, name, pick);
 
 /** A pick of plain numbers, relative or absolute ($): read from the cell, not played; the cell is a table. */
 export const isPicked = (result: CompileResult, name: string, pick: Pick | null) =>

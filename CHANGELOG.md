@@ -10,10 +10,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 - **A main key:** a bare `over=key` reads the piece's main key, the first cell in the text whose braid is `scale(…)`, as a bare tap reads its main meter (#124); `CompileResult.mainKey` names it. With none, `over=key` is an error, never a default key. An addition: every piece reads and sounds as before (`over=key` was an error), and no example's notes moved.
 ### Added
-- **`restart=resume` and `restart=free`** (#53, decision 032): what switching a part on does to its time. `resume` continues a part's time from where it was switched off; `free` lets it run on while off, unheard, so it lands where an unswitched copy would be; `restart` (the default) is unchanged. On a tap's line or a selector; the warning that they play as `restart` is gone. **In C, a sketch** (`examples/in-c.cells`, four of its fifty-three cells) is a new example that uses `resume`; no other example's snapshot moves.
+- **`restart=resume` and `restart=free`** (#53, decision 032): what switching a part on does to its time. `resume` continues a part's time from where it was switched off; `free` lets it run on while off, unheard, so it lands where an unswitched copy would be; `restart` (the default) is unchanged. On a section's line or a selector; the warning that they play as `restart` is gone. **In C, a sketch** (`examples/in-c.cells`, four of its fifty-three cells) is a new example that uses `resume`; no other example's snapshot moves.
 
 ### Changed
 - **A tap that is no note value says what a tap reads** (#85): `step=3n`, `step=16x` and `step=4n..` gave `Unexpected 'n'`; they now say that the token is no rate or tap and list what a tap reads (note values, triplets, dotted, `1m`, `pulse`, `beat`, `&meter:<tap>`), at the token. Text that was an error stays one; nothing that plays changes.
+- **"Tap" means reading the meter** (#126, decision 044): a name a selector's table declares is a **section**, and a cell reading a net is a **reader**. No piece's notes move, and a piece that names its table `&parts` plays as before. What a frontend migrates:
+  - `CompileResult.taps` is **`CompileResult.sections`** (each section to its table), and `GraphNet.taps` is **`GraphNet.readers`** (a net's edges, one per reader);
+  - the module `engine/compiler/taps` is `engine/compiler/sections` (`tapped()` is `sectioned()`), and `engine/helix`'s `isTap` is `isRelativePick`;
+  - the attribute role `tap` is `section` (`ATTRIBUTES.restart.on` is `['section', 'selector']`), and the messages say so: `&x is a section of &sections`, `restart= acts on a section … or a selector (over= a table of sections)`, `&sections declares sections (…)`.
+- **The examples' table of sections is `&sections`**, not `&parts` (Jambot's word for a voice of the band): Shorten offers the rename as a migration where a table of sections is named `&parts` and nothing is named `&sections`, checked to play the same notes. Seven examples moved (Arrangement, Cellular Brothers, Hypercell, In C, Korobeiniki, One more Cell, Pop song): their notes and events are the same, only their names (the snapshot's `values` and `live` hashes).
 
 ## v0.4.0 — 2026-10-17
 

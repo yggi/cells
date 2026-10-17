@@ -2,6 +2,8 @@
 
 **Date:** 2026-10-12 · **Status:** accepted (owner, #29 item 4); built in #53 (2026-10-17)
 
+*Named since [decision 044](044-tap-reads-the-meter.md): the tap that switches a part here is a **section**, and `restart=` acts on a section or a selector; "tap" means reading the meter.*
+
 ## Context
 
 Decision 016 switches a section on by gating its time, and a part restarts from its top each time it is switched on. Two other behaviours are coherent, and nothing chooses between them yet.

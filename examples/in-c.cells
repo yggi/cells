@@ -9,14 +9,14 @@
 &c3 ~ 2 3 2
 &c4 ~ 2 3 4
 
-# a player's score: each cell repeated, then on to the next. Each player has a tap of the bar and moves at their own pace
+# a player's score: each cell repeated, then on to the next. Each player is a section of &sections and moves at their own pace
 &alice over=&major step=&aliceBar*2 &c1!8 &c2!6 &c3!4 &c4!4
 &bob over=&major step=&bobBar*2 &c1!6 &c2!6 &c3!6 &c4!2
 &carol over=&major step=&carolBar*2 &c2!6 &c3!8 &c4!6
 
-&parts step=4n &aliceBar &bobBar &carolBar
+&sections step=4n &aliceBar &bobBar &carolBar
 # who plays, a bar a step: Alice from the start, Bob in and out, Carol late, then everyone
-&song over=&parts restart=resume step=1m laps=1 0 [0,1] [0,1] 0 [0,2] [0,1,2] [0,1,2] [1,2] [0,1,2] [0,1,2] [0,2] [0,1,2]
+&song over=&sections restart=resume step=1m laps=1 0 [0,1] [0,1] 0 [0,2] [0,1,2] [0,1,2] [1,2] [0,1,2] [0,1,2] [0,2] [0,1,2]
 
 &pulse s=sine loop=C6 env=&(map=adsr 0 .04 0 .03)
 &marimba s=tri loop=C4 env=&(map=adsr .005 .25 0 .15)

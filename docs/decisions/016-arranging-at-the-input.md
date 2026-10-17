@@ -2,6 +2,8 @@
 
 **Date:** 2026-10-10 · **Status:** accepted (owner, #234, #29)
 
+*Named since [decision 044](044-tap-reads-the-meter.md): a tap of the meter's bus here is a **section**, its table `&sections` in the examples (`compiler/sections.ts`, `CompileResult.sections`); "tap" means reading the meter.*
+
 ## Context
 
 A selector read a table of parts (mixes) and their sound went through it to the sound card (`&song over=&parts`, `&out … &song`). A part not picked kept running, stepped but not heard; a piece whose sections differ in length couldn't use a selector, and wrote its form into every voice instead (BWV 847's `&tacetFugue ~@511`). Measured, a selector is the slowest clocked cell of its piece and yet sat after every voice it picks: drawn by time, its sound runs down into it (the rows-by-the-tower probe, [#239](https://github.com/yggi/cell-studio/pull/239)). Rewired at the input, *Pop* draws with 0.7 crossings where every way of gating its output cost 5 to 35 (the selector-gates probe, [#240](https://github.com/yggi/cell-studio/pull/240)).

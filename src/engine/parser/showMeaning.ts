@@ -9,7 +9,7 @@ export type CoreShow = (typeof SHOWS)[number];
 export const SHOW_MEANING: Readonly<Record<CoreShow, string>> = {
   braid: 'steps, coloured by pitch',
   pattern: 'rhythm only: hits and rests',
-  equal: 'its entries evenly round the ring, wired from the slots they take: the taps stay put as it turns',
+  equal: 'its entries evenly round the ring, wired from the slots they take: the readers stay put as it turns',
   notes: 'note names: C4 D4 E4',
   midi: 'MIDI numbers: 60 62 64',
   do: 'movable do: do re mi from the tonic',
