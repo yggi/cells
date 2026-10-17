@@ -51,6 +51,8 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
   - **Several levels** nest, coarse to fine, each node keeping its ends: `swing=8n:.6,16n:.55`. One level alone can be left free: `swing=8n:free(.5, .5..75)`.
   - **Bare, `swing=r`**: on a list stepping at a rate (no bar), of each pair of its steps the second starts r of the way through the pair. On a meter it leans the level of the meter cell's own steps (`meter("4/4", 2) swing=.67` is `swing=8n:.67`), with a warning that names the level, since the level of a cell's own steps changes with its subdivision; Shorten writes it so.
 
+- **`legato=16n:.5`** — the meter's articulation ([#94](https://github.com/yggi/cells/issues/94)), a share of each note's held length by level, as swing names its levels: a line that taps the meter and states no `legato=` of its own sounds its notes at the share of its tap's level, the finest level at or above its step (`legato=16n:.5,4n:.8`: `step=16n` and `step=32n` at .5, `step=8n`, `step=pulse` and `step=beat` at .8 in 4/4, `step=2n` as written). An unequal beat (7/8's) is read by its longest. A line's own `legato=` wins ([sound.md](sound.md)); a line at a rate, or stepped by another cell, is as written. With swing, a meter fragment carries a feel: where its notes fall and how long they sound. One level alone can be left free: `legato=16n:free(.5, .25..1)`.
+
 ```cells
 &bar meter("4/4") step=100bpm swing=8n:.6
 &eighths step=8n 0

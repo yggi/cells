@@ -97,6 +97,14 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     value: 'number',
     on: ['voice'],
   },
+  legato: {
+    help: 'on a line: each note sounds its held length (@n, _) times this share, Strudel’s legato (.5 staccato, 1 as written, 1.5 into the next): a number, free(), or a cell of shares read at each onset (legato=&artic); nothing cuts a note at the bar line',
+    doc: 'sound.md',
+    value: 'number',
+    on: ['clock', 'driven'],
+    moves: true,
+    form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
+  },
   pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades'),
   distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
   crush: sound('bit depth: 16 clean, 8 grainy, 3 and fewer: rubble'),
@@ -222,7 +230,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
  * `size` `sz` `roomsize` `rsize` (a reverb's size; size= is how large a cell is drawn), `dist` (Strudel's
  * distort, on another scale than ours), `fm` `fmi` `fmh` (Strudel's FM is a number on the carrier; ours names a
  * cell, its ratio= on the modulator), `vel` `velocity` (a gate's old spelling here), `att` `dec` `sus` `rel` and
- * the filter envelopes (an envelope is a cell), `legato` `clip` (a note's length; a tie is glide=).
+ * the filter envelopes (an envelope is a cell). Strudel's `clip` is its `legato`, read as ours with a warning (the parser), for Normalise to rewrite (#94, #28).
  */
 export const PARAM_ALIASES: Readonly<Record<string, string>> = {
   sound: 's',
@@ -239,6 +247,7 @@ export const PARAM_ALIASES: Readonly<Record<string, string>> = {
   dt: 'delaytime',
   delayfb: 'delayfeedback',
   dfb: 'delayfeedback',
+  clip: 'legato',
 };
 
 /** A parameter's own name for a key as written: ours for an alias (cutoff → lpf), the key itself otherwise. */

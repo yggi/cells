@@ -114,7 +114,11 @@ describe('parse: rates, stride and voices', () => {
     for (const [alias, ours] of Object.entries(PARAM_ALIASES)) {
       const value = ours === 's' ? 'saw' : '300';
       const r = parse(`&a [&t * &(s=saw ${alias}=${value})]`.replace('s=saw sound=saw', 'sound=saw'));
-      expect(r.diagnostics, alias).toEqual([]);
+      // (clip= alone warns: cells keeps legato=, #94)
+      expect(
+        r.diagnostics.map((d) => d.severity),
+        alias,
+      ).toEqual(alias === 'clip' ? ['warning'] : []);
       expect(r.cells.find((d) => d.name !== 'a')?.params[ours], alias).toBe(ours === 's' ? 'saw' : 300);
       // an alias and its name on one line: one parameter, given twice
       expect(parse(`&b ${ours}=${value} ${alias}=${value}`).diagnostics.map((d) => d.message)).toEqual([`${alias}= and ${ours}= are one parameter, ${ours}= — given twice`]);

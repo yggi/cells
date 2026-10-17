@@ -27,6 +27,10 @@ interface Body {
         level: string;
         share: number;
     }[] | null;
+    legato: {
+        level: string;
+        share: number;
+    }[] | null;
     readonly params: Record<string, number | string>;
     readonly paramSpans: Record<string, Span>;
     readonly paramCells: Record<string, ParamCells>;

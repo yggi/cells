@@ -94,6 +94,14 @@ interface PlanTrack extends Series {
     }[];
     /** When it stops, in seconds (laps= on a cell that drives it); Infinity if it loops. */
     readonly end: number;
+    /**
+     * Its line's `legato=` (#94): the share of its held length each note sounds, a number (1: as written), or cells read at
+     * the note's onset (their product, scaled by a range when one is written).
+     */
+    readonly share: number | {
+        readonly range: readonly [number, number] | null;
+        readonly series: readonly Series[];
+    };
 }
 /** The static part of playback (braids flattened); pitches are resolved per moment. */
 export interface Plan {

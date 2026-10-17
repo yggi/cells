@@ -38,6 +38,8 @@ export interface Meter {
   readonly counted?: number;
   /** swing= (#18): the levels that lean, coarse to fine, each a division of a beat (`swingAt`). */
   readonly swing?: readonly SwingLevel[];
+  /** legato= by level (#94): the share of a note's held length a line tapping it sounds when it states none (a share, not a lean). */
+  readonly legato?: readonly SwingLevel[];
 }
 
 /**
@@ -269,4 +271,15 @@ export function tapPositions(m: Meter, tap: Tap, bars = 1): number[] {
     }
   }
   return out;
+}
+
+/**
+ * The share a meter gives a line that taps it and states no legato= (#94): its level for the tap's step, the finest at or
+ * above it (an unequal beat by its longest); 1 when it has none. `tap` as written (`16n`, `pulse`, `beat`, `1m`), `ratio`
+ * the tap's chain (`16n*2`: 2).
+ */
+export function tapShare(m: Meter, tap: string, ratio: number): number {
+  const whole = (tap === 'pulse' ? 1 : tap === 'beat' ? Math.max(...m.beats) : tap === '1m' ? m.pulses : (noteValue(tap) ?? 0) * m.unit) / m.unit / ratio;
+  const at = (m.legato ?? []).filter((l) => l.whole >= whole - 1e-9).sort((a, b) => a.whole - b.whole)[0];
+  return at?.share ?? 1;
 }
