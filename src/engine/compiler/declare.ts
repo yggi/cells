@@ -1,6 +1,7 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
 import type { Atom, CellDecl, Expr, Ref, Span, Token } from '../ast';
-import { MAX_SPLICE_DEPTH, ROOT } from '../program';
+import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from '../program';
+import { SCALE_KEY } from '../parser/generators';
 import { VOICE_PARAMS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
@@ -21,6 +22,8 @@ export interface Declared {
    * declares the names it doesn't find as its taps, each stepped as the table was; the table is then a table.
    */
   readonly taps: ReadonlyMap<string, string>;
+  /** The piece's main key, which a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */
+  readonly mainKey?: string;
 }
 
 export function declare(ctx: Ctx): Declared {
@@ -31,6 +34,7 @@ export function declare(ctx: Ctx): Declared {
     if (decls.has(c.name)) error(`&${c.name} is already defined on line ${decls.get(c.name)!.span.line}`, c.span);
     else decls.set(c.name, c);
   }
+  const mainKey = mainKeyOf(ctx, decls);
   const taps = tapTables(decls, error);
   gates(decls, implicit, error);
   mixSelectors(ctx, decls);
@@ -101,7 +105,26 @@ export function declare(ctx: Ctx): Declared {
     return ok;
   };
   for (const name of decls.keys()) checkOver(name, []);
-  return { decls, implicit, implicitRoot, overOk, taps };
+  return { decls, implicit, implicitRoot, overOk, taps, ...(mainKey ? { mainKey } : {}) };
+}
+
+/**
+ * The piece's main key (#124), which a bare `over=key` reads, as a bare tap reads the main meter (decision 040): the first
+ * cell in the text whose own braid is `scale(…)` (`&key scale(dorian, D)`), not an unnamed one or a copy (`base=`). Each
+ * `over=key` is set to read it by name; with none, each is an error, never a default key.
+ */
+function mainKeyOf(ctx: Ctx, decls: Map<string, CellDecl>): string | null {
+  const main = [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;
+  for (const d of [...decls.values()]) {
+    if (d.over?.name !== MAIN_KEY) continue;
+    if (main) decls.set(d.name, { ...d, over: { ...d.over, name: main } });
+    else {
+      ctx.error(`over=key reads the piece's main key, the first scale(…) in the text, and the piece has no main key: write one (&key scale(major, C))`, d.over.span);
+      // (said here, so not again as an unknown cell)
+      ctx.broken.add(MAIN_KEY);
+    }
+  }
+  return main;
 }
 
 /** The kit that grooves and their motifs read: every voice they name. */
