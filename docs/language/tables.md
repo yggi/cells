@@ -4,6 +4,7 @@ Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's
 
 - **`over=&t`** — a number x means entry x of &t; past the end it climbs a lap. Without `over=`, a cell reads through the table of whoever splices it. A table is its numbers: cells spliced into it aren't entries, and reading through one says so (unless it's a kit, a table of voices, or a table of taps a selector switches: [time.md](time.md)).
 - **Over a braid of stacks, the chord in force** ([#95](https://github.com/yggi/cells/issues/95)): when every step of the table is a stack, `over=` reads the stack sounding at the note's onset, as Strudel's `n(…)` reads `.chord(…).voicing()`. Over `&harm over=&key step=2n [0,2,4,6] [4,6#,8,10]` in A minor, `0 1 2 3` plays A C E G under the first stack and E G♯ B D under the second; past the chord's last tone it climbs to the same chord a lap up (`4` is A an octave up, not the next chord's E), below its first it falls a lap (`-1` is G below), and an accidental moves a degree of the table below (`0#` under Am7 is B). `over=&harm[>>]` reads the next chord, `[<<]` the one before; after the last the next is the first, a lap up. A braid that mixes stacks and single numbers is not a braid of stacks: it reads as any table, its numbers in order as turned.
+- **`over=key`**, bare, reads the piece's **main key**: the first cell in the text whose braid is `scale(…)`, whatever its name, as a bare tap reads the main meter ([time.md](time.md#taps), [#124](https://github.com/yggi/cells/issues/124)). A line written so names no key and plays in the key the piece holds: a fragment that leaves its key to the host, whose `&key scale(…)` comes first. `over=&key` still names a cell. An unnamed `scale(…)` (after `over=`, or in `&( … )`) or a copy (`base=`) is never the main key. With none, `over=key` is an error, "the piece has no main key", never a default key. It reads the key whole: to turn it, name it (`over=&key[<<2]`).
 - **`scale(name, tonic)`** is a scale by name over the 12 turned to its tonic: a key and a mode in one, for when the mode is fixed. It is exactly two cells, the key (`shift=` the tonic) and the scale's `scan(…)` over it ([decision 013](../decisions/013-scale-generator.md)).
   - In a braid the cell is the scale: `&scale scale(minor, D)` is D minor. Its `shift=` walks its modes, as on any cell; the tonic argument transposes. The tonic is a note name (`D`, `F#`, `Bb`), a number, or `free(…)` (the cell's own slider, its *tonic*; `free(D)` chooses among the twelve by name, and is written back by name); left out, C. `shift=free(G)` turns a key the same way.
   - After `over=` it is a table of its own, unnamed: `&tune over=scale(major, G) 0 2 4`.
@@ -30,6 +31,14 @@ Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's
 &bass over=&harm step=8n 0 2 4 2
 &bassV loop=C2
 &out map=midi ~ [&bass * &bassV]
+```
+
+```cells
+&bar meter("4/4") step=100bpm
+&key scale(dorian, D)
+&bass over=key step=8n 0 2 4 2
+&v s=sine loop=C3
+&out map=sample [&bass * &v]
 ```
 
 ```cells-fragment

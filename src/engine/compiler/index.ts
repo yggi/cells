@@ -81,6 +81,7 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
     plugins,
     taps: declared.taps,
     ...(timed.mainMeter ? { mainMeter: timed.mainMeter } : {}),
+    ...(declared.mainKey ? { mainKey: declared.mainKey } : {}),
     ...(builtin ? { builtinCard: builtin } : {}),
   };
 }
