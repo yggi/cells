@@ -84,7 +84,7 @@ npm run verify
 npm run build && CHROME_PATH=/opt/pw-browsers/chromium npm run smoke    # every piece started, the covering set played
 ```
 
-Move the tag where its docs name it (`AGENTS.md`, `docs/MEMORY.md`), and add a line under *Unreleased* in its `CHANGELOG.md`.
+Move the tag where its docs name it (`docs/MEMORY.md`; `AGENTS.md` links there), and add a line under *Unreleased* in its `CHANGELOG.md`.
 The smoke test is the one check that builds the audio of every kind of voice, so a pin move runs it in full and says so in the pull request.
 
 **yggi/jambot** (pnpm; cells is a devDependency of `packages/score`, which only its tests and experiments import):
