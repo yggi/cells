@@ -1,10 +1,10 @@
 ---
 name: Epic
-about: A goal that several issues or pull requests deliver
+about: A goal that several issues deliver
 labels: epic
 ---
 
-<!-- Lifted from yggi/jambot .github/ISSUE_TEMPLATE/epic.md @ 6cc0437. -->
+<!-- Lifted from yggi/cells .github/ISSUE_TEMPLATE/epic.md @ e35c6ee, consolidated 2026-10-16 (yggi/music-commons#4). -->
 
 ## Goal
 
@@ -12,11 +12,7 @@ labels: epic
 
 ## Checklist
 
-<!-- One line per piece of work: `- [ ] #123: what it delivers`. A pull request for one rung says `Part of #<this>`. -->
-
-## Releases and frontends
-
-<!-- The tag that carries it, and what each frontend has to migrate when it moves its pin (CHANGELOG.md), or "none". -->
+<!-- One line per rung, each an issue: `- [ ] #123: what it delivers`. A pull request for one rung says `Part of #<this>`, and the land step ticks its line. -->
 
 ## Not here
 
