@@ -27,6 +27,7 @@ const meaning = (a: Attribute) => sentence(`${a.help}${a.on ? ` — on ${rolesTe
 
 /** A parameter's forms, from what it takes. */
 function paramForm(key: string, a: Attribute): string {
+  if (a.form) return a.form;
   if (a.value === 'cell') return `${key}=&cell`;
   if (a.value === 'word') {
     const words = key === 's' ? Object.keys(DOUGH_SOURCES) : key === 'body' ? Object.keys(BODIES) : key === 'board' ? ['none', ...Object.keys(BODIES)] : null;

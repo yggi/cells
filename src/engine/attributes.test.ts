@@ -65,9 +65,14 @@ describe('an attribute where it does nothing is a warning', () => {
     ['title= on a cell that plays', '&t step=4 title="x" 0 1' + tail, 'title= acts on a note (a label= and nothing else): on &t it does nothing'],
     ['a word for a number, not on a voice', '&m step=90bpm motor=strong\n&t step=&m 0 1' + tail, "motor= takes a number: 'strong' does nothing"],
     [
-      'swing= on a scan',
+      'swing= by level on a clock that is not a meter',
+      '&m step=90bpm swing=8n:.6 0 1 2 3\n&t step=&m 0 1' + tail,
+      'swing=8n:.6 leans levels of a meter, and &m is not one: write swing=.6 (pairs of its steps)',
+    ],
+    [
+      'a bare swing= on a scan, whose steps are its beats',
       '&m scan(3 3 3 3) step=90bpm swing=.6\n&t step=pulse 0 1' + tail,
-      'swing= swings a meter written as a list or meter(…); a scan(…) places its steps itself — write the swing into it',
+      "swing=.6 leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:.6",
     ],
   ])('%s', (_, source, message) => {
     expect(warnings(source)).toEqual([message]);

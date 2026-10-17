@@ -58,5 +58,6 @@ The same discussion settled what happens past the end of a lap, for pitch and fo
 ## Consequences
 
 - Rungs, each an issue under #15: the taps (pulse, beat, note values, the reset at the bar) with the examples moved to them; `cycle=` in laps with its migration; the proportions in the meter cell, written as a tree and as `swing=` keyed by note value (`swing=8n:.67`), with overrides at the tap (#18). Each measured against the event snapshots.
+- `swing=` keyed by note value is built on the meter cell (#18's first rung, [time.md](../language/time.md)): `swing=8n:.67` leans one level, a group of three leaning its second and third, every node keeping its ends; levels nest, `swing=8n:.6,16n:.55` (what Jambot's swing axis needs). A bare `swing=.67` keeps its meaning on a list (pairs of its steps); on a meter it reads as the level of the meter cell's own steps, with a warning, and Shorten names the level (`src/engine/shorten/swing.ts`). The tree written in the meter cell and the overrides at the tap are not built.
 - `beat=`'s old meaning (steps per beat) goes: `swing.cells` and `bwv847.cells` move to taps.
 - Jambot's grid of sixteenths in every meter (T6) is this rule; its swing axis splits level from amount and later moves into the meter at the seam (yggi/jambot#309).

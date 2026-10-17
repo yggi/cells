@@ -141,14 +141,14 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
   it('swing written on the meter moves no tap’s count, only its positions', () => {
     for (const tap of ['pulse', 'beat', '8n', '16n', '4n.', '1m']) {
       const straight = positions('meter("4/4", 2)', tap);
-      const swung = positions('meter("4/4", 2) swing=.67', tap);
+      const swung = positions('meter("4/4", 2) swing=8n:.67', tap);
       expect(swung.length, tap).toBe(straight.length);
       expect(swung[0], tap).toBe(0);
     }
     // (the eighths swing: each pair's second comes two thirds through)
-    expect(positions('meter("4/4", 2) swing=.67', '8n')).toEqual([0, 0.67, 1, 1.67, 2, 2.67, 3, 3.67]);
+    expect(positions('meter("4/4", 2) swing=8n:.67', '8n')).toEqual([0, 0.67, 1, 1.67, 2, 2.67, 3, 3.67]);
     // (the beats don't move)
-    expect(positions('meter("4/4", 2) swing=.67', 'beat')).toEqual([0, 1, 2, 3]);
+    expect(positions('meter("4/4", 2) swing=8n:.67', 'beat')).toEqual([0, 1, 2, 3]);
   });
 
   it('a scan meter: its pulses are its entries, each a quarter, and the taps follow its bend', () => {

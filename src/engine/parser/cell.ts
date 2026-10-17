@@ -33,6 +33,7 @@ interface Body {
   chance: number | null;
   seed: number | null;
   size: number | null;
+  swing: { level: string; share: number }[] | null;
   readonly params: Record<string, number | string>;
   readonly paramSpans: Record<string, Span>;
   readonly paramCells: Record<string, ParamCells>;
@@ -296,6 +297,38 @@ const readCellParam: Reader = (s, b, word) => {
   b.paramSpans[word] = r.span;
 };
 
+/**
+ * swing= (#18): by level, `swing=8n:.67` (a meter's eighths, each pair's second two thirds through), several levels coarse
+ * to fine, `swing=8n:.6,16n:.55`, one level alone left free, `swing=8n:free(.5, .5..75)`; bare, `swing=.6`, as any number.
+ */
+const readSwing: Reader = (s, b, word) => {
+  if (!/^[1-9][0-9]*(?:n\.?|t):/.test(s.text.slice(s.i))) return readParam(s, b, word);
+  const vs = s.i;
+  const levels: { level: string; share: number }[] = [];
+  for (;;) {
+    const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
+    if (level === null) s.fail('a level after the comma, a note value and a share: swing=8n:.6,16n:.55');
+    s.i++; // (:)
+    let share: number;
+    if (s.text.startsWith('free(', s.i)) {
+      const f = parseFree(s, 'param', false);
+      (f as { param?: string }).param = word;
+      share = f.value;
+      if (levels.length || s.peek() === ',') s.fail('a share left free(…) is one level alone: swing=8n:free(.5, .5..75)', vs, s.i - vs);
+    } else {
+      const n = s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y);
+      if (n === null) s.fail(`a share after ${level}:, from 0 to 1 (.5 straight, .67 the triplet swing): swing=${level}:.67`);
+      share = parseFloat(n!);
+    }
+    levels.push({ level: level!, share });
+    if (s.peek() !== ',') break;
+    s.i++;
+  }
+  b.swing = levels;
+  b.params[word] = levels[0].share;
+  b.paramSpans[word] = s.span(vs);
+};
+
 /** A parameter's value: a number or a word, free(…), a clock (a time), or cells it moves with. */
 function readParam(s: LineScanner, b: Body, key: string): void {
   const vs = s.i;
@@ -476,6 +509,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     chance: null,
     seed: null,
     size: null,
+    swing: null,
     params: {},
     paramSpans: {},
     paramCells: {},
@@ -526,7 +560,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
         );
       }
       seen.set(slot, word);
-      const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (CELL_PARAMS.has(key) ? readCellParam : readParam);
+      const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (key === 'swing' ? readSwing : CELL_PARAMS.has(key) ? readCellParam : readParam);
       read(s, b, key, at);
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
       continue;
@@ -600,8 +634,32 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     if (b.over) s.fail('scale(…) reads through a key of its own: drop over=, or write the key as a cell (&mode over=&key scan(…))', b.over.span.col - 1, b.over.span.len);
     b.over = scaleKey;
   }
-  const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, laps, chance, seed, size, params, paramSpans, paramCells, paramClocks } =
-    b;
+  const {
+    over,
+    base,
+    shift,
+    step,
+    map,
+    stride,
+    cycle,
+    env,
+    pitch,
+    show,
+    label,
+    title,
+    tags,
+    tier,
+    about,
+    laps,
+    chance,
+    seed,
+    size,
+    swing,
+    params,
+    paramSpans,
+    paramCells,
+    paramClocks,
+  } = b;
   return {
     name: head.name,
     span: head.span,
@@ -626,6 +684,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     chance,
     seed,
     size,
+    ...(swing ? { swing } : {}),
     params,
     paramSpans,
     paramCells,
