@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SAILOR_WITH_KIT } from './fixtures';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -118,6 +119,7 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(m('meter("9/8")')).toEqual({ pulses: 9, unit: 8, beats: [3, 3, 3] });
     expect(m('meter("12/8")')).toEqual({ pulses: 12, unit: 8, beats: [3, 3, 3, 3] });
     expect(m('meter("7/8")')).toEqual({ pulses: 7, unit: 8, beats: [3, 2, 2] });
+    expect(m('meter("10/8")')).toEqual({ pulses: 10, unit: 8, beats: [3, 2, 3, 2] });
     // (a scan: its entries its pulses, each a quarter, and its beats)
     expect(m('scan(27 23 26 24)')).toEqual({ pulses: 4, unit: 4, beats: [1, 1, 1, 1] });
     // (beat= states another feel: alla breve)
@@ -202,6 +204,91 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(bar('meter("6/8") step=60bpm')).toBeCloseTo(2, 9);
     expect(bar('meter("4/4") step=60bpm beat=2')).toBeCloseTo(2, 9);
     expect(bar('meter("4/4") step=60bpm')).toBeCloseTo(4, 9);
+  });
+
+  it('10/8 is grouped 3+2+3+2: its beats at 90 bpm last 3/10, 2/10, 3/10 and 2/10 of the bar, and its levels are the ones the repository wrote by hand', () => {
+    const r = compiled(`&bar meter("10/8") step=90bpm\n&x step=beat 0${VOICE}`);
+    const at = eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-6).map((e) => e.at);
+    const bar = 4 / 1.5; // (4 beats at 90 bpm)
+    expect(at.slice(0, 4).map((t) => +(t / bar).toFixed(6))).toEqual([0, 0.3, 0.5, 0.8]);
+    expect([at[1] - at[0], at[2] - at[1], at[3] - at[2], bar - at[3]].map((d) => +(d / bar).toFixed(6))).toEqual([0.3, 0.2, 0.3, 0.2]);
+    expect(positions('meter("10/8")', 'pulse')).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(positions('meter("10/8")', 'beat')).toEqual([0, 3, 5, 8]);
+    expect(compiled('&m meter("10/8")').cells.get('m')!.meter!.beats).toEqual(compiled('&m meter("*..+.+..+.")').cells.get('m')!.meter!.beats);
+  });
+
+  it('a time parameter reads a tap as a length, as the same length in seconds does (#87)', () => {
+    const play = (meter: string, time: string) => {
+      const r = compiled(`${meter}\n&x step=pulse 0 2\n&v s=saw delaytime=${time} delayfeedback=.4\n&out map=sample [&x * &v]`);
+      return { time: r.cells.get('v')!.params.delaytime as number, events: eventsBetween(plan(r, codeShifts(r)), 0, 4).map((e) => ({ ...e })) };
+    };
+    const four = '&bar meter("4/4") step=120bpm';
+    // (at 120 bpm a beat is half a second)
+    for (const [tap, seconds] of [
+      ['8n', 0.25],
+      ['4n.', 0.75],
+      ['16n', 0.125],
+      ['8t', 1 / 6],
+      ['1m', 2],
+      ['pulse', 0.5],
+      ['beat*2', 0.25],
+    ] as const) {
+      const got = play(four, tap);
+      expect(got.time, tap).toBeCloseTo(seconds, 6);
+      expect(got.events, tap).toEqual(play(four, String(+seconds.toFixed(6))).events);
+    }
+    // (7/8 as 3+2+2 at 90 bpm: a bar of 2 s, three beats: a parameter is one number, so `beat` is their mean, 2/3 s)
+    expect(play('&bar meter("7/8") step=90bpm', 'beat').time).toBeCloseTo(2 / 3, 6);
+    // (a named meter, at its own tempo)
+    expect(play(`${four}\n&bar2 meter("3/4") step=60bpm`, '&bar2:4n').time).toBeCloseTo(1, 6);
+    // (a swing moves the steps and not their mean)
+    expect(play('&bar meter("4/4") step=120bpm swing=8n:2/3'.replace('2/3', '.67'), '8n').time).toBeCloseTo(0.25, 6);
+  });
+
+  it('a tap as a length needs a meter that keeps time, and says so', () => {
+    const d = compileSource('&v s=saw delaytime=8n').diagnostics.filter((x) => x.severity === 'error');
+    expect(d.map((x) => x.message)).toEqual([expect.stringContaining('delaytime=8n taps the piece')]);
+  });
+
+  it('the Sailor fixture taps its meter and compiles without a warning about it (#92)', () => {
+    expect(compileSource(SAILOR_WITH_KIT).diagnostics.filter((d) => d.message.includes("meter cell's own steps"))).toEqual([]);
+  });
+
+  it('a tap written outside step= says that only step= reads it, and names it as written (#103)', () => {
+    const cases: [string, string, number][] = [
+      ['in a product', '&bar meter("4/4")\n&tick loop=A4\n&out map=sample [&bar:16n * &tick]', '&out map=sample ['.length + 1],
+      ['in a braid', '&bar meter("4/4")\n&x 0 &bar:beat 2', '&x 0 '.length + 1],
+      ['as an attribute’s value', '&bar meter("4/4")\n&x over=&bar:8n 0', '&x over='.length + 1],
+    ];
+    // (only a whole tap: a name that begins like one, &k:mute or &x:m1, is not a tap and isn't called one)
+    for (const src of ['&k [&mute, &bd]\n&x step=1 &k:mute', '&x step=1 0 1\n&y &x:m1', '&x step=1 0\n&y &x:8nx'])
+      expect(
+        compileSource(src).diagnostics.some((d) => d.message.includes("meter's tap")),
+        src,
+      ).toBe(false);
+    for (const [, src, col] of cases) {
+      const tap = src.match(/&bar:\w+/)![0];
+      const d = compileSource(src).diagnostics.filter((x) => x.message.includes(tap));
+      expect(d).toHaveLength(1);
+      expect(d[0]!.message).toBe(`${tap} is a meter's tap, which only step= reads (step=${tap}): here it names no cell`);
+      expect(d[0]!.span.col).toBe(col);
+    }
+  });
+
+  it('a tap that is no note value says what a tap reads, at the token (#85)', () => {
+    const errors = (tap: string) => compileSource(`&bar meter("4/4") step=100bpm\n&x step=${tap} 0${VOICE}`).diagnostics.filter((d) => d.severity === 'error');
+    for (const tap of ['3n', '16x', '4n..']) {
+      const [e, ...rest] = errors(tap);
+      expect(rest, tap).toEqual([]);
+      expect(e!.message, tap).toBe(
+        `step=${tap} is no rate or tap: a tap reads a note value (1n 2n 4n 8n 16n 32n), a triplet (4t 8t 16t), a dotted one (2n. 4n. 8n.), 1m, pulse, beat, or another meter's (&bar2:16n)`,
+      );
+      expect([e!.span.col, e!.span.len], tap).toEqual(['&x step='.length + 1, tap.length]);
+    }
+    // (a loop reads no tap, and says so)
+    expect(compileSource('&x loop=3n 0').diagnostics.map((d) => d.message)).toContain('loop=3n is no rate: a number with its unit (loop=100bpm, loop=2hz)');
+    // (a rate with its unit is still a rate)
+    expect(errors('120bpm')).toEqual([]);
   });
 
   it('a tap reads the main meter, or the one it names; chains step it as they step any clock', () => {

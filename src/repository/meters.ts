@@ -39,13 +39,13 @@ const weighted = (...points: StylePoint[]) => points.map((point) => ({ point, we
 export const METER_FRAGMENTS: readonly Fragment[] = [
   { id: '4/4', text: '&bar meter("4/4")', association: weighted(SYNTH_POP, TECHNO, BOSSA_NOVA) },
   // (Jambot's swing 1: the triplet swing, 2/3, on the eighths; the sixteenths straight)
-  { id: '4/4 swung on 8n', text: '&bar meter("4/4") swing=8n:.6666666666666666', association: weighted(SWING_JAZZ) },
+  { id: '4/4 swung on 8n', text: '&bar meter("4/4") swing=8n:2/3', association: weighted(SWING_JAZZ) },
   // (Jambot's swing .45: the sixteenths' heaviest lean of the presets)
   { id: '4/4 leaning on 16n', text: '&bar meter("4/4") swing=16n:.65', association: weighted(LO_FI) },
   // (Jambot's swing .3)
   { id: '4/4 leaning lightly on 16n', text: '&bar meter("4/4") swing=16n:.6', association: weighted(DEEP_HOUSE, FUNK) },
   // (Jambot's swing .05: 31/60, an onset a thirtieth of a sixteenth late)
-  { id: '4/4 leaning faintly on 16n', text: '&bar meter("4/4") swing=16n:.5166666666666667', association: weighted(AMBIENT) },
+  { id: '4/4 leaning faintly on 16n', text: '&bar meter("4/4") swing=16n:31/60', association: weighted(AMBIENT) },
   // (alla breve: the bpm counts half notes; fast, bright, marching)
   { id: '4/4 alla breve', text: '&bar meter("4/4") beat=2', association: weighted(at(0.2, 0.6, 0.9, 1)) },
   // (a march, a polka: on the beat, plain, short and dense)
@@ -60,6 +60,6 @@ export const METER_FRAGMENTS: readonly Fragment[] = [
   { id: '5/4', text: '&bar meter("5/4")', association: weighted(at(0.4, 0.9, 0.5, 0.3)) },
   // (3+2+2, a Balkan dance: off the beat, short and dense)
   { id: '7/8', text: '&bar meter("7/8")', association: weighted(at(0.8, 0.6, 1, 1)) },
-  // (3+2+3+2, written as levels: no time signature groups 10/8 so)
-  { id: '10/8', text: '&bar meter("*..+.+..+.")', association: weighted(at(0.6, 0.9, 0.8, 0.9)) },
+  // (3+2+3+2)
+  { id: '10/8', text: '&bar meter("10/8")', association: weighted(at(0.6, 0.9, 0.8, 0.9)) },
 ];

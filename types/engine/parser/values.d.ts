@@ -4,6 +4,8 @@ import type { LineScanner } from './scanner';
 import { type Syntax } from './syntax';
 /** step= and loop=: what moves a cell — the forms besides the units. */
 export declare const STEP_SYNTAX: readonly Syntax[];
+/** Whether a tap's word starts here (a time parameter reads one as a length: delaytime=8n). */
+export declare const atTap: (s: LineScanner) => boolean;
 export declare function parseStep(s: LineScanner, whole: boolean): StepSpec;
 type MapWord = Exclude<MapSpec['kind'], 'table' | 'edo' | 'midi'> | 'edo' | 'midi';
 /** map=: how a cell's values sound (or what kind of cell it is). The parser reads the words from this table. */

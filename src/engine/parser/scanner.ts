@@ -259,13 +259,22 @@ export class LineScanner {
     }
     return { name, pick, shift, ...this.transposition(name), span: this.span(at) };
   }
+  /** At a ':' after the reference starting at `from`: a meter's tap (&bar:16n) is read by step= only, so it fails and says so. */
+  rejectTap(from: number): void {
+    if (this.peek() !== ':') return;
+    const tap = /^(?:(?:pulse|beat)(?:\*\d+)?|\d+[nt]\.?|\d*m)(?![\w.])/.exec(this.text.slice(this.i + 1));
+    if (!tap) return;
+    const as = this.text.slice(from, this.i + 1 + tap[0].length);
+    this.fail(`${as} is a meter's tap, which only step= reads (step=${as}): here it names no cell`, from, as.length);
+  }
   /**
    * A reference where `^n` and `^$n` mean nothing: an attribute's cell (over=&k, step=&bar, env=&adsr …) or a line's
    * name. They move a cell a braid plays (and base='s copy); anywhere else they would be dropped, so this warns.
    */
-  cellRef(what: string, where: string): Ref {
+  cellRef(what: string, where: string, tapRead = false): Ref {
     const at = this.i;
     const r = this.ref(what);
+    if (!tapRead) this.rejectTap(at);
     // (the caret after the name, its pick or its unnamed body: never one inside &( … ))
     const caret = this.text.lastIndexOf('^', this.i - 1);
     if (caret >= at && caret > this.text.lastIndexOf(')', this.i - 1))
