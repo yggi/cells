@@ -68,7 +68,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       error(`Pick or shift the melody, not the voice: &theme[0] * &${voice.name}`, b.voice.span);
       continue;
     }
-    if (decls.get(voice.name)?.step?.kind === 'driven') {
+    if (decls.get(voice.name)?.step?.kind === 'driven' || decls.get(voice.name)?.step?.kind === 'tap') {
       error(`&${voice.name} moves with step=&…, so it can't be a voice: a voice moves at a rate, its pitch (loop=C4)`, b.voice.span);
       continue;
     }
@@ -188,7 +188,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     if (lead.length === 0) {
       error(
         terms.length
-          ? `Nothing starts notes on &${voice.name}: give a pitch or a volume (map=amp) step= timing (step=&bar); loop= terms only bend`
+          ? `Nothing starts notes on &${voice.name}: give a pitch or a volume (map=amp) step= timing (step=4n); loop= terms only bend`
           : `&${voice.name} has nothing to play: a melody goes before it, like &melody * &${voice.name}`,
         span,
       );

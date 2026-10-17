@@ -31,7 +31,7 @@ The name is lower-case letters (not one of the shows or the built-in plugins). T
 &piece title="Plugin ring" tags="topic" label="A meter drawn by a plugin." about=&out
 &bar scan(1 1 1 1) step=90bpm show=ring
 &v s=sine loop=C4
-&tune step=&bar 0 4 7 4
+&tune step=4n 0 4 7 4
 &out postgain=.251 loop=SAMPLE_RATE map=sample [&tune * &v * .3]
 === plugin ring ===
 { "fits": ["meter"], "size": 160, "tokens": { "ring": "#e3a25a" } }

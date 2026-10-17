@@ -61,6 +61,6 @@ describe('sections by key (#346)', () => {
     expect(made.inKey).toMatch(/^\d sections by key \(G major, .*G major\)$/);
     expect(made.source).toMatch(/^&key2 scale\(/m);
     expect(made.source).toMatch(/^&upB over=&key2 /m);
-    expect(made.source).toMatch(/^&up step=&tempo &upA(@\d)? &upB/m);
+    expect(made.source).toMatch(/^&up step=pulse &upA(@\d)? &upB/m);
   }, 60_000);
 });

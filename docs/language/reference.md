@@ -57,7 +57,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `sin(n)` · `saw(n)` · `tri(n)` · `square(n)`: One cycle of a waveform in n steps, from −1 to 1, as Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step: a sine from 0, a saw rising from −1, a triangle rising from −1 to 1 at the half and falling back, a square −1 then 1. A waveform, or a slow swell. [→](braid.md) `&sine loop=220 sin(12)` · `&ramp loop=220 saw(8)` · `&swell map=lin loop=.25 tri(4)` · `&pulse loop=110 square(2)`
 - `scale(name)` · `scale(name, tonic)` · `scale("tonic:name")`: A scale by name over the 12, turned to its tonic (a note name, a number or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: major minor ionian dorian phrygian lydian mixolydian aeolian locrian harmonic melodic pentatonic minorpentatonic blues wholetone. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (131 names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's. [→](tables.md) `&scale scale(minor, D)` · `&blues scale(blues)` · `&scale scale(dorian, free(2, 0..11))` · `&scale scale("F#:harmonic:minor")`
 - `fifths()` · `fifths(n)` · `fifths(note)`: The circle of fifths: the twelve pitch classes a fifth apart, C G D A E B F# C# Ab Eb Bb F, as written from C; turned n fifths round, or to start on a note (its shift=: [0] is where it starts, [$0] is C). Drawn round its wheel in its own order. [→](tables.md) `&circle fifths()` · `&circleG fifths(1)` · `&circleG fifths(G)`
-- `meter("sig")` · `meter("sig", sub)` · `meter("levels")`: A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (2/4 3/4 4/4 5/4 6/8 7/8 9/8 12/8 5/8) with sub steps a beat, or levels written out (* bar, + beat, - half, . subdivision, , finer). Its bpm counts beats. Each argument can be free(…). [→](time.md) `&bar meter("4/4", 2) step=100bpm` · `&bar meter("6/8") step=60bpm` · `&bar meter("*.+.+..") step=90bpm`
+- `meter("sig")` · `meter("sig", sub)` · `meter("levels")`: A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (2/4 3/4 4/4 5/4 6/8 7/8 9/8 12/8 5/8) with sub steps a pulse, or levels written out (* bar, + beat, - half, . subdivision, , finer). Its bpm counts beats. Each argument can be free(…). [→](time.md) `&bar meter("4/4", 2) step=100bpm` · `&bar meter("6/8") step=60bpm` · `&bar meter("*.+.+..") step=90bpm`
 - `spell("text", &table, "names")`: A text spelled through a table: each character that is one of the names plays that entry of the table, then a pause; anything else rests as long. The text can be free("…"), a field to type in. [→](braid.md) `&dial spell("867 5309", &keys, "1 2 3 A 4 5 6 B 7 8 9 C * 0 # D")` · `&dial spell(free("867 5309"), &keys, "1 2 3 A 4 5 6 B 7 8 9 C * 0 # D")`
 
 ## free(): left to the performer
@@ -75,8 +75,11 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `step=&x` · `loop=&x`: Driven by another cell: a step (or a whole turn) per step of &x. [→](time.md) `&tune step=&bar 0 2 4`
 - `step=cycle(&x)`: A step per cycle of &x (each time its braid comes round). [→](time.md) `&key step=cycle(&theme) stride=7`
 - `step=&x*n` · `step=&x/n` · `step=&x*n/d`: A chain read left to right, as Strudel's fast and slow: *n n steps per step of &x, /n one per n steps; *3/2 is three per two (triplets). [→](time.md) `&fast step=&bar*2 0 1` · `&trip step=&bar*3/2 0 2 4`
+- `step=pulse` · `step=beat` · `step=pulse*k` · `step=beat*k`: A tap of the piece's main meter (decision 040): each pulse (the numerator: 7/8 has seven), each beat (what is counted: 6/8 has two, 7/8 three unequal), or each in k equal steps; it comes round at the bar. [→](time.md) `&tune step=pulse 0 2 4` · `&hats step=pulse*2 0!8` · `&chords step=beat [0,2,4]`
+- `step=16n` · `step=8t` · `step=4n.` · `step=1m`: A tap by note value: 1n 2n 4n 8n 16n 32n, triplets (4t 8t 16t), dotted (2n. 4n. 8n.), the bar (1m); one longer than what is left of the bar is cut at the bar line. cycle=n runs it n bars before it comes round. [→](time.md) `&drums step=16n 0 ~ 1 ~` · `&tresillo step=4n. 0 0 0` · `&roots step=1n cycle=4 0 5 7`
+- `step=&m:16n`: A tap of another meter than the main one: step=&m:pulse, &m:beat*3, &m:8n. [→](time.md) `&comp step=&bar2:8n 0 2`
 - `step=free(r, lo..hi)` · `step=free(marking)`: A rate left free: a slider, with units (free(90bpm, 60..240)), or a tempo marking (free(adagio)). [→](free.md) `&bar scan(4 4 4 4) step=free(90bpm, 60..240)` · `&bar scan(4 4 4 4) step=free(adagio)`
-- `nbpm`: n a minute: beats on a meter (its steps, unless beat= or meter(…) say how many make a beat). [→](time.md) `&bar scan(4 4 4 4) step=84bpm`
+- `nbpm`: n a minute: beats on a meter (a scan’s entries; meter(…)’s beats: 6/8 two, 7/8 three unequal; beat= says another count). [→](time.md) `&bar scan(4 4 4 4) step=84bpm`
 - `nhz`: n a second (a plain number says the same). [→](time.md) `&a loop=440hz`
 - `nmin`: n a minute (wall-clock time: loop=1min turns once a minute). [→](time.md) `&tick scan(1!60) loop=1min`
 - `nh`: n an hour. [→](time.md) `&hour scan(1!60) loop=1h`
@@ -104,7 +107,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 
 - `over=&table` · `over=&table[<<n]` · `over=scale(name, tonic)`: The table its numbers read. [→](tables.md) `&tune over=&major step=2 0 2 4` · `&mode over=&major[<<2] 0 2 4` · `&tune over=scale(minor, A) step=2 0 2 4`
 - `base=&cell` · `base=&cell^$n` · `base=&cell^n`: The cell it is a copy of, changed where it says: its braid step by step over the base’s (= keeps a step), its attributes where it sets none. [→](braid.md) `&answer base=&subject^$7 =!3 12@2` · `&last base=&subject =!21 3@2`
-- `step=…`: What moves it, step by step. [→](time.md) `&tune step=&bar 0 2 4`
+- `step=…`: What moves it, step by step. [→](time.md) `&tune step=4n 0 2 4` · `&tune step=&clock 0 2 4`
 - `loop=…`: What moves it, the whole braid at a time. [→](time.md) `&lead s=saw loop=C4`
 - `shift=n` · `shift=free(n, lo..hi)`: How far it is turned. [→](tables.md) `&mode over=&major shift=5 0 2 4` · `&key shift=free(0, 0..11)`
 - `stride=n` · `stride=free(n, lo..hi)`: How far each step turns it. [→](time.md) `&key step=cycle(&theme) stride=7`
@@ -151,7 +154,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `coupling=n` · `coupling=free(n, lo..hi)`: A resonator: how strongly it is coupled (.01 faint, .05 strong) — on a resonator (body=) [→](physics.md)
 - `excite=&cell`: A resonator: sound that drives it (excite=&mix) — it answers where the sound meets its modes — on a resonator (body=) [→](physics.md)
 - `postgain=n` · `postgain=free(n, lo..hi)`: On the sound card: its master, a linear gain after everything (Strudel’s postgain: 1 as it is, .5 half; free(.8, 0..1) a slider) — on the sound card (map=sample) [→](mix.md)
-- `beat=n` · `beat=free(n, lo..hi)`: On a meter: how many of its steps make a beat — its bpm counts beats (beat=4: steps in sixteenths) — on a meter (step= a rate) [→](time.md)
+- `beat=n` · `beat=free(n, lo..hi)`: On a meter: how many beats it counts, equal (meter("4/4") beat=2: alla breve) — its bpm counts beats — on a meter (step= a rate) [→](time.md)
 - `swing=n` · `swing=free(n, lo..hi)`: On a meter: of each pair of steps, the second comes this far through (.5 straight, .67 triplet swing) — on a meter (step= a rate) [→](time.md)
 - `motor=n` · `motor=free(n, lo..hi)`: On a meter: it turns physically — a motor this strong pulls it to its tempo (from rest) — on a meter (step= a rate) [→](physics.md)
 - `mass=n` · `mass=free(n, lo..hi)`: Physics: how heavy it turns (inertia); on a cell a meter drives, load — on a meter (step= a rate) or a driven cell (step=&x) [→](physics.md)

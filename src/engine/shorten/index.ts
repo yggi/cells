@@ -13,6 +13,7 @@
  *  - wrappers.ts:  a cell that only reads motifs through a shifted table — &motif^k where it's used
  *  - aliases.ts:   Strudel's or dough's name for a parameter where ours is shorter: cutoff= → lpf= (decision 027)
  *  - gates.ts:     a migration: a gate written the old way (trigger=, velocity=, gate=, gain=) as play= and level= (decision 023)
+ *  - taps.ts:      a migration: a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
  *
  * Each suggestion carries its rewrite; its saving is measured on the result
  * (harness.ts: the cells a rule may touch, the measure, the note-for-note check).
@@ -28,6 +29,7 @@ import { wrappers } from './wrappers';
 import { stereo } from './stereo';
 import { gates } from './gates';
 import { aliases } from './aliases';
+import { taps } from './taps';
 
 export type { Suggestion } from './harness';
 
@@ -46,6 +48,7 @@ export function shorten(source: string): Suggestion[] {
     ...stereo(source, result),
     ...gates(source, result),
     ...aliases(source, result),
+    ...taps(source, result),
   ].sort((a, b) => b.saving - a.saving);
 }
 

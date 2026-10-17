@@ -32,7 +32,15 @@ const atomRefs = (a: Atom): string[] =>
 function readsOf(d: CellDecl): string[] {
   const out: string[] = [];
   if (d.braid.kind === 'list') for (const t of d.braid.tokens) out.push(...atomRefs(t.atom));
-  for (const r of [d.over, d.base, d.env, d.pitch, d.map?.kind === 'table' ? d.map.table : null, d.step?.kind === 'driven' ? d.step.driver : null]) if (r) out.push(r.name);
+  for (const r of [
+    d.over,
+    d.base,
+    d.env,
+    d.pitch,
+    d.map?.kind === 'table' ? d.map.table : null,
+    d.step?.kind === 'driven' ? d.step.driver : d.step?.kind === 'tap' ? d.step.meter : null,
+  ])
+    if (r) out.push(r.name);
   for (const pc of Object.values(d.paramCells ?? {})) out.push(...pc.factors.map((f) => f.name));
   for (const st of Object.values(d.paramClocks ?? {})) if (st.kind === 'driven') out.push(st.driver.name);
   for (const [k, v] of Object.entries(d.params)) if (typeof v === 'string' && ATTRIBUTES[k]?.value === 'cell') out.push(v);

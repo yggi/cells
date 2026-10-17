@@ -1,3 +1,4 @@
+import type { Tap } from './ast';
 /** A group of steps [from, to) at a level: 0 the bar, then finer (1 a beat, 2 a half, 3 a subdivision, 4 finer). */
 export interface MeterGroup {
     readonly level: number;
@@ -16,8 +17,35 @@ export interface Meter {
     readonly lap: number;
     /** The form it was written as: `meter(…)` (levels, its steps even) or `scan(…)` (positions, every step level 1). */
     readonly written: 'meter' | 'scan';
+    /** The pulse: the numerator, equal steps of the denominator's length; a scan's are its entries. */
+    readonly pulses: number;
+    /** The note value of a pulse, as the denominator: 4 a quarter (a scan's), 8 an eighth. */
+    readonly unit: number;
+    /** The beats, each its length in pulses: what is counted, what bpm counts (6/8: 3 3; 7/8: 3 2 2; 4/4: 1 1 1 1). */
+    readonly beats: readonly number[];
 }
-/** meter(…): steps by level, a bar whose steps are even. */
-export declare function meterOfLevels(levels: readonly number[]): Meter;
+/** How a time signature writes a meter: its pulses, its note value and its beats (in pulses), each pulse in `sub` steps. */
+export interface Signature {
+    readonly pulses: number;
+    readonly unit: number;
+    readonly beats: readonly number[];
+    readonly sub: number;
+}
+/** The meter's steps a pulse (meter("4/4", 2): 2; a scan: 1). */
+export declare const stepsPerPulse: (m: Meter) => number;
+/** beat=n on a meter: n equal beats over its pulses, in place of the beats it was written with (alla breve: `meter("4/4") beat=2`). */
+export declare function withBeats(m: Meter, n: number): Meter;
+/**
+ * meter(…): steps by level, a bar whose steps are even. Its signature, when it was written as one (`meter("7/8")`), says
+ * its pulses and beats; written as levels (`meter("*.+.+..")`), its steps are its pulses and its beats run from each
+ * beat (+, *) to the next, a pulse an eighth (a quarter when every step is a beat, a sixteenth when every beat is four).
+ */
+export declare function meterOfLevels(levels: readonly number[], signature?: Signature): Meter;
 /** scan(…): positions in the bar, no levels: a flat tree. */
 export declare function meterOfScan(steps: readonly number[]): Meter;
+/**
+ * Where a tap's steps fall in `bars` bars of a meter, in pulses from the downbeat (decision 040): `pulse` each pulse,
+ * `beat` each beat (unequal where the beats are), a note value every so many pulses, cut at the end of the last bar
+ * (`1n` in 3/4: one a bar; `4n.` in 4/4: 3+3+2 eighths), `1m` each bar. The tap comes round after them.
+ */
+export declare function tapPositions(m: Meter, tap: Tap, bars?: number): number[];

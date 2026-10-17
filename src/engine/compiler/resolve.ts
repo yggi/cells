@@ -4,7 +4,7 @@ import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_PARAMS } from '../attributes';
 import { scan as scanOf } from '../../theory/modes';
-import { meterOfLevels, meterOfScan, type Meter } from '../meter';
+import { meterOfLevels, meterOfScan, stepsPerPulse, withBeats, type Meter } from '../meter';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
@@ -12,12 +12,25 @@ import type { Typed } from './sorts';
 
 class Abort extends Error {}
 
-/** The Meter a braid is written as: meter(…) (a list of levels, with perBeat) or scan(…); none otherwise. */
-function meterOf(b: Braid): Meter | null {
-  if (b.kind === 'scan') return meterOfScan(b.steps);
-  if (b.kind === 'list' && b.perBeat !== undefined) return meterOfLevels(b.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : 0)));
-  return null;
+/**
+ * The Meter a braid is written as: meter(…) (a list of levels, with perBeat) or scan(…); none otherwise. beat=n on it
+ * states n equal beats (decision 040: alla breve, `meter("4/4") beat=2`).
+ */
+function meterOf(b: Braid, beat: number | string | undefined): Meter | null {
+  const m =
+    b.kind === 'scan'
+      ? meterOfScan(b.steps)
+      : b.kind === 'list' && b.perBeat !== undefined
+        ? meterOfLevels(
+            b.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : 0)),
+            b.signature,
+          )
+        : null;
+  return m && typeof beat === 'number' && beat > 0 ? withBeats(m, beat) : m;
 }
+
+/** A meter's steps a beat: what its bpm is read through (1 when it has no meter). */
+export const stepsPerBeat = (m: Meter | null): number => (m ? (stepsPerPulse(m) * m.pulses) / Math.max(1, m.beats.length) : 1);
 
 export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }: Declared, typed: Typed): Cells {
   const { rateOf, error, warn, broken, unknownCell } = ctx;
@@ -112,8 +125,8 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
         .filter(Boolean),
       about: (d.about ?? []).map((r) => r.name),
       ...(d.base ? { base: { name: d.base.name, ...(d.base.transpose ? { transpose: d.base.transpose } : {}), ...(d.base.degree ? { degree: d.base.degree } : {}) } } : {}),
-      beat: typeof d.params.beat === 'number' ? d.params.beat : ((d.braid as { perBeat?: number }).perBeat ?? 1),
-      meter: meterOf(d.braid),
+      beat: stepsPerBeat(meterOf(d.braid, d.params.beat)),
+      meter: meterOf(d.braid, d.params.beat),
       label: d.label ?? null,
       note:
         !!(d.label || d.title) &&

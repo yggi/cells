@@ -2,8 +2,8 @@
 
 /**
  * MIDI clock, the pure part (#206): when the 24-a-beat ticks fall in a window of the piece. A beat is the main meter's:
- * the meter the piece's first played cell steps with, followed up its step= chain to the one with a rate of its own
- * (`scan(4 4 4 4)` is four beats a bar; `beat=` and `meter(…)` say how many steps make one). Tick k falls at that
+ * the meter the piece's first played cell steps with or taps, followed up its step= chain to the one with a rate of its own
+ * (`scan(4 4 4 4)` is four beats a bar; `meter(…)` and `beat=` on it say how many steps make one). Tick k falls at that
  * meter's step k·beat/24, laid through its time map (`clocking.ts`), so the ticks swing with it, bend with a scan, and
  * speed up and slow down with a motor. Each tick's time is worked out from its index, never by adding up intervals, so
  * windows meet exactly. Sending them is the browser's business (`src/midi/clock-out.ts`).
@@ -44,7 +44,8 @@ export function mainMeter(result: CompileResult): MainMeter | null {
   if (meters.has(result)) return meters.get(result)!;
   let found: MainMeter | null = null;
   const first = result.ok ? result.outputs.map((o) => result.cells.get(o.cell)?.clock).find((c) => !!c) : undefined;
-  let name = first;
+  // (a tap, step=16n: a clock of its own, laid through its meter's map — the meter is the one to follow)
+  let name = first && result.clocks.get(first)?.tap ? result.clocks.get(first)!.tap!.meter : first;
   for (let guard = 0; name && guard < 16; guard++) {
     const driver = result.cells.get(name)?.step?.driver;
     if (!driver || !result.clocks.has(driver)) break;

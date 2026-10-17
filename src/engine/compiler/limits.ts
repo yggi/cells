@@ -61,7 +61,9 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
     if (!clock) continue;
     const lap = Math.max(1, c.steps);
     const perSecond = (clock.perSecond * c.rate * expansion(c.name)) / lap;
-    if (perSecond > (fastest.get(c.clock) ?? 0)) fastest.set(c.clock, perSecond);
+    // (a tap, step=16n, runs as its meter does: the meter's rate is the one a slider moves)
+    const key = clock.tap?.meter ?? c.clock;
+    if (perSecond > (fastest.get(key) ?? 0)) fastest.set(key, perSecond);
     if (!(perSecond > MAX_NOTES_PER_SECOND)) continue;
     reported.add(c.name);
     const d = decls.get(c.name);

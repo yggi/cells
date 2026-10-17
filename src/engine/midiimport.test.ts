@@ -39,7 +39,7 @@ describe('a MIDI file as a piece', () => {
     const { source, perQuarter, lines } = cellsFromMidi(smf, 'test');
     expect(perQuarter).toBe(2);
     expect(lines).toBe(1);
-    expect(source).toContain('&leadSynth step=&tempo 0 [4,7] ~ 12');
+    expect(source).toContain('&leadSynth step=pulse 0 [4,7] ~ 12');
     const heard = notesOf(source);
     expect(heard.map((n) => `${n.key}@${n.at.toFixed(3)}`)).toEqual(['60@0.000', '64@0.250', '67@0.250', '72@0.750']);
   });
@@ -149,7 +149,8 @@ describe('a MIDI file as a piece', () => {
     const smf = readMidi(writeMidi(pieceMidi(result, codeShifts(result)).smf));
     const { source, notes: count, perQuarter } = cellsFromMidi(smf, 'BWV 847');
     expect(count).toBe(1765);
-    expect(perQuarter).toBe(4);
+    // (its tempo map's beats are its entries, decision 040: the file writes a sixteenth as a beat, so one step a quarter)
+    expect(perQuarter).toBe(1);
     const back = notesOf(source);
     expect(back.map((n) => n.key)).toEqual(original.map((n) => n.key));
     const worst = (k: 'at' | 'dur') => back.reduce((m, n, i) => Math.max(m, Math.abs(n[k] - original[i][k])), 0);
@@ -171,7 +172,7 @@ describe('a long rest (a voice that enters late in a long piece)', () => {
       meters: [],
     };
     const made = cellsFromMidi(smf, 'late');
-    expect(made.source).toMatch(/&late step=&tempo ~@4096 ~@903 7/);
+    expect(made.source).toMatch(/&late step=pulse ~@4096 ~@903 7/);
     expect(compileSource(made.source).ok).toBe(true);
   });
 });

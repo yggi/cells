@@ -4,9 +4,9 @@
 &bar scan(1 1 1 1) step=free(moderato)
 &major scale(major)
 
-&tune over=&major step=&bar*2 0 2 [4|5|7] 4 [2|7] 0 [4|9] ~
-&hats step=&bar*4 0 0? 0 0?.7 0 0? 0 0?.2
-&ghosts chance=.75 seed=3 step=&bar*4 0?!8
+&tune over=&major step=8n 0 2 [4|5|7] 4 [2|7] 0 [4|9] ~
+&hats step=16n 0 0? 0 0?.7 0 0? 0 0?.2
+&ghosts chance=.75 seed=3 step=16n 0?!8
 
 &lead s=tri loop=C5 env=&(map=adsr .005 .2 .3 .2)
 &hh s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)

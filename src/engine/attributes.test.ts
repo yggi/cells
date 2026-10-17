@@ -66,7 +66,7 @@ describe('an attribute where it does nothing is a warning', () => {
     ['a word for a number, not on a voice', '&m step=90bpm motor=strong\n&t step=&m 0 1' + tail, "motor= takes a number: 'strong' does nothing"],
     [
       'swing= on a scan',
-      '&m scan(3 3 3 3) step=90bpm swing=.6\n&t step=&m 0 1' + tail,
+      '&m scan(3 3 3 3) step=90bpm swing=.6\n&t step=pulse 0 1' + tail,
       'swing= swings a meter written as a list or meter(…); a scan(…) places its steps itself — write the swing into it',
     ],
   ])('%s', (_, source, message) => {

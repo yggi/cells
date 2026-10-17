@@ -11,8 +11,8 @@
 &c over=&just step=&justBar*2 0 2 4 5 4 2 1 0 0@4 ~@4
 
 &pluck s=tri loop=C4 env=&(map=adsr .01 .4 .3 .3)
-&grids step=&bar &edoBar &fifthsBar &justBar
-&turns over=&grids step=&bar/2 0 1 2                  # a grid every two bars, in turn
+&grids step=4n &edoBar &fifthsBar &justBar
+&turns over=&grids step=2n 0 1 2                      # a grid every two bars, in turn
 &out map=sample postgain=6.31 [&a * &pluck * .3,
                           &b * &pluck * .3,
                           &c * &pluck * .3]

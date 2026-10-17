@@ -1,5 +1,6 @@
 /** Generators: a braid written as a rule — scan(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
 import type { Braid, Ref, Span, WaveShape } from '../ast';
+import type { Signature } from '../meter';
 import { syntax, type Syntax } from './syntax';
 import type { LineScanner } from './scanner';
 import { parseFree } from './free';
@@ -133,11 +134,18 @@ export const SIGNATURES: Record<string, number[]> = {
   '4/4': [1, 1, 1, 1],
   '5/4': [1, 1, 1, 1, 1],
   '6/8': [3, 3],
-  '7/8': [2, 2, 3],
+  '7/8': [3, 2, 2],
   '9/8': [3, 3, 3],
   '12/8': [3, 3, 3, 3],
   '5/8': [3, 2],
 };
+/** A time signature's pulses (the numerator), their note value (the denominator) and its beats in pulses (decision 040). */
+export function signatureOf(sig: string, sub: number): Signature {
+  const [num, den] = sig.split('/').map((x) => parseInt(x, 10));
+  const groups = SIGNATURES[sig] ?? [];
+  // (x/8: a beat a group of eighths; x/4: a beat a pulse)
+  return { pulses: num, unit: den, beats: sig.endsWith('/8') ? groups : groups.map(() => 1), sub };
+}
 export function meterLevels(sig: string, sub: number): string {
   if (/^[*+\-.,]+$/.test(sig)) return sig;
   const groups = SIGNATURES[sig];
@@ -161,7 +169,7 @@ export function meterLevels(sig: string, sub: number): string {
 }
 
 /**
- * meter(signature, steps a beat): a bar as levels, one per step — 0 the downbeat (*, the bar's
+ * meter(signature, steps a pulse): a bar as levels, one per step — 0 the downbeat (*, the bar's
  * tonic), 1 a beat (+), 2 a half (-), 3 a subdivision (.), 4 finer (,). Unused levels can be skipped:
  * *-+- and *.+. are both 4/4. The bpm counts the beats, not the steps.
  * meter("4/4", 2): *.+.+.+. ; meter("6/8"): *..+.. ; meter("*.+.+.."): as written.
@@ -187,7 +195,7 @@ function parseMeter(s: LineScanner, start: number): Braid {
   if (s.peek() === ',') {
     s.i++;
     s.skipSpace();
-    sub = Math.max(1, Math.min(8, parseInt(arg('steps a beat'), 10) || 1));
+    sub = Math.max(1, Math.min(8, parseInt(arg('steps a pulse'), 10) || 1));
     s.skipSpace();
   }
   s.expect(')', `')' to close meter(…)`);
@@ -200,7 +208,7 @@ function parseMeter(s: LineScanner, start: number): Braid {
   const value = (ch: string) => Math.max(0, '*+-.,'.indexOf(ch));
   const tokens = [...levels].map((ch) => ({ atom: { kind: 'note' as const, value: value(ch), alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
   const beats = [...levels].filter((ch) => ch === '*' || ch === '+').length || 1;
-  return { kind: 'list', tokens, span, perBeat: levels.length / beats } as Braid;
+  return { kind: 'list', tokens, span, perBeat: levels.length / beats, ...(SIGNATURES[sig] ? { signature: signatureOf(sig, sub) } : {}) } as Braid;
 }
 
 /** Whole numbers between parentheses, comma-separated: euclid(3, 8). The scanner is at '('. */
@@ -460,7 +468,7 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     syntax: syntax(
       'generator',
       'meter("sig") · meter("sig", sub) · meter("levels")',
-      `A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (${Object.keys(SIGNATURES).join(' ')}) with sub steps a beat, or levels written out (* bar, + beat, - half, . subdivision, , finer). Its bpm counts beats. Each argument can be free(…).`,
+      `A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (${Object.keys(SIGNATURES).join(' ')}) with sub steps a pulse, or levels written out (* bar, + beat, - half, . subdivision, , finer). Its bpm counts beats. Each argument can be free(…).`,
       ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("*.+.+..") step=90bpm'],
       'time.md',
     ),

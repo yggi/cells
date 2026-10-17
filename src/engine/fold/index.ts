@@ -59,7 +59,7 @@ type Watch = (now: () => Folded, stage: Stage) => void;
 
 /** The characters the folded lines print as (`caret`: how a symbol moves, `^$` semitones or `^` degrees). */
 const sizeOf = (f: Folded, caret: string) => {
-  const { defs, lines } = printFolded(f, 'm', '&tempo', caret);
+  const { defs, lines } = printFolded(f, 'm', 'pulse', caret);
   return [...defs, ...lines.values()].reduce((n, s) => n + s.length + 1, 0);
 };
 

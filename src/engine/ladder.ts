@@ -28,9 +28,10 @@ export const STUBS: ReadonlySet<string> = new Set([
 /**
  * Forms read and played but on no tier yet (#337: Strudel's `<a b>`, `x/n`, `x(k,n,r)`): a tier's pieces must show its
  * forms, and no tutorial piece can show these without changing the notes it plays. They go on a tier (4, rhythm, or 5,
- * development) with the piece that shows them.
+ * development) with the piece that shows them. `beat=` (decision 040: a meter's beats, alla breve) lost its piece when
+ * Swing moved to taps: it goes on tier 4 with one that shows it.
  */
-export const PENDING: ReadonlySet<string> = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)']);
+export const PENDING: ReadonlySet<string> = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter beat']);
 
 /**
  * A form's key, from its reference entry: an attribute or a parameter by its word (`over`, `lpf`);
@@ -85,13 +86,14 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   },
   {
     name: 'Time and voice',
-    concept: 'a clock: a bar, step=&bar, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
+    concept: 'a clock: a bar, its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
     forms: [
       // a clock
       'generator scan(i …)',
       'rate nbpm',
       'rate step=&x',
       'rate step=&x*n',
+      'rate step=16n',
       'rate step=free(r, lo..hi)',
       'free free(marking)',
       // a voice
@@ -134,7 +136,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   },
   {
     name: 'Rhythm and feel',
-    concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: a swing clock, swing= and beat=',
+    concept:
+      'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: a swing clock tapped by its pulse, swing= on a meter tapped by name',
     forms: [
       // meter and feel
       'map map=amp',
@@ -147,9 +150,12 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'sort signal: a pattern read through a kit',
       'line oneshot',
       'modifier &x:0:gain',
+      // taps by pulse, of a named meter (decision 040)
+      'rate step=pulse',
+      'rate step=&m:16n',
       // swing
       'parameter swing',
-      'parameter beat',
+      'generator meter("sig")',
     ],
   },
   {
@@ -215,7 +221,6 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'free free(v, lo..hi)',
       'free free(v, lo..hi, "names")',
       'mix free(v, lo..hi)',
-      'generator meter("sig")',
     ],
   },
   {
@@ -494,6 +499,10 @@ export function formsUsed(source: string): Set<string> {
       use(st.cycle ? 'rate step=cycle(&x)' : 'rate step=&x');
       if (st.chain.length) use('rate step=&x*n');
       ref(st.driver);
+    } // a tap (decision 040): by pulse or beat, by note value, of a named meter
+    else if (st?.kind === 'tap') {
+      use(st.tap.kind === 'pulse' || st.tap.kind === 'beat' ? 'rate step=pulse' : 'rate step=16n');
+      if (st.meter) (use('rate step=&m:16n'), ref(st.meter));
     }
     // map=
     const m = d.map;

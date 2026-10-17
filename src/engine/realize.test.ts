@@ -371,7 +371,8 @@ describe('lullaby', () => {
   it('loops in whole bars: 16 bars of 3/4 — the bass a bar a step, the tune with it', () => {
     expect(r.cells.get('song')!.steps).toBe(16 * 6);
     expect(r.cells.get('roots')!.steps).toBe(16); // (the shortener divided out its ×3: a bar a step)
-    const lap = (n: string) => r.cells.get(n)!.steps / r.cells.get(n)!.rate;
+    // (in seconds: each taps the bar its own way, the tune by the eighth, the bass by the bar)
+    const lap = (n: string) => r.cells.get(n)!.steps / (r.clocks.get(r.cells.get(n)!.clock!)!.perSecond * r.cells.get(n)!.rate);
     expect(lap('roots')).toBeCloseTo(lap('song'), 9);
   });
 });
@@ -456,7 +457,7 @@ describe('a turning table comes round after its own length; cycle= says otherwis
   it('a braid of chords comes round after its chords: the Prelude without its cycle=', () => {
     // (as the Prelude was written before: one table of 95 numbers, turned five at a time, cycle= its length)
     const p = PRESETS.prelude.source;
-    const line = /^&chords step=&bar\/4 (\[.*)$/m.exec(p)!;
+    const line = /^&chords step=1m (\[.*)$/m.exec(p)!;
     const n = line[1]
       .replace(/[[\],]/g, ' ')
       .trim()
@@ -698,7 +699,7 @@ describe('a voice’s own env= and pitch=', () => {
 });
 
 describe('swing: a meter driven by the bar, its intervals free', () => {
-  const src = '&bar scan(1 1 1 1) step=120bpm\n&swing scan(free(2, 1..3) 1) step=&bar*2\n&t step=&swing 0 1 2 3\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t * &v]';
+  const src = '&bar scan(1 1 1 1) step=120bpm\n&swing scan(free(2, 1..3) 1) step=8n\n&t step=&swing:pulse 0 1 2 3\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t * &v]';
   it('two eighths a beat, long then short: 2:1 is the triplet swing', () => {
     const r = compileSource(src);
     expect(r.diagnostics).toEqual([]);
@@ -790,7 +791,7 @@ describe('Metronome: any meter — the bar written as levels (meter(…)), read 
     expect(meterLevels('4/4', 2)).toBe('*.+.+.+.');
     expect(meterLevels('4/4', 4)).toBe('*,.,+,.,+,.,+,.,');
     expect(meterLevels('3/4', 3)).toBe('*..+..+..');
-    expect(meterLevels('7/8', 1)).toBe('*.+.+..');
+    expect(meterLevels('7/8', 1)).toBe('*..+.+.'); // (3+2+2, decision 040)
     expect(meterLevels('*.+.+..', 1)).toBe('*.+.+..');
   });
 });

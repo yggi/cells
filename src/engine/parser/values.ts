@@ -1,5 +1,5 @@
 /** The values with a syntax of their own: step= and loop= (rates, clocks, chains), map= (kinds, grids, tables). */
-import type { MapSpec, RateOp, StepSpec } from '../ast';
+import type { MapSpec, RateOp, StepSpec, Tap } from '../ast';
 import type { LineScanner } from './scanner';
 import { parseFree } from './free';
 import { syntax, type Syntax } from './syntax';
@@ -32,6 +32,21 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   ),
   syntax(
     'rate',
+    'step=pulse · step=beat · step=pulse*k · step=beat*k',
+    "A tap of the piece's main meter (decision 040): each pulse (the numerator: 7/8 has seven), each beat (what is counted: 6/8 has two, 7/8 three unequal), or each in k equal steps; it comes round at the bar.",
+    ['&tune step=pulse 0 2 4', '&hats step=pulse*2 0!8', '&chords step=beat [0,2,4]'],
+    'time.md',
+  ),
+  syntax(
+    'rate',
+    'step=16n · step=8t · step=4n. · step=1m',
+    'A tap by note value: 1n 2n 4n 8n 16n 32n, triplets (4t 8t 16t), dotted (2n. 4n. 8n.), the bar (1m); one longer than what is left of the bar is cut at the bar line. cycle=n runs it n bars before it comes round.',
+    ['&drums step=16n 0 ~ 1 ~', '&tresillo step=4n. 0 0 0', '&roots step=1n cycle=4 0 5 7'],
+    'time.md',
+  ),
+  syntax('rate', 'step=&m:16n', 'A tap of another meter than the main one: step=&m:pulse, &m:beat*3, &m:8n.', ['&comp step=&bar2:8n 0 2'], 'time.md'),
+  syntax(
+    'rate',
     'step=free(r, lo..hi) · step=free(marking)',
     'A rate left free: a slider, with units (free(90bpm, 60..240)), or a tempo marking (free(adagio)).',
     ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&bar scan(4 4 4 4) step=free(adagio)'],
@@ -39,8 +54,36 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   ),
 ];
 
+/** A tap's word (decision 040): pulse, beat, a note value (16n, 8t, 4n.) or the bar (1m); null if there is none here. */
+function tapWord(s: LineScanner): Tap | null {
+  const w = s.match(/(?:pulse|beat|1m|(?:1|2|4|8|16|32|64)(?:n\.?|t))(?![A-Za-z0-9_.])/y);
+  if (w === null) return null;
+  if (w === 'pulse' || w === 'beat') return { written: w, kind: w };
+  if (w === '1m') return { written: w, kind: 'bar' };
+  const n = parseInt(w, 10);
+  const whole = w.endsWith('.') ? 3 / (2 * n) : w.endsWith('t') ? 2 / (3 * n) : 1 / n;
+  return { written: w, kind: 'note', whole };
+}
+
+/** A chain of *n and /n, read left to right: *2 twice per step, /2 once per two steps, *3/2 three per two. */
+function rateChain(s: LineScanner): { ratio: number; chain: RateOp[] } {
+  let ratio = 1;
+  const chain: RateOp[] = [];
+  while (s.peek() === '*' || s.peek() === '/') {
+    const op = s.text[s.i++];
+    const at = s.i;
+    const n = s.match(/[0-9]+(?:\.[0-9]+)?|\.[0-9]+/y);
+    if (n === null || !(parseFloat(n) > 0)) s.fail(`a positive number after ${op}`, at);
+    ratio = op === '*' ? ratio * parseFloat(n) : ratio / parseFloat(n);
+    chain.push({ op: op === '*' ? '×' : '÷', n: parseFloat(n!) });
+  }
+  return { ratio, chain };
+}
+
 export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   const start = s.i;
+  const tap = whole ? null : tapWord(s);
+  if (tap) return { whole, kind: 'tap', meter: null, tap, ...rateChain(s), span: s.span(start) };
   if (s.text.startsWith('free(', s.i)) {
     const f = parseFree(s, whole ? 'loop' : 'step', true);
     const rate = perSecond(f.value, f.unit);
@@ -61,18 +104,14 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   const driver = s.cellRef(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`, `in ${what}=`);
   if (driver.pick || driver.shift) s.fail(`${what}= takes a whole cell`, driver.span.col - 1, driver.span.len);
   if (cycle) s.expect(')', `')' to close cycle(&${driver.name})`);
-  // a chain of *n and /n, read left to right: *2 twice per step, /2 once per two steps, *3/2 three per two
-  let ratio = 1;
-  const chain: RateOp[] = [];
-  while (s.peek() === '*' || s.peek() === '/') {
-    const op = s.text[s.i++];
-    const at = s.i;
-    const n = s.match(/[0-9]+(?:\.[0-9]+)?|\.[0-9]+/y);
-    if (n === null || !(parseFloat(n) > 0)) s.fail(`a positive number after ${op}`, at);
-    ratio = op === '*' ? ratio * parseFloat(n) : ratio / parseFloat(n);
-    chain.push({ op: op === '*' ? '×' : '÷', n: parseFloat(n!) });
+  // a tap of a named meter: step=&bar2:16n
+  if (!cycle && !whole && s.peek() === ':') {
+    s.i++;
+    const named = tapWord(s);
+    if (!named) s.fail(`&${driver.name}: taps a meter by pulse, beat or a note value (&${driver.name}:pulse, &${driver.name}:beat, &${driver.name}:16n, &${driver.name}:1m)`);
+    return { whole, kind: 'tap', meter: driver, tap: named!, ...rateChain(s), span: s.span(start) };
   }
-  return { whole, kind: 'driven', driver, cycle, ratio, chain, span: s.span(start) };
+  return { whole, kind: 'driven', driver, cycle, ...rateChain(s), span: s.span(start) };
 }
 
 type MapWord = Exclude<MapSpec['kind'], 'table' | 'edo' | 'midi'> | 'edo' | 'midi';

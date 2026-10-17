@@ -5,9 +5,10 @@
  * - **The grid**: the coarsest step (a quarter note, an eighth, a triplet … down to a 64th) that every start falls on,
  *   within a 96th of a quarter (and an eighth of the step); a file played in, whose starts fall on none, is laid on sixteenths and says how many
  *   notes moved.
- * - **The time**: one meter for the whole piece, `&tempo scan(…) step=free(…bpm) beat=… laps=1`, a step each grid step,
- *   each as long as the file's tempo map makes it (a scan's steps are its weights against their mean), so a tempo
- *   change is a change of weight, as BWV 847 writes its own; laps=1, so the piece ends.
+ * - **The time**: one meter for the whole piece, `&tempo scan(…) step=free(…bpm) laps=1`, a step each grid step (its
+ *   bpm counts them: a scan's beats are its steps, decision 040), each as long as the file's tempo map makes it (a
+ *   scan's steps are its weights against their mean), so a tempo change is a change of weight, as BWV 847 writes its
+ *   own; laps=1, so the piece ends. Every line taps it by the pulse (`step=pulse`, `step=pulse/2`).
  * - **The lines**: a line a track and channel (a format 0 file's channels apart), named after the track. Notes that start
  *   and end together are a chord; one that overlaps another goes in a line of its own beside it (`&lead2`), so every
  *   note is written. A melodic note is its key in semitones from C4, on a voice at C4; channel 10 is drums, each note

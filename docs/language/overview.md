@@ -16,7 +16,7 @@ One cell per line; attributes go anywhere.
 &bar scan(27 23 26 24) step=84bpm                  # the clock, a bent 4/4 bar
 &key step=cycle(&theme) stride=7                   # the 12; a fifth per pass of &theme
 &scale over=&key scan(2 1 2 2 1 2 2) step=cycle(&key)   # Aeolian; a degree per circle of keys
-&theme over=&scale step=&bar 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
+&theme over=&scale step=4n 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
 
 &lead s=saw loop=261.63 lpf=2200          # a voice
 &vibrato loop=5 0 .1 .15 .1 0 -.1 -.15 -.1         # a pitch, ±0.15 semitones, 5 times a second
@@ -69,7 +69,7 @@ Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decisi
 
 ```cells
 &bar scan(1 1 1 1) step=120bpm                                 # setcps(.5): this meter's own clock
-&tune over=scale("C:minor:pentatonic") step=&bar*2 0 2 4 2 [3 4] ~ 4 _
+&tune over=scale("C:minor:pentatonic") step=8n 0 2 4 2 [3 4] ~ 4 _
 &lead sound=saw loop=C4 cutoff=1200                           # sound= and cutoff= read as s= and lpf=
 &mix [&tune * &lead, &tune^2 * &lead * .5]                     # n(…).scaleTranspose(2), quieter
 ```

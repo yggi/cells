@@ -276,7 +276,7 @@ function mixSelectors(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): void {
     const t = d.over ? decls.get(d.over.name) : undefined;
     if (!t || t.braid.kind !== 'list' || !t.braid.tokens.length || !t.braid.tokens.every((x) => x.atom.kind === 'ref' && isMix(decls.get(x.atom.name)))) continue;
     ctx.error(
-      `A selector switches taps of a meter's bus (decision 016): &${d.name} over=&${t.name} reads mixes. Write &${t.name} step=&bar with a tap per part (&${t.name} step=&bar &keysBar &drumBar), step each part's cells by its tap (step=&keysBar), and play the parts straight into the sound card`,
+      `A selector switches taps of a meter's bus (decision 016): &${d.name} over=&${t.name} reads mixes. Write &${t.name} step=4n with a tap per part (&${t.name} step=4n &keysBar &drumBar), step each part's cells by its tap (step=&keysBar), and play the parts straight into the sound card`,
       d.over!.span,
     );
     ctx.broken.add(d.name);

@@ -44,7 +44,7 @@ describe('plugins', () => {
     ]);
   });
   it('one a cell shows is quiet', () => {
-    expect(messages('&bar scan(1 1) step=1 show=ring\n&mel step=&bar 0 2\n&v s=sine\n&out map=sample [&mel * &v]\n' + block)).toEqual([]);
+    expect(messages('&bar scan(1 1) step=1 show=ring\n&mel step=4n 0 2\n&v s=sine\n&out map=sample [&mel * &v]\n' + block)).toEqual([]);
   });
 });
 
@@ -111,7 +111,7 @@ describe('a pick that takes nothing', () => {
 });
 
 describe('a rate left free(…)', () => {
-  const src = (hi: number) => `&bar scan(1 1 1 1) step=free(100bpm, 60..${hi})\n&mel step=&bar 0 2 4 7\n&v s=sine\n&out map=sample [&mel * &v]`;
+  const src = (hi: number) => `&bar scan(1 1 1 1) step=free(100bpm, 60..${hi})\n&mel step=4n 0 2 4 7\n&v s=sine\n&out map=sample [&mel * &v]`;
   it('has a slider that stops where the cap does, with a warning', () => {
     const r = compileSource(src(9_999_999));
     expect(r.diagnostics.map((d) => d.message)).toEqual([
