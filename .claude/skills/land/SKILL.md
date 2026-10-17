@@ -30,6 +30,7 @@ Every comment posted from a session ends with a blank line, `---` and `_Generate
       One that didn't (a `Closes yggi/<repo>#n` in another repository, a typo) is closed by hand, with a comment naming the pull request: `gh api -X PATCH repos/yggi/<repo>/issues/<n> -f state=closed -f state_reason=completed`.
    2. **Ticked:** a `Part of #n` epic's checklist line for this pull request is ticked, `- [x] … (#<pr>)`, by rewriting the epic's body with that one line changed (`gh api -X PATCH repos/yggi/cells/issues/<n> -F body=@<file>`).
       An epic with no line for it gets one comment naming what landed.
+      A rung of the central roadmap (#81) is ticked there and in its twin, yggi/jambot#358, and the epic's *Where it stands* is brought up to date.
    3. **Follow-ups filed:** each line of the pull request's *Not done / follow-ups* that names work becomes an issue, or is one already and is linked, in the repository where it belongs: a language question here, a workbench one in yggi/cell-studio, Jambot's in yggi/jambot, the wire's in yggi/webmidi, one across the family in yggi/music-commons.
       The issue states its bounds as numbers (the `task` template).
    4. **References right:** an issue or pull request in another repository that the merged pull request mentions by a bare number is written `yggi/<repo>#n`, in its body and its comments; a bare `#n` here always means cells' own.
