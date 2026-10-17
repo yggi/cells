@@ -8,6 +8,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since `v0.3.0`.
+
+## v0.3.0 — 2026-10-17
+
+A line taps the meter by pulse, beat or note value (decision 040), so a change of meter or swing no longer changes what a line means.
+Every example moved to taps and plays the same notes, except the Metronome's 7/8, which now groups 3+2+2.
+Three forms change meaning or warn, and each names its migration below:
+- `step=&bar` warns, and Shorten rewrites it;
+- `beat=` now means a meter's beats;
+- a scan whose entries aren't quarters says so with `pulse=`.
+
+A frontend that looks a cell's clock up as a cell migrates (`clocks.get(c.clock).cell`).
+
 ### Changed
 - **Taps by pulse, beat and note value; a tap comes round at the bar** (#74, decision 040, rung 1 of #15). A compiled `Meter` knows its pulse (`pulses`, the numerator), its beats (`beats`, each in pulses: 6/8 `3 3`, 7/8 `3 2 2`) and the note value of a pulse (`unit`, the denominator; a scan's is 4). A line taps it: `step=pulse`, `step=pulse*k`, `step=beat`, `step=beat*k`, note values `1n` … `32n`, triplets `4t 8t 16t`, dotted `2n. 4n. 8n.`, the bar `1m`, with a chain as on any clock (`1m/4`); of the main meter (the first in the text with a tempo of its own, `CompileResult.mainMeter`) or a named one (`step=&bar2:16n`). A note value longer than what is left of the bar is cut at the bar line; `cycle=n` on a tap runs it n bars. A tap is a clock of its own (`Clock.tap`: its positions in the meter's steps, laid through the meter's time map), named `meter:tap` (`bar:16n`), its cell the meter; a tapped cell's `step.driver` is the meter and `step.tap` the tap as written. A frontend that looks a cell's clock up as a cell (`cells.get(c.clock)`) migrates to `clocks.get(c.clock).cell`.
 - **`step=&bar` warns** where `&bar` is a meter ("tap the meter by pulse, beat or a note value"), naming the tap that says the same; it plays as before. **Shorten writes the migration** (`taps`, a suggestion of kind `tap`): `step=&bar*2` → `step=8n`, `&bar/4` → `1m`, `&bar*3/4` → `2t`, a meter stepped by another → `step=&swing:pulse`, offered where the piece plays the same notes. Every example and doc moved to taps this way; no example's notes moved but the two below.
