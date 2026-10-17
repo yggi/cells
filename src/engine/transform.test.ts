@@ -37,6 +37,9 @@ describe('a transform, spelt as written', () => {
     expect(rate({ per: 'cycle' })).toBe('⟳');
     expect(rate({ whole: true, per: 'cycle', by: [{ op: '×', n: 2 }] })).toBe('loop ⟳×2');
     expect(rate({ by: [{ op: '÷', n: 2 }], belt: 30 })).toBe('÷2 · belt');
+    // (a tap, as written, in place of the meter's own steps: #92)
+    expect(rate({ tap: '8n', belt: 30 })).toBe('8n · belt');
+    expect(rate({ tap: '16n', by: [{ op: '×', n: 2 }] })).toBe('16n ×2');
   });
 
   it('steps in order', () => {

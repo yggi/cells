@@ -54,6 +54,9 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   ),
 ];
 
+/** Whether a tap's word starts here (a time parameter reads one as a length: delaytime=8n). */
+export const atTap = (s: LineScanner): boolean => /^(?:pulse|beat|1m|(?:1|2|4|8|16|32|64)(?:n\.?|t))(?![A-Za-z0-9_.])/.test(s.text.slice(s.i));
+
 /** A tap's word (decision 040): pulse, beat, a note value (16n, 8t, 4n.) or the bar (1m); null if there is none here. */
 function tapWord(s: LineScanner): Tap | null {
   const w = s.match(/(?:pulse|beat|1m|(?:1|2|4|8|16|32|64)(?:n\.?|t))(?![A-Za-z0-9_.])/y);
@@ -101,7 +104,7 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   if (s.peek() === '{') s.fail('{&x} is now written cycle(&x)');
   const cycle = s.match(/cycle\(/y) !== null;
   const what = whole ? 'loop' : 'step';
-  const driver = s.cellRef(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`, `in ${what}=`);
+  const driver = s.cellRef(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`, `in ${what}=`, true);
   if (driver.pick || driver.shift) s.fail(`${what}= takes a whole cell`, driver.span.col - 1, driver.span.len);
   if (cycle) s.expect(')', `')' to close cycle(&${driver.name})`);
   // a tap of a named meter: step=&bar2:16n

@@ -27,6 +27,8 @@ export interface Meter {
     readonly counted?: number;
     /** swing= (#18): the levels that lean, coarse to fine, each a division of a beat (`swingAt`). */
     readonly swing?: readonly SwingLevel[];
+    /** legato= by level (#94): the share of a note's held length a line tapping it sounds when it states none (a share, not a lean). */
+    readonly legato?: readonly SwingLevel[];
 }
 /**
  * A level of a meter that leans (#18, decision 040's `swing=8n:.67`): its divisions as a note value (`8n`), and the share
@@ -92,3 +94,9 @@ export declare function meterOfScan(steps: readonly number[]): Meter;
  * (`1n` in 3/4: one a bar; `4n.` in 4/4: 3+3+2 eighths), `1m` each bar. The tap comes round after them.
  */
 export declare function tapPositions(m: Meter, tap: Tap, bars?: number): number[];
+/**
+ * The share a meter gives a line that taps it and states no legato= (#94): its level for the tap's step, the finest at or
+ * above it (an unequal beat by its longest); 1 when it has none. `tap` as written (`16n`, `pulse`, `beat`, `1m`), `ratio`
+ * the tap's chain (`16n*2`: 2).
+ */
+export declare function tapShare(m: Meter, tap: string, ratio: number): number;

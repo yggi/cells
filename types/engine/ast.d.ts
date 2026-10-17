@@ -425,6 +425,11 @@ export interface CellDecl {
         readonly level: string;
         readonly share: number;
     }[];
+    /** legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none. */
+    readonly legato?: readonly {
+        readonly level: string;
+        readonly share: number;
+    }[];
     /** dough parameters (s=saw lpf=1800 …): a cell with any of these is a voice. */
     readonly params: Readonly<Record<string, number | string>>;
     readonly paramSpans: Readonly<Record<string, Span>>;

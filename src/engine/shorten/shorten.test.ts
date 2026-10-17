@@ -65,6 +65,25 @@ describe('shorten', () => {
     expect(next).toContain('&t step=&bar 4 2 0@2 ~');
     expect(sounds(next)).toEqual(sounds(src));
   });
+  it('fractions of a tap: step=8n held twice is step=4n, and the old spelling is offered as a tap too (#92)', () => {
+    const bar = '&bar meter("4/4") step=120bpm\n';
+    const held = '4@2 2@2 0@2 5@2';
+    for (const [step, want] of [
+      ['8n', '&t step=4n 4 2 0 5'],
+      ['8t', '&t step=4t 4 2 0 5'],
+      ['pulse*2', '&t step=pulse 4 2 0 5'],
+      ['beat*4', '&t step=beat*2 4 2 0 5'],
+      ['1m/2', '&t step=1m/4 4 2 0 5'],
+      ['&bar*2', '&t step=4n 4 2 0 5'],
+    ] as const) {
+      const src = `${bar}&t step=${step} ${held}${tail}`;
+      const next = first(src, 'fraction').apply(src);
+      expect(next, step).toContain(want);
+      expect(sounds(next), step).toEqual(sounds(src));
+    }
+    // (a tap that can't be slowed whole offers nothing: 1m held twice is 1m/2, but pulse*3 held twice is not a whole tap)
+    expect(shorten(`${bar}&t step=pulse*3 ${held}${tail}`).some((x) => x.kind === 'fraction')).toBe(false);
+  });
   it('subsequences: a run of them counted, a fraction divided outside them only (decision 027)', () => {
     const run = '&t step=4 [0 2] [0 2] [0 2] 4' + tail;
     expect(first(run, 'run').apply(run)).toContain('&t step=4 [0 2]!3 4');

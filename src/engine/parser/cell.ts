@@ -9,7 +9,7 @@ import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE, parseFree } from './free';
 import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
-import { parseMap, parseStep } from './values';
+import { atTap, parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
 
 /** What a cell's attributes have set so far, as its line is read. */
@@ -34,6 +34,7 @@ interface Body {
   seed: number | null;
   size: number | null;
   swing: { level: string; share: number }[] | null;
+  legato: { level: string; share: number }[] | null;
   readonly params: Record<string, number | string>;
   readonly paramSpans: Record<string, Span>;
   readonly paramCells: Record<string, ParamCells>;
@@ -298,34 +299,54 @@ const readCellParam: Reader = (s, b, word) => {
 };
 
 /**
- * swing= (#18): by level, `swing=8n:.67` (a meter's eighths, each pair's second two thirds through), several levels coarse
+ * swing= (#18): by level, `swing=8n:.67` (a meter's eighths, each pair's second two thirds through; a share is a decimal or a
+ * fraction, `8n:2/3`, decision 042), several levels coarse
  * to fine, `swing=8n:.6,16n:.55`, one level alone left free, `swing=8n:free(.5, .5..75)`; bare, `swing=.6`, as any number.
+ * legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none; bare,
+ * `legato=.5`, a line's own.
  */
-const readSwing: Reader = (s, b, word) => {
+const readLevels: Reader = (s, b, word) => {
   if (!/^[1-9][0-9]*(?:n\.?|t):/.test(s.text.slice(s.i))) return readParam(s, b, word);
   const vs = s.i;
   const levels: { level: string; share: number }[] = [];
   for (;;) {
     const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
-    if (level === null) s.fail('a level after the comma, a note value and a share: swing=8n:.6,16n:.55');
+    if (level === null) s.fail(`a level after the comma, a note value and a share: ${word}=8n:.6,16n:.55`);
     s.i++; // (:)
     let share: number;
     if (s.text.startsWith('free(', s.i)) {
       const f = parseFree(s, 'param', false);
       (f as { param?: string }).param = word;
       share = f.value;
-      if (levels.length || s.peek() === ',') s.fail('a share left free(…) is one level alone: swing=8n:free(.5, .5..75)', vs, s.i - vs);
-    } else {
-      const n = s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y);
-      if (n === null) s.fail(`a share after ${level}:, from 0 to 1 (.5 straight, .67 the triplet swing): swing=${level}:.67`);
+      if (levels.length || s.peek() === ',') s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
+    } else if (word === 'legato') {
+      const n = s.match(/(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?![0-9.])/y);
+      if (n === null) s.fail(`a share after ${level}:, of each note's held length (.5 staccato, 1 as written): legato=${level}:.5`);
       share = parseFloat(n!);
+    } else {
+      const at = s.i;
+      const frac = s.match(/[0-9]+\/[0-9]+(?![0-9.])/y);
+      if (frac !== null) {
+        const [num, den] = frac.split('/').map(Number) as [number, number];
+        if (den === 0) s.fail(`a share's denominator can't be 0: swing=${level}:2/3`, at, frac.length);
+        if (num > den) s.fail(`a share is from 0 to 1, and ${frac} is above it: swing=${level}:2/3`, at, frac.length);
+        share = num / den;
+      } else {
+        const n = s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y);
+        if (n === null) s.fail(`a share after ${level}:, from 0 to 1, a decimal or a fraction (.5 straight, .67 or 2/3 the triplet swing): swing=${level}:2/3`);
+        share = parseFloat(n!);
+      }
     }
     levels.push({ level: level!, share });
     if (s.peek() !== ',') break;
     s.i++;
   }
-  b.swing = levels;
-  b.params[word] = levels[0].share;
+  // (a meter's legato by level is its lines' default, not a share of its own notes: no params.legato)
+  if (word === 'legato') b.legato = levels;
+  else {
+    b.swing = levels;
+    b.params[word] = levels[0].share;
+  }
   b.paramSpans[word] = s.span(vs);
 };
 
@@ -356,10 +377,10 @@ function readParam(s: LineScanner, b: Body, key: string): void {
     b.paramSpans[key] = s.span(vs);
     return;
   }
-  // a time as a clock: delaytime=&bar*2
-  if (s.peek() === '&' && TIME_PARAMS.has(key)) {
+  // a time as a clock, or a tap's length: delaytime=&bar*2, delaytime=8n
+  if ((s.peek() === '&' || atTap(s)) && TIME_PARAMS.has(key)) {
     const st = parseStep(s, false);
-    if (st.kind !== 'driven') s.fail(`${key}= takes seconds, or a clock: ${key}=&bar*2`, vs, s.i - vs);
+    if (st.kind !== 'driven' && st.kind !== 'tap') s.fail(`${key}= takes seconds, a clock or a tap: ${key}=&bar*2, ${key}=8n`, vs, s.i - vs);
     b.paramClocks[key] = st;
     b.paramSpans[key] = s.span(vs);
     return;
@@ -510,6 +531,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed: null,
     size: null,
     swing: null,
+    legato: null,
     params: {},
     paramSpans: {},
     paramCells: {},
@@ -560,7 +582,10 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
         );
       }
       seen.set(slot, word);
-      const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (key === 'swing' ? readSwing : CELL_PARAMS.has(key) ? readCellParam : readParam);
+      // (clip= is Strudel's other name for legato=: read as legato=, and said, since cells keeps one spelling: Normalise
+      // writes legato=, #94)
+      if (word === 'clip') s.warn("clip= is Strudel's name for legato= — write legato= (Normalise rewrites it)", at, word.length);
+      const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (key === 'swing' || key === 'legato' ? readLevels : CELL_PARAMS.has(key) ? readCellParam : readParam);
       read(s, b, key, at);
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
       continue;
@@ -655,6 +680,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed,
     size,
     swing,
+    legato,
     params,
     paramSpans,
     paramCells,
@@ -685,6 +711,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed,
     size,
     ...(swing ? { swing } : {}),
+    ...(legato ? { legato } : {}),
     params,
     paramSpans,
     paramCells,

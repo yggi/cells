@@ -128,7 +128,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 
 ## Parameters
 
-Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Strudel's and dough's other names for a parameter that means the same here read as ours (`sound` → `s`, `cutoff` → `lpf`, `ctf` → `lpf`, `lp` → `lpf`, `resonance` → `lpq`, `hcutoff` → `hpf`, `hp` → `hpf`, `hresonance` → `hpq`, `verb` → `room`, `reverb` → `room`, `delayt` → `delaytime`, `dt` → `delaytime`, `delayfb` → `delayfeedback`, `dfb` → `delayfeedback`): the text keeps what is written, and an alias beside ours is the parameter given twice ([decision 027](../decisions/027-on-top-of-strudel.md)).
+Parameters belong to voices (the sound ones keep dough's names) and to physical cells. A word where a number belongs, or a parameter on a cell where it does nothing, is a warning. Strudel's and dough's other names for a parameter that means the same here read as ours (`sound` → `s`, `cutoff` → `lpf`, `ctf` → `lpf`, `lp` → `lpf`, `resonance` → `lpq`, `hcutoff` → `hpf`, `hp` → `hpf`, `hresonance` → `hpq`, `verb` → `room`, `reverb` → `room`, `delayt` → `delaytime`, `dt` → `delaytime`, `delayfb` → `delayfeedback`, `dfb` → `delayfeedback`, `clip` → `legato`): the text keeps what is written, and an alias beside ours is the parameter given twice ([decision 027](../decisions/027-on-top-of-strudel.md)).
 
 - `s=sine|tri|triangle|saw|sawtooth|square|pulse|white|pink|brown`: Sound source: sine tri saw square pulse white pink brown — on a voice; it makes the cell a voice. [→](sound.md)
 - `lpf=n` · `lpf=free(n, lo..hi)` · `lpf=&x` · `lpf=lo..hi * &a * &b`: Low-pass cutoff, Hz — on a voice; it makes the cell a voice. [→](sound.md)
@@ -137,9 +137,10 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `hpq=n` · `hpq=free(n, lo..hi)` · `hpq=&x` · `hpq=lo..hi * &a * &b`: High-pass resonance — on a voice; it makes the cell a voice. [→](sound.md)
 - `room=n` · `room=free(n, lo..hi)` · `room=&x` · `room=lo..hi * &a * &b`: Reverb send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `delay=n` · `delay=free(n, lo..hi)` · `delay=&x` · `delay=lo..hi * &a * &b`: Delay send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
-- `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — on a voice; it makes the cell a voice. [→](sound.md)
+- `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — or a tap: 8n, 4n. — on a voice; it makes the cell a voice. [→](sound.md)
 - `delayfeedback=n` · `delayfeedback=free(n, lo..hi)`: Echo feedback 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `glide=n` · `glide=free(n, lo..hi)`: Tied notes (each starting as the one before ends) play as one: its envelope once, each next a slide there over this many seconds (dough’s glide; 0 or none: each note its own) — on a voice. [→](sound.md)
+- `legato=n` · `legato=free(n, lo..hi)` · `legato=&x` · `legato=lo..hi * &a * &b` · `on a meter, its lines’ default by level: legato=16n:r,4n:r`: On a line: each note sounds its held length (@n, _) times this share, Strudel’s legato (.5 staccato, 1 as written, 1.5 into the next): a number, free(), or a cell of shares read at each onset (legato=&artic); nothing cuts a note at the bar line — on a meter (step= a rate) or a driven cell (step=&x) [→](sound.md)
 - `pan=n` · `pan=free(n, lo..hi)`: Where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades — on a voice; it makes the cell a voice. [→](sound.md)
 - `distort=n` · `distort=free(n, lo..hi)`: Distortion: 0 clean, .3 gritty, 1 and more harsh — on a voice; it makes the cell a voice. [→](sound.md)
 - `crush=n` · `crush=free(n, lo..hi)`: Bit depth: 16 clean, 8 grainy, 3 and fewer: rubble — on a voice; it makes the cell a voice. [→](sound.md)
@@ -167,7 +168,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `damping=n` · `damping=free(n, lo..hi)`: A belt’s damping: how soon its swinging dies (0 rings on, high creeps) — on a driven cell (step=&x) [→](physics.md)
 - `slip=n` · `slip=free(n, lo..hi)`: A belt’s grip: past this pull it slips, and the cell falls behind for good — on a driven cell (step=&x) [→](physics.md)
 - `write=&cell`: A tape: what its write head records (write=&melody); it moves with its step= — on a tape (write=) [→](physics.md)
-- `length=n` · `length=free(n, lo..hi)` · `length=&clock/n`: A tape: how long its loop is, in seconds of tape (or a clock: length=&bar/4); none, an open reel — on a tape (write=) [→](physics.md)
+- `length=n` · `length=free(n, lo..hi)` · `length=&clock/n`: A tape: how long its loop is, in seconds of tape (or a clock: length=&bar/4, or a tap: length=1m); none, an open reel — on a tape (write=) [→](physics.md)
 - `erase=n` · `erase=free(n, lo..hi)`: A tape: how much of what was there each pass under the write head wipes (1 all, .3 leaves ghosts) — on a tape (write=) [→](physics.md)
 - `tone=n` · `tone=free(n, lo..hi)`: A sound tape: its loss — each pass through the loop darker (Hz: 7000 bright, 1500 worn) — on a tape (write=) [→](physics.md)
 - `drive=n` · `drive=free(n, lo..hi)`: A sound tape: how hard it saturates each pass (0 clean, .5 warm, 1 crushed) — on a tape (write=) [→](physics.md)
@@ -176,7 +177,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `printgap=n` · `printgap=free(n, lo..hi)`: A sound tape: how far before each head the print-through sits (tape-seconds, .6) — on a tape (write=) [→](physics.md)
 - `dropout=n` · `dropout=free(n, lo..hi)`: A sound tape: brief gaps in the playback, about this many a second — on a tape (write=) [→](physics.md)
 - `play=&cell`: A read head: the tape it reads (play=&tape), at= tape-seconds after the write head; a gate: the notes it plays on the voices in its braid (play=&tune) — on a read head (play=) or a gate (play= with a braid) [→](physics.md)
-- `at=n` · `at=free(n, lo..hi)` · `at=&clock/n`: A read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar) — on a read head (play=) [→](physics.md)
+- `at=n` · `at=free(n, lo..hi)` · `at=&clock/n`: A read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar, or a tap: at=4n) — on a read head (play=) [→](physics.md)
 - `wander=n` · `wander=free(n, lo..hi)`: A read head: how far it wanders either way (tape-seconds) — a flying head — on a read head (play=) [→](physics.md)
 - `wanderhz=n` · `wanderhz=free(n, lo..hi)`: A read head: how fast it wanders (times a second) — on a read head (play=) [→](physics.md)
 - `level=n` · `level=free(n, lo..hi)`: On a gate: how loud, a product of level cells and a gain (level=&accent*&duck*.4) — on a gate (play= with a braid) [→](mix.md)

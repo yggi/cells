@@ -89,13 +89,21 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   hpq: sound('high-pass resonance', { moves: true }),
   room: sound('reverb send 0–1', { moves: true }),
   delay: sound('delay send 0–1', { moves: true }),
-  delaytime: sound('echo time, seconds — or a clock: &bar*2 (an eighth at the tempo)', { clock: true }),
+  delaytime: sound('echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — or a tap: 8n, 4n.', { clock: true }),
   delayfeedback: sound('echo feedback 0–1'),
   glide: {
     help: 'tied notes (each starting as the one before ends) play as one: its envelope once, each next a slide there over this many seconds (dough’s glide; 0 or none: each note its own)',
     doc: 'sound.md',
     value: 'number',
     on: ['voice'],
+  },
+  legato: {
+    help: 'on a line: each note sounds its held length (@n, _) times this share, Strudel’s legato (.5 staccato, 1 as written, 1.5 into the next): a number, free(), or a cell of shares read at each onset (legato=&artic); nothing cuts a note at the bar line',
+    doc: 'sound.md',
+    value: 'number',
+    on: ['clock', 'driven'],
+    moves: true,
+    form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
   },
   pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades'),
   distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
@@ -148,7 +156,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   slip: physics('a belt’s grip: past this pull it slips, and the cell falls behind for good', ['driven']),
   // tapes and their heads
   write: physics('a tape: what its write head records (write=&melody); it moves with its step=', ['tape'], { value: 'cell' }),
-  length: physics('a tape: how long its loop is, in seconds of tape (or a clock: length=&bar/4); none, an open reel', ['tape'], { clock: true }),
+  length: physics('a tape: how long its loop is, in seconds of tape (or a clock: length=&bar/4, or a tap: length=1m); none, an open reel', ['tape'], { clock: true }),
   erase: physics('a tape: how much of what was there each pass under the write head wipes (1 all, .3 leaves ghosts)', ['tape']),
   tone: physics('a sound tape: its loss — each pass through the loop darker (Hz: 7000 bright, 1500 worn)', ['tape'], { hz: true }),
   drive: physics('a sound tape: how hard it saturates each pass (0 clean, .5 warm, 1 crushed)', ['tape']),
@@ -161,7 +169,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     ['head', 'gate'],
     { value: 'cell' },
   ),
-  at: physics('a read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar)', ['head'], { clock: true }),
+  at: physics('a read head: how far after the write head it sits, in seconds of tape (or a clock: at=&bar, or a tap: at=4n)', ['head'], { clock: true }),
   wander: physics('a read head: how far it wanders either way (tape-seconds) — a flying head', ['head']),
   wanderhz: physics('a read head: how fast it wanders (times a second)', ['head'], { hz: true }),
   // a gate: a named junction (docs/language/mix.md: a gate)
@@ -222,7 +230,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
  * `size` `sz` `roomsize` `rsize` (a reverb's size; size= is how large a cell is drawn), `dist` (Strudel's
  * distort, on another scale than ours), `fm` `fmi` `fmh` (Strudel's FM is a number on the carrier; ours names a
  * cell, its ratio= on the modulator), `vel` `velocity` (a gate's old spelling here), `att` `dec` `sus` `rel` and
- * the filter envelopes (an envelope is a cell), `legato` `clip` (a note's length; a tie is glide=).
+ * the filter envelopes (an envelope is a cell). Strudel's `clip` is its `legato`, read as ours with a warning (the parser), for Normalise to rewrite (#94, #28).
  */
 export const PARAM_ALIASES: Readonly<Record<string, string>> = {
   sound: 's',
@@ -239,6 +247,7 @@ export const PARAM_ALIASES: Readonly<Record<string, string>> = {
   dt: 'delaytime',
   delayfb: 'delayfeedback',
   dfb: 'delayfeedback',
+  clip: 'legato',
 };
 
 /** A parameter's own name for a key as written: ours for an alias (cutoff → lpf), the key itself otherwise. */
