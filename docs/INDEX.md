@@ -30,5 +30,6 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
   - [notes/10-language-pass.md](notes/10-language-pass.md) — the language pass: the invariants, Strudel and dough, the four primitives (moved from Cell studio)
   - [notes/10-examples-pass.md](notes/10-examples-pass.md) — the examples pass: drums on a kit, no extra mixers (moved from Cell studio)
   - [notes/gate-node.md](notes/gate-node.md) — the gate node: what a gate gates, kits and MIDI as receivers, ports and bands (moved from Cell studio)
+  - [notes/95-chord-in-force.md](notes/95-chord-in-force.md) — the chord in force: how a line reads the chord sounding, four options measured on Jambot's E33 bars, a proposal (`tools/chord-in-force.ts`, #95)
   - [notes/groove-measure.md](notes/groove-measure.md) — swing, agogic and accent measured in the Groove MIDI Dataset, per style and level (`tools/groove.ts`, #19)
   - [notes/swing-research.md](notes/swing-research.md) — swing on several levels: the research, the drums' beat shapes, and a tree of proportions in the meter cell (#18)
