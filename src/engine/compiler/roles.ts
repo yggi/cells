@@ -70,10 +70,9 @@ export function checkRoles(ctx: Ctx, { decls, implicit, taps }: Declared, cells:
       else if (k === 'pan' && typeof d.params.pan === 'number' && (d.params.pan < 0 || d.params.pan > 1))
         warn(`pan=${d.params.pan}: pan runs from 0 (left) to 1 (right); ${d.params.pan < 0 ? 'this plays hard left' : 'this plays hard right'}`, span);
       else if (a?.on && !a.on.some((r) => has.has(r))) warn(`${k}= acts on ${rolesText(a.on)}: on &${d.name} it does nothing`, span);
-      // restart= (decision 032): restart, resume or free; the last two are named, not yet built
+      // restart= (decision 032): restart, resume or free
       else if (k === 'restart' && !RESTARTS.includes(d.params.restart as string))
         warn(`restart=${d.params.restart}: what switching a part on does to its time is restart, resume or free — this plays as restart`, span);
-      else if (k === 'restart' && d.params.restart !== 'restart') warn(`restart=${d.params.restart} is not yet implemented: plays as restart`, span);
       else if (a?.value === 'number' && !c.voice && typeof d.params[k] === 'string') warn(`${k}= takes a number: '${d.params[k]}' does nothing`, span);
     }
     // a gate is its notes (play=), its level and what it plays: its timing and tables are its notes', so these are ignored

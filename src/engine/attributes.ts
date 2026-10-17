@@ -206,7 +206,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   channels: { help: 'a spectrum or waterfall: sum (one, the default) or split (each channel its own)', doc: 'display.md', value: 'word', on: ['scope'] },
   // arranging: what switching a part on does to its time (decision 032)
   restart: {
-    help: 'what switching a part on does to its time (on a selector: for all its taps) — restart (from its top, the default), resume (where it stopped; not yet built), free (its time runs on, only its sound is switched; not yet built)',
+    help: 'what switching a part on does to its time (on a selector: for all its taps) — restart (from its top, the default), resume (where it stopped), free (its time runs on, only its sound is switched)',
     doc: 'time.md',
     value: 'word',
     on: ['tap', 'selector'],

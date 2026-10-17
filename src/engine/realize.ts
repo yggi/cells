@@ -185,6 +185,18 @@ function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number):
   return { ...e, value: o.value, alter: o.alter };
 }
 
+/**
+ * What switching a part on does to its time (decision 032): the policy its tap's line states, else its selector's; with
+ * several selectors on one track, the first that names one other than restart.
+ */
+function restartOf(result: CompileResult, select: Output['select']): 'restart' | 'resume' | 'free' {
+  for (const x of select) {
+    const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart;
+    if (word === 'resume' || word === 'free') return word;
+  }
+  return 'restart';
+}
+
 /** The entries a selector picks right now. */
 export function picksNow(result: CompileResult, statics: Shifts, name: string, seconds: number): Set<number> {
   const c = result.cells.get(name);
@@ -645,16 +657,23 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     // (`minLap`: in a selector's window, from its start, no note before lap 0 plays)
     // (a run starts again every RUN notes along the track, the same wherever a window cuts it: an endless tie ends)
     // (and as sounded: a share under 1, legato=, leaves a gap, so the note before isn't tied)
-    const tied = (i: number, lap: number, minLap: number, base: number): boolean => {
+    const tied = (i: number, lap: number, minLap: number, base: number, notBefore: number): boolean => {
       if (!tie || !single(i) || mod(lap * n + i, RUN) === 0) return false;
       const [k, kl] = before(i, lap);
       const end = kl * t.period + t.events[k].step + t.events[k].duration;
       const start = lap * t.period + t.events[i].step;
-      return single(k) && kl >= minLap && Math.abs(end - start) < EPS && shareAt(base + kl * t.period + t.events[k].step) >= 1 - EPS && !!thrown(result, t, t.events[k], kl);
+      return (
+        single(k) &&
+        kl >= minLap &&
+        base + kl * t.period + t.events[k].step >= notBefore - EPS &&
+        Math.abs(end - start) < EPS &&
+        shareAt(base + kl * t.period + t.events[k].step) >= 1 - EPS &&
+        !!thrown(result, t, t.events[k], kl)
+      );
     };
     // emit: a note, or (glide) the run it starts, up to `bound` (its window's end; `base` the window's first step)
-    const emit = (s: number, e: StepEvent, upto: number, i = -1, lap = 0, base = 0, minLap = 0, bound = Infinity) => {
-      if (i >= 0 && tied(i, lap, minLap, base)) return;
+    const emit = (s: number, e: StepEvent, upto: number, i = -1, lap = 0, base = 0, minLap = 0, bound = Infinity, notBefore = -Infinity) => {
+      if (i >= 0 && tied(i, lap, minLap, base, notBefore)) return;
       const first = make(s, e, upto, bound);
       if (!first) return;
       if (i < 0 || !tie || !single(i)) return void out.push(first);
@@ -664,7 +683,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       for (let guard = 0; guard < RUN; guard++) {
         [j, jl] = j < n - 1 ? [j + 1, jl] : [0, jl + 1];
         const sj = base + jl * t.period + t.events[j].step;
-        if (sj >= bound - EPS || !tied(j, jl, minLap, base)) break;
+        if (sj >= bound - EPS || !tied(j, jl, minLap, base, notBefore)) break;
         const r = thrown(result, t, t.events[j], jl);
         const next = r && make(sj, r, sj + t.events[j].duration, bound);
         if (!next) break;
@@ -697,24 +716,35 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         }
       continue;
     }
-    // picked by selectors: where they all pick it, starting again from its beginning (reading a table splices)
-    let windows = windowsOf(p, t.selects[0], from, until);
-    for (const sel of t.selects.slice(1)) {
-      const other = windowsOf(p, sel, from, until);
-      windows = windows.flatMap((w) => other.flatMap((x) => (Math.max(w.a, x.a) < Math.min(w.b, x.b) ? [{ a: Math.max(w.a, x.a), b: Math.min(w.b, x.b) }] : [])));
-    }
+    // picked by selectors: where they all pick it (reading a table splices). What switching on does to its time is
+    // restart= (decision 032): from its beginning each time (restart), from where it stopped (resume), or on the clock
+    // it was never stopped on (free); `base` is the step its lap 0 begins at, in the window
+    const policy = restartOf(result, t.output.select);
+    const windowsFrom = (a: number): { a: number; b: number }[] => {
+      let ws = windowsOf(p, t.selects[0], a, until);
+      for (const sel of t.selects.slice(1)) {
+        const other = windowsOf(p, sel, a, until);
+        ws = ws.flatMap((w) => other.flatMap((x) => (Math.max(w.a, x.a) < Math.min(w.b, x.b) ? [{ a: Math.max(w.a, x.a), b: Math.min(w.b, x.b) }] : [])));
+      }
+      return ws;
+    };
+    // (resume: the time it spent on before each window, so from the start of play)
+    const windows = windowsFrom(policy === 'resume' ? 0 : from);
+    let held = 0;
     for (const w of windows) {
       const sA = tm.stepAt(w.a) * t.rate;
       const sB = tm.stepAt(w.b) * t.rate;
+      const base = policy === 'free' ? 0 : policy === 'resume' ? sA - held : sA;
+      held += sB - sA;
       const lo = Math.max(c0, sA);
       const hi = Math.min(c1, sB);
       if (hi <= lo) continue;
-      for (let lap = Math.floor((lo - sA) / t.period) - 1; sA + lap * t.period < hi; lap++)
+      for (let lap = Math.floor((lo - base) / t.period) - 1; base + lap * t.period < hi; lap++)
         for (const [i, e] of t.events.entries()) {
-          const s = sA + lap * t.period + e.step;
+          const s = base + lap * t.period + e.step;
           if (lap < 0 || s < lo - EPS || s >= hi - EPS) continue;
           const r = thrown(result, t, e, lap);
-          if (r) emit(s, r, s + e.duration, i, lap, sA, 0, sB);
+          if (r) emit(s, r, s + e.duration, i, lap, base, 0, sB, sA);
         }
     }
   }
