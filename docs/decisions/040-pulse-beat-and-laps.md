@@ -24,7 +24,7 @@ The same discussion settled what happens past the end of a lap, for pitch and fo
 - `pulse=` states a scan's pulse value (`pulse=16n`: its entries sixteenths); its beats then count quarters (owner, 2026-10-17, on #79).
 - `beat=` on a meter states another feel (`meter("4/4") beat=2`, alla breve).
 
-**A line taps the meter by pulse, beat or note value**, never by the meter cell's own steps:
+**A line taps the meter by pulse, beat or note value**, never by the meter cell's own steps (a meter tap, not decision 016's section tap: [time.md](../language/time.md) names both):
 
 - `step=pulse`, `step=pulse*k` (each pulse in k equal steps): in 7/8, `pulse` is 7 equal eighths, `pulse*2` 14 sixteenths.
 - `step=beat`, `step=beat*k` (each beat in k equal steps): in 7/8, `beat` is a dotted quarter and two quarters, `beat*3` nine unequal steps, three eighths and two triplets.
@@ -32,7 +32,7 @@ The same discussion settled what happens past the end of a lap, for pitch and fo
 - They read the piece's main meter; another meter is named: `step=&bar2:16n`.
 - The tree's proportions place the steps; a division the tree doesn't hold is even within its node (measured in the note: no example moves).
 - **Swing never changes pulse or beat**, so it never changes what a tap means.
-- A raw `step=&bar` (the meter cell's own steps) is discouraged: a warning, and Normalise rewrites it.
+- A raw `step=&bar` (the meter cell's own steps) is discouraged: a warning, and Shorten migrates it to a tap. Normalise, the corpus-wide command of [decision 017](017-shorten-and-normalise.md), is not built.
 
 **`cycle=n` counts laps before it comes round:**
 

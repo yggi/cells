@@ -12,7 +12,8 @@
 #   network failure, or made right after `npm run verify` by hand (its `postverify` stamps the tree,
 #   tools/verified.sh), doesn't run it again. The hook stamps only the tree its own run saw (tools/verified.sh, `begin`
 #   before the check and `end` after a pass): when a file changed while the check ran, the push goes through unstamped.
-# - A run that passed prints one line, with the number of tests that passed, for the pull request to quote.
+# - A run that passed prints one line, with the number of tests that passed, for the pull request to quote; so does a
+#   push of a tree that passed already, from the count kept with its stamp (a line `<tree> <tests passed>`).
 # - A run that failed leaves its whole output in the git directory (`cells-verify-failed.log`), named in the message:
 #   the last 40 lines shown may not reach the failure.
 # - Deleting a ref and pushing a tag are not checked.
@@ -47,8 +48,18 @@ gitdir=$(git rev-parse --absolute-git-dir)
 stamps="$gitdir/cells-verified"
 tree=$(git rev-parse 'HEAD^{tree}')
 short=$(git rev-parse --short 'HEAD^{tree}')
-if grep -qx "$tree" "$stamps" 2>/dev/null; then
-  echo "pre-push: tree $short passed verify already, not run again" >&2
+commit=$(git rev-parse --short HEAD)
+# The count of tests kept with the tree's stamp, `?` for a stamp of a tree alone; nothing when the tree has none.
+passed() {
+  line=$(grep -E "^$tree( |\$)" "$stamps" 2>/dev/null | tail -1)
+  [ -n "$line" ] || return 0
+  kept=${line#"$tree"}
+  kept=${kept# }
+  echo "${kept:-?}"
+}
+known=$(passed)
+if [ -n "$known" ]; then
+  echo "pre-push: $commit passed npm run verify already ($known tests passed); not run again" >&2
   exit 0
 fi
 
@@ -78,10 +89,10 @@ fi
 esc=$(printf '\033')
 count=$(sed "s/$esc\[[0-9;]*m//g" "$log" | sed -n 's/^ *Tests  *\([0-9][0-9]*\) passed.*/\1/p' | tail -1)
 rm -f "$log"
-# `postverify` has stamped the tree already when the check was `npm run verify`, and this `end` then finds nothing
-# begun. Neither stamps a tree a file changed in while the check ran.
-sh "$stamp_tool" end
-if ! grep -qx "$tree" "$stamps" 2>/dev/null; then
+# `postverify` has stamped the tree already when the check was `npm run verify`, with the count its reporter kept, and
+# this `end` then finds nothing begun. Neither stamps a tree a file changed in while the check ran.
+sh "$stamp_tool" end "$count"
+if [ -z "$(passed)" ]; then
   echo "pre-push: verify passed, ${count:-an unknown number of} tests, but a file changed while it ran: let through, not stamped" >&2
   exit 0
 fi

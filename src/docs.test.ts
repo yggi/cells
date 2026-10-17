@@ -65,6 +65,22 @@ describe('docs: structure', () => {
   });
 });
 
+/**
+ * The vitest commands that put `-u` (or `--update`) before a path: vitest reads the path as the flag's value and runs
+ * every test (minutes) instead of one file (seconds). The path goes first: `npx vitest run src/engine/snapshot.test.ts -u`.
+ */
+const updateBeforePath = (text: string): string[] => [...text.matchAll(/vitest run (?:-u|--update) +[^\s`-][^\s`]*/g)].map((m) => m[0]);
+
+describe('docs: commands', () => {
+  it('is shown firing: -u before the path takes the path as its value', () => {
+    expect(updateBeforePath('`npx vitest run -u src/engine/snapshot.test.ts`')).toEqual(['vitest run -u src/engine/snapshot.test.ts']);
+    expect(updateBeforePath('`npx vitest run src/engine/snapshot.test.ts -u`')).toEqual([]);
+  });
+
+  for (const page of [...pages, resolve(DOCS, '../AGENTS.md'), resolve(DOCS, '../README.md')])
+    it(`${relative(resolve(DOCS, '..'), page)} gives no vitest command whose -u swallows its path`, () => expect(updateBeforePath(read(page))).toEqual([]));
+});
+
 /** The headings CHANGELOG.md lacks: *Unreleased*, and the version package.json names (the tag a frontend pins). */
 const changelogMisses = (text: string, version: string): string[] => ['Unreleased', `v${version}`].filter((h) => !new RegExp(`^## ${h.replace(/\./g, '\\.')}\\b`, 'm').test(text));
 

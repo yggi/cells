@@ -80,6 +80,8 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 
 ## Laps and selectors
 
+**"Tap" names two things.** A **section tap** is a part of an arrangement, a name in a selector's table that steps the part's cells ([decision 016](../decisions/016-arranging-at-the-input.md), `src/engine/compiler/taps.ts`); a **meter tap** is a line's step read off a meter by pulse, beat or note value (`step=beat`, `step=16n`: [decision 040](../decisions/040-pulse-beat-and-laps.md), being built in [#79](https://github.com/yggi/cells/issues/79)). A pick is a tap in decision 012's sense, a fixed point reading a turning cell ([braid.md](braid.md)).
+
 - **`laps=n`** — a clock plays n laps, then nothing it drives sounds: a piece that ends. The transport stops at the end.
 
 ```cells-fragment
