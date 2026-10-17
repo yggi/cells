@@ -80,11 +80,13 @@ export declare class LineScanner {
     lambda(): string;
     /** `&name`, optionally picked: `&name[0]`, `&name[1:]` (as turned), `&name[$0]` (as written). */
     ref(what: string): Ref;
+    /** At a ':' after the reference starting at `from`: a meter's tap (&bar:16n) is read by step= only, so it fails and says so. */
+    rejectTap(from: number): void;
     /**
      * A reference where `^n` and `^$n` mean nothing: an attribute's cell (over=&k, step=&bar, env=&adsr …) or a line's
      * name. They move a cell a braid plays (and base='s copy); anywhere else they would be dropped, so this warns.
      */
-    cellRef(what: string, where: string): Ref;
+    cellRef(what: string, where: string, tapRead?: boolean): Ref;
     /**
      * After a reference: `^n` moves it n steps of the table it is read through (a degree, relative: degree(&x, n)); `^$n`
      * n steps of the grid after its tables (absolute: semitones on the 12).

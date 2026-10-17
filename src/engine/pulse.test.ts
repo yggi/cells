@@ -204,6 +204,21 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(bar('meter("4/4") step=60bpm')).toBeCloseTo(4, 9);
   });
 
+  it('a tap written outside step= says that only step= reads it, and names it as written (#103)', () => {
+    const cases: [string, string, number][] = [
+      ['in a product', '&bar meter("4/4")\n&tick loop=A4\n&out map=sample [&bar:16n * &tick]', '&out map=sample ['.length + 1],
+      ['in a braid', '&bar meter("4/4")\n&x 0 &bar:beat 2', '&x 0 '.length + 1],
+      ['as an attribute’s value', '&bar meter("4/4")\n&x over=&bar:8n 0', '&x over='.length + 1],
+    ];
+    for (const [, src, col] of cases) {
+      const tap = src.match(/&bar:\w+/)![0];
+      const d = compileSource(src).diagnostics.filter((x) => x.message.includes(tap));
+      expect(d).toHaveLength(1);
+      expect(d[0]!.message).toBe(`${tap} is a meter's tap, which only step= reads (step=${tap}): here it names no cell`);
+      expect(d[0]!.span.col).toBe(col);
+    }
+  });
+
   it('a tap reads the main meter, or the one it names; chains step it as they step any clock', () => {
     const two = `&bar meter("4/4") step=120bpm\n&bar2 meter("3/4") step=120bpm\n&x step=&bar2:pulse 0${VOICE}`;
     const r = compiled(two);
