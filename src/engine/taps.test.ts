@@ -158,19 +158,87 @@ describe('restart= on a tap or a selector (decision 032)', () => {
     }
     expect(compileSource(onTap('restart')).cells.get('tuneBar')?.params.restart).toBe('restart');
   });
-  it.each(['resume', 'free'])('restart=%s parses, warns that it is not yet implemented, and plays as restart', (policy) => {
-    for (const src of [onTap(policy), onSelector(policy)]) {
-      expect(messages(src)).toEqual([`warning: restart=${policy} is not yet implemented: plays as restart`]);
-      expect(played(src, 0, 40)).toEqual(played(SONG, 0, 40));
-    }
-  });
   it('a tap with restart= stays a tap', () => {
     expect(compileSource(onTap('resume')).cells.get('tuneBar')?.clock).toBe('bar:4n');
+  });
+  it.each(['resume', 'free'])('restart=%s parses on a tap and on a selector, and says nothing', (policy) => {
+    for (const src of [onTap(policy), onSelector(policy)]) expect(messages(src)).toEqual([]);
   });
   it('another word, or another cell, says so', () => {
     expect(messages(onTap('again'))).toEqual(['warning: restart=again: what switching a part on does to its time is restart, resume or free — this plays as restart']);
     expect(messages(SONG.replace('&lead s=square', '&lead restart=resume s=square'))).toEqual([
       'warning: restart= acts on a tap (a name a stepped table of names declares) or a selector (over= a table of taps): on &lead it does nothing',
     ]);
+  });
+});
+
+// Decision 032, built (#53): a part switched off and on at three positions. A beat is half a second; the selector steps by
+// the beat: on for beats 0-1, off for 2-3, on for 4-6, off for 7, on for 8, off for 9 (one entry holds a part on, so it is switched on three times).
+describe('restart=resume and restart=free (decision 032)', () => {
+  const PART = (policy: string) => `
+&bar scan(1 1 1 1) step=120bpm
+&major scale(major)
+&parts step=4n &mel
+${policy ? `&mel restart=${policy}\n` : ''}&song over=&parts step=4n laps=1 0@2 ~@2 0@3 ~ 0 ~
+&tune over=&major step=&mel 0 1 2 3 4 5 6 7 8 9 10 11
+&lead s=sine loop=C4
+&out map=sample [&tune * &lead]
+`;
+  /** The steps of the tune that sound, by the beat each begins on. */
+  // (a step is a degree of C major above the voice's C4)
+  const step = (e: { freq: number }) => {
+    const semitones = Math.round(12 * Math.log2(e.freq / 261.6256));
+    return Math.floor(semitones / 12) * 7 + [0, 2, 4, 5, 7, 9, 11].indexOf(((semitones % 12) + 12) % 12);
+  };
+  const steps = (policy: string) => played(PART(policy), 0, 5).map((e) => [Math.round(e.at * 2), step(e)] as const);
+  it('restart starts at step 0 each time it is switched on', () => {
+    expect(steps('')).toEqual([
+      [0, 0],
+      [1, 1],
+      [4, 0],
+      [5, 1],
+      [6, 2],
+      [8, 0],
+    ]);
+    expect(steps('restart')).toEqual(steps(''));
+  });
+  it('resume continues from the step where it stopped', () => {
+    expect(steps('resume')).toEqual([
+      [0, 0],
+      [1, 1],
+      [4, 2],
+      [5, 3],
+      [6, 4],
+      [8, 5],
+    ]);
+  });
+  it('free lands where an unswitched copy would be, and only its sound is gated', () => {
+    expect(steps('free')).toEqual([
+      [0, 0],
+      [1, 1],
+      [4, 4],
+      [5, 5],
+      [6, 6],
+      [8, 8],
+    ]);
+    // (the unswitched copy: the same tune on the beat, nothing gating it)
+    const open = compileSource(
+      '&bar scan(1 1 1 1) step=120bpm\n&major scale(major)\n&tune over=&major step=4n 0 1 2 3 4 5 6 7 8 9 10 11\n&lead s=sine loop=C4\n&out map=sample [&tune * &lead]',
+    );
+    const copy = eventsBetween(plan(open, codeShifts(open)), 0, 5).map((e) => [Math.round(e.at * 2), step(e)] as const);
+    expect(steps('free')).toEqual(copy.filter(([beat]) => [0, 1, 4, 5, 6, 8].includes(beat)));
+  });
+  it('the selector says it for all its taps, and a tap says it for itself first', () => {
+    const onSelector = PART('').replace('&song over=&parts', '&song over=&parts restart=resume');
+    expect(played(onSelector, 0, 5).map(step)).toEqual([0, 1, 2, 3, 4, 5]);
+    const tapWins = onSelector + '&mel restart=free\n';
+    expect(played(tapWins, 0, 5).map(step)).toEqual([0, 1, 4, 5, 6, 8]);
+  });
+  it('a window read in pieces plays what it plays whole', () => {
+    for (const policy of ['restart', 'resume', 'free']) {
+      const whole = played(PART(policy), 0, 5).map((e) => e.at.toFixed(4));
+      const parts = [0, 1.3, 2.9, 4.1].flatMap((from, i, a) => played(PART(policy), from, a[i + 1] ?? 5).map((e) => e.at.toFixed(4)));
+      expect(parts).toEqual(whole);
+    }
   });
 });

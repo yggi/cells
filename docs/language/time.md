@@ -112,6 +112,17 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 
 A tap may have a line of its own with attributes only, and stays a tap (`&tuneBar off` switches the tune's part off in every section; holding its bulb in the graph writes that line). A name the table declares must step something (`step=&tuneBar`), or the compiler says so, and so does a table of taps no selector reads (every part would play all the time); a table of names none of which steps anything is a braid of cells as before (an unknown name an error). The old form, a selector reading a table of mixes and their sound through it, is an error now, and the error says what to write instead.
 
-**`restart=`** names what switching a part on does to its time ([decision 032](../decisions/032-restart-policies.md)), on a tap's line (`&tuneBar restart=restart`) or on the selector, for all its taps: **`restart`**, from its top (the default, what plays today); **`resume`**, its time paused while it is off, going on where it stopped; **`free`**, its time running on global time and only its sound switched (Strudel's default). `resume` and `free` are named but not yet built: they warn and play as `restart`.
+**`restart=`** names what switching a part on does to its time ([decision 032](../decisions/032-restart-policies.md)), on a tap's line (`&tuneBar restart=resume`) or on the selector, for all its taps (a tap's own line wins): **`restart`**, from its top each time (the default); **`resume`**, its time paused while it is off, going on where it stopped; **`free`**, its time running on as if never switched, only its sound gated (Strudel's default), so it lands where an unswitched copy would be. With several selectors on one part, the first that names a policy other than `restart` rules. [In C, a sketch](../../examples/in-c.cells) needs `resume`: each player repeats a cell until moving on, and one who sits out comes back where they left off.
+
+```cells
+&bar meter("4/4") step=120bpm
+&major scale(major)
+&parts step=4n &mel
+&mel restart=resume
+&song over=&parts step=4n laps=1 0@2 ~@2 0@3 ~ 0 ~
+&tune over=&major step=&mel 0 1 2 3 4 5 6 7 8 9 10 11
+&lead s=sine loop=C4
+&out map=sample [&tune * &lead]
+```
 
 The transport marks a selector's sections and jumps to them ([../ui/transport.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md)).

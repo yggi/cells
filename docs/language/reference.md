@@ -186,7 +186,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `fold=n` · `fold=free(n, lo..hi)`: A spectrum or waterfall: pitches folded by this stride into as many bins (12: by pitch class, the default) — on a scope (scope=) [→](display.md)
 - `bins=n` · `bins=free(n, lo..hi)`: A spectrum or waterfall without a fold: this many bands, low to high (1 a meter, 3 low-mid-high, 20 an equaliser) — on a scope (scope=) [→](display.md)
 - `channels=word`: A spectrum or waterfall: sum (one, the default) or split (each channel its own) — on a scope (scope=) [→](display.md)
-- `restart=word`: What switching a part on does to its time (on a selector: for all its taps) — restart (from its top, the default), resume (where it stopped; not yet built), free (its time runs on, only its sound is switched; not yet built) — on a tap (a name a stepped table of names declares) or a selector (over= a table of taps) [→](time.md)
+- `restart=word`: What switching a part on does to its time (on a selector: for all its taps) — restart (from its top, the default), resume (where it stopped), free (its time runs on, only its sound is switched) — on a tap (a name a stepped table of names declares) or a selector (over= a table of taps) [→](time.md)
 - `law=word`: A law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music) — on a law (law=) [→](time.md)
 - `anchor=n` · `anchor=free(n, lo..hi)`: A clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands — on a meter (step= a rate) [→](time.md)
 

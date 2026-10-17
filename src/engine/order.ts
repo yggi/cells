@@ -73,6 +73,7 @@ export const ORDER = [
   'ghosts',
   'tines',
   'phase',
+  'in-c',
   'tape',
   'soundtape',
   'testtones',
