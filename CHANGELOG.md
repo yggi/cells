@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+### Added
+- **A first repository: fragments found by their place in style space** (#82, decision 041, rung 5 of #81). `createRepository(fragments)` holds fragments, each cells text with an id and an association (weighted style points, axis names to numbers), and throws on a malformed entry; `query(point, k, axisWeights?)` returns the k nearest, ranked by a weighted distance over the axes the point and each association share, so an axis no fragment has is ignored. `METER_FRAGMENTS` are its first library, nine meters that need no swing (4/4, 4/4 alla breve, 2/4, 3/4, 6/8, 12/8, 5/4, 7/8 as 3+2+2, 10/8 as 3+2+3+2), each one line `&bar meter(…)` with no tempo, associated by hand with Jambot's eight presets (all of which find 4/4 until the swung meters land). New exports from the package and from `@yggi/cells/repository/<module>`; nothing a piece reads or plays changes.
+
 ### Corrected: what the v0.3.0 notes left out
 Cell studio and Jambot, moving onto v0.3.0, found more that a frontend sees. Nothing here changed since v0.3.0: the notes did.
 - **A `scan(…)` is a meter for `step=&bar`'s warning**, as for taps: `step=&bar*4` under `&bar scan(1 1 1 1)` warns, and Shorten rewrites it (`16n`).

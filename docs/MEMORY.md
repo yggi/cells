@@ -4,7 +4,7 @@ Entrypoint for humans and agents: slow-change, shared knowledge about the cells 
 
 ## The project
 
-The cells language: a minimal language for music where everything is a **cell**, a helix (pitch classes over octaves, beats over bars) with a **braid** sitting in its grid, on top of Strudel's mini-notation. This repository is the language as a pure TypeScript package, `@yggi/cells`: text in, events out, with no host of its own. Its frontends consume it at a tag: [Cell studio](https://github.com/yggi/cell-studio), the workbench (editor, graph, audio), and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend (the composer, the Muse, sessions). It came out of Cell studio with its history ([#1](https://github.com/yggi/cells/issues/1)); the eternal jam sessions it serves are in Jambot's brief (`docs/briefs/eternal-jam.md` there). It also holds the code of the repository of cell fragments (their format, canonical form, hash, index, queries), not yet written.
+The cells language: a minimal language for music where everything is a **cell**, a helix (pitch classes over octaves, beats over bars) with a **braid** sitting in its grid, on top of Strudel's mini-notation. This repository is the language as a pure TypeScript package, `@yggi/cells`: text in, events out, with no host of its own. Its frontends consume it at a tag: [Cell studio](https://github.com/yggi/cell-studio), the workbench (editor, graph, audio), and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend (the composer, the Muse, sessions). It came out of Cell studio with its history ([#1](https://github.com/yggi/cells/issues/1)); the eternal jam sessions it serves are in Jambot's brief (`docs/briefs/eternal-jam.md` there). It also holds the repository of cell fragments: their format and a query by style is built (`src/repository/`, decision 041), their canonical form and hash are not ([#49](https://github.com/yggi/cells/issues/49)).
 
 ## The family
 
@@ -18,7 +18,8 @@ The whole map, module by module: [architecture.md](architecture.md).
 
 - `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), the time analysis (`time/`)
 - `theory/` modes and tonal's scale names
-- `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>`
+- `repository/` fragments found by their place in style space (`fragments.ts`), the meters (`meters.ts`)
+- `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>` (`theory/`, `repository/` alike)
 - `engine/examples.generated.ts` every example's source, written by `npm run examples`
 - `host.d.ts` the three host globals the language uses (the purity gate's whole allowance)
 - `../examples/` the pieces, the language's conformance suite; `../midi/` the folder's corpus (Mutopia's Bach); `../fixtures/` test pieces
@@ -75,3 +76,4 @@ One line each; the record has the rationale. → [decisions/](decisions/README.m
 - 038 · Jambot's score rulings, carried over: each of yggi/jambot#7's (a)–(j), #116's (k)–(m) and ledger, and #63's E16, as it stands under 037: holds (where cells says it), overridden (by which row), or open (which issue carries it) · → decisions/038-jambot-rulings-carried-over.md
 - 039 · Live MIDI lives in yggi/webmidi (a pure core, a Web MIDI adapter, shared Svelte components); cells keeps MIDI files and when a piece's clock ticks; neither depends on the other · → decisions/039-midi-lives-in-webmidi.md
 - 040 · A meter knows its bar, its pulse (the numerator, steady), its beat (what is counted and what bpm counts: 6/8 has 2, 7/8 three unequal) and its tree; lines tap `pulse`, `beat` (×k) or note values (`16n`, `1m`), never the meter cell's own steps, and a tap comes round at the bar; `cycle=n` counts laps (absent: walk, 1: wrap, 0: constant); the language changes freely until v1.0.0 · → decisions/040-pulse-beat-and-laps.md
+- 041 · A fragment is cells text and an index entry (an id, an association: weighted style points, axis names to numbers); a query ranks fragments by a weighted distance over the axes it shares with each point, the nearest point divided by its weight; the repository doesn't know the axes · → decisions/041-fragments-by-style.md
