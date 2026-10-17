@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SAILOR_WITH_KIT } from './fixtures';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -202,6 +203,10 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(bar('meter("6/8") step=60bpm')).toBeCloseTo(2, 9);
     expect(bar('meter("4/4") step=60bpm beat=2')).toBeCloseTo(2, 9);
     expect(bar('meter("4/4") step=60bpm')).toBeCloseTo(4, 9);
+  });
+
+  it('the Sailor fixture taps its meter and compiles without a warning about it (#92)', () => {
+    expect(compileSource(SAILOR_WITH_KIT).diagnostics.filter((d) => d.message.includes("meter cell's own steps"))).toEqual([]);
   });
 
   it('a tap written outside step= says that only step= reads it, and names it as written (#103)', () => {
