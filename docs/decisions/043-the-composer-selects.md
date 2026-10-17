@@ -1,4 +1,4 @@
-# 043 · The composer selects from the repository: generation on a miss, a place by association, queries in order that fit, and one ladder of novelty
+# 043 · The composer asks the repository first and judges what it gets, generating what doesn't satisfy it; a place by association, queries in order that fit, and one ladder of novelty
 
 **Date:** 2026-10-17 · **Status:** accepted (owner, in the session of 2026-10-17: the concept below, quoted on yggi/jambot#358; "put this as the central roadmap epics") · Issues: #81, yggi/jambot#358, #49
 
@@ -17,10 +17,11 @@ The first rungs are built.
 
 ## Decision
 
-1. **The composer selects; it doesn't generate.**
-   It fills an empty workbench from the repository.
-   A query that finds nothing generates a fragment, files it under the style it was made for, and uses it.
-   So the generators (Jambot's) seed the repository and fade as it fills.
+1. **The composer asks the repository first, judges what it gets, and generates what doesn't satisfy it.**
+   It fills an empty workbench by asking the repository for each part.
+   It judges every result against the composition on its workbench, and may reject it.
+   When nothing satisfies it, it generates a fragment of its own that fits the composition, files it in the repository under the style it was made for, and uses it.
+   The composer stays a generator: the repository is where it looks first, not a replacement for it (owner, 2026-10-17).
 2. **A fragment's place in style space is an association, not a reading** (041).
    It comes from where the fragment was found, where it was made, and where jams kept it.
    A reading of the fragment itself is only a first guess: a meter, a clave or a section pattern has nothing to read on most axes.
@@ -39,7 +40,8 @@ The first rungs are built.
 
 Nothing jumps: a fetched fragment enters at a section boundary, or fades in by density.
 
-**Why not** keep the generators as the source: genres would stay patches in code, against "as little hardwired as possible", and nothing a jam made would outlive it.
+**Why not** the generators alone: genres would stay patches in code, against "as little hardwired as possible", and nothing a jam made would outlive it.
+**Why not** the repository alone: a fragment found by style alone may not fit the composition it joins; the composer's judgement decides, and what it makes instead goes back to the repository.
 **Why not** a reading as a fragment's place: most parts have nothing to read on most axes; the swung meters showed it (swing left the style vector, yggi/jambot#360).
 
 ## Open
