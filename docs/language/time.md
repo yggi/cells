@@ -27,7 +27,7 @@ A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/
 
 ## Meters
 
-A meter is a cell whose braid is a `scan` or a `meter(…)`: `scan(27 23 26 24)` is a bent 4/4 bar, `scan(3 3 2)` the tresillo. A scan places its steps within the bar; other clocks step evenly.
+A meter is a cell whose braid is a `scan` or a `meter(…)`: `scan(27 23 26 24)` is a bent 4/4 bar, `scan(3 3 2)` the tresillo. A scan places its steps within the bar; other clocks step evenly, unless a swing leans them.
 
 **`meter(signature, steps a pulse)`** writes a bar as levels, one per step: 0 the downbeat, 1 a beat, then finer subdivisions. `meter("4/4", 2)` is eight steps, `*.+.+.+.`; `meter("6/8")` six; levels can be written directly, `meter("*.+.+..")`. Read through a kit, each level picks its own sound (the Metronome).
 
@@ -44,12 +44,18 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
 
 - **bpm counts beats**: `meter("6/8") step=60bpm` is two dotted quarters a second, a bar of 2 s. With unequal beats the bar lasts beats ÷ bpm and the beats keep their proportions: `meter("7/8") step=90bpm` is a bar of 2 s, beats of 0.86, 0.57 and 0.57 s.
 - **`beat=n`** — another feel: n equal beats over the pulses (`meter("4/4") beat=2`, alla breve: its bpm counts half notes). On a cell that is not a meter it does nothing (a warning).
-- **`swing=r`** — of each pair of steps, the second starts r of the way through the pair (.5 straight, .67 a triplet swing). It swings a meter written as a list or `meter(…)`; a `scan` places its steps itself, so its swing is written into it (`scan(2 1)`, as in the blues). Swing never changes a meter's pulse or beat, so it never changes what a tap counts, only where its steps fall.
+- **`swing=8n:r`** — swing on the bar ([#18](https://github.com/yggi/cells/issues/18)): one level of the meter leans, named by its note value. Of each pair of eighths, the second starts r of the way through their beat (.5 straight, .67 a triplet swing, .6 a light one); `swing=16n:.55` leans the sixteenths and leaves the eighths straight. A group of three (6/8's beat, 7/8's first) leans its second and third: the second moves as far as a pair's would, from a third (at .67 to a half: long, short, short), the third halfway between it and the end.
+  - **Every node keeps its ends**: a beat, a group's start and a bar line never move, so an odd bar never drifts. Swing never changes a meter's pulse or beat, so it never changes what a tap counts, only where its steps fall; a level no beat divides into (`swing=4n:.67` in 4/4, its quarters the beats) leans nothing, with a warning.
+  - **Taps are placed through it**, whatever the meter's own steps: `meter("4/4") swing=8n:.67` swings `step=8n` and `step=pulse*2` alike. A division the tree holds is even within its node (16ths under swung eighths: the second at a third of a long eighth); one it doesn't hold is even within its beat, not warped (`8t` under swung eighths stays straight).
+  - It swings a `meter(…)` and a `scan(…)` alike: a scan's taps lean within its bent beats.
+  - **Several levels** nest, coarse to fine, each node keeping its ends: `swing=8n:.6,16n:.55`. One level alone can be left free: `swing=8n:free(.5, .5..75)`.
+  - **Bare, `swing=r`**: on a list stepping at a rate (no bar), of each pair of its steps the second starts r of the way through the pair. On a meter it leans the level of the meter cell's own steps (`meter("4/4", 2) swing=.67` is `swing=8n:.67`), with a warning that names the level, since the level of a cell's own steps changes with its subdivision; Shorten writes it so.
 
 ```cells
-&bar meter("4/4", 2) step=100bpm swing=.6
+&bar meter("4/4") step=100bpm swing=8n:.6
+&eighths step=8n 0
 &tick s=sine loop=A5 env=&(map=adsr 0 .03 0 .02)
-&out loop=SAMPLE_RATE map=sample [&bar * &tick]
+&out loop=SAMPLE_RATE map=sample [&eighths * &tick]
 ```
 
 ## Taps
@@ -61,7 +67,7 @@ A line taps a meter by pulse, beat or note value, never by the meter cell's own 
 - **Note values**: `1n` `2n` `4n` `8n` `16n` `32n`, triplets `4t` `8t` `16t`, dotted `2n.` `4n.` `8n.`, and the bar, `1m`.
 - **A tap comes round at the bar**: a note value longer than what is left of the bar is cut at the bar line. `1n` in 3/4 is one step a bar, a bar long; `4n.` in 4/4 is 3+3+2 eighths, the tresillo. **`cycle=n`** on the tap runs it n bars before it comes round: `step=1n cycle=4` in 3/4 is three whole notes over four bars.
 - A tap reads the piece's **main meter**, the first meter in the text with a tempo of its own; another is named: `step=&bar2:16n`, `step=&swing:pulse`.
-- The meter's steps place the tap's: a scan bends them, `swing=` swings them, a motor drags them. A division the meter doesn't hold is even within its step.
+- The meter places the tap's steps: a scan bends them, `swing=` leans them (each node keeping its ends), a motor drags them. A division the meter doesn't hold is even within its step, and within its beat under a swing.
 
 A line stepped by the meter cell's own steps (`step=&bar*2`) still plays as it did, with a warning that names the tap saying the same (`step=8n`); Shorten rewrites it so, where the notes stay the same.
 

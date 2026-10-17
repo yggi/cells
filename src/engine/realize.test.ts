@@ -780,7 +780,7 @@ describe('Metronome: any meter — the bar written as levels (meter(…)), read 
     expect(clicks(src)).toEqual(['0.00:down', '0.60:beatc', '1.20:beatc', '1.80:beatc', '2.40:down']);
   });
   it('eighths, swung: the off-beats two thirds through', () => {
-    const c = clicks(src.replace('free(0, 0..3, "1 2 3 4")', 'free(1, 0..3, "1 2 3 4")').replace('swing=free(.5,', 'swing=free(.67,'));
+    const c = clicks(src.replace('free(0, 0..3, "1 2 3 4")', 'free(1, 0..3, "1 2 3 4")').replace('swing=8n:free(.5,', 'swing=8n:free(.67,'));
     expect(c.slice(0, 4)).toEqual(['0.00:down', '0.40:sub', '0.60:beatc', '1.00:sub']);
   });
   it('6/8: two beats a bar, three eighths each — the bpm counts the beats', () => {

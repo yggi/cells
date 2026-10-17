@@ -417,6 +417,14 @@ export interface CellDecl {
     readonly seed?: number | null;
     /** Times given as a clock: delaytime=&bar*2 (an eighth, at whatever the tempo is). */
     readonly paramClocks?: Readonly<Record<string, StepSpec>>;
+    /**
+     * swing= by level (#18): `swing=8n:.67`, `swing=8n:.6,16n:.55`, each a note value of a meter's and a share (params.swing
+     * holds the first share). Absent for a bare `swing=.6`.
+     */
+    readonly swing?: readonly {
+        readonly level: string;
+        readonly share: number;
+    }[];
     /** dough parameters (s=saw lpf=1800 …): a cell with any of these is a voice. */
     readonly params: Readonly<Record<string, number | string>>;
     readonly paramSpans: Readonly<Record<string, Span>>;

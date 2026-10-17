@@ -251,8 +251,13 @@ export interface Clock {
   readonly positional: boolean;
   /** A belt (belt= on a driven cell): it follows its driver at this ratio through a spring, not rigidly. */
   readonly belt?: { readonly driver: string; readonly rate: number };
-  /** swing=: of each pair of steps, the second starts this far through (.5 straight, .67 triplet swing). */
+  /** A bare swing= on a clock that is not a meter (a list at a rate): of each pair of its steps, the second starts this far through. */
   readonly swing?: number;
+  /**
+   * A meter's swing (#18) on its own steps: where each of a bar's steps is played, in its steps (`swungSteps`). A tap reads
+   * the meter without it and swings its own positions (`swingAt`).
+   */
+  readonly swung?: readonly number[];
   /**
    * A tap of a meter (decision 040: `step=16n`, `step=beat`): its steps at these positions, in the meter's steps, in a lap
    * of `lap` of them (the bar, or cycle= bars), laid through the meter's time map. `cell` is the meter.

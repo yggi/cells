@@ -30,7 +30,38 @@ export interface TimeMap {
  * interpolate.
  */
 export function timeMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap {
-  if (clock.tap) return tapMap(clock.tap, timeMap(result, result.clocks.get(clock.tap.meter)!, shifts));
+  // (a tap reads its meter unswung: its own positions carry the swing, #18)
+  if (clock.tap) return tapMap(clock.tap, plainMap(result, result.clocks.get(clock.tap.meter)!, shifts));
+  const plain = plainMap(result, clock, shifts);
+  return clock.swung ? swungMap(clock.swung, plain) : plain;
+}
+
+/**
+ * A meter's own steps under its swing (#18): step i of each bar where `swung` puts it, in its steps, laid through the
+ * meter's map as it would be unswung; fractional steps interpolate between them.
+ */
+function swungMap(swung: readonly number[], inner: TimeMap): TimeMap {
+  const k = Math.max(1, swung.length);
+  const at = (i: number) => (i < k ? swung[i] : k);
+  const S = (s: number) => {
+    const j = Math.floor(s);
+    const b = Math.floor(j / k);
+    const i = j - b * k;
+    return b * k + at(i) + (s - j) * (at(i + 1) - at(i));
+  };
+  const back = (x: number) => {
+    const b = Math.floor(x / k);
+    const r = x - b * k;
+    let i = 0;
+    while (i + 1 < k && at(i + 1) <= r) i++;
+    const span = at(i + 1) - at(i);
+    return b * k + i + (span > 0 ? (r - at(i)) / span : 0);
+  };
+  return { beats: inner.beats, q: (s) => inner.q(S(s)), stepAt: (t) => back(inner.stepAt(t)), ...(inner.speed ? { speed: inner.speed } : {}) };
+}
+
+/** A clock's time map before a meter's swing: a rate, pairs of a list's steps swung, or a scan's positions. */
+function plainMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap {
   if (!clock.positional && clock.swing !== undefined) {
     // swing: a pair of steps keeps its length, its second step starts sw of the way through
     const sw = Math.min(0.95, Math.max(0.05, clock.swing));
@@ -169,13 +200,23 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
   if (!byShifts) built.set(result, (byShifts = new WeakMap()));
   const maps = byShifts.get(statics) ?? new Map<string, TimeMap>();
   byShifts.set(statics, maps);
-  const map = (clock: string) => {
+  const map = (clock: string): TimeMap => {
     let m = maps.get(clock);
     if (!m) {
       const info = result.clocks.get(clock)!;
-      // a tap: through its meter's map as the meter moves (physics and all)
-      if (info.tap) m = tapMap(info.tap, map(info.tap.meter));
-      else if (info.belt) {
+      // a tap: through its meter's map as the meter moves (physics and all), unswung: its positions carry the swing (#18)
+      if (info.tap) m = tapMap(info.tap, base(info.tap.meter));
+      else m = info.swung ? swungMap(info.swung, base(clock)) : base(clock);
+      maps.set(clock, m);
+    }
+    return m;
+  };
+  // (a clock's map before a meter's swing, kept beside it: what a tap reads; no cell's name holds a NUL)
+  const base = (clock: string): TimeMap => {
+    let m = maps.get(`${clock}\0plain`);
+    if (!m) {
+      const info = result.clocks.get(clock)!;
+      if (info.belt) {
         // a belt: where its driver would put it (the driver's own map, physics and all), through a spring
         const drv = result.clocks.get(info.belt.driver)!;
         const idealD = timeMap(result, drv, statics);
@@ -195,12 +236,12 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
         const rate = info.belt.rate;
         m = { beats: 1, q: (st) => belt.real(idealD.q(st / rate)), stepAt: (t) => idealD.stepAt(belt.nominal(t)) * rate, speed: (t) => belt.speed(t) };
       } else {
-        const ideal = timeMap(result, info, statics);
+        const ideal = plainMap(result, info, statics);
         // a clock with a motor turns physically: its time warped (spin-up, sag under load, running down)
         const w = warpOf(result, info.cell);
         m = w ? { beats: ideal.beats, q: (st) => w.real(ideal.q(st)), stepAt: (t) => ideal.stepAt(w.nominal(t)), speed: (t) => w.speed(t) } : ideal;
       }
-      maps.set(clock, m);
+      maps.set(`${clock}\0plain`, m);
     }
     return m;
   };
