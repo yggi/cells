@@ -275,6 +275,20 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     }
   });
 
+  it('a tap that is no note value says what a tap reads, at the token (#85)', () => {
+    const errors = (tap: string) => compileSource(`&bar meter("4/4") step=100bpm\n&x step=${tap} 0${VOICE}`).diagnostics.filter((d) => d.severity === 'error');
+    for (const tap of ['3n', '16x', '4n..']) {
+      const [e, ...rest] = errors(tap);
+      expect(rest, tap).toEqual([]);
+      expect(e!.message, tap).toBe(
+        `step=${tap} is no rate or tap: a tap reads a note value (1n 2n 4n 8n 16n 32n), a triplet (4t 8t 16t), a dotted one (2n. 4n. 8n.), 1m, pulse, beat, or another meter's (&bar2:16n)`,
+      );
+      expect([e!.span.col, e!.span.len], tap).toEqual(['&x step='.length + 1, tap.length]);
+    }
+    // (a rate with its unit is still a rate)
+    expect(errors('120bpm')).toEqual([]);
+  });
+
   it('a tap reads the main meter, or the one it names; chains step it as they step any clock', () => {
     const two = `&bar meter("4/4") step=120bpm\n&bar2 meter("3/4") step=120bpm\n&x step=&bar2:pulse 0${VOICE}`;
     const r = compiled(two);

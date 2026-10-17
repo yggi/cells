@@ -85,6 +85,7 @@ function rateChain(s: LineScanner): { ratio: number; chain: RateOp[] } {
 
 export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   const start = s.i;
+  const what = whole ? 'loop' : 'step';
   const tap = whole ? null : tapWord(s);
   if (tap) return { whole, kind: 'tap', meter: null, tap, ...rateChain(s), span: s.span(start) };
   if (s.text.startsWith('free(', s.i)) {
@@ -97,13 +98,21 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   if (rate !== null) {
     const r = perSecond(parseFloat(rate), s.match(UNIT));
     if (!(r > 0)) s.fail('A rate must be positive', start, s.i - start);
+    // (a number run into letters that are no unit, 3n, 16x, 4n..: it was meant as a tap, and none reads that)
+    if (/[A-Za-z.]/.test(s.peek())) {
+      const token = /^[^\s,\])]+/.exec(s.text.slice(start))![0];
+      s.fail(
+        `${what}=${token} is no rate or tap: a tap reads a note value (1n 2n 4n 8n 16n 32n), a triplet (4t 8t 16t), a dotted one (2n. 4n. 8n.), 1m, pulse, beat, or another meter's (&bar2:16n)`,
+        start,
+        token.length,
+      );
+    }
     return { whole, kind: 'rate', perSecond: r, span: s.span(start) };
   }
   const env = s.match(/[A-Z](?:[A-Z0-9_]*|[#b]?-?[0-9]+)(?![A-Za-z0-9_#])/y);
   if (env !== null) return { whole, kind: 'env', name: env, span: s.span(start) };
   if (s.peek() === '{') s.fail('{&x} is now written cycle(&x)');
   const cycle = s.match(/cycle\(/y) !== null;
-  const what = whole ? 'loop' : 'step';
   const driver = s.cellRef(cycle ? 'a cell inside cycle( ), like cycle(&theme)' : `a cell or a rate after ${what}=, like ${what}=&meter`, `in ${what}=`, true);
   if (driver.pick || driver.shift) s.fail(`${what}= takes a whole cell`, driver.span.col - 1, driver.span.len);
   if (cycle) s.expect(')', `')' to close cycle(&${driver.name})`);
