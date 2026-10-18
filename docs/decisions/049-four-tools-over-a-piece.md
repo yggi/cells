@@ -37,7 +37,7 @@ The owner (2026-10-18):
 | `defaults` (Fs5 and the boilerplate of yggi/cell-studio#171) | Normalise | an attribute that says what is so anyway: no cell or step changes |
 | `runs` (`0 0 0 0` → `0!4`, F11), `fractions` (`4@2 2@2 0@4` → `4 2 0@2` on a clock half as fast), `progressions` (a transposer's `loop=&bar/48` → `step=&bar/4`, F2) | Normalise, when #27 rules their rows | the same steps, spelled otherwise; Shorten keeps them until then |
 | `phrases`, `same`, `wrappers`, `stereo` | Shorten | each changes the cells or the steps (`stereo`: two chords on the card that differ only in gains as one, and `pan=`) |
-| `sections` (`&parts` → `&sections`, 044) | question 4 | `&parts` is a valid name, not a retired form |
+| `sections` (`&parts` → `&sections`, 044) | Migrate, for one minor version, then retired | `&parts` is a valid name, not a retired form: a one-off move of the examples' convention, now done (#153); the owner's ruling on question 4 |
 
 The folder's finders (keys, sections by key, voices; the repeats `pairs`, `figure`, `variants`, `dilate` and `stretch` find) and `src/engine/time/` (`boundaries`, `motifs`, `necklace`) are Fold's. Its writers (`print.ts`, β, its judge by printed characters) are Shorten's work done the folder's way: each retires when Shorten on hints folds every MIDI set at least as well (the ratchets).
 
@@ -57,11 +57,13 @@ Rejected: Migrate inside Normalise (a retired form is not a valid one, and a pie
 - `docs/notes/fold.md`'s architecture (a reader, tools, a printer, a judge) changes: the reader and the tools stay the folder's, the printer and the judge become Shorten's (#158). Its ratchets guard the move.
 - #27's rows split: a **spelling row** joins Normalise; a **structure row** (F8 a drum hit, F15 inline or named, F19 a gate against a product) is Shorten's preference, not a canonical spelling. Identity beyond spelling, two structures of one piece hashing alike, is the pure cell's (#46).
 
+- **The tools meet the repository** (#159): Normalise's output is the canonical form the hash (#49) and the learned layer's identity (decision 048) read; Fold → Shorten → Normalise is how what the Muse hears becomes a filed fragment (decision 047, `source: muse`); and Shorten's cells are a fragment's natural size, so Shorten's measure (question 2) and decision 047's "a piece with holes" agree on that unit.
+
 ## Questions for the owner
 
 1. **The line:** Normalise keeps every cell, its name, every step and every reference; Shorten changes them. Accepted?
 2. **Shorten's measure:** each leaf a braid writes (`x!n` and `x@n` one leaf, a chord its entries) plus one for each cell, over the normal form, names and comments free. Or other weights (an attribute's value, a reference costing more than a number)?
-3. **`clip=`:** Strudel's spelling of `legato`, valid by decision 027, so Normalise's. Normalise is never offered while writing, and the other aliases warn nothing; should `clip=` stop warning too? Recommended: yes, as `cutoff=` doesn't warn.
-4. **`&parts` → `&sections`:** a name, valid; Normalise keeps names. Recommended: the rule goes (decision 044's examples moved), since no tool renames an author's cell.
+3. **`clip=`: ruled.** "clip warns, normalize will rewrite it to legato" (owner, 2026-10-17, on the legato work; built in #105). `clip=` → `legato=` is a Normalise rule, and its warning stays until Normalise offers it.
+4. **`&parts` → `&sections`: ruled** (#159). Neither a migration (the old name stays valid) nor a normalisation (names are the author's): a one-off move of the examples' convention, done (#153). Migrate offers it for one minor version, then it is retired with a `CHANGELOG.md` line, as a kind Shorten stops offering is.
 5. **The folder stops writing text:** its printer and β become Shorten's on hints, each retired only when the ratchets hold without it. Accepted as the direction?
 6. **A retired form:** kept in the parser until a decision of its own, its migration witnessed by fixture pairs from then on. Or a fixed term (read until 1.0, say)?
