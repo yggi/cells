@@ -19,3 +19,17 @@ What the language's tests promise, a group or a promise to a line; they came fro
 - The family's contracts (yggi/music-commons `contracts/`): `src/contracts.test.ts` runs the `euclid` and `notes` vectors, copied into `fixtures/contracts/` (a `lifted` line names the hub's commit; refresh them by copying again), against `bjorklund`, `euclid(k, n, r)`, `x(k,n,r)`, theory's `even`, note names in braids and rates, `noteFrequency`, `noteOf`, `keyOf`, `keyName` and `noteName`. Where cells differs from a vector, a test records what cells does, and the change is the language's to decide.
 - The language draws on no chance of its own: `repeatable.test.ts` (Cell studio holds its layout and audio to the same line).
 - The repository's own gates: `tools/hooks.test.ts` runs the pre-push hook, the stamp `npm run verify` leaves for it and its pointing git at the hook (`tools/verified.sh`), the session's start and `branch-status.sh` in throwaway repositories, and `tools/test-count.test.ts` the reporter that keeps the count of verify's tests for the stamp (`tools/test-count.ts`); `tools/reading-list.test.ts` holds the boot set (`AGENTS.md` and `docs/MEMORY.md`) under 24 KB. `tools/review.test.ts` runs the review skill's `prepare.sh` against a throwaway origin; `tools/node-ts.test.ts` runs the language under Node. `tools/pianoroll.test.ts` draws the pianoroll skill's pictures (the PNG only where Chromium's headless shell is). `tools/groove.test.ts` runs the Groove MIDI measure ([notes/groove-measure.md](notes/groove-measure.md)) over three of the dataset's files (`fixtures/groove/`) and synthetic performances, and fails when a 2:1 pair's swing share is computed wrongly.
+
+## Gates that show themselves only by failing
+
+What fixes each:
+
+- A generated file gone stale, `src/engine/examples.generated.ts` (`npm run examples`), `src/repository/seed.generated.ts` (`npm run fragments`), `types/` (`npm run types`, after any change to an exported signature) or `dist/` (`npm run dist`, after any change to `src/`), `docs/language/reference.md` (`npm run reference`, which also rewrites the README's index of forms)
+- A host global in `src/` beyond the three in `src/host.d.ts` (the purity typecheck, `tsconfig.pure.json`: no command, the code moves out)
+- An unguarded index in a folder on the clean list of `tools/strict.mjs` (the strictness ratchet: narrow the value)
+- A change in what an example plays (`src/engine/snapshot.txt`: `npx vitest run src/engine/snapshot.test.ts -u` when it is the point, about 10 s, named in the pull request; `-u` before the path takes it as its value and runs every test)
+- A new form (an attribute, a generator, a modifier) on no tier of the tutorial (`src/engine/ladder.test.ts`: put it on a tier in `src/engine/ladder.ts` with a tutorial piece that shows it, or in `PENDING` there until it has one)
+- A vector of the hub's contracts cells no longer meets (`src/contracts.test.ts` over `fixtures/contracts/`: a decision, no command)
+- A MIDI set without its slow test and ratchet file (`src/engine/fold/midi.sets.test.ts`)
+- The folder's ratchets, in the slow tests only (`UPDATE_RATCHET=1`, above)
+- The boot set, `AGENTS.md` with this page, over 24 KB (`tools/reading-list.ts`: condense it, as a change of its own)

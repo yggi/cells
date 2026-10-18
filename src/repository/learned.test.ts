@@ -1,6 +1,6 @@
 // The learned layer (#145, decision 048): merged with the seed at each query and never stored, so an empty one changes no
 // query and two repositories answer alike; filing (a point at the query's point, weight 0.1, `source` and `created`, a
-// file); identity after renaming; use moving an association (the point that finds a fragment raised, to 1.25).
+// file); identity after renaming; use moving an association (the point that finds a fragment raised, to 1.2).
 import { describe, expect, it } from 'vitest';
 import { renameCell } from '../engine/edit';
 import { chanceOf } from '../engine/realize';
@@ -70,6 +70,49 @@ describe('an empty layer', () => {
     for (const point of [...PRESETS, ...POINTS.slice(0, 200)]) {
       expect(ranked(meters.query(point, 13, {}, { layer: EMPTY_LAYER }))).toEqual(ranked(meters.query(point, 13)));
       expect(ranked(library.query(point, 13, {}, { facet: 'meter', layer: onRhythms }))).toEqual(ranked(meters.query(point, 13)));
+    }
+  });
+});
+
+// The pull a query option (#151): at 0 it ranks as a query with nothing chosen, and with nothing chosen no pull changes
+// anything, so Jambot's meter query, which chooses nothing, ranks as it did.
+describe('the pull', () => {
+  const POINTS = drawn(1_000, 'pull');
+  const ids = LIBRARY.map((f) => f.id);
+  const pick = (tag: string) => ids[Math.floor(chanceOf(tag) * ids.length)]!;
+  // (a layer that has learned: every pair of the library used together, 1 to 500 times, drawn; and a jam's points and filings)
+  const together = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => ({ ids: [a, b].sort() as [string, string], count: 1 + Math.floor(chanceOf(`count|${a}|${b}`) * 500) })));
+  let layer: LearnedLayer = fileFragment(library, EMPTY_LAYER, filing(AMBIENT)).layer;
+  layer = useFragments(library, layer, [
+    { id: '4/4 swung on 8n', point: LO_FI, facet: 'meter' },
+    { id: 'Lo-fi hip hop drums', point: LO_FI, facet: 'rhythm' },
+  ]);
+  layer = { ...layer, together: [...together, ...layer.together.filter((p) => p.ids.includes('composer 2026-10-18T21:04:00Z'))] };
+  const facets = [undefined, 'meter', 'rhythm'] as const;
+  const optionsAt = (i: number): QueryOptions => {
+    const facet = facets[i % 3];
+    return { ...(facet ? { facet } : {}), layer, chosen: Array.from({ length: 1 + (i % 3) }, (_, j) => pick(`chosen|${i}|${j}`)) };
+  };
+
+  it('at 0, ranks as a query with nothing chosen: over 1,000 points, with a layer that counts every pair', () => {
+    expect(POINTS).toHaveLength(1_000);
+    let moved = 0;
+    for (const [i, point] of POINTS.entries()) {
+      const { chosen, ...unchosen } = optionsAt(i);
+      const none = ranked(library.query(point, 27, {}, unchosen));
+      expect(ranked(library.query(point, 27, {}, { ...unchosen, chosen, pull: 0 })), JSON.stringify(point)).toEqual(none);
+      if (JSON.stringify(ranked(library.query(point, 27, {}, { ...unchosen, chosen }))) !== JSON.stringify(none)) moved++;
+    }
+    // (and the default pull, over the same, does move them: the 0 is what holds)
+    expect(moved).toBeGreaterThan(900);
+  });
+
+  it('with nothing chosen, no pull changes a query: over 1,000 points', () => {
+    for (const [i, point] of POINTS.entries()) {
+      const { chosen: _, ...unchosen } = optionsAt(i);
+      const asked = ranked(library.query(point, 27, {}, unchosen));
+      for (const pull of [0, 0.5, 10]) expect(ranked(library.query(point, 27, {}, { ...unchosen, pull })), `${JSON.stringify(point)} pull ${pull}`).toEqual(asked);
+      expect(ranked(library.query(point, 27, {}, { ...unchosen, chosen: [] }))).toEqual(asked);
     }
   });
 });
@@ -174,16 +217,16 @@ describe('use moves an association', () => {
   const at = (id: string, x: number, weight = 1): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x }, weight, facet: 'meter' }] });
   const r = createRepository([at('a', 0), at('b', 1)]);
 
-  it('raises the seed point that finds it by 0.1, as a point of the layer at its place, to 1.25 at most', () => {
-    expect([USE_STEP, USE_CAP]).toEqual([0.1, 1.25]);
+  it('raises the seed point that finds it by 0.1, as a point of the layer at its place, to 1.2 at most', () => {
+    expect([USE_STEP, USE_CAP]).toEqual([0.1, 1.2]);
     let layer = EMPTY_LAYER;
     const weights: number[] = [];
     for (let n = 0; n < 4; n++) {
       layer = useFragments(r, layer, [{ id: 'a', point: { x: 0.4 }, facet: 'meter' }]);
       weights.push(...layer.points.map((p) => p.weight));
     }
-    expect(weights).toEqual([1.1, 1.2, 1.25, 1.25]);
-    expect(layer.points).toEqual([{ id: 'a', point: { x: 0 }, weight: 1.25, facet: 'meter' }]);
+    expect(weights).toEqual([1.1, 1.2, 1.2, 1.2]);
+    expect(layer.points).toEqual([{ id: 'a', point: { x: 0 }, weight: 1.2, facet: 'meter' }]);
     expect(useFragments(r, layer, [{ id: 'a', point: { x: 0.4 }, facet: 'meter' }])).toBe(layer);
   });
 
@@ -195,11 +238,11 @@ describe('use moves an association', () => {
     expect([first!.fragment.id, first!.distance]).toEqual(['a', 0.52 / 1.1]);
   });
 
-  it('but never past a seed point by more than the cap: a fragment more than 1.25 times as far stays behind', () => {
+  it('but never past a seed point by more than the cap: a fragment more than 1.2 times as far stays behind', () => {
     let layer = EMPTY_LAYER;
     for (let n = 0; n < 50; n++) layer = useFragments(r, layer, [{ id: 'a', point: { x: 0.3 }, facet: 'meter' }]);
-    expect(r.query({ x: 0.55 }, 1, {}, { layer })[0]!.fragment.id).toBe('a'); // (0.55 / 0.45 ≈ 1.22)
-    expect(r.query({ x: 0.56 }, 1, {}, { layer })[0]!.fragment.id).toBe('b'); // (0.56 / 0.44 ≈ 1.27)
+    expect(r.query({ x: 0.54 }, 1, {}, { layer })[0]!.fragment.id).toBe('a'); // (0.54 / 0.46 ≈ 1.17)
+    expect(r.query({ x: 0.55 }, 1, {}, { layer })[0]!.fragment.id).toBe('b'); // (0.55 / 0.45 ≈ 1.22)
   });
 
   it('raises a filed fragment’s own point in place, so its file carries its whole association', () => {
