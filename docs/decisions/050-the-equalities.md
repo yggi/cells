@@ -26,7 +26,7 @@ Two ladders, each rung named once in the code. A rung is implied by the one abov
 
 | rung | name | holds when | built |
 |---|---|---|---|
-| S1 | **sounds identical** | every event alike: voice, onset, length, pitch, gains, bends, levels, moving parameters, envelope. That is the snapshot's `notes` and `events` hashes | `soundsIdentical` |
+| S1 | **sounds identical** | every event alike: voice (by its place among the voices, #186), onset, length, pitch, gains, bends, levels, moving parameters, envelope. That is the snapshot's `notes` and `events` hashes | `soundsIdentical` |
 | S2 | plays the same notes | voice, onset, length and pitch alike; gains and the rest free | `playsSameNotes` |
 | S3 | the same notes in named cells | the named cells' flattened steps alike | `sameNotes` |
 
@@ -45,6 +45,6 @@ Rejected: one equality for everything (renaming and respelling are not the same 
 
 ## Consequences
 
-- **A voice renamed is E2 but not S1.** An event names its voice, and so does the snapshot's `notes` hash. So "E2 ⇒ S1" holds for every cell that isn't a voice (`identity.test.ts` shows both). That matters to Shorten's `same` rule (two voices alike become one name) and to a fragment's identity (its voices renamed when filed). Whether S1 should compare a voice by its place in the text rather than its name is #186; until then S1 names voices, as the snapshot does.
+- **S1 reads a voice by its place, not its name** (#186, the owner: as recommended). An event names its voice, so S1 and S2 number the voices heard in the order the text declares them: a voice renamed sounds identical, so E2 ⇒ S1 holds for every cell; two voices' parts swapped don't; a cell added that isn't a voice moves no number. The snapshot keeps the names: its hashes witness how a piece is seen as well as heard, and no example's moves.
 - **The tools move from `samePiece` (S1 over 60 s) to `soundsIdentical` (S1 over the whole window)** in a rung of their own (#154), timed against the shorten tests over every example, since pieces that end are then compared to their end.
 - #177's target ratchet scores "the result plays the input" as S1 over the whole window. Its measure is decision 049's (`engine/measure`, #183).
