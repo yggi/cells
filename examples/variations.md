@@ -2,10 +2,10 @@
 title: "Variations: a subject and its copies"
 tags: [tutorial, motifs, counterpoint]
 tier: 5
+description: "One subject entered three times, as a fugue begins: as it is, a fifth up with its leap bent (a tonal answer), and an octave down with its last note held. Each entry after the first is a copy of the subject, written as what changes."
 ---
 
 ```cells
-&piece label="One subject entered three times, as a fugue begins: as it is, a fifth up with its leap bent (a tonal answer), and an octave down with its last note held. Each entry after the first is a copy of the subject, written as what changes." about=&out
 &copyNote label="base=&subject makes a cell a copy of &subject. = keeps a step as it is there, a value changes it, =!n keeps n of them and =@n keeps one held n; base=&subject^$7 is the copy a fifth up." about=(&answer &low)
 &bar scan(1 1 1 1) step=free(andante)
 

@@ -1,10 +1,10 @@
 ---
 title: 5 to 12
 tags: [genre:experimental, artist:Stockhausen, modal, sound]
+description: "A day of music, anchored to the clock: it begins at 11:55 and plays where the day stands."
 ---
 
 ```cells
-&piece label="A day of music, anchored to the clock: it begins at 11:55 and plays where the day stands." about=&out
 &blocksNote label="Twelve blocks of two hours, a mode each — down from Ionian to the Locrian nadir, up again to the Lydian zenith." about=&cycle
 &keysNote label="Twelve keys of ten minutes, by fifths going down, by fourths coming up (a new dawn: strange, full of hope)." about=&cycle
 &barNote label="Every bar sounds all seven notes, on its mode's 12/8 bell." about=(&cycle &glass)

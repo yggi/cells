@@ -1,10 +1,10 @@
 ---
 title: Tape Machine
 tags: [genre:electronic, genre:ambient, sound]
+description: "A tape loop on a machine that turns: it spins up from rest, the pitch gliding up with it, and wows gently."
 ---
 
 ```cells
-&piece label="A tape loop on a machine that turns: it spins up from rest, the pitch gliding up with it, and wows gently." about=&out
 &capstanNote label="Hold the capstan with your finger: a tape stop, the pitch diving; let go and it spins back up." about=&bar
 &slackNote label="The hats ride a slack belt, dragging behind." about=&hats
 &springEndNote label="At the end the spring gives out and the tape stops for good." about=&bar

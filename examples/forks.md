@@ -1,10 +1,10 @@
 ---
 title: Two Tuning Forks
 tags: [genre:experimental, sound]
+description: Two tuning forks on one table, one struck now and then, the other set singing by the table.
 ---
 
 ```cells
-&piece label="Two tuning forks on one table, one struck now and then, the other set singing by the table." about=&out
 &tableNote label="The second fork, tuned the same, is never struck — but the table carries the vibration, and it begins to sing." about=&forkB
 &detuneNote label="Detune it with its slider and they beat." about=&forkB
 &touchNote label="Tap a fork to strike it (where you tap is how it rings), hold to damp it, drag across it to bow." about=(&forkA &forkB)

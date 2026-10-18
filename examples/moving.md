@@ -2,10 +2,10 @@
 title: "Moving parameters: a filter that opens"
 tags: [tutorial, sound]
 tier: 6
+description: A bass line whose filter opens on every note and swells over four bars, with accents and a fade.
 ---
 
 ```cells
-&piece label="A bass line whose filter opens on every note and swells over four bars, with accents and a fade." about=&out
 &rangeNote label="lpf=150..2800 * &fenv * &swell: the cutoff moves in that range, scaled by an envelope on every note and a slow swell." about=&acid
 &dbNote label="map=db: a volume in decibels, 0 as it is, −6 about half." about=&fade
 &bar scan(1 1 1 1) step=free(moderato)

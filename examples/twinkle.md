@@ -2,10 +2,10 @@
 title: "Motifs and reuse: Twinkle Twinkle"
 tags: [tutorial, genre:classical, genre:folk, diatonic, motifs]
 tier: 3
+description: Twinkle Twinkle from three motifs, one of them read a step up the scale, in solfège.
 ---
 
 ```cells
-&piece label="Twinkle Twinkle from three motifs, one of them read a step up the scale, in solfège." about=&mix
 # Three motifs make the whole tune. The middle line is &down again,
 # a step up the scale: &down^1.
 &bar scan(1 1 1 1) step=96bpm

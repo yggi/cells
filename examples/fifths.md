@@ -2,10 +2,10 @@
 title: "A table that turns: the circle of fifths"
 tags: [tutorial, genre:classical, tonal, chromatic, harmony]
 tier: 5
+description: "A key that turns a fifth each pass: round the circle of fifths and home."
 ---
 
 ```cells
-&piece label="A key that turns a fifth each pass: round the circle of fifths and home." about=&mix
 # &key turns once per pass of &tune, a fifth at a time (stride=7): C G D A E …
 # After twelve fifths it is home: a table that turns comes round after its own length.
 &bar scan(27 23 26 24) step=110bpm

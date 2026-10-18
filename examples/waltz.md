@@ -1,10 +1,10 @@
 ---
 title: "Viennese waltz: oom-pah-pah"
 tags: [genre:classical, tonal, rhythm]
+description: "A waltz in G: oom on one, pah-pah on two and three, a flute above."
 ---
 
 ```cells
-&piece label="A waltz in G: oom on one, pah-pah on two and three, a flute above." about=&mix
 # scan(28 37 35) pulls beat 2 early: short – long – long
 &bar scan(28 37 35) step=free(168bpm, 140..200)
 &tune over=scale(major, G) step=4n 2 4 7 7@2 6 5@2 4 1@3 1 4 6 6@2 5 4@2 1 0@3      # G major

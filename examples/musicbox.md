@@ -2,10 +2,10 @@
 title: Music Box
 tags: [tutorial, genre:classical, sound]
 tier: 7
+description: "A clockwork music box: wound, it spins up from rest, plays its tune, and as the spring runs down it slows and stops."
 ---
 
 ```cells
-&piece label="A clockwork music box: wound, it spins up from rest, plays its tune, and as the spring runs down it slows and stops." about=&out
 &springNote label="As the spring runs down it slows, and slows, and stops. Physics, not a ritardando." about=&bar
 &drumNote label="Turn the drum forward with your finger to push the tune on; hold it, and the box stops under your hand." about=&bar
 # Music Box — the meter is a body that turns: a motor (its spring) pulls it to 96 bpm, its

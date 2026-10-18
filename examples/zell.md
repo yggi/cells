@@ -1,6 +1,7 @@
 ---
 title: Zelluläre Aktivität
 tags: [genre:electronic, artist:Kraftwerk, diatonic, arrangement]
+description: Zelluläre Aktivität — it builds, layer by layer, and ends.
 ---
 
 ```cells
@@ -9,7 +10,6 @@ tags: [genre:electronic, artist:Kraftwerk, diatonic, arrangement]
 # semitones down, F); the arpeggio by moving its shape up the scale (&shape^5:
 # the same shape on its sixth step) — chromatic and diatonic, side by side. A slow filter
 # sweep over the arpeggio; a plain melody with echoes in time.
-&piece label="**Zelluläre Aktivität** — it builds, layer by layer, and ends." about=&out
 &aufbauNote label="It builds, layer by layer: &lied reads the parts, eight bars a step." about=&lied
 &progressionNote label="Am – F – C – G." about=(&bassline &arp)
 &bassNote label="Bass: octaves, transposed (^n)." about=&bassline

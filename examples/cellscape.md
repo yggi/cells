@@ -1,10 +1,10 @@
 ---
 title: Cellscape
 tags: [genre:electronic, modal, genre:ambient, canon, arrangement]
+description: A cycle of twelve scenes, each a fifth from the last, and home.
 ---
 
 ```cells
-&piece label="A cycle of twelve scenes, each a fifth from the last, and home." about=&out
 &droneNote label="A drone that breathes through its filter." about=(&pad &breath)
 &sequenceNote label="A sequenced arpeggio under a slow sweep." about=(&arp &sweep)
 &canonNote label="A canon at the octave." about=(&melody &canon)

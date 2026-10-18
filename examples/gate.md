@@ -2,10 +2,10 @@
 title: "A gate: a product with a name"
 tags: [tutorial, diatonic]
 tier: 9
+description: "Where notes become sound, named: a gate plays its voices with each note of what it plays."
 ---
 
 ```cells
-&piece label="Where notes become sound, named: a gate plays its voices with each note of what it plays." about=&out
 &gateNote label="&leadOut is a gate: it plays each note of &tune on the voices in its braid, both of them ([&lead, &bell], a chord), as loud as level= says: &accent per note times .4. It is read as [&tune * &accent * &lead * .4, …]." about=&leadOut
 &drumNote label="&drumOut plays a kit: each number of &beat picks the drum, 0 the kick, 1 the snare, 2 the hat, as &beat over=&kit would." about=&drumOut
 &productNote label="The bass is the same thing unnamed: a product in the sound card." about=&bass

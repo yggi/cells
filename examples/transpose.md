@@ -2,10 +2,10 @@
 title: "Key and mode: one theme, two wheels"
 tags: [tutorial, genre:classical, modal, diatonic, harmony]
 tier: 3
+description: One theme, read through a mode and a key.
 ---
 
 ```cells
-&piece label="One theme, read through a mode and a key." about=&mix
 &turnNote label="Turn either, and the theme follows." about=(&key &mode)
 # The mechanism on its own: a theme read through two wheels.
 # Change shift= on &key or &mode — the theme follows.

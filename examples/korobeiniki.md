@@ -1,6 +1,7 @@
 ---
 title: "8-bit: Korobeiniki, in Tetris form"
 tags: [genre:world, genre:electronic, genre:folk, tonal, genre:8-bit, arrangement]
+description: "Korobeiniki, in the form of the puzzle game's music: A · A · B · B · A, and round again."
 ---
 
 ```cells
@@ -8,7 +9,6 @@ tags: [genre:world, genre:electronic, genre:folk, tonal, genre:8-bit, arrangemen
 # 1980s console would play it: pulse waves are braids, the bass a stepped triangle,
 # chords are arpeggios too fast to hear apart. In the game's form: the song (A),
 # then a slower middle section (B, our own), then the song again — and round.
-&piece label="**Korobeiniki**, in the form of the puzzle game's music: A · A · B · B · A, and round again." about=&out
 &formNote label="&tetris picks the parts, eight bars a step." about=&tetris
 &sectionsNote label="A is the folk song; B, slower, in half notes, is our own." about=(&tune &chorale)
 &bar scan(1 1 1 1) step=free(144bpm, 100..200)

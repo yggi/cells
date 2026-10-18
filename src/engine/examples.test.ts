@@ -1,6 +1,6 @@
 // The language's half of yggi/cell-studio src/engine/examples.test.ts @ e168c8d: every example is listed, compiles, and
-// carries its card; the library's index and miniatures stay with the workbench. Each is a piece file (piecefile.ts,
-// decision 047): its title, tags and tier in the frontmatter, the piece in a cells block.
+// says what it is; the library's index and miniatures stay with the workbench. Each is a piece file (piecefile.ts,
+// decision 047): its title, description, tags and tier in the frontmatter, the piece in a cells block, with no card (#196).
 import { describe, expect, test } from 'vitest';
 import { readdirSync } from 'node:fs';
 import { PRESETS } from './presets';
@@ -10,13 +10,13 @@ import { readPiece, writePiece } from './piecefile';
 import { movedCard } from './shorten/card';
 import { canonicalTag, parseTag, VOCABULARY } from './tags';
 
-/** An example's text written the old way: what its frontmatter says, on its card (`&piece title="…" tags="…" tier=n`). */
+/** An example's text written the old way: what its frontmatter says, on its card (`&piece title="…" tags="…" tier=n label="…"`), its first line. */
 function oldForm(file: string): string {
   const piece = readPiece(file);
   if ('problems' in piece) throw new Error(piece.problems[0]!.message);
-  const { title, tags, tier } = piece.frontmatter;
-  const card = `title="${title}" tags="${(tags as string[]).join(', ')}"${tier === undefined ? '' : ` tier=${tier}`}`;
-  return piece.text.replace(/^&piece /m, `&piece ${card} `);
+  const { title, tags, tier, description } = piece.frontmatter;
+  const card = `&piece title="${title}" tags="${(tags as string[]).join(', ')}"${tier === undefined ? '' : ` tier=${tier}`} label="${description}"`;
+  return `${card}\n${piece.text}`;
 }
 
 describe('examples/*.md', () => {
@@ -31,11 +31,13 @@ describe('examples/*.md', () => {
     expect(Object.keys(PRESETS).sort()).toEqual(files.sort());
   });
   for (const [key, p] of Object.entries(PRESETS)) {
-    test(`${key}: compiles without diagnostics, has a title, tags, and its card's postgain= or the built-in card`, () => {
+    test(`${key}: compiles without diagnostics, has a title, a description, tags, and its card's postgain= or the built-in card`, () => {
       const r = compileSource(p.source);
       expect(r.diagnostics).toEqual([]);
       const m = pieceMeta(p.file);
       expect(m?.title, 'title:').toBeTruthy();
+      const piece = readPiece(p.file);
+      expect('frontmatter' in piece && typeof piece.frontmatter.description === 'string' && piece.frontmatter.description, 'description:').toBeTruthy();
       expect(m?.tags.length, 'tags:').toBeGreaterThan(0);
       // tags are the vocabulary's, written with their kind (genre:jazz, artist:Bach; a topic bare)
       for (const t of m?.tags ?? []) {
@@ -53,20 +55,18 @@ describe('examples/*.md', () => {
   }
 
   for (const [key, p] of Object.entries(PRESETS)) {
-    test(`${key}: the card is the first cell, a note named piece, and its notes are named …Note`, () => {
-      const lines = p.source.split('\n');
-      const first = lines.find((l) => l.startsWith('&'));
-      expect(first, 'the first cell').toMatch(/^&piece label="/);
+    test(`${key}: no card (the frontmatter says what the piece is), and its notes are named …Note`, () => {
       const r = compileSource(p.source);
-      expect(r.cells.get('piece')?.note, '&piece is a note').toBe(true);
-      for (const c of r.cells.values()) if (c.note && c.name !== 'piece') expect(c.name, `note &${c.name}`).toMatch(/Note$/);
+      expect(r.cells.has('piece'), 'a card, &piece: its label is the description').toBe(false);
+      for (const c of r.cells.values()) if (c.note) expect(c.name, `note &${c.name}`).toMatch(/Note$/);
     });
   }
 
   for (const [key, p] of Object.entries(PRESETS)) {
     test(`${key}: reads the same from its frontmatter as written the old way, and the migration writes its file byte for byte`, () => {
       const old = oldForm(p.file);
-      expect(pieceMeta(p.file)).toEqual(pieceMeta(old));
+      // (the same card, but on no note: the file's frontmatter says it all)
+      expect(pieceMeta(p.file)).toEqual({ ...pieceMeta(old), cell: null });
       expect(compileSource(old).diagnostics.map((d) => d.message)).toEqual([expect.stringMatching(/frontmatter now .*Shorten moves them there/)]);
       const moved = movedCard(old)!;
       expect(moved.text).toBe(p.source);

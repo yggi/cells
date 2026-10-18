@@ -1,10 +1,10 @@
 ---
 title: Baustelle
 tags: [genre:experimental, genre:electronic, artist:Neubauten, microtonal, genre:industrial, arrangement]
+description: "An original in the manner of Einstürzende Neubauten: struck metal and a scream; it builds, breaks, comes back harder, and collapses."
 ---
 
 ```cells
-&piece label="An original in the manner of Einstürzende Neubauten: struck metal and a scream; it builds, breaks, comes back harder, and collapses." about=&out
 &metalsNote label="Beams, pipes and plates struck and tuned to their own partials." about=(&beams &pipes &plates)
 &springNote label="A giant bass spring." about=(&feder &bassfeder)
 &toolsNote label="A grinder and a drill." about=(&grind &drill)

@@ -2,10 +2,10 @@
 title: Harmonograph
 tags: [tutorial, genre:experimental, sound]
 tier: 7
+description: "Two tuning forks, struck together, each draw one axis of an oscilloscope: a Lissajous curve."
 ---
 
 ```cells
-&piece label="Two tuning forks, struck together, each draw one axis of an oscilloscope: a Lissajous curve." about=&out
 &forksNote label="A tonic and its fifth (0 and 7), struck together; the tonic sounds left, the fifth right." about=(&tonic &fifth)
 &scopesNote label="A spectrum folds pitches into twelve classes (fold=12), each fork its own (channels=split); a waterfall shows bands (bins=24) as they ring away." about=(&classes &bands)
 &figureNote label="Each fork drives one axis of an oscilloscope, x and y, and the figure they draw is a Lissajous curve — 3 : 2, slowly turning (the fifth is tempered), shrinking as they ring away." about=&screen

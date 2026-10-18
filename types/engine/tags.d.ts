@@ -1,7 +1,7 @@
 /**
- * The tags of a piece's card (`tags="genre:jazz, artist:Bach, rhythm"`): four kinds. `genre:` and
+ * The tags of a piece (its file's `tags: [genre:jazz, artist:Bach, rhythm]`): four kinds. `genre:` and
  * `artist:` say what kind of tag it is by a prefix; `tutorial` is a kind and its one tag at once (a
- * piece of the tutorial, whose tiers its card's tier= says); a tag without a prefix is
+ * piece of the tutorial, whose tier its file's `tier:` says); a tag without a prefix is
  * a topic (a technique or idea: rhythm, canon, tuning), the kind a person types without thinking
  * about it. The library shows the name only and groups by kind. Pure text: no UI.
  */

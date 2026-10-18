@@ -1,10 +1,10 @@
 ---
 title: Cellscape II feat. Stockhausen
 tags: [genre:experimental, genre:electronic, artist:Stockhausen, microtonal, genre:ambient]
+description: "No octaves, no beat, no instruments: sines and noise on Stockhausen's 25 steps to 5:1."
 ---
 
 ```cells
-&piece label="No octaves, no beat, no instruments: sines and noise on Stockhausen's 25 steps to 5:1." about=&out
 &ownTimeNote label="Every layer keeps its own time and a prime number of steps." about=(&constellations &glints &ripples)
 &chanceNote label="Chance thins and chooses, a little differently every time round, the same every time you play it." about=(&constellations &glints &ripples)
 &glintSliderNote label="The glints' chance is a slider." about=&glints

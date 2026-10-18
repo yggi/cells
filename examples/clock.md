@@ -2,10 +2,10 @@
 title: "A clock: one bar drives every part"
 tags: [tutorial, rhythm]
 tier: 2
+description: "A bar sets the tempo, and every part steps with it: on the beat, twice as fast, or once every two beats."
 ---
 
 ```cells
-&piece label="A bar sets the tempo, and every part steps with it: on the beat, twice as fast, or once every two beats." about=&out
 &barNote label="&bar is the clock: scan(1 1 1 1) is four even beats; step=free(andante) a tempo marking, a slider from 76 to 108 beats a minute." about=&bar
 &ratesNote label="Each part taps the bar by a note value: step=4n a step a beat (a quarter), 8n two steps a beat, 2n a step every two beats." about=(&tune &eighths &bass)
 &bar scan(1 1 1 1) step=free(andante)          # four beats, andante

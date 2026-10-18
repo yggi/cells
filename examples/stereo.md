@@ -2,10 +2,10 @@
 title: "Stereo: Mary Had a Little Lamb"
 tags: [tutorial, genre:world, genre:folk, pentatonic, stereo]
 tier: 6
+description: "Mary Had a Little Lamb across two channels: the bell on the left, the cello on the right."
 ---
 
 ```cells
-&piece label="Mary Had a Little Lamb across two channels: the bell on the left, the cello on the right." about=&out
 &glideNote label="glide=.12: the cello bows its line, each note sliding on from the last in .12 s, its envelope once (no new attack). A rest or a chord would end the run." about=&cello
 # pan= places a voice between the sound card's two channels: 0 left, .5 the centre (as
 # without it), 1 right; the far side fades. .15: the left full, the right at .3.

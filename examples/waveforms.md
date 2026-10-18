@@ -2,10 +2,10 @@
 title: "Sound: voices, waveforms, envelopes"
 tags: [tutorial, genre:electronic, sound]
 tier: 6
+description: "Voices made of braids: square, triangle, saw and sine, with envelopes and a vibrato."
 ---
 
 ```cells
-&piece label="Voices made of braids: square, triangle, saw and sine, with envelopes and a vibrato." about=&mix
 # A voice is a cell looped at audio rate: one turn of its braid is one cycle
 # of its waveform. Its pitch and its volume are cells too.
 &bar scan(1 1 1 1) step=100bpm

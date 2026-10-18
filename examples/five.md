@@ -1,10 +1,10 @@
 ---
 title: "Five: an original tune in 5/4"
 tags: [genre:jazz, modal, rhythm]
+description: An original tune in 5/4, felt as 3 + 2, after the groove of Take Five.
 ---
 
 ```cells
-&piece label="An original tune in 5/4, felt as 3 + 2, after the groove of Take Five." about=&mix
 # Five: an original tune in 5/4, the bar felt as 3 + 2 — after the groove of Take Five.
 # It builds on the blues: the same swing meter, the minor pentatonic (here on Eb).
 &bar scan(1 1 1 1 1) step=free(172bpm, 120..220)    # five beats

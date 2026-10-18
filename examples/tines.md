@@ -1,10 +1,10 @@
 ---
 title: Cell Tines
 tags: [genre:electronic, diatonic, FM, sound]
+description: "FM, after the DX7: an electric piano, bells and a punchy bass, all made by frequency modulation."
 ---
 
 ```cells
-&piece label="FM, after the DX7: an electric piano, bells and a punchy bass, all made by frequency modulation." about=&out
 &pianoNote label="An electric piano of two pairs: a body at 1:1, a tine at 14:1 that barks on the attack." about=(&body &tine)
 &bellNote label="Bells at 3.5:1." about=(&tune &bell)
 &bassNote label="A punchy FM bass." about=(&fmbass &low)

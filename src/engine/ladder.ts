@@ -1,5 +1,5 @@
 /**
- * The tutorial in tiers (#170): each piece of it (a card with `tags="tutorial"` and `tier=n`) belongs
+ * The tutorial in tiers (#170): each piece of it (a file with `tags: [tutorial]` and `tier: n`) belongs
  * to a tier, and uses only what its tier and the tiers before it introduce. A tier is a set of the
  * forms of docs/language/reference.md, and every form is some tier's: together the tiers cover the
  * language, each form once, and the pieces of a tier together show all of its forms. `formsUsed`

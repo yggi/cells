@@ -1,10 +1,10 @@
 ---
 title: Hypercell
 tags: [genre:electronic, artist:Scooter, diatonic, genre:dance, arrangement]
+description: "90s happy hardcore and eurodance, an original: three minutes of euphoric drops, then it ends."
 ---
 
 ```cells
-&piece label="90s happy hardcore and eurodance, an original: three minutes of euphoric drops, then it ends." about=&out
 &fourFloorNote label="Four-on-the-floor at 160." about=&beat
 &offbeatBassNote label="Offbeat octave bass." about=(&off &bass)
 &stabsNote label="Rave stabs." about=(&stabs &stab)

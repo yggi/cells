@@ -1,10 +1,10 @@
 ---
 title: Cellular Brothers
 tags: [genre:electronic, artist:Chemical Brothers, modal, genre:dance, arrangement]
+description: "Big beat, an original in the manner of the Chemical Brothers: gritty and crushed, about two and a half minutes, then it ends."
 ---
 
 ```cells
-&piece label="Big beat, an original in the manner of the Chemical Brothers: gritty and crushed, about two and a half minutes, then it ends." about=&out
 &breakNote label="A gritty, crushed breakbeat." about=&break
 &acidNote label="An acid line." about=&acid
 &riffNote label="A distorted stab riff in E minor." about=(&riff &stab)

@@ -2,10 +2,10 @@
 title: "Meter and rhythm: the tresillo"
 tags: [tutorial, genre:world, rhythm]
 tier: 4
+description: The tresillo over a meter of its own, with hats, triplets and chords on the beat.
 ---
 
 ```cells
-&piece label="The tresillo over a meter of its own, with hats, triplets and chords on the beat." about=&mix
 # A meter is a scan: the intervals between its beats, adding up to the bar.
 # scan(27 23 26 24): beats at 0 27 50 76 % — the first long, the third leaning.
 &bar scan(27 23 26 24) step=100bpm             # 4/4, bent

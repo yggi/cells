@@ -1,10 +1,10 @@
 ---
 title: Sound on Tape
 tags: [genre:experimental, genre:electronic, genre:ambient, sound]
+description: "Sound, on a tape loop: a plucked tune and a soft pad go to the speakers and onto a wowing reel of tape."
 ---
 
 ```cells
-&piece label="Sound, on a tape loop: a plucked tune and a soft pad go to the speakers and onto a wowing reel of tape." about=&out
 &lengthNote label="The tape holds 4 seconds; every lap it comes round darker and warmer, a little hiss under it." about=&tape
 &headsNote label="Three heads play the tape back, left, right and between." about=(&left &right &far)
 &reelNote label="Hold the reel: the whole tape bends down." about=&reel

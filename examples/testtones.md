@@ -1,10 +1,10 @@
 ---
 title: Test Tones on Tape
 tags: [genre:experimental, genre:electronic, genre:ambient, sound]
+description: "For the test bench, in the spirit of Hainbach: old sine generators, a beeping oscillator and a noise sweep, all onto worn tape."
 ---
 
 ```cells
-&piece label="For the test bench, in the spirit of Hainbach: old sine generators, a beeping oscillator and a noise sweep, all onto worn tape." about=&out
 &generatorNote label="Old sine generators holding drifting tones on a harmonic dial." about=(&drones &dial &drift)
 &beepNote label="A beeping test oscillator." about=&beeps
 &swellNote label="Swells from a noise sweep." about=&swells

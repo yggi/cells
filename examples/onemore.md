@@ -1,10 +1,10 @@
 ---
 title: One more Cell
 tags: [genre:electronic, artist:Daft Punk, diatonic, genre:dance]
+description: "French filter house, an original: maj7 chords chopped in a funky rhythm under one long filter sweep."
 ---
 
 ```cells
-&piece label="French filter house, an original: maj7 chords chopped in a funky rhythm under one long filter sweep." about=&out
 &chordsNote label="Parallel maj7 chords chopped in a funky sixteenth rhythm, F G A B♭." about=(&chop &prog)
 &sweepNote label="One long filter sweep, pumping on every beat." about=(&filt &pump)
 &discoNote label="Disco octaves and a robotic lead." about=(&disco &robot)

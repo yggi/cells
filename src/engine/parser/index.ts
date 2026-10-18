@@ -72,10 +72,11 @@ export function parse(whole: string): ParseResult {
 }
 
 /**
- * A piece's card: its title, its description (the label of its card, as plain text), its tags and its tier. From a file
- * (`piecefile.ts`, decision 047): the frontmatter's title, tags, tier and description (else the label of the text's first note). From a
- * text written the old way: the first note with a title=, its title=, label=, tags= and tier= (a warning says they now go
- * in the frontmatter, and Shorten moves them there).
+ * A piece's card: its title, its description, its tags and its tier. From a file (`piecefile.ts`, decision 047): the
+ * frontmatter's title, tags, tier and description (else the label of a card its text still has: a note named `&piece`,
+ * as a text written before the description moved there). From a text written the old way: the first note with a
+ * title=, its title=, label=, tags= and tier= (a warning says they now go in the frontmatter, and Shorten moves them
+ * there).
  */
 export interface PieceMeta {
   readonly title: string;
@@ -83,12 +84,12 @@ export interface PieceMeta {
   readonly tags: readonly string[];
   /** Its tier of the tutorial (tier=), if it is one of its pieces. */
   readonly tier: number | null;
-  /** The note it's on (in a file, the text's first note), or null for none. */
+  /** The note it's on (in a file, its text's `&piece`), or null for none: a file says it all in its frontmatter. */
   readonly cell: string | null;
 }
 
 /** A label as plain text: fields dropped, formatting stripped, \n a space. */
-const plainLabel = (label: string) =>
+export const plainLabel = (label: string): string =>
   label
     .replace(/\{[^}]*\}/g, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')
@@ -109,6 +110,9 @@ function card(title: string, label: string, tagList: readonly string[], tier: nu
   return { title, description, tags, tier, cell };
 }
 
+/** The name of the card a text keeps when its file's frontmatter doesn't say what the piece is yet (display.md). */
+export const CARD = 'piece';
+
 /** A piece's card, from a file or from a text written the old way; null without a title. */
 export function pieceMeta(source: string): PieceMeta | null {
   if (isPieceFile(source)) {
@@ -116,9 +120,9 @@ export function pieceMeta(source: string): PieceMeta | null {
     if ('problems' in file) return null;
     const { title, tags, tier, description } = file.frontmatter;
     if (typeof title !== 'string') return null;
-    const note = parse(file.text).cells.find(isNote);
+    const note = parse(file.text).cells.find((c) => c.name === CARD && isNote(c));
     const tagList = Array.isArray(tags) ? tags.filter((t): t is string => typeof t === 'string') : [];
-    // (the frontmatter's description, else the label of the text's first note)
+    // (the frontmatter's description, else the label of the card the text still has)
     return card(title, typeof description === 'string' ? description : (note?.label ?? ''), tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
   }
   const d = parse(source).cells.find((c) => c.title);

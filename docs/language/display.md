@@ -7,15 +7,15 @@ How a cell is shown and described: names, labels, notes, the piece's file and it
 - **label="text"** a name shown instead of `&name`. **tags="a, b"** takes quoted text too; each may be given once per cell.
 - **tags=** on a cell clusters it in the graph, the first tag grouping it; a tag is also a chip in the library.
 - **A note**: a cell with a `label=` and nothing else (no braid, `step=`, `over=`, `map=`, `shift=`, `off`, sound parameters). It does nothing; it explains. It is read in the graph's margin, not among the cells, numbered in the order the piece writes notes, and is never clustered ([../ui/graph.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/graph.md): the margin).
-- **about=&cell** (or **about=(&a &b)**) on a note links it to the cells it explains: each wears the note's number on its rim. The links are annotation only: they don't change the layout, and a cell that is not a note can't have them. Keep a piece's card to one sentence and put the how-to-listen details in notes next to the cells they are about.
+- **about=&cell** (or **about=(&a &b)**) on a note links it to the cells it explains: each wears the note's number on its rim. The links are annotation only: they don't change the layout, and a cell that is not a note can't have them. Keep a piece's description to one sentence and put the how-to-listen details in notes next to the cells they are about.
 
 Label templates fill from the cell as it is now, so a key that turns renames itself: `{notes}` (up to 16, then …), `{tonic}`, `{mode}` (bold, the common name first: **Minor** (*Aeolian*)), `{steps}`, `{tempo}` (beats a minute), `{shift}`, `{name}`, and `{&key:tonic}` for another cell's field (a note has none of its own). `**bold**`, `*italic*`, `\n` a new line; other text is escaped. Any other field (`{lap}`, a misspelt `{tempi}`) stays as written, with a warning that lists these.
 
 ```cells
-&piece label="A **12-bar** blues sketch.\nSwung, in C."
 &bar scan(1 1 1 1) step=100bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}: {notes}"
 &hint label="The major scale: 2 2 1 2 2 2 1." about=&major
+&tuneNote label="A **12-bar** blues sketch.\nSwung, in C." about=&tune
 &tune over=&major step=8n show=notes:flats size=1.5 label="the tune" 0 2 4 5
 &v s=sine loop=C4
 &out postgain=.501 loop=SAMPLE_RATE map=sample [&tune * &v * .3]
@@ -29,10 +29,10 @@ A piece is a file, the same kind as a fragment ([decision 047](../decisions/047-
 ---
 title: Swing blues
 tags: [genre:jazz, genre:blues, rhythm]
+description: A blues riff, in C.
 ---
 
 ```cells
-&piece label="A blues riff, in C." about=&out
 &bar scan(1 1 1 1) step=100bpm swing=8n:2/3
 &riff step=8n 0 3 5 6 7 ~ 10 7
 &v s=tri loop=C4
@@ -42,11 +42,11 @@ tags: [genre:jazz, genre:blues, rhythm]
 Anything else about the piece, in prose.
 ````
 
-The frontmatter says what the piece is: its `title` names it (and the saved file), its `tags` are the piece's (a list; each once, whatever the case), its `tier` its tier of the tutorial (below), its `description` what the card's label said (it wins over a card's); any other key is kept, in its order. A text with no card, as Convert to cells writes (the title, `tags: [midi]` and the description are in the frontmatter of `Imported`), has only the frontmatter. Else the text's first note is the piece's card: its `label=` is the description (fields dropped, formatting stripped, `\n` a space; an opening that repeats the title is cut). The picker shows each piece as one wheel: its graph inside, tags round the rim. `pieceMeta` reads the card, `readPiece` and `writePiece` the file (`src/engine/piecefile.ts`).
+The frontmatter says what the piece is: its `title` names it (and the saved file), its `tags` are the piece's (a list; each once, whatever the case), its `tier` its tier of the tutorial (below), its `description` what the piece is, in a sentence; any other key is kept, in its order. The text holds the piece and no card: Convert to cells writes its title, `tags: [midi]` and description in the frontmatter of `Imported`, as the examples have theirs. The picker shows each piece as one wheel: its graph inside, tags round the rim. `pieceMeta` reads the card (fields dropped, formatting stripped, `\n` a space; an opening that repeats the title is cut), `readPiece` and `writePiece` the file (`src/engine/piecefile.ts`).
 
-**Written the old way**, a text says these on its card, the first note with a `title=`: `&piece title="Swing blues" tags="genre:jazz, rhythm" tier=1 label="…"`. It still compiles, and `pieceMeta` still reads its card, with a warning on the card that its `title=`, `tags=` and `tier=` go in the file's frontmatter now; Shorten's migration (`card`) writes the file, moving them there and leaving the rest of the text byte for byte. (A `tags=` on any other cell is its clusters, as above.)
+**Written the old way**, a text says these on its card, the first note with a `title=`: `&piece title="Swing blues" tags="genre:jazz, rhythm" tier=1 label="…"`. It still compiles, and `pieceMeta` still reads its card, with a warning on the card that its `title=`, `tags=` and `tier=` go in the file's frontmatter now. A file written before the description moved to the frontmatter keeps its card in its text, the note `&piece label="…"`; it is still valid, and `pieceMeta` reads its label as the description where the frontmatter has none. Shorten's migration (`card`) writes the file for both: the card's title, tags and tier go to the frontmatter, its label, as plain text, to `description`, and the card's line goes, the rest of the text byte for byte. (A `tags=` on any other cell is its clusters, as above.)
 
-**The convention for examples** (a test checks the first two): the card is the first cell, a note named `&piece`, and its notes are named `&…Note`; the card's label is one sentence (what the piece is, no `&names`, no instructions) and the card links to the sound card with `about=` (the cell with `map=sample`); how it works and what to try go into notes beside the cells they explain (`&filter label="…" about=(&fenv &accent)`), a topic each.
+**The convention for examples** (a test checks the first two): no card (no `&piece`: the description is the frontmatter's), and the notes are named `&…Note`; the description is one sentence (what the piece is, no `&names`, no instructions); how it works and what to try go into notes beside the cells they explain (`&filterNote label="…" about=(&fenv &accent)`), a topic each.
 
 **The order of the cells** (judgment, nothing checks it): clock → harmony → parts → voices → mix → arrangement → out. An arrangement is the selector that chooses between the sections of a table (`&song`, `&tetris` over `&sections`; decision 016); it comes after the parts and before the sound card. A table may sit beside the part that reads it. Reordering lines does not change the sound.
 
