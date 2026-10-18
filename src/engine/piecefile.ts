@@ -17,11 +17,11 @@
  * ```
  * ```
  *
- * The frontmatter says what the piece is: `title` (a string), `tags` (a list of strings: genre:jazz, artist:Bach, a
+ * The frontmatter says what the piece is: `title` (a string), `description` (a string: what the card's label said), `tags` (a list of strings: genre:jazz, artist:Bach, a
  * topic) and `tier` (its tier of the tutorial, a whole number 1 to 9999), each optional here (the examples' checks ask
  * for a title and tags); any other key is kept with its value, in its order, as a fragment's metadata is. The block is
- * the piece's text, what compiles; its card's description stays in it, as the label of its first note (`&piece`), since
- * the graph shows it. Nothing comes before the block (no preface: what would go there goes in the frontmatter or the
+ * the piece's text, what compiles; a card's description may stay in it, as the label of its first note (`&piece`), since
+ * the graph shows it, and the frontmatter's `description` wins where both say one (a text with no card, as the MIDI folder writes, has only that). Nothing comes before the block (no preface: what would go there goes in the frontmatter or the
  * prose, as in a fragment file); the prose is everything after it. `writePiece` writes one blank line before the block
  * and before the prose, and ends the file with a newline, so a file written that way reads and writes back byte for byte.
  */
@@ -55,6 +55,7 @@ function keyProblems(root: YamlNode & { kind: 'map' }): YamlProblem[] {
   for (const { key, line, value } of root.entries) {
     const v = yamlValue(value);
     if (key === 'title' && (typeof v !== 'string' || !v.trim())) problems.push({ line, message: `the title is ${JSON.stringify(v)}, not a text: title: "A name"` });
+    if (key === 'description' && typeof v !== 'string') problems.push({ line, message: `the description is ${JSON.stringify(v)}, not a text: description: "What it is"` });
     if (key === 'tags' && !(Array.isArray(v) && v.every((t) => typeof t === 'string' && t.trim())))
       problems.push({ line, message: `the tags are ${JSON.stringify(v)}, not a list of names: tags: [genre:jazz, rhythm]` });
     if (key === 'tier' && !(typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 9999))

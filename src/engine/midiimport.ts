@@ -30,11 +30,15 @@ import { compileSource } from './compile';
 import { MAX_REPS } from './parser/scanner';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
+import type { PieceFrontmatter } from './piecefile';
 import { gmDrumNote, kitNotes } from './midi';
 
 /** A file as a piece, and what was made of it. */
 export interface Imported {
+  /** The piece's text: no card, which is in `frontmatter` (a frontend saves a file with `writePiece`, `piecefile.ts`). */
   readonly source: string;
+  /** What the card said of it: the file's `title`, its `tags` (`midi`) and a `description` (what was made of the file). */
+  readonly frontmatter: PieceFrontmatter;
   readonly notes: number;
   /** The braids written (a track's overlapping notes in more than one). */
   readonly lines: number;
@@ -333,13 +337,13 @@ export function cellsFromMidi(
     if (voice) voices.push(`&${voice} s=tri loop=C4${legato ? ` glide=${legato.glide}` : ''} env=&(map=adsr .005 .2 .6 .15)`);
     for (const n of names) mix.push(voice ? `&${n} * &${voice} * .25` : `&${n} * .4`);
   }
+  // (each text written, and the description its file says of it: how it is written is the one thing that differs)
+  const describing = new Map<string, string>();
   const write = (body: string[], how: string) => {
     const label = `Opened from a MIDI file: ${count} notes in ${lines.length} line${lines.length === 1 ? '' : 's'}, ${perQuarter} step${perQuarter === 1 ? '' : 's'} a quarter note, ${how}.`;
-    return [
-      `&piece title="${title.replace(/"/g, "'")}" tags="midi" label="${label}" about=&out`,
+    const text = [
       // (where the file came from and on what terms: comments the piece keeps)
-      ...(credit.length ? ['', ...credit.map((l) => `# ${l}`)] : []),
-      '',
+      ...(credit.length ? [...credit.map((l) => `# ${l}`), ''] : []),
       `# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`,
       tempo,
       '',
@@ -351,6 +355,8 @@ export function cellsFromMidi(
       `&out map=sample [${mix.join(', ')}]`,
       '',
     ].join('\n');
+    describing.set(text, label);
+    return text;
   };
   const flat = write(
     [
@@ -521,6 +527,7 @@ export function cellsFromMidi(
   }
   return {
     source,
+    frontmatter: { title, tags: ['midi'], description: describing.get(source)! },
     notes: count,
     lines: lines.length,
     perQuarter,

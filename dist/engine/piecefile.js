@@ -7,6 +7,8 @@ function keyProblems(root) {
         const v = yamlValue(value);
         if (key === 'title' && (typeof v !== 'string' || !v.trim()))
             problems.push({ line, message: `the title is ${JSON.stringify(v)}, not a text: title: "A name"` });
+        if (key === 'description' && typeof v !== 'string')
+            problems.push({ line, message: `the description is ${JSON.stringify(v)}, not a text: description: "What it is"` });
         if (key === 'tags' && !(Array.isArray(v) && v.every((t) => typeof t === 'string' && t.trim())))
             problems.push({ line, message: `the tags are ${JSON.stringify(v)}, not a list of names: tags: [genre:jazz, rhythm]` });
         if (key === 'tier' && !(typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 9999))

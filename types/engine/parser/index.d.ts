@@ -4,7 +4,7 @@ export { SHOWS } from './cell';
 export declare function parse(whole: string): ParseResult;
 /**
  * A piece's card: its title, its description (the label of its card, as plain text), its tags and its tier. From a file
- * (`piecefile.ts`, decision 047): the frontmatter's title, tags and tier, and the label of the text's first note. From a
+ * (`piecefile.ts`, decision 047): the frontmatter's title, tags, tier and description (else the label of the text's first note). From a
  * text written the old way: the first note with a title=, its title=, label=, tags= and tier= (a warning says they now go
  * in the frontmatter, and Shorten moves them there).
  */

@@ -7,6 +7,8 @@ import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { noteOf } from './midi';
 import { PRESETS } from './presets';
+import { pieceMeta } from './parser';
+import { writePiece } from './piecefile';
 
 /** A piece's notes as (key, start, length), in order: what a file must give back. */
 function notesOf(source: string) {
@@ -85,6 +87,36 @@ describe('a MIDI file as a piece', () => {
     );
     const heard = notesOf(cellsFromMidi(smf, 'test').source);
     expect(heard.map((n) => n.at.toFixed(3))).toEqual(['0.000', '0.500', '1.000', '2.000']);
+  });
+
+  it('writes no card: the title, tags and description go in the frontmatter, and the text compiles with no diagnostic', () => {
+    const smf = file(
+      [
+        {
+          name: 'lead',
+          notes: notes(1, [
+            [60, 0, 24],
+            [62, 24, 48],
+          ]),
+          bends: [],
+          programs: [],
+        },
+      ],
+      [{ tick: 0, micros: 500_000 }],
+    );
+    const made = cellsFromMidi(smf, 'A "tune"', { credit: ['From a file.'], story: true });
+    expect(made.source).not.toMatch(/title=|tags=|label=|about=|&piece/);
+    expect(made.source.startsWith('# From a file.\n')).toBe(true);
+    expect(made.frontmatter).toEqual({ title: 'A "tune"', tags: ['midi'], description: expect.stringMatching(/^Opened from a MIDI file: 2 notes in 1 line/) });
+    expect(compileSource(made.source).diagnostics).toEqual([]);
+    for (const frame of made.story!) expect(compileSource(frame.source).diagnostics).toEqual([]);
+    // (written as a file, it reads back as the same card)
+    const file_ = writePiece({ frontmatter: made.frontmatter, text: made.source.trimEnd(), prose: '' });
+    expect(pieceMeta(file_)).toMatchObject({
+      title: 'A "tune"',
+      tags: ['midi'],
+      description: made.frontmatter.description!.toString().replace(/^Opened from a MIDI file: /, 'Opened from a MIDI file: '),
+    });
   });
 
   it('writes channel 10 as drum voices by their General MIDI names', () => {

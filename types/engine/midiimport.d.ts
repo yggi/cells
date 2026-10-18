@@ -20,9 +20,13 @@
  */
 import { type Smf } from './midifile';
 import { type Stage } from './fold';
+import type { PieceFrontmatter } from './piecefile';
 /** A file as a piece, and what was made of it. */
 export interface Imported {
+    /** The piece's text: no card, which is in `frontmatter` (a frontend saves a file with `writePiece`, `piecefile.ts`). */
     readonly source: string;
+    /** What the card said of it: the file's `title`, its `tags` (`midi`) and a `description` (what was made of the file). */
+    readonly frontmatter: PieceFrontmatter;
     readonly notes: number;
     /** The braids written (a track's overlapping notes in more than one). */
     readonly lines: number;
