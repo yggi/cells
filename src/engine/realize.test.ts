@@ -914,7 +914,7 @@ describe('three more: Pachelbel, pop, IDM', () => {
     const r = compileSource(P.idm.source);
     expect(r.diagnostics).toEqual([]);
     const bar = (4 * 60) / 160;
-    const drums = (n: number) => events(r, n * bar, (n + 1) * bar - 1e-3).filter((e) => ['bd', 'sd', 'ch'].includes(e.voice));
+    const drums = (n: number) => events(r, n * bar, (n + 1) * bar - 1e-3).filter((e) => ['bd', 'sd', 'hh'].includes(e.voice));
     const hits = (n: number) => drums(n).map((e) => e.voice);
     // backwards, step by step (a ratchet's hits stay a ratchet)
     const steps = (n: number) => {
@@ -1607,9 +1607,9 @@ describe('five more: Cell in Focus, Hypercell, One more Cell, Cellular Brothers,
     const r = R('brothers');
     const sec = (32 * 60) / 112;
     const who = (n: number) => [...new Set(events(r, n * sec, (n + 1) * sec - 1e-3).map((e) => e.voice))].sort().join(' ');
-    expect(who(0)).toBe('bd ch sd');
+    expect(who(0)).toBe('bd hh sd');
     expect(who(3)).toBe('riser sn'); // a build
-    expect(who(5)).toBe('bd ch sd siren1 stab subv tb'); // everything
+    expect(who(5)).toBe('bd hh sd siren1 stab subv tb'); // everything
     expect(plan(r, codeShifts(r)).end).toBeCloseTo(9 * sec, 6);
   });
   it('Ghost-Cells: seven against eight — the piano comes back a step later every bar; it loops', () => {

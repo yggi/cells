@@ -17,7 +17,7 @@ description: "Eighths played long and short: a swing clock, and the same feel fr
 &comp over=scale(major, G) step=&bar2:8n ~ [2,4,6] ~!3 [2,4,6] ~ [2,4,6]
 
 &bass s=sine loop=G2 env=&(map=adsr .01 .4 .5 .1)
-&cymbal s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
+&cym s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
 &piano s=tri loop=G3 env=&(map=adsr .005 .4 .2 .2)
-&out map=sample postgain=1.88 [&walk * &bass * .5, &ride * &cymbal * .1, &comp * &piano * .15]
+&out map=sample postgain=1.88 [&walk * &bass * .5, &ride * &cym * .1, &comp * &piano * .15]
 ```
