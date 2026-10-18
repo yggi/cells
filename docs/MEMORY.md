@@ -20,9 +20,9 @@ The whole map, module by module: [architecture.md](architecture.md).
 - `theory/` modes and tonal's scale names
 - `repository/` fragments found by their place in style space, the facet their points hint and how often they were used together, a learned layer merged at each query (`fragments.ts`); filing and use (`learned.ts`); fragment files (`files.ts`, frontmatter in `yaml.ts`); a fragment's holes (`holes.ts`), the union of lines and the fit to a workbench (`fit.ts`); the seed library (`seed.ts`, from `../fragments/` through `seed.generated.ts`): the meters (`meters.ts`), the rhythms (`rhythms.ts`: E31's drum bars, five claves), both (`library.ts`)
 - `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>` (`theory/`, `repository/` alike)
-- `engine/examples.generated.ts` every example's source, written by `npm run examples`
+- `engine/examples.generated.ts` every example's file, written by `npm run examples`
 - `host.d.ts` the three host globals the language uses (the purity gate's whole allowance)
-- `../examples/` the pieces, the language's conformance suite; `../fragments/` the seed library's files; `../midi/` the folder's corpus (Mutopia's Bach); `../fixtures/` test pieces
+- `../examples/` the pieces, the language's conformance suite, each a piece file (`engine/piecefile.ts`: title, tags and tier in its frontmatter, the piece in a ```cells block, decision 047); `../fragments/` the seed library's files; `../midi/` the folder's corpus (Mutopia's Bach); `../fixtures/` test pieces
 
 ## Gates
 
@@ -42,7 +42,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - `map=midi` a MIDI card, entries channels; `midi(10)`, `midi(10, 2)` (slot 2) → [midi](language/midi.md)
 - voices `s=` `loop=`, `env=` `pitch=` `map=adsr|amp|lin|db`; a line's articulation `legato=.5` (Strudel's) → [sound](language/sound.md)
 - belts, tape, resonators, FM → [physics](language/physics.md)
-- `title=` `tags=` `label=` `show=`, loudness: the card's `postgain=` (linear); the tutorial: `tags="tutorial"` `tier=n` → [display](language/display.md); a `show=` of the piece's own → [plugins](language/plugins.md)
+- a piece's file: `title:` `tags:` `tier:` in its frontmatter (the card's `title=` `tags=` `tier=` the old way, a warning); `label=` `show=`, a cell's `tags=`; loudness: the card's `postgain=` (linear) → [display](language/display.md); a `show=` of the piece's own → [plugins](language/plugins.md)
 
 ## Decisions
 

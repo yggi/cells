@@ -1,4 +1,4 @@
-import {} from "../ast.js";
+import { isNote } from "../ast.js";
 import { footOf, innerSteps, leaves } from "../subseq.js";
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps } from "../program.js";
 import { VOICE_PARAMS } from "../attributes.js";
@@ -124,19 +124,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk }, typ
             beat: stepsPerBeat(meterOf(d)),
             meter: meterOf(d),
             label: d.label ?? null,
-            note: !!(d.label || d.title) &&
-                d.braid.kind === 'blank' &&
-                d.over === null &&
-                d.step === null &&
-                d.map === null &&
-                d.cycle === null &&
-                d.shift === null &&
-                d.stride === null &&
-                !d.off &&
-                !d.frees?.length &&
-                !d.env &&
-                !d.pitch &&
-                Object.keys(d.params).length === 0,
+            note: isNote(d),
             env: d.env?.name ?? null,
             pitch: d.pitch?.name ?? null,
             braid: o === null ? 'blank' : b.kind,

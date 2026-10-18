@@ -7,18 +7,18 @@ import { PRESETS } from './presets';
 import { canonicalTags, TUTORIAL } from './tags';
 
 // The tutorial (#170) in tiers: every form of the reference on exactly one tier, and the pieces of a tier together show all of its forms.
-const pieces = Object.entries(PRESETS).map(([key, p]) => ({ key, source: p.source, meta: pieceMeta(p.source) }));
+const pieces = Object.entries(PRESETS).map(([key, p]) => ({ key, source: p.source, meta: pieceMeta(p.file) }));
 const tutorial = pieces.filter((p) => canonicalTags(p.meta?.tags ?? []).includes(TUTORIAL));
 
 describe('the tutorial, in tiers', () => {
-  test('its pieces carry tier=, each of the tiers 1 to the last has some; a tier only on the tutorial', () => {
-    for (const p of tutorial) expect(p.meta?.tier, `${p.key}: tier=`).toBeGreaterThanOrEqual(1);
+  test('its pieces carry a tier (tier: in the frontmatter), each of the tiers 1 to the last has some; a tier only on the tutorial', () => {
+    for (const p of tutorial) expect(p.meta?.tier, `${p.key}: tier`).toBeGreaterThanOrEqual(1);
     expect([...new Set(tutorial.map((p) => p.meta?.tier))].sort((a, b) => a! - b!)).toEqual(TIERS.map((_, i) => i + 1));
     for (const p of pieces)
       if (p.meta?.tier != null)
         expect(
           tutorial.map((t) => t.key),
-          `${p.key}: tier= without the tutorial tag`,
+          `${p.key}: a tier without the tutorial tag`,
         ).toContain(p.key);
   });
 

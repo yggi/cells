@@ -73,10 +73,14 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   laps: core('how many laps it plays, then it ends', 'time.md'),
   chance: core('what a bare x? means here: the probability it is dropped, or free() for a slider', 'cell.md'),
   seed: core('a different sequence of chance', 'cell.md'),
-  title: core('on a note: the piece’s title (its card)', 'display.md', ['note']),
-  tags: core('on a note: the piece’s tags, comma-separated; on a cell, its clusters in the graph', 'display.md'),
+  // (the card's title= and tier=: the old spelling, still read; its file's frontmatter says them now, Shorten moves them: decision 047)
+  title: { ...core('on a note: the piece’s title (its card), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']), old: 'title: in the frontmatter' },
+  tags: core('on a cell: its clusters in the graph, comma-separated (on the piece’s card, the old spelling of its tags: its file’s frontmatter holds them)', 'display.md'),
   about: core('on a note: the cells it explains', 'display.md', ['note']),
-  tier: core('on a piece’s card: its tier of the tutorial (1 the first); the pieces of a tier keep the library’s order', 'display.md', ['note']),
+  tier: {
+    ...core('on a piece’s card: its tier of the tutorial (1 the first), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']),
+    old: 'tier: in the frontmatter',
+  },
 };
 
 /** Parameters: `key=value`, a number (or free()), a word or a cell — the voice's, and the physical cells'. */

@@ -28,7 +28,7 @@ function draw(view, h) {
 The name is lower-case letters (not one of the shows or the built-in plugins). The block is blanked before the cells are read, so a cell's line numbers don't move. Then `show=ring` on a cell it fits draws that cell as the plugin does:
 
 ```cells
-&piece title="Plugin ring" tags="topic" label="A meter drawn by a plugin." about=&out
+&piece label="A meter drawn by a plugin." about=&out
 &bar scan(1 1 1 1) step=90bpm show=ring
 &v s=sine loop=C4
 &tune step=4n 0 4 7 4

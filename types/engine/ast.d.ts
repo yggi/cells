@@ -435,6 +435,11 @@ export interface CellDecl {
     readonly paramSpans: Readonly<Record<string, Span>>;
     readonly braid: Braid;
 }
+/**
+ * A note: a cell with a label= (or title=) and nothing else, no braid, clock, table, map or sound. It does nothing; it
+ * explains, in the graph's margin (display.md).
+ */
+export declare const isNote: (d: CellDecl) => boolean;
 /** A pitch term acting on a voice: `&theme`, `+ &vibrato`, `- &x`. */
 export interface Term {
     readonly ref: Ref;

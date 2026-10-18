@@ -8,7 +8,7 @@
  *   node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/pianoroll.ts \
  *     [--from 0] [--to 8] [--title "…"] [-o roll.svg] [--png] [--notes notes.json] <input>...
  *
- * An input is `example:<key>` (examples/<key>.cells), a `.cells` file, or a `.json` of notes that `--notes` wrote (from
+ * An input is `example:<key>` (examples/<key>.md), a `.cells` text, a piece file (`.md`), or a `.json` of notes that `--notes` wrote (from
  * another checkout: the same text under another version of the language), each optionally `label=<input>`.
  * Lifted in spirit from yggi/jambot .claude/skills/screenshot @ ef79048 (inline SVG from the numbers, no library).
  */
@@ -17,7 +17,8 @@ import { existsSync, globSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { compileSource } from '../src/engine/compile';
-import { EXAMPLE_SOURCES } from '../src/engine/examples.generated';
+import { PRESETS } from '../src/engine/presets';
+import { isPieceFile, readPiece } from '../src/engine/piecefile';
 import { codeShifts } from '../src/engine/program';
 import { eventsBetween, plan } from '../src/engine/realize';
 
@@ -186,13 +187,13 @@ export function toPng(svgPath: string, pngPath: string, width: number, height: n
   if (run.status !== 0 || !existsSync(pngPath)) throw new Error(`Chromium didn't render ${svgPath}: ${run.stderr || run.error}`);
 }
 
-/** An input's label and notes: `example:<key>`, a `.cells` file or a `.json` of notes, optionally `label=<input>`. */
+/** An input's label and notes: `example:<key>`, a `.cells` text, a piece file (`.md`) or a `.json` of notes, optionally `label=<input>`. */
 export function readInput(input: string, from = WINDOW.from, to = WINDOW.to): Roll {
   const eq = /^([^=/]+)=(.+)$/.exec(input);
   const [label, what] = eq ? [eq[1], eq[2]] : [null, input];
   if (what.startsWith('example:')) {
     const key = what.slice('example:'.length);
-    const source = EXAMPLE_SOURCES[key];
+    const source = (PRESETS as Record<string, { source: string } | undefined>)[key]?.source;
     if (source === undefined) throw new Error(`no example ${key}`);
     return { label: label ?? key, notes: notesOf(source, from, to) };
   }
@@ -200,7 +201,10 @@ export function readInput(input: string, from = WINDOW.from, to = WINDOW.to): Ro
     const saved = JSON.parse(readFileSync(what, 'utf8')) as Roll;
     return { label: label ?? saved.label, notes: saved.notes.filter((n) => n.at < to && n.at >= from) };
   }
-  return { label: label ?? basename(what), notes: notesOf(readFileSync(what, 'utf8'), from, to) };
+  const text = readFileSync(what, 'utf8');
+  const piece = isPieceFile(text) ? readPiece(text) : null;
+  if (piece && 'problems' in piece) throw new Error(`${what}: ${piece.problems.map((p) => `line ${p.line}: ${p.message}`).join('; ')}`);
+  return { label: label ?? basename(what), notes: notesOf(piece ? piece.text : text, from, to) };
 }
 
 /** The command line (the header says how): returns what it wrote. */

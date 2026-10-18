@@ -1,4 +1,6 @@
 import { applyBases } from "./base.js";
+import { isNote } from "../ast.js";
+import { isPieceFile, readPiece } from "../piecefile.js";
 import { IDENT, LineError, LineScanner, stripComment } from "./scanner.js";
 import { parseBody, parseCell, SHOWS } from "./cell.js";
 import { splitPlugins } from "../plugins.js";
@@ -60,22 +62,36 @@ export function parse(whole) {
     });
     return applyBases({ cells, diagnostics, broken, plugins });
 }
-export function pieceMeta(source) {
-    const d = parse(source).cells.find((c) => c.title);
-    if (!d)
-        return null;
-    const plain = (d.label ?? '')
-        .replace(/\{[^}]*\}/g, '')
-        .replace(/\*\*(.+?)\*\*/g, '$1')
-        .replace(/\*(.+?)\*/g, '$1')
-        .replace(/\\n/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    const tags = (d.tags ?? '')
-        .split(',')
+const plainLabel = (label) => label
+    .replace(/\{[^}]*\}/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/\\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+function card(title, label, tagList, tier, cell) {
+    const plain = plainLabel(label);
+    const tags = tagList
         .map((t) => t.trim())
         .filter(Boolean)
         .filter((t, i, all) => all.findIndex((u) => u.toLowerCase() === t.toLowerCase()) === i);
-    const description = plain.toLowerCase().startsWith(d.title.toLowerCase()) ? plain.slice(d.title.length).replace(/^[\s,.:;—–-]+/, '') : plain;
-    return { title: d.title, description, tags: [...new Set(tags)], tier: d.tier ?? null, cell: d.name };
+    const description = plain.toLowerCase().startsWith(title.toLowerCase()) ? plain.slice(title.length).replace(/^[\s,.:;—–-]+/, '') : plain;
+    return { title, description, tags, tier, cell };
+}
+export function pieceMeta(source) {
+    if (isPieceFile(source)) {
+        const file = readPiece(source);
+        if ('problems' in file)
+            return null;
+        const { title, tags, tier } = file.frontmatter;
+        if (typeof title !== 'string')
+            return null;
+        const note = parse(file.text).cells.find(isNote);
+        const tagList = Array.isArray(tags) ? tags.filter((t) => typeof t === 'string') : [];
+        return card(title, note?.label ?? '', tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
+    }
+    const d = parse(source).cells.find((c) => c.title);
+    if (!d)
+        return null;
+    return card(d.title, d.label ?? '', (d.tags ?? '').split(','), d.tier ?? null, d.name);
 }
