@@ -230,13 +230,13 @@ describe('used together', () => {
   });
 
   // The saturation (#151): each doubling of uses pulls the same until a group is known, at 10 uses; past that, more add
-  // nothing, so a group a long jam keeps never pulls past the reach, 0.02 at the default pull.
-  it('saturates: each use pulls more up to 10, and none past it, so a known group pulls 0.02 at the default and no more', () => {
-    expect([CO_USE_PULL, CO_USE_KNOWN, CO_USE_REACH]).toEqual([0.1, 10, 0.2]);
+  // nothing, so a group a long jam keeps never pulls past the reach, 0.01 at the default pull (#162).
+  it('saturates: each use pulls more up to 10, and none past it, so a known group pulls 0.01 at the default and no more', () => {
+    expect([CO_USE_PULL, CO_USE_KNOWN, CO_USE_REACH]).toEqual([0.1, 10, 0.1]);
     for (let n = 1; n <= CO_USE_KNOWN; n++) expect(pullOf(n), `use ${n}`).toBeGreaterThan(pullOf(n - 1));
     for (const n of [11, 12, 20, 100, 500, 1_000_000]) expect(pullOf(n), `${n} uses`).toBe(pullOf(CO_USE_KNOWN));
-    expect(pullOf(CO_USE_KNOWN)).toBeCloseTo(0.02, 15);
-    expect(pullOf(1)).toBeCloseTo((0.02 * Math.log(2)) / Math.log(11), 15);
+    expect(pullOf(CO_USE_KNOWN)).toBeCloseTo(0.01, 15);
+    expect(pullOf(1)).toBeCloseTo((0.01 * Math.log(2)) / Math.log(11), 15);
   });
 
   it('two fragments 0.3 apart, Jambot’s miss distance, keep their order at every count of either, a million uses included', () => {
@@ -244,10 +244,10 @@ describe('used together', () => {
     for (const near of counts) for (const far of counts) expect(counted([at('near', 0.1), at('far', 0.4)], { near, far })(), `near ${near}, far ${far}`).toEqual(['near', 'far']);
   });
 
-  it('a known group (10 uses, not 9) takes the lead from a fragment 0.0195 nearer, and never from one more than 0.02 nearer', () => {
-    expect(counted([at('near', 0.1), at('far', 0.1195)], { far: 10 })()).toEqual(['far', 'near']);
-    expect(counted([at('near', 0.1), at('far', 0.1195)], { far: 9 })()).toEqual(['near', 'far']);
-    expect(counted([at('near', 0.1), at('far', 0.121)], { far: 1_000_000 })()).toEqual(['near', 'far']);
+  it('a known group (10 uses, not 9) takes the lead from a fragment 0.00975 nearer, and never from one more than 0.01 nearer', () => {
+    expect(counted([at('near', 0.1), at('far', 0.10975)], { far: 10 })()).toEqual(['far', 'near']);
+    expect(counted([at('near', 0.1), at('far', 0.10975)], { far: 9 })()).toEqual(['near', 'far']);
+    expect(counted([at('near', 0.1), at('far', 0.1105)], { far: 1_000_000 })()).toEqual(['near', 'far']);
   });
 
   it('sums the uses with every fragment chosen before it weighs them, so a count does what it does however many are chosen', () => {
@@ -284,9 +284,9 @@ describe('the pull, a query option', () => {
       expect(far.score, `pull ${pull}`).toBeCloseTo(0.15 - pull * CO_USE_REACH, 15);
       expect(far.score).toBe(coUseScore(0.15, 40, pull));
     }
-    // (0.05 apart: the default's 0.02 doesn't reverse them, a pull of 0.5 (0.1) does)
+    // (0.05 apart: the default's 0.01 doesn't reverse them, a pull of 1 (0.1) does)
     expect(ask({}).map((f) => f.fragment.id)).toEqual(['near', 'far']);
-    expect(ask({ pull: 0.5 }).map((f) => f.fragment.id)).toEqual(['far', 'near']);
+    expect(ask({ pull: 1 }).map((f) => f.fragment.id)).toEqual(['far', 'near']);
   });
 
   it('at 0, pulls nothing: every score is the distance, as with nothing chosen', () => {

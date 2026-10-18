@@ -1,6 +1,6 @@
 // The learned layer (#145, decision 048): merged with the seed at each query and never stored, so an empty one changes no
 // query and two repositories answer alike; filing (a point at the query's point, weight 0.1, `source` and `created`, a
-// file); identity after renaming; use moving an association (the point that finds a fragment raised, to 1.25).
+// file); identity after renaming; use moving an association (the point that finds a fragment raised, to 1.2).
 import { describe, expect, it } from 'vitest';
 import { renameCell } from '../engine/edit';
 import { chanceOf } from '../engine/realize';
@@ -217,16 +217,16 @@ describe('use moves an association', () => {
   const at = (id: string, x: number, weight = 1): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x }, weight, facet: 'meter' }] });
   const r = createRepository([at('a', 0), at('b', 1)]);
 
-  it('raises the seed point that finds it by 0.1, as a point of the layer at its place, to 1.25 at most', () => {
-    expect([USE_STEP, USE_CAP]).toEqual([0.1, 1.25]);
+  it('raises the seed point that finds it by 0.1, as a point of the layer at its place, to 1.2 at most', () => {
+    expect([USE_STEP, USE_CAP]).toEqual([0.1, 1.2]);
     let layer = EMPTY_LAYER;
     const weights: number[] = [];
     for (let n = 0; n < 4; n++) {
       layer = useFragments(r, layer, [{ id: 'a', point: { x: 0.4 }, facet: 'meter' }]);
       weights.push(...layer.points.map((p) => p.weight));
     }
-    expect(weights).toEqual([1.1, 1.2, 1.25, 1.25]);
-    expect(layer.points).toEqual([{ id: 'a', point: { x: 0 }, weight: 1.25, facet: 'meter' }]);
+    expect(weights).toEqual([1.1, 1.2, 1.2, 1.2]);
+    expect(layer.points).toEqual([{ id: 'a', point: { x: 0 }, weight: 1.2, facet: 'meter' }]);
     expect(useFragments(r, layer, [{ id: 'a', point: { x: 0.4 }, facet: 'meter' }])).toBe(layer);
   });
 
@@ -238,11 +238,11 @@ describe('use moves an association', () => {
     expect([first!.fragment.id, first!.distance]).toEqual(['a', 0.52 / 1.1]);
   });
 
-  it('but never past a seed point by more than the cap: a fragment more than 1.25 times as far stays behind', () => {
+  it('but never past a seed point by more than the cap: a fragment more than 1.2 times as far stays behind', () => {
     let layer = EMPTY_LAYER;
     for (let n = 0; n < 50; n++) layer = useFragments(r, layer, [{ id: 'a', point: { x: 0.3 }, facet: 'meter' }]);
-    expect(r.query({ x: 0.55 }, 1, {}, { layer })[0]!.fragment.id).toBe('a'); // (0.55 / 0.45 ≈ 1.22)
-    expect(r.query({ x: 0.56 }, 1, {}, { layer })[0]!.fragment.id).toBe('b'); // (0.56 / 0.44 ≈ 1.27)
+    expect(r.query({ x: 0.54 }, 1, {}, { layer })[0]!.fragment.id).toBe('a'); // (0.54 / 0.46 ≈ 1.17)
+    expect(r.query({ x: 0.55 }, 1, {}, { layer })[0]!.fragment.id).toBe('b'); // (0.55 / 0.45 ≈ 1.22)
   });
 
   it('raises a filed fragment’s own point in place, so its file carries its whole association', () => {

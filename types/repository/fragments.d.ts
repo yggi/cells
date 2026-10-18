@@ -119,12 +119,13 @@ export declare const CO_USE_PULL = 0.1;
 /** The count of uses together past which more add nothing: a group used together 10 times is known (#151). */
 export declare const CO_USE_KNOWN = 10;
 /**
- * How far a known group pulls, in units of the pull: 0.02 in distance at the default, Jambot's hold distance, a fifteenth
- * of its miss distance (0.3). Over the lock-in walk (`lockin.test.ts`) use together then adds 1.5 points to the rhythms'
- * share among a run's 3 most used, where the pull that grew without bound added 6; at 0.25 the total passes the bound of
- * 5, and a cap on the count alone can't meet it, since one use already pulls λ·ln 2 ≈ 0.07 and adds 3.5 (#151).
+ * How far a known group pulls, in units of the pull: 0.01 in distance at the default, half Jambot's hold distance, a
+ * thirtieth of its miss distance (0.3). Over the lock-in measure's 256 runs (`lockin.ts`, `lockin.slow.test.ts`) use
+ * together then adds 1.5 points to the rhythms' share among a run's 3 most used, on top of use moves' 2.5, 4.05 in all,
+ * under the bound of 5 with twice its standard error (#162); at 0.2 the total is 5.1, at 0.05 3.4. Any pull adds some,
+ * since among fragments that fit the style about as well a known group wins the tie, and stays (#151).
  */
-export declare const CO_USE_REACH = 0.2;
+export declare const CO_USE_REACH = 0.1;
 /**
  * A fragment's score: its distance less pull · reach · ln(1 + min(n, known)) / ln(1 + known), n its uses with the
  * fragments already chosen, summed over them (decision 046, amended by #151). The logarithm makes each doubling of uses

@@ -1,6 +1,6 @@
-# 046 · Each point of an association may name the facet it is found under, a hint a query names; how often fragments were used together pulls a fragment nearer by λ·ln(1 + n), λ = 0.1; amended (#151): the count saturates at 10 uses, a known group pulls 0.2 · λ, and λ is the query's `pull`
+# 046 · Each point of an association may name the facet it is found under, a hint a query names; how often fragments were used together pulls a fragment nearer by λ·ln(1 + n), λ = 0.1; amended (#151): the count saturates at 10 uses, a known group pulls 0.2 · λ, and λ is the query's `pull`; amended (#162): 0.1 · λ
 
-**Date:** 2026-10-18 · **Status:** accepted (owner, 2026-10-18, on #141: the facet a hint on each association point, not a classifier of the fragment; the co-use score and λ as built); where the counts live, superseded by 048 (a learned layer the frontend hands each query, `used(ids)` gone); the score's form, amended (owner, 2026-10-18, on #151: "all 3 as suggested", below) · Issues: #138, #81 (the rung *Rhythms as fragments*), #49, #151
+**Date:** 2026-10-18 · **Status:** accepted (owner, 2026-10-18, on #141: the facet a hint on each association point, not a classifier of the fragment; the co-use score and λ as built); where the counts live, superseded by 048 (a learned layer the frontend hands each query, `used(ids)` gone); the score's form, amended (owner, 2026-10-18, on #151: "all 3 as suggested", below); its reach, amended (owner, 2026-10-18, on #162: "go ahead with 162", below) · Issues: #138, #81 (the rung *Rhythms as fragments*), #49, #151, #162
 
 ## Context
 
@@ -80,6 +80,16 @@ Why these:
 
 **Why not** a count that fades: what was used lately is the workbench's, which the frontend keeps; the layer's counts are how well a group is known, and stay.
 **Why not** a negative pull, pushing groups apart: the far end of the ladder is a pull of 0 and a far point; a pull below 0 is refused.
+
+## Amended (owner, 2026-10-18, #162)
+
+The reach of 0.2 met the lock-in bound on one draw of 8 runs (+4.7 points), and not over 32 draws: there use together brought the rhythms' share to +6.1, 7.1 with twice its standard error.
+[Decision 048, amended](048-the-learned-layer.md#amended-owner-2026-10-18-162), states the bound over 256 runs with room for the measure's noise, and has the table.
+
+- **A known group pulls 0.1 times the pull** (`CO_USE_REACH`): 0.01 in distance at the default, half Jambot's hold distance. The score is `distance − pull · 0.1 · ln(1 + min(n, 10)) / ln 11`; the saturation at 10 uses and the pull as the query's option are as above.
+- Over 256 runs, with 048's cap moved to 1.2, use together adds 1.5 points to the rhythms' share on top of use moves' 2.5: +4.05 ± 0.4, 4.9 with twice the error. At the cap of 1.25 no reach of 0.02 or more meets the bound; at 1.2, 0.15 adds 4.6 (5.4).
+- Any pull adds some lock-in (a reach of 0.05 adds 0.9 points over use moves alone), since among fragments that fit the style about as well a known group wins, and stays: the reach sets how wide that band is.
+- What #151 measured still holds: two fragments 0.3 apart keep their order at every count; at equal distance 5 uses outrank 0 at any pull above 0; a pull of 0 ranks as nothing chosen.
 
 ## Consequences
 
