@@ -73,7 +73,7 @@ export function parse(whole: string): ParseResult {
 
 /**
  * A piece's card: its title, its description (the label of its card, as plain text), its tags and its tier. From a file
- * (`piecefile.ts`, decision 047): the frontmatter's title, tags and tier, and the label of the text's first note. From a
+ * (`piecefile.ts`, decision 047): the frontmatter's title, tags, tier and description (else the label of the text's first note). From a
  * text written the old way: the first note with a title=, its title=, label=, tags= and tier= (a warning says they now go
  * in the frontmatter, and Shorten moves them there).
  */
@@ -114,11 +114,12 @@ export function pieceMeta(source: string): PieceMeta | null {
   if (isPieceFile(source)) {
     const file = readPiece(source);
     if ('problems' in file) return null;
-    const { title, tags, tier } = file.frontmatter;
+    const { title, tags, tier, description } = file.frontmatter;
     if (typeof title !== 'string') return null;
     const note = parse(file.text).cells.find(isNote);
     const tagList = Array.isArray(tags) ? tags.filter((t): t is string => typeof t === 'string') : [];
-    return card(title, note?.label ?? '', tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
+    // (the frontmatter's description, else the label of the text's first note)
+    return card(title, typeof description === 'string' ? description : (note?.label ?? ''), tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
   }
   const d = parse(source).cells.find((c) => c.title);
   if (!d) return null;

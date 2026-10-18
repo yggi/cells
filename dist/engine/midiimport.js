@@ -232,12 +232,11 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
         for (const n of names)
             mix.push(voice ? `&${n} * &${voice} * .25` : `&${n} * .4`);
     }
+    const describing = new Map();
     const write = (body, how) => {
         const label = `Opened from a MIDI file: ${count} notes in ${lines.length} line${lines.length === 1 ? '' : 's'}, ${perQuarter} step${perQuarter === 1 ? '' : 's'} a quarter note, ${how}.`;
-        return [
-            `&piece title="${title.replace(/"/g, "'")}" tags="midi" label="${label}" about=&out`,
-            ...(credit.length ? ['', ...credit.map((l) => `# ${l}`)] : []),
-            '',
+        const text = [
+            ...(credit.length ? [...credit.map((l) => `# ${l}`), ''] : []),
             `# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`,
             tempo,
             '',
@@ -249,6 +248,8 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
             `&out map=sample [${mix.join(', ')}]`,
             '',
         ].join('\n');
+        describing.set(text, label);
+        return text;
     };
     const flat = write([
         '# every note, a line a track (and one beside for notes that overlap); melodies as semitones from C4',
@@ -389,6 +390,7 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
     }
     return {
         source,
+        frontmatter: { title, tags: ['midi'], description: describing.get(source) },
         notes: count,
         lines: lines.length,
         perQuarter,

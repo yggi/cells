@@ -72,6 +72,7 @@ describe('a piece file', () => {
     expect(problems('---\ntitle: x\n')).toEqual([{ line: 1, message: expect.stringMatching(/never closed/) }]);
     expect(problems(withLine(2, 'title: [a, b]'))).toEqual([{ line: 2, message: expect.stringMatching(/the title is \["a","b"\], not a text/) }]);
     expect(problems(withLine(3, 'tags: tutorial, rhythm'))).toEqual([{ line: 3, message: expect.stringMatching(/not a list of names: tags: \[genre:jazz, rhythm\]/) }]);
+    expect(problems(withLine(2, 'description: [a]'))).toEqual([{ line: 2, message: expect.stringMatching(/the description is \["a"\], not a text/) }]);
     expect(problems(withLine(4, 'tier: 1.5'))).toEqual([{ line: 4, message: expect.stringMatching(/whole number, 1 to 9999/) }]);
     expect(problems(withLine(4, 'tier: 0'))).toEqual([{ line: 4, message: expect.stringMatching(/whole number, 1 to 9999/) }]);
     expect(problems(withLine(7, 'A preface.'))).toEqual([{ line: 7, message: expect.stringMatching(/prose before the ```cells block/) }]);

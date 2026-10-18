@@ -83,12 +83,12 @@ export function pieceMeta(source) {
         const file = readPiece(source);
         if ('problems' in file)
             return null;
-        const { title, tags, tier } = file.frontmatter;
+        const { title, tags, tier, description } = file.frontmatter;
         if (typeof title !== 'string')
             return null;
         const note = parse(file.text).cells.find(isNote);
         const tagList = Array.isArray(tags) ? tags.filter((t) => typeof t === 'string') : [];
-        return card(title, note?.label ?? '', tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
+        return card(title, typeof description === 'string' ? description : (note?.label ?? ''), tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
     }
     const d = parse(source).cells.find((c) => c.title);
     if (!d)
