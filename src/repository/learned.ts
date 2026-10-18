@@ -16,8 +16,8 @@
  *   point of that facet gets one at the use's place, of weight `FILING_WEIGHT`. So use never adds a place a fragment is
  *   found at (a point added where it was kept would drag it along a walking style, one section behind, and lock the
  *   composer onto it: in each of 8 runs of 1,250 sections, its 3 most used meters and rhythms held every section, against
- *   76 to 100 % with nothing learned, in `lockin.test.ts`'s first draft); it
- *   makes the places it has reach farther, by a quarter at most.
+ *   76 to 100 % with nothing learned, in the lock-in measure's first draft, `lockin.ts`); it makes the places it has
+ *   reach farther, by a fifth at most.
  */
 import type { FragmentFile, Meta } from './files';
 import { declarations } from './fit';
@@ -38,13 +38,15 @@ export const USE_STEP = 0.1;
 
 /**
  * The most use can raise a point's weight to. A seed point weighs 1, so use shortens a seed fragment's distances by a
- * fifth at most (1/1.25), and moves its border with a fragment nothing used from halfway to five ninths of the way: a fragment
- * more than 1.25 times as far as one used is never found first. Over 10,000 sections of the walk at entropy 0.3
- * (`lockin.test.ts`), use moves add 2.5 points to the share of sections whose fragment is among its run's 3 most used
- * (meters) and 3.2 (rhythms), under the bound of 5; at 1.5 they add 7 and 8.5, at 1.1 none and 1. The step barely
- * matters (0.02 or 0.1, the same to a point): the cap decides.
+ * sixth at most (1/1.2), and moves its border with a fragment nothing used from halfway to six elevenths of the way: a
+ * fragment more than 1.2 times as far as one used is never found first. Over the lock-in measure's 256 runs of 1,250
+ * sections at entropy 0.3 (`lockin.ts`, `lockin.slow.test.ts`), use moves add 1.5 points to the share of sections whose
+ * fragment is among its run's 3 most used (meters) and 2.5 (rhythms), and 4.05 to the rhythms' with use together, each
+ * under the bound of 5 with twice its standard error (0.2 to 0.4 points); at 1.25 they add 2.2 and 3.9, and 6.1 with
+ * use together at 046's first reach (#162); at 1.5, 4.9 and 7.2; at 1.1, −0.4 and 0.4. The step barely matters (0.02,
+ * 0.05 or 0.1, within half a point): the cap decides.
  */
-export const USE_CAP = 1.25;
+export const USE_CAP = 1.2;
 
 /** A fragment to file: its text, where it was made or heard, and who and when. */
 export interface Filing {

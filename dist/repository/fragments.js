@@ -2,7 +2,7 @@ import { cachedFit } from "./fit.js";
 export const EMPTY_LAYER = Object.freeze({ filed: Object.freeze([]), points: Object.freeze([]), together: Object.freeze([]) });
 export const CO_USE_PULL = 0.1;
 export const CO_USE_KNOWN = 10;
-export const CO_USE_REACH = 0.2;
+export const CO_USE_REACH = 0.1;
 export const coUseScore = (distance, uses, pull = CO_USE_PULL) => uses > 0 && pull > 0 ? distance - (pull * CO_USE_REACH * Math.log1p(Math.min(uses, CO_USE_KNOWN))) / Math.log1p(CO_USE_KNOWN) : distance;
 const isFiniteNumber = (x) => typeof x === 'number' && Number.isFinite(x);
 function pointProblems(point, where) {
