@@ -26,6 +26,7 @@
       "default": "./dist/repository/*.js"
     },
     "./examples/*": "./examples/*",
+    "./fragments/*": "./fragments/*",
     "./midi/*": "./midi/*",
     "./package.json": "./package.json"
   },
@@ -35,6 +36,7 @@
     "dist",
     "types",
     "examples",
+    "fragments",
     "docs/language",
     "midi",
     "LICENSE",
@@ -50,6 +52,7 @@
     "format:check": "prettier --check .",
     "knip": "knip",
     "examples": "node --experimental-strip-types --no-warnings tools/examples.ts",
+    "fragments": "node --experimental-strip-types --no-warnings tools/fragments.ts",
     "preverify": "node tools/install-first.mjs && sh tools/verified.sh begin",
     "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test -- --reporter=default --reporter=./tools/test-count.ts",
     "postverify": "sh tools/verified.sh end",

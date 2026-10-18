@@ -3,7 +3,8 @@
  * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
  * shorter, `fold` and `cellsFromMidi` write cells from notes, `pieceMidi` and `readMidi` carry MIDI files. `createRepository`
  * holds fragments and finds them by their place in style space and by how often they were used together; `METER_FRAGMENTS`
- * are its meters, `RHYTHM_FRAGMENTS` its rhythms, `LIBRARY` both.
+ * are its meters, `RHYTHM_FRAGMENTS` its rhythms, `LIBRARY` both, read from the seed library's files (`fragments/`);
+ * `readFragment` and `writeFragment` read and write a fragment as a file, Markdown with YAML frontmatter.
  * Every module is also reachable on its own: `@yggi/cells/engine/<module>`, `@yggi/cells/theory/<module>`,
  * `@yggi/cells/repository/<module>`.
  */
@@ -24,3 +25,4 @@ export { createRepository, type Fragment, type Found, type QueryOptions, type Re
 export { METER_FRAGMENTS } from './repository/meters';
 export { RHYTHM_FRAGMENTS } from './repository/rhythms';
 export { LIBRARY } from './repository/library';
+export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';

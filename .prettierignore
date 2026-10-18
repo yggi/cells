@@ -9,6 +9,7 @@ src/engine/fold/ratchet.baseline.json
 src/engine/fold/ratchet.midi.*.json
 tools/bwv847.reference.json
 src/engine/examples.generated.ts
+src/repository/seed.generated.ts
 package-lock.json
 .claude
 node_modules
