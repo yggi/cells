@@ -47,6 +47,10 @@ describe('a stepped table turns by its braid’s own steps (#122)', () => {
     expect(plays('&harm over=&key step=4n [0,2,4] <[5,7,9] [3,5,7]>', '&x over=&harm step=4n 0', 4)).toEqual([C, A, C, degree(3)]);
   });
 
+  it('a lap that opens on a rest keeps the entry before it in force: <0 ~> 4@2 holds 4 across the rest', () => {
+    expect(plays('&k over=&key step=4n <0 ~> 4@2', '&x over=&k step=4n 0', 7)).toEqual([0, 4, 4, 4, 4, 4, 0].map((d) => degree(d)));
+  });
+
   it('a table that steps once per entry turns as before: one a step, its cycle= its entries', () => {
     expect(plays('&harm over=&key step=4n [0,2,4] [5,7,9]', '&x over=&harm step=4n 0', 4)).toEqual([C, A, C, A]);
     expect(plays('&k over=&key step=4n stride=2 cycle=8 0 1 2 3', '&x over=&k step=4n 0', 5)).toEqual([0, 2, 7, 9, 0].map((d) => degree(d)));

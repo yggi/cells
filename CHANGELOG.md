@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since `v0.5.0`.
+
+## v0.5.0 — 2026-10-18
+
 ### Added
 - **A main key:** a bare `over=key` reads the piece's main key, the first cell in the text whose braid is `scale(…)`, as a bare tap reads its main meter (#124); `CompileResult.mainKey` names it. With none, `over=key` is an error, never a default key. An addition: every piece reads and sounds as before (`over=key` was an error), and no example's notes moved.
 - **`restart=resume` and `restart=free`** (#53, decision 032): what switching a part on does to its time. `resume` continues a part's time from where it was switched off; `free` lets it run on while off, unheard, so it lands where an unswitched copy would be; `restart` (the default) is unchanged. On a section's line or a selector; the warning that they play as `restart` is gone. **In C, a sketch** (`examples/in-c.cells`, four of its fifty-three cells) is a new example that uses `resume`; no other example's snapshot moves.
