@@ -9,10 +9,15 @@
  * and is associated with its preset's point. Lifted from yggi/jambot packages/score/experiments/drums-in-cells.ts @
  * 327d6a8 (`fixtures/jambot-e31.json` holds E31's texts and hits).
  *
- * The claves are two bars each (`step=16n cycle=2`), five strokes on the eighths, struck as a side stick (`&rs`, General
- * MIDI's 37), as a drummer plays the clave on a kit; their names (`&clave`, `&claves`, `&rs`) are none of the drum bars',
- * so a clave layers on any of them in one text. Their associations are written by hand, near Bossa nova and Funk.
+ * The claves are five strokes each, struck as a side stick (`&rs`, General MIDI's 37), as a drummer plays the clave on a
+ * kit: four over two bars of eighths (`step=16n cycle=2`), and the bossa nova clave also in one bar of sixteenths
+ * (`step=16n`), the form that matches a bossa bar written in sixteenths, as Jambot's is; which of the two fits a
+ * composition is the fit check's to choose (#49's next step), not the association's. Their names (`&clave`, `&claves`,
+ * `&rs`) are none of the drum bars', so a clave layers on any of them in one text. Their associations are written by
+ * hand, near Bossa nova and Funk.
+ *
+ * Every point of a rhythm is associated as the facet `rhythm`: a hint a query names, not what the fragment can fill.
  */
 import type { Fragment } from './fragments';
-/** The rhythms built so far: E31's eight drum bars and four claves, of the facet `rhythm`. */
+/** The rhythms built so far: E31's eight drum bars and five claves, associated as the facet `rhythm`. */
 export declare const RHYTHM_FRAGMENTS: readonly Fragment[];

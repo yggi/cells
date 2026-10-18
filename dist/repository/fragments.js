@@ -17,9 +17,6 @@ export function fragmentProblems(entry) {
     const name = typeof id === 'string' && id.trim() ? id : '(no id)';
     if (typeof text !== 'string' || !text.trim())
         problems.push(`${name}: no text`);
-    const { facet } = entry;
-    if (facet !== undefined && (typeof facet !== 'string' || !facet.trim()))
-        problems.push(`${name}: facet ${String(facet)}, not a name`);
     if (!Array.isArray(association) || !association.length)
         problems.push(`${name}: no style point in its association`);
     else
@@ -27,6 +24,9 @@ export function fragmentProblems(entry) {
             const where = `${name}: point ${i + 1}`;
             if (!wp || !isFiniteNumber(wp.weight) || wp.weight <= 0)
                 problems.push(`${where}: weight ${String(wp?.weight)}, not a number > 0`);
+            const facet = wp?.facet;
+            if (facet !== undefined && (typeof facet !== 'string' || !facet.trim()))
+                problems.push(`${where}: facet ${String(facet)}, not a name`);
             problems.push(...pointProblems(wp?.point, where));
         });
     return problems;
@@ -43,8 +43,9 @@ export function pointDistance(a, b, axisWeights = {}) {
     }
     return weights > 0 ? Math.sqrt(sum / weights) : Infinity;
 }
-export function fragmentDistance(fragment, point, axisWeights = {}) {
-    return Math.min(...fragment.association.map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
+export const pointsOf = (fragment, facet) => facet === undefined ? fragment.association : fragment.association.filter((wp) => wp.facet === undefined || wp.facet === facet);
+export function fragmentDistance(fragment, point, axisWeights = {}, facet) {
+    return Math.min(...pointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
 }
 export function createRepository(entries) {
     const problems = entries.flatMap(fragmentProblems);
@@ -78,9 +79,9 @@ export function createRepository(entries) {
                 throw new Error(`query: ${wrong.join(', ')}`);
             const chosenIds = [...new Set(chosen)];
             return fragments
-                .filter((fragment) => facet === undefined || fragment.facet === facet)
+                .filter((fragment) => pointsOf(fragment, facet).length > 0)
                 .map((fragment) => {
-                const distance = fragmentDistance(fragment, point, axisWeights);
+                const distance = fragmentDistance(fragment, point, axisWeights, facet);
                 return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id, chosenIds)) };
             })
                 .sort((a, b) => a.score - b.score || (a.fragment.id < b.fragment.id ? -1 : a.fragment.id > b.fragment.id ? 1 : 0))

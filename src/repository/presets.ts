@@ -20,5 +20,5 @@ export const FUNK = at(1, 0.12, 0.85, 0.75); // swing .3: 16n at .6
 export const BOSSA_NOVA = at(0.75, 0.85, 0.45, 0.45);
 export const SWING_JAZZ = at(0.35, 1, 0.3, 0.6); // swing 1: 8n at 2/3, the jazz kit and the walking bass (yggi/jambot#360)
 
-/** An association of these points, each of weight 1. */
-export const weighted = (...points: StylePoint[]) => points.map((point) => ({ point, weight: 1 }));
+/** An association of these points, each of weight 1 and associated as this facet. */
+export const weighted = (facet: string, ...points: StylePoint[]) => points.map((point) => ({ point, weight: 1, facet }));

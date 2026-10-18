@@ -2,7 +2,7 @@
 // meters alone return, at every point Jambot asks at and over a grid, so the rhythms change no meter query (Jambot's,
 // yggi/jambot#384); and a query costs under a millisecond.
 import { describe, expect, it } from 'vitest';
-import { createRepository, type StylePoint } from './fragments';
+import { createRepository, type Fragment, type StylePoint } from './fragments';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
@@ -26,11 +26,12 @@ const POINTS: StylePoint[] = [
 const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.fragment.id, f.distance, f.score]);
 
 describe('the library', () => {
-  it('is the thirteen meters and the twelve rhythms, each of its facet: twenty-five', () => {
-    expect(LIBRARY).toHaveLength(25);
-    expect(LIBRARY.filter((f) => f.facet === 'meter')).toEqual(METER_FRAGMENTS);
-    expect(LIBRARY.filter((f) => f.facet === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
-    expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length]).toEqual([13, 12]);
+  const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
+  it('is the thirteen meters and the thirteen rhythms, every point associated as its facet: twenty-six', () => {
+    expect(LIBRARY).toHaveLength(26);
+    expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
+    expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
+    expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length]).toEqual([13, 13]);
   });
 
   it('a query of the meters over it returns what the meters alone return, at every one of 661 points', () => {
@@ -43,13 +44,13 @@ describe('the library', () => {
   });
 
   it('a query that names no facet mixes them: the facet is what keeps the meters apart', () => {
-    const facets = library.query(BOSSA_NOVA, 3).map((f) => f.fragment.facet);
+    const facets = library.query(BOSSA_NOVA, 3).flatMap((f) => facetsOf(f.fragment));
     expect(facets).toContain('rhythm');
     expect(facets).toContain('meter');
   });
 
   // (as yggi/jambot#375 timed its query: 20,000 of them, each over every fragment, here with a facet and two fragments chosen)
-  it('a query over the 25 costs under 1 ms', () => {
+  it('a query over the 26 costs under 1 ms', () => {
     const r = createRepository(LIBRARY);
     r.used(['4/4', 'Bossa nova drums', 'bossa nova clave']);
     r.used(['4/4 leaning lightly on 16n', 'Funk drums', 'rumba clave 3-2']);

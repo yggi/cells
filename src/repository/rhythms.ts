@@ -9,9 +9,14 @@
  * and is associated with its preset's point. Lifted from yggi/jambot packages/score/experiments/drums-in-cells.ts @
  * 327d6a8 (`fixtures/jambot-e31.json` holds E31's texts and hits).
  *
- * The claves are two bars each (`step=16n cycle=2`), five strokes on the eighths, struck as a side stick (`&rs`, General
- * MIDI's 37), as a drummer plays the clave on a kit; their names (`&clave`, `&claves`, `&rs`) are none of the drum bars',
- * so a clave layers on any of them in one text. Their associations are written by hand, near Bossa nova and Funk.
+ * The claves are five strokes each, struck as a side stick (`&rs`, General MIDI's 37), as a drummer plays the clave on a
+ * kit: four over two bars of eighths (`step=16n cycle=2`), and the bossa nova clave also in one bar of sixteenths
+ * (`step=16n`), the form that matches a bossa bar written in sixteenths, as Jambot's is; which of the two fits a
+ * composition is the fit check's to choose (#49's next step), not the association's. Their names (`&clave`, `&claves`,
+ * `&rs`) are none of the drum bars', so a clave layers on any of them in one text. Their associations are written by
+ * hand, near Bossa nova and Funk.
+ *
+ * Every point of a rhythm is associated as the facet `rhythm`: a hint a query names, not what the fragment can fill.
  */
 import type { Fragment } from './fragments';
 import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO, weighted } from './presets';
@@ -19,10 +24,10 @@ import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP
 /** A fragment's text, a line each. */
 const lines = (...each: string[]) => each.join('\n');
 
-/** A clave's text: its two bars of sixteenths, played by the side stick at half the level (velocity 90). */
-const clave = (strokes: string) => lines(`&clave step=16n cycle=2 ${strokes}`, '&claves map=midi(10) [&clave * .5]', '&rs s=white');
+/** A clave's text: its sixteenths over two bars (or one), played by the side stick at half the level (velocity 90). */
+const clave = (strokes: string, bars = 2) => lines(`&clave step=16n${bars > 1 ? ` cycle=${bars}` : ''} ${strokes}`, '&claves map=midi(10) [&clave * .5]', '&rs s=white');
 
-/** The rhythms built so far: E31's eight drum bars and four claves, of the facet `rhythm`. */
+/** The rhythms built so far: E31's eight drum bars and five claves, associated as the facet `rhythm`. */
 export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
   {
     id: 'Synth-pop drums',
@@ -37,8 +42,7 @@ export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
       '&sd s=white',
       '&hh s=white',
     ),
-    association: weighted(SYNTH_POP),
-    facet: 'rhythm',
+    association: weighted('rhythm', SYNTH_POP),
   },
   {
     id: 'Techno drums',
@@ -53,8 +57,7 @@ export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
       '&oh s=white',
       '&sd s=white',
     ),
-    association: weighted(TECHNO),
-    facet: 'rhythm',
+    association: weighted('rhythm', TECHNO),
   },
   {
     id: 'Deep house drums',
@@ -69,8 +72,7 @@ export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
       '&hh s=white',
       '&sd s=white',
     ),
-    association: weighted(DEEP_HOUSE),
-    facet: 'rhythm',
+    association: weighted('rhythm', DEEP_HOUSE),
   },
   {
     id: 'Ambient drums',
@@ -84,8 +86,7 @@ export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
       '&hh s=white',
       '&sd s=white',
     ),
-    association: weighted(AMBIENT),
-    facet: 'rhythm',
+    association: weighted('rhythm', AMBIENT),
   },
   {
     id: 'Lo-fi hip hop drums',
@@ -103,8 +104,7 @@ export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
       '&sd s=white',
       '&hh s=white',
     ),
-    association: weighted(LO_FI),
-    facet: 'rhythm',
+    association: weighted('rhythm', LO_FI),
   },
   {
     id: 'Funk drums',
@@ -123,8 +123,7 @@ export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
       '&oh s=white',
       '&sd s=white',
     ),
-    association: weighted(FUNK),
-    facet: 'rhythm',
+    association: weighted('rhythm', FUNK),
   },
   {
     id: 'Bossa nova drums',
@@ -142,8 +141,7 @@ export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
       '&sd s=white',
       '&hh s=white',
     ),
-    association: weighted(BOSSA_NOVA),
-    facet: 'rhythm',
+    association: weighted('rhythm', BOSSA_NOVA),
   },
   {
     id: 'Swing jazz drums',
@@ -160,19 +158,25 @@ export const RHYTHM_FRAGMENTS: readonly Fragment[] = [
       '&ph s=white',
       '&sd s=white',
     ),
-    association: weighted(SWING_JAZZ),
-    facet: 'rhythm',
+    association: weighted('rhythm', SWING_JAZZ),
   },
   // (the son clave, 3-2: x..x..x. ..x.x... over two bars of eighths. It is where the bossa nova clave and Funk's Bo
   // Diddley beat come from, and sits halfway between Bossa nova and Funk)
-  { id: 'son clave 3-2', text: clave('&rs ~!5 &rs ~!5 &rs ~!7 &rs ~!3 &rs ~!7'), association: weighted(at(0.875, 0.485, 0.65, 0.6)), facet: 'rhythm' },
+  { id: 'son clave 3-2', text: clave('&rs ~!5 &rs ~!5 &rs ~!7 &rs ~!3 &rs ~!7'), association: weighted('rhythm', at(0.875, 0.485, 0.65, 0.6)) },
   // (the son clave from its other bar, 2-3: it starts off the downbeat, so it sits a step from 3-2 toward Funk, more off
   // the beat and plainer)
-  { id: 'son clave 2-3', text: clave('~!4 &rs ~!3 &rs ~!7 &rs ~!5 &rs ~!5 &rs ~!3'), association: weighted(at(0.95, 0.35, 0.75, 0.65)), facet: 'rhythm' },
+  { id: 'son clave 2-3', text: clave('~!4 &rs ~!3 &rs ~!7 &rs ~!5 &rs ~!5 &rs ~!3'), association: weighted('rhythm', at(0.95, 0.35, 0.75, 0.65)) },
   // (the rumba clave, 3-2: the son's third stroke an eighth later, off the beat; drums and voices over a static harmony,
   // short and dense: near Funk)
-  { id: 'rumba clave 3-2', text: clave('&rs ~!5 &rs ~!7 &rs ~!5 &rs ~!3 &rs ~!7'), association: weighted(at(1, 0.2, 0.75, 0.8)), facet: 'rhythm' },
+  { id: 'rumba clave 3-2', text: clave('&rs ~!5 &rs ~!7 &rs ~!5 &rs ~!3 &rs ~!7'), association: weighted('rhythm', at(1, 0.2, 0.75, 0.8)) },
   // (the bossa nova clave: the son's last stroke an eighth later. Bossa nova's harmony and articulation, a little more off
   // the beat and sparser than its drum bar: five strokes in two bars)
-  { id: 'bossa nova clave', text: clave('&rs ~!5 &rs ~!5 &rs ~!7 &rs ~!5 &rs ~!5'), association: weighted(at(0.8, 0.85, 0.45, 0.35)), facet: 'rhythm' },
+  { id: 'bossa nova clave', text: clave('&rs ~!5 &rs ~!5 &rs ~!7 &rs ~!5 &rs ~!5'), association: weighted('rhythm', at(0.8, 0.85, 0.45, 0.35)) },
+  // (the bossa nova clave in one bar of sixteenths, x..x..x...x..x..: as dense as Bossa nova's drum bar, written in the
+  // same sixteenths, so at Bossa nova's energy; off the beat as the two-bar one)
+  {
+    id: 'bossa nova clave (one bar)',
+    text: clave('&rs ~!2 &rs ~!2 &rs ~!3 &rs ~!2 &rs ~!2', 1),
+    association: weighted('rhythm', at(0.8, 0.85, 0.45, 0.45)),
+  },
 ];

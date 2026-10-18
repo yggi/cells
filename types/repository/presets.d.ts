@@ -15,8 +15,9 @@ export declare const LO_FI: Readonly<Record<string, number>>;
 export declare const FUNK: Readonly<Record<string, number>>;
 export declare const BOSSA_NOVA: Readonly<Record<string, number>>;
 export declare const SWING_JAZZ: Readonly<Record<string, number>>;
-/** An association of these points, each of weight 1. */
-export declare const weighted: (...points: StylePoint[]) => {
+/** An association of these points, each of weight 1 and associated as this facet. */
+export declare const weighted: (facet: string, ...points: StylePoint[]) => {
     point: Readonly<Record<string, number>>;
     weight: number;
+    facet: string;
 }[];

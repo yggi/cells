@@ -7,4 +7,4 @@ export const LO_FI = at(0.5, 0.75, 0.35, 0.5);
 export const FUNK = at(1, 0.12, 0.85, 0.75);
 export const BOSSA_NOVA = at(0.75, 0.85, 0.45, 0.45);
 export const SWING_JAZZ = at(0.35, 1, 0.3, 0.6);
-export const weighted = (...points) => points.map((point) => ({ point, weight: 1 }));
+export const weighted = (facet, ...points) => points.map((point) => ({ point, weight: 1, facet }));

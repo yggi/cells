@@ -20,8 +20,8 @@ describe('a malformed entry fails', () => {
     ['an axis that is no number', { ...good, association: [{ point: { x: Infinity }, weight: 1 }] }],
     ['no style point', { ...good, association: [] }],
     ['no id', { ...good, id: '' }],
-    ['an empty facet', { ...good, facet: ' ' }],
-    ['a facet that is no name', { ...good, facet: 3 }],
+    ['an empty facet', { ...good, association: [{ point: { x: 0 }, weight: 1, facet: ' ' }] }],
+    ['a facet that is no name', { ...good, association: [{ point: { x: 0 }, weight: 1, facet: 3 }] }],
   ];
   it.each(malformed)('%s', (_, entry) => {
     expect(fragmentProblems(entry as Fragment)).not.toEqual([]);
@@ -100,16 +100,45 @@ describe('a query', () => {
   });
 });
 
-describe('a facet', () => {
-  const of = (id: string, facet?: string): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x: 0 }, weight: 1 }], ...(facet ? { facet } : {}) });
-  const repository = createRepository([of('m', 'meter'), of('r', 'rhythm'), of('n')]);
-  const ids = (facet?: string) => repository.query({ x: 0 }, 9, {}, { facet }).map((f) => f.fragment.id);
+describe('a facet, on each point of an association', () => {
+  // (the owner's example: the bell, a rhythm associated with one music and a scale with another)
+  const bell: Fragment = {
+    id: 'bell',
+    text: '&bell step=8n 0 ~ 0 ~ 0 0 ~ 0 ~ 0 ~ 0',
+    association: [
+      { point: { x: 0.9 }, weight: 1, facet: 'rhythm' },
+      { point: { x: 0.1 }, weight: 1, facet: 'scale' },
+    ],
+  };
+  const of = (id: string, x: number, facet?: string): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x }, weight: 1, ...(facet ? { facet } : {}) }] });
+  const repository = createRepository([bell, of('meter', 0.5, 'meter'), of('any', 0.4)]);
+  const found = (point: number, facet?: string) => repository.query({ x: point }, 9, {}, { facet }).map((f) => [f.fragment.id, Number(f.distance.toFixed(9))]);
 
-  it('a query that names one finds only its fragments; one that names none finds all', () => {
-    expect(ids('meter')).toEqual(['m']);
-    expect(ids('rhythm')).toEqual(['r']);
-    expect(ids('harmony')).toEqual([]);
-    expect(ids()).toEqual(['m', 'n', 'r']);
+  it('a query that names one measures each fragment over its points of that facet', () => {
+    expect(found(0.2, 'rhythm')).toEqual([
+      ['any', 0.2],
+      ['bell', 0.7],
+    ]);
+    expect(found(0.2, 'scale')).toEqual([
+      ['bell', 0.1],
+      ['any', 0.2],
+    ]);
+    expect(fragmentDistance(bell, { x: 0.2 }, {}, 'rhythm')).toBeCloseTo(0.7, 12);
+  });
+
+  it('a point that names no facet counts for every facet', () => {
+    for (const facet of ['meter', 'rhythm', 'scale', 'harmony']) expect(found(0.4, facet)[0]).toEqual(['any', 0]);
+  });
+
+  it('a fragment with no point of the facet named isn’t ranked; a query that names none measures every point', () => {
+    expect(found(0.5, 'meter').map(([id]) => id)).toEqual(['meter', 'any']);
+    expect(found(0.5, 'harmony').map(([id]) => id)).toEqual(['any']);
+    expect(found(0.2)).toEqual([
+      ['bell', 0.1],
+      ['any', 0.2],
+      ['meter', 0.3],
+    ]);
+    expect(fragmentDistance(bell, { x: 0.2 }, {}, 'meter')).toBe(Infinity);
   });
 });
 

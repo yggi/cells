@@ -17,5 +17,5 @@
  * `leaning … on 16n`.
  */
 import type { Fragment } from './fragments';
-/** The meters built so far: thirteen, each one line of cells text, of the facet `meter`. */
+/** The meters built so far: thirteen, each one line of cells text, every point associated as the facet `meter`. */
 export declare const METER_FRAGMENTS: readonly Fragment[];

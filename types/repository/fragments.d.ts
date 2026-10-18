@@ -1,13 +1,16 @@
 /**
- * The repository of fragments (decision 041): a fragment is cells text with an index entry, an id, the facet it belongs to
- * and an association, the places in style space it is found at. A query takes a style point and k and returns the k
- * fragments nearest to it, of the facet it names. Fragments come in groups (decision 043): the repository counts how often
- * two were used together, and a query weighs that count with what is already chosen beside the distance (decision 046).
- * In memory only: no hash, no canonical form, no persistence (#49's later steps).
+ * The repository of fragments (decision 041): a fragment is cells text with an index entry, an id and an association, the
+ * places in style space it is found at, each of which may name the facet it is found under. A query takes a style point
+ * and k and returns the k fragments nearest to it, over their points of the facet it names. Fragments come in groups
+ * (decision 043): the repository counts how often two were used together, and a query weighs that count with what is
+ * already chosen beside the distance (decision 046). In memory only: no hash, no canonical form, no persistence (#49's
+ * later steps).
  *
  * The repository doesn't know the axes, nor the facets. A style point maps axis names to numbers, and the frontend names
  * them (Jambot's `sync`, `harm`, …): a distance compares only the axes a query and a point share, so an axis no fragment
- * has is ignored. A facet is a name too (`meter`, `rhythm`), compared and never read.
+ * has is ignored. A facet is a name too (`meter`, `rhythm`), compared and never read: a hint of what a fragment is
+ * associated as there (a bell a rhythm in one style, a scale in another), not a classifier. What a fragment can fill is
+ * read off its text by the fit check (#49's next step), never off its facets.
  */
 /** A place in style space: axis names to numbers. */
 export type StylePoint = Readonly<Record<string, number>>;
@@ -15,6 +18,8 @@ export type StylePoint = Readonly<Record<string, number>>;
 export interface WeightedPoint {
     readonly point: StylePoint;
     readonly weight: number;
+    /** The facet it is associated as here (`meter`, `rhythm`): a hint a query names. With none, the point counts for every facet. */
+    readonly facet?: string;
 }
 /** A fragment: cells text and its index entry. */
 export interface Fragment {
@@ -24,8 +29,6 @@ export interface Fragment {
     readonly text: string;
     /** The places in style space it is found at, one or more. */
     readonly association: readonly WeightedPoint[];
-    /** The kind of part it is, which a query names to find only those (`meter`, `rhythm`); with none, only a query that names no facet finds it. */
-    readonly facet?: string;
 }
 /** A fragment a query found, how far it is from the query's point, and the score it was ranked by. */
 export interface Found {
@@ -37,7 +40,7 @@ export interface Found {
 }
 /** What a query may say beside its point: the facet it asks for, and the fragments already chosen. */
 export interface QueryOptions {
-    /** Only fragments of this facet; every fragment where it says none. */
+    /** Measure each fragment over its points of this facet and those that name none, and rank only fragments that have one; every point of every fragment where it says none. */
     readonly facet?: string;
     /** The ids already chosen (on the composer's workbench): a fragment used with them often ranks nearer. An id the repository doesn't hold counts no use. */
     readonly chosen?: readonly string[];
@@ -45,8 +48,8 @@ export interface QueryOptions {
 export interface Repository {
     readonly fragments: readonly Fragment[];
     /**
-     * The k fragments of the facet asked for that rank first, by score (`coUseScore`), then by id; each with its distance
-     * (`fragmentDistance`) and its score, which is the distance when nothing is chosen. A fragment that shares no axis with
+     * The k fragments that rank first, by score (`coUseScore`), then by id; each with its distance (`fragmentDistance`,
+     * over its points of the facet asked for) and its score, which is the distance when nothing is chosen. A fragment that shares no axis with
      * the point is infinitely far, and comes last. `axisWeights` weighs the axes against each other (1 where it says
      * nothing): the frontend knows that its tempo is not on the scale of its other axes.
      */
@@ -75,7 +78,12 @@ export declare function fragmentProblems(entry: Fragment): string[];
  * that sharing more axes doesn't make a point farther. Infinite when they share none.
  */
 export declare function pointDistance(a: StylePoint, b: StylePoint, axisWeights?: StylePoint): number;
-/** How far a fragment is from a point: the nearest of its association's points, each distance divided by that point's weight. */
-export declare function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeights?: StylePoint): number;
+/** A fragment's association points a query of this facet measures: those of the facet and those that name none; all, for no facet. */
+export declare const pointsOf: (fragment: Fragment, facet?: string) => readonly WeightedPoint[];
+/**
+ * How far a fragment is from a point: the nearest of its association's points (of the facet, where one is named), each
+ * distance divided by that point's weight. Infinite when it has no point of that facet.
+ */
+export declare function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeights?: StylePoint, facet?: string): number;
 /** A repository of these fragments; it throws on a malformed entry or an id given twice, naming each problem. */
 export declare function createRepository(entries: readonly Fragment[]): Repository;

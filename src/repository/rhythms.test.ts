@@ -62,20 +62,22 @@ const PRESETS: Record<string, { point: StylePoint; swing: number }> = {
   'Swing jazz': { point: SWING_JAZZ, swing: 1 },
 };
 
-// Each clave's strokes, in sixteenths over its two bars of 4/4 (a stroke on every eighth of x..x..x...x.x... in cut time, doubled).
-const CLAVES: Record<string, number[]> = {
-  'son clave 3-2': [0, 6, 12, 20, 24],
-  'son clave 2-3': [4, 8, 16, 22, 28],
-  'rumba clave 3-2': [0, 6, 14, 20, 24],
-  'bossa nova clave': [0, 6, 12, 20, 26],
+// Each clave's strokes, in sixteenths of 4/4 over its bars: over two, a stroke on every eighth of the cut-time pattern
+// (x..x..x...x.x... doubled); over one, the cut-time pattern itself.
+const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
+  'son clave 3-2': { bars: 2, strokes: [0, 6, 12, 20, 24] },
+  'son clave 2-3': { bars: 2, strokes: [4, 8, 16, 22, 28] },
+  'rumba clave 3-2': { bars: 2, strokes: [0, 6, 14, 20, 24] },
+  'bossa nova clave': { bars: 2, strokes: [0, 6, 12, 20, 26] },
+  'bossa nova clave (one bar)': { bars: 1, strokes: [0, 3, 6, 10, 13] },
 };
 
 const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(`${w.preset} drums`) }));
 
 describe('the rhythm fragments', () => {
-  it('are E31’s eight drum bars, one per preset, and four claves, all of the facet rhythm', () => {
+  it('are E31’s eight drum bars, one per preset, and five claves, every point associated as the facet rhythm', () => {
     expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([...Object.keys(PRESETS).map((p) => `${p} drums`), ...Object.keys(CLAVES)]);
-    expect(RHYTHM_FRAGMENTS.every((f) => f.facet === 'rhythm')).toBe(true);
+    expect(RHYTHM_FRAGMENTS.flatMap((f) => f.association.map((wp) => wp.facet))).toEqual(RHYTHM_FRAGMENTS.map(() => 'rhythm'));
   });
 
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: its drum bar is E31’s text word for word, without its &bar line', (_, w) => {
@@ -155,10 +157,10 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
 });
 
 describe('the claves', () => {
-  it.each(Object.entries(CLAVES))('%s plays its five strokes over its two bars, and comes round', (id, strokes) => {
-    const { hits, diagnostics } = played(hosted(meterText('4/4'), 120, byId(id).text), 120, 64);
+  it.each(Object.entries(CLAVES))('%s plays its five strokes over its bars, and comes round', (id, { bars, strokes }) => {
+    const { hits, diagnostics } = played(hosted(meterText('4/4'), 120, byId(id).text), 120, 32 * bars);
     expect(diagnostics).toEqual([]);
-    expect(hits.map((h) => h.step)).toEqual([...strokes, ...strokes.map((s) => s + 32)]);
+    expect(hits.map((h) => h.step)).toEqual([...strokes, ...strokes.map((s) => s + 16 * bars)]);
     expect(new Set(hits.map((h) => [h.note, h.length, h.velocity].join()))).toEqual(new Set(['37,1,90']));
   });
 
@@ -182,9 +184,10 @@ describe('where the rhythms are found', () => {
     expect(first(point)).toBe(id);
   });
 
-  it('the clave nearest Bossa nova is the bossa nova clave, nearest Funk the rumba clave, and the son clave 3-2 is as near both', () => {
+  it('the claves nearest Bossa nova are the bossa nova claves, the one-bar first; nearest Funk the rumba clave; the son clave 3-2 as near both', () => {
     const claves = Object.keys(CLAVES);
-    expect(first(BOSSA_NOVA, claves)).toBe('bossa nova clave');
+    expect(first(BOSSA_NOVA, claves)).toBe('bossa nova clave (one bar)');
+    expect(first(BOSSA_NOVA, claves.slice(0, 4))).toBe('bossa nova clave');
     expect(first(FUNK, claves)).toBe('rumba clave 3-2');
     const son = byId('son clave 3-2');
     expect(rhythms.query(BOSSA_NOVA, 12).find((f) => f.fragment === son)!.distance).toBeCloseTo(rhythms.query(FUNK, 12).find((f) => f.fragment === son)!.distance, 12);
