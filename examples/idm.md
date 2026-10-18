@@ -8,14 +8,14 @@ description: A breakbeat backwards every other bar, with ratchets and hats.
 &hatsNote label="The hats run seven against four." about=&hats
 &harmonyNote label="One harmony and one breath for pad, acid and lead." about=(&lydian &breath)
 # Intelligent dance music, in the manner of Aphex Twin — an original. A breakbeat
-# of voices, every other bar its retrograde ([::-1]); ratchets (&ch*3: a
+# of voices, every other bar its retrograde ([::-1]); ratchets (&hh*3: a
 # sixteenth split in three); hats seven against four. One harmony for all: the
 # Lydian scale turns a step every two bars, and pad, acid and lead all read it;
 # one breath: a slow filter sweep moves the pad and the lead together.
 &bar scan(1 1 1 1) step=free(160bpm, 110..200)
 &lydian scan(2 2 2 1 2 2 1) step=1m/2 stride=1 cycle=2 label="the harmony: {mode} on {tonic}"     # C, then D: a step every two bars
 
-&pat &bd ~ &ch &ch*2 &sd ~ &bd &ch ~ &bd &sd &ch*3 ~ &bd &sd*4!2   # a bar of sixteenths
+&pat &bd ~ &hh &hh*2 &sd ~ &bd &hh ~ &bd &sd &hh*3 ~ &bd &sd*4!2   # a bar of sixteenths
 &break step=16n &pat &pat[::-1]                            # … then the same bar backwards
 &hats step=pulse*7/4 &tick:0:.6 &tick:0:.3 &tick:0:.4 &tick:0:.3 &tick:0:.5 &tick:0:.3 &tick:0:.4  # seven to the bar
 &pad over=&lydian step=1m/2 [0,2,4,6]                      # the chord, as the scale turns
@@ -27,7 +27,7 @@ description: A breakbeat backwards every other bar, with ratchets and hats.
 
 &bd oneshot s=sine loop=A1 pitch=0..36 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)
 &sd s=white hpf=900 env=&(map=adsr 0 .1 0 .04)
-&ch s=white hpf=9000 env=&(map=adsr 0 .025 0 .01)
+&hh s=white hpf=9000 env=&(map=adsr 0 .025 0 .01)
 &tick gain=.2 s=white hpf=11000 env=&(map=adsr 0 .015 0 .01)
 &bleep s=tri loop=C5 lpf=800..5000 * &breath delaytime=&bar*4/3 delay=.3 delayfeedback=.4 room=.25 env=&(map=adsr .003 .12 .3 .1)
 &saw303 s=saw loop=C2 lpf=150..2600 * &(map=adsr .002 .16 .12 .06) * &accent lpq=12 env=&(map=adsr .002 .12 .4 .05)
