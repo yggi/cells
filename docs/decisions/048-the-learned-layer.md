@@ -1,6 +1,6 @@
 # 048 · The learned layer is plain data the frontend hands each query; filing gives a point of weight 0.1, use raises the point that found a fragment to 1.25 at most, and a text held after renaming adds to the fragment that holds it
 
-**Date:** 2026-10-18 · **Status:** proposed (#145; the owner rules on the pull request) · Issues: #145, #81, #49
+**Date:** 2026-10-18 · **Status:** accepted (owner, 2026-10-18, on #152: the filing weight 0.1, use raising the point that found it by 0.1 to 1.25 at most, a filed fragment first on a tie, use adding at most 5 points to the share among the 3 most used) · Issues: #145, #81, #49
 
 ## Context
 
