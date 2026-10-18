@@ -1,5 +1,5 @@
 import { compileSource } from "./compile.js";
-import { samePiece } from "./sameness.js";
+import { soundsIdentical } from "./sameness.js";
 export const ROUNDS = 20;
 export function rewriteAll(source, find, rounds = ROUNDS) {
     let now = source;
@@ -17,7 +17,7 @@ export function rewriteAll(source, find, rounds = ROUNDS) {
             catch {
                 continue;
             }
-            if (next !== now && samePiece(now, next)) {
+            if (next !== now && soundsIdentical(now, next)) {
                 taken = { next, title: r.title };
                 break;
             }

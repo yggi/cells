@@ -4,7 +4,7 @@
  * apply theirs, round after round (`rewriteAll`). Pure.
  */
 import { compileSource } from './compile';
-import { samePiece } from './sameness';
+import { soundsIdentical } from './sameness';
 
 /** The tool a rewrite is one of. */
 export type Tool = 'migrate' | 'normalise' | 'shorten';
@@ -30,7 +30,8 @@ export const ROUNDS = 20;
 
 /**
  * A tool's rewrites applied until none is left: each round the first that changes the text and plays the same notes
- * (`samePiece`), the text compiled again after it. The steps are the rewrites' titles, in order.
+ * over the whole piece (`soundsIdentical`, S1 of decision 050), the text compiled again after it. The steps are the
+ * rewrites' titles, in order.
  */
 export function rewriteAll(source: string, find: Find, rounds = ROUNDS): { source: string; steps: string[] } {
   let now = source;
@@ -46,7 +47,7 @@ export function rewriteAll(source: string, find: Find, rounds = ROUNDS): { sourc
       } catch {
         continue;
       }
-      if (next !== now && samePiece(now, next)) {
+      if (next !== now && soundsIdentical(now, next)) {
         taken = { next, title: r.title };
         break;
       }

@@ -4,8 +4,8 @@
  * rewrite against it before they offer or apply it. Lifted out of `shorten/harness.ts` (#155). Pure.
  *
  *  - S1 `soundsIdentical`: every event alike, voice, onset, length, pitch, gains, bends, levels, moving parameters,
- *    envelope (the snapshot's `notes` and `events` hashes), over the whole piece (`wholeWindow`). `samePiece` is S1 over
- *    the first minute, what the tools check by until they move to the whole window.
+ *    envelope (the snapshot's `notes` and `events` hashes), over the whole piece (`wholeWindow`): what the tools check a
+ *    rewrite by. `samePiece` is S1 over the first minute, kept for the tests of equal spellings and its public subpath.
  *  - S2 `playsSameNotes`: every event's voice, onset, length and pitch alike, gains and the rest free.
  *  - S3 `sameNotes`: the named cells' flattened steps alike.
  */

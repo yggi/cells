@@ -5,7 +5,7 @@
  * Not always shorter: a migration, offered whatever its length when it plays the same notes (checked here).
  */
 import { attrsOf, declLine, declWords, setAttr, setBraid } from '../edit';
-import { samePiece } from '../sameness';
+import { soundsIdentical } from '../sameness';
 import type { Result, ShortenRewrite } from './harness';
 
 /** The rewrite of one gate written the old way, or null (not one, or its line can't be rewritten in place). */
@@ -31,7 +31,7 @@ export function gates(source: string, result: Result): ShortenRewrite[] {
   for (const c of result.cells.values()) {
     if (c.gate?.port !== 'trigger') continue;
     const next = rewrite(source, c.name);
-    if (next === null || !samePiece(source, next)) continue;
+    if (next === null || !soundsIdentical(source, next)) continue;
     const at = declLine(source, c.name);
     out.push({
       id: `gate:${c.name}`,

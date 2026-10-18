@@ -4,7 +4,7 @@
  * author's: only `&parts` is offered, whatever its length, when it plays the same notes (checked here).
  */
 import { declLine, renameCell } from '../edit';
-import { samePiece } from '../sameness';
+import { soundsIdentical } from '../sameness';
 import type { Result, ShortenRewrite } from './harness';
 
 /** The name the examples' table of sections had, and the one it has. */
@@ -16,7 +16,7 @@ export function sections(source: string, result: Result): ShortenRewrite[] {
   if (![...(result.sections?.values() ?? [])].includes(FROM) || declLine(source, TO) >= 0) return [];
   const apply = (s: string) => renameCell(s, FROM, TO);
   const next = apply(source);
-  if (next === source || !samePiece(source, next)) return [];
+  if (next === source || !soundsIdentical(source, next)) return [];
   const at = declLine(source, FROM);
   return [
     {

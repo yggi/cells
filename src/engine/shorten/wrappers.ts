@@ -4,7 +4,7 @@
  * splices it reads the same table unshifted, and it has nothing else to say (no label, no step).
  */
 import { declWords, deleteCell, setBraid, spansLines } from '../edit';
-import { samePiece } from '../sameness';
+import { soundsIdentical } from '../sameness';
 import { saves, type Result, type ShortenRewrite } from './harness';
 
 const PLAIN_REF = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
@@ -50,7 +50,7 @@ export function wrappers(source: string, result: Result): ShortenRewrite[] {
       after: moved.join(' '),
       apply,
     };
-    if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source))) out.push(s);
+    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source))) out.push(s);
   }
   return out;
 }

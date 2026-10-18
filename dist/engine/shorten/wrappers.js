@@ -1,5 +1,5 @@
 import { declWords, deleteCell, setBraid, spansLines } from "../edit.js";
-import { samePiece } from "../sameness.js";
+import { soundsIdentical } from "../sameness.js";
 import { saves } from "./harness.js";
 const PLAIN_REF = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
 export function wrappers(source, result) {
@@ -50,7 +50,7 @@ export function wrappers(source, result) {
             after: moved.join(' '),
             apply,
         };
-        if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source)))
+        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source)))
             out.push(s);
     }
     return out;

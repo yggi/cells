@@ -1,7 +1,7 @@
 import { declLine, setAttr, splitComment } from "../edit.js";
 import { pieceMeta } from "../parser/index.js";
 import { isPieceFile, writePiece } from "../piecefile.js";
-import { samePiece } from "../sameness.js";
+import { soundsIdentical } from "../sameness.js";
 export function movedCard(text) {
     const meta = isPieceFile(text) ? null : pieceMeta(text);
     if (!meta?.cell)
@@ -25,7 +25,7 @@ export function movedCard(text) {
 export function card(source) {
     const moved = movedCard(source);
     const name = pieceMeta(source)?.cell;
-    if (!moved || !name || !samePiece(source, moved.text))
+    if (!moved || !name || !soundsIdentical(source, moved.text))
         return [];
     const apply = (s) => {
         const m = movedCard(s);

@@ -24,7 +24,8 @@ export type Find = (source: string, result: ReturnType<typeof compileSource>) =>
 export declare const ROUNDS = 20;
 /**
  * A tool's rewrites applied until none is left: each round the first that changes the text and plays the same notes
- * (`samePiece`), the text compiled again after it. The steps are the rewrites' titles, in order.
+ * over the whole piece (`soundsIdentical`, S1 of decision 050), the text compiled again after it. The steps are the
+ * rewrites' titles, in order.
  */
 export declare function rewriteAll(source: string, find: Find, rounds?: number): {
     source: string;
