@@ -57,6 +57,7 @@
     "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test -- --reporter=default --reporter=./tools/test-count.ts",
     "postverify": "sh tools/verified.sh end",
     "reference": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/reference.ts",
+    "normalise": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/normalise.ts",
     "types": "tsc -p tsconfig.types.json",
     "dist": "node --experimental-strip-types --no-warnings tools/dist.ts"
   },
