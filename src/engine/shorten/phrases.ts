@@ -22,6 +22,10 @@ const isDegree = (ref: string) => ref.startsWith('^') && !ref.startsWith('^$');
 /** Phrases written more than once (exactly, backwards, or transposed): one cell, used where they were. */
 export function phrases(source: string, cells: readonly Candidate[], result: Result): ShortenRewrite[] {
   type Occ = { cell: string; at: number; ref: string };
+  // (not in a cell another copies, base=&x: a copy counts its base's steps, =!3, so a phrase cut out of the base
+  // would move every copy's changes; nor in a copy, whose steps are changes to its base's)
+  const copied = new Set([...source.matchAll(/\bbase=&(\w+)/g)].map((m) => m[1]));
+  cells = cells.filter((c) => !copied.has(c.name) && !new RegExp(`^&${c.name}\\b[^\\n]*\\bbase=&`, 'm').test(source));
   const found: { key: string; tokens: string[]; occs: Occ[]; saving: number }[] = [];
   const maxLen = 16;
   // every stretch of 2–16 steps, keyed as written

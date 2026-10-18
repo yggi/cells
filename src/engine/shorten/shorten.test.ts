@@ -162,6 +162,15 @@ describe('shorten all the way, on every example: it sounds the same, and is done
   }
 });
 
+describe('shorten: a cell base= copies keeps its steps (#177)', () => {
+  it("no phrase is cut out of a base or a copy: a copy counts its base's steps (=!n)", () => {
+    const src = '&s 0 1 2 3 4 5 6 0 1 2 3 4 5 6 0 1 2 3 4 5 6 9\n&c base=&s^$5 =!4 4\n&t step=4 &s &c' + tail;
+    expect(shorten(src).filter((s) => s.kind === 'phrase')).toEqual([]);
+    // (the same braid with no copy: the phrase is found)
+    expect(shorten('&s 0 1 2 3 4 5 6 0 1 2 3 4 5 6 0 1 2 3 4 5 6 9\n&t step=4 &s &s^$5' + tail).filter((s) => s.kind === 'phrase')).not.toEqual([]);
+  });
+});
+
 describe('shorten: whole lines (#10)', () => {
   it('a cell that only reads a motif through a shifted table: &motif^k where it is used', () => {
     const src = '&scale over=scale(0,5)\n&down 3 3 2 2 1 1 0@2\n&mid over=&scale[>>] &down\n&t over=&scale step=4 &down &mid &mid' + tail;

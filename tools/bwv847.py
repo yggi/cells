@@ -1,11 +1,11 @@
 """
-Write the BWV 847 example from the encoding, with its structure: the prelude's
-figuration as one figure read through two braids of four-note chords, one a bar;
-its later sections as cells; the fugue as its subject and countersubject,
-entered in each voice at their transpositions, with the free counterpoint
-between them as cells of their own. Writes examples/bwv847.md (a piece file: its title and tags in the frontmatter, the text written in full, then
-shortened by tools/shorten.mjs, in its cells block) and the
-reference the tests check it against (tools/bwv847.reference.json).
+Write BWV 847's reference from the encoding (tools/bwv847.reference.json: every note, voice by voice, that the
+example is checked against), and the text this script once wrote as the example (fixtures/bwv847-generated.cells):
+the prelude's figuration as one figure read through two braids of four-note chords, one a bar; its later sections
+as cells; the fugue as its subject and countersubject, entered in each voice at their transpositions, with the free
+counterpoint between them as cells of their own, written in full, then shortened by tools/shorten.mjs. The example
+itself (examples/bwv847.md) is written by hand (#177), and src/engine/sections.test.ts checks that it plays every
+note of the generated text: the generated text is the input the analysis tools are measured on.
 
 The notes are the CCARH Humdrum encoding (humdrum-tools/bach-wtc on GitHub),
 fetched into $BACH_WTC (default /tmp/bach-wtc) when it isn't there yet.
@@ -219,7 +219,7 @@ layout.update({'subject': (2.1, deepest + 1.3), 'counter': (4.1, deepest + 1.2)}
 # own, used exactly or transposed): the same notes — realize.test.ts checks them against the reference — in less text
 short = subprocess.run(['node', 'tools/shorten.mjs', '--within', r'^(soprano|alto|bass|rh|lh)'], input=src + '\n', capture_output=True, text=True, check=True)
 print(f'shortened: {len(src) + 1} -> {len(short.stdout)} characters', file=sys.stderr)
-FRONTMATTER = '---\ntitle: "Bach, Prelude and Fugue in C minor: for Wendy"\ntags: [genre:classical, genre:electronic, artist:Bach, artist:Wendy Carlos, tonal, counterpoint]\n---\n'
-open('examples/bwv847.md', 'w').write(f"{FRONTMATTER}\n```cells\n{short.stdout.rstrip()}\n```\n")
+HEADER = '# The BWV 847 example as tools/bwv847.py wrote it until #177 (shortened by tools/shorten.mjs), for src/engine/sections.test.ts: the hand-written example plays every one of its notes.\n'
+open('fixtures/bwv847-generated.cells', 'w').write(HEADER + short.stdout.rstrip() + '\n')
 print('subjects:', [(s[0], s[1] // 16 + 1, s[3], s[4]) for s in subs], file=sys.stderr)
 print('counters:', [(c[0], c[1] // 16 + 1, c[3], c[4]) for c in cnts], file=sys.stderr)

@@ -551,7 +551,16 @@ function plainEvents(p, from, to, outputs) {
                 const other = windowsOf(p, sel, a, until);
                 ws = ws.flatMap((w) => other.flatMap((x) => (Math.max(w.a, x.a) < Math.min(w.b, x.b) ? [{ a: Math.max(w.a, x.a), b: Math.min(w.b, x.b) }] : [])));
             }
-            return ws;
+            if (policy === 'restart')
+                return ws;
+            return ws.reduce((all, w) => {
+                const last = all[all.length - 1];
+                if (last && Math.abs(w.a - last.b) < EPS)
+                    all[all.length - 1] = { a: last.a, b: w.b };
+                else
+                    all.push(w);
+                return all;
+            }, []);
         };
         const windows = windowsFrom(policy === 'resume' ? 0 : from);
         let held = 0;
