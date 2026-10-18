@@ -45,12 +45,13 @@ export const bendMessage = (channel: number, value: number): number[] => [0xe0 |
 
 /**
  * How hard a note is struck, 1 … 127: its level at its start times the louder of its two channels' gains (on a MIDI
- * card, the gain of its product there). Synths
+ * card, the gain of its product there), the size of that gain: MIDI has no phase. Synths
  * mostly turn velocity into amplitude on a square law, so the velocity is the square root of that amplitude.
  */
-export function velocityOf(e: Pick<Played, 'gains' | 'levels'>, gain = Math.max(e.gains[0], e.gains[1])): number {
+export function velocityOf(e: Pick<Played, 'gains' | 'levels'>, gain = Math.max(Math.abs(e.gains[0]), Math.abs(e.gains[1]))): number {
   const level = e.levels[0]?.level ?? 1;
-  const amp = Math.max(0, level * gain);
+  // (the size of the gain: MIDI has no phase, so an inverted voice is struck as hard as the same voice upright)
+  const amp = Math.max(0, level * Math.abs(gain));
   const v = Math.round(127 * Math.sqrt(Math.min(1, amp)));
   return Math.max(1, Math.min(127, Number.isFinite(v) ? v : 1));
 }

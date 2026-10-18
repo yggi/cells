@@ -125,7 +125,7 @@ const driverMuted = (result, name, muted) => {
 function voiceGain(result, voice) {
     const c = result.cells.get(voice);
     const l = c?.voice ? c.params.gain : undefined;
-    return typeof l === 'number' && Number.isFinite(l) && l >= 0 ? l : 1;
+    return typeof l === 'number' && Number.isFinite(l) ? l : 1;
 }
 export function liveGains(o, muted) {
     if (o.silent)
@@ -144,17 +144,18 @@ function partsGains(parts, muted) {
         }
     return g;
 }
+const audible = (g) => g[0] !== 0 || g[1] !== 0;
 export function outputSounds(result, o, muted) {
     if (!outputOn(result, o, muted))
         return false;
     const g = liveGains(o, muted);
-    return g[0] > 0 || g[1] > 0;
+    return audible(g);
 }
 export function outputPlays(result, o, muted) {
     if (!outputOn(result, o, muted))
         return false;
     const g = liveGains(o, muted);
-    return g[0] > 0 || g[1] > 0 || outputSent(o, muted);
+    return audible(g) || outputSent(o, muted);
 }
 function liveMidi(o, muted) {
     return (o.midi ?? []).filter((m) => !muted.has(cellId(m.card)) && !(m.mix && muted.has(cellId(m.mix))));
@@ -298,7 +299,7 @@ export function eventsBetween(p, from, to, outputs = false, held = {}) {
             continue;
         const g = liveGains(o, p.muted);
         const midi = o.midi ? liveMidi(o, p.muted) : [];
-        const heard = g[0] > 0 || g[1] > 0;
+        const heard = audible(g);
         if (!heard && !midi.length)
             continue;
         const base = p.result.cells.get(o.voice)?.freq || 261.63;
@@ -468,7 +469,7 @@ function plainEvents(p, from, to, outputs) {
                 value: e.value + e.alter,
                 gains,
                 levels: level,
-                ...(!t.output.silent && !(gains[0] > 0 || gains[1] > 0) ? { unheard: true } : {}),
+                ...(!t.output.silent && !audible(gains) ? { unheard: true } : {}),
                 ...(midi.length ? { midi } : {}),
                 ...(env ? { env } : {}),
                 ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
@@ -647,7 +648,7 @@ function droneEvents(p, from, to, outputs, held) {
                 gains,
                 levels,
                 held: true,
-                ...(!o.silent && !(gains[0] > 0 || gains[1] > 0) ? { unheard: true } : {}),
+                ...(!o.silent && !audible(gains) ? { unheard: true } : {}),
                 ...(midi.length ? { midi } : {}),
                 ...(o.envelope ? { env: o.envelope } : {}),
                 ...(o.through.length ? { instrument: o.through[0] } : {}),

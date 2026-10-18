@@ -6,7 +6,7 @@ export const MIX_SYNTAX = [
     syntax('mix', '[a, b, …]', 'A mix: one chord of sounds, each a product or a sum. On the sound card (map=sample), one chord is mono, two are left and right.', ['&mix [&theme * &lead, &bass * 0.5]'], 'mix.md'),
     syntax('mix', 'p * s · v * s', 'A pitch or a volume acting on a sound: the voice is the factor that is a sound, wherever it is written. `*` is commutative and associative; two pitches multiplied add.', ['&mix [&theme * &lead]', '&mix [&lead * &accent * &theme]'], 'mix.md'),
     syntax('mix', 'a + b · a - b', "Pitches add (subtract) in semitones; sounds mix (they can't be subtracted).", ['&mix [(&theme + &vibrato - 12) * &lead]', '&mix [&a * &lead + &b * &organ]'], 'mix.md'),
-    syntax('mix', 'n', "A number takes its operator's sort: semitones in a sum (0 changes nothing), a gain in a product (1 changes nothing).", ['&mix [(&pedal + 12) * &bass * 0.8]'], 'mix.md'),
+    syntax('mix', 'n', "A number takes its operator's sort: semitones in a sum (0 changes nothing), a gain in a product (1 changes nothing; a negative gain inverts the phase: * -.5 is half the level, upside down).", ['&mix [(&pedal + 12) * &bass * 0.8]'], 'mix.md'),
     syntax('mix', 'free(v, lo..hi)', 'A gain left to the performer.', ['&mix [&theme * &lead * free(.8, 0..1)]'], 'free.md'),
     syntax('mix', '( … )', "Grouping. By the laws, grouping and order don't change what plays.", ['&mix [&theme * (&lead + &organ) * 0.5]'], 'mix.md'),
 ];
