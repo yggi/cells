@@ -1,2 +1,2 @@
-import { type Result, type Suggestion } from './harness';
-export declare function stereo(source: string, result: Result): Suggestion[];
+import { type Result, type ShortenRewrite } from './harness';
+export declare function stereo(source: string, result: Result): ShortenRewrite[];

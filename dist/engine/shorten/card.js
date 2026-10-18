@@ -1,7 +1,7 @@
 import { declLine, setAttr, splitComment } from "../edit.js";
 import { pieceMeta } from "../parser/index.js";
 import { isPieceFile, writePiece } from "../piecefile.js";
-import { samePiece, size } from "./harness.js";
+import { samePiece } from "../sameness.js";
 export function movedCard(text) {
     const meta = isPieceFile(text) ? null : pieceMeta(text);
     if (!meta?.cell)
@@ -31,16 +31,15 @@ export function card(source) {
         const m = movedCard(s);
         return m ? writePiece({ frontmatter: m.frontmatter, text: m.text, prose: '' }) : s;
     };
-    const file = apply(source);
     const at = declLine(source, name);
     return [
         {
             id: `card:${name}`,
-            kind: 'card',
+            tool: 'migrate',
+            rule: 'card',
             title: `&${name} says what the piece is: its title, tags and tier go in the file's frontmatter, the piece in its cells block (decision 047)`,
             before: source.split('\n')[at].trim(),
             after: moved.text.split('\n')[declLine(moved.text, name)]?.trim() ?? '',
-            saving: size(source) - size(file),
             apply,
         },
     ];

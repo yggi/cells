@@ -1,13 +1,14 @@
 /**
- * What every Shorten rule shares: the cells it may rewrite, how a suggestion's
- * saving is measured, and the note-for-note check a rule runs before it offers
- * a rewrite whose sound depends on its tables.
+ * What every Shorten rule shares: the cells it may rewrite, and how a rewrite's saving is measured, so it is offered
+ * as a suggestion. The note-for-note check a rule runs before it offers a rewrite is the tools' own (`../sameness`),
+ * re-exported here as it was before #155.
  */
 import { compileSource } from '../compile';
-import { ROOT, codeShifts } from '../program';
-import { eventsBetween, plan } from '../realize';
+import { ROOT } from '../program';
 import { declWords, spansLines } from '../edit';
-import { flatten } from '../flatten';
+import type { Rewrite } from '../rewrite';
+
+export { samePiece, sameNotes, SAMENESS_SECONDS } from '../sameness';
 
 export interface Suggestion {
   readonly id: string;
@@ -53,32 +54,35 @@ export function candidates(source: string): { result: Result; cells: Candidate[]
 /** The code's length: runs of spaces count as one (the padding that keeps comments aligned isn't code). */
 export const size = (source: string) => source.replace(/[ \t]+/g, ' ').length;
 
-/** A suggestion with its saving measured on its result; null when it saves nothing (or its rewrite fails). */
-export const measured = (source: string, s: Omit<Suggestion, 'saving'>): Suggestion | null => {
+/** What a rewrite saves (characters, `size`), or null when it changes nothing or its rewrite fails. */
+export const saves = (source: string, r: Pick<Rewrite, 'apply'>): number | null => {
   try {
-    const next = s.apply(source);
-    const saving = size(source) - size(next);
-    return saving > 0 && next !== source ? { ...s, saving } : null;
+    const next = r.apply(source);
+    return next === source ? null : size(source) - size(next);
   } catch {
     return null;
   }
 };
 
-/** Do these cells play the same notes (value, place, length) in both programs? */
-export function sameNotes(a: string, b: string, names: readonly string[]): boolean {
-  try {
-    const ra = compileSource(a);
-    const rb = compileSource(b);
-    if (!rb.ok) return false;
-    const notes = (r: Result, n: string) =>
-      flatten(r, n, codeShifts(r))
-        .map((e) => `${e.step.toFixed(6)}:${e.duration.toFixed(6)}:${e.value + e.alter + (e.transpose ?? 0)}:${e.table}`)
-        .join(' ');
-    return names.every((n) => notes(ra, n) === notes(rb, n));
-  } catch {
-    return false;
-  }
-}
+/** A Shorten rule's rewrite: offered as a suggestion of the rule's kind. */
+export type ShortenRewrite = Rewrite<Suggestion['kind']>;
+
+/** A rewrite offered as a suggestion, its saving measured on its result (a rule has checked it changes the text). */
+export const suggestion = (source: string, r: ShortenRewrite): Suggestion => ({
+  id: r.id,
+  kind: r.rule,
+  title: r.title,
+  before: r.before,
+  after: r.after,
+  saving: saves(source, r) ?? 0,
+  apply: r.apply,
+});
+
+/** A suggestion with its saving measured on its result; null when it saves nothing (or its rewrite fails). Kept for the public subpath. */
+export const measured = (source: string, s: Omit<Suggestion, 'saving'>): Suggestion | null => {
+  const saving = saves(source, s);
+  return saving !== null && saving > 0 ? { ...s, saving } : null;
+};
 
 /**
  * Are a cell's numbers steps of a grid wherever it is read? Its own over=, else the tables of every cell
@@ -90,31 +94,4 @@ function readsGrid(r: Result, name: string, path: readonly string[] = []): boole
   if (c.over) return !!r.cells.get(c.over)?.root;
   const users = [...r.cells.values()].filter((u) => u.units.some((x) => x.atom.kind === 'ref' && x.atom.name === name));
   return users.length === 0 ? !!r.cells.get(ROOT)?.root : users.every((u) => readsGrid(r, u.name, [...path, name]));
-}
-
-/**
- * How many seconds two spellings are compared over: Shorten's check and the tests of equal spellings use the same. A minute is
- * the longest cycle of most pieces (the longest layers, a day in the sun pieces or twenty minutes in Royal, are never run to the end).
- */
-export const SAMENESS_SECONDS = 60;
-
-/** Does the whole piece play the same notes (voice, onset, length, pitch, level per channel, bends, volumes, moving parameters, envelope) in both, for its first minute? */
-export function samePiece(a: string, b: string, until = SAMENESS_SECONDS): boolean {
-  try {
-    const play = (src: string) => {
-      const r = compileSource(src);
-      if (!r.ok) return null;
-      return eventsBetween(plan(r, codeShifts(r)), 0, until)
-        .map(
-          (e) =>
-            `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`,
-        )
-        .sort()
-        .join('\n');
-    };
-    const x = play(a);
-    return x !== null && x === play(b);
-  } catch {
-    return false;
-  }
 }

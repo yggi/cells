@@ -1,6 +1,6 @@
 import { attrsOf, declLine, setAttr } from "../edit.js";
 import { bareSwingLevel } from "../meter.js";
-import { samePiece, size } from "./harness.js";
+import { samePiece } from "../sameness.js";
 export function swings(source, result) {
     const out = [];
     for (const c of result.cells.values()) {
@@ -18,11 +18,11 @@ export function swings(source, result) {
         const at = declLine(source, c.name);
         out.push({
             id: `swing:${c.name}`,
-            kind: 'swing',
+            tool: 'migrate',
+            rule: 'swing',
             title: `&${c.name}'s swing= leans the meter cell's own steps: name the level, swing=${level}:${written} (#18)`,
             before: source.split('\n')[at].trim(),
             after: next.split('\n')[at].trim(),
-            saving: size(source) - size(next),
             apply,
         });
     }

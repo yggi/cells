@@ -1,5 +1,5 @@
 import { attrsOf, declLine, declWords, setAttr, setBraid } from "../edit.js";
-import { samePiece, size } from "./harness.js";
+import { samePiece } from "../sameness.js";
 function rewrite(source, name) {
     const a = attrsOf(source, name);
     const w = declWords(source, name);
@@ -28,11 +28,11 @@ export function gates(source, result) {
         const at = declLine(source, c.name);
         out.push({
             id: `gate:${c.name}`,
-            kind: 'gate',
+            tool: 'migrate',
+            rule: 'gate',
             title: `&${c.name} is a gate written the old way: play= for trigger=, one level= for velocity=, gate= and gain=, the voices it plays all of as a chord`,
             before: source.split('\n')[at].trim(),
             after: next.split('\n')[at].trim(),
-            saving: size(source) - size(next),
             apply: (s) => rewrite(s, c.name) ?? s,
         });
     }

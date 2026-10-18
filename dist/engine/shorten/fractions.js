@@ -1,6 +1,6 @@
 import { attrsOf, setAttr, setBraid } from "../edit.js";
 import { tapOfRaw } from "./taps.js";
-import { measured } from "./harness.js";
+import { saves } from "./harness.js";
 const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 export function fractions(source, cells, result) {
     const out = [];
@@ -48,15 +48,16 @@ export function fractions(source, cells, result) {
         if (!slower)
             continue;
         const next = c.tokens.map((t, i) => t.slice(0, cut(t)) + t.slice(cut(t)).replace(/@[0-9]+/, held[i] / g > 1 ? `@${held[i] / g}` : ''));
-        const s = measured(source, {
+        const s = {
             id: `fraction:${c.name}`,
-            kind: 'fraction',
+            tool: 'shorten',
+            rule: 'fraction',
             title: `&${c.name}: every step is held ${g}× or more — divide by ${g}, and step ${g}× slower`,
             before: `step=${step}  ${c.tokens.slice(0, 5).join(' ')}${c.tokens.length > 5 ? ' …' : ''}`,
             after: `step=${slower}  ${next.slice(0, 5).join(' ')}${next.length > 5 ? ' …' : ''}`,
             apply: (src) => setAttr(setBraid(src, c.name, next), c.name, 'step', slower),
-        });
-        if (s)
+        };
+        if ((saves(source, s) ?? 0) > 0)
             out.push(s);
     }
     return out;

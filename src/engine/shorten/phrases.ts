@@ -7,7 +7,8 @@
  */
 import { period } from '../helix';
 import { declLine, freshName, setBraid } from '../edit';
-import { measured, sameNotes, type Candidate, type Result, type Suggestion } from './harness';
+import { sameNotes } from '../sameness';
+import { saves, type Candidate, type Result, type ShortenRewrite } from './harness';
 
 const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/; // a plain step: a whole number, perhaps held (transposable)
 /** A phrase worth a name has at least four steps … */
@@ -19,7 +20,7 @@ const use = (name: string, ref: string) => `&${name}${ref}`;
 const isDegree = (ref: string) => ref.startsWith('^') && !ref.startsWith('^$');
 
 /** Phrases written more than once (exactly, backwards, or transposed): one cell, used where they were. */
-export function phrases(source: string, cells: readonly Candidate[], result: Result): Suggestion[] {
+export function phrases(source: string, cells: readonly Candidate[], result: Result): ShortenRewrite[] {
   type Occ = { cell: string; at: number; ref: string };
   const found: { key: string; tokens: string[]; occs: Occ[]; saving: number }[] = [];
   const maxLen = 16;
@@ -114,7 +115,7 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
     kept.push(f);
     if (kept.length >= 8) break;
   }
-  const out: Suggestion[] = [];
+  const out: ShortenRewrite[] = [];
   for (const f of kept) {
     const apply = (src: string) => {
       const name = freshName(src, 'm');
@@ -148,16 +149,18 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
     ];
     // (a turn's climb, and a degree's step, depend on the table it's read through: checked note for note)
     const turnedAny = f.occs.some((o) => o.ref.startsWith('[>>') || o.ref.startsWith('[<<') || isDegree(o.ref));
-    const s = measured(source, {
+    const s: ShortenRewrite = {
       id: `phrase:${f.key}`,
-      kind: 'phrase',
+      tool: 'shorten',
+      rule: 'phrase',
       title: `A phrase written ${f.occs.length} times (${ways.join(', ')}) in ${[...new Set(f.occs.map((o) => `&${o.cell}`))].join(', ')}: one cell, used where it was`,
       before: f.key.length > 48 ? f.key.slice(0, 47) + '…' : f.key,
       after: f.occs.map((o) => use('m', o.ref)).join(' … '),
       apply,
-    });
+    };
     // (a turn's climb depends on the table it's read through: checked, note for note, before it's offered)
-    if (s && s.saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))]))) out.push(s);
+    const saving = saves(source, s) ?? 0;
+    if (saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))]))) out.push(s);
   }
   return out;
 }

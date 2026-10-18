@@ -19,10 +19,11 @@
  *  - card.ts:      a migration: a card that says what the piece is (title= tags= tier=) as a piece file, those in its
  *                  frontmatter (decision 047); its rewrite is a file, not a text, so shortenAll never takes it
  *
- * Each suggestion carries its rewrite; its saving is measured on the result
- * (harness.ts: the cells a rule may touch, the measure, the note-for-note check).
+ * Each rule returns rewrites (../rewrite.ts), each one checked by the rule; a rewrite is offered as a suggestion, its
+ * saving measured on the result (harness.ts: the cells a rule may touch, the measure). The note-for-note check is the
+ * tools' own (../sameness.ts).
  */
-import { candidates, size, type Suggestion } from './harness';
+import { candidates, size, suggestion, type Suggestion } from './harness';
 import { runs } from './runs';
 import { phrases } from './phrases';
 import { fractions } from './fractions';
@@ -44,7 +45,7 @@ export type { Suggestion } from './harness';
 export function shorten(source: string): Suggestion[] {
   const { result, cells } = candidates(source);
   if (!result.ok) return [];
-  return [
+  const found = [
     ...runs(source, cells),
     ...phrases(source, cells, result),
     ...fractions(source, cells, result),
@@ -59,7 +60,8 @@ export function shorten(source: string): Suggestion[] {
     ...swings(source, result),
     ...sections(source, result),
     ...card(source),
-  ].sort((a, b) => b.saving - a.saving);
+  ];
+  return found.map((r) => suggestion(source, r)).sort((a, b) => b.saving - a.saving);
 }
 
 /** Shorten again and again — the best each time — until nothing more pays. */

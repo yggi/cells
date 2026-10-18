@@ -1,6 +1,7 @@
 import { period } from "../helix.js";
 import { declLine, freshName, setBraid } from "../edit.js";
-import { measured, sameNotes } from "./harness.js";
+import { sameNotes } from "../sameness.js";
+import { saves } from "./harness.js";
 const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/;
 const MIN_PHRASE = 4;
 const TOLL = 12;
@@ -137,15 +138,17 @@ export function phrases(source, cells, result) {
                             : `turned ${o.ref}`)),
         ];
         const turnedAny = f.occs.some((o) => o.ref.startsWith('[>>') || o.ref.startsWith('[<<') || isDegree(o.ref));
-        const s = measured(source, {
+        const s = {
             id: `phrase:${f.key}`,
-            kind: 'phrase',
+            tool: 'shorten',
+            rule: 'phrase',
             title: `A phrase written ${f.occs.length} times (${ways.join(', ')}) in ${[...new Set(f.occs.map((o) => `&${o.cell}`))].join(', ')}: one cell, used where it was`,
             before: f.key.length > 48 ? f.key.slice(0, 47) + '…' : f.key,
             after: f.occs.map((o) => use('m', o.ref)).join(' … '),
             apply,
-        });
-        if (s && s.saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))])))
+        };
+        const saving = saves(source, s) ?? 0;
+        if (saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))])))
             out.push(s);
     }
     return out;
