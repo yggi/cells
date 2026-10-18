@@ -15,7 +15,7 @@ export function declare(ctx) {
     }
     const mainKey = mainKeyOf(ctx, decls);
     const sections = sectionTables(decls, error);
-    gates(decls, implicit, error);
+    gates(decls, implicit, error, ctx.warn);
     mixSelectors(ctx, decls);
     const implicitRoot = !decls.has(ROOT);
     for (const name of decls.keys())
@@ -175,7 +175,7 @@ export function voiceGrooves(decls) {
             rewrite(d);
     return { voices, cells };
 }
-function gates(decls, implicit, error) {
+function gates(decls, implicit, error, warn) {
     const ref = (name, span) => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
     for (const d of [...decls.values()]) {
         const p = d.params;
@@ -186,6 +186,8 @@ function gates(decls, implicit, error) {
             continue;
         const port = old ? 'trigger' : 'play';
         const notesSpan = d.paramSpans[port] ?? d.span;
+        if (old)
+            warn(`&${d.name} is a gate written the old way: play= for trigger=, one level= for velocity=, gate= and gain=, the voices it plays all of as a chord (Migrate rewrites it, decision 023)`, notesSpan);
         const plain = (a) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
         const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;
         const bare = tokens.every((t) => plain(t.atom) && t.repeat === 1 && t.subdivide === 1 && t.elongate === 1);

@@ -195,7 +195,10 @@ describe('a gate', () => {
     expect(spans(G + '&g play=&tune level=-.5 [&v]')).toEqual([
       { severity: 'warning', message: "level=-0.5: a level is 0 or more, and a negative one doesn't play softer — write 0.5", line: 5, col: 21, len: 3 },
     ]);
-    expect(spans(G + '&g trigger=&tune gain=-.5 &v')[0]).toMatchObject({ severity: 'warning', message: expect.stringMatching(/^gain=-0.5: a level is 0 or more/) });
+    expect(spans(G + '&g trigger=&tune gain=-.5 &v').find((d) => d.message.startsWith('gain='))).toMatchObject({
+      severity: 'warning',
+      message: expect.stringMatching(/^gain=-0.5: a level is 0 or more/),
+    });
   });
   it('a receiver that isn’t a cell is an unknown cell, not a product with no voice', () => {
     expect(spans(G + '&g play=&tune [&nope]')).toEqual([{ severity: 'error', message: 'Unknown cell &nope', line: 5, col: 16, len: 5 }]);
@@ -211,7 +214,7 @@ describe('a gate', () => {
         len: 2,
       }),
     ]);
-    expect(spans(G + '&g play=&tune [&v]\n&h trigger=&tune velocity=&g &v')[0].message).toMatch(/^velocity=&g: a gate's velocity= takes a level/);
+    expect(spans(G + '&g play=&tune [&v]\n&h trigger=&tune velocity=&g &v').find((d) => d.severity === 'error')?.message).toMatch(/^velocity=&g: a gate's velocity= takes a level/);
     expect(spans(G + '&h play=&v [&v]')[0].message).toMatch(/^play=&v: a gate's play= takes the notes it plays .* and &v is a sound \(a voice\)/);
   });
 });

@@ -7,11 +7,11 @@ import { defaults } from "./defaults.js";
 import { progressions } from "./progressions.js";
 import { wrappers } from "./wrappers.js";
 import { stereo } from "./stereo.js";
-import { gates } from "./gates.js";
+import { gates } from "../migrate/gates.js";
 import { aliases } from "./aliases.js";
-import { taps } from "./taps.js";
-import { swings } from "./swing.js";
-import { sections } from "./sections.js";
+import { taps } from "../migrate/taps.js";
+import { swings } from "../migrate/swing.js";
+import { sections } from "../migrate/sections.js";
 import { card } from "./card.js";
 export function shorten(source) {
     const { result, cells } = candidates(source);

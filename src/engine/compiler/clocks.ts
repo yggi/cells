@@ -79,7 +79,7 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         const leans = whole !== null && swingLevelProblem(m, whole) === null;
         warn(
           leans
-            ? `swing=${share(d.params.swing)} leans the meter cell's own steps: name the level it leans, swing=${level}:${share(d.params.swing)}`
+            ? `swing=${share(d.params.swing)} leans the meter cell's own steps: name the level it leans, swing=${level}:${share(d.params.swing)} (Migrate rewrites it)`
             : `swing=${share(d.params.swing)} leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:${share(d.params.swing)}`,
           swingSpan,
         );
@@ -219,7 +219,7 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         // (a meter stepped by another, scan(2 1) step=&bar: its pulses are its steps, no note value)
         const tap = tapFor(m.levels.length, m.pulses, decls.get(drv)?.step?.kind === 'rate' ? m.unit : 0, st.ratio);
         warn(
-          `step=&${drv}${chainText(st.chain)} steps by the meter cell's own steps: tap the meter by pulse, beat or a note value (step=${mainMeter() === drv ? '' : `&${drv}:`}${tap})`,
+          `step=&${drv}${chainText(st.chain)} steps by the meter cell's own steps: tap the meter by pulse, beat or a note value (step=${mainMeter() === drv ? '' : `&${drv}:`}${tap}; Migrate rewrites it)`,
           st.span,
         );
       }

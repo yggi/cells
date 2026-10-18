@@ -1,3 +1,2 @@
-import type { Result, ShortenRewrite } from './harness';
-/** Each meter with a bare swing=: the same swing with its level named, if it plays the same notes. */
-export declare function swings(source: string, result: Result): ShortenRewrite[];
+/** Moved to `../migrate/swing.ts` (#156): a bare swing= on a meter is Migrate's. Kept for the public subpath. */
+export { swings } from '../migrate/swing';

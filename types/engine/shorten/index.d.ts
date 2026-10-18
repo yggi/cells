@@ -12,10 +12,8 @@
  *  - stereo.ts:    a sound card's two chords that differ only in gains — one chord, and pan= on each voice
  *  - wrappers.ts:  a cell that only reads motifs through a shifted table — &motif^k where it's used
  *  - aliases.ts:   Strudel's or dough's name for a parameter where ours is shorter: cutoff= → lpf= (decision 027)
- *  - gates.ts:     a migration: a gate written the old way (trigger=, velocity=, gate=, gain=) as play= and level= (decision 023)
- *  - taps.ts:      a migration: a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
- *  - swing.ts:     a migration: a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
- *  - sections.ts:  a migration: a table of sections named &parts as &sections (decision 044)
+ *  - the migrations, Migrate's (../migrate/, decision 049), offered here too for one minor version more (#154):
+ *    a gate written the old way, a line stepped by a meter cell's own steps, a bare swing= on a meter, &parts as &sections
  *  - card.ts:      a migration: a card that says what the piece is (title= tags= tier=) as a piece file, those in its
  *                  frontmatter (decision 047); its rewrite is a file, not a text, so shortenAll never takes it
  *

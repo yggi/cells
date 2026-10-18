@@ -49,7 +49,7 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
   - **Taps are placed through it**, whatever the meter's own steps: `meter("4/4") swing=8n:.67` swings `step=8n` and `step=pulse*2` alike. A division the tree holds is even within its node (16ths under swung eighths: the second at a third of a long eighth); one it doesn't hold is even within its beat, not warped (`8t` under swung eighths stays straight).
   - It swings a `meter(…)` and a `scan(…)` alike: a scan's taps lean within its bent beats.
   - **Several levels** nest, coarse to fine, each node keeping its ends: `swing=8n:.6,16n:.55`. One level alone can be left free: `swing=8n:free(.5, .5..75)`.
-  - **Bare, `swing=r`**: on a list stepping at a rate (no bar), of each pair of its steps the second starts r of the way through the pair. On a meter it leans the level of the meter cell's own steps (`meter("4/4", 2) swing=.67` is `swing=8n:.67`), with a warning that names the level, since the level of a cell's own steps changes with its subdivision; Shorten writes it so.
+  - **Bare, `swing=r`**: on a list stepping at a rate (no bar), of each pair of its steps the second starts r of the way through the pair. On a meter it leans the level of the meter cell's own steps (`meter("4/4", 2) swing=.67` is `swing=8n:.67`), with a warning that names the level, since the level of a cell's own steps changes with its subdivision; Migrate writes it so.
 
 - **`legato=16n:.5`** — the meter's articulation ([#94](https://github.com/yggi/cells/issues/94)), a share of each note's written length by level (its steps, the end swung as the onset is: [sound.md](sound.md)), as swing names its levels: a line that taps the meter and states no `legato=` of its own sounds its notes at the share of its tap's level, the finest level at or above its step (`legato=16n:.5,4n:.8`: `step=16n` and `step=32n` at .5, `step=8n`, `step=pulse` and `step=beat` at .8 in 4/4, `step=2n` as written). An unequal beat (7/8's) is read by its longest. A line's own `legato=` wins ([sound.md](sound.md)); a line at a rate, or stepped by another cell, is as written. With swing, a meter fragment carries a feel: where its notes fall and how long they sound. One level alone can be left free: `legato=16n:free(.5, .25..1)`.
 
@@ -72,7 +72,7 @@ A line taps a meter by pulse, beat or note value, never by the meter cell's own 
 - A time parameter (`delaytime=`, a tape's `length=`, a head's `at=`) reads a tap as a length: `delaytime=8n` is an eighth at the meter's tempo (.25 s at 120 bpm), `4n.` is .75 s even where the bar line cuts it, `&bar2:8n` reads another meter. A pulse, a beat or the bar is the mean of its steps over the bar (`beat` in 7/8 as 3+2+2 at 90 bpm is 2/3 s: a parameter is one number). Like a clock's, it is fixed at the piece's tempo when compiled, and a swing leaves it as it is.
 - The meter places the tap's steps: a scan bends them, `swing=` leans them (each node keeping its ends), a motor drags them. A division the meter doesn't hold is even within its step, and within its beat under a swing.
 
-A line stepped by the meter cell's own steps (`step=&bar*2`) still plays as it did, with a warning that names the tap saying the same (`step=8n`); Shorten rewrites it so, where the notes stay the same.
+A line stepped by the meter cell's own steps (`step=&bar*2`) still plays as it did, with a warning that names the tap saying the same (`step=8n`); Migrate rewrites it so, where the notes stay the same.
 
 ```cells
 &bar meter("7/8") step=90bpm

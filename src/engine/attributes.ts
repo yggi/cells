@@ -45,7 +45,7 @@ export interface Attribute {
   readonly clock?: true;
   /** It is a frequency or a rate, in Hz (lpf=1200, wanderhz=.5): its slider over a wide range runs on a log scale. */
   readonly hz?: true;
-  /** An old spelling, still read and rewritten by Shorten: what says it now. Not in the reference. */
+  /** An old spelling, still read and rewritten by Migrate: what says it now. Not in the reference. */
   readonly old?: string;
   /** Named before it is built (some of its values warn and play as the default): in the reference, taught on no tier yet. */
   readonly stub?: true;
@@ -183,7 +183,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     value: 'number',
     on: ['gate'],
   },
-  // (the old spelling of a gate, still read; Shorten rewrites it: decision 023)
+  // (the old spelling of a gate, still read with a warning; Migrate rewrites it: decision 023)
   trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
   gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
   velocity: { help: 'a gate, the old spelling: a level, one factor of level= (velocity=&accent)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
