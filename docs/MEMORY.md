@@ -8,7 +8,7 @@ The cells language: a minimal language for music where everything is a **cell**,
 
 ## The family
 
-The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells implements `euclid` (Bjorklund's set, a turn of the canonical one) and `notes` (C4 = 60, through A4 = 69), and passes version 1 of both: `src/contracts.test.ts` runs their vectors, copied into `fixtures/contracts/` with the hub's commit, and records where cells differs (it writes a mixed set of names, C# Eb F# Ab Bb, neither column whole; an attribute doesn't read a natural note in octave −1, `loop=C-1`).
+The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells implements `euclid` (Bjorklund's set, a turn of the canonical one) and `notes` (C4 = 60, through A4 = 69), and passes version 1 of both: `src/contracts.test.ts` runs their vectors, copied into `fixtures/contracts/` with the hub's commit, and records where cells differs (it writes a mixed set of names, C# Eb F# Ab Bb, neither column whole).
 
 The language's open questions live in this tracker, [yggi/cells' issues](https://github.com/yggi/cells/issues); the frontends' trackers point here ([music-commons#14](https://github.com/yggi/music-commons/issues/14)).
 
