@@ -27,7 +27,8 @@ export { isPieceFile, readPiece, writePiece, type PieceFile, type PieceFileProbl
 export { movedCard } from './engine/shorten/card';
 export type { CompileResult } from './engine/program';
 export type { Diagnostic } from './engine/ast';
-export { createRepository, type Fragment, type Found, type QueryOptions, type Repository, type StylePoint, type WeightedPoint } from './repository/fragments';
+export { createRepository, EMPTY_LAYER, layerProblems, type Fragment, type Found, type LearnedLayer, type LearnedPoint, type Merged, type QueryOptions, type Repository, type StylePoint, type UsedPair, type WeightedPoint, } from './repository/fragments';
+export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
 export { METER_FRAGMENTS } from './repository/meters';
 export { RHYTHM_FRAGMENTS } from './repository/rhythms';
 export { LIBRARY } from './repository/library';
