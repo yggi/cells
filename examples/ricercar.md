@@ -1,6 +1,6 @@
 ---
 title: "Ricercar: a study in counterpoint"
-tags: [genre:classical, artist:Bach, tonal, counterpoint]
+tags: [genre:classical, artist:Bach, tonal, counterpoint, stereo]
 description: A study in counterpoint on the King's theme, from strict to free, in six passes.
 ---
 

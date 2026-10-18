@@ -1,6 +1,6 @@
 ---
 title: Cell Tines
-tags: [genre:electronic, diatonic, FM, sound]
+tags: [genre:electronic, diatonic, FM, sound, stereo]
 description: "FM, after the DX7: an electric piano, bells and a punchy bass, all made by frequency modulation."
 ---
 

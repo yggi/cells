@@ -1,6 +1,6 @@
 ---
 title: Cell Phase
-tags: [genre:experimental, artist:Steve Reich, modal, genre:minimal, rhythm]
+tags: [genre:experimental, genre:minimal, artist:Steve Reich, modal, rhythm, stereo]
 description: "After Steve Reich's Piano Phase, an original: two pianos, one pattern of twelve, slowly slipping apart."
 ---
 

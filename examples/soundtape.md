@@ -1,6 +1,6 @@
 ---
 title: Sound on Tape
-tags: [genre:experimental, genre:electronic, genre:ambient, sound]
+tags: [genre:experimental, genre:electronic, genre:ambient, sound, tape]
 description: "Sound, on a tape loop: a plucked tune and a soft pad go to the speakers and onto a wowing reel of tape."
 ---
 

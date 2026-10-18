@@ -1,6 +1,6 @@
 ---
 title: "Rests, holds and repeats: a rhythm on one note"
-tags: [tutorial]
+tags: [tutorial, rhythm]
 tier: 1
 description: "One note, played as a rhythm: some steps rest, some are held, some are played twice."
 ---

@@ -1,6 +1,6 @@
 ---
 title: Music Box
-tags: [tutorial, genre:classical, sound]
+tags: [tutorial, genre:classical, sound, stereo]
 tier: 7
 description: "A clockwork music box: wound, it spins up from rest, plays its tune, and as the spring runs down it slows and stops."
 ---

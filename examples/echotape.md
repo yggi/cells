@@ -1,6 +1,6 @@
 ---
 title: Echo Tape
-tags: [tutorial, genre:experimental, genre:electronic, sound]
+tags: [tutorial, genre:experimental, genre:electronic, sound, stereo, tape]
 tier: 8
 description: "A tape loop of notes: a write head records the tune and read heads play it back, echoing."
 ---

@@ -457,7 +457,8 @@ describe('a turning table comes round after its own length; cycle= says otherwis
   it('a braid of chords comes round after its chords: the Prelude without its cycle=', () => {
     // (as the Prelude was written before: one table of 95 numbers, turned five at a time, cycle= its length)
     const p = PRESETS.prelude.source;
-    const line = /^&chords step=1m (\[.*)$/m.exec(p)!;
+    // (its line, with the lines it continues on: each but the last ends in `[`)
+    const line = /^&chords step=1m (\[(?:.*\[\n)*.*)$/m.exec(p)!;
     const n = line[1]
       .replace(/[[\],]/g, ' ')
       .trim()

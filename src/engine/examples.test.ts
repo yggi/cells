@@ -10,6 +10,10 @@ import { readPiece, writePiece } from './piecefile';
 import { movedCard } from './shorten/card';
 import { canonicalTag, parseTag, VOCABULARY } from './tags';
 
+/** The kinds' order a piece's tags are written in: the tutorial, its genres, its artists, its topics (each kind in its own order). */
+const KIND_ORDER = ['tutorial', 'genre', 'artist', 'topic'];
+const inKindOrder = (tags: readonly string[]) => tags.every((t, i) => i === 0 || KIND_ORDER.indexOf(parseTag(tags[i - 1]!).kind) <= KIND_ORDER.indexOf(parseTag(t).kind));
+
 /** An example's text written the old way: what its frontmatter says, on its card (`&piece title="…" tags="…" tier=n label="…"`), its first line. */
 function oldForm(file: string): string {
   const piece = readPiece(file);
@@ -20,6 +24,13 @@ function oldForm(file: string): string {
 }
 
 describe('examples/*.md', () => {
+  test('the order of the tags is checked: a genre after a topic, or the tutorial after a genre, is out of it', () => {
+    expect(inKindOrder(['tutorial', 'genre:jazz', 'artist:Coltrane', 'modal', 'rhythm'])).toBe(true);
+    expect(inKindOrder(['tutorial', 'MIDI', 'genre:electronic'])).toBe(false);
+    expect(inKindOrder(['genre:jazz', 'tutorial'])).toBe(false);
+    expect(inKindOrder(['artist:Bach', 'genre:classical'])).toBe(false);
+  });
+
   test('every file is listed, and every listed piece has a file', () => {
     const files = readdirSync('examples')
       .filter((f) => f.endsWith('.md'))
@@ -45,6 +56,7 @@ describe('examples/*.md', () => {
         expect(VOCABULARY[kind], `tag ${t}: not in the vocabulary (src/engine/tags.ts)`).toContain(name);
         expect(canonicalTag(t), `tag ${t}: written ${canonicalTag(t)}`).toBe(t);
       }
+      expect(inKindOrder(m?.tags ?? []), `tags [${m?.tags.join(', ')}]: tutorial, genres, artists, topics`).toBe(true);
       // its level: a card written with its postgain= (linear, from the loudness check: display.md; left out where that
       // found 1, the default), or no card written and the built-in card's .8 (decision 028)
       const cards = [...r.cells.values()].filter((c) => c.sink && !c.implicit);

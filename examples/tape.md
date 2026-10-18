@@ -1,6 +1,6 @@
 ---
 title: Tape Machine
-tags: [genre:electronic, genre:ambient, sound]
+tags: [genre:electronic, genre:ambient, sound, stereo, tape]
 description: "A tape loop on a machine that turns: it spins up from rest, the pitch gliding up with it, and wows gently."
 ---
 

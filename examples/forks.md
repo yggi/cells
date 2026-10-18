@@ -1,6 +1,6 @@
 ---
 title: Two Tuning Forks
-tags: [genre:experimental, sound]
+tags: [genre:experimental, sound, stereo, physics]
 description: Two tuning forks on one table, one struck now and then, the other set singing by the table.
 ---
 

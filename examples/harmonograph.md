@@ -1,6 +1,6 @@
 ---
 title: Harmonograph
-tags: [tutorial, genre:experimental, sound]
+tags: [tutorial, genre:experimental, sound, stereo, physics]
 tier: 7
 description: "Two tuning forks, struck together, each draw one axis of an oscilloscope: a Lissajous curve."
 ---

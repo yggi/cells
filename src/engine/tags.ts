@@ -51,6 +51,8 @@ export const VOCABULARY: Readonly<Record<TagKind, readonly string[]>> = {
     'stereo',
     'FM',
     'MIDI',
+    'physics',
+    'tape',
   ],
 };
 

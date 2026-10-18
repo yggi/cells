@@ -1,6 +1,6 @@
 ---
 title: "MIDI out: a band on a synth"
-tags: [tutorial, MIDI, genre:electronic]
+tags: [tutorial, genre:electronic, MIDI]
 tier: 9
 description: "The piece names where its notes go: a melody and a bass on a synth's channels 1 and 2, the drums on 10. The bass is sent, not heard."
 ---

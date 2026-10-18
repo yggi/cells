@@ -37,6 +37,8 @@ export const VOCABULARY = {
         'stereo',
         'FM',
         'MIDI',
+        'physics',
+        'tape',
     ],
 };
 export function parseTag(tag) {

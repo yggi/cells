@@ -1,6 +1,6 @@
 ---
 title: "Study after Studie II: 25 steps to 5:1"
-tags: [genre:experimental, genre:electronic, artist:Stockhausen, microtonal, tuning]
+tags: [genre:experimental, genre:electronic, artist:Stockhausen, microtonal, tuning, stereo]
 description: Sine mixtures on Stockhausen's scale of 25 equal steps to 5:1, with durations from the same series.
 ---
 

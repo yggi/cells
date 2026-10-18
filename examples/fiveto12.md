@@ -1,6 +1,6 @@
 ---
 title: 5 to 12
-tags: [genre:experimental, artist:Stockhausen, modal, sound]
+tags: [genre:experimental, artist:Stockhausen, modal, sound, stereo, physics, tape]
 description: "A day of music, anchored to the clock: it begins at 11:55 and plays where the day stands."
 ---
 

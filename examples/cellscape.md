@@ -1,6 +1,6 @@
 ---
 title: Cellscape
-tags: [genre:electronic, modal, genre:ambient, canon, arrangement]
+tags: [genre:electronic, genre:ambient, modal, canon, arrangement, stereo]
 description: A cycle of twelve scenes, each a fifth from the last, and home.
 ---
 

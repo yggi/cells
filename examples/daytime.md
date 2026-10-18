@@ -1,6 +1,6 @@
 ---
 title: "Clock time: a minute, an hour, a day"
-tags: [tutorial, modal]
+tags: [tutorial, modal, stereo]
 tier: 8
 description: "Music on the clock on the wall: a tick each second, a chime each minute, a day of music anchored to the time."
 ---

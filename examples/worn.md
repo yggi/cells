@@ -1,6 +1,6 @@
 ---
 title: Sound on a worn tape
-tags: [tutorial, sound]
+tags: [tutorial, sound, tape]
 tier: 8
 description: A flute recorded onto a worn tape loop and played back by two heads, one of them wandering.
 ---

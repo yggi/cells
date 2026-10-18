@@ -1,6 +1,6 @@
 ---
 title: Cellular Brothers
-tags: [genre:electronic, artist:Chemical Brothers, modal, genre:dance, arrangement]
+tags: [genre:electronic, genre:dance, artist:Chemical Brothers, modal, arrangement]
 description: "Big beat, an original in the manner of the Chemical Brothers: gritty and crushed, about two and a half minutes, then it ends."
 ---
 
