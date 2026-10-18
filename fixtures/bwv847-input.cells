@@ -1,4 +1,4 @@
-# Lifted from yggi/cell-studio tools/probe/pieces/bwv847-input.cells @ e168c8d: the example arranged at the input (decision 016), for src/engine/taps.test.ts.
+# Lifted from yggi/cell-studio tools/probe/pieces/bwv847-input.cells @ e168c8d: the example arranged at the input (decision 016), for src/engine/sections.test.ts.
 # J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered Clavier I),
 # in full — on an old-school synthesizer, after Wendy Carlos' Switched-On Bach.
 # The notes: the CCARH Humdrum encoding (Bach-Gesellschaft edition, vol. xiv),
@@ -10,7 +10,7 @@
 
 # one tempo map for both: a sixteenth a step, each section at its pace; laps=1 — the piece ends with the fugue
 &tempo scan(1!432 .72!96 2!17 .86!64 1.6!15 1.5!496) pulse=16n step=free(89bpm, 60..120) laps=1 label="tempo map: ♩=108 · *Presto* · *Adagio* · *Allegro* · fugue ♩=72"
-# the movements: two taps of the tempo map, switched by the form (decision 016), no tacets
+# the movements: two sections stepped by the tempo map, switched by the form (decision 016), no tacets
 &movements step=pulse &preludeTime &fugueTime
 &form over=&movements step=pulse laps=1 label="prelude · a breath · fugue" 0@609 ~@15 1@496
 

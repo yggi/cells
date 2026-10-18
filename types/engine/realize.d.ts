@@ -40,7 +40,7 @@ export interface Played {
     readonly unheard?: true;
     /** The MIDI cards' entries it goes out on (those switched on): MIDI out sends it there and nowhere else. */
     readonly midi?: Output['midi'];
-    /** The output it comes from (`Output.id`), when asked for (`eventsBetween(…, true)`): which mixes' wheels hear it (audio/wiring.ts `taps`). */
+    /** The output it comes from (`Output.id`), when asked for (`eventsBetween(…, true)`): which mixes' wheels hear it (Cell studio's audio wiring). */
     readonly output?: string;
     /**
      * A drone's note (a voice alone, decision 028): held from where play starts until play stops or the piece ends, so it

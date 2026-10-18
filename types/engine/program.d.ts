@@ -293,7 +293,7 @@ export interface Output {
         readonly gains: readonly [number, number];
     }[];
     /**
-     * Selectors it plays through (a cell reading a table of taps, the tap that steps it: decision 016): it sounds while each picks its
+     * Selectors it plays through (a cell reading a table of sections, the section that steps it: decision 016): it sounds while each picks its
      * entry, and starts again from its beginning each time it's picked — reading a table splices.
      */
     readonly select: readonly {
@@ -363,7 +363,7 @@ export interface Resonance {
     /** The mixes it plays through on the way (as an output's): one switched off silences it. */
     readonly through: Output['through'];
 }
-/** A read head of a sound tape in a mix: its tap, at a level per channel. */
+/** A read head of a sound tape in a mix: what it reads, at a level per channel. */
 export interface TapeReturn {
     readonly head: string;
     readonly tape: string;
@@ -386,8 +386,8 @@ export interface CompileResult {
     readonly diagnostics: readonly Diagnostic[];
     /** The `show=` plugins the piece carries, by name (plugins.ts). */
     readonly plugins: ReadonlyMap<string, ShowPlugin>;
-    /** Taps of a meter's bus (decision 016), each to its table: what a selector reading the table switches. */
-    readonly taps?: ReadonlyMap<string, string>;
+    /** Sections of an arrangement (decisions 016 and 044), each to its table: what a selector reading the table switches. */
+    readonly sections?: ReadonlyMap<string, string>;
     /** The meter a tap that names none reads (decision 040): the first meter in the text with a tempo of its own. */
     readonly mainMeter?: string;
     /** The key a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */

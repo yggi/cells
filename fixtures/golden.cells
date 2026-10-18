@@ -30,11 +30,11 @@
 &pluck map=adsr .005 .3 0 .2
 &pad s=saw loop=C4 lpf=1800 env=&pluck
 &compOut play=&comp level=&accent*.3 [&bell, &pad]
-# two instruments, and the taps of the bar that switch them
+# two instruments, each stepped by a section the form switches
 &leadA [&walk * &lead * .3]
 &leadB [&drone * &lead * .3]
-&parts step=4n &walkBar &droneBar
-&tetris over=&parts step=1m/8 [0,1] [1] [0]
+&sections step=4n &walkBar &droneBar
+&tetris over=&sections step=1m/8 [0,1] [1] [0]
 # a motor with a belt, a tape it turns; a kalimba, its tines on one board
 &capstan scan(1 1 1 1) step=96bpm motor=1.4 mass=1 friction=.1 wow=.015 varispeed=1
 &hats step=&capstan:8n belt=30 mass=1.5 ~ 0 ~ 0 ~ 0 ~ 0

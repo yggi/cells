@@ -6,7 +6,7 @@ import { leaves } from '../subseq';
 import type { CellDecl } from '../ast';
 import type { Cells, Ctx } from './context';
 
-export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, taps: ReadonlyMap<string, string> = new Map()): void {
+export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, sections: ReadonlyMap<string, string> = new Map()): void {
   const { error, warn, unknownCell } = ctx;
   // resonators: body= one of the known bodies; couple= another resonator; excite= a mix
   for (const c of cells.values()) {
@@ -137,23 +137,23 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
     if (d.map?.kind === 'edo' && (d.over !== null || d.braid.kind !== 'blank'))
       error(`A grid (map=edo, map=ed(r)) reads nothing and has no braid: &${d.name} cycle=19 map=edo`, d.map.span);
   // a table is its numbers: cells spliced into one are skipped when it is read (over=), unless it is a
-  // kit (a table of voices) or a table of taps (its entries are clocks, a selector switches them: decision 016)
+  // kit (a table of voices) or a table of sections (its entries are clocks, a selector switches them: decision 016)
   for (const d of decls.values()) {
     const t = d.over ? cells.get(d.over.name) : undefined;
     if (!t || t.kit) continue;
     const refs = refsOf(t);
     // (a selector of mixes, the form before decision 016, has said so already: declare.ts)
-    if (!refs.length || refs.every((r) => taps.get(r) === t.name) || ctx.broken.has(d.name)) continue;
+    if (!refs.length || refs.every((r) => sections.get(r) === t.name) || ctx.broken.has(d.name)) continue;
     const listed = [...new Set(refs)].map((r) => '&' + r).join(' ');
     warn(
       `&${t.name} is read as a table, but its cells (${listed}) aren't entries: a table is its numbers. To play cells one after another, splice them into a braid (&${d.name} ${listed}); choosing a melody per step isn't built yet (#29)`,
       d.over!.span,
     );
   }
-  // a tap nothing is stepped or looped by: a section with nothing in it (or a name mistyped where it is used)
-  for (const [tap, table] of taps)
-    if (![...cells.values()].some((c) => c.step?.driver === tap || Object.values(c.paramClocks).some((p) => p.driver === tap)))
-      warn(`&${tap} is a tap of &${table}, but nothing is stepped by it: step=&${tap} on what it should play (or a name mistyped)`, decls.get(tap)!.span);
+  // a section nothing is stepped or looped by: a section with nothing in it (or a name mistyped where it is used)
+  for (const [section, table] of sections)
+    if (![...cells.values()].some((c) => c.step?.driver === section || Object.values(c.paramClocks).some((p) => p.driver === section)))
+      warn(`&${section} is a section of &${table}, but nothing is stepped by it: step=&${section} on what it should play (or a name mistyped)`, decls.get(section)!.span);
   // map=&table reads a table's numbers: a mix or a card has none
   for (const d of decls.values()) {
     const t = d.map?.kind === 'table' ? cells.get(d.map.table.name) : undefined;
@@ -177,14 +177,14 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
         );
     });
   }
-  // a table of taps nothing selects: every tap stays on, so every part plays all the time
-  for (const table of new Set(taps.values()))
+  // a table of sections nothing selects: every section stays on, so every part plays all the time
+  for (const table of new Set(sections.values()))
     if (![...decls.values()].some((d) => d.over?.name === table)) {
-      const names = [...taps].filter(([, t]) => t === table).map(([tap]) => tap);
+      const names = [...sections].filter(([, t]) => t === table).map(([section]) => section);
       const st = decls.get(names[0])?.step;
       const clock = st?.kind === 'driven' ? st.driver.name : 'bar';
       warn(
-        `&${table} declares taps (${names.map((n) => '&' + n).join(' ')}), and nothing selects them: every part plays all the time. A selector reads the table and switches them, a section per step: &song over=&${table} step=&${clock}/16 0 [0,1]`,
+        `&${table} declares sections (${names.map((n) => '&' + n).join(' ')}), and nothing selects them: every part plays all the time. A selector reads the table and switches them, a step of the form at a time: &song over=&${table} step=&${clock}/16 0 [0,1]`,
         decls.get(table)!.span,
       );
     }

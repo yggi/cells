@@ -56,7 +56,7 @@ export declare function clocking(result: CompileResult, statics: Shifts, seconds
 export declare function shiftsAt(result: CompileResult, statics: Shifts, seconds: number, played?: ReadonlySet<string>): Shifts;
 /** Where a turning table comes round by itself: its braid's own length in steps (a key of 12 after 12, `[0,2,4]@3 [5,7,9]` after 4). */
 export declare const ownLength: (result: CompileResult, name: string) => number;
-/** Is it a selector (a cell reading a table of taps: decision 016)? */
+/** Is it a selector (a cell reading a table of sections: decision 016)? */
 export declare function selects(result: CompileResult, name: string): boolean;
 /**
  * A tape's motion: how far it has moved (tape-seconds) at real second x, when it has moved u, and how

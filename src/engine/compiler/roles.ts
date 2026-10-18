@@ -10,7 +10,7 @@ import type { Declared } from './declare';
 /** What switching a part on does to its time (decision 032): from its top, where it stopped, or running on. */
 const RESTARTS: readonly string[] = ['restart', 'resume', 'free'];
 
-export function checkRoles(ctx: Ctx, { decls, implicit, taps }: Declared, cells: Cells, clocks: ReadonlyMap<string, Clock>, plugins: ReadonlyMap<string, ShowPlugin>): void {
+export function checkRoles(ctx: Ctx, { decls, implicit, sections }: Declared, cells: Cells, clocks: ReadonlyMap<string, Clock>, plugins: ReadonlyMap<string, ShowPlugin>): void {
   const { warn } = ctx;
   // ---- attributes where they do nothing: each acts on some roles only (attributes.ts)
   const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
@@ -30,8 +30,8 @@ export function checkRoles(ctx: Ctx, { decls, implicit, taps }: Declared, cells:
     if (c.note) r.add('note');
     if (typeof c.params.fm === 'string') r.add('carrier');
     if (modulators.has(c.name)) r.add('modulator');
-    if (taps.has(c.name)) r.add('tap');
-    if (c.over && [...taps.values()].includes(c.over)) r.add('selector');
+    if (sections.has(c.name)) r.add('section');
+    if (c.over && [...sections.values()].includes(c.over)) r.add('selector');
     return r;
   };
   for (const d of decls.values()) {

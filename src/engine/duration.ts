@@ -128,7 +128,7 @@ export function durationText(seconds: number): string {
 }
 
 /**
- * The piece's sections, if an arrangement plays it (a selector: a cell reading a table of taps, `selects`):
+ * The piece's sections, if an arrangement plays it (a selector: a cell reading a table of sections, `selects`):
  * where each begins (seconds, within one lap) and what it's called — from the selector's label,
  * split at ·, when the names match the sections; else numbered.
  */

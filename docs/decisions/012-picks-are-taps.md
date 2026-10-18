@@ -2,6 +2,8 @@
 
 **Date:** 2026-10-08 · **Status:** accepted (owner, #10 · the wheels pass)
 
+*Named since [decision 044](044-tap-reads-the-meter.md): a pick is a fixed **reader** on a turning wheel; "tap" means reading the meter.*
+
 ## Context
 
 `&key[0]` picked from a braid *as written*, its `shift=` ignored: with `&key shift=2`, `&key[0]` was C, while `over=&key 0` was D. A pick and a read through a table said different things about the same wheel, and a pick never followed a key that steps or is turned by hand.

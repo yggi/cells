@@ -31,7 +31,7 @@
 &sd tags="beat" gain=.35 s=white hpf=1200 env=&(map=adsr 0 .14 0 .05)
 &metal tags="beat" s=square loop=A7 hpf=5000 env=&(map=adsr 0 .03 0 .02)
 
-# Aufbau: the taps the song stacks — eight bars (the progression) a step
+# Aufbau: the sections the song stacks — eight bars (the progression) a step
 &teile step=4n &beatBar &ticksBar &bassBar &arpBar &melodyBar
 &lied over=&teile step=1m/8 laps=1 label="Aufbau: Klick · Bass · Takt · Arpeggio · Melodie · Pause · alles · Klick" 1 [1,2] [0,1,2] [0,1,2,3] [0,1,2,3,4] [2,3] [0,1,2,3,4] 1
 

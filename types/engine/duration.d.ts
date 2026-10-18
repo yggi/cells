@@ -18,7 +18,7 @@ export declare function clockText(seconds: number, hours?: boolean): string;
 /** A duration in words: 0:13, 5:20, 3 h 12 min, 4 days, 2,300 years, 10^14 years. */
 export declare function durationText(seconds: number): string;
 /**
- * The piece's sections, if an arrangement plays it (a selector: a cell reading a table of taps, `selects`):
+ * The piece's sections, if an arrangement plays it (a selector: a cell reading a table of sections, `selects`):
  * where each begins (seconds, within one lap) and what it's called — from the selector's label,
  * split at ·, when the names match the sections; else numbered.
  */

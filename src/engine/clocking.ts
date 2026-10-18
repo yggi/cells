@@ -148,7 +148,7 @@ export function playedCells(result: CompileResult): Set<string> {
     out.add(n);
     const c = result.cells.get(n);
     for (const k of c?.children.keys() ?? []) {
-      // (a cell only picked from, &k[0] &k[$0], isn't played: it is a table, turning under its taps)
+      // (a cell only picked from, &k[0] &k[$0], isn't played: it is a table, turning under its picks)
       const refs = c!.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === k ? [u.atom] : []));
       if (!refs.length || !refs.every((r) => isPicked(result, k, r.pick))) walk(k);
     }
@@ -356,11 +356,11 @@ function ownSteps(result: CompileResult, name: string): OwnSteps | null {
   return own;
 }
 
-/** Is it a selector (a cell reading a table of taps: decision 016)? */
+/** Is it a selector (a cell reading a table of sections: decision 016)? */
 export function selects(result: CompileResult, name: string): boolean {
   const table = result.cells.get(name)?.over ?? '';
   const t = result.cells.get(table);
-  return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && result.taps?.get(u.atom.name) === table);
+  return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && result.sections?.get(u.atom.name) === table);
 }
 
 /**

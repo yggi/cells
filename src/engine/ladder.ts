@@ -162,7 +162,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Development',
     concept:
-      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: parts as taps of the bar, a selector, laps=, off',
+      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: sections stepped by the bar, a selector, laps=, off',
     forms: [
       // a kit's balance: a voice's own gain
       'parameter gain',
@@ -186,7 +186,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'rate step=cycle(&x)',
       'generator fifths()',
       // arrangement
-      'line &parts step=&bar &a &b',
+      'line &sections step=&bar &a &b',
       'attribute laps',
       'line off',
       'line … +',
@@ -440,8 +440,8 @@ export function formsUsed(source: string): Set<string> {
     if (c?.note) use('line &name label="…"');
     if (d.off) use('line off');
     if (d.oneshot) use('line oneshot');
-    // (a stepped table of names that declares taps: decision 016)
-    if ([...(compiled.taps?.values() ?? [])].includes(d.name)) use('line &parts step=&bar &a &b');
+    // (a stepped table of names that declares sections: decision 016)
+    if ([...(compiled.sections?.values() ?? [])].includes(d.name)) use('line &sections step=&bar &a &b');
     if (d.lambda) use('reference &( … )');
     // attributes
     if (d.over) {

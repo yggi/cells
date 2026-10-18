@@ -25,10 +25,10 @@ export function declLine(source: string, name: string): number {
 }
 
 /**
- * 0-based index of the line of a table of taps naming &name as a tap (decision 016: `&parts step=&bar &keysBar …`), or
+ * 0-based index of the line of a table of sections naming &name as a section (decision 016: `&sections step=&bar &keysBar …`), or
  * -1: a stepped line whose words after its attributes are plain names, &name among them.
  */
-function tapLine(lines: readonly string[], name: string): number {
+function sectionLine(lines: readonly string[], name: string): number {
   return lines.findIndex((l) => {
     const words = splitWords(splitComment(l)[0]);
     if (!/^&\w+$/.test(words[0] ?? '') || !words.some((w) => w.startsWith('step='))) return false;
@@ -38,24 +38,24 @@ function tapLine(lines: readonly string[], name: string): number {
 }
 
 /**
- * Rewrite the code part of &name's line; comments and other lines untouched. A tap without a line of its own gets one,
- * under its table's (`&keysBar off`); a tap's line left with nothing but its name goes again.
+ * Rewrite the code part of &name's line; comments and other lines untouched. A section without a line of its own gets
+ * one, under its table's (`&keysBar off`); a section's line left with nothing but its name goes again.
  */
 function editDecl(source: string, name: string, f: (code: string, head: RegExp) => string): string {
   const lines = source.split('\n');
   let i = declLine(source, name);
-  const tap = tapLine(lines, name);
+  const table = sectionLine(lines, name);
   if (i < 0) {
-    if (tap < 0) return source;
+    if (table < 0) return source;
     // (with the table's line ending: a CRLF file stays CRLF)
-    lines.splice(tap + 1, 0, `&${name}${lines[tap].endsWith('\r') ? '\r' : ''}`);
-    i = tap + 1;
+    lines.splice(table + 1, 0, `&${name}${lines[table].endsWith('\r') ? '\r' : ''}`);
+    i = table + 1;
   }
   // (a CRLF file: the line's \r stays at its end, whatever the edit rebuilds)
   const cr = lines[i].endsWith('\r') ? '\r' : '';
   const [code, comment] = splitComment(cr ? lines[i].slice(0, -1) : lines[i]);
   let next = f(code, headOf(name));
-  if (tap >= 0 && !comment && next.trim() === `&${name}`) {
+  if (table >= 0 && !comment && next.trim() === `&${name}`) {
     lines.splice(i, 1);
     return lines.join('\n');
   }
@@ -102,10 +102,10 @@ const FIFTHS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'Ab', 'Eb', 'Bb', 'F']
  * is turned there: by name if it was written by name, `fifths()` at 0.
  */
 export function setShift(source: string, name: string, shift: number): string {
-  // (a tap is one step, stepped as its table is: a turn changes nothing, so none is written; one already written can go)
+  // (a section is one step, stepped as its table is: a turn changes nothing, so none is written; one already written can go)
   const lines = source.split('\n');
   const own = declLine(source, name);
-  if (tapLine(lines, name) >= 0 && (own < 0 || (splitWords(splitComment(lines[own])[0]).slice(1).every(isAttrWord) && !/\sshift=/.test(lines[own])))) return source;
+  if (sectionLine(lines, name) >= 0 && (own < 0 || (splitWords(splitComment(lines[own])[0]).slice(1).every(isAttrWord) && !/\sshift=/.test(lines[own])))) return source;
   let circle = false;
   const turned = editDecl(source, name, (code) => {
     const m = /\bfifths\(([^)]*)\)/.exec(code);

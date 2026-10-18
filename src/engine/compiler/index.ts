@@ -20,7 +20,7 @@ import { outputsOf } from './outputs';
 import { displayCells } from './display';
 import { checkRoles } from './roles';
 import { checkLimits } from './limits';
-import { tapped } from './taps';
+import { sectioned } from './sections';
 
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
@@ -35,11 +35,11 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
   const bound = bindVoices(ctx, decls, resolved, typed);
   const timed = clockCells(ctx, decls, bound.cells);
   const { clocks } = timed;
-  checkCells(ctx, decls, timed.cells, declared.taps);
+  checkCells(ctx, decls, timed.cells, declared.sections);
   const made = outputsOf(ctx, decls, timed.cells, clocks, bound);
   const { returns, resonances } = made;
-  // (decision 016) what a tap steps plays while a selector reading its table picks it
-  const outputs = tapped(made.outputs, timed.cells, declared.taps);
+  // (decision 016) what a section steps plays while a selector reading its table picks it
+  const outputs = sectioned(made.outputs, timed.cells, declared.sections);
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
   const cells = displayCells(timed.cells);
   checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed));
@@ -79,7 +79,7 @@ export function compile(parsed: ParseResult, env: Env): CompileResult {
     returns,
     resonances,
     plugins,
-    taps: declared.taps,
+    sections: declared.sections,
     ...(timed.mainMeter ? { mainMeter: timed.mainMeter } : {}),
     ...(declared.mainKey ? { mainKey: declared.mainKey } : {}),
     ...(builtin ? { builtinCard: builtin } : {}),
