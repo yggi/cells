@@ -396,8 +396,7 @@ function plainEvents(p, from, to, outputs) {
             if (at >= t.end - EPS)
                 return null;
             const share = shareAt(s);
-            const written = tm.q(upto / t.rate);
-            const ends = Math.min(share === 1 ? written : at + share * (written - at), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
+            const ends = Math.min(tm.q((share === 1 ? upto : s + share * (upto - s)) / t.rate), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
             const by = t.picker ? heldAt(p, t.picker, at) : e;
             const v = by && voiceFor(result, t.output, by.value);
             if (!v || p.muted.has(cellId(v.voice)))

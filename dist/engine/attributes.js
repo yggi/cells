@@ -40,7 +40,7 @@ export const PARAMS = {
         on: ['voice'],
     },
     legato: {
-        help: 'on a line: each note sounds its held length (@n, _) times this share, Strudel’s legato (.5 staccato, 1 as written, 1.5 into the next): a number, free(), or a cell of shares read at each onset (legato=&artic); nothing cuts a note at the bar line',
+        help: 'on a line: each note sounds its written length (@n, _) times this share, its end swung as its onset is, Strudel’s legato (.5 staccato, 1 as written, 1.5 into the next): a number, free(), or a cell of shares read at each onset (legato=&artic); nothing cuts a note at the bar line',
         doc: 'sound.md',
         value: 'number',
         on: ['clock', 'driven'],

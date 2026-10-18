@@ -6,9 +6,11 @@ import { pieceMidi } from './midiexport';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import e33 from '../../fixtures/jambot-legato.json';
+import e33Swung from '../../fixtures/jambot-legato-swung.json';
 
 // legato= (#94): a line's articulation, Strudel's `legato` (its `clip`): each note sounds its held length (@n, _) times the
 // share in force at its onset, a number, free() or a cell of shares on its own tap. Nothing cuts a note at the bar line.
+// Under a swing the share is of the written steps, and the swing places the note's end as it places its onset (#120).
 
 // (a bar of 4 s: a quarter a second, a sixteenth a quarter of one)
 const BAR = '&bar meter("4/4") step=60bpm\n';
@@ -69,12 +71,6 @@ describe('legato=: each note sounds its held length times a share', () => {
     expect(notes(`${BAR}&x step=4n legato=1.5 0 2 4 5${VOICE}`).map(([, d]) => d)).toEqual([1.5, 1.5, 1.5, 1.5]);
   });
 
-  it('a held note under a swing: its share of the time it lasts as written', () => {
-    // (the long eighth of a beat swung to .67 lasts .67 s; at .5 it sounds .335 s)
-    const [[, dur]] = notes(`&bar meter("4/4") step=60bpm swing=8n:.67\n&x step=8n legato=.5 0${VOICE}`, 0.5);
-    expect(dur).toBeCloseTo(0.335, 9);
-  });
-
   it('a cell of shares, stepped on its own tap: the share in force at each onset', () => {
     // (&artic changes each eighth; the line steps sixteenths: two notes under each share)
     const durs = notes(`${BAR}&artic step=8n .5 1\n&x step=16n legato=&artic 0!8${VOICE}`, 2).map(([, d]) => d);
@@ -126,6 +122,68 @@ describe('legato=: each note sounds its held length times a share', () => {
       [1, 0.5],
       [2, 0.5],
     ]);
+  });
+});
+
+describe('legato= under a swing: a share of the written steps, the end swung as the onset is (#120, Strudel’s reading)', () => {
+  // Funk's bar 0 (E33): a pair of sixteenths takes .6 and .4 of its time, so an even step lasts 1.2 steps' time, an odd .8
+  const FUNK = '&bar meter("4/4") step=104bpm';
+  const STEP = 60 / 104 / 4;
+  /** Each note of the bar's line as [onset, length], in steps of the bar's time. */
+  const bar = (meter: string, line: string) => notes(`${FUNK}${meter}\n&x step=16n ${line}7@10 14@3 7@3${VOICE}`, 16 * STEP).map(([at, dur]) => [at / STEP, dur / STEP]);
+  /** A time in steps, as written: the swing of 16n:.6 undone. */
+  const written = (t: number) => {
+    const pair = Math.floor(t / 2);
+    const f = t - 2 * pair;
+    return 2 * pair + (f < 1.2 ? f / 1.2 : 1 + (f - 1.2) / 0.8);
+  };
+  const close = (got: number[][], want: number[][]) => {
+    expect(got).toHaveLength(want.length);
+    for (const [i, [at, dur]] of want.entries()) {
+      expect(got[i][0]).toBeCloseTo(at, 9);
+      expect(got[i][1]).toBeCloseTo(dur, 9);
+    }
+  };
+
+  it('Funk’s bar 0: the note at step 10, held 3, ends at step 11.275 written, 1.42 steps’ time after its onset', () => {
+    const played = bar(' swing=16n:.6', 'legato=.425 ');
+    // (the held reading, .425 of the 3.2 steps' time it is held, would sound 1.36 and end it at step 11.2)
+    close(played, [
+      [0, 4.3],
+      [10, 1.42],
+      [13.2, 1.13],
+    ]);
+    const [, [at, dur]] = played;
+    expect(written(at + dur)).toBeCloseTo(11.275, 9);
+    expect(written(at + dur) - written(at)).toBeCloseTo(0.425 * 3, 9);
+  });
+
+  it('every way of stating the share: a number, free(), a cell of shares, the meter’s default by level', () => {
+    const want = bar(' swing=16n:.6', 'legato=.425 ');
+    close(bar(' swing=16n:.6', 'legato=free(.425, .25..2.5) '), want);
+    close(bar(' swing=16n:.6\n&artic step=1m .425', 'legato=&artic '), want);
+    close(bar(' swing=16n:.6 legato=16n:.425', ''), want);
+  });
+
+  it('a straight meter is as before: written and held time are the same', () => {
+    close(bar('', 'legato=.425 '), [
+      [0, 4.25],
+      [10, 1.275],
+      [13, 1.275],
+    ]);
+  });
+
+  it('within one step, the share of its time: the long eighth swung to .67 at .5 sounds .335 s', () => {
+    const [[, dur]] = notes(`&bar meter("4/4") step=60bpm swing=8n:.67\n&x step=8n legato=.5 0${VOICE}`, 0.5);
+    expect(dur).toBeCloseTo(0.335, 9);
+  });
+
+  it('a share over 1 sounds into the next pair, its end swung: the short sixteenth at 1.5 ends halfway through the long one after it', () => {
+    // (written 1.5 steps from step 1: step 1 whole, .8 steps' time, and half of step 2, .6; the held reading, 1.5 × .8, 1.2)
+    const [[at, dur]] = notes(`${FUNK} swing=16n:.6\n&x step=16n legato=1.5 ~ 0 ~ ~${VOICE}`, 4 * STEP).map(([t, d]) => [t / STEP, d / STEP]);
+    expect(at).toBeCloseTo(1.2, 9);
+    expect(dur).toBeCloseTo(1.4, 9);
+    expect(written(at + dur)).toBeCloseTo(2.5, 9);
   });
 });
 
@@ -201,5 +259,42 @@ describe('a meter’s articulation: legato= by level, the default of the lines t
     expect(notes(withHeld(src, compiled(src), new Map([[0, 0.75]])), 0.5)[0][1]).toBeCloseTo(0.1875, 9);
     expect(messages(`${BAR.trim()} legato=16n:0\n&x step=16n 0${VOICE}`).join('; ')).toMatch(/legato=16n:0: .*above 0/);
     expect(messages(`${BAR}&x step=16n legato=16n:.5 0${VOICE}`).join('; ')).toMatch(/&x is not a meter, so it does nothing/);
+  });
+});
+
+describe('E33’s 160 swung bars, their swing on &bar (fixtures/jambot-legato-swung.json, #120)', () => {
+  const LAP = '\n&lap step=1m 0\n&lapV loop=C4\n&read map=midi ~!14 [&lap * &lapV]';
+  it('every bass, pad and stab note starts and sounds as Jambot plays it, within 1e-6 steps, where 572 parted under the held reading', () => {
+    const notes = new Map<string, number>();
+    const parted = new Map<string, number>();
+    expect(e33Swung.bars).toHaveLength(160);
+    for (const b of e33Swung.bars) {
+      expect(b.text, `${b.run} bar ${b.bar}`).toMatch(/^&bar meter\("4\/4"\) step=\d+bpm swing=\d+n:/);
+      const r = compiled(b.text + LAP);
+      const route = router(r, channelTable(r));
+      const sent = eventsBetween(plan(r, codeShifts(r)), 0, 30).flatMap((e) => routesOf(route(e)).flatMap((x) => midiNote(e, x) ?? []));
+      const barSeconds = sent.filter((n) => n.channel === 15).find((n) => n.at > 0)!.at;
+      const step = barSeconds / b.steps;
+      const played = sent
+        .filter((n) => (n.channel === 2 || n.channel === 3) && n.at < barSeconds - 1e-9)
+        .map((n) => [n.channel, n.at / step, n.note, (n.end - n.at) / step])
+        .sort((x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2]);
+      expect(played.length, `${b.run} bar ${b.bar}`).toBe(b.notes.length);
+      for (const [i, [channel, writtenAt, key, , at, sounds, before]] of b.notes.entries()) {
+        const [c, a, k, l] = played[i];
+        expect([c, k], `${b.run} bar ${b.bar}`).toEqual([channel, key]);
+        expect(Math.abs(a - at), `${b.run} bar ${b.bar} step ${writtenAt}`).toBeLessThan(1e-6);
+        expect(Math.abs(l - sounds), `${b.run} bar ${b.bar} step ${writtenAt}`).toBeLessThan(1e-6);
+        notes.set(b.run, (notes.get(b.run) ?? 0) + 1);
+        if (Math.abs(before - sounds) > 1e-6) parted.set(b.run, (parted.get(b.run) ?? 0) + 1);
+      }
+    }
+    expect(Object.fromEntries([...notes].map(([run, n]) => [run, [n, parted.get(run) ?? 0]]))).toEqual({
+      'Deep house 4/4': [239, 209],
+      'Ambient 4/4': [155, 0],
+      'Lo-fi hip hop 4/4': [254, 158],
+      'Funk 4/4': [413, 77],
+      'Swing jazz 4/4': [300, 128],
+    });
   });
 });
