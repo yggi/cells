@@ -1,0 +1,7 @@
+# lines stepped by the meter cell's own steps (decision 040): twice as fast, and as fast
+&bar meter("4/4") step=120bpm
+&tune over=scale(major) step=&bar*2 0 2 4 2 4 5 7 4
+&bass over=scale(major) step=&bar -7 -3 -5 -4
+&lead s=saw loop=C4
+&low s=tri loop=C3
+&mix [&tune * &lead, &bass * &low]

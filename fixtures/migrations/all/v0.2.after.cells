@@ -1,0 +1,10 @@
+# a piece written before v0.3.0: a gate the old way, lines stepped by the bar's own steps, a bare swing, &parts
+&bar meter("4/4", 2) step=100bpm swing=8n:.6
+&sections step=4n &keysBar
+&song over=&sections step=1m laps=1 0 0
+&keys over=scale(minor) step=&keysBar/4 [0,2,4] [3,5,7]
+&tune over=scale(minor) step=8n 0 2 4 2 4 5 7 4
+&lead s=tri loop=A4
+&pad s=saw loop=A3
+&leadOut play=&tune level=.5 &lead
+&out map=sample [&keys * &pad, &leadOut]

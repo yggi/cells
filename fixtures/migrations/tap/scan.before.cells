@@ -1,0 +1,5 @@
+# a scan(…) bar is a meter too: its own steps are its pulses (decision 040)
+&bar scan(1 1 1 1) step=96bpm
+&tune over=scale(minor) step=&bar*4 0 2 4 2 0 ~ 4 7 0 2 4 2 0 ~ -1 ~
+&lead s=saw loop=A3
+&mix [&tune * &lead]

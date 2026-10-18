@@ -1,0 +1,10 @@
+# a gate written the old way: trigger=, velocity=, gate=, gain=, two bare voices (decision 023)
+&bar scan(1 1 1 1) step=120bpm
+&major scale(major)
+&lead s=tri loop=C5
+&bell s=sine loop=C6
+&tune over=&major step=8n 0 2 4 2
+&accent map=amp step=8n 1 .5 .8 .5
+&duck map=amp step=4n 1 .25
+&leadOut trigger=&tune velocity=&accent gate=&duck gain=.4 &lead &bell
+&out map=sample &leadOut

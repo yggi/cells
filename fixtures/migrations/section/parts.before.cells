@@ -1,0 +1,8 @@
+# a table of sections named &parts (decision 044): the examples call it &sections
+&bar meter("4/4") step=120bpm
+&parts step=4n &keysBar &drumBar
+&song over=&parts step=1m laps=1 0 [0,1]
+&keys step=&keysBar/4 0 4
+&kick step=&drumBar 0 ~
+&v s=tri loop=C4
+&out map=sample [&keys * &v, &kick * &v]
