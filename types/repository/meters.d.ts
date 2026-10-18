@@ -1,7 +1,8 @@
 /**
  * The meters: the repository's first facet (#82, decision 041), since swing lives in the meter cell and whether the band
  * swings is a question of which meter it plays. Each fragment is one line, `&bar meter(…)`, open on its tempo: the host
- * sets `step=` (Jambot's `bpm` is its own axis, and a fragment's style has no tempo: decision 037).
+ * sets `step=` (Jambot's `bpm` is its own axis, and a fragment's style has no tempo: decision 037). Each is a file of the
+ * seed library, `fragments/meters/*.md` (`seed.ts`), whose prose says what it is and where it sits.
  *
  * The associations are written by hand, on four of Jambot's axes (`presets.ts`). Each of Jambot's eight presets names a
  * 4/4 meter (yggi/jambot#360) and is a point of that meter's association: straight 4/4 holds the three that play
