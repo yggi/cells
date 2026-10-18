@@ -28,17 +28,20 @@ export function period(result: CompileResult, name: string, ctx?: string): numbe
  * Either way, entry i of the result is entry i + shift of the original helix.
  */
 export function shiftedUnits(result: CompileResult, name: string, shift: number, ctx?: string): Unit[] {
-  const c = result.cells.get(name)!;
-  const k = c.units.length;
-  if (k === 0 || shift === 0) return [...c.units];
-  const p = period(result, name, ctx);
-  const lap = Math.floor(shift / k);
-  const r = shift - lap * k;
+  return rotated(result.cells.get(name)!.units, shift, () => period(result, name, ctx));
+}
+
+/** `units` rotated by `shift`, the ones that wrap climbing `lap()` per lap (a subsequence with every number in it). */
+function rotated(units: readonly Unit[], shift: number, lap: () => number): Unit[] {
+  const k = units.length;
+  if (k === 0 || shift === 0) return [...units];
+  const p = lap();
+  const laps = Math.floor(shift / k);
+  const r = shift - laps * k;
   return Array.from({ length: k }, (_, i) => {
-    const u = c.units[(i + r) % k];
-    const climb = p * (lap + (i + r >= k ? 1 : 0));
+    const u = units[(i + r) % k];
+    const climb = p * (laps + (i + r >= k ? 1 : 0));
     if (climb === 0) return u;
-    // (a subsequence climbs with every number in it)
     const atom = mapLeaves(u.atom, (a) =>
       a.kind === 'note'
         ? { ...a, value: a.value + climb }
@@ -52,6 +55,28 @@ export function shiftedUnits(result: CompileResult, name: string, shift: number,
   });
 }
 
+const turnCache = new WeakMap<CompileResult, Map<string, readonly Unit[]>>();
+
+/**
+ * The entries a table turns through, in order: its steps, and a subsequence's each one (`[a b] c` turns a, b, c), since
+ * a table turns by its braid's own steps (#122). Without a subsequence, its units as written. Shared: don't change it.
+ */
+export function tableUnits(result: CompileResult, name: string): readonly Unit[] {
+  const c = result.cells.get(name)!;
+  if (!c.units.some((u) => u.atom.kind === 'seq')) return c.units;
+  let cache = turnCache.get(result);
+  if (!cache) turnCache.set(result, (cache = new Map()));
+  let us = cache.get(name);
+  if (!us) cache.set(name, (us = c.units.flatMap((u) => (u.atom.kind === 'seq' ? leaves(u.atom).map((atom) => ({ atom, repeat: 1, subdivide: 1, elongate: 1 })) : [u]))));
+  return us;
+}
+
+/** A braid every step of which is a stack (`[0,2,4] [5,7,9]`): read through, it is the chord in force (#95). */
+const isStacks = (result: CompileResult, name: string) => {
+  const us = tableUnits(result, name);
+  return us.length > 0 && us.every((u) => u.atom.kind === 'chord');
+};
+
 /**
  * `entries` is asked for the same table at the same shift over and over (every note of every glyph that reads
  * through it, on every flush: issue #41). It is a pure function of (program, cell, shift), so the answers are
@@ -60,15 +85,21 @@ export function shiftedUnits(result: CompileResult, name: string, shift: number,
 const ENTRY_CACHE = 256;
 const entryCache = new WeakMap<CompileResult, Map<string, readonly Entry[]>>();
 
-/** The cell as a lookup table: its numbers in order (chords contribute each member, subsequences theirs in order). Shared: don't change it. */
-export function entries(result: CompileResult, name: string, shift: number): readonly Entry[] {
+/**
+ * The cell as a lookup table: its numbers in order (chords contribute each member, subsequences theirs in order), turned
+ * by `shift` entries (a subsequence's steps each one). With `inForce`, a braid of stacks is the stack the turn has
+ * brought round, its tones the entries (#95); any other table, all its numbers. Shared: don't change it.
+ */
+export function entries(result: CompileResult, name: string, shift: number, inForce = false): readonly Entry[] {
   let cache = entryCache.get(result);
   if (!cache) entryCache.set(result, (cache = new Map()));
-  const key = `${name}|${shift}`;
+  const stacks = inForce && isStacks(result, name);
+  const key = `${name}|${shift}${stacks ? '|in force' : ''}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const out: Entry[] = [];
-  for (const a of shiftedUnits(result, name, shift).flatMap((u) => leaves(u.atom))) {
+  const turned = rotated(tableUnits(result, name), shift, () => period(result, name));
+  for (const a of (stacks ? turned.slice(0, 1) : turned).flatMap((u) => leaves(u.atom))) {
     if (a.kind === 'note') out.push({ value: a.value, alter: a.alter });
     else if (a.kind === 'chord') a.notes.forEach((v, j) => out.push({ value: v, alter: a.alters[j] }));
   }
@@ -77,11 +108,14 @@ export function entries(result: CompileResult, name: string, shift: number): rea
   return out;
 }
 
-/** Entry x of a table (its own shift plus `extra`), climbing the helix outside [0, k). */
+/**
+ * Entry x of a table (its own shift plus `extra`), climbing the helix outside [0, k). Through a braid of stacks, entry
+ * x of the chord in force (#95): past its last tone the same chord a lap up, below its first a lap down.
+ */
 export function lookup(result: CompileResult, name: string, x: number, shifts: Shifts, extra = 0): Entry {
   const c = result.cells.get(name)!;
   if (c.root) return { value: x + shifts(name) + extra, alter: 0 };
-  const es = entries(result, name, shifts(name) + extra);
+  const es = entries(result, name, shifts(name) + extra, true);
   if (es.length === 0) return { value: 0, alter: 0 };
   const xi = Math.floor(x);
   const lap = Math.floor(xi / es.length);
