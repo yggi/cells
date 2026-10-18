@@ -176,17 +176,19 @@ describe('identity, until the hash', () => {
   const son = LIBRARY.find((f) => f.id === 'son clave 3-2')!;
 
   it('a text is the same as another after renaming its own names, with comments and spacing aside', () => {
-    const renamedSon = renameCell(renameCell(renameCell(son.text, 'clave', 'cl'), 'claves', 'cls'), 'rs', 'side');
+    const renamedSon = renameCell(renameCell(renameCell(son.text, 'clave', 'cl'), 'percussion', 'perc'), 'claves', 'wood');
     expect(renamedSon).not.toBe(son.text);
     expect(sameText(renamedSon, son.text)).toEqual(
       new Map([
         ['&cl', '&clave'],
-        ['&cls', '&claves'],
-        ['&side', '&rs'],
+        ['&perc', '&percussion'],
+        ['&wood', '&claves'],
       ]),
     );
-    expect(sameText(`${son.text.replace(' &rs', '   &rs')} // the son`, son.text)?.size).toBe(0);
-    expect(canonicalText(son.text)).toBe(['&#1 step=16n cycle=2 &#3 ~!5 &#3 ~!5 &#3 ~!7 &#3 ~!3 &#3 ~!7', '&#2 map=midi(10) [&#1 * .5]', '&#3 s=white'].join('\n'));
+    expect(sameText(`${son.text.replace(' &claves', '   &claves')} // the son`, son.text)?.size).toBe(0);
+    expect(canonicalText(son.text)).toBe(
+      ['&#1 step=16n cycle=2 &#3 ~!5 &#3 ~!5 &#3 ~!7 &#3 ~!3 &#3 ~!7', '&#2 map=midi(10) [&#1 * .5]', '&#3 s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)'].join('\n'),
+    );
   });
 
   it('but not one that differs, nor one that renames an interface name or a name it uses and doesn’t define', () => {
