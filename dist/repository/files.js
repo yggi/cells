@@ -1,6 +1,6 @@
+import { readBlocks, rewrite, writeBody } from "../engine/literate.js";
 import { fragmentProblems } from "./fragments.js";
 import { readYaml, writeYaml, yamlValue } from "./yaml.js";
-const FENCE = /^```cells\s*$/;
 const ENTRY_KEYS = ['id', 'association'];
 const POINT_KEYS = ['point', 'weight', 'facet'];
 const entry = (node, key) => node.entries.find((e) => e.key === key);
@@ -56,18 +56,9 @@ export function readFragment(markdown) {
     if (root.kind !== 'map')
         return { problems: [{ line: root.line, message: 'the frontmatter is a map (`id: …`, `association: …`)' }] };
     const problems = [];
-    const fences = lines.flatMap((l, i) => (i > close && FENCE.test(l) ? [i] : []));
-    const open = fences[0];
-    if (open === undefined)
-        problems.push({ line: close + 1, message: 'no ```cells block after the frontmatter' });
-    if (fences.length > 1)
-        problems.push({ line: fences[1] + 1, message: `a second \`\`\`cells block (the first is at line ${open + 1}): a fragment file holds one` });
-    const end = open === undefined ? -1 : lines.indexOf('```', open + 1);
-    if (open !== undefined && end < 0)
-        problems.push({ line: open + 1, message: 'the ```cells block is never closed (a line ```)' });
-    const before = open === undefined ? -1 : lines.slice(close + 1, open).findIndex((l) => l.trim());
-    if (before >= 0)
-        problems.push({ line: close + 2 + before, message: 'prose before the ```cells block: the block comes first, the prose after it' });
+    const body = readBlocks(lines, close + 1);
+    if ('problems' in body)
+        problems.push(...body.problems);
     const id = entry(root, 'id');
     const idValue = id?.value.kind === 'scalar' ? id.value.value : undefined;
     if (!id)
@@ -78,33 +69,33 @@ export function readFragment(markdown) {
     if (!assoc)
         problems.push({ line: 1, message: 'no association in the frontmatter' });
     const points = assoc ? association(assoc.value, problems) : [];
-    if (problems.length)
-        return { problems };
-    const fragment = { id: idValue, text: lines.slice(open + 1, end).join('\n'), association: points };
+    if (problems.length || 'problems' in body)
+        return { problems: problems.sort((a, b) => a.line - b.line) };
+    const fragment = { id: idValue, text: body.text, association: points };
     const wrong = fragmentProblems(fragment);
     if (wrong.length)
         return {
             problems: wrong.map((message) => {
                 const point = /point (\d+)/.exec(message);
-                const line = point ? assoc.value.items[Number(point[1]) - 1].line : /no text/.test(message) ? open + 1 : id.line;
+                const line = point
+                    ? assoc.value.items[Number(point[1]) - 1].line
+                    : /no text/.test(message)
+                        ? (body.map[0]?.line ?? close + 2) - 1
+                        : id.line;
                 return { line, message };
             }),
         };
     const meta = Object.fromEntries(root.entries.filter((e) => !ENTRY_KEYS.includes(e.key)).map((e) => [e.key, yamlValue(e.value)]));
-    const prose = lines
-        .slice(end + 1)
-        .join('\n')
-        .replace(/^\s*\n/, '')
-        .trimEnd();
-    return { fragment, meta, prose };
+    return { fragment, meta, prose: body.prose, layout: body.layout };
 }
-export function writeFragment({ fragment, meta, prose }) {
+export function writeFragment({ fragment, meta, prose, layout }) {
     const clash = ENTRY_KEYS.filter((key) => Object.hasOwn(meta, key));
     if (clash.length)
         throw new Error(`writeFragment: the metadata has ${clash.join(' and ')}, which the entry writes`);
     const association = fragment.association.map(({ point, weight, facet }) => ({ point, weight, ...(facet === undefined ? {} : { facet }) }));
     const frontmatter = writeYaml({ id: fragment.id, association, ...meta });
-    return `---\n${frontmatter}---\n\n\`\`\`cells\n${fragment.text}\n\`\`\`\n${prose ? `\n${prose}\n` : ''}`;
+    const body = layout ? rewrite(layout, fragment.text) : { blocks: [[fragment.text]], gaps: [['', '```cells'], ['```']] };
+    return `---\n${frontmatter}---\n${writeBody(body, prose)}`;
 }
 export function readFragments(files) {
     const read = [];

@@ -22,7 +22,7 @@ The whole map, module by module: [architecture.md](architecture.md).
 - `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>` (`theory/`, `repository/` alike)
 - `engine/examples.generated.ts` every example's file, written by `npm run examples`
 - `host.d.ts` the three host globals the language uses (the purity gate's whole allowance)
-- `../examples/` the pieces, the language's conformance suite, each a piece file (`engine/piecefile.ts`: title, tags and tier in its frontmatter, the piece in a ```cells block, decision 047); `../fragments/` the seed library's files; `../midi/` the folder's corpus (Mutopia's Bach); `../fixtures/` test pieces
+- `../examples/` the pieces, the language's conformance suite, each a piece file (`engine/piecefile.ts`: title, tags and tier in its frontmatter, the piece in its ```cells blocks, decision 047, 051); `../fragments/` the seed library's files; `../midi/` the folder's corpus (Mutopia's Bach); `../fixtures/` test pieces
 
 ## Gates
 
@@ -86,3 +86,4 @@ One line each; the record has the rationale. → [decisions/](decisions/README.m
 - 048 · The learned layer is plain data the frontend hands each query (filed fragments, points use added, counts of use together), merged there, never stored · → decisions/048-the-learned-layer.md
 - 049 · Migrate, Normalise (spelling only: every cell, name, step and reference kept), Shorten (by structure), Fold (hints Shorten); a hash reads Normalise, then an identity step · → decisions/049-four-tools-over-a-piece.md
 - 050 · The equalities: text rungs E0–E5 (byte, layout, renaming, normal form, structure, orbit; minified: E4 after Shorten) and sound rungs S1–S3 (sounds identical, same notes, same cells' steps), over the whole piece where it ends · → decisions/050-the-equalities.md
+- 051 · Literate cells: a file's code is the join of all its ```cells blocks, in order; the rest is prose, kept byte for byte when the code is rewritten (each line back into the block it came from); raw cells text with no fence is a valid shorthand; docs pages stay pages of samples · → decisions/051-literate-cells.md

@@ -15,6 +15,8 @@ const read = (markdown: string): FragmentFile => {
   if ('problems' in r) throw new Error(JSON.stringify(r.problems));
   return r;
 };
+/** A file read without its layout (the blocks and the prose between them, literate.ts), to compare what it holds. */
+const bare = ({ layout: _, ...file }: FragmentFile) => file;
 const problems = (markdown: string) => {
   const r = readFragment(markdown);
   return 'problems' in r ? r.problems : [];
@@ -53,7 +55,7 @@ describe('the seed files', () => {
   });
 
   it.each(SEED.map((f) => [f.fragment.id, f]))('%s reads back from what it writes, fragment, metadata and prose', (_, { fragment, meta, prose }) => {
-    expect(read(writeFragment({ fragment, meta, prose }))).toEqual({ fragment, meta, prose });
+    expect(bare(read(writeFragment({ fragment, meta, prose })))).toEqual({ fragment, meta, prose });
   });
 
   it('build the meters and the rhythms, in file order, and the library is both', () => {
@@ -96,7 +98,7 @@ describe('the seed files', () => {
 
 describe('a fragment file', () => {
   it('reads its entry, its metadata and its prose', () => {
-    expect(read(good())).toEqual({
+    expect(bare(read(good()))).toEqual({
       fragment: { id: 'a fragment', text: '&x step=16n 0', association: [{ point: { sync: 0.5 }, weight: 1, facet: 'rhythm' }] },
       meta: { source: 'seed' },
       prose: 'Some prose.',
@@ -142,7 +144,7 @@ describe('a fragment file', () => {
 
   it('takes blank lines around the block and the prose as they come, and writes one', () => {
     const loose = good((l) => l.splice(9, 1, '', '', '')).replace('Some prose.\n', '\n\nSome prose.\n\n\n');
-    expect(read(loose)).toEqual(read(good()));
+    expect(bare(read(loose))).toEqual(bare(read(good())));
     expect(writeFragment(read(loose))).toBe(good());
   });
 
@@ -156,7 +158,7 @@ describe('a malformed file names its problem and its line', () => {
     ['no frontmatter', good((l) => l.splice(0, 9)), 1, /no frontmatter/],
     ['frontmatter never closed', good((l) => l.splice(8, 1)), 1, /never closed/],
     ['no cells block', good((l) => l.splice(10, 3)), 9, /no ```cells block/],
-    ['two cells blocks', good((l) => l.push('', '```cells', '&y 0', '```')), 17, /a second ```cells block \(the first is at line 11\)/],
+    ['a second cells block never closed', good((l) => l.push('', '```cells', '&y 0')), 17, /never closed/],
     ['a cells block never closed', good((l) => l.splice(12)), 11, /never closed/],
     ['an association point without a number', good((l) => (l[4] = '      sync: high')), 5, /sync is "high", not a number/],
     ['a weight that is no number', good((l) => (l[5] = '    weight: heavy')), 6, /weight is "heavy", not a number/],
@@ -170,7 +172,6 @@ describe('a malformed file names its problem and its line', () => {
     ['an id that is a number', good((l) => (l[1] = 'id: 5')), 2, /the id is 5, not a string: quote it/],
     ['no association', good((l) => l.splice(2, 5)), 1, /no association/],
     ['an empty text', good((l) => (l[11] = ' ')), 11, /no text/],
-    ['prose before the block', good((l) => l.splice(9, 0, '# A heading')), 10, /prose before the ```cells block/],
     ['YAML the subset refuses', good((l) => (l[7] = 'source: &who seed')), 8, /anchor/],
   ];
   it.each(cases)('%s', (_, markdown, line, message) => {
