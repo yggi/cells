@@ -1,7 +1,7 @@
 // What fits the workbench (decision 047, points 2 and 3): the union of lines, a line given twice kept once and a colliding
 // private name renamed; the fit over every (rhythm, meter) pair of the library; two drum bars on one workbench, each
 // playing E31's hits as alone; and what it costs.
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
@@ -14,6 +14,12 @@ import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { BOSSA_NOVA, FUNK } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
+
+// (the compile counted, for what it costs: the real one, called through)
+vi.mock('../engine/compile', async (original) => {
+  const actual = await original<typeof import('../engine/compile')>();
+  return { ...actual, compileSource: vi.fn(actual.compileSource) };
+});
 
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
@@ -268,29 +274,31 @@ describe('what it costs', () => {
     for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(true);
   });
 
-  // The bound, as the compile makes it: a query over the 26 with that workbench under 5 ms once the repository has its
-  // fits (each cached by its two texts, each compile by its text: `cachedFit`); about 0.2 ms measured. A workbench the
-  // repository hasn't seen costs a compile of each union that passes the cheaper checks, about 4 ms for a workbench of
-  // five (13 here, about 50 ms measured), and a query for fewer stops at the k-th that fits: under 150 ms, and under 20 ms
-  // for the first that fits.
-  it('a fitting query over the 26, with a workbench of five, under 5 ms once it has its fits; a new workbench under 150 ms, 20 ms for k = 1', () => {
+  // The bound, as the work it bounds: the compiles a query makes (counted at `compileSource`, which the cache stands in
+  // front of), not the milliseconds they take, which a loaded machine changes. A workbench the repository hasn't seen
+  // costs its own compile and at most one compile of the union per fragment tried (those that pass the cheaper checks);
+  // a query for k stops at the k-th that fits, so k = 1 tries the first that fits; the same workbench again, every fit
+  // cached by its two texts (`cachedFit`), compiles nothing. One wall-clock line stays as a gross witness: ten seconds
+  // for all three, which a machine under any load keeps and a compile of each of a thousand unions doesn't.
+  it('a fitting query over the 26 compiles at most one union a fragment for a new workbench, one for k = 1, and none the second time', () => {
+    const compiles = vi.mocked(compileSource);
+    const count = <T>(run: () => T): [T, number] => {
+      const before = compiles.mock.calls.length;
+      return [run(), compiles.mock.calls.length - before];
+    };
     const r = createRepository(LIBRARY);
     r.query(FUNK, 26, {}, { workbench: bench('4/4') });
     const t0 = performance.now();
-    const first = r.query(FUNK, 26, {}, { workbench });
-    const fresh = performance.now() - t0;
+    const [first, fresh] = count(() => r.query(FUNK, 26, {}, { workbench }));
     expect(first).toHaveLength(13);
-    const n = 200;
-    const t1 = performance.now();
-    for (let i = 0; i < n; i++) r.query(FUNK, 26, {}, { workbench, chosen: ['Funk drums'] });
-    const again = (performance.now() - t1) / n;
-    const other = `${workbench}\n// one more line`;
-    const t2 = performance.now();
-    expect(r.query(FUNK, 1, {}, { workbench: other })).toHaveLength(1);
-    const one = performance.now() - t2;
-    expect(again).toBeLessThan(5);
-    expect(fresh).toBeLessThan(150);
-    expect(one).toBeLessThan(20);
+    expect(fresh).toBeGreaterThan(0);
+    expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
+    expect(count(() => r.query(FUNK, 26, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);
+    const [one, tried] = count(() => r.query(FUNK, 1, {}, { workbench: `${workbench}\n&more loop=A4` }));
+    expect(one).toHaveLength(1);
+    // (the workbench, and the union of the first fragment that fits: a fragment that fails a cheaper check compiles none)
+    expect(tried).toBeLessThanOrEqual(2);
+    expect(performance.now() - t0).toBeLessThan(10_000);
   });
 
   it('a cached compile is the compile, and keeps the last texts it was asked for', () => {
