@@ -111,7 +111,7 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
     }
     return { whole, kind: 'rate', perSecond: r, span: s.span(start) };
   }
-  const env = s.match(/[A-Z](?:[A-Z0-9_]*|[#b]?-?[0-9]+)(?![A-Za-z0-9_#])/y);
+  const env = s.match(/[A-Z](?:[#b]?-?[0-9]+|[A-Z0-9_]*)(?![A-Za-z0-9_#])/y);
   if (env !== null) return { whole, kind: 'env', name: env, span: s.span(start) };
   if (s.peek() === '{') s.fail('{&x} is now written cycle(&x)');
   const cycle = s.match(/cycle\(/y) !== null;

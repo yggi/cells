@@ -1,5 +1,5 @@
 /** Phase 8: attributes where they do nothing — each acts on some roles only (attributes.ts): warnings. */
-import type { Span } from '../ast';
+import type { Expr, Span } from '../ast';
 import { SHOWS } from '../parser/cell';
 import { ATTRIBUTES, rolesText, type Role } from '../attributes';
 import { PLUGIN_SYNTAX, type ShowPlugin } from '../plugins';
@@ -9,6 +9,14 @@ import type { Declared } from './declare';
 
 /** What switching a part on does to its time (decision 032): from its top, where it stopped, or running on. */
 const RESTARTS: readonly string[] = ['restart', 'resume', 'free'];
+
+/** The negative numbers a product multiplies by (a gain in a product): `[&t * &v * -.5]`, in a sum's terms and groups too. */
+function negativeFactors(e: Expr, inProduct = false): Extract<Expr, { k: 'num' }>[] {
+  if (e.k === 'num') return inProduct && e.value < 0 ? [e] : [];
+  if (e.k === 'sum') return e.items.flatMap((i) => negativeFactors(i.e));
+  if (e.k === 'prod') return e.factors.flatMap((f) => negativeFactors(f, true));
+  return [];
+}
 
 export function checkRoles(ctx: Ctx, { decls, implicit, sections }: Declared, cells: Cells, clocks: ReadonlyMap<string, Clock>, plugins: ReadonlyMap<string, ShowPlugin>): void {
   const { warn } = ctx;
@@ -75,6 +83,18 @@ export function checkRoles(ctx: Ctx, { decls, implicit, sections }: Declared, ce
         warn(`restart=${d.params.restart}: what switching a part on does to its time is restart, resume or free — this plays as restart`, span);
       else if (a?.value === 'number' && !c.voice && typeof d.params[k] === 'string') warn(`${k}= takes a number: '${d.params[k]}' does nothing`, span);
     }
+    // a gain below 0 plays nothing softer (Cell studio clamps or inverts it): write the positive value
+    for (const k of ['gain', 'postgain'] as const) {
+      const v = d.params[k];
+      if (typeof v === 'number' && v < 0 && !d.gate && (k === 'postgain' || c.voice))
+        warn(`${k}=${v}: a gain is 0 or more, and a negative one doesn't play softer — write ${-v}`, d.paramSpans[k] ?? d.span);
+    }
+    if (!d.gate)
+      for (const t of d.braid.kind === 'list' ? d.braid.tokens : [])
+        if (t.atom.kind === 'mix')
+          for (const e of t.atom.exprs)
+            for (const n of negativeFactors(e))
+              warn(`* ${n.value}: a factor in a product is a gain, 0 or more, and a negative one doesn't play softer — write ${-n.value}`, n.span);
     // a gate is its notes (play=), its level and what it plays: its timing and tables are its notes', so these are ignored
     if (d.gate) {
       const timing = d.step ? (d.step.whole ? 'loop' : 'step') : null;

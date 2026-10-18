@@ -3,6 +3,15 @@ import { ATTRIBUTES, rolesText } from "../attributes.js";
 import { PLUGIN_SYNTAX } from "../plugins.js";
 import { isMidiCard } from "../program.js";
 const RESTARTS = ['restart', 'resume', 'free'];
+function negativeFactors(e, inProduct = false) {
+    if (e.k === 'num')
+        return inProduct && e.value < 0 ? [e] : [];
+    if (e.k === 'sum')
+        return e.items.flatMap((i) => negativeFactors(i.e));
+    if (e.k === 'prod')
+        return e.factors.flatMap((f) => negativeFactors(f, true));
+    return [];
+}
 export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, plugins) {
     const { warn } = ctx;
     const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
@@ -74,6 +83,17 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
             else if (a?.value === 'number' && !c.voice && typeof d.params[k] === 'string')
                 warn(`${k}= takes a number: '${d.params[k]}' does nothing`, span);
         }
+        for (const k of ['gain', 'postgain']) {
+            const v = d.params[k];
+            if (typeof v === 'number' && v < 0 && !d.gate && (k === 'postgain' || c.voice))
+                warn(`${k}=${v}: a gain is 0 or more, and a negative one doesn't play softer — write ${-v}`, d.paramSpans[k] ?? d.span);
+        }
+        if (!d.gate)
+            for (const t of d.braid.kind === 'list' ? d.braid.tokens : [])
+                if (t.atom.kind === 'mix')
+                    for (const e of t.atom.exprs)
+                        for (const n of negativeFactors(e))
+                            warn(`* ${n.value}: a factor in a product is a gain, 0 or more, and a negative one doesn't play softer — write ${-n.value}`, n.span);
         if (d.gate) {
             const timing = d.step ? (d.step.whole ? 'loop' : 'step') : null;
             for (const [k, span] of [
