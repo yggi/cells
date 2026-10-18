@@ -1,5 +1,6 @@
 import { declLine, declWords, setAttr, splitComment } from "../edit.js";
-import { measured, samePiece } from "./harness.js";
+import { samePiece } from "../sameness.js";
+import { saves } from "./harness.js";
 function splitTop(text, sep) {
     const out = [];
     let depth = 0;
@@ -107,15 +108,16 @@ export function stereo(source, result) {
             });
             return next;
         };
-        const s = measured(source, {
+        const s = {
             id: `pan:${card.name}`,
-            kind: 'pan',
+            tool: 'shorten',
+            rule: 'pan',
             title: `&${card.name}'s two chords hold the same sounds at different gains: one chord, and each voice placed with pan=`,
             before: '[…] […]',
             after: voices.map((v, i) => `&${v} pan=${written(pans[i])}`).join(' · '),
             apply,
-        });
-        if (s && samePiece(source, s.apply(source)))
+        };
+        if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source)))
             out.push(s);
     }
     return out;

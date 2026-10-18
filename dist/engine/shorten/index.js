@@ -1,4 +1,4 @@
-import { candidates, size } from "./harness.js";
+import { candidates, size, suggestion } from "./harness.js";
 import { runs } from "./runs.js";
 import { phrases } from "./phrases.js";
 import { fractions } from "./fractions.js";
@@ -16,7 +16,7 @@ export function shorten(source) {
     const { result, cells } = candidates(source);
     if (!result.ok)
         return [];
-    return [
+    const found = [
         ...runs(source, cells),
         ...phrases(source, cells, result),
         ...fractions(source, cells, result),
@@ -30,7 +30,8 @@ export function shorten(source) {
         ...taps(source, result),
         ...swings(source, result),
         ...sections(source, result),
-    ].sort((a, b) => b.saving - a.saving);
+    ];
+    return found.map((r) => suggestion(source, r)).sort((a, b) => b.saving - a.saving);
 }
 export function shortenAll(source, rounds = 60) {
     let now = source;

@@ -6,11 +6,12 @@
  */
 import { attrsOf, declLine, setAttr } from '../edit';
 import { bareSwingLevel } from '../meter';
-import { samePiece, size, type Result, type Suggestion } from './harness';
+import { samePiece } from '../sameness';
+import type { Result, ShortenRewrite } from './harness';
 
 /** Each meter with a bare swing=: the same swing with its level named, if it plays the same notes. */
-export function swings(source: string, result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function swings(source: string, result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   for (const c of result.cells.values()) {
     const m = c.meter;
     // (the share as written, free(…) and all; one with its level named already is left alone)
@@ -24,11 +25,11 @@ export function swings(source: string, result: Result): Suggestion[] {
     const at = declLine(source, c.name);
     out.push({
       id: `swing:${c.name}`,
-      kind: 'swing',
+      tool: 'migrate',
+      rule: 'swing',
       title: `&${c.name}'s swing= leans the meter cell's own steps: name the level, swing=${level}:${written} (#18)`,
       before: source.split('\n')[at].trim(),
       after: next.split('\n')[at].trim(),
-      saving: size(source) - size(next),
       apply,
     });
   }

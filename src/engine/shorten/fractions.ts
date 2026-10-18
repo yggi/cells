@@ -4,13 +4,13 @@
  */
 import { attrsOf, setAttr, setBraid } from '../edit';
 import { tapOfRaw } from './taps';
-import { measured, type Candidate, type Result, type Suggestion } from './harness';
+import { saves, type Candidate, type Result, type ShortenRewrite } from './harness';
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
 
 /** Fractions: every step held a multiple of some n — divide it out, and slow the clock instead. */
-export function fractions(source: string, cells: readonly Candidate[], result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function fractions(source: string, cells: readonly Candidate[], result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   for (const c of cells) {
     // only what nothing else splices in, steps by, reads or is shaped by (they'd hear the lengths) — a mix
     // playing it is fine — and without chance (it keys on positions)
@@ -54,15 +54,16 @@ export function fractions(source: string, cells: readonly Candidate[], result: R
     else slower = slowerTap(step, g) ?? slower;
     if (!slower) continue;
     const next = c.tokens.map((t, i) => t.slice(0, cut(t)) + t.slice(cut(t)).replace(/@[0-9]+/, held[i] / g > 1 ? `@${held[i] / g}` : ''));
-    const s = measured(source, {
+    const s: ShortenRewrite = {
       id: `fraction:${c.name}`,
-      kind: 'fraction',
+      tool: 'shorten',
+      rule: 'fraction',
       title: `&${c.name}: every step is held ${g}× or more — divide by ${g}, and step ${g}× slower`,
       before: `step=${step}  ${c.tokens.slice(0, 5).join(' ')}${c.tokens.length > 5 ? ' …' : ''}`,
       after: `step=${slower}  ${next.slice(0, 5).join(' ')}${next.length > 5 ? ' …' : ''}`,
       apply: (src) => setAttr(setBraid(src, c.name, next), c.name, 'step', slower),
-    });
-    if (s) out.push(s);
+    };
+    if ((saves(source, s) ?? 0) > 0) out.push(s);
   }
   return out;
 }

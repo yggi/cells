@@ -3,21 +3,23 @@
  * a turning table's cycle= equal to its own length (decision 008), pan=.5 (the centre).
  */
 import { attrsOf, setAttr } from '../edit';
-import { measured, samePiece, type Result, type Suggestion } from './harness';
+import { samePiece } from '../sameness';
+import { saves, type Result, type ShortenRewrite } from './harness';
 
-export function defaults(source: string, result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function defaults(source: string, result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   const offer = (name: string, key: string, why: string) => {
     const value = attrsOf(source, name).get(key);
-    const s = measured(source, {
+    const s: ShortenRewrite = {
       id: `default:${name}:${key}`,
-      kind: 'default',
+      tool: 'shorten',
+      rule: 'default',
       title: `&${name}: ${key}=${value} is ${why} — leave it out`,
       before: `${key}=${value}`,
       after: '',
       apply: (src) => setAttr(src, name, key, null),
-    });
-    if (s && samePiece(source, s.apply(source))) out.push(s);
+    };
+    if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source))) out.push(s);
   };
   for (const c of result.cells.values()) {
     if (c.implicit || c.lambda) continue;

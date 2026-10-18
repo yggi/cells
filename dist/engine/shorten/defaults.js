@@ -1,18 +1,20 @@
 import { attrsOf, setAttr } from "../edit.js";
-import { measured, samePiece } from "./harness.js";
+import { samePiece } from "../sameness.js";
+import { saves } from "./harness.js";
 export function defaults(source, result) {
     const out = [];
     const offer = (name, key, why) => {
         const value = attrsOf(source, name).get(key);
-        const s = measured(source, {
+        const s = {
             id: `default:${name}:${key}`,
-            kind: 'default',
+            tool: 'shorten',
+            rule: 'default',
             title: `&${name}: ${key}=${value} is ${why} — leave it out`,
             before: `${key}=${value}`,
             after: '',
             apply: (src) => setAttr(src, name, key, null),
-        });
-        if (s && samePiece(source, s.apply(source)))
+        };
+        if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source)))
             out.push(s);
     };
     for (const c of result.cells.values()) {

@@ -1,6 +1,6 @@
 import { declLine, setAttr } from "../edit.js";
 import { tapFor } from "../compiler/clocks.js";
-import { samePiece, size } from "./harness.js";
+import { samePiece } from "../sameness.js";
 export function tapOfRaw(result, name, by = 1) {
     const c = result.cells.get(name);
     const st = c?.step;
@@ -30,11 +30,11 @@ export function taps(source, result) {
         const at = declLine(source, line);
         out.push({
             id: `tap:${line}`,
-            kind: 'tap',
+            tool: 'migrate',
+            rule: 'tap',
             title: `&${line} steps by the meter cell's own steps: tap the meter instead, step=${tap} (decision 040)`,
             before: source.split('\n')[at].trim(),
             after: next.split('\n')[at].trim(),
-            saving: size(source) - size(next),
             apply,
         });
     }

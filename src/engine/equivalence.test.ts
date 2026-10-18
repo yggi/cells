@@ -8,7 +8,7 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { shortenAll } from './shorten';
-import { SAMENESS_SECONDS } from './shorten/harness';
+import { SAMENESS_SECONDS } from './sameness';
 import { PRESETS } from './presets';
 
 const sounds = (src: string, seconds = SAMENESS_SECONDS) => {

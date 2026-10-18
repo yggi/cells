@@ -4,12 +4,13 @@
  * splices it reads the same table unshifted, and it has nothing else to say (no label, no step).
  */
 import { declWords, deleteCell, setBraid, spansLines } from '../edit';
-import { measured, samePiece, type Result, type Suggestion } from './harness';
+import { samePiece } from '../sameness';
+import { saves, type Result, type ShortenRewrite } from './harness';
 
 const PLAIN_REF = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
 
-export function wrappers(source: string, result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function wrappers(source: string, result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   for (const w of result.cells.values()) {
     if (!w.over || !w.overShift || w.step || w.label || w.voice || w.mix || w.implicit) continue;
     // its body: an over= and plain references to motifs that read their reader's table
@@ -40,15 +41,16 @@ export function wrappers(source: string, result: Result): Suggestion[] {
       }
       return w.lambda ? next : deleteCell(next, w.name);
     };
-    const s = measured(source, {
+    const s: ShortenRewrite = {
       id: `degree:${w.name}`,
-      kind: 'degree',
+      tool: 'shorten',
+      rule: 'degree',
       title: `${w.lambda ? token : `&${w.name}`} only reads ${motifs.join(' ')} through &${w.over} moved ${k > 0 ? 'up' : 'down'} ${Math.abs(k)}: write ${moved.join(' ')} where it is used`,
       before: token.length > 40 ? token.slice(0, 39) + '…' : token,
       after: moved.join(' '),
       apply,
-    });
-    if (s && samePiece(source, s.apply(source))) out.push(s);
+    };
+    if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source))) out.push(s);
   }
   return out;
 }

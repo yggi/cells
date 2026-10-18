@@ -5,7 +5,8 @@
  */
 import { declLine, setAttr } from '../edit';
 import { tapFor } from '../compiler/clocks';
-import { samePiece, size, type Result, type Suggestion } from './harness';
+import { samePiece } from '../sameness';
+import type { Result, ShortenRewrite } from './harness';
 
 /** The tap that says what &name's step= says (slowed `by` times, for the fractions), or null (not stepped by a meter's own steps). */
 export function tapOfRaw(result: Result, name: string, by = 1): string | null {
@@ -22,8 +23,8 @@ export function tapOfRaw(result: Result, name: string, by = 1): string | null {
 }
 
 /** Each line stepped by a meter's own steps: its tap, if it plays the same notes. */
-export function taps(source: string, result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function taps(source: string, result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   const seen = new Set<string>();
   for (const c of result.cells.values()) {
     const tap = tapOfRaw(result, c.name);
@@ -37,11 +38,11 @@ export function taps(source: string, result: Result): Suggestion[] {
     const at = declLine(source, line);
     out.push({
       id: `tap:${line}`,
-      kind: 'tap',
+      tool: 'migrate',
+      rule: 'tap',
       title: `&${line} steps by the meter cell's own steps: tap the meter instead, step=${tap} (decision 040)`,
       before: source.split('\n')[at].trim(),
       after: next.split('\n')[at].trim(),
-      saving: size(source) - size(next),
       apply,
     });
   }

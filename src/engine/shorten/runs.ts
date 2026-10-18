@@ -2,11 +2,11 @@
  * Runs: the same step written again and again, counted — `0 0 0 0` → `0!4`.
  */
 import { setBraid } from '../edit';
-import { measured, type Candidate, type Suggestion } from './harness';
+import { saves, type Candidate, type ShortenRewrite } from './harness';
 
 /** Runs: the same step written again and again. */
-export function runs(source: string, cells: readonly Candidate[]): Suggestion[] {
-  const out: Suggestion[] = [];
+export function runs(source: string, cells: readonly Candidate[]): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   for (const c of cells) {
     const next: string[] = [];
     const shown: string[] = [];
@@ -21,15 +21,16 @@ export function runs(source: string, cells: readonly Candidate[]): Suggestion[] 
       i += k;
     }
     if (next.length === c.tokens.length) continue;
-    const s = measured(source, {
+    const s: ShortenRewrite = {
       id: `run:${c.name}`,
-      kind: 'run',
+      tool: 'shorten',
+      rule: 'run',
       title: `Runs in &${c.name}: the same step again and again, counted`,
       before: shown.map((x) => x.split(' → ')[0]).join('   '),
       after: shown.map((x) => x.split(' → ')[1]).join('   '),
       apply: (src) => setBraid(src, c.name, next),
-    });
-    if (s) out.push(s);
+    };
+    if ((saves(source, s) ?? 0) > 0) out.push(s);
   }
   return out;
 }

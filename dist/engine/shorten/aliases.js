@@ -1,6 +1,6 @@
 import { PARAM_ALIASES } from "../attributes.js";
 import { attrsOf, renameAttr } from "../edit.js";
-import { measured } from "./harness.js";
+import { saves } from "./harness.js";
 export function aliases(source, result) {
     const out = [];
     for (const c of result.cells.values()) {
@@ -10,15 +10,16 @@ export function aliases(source, result) {
             const ours = PARAM_ALIASES[key];
             if (!ours || ours.length >= key.length)
                 continue;
-            const s = measured(source, {
+            const s = {
                 id: `alias:${c.name}:${key}`,
-                kind: 'alias',
+                tool: 'shorten',
+                rule: 'alias',
                 title: `&${c.name}: ${key}= is Strudel's or dough's name for ${ours}= — write ours`,
                 before: `${key}=${value}`,
                 after: `${ours}=${value}`,
                 apply: (src) => renameAttr(src, c.name, key, ours),
-            });
-            if (s)
+            };
+            if ((saves(source, s) ?? 0) > 0)
                 out.push(s);
         }
     }

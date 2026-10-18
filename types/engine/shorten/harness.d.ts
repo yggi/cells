@@ -1,9 +1,11 @@
 /**
- * What every Shorten rule shares: the cells it may rewrite, how a suggestion's
- * saving is measured, and the note-for-note check a rule runs before it offers
- * a rewrite whose sound depends on its tables.
+ * What every Shorten rule shares: the cells it may rewrite, and how a rewrite's saving is measured, so it is offered
+ * as a suggestion. The note-for-note check a rule runs before it offers a rewrite is the tools' own (`../sameness`),
+ * re-exported here as it was before #155.
  */
 import { compileSource } from '../compile';
+import type { Rewrite } from '../rewrite';
+export { samePiece, sameNotes, SAMENESS_SECONDS } from '../sameness';
 export interface Suggestion {
     readonly id: string;
     readonly kind: 'run' | 'phrase' | 'fraction' | 'same' | 'default' | 'progression' | 'degree' | 'pan' | 'gate' | 'alias' | 'tap' | 'swing' | 'section';
@@ -31,14 +33,11 @@ export declare function candidates(source: string): {
 };
 /** The code's length: runs of spaces count as one (the padding that keeps comments aligned isn't code). */
 export declare const size: (source: string) => number;
-/** A suggestion with its saving measured on its result; null when it saves nothing (or its rewrite fails). */
+/** What a rewrite saves (characters, `size`), or null when it changes nothing or its rewrite fails. */
+export declare const saves: (source: string, r: Pick<Rewrite, "apply">) => number | null;
+/** A Shorten rule's rewrite: offered as a suggestion of the rule's kind. */
+export type ShortenRewrite = Rewrite<Suggestion['kind']>;
+/** A rewrite offered as a suggestion, its saving measured on its result (a rule has checked it changes the text). */
+export declare const suggestion: (source: string, r: ShortenRewrite) => Suggestion;
+/** A suggestion with its saving measured on its result; null when it saves nothing (or its rewrite fails). Kept for the public subpath. */
 export declare const measured: (source: string, s: Omit<Suggestion, "saving">) => Suggestion | null;
-/** Do these cells play the same notes (value, place, length) in both programs? */
-export declare function sameNotes(a: string, b: string, names: readonly string[]): boolean;
-/**
- * How many seconds two spellings are compared over: Shorten's check and the tests of equal spellings use the same. A minute is
- * the longest cycle of most pieces (the longest layers, a day in the sun pieces or twenty minutes in Royal, are never run to the end).
- */
-export declare const SAMENESS_SECONDS = 60;
-/** Does the whole piece play the same notes (voice, onset, length, pitch, level per channel, bends, volumes, moving parameters, envelope) in both, for its first minute? */
-export declare function samePiece(a: string, b: string, until?: number): boolean;
