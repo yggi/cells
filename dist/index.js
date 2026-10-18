@@ -15,3 +15,4 @@ export { RHYTHM_FRAGMENTS } from "./repository/rhythms.js";
 export { LIBRARY } from "./repository/library.js";
 export { holesOf, INTERFACE_NAMES } from "./repository/holes.js";
 export { fitOf, unionOf } from "./repository/fit.js";
+export { readFragment, readFragments, writeFragment } from "./repository/files.js";

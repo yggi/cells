@@ -2,7 +2,8 @@
  * Jambot's eight presets as places in style space, on the four axes the repository's fragments are placed on: `sync` (on
  * the beat 0, off it 1), `harm` (a static vamp 0, moving, rich harmony 1), `artic` (legato 0, staccato 1) and `energy`
  * (sparse 0, dense 1). Swing, entropy and bpm are left out: a fragment's style has no tempo (decision 037), and swing is
- * which meter the band plays (decision 043). The meters and the rhythms are associated with these same points.
+ * which meter the band plays (decision 043). The meters' and the rhythms' files (`fragments/`) write these same points
+ * as numbers, and their tests read them from here.
  */
 import type { StylePoint } from './fragments';
 
@@ -19,6 +20,3 @@ export const LO_FI = at(0.5, 0.75, 0.35, 0.5); // swing .45: 16n at .65
 export const FUNK = at(1, 0.12, 0.85, 0.75); // swing .3: 16n at .6
 export const BOSSA_NOVA = at(0.75, 0.85, 0.45, 0.45);
 export const SWING_JAZZ = at(0.35, 1, 0.3, 0.6); // swing 1: 8n at 2/3, the jazz kit and the walking bass (yggi/jambot#360)
-
-/** An association of these points, each of weight 1 and associated as this facet. */
-export const weighted = (facet: string, ...points: StylePoint[]) => points.map((point) => ({ point, weight: 1, facet }));

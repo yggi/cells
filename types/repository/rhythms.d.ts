@@ -6,8 +6,8 @@
  *
  * The drum bars are Jambot's E31 (yggi/jambot#317): one bar the band writes for each preset, its drum part as cells text,
  * every role and every sound the band's drums play between them, 144 hits. Each is E31's text without its `&bar` line,
- * and is associated with its preset's point. Lifted from yggi/jambot packages/score/experiments/drums-in-cells.ts @
- * 327d6a8 (`fixtures/jambot-e31.json` holds E31's texts and hits).
+ * and is associated with its preset's point; each file names where it was lifted from under `lifted:`
+ * (`fixtures/jambot-e31.json` holds E31's texts and hits).
  *
  * The claves are five strokes each, struck as a side stick (`&rs`, General MIDI's 37), as a drummer plays the clave on a
  * kit: four over two bars of eighths (`step=16n cycle=2`), and the bossa nova clave also in one bar of sixteenths
@@ -17,6 +17,7 @@
  * hand, near Bossa nova and Funk.
  *
  * Every point of a rhythm is associated as the facet `rhythm`: a hint a query names, not what the fragment can fill.
+ * Each is a file of the seed library, `fragments/rhythms/*.md` (`seed.ts`), whose prose says what it is and where it sits.
  */
 import type { Fragment } from './fragments';
 /** The rhythms built so far: E31's eight drum bars and five claves, associated as the facet `rhythm`. */
