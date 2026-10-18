@@ -34,7 +34,7 @@ import { stepsOf } from '../src/engine/flatten';
 import { parse } from '../src/engine/parser';
 import { codeShifts } from '../src/engine/program';
 import { eventsBetween, plan } from '../src/engine/realize';
-import { structureOf } from './structure';
+import { structureOf } from '../src/engine/measure';
 
 /** Steps a boundary may be off and still be found: a bar of sixteenths. */
 export const TOLERANCE = 16;
