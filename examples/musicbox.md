@@ -1,0 +1,26 @@
+---
+title: Music Box
+tags: [tutorial, genre:classical, sound]
+tier: 7
+---
+
+```cells
+&piece label="A clockwork music box: wound, it spins up from rest, plays its tune, and as the spring runs down it slows and stops." about=&out
+&springNote label="As the spring runs down it slows, and slows, and stops. Physics, not a ritardando." about=&bar
+&drumNote label="Turn the drum forward with your finger to push the tune on; hold it, and the box stops under your hand." about=&bar
+# Music Box — the meter is a body that turns: a motor (its spring) pulls it to 96 bpm, its
+# mass resists, friction drags; over 36 s the spring runs down, and it coasts to a stop.
+# Everything it drives slows with it — the tune, the bass, the tick of the escapement.
+&bar scan(1 1 1) step=96bpm motor=6 mass=1.2 friction=.4 wind=36
+&major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
+&tune over=&major step=8n label="the comb" 4 2 0 2 4 4 4@2 3 2 1 2 3 1 -1 1 3 3 3@2 2 1 0@2
+&low over=&major step=4n label="the bass" -14 -12 -10 -14 -12 -10!2 -8 -6 -10 -8 -6
+&tick step=4n label="the escapement" 0!3
+
+&m s=sine ratio=7.1
+&comb oneshot pan=.36 s=sine loop=C5 fm=&m index=.2..1.6 * &(map=adsr .001 .06 .1 .1) room=.35 env=&(map=adsr .001 1.1 0 1)
+&combLow oneshot pan=.61 s=sine loop=C5 fm=&m index=.1...8 * &(map=adsr .001 .06 .1 .1) env=&(map=adsr .001 1.4 0 1.2)
+&tickv s=white hpf=6500 env=&(map=adsr 0 .012 0 .01)
+
+&out postgain=2.24 map=sample [&tune * &comb * .22, &low * &combLow * .18, &tick * &tickv * .05]
+```

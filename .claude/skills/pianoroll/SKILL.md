@@ -20,7 +20,7 @@ node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs t
   before=example:twinkle after=$S/twinkle-after.cells
 ```
 
-- An input is `example:<key>` (`examples/<key>.cells`), a `.cells` file, or a `.json` of notes (below), each optionally `label=<input>`.
+- An input is `example:<key>` (`examples/<key>.md`), a `.cells` text, a piece file (`.md`), or a `.json` of notes (below), each optionally `label=<input>`.
 - `--from` and `--to` set the window in seconds; pick it by a measure (the first bar where the two differ, the section a change reaches), and say which it is.
 - `--title` is the question the picture answers.
 - A note that started before `--from` isn't drawn; one held past `--to` is clipped to it.

@@ -1,0 +1,10 @@
+---
+title: An oscillator
+tags: [tutorial]
+tier: 1
+---
+
+```cells
+&piece label="The smallest piece that sounds: one cell turning its braid 440 times a second, held, heard through the built-in card." about=&a
+&a loop=A4
+```

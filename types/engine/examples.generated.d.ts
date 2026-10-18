@@ -1,2 +1,2 @@
-/** Every example's source, by its key (its file name without .cells). */
-export declare const EXAMPLE_SOURCES: Readonly<Record<string, string>>;
+/** Every example's file (frontmatter, the piece in a cells block: piecefile.ts), by its key (its file name without .md). */
+export declare const EXAMPLE_FILES: Readonly<Record<string, string>>;

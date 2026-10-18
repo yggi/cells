@@ -37,4 +37,4 @@ it in the parser keeps the compiler, the graph and the engine as they are.
 - Free values (`free(…)`) in a base aren't copied as sliders of their own: the copy plays the base's written value.
 - The folder writes variants this way (`engine/fold/variants.ts`); BWV 847 converted from MIDI has its subject as one
   cell and its bent entries as copies.
-- Tier 5 of the tutorial teaches it with a new piece, *Variations* (`examples/variations.cells`).
+- Tier 5 of the tutorial teaches it with a new piece, *Variations* (`examples/variations.md`).

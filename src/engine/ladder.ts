@@ -30,9 +30,18 @@ export const STUBS: ReadonlySet<string> = new Set([
  * forms, and no tutorial piece can show these without changing the notes it plays. They go on a tier (4, rhythm, or 5,
  * development) with the piece that shows them. `beat=` (decision 040: a meter's beats, alla breve) lost its piece when
  * Swing moved to taps: it goes on tier 4 with one that shows it; `pulse=` (a scan's note value: BWV 847's sixteenths) too; `legato=` (#94, a line's articulation) waits for a piece of its own
- * on tier 4.
+ * on tier 4. `tags=`, a cell's clusters, lost its tier-1 pieces when the card's tags moved into the file's frontmatter
+ * (decision 047): it goes on a tier with a piece whose cells it clusters.
  */
-export const PENDING: ReadonlySet<string> = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter beat', 'parameter pulse', 'parameter legato']);
+export const PENDING: ReadonlySet<string> = new Set([
+  'step <a b c>',
+  'modifier x/n',
+  'modifier x(k,n,r)',
+  'parameter beat',
+  'parameter pulse',
+  'parameter legato',
+  'attribute tags',
+]);
 
 /**
  * A form's key, from its reference entry: an attribute or a parameter by its word (`over`, `lpf`);
@@ -69,10 +78,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'attribute loop',
       'attribute map',
       'attribute label',
-      'attribute title',
-      'attribute tags',
       'attribute about',
-      'attribute tier',
       'rate step=r',
       'rate loop=NAME',
       'map map=sample',

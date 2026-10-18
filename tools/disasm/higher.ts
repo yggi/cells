@@ -3,7 +3,7 @@
  * the folder leaves that a move on its own symbols would fold. A line that splices one cell again and again at moving
  * bases (`&m &m^1 &m^2 &m^3`: a sequence; a canon per tonos, the whole canon a tone higher each time) is a fast cell
  * driven by a slow path of transpositions. The language says one as a key cell stepped slowly, the line read through a
- * scale over it (examples/pertonos.cells); a caret that read a cell (`&m^&path`) would say it per line. The probe
+ * scale over it (examples/pertonos.md); a caret that read a cell (`&m^&path`) would say it per line. The probe
  * counts such runs and what a path would cost, so either has a number.
  */
 

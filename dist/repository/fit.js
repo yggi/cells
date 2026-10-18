@@ -4,7 +4,7 @@ import { clockNeeds, holesOf, INTERFACE_NAMES, meterMeets } from "./holes.js";
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const CONTINUES = /[+*,[]\s*$/;
-function declarations(text) {
+export function declarations(text) {
     const out = [];
     let carry = null;
     for (const raw of text.split('\n')) {

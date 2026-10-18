@@ -5,7 +5,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { compileSource } from './engine/compile';
 import * as cells from './index';
-import { EXAMPLE_SOURCES } from './engine/examples.generated';
+import { PRESETS } from './engine/presets';
 
 const DOCS = resolve(import.meta.dirname, '../docs');
 const markdown = (dir: string): string[] =>
@@ -118,8 +118,8 @@ describe('docs: the README shows the language as it is', () => {
     expect(compileSource(piece).diagnostics).toEqual([]);
     const lines = piece.split('\n').filter(Boolean);
     expect(lines.length).toBeLessThanOrEqual(10);
-    const source = Object.values(EXAMPLE_SOURCES).find((src) => lines.every((l) => src.split('\n').includes(l)));
-    expect(source, 'every line of the README piece is in one examples/*.cells').toBeDefined();
+    const source = Object.values(PRESETS).find(({ source: src }) => lines.every((l) => src.split('\n').includes(l)));
+    expect(source, 'every line of the README piece is in the text of one example (examples/*.md)').toBeDefined();
   });
 
   it('what its TypeScript block imports is exported, and it runs', () => {

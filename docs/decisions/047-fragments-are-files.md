@@ -49,6 +49,7 @@ What was left open: what a fragment's text may hold, how fragments combine, what
 
 - **The frontmatter is YAML, a subset parsed in cells**, so cells stays pure and takes no dependency; what the subset refuses is named where it is built (#143).
 - **The examples' title and tags move into frontmatter**, so an example and a fragment are the same kind of file.
+  Built in #146: the card's `tier=` moves with them (only a card takes it), and its description stays the label of the text's first note (`&piece`), which the graph shows; an example has no preface, as a fragment has none (`src/engine/piecefile.ts`).
 
 ## Open
 

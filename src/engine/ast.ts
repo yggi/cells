@@ -352,6 +352,25 @@ export interface CellDecl {
   readonly braid: Braid;
 }
 
+/**
+ * A note: a cell with a label= (or title=) and nothing else, no braid, clock, table, map or sound. It does nothing; it
+ * explains, in the graph's margin (display.md).
+ */
+export const isNote = (d: CellDecl): boolean =>
+  !!(d.label || d.title) &&
+  d.braid.kind === 'blank' &&
+  d.over === null &&
+  d.step === null &&
+  d.map === null &&
+  d.cycle === null &&
+  d.shift === null &&
+  d.stride === null &&
+  !d.off &&
+  !d.frees?.length &&
+  !d.env &&
+  !d.pitch &&
+  Object.keys(d.params).length === 0;
+
 /** A pitch term acting on a voice: `&theme`, `+ &vibrato`, `- &x`. */
 export interface Term {
   readonly ref: Ref;

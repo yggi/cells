@@ -3,7 +3,8 @@ Write the BWV 847 example from the encoding, with its structure: the prelude's
 figuration as one figure read through two braids of four-note chords, one a bar;
 its later sections as cells; the fugue as its subject and countersubject,
 entered in each voice at their transpositions, with the free counterpoint
-between them as cells of their own. Writes examples/bwv847.cells (written in full, then shortened by tools/shorten.mjs) and the
+between them as cells of their own. Writes examples/bwv847.md (a piece file: its title and tags in the frontmatter, the text written in full, then
+shortened by tools/shorten.mjs, in its cells block) and the
 reference the tests check it against (tools/bwv847.reference.json).
 
 The notes are the CCARH Humdrum encoding (humdrum-tools/bach-wtc on GitHub),
@@ -160,7 +161,7 @@ src = f"""# J. S. Bach, Prelude and Fugue in C minor, BWV 847 (The Well-Tempered
 # in full — on an old-school synthesizer, after Wendy Carlos' Switched-On Bach.
 # The notes: the CCARH Humdrum encoding (Bach-Gesellschaft edition, vol. xiv),
 # as semitones from C4, a sixteenth a step; tools/bwv847.py writes this from it.
-&piece title="Bach, Prelude and Fugue in C minor: for Wendy" tags="genre:classical, genre:electronic, artist:Bach, artist:Wendy Carlos, tonal, counterpoint" label="**Prelude and Fugue in C minor**, BWV 847 — in full: a prelude of one figure, then a fugue in three voices." about=&out
+&piece label="**Prelude and Fugue in C minor**, BWV 847 — in full: a prelude of one figure, then a fugue in three voices." about=&out
 &preludeFigureNote label="The prelude: one figure, twice a bar in both hands, through 24 bars of changing chords." about=(&rhFigure &lhFigure)
 &preludeBreaksNote label="Then it breaks free — *Presto*, *Adagio*, *Allegro*." about=(&rhPresto &rhAdagio &rhAllegro)
 &fugueEntriesNote label="The fugue, in three voices: the subject enters in the alto, is answered by the soprano, then the bass — and returns, in every voice, through the keys." about=(&alto &soprano &bass)
@@ -218,6 +219,7 @@ layout.update({'subject': (2.1, deepest + 1.3), 'counter': (4.1, deepest + 1.2)}
 # own, used exactly or transposed): the same notes — realize.test.ts checks them against the reference — in less text
 short = subprocess.run(['node', 'tools/shorten.mjs', '--within', r'^(soprano|alto|bass|rh|lh)'], input=src + '\n', capture_output=True, text=True, check=True)
 print(f'shortened: {len(src) + 1} -> {len(short.stdout)} characters', file=sys.stderr)
-open('examples/bwv847.cells', 'w').write(short.stdout)
+FRONTMATTER = '---\ntitle: "Bach, Prelude and Fugue in C minor: for Wendy"\ntags: [genre:classical, genre:electronic, artist:Bach, artist:Wendy Carlos, tonal, counterpoint]\n---\n'
+open('examples/bwv847.md', 'w').write(f"{FRONTMATTER}\n```cells\n{short.stdout.rstrip()}\n```\n")
 print('subjects:', [(s[0], s[1] // 16 + 1, s[3], s[4]) for s in subs], file=sys.stderr)
 print('counters:', [(c[0], c[1] // 16 + 1, c[3], c[4]) for c in cnts], file=sys.stderr)

@@ -1,6 +1,6 @@
 # 017 · Two tools: Shorten suggests, Normalise converges
 
-**Date:** 2026-10-10 · **Status:** accepted (owner, #234); its migrations are superseded by [048](048-four-tools-over-a-piece.md) if accepted
+**Date:** 2026-10-10 · **Status:** accepted (owner, #234); its migrations are superseded by [049](049-four-tools-over-a-piece.md) if accepted
 
 ## Context
 
