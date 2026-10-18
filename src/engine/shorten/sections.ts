@@ -4,14 +4,15 @@
  * author's: only `&parts` is offered, whatever its length, when it plays the same notes (checked here).
  */
 import { declLine, renameCell } from '../edit';
-import { samePiece, size, type Result, type Suggestion } from './harness';
+import { samePiece } from '../sameness';
+import type { Result, ShortenRewrite } from './harness';
 
 /** The name the examples' table of sections had, and the one it has. */
 const FROM = 'parts';
 const TO = 'sections';
 
 /** A table of sections named &parts: its rename to &sections, if it plays the same notes. */
-export function sections(source: string, result: Result): Suggestion[] {
+export function sections(source: string, result: Result): ShortenRewrite[] {
   if (![...(result.sections?.values() ?? [])].includes(FROM) || declLine(source, TO) >= 0) return [];
   const apply = (s: string) => renameCell(s, FROM, TO);
   const next = apply(source);
@@ -20,11 +21,11 @@ export function sections(source: string, result: Result): Suggestion[] {
   return [
     {
       id: `section:${FROM}`,
-      kind: 'section',
+      tool: 'migrate',
+      rule: 'section',
       title: `&${FROM} is a table of sections: call it &${TO}, as "part" is a voice of the band (decision 044)`,
       before: source.split('\n')[at].trim(),
       after: next.split('\n')[at].trim(),
-      saving: size(source) - size(next),
       apply,
     },
   ];

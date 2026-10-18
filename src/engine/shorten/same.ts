@@ -2,11 +2,11 @@
  * The same: two cells written exactly alike — one is enough, used by both names' users.
  */
 import { declLine, deleteCell, spansLines } from '../edit';
-import { measured, type Result, type Suggestion } from './harness';
+import { saves, type Result, type ShortenRewrite } from './harness';
 
 /** Cells written exactly alike: one is enough — its users read the other. */
-export function sameCells(source: string, result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function sameCells(source: string, result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   const byText = new Map<string, string[]>();
   for (const c of result.cells.values()) {
     if (c.lambda || c.implicit || c.voice || c.note || c.sink || spansLines(source, c.name)) continue;
@@ -31,15 +31,16 @@ export function sameCells(source: string, result: Result): Suggestion[] {
       }
       return next;
     };
-    const s = measured(source, {
+    const s: ShortenRewrite = {
       id: `same:${names.join(',')}`,
-      kind: 'same',
+      tool: 'shorten',
+      rule: 'same',
       title: `${names.map((n) => `&${n}`).join(' and ')} are written exactly alike: keep &${keep}, and use it for both`,
       before: `${gone.map((g) => `&${g}`).join(' ')} ${body.length > 40 ? body.slice(0, 39) + '…' : body}`,
       after: `&${keep}`,
       apply,
-    });
-    if (s) out.push(s);
+    };
+    if ((saves(source, s) ?? 0) > 0) out.push(s);
   }
   return out;
 }

@@ -1,5 +1,6 @@
 import { declWords, deleteCell, setBraid, spansLines } from "../edit.js";
-import { measured, samePiece } from "./harness.js";
+import { samePiece } from "../sameness.js";
+import { saves } from "./harness.js";
 const PLAIN_REF = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
 export function wrappers(source, result) {
     const out = [];
@@ -40,15 +41,16 @@ export function wrappers(source, result) {
             }
             return w.lambda ? next : deleteCell(next, w.name);
         };
-        const s = measured(source, {
+        const s = {
             id: `degree:${w.name}`,
-            kind: 'degree',
+            tool: 'shorten',
+            rule: 'degree',
             title: `${w.lambda ? token : `&${w.name}`} only reads ${motifs.join(' ')} through &${w.over} moved ${k > 0 ? 'up' : 'down'} ${Math.abs(k)}: write ${moved.join(' ')} where it is used`,
             before: token.length > 40 ? token.slice(0, 39) + '…' : token,
             after: moved.join(' '),
             apply,
-        });
-        if (s && samePiece(source, s.apply(source)))
+        };
+        if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source)))
             out.push(s);
     }
     return out;

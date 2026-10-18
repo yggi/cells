@@ -19,8 +19,9 @@
  *  - card.ts:      a migration: a card that says what the piece is (title= tags= tier=) as a piece file, those in its
  *                  frontmatter (decision 047); its rewrite is a file, not a text, so shortenAll never takes it
  *
- * Each suggestion carries its rewrite; its saving is measured on the result
- * (harness.ts: the cells a rule may touch, the measure, the note-for-note check).
+ * Each rule returns rewrites (../rewrite.ts), each one checked by the rule; a rewrite is offered as a suggestion, its
+ * saving measured on the result (harness.ts: the cells a rule may touch, the measure). The note-for-note check is the
+ * tools' own (../sameness.ts).
  */
 import { type Suggestion } from './harness';
 export type { Suggestion } from './harness';
