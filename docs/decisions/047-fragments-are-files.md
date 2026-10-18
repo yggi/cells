@@ -45,8 +45,11 @@ What was left open: what a fragment's text may hold, how fragments combine, what
 - Files keep the repository legible (the project's spirit: legible all the way down): a person can read, edit, diff and share a fragment, and an index is derived from files, never the other way round.
 - cells stateless keeps it pure (`tsconfig.pure.json`) and lets each frontend keep its own memory: a jam's, a person's library.
 
+## Settled after (owner, 2026-10-18)
+
+- **The frontmatter is YAML, a subset parsed in cells**, so cells stays pure and takes no dependency; what the subset refuses is named where it is built (#143).
+- **The examples' title and tags move into frontmatter**, so an example and a fragment are the same kind of file.
+
 ## Open
 
-- The frontmatter's syntax: YAML (what SilverBullet and most Markdown tools read) needs a parser in cells, a dependency or a small subset of its own; to be chosen in the files' issue.
-- Whether the examples' own metadata (their title and tags, today in the text) moves into frontmatter, so an example and a fragment are the same kind of file.
-- The store: SilverBullet or another, and who serves it at an event (Jambot's lobby, a person's machine); the frontends' issues measure it.
+- The store: SilverBullet or another, and who serves it at an event (Jambot's lobby, a person's machine); yggi/cell-studio#455 measures it.
