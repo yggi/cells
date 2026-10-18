@@ -1,5 +1,5 @@
 import { declLine, renameCell } from "../edit.js";
-import { samePiece } from "../sameness.js";
+import { soundsIdentical } from "../sameness.js";
 const FROM = 'parts';
 const TO = 'sections';
 export function sections(source, result) {
@@ -7,7 +7,7 @@ export function sections(source, result) {
         return [];
     const apply = (s) => renameCell(s, FROM, TO);
     const next = apply(source);
-    if (next === source || !samePiece(source, next))
+    if (next === source || !soundsIdentical(source, next))
         return [];
     const at = declLine(source, FROM);
     return [

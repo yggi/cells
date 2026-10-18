@@ -44,4 +44,10 @@ describe('rewriteAll: a tool’s rewrites applied until none is left (#155)', ()
     expect(rewriteAll(SRC, find, 3).steps).toHaveLength(3);
     expect(rewriteAll('&a over=&nowhere 0', find).steps).toEqual([]);
   });
+
+  it('checks a rewrite over the whole piece, not its first minute (decision 050): a note moved at 80 s is refused', () => {
+    const ends = (last: string) => `&bar meter("4/4") step=60bpm\n&tune over=scale(major) step=4n laps=1 0!79 ${last}\n&lead s=sine loop=C4\n&out map=sample [&tune * &lead]`;
+    const late = respell('0!79 4', '0!79 5');
+    expect(rewriteAll(ends('4'), () => [late]).steps).toEqual([]);
+  });
 });

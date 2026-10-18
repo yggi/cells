@@ -144,12 +144,9 @@ describe('the notes contract (music-commons contracts/notes, version 1)', () => 
       }
   });
 
-  /** The contract's names an attribute's rate does not read (below): a natural note in octave −1. */
-  const unread = /^[A-G]-1$/;
-
   it('a note name as a rate is its frequency: &a loop=<name> turns at its Hz', () => {
     for (const v of keys)
-      for (const name of [v.sharp, v.flat].filter((name) => !unread.test(name))) {
+      for (const name of [v.sharp, v.flat]) {
         const r = compileSource(`&a loop=${name}`);
         expect(
           r.diagnostics.filter((d) => d.severity === 'error'),
@@ -163,17 +160,17 @@ describe('the notes contract (music-commons contracts/notes, version 1)', () => 
     expect(Math.abs(eventsBetween(plan(r, codeShifts(r)), 0, 1, true)[0].freq - keys[61].hz)).toBeLessThan(0.001);
   });
 
-  it('…but not a natural note in octave −1: loop=C-1 is an error (recorded, not a failure: C#-1, Bb-1 and a braid’s C-1 read)', () => {
-    // The contract names notes 0, 2, 4, 5, 7, 9 and 11 C-1, D-1 … B-1. A braid reads them (above), and so do
-    // noteFrequency, keyOf and pitchOfName, and an attribute reads the same octave with an accidental; an attribute's
-    // rate (parseStep in parser/values.ts) takes the bare letter as an environment name and stops at the '-'.
-    const names = keys.flatMap((v) => [v.sharp, v.flat]).filter((name, i, all) => unread.test(name) && all.indexOf(name) === i);
-    expect(names).toEqual(['C-1', 'D-1', 'E-1', 'F-1', 'G-1', 'A-1', 'B-1']);
-    for (const name of names)
+  it('…and a natural note in octave −1 too: loop=C-1 … B-1 are notes 0 … 11, and an upper-case word is still an environment name', () => {
+    for (const [i, name] of ['C-1', 'D-1', 'E-1', 'F-1', 'G-1', 'A-1', 'B-1'].entries()) {
+      const r = compileSource(`&a loop=${name}`);
       expect(
-        compileSource(`&a loop=${name}`).diagnostics.map((d) => d.message),
+        r.diagnostics.filter((d) => d.severity === 'error'),
         name,
-      ).toContain("Unexpected '-'");
+      ).toEqual([]);
+      expect(Math.abs(r.cells.get('a')!.freq - noteFrequency(name)!), name).toBeLessThan(0.001);
+      expect(keyOf(name), name).toBe([0, 2, 4, 5, 7, 9, 11][i]);
+    }
+    for (const word of ['SAMPLE_RATE', 'A', 'B1B', 'C2_X']) expect(parse(`&a loop=${word}`).cells[0].step, word).toMatchObject({ kind: 'env', name: word });
   });
 
   it('a note number’s name (keyName, noteName) has the contract’s pitch class and octave, and is its sharp or its flat label', () => {

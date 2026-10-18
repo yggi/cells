@@ -197,6 +197,17 @@ describe('a gate', () => {
     ]);
     expect(spans(G + '&g trigger=&tune gain=-.5 &v')[0]).toMatchObject({ severity: 'warning', message: expect.stringMatching(/^gain=-0.5: a level is 0 or more/) });
   });
+  it('a negative gain warns at it: a voice’s gain=, the card’s postgain=, a factor in a product', () => {
+    expect(spans('&v s=saw gain=-1')).toEqual([
+      { severity: 'warning', message: "gain=-1: a gain is 0 or more, and a negative one doesn't play softer — write 1", line: 1, col: 15, len: 2 },
+    ]);
+    expect(spans('&v s=saw\n&out map=sample postgain=-.5 [&v]')).toEqual([
+      { severity: 'warning', message: "postgain=-0.5: a gain is 0 or more, and a negative one doesn't play softer — write 0.5", line: 2, col: 26, len: 3 },
+    ]);
+    expect(spans('&bar step=1\n&t step=&bar 0 2\n&v s=saw\n&out map=sample [&t * &v * -.5]')).toEqual([
+      { severity: 'warning', message: "* -0.5: a factor in a product is a gain, 0 or more, and a negative one doesn't play softer — write 0.5", line: 4, col: 28, len: 3 },
+    ]);
+  });
   it('a receiver that isn’t a cell is an unknown cell, not a product with no voice', () => {
     expect(spans(G + '&g play=&tune [&nope]')).toEqual([{ severity: 'error', message: 'Unknown cell &nope', line: 5, col: 16, len: 5 }]);
     expect(spans(G + '&out map=sample [&tune * &nope]')).toEqual([{ severity: 'error', message: 'Unknown cell &nope', line: 5, col: 26, len: 5 }]);

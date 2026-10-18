@@ -5,7 +5,7 @@
  */
 import { declLine, setAttr } from '../edit';
 import { tapFor } from '../compiler/clocks';
-import { samePiece } from '../sameness';
+import { soundsIdentical } from '../sameness';
 import type { Result, ShortenRewrite } from './harness';
 
 /** The tap that says what &name's step= says (slowed `by` times, for the fractions), or null (not stepped by a meter's own steps). */
@@ -34,7 +34,7 @@ export function taps(source: string, result: Result): ShortenRewrite[] {
     seen.add(line);
     const apply = (s: string) => setAttr(s, line, 'step', tap);
     const next = apply(source);
-    if (next === source || !samePiece(source, next)) continue;
+    if (next === source || !soundsIdentical(source, next)) continue;
     const at = declLine(source, line);
     out.push({
       id: `tap:${line}`,

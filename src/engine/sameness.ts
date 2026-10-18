@@ -4,8 +4,8 @@
  * rewrite against it before they offer or apply it. Lifted out of `shorten/harness.ts` (#155). Pure.
  *
  *  - S1 `soundsIdentical`: every event alike, voice, onset, length, pitch, gains, bends, levels, moving parameters,
- *    envelope (the snapshot's `notes` and `events` hashes), over the whole piece (`wholeWindow`). `samePiece` is S1 over
- *    the first minute, what the tools check by until they move to the whole window.
+ *    envelope (the snapshot's `notes` and `events` hashes), over the whole piece (`wholeWindow`): what the tools check a
+ *    rewrite by. `samePiece` is S1 over the first minute, kept for the tests of equal spellings and its public subpath.
  *  - S2 `playsSameNotes`: every event's voice, onset, length and pitch alike, gains and the rest free.
  *  - S3 `sameNotes`: the named cells' flattened steps alike.
  */
@@ -39,24 +39,33 @@ export function sameNotes(a: string, b: string, names: readonly string[]): boole
  */
 export const SAMENESS_SECONDS = 60;
 
-/** One event as two pieces are compared: all of it (S1), or the note it plays (S2: voice, onset, length, pitch). */
+/**
+ * One event as two pieces are compared: all of it (S1), or the note it plays (S2: voice, onset, length, pitch). Its voice
+ * is read by its place among the voices heard, in the order the text declares them, not by its name (#186): a voice
+ * renamed sounds identical, as a renamed text is E2, and two voices' names swapped don't.
+ */
 type Event = ReturnType<typeof eventsBetween>[number];
-const whole = (e: Event) =>
-  `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
-const note = (e: Event) => `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
+const whole = (e: Event, voice: string) =>
+  `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
+const note = (e: Event, voice: string) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
 
 /** Do two texts compile and play the same events, each read as `key` reads it, from 0 to `until` seconds? */
-function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Result) => number), key: (e: Event) => string): boolean {
+function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Result) => number), key: (e: Event, voice: string) => string): boolean {
   try {
     const ra = compileSource(a);
     const rb = compileSource(b);
     if (!ra.ok || !rb.ok) return false;
     const to = typeof until === 'number' ? until : until(ra, rb);
-    const play = (r: Result) =>
-      eventsBetween(plan(r, codeShifts(r)), 0, to)
-        .map(key)
+    const play = (r: Result) => {
+      const events = eventsBetween(plan(r, codeShifts(r)), 0, to);
+      // (the voices heard, numbered in the order the text declares them: a cell that isn't a voice moves no number)
+      const heard = new Set(events.map((e) => e.voice));
+      const place = new Map([...r.cells.keys()].filter((name) => heard.has(name)).map((name, i) => [name, `#${i}`]));
+      return events
+        .map((e) => key(e, place.get(e.voice) ?? e.voice))
         .sort()
         .join('\n');
+    };
     return play(ra) === play(rb);
   } catch {
     return false;

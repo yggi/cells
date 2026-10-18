@@ -4,7 +4,7 @@
  * melody beside it (#10 F2) — and then its runs and fractions can be seen.
  */
 import { attrsOf, setAttr } from '../edit';
-import { samePiece } from '../sameness';
+import { soundsIdentical } from '../sameness';
 import { saves, type Result, type ShortenRewrite } from './harness';
 
 export function progressions(source: string, result: Result): ShortenRewrite[] {
@@ -25,7 +25,7 @@ export function progressions(source: string, result: Result): ShortenRewrite[] {
       after: `step=${step}`,
       apply: (src) => setAttr(setAttr(src, c.name, 'loop', null), c.name, 'step', step),
     };
-    if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source))) out.push(s);
+    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source))) out.push(s);
   }
   return out;
 }

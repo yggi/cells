@@ -1,5 +1,5 @@
 import { attrsOf, declLine, declWords, setAttr, setBraid } from "../edit.js";
-import { samePiece } from "../sameness.js";
+import { soundsIdentical } from "../sameness.js";
 function rewrite(source, name) {
     const a = attrsOf(source, name);
     const w = declWords(source, name);
@@ -23,7 +23,7 @@ export function gates(source, result) {
         if (c.gate?.port !== 'trigger')
             continue;
         const next = rewrite(source, c.name);
-        if (next === null || !samePiece(source, next))
+        if (next === null || !soundsIdentical(source, next))
             continue;
         const at = declLine(source, c.name);
         out.push({

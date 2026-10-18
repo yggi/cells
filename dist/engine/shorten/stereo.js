@@ -1,5 +1,5 @@
 import { declLine, declWords, setAttr, splitComment } from "../edit.js";
-import { samePiece } from "../sameness.js";
+import { soundsIdentical } from "../sameness.js";
 import { saves } from "./harness.js";
 function splitTop(text, sep) {
     const out = [];
@@ -117,7 +117,7 @@ export function stereo(source, result) {
             after: voices.map((v, i) => `&${v} pan=${written(pans[i])}`).join(' · '),
             apply,
         };
-        if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source)))
+        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source)))
             out.push(s);
     }
     return out;

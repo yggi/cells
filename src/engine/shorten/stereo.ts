@@ -4,7 +4,7 @@
  * sound is a voice heard nowhere else, and each pan is exact (three decimals at most).
  */
 import { declLine, declWords, setAttr, splitComment } from '../edit';
-import { samePiece } from '../sameness';
+import { soundsIdentical } from '../sameness';
 import { saves, type Result, type ShortenRewrite } from './harness';
 
 /** Split at a separator outside brackets and parentheses. */
@@ -112,7 +112,7 @@ export function stereo(source: string, result: Result): ShortenRewrite[] {
       after: voices.map((v, i) => `&${v} pan=${written(pans[i])}`).join(' · '),
       apply,
     };
-    if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source))) out.push(s);
+    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source))) out.push(s);
   }
   return out;
 }
