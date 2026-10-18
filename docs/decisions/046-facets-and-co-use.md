@@ -1,6 +1,6 @@
 # 046 · Each point of an association may name the facet it is found under, a hint a query names; how often fragments were used together pulls a fragment nearer by λ·ln(1 + n), λ = 0.1
 
-**Date:** 2026-10-18 · **Status:** accepted (owner, 2026-10-18, on #141: the facet a hint on each association point, not a classifier of the fragment; the co-use score and λ as built) · Issues: #138, #81 (the rung *Rhythms as fragments*), #49
+**Date:** 2026-10-18 · **Status:** accepted (owner, 2026-10-18, on #141: the facet a hint on each association point, not a classifier of the fragment; the co-use score and λ as built); where the counts live, superseded by 048 (a learned layer the frontend hands each query, `used(ids)` gone) · Issues: #138, #81 (the rung *Rhythms as fragments*), #49
 
 ## Context
 
