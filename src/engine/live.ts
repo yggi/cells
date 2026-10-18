@@ -7,7 +7,7 @@
  */
 import { ROOT, pickedUnits, type CompileResult, type Output, type ResolvedCell, type Shifts } from './program';
 import { resolveIn } from './helix';
-import { clocking, playedCells, selects, shiftsAt } from './clocking';
+import { clocking, playedCells, playing, selects, shiftsAt } from './clocking';
 import { stepsOf, unitsFor } from './flatten';
 import { footOf, slots, type Slot } from './subseq';
 import type { Atom } from './ast';
@@ -84,18 +84,18 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
   const beatAt = new Map<string, number>();
   const stepAt = new Map<string, number>();
   const played = playedCells(result);
-  const now = shiftsAt(result, statics, seconds, played);
+  const now = shiftsAt(result, statics, seconds);
   const clk = clocking(result, statics, seconds);
   const mark = (name: string): LiveCell => {
     let c = cells.get(name);
     if (!c) cells.set(name, (c = { local: null, entries: new Set() }));
     return c;
   };
-  // a note looked up: every table it passes through lights the entry it used; `from` reads the
-  // first table through over= (else it's inherited: no edge of its own)
-  const markChain = (way: Descent, from: string | null, table: string, tableShift: number, value: number, alter: number) => {
+  // a note of `cell` looked up: every table it passes through lights the entry it used; `from` reads the
+  // first table through over= (else it's inherited: no edge of its own). The tables turn, played or not (#167).
+  const markChain = (way: Descent, cell: string, from: string | null, table: string, tableShift: number, value: number, alter: number) => {
     let prev = from;
-    for (const p of resolveIn(result, table, tableShift, value, alter, now).path) {
+    for (const p of resolveIn(result, table, tableShift, value, alter, played.has(cell) ? playing(now, statics, cell) : now).path) {
       mark(p.cell).entries.add(p.index);
       way.push({ from: prev && result.cells.get(prev)?.over === p.cell ? prev : null, to: p.cell, table: true });
       prev = p.cell;
@@ -220,8 +220,8 @@ export function liveAt(result: CompileResult, statics: Shifts, muted: ReadonlySe
             }
           }
         } else {
-          if (a.kind === 'note') markChain(way, tFrom, table, tShift, a.value, a.alter);
-          else a.notes.forEach((v, j) => markChain(way, tFrom, table, tShift, v, a.alters[j]));
+          if (a.kind === 'note') markChain(way, at, tFrom, table, tShift, a.value, a.alter);
+          else a.notes.forEach((v, j) => markChain(way, at, tFrom, table, tShift, v, a.alters[j]));
         }
       }
       // (a splice sounding now: followed down; one at a time)

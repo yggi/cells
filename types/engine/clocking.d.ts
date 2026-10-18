@@ -27,8 +27,8 @@ export interface TimeMap {
 export declare function timeMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap;
 /**
  * Cells whose braid is played — the terms of every out (triggers and
- * modulators) and everything they splice: their moving shift is a playhead,
- * not a turn of a table.
+ * modulators) and everything they splice: their own notes read their moving
+ * shift as a playhead, not a turn of a table (`playing`).
  */
 export declare function playedCells(result: CompileResult): Set<string>;
 export interface Clocking {
@@ -46,14 +46,20 @@ export declare function varispeedOf(result: CompileResult, clock: string): numbe
 /** A program's clocks read at `seconds`: each clock's time map, and how many steps it has taken. */
 export declare function clocking(result: CompileResult, statics: Shifts, seconds?: number): Clocking;
 /**
- * Shifts at a moment: the static shift, plus — for stepped cells that are
- * looked through rather than played — the turns their step= chain has made,
- * times their stride. A table turns by its braid's own steps (#122): an entry
- * held `@n` (or `_`) or repeated `!n` stays in force n steps, and a subsequence's
- * steps turn within its step. They come round after the braid's own length, or
- * where cycle= says (more laps climb on the way).
+ * Shifts at a moment, as a line reading through them sees them: the static shift, plus — for stepped cells looked
+ * through, played or not — the turns their step= chain has made, times their stride. A table that also plays turns
+ * for what reads through it, so a reader sees the entry sounding (#167). A table turns by its braid's own steps (#122):
+ * an entry held `@n` (or `_`) or repeated `!n` stays in force n steps, and a subsequence's steps turn within its step.
+ * They come round after the braid's own length, or where cycle= says (more laps climb on the way). A played cell's own
+ * notes read their own shift as it stands (`playing`).
  */
-export declare function shiftsAt(result: CompileResult, statics: Shifts, seconds: number, played?: ReadonlySet<string>): Shifts;
+export declare function shiftsAt(result: CompileResult, statics: Shifts, seconds: number): Shifts;
+/**
+ * Shifts as a played cell's own notes read them (#167): its moving shift is its playhead, the steps its braid has
+ * played, so its own shift is the static one (a played grid's notes, a relative pick's entry as a mix plays it); every
+ * table it reads through turns as `shiftsAt` turns it, played or not.
+ */
+export declare const playing: (now: Shifts, statics: Shifts, cell: string) => Shifts;
 /** Where a turning table comes round by itself: its braid's own length in steps (a key of 12 after 12, `[0,2,4]@3 [5,7,9]` after 4). */
 export declare const ownLength: (result: CompileResult, name: string) => number;
 /** Is it a selector (a cell reading a table of sections: decision 016)? */

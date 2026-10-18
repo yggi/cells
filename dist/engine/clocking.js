@@ -189,13 +189,13 @@ export function clocking(result, statics, seconds = 0) {
     };
     return { map, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
-export function shiftsAt(result, statics, seconds, played = playedCells(result)) {
+export function shiftsAt(result, statics, seconds) {
     const clk = clocking(result, statics, seconds);
     const steps = new Map();
     return (name) => {
         const base = statics(name);
         const c = result.cells.get(name);
-        if (!c || !c.step || !c.clock || played.has(name) || result.clocks.has(name) || selects(result, name) || c.loops)
+        if (!c || !c.step || !c.clock || result.clocks.has(name) || selects(result, name) || c.loops)
             return base;
         let s = steps.get(c.clock);
         if (s === undefined)
@@ -214,6 +214,7 @@ export function shiftsAt(result, statics, seconds, played = playedCells(result))
         return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
     };
 }
+export const playing = (now, statics, cell) => (name) => name === cell ? statics(name) : now(name);
 export const ownLength = (result, name) => {
     const c = result.cells.get(name);
     return ownSteps(result, name)?.length ?? (c.units.length || c.cycle);

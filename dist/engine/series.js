@@ -1,5 +1,5 @@
 import { resolveIn, semitones } from "./helix.js";
-import { clocking, EPS, shiftsAt } from "./clocking.js";
+import { clocking, EPS, playing, shiftsAt } from "./clocking.js";
 import { tapped } from "./flatten.js";
 export function paramTracks(p, voice, at, dur) {
     const vp = p.voiceParams.get(voice);
@@ -28,9 +28,10 @@ export function paramTracks(p, voice, at, dur) {
     return out;
 }
 export function pitchOf(p, e, at) {
-    const now = shiftsAt(p.result, p.statics, at + EPS, p.played);
-    const t = tapped(p.result, e, now);
-    const found = resolveIn(p.result, e.table, e.tableShift, t.value, t.alter, now);
+    const now = shiftsAt(p.result, p.statics, at + EPS);
+    const own = p.played.has(e.cell) ? playing(now, p.statics, e.cell) : now;
+    const t = tapped(p.result, e, own);
+    const found = resolveIn(p.result, e.table, e.tableShift, t.value, t.alter, own);
     const r = e.transpose ? { ...found, position: found.position + e.transpose } : found;
     return semitones(p.result, r.root, r.position);
 }

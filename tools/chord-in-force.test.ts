@@ -78,6 +78,17 @@ describe('the chord in force, over E33’s 384 bars (#95)', () => {
     expect(BY_READING.overHarm!.overChord).toBe(53);
   });
 
+  it('… and with the harmony played too, on a channel of its own: every note still over the chord sounding (#167)', () => {
+    const bars = BARS.map((b) => barUnder(b, 'overHarm', true));
+    const secs = SECTIONS.map((s) => sectionUnder(s, 'overHarm', true));
+    const sum = (xs: readonly { matched: number }[]) => xs.reduce((n, x) => n + x.matched, 0);
+    expect(sum(bars)).toBe(2979);
+    expect(bars.filter((b) => b.matched === b.want).length).toBe(384);
+    expect(sum(secs)).toBe(2979);
+    expect(secs.filter((s) => s.matched === s.want).length).toBe(23);
+    expect([...bars, ...secs].flatMap((x) => x.diagnostics)).toEqual([]);
+  });
+
   it('… as E33 writes it, and as this tool lowers the chord in force to degrees of the key', () => {
     for (const r of ['e33', 'inForce', 'integers']) {
       expect(BY_READING[r]!.bars).toBe(2979);

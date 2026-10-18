@@ -4,7 +4,7 @@
  * one note. Tables are looked up as they stand at each moment (`pitchOf`).
  */
 import { resolveIn, semitones } from './helix';
-import { clocking, EPS, shiftsAt } from './clocking';
+import { clocking, EPS, playing, shiftsAt } from './clocking';
 import { tapped, type StepEvent } from './flatten';
 import type { Plan } from './realize';
 
@@ -66,9 +66,11 @@ export function paramTracks(p: Plan, voice: string, at: number, dur: number): Re
 
 /** Pitch of a step event, in semitones, looking tables up as they stand at `at`. */
 export function pitchOf(p: Plan, e: StepEvent, at: number): number {
-  const now = shiftsAt(p.result, p.statics, at + EPS, p.played);
-  const t = tapped(p.result, e, now);
-  const found = resolveIn(p.result, e.table, e.tableShift, t.value, t.alter, now);
+  // (the tables it reads through as they stand, turning whether they also play or not: #167; its own cell, if played, as written)
+  const now = shiftsAt(p.result, p.statics, at + EPS);
+  const own = p.played.has(e.cell) ? playing(now, p.statics, e.cell) : now;
+  const t = tapped(p.result, e, own);
+  const found = resolveIn(p.result, e.table, e.tableShift, t.value, t.alter, own);
   const r = e.transpose ? { ...found, position: found.position + e.transpose } : found; // ^$n: grid steps up
   return semitones(p.result, r.root, r.position);
 }

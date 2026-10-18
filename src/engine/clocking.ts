@@ -138,8 +138,8 @@ function tapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap): TimeMap {
 
 /**
  * Cells whose braid is played — the terms of every out (triggers and
- * modulators) and everything they splice: their moving shift is a playhead,
- * not a turn of a table.
+ * modulators) and everything they splice: their own notes read their moving
+ * shift as a playhead, not a turn of a table (`playing`).
  */
 export function playedCells(result: CompileResult): Set<string> {
   const out = new Set<string>();
@@ -250,14 +250,14 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
 }
 
 /**
- * Shifts at a moment: the static shift, plus — for stepped cells that are
- * looked through rather than played — the turns their step= chain has made,
- * times their stride. A table turns by its braid's own steps (#122): an entry
- * held `@n` (or `_`) or repeated `!n` stays in force n steps, and a subsequence's
- * steps turn within its step. They come round after the braid's own length, or
- * where cycle= says (more laps climb on the way).
+ * Shifts at a moment, as a line reading through them sees them: the static shift, plus — for stepped cells looked
+ * through, played or not — the turns their step= chain has made, times their stride. A table that also plays turns
+ * for what reads through it, so a reader sees the entry sounding (#167). A table turns by its braid's own steps (#122):
+ * an entry held `@n` (or `_`) or repeated `!n` stays in force n steps, and a subsequence's steps turn within its step.
+ * They come round after the braid's own length, or where cycle= says (more laps climb on the way). A played cell's own
+ * notes read their own shift as it stands (`playing`).
  */
-export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number, played: ReadonlySet<string> = playedCells(result)): Shifts {
+export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number): Shifts {
   const clk = clocking(result, statics, seconds);
   const steps = new Map<string, number>();
   return (name) => {
@@ -266,7 +266,7 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
     // a meter (a clock of its own) places time: read as a table, it doesn't turn;
     // a selector sequences its parts: it steps, it doesn't turn either
     // … and what loops (loop=) oscillates: it doesn't turn either
-    if (!c || !c.step || !c.clock || played.has(name) || result.clocks.has(name) || selects(result, name) || c.loops) return base;
+    if (!c || !c.step || !c.clock || result.clocks.has(name) || selects(result, name) || c.loops) return base;
     let s = steps.get(c.clock);
     if (s === undefined) steps.set(c.clock, (s = clk.stepOf(c.clock)));
     // a turning table comes round after its own length (a key of 12 after 12, a scale after 7, a
@@ -286,6 +286,16 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
     return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
   };
 }
+
+/**
+ * Shifts as a played cell's own notes read them (#167): its moving shift is its playhead, the steps its braid has
+ * played, so its own shift is the static one (a played grid's notes, a relative pick's entry as a mix plays it); every
+ * table it reads through turns as `shiftsAt` turns it, played or not.
+ */
+export const playing =
+  (now: Shifts, statics: Shifts, cell: string): Shifts =>
+  (name) =>
+    name === cell ? statics(name) : now(name);
 
 /** Where a turning table comes round by itself: its braid's own length in steps (a key of 12 after 12, `[0,2,4]@3 [5,7,9]` after 4). */
 export const ownLength = (result: CompileResult, name: string) => {
