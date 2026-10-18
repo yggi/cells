@@ -1,7 +1,13 @@
 /**
- * Sameness: do two spellings play the same? The promise every tool that rewrites a piece keeps (decision 049): Migrate,
- * Normalise and Shorten check a rewrite against it before they offer or apply it, and the tests of equal spellings
- * compare by it. Lifted out of `shorten/harness.ts` (#155). Pure.
+ * Sameness: do two texts sound the same, at some rung of decision 050's ladder? The sound rungs (S); the text rungs (E)
+ * are `identity.ts`'s. Every tool that rewrites a piece promises S1 (decision 049): Migrate, Normalise and Shorten check a
+ * rewrite against it before they offer or apply it. Lifted out of `shorten/harness.ts` (#155). Pure.
+ *
+ *  - S1 `soundsIdentical`: every event alike, voice, onset, length, pitch, gains, bends, levels, moving parameters,
+ *    envelope (the snapshot's `notes` and `events` hashes), over the whole piece (`wholeWindow`). `samePiece` is S1 over
+ *    the first minute, what the tools check by until they move to the whole window.
+ *  - S2 `playsSameNotes`: every event's voice, onset, length and pitch alike, gains and the rest free.
+ *  - S3 `sameNotes`: the named cells' flattened steps alike.
  */
 import { compileSource } from './compile';
 import { codeShifts } from './program';
@@ -11,7 +17,7 @@ import { pieceTime } from './duration';
 
 type Result = ReturnType<typeof compileSource>;
 
-/** Do these cells play the same notes (value, place, length) in both programs? */
+/** S3: do these cells play the same notes (value, place, length) in both programs? */
 export function sameNotes(a: string, b: string, names: readonly string[]): boolean {
   try {
     const ra = compileSource(a);
