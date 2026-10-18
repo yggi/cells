@@ -2,7 +2,8 @@
 // distance over the axes a point shares with each association, and ignores the axes it doesn't; it finds the facet it
 // names; and how often fragments were used together with what is chosen ranks beside the distance, within its bounds.
 import { describe, expect, it } from 'vitest';
-import { CO_USE_PULL, coUseScore, createRepository, fragmentDistance, fragmentProblems, pointDistance, type Fragment } from './fragments';
+import { CO_USE_PULL, coUseScore, createRepository, EMPTY_LAYER, fragmentDistance, fragmentProblems, pointDistance, type Fragment, type StylePoint } from './fragments';
+import { usedTogether, useFragments } from './learned';
 
 const good: Fragment = { id: 'a', text: '&bar meter("4/4")', association: [{ point: { x: 0, y: 0 }, weight: 1 }] };
 
@@ -144,9 +145,25 @@ describe('a facet, on each point of an association', () => {
 
 describe('used together', () => {
   const at = (id: string, x: number): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x }, weight: 1 }] });
-  const fresh = (...fragments: Fragment[]) => createRepository([at('chosen', 9), at('other chosen', 9), ...fragments]);
-  const order = (r: ReturnType<typeof fresh>, chosen: string[], point = { x: 0 }) => r.query(point, 9, {}, { chosen }).map((f) => f.fragment.id);
-  const useTimes = (r: ReturnType<typeof fresh>, n: number, ...ids: string[]) => Array.from({ length: n }, () => r.used(ids));
+  // (the counts live in a learned layer, decision 048: each use returns a new one)
+  const fresh = (...fragments: Fragment[]) => {
+    const repository = createRepository([at('chosen', 9), at('other chosen', 9), ...fragments]);
+    let layer = EMPTY_LAYER;
+    return {
+      repository,
+      used: (ids: string[]) =>
+        void (layer = useFragments(
+          repository,
+          layer,
+          ids.map((id) => ({ id })),
+        )),
+      usedTogether: (a: string, b: string) => usedTogether(layer, a, b),
+      query: (point: StylePoint, k: number, chosen?: string[]) => repository.query(point, k, {}, { chosen, layer }),
+    };
+  };
+  type Fresh = ReturnType<typeof fresh>;
+  const order = (r: Fresh, chosen: string[], point = { x: 0 }) => r.query(point, 9, chosen).map((f) => f.fragment.id);
+  const useTimes = (r: Fresh, n: number, ...ids: string[]) => Array.from({ length: n }, () => r.used(ids));
 
   it('counts each pair of a use once, both ways round; a fragment with itself, never', () => {
     const r = fresh(at('a', 0), at('b', 0));
@@ -159,7 +176,7 @@ describe('used together', () => {
 
   it('refuses an id it doesn’t hold, and records nothing of that use', () => {
     const r = fresh(at('a', 0));
-    expect(() => r.used(['a', 'nothing', 'chosen'])).toThrow(/used: no fragment 'nothing'/);
+    expect(() => r.used(['a', 'nothing', 'chosen'])).toThrow(/useFragments: no fragment 'nothing'/);
     expect(r.usedTogether('a', 'chosen')).toBe(0);
   });
 
@@ -179,7 +196,7 @@ describe('used together', () => {
     expect(order(r, ['chosen']).slice(0, 2)).toEqual(['a', 'b']);
     useTimes(r, 5, 'b', 'chosen');
     expect(order(r, ['chosen']).slice(0, 2)).toEqual(['b', 'a']);
-    const b = r.query({ x: 0 }, 9, {}, { chosen: ['chosen'] })[0]!;
+    const b = r.query({ x: 0 }, 9, ['chosen'])[0]!;
     expect([b.distance, b.score]).toEqual([0.2, 0.2 - CO_USE_PULL * Math.log(6)]);
   });
 
@@ -206,13 +223,13 @@ describe('used together', () => {
     const r = fresh(at('a', 0.5));
     useTimes(r, 5, 'a', 'chosen');
     useTimes(r, 4, 'a', 'other chosen');
-    const [a] = r.query({ x: 0 }, 1, {}, { chosen: ['chosen', 'other chosen', 'chosen'] });
+    const [a] = r.query({ x: 0 }, 1, ['chosen', 'other chosen', 'chosen']);
     expect(a!.score).toBeCloseTo(coUseScore(0.5, 9), 12);
     expect(a!.score).toBeCloseTo(0.5 - CO_USE_PULL * Math.log(10), 12);
   });
 
   it('counts no use with a chosen id it doesn’t hold', () => {
     const r = fresh(at('a', 0.5));
-    expect(r.query({ x: 0 }, 1, {}, { chosen: ['made by the composer'] })[0]!.score).toBe(0.5);
+    expect(r.query({ x: 0 }, 1, ['made by the composer'])[0]!.score).toBe(0.5);
   });
 });

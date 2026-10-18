@@ -43,6 +43,14 @@ export interface Fit {
     /** What the union's compile says that the workbench's alone doesn't; absent when a cheaper check failed first. */
     readonly diagnostics?: readonly Diagnostic[];
 }
+/** A declaration of a text: its cell's name (bare), its lines as written, and its code (comments aside, whitespace collapsed). */
+export interface Line {
+    readonly name: string;
+    readonly written: string;
+    readonly code: string;
+}
+/** A text's declarations, a line (and the lines it continues onto: one ending in `+`, `*`, `,` or `[`) each, as the parser reads them. */
+export declare function declarations(text: string): Line[];
 /** The union of a fragment with a workbench (see the module's comment). */
 export declare function unionOf(fragment: string, workbench: string): Union;
 /** Whether a fragment fits a workbench (see the module's comment); `compiled` compiles a text, and may cache it (`cachedCompile`). */
