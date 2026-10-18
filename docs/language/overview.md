@@ -64,7 +64,7 @@ Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decisi
 | `s("hh:0:.5")` | `&hh:0:.5` | a hit's own gain |
 | `.lpq(q)` | `lpq=` | Strudel's Q, not dough's 0–1 |
 | `.distort(d)` | `distort=` | on a scale of its own: 0 clean, 1 harsh |
-| `.legato(n)` | — | a note's length against its step isn't read yet; a tie that slides is dough's `glide=` ([sound.md](sound.md)) |
+| `.legato(n)` · `.clip(n)` | `legato=n` | Strudel's: a note's written length times n, before any swing; a tie that slides is dough's `glide=` ([sound.md](sound.md)) |
 | `s("bd")` and samples | voices made of braids, `s=saw` | no samples |
 
 ```cells

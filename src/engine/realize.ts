@@ -99,8 +99,9 @@ interface PlanTrack extends Series {
   /** When it stops, in seconds (laps= on a cell that drives it); Infinity if it loops. */
   readonly end: number;
   /**
-   * Its line's `legato=` (#94): the share of its held length each note sounds, a number (1: as written), or cells read at
-   * the note's onset (their product, scaled by a range when one is written).
+   * Its line's `legato=` (#94): the share of its written length (its steps) each note sounds, its end then placed by the
+   * time map as its onset is (#120), a number (1: as written), or cells read at the note's onset (their product, scaled by
+   * a range when one is written).
    */
   readonly share: number | { readonly range: readonly [number, number] | null; readonly series: readonly Series[] };
 }
@@ -536,7 +537,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     const c0 = tm.stepAt(Math.max(0, from)) * t.rate;
     const c1 = tm.stepAt(Math.max(0, until)) * t.rate;
     if (!Number.isFinite(c0) || !Number.isFinite(c1) || c1 <= c0) continue; // (a clock gone wild: nothing from it)
-    // legato= (#94): the share of its held length a note starting at step s sounds, read at its onset
+    // legato= (#94): the share of its written length a note starting at step s sounds, read at its onset
     const shareAt = (s: number): number => {
       const l = t.share;
       if (typeof l === 'number') return l;
@@ -547,16 +548,16 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       }, 1);
       return l.range ? l.range[0] + (l.range[1] - l.range[0]) * x : x;
     };
-    // a note at step s, held until step `upto` as written, sounding its share of that (legato=): past the bar line, into
-    // the next note, wherever it reaches; only a selector's window (`bound`, a step) and the line's end cut it
+    // a note at step s, held until step `upto` as written, sounding its share of those steps (legato=, #120: Strudel's
+    // reading, the share taken before the swing), its end then placed by the time map as its onset is: past the bar line,
+    // into the next note, wherever it reaches; only a selector's window (`bound`, a step) and the line's end cut it
     const make = (s: number, e: StepEvent, upto: number, bound = Infinity): Played | null => {
       const at = tm.q(s / t.rate);
       if (!Number.isFinite(at)) return null; // (a clock run down: this step never comes)
       if (at >= t.end - EPS) return null;
       // (a note whose clock stops beneath it never reaches its end: it rings 8 s at most)
       const share = shareAt(s);
-      const written = tm.q(upto / t.rate);
-      const ends = Math.min(share === 1 ? written : at + share * (written - at), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
+      const ends = Math.min(tm.q((share === 1 ? upto : s + share * (upto - s)) / t.rate), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
       // (a kit read held under a melody picks the member by its number then; the melody's step starts the note)
       const by = t.picker ? heldAt(p, t.picker, at) : e;
       const v = by && voiceFor(result, t.output, by.value);
