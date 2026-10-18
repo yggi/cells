@@ -1,0 +1,29 @@
+---
+title: Sound on Tape
+tags: [genre:experimental, genre:electronic, genre:ambient, sound]
+---
+
+```cells
+&piece label="Sound, on a tape loop: a plucked tune and a soft pad go to the speakers and onto a wowing reel of tape." about=&out
+&lengthNote label="The tape holds 4 seconds; every lap it comes round darker and warmer, a little hiss under it." about=&tape
+&headsNote label="Three heads play the tape back, left, right and between." about=(&left &right &far)
+&reelNote label="Hold the reel: the whole tape bends down." about=&reel
+# Sound on Tape — &tape records a mix (write=&dry): sound, not notes. Its loop (length=) feeds
+# back into itself, keeping 1 − erase each lap, through its loss (tone=, Hz) and saturation
+# (drive=), with a little hiss=. The read heads are readers; in a mix they return to the speakers.
+# The tape moves with &reel: when the reel slows, the heads' delays stretch and the pitch drops.
+&reel step=72bpm motor=1.2 mass=1 friction=.05 wow=.02 0
+&bar scan(1 1 1 1) step=72bpm
+&minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"
+&tune over=&minor step=8n label="the tune" 0 ~ 7 ~!2 4 ~!2 2 ~!7 9 ~ 7 ~ 4 ~!3 2 ~ 0 ~!5
+&pad over=&minor step=1m/2 label="the pad" [0,2,4] [-2,0,2]
+&pluck s=tri loop=D4 lpf=2600 env=&(map=adsr .003 .5 0 .4)
+&soft s=saw loop=D3 lpf=700 env=&(map=adsr 1.5 1 .8 3)
+&dry [&tune * &pluck * .25, &pad * &soft * .05]
+&tape step=&reel write=&dry length=4 erase=.35 tone=3200 drive=.35 hiss=.006 label="the tape: 4 s"
+&left play=&tape at=.75 label="head 1"
+&right play=&tape at=1.5 label="head 2"
+&far play=&tape at=2.75 label="head 3"
+
+&out postgain=12.6 map=sample [&dry, &left * .5, &far * .35] [&dry, &right * .5, &far * .35]
+```

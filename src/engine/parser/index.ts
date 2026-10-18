@@ -13,6 +13,8 @@
  *   mix.ts         a mix chord, kept as an expression (compile types it: algebra.ts)
  */
 import { applyBases } from './base';
+import { isNote } from '../ast';
+import { isPieceFile, readPiece } from '../piecefile';
 import type { CellDecl, Diagnostic, ParseResult } from '../ast';
 import { IDENT, LineError, LineScanner, stripComment } from './scanner';
 import { parseBody, parseCell, SHOWS } from './cell';
@@ -69,34 +71,56 @@ export function parse(whole: string): ParseResult {
   return applyBases({ cells, diagnostics, broken, plugins });
 }
 
-/** A piece's card: the first note with a title= — its title, its description (the label, as plain text), its tags. */
+/**
+ * A piece's card: its title, its description (the label of its card, as plain text), its tags and its tier. From a file
+ * (`piecefile.ts`, decision 047): the frontmatter's title, tags and tier, and the label of the text's first note. From a
+ * text written the old way: the first note with a title=, its title=, label=, tags= and tier= (a warning says they now go
+ * in the frontmatter, and Shorten moves them there).
+ */
 export interface PieceMeta {
   readonly title: string;
   readonly description: string;
   readonly tags: readonly string[];
   /** Its tier of the tutorial (tier=), if it is one of its pieces. */
   readonly tier: number | null;
-  /** The note it's on. */
-  readonly cell: string;
+  /** The note it's on (in a file, the text's first note), or null for none. */
+  readonly cell: string | null;
 }
 
-export function pieceMeta(source: string): PieceMeta | null {
-  const d = parse(source).cells.find((c) => c.title);
-  if (!d) return null;
-  const plain = (d.label ?? '')
+/** A label as plain text: fields dropped, formatting stripped, \n a space. */
+const plainLabel = (label: string) =>
+  label
     .replace(/\{[^}]*\}/g, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .replace(/\*(.+?)\*/g, '$1')
     .replace(/\\n/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  const tags = (d.tags ?? '')
-    .split(',')
+
+function card(title: string, label: string, tagList: readonly string[], tier: number | null, cell: string | null): PieceMeta {
+  const plain = plainLabel(label);
+  const tags = tagList
     .map((t) => t.trim()) // (as written: names keep their capitals — Bach, Wendy Carlos)
     .filter(Boolean)
     // (once each, whatever the case: the first spelling stays)
     .filter((t, i, all) => all.findIndex((u) => u.toLowerCase() === t.toLowerCase()) === i);
   // (a description that opens with the title doesn't need to say it twice)
-  const description = plain.toLowerCase().startsWith(d.title!.toLowerCase()) ? plain.slice(d.title!.length).replace(/^[\s,.:;—–-]+/, '') : plain;
-  return { title: d.title!, description, tags: [...new Set(tags)], tier: d.tier ?? null, cell: d.name };
+  const description = plain.toLowerCase().startsWith(title.toLowerCase()) ? plain.slice(title.length).replace(/^[\s,.:;—–-]+/, '') : plain;
+  return { title, description, tags, tier, cell };
+}
+
+/** A piece's card, from a file or from a text written the old way; null without a title. */
+export function pieceMeta(source: string): PieceMeta | null {
+  if (isPieceFile(source)) {
+    const file = readPiece(source);
+    if ('problems' in file) return null;
+    const { title, tags, tier } = file.frontmatter;
+    if (typeof title !== 'string') return null;
+    const note = parse(file.text).cells.find(isNote);
+    const tagList = Array.isArray(tags) ? tags.filter((t): t is string => typeof t === 'string') : [];
+    return card(title, note?.label ?? '', tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
+  }
+  const d = parse(source).cells.find((c) => c.title);
+  if (!d) return null;
+  return card(d.title!, d.label ?? '', (d.tags ?? '').split(','), d.tier ?? null, d.name);
 }

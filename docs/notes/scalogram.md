@@ -249,7 +249,7 @@ pulse, the notes and the waterfall in the audible, the waveform at the top. Pict
   pitch, is a piece folded the same way at two scales.
   - **5 to 12**: the glass's rhythm round a 12-pulse cycle and its pitch classes are one necklace, 2 2 2 1 2 2 1 (the
     standard bell and the major scale), maximally even. The only one in the library.
-  - **Bell** (examples/bell.cells) writes the same thing in its code, one scan for both, but within one cycle its
+  - **Bell** (examples/bell.md) writes the same thing in its code, one scan for both, but within one cycle its
     melody sounds five of the scale's seven pitch classes: heard, the pitch side is a pentatonic subset. The folding is
     the code's, and a code-side check (one cell read as a clock and as a table, `step=` and `over=`) would find it.
 - **Motifs** (`motifs.ts`): a five-note figure (its intervals, its rhythm against its first gap) heard again; those

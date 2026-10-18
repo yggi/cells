@@ -3,7 +3,7 @@ import { shorten } from './index';
 import { compileSource } from '../compile';
 import { codeShifts } from '../program';
 import { eventsBetween, plan } from '../realize';
-import { EXAMPLE_SOURCES } from '../examples.generated';
+import { PRESETS } from '../presets';
 
 // Decision 044: a table of sections named &parts is offered as &sections, the name the examples use.
 const SONG = `&bar meter("4/4") step=120bpm
@@ -38,6 +38,6 @@ describe('a table of sections named &parts (decision 044)', () => {
   });
 
   it('leaves no example a table named &parts', () => {
-    for (const [key, src] of Object.entries(EXAMPLE_SOURCES)) expect(migration(src), key).toBeUndefined();
+    for (const [key, { source }] of Object.entries(PRESETS)) expect(migration(source), key).toBeUndefined();
   });
 });

@@ -2,7 +2,7 @@
  * Foldings: a piece's cyclic patterns, heard at every level, and the same pattern found at more than one. A necklace is
  * `n` slots round a cycle with some marked: the strokes of a bell in its twelve pulses, the notes of a scale in the
  * twelve semitones. Seen as its steps (the gaps between marks) it doesn't depend on where the cycle starts, so the
- * West African bell x.x.xx.x.x.x and the major scale are one necklace, 2 2 1 2 2 2 1 (examples/bell.cells writes them
+ * West African bell x.x.xx.x.x.x and the major scale are one necklace, 2 2 1 2 2 2 1 (examples/bell.md writes them
  * as one scan). The same necklace at two levels is a piece folded the same way at two scales: a fixed point of
  * renormalization (docs/notes/multiscale.md), and a candidate for one cell where the code has two.
  */

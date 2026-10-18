@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { PRESETS } from './presets';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -137,10 +138,10 @@ describe('the examples arranged at the input play the same', () => {
     };
   };
   it.each([
-    ['BWV 847: the movements two sections stepped by the tempo map, no tacets (the breath between them said: ~@15)', 'examples/bwv847.cells', 'fixtures/bwv847-input.cells'],
-    ['Pop: six sections stepped by the bar, the parts straight out', 'examples/pop.cells', 'fixtures/pop-input.cells'],
+    ['BWV 847: the movements two sections stepped by the tempo map, no tacets (the breath between them said: ~@15)', 'bwv847', 'fixtures/bwv847-input.cells'],
+    ['Pop: six sections stepped by the bar, the parts straight out', 'pop', 'fixtures/pop-input.cells'],
   ])('%s', (_, example, rewired) => {
-    const before = notes(readFileSync(example, 'utf8'));
+    const before = notes(PRESETS[example as 'pop'].source);
     const after = notes(readFileSync(rewired, 'utf8'));
     expect(after.end).toBe(before.end);
     expect(after.notes.length).toBe(before.notes.length);

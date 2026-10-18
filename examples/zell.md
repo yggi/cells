@@ -1,0 +1,49 @@
+---
+title: Zelluläre Aktivität
+tags: [genre:electronic, artist:Kraftwerk, diatonic, arrangement]
+---
+
+```cells
+# Zelluläre Aktivität — in the manner of Kraftwerk, an original. Am – F – C – G, two
+# bars each. The bass's octaves move through the chords by transposing (&oct^$-4: four
+# semitones down, F); the arpeggio by moving its shape up the scale (&shape^5:
+# the same shape on its sixth step) — chromatic and diatonic, side by side. A slow filter
+# sweep over the arpeggio; a plain melody with echoes in time.
+&piece label="**Zelluläre Aktivität** — it builds, layer by layer, and ends." about=&out
+&aufbauNote label="It builds, layer by layer: &lied reads the parts, eight bars a step." about=&lied
+&progressionNote label="Am – F – C – G." about=(&bassline &arp)
+&bassNote label="Bass: octaves, transposed (^n)." about=&bassline
+&arpNote label="Arpeggio: one shape, read on the chord's step of the scale." about=(&shape &arp)
+&melodyNote label="Melody: plain, with echoes in time (delaytime=&bar)." about=(&melody &lead)
+&bar scan(1 1 1 1) step=free(112bpm, 90..140)
+&minor scan(2 1 2 2 1 2 2)                                   # A minor (the voices sit on A)
+
+&oct tags="bass" 0 12 0 12 0 12 0 12                                     # Oktaven: a bar of eighths
+&bassline tags="bass" step=&bassBar*2 label="Bass: Oktaven" &oct!2 &oct^$-4!2 &oct^$3!2 &oct^$-2!2   # A · F · C · G
+
+&shape tags="arpeggio" 0 2 4 7                                               # a chord's tones, up (degrees)
+&arp tags="arpeggio" over=&minor step=&arpBar*4 label="Arpeggio" &shape!8 &shape^5!8 &shape^2!8 &shape^6!8   # on A, F, C, G
+&sweep tags="arpeggio" map=lin loop=&bar/16 .1 1 .1
+
+&melody tags="melody" over=&minor step=&melodyBar label="Melodie" 4@2 2 1 0@4 5@2 4 2 4@4 2@2 1 0 1@4 6@2 4 3 4@4
+
+&beat tags="beat" step=&beatBar &bd &sd &bd &sd
+&ticks tags="beat" map=amp step=&ticksBar*4 .5 .2 .3 .2 .5 .2 .3 .6
+
+&bass tags="bass" s=square loop=A1 lpf=600 env=&(map=adsr .005 .12 .5 .05)
+&arpeggio tags="arpeggio" s=square loop=A3 lpf=300..4000 * &sweep lpq=4 env=&(map=adsr .002 .1 .2 .05)
+&lead tags="melody" s=saw loop=A4 lpf=2200 delaytime=&bar delay=.3 delayfeedback=.3 room=.2 env=&(map=adsr .03 .2 .7 .2)
+&bd tags="beat" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
+&sd tags="beat" gain=.35 s=white hpf=1200 env=&(map=adsr 0 .14 0 .05)
+&metal tags="beat" s=square loop=A7 hpf=5000 env=&(map=adsr 0 .03 0 .02)
+
+# Aufbau: the sections the song stacks — eight bars (the progression) a step
+&teile step=4n &beatBar &ticksBar &bassBar &arpBar &melodyBar
+&lied over=&teile step=1m/8 laps=1 label="Aufbau: Klick · Bass · Takt · Arpeggio · Melodie · Pause · alles · Klick" 1 [1,2] [0,1,2] [0,1,2,3] [0,1,2,3,4] [2,3] [0,1,2,3,4] 1
+
+&out postgain=1.78 map=sample [&ticks * &metal * .12,
+                         &beat,
+                         &bassline * &bass * .5,
+                         &arp * &arpeggio * .18,
+                         &melody * &lead * .3]
+```

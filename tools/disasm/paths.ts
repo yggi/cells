@@ -16,7 +16,7 @@
  *   lines or more.
  *
  * What a path is worth, said as a key cell (`saving`): every note from the pattern's start on, in pass k, written k·Δp
- * lower, and a cell of the key's steps (0, Δp, 2Δp …) summed into the lines (`examples/pertonos.cells` writes its
+ * lower, and a cell of the key's steps (0, Δp, 2Δp …) summed into the lines (`examples/pertonos.md` writes its
  * canon so). The folder judges both; the difference is the key cell's worth, its own characters counted.
  */
 import type { Smf } from '../../src/engine/midifile';

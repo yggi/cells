@@ -8,7 +8,7 @@ A minimal language for music where everything is a cell: a helix with a braid in
 &out loop=SAMPLE_RATE map=sample postgain=2 [&tune * &voice * .5]
 ```
 
-That is Frère Jacques ([`examples/steps.cells`](examples/steps.cells)). One cell per line, attributes anywhere; a cell looped at an audio rate is a voice, and the sound card (`&out`) plays what is in its brackets.
+That is Frère Jacques ([`examples/steps.md`](examples/steps.md)). One cell per line, attributes anywhere; a cell looped at an audio rate is a voice, and the sound card (`&out`) plays what is in its brackets. An example is a piece file: Markdown, its title and tags in YAML frontmatter and the piece in a ```` ```cells ```` block, the same kind of file as a fragment ([display.md](docs/language/display.md#a-pieces-file-and-its-card)).
 
 ## Use
 
@@ -44,7 +44,7 @@ The package ships TypeScript (Node won't strip it under `node_modules`: [#11](ht
 - [free(): left to the performer](docs/language/reference.md#free-left-to-the-performer): 5 forms
 - [step= and loop=](docs/language/reference.md#step--and-loop-): 16 forms
 - [map=](docs/language/reference.md#map-): 11 forms
-- [Attributes](docs/language/reference.md#attributes): 20 forms
+- [Attributes](docs/language/reference.md#attributes): 18 forms
 - [Parameters](docs/language/reference.md#parameters): 59 forms
 - [Sorts: what a cell is in a mix](docs/language/reference.md#sorts-what-a-cell-is-in-a-mix): 8 forms
 - [Mixes](docs/language/reference.md#mixes): 6 forms

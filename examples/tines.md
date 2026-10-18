@@ -1,0 +1,33 @@
+---
+title: Cell Tines
+tags: [genre:electronic, diatonic, FM, sound]
+---
+
+```cells
+&piece label="FM, after the DX7: an electric piano, bells and a punchy bass, all made by frequency modulation." about=&out
+&pianoNote label="An electric piano of two pairs: a body at 1:1, a tine at 14:1 that barks on the attack." about=(&body &tine)
+&bellNote label="Bells at 3.5:1." about=(&tune &bell)
+&bassNote label="A punchy FM bass." about=(&fmbass &low)
+&indexNote label="Each brightness is an index under an envelope: bright on the attack, mellowing as it rings." about=(&body &tine &bell &fmbass)
+&chordNote label="Fmaj7 · Em7 · Dm7 · Cmaj7." about=&comp
+# Cell Tines — frequency modulation: a modulator (a voice with ratio=) swings its carrier's
+# frequency (fm=&op) by index × its own frequency. Whole-number ratios sound harmonic
+# (pianos, basses), others not (bells). The index moves: index=lo..hi * &envelope.
+&bar scan(1 1 1 1) step=free(84bpm, 60..110)
+&major scan(2 2 1 2 2 2 1)
+&chord [0,2,4,6]@3 [0,2,4,6] ~@2 [0,2,4,6]@2                    # a seventh chord, in its rhythm
+&comp over=&major step=8n label="the piano: Fmaj7 · Em7 · Dm7 · Cmaj7" &chord^3 &chord^2 &chord^1 &chord
+&tune over=&major step=8n label="the bells" ~@2 9 11 12@4 ~@2 11 9 8@4 ~@2 7 8 9 8 7 5 4@4 ~@4
+&low over=&major step=4n -11 ~ -11 -10 -12 ~ -12 -11 -13 ~ -13 -12 -14 ~ -14 -10
+
+&m1 s=sine ratio=1
+&m2 s=sine ratio=14
+&m3 s=sine ratio=3.5
+&m4 s=sine ratio=1
+&body s=sine loop=C4 fm=&m1 index=.3..2.6 * &(map=adsr .002 .9 .3 .6) room=.3 env=&(map=adsr .002 1.6 .35 .8)
+&tine pan=.33 s=sine loop=C4 fm=&m2 index=0..2.2 * &(map=adsr .001 .1 0 .1) env=&(map=adsr .001 .45 0 .3)
+&bell oneshot pan=.38 s=sine loop=C5 fm=&m3 index=.8..6 * &(map=adsr .001 1.4 .15 1.2) room=.5 delaytime=&bar*4/3 delay=.3 delayfeedback=.35 env=&(map=adsr .002 3 0 2.5)
+&fmbass s=sine loop=C2 fm=&m4 index=.6..5 * &(map=adsr .001 .18 .15 .1) env=&(map=adsr .003 .4 .5 .1)
+
+&out postgain=4.47 map=sample [&comp * &body * .055, &comp * &tine * .03, &tune * &bell * .12, &low * &fmbass * .35]
+```

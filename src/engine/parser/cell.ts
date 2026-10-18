@@ -90,11 +90,13 @@ const whole =
   };
 const text =
   (key: 'title' | 'tags' | 'label', example: string): Reader =>
-  (s, b) => {
+  (s, b, _word, start) => {
     const at = s.i;
     const q = s.match(/"([^"]*)"/y);
     if (q === null) s.fail(`${key}= takes a text in quotes: ${example}`);
     b[key] = q!.slice(1, -1);
+    // (where it is written: on a piece's card, the warning that it now goes in the frontmatter points there)
+    if (key !== 'label') b.paramSpans[key] = s.place(start);
     // a label's fields: {tempo}, {&key:tonic} — any other would show as written
     if (key === 'label')
       for (const m of q!.matchAll(/\{(?:&[A-Za-z_][A-Za-z0-9_]*:)?([A-Za-z_][A-Za-z0-9_]*)\}/g))
@@ -251,7 +253,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
   tags: {
     form: 'tags="tag, tag"',
-    examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm"', '&lead tags="melody" s=saw loop=C4'],
+    examples: ['&lead tags="melody" s=saw loop=C4', '&beam tags="metal" map=ratios 1 2.756 5.404'],
     read: text('tags', 'tags="jazz, blues"'),
   },
   tier: {
@@ -262,6 +264,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       const n = s.match(/[0-9]+(?![0-9.])/y);
       if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999)) s.fail('tier= is a tier of the tutorial, 1 to 9999: tier=1', at, word.length + 1);
       b.tier = parseInt(n!, 10);
+      b.paramSpans.tier = s.place(at);
     },
   },
   about: {
