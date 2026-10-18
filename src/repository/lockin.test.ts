@@ -3,6 +3,7 @@
 // sections, one from each preset's point: 10,000 sections. Each section the composer asks for a meter, then for a rhythm
 // with the meter chosen, keeps the first of each, files one of its own on a miss (nothing within 0.3, Jambot's
 // `MISS_DISTANCE`), and uses what it kept at the section's point. The same walk with nothing learned is the baseline.
+// Use together pulls at the query's default (`CO_USE_PULL`), saturating at `CO_USE_KNOWN` uses (#151).
 // `LOCKIN_REPORT=1 npx vitest run --silent=false src/repository/lockin.test.ts` prints the numbers.
 import { describe, expect, it } from 'vitest';
 import { renameCell } from '../engine/edit';
@@ -123,12 +124,12 @@ function topThree(ids: readonly string[]): number {
 }
 
 /**
- * The bound on lock-in (decision 048): what use moves may add to the share of sections whose fragment is among its run's
- * 3 most used, over the same walk with nothing learned, on each facet, over the 10,000 sections: 5 points.
+ * The bound on lock-in (decision 048; #151): what use moves, and use moves with use together, may add to the share of
+ * sections whose fragment is among its run's 3 most used, over the same walk with nothing learned, on each facet, over the
+ * 10,000 sections: 5 points. Measured: use moves add 2.5 (meters) and 3.2 (rhythms); with use together, 2.5 and 4.7,
+ * where the pull that grew without bound added 9.3 to the rhythms'.
  */
 const LOCK_IN_BOUND = 0.05;
-/** What use moves and use together add, recorded: the count's pull (decision 046) adds the most, and this holds it from growing. */
-const LOCK_IN_RECORDED = 0.1;
 
 const runs = (learn: Learning) => Object.values(PRESETS).map((start, seed) => run(start, seed, learn));
 const MOVES = runs({ move: true, together: false });
@@ -187,8 +188,8 @@ describe('lock-in, over 10,000 sections at entropy 0.3', () => {
     expect(pooled(MOVES, facet, 'kept') - pooled(MOVES, facet, 'alone')).toBeLessThanOrEqual(LOCK_IN_BOUND);
   });
 
-  it.each(FACETS)('use moves and use together add at most 10 points, recorded: %s', (facet) => {
-    expect(pooled(BOTH, facet, 'kept') - pooled(BOTH, facet, 'alone')).toBeLessThanOrEqual(LOCK_IN_RECORDED);
+  it.each(FACETS)('use moves and use together, at the default pull, add at most 5 points: %s', (facet) => {
+    expect(pooled(BOTH, facet, 'kept') - pooled(BOTH, facet, 'alone')).toBeLessThanOrEqual(LOCK_IN_BOUND);
   });
 
   it('files fragments of its own where it misses, and finds them again the section after', () => {

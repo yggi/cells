@@ -63,7 +63,7 @@ Why these:
 
 ## Open
 
-- **Use together locks in more than use moves:** over the same walk, counting and weighing use together (046's pull, λ · ln(1 + n)) adds 9.3 points to the rhythms' share (to 0.981; Synth-pop's, Techno's, Deep house's, Ambient's and Lo-fi's runs keep their 3 most used rhythms every section), since a rhythm used with its meter hundreds of times is pulled 0.6 nearer, past any style distance. Recorded under 10 points in `lockin.test.ts`; bounding the pull (a count that saturates, or fades as the workbench's memory does) is [#151](https://github.com/yggi/cells/issues/151).
+- **Use together locked in more than use moves:** over the same walk, 046's pull, λ · ln(1 + n), added 9.3 points to the rhythms' share (to 0.981), since a rhythm used with its meter hundreds of times was pulled 0.6 nearer, past any style distance. [#151](https://github.com/yggi/cells/issues/151) bounds it ([046, amended](046-facets-and-co-use.md#amended-owner-2026-10-18-151)): the count saturates at 10 uses, a known group pulls 0.02 at the default, and the pull is the query's; with use together the rhythms' share is 0.935 (+4.7), and `lockin.test.ts` holds both ways of learning to 5 points.
 - Learning shortens distances, so a fragment used often is no longer a miss where it was: over the walk's 10,000 sections, the composer files 2 new fragments and 2 texts held already, where the seed alone misses 553 times (meters 349, rhythms 204); each new one is found again the section after it is filed (sections 1,046 and 1,147 of their runs).
 - The hash (#46, #28) replaces identity on the canonical text, and keys the layer's rows by hash instead of id.
 

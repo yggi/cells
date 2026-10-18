@@ -74,6 +74,49 @@ describe('an empty layer', () => {
   });
 });
 
+// The pull a query option (#151): at 0 it ranks as a query with nothing chosen, and with nothing chosen no pull changes
+// anything, so Jambot's meter query, which chooses nothing, ranks as it did.
+describe('the pull', () => {
+  const POINTS = drawn(1_000, 'pull');
+  const ids = LIBRARY.map((f) => f.id);
+  const pick = (tag: string) => ids[Math.floor(chanceOf(tag) * ids.length)]!;
+  // (a layer that has learned: every pair of the library used together, 1 to 500 times, drawn; and a jam's points and filings)
+  const together = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => ({ ids: [a, b].sort() as [string, string], count: 1 + Math.floor(chanceOf(`count|${a}|${b}`) * 500) })));
+  let layer: LearnedLayer = fileFragment(library, EMPTY_LAYER, filing(AMBIENT)).layer;
+  layer = useFragments(library, layer, [
+    { id: '4/4 swung on 8n', point: LO_FI, facet: 'meter' },
+    { id: 'Lo-fi hip hop drums', point: LO_FI, facet: 'rhythm' },
+  ]);
+  layer = { ...layer, together: [...together, ...layer.together.filter((p) => p.ids.includes('composer 2026-10-18T21:04:00Z'))] };
+  const facets = [undefined, 'meter', 'rhythm'] as const;
+  const optionsAt = (i: number): QueryOptions => {
+    const facet = facets[i % 3];
+    return { ...(facet ? { facet } : {}), layer, chosen: Array.from({ length: 1 + (i % 3) }, (_, j) => pick(`chosen|${i}|${j}`)) };
+  };
+
+  it('at 0, ranks as a query with nothing chosen: over 1,000 points, with a layer that counts every pair', () => {
+    expect(POINTS).toHaveLength(1_000);
+    let moved = 0;
+    for (const [i, point] of POINTS.entries()) {
+      const { chosen, ...unchosen } = optionsAt(i);
+      const none = ranked(library.query(point, 27, {}, unchosen));
+      expect(ranked(library.query(point, 27, {}, { ...unchosen, chosen, pull: 0 })), JSON.stringify(point)).toEqual(none);
+      if (JSON.stringify(ranked(library.query(point, 27, {}, { ...unchosen, chosen }))) !== JSON.stringify(none)) moved++;
+    }
+    // (and the default pull, over the same, does move them: the 0 is what holds)
+    expect(moved).toBeGreaterThan(900);
+  });
+
+  it('with nothing chosen, no pull changes a query: over 1,000 points', () => {
+    for (const [i, point] of POINTS.entries()) {
+      const { chosen: _, ...unchosen } = optionsAt(i);
+      const asked = ranked(library.query(point, 27, {}, unchosen));
+      for (const pull of [0, 0.5, 10]) expect(ranked(library.query(point, 27, {}, { ...unchosen, pull })), `${JSON.stringify(point)} pull ${pull}`).toEqual(asked);
+      expect(ranked(library.query(point, 27, {}, { ...unchosen, chosen: [] }))).toEqual(asked);
+    }
+  });
+});
+
 describe('filing', () => {
   it('a filed fragment is found first at its point, at distance 0: at 200 points, and at each preset’s, where a seed fragment sits at 0 too', () => {
     for (const point of [...drawn(200, 'filed'), ...PRESETS]) {

@@ -1,7 +1,9 @@
 import { cachedFit } from "./fit.js";
 export const EMPTY_LAYER = Object.freeze({ filed: Object.freeze([]), points: Object.freeze([]), together: Object.freeze([]) });
 export const CO_USE_PULL = 0.1;
-export const coUseScore = (distance, uses) => distance - CO_USE_PULL * Math.log1p(uses);
+export const CO_USE_KNOWN = 10;
+export const CO_USE_REACH = 0.2;
+export const coUseScore = (distance, uses, pull = CO_USE_PULL) => uses > 0 && pull > 0 ? distance - (pull * CO_USE_REACH * Math.log1p(Math.min(uses, CO_USE_KNOWN))) / Math.log1p(CO_USE_KNOWN) : distance;
 const isFiniteNumber = (x) => typeof x === 'number' && Number.isFinite(x);
 function pointProblems(point, where) {
     if (typeof point !== 'object' || point === null)
@@ -164,9 +166,11 @@ export function createRepository(entries) {
     return {
         fragments: seed,
         merge,
-        query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer } = {}) {
+        query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL } = {}) {
             if (!(Number.isInteger(k) && k >= 0))
                 throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
+            if (!(isFiniteNumber(pull) && pull >= 0))
+                throw new Error(`query: pull is ${String(pull)}, not a number ≥ 0`);
             const wrong = [
                 ...Object.entries(point).flatMap(([axis, v]) => (isFiniteNumber(v) ? [] : [`${axis} is ${String(v)}`])),
                 ...Object.entries(axisWeights).flatMap(([axis, w]) => (isFiniteNumber(w) && w > 0 ? [] : [`${axis}'s weight is ${String(w)}`])),
@@ -187,7 +191,7 @@ export function createRepository(entries) {
                 .filter((fragment) => pointsOf(fragment, facet).length > 0)
                 .map((fragment) => {
                 const distance = fragmentDistance(fragment, point, axisWeights, facet);
-                return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id)) };
+                return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id), pull) };
             })
                 .sort((a, b) => a.score - b.score || Number(filed.has(b.fragment.id)) - Number(filed.has(a.fragment.id)) || byId(a.fragment.id, b.fragment.id));
             if (workbench === undefined)
