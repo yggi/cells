@@ -9,6 +9,8 @@ export { cellsFromMidi } from "./engine/midiimport.js";
 export { pieceMidi } from "./engine/midiexport.js";
 export { readMidi, writeMidi, isMidi } from "./engine/midifile.js";
 export { PRESETS } from "./engine/presets.js";
+export { isPieceFile, readPiece, writePiece } from "./engine/piecefile.js";
+export { movedCard } from "./engine/shorten/card.js";
 export { createRepository, EMPTY_LAYER, layerProblems, } from "./repository/fragments.js";
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";
 export { METER_FRAGMENTS } from "./repository/meters.js";
