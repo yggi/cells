@@ -10,8 +10,10 @@
  * them (Jambot's `sync`, `harm`, …): a distance compares only the axes a query and a point share, so an axis no fragment
  * has is ignored. A facet is a name too (`meter`, `rhythm`), compared and never read: a hint of what a fragment is
  * associated as there (a bell a rhythm in one style, a scale in another), not a classifier. What a fragment can fill is
- * read off its text by the fit check (#49's next step), never off its facets.
+ * read off its text by the fit (`fit.ts`, decision 047), never off its facets: a query given the workbench ranks only the
+ * fragments that fit it.
  */
+import { cachedFit } from './fit';
 
 /** A place in style space: axis names to numbers. */
 export type StylePoint = Readonly<Record<string, number>>;
@@ -49,6 +51,12 @@ export interface QueryOptions {
   readonly facet?: string;
   /** The ids already chosen (on the composer's workbench): a fragment used with them often ranks nearer. An id the repository doesn't hold counts no use. */
   readonly chosen?: readonly string[];
+  /**
+   * The workbench, a cells text: rank only the fragments that fit it (`fitOf`: their uses defined there, no name defined
+   * twice, their clock's needs met, the union compiled with no new diagnostic). Each fragment is tested in the order it
+   * ranks, until k fit; the repository caches each compile by its text.
+   */
+  readonly workbench?: string;
 }
 
 export interface Repository {
@@ -147,6 +155,7 @@ export function createRepository(entries: readonly Fragment[]): Repository {
   }
   if (problems.length) throw new Error(`A malformed repository: ${problems.join('; ')}`);
   const fragments = [...entries];
+  const fits = cachedFit();
   // How often each pair was used together, both ways round: id → id → count.
   const together = new Map<string, Map<string, number>>(fragments.map((f) => [f.id, new Map()]));
   const usesWith = (id: string, chosen: readonly string[]) => {
@@ -157,7 +166,7 @@ export function createRepository(entries: readonly Fragment[]): Repository {
   };
   return {
     fragments,
-    query(point, k, axisWeights = {}, { facet, chosen = [] } = {}) {
+    query(point, k, axisWeights = {}, { facet, chosen = [], workbench } = {}) {
       if (!(Number.isInteger(k) && k >= 0)) throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
       const wrong = [
         ...Object.entries(point).flatMap(([axis, v]) => (isFiniteNumber(v) ? [] : [`${axis} is ${String(v)}`])),
@@ -165,14 +174,20 @@ export function createRepository(entries: readonly Fragment[]): Repository {
       ];
       if (wrong.length) throw new Error(`query: ${wrong.join(', ')}`);
       const chosenIds = [...new Set(chosen)];
-      return fragments
+      const ranked = fragments
         .filter((fragment) => pointsOf(fragment, facet).length > 0)
         .map((fragment) => {
           const distance = fragmentDistance(fragment, point, axisWeights, facet);
           return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id, chosenIds)) };
         })
-        .sort((a, b) => a.score - b.score || (a.fragment.id < b.fragment.id ? -1 : a.fragment.id > b.fragment.id ? 1 : 0))
-        .slice(0, k);
+        .sort((a, b) => a.score - b.score || (a.fragment.id < b.fragment.id ? -1 : a.fragment.id > b.fragment.id ? 1 : 0));
+      if (workbench === undefined) return ranked.slice(0, k);
+      const fitting: Found[] = [];
+      for (const found of ranked) {
+        if (fitting.length >= k) break;
+        if (fits(found.fragment.text, workbench).fits) fitting.push(found);
+      }
+      return fitting;
     },
     used(ids) {
       const unknown = ids.filter((id) => !together.has(id));

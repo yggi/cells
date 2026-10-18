@@ -5,6 +5,8 @@
  * holds fragments and finds them by their place in style space and by how often they were used together; `METER_FRAGMENTS`
  * are its meters, `RHYTHM_FRAGMENTS` its rhythms, `LIBRARY` both, read from the seed library's files (`fragments/`);
  * `readFragment` and `writeFragment` read and write a fragment as a file, Markdown with YAML frontmatter.
+ * `holesOf` reads what a fragment uses, defines and its clock needs, `unionOf` and `fitOf` add it to a workbench and say
+ * whether it fits.
  * Every module is also reachable on its own: `@yggi/cells/engine/<module>`, `@yggi/cells/theory/<module>`,
  * `@yggi/cells/repository/<module>`.
  */
@@ -25,4 +27,6 @@ export { createRepository, type Fragment, type Found, type QueryOptions, type Re
 export { METER_FRAGMENTS } from './repository/meters';
 export { RHYTHM_FRAGMENTS } from './repository/rhythms';
 export { LIBRARY } from './repository/library';
+export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
+export { fitOf, unionOf, type Fit, type Union } from './repository/fit';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';
