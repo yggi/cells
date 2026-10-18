@@ -1,0 +1,7 @@
+{
+  "bwv847 target": {"plays":true,"precision":0.667,"recall":1,"entries":11,"of":11,"structure":1},
+  "bwv847 flat": {"plays":true,"precision":1,"recall":0.25,"entries":1,"of":11,"structure":1.689},
+  "bwv847 fold": {"plays":true,"precision":0.333,"recall":0.625,"entries":8,"of":11,"structure":0.941},
+  "bwv847 shorten": {"plays":true,"precision":0.096,"recall":0.625,"entries":6,"of":11,"structure":0.98},
+  "bwv847 fold+shorten": {"plays":true,"precision":0.375,"recall":0.75,"entries":8,"of":11,"structure":0.912}
+}
