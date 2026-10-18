@@ -1,6 +1,6 @@
 # 049 · Four tools over a piece: Migrate, Normalise, Shorten, Fold
 
-**Date:** 2026-10-18 · **Status:** proposed (the four definitions are the owner's, 2026-10-18; the lines between the tools, the sort of today's rules and the questions below are the proposal) · Issues: #154 (the epic), #161 (the shared layer, built), #155, #156, #28, #157, #158, #27, #35 · Supersedes [decision 017](017-shorten-and-normalise.md) in part
+**Date:** 2026-10-18 · **Status:** accepted (the four definitions are the owner's, 2026-10-18; questions 1, 2 and 5 "as suggested", 3 and 4 ruled, 6 waiting with Migrate, the owner, 2026-10-18) · Issues: #154 (the epic), #161 (the shared layer, built), #155, #156, #28, #157, #158, #27, #35 · Supersedes [decision 017](017-shorten-and-normalise.md) in part
 
 ## Context
 
@@ -59,7 +59,16 @@ Rejected: Migrate inside Normalise (a retired form is not a valid one, and a pie
 
 - **The tools meet the repository** (#159): Normalise's output is the canonical form the hash (#49) and the learned layer's identity (decision 048) read; Fold → Shorten → Normalise is how what the Muse hears becomes a filed fragment (decision 047, `source: muse`); and Shorten's cells are a fragment's natural size, so Shorten's measure (question 2) and decision 047's "a piece with holes" agree on that unit.
 
-## Questions for the owner
+## Rulings (owner, 2026-10-18)
+
+1. **The line is accepted, and identity is not the normal form.** Normalise keeps every cell, its name, every step and every reference. A hash (#49) and the learned layer's identity (decision 048) read **Normalise, then an identity step**: a fragment's own names numbered in the order they are declared (the interface names `&bar`, `key`, `&harm` kept, decision 047), comments dropped, a stated default dropped. The identity step is the hash's, never written back to a piece. So Normalise keeps a default a piece states (the `steps` tutorial's `loop=SAMPLE_RATE`, #168), and a fragment is normalised on a workbench (the fit's union, then its own lines) before the identity step and the hash.
+2. **Shorten's measure is accepted, with an attribute's value counted as a leaf:** each leaf a braid writes (`x!n` and `x@n` one leaf, a chord its entries, a reference one leaf), one per attribute value, plus one per cell, over the normal form, names and comments free. So structure can't hide in attributes, and one per cell keeps a piece from splitting into cells of one note (decision 047's piece with holes). The folder's ratchets re-record their baselines once, in the rung that changes the measure (#157), with no fold lost.
+3. **`clip=`:** a Normalise rule; its warning stays until Normalise offers it (#168 builds it).
+4. **`&parts` → `&sections`:** Migrate offers it for one minor version, then it is retired.
+5. **The folder stops writing text: accepted as the direction**, each writer retired only when the ratchets hold without it. Fold reads events from any loader, Jambot's Muse among them, live, a section at a time: `hints(events)` takes a span (a section, or what has been heard so far), not a whole file, and a hint carries when it was heard and in which voice (#158).
+6. **A retired form:** waits with Migrate, which starts with v1.0.0.
+
+## The questions as they were asked
 
 1. **The line:** Normalise keeps every cell, its name, every step and every reference; Shorten changes them. Accepted?
 2. **Shorten's measure:** each leaf a braid writes (`x!n` and `x@n` one leaf, a chord its entries) plus one for each cell, over the normal form, names and comments free. Or other weights (an attribute's value, a reference costing more than a number)?

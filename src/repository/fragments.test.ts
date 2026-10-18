@@ -1,8 +1,22 @@
 // The repository's format and its query (decisions 041 and 046): a malformed entry fails, a query ranks by the weighted
 // distance over the axes a point shares with each association, and ignores the axes it doesn't; it finds the facet it
-// names; and how often fragments were used together with what is chosen ranks beside the distance, within its bounds.
+// names; and how often fragments were used together with what is chosen ranks beside the distance, within its bounds: a
+// count that saturates, as strongly as the query's pull (#151).
 import { describe, expect, it } from 'vitest';
-import { CO_USE_PULL, coUseScore, createRepository, EMPTY_LAYER, fragmentDistance, fragmentProblems, pointDistance, type Fragment, type StylePoint } from './fragments';
+import {
+  CO_USE_KNOWN,
+  CO_USE_PULL,
+  CO_USE_REACH,
+  coUseScore,
+  createRepository,
+  EMPTY_LAYER,
+  fragmentDistance,
+  fragmentProblems,
+  pointDistance,
+  type Fragment,
+  type QueryOptions,
+  type StylePoint,
+} from './fragments';
 import { usedTogether, useFragments } from './learned';
 
 const good: Fragment = { id: 'a', text: '&bar meter("4/4")', association: [{ point: { x: 0, y: 0 }, weight: 1 }] };
@@ -158,11 +172,25 @@ describe('used together', () => {
           ids.map((id) => ({ id })),
         )),
       usedTogether: (a: string, b: string) => usedTogether(layer, a, b),
-      query: (point: StylePoint, k: number, chosen?: string[]) => repository.query(point, k, {}, { chosen, layer }),
+      query: (point: StylePoint, k: number, chosen?: string[], more: QueryOptions = {}) => repository.query(point, k, {}, { chosen, layer, ...more }),
     };
   };
   type Fresh = ReturnType<typeof fresh>;
-  const order = (r: Fresh, chosen: string[], point = { x: 0 }) => r.query(point, 9, chosen).map((f) => f.fragment.id);
+  const order = (r: Fresh, chosen: string[], point = { x: 0 }, more: QueryOptions = {}) => r.query(point, 9, chosen, more).map((f) => f.fragment.id);
+  /** A repository of these fragments and a layer that counts each one's uses with 'chosen' as given, written directly. */
+  const counted = (fragments: Fragment[], counts: Record<string, number>) => {
+    const repository = createRepository([at('chosen', 9), ...fragments]);
+    const together = Object.entries(counts)
+      .filter(([, count]) => count > 0)
+      .map(([id, count]) => ({ ids: (id < 'chosen' ? [id, 'chosen'] : ['chosen', id]) as [string, string], count }));
+    return (more: QueryOptions = {}) =>
+      repository
+        .query({ x: 0 }, 9, {}, { chosen: ['chosen'], layer: { filed: [], points: [], together }, ...more })
+        .map((f) => f.fragment.id)
+        .filter((id) => id !== 'chosen');
+  };
+  /** How far n uses pull at the default: the distance less the score. */
+  const pullOf = (n: number, pull?: number) => 1 - coUseScore(1, n, pull);
   const useTimes = (r: Fresh, n: number, ...ids: string[]) => Array.from({ length: n }, () => r.used(ids));
 
   it('counts each pair of a use once, both ways round; a fragment with itself, never', () => {
@@ -197,26 +225,29 @@ describe('used together', () => {
     useTimes(r, 5, 'b', 'chosen');
     expect(order(r, ['chosen']).slice(0, 2)).toEqual(['b', 'a']);
     const b = r.query({ x: 0 }, 9, ['chosen'])[0]!;
-    expect([b.distance, b.score]).toEqual([0.2, 0.2 - CO_USE_PULL * Math.log(6)]);
+    expect([b.distance, b.score]).toEqual([0.2, coUseScore(0.2, 5)]);
+    expect(b.score).toBeCloseTo(0.2 - (CO_USE_PULL * CO_USE_REACH * Math.log(6)) / Math.log(11), 15);
   });
 
-  // The bound λ = 0.1 is chosen for (decision 046): two fragments 0.3 apart keep their order for every count below 10 of
-  // either with what is chosen, and the farther comes first at its 20th use (λ·ln 21 > 0.3 > λ·ln 20).
-  it('two fragments 0.3 apart: no count below 10 reverses them, and the farther takes the lead at 20 uses', () => {
-    const counts = Array.from({ length: 10 }, (_, n) => n);
-    for (const near of counts)
-      for (const far of counts) {
-        const r = fresh(at('near', 0.1), at('far', 0.4));
-        useTimes(r, near, 'near', 'chosen');
-        useTimes(r, far, 'far', 'chosen');
-        expect(order(r, ['chosen']).slice(0, 2), `near ${near}, far ${far}`).toEqual(['near', 'far']);
-      }
-    const r = fresh(at('near', 0.1), at('far', 0.4));
-    useTimes(r, 19, 'far', 'chosen');
-    expect(order(r, ['chosen']).slice(0, 2)).toEqual(['near', 'far']);
-    r.used(['far', 'chosen']);
-    expect(order(r, ['chosen']).slice(0, 2)).toEqual(['far', 'near']);
-    expect(CO_USE_PULL * Math.log(10)).toBeLessThan(0.3);
+  // The saturation (#151): each doubling of uses pulls the same until a group is known, at 10 uses; past that, more add
+  // nothing, so a group a long jam keeps never pulls past the reach, 0.01 at the default pull (#162).
+  it('saturates: each use pulls more up to 10, and none past it, so a known group pulls 0.01 at the default and no more', () => {
+    expect([CO_USE_PULL, CO_USE_KNOWN, CO_USE_REACH]).toEqual([0.1, 10, 0.1]);
+    for (let n = 1; n <= CO_USE_KNOWN; n++) expect(pullOf(n), `use ${n}`).toBeGreaterThan(pullOf(n - 1));
+    for (const n of [11, 12, 20, 100, 500, 1_000_000]) expect(pullOf(n), `${n} uses`).toBe(pullOf(CO_USE_KNOWN));
+    expect(pullOf(CO_USE_KNOWN)).toBeCloseTo(0.01, 15);
+    expect(pullOf(1)).toBeCloseTo((0.01 * Math.log(2)) / Math.log(11), 15);
+  });
+
+  it('two fragments 0.3 apart, Jambot’s miss distance, keep their order at every count of either, a million uses included', () => {
+    const counts = [0, 1, 5, 9, 10, 20, 500, 1_000_000];
+    for (const near of counts) for (const far of counts) expect(counted([at('near', 0.1), at('far', 0.4)], { near, far })(), `near ${near}, far ${far}`).toEqual(['near', 'far']);
+  });
+
+  it('a known group (10 uses, not 9) takes the lead from a fragment 0.00975 nearer, and never from one more than 0.01 nearer', () => {
+    expect(counted([at('near', 0.1), at('far', 0.10975)], { far: 10 })()).toEqual(['far', 'near']);
+    expect(counted([at('near', 0.1), at('far', 0.10975)], { far: 9 })()).toEqual(['near', 'far']);
+    expect(counted([at('near', 0.1), at('far', 0.1105)], { far: 1_000_000 })()).toEqual(['near', 'far']);
   });
 
   it('sums the uses with every fragment chosen before it weighs them, so a count does what it does however many are chosen', () => {
@@ -225,11 +256,48 @@ describe('used together', () => {
     useTimes(r, 4, 'a', 'other chosen');
     const [a] = r.query({ x: 0 }, 1, ['chosen', 'other chosen', 'chosen']);
     expect(a!.score).toBeCloseTo(coUseScore(0.5, 9), 12);
-    expect(a!.score).toBeCloseTo(0.5 - CO_USE_PULL * Math.log(10), 12);
+    expect(a!.score).toBeCloseTo(0.5 - (CO_USE_PULL * CO_USE_REACH * Math.log(10)) / Math.log(11), 12);
   });
 
   it('counts no use with a chosen id it doesn’t hold', () => {
     const r = fresh(at('a', 0.5));
     expect(r.query({ x: 0 }, 1, ['made by the composer'])[0]!.score).toBe(0.5);
+  });
+});
+
+// The pull's strength is the query's (#151): the frontend sets it from its novelty ladder (decision 043, point 5), and 0
+// is a query with nothing chosen. Over the library and 1,000 points: learned.test.ts.
+describe('the pull, a query option', () => {
+  const at = (id: string, x: number): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x }, weight: 1 }] });
+  const repository = createRepository([at('chosen', 9), at('near', 0.1), at('far', 0.15)]);
+  const layer = { filed: [], points: [], together: [{ ids: ['chosen', 'far'] as [string, string], count: 40 }] };
+  const ask = (more: QueryOptions) => repository.query({ x: 0 }, 2, {}, { chosen: ['chosen'], layer, ...more });
+
+  it('is CO_USE_PULL where the query names none', () => {
+    expect(ask({})).toEqual(ask({ pull: CO_USE_PULL }));
+    expect(ask({})[1]!.score).toBe(coUseScore(0.15, 40));
+  });
+
+  it('scales the pull: a known group pulls the pull times the reach', () => {
+    for (const pull of [0.05, 0.1, 0.5, 1, 3]) {
+      const far = ask({ pull }).find((f) => f.fragment.id === 'far')!;
+      expect(far.score, `pull ${pull}`).toBeCloseTo(0.15 - pull * CO_USE_REACH, 15);
+      expect(far.score).toBe(coUseScore(0.15, 40, pull));
+    }
+    // (0.05 apart: the default's 0.01 doesn't reverse them, a pull of 1 (0.1) does)
+    expect(ask({}).map((f) => f.fragment.id)).toEqual(['near', 'far']);
+    expect(ask({ pull: 1 }).map((f) => f.fragment.id)).toEqual(['far', 'near']);
+  });
+
+  it('at 0, pulls nothing: every score is the distance, as with nothing chosen', () => {
+    expect(ask({ pull: 0 })).toEqual(repository.query({ x: 0 }, 2, {}, { layer }));
+    for (const f of ask({ pull: 0 })) expect(f.score).toBe(f.distance);
+    expect(coUseScore(0.3, 1_000, 0)).toBe(0.3);
+    expect(coUseScore(Infinity, 3)).toBe(Infinity);
+  });
+
+  it('refuses a pull that isn’t a number ≥ 0', () => {
+    for (const pull of [-0.1, -Infinity, Infinity, NaN, '0.1' as unknown as number, null as unknown as number])
+      expect(() => ask({ pull }), String(pull)).toThrow(/query: pull is .*, not a number ≥ 0/);
   });
 });

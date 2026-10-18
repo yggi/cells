@@ -3,7 +3,8 @@
  * places in style space it is found at, each of which may name the facet it is found under. A query takes a style point
  * and k and returns the k fragments nearest to it, over their points of the facet it names. Fragments come in groups
  * (decision 043): a query weighs how often two were used together with what is already chosen, beside the distance
- * (decision 046).
+ * (decision 046), as strongly as the frontend asks (`pull`); how well a group is known saturates, and what was used lately
+ * is the frontend's workbench, not the repository's (#151).
  *
  * The repository is built from the seed library and keeps nothing a jam learns (decision 047, point 7; decision 048): a
  * query may be handed a learned layer (`LearnedLayer`: fragments the frontend filed, association points use added,
@@ -85,6 +86,12 @@ export interface QueryOptions {
     /** The ids already chosen (on the composer's workbench): a fragment used with them often ranks nearer. An id the repository doesn't hold counts no use. */
     readonly chosen?: readonly string[];
     /**
+     * How strongly use together with what is chosen pulls (`coUseScore`), a number ≥ 0: `CO_USE_PULL` where it says none, 0
+     * for none (a query that ranks as one with nothing chosen). The frontend sets it from where it is on its novelty ladder
+     * (decision 043, point 5): strong to repeat and vary, weak or 0 to fetch nearby and far. cells knows no ladder.
+     */
+    readonly pull?: number;
+    /**
      * The workbench, a cells text: rank only the fragments that fit it (`fitOf`: their uses defined there, no name defined
      * twice, their clock's needs met, the union compiled with no new diagnostic). Each fragment is tested in the order it
      * ranks, until k fit; the repository caches each compile by its text.
@@ -99,26 +106,34 @@ export interface Repository {
     /**
      * The k fragments that rank first, by score (`coUseScore`), then a filed fragment before a seed one, then by id; each
      * with its distance (`fragmentDistance`, over its points of the facet asked for) and its score, which is the distance
-     * when nothing is chosen. A fragment that shares no axis with the point is infinitely far, and comes last.
-     * `axisWeights` weighs the axes against each other (1 where it says nothing): the frontend knows that its tempo is not
-     * on the scale of its other axes. Throws on a malformed layer (`layerProblems`).
+     * when nothing is chosen or the pull is 0. A fragment that shares no axis with the point is infinitely far, and comes
+     * last. `axisWeights` weighs the axes against each other (1 where it says nothing): the frontend knows that its tempo is
+     * not on the scale of its other axes. Throws on a malformed layer (`layerProblems`), or a pull that isn't a number ≥ 0.
      */
     query(point: StylePoint, k: number, axisWeights?: StylePoint, options?: QueryOptions): Found[];
     /** The seed and a layer merged, as a query sees them; throws on a malformed layer, or one that files a seed's id. */
     merge(layer: LearnedLayer): Merged;
 }
-/**
- * How far the uses of a fragment with what is already chosen pull it nearer: λ in `coUseScore`, in units of distance per
- * e-fold of uses. At 0.1, fewer than 10 uses (λ·ln 10 ≈ 0.23) never reverse two fragments 0.3 apart, Jambot's miss
- * distance, and the 20th does (λ·ln 21 ≈ 0.304): the style leads, and the groups a jam keeps reorder what is near it.
- */
+/** The pull of use together a query has where it names none (`QueryOptions.pull`): λ in `coUseScore`. */
 export declare const CO_USE_PULL = 0.1;
+/** The count of uses together past which more add nothing: a group used together 10 times is known (#151). */
+export declare const CO_USE_KNOWN = 10;
 /**
- * A fragment's score: its distance less λ·ln(1 + n), n its uses with the fragments already chosen, summed over them
- * (decision 046). The logarithm makes each doubling of uses pull the same, so a pair used often doesn't lock the query
- * onto it; the sum is taken before it, so how many fragments are chosen doesn't change what a count can do.
+ * How far a known group pulls, in units of the pull: 0.01 in distance at the default, half Jambot's hold distance, a
+ * thirtieth of its miss distance (0.3). Over the lock-in measure's 256 runs (`lockin.ts`, `lockin.slow.test.ts`) use
+ * together then adds 1.5 points to the rhythms' share among a run's 3 most used, on top of use moves' 2.5, 4.05 in all,
+ * under the bound of 5 with twice its standard error (#162); at 0.2 the total is 5.1, at 0.05 3.4. Any pull adds some,
+ * since among fragments that fit the style about as well a known group wins the tie, and stays (#151).
  */
-export declare const coUseScore: (distance: number, uses: number) => number;
+export declare const CO_USE_REACH = 0.1;
+/**
+ * A fragment's score: its distance less pull · reach · ln(1 + min(n, known)) / ln(1 + known), n its uses with the
+ * fragments already chosen, summed over them (decision 046, amended by #151). The logarithm makes each doubling of uses
+ * pull the same, until the group is known; past that, more uses add nothing, so a group a long jam keeps never pulls past
+ * `CO_USE_REACH` · pull and the style stays in charge. The sum is taken before it, so how many fragments are chosen
+ * doesn't change what a count can do. With a pull of 0, or no uses, the score is the distance.
+ */
+export declare const coUseScore: (distance: number, uses: number, pull?: number) => number;
 /** What is wrong with an index entry, each problem a sentence; none for a well-formed one. */
 export declare function fragmentProblems(entry: Fragment): string[];
 /** What is wrong with a learned layer's shape, each problem a sentence; none for a well-formed one. Which ids it may name is the seed's (`merge`). */
