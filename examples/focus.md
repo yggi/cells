@@ -1,6 +1,6 @@
 ---
 title: Cell in Focus
-tags: [genre:electronic, artist:Aphex Twin, diatonic, genre:ambient]
+tags: [genre:electronic, genre:ambient, artist:Aphex Twin, diatonic, stereo]
 description: "Slow, serene and looping: four soft chords with bells drifting above; nothing hurries."
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Baustelle
-tags: [genre:experimental, genre:electronic, artist:Neubauten, microtonal, genre:industrial, arrangement]
+tags: [genre:experimental, genre:electronic, genre:industrial, artist:Neubauten, microtonal, arrangement]
 description: "An original in the manner of Einstürzende Neubauten: struck metal and a scream; it builds, breaks, comes back harder, and collapses."
 ---
 
@@ -61,7 +61,8 @@ description: "An original in the manner of Einstürzende Neubauten: struck metal
 &metalPart [&beams * &beamv * .09, &pipes * &pipev * .07]
 &einsturz [&fall * &beamv * .14, &crashPlate * &platev * .08, &rubble * &crash * .25, &rubble * &sub * .6]
 &teile step=4n &metalBar &plateBar &subBar &riffBar &federBar &grindBar &drillBar &schreiBar &einsturzBar
-&tag over=&teile step=1m/4 laps=1 label="metal · grinder · spring · groove · drill · scream · break · spring · groove · all · all · collapse · Einsturz" [0] [0,5] [0,2,4] [0,1,2,3,4] [0,1,2,3,4,6] [0,1,2,3,4,5,7] [4,5,7] [4] [0,1,2,3,4,5] [0,1,2,3,4,5,6,7]!2 [5,7] 8
+&tag over=&teile step=1m/4 laps=1 label="metal · grinder · spring · groove · drill · scream · break · spring · groove · all · all · collapse · Einsturz" [0] [
+     0,5] [0,2,4] [0,1,2,3,4] [0,1,2,3,4,6] [0,1,2,3,4,5,7] [4,5,7] [4] [0,1,2,3,4,5] [0,1,2,3,4,5,6,7]!2 [5,7] 8
 
 &out postgain=.282 map=sample [&metalPart, &plates * &platev * .05, &kick * &sub * .55,
                            &riff * &accent * &grit * .2, &feder * &bassfeder * .3,

@@ -1,6 +1,6 @@
 ---
 title: "Two voices: a mix"
-tags: [tutorial]
+tags: [tutorial, sound]
 tier: 1
 description: "One tune, played by two voices at once: a sine on top and a saw three octaves below it, quieter."
 ---

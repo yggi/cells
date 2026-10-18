@@ -1,6 +1,6 @@
 ---
 title: "Semitones: a scale up and down"
-tags: [tutorial]
+tags: [tutorial, diatonic]
 tier: 1
 description: "A number is a note: so many semitones above the voice's own. Up the C major scale and back."
 ---

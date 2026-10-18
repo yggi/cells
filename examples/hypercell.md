@@ -1,6 +1,6 @@
 ---
 title: Hypercell
-tags: [genre:electronic, artist:Scooter, diatonic, genre:dance, arrangement]
+tags: [genre:electronic, genre:dance, artist:Scooter, diatonic, arrangement]
 description: "90s happy hardcore and eurodance, an original: three minutes of euphoric drops, then it ends."
 ---
 
@@ -43,7 +43,8 @@ description: "90s happy hardcore and eurodance, an original: three minutes of eu
 &hookPart [&hook * &sawA * .13, &hook * &sawB * .13]
 &padPart [&held * &padv * .08]
 &sections step=4n &bassBar &stabBar &hookBar &padBar &beatBar &rollBar &riseBar
-&song over=&sections step=1m/8 laps=1 label="intro · groove · build · drop · drop · break · build · drop · drop · bass · break · build · drop · drop · out" [4] [0,4] [0,4,5,6] [0,1,2,4]!2 [2,3] [3,5,6] [0,1,2,4]!2 [0,4] 3 [3,5,6] [0,1,2,4]!2 4
+&song over=&sections step=1m/8 laps=1 label="intro · groove · build · drop · drop · break · build · drop · drop · bass · break · build · drop · drop · out" [
+      4] [0,4] [0,4,5,6] [0,1,2,4]!2 [2,3] [3,5,6] [0,1,2,4]!2 [0,4] 3 [3,5,6] [0,1,2,4]!2 4
 
 &out postgain=1.41 map=sample [&beat, &bassPart, &stabs * &stab * .1, &hookPart,
                          &lift * &riser * .12, &padPart, &roll]

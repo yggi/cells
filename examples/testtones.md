@@ -1,6 +1,6 @@
 ---
 title: Test Tones on Tape
-tags: [genre:experimental, genre:electronic, genre:ambient, sound]
+tags: [genre:experimental, genre:electronic, genre:ambient, sound, tape]
 description: "For the test bench, in the spirit of Hainbach: old sine generators, a beeping oscillator and a noise sweep, all onto worn tape."
 ---
 

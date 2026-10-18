@@ -1,6 +1,6 @@
 ---
 title: "8-bit: Korobeiniki, in Tetris form"
-tags: [genre:world, genre:electronic, genre:folk, tonal, genre:8-bit, arrangement]
+tags: [genre:world, genre:electronic, genre:folk, genre:8-bit, tonal, arrangement]
 description: "Korobeiniki, in the form of the puzzle game's music: A · A · B · B · A, and round again."
 ---
 

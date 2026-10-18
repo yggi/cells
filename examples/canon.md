@@ -1,6 +1,6 @@
 ---
 title: "Canon: Frère Jacques"
-tags: [tutorial, genre:classical, genre:folk, diatonic, canon]
+tags: [tutorial, genre:classical, genre:folk, diatonic, canon, stereo]
 tier: 5
 description: "Frère Jacques as a round: four voices, each a bar behind the last."
 ---

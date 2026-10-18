@@ -1,6 +1,6 @@
 ---
 title: "Canon per tonos: rising a tone a pass"
-tags: [genre:classical, artist:Bach, tonal, canon]
+tags: [genre:classical, artist:Bach, tonal, canon, stereo]
 description: A canon on the royal theme that rises a whole tone each pass, as in the Musical Offering.
 ---
 

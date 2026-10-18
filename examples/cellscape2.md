@@ -1,6 +1,6 @@
 ---
 title: Cellscape II feat. Stockhausen
-tags: [genre:experimental, genre:electronic, artist:Stockhausen, microtonal, genre:ambient]
+tags: [genre:experimental, genre:electronic, genre:ambient, artist:Stockhausen, microtonal, stereo]
 description: "No octaves, no beat, no instruments: sines and noise on Stockhausen's 25 steps to 5:1."
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Kalimba
-tags: [tutorial, genre:world, sound]
+tags: [tutorial, genre:world, sound, physics]
 tier: 7
 description: "The smallest tuned instrument: one resonator, its braid its tines, eight of them on a shared board."
 ---

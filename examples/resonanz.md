@@ -1,6 +1,6 @@
 ---
 title: "Baustelle II: Resonanz"
-tags: [genre:experimental, genre:electronic, artist:Neubauten, genre:industrial, sound]
+tags: [genre:experimental, genre:electronic, genre:industrial, artist:Neubauten, sound, physics, tape]
 description: "The building site again, now the metal itself rings: struck plate, beam, wire and spring, and pipes driven by a tape of the site."
 ---
 

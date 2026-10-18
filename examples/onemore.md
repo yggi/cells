@@ -1,6 +1,6 @@
 ---
 title: One more Cell
-tags: [genre:electronic, artist:Daft Punk, diatonic, genre:dance]
+tags: [genre:electronic, genre:dance, artist:Daft Punk, diatonic]
 description: "French filter house, an original: maj7 chords chopped in a funky rhythm under one long filter sweep."
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "Sympathy: resonators that answer"
-tags: [tutorial, sound]
+tags: [tutorial, sound, physics]
 tier: 7
 description: A struck fork sets its twin singing, and a harp's strings answer a flute they are never plucked by.
 ---

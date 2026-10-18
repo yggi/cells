@@ -1,6 +1,6 @@
 ---
 title: "A tone: one note, one voice"
-tags: [tutorial]
+tags: [tutorial, sound]
 tier: 1
 description: "The smallest piece that sounds: a note every second, played by a sine on A4."
 ---

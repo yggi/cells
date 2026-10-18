@@ -1,6 +1,6 @@
 ---
 title: "Just intonation: pure and tempered"
-tags: [genre:experimental, microtonal, tuning, harmony]
+tags: [genre:experimental, microtonal, tuning, harmony, stereo]
 description: "Just intonation: the same four chords twice, pure on the left and tempered on the right."
 ---
 

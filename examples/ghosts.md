@@ -1,6 +1,6 @@
 ---
 title: Ghost-Cells
-tags: [genre:experimental, genre:electronic, artist:Nine Inch Nails, modal, genre:ambient, genre:industrial]
+tags: [genre:experimental, genre:electronic, genre:ambient, genre:industrial, artist:Nine Inch Nails, modal, stereo]
 description: Dark and looping, in the manner of an instrumental Nine Inch Nails record.
 ---
 

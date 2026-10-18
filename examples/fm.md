@@ -1,6 +1,6 @@
 ---
 title: "FM: one voice bends another"
-tags: [tutorial, sound]
+tags: [tutorial, sound, FM]
 tier: 7
 description: A bell and an electric piano, each a sine whose frequency another sine swings.
 ---

@@ -1,6 +1,6 @@
 ---
 title: Automaton
-tags: [tutorial, genre:experimental, rhythm, sound]
+tags: [tutorial, genre:experimental, rhythm, sound, stereo]
 tier: 7
 description: "A mechanical band on belts, all turned by one drum: bells, a drummer and a woodblock, each on a belt of different give."
 ---
