@@ -57,7 +57,8 @@ export function velocityOf(e: Pick<Played, 'gains' | 'levels'>, gain = Math.max(
 
 /**
  * The General MIDI drum note for a kit member's name (lower case, a trailing number ignored: `bd2` is a kick), or
- * null for a name it doesn't know.
+ * null for a name it doesn't know. The clave is Strudel's `clave` (its sample bank's name) and General MIDI's `claves`,
+ * 75, a sound of its own: not the side stick (`rim`, `rs`, 37) a drummer plays it with on a kit.
  */
 const GM_DRUMS: Readonly<Record<string, number>> = {
   bd: 36,
@@ -84,6 +85,8 @@ const GM_DRUMS: Readonly<Record<string, number>> = {
   mid: 45,
   ht: 48,
   hi: 48,
+  clave: 75,
+  claves: 75,
 };
 export function gmDrumNote(name: string): number | null {
   return GM_DRUMS[name.toLowerCase().replace(/\d+$/, '')] ?? null;

@@ -35,6 +35,7 @@ const DRUM_OF = {
     55: 'crash',
     57: 'crash',
     59: 'ride',
+    75: 'claves',
 };
 const DRUMS = {
     bd: 's=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)',
@@ -48,6 +49,7 @@ const DRUMS = {
     hi: 's=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .15 0 .05)',
     crash: 's=white hpf=5000 env=&(map=adsr 0 .8 0 .3)',
     ride: 's=white hpf=9000 env=&(map=adsr 0 .4 0 .2)',
+    claves: 's=sine loop=D7 env=&(map=adsr 0 .06 0 .03)',
 };
 const TUNED = 's=sine env=&(map=adsr 0 .3 0 .05)';
 const NOISE = 's=white hpf=6000 env=&(map=adsr 0 .1 0 .05)';

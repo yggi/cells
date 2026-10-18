@@ -1,5 +1,5 @@
 // The rhythms (#138): E31's eight drum bars, lifted word for word but their `&bar`, play E31's 144 hits under a host's
-// meter; the claves play their patterns; every rhythm is open on its meter and finds its place by its association.
+// meter; the claves play their patterns on General MIDI's claves (#140); every rhythm is open on its meter and finds its place by its association.
 import { describe, expect, it } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import vectors from '../../fixtures/jambot-swing.json';
@@ -161,7 +161,7 @@ describe('the claves', () => {
     const { hits, diagnostics } = played(hosted(meterText('4/4'), 120, byId(id).text), 120, 32 * bars);
     expect(diagnostics).toEqual([]);
     expect(hits.map((h) => h.step)).toEqual([...strokes, ...strokes.map((s) => s + 16 * bars)]);
-    expect(new Set(hits.map((h) => [h.note, h.length, h.velocity].join()))).toEqual(new Set(['37,1,90']));
+    expect(new Set(hits.map((h) => [h.note, h.length, h.velocity].join()))).toEqual(new Set(['75,1,90']));
   });
 
   it.each(Object.keys(CLAVES).flatMap((clave) => drumBars.map((w) => [clave, w.preset, clave, w] as const)))('%s layers on %s drums in one text', (_, __, clave, w) => {
@@ -170,6 +170,8 @@ describe('the claves', () => {
     const drums = played(hosted(meterText('4/4'), w.bpm, w.fragment.text), w.bpm, 32).hits;
     const strokes = played(hosted(meterText('4/4'), w.bpm, byId(clave).text), w.bpm, 32).hits;
     expect(both.hits).toEqual(sorted([...drums, ...strokes]));
+    // (a line of its own with a sound of its own: the clave's note is none the drum bar strikes, so a shared step is two sounds, #140)
+    expect(drums.filter((h) => h.note === 75)).toEqual([]);
   });
 });
 

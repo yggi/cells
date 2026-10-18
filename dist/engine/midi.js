@@ -48,6 +48,8 @@ const GM_DRUMS = {
     mid: 45,
     ht: 48,
     hi: 48,
+    clave: 75,
+    claves: 75,
 };
 export function gmDrumNote(name) {
     return GM_DRUMS[name.toLowerCase().replace(/\d+$/, '')] ?? null;
