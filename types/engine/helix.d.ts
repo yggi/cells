@@ -16,9 +16,21 @@ export declare function period(result: CompileResult, name: string, ctx?: string
  * Either way, entry i of the result is entry i + shift of the original helix.
  */
 export declare function shiftedUnits(result: CompileResult, name: string, shift: number, ctx?: string): Unit[];
-/** The cell as a lookup table: its numbers in order (chords contribute each member, subsequences theirs in order). Shared: don't change it. */
-export declare function entries(result: CompileResult, name: string, shift: number): readonly Entry[];
-/** Entry x of a table (its own shift plus `extra`), climbing the helix outside [0, k). */
+/**
+ * The entries a table turns through, in order: its steps, and a subsequence's each one (`[a b] c` turns a, b, c), since
+ * a table turns by its braid's own steps (#122). Without a subsequence, its units as written. Shared: don't change it.
+ */
+export declare function tableUnits(result: CompileResult, name: string): readonly Unit[];
+/**
+ * The cell as a lookup table: its numbers in order (chords contribute each member, subsequences theirs in order), turned
+ * by `shift` entries (a subsequence's steps each one). With `inForce`, a braid of stacks is the stack the turn has
+ * brought round, its tones the entries (#95); any other table, all its numbers. Shared: don't change it.
+ */
+export declare function entries(result: CompileResult, name: string, shift: number, inForce?: boolean): readonly Entry[];
+/**
+ * Entry x of a table (its own shift plus `extra`), climbing the helix outside [0, k). Through a braid of stacks, entry
+ * x of the chord in force (#95): past its last tone the same chord a lap up, below its first a lap down.
+ */
 export declare function lookup(result: CompileResult, name: string, x: number, shifts: Shifts, extra?: number): Entry;
 export interface Resolved {
     readonly root: string;
