@@ -7,6 +7,7 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { flatten } from './flatten';
+import { pieceTime } from './duration';
 
 type Result = ReturnType<typeof compileSource>;
 
@@ -32,23 +33,60 @@ export function sameNotes(a: string, b: string, names: readonly string[]): boole
  */
 export const SAMENESS_SECONDS = 60;
 
-/** Does the whole piece play the same notes (voice, onset, length, pitch, level per channel, bends, volumes, moving parameters, envelope) in both, for its first minute? */
-export function samePiece(a: string, b: string, until = SAMENESS_SECONDS): boolean {
+/** One event as two pieces are compared: all of it (S1), or the note it plays (S2: voice, onset, length, pitch). */
+type Event = ReturnType<typeof eventsBetween>[number];
+const whole = (e: Event) =>
+  `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
+const note = (e: Event) => `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
+
+/** Do two texts compile and play the same events, each read as `key` reads it, from 0 to `until` seconds? */
+function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Result) => number), key: (e: Event) => string): boolean {
   try {
-    const play = (src: string) => {
-      const r = compileSource(src);
-      if (!r.ok) return null;
-      return eventsBetween(plan(r, codeShifts(r)), 0, until)
-        .map(
-          (e) =>
-            `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`,
-        )
+    const ra = compileSource(a);
+    const rb = compileSource(b);
+    if (!ra.ok || !rb.ok) return false;
+    const to = typeof until === 'number' ? until : until(ra, rb);
+    const play = (r: Result) =>
+      eventsBetween(plan(r, codeShifts(r)), 0, to)
+        .map(key)
         .sort()
         .join('\n');
-    };
-    const x = play(a);
-    return x !== null && x === play(b);
+    return play(ra) === play(rb);
   } catch {
     return false;
   }
+}
+
+/** Does the whole piece play the same notes (voice, onset, length, pitch, level per channel, bends, volumes, moving parameters, envelope) in both, for its first minute? */
+export function samePiece(a: string, b: string, until = SAMENESS_SECONDS): boolean {
+  return sameEvents(a, b, until, whole);
+}
+
+/**
+ * The longest a piece is compared over to its end, in seconds: twenty minutes, past every example that ends (BWV 847 is
+ * 189 s), short of a day-long piece (law=fiveto12), which is compared over its first twenty minutes.
+ */
+export const WHOLE_PIECE_LIMIT = 1200;
+
+/**
+ * Where two pieces are compared to (#180): the later of their ends, each piece's end where it ends (laps=) and its first
+ * minute where it goes on (`SAMENESS_SECONDS`), at most `WHOLE_PIECE_LIMIT`.
+ */
+export function wholeWindow(a: Result, b: Result): number {
+  const end = (r: Result) => pieceTime(r).ends ?? SAMENESS_SECONDS;
+  return Math.min(WHOLE_PIECE_LIMIT, Math.max(end(a), end(b)));
+}
+
+/**
+ * S1, **sounds identical** (#180; the owner: the snapshot's `notes` and `events` hashes agree): every event alike, its
+ * voice, onset, length, pitch, gains, bends, levels, moving parameters and envelope, over the whole piece (`wholeWindow`),
+ * or to `until` seconds.
+ */
+export function soundsIdentical(a: string, b: string, until?: number): boolean {
+  return sameEvents(a, b, until ?? wholeWindow, whole);
+}
+
+/** S2, **plays the same notes** (#180): every event's voice, onset, length and pitch alike, its gains and the rest free, over the whole piece or to `until`. */
+export function playsSameNotes(a: string, b: string, until?: number): boolean {
+  return sameEvents(a, b, until ?? wholeWindow, note);
 }
