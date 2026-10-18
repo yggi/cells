@@ -1,8 +1,12 @@
 import { ORDER } from "./order.js";
-import { EXAMPLE_SOURCES } from "./examples.generated.js";
+import { readPiece } from "./piecefile.js";
+import { EXAMPLE_FILES } from "./examples.generated.js";
 export const PRESETS = Object.fromEntries(ORDER.map((key) => {
-    const source = EXAMPLE_SOURCES[key];
-    if (source === undefined)
-        throw new Error(`examples/${key}.cells is missing`);
-    return [key, { source: source.replace(/\n$/, '') }];
+    const file = EXAMPLE_FILES[key];
+    if (file === undefined)
+        throw new Error(`examples/${key}.md is missing`);
+    const piece = readPiece(file);
+    if ('problems' in piece)
+        throw new Error(`examples/${key}.md: ${piece.problems.map((p) => `line ${p.line}: ${p.message}`).join('; ')}`);
+    return [key, { source: piece.text, file }];
 }));

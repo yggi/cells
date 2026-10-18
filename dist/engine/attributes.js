@@ -18,10 +18,13 @@ export const CORE = {
     laps: core('how many laps it plays, then it ends', 'time.md'),
     chance: core('what a bare x? means here: the probability it is dropped, or free() for a slider', 'cell.md'),
     seed: core('a different sequence of chance', 'cell.md'),
-    title: core('on a note: the piece’s title (its card)', 'display.md', ['note']),
-    tags: core('on a note: the piece’s tags, comma-separated; on a cell, its clusters in the graph', 'display.md'),
+    title: { ...core('on a note: the piece’s title (its card), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']), old: 'title: in the frontmatter' },
+    tags: core('on a cell: its clusters in the graph, comma-separated (on the piece’s card, the old spelling of its tags: its file’s frontmatter holds them)', 'display.md'),
     about: core('on a note: the cells it explains', 'display.md', ['note']),
-    tier: core('on a piece’s card: its tier of the tutorial (1 the first); the pieces of a tier keep the library’s order', 'display.md', ['note']),
+    tier: {
+        ...core('on a piece’s card: its tier of the tutorial (1 the first), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']),
+        old: 'tier: in the frontmatter',
+    },
 };
 export const PARAMS = {
     s: sound('sound source: sine tri saw square pulse white pink brown', { value: 'word' }),

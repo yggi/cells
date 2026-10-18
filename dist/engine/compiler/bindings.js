@@ -169,6 +169,7 @@ export function bindVoices(ctx, decls, given, typed) {
         if (v && !v.root && !v.kit && !soundHead(v.name) && !b.pitches.some((t) => t.ref.name === v.name))
             cells.set(v.name, { ...v, voice: true });
     }
+    const card = [...decls].find(([, d]) => d.title)?.[0];
     for (const [name, d] of decls) {
         const c = cells.get(name);
         if (!c)
@@ -188,6 +189,12 @@ export function bindVoices(ctx, decls, given, typed) {
             warn('tier= puts a piece in a tier of the tutorial; without tags="tutorial" it is ignored', d.paramSpans.tier ?? d.span);
         if (d.tier != null && !d.title)
             error('tier= belongs on a piece’s card: the note with its title=', d.paramSpans.tier ?? d.span);
+        if (name === card && c.note) {
+            const moved = ['title', 'tags', 'tier'].filter((k) => d[k] != null);
+            const list = (forms) => (forms.length > 1 ? `${forms.slice(0, -1).join(', ')} and ${forms.at(-1)}` : forms[0]);
+            const many = moved.length > 1;
+            warn(`${list(moved.map((k) => `${k}=`))} on the piece’s card ${many ? 'go' : 'goes'} in its file’s frontmatter now (${moved.map((k) => `${k}:`).join(' ')}): Shorten moves ${many ? 'them' : 'it'} there (decision 047)`, d.paramSpans.title ?? d.span);
+        }
         if (!c.voice)
             continue;
         const src = d.params.s;

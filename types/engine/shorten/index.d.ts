@@ -16,6 +16,8 @@
  *  - taps.ts:      a migration: a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
  *  - swing.ts:     a migration: a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
  *  - sections.ts:  a migration: a table of sections named &parts as &sections (decision 044)
+ *  - card.ts:      a migration: a card that says what the piece is (title= tags= tier=) as a piece file, those in its
+ *                  frontmatter (decision 047); its rewrite is a file, not a text, so shortenAll never takes it
  *
  * Each rule returns rewrites (../rewrite.ts), each one checked by the rule; a rewrite is offered as a suggestion, its
  * saving measured on the result (harness.ts: the cells a rule may touch, the measure). The note-for-note check is the

@@ -47,7 +47,7 @@ Pieces will look and sound different when this is done. Before any of that, each
 
 **Shorten finds nothing in 51 of 52 examples.** Only BWV 847 has suggestions (8, −696 characters: transposed phrases across the fugue's voices, which `tools/bwv847.py` keeps apart on purpose). Shorten's rules are all at the level of a braid's tokens (runs, phrases, fractions, identical lines), and the examples have been through them. The overcomplications left are structural: whole lines, cells and mixes that say one thing twice. Shorten has no rule that sees them.
 
-**Idioms, counted over `examples/*.cells`:**
+**Idioms, counted over `examples/*.md`:**
 
 | idiom | lines | files |
 |---|---|---|

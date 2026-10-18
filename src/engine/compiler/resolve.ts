@@ -1,5 +1,5 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
-import { type Atom, type CellDecl, type Span, type Token } from '../ast';
+import { isNote, type Atom, type CellDecl, type Span, type Token } from '../ast';
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_PARAMS } from '../attributes';
@@ -145,20 +145,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
       beat: stepsPerBeat(meterOf(d)),
       meter: meterOf(d),
       label: d.label ?? null,
-      note:
-        !!(d.label || d.title) &&
-        d.braid.kind === 'blank' &&
-        d.over === null &&
-        d.step === null &&
-        d.map === null &&
-        d.cycle === null &&
-        d.shift === null &&
-        d.stride === null &&
-        !d.off &&
-        !d.frees?.length &&
-        !d.env &&
-        !d.pitch &&
-        Object.keys(d.params).length === 0,
+      note: isNote(d),
       env: d.env?.name ?? null,
       pitch: d.pitch?.name ?? null,
       braid: o === null ? 'blank' : b.kind,

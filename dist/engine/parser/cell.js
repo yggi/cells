@@ -40,12 +40,14 @@ const whole = (key) => (s, b, _word, at) => {
     b[key] = s.text.startsWith('free(', s.i) ? Math.round(parseFree(s, key, false).value) : s.int(`a whole number after ${key}=`);
     b.paramSpans[key] = s.place(at);
 };
-const text = (key, example) => (s, b) => {
+const text = (key, example) => (s, b, _word, start) => {
     const at = s.i;
     const q = s.match(/"([^"]*)"/y);
     if (q === null)
         s.fail(`${key}= takes a text in quotes: ${example}`);
     b[key] = q.slice(1, -1);
+    if (key !== 'label')
+        b.paramSpans[key] = s.place(start);
     if (key === 'label')
         for (const m of q.matchAll(/\{(?:&[A-Za-z_][A-Za-z0-9_]*:)?([A-Za-z_][A-Za-z0-9_]*)\}/g))
             if (!LABEL_FIELDS.includes(m[1]))
@@ -195,7 +197,7 @@ export const KEYS = {
     title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
     tags: {
         form: 'tags="tag, tag"',
-        examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm"', '&lead tags="melody" s=saw loop=C4'],
+        examples: ['&lead tags="melody" s=saw loop=C4', '&beam tags="metal" map=ratios 1 2.756 5.404'],
         read: text('tags', 'tags="jazz, blues"'),
     },
     tier: {
@@ -206,6 +208,7 @@ export const KEYS = {
             if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999))
                 s.fail('tier= is a tier of the tutorial, 1 to 9999: tier=1', at, word.length + 1);
             b.tier = parseInt(n, 10);
+            b.paramSpans.tier = s.place(at);
         },
     },
     about: {

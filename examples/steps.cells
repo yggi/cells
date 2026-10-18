@@ -1,8 +1,0 @@
-&piece title="Steps: a tune on one line" tags="tutorial, genre:folk" tier=1 label="Frère Jacques written as steps: numbers, rests, holds and repeats, four steps a second." about=&out
-&stepsNote label="A number is a step: so many semitones above the voice's note. ~ is a rest, @2 holds a step for two, !2 plays it twice." about=&tune
-&outNote label="The sound card: map=sample turns what it plays into samples, at the rate the computer plays them (loop=SAMPLE_RATE). One chord in its brackets: one channel, mono." about=&out
-# &tune moves at step=4: four steps a second. Its numbers are semitones above the voice's C.
-&tune step=4 0 2 4 0 0 2 4 0 4 5 7@2 4 5 7@2 7 9 7 5 4 ~ 0 ~ 7 9 7 5 4 ~ 0 ~ 0!2 -5 0@2 0!2 -5 0@2
-
-&voice s=sine loop=C4                           # a voice: a sine, on C4
-&out loop=SAMPLE_RATE map=sample postgain=2 [&tune * &voice * .5]

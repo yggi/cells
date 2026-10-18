@@ -1,5 +1,5 @@
 /**
- * Sameness: do two spellings play the same? The promise every tool that rewrites a piece keeps (decision 048): Migrate,
+ * Sameness: do two spellings play the same? The promise every tool that rewrites a piece keeps (decision 049): Migrate,
  * Normalise and Shorten check a rewrite against it before they offer or apply it, and the tests of equal spellings
  * compare by it. Lifted out of `shorten/harness.ts` (#155). Pure.
  */

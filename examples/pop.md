@@ -1,0 +1,43 @@
+---
+title: "Pop song: four chords, arranged"
+tags: [genre:electronic, diatonic, harmony, arrangement]
+---
+
+```cells
+&piece label="I – V – vi – IV, arranged by a selector: intro, verses, choruses, a break, an outro, an end." about=&out
+# The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees
+# over the major scale, each chord comes out the right kind: C, G, Am, F.
+# Arranged: each part is a section stepped by the bar, and &song switches the sections,
+# four bars a step — intro, verses, choruses, a break, an outro and an end.
+&bar scan(1 1 1 1) step=free(100bpm, 70..140)
+&major scan(2 2 1 2 2 2 1)
+&chords tags="keys" over=&major step=&keysBar*2 [0,2,4]!8 [4,6,8]!8 [5,7,9]!8 [3,5,7]!8
+&roots tags="bass" over=&major step=&bassBar*2 0!8 4!8 5!8 3!8
+
+&hook tags="hook" 4 4 5 4                                             # the hook …
+&tune tags="hook" over=&major step=&hookBar*2 &hook 2@2 0@2 &hook 2@2 ~@2 &hook^1 4@2 2@2 3 3 2 1 0@4           # … a step up in bar 3
+
+&beat tags="drums" step=&beatBar &bd &sd &bd &sd
+&hats tags="drums" step=&hatsBar*2 &hh:0:.5 &hh:0:.25 &hh:0:.5 &hh:0:.25 &hh:0:.5 &hh:0:.25 &hh:0:.5 &hh:0:.3
+
+&lead tags="hook" s=square loop=C5 lpf=3000 env=&(map=adsr .01 .2 .6 .2) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
+&keys tags="keys" s=tri loop=C4 env=&(map=adsr .005 .3 .3 .2)
+&bass tags="bass" s=square loop=C2 lpf=500 env=&(map=adsr .005 .15 .5 .05)
+&bd tags="drums" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
+&sd tags="drums" gain=.4 s=white hpf=1200 env=&(map=adsr 0 .15 0 .05)
+&hh tags="drums" gain=.2 s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
+
+&final tags="keys" over=&major step=&endBar [0,2,4,7]@4                  # the last chord: C
+
+# the sections the song switches: four bars a step — a section
+# picked starts from its top; a chord of sections plays them together; laps=1: it ends
+&sections step=4n &bassBar &keysBar &hookBar &hatsBar &beatBar &endBar
+&song over=&sections step=1m/4 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [1,3] [0,1,3,4]!2 [0,1,2,3,4]!2 [1,2] [0,1,2,3,4]!2 [1] 5
+
+&out postgain=1.78 map=sample [&hats,
+                         &beat,
+                         &roots * &bass * .5,
+                         &chords * &keys * .15,
+                         &tune * &lead * .35,
+                         &final * &keys * .2]
+```

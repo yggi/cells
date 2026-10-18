@@ -1,5 +1,5 @@
 /**
- * A rewrite: what Migrate, Normalise and Shorten each find in a piece (decision 048), one change to its text with what it
+ * A rewrite: what Migrate, Normalise and Shorten each find in a piece (decision 049), one change to its text with what it
  * does in a sentence. Shorten offers its rewrites as suggestions, measured (`shorten/harness.ts`); Migrate and Normalise
  * apply theirs, round after round (`rewriteAll`). Pure.
  */

@@ -1,0 +1,70 @@
+---
+title: Baustelle
+tags: [genre:experimental, genre:electronic, artist:Neubauten, microtonal, genre:industrial, arrangement]
+---
+
+```cells
+&piece label="An original in the manner of Einstürzende Neubauten: struck metal and a scream; it builds, breaks, comes back harder, and collapses." about=&out
+&metalsNote label="Beams, pipes and plates struck and tuned to their own partials." about=(&beams &pipes &plates)
+&springNote label="A giant bass spring." about=(&feder &bassfeder)
+&toolsNote label="A grinder and a drill." about=(&grind &drill)
+&screamNote label="A scream." about=&schrei
+&lowEndNote label="Sub-bass under a gritty riff." about=(&sub &riff)
+# Baustelle — a building site, played. Metal is inharmonic: a free steel beam rings at
+# 1 : 2.76 : 5.40 : 8.93, so each metal gets a grid of its own partials (map=ratios), and
+# a hit is a chord of them. Some hits fall only sometimes (?), some choose ([a|b]):
+# the percussionist's hand. Under it: a sub-bass kick, a crushed riff, the Bassfeder.
+&bar scan(1 1 1 1) step=free(118bpm, 90..150)
+
+# ---- the metals: their partials (the last number is just where each grid repeats)
+&beam tags="metal" map=ratios 1 2.756 5.404 8.933 16 label="beam: 1 : 2.76 : 5.40 : 8.93"
+&pipe tags="metal" map=ratios 1 2.42 4.37 6.71 8 label="pipe"
+&plate tags="metal" map=ratios 1 1.59 2.14 2.30 2.65 2.92 4 label="plate"
+&beams tags="metal" over=&beam step=&metalBar*4 [0,1,2,3] ~!2 [0,1,2,3]? ~!2 [0,1,2,3] ~!3 [0,1,2,3] ~ [0,2]? ~ [0,1,2,3] [1,3]?.7
+&pipes tags="metal" over=&pipe step=&metalBar*4 ~ ~ [0,1,2,3] ~ [1|2]? [0,1,2,3] ~ [0,1,2,3]? ~ ~ [0,1,2,3] ~ ~ [1,2,3]? [0,1,2,3] ~
+&plates tags="metal" over=&plate step=&plateBar ~ [0,1,2,3,4,5] ~ [0,1,2,3,4,5]
+
+# ---- the low end: a sub-bass kick, four on the floor; a crushed riff on E; the Bassfeder
+&kick tags="low" step=&subBar 0!4
+&riff tags="low" step=&riffBar*4 0 0 1 0 ~ 0 7 0 6 ~ 0 1 0 ~ 3 -2
+&accent tags="low" map=amp step=16n 1 .5 .8 .5 0 .6 1 .5 .9 0 .6 .8 .5 0 1 .7
+&feder tags="low" step=&federBar*2 0 ~ ~ 0? 0 ~ [0|-5] ~
+
+# ---- tools: the grinder (noise that swells, now it can), the drill (a whine that wobbles)
+&grind tags="tools" step=&grindBar/2 0 0?.4
+&swell tags="tools" map=amp step=8n .2 .5 1 .7
+&drill tags="tools" step=&drillBar 0? ~!3 0?.7 ~ 7? ~
+&edge tags="tools" map=lin loop=.37 .2 1 .4
+# ---- the scream: a saw sliding, and breath, through filters moving between vowels
+&schrei tags="scream" step=&schreiBar/2 0 ~ 0?.5 ~
+&slide tags="scream" map=lin loop=&bar/2 0 7 12 9 -2 0
+&vowel tags="scream" map=lin loop=.83 .3 1 .55 .8 .3
+
+# ---- the last crash
+&fall tags="metal" over=&beam step=&einsturzBar/4 [0,1,2,3]
+&crashPlate tags="metal" over=&plate step=&einsturzBar/4 [0,1,2,3,4,5]
+&rubble step=&einsturzBar/4 0
+
+&beamv tags="metal" s=sine loop=110 room=.3 env=&(map=adsr 0 .5 0 .9)
+&pipev tags="metal" s=sine loop=233 room=.25 env=&(map=adsr 0 .3 0 .6)
+&platev tags="metal" s=sine loop=415 room=.4 distort=.2 env=&(map=adsr 0 .25 0 1.4)
+&sub tags="low" s=sine loop=E1 pitch=0..14 * &(map=adsr 0 .07 0 0) distort=.15 env=&(map=adsr .002 .45 .5 .15)
+&grit tags="low" s=saw loop=E1 distort=.85 crush=6 lpf=90..2200 * &(map=adsr .003 .18 .15 .08) * &accent lpq=7 env=&(map=adsr .002 .12 .5 .05)
+&bassfeder tags="low" s=saw loop=A1 pitch=0..9 * &(map=adsr 0 .09 0 0) distort=.6 lpf=160..1300 * &(map=adsr .002 .3 .1 .3) lpq=9 delaytime=.019 delay=.55 delayfeedback=.84 env=&(map=adsr .002 .6 .2 .5)
+&grinder tags="tools" s=white distort=.7 lpf=900..7000 * &edge hpf=500 lpq=3 env=&(map=adsr .05 .4 .8 .3)
+&drillv tags="tools" s=saw loop=E4 distort=1 crush=8 lpf=4000 env=&(map=adsr .02 .1 .9 .1) pitch=&(map=lin loop=23 0 .7 0 -.7 0)
+&voice tags="scream" s=saw loop=A3 distort=1.2 crush=7 lpf=500..2600 * &vowel lpq=11 hpf=300 env=&(map=adsr .08 .3 .9 .6)
+&breath tags="scream" s=white distort=.9 lpf=600..3000 * &vowel lpq=8 hpf=900 env=&(map=adsr .05 .3 .8 .5)
+&crash s=white distort=.5 lpf=9000 room=.6 env=&(map=adsr 0 3 0 4)
+
+# ---- the parts, and the site's day: four bars a step; laps=1: it ends
+&metalPart [&beams * &beamv * .09, &pipes * &pipev * .07]
+&einsturz [&fall * &beamv * .14, &crashPlate * &platev * .08, &rubble * &crash * .25, &rubble * &sub * .6]
+&teile step=4n &metalBar &plateBar &subBar &riffBar &federBar &grindBar &drillBar &schreiBar &einsturzBar
+&tag over=&teile step=1m/4 laps=1 label="metal · grinder · spring · groove · drill · scream · break · spring · groove · all · all · collapse · Einsturz" [0] [0,5] [0,2,4] [0,1,2,3,4] [0,1,2,3,4,6] [0,1,2,3,4,5,7] [4,5,7] [4] [0,1,2,3,4,5] [0,1,2,3,4,5,6,7]!2 [5,7] 8
+
+&out postgain=.282 map=sample [&metalPart, &plates * &platev * .05, &kick * &sub * .55,
+                           &riff * &accent * &grit * .2, &feder * &bassfeder * .3,
+                           &grind * &swell * &grinder * .14, &drill * &drillv * .06,
+                           (&schrei + &slide) * &voice * .1, &schrei * &breath * .06, &einsturz]
+```

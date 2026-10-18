@@ -1,0 +1,30 @@
+---
+title: Echo Tape
+tags: [tutorial, genre:experimental, genre:electronic, sound]
+tier: 8
+---
+
+```cells
+&piece label="A tape loop of notes: a write head records the tune and read heads play it back, echoing." about=&out
+&headsNote label="Three read heads play it back .375, .75 and 1.5 tape-seconds on." about=(&near &mid &far)
+&ghostNote label="Every pass under the write head erases a little less than half — ghosts of older phrases fade round the loop." about=&tape
+&reelNote label="The reel wows; hold it, and the echoes slow and sag in pitch." about=&reel
+# Echo Tape — &tape records &tune (write=) onto a loop of 6 tape-seconds (length=); the tape
+# moves with &reel, a physical motor (wow, and your hand). The read heads (play=, at=) are cells:
+# play them like any melody. erase=.45: each pass keeps 55% — the ghosts.
+&reel step=84bpm motor=1.5 mass=1 friction=.1 wow=.015 0
+&bar scan(1 1 1 1) step=84bpm
+&major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
+&tune over=&major step=8n label="the tune" 0 ~ 4 ~ 7 ~!3 11 ~ 9 ~ 7 ~!3 4 ~ 5 ~ 4 2 ~!2 0 ~!7
+&tape step=&reel write=&tune length=6 erase=.45 varispeed=1 label="the tape: 6 s, a loop"
+&near play=&tape at=.375 label="head 1"
+&mid play=&tape at=.75 label="head 2"
+&far play=&tape at=1.5 label="head 3"
+
+&m s=sine ratio=3
+&bell s=sine loop=G4 fm=&m index=.2..1.4 * &(map=adsr .001 .15 .1 .1) room=.3 env=&(map=adsr .002 1.2 0 .8)
+&soft s=tri loop=G4 lpf=1800 room=.5 env=&(map=adsr .004 .9 0 .6)
+
+&out postgain=7.08 map=sample [&tune * &bell * .22, &near * &soft * .12, &far * &soft * .08] [
+                                  &tune * &bell * .22, &mid * &soft * .12, &far * &soft * .08]
+```

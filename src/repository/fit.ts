@@ -51,7 +51,7 @@ export interface Fit {
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 
 /** A declaration of a text: its cell's name (bare), its lines as written, and its code (comments aside, whitespace collapsed). */
-interface Line {
+export interface Line {
   readonly name: string;
   readonly written: string;
   readonly code: string;
@@ -61,7 +61,7 @@ const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const CONTINUES = /[+*,[]\s*$/;
 
 /** A text's declarations, a line (and the lines it continues onto: one ending in `+`, `*`, `,` or `[`) each, as the parser reads them. */
-function declarations(text: string): Line[] {
+export function declarations(text: string): Line[] {
   const out: Line[] = [];
   let carry: { written: string[]; code: string[] } | null = null;
   for (const raw of text.split('\n')) {

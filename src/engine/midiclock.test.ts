@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { PRESETS } from './presets';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { plan, type Plan } from './realize';
@@ -38,22 +38,11 @@ describe('the main meter', () => {
 
   it('is found for the examples that have one, and none for those stepping at a bare rate', () => {
     const none: string[] = [];
-    for (const f of readdirSync('examples').filter((x) => x.endsWith('.cells'))) {
-      const r = compileSource(readFileSync(`examples/${f}`, 'utf8'));
-      if (r.ok && !mainMeter(r)) none.push(f);
+    for (const [key, { source }] of Object.entries(PRESETS).sort(([a], [b]) => (a < b ? -1 : 1))) {
+      const r = compileSource(source);
+      if (r.ok && !mainMeter(r)) none.push(key);
     }
-    expect(none).toEqual([
-      'cellscape2.cells',
-      'daytime.cells',
-      'dtmf.cells',
-      'fiveto12.cells',
-      'oscillator.cells',
-      'rests.cells',
-      'semitones.cells',
-      'steps.cells',
-      'tone.cells',
-      'twovoices.cells',
-    ]);
+    expect(none).toEqual(['cellscape2', 'daytime', 'dtmf', 'fiveto12', 'oscillator', 'rests', 'semitones', 'steps', 'tone', 'twovoices']);
   });
 });
 
@@ -132,8 +121,8 @@ describe('the ticks', () => {
   });
 
   it('every example: window by window as one piece, eight seconds, none lost or doubled', () => {
-    for (const f of readdirSync('examples').filter((x) => x.endsWith('.cells'))) {
-      const r = compileSource(readFileSync(`examples/${f}`, 'utf8'));
+    for (const [f, { source }] of Object.entries(PRESETS)) {
+      const r = compileSource(source);
       if (!r.ok || !mainMeter(r)) continue;
       const p = plan(r, codeShifts(r));
       const w = windowed(p, 0, 8);

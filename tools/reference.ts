@@ -59,7 +59,7 @@ export function entries(): Syntax[] {
     ...Object.values(RATE_UNITS).map((u) => u.syntax),
     ...Object.values(MAP_KINDS),
     ...MAP_SYNTAX,
-    ...(Object.keys(CORE) as (keyof typeof CORE)[]).map(attribute),
+    ...(Object.keys(CORE) as (keyof typeof CORE)[]).filter((k) => !CORE[k].old).map(attribute),
     ...Object.entries(PARAMS)
       .filter(([, a]) => !a.old)
       .map(parameter),

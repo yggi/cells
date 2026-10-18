@@ -16,6 +16,8 @@
  *  - taps.ts:      a migration: a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
  *  - swing.ts:     a migration: a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
  *  - sections.ts:  a migration: a table of sections named &parts as &sections (decision 044)
+ *  - card.ts:      a migration: a card that says what the piece is (title= tags= tier=) as a piece file, those in its
+ *                  frontmatter (decision 047); its rewrite is a file, not a text, so shortenAll never takes it
  *
  * Each rule returns rewrites (../rewrite.ts), each one checked by the rule; a rewrite is offered as a suggestion, its
  * saving measured on the result (harness.ts: the cells a rule may touch, the measure). The note-for-note check is the
@@ -35,6 +37,7 @@ import { aliases } from './aliases';
 import { taps } from './taps';
 import { swings } from './swing';
 import { sections } from './sections';
+import { card } from './card';
 
 export type { Suggestion } from './harness';
 
@@ -56,6 +59,7 @@ export function shorten(source: string): Suggestion[] {
     ...taps(source, result),
     ...swings(source, result),
     ...sections(source, result),
+    ...card(source),
   ];
   return found.map((r) => suggestion(source, r)).sort((a, b) => b.saving - a.saving);
 }
@@ -65,7 +69,8 @@ export function shortenAll(source: string, rounds = 60): { source: string; steps
   let now = source;
   const steps: string[] = [];
   for (let i = 0; i < rounds; i++) {
-    const best = shorten(now)[0];
+    // (the card's migration rewrites the text as a file: the text is shortened, the file is the frontend's to make)
+    const best = shorten(now).find((s) => s.kind !== 'card');
     if (!best) break;
     const next = best.apply(now);
     if (size(next) >= size(now)) break;

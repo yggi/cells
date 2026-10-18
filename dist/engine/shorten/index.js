@@ -12,6 +12,7 @@ import { aliases } from "./aliases.js";
 import { taps } from "./taps.js";
 import { swings } from "./swing.js";
 import { sections } from "./sections.js";
+import { card } from "./card.js";
 export function shorten(source) {
     const { result, cells } = candidates(source);
     if (!result.ok)
@@ -30,6 +31,7 @@ export function shorten(source) {
         ...taps(source, result),
         ...swings(source, result),
         ...sections(source, result),
+        ...card(source),
     ];
     return found.map((r) => suggestion(source, r)).sort((a, b) => b.saving - a.saving);
 }
@@ -37,7 +39,7 @@ export function shortenAll(source, rounds = 60) {
     let now = source;
     const steps = [];
     for (let i = 0; i < rounds; i++) {
-        const best = shorten(now)[0];
+        const best = shorten(now).find((s) => s.kind !== 'card');
         if (!best)
             break;
         const next = best.apply(now);
