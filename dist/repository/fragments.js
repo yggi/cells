@@ -1,3 +1,4 @@
+import { cachedFit } from "./fit.js";
 export const CO_USE_PULL = 0.1;
 export const coUseScore = (distance, uses) => distance - CO_USE_PULL * Math.log1p(uses);
 const isFiniteNumber = (x) => typeof x === 'number' && Number.isFinite(x);
@@ -58,6 +59,7 @@ export function createRepository(entries) {
     if (problems.length)
         throw new Error(`A malformed repository: ${problems.join('; ')}`);
     const fragments = [...entries];
+    const fits = cachedFit();
     const together = new Map(fragments.map((f) => [f.id, new Map()]));
     const usesWith = (id, chosen) => {
         const counts = together.get(id);
@@ -68,7 +70,7 @@ export function createRepository(entries) {
     };
     return {
         fragments,
-        query(point, k, axisWeights = {}, { facet, chosen = [] } = {}) {
+        query(point, k, axisWeights = {}, { facet, chosen = [], workbench } = {}) {
             if (!(Number.isInteger(k) && k >= 0))
                 throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
             const wrong = [
@@ -78,14 +80,23 @@ export function createRepository(entries) {
             if (wrong.length)
                 throw new Error(`query: ${wrong.join(', ')}`);
             const chosenIds = [...new Set(chosen)];
-            return fragments
+            const ranked = fragments
                 .filter((fragment) => pointsOf(fragment, facet).length > 0)
                 .map((fragment) => {
                 const distance = fragmentDistance(fragment, point, axisWeights, facet);
                 return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id, chosenIds)) };
             })
-                .sort((a, b) => a.score - b.score || (a.fragment.id < b.fragment.id ? -1 : a.fragment.id > b.fragment.id ? 1 : 0))
-                .slice(0, k);
+                .sort((a, b) => a.score - b.score || (a.fragment.id < b.fragment.id ? -1 : a.fragment.id > b.fragment.id ? 1 : 0));
+            if (workbench === undefined)
+                return ranked.slice(0, k);
+            const fitting = [];
+            for (const found of ranked) {
+                if (fitting.length >= k)
+                    break;
+                if (fits(found.fragment.text, workbench).fits)
+                    fitting.push(found);
+            }
+            return fitting;
         },
         used(ids) {
             const unknown = ids.filter((id) => !together.has(id));

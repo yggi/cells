@@ -11,8 +11,8 @@
  *
  * The claves are five strokes each, struck as a side stick (`&rs`, General MIDI's 37), as a drummer plays the clave on a
  * kit: four over two bars of eighths (`step=16n cycle=2`), and the bossa nova clave also in one bar of sixteenths
- * (`step=16n`), the form that matches a bossa bar written in sixteenths, as Jambot's is; which of the two fits a
- * composition is the fit check's to choose (#49's next step), not the association's. Their names (`&clave`, `&claves`,
+ * (`step=16n`), the form that matches a bossa bar written in sixteenths, as Jambot's is. What a clave fits is the fit's
+ * (`fit.ts`), read off its text: under the library's meters both fit each 4/4 and nothing else. Their names (`&clave`, `&claves`,
  * `&rs`) are none of the drum bars', so a clave layers on any of them in one text. Their associations are written by
  * hand, near Bossa nova and Funk.
  *

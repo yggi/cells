@@ -1,17 +1,3 @@
-/**
- * The repository of fragments (decision 041): a fragment is cells text with an index entry, an id and an association, the
- * places in style space it is found at, each of which may name the facet it is found under. A query takes a style point
- * and k and returns the k fragments nearest to it, over their points of the facet it names. Fragments come in groups
- * (decision 043): the repository counts how often two were used together, and a query weighs that count with what is
- * already chosen beside the distance (decision 046). In memory only: no hash, no canonical form, no persistence (#49's
- * later steps).
- *
- * The repository doesn't know the axes, nor the facets. A style point maps axis names to numbers, and the frontend names
- * them (Jambot's `sync`, `harm`, …): a distance compares only the axes a query and a point share, so an axis no fragment
- * has is ignored. A facet is a name too (`meter`, `rhythm`), compared and never read: a hint of what a fragment is
- * associated as there (a bell a rhythm in one style, a scale in another), not a classifier. What a fragment can fill is
- * read off its text by the fit check (#49's next step), never off its facets.
- */
 /** A place in style space: axis names to numbers. */
 export type StylePoint = Readonly<Record<string, number>>;
 /** One place a fragment is associated with, and how strongly: a weight > 0 (use moves it, later). */
@@ -44,6 +30,12 @@ export interface QueryOptions {
     readonly facet?: string;
     /** The ids already chosen (on the composer's workbench): a fragment used with them often ranks nearer. An id the repository doesn't hold counts no use. */
     readonly chosen?: readonly string[];
+    /**
+     * The workbench, a cells text: rank only the fragments that fit it (`fitOf`: their uses defined there, no name defined
+     * twice, their clock's needs met, the union compiled with no new diagnostic). Each fragment is tested in the order it
+     * ranks, until k fit; the repository caches each compile by its text.
+     */
+    readonly workbench?: string;
 }
 export interface Repository {
     readonly fragments: readonly Fragment[];

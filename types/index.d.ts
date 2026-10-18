@@ -3,7 +3,8 @@
  * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
  * shorter, `fold` and `cellsFromMidi` write cells from notes, `pieceMidi` and `readMidi` carry MIDI files. `createRepository`
  * holds fragments and finds them by their place in style space and by how often they were used together; `METER_FRAGMENTS`
- * are its meters, `RHYTHM_FRAGMENTS` its rhythms, `LIBRARY` both.
+ * are its meters, `RHYTHM_FRAGMENTS` its rhythms, `LIBRARY` both; `holesOf` reads what a fragment uses, defines and its clock
+ * needs, `unionOf` and `fitOf` add it to a workbench and say whether it fits.
  * Every module is also reachable on its own: `@yggi/cells/engine/<module>`, `@yggi/cells/theory/<module>`,
  * `@yggi/cells/repository/<module>`.
  */
@@ -24,3 +25,5 @@ export { createRepository, type Fragment, type Found, type QueryOptions, type Re
 export { METER_FRAGMENTS } from './repository/meters';
 export { RHYTHM_FRAGMENTS } from './repository/rhythms';
 export { LIBRARY } from './repository/library';
+export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
+export { fitOf, unionOf, type Fit, type Union } from './repository/fit';
