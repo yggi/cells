@@ -8,7 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.5.0`.
+### Added
+- **Rhythms in the repository** (#138, decision 046): `RHYTHM_FRAGMENTS` (`@yggi/cells/repository/rhythms`), twelve fragments open on their meter (their lines tap it, no `&bar` of their own: the host writes its `&bar` first), each with its own MIDI card on channel 10. Jambot's E31 drum bars, one per preset at its point, lifted word for word but their `&bar` line: under the repository's 4/4 at the preset's bpm they play E31's 144 hits, 144 of 144. Under a preset's own swung meter, the rim of Lo-fi hip hop's and Funk's stays straight, as #121 says of a Euclid on `1m`. And four two-bar claves (`step=16n cycle=2`): son 3-2 and 2-3, rumba 3-2 and bossa nova, struck as a side stick (`&rs`). `LIBRARY` is the meters and the rhythms, twenty-five.
+- **Facets** (decision 046): a fragment may name its facet (`facet: 'meter'`, `'rhythm'`; every meter now names `meter`), and `query(point, k, axisWeights, { facet })` ranks only that facet's fragments. A query that names none ranks all, as before.
+- **Used together** (decision 046): `repository.used(ids)` counts each pair of fragments used together, `usedTogether(a, b)` reads the count, and `query(…, { chosen })` ranks by `distance − 0.1 · ln(1 + n)`, n the uses with what is chosen (`coUseScore`, `CO_USE_PULL`). `Found` carries that `score` beside its `distance`, which is the score when nothing is chosen, so every query that names nothing chosen ranks as before. No piece reads or sounds differently; a frontend's query over `METER_FRAGMENTS` returns what it did.
 
 ## v0.5.0 — 2026-10-18
 

@@ -2,7 +2,8 @@
  * The cells language. Text in, events out: `compileSource` reads a piece, `plan` and `windowAt` realize it a window at a
  * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
  * shorter, `fold` and `cellsFromMidi` write cells from notes, `pieceMidi` and `readMidi` carry MIDI files. `createRepository`
- * holds fragments and finds them by their place in style space; `METER_FRAGMENTS` are its meters.
+ * holds fragments and finds them by their place in style space and by how often they were used together; `METER_FRAGMENTS`
+ * are its meters, `RHYTHM_FRAGMENTS` its rhythms, `LIBRARY` both.
  * Every module is also reachable on its own: `@yggi/cells/engine/<module>`, `@yggi/cells/theory/<module>`,
  * `@yggi/cells/repository/<module>`.
  */
@@ -19,5 +20,7 @@ export { readMidi, writeMidi, isMidi } from './engine/midifile';
 export { PRESETS, type Preset } from './engine/presets';
 export type { CompileResult } from './engine/program';
 export type { Diagnostic } from './engine/ast';
-export { createRepository, type Fragment, type Found, type Repository, type StylePoint, type WeightedPoint } from './repository/fragments';
+export { createRepository, type Fragment, type Found, type QueryOptions, type Repository, type StylePoint, type WeightedPoint } from './repository/fragments';
 export { METER_FRAGMENTS } from './repository/meters';
+export { RHYTHM_FRAGMENTS } from './repository/rhythms';
+export { LIBRARY } from './repository/library';

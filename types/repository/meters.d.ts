@@ -3,10 +3,9 @@
  * swings is a question of which meter it plays. Each fragment is one line, `&bar meter(…)`, open on its tempo: the host
  * sets `step=` (Jambot's `bpm` is its own axis, and a fragment's style has no tempo: decision 037).
  *
- * The associations are written by hand, on four of Jambot's axes: `sync` (on the beat 0, off it 1), `harm` (a static
- * vamp 0, moving, rich harmony 1), `artic` (legato 0, staccato 1) and `energy` (sparse 0, dense 1). Each of Jambot's eight
- * presets names a 4/4 meter (yggi/jambot#360) and is a point of that meter's association: straight 4/4 holds the three
- * that play straight, and each swung 4/4 the presets that play its swing. The other meters sit where no preset is, and
+ * The associations are written by hand, on four of Jambot's axes (`presets.ts`). Each of Jambot's eight presets names a
+ * 4/4 meter (yggi/jambot#360) and is a point of that meter's association: straight 4/4 holds the three that play
+ * straight, and each swung 4/4 the presets that play its swing. The other meters sit where no preset is, and
  * where no point halfway between two presets is nearer to them than to the presets' own meters.
  *
  * A swung meter plays exactly the swing Jambot plays at its presets' value on the swing axis: the shares are
@@ -18,5 +17,5 @@
  * `leaning … on 16n`.
  */
 import type { Fragment } from './fragments';
-/** The meters built so far: thirteen, each one line of cells text. */
+/** The meters built so far: thirteen, each one line of cells text, of the facet `meter`. */
 export declare const METER_FRAGMENTS: readonly Fragment[];

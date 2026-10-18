@@ -1,7 +1,8 @@
-// The repository's format and its query (decision 041): a malformed entry fails, a query ranks by the weighted distance
-// over the axes a point shares with each association, and ignores the axes it doesn't.
+// The repository's format and its query (decisions 041 and 046): a malformed entry fails, a query ranks by the weighted
+// distance over the axes a point shares with each association, and ignores the axes it doesn't; it finds the facet it
+// names; and how often fragments were used together with what is chosen ranks beside the distance, within its bounds.
 import { describe, expect, it } from 'vitest';
-import { createRepository, fragmentDistance, fragmentProblems, pointDistance, type Fragment } from './fragments';
+import { CO_USE_PULL, coUseScore, createRepository, fragmentDistance, fragmentProblems, pointDistance, type Fragment } from './fragments';
 
 const good: Fragment = { id: 'a', text: '&bar meter("4/4")', association: [{ point: { x: 0, y: 0 }, weight: 1 }] };
 
@@ -19,6 +20,8 @@ describe('a malformed entry fails', () => {
     ['an axis that is no number', { ...good, association: [{ point: { x: Infinity }, weight: 1 }] }],
     ['no style point', { ...good, association: [] }],
     ['no id', { ...good, id: '' }],
+    ['an empty facet', { ...good, facet: ' ' }],
+    ['a facet that is no name', { ...good, facet: 3 }],
   ];
   it.each(malformed)('%s', (_, entry) => {
     expect(fragmentProblems(entry as Fragment)).not.toEqual([]);
@@ -94,5 +97,93 @@ describe('a query', () => {
     expect(() => repository.query({ x: 0 }, 1.5)).toThrow(/k is 1.5/);
     expect(() => repository.query({ x: NaN }, 1)).toThrow(/x is NaN/);
     expect(() => repository.query({ x: 0 }, 1, { x: 0 })).toThrow(/x's weight is 0/);
+  });
+});
+
+describe('a facet', () => {
+  const of = (id: string, facet?: string): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x: 0 }, weight: 1 }], ...(facet ? { facet } : {}) });
+  const repository = createRepository([of('m', 'meter'), of('r', 'rhythm'), of('n')]);
+  const ids = (facet?: string) => repository.query({ x: 0 }, 9, {}, { facet }).map((f) => f.fragment.id);
+
+  it('a query that names one finds only its fragments; one that names none finds all', () => {
+    expect(ids('meter')).toEqual(['m']);
+    expect(ids('rhythm')).toEqual(['r']);
+    expect(ids('harmony')).toEqual([]);
+    expect(ids()).toEqual(['m', 'n', 'r']);
+  });
+});
+
+describe('used together', () => {
+  const at = (id: string, x: number): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x }, weight: 1 }] });
+  const fresh = (...fragments: Fragment[]) => createRepository([at('chosen', 9), at('other chosen', 9), ...fragments]);
+  const order = (r: ReturnType<typeof fresh>, chosen: string[], point = { x: 0 }) => r.query(point, 9, {}, { chosen }).map((f) => f.fragment.id);
+  const useTimes = (r: ReturnType<typeof fresh>, n: number, ...ids: string[]) => Array.from({ length: n }, () => r.used(ids));
+
+  it('counts each pair of a use once, both ways round; a fragment with itself, never', () => {
+    const r = fresh(at('a', 0), at('b', 0));
+    r.used(['a', 'b', 'chosen', 'a']);
+    r.used(['b', 'chosen']);
+    r.used(['a']);
+    expect([r.usedTogether('a', 'b'), r.usedTogether('b', 'a'), r.usedTogether('b', 'chosen'), r.usedTogether('a', 'chosen'), r.usedTogether('a', 'a')]).toEqual([1, 1, 2, 1, 0]);
+    expect(r.usedTogether('a', 'nothing')).toBe(0);
+  });
+
+  it('refuses an id it doesn’t hold, and records nothing of that use', () => {
+    const r = fresh(at('a', 0));
+    expect(() => r.used(['a', 'nothing', 'chosen'])).toThrow(/used: no fragment 'nothing'/);
+    expect(r.usedTogether('a', 'chosen')).toBe(0);
+  });
+
+  it('changes nothing while nothing is chosen: the score is the distance', () => {
+    const r = fresh(at('a', 0.2), at('b', 0.1));
+    useTimes(r, 50, 'a', 'chosen');
+    expect(r.query({ x: 0 }, 9).map((f) => [f.fragment.id, f.score === f.distance])).toEqual([
+      ['b', true],
+      ['a', true],
+      ['chosen', true],
+      ['other chosen', true],
+    ]);
+  });
+
+  it('a fragment used 5 times with what is chosen outranks one at the same distance used 0 times', () => {
+    const r = fresh(at('a', 0.2), at('b', 0.2));
+    expect(order(r, ['chosen']).slice(0, 2)).toEqual(['a', 'b']);
+    useTimes(r, 5, 'b', 'chosen');
+    expect(order(r, ['chosen']).slice(0, 2)).toEqual(['b', 'a']);
+    const b = r.query({ x: 0 }, 9, {}, { chosen: ['chosen'] })[0]!;
+    expect([b.distance, b.score]).toEqual([0.2, 0.2 - CO_USE_PULL * Math.log(6)]);
+  });
+
+  // The bound λ = 0.1 is chosen for (decision 046): two fragments 0.3 apart keep their order for every count below 10 of
+  // either with what is chosen, and the farther comes first at its 20th use (λ·ln 21 > 0.3 > λ·ln 20).
+  it('two fragments 0.3 apart: no count below 10 reverses them, and the farther takes the lead at 20 uses', () => {
+    const counts = Array.from({ length: 10 }, (_, n) => n);
+    for (const near of counts)
+      for (const far of counts) {
+        const r = fresh(at('near', 0.1), at('far', 0.4));
+        useTimes(r, near, 'near', 'chosen');
+        useTimes(r, far, 'far', 'chosen');
+        expect(order(r, ['chosen']).slice(0, 2), `near ${near}, far ${far}`).toEqual(['near', 'far']);
+      }
+    const r = fresh(at('near', 0.1), at('far', 0.4));
+    useTimes(r, 19, 'far', 'chosen');
+    expect(order(r, ['chosen']).slice(0, 2)).toEqual(['near', 'far']);
+    r.used(['far', 'chosen']);
+    expect(order(r, ['chosen']).slice(0, 2)).toEqual(['far', 'near']);
+    expect(CO_USE_PULL * Math.log(10)).toBeLessThan(0.3);
+  });
+
+  it('sums the uses with every fragment chosen before it weighs them, so a count does what it does however many are chosen', () => {
+    const r = fresh(at('a', 0.5));
+    useTimes(r, 5, 'a', 'chosen');
+    useTimes(r, 4, 'a', 'other chosen');
+    const [a] = r.query({ x: 0 }, 1, {}, { chosen: ['chosen', 'other chosen', 'chosen'] });
+    expect(a!.score).toBeCloseTo(coUseScore(0.5, 9), 12);
+    expect(a!.score).toBeCloseTo(0.5 - CO_USE_PULL * Math.log(10), 12);
+  });
+
+  it('counts no use with a chosen id it doesn’t hold', () => {
+    const r = fresh(at('a', 0.5));
+    expect(r.query({ x: 0 }, 1, {}, { chosen: ['made by the composer'] })[0]!.score).toBe(0.5);
   });
 });

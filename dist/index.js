@@ -11,3 +11,5 @@ export { readMidi, writeMidi, isMidi } from "./engine/midifile.js";
 export { PRESETS } from "./engine/presets.js";
 export { createRepository } from "./repository/fragments.js";
 export { METER_FRAGMENTS } from "./repository/meters.js";
+export { RHYTHM_FRAGMENTS } from "./repository/rhythms.js";
+export { LIBRARY } from "./repository/library.js";

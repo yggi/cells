@@ -1,10 +1,13 @@
 /**
- * The repository of fragments, its first step (decision 041): a fragment is cells text with an index entry, an id and an
- * association, the places in style space it is found at. A query takes a style point and k and returns the k fragments
- * nearest to it. In memory only: no hash, no canonical form, no persistence (#49's later steps).
+ * The repository of fragments (decision 041): a fragment is cells text with an index entry, an id, the facet it belongs to
+ * and an association, the places in style space it is found at. A query takes a style point and k and returns the k
+ * fragments nearest to it, of the facet it names. Fragments come in groups (decision 043): the repository counts how often
+ * two were used together, and a query weighs that count with what is already chosen beside the distance (decision 046).
+ * In memory only: no hash, no canonical form, no persistence (#49's later steps).
  *
- * The repository doesn't know the axes. A style point maps axis names to numbers, and the frontend names them (Jambot's
- * `sync`, `harm`, …): a distance compares only the axes a query and a point share, so an axis no fragment has is ignored.
+ * The repository doesn't know the axes, nor the facets. A style point maps axis names to numbers, and the frontend names
+ * them (Jambot's `sync`, `harm`, …): a distance compares only the axes a query and a point share, so an axis no fragment
+ * has is ignored. A facet is a name too (`meter`, `rhythm`), compared and never read.
  */
 
 /** A place in style space: axis names to numbers. */
@@ -24,23 +27,55 @@ export interface Fragment {
   readonly text: string;
   /** The places in style space it is found at, one or more. */
   readonly association: readonly WeightedPoint[];
+  /** The kind of part it is, which a query names to find only those (`meter`, `rhythm`); with none, only a query that names no facet finds it. */
+  readonly facet?: string;
 }
 
-/** A fragment a query found, and how far it is from the query's point. */
+/** A fragment a query found, how far it is from the query's point, and the score it was ranked by. */
 export interface Found {
   readonly fragment: Fragment;
+  /** Its distance from the query's point (`fragmentDistance`): the style alone. */
   readonly distance: number;
+  /** What it is ranked by: the distance less the pull of its uses with what is already chosen (`coUseScore`); the distance when it has none. */
+  readonly score: number;
+}
+
+/** What a query may say beside its point: the facet it asks for, and the fragments already chosen. */
+export interface QueryOptions {
+  /** Only fragments of this facet; every fragment where it says none. */
+  readonly facet?: string;
+  /** The ids already chosen (on the composer's workbench): a fragment used with them often ranks nearer. An id the repository doesn't hold counts no use. */
+  readonly chosen?: readonly string[];
 }
 
 export interface Repository {
   readonly fragments: readonly Fragment[];
   /**
-   * The k fragments nearest to a point, nearest first (ties by id), each with its distance (`fragmentDistance`). A
-   * fragment that shares no axis with the point is infinitely far, and comes last. `axisWeights` weighs the axes
-   * against each other (1 where it says nothing): the frontend knows that its tempo is not on the scale of its other axes.
+   * The k fragments of the facet asked for that rank first, by score (`coUseScore`), then by id; each with its distance
+   * (`fragmentDistance`) and its score, which is the distance when nothing is chosen. A fragment that shares no axis with
+   * the point is infinitely far, and comes last. `axisWeights` weighs the axes against each other (1 where it says
+   * nothing): the frontend knows that its tempo is not on the scale of its other axes.
    */
-  query(point: StylePoint, k: number, axisWeights?: StylePoint): Found[];
+  query(point: StylePoint, k: number, axisWeights?: StylePoint, options?: QueryOptions): Found[];
+  /** Records that these fragments were used together: the count of every pair among them goes up by one (an id given twice counts once). Throws on an id it doesn't hold. */
+  used(ids: readonly string[]): void;
+  /** How often two fragments were used together (0 for a fragment with itself). */
+  usedTogether(a: string, b: string): number;
 }
+
+/**
+ * How far the uses of a fragment with what is already chosen pull it nearer: λ in `coUseScore`, in units of distance per
+ * e-fold of uses. At 0.1, fewer than 10 uses (λ·ln 10 ≈ 0.23) never reverse two fragments 0.3 apart, Jambot's miss
+ * distance, and the 20th does (λ·ln 21 ≈ 0.304): the style leads, and the groups a jam keeps reorder what is near it.
+ */
+export const CO_USE_PULL = 0.1;
+
+/**
+ * A fragment's score: its distance less λ·ln(1 + n), n its uses with the fragments already chosen, summed over them
+ * (decision 046). The logarithm makes each doubling of uses pull the same, so a pair used often doesn't lock the query
+ * onto it; the sum is taken before it, so how many fragments are chosen doesn't change what a count can do.
+ */
+export const coUseScore = (distance: number, uses: number): number => distance - CO_USE_PULL * Math.log1p(uses);
 
 const isFiniteNumber = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 
@@ -59,6 +94,8 @@ export function fragmentProblems(entry: Fragment): string[] {
   if (typeof id !== 'string' || !id.trim()) problems.push('no id');
   const name = typeof id === 'string' && id.trim() ? id : '(no id)';
   if (typeof text !== 'string' || !text.trim()) problems.push(`${name}: no text`);
+  const { facet } = entry as { facet?: unknown };
+  if (facet !== undefined && (typeof facet !== 'string' || !facet.trim())) problems.push(`${name}: facet ${String(facet)}, not a name`);
   if (!Array.isArray(association) || !association.length) problems.push(`${name}: no style point in its association`);
   else
     association.forEach((wp: Partial<WeightedPoint> | null, i) => {
@@ -100,19 +137,46 @@ export function createRepository(entries: readonly Fragment[]): Repository {
   }
   if (problems.length) throw new Error(`A malformed repository: ${problems.join('; ')}`);
   const fragments = [...entries];
+  // How often each pair was used together, both ways round: id → id → count.
+  const together = new Map<string, Map<string, number>>(fragments.map((f) => [f.id, new Map()]));
+  const usesWith = (id: string, chosen: readonly string[]) => {
+    const counts = together.get(id)!;
+    let n = 0;
+    for (const other of chosen) n += counts.get(other) ?? 0;
+    return n;
+  };
   return {
     fragments,
-    query(point, k, axisWeights = {}) {
+    query(point, k, axisWeights = {}, { facet, chosen = [] } = {}) {
       if (!(Number.isInteger(k) && k >= 0)) throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
       const wrong = [
         ...Object.entries(point).flatMap(([axis, v]) => (isFiniteNumber(v) ? [] : [`${axis} is ${String(v)}`])),
         ...Object.entries(axisWeights).flatMap(([axis, w]) => (isFiniteNumber(w) && w > 0 ? [] : [`${axis}'s weight is ${String(w)}`])),
       ];
       if (wrong.length) throw new Error(`query: ${wrong.join(', ')}`);
+      const chosenIds = [...new Set(chosen)];
       return fragments
-        .map((fragment) => ({ fragment, distance: fragmentDistance(fragment, point, axisWeights) }))
-        .sort((a, b) => a.distance - b.distance || (a.fragment.id < b.fragment.id ? -1 : a.fragment.id > b.fragment.id ? 1 : 0))
+        .filter((fragment) => facet === undefined || fragment.facet === facet)
+        .map((fragment) => {
+          const distance = fragmentDistance(fragment, point, axisWeights);
+          return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id, chosenIds)) };
+        })
+        .sort((a, b) => a.score - b.score || (a.fragment.id < b.fragment.id ? -1 : a.fragment.id > b.fragment.id ? 1 : 0))
         .slice(0, k);
+    },
+    used(ids) {
+      const unknown = ids.filter((id) => !together.has(id));
+      if (unknown.length) throw new Error(`used: no fragment ${unknown.map((id) => `'${id}'`).join(', ')}`);
+      const distinct = [...new Set(ids)];
+      for (const a of distinct)
+        for (const b of distinct) {
+          if (a === b) continue;
+          const counts = together.get(a)!;
+          counts.set(b, (counts.get(b) ?? 0) + 1);
+        }
+    },
+    usedTogether(a, b) {
+      return a === b ? 0 : (together.get(a)?.get(b) ?? 0);
     },
   };
 }

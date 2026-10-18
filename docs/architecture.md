@@ -52,5 +52,8 @@ text
 
 The repository of fragments ([decision 041](decisions/041-fragments-by-style.md)), in memory; it reads no other module of the language.
 
-- `fragments.ts`: the format (`Fragment`: an id, cells text, an association of weighted style points), `fragmentProblems` (what is wrong with an entry), `createRepository` (throws on a malformed entry), its `query` (the k nearest to a style point), `pointDistance` and `fragmentDistance`.
-- `meters.ts`: `METER_FRAGMENTS`, the first library: thirteen meters, one line `&bar meter(…)` each, open on their tempo, associated by hand with Jambot's presets; four are 4/4s swung as Jambot's presets swing.
+- `fragments.ts`: the format (`Fragment`: an id, cells text, an association of weighted style points, a facet), `fragmentProblems` (what is wrong with an entry), `createRepository` (throws on a malformed entry), its `query` (the k of a facet that rank first at a style point, by distance less the pull of their uses with what is chosen: `coUseScore`, [decision 046](decisions/046-facets-and-co-use.md)), `used` and `usedTogether` (how often two were used together), `pointDistance` and `fragmentDistance`.
+- `presets.ts`: Jambot's eight presets as style points, which the meters and the rhythms are associated with.
+- `meters.ts`: `METER_FRAGMENTS`, the facet `meter`: thirteen meters, one line `&bar meter(…)` each, open on their tempo, associated by hand with Jambot's presets; four are 4/4s swung as Jambot's presets swing.
+- `rhythms.ts`: `RHYTHM_FRAGMENTS`, the facet `rhythm`, open on their meter (their lines tap it, no `&bar`): Jambot's E31 drum bars, one per preset at its point, and four two-bar claves (son 3-2 and 2-3, rumba 3-2, bossa nova) placed by hand near Bossa nova and Funk.
+- `library.ts`: `LIBRARY`, the meters and the rhythms, twenty-five.
