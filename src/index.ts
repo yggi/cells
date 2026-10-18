@@ -7,7 +7,8 @@
  * from the seed library's files (`fragments/`);
  * `readFragment` and `writeFragment` read and write a fragment as a file, Markdown with YAML frontmatter; `readPiece` and
  * `writePiece` a piece (an example, a person's) as the same kind of file, its title, tags and tier in the frontmatter,
- * and `movedCard` takes them out of a text written the old way.
+ * and `movedCard` takes them out of a text written the old way; a file's code is the join of its cells blocks, the rest prose
+ * (`readLiterate`, `fileLine`, `rewrite`).
  * `holesOf` reads what a fragment uses, defines and its clock needs, `unionOf` and `fitOf` add it to a workbench and say
  * whether it fits.
  * Every module is also reachable on its own: `@yggi/cells/engine/<module>`, `@yggi/cells/theory/<module>`,
@@ -26,6 +27,7 @@ export { pieceMidi } from './engine/midiexport';
 export { readMidi, writeMidi, isMidi } from './engine/midifile';
 export { PRESETS, type Preset } from './engine/presets';
 export { isPieceFile, readPiece, writePiece, type PieceFile, type PieceFileProblems, type PieceFrontmatter } from './engine/piecefile';
+export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { movedCard } from './engine/shorten/card';
 export type { CompileResult } from './engine/program';
 export type { Diagnostic } from './engine/ast';

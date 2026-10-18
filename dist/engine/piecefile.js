@@ -1,5 +1,5 @@
+import { readBlocks, rewrite, writeBody } from "./literate.js";
 import { readYaml, writeYaml, yamlValue } from "../repository/yaml.js";
-const FENCE = /^```cells\s*$/;
 export const isPieceFile = (source) => /^---\r?\n/.test(source);
 function keyProblems(root) {
     const problems = [];
@@ -29,28 +29,13 @@ export function readPiece(markdown) {
     const root = yaml.node;
     if (root.kind !== 'map')
         return { problems: [{ line: root.line, message: 'the frontmatter is a map (`title: …`, `tags: […]`)' }] };
-    const problems = keyProblems(root);
-    const fences = lines.flatMap((l, i) => (i > close && FENCE.test(l) ? [i] : []));
-    const open = fences[0];
-    if (open === undefined)
-        problems.push({ line: close + 1, message: 'no ```cells block after the frontmatter' });
-    if (fences.length > 1)
-        problems.push({ line: fences[1] + 1, message: `a second \`\`\`cells block (the first is at line ${open + 1}): a piece file holds one` });
-    const end = open === undefined ? -1 : lines.indexOf('```', open + 1);
-    if (open !== undefined && end < 0)
-        problems.push({ line: open + 1, message: 'the ```cells block is never closed (a line ```)' });
-    const before = open === undefined ? -1 : lines.slice(close + 1, open).findIndex((l) => l.trim());
-    if (before >= 0)
-        problems.push({ line: close + 2 + before, message: 'prose before the ```cells block: the block comes first, the prose after it' });
-    if (problems.length)
+    const body = readBlocks(lines, close + 1);
+    const problems = [...keyProblems(root), ...('problems' in body ? body.problems : [])];
+    if ('problems' in body || problems.length)
         return { problems: problems.sort((a, b) => a.line - b.line) };
-    const prose = lines
-        .slice(end + 1)
-        .join('\n')
-        .replace(/^\s*\n/, '')
-        .trimEnd();
-    return { frontmatter: yamlValue(root), text: lines.slice(open + 1, end).join('\n'), prose };
+    return { frontmatter: yamlValue(root), text: body.text, prose: body.prose, map: body.map, layout: body.layout };
 }
-export function writePiece({ frontmatter, text, prose }) {
-    return `---\n${writeYaml(frontmatter)}---\n\n\`\`\`cells\n${text}\n\`\`\`\n${prose ? `\n${prose}\n` : ''}`;
+export function writePiece({ frontmatter, text, prose, layout }) {
+    const body = layout ? rewrite(layout, text) : { blocks: [[text]], gaps: [['', '```cells'], ['```']] };
+    return `---\n${writeYaml(frontmatter)}---\n${writeBody(body, prose)}`;
 }
