@@ -107,6 +107,27 @@ describe('a MIDI file as a piece', () => {
     expect(notesOf(source).map((n) => `${n.voice}@${n.at.toFixed(2)}`)).toEqual(['bd@0.00', 'hh@0.00', 'sd@0.25']);
   });
 
+  it('writes General MIDI’s claves (75) as a clave of its own, which MIDI out sends as 75 again (#140)', () => {
+    const smf = file([
+      {
+        name: 'drums',
+        notes: notes(10, [
+          [75, 0, 12],
+          [37, 24, 36],
+        ]),
+        bends: [],
+        programs: [],
+      },
+    ]);
+    const { source, dropped } = cellsFromMidi(smf, 'test');
+    expect(dropped).toBe(0);
+    expect(source).toContain('&claves s=sine loop=D7');
+    expect(notesOf(source).map((n) => `${n.voice}@${n.at.toFixed(3)}`)).toEqual(['claves@0.000', 'rim@0.125']);
+    const r = compileSource(source);
+    const back = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
+    expect(back.tracks.flatMap((t) => t.notes.map((n) => `${n.channel}:${n.key}`))).toEqual(['10:75', '10:37']);
+  });
+
   it('brings back the drums of a file the app saved as the piece’s own, at their pitches (#334)', () => {
     const src =
       '&beat scan(1 1 1 1) step=120bpm\n&dundun oneshot s=sine loop=C2 env=&(map=adsr 0 .25 0 .1)\n&bd s=sine loop=G1\n&shekere s=white hpf=6000\n' +

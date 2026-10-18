@@ -63,8 +63,8 @@ const MADE: Record<Facet, readonly string[]> = {
     '&perc step=16n euclid(7,16,2)\n&rim map=midi(10) [&perc]',
     '&perc step=8n euclid(3,8)\n&rim map=midi(10) [&perc]',
     '&shaker step=16n euclid(11,16)\n&rim map=midi(10) [&shaker]',
-    renameCell(renameCell(renameCell(son, 'clave', 'cl'), 'claves', 'cls'), 'rs', 'side'),
-    son.replace(' &rs', '  &rs'),
+    renameCell(renameCell(renameCell(son, 'clave', 'cl'), 'percussion', 'perc'), 'claves', 'wood'),
+    son.replace(' &claves', '  &claves'),
   ],
 };
 const made = (facet: Facet, seed: number, section: number) => MADE[facet][Math.floor(chanceOf(`made|${seed}|${section}|${facet}`) * MADE[facet].length)]!;

@@ -12,11 +12,11 @@ source: seed
 ---
 
 ```cells
-&clave step=16n &rs ~!2 &rs ~!2 &rs ~!3 &rs ~!2 &rs ~!2
-&claves map=midi(10) [&clave * .5]
-&rs s=white
+&clave step=16n &claves ~!2 &claves ~!2 &claves ~!3 &claves ~!2 &claves ~!2
+&percussion map=midi(10) [&clave * .5]
+&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)
 ```
 
 The bossa nova clave in one bar of sixteenths, x..x..x...x..x..: as dense as Bossa nova's drum bar, written in the same sixteenths, so at Bossa nova's energy; off the beat as the two-bar one. Which of the two fits a composition is the fit's to choose (#144), not the association's.
 
-Five strokes struck as a side stick (`&rs`, General MIDI's 37), as a drummer plays the clave on a kit, at half the level (velocity 90). Its names (`&clave`, `&claves`, `&rs`) are none of the drum bars', so it layers on any of them in one text.
+Five strokes of a clave (`&claves`, General MIDI's 75), a sound of its own beside the drum bar's rim, at half the level (velocity 90). Its names (`&clave`, `&percussion`, `&claves`) are none of the drum bars', so it layers on any of them in one text.

@@ -5,6 +5,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { compileSource } from './engine/compile';
 import * as cells from './index';
+import { gmDrumNote } from './engine/midi';
 import { PRESETS } from './engine/presets';
 
 const DOCS = resolve(import.meta.dirname, '../docs');
@@ -146,5 +147,26 @@ describe('docs: the README shows the language as it is', () => {
     const { files } = JSON.parse(read(resolve(DOCS, '../package.json'))) as { files: string[] };
     expect(files).toContain('docs/language');
     for (const m of readme.matchAll(/\]\((docs\/[^)#\s]+)/g)) expect(m[1]).toMatch(/^docs\/language\//);
+  });
+});
+
+describe('docs: the drum names', () => {
+  const names = (text: string) =>
+    [...(/^- \*\*Drum names\.\*\* (.*)$/m.exec(text)?.[1] ?? '').matchAll(/((?:`[a-z]+` )+)(\d+)/g)].flatMap((m) =>
+      m[1]!
+        .trim()
+        .split(' ')
+        .map((n) => [n.slice(1, -1), Number(m[2])] as const),
+    );
+  const page = read(join(DOCS, 'language/midi.md'));
+
+  it('is shown firing: a name listed on a note it doesn’t send is caught', () => {
+    expect(names('- **Drum names.** `clave` 37, `bd` 36.').filter(([n, note]) => gmDrumNote(n) !== note)).toEqual([['clave', 37]]);
+  });
+
+  it('midi.md lists each name on the note MIDI out sends it as (#140)', () => {
+    // (all 26 names of `GM_DRUMS` in `src/engine/midi.ts`)
+    expect(names(page)).toHaveLength(26);
+    expect(names(page).filter(([n, note]) => gmDrumNote(n) !== note)).toEqual([]);
   });
 });

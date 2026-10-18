@@ -9,11 +9,11 @@
  * and is associated with its preset's point; each file names where it was lifted from under `lifted:`
  * (`fixtures/jambot-e31.json` holds E31's texts and hits).
  *
- * The claves are five strokes each, struck as a side stick (`&rs`, General MIDI's 37), as a drummer plays the clave on a
- * kit: four over two bars of eighths (`step=16n cycle=2`), and the bossa nova clave also in one bar of sixteenths
+ * The claves are five strokes each, struck as a clave (`&claves`, General MIDI's 75: yggi/cells#140), a sound of its own
+ * beside a drum bar's rim: four over two bars of eighths (`step=16n cycle=2`), and the bossa nova clave also in one bar of sixteenths
  * (`step=16n`), the form that matches a bossa bar written in sixteenths, as Jambot's is. What a clave fits is the fit's
- * (`fit.ts`), read off its text: under the library's meters both fit each 4/4 and nothing else. Their names (`&clave`, `&claves`,
- * `&rs`) are none of the drum bars', so a clave layers on any of them in one text. Their associations are written by
+ * (`fit.ts`), read off its text: under the library's meters both fit each 4/4 and nothing else. Their names (`&clave`, `&percussion`,
+ * `&claves`) are none of the drum bars', so a clave layers on any of them in one text. Their associations are written by
  * hand, near Bossa nova and Funk.
  *
  * Every point of a rhythm is associated as the facet `rhythm`: a hint a query names, not what the fragment can fill.

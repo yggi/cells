@@ -126,6 +126,8 @@ describe('kits: General MIDI drum notes by name', () => {
       lt: 41,
       mt: 45,
       ht: 48,
+      clave: 75,
+      claves: 75,
       BD2: 36,
     };
     for (const [name, note] of Object.entries(want)) expect(gmDrumNote(name), name).toBe(note);
@@ -139,6 +141,15 @@ describe('kits: General MIDI drum notes by name', () => {
       ['down', 38],
       ['beat', 39],
       ['sub', 40],
+    ]);
+  });
+
+  it('sends a clave as General MIDI’s claves, 75, whatever else its kit holds: not the side stick, not the next free note (#140)', () => {
+    expect([...kitNotes(['claves'])]).toEqual([['claves', 75]]);
+    expect([...kitNotes(['down', 'clave', 'rs'])]).toEqual([
+      ['clave', 75],
+      ['rs', 37],
+      ['down', 36],
     ]);
   });
 
