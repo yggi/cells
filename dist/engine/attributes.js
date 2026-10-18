@@ -64,7 +64,7 @@ export const PARAMS = {
     coupling: physics('a resonator: how strongly it is coupled (.01 faint, .05 strong)', ['resonator']),
     excite: physics('a resonator: sound that drives it (excite=&mix) — it answers where the sound meets its modes', ['resonator'], { value: 'cell' }),
     postgain: {
-        help: 'on the sound card: its master, a linear gain after everything (Strudel’s postgain: 1 as it is, .5 half; free(.8, 0..1) a slider)',
+        help: 'on the sound card: its master, a linear gain after everything (Strudel’s postgain: 1 as it is, .5 half, a negative one inverts the phase; free(.8, 0..1) a slider)',
         doc: 'mix.md',
         value: 'number',
         on: ['card'],
@@ -115,7 +115,7 @@ export const PARAMS = {
     gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
     velocity: { help: 'a gate, the old spelling: a level, one factor of level= (velocity=&accent)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
     gain: {
-        help: 'on a voice: its own gain, dough’s, times every gain it is played at (1 by default; a kit member’s balance); on a gate written the old way (trigger=): the number in level=',
+        help: 'on a voice: its own gain, dough’s, times every gain it is played at (1 by default, a negative one inverts the phase; a kit member’s balance); on a gate written the old way (trigger=): the number in level=',
         doc: 'sound.md',
         value: 'number',
         on: ['voice', 'gate'],

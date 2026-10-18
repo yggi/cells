@@ -11,6 +11,7 @@ export { pieceMidi } from "./engine/midiexport.js";
 export { readMidi, writeMidi, isMidi } from "./engine/midifile.js";
 export { PRESETS } from "./engine/presets.js";
 export { isPieceFile, readPiece, writePiece } from "./engine/piecefile.js";
+export { fileLine, readLiterate, rewrite } from "./engine/literate.js";
 export { movedCard } from "./engine/shorten/card.js";
 export { createRepository, EMPTY_LAYER, layerProblems, } from "./repository/fragments.js";
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";

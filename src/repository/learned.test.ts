@@ -152,7 +152,7 @@ describe('filing', () => {
     const { file } = fileFragment(library, EMPTY_LAYER, filing(LO_FI, { meta: { heard: '2026-10-18T21:05:00Z' } }));
     const text = writeFragment(file!);
     expect(text).toContain('source: composer\ncreated: "2026-10-18T21:04:00Z"');
-    expect(readFragment(text)).toEqual(file);
+    expect(readFragment(text)).toEqual({ ...file, layout: expect.anything() });
   });
 
   it('names a second filing at the same time apart, and refuses an id that is taken', () => {

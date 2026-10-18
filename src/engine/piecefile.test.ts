@@ -75,10 +75,9 @@ describe('a piece file', () => {
     expect(problems(withLine(2, 'description: [a]'))).toEqual([{ line: 2, message: expect.stringMatching(/the description is \["a"\], not a text/) }]);
     expect(problems(withLine(4, 'tier: 1.5'))).toEqual([{ line: 4, message: expect.stringMatching(/whole number, 1 to 9999/) }]);
     expect(problems(withLine(4, 'tier: 0'))).toEqual([{ line: 4, message: expect.stringMatching(/whole number, 1 to 9999/) }]);
-    expect(problems(withLine(7, 'A preface.'))).toEqual([{ line: 7, message: expect.stringMatching(/prose before the ```cells block/) }]);
     expect(problems(withLine(8, '```js'))).toEqual([{ line: 6, message: expect.stringMatching(/no ```cells block/) }]);
     expect(problems(withLine(13, 'more'))).toEqual([{ line: 8, message: expect.stringMatching(/never closed/) }]);
-    expect(problems(withLine(15, '```cells'))).toEqual([{ line: 15, message: expect.stringMatching(/a second ```cells block \(the first is at line 8\)/) }]);
+    expect(problems(withLine(15, '```cells'))).toEqual([{ line: 15, message: expect.stringMatching(/never closed/) }]);
     // (the YAML subset's own refusals, with their lines)
     expect(problems(withLine(5, 'heard: *a'))).toEqual([{ line: 5, message: expect.stringMatching(/alias/) }]);
   });

@@ -1,7 +1,8 @@
 /**
  * A piece as a file (decision 047, #146): the same kind of file as a fragment (`repository/files.ts`), Markdown with YAML
- * frontmatter (`repository/yaml.ts`, the subset parsed in cells), then one ```` ```cells ```` block, then free prose. The
- * examples (`examples/*.md`) are such files.
+ * frontmatter (`repository/yaml.ts`, the subset parsed in cells), then ```` ```cells ```` blocks among free prose. The
+ * examples (`examples/*.md`) are such files. The piece is the join of its blocks, and the rest is prose (decision 051:
+ * literate cells, `literate.ts`).
  *
  * ```
  * ---
@@ -20,12 +21,15 @@
  * The frontmatter says what the piece is: `title` (a string), `description` (a string: what the piece is, in a
  * sentence), `tags` (a list of strings: genre:jazz, artist:Bach, a topic) and `tier` (its tier of the tutorial, a whole
  * number 1 to 9999), each optional here (the examples' checks ask for a title, a description and tags); any other key is
- * kept with its value, in its order, as a fragment's metadata is. The block is the piece's text, what compiles, with no
- * card (#196); a text written before the description moved here may still hold one, the note `&piece`, whose label
- * `pieceMeta` reads where the frontmatter has no `description` (Shorten's `card` moves it). Nothing comes before the block (no preface: what would go there goes in the frontmatter or the
- * prose, as in a fragment file); the prose is everything after it. `writePiece` writes one blank line before the block
- * and before the prose, and ends the file with a newline, so a file written that way reads and writes back byte for byte.
+ * kept with its value, in its order, as a fragment's metadata is. The blocks, joined, are the piece's text, what
+ * compiles, with no card (#196); a text written before the description moved here may still hold one, the note
+ * `&piece`, whose label `pieceMeta` reads where the frontmatter has no `description` (Shorten's `card` moves it). The
+ * prose is everything outside the blocks; `prose` here is what follows the last. `writePiece` of a file that was read
+ * puts its text back in the blocks it came from and keeps the rest byte for byte (`rewrite`, `literate.ts`); a file made
+ * new has one block, one blank line before it and before the prose, and ends with a newline, so a file written that way
+ * reads and writes back byte for byte.
  */
+import { readBlocks, rewrite, writeBody, type CodeLine, type Layout } from './literate';
 import { readYaml, writeYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from '../repository/yaml';
 
 /** The frontmatter, every key in the order the file gives it. */
@@ -34,18 +38,20 @@ export type PieceFrontmatter = { readonly [key: string]: YamlValue };
 /** What a piece file holds. */
 export interface PieceFile {
   readonly frontmatter: PieceFrontmatter;
-  /** The cells text in the block: the piece, what compiles. */
+  /** The cells text: the blocks joined, the piece, what compiles. */
   readonly text: string;
-  /** The Markdown after the block, without the blank lines around it; empty for none. */
+  /** The Markdown after the last block, without the blank lines around it; empty for none. */
   readonly prose: string;
+  /** Where each line of `text` is in the file (a file that was read; none for one made new). */
+  readonly map?: readonly CodeLine[];
+  /** The blocks and the prose between them, as the file has them (a file that was read). */
+  readonly layout?: Layout;
 }
 
 /** What is wrong with a piece file, each problem with its line. */
 export interface PieceFileProblems {
   readonly problems: readonly YamlProblem[];
 }
-
-const FENCE = /^```cells\s*$/;
 
 /** Is this a file (frontmatter first) rather than a bare cells text? A cells text never starts with `---`. */
 export const isPieceFile = (source: string): boolean => /^---\r?\n/.test(source);
@@ -76,26 +82,14 @@ export function readPiece(markdown: string): PieceFile | PieceFileProblems {
   const root = yaml.node;
   if (root.kind !== 'map') return { problems: [{ line: root.line, message: 'the frontmatter is a map (`title: …`, `tags: […]`)' }] };
 
-  const problems = keyProblems(root);
-  const fences = lines.flatMap((l, i) => (i > close && FENCE.test(l) ? [i] : []));
-  const open = fences[0];
-  if (open === undefined) problems.push({ line: close + 1, message: 'no ```cells block after the frontmatter' });
-  if (fences.length > 1) problems.push({ line: fences[1]! + 1, message: `a second \`\`\`cells block (the first is at line ${open! + 1}): a piece file holds one` });
-  const end = open === undefined ? -1 : lines.indexOf('```', open + 1);
-  if (open !== undefined && end < 0) problems.push({ line: open + 1, message: 'the ```cells block is never closed (a line ```)' });
-  const before = open === undefined ? -1 : lines.slice(close + 1, open).findIndex((l) => l.trim());
-  if (before >= 0) problems.push({ line: close + 2 + before, message: 'prose before the ```cells block: the block comes first, the prose after it' });
-  if (problems.length) return { problems: problems.sort((a, b) => a.line - b.line) };
-
-  const prose = lines
-    .slice(end + 1)
-    .join('\n')
-    .replace(/^\s*\n/, '')
-    .trimEnd();
-  return { frontmatter: yamlValue(root) as PieceFrontmatter, text: lines.slice(open! + 1, end).join('\n'), prose };
+  const body = readBlocks(lines, close + 1);
+  const problems = [...keyProblems(root), ...('problems' in body ? body.problems : [])];
+  if ('problems' in body || problems.length) return { problems: problems.sort((a, b) => a.line - b.line) };
+  return { frontmatter: yamlValue(root) as PieceFrontmatter, text: body.text, prose: body.prose, map: body.map, layout: body.layout };
 }
 
-/** A piece file's text: the frontmatter, the cells block, the prose. */
-export function writePiece({ frontmatter, text, prose }: PieceFile): string {
-  return `---\n${writeYaml(frontmatter)}---\n\n\`\`\`cells\n${text}\n\`\`\`\n${prose ? `\n${prose}\n` : ''}`;
+/** A piece file's text: the frontmatter, the cells blocks, the prose. */
+export function writePiece({ frontmatter, text, prose, layout }: PieceFile): string {
+  const body: Layout = layout ? rewrite(layout, text) : { blocks: [[text]], gaps: [['', '```cells'], ['```']] };
+  return `---\n${writeYaml(frontmatter)}---\n${writeBody(body, prose)}`;
 }
