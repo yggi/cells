@@ -1,0 +1,5 @@
+{
+  "about": "BWV 847 as an analyst marks it (#177): the sections are the steps (sixteenths) where examples/bwv847.md's form changes, inside the piece: the figuration ends (384), bars 25-27 end (432), the Presto (528), the Adagio (545), the Allegro and the prelude (609), the fugue's alto (626), soprano (658) and bass (722) come in. The themes are the cells whose copies are the fugue's entries.",
+  "sections": [384, 432, 528, 545, 609, 626, 658, 722],
+  "themes": ["subject", "counter"]
+}
