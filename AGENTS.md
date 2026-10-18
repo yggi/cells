@@ -11,6 +11,7 @@ The cells language as a package: a minimal music language where everything is a 
 - `npm run types`: rewrites `types/` (the declarations a frontend typechecks against, through the `types` condition of `exports`) from `src/`; a test fails when it is stale. Run it with any change to an exported signature.
 - `npm run dist`: rewrites `dist/` (`src/` as JavaScript for Node, through the `default` condition of `exports`; bundlers keep the source through `module`); a test fails when it is stale. Run it with any change to `src/`, and commit the result.
 - Skills (`.claude/skills/`): `release` (verify `main`, the changelog and version, the owner's tag, the frontends' pins moved), `review` (a pull request in its own worktree, verified, its claims re-run, one review), `pianoroll` (what a text plays as a picture, before and after a change), `land` (a pull request merged by squash on the owner's word, then its issues: closed, its epic ticked, its follow-ups filed; no deploy). `node --experimental-transform-types --import ./tools/node-ts.mjs` runs the source under Node.
+- `npm run structure -- [--cells] <input>...`: a text's structure, decision 049's measure (each leaf a braid writes, one per attribute value, one per cell, over the normal form; names, labels and comments free), for a change that claims a piece more compact; an input is `example:<key>`, a `.md` piece or fragment, or a `.cells` text (`tools/structure.ts`, until #157 builds it into Shorten).
 - One file while iterating: `npx vitest run src/engine/parser/parser.test.ts`.
 
 ## Rules
