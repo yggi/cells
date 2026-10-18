@@ -727,7 +727,15 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         const other = windowsOf(p, sel, a, until);
         ws = ws.flatMap((w) => other.flatMap((x) => (Math.max(w.a, x.a) < Math.min(w.b, x.b) ? [{ a: Math.max(w.a, x.a), b: Math.min(w.b, x.b) }] : [])));
       }
-      return ws;
+      // (resume and free: a part named again by the selector's next step stays on, so a note held across the step
+      // isn't cut there; restart starts it again, from its top, at each step that names it)
+      if (policy === 'restart') return ws;
+      return ws.reduce<{ a: number; b: number }[]>((all, w) => {
+        const last = all[all.length - 1];
+        if (last && Math.abs(w.a - last.b) < EPS) all[all.length - 1] = { a: last.a, b: w.b };
+        else all.push(w);
+        return all;
+      }, []);
     };
     // (resume: the time it spent on before each window, so from the start of play)
     const windows = windowsFrom(policy === 'resume' ? 0 : from);

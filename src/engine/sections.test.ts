@@ -138,7 +138,7 @@ describe('the examples arranged at the input play the same', () => {
     };
   };
   it.each([
-    ['BWV 847: the movements two sections stepped by the tempo map, no tacets (the breath between them said: ~@15)', 'bwv847', 'fixtures/bwv847-input.cells'],
+    ['BWV 847: written by hand as a selector over its voices (#177), every note of the text the generator wrote', 'bwv847', 'fixtures/bwv847-generated.cells'],
     ['Pop: six sections stepped by the bar, the parts straight out', 'pop', 'fixtures/pop-input.cells'],
   ])('%s', (_, example, rewired) => {
     const before = notes(PRESETS[example as 'pop'].source);
@@ -236,6 +236,30 @@ ${policy ? `&mel restart=${policy}\n` : ''}&song over=&sections step=4n laps=1 0
     expect(played(onSelector, 0, 5).map(step)).toEqual([0, 1, 2, 3, 4, 5]);
     const sectionWins = onSelector + '&mel restart=free\n';
     expect(played(sectionWins, 0, 5).map(step)).toEqual([0, 1, 4, 5, 6, 8]);
+  });
+  it('resume and free: a note held across the selector naming the part again is not cut there; restart starts it again', () => {
+    // (&song's second step names &mel again with &drum: a held note of &mel goes on through it, #177's alto in bar 6)
+    const HELD = (policy: string) => `
+&bar scan(1 1 1 1) step=120bpm
+&sections step=4n &mel &drum
+&song over=&sections step=4n laps=1 restart=${policy} 0@2 [0,1]@2
+&tune step=&mel 0 7@3
+&kick step=&drum 12
+&lead s=sine loop=C4
+&out map=sample [&tune * &lead, &kick * &lead]
+`;
+    const tune = (policy: string) => played(HELD(policy), 0, 3).flatMap((e) => (Math.round(12 * Math.log2(e.freq / 261.6256)) === 12 ? [] : [[e.at, e.dur]]));
+    for (const policy of ['resume', 'free'])
+      expect(tune(policy)).toEqual([
+        [0, 0.5],
+        [0.5, 1.5],
+      ]);
+    expect(tune('restart')).toEqual([
+      [0, 0.5],
+      [0.5, 0.5],
+      [1, 0.5],
+      [1.5, 0.5],
+    ]);
   });
   it('a window read in pieces plays what it plays whole', () => {
     for (const policy of ['restart', 'resume', 'free']) {

@@ -8,7 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.6.0`.
+### Changed
+- **BWV 847 is written by hand as its structure** (#177): no tacets. The form is a selector over the five voices (`&sections step=pulse &rhTime &lhTime &sopranoTime &altoTime &bassTime`), its steps the piece's sections, each naming the voices that play, with `restart=resume`, so a voice switched off waits and goes on where it stopped. Each fugue entry is a copy of the subject or the countersubject, transposed and bent where Bach bends it (`&answer base=&subject^$7 =!3 12@2 =!15 10@2`), and the episodes the voices share are cells (`&head`, `&climb`, `&walk`, …). It sounds identical: all 1,765 notes and their gains over the whole piece, and the event snapshot's `notes` and `events`. Its `values` and `live` hashes move, since its cells are renamed: a frontend that names the example's cells (`&s11s`, `&tacetFugue`, `&rhBars`, `&lhAllegro`, `&m1`, …) finds them gone. `tools/bwv847.py` no longer writes the example: it writes the reference and `fixtures/bwv847-generated.cells`, the text it wrote before.
+
+### Fixed
+- **A part held across the selector's next step** (#177): under `restart=resume` or `restart=free`, a note of a part that the selector's next step names again was cut at the step, as if the part had been switched off; now it sounds whole. `restart` (the default) is unchanged: a part named again starts from its top. In C, the one example with `resume`, plays as before (the event snapshot doesn't move); a piece with `resume` or `free` whose held notes cross a step where the part stays on now hears them held.
+- **Shorten cuts no phrase out of a cell another copies** (#177): a copy (`base=&subject`) counts its base's steps (`=!3 12@2`), so a phrase cut out of the base moved every copy's changes onto other notes (with an error, `= past the end of &subject`). Shorten's phrases now leave a base and its copies as they are; no suggestion it made before on an example without `base=` changes.
 
 ## v0.6.0 — 2026-10-18
 

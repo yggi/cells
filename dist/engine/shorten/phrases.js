@@ -8,6 +8,8 @@ const TOLL = 12;
 const use = (name, ref) => `&${name}${ref}`;
 const isDegree = (ref) => ref.startsWith('^') && !ref.startsWith('^$');
 export function phrases(source, cells, result) {
+    const copied = new Set([...source.matchAll(/\bbase=&(\w+)/g)].map((m) => m[1]));
+    cells = cells.filter((c) => !copied.has(c.name) && !new RegExp(`^&${c.name}\\b[^\\n]*\\bbase=&`, 'm').test(source));
     const found = [];
     const maxLen = 16;
     const where = new Map();
