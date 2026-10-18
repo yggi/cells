@@ -248,6 +248,7 @@ export function waveValues(shape, n) {
 }
 const TONICS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const tonicName = (pc) => ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][((pc % 12) + 12) % 12];
+export const SCALE_KEY = 'key:λ';
 export function parseScale(s, start) {
     s.i++;
     s.skipSpace();
@@ -321,7 +322,7 @@ export function parseScale(s, start) {
         s.expect(')', "')' to close scale(…)");
     }
     const span = s.span(start);
-    const key = `key:λ${s.line}_${start + s.offset}`;
+    const key = `${SCALE_KEY}${s.line}_${start + s.offset}`;
     s.lambdas.push({
         name: key,
         span,

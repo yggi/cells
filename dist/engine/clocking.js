@@ -1,4 +1,5 @@
-import { isPicked, period, shiftedUnits } from "./helix.js";
+import { isPicked, period, shiftedUnits, tableUnits } from "./helix.js";
+import { footOf, leaves, slots } from "./subseq.js";
 import { beltWarp, onReset, warpOf } from "./physics.js";
 import { mod } from "../theory/modes.js";
 export const EPS = 1e-9;
@@ -199,15 +200,75 @@ export function shiftsAt(result, statics, seconds, played = playedCells(result))
         let s = steps.get(c.clock);
         if (s === undefined)
             steps.set(c.clock, (s = clk.stepOf(c.clock)));
-        const turns = Math.floor(c.rate * s + EPS) * c.stride;
-        const wrap = c.wrap ?? (c.units.length || c.cycle);
-        return base + (wrap > 0 ? mod(turns, wrap) : turns);
+        const step = Math.floor(c.rate * s + EPS);
+        const turns = step * c.stride;
+        const own = ownSteps(result, name);
+        if (!own) {
+            const wrap = c.wrap ?? ownLength(result, name);
+            return base + (wrap > 0 ? mod(turns, wrap) : turns);
+        }
+        const at = turns + Math.min(1 - EPS, Math.max(0, c.rate * s - step));
+        const wrap = c.wrap ?? own.length;
+        const b = wrap > 0 ? mod(at, wrap) : at;
+        const lap = Math.floor(b / own.length);
+        return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
     };
+}
+export const ownLength = (result, name) => {
+    const c = result.cells.get(name);
+    return ownSteps(result, name)?.length ?? (c.units.length || c.cycle);
+};
+const ownCache = new WeakMap();
+function ownSteps(result, name) {
+    let cache = ownCache.get(result);
+    if (!cache)
+        ownCache.set(result, (cache = new Map()));
+    if (cache.has(name))
+        return cache.get(name);
+    const units = result.cells.get(name).units;
+    let own = null;
+    if (units.some((u) => u.repeat !== 1 || u.elongate !== 1 || u.atom.kind === 'seq')) {
+        const first = [];
+        let n = 0;
+        for (const u of units) {
+            first.push(n);
+            n += u.atom.kind === 'seq' ? leaves(u.atom).length : 1;
+        }
+        const turns = slots(units, () => 1)
+            .filter((sl) => !sl.chosen || sl.chosen.every((p) => p.is === 0))
+            .map((sl) => {
+            const u = units[sl.top];
+            const index = first[sl.top] + (u.atom.kind === 'seq' ? leaves(u.atom).indexOf(sl.atom) : 0);
+            return { at: sl.at, index, ...(sl.laps ? { laps: sl.laps } : {}) };
+        })
+            .sort((x, y) => x.at - y.at);
+        const length = units.reduce((t, u) => t + footOf(u.atom, () => 1) * u.elongate * u.repeat, 0);
+        const sounds = (t, lap) => !t.laps || mod(lap, t.laps.of) === t.laps.is;
+        const entries = tableUnits(result, name).length;
+        own = {
+            length,
+            entries,
+            inForce(at, lap) {
+                let found;
+                for (const t of turns)
+                    if (t.at <= at + EPS && sounds(t, lap) && (!found || t.at > found.at + EPS))
+                        found = t;
+                if (found)
+                    return found.index;
+                for (const t of turns)
+                    if (sounds(t, lap - 1) && (!found || t.at > found.at + EPS))
+                        found = t;
+                return found ? found.index - entries : 0;
+            },
+        };
+    }
+    cache.set(name, own);
+    return own;
 }
 export function selects(result, name) {
     const table = result.cells.get(name)?.over ?? '';
     const t = result.cells.get(table);
-    return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && result.taps?.get(u.atom.name) === table);
+    return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && result.sections?.get(u.atom.name) === table);
 }
 export function tapeMotion(result, clk, tape) {
     const tc = result.cells.get(tape);

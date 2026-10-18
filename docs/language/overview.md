@@ -56,7 +56,7 @@ Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decisi
 | `.rev()` | `&x[::-1]` | a slice, Python-style |
 | `sine2` `saw2` `tri2` `square2` | `sin(n)` `saw(n)` `tri(n)` `square(n)` | a cycle in n steps, a braid: a waveform or a swell |
 | `.range(lo, hi)` | `lpf=lo..hi * &x` | a range a cell moves ([sound.md](sound.md)) |
-| `.pick(…)` · `.inhabit(…)` | a selector, `over=&parts` | switches whole parts on a meter's bus ([time.md](time.md)) |
+| `.pick(…)` · `.inhabit(…)` | a selector, `over=&sections` | switches whole sections on a meter's bus ([time.md](time.md)) |
 | `.bank("tr808")` | a kit, `&kit &bd &sd &hh` | a table of voices, its numbers pick the drum ([sound.md](sound.md)) |
 | `setcps(.5)` | `loop=` on a meter | every cell has a clock of its own; there is no global cps ([time.md](time.md)) |
 | `.fm(n)` `.fmh(r)` | `fm=&op` `ratio=` `index=` | FM names a modulator cell, for now ([decision 030](../decisions/030-fm-feedback.md) will align it) |

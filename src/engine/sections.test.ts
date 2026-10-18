@@ -4,13 +4,13 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 
-// Decision 016: arranging at the input. A stepped table of names declares them as taps of the meter's bus; a selector
-// reading the table switches them; what a tap steps plays while it is picked, from its top each time.
+// Decision 016: arranging at the input. A stepped table of names declares them as sections (decision 044); a selector
+// reading the table switches them; what a section steps plays while it is picked, from its top each time.
 const SONG = `
 &bar scan(1 1 1 1) step=120bpm
 &major scale(major)
-&parts step=4n &keysBar &tuneBar &drumBar
-&song over=&parts step=1m/4 laps=1 0 [0,2] [0,1,2] 0
+&sections step=4n &keysBar &tuneBar &drumBar
+&song over=&sections step=1m/4 laps=1 0 [0,2] [0,1,2] 0
 &chords over=&major step=&keysBar/4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
 &tune over=&major step=&tuneBar*2 4 4 5 7
 &kick step=&drumBar 0 ~ 0 ~
@@ -20,23 +20,23 @@ const SONG = `
 &out map=sample [&chords * &keys * .15, &tune * &lead * .2, &kick * &bd * .6]
 `;
 
-// (a beat is half a second; a section, sixteen beats, is eight)
-const SECTION = 8;
+// (a beat is half a second; a step of the song, sixteen beats, is eight)
+const SONG_STEP = 8;
 const played = (src: string, from: number, to: number) => {
   const r = compileSource(src);
   return eventsBetween(plan(r, codeShifts(r), r.off), from, to); // (what is off, as the app plays it)
 };
-const voices = (src: string, section: number) => new Set(played(src, section * SECTION, (section + 1) * SECTION - 0.01).map((e) => e.voice));
+const voices = (src: string, step: number) => new Set(played(src, step * SONG_STEP, (step + 1) * SONG_STEP - 0.01).map((e) => e.voice));
 
 describe('arranging at the input (decision 016)', () => {
-  it('compiles: the names in a stepped table are its taps, nothing warns', () => {
+  it('compiles: the names in a stepped table are its sections, nothing warns', () => {
     const r = compileSource(SONG);
     expect(r.ok).toBe(true);
     expect(r.diagnostics.map((d) => d.message)).toEqual([]);
-    for (const tap of ['keysBar', 'tuneBar', 'drumBar']) expect(r.cells.get(tap)?.clock).toBe('bar:4n'); // (decision 040: a tap of the meter, by the quarter)
+    for (const section of ['keysBar', 'tuneBar', 'drumBar']) expect(r.cells.get(section)?.clock).toBe('bar:4n'); // (decision 040: a tap of the meter, by the quarter)
   });
 
-  it('each section plays the parts its selector picks, and only those', () => {
+  it('each step of the song plays the sections its selector picks, and only those', () => {
     expect(voices(SONG, 0)).toEqual(new Set(['keys'])); // 0: the keys
     expect(voices(SONG, 1)).toEqual(new Set(['keys', 'bd'])); // [0,2]: keys and drums
     expect(voices(SONG, 2)).toEqual(new Set(['keys', 'lead', 'bd'])); // [0,1,2]: all three
@@ -44,9 +44,9 @@ describe('arranging at the input (decision 016)', () => {
     expect(voices(SONG, 4)).toEqual(new Set()); // laps=1: the song has ended
   });
 
-  it('a part picked starts from its top: the tune enters in the third section on its first note', () => {
-    const first = played(SONG, 2 * SECTION, 3 * SECTION).filter((e) => e.voice === 'lead')[0];
-    expect(first.at).toBeCloseTo(2 * SECTION, 6);
+  it('a section picked starts from its top: the tune enters in the third step of the song on its first note', () => {
+    const first = played(SONG, 2 * SONG_STEP, 3 * SONG_STEP).filter((e) => e.voice === 'lead')[0];
+    expect(first.at).toBeCloseTo(2 * SONG_STEP, 6);
     // its first note is degree 4 of C major (G), up from C5
     expect(12 * Math.log2(first.freq / 523.25)).toBeCloseTo(7, 1);
   });
@@ -59,39 +59,41 @@ describe('arranging at the input (decision 016)', () => {
     expect(r.cells.get('both')?.clock).toBe('bar:4n');
   });
 
-  it('a tap may have a line of its own, of attributes only: off silences what it steps, in every section', () => {
-    const off = SONG.replace('&parts step=4n &keysBar &tuneBar &drumBar', '&parts step=4n &keysBar &tuneBar &drumBar\n&drumBar off label="the drums"');
+  it('a section may have a line of its own, of attributes only: off silences what it steps, in every step of the song', () => {
+    const off = SONG.replace('&sections step=4n &keysBar &tuneBar &drumBar', '&sections step=4n &keysBar &tuneBar &drumBar\n&drumBar off label="the drums"');
     const r = compileSource(off);
     expect(r.diagnostics.map((d) => d.message)).toEqual([]);
-    expect([r.taps?.get('drumBar'), r.cells.get('drumBar')?.clock, r.cells.get('drumBar')?.label]).toEqual(['parts', 'bar:4n', 'the drums']);
+    expect([r.sections?.get('drumBar'), r.cells.get('drumBar')?.clock, r.cells.get('drumBar')?.label]).toEqual(['sections', 'bar:4n', 'the drums']);
     expect(voices(off, 1)).toEqual(new Set(['keys'])); // [0,2]: the keys; the drums are off
     expect(voices(off, 2)).toEqual(new Set(['keys', 'lead']));
-    // a tap's line with steps or a table of its own: the error says which line, and only that (not that the other taps
-    // are unknown, nor what they step stands still)
-    for (const [tap, line] of [
+    // a section's line with steps or a table of its own: the error says which line, and only that (not that the other
+    // sections are unknown, nor what they step stands still)
+    for (const [section, line] of [
       ['drumBar', '&drumBar 0 1'],
       ['keysBar', '&keysBar 0 1'],
       ['tuneBar', '&tuneBar over=&major'],
     ])
       expect(
-        compileSource(SONG.replace('&parts step=4n &keysBar &tuneBar &drumBar', `&parts step=4n &keysBar &tuneBar &drumBar\n${line}`)).diagnostics.map((d) => d.message),
-      ).toEqual([`&${tap} is a tap of &parts, so its line can carry attributes only (off, label=, tags=, show=, size=, shift=, restart=), not steps or a table of its own`]);
+        compileSource(SONG.replace('&sections step=4n &keysBar &tuneBar &drumBar', `&sections step=4n &keysBar &tuneBar &drumBar\n${line}`)).diagnostics.map((d) => d.message),
+      ).toEqual([
+        `&${section} is a section of &sections, so its line can carry attributes only (off, label=, tags=, show=, size=, shift=, restart=), not steps or a table of its own`,
+      ]);
     // (a bare line of a name no table names is a cell of no steps, as before)
     expect(compileSource('&x off').cells.get('x')?.clock).toBeFalsy();
   });
 
-  it('a tap nothing is stepped by warns: a section with nothing in it, or a name mistyped', () => {
+  it('a section nothing is stepped by warns: a section with nothing in it, or a name mistyped', () => {
     const r = compileSource(SONG.replace('step=&drumBar', 'step=&drumsBar'));
     expect(r.ok).toBe(false); // &drumsBar is no cell
-    const typo = compileSource(SONG.replace('&parts step=4n &keysBar &tuneBar &drumBar', '&parts step=4n &keysBar &tuneBar &drumBar &fillBar'));
-    expect(typo.diagnostics.some((d) => d.message.startsWith('&fillBar is a tap of &parts, but nothing is stepped by it'))).toBe(true);
+    const typo = compileSource(SONG.replace('&sections step=4n &keysBar &tuneBar &drumBar', '&sections step=4n &keysBar &tuneBar &drumBar &fillBar'));
+    expect(typo.diagnostics.some((d) => d.message.startsWith('&fillBar is a section of &sections, but nothing is stepped by it'))).toBe(true);
   });
 
-  it('two selectors over one table AND together: a tap plays only while both pick it', () => {
-    // &mute, a second selector over &parts at twice the rate: all three parts, then never the drums (half a section each)
-    const both = SONG.replace('&chords', '&mute over=&parts step=1m/2 [0,1,2] [0,1]\n&chords');
+  it('two selectors over one table AND together: a section plays only while both pick it', () => {
+    // &mute, a second selector over &sections at twice the rate: all three sections, then never the drums (half a song step each)
+    const both = SONG.replace('&chords', '&mute over=&sections step=1m/2 [0,1,2] [0,1]\n&chords');
     expect(compileSource(both).diagnostics.map((d) => d.message)).toEqual([]);
-    const half = (n: number) => new Set(played(both, n * (SECTION / 2), (n + 1) * (SECTION / 2) - 0.01).map((e) => e.voice));
+    const half = (n: number) => new Set(played(both, n * (SONG_STEP / 2), (n + 1) * (SONG_STEP / 2) - 0.01).map((e) => e.voice));
     expect([half(2), half(3)]).toEqual([new Set(['keys', 'bd']), new Set(['keys'])]); // &song [0,2]: the drums only while &mute has them
     expect([half(4), half(5)]).toEqual([new Set(['keys', 'lead', 'bd']), new Set(['keys', 'lead'])]); // [0,1,2]
     expect(voices(both, 4)).toEqual(new Set()); // &mute picks all three, but &song has ended
@@ -104,9 +106,9 @@ describe('a selector of mixes (the form before decision 016)', () => {
 &b step=&bar 12
 &partA [&a * &v]
 &partB [&b * &w]
-&parts &partA &partB
-&song over=&parts step=&bar/4 laps=1 0 [0,1] ~ 1
-&song2 over=&parts step=&bar/4 laps=1 0
+&sections &partA &partB
+&song over=&sections step=&bar/4 laps=1 0 [0,1] ~ 1
+&song2 over=&sections step=&bar/4 laps=1 0
 &v s=tri loop=C4
 &w s=sine loop=C4
 &out loop=SAMPLE_RATE map=sample ${out}`;
@@ -116,7 +118,7 @@ describe('a selector of mixes (the form before decision 016)', () => {
     expect(r.diagnostics.map((d) => d.message)).toEqual(
       ['song', 'song2'].map(
         (s) =>
-          `A selector switches taps of a meter's bus (decision 016): &${s} over=&parts reads mixes. Write &parts step=4n with a tap per part (&parts step=4n &keysBar &drumBar), step each part's cells by its tap (step=&keysBar), and play the parts straight into the sound card`,
+          `A selector switches sections (decision 016): &${s} over=&sections reads mixes. Write &sections step=4n with a section per part (&sections step=4n &keysBar &drumBar), step each part's cells by its section (step=&keysBar), and play the parts straight into the sound card`,
       ),
     );
   });
@@ -135,8 +137,8 @@ describe('the examples arranged at the input play the same', () => {
     };
   };
   it.each([
-    ['BWV 847: the movements two taps of the tempo map, no tacets (the breath between them said: ~@15)', 'examples/bwv847.cells', 'fixtures/bwv847-input.cells'],
-    ['Pop: six taps of the bar, the parts straight out', 'examples/pop.cells', 'fixtures/pop-input.cells'],
+    ['BWV 847: the movements two sections stepped by the tempo map, no tacets (the breath between them said: ~@15)', 'examples/bwv847.cells', 'fixtures/bwv847-input.cells'],
+    ['Pop: six sections stepped by the bar, the parts straight out', 'examples/pop.cells', 'fixtures/pop-input.cells'],
   ])('%s', (_, example, rewired) => {
     const before = notes(readFileSync(example, 'utf8'));
     const after = notes(readFileSync(rewired, 'utf8'));
@@ -147,27 +149,27 @@ describe('the examples arranged at the input play the same', () => {
 });
 
 // Decision 032: restart= names what switching a part on does to its time; resume and free are stubs.
-describe('restart= on a tap or a selector (decision 032)', () => {
+describe('restart= on a section or a selector (decision 032)', () => {
   const messages = (src: string) => compileSource(src).diagnostics.map((d) => `${d.severity}: ${d.message}`);
-  const onTap = (policy: string) => SONG + `&tuneBar restart=${policy}\n`;
-  const onSelector = (policy: string) => SONG.replace('&song over=&parts', `&song over=&parts restart=${policy}`);
-  it('restart (the default) parses on a tap and on a selector, says nothing and plays as without it', () => {
-    for (const src of [onTap('restart'), onSelector('restart')]) {
+  const onSection = (policy: string) => SONG + `&tuneBar restart=${policy}\n`;
+  const onSelector = (policy: string) => SONG.replace('&song over=&sections', `&song over=&sections restart=${policy}`);
+  it('restart (the default) parses on a section and on a selector, says nothing and plays as without it', () => {
+    for (const src of [onSection('restart'), onSelector('restart')]) {
       expect(messages(src)).toEqual([]);
       expect(played(src, 0, 40)).toEqual(played(SONG, 0, 40));
     }
-    expect(compileSource(onTap('restart')).cells.get('tuneBar')?.params.restart).toBe('restart');
+    expect(compileSource(onSection('restart')).cells.get('tuneBar')?.params.restart).toBe('restart');
   });
-  it('a tap with restart= stays a tap', () => {
-    expect(compileSource(onTap('resume')).cells.get('tuneBar')?.clock).toBe('bar:4n');
+  it('a section with restart= stays a section', () => {
+    expect(compileSource(onSection('resume')).cells.get('tuneBar')?.clock).toBe('bar:4n');
   });
-  it.each(['resume', 'free'])('restart=%s parses on a tap and on a selector, and says nothing', (policy) => {
-    for (const src of [onTap(policy), onSelector(policy)]) expect(messages(src)).toEqual([]);
+  it.each(['resume', 'free'])('restart=%s parses on a section and on a selector, and says nothing', (policy) => {
+    for (const src of [onSection(policy), onSelector(policy)]) expect(messages(src)).toEqual([]);
   });
   it('another word, or another cell, says so', () => {
-    expect(messages(onTap('again'))).toEqual(['warning: restart=again: what switching a part on does to its time is restart, resume or free — this plays as restart']);
+    expect(messages(onSection('again'))).toEqual(['warning: restart=again: what switching a part on does to its time is restart, resume or free — this plays as restart']);
     expect(messages(SONG.replace('&lead s=square', '&lead restart=resume s=square'))).toEqual([
-      'warning: restart= acts on a tap (a name a stepped table of names declares) or a selector (over= a table of taps): on &lead it does nothing',
+      'warning: restart= acts on a section (a name a stepped table of names declares) or a selector (over= a table of sections): on &lead it does nothing',
     ]);
   });
 });
@@ -178,8 +180,8 @@ describe('restart=resume and restart=free (decision 032)', () => {
   const PART = (policy: string) => `
 &bar scan(1 1 1 1) step=120bpm
 &major scale(major)
-&parts step=4n &mel
-${policy ? `&mel restart=${policy}\n` : ''}&song over=&parts step=4n laps=1 0@2 ~@2 0@3 ~ 0 ~
+&sections step=4n &mel
+${policy ? `&mel restart=${policy}\n` : ''}&song over=&sections step=4n laps=1 0@2 ~@2 0@3 ~ 0 ~
 &tune over=&major step=&mel 0 1 2 3 4 5 6 7 8 9 10 11
 &lead s=sine loop=C4
 &out map=sample [&tune * &lead]
@@ -228,11 +230,11 @@ ${policy ? `&mel restart=${policy}\n` : ''}&song over=&parts step=4n laps=1 0@2 
     const copy = eventsBetween(plan(open, codeShifts(open)), 0, 5).map((e) => [Math.round(e.at * 2), step(e)] as const);
     expect(steps('free')).toEqual(copy.filter(([beat]) => [0, 1, 4, 5, 6, 8].includes(beat)));
   });
-  it('the selector says it for all its taps, and a tap says it for itself first', () => {
-    const onSelector = PART('').replace('&song over=&parts', '&song over=&parts restart=resume');
+  it('the selector says it for all its sections, and a section says it for itself first', () => {
+    const onSelector = PART('').replace('&song over=&sections', '&song over=&sections restart=resume');
     expect(played(onSelector, 0, 5).map(step)).toEqual([0, 1, 2, 3, 4, 5]);
-    const tapWins = onSelector + '&mel restart=free\n';
-    expect(played(tapWins, 0, 5).map(step)).toEqual([0, 1, 4, 5, 6, 8]);
+    const sectionWins = onSelector + '&mel restart=free\n';
+    expect(played(sectionWins, 0, 5).map(step)).toEqual([0, 1, 4, 5, 6, 8]);
   });
   it('a window read in pieces plays what it plays whole', () => {
     for (const policy of ['restart', 'resume', 'free']) {

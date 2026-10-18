@@ -1,6 +1,6 @@
 import { pickLabel } from "./ast.js";
 import { ROOT, MAX_EVENTS, pickIndices, pickSteps } from "./program.js";
-import { isTap, positionOf, rootOf, shiftedUnits } from "./helix.js";
+import { isRelativePick, positionOf, rootOf, shiftedUnits } from "./helix.js";
 import { placed, whole } from "./subseq.js";
 export function unitsFor(result, name, shifts, pick, table, extra = 0) {
     if (!pick)
@@ -24,7 +24,7 @@ export function flatten(result, root, shifts, rootPick = null, silent = () => fa
             return hit;
         const out = [];
         if (!silent(name)) {
-            const taps = isTap(result, name, pick) ? pickIndices(result.cells.get(name).units.length, pick) : null;
+            const reads = isRelativePick(result, name, pick) ? pickIndices(result.cells.get(name).units.length, pick) : null;
             const units = unitsFor(result, name, shifts, pick, table, extra);
             const unit = (x) => (x.kind === 'ref' ? stepsOf(result, x.name, x.pick) || 1 : 1);
             const leaf = (x, at, dur) => {
@@ -48,7 +48,7 @@ export function flatten(result, root, shifts, rootPick = null, silent = () => fa
                     cell: name,
                     table,
                     tableShift: tShift,
-                    ...(taps ? { via: { cell: name, index: taps[top], ctx: table, mul: 1, add: 0 } } : {}),
+                    ...(reads ? { via: { cell: name, index: reads[top], ctx: table, mul: 1, add: 0 } } : {}),
                     ...(laps ? { laps } : {}),
                     ...(chosen ? { chosen } : {}),
                 };

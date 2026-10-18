@@ -34,9 +34,9 @@ export function edgeLabel(e) {
     const drawn = (st) => e.port === 'braid' && st.kind === 'pick' && !st.pick.abs;
     const told = e.transforms.map((t) => t.filter((st) => !drawn(st)));
     const each = [...new Set(told.map(transformLabel))].filter(Boolean);
-    const tapped = e.transforms.length > 0 && e.transforms.every((t) => t.length > 0 && t.every(drawn));
+    const picked = e.transforms.length > 0 && e.transforms.every((t) => t.length > 0 && t.every(drawn));
     const parts = [
-        e.count > 1 && !tapped ? `×${e.count}` : '',
+        e.count > 1 && !picked ? `×${e.count}` : '',
         isAttribute(e.port) ? e.port : '',
         ...each.slice(0, NAMED),
         each.length > NAMED ? '…' : '',

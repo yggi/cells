@@ -20,6 +20,8 @@ type Generator = (s: LineScanner, start: number) => Braid;
  * a square −1 for the first half and 1 for the second.
  */
 export declare function waveValues(shape: WaveShape, n: number): number[];
+/** The start of the name of the key a `scale(…)` declares (`key:λ3_8`): a cell whose `over=` names one reads its own scale(…). */
+export declare const SCALE_KEY = "key:\u03BB";
 /**
  * `scale(name, tonic)`: a scale by name over the 12 turned to its tonic. What it stands for is two cells: the key (the
  * 12, `shift=` the tonic: a note name, a number or free(…)) and the scale's steps over it, `scan(…)`. The key is declared

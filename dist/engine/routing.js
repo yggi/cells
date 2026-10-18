@@ -55,7 +55,7 @@ export class RouteAcc {
             const st = this.result.cells.get(at)?.step ?? null;
             if (!st || this.off(st.driver))
                 break;
-            const table = this.result.taps?.get(at);
+            const table = this.result.sections?.get(at);
             if (table && !this.off(table)) {
                 this.edge(table, at);
                 this.edge(table, st.driver, stepEdgeId(cellId(table), cellId(st.driver)));

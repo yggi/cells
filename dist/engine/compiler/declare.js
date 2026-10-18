@@ -1,4 +1,5 @@
-import { MAX_SPLICE_DEPTH, ROOT } from "../program.js";
+import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from "../program.js";
+import { SCALE_KEY } from "../parser/generators.js";
 import { VOICE_PARAMS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
 import { leaves } from "../subseq.js";
@@ -12,7 +13,8 @@ export function declare(ctx) {
         else
             decls.set(c.name, c);
     }
-    const taps = tapTables(decls, error);
+    const mainKey = mainKeyOf(ctx, decls);
+    const sections = sectionTables(decls, error);
     gates(decls, implicit, error);
     mixSelectors(ctx, decls);
     const implicitRoot = !decls.has(ROOT);
@@ -84,7 +86,21 @@ export function declare(ctx) {
     };
     for (const name of decls.keys())
         checkOver(name, []);
-    return { decls, implicit, implicitRoot, overOk, taps };
+    return { decls, implicit, implicitRoot, overOk, sections, ...(mainKey ? { mainKey } : {}) };
+}
+function mainKeyOf(ctx, decls) {
+    const main = [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;
+    for (const d of [...decls.values()]) {
+        if (d.over?.name !== MAIN_KEY)
+            continue;
+        if (main)
+            decls.set(d.name, { ...d, over: { ...d.over, name: main } });
+        else {
+            ctx.error(`over=key reads the piece's main key, the first scale(…) in the text, and the piece has no main key: write one (&key scale(major, C))`, d.over.span);
+            ctx.broken.add(MAIN_KEY);
+        }
+    }
+    return main;
 }
 export const VOICE_KIT = 'kit:voices';
 export function voiceGrooves(decls) {
@@ -233,12 +249,12 @@ function mixSelectors(ctx, decls) {
         const t = d.over ? decls.get(d.over.name) : undefined;
         if (!t || t.braid.kind !== 'list' || !t.braid.tokens.length || !t.braid.tokens.every((x) => x.atom.kind === 'ref' && isMix(decls.get(x.atom.name))))
             continue;
-        ctx.error(`A selector switches taps of a meter's bus (decision 016): &${d.name} over=&${t.name} reads mixes. Write &${t.name} step=4n with a tap per part (&${t.name} step=4n &keysBar &drumBar), step each part's cells by its tap (step=&keysBar), and play the parts straight into the sound card`, d.over.span);
+        ctx.error(`A selector switches sections (decision 016): &${d.name} over=&${t.name} reads mixes. Write &${t.name} step=4n with a section per part (&${t.name} step=4n &keysBar &drumBar), step each part's cells by its section (step=&keysBar), and play the parts straight into the sound card`, d.over.span);
         ctx.broken.add(d.name);
     }
 }
-function tapTables(decls, error) {
-    const taps = new Map();
+function sectionTables(decls, error) {
+    const sections = new Map();
     const clocks = new Set([...decls.values()].flatMap((d) => (d.step?.kind === 'driven' ? [d.step.driver.name] : [])));
     const bare = (k) => !!k && !k.step && !k.over && !k.map && (k.braid.kind === 'blank' || (k.braid.kind === 'list' && !k.braid.tokens.length));
     for (const d of [...decls.values()]) {
@@ -250,11 +266,11 @@ function tapTables(decls, error) {
             if (a.kind !== 'ref' || a.pick || a.shift || a.transpose || a.values || t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1)
                 break;
             const known = decls.get(a.name);
-            if (known && !bare(known) && (!known.step || taps.has(a.name))) {
+            if (known && !bare(known) && (!known.step || sections.has(a.name))) {
                 const rest = d.braid.tokens.map((x) => (x.atom.kind === 'ref' ? x.atom.name : '')).filter((n) => n !== a.name);
                 if (known.step || !rest.some((n) => n && !decls.has(n) && clocks.has(n)))
                     break;
-                error(`&${a.name} is a tap of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=, size=, shift=, restart=), not steps or a table of its own`, known.span);
+                error(`&${a.name} is a section of &${d.name}, so its line can carry attributes only (off, label=, tags=, show=, size=, shift=, restart=), not steps or a table of its own`, known.span);
                 decls.set(a.name, { ...known, over: null, map: null, braid: { kind: 'blank' } });
             }
             names.push(a.name);
@@ -262,7 +278,7 @@ function tapTables(decls, error) {
         if (names.length !== d.braid.tokens.length || names.every((n) => decls.has(n) && !bare(decls.get(n))) || !names.some((n) => clocks.has(n)))
             continue;
         for (const [i, name] of names.entries()) {
-            taps.set(name, d.name);
+            sections.set(name, d.name);
             const own = decls.get(name);
             if (own && !bare(own))
                 continue;
@@ -274,5 +290,5 @@ function tapTables(decls, error) {
         }
         decls.set(d.name, { ...d, step: null });
     }
-    return taps;
+    return sections;
 }

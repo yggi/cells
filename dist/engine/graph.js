@@ -260,7 +260,7 @@ export function writtenGraph(result) {
             };
             link({ id: edgeId(from, id), source: from, target: id, count: 1, transforms: [refTransform(ref)], ...wire('base', 'none', from, id, 1, false, true) });
         }
-        const table = result.taps?.get(c.name);
+        const table = result.sections?.get(c.name);
         if (c.step && table && !buses.has(table)) {
             buses.add(table);
             link({
@@ -525,21 +525,21 @@ export function netsOf(nodes, edges) {
         if (!port)
             continue;
         const at = `${e.from}|${port}|${e.bulb ?? ''}`;
-        const g = groups.get(at) ?? { port, taps: [] };
-        g.taps.push(e);
+        const g = groups.get(at) ?? { port, readers: [] };
+        g.readers.push(e);
         groups.set(at, g);
     }
     return [...groups.values()]
-        .filter(({ port, taps }) => (taps.length > 1 || port === 'step') && (!DELAY_PORTS.has(port) || taps.some(isDelayed)))
-        .map(({ port, taps }) => {
-        const { bulb, bulbAt } = taps[0];
+        .filter(({ port, readers }) => (readers.length > 1 || port === 'step') && (!DELAY_PORTS.has(port) || readers.some(isDelayed)))
+        .map(({ port, readers }) => {
+        const { bulb, bulbAt } = readers[0];
         return {
-            id: `net:${taps[0].from}:${port}${bulb ? `:${bulb}` : ''}`,
-            owner: taps[0].from,
+            id: `net:${readers[0].from}:${port}${bulb ? `:${bulb}` : ''}`,
+            owner: readers[0].from,
             port,
-            band: taps[0].band,
-            taps: taps.map((e) => e.id),
-            delayed: taps.some(isDelayed),
+            band: readers[0].band,
+            readers: readers.map((e) => e.id),
+            delayed: readers.some(isDelayed),
             ...(bulb ? { bulb } : {}),
             ...(bulbAt ? { bulbAt } : {}),
         };

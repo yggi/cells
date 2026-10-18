@@ -14,7 +14,7 @@ export function declLine(source, name) {
     const head = headOf(name);
     return source.split('\n').findIndex((l) => head.test(splitComment(l)[0]));
 }
-function tapLine(lines, name) {
+function sectionLine(lines, name) {
     return lines.findIndex((l) => {
         const words = splitWords(splitComment(l)[0]);
         if (!/^&\w+$/.test(words[0] ?? '') || !words.some((w) => w.startsWith('step=')))
@@ -26,17 +26,17 @@ function tapLine(lines, name) {
 function editDecl(source, name, f) {
     const lines = source.split('\n');
     let i = declLine(source, name);
-    const tap = tapLine(lines, name);
+    const table = sectionLine(lines, name);
     if (i < 0) {
-        if (tap < 0)
+        if (table < 0)
             return source;
-        lines.splice(tap + 1, 0, `&${name}${lines[tap].endsWith('\r') ? '\r' : ''}`);
-        i = tap + 1;
+        lines.splice(table + 1, 0, `&${name}${lines[table].endsWith('\r') ? '\r' : ''}`);
+        i = table + 1;
     }
     const cr = lines[i].endsWith('\r') ? '\r' : '';
     const [code, comment] = splitComment(cr ? lines[i].slice(0, -1) : lines[i]);
     let next = f(code, headOf(name));
-    if (tap >= 0 && !comment && next.trim() === `&${name}`) {
+    if (table >= 0 && !comment && next.trim() === `&${name}`) {
         lines.splice(i, 1);
         return lines.join('\n');
     }
@@ -72,7 +72,7 @@ const FIFTHS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'Ab', 'Eb', 'Bb', 'F']
 export function setShift(source, name, shift) {
     const lines = source.split('\n');
     const own = declLine(source, name);
-    if (tapLine(lines, name) >= 0 && (own < 0 || (splitWords(splitComment(lines[own])[0]).slice(1).every(isAttrWord) && !/\sshift=/.test(lines[own]))))
+    if (sectionLine(lines, name) >= 0 && (own < 0 || (splitWords(splitComment(lines[own])[0]).slice(1).every(isAttrWord) && !/\sshift=/.test(lines[own]))))
         return source;
     let circle = false;
     const turned = editDecl(source, name, (code) => {

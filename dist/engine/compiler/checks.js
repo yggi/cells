@@ -2,7 +2,7 @@ import { BODIES, isMidiCard } from "../program.js";
 import { MOVING_PARAMS } from "../attributes.js";
 import { refsOf } from "../readers.js";
 import { leaves } from "../subseq.js";
-export function checkCells(ctx, decls, cells, taps = new Map()) {
+export function checkCells(ctx, decls, cells, sections = new Map()) {
     const { error, warn, unknownCell } = ctx;
     for (const c of cells.values()) {
         const span = (k) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name).span;
@@ -162,14 +162,14 @@ export function checkCells(ctx, decls, cells, taps = new Map()) {
         if (!t || t.kit)
             continue;
         const refs = refsOf(t);
-        if (!refs.length || refs.every((r) => taps.get(r) === t.name) || ctx.broken.has(d.name))
+        if (!refs.length || refs.every((r) => sections.get(r) === t.name) || ctx.broken.has(d.name))
             continue;
         const listed = [...new Set(refs)].map((r) => '&' + r).join(' ');
         warn(`&${t.name} is read as a table, but its cells (${listed}) aren't entries: a table is its numbers. To play cells one after another, splice them into a braid (&${d.name} ${listed}); choosing a melody per step isn't built yet (#29)`, d.over.span);
     }
-    for (const [tap, table] of taps)
-        if (![...cells.values()].some((c) => c.step?.driver === tap || Object.values(c.paramClocks).some((p) => p.driver === tap)))
-            warn(`&${tap} is a tap of &${table}, but nothing is stepped by it: step=&${tap} on what it should play (or a name mistyped)`, decls.get(tap).span);
+    for (const [section, table] of sections)
+        if (![...cells.values()].some((c) => c.step?.driver === section || Object.values(c.paramClocks).some((p) => p.driver === section)))
+            warn(`&${section} is a section of &${table}, but nothing is stepped by it: step=&${section} on what it should play (or a name mistyped)`, decls.get(section).span);
     for (const d of decls.values()) {
         const t = d.map?.kind === 'table' ? cells.get(d.map.table.name) : undefined;
         if (t && (t.mix || t.sink || isMidiCard(t)))
@@ -186,12 +186,12 @@ export function checkCells(ctx, decls, cells, taps = new Map()) {
                 warn(`!${t.repeat} on a card with one channel (map=midi(${channel})): each note goes out ${t.repeat.toLocaleString('en')} times on it, at once — leave out the !${t.repeat}`, t.span);
         });
     }
-    for (const table of new Set(taps.values()))
+    for (const table of new Set(sections.values()))
         if (![...decls.values()].some((d) => d.over?.name === table)) {
-            const names = [...taps].filter(([, t]) => t === table).map(([tap]) => tap);
+            const names = [...sections].filter(([, t]) => t === table).map(([section]) => section);
             const st = decls.get(names[0])?.step;
             const clock = st?.kind === 'driven' ? st.driver.name : 'bar';
-            warn(`&${table} declares taps (${names.map((n) => '&' + n).join(' ')}), and nothing selects them: every part plays all the time. A selector reads the table and switches them, a section per step: &song over=&${table} step=&${clock}/16 0 [0,1]`, decls.get(table).span);
+            warn(`&${table} declares sections (${names.map((n) => '&' + n).join(' ')}), and nothing selects them: every part plays all the time. A selector reads the table and switches them, a step of the form at a time: &song over=&${table} step=&${clock}/16 0 [0,1]`, decls.get(table).span);
         }
     const farDegrees = Math.max(12, ...[...cells.values()].filter((c) => c.root).map((c) => c.cycle)) * FAR_OCTAVES;
     for (const c of cells.values()) {

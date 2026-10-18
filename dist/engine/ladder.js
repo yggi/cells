@@ -121,7 +121,7 @@ export const TIERS = [
     },
     {
         name: 'Development',
-        concept: 'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: parts as taps of the bar, a selector, laps=, off',
+        concept: 'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: sections stepped by the bar, a selector, laps=, off',
         forms: [
             'parameter gain',
             'reference &name[<<n]',
@@ -138,7 +138,7 @@ export const TIERS = [
             'attribute stride',
             'rate step=cycle(&x)',
             'generator fifths()',
-            'line &parts step=&bar &a &b',
+            'line &sections step=&bar &a &b',
             'attribute laps',
             'line off',
             'line … +',
@@ -410,8 +410,8 @@ export function formsUsed(source) {
             use('line off');
         if (d.oneshot)
             use('line oneshot');
-        if ([...(compiled.taps?.values() ?? [])].includes(d.name))
-            use('line &parts step=&bar &a &b');
+        if ([...(compiled.sections?.values() ?? [])].includes(d.name))
+            use('line &sections step=&bar &a &b');
         if (d.lambda)
             use('reference &( … )');
         if (d.over) {

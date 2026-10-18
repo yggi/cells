@@ -33,7 +33,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     if (![b.voice, ...b.pitches.map((t) => t.ref)].every(known)) continue;
     // (a term whose line failed, or that uses one: its own error says why; nothing more about this product)
     if ([b.voice, ...b.pitches.map((t) => t.ref)].some((r) => ctx.broken.has(r.name))) continue;
-    // a sound tape's read head in a mix: its tap returns to the sound card at these levels
+    // a sound tape's read head in a mix: what it reads returns to the sound card at these levels
     if (soundHead(b.voice.name) && b.pitches.length === 0) {
       returns.push({ head: b.voice.name, tape: cells.get(b.voice.name)!.params.play as string, gains: [gains[0], gains[1]], parts, through: [...through] });
       continue;

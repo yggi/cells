@@ -12,10 +12,13 @@ export interface Declared {
     /** Which cells' over= chains are sound (known, acyclic). */
     readonly overOk: ReadonlyMap<string, boolean>;
     /**
-     * Taps of a meter's bus (decision 016), each to its table: a stepped table of names (`&parts step=&bar &keys &drums`)
-     * declares the names it doesn't find as its taps, each stepped as the table was; the table is then a table.
+     * Sections of an arrangement (decisions 016 and 044), each to its table: a stepped table of names
+     * (`&sections step=&bar &keys &drums`) declares the names it doesn't find as its sections, each stepped as the table
+     * was; the table is then a table.
      */
-    readonly taps: ReadonlyMap<string, string>;
+    readonly sections: ReadonlyMap<string, string>;
+    /** The piece's main key, which a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */
+    readonly mainKey?: string;
 }
 export declare function declare(ctx: Ctx): Declared;
 /** The kit that grooves and their motifs read: every voice they name. */

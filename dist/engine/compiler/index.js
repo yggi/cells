@@ -11,7 +11,7 @@ import { outputsOf } from "./outputs.js";
 import { displayCells } from "./display.js";
 import { checkRoles } from "./roles.js";
 import { checkLimits } from "./limits.js";
-import { tapped } from "./taps.js";
+import { sectioned } from "./sections.js";
 const pluginsOf = (parsed) => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
 export function compile(parsed, env) {
     const ctx = context(parsed, env);
@@ -22,10 +22,10 @@ export function compile(parsed, env) {
     const bound = bindVoices(ctx, decls, resolved, typed);
     const timed = clockCells(ctx, decls, bound.cells);
     const { clocks } = timed;
-    checkCells(ctx, decls, timed.cells, declared.taps);
+    checkCells(ctx, decls, timed.cells, declared.sections);
     const made = outputsOf(ctx, decls, timed.cells, clocks, bound);
     const { returns, resonances } = made;
-    const outputs = tapped(made.outputs, timed.cells, declared.taps);
+    const outputs = sectioned(made.outputs, timed.cells, declared.sections);
     checkLimits(ctx, decls, timed.cells, clocks, outputs);
     const cells = displayCells(timed.cells);
     checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed));
@@ -63,8 +63,9 @@ export function compile(parsed, env) {
         returns,
         resonances,
         plugins,
-        taps: declared.taps,
+        sections: declared.sections,
         ...(timed.mainMeter ? { mainMeter: timed.mainMeter } : {}),
+        ...(declared.mainKey ? { mainKey: declared.mainKey } : {}),
         ...(builtin ? { builtinCard: builtin } : {}),
     };
 }

@@ -11,6 +11,7 @@ import { gates } from "./gates.js";
 import { aliases } from "./aliases.js";
 import { taps } from "./taps.js";
 import { swings } from "./swing.js";
+import { sections } from "./sections.js";
 export function shorten(source) {
     const { result, cells } = candidates(source);
     if (!result.ok)
@@ -28,6 +29,7 @@ export function shorten(source) {
         ...aliases(source, result),
         ...taps(source, result),
         ...swings(source, result),
+        ...sections(source, result),
     ].sort((a, b) => b.saving - a.saving);
 }
 export function shortenAll(source, rounds = 60) {

@@ -1,6 +1,6 @@
 /**
- * What a tap does to what it carries (docs/notes/nets.md, "a tap is (net, transform)"): the transform written where a
- * name is read, as data. A wire of the graph (engine/graph.ts) carries one per place its name is written; its label is
+ * What a reader does to what it carries (docs/notes/nets.md, "a tap is (net, transform)", its tap a reader since decision
+ * 044): the transform written where a name is read, as data. A wire of the graph (engine/graph.ts) carries one per place its name is written; its label is
  * drawn from them (`edgeLabel`), so the label and the transform can't disagree.
  */
 import { type Pick, type RateOp } from './ast';
@@ -69,7 +69,7 @@ export declare const isAttribute: (port: string) => boolean;
 /**
  * An edge's label: how many slots of it are written (`×2`), the attribute it feeds, what each place it is written does
  * (the different ones, in order: the first three, then …), and how its port combines it. Undefined when there is nothing to say.
- * A relative pick into a braid isn't said: its strand leaves the tap it reads; an absolute one ([$0]) is, on its wire from the hub.
+ * A relative pick into a braid isn't said: its strand leaves the entry it reads; an absolute one ([$0]) is, on its wire from the hub.
  */
 export declare function edgeLabel(e: {
     readonly port: string;

@@ -19,7 +19,7 @@ export function taps(source, result) {
     const seen = new Set();
     for (const c of result.cells.values()) {
         const tap = tapOfRaw(result, c.name);
-        const line = result.taps?.get(c.name) ?? c.name;
+        const line = result.sections?.get(c.name) ?? c.name;
         if (tap === null || seen.has(line) || declLine(source, line) < 0)
             continue;
         seen.add(line);

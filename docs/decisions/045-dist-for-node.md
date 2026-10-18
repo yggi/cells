@@ -1,4 +1,4 @@
-# 044 · dist/ for Node
+# 045 · dist/ for Node
 
 Date: 2026-10-17 · Status: accepted · Issue: [#11](https://github.com/yggi/cells/issues/11)
 

@@ -2,6 +2,8 @@
 
 **Date:** 2026-10-07 · **Status:** accepted (owner, #147); open question 1 of [notes/nets.md](../notes/nets.md)
 
+*Named since [decision 044](044-tap-reads-the-meter.md): a tap of a net here is a **reader**, delayed taps are delayed readers (`GraphNet.readers`); "tap" means reading the meter.*
+
 ## Context
 
 A tape's heads, a canon's delayed voices and a chorus are one shape: a net with taps at a delay ([notes/nets.md](../notes/nets.md), decision 17). In the code there are two spellings of a delayed tap, and they don't mean the same thing:

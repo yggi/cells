@@ -2,7 +2,7 @@ import { syntax } from "./syntax.js";
 import { pitchOfName } from "../../theory/modes.js";
 export const REFERENCE_SYNTAX = [
     syntax('reference', '&name', 'A cell, by name: in a braid (spliced in), after an attribute (over=&scale), in a mix.', ['&theme step=2 &motif 0'], 'cell.md'),
-    syntax('reference', '&name[i]', 'One entry of its braid as it is turned now (a fixed tap: it follows shift=), counted from 0; negative from the end (&x[-1] the last). &name[$i]: as written.', ['&tune step=2 &motif[0] &motif[-1] &key[$0]'], 'braid.md'),
+    syntax('reference', '&name[i]', 'One entry of its braid as it is turned now (a fixed reader: it follows shift=), counted from 0; negative from the end (&x[-1] the last). &name[$i]: as written.', ['&tune step=2 &motif[0] &motif[-1] &key[$0]'], 'braid.md'),
     syntax('reference', '&name[a:b] · &name[a:b:s]', 'A slice, Python-style: from a up to b (either may be left out), every s-th; [::-1] backwards (retrograde). As turned; [$a:b] as written.', ['&tune step=2 &motif[1:3] &motif[:-1] &motif[::-1] &motif[::2]'], 'braid.md'),
     syntax('reference', '&name[<<n] · &name[>>n]', 'Shifted back or forward n places (1 if left out), on top of its own shift=: rotating it, climbing the helix.', ['&canon step=2 &theme[>>4]', '&mode over=&scale[<<] 0 2 4'], 'braid.md'),
     syntax('reference', '&name^n · degree(&name, n)', 'In a braid, moved n steps of the table it is read through (degrees, in a scale; relative): its values plus n, before the table reads them. n may be negative. &name^n is the short form.', ['&tune over=&major step=2 &motif &motif^1 &motif^-2', '&tune over=&major step=2 degree(inverse(&motif), 4)'], 'braid.md'),

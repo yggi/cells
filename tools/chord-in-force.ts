@@ -1,24 +1,25 @@
 /**
  * The chord in force (#95): how a line reads the chord sounding now, measured on E33's 384 bars
- * (`fixtures/jambot-chord-in-force.json`, lifted from yggi/jambot). The probe of a proposal,
- * `docs/notes/95-chord-in-force.md`; it changes nothing in `src/`.
+ * (`fixtures/jambot-chord-in-force.json`, lifted from yggi/jambot). The probe of `docs/notes/95-chord-in-force.md`,
+ * whose option 1 is now cells' own `over=` (#125, with the table's turn by its braid's own steps, #122): its test holds
+ * that cells plays every note of E33's bars and sections over `over=&harm`.
  *
  * Every bass, pad and stab note E33 states as a degree of the key is restated over the harmony line, as an index
  * into the chord sounding at its onset: `i` a tone of the chord (past its last tone, the chord a lap up: the key's
  * seven degrees), `i#`/`ib` a degree of the key above or below one (an accidental on a number moves a step of the
  * table below, decision 015). A note no index reaches stays a degree of the key, and so does its line. Then:
  *
- * - **today**: the restated lines read `over=&harm` as cells reads it now (the braid of chords flattened, as turned),
- *   and cells plays them;
- * - **in force**: the same numbers read as the chord in force (options 1 to 3 of the note share this meaning), lowered
- *   back to degrees of the key by the chord sounding at each onset, and cells plays the lowering;
+ * - **over the harmony**: the restated lines read `over=&harm`, the chord in force as cells reads it, and cells plays
+ *   them;
+ * - **in force**: the same numbers read as the chord in force by this tool (options 1 to 3 of the note share this
+ *   meaning), lowered back to degrees of the key by the chord sounding at each onset, and cells plays the lowering;
  * - **in force, integers**: what Strudel's `n(…).chord(…).voicing()` can say (option 4): an index with no accidental.
  *
  * Each is counted over the bar texts (E33's own, one bar each) and over section texts (a run's bars as one text, cut
  * where the key changes), where the harmony is a braid of many chords.
  *
  * `node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/chord-in-force.ts` prints the
- * tables; `tools/chord-in-force.slow.test.ts` holds them.
+ * tables; `tools/chord-in-force.test.ts` holds them.
  */
 import { readFileSync } from 'node:fs';
 import { planOf, windowAt } from '../src/index.ts';
@@ -247,14 +248,14 @@ const bandNotes = (bars: readonly Bar[], offset: (b: Bar) => number) => bars.fla
 // ---- the readings
 
 /** How a line restated over the chord in force is written, for one reading. */
-export type Reading = 'e33' | 'today' | 'inForce' | 'integers';
-export const READINGS: readonly Reading[] = ['e33', 'today', 'inForce', 'integers'];
+export type Reading = 'e33' | 'overHarm' | 'inForce' | 'integers';
+export const READINGS: readonly Reading[] = ['e33', 'overHarm', 'inForce', 'integers'];
 
 /** A part's words and the table its line reads, for a reading: over the chord where the reading can say every note, else E33's. */
 function lineFor(bar: Bar, r: Restated, reading: Reading): { over: 'key' | 'harm'; words: readonly Word[] } {
-  const usable = r.chord && (reading === 'today' || reading === 'inForce' || (reading === 'integers' && r.kinds.every((k) => k === 'tone')));
+  const usable = r.chord && (reading === 'overHarm' || reading === 'inForce' || (reading === 'integers' && r.kinds.every((k) => k === 'tone')));
   if (!usable) return { over: 'key', words: r.key };
-  return reading === 'today' ? { over: 'harm', words: r.chord! } : { over: 'key', words: lower(bar, r.part, r.chord!) };
+  return reading === 'overHarm' ? { over: 'harm', words: r.chord! } : { over: 'key', words: lower(bar, r.part, r.chord!) };
 }
 
 /** A line as text: E33's spelling, over the key or over the harmony. */
@@ -294,13 +295,13 @@ export function sections(bars: readonly Bar[] = BARS): Bar[][] {
 
 /**
  * A section's harmony as one braid: a chord a bar on `1m`, or on `2n` where a bar holds two. A whole bar's chord there
- * is written `@2`; played, it is stated twice, since a stepped table turns once a step whatever its `@` and `!` say.
+ * is written `@2`, held two steps of the braid (#122).
  */
-export function sectionHarmony(section: readonly Bar[], played = false): string {
+export function sectionHarmony(section: readonly Bar[]): string {
   const split = section.some((b) => /step=2n /.test(b.lines.harm!));
   const words = section.map((b) => {
     const body = bodyOf(b.lines.harm!);
-    return split && /step=1m /.test(b.lines.harm!) ? (played ? `${body} ${body}` : `${body}@2`) : body;
+    return split && /step=1m /.test(b.lines.harm!) ? `${body}@2` : body;
   });
   return `&harm over=&key step=${split ? '2n' : '1m'} ${words.join(' ')}`;
 }
@@ -332,12 +333,12 @@ export function sectionUnder(section: readonly Bar[], reading: Reading) {
     const chord = reading !== 'e33' && per.every((x) => !x || (x.r.chord && (reading !== 'integers' || x.r.kinds.every((k) => k === 'tone'))));
     if (chord) overChord.push(part);
     const written = per.map((x) => (!x ? rest : chord ? x.r.chord! : x.r.key));
-    const playedWords = per.map((x, i) => (!x || !chord || reading === 'today' ? written[i]! : lower(x.bar, part, x.r.chord!)));
-    const over = chord && reading === 'today' ? 'harm' : 'key';
+    const playedWords = per.map((x, i) => (!x || !chord || reading === 'overHarm' ? written[i]! : lower(x.bar, part, x.r.chord!)));
+    const over = chord && reading === 'overHarm' ? 'harm' : 'key';
     lines.push(`&${part} over=&${over} step=16n ${collapsed(playedWords, steps)}`);
     chars[part] = `&${part} over=&${chord ? 'harm' : 'key'} step=16n ${collapsed(written, steps)}`.length + 1;
   }
-  const head = [section[0]!.lines.bar!, section[0]!.lines.key!, sectionHarmony(section, true)];
+  const head = [section[0]!.lines.bar!, section[0]!.lines.key!, sectionHarmony(section)];
   const played = cellsPlays([...head, ...lines], parts, steps, section.length);
   const first = section[0]!.bar;
   const want = bandNotes(section, (b) => (b.bar - first) * steps);

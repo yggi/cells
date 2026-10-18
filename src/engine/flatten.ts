@@ -5,7 +5,7 @@
  */
 import { pickLabel, type Atom, type Pick } from './ast';
 import { ROOT, MAX_EVENTS, pickIndices, pickSteps, type CompileResult, type Shifts } from './program';
-import { isTap, positionOf, rootOf, shiftedUnits } from './helix';
+import { isRelativePick, positionOf, rootOf, shiftedUnits } from './helix';
 import { placed, whole, type Chosen, type Hit, type Laps, type Leaf } from './subseq';
 
 /** What a slot holds as flatten reads it: a leaf, or a note of a cell spliced in (by the reference that splices it). */
@@ -40,7 +40,7 @@ export interface StepEvent {
   /** Grid steps it's transposed by (the ^$n of every reference it was spliced through). */
   readonly transpose?: number;
   /**
-   * A relative pick's tap: the value is entry `index` of `cell` turned as it stands when it sounds (read in `ctx`,
+   * A relative pick, a fixed reader: the value is entry `index` of `cell` turned as it stands when it sounds (read in `ctx`,
    * for its lap), times mul plus add (degree(…), inverse(…)); `value` is that entry as the code has it.
    */
   readonly via?: { readonly cell: string; readonly index: number; readonly ctx: string; readonly mul: 1 | -1; readonly add: number };
@@ -83,7 +83,7 @@ export function flatten(
     const out: StepEvent[] = [];
     if (!silent(name)) {
       // a relative pick of plain numbers: which entry each is, looked up again as the cell turns (StepEvent.via)
-      const taps = isTap(result, name, pick) ? pickIndices(result.cells.get(name)!.units.length, pick) : null;
+      const reads = isRelativePick(result, name, pick) ? pickIndices(result.cells.get(name)!.units.length, pick) : null;
       const units = unitsFor(result, name, shifts, pick, table, extra);
       const unit = (x: Leaf) => (x.kind === 'ref' ? stepsOf(result, x.name, x.pick) || 1 : 1);
       // (a splice's own notes, as hits in its step's frame: what holds it — <…>, /n, *n, (k,n,r) — plays them as it does a note)
@@ -108,7 +108,7 @@ export function flatten(
           cell: name,
           table,
           tableShift: tShift,
-          ...(taps ? { via: { cell: name, index: taps[top], ctx: table, mul: 1 as const, add: 0 } } : {}),
+          ...(reads ? { via: { cell: name, index: reads[top], ctx: table, mul: 1 as const, add: 0 } } : {}),
           // <a b>, x/n: the laps it plays on; [a b|c]: the choices it is in
           ...(laps ? { laps } : {}),
           ...(chosen ? { chosen } : {}),
@@ -176,6 +176,6 @@ export function flatten(
 export function tapped(result: CompileResult, e: StepEvent, shifts: Shifts): { value: number; alter: number } {
   if (!e.via) return { value: e.value, alter: e.alter };
   const u = shiftedUnits(result, e.via.cell, shifts(e.via.cell), e.via.ctx)[e.via.index];
-  // (the entry under the tap now, its accidental with it: mirrored with it by inverse(…))
+  // (the entry under the reader now, its accidental with it: mirrored with it by inverse(…))
   return u?.atom.kind === 'note' ? { value: e.via.mul * u.atom.value + e.via.add, alter: e.via.mul * u.atom.alter } : { value: e.value, alter: e.alter };
 }

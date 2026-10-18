@@ -1,6 +1,6 @@
 # The chord in force: how a line reads the chord sounding now
 
-Date: 2026-10-17 · Status: proposal, for the owner · Issue: [#95](https://github.com/yggi/cells/issues/95), a rung of the central roadmap [#81](https://github.com/yggi/cells/issues/81) (twin: [yggi/jambot#358](https://github.com/yggi/jambot/issues/358)) · Tool: `tools/chord-in-force.ts`, held by `tools/chord-in-force.test.ts`
+Date: 2026-10-17 · Status: ruled, option 1 (the owner on #119), built by #125 with the turn by the braid's own steps (#122): the tool's `over=&harm` reading is now cells' own, and its test holds every note ·  Issue: [#95](https://github.com/yggi/cells/issues/95), a rung of the central roadmap [#81](https://github.com/yggi/cells/issues/81) (twin: [yggi/jambot#358](https://github.com/yggi/jambot/issues/358)) · Tool: `tools/chord-in-force.ts`, held by `tools/chord-in-force.test.ts`
 
 Jambot's E33 ([yggi/jambot#359](https://github.com/yggi/jambot/issues/359)) states the harmony once, `&harm over=&key step=1m [0,2,4]`, and nothing reads it: the bass and the comp state every note again as a degree of the key.
 2,862 of their 2,979 notes are tones of the chord sounding.

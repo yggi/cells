@@ -4,7 +4,7 @@
 &reelNote label="Hold the reel: the whole tape bends down." about=&reel
 # Sound on Tape — &tape records a mix (write=&dry): sound, not notes. Its loop (length=) feeds
 # back into itself, keeping 1 − erase each lap, through its loss (tone=, Hz) and saturation
-# (drive=), with a little hiss=. The read heads are taps; in a mix they return to the speakers.
+# (drive=), with a little hiss=. The read heads are readers; in a mix they return to the speakers.
 # The tape moves with &reel: when the reel slows, the heads' delays stretch and the pitch drops.
 &reel step=72bpm motor=1.2 mass=1 friction=.05 wow=.02 0
 &bar scan(1 1 1 1) step=72bpm

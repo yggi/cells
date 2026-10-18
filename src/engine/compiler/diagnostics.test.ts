@@ -216,22 +216,24 @@ describe('a gate', () => {
   });
 });
 
-describe('a table of taps nothing selects', () => {
+describe('a table of sections nothing selects', () => {
   it('warns at the table: every part plays all the time', () => {
-    expect(spans('&bar step=1\n&parts step=&bar &p1 &p2\n&mel step=&p1 0 2\n&m2 step=&p2 4 5\n&v s=sine\n&out map=sample [&mel * &v, &m2 * &v]')).toEqual([
+    expect(spans('&bar step=1\n&sections step=&bar &p1 &p2\n&mel step=&p1 0 2\n&m2 step=&p2 4 5\n&v s=sine\n&out map=sample [&mel * &v, &m2 * &v]')).toEqual([
       {
         severity: 'warning',
         message:
-          '&parts declares taps (&p1 &p2), and nothing selects them: every part plays all the time. A selector reads the table and switches them, a section per step: &song over=&parts step=&bar/16 0 [0,1]',
+          '&sections declares sections (&p1 &p2), and nothing selects them: every part plays all the time. A selector reads the table and switches them, a step of the form at a time: &song over=&sections step=&bar/16 0 [0,1]',
         line: 2,
         col: 1,
-        len: 6,
+        len: 9,
       },
     ]);
   });
   it('with a selector, quiet', () => {
     expect(
-      spans('&bar step=1\n&parts step=&bar &p1 &p2\n&song over=&parts step=&bar/4 0 1\n&mel step=&p1 0 2\n&m2 step=&p2 4 5\n&v s=sine\n&out map=sample [&mel * &v, &m2 * &v]'),
+      spans(
+        '&bar step=1\n&sections step=&bar &p1 &p2\n&song over=&sections step=&bar/4 0 1\n&mel step=&p1 0 2\n&m2 step=&p2 4 5\n&v s=sine\n&out map=sample [&mel * &v, &m2 * &v]',
+      ),
     ).toEqual([]);
   });
 });

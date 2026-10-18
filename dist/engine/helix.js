@@ -12,16 +12,18 @@ export function period(result, name, ctx) {
     return result.cells.get(c.over ?? ctx ?? c.context)?.cycle ?? 12;
 }
 export function shiftedUnits(result, name, shift, ctx) {
-    const c = result.cells.get(name);
-    const k = c.units.length;
+    return rotated(result.cells.get(name).units, shift, () => period(result, name, ctx));
+}
+function rotated(units, shift, lap) {
+    const k = units.length;
     if (k === 0 || shift === 0)
-        return [...c.units];
-    const p = period(result, name, ctx);
-    const lap = Math.floor(shift / k);
-    const r = shift - lap * k;
+        return [...units];
+    const p = lap();
+    const laps = Math.floor(shift / k);
+    const r = shift - laps * k;
     return Array.from({ length: k }, (_, i) => {
-        const u = c.units[(i + r) % k];
-        const climb = p * (lap + (i + r >= k ? 1 : 0));
+        const u = units[(i + r) % k];
+        const climb = p * (laps + (i + r >= k ? 1 : 0));
         if (climb === 0)
             return u;
         const atom = mapLeaves(u.atom, (a) => a.kind === 'note'
@@ -34,18 +36,37 @@ export function shiftedUnits(result, name, shift, ctx) {
         return atom === u.atom ? u : { ...u, atom };
     });
 }
+const turnCache = new WeakMap();
+export function tableUnits(result, name) {
+    const c = result.cells.get(name);
+    if (!c.units.some((u) => u.atom.kind === 'seq'))
+        return c.units;
+    let cache = turnCache.get(result);
+    if (!cache)
+        turnCache.set(result, (cache = new Map()));
+    let us = cache.get(name);
+    if (!us)
+        cache.set(name, (us = c.units.flatMap((u) => (u.atom.kind === 'seq' ? leaves(u.atom).map((atom) => ({ atom, repeat: 1, subdivide: 1, elongate: 1 })) : [u]))));
+    return us;
+}
+const isStacks = (result, name) => {
+    const us = tableUnits(result, name);
+    return us.length > 0 && us.every((u) => u.atom.kind === 'chord');
+};
 const ENTRY_CACHE = 256;
 const entryCache = new WeakMap();
-export function entries(result, name, shift) {
+export function entries(result, name, shift, inForce = false) {
     let cache = entryCache.get(result);
     if (!cache)
         entryCache.set(result, (cache = new Map()));
-    const key = `${name}|${shift}`;
+    const stacks = inForce && isStacks(result, name);
+    const key = `${name}|${shift}${stacks ? '|in force' : ''}`;
     const hit = cache.get(key);
     if (hit)
         return hit;
     const out = [];
-    for (const a of shiftedUnits(result, name, shift).flatMap((u) => leaves(u.atom))) {
+    const turned = rotated(tableUnits(result, name), shift, () => period(result, name));
+    for (const a of (stacks ? turned.slice(0, 1) : turned).flatMap((u) => leaves(u.atom))) {
         if (a.kind === 'note')
             out.push({ value: a.value, alter: a.alter });
         else if (a.kind === 'chord')
@@ -60,7 +81,7 @@ export function lookup(result, name, x, shifts, extra = 0) {
     const c = result.cells.get(name);
     if (c.root)
         return { value: x + shifts(name) + extra, alter: 0 };
-    const es = entries(result, name, shifts(name) + extra);
+    const es = entries(result, name, shifts(name) + extra, true);
     if (es.length === 0)
         return { value: 0, alter: 0 };
     const xi = Math.floor(x);
@@ -184,7 +205,7 @@ export function tableChain(result, table) {
     }
     return out;
 }
-export const isTap = (result, name, pick) => !!pick && !pick.abs && isPicked(result, name, pick);
+export const isRelativePick = (result, name, pick) => !!pick && !pick.abs && isPicked(result, name, pick);
 export const isPicked = (result, name, pick) => !!pick && result.cells.get(name).units.every((u) => u.atom.kind === 'note' && u.repeat === 1 && u.subdivide === 1 && u.chance === undefined);
 export function rootOf(result, table) {
     let at = table;

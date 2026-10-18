@@ -1,7 +1,7 @@
 import { leaves } from "../subseq.js";
 import { TIME_PARAMS } from "../attributes.js";
 import { RETIRED_PARAMS } from "../dough-params.js";
-import { LABEL_FIELDS, MAX_EVENTS } from "../program.js";
+import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from "../program.js";
 import { CELL_PARAMS, CORE, PARAMS, PARAM_ALIASES, nearestAttribute } from "../attributes.js";
 import { IDENT, LineScanner } from "./scanner.js";
 import { OPERATIONS, parseToken, pushStep } from "./braid.js";
@@ -60,10 +60,19 @@ const timing = (s, b, word) => {
 const BLANK_TABLE = { over: null, shift: null, off: false, step: null, map: null, stride: null, cycle: null, params: {}, paramSpans: {} };
 export const KEYS = {
     over: {
-        form: 'over=&table · over=&table[<<n] · over=scale(name, tonic)',
-        examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4'],
+        form: 'over=&table · over=&table[<<n] · over=scale(name, tonic) · over=key',
+        examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4', '&bass over=key step=16n 0 4 7'],
         read: (s, b) => {
-            if (s.text.startsWith('scale(', s.i)) {
+            const bare = /key(?![A-Za-z0-9_])/y;
+            bare.lastIndex = s.i;
+            if (bare.test(s.text)) {
+                const at = s.i;
+                s.i += 3;
+                if (s.peek() === '[')
+                    s.fail('over=key reads the main key whole: to turn it, name it (over=&key[<<2])', s.i, 1);
+                b.over = { name: MAIN_KEY, pick: null, shift: 0, span: s.place(at) };
+            }
+            else if (s.text.startsWith('scale(', s.i)) {
                 const at0 = s.i;
                 s.i += 5;
                 const sc = parseScale(s, at0);
@@ -72,7 +81,7 @@ export const KEYS = {
                 b.over = { name, pick: null, shift: 0, span: sc.span };
             }
             else
-                b.over = s.cellRef('a cell or scale(name, tonic) after over=, like over=&scale or over=scale(minor, A)', 'after over=');
+                b.over = s.cellRef('a cell, scale(name, tonic) or key after over=, like over=&scale, over=scale(minor, A) or over=key', 'after over=');
             if (b.over.pick)
                 s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over.span.col - 1, b.over.span.len);
         },
@@ -383,7 +392,7 @@ export const LINE_SYNTAX = [
     syntax('line', 'oneshot', 'On a voice: each note plays its envelope through (its attack and decay), whatever its step: a drum hit on any grid.', ['&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)'], 'sound.md'),
     syntax('line', '# … · // …', 'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.', ['&tune step=2 0 2 4  # the opening'], 'cell.md'),
     syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
-    syntax('line', '&parts step=&bar &a &b', "Taps of a meter's bus (decision 016): a stepped table of names declares them, each stepped as the table is. What a tap steps plays while a selector reading the table picks it (`over=&parts`), from its top each time: an arrangement.", ['&parts step=&bar &verseBar &chorusBar'], 'time.md'),
+    syntax('line', '&sections step=&bar &a &b', 'Sections of an arrangement (decision 016): a stepped table of names declares them, each stepped as the table is. What a section steps plays while a selector reading the table picks it (`over=&sections`), from its top each time.', ['&sections step=&bar &verseBar &chorusBar'], 'time.md'),
 ];
 function parseFreeBraid(s) {
     const start = s.i;
