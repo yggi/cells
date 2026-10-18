@@ -1,0 +1,612 @@
+import { leaves } from "../subseq.js";
+import { TIME_PARAMS } from "../attributes.js";
+import { RETIRED_PARAMS } from "../dough-params.js";
+import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from "../program.js";
+import { CELL_PARAMS, CORE, PARAMS, PARAM_ALIASES, nearestAttribute } from "../attributes.js";
+import { IDENT, LineScanner } from "./scanner.js";
+import { OPERATIONS, parseToken, pushStep } from "./braid.js";
+import { FREE_BRAID_WHOLE, parseFree } from "./free.js";
+import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generators.js";
+import { atTap, parseMap, parseStep } from "./values.js";
+import { syntax } from "./syntax.js";
+export const SHOWS = [
+    'braid',
+    'pattern',
+    'equal',
+    'notes',
+    'midi',
+    'do',
+    'degrees',
+    'table',
+    'scale',
+    'mode',
+    'key',
+    'grid',
+    'meter',
+    'spectrum',
+    'wave',
+    'levels',
+    'adsr',
+    'mix',
+    'note',
+    'petal',
+    'off',
+    'matrix',
+    'lfo',
+    'brightness',
+];
+export const SHOW_CONVENTIONS = { notes: ['flats', 'sharps', 'german'], do: ['fixed', 'movable'] };
+const whole = (key) => (s, b, _word, at) => {
+    b[key] = s.text.startsWith('free(', s.i) ? Math.round(parseFree(s, key, false).value) : s.int(`a whole number after ${key}=`);
+    b.paramSpans[key] = s.place(at);
+};
+const text = (key, example) => (s, b) => {
+    const at = s.i;
+    const q = s.match(/"([^"]*)"/y);
+    if (q === null)
+        s.fail(`${key}= takes a text in quotes: ${example}`);
+    b[key] = q.slice(1, -1);
+    if (key === 'label')
+        for (const m of q.matchAll(/\{(?:&[A-Za-z_][A-Za-z0-9_]*:)?([A-Za-z_][A-Za-z0-9_]*)\}/g))
+            if (!LABEL_FIELDS.includes(m[1]))
+                s.warn(`{${m[1]}} isn't a label field: it shows as written (the fields: ${LABEL_FIELDS.map((f) => `{${f}}`).join(' ')})`, at + m.index, m[0].length);
+};
+const voiceOwn = (key) => (s, b) => {
+    b[key] = s.cellRef(`a cell after ${key}=, like ${key}=&pluck or ${key}=&(map=adsr .01 .3 .5 .4)`, `after ${key}=`);
+};
+const timing = (s, b, word) => {
+    b.step = parseStep(s, word === 'loop');
+};
+const BLANK_TABLE = { over: null, shift: null, off: false, step: null, map: null, stride: null, cycle: null, params: {}, paramSpans: {} };
+export const KEYS = {
+    over: {
+        form: 'over=&table · over=&table[<<n] · over=scale(name, tonic) · over=key',
+        examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4', '&bass over=key step=16n 0 4 7'],
+        read: (s, b) => {
+            const bare = /key(?![A-Za-z0-9_])/y;
+            bare.lastIndex = s.i;
+            if (bare.test(s.text)) {
+                const at = s.i;
+                s.i += 3;
+                if (s.peek() === '[')
+                    s.fail('over=key reads the main key whole: to turn it, name it (over=&key[<<2])', s.i, 1);
+                b.over = { name: MAIN_KEY, pick: null, shift: 0, span: s.place(at) };
+            }
+            else if (s.text.startsWith('scale(', s.i)) {
+                const at0 = s.i;
+                s.i += 5;
+                const sc = parseScale(s, at0);
+                const name = `scale:λ${s.line}_${at0 + s.offset}`;
+                s.lambdas.push({ ...BLANK_TABLE, name, span: sc.span, lambda: s.text.slice(at0, s.i), over: sc.key, braid: { kind: 'scan', steps: sc.steps, span: sc.span } });
+                b.over = { name, pick: null, shift: 0, span: sc.span };
+            }
+            else
+                b.over = s.cellRef('a cell, scale(name, tonic) or key after over=, like over=&scale, over=scale(minor, A) or over=key', 'after over=');
+            if (b.over.pick)
+                s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over.span.col - 1, b.over.span.len);
+        },
+    },
+    base: {
+        form: 'base=&cell · base=&cell^$n · base=&cell^n',
+        examples: ['&answer base=&subject^$7 =!3 12@2', '&last base=&subject =!21 3@2'],
+        read: (s, b) => {
+            b.base = s.ref('a cell after base=, like base=&subject or base=&subject^$7');
+            if (b.base.pick)
+                s.fail('base= takes a whole cell (transposing it is fine: base=&subject^$7)', b.base.span.col - 1, b.base.span.len);
+        },
+    },
+    step: { form: 'step=…', examples: ['&tune step=4n 0 2 4', '&tune step=&clock 0 2 4'], read: timing },
+    loop: { form: 'loop=…', examples: ['&lead s=saw loop=C4'], read: timing },
+    shift: { form: 'shift=n · shift=free(n, lo..hi)', examples: ['&mode over=&major shift=5 0 2 4', '&key shift=free(0, 0..11)'], read: whole('shift') },
+    stride: { form: 'stride=n · stride=free(n, lo..hi)', examples: ['&key step=cycle(&theme) stride=7'], read: whole('stride') },
+    map: { form: 'map=…', examples: ['&accent map=amp step=&bar 1 .5'], read: (s, b) => (b.map = parseMap(s)) },
+    show: {
+        form: `show=kind · show=notes:convention · show=do:convention · show=mix:&grid`,
+        examples: ['&tune show=notes step=2 0 2 4', '&tune show=notes:german step=2 0 2 4', '&tune show=do:movable step=2 0 2 4', '&band show=mix:&edo19 [&a, &b]'],
+        read: (s, b) => {
+            const at2 = s.i;
+            const w = s.match(/[a-z]+/y);
+            if (w === null)
+                s.fail(`show= takes one of: ${SHOWS.join(' ')}, or a plugin of the piece`, at2, 1);
+            let conv = '';
+            if (w === 'mix' && s.peek() === ':' && !s.text.startsWith(':&', s.i))
+                s.fail('show=mix:&grid: the grid whose colours the mix wears, like show=mix:&edo19 (no space after the colon)', at2, s.i + 1 - at2);
+            if (w === 'mix' && s.text.startsWith(':&', s.i)) {
+                s.i += 2;
+                const g = s.match(IDENT);
+                if (g === null)
+                    s.fail('show=mix:&grid: the grid whose colours the mix wears, like show=mix:&edo19', at2, s.i - at2);
+                b.show = `mix:&${g}`;
+                b.paramSpans.show = s.span(at2);
+                return;
+            }
+            if (s.peek() === ':') {
+                s.i++;
+                const cw = s.match(/[a-z]+/y) ?? '';
+                const ok = SHOW_CONVENTIONS[w]?.includes(cw);
+                if (!ok)
+                    s.fail(`show=${w}: takes ${w === 'notes' ? 'flats, sharps or german' : w === 'do' ? 'fixed or movable' : 'no convention'}`, at2, s.i - at2);
+                conv = `:${cw}`;
+            }
+            b.show = w + conv;
+            b.paramSpans.show = s.span(at2);
+        },
+    },
+    label: {
+        form: 'label="text"',
+        examples: ['&theme label="the King\'s theme" step=2 0 2 4', '&note label="A note in the graph: alone on its cell."'],
+        read: text('label', 'label="the King\'s theme"'),
+    },
+    env: { form: 'env=&envelope', examples: ['&lead s=saw loop=C4 env=&(map=adsr .01 .3 .5 .4)'], read: voiceOwn('env') },
+    pitch: {
+        form: 'pitch=&vibrato · pitch=lo..hi * &shape',
+        examples: ['&lead s=saw loop=C4 pitch=&(loop=5 0 .1 -.1)', '&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0)'],
+        read: (s, b, word, at) => (/^[0-9.]+\.\./.test(s.text.slice(s.i)) ? readParam(s, b, word) : voiceOwn('pitch')(s, b, word, at)),
+    },
+    cycle: {
+        form: 'cycle=n',
+        examples: ['&key step=cycle(&theme) stride=7 cycle=12', '&edo19 cycle=19 map=edo'],
+        read: (s, b) => {
+            const vs = s.i;
+            b.cycle = s.int('a whole number after cycle=');
+            if (b.cycle < 1)
+                s.fail('cycle must be at least 1', vs, s.i - vs);
+            if (b.cycle > MAX_EVENTS)
+                s.fail(`cycle=${b.cycle}: at most ${MAX_EVENTS.toLocaleString('en')}, the most steps a cell can hold (a grid's to its period, a table's turns before it comes round)`, vs, s.i - vs);
+        },
+    },
+    size: {
+        form: 'size=x',
+        examples: ['&theme size=2 step=2 0 2 4'],
+        read: (s, b) => {
+            const at2 = s.i;
+            const n = s.match(/[0-9]*\.?[0-9]+/y);
+            if (n === null || !(+n >= 0.25 && +n <= 4))
+                s.fail('size= is how large it is drawn, from .25 to 4: size=2', at2, Math.max(1, (n ?? '').length));
+            b.size = +n;
+        },
+    },
+    laps: {
+        form: 'laps=n',
+        examples: ['&bar scan(4 4 4 4) step=84bpm laps=30'],
+        read: (s, b, word, at) => {
+            const n = s.match(/[0-9]+/y);
+            if (n === null || !(parseInt(n, 10) >= 1))
+                s.fail('laps= takes a count of laps, 1 or more: laps=1', at, word.length + 1);
+            b.laps = parseInt(n, 10);
+        },
+    },
+    chance: {
+        form: 'chance=p · chance=free(p, 0..1)',
+        examples: ['&ghost chance=.8 step=4 0? 0? 0? 0?', '&ghost chance=free(.7, 0..1) step=4 0? 0?'],
+        read: (s, b) => {
+            if (s.text.startsWith('free(', s.i))
+                b.chance = parseFree(s, 'chance', false).value;
+            else {
+                const at2 = s.i;
+                const n = s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y);
+                if (n === null)
+                    s.fail('chance= is a probability from 0 to 1: chance=.3, or chance=free(.3, 0..1)', at2, 1);
+                b.chance = parseFloat(n);
+            }
+        },
+    },
+    seed: { form: 'seed=n', examples: ['&ghost seed=7 step=4 0? 0? 0? 0?'], read: (s, b) => (b.seed = s.int('a whole number after seed=')) },
+    title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
+    tags: {
+        form: 'tags="tag, tag"',
+        examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm"', '&lead tags="melody" s=saw loop=C4'],
+        read: text('tags', 'tags="jazz, blues"'),
+    },
+    tier: {
+        form: 'tier=n',
+        examples: ['&piece title="Steps: a tune on one line" tags="tutorial" tier=1 label="Numbers, rests, holds and repeats."'],
+        read: (s, b, word, at) => {
+            const n = s.match(/[0-9]+(?![0-9.])/y);
+            if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999))
+                s.fail('tier= is a tier of the tutorial, 1 to 9999: tier=1', at, word.length + 1);
+            b.tier = parseInt(n, 10);
+        },
+    },
+    about: {
+        form: 'about=&cell · about=(&a &b …)',
+        examples: ['&fenvNote label="The filter opens on every note." about=&fenv', '&why label="Two cells at once." about=(&fenv &accent)'],
+        read: (s, b, word, at) => {
+            const what = 'a cell after about=, like about=&fenv or about=(&fenv &accent)';
+            const about = [];
+            b.about = about;
+            if (s.peek() === '(') {
+                s.i++;
+                s.skipSpace();
+                while (s.peek() !== ')') {
+                    if (s.done())
+                        s.fail(`')' to close about=(…)`);
+                    about.push(s.cellRef(what, 'in about='));
+                    s.skipSpace();
+                }
+                s.i++;
+                if (about.length === 0)
+                    s.fail(what, at, word.length + 1);
+            }
+            else
+                about.push(s.cellRef(what, 'in about='));
+        },
+    },
+};
+const CELL_WANTS = {
+    fm: 'a voice after fm=, like fm=&op',
+    write: 'what the tape records, like write=&melody',
+    play: 'the tape it reads, like play=&tape, or the notes a gate plays, like play=&tune',
+    couple: 'the resonator it shares a table with, like couple=&fork',
+    excite: 'what drives it, like excite=&mix',
+    trigger: 'the melody whose notes it plays with, like trigger=&tune',
+    velocity: 'a level cell, like velocity=&accent',
+    gate: 'a level cell, like gate=&duck',
+};
+const readCellParam = (s, b, word) => {
+    const r = s.cellRef(CELL_WANTS[word], `after ${word}=`);
+    b.params[word] = r.name;
+    b.paramSpans[word] = r.span;
+};
+const readLevels = (s, b, word) => {
+    if (!/^[1-9][0-9]*(?:n\.?|t):/.test(s.text.slice(s.i)))
+        return readParam(s, b, word);
+    const vs = s.i;
+    const levels = [];
+    for (;;) {
+        const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
+        if (level === null)
+            s.fail(`a level after the comma, a note value and a share: ${word}=8n:.6,16n:.55`);
+        s.i++;
+        let share;
+        if (s.text.startsWith('free(', s.i)) {
+            const f = parseFree(s, 'param', false);
+            f.param = word;
+            share = f.value;
+            if (levels.length || s.peek() === ',')
+                s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
+        }
+        else if (word === 'legato') {
+            const n = s.match(/(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?![0-9.])/y);
+            if (n === null)
+                s.fail(`a share after ${level}:, of each note's held length (.5 staccato, 1 as written): legato=${level}:.5`);
+            share = parseFloat(n);
+        }
+        else {
+            const at = s.i;
+            const frac = s.match(/[0-9]+\/[0-9]+(?![0-9.])/y);
+            if (frac !== null) {
+                const [num, den] = frac.split('/').map(Number);
+                if (den === 0)
+                    s.fail(`a share's denominator can't be 0: swing=${level}:2/3`, at, frac.length);
+                if (num > den)
+                    s.fail(`a share is from 0 to 1, and ${frac} is above it: swing=${level}:2/3`, at, frac.length);
+                share = num / den;
+            }
+            else {
+                const n = s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y);
+                if (n === null)
+                    s.fail(`a share after ${level}:, from 0 to 1, a decimal or a fraction (.5 straight, .67 or 2/3 the triplet swing): swing=${level}:2/3`);
+                share = parseFloat(n);
+            }
+        }
+        levels.push({ level: level, share });
+        if (s.peek() !== ',')
+            break;
+        s.i++;
+    }
+    if (word === 'legato')
+        b.legato = levels;
+    else {
+        b.swing = levels;
+        b.params[word] = levels[0].share;
+    }
+    b.paramSpans[word] = s.span(vs);
+};
+function readParam(s, b, key) {
+    const vs = s.i;
+    if (key === 'level' && (s.peek() === '&' || /^(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\s*\*/.test(s.text.slice(s.i)))) {
+        const factors = [];
+        let gain = 1;
+        for (let first = true;; first = false) {
+            const save = s.i;
+            if (!first) {
+                s.skipSpace();
+                if (s.peek() !== '*') {
+                    s.i = save;
+                    break;
+                }
+                s.i++;
+                s.skipSpace();
+            }
+            const n = s.match(/(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+            if (n !== null)
+                gain *= parseFloat(n);
+            else
+                factors.push(s.cellRef('a level cell or a number, like level=&accent*&duck*.4', 'in level='));
+        }
+        b.paramCells[key] = { range: null, factors, span: s.span(vs) };
+        if (gain !== 1)
+            b.params[key] = gain;
+        b.paramSpans[key] = s.span(vs);
+        return;
+    }
+    if ((s.peek() === '&' || atTap(s)) && TIME_PARAMS.has(key)) {
+        const st = parseStep(s, false);
+        if (st.kind !== 'driven' && st.kind !== 'tap')
+            s.fail(`${key}= takes seconds, a clock or a tap: ${key}=&bar*2, ${key}=8n`, vs, s.i - vs);
+        b.paramClocks[key] = st;
+        b.paramSpans[key] = s.span(vs);
+        return;
+    }
+    if (s.text.startsWith('free(', s.i)) {
+        const f = parseFree(s, 'param', false);
+        f.param = key;
+        b.params[key] = f.value;
+        b.paramSpans[key] = s.span(vs);
+        return;
+    }
+    const range = s.text.slice(s.i).match(/^([0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\.([0-9]+(?:\.[0-9]+)?|\.[0-9]+)/);
+    if (s.peek() === '&' || range) {
+        if (range)
+            s.i += range[0].length;
+        const factors = [];
+        if (!range)
+            factors.push(s.cellRef(`a cell after ${key}=`, `in ${key}=`));
+        for (;;) {
+            const save = s.i;
+            s.skipSpace();
+            if (s.peek() !== '*') {
+                s.i = save;
+                break;
+            }
+            s.i++;
+            s.skipSpace();
+            factors.push(s.cellRef(`a cell after *, like ${key}=200..3000 * &fenv`, `in ${key}=`));
+        }
+        if (range && factors.length === 0)
+            s.fail(`${key}=${range[0]}: a range is scaled by cells — ${key}=${range[0]} * &fenv`, vs, s.i - vs);
+        if (!range && factors.length > 1)
+            s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
+        b.paramCells[key] = { range: range ? [parseFloat(range[1]), parseFloat(range[2])] : null, factors, span: s.span(vs) };
+        b.paramSpans[key] = s.span(vs);
+        return;
+    }
+    const v = s.match(/-?[A-Za-z0-9_.]+/y);
+    if (v === null)
+        s.fail(`Expected a value after ${key}=`);
+    b.params[key] = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(v) ? parseFloat(v) : v;
+    b.paramSpans[key] = s.span(vs);
+}
+const RETIRED_KEYS = {
+    init: 'init= is now shift=',
+    out: 'out= is now a command: out(voice, &cell) / step(&meter, bpm=…)',
+    time: 'time= is now a command: out(voice, &cell) / step(&meter, bpm=…)',
+    rung: 'rung= is now tier= (decision 020): the tutorial is in tiers, tier=1 to tier=9',
+    ...RETIRED_PARAMS,
+};
+export const LINE_SYNTAX = [
+    syntax('line', '&name …', 'A cell: one per line, its name first, then its attributes (key=value) and its braid, in any order.', ['&theme over=&major step=&bar 0 2 4 5'], 'cell.md'),
+    syntax('line', '&name label="…"', 'A note: a cell with only a label= (and title=, tags=, about=) explains, in the graph; it does nothing.', ['&why label="The bass walks down a fifth each bar."'], 'display.md'),
+    syntax('line', 'off', 'Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph).', ['&drums off over=&kit step=&bar 0 1'], 'cell.md'),
+    syntax('line', 'oneshot', 'On a voice: each note plays its envelope through (its attack and decay), whatever its step: a drum hit on any grid.', ['&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)'], 'sound.md'),
+    syntax('line', '# … · // …', 'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.', ['&tune step=2 0 2 4  # the opening'], 'cell.md'),
+    syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
+    syntax('line', '&sections step=&bar &a &b', 'Sections of an arrangement (decision 016): a stepped table of names declares them, each stepped as the table is. What a section steps plays while a selector reading the table picks it (`over=&sections`), from its top each time.', ['&sections step=&bar &verseBar &chorusBar'], 'time.md'),
+];
+function parseFreeBraid(s) {
+    const start = s.i;
+    s.i += 'free('.length;
+    if (s.peek() === '"')
+        s.fail('free("…") is a text, for spell(…): a braid left free is steps, free(0 2 4 ~)', start, 6);
+    const close = s.text.indexOf(')', s.i);
+    if (close < 0)
+        s.fail(`')' to close free(…)`, start, s.i - start);
+    const inner = s.within(s.text.slice(s.i, close), s.i);
+    const tokens = [];
+    for (;;) {
+        inner.skipSpace();
+        if (inner.done())
+            break;
+        const at = inner.i;
+        const t = parseToken(inner);
+        if (leaves(t.atom).some((a) => a.kind !== 'note' && a.kind !== 'rest' && a.kind !== 'chord'))
+            inner.fail('A braid left free holds steps: numbers, rests (~), chords ([0,4]) and subsequences of them ([0 2]), held (@n) or repeated (!n)', at, inner.i - at);
+        pushStep(inner, tokens, t);
+    }
+    if (!tokens.length)
+        s.fail('free(…) around a braid needs steps: free(0 2 4 ~)', start, close - start + 1);
+    s.i = close + 1;
+    const length = tokens.reduce((n, t) => n + t.repeat * t.elongate, 0);
+    s.frees.push({ key: 'braid', value: 0, unit: '', lo: 0, hi: length, span: s.place(start), braid: inner.text.trim().replace(/\s+/g, ' ') });
+    return { kind: 'list', tokens };
+}
+export function parseBody(s, head) {
+    const b = {
+        over: null,
+        base: null,
+        shift: null,
+        cycle: null,
+        step: null,
+        map: null,
+        stride: null,
+        env: null,
+        pitch: null,
+        show: null,
+        label: null,
+        laps: null,
+        title: null,
+        tags: null,
+        tier: null,
+        about: null,
+        chance: null,
+        seed: null,
+        size: null,
+        swing: null,
+        legato: null,
+        params: {},
+        paramSpans: {},
+        paramCells: {},
+        paramClocks: {},
+    };
+    const seen = new Map();
+    let off = false;
+    let oneshot = false;
+    const tokens = [];
+    let generator = null;
+    let scaleKey = null;
+    let fifthsShift = null;
+    let freeBraid = false;
+    let freeEnd = -1;
+    let freeSteps = '';
+    while (!s.done()) {
+        const at = s.i;
+        const word = s.match(IDENT);
+        if (word !== null && s.peek() === '=') {
+            s.i++;
+            const key = word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
+            if (key === null) {
+                if (word in RETIRED_KEYS)
+                    s.fail(RETIRED_KEYS[word], at, word.length);
+                const near = nearestAttribute(word);
+                s.fail(`Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`, at, word.length);
+            }
+            const slot = key === 'loop' ? 'step' : key;
+            if (seen.has(slot)) {
+                const first = seen.get(slot);
+                s.fail(slot === 'step' && b.step.whole !== (word === 'loop')
+                    ? 'step= and loop= say the same thing two ways — pick one'
+                    : first !== word
+                        ? `${word}= and ${first}= are one parameter, ${key}= — given twice`
+                        : `${word}= is given twice`, at, word.length);
+            }
+            seen.set(slot, word);
+            if (word === 'clip')
+                s.warn("clip= is Strudel's name for legato= — write legato= (Normalise rewrites it)", at, word.length);
+            const read = KEYS[key]?.read ?? (key === 'swing' || key === 'legato' ? readLevels : CELL_PARAMS.has(key) ? readCellParam : readParam);
+            read(s, b, key, at);
+            if (!s.atBoundary())
+                s.fail(`Unexpected '${s.peek()}'`);
+            continue;
+        }
+        if (word === 'free' && s.peek() === '(') {
+            if (generator || tokens.length)
+                s.fail(FREE_BRAID_WHOLE, at, word.length);
+            s.i = at;
+            generator = parseFreeBraid(s);
+            freeBraid = true;
+            freeEnd = s.i;
+            freeSteps = s.text.slice(at + 'free('.length, s.i - 1).trim();
+            continue;
+        }
+        if (word !== null && isGenerator(word) && s.peek() === '(') {
+            if (generator || tokens.length)
+                s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
+            if (word === 'fifths') {
+                const f = parseFifths(s, at);
+                generator = f.braid;
+                fifthsShift = f.shift;
+            }
+            else if (word === 'scale') {
+                const sc = parseScale(s, at);
+                generator = { kind: 'scan', steps: sc.steps, span: sc.span };
+                scaleKey = sc.key;
+            }
+            else
+                generator = parseGenerator(s, word, at);
+            continue;
+        }
+        if (word !== null && OPERATIONS.includes(word) && s.peek() === '(') {
+            if (generator)
+                s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps');
+            s.i = at;
+            pushStep(s, tokens, parseToken(s));
+            continue;
+        }
+        if (word === 'off' && s.atBoundary()) {
+            if (off)
+                s.fail('off is given twice', at, word.length);
+            off = true;
+            continue;
+        }
+        if (word === 'oneshot' && s.atBoundary()) {
+            if (oneshot)
+                s.fail('oneshot is given twice', at, word.length);
+            oneshot = true;
+            continue;
+        }
+        if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_'))
+            s.i = at;
+        else if (word !== null)
+            s.fail(`Unexpected '${word}'`, at, word.length);
+        if (generator && freeBraid && s.peek() === ')')
+            s.fail(`A ')' with nothing to close: free(${freeSteps}) ends at its first ')'`, at, 1);
+        if (generator && at === freeEnd && /[@!*/?:]/.test(s.peek())) {
+            const mod = /^\S+/.exec(s.text.slice(at))[0];
+            s.fail(`free(${freeSteps})${mod}: a modifier goes on its steps, inside the parentheses: free([${freeSteps}]${mod})`, at, mod.length);
+        }
+        if (generator)
+            s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
+        pushStep(s, tokens, parseToken(s));
+    }
+    const braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
+    if (oneshot && typeof b.params.glide === 'number' && b.params.glide > 0) {
+        const at = b.paramSpans.glide;
+        s.fail('oneshot or glide=: a voice plays each note through, or ties them as one', at ? at.col - 1 : 0, 5);
+    }
+    if (fifthsShift !== null && fifthsShift !== 0) {
+        if (b.shift !== null)
+            s.fail('fifths(n) turns it already: write fifths() and shift=, or fifths(n) alone');
+        b.shift = fifthsShift;
+    }
+    if (scaleKey) {
+        if (b.over)
+            s.fail('scale(…) reads through a key of its own: drop over=, or write the key as a cell (&mode over=&key scan(…))', b.over.span.col - 1, b.over.span.len);
+        b.over = scaleKey;
+    }
+    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, laps, chance, seed, size, swing, legato, params, paramSpans, paramCells, paramClocks, } = b;
+    return {
+        name: head.name,
+        span: head.span,
+        over,
+        ...(base ? { base } : {}),
+        shift,
+        off,
+        ...(oneshot ? { oneshot } : {}),
+        step,
+        map,
+        stride,
+        cycle,
+        env,
+        pitch,
+        show,
+        label,
+        title,
+        tags,
+        tier,
+        about: about ?? undefined,
+        laps,
+        chance,
+        seed,
+        size,
+        ...(swing ? { swing } : {}),
+        ...(legato ? { legato } : {}),
+        params,
+        paramSpans,
+        paramCells,
+        paramClocks,
+        braid,
+        frees: [...s.frees],
+    };
+}
+export function parseCell(s) {
+    s.skipSpace();
+    if (s.text.startsWith('&(', s.i))
+        s.fail('An unnamed cell &( … ) goes where a cell is used; a line declares a named one: &name …');
+    const head = s.cellRef('a cell name like &theme', 'names the line');
+    if (head.pick || head.shift)
+        s.fail('Brackets go where a cell is used (&x[0], &x[<<]), not where it is named — use shift= here', head.span.col - 1, head.span.len);
+    if (s.peek() === '(')
+        s.fail(`&name(…) is gone — write over=&…`);
+    return parseBody(s, head);
+}
