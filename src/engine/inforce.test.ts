@@ -3,6 +3,9 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { pieceTime } from './duration';
+import { planOf } from './host';
+import { windowAt } from './schedule';
+import { channelTable, midiNote, router, routesOf } from './midi';
 
 // A table turning by its braid's own steps (#122), and over= a braid of stacks reading the chord in force (#95, #125).
 const midi = (f: number) => Math.round(69 + 12 * Math.log2(f / 440));
@@ -117,5 +120,79 @@ describe('over= a braid of stacks reads the chord in force (#95, #125)', () => {
   it('a braid mixing stacks and single numbers reads as before: its numbers in order, as turned', () => {
     // [0,2,4] 5 is the entries 0 2 4 5: index 3 is degree 5; turned, 5 7 9 11: index 3 is the chord's 4 a lap up
     expect(plays('&harm over=&key step=4n [0,2,4] 5', '&x over=&harm step=4n 3', 2)).toEqual([degree(5), degree(11)]);
+  });
+});
+
+describe('a table that also plays turns for the lines read through it (#167)', () => {
+  // #167's witness: &pad reads each beat's chord root over &harm, C3 D3 E3 F3, whether or not a line plays &harm too
+  const head =
+    '&bar meter("4/4") step=120bpm\n&key scale(ionian, C)\n&harm over=&key step=4n [0,2,4] [1,3,5] [2,4,6] [3,5,7]\n&pad over=&harm step=4n 0 0 0 0\n&compV loop=C3\n&readV loop=C4';
+  /** Each MIDI note's channel and key over the first bar, through planOf, windowAt and the MIDI out. */
+  const midiOut = (src: string) => {
+    const p = planOf(src);
+    expect(p.result.diagnostics).toEqual([]);
+    const route = router(p.result, channelTable(p.result));
+    return windowAt(p, 0, 2 - 1e-3).events.flatMap((e) => routesOf(route(e)).flatMap((r) => (midiNote(e, r) ? [midiNote(e, r)!] : [])));
+  };
+  const pad = (src: string) => midiOut(src).flatMap((n) => (n.channel === 3 ? [n.note] : []));
+
+  it('the reader plays 48 50 52 53 alone, with a line playing &harm, and with a copy of it played instead', () => {
+    expect(pad(`${head}\n&out map=midi ~ ~ [&pad * &compV]`)).toEqual([48, 50, 52, 53]);
+    expect(pad(`${head}\n&read map=midi ~!14 ~ [&harm * &readV]\n&out map=midi ~ ~ [&pad * &compV]`)).toEqual([48, 50, 52, 53]);
+    expect(pad(`${head}\n&harm2 over=&key step=4n [0,2,4] [1,3,5] [2,4,6] [3,5,7]\n&read map=midi ~!14 ~ [&harm2 * &readV]\n&out map=midi ~ ~ [&pad * &compV]`)).toEqual([
+      48, 50, 52, 53,
+    ]);
+  });
+
+  it('what the played table plays is unchanged: its chords, one a beat, as they sound without a reader', () => {
+    const chords = [
+      [60, 64, 67],
+      [62, 65, 69],
+      [64, 67, 71],
+      [65, 69, 72],
+    ];
+    const harm = (src: string) => midiOut(src).flatMap((n) => (n.channel === 16 ? [n.note] : []));
+    const read = '&read map=midi ~!14 ~ [&harm * &readV]';
+    expect(harm(`${head}\n${read}\n&out map=midi ~ ~ [&pad * &compV]`)).toEqual(chords.flat());
+    expect(harm(`${head}\n${read}`)).toEqual(chords.flat());
+  });
+
+  it('a played table turns by its own steps for the reader as an unplayed one does: @n, !n, <a b>, a subsequence (#122)', () => {
+    const src = (braid: string, played: boolean) =>
+      `&bar meter("4/4") step=60bpm\n&key scale(major, C)\n&harm over=&key step=4n ${braid}\n&x over=&harm step=8n 0\n&v s=tri loop=C4\n&w s=sine loop=C5\n&out map=sample [&x * &v${played ? ', &harm * &w' : ''}]`;
+    const xs = (s: string) => {
+      const r = compileSource(s);
+      expect(r.diagnostics).toEqual([]);
+      return eventsBetween(plan(r, codeShifts(r)), 0, 8 - 1e-3)
+        .filter((e) => e.voice === 'v')
+        .map((e) => midi(e.freq));
+    };
+    for (const braid of ['[0,2,4]@2 [5,7,9]', '[0,2,4]!2 [5,7,9]', '[0,2,4] <[5,7,9] [3,5,7]>', '[0,2,4] [[5,7,9] [2,4,6]]'])
+      expect(xs(src(braid, true)), braid).toEqual(xs(src(braid, false)));
+    // [0,2,4]@2 [5,7,9]: C for two beats, then A, read twice a beat
+    expect(xs(src('[0,2,4]@2 [5,7,9]', true))).toEqual([0, 0, 0, 0, 5, 5, 0, 0, 0, 0, 5, 5, 0, 0, 0, 0].map((d) => degree(d)));
+  });
+
+  it('a played cell’s own notes read its own shift as written: a pick a mix plays, a grid played; a reader of either turns', () => {
+    /** Each note over four beats, a beat a second, as voice:key. */
+    const notes = (body: string) => {
+      const r = compileSource(`&bar meter("4/4") step=60bpm\n&key scale(major, C)\n&v s=tri loop=C4\n&w s=sine loop=C5\n${body}`);
+      expect(r.diagnostics).toEqual([]);
+      return eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-3).map((e) => `${e.voice}:${midi(e.freq)}`);
+    };
+    // &k[1] in a mix plays E each beat (decision 012: a cell plays on its own clock, picked or not); &x over=&k reads C, E, G, A
+    expect(notes('&k over=&key step=4n 0 2 4 5\n&out map=sample [&k[1] * &v]')).toEqual(['v:64', 'v:64', 'v:64', 'v:64']);
+    expect(notes('&k over=&key step=4n 0 2 4 5\n&x over=&k step=4n 0\n&out map=sample [&k[1] * &v, &x * &w]')).toEqual([
+      'v:64',
+      'w:72',
+      'v:64',
+      'w:76',
+      'v:64',
+      'w:79',
+      'v:64',
+      'w:81',
+    ]);
+    // a grid of five played walks its steps, 0 2.4 4.8 7.2 semitones; a line over it reads the step sounding
+    expect(notes('&g map=edo cycle=5 step=4n\n&x over=&g step=4n 0\n&out map=sample [&g * &v, &x * &w]')).toEqual(['v:60', 'w:72', 'v:62', 'w:74', 'v:65', 'w:77', 'v:67', 'w:79']);
   });
 });

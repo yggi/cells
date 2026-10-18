@@ -1,6 +1,6 @@
 import { ROOT, pickedUnits } from "./program.js";
 import { resolveIn } from "./helix.js";
-import { clocking, playedCells, selects, shiftsAt } from "./clocking.js";
+import { clocking, playedCells, playing, selects, shiftsAt } from "./clocking.js";
 import { stepsOf, unitsFor } from "./flatten.js";
 import { footOf, slots } from "./subseq.js";
 import { cellId, edgeId } from "./ids.js";
@@ -41,7 +41,7 @@ export function liveAt(result, statics, muted, seconds) {
     const beatAt = new Map();
     const stepAt = new Map();
     const played = playedCells(result);
-    const now = shiftsAt(result, statics, seconds, played);
+    const now = shiftsAt(result, statics, seconds);
     const clk = clocking(result, statics, seconds);
     const mark = (name) => {
         let c = cells.get(name);
@@ -49,9 +49,9 @@ export function liveAt(result, statics, muted, seconds) {
             cells.set(name, (c = { local: null, entries: new Set() }));
         return c;
     };
-    const markChain = (way, from, table, tableShift, value, alter) => {
+    const markChain = (way, cell, from, table, tableShift, value, alter) => {
         let prev = from;
-        for (const p of resolveIn(result, table, tableShift, value, alter, now).path) {
+        for (const p of resolveIn(result, table, tableShift, value, alter, played.has(cell) ? playing(now, statics, cell) : now).path) {
             mark(p.cell).entries.add(p.index);
             way.push({ from: prev && result.cells.get(prev)?.over === p.cell ? prev : null, to: p.cell, table: true });
             prev = p.cell;
@@ -178,9 +178,9 @@ export function liveAt(result, statics, muted, seconds) {
                 }
                 else {
                     if (a.kind === 'note')
-                        markChain(way, tFrom, table, tShift, a.value, a.alter);
+                        markChain(way, at, tFrom, table, tShift, a.value, a.alter);
                     else
-                        a.notes.forEach((v, j) => markChain(way, tFrom, table, tShift, v, a.alters[j]));
+                        a.notes.forEach((v, j) => markChain(way, at, tFrom, table, tShift, v, a.alters[j]));
                 }
             }
             const hit = now.find((x) => x.atom.kind === 'ref');

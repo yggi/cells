@@ -204,13 +204,18 @@ export function lower(bar: Bar, part: Part, words: readonly Word[]): Word[] {
 // ---- playing a text and reading it back
 
 const CHANNEL: Readonly<Record<Part, number>> = { bass: 2, pad: 3, stab: 3 };
-const VOICE_LINES = ['&bassV loop=C1', '&compV loop=C3', '&lap step=1m 0', '&lapV loop=C4'];
+const VOICE_LINES = ['&bassV loop=C1', '&compV loop=C3', '&lap step=1m 0', '&lapV loop=C4', '&harmV loop=C4'];
+/** The channel the harmony line itself sounds on, when it is played too (#167): read back by nothing, its notes left out. */
+const HARMONY_CHANNEL = 4;
 
-/** A text's notes as cells plays them: [channel, step on the 16th grid, MIDI key], over `bars` bars of `steps`. */
-export function cellsPlays(lines: readonly string[], parts: readonly Part[], steps: number, bars = 1): { notes: string[]; diagnostics: string[] } {
+/**
+ * A text's notes as cells plays them: [channel, step on the 16th grid, MIDI key], over `bars` bars of `steps`. With
+ * `harmony`, the card plays `&harm` too, on a channel of its own, as a frontend that sounds the harmony would (#167).
+ */
+export function cellsPlays(lines: readonly string[], parts: readonly Part[], steps: number, bars = 1, harmony = false): { notes: string[]; diagnostics: string[] } {
   const bass = parts.includes('bass') ? '[&bass * &bassV]' : '~';
   const comp = parts.filter((p) => p !== 'bass').map((p) => `&${p} * &compV`);
-  const card = `&out map=midi ~ ${bass} ${comp.length ? `[${comp.join(', ')}]` : '~'} ~!11 [&lap * &lapV]`;
+  const card = `&out map=midi ~ ${bass} ${comp.length ? `[${comp.join(', ')}]` : '~'} ${harmony ? '[&harm * &harmV]' : '~'} ~!10 [&lap * &lapV]`;
   const plan = planOf([...lines, ...VOICE_LINES, card].join('\n'));
   const route = router(plan.result, channelTable(plan.result));
   const played = windowAt(plan, 0, 4 * bars * 4).events.flatMap((e) =>
@@ -223,7 +228,7 @@ export function cellsPlays(lines: readonly string[], parts: readonly Part[], ste
   const bar = laps.find((at) => at > 0)!;
   const step = bar / steps;
   return {
-    notes: played.filter((n) => n.channel !== 15 && n.at < bar * bars - 1e-9).map((n) => `${n.channel} ${Math.round(n.at / step)} ${n.note}`),
+    notes: played.filter((n) => n.channel !== 15 && n.channel !== HARMONY_CHANNEL && n.at < bar * bars - 1e-9).map((n) => `${n.channel} ${Math.round(n.at / step)} ${n.note}`),
     diagnostics: plan.result.diagnostics.map((d) => d.message),
   };
 }
@@ -261,8 +266,8 @@ function lineFor(bar: Bar, r: Restated, reading: Reading): { over: 'key' | 'harm
 /** A line as text: E33's spelling, over the key or over the harmony. */
 const lineText = (part: Part, over: 'key' | 'harm', words: readonly Word[]) => `&${part} over=&${over} step=16n ${words.map(wordText).join(' ')}`;
 
-/** One bar under a reading: the lines cells plays, and the notes it plays that are the band's. */
-export function barUnder(bar: Bar, reading: Reading) {
+/** One bar under a reading: the lines cells plays, and the notes it plays that are the band's (with `harmony`, `&harm` played too). */
+export function barUnder(bar: Bar, reading: Reading, harmony = false) {
   const restated = PARTS.map((p) => restate(bar, p)).filter((r): r is Restated => r !== null);
   const lines = [
     bar.lines.bar!,
@@ -277,6 +282,8 @@ export function barUnder(bar: Bar, reading: Reading) {
     lines,
     restated.map((r) => r.part),
     bar.steps,
+    1,
+    harmony,
   );
   const want = bandNotes([bar], () => 0);
   return { lines, want: want.length, matched: matched(want, played.notes), diagnostics: played.diagnostics };
@@ -319,8 +326,11 @@ export function collapsed(chunks: readonly (readonly Word[])[], steps: number): 
   return out.join(' ');
 }
 
-/** One section under a reading: a part's line over the chord only where every bar of it can be; the notes cells plays that are the band's; characters as written. */
-export function sectionUnder(section: readonly Bar[], reading: Reading) {
+/**
+ * One section under a reading: a part's line over the chord only where every bar of it can be; the notes cells plays
+ * that are the band's (with `harmony`, `&harm` played too); characters as written.
+ */
+export function sectionUnder(section: readonly Bar[], reading: Reading, harmony = false) {
   const steps = section[0]!.steps;
   const parts = PARTS.filter((p) => section.some((b) => b.lines[p]));
   const rest: Word[] = [{ tones: [], length: steps }];
@@ -339,7 +349,7 @@ export function sectionUnder(section: readonly Bar[], reading: Reading) {
     chars[part] = `&${part} over=&${chord ? 'harm' : 'key'} step=16n ${collapsed(written, steps)}`.length + 1;
   }
   const head = [section[0]!.lines.bar!, section[0]!.lines.key!, sectionHarmony(section)];
-  const played = cellsPlays([...head, ...lines], parts, steps, section.length);
+  const played = cellsPlays([...head, ...lines], parts, steps, section.length, harmony);
   const first = section[0]!.bar;
   const want = bandNotes(section, (b) => (b.bar - first) * steps);
   return { lines: [...head, ...lines], want: want.length, matched: matched(want, played.notes), chars, overChord, diagnostics: played.diagnostics };

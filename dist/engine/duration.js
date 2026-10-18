@@ -61,10 +61,9 @@ export function pieceTime(result, seen) {
                 if (s)
                     periods.push(s);
             }
-    const played = new Set(result.outputs.map((o) => o.cell));
     const read = new Set([...result.cells.values()].flatMap((c) => (c.over ? [c.over] : [])));
     for (const c of result.cells.values()) {
-        if (!read.has(c.name) || !c.step || !c.clock || played.has(c.name) || c.loops || result.clocks.has(c.name) || !c.cycle)
+        if (!read.has(c.name) || !c.step || !c.clock || c.loops || result.clocks.has(c.name) || !c.cycle)
             continue;
         const turn = secondsOf(c.clock, 1 / c.rate);
         if (!turn)

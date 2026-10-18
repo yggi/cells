@@ -77,11 +77,10 @@ export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
         if (s) periods.push(s);
       }
   // tables that turn (stride=, cycle=): back where they began after cycle / gcd(cycle, stride) turns
-  // (only what something reads as a table turns: a selector steps, it doesn't)
-  const played = new Set(result.outputs.map((o) => o.cell));
+  // (only what something reads as a table turns, played too, #167: a selector steps, it doesn't)
   const read = new Set([...result.cells.values()].flatMap((c) => (c.over ? [c.over] : [])));
   for (const c of result.cells.values()) {
-    if (!read.has(c.name) || !c.step || !c.clock || played.has(c.name) || c.loops || result.clocks.has(c.name) || !c.cycle) continue;
+    if (!read.has(c.name) || !c.step || !c.clock || c.loops || result.clocks.has(c.name) || !c.cycle) continue;
     const turn = secondsOf(c.clock, 1 / c.rate);
     if (!turn) continue;
     const stride = Math.max(1, Math.abs(Math.round(c.stride || 1)));

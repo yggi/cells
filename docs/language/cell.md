@@ -33,4 +33,4 @@ The anatomy of one line of code: a cell is `&name`, attributes, and a braid, in 
 - **Note names** are rates from the environment, tuned from `A4` (440 by default): `loop=C4`, `loop=F#3`, `loop=Bb2`. See [tuning.md](tuning.md).
 - **Names**: the first note with `title=` names the piece; see [display.md](display.md).
 
-A played braid's moving shift is its playhead; a table's moving shift turns what reads through it, looping within its cycle ([time.md](time.md)).
+A played braid's moving shift is its playhead; a table's moving shift turns what reads through it, looping within its cycle ([time.md](time.md)). A cell can be both: a stepped table that is also played turns for what reads through it, so a reader sees the entry sounding, the one the turn brings round when nothing plays it, while its own notes play as written ([tables.md](tables.md), [#167](https://github.com/yggi/cells/issues/167)).
