@@ -34,7 +34,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 
 - `&name … ` one cell per line; steps `0 2 ~ 4@2 0!4 [0,2,4]` → [cell](language/cell.md)
 - `scan(…)` `euclid(k,n)` `sin(n)`; `&t[i]` `&t[$i]` `&t[a:b]` `&t[<<n]` `&t^n` (degrees) `&t^$n` (grid steps) → [braid](language/braid.md)
-- `over=&t` `scale(name, tonic)` `shift=n` `cycle=n` → [tables](language/tables.md)
+- `over=&t` `scale(name, tonic)` `shift=n` `cycle=n`; `over=key` the main key (the first `scale(…)`) → [tables](language/tables.md)
 - `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), taps of a meter (`pulse` `beat` `16n` `4n.` `8t` `1m`, `&m:16n`, `cycle=n` bars), `beat=`, swing on the bar (`swing=8n:.67`), `stride=`, `laps=` → [time](language/time.md)
 - `map=edo|ed(r)|ratios`, note names → [tuning](language/tuning.md)
 - `free(default, lo..hi)`, `free(0 2 4 ~)` a braid, recorded → [free](language/free.md)
@@ -54,11 +54,11 @@ One line each; the record has the rationale. → [decisions/](decisions/README.m
 - 007 · `pan=` is back, a balance in dough's sense, compiled into the channel gains; two chords on the sound card stay valid · → decisions/007-pan-is-back.md
 - 008 · A turning table comes round after its own length; `cycle=` only when it differs · → decisions/008-tables-come-round.md
 - 009 · The tutorial covers every form once (a test checks); `tutorial` a kind of tag (it replaces `basics`), its own cell in the library; its rungs are superseded by 018 · → decisions/009-tutorial-ladder.md
-- 010 · A canon's `[<<n]` is a copy (the score replayed); `play= at=` reads what was recorded; a tap of what was played waits for `&<` (#149) · → decisions/010-canon-copies.md
-- 012 · A pick is a fixed tap on a turning wheel: `&x[i]` reads the cell as turned (and follows it while it plays), `&x[$i]` as written · → decisions/012-picks-are-taps.md
+- 010 · A canon's `[<<n]` is a copy (the score replayed); `play= at=` reads what was recorded; a reader of what was played waits for `&<` (#149) · → decisions/010-canon-copies.md
+- 012 · A pick is a fixed reader on a turning wheel: `&x[i]` reads the cell as turned (and follows it while it plays), `&x[$i]` as written · → decisions/012-picks-are-taps.md
 - 013 · `scale(name, tonic)` is a generator: a fixed mode by name over a key of its own; `shift=` walks its modes, the tonic transposes · → decisions/013-scale-generator.md
 - 015 · `&x^n` moves by degrees (`degree(&x, n)`, relative), `&x^$n` by grid steps (absolute, the old `^n`): `$` is the absolute frame · → decisions/015-caret-is-degrees.md
-- 016 · Arranging at the input: a section is a tap of the meter's bus, declared by a stepped table of names (`&parts step=&bar &keysBar …`) and switched by the selector (it restarts when switched on; it owns only what its tap steps or loops); the selector of mixes is removed (an error that says what to write); the switch and the gate node stay two mechanisms for now · → decisions/016-arranging-at-the-input.md
+- 016 · Arranging at the input: a section is switched on the meter's bus, declared by a stepped table of names (`&sections step=&bar &keysBar …`) and switched by the selector (it restarts when switched on; it owns only what it steps or loops); the selector of mixes is removed (an error that says what to write); the switch and the gate node stay two mechanisms for now · → decisions/016-arranging-at-the-input.md
 - 017 · Two tools: Shorten suggests on the piece being written (shorter, and migrations of removed forms), Normalise converges a corpus to one canonical spelling per duplicate, as a command of its own, never offered while writing · → decisions/017-shorten-and-normalise.md
 - 018 · `free(0 2 4 ~)` is a braid left to the performer, a cell's whole braid; its length the frame a take fills; record (a flag on the transport) takes one pass of the armed cell from the keys, quantised through its time map, held until Keep; keys off the table: one setting, allow / snap / ignore, for playing and recording · → decisions/018-free-braid.md
 - 019 · MIDI out in the language: a MIDI card, `map=midi`, its entries channels; `midi(c)` one channel, `midi(c, p)` an output slot, the MIDI page's pth output (its device this browser's); a voice only on a card is sent, not heard; a piece with a card sends only what its cards name, one without keeps the default output · → decisions/019-midi-card.md
@@ -79,3 +79,4 @@ One line each; the record has the rationale. → [decisions/](decisions/README.m
 - 041 · A fragment is cells text and an index entry (an id, an association: weighted style points, axis names to numbers); a query ranks fragments by a weighted distance over the axes it shares with each point, the nearest point divided by its weight; the repository doesn't know the axes · → decisions/041-fragments-by-style.md
 - 042 · A swing share (`swing=8n:r`) is a decimal or a fraction of whole numbers, `8n:2/3`, `16n:31/60`: the exact triplet swing in three characters; a level's share only, not yet a bare swing or a `free(…)` · → decisions/042-swing-share-as-a-fraction.md
 - 043 · The composer asks the repository first, judges each result against its composition, and generates (and files) what doesn't satisfy it; a fragment's place by association, queries in order (the meter first) that fit the workbench, fragments in groups, one ladder of novelty moved by entropy; a feel (swing, articulation) is one meter fragment · → decisions/043-the-composer-selects.md
+- 044 · "Tap" means reading the meter (`step=16n`); a name a selector's table declares is a **section** (`CompileResult.sections`, the examples' `&sections`), a cell reading a net a **reader** (`GraphNet.readers`), a pick a fixed reader · → decisions/044-tap-reads-the-meter.md

@@ -6,7 +6,8 @@
  * function of time.
  */
 import type { CompileResult, Clock, Shifts } from './program';
-import { isPicked, period, shiftedUnits } from './helix';
+import { isPicked, period, shiftedUnits, tableUnits } from './helix';
+import { footOf, leaves, slots, type Laps } from './subseq';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
 import { mod } from '../theory/modes';
 
@@ -147,7 +148,7 @@ export function playedCells(result: CompileResult): Set<string> {
     out.add(n);
     const c = result.cells.get(n);
     for (const k of c?.children.keys() ?? []) {
-      // (a cell only picked from, &k[0] &k[$0], isn't played: it is a table, turning under its taps)
+      // (a cell only picked from, &k[0] &k[$0], isn't played: it is a table, turning under its picks)
       const refs = c!.units.flatMap((u) => (u.atom.kind === 'ref' && u.atom.name === k ? [u.atom] : []));
       if (!refs.length || !refs.every((r) => isPicked(result, k, r.pick))) walk(k);
     }
@@ -251,7 +252,9 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
 /**
  * Shifts at a moment: the static shift, plus — for stepped cells that are
  * looked through rather than played — the turns their step= chain has made,
- * times their stride. They come round after the table's own length, or
+ * times their stride. A table turns by its braid's own steps (#122): an entry
+ * held `@n` (or `_`) or repeated `!n` stays in force n steps, and a subsequence's
+ * steps turn within its step. They come round after the braid's own length, or
  * where cycle= says (more laps climb on the way).
  */
 export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number, played: ReadonlySet<string> = playedCells(result)): Shifts {
@@ -268,17 +271,96 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
     if (s === undefined) steps.set(c.clock, (s = clk.stepOf(c.clock)));
     // a turning table comes round after its own length (a key of 12 after 12, a scale after 7, a
     // braid of chords after its chords); cycle= says otherwise (cycle=24: two laps, climbing, then round)
-    const turns = Math.floor(c.rate * s + EPS) * c.stride;
-    const wrap = c.wrap ?? (c.units.length || c.cycle);
-    return base + (wrap > 0 ? mod(turns, wrap) : turns);
+    const step = Math.floor(c.rate * s + EPS);
+    const turns = step * c.stride;
+    const own = ownSteps(result, name);
+    if (!own) {
+      const wrap = c.wrap ?? ownLength(result, name);
+      return base + (wrap > 0 ? mod(turns, wrap) : turns);
+    }
+    // (a subsequence turns within its step: how far through it)
+    const at = turns + Math.min(1 - EPS, Math.max(0, c.rate * s - step));
+    const wrap = c.wrap ?? own.length;
+    const b = wrap > 0 ? mod(at, wrap) : at;
+    const lap = Math.floor(b / own.length);
+    return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
   };
 }
 
-/** Is it a selector (a cell reading a table of taps: decision 016)? */
+/** Where a turning table comes round by itself: its braid's own length in steps (a key of 12 after 12, `[0,2,4]@3 [5,7,9]` after 4). */
+export const ownLength = (result: CompileResult, name: string) => {
+  const c = result.cells.get(name)!;
+  return ownSteps(result, name)?.length ?? (c.units.length || c.cycle);
+};
+
+/** A turn of a table's braid: from `at` (in its steps, within a lap) entry `index` is in force, on the laps `laps` says. */
+interface Turn {
+  readonly at: number;
+  readonly index: number;
+  readonly laps?: Laps;
+}
+
+/** How a table turns by its own steps: its braid's length in steps, its entries, and the entry in force at a step of a lap. */
+interface OwnSteps {
+  readonly length: number;
+  readonly entries: number;
+  inForce(at: number, lap: number): number;
+}
+
+const ownCache = new WeakMap<CompileResult, Map<string, OwnSteps | null>>();
+
+/**
+ * A table whose steps aren't one entry each (`@n`, `_`, `!n`, a subsequence): which entry is in force when, as its braid
+ * would play (subseq.ts `slots`: `<a b>` by lap, a choice its first option). Null when every step is one entry, where
+ * the step count is the entry.
+ */
+function ownSteps(result: CompileResult, name: string): OwnSteps | null {
+  let cache = ownCache.get(result);
+  if (!cache) ownCache.set(result, (cache = new Map()));
+  if (cache.has(name)) return cache.get(name)!;
+  const units = result.cells.get(name)!.units;
+  let own: OwnSteps | null = null;
+  if (units.some((u) => u.repeat !== 1 || u.elongate !== 1 || u.atom.kind === 'seq')) {
+    const first: number[] = [];
+    let n = 0;
+    for (const u of units) {
+      first.push(n);
+      n += u.atom.kind === 'seq' ? leaves(u.atom).length : 1;
+    }
+    const turns: Turn[] = slots(units, () => 1)
+      .filter((sl) => !sl.chosen || sl.chosen.every((p) => p.is === 0))
+      .map((sl) => {
+        const u = units[sl.top];
+        const index = first[sl.top] + (u.atom.kind === 'seq' ? leaves(u.atom).indexOf(sl.atom) : 0);
+        return { at: sl.at, index, ...(sl.laps ? { laps: sl.laps } : {}) };
+      })
+      .sort((x, y) => x.at - y.at);
+    const length = units.reduce((t, u) => t + footOf(u.atom, () => 1) * u.elongate * u.repeat, 0);
+    const sounds = (t: Turn, lap: number) => !t.laps || mod(lap, t.laps.of) === t.laps.is;
+    const entries = tableUnits(result, name).length;
+    own = {
+      length,
+      entries,
+      inForce(at, lap) {
+        // the last turn begun on this lap, the first written of those begun together (none yet: the last of the lap
+        // before, a lap down)
+        let found: Turn | undefined;
+        for (const t of turns) if (t.at <= at + EPS && sounds(t, lap) && (!found || t.at > found.at + EPS)) found = t;
+        if (found) return found.index;
+        for (const t of turns) if (sounds(t, lap - 1) && (!found || t.at > found.at + EPS)) found = t;
+        return found ? found.index - entries : 0;
+      },
+    };
+  }
+  cache.set(name, own);
+  return own;
+}
+
+/** Is it a selector (a cell reading a table of sections: decision 016)? */
 export function selects(result: CompileResult, name: string): boolean {
   const table = result.cells.get(name)?.over ?? '';
   const t = result.cells.get(table);
-  return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && result.taps?.get(u.atom.name) === table);
+  return !!t && t.units.length > 0 && t.units.every((u) => u.atom.kind === 'ref' && result.sections?.get(u.atom.name) === table);
 }
 
 /**

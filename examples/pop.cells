@@ -1,8 +1,8 @@
 &piece title="Pop song: four chords, arranged" tags="genre:electronic, diatonic, harmony, arrangement" label="I – V – vi – IV, arranged by a selector: intro, verses, choruses, a break, an outro, an end." about=&out
 # The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees
 # over the major scale, each chord comes out the right kind: C, G, Am, F.
-# Arranged: each part is a tap of the bar, and &song switches the taps, a section a
-# step — intro, verses, choruses, a break, an outro and an end.
+# Arranged: each part is a section stepped by the bar, and &song switches the sections,
+# four bars a step — intro, verses, choruses, a break, an outro and an end.
 &bar scan(1 1 1 1) step=free(100bpm, 70..140)
 &major scan(2 2 1 2 2 2 1)
 &chords tags="keys" over=&major step=&keysBar*2 [0,2,4]!8 [4,6,8]!8 [5,7,9]!8 [3,5,7]!8
@@ -23,10 +23,10 @@
 
 &final tags="keys" over=&major step=&endBar [0,2,4,7]@4                  # the last chord: C
 
-# the taps the song switches: a section (four bars) a step — a part
-# picked starts from its top; a chord of parts plays them together; laps=1: it ends
-&parts step=4n &bassBar &keysBar &hookBar &hatsBar &beatBar &endBar
-&song over=&parts step=1m/4 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [1,3] [0,1,3,4]!2 [0,1,2,3,4]!2 [1,2] [0,1,2,3,4]!2 [1] 5
+# the sections the song switches: four bars a step — a section
+# picked starts from its top; a chord of sections plays them together; laps=1: it ends
+&sections step=4n &bassBar &keysBar &hookBar &hatsBar &beatBar &endBar
+&song over=&sections step=1m/4 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [1,3] [0,1,3,4]!2 [0,1,2,3,4]!2 [1,2] [0,1,2,3,4]!2 [1] 5
 
 &out postgain=1.78 map=sample [&hats,
                          &beat,

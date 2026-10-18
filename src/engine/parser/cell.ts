@@ -3,7 +3,7 @@ import { leaves } from '../subseq';
 import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, Token } from '../ast';
 import { TIME_PARAMS } from '../attributes';
 import { RETIRED_PARAMS } from '../dough-params';
-import { LABEL_FIELDS, MAX_EVENTS } from '../program';
+import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from '../program';
 import { CELL_PARAMS, CORE, PARAMS, PARAM_ALIASES, nearestAttribute } from '../attributes';
 import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
@@ -116,10 +116,18 @@ const BLANK_TABLE = { over: null, shift: null, off: false, step: null, map: null
 /** The core attributes, each with a syntax of its own: the parser reads a cell's line through this table. */
 export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   over: {
-    form: 'over=&table · over=&table[<<n] · over=scale(name, tonic)',
-    examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4'],
+    form: 'over=&table · over=&table[<<n] · over=scale(name, tonic) · over=key',
+    examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4', '&bass over=key step=16n 0 4 7'],
     read: (s, b) => {
-      if (s.text.startsWith('scale(', s.i)) {
+      const bare = /key(?![A-Za-z0-9_])/y;
+      bare.lastIndex = s.i;
+      if (bare.test(s.text)) {
+        // over=key: the piece's main key (#124), as a bare tap reads its main meter; compile names the cell (declare.ts)
+        const at = s.i;
+        s.i += 3;
+        if (s.peek() === '[') s.fail('over=key reads the main key whole: to turn it, name it (over=&key[<<2])', s.i, 1);
+        b.over = { name: MAIN_KEY, pick: null, shift: 0, span: s.place(at) };
+      } else if (s.text.startsWith('scale(', s.i)) {
         // over=scale(name, tonic): a table of its own, unnamed and not drawn — the scale's scan over its key
         const at0 = s.i;
         s.i += 5;
@@ -127,7 +135,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
         const name = `scale:λ${s.line}_${at0 + s.offset}`;
         s.lambdas.push({ ...BLANK_TABLE, name, span: sc.span, lambda: s.text.slice(at0, s.i), over: sc.key, braid: { kind: 'scan', steps: sc.steps, span: sc.span } });
         b.over = { name, pick: null, shift: 0, span: sc.span };
-      } else b.over = s.cellRef('a cell or scale(name, tonic) after over=, like over=&scale or over=scale(minor, A)', 'after over=');
+      } else b.over = s.cellRef('a cell, scale(name, tonic) or key after over=, like over=&scale, over=scale(minor, A) or over=key', 'after over=');
       if (b.over!.pick) s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over!.span.col - 1, b.over!.span.len);
     },
   },
@@ -471,9 +479,9 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
   syntax(
     'line',
-    '&parts step=&bar &a &b',
-    "Taps of a meter's bus (decision 016): a stepped table of names declares them, each stepped as the table is. What a tap steps plays while a selector reading the table picks it (`over=&parts`), from its top each time: an arrangement.",
-    ['&parts step=&bar &verseBar &chorusBar'],
+    '&sections step=&bar &a &b',
+    'Sections of an arrangement (decision 016): a stepped table of names declares them, each stepped as the table is. What a section steps plays while a selector reading the table picks it (`over=&sections`), from its top each time.',
+    ['&sections step=&bar &verseBar &chorusBar'],
     'time.md',
   ),
 ];

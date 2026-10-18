@@ -1,11 +1,11 @@
-# Lifted from yggi/cell-studio tools/probe/pieces/pop-input.cells @ e168c8d: the example arranged at the input (decision 016), for src/engine/taps.test.ts.
-&piece title="Pop song, arranged at the input (a probe)" tags="genre:electronic, diatonic, harmony, arrangement" label="Pop rewired at the input (decision 016): the song switches which tap of the bar each part is stepped by; the parts' sound goes straight out." about=&out
+# Lifted from yggi/cell-studio tools/probe/pieces/pop-input.cells @ e168c8d: the example arranged at the input (decision 016), for src/engine/sections.test.ts.
+&piece title="Pop song, arranged at the input (a probe)" tags="genre:electronic, diatonic, harmony, arrangement" label="Pop rewired at the input (decision 016): the song switches which section each part is stepped by; the parts' sound goes straight out." about=&out
 &bar scan(1 1 1 1) step=free(100bpm, 70..140)
 &major scan(2 2 1 2 2 2 1)
 
-# the parts: taps of the bar, declared by the table; the song switches them, a section (four bars) a step
-&parts step=4n &hatsBar &beatBar &bassBar &keysBar &hookBar &endBar
-&song over=&parts step=1m/4 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [0,3] [0,1,2,3]!2 [0,1,2,3,4]!2 [3,4] [0,1,2,3,4]!2 [3] 5
+# the parts: sections stepped by the bar, declared by the table; the song switches them, four bars a step
+&sections step=4n &hatsBar &beatBar &bassBar &keysBar &hookBar &endBar
+&song over=&sections step=1m/4 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [0,3] [0,1,2,3]!2 [0,1,2,3,4]!2 [3,4] [0,1,2,3,4]!2 [3] 5
 
 &chords tags="keys" over=&major step=&keysBar*2 [0,2,4]!8 [4,6,8]!8 [5,7,9]!8 [3,5,7]!8
 &roots tags="bass" over=&major step=&bassBar*2 0!8 4!8 5!8 3!8

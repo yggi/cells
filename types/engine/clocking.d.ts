@@ -48,11 +48,15 @@ export declare function clocking(result: CompileResult, statics: Shifts, seconds
 /**
  * Shifts at a moment: the static shift, plus — for stepped cells that are
  * looked through rather than played — the turns their step= chain has made,
- * times their stride. They come round after the table's own length, or
+ * times their stride. A table turns by its braid's own steps (#122): an entry
+ * held `@n` (or `_`) or repeated `!n` stays in force n steps, and a subsequence's
+ * steps turn within its step. They come round after the braid's own length, or
  * where cycle= says (more laps climb on the way).
  */
 export declare function shiftsAt(result: CompileResult, statics: Shifts, seconds: number, played?: ReadonlySet<string>): Shifts;
-/** Is it a selector (a cell reading a table of taps: decision 016)? */
+/** Where a turning table comes round by itself: its braid's own length in steps (a key of 12 after 12, `[0,2,4]@3 [5,7,9]` after 4). */
+export declare const ownLength: (result: CompileResult, name: string) => number;
+/** Is it a selector (a cell reading a table of sections: decision 016)? */
 export declare function selects(result: CompileResult, name: string): boolean;
 /**
  * A tape's motion: how far it has moved (tape-seconds) at real second x, when it has moved u, and how

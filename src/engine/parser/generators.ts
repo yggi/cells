@@ -274,6 +274,9 @@ export function waveValues(shape: WaveShape, n: number): number[] {
 const TONICS: Readonly<Record<string, number>> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const tonicName = (pc: number) => ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][((pc % 12) + 12) % 12];
 
+/** The start of the name of the key a `scale(…)` declares (`key:λ3_8`): a cell whose `over=` names one reads its own scale(…). */
+export const SCALE_KEY = 'key:λ';
+
 /**
  * `scale(name, tonic)`: a scale by name over the 12 turned to its tonic. What it stands for is two cells: the key (the
  * 12, `shift=` the tonic: a note name, a number or free(…)) and the scale's steps over it, `scan(…)`. The key is declared
@@ -355,7 +358,7 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
     s.expect(')', "')' to close scale(…)");
   }
   const span = s.span(start);
-  const key = `key:λ${s.line}_${start + s.offset}`;
+  const key = `${SCALE_KEY}${s.line}_${start + s.offset}`;
   s.lambdas.push({
     name: key,
     span,

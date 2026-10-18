@@ -71,7 +71,14 @@ describe('the chord in force, over E33’s 384 bars (#95)', () => {
     expect(linesOverChord()).toEqual({ lines: 802, any: 781, integers: 720 });
   });
 
-  it('cells plays E33’s text, and the lowering of the chord in force, as the band in every bar and section', () => {
+  it('cells plays E33’s text over the chord in force, over=&harm (#125), as the band: 2,979 notes in 384 bars and 23 sections', () => {
+    // the bar texts one bar each, the section texts a run's bars as one text with the harmony a braid of all its chords
+    // (a whole bar's chord held @2 among bars of two: the turn by the braid's own steps, #122)
+    expect(BY_READING.overHarm).toMatchObject({ bars: 2979, barsEqual: 384, sections: 2979, sectionsEqual: 23, diagnostics: [] });
+    expect(BY_READING.overHarm!.overChord).toBe(53);
+  });
+
+  it('… as E33 writes it, and as this tool lowers the chord in force to degrees of the key', () => {
     for (const r of ['e33', 'inForce', 'integers']) {
       expect(BY_READING[r]!.bars).toBe(2979);
       expect(BY_READING[r]!.barsEqual).toBe(384);
@@ -81,15 +88,11 @@ describe('the chord in force, over E33’s 384 bars (#95)', () => {
     }
   });
 
-  it('over=&harm as cells reads it today: 380 of 384 bars, and no section, play the band’s notes', () => {
-    expect(BY_READING.today).toMatchObject({ bars: 2969, barsEqual: 380, sections: 1688, sectionsEqual: 0, diagnostics: [] });
-  });
-
   it('characters: an index is no shorter than a degree; a section text states the harmony once', () => {
     expect(barCharacters()).toEqual({ e33: 32694, chord: 33410, pick: 35753, integers: 33261 });
     expect(Object.fromEntries(READINGS.map((r) => [r, [BY_READING[r]!.overChord, BY_READING[r]!.characters]]))).toEqual({
       e33: [0, 13070],
-      today: [53, 12888],
+      overHarm: [53, 12888],
       inForce: [53, 12888],
       integers: [35, 12910],
     });
