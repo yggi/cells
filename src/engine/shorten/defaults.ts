@@ -3,7 +3,7 @@
  * a turning table's cycle= equal to its own length (decision 008), pan=.5 (the centre).
  */
 import { attrsOf, setAttr } from '../edit';
-import { samePiece } from '../sameness';
+import { soundsIdentical } from '../sameness';
 import { saves, type Result, type ShortenRewrite } from './harness';
 
 export function defaults(source: string, result: Result): ShortenRewrite[] {
@@ -19,7 +19,7 @@ export function defaults(source: string, result: Result): ShortenRewrite[] {
       after: '',
       apply: (src) => setAttr(src, name, key, null),
     };
-    if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source))) out.push(s);
+    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source))) out.push(s);
   };
   for (const c of result.cells.values()) {
     if (c.implicit || c.lambda) continue;

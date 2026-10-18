@@ -1,6 +1,6 @@
 import { declLine, setAttr } from "../edit.js";
 import { tapFor } from "../compiler/clocks.js";
-import { samePiece } from "../sameness.js";
+import { soundsIdentical } from "../sameness.js";
 export function tapOfRaw(result, name, by = 1) {
     const c = result.cells.get(name);
     const st = c?.step;
@@ -25,7 +25,7 @@ export function taps(source, result) {
         seen.add(line);
         const apply = (s) => setAttr(s, line, 'step', tap);
         const next = apply(source);
-        if (next === source || !samePiece(source, next))
+        if (next === source || !soundsIdentical(source, next))
             continue;
         const at = declLine(source, line);
         out.push({

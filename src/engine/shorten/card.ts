@@ -8,7 +8,7 @@
 import { declLine, setAttr, splitComment } from '../edit';
 import { pieceMeta } from '../parser';
 import { isPieceFile, writePiece, type PieceFrontmatter } from '../piecefile';
-import { samePiece } from '../sameness';
+import { soundsIdentical } from '../sameness';
 import type { ShortenRewrite } from './harness';
 
 /** What a text's card says of the piece, and the text without it; null for a text whose card says nothing (or with no card). */
@@ -34,7 +34,7 @@ export function movedCard(text: string): { frontmatter: PieceFrontmatter; text: 
 export function card(source: string): ShortenRewrite[] {
   const moved = movedCard(source);
   const name = pieceMeta(source)?.cell;
-  if (!moved || !name || !samePiece(source, moved.text)) return [];
+  if (!moved || !name || !soundsIdentical(source, moved.text)) return [];
   const apply = (s: string) => {
     const m = movedCard(s);
     return m ? writePiece({ frontmatter: m.frontmatter, text: m.text, prose: '' }) : s;
