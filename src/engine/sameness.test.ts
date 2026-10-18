@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { compileSource } from './compile';
 import { PRESETS } from './presets';
+import { codeShifts } from './program';
+import { eventsBetween, plan } from './realize';
 import { playsSameNotes, samePiece, SAMENESS_SECONDS, soundsIdentical, wholeWindow, WHOLE_PIECE_LIMIT } from './sameness';
 
 // A line that ends (laps=1) 80 s in, at 60 bpm: one note a second, the last after the first minute.
@@ -24,6 +26,34 @@ describe('the equalities a tool promises, over their window (#180)', () => {
     expect(playsSameNotes(ENDS('4'), ENDS('4', '.25'))).toBe(true);
     expect(soundsIdentical(ENDS('4'), ENDS('4', '.25'))).toBe(false);
     expect(playsSameNotes(ENDS('4'), ENDS('5', '.25'))).toBe(false);
+  });
+
+  it('a negative gain keeps its sign in the events: S1 tells gain=.5 from gain=-.5, S2 does not (#193)', () => {
+    expect(ENDS('4', '-.5')).not.toBe(ENDS('4', '.5'));
+    expect(soundsIdentical(ENDS('4', '.5'), ENDS('4', '-.5'))).toBe(false);
+    expect(soundsIdentical(ENDS('4', '-.5'), ENDS('4', '-.5'))).toBe(true);
+    expect(playsSameNotes(ENDS('4', '.5'), ENDS('4', '-.5'))).toBe(true);
+    // (two inversions are an upright voice: a sign is a polarity, so -1 * -.5 is .5)
+    expect(soundsIdentical(ENDS('4', '-1 * -.5'), ENDS('4', '.5'))).toBe(true);
+    const voice = (gain: string) => `&bar step=1\n&t step=&bar 0 2\n&v s=saw gain=${gain}\n&out map=sample [&t * &v]`;
+    expect(soundsIdentical(voice('-1'), voice('1'))).toBe(false);
+    expect(playsSameNotes(voice('-1'), voice('1'))).toBe(true);
+  });
+
+  it('a voice and its inversion mixed at equal gains cancel: the events’ gains sum to 0, and nothing is heard (#193)', () => {
+    const G = '&bar step=1\n&t step=&bar 0 2\n&v s=saw\n';
+    const events = (text: string) => {
+      const r = compileSource(text);
+      return eventsBetween(plan(r, codeShifts(r)), 0, 2, true);
+    };
+    const upright = events(G + '&out map=sample [&t * &v * .5]');
+    const inverted = events(G + '&out map=sample [&t * &v * -.5]');
+    expect(upright.map((e) => e.gains[0] + inverted[upright.indexOf(e)]!.gains[0])).toEqual([0, 0]);
+    expect(inverted.map((e) => e.gains)).toEqual([
+      [-0.5, -0.5],
+      [-0.5, -0.5],
+    ]);
+    expect(events(G + '&out map=sample [&t * &v * .5, &t * &v * -.5]')).toEqual([]);
   });
 
   it('a piece that goes on is compared over its first minute, a day-long one over twenty minutes', () => {

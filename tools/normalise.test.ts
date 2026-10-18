@@ -24,3 +24,10 @@ describe('npm run normalise: files in the canonical spelling (#28)', () => {
     }
   });
 });
+
+describe('a negative gain is phase inversion (#193)', () => {
+  it('Normalise keeps its sign: a piece with gain=-1 and * -.5 is normal as written', () => {
+    const text = `${PIECE}&inv s=saw loop=C4 gain=-1\n&out map=sample postgain=-.5 [&tune * &inv * -.5]\n`;
+    expect(normaliseFile('x.cells', text).text).toBe(text.replace('cutoff=', 'lpf='));
+  });
+});

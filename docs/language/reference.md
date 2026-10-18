@@ -152,7 +152,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `couple=&cell`: A resonator: another it shares a table with (couple=&other) — each sets the other ringing — on a resonator (body=) [→](physics.md)
 - `coupling=n` · `coupling=free(n, lo..hi)`: A resonator: how strongly it is coupled (.01 faint, .05 strong) — on a resonator (body=) [→](physics.md)
 - `excite=&cell`: A resonator: sound that drives it (excite=&mix) — it answers where the sound meets its modes — on a resonator (body=) [→](physics.md)
-- `postgain=n` · `postgain=free(n, lo..hi)`: On the sound card: its master, a linear gain after everything (Strudel’s postgain: 1 as it is, .5 half; free(.8, 0..1) a slider) — on the sound card (map=sample) [→](mix.md)
+- `postgain=n` · `postgain=free(n, lo..hi)`: On the sound card: its master, a linear gain after everything (Strudel’s postgain: 1 as it is, .5 half, a negative one inverts the phase; free(.8, 0..1) a slider) — on the sound card (map=sample) [→](mix.md)
 - `beat=n` · `beat=free(n, lo..hi)`: On a meter: how many beats it counts, equal (meter("4/4") beat=2: alla breve) — its bpm counts beats — on a meter (step= a rate) [→](time.md)
 - `pulse=word`: On a scan: the note value of its entries (pulse=16n: sixteenths) — its beats then count quarters, and its taps read note values by it — on a meter (step= a rate) or a driven cell (step=&x) [→](time.md)
 - `swing=8n:r` · `swing=8n:r,16n:r` · `swing=8n:free(r, lo..hi)` · `swing=r`: On a meter: a level of its bar leans, named by note value — of each pair of its eighths (swing=8n:.67), the second comes this far through their beat (.5 straight, .67 triplet swing), a group of three leaning; every beat and bar line stays. Bare (swing=.6), on a list: pairs of its steps — on a meter (step= a rate) [→](time.md)
@@ -179,7 +179,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `wander=n` · `wander=free(n, lo..hi)`: A read head: how far it wanders either way (tape-seconds) — a flying head — on a read head (play=) [→](physics.md)
 - `wanderhz=n` · `wanderhz=free(n, lo..hi)`: A read head: how fast it wanders (times a second) — on a read head (play=) [→](physics.md)
 - `level=n` · `level=free(n, lo..hi)`: On a gate: how loud, a product of level cells and a gain (level=&accent*&duck*.4) — on a gate (play= with a braid) [→](mix.md)
-- `gain=n` · `gain=free(n, lo..hi)`: On a voice: its own gain, dough’s, times every gain it is played at (1 by default; a kit member’s balance); on a gate written the old way (trigger=): the number in level= — on a voice or a gate (play= with a braid) [→](sound.md)
+- `gain=n` · `gain=free(n, lo..hi)`: On a voice: its own gain, dough’s, times every gain it is played at (1 by default, a negative one inverts the phase; a kit member’s balance); on a gate written the old way (trigger=): the number in level= — on a voice or a gate (play= with a braid) [→](sound.md)
 - `scope=word`: A scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels — on a scope (scope=) [→](display.md)
 - `fold=n` · `fold=free(n, lo..hi)`: A spectrum or waterfall: pitches folded by this stride into as many bins (12: by pitch class, the default) — on a scope (scope=) [→](display.md)
 - `bins=n` · `bins=free(n, lo..hi)`: A spectrum or waterfall without a fold: this many bands, low to high (1 a meter, 3 low-mid-high, 20 an equaliser) — on a scope (scope=) [→](display.md)
@@ -206,7 +206,7 @@ Every cell has a sort, decided by its own line, never by where it is written in 
 - `[a, b, …]`: A mix: one chord of sounds, each a product or a sum. On the sound card (map=sample), one chord is mono, two are left and right. [→](mix.md) `&mix [&theme * &lead, &bass * 0.5]`
 - `p * s` · `v * s`: A pitch or a volume acting on a sound: the voice is the factor that is a sound, wherever it is written. `*` is commutative and associative; two pitches multiplied add. [→](mix.md) `&mix [&theme * &lead]` · `&mix [&lead * &accent * &theme]`
 - `a + b` · `a - b`: Pitches add (subtract) in semitones; sounds mix (they can't be subtracted). [→](mix.md) `&mix [(&theme + &vibrato - 12) * &lead]` · `&mix [&a * &lead + &b * &organ]`
-- `n`: A number takes its operator's sort: semitones in a sum (0 changes nothing), a gain in a product (1 changes nothing). [→](mix.md) `&mix [(&pedal + 12) * &bass * 0.8]`
+- `n`: A number takes its operator's sort: semitones in a sum (0 changes nothing), a gain in a product (1 changes nothing; a negative gain inverts the phase: * -.5 is half the level, upside down). [→](mix.md) `&mix [(&pedal + 12) * &bass * 0.8]`
 - `free(v, lo..hi)`: A gain left to the performer. [→](free.md) `&mix [&theme * &lead * free(.8, 0..1)]`
 - `( … )`: Grouping. By the laws, grouping and order don't change what plays. [→](mix.md) `&mix [&theme * (&lead + &organ) * 0.5]`
 

@@ -247,11 +247,11 @@ const driverMuted = (result: CompileResult, name: string, muted: ReadonlySet<str
   return false;
 };
 
-/** A voice's own gain (`gain=` on a voice: a number, 1 by default), times every gain it is played at. */
+/** A voice's own gain (`gain=` on a voice: a number, 1 by default, signed: a negative one inverts its phase), times every gain it is played at. */
 function voiceGain(result: CompileResult, voice: string): number {
   const c = result.cells.get(voice);
   const l = c?.voice ? c.params.gain : undefined;
-  return typeof l === 'number' && Number.isFinite(l) && l >= 0 ? l : 1;
+  return typeof l === 'number' && Number.isFinite(l) ? l : 1;
 }
 
 /** An output's level per channel, leaving out mixes (or sound cards) that are switched off. */
@@ -278,18 +278,21 @@ function partsGains(parts: Output['parts'], muted: ReadonlySet<string>): [number
   return g;
 }
 
+/** Does a pair of channel gains sound? Any but 0 does: a negative one is an inverted voice (gains of opposite signs cancel). */
+const audible = (g: readonly [number, number]): boolean => g[0] !== 0 || g[1] !== 0;
+
 /** Is it heard: on, and reaching a sound card through what is on (a send: into what it feeds)? */
 export function outputSounds(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean {
   if (!outputOn(result, o, muted)) return false;
   const g = liveGains(o, muted);
-  return g[0] > 0 || g[1] > 0;
+  return audible(g);
 }
 
 /** Does it play at all: heard (`outputSounds`), or sent on a MIDI card that is on (`outputSent`)? What the plan plays. */
 export function outputPlays(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean {
   if (!outputOn(result, o, muted)) return false;
   const g = liveGains(o, muted);
-  return g[0] > 0 || g[1] > 0 || outputSent(o, muted);
+  return audible(g) || outputSent(o, muted);
 }
 
 /** Its MIDI cards' entries that are on (the card, and a mix named as the entry); none: it isn't sent. */
@@ -456,7 +459,7 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
     const g = liveGains(o, p.muted);
     // (on a MIDI card too: its notes are sent there, and heard only if a sound card hears them)
     const midi = o.midi ? liveMidi(o, p.muted) : [];
-    const heard = g[0] > 0 || g[1] > 0;
+    const heard = audible(g);
     if (!heard && !midi.length) continue;
     const base = p.result.cells.get(o.voice)?.freq || 261.63;
     // (it reads the day it plays in, over=&day: where that day stands when play starts, against the law's own 11:55)
@@ -636,7 +639,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         gains,
         levels: level,
         // (on MIDI cards only, or its sound card switched off: sent, not heard)
-        ...(!t.output.silent && !(gains[0] > 0 || gains[1] > 0) ? { unheard: true as const } : {}),
+        ...(!t.output.silent && !audible(gains) ? { unheard: true as const } : {}),
         ...(midi.length ? { midi } : {}),
         ...(env ? { env } : {}),
         ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
@@ -843,7 +846,7 @@ function droneEvents(p: Plan, from: number, to: number, outputs: boolean, held: 
         gains,
         levels,
         held: true,
-        ...(!o.silent && !(gains[0] > 0 || gains[1] > 0) ? { unheard: true as const } : {}),
+        ...(!o.silent && !audible(gains) ? { unheard: true as const } : {}),
         ...(midi.length ? { midi } : {}),
         ...(o.envelope ? { env: o.envelope } : {}),
         ...(o.through.length ? { instrument: o.through[0] } : {}),

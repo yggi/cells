@@ -31,7 +31,7 @@ export const MIX_SYNTAX: readonly Syntax[] = [
   syntax(
     'mix',
     'n',
-    "A number takes its operator's sort: semitones in a sum (0 changes nothing), a gain in a product (1 changes nothing).",
+    "A number takes its operator's sort: semitones in a sum (0 changes nothing), a gain in a product (1 changes nothing; a negative gain inverts the phase: * -.5 is half the level, upside down).",
     ['&mix [(&pedal + 12) * &bass * 0.8]'],
     'mix.md',
   ),
