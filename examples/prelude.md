@@ -1,10 +1,10 @@
 ---
 title: "Bach, Prelude in C: for Wendy"
 tags: [genre:classical, genre:electronic, artist:Bach, artist:Wendy Carlos, tonal]
+description: Bach's Prelude in C (bars 1–19) as one figure reading a table of chords, on an old-school synthesizer.
 ---
 
 ```cells
-&piece label="Bach's Prelude in C (bars 1–19) as one figure reading a table of chords, on an old-school synthesizer." about=&mix
 # J. S. Bach, Prelude in C major (Well-Tempered Clavier I), bars 1–19 — on an
 # old-school synthesizer, in homage to Wendy Carlos. The whole prelude is one
 # figure reading a braid of chords, one a bar, five notes each.

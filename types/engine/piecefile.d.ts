@@ -9,24 +9,25 @@
  * title: "Motifs and reuse: Twinkle Twinkle"
  * tags: [tutorial, genre:classical, genre:folk, diatonic, motifs]
  * tier: 3
+ * description: "Twinkle Twinkle from three motifs, one of them read a step up the scale, in solfège."
  * ---
  *
  * ```cells
- * &piece label="Twinkle Twinkle from three motifs, one of them read a step up the scale, in solfège." about=&mix
  * &bar scan(1 1 1 1) step=96bpm
  * …
  * ```
  * ```
  *
- * The frontmatter says what the piece is: `title` (a string), `description` (a string: what the card's label said), `tags` (a list of strings: genre:jazz, artist:Bach, a
- * topic) and `tier` (its tier of the tutorial, a whole number 1 to 9999), each optional here (the examples' checks ask
- * for a title and tags); any other key is kept with its value, in its order, as a fragment's metadata is. The blocks,
- * joined, are the piece's text, what compiles; a card's description may stay in it, as the label of its first note
- * (`&piece`), since the graph shows it, and the frontmatter's `description` wins where both say one (a text with no
- * card, as the MIDI folder writes, has only that). The prose is everything outside the blocks; `prose` here is what
- * follows the last. `writePiece` of a file that was read puts its text back in the blocks it came from and keeps the
- * rest byte for byte (`rewrite`, `literate.ts`); a file made new has one block, one blank line before it and before the
- * prose, and ends with a newline, so a file written that way reads and writes back byte for byte.
+ * The frontmatter says what the piece is: `title` (a string), `description` (a string: what the piece is, in a
+ * sentence), `tags` (a list of strings: genre:jazz, artist:Bach, a topic) and `tier` (its tier of the tutorial, a whole
+ * number 1 to 9999), each optional here (the examples' checks ask for a title, a description and tags); any other key is
+ * kept with its value, in its order, as a fragment's metadata is. The blocks, joined, are the piece's text, what
+ * compiles, with no card (#196); a text written before the description moved here may still hold one, the note
+ * `&piece`, whose label `pieceMeta` reads where the frontmatter has no `description` (Shorten's `card` moves it). The
+ * prose is everything outside the blocks; `prose` here is what follows the last. `writePiece` of a file that was read
+ * puts its text back in the blocks it came from and keeps the rest byte for byte (`rewrite`, `literate.ts`); a file made
+ * new has one block, one blank line before it and before the prose, and ends with a newline, so a file written that way
+ * reads and writes back byte for byte.
  */
 import { type CodeLine, type Layout } from './literate';
 import { type YamlProblem, type YamlValue } from '../repository/yaml';

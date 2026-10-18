@@ -2,10 +2,10 @@
 title: "Swing: the long and the short"
 tags: [tutorial, rhythm]
 tier: 4
+description: "Eighths played long and short: a swing clock, and the same feel from swing= on the bar."
 ---
 
 ```cells
-&piece label="Eighths played long and short: a swing clock, and the same feel from swing= on the bar." about=&out
 &clockNote label="&swing is a clock of its own: scan(2 1), a long step and a short, two to a beat. What steps with it swings." about=&swing
 &swingNote label="swing=8n:.67 on a bar says the same: its eighths lean, the second of each pair two thirds of the way through its beat, and every beat stays where it is. &comp taps it by the eighth, &bar2:8n." about=&bar2
 &bar scan(1 1 1 1) step=free(moderato)

@@ -2,10 +2,10 @@
 title: "Steps: a tune on one line"
 tags: [tutorial, genre:folk]
 tier: 1
+description: "Frère Jacques written as steps: numbers, rests, holds and repeats, four steps a second."
 ---
 
 ```cells
-&piece label="Frère Jacques written as steps: numbers, rests, holds and repeats, four steps a second." about=&out
 &stepsNote label="A number is a step: so many semitones above the voice's note. ~ is a rest, @2 holds a step for two, !2 plays it twice." about=&tune
 &outNote label="The sound card: map=sample turns what it plays into samples, at the rate the computer plays them (loop=SAMPLE_RATE). One chord in its brackets: one channel, mono." about=&out
 # &tune moves at step=4: four steps a second. Its numbers are semitones above the voice's C.

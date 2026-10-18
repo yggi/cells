@@ -1,10 +1,10 @@
 ---
 title: "Lullaby: Brahms, Wiegenlied"
 tags: [genre:classical, artist:Brahms, tonal, diatonic]
+description: Brahms' lullaby on a music box, its notes ringing on.
 ---
 
 ```cells
-&piece label="Brahms' lullaby on a music box, its notes ringing on." about=&mix
 # Brahms, Wiegenlied (1868). A music box over a slow 3/4. The second phrase is
 # the first a step lower (&rock^-1): a sequence, as Brahms wrote it.
 &bar scan(28 37 35) step=free(56bpm, 40..72)

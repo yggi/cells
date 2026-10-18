@@ -2,10 +2,10 @@
 title: "Two voices: a mix"
 tags: [tutorial]
 tier: 1
+description: "One tune, played by two voices at once: a sine on top and a saw three octaves below it, quieter."
 ---
 
 ```cells
-&piece label="One tune, played by two voices at once: a sine on top and a saw three octaves below it, quieter." about=&out
 &twovoicesNote label="A chord in the brackets is a mix: the sound card plays what is in it at once. * .5 and * .25 are gains: how loud each voice is in the mix." about=&out
 
 &tune step=3 0 4 7 4 0 4 7@2 5 9 12 9 5 9 12@2   # a tune

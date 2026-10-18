@@ -2,10 +2,10 @@
 title: "FM: one voice bends another"
 tags: [tutorial, sound]
 tier: 7
+description: A bell and an electric piano, each a sine whose frequency another sine swings.
 ---
 
 ```cells
-&piece label="A bell and an electric piano, each a sine whose frequency another sine swings." about=&out
 &fmNote label="fm=&bm: &bm swings the bell's frequency. ratio= is the modulator's frequency against the carrier's (3.5: a bell, not a harmonic); index= how far it swings, 0 a plain sine." about=(&bell &bm)
 &moveNote label="index= can move: on the piano it falls on every note, bright when struck and a sine as it rings." about=&epiano
 &bar scan(1 1 1 1) step=free(andante)

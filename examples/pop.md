@@ -1,10 +1,10 @@
 ---
 title: "Pop song: four chords, arranged"
 tags: [genre:electronic, diatonic, harmony, arrangement]
+description: "I – V – vi – IV, arranged by a selector: intro, verses, choruses, a break, an outro, an end."
 ---
 
 ```cells
-&piece label="I – V – vi – IV, arranged by a selector: intro, verses, choruses, a break, an outro, an end." about=&out
 # The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees
 # over the major scale, each chord comes out the right kind: C, G, Am, F.
 # Arranged: each part is a section stepped by the bar, and &song switches the sections,

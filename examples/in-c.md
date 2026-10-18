@@ -1,10 +1,10 @@
 ---
 title: In C, a sketch
 tags: [genre:minimal, genre:experimental, arrangement, motifs, rhythm]
+description: "After Terry Riley's In C: four of its fifty-three cells, each player repeating a cell until moving on, and a player who sits out comes back where they left off."
 ---
 
 ```cells
-&piece label="After Terry Riley's In C: four of its fifty-three cells, each player repeating a cell until moving on, and a player who sits out comes back where they left off." about=&out
 &resumeNote label="restart=resume: a player switched off is not rewound. Take restart=resume off &song (the default, restart) to hear each come back at the top of their score." about=&song
 &bar meter("4/4") step=free(104bpm, 60..140)
 &major scale(major)

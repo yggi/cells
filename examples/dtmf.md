@@ -2,10 +2,10 @@
 title: "DTMF: a telephone keypad"
 tags: [tutorial, genre:electronic, sound]
 tier: 8
+description: "Every touch-tone phone: a key is two sines at once, its row's and its column's."
 ---
 
 ```cells
-&piece label="Every touch-tone phone: a key is two sines at once, its row's and its column's." about=&out
 &dialNote label="Type a number and it's dialled — a key, a pause; a space (or anything not on the keypad) a rest — over and over." about=&dial
 # DTMF — dual-tone multi-frequency. Rows 697 770 852 941 Hz, columns 1209 1336 1477 1633 Hz:
 # eight frequencies (&dtmf, as ratios to 697), sixteen keys a row and a column each (&keys).

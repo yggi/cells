@@ -27,7 +27,7 @@ const atomRefs = (a: Atom): string[] =>
  * Every cell a declaration reads, in any position: its braid (splices, a mix's or a card's terms), over=, base=, a
  * step=/loop= driver, a map= table, env= and pitch=, a parameter's cells and clocks, and the parameters that
  * take a cell (play= write= excite= couple= fm= …: attributes.ts). Not about=: a note's links are annotation only, so a
- * piece's card that explains its oscillator (`&piece … about=&a`) leaves it heard.
+ * note that explains its oscillator (`&oscNote label="…" about=&a`) leaves it heard.
  */
 function readsOf(d: CellDecl): string[] {
   const out: string[] = [];

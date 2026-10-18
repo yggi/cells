@@ -1,10 +1,10 @@
 ---
 title: "Drunken Sailor: D Dorian, with a kit"
 tags: [genre:world, genre:folk, modal, rhythm]
+description: Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit.
 ---
 
 ```cells
-&piece label="Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit." about=&mix
 # D Dorian. The second line is the first, a step lower: &A^-1.
 &bar scan(1 1 1 1) step=free(112bpm, 90..140)
 &dorian scale(dorian, D)

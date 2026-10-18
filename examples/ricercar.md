@@ -1,10 +1,10 @@
 ---
 title: "Ricercar: a study in counterpoint"
 tags: [genre:classical, artist:Bach, tonal, counterpoint]
+description: A study in counterpoint on the King's theme, from strict to free, in six passes.
 ---
 
 ```cells
-&piece label="**A study in counterpoint** on the King's theme, from strict to free, in six passes." about=&out
 &passesNote label="A pass each: 1 the theme alone · 2 note against note, above · 3 note against note, below · 4 two against one · 5 four against one · 6 free, in three voices." about=(&upper &lower)
 &consonanceNote label="On every note of the theme the voices agree (consonances only); between, a dissonance only passes, by step." about=(&theme &upper &lower)
 

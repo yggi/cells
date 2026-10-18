@@ -1,10 +1,10 @@
 ---
 title: Cell Phase
 tags: [genre:experimental, artist:Steve Reich, modal, genre:minimal, rhythm]
+description: "After Steve Reich's Piano Phase, an original: two pianos, one pattern of twelve, slowly slipping apart."
 ---
 
 ```cells
-&piece label="After Steve Reich's Piano Phase, an original: two pianos, one pattern of twelve, slowly slipping apart." about=&out
 &driftNote label="The right one plays 81 notes in the time of the left one's 80 — it slips a note ahead every 81, through all twelve alignments, back to unison after 81 rounds." about=(&left &right)
 &woodNote label="A quiet euclid(5, 12) on low wood marks the left player's twelve." about=(&wood &left)
 # Cell Phase — no tempo is nudged: the drift is a ratio of clocks. &left steps in sixteenths

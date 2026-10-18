@@ -62,7 +62,7 @@ export function parse(whole) {
     });
     return applyBases({ cells, diagnostics, broken, plugins });
 }
-const plainLabel = (label) => label
+export const plainLabel = (label) => label
     .replace(/\{[^}]*\}/g, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .replace(/\*(.+?)\*/g, '$1')
@@ -78,6 +78,7 @@ function card(title, label, tagList, tier, cell) {
     const description = plain.toLowerCase().startsWith(title.toLowerCase()) ? plain.slice(title.length).replace(/^[\s,.:;—–-]+/, '') : plain;
     return { title, description, tags, tier, cell };
 }
+export const CARD = 'piece';
 export function pieceMeta(source) {
     if (isPieceFile(source)) {
         const file = readPiece(source);
@@ -86,7 +87,7 @@ export function pieceMeta(source) {
         const { title, tags, tier, description } = file.frontmatter;
         if (typeof title !== 'string')
             return null;
-        const note = parse(file.text).cells.find(isNote);
+        const note = parse(file.text).cells.find((c) => c.name === CARD && isNote(c));
         const tagList = Array.isArray(tags) ? tags.filter((t) => typeof t === 'string') : [];
         return card(title, typeof description === 'string' ? description : (note?.label ?? ''), tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
     }

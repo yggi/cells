@@ -1,6 +1,6 @@
 // A piece as a file (#146, decision 047): every example writes back byte for byte, a fragment's file reads as a piece
 // file too (the same kind of file), unknown keys keep their order, a malformed file names its problem and its line, and
-// pieceMeta reads a file's card from its frontmatter and its first note.
+// pieceMeta reads a file's card from its frontmatter (and from the note &piece a text written before #196 keeps).
 import { describe, expect, it } from 'vitest';
 import { isPieceFile, readPiece, writePiece, type PieceFile } from './piecefile';
 import { pieceMeta } from './parser';
@@ -84,10 +84,13 @@ describe('a piece file', () => {
 });
 
 describe("pieceMeta: a piece's card", () => {
-  it('from a file: the frontmatter, and the label of the first note', () => {
+  it('from a file: the frontmatter, and the label of a card its text still has', () => {
     expect(pieceMeta(good)).toEqual({ title: 'Steps: a tune on one line', description: 'Numbers, rests, holds.', tags: ['tutorial', 'rhythm'], tier: 1, cell: 'piece' });
-    // (a file with no note has a card with no description; one with no title has none)
+    // (the frontmatter's description wins; a file with no card and none has no description, whatever its notes say;
+    // one with no title has no card)
+    expect(pieceMeta(withLine(5, 'description: "Said here."'))).toMatchObject({ description: 'Said here.', cell: 'piece' });
     expect(pieceMeta(withLine(9, '&bar scan(1 1 1 1) step=90bpm'))).toMatchObject({ description: '', cell: null });
+    expect(pieceMeta(withLine(9, '&stepsNote label="A note, not the card." about=&tune'))).toMatchObject({ description: '', cell: null });
     expect(pieceMeta(withLine(2, 'name: x'))).toBeNull();
     expect(pieceMeta(withLine(4, 'tier: x'))).toBeNull();
   });

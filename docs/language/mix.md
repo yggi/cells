@@ -138,7 +138,7 @@ Two mixes, one for each channel:
 &melody [&tune * &lead * .5]
 ```
 
-Here `&melody` (and `&lead` through it) and `&drone` go to the built-in card, each on a fader at 1 (`&melody`'s voice at .5), all of it through the master at .8. A piece whose card explains its oscillator (`&piece … about=&a`) leaves it heard: `about=` is annotation.
+Here `&melody` (and `&lead` through it) and `&drone` go to the built-in card, each on a fader at 1 (`&melody`'s voice at .5), all of it through the master at .8. A note that explains its oscillator (`&oscNote label="…" about=&a`) leaves it heard: `about=` is annotation.
 
 ## Instruments
 

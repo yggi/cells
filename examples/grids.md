@@ -2,10 +2,10 @@
 title: "Tuning: three grids"
 tags: [tutorial, tuning, microtonal]
 tier: 6
+description: "One tune on three grids in turn: nineteen equal steps to the octave, a pure fifth cut in seven, and pure ratios."
 ---
 
 ```cells
-&piece label="One tune on three grids in turn: nineteen equal steps to the octave, a pure fifth cut in seven, and pure ratios." about=&out
 &edoNote label="map=edo with cycle=19: nineteen equal steps to the octave. map=ed(3/2): equal steps to a pure fifth instead." about=(&edo19 &fifths)
 &ratiosNote label="map=ratios: the tones as ratios, one period's worth, the last the period: 1 9/8 5/4 … 2." about=&just
 &bar scan(1 1 1 1) step=free(andante)

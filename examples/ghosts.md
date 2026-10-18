@@ -1,10 +1,10 @@
 ---
 title: Ghost-Cells
 tags: [genre:experimental, genre:electronic, artist:Nine Inch Nails, modal, genre:ambient, genre:industrial]
+description: Dark and looping, in the manner of an instrumental Nine Inch Nails record.
 ---
 
 ```cells
-&piece label="Dark and looping, in the manner of an instrumental Nine Inch Nails record." about=&out
 &pianoNote label="A prepared-piano phrase of seven eighths over a bar of eight, drifting a step each time round." about=(&phrase &piano)
 &droneNote label="A distorted drone." about=(&drone &low)
 &noiseNote label="Crushed noise drifting on prime periods." about=(&hiss &noise &grit &haze)

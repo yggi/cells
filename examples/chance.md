@@ -2,10 +2,10 @@
 title: Chance and choice
 tags: [tutorial, rhythm]
 tier: 5
+description: "A line that is never quite the same twice round: steps that may not sound, and choices between notes."
 ---
 
 ```cells
-&piece label="A line that is never quite the same twice round: steps that may not sound, and choices between notes." about=&out
 &chanceNote label="0?.7 is dropped seven times in ten; a bare 0? takes the cell's chance=. It is the same every time you play the piece; seed= picks another sequence." about=(&ghosts &hats)
 &choiceNote label="[4|5|7]: one of them, chosen afresh each time round." about=&tune
 &bar scan(1 1 1 1) step=free(moderato)

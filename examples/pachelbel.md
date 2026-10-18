@@ -1,10 +1,10 @@
 ---
 title: "Pachelbel, Canon in D: a ground and three violins"
 tags: [genre:classical, artist:Pachelbel, tonal, diatonic, canon]
+description: Eight bass notes, over and over; three violins play one line, each entering a ground later.
 ---
 
 ```cells
-&piece label="Eight bass notes, over and over; three violins play one line, each entering a ground later." about=&out
 # Johann Pachelbel, Canon in D. Eight bass notes, over and over (the ground);
 # three violins play one line, each entering two bars after the last.
 &bar scan(1 1 1 1) step=free(66bpm, 40..100)

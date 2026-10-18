@@ -1,10 +1,10 @@
 ---
 title: Cell in Focus
 tags: [genre:electronic, artist:Aphex Twin, diatonic, genre:ambient]
+description: "Slow, serene and looping: four soft chords with bells drifting above; nothing hurries."
 ---
 
 ```cells
-&piece label="Slow, serene and looping: four soft chords with bells drifting above; nothing hurries." about=&out
 &chordsNote label="Four soft chords breathe through a filter." about=(&chords &pad &breath)
 &bellsNote label="A bell arpeggio drifts above them, thinning by chance." about=(&arp &bell)
 &rootsNote label="A low root under each." about=(&roots &low)
