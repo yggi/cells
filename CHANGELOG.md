@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.5.0`.
+### Changed
+- **`legato=` under a swing is a share of a note's written steps** (#120, the owner's ruling: Strudel's reading, whose `legato` scales a note's length before any swing; part of #81). The swing then places the note's end as it places its onset, where cells took the share of the time the note is held. **A change of meaning** for a line that taps a swung meter and sounds a share other than 1 (a number, `free(…)`, a cell of shares, or the meter's `legato=` by level): under Funk's `swing=16n:.6`, a note on step 10 held 3 at `.425` now ends at step 11.275 as written, 1.42 steps' time after its onset, where it sounded 1.36. A note within one step, a share of 1, and every straight meter sound as before; a clock that bends time otherwise (a scan's positions, a motor, a belt) places a note's end through its steps the same way. No example states a `legato=`, so no example's notes moved, and Shorten has nothing to migrate (the spelling stays). E33's 160 swung bars now play every bass, pad and stab note at Jambot's length and onset within 1e-6 steps, the 572 that parted among them (`fixtures/jambot-legato-swung.json`, lifted from yggi/jambot).
 
 ## v0.5.0 — 2026-10-18
 

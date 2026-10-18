@@ -38,5 +38,5 @@ Cells grew its step notation alongside Strudel's mini-notation and its sound par
   - loudness as products and `level=`
 - New spellings are checked against Strudel's before they land. The owner chose, on this decision's advice ([notes/10-language-pass.md](../notes/10-language-pass.md) §7):
   - **`_` is Strudel's elongation** (`0 _ _` is `0@3`), and the step a `base=` copy keeps is **`=`** (decision 026's `_`);
-  - **#306's forms:** a tie that slides is dough's `glide=t` (not `legato`, which stays Strudel's note length × n); a hit's own level is a sound's `:` fields as in `s("bd:0:.3")`, `&bd:n:gain` (not `x%n`); a voice's own level is dough's `gain=` (not `level=`).
+  - **#306's forms:** a tie that slides is dough's `glide=t` (not `legato`, which stays Strudel's note length × n: of its written steps, before any swing, [#120](https://github.com/yggi/cells/issues/120)); a hit's own level is a sound's `:` fields as in `s("bd:0:.3")`, `&bd:n:gain` (not `x%n`); a voice's own level is dough's `gain=` (not `level=`).
 - AGENTS.md's "stop before anything that could break saved pieces" reads, until the first release, as "stop before anything that changes how an example sounds".

@@ -38,7 +38,7 @@ export interface Meter {
   readonly counted?: number;
   /** swing= (#18): the levels that lean, coarse to fine, each a division of a beat (`swingAt`). */
   readonly swing?: readonly SwingLevel[];
-  /** legato= by level (#94): the share of a note's held length a line tapping it sounds when it states none (a share, not a lean). */
+  /** legato= by level (#94): the share of a note's written length a line tapping it sounds when it states none (a share, not a lean). */
   readonly legato?: readonly SwingLevel[];
 }
 
