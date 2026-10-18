@@ -16,9 +16,9 @@ What was left open: what a fragment's text may hold, how fragments combine, what
 2. **Fragments combine by a union of lines, and the workbench is a cells text.**
    A line two fragments give word for word is the same line (owner, on #22), so combining is a union.
    A few names are the interface fragments agree on (`&bar`, `key`, `&harm`; more as facets need them); every other name is the fragment's own, renamed on a collision with a name already on the workbench (decision 037: a name is a word, a hash the identity).
-3. **What fits is what compiles.**
-   A fragment fits a workbench when every name it uses is defined there, no name is defined twice by different lines, and the union compiles without a diagnostic.
-   No declared constraints beside the text: the compiler is the fit test, so the test can't drift from the language.
+3. **What fits is read off the text and the compiler.**
+   A fragment fits a workbench when every name it uses is defined there, no name is defined twice by different lines, what its clock needs is there (a braid of 32 sixteenths on `cycle=2` needs bars of 16 sixteenths: a two-bar clave compiles under 7/8, as #141 found, but doesn't fit it), and the union compiles without a diagnostic.
+   No declared constraints beside the text: what a fragment needs is derived from it (1), so the test can't drift from the language.
 4. **A facet is a hint, given per association.**
    Each point of a fragment's association may name a facet: the role it is associated with there (`meter`, `rhythm`, `harmony`, `line`, `instrument`, `section`, as 043's order asks).
    One fragment can have several: a bell pattern is a rhythm where it is associated with West African music, and a scale or a harmony where it is associated with Western music (the owner's example).
@@ -40,7 +40,7 @@ What was left open: what a fragment's text may hold, how fragments combine, what
 ## Why
 
 - A union of lines needs nothing new: the host's lines first, taps and the main key already leave the meter and key open, and "the same line" makes two fragments that share an interface fit by construction.
-- The compiler as the fit test keeps one source of truth: the language says what a line needs, so the repository never holds a second, drifting copy of it.
+- Deriving the fit from the text and the compiler keeps one source of truth: the language says what a line needs, so the repository never holds a second, drifting copy of it.
 - A facet per association says what the owner's bell says: one text has different roles in different places, and the role is where it is heard, not what it is.
 - Files keep the repository legible (the project's spirit: legible all the way down): a person can read, edit, diff and share a fragment, and an index is derived from files, never the other way round.
 - cells stateless keeps it pure (`tsconfig.pure.json`) and lets each frontend keep its own memory: a jam's, a person's library.
