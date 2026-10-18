@@ -1,5 +1,5 @@
 import { setBraid } from "../edit.js";
-import { measured } from "./harness.js";
+import { saves } from "./harness.js";
 export function runs(source, cells) {
     const out = [];
     for (const c of cells) {
@@ -22,15 +22,16 @@ export function runs(source, cells) {
         }
         if (next.length === c.tokens.length)
             continue;
-        const s = measured(source, {
+        const s = {
             id: `run:${c.name}`,
-            kind: 'run',
+            tool: 'shorten',
+            rule: 'run',
             title: `Runs in &${c.name}: the same step again and again, counted`,
             before: shown.map((x) => x.split(' → ')[0]).join('   '),
             after: shown.map((x) => x.split(' → ')[1]).join('   '),
             apply: (src) => setBraid(src, c.name, next),
-        });
-        if (s)
+        };
+        if ((saves(source, s) ?? 0) > 0)
             out.push(s);
     }
     return out;

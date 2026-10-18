@@ -1,28 +1,29 @@
 /**
  * Aliases: Strudel's or dough's other name for a parameter (decision 027), where ours is shorter — cutoff=800 is
  * lpf=800, sound=saw s=saw. The parser reads the two as one, so the respelling plays the same by construction.
- * (Normalise, #244, will write ours everywhere; this offers only what saves characters.)
+ * (Normalise, #28, will write ours everywhere; this offers only what saves characters.)
  */
 import { PARAM_ALIASES } from '../attributes';
 import { attrsOf, renameAttr } from '../edit';
-import { measured, type Result, type Suggestion } from './harness';
+import { saves, type Result, type ShortenRewrite } from './harness';
 
-export function aliases(source: string, result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function aliases(source: string, result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   for (const c of result.cells.values()) {
     if (c.implicit || c.lambda) continue;
     for (const [key, value] of attrsOf(source, c.name)) {
       const ours = PARAM_ALIASES[key];
       if (!ours || ours.length >= key.length) continue;
-      const s = measured(source, {
+      const s: ShortenRewrite = {
         id: `alias:${c.name}:${key}`,
-        kind: 'alias',
+        tool: 'shorten',
+        rule: 'alias',
         title: `&${c.name}: ${key}= is Strudel's or dough's name for ${ours}= — write ours`,
         before: `${key}=${value}`,
         after: `${ours}=${value}`,
         apply: (src) => renameAttr(src, c.name, key, ours),
-      });
-      if (s) out.push(s);
+      };
+      if ((saves(source, s) ?? 0) > 0) out.push(s);
     }
   }
   return out;

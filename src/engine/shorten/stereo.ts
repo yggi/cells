@@ -4,7 +4,8 @@
  * sound is a voice heard nowhere else, and each pan is exact (three decimals at most).
  */
 import { declLine, declWords, setAttr, splitComment } from '../edit';
-import { measured, samePiece, type Result, type Suggestion } from './harness';
+import { samePiece } from '../sameness';
+import { saves, type Result, type ShortenRewrite } from './harness';
 
 /** Split at a separator outside brackets and parentheses. */
 function splitTop(text: string, sep: string): string[] {
@@ -52,8 +53,8 @@ const entryOf = (e: string) => {
 /** How a pan is written: .35, 0, 1. */
 const written = (p: number) => String(+p.toFixed(3)).replace(/^0\./, '.');
 
-export function stereo(source: string, result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function stereo(source: string, result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   const lines = source.split('\n');
   for (const card of result.cells.values()) {
     if (!card.sink) continue;
@@ -102,15 +103,16 @@ export function stereo(source: string, result: Result): Suggestion[] {
       });
       return next;
     };
-    const s = measured(source, {
+    const s: ShortenRewrite = {
       id: `pan:${card.name}`,
-      kind: 'pan',
+      tool: 'shorten',
+      rule: 'pan',
       title: `&${card.name}'s two chords hold the same sounds at different gains: one chord, and each voice placed with pan=`,
       before: '[…] […]',
       after: voices.map((v, i) => `&${v} pan=${written(pans[i])}`).join(' · '),
       apply,
-    });
-    if (s && samePiece(source, s.apply(source))) out.push(s);
+    };
+    if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source))) out.push(s);
   }
   return out;
 }

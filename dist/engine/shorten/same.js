@@ -1,5 +1,5 @@
 import { declLine, deleteCell, spansLines } from "../edit.js";
-import { measured } from "./harness.js";
+import { saves } from "./harness.js";
 export function sameCells(source, result) {
     const out = [];
     const byText = new Map();
@@ -29,15 +29,16 @@ export function sameCells(source, result) {
             }
             return next;
         };
-        const s = measured(source, {
+        const s = {
             id: `same:${names.join(',')}`,
-            kind: 'same',
+            tool: 'shorten',
+            rule: 'same',
             title: `${names.map((n) => `&${n}`).join(' and ')} are written exactly alike: keep &${keep}, and use it for both`,
             before: `${gone.map((g) => `&${g}`).join(' ')} ${body.length > 40 ? body.slice(0, 39) + '…' : body}`,
             after: `&${keep}`,
             apply,
-        });
-        if (s)
+        };
+        if ((saves(source, s) ?? 0) > 0)
             out.push(s);
     }
     return out;

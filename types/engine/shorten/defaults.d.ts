@@ -1,2 +1,2 @@
-import { type Result, type Suggestion } from './harness';
-export declare function defaults(source: string, result: Result): Suggestion[];
+import { type Result, type ShortenRewrite } from './harness';
+export declare function defaults(source: string, result: Result): ShortenRewrite[];

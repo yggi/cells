@@ -5,7 +5,8 @@
  * Not always shorter: a migration, offered whatever its length when it plays the same notes (checked here).
  */
 import { attrsOf, declLine, declWords, setAttr, setBraid } from '../edit';
-import { samePiece, size, type Result, type Suggestion } from './harness';
+import { samePiece } from '../sameness';
+import type { Result, ShortenRewrite } from './harness';
 
 /** The rewrite of one gate written the old way, or null (not one, or its line can't be rewritten in place). */
 function rewrite(source: string, name: string): string | null {
@@ -25,8 +26,8 @@ function rewrite(source: string, name: string): string | null {
 }
 
 /** Each gate written the old way: its rewrite, if it plays the same notes. */
-export function gates(source: string, result: Result): Suggestion[] {
-  const out: Suggestion[] = [];
+export function gates(source: string, result: Result): ShortenRewrite[] {
+  const out: ShortenRewrite[] = [];
   for (const c of result.cells.values()) {
     if (c.gate?.port !== 'trigger') continue;
     const next = rewrite(source, c.name);
@@ -34,11 +35,11 @@ export function gates(source: string, result: Result): Suggestion[] {
     const at = declLine(source, c.name);
     out.push({
       id: `gate:${c.name}`,
-      kind: 'gate',
+      tool: 'migrate',
+      rule: 'gate',
       title: `&${c.name} is a gate written the old way: play= for trigger=, one level= for velocity=, gate= and gain=, the voices it plays all of as a chord`,
       before: source.split('\n')[at].trim(),
       after: next.split('\n')[at].trim(),
-      saving: size(source) - size(next),
       apply: (s) => rewrite(s, c.name) ?? s,
     });
   }

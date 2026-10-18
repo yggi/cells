@@ -8,7 +8,8 @@
 import { declLine, setAttr, splitComment } from '../edit';
 import { pieceMeta } from '../parser';
 import { isPieceFile, writePiece, type PieceFrontmatter } from '../piecefile';
-import { samePiece, size, type Suggestion } from './harness';
+import { samePiece } from '../sameness';
+import type { ShortenRewrite } from './harness';
 
 /** What a text's card says of the piece, and the text without it; null for a text whose card says nothing (or with no card). */
 export function movedCard(text: string): { frontmatter: PieceFrontmatter; text: string } | null {
@@ -30,7 +31,7 @@ export function movedCard(text: string): { frontmatter: PieceFrontmatter; text: 
 }
 
 /** A card that says what the piece is: the piece as a file, its title, tags and tier in the frontmatter. */
-export function card(source: string): Suggestion[] {
+export function card(source: string): ShortenRewrite[] {
   const moved = movedCard(source);
   const name = pieceMeta(source)?.cell;
   if (!moved || !name || !samePiece(source, moved.text)) return [];
@@ -38,16 +39,15 @@ export function card(source: string): Suggestion[] {
     const m = movedCard(s);
     return m ? writePiece({ frontmatter: m.frontmatter, text: m.text, prose: '' }) : s;
   };
-  const file = apply(source);
   const at = declLine(source, name);
   return [
     {
       id: `card:${name}`,
-      kind: 'card',
+      tool: 'migrate',
+      rule: 'card',
       title: `&${name} says what the piece is: its title, tags and tier go in the file's frontmatter, the piece in its cells block (decision 047)`,
       before: source.split('\n')[at]!.trim(),
       after: moved.text.split('\n')[declLine(moved.text, name)]?.trim() ?? '',
-      saving: size(source) - size(file),
       apply,
     },
   ];

@@ -1,5 +1,6 @@
 import { attrsOf, setAttr } from "../edit.js";
-import { measured, samePiece } from "./harness.js";
+import { samePiece } from "../sameness.js";
+import { saves } from "./harness.js";
 export function progressions(source, result) {
     const out = [];
     for (const c of result.cells.values()) {
@@ -11,15 +12,16 @@ export function progressions(source, result) {
             continue;
         const per = +m[2] / c.steps;
         const step = `&${m[1]}${per > 1 ? `/${per}` : ''}`;
-        const s = measured(source, {
+        const s = {
             id: `progression:${c.name}`,
-            kind: 'progression',
+            tool: 'shorten',
+            rule: 'progression',
             title: `&${c.name}: loop=${loop} over ${c.steps} steps is a step every ${per} — step=${step}, held under the melody it moves`,
             before: `loop=${loop}`,
             after: `step=${step}`,
             apply: (src) => setAttr(setAttr(src, c.name, 'loop', null), c.name, 'step', step),
-        });
-        if (s && samePiece(source, s.apply(source)))
+        };
+        if ((saves(source, s) ?? 0) > 0 && samePiece(source, s.apply(source)))
             out.push(s);
     }
     return out;
