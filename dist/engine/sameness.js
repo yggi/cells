@@ -19,8 +19,8 @@ export function sameNotes(a, b, names) {
     }
 }
 export const SAMENESS_SECONDS = 60;
-const whole = (e) => `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
-const note = (e) => `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
+const whole = (e, voice) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
+const note = (e, voice) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
 function sameEvents(a, b, until, key) {
     try {
         const ra = compileSource(a);
@@ -28,10 +28,15 @@ function sameEvents(a, b, until, key) {
         if (!ra.ok || !rb.ok)
             return false;
         const to = typeof until === 'number' ? until : until(ra, rb);
-        const play = (r) => eventsBetween(plan(r, codeShifts(r)), 0, to)
-            .map(key)
-            .sort()
-            .join('\n');
+        const play = (r) => {
+            const events = eventsBetween(plan(r, codeShifts(r)), 0, to);
+            const heard = new Set(events.map((e) => e.voice));
+            const place = new Map([...r.cells.keys()].filter((name) => heard.has(name)).map((name, i) => [name, `#${i}`]));
+            return events
+                .map((e) => key(e, place.get(e.voice) ?? e.voice))
+                .sort()
+                .join('\n');
+        };
         return play(ra) === play(rb);
     }
     catch {

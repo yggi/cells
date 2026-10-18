@@ -20,13 +20,13 @@ describe('the text ladder, E0 to E3 (decision 050, #180)', () => {
     expect(rungs(PIECE, b)).toEqual([false, true, true, true]);
     expect(soundsIdentical(PIECE, b)).toBe(true);
   });
-  it('E2, not E1: a cell renamed; a voice renamed is E2 but not S1, since an event names its voice', () => {
+  it('E2, not E1: a cell renamed, a voice too (S1 reads a voice by its place, #186)', () => {
     const b = PIECE.replaceAll('&tune', '&line');
     expect(rungs(PIECE, b)).toEqual([false, false, true, true]);
     expect(soundsIdentical(PIECE, b)).toBe(true);
     const voice = PIECE.replaceAll('&lead', '&saw');
     expect(rungs(PIECE, voice)).toEqual([false, false, true, true]);
-    expect(soundsIdentical(PIECE, voice)).toBe(false);
+    expect(soundsIdentical(PIECE, voice)).toBe(true);
   });
   it('E3, not E2: an alias, which Normalise writes as ours', () => {
     const b = PIECE.replace('lpf=800', 'cutoff=800');

@@ -42,4 +42,20 @@ describe('the equalities a tool promises, over their window (#180)', () => {
   it('a text that does not compile is the same as nothing', () => {
     expect(soundsIdentical('&a over=&nowhere 0', '&a over=&nowhere 0')).toBe(false);
   });
+
+  it('S1 reads a voice by its place among the voices heard, not its name (#186)', () => {
+    const TWO = (first: string, second: string) => `&bar meter("4/4") step=120bpm
+&t over=scale(major) step=8n 0 2 4 2
+&u over=scale(major) step=4n 7 4
+&a s=saw loop=C4
+&b s=sine loop=C3
+&out map=sample [&t * &${first}, &u * &${second}]`;
+    const renamed = TWO('a', 'b').replaceAll('&a', '&lead').replaceAll('&b', '&bass');
+    expect(soundsIdentical(TWO('a', 'b'), renamed)).toBe(true);
+    expect(playsSameNotes(TWO('a', 'b'), renamed)).toBe(true);
+    // (the lines swap voices: each note on the other voice)
+    expect(soundsIdentical(TWO('a', 'b'), TWO('b', 'a'))).toBe(false);
+    // (a cell that isn't a voice, added before the voices, moves no voice's number)
+    expect(soundsIdentical(TWO('a', 'b'), TWO('a', 'b').replace('&a s=saw', '&m 0 2\n&a s=saw'))).toBe(true);
+  });
 });
