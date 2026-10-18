@@ -17,9 +17,9 @@ export function bendValue(cents, range = DEFAULT_BEND_RANGE) {
     return Math.max(0, Math.min(16383, v));
 }
 export const bendMessage = (channel, value) => [0xe0 | ((channel - 1) & 15), value & 0x7f, (value >> 7) & 0x7f];
-export function velocityOf(e, gain = Math.max(e.gains[0], e.gains[1])) {
+export function velocityOf(e, gain = Math.max(Math.abs(e.gains[0]), Math.abs(e.gains[1]))) {
     const level = e.levels[0]?.level ?? 1;
-    const amp = Math.max(0, level * gain);
+    const amp = Math.max(0, level * Math.abs(gain));
     const v = Math.round(127 * Math.sqrt(Math.min(1, amp)));
     return Math.max(1, Math.min(127, Number.isFinite(v) ? v : 1));
 }

@@ -28,7 +28,7 @@ export declare function bendValue(cents: number, range?: number): number;
 export declare const bendMessage: (channel: number, value: number) => number[];
 /**
  * How hard a note is struck, 1 … 127: its level at its start times the louder of its two channels' gains (on a MIDI
- * card, the gain of its product there). Synths
+ * card, the gain of its product there), the size of that gain: MIDI has no phase. Synths
  * mostly turn velocity into amplitude on a square law, so the velocity is the square root of that amplitude.
  */
 export declare function velocityOf(e: Pick<Played, 'gains' | 'levels'>, gain?: number): number;
