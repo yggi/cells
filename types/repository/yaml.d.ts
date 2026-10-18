@@ -5,7 +5,8 @@
  * - **Block maps** (`key: value`, nested by indenting) and **block lists** (`- item`, a map's first entry on the dash
  *   line, or a list indented under its key or level with it). Keys are plain words: not quoted, not a number.
  * - **Scalars:** plain text, `"double"` (JSON's escapes) or `'single'` (`''` a quote) quoted strings, decimal numbers,
- *   `true` `false`, `null` `~`. A timestamp (`2026-10-18T21:00:00Z`) stays the string it is written as.
+ *   `true` `false`, `null` `~`. A timestamp (`2026-10-18T21:00:00Z`) stays the string it is written as, and is written
+ *   quoted, so a YAML 1.1 parser (js-yaml, SilverBullet's) reads it as a string too.
  * - **Flow** only as a list of scalars, `[a, b]`, and the empty map `{}`.
  *
  * It refuses, naming the line: anchors and aliases (`&a`, `*a`), tags (`!x`), directives and a second document (`%`,

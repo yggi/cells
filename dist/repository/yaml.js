@@ -11,6 +11,7 @@ const NULL = /^(null|Null|NULL|~)$/;
 const TRUE = /^(true|True|TRUE)$/;
 const FALSE = /^(false|False|FALSE)$/;
 const OLD_BOOLEAN = /^(y|Y|yes|Yes|YES|n|N|no|No|NO|on|On|ON|off|Off|OFF)$/;
+const TIMESTAMP = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$|^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}([Tt]|[ \t]+)[0-9]{1,2}:[0-9]{2}:[0-9]{2}(\.[0-9]*)?([ \t]*(Z|[-+][0-9]{1,2}(:[0-9]{2})?))?$/;
 const INDICATOR = /^[-?:,[\]{}#&*!|>'"%@`]/;
 const isKey = (key) => key !== '' && !INDICATOR.test(key) && !/: |:$| #|^\s|\s$/.test(key) && !/^[0-9]+$/.test(key) && !/[\n\r\t]/.test(key);
 function plainValue(text, line, inFlow) {
@@ -210,7 +211,7 @@ export function yamlValue(node) {
 }
 const isScalar = (v) => v === null || typeof v !== 'object';
 function writeString(s, inFlow) {
-    let plain = s !== '' && s === s.trim() && !INDICATOR.test(s) && !/[\n\r\t\\]/.test(s) && !OLD_BOOLEAN.test(s) && !(inFlow && /[[\]{},]/.test(s));
+    let plain = s !== '' && s === s.trim() && !INDICATOR.test(s) && !/[\n\r\t\\]/.test(s) && !OLD_BOOLEAN.test(s) && !TIMESTAMP.test(s) && !(inFlow && /[[\]{},]/.test(s));
     if (plain) {
         try {
             plain = plainValue(s, 0, inFlow) === s;

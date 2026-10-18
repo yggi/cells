@@ -204,6 +204,32 @@ describe('the YAML subset writes', () => {
     expect(writeYaml(value(text) as { [key: string]: YamlValue })).toBe(text);
   });
 
+  // (a YAML 1.1 parser, js-yaml as SilverBullet runs it, reads these as booleans: quoted, each is a string to every parser)
+  const OLD_BOOLEANS = ['y', 'Y', 'yes', 'Yes', 'YES', 'n', 'N', 'no', 'No', 'NO', 'on', 'On', 'ON', 'off', 'Off', 'OFF'];
+  it.each(OLD_BOOLEANS)('quotes %s, a boolean to YAML 1.1, and reads it back as the string', (word) => {
+    expect(writeYaml({ a: word, b: [word] })).toBe(`a: "${word}"\nb: ["${word}"]\n`);
+    expect(value(writeYaml({ a: word }))).toEqual({ a: word });
+  });
+
+  // (js-yaml's two timestamp forms, a date and a date with a time: unquoted, it reads them as a Date)
+  const TIMESTAMPS = [
+    '2026-10-18',
+    '2026-10-18T21:00:00Z',
+    '2026-10-18t21:00:00Z',
+    '2026-1-8T9:05:00',
+    '2026-10-18 21:00:00',
+    '2026-10-18T21:00:00.123+02:00',
+    '2026-10-18T21:00:00 -5',
+  ];
+  it.each(TIMESTAMPS)('quotes the timestamp %s, so a YAML 1.1 parser reads a string, and reads it back equal', (stamp) => {
+    expect(writeYaml({ created: stamp, tags: [stamp] })).toBe(`created: "${stamp}"\ntags: ["${stamp}"]\n`);
+    expect(value(writeYaml({ created: stamp }))).toEqual({ created: stamp });
+  });
+
+  it('leaves plain what is no timestamp to js-yaml: a year, a month, a time alone', () => {
+    expect(writeYaml({ a: '2026-10', b: 'v2026-10-18', c: '21:00' })).toBe('a: 2026-10\nb: v2026-10-18\nc: 21:00\n');
+  });
+
   it('refuses a key the subset reads no other way, and a number that is none', () => {
     expect(() => writeYaml({ 'a: b': 1 })).toThrow(/key/);
     expect(() => writeYaml({ '12': 1 })).toThrow(/key/);

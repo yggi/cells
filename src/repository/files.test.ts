@@ -110,12 +110,12 @@ describe('a fragment file', () => {
         0,
         'zeta: last letter',
         'tags: [Maker Faire, jam]',
-        'heard: 2026-10-18T21:00:00Z',
+        'heard: "2026-10-18T21:00:00Z"',
         'muse:',
         '  confidence: 0.8',
         '  bars: [1, 2]',
         'alpha: 1',
-        'created: 2026-10-18',
+        'created: "2026-10-18"',
       ),
     );
     const { meta } = read(file);

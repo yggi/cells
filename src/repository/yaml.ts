@@ -5,7 +5,8 @@
  * - **Block maps** (`key: value`, nested by indenting) and **block lists** (`- item`, a map's first entry on the dash
  *   line, or a list indented under its key or level with it). Keys are plain words: not quoted, not a number.
  * - **Scalars:** plain text, `"double"` (JSON's escapes) or `'single'` (`''` a quote) quoted strings, decimal numbers,
- *   `true` `false`, `null` `~`. A timestamp (`2026-10-18T21:00:00Z`) stays the string it is written as.
+ *   `true` `false`, `null` `~`. A timestamp (`2026-10-18T21:00:00Z`) stays the string it is written as, and is written
+ *   quoted, so a YAML 1.1 parser (js-yaml, SilverBullet's) reads it as a string too.
  * - **Flow** only as a list of scalars, `[a, b]`, and the empty map `{}`.
  *
  * It refuses, naming the line: anchors and aliases (`&a`, `*a`), tags (`!x`), directives and a second document (`%`,
@@ -46,6 +47,8 @@ const TRUE = /^(true|True|TRUE)$/;
 const FALSE = /^(false|False|FALSE)$/;
 /** What a YAML 1.1 parser reads as a boolean: written quoted, so no parser reads it as one. */
 const OLD_BOOLEAN = /^(y|Y|yes|Yes|YES|n|N|no|No|NO|on|On|ON|off|Off|OFF)$/;
+/** What a YAML 1.1 parser reads as a timestamp (js-yaml's two forms): written quoted, so no parser reads it as a date. */
+const TIMESTAMP = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$|^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}([Tt]|[ \t]+)[0-9]{1,2}:[0-9]{2}:[0-9]{2}(\.[0-9]*)?([ \t]*(Z|[-+][0-9]{1,2}(:[0-9]{2})?))?$/;
 const INDICATOR = /^[-?:,[\]{}#&*!|>'"%@`]/;
 /** A key the subset reads: plain, starting with no indicator, without `: ` or ` #`, not a whole number (an object would reorder it). */
 const isKey = (key: string) => key !== '' && !INDICATOR.test(key) && !/: |:$| #|^\s|\s$/.test(key) && !/^[0-9]+$/.test(key) && !/[\n\r\t]/.test(key);
@@ -228,7 +231,7 @@ const isScalar = (v: YamlValue): v is string | number | boolean | null => v === 
 
 /** A string written plain where reading it back gives it unchanged, else double-quoted (JSON's escapes). */
 function writeString(s: string, inFlow: boolean): string {
-  let plain = s !== '' && s === s.trim() && !INDICATOR.test(s) && !/[\n\r\t\\]/.test(s) && !OLD_BOOLEAN.test(s) && !(inFlow && /[[\]{},]/.test(s));
+  let plain = s !== '' && s === s.trim() && !INDICATOR.test(s) && !/[\n\r\t\\]/.test(s) && !OLD_BOOLEAN.test(s) && !TIMESTAMP.test(s) && !(inFlow && /[[\]{},]/.test(s));
   if (plain) {
     try {
       plain = plainValue(s, 0, inFlow) === s;
