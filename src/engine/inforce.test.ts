@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
+import { playedCells, shiftsAt } from './clocking';
 import { eventsBetween, plan } from './realize';
 import { pieceTime } from './duration';
 import { planOf } from './host';
@@ -194,5 +195,26 @@ describe('a table that also plays turns for the lines read through it (#167)', (
     ]);
     // a grid of five played walks its steps, 0 2.4 4.8 7.2 semitones; a line over it reads the step sounding
     expect(notes('&g map=edo cycle=5 step=4n\n&x over=&g step=4n 0\n&out map=sample [&g * &v, &x * &w]')).toEqual(['v:60', 'w:72', 'v:62', 'w:74', 'v:65', 'w:77', 'v:67', 'w:79']);
+  });
+});
+
+describe('a played cell turns in shiftsAt only when a line reads through it (#203)', () => {
+  /** A cell's shift each beat over four beats, a beat a second, as shiftsAt has it. */
+  const turns = (body: string, name: string) => {
+    const r = compileSource(`&bar meter("4/4") step=60bpm\n&key scale(major, C)\n&v s=tri loop=C4\n&w s=sine loop=C5\n${body}`);
+    expect(r.diagnostics).toEqual([]);
+    return [0, 1, 2, 3].map((t) => shiftsAt(r, codeShifts(r), t + 0.5)(name));
+  };
+
+  it('a braid played and read by nothing keeps its written shift: its moving shift is its playhead (#203’s witness)', () => {
+    const r = compileSource(`&bar meter("4/4") step=60bpm\n&key scale(major, C)\n&v s=tri loop=C4\n&k over=&key step=4n 0 2 4 5\n&out map=sample [&k * &v]`);
+    expect(playedCells(r).has('k')).toBe(true);
+    expect(turns('&k over=&key step=4n 0 2 4 5\n&out map=sample [&k * &v]', 'k')).toEqual([0, 0, 0, 0]);
+  });
+
+  it('a played table a line reads through turns, over= or a relative pick; one only read turns as before', () => {
+    expect(turns('&k over=&key step=4n 0 2 4 5\n&x over=&k step=4n 0\n&out map=sample [&k * &v, &x * &w]', 'k')).toEqual([0, 1, 2, 3]);
+    expect(turns('&k over=&key step=4n 0 2 4 5\n&y step=4n &k[0]\n&out map=sample [&k * &v, &y * &w]', 'k')).toEqual([0, 1, 2, 3]);
+    expect(turns('&k over=&key step=4n 0 2 4 5\n&x over=&k step=4n 0\n&out map=sample [&x * &w]', 'k')).toEqual([0, 1, 2, 3]);
   });
 });

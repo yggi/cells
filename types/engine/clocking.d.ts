@@ -30,7 +30,13 @@ export declare function timeMap(result: CompileResult, clock: Clock, shifts: Shi
  * modulators) and everything they splice: their own notes read their moving
  * shift as a playhead, not a turn of a table (`playing`).
  */
-export declare function playedCells(result: CompileResult): Set<string>;
+export declare function playedCells(result: CompileResult): ReadonlySet<string>;
+/**
+ * Cells a line reads through (#203): every over= (and the table a cell without one is shown through), every grid, and
+ * every cell a relative pick reads (`&k[0]`, a fixed reader following it as it turns). A played cell turns in
+ * `shiftsAt` only when it is one of these: its own notes read their shift as a playhead (`playing`).
+ */
+export declare function readThrough(result: CompileResult): ReadonlySet<string>;
 export interface Clocking {
     /** Fractional step count of a clock at `seconds`. */
     stepOf(clock: string): number;
@@ -46,12 +52,12 @@ export declare function varispeedOf(result: CompileResult, clock: string): numbe
 /** A program's clocks read at `seconds`: each clock's time map, and how many steps it has taken. */
 export declare function clocking(result: CompileResult, statics: Shifts, seconds?: number): Clocking;
 /**
- * Shifts at a moment, as a line reading through them sees them: the static shift, plus — for stepped cells looked
- * through, played or not — the turns their step= chain has made, times their stride. A table that also plays turns
+ * Shifts at a moment, as a line reading through them sees them: the static shift, plus — for stepped cells a line
+ * reads through (`readThrough`), played or not — the turns their step= chain has made, times their stride. A table that also plays turns
  * for what reads through it, so a reader sees the entry sounding (#167). A table turns by its braid's own steps (#122):
  * an entry held `@n` (or `_`) or repeated `!n` stays in force n steps, and a subsequence's steps turn within its step.
  * They come round after the braid's own length, or where cycle= says (more laps climb on the way). A played cell's own
- * notes read their own shift as it stands (`playing`).
+ * notes read their own shift as it stands (`playing`), so a played cell nothing reads through doesn't turn (#203).
  */
 export declare function shiftsAt(result: CompileResult, statics: Shifts, seconds: number): Shifts;
 /**
