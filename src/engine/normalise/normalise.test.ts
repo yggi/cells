@@ -57,8 +57,9 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
 
   it('every example, and every fragment of the seed library, is normal already', () => {
     for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source).steps]).toEqual([key, []]);
-    // (a meter compiles alone; a rhythm is open on its meter, so it is read on a 4/4 at a tempo, where it fits)
-    const bar = '&bar meter("4/4") step=100bpm';
+    // (a meter compiles alone; a rhythm is open on its meter, and a bass line on its meter and its harmony, so each is read
+    // on a 4/4 at a tempo, with a key and a harmony, where it fits)
+    const bar = '&bar meter("4/4") step=100bpm\n&key scale(major, C)\n&harm over=key step=1m [0,2,4] [3,5,7]';
     for (const f of LIBRARY) {
       const text = compileSource(f.text).ok ? f.text : unionOf(f.text, bar).text;
       expect([f.id, compileSource(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);

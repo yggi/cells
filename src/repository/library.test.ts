@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { createRepository, EMPTY_LAYER, type Fragment, type StylePoint } from './fragments';
 import { useFragments } from './learned';
+import { BASS_FRAGMENTS } from './bass';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
@@ -11,6 +12,7 @@ import { RHYTHM_FRAGMENTS } from './rhythms';
 
 const library = createRepository(LIBRARY);
 const meters = createRepository(METER_FRAGMENTS);
+const rhythms = createRepository(RHYTHM_FRAGMENTS);
 const PRESETS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ];
 const AXES = ['sync', 'harm', 'artic', 'energy'] as const;
 
@@ -28,16 +30,21 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters and the thirteen rhythms, every point associated as its facet: twenty-six', () => {
-    expect(LIBRARY).toHaveLength(26);
+  it('is the thirteen meters, the thirteen rhythms and the five bass lines, every point associated as its facet: thirty-one', () => {
+    expect(LIBRARY).toHaveLength(31);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
-    expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length]).toEqual([13, 13]);
+    expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
+    expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length, BASS_FRAGMENTS.length]).toEqual([13, 13, 5]);
   });
 
   it('a query of the meters over it returns what the meters alone return, at every one of 661 points', () => {
     expect(POINTS).toHaveLength(661);
     for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'meter' })), JSON.stringify(point)).toEqual(ranked(meters.query(point, 13)));
+  });
+
+  it('and so do the rhythms: the bass lines change no rhythm query', () => {
+    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythms.query(point, 13)));
   });
 
   it('and so does one that names chosen fragments with no use recorded', () => {
@@ -51,7 +58,7 @@ describe('the library', () => {
   });
 
   // (as yggi/jambot#375 timed its query: 20,000 of them, each over every fragment, here with a facet and two fragments chosen)
-  it('a query over the 26 costs under 1 ms', () => {
+  it('a query over the 31 costs under 1 ms', () => {
     const r = createRepository(LIBRARY);
     const uses = (ids: string[]) => ids.map((id) => ({ id }));
     const layer = useFragments(
