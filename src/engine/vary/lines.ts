@@ -4,24 +4,60 @@
  * the line's own braid as plain steps on that grid. Rung 1 reads the lines a drum part writes: steps that are rests or
  * hits of a voice (`&hh`, `&hh:0:.25`, `~!5`, a chord of hits `[&bd,&hh]`), a subsequence of them on one step
  * (`step=1m [&rim ~ ~ &rim …]`), or a Euclid of a voice (`&rim(5,16,4)`), each times at most one `map=amp` cell of
- * levels, one a step. A line written any other way (a splice, a melody's numbers, `@`, a choice) is not read, and so not
- * varied. Pure.
+ * levels, one a step. Rung 2 reads the lines a pitched part writes: a cell of degrees of the table it reads (`over=&harm`)
+ * times one voice (`&bass * &bassV`), its steps rests, whole numbers (`0`, `-1`, `0!8`) or another cell spliced in
+ * (`&bassNext`, `&bassNext^$-1`) that plays one note on its step. A line written any other way (`@`, a choice, an
+ * accidental, a subsequence of degrees) is not read, and so not varied. Pure.
  */
 import { declWords, splitWords } from '../edit';
+import { flatten } from '../flatten';
 import { gmDrumNote } from '../midi';
 import { noteValue, type Meter } from '../meter';
 import { bjorklund } from '../parser/generators';
-import type { CompileResult } from '../program';
+import { codeShifts, type CompileResult } from '../program';
 
 /** One note of a line: its step on the line's grid, the voice it strikes, its own level as written, its level in all. */
 export interface LineNote {
   readonly step: number;
-  /** The voice, as written: `&hh`. */
+  /** The voice, as written: `&hh` (a pitched line's: the voice it is a product with, `&bassV`). */
   readonly voice: string;
   /** Its own level as written (`.25` of `&hh:0:.25`), or null: none, at 1. */
   readonly own: string | null;
   /** Its level: its own times its level cell's at its step. */
   readonly level: number;
+  /** A pitched line's note: what it plays; absent on a line of hits. */
+  readonly pitch?: Pitch;
+}
+
+/**
+ * A pitched note: its step as written (a degree, or a splice), then mirrored and moved by the operators, so it plays
+ * `sign · value + by` degrees of the table it reads (`inverse(…)` mirrors a splice in its own table, `degree(…)` moves it
+ * there, as the language reads them).
+ */
+export interface Pitch {
+  /** As written: a degree (`2`), or the splice (`&bassNext^$-1`). */
+  readonly written: number | string;
+  readonly sign: 1 | -1;
+  readonly by: number;
+  /** What its step plays as written, as the compiler flattens it: the table read and its shift, the value, its accidental, its grid steps. */
+  readonly table: string;
+  readonly value: number;
+  readonly alter: number;
+  readonly transpose: number;
+}
+
+/** The pitch moved: mirrored (`sign` −1) and then moved `by` degrees, after what it already was. */
+export const moved = (p: Pitch, sign: 1 | -1, by: number): Pitch => ({ ...p, sign: (p.sign * sign) as 1 | -1, by: p.by * sign + by });
+
+/** What a pitch plays, for S2: its table, its degree there, its accidental and its grid steps. */
+export const pitchKey = (p: Pitch): string => `${p.table}:${p.sign * p.value + p.by}:${p.sign * p.alter}:${p.transpose}`;
+
+/** A pitch's text: a degree as a number; a splice wrapped in `inverse(…)` and moved by `^n` (on a bare reference) or `degree(…, n)`. */
+export function pitchText(p: Pitch): string {
+  if (typeof p.written === 'number') return String(p.sign * p.written + p.by);
+  const inner = p.sign === -1 ? `inverse(${p.written})` : p.written;
+  if (p.by === 0) return inner;
+  return /^&[A-Za-z_][A-Za-z0-9_]*$/.test(inner) ? `${inner}^${p.by}` : `degree(${inner}, ${p.by})`;
 }
 
 /** How a line's trigger is written: steps, a subsequence on one step, or a Euclid of one voice. */
@@ -48,6 +84,8 @@ export interface Line {
   readonly stepWhole: number | null;
   /** The meter it taps, or null. */
   readonly meter: Meter | null;
+  /** A pitched line's table (its `over=`, bare) and voice: its notes carry their pitch; absent, a line of hits. */
+  readonly pitched?: { readonly table: string | null; readonly voice: string };
 }
 
 /** A voice's pitch, as the lines are ordered by it: its General MIDI drum note, else past every drum. */
@@ -59,6 +97,8 @@ const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
 const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
+const DEGREE = /^(-?\d+)(?:!(\d+))?$/;
+const SPLICE = /^&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?$/;
 
 /** A step as read: the hits it strikes (none: a rest), each its voice and own level. */
 type Step = readonly { readonly voice: string; readonly own: string | null }[];
@@ -105,7 +145,7 @@ export const euclidHits = (k: number, n: number, r: number): number[] => {
 };
 
 /** A tap's length in whole notes on a meter: a note value (`16n`), a bar (`1m`), a pulse; null for any other. */
-function tapWhole(tap: string | undefined, meter: Meter | null): number | null {
+export function tapWhole(tap: string | undefined, meter: Meter | null): number | null {
   if (!tap || !meter) return null;
   const bar = meter.pulses / meter.unit;
   if (tap === '1m') return bar;
@@ -140,8 +180,15 @@ export function linesOf(source: string, result: CompileResult): Line[] {
       if (cells.some((c) => !c)) continue;
       const levelCells = cells.filter((c) => c!.map?.kind === 'amp');
       const triggers = cells.filter((c) => c!.map?.kind !== 'amp');
+      const voices = triggers.filter((c) => c!.voice);
+      const at = { name: card.name, entries, entry };
+      if (triggers.length === 2 && voices.length === 1 && !levelCells.length) {
+        const line = pitchedLineOf(source, result, triggers.find((c) => !c!.voice)!.name, voices[0]!.name, at);
+        if (line) out.push(line);
+        continue;
+      }
       if (triggers.length !== 1 || levelCells.length > 1) continue;
-      const line = lineOf(source, result, triggers[0]!.name, levelCells[0]?.name, { name: card.name, entries, entry });
+      const line = lineOf(source, result, triggers[0]!.name, levelCells[0]?.name, at);
       if (line) out.push(line);
     }
   }
@@ -195,6 +242,49 @@ function lineOf(source: string, result: CompileResult, trigger: string, levelCel
   };
 }
 
+/**
+ * A pitched line: a cell of degrees and splices times one voice. Each step is a rest or one note, which its flattened
+ * events say it plays (one event, one step long); null where a step is written any other way or plays otherwise.
+ */
+function pitchedLineOf(source: string, result: CompileResult, trigger: string, voice: string, card: Line['card']): Line | null {
+  const words = declWords(source, trigger);
+  const cell = result.cells.get(trigger)!;
+  if (!words || !cell.step) return null;
+  const meter = result.cells.get(cell.step.driver)?.meter ?? null;
+  const written: (number | string | null)[] = [];
+  for (const token of words.braid) {
+    const rest = REST.exec(token);
+    const degree = DEGREE.exec(token);
+    if (rest) for (let i = 0; i < Number(rest[1] ?? 1); i++) written.push(null);
+    else if (degree) for (let i = 0; i < Number(degree[2] ?? 1); i++) written.push(Number(degree[1]));
+    else if (SPLICE.test(token)) written.push(token);
+    else return null;
+  }
+  if (!written.length || written.length !== cell.steps) return null;
+  const events = flatten(result, trigger, codeShifts(result));
+  const notes: LineNote[] = [];
+  for (const [step, w] of written.entries()) {
+    const at = events.filter((e) => Math.abs(e.step - step) < 1e-9);
+    if (w === null ? at.length : at.length !== 1 || Math.abs(at[0]!.duration - 1) > 1e-9) return null;
+    if (w === null) continue;
+    const e = at[0]!;
+    const pitch: Pitch = { written: w, sign: 1, by: 0, table: `${e.table}:${e.tableShift}`, value: e.value, alter: e.alter, transpose: e.transpose ?? 0 };
+    notes.push({ step, voice: `&${voice}`, own: null, level: 1, pitch });
+  }
+  if (events.length !== notes.length) return null;
+  return {
+    name: `&${trigger}`,
+    trigger,
+    card,
+    form: 'steps',
+    steps: written.length,
+    notes,
+    stepWhole: tapWhole(cell.step.tap, meter),
+    meter,
+    pitched: { table: cell.over, voice: `&${voice}` },
+  };
+}
+
 /** A hit's text: its voice, and its own level where it has one. */
 const hitText = (n: { voice: string; own: string | null }) => (n.own === null ? n.voice : `${n.voice}:0:${n.own}`);
 
@@ -217,7 +307,7 @@ export function written(line: Line, notes: readonly LineNote[], levels?: readonl
     out.set(line.trigger, [`${voice}(${k},${n},${(r + 1) % n})`]);
   } else {
     const tokens = Array.from({ length: line.steps }, (_, step) => {
-      const hits = notes.filter((n) => n.step === step).map(hitText);
+      const hits = notes.filter((n) => n.step === step).map((n) => (n.pitch ? pitchText(n.pitch) : hitText(n)));
       return hits.length === 0 ? '~' : hits.length === 1 ? hits[0]! : `[${hits.join(',')}]`;
     });
     out.set(line.trigger, line.form === 'steps' ? tokens : [`[${tokens.join(' ')}]`]);

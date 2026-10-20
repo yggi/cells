@@ -2,18 +2,23 @@
  * Anchors (decision 052, point 3): what no operator touches, derived from a fragment's text on its workbench by a rule
  * per kind of line, never declared. Rung 1 has the drums' two: the kick (a line every note of which strikes General
  * MIDI's kick, 36: `gmDrumNote`'s `bd`, `kick`, `kd`) and the backbeat (a line every note of which strikes the snare, 38,
- * on the meter's backbeat). The root on a chord change and the cadence join with the pitched operators. Pure.
+ * on the meter's backbeat). Rung 2 has the pitched lines' one: the root on a chord change (a note of a line over a
+ * harmony, a braid of stacks, whose onset is where the chord in force changes or its lap starts, and which plays that
+ * chord's root, its degree 0 or a lap of it). The cadence joins with harmony (rung 3). Pure.
  */
+import { flatten } from '../flatten';
 import { gmDrumNote } from '../midi';
 import type { Meter } from '../meter';
-import type { Line } from './lines';
+import { codeShifts, type CompileResult } from '../program';
+import { tapWhole, type Line } from './lines';
 
 /** What no operator moves: a whole line, or (with the pitched operators) one note of it, its step on the line's grid. */
 export interface Anchor {
   /** The line, as the card names it: `&kick`. */
   readonly line: string;
+  /** One note's step on the line's grid (a root on a change); absent, the whole line. */
   readonly step?: number;
-  readonly reason: 'kick' | 'backbeat';
+  readonly reason: 'kick' | 'backbeat' | 'root';
 }
 
 const KICK = 36;
@@ -45,9 +50,58 @@ function onBackbeat(line: Line): boolean {
 /** Whether every note of a line strikes this drum. */
 const strikes = (line: Line, note: number) => line.notes.length > 0 && line.notes.every((n) => gmDrumNote(n.voice.slice(1)) === note);
 
-/** The anchors among a fragment's lines: the kick's line, and the backbeat's. */
-export function anchorsAmong(lines: readonly Line[]): Anchor[] {
+/**
+ * A harmony's changes: each onset, in whole notes from its lap's start, where the chord in force changes or its lap
+ * starts, with that chord's size; and its lap. Null where the table is no harmony (no step of it a stack of two or more)
+ * or its tap is none of the meter's.
+ */
+function changesOf(result: CompileResult, table: string): { lap: number; changes: { at: number; size: number }[] } | null {
+  const cell = result.cells.get(table);
+  if (!cell?.step) return null;
+  const whole = tapWhole(cell.step.tap, result.cells.get(cell.step.driver)?.meter ?? null);
+  if (whole === null) return null;
+  const chords = new Map<number, number[]>();
+  for (const e of flatten(result, table, codeShifts(result))) chords.set(e.step, [...(chords.get(e.step) ?? []), e.value + e.alter]);
+  if (![...chords.values()].some((c) => c.length > 1)) return null;
+  const steps = [...chords.keys()].sort((a, b) => a - b);
+  const sorted = (c: number[]) => [...c].sort((a, b) => a - b).join(',');
+  const changes = steps.filter((s, k) => k === 0 || sorted(chords.get(s)!) !== sorted(chords.get(steps[k - 1]!)!)).map((s) => ({ at: s * whole, size: chords.get(s)!.length }));
+  return { lap: cell.steps * whole, changes };
+}
+
+/**
+ * The roots on a pitched line's chord changes: each note, a degree of its line's harmony as written, that lands on a
+ * change in some lap of the two (the line's lap and the harmony's, up to 64 of the line's) and plays the root at every
+ * change it lands on.
+ */
+function rootsOf(line: Line, result: CompileResult): Anchor[] {
+  if (!line.pitched?.table || line.stepWhole === null) return [];
+  const harmony = changesOf(result, line.pitched.table);
+  if (!harmony) return [];
+  const lap = line.steps * line.stepWhole;
+  const round = (x: number) => near(x % harmony.lap, 0) || near(x % harmony.lap, harmony.lap);
+  let laps = 1;
+  while (laps < 64 && !round(laps * lap)) laps++;
+  return line.notes.flatMap((n): Anchor[] => {
+    const p = n.pitch!;
+    if (typeof p.written !== 'number' || p.table !== `${line.pitched!.table}:0` || p.alter || p.transpose) return [];
+    const landed = Array.from({ length: laps }, (_, k) => (n.step * line.stepWhole! + k * lap) % harmony.lap).flatMap((at) =>
+      harmony.changes.filter((c) => near(c.at, at) || near(c.at + harmony.lap, at)),
+    );
+    const root = (size: number) => ((p.value % size) + size) % size === 0;
+    return landed.length && landed.every((c) => root(c.size)) ? [{ line: line.name, step: n.step, reason: 'root' }] : [];
+  });
+}
+
+/** The anchors among a fragment's lines: the kick's line, the backbeat's, and the roots on a pitched line's chord changes. */
+export function anchorsAmong(lines: readonly Line[], result: CompileResult): Anchor[] {
   return lines.flatMap((line): Anchor[] =>
-    strikes(line, KICK) ? [{ line: line.name, reason: 'kick' }] : strikes(line, SNARE) && onBackbeat(line) ? [{ line: line.name, reason: 'backbeat' }] : [],
+    line.pitched
+      ? rootsOf(line, result)
+      : strikes(line, KICK)
+        ? [{ line: line.name, reason: 'kick' }]
+        : strikes(line, SNARE) && onBackbeat(line)
+          ? [{ line: line.name, reason: 'backbeat' }]
+          : [],
   );
 }
