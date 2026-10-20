@@ -182,7 +182,7 @@ function lru<T>(limit: number, make: (key: string) => T): (key: string) => T {
 }
 
 /**
- * A compile cached by text: the last `limit` texts compiled. At 512, a library of 26 fragments, each alone and in its union
+ * A compile cached by text: the last `limit` texts compiled. At 512, a library of 31 fragments, each alone and in its union
  * with a workbench, holds about ten workbenches' queries.
  */
 export const cachedCompile = (limit = 512): ((text: string) => CompileResult) => lru(limit, (text) => compileSource(text));
