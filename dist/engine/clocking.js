@@ -1,4 +1,4 @@
-import { isPicked, period, shiftedUnits, tableUnits } from "./helix.js";
+import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from "./helix.js";
 import { footOf, leaves, slots } from "./subseq.js";
 import { beltWarp, onReset, warpOf } from "./physics.js";
 import { mod } from "../theory/modes.js";
@@ -98,7 +98,10 @@ function tapMap(tap, meter) {
     return { beats: k, q: (j) => meter.q(meterStep(j)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
 }
 export function playedCells(result) {
-    const out = new Set();
+    let out = playedCache.get(result);
+    if (out)
+        return out;
+    playedCache.set(result, (out = new Set()));
     const walk = (n) => {
         if (out.has(n))
             return;
@@ -113,6 +116,26 @@ export function playedCells(result) {
     for (const o of result.outputs)
         for (const t of [...(o.drone ? [] : [o]), ...o.mods, ...o.levels])
             walk(t.cell);
+    return out;
+}
+const playedCache = new WeakMap();
+const readCache = new WeakMap();
+export function readThrough(result) {
+    let out = readCache.get(result);
+    if (out)
+        return out;
+    readCache.set(result, (out = new Set()));
+    for (const c of result.cells.values()) {
+        if (c.root)
+            out.add(c.name);
+        if (c.over)
+            out.add(c.over);
+        if (!c.root)
+            out.add(c.context);
+        for (const u of c.units)
+            if (u.atom.kind === 'ref' && isRelativePick(result, u.atom.name, u.atom.pick))
+                out.add(u.atom.name);
+    }
     return out;
 }
 const belts = new WeakMap();
@@ -191,11 +214,13 @@ export function clocking(result, statics, seconds = 0) {
 }
 export function shiftsAt(result, statics, seconds) {
     const clk = clocking(result, statics, seconds);
+    const played = playedCells(result);
+    const read = readThrough(result);
     const steps = new Map();
     return (name) => {
         const base = statics(name);
         const c = result.cells.get(name);
-        if (!c || !c.step || !c.clock || result.clocks.has(name) || selects(result, name) || c.loops)
+        if (!c || !c.step || !c.clock || result.clocks.has(name) || selects(result, name) || c.loops || (played.has(name) && !read.has(name)))
             return base;
         let s = steps.get(c.clock);
         if (s === undefined)

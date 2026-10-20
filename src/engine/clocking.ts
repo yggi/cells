@@ -6,7 +6,7 @@
  * function of time.
  */
 import type { CompileResult, Clock, Shifts } from './program';
-import { isPicked, period, shiftedUnits, tableUnits } from './helix';
+import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from './helix';
 import { footOf, leaves, slots, type Laps } from './subseq';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
 import { mod } from '../theory/modes';
@@ -141,8 +141,10 @@ function tapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap): TimeMap {
  * modulators) and everything they splice: their own notes read their moving
  * shift as a playhead, not a turn of a table (`playing`).
  */
-export function playedCells(result: CompileResult): Set<string> {
-  const out = new Set<string>();
+export function playedCells(result: CompileResult): ReadonlySet<string> {
+  let out = playedCache.get(result);
+  if (out) return out;
+  playedCache.set(result, (out = new Set<string>()));
   const walk = (n: string) => {
     if (out.has(n)) return;
     out.add(n);
@@ -156,6 +158,27 @@ export function playedCells(result: CompileResult): Set<string> {
   // (a mix plays a cell on its own clock, picked or not)
   // (a drone's cell is its voice: a waveform, not a braid played)
   for (const o of result.outputs) for (const t of [...(o.drone ? [] : [o]), ...o.mods, ...o.levels]) walk(t.cell);
+  return out;
+}
+
+const playedCache = new WeakMap<CompileResult, Set<string>>();
+const readCache = new WeakMap<CompileResult, Set<string>>();
+
+/**
+ * Cells a line reads through (#203): every over= (and the table a cell without one is shown through), every grid, and
+ * every cell a relative pick reads (`&k[0]`, a fixed reader following it as it turns). A played cell turns in
+ * `shiftsAt` only when it is one of these: its own notes read their shift as a playhead (`playing`).
+ */
+export function readThrough(result: CompileResult): ReadonlySet<string> {
+  let out = readCache.get(result);
+  if (out) return out;
+  readCache.set(result, (out = new Set<string>()));
+  for (const c of result.cells.values()) {
+    if (c.root) out.add(c.name);
+    if (c.over) out.add(c.over);
+    if (!c.root) out.add(c.context);
+    for (const u of c.units) if (u.atom.kind === 'ref' && isRelativePick(result, u.atom.name, u.atom.pick)) out.add(u.atom.name);
+  }
   return out;
 }
 
@@ -250,15 +273,17 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
 }
 
 /**
- * Shifts at a moment, as a line reading through them sees them: the static shift, plus — for stepped cells looked
- * through, played or not — the turns their step= chain has made, times their stride. A table that also plays turns
+ * Shifts at a moment, as a line reading through them sees them: the static shift, plus — for stepped cells a line
+ * reads through (`readThrough`), played or not — the turns their step= chain has made, times their stride. A table that also plays turns
  * for what reads through it, so a reader sees the entry sounding (#167). A table turns by its braid's own steps (#122):
  * an entry held `@n` (or `_`) or repeated `!n` stays in force n steps, and a subsequence's steps turn within its step.
  * They come round after the braid's own length, or where cycle= says (more laps climb on the way). A played cell's own
- * notes read their own shift as it stands (`playing`).
+ * notes read their own shift as it stands (`playing`), so a played cell nothing reads through doesn't turn (#203).
  */
 export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number): Shifts {
   const clk = clocking(result, statics, seconds);
+  const played = playedCells(result);
+  const read = readThrough(result);
   const steps = new Map<string, number>();
   return (name) => {
     const base = statics(name);
@@ -266,7 +291,8 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
     // a meter (a clock of its own) places time: read as a table, it doesn't turn;
     // a selector sequences its parts: it steps, it doesn't turn either
     // … and what loops (loop=) oscillates: it doesn't turn either
-    if (!c || !c.step || !c.clock || result.clocks.has(name) || selects(result, name) || c.loops) return base;
+    // … and a played cell nothing reads through is a braid played, not a table turning (#203)
+    if (!c || !c.step || !c.clock || result.clocks.has(name) || selects(result, name) || c.loops || (played.has(name) && !read.has(name))) return base;
     let s = steps.get(c.clock);
     if (s === undefined) steps.set(c.clock, (s = clk.stepOf(c.clock)));
     // a turning table comes round after its own length (a key of 12 after 12, a scale after 7, a

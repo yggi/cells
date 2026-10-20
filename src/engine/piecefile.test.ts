@@ -100,3 +100,51 @@ describe("pieceMeta: a piece's card", () => {
     expect(pieceMeta(good)).toEqual(pieceMeta(old));
   });
 });
+
+describe('a file of cells blocks with no frontmatter (#212)', () => {
+  const BARE = [
+    '# Steps',
+    '',
+    'A tune on one line.',
+    '',
+    '```cells',
+    '&tune step=4 0 2 4',
+    '```',
+    '',
+    'Then a second line:',
+    '',
+    '```cells',
+    '&out [&tune]',
+    '```',
+    '',
+    'The end.',
+    '',
+  ].join('\n');
+
+  it('reads as a literate piece with an empty frontmatter: its blocks joined are the text, the rest prose', () => {
+    expect(isPieceFile(BARE)).toBe(true);
+    const file = read(BARE);
+    expect(file.frontmatter).toEqual({});
+    expect(file.text).toBe('&tune step=4 0 2 4\n&out [&tune]');
+    expect(file.prose).toBe('The end.');
+    expect(file.map).toEqual([
+      { block: 0, line: 6 },
+      { block: 1, line: 12 },
+    ]);
+  });
+
+  it('writes back byte for byte without a frontmatter, one opening on its fence too; given one, writes it', () => {
+    expect(writePiece(read(BARE))).toBe(BARE);
+    const fenced = '```cells\n&tune step=4 0\n```\n';
+    expect(writePiece(read(fenced))).toBe(fenced);
+    expect(writePiece({ ...read(fenced), text: '&tune step=4 2' })).toBe('```cells\n&tune step=4 2\n```\n');
+    expect(writePiece({ ...read(fenced), frontmatter: { title: 'Steps' } })).toBe('---\ntitle: Steps\n---\n\n```cells\n&tune step=4 0\n```\n');
+  });
+
+  it('a raw text is still no file, and a file with neither frontmatter nor a cells block names what is missing', () => {
+    expect(isPieceFile('&tune step=4 0 2 4')).toBe(false);
+    expect(isPieceFile('# Notes\n\n```js\nx\n```\n')).toBe(false);
+    expect(problems('# Notes\n\nNo code.')).toEqual([{ line: 1, message: expect.stringMatching(/no frontmatter/) }]);
+    expect(problems('```cells\n&tune step=4 0\n')).toEqual([{ line: 1, message: expect.stringMatching(/never closed/) }]);
+  });
+});

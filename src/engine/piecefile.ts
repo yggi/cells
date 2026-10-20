@@ -27,7 +27,8 @@
  * prose is everything outside the blocks; `prose` here is what follows the last. `writePiece` of a file that was read
  * puts its text back in the blocks it came from and keeps the rest byte for byte (`rewrite`, `literate.ts`); a file made
  * new has one block, one blank line before it and before the prose, and ends with a newline, so a file written that way
- * reads and writes back byte for byte.
+ * reads and writes back byte for byte. A file of cells blocks with no frontmatter is a piece too (#212): its frontmatter
+ * is empty, its blocks the code, the rest prose, and it is written back without one.
  */
 import { readBlocks, rewrite, writeBody, type CodeLine, type Layout } from './literate';
 import { readYaml, writeYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from '../repository/yaml';
@@ -46,6 +47,8 @@ export interface PieceFile {
   readonly map?: readonly CodeLine[];
   /** The blocks and the prose between them, as the file has them (a file that was read). */
   readonly layout?: Layout;
+  /** The file has no frontmatter, only cells blocks among prose (#212): written back without one. */
+  readonly bare?: true;
 }
 
 /** What is wrong with a piece file, each problem with its line. */
@@ -53,8 +56,14 @@ export interface PieceFileProblems {
   readonly problems: readonly YamlProblem[];
 }
 
-/** Is this a file (frontmatter first) rather than a bare cells text? A cells text never starts with `---`. */
-export const isPieceFile = (source: string): boolean => /^---\r?\n/.test(source);
+/** A line opening a cells block: three backticks or more, then `cells`. */
+const CELLS_FENCE = /^`{3,}\s*cells\s*$/m;
+
+/**
+ * Is this a file (frontmatter first, or cells blocks among prose: #212) rather than a bare cells text? A cells text
+ * never starts with `---`, nor holds a line of backticks.
+ */
+export const isPieceFile = (source: string): boolean => /^---\r?\n/.test(source) || CELLS_FENCE.test(source);
 
 /** What is wrong with the keys the frontmatter gives a meaning: title, tags, tier. */
 function keyProblems(root: YamlNode & { kind: 'map' }): YamlProblem[] {
@@ -74,7 +83,13 @@ function keyProblems(root: YamlNode & { kind: 'map' }): YamlProblem[] {
 /** A piece file read: its frontmatter, its text and its prose, or what is wrong with it, each problem naming its line. */
 export function readPiece(markdown: string): PieceFile | PieceFileProblems {
   const lines = markdown.split(/\r?\n/);
-  if (lines[0] !== '---') return { problems: [{ line: 1, message: 'no frontmatter: a piece file starts with a line `---`' }] };
+  if (lines[0] !== '---') {
+    // (no frontmatter, but cells blocks: a literate piece with an empty one, #212)
+    if (!CELLS_FENCE.test(markdown)) return { problems: [{ line: 1, message: 'no frontmatter: a piece file starts with a line `---`, or holds a ```cells block' }] };
+    const body = readBlocks(lines, 0);
+    if ('problems' in body) return body;
+    return { frontmatter: {}, text: body.text, prose: body.prose, map: body.map, layout: body.layout, bare: true };
+  }
   const close = lines.indexOf('---', 1);
   if (close < 0) return { problems: [{ line: 1, message: 'the frontmatter is never closed: no second line `---`' }] };
   const yaml = readYaml(lines.slice(1, close).join('\n'), 2);
@@ -89,7 +104,14 @@ export function readPiece(markdown: string): PieceFile | PieceFileProblems {
 }
 
 /** A piece file's text: the frontmatter, the cells blocks, the prose. */
-export function writePiece({ frontmatter, text, prose, layout }: PieceFile): string {
+export function writePiece({ frontmatter, text, prose, layout, bare }: PieceFile): string {
   const body: Layout = layout ? rewrite(layout, text) : { blocks: [[text]], gaps: [['', '```cells'], ['```']] };
+  // (a file read without frontmatter is written back without one, while it still has none to give: #212)
+  if (bare && layout && !Object.keys(frontmatter).length) {
+    // (with no frontmatter above it, no blank line before a first fence that has no prose before it either)
+    const first = body.gaps[0]!;
+    const out = writeBody(body, prose);
+    return first.every((l, j) => !l.trim() || j === first.length - 1) ? out.slice(1) : out;
+  }
   return `---\n${writeYaml(frontmatter)}---\n${writeBody(body, prose)}`;
 }
