@@ -489,6 +489,17 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
   },
 };
 
+/**
+ * The rhythm even(k, n, phase) played, written now (#7): the euclid(k, n, r) that strikes the same onsets (r found by
+ * trying each turn; the two count their phases differently, decision 037), else the steps themselves.
+ */
+function euclidOfEven(k: number, n: number, phase: number): string {
+  const want = new Set(evenPositions(k, n, phase).map((x) => ((x % n) + n) % n));
+  const pattern = bjorklund(k, n);
+  for (let r = 0; r < n; r++) if (pattern.every((_, j) => pattern[(((j - r) % n) + n) % n] === want.has(j))) return `euclid(${k}, ${n}${r ? `, ${r}` : ''})`;
+  return Array.from({ length: n }, (_, j) => (want.has(j) ? '0' : '~')).join(' ');
+}
+
 /** Generators that are gone: reading one says what to write instead. */
 const RETIRED_GENERATORS: Readonly<Record<string, Generator>> = {
   even: (s, start) => {
@@ -497,7 +508,7 @@ const RETIRED_GENERATORS: Readonly<Record<string, Generator>> = {
     const steps = k >= 1 && n >= k ? intervals(evenPositions(k, n, phase), n) : null;
     return s.fail(
       steps
-        ? `even(…) is gone: for a scale write scan(${steps.join(' ')}); for a rhythm, euclid(${k}, ${n}${phase ? `, ${phase}` : ''})`
+        ? `even(…) is gone: for a scale write scan(${steps.join(' ')}); for a rhythm, ${euclidOfEven(k, n, phase)}`
         : 'even(…) is gone: write the intervals, scan(2 2 1 2 2 2 1), or a rhythm, euclid(3, 8)',
       start,
       span.len,
