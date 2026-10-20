@@ -262,7 +262,8 @@ const readLevels = (s, b, word) => {
             s.fail(`a level after the comma, a note value and a share: ${word}=8n:.6,16n:.55`);
         s.i++;
         let share;
-        if (s.text.startsWith('free(', s.i)) {
+        const free = s.text.startsWith('free(', s.i);
+        if (free) {
             const f = parseFree(s, 'param', false);
             f.param = word;
             share = f.value;
@@ -293,7 +294,20 @@ const readLevels = (s, b, word) => {
                 share = parseFloat(n);
             }
         }
-        levels.push({ level: level, share });
+        let pairs = false;
+        if (s.peek() === ':') {
+            const at = s.i;
+            s.i++;
+            const named = s.match(/[a-z]+/y);
+            if (named !== 'pairs')
+                s.fail(`after a share, :pairs leans a level's pairs alone and keeps its groups of three straight: swing=${level}:2/3:pairs`, at, 1 + (named?.length ?? 0));
+            if (word === 'legato')
+                s.fail(`:pairs is swing='s, a level's pairs leaning alone; a legato= share holds every note of its level: legato=${level}:.5`, at, 6);
+            pairs = true;
+            if (free && s.peek() === ',')
+                s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
+        }
+        levels.push({ level: level, share, ...(pairs ? { pairs } : {}) });
         if (s.peek() !== ',')
             break;
         s.i++;

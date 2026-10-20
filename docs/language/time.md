@@ -44,7 +44,8 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
 
 - **bpm counts beats**: `meter("6/8") step=60bpm` is two dotted quarters a second, a bar of 2 s. With unequal beats the bar lasts beats ÷ bpm and the beats keep their proportions: `meter("7/8") step=90bpm` is a bar of 2 s, beats of 0.86, 0.57 and 0.57 s.
 - **`beat=n`** — another feel: n equal beats over the pulses (`meter("4/4") beat=2`, alla breve: its bpm counts half notes). On a cell that is not a meter it does nothing (a warning).
-- **`swing=8n:r`** — swing on the bar ([#18](https://github.com/yggi/cells/issues/18)): one level of the meter leans, named by its note value. Of each pair of eighths, the second starts r of the way through their beat (.5 straight, .67 a triplet swing, .6 a light one); a share is a decimal or a fraction, `swing=8n:2/3` the exact triplet swing and `swing=16n:31/60` ([decision 042](../decisions/042-swing-share-as-a-fraction.md)); `swing=16n:.55` leans the sixteenths and leaves the eighths straight. A group of three (6/8's beat, 7/8's first) leans its second and third: the second moves as far as a pair's would, from a third (at .67 to a half: long, short, short), the third halfway between it and the end.
+- **`swing=8n:r`** — swing on the bar ([#18](https://github.com/yggi/cells/issues/18)): one level of the meter leans, named by its note value. Of each pair of eighths, the second starts r of the way through their beat (.5 straight, .67 a triplet swing, .6 a light one); a share is a decimal or a fraction, `swing=8n:2/3` the exact triplet swing and `swing=16n:31/60` ([decision 042](../decisions/042-swing-share-as-a-fraction.md)); `swing=16n:.55` leans the sixteenths and leaves the eighths straight. A group of three (6/8's beat, 7/8's first) leans its second and third (or stays straight, with `:pairs` below): the second moves as far as a pair's would, from a third (at .67 to a half: long, short, short), the third halfway between it and the end.
+  - **`:pairs`** leans a level's pairs alone and keeps its groups of three straight ([decision 053](../decisions/053-the-pairs-alone.md)): `meter("7/8") swing=8n:2/3:pairs` swings the eighths of each two-eighth beat and plays the first beat's three evenly, as a band swinging a mixed meter (5/8, 7/8, 10/8) does in jazz, and as Jambot's band does (its T16). It is a word on one level (`swing=8n:2/3:pairs,16n:.55` leans the sixteenths in every group). Where every group of the level is three (6/8's eighths), it leans nothing, with a warning.
   - **Every node keeps its ends**: a beat, a group's start and a bar line never move, so an odd bar never drifts. Swing never changes a meter's pulse or beat, so it never changes what a tap counts, only where its steps fall; a level no beat divides into (`swing=4n:.67` in 4/4, its quarters the beats) leans nothing, with a warning.
   - **Taps are placed through it**, whatever the meter's own steps: `meter("4/4") swing=8n:.67` swings `step=8n` and `step=pulse*2` alike. A division the tree holds is even within its node (16ths under swung eighths: the second at a third of a long eighth); one it doesn't hold is even within its beat, not warped (`8t` under swung eighths stays straight).
   - It swings a `meter(…)` and a `scan(…)` alike: a scan's taps lean within its bent beats.
@@ -55,6 +56,15 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
 
 ```cells
 &bar meter("4/4") step=100bpm swing=8n:.6
+&eighths step=8n 0
+&tick s=sine loop=A5 env=&(map=adsr 0 .03 0 .02)
+&out loop=SAMPLE_RATE map=sample [&eighths * &tick]
+```
+
+The pairs alone, in 7/8: the eighths of the first beat even, those of the second and third swung.
+
+```cells
+&bar meter("7/8") step=90bpm swing=8n:2/3:pairs
 &eighths step=8n 0
 &tick s=sine loop=A5 env=&(map=adsr 0 .03 0 .02)
 &out loop=SAMPLE_RATE map=sample [&eighths * &tick]

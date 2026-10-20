@@ -341,9 +341,10 @@ export interface CellDecl {
   readonly paramClocks?: Readonly<Record<string, StepSpec>>;
   /**
    * swing= by level (#18): `swing=8n:.67`, `swing=8n:.6,16n:.55`, each a note value of a meter's and a share (params.swing
-   * holds the first share). Absent for a bare `swing=.6`.
+   * holds the first share); `pairs` where it says `:pairs`, its groups of three straight (decision 053). Absent for a bare
+   * `swing=.6`.
    */
-  readonly swing?: readonly { readonly level: string; readonly share: number }[];
+  readonly swing?: readonly { readonly level: string; readonly share: number; readonly pairs?: boolean }[];
   /** legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none. */
   readonly legato?: readonly { readonly level: string; readonly share: number }[];
   /** dough parameters (s=saw lpf=1800 …): a cell with any of these is a voice. */

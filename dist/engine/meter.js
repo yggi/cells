@@ -48,16 +48,25 @@ export function swingLevelProblem(m, whole) {
         ? null
         : `no beat of this meter divides into two or more of ${noteName(whole) ?? 'them'} (its beats: ${m.beats.map((b) => noteName(b / m.unit) ?? b).join(' ')}), and swing never moves a beat`;
 }
+export function pairsProblem(m, whole) {
+    const len = whole * m.unit;
+    const probe = { ...m, swing: [{ level: noteName(whole) ?? '', whole, share: 0.6, pairs: true }] };
+    for (let i = 0; i * len < m.pulses - 1e-9; i++)
+        if (Math.abs(swingAt(probe, i * len) - i * len) > 1e-9)
+            return null;
+    return `every group of ${noteName(whole) ?? 'them'} in it is three, and :pairs keeps those straight`;
+}
 const held = (v) => {
     for (let k = 0, x = v; k <= 6; k++, x *= 2)
         if (Math.abs(x - Math.round(x)) < 1e-9)
             return true;
     return false;
 };
-function knotsOf(parts, share) {
+function knotsOf(parts, lean) {
     const even = Array.from({ length: parts + 1 }, (_, i) => i / parts);
-    if (share === null || (parts !== 2 && parts !== 3))
+    if (lean === null || (parts !== 2 && parts !== 3) || (parts === 3 && lean.pairs))
         return even;
+    const { share } = lean;
     if (parts === 2)
         return [0, Math.min(0.95, Math.max(0.05, share)), 1];
     const second = Math.min(0.95, Math.max(0.05, share - 1 / 6));
@@ -79,7 +88,7 @@ function swungIn(x, n, levels) {
         const rel = ((x - from) / len) * parts;
         if (!held(rel))
             break;
-        const knots = knotsOf(parts, levels.find((l) => Math.abs(l.len - child) < 1e-9)?.share ?? null);
+        const knots = knotsOf(parts, levels.find((l) => Math.abs(l.len - child) < 1e-9) ?? null);
         const k = Math.min(parts - 1, Math.max(0, Math.floor(rel + 1e-9)));
         from += k * child;
         len = child;
@@ -91,7 +100,7 @@ function swungIn(x, n, levels) {
 export function swingAt(m, p) {
     if (!m.swing?.length)
         return p;
-    const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share }));
+    const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share, ...(l.pairs ? { pairs: true } : {}) }));
     const P = m.pulses;
     const bar = Math.floor(p / P + 1e-9);
     const x = p - bar * P;

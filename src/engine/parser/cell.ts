@@ -33,7 +33,7 @@ interface Body {
   chance: number | null;
   seed: number | null;
   size: number | null;
-  swing: { level: string; share: number }[] | null;
+  swing: { level: string; share: number; pairs?: boolean }[] | null;
   legato: { level: string; share: number }[] | null;
   readonly params: Record<string, number | string>;
   readonly paramSpans: Record<string, Span>;
@@ -311,7 +311,7 @@ const readCellParam: Reader = (s, b, word) => {
 
 /**
  * swing= (#18): by level, `swing=8n:.67` (a meter's eighths, each pair's second two thirds through; a share is a decimal or a
- * fraction, `8n:2/3`, decision 042), several levels coarse
+ * fraction, `8n:2/3`, decision 042; `8n:2/3:pairs` its pairs alone, its groups of three straight, decision 053), several levels coarse
  * to fine, `swing=8n:.6,16n:.55`, one level alone left free, `swing=8n:free(.5, .5..75)`; bare, `swing=.6`, as any number.
  * legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none; bare,
  * `legato=.5`, a line's own.
@@ -319,13 +319,14 @@ const readCellParam: Reader = (s, b, word) => {
 const readLevels: Reader = (s, b, word) => {
   if (!/^[1-9][0-9]*(?:n\.?|t):/.test(s.text.slice(s.i))) return readParam(s, b, word);
   const vs = s.i;
-  const levels: { level: string; share: number }[] = [];
+  const levels: { level: string; share: number; pairs?: boolean }[] = [];
   for (;;) {
     const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
     if (level === null) s.fail(`a level after the comma, a note value and a share: ${word}=8n:.6,16n:.55`);
     s.i++; // (:)
     let share: number;
-    if (s.text.startsWith('free(', s.i)) {
+    const free = s.text.startsWith('free(', s.i);
+    if (free) {
       const f = parseFree(s, 'param', false);
       (f as { param?: string }).param = word;
       share = f.value;
@@ -348,7 +349,19 @@ const readLevels: Reader = (s, b, word) => {
         share = parseFloat(n!);
       }
     }
-    levels.push({ level: level!, share });
+    // (:pairs, decision 053: the level's pairs lean alone, its groups of three straight)
+    let pairs = false;
+    if (s.peek() === ':') {
+      const at = s.i;
+      s.i++;
+      const named = s.match(/[a-z]+/y);
+      if (named !== 'pairs')
+        s.fail(`after a share, :pairs leans a level's pairs alone and keeps its groups of three straight: swing=${level}:2/3:pairs`, at, 1 + (named?.length ?? 0));
+      if (word === 'legato') s.fail(`:pairs is swing='s, a level's pairs leaning alone; a legato= share holds every note of its level: legato=${level}:.5`, at, 6);
+      pairs = true;
+      if (free && s.peek() === ',') s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
+    }
+    levels.push({ level: level!, share, ...(pairs ? { pairs } : {}) });
     if (s.peek() !== ',') break;
     s.i++;
   }
