@@ -8,6 +8,7 @@ import { shorten } from '../shorten';
 import { PRESETS } from '../presets';
 import { LIBRARY } from '../../repository/library';
 import { unionOf } from '../../repository/fit';
+import { holesOf } from '../../repository/holes';
 
 const BASE = `&bar scan(1 1 1 1) step=120bpm
 &tune over=scale(major) step=4n 0 2 4 2
@@ -57,11 +58,14 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
 
   it('every example, and every fragment of the seed library, is normal already', () => {
     for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source).steps]).toEqual([key, []]);
-    // (a meter compiles alone; a rhythm is open on its meter, and a bass line on its meter and its harmony, so each is read
-    // on a 4/4 at a tempo, with a key and a harmony, where it fits)
-    const bar = '&bar meter("4/4") step=100bpm\n&key scale(major, C)\n&harm over=key step=1m [0,2,4] [3,5,7]';
+    // (a meter compiles alone; a rhythm is open on its meter, a bass line on its meter and its harmony, and a harmony on
+    // its meter and its key, so each is read on a 4/4 at a tempo, with a key and, unless it writes its own, a harmony,
+    // where it fits)
+    const keyed = '&bar meter("4/4") step=100bpm\n&key scale(major, C)';
+    const bar = `${keyed}\n&harm over=key step=1m [0,2,4] [3,5,7]`;
     for (const f of LIBRARY) {
-      const text = compileSource(f.text).ok ? f.text : unionOf(f.text, bar).text;
+      const bench = holesOf(f.text, compileSource).defines.includes('&harm') ? keyed : bar;
+      const text = compileSource(f.text).ok ? f.text : unionOf(f.text, bench).text;
       expect([f.id, compileSource(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
     }
   });
