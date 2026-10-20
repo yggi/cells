@@ -40,6 +40,8 @@ export interface SwingLevel {
     /** Its length in whole notes (`8n`: 1/8). */
     readonly whole: number;
     readonly share: number;
+    /** `:pairs` (#204, decision 053): only its nodes of two lean, its groups of three kept even (a band swinging 7/8 as jazz does). */
+    readonly pairs?: boolean;
 }
 /** How a time signature writes a meter: its pulses, its note value and its beats (in pulses), each pulse in `sub` steps. */
 export interface Signature {
@@ -73,6 +75,11 @@ export declare const bareSwingLevel: (m: Meter) => string | null;
  * What is wrong with it, or null.
  */
 export declare function swingLevelProblem(m: Meter, whole: number): string | null;
+/**
+ * A level written `:pairs` (decision 053) that leans nothing in this meter: none of its nodes is a pair, every one a group
+ * of three (6/8's eighths), which `:pairs` keeps straight. What is wrong with it, or null.
+ */
+export declare function pairsProblem(m: Meter, whole: number): string | null;
 /**
  * Where a position, in pulses from the first downbeat, is played under the meter's swing (#18): within its beat, through
  * the beat's tree (`swungIn`). Every beat and every bar line stays where it is.

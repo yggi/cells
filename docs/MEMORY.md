@@ -35,7 +35,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - `&name … ` one cell per line; steps `0 2 ~ 4@2 0!4 [0,2,4]` → [cell](language/cell.md)
 - `scan(…)` `euclid(k,n)` `sin(n)`; `&t[i]` `&t[$i]` `&t[a:b]` `&t[<<n]` `&t^n` (degrees) `&t^$n` (grid steps) → [braid](language/braid.md)
 - `over=&t` `scale(name, tonic)` `shift=n` `cycle=n`; `over=key` the main key (the first `scale(…)`) → [tables](language/tables.md)
-- `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), taps of a meter (`pulse` `beat` `16n` `4n.` `8t` `1m`, `&m:16n`, `cycle=n` bars), `beat=`, swing on the bar (`swing=8n:.67`), `stride=`, `laps=` → [time](language/time.md)
+- `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), taps of a meter (`pulse` `beat` `16n` `4n.` `8t` `1m`, `&m:16n`, `cycle=n` bars), `beat=`, swing on the bar (`swing=8n:.67`, `:pairs` its pairs alone), `stride=`, `laps=` → [time](language/time.md)
 - `map=edo|ed(r)|ratios`, note names → [tuning](language/tuning.md)
 - `free(default, lo..hi)`, `free(0 2 4 ~)` a braid, recorded → [free](language/free.md)
 - `[a * &voice, …]` mixes (sorts, `+` `*` commute), `map=sample` `postgain=` (its master, linear); a gate `&g play=&tune level=&a*.4 [&lead, &bell]` → [mix](language/mix.md)
@@ -88,3 +88,4 @@ One line each; the record has the rationale. → [decisions/](decisions/README.m
 - 050 · The equalities: text rungs E0–E5 (byte, layout, renaming, normal form, structure, orbit; minified: E4 after Shorten) and sound rungs S1–S3 (sounds identical, same notes, same cells' steps), over the whole piece where it ends · → decisions/050-the-equalities.md
 - 051 · Literate cells: a file's code is the join of all its ```cells blocks, in order; the rest is prose, kept byte for byte when the code is rewritten (each line back into the block it came from); raw cells text with no fence is a valid shorthand; docs pages stay pages of samples · → decisions/051-literate-cells.md
 - 052 · the ladder's variations are operators in cells, a fragment's text to texts (rotate, drop, add; transpose, invert, reverse), a fifth tool's `Rewrite`s; anchors derived from the text; which and when the frontend's; a variation plays other notes (S2), keeps anchors and holes, filed with `varies:` `by:` · → decisions/052-variations-as-operators.md
+- 053 · `swing=8n:r:pairs` leans a level's pairs alone and keeps its groups of three straight (a band's mixed meter, Jambot's T16); without the word a three leans as 040 says; a word on the level, the tree's shorthand, not a share for threes (`/` is a fraction) nor a tap's override · → decisions/053-the-pairs-alone.md

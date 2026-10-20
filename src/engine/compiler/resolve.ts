@@ -41,7 +41,7 @@ function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato'>): Me
     felt,
     levels.flatMap((l) => {
       const whole = noteValue(l.level);
-      return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
+      return whole === null ? [] : [{ level: l.level, whole, share: l.share, ...(l.pairs ? { pairs: true } : {}) }];
     }),
   );
 }

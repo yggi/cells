@@ -52,6 +52,8 @@ export interface SwingLevel {
   /** Its length in whole notes (`8n`: 1/8). */
   readonly whole: number;
   readonly share: number;
+  /** `:pairs` (#204, decision 053): only its nodes of two lean, its groups of three kept even (a band swinging 7/8 as jazz does). */
+  readonly pairs?: boolean;
 }
 
 /** How a time signature writes a meter: its pulses, its note value and its beats (in pulses), each pulse in `sub` steps. */
@@ -131,6 +133,17 @@ export function swingLevelProblem(m: Meter, whole: number): string | null {
     : `no beat of this meter divides into two or more of ${noteName(whole) ?? 'them'} (its beats: ${m.beats.map((b) => noteName(b / m.unit) ?? b).join(' ')}), and swing never moves a beat`;
 }
 
+/**
+ * A level written `:pairs` (decision 053) that leans nothing in this meter: none of its nodes is a pair, every one a group
+ * of three (6/8's eighths), which `:pairs` keeps straight. What is wrong with it, or null.
+ */
+export function pairsProblem(m: Meter, whole: number): string | null {
+  const len = whole * m.unit;
+  const probe: Meter = { ...m, swing: [{ level: noteName(whole) ?? '', whole, share: 0.6, pairs: true }] };
+  for (let i = 0; i * len < m.pulses - 1e-9; i++) if (Math.abs(swingAt(probe, i * len) - i * len) > 1e-9) return null;
+  return `every group of ${noteName(whole) ?? 'them'} in it is three, and :pairs keeps those straight`;
+}
+
 /** On a node's divisions, halved and halved again (a 16th under swung 8ths): v in units of its children. */
 const held = (v: number) => {
   for (let k = 0, x = v; k <= 6; k++, x *= 2) if (Math.abs(x - Math.round(x)) < 1e-9) return true;
@@ -141,11 +154,12 @@ const held = (v: number) => {
  * Where a node's children start, as shares of it: even, or leaning (#18). A pair's second starts at the share; a group of
  * three leans its second and third (Jambot's ternary lean, `apps/web/src/meter/ternary.ts` there): the second moves as far
  * as a pair's would, from a third (.67, a pair's triplet swing, puts it at a half: long, short, short), the third halfway
- * between it and the end.
+ * between it and the end. A level written `:pairs` (decision 053) leans its pairs alone: its groups of three stay even.
  */
-function knotsOf(parts: number, share: number | null): number[] {
+function knotsOf(parts: number, lean: { readonly share: number; readonly pairs?: boolean } | null): number[] {
   const even = Array.from({ length: parts + 1 }, (_, i) => i / parts);
-  if (share === null || (parts !== 2 && parts !== 3)) return even;
+  if (lean === null || (parts !== 2 && parts !== 3) || (parts === 3 && lean.pairs)) return even;
+  const { share } = lean;
   if (parts === 2) return [0, Math.min(0.95, Math.max(0.05, share)), 1];
   const second = Math.min(0.95, Math.max(0.05, share - 1 / 6));
   return [0, second, (second + 1) / 2, 1];
@@ -158,7 +172,7 @@ function knotsOf(parts: number, share: number | null): number[] {
  * are that level, evenly otherwise. A position on the tree's divisions (or halves of them) is placed through it; one the
  * tree doesn't hold (a triplet in a swung pair) is even within its node, not warped.
  */
-function swungIn(x: number, n: number, levels: readonly { len: number; share: number }[]): number {
+function swungIn(x: number, n: number, levels: readonly { len: number; share: number; pairs?: boolean }[]): number {
   const finest = Math.min(...levels.map((l) => l.len));
   let from = 0;
   let len = n;
@@ -173,7 +187,7 @@ function swungIn(x: number, n: number, levels: readonly { len: number; share: nu
     const child = len / parts;
     const rel = ((x - from) / len) * parts;
     if (!held(rel)) break;
-    const knots = knotsOf(parts, levels.find((l) => Math.abs(l.len - child) < 1e-9)?.share ?? null);
+    const knots = knotsOf(parts, levels.find((l) => Math.abs(l.len - child) < 1e-9) ?? null);
     const k = Math.min(parts - 1, Math.max(0, Math.floor(rel + 1e-9)));
     from += k * child;
     len = child;
@@ -189,7 +203,7 @@ function swungIn(x: number, n: number, levels: readonly { len: number; share: nu
  */
 export function swingAt(m: Meter, p: number): number {
   if (!m.swing?.length) return p;
-  const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share }));
+  const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share, ...(l.pairs ? { pairs: true } : {}) }));
   const P = m.pulses;
   const bar = Math.floor(p / P + 1e-9);
   const x = p - bar * P;
