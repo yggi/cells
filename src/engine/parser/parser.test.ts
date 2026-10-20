@@ -4,6 +4,7 @@ import { pickLabel, refLabel, type Atom, type Binding } from '../ast';
 import { distribute } from '../algebra';
 import { rateChain } from '../transform';
 import { PARAM_ALIASES } from '../attributes';
+import { even as evenPositions } from '../../theory/modes';
 
 /** The parser keeps a mix as written; typed here as compile would, the voices of these tests being sounds. */
 const SOUNDS = /^(lead|bass|organ|cello|v|w|v2)$/;
@@ -395,7 +396,20 @@ describe('euclid(k, n, shift): Bjorklund’s rhythms', () => {
   it('a written braid like any other: steps to read through a kit, or to play', () => {
     expect(parse('&t step=4 euclid(3, 8)').diagnostics).toEqual([]);
     expect(parse('&t euclid(9, 8)').diagnostics[0].message).toMatch(/euclid\(k, n\)/);
-    expect(parse('&t even(3, 8)').diagnostics[0].message).toMatch(/euclid\(3, 8\)/);
+    expect(parse('&t even(3, 8)').diagnostics[0].message).toMatch(/euclid\(3, 8, 2\)/);
+  });
+  it('even(k, n, p) is gone: the rhythm it names plays the onsets even(k, n, p) did, every 1 ≤ k ≤ n ≤ 16, 0 ≤ p < n (#7)', () => {
+    expect(parse('&t even(3, 8, 2)').diagnostics[0].message).toMatch(/for a rhythm, euclid\(3, 8\)$/);
+    for (let n = 1; n <= 16; n++)
+      for (let k = 1; k <= n; k++)
+        for (let p = 0; p < n; p++) {
+          const said = /for a rhythm, (.*)$/.exec(parse(`&t even(${k}, ${n}, ${p})`).diagnostics[0].message)?.[1];
+          const r = parse(`&t ${said}`);
+          expect(r.diagnostics, `even(${k}, ${n}, ${p}): ${said}`).toEqual([]);
+          const b = r.cells[0].braid;
+          const at = b.kind === 'list' ? b.tokens.flatMap((t, j) => (t.atom.kind === 'note' ? [j] : [])) : null;
+          expect(at, `even(${k}, ${n}, ${p}): ${said}`).toEqual(evenPositions(k, n, p));
+        }
   });
 });
 
