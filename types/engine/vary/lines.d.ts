@@ -1,15 +1,39 @@
 import { type Meter } from '../meter';
-import type { CompileResult } from '../program';
+import { type CompileResult } from '../program';
 /** One note of a line: its step on the line's grid, the voice it strikes, its own level as written, its level in all. */
 export interface LineNote {
     readonly step: number;
-    /** The voice, as written: `&hh`. */
+    /** The voice, as written: `&hh` (a pitched line's: the voice it is a product with, `&bassV`). */
     readonly voice: string;
     /** Its own level as written (`.25` of `&hh:0:.25`), or null: none, at 1. */
     readonly own: string | null;
     /** Its level: its own times its level cell's at its step. */
     readonly level: number;
+    /** A pitched line's note: what it plays; absent on a line of hits. */
+    readonly pitch?: Pitch;
 }
+/**
+ * A pitched note: its step as written (a degree, or a splice), then mirrored and moved by the operators, so it plays
+ * `sign · value + by` degrees of the table it reads (`inverse(…)` mirrors a splice in its own table, `degree(…)` moves it
+ * there, as the language reads them).
+ */
+export interface Pitch {
+    /** As written: a degree (`2`), or the splice (`&bassNext^$-1`). */
+    readonly written: number | string;
+    readonly sign: 1 | -1;
+    readonly by: number;
+    /** What its step plays as written, as the compiler flattens it: the table read and its shift, the value, its accidental, its grid steps. */
+    readonly table: string;
+    readonly value: number;
+    readonly alter: number;
+    readonly transpose: number;
+}
+/** The pitch moved: mirrored (`sign` −1) and then moved `by` degrees, after what it already was. */
+export declare const moved: (p: Pitch, sign: 1 | -1, by: number) => Pitch;
+/** What a pitch plays, for S2: its table, its degree there, its accidental and its grid steps. */
+export declare const pitchKey: (p: Pitch) => string;
+/** A pitch's text: a degree as a number; a splice wrapped in `inverse(…)` and moved by `^n` (on a bare reference) or `degree(…, n)`. */
+export declare function pitchText(p: Pitch): string;
 /** How a line's trigger is written: steps, a subsequence on one step, or a Euclid of one voice. */
 type Form = 'steps' | 'seq' | 'euclid';
 /** A line of a fragment's card, as read. */
@@ -45,11 +69,18 @@ export interface Line {
     readonly stepWhole: number | null;
     /** The meter it taps, or null. */
     readonly meter: Meter | null;
+    /** A pitched line's table (its `over=`, bare) and voice: its notes carry their pitch; absent, a line of hits. */
+    readonly pitched?: {
+        readonly table: string | null;
+        readonly voice: string;
+    };
 }
 /** A voice's pitch, as the lines are ordered by it: its General MIDI drum note, else past every drum. */
 export declare const pitchOf: (voice: string) => number;
 /** The steps of n a Euclid strikes, turned right by r, as the parser reads `x(k,n,r)` (`parser/braid.ts`). */
 export declare const euclidHits: (k: number, n: number, r: number) => number[];
+/** A tap's length in whole notes on a meter: a note value (`16n`), a bar (`1m`), a pulse; null for any other. */
+export declare function tapWhole(tap: string | undefined, meter: Meter | null): number | null;
 /**
  * The lines of a fragment, read off its text and its compile (the fragment under its workbench): every entry of every
  * card (a MIDI card, a sound card) whose trigger is a cell this module reads, in the order the cards write them.
