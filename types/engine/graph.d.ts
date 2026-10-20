@@ -13,6 +13,7 @@ export type GraphNode = {
     readonly kind: 'cell';
     readonly depth: number;
     readonly cell: ResolvedCell;
+    /** A meter: its bar keeps time, written meter(…) or scan(…) (`keepsTime`, #123); drawn as ground, with its net. */
     readonly isMeter: boolean;
     readonly petalOf?: string;
     /**

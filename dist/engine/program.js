@@ -125,3 +125,7 @@ export function adsrOf(c) {
 export function isPositional(c) {
     return c.root || c.scan !== null;
 }
+export function keepsTime(result, name) {
+    const clock = result.clocks.get(name);
+    return !!clock && clock.cell === name && !clock.tap && !!result.cells.get(name)?.meter;
+}
