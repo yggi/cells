@@ -1,13 +1,14 @@
 /**
  * A rewrite: what Migrate, Normalise and Shorten each find in a piece (decision 049), one change to its text with what it
  * does in a sentence. Shorten offers its rewrites as suggestions, measured (`shorten/harness.ts`); Migrate and Normalise
- * apply theirs, round after round (`rewriteAll`). Pure.
+ * apply theirs, round after round (`rewriteAll`). Vary (`vary/`, decision 052) gives a fragment's variations as rewrites
+ * too, each playing other notes, so `rewriteAll`, which takes only a rewrite that plays the same, never runs it. Pure.
  */
 import { compileSource } from './compile';
 import { soundsIdentical } from './sameness';
 
 /** The tool a rewrite is one of. */
-export type Tool = 'migrate' | 'normalise' | 'shorten';
+export type Tool = 'migrate' | 'normalise' | 'shorten' | 'vary';
 
 export interface Rewrite<R extends string = string> {
   readonly id: string;

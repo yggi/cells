@@ -1,7 +1,7 @@
 /**
  * The cells language. Text in, events out: `compileSource` reads a piece, `plan` and `windowAt` realize it a window at a
  * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
- * shorter, `normalise` in the canonical spelling, `fold` and `cellsFromMidi` write cells from notes, `pieceMidi` and
+ * shorter, `normalise` in the canonical spelling, `variations` and `varied` vary a fragment (its anchors: `anchorsOf`), `fold` and `cellsFromMidi` write cells from notes, `pieceMidi` and
  * `readMidi` carry MIDI files. `createRepository` holds fragments and finds them by their place in style space and by how
  * often they were used together; `METER_FRAGMENTS` are its meters, `RHYTHM_FRAGMENTS` its rhythms, `BASS_FRAGMENTS` its bass lines, `LIBRARY` all, read
  * from the seed library's files (`fragments/`);
@@ -21,6 +21,7 @@ export { windowAt, type Window } from './engine/schedule';
 export { createHost, planOf, type ToEngine, type FromEngine } from './engine/host';
 export { shorten, shortenAll } from './engine/shorten';
 export { normalise } from './engine/normalise';
+export { anchorsOf, varied, variations, type Anchor, type Operator, type Variation, type VaryOptions } from './engine/vary';
 export { fold } from './engine/fold';
 export { cellsFromMidi } from './engine/midiimport';
 export { pieceMidi } from './engine/midiexport';
