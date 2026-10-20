@@ -114,6 +114,28 @@ const PRESETS: Record<string, { point: StylePoint; eighth: number }> = {
   'Swing jazz': { point: SWING_JAZZ, eighth: 1 },
 };
 const NEAREST_PRESET: Record<Pattern, string> = { root: 'Ambient', pump: 'Techno', eight: 'Techno', funk: 'Funk', walk: 'Swing jazz' };
+// The pattern `bass.ts` plays most at each preset, and its share there (#209): at Deep house the root and the funk line tie
+// (0.35 each in the blend), and the root, first in `bass.ts`'s order, takes it. The eighths are the most at none.
+const MOST: Record<string, Pattern> = {
+  'Synth-pop': 'root',
+  Techno: 'pump',
+  'Deep house': 'root',
+  Ambient: 'root',
+  'Lo-fi hip hop': 'funk',
+  Funk: 'funk',
+  'Bossa nova': 'funk',
+  'Swing jazz': 'walk',
+};
+const MOST_SHARE: Record<string, number> = {
+  'Synth-pop': 0.32,
+  Techno: 0.5,
+  'Deep house': 0.31,
+  Ambient: 0.68,
+  'Lo-fi hip hop': 0.48,
+  Funk: 0.74,
+  'Bossa nova': 0.63,
+  'Swing jazz': 0.74,
+};
 
 // The host's workbench: a meter at a tempo, a key, and a harmony of one chord a bar, as pitch classes for the expected notes.
 const HOST = '&bar meter("4/4") step=120bpm\n&key scale(major, C)';
@@ -171,9 +193,12 @@ function expected(pattern: Pattern, chords: readonly (readonly number[])[]): [nu
 }
 
 describe('the bass lines', () => {
-  it('are bass.ts’s five patterns, each one point associated as the facet bass, source seed, lifted from bass.ts', () => {
+  it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most', () => {
     expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual(PATTERNS.map((p) => ID[p]));
-    for (const p of PATTERNS) expect(byId(ID[p]).association, p).toEqual([{ point: POINT[p], weight: 1, facet: 'bass' }]);
+    for (const p of PATTERNS) {
+      const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
+      expect(byId(ID[p]).association, p).toEqual([POINT[p], ...presets.map((name) => PRESETS[name]!.point)].map((point) => ({ point, weight: 1, facet: 'bass' })));
+    }
   });
 
   it('each uses &harm and nothing else of the host’s: what it needs is read off its text', () => {
@@ -276,6 +301,29 @@ describe('where each sits', () => {
           library.query(POINT[p], 31, {}, { facet }).map((f) => f.fragment.id),
           `${p}, ${facet}`,
         ).not.toContain(ID[p]);
+    }
+  });
+});
+
+describe('at the presets (#209)', () => {
+  const library = createRepository(LIBRARY);
+  for (const [name, { point, eighth }] of Object.entries(PRESETS))
+    it(`${name}: a query for the bass returns first the pattern bass.ts plays most there, ${MOST[name]}, at distance 0`, () => {
+      const shares = PATTERNS.map((p) => share(p, point, eighth));
+      const most = PATTERNS[shares.indexOf(Math.max(...shares))]!;
+      expect([most, +Math.max(...shares).toFixed(2)]).toEqual([MOST[name], MOST_SHARE[name]]);
+      const [first, second] = library.query(point, 2, {}, { facet: 'bass' });
+      expect([first!.fragment.id, first!.distance]).toEqual([ID[most], 0]);
+      expect(second!.distance).toBeGreaterThan(0);
+    });
+
+  it('at each, that pattern alone is at distance 0: the walk only at Swing jazz, the eighths at none', () => {
+    for (const [name, { point }] of Object.entries(PRESETS)) {
+      const at0 = library
+        .query(point, 5, {}, { facet: 'bass' })
+        .filter((f) => f.distance === 0)
+        .map((f) => f.fragment.id);
+      expect(at0, name).toEqual([ID[MOST[name]!]]);
     }
   });
 });
