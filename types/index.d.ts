@@ -3,7 +3,7 @@
  * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
  * shorter, `normalise` in the canonical spelling, `fold` and `cellsFromMidi` write cells from notes, `pieceMidi` and
  * `readMidi` carry MIDI files. `createRepository` holds fragments and finds them by their place in style space and by how
- * often they were used together; `METER_FRAGMENTS` are its meters, `RHYTHM_FRAGMENTS` its rhythms, `LIBRARY` both, read
+ * often they were used together; `METER_FRAGMENTS` are its meters, `RHYTHM_FRAGMENTS` its rhythms, `BASS_FRAGMENTS` its bass lines, `LIBRARY` all, read
  * from the seed library's files (`fragments/`);
  * `readFragment` and `writeFragment` read and write a fragment as a file, Markdown with YAML frontmatter; `readPiece` and
  * `writePiece` a piece (an example, a person's) as the same kind of file, its title, tags and tier in the frontmatter,
@@ -35,6 +35,7 @@ export { createRepository, EMPTY_LAYER, layerProblems, type Fragment, type Found
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
 export { METER_FRAGMENTS } from './repository/meters';
 export { RHYTHM_FRAGMENTS } from './repository/rhythms';
+export { BASS_FRAGMENTS } from './repository/bass';
 export { LIBRARY } from './repository/library';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
 export { fitOf, unionOf, type Fit, type Union } from './repository/fit';

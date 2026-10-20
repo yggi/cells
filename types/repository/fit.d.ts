@@ -56,7 +56,7 @@ export declare function unionOf(fragment: string, workbench: string): Union;
 /** Whether a fragment fits a workbench (see the module's comment); `compiled` compiles a text, and may cache it (`cachedCompile`). */
 export declare function fitOf(fragment: string, workbench: string, compiled?: (text: string) => CompileResult): Fit;
 /**
- * A compile cached by text: the last `limit` texts compiled. At 512, a library of 26 fragments, each alone and in its union
+ * A compile cached by text: the last `limit` texts compiled. At 512, a library of 31 fragments, each alone and in its union
  * with a workbench, holds about ten workbenches' queries.
  */
 export declare const cachedCompile: (limit?: number) => ((text: string) => CompileResult);

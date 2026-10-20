@@ -3,6 +3,7 @@
 // built from the files is the meters and the rhythms.
 import { describe, expect, it } from 'vitest';
 import { readFragment, readFragments, writeFragment, type FragmentFile } from './files';
+import { BASS_FRAGMENTS } from './bass';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
@@ -48,7 +49,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are twenty-six', () => expect(files).toHaveLength(26));
+  it('are thirty-one', () => expect(files).toHaveLength(31));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -58,10 +59,12 @@ describe('the seed files', () => {
     expect(bare(read(writeFragment({ fragment, meta, prose })))).toEqual({ fragment, meta, prose });
   });
 
-  it('build the meters and the rhythms, in file order, and the library is both', () => {
-    expect(SEED.map((f) => f.fragment)).toEqual(LIBRARY);
+  it('build the meters, the rhythms and the bass lines, each in file order, and the library is all of them', () => {
+    expect(new Set(SEED.map((f) => f.fragment))).toEqual(new Set(LIBRARY));
+    expect(SEED).toHaveLength(LIBRARY.length);
     expect(SEED.filter((f) => f.path.startsWith('meters/')).map((f) => f.fragment)).toEqual(METER_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('rhythms/')).map((f) => f.fragment)).toEqual(RHYTHM_FRAGMENTS);
+    expect(SEED.filter((f) => f.path.startsWith('bass/')).map((f) => f.fragment)).toEqual(BASS_FRAGMENTS);
   });
 
   // (the points that come from Jambot's presets, lifted into presets.ts: a file must write each exactly; the points placed
@@ -81,6 +84,8 @@ describe('the seed files', () => {
       'Funk drums': [FUNK],
       'Bossa nova drums': [BOSSA_NOVA],
       'Swing jazz drums': [SWING_JAZZ],
+      'funk bass': [FUNK],
+      'walking bass': [SWING_JAZZ],
     };
     for (const [id, points] of Object.entries(AT_PRESETS))
       expect(
@@ -89,10 +94,14 @@ describe('the seed files', () => {
       ).toEqual(points);
   });
 
-  it('each says it is a seed, every drum bar where it was lifted from, and each has prose', () => {
+  it('each says it is a seed, every drum bar and bass line where it was lifted from, and each has prose', () => {
     expect(SEED.every((f) => f.meta.source === 'seed' && f.prose.length > 0)).toBe(true);
-    expect(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id)).toEqual(RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith(' drums')).map((f) => f.id));
-    expect(new Set(SEED.map((f) => f.meta.lifted).filter(Boolean))).toEqual(new Set(['yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8']));
+    expect(new Set(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id))).toEqual(
+      new Set([...RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith(' drums')), ...BASS_FRAGMENTS].map((f) => f.id)),
+    );
+    expect(new Set(SEED.map((f) => f.meta.lifted).filter(Boolean))).toEqual(
+      new Set(['yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8', 'yggi/jambot packages/engine/src/bass.ts @ 1037a80']),
+    );
   });
 });
 

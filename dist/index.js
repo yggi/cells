@@ -17,6 +17,7 @@ export { createRepository, EMPTY_LAYER, layerProblems, } from "./repository/frag
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";
 export { METER_FRAGMENTS } from "./repository/meters.js";
 export { RHYTHM_FRAGMENTS } from "./repository/rhythms.js";
+export { BASS_FRAGMENTS } from "./repository/bass.js";
 export { LIBRARY } from "./repository/library.js";
 export { holesOf, INTERFACE_NAMES } from "./repository/holes.js";
 export { fitOf, unionOf } from "./repository/fit.js";
