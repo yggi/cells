@@ -251,17 +251,18 @@ describe('two drum bars on one workbench', () => {
 describe('a query given the workbench', () => {
   it('ranks only the fragments that fit, in the order they rank without it', () => {
     const r = createRepository(LIBRARY);
-    const all = r.query(BOSSA_NOVA, 26).map((f) => f.fragment.id);
-    const fitting = r.query(BOSSA_NOVA, 26, {}, { workbench: bench('4/4') }).map((f) => f.fragment.id);
+    const all = r.query(BOSSA_NOVA, LIBRARY.length).map((f) => f.fragment.id);
+    const fitting = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('4/4') }).map((f) => f.fragment.id);
     expect(fitting).toEqual(all.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id)));
-    expect(r.query(BOSSA_NOVA, 26, {}, { workbench: bench('7/8') })).toEqual([]);
-    expect(r.query(BOSSA_NOVA, 26, {}, { facet: 'meter', workbench: bench('4/4') })).toEqual([]);
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('7/8') })).toEqual([]);
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('4/4') })).toEqual([]);
     expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('4/4') }).map((f) => f.fragment.id)).toEqual(fitting.slice(0, 2));
   });
 
   it('without a workbench, every query is what it was', () => {
     const r = createRepository(LIBRARY);
-    for (const facet of [undefined, 'meter', 'rhythm']) expect(r.query(FUNK, 26, {}, { facet, workbench: undefined })).toEqual(r.query(FUNK, 26, {}, { facet }));
+    for (const facet of [undefined, 'meter', 'rhythm', 'bass'])
+      expect(r.query(FUNK, LIBRARY.length, {}, { facet, workbench: undefined })).toEqual(r.query(FUNK, LIBRARY.length, {}, { facet }));
   });
 });
 
@@ -280,20 +281,23 @@ describe('what it costs', () => {
   // a query for k stops at the k-th that fits, so k = 1 tries the first that fits; the same workbench again, every fit
   // cached by its two texts (`cachedFit`), compiles nothing. One wall-clock line stays as a gross witness: ten seconds
   // for all three, which a machine under any load keeps and a compile of each of a thousand unions doesn't.
-  it('a fitting query over the 26 compiles at most one union a fragment for a new workbench, one for k = 1, and none the second time', () => {
-    const compiles = vi.mocked(compileSource);
+  it('a fitting query over the library compiles at most one union a fragment for a new workbench, one for k = 1, and none the second time', async () => {
+    // (the repository loaded afresh, so it compiles through the counted compile: with isolate off, a file that ran earlier
+    // in this worker may have loaded it with the real one)
+    vi.resetModules();
+    const compiles = vi.mocked((await import('../engine/compile')).compileSource);
     const count = <T>(run: () => T): [T, number] => {
       const before = compiles.mock.calls.length;
       return [run(), compiles.mock.calls.length - before];
     };
-    const r = createRepository(LIBRARY);
-    r.query(FUNK, 26, {}, { workbench: bench('4/4') });
+    const r = (await import('./fragments')).createRepository(LIBRARY);
+    r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
     const t0 = performance.now();
-    const [first, fresh] = count(() => r.query(FUNK, 26, {}, { workbench }));
+    const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
     expect(first).toHaveLength(13);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
-    expect(count(() => r.query(FUNK, 26, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);
+    expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);
     const [one, tried] = count(() => r.query(FUNK, 1, {}, { workbench: `${workbench}\n&more loop=A4` }));
     expect(one).toHaveLength(1);
     // (the workbench, and the union of the first fragment that fits: a fragment that fails a cheaper check compiles none)
