@@ -5,6 +5,7 @@ export { windowAt } from "./engine/schedule.js";
 export { createHost, planOf } from "./engine/host.js";
 export { shorten, shortenAll } from "./engine/shorten/index.js";
 export { normalise } from "./engine/normalise/index.js";
+export { anchorsOf, varied, variations } from "./engine/vary/index.js";
 export { fold } from "./engine/fold/index.js";
 export { cellsFromMidi } from "./engine/midiimport.js";
 export { pieceMidi } from "./engine/midiexport.js";

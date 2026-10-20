@@ -69,7 +69,7 @@ describe('the seed files', () => {
 
   // (the points that come from Jambot's presets, lifted into presets.ts: a file must write each exactly; the points placed
   // by hand, the other meters' and the claves', have the files as their source)
-  it("write Jambot's presets' points exactly, where a meter or a drum bar is at a preset", () => {
+  it("write Jambot's presets' points exactly, where a meter, a drum bar or a bass line is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       '4/4': [SYNTH_POP, TECHNO, BOSSA_NOVA],
       '4/4 swung on 8n': [SWING_JAZZ],
@@ -84,12 +84,21 @@ describe('the seed files', () => {
       'Funk drums': [FUNK],
       'Bossa nova drums': [BOSSA_NOVA],
       'Swing jazz drums': [SWING_JAZZ],
-      'funk bass': [FUNK],
+      'funk bass': [FUNK, LO_FI, BOSSA_NOVA],
       'walking bass': [SWING_JAZZ],
     };
+    // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
+    const AFTER_OWN_POINT: Record<string, readonly object[]> = { 'root bass': [SYNTH_POP, DEEP_HOUSE, AMBIENT], 'pumping bass': [TECHNO] };
     for (const [id, points] of Object.entries(AT_PRESETS))
       expect(
         LIBRARY.find((f) => f.id === id)!.association.map((wp) => wp.point),
+        id,
+      ).toEqual(points);
+    for (const [id, points] of Object.entries(AFTER_OWN_POINT))
+      expect(
+        LIBRARY.find((f) => f.id === id)!
+          .association.slice(1)
+          .map((wp) => wp.point),
         id,
       ).toEqual(points);
   });
