@@ -1,4 +1,4 @@
-import { isMidiCard } from "./program.js";
+import { isMidiCard, keepsTime } from "./program.js";
 import { leaves } from "./subseq.js";
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from "./ids.js";
 import { VOICE_KIT } from "./compiler/declare.js";
@@ -21,7 +21,7 @@ export const isTurntable = (c) => typeof c.params.motor === 'number' || typeof c
 export function writtenGraph(result) {
     const edges = [];
     const depth = new Map();
-    const meters = new Set([...result.clocks.values()].filter((c) => c.positional).map((c) => c.cell));
+    const meters = new Set([...result.clocks.keys()].filter((name) => keepsTime(result, name)));
     const playedBy = new Map();
     const from = (o) => (o.tape ? o.tape.head : o.cell);
     for (const o of result.outputs)

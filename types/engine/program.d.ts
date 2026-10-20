@@ -431,4 +431,9 @@ export declare function adsrOf(c: ResolvedCell): {
 } | null;
 /** Scans (meters) and grids place their steps within the bar; a plain list steps evenly. */
 export declare function isPositional(c: ResolvedCell): boolean;
+/**
+ * Does this cell keep time as a meter (#123)? Its compiled bar (`ResolvedCell.meter`, written `meter(…)` or `scan(…)`, one
+ * `Meter` since #16) drives a clock of its own, not a tap of another's. What the graph draws as a meter, with its net.
+ */
+export declare function keepsTime(result: CompileResult, name: string): boolean;
 export {};

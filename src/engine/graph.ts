@@ -6,7 +6,7 @@
  * Depth grows outward from the roots: a cell sits one ring beyond the table
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
-import { isMidiCard, type CompileResult, type ResolvedCell } from './program';
+import { isMidiCard, keepsTime, type CompileResult, type ResolvedCell } from './program';
 import type { Atom, Binding, Pick, ValueMap } from './ast';
 import { leaves } from './subseq';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
@@ -20,6 +20,7 @@ export type GraphNode =
       readonly kind: 'cell';
       readonly depth: number;
       readonly cell: ResolvedCell;
+      /** A meter: its bar keeps time, written meter(…) or scan(…) (`keepsTime`, #123); drawn as ground, with its net. */
       readonly isMeter: boolean;
       readonly petalOf?: string;
       /**
@@ -218,8 +219,8 @@ export interface WrittenGraph {
 export function writtenGraph(result: CompileResult): WrittenGraph {
   const edges: GraphEdge[] = [];
   const depth = new Map<string, number>();
-  // meters: clocks whose entries place beats in a bar (agogic, even) — not a vibrato looping at a rate
-  const meters = new Set([...result.clocks.values()].filter((c) => c.positional).map((c) => c.cell));
+  // meters: cells whose bar keeps time, meter(…) or scan(…) alike (#123) — not a vibrato looping at a rate
+  const meters = new Set([...result.clocks.keys()].filter((name) => keepsTime(result, name)));
   const playedBy = new Map<string, string[]>();
   // (an output played off a tape comes from its read head, not the tape's source)
   const from = (o: (typeof result.outputs)[number]) => (o.tape ? o.tape.head : o.cell);

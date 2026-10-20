@@ -500,3 +500,12 @@ export function adsrOf(c: ResolvedCell): { attack: number; decay: number; sustai
 export function isPositional(c: ResolvedCell): boolean {
   return c.root || c.scan !== null;
 }
+
+/**
+ * Does this cell keep time as a meter (#123)? Its compiled bar (`ResolvedCell.meter`, written `meter(…)` or `scan(…)`, one
+ * `Meter` since #16) drives a clock of its own, not a tap of another's. What the graph draws as a meter, with its net.
+ */
+export function keepsTime(result: CompileResult, name: string): boolean {
+  const clock = result.clocks.get(name);
+  return !!clock && clock.cell === name && !clock.tap && !!result.cells.get(name)?.meter;
+}

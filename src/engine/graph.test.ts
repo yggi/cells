@@ -15,3 +15,22 @@ describe('a tap on a belt says itself on its wire (#92)', () => {
     expect(label('step=&bar:beat')).toBe('beat · belt');
   });
 });
+
+describe('a meter is a meter in the graph, written meter(…) or scan(…) (#123)', () => {
+  /** The graph's meters for a bar written `bar`, and a line tapping it. */
+  const meters = (bar: string) => {
+    const r = compileSource(`&bar ${bar} step=120bpm\n&hat step=8n 0 0\n&v s=sine loop=C4\n&out map=sample [&hat * &v]`);
+    expect(r.diagnostics).toEqual([]);
+    return writtenGraph(r).nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.cell.name] : []));
+  };
+  it('meter("4/4") and scan(1 1 1 1) are both the meter; the line tapping it is not', () => {
+    expect(meters('meter("4/4")')).toEqual(['bar']);
+    expect(meters('scan(1 1 1 1)')).toEqual(['bar']);
+    expect(meters('meter("7/8")')).toEqual(['bar']);
+  });
+  it('a list at a rate keeps no time: no meter', () => {
+    const r = compileSource('&lfo step=4bpm 0 3 5\n&v s=sine loop=C4\n&out map=sample [&lfo * &v]');
+    expect(r.diagnostics).toEqual([]);
+    expect(writtenGraph(r).nodes.some((n) => n.kind === 'cell' && n.isMeter)).toBe(false);
+  });
+});
