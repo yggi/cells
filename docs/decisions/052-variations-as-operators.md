@@ -1,6 +1,6 @@
 # 052 · The ladder's variations are operators in cells, from a fragment's text to texts: rotate, drop and add first, then transpose, invert and reverse; anchors derived from the text; which and when stays the frontend's
 
-**Date:** 2026-10-20 · **Status:** proposed (a draft for the owner, who approved drafting it on 2026-10-20; the questions at the end wait on the owner's ruling) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425
+**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425
 
 ## Context
 
@@ -256,16 +256,16 @@ Why derived:
 
 No rung changes how any piece sounds: no snapshot moves, and nothing of #29 is needed (every operator writes forms the language has).
 
-### 6. Questions for the owner
+### 6. Settled with the owner (2026-10-20: all eight as recommended)
 
-1. **The operators in cells, one set for both frontends?** Recommended: yes, as above; the policy (when, which, the draw, `keep`) stays the frontend's.
-2. **Anchors derived from the text, or declared in frontmatter?** Recommended: derived (point 3), with the frontend's `keep` for its own reasons.
-3. **The backbeat rule lifted now, or written by the meter's accents (#21)?** Recommended: lifted now from Jambot's `backbeatOf`, as a function of the meter's pulses; when a meter can say its accents, the rule reads them instead.
-4. **A rotation that only moves levels** (a line one sound strikes on every step): S1-distinct, S2-identical. Recommended: not a variation, as point 2 says; none occurs on E31's bars, so Jambot is still reproduced exactly.
-5. **`by:` beside `varies:`?** Recommended: yes, a string `Variation.by` carries and the frontend files; nothing reads it but people and, later, the hash (6).
-6. **A variation in its source's orbit (rotate, transpose, invert, reverse): its own text, or a reference to its source with the operator** (#49's requirement 1, `fragment(h)^5`)? Recommended: its own text now, since references wait for the hash; `varies` and `by` keep what a reference would need.
-7. **The pitched operators' amounts:** transpose by −2, −1, 1, 2 degrees of the table read; invert about the line's first note; reverse within each span between anchors (the whole lap where there is none). Recommended: these, each a default the frontend may narrow (`degrees`, `operators`).
-8. **Where it lives:** `src/engine/vary/`, a fifth tool beside Shorten and Normalise sharing their `Rewrite` (`Tool` gains `vary`), its promise "other notes, anchors kept" where theirs is S1; never run by `rewriteAll`. Recommended: yes.
+1. **The operators in cells, one set for both frontends?** Ruled, as recommended: yes, as above; the policy (when, which, the draw, `keep`) stays the frontend's.
+2. **Anchors derived from the text, or declared in frontmatter?** Ruled, as recommended: derived (point 3), with the frontend's `keep` for its own reasons.
+3. **The backbeat rule lifted now, or written by the meter's accents (#21)?** Ruled, as recommended: lifted now from Jambot's `backbeatOf`, as a function of the meter's pulses; when a meter can say its accents, the rule reads them instead.
+4. **A rotation that only moves levels** (a line one sound strikes on every step): S1-distinct, S2-identical. Ruled, as recommended: not a variation, as point 2 says; none occurs on E31's bars, so Jambot is still reproduced exactly.
+5. **`by:` beside `varies:`?** Ruled, as recommended: yes, a string `Variation.by` carries and the frontend files; nothing reads it but people and, later, the hash (6).
+6. **A variation in its source's orbit (rotate, transpose, invert, reverse): its own text, or a reference to its source with the operator** (#49's requirement 1, `fragment(h)^5`)? Ruled, as recommended: its own text now, since references wait for the hash; `varies` and `by` keep what a reference would need.
+7. **The pitched operators' amounts:** transpose by −2, −1, 1, 2 degrees of the table read; invert about the line's first note; reverse within each span between anchors (the whole lap where there is none). Ruled, as recommended: these, each a default the frontend may narrow (`degrees`, `operators`).
+8. **Where it lives:** `src/engine/vary/`, a fifth tool beside Shorten and Normalise sharing their `Rewrite` (`Tool` gains `vary`), its promise "other notes, anchors kept" where theirs is S1; never run by `rewriteAll`. Ruled, as recommended: yes.
 
 ## Why
 
