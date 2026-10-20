@@ -9,7 +9,9 @@
  *
  * Every point of a bass line is associated as the facet `bass`: the role it is found as, so a query for the bass never
  * sees a lead's line (both are lines over `&harm`, which the fit can't tell apart). Each sits where its pattern's share of
- * `bass.ts`'s blend is greatest, and where several points tie, the one nearest the preset where its share is greatest.
+ * `bass.ts`'s blend is greatest, and where several points tie, the one nearest the preset where its share is greatest; and
+ * at each of Jambot's presets where `bass.ts` plays its pattern most, as the meters are at theirs (#209), so a query for the
+ * bass at a preset finds that pattern first.
  * Each is a file of the seed library, `fragments/bass/*.md` (`seed.ts`), whose prose says what it is, where it sits and why,
  * and what `bass.ts` draws that a fixed line doesn't.
  */
