@@ -31,4 +31,4 @@ The owner ruled (2026-10-20) that cells gets a way to lean a level's pairs alone
 
 - `SwingLevel.pairs` (`src/engine/meter.ts`) carries it from the parser to the placement (`knotsOf`); `pairsProblem` is the warning.
 - Tests (`src/engine/swing.test.ts`): every meter of the repository (13) with `8n:2/3:pairs`, its eighths a literal table, a pair exactly as `swing=8n`, a three exactly as straight; 5/8, 7/8 and 10/8 at 90 bpm land on Jambot's T16 onsets (lifted from there, measured by its `swingMapAt`).
-- Jambot states a mixed meter's 8n swing with it at the pin that carries it, so its shadow's last swing gap goes (Jambot's own issue).
+- Jambot states a mixed meter's 8n swing with it at the pin that carries it, so its shadow's last swing gap goes ([yggi/jambot#451](https://github.com/yggi/jambot/issues/451)).
