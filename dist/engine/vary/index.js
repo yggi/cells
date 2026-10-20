@@ -3,9 +3,11 @@ import { compileSource } from "../compile.js";
 import { declWords, setBraid } from "../edit.js";
 import { gmDrumNote } from "../midi.js";
 import { anchorsAmong } from "./anchors.js";
-import { linesOf, pitchOf, written } from "./lines.js";
+import { linesOf, moved, pitchKey, pitchOf, written } from "./lines.js";
 export { backbeatOf } from "./anchors.js";
 export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
+export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse'];
+export const DEGREES = [-2, -1, 1, 2];
 function read(fragment, workbench = '') {
     const own = new Set(declarations(fragment).map((l) => l.name));
     const bench = declarations(workbench)
@@ -16,21 +18,23 @@ function read(fragment, workbench = '') {
     if (!result.ok)
         return { lines: [], anchors: [] };
     const lines = linesOf(text, result);
-    return { lines, anchors: anchorsAmong(lines) };
+    return { lines, anchors: anchorsAmong(lines, result) };
 }
 export const anchorsOf = (fragment, workbench) => read(fragment, workbench).anchors;
 const named = (name) => (name.startsWith('&') ? name : `&${name}`);
 export function variations(fragment, options = {}) {
-    const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1 } = options;
+    const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES } = options;
     const { lines, anchors } = read(fragment, workbench);
-    const left = new Set([...anchors.map((a) => a.line), ...keep.map(named)]);
+    const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
+    const pinned = (line, n) => anchors.some((a) => a.line === line.name && a.step === n.step);
     const onset = (i, step) => {
         const w = lines[i].stepWhole;
         return w === null ? `${i}@${step}` : (step * w).toFixed(9);
     };
     const sound = (voice) => String(gmDrumNote(voice.slice(1)) ?? voice);
-    const keysOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${lines[i].stepWhole ?? i} ${n.voice}`);
-    const strikesOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}`);
+    const pitch = (n) => (n.pitch ? ` ${pitchKey(n.pitch)}` : '');
+    const keysOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${lines[i].stepWhole ?? i} ${n.voice}${pitch(n)}`);
+    const strikesOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}${pitch(n)}`);
     const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
     const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
     const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
@@ -83,7 +87,25 @@ export function variations(fragment, options = {}) {
         const line = lines[i];
         const levels = line.levels?.tokens;
         for (const operator of operators) {
-            if (operator === 'rotate') {
+            if (PITCHED_OPERATORS.includes(operator) !== !!line.pitched)
+                continue;
+            if (operator === 'transpose')
+                for (const n of degrees) {
+                    const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch, 1, n) }));
+                    offer(i, operator, notes, n, written(line, notes), `every note ${n > 0 ? 'up' : 'down'} ${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'}`);
+                }
+            else if (operator === 'invert') {
+                const f = line.notes[0].pitch.written;
+                if (typeof f !== 'number')
+                    continue;
+                const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch, -1, 2 * f) }));
+                offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`);
+            }
+            else if (operator === 'reverse') {
+                const notes = inOrder(reversed(line, (n) => pinned(line, n)));
+                offer(i, operator, notes, null, written(line, notes), 'its notes in reverse order between its anchors');
+            }
+            else if (operator === 'rotate') {
                 const notes = inOrder(line.notes.map((n) => ({ ...n, step: (n.step + 1) % line.steps })));
                 const turned = levels && [levels.at(-1), ...levels.slice(0, -1)];
                 offer(i, operator, notes, null, written(line, notes, turned, true), 'every note a step later, the last to the first');
@@ -106,6 +128,26 @@ export function variations(fragment, options = {}) {
             }
         }
     }
+    return out;
+}
+function reversed(line, anchored) {
+    const at = new Map(line.notes.map((n) => [n.step, n]));
+    const fixed = line.notes.filter(anchored).map((n) => n.step);
+    const spans = [];
+    if (!fixed.length)
+        spans.push(Array.from({ length: line.steps }, (_, s) => s));
+    else
+        for (const [k, start] of fixed.entries()) {
+            const end = fixed[(k + 1) % fixed.length] + (k + 1 === fixed.length ? line.steps : 0);
+            spans.push(Array.from({ length: end - start - 1 }, (_, j) => (start + 1 + j) % line.steps));
+        }
+    const out = line.notes.filter(anchored);
+    for (const span of spans)
+        for (const [j, step] of span.entries()) {
+            const n = at.get(span[span.length - 1 - j]);
+            if (n)
+                out.push({ ...n, step });
+        }
     return out;
 }
 export function drawn(draw, n) {

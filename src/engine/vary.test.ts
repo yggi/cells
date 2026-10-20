@@ -1,6 +1,6 @@
 // Decision 052's examples (#208): the ladder's variations as operators over a fragment's text. This holds what each of
-// the decision's ```cells blocks claims, and that Vary (`vary/`, rung 1: the rhythm operators) gives the drum bar's
-// variations as written there; the bass's wait for the pitched operators (rung 2). A block is a label (`# source: …`, or `# by: <operator>
+// the decision's ```cells blocks claims, and that Vary (`vary/`: the rhythm operators, rung 1, and the pitched ones,
+// rung 2) gives the drum bar's variations and the bass's as written there. A block is a label (`# source: …`, or `# by: <operator>
 // <line> [<amount>]` for a variation of the source before it), the workbench's lines, a blank line, and the fragment.
 // Each compiles; each variation plays other notes than its source and the others (S2), keeps its anchors (the anchored
 // lines' notes, S3, and each anchored note) and its holes, changes only the line it names, and does to it what its
@@ -13,7 +13,7 @@ import { flatten } from './flatten';
 import { codeShifts } from './program';
 import { playsSameNotes, sameNotes } from './sameness';
 import { holesOf } from '../repository/holes';
-import { anchorsOf, variations } from './vary';
+import { anchorsOf, PITCHED_OPERATORS, variations } from './vary';
 
 const DECISION = resolve(import.meta.dirname, '../../docs/decisions/052-variations-as-operators.md');
 const blocks = [...readFileSync(DECISION, 'utf8').matchAll(/^```cells\n([\s\S]*?)^```/gm)].map((m) => m[1]);
@@ -173,6 +173,27 @@ describe("Vary gives the decision's drum variations (rung 1)", () => {
 
   it('17 of them: 1 rotation, 4 drops, 12 adds', () => {
     expect(['rotate', 'drop', 'add'].map((rule) => all.filter((v) => v.rule === rule).length)).toEqual([1, 4, 12]);
+  });
+
+  for (const v of written)
+    it(`${v.label}: the one Vary gives by that name, word for word`, () => {
+      const found = all.filter((x) => x.by === v.label.replace('# by: ', ''));
+      expect(found).toHaveLength(1);
+      expect(found[0]!.apply(fragment)).toBe(v.fragment);
+    });
+});
+
+describe("Vary gives the decision's bass variations (rung 2)", () => {
+  const { source, variations: written } = groups[1]!;
+  const [workbench, fragment] = [source.text.split('\n').slice(1, source.text.split('\n').indexOf('')).join('\n'), source.fragment];
+  const all = variations(fragment, { workbench, operators: PITCHED_OPERATORS });
+
+  it('its anchors are the roots on steps 0 and 4, where the chord changes, as the decision says', () => {
+    expect(anchorsOf(fragment, workbench)).toEqual(SOURCES[1]!.notes.map((step) => ({ line: '&bass', step, reason: 'root' })));
+  });
+
+  it('6 of them: 4 transpositions, 1 inversion, 1 retrograde', () => {
+    expect(all.map((v) => v.by)).toEqual(['transpose &bass -2', 'transpose &bass -1', 'transpose &bass 1', 'transpose &bass 2', 'invert &bass', 'reverse &bass']);
   });
 
   for (const v of written)
