@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.7.0`.
+### Fixed
+- **`shiftsAt` turns a played cell only when a line reads through it** (#203, the fix of #171's reach): since v0.6.0 it turned every stepped played braid, so a reader of `LiveState.shifts` saw a played braid's shift count its own steps (Drums' `groove` read 5 two seconds in, written 0). Now a played cell turns only when something reads through it (an `over=`, the table a cell is shown through, a grid, a relative pick `&k[0]`), as #167 said; the turning tables turn as before. `readThrough(result)` (`engine/clocking`) is that set; `playedCells` is cached and returns a `ReadonlySet`. Over the 78 examples, 15 cells' shifts move in `shiftsAt` where 212 did, none of them played. No note moves (the event snapshot doesn't): a played cell's own notes read their written shift (`playing`) either way. A frontend that drew a played wheel with `playing()`'s split to work round it (Cell studio's `drawnShifts`) can read `LiveState.shifts` as it stands.
 
 ## v0.7.0 — 2026-10-20
 
