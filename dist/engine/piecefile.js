@@ -1,6 +1,7 @@
 import { readBlocks, rewrite, writeBody } from "./literate.js";
 import { readYaml, writeYaml, yamlValue } from "../repository/yaml.js";
-export const isPieceFile = (source) => /^---\r?\n/.test(source);
+const CELLS_FENCE = /^`{3,}\s*cells\s*$/m;
+export const isPieceFile = (source) => /^---\r?\n/.test(source) || CELLS_FENCE.test(source);
 function keyProblems(root) {
     const problems = [];
     for (const { key, line, value } of root.entries) {
@@ -18,8 +19,14 @@ function keyProblems(root) {
 }
 export function readPiece(markdown) {
     const lines = markdown.split(/\r?\n/);
-    if (lines[0] !== '---')
-        return { problems: [{ line: 1, message: 'no frontmatter: a piece file starts with a line `---`' }] };
+    if (lines[0] !== '---') {
+        if (!CELLS_FENCE.test(markdown))
+            return { problems: [{ line: 1, message: 'no frontmatter: a piece file starts with a line `---`, or holds a ```cells block' }] };
+        const body = readBlocks(lines, 0);
+        if ('problems' in body)
+            return body;
+        return { frontmatter: {}, text: body.text, prose: body.prose, map: body.map, layout: body.layout, bare: true };
+    }
     const close = lines.indexOf('---', 1);
     if (close < 0)
         return { problems: [{ line: 1, message: 'the frontmatter is never closed: no second line `---`' }] };
@@ -35,7 +42,12 @@ export function readPiece(markdown) {
         return { problems: problems.sort((a, b) => a.line - b.line) };
     return { frontmatter: yamlValue(root), text: body.text, prose: body.prose, map: body.map, layout: body.layout };
 }
-export function writePiece({ frontmatter, text, prose, layout }) {
+export function writePiece({ frontmatter, text, prose, layout, bare }) {
     const body = layout ? rewrite(layout, text) : { blocks: [[text]], gaps: [['', '```cells'], ['```']] };
+    if (bare && layout && !Object.keys(frontmatter).length) {
+        const first = body.gaps[0];
+        const out = writeBody(body, prose);
+        return first.every((l, j) => !l.trim() || j === first.length - 1) ? out.slice(1) : out;
+    }
     return `---\n${writeYaml(frontmatter)}---\n${writeBody(body, prose)}`;
 }

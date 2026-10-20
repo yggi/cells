@@ -27,7 +27,8 @@
  * prose is everything outside the blocks; `prose` here is what follows the last. `writePiece` of a file that was read
  * puts its text back in the blocks it came from and keeps the rest byte for byte (`rewrite`, `literate.ts`); a file made
  * new has one block, one blank line before it and before the prose, and ends with a newline, so a file written that way
- * reads and writes back byte for byte.
+ * reads and writes back byte for byte. A file of cells blocks with no frontmatter is a piece too (#212): its frontmatter
+ * is empty, its blocks the code, the rest prose, and it is written back without one.
  */
 import { type CodeLine, type Layout } from './literate';
 import { type YamlProblem, type YamlValue } from '../repository/yaml';
@@ -46,14 +47,19 @@ export interface PieceFile {
     readonly map?: readonly CodeLine[];
     /** The blocks and the prose between them, as the file has them (a file that was read). */
     readonly layout?: Layout;
+    /** The file has no frontmatter, only cells blocks among prose (#212): written back without one. */
+    readonly bare?: true;
 }
 /** What is wrong with a piece file, each problem with its line. */
 export interface PieceFileProblems {
     readonly problems: readonly YamlProblem[];
 }
-/** Is this a file (frontmatter first) rather than a bare cells text? A cells text never starts with `---`. */
+/**
+ * Is this a file (frontmatter first, or cells blocks among prose: #212) rather than a bare cells text? A cells text
+ * never starts with `---`, nor holds a line of backticks.
+ */
 export declare const isPieceFile: (source: string) => boolean;
 /** A piece file read: its frontmatter, its text and its prose, or what is wrong with it, each problem naming its line. */
 export declare function readPiece(markdown: string): PieceFile | PieceFileProblems;
 /** A piece file's text: the frontmatter, the cells blocks, the prose. */
-export declare function writePiece({ frontmatter, text, prose, layout }: PieceFile): string;
+export declare function writePiece({ frontmatter, text, prose, layout, bare }: PieceFile): string;
