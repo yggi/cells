@@ -14,6 +14,7 @@ import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { BOSSA_NOVA, FUNK } from './presets';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
+import { MODE_FRAGMENTS } from './modes';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 // (the compile counted, for what it costs: the real one, called through)
@@ -254,12 +255,12 @@ describe('a query given the workbench', () => {
     const r = createRepository(LIBRARY);
     const all = r.query(BOSSA_NOVA, LIBRARY.length).map((f) => f.fragment.id);
     const fitting = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('4/4') }).map((f) => f.fragment.id);
-    // (the rhythms that fit 4/4, and the kits, which fit any workbench: they use no name)
-    const kits = INSTRUMENT_FRAGMENTS.map((f) => f.id);
-    expect(fitting).toEqual(all.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id) || kits.includes(id)));
-    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('7/8') }).map((f) => f.fragment.id)).toEqual(all.filter((id) => kits.includes(id)));
+    // (the rhythms that fit 4/4, and the kits and the modes, which fit any workbench with no key: they use no name)
+    const open = [...INSTRUMENT_FRAGMENTS, ...MODE_FRAGMENTS].map((f) => f.id);
+    expect(fitting).toEqual(all.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id) || open.includes(id)));
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('7/8') }).map((f) => f.fragment.id)).toEqual(all.filter((id) => open.includes(id)));
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('4/4') })).toEqual([]);
-    expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('4/4') }).map((f) => f.fragment.id)).toEqual(fitting.filter((id) => !kits.includes(id)).slice(0, 2));
+    expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('4/4') }).map((f) => f.fragment.id)).toEqual(fitting.filter((id) => !open.includes(id)).slice(0, 2));
   });
 
   it('without a workbench, every query is what it was', () => {
@@ -297,8 +298,8 @@ describe('what it costs', () => {
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
     const t0 = performance.now();
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
-    // (the 13 rhythms and the 2 kits)
-    expect(first).toHaveLength(15);
+    // (the 13 rhythms, the 2 kits and the 5 modes)
+    expect(first).toHaveLength(20);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
     expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);
