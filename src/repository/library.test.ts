@@ -6,6 +6,7 @@ import { createRepository, EMPTY_LAYER, type Fragment, type StylePoint } from '.
 import { useFragments } from './learned';
 import { BASS_FRAGMENTS } from './bass';
 import { HARMONY_FRAGMENTS } from './harmony';
+import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
@@ -32,13 +33,14 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the thirteen rhythms, the five bass lines and the five harmonies, every point associated as its facet: thirty-six', () => {
-    expect(LIBRARY).toHaveLength(36);
+  it('is the thirteen meters, the thirteen rhythms, the five bass lines, the five harmonies and the two kits, every point associated as its facet: thirty-eight', () => {
+    expect(LIBRARY).toHaveLength(38);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'harmony')).toEqual(HARMONY_FRAGMENTS);
-    expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length, BASS_FRAGMENTS.length, HARMONY_FRAGMENTS.length]).toEqual([13, 13, 5, 5]);
+    expect(LIBRARY.filter((f) => facetsOf(f).join() === 'instrument')).toEqual(INSTRUMENT_FRAGMENTS);
+    expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length, BASS_FRAGMENTS.length, HARMONY_FRAGMENTS.length, INSTRUMENT_FRAGMENTS.length]).toEqual([13, 13, 5, 5, 2]);
   });
 
   it('a query of the meters over it returns what the meters alone return, at every one of 661 points', () => {

@@ -165,8 +165,8 @@ describe('docs: the drum names', () => {
   });
 
   it('midi.md lists each name on the note MIDI out sends it as (#140)', () => {
-    // (all 26 names of `GM_DRUMS` in `src/engine/midi.ts`)
-    expect(names(page)).toHaveLength(26);
+    // (all 75 names and aliases of `GM_KIT` in `src/engine/midi.ts`)
+    expect(names(page)).toHaveLength(75);
     expect(names(page).filter(([n, note]) => gmDrumNote(n) !== note)).toEqual([]);
   });
 });

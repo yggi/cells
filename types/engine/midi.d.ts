@@ -32,6 +32,23 @@ export declare const bendMessage: (channel: number, value: number) => number[];
  * mostly turn velocity into amplitude on a square law, so the velocity is the square root of that amplitude.
  */
 export declare function velocityOf(e: Pick<Played, 'gains' | 'levels'>, gain?: number): number;
+/**
+ * General MIDI's 47 percussion notes, 35–81, each under its kit name and its aliases (decision 054, ruling 3; #225):
+ * Strudel's short name where Strudel has one (`bd`, `sd`, `hh`, `oh`, `cp`, `rim`, `lt`, `mt`, `ht`, `cr`, `rd`, `cb`,
+ * `tb`, `sh`; decision 027, a spelling shared with Strudel keeps its meaning) and General MIDI's name as an alias, else
+ * General MIDI's name itself. A General MIDI name is spelled as one word: lower case, its words and hyphens run
+ * together (*Low-Mid Tom*, `lowmidtom`), a closing 1 dropped and a closing 2 spelled `two` (*Crash Cymbal 2*,
+ * `crashcymbaltwo`), since a trailing number is a copy's (`bd2` is a kick). The clave is General MIDI's `claves`, 75,
+ * Strudel's sample bank's `clave` its alias (Strudel has no short name for it): a sound of its own, not the side stick
+ * (`rim`, `rs`, 37) a drummer plays it with on a kit. `sh` is the maracas, 70 (#178: Strudel's shakers).
+ * The seed library's General MIDI kit defines a voice under each kit name (`fragments/instruments/gm-kit.md`).
+ */
+export declare const GM_KIT: readonly {
+    readonly note: number;
+    readonly name: string;
+    readonly aliases: readonly string[];
+}[];
+/** The General MIDI drum note for a kit member's name or alias (`GM_KIT`; lower case, a trailing number ignored: `bd2` is a kick), or null for a name it doesn't know. */
 export declare function gmDrumNote(name: string): number | null;
 /**
  * Each kit member's drum note: by its name where General MIDI has one (`gmDrumNote`), else the next note from 36
