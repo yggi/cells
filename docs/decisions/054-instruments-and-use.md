@@ -98,7 +98,7 @@ Four questions were put, and ruled as recommended.
   The expansion is a function of its own (`expand(text, resolve)`, #177's `inline`): what the compiler reads, and Cell studio's "write out".
 - **Shorten's measure** (049, ruling 2) counts a `use` line as one leaf, a reference, and the used fragment's lines nowhere in the piece: they are the library's.
   So the rule saves structure wherever it removes a line, and an override line equal to the used fragment's is a line Shorten offers to remove.
-- **The built-in card (decision 028) hears what the piece's own lines leave unread, not a used fragment's** (recommended).
+- **The built-in card (decision 028) hears what the piece's own lines leave unread, not a used fragment's** (ruled, as recommended).
   A piece with no card that uses the General MIDI kit would otherwise hear 47 voices held; a used fragment that should sound brings its card, as the seed's rhythms and bass lines do, or the piece reads its lines.
 - **MIDI out is unchanged**: a kit's notes are its members' (`kitNotes`), the voices a kit or a mix reads, so a used voice nothing plays sends nothing.
 
@@ -170,26 +170,26 @@ What the compiler reads for it, the expansion: the piece's own lines first, then
 **Why not** the union's renaming for `use`: two used fragments that both define `&bd` mean the same drum, and `&bd2` would send another note.
 **Why not** a reference by hash in the text (`use #7b0c…`): unreadable, and the code would change whenever the library does.
 
-## Open
+## Settled after (owner, 2026-10-21: each as recommended)
 
-Each with the recommendation; none is ruled.
+Each was open in the draft with a recommendation; the owner ruled every one as recommended, and the two gaps the draft found with them (the built-in card in *What follows*, the fit's voice holes below).
 
 - **The hash's exact quotient** (#46): E4, or E5, the orbit under the operators?
-  Recommended: a lockfile pins E4, since it pins what sounds and an orbit doesn't sound alike (E5 sits beside S1, decision 050); orbit identity is the repository's, for recognition (#224).
+  Ruled, as recommended: a lockfile pins E4, since it pins what sounds and an orbit doesn't sound alike (E5 sits beside S1, decision 050); orbit identity is the repository's, for recognition (#224).
 - **The lockfile's hash before E4 exists.**
-  Recommended: the hash of the text up to layout (E1), recorded with its rung (`e1:…`), so a lockfile written before E4 still checks after it (E4 follows from E1), and the next save records `e4:…`.
+  Ruled, as recommended: the hash of the text up to layout (E1), recorded with its rung (`e1:…`), so a lockfile written before E4 still checks after it (E4 follows from E1), and the next save records `e4:…`.
 - **Where a library's older versions live**, so a lockfile's hash resolves after the library moves on.
-  Recommended: the seed library keeps each version a release shipped, by hash, in a generated table (a kit changes seldom); a frontend keeps what its pieces' lockfiles name.
+  Ruled, as recommended: the seed library keeps each version a release shipped, by hash, in a generated table (a kit changes seldom); a frontend keeps what its pieces' lockfiles name.
 - **Qualified names** (`&kit fragment("gm kit")`, `&kit.bd`).
-  Recommended: only after the collision error has fired in a real piece or a composer's workbench, and only in a form that keeps a voice's drum note (`&kit.bd` reads `bd`).
+  Ruled, as recommended: only after the collision error has fired in a real piece or a composer's workbench, and only in a form that keeps a voice's drum note (`&kit.bd` reads `bd`).
 - **`use` of a learned or a person's fragment across devices**: its id (`composer 2026-10-18T21:04:00Z`, 048) lives in one frontend's layer, so another device's resolver may not hold it.
-  Recommended: until 047's store serves fragments by hash, a save that leaves a `use` only this device resolves offers to write it out (the expansion).
+  Ruled, as recommended: until 047's store serves fragments by hash, a save that leaves a `use` only this device resolves offers to write it out (the expansion).
 - **Version ranges** (`use "gm kit" ^1`).
-  Recommended: none. A `use` follows the current version until a save pins it, and moving the pin is a person's act; fragments have no versions of their own to range over.
+  Ruled, as recommended: none. A `use` follows the current version until a save pins it, and moving the pin is a person's act; fragments have no versions of their own to range over.
 - **The fit's voice holes.** Once a rhythm fragment's stand-in voices go (rung 2), its `&bd` is a hole, and 043 asks for the instruments after the rhythms, so the fit would refuse every groove on a workbench with no kit yet.
-  Recommended: a hole read only as a sound (played through a mix or a kit, never a table or a clock) doesn't block the fit, and the composer asks for the instrument next.
+  Ruled, as recommended: a hole read only as a sound (played through a mix or a kit, never a table or a clock) doesn't block the fit, and the composer asks for the instrument next.
 - **A used fragment swapped while it plays** (#177's requirement 4).
-  Recommended: the host re-resolves the `use` and recompiles at a section's boundary, the clocks kept as a tempo change keeps the beat (#56); the language adds nothing until a live client needs more.
+  Ruled, as recommended: the host re-resolves the `use` and recompiles at a section's boundary, the clocks kept as a tempo change keeps the beat (#56); the language adds nothing until a live client needs more.
 
 ## Rungs
 
