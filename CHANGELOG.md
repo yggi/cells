@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.8.0`.
+### Added
+- **The General MIDI drum kit as seed fragments** (decision 054's rung 1, #225, #178): `fragments/instruments/`, the facet `instrument`, two fragments that define voices and use nothing, so each fits any workbench and fills the holes a groove leaves: **`gm kit`**, a voice for each of General MIDI's 47 percussion notes (35–81), and **`core kit`**, the 13 a groove needs (`bd rim sd cp lt hh ph mt oh ht cr rd claves`), the same lines. Each sound is a first pass in cells' own parameters, to be judged by ear in Cell studio. Both sit once at the centre of style space, the core kit at twice the weight, so a query for an instrument finds it first. `INSTRUMENT_FRAGMENTS` (in `index.ts`) and `LIBRARY` hold them.
+- **All 47 General MIDI drum notes have names** (`GM_KIT` in `@yggi/cells/engine/midi`, which replaces `GM_DRUMS`): Strudel's short name where it has one, General MIDI's name spelled as one word as its alias (`cb`/`cowbell` 56, `tb`/`tambourine` 54, `sh`/`maracas` 70, `lowconga` 64, `crashcymbaltwo` 57 …), 75 names in all, listed in `docs/language/midi.md`. No name that had a note moves, and no example's MIDI out changes; a kit member newly named so (`cb`, `tb`, `sh`, a Latin drum, or one of them with a trailing number, `tb303`) is now sent on its General MIDI note instead of the next free one from 36.
 
 ## v0.8.0 — 2026-10-20
 
