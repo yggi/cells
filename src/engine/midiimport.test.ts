@@ -5,10 +5,11 @@ import { pieceMidi } from './midiexport';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
-import { noteOf } from './midi';
+import { GM_KIT, gmDrumNote, noteOf } from './midi';
 import { PRESETS } from './presets';
 import { pieceMeta } from './parser';
 import { writePiece } from './piecefile';
+import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 
 /** A piece's notes as (key, start, length), in order: what a file must give back. */
 function notesOf(source: string) {
@@ -158,6 +159,36 @@ describe('a MIDI file as a piece', () => {
     const r = compileSource(source);
     const back = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
     expect(back.tracks.flatMap((t) => t.notes.map((n) => `${n.channel}:${n.key}`))).toEqual(['10:75', '10:37']);
+  });
+
+  it('writes every one of General MIDI’s 47 drum notes, each with the seed General MIDI kit’s sound for its note (#178)', () => {
+    const smf = file([
+      {
+        name: 'drums',
+        notes: notes(
+          10,
+          GM_KIT.map((d, i) => [d.note, 24 * i, 24 * i + 12]),
+        ),
+        bends: [],
+        programs: [],
+      },
+    ]);
+    const { source, dropped } = cellsFromMidi(smf, 'test');
+    expect(dropped).toBe(0);
+    // (each voice it writes, under a kit name or an alias, is the kit's line for that note, word for word)
+    const kit = new Map(
+      INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')!
+        .text.split('\n')
+        .map((l) => [gmDrumNote(/^&(\w+)/.exec(l)![1]!), l.replace(/^&\w+ /, '')]),
+    );
+    const voices = [...source.matchAll(/^&(\w+) (s=.*)$/gm)].map(([, name, sound]) => [name!, sound!] as const);
+    expect(voices.filter(([name, sound]) => kit.get(gmDrumNote(name)) !== sound)).toEqual([]);
+    // (MIDI out sends each note back as itself, but General MIDI's lesser drums, written as the one beside them)
+    const r = compileSource(source);
+    const back = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf)).tracks.flatMap((t) => t.notes.map((n) => n.key));
+    const merged = { 35: 36, 40: 38, 43: 41, 44: 42, 47: 45, 50: 48, 52: 49, 53: 51, 55: 49, 57: 49, 59: 51 } as Record<number, number>;
+    expect(back).toEqual(GM_KIT.map((d) => merged[d.note] ?? d.note));
+    expect(GM_KIT.filter((d) => !(d.note in merged))).toHaveLength(36);
   });
 
   it('brings back the drums of a file the app saved as the piece’s own, at their pitches (#334)', () => {

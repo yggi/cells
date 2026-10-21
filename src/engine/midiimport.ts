@@ -69,7 +69,12 @@ const DIVISIONS = [1, 2, 3, 4, 6, 8, 12, 16];
 /** The share of starts that must fall on a grid for it to be the file's. */
 const ON_GRID = 0.995;
 
-/** General MIDI's drums as the voices a piece writes for them, by note; each voice's sound below. */
+/**
+ * General MIDI's drums as the voices a piece writes for them, by note; each voice's sound below. The kit's own notes
+ * (54, 56, 58, 60–74, 76–81: the hand percussion, #178) are written under the seed General MIDI kit's names (`GM_KIT`,
+ * `fragments/instruments/01-gm-kit.md`); the drum kit's notes under the names this importer always gave them, General
+ * MIDI's lesser drums with the one beside them (an acoustic bass drum as `bd`, a pedal hat as `hh`).
+ */
 const DRUM_OF: Record<number, string> = {
   35: 'bd',
   36: 'bd',
@@ -90,11 +95,36 @@ const DRUM_OF: Record<number, string> = {
   51: 'ride',
   52: 'crash',
   53: 'ride',
+  54: 'tb',
   55: 'crash',
+  56: 'cb',
   57: 'crash',
+  58: 'vibraslap',
   59: 'ride',
+  60: 'hibongo',
+  61: 'lowbongo',
+  62: 'mutehiconga',
+  63: 'openhiconga',
+  64: 'lowconga',
+  65: 'hightimbale',
+  66: 'lowtimbale',
+  67: 'highagogo',
+  68: 'lowagogo',
+  69: 'cabasa',
+  70: 'sh',
+  71: 'shortwhistle',
+  72: 'longwhistle',
+  73: 'shortguiro',
+  74: 'longguiro',
   75: 'claves',
+  76: 'hiwoodblock',
+  77: 'lowwoodblock',
+  78: 'mutecuica',
+  79: 'opencuica',
+  80: 'mutetriangle',
+  81: 'opentriangle',
 };
+/** Each voice's sound: the seed General MIDI kit's line for its note, word for word. */
 const DRUMS: Record<string, string> = {
   bd: 's=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)',
   sd: 's=white hpf=1500 env=&(map=adsr 0 .12 0 .05)',
@@ -108,6 +138,30 @@ const DRUMS: Record<string, string> = {
   crash: 's=white hpf=5000 env=&(map=adsr 0 .8 0 .3)',
   ride: 's=white hpf=9000 env=&(map=adsr 0 .4 0 .2)',
   claves: 's=sine loop=D7 env=&(map=adsr 0 .06 0 .03)',
+  tb: 's=white hpf=6000 env=&(map=adsr 0 .15 0 .05)',
+  cb: 's=square loop=G5 lpf=2500 env=&(map=adsr 0 .1 0 .03)',
+  vibraslap: 's=white hpf=2000 crush=6 env=&(map=adsr 0 .6 0 .2)',
+  hibongo: 's=sine loop=E4 pitch=0..7 * &(map=adsr 0 .02 0 0) env=&(map=adsr 0 .1 0 .03)',
+  lowbongo: 's=sine loop=A3 pitch=0..7 * &(map=adsr 0 .02 0 0) env=&(map=adsr 0 .12 0 .03)',
+  mutehiconga: 's=sine loop=C4 env=&(map=adsr 0 .05 0 .02)',
+  openhiconga: 's=sine loop=C4 pitch=0..5 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)',
+  lowconga: 's=sine loop=G3 pitch=0..5 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .25 0 .05)',
+  hightimbale: 's=tri loop=D5 env=&(map=adsr 0 .15 0 .05)',
+  lowtimbale: 's=tri loop=A4 env=&(map=adsr 0 .18 0 .05)',
+  highagogo: 's=tri loop=A5 env=&(map=adsr 0 .2 0 .05)',
+  lowagogo: 's=tri loop=E5 env=&(map=adsr 0 .2 0 .05)',
+  cabasa: 's=white hpf=5000 env=&(map=adsr 0 .06 0 .03)',
+  sh: 's=white hpf=4000 env=&(map=adsr 0 .04 0 .03)',
+  shortwhistle: 's=sine loop=B6 env=&(map=adsr .01 .08 0 .03)',
+  longwhistle: 's=sine loop=B6 env=&(map=adsr .01 .1 .8 .1)',
+  shortguiro: 's=white hpf=2500 lpf=5000 crush=4 env=&(map=adsr 0 .08 0 .02)',
+  longguiro: 's=white hpf=2500 lpf=5000 crush=4 env=&(map=adsr 0 .3 0 .05)',
+  hiwoodblock: 's=sine loop=G5 env=&(map=adsr 0 .04 0 .02)',
+  lowwoodblock: 's=sine loop=C5 env=&(map=adsr 0 .05 0 .02)',
+  mutecuica: 's=sine loop=A4 pitch=0..7 * &(map=adsr 0 .08 0 0) env=&(map=adsr 0 .1 0 .03)',
+  opencuica: 's=sine loop=A4 pitch=0..12 * &(map=adsr .05 .2 0 0) env=&(map=adsr 0 .3 0 .05)',
+  mutetriangle: 's=sine loop=A6 env=&(map=adsr 0 .08 0 .03)',
+  opentriangle: 's=sine loop=A6 env=&(map=adsr 0 1.2 0 .4)',
 };
 /** A drum this importer has no sound for: a tuned one (a sine at its pitch), else a noise. */
 const TUNED = 's=sine env=&(map=adsr 0 .3 0 .05)';
