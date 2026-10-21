@@ -54,6 +54,7 @@ export { BASS_FRAGMENTS } from './repository/bass';
 export { HARMONY_FRAGMENTS } from './repository/harmony';
 export { INSTRUMENT_FRAGMENTS } from './repository/instruments';
 export { LIBRARY } from './repository/library';
+export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
 export { fitOf, unionOf, type Fit, type Union } from './repository/fit';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';
