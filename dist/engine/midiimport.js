@@ -9,96 +9,14 @@ import { compileSource } from "./compile.js";
 import { MAX_REPS } from "./parser/scanner.js";
 import { codeShifts } from "./program.js";
 import { eventsBetween, plan } from "./realize.js";
-import { gmDrumNote, kitNotes } from "./midi.js";
+import { GM_KIT, gmDrumNote, kitNotes } from "./midi.js";
+import { INSTRUMENT_FRAGMENTS } from "../repository/instruments.js";
 const DIVISIONS = [1, 2, 3, 4, 6, 8, 12, 16];
 const ON_GRID = 0.995;
-const DRUM_OF = {
-    35: 'bd',
-    36: 'bd',
-    37: 'rim',
-    38: 'sd',
-    39: 'cp',
-    40: 'sd',
-    41: 'lo',
-    42: 'hh',
-    43: 'lo',
-    44: 'hh',
-    45: 'mid',
-    46: 'oh',
-    47: 'mid',
-    48: 'hi',
-    49: 'crash',
-    50: 'hi',
-    51: 'ride',
-    52: 'crash',
-    53: 'ride',
-    54: 'tb',
-    55: 'crash',
-    56: 'cb',
-    57: 'crash',
-    58: 'vibraslap',
-    59: 'ride',
-    60: 'hibongo',
-    61: 'lowbongo',
-    62: 'mutehiconga',
-    63: 'openhiconga',
-    64: 'lowconga',
-    65: 'hightimbale',
-    66: 'lowtimbale',
-    67: 'highagogo',
-    68: 'lowagogo',
-    69: 'cabasa',
-    70: 'sh',
-    71: 'shortwhistle',
-    72: 'longwhistle',
-    73: 'shortguiro',
-    74: 'longguiro',
-    75: 'claves',
-    76: 'hiwoodblock',
-    77: 'lowwoodblock',
-    78: 'mutecuica',
-    79: 'opencuica',
-    80: 'mutetriangle',
-    81: 'opentriangle',
-};
-const DRUMS = {
-    bd: 's=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)',
-    sd: 's=white hpf=1500 env=&(map=adsr 0 .12 0 .05)',
-    hh: 's=white hpf=8000 env=&(map=adsr 0 .04 0 .02)',
-    oh: 's=white hpf=7000 env=&(map=adsr 0 .25 0 .1)',
-    rim: 's=sine loop=E5 env=&(map=adsr 0 .03 0 .02)',
-    cp: 's=white hpf=1000 env=&(map=adsr 0 .08 0 .05)',
-    lo: 's=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)',
-    mid: 's=sine loop=C3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .2 0 .05)',
-    hi: 's=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .15 0 .05)',
-    crash: 's=white hpf=5000 env=&(map=adsr 0 .8 0 .3)',
-    ride: 's=white hpf=9000 env=&(map=adsr 0 .4 0 .2)',
-    claves: 's=sine loop=D7 env=&(map=adsr 0 .06 0 .03)',
-    tb: 's=white hpf=6000 env=&(map=adsr 0 .15 0 .05)',
-    cb: 's=square loop=G5 lpf=2500 env=&(map=adsr 0 .1 0 .03)',
-    vibraslap: 's=white hpf=2000 crush=6 env=&(map=adsr 0 .6 0 .2)',
-    hibongo: 's=sine loop=E4 pitch=0..7 * &(map=adsr 0 .02 0 0) env=&(map=adsr 0 .1 0 .03)',
-    lowbongo: 's=sine loop=A3 pitch=0..7 * &(map=adsr 0 .02 0 0) env=&(map=adsr 0 .12 0 .03)',
-    mutehiconga: 's=sine loop=C4 env=&(map=adsr 0 .05 0 .02)',
-    openhiconga: 's=sine loop=C4 pitch=0..5 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)',
-    lowconga: 's=sine loop=G3 pitch=0..5 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .25 0 .05)',
-    hightimbale: 's=tri loop=D5 env=&(map=adsr 0 .15 0 .05)',
-    lowtimbale: 's=tri loop=A4 env=&(map=adsr 0 .18 0 .05)',
-    highagogo: 's=tri loop=A5 env=&(map=adsr 0 .2 0 .05)',
-    lowagogo: 's=tri loop=E5 env=&(map=adsr 0 .2 0 .05)',
-    cabasa: 's=white hpf=5000 env=&(map=adsr 0 .06 0 .03)',
-    sh: 's=white hpf=4000 env=&(map=adsr 0 .04 0 .03)',
-    shortwhistle: 's=sine loop=B6 env=&(map=adsr .01 .08 0 .03)',
-    longwhistle: 's=sine loop=B6 env=&(map=adsr .01 .1 .8 .1)',
-    shortguiro: 's=white hpf=2500 lpf=5000 crush=4 env=&(map=adsr 0 .08 0 .02)',
-    longguiro: 's=white hpf=2500 lpf=5000 crush=4 env=&(map=adsr 0 .3 0 .05)',
-    hiwoodblock: 's=sine loop=G5 env=&(map=adsr 0 .04 0 .02)',
-    lowwoodblock: 's=sine loop=C5 env=&(map=adsr 0 .05 0 .02)',
-    mutecuica: 's=sine loop=A4 pitch=0..7 * &(map=adsr 0 .08 0 0) env=&(map=adsr 0 .1 0 .03)',
-    opencuica: 's=sine loop=A4 pitch=0..12 * &(map=adsr .05 .2 0 0) env=&(map=adsr 0 .3 0 .05)',
-    mutetriangle: 's=sine loop=A6 env=&(map=adsr 0 .08 0 .03)',
-    opentriangle: 's=sine loop=A6 env=&(map=adsr 0 1.2 0 .4)',
-};
+const DRUM_OF = Object.fromEntries(GM_KIT.map((d) => [d.note, d.name]));
+const DRUMS = Object.fromEntries(INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')
+    .text.split('\n')
+    .map((line) => /^&(\w+) (.*)$/.exec(line).slice(1, 3)));
 const TUNED = 's=sine env=&(map=adsr 0 .3 0 .05)';
 const NOISE = 's=white hpf=6000 env=&(map=adsr 0 .1 0 .05)';
 function kitOf(name, notes) {
