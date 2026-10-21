@@ -57,40 +57,69 @@ export function velocityOf(e: Pick<Played, 'gains' | 'levels'>, gain = Math.max(
 }
 
 /**
- * The General MIDI drum note for a kit member's name (lower case, a trailing number ignored: `bd2` is a kick), or
- * null for a name it doesn't know. The clave is Strudel's `clave` (its sample bank's name) and General MIDI's `claves`,
- * 75, a sound of its own: not the side stick (`rim`, `rs`, 37) a drummer plays it with on a kit.
+ * General MIDI's 47 percussion notes, 35–81, each under its kit name and its aliases (decision 054, ruling 3; #225):
+ * Strudel's short name where Strudel has one (`bd`, `sd`, `hh`, `oh`, `cp`, `rim`, `lt`, `mt`, `ht`, `cr`, `rd`, `cb`,
+ * `tb`, `sh`; decision 027, a spelling shared with Strudel keeps its meaning) and General MIDI's name as an alias, else
+ * General MIDI's name itself. A General MIDI name is spelled as one word: lower case, its words and hyphens run
+ * together (*Low-Mid Tom*, `lowmidtom`), a closing 1 dropped and a closing 2 spelled `two` (*Crash Cymbal 2*,
+ * `crashcymbaltwo`), since a trailing number is a copy's (`bd2` is a kick). The clave is General MIDI's `claves`, 75,
+ * Strudel's sample bank's `clave` its alias (Strudel has no short name for it): a sound of its own, not the side stick
+ * (`rim`, `rs`, 37) a drummer plays it with on a kit. `sh` is the maracas, 70 (#178: Strudel's shakers).
+ * The seed library's General MIDI kit defines a voice under each kit name (`fragments/instruments/gm-kit.md`).
  */
-const GM_DRUMS: Readonly<Record<string, number>> = {
-  bd: 36,
-  kick: 36,
-  kd: 36,
-  rim: 37,
-  rs: 37,
-  sd: 38,
-  snare: 38,
-  cp: 39,
-  clap: 39,
-  hh: 42,
-  ch: 42,
-  ph: 44,
-  oh: 46,
-  crash: 49,
-  cr: 49,
-  ride: 51,
-  rd: 51,
-  lt: 41,
-  lo: 41,
-  tom: 45,
-  mt: 45,
-  mid: 45,
-  ht: 48,
-  hi: 48,
-  clave: 75,
-  claves: 75,
-};
+export const GM_KIT: readonly { readonly note: number; readonly name: string; readonly aliases: readonly string[] }[] = [
+  { note: 35, name: 'acousticbassdrum', aliases: [] },
+  { note: 36, name: 'bd', aliases: ['kick', 'kd', 'bassdrum'] },
+  { note: 37, name: 'rim', aliases: ['rs', 'sidestick'] },
+  { note: 38, name: 'sd', aliases: ['snare', 'acousticsnare'] },
+  { note: 39, name: 'cp', aliases: ['clap', 'handclap'] },
+  { note: 40, name: 'electricsnare', aliases: [] },
+  { note: 41, name: 'lt', aliases: ['lo', 'lowfloortom'] },
+  { note: 42, name: 'hh', aliases: ['ch', 'closedhihat'] },
+  { note: 43, name: 'highfloortom', aliases: [] },
+  { note: 44, name: 'ph', aliases: ['pedalhihat'] },
+  { note: 45, name: 'mt', aliases: ['tom', 'mid', 'lowtom'] },
+  { note: 46, name: 'oh', aliases: ['openhihat'] },
+  { note: 47, name: 'lowmidtom', aliases: [] },
+  { note: 48, name: 'ht', aliases: ['hi', 'himidtom'] },
+  { note: 49, name: 'cr', aliases: ['crash', 'crashcymbal'] },
+  { note: 50, name: 'hightom', aliases: [] },
+  { note: 51, name: 'rd', aliases: ['ride', 'ridecymbal'] },
+  { note: 52, name: 'chinesecymbal', aliases: [] },
+  { note: 53, name: 'ridebell', aliases: [] },
+  { note: 54, name: 'tb', aliases: ['tambourine'] },
+  { note: 55, name: 'splashcymbal', aliases: [] },
+  { note: 56, name: 'cb', aliases: ['cowbell'] },
+  { note: 57, name: 'crashcymbaltwo', aliases: [] },
+  { note: 58, name: 'vibraslap', aliases: [] },
+  { note: 59, name: 'ridecymbaltwo', aliases: [] },
+  { note: 60, name: 'hibongo', aliases: [] },
+  { note: 61, name: 'lowbongo', aliases: [] },
+  { note: 62, name: 'mutehiconga', aliases: [] },
+  { note: 63, name: 'openhiconga', aliases: [] },
+  { note: 64, name: 'lowconga', aliases: [] },
+  { note: 65, name: 'hightimbale', aliases: [] },
+  { note: 66, name: 'lowtimbale', aliases: [] },
+  { note: 67, name: 'highagogo', aliases: [] },
+  { note: 68, name: 'lowagogo', aliases: [] },
+  { note: 69, name: 'cabasa', aliases: [] },
+  { note: 70, name: 'sh', aliases: ['maracas'] },
+  { note: 71, name: 'shortwhistle', aliases: [] },
+  { note: 72, name: 'longwhistle', aliases: [] },
+  { note: 73, name: 'shortguiro', aliases: [] },
+  { note: 74, name: 'longguiro', aliases: [] },
+  { note: 75, name: 'claves', aliases: ['clave'] },
+  { note: 76, name: 'hiwoodblock', aliases: [] },
+  { note: 77, name: 'lowwoodblock', aliases: [] },
+  { note: 78, name: 'mutecuica', aliases: [] },
+  { note: 79, name: 'opencuica', aliases: [] },
+  { note: 80, name: 'mutetriangle', aliases: [] },
+  { note: 81, name: 'opentriangle', aliases: [] },
+];
+const GM_DRUMS: ReadonlyMap<string, number> = new Map(GM_KIT.flatMap(({ note, name, aliases }) => [name, ...aliases].map((n) => [n, note] as const)));
+/** The General MIDI drum note for a kit member's name or alias (`GM_KIT`; lower case, a trailing number ignored: `bd2` is a kick), or null for a name it doesn't know. */
 export function gmDrumNote(name: string): number | null {
-  return GM_DRUMS[name.toLowerCase().replace(/\d+$/, '')] ?? null;
+  return GM_DRUMS.get(name.toLowerCase().replace(/\d+$/, '')) ?? null;
 }
 
 /**

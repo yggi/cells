@@ -20,6 +20,7 @@ export { METER_FRAGMENTS } from "./repository/meters.js";
 export { RHYTHM_FRAGMENTS } from "./repository/rhythms.js";
 export { BASS_FRAGMENTS } from "./repository/bass.js";
 export { HARMONY_FRAGMENTS } from "./repository/harmony.js";
+export { INSTRUMENT_FRAGMENTS } from "./repository/instruments.js";
 export { LIBRARY } from "./repository/library.js";
 export { holesOf, INTERFACE_NAMES } from "./repository/holes.js";
 export { fitOf, unionOf } from "./repository/fit.js";
