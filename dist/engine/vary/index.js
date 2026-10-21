@@ -16,15 +16,18 @@ function read(fragment, workbench = '') {
     const text = [...bench, fragment].join('\n');
     const result = compileSource(text);
     if (!result.ok)
-        return { lines: [], anchors: [] };
+        return { lines: [], anchors: [], ok: false };
     const lines = linesOf(text, result);
-    return { lines, anchors: anchorsAmong(lines, result) };
+    return { lines, anchors: anchorsAmong(lines, result), ok: true };
 }
 export const anchorsOf = (fragment, workbench) => read(fragment, workbench).anchors;
 const named = (name) => (name.startsWith('&') ? name : `&${name}`);
-export function variations(fragment, options = {}) {
+export const variations = (fragment, options) => readVariations(fragment, options).variations.map((v) => v.variation);
+export function readVariations(fragment, options = {}) {
     const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES } = options;
-    const { lines, anchors } = read(fragment, workbench);
+    const { lines, anchors, ok } = read(fragment, workbench);
+    if (!ok)
+        return { notes: null, variations: [] };
     const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
     const pinned = (line, n) => anchors.some((a) => a.line === line.name && a.step === n.step);
     const onset = (i, step) => {
@@ -35,6 +38,11 @@ export function variations(fragment, options = {}) {
     const pitch = (n) => (n.pitch ? ` ${pitchKey(n.pitch)}` : '');
     const keysOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${lines[i].stepWhole ?? i} ${n.voice}${pitch(n)}`);
     const strikesOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}${pitch(n)}`);
+    const heardOf = (i, notes) => {
+        const { stepWhole, name } = lines[i];
+        return notes.map((n) => `${stepWhole === null ? `${name}@${n.step}` : (n.step * stepWhole).toFixed(9)} ${stepWhole ?? name} ${sound(n.voice)}${pitch(n)}`);
+    };
+    const heardKeys = lines.map((l, i) => heardOf(i, l.notes));
     const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
     const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
     const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
@@ -62,7 +70,7 @@ export function variations(fragment, options = {}) {
             const w = words.get(name);
             return w ? [...w.head, ...w.attrs, ...(braid ?? w.braid)].join(' ') : '';
         };
-        out.push({
+        const variation = {
             id: `vary:${operator}:${line}${amount === null ? '' : `:${amount}`}:${out.length}`,
             tool: 'vary',
             rule: operator,
@@ -72,7 +80,8 @@ export function variations(fragment, options = {}) {
             apply: (source) => [...braids].reduce((text, [name, braid]) => setBraid(text, name, braid), source),
             line,
             by: `${operator} ${line}${amount === null ? '' : ` ${amount}`}`,
-        });
+        };
+        out.push({ variation, notes: lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j])) });
     };
     const inOrder = (notes) => notes.sort((a, b) => a.step - b.step || pitchOf(a.voice) - pitchOf(b.voice));
     const first = (i) => {
@@ -128,7 +137,7 @@ export function variations(fragment, options = {}) {
             }
         }
     }
-    return out;
+    return { notes: heardKeys.flat(), variations: out };
 }
 function reversed(line, anchored) {
     const at = new Map(line.notes.map((n) => [n.step, n]));

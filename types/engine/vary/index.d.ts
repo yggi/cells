@@ -32,7 +32,21 @@ export interface VaryOptions {
 /** A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's, the roots on chord changes. */
 export declare const anchorsOf: (fragment: string, workbench?: string) => readonly Anchor[];
 /** Every variation by one operator on one line, in Jambot's order, none playing the notes of its source or of one before it. */
-export declare function variations(fragment: string, options?: VaryOptions): readonly Variation[];
+export declare const variations: (fragment: string, options?: VaryOptions) => readonly Variation[];
+/**
+ * A fragment's notes on its workbench and each variation's, as recognition compares them (#224): one key a note, its
+ * onset, its length (its line's step), the sound it strikes (a drum's General MIDI note, else its voice) and a pitched
+ * note's pitch. Null where the fragment doesn't compile on its workbench. One compile, as `variations`.
+ */
+export interface Readings {
+    readonly notes: readonly string[] | null;
+    readonly variations: readonly {
+        readonly variation: Variation;
+        readonly notes: readonly string[];
+    }[];
+}
+/** `variations`, each with its notes as recognition compares them, and the source's. */
+export declare function readVariations(fragment: string, options?: VaryOptions): Readings;
 /** The index a draw in [0, 1) takes of n: ⌊draw · n⌋, the one Jambot's `pick(draw, ones)` takes for every draw. */
 export declare function drawn(draw: number, n: number): number;
 /** The variation `drawn` picks of the n `variations` gives; null where there is none. A draw outside [0, 1) is an error. */

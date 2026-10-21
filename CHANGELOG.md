@@ -8,7 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.8.0`.
+### Added
+- **Recognition** (decision 055, #224, yggi/jambot#237): `createRecogniser()` (`@yggi/cells/repository/recognise`, and in `index.ts`) returns a recogniser whose `recognise(text, library, options)` gives the library's fragments a heard text is within `tolerance` notes of (by default 0), nearest first, each by its nearest path of Vary's operators (none, or one; two with `depth: 2`) and its distance: the notes that differ, S2 as Vary reads them (onset, length, the drum's General MIDI note or the voice, a pitched note's pitch; levels free). On a warmed recogniser a recognition compiles only the heard text. Jambot's 284 variations on E31's bars and the bass seeds' 24 are each recognised as their source's, by their operator, at distance 0; none of 1,000 random bars is. `readVariations` (`engine/vary`) gives `variations` with each one's notes.
+
+### Fixed
+- **Vary reads back what its pitched operators write** (#224): a pitched line's step `degree(&bassNext^$-1, -2)` or `inverse(&bassNext)`, a splice moved or mirrored, reads as the note it plays, so a transposed or inverted bass varies again, and is recognised. `variations` of every seed gives what it did; nothing a piece plays changes.
 
 ## v0.8.0 — 2026-10-20
 

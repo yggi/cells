@@ -21,6 +21,7 @@ export { RHYTHM_FRAGMENTS } from "./repository/rhythms.js";
 export { BASS_FRAGMENTS } from "./repository/bass.js";
 export { HARMONY_FRAGMENTS } from "./repository/harmony.js";
 export { LIBRARY } from "./repository/library.js";
+export { ALL_OPERATORS, createRecogniser } from "./repository/recognise.js";
 export { holesOf, INTERFACE_NAMES } from "./repository/holes.js";
 export { fitOf, unionOf } from "./repository/fit.js";
 export { readFragment, readFragments, writeFragment } from "./repository/files.js";
