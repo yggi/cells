@@ -60,11 +60,13 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source).steps]).toEqual([key, []]);
     // (a meter compiles alone; a rhythm is open on its meter, a bass line on its meter and its harmony, and a harmony on
     // its meter and its key, so each is read on a 4/4 at a tempo, with a key and, unless it writes its own, a harmony,
-    // where it fits)
-    const keyed = '&bar meter("4/4") step=100bpm\n&key scale(major, C)';
+    // where it fits; a mode writes its own key)
+    const meter = '&bar meter("4/4") step=100bpm';
+    const keyed = `${meter}\n&key scale(major, C)`;
     const bar = `${keyed}\n&harm over=key step=1m [0,2,4] [3,5,7]`;
     for (const f of LIBRARY) {
-      const bench = holesOf(f.text, compileSource).defines.includes('&harm') ? keyed : bar;
+      const defines = holesOf(f.text, compileSource).defines;
+      const bench = defines.includes('&key') ? meter : defines.includes('&harm') ? keyed : bar;
       const text = compileSource(f.text).ok ? f.text : unionOf(f.text, bench).text;
       expect([f.id, compileSource(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
     }
