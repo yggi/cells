@@ -5,7 +5,7 @@ import { pieceMidi } from './midiexport';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
-import { GM_KIT, gmDrumNote, noteOf } from './midi';
+import { GM_KIT, gmDrumNote, kitNotes, noteOf } from './midi';
 import { PRESETS } from './presets';
 import { pieceMeta } from './parser';
 import { writePiece } from './piecefile';
@@ -188,6 +188,40 @@ describe('a MIDI file as a piece', () => {
     const r = compileSource(source);
     const back = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf)).tracks.flatMap((t) => t.notes.map((n) => n.key));
     expect(back).toEqual(GM_KIT.map((d) => d.note));
+  });
+
+  it('keeps the kit’s names for the drums: a track named as one is renamed, and the piece compiles (#178)', () => {
+    const smf = file([
+      { name: 'cb', notes: notes(1, [[60, 0, 24]]), bends: [], programs: [] },
+      { name: 'drums', notes: notes(10, [[56, 24, 36]]), bends: [], programs: [] },
+    ]);
+    const { source, dropped } = cellsFromMidi(smf, 'test');
+    expect(dropped).toBe(0);
+    expect(compileSource(source).diagnostics).toEqual([]);
+    expect(source).toMatch(/^&cb2 step=pulse /m);
+    expect(source).toContain('&cb s=square loop=G5 lpf=2500');
+    expect(notesOf(source).map((n) => `${n.voice}:${n.key}`)).toEqual(['cbVoice:60', 'cb:79']);
+  });
+
+  it('brings back an app-saved kit’s General MIDI members with the kit’s sounds, at their pitches (#178)', () => {
+    const keys = kitNotes(['cb', 'sh', 'lowconga']);
+    const smf = file([
+      {
+        name: 'cb(G5) sh lowconga(G3)',
+        notes: notes(10, [
+          [keys.get('cb')!, 0, 12],
+          [keys.get('sh')!, 24, 36],
+          [keys.get('lowconga')!, 48, 60],
+        ]),
+        bends: [],
+        programs: [],
+      },
+    ]);
+    const { source, dropped } = cellsFromMidi(smf, 'test');
+    expect(dropped).toBe(0);
+    expect(source).toContain('&cb s=square loop=G5 lpf=2500 env=&(map=adsr 0 .1 0 .03)');
+    expect(source).toContain('&sh s=white hpf=4000 env=&(map=adsr 0 .04 0 .03)');
+    expect(source).toContain('&lowconga s=sine loop=G3 pitch=0..5 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .25 0 .05)');
   });
 
   it('brings back the drums of a file the app saved as the piece’s own, at their pitches (#334)', () => {

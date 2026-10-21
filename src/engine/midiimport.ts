@@ -79,7 +79,11 @@ const DRUM_OF: Readonly<Record<number, string>> = Object.fromEntries(GM_KIT.map(
 const DRUMS: Readonly<Record<string, string>> = Object.fromEntries(
   INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')!
     .text.split('\n')
-    .map((line) => /^&(\w+) (.*)$/.exec(line)!.slice(1, 3)),
+    // (its voice lines: a comment or a blank line in the fragment is none)
+    .flatMap((line) => {
+      const m = /^&(\w+) (.*)$/.exec(line);
+      return m ? [[m[1]!, m[2]!] as const] : [];
+    }),
 );
 /** A drum this importer has no sound for: a tuned one (a sine at its pitch), else a noise. */
 const TUNED = 's=sine env=&(map=adsr 0 .3 0 .05)';

@@ -16,7 +16,10 @@ const ON_GRID = 0.995;
 const DRUM_OF = Object.fromEntries(GM_KIT.map((d) => [d.note, d.name]));
 const DRUMS = Object.fromEntries(INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')
     .text.split('\n')
-    .map((line) => /^&(\w+) (.*)$/.exec(line).slice(1, 3)));
+    .flatMap((line) => {
+    const m = /^&(\w+) (.*)$/.exec(line);
+    return m ? [[m[1], m[2]]] : [];
+}));
 const TUNED = 's=sine env=&(map=adsr 0 .3 0 .05)';
 const NOISE = 's=white hpf=6000 env=&(map=adsr 0 .1 0 .05)';
 function kitOf(name, notes) {
