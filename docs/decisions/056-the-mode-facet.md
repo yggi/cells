@@ -1,4 +1,4 @@
-# 055 · A mode is a fragment of a facet of its own, `mode`: `&key scale(dorian, free(C))`, the mode stated and the tonic left to the host; a fragment may be of two facets, each at a place of its own
+# 056 · A mode is a fragment of a facet of its own, `mode`: `&key scale(dorian, free(C))`, the mode stated and the tonic left to the host; a fragment may be of two facets, each at a place of its own
 
 **Date:** 2026-10-21 · **Status:** accepted (owner, 2026-10-21, on #228: "fragments with facet 'mode'"; the bell and scale, ionian and the African bell, the first fragment of two facets) · Issues: #228, yggi/jambot#420, #221, #211, #138
 

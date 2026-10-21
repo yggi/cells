@@ -22,7 +22,8 @@ const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)(?:!(\d+))?$/;
-const SPLICE = /^&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?$/;
+const REF = String.raw `&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
+const SPLICE = new RegExp(String.raw `^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);
 function hitOf(token) {
     const m = HIT.exec(token);
     return m && !m[3] ? { voice: `&${m[1]}`, own: m[2] ?? null } : null;

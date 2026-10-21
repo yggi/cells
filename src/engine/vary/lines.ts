@@ -6,7 +6,8 @@
  * (`step=1m [&rim ~ ~ &rim …]`), or a Euclid of a voice (`&rim(5,16,4)`), each times at most one `map=amp` cell of
  * levels, one a step. Rung 2 reads the lines a pitched part writes: a cell of degrees of the table it reads (`over=&harm`)
  * times one voice (`&bass * &bassV`), its steps rests, whole numbers (`0`, `-1`, `0!8`) or another cell spliced in
- * (`&bassNext`, `&bassNext^$-1`) that plays one note on its step. A line written any other way (`@`, a choice, an
+ * (`&bassNext`, `&bassNext^$-1`, and as the operators write one back, `degree(inverse(&bassNext), 2)`) that plays one note
+ * on its step. A line written any other way (`@`, a choice, an
  * accidental, a subsequence of degrees) is not read, and so not varied. Pure.
  */
 import { declWords, splitWords } from '../edit';
@@ -98,7 +99,9 @@ const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)(?:!(\d+))?$/;
-const SPLICE = /^&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?$/;
+const REF = String.raw`&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
+/** A splice, as written or as an operator writes it back (`pitchText`): `&x`, `&x^$-1`, `inverse(&x)`, `degree(inverse(&x), 2)`. */
+const SPLICE = new RegExp(String.raw`^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);
 
 /** A step as read: the hits it strikes (none: a rest), each its voice and own level. */
 type Step = readonly { readonly voice: string; readonly own: string | null }[];

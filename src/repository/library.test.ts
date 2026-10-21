@@ -15,7 +15,7 @@ import { RHYTHM_FRAGMENTS } from './rhythms';
 
 const library = createRepository(LIBRARY);
 const meters = createRepository(METER_FRAGMENTS);
-// (the bell and scale is a rhythm too, and a mode: decision 055)
+// (the bell and scale is a rhythm too, and a mode: decision 056)
 const rhythmsAndBell = createRepository([...RHYTHM_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.association.some((wp) => wp.facet === 'rhythm'))]);
 const basses = createRepository(BASS_FRAGMENTS);
 const PRESETS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ];

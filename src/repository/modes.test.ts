@@ -1,4 +1,4 @@
-// The modes (#228, decision 055): four fragments that state a mode, `&key scale(mode, free(C))`, each found first at
+// The modes (#228, decision 056): four fragments that state a mode, `&key scale(mode, free(C))`, each found first at
 // distance 0 at the point of each of Jambot's presets that plays it; every harmony and bass seed fits a workbench with
 // each and compiles there with no diagnostic; and the bell and scale, a mode and a rhythm in one, plays the bell and reads
 // as the major scale.

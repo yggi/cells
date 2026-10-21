@@ -1,5 +1,5 @@
 /**
- * The modes: the repository's sixth facet, the key the harmonies and the bass lines read (#228, decision 055). Each
+ * The modes: the repository's sixth facet, the key the harmonies and the bass lines read (#228, decision 056). Each
  * fragment defines `key`, the piece's main key (decision 047's interface name), as `&key scale(mode, free(C))`: a mode
  * stated, its tonic left to the host, a number left to the performer that Jambot's key plan sets as it moves. It uses
  * nothing, so it fits any workbench that has no key yet.
