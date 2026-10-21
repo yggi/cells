@@ -9,12 +9,14 @@ import { HARMONY_FRAGMENTS } from './harmony';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
+import { MODE_FRAGMENTS } from './modes';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 const library = createRepository(LIBRARY);
 const meters = createRepository(METER_FRAGMENTS);
-const rhythms = createRepository(RHYTHM_FRAGMENTS);
+// (the bell and scale is a rhythm too, and a mode: decision 055)
+const rhythmsAndBell = createRepository([...RHYTHM_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.association.some((wp) => wp.facet === 'rhythm'))]);
 const basses = createRepository(BASS_FRAGMENTS);
 const PRESETS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ];
 const AXES = ['sync', 'harm', 'artic', 'energy'] as const;
@@ -33,14 +35,18 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the thirteen rhythms, the five bass lines, the five harmonies and the two kits, every point associated as its facet: thirty-eight', () => {
-    expect(LIBRARY).toHaveLength(38);
+  it('is the thirteen meters, the thirteen rhythms, the five bass lines, the five harmonies, the two kits and the five modes, every point associated as its facet, the bell and scale as two: forty-three', () => {
+    expect(LIBRARY).toHaveLength(43);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'harmony')).toEqual(HARMONY_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'instrument')).toEqual(INSTRUMENT_FRAGMENTS);
-    expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length, BASS_FRAGMENTS.length, HARMONY_FRAGMENTS.length, INSTRUMENT_FRAGMENTS.length]).toEqual([13, 13, 5, 5, 2]);
+    expect(LIBRARY.filter((f) => facetsOf(f)[0] === 'mode')).toEqual(MODE_FRAGMENTS);
+    expect(LIBRARY.filter((f) => facetsOf(f).length > 1).map((f) => [f.id, facetsOf(f)])).toEqual([['bell and scale', ['mode', 'rhythm']]]);
+    expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length, BASS_FRAGMENTS.length, HARMONY_FRAGMENTS.length, INSTRUMENT_FRAGMENTS.length, MODE_FRAGMENTS.length]).toEqual([
+      13, 13, 5, 5, 2, 5,
+    ]);
   });
 
   it('a query of the meters over it returns what the meters alone return, at every one of 661 points', () => {
@@ -48,8 +54,9 @@ describe('the library', () => {
     for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'meter' })), JSON.stringify(point)).toEqual(ranked(meters.query(point, 13)));
   });
 
-  it('and so do the rhythms: the bass lines and the harmonies change no rhythm query', () => {
-    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythms.query(point, 13)));
+  it('and so do the rhythms, with the bell and scale: the bass lines, the harmonies and the modes change no rhythm query', () => {
+    for (const point of POINTS)
+      expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 14, {}, { facet: 'rhythm' })));
   });
 
   it('and so do the bass lines: the harmonies change no bass query', () => {

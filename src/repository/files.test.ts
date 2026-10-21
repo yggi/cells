@@ -5,8 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { readFragment, readFragments, writeFragment, type FragmentFile } from './files';
 import { BASS_FRAGMENTS } from './bass';
 import { HARMONY_FRAGMENTS } from './harmony';
+import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
+import { MODE_FRAGMENTS } from './modes';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { SEED } from './seed';
@@ -50,7 +52,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are thirty-eight', () => expect(files).toHaveLength(38));
+  it('are forty-three', () => expect(files).toHaveLength(43));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -60,18 +62,20 @@ describe('the seed files', () => {
     expect(bare(read(writeFragment({ fragment, meta, prose })))).toEqual({ fragment, meta, prose });
   });
 
-  it('build the meters, the rhythms, the bass lines and the harmonies, each in file order, and the library is all of them', () => {
+  it('build the meters, the rhythms, the bass lines, the harmonies, the instruments and the modes, each in file order, and the library is all of them', () => {
     expect(new Set(SEED.map((f) => f.fragment))).toEqual(new Set(LIBRARY));
     expect(SEED).toHaveLength(LIBRARY.length);
     expect(SEED.filter((f) => f.path.startsWith('meters/')).map((f) => f.fragment)).toEqual(METER_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('rhythms/')).map((f) => f.fragment)).toEqual(RHYTHM_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('bass/')).map((f) => f.fragment)).toEqual(BASS_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('harmony/')).map((f) => f.fragment)).toEqual(HARMONY_FRAGMENTS);
+    expect(SEED.filter((f) => f.path.startsWith('instruments/')).map((f) => f.fragment)).toEqual(INSTRUMENT_FRAGMENTS);
+    expect(SEED.filter((f) => f.path.startsWith('modes/')).map((f) => f.fragment)).toEqual(MODE_FRAGMENTS);
   });
 
   // (the points that come from Jambot's presets, lifted into presets.ts: a file must write each exactly; the points placed
   // by hand, the other meters' and the claves', have the files as their source)
-  it("write Jambot's presets' points exactly, where a meter, a drum bar or a bass line is at a preset", () => {
+  it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       '4/4': [SYNTH_POP, TECHNO, BOSSA_NOVA],
       '4/4 swung on 8n': [SWING_JAZZ],
@@ -88,6 +92,9 @@ describe('the seed files', () => {
       'Swing jazz drums': [SWING_JAZZ],
       'funk bass': [FUNK, LO_FI, BOSSA_NOVA],
       'walking bass': [SWING_JAZZ],
+      aeolian: [SYNTH_POP, TECHNO, LO_FI],
+      dorian: [DEEP_HOUSE, FUNK],
+      ionian: [AMBIENT, BOSSA_NOVA, SWING_JAZZ],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
     const AFTER_OWN_POINT: Record<string, readonly object[]> = { 'root bass': [SYNTH_POP, DEEP_HOUSE, AMBIENT], 'pumping bass': [TECHNO] };
