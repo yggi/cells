@@ -1,9 +1,11 @@
 import { declarations } from "../../repository/fit.js";
 import { compileSource } from "../compile.js";
+import { flatten } from "../flatten.js";
+import { codeShifts } from "../program.js";
 import { declWords, setBraid } from "../edit.js";
 import { gmDrumNote } from "../midi.js";
 import { anchorsAmong } from "./anchors.js";
-import { linesOf, moved, pitchKey, pitchOf, written } from "./lines.js";
+import { linesOf, moved, pitchKey, pitchOf, tapWhole, written } from "./lines.js";
 export { backbeatOf } from "./anchors.js";
 export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
 export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse'];
@@ -16,18 +18,18 @@ function read(fragment, workbench = '') {
     const text = [...bench, fragment].join('\n');
     const result = compileSource(text);
     if (!result.ok)
-        return { lines: [], anchors: [], ok: false };
+        return { lines: [], anchors: [], result: null, own };
     const lines = linesOf(text, result);
-    return { lines, anchors: anchorsAmong(lines, result), ok: true };
+    return { lines, anchors: anchorsAmong(lines, result), result, own };
 }
 export const anchorsOf = (fragment, workbench) => read(fragment, workbench).anchors;
 const named = (name) => (name.startsWith('&') ? name : `&${name}`);
 export const variations = (fragment, options) => readVariations(fragment, options).variations.map((v) => v.variation);
 export function readVariations(fragment, options = {}) {
     const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES } = options;
-    const { lines, anchors, ok } = read(fragment, workbench);
-    if (!ok)
-        return { notes: null, variations: [] };
+    const { lines, anchors, result, own } = read(fragment, workbench);
+    if (!result)
+        return { notes: null, span: null, bar: null, variations: [] };
     const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
     const pinned = (line, n) => anchors.some((a) => a.line === line.name && a.step === n.step);
     const onset = (i, step) => {
@@ -38,11 +40,21 @@ export function readVariations(fragment, options = {}) {
     const pitch = (n) => (n.pitch ? ` ${pitchKey(n.pitch)}` : '');
     const keysOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${lines[i].stepWhole ?? i} ${n.voice}${pitch(n)}`);
     const strikesOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}${pitch(n)}`);
+    const places = new Map([...new Set(lines.flatMap((l) => (l.pitched ? [l.pitched.voice] : [])))].map((v, k) => [v, `voice#${k}`]));
     const heardOf = (i, notes) => {
         const { stepWhole, name } = lines[i];
-        return notes.map((n) => `${stepWhole === null ? `${name}@${n.step}` : (n.step * stepWhole).toFixed(9)} ${stepWhole ?? name} ${sound(n.voice)}${pitch(n)}`);
+        return notes.map((n) => {
+            const what = `${stepWhole ?? name} ${n.pitch ? `${places.get(n.voice)} ${pitchKey(n.pitch)}` : sound(n.voice)}`;
+            return stepWhole === null ? { at: null, key: `${name}@${n.step} ${what}` } : { at: n.step * stepWhole, key: what };
+        });
     };
     const heardKeys = lines.map((l, i) => heardOf(i, l.notes));
+    const chords = harmoniesOf(result, own, lines);
+    const laps = [...lines.map((l) => (l.stepWhole === null ? null : l.steps * l.stepWhole)), ...chords.map((h) => h.lap)];
+    const meter = lines.find((l) => l.meter)?.meter ?? chords.find((h) => h.meter)?.meter ?? null;
+    const span = laps.length && laps.every((l) => l !== null) ? laps.reduce((a, b) => lcm(a, b)) : null;
+    const bar = meter ? meter.pulses / meter.unit : null;
+    const fixed = chords.flatMap((h) => h.notes);
     const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
     const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
     const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
@@ -81,7 +93,7 @@ export function readVariations(fragment, options = {}) {
             line,
             by: `${operator} ${line}${amount === null ? '' : ` ${amount}`}`,
         };
-        out.push({ variation, notes: lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j])) });
+        out.push({ variation, notes: [...lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j])), ...fixed] });
     };
     const inOrder = (notes) => notes.sort((a, b) => a.step - b.step || pitchOf(a.voice) - pitchOf(b.voice));
     const first = (i) => {
@@ -137,7 +149,35 @@ export function readVariations(fragment, options = {}) {
             }
         }
     }
-    return { notes: heardKeys.flat(), variations: out };
+    return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
+}
+function lcm(a, b) {
+    const gcd = (x, y) => (y ? gcd(y, x % y) : x);
+    const [x, y] = [Math.round(a * 3840), Math.round(b * 3840)];
+    return x && y ? ((x / gcd(x, y)) * y) / 3840 : Math.max(a, b);
+}
+function harmoniesOf(result, own, lines) {
+    const played = new Set(lines.flatMap((l) => [l.trigger, l.card.name, ...(l.levels ? [l.levels.cell] : [])]));
+    const out = [];
+    for (const name of own) {
+        const cell = result.cells.get(name);
+        if (!cell?.step || played.has(name) || cell.voice)
+            continue;
+        const meter = result.cells.get(cell.step.driver)?.meter ?? null;
+        const whole = tapWhole(cell.step.tap, meter);
+        if (whole === null)
+            continue;
+        const events = flatten(result, name, codeShifts(result));
+        const at = new Map();
+        for (const e of events)
+            at.set(e.step, (at.get(e.step) ?? 0) + 1);
+        if (![...at.values()].some((n) => n > 1))
+            continue;
+        const k = out.length;
+        const notes = events.map((e) => ({ at: e.step * whole, key: `${whole * e.duration} chords#${k} ${e.table}:${e.tableShift}:${e.value}:${e.alter}:${e.transpose ?? 0}` }));
+        out.push({ notes, lap: cell.steps * whole, meter });
+    }
+    return out;
 }
 function reversed(line, anchored) {
     const at = new Map(line.notes.map((n) => [n.step, n]));

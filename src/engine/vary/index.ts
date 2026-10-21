@@ -31,11 +31,14 @@
  */
 import { declarations } from '../../repository/fit';
 import { compileSource } from '../compile';
+import { flatten } from '../flatten';
+import type { Meter } from '../meter';
+import { codeShifts, type CompileResult } from '../program';
 import { declWords, setBraid } from '../edit';
 import { gmDrumNote } from '../midi';
 import type { Rewrite } from '../rewrite';
 import { anchorsAmong, type Anchor } from './anchors';
-import { linesOf, moved, pitchKey, pitchOf, written, type Line, type LineNote } from './lines';
+import { linesOf, moved, pitchKey, pitchOf, tapWhole, written, type Line, type LineNote } from './lines';
 
 export { backbeatOf, type Anchor } from './anchors';
 
@@ -74,16 +77,16 @@ export interface VaryOptions {
 }
 
 /** A fragment read under its workbench: the workbench's lines it doesn't write itself, then its own. */
-function read(fragment: string, workbench = ''): { lines: Line[]; anchors: Anchor[]; ok: boolean } {
+function read(fragment: string, workbench = ''): { lines: Line[]; anchors: Anchor[]; result: CompileResult | null; own: ReadonlySet<string> } {
   const own = new Set(declarations(fragment).map((l) => l.name));
   const bench = declarations(workbench)
     .filter((l) => !own.has(l.name))
     .map((l) => l.written);
   const text = [...bench, fragment].join('\n');
   const result = compileSource(text);
-  if (!result.ok) return { lines: [], anchors: [], ok: false };
+  if (!result.ok) return { lines: [], anchors: [], result: null, own };
   const lines = linesOf(text, result);
-  return { lines, anchors: anchorsAmong(lines, result), ok: true };
+  return { lines, anchors: anchorsAmong(lines, result), result, own };
 }
 
 /** A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's, the roots on chord changes. */
@@ -96,20 +99,35 @@ const named = (name: string) => (name.startsWith('&') ? name : `&${name}`);
 export const variations = (fragment: string, options?: VaryOptions): readonly Variation[] => readVariations(fragment, options).variations.map((v) => v.variation);
 
 /**
- * A fragment's notes on its workbench and each variation's, as recognition compares them (#224): one key a note, its
- * onset, its length (its line's step), the sound it strikes (a drum's General MIDI note, else its voice) and a pitched
- * note's pitch. Null where the fragment doesn't compile on its workbench. One compile, as `variations`.
+ * One note as recognition compares it (#224, decision 055): its onset in whole notes from its lap's start (null where
+ * its line's grid is none of the meter's, its line's own step then in `key`), and the rest of what it is for S2: its
+ * length (its line's step), the sound it strikes (a drum's General MIDI note, else its voice) and a pitched note's pitch,
+ * its voice by its place among the pitched voices (`&bassV` is the first), as S1 numbers voices (#186).
+ */
+export interface HeardNote {
+  readonly at: number | null;
+  readonly key: string;
+}
+
+/**
+ * A fragment's notes on its workbench and each variation's, as recognition compares them, with the lap they come round
+ * after and the bar, in whole notes (null where a line's grid is none of the meter's). A harmony the fragment defines
+ * itself (a braid of stacks no card plays, `&harm`) counts its chords' degrees as notes, beside its lines, so a vamp is
+ * recognised as a bass line is. Null notes where the fragment doesn't compile on its workbench. One compile, as
+ * `variations`.
  */
 export interface Readings {
-  readonly notes: readonly string[] | null;
-  readonly variations: readonly { readonly variation: Variation; readonly notes: readonly string[] }[];
+  readonly notes: readonly HeardNote[] | null;
+  readonly span: number | null;
+  readonly bar: number | null;
+  readonly variations: readonly { readonly variation: Variation; readonly notes: readonly HeardNote[] }[];
 }
 
 /** `variations`, each with its notes as recognition compares them, and the source's. */
 export function readVariations(fragment: string, options: VaryOptions = {}): Readings {
   const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES } = options;
-  const { lines, anchors, ok } = read(fragment, workbench);
-  if (!ok) return { notes: null, variations: [] };
+  const { lines, anchors, result, own } = read(fragment, workbench);
+  if (!result) return { notes: null, span: null, bar: null, variations: [] };
   const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
   const pinned = (line: Line, n: LineNote) => anchors.some((a) => a.line === line.name && a.step === n.step);
   // (each note's onset in whole notes where its line's grid is the meter's, else its line's own step; its sound, the
@@ -122,11 +140,21 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
   const pitch = (n: LineNote) => (n.pitch ? ` ${pitchKey(n.pitch)}` : '');
   const keysOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${lines[i]!.stepWhole ?? i} ${n.voice}${pitch(n)}`);
   const strikesOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}${pitch(n)}`);
-  const heardOf = (i: number, notes: readonly LineNote[]) => {
+  const places = new Map([...new Set(lines.flatMap((l) => (l.pitched ? [l.pitched.voice] : [])))].map((v, k) => [v, `voice#${k}`]));
+  const heardOf = (i: number, notes: readonly LineNote[]): HeardNote[] => {
     const { stepWhole, name } = lines[i]!;
-    return notes.map((n) => `${stepWhole === null ? `${name}@${n.step}` : (n.step * stepWhole).toFixed(9)} ${stepWhole ?? name} ${sound(n.voice)}${pitch(n)}`);
+    return notes.map((n) => {
+      const what = `${stepWhole ?? name} ${n.pitch ? `${places.get(n.voice)} ${pitchKey(n.pitch)}` : sound(n.voice)}`;
+      return stepWhole === null ? { at: null, key: `${name}@${n.step} ${what}` } : { at: n.step * stepWhole, key: what };
+    });
   };
   const heardKeys = lines.map((l, i) => heardOf(i, l.notes));
+  const chords = harmoniesOf(result, own, lines);
+  const laps = [...lines.map((l) => (l.stepWhole === null ? null : l.steps * l.stepWhole)), ...chords.map((h) => h.lap)];
+  const meter = lines.find((l) => l.meter)?.meter ?? chords.find((h) => h.meter)?.meter ?? null;
+  const span = laps.length && laps.every((l) => l !== null) ? laps.reduce((a, b) => lcm(a!, b!)) : null;
+  const bar = meter ? meter.pulses / meter.unit : null;
+  const fixed = chords.flatMap((h) => h.notes);
   const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
   const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
   const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
@@ -137,7 +165,7 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
       .join('|');
   const seen = new Set([signature(-1, [])]);
 
-  const out: { variation: Variation; notes: string[] }[] = [];
+  const out: { variation: Variation; notes: HeardNote[] }[] = [];
   const words = new Map<string, ReturnType<typeof declWords>>();
   /** A candidate kept where it is a variation: enough notes, no sound struck twice at an onset, other notes than any before. */
   const offer = (i: number, operator: Operator, notes: readonly LineNote[], amount: number | null, braids: Map<string, string[]> | null, what: string) => {
@@ -164,7 +192,7 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
       line,
       by: `${operator} ${line}${amount === null ? '' : ` ${amount}`}`,
     };
-    out.push({ variation, notes: lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j]!)) });
+    out.push({ variation, notes: [...lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j]!)), ...fixed] });
   };
 
   const inOrder = (notes: LineNote[]) => notes.sort((a, b) => a.step - b.step || pitchOf(a.voice) - pitchOf(b.voice));
@@ -215,7 +243,39 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
       }
     }
   }
-  return { notes: heardKeys.flat(), variations: out };
+  return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
+}
+
+/** The least common multiple of two laps in whole notes, on a grid of 1/3840 of one (every tap's, triplets and fives too). */
+function lcm(a: number, b: number): number {
+  const gcd = (x: number, y: number): number => (y ? gcd(y, x % y) : x);
+  const [x, y] = [Math.round(a * 3840), Math.round(b * 3840)];
+  return x && y ? ((x / gcd(x, y)) * y) / 3840 : Math.max(a, b);
+}
+
+/**
+ * The harmonies a fragment defines itself: each cell of its own that no line plays, stepped on the meter, some step of
+ * which is a stack (`[0,2,4]`); its chords' degrees as notes (its name, the table it reads, the degree, its accidental),
+ * each a step long, its lap and its meter.
+ */
+function harmoniesOf(result: CompileResult, own: ReadonlySet<string>, lines: readonly Line[]): { notes: HeardNote[]; lap: number; meter: Meter | null }[] {
+  const played = new Set(lines.flatMap((l) => [l.trigger, l.card.name, ...(l.levels ? [l.levels.cell] : [])]));
+  const out: { notes: HeardNote[]; lap: number; meter: Meter | null }[] = [];
+  for (const name of own) {
+    const cell = result.cells.get(name);
+    if (!cell?.step || played.has(name) || cell.voice) continue;
+    const meter = result.cells.get(cell.step.driver)?.meter ?? null;
+    const whole = tapWhole(cell.step.tap, meter);
+    if (whole === null) continue;
+    const events = flatten(result, name, codeShifts(result));
+    const at = new Map<number, number>();
+    for (const e of events) at.set(e.step, (at.get(e.step) ?? 0) + 1);
+    if (![...at.values()].some((n) => n > 1)) continue;
+    const k = out.length;
+    const notes = events.map((e) => ({ at: e.step * whole, key: `${whole * e.duration} chords#${k} ${e.table}:${e.tableShift}:${e.value}:${e.alter}:${e.transpose ?? 0}` }));
+    out.push({ notes, lap: cell.steps * whole, meter });
+  }
+  return out;
 }
 
 /**

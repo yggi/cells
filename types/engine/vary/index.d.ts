@@ -34,15 +34,29 @@ export declare const anchorsOf: (fragment: string, workbench?: string) => readon
 /** Every variation by one operator on one line, in Jambot's order, none playing the notes of its source or of one before it. */
 export declare const variations: (fragment: string, options?: VaryOptions) => readonly Variation[];
 /**
- * A fragment's notes on its workbench and each variation's, as recognition compares them (#224): one key a note, its
- * onset, its length (its line's step), the sound it strikes (a drum's General MIDI note, else its voice) and a pitched
- * note's pitch. Null where the fragment doesn't compile on its workbench. One compile, as `variations`.
+ * One note as recognition compares it (#224, decision 055): its onset in whole notes from its lap's start (null where
+ * its line's grid is none of the meter's, its line's own step then in `key`), and the rest of what it is for S2: its
+ * length (its line's step), the sound it strikes (a drum's General MIDI note, else its voice) and a pitched note's pitch,
+ * its voice by its place among the pitched voices (`&bassV` is the first), as S1 numbers voices (#186).
+ */
+export interface HeardNote {
+    readonly at: number | null;
+    readonly key: string;
+}
+/**
+ * A fragment's notes on its workbench and each variation's, as recognition compares them, with the lap they come round
+ * after and the bar, in whole notes (null where a line's grid is none of the meter's). A harmony the fragment defines
+ * itself (a braid of stacks no card plays, `&harm`) counts its chords' degrees as notes, beside its lines, so a vamp is
+ * recognised as a bass line is. Null notes where the fragment doesn't compile on its workbench. One compile, as
+ * `variations`.
  */
 export interface Readings {
-    readonly notes: readonly string[] | null;
+    readonly notes: readonly HeardNote[] | null;
+    readonly span: number | null;
+    readonly bar: number | null;
     readonly variations: readonly {
         readonly variation: Variation;
-        readonly notes: readonly string[];
+        readonly notes: readonly HeardNote[];
     }[];
 }
 /** `variations`, each with its notes as recognition compares them, and the source's. */

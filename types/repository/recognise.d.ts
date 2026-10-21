@@ -20,6 +20,11 @@ export interface Recognised {
     readonly fragment: Fragment;
     /** The operators that map the fragment towards the heard text, first to last: none, one or two. */
     readonly path: readonly PathStep[];
+    /**
+     * The bar of the fragment's lap the heard text was matched from, 0 where the heard text is as long as the lap or
+     * longer: a heard bar of a two-bar clave is matched against each of its bars, and the nearest is reported.
+     */
+    readonly bar: number;
     /** The notes that differ: those the heard text plays that the path doesn't, and those it plays that the heard text doesn't (S2, decision 050). */
     readonly distance: number;
 }

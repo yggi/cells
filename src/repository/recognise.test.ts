@@ -6,7 +6,9 @@ import e31 from '../../fixtures/jambot-e31.json';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
 import { BASS_FRAGMENTS } from './bass';
 import { LIBRARY } from './library';
-import { createRecogniser } from './recognise';
+import { createRepository, EMPTY_LAYER } from './fragments';
+import { fileFragment } from './learned';
+import { createRecogniser, type Recognised } from './recognise';
 
 vi.mock('../engine/compile', async (original) => {
   const actual = await original<typeof import('../engine/compile')>();
@@ -102,6 +104,47 @@ function randomBar(draw: () => number): string {
   const line = (name: string, voice: string) => `&${name} step=16n ${Array.from({ length: 16 }, () => (draw() < 0.25 ? voice : '~')).join(' ')}`;
   return [line('kick', '&bd'), line('backbeat', '&sd'), line('hat', '&hh'), '&drums map=midi(10) [&kick, &backbeat, &hat]', '&bd s=white', '&sd s=white', '&hh s=white'].join('\n');
 }
+
+/** What a recognition found, one string each: its id, its path, the bar it was matched from and its distance. */
+const found = (rs: readonly Recognised[]) => rs.map((r) => `${r.fragment.id} [${r.path.map((p) => p.by).join('; ')}] bar ${r.bar} at ${r.distance}`);
+
+describe('a pitched voice by its place, a bar of a longer fragment, and the learned layer', () => {
+  it('a bass seed and its variation with every name changed are recognised as the seed’s, at distance 0', () => {
+    const walking = BASS_FRAGMENTS.find((f) => f.id === 'walking bass')!;
+    const renamed = (text: string) => text.replaceAll('&bass', '&low');
+    expect(found(recogniser.recognise(renamed(walking.text), LIBRARY, { workbench: BASS }))).toEqual(['walking bass [] bar 0 at 0']);
+    const [down] = variations(walking.text, { workbench: BASS, operators: PITCHED_OPERATORS });
+    expect(found(recogniser.recognise(renamed(down!.apply(walking.text)), LIBRARY, { workbench: BASS }))).toEqual([`walking bass [${down!.by}] bar 0 at 0`]);
+  });
+
+  it('a bar of the two-bar bossa nova clave, its second, is recognised as the clave from its bar 1', () => {
+    const second = '&clave step=16n ~!4 &claves ~!5 &claves ~!5\n&percussion map=midi(10) [&clave * .5]\n&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)';
+    expect(found(recogniser.recognise(second, LIBRARY, DRUM_OPTIONS))).toEqual(['bossa nova clave [] bar 1 at 0']);
+  });
+
+  it('a bar of a vamp, its fifth, is recognised as the vamp to the seventh from its bar 4', () => {
+    expect(found(recogniser.recognise('&harm over=key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual(['vamp to the seventh [] bar 4 at 0']);
+  });
+
+  it('a groove the band filed and the composer’s variation of it, recognised by the `by` it was filed with', () => {
+    const repository = createRepository(LIBRARY);
+    const groove = randomBar(draws(7));
+    const filed = fileFragment(repository, EMPTY_LAYER, { text: groove, point: { energy: 0.5 }, facet: 'rhythm', source: 'muse', created: '2026-10-21T14:00:00Z' });
+    const variation = variations(groove, DRUM_OPTIONS).find((v) => v.rule === 'add')!;
+    const varied = fileFragment(repository, filed.layer, {
+      text: variation.apply(groove),
+      point: { energy: 0.5 },
+      facet: 'rhythm',
+      source: 'composer',
+      created: '2026-10-21T14:01:00Z',
+      meta: { varies: filed.id, by: variation.by },
+    });
+    const library = repository.merge(varied.layer).fragments;
+    const by = varied.file!.meta['by'];
+    expect(found(recogniser.recognise(variation.apply(groove), library, DRUM_OPTIONS))).toEqual([`${varied.id} [] bar 0 at 0`, `${filed.id} [${String(by)}] bar 0 at 0`]);
+    expect(found(recogniser.recognise(groove, library, DRUM_OPTIONS))[0]).toBe(`${filed.id} [] bar 0 at 0`);
+  });
+});
 
 describe('random bars, and the cost', () => {
   const draw = draws(224);
