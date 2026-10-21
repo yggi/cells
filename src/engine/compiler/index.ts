@@ -25,10 +25,11 @@ import { sectioned } from './sections';
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
 
-export function compile(parsed: ParseResult, env: Env): CompileResult {
+/** A parsed piece, compiled; `used` names the cells a `use` line gave it (decision 054), which the built-in card doesn't hear. */
+export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string> = new Set()): CompileResult {
   const ctx = context(parsed, env);
   // (no card written: the built-in one, decision 028)
-  const declared = builtinCard(ctx, declare(ctx));
+  const declared = builtinCard(ctx, declare(ctx), used);
   const { decls, builtin } = declared;
   const typed = sorts(ctx, decls);
   const resolved = resolveCells(ctx, declared, typed);

@@ -27,10 +27,11 @@ export { cellsFromMidi } from './engine/midiimport';
 export { pieceMidi } from './engine/midiexport';
 export { readMidi, writeMidi, isMidi } from './engine/midifile';
 export { PRESETS, type Preset } from './engine/presets';
-export { isPieceFile, readPiece, writePiece, type PieceFile, type PieceFileProblems, type PieceFrontmatter } from './engine/piecefile';
+export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece, type PieceFile, type PieceFileProblems, type PieceFrontmatter } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { movedCard } from './engine/shorten/card';
-export type { CompileResult } from './engine/program';
+export type { CompileOptions, CompileResult, Locked, Resolve, Used } from './engine/program';
+export { expand, fragmentHash } from './engine/use';
 export type { Diagnostic } from './engine/ast';
 export {
   createRepository,
@@ -53,7 +54,7 @@ export { RHYTHM_FRAGMENTS } from './repository/rhythms';
 export { BASS_FRAGMENTS } from './repository/bass';
 export { HARMONY_FRAGMENTS } from './repository/harmony';
 export { INSTRUMENT_FRAGMENTS } from './repository/instruments';
-export { LIBRARY } from './repository/library';
+export { LIBRARY, resolveSeed } from './repository/library';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
 export { fitOf, unionOf, type Fit, type Union } from './repository/fit';

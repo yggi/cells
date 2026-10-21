@@ -1,11 +1,11 @@
 import { compileSource } from "./compile.js";
 import { soundsIdentical } from "./sameness.js";
 export const ROUNDS = 20;
-export function rewriteAll(source, find, rounds = ROUNDS) {
+export function rewriteAll(source, find, rounds = ROUNDS, options = {}) {
     let now = source;
     const steps = [];
     for (let i = 0; i < rounds; i++) {
-        const result = compileSource(now);
+        const result = compileSource(now, undefined, options);
         if (!result.ok)
             break;
         let taken = null;
@@ -17,7 +17,7 @@ export function rewriteAll(source, find, rounds = ROUNDS) {
             catch {
                 continue;
             }
-            if (next !== now && soundsIdentical(now, next)) {
+            if (next !== now && soundsIdentical(now, next, undefined, options)) {
                 taken = { next, title: r.title };
                 break;
             }

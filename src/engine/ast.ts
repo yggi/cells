@@ -404,4 +404,12 @@ export interface ParseResult {
   readonly broken?: readonly string[];
   /** The `show=` plugins the text carries (plugins.ts). */
   readonly plugins?: readonly ShowPlugin[];
+  /** Its `use` lines, in the order written (decision 054); absent for none. */
+  readonly uses?: readonly UseLine[];
+}
+
+/** A `use "id"` line (decision 054): the fragment's id, and where the line is. */
+export interface UseLine {
+  readonly id: string;
+  readonly span: Span;
 }

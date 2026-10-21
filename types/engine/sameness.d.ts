@@ -10,6 +10,7 @@
  *  - S3 `sameNotes`: the named cells' flattened steps alike.
  */
 import { compileSource } from './compile';
+import { type CompileOptions } from './program';
 type Result = ReturnType<typeof compileSource>;
 /** S3: do these cells play the same notes (value, place, length) in both programs? */
 export declare function sameNotes(a: string, b: string, names: readonly string[]): boolean;
@@ -33,9 +34,9 @@ export declare function wholeWindow(a: Result, b: Result): number;
 /**
  * S1, **sounds identical** (#180; the owner: the snapshot's `notes` and `events` hashes agree): every event alike, its
  * voice, onset, length, pitch, gains, bends, levels, moving parameters and envelope, over the whole piece (`wholeWindow`),
- * or to `until` seconds.
+ * or to `until` seconds. A text's `use` lines (decision 054) read through `options`.
  */
-export declare function soundsIdentical(a: string, b: string, until?: number): boolean;
+export declare function soundsIdentical(a: string, b: string, until?: number, options?: CompileOptions): boolean;
 /** S2, **plays the same notes** (#180): every event's voice, onset, length and pitch alike, its gains and the rest free, over the whole piece or to `until`. */
-export declare function playsSameNotes(a: string, b: string, until?: number): boolean;
+export declare function playsSameNotes(a: string, b: string, until?: number, options?: CompileOptions): boolean;
 export {};

@@ -1,3 +1,4 @@
+import { braidReadsOf, otherReadsOf } from "../engine/compiler/builtin.js";
 import { parse } from "../engine/parser/index.js";
 import { tapPositions } from "../engine/meter.js";
 import { MAIN_KEY } from "../engine/program.js";
@@ -31,17 +32,26 @@ export function clockNeeds(text, result, of, own) {
         return [{ need: { ...base, bar: fewestBar(base) }, tap: step.tap }];
     });
 }
+export function readOnlyAsSound(decls) {
+    const inBraid = new Set(decls.flatMap((d) => braidReadsOf(d)).map((n) => `&${n}`));
+    const elsewhere = new Set(decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`));
+    return (name) => inBraid.has(name) && !elsewhere.has(name);
+}
 export function holesOf(text, compiled) {
-    const decls = parse(text).cells.filter((d) => !d.lambda);
+    const all = parse(text).cells;
+    const decls = all.filter((d) => !d.lambda);
     const result = compiled(text);
     const unknown = result.diagnostics.flatMap((d) => {
         const m = UNKNOWN_CELL.exec(d.message);
         return m ? [`&${m[1]}`] : [];
     });
     const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
+    const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
+    const sound = readOnlyAsSound(all);
     return {
-        uses: [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort(),
-        defines: [...new Set(decls.map((d) => `&${d.name}`))],
+        uses,
+        sounds: uses.filter(sound),
+        defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
         clock: clockNeeds(text, result).map((t) => t.need),
     };
 }

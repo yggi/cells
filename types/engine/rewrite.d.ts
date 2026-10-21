@@ -5,6 +5,7 @@
  * too, each playing other notes, so `rewriteAll`, which takes only a rewrite that plays the same, never runs it. Pure.
  */
 import { compileSource } from './compile';
+import type { CompileOptions } from './program';
 /** The tool a rewrite is one of. */
 export type Tool = 'migrate' | 'normalise' | 'shorten' | 'vary';
 export interface Rewrite<R extends string = string> {
@@ -26,9 +27,9 @@ export declare const ROUNDS = 20;
 /**
  * A tool's rewrites applied until none is left: each round the first that changes the text and plays the same notes
  * over the whole piece (`soundsIdentical`, S1 of decision 050), the text compiled again after it. The steps are the
- * rewrites' titles, in order.
+ * rewrites' titles, in order. A text's `use` lines (decision 054) read through `options`: they are lines like any other.
  */
-export declare function rewriteAll(source: string, find: Find, rounds?: number): {
+export declare function rewriteAll(source: string, find: Find, rounds?: number, options?: CompileOptions): {
     source: string;
     steps: string[];
 };

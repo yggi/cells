@@ -6,6 +6,7 @@
  */
 import { compileSource } from './compile';
 import { soundsIdentical } from './sameness';
+import type { CompileOptions } from './program';
 
 /** The tool a rewrite is one of. */
 export type Tool = 'migrate' | 'normalise' | 'shorten' | 'vary';
@@ -32,13 +33,13 @@ export const ROUNDS = 20;
 /**
  * A tool's rewrites applied until none is left: each round the first that changes the text and plays the same notes
  * over the whole piece (`soundsIdentical`, S1 of decision 050), the text compiled again after it. The steps are the
- * rewrites' titles, in order.
+ * rewrites' titles, in order. A text's `use` lines (decision 054) read through `options`: they are lines like any other.
  */
-export function rewriteAll(source: string, find: Find, rounds = ROUNDS): { source: string; steps: string[] } {
+export function rewriteAll(source: string, find: Find, rounds = ROUNDS, options: CompileOptions = {}): { source: string; steps: string[] } {
   let now = source;
   const steps: string[] = [];
   for (let i = 0; i < rounds; i++) {
-    const result = compileSource(now);
+    const result = compileSource(now, undefined, options);
     if (!result.ok) break;
     let taken: { next: string; title: string } | null = null;
     for (const r of find(now, result)) {
@@ -48,7 +49,7 @@ export function rewriteAll(source: string, find: Find, rounds = ROUNDS): { sourc
       } catch {
         continue;
       }
-      if (next !== now && soundsIdentical(now, next)) {
+      if (next !== now && soundsIdentical(now, next, undefined, options)) {
         taken = { next, title: r.title };
         break;
       }

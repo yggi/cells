@@ -495,6 +495,13 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
   syntax(
     'line',
+    'use "id"',
+    "A fragment taken into the piece by its id (decision 054): its lines the piece doesn't define are read after the piece's own, which win. A line of its own, the id in double quotes; the host's resolver finds it.",
+    ['use "core kit"'],
+    'use.md',
+  ),
+  syntax(
+    'line',
     '&sections step=&bar &a &b',
     'Sections of an arrangement (decision 016): a stepped table of names declares them, each stepped as the table is. What a section steps plays while a selector reading the table picks it (`over=&sections`), from its top each time.',
     ['&sections step=&bar &verseBar &chorusBar'],

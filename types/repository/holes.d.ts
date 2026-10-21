@@ -12,8 +12,13 @@
  *   taps of its level in its `cycle=` bars, times its rate (`16n*2`: 2), a multiple of its steps. Stated as the smallest
  *   bar that does: a braid of 32 sixteenths on `cycle=2` needs bars of 16 sixteenths (or 32, 48 …), so a two-bar clave
  *   compiles under 7/8 (bars of 14) but doesn't fit it; a line of one step on `1m` needs bars of 1, any meter.
+ * - **Sounds:** the uses read only as a sound, a step of a braid or a term of a mix (a groove's `&bd`), never as a table,
+ *   a clock or a parameter: decision 054 rules that such a hole doesn't block the fit (the composer asks for the
+ *   instrument next). A hole that a used fragment's line reads (decision 054: `use`) is never one: its lines aren't the
+ *   text's.
+ * - A text with `use` lines (decision 054) defines what they give too, as its compile says (`CompileResult.uses`).
  */
-import type { Tap } from '../engine/ast';
+import type { CellDecl, Tap } from '../engine/ast';
 import { type Meter } from '../engine/meter';
 import { type CompileResult } from '../engine/program';
 /** What a line's clock needs of the meter it taps: its lap of `bars` bars holds its `steps` a whole number of times. */
@@ -37,7 +42,9 @@ export interface ClockNeed {
 export interface Holes {
     /** Names it reads and declares nowhere (`&harm`), and `key` for the main key; sorted. */
     readonly uses: readonly string[];
-    /** Names its lines declare (`&kick`), in the order written. */
+    /** Of those, the names read only as a sound (a braid's step, a mix's term): they don't block the fit; sorted. */
+    readonly sounds: readonly string[];
+    /** Names its lines declare (`&kick`), in the order written, then those its `use` lines give. */
     readonly defines: readonly string[];
     readonly clock: readonly ClockNeed[];
 }
@@ -58,5 +65,7 @@ export interface TappedNeed {
  * main meter is a need unless the main meter is one of `own`. A cell that didn't compile states no need here.
  */
 export declare function clockNeeds(text: string, result: CompileResult, of?: ReadonlySet<string>, own?: ReadonlySet<string>): TappedNeed[];
+/** Whether declarations read a name (`&bd`) only as a sound: a step of a braid or a term of a mix, never a table, a clock or a parameter. */
+export declare function readOnlyAsSound(decls: readonly CellDecl[]): (name: string) => boolean;
 /** A fragment's holes, read off its declarations and its compile alone (`compiled`, which may be cached by text). */
 export declare function holesOf(text: string, compiled: (text: string) => CompileResult): Holes;

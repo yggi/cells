@@ -12,11 +12,14 @@
  * - **An attribute value** is each `key=value` a line writes (in an unnamed cell `&( … )` too), and each flag (`off`,
  *   `oneshot`). How a cell is shown and named costs nothing: `label=` `show=` `tags=` `title=` `tier=` `about=` `size=`.
  * - **A cell** is every cell declared, an unnamed one too, but a note (a cell that only explains: `isNote`).
+ * - **A `use` line** (decision 054) is one leaf, a reference: the used fragment's lines are the library's, nowhere in the
+ *   piece. Its fragment is read through `resolve` while the text is normalised.
  */
 import type { Atom, Braid, CellDecl, Expr, Token } from './ast';
 import { isNote } from './ast';
 import { normalise } from './normalise/index';
 import { parse } from './parser';
+import type { Resolve } from './program';
 
 /** What a text's structure is made of, and their sum (decision 049's measure). */
 export interface Structure {
@@ -93,9 +96,15 @@ function logicalLines(text: string): Map<number, string> {
 const attributesOf = (line: string): number =>
   [...line.matchAll(/(?:^|[\s(])([A-Za-z][A-Za-z0-9]*)=/g)].filter((m) => !FREE.has(m[1]!)).length + [...line.matchAll(/(?:^|\s)(off|oneshot)(?=\s|$)/g)].length;
 
+/** How a text is measured: as written, or normalised (the default), its `use` lines read through `resolve`. */
+export interface MeasureOptions {
+  readonly asWritten?: boolean;
+  readonly resolve?: Resolve;
+}
+
 /** A text's cells, each with its share of the measure, in the order declared (an unnamed cell's share is its line's). */
-export function structureByCell(text: string, { asWritten = false } = {}): CellStructure[] {
-  const source = asWritten ? text : normalise(text).source;
+export function structureByCell(text: string, { asWritten = false, resolve }: MeasureOptions = {}): CellStructure[] {
+  const source = asWritten ? text : normalise(text, resolve ? { resolve } : {}).source;
   // (a copy as written: its base= taken out, so the parser keeps its own steps, = among them, unresolved)
   const written = source.replace(/(^|[\s(])base=&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?/gm, '$1');
   const lines = written.split('\n');
@@ -112,9 +121,10 @@ export function structureByCell(text: string, { asWritten = false } = {}): CellS
   });
 }
 
-/** A text's structure: its cells', summed. */
-export function structureOf(text: string, options: { asWritten?: boolean } = {}): Structure {
+/** A text's structure: its cells', summed, and a leaf for each `use` line. */
+export function structureOf(text: string, options: MeasureOptions = {}): Structure {
   const cells = structureByCell(text, options);
   const sum = (k: keyof Structure) => cells.reduce((n, c) => n + c[k], 0);
-  return { cells: sum('cells'), leaves: sum('leaves'), attributes: sum('attributes'), total: sum('total') };
+  const uses = parse(text).uses?.length ?? 0;
+  return { cells: sum('cells'), leaves: sum('leaves') + uses, attributes: sum('attributes'), total: sum('total') + uses };
 }

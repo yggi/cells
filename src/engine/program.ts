@@ -411,6 +411,41 @@ export interface CompileResult {
    * which every sound nothing reads goes to. It is in `cells` (implicit: not drawn, in no line, never edited).
    */
   readonly builtinCard?: string;
+  /** What each of the piece's `use` lines resolved to and gave it (decision 054), in the order written; absent for none. */
+  readonly uses?: readonly Used[];
+}
+
+/**
+ * Where a piece's `use "id"` lines are read from (decision 054): a fragment's text by its id, and the hash its lockfile
+ * recorded for it where it has one, or null where the library has none of that id. A library that no longer has the
+ * version hashed gives its current one: the compile warns.
+ */
+export type Resolve = (id: string, hash?: string) => string | null;
+
+/** A lockfile's entry (decision 054): the hash a piece's `use` of an id resolved to when it was saved. */
+export interface Locked {
+  readonly id: string;
+  readonly hash: string;
+}
+
+/** What a compile reads besides the text: the resolver of its `use` lines, and the hashes its lockfile recorded. */
+export interface CompileOptions {
+  readonly resolve?: Resolve;
+  readonly locked?: readonly Locked[];
+}
+
+/** A `use` line, as compiled (decision 054). */
+export interface Used {
+  /** The fragment's id, as written. */
+  readonly id: string;
+  /** The line it is on. */
+  readonly span: Span;
+  /** The hash of the text it resolved to (`e1:…`: the text up to layout, decision 050), or null where it didn't resolve. */
+  readonly hash: string | null;
+  /** The names it gave the piece (`&bd`), in the order the expansion writes them: its own lines, then those it used. */
+  readonly gave: readonly string[];
+  /** The names it defines that the piece's own lines define instead. */
+  readonly overrode: readonly string[];
 }
 
 /** Shift of every cell; missing names use the code's shift=. */

@@ -7,6 +7,7 @@ import { compileSource } from './engine/compile';
 import * as cells from './index';
 import { gmDrumNote } from './engine/midi';
 import { PRESETS } from './engine/presets';
+import { resolveSeed } from './repository/library';
 
 const DOCS = resolve(import.meta.dirname, '../docs');
 const markdown = (dir: string): string[] =>
@@ -27,7 +28,8 @@ describe('docs: language pages compile', () => {
   for (const page of language)
     for (const [i, src] of blocks(read(page)).entries())
       it(`${rel(page)} block ${i + 1}`, () => {
-        const r = compileSource(src);
+        // (a `use` line reads the seed library: decision 054)
+        const r = compileSource(src, undefined, { resolve: resolveSeed });
         // a small example may leave out the sound card; anything else is a diagnostic to fix
         const problems = r.diagnostics.filter((d) => !d.message.startsWith('Nothing plays yet'));
         expect(problems.map((d) => d.message)).toEqual([]);

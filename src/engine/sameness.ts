@@ -10,7 +10,7 @@
  *  - S3 `sameNotes`: the named cells' flattened steps alike.
  */
 import { compileSource } from './compile';
-import { codeShifts } from './program';
+import { codeShifts, type CompileOptions } from './program';
 import { eventsBetween, plan } from './realize';
 import { flatten } from './flatten';
 import { pieceTime } from './duration';
@@ -49,11 +49,11 @@ const whole = (e: Event, voice: string) =>
   `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
 const note = (e: Event, voice: string) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
 
-/** Do two texts compile and play the same events, each read as `key` reads it, from 0 to `until` seconds? */
-function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Result) => number), key: (e: Event, voice: string) => string): boolean {
+/** Do two texts compile and play the same events, each read as `key` reads it, from 0 to `until` seconds? Their `use` lines read through `options`. */
+function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Result) => number), key: (e: Event, voice: string) => string, options: CompileOptions = {}): boolean {
   try {
-    const ra = compileSource(a);
-    const rb = compileSource(b);
+    const ra = compileSource(a, undefined, options);
+    const rb = compileSource(b, undefined, options);
     if (!ra.ok || !rb.ok) return false;
     const to = typeof until === 'number' ? until : until(ra, rb);
     const play = (r: Result) => {
@@ -95,13 +95,13 @@ export function wholeWindow(a: Result, b: Result): number {
 /**
  * S1, **sounds identical** (#180; the owner: the snapshot's `notes` and `events` hashes agree): every event alike, its
  * voice, onset, length, pitch, gains, bends, levels, moving parameters and envelope, over the whole piece (`wholeWindow`),
- * or to `until` seconds.
+ * or to `until` seconds. A text's `use` lines (decision 054) read through `options`.
  */
-export function soundsIdentical(a: string, b: string, until?: number): boolean {
-  return sameEvents(a, b, until ?? wholeWindow, whole);
+export function soundsIdentical(a: string, b: string, until?: number, options?: CompileOptions): boolean {
+  return sameEvents(a, b, until ?? wholeWindow, whole, options);
 }
 
 /** S2, **plays the same notes** (#180): every event's voice, onset, length and pitch alike, its gains and the rest free, over the whole piece or to `until`. */
-export function playsSameNotes(a: string, b: string, until?: number): boolean {
-  return sameEvents(a, b, until ?? wholeWindow, note);
+export function playsSameNotes(a: string, b: string, until?: number, options?: CompileOptions): boolean {
+  return sameEvents(a, b, until ?? wholeWindow, note, options);
 }

@@ -29,9 +29,22 @@
  * new has one block, one blank line before it and before the prose, and ends with a newline, so a file written that way
  * reads and writes back byte for byte. A file of cells blocks with no frontmatter is a piece too (#212): its frontmatter
  * is empty, its blocks the code, the rest prose, and it is written back without one.
+ *
+ * **The lockfile** (decision 054): `uses`, a list of `id` and `hash`, what each of the text's `use` lines resolved to when
+ * it was saved (`lockfileOf` reads it for `compileSource`'s `locked`, `withLockfile` records a compile's). `writePiece` drops an
+ * entry no `use` line names, and the key with the last one; a file with no frontmatter has no lockfile.
+ *
+ * ```
+ * uses:
+ *   - id: gm kit
+ *     hash: e1:6de2201770fbb2d7
+ * ```
  */
 import { readBlocks, rewrite, writeBody, type CodeLine, type Layout } from './literate';
 import { readYaml, writeYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from '../repository/yaml';
+import { readUse } from './parser/use';
+import { splitComment } from './edit';
+import type { Locked, Used } from './program';
 
 /** The frontmatter, every key in the order the file gives it. */
 export type PieceFrontmatter = { readonly [key: string]: YamlValue };
@@ -76,6 +89,8 @@ function keyProblems(root: YamlNode & { kind: 'map' }): YamlProblem[] {
       problems.push({ line, message: `the tags are ${JSON.stringify(v)}, not a list of names: tags: [genre:jazz, rhythm]` });
     if (key === 'tier' && !(typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 9999))
       problems.push({ line, message: `the tier is ${JSON.stringify(v)}: a tier of the tutorial is a whole number, 1 to 9999` });
+    if (key === 'uses' && !(Array.isArray(v) && v.every(isLocked)))
+      problems.push({ line, message: `the uses are ${JSON.stringify(v)}, not a lockfile: uses: a list of - id: gm kit, hash: e1:…` });
   }
   return problems;
 }
@@ -103,8 +118,47 @@ export function readPiece(markdown: string): PieceFile | PieceFileProblems {
   return { frontmatter: yamlValue(root) as PieceFrontmatter, text: body.text, prose: body.prose, map: body.map, layout: body.layout };
 }
 
-/** A piece file's text: the frontmatter, the cells blocks, the prose. */
-export function writePiece({ frontmatter, text, prose, layout, bare }: PieceFile): string {
+/** Is this a lockfile's entry: an id and a hash, both texts, nothing else? */
+function isLocked(v: YamlValue): v is { readonly id: string; readonly hash: string } {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+  const m = v as { readonly [key: string]: YamlValue };
+  return Object.keys(m).sort().join() === 'hash,id' && typeof m.id === 'string' && typeof m.hash === 'string';
+}
+
+/** A lockfile as the frontmatter holds it. */
+const asYaml = (entries: readonly Locked[]): YamlValue => entries.map(({ id, hash }) => ({ id, hash }));
+
+/** A piece file's lockfile (decision 054): what each `use` resolved to when it was saved, for `compileSource`'s `locked`. */
+export const lockfileOf = ({ frontmatter }: Pick<PieceFile, 'frontmatter'>): Locked[] =>
+  Array.isArray(frontmatter.uses) ? frontmatter.uses.filter(isLocked).map(({ id, hash }) => ({ id, hash })) : [];
+
+/**
+ * A piece file with its lockfile recording what a compile's `use` lines resolved to (`CompileResult.uses`): a `use` that
+ * didn't resolve keeps the entry it had. What `writePiece` then writes; a frontend whose person didn't keep a changed
+ * version (the compile warned) leaves the entry as it was.
+ */
+export function withLockfile(file: PieceFile, uses: readonly Used[]): PieceFile {
+  const had = lockfileOf(file);
+  const entries = uses.flatMap((u) => (u.hash ? [{ id: u.id, hash: u.hash }] : had.filter((k) => k.id === u.id)));
+  const once = entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
+  return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(once) } };
+}
+
+/** The ids a text's `use` lines name. */
+const usedIds = (text: string): Set<string> => new Set(text.split('\n').flatMap((raw) => readUse(splitComment(raw)[0]) ?? []));
+
+/** The frontmatter with its lockfile's entries no `use` line names dropped, and the key gone with the last one. */
+function pruned(frontmatter: PieceFrontmatter, text: string): PieceFrontmatter {
+  if (!('uses' in frontmatter) || !Array.isArray(frontmatter.uses)) return frontmatter;
+  const named = usedIds(text);
+  const kept = lockfileOf({ frontmatter }).filter((k) => named.has(k.id));
+  return Object.fromEntries(Object.entries(frontmatter).flatMap(([k, v]) => (k !== 'uses' ? [[k, v]] : kept.length ? [[k, asYaml(kept)]] : [])));
+}
+
+/** A piece file's text: the frontmatter (its lockfile pruned to the `use` lines the text has), the cells blocks, the prose. */
+export function writePiece(file: PieceFile): string {
+  const { text, prose, layout, bare } = file;
+  const frontmatter = pruned(file.frontmatter, text);
   const body: Layout = layout ? rewrite(layout, text) : { blocks: [[text]], gaps: [['', '```cells'], ['```']] };
   // (a file read without frontmatter is written back without one, while it still has none to give: #212)
   if (bare && layout && !Object.keys(frontmatter).length) {

@@ -8,19 +8,25 @@
  * that neither text names), with every use of it in the fragment, until no private name collides (a rename can make a
  * shared line differ, `[&kick, &sd]`, and so rename it too). The interface names (`INTERFACE_NAMES`: `&bar`, `key`,
  * `&harm`) are never renamed: one the fragment defines differently is defined twice, and the fragment doesn't fit.
- * Lines of the fragment that declare nothing (blank, a comment alone) aren't carried over.
+ * Lines of the fragment that declare nothing (blank, a comment alone) aren't carried over, but for its `use` lines
+ * (decision 054), each carried over unless the workbench has it, before its declarations.
  *
  * **The fit:** every name the fragment uses is defined on the workbench (`key`: the workbench has a main key), no name is
  * defined twice by different lines, every clock need is met by the meter the workbench gives it (its main meter, or the
  * one named), and the union compiles with no diagnostic the workbench alone doesn't have (its own warnings, or an error a
  * hole of its own makes, are no fault of the fragment's). The checks run cheapest first, and the union is compiled only
- * when the others pass; its compile may be cached by text (`cachedCompile`).
+ * when the others pass; its compile may be cached by text (`cachedCompile`). A hole read only as a sound (`Holes.sounds`:
+ * a groove's `&bd`) doesn't block the fit (decision 054): what the workbench doesn't define of them is `sounds`, the
+ * instrument to ask for next, and the union is judged with a stand-in voice for each (`&bd s=white`, as the seed's
+ * rhythms wrote theirs), so that only the fragment's other faults count. The stand-ins are in no text the fit returns. What a workbench's `use` lines give it
+ * counts as defined there, as its compile says.
  */
 import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
 import type { CompileResult } from '../engine/program';
-import { clockNeeds, holesOf, INTERFACE_NAMES, meterMeets, type ClockNeed, type TappedNeed } from './holes';
+import { parse } from '../engine/parser';
+import { clockNeeds, holesOf, INTERFACE_NAMES, meterMeets, readOnlyAsSound, type ClockNeed, type TappedNeed } from './holes';
 
 /** A fragment added to a workbench: the text, and what became of the fragment's names there. */
 export interface Union {
@@ -40,8 +46,10 @@ export interface Union {
 export interface Fit {
   readonly fits: boolean;
   readonly union: Union;
-  /** Names the fragment uses that the workbench doesn't define (`key`: it has no main key). */
+  /** Names the fragment uses that the workbench doesn't define (`key`: it has no main key), but for its sounds. */
   readonly missing: readonly string[];
+  /** Names the fragment reads only as a sound that the workbench doesn't define: they don't block the fit. */
+  readonly sounds: readonly string[];
   /** Its clock needs the workbench's meter doesn't meet (or a need with no meter there to meet it). */
   readonly unmet: readonly ClockNeed[];
   /** What the union's compile says that the workbench's alone doesn't; absent when a cheaper check failed first. */
@@ -58,6 +66,8 @@ export interface Line {
 }
 
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
+/** A `use` line's code, collapsed (decision 054). */
+const USE = /^use\s/;
 const CONTINUES = /[+*,[]\s*$/;
 
 /** A text's declarations, a line (and the lines it continues onto: one ending in `+`, `*`, `,` or `[`) each, as the parser reads them. */
@@ -87,6 +97,13 @@ const namesIn = (text: string) =>
       .map((m) => m[1] ?? ''),
   );
 
+/** A text's `use` lines, their code collapsed, in order. */
+const useLines = (text: string): string[] =>
+  text
+    .split('\n')
+    .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
+    .filter((code) => USE.test(code));
+
 /** The union of a fragment with a workbench (see the module's comment). */
 export function unionOf(fragment: string, workbench: string): Union {
   const bench = new Map(declarations(workbench).map((l) => [l.name, l]));
@@ -107,7 +124,9 @@ export function unionOf(fragment: string, workbench: string): Union {
       else collide.push(line.name);
     }
     if (!collide.length) {
-      const kept = lines.filter((l) => !shared.includes(l.name)).map((l) => l.written);
+      const benchUses = new Set(useLines(workbench));
+      const uses = useLines(fragment).filter((u) => !benchUses.has(u));
+      const kept = [...uses, ...lines.filter((l) => !shared.includes(l.name)).map((l) => l.written)];
       const head = workbench.replace(/\s+$/, '');
       const amp = (names: readonly string[]) => names.map((n) => `&${n}`);
       return {
@@ -134,20 +153,35 @@ function meets(result: CompileResult, { need, tap }: TappedNeed): boolean {
   return !!meter && meterMeets(need, meter, tap);
 }
 
+/** The names a compile reports as unknown cells (`&bd`). */
+const unknownCells = (result: CompileResult): string[] => result.diagnostics.flatMap((d) => /^Unknown cell (&[A-Za-z_][A-Za-z0-9_]*)$/.exec(d.message)?.[1] ?? []);
+
 const sameDiagnostic = (a: Diagnostic, b: Diagnostic) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
 
 /** Whether a fragment fits a workbench (see the module's comment); `compiled` compiles a text, and may cache it (`cachedCompile`). */
 export function fitOf(fragment: string, workbench: string, compiled: (text: string) => CompileResult = compileSource): Fit {
   const holes = holesOf(fragment, compiled);
   const bench = compiled(workbench);
-  const benchNames = new Set(declarations(workbench).map((l) => `&${l.name}`));
-  const missing = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
+  const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
+  const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
+  const sounds = unfilled.filter((name) => holes.sounds.includes(name));
+  const missing = unfilled.filter((name) => !sounds.includes(name));
+  const sound = readOnlyAsSound(parse(fragment).cells);
   const union = unionOf(fragment, workbench);
   const alone = clockNeeds(fragment, compiled(fragment));
   const unmet = alone.filter((t) => !meets(bench, t)).map((t) => t.need);
-  const failed = { fits: false, union, missing, unmet };
+  const failed = { fits: false, union, missing, sounds, unmet };
   if (missing.length || union.twice.length || unmet.length) return failed;
-  const result = compiled(union.text);
+  // (a stand-in voice for each sound hole the workbench leaves: one a stand-in lets the compile reach is added, and so on)
+  const judged = (): string => [union.text, ...sounds.map((n) => `${n} s=white`)].join('\n');
+  let result = compiled(judged());
+  for (;;) {
+    const more = unknownCells(result).filter((n) => sound(n) && !sounds.includes(n) && !benchNames.has(n) && !union.names.includes(n));
+    if (!more.length) break;
+    sounds.push(...more);
+    result = compiled(judged());
+  }
+  sounds.sort();
   const before = [...bench.diagnostics];
   const diagnostics = result.diagnostics.filter((d) => {
     const i = before.findIndex((b) => sameDiagnostic(b, d));
@@ -158,10 +192,10 @@ export function fitOf(fragment: string, workbench: string, compiled: (text: stri
   // (the needs again, on the union as compiled: a line that only compiled once the workbench's names were there states its need here)
   const bare = (names: readonly string[]) => new Set(names.map((n) => n.slice(1)));
   const own = bare(union.names.filter((n) => !union.shared.includes(n)));
-  const unmetThere = clockNeeds(union.text, result, bare(union.names), own)
+  const unmetThere = clockNeeds(judged(), result, bare(union.names), own)
     .filter((t) => !meets(result, t))
     .map((t) => t.need);
-  return { fits: !diagnostics.length && !unmetThere.length, union, missing, unmet: unmetThere, diagnostics };
+  return { fits: !diagnostics.length && !unmetThere.length, union, missing, sounds, unmet: unmetThere, diagnostics };
 }
 
 /** What `make` gives for a key, kept for the last `limit` keys asked for, the least recently used dropped first. */

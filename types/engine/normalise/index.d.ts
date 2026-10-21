@@ -6,14 +6,16 @@
  *
  *  - aliases.ts:  Strudel's or dough's name for a parameter as ours, whatever its length: cutoff= → lpf=, clip= → legato=
  *
- * The canonical table's other rows join as the owner rules them (#27). Pure.
+ * The canonical table's other rows join as the owner rules them (#27). A `use` line (decision 054) is kept, in its one
+ * spelling (`use "id"`, the only one the parser reads), in its order, never expanded: expanding adds cells, Shorten's side
+ * of decision 049's line (`expand` writes it out). Its fragment is read through `options.resolve`. Pure.
  */
 import { type Rewrite } from '../rewrite';
-import type { CompileResult } from '../program';
+import type { CompileOptions, CompileResult } from '../program';
 /** Every rewrite into the canonical spelling a text has. */
 export declare const normalisations: (source: string, result: CompileResult) => Rewrite[];
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */
-export declare const normalise: (source: string) => {
+export declare const normalise: (source: string, options?: CompileOptions) => {
     source: string;
     steps: string[];
 };

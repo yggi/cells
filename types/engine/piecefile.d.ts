@@ -29,9 +29,20 @@
  * new has one block, one blank line before it and before the prose, and ends with a newline, so a file written that way
  * reads and writes back byte for byte. A file of cells blocks with no frontmatter is a piece too (#212): its frontmatter
  * is empty, its blocks the code, the rest prose, and it is written back without one.
+ *
+ * **The lockfile** (decision 054): `uses`, a list of `id` and `hash`, what each of the text's `use` lines resolved to when
+ * it was saved (`lockfileOf` reads it for `compileSource`'s `locked`, `withLockfile` records a compile's). `writePiece` drops an
+ * entry no `use` line names, and the key with the last one; a file with no frontmatter has no lockfile.
+ *
+ * ```
+ * uses:
+ *   - id: gm kit
+ *     hash: e1:6de2201770fbb2d7
+ * ```
  */
 import { type CodeLine, type Layout } from './literate';
 import { type YamlProblem, type YamlValue } from '../repository/yaml';
+import type { Locked, Used } from './program';
 /** The frontmatter, every key in the order the file gives it. */
 export type PieceFrontmatter = {
     readonly [key: string]: YamlValue;
@@ -61,5 +72,13 @@ export interface PieceFileProblems {
 export declare const isPieceFile: (source: string) => boolean;
 /** A piece file read: its frontmatter, its text and its prose, or what is wrong with it, each problem naming its line. */
 export declare function readPiece(markdown: string): PieceFile | PieceFileProblems;
-/** A piece file's text: the frontmatter, the cells blocks, the prose. */
-export declare function writePiece({ frontmatter, text, prose, layout, bare }: PieceFile): string;
+/** A piece file's lockfile (decision 054): what each `use` resolved to when it was saved, for `compileSource`'s `locked`. */
+export declare const lockfileOf: ({ frontmatter }: Pick<PieceFile, "frontmatter">) => Locked[];
+/**
+ * A piece file with its lockfile recording what a compile's `use` lines resolved to (`CompileResult.uses`): a `use` that
+ * didn't resolve keeps the entry it had. What `writePiece` then writes; a frontend whose person didn't keep a changed
+ * version (the compile warned) leaves the entry as it was.
+ */
+export declare function withLockfile(file: PieceFile, uses: readonly Used[]): PieceFile;
+/** A piece file's text: the frontmatter (its lockfile pruned to the `use` lines the text has), the cells blocks, the prose. */
+export declare function writePiece(file: PieceFile): string;
