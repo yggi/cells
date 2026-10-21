@@ -4,11 +4,11 @@ Entrypoint for humans and agents: slow-change, shared knowledge about the cells 
 
 ## The project
 
-The cells language: a minimal language for music where everything is a **cell**, a helix (pitch classes over octaves, beats over bars) with a **braid** sitting in its grid, on top of Strudel's mini-notation. This repository is the language as a pure TypeScript package, `@yggi/cells`: text in, events out, with no host of its own. Its frontends consume it at a tag: [Cell studio](https://github.com/yggi/cell-studio), the workbench (editor, graph, audio), and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend (the composer, the Muse, sessions). It came out of Cell studio with its history ([#1](https://github.com/yggi/cells/issues/1)); the eternal jam sessions it serves are in Jambot's brief (`docs/briefs/eternal-jam.md` there). It also holds the repository of cell fragments (`src/repository/`, decisions 041, 046–048: [architecture.md](architecture.md)) and its seed library, 31 files in `fragments/`; a fragment's canonical form and hash are not built ([#49](https://github.com/yggi/cells/issues/49)).
+The cells language: a minimal language for music where everything is a **cell**, a helix (pitch classes over octaves, beats over bars) with a **braid** sitting in its grid, on top of Strudel's mini-notation. This repository is the language as a pure TypeScript package, `@yggi/cells`: text in, events out, with no host of its own. Its frontends consume it at a tag: [Cell studio](https://github.com/yggi/cell-studio), the workbench (editor, graph, audio), and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend (the composer, the Muse, sessions). It came out of Cell studio ([#1](https://github.com/yggi/cells/issues/1)), and holds the repository of cell fragments with its seed library in `fragments/` (decisions 041, 046–048); a fragment's canonical form and hash are not built ([#49](https://github.com/yggi/cells/issues/49)).
 
 ## The family
 
-The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells implements `euclid` (Bjorklund's set, a turn of the canonical one) and `notes` (C4 = 60, through A4 = 69), and passes version 1 of both: `src/contracts.test.ts` runs their vectors, copied into `fixtures/contracts/` with the hub's commit, and records where cells differs (it writes a mixed set of names, C# Eb F# Ab Bb, neither column whole).
+The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells passes version 1 of `euclid` and `notes`, and records where it differs ([testing.md](testing.md)).
 
 The language's open questions live in this tracker, [yggi/cells' issues](https://github.com/yggi/cells/issues); the frontends' trackers point here ([music-commons#14](https://github.com/yggi/music-commons/issues/14)).
 
@@ -18,7 +18,7 @@ The whole map, module by module: [architecture.md](architecture.md).
 
 - `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, Vary (`vary/`, decision 052), the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), the time analysis (`time/`)
 - `theory/` modes and tonal's scale names
-- `repository/` fragments found by their place in style space, the facet their points hint and how often they were used together, a learned layer merged at each query (`fragments.ts`); filing and use (`learned.ts`); fragment files (`files.ts`, frontmatter in `yaml.ts`); a fragment's holes (`holes.ts`), the union of lines and the fit to a workbench (`fit.ts`); the seed library (`seed.ts`, from `../fragments/` through `seed.generated.ts`): the meters (`meters.ts`), the rhythms (`rhythms.ts`: E31's drum bars, five claves), both (`library.ts`)
+- `repository/` fragments found by their place in style space, with a learned layer (`fragments.ts`, `learned.ts`); files, holes and the fit (`files.ts`, `holes.ts`, `fit.ts`); the seed library, a module a facet, all in `library.ts`
 - `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>` (`theory/`, `repository/` alike)
 - `engine/examples.generated.ts` every example's file, written by `npm run examples`
 - `host.d.ts` the three host globals the language uses (the purity gate's whole allowance)
