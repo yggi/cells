@@ -95,6 +95,17 @@ describe('the expansion', () => {
     expect(r.cells.get('sd')?.params.hpf).toBe(2000);
   });
 
+  it('an id used twice gives its lines once, and the second use says it adds nothing', () => {
+    const r = compileSource(`${GROOVE}&out map=sample [&beat]\nuse "core kit"`, undefined, seed);
+    expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['warning', 'use "core kit" is written already, on line 1: this one adds nothing', 5]]);
+    expect(r.uses?.map((u) => [u.hash, u.gave.length])).toEqual([
+      [fragmentHash(KIT), KIT_NAMES.length],
+      [fragmentHash(KIT), 0],
+    ]);
+    const resolve = library({ twice: 'use "kit"\nuse "kit"\n&beat step=8n &bd ~', kit: '&bd s=sine loop=A1' });
+    expect(errors('&bar meter("4/4") step=100bpm\nuse "twice"', resolve)).toEqual([]);
+  });
+
   it('a line two used fragments give word for word is one line', () => {
     const resolve = library({ a: '&bd s=sine loop=A1\n&x s=saw', b: '&bd  s=sine   loop=A1 # the same\n&y s=saw' });
     const r = compileSource('use "a"\nuse "b"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd &x &y', undefined, { resolve });
@@ -267,6 +278,27 @@ describe('the fit (decision 047) with use', () => {
     expect([fit.fits, fit.missing, fit.sounds]).toEqual([true, [], ['&bd', '&hh', '&oh', '&rim', '&sd']]);
     // (a hole read as a table still blocks)
     expect(fitOf('&bass over=&harm step=8n 0!8\n&m [&bass * &v]\n&v s=saw', '&bar meter("4/4") step=100bpm').missing).toEqual(['&harm']);
+  });
+
+  it('a used fragment’s holes are judged over the expansion: its clock needs and its sounds the piece’s', () => {
+    const bench = (meter: string) => setTiming(`&bar meter("${meter}")`, 'bar', 'step', '120bpm');
+    // (a two-bar clave doesn't fit 7/8, used or written out)
+    const clave = RHYTHM_FRAGMENTS.find((f) => f.id === 'son clave 3-2')!.text;
+    expect(fitOf(clave, bench('7/8')).fits).toBe(false);
+    const used = fitOf('use "son clave 3-2"', bench('7/8'), undefined, resolveSeed);
+    expect([used.fits, used.unmet.map((n) => n.cell)]).toEqual([false, ['&clave']]);
+    expect(fitOf('use "son clave 3-2"', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
+    expect(holesOf('use "son clave 3-2"', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
+    // (a used groove without its stand-ins: its voices are sounds, as written out)
+    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'Funk drums')!.text;
+    const bare = funk
+      .split('\n')
+      .filter((l) => !/ s=white$/.test(l))
+      .join('\n');
+    const resolve: Resolve = (id) => (id === 'bare funk' ? bare : resolveSeed(id));
+    const fit = fitOf('use "bare funk"', bench('4/4'), undefined, resolve);
+    expect([fit.fits, fit.missing, fit.sounds]).toEqual([true, [], ['&bd', '&hh', '&oh', '&rim', '&sd']]);
+    expect(fitOf('use "bare funk"', 'use "core kit"\n' + bench('4/4'), undefined, resolve).sounds).toEqual([]);
   });
 
   it('a union carries a fragment’s use lines, once', () => {

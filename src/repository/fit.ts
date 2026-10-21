@@ -24,9 +24,9 @@
 import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
-import type { CompileResult } from '../engine/program';
+import type { CompileResult, Resolve } from '../engine/program';
 import { parse } from '../engine/parser';
-import { clockNeeds, holesOf, INTERFACE_NAMES, meterMeets, readOnlyAsSound, type ClockNeed, type TappedNeed } from './holes';
+import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, type ClockNeed, type TappedNeed } from './holes';
 
 /** A fragment added to a workbench: the text, and what became of the fragment's names there. */
 export interface Union {
@@ -158,17 +158,23 @@ const unknownCells = (result: CompileResult): string[] => result.diagnostics.fla
 
 const sameDiagnostic = (a: Diagnostic, b: Diagnostic) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
 
-/** Whether a fragment fits a workbench (see the module's comment); `compiled` compiles a text, and may cache it (`cachedCompile`). */
-export function fitOf(fragment: string, workbench: string, compiled: (text: string) => CompileResult = compileSource): Fit {
-  const holes = holesOf(fragment, compiled);
+/**
+ * Whether a fragment fits a workbench (see the module's comment); `compiledBy` compiles a text, and may cache it
+ * (`cachedCompile`). Their `use` lines (decision 054) read through `resolve`: the fragment is judged over its expansion,
+ * its used fragments' holes and clock needs its own; `compiledBy`, where given, must read them through the same.
+ */
+export function fitOf(fragment: string, workbench: string, compiledBy?: (text: string) => CompileResult, resolve?: Resolve): Fit {
+  const compiled = compiledBy ?? ((text: string) => compileSource(text, undefined, resolve ? { resolve } : {}));
+  const holes = holesOf(fragment, compiled, resolve);
   const bench = compiled(workbench);
   const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
   const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
   const sounds = unfilled.filter((name) => holes.sounds.includes(name));
   const missing = unfilled.filter((name) => !sounds.includes(name));
-  const sound = readOnlyAsSound(parse(fragment).cells);
+  const read = linesRead(fragment, resolve);
+  const sound = readOnlyAsSound(parse(read).cells);
   const union = unionOf(fragment, workbench);
-  const alone = clockNeeds(fragment, compiled(fragment));
+  const alone = clockNeeds(read, compiled(fragment));
   const unmet = alone.filter((t) => !meets(bench, t)).map((t) => t.need);
   const failed = { fits: false, union, missing, sounds, unmet };
   if (missing.length || union.twice.length || unmet.length) return failed;

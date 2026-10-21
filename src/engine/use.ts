@@ -6,6 +6,7 @@
  * - A line two used fragments give word for word (its code: comments aside, whitespace collapsed) is one line; a name
  *   they define by different lines, and the piece doesn't, is an error naming it and both ids. `use` never renames: a
  *   renamed voice changes its drum note (#117).
+ * - An id used twice gives its lines once, at its first `use` (the second warns, in the piece).
  * - A cycle is an error naming it, and so is a depth past `USE_DEPTH`; an unresolved id is an error naming it, and the
  *   piece's other lines compile as they would without it. Each is said on the piece's `use` line it came through.
  * - Cells resolves nothing itself: the host hands each compile a resolver (`Resolve`), and the hashes its lockfile
@@ -125,6 +126,7 @@ function merge(own: readonly Line[], used: readonly { id: string; lines: readonl
 function fragmentLines(path: readonly string[], text: string, resolve: Resolve, say: (message: string) => void): readonly Line[] {
   const own = linesOf(text);
   const where = ` (in ${pathOf(path)})`;
+  const seen = new Set<string>();
   const used = own.flatMap((l) => {
     if (l.use === undefined) return [];
     if (l.use === null) {
@@ -132,6 +134,9 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
       return [];
     }
     const id = l.use;
+    // (an id used twice gives its lines once)
+    if (seen.has(id)) return [];
+    seen.add(id);
     const next = [...path, id];
     if (path.includes(id)) say(`use ${quoted(id)} is a cycle: ${pathOf(next)}`);
     else if (next.length > USE_DEPTH) say(`use ${quoted(id)} nests past ${USE_DEPTH} deep: ${pathOf(next)}`);
@@ -170,8 +175,17 @@ export function expansion(text: string, { resolve, locked = [] }: CompileOptions
     return { line: l.line, col: col + 1, len: first.trimEnd().length - col };
   };
   const hashes: (string | null)[] = [];
-  const used = uses.map((u) => {
+  const first = new Map<string, number>();
+  const used = uses.map((u, i) => {
     const span = spanOf(u);
+    // (an id used twice gives its lines once, at its first use; the second adds nothing, and says so)
+    const earlier = first.get(u.use);
+    if (earlier !== undefined) {
+      diagnostics.push({ severity: 'warning', message: `use ${quoted(u.use)} is written already, on line ${uses[earlier]!.line}: this one adds nothing`, span });
+      hashes.push(hashes[earlier] ?? null);
+      return { id: u.use, lines: [] };
+    }
+    first.set(u.use, i);
     const say = (message: string) => diagnostics.push({ severity: 'error', message, span });
     const recorded = locked.find((k) => k.id === u.use)?.hash;
     const theirs = resolve ? resolve(u.use, ...(recorded ? [recorded] : [])) : null;

@@ -22,7 +22,7 @@
  * counts as defined there, as its compile says.
  */
 import type { Diagnostic } from '../engine/ast';
-import type { CompileResult } from '../engine/program';
+import type { CompileResult, Resolve } from '../engine/program';
 import { type ClockNeed } from './holes';
 /** A fragment added to a workbench: the text, and what became of the fragment's names there. */
 export interface Union {
@@ -60,8 +60,12 @@ export interface Line {
 export declare function declarations(text: string): Line[];
 /** The union of a fragment with a workbench (see the module's comment). */
 export declare function unionOf(fragment: string, workbench: string): Union;
-/** Whether a fragment fits a workbench (see the module's comment); `compiled` compiles a text, and may cache it (`cachedCompile`). */
-export declare function fitOf(fragment: string, workbench: string, compiled?: (text: string) => CompileResult): Fit;
+/**
+ * Whether a fragment fits a workbench (see the module's comment); `compiledBy` compiles a text, and may cache it
+ * (`cachedCompile`). Their `use` lines (decision 054) read through `resolve`: the fragment is judged over its expansion,
+ * its used fragments' holes and clock needs its own; `compiledBy`, where given, must read them through the same.
+ */
+export declare function fitOf(fragment: string, workbench: string, compiledBy?: (text: string) => CompileResult, resolve?: Resolve): Fit;
 /**
  * A compile cached by text: the last `limit` texts compiled. At 512, a library of 31 fragments, each alone and in its union
  * with a workbench, holds about ten workbenches' queries.

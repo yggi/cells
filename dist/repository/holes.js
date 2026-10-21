@@ -2,6 +2,7 @@ import { braidReadsOf, otherReadsOf } from "../engine/compiler/builtin.js";
 import { parse } from "../engine/parser/index.js";
 import { tapPositions } from "../engine/meter.js";
 import { MAIN_KEY } from "../engine/program.js";
+import { expansion, hasUse } from "../engine/use.js";
 export const INTERFACE_NAMES = ['&bar', 'key', '&harm'];
 const UNKNOWN_CELL = /^Unknown cell &([A-Za-z_][A-Za-z0-9_]*)$/;
 const WHOLE = 1e-9;
@@ -37,8 +38,10 @@ export function readOnlyAsSound(decls) {
     const elsewhere = new Set(decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`));
     return (name) => inBraid.has(name) && !elsewhere.has(name);
 }
-export function holesOf(text, compiled) {
-    const all = parse(text).cells;
+export const linesRead = (text, resolve) => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
+export function holesOf(text, compiled, resolve) {
+    const read = linesRead(text, resolve);
+    const all = parse(read).cells;
     const decls = all.filter((d) => !d.lambda);
     const result = compiled(text);
     const unknown = result.diagnostics.flatMap((d) => {
@@ -52,6 +55,6 @@ export function holesOf(text, compiled) {
         uses,
         sounds: uses.filter(sound),
         defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
-        clock: clockNeeds(text, result).map((t) => t.need),
+        clock: clockNeeds(read, result).map((t) => t.need),
     };
 }

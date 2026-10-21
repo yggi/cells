@@ -1,7 +1,7 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
 import { parse } from "../engine/parser/index.js";
-import { clockNeeds, holesOf, INTERFACE_NAMES, meterMeets, readOnlyAsSound } from "./holes.js";
+import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound } from "./holes.js";
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const USE = /^use\s/;
@@ -85,16 +85,18 @@ function meets(result, { need, tap }) {
 }
 const unknownCells = (result) => result.diagnostics.flatMap((d) => /^Unknown cell (&[A-Za-z_][A-Za-z0-9_]*)$/.exec(d.message)?.[1] ?? []);
 const sameDiagnostic = (a, b) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
-export function fitOf(fragment, workbench, compiled = compileSource) {
-    const holes = holesOf(fragment, compiled);
+export function fitOf(fragment, workbench, compiledBy, resolve) {
+    const compiled = compiledBy ?? ((text) => compileSource(text, undefined, resolve ? { resolve } : {}));
+    const holes = holesOf(fragment, compiled, resolve);
     const bench = compiled(workbench);
     const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
     const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
     const sounds = unfilled.filter((name) => holes.sounds.includes(name));
     const missing = unfilled.filter((name) => !sounds.includes(name));
-    const sound = readOnlyAsSound(parse(fragment).cells);
+    const read = linesRead(fragment, resolve);
+    const sound = readOnlyAsSound(parse(read).cells);
     const union = unionOf(fragment, workbench);
-    const alone = clockNeeds(fragment, compiled(fragment));
+    const alone = clockNeeds(read, compiled(fragment));
     const unmet = alone.filter((t) => !meets(bench, t)).map((t) => t.need);
     const failed = { fits: false, union, missing, sounds, unmet };
     if (missing.length || union.twice.length || unmet.length)

@@ -14,13 +14,14 @@
  *   compiles under 7/8 (bars of 14) but doesn't fit it; a line of one step on `1m` needs bars of 1, any meter.
  * - **Sounds:** the uses read only as a sound, a step of a braid or a term of a mix (a groove's `&bd`), never as a table,
  *   a clock or a parameter: decision 054 rules that such a hole doesn't block the fit (the composer asks for the
- *   instrument next). A hole that a used fragment's line reads (decision 054: `use`) is never one: its lines aren't the
- *   text's.
- * - A text with `use` lines (decision 054) defines what they give too, as its compile says (`CompileResult.uses`).
+ *   instrument next).
+ * - A text with `use` lines (decision 054) is read over its expansion, given the resolver its compile reads them by
+ *   (`resolve`): a used fragment's holes, sounds and clock needs are the text's, less what the text and the other used
+ *   fragments define, and it defines what they give (`CompileResult.uses`). Without one, only its own lines are read.
  */
 import type { CellDecl, Tap } from '../engine/ast';
 import { type Meter } from '../engine/meter';
-import { type CompileResult } from '../engine/program';
+import { type CompileResult, type Resolve } from '../engine/program';
 /** What a line's clock needs of the meter it taps: its lap of `bars` bars holds its `steps` a whole number of times. */
 export interface ClockNeed {
     /** The tapping cell, as written (`&clave`). */
@@ -67,5 +68,10 @@ export interface TappedNeed {
 export declare function clockNeeds(text: string, result: CompileResult, of?: ReadonlySet<string>, own?: ReadonlySet<string>): TappedNeed[];
 /** Whether declarations read a name (`&bd`) only as a sound: a step of a braid or a term of a mix, never a table, a clock or a parameter. */
 export declare function readOnlyAsSound(decls: readonly CellDecl[]): (name: string) => boolean;
+/**
+ * The lines a text's compile reads: its expansion where it has `use` lines and a resolver (decision 054: a used
+ * fragment's holes are the text's), else the text.
+ */
+export declare const linesRead: (text: string, resolve?: Resolve) => string;
 /** A fragment's holes, read off its declarations and its compile alone (`compiled`, which may be cached by text). */
-export declare function holesOf(text: string, compiled: (text: string) => CompileResult): Holes;
+export declare function holesOf(text: string, compiled: (text: string) => CompileResult, resolve?: Resolve): Holes;

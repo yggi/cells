@@ -69,6 +69,7 @@ function merge(own, used, say) {
 function fragmentLines(path, text, resolve, say) {
     const own = linesOf(text);
     const where = ` (in ${pathOf(path)})`;
+    const seen = new Set();
     const used = own.flatMap((l) => {
         if (l.use === undefined)
             return [];
@@ -77,6 +78,9 @@ function fragmentLines(path, text, resolve, say) {
             return [];
         }
         const id = l.use;
+        if (seen.has(id))
+            return [];
+        seen.add(id);
         const next = [...path, id];
         if (path.includes(id))
             say(`use ${quoted(id)} is a cycle: ${pathOf(next)}`);
@@ -103,8 +107,16 @@ export function expansion(text, { resolve, locked = [] } = {}) {
         return { line: l.line, col: col + 1, len: first.trimEnd().length - col };
     };
     const hashes = [];
-    const used = uses.map((u) => {
+    const first = new Map();
+    const used = uses.map((u, i) => {
         const span = spanOf(u);
+        const earlier = first.get(u.use);
+        if (earlier !== undefined) {
+            diagnostics.push({ severity: 'warning', message: `use ${quoted(u.use)} is written already, on line ${uses[earlier].line}: this one adds nothing`, span });
+            hashes.push(hashes[earlier] ?? null);
+            return { id: u.use, lines: [] };
+        }
+        first.set(u.use, i);
         const say = (message) => diagnostics.push({ severity: 'error', message, span });
         const recorded = locked.find((k) => k.id === u.use)?.hash;
         const theirs = resolve ? resolve(u.use, ...(recorded ? [recorded] : [])) : null;

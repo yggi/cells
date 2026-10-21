@@ -26,6 +26,7 @@ use "core kit"
 A used fragment may itself `use`: its own lines win over what it uses, and the piece's over all.
 
 - A line two used fragments give word for word (comments aside, whitespace collapsed) is one line.
+- An id used twice gives its lines once, at its first `use`; the second warns that it adds nothing.
 - A name two used fragments define by different lines, and the piece doesn't, is an error naming the name and both ids: the piece writes the line itself, or drops one `use`.
   `use` never renames: a voice's General MIDI note is read off its name ([midi.md](midi.md)), and `&bd2` would send another.
 - A cycle is an error naming it, and so is a depth past 8 (a kit in a groove in a section in a piece is 3).
@@ -70,4 +71,5 @@ Shorten's measure counts a `use` line as one leaf, a reference; the used fragmen
 ## Fragments with holes
 
 A piece with `use` is a fragment like any other: its holes are its expansion's, a used fragment's holes the piece's, less what the piece and the other used fragments define.
+`holesOf(text, compiled, resolve)` and `fitOf(fragment, workbench, compiled, resolve)` read it so, given the resolver: a used two-bar clave needs bars a whole number of its taps, as written out, so it doesn't fit 7/8; without a resolver, only the text's own lines are read.
 A hole read only as a sound, a step of a braid or a term of a mix (a groove's `&bd`), never as a table or a clock, doesn't block a fragment's fit on a workbench: `fitOf` lists it in `sounds`, the instrument to ask for next.
