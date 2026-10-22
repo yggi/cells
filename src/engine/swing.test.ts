@@ -3,7 +3,7 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { shorten } from './shorten';
-import vectors from '../../fixtures/jambot-swing.json';
+import swing from '../../fixtures/contracts/swing.json';
 import { METER_FRAGMENTS } from '../repository/meters';
 
 // Swing on the bar (#18, the first rung): a meter leans one level of its tree, named by note value (`swing=8n:.67`), and
@@ -145,14 +145,19 @@ describe('swing on the bar: one level of the meter leans, named by note value', 
   });
 });
 
-describe('Jambot’s swing axis, pinned by vectors (fixtures/jambot-swing.json)', () => {
-  it('holds s from 0 to 1 in steps of .05, each with its two levels’ shares', () => {
-    expect(vectors.vectors.map((v) => v.s)).toEqual(Array.from({ length: 21 }, (_, i) => i / 20));
-    expect(vectors.lifted).toMatch(/^Lifted from yggi\/jambot packages\/engine\/src\/swing\.ts @ [0-9a-f]{40}$/);
+describe('Jambot’s swing axis, the readers’ path of the swing contract (fixtures/contracts/swing.json)', () => {
+  /** The path's vectors: 4/4, each s with its two levels' shares (`8n`, then `16n`) and where its 16ths play. */
+  const path = swing.vectors.filter((v) => v.s !== undefined);
+  const share = (v: (typeof path)[number], level: string) => v.swing.find((l) => l.level === level)!.share;
+
+  it('holds s from 0 to 1 in steps of .05, each with its two levels’ shares, on 4/4', () => {
+    expect(path.map((v) => v.s)).toEqual(Array.from({ length: 21 }, (_, i) => i / 20));
+    expect(path.every((v) => v.name === '4/4' && v.swing.length === 2)).toBe(true);
+    expect(swing.lifted).toMatch(/^Lifted from yggi\/music-commons contracts\/swing\/vectors\.json @ [0-9a-f]{7,40}$/);
   });
 
-  it.each(vectors.vectors.map((v) => [v.s, v] as const))('s = %s: a 4/4 bar swung by its two shares places every 16th within 1e-9 of leanMap', (_, v) => {
-    const r = compiled(`&bar meter("4/4") step=60bpm swing=8n:${v.shares.eighth},16n:${v.shares.sixteenth}\n&x step=16n 0${VOICE}`);
+  it.each(path.map((v) => [v.s, v] as const))('s = %s: a 4/4 bar swung by its two shares places every 16th within 1e-9 of leanMap', (_, v) => {
+    const r = compiled(`&bar meter("4/4") step=60bpm swing=8n:${share(v, '8n')},16n:${share(v, '16n')}\n&x step=16n 0${VOICE}`);
     // (a bar of 4 s: a sixteenth is a quarter of a second)
     const at = eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-6).map((e) => e.at * 4);
     expect(at).toHaveLength(16);

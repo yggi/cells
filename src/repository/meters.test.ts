@@ -2,13 +2,16 @@
 // meters, which play the swing Jambot plays, and so does every point halfway between two of them; an axis no fragment
 // has changes nothing.
 import { describe, expect, it } from 'vitest';
-import vectors from '../../fixtures/jambot-swing.json';
+import swing from '../../fixtures/contracts/swing.json';
 import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { createRepository, type StylePoint } from './fragments';
 import { METER_FRAGMENTS } from './meters';
+
+/** Jambot's swing axis, the readers' path of the swing contract (music-commons contracts/swing): 4/4 at each s from 0 to 1 in twentieths. */
+const path = swing.vectors.filter((v) => v.s !== undefined);
 
 const repository = createRepository(METER_FRAGMENTS);
 const ids = METER_FRAGMENTS.map((f) => f.id);
@@ -105,7 +108,7 @@ describe('the presets find their meters', () => {
 
   // (a bar of 120 bpm is 2 s: a sixteenth is an eighth of a second)
   it.each(PRESETS.map((p) => [p.name, p] as const))('%s: the meter it finds plays each sixteenth within 1e-9 of Jambot’s leanMap', (_, preset) => {
-    const v = vectors.vectors.find((x) => x.s === preset.point.swing)!;
+    const v = path.find((x) => x.s === preset.point.swing)!;
     const r = compileSource(inFrame(repository.query(preset.point, 1)[0]!.fragment.text, true));
     expect(r.diagnostics).toEqual([]);
     const at = eventsBetween(plan(r, codeShifts(r)), 0, 2 - 1e-6).map((e) => e.at * 8);

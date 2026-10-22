@@ -2,7 +2,7 @@
 // meter; the claves play their patterns on General MIDI's claves (#140); every rhythm is open on its meter and finds its place by its association.
 import { describe, expect, it } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
-import vectors from '../../fixtures/jambot-swing.json';
+import swing from '../../fixtures/contracts/swing.json';
 import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
@@ -12,6 +12,9 @@ import { createRepository, type StylePoint } from './fragments';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
+
+/** Jambot's swing axis, the readers' path of the swing contract (music-commons contracts/swing): 4/4 at each s from 0 to 1 in twentieths. */
+const path = swing.vectors.filter((v) => v.s !== undefined);
 
 /** One drum hit as MIDI out sends it: its note, its step and length in sixteenths of the bar, its velocity. */
 interface Hit {
@@ -128,7 +131,7 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
   const RIM_UNSWUNG = ['Lo-fi hip hop', 'Funk'];
   const underOwnMeter = (w: (typeof drumBars)[number]) => {
     const { point, swing } = PRESETS[w.preset]!;
-    const onsets = [...vectors.vectors.find((v) => v.s === swing)!.onsets, 16];
+    const onsets = [...path.find((v) => v.s === swing)!.onsets, 16];
     const rimUnswung = (h: Hit) => RIM_UNSWUNG.includes(w.preset) && h.note === 37;
     const want = sorted(
       w.hits.map((h) => (rimUnswung(h) ? { ...h, velocity: h.step % 2 ? 1 : h.velocity } : { ...h, step: onsets[h.step]!, length: onsets[h.step + 1]! - onsets[h.step]! })),
