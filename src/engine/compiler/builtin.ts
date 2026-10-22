@@ -23,15 +23,17 @@ const exprRefs = (e: Expr): string[] => (e.k === 'ref' ? [e.ref.name] : e.k === 
 const atomRefs = (a: Atom): string[] =>
   a.kind === 'ref' ? [a.name] : a.kind === 'mix' ? a.exprs.flatMap(exprRefs) : a.kind === 'seq' ? a.layers.flatMap((l) => l.flatMap((t: Token) => atomRefs(t.atom))) : [];
 
+/** The cells a declaration's braid reads: its steps' splices, a mix's or a card's terms, inside subsequences too. */
+export const braidReadsOf = (d: CellDecl): string[] => (d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => atomRefs(t.atom)) : []);
+
 /**
- * Every cell a declaration reads, in any position: its braid (splices, a mix's or a card's terms), over=, base=, a
- * step=/loop= driver, a map= table, env= and pitch=, a parameter's cells and clocks, and the parameters that
- * take a cell (play= write= excite= couple= fm= …: attributes.ts). Not about=: a note's links are annotation only, so a
- * note that explains its oscillator (`&oscNote label="…" about=&a`) leaves it heard.
+ * Every other cell a declaration reads: over=, base=, a step=/loop= driver, a map= table, env= and pitch=, a parameter's
+ * cells and clocks, and the parameters that take a cell (play= write= excite= couple= fm= …: attributes.ts). Not about=:
+ * a note's links are annotation only, so a note that explains its oscillator (`&oscNote label="…" about=&a`) leaves it
+ * heard.
  */
-function readsOf(d: CellDecl): string[] {
+export function otherReadsOf(d: CellDecl): string[] {
   const out: string[] = [];
-  if (d.braid.kind === 'list') for (const t of d.braid.tokens) out.push(...atomRefs(t.atom));
   for (const r of [
     d.over,
     d.base,
@@ -48,12 +50,16 @@ function readsOf(d: CellDecl): string[] {
   return out;
 }
 
+/** Every cell a declaration reads, in any position: its braid's (`braidReadsOf`) and the rest (`otherReadsOf`). */
+const readsOf = (d: CellDecl): string[] => [...braidReadsOf(d), ...otherReadsOf(d)];
+
 /**
  * The declarations with the built-in card added, when the piece writes no card and has a sound nothing reads: a sound
  * is what the mix algebra calls a signal or a wave (sorts.ts: a voice, a mix, a gate, a pattern read through a kit, a
- * tape's read head, a braid at audio rate). Otherwise as they were.
+ * tape's read head, a braid at audio rate). Otherwise as they were. A cell a `use` line gave (`used`, decision 054) isn't
+ * heard: a piece using the General MIDI kit would hold its 47 voices.
  */
-export function builtinCard(ctx: Ctx, declared: Declared): Declared & { readonly builtin: string | null } {
+export function builtinCard(ctx: Ctx, declared: Declared, used: ReadonlySet<string> = new Set()): Declared & { readonly builtin: string | null } {
   const { decls, implicit } = declared;
   const none = { ...declared, builtin: null };
   if ([...decls.values()].some((d) => d.map?.kind === 'sample' || d.map?.kind === 'midi')) return none;
@@ -61,7 +67,7 @@ export function builtinCard(ctx: Ctx, declared: Declared): Declared & { readonly
   for (const d of decls.values()) for (const n of readsOf(d)) if (n !== d.name) read.add(n);
   const sortOf = sortOfCells(ctx, decls);
   const sounds = [...decls.values()].filter(
-    (d) => !implicit.has(d.name) && !d.lambda && !read.has(d.name) && !ctx.broken.has(d.name) && (sortOf(d.name) === 'signal' || sortOf(d.name) === 'wave'),
+    (d) => !implicit.has(d.name) && !used.has(d.name) && !d.lambda && !read.has(d.name) && !ctx.broken.has(d.name) && (sortOf(d.name) === 'signal' || sortOf(d.name) === 'wave'),
   );
   if (!sounds.length) return none;
   const span = IMPLICIT;

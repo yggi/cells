@@ -1,8 +1,10 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
-import { clockNeeds, holesOf, INTERFACE_NAMES, meterMeets } from "./holes.js";
+import { parse } from "../engine/parser/index.js";
+import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound } from "./holes.js";
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
+const USE = /^use\s/;
 const CONTINUES = /[+*,[]\s*$/;
 export function declarations(text) {
     const out = [];
@@ -26,6 +28,10 @@ const namesIn = (text) => new Set(text
     .split('\n')
     .flatMap((line) => [...splitComment(line)[0].matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)])
     .map((m) => m[1] ?? ''));
+const useLines = (text) => text
+    .split('\n')
+    .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
+    .filter((code) => USE.test(code));
 export function unionOf(fragment, workbench) {
     const bench = new Map(declarations(workbench).map((l) => [l.name, l]));
     const taken = new Set([...namesIn(workbench), ...namesIn(fragment)]);
@@ -50,7 +56,9 @@ export function unionOf(fragment, workbench) {
                 collide.push(line.name);
         }
         if (!collide.length) {
-            const kept = lines.filter((l) => !shared.includes(l.name)).map((l) => l.written);
+            const benchUses = new Set(useLines(workbench));
+            const uses = useLines(fragment).filter((u) => !benchUses.has(u));
+            const kept = [...uses, ...lines.filter((l) => !shared.includes(l.name)).map((l) => l.written)];
             const head = workbench.replace(/\s+$/, '');
             const amp = (names) => names.map((n) => `&${n}`);
             return {
@@ -75,19 +83,34 @@ function meets(result, { need, tap }) {
     const meter = name === undefined ? null : result.cells.get(name)?.meter;
     return !!meter && meterMeets(need, meter, tap);
 }
+const unknownCells = (result) => result.diagnostics.flatMap((d) => /^Unknown cell (&[A-Za-z_][A-Za-z0-9_]*)$/.exec(d.message)?.[1] ?? []);
 const sameDiagnostic = (a, b) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
-export function fitOf(fragment, workbench, compiled = compileSource) {
-    const holes = holesOf(fragment, compiled);
+export function fitOf(fragment, workbench, compiledBy, resolve) {
+    const compiled = compiledBy ?? ((text) => compileSource(text, undefined, resolve ? { resolve } : {}));
+    const holes = holesOf(fragment, compiled, resolve);
     const bench = compiled(workbench);
-    const benchNames = new Set(declarations(workbench).map((l) => `&${l.name}`));
-    const missing = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
+    const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
+    const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
+    const sounds = unfilled.filter((name) => holes.sounds.includes(name));
+    const missing = unfilled.filter((name) => !sounds.includes(name));
+    const read = linesRead(fragment, resolve);
+    const sound = readOnlyAsSound(parse(read).cells);
     const union = unionOf(fragment, workbench);
-    const alone = clockNeeds(fragment, compiled(fragment));
+    const alone = clockNeeds(read, compiled(fragment));
     const unmet = alone.filter((t) => !meets(bench, t)).map((t) => t.need);
-    const failed = { fits: false, union, missing, unmet };
+    const failed = { fits: false, union, missing, sounds, unmet };
     if (missing.length || union.twice.length || unmet.length)
         return failed;
-    const result = compiled(union.text);
+    const judged = () => [union.text, ...sounds.map((n) => `${n} s=white`)].join('\n');
+    let result = compiled(judged());
+    for (;;) {
+        const more = unknownCells(result).filter((n) => sound(n) && !sounds.includes(n) && !benchNames.has(n) && !union.names.includes(n));
+        if (!more.length)
+            break;
+        sounds.push(...more);
+        result = compiled(judged());
+    }
+    sounds.sort();
     const before = [...bench.diagnostics];
     const diagnostics = result.diagnostics.filter((d) => {
         const i = before.findIndex((b) => sameDiagnostic(b, d));
@@ -98,10 +121,10 @@ export function fitOf(fragment, workbench, compiled = compileSource) {
     });
     const bare = (names) => new Set(names.map((n) => n.slice(1)));
     const own = bare(union.names.filter((n) => !union.shared.includes(n)));
-    const unmetThere = clockNeeds(union.text, result, bare(union.names), own)
+    const unmetThere = clockNeeds(judged(), result, bare(union.names), own)
         .filter((t) => !meets(result, t))
         .map((t) => t.need);
-    return { fits: !diagnostics.length && !unmetThere.length, union, missing, unmet: unmetThere, diagnostics };
+    return { fits: !diagnostics.length && !unmetThere.length, union, missing, sounds, unmet: unmetThere, diagnostics };
 }
 function lru(limit, make) {
     const cache = new Map();

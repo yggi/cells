@@ -11,7 +11,12 @@ const need = (cell: string, tap: string, bars: number, steps: number, rate: numb
 
 describe('what a fragment uses and defines', () => {
   it('uses the names its compile finds declared nowhere, and defines its lines’ names', () => {
-    expect(holes('&line step=8n 0 2 4 over=&harm\n&out [&line * &lead]\n&lead s=saw loop=C3')).toEqual({ uses: ['&harm'], defines: ['&line', '&out', '&lead'], clock: [] });
+    expect(holes('&line step=8n 0 2 4 over=&harm\n&out [&line * &lead]\n&lead s=saw loop=C3')).toEqual({
+      uses: ['&harm'],
+      sounds: [],
+      defines: ['&line', '&out', '&lead'],
+      clock: [],
+    });
   });
 
   it('uses the main key where a line reads it and the text has none, as `key`', () => {

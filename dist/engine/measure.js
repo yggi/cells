@@ -52,8 +52,8 @@ function logicalLines(text) {
     return out;
 }
 const attributesOf = (line) => [...line.matchAll(/(?:^|[\s(])([A-Za-z][A-Za-z0-9]*)=/g)].filter((m) => !FREE.has(m[1])).length + [...line.matchAll(/(?:^|\s)(off|oneshot)(?=\s|$)/g)].length;
-export function structureByCell(text, { asWritten = false } = {}) {
-    const source = asWritten ? text : normalise(text).source;
+export function structureByCell(text, { asWritten = false, resolve } = {}) {
+    const source = asWritten ? text : normalise(text, resolve ? { resolve } : {}).source;
     const written = source.replace(/(^|[\s(])base=&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?/gm, '$1');
     const lines = written.split('\n');
     const cells = parse(written).cells.filter((d) => !isNote(d));
@@ -71,5 +71,6 @@ export function structureByCell(text, { asWritten = false } = {}) {
 export function structureOf(text, options = {}) {
     const cells = structureByCell(text, options);
     const sum = (k) => cells.reduce((n, c) => n + c[k], 0);
-    return { cells: sum('cells'), leaves: sum('leaves'), attributes: sum('attributes'), total: sum('total') };
+    const uses = parse(text).uses?.length ?? 0;
+    return { cells: sum('cells'), leaves: sum('leaves') + uses, attributes: sum('attributes'), total: sum('total') + uses };
 }

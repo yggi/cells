@@ -1,5 +1,7 @@
 import { readBlocks, rewrite, writeBody } from "./literate.js";
 import { readYaml, writeYaml, yamlValue } from "../repository/yaml.js";
+import { readUse } from "./parser/use.js";
+import { splitComment } from "./edit.js";
 const CELLS_FENCE = /^`{3,}\s*cells\s*$/m;
 export const isPieceFile = (source) => /^---\r?\n/.test(source) || CELLS_FENCE.test(source);
 function keyProblems(root) {
@@ -14,6 +16,8 @@ function keyProblems(root) {
             problems.push({ line, message: `the tags are ${JSON.stringify(v)}, not a list of names: tags: [genre:jazz, rhythm]` });
         if (key === 'tier' && !(typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 9999))
             problems.push({ line, message: `the tier is ${JSON.stringify(v)}: a tier of the tutorial is a whole number, 1 to 9999` });
+        if (key === 'uses' && !(Array.isArray(v) && v.every(isLocked)))
+            problems.push({ line, message: `the uses are ${JSON.stringify(v)}, not a lockfile: uses: a list of - id: gm kit, hash: e1:…` });
     }
     return problems;
 }
@@ -42,7 +46,31 @@ export function readPiece(markdown) {
         return { problems: problems.sort((a, b) => a.line - b.line) };
     return { frontmatter: yamlValue(root), text: body.text, prose: body.prose, map: body.map, layout: body.layout };
 }
-export function writePiece({ frontmatter, text, prose, layout, bare }) {
+function isLocked(v) {
+    if (typeof v !== 'object' || v === null || Array.isArray(v))
+        return false;
+    const m = v;
+    return Object.keys(m).sort().join() === 'hash,id' && typeof m.id === 'string' && typeof m.hash === 'string';
+}
+const asYaml = (entries) => entries.map(({ id, hash }) => ({ id, hash }));
+export const lockfileOf = ({ frontmatter }) => Array.isArray(frontmatter.uses) ? frontmatter.uses.filter(isLocked).map(({ id, hash }) => ({ id, hash })) : [];
+export function withLockfile(file, uses) {
+    const had = lockfileOf(file);
+    const entries = uses.flatMap((u) => (u.hash ? [{ id: u.id, hash: u.hash }] : had.filter((k) => k.id === u.id)));
+    const once = entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
+    return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(once) } };
+}
+const usedIds = (text) => new Set(text.split('\n').flatMap((raw) => readUse(splitComment(raw)[0]) ?? []));
+function pruned(frontmatter, text) {
+    if (!('uses' in frontmatter) || !Array.isArray(frontmatter.uses))
+        return frontmatter;
+    const named = usedIds(text);
+    const kept = lockfileOf({ frontmatter }).filter((k) => named.has(k.id));
+    return Object.fromEntries(Object.entries(frontmatter).flatMap(([k, v]) => (k !== 'uses' ? [[k, v]] : kept.length ? [[k, asYaml(kept)]] : [])));
+}
+export function writePiece(file) {
+    const { text, prose, layout, bare } = file;
+    const frontmatter = pruned(file.frontmatter, text);
     const body = layout ? rewrite(layout, text) : { blocks: [[text]], gaps: [['', '```cells'], ['```']] };
     if (bare && layout && !Object.keys(frontmatter).length) {
         const first = body.gaps[0];

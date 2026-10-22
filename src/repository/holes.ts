@@ -12,11 +12,19 @@
  *   taps of its level in its `cycle=` bars, times its rate (`16n*2`: 2), a multiple of its steps. Stated as the smallest
  *   bar that does: a braid of 32 sixteenths on `cycle=2` needs bars of 16 sixteenths (or 32, 48 …), so a two-bar clave
  *   compiles under 7/8 (bars of 14) but doesn't fit it; a line of one step on `1m` needs bars of 1, any meter.
+ * - **Sounds:** the uses read only as a sound, a step of a braid or a term of a mix (a groove's `&bd`), never as a table,
+ *   a clock or a parameter: decision 054 rules that such a hole doesn't block the fit (the composer asks for the
+ *   instrument next).
+ * - A text with `use` lines (decision 054) is read over its expansion, given the resolver its compile reads them by
+ *   (`resolve`): a used fragment's holes, sounds and clock needs are the text's, less what the text and the other used
+ *   fragments define, and it defines what they give (`CompileResult.uses`). Without one, only its own lines are read.
  */
-import type { Tap } from '../engine/ast';
+import type { CellDecl, Tap } from '../engine/ast';
+import { braidReadsOf, otherReadsOf } from '../engine/compiler/builtin';
 import { parse } from '../engine/parser';
 import { tapPositions, type Meter } from '../engine/meter';
-import { MAIN_KEY, type CompileResult } from '../engine/program';
+import { MAIN_KEY, type CompileResult, type Resolve } from '../engine/program';
+import { expansion, hasUse } from '../engine/use';
 
 /** What a line's clock needs of the meter it taps: its lap of `bars` bars holds its `steps` a whole number of times. */
 export interface ClockNeed {
@@ -40,7 +48,9 @@ export interface ClockNeed {
 export interface Holes {
   /** Names it reads and declares nowhere (`&harm`), and `key` for the main key; sorted. */
   readonly uses: readonly string[];
-  /** Names its lines declare (`&kick`), in the order written. */
+  /** Of those, the names read only as a sound (a braid's step, a mix's term): they don't block the fit; sorted. */
+  readonly sounds: readonly string[];
+  /** Names its lines declare (`&kick`), in the order written, then those its `use` lines give. */
   readonly defines: readonly string[];
   readonly clock: readonly ClockNeed[];
 }
@@ -97,18 +107,36 @@ export function clockNeeds(text: string, result: CompileResult, of?: ReadonlySet
   });
 }
 
+/** Whether declarations read a name (`&bd`) only as a sound: a step of a braid or a term of a mix, never a table, a clock or a parameter. */
+export function readOnlyAsSound(decls: readonly CellDecl[]): (name: string) => boolean {
+  const inBraid = new Set(decls.flatMap((d) => braidReadsOf(d)).map((n) => `&${n}`));
+  const elsewhere = new Set(decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`));
+  return (name) => inBraid.has(name) && !elsewhere.has(name);
+}
+
+/**
+ * The lines a text's compile reads: its expansion where it has `use` lines and a resolver (decision 054: a used
+ * fragment's holes are the text's), else the text.
+ */
+export const linesRead = (text: string, resolve?: Resolve): string => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
+
 /** A fragment's holes, read off its declarations and its compile alone (`compiled`, which may be cached by text). */
-export function holesOf(text: string, compiled: (text: string) => CompileResult): Holes {
-  const decls = parse(text).cells.filter((d) => !d.lambda);
+export function holesOf(text: string, compiled: (text: string) => CompileResult, resolve?: Resolve): Holes {
+  const read = linesRead(text, resolve);
+  const all = parse(read).cells;
+  const decls = all.filter((d) => !d.lambda);
   const result = compiled(text);
   const unknown = result.diagnostics.flatMap((d) => {
     const m = UNKNOWN_CELL.exec(d.message);
     return m ? [`&${m[1]}`] : [];
   });
   const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
+  const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
+  const sound = readOnlyAsSound(all);
   return {
-    uses: [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort(),
-    defines: [...new Set(decls.map((d) => `&${d.name}`))],
-    clock: clockNeeds(text, result).map((t) => t.need),
+    uses,
+    sounds: uses.filter(sound),
+    defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
+    clock: clockNeeds(read, result).map((t) => t.need),
   };
 }

@@ -22,6 +22,7 @@ export const PENDING = new Set([
     'parameter pulse',
     'parameter legato',
     'attribute tags',
+    'line use "id"',
 ]);
 export function formKey(e) {
     if (e.section === 'attribute' || e.section === 'parameter')

@@ -15,17 +15,20 @@
 import { applyBases } from './base';
 import { isNote } from '../ast';
 import { isPieceFile, readPiece } from '../piecefile';
-import type { CellDecl, Diagnostic, ParseResult } from '../ast';
+import type { CellDecl, Diagnostic, ParseResult, UseLine } from '../ast';
 import { IDENT, LineError, LineScanner, stripComment } from './scanner';
 import { parseBody, parseCell, SHOWS } from './cell';
 import { splitPlugins } from '../plugins';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
+import { readUse, USE_FORM } from './use';
 
 export { meterLevels, SIGNATURES } from './generators';
 export { SHOWS } from './cell';
+export { readUse, USE_FORM } from './use';
 
 export function parse(whole: string): ParseResult {
   const cells: CellDecl[] = [];
+  const uses: UseLine[] = [];
   // (plugin blocks are not cells: split off and blanked, so the lines keep their numbers)
   const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole, [...SHOWS, ...BUILTIN_PLUGINS.map((p) => p.name)]);
   const diagnostics: Diagnostic[] = [...pluginDiagnostics];
@@ -49,6 +52,14 @@ export function parse(whole: string): ParseResult {
   lines.forEach(({ text, line: lineNo, parts }) => {
     const s: LineScanner = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
     if (s.done()) return;
+    const use = readUse(text);
+    if (use !== undefined) {
+      const col = text.search(/\S/);
+      const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
+      if (use === null) diagnostics.push({ severity: 'error', message: USE_FORM, span });
+      else uses.push({ id: use, span });
+      return;
+    }
     try {
       const start = s.i;
       const word = s.match(IDENT);
@@ -68,7 +79,7 @@ export function parse(whole: string): ParseResult {
     }
   });
   // (base=: each copy resolved into a plain cell, decision 026)
-  return applyBases({ cells, diagnostics, broken, plugins });
+  return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}) });
 }
 
 /**

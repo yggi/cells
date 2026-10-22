@@ -13,9 +13,9 @@ import { checkRoles } from "./roles.js";
 import { checkLimits } from "./limits.js";
 import { sectioned } from "./sections.js";
 const pluginsOf = (parsed) => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
-export function compile(parsed, env) {
+export function compile(parsed, env, used = new Set()) {
     const ctx = context(parsed, env);
-    const declared = builtinCard(ctx, declare(ctx));
+    const declared = builtinCard(ctx, declare(ctx), used);
     const { decls, builtin } = declared;
     const typed = sorts(ctx, decls);
     const resolved = resolveCells(ctx, declared, typed);

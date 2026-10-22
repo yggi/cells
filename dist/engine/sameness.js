@@ -21,10 +21,10 @@ export function sameNotes(a, b, names) {
 export const SAMENESS_SECONDS = 60;
 const whole = (e, voice) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
 const note = (e, voice) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
-function sameEvents(a, b, until, key) {
+function sameEvents(a, b, until, key, options = {}) {
     try {
-        const ra = compileSource(a);
-        const rb = compileSource(b);
+        const ra = compileSource(a, undefined, options);
+        const rb = compileSource(b, undefined, options);
         if (!ra.ok || !rb.ok)
             return false;
         const to = typeof until === 'number' ? until : until(ra, rb);
@@ -51,9 +51,9 @@ export function wholeWindow(a, b) {
     const end = (r) => pieceTime(r).ends ?? SAMENESS_SECONDS;
     return Math.min(WHOLE_PIECE_LIMIT, Math.max(end(a), end(b)));
 }
-export function soundsIdentical(a, b, until) {
-    return sameEvents(a, b, until ?? wholeWindow, whole);
+export function soundsIdentical(a, b, until, options) {
+    return sameEvents(a, b, until ?? wholeWindow, whole, options);
 }
-export function playsSameNotes(a, b, until) {
-    return sameEvents(a, b, until ?? wholeWindow, note);
+export function playsSameNotes(a, b, until, options) {
+    return sameEvents(a, b, until ?? wholeWindow, note, options);
 }

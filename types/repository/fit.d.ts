@@ -8,16 +8,21 @@
  * that neither text names), with every use of it in the fragment, until no private name collides (a rename can make a
  * shared line differ, `[&kick, &sd]`, and so rename it too). The interface names (`INTERFACE_NAMES`: `&bar`, `key`,
  * `&harm`) are never renamed: one the fragment defines differently is defined twice, and the fragment doesn't fit.
- * Lines of the fragment that declare nothing (blank, a comment alone) aren't carried over.
+ * Lines of the fragment that declare nothing (blank, a comment alone) aren't carried over, but for its `use` lines
+ * (decision 054), each carried over unless the workbench has it, before its declarations.
  *
  * **The fit:** every name the fragment uses is defined on the workbench (`key`: the workbench has a main key), no name is
  * defined twice by different lines, every clock need is met by the meter the workbench gives it (its main meter, or the
  * one named), and the union compiles with no diagnostic the workbench alone doesn't have (its own warnings, or an error a
  * hole of its own makes, are no fault of the fragment's). The checks run cheapest first, and the union is compiled only
- * when the others pass; its compile may be cached by text (`cachedCompile`).
+ * when the others pass; its compile may be cached by text (`cachedCompile`). A hole read only as a sound (`Holes.sounds`:
+ * a groove's `&bd`) doesn't block the fit (decision 054): what the workbench doesn't define of them is `sounds`, the
+ * instrument to ask for next, and the union is judged with a stand-in voice for each (`&bd s=white`, as the seed's
+ * rhythms wrote theirs), so that only the fragment's other faults count. The stand-ins are in no text the fit returns. What a workbench's `use` lines give it
+ * counts as defined there, as its compile says.
  */
 import type { Diagnostic } from '../engine/ast';
-import type { CompileResult } from '../engine/program';
+import type { CompileResult, Resolve } from '../engine/program';
 import { type ClockNeed } from './holes';
 /** A fragment added to a workbench: the text, and what became of the fragment's names there. */
 export interface Union {
@@ -36,8 +41,10 @@ export interface Union {
 export interface Fit {
     readonly fits: boolean;
     readonly union: Union;
-    /** Names the fragment uses that the workbench doesn't define (`key`: it has no main key). */
+    /** Names the fragment uses that the workbench doesn't define (`key`: it has no main key), but for its sounds. */
     readonly missing: readonly string[];
+    /** Names the fragment reads only as a sound that the workbench doesn't define: they don't block the fit. */
+    readonly sounds: readonly string[];
     /** Its clock needs the workbench's meter doesn't meet (or a need with no meter there to meet it). */
     readonly unmet: readonly ClockNeed[];
     /** What the union's compile says that the workbench's alone doesn't; absent when a cheaper check failed first. */
@@ -53,8 +60,12 @@ export interface Line {
 export declare function declarations(text: string): Line[];
 /** The union of a fragment with a workbench (see the module's comment). */
 export declare function unionOf(fragment: string, workbench: string): Union;
-/** Whether a fragment fits a workbench (see the module's comment); `compiled` compiles a text, and may cache it (`cachedCompile`). */
-export declare function fitOf(fragment: string, workbench: string, compiled?: (text: string) => CompileResult): Fit;
+/**
+ * Whether a fragment fits a workbench (see the module's comment); `compiledBy` compiles a text, and may cache it
+ * (`cachedCompile`). Their `use` lines (decision 054) read through `resolve`: the fragment is judged over its expansion,
+ * its used fragments' holes and clock needs its own; `compiledBy`, where given, must read them through the same.
+ */
+export declare function fitOf(fragment: string, workbench: string, compiledBy?: (text: string) => CompileResult, resolve?: Resolve): Fit;
 /**
  * A compile cached by text: the last `limit` texts compiled. At 512, a library of 31 fragments, each alone and in its union
  * with a workbench, holds about ten workbenches' queries.

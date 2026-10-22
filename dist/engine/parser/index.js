@@ -5,10 +5,13 @@ import { IDENT, LineError, LineScanner, stripComment } from "./scanner.js";
 import { parseBody, parseCell, SHOWS } from "./cell.js";
 import { splitPlugins } from "../plugins.js";
 import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
+import { readUse, USE_FORM } from "./use.js";
 export { meterLevels, SIGNATURES } from "./generators.js";
 export { SHOWS } from "./cell.js";
+export { readUse, USE_FORM } from "./use.js";
 export function parse(whole) {
     const cells = [];
+    const uses = [];
     const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole, [...SHOWS, ...BUILTIN_PLUGINS.map((p) => p.name)]);
     const diagnostics = [...pluginDiagnostics];
     const broken = [];
@@ -34,6 +37,16 @@ export function parse(whole) {
         const s = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
         if (s.done())
             return;
+        const use = readUse(text);
+        if (use !== undefined) {
+            const col = text.search(/\S/);
+            const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
+            if (use === null)
+                diagnostics.push({ severity: 'error', message: USE_FORM, span });
+            else
+                uses.push({ id: use, span });
+            return;
+        }
         try {
             const start = s.i;
             const word = s.match(IDENT);
@@ -60,7 +73,7 @@ export function parse(whole) {
                 broken.push(name);
         }
     });
-    return applyBases({ cells, diagnostics, broken, plugins });
+    return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}) });
 }
 export const plainLabel = (label) => label
     .replace(/\{[^}]*\}/g, '')

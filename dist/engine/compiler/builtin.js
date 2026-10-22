@@ -5,11 +5,9 @@ const BUILTIN_CARD = 'card:builtin';
 const BUILTIN_POSTGAIN = 0.8;
 const exprRefs = (e) => (e.k === 'ref' ? [e.ref.name] : e.k === 'sum' ? e.items.flatMap((x) => exprRefs(x.e)) : e.k === 'prod' ? e.factors.flatMap(exprRefs) : []);
 const atomRefs = (a) => a.kind === 'ref' ? [a.name] : a.kind === 'mix' ? a.exprs.flatMap(exprRefs) : a.kind === 'seq' ? a.layers.flatMap((l) => l.flatMap((t) => atomRefs(t.atom))) : [];
-function readsOf(d) {
+export const braidReadsOf = (d) => (d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => atomRefs(t.atom)) : []);
+export function otherReadsOf(d) {
     const out = [];
-    if (d.braid.kind === 'list')
-        for (const t of d.braid.tokens)
-            out.push(...atomRefs(t.atom));
     for (const r of [
         d.over,
         d.base,
@@ -32,7 +30,8 @@ function readsOf(d) {
         out.push(d.gate.notes, ...d.gate.levels.map((l) => l.name), ...d.gate.receivers);
     return out;
 }
-export function builtinCard(ctx, declared) {
+const readsOf = (d) => [...braidReadsOf(d), ...otherReadsOf(d)];
+export function builtinCard(ctx, declared, used = new Set()) {
     const { decls, implicit } = declared;
     const none = { ...declared, builtin: null };
     if ([...decls.values()].some((d) => d.map?.kind === 'sample' || d.map?.kind === 'midi'))
@@ -43,7 +42,7 @@ export function builtinCard(ctx, declared) {
             if (n !== d.name)
                 read.add(n);
     const sortOf = sortOfCells(ctx, decls);
-    const sounds = [...decls.values()].filter((d) => !implicit.has(d.name) && !d.lambda && !read.has(d.name) && !ctx.broken.has(d.name) && (sortOf(d.name) === 'signal' || sortOf(d.name) === 'wave'));
+    const sounds = [...decls.values()].filter((d) => !implicit.has(d.name) && !used.has(d.name) && !d.lambda && !read.has(d.name) && !ctx.broken.has(d.name) && (sortOf(d.name) === 'signal' || sortOf(d.name) === 'wave'));
     if (!sounds.length)
         return none;
     const span = IMPLICIT;
