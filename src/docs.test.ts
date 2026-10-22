@@ -66,6 +66,13 @@ describe('docs: structure', () => {
     const records = readdirSync(join(DOCS, 'decisions')).filter((f) => /^\d{3}-.*\.md$/.test(f));
     for (const r of records) expect(linked, r).toContain(`decisions/${r}`);
   });
+
+  // (two pull requests took 055 at once, #230 and #233, #242: each passed alone, and the second's merge is what fails)
+  it('no two decisions share a number', () => {
+    const records = readdirSync(join(DOCS, 'decisions')).filter((f) => /^\d{3}-.*\.md$/.test(f));
+    const taken = records.filter((r, i) => records.findIndex((s) => s.slice(0, 3) === r.slice(0, 3)) !== i);
+    expect(taken, 'a number taken twice: renumber the later one').toEqual([]);
+  });
 });
 
 /**
