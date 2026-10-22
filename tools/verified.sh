@@ -1,8 +1,9 @@
 #!/bin/sh
 # The stamp of a tree that passed `npm run verify`, read by the pre-push hook (.githooks/pre-push), so a push right after
 # a verify run by hand doesn't run it again, and still says how many tests passed. The stamps are lines
-# `<tree> <tests passed>` in the git directory (`cells-verified`); a line of a tree alone, from before the count was
-# kept, reads as a count unknown.
+# `<tree> <tests passed>` in the repository's common git directory (`cells-verified`), shared by its linked worktrees, since
+# a tree is the same files whichever checkout verified it (#242); a line of a tree alone, from before the count was kept,
+# reads as a count unknown. What a run is doing (`cells-verifying`, `cells-tests-passed`) stays with its own worktree.
 #
 #   begin  (npm's `preverify`) records the tree verify is about to check: the checkout's files as they are, tracked or
 #          not, but not ignored, written as a git tree through a scratch index (the real index is left alone). It also
@@ -17,6 +18,7 @@
 # Outside a git checkout, or at `end` with nothing begun, it does nothing: verify's result never depends on it.
 cd "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || exit 0
 gitdir=$(git rev-parse --absolute-git-dir) || exit 0
+stamps="$(git rev-parse --path-format=absolute --git-common-dir)/cells-verified" || exit 0
 pending="$gitdir/cells-verifying"
 counted="$gitdir/cells-tests-passed"
 
@@ -48,7 +50,7 @@ case "$1" in
     began=$(cat "$pending")
     rm -f "$pending"
     [ "$(tree 2>/dev/null)" = "$began" ] || exit 0
-    grep -q "^$began " "$gitdir/cells-verified" 2>/dev/null || echo "$began ${count:-?}" >>"$gitdir/cells-verified"
+    grep -q "^$began " "$stamps" 2>/dev/null || echo "$began ${count:-?}" >>"$stamps"
     ;;
   *)
     echo 'usage: tools/verified.sh begin|end [tests passed]' >&2

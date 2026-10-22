@@ -209,6 +209,23 @@ describe('pre-push', () => {
     expect(status).toBe(0);
   });
 
+  it('lets a tree verified in one worktree through from another worktree of the same repository (#242)', () => {
+    const dir = repoWith(['a.ts']);
+    const other = `${dir}-other`;
+    repos.push(other);
+    git(dir, 'worktree', 'add', '-q', '--detach', other, 'HEAD');
+    verified(dir, 'begin');
+    verified(dir, 'end');
+    const { status, stderr } = hook(other, 'head', failing);
+    expect(stderr).toContain('passed npm run verify already');
+    expect(status).toBe(0);
+    // (and the other way: a tree the linked worktree verified, the main checkout pushes unverified)
+    commit(other, 'b.ts');
+    expect(hook(other, 'head', `echo '      Tests  3 passed (3)'`).status).toBe(0);
+    git(dir, 'checkout', '-q', '--detach', git(other, 'rev-parse', 'HEAD'));
+    expect(hook(dir, 'head', failing).stderr).toContain('(3 tests passed)');
+  });
+
   it('is what a checkout runs: the session start points core.hooksPath at it', () => {
     expect(readFileSync(`${root}/.claude/hooks/session-start.sh`, 'utf8')).toContain('git config core.hooksPath .githooks');
   });

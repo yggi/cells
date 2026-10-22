@@ -31,8 +31,9 @@ npm ci --no-audit --no-fund && npm run verify && npm run test:all
 ```
 
 `verify` holds what a frontend reads: the generated `types/` and `src/engine/examples.generated.ts` are fresh, the examples compile, the event snapshot (`src/engine/snapshot.txt`) and the contracts' vectors hold.
-`test:all` adds the slow tests (the folder over whole pieces and the MIDI library, about two minutes), which run before a release and nowhere else on their own.
-Name the commit and both test counts on the issue.
+`test:all` adds the slow tests (the folder over whole pieces and the MIDI library, about two minutes), which also run nightly on `main` and on every pull request out of draft (`.github/workflows/ci.yml`).
+Or run it from Actions instead of the worktree: *Actions → ci → Run workflow* on `main`; its two jobs, `verify` and `slow`, are this step, and each job's summary gives the commit and its test count.
+Name the commit and both test counts on the issue (and the run's link, when it ran in Actions).
 
 ## 2. The version
 

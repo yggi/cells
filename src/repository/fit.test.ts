@@ -289,8 +289,7 @@ describe('what it costs', () => {
   // front of), not the milliseconds they take, which a loaded machine changes. A workbench the repository hasn't seen
   // costs its own compile and at most one compile of the union per fragment tried (those that pass the cheaper checks);
   // a query for k stops at the k-th that fits, so k = 1 tries the first that fits; the same workbench again, every fit
-  // cached by its two texts (`cachedFit`), compiles nothing. One wall-clock line stays as a gross witness: ten seconds
-  // for all three, which a machine under any load keeps and a compile of each of a thousand unions doesn't.
+  // cached by its two texts (`cachedFit`), compiles nothing. Their milliseconds: `timing.slow.test.ts` (#237).
   it('a fitting query over the library compiles at most one union a fragment for a new workbench, one for k = 1, and none the second time', async () => {
     // (the repository loaded afresh, so it compiles through the counted compile: with isolate off, a file that ran earlier
     // in this worker may have loaded it with the real one)
@@ -302,7 +301,6 @@ describe('what it costs', () => {
     };
     const r = (await import('./fragments')).createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
-    const t0 = performance.now();
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
     // (the 13 rhythms, the 2 kits and the 5 modes)
     expect(first).toHaveLength(20);
@@ -313,7 +311,6 @@ describe('what it costs', () => {
     expect(one).toHaveLength(1);
     // (the workbench, and the union of the first fragment that fits: a fragment that fails a cheaper check compiles none)
     expect(tried).toBeLessThanOrEqual(2);
-    expect(performance.now() - t0).toBeLessThan(10_000);
   });
 
   it('a cached compile is the compile, and keeps the last texts it was asked for', () => {
