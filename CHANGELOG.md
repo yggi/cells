@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.9.0`.
+### Fixed
+- **Shorten no longer rewrites a bare `swing=` that leans nothing** (#166): on a meter whose own steps are its beats (`meter("4/4")`), it offered `swing=4n:.67`, which plays the same and then warns "leans nothing". The rewrite is left out and the compiler's warning stands for the author (it names `swing=8n:`, which would change the notes). No piece's notes change.
 
 ## v0.9.0 — 2026-10-22
 
