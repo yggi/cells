@@ -26,7 +26,7 @@ These read a braid *as written* or moved. They go where a braid is used — brai
 - **`&t[$i]`**, **`&t[$a:b]`** pick *as written*, whatever the shift: with `&key shift=2`, `&key[$0] &key[$4] &key[$7]` is C E G.
 - **`&t[<<n]`**, **`&t[>>n]`** — &t shifted back / forward by n (default 1), on top of its own rotation; wrapped entries climb a lap. `&john[<<]` is the theme one unit behind; `over=&scale[<<]` reads one step lower. In `out` the brackets keep shifts apart from pitch arithmetic: `(&alto[<<] - 7) * &cello` — a bar behind, a fifth below.
 - Slices rotate too, without the climb: `&x[-1:] &x[:-1]`.
-- **`&x^n`** moves a reference n steps of the table it is read through (degrees: relative), **`&x^$n`** n steps of the grid after its tables (semitones on the 12: absolute): `&m^1` a degree up, `&m^$7` a fifth up ([decision 015](../decisions/015-caret-is-degrees.md); below).
+- **`&x^n`** moves a reference n steps of the table it is read through (degrees: relative), **`&x^$n`** n steps of the grid after its tables (semitones on the 12: absolute): `&m^1` a degree up, `&m^$7` a fifth up ([decision 015](https://github.com/yggi/cells/blob/main/docs/decisions/015-caret-is-degrees.md); below).
 - **`shift=n`** rotates the braid by n (wrapped entries climb a lap: a shift of more than twenty laps carries its notes out of hearing, and warns).
 
 ```cells-fragment
@@ -60,7 +60,7 @@ A reference's numbers are indices into the table it is read through, so they can
 
 ## A copy, changed: base=
 
-**`base=&x`** makes a cell a copy of &x, changed where it says ([decision 026](../decisions/026-base.md)): an overdub,
+**`base=&x`** makes a cell a copy of &x, changed where it says ([decision 026](https://github.com/yggi/cells/blob/main/docs/decisions/026-base.md)): an overdub,
 a delta. A fugue's entries are this: one subject, each entry a little bent.
 
 - **Its braid goes over the base's, step by step.** `=` keeps the base's step as it is there (read "the same"); a value
@@ -82,5 +82,5 @@ a delta. A fugue's entries are this: one subject, each entry a little bent.
 &out map=sample [&tune * &v * .4]
 ```
 
-The folder (`engine/fold`, [notes/fold.md](../notes/fold.md)) writes what returns nearly the same this way when a MIDI
+The folder (`engine/fold`, [notes/fold.md](https://github.com/yggi/cells/blob/main/docs/notes/fold.md)) writes what returns nearly the same this way when a MIDI
 file is converted to cells: BWV 847's subject and its bent entries.
