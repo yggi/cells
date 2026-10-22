@@ -20,7 +20,7 @@ A tempo marking is its range, centred: `step=free(adagio)` (largo larghetto adag
 
 ## A braid left free
 
-**`free(0 2 4 ~ …)`** around a braid is the same thing for notes: steps left to the performer ([decision 018](../decisions/018-free-braid.md)). It is a cell's whole braid, nothing beside it.
+**`free(0 2 4 ~ …)`** around a braid is the same thing for notes: steps left to the performer ([decision 018](https://github.com/yggi/cells/blob/main/docs/decisions/018-free-braid.md)). It is a cell's whole braid, nothing beside it.
 
 ```cells
 &key scan(2 2 1 2 2 2 1)

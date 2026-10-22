@@ -30,7 +30,7 @@
  * byte for byte, and one made new has a single block with one blank line before it and before the prose, and ends the
  * file with a newline, so a file written that way reads and writes back byte for byte.
  */
-import { type Layout } from '../engine/literate';
+import type { Layout } from '../engine/literate';
 import { type Fragment } from './fragments';
 import { type YamlProblem, type YamlValue } from './yaml';
 /** A fragment's metadata: every frontmatter key but `id` and `association`, in the order the file gives them. */

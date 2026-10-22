@@ -1,5 +1,5 @@
 import { attrsOf, declLine, setAttr } from "../edit.js";
-import { bareSwingLevel } from "../meter.js";
+import { bareSwingLevel, noteValue, swingLevelProblem } from "../meter.js";
 import { soundsIdentical } from "../sameness.js";
 export function swings(source, result) {
     const out = [];
@@ -9,7 +9,8 @@ export function swings(source, result) {
         if (!m || !written || /^[1-9][0-9]*(?:n\.?|t):/.test(written) || declLine(source, c.name) < 0)
             continue;
         const level = bareSwingLevel(m);
-        if (!level)
+        const whole = level === null ? null : noteValue(level);
+        if (!level || whole === null || swingLevelProblem(m, whole) !== null)
             continue;
         const apply = (s) => setAttr(s, c.name, 'swing', `${level}:${written}`);
         const next = apply(source);

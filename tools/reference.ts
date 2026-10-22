@@ -124,7 +124,9 @@ export function renderReference(): string {
           PARAM_ALIASES,
         )
           .map(([k, v]) => `\`${k}\` → \`${v}\``)
-          .join(', ')}): the text keeps what is written, and an alias beside ours is the parameter given twice ([decision 027](../decisions/027-on-top-of-strudel.md)).`,
+          .join(
+            ', ',
+          )}): the text keeps what is written, and an alias beside ours is the parameter given twice ([decision 027](https://github.com/yggi/cells/blob/main/docs/decisions/027-on-top-of-strudel.md)).`,
         '',
       );
     if (section === 'sort')

@@ -133,6 +133,12 @@ describe('swing on the bar: one level of the meter leans, named by note value', 
     expect(shorten(free).find((x) => x.kind === 'swing')!.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:free(.5, .5..75)');
   });
 
+  it('a bare swing= on beats that are the meter’s own steps is left to the author: the warning stands, Shorten offers nothing (#166)', () => {
+    const bare = `&bar meter("4/4") step=120bpm swing=.67\n&x step=8n 0${VOICE}`;
+    expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:.67"]);
+    expect(shorten(bare).find((x) => x.kind === 'swing')).toBeUndefined();
+  });
+
   it('several levels at once nest, each node keeping its ends', () => {
     expect(rounded(onsets('meter("4/4") swing=8n:.6,16n:.55', '16n').slice(0, 4))).toEqual([0, 0.33, 0.6, 0.82]);
     expect(() => compiled(`&bar meter("4/4") step=60bpm swing=8n:free(.5, .5..75),16n:.55\n&x step=8n 0${VOICE}`)).toThrow(/one level alone/);
