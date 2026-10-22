@@ -8,7 +8,8 @@
 # - It verifies the working tree, and the push sends the commit, so a dirty tracked tree is refused: commit first, and
 #   push the branch checked out. So is an untracked file git doesn't ignore, unless the commit's tree passed verify
 #   already: verify would see it, and the commit lacks it (a new module left out of `git add` passes, then breaks main).
-# - A tree that passed is remembered by its hash in the git directory (`cells-verified`), so a push retried after a
+# - A tree that passed is remembered by its hash in the common git directory (`cells-verified`, shared by every linked
+#   worktree, since a tree is the same files whichever checkout verified it), so a push retried after a
 #   network failure, or made right after `npm run verify` by hand (its `postverify` stamps the tree,
 #   tools/verified.sh), doesn't run it again. The hook stamps only the tree its own run saw (tools/verified.sh, `begin`
 #   before the check and `end` after a pass): when a file changed while the check ran, the push goes through unstamped.
@@ -45,7 +46,7 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
 fi
 
 gitdir=$(git rev-parse --absolute-git-dir)
-stamps="$gitdir/cells-verified"
+stamps="$(git rev-parse --path-format=absolute --git-common-dir)/cells-verified"
 tree=$(git rev-parse 'HEAD^{tree}')
 short=$(git rev-parse --short 'HEAD^{tree}')
 commit=$(git rev-parse --short HEAD)
