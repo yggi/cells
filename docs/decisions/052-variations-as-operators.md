@@ -46,11 +46,13 @@ It makes no choice: a frontend picks one by a draw, or shows them all.
 | **transpose** | every note n degrees of the table the line reads (`key`, or the chord in force), n in −2, −1, 1, 2 | `&x^n` (decision 015) | yggi/jambot#423; the lead's lift (n = 2) |
 | **invert** | every note mirrored about the line's first note, in degrees of its table | `degree(inverse(&x), 2f)`, f the first note | yggi/jambot#423; the lead's turn over |
 | **reverse** | the notes in reverse order, each keeping its length | `&x[::-1]` | yggi/jambot#423 |
+| **bend** | the last note moved to the note before it, n degrees of its table from it, n in −2, −1, 1, 2 (`BENDS`) | the note before, `^n`, on the last's step | the lead's bend (yggi/jambot#424, #267) |
+| **trim** | the last note left out, the note before it held to the lap's end (a rest after it), where the line keeps 2 notes (`TRIM_FEWEST`) | a step edit | the lead's drop (yggi/jambot#424, #267) |
 
 - **A line** is an entry of a card's mix: a cell, or a product of cells on one grid (`&euclid * &euclidLevel`).
 - **Written into the line itself.** A variation rewrites only the braid of the line it varies, under the same name, as plain steps on the line's own grid; Normalise then spells it. It never writes a reference to its source (`&hat2 base=&hat[>>1]`), because a filed variation stands alone (its source may not be on the workbench), replaces its source in the union (the same name, decision 047's "the same line"), and keeps its anchors, which a whole-line form can't. A form that survives the change is kept: a Euclid rotated is a Euclid with another rotation; one a hit dropped is written out as steps, as `grooveText` does.
 - **Not a variation**, and left out: a result that plays the same notes as its source or as a variation given before it (S2, below); one that strikes one sound twice at one onset; one that leaves the fragment fewer than `fewest` notes.
-- **The order** is Jambot's, so its draws pick the same variation: the lines in the order the lap first plays them (by onset, then pitch); for each, its rotation, its drops in the order the notes play, its adds by step; then the pitched operators, transpose by −2, −1, 1, 2, invert, reverse.
+- **The order** is Jambot's, so its draws pick the same variation: the lines in the order the lap first plays them (by onset, then pitch); for each, its rotation, its drops in the order the notes play, its adds by step; then the pitched operators, transpose by −2, −1, 1, 2, invert, reverse, bend by −2, −1, 1, 2, trim.
 - **The draw:** `varied(text, draw, options)` gives the variation at index ⌊draw · n⌋ of the n, for a draw in [0, 1), the index Jambot's `pick(draw, ones)` gives for every draw; a draw outside [0, 1) is an error.
 
 A drum bar on its workbench, and three of its 17 variations (1 rotation, 4 drops, 12 adds); the comment names each as the frontmatter will (point 4):
@@ -107,7 +109,7 @@ A drum bar on its workbench, and three of its 17 variations (1 rotation, 4 drops
 &hh s=white
 ```
 
-A bass line over the chord in force on its workbench, and three of its 6 variations; its anchors are the roots on steps 0 and 4, where the chord changes:
+A bass line over the chord in force on its workbench, and three of its 10 variations (4 transpositions, an inversion, a retrograde, 3 bends and a trim: its bend by −1 plays its source); its anchors are the roots on steps 0 and 4, where the chord changes:
 
 ```cells
 # source: a bass over the chord in force, the host's meter, key and harmony first
@@ -250,7 +252,7 @@ Why derived:
 **Rung 2, the pitched operators** (transpose, invert, reverse, the root anchor), for yggi/jambot#423, once its five bass seeds are files in cells:
 
 - On each of the five seeds, on its own workbench: every variation plays other notes than its source and the others; the root on each chord change plays as before; every other note plays what the language's own form plays: `&x^n` for each n, `degree(inverse(&x), 2f)`, the retrograde within each span. Up to 30 variations (5 × 6); the pull request names any left out, and why.
-- The lead's (yggi/jambot#424) map onto these: lift is transpose by 2 and turn over is invert, each reproducing the first two ways of the lead's `varied` (before its nudge) note for note on its shapes, in Jambot's tree; bending the last note and dropping it (the note before held to the bar's end) join as operators of their own when that rung starts.
+- The lead's (yggi/jambot#424) map onto these: lift is transpose by 2 and turn over is invert, each reproducing the first two ways of the lead's `varied` (before its nudge) note for note on its shapes, in Jambot's tree; bending the last note and dropping it (the note before held to the bar's end) join as operators of their own when that rung starts: **bend** and **trim** (#267), pitched operators after reverse. The lead's drop is `trim`, not a pitched `drop`: an operator's name acts on one kind of line, and `drop`, a rhythm operator a frontend gets where it names none, would then leave the last note of a pitched line out for a frontend that asked only for the rhythm ones.
 
 **Rung 3, harmony** (yggi/jambot#425): substitution by a secondary dominant toward a slot and a slot reharmonised by a third, with the cadence as their anchor, specified with numbers when yggi/jambot#425's seed progressions are files.
 

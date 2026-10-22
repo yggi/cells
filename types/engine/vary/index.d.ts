@@ -2,13 +2,17 @@ import type { Rewrite } from '../rewrite';
 import { type Anchor } from './anchors';
 export { backbeatOf, type Anchor } from './anchors';
 /** The operators: the rhythm ones (rung 1) and the pitched ones (rung 2). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse';
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim';
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export declare const RHYTHM_OPERATORS: readonly Operator[];
 /** The pitched operators, in their order: for a bass, a lead. */
 export declare const PITCHED_OPERATORS: readonly Operator[];
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export declare const DEGREES: readonly number[];
+/** A bend's amounts, in degrees of the table read from the note before the last: 1 or 2, either way (yggi/jambot#424). */
+export declare const BENDS: readonly number[];
+/** The fewest notes a trimmed line keeps: its last note left out, at least two stay (the lead's shapes, yggi/jambot#424). */
+export declare const TRIM_FEWEST = 2;
 /** One change to one line: a rewrite of the tool `vary`, whose `apply` gives the varied fragment. */
 export interface Variation extends Rewrite<Operator> {
     /** The line it varies, as the card names it: `&hat`. */
