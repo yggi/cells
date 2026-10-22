@@ -3,7 +3,7 @@
  * needs, all read off the compiler's own results, never written beside the text and never parsed a second time.
  *
  * - **Defines:** the cells its lines declare (the parser's declarations; an unnamed cell `&( … )` is part of its line).
- * - **Uses:** each name its compile reports as an unknown cell (`Unknown cell &harm`: the compiler's one place for a name
+ * - **Uses:** each name its compile reports as unknown (`CompileResult.unknown`: the compiler's one place for a name
  *   used and declared nowhere), and `key` when a line reads the main key (`over=key`, #130) and the text has none of its
  *   own. A name the compiler doesn't reach, for an earlier error on the same line, isn't listed; the fit's compile of the
  *   union still says it (`fit.ts`).
@@ -57,9 +57,6 @@ export interface Holes {
 
 /** The interface names: what fragments agree on and a union never renames (decision 047, point 2; more as facets need them). */
 export const INTERFACE_NAMES: readonly string[] = ['&bar', 'key', '&harm'];
-
-/** The compiler's message for a name used and declared nowhere (compiler/context.ts), its name captured. */
-const UNKNOWN_CELL = /^Unknown cell &([A-Za-z_][A-Za-z0-9_]*)$/;
 
 /** How far a count may sit from a whole number and still be one (a rate written as a decimal, `16n*1.5`). */
 const WHOLE = 1e-9;
@@ -126,10 +123,7 @@ export function holesOf(text: string, compiled: (text: string) => CompileResult,
   const all = parse(read).cells;
   const decls = all.filter((d) => !d.lambda);
   const result = compiled(text);
-  const unknown = result.diagnostics.flatMap((d) => {
-    const m = UNKNOWN_CELL.exec(d.message);
-    return m ? [`&${m[1]}`] : [];
-  });
+  const unknown = result.unknown.map((u) => `&${u.name}`);
   const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
   const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
   const sound = readOnlyAsSound(all);

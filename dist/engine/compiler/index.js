@@ -32,6 +32,8 @@ export function compile(parsed, env, used = new Set()) {
     const { diagnostics } = ctx;
     const ok = !diagnostics.some((x) => x.severity === 'error');
     diagnostics.sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
+    const byPlace = (a, b) => a.line - b.line || a.col - b.col;
+    const unknown = [...ctx.unknown].map(([name, at]) => ({ name, at: [...at].sort(byPlace) })).sort((a, b) => byPlace(a.at[0], b.at[0]));
     const off = new Set([...cells.values()].filter((c) => c.off).map((c) => `cell:${c.name}`));
     const num = (c, k, d) => (typeof c.params[k] === 'number' ? c.params[k] : d);
     const tapes = [...cells.values()]
@@ -59,6 +61,7 @@ export function compile(parsed, env, used = new Set()) {
         outputs,
         off,
         diagnostics,
+        unknown,
         tapes,
         returns,
         resonances,

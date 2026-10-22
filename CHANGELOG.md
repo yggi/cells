@@ -8,7 +8,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.9.0`.
+- `CompileResult.unknown`: the cells a text uses and declares nowhere (`{ name, at }`, each with its uses), as data; the holes and the fit read it, no longer the `Unknown cell &x` message. Additive: no message, diagnostic or event moves, every piece reads and sounds as before.
 
 ## v0.9.0 — 2026-10-22
 
