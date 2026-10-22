@@ -2,7 +2,7 @@
 
 A minimal language for music where everything is a **cell**: a helix (pitch classes over octaves, beats over bars) with a **braid** sitting in its grid. This page is the map; each topic has one page.
 
-The smallest piece that sounds is one line ([decision 028](../decisions/028-the-smallest-piece.md)):
+The smallest piece that sounds is one line ([decision 028](https://github.com/yggi/cells/blob/main/docs/decisions/028-the-smallest-piece.md)):
 
 ```cells
 &a loop=A4                # an oscillator: its braid turned 440 times a second
@@ -40,11 +40,11 @@ Everything is indexing and moving a helix.
 | [display.md](display.md) | titles, tags, labels, `show=`, loudness (the card's `postgain=`) |
 | [reference.md](reference.md) | the syntax reference: every form the parser reads, with an example (generated from the parser) |
 
-The code is the single source of truth: the graph draws exactly what is written, and every edit made in it is a rewrite of a cell's line ([../architecture.md](../architecture.md)).
+The code is the single source of truth: the graph draws exactly what is written, and every edit made in it is a rewrite of a cell's line ([../architecture.md](https://github.com/yggi/cells/blob/main/docs/architecture.md)).
 
 ## For Strudel users
 
-Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decision 027](../decisions/027-on-top-of-strudel.md)): a step form spelled as in Strudel's mini-notation means what it means there (`~` `x!n` `x@n` `x*n` `_` `[a b]` `[a, b]` `[a|b]` `x?p` `euclid(k, n, r)`), and a sound parameter keeps dough's or Strudel's name only where it means the same (their other names read as ours: [sound.md](sound.md#voices)). The rest is a different model, not another spelling:
+Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decision 027](https://github.com/yggi/cells/blob/main/docs/decisions/027-on-top-of-strudel.md)): a step form spelled as in Strudel's mini-notation means what it means there (`~` `x!n` `x@n` `x*n` `_` `[a b]` `[a, b]` `[a|b]` `x?p` `euclid(k, n, r)`), and a sound parameter keeps dough's or Strudel's name only where it means the same (their other names read as ours: [sound.md](sound.md#voices)). The rest is a different model, not another spelling:
 
 | Strudel | cells | |
 |---|---|---|
@@ -59,7 +59,7 @@ Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decisi
 | `.pick(…)` · `.inhabit(…)` | a selector, `over=&sections` | switches whole sections on a meter's bus ([time.md](time.md)) |
 | `.bank("tr808")` | a kit, `&kit &bd &sd &hh` | a table of voices, its numbers pick the drum ([sound.md](sound.md)) |
 | `setcps(.5)` | `loop=` on a meter | every cell has a clock of its own; there is no global cps ([time.md](time.md)) |
-| `.fm(n)` `.fmh(r)` | `fm=&op` `ratio=` `index=` | FM names a modulator cell, for now ([decision 030](../decisions/030-fm-feedback.md) will align it) |
+| `.fm(n)` `.fmh(r)` | `fm=&op` `ratio=` `index=` | FM names a modulator cell, for now ([decision 030](https://github.com/yggi/cells/blob/main/docs/decisions/030-fm-feedback.md) will align it) |
 | `.gain()` · `.postgain()` · `.velocity()` | `gain=` · the card's `postgain=` · a gate's `level=` | loudness is a product: a voice's own, the master, a gate's ([mix.md](mix.md)) |
 | `s("hh:0:.5")` | `&hh:0:.5` | a hit's own gain |
 | `.lpq(q)` | `lpq=` | Strudel's Q, not dough's 0–1 |

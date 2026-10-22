@@ -66,6 +66,13 @@ describe('docs: structure', () => {
     const records = readdirSync(join(DOCS, 'decisions')).filter((f) => /^\d{3}-.*\.md$/.test(f));
     for (const r of records) expect(linked, r).toContain(`decisions/${r}`);
   });
+
+  // (two pull requests took 055 at once, #230 and #233, #242: each passed alone, and the second's merge is what fails)
+  it('no two decisions share a number', () => {
+    const records = readdirSync(join(DOCS, 'decisions')).filter((f) => /^\d{3}-.*\.md$/.test(f));
+    const taken = records.filter((r, i) => records.findIndex((s) => s.slice(0, 3) === r.slice(0, 3)) !== i);
+    expect(taken, 'a number taken twice: renumber the later one').toEqual([]);
+  });
 });
 
 /**
@@ -150,6 +157,36 @@ describe('docs: the README shows the language as it is', () => {
     expect(files).toContain('docs/language');
     for (const m of readme.matchAll(/\]\((docs\/[^)#\s]+)/g)) expect(m[1]).toMatch(/^docs\/language\//);
   });
+});
+
+/** The relative links of a shipped page that point at a file the package's `files` doesn't ship (#78). */
+const unshipped = (page: string, text: string, files: string[]): string[] => {
+  const shipped = (path: string) => files.some((f) => !f.startsWith('!') && (path === f || path.startsWith(`${f}/`)));
+  const root = resolve(DOCS, '..');
+  return [...text.replace(/^```[\s\S]*?^```/gm, '').matchAll(/\]\(([^)\s]+)\)/g)]
+    .map((m) => m[1]!)
+    .filter((t) => !/^(https?:|mailto:|#)/.test(t))
+    .filter(
+      (t) =>
+        !shipped(
+          relative(root, resolve(dirname(page), t.split('#')[0]!))
+            .split('\\')
+            .join('/'),
+        ),
+    );
+};
+
+describe('docs: shipped pages link only what the package ships (#78)', () => {
+  const { files } = JSON.parse(read(resolve(DOCS, '../package.json'))) as { files: string[] };
+  const shippedPages = [...markdown(join(DOCS, 'language')), resolve(DOCS, '../README.md')];
+
+  it('is shown firing: a page linking ../architecture.md fails, an absolute link passes', () => {
+    const page = join(DOCS, 'language/x.md');
+    expect(unshipped(page, '[a](../architecture.md) [b](overview.md)', files)).toEqual(['../architecture.md']);
+    expect(unshipped(page, '[a](https://github.com/yggi/cells/blob/main/docs/architecture.md)', files)).toEqual([]);
+  });
+
+  for (const page of shippedPages) it(`${relative(resolve(DOCS, '..'), page)} links no file the package lacks`, () => expect(unshipped(page, read(page), files)).toEqual([]));
 });
 
 describe('docs: the drum names', () => {

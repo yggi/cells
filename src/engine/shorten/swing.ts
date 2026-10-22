@@ -5,7 +5,7 @@
  * same notes (checked here).
  */
 import { attrsOf, declLine, setAttr } from '../edit';
-import { bareSwingLevel } from '../meter';
+import { bareSwingLevel, noteValue, swingLevelProblem } from '../meter';
 import { soundsIdentical } from '../sameness';
 import type { Result, ShortenRewrite } from './harness';
 
@@ -18,7 +18,10 @@ export function swings(source: string, result: Result): ShortenRewrite[] {
     const written = m && typeof c.params.swing === 'number' ? attrsOf(source, c.name).get('swing') : undefined;
     if (!m || !written || /^[1-9][0-9]*(?:n\.?|t):/.test(written) || declLine(source, c.name) < 0) continue;
     const level = bareSwingLevel(m);
-    if (!level) continue;
+    // (a level that leans nothing, the beats of a meter with no subdivision, is left to the author: the compiler's warning
+    // names what they may have meant, and that changes the notes, which a migration never does, #166)
+    const whole = level === null ? null : noteValue(level);
+    if (!level || whole === null || swingLevelProblem(m, whole) !== null) continue;
     const apply = (s: string) => setAttr(s, c.name, 'swing', `${level}:${written}`);
     const next = apply(source);
     if (next === source || !soundsIdentical(source, next)) continue;

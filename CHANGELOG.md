@@ -9,6 +9,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 ## Unreleased
 
 - A new tutorial piece, `breve` (tier 4), shows `beat=` and a scan's `pulse=`; `PresetKey` gains `'breve'`. In-c's `[0,1] [0,1]` is written `[0,1]!2`. No piece reads or sounds differently.
+- `CompileResult.unknown`: the cells a text uses and declares nowhere (`{ name, at }`, each with its uses), as data; the holes and the fit read it, no longer the `Unknown cell &x` message. Additive: no message, diagnostic or event moves, every piece reads and sounds as before.
+### Fixed
+- **Shorten no longer rewrites a bare `swing=` that leans nothing** (#166): on a meter whose own steps are its beats (`meter("4/4")`), it offered `swing=4n:.67`, which plays the same and then warns "leans nothing". The rewrite is left out and the compiler's warning stands for the author (it names `swing=8n:`, which would change the notes). No piece's notes change.
 
 ## v0.9.0 — 2026-10-22
 

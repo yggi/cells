@@ -23,7 +23,7 @@ Label templates fill from the cell as it is now, so a key that turns renames its
 
 ## A piece's file and its card
 
-A piece is a file, the same kind as a fragment ([decision 047](../decisions/047-fragments-are-files.md)): Markdown, its YAML frontmatter first (the subset cells parses, `src/repository/yaml.ts`), then ```` ```cells ```` blocks holding the piece, with prose among them if there is any ([decision 051](../decisions/051-literate-cells.md): the piece is the join of its blocks, in order; a file with no fence and no frontmatter is all code, and one with cells blocks and no frontmatter is a piece with an empty one, [#212](https://github.com/yggi/cells/issues/212)). The examples are such files (`examples/*.md`):
+A piece is a file, the same kind as a fragment ([decision 047](https://github.com/yggi/cells/blob/main/docs/decisions/047-fragments-are-files.md)): Markdown, its YAML frontmatter first (the subset cells parses, `src/repository/yaml.ts`), then ```` ```cells ```` blocks holding the piece, with prose among them if there is any ([decision 051](https://github.com/yggi/cells/blob/main/docs/decisions/051-literate-cells.md): the piece is the join of its blocks, in order; a file with no fence and no frontmatter is all code, and one with cells blocks and no frontmatter is a piece with an empty one, [#212](https://github.com/yggi/cells/issues/212)). The examples are such files (`examples/*.md`):
 
 ````markdown
 ---
