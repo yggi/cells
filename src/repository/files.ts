@@ -30,9 +30,10 @@
  * byte for byte, and one made new has a single block with one blank line before it and before the prose, and ends the
  * file with a newline, so a file written that way reads and writes back byte for byte.
  */
-import { readBlocks, rewrite, writeBody, type Layout } from '../engine/literate';
+import type { Layout } from '../engine/literate';
+import { readPiece, writePiece } from '../engine/piecefile';
 import { fragmentProblems, type Fragment, type WeightedPoint } from './fragments';
-import { readYaml, writeYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from './yaml';
+import { readYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from './yaml';
 
 /** A fragment's metadata: every frontmatter key but `id` and `association`, in the order the file gives them. */
 export type Meta = { readonly [key: string]: YamlValue };
@@ -94,18 +95,16 @@ function association(node: YamlNode, problems: YamlProblem[]): WeightedPoint[] {
 /** A fragment file read: its fragment, metadata and prose, or what is wrong with it, each problem naming its line. */
 export function readFragment(markdown: string): FragmentFile | FragmentFileProblems {
   const lines = markdown.split(/\r?\n/);
+  // (the piece reader's own reading, with the words of a fragment file; it takes a file with no frontmatter, a fragment can't)
   if (lines[0] !== '---') return { problems: [{ line: 1, message: 'no frontmatter: a fragment file starts with a line `---`' }] };
+  const piece = readPiece(markdown);
+  if ('problems' in piece)
+    return { problems: piece.problems.map((p) => (/^the frontmatter is a map/.test(p.message) ? { ...p, message: 'the frontmatter is a map (`id: …`, `association: …`)' } : p)) };
+  // (the lines of the entry's problems come from the nodes, which a read piece no longer has)
   const close = lines.indexOf('---', 1);
-  if (close < 0) return { problems: [{ line: 1, message: 'the frontmatter is never closed: no second line `---`' }] };
-  const yaml = readYaml(lines.slice(1, close).join('\n'), 2);
-  if ('problems' in yaml) return yaml;
-  const root = yaml.node;
-  if (root.kind !== 'map') return { problems: [{ line: root.line, message: 'the frontmatter is a map (`id: …`, `association: …`)' }] };
+  const root = (readYaml(lines.slice(1, close).join('\n'), 2) as { node: YamlNode & { kind: 'map' } }).node;
 
   const problems: YamlProblem[] = [];
-  const body = readBlocks(lines, close + 1);
-  if ('problems' in body) problems.push(...body.problems);
-
   const id = entry(root, 'id');
   const idValue = id?.value.kind === 'scalar' ? id.value.value : undefined;
   if (!id) problems.push({ line: 1, message: 'no id in the frontmatter' });
@@ -113,9 +112,9 @@ export function readFragment(markdown: string): FragmentFile | FragmentFileProbl
   const assoc = entry(root, 'association');
   if (!assoc) problems.push({ line: 1, message: 'no association in the frontmatter' });
   const points = assoc ? association(assoc.value, problems) : [];
-  if (problems.length || 'problems' in body) return { problems: problems.sort((a, b) => a.line - b.line) };
+  if (problems.length) return { problems: problems.sort((a, b) => a.line - b.line) };
 
-  const fragment: Fragment = { id: idValue as string, text: body.text, association: points };
+  const fragment: Fragment = { id: idValue as string, text: piece.text, association: points };
   // What is left to check is the entry's own sense (an empty id or text, a weight ≤ 0, a blank facet): fragments.ts says it.
   const wrong = fragmentProblems(fragment);
   if (wrong.length)
@@ -125,13 +124,13 @@ export function readFragment(markdown: string): FragmentFile | FragmentFileProbl
         const line = point
           ? (assoc!.value as YamlNode & { kind: 'list' }).items[Number(point[1]) - 1]!.line
           : /no text/.test(message)
-            ? (body.map[0]?.line ?? close + 2) - 1
+            ? (piece.map?.[0]?.line ?? close + 2) - 1
             : id!.line;
         return { line, message };
       }),
     };
-  const meta = Object.fromEntries(root.entries.filter((e) => !ENTRY_KEYS.includes(e.key)).map((e) => [e.key, yamlValue(e.value)]));
-  return { fragment, meta, prose: body.prose, layout: body.layout };
+  const meta = Object.fromEntries(Object.entries(piece.frontmatter).filter(([key]) => !ENTRY_KEYS.includes(key)));
+  return { fragment, meta, prose: piece.prose, layout: piece.layout! };
 }
 
 /** A fragment file's text: frontmatter (the entry, then the metadata), the cells block, the prose. */
@@ -139,9 +138,7 @@ export function writeFragment({ fragment, meta, prose, layout }: FragmentFile): 
   const clash = ENTRY_KEYS.filter((key) => Object.hasOwn(meta, key));
   if (clash.length) throw new Error(`writeFragment: the metadata has ${clash.join(' and ')}, which the entry writes`);
   const association = fragment.association.map(({ point, weight, facet }) => ({ point, weight, ...(facet === undefined ? {} : { facet }) }));
-  const frontmatter = writeYaml({ id: fragment.id, association, ...meta });
-  const body: Layout = layout ? rewrite(layout, fragment.text) : { blocks: [[fragment.text]], gaps: [['', '```cells'], ['```']] };
-  return `---\n${frontmatter}---\n${writeBody(body, prose)}`;
+  return writePiece({ frontmatter: { id: fragment.id, association, ...meta }, text: fragment.text, prose, layout });
 }
 
 /** A fragment file read from a library of files, with the path it was read from. */

@@ -1,6 +1,6 @@
-import { readBlocks, rewrite, writeBody } from "../engine/literate.js";
+import { readPiece, writePiece } from "../engine/piecefile.js";
 import { fragmentProblems } from "./fragments.js";
-import { readYaml, writeYaml, yamlValue } from "./yaml.js";
+import { readYaml, yamlValue } from "./yaml.js";
 const ENTRY_KEYS = ['id', 'association'];
 const POINT_KEYS = ['point', 'weight', 'facet'];
 const entry = (node, key) => node.entries.find((e) => e.key === key);
@@ -46,19 +46,12 @@ export function readFragment(markdown) {
     const lines = markdown.split(/\r?\n/);
     if (lines[0] !== '---')
         return { problems: [{ line: 1, message: 'no frontmatter: a fragment file starts with a line `---`' }] };
+    const piece = readPiece(markdown);
+    if ('problems' in piece)
+        return { problems: piece.problems.map((p) => (/^the frontmatter is a map/.test(p.message) ? { ...p, message: 'the frontmatter is a map (`id: …`, `association: …`)' } : p)) };
     const close = lines.indexOf('---', 1);
-    if (close < 0)
-        return { problems: [{ line: 1, message: 'the frontmatter is never closed: no second line `---`' }] };
-    const yaml = readYaml(lines.slice(1, close).join('\n'), 2);
-    if ('problems' in yaml)
-        return yaml;
-    const root = yaml.node;
-    if (root.kind !== 'map')
-        return { problems: [{ line: root.line, message: 'the frontmatter is a map (`id: …`, `association: …`)' }] };
+    const root = readYaml(lines.slice(1, close).join('\n'), 2).node;
     const problems = [];
-    const body = readBlocks(lines, close + 1);
-    if ('problems' in body)
-        problems.push(...body.problems);
     const id = entry(root, 'id');
     const idValue = id?.value.kind === 'scalar' ? id.value.value : undefined;
     if (!id)
@@ -69,9 +62,9 @@ export function readFragment(markdown) {
     if (!assoc)
         problems.push({ line: 1, message: 'no association in the frontmatter' });
     const points = assoc ? association(assoc.value, problems) : [];
-    if (problems.length || 'problems' in body)
+    if (problems.length)
         return { problems: problems.sort((a, b) => a.line - b.line) };
-    const fragment = { id: idValue, text: body.text, association: points };
+    const fragment = { id: idValue, text: piece.text, association: points };
     const wrong = fragmentProblems(fragment);
     if (wrong.length)
         return {
@@ -80,22 +73,20 @@ export function readFragment(markdown) {
                 const line = point
                     ? assoc.value.items[Number(point[1]) - 1].line
                     : /no text/.test(message)
-                        ? (body.map[0]?.line ?? close + 2) - 1
+                        ? (piece.map?.[0]?.line ?? close + 2) - 1
                         : id.line;
                 return { line, message };
             }),
         };
-    const meta = Object.fromEntries(root.entries.filter((e) => !ENTRY_KEYS.includes(e.key)).map((e) => [e.key, yamlValue(e.value)]));
-    return { fragment, meta, prose: body.prose, layout: body.layout };
+    const meta = Object.fromEntries(Object.entries(piece.frontmatter).filter(([key]) => !ENTRY_KEYS.includes(key)));
+    return { fragment, meta, prose: piece.prose, layout: piece.layout };
 }
 export function writeFragment({ fragment, meta, prose, layout }) {
     const clash = ENTRY_KEYS.filter((key) => Object.hasOwn(meta, key));
     if (clash.length)
         throw new Error(`writeFragment: the metadata has ${clash.join(' and ')}, which the entry writes`);
     const association = fragment.association.map(({ point, weight, facet }) => ({ point, weight, ...(facet === undefined ? {} : { facet }) }));
-    const frontmatter = writeYaml({ id: fragment.id, association, ...meta });
-    const body = layout ? rewrite(layout, fragment.text) : { blocks: [[fragment.text]], gaps: [['', '```cells'], ['```']] };
-    return `---\n${frontmatter}---\n${writeBody(body, prose)}`;
+    return writePiece({ frontmatter: { id: fragment.id, association, ...meta }, text: fragment.text, prose, layout });
 }
 export function readFragments(files) {
     const read = [];

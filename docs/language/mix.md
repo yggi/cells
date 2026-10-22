@@ -15,7 +15,7 @@ Output is cells too. A chord of sounds is a mix, and a cell with `map=sample` is
 
 ## The algebra of a mix
 
-A mix is written with `+` and `*`, and these sorts of things meet in it ([decision 006](../decisions/006-mix-algebra.md); the exact rules, in the order they decide, are in the [reference](reference.md#sorts-what-a-cell-is-in-a-mix)):
+A mix is written with `+` and `*`, and these sorts of things meet in it ([decision 006](https://github.com/yggi/cells/blob/main/docs/decisions/006-mix-algebra.md); the exact rules, in the order they decide, are in the [reference](reference.md#sorts-what-a-cell-is-in-a-mix)):
 
 - **pitches**: semitone streams, such as a melody, a cell reading a table, or a vibrato
 - **volumes**: cells with `map=amp`, `map=db` or `map=adsr` (an envelope)
@@ -42,7 +42,7 @@ A **plain value**, a number or a `map=lin` cell, has no sort of its own. It take
 
 The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is a gain. To transpose by a constant in a product, write the sum: `(&theme + 12) * &lead`.
 
-**A kit read only selects** ([decision 029](../decisions/029-kits-pass-pitch.md)). A pattern read through a kit picks a member by its number and adds no pitch; the rest of the product acts on the member picked as on any voice: its pitch terms transpose it, its volumes scale it, a clock's varispeed bends it. With no other pitch term (plain drums) each member plays at its own pitch. Of the terms that step, the finest starts notes, as in any product: a melody over a slower kit read plays on the voice the read picks, held while it lasts (orchestration):
+**A kit read only selects** ([decision 029](https://github.com/yggi/cells/blob/main/docs/decisions/029-kits-pass-pitch.md)). A pattern read through a kit picks a member by its number and adds no pitch; the rest of the product acts on the member picked as on any voice: its pitch terms transpose it, its volumes scale it, a clock's varispeed bends it. With no other pitch term (plain drums) each member plays at its own pitch. Of the terms that step, the finest starts notes, as in any product: a melody over a slower kit read plays on the voice the read picks, held while it lasts (orchestration):
 
 ```cells
 &bar scan(1 1 1 1) step=120bpm
@@ -56,7 +56,7 @@ The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is 
 
 ## A gate: a product with a name
 
-A product that plays a voice can be written as a cell of its own, a **gate** ([decision 023](../decisions/023-gate-spelling.md)):
+A product that plays a voice can be written as a cell of its own, a **gate** ([decision 023](https://github.com/yggi/cells/blob/main/docs/decisions/023-gate-spelling.md)):
 `play=` names the notes it plays, its braid what it plays them on, and `level=` how loud: a product of level cells and
 a gain, each as in a product (per note, over time, fixed: how fast a factor moves is in its cell, not its name). It is
 read as the product it stands for, one for each voice it plays, so it sounds as the product does:
@@ -100,7 +100,7 @@ its level, its notes going out to the voices it plays and their sound on from th
 
 ## The sound card
 
-**`map=sample`** makes a cell the sound card. It can hold its mix directly: `&mix loop=SAMPLE_RATE map=sample [&tune * &lead, &bass * 0.5]` — one chord is mono, two chords `[…] [left] […] [right]` are stereo. `loop=SAMPLE_RATE` turns its braid once per sample (`SAMPLE_RATE` is provided by the environment: the audio device's rate, 48000 until audio starts; plain numbers like `44.1k` work too), and its entries are the channels — one (mono) or two (left, right). Different mixes per channel are stereo; or one chord, and each voice placed with its own **`pan=`** (0 left, .5 centre, 1 right: [sound.md](sound.md)), which plays exactly what two chords with the voice's gains scaled play ([decision 007](../decisions/007-pan-is-back.md)):
+**`map=sample`** makes a cell the sound card. It can hold its mix directly: `&mix loop=SAMPLE_RATE map=sample [&tune * &lead, &bass * 0.5]` — one chord is mono, two chords `[…] [left] […] [right]` are stereo. `loop=SAMPLE_RATE` turns its braid once per sample (`SAMPLE_RATE` is provided by the environment: the audio device's rate, 48000 until audio starts; plain numbers like `44.1k` work too), and its entries are the channels — one (mono) or two (left, right). Different mixes per channel are stereo; or one chord, and each voice placed with its own **`pan=`** (0 left, .5 centre, 1 right: [sound.md](sound.md)), which plays exactly what two chords with the voice's gains scaled play ([decision 007](https://github.com/yggi/cells/blob/main/docs/decisions/007-pan-is-back.md)):
 
 ```cells
 &theme step=1 0 2 4 5
@@ -129,7 +129,7 @@ Two mixes, one for each channel:
 &out map=sample postgain=free(.8, 0..1) [&theme * &reed * .5]
 ```
 
-**No card written: the built-in card** ([decision 028](../decisions/028-the-smallest-piece.md)). A piece that writes no card (neither `map=sample` nor a MIDI card) is heard through one of its own: every sound that nothing else reads (a voice, a waveform, a mix, a gate, a pattern read through a kit, a tape's read head that no mix, splice, `over=`, `env=`, `pitch=`, `fm=`, `play=`, `write=`, `excite=` … names; a note's `about=` is not a read) goes to it, a fader each (at 1, on both sides), and its master, its `postgain=`, is Strudel's default gain, **0.8**. It is in no line and the graph draws no node for it; a piece that writes its card keeps exactly that card, and one that writes only MIDI cards sends what they name and sounds nothing else ([midi.md](midi.md)). So two voices alone are both heard, each held at its own pitch ([sound.md](sound.md)), and a mix nothing reads is heard as it is:
+**No card written: the built-in card** ([decision 028](https://github.com/yggi/cells/blob/main/docs/decisions/028-the-smallest-piece.md)). A piece that writes no card (neither `map=sample` nor a MIDI card) is heard through one of its own: every sound that nothing else reads (a voice, a waveform, a mix, a gate, a pattern read through a kit, a tape's read head that no mix, splice, `over=`, `env=`, `pitch=`, `fm=`, `play=`, `write=`, `excite=` … names; a note's `about=` is not a read) goes to it, a fader each (at 1, on both sides), and its master, its `postgain=`, is Strudel's default gain, **0.8**. It is in no line and the graph draws no node for it; a piece that writes its card keeps exactly that card, and one that writes only MIDI cards sends what they name and sounds nothing else ([midi.md](midi.md)). So two voices alone are both heard, each held at its own pitch ([sound.md](sound.md)), and a mix nothing reads is heard as it is:
 
 ```cells
 &tune step=2 0 2 4 7
