@@ -14,6 +14,7 @@
   "rhythm": {"kept":false,"score":312,"back":0,"of":0},
   "drums": {"kept":true,"score":400,"back":0,"of":0},
   "swing": {"kept":true,"score":221,"back":1,"of":2},
+  "breve": {"kept":true,"score":137,"back":0,"of":0},
   "canon": {"kept":true,"score":351,"back":1,"of":2},
   "mirrors": {"kept":true,"score":229,"back":1,"of":3},
   "variations": {"kept":true,"score":252,"back":6,"of":6},
