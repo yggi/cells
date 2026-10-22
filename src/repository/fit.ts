@@ -154,7 +154,7 @@ function meets(result: CompileResult, { need, tap }: TappedNeed): boolean {
 }
 
 /** The names a compile reports as unknown cells (`&bd`). */
-const unknownCells = (result: CompileResult): string[] => result.diagnostics.flatMap((d) => /^Unknown cell (&[A-Za-z_][A-Za-z0-9_]*)$/.exec(d.message)?.[1] ?? []);
+const unknownCells = (result: CompileResult): string[] => result.unknown.map((u) => `&${u.name}`);
 
 const sameDiagnostic = (a: Diagnostic, b: Diagnostic) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
 

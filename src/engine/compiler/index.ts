@@ -4,7 +4,7 @@
  * pass from phase to phase, each refining phase handing on a new map. They share only the
  * diagnostics and the environment (context.ts).
  */
-import type { ParseResult } from '../ast';
+import type { ParseResult, Span } from '../ast';
 import type { AudioTape, CompileResult, Env, ResolvedCell } from '../program';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
 import type { ShowPlugin } from '../plugins';
@@ -48,6 +48,9 @@ export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string>
   const { diagnostics } = ctx;
   const ok = !diagnostics.some((x) => x.severity === 'error');
   diagnostics.sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
+  // (by first use, as the messages read once the diagnostics are sorted)
+  const byPlace = (a: Span, b: Span) => a.line - b.line || a.col - b.col;
+  const unknown = [...ctx.unknown].map(([name, at]) => ({ name, at: [...at].sort(byPlace) })).sort((a, b) => byPlace(a.at[0]!, b.at[0]!));
   const off = new Set([...cells.values()].filter((c) => c.off).map((c) => `cell:${c.name}`));
   // sound tapes: a tape whose write= is a mix — its loop, its colour, its heads
   const num = (c: ResolvedCell, k: string, d: number) => (typeof c.params[k] === 'number' ? (c.params[k] as number) : d);
@@ -76,6 +79,7 @@ export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string>
     outputs,
     off,
     diagnostics,
+    unknown,
     tapes,
     returns,
     resonances,

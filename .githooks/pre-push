@@ -89,6 +89,9 @@ fi
 # vitest's summary line, `Tests  1234 passed (1234)`, colours stripped.
 esc=$(printf '\033')
 count=$(sed "s/$esc\[[0-9;]*m//g" "$log" | sed -n 's/^ *Tests  *\([0-9][0-9]*\) passed.*/\1/p' | tail -1)
+# A passing run's alarms, which its hidden output would keep from the pusher: the boot set near its ceiling
+# (tools/reading-list.test.ts).
+grep -h '^the boot set is ' "$log" | head -1 | sed 's/^/pre-push: /' >&2
 rm -f "$log"
 # `postverify` has stamped the tree already when the check was `npm run verify`, with the count its reporter kept, and
 # this `end` then finds nothing begun. Neither stamps a tree a file changed in while the check ran.

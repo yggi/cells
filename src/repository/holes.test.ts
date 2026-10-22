@@ -3,6 +3,9 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
+import { EXAMPLE_FILES } from '../engine/examples.generated';
+import { readPiece } from '../engine/piecefile';
+import { SEED_FILES } from './seed.generated';
 import { holesOf, lapMeets, meterMeets, type ClockNeed } from './holes';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
@@ -69,5 +72,36 @@ describe('what its clock needs', () => {
     const meter = (signature: string) => compileSource(setTiming(`&bar meter("${signature}")`, 'bar', 'step', '90bpm')).cells.get('bar')!.meter!;
     const sixteenth = { written: '16n', kind: 'note', whole: 1 / 16 } as const;
     expect(['4/4', '7/8', '5/4', '12/8', '2/4'].map((s) => meterMeets(clave, meter(s), sixteenth))).toEqual([true, false, false, false, false]);
+  });
+});
+
+describe('the cells a text uses and declares nowhere, as data', () => {
+  // the messages the list replaced: `Unknown cell &x`, one per use, once the diagnostics are sorted by place
+  const fromMessages = (text: string) => {
+    const r = compileSource(text);
+    return r.diagnostics.flatMap((d) => /^Unknown cell &([A-Za-z_][A-Za-z0-9_]*)$/.exec(d.message)?.[1] ?? []);
+  };
+
+  it('names each with its uses, in order of first use', () => {
+    const r = compileSource('&a step=8n 0 2 over=&harm\n&b step=8n 0 over=&harm\n&c [&a * &lead]');
+    expect(r.unknown.map((u) => [u.name, u.at.map((s) => s.line)])).toEqual([
+      ['harm', [1, 2]],
+      ['lead', [3]],
+    ]);
+  });
+
+  it('equals the messages’ names over the seed fragments and the examples, uses and all', () => {
+    const texts = Object.entries({ ...SEED_FILES, ...EXAMPLE_FILES }).map(([path, markdown]) => {
+      const piece = readPiece(markdown);
+      if ('problems' in piece) throw new Error(path);
+      return piece.text;
+    });
+    expect(texts.length).toBe(Object.keys(SEED_FILES).length + Object.keys(EXAMPLE_FILES).length);
+    for (const text of texts) {
+      const r = compileSource(text);
+      const names = fromMessages(text);
+      expect(r.unknown.flatMap((u) => u.at.map(() => u.name)).sort(), text.slice(0, 40)).toEqual(names.sort());
+      expect([...new Set(r.unknown.map((u) => u.name))], text.slice(0, 40)).toEqual([...new Set(names)]);
+    }
   });
 });

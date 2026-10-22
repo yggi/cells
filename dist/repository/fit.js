@@ -83,7 +83,7 @@ function meets(result, { need, tap }) {
     const meter = name === undefined ? null : result.cells.get(name)?.meter;
     return !!meter && meterMeets(need, meter, tap);
 }
-const unknownCells = (result) => result.diagnostics.flatMap((d) => /^Unknown cell (&[A-Za-z_][A-Za-z0-9_]*)$/.exec(d.message)?.[1] ?? []);
+const unknownCells = (result) => result.unknown.map((u) => `&${u.name}`);
 const sameDiagnostic = (a, b) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
 export function fitOf(fragment, workbench, compiledBy, resolve) {
     const compiled = compiledBy ?? ((text) => compileSource(text, undefined, resolve ? { resolve } : {}));
