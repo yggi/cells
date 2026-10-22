@@ -20,7 +20,7 @@ const CLEAN = [
 
 const require = createRequire(import.meta.url);
 const tsc = join(dirname(require.resolve('typescript/package.json')), 'bin', 'tsc');
-const run = spawnSync(process.execPath, [tsc, '-p', 'tsconfig.strict.json', '--pretty', 'false'], {
+const run = spawnSync(process.execPath, [tsc, '-p', 'tsconfig.strict.json', '--pretty', 'false', '--incremental', '--tsBuildInfoFile', '.cache/strict.tsbuildinfo'], {
   cwd: join(dirname(fileURLToPath(import.meta.url)), '..'),
   encoding: 'utf8',
   maxBuffer: 64 * 1024 * 1024,
