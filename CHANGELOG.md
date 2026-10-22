@@ -8,7 +8,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.9.0`.
+- A new tutorial piece, `breve` (tier 4), shows `beat=` and a scan's `pulse=`; `PresetKey` gains `'breve'`. In-c's `[0,1] [0,1]` is written `[0,1]!2`. No piece reads or sounds differently.
 
 ## v0.9.0 — 2026-10-22
 

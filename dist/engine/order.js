@@ -14,6 +14,7 @@ export const ORDER = [
     'rhythm',
     'drums',
     'swing',
+    'breve',
     'canon',
     'mirrors',
     'variations',

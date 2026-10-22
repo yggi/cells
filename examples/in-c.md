@@ -22,7 +22,7 @@ description: "After Terry Riley's In C: four of its fifty-three cells, each play
 
 &sections step=4n &aliceBar &bobBar &carolBar
 # who plays, a bar a step: Alice from the start, Bob in and out, Carol late, then everyone
-&song over=&sections restart=resume step=1m laps=1 0 [0,1] [0,1] 0 [0,2] [0,1,2] [0,1,2] [1,2] [0,1,2] [0,1,2] [0,2] [0,1,2]
+&song over=&sections restart=resume step=1m laps=1 0 [0,1]!2 0 [0,2] [0,1,2] [0,1,2] [1,2] [0,1,2] [0,1,2] [0,2] [0,1,2]
 
 &pulse s=sine loop=C6 env=&(map=adsr 0 .04 0 .03)
 &marimba s=tri loop=C4 env=&(map=adsr .005 .25 0 .15)
