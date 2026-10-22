@@ -10,8 +10,8 @@
  * where no point halfway between two presets is nearer to them than to the presets' own meters.
  *
  * A swung meter plays exactly the swing Jambot plays at its presets' value on the swing axis: the shares are
- * `swingShares(s)` of yggi/jambot packages/engine/src/swing.ts, each written as the shortest decimal that is that number
- * (`fixtures/jambot-swing.json`), so every onset lands where Jambot's `leanMap` puts it. Two presets share a swung meter
+ * the shares of Jambot's swing axis at `s` (the readers' path of the family's swing contract, `fixtures/contracts/swing.json`),
+ * each written as the shortest decimal that is that number, so every onset lands where Jambot's `leanMap` puts it. Two presets share a swung meter
  * when their shares move no onset of the bar by 1e-9 or more (a level's offbeat moves by the share's difference times its
  * span, at most 4 sixteenths: shares less than 2.5e-10 apart); today that means equal, Deep house's and Funk's. A meter
  * swung on `8n` brings in Jambot's jazz kit (yggi/jambot#360), so its id says `swung on 8n`, and a lean on `16n` says
