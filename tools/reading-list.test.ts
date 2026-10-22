@@ -22,8 +22,7 @@ describe('the boot set', () => {
     // (docs/MEMORY.md moves facts to the pages it points to, and to the modules).
     expect(bytes).toBeLessThanOrEqual(CEILING);
     // The alarm, before the ceiling (#242: #235 found the set 58 B under it): verify's output says so from 90 %.
-    if (bytes >= ALARM * CEILING)
-      console.warn(`the boot set is ${bytes} B, ${Math.round((100 * bytes) / CEILING)} % of its ceiling: condense it, as a change of its own`);
+    if (bytes >= ALARM * CEILING) console.warn(`the boot set is ${bytes} B, ${Math.round((100 * bytes) / CEILING)} % of its ceiling: condense it, as a change of its own`);
   });
 
   it('warns from 90 % of the ceiling', () => {
