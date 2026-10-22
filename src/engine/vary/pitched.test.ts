@@ -12,6 +12,7 @@ import { windowAt } from '../schedule';
 import { unionOf } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
 import { BASS_FRAGMENTS } from '../../repository/bass';
+import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { anchorsOf, PITCHED_OPERATORS, variations, varied } from '.';
 
 vi.mock('../compile', async (original) => {
@@ -20,7 +21,8 @@ vi.mock('../compile', async (original) => {
 });
 
 // The bass seeds' workbenches (`src/repository/bass.test.ts`): 4/4 at 120 bpm in C major, one chord a bar.
-const HOST = '&bar meter("4/4") step=120bpm\n&key scale(major, C)';
+// (the bass lines leave `&bassV`, their voice, as a hole: the bass instrument fills it, #244)
+const HOST = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n${INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text}`;
 const PROGRESSIONS: Record<string, { harm: string; bars: number }> = {
   'I–vi–IV–V': { harm: '&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]', bars: 4 },
   'ii–V–I': { harm: '&harm over=key step=1m [1,3,5,7] [4,6,8,10] [0,2,4,6]', bars: 3 },

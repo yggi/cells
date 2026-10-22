@@ -17,11 +17,20 @@ vi.mock('../engine/compile', async (original) => {
 });
 
 /** E31's drum bars on Jambot's workbench, varied as Jambot varies them (`src/engine/vary/rhythm.test.ts`). */
-const DRUMS = '&bar meter("4/4") step=120bpm';
+const kit = (id: string) => LIBRARY.find((f) => f.id === id)!.text;
+// (the rhythms leave their voices as holes, #244: the workbench brings the core kit)
+const DRUMS = `&bar meter("4/4") step=120bpm\n${kit('core kit')}`;
 const DRUM_OPTIONS = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
-const BARS = e31.witnesses.map((w) => ({ preset: w.preset, fragment: w.text.split('\n').slice(1).join('\n') }));
+const BARS = e31.witnesses.map((w) => ({
+  preset: w.preset,
+  fragment: w.text
+    .split('\n')
+    .slice(1)
+    .filter((l) => !/^&\w+ s=white$/.test(l))
+    .join('\n'),
+}));
 /** The bass seeds' workbench over I–vi–IV–V (`src/engine/vary/pitched.test.ts`). */
-const BASS = '&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]';
+const BASS = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]\n${kit('bass')}`;
 
 const recogniser = createRecogniser();
 
@@ -103,7 +112,7 @@ function draws(seed: number): () => number {
 /** A bar of random hits: a kick, a snare and a hat line, each step struck with chance 1/4, on Jambot's card. */
 function randomBar(draw: () => number): string {
   const line = (name: string, voice: string) => `&${name} step=16n ${Array.from({ length: 16 }, () => (draw() < 0.25 ? voice : '~')).join(' ')}`;
-  return [line('kick', '&bd'), line('backbeat', '&sd'), line('hat', '&hh'), '&drums map=midi(10) [&kick, &backbeat, &hat]', '&bd s=white', '&sd s=white', '&hh s=white'].join('\n');
+  return [line('kick', '&bd'), line('backbeat', '&sd'), line('hat', '&hh'), '&drums map=midi(10) [&kick, &backbeat, &hat]'].join('\n');
 }
 
 /** What a recognition found, one string each: its id, its path, the bar it was matched from and its distance. */
@@ -112,14 +121,15 @@ const found = (rs: readonly Recognised[]) => rs.map((r) => `${r.fragment.id} [${
 describe('a pitched voice by its place, a bar of a longer fragment, and the learned layer', () => {
   it('a bass seed and its variation with every name changed are recognised as the seed’s, at distance 0', () => {
     const walking = BASS_FRAGMENTS.find((f) => f.id === 'walking bass')!;
-    const renamed = (text: string) => text.replaceAll('&bass', '&low');
+    // (the line is renamed, not its voice: `&bassV` is the bass instrument's name, the hole it fills)
+    const renamed = (text: string) => text.replace(/&bass\b/g, '&low');
     expect(found(recogniser.recognise(renamed(walking.text), LIBRARY, { workbench: BASS }))).toEqual(['walking bass [] bar 0 at 0']);
     const [down] = variations(walking.text, { workbench: BASS, operators: PITCHED_OPERATORS });
     expect(found(recogniser.recognise(renamed(down!.apply(walking.text)), LIBRARY, { workbench: BASS }))).toEqual([`walking bass [${down!.by}] bar 0 at 0`]);
   });
 
   it('a bar of the two-bar bossa nova clave, its second, is recognised as the clave from its bar 1', () => {
-    const second = '&clave step=16n ~!4 &claves ~!5 &claves ~!5\n&percussion map=midi(10) [&clave * .5]\n&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)';
+    const second = '&clave step=16n ~!4 &claves ~!5 &claves ~!5\n&percussion map=midi(10) [&clave * .5]';
     expect(found(recogniser.recognise(second, LIBRARY, DRUM_OPTIONS))).toEqual(['bossa nova clave [] bar 1 at 0']);
   });
 

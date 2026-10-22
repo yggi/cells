@@ -14,9 +14,8 @@ source: seed
 ```cells
 &clave step=16n cycle=2 ~!4 &claves ~!3 &claves ~!7 &claves ~!5 &claves ~!5 &claves ~!3
 &percussion map=midi(10) [&clave * .5]
-&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)
 ```
 
 The son clave from its other bar, 2-3: it starts off the downbeat, so it sits a step from 3-2 toward Funk, more off the beat and plainer.
 
-Five strokes of a clave (`&claves`, General MIDI's 75), a sound of its own beside the drum bar's rim, at half the level (velocity 90). Its names (`&clave`, `&percussion`, `&claves`) are none of the drum bars', so it layers on any of them in one text.
+Five strokes of a clave (`&claves`, General MIDI's 75), a sound of its own beside the drum bar's rim, at half the level (velocity 90). `&claves` is a hole, a sound the core kit (or the General MIDI kit) fills with the line this fragment used to carry word for word (decision 054, rung 2: #244). Its other names (`&clave`, `&percussion`) are none of the drum bars', so it layers on any of them in one text.

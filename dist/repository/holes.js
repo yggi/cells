@@ -38,6 +38,7 @@ export function readOnlyAsSound(decls) {
     return (name) => inBraid.has(name) && !elsewhere.has(name);
 }
 export const linesRead = (text, resolve) => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
+export const standIn = (name) => `${name} s=white`;
 export function holesOf(text, compiled, resolve) {
     const read = linesRead(text, resolve);
     const all = parse(read).cells;
@@ -45,12 +46,26 @@ export function holesOf(text, compiled, resolve) {
     const result = compiled(text);
     const unknown = result.unknown.map((u) => `&${u.name}`);
     const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
-    const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
     const sound = readOnlyAsSound(all);
+    const found = new Set(unknown.filter(sound));
+    let last = result;
+    for (;;) {
+        if (!found.size)
+            break;
+        last = compiled(`${text}\n${[...found].map(standIn).join('\n')}`);
+        const more = last.unknown.map((u) => `&${u.name}`).filter((n) => sound(n) && !found.has(n));
+        if (!more.length)
+            break;
+        more.forEach((n) => found.add(n));
+    }
+    const uses = [...new Set([...unknown, ...found, ...(readsKey ? ['key'] : [])])].sort();
+    const sounds = uses.filter(sound);
+    const stand = sounds.map(standIn).join('\n');
+    const filled = stand ? `${read}\n${stand}` : read;
     return {
         uses,
-        sounds: uses.filter(sound),
+        sounds,
         defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
-        clock: clockNeeds(read, result).map((t) => t.need),
+        clock: clockNeeds(filled, stand ? last : result).map((t) => t.need),
     };
 }

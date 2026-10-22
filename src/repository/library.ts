@@ -13,7 +13,7 @@ import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, then the modes: forty-three fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, then the modes: forty-four fragments. */
 export const LIBRARY: readonly Fragment[] = [...METER_FRAGMENTS, ...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...HARMONY_FRAGMENTS, ...INSTRUMENT_FRAGMENTS, ...MODE_FRAGMENTS];
 
 const BY_ID = new Map(LIBRARY.map((f) => [f.id, f.text]));

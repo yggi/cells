@@ -10,6 +10,7 @@ import { BASS_FRAGMENTS } from './bass';
 import { fitOf } from './fit';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
+import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { compileSource } from '../engine/compile';
 import { LIBRARY } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
@@ -158,7 +159,9 @@ const PROGRESSIONS: Record<string, { harm: string; chords: readonly (readonly nu
     ],
   },
 };
-const workbench = (name: string) => `${HOST}\n${PROGRESSIONS[name]!.harm}`;
+/** The bass instrument: `&bassV`, the voice the lines leave as a hole (#244). */
+const BASS_INSTRUMENT = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
+const workbench = (name: string) => `${HOST}\n${PROGRESSIONS[name]!.harm}\n${BASS_INSTRUMENT}`;
 
 const pc = (x: number) => ((x % 12) + 12) % 12;
 function toneOf(tone: Tone, chord: readonly number[], next: readonly number[]): number {
@@ -201,10 +204,12 @@ describe('the bass lines', () => {
     }
   });
 
-  it('each uses &harm and nothing else of the host’s: what it needs is read off its text', () => {
+  it('each uses &harm and a voice, `&bassV`, which the bass instrument fills: what it needs is read off its text', () => {
     for (const f of BASS_FRAGMENTS) {
-      expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&harm']);
+      expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&bassV', '&harm']);
+      expect(holesOf(f.text, compileSource).sounds, f.id).toEqual(['&bassV']);
       expect(fitOf(f.text, HOST).missing, f.id).toEqual(['&harm']);
+      expect(fitOf(f.text, HOST).sounds, f.id).toEqual(['&bassV']);
     }
   });
 
@@ -249,6 +254,52 @@ describe('what each plays is what bass.ts plays for its pattern alone at its poi
     // (I–vi: into A from G♯, where the key's degree below A is G, a whole tone: `0b` over the next chord would play G)
     const { notes } = played(fitOf(byId('walking bass').text, workbench('I–vi–IV–V')).union.text, 1);
     expect(notes.at(-1)).toEqual([0, 12, 8]);
+  });
+});
+
+// The register the lines were written in, pinned in absolute MIDI notes (#244): what each line sent on channel 2 over the
+// first four bars of I–vi–IV–V, in C and in D, while each carried its own `&bassV loop=C2`. Through the `bass` instrument
+// they send these notes still; an instrument an octave off moves every one (Jambot's bass reads this register).
+const SENT: Record<string, Record<string, readonly number[]>> = {
+  C: {
+    'root bass': [36, 36, 45, 45, 41, 41, 43, 43],
+    'pumping bass': [36, 36, 36, 36, 45, 45, 45, 45, 41, 41, 41, 41, 43, 43, 43, 43],
+    'eighths bass': [...Array<number>(8).fill(36), ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43)],
+    'funk bass': [36, 36, 36, 36, 36, 36, ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43), 48, 48],
+    'walking bass': [36, 40, 43, 44, 45, 48, 52, 40, 41, 45, 48, 42, 43, 47, 50, 47],
+  },
+  D: {
+    'root bass': [38, 38, 47, 47, 43, 43, 45, 45],
+    'pumping bass': [38, 38, 38, 38, 47, 47, 47, 47, 43, 43, 43, 43, 45, 45, 45, 45],
+    'eighths bass': [...Array<number>(8).fill(38), ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45)],
+    'funk bass': [38, 38, 38, 38, 38, 38, ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45), 50, 50],
+    'walking bass': [38, 42, 45, 46, 47, 50, 54, 42, 43, 47, 50, 44, 45, 49, 52, 49],
+  },
+};
+
+describe('the bass lines send the notes they always sent, through the bass instrument', () => {
+  const notesOf = (text: string) => {
+    const plan = planOf(text);
+    const route = router(plan.result, channelTable(plan.result));
+    return windowAt(plan, 0, 8 - 1e-9).events.flatMap((e) =>
+      routesOf(route(e)).flatMap((r) => {
+        const n = midiNote(e, r);
+        return n && n.channel === 2 ? [n.note] : [];
+      }),
+    );
+  };
+  const progression = '&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]';
+  for (const tonic of Object.keys(SENT))
+    it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))(`%s, in ${tonic}: its absolute MIDI notes on channel 2`, (id, text) => {
+      const host = `&bar meter("4/4") step=120bpm\n&key scale(major, ${tonic})\n${progression}`;
+      expect(notesOf(`${host}\n${text}\n${BASS_INSTRUMENT}`)).toEqual(SENT[tonic]![id]);
+    });
+
+  it('is shown firing: the instrument an octave up moves every note by 12', () => {
+    const host = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n${progression}`;
+    const up = BASS_INSTRUMENT.replace('loop=C2', 'loop=C3');
+    expect(up).not.toBe(BASS_INSTRUMENT);
+    expect(notesOf(`${host}\n${byId('root bass').text}\n${up}`)).toEqual(SENT['C']!['root bass']!.map((n) => n + 12));
   });
 });
 

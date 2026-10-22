@@ -117,6 +117,9 @@ export function readOnlyAsSound(decls: readonly CellDecl[]): (name: string) => b
  */
 export const linesRead = (text: string, resolve?: Resolve): string => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
 
+/** The line that stands in for a sound hole while a fragment is judged without its instrument (`&bd s=white`). */
+export const standIn = (name: string): string => `${name} s=white`;
+
 /** A fragment's holes, read off its declarations and its compile alone (`compiled`, which may be cached by text). */
 export function holesOf(text: string, compiled: (text: string) => CompileResult, resolve?: Resolve): Holes {
   const read = linesRead(text, resolve);
@@ -125,12 +128,27 @@ export function holesOf(text: string, compiled: (text: string) => CompileResult,
   const result = compiled(text);
   const unknown = result.unknown.map((u) => `&${u.name}`);
   const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
-  const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
   const sound = readOnlyAsSound(all);
+  // A line that strikes a hole (`&clave`'s `&claves`) doesn't compile until an instrument fills it, and the compile says
+  // one unknown cell a line: so each sound hole is stood in by a voice, and the compile asked again for the next, until
+  // none is left (#244). The clock is read there too: the need is the line's whatever sounds it.
+  const found = new Set(unknown.filter(sound));
+  let last = result;
+  for (;;) {
+    if (!found.size) break;
+    last = compiled(`${text}\n${[...found].map(standIn).join('\n')}`);
+    const more = last.unknown.map((u) => `&${u.name}`).filter((n) => sound(n) && !found.has(n));
+    if (!more.length) break;
+    more.forEach((n) => found.add(n));
+  }
+  const uses = [...new Set([...unknown, ...found, ...(readsKey ? ['key'] : [])])].sort();
+  const sounds = uses.filter(sound);
+  const stand = sounds.map(standIn).join('\n');
+  const filled = stand ? `${read}\n${stand}` : read;
   return {
     uses,
-    sounds: uses.filter(sound),
+    sounds,
     defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
-    clock: clockNeeds(read, result).map((t) => t.need),
+    clock: clockNeeds(filled, stand ? last : result).map((t) => t.need),
   };
 }

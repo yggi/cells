@@ -26,6 +26,8 @@ vi.mock('../engine/compile', async (original) => {
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
 /** The host's workbench: a meter at a tempo, as a host sets one (`setTiming`), then the fragments already on it. */
+/** The core kit's lines: the voices the rhythms leave as holes (#244). */
+const KIT = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!.text;
 const bench = (meter: string, bpm = 120, ...fragments: string[]) => [setTiming(meterText(meter), 'bar', 'step', `${bpm}bpm`), ...fragments].join('\n');
 
 describe('the union of lines', () => {
@@ -155,7 +157,8 @@ describe('every rhythm against every meter of the library', () => {
 
   it('a two-bar clave compiles under 7/8, and doesn’t fit it: 28 sixteenths in its two bars, 32 in its braid', () => {
     const clave = rhythm('son clave 3-2');
-    expect(compileSource(bench('7/8', 90, clave)).diagnostics).toEqual([]);
+    // (its `&claves` is a hole the core kit fills: #244)
+    expect(compileSource(bench('7/8', 90, clave, KIT)).diagnostics).toEqual([]);
     const f = fitOf(clave, bench('7/8', 90));
     expect(f.fits).toBe(false);
     expect(f.unmet).toEqual([{ cell: '&clave', meter: null, tap: '16n', bars: 2, steps: 32, rate: 1, bar: 16 }]);
@@ -221,7 +224,6 @@ describe('two drum bars on one workbench', () => {
     // two every bar strikes, `&bd` and `&sd`. The union is the workbench and the rest of the added bar)
     const names = (text: string) => lines(text).map((l) => l.split(' ')[0]!);
     expect([...u.shared].sort()).toEqual(sameLines(a.text, b.text));
-    expect(u.shared).toEqual(expect.arrayContaining(['&bd', '&sd']));
     expect(lines(u.text)).toHaveLength(lines(workbench).length + lines(b.text).length - u.shared.length);
     expect(new Set(lines(u.text)).size).toBe(lines(u.text).length);
     // (every other name the two both define is renamed, and no name is declared twice)
@@ -229,7 +231,7 @@ describe('two drum bars on one workbench', () => {
     expect([...u.renamed.keys()].sort()).toEqual(collide.sort());
     expect(new Set(names(u.text)).size).toBe(names(u.text).length);
     // (each bar plays E31's hits, at the workbench's tempo, as it does alone)
-    const { hits, diagnostics } = played(u.text, a.bpm);
+    const { hits, diagnostics } = played(`${u.text}\n${KIT}`, a.bpm);
     expect(diagnostics).toEqual([]);
     const want = sorted([...a.hits, ...b.hits]);
     expect(hits).toHaveLength(want.length);
@@ -239,7 +241,7 @@ describe('two drum bars on one workbench', () => {
   it('E31’s 144 hits, each bar’s checked in every pair it is in: 144 × 14 = 2016 of 2016', () => {
     let matched = 0;
     for (const [, , a, b] of pairs) {
-      const { hits } = played(unionOf(b.text, bench('4/4', a.bpm, a.text)).text, a.bpm);
+      const { hits } = played(`${unionOf(b.text, bench('4/4', a.bpm, a.text)).text}\n${KIT}`, a.bpm);
       const left = [...hits];
       for (const h of [...a.hits, ...b.hits]) {
         const i = left.findIndex((p) => sameHit(p, h));
@@ -275,7 +277,8 @@ describe('what it costs', () => {
   const workbench = ['Funk drums', 'Techno drums', 'rumba clave 3-2', 'bossa nova clave (one bar)'].reduce((text, id) => unionOf(rhythm(id), text).text, bench('4/4', 104));
 
   it('the workbench of five compiles clean and every rhythm still fits it, renamed where it collides', () => {
-    expect(compileSource(workbench).diagnostics).toEqual([]);
+    // (the claves' voice is a hole an instrument fills: the core kit's line)
+    expect(compileSource(`${workbench}\n${KIT}`).diagnostics).toEqual([]);
     for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(true);
   });
 
@@ -296,15 +299,15 @@ describe('what it costs', () => {
     const r = (await import('./fragments')).createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
-    // (the 13 rhythms, the 2 kits and the 5 modes)
-    expect(first).toHaveLength(20);
+    // (the 13 rhythms, the 3 instruments and the 5 modes)
+    expect(first).toHaveLength(21);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
     expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);
     const [one, tried] = count(() => r.query(FUNK, 1, {}, { workbench: `${workbench}\n&more loop=A4` }));
     expect(one).toHaveLength(1);
-    // (the workbench, and the union of the first fragment that fits: a fragment that fails a cheaper check compiles none)
-    expect(tried).toBeLessThanOrEqual(2);
+    // (the workbench, the workbench with its own sound holes stood in, and the union of the first fragment that fits: a fragment that fails a cheaper check compiles none)
+    expect(tried).toBeLessThanOrEqual(3);
   });
 
   it('a cached compile is the compile, and keeps the last texts it was asked for', () => {

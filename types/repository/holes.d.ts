@@ -73,5 +73,7 @@ export declare function readOnlyAsSound(decls: readonly CellDecl[]): (name: stri
  * fragment's holes are the text's), else the text.
  */
 export declare const linesRead: (text: string, resolve?: Resolve) => string;
+/** The line that stands in for a sound hole while a fragment is judged without its instrument (`&bd s=white`). */
+export declare const standIn: (name: string) => string;
 /** A fragment's holes, read off its declarations and its compile alone (`compiled`, which may be cached by text). */
 export declare function holesOf(text: string, compiled: (text: string) => CompileResult, resolve?: Resolve): Holes;

@@ -21,10 +21,6 @@ lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 &euclid step=1m &rim(5,16,4)
 &euclidLevel map=amp step=16n .201438 0 0 0 .208568 0 0 .180792 0 0 .215822 0 0 .201438 0 0
 &drums map=midi(10) [&kick, &backbeat, &fill, &ghost, &hat, &euclid * &euclidLevel]
-&bd s=white
-&rim s=white
-&sd s=white
-&hh s=white
 ```
 
-Jambot's E31 bar for Bossa nova (yggi/jambot#317): the band's drum part as cells text, without its `&bar` line, so the host's `&bar`, written first, sets its meter and tempo. At Bossa nova's point.
+Jambot's E31 bar for Bossa nova (yggi/jambot#317): the band's drum part as cells text, without its `&bar` line and its stand-in voices (`&bd s=white` …: the kit fills them, decision 054, rung 2), so the host's `&bar`, written first, sets its meter and tempo. At Bossa nova's point.

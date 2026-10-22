@@ -29,7 +29,6 @@ lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ```cells
 &bass over=&harm step=16n 0 ~ ~ 0 ~ ~ 0 0 ~ ~ 0 0 ~ &bassNext &bassNext ~
 &bassNext over=&harm[>>] 0
-&bassV loop=C2
 &bassOut map=midi(2) [&bass * &bassV]
 ```
 
