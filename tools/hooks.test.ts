@@ -171,6 +171,14 @@ describe('pre-push', () => {
     expect(hook(dir, 'head', failing).status).toBe(1);
   });
 
+  it("passes on a passing run's boot-set alarm, which its hidden output would keep from the pusher (#242)", () => {
+    const alarm = `echo 'the boot set is 23897 B, 97 % of its ceiling: condense it, as a change of its own'; echo '      Tests  2 passed (2)'`;
+    const { status, stderr } = hook(repoWith(['a.ts']), 'head', alarm);
+    expect(status).toBe(0);
+    expect(stderr).toContain('pre-push: the boot set is 23897 B, 97 % of its ceiling');
+    expect(hook(repoWith(['b.ts']), 'head', `echo '      Tests  2 passed (2)'`).stderr).not.toContain('boot set');
+  });
+
   it('does not verify a tree twice, so a retried push is free, and says so with the count of tests that passed', () => {
     const dir = repoWith(['a.ts']);
     expect(hook(dir, 'head', `echo '      Tests  12 passed (12)'`).status).toBe(0);

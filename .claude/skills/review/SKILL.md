@@ -49,6 +49,15 @@ Every claim in *Verified* and *What and why* that a command can check, check in 
 - **"Nothing sounds different."** `npx vitest run src/engine/snapshot.test.ts` passes unchanged, and `src/engine/snapshot.txt` isn't in the diff. A moved line names the piece; the pull request must name it too.
 - **A measured number** (a ratchet's score, a size, a time): run what measured it and compare.
 
+Then break it yourself: for each thing the change claims to catch or keep, make the smallest edit in the worktree that should trip it (a check undone, a value off by one, a file deleted), run the test, restore.
+The review's summary carries them as a table, one row each, as the reviews of #231 and #234 did:
+
+| break-it | the edit | what failed | restored |
+|---|---|---|---|
+| the hook ignores the shared stamp | `tools/verified.sh` from `main` | `hooks.test.ts`: 1 failed, 35 passed | yes |
+
+A break-it that fails nothing is a finding: the check it meant to show doesn't exist.
+
 ## 3. Read against cells' rules
 
 For each change:
@@ -62,6 +71,7 @@ For each change:
 - **The laws.** Meaningful tests (every check shown firing, finite cases tested over every case), true names, generalization (a more general form covering the new case and an old one), the same forms at every level (yggi/music-commons `PRACTICES.md`).
 - **Lifted code** names where from (`Lifted from yggi/<repo> <path> @ <commit>`).
 - **Docs describe the present**, and `docs/MEMORY.md`, `docs/INDEX.md` and a decision's line move in the same pull request.
+- **A new decision's number** was named on its issue before it was written (AGENTS.md), and is still free on `main` and in the open pull requests: `src/docs.test.ts` catches a number taken twice only once both are merged.
 
 Don't stop at reading: probe.
 The `Probe:` line runs the language from the worktree's source under Node (`tools/node-ts.mjs`), with `notes(text, seconds)` already in hand: what a piece plays, as the snapshot reads it (voice, onset, length, frequency).
