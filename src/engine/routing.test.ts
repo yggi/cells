@@ -42,16 +42,11 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
 });
 
 describe('at rest, nothing is dimmed (#201)', () => {
-  it('the heads at rest (the live state at time 0) are worked out for every example, and fast', () => {
-    const t0 = performance.now();
-    let n = 0;
+  // (how fast: `timing.slow.test.ts`, #237)
+  it('the heads at rest (the live state at time 0) are worked out for every example', () => {
     for (const p of Object.values(PRESETS)) {
       const r = compileSource(p.source);
-      const heads = liveAt(r, codeShifts(r), r.off, 0);
-      expect(heads.seconds).toBe(0);
-      n++;
+      expect(liveAt(r, codeShifts(r), r.off, 0).seconds).toBe(0);
     }
-    // (a piece is opened or edited and this runs once: no budget to hold to, but a sign if one example is slow)
-    expect((performance.now() - t0) / n).toBeLessThan(50);
   });
 });

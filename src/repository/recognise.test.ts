@@ -1,6 +1,7 @@
 // Recognition (decision 055, #224): each of Jambot's 284 variations on E31's bars, and each of the bass seeds' 24, is
 // recognised as its source's, by its operator, at distance 0, against the whole library; random bars of hits are
-// recognised as nothing; a recognition on a warmed recogniser compiles only the heard text, and costs under 5 ms at p95.
+// recognised as nothing; a recognition on a warmed recogniser compiles only the heard text (its milliseconds:
+// `timing.slow.test.ts`).
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
@@ -157,23 +158,18 @@ describe('random bars, and the cost', () => {
 
   // The bound, as the work it bounds (#194, as `fit.test.ts` counts it): a recognition on a warmed recogniser compiles
   // the heard text and nothing else, one compile (2 ms on Funk's bar), the library's readings kept. Alone it takes 2.7 ms at
-  // p95 (decision 055); a loaded machine moves the milliseconds, so the wall clock stays only as a gross witness, 25 ms.
-  it('on a warmed recogniser, a recognition compiles only the heard text: one compile, under 5 ms at p95 unloaded', async () => {
+  // p95 (decision 055); a loaded machine moves the milliseconds, so the wall clock is `timing.slow.test.ts`'s (#237).
+  it('on a warmed recogniser, a recognition compiles only the heard text: one compile', async () => {
     // (the recogniser loaded afresh, so it compiles through the counted compile: with isolate off, a file that ran earlier
     // in this worker may have loaded Vary with the real one, as `fit.test.ts` says)
     vi.resetModules();
     const compiles = vi.mocked((await import('../engine/compile')).compileSource);
     const warm = (await import('./recognise')).createRecogniser();
     warm.recognise(BARS[0]!.fragment, LIBRARY, DRUM_OPTIONS);
-    const times: number[] = [];
     for (const text of bars.slice(0, 200)) {
       const before = compiles.mock.calls.length;
-      const t0 = performance.now();
       warm.recognise(text, LIBRARY, DRUM_OPTIONS);
-      times.push(performance.now() - t0);
       expect(compiles.mock.calls.length - before).toBe(1);
     }
-    times.sort((a, b) => a - b);
-    expect(times[Math.floor(0.95 * times.length)]!).toBeLessThan(25);
   });
 });

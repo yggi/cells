@@ -306,8 +306,7 @@ describe('varied: a variation by a draw', () => {
 
 describe('what it costs', () => {
   // The bound as the work it bounds (#194): every variation of a bar is read off one compile of the bar on its
-  // workbench, and none is compiled; `varied` the same. One wall-clock line stays as a gross witness, chosen and named: all
-  // eight bars' variations and a draw on each, five times over, in 10 s.
+  // workbench, and none is compiled; `varied` the same. Their milliseconds: `../timing.slow.test.ts` (#237).
   it('every variation of a bar costs one compile, and so does varied; none is compiled', async () => {
     // (the modules loaded afresh, as `pitched.test.ts` does: with isolate off, a file that ran earlier in this worker, such
     // as `vary.test.ts`, may have loaded Vary over the real compile, which these calls would then go through uncounted, #236)
@@ -318,19 +317,16 @@ describe('what it costs', () => {
       const before = compiles.mock.calls.length;
       return [run(), compiles.mock.calls.length - before];
     };
-    const t0 = performance.now();
-    for (let round = 0; round < 5; round++)
-      for (const b of BARS) {
-        const [all, n] = count(() => variations(b.fragment, OPTIONS));
-        expect(all.length).toBeGreaterThan(0);
-        expect(n).toBe(1);
-        const [one, m] = count(() => varied(b.fragment, 0.5, OPTIONS));
-        expect(one).not.toBeNull();
-        expect(m).toBe(1);
-        const [, applied] = count(() => all.map((v: Variation) => v.apply(b.fragment)));
-        expect(applied).toBe(0);
-      }
+    for (const b of BARS) {
+      const [all, n] = count(() => variations(b.fragment, OPTIONS));
+      expect(all.length).toBeGreaterThan(0);
+      expect(n).toBe(1);
+      const [one, m] = count(() => varied(b.fragment, 0.5, OPTIONS));
+      expect(one).not.toBeNull();
+      expect(m).toBe(1);
+      const [, applied] = count(() => all.map((v: Variation) => v.apply(b.fragment)));
+      expect(applied).toBe(0);
+    }
     vi.resetModules(); // (and afresh again for the files after this one)
-    expect(performance.now() - t0).toBeLessThan(10_000);
   });
 });
