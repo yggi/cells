@@ -1,6 +1,6 @@
 # `use`: a fragment taken by its id
 
-A piece takes a fragment of a library into itself by naming it: `use "core kit"`, a line of its own, the fragment's id in double quotes ([decision 054](../decisions/054-instruments-and-use.md)).
+A piece takes a fragment of a library into itself by naming it: `use "core kit"`, a line of its own, the fragment's id in double quotes ([decision 054](https://github.com/yggi/cells/blob/main/docs/decisions/054-instruments-and-use.md)).
 It has no name, no attributes and no braid.
 
 ```cells

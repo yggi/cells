@@ -29,6 +29,7 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 
 - [decisions/](decisions/) — one record per decision; the one-line list is in MEMORY.md
 - [notes/](notes/) — the long threads the code cites: the folder, nets, the scalogram, the disassembler, the ratchet, multiscale, conversion, the canonical table, the corpus, the groove measure, open fragments
+  - [notes/README.md](notes/README.md) — what a note is, its header, when it is written and when it is deleted (lifted from Cell studio)
   - [notes/10-language-pass.md](notes/10-language-pass.md) — the language pass: the invariants, Strudel and dough, the four primitives (moved from Cell studio)
   - [notes/10-examples-pass.md](notes/10-examples-pass.md) — the examples pass: drums on a kit, no extra mixers (moved from Cell studio)
   - [notes/22-open-fragments.md](notes/22-open-fragments.md) — open fragments: a fragment that leaves `&bar` and `&key` to the host, four options measured on three cases, and a recommendation (`tools/open-fragments.ts`, #22)
