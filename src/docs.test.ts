@@ -67,6 +67,13 @@ describe('docs: structure', () => {
     for (const r of records) expect(linked, r).toContain(`decisions/${r}`);
   });
 
+  it('decisions/README.md gives every decision its line, as a link (#259: the substance moved there from MEMORY.md)', () => {
+    const list = read(join(DOCS, 'decisions', 'README.md'));
+    const linked = [...list.matchAll(/^- \d{3} · .+ · → \[([\w.-]+\.md)\]\(\1\)$/gm)].map((m) => m[1]);
+    const records = readdirSync(join(DOCS, 'decisions')).filter((f) => /^\d{3}-.*\.md$/.test(f));
+    expect(linked.sort()).toEqual(records.sort());
+  });
+
   // (two pull requests took 055 at once, #230 and #233, #242: each passed alone, and the second's merge is what fails)
   it('no two decisions share a number', () => {
     const records = readdirSync(join(DOCS, 'decisions')).filter((f) => /^\d{3}-.*\.md$/.test(f));

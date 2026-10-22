@@ -13,6 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 - **`holesOf` and `fitOf` read a fragment through its sound holes**: a line that strikes a hole doesn't compile until an instrument fills it, and the compile says one unknown cell a line, so `holesOf` stands each sound hole in by a voice (`standIn`, `&name s=white`, exported from `@yggi/cells/repository/holes`) and asks again until none is left: `uses` and `sounds` hold every name a fragment strikes (`&oh` after `&hh`), and a line's clock need is read through them (a two-bar clave needs bars of 16 sixteenths, with no kit). `fitOf` does the same for the workbench's own holes, a groove added before its kit, and leaves the stand-ins' "only on a MIDI card" warning out of the fit's diagnostics. A fragment with no sound hole reads as before.
 
 ### Added
+- A new tutorial piece, `breve` (tier 4), shows `beat=` and a scan's `pulse=`; `PresetKey` gains `'breve'`. In-c's `[0,1] [0,1]` is written `[0,1]!2`. No piece reads or sounds differently.
 - `CompileResult.unknown`: the cells a text uses and declares nowhere (`{ name, at }`, each with its uses), as data; the holes and the fit read it, no longer the `Unknown cell &x` message. Additive: no message, diagnostic or event moves, every piece reads and sounds as before.
 
 ### Fixed

@@ -10,7 +10,7 @@
  */
 export const BOOT_SET = ['AGENTS.md', 'docs/MEMORY.md'];
 
-/** In bytes: about 6k tokens, the family's ceiling (Jambot's too), with headroom over today's 14 KB. A ceiling far above the size could never fire. */
+/** In bytes: about 6k tokens, the family's ceiling (Jambot's too), with headroom over today's 17 KB (#259). A ceiling far above the size could never fire. */
 export const CEILING = 24 * 1024;
 
 /** The share of the ceiling from which the test warns, so the condensing comes before a pull request is stopped by it. */

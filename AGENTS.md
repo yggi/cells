@@ -26,7 +26,7 @@ Enforced (a failing check says so):
 Judgment (nothing checks these; you do):
 - **The text is the single source of truth.** A change to what the language means changes how the frontends' pieces sound: say so, and keep the examples sounding the same (the event snapshots) unless the change is the point.
 - **A release is a tag.** Frontends depend on `github:yggi/cells#vX.Y.Z`, never a branch, and read [CHANGELOG.md](CHANGELOG.md) before they move it: a change a frontend would notice adds a line under *Unreleased*, and one that breaks a piece names its migration there (Shorten writes migrations). That is a minor version before 1.0, and the frontends' issues say what to migrate.
-- A decision with a rationale gets `docs/decisions/NNN-slug.md` (the next number after the highest here or in Cell studio's list, named on its issue before it is written) and a line in `docs/MEMORY.md`.
+- A decision with a rationale gets `docs/decisions/NNN-slug.md` (the next number after the highest here or in Cell studio's list, named on its issue before it is written), its line in `docs/decisions/README.md`'s list, and its head in `docs/MEMORY.md`'s.
 - Code lifted from a sibling says where from (`Lifted from yggi/<repo> <path> @ <commit>`).
 
 ## Working
