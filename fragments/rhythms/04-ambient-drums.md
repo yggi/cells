@@ -18,9 +18,6 @@ lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 &fill step=16n ~ ~ ~ ~ ~ ~ ~ ~ &sd:0:.0992 &sd:0:.136958 &sd:0:.167648 &sd:0:.194432 ~ &sd:0:.303801 &sd:0:.416889 &sd:0:.396801
 &hat step=16n &hh:0:.238328 ~ &hh:0:.174158 ~ &hh:0:.261951 ~ ~ ~ &hh:0:.230702 ~ &hh:0:.201438 ~ &hh:0:.261951 ~ &hh:0:.2232 ~
 &drums map=midi(10) [&kick, &backbeat, &fill, &hat]
-&bd s=white
-&hh s=white
-&sd s=white
 ```
 
-Jambot's E31 bar for Ambient (yggi/jambot#317): the band's drum part as cells text, without its `&bar` line, so the host's `&bar`, written first, sets its meter and tempo. At Ambient's point.
+Jambot's E31 bar for Ambient (yggi/jambot#317): the band's drum part as cells text, without its `&bar` line and its stand-in voices (`&bd s=white` …: the kit fills them, decision 054, rung 2), so the host's `&bar`, written first, sets its meter and tempo. At Ambient's point.

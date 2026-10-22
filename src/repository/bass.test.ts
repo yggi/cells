@@ -10,6 +10,7 @@ import { BASS_FRAGMENTS } from './bass';
 import { fitOf } from './fit';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
+import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { compileSource } from '../engine/compile';
 import { LIBRARY } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
@@ -158,7 +159,9 @@ const PROGRESSIONS: Record<string, { harm: string; chords: readonly (readonly nu
     ],
   },
 };
-const workbench = (name: string) => `${HOST}\n${PROGRESSIONS[name]!.harm}`;
+/** The bass instrument: `&bassV`, the voice the lines leave as a hole (#244). */
+const BASS_INSTRUMENT = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
+const workbench = (name: string) => `${HOST}\n${PROGRESSIONS[name]!.harm}\n${BASS_INSTRUMENT}`;
 
 const pc = (x: number) => ((x % 12) + 12) % 12;
 function toneOf(tone: Tone, chord: readonly number[], next: readonly number[]): number {
@@ -201,10 +204,12 @@ describe('the bass lines', () => {
     }
   });
 
-  it('each uses &harm and nothing else of the host’s: what it needs is read off its text', () => {
+  it('each uses &harm and a voice, `&bassV`, which the bass instrument fills: what it needs is read off its text', () => {
     for (const f of BASS_FRAGMENTS) {
-      expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&harm']);
+      expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&bassV', '&harm']);
+      expect(holesOf(f.text, compileSource).sounds, f.id).toEqual(['&bassV']);
       expect(fitOf(f.text, HOST).missing, f.id).toEqual(['&harm']);
+      expect(fitOf(f.text, HOST).sounds, f.id).toEqual(['&bassV']);
     }
   });
 

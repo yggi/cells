@@ -36,10 +36,10 @@ describe('what a fragment uses and defines', () => {
     expect(holes('&x step=1m &( 0 1 )').defines).toEqual(['&x']);
   });
 
-  it('every rhythm uses nothing but a sound: the five claves’ `&claves`, which an instrument fills (#244)', () => {
+  it('every rhythm uses nothing but sounds, the names it strikes, which an instrument fills (#244)', () => {
     for (const f of RHYTHM_FRAGMENTS) {
       const h = holes(f.text);
-      expect(h.uses, f.id).toEqual(f.id.includes('clave') ? ['&claves'] : []);
+      expect(h.uses.length, f.id).toBeGreaterThan(0);
       expect(h.sounds, f.id).toEqual(h.uses);
     }
   });
@@ -100,7 +100,7 @@ describe('the cells a text uses and declares nowhere, as data', () => {
     for (const text of texts) {
       const r = compileSource(text);
       const names = fromMessages(text);
-      expect(r.unknown.flatMap((u) => u.at.map(() => u.name)).sort(), text.slice(0, 40)).toEqual(names.sort());
+      expect(r.unknown.flatMap((u) => u.at.map(() => u.name)).sort(), text.slice(0, 40)).toEqual([...names].sort());
       expect([...new Set(r.unknown.map((u) => u.name))], text.slice(0, 40)).toEqual([...new Set(names)]);
     }
   });

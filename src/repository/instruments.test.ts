@@ -99,19 +99,20 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it('are the General MIDI kit and the core kit, each once at the centre of style space as the facet instrument, the core kit weighted first', () => {
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm kit', 'core kit']);
+  it('are the General MIDI kit, the core kit and the bass, each once at the centre of style space as the facet instrument, the core kit weighted first', () => {
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm kit', 'core kit', 'bass']);
     for (const f of INSTRUMENT_FRAGMENTS) expect(f.association.map((wp) => [wp.point, wp.facet])).toEqual([[{ sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 }, 'instrument']]);
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([0.5, 1, 0.25]);
     expect(
       createRepository(LIBRARY)
-        .query(AMBIENT, 2, {}, { facet: 'instrument' })
+        .query(AMBIENT, 3, {}, { facet: 'instrument' })
         .map((f) => f.fragment.id),
-    ).toEqual(['core kit', 'gm kit']);
+    ).toEqual(['core kit', 'gm kit', 'bass']);
     expect(
       createRepository(LIBRARY)
-        .query(FUNK, 2, {}, { facet: 'instrument' })
+        .query(FUNK, 3, {}, { facet: 'instrument' })
         .map((f) => f.fragment.id),
-    ).toEqual(['core kit', 'gm kit']);
+    ).toEqual(['core kit', 'gm kit', 'bass']);
   });
 
   it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order, and the core kit 13 of its lines word for word', () => {
@@ -141,14 +142,17 @@ describe('the instrument fragments', () => {
 });
 
 describe('every rhythm with the core kit plays each hit on its General MIDI note (13 of 13)', () => {
-  const { hits: synthPop } = played(hosted(RHYTHM_FRAGMENTS.find((f) => f.id === 'Synth-pop drums')!.text), 32);
+  const { hits: synthPop } = played(hosted(RHYTHM_FRAGMENTS.find((f) => f.id === 'Synth-pop drums')!.text, coreKit.text), 32);
   it('is shown firing: a hit on another note is caught', () => expect(synthPop.map((h) => ({ ...h, note: h.note + 1 }))).not.toEqual(synthPop));
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the kit after the groove, and the groove after the kit', (_, text) => {
-    const alone = played(hosted(text, ...(text.includes('&claves') ? [coreKit.text.split('\n').find((l) => l.startsWith('&claves '))!] : [])), 32);
+    // (a rhythm has no voice of its own: it plays through a kit, the kit's lines written out after it)
+    const alone = played(hosted(text, coreKit.text), 32);
     expect(alone.hits.length).toBeGreaterThan(0);
     const kitAfter = fitOf(coreKit.text, hosted(text));
     expect(kitAfter.fits).toBe(true);
+    // (and no sound hole is left on it, as the kit's voices fill every one)
+    expect(fitOf(text, hosted(coreKit.text)).sounds).toEqual([]);
     const grooveAfter = fitOf(text, hosted(coreKit.text));
     expect(grooveAfter.fits).toBe(true);
     for (const union of [kitAfter.union.text, grooveAfter.union.text]) {

@@ -17,8 +17,7 @@
  * hole of its own makes, are no fault of the fragment's). The checks run cheapest first, and the union is compiled only
  * when the others pass; its compile may be cached by text (`cachedCompile`). A hole read only as a sound (`Holes.sounds`:
  * a groove's `&bd`) doesn't block the fit (decision 054): what the workbench doesn't define of them is `sounds`, the
- * instrument to ask for next, and the union is judged with a stand-in voice for each (`&bd s=white`, as the seed's
- * rhythms wrote theirs), so that only the fragment's other faults count. The stand-ins are in no text the fit returns. What a workbench's `use` lines give it
+ * instrument to ask for next, and the union is judged with a stand-in voice for each (`&bd s=white`), so that only the fragment's other faults count. The stand-ins are in no text the fit returns. What a workbench's `use` lines give it
  * counts as defined there, as its compile says.
  */
 import type { Diagnostic } from '../engine/ast';
@@ -26,6 +25,7 @@ import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
 import type { CompileResult, Resolve } from '../engine/program';
 import { parse } from '../engine/parser';
+import { braidReadsOf } from '../engine/compiler/builtin';
 import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
 /** A fragment added to a workbench: the text, and what became of the fragment's names there. */
@@ -181,7 +181,13 @@ export function fitOf(fragment: string, workbench: string, compiledBy?: (text: s
   const failed = { fits: false, union, missing, sounds, unmet };
   if (missing.length || union.twice.length || unmet.length) return failed;
   // (a stand-in voice for each sound hole the workbench leaves: one a stand-in lets the compile reach is added, and so on)
-  const judged = (): string => [union.text, ...sounds.map(standIn)].join('\n');
+  // (and one for each sound hole the workbench has itself, a groove added before its kit: not the fragment's fault)
+  const benchDecls = parse(workbench).cells;
+  const benchSound = readOnlyAsSound(benchDecls);
+  const benchHoles = [...new Set(benchDecls.flatMap((d) => braidReadsOf(d)).map((n) => `&${n}`))].filter((n) => !benchNames.has(n) && !union.names.includes(n) && benchSound(n));
+  const benchStand = benchHoles.map(standIn);
+  const benchResult = benchStand.length ? compiled([workbench, ...benchStand].join('\n')) : bench;
+  const judged = (): string => [union.text, ...new Set([...sounds.map(standIn), ...benchStand])].join('\n');
   let result = compiled(judged());
   for (;;) {
     const more = unknownCells(result).filter((n) => sound(n) && !sounds.includes(n) && !benchNames.has(n) && !union.names.includes(n));
@@ -190,8 +196,12 @@ export function fitOf(fragment: string, workbench: string, compiledBy?: (text: s
     result = compiled(judged());
   }
   sounds.sort();
-  const before = [...bench.diagnostics];
+  const before = [...benchResult.diagnostics];
+  // (a stand-in's sound isn't sent on a MIDI card, and the compile says so of it: not the fragment's fault)
+  const standNames = new Set([...sounds, ...benchStand.map((l) => l.split(' ')[0]!)].map((n) => (n.startsWith('&') ? n : `&${n}`)));
   const diagnostics = result.diagnostics.filter((d) => {
+    const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
+    if (m && standNames.has(m[1]!)) return false;
     const i = before.findIndex((b) => sameDiagnostic(b, d));
     if (i < 0) return true;
     before.splice(i, 1);

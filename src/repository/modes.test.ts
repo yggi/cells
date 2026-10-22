@@ -14,6 +14,14 @@ import { createRepository, type StylePoint } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
+
+/** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
+const AGOGO = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')!
+  .text.split('\n')
+  .find((l) => l.startsWith('&highagogo '))!;
+/** A text with the General MIDI kit's high agogô where it strikes one: the bell's hole, filled (#244). */
+const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOGO}` : text);
+const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY } from './library';
 import { MODE_FRAGMENTS } from './modes';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
@@ -64,16 +72,16 @@ describe('the mode fragments', () => {
     expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell and scale']);
   });
 
-  it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s defines key and uses nothing, so it fits any meter', (_, text) => {
+  it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s defines key and uses nothing but a sound, so it fits any meter', (id, text) => {
     const holes = holesOf(text, compileSource);
-    expect(holes.uses).toEqual([]);
+    expect(holes.uses).toEqual(id === 'bell and scale' ? ['&highagogo'] : []);
     expect(holes.defines).toContain('&key');
     for (const m of ['4/4', '6/8', '12/8', '7/8']) expect(fitOf(text, meter(m)).fits, m).toBe(true);
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s is the main key, and plays its mode up from C with no diagnostic', (id, text) => {
     const mode = (id === 'bell and scale' ? 'ionian' : id) as Mode;
-    const piece = `${fitOf(text, meter()).union.text}\n${PROBE}`;
+    const piece = `${filled(fitOf(text, meter()).union.text)}\n${PROBE}`;
     expect(compileSource(piece).diagnostics.map((d) => d.message)).toEqual([]);
     expect(sent(piece, 3, 8).map((n) => n.note - 60)).toEqual([...SCALE[mode], 12]);
   });
@@ -81,8 +89,8 @@ describe('the mode fragments', () => {
   it('leave the tonic to the host: free(…), which moves every note', () => {
     for (const f of MODE_FRAGMENTS) {
       expect(f.text).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian), free\(C\)\)/);
-      const inA = `${fitOf(f.text.replace('free(C)', 'free(A)'), meter()).union.text}\n${PROBE}`;
-      const inC = `${fitOf(f.text, meter()).union.text}\n${PROBE}`;
+      const inA = `${filled(fitOf(f.text.replace('free(C)', 'free(A)'), meter()).union.text)}\n${PROBE}`;
+      const inC = `${filled(fitOf(f.text, meter()).union.text)}\n${PROBE}`;
       expect(sent(inA, 3, 8).map((n) => n.note)).toEqual(sent(inC, 3, 8).map((n) => n.note + 9));
     }
   });
@@ -128,7 +136,7 @@ describe('the harmonies and the bass lines, over each mode', () => {
       const fit = fitOf(vamp.text, host);
       expect(fit.fits, vamp.id).toBe(true);
       expect(
-        compileSource(`${fit.union.text}\n&padV loop=C4\n&pad map=midi(4) [&harm * &padV]`).diagnostics.map((d) => d.message),
+        compileSource(`${filled(fit.union.text)}\n&padV loop=C4\n&pad map=midi(4) [&harm * &padV]`).diagnostics.map((d) => d.message),
         vamp.id,
       ).toEqual([]);
     }
@@ -141,7 +149,7 @@ describe('the harmonies and the bass lines, over each mode', () => {
         const fit = fitOf(bass.text, host);
         expect(fit.fits, `${bass.id} over ${vamp.id}`).toBe(true);
         expect(
-          compileSource(fit.union.text).diagnostics.map((d) => d.message),
+          compileSource(`${filled(fit.union.text)}\n${BASS_VOICE}`).diagnostics.map((d) => d.message),
           `${bass.id} over ${vamp.id}`,
         ).toEqual([]);
       }
@@ -165,7 +173,7 @@ describe('the bell and scale', () => {
 
   it('strikes the bell, x.x.xx.x.x.x, seven strokes over the twelve twelfths of any bar, on the high agogô (67)', () => {
     for (const m of ['12/8', '4/4', '6/8']) {
-      const text = fitOf(bell.text, meter(m)).union.text;
+      const text = filled(fitOf(bell.text, meter(m)).union.text);
       const bar = compileSource(text).cells.get('bar')!.meter!;
       const seconds = bar.beats.length; // (at 60 bpm, a beat a second)
       const hits = sent(text, 10, 2 * seconds);
@@ -184,23 +192,25 @@ describe('the bell and scale', () => {
     for (const vamp of HARMONY_FRAGMENTS)
       for (const bass of BASS_FRAGMENTS) {
         const over = (mode: string) =>
-          `${fitOf(bass.text, fitOf(vamp.text, fitOf(mode, meter()).union.text).union.text).union.text}\n&padV loop=C4\n&pad map=midi(4) [&harm * &padV]`;
+          `${filled(fitOf(bass.text, fitOf(vamp.text, fitOf(mode, meter()).union.text).union.text).union.text)}\n${BASS_VOICE}\n&padV loop=C4\n&pad map=midi(4) [&harm * &padV]`;
         expect(melodic(over(bell.text)), `${bass.id} over ${vamp.id}`).toEqual(melodic(over(ionian)));
       }
   });
 
-  it('layers on every rhythm, and on the General MIDI kit, whose high agogô it shares word for word', () => {
+  it('layers on every rhythm, and its high agogô is a hole the General MIDI kit fills (#244)', () => {
     const gmKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')!;
-    expect(gmKit.text.split('\n')).toContain(bell.text.split('\n').find((l) => l.startsWith('&highagogo '))!);
-    expect(fitOf(bell.text, `${meter()}\n${gmKit.text}`).union.shared).toContain('&highagogo');
+    expect(gmKit.text.split('\n').some((l) => l.startsWith('&highagogo '))).toBe(true);
+    expect(bell.text).not.toMatch(/^&highagogo /m);
+    const alone = fitOf(bell.text, meter());
+    expect([alone.fits, alone.sounds]).toEqual([true, ['&highagogo']]);
+    expect(fitOf(bell.text, `${meter()}\n${gmKit.text}`).sounds).toEqual([]);
     for (const rhythm of RHYTHM_FRAGMENTS) {
       const fit = fitOf(bell.text, fitOf(rhythm.text, meter()).union.text);
       expect(fit.fits, rhythm.id).toBe(true);
       expect(fit.union.renamed.size, rhythm.id).toBe(0);
-      // (a clave's `&claves` is a hole the General MIDI kit fills: #244)
-      const clavesLine = gmKit.text.split('\n').find((l) => l.startsWith('&claves '))!;
+      // (the rhythm's voices and the bell's are holes the General MIDI kit fills)
       expect(
-        compileSource(rhythm.id.includes('clave') ? `${fit.union.text}\n${clavesLine}` : fit.union.text).diagnostics.map((d) => d.message),
+        compileSource(`${fit.union.text}\n${gmKit.text}`).diagnostics.map((d) => d.message),
         rhythm.id,
       ).toEqual([]);
     }

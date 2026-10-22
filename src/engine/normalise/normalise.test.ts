@@ -67,13 +67,10 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     for (const f of LIBRARY) {
       const defines = holesOf(f.text, compileSource).defines;
       const bench = defines.includes('&key') ? meter : defines.includes('&harm') ? keyed : bar;
-      // (a clave's `&claves` is a sound hole: the core kit's line fills it, #244)
-      const kit = holesOf(f.text, compileSource).sounds.includes('&claves')
-        ? `\n${LIBRARY.find((k) => k.id === 'core kit')!
-            .text.split('\n')
-            .find((l) => l.startsWith('&claves '))!}`
-        : '';
-      const text = compileSource(f.text).ok ? f.text : `${unionOf(f.text, bench).text}${kit}`;
+      // (a fragment's sound holes, the voices an instrument fills (#244), are filled by the General MIDI kit's and the bass's lines)
+      const voices = [...LIBRARY.find((k) => k.id === 'gm kit')!.text.split('\n'), ...LIBRARY.find((k) => k.id === 'bass')!.text.split('\n')];
+      const kit = holesOf(f.text, compileSource).sounds.map((n) => `\n${voices.find((l) => l.startsWith(`${n} `))!}`);
+      const text = `${compileSource(f.text).ok ? f.text : unionOf(f.text, bench).text}${kit.join('')}`;
       expect([f.id, compileSource(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
     }
   });

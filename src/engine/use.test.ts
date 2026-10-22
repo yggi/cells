@@ -271,10 +271,9 @@ describe('the fit (decision 047) with use', () => {
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))
       .join('\n');
-    // (a line's first unknown cell is the one its compile reaches: &oh follows &hh on the hats' line)
-    expect(holesOf(bare, compileSource).sounds).toEqual(['&bd', '&hh', '&rim', '&sd']);
+    // (a line's first unknown cell is the one its compile reaches: holesOf stands each in and asks again, so &oh follows &hh)
+    expect(holesOf(bare, compileSource).sounds).toEqual(['&bd', '&hh', '&oh', '&rim', '&sd']);
     const fit = fitOf(bare, '&bar meter("4/4") step=100bpm');
-    // (the fit finds &oh too: a stand-in for &hh lets the compile reach it)
     expect([fit.fits, fit.missing, fit.sounds]).toEqual([true, [], ['&bd', '&hh', '&oh', '&rim', '&sd']]);
     // (a hole read as a table still blocks)
     expect(fitOf('&bass over=&harm step=8n 0!8\n&m [&bass * &v]\n&v s=saw', '&bar meter("4/4") step=100bpm').missing).toEqual(['&harm']);

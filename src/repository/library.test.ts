@@ -34,8 +34,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the thirteen rhythms, the five bass lines, the five harmonies, the two kits and the five modes, every point associated as its facet, the bell and scale as two: forty-three', () => {
-    expect(LIBRARY).toHaveLength(43);
+  it('is the thirteen meters, the thirteen rhythms, the five bass lines, the five harmonies, the three instruments and the five modes, every point associated as its facet, the bell and scale as two: forty-four', () => {
+    expect(LIBRARY).toHaveLength(44);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -44,7 +44,7 @@ describe('the library', () => {
     expect(LIBRARY.filter((f) => facetsOf(f)[0] === 'mode')).toEqual(MODE_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).length > 1).map((f) => [f.id, facetsOf(f)])).toEqual([['bell and scale', ['mode', 'rhythm']]]);
     expect([METER_FRAGMENTS.length, RHYTHM_FRAGMENTS.length, BASS_FRAGMENTS.length, HARMONY_FRAGMENTS.length, INSTRUMENT_FRAGMENTS.length, MODE_FRAGMENTS.length]).toEqual([
-      13, 13, 5, 5, 2, 5,
+      13, 13, 5, 5, 3, 5,
     ]);
   });
 

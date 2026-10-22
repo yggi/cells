@@ -14,9 +14,13 @@ import { fitOf } from './fit';
 import { createRepository, type StylePoint } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
+import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
 import { AMBIENT, at, FUNK, TECHNO } from './presets';
 import { SEED } from './seed';
+
+/** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
+const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 
 type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian';
 const MODES: readonly Mode[] = ['aeolian', 'dorian', 'ionian', 'mixolydian'];
@@ -161,7 +165,7 @@ describe('the harmonies', () => {
       for (const f of HARMONY_FRAGMENTS) {
         const fit = fitOf(bass, fitOf(f.text, host(mode)).union.text);
         expect(fit.fits, `${f.id} in ${mode}`).toBe(true);
-        const plan = planOf(fit.union.text);
+        const plan = planOf(`${fit.union.text}\n${BASS_VOICE}`);
         const route = router(plan.result, channelTable(plan.result));
         const downbeats = windowAt(plan, 0, 16 - 1e-9)
           .events.flatMap((e) => routesOf(route(e)).map((r) => midiNote(e, r)))

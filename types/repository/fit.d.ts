@@ -17,8 +17,7 @@
  * hole of its own makes, are no fault of the fragment's). The checks run cheapest first, and the union is compiled only
  * when the others pass; its compile may be cached by text (`cachedCompile`). A hole read only as a sound (`Holes.sounds`:
  * a groove's `&bd`) doesn't block the fit (decision 054): what the workbench doesn't define of them is `sounds`, the
- * instrument to ask for next, and the union is judged with a stand-in voice for each (`&bd s=white`, as the seed's
- * rhythms wrote theirs), so that only the fragment's other faults count. The stand-ins are in no text the fit returns. What a workbench's `use` lines give it
+ * instrument to ask for next, and the union is judged with a stand-in voice for each (`&bd s=white`), so that only the fragment's other faults count. The stand-ins are in no text the fit returns. What a workbench's `use` lines give it
  * counts as defined there, as its compile says.
  */
 import type { Diagnostic } from '../engine/ast';

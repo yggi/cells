@@ -46,8 +46,19 @@ export function holesOf(text, compiled, resolve) {
     const result = compiled(text);
     const unknown = result.unknown.map((u) => `&${u.name}`);
     const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
-    const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
     const sound = readOnlyAsSound(all);
+    const found = new Set(unknown.filter(sound));
+    let last = result;
+    for (;;) {
+        if (!found.size)
+            break;
+        last = compiled(`${text}\n${[...found].map(standIn).join('\n')}`);
+        const more = last.unknown.map((u) => `&${u.name}`).filter((n) => sound(n) && !found.has(n));
+        if (!more.length)
+            break;
+        more.forEach((n) => found.add(n));
+    }
+    const uses = [...new Set([...unknown, ...found, ...(readsKey ? ['key'] : [])])].sort();
     const sounds = uses.filter(sound);
     const stand = sounds.map(standIn).join('\n');
     const filled = stand ? `${read}\n${stand}` : read;
@@ -55,6 +66,6 @@ export function holesOf(text, compiled, resolve) {
         uses,
         sounds,
         defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
-        clock: clockNeeds(filled, stand ? compiled(`${text}\n${stand}`) : result).map((t) => t.need),
+        clock: clockNeeds(filled, stand ? last : result).map((t) => t.need),
     };
 }

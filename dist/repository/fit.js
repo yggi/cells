@@ -1,6 +1,7 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
 import { parse } from "../engine/parser/index.js";
+import { braidReadsOf } from "../engine/compiler/builtin.js";
 import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn } from "./holes.js";
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
@@ -102,7 +103,12 @@ export function fitOf(fragment, workbench, compiledBy, resolve) {
     const failed = { fits: false, union, missing, sounds, unmet };
     if (missing.length || union.twice.length || unmet.length)
         return failed;
-    const judged = () => [union.text, ...sounds.map(standIn)].join('\n');
+    const benchDecls = parse(workbench).cells;
+    const benchSound = readOnlyAsSound(benchDecls);
+    const benchHoles = [...new Set(benchDecls.flatMap((d) => braidReadsOf(d)).map((n) => `&${n}`))].filter((n) => !benchNames.has(n) && !union.names.includes(n) && benchSound(n));
+    const benchStand = benchHoles.map(standIn);
+    const benchResult = benchStand.length ? compiled([workbench, ...benchStand].join('\n')) : bench;
+    const judged = () => [union.text, ...new Set([...sounds.map(standIn), ...benchStand])].join('\n');
     let result = compiled(judged());
     for (;;) {
         const more = unknownCells(result).filter((n) => sound(n) && !sounds.includes(n) && !benchNames.has(n) && !union.names.includes(n));
@@ -112,8 +118,12 @@ export function fitOf(fragment, workbench, compiledBy, resolve) {
         result = compiled(judged());
     }
     sounds.sort();
-    const before = [...bench.diagnostics];
+    const before = [...benchResult.diagnostics];
+    const standNames = new Set([...sounds, ...benchStand.map((l) => l.split(' ')[0])].map((n) => (n.startsWith('&') ? n : `&${n}`)));
     const diagnostics = result.diagnostics.filter((d) => {
+        const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
+        if (m && standNames.has(m[1]))
+            return false;
         const i = before.findIndex((b) => sameDiagnostic(b, d));
         if (i < 0)
             return true;
