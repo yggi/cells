@@ -1,9 +1,8 @@
 // The library (#138): the meters and the rhythms in one repository. A query that names the facet `meter` returns what the
 // meters alone return, at every point Jambot asks at and over a grid, so the rhythms change no meter query (Jambot's,
-// yggi/jambot#384); and a query costs under a millisecond.
+// yggi/jambot#384). What a query costs: `timing.slow.test.ts`.
 import { describe, expect, it } from 'vitest';
-import { createRepository, EMPTY_LAYER, type Fragment, type StylePoint } from './fragments';
-import { useFragments } from './learned';
+import { createRepository, type Fragment, type StylePoint } from './fragments';
 import { BASS_FRAGMENTS } from './bass';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
@@ -71,24 +70,5 @@ describe('the library', () => {
     const facets = library.query(BOSSA_NOVA, 3).flatMap((f) => facetsOf(f.fragment));
     expect(facets).toContain('rhythm');
     expect(facets).toContain('meter');
-  });
-
-  // (as yggi/jambot#375 timed its query: 20,000 of them, each over every fragment, here with a facet and two fragments chosen)
-  it('a query over the 36 costs under 1 ms', () => {
-    const r = createRepository(LIBRARY);
-    const uses = (ids: string[]) => ids.map((id) => ({ id }));
-    const layer = useFragments(
-      r,
-      useFragments(r, EMPTY_LAYER, uses(['4/4', 'Bossa nova drums', 'bossa nova clave'])),
-      uses(['4/4 leaning lightly on 16n', 'Funk drums', 'rumba clave 3-2']),
-    );
-    const n = 20_000;
-    const t0 = performance.now();
-    for (let i = 0; i < n; i++) {
-      const point = POINTS[i % POINTS.length]!;
-      r.query(point, 25, {}, i % 2 ? { facet: 'rhythm', chosen: ['4/4', 'Funk drums'], layer } : { facet: 'meter', layer });
-    }
-    const perQuery = (performance.now() - t0) / n;
-    expect(perQuery).toBeLessThan(1);
   });
 });
