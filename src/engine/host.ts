@@ -4,7 +4,9 @@
  * tests drive it directly. Messages are plain data (structured clone), so the same host runs in a worker,
  * in this thread, or in node.
  *
- *   load   { code, env }                 compile and plan the piece (as the app does: code shifts, offs)
+ *   load   { code, env, locked }         compile and plan the piece (as the app does: code shifts, offs); its `use` lines
+ *                                        read through the host's resolver (a function: given when the host is made) and
+ *                                        the lockfile's hashes (`locked`, plain data), decision 054
  *   window { id, from, length, begins }  → { type: 'window', id, window }   (engine/schedule.ts; begins: where play began)
  *   grab   { cell, t, speed }            a hand on a physical cell at transport second t (null lets go)
  *   reset                                every hand forgotten (Reset)
@@ -12,23 +14,23 @@
  * Replies come in the order asked; a window asked after a load is of the piece loaded.
  */
 import { compileSource } from './compile';
-import { codeShifts, type Env } from './program';
+import { codeShifts, type CompileOptions, type Env, type Locked, type Resolve } from './program';
 import { grab, resetPhysics } from './physics';
 import { physicsOf } from './clocking';
 import { plan, type Plan } from './realize';
 import { windowAt, type Window } from './schedule';
 
 export type ToEngine =
-  | { type: 'load'; code: string; env?: Env }
+  | { type: 'load'; code: string; env?: Env; locked?: readonly Locked[] }
   | { type: 'window'; id: number; from: number; length: number; begins?: number }
   | { type: 'grab'; cell: string; t: number; speed: number | null }
   | { type: 'reset' };
 
 export type FromEngine = { type: 'window'; id: number; window: Window; ms: number } | { type: 'loaded'; ms: number; ok: boolean };
 
-/** The plan the app plays for a compiled piece: its shifts and switches as written. */
-export function planOf(code: string, env?: Env): Plan {
-  const r = compileSource(code, env);
+/** The plan the app plays for a compiled piece: its shifts and switches as written; its `use` lines read through `options`. */
+export function planOf(code: string, env?: Env, options?: CompileOptions): Plan {
+  const r = compileSource(code, env, options);
   return plan(r, codeShifts(r), r.off);
 }
 
@@ -40,13 +42,18 @@ export function grabIn(p: Plan, cell: string, t: number, speed: number | null): 
 
 export const emptyWindow = (from: number, length: number): Window => ({ from, to: from + length, events: [], tapes: [] });
 
-export function createHost(now: () => number = () => performance.now()) {
+/** What a host is made with: the resolver its pieces' `use` lines read through (it can't cross `postMessage`, so isn't in `load`). */
+export interface HostOptions {
+  readonly resolve?: Resolve;
+}
+
+export function createHost(now: () => number = () => performance.now(), { resolve }: HostOptions = {}) {
   let p: Plan | null = null;
   return (m: ToEngine): FromEngine | null => {
     switch (m.type) {
       case 'load': {
         const t0 = now();
-        p = planOf(m.code, m.env);
+        p = planOf(m.code, m.env, { ...(resolve ? { resolve } : {}), ...(m.locked ? { locked: m.locked } : {}) });
         return { type: 'loaded', ms: now() - t0, ok: p.result.ok };
       }
       case 'window': {

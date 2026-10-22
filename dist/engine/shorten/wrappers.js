@@ -2,7 +2,7 @@ import { declWords, deleteCell, setBraid, spansLines } from "../edit.js";
 import { soundsIdentical } from "../sameness.js";
 import { saves } from "./harness.js";
 const PLAIN_REF = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
-export function wrappers(source, result) {
+export function wrappers(source, result, options = {}) {
     const out = [];
     for (const w of result.cells.values()) {
         if (!w.over || !w.overShift || w.step || w.label || w.voice || w.mix || w.implicit)
@@ -50,7 +50,7 @@ export function wrappers(source, result) {
             after: moved.join(' '),
             apply,
         };
-        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source)))
+        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options))
             out.push(s);
     }
     return out;

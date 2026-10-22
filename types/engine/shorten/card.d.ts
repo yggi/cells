@@ -1,4 +1,5 @@
 import { type PieceFrontmatter } from '../piecefile';
+import type { CompileOptions } from '../program';
 import type { ShortenRewrite } from './harness';
 /** What a text's card says of the piece, and the text without it; null for a text with no card, or a file. */
 export declare function movedCard(text: string): {
@@ -6,4 +7,4 @@ export declare function movedCard(text: string): {
     text: string;
 } | null;
 /** A card that says what the piece is: the piece as a file, its title, tags, tier and description in the frontmatter. */
-export declare function card(source: string): ShortenRewrite[];
+export declare function card(source: string, options?: CompileOptions): ShortenRewrite[];

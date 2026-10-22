@@ -5,9 +5,10 @@
  */
 import { attrsOf, setAttr } from '../edit';
 import { soundsIdentical } from '../sameness';
+import type { CompileOptions } from '../program';
 import { saves, type Result, type ShortenRewrite } from './harness';
 
-export function progressions(source: string, result: Result): ShortenRewrite[] {
+export function progressions(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   const out: ShortenRewrite[] = [];
   for (const c of result.cells.values()) {
     if (c.lambda || c.implicit || c.voice || c.mix || c.sink || c.map || !c.loops || !c.steps) continue;
@@ -25,7 +26,7 @@ export function progressions(source: string, result: Result): ShortenRewrite[] {
       after: `step=${step}`,
       apply: (src) => setAttr(setAttr(src, c.name, 'loop', null), c.name, 'step', step),
     };
-    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source))) out.push(s);
+    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options)) out.push(s);
   }
   return out;
 }

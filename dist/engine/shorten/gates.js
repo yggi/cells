@@ -17,13 +17,13 @@ function rewrite(source, name) {
         next = setBraid(next, name, [`[${w.braid.join(', ')}]`]);
     return next;
 }
-export function gates(source, result) {
+export function gates(source, result, options = {}) {
     const out = [];
     for (const c of result.cells.values()) {
         if (c.gate?.port !== 'trigger')
             continue;
         const next = rewrite(source, c.name);
-        if (next === null || !soundsIdentical(source, next))
+        if (next === null || !soundsIdentical(source, next, undefined, options))
             continue;
         const at = declLine(source, c.name);
         out.push({

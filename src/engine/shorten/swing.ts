@@ -7,10 +7,11 @@
 import { attrsOf, declLine, setAttr } from '../edit';
 import { bareSwingLevel, noteValue, swingLevelProblem } from '../meter';
 import { soundsIdentical } from '../sameness';
+import type { CompileOptions } from '../program';
 import type { Result, ShortenRewrite } from './harness';
 
 /** Each meter with a bare swing=: the same swing with its level named, if it plays the same notes. */
-export function swings(source: string, result: Result): ShortenRewrite[] {
+export function swings(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   const out: ShortenRewrite[] = [];
   for (const c of result.cells.values()) {
     const m = c.meter;
@@ -24,7 +25,7 @@ export function swings(source: string, result: Result): ShortenRewrite[] {
     if (!level || whole === null || swingLevelProblem(m, whole) !== null) continue;
     const apply = (s: string) => setAttr(s, c.name, 'swing', `${level}:${written}`);
     const next = apply(source);
-    if (next === source || !soundsIdentical(source, next)) continue;
+    if (next === source || !soundsIdentical(source, next, undefined, options)) continue;
     const at = declLine(source, c.name);
     out.push({
       id: `swing:${c.name}`,

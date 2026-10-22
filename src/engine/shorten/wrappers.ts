@@ -5,11 +5,12 @@
  */
 import { declWords, deleteCell, setBraid, spansLines } from '../edit';
 import { soundsIdentical } from '../sameness';
+import type { CompileOptions } from '../program';
 import { saves, type Result, type ShortenRewrite } from './harness';
 
 const PLAIN_REF = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
 
-export function wrappers(source: string, result: Result): ShortenRewrite[] {
+export function wrappers(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   const out: ShortenRewrite[] = [];
   for (const w of result.cells.values()) {
     if (!w.over || !w.overShift || w.step || w.label || w.voice || w.mix || w.implicit) continue;
@@ -50,7 +51,7 @@ export function wrappers(source: string, result: Result): ShortenRewrite[] {
       after: moved.join(' '),
       apply,
     };
-    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source))) out.push(s);
+    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options)) out.push(s);
   }
   return out;
 }

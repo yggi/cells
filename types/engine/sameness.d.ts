@@ -12,8 +12,8 @@
 import { compileSource } from './compile';
 import { type CompileOptions } from './program';
 type Result = ReturnType<typeof compileSource>;
-/** S3: do these cells play the same notes (value, place, length) in both programs? */
-export declare function sameNotes(a: string, b: string, names: readonly string[]): boolean;
+/** S3: do these cells play the same notes (value, place, length) in both programs? Their `use` lines read through `options`. */
+export declare function sameNotes(a: string, b: string, names: readonly string[], options?: CompileOptions): boolean;
 /**
  * How many seconds two spellings are compared over: the tools' check and the tests of equal spellings use the same. A minute is
  * the longest cycle of most pieces (the longest layers, a day in the sun pieces or twenty minutes in Royal, are never run to the end).

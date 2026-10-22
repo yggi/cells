@@ -14,7 +14,7 @@ export function tapOfRaw(result, name, by = 1) {
     const tap = tapFor(m.levels.length, m.pulses, rooted ? m.unit : 0, ratio);
     return result.mainMeter === st.driver ? tap : `&${st.driver}:${tap}`;
 }
-export function taps(source, result) {
+export function taps(source, result, options = {}) {
     const out = [];
     const seen = new Set();
     for (const c of result.cells.values()) {
@@ -25,7 +25,7 @@ export function taps(source, result) {
         seen.add(line);
         const apply = (s) => setAttr(s, line, 'step', tap);
         const next = apply(source);
-        if (next === source || !soundsIdentical(source, next))
+        if (next === source || !soundsIdentical(source, next, undefined, options))
             continue;
         const at = declLine(source, line);
         out.push({

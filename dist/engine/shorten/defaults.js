@@ -1,7 +1,7 @@
 import { attrsOf, setAttr } from "../edit.js";
 import { soundsIdentical } from "../sameness.js";
 import { saves } from "./harness.js";
-export function defaults(source, result) {
+export function defaults(source, result, options = {}) {
     const out = [];
     const offer = (name, key, why) => {
         const value = attrsOf(source, name).get(key);
@@ -14,7 +14,7 @@ export function defaults(source, result) {
             after: '',
             apply: (src) => setAttr(src, name, key, null),
         };
-        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source)))
+        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options))
             out.push(s);
     };
     for (const c of result.cells.values()) {

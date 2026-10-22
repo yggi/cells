@@ -17,11 +17,11 @@ import { pieceTime } from './duration';
 
 type Result = ReturnType<typeof compileSource>;
 
-/** S3: do these cells play the same notes (value, place, length) in both programs? */
-export function sameNotes(a: string, b: string, names: readonly string[]): boolean {
+/** S3: do these cells play the same notes (value, place, length) in both programs? Their `use` lines read through `options`. */
+export function sameNotes(a: string, b: string, names: readonly string[], options: CompileOptions = {}): boolean {
   try {
-    const ra = compileSource(a);
-    const rb = compileSource(b);
+    const ra = compileSource(a, undefined, options);
+    const rb = compileSource(b, undefined, options);
     if (!rb.ok) return false;
     const notes = (r: Result, n: string) =>
       flatten(r, n, codeShifts(r))

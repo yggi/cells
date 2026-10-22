@@ -1,3 +1,4 @@
+import { compileSource } from "../compile.js";
 import { candidates, size, suggestion } from "./harness.js";
 import { runs } from "./runs.js";
 import { phrases } from "./phrases.js";
@@ -13,33 +14,47 @@ import { taps } from "./taps.js";
 import { swings } from "./swing.js";
 import { sections } from "./sections.js";
 import { card } from "./card.js";
-export function shorten(source) {
-    const { result, cells } = candidates(source);
+export function shorten(source, options = {}) {
+    const { result, cells } = candidates(source, options);
     if (!result.ok)
         return [];
     const found = [
         ...runs(source, cells),
-        ...phrases(source, cells, result),
+        ...phrases(source, cells, result, options),
         ...fractions(source, cells, result),
         ...sameCells(source, result),
-        ...defaults(source, result),
-        ...progressions(source, result),
-        ...wrappers(source, result),
-        ...stereo(source, result),
-        ...gates(source, result),
+        ...defaults(source, result, options),
+        ...progressions(source, result, options),
+        ...wrappers(source, result, options),
+        ...stereo(source, result, options),
+        ...gates(source, result, options),
         ...aliases(source, result),
-        ...taps(source, result),
-        ...swings(source, result),
-        ...sections(source, result),
-        ...card(source),
+        ...taps(source, result, options),
+        ...swings(source, result, options),
+        ...sections(source, result, options),
+        ...card(source, options),
     ];
-    return found.map((r) => suggestion(source, r)).sort((a, b) => b.saving - a.saving);
+    const kept = result.uses?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
+    return kept.map((r) => suggestion(source, r)).sort((a, b) => b.saving - a.saving);
 }
-export function shortenAll(source, rounds = 60) {
+const overridden = (r) => (r.uses ?? [])
+    .flatMap((u) => u.overrode)
+    .sort()
+    .join(' ');
+function keepsUsed(r, source, options, before) {
+    try {
+        const next = compileSource(r.apply(source), undefined, options);
+        return next.ok && overridden(next) === before;
+    }
+    catch {
+        return false;
+    }
+}
+export function shortenAll(source, rounds = 60, options = {}) {
     let now = source;
     const steps = [];
     for (let i = 0; i < rounds; i++) {
-        const best = shorten(now).find((s) => s.kind !== 'card');
+        const best = shorten(now, options).find((s) => s.kind !== 'card');
         if (!best)
             break;
         const next = best.apply(now);

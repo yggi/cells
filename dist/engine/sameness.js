@@ -3,10 +3,10 @@ import { codeShifts } from "./program.js";
 import { eventsBetween, plan } from "./realize.js";
 import { flatten } from "./flatten.js";
 import { pieceTime } from "./duration.js";
-export function sameNotes(a, b, names) {
+export function sameNotes(a, b, names, options = {}) {
     try {
-        const ra = compileSource(a);
-        const rb = compileSource(b);
+        const ra = compileSource(a, undefined, options);
+        const rb = compileSource(b, undefined, options);
         if (!rb.ok)
             return false;
         const notes = (r, n) => flatten(r, n, codeShifts(r))

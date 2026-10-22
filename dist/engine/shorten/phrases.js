@@ -7,7 +7,7 @@ const MIN_PHRASE = 4;
 const TOLL = 12;
 const use = (name, ref) => `&${name}${ref}`;
 const isDegree = (ref) => ref.startsWith('^') && !ref.startsWith('^$');
-export function phrases(source, cells, result) {
+export function phrases(source, cells, result, options = {}) {
     const copied = new Set([...source.matchAll(/\bbase=&(\w+)/g)].map((m) => m[1]));
     cells = cells.filter((c) => !copied.has(c.name) && !new RegExp(`^&${c.name}\\b[^\\n]*\\bbase=&`, 'm').test(source));
     const found = [];
@@ -150,7 +150,7 @@ export function phrases(source, cells, result) {
             apply,
         };
         const saving = saves(source, s) ?? 0;
-        if (saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))])))
+        if (saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))], options)))
             out.push(s);
     }
     return out;

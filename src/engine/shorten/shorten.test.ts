@@ -5,6 +5,9 @@ import { SAMENESS_SECONDS, size } from './harness';
 import { eventsBetween, plan } from '../realize';
 import { codeShifts } from '../program';
 import { PRESETS } from '../presets';
+import { expand } from '../use';
+import type { Resolve } from '../program';
+import { resolveSeed } from '../../repository/library';
 
 const tail = '\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
 const sounds = (src: string, until = SAMENESS_SECONDS) => {
@@ -137,6 +140,25 @@ describe('shorten: turns, alike cells, and all the way', () => {
     expect(next).not.toMatch(/^&b /m);
     expect(next).toContain('&t step=4 &a 2 &a 5');
     expect(sounds(next)).toEqual(sounds(src));
+  });
+  it('a piece with use: what the piece written out is offered, read through the resolver (#241)', () => {
+    const src = 'use "core kit"\n&bar meter("4/4") step=100bpm\n&a &bd ~ &hh ~ &sd ~ &hh &hh\n&b &bd ~ &hh ~ &sd ~ &hh &hh\n&beat step=8n &a &b &a &b\n&out map=sample [&beat]\n';
+    const seed = { resolve: resolveSeed };
+    expect(shorten(src)).toEqual([]);
+    const offered = shorten(src, seed);
+    expect(offered.map((s) => [s.id, s.saving])).toEqual(shorten(expand(src, resolveSeed)).map((s) => [s.id, s.saving]));
+    expect(offered.map((s) => s.id)).toEqual(['same:a,b']);
+    const { source } = shortenAll(src, 60, seed);
+    expect(source).toContain('use "core kit"');
+    expect(source).toContain('&beat step=8n &a &a &a &a');
+    expect(compileSource(source, undefined, seed).ok).toBe(true);
+  });
+  it('a piece with use: no rewrite of a used line, which written out would be offered (#241)', () => {
+    const resolve: Resolve = (id) => (id === 'kit' ? '&bd s=sine loop=A1 pan=.5\n&hh s=white hpf=8000' : null);
+    const src = 'use "kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &bd &bd &hh ~\n&out map=sample [&beat]\n';
+    const out = expand(src, resolve);
+    expect(shorten(out).map((s) => s.id)).toContain('default:bd:pan');
+    expect(shorten(src, { resolve })).toEqual([]);
   });
   it('all the way: again and again until nothing more pays — and still the same sound', () => {
     const src = '&t step=4 0 0 0 0 4 7 11 14 11 7 4 1 4 7 11 14 11 7 4 2 4 7 11 14 11 7 4' + tail;

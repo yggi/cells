@@ -1,34 +1,14 @@
-/**
- * Shorten: read the code like a linter, find what's written out longhand, and
- * offer it shorter — the measure is the code's length, the promise that it
- * sounds the same. One rule a file:
- *
- *  - runs.ts:      0 0 0 0 → 0!4
- *  - phrases.ts:   a phrase written twice or more becomes a cell of its own, used where it was
- *  - fractions.ts: every step's length shares a factor — divide it out, slow the clock
- *  - same.ts:      two cells written exactly alike — one, used by both names' users
- *  - defaults.ts:  an attribute that says what would be so anyway (loop=SAMPLE_RATE, cycle= its length, pan=.5)
- *  - progressions.ts: a transposing loop=&x/N with the bars multiplied out — step=&x/(N/k)
- *  - stereo.ts:    a sound card's two chords that differ only in gains — one chord, and pan= on each voice
- *  - wrappers.ts:  a cell that only reads motifs through a shifted table — &motif^k where it's used
- *  - aliases.ts:   Strudel's or dough's name for a parameter where ours is shorter: cutoff= → lpf= (decision 027)
- *  - gates.ts:     a migration: a gate written the old way (trigger=, velocity=, gate=, gain=) as play= and level= (decision 023)
- *  - taps.ts:      a migration: a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
- *  - swing.ts:     a migration: a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
- *  - sections.ts:  a migration: a table of sections named &parts as &sections (decision 044)
- *  - card.ts:      a migration: a card that says what the piece is (title= tags= tier=) as a piece file, those in its
- *                  frontmatter (decision 047); its rewrite is a file, not a text, so shortenAll never takes it
- *
- * Each rule returns rewrites (../rewrite.ts), each one checked by the rule; a rewrite is offered as a suggestion, its
- * saving measured on the result (harness.ts: the cells a rule may touch, the measure). The note-for-note check is the
- * tools' own (../sameness.ts).
- */
+import type { CompileOptions } from '../program';
 import { type Suggestion } from './harness';
 export type { Suggestion } from './harness';
-/** Everything that could be written shorter, the largest saving first. */
-export declare function shorten(source: string): Suggestion[];
+/**
+ * Everything that could be written shorter, the largest saving first. A piece's `use` lines read through `options`
+ * (decision 054, #241): what is offered is what the piece written out would be offered, less any rewrite of a used line
+ * (one the piece would then define over its fragment's).
+ */
+export declare function shorten(source: string, options?: CompileOptions): Suggestion[];
 /** Shorten again and again — the best each time — until nothing more pays. */
-export declare function shortenAll(source: string, rounds?: number): {
+export declare function shortenAll(source: string, rounds?: number, options?: CompileOptions): {
     source: string;
     steps: string[];
 };

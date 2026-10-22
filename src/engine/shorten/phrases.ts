@@ -8,6 +8,7 @@
 import { period } from '../helix';
 import { declLine, freshName, setBraid } from '../edit';
 import { sameNotes } from '../sameness';
+import type { CompileOptions } from '../program';
 import { saves, type Candidate, type Result, type ShortenRewrite } from './harness';
 
 const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/; // a plain step: a whole number, perhaps held (transposable)
@@ -20,7 +21,7 @@ const use = (name: string, ref: string) => `&${name}${ref}`;
 const isDegree = (ref: string) => ref.startsWith('^') && !ref.startsWith('^$');
 
 /** Phrases written more than once (exactly, backwards, or transposed): one cell, used where they were. */
-export function phrases(source: string, cells: readonly Candidate[], result: Result): ShortenRewrite[] {
+export function phrases(source: string, cells: readonly Candidate[], result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   type Occ = { cell: string; at: number; ref: string };
   // (not in a cell another copies, base=&x: a copy counts its base's steps, =!3, so a phrase cut out of the base
   // would move every copy's changes; nor in a copy, whose steps are changes to its base's)
@@ -164,7 +165,7 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
     };
     // (a turn's climb depends on the table it's read through: checked, note for note, before it's offered)
     const saving = saves(source, s) ?? 0;
-    if (saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))]))) out.push(s);
+    if (saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))], options))) out.push(s);
   }
   return out;
 }

@@ -5,6 +5,7 @@
  */
 import { declLine, renameCell } from '../edit';
 import { soundsIdentical } from '../sameness';
+import type { CompileOptions } from '../program';
 import type { Result, ShortenRewrite } from './harness';
 
 /** The name the examples' table of sections had, and the one it has. */
@@ -12,11 +13,11 @@ const FROM = 'parts';
 const TO = 'sections';
 
 /** A table of sections named &parts: its rename to &sections, if it plays the same notes. */
-export function sections(source: string, result: Result): ShortenRewrite[] {
+export function sections(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   if (![...(result.sections?.values() ?? [])].includes(FROM) || declLine(source, TO) >= 0) return [];
   const apply = (s: string) => renameCell(s, FROM, TO);
   const next = apply(source);
-  if (next === source || !soundsIdentical(source, next)) return [];
+  if (next === source || !soundsIdentical(source, next, undefined, options)) return [];
   const at = declLine(source, FROM);
   return [
     {

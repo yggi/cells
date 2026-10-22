@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS } from './presets';
 import { createHost, planOf } from './host';
+import { resolveSeed } from '../repository/library';
 import { eventsBetween } from './realize';
 import { retime, tapeSpeeds, windowAt, type Window } from './schedule';
 
@@ -81,6 +82,19 @@ describe('host: the engine behind messages (what runs in the worker)', () => {
       expect(reply).toMatchObject({ type: 'window', id: i });
       expect(reply!.type === 'window' && reply!.window).toEqual(windowAt(here, i * 0.25, 0.25));
     }
+  });
+
+  it('a piece with use loads through the resolver the host was made with, its windows those of planOf with it (#241)', () => {
+    const src = 'use "core kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n&out map=sample [&beat]\n';
+    expect(createHost()({ type: 'load', code: src })).toMatchObject({ type: 'loaded', ok: false });
+    const host = createHost(undefined, { resolve: resolveSeed });
+    expect(host({ type: 'load', code: src, locked: [] })).toMatchObject({ type: 'loaded', ok: true });
+    const here = planOf(src, undefined, { resolve: resolveSeed });
+    for (let i = 0; i < 8; i++) {
+      const reply = host({ type: 'window', id: i, from: i * 0.25, length: 0.25 });
+      expect(reply!.type === 'window' && reply!.window).toEqual(windowAt(here, i * 0.25, 0.25));
+    }
+    expect(windowAt(here, 0, 2).events.length).toBeGreaterThan(0);
   });
 
   it('mirrors hands: a grab sent to it changes its windows as the same grab changes them here', async () => {

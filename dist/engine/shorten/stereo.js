@@ -52,7 +52,7 @@ const entryOf = (e) => {
     return { sound: fs.filter((f) => !NUMBER.test(f)).join(' * '), gain: fs.filter((f) => NUMBER.test(f)).reduce((a, f) => a * parseFloat(f), 1), factors: fs };
 };
 const written = (p) => String(+p.toFixed(3)).replace(/^0\./, '.');
-export function stereo(source, result) {
+export function stereo(source, result, options = {}) {
     const out = [];
     const lines = source.split('\n');
     for (const card of result.cells.values()) {
@@ -117,7 +117,7 @@ export function stereo(source, result) {
             after: voices.map((v, i) => `&${v} pan=${written(pans[i])}`).join(' · '),
             apply,
         };
-        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source)))
+        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options))
             out.push(s);
     }
     return out;

@@ -4,6 +4,7 @@
  * re-exported here as it was before #155.
  */
 import { compileSource } from '../compile';
+import { type CompileOptions } from '../program';
 import type { Rewrite } from '../rewrite';
 export { samePiece, sameNotes, SAMENESS_SECONDS } from '../sameness';
 export interface Suggestion {
@@ -27,11 +28,13 @@ export interface Candidate {
     /** Transposable: its numbers are steps of a grid (no table between them and it). */
     readonly grid: boolean;
 }
-/** The cells whose steps are written out one by one, and safe to rewrite. */
-export declare function candidates(source: string): {
+/** The cells whose steps are written out one by one, and safe to rewrite: the piece's own (a used line is its fragment's, #241). */
+export declare function candidates(source: string, options?: CompileOptions): {
     result: Result;
     cells: Candidate[];
 };
+/** The names a piece's `use` lines gave it (bare): their lines are the fragments', not the piece's to rewrite. */
+export declare const usedNames: (r: Result) => ReadonlySet<string>;
 /** The code's length: runs of spaces count as one (the padding that keeps comments aligned isn't code). */
 export declare const size: (source: string) => number;
 /** What a rewrite saves (characters, `size`), or null when it changes nothing or its rewrite fails. */
