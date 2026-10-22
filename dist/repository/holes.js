@@ -39,6 +39,7 @@ export function readOnlyAsSound(decls) {
     return (name) => inBraid.has(name) && !elsewhere.has(name);
 }
 export const linesRead = (text, resolve) => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
+export const standIn = (name) => `${name} s=white`;
 export function holesOf(text, compiled, resolve) {
     const read = linesRead(text, resolve);
     const all = parse(read).cells;
@@ -51,10 +52,13 @@ export function holesOf(text, compiled, resolve) {
     const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
     const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
     const sound = readOnlyAsSound(all);
+    const sounds = uses.filter(sound);
+    const stand = sounds.map(standIn).join('\n');
+    const filled = stand ? `${read}\n${stand}` : read;
     return {
         uses,
-        sounds: uses.filter(sound),
+        sounds,
         defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
-        clock: clockNeeds(read, result).map((t) => t.need),
+        clock: clockNeeds(filled, stand ? compiled(`${text}\n${stand}`) : result).map((t) => t.need),
     };
 }

@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.9.0`.
+### Changed
+- **The five claves' `&claves` voice is a hole, filled by `use "core kit"`** (decision 054's rung 2, #244): the line `&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)` is gone from `son clave 3-2`, `son clave 2-3`, `rumba clave 3-2`, `bossa nova clave` and `bossa nova clave (one bar)`, which the core kit (and the General MIDI kit) carries word for word, so a clave with either kit sounds identical (S1, the whole window) to the clave as it was; 5 lines of the rhythms' 35 voice lines. **A clave fragment no longer compiles alone**: its `&claves` is an unknown cell until a workbench brings a kit (`holesOf(clave).sounds` is `['&claves']`, so it still fits any workbench with a meter, and `fitOf`'s `sounds` names it for the composer to ask the instrument next). A frontend that compiles a clave text, or recognises one (`recognise`'s workbench), adds the kit's line or `use "core kit"` to its workbench. Jambot's rhythm queries return the same fragments at each preset. The eight drum bars keep their `&bd s=white …` stand-ins, 30 lines, as overrides: the kit's voices have a pitch and an envelope the stand-ins don't (S1 and S2 fail), and the bell and scale's `&highagogo` (the General MIDI kit's, not the core kit's) and the bass lines' `&bassV loop=C2` (in no kit until rung 7) stay as they were.
+- **`holesOf` and `fitOf` read a clock need through a line's sound holes**: a line that strikes a hole (`&clave`'s `&claves`) doesn't compile until an instrument fills it, so its need (a two-bar clave needs bars of 16 sixteenths) was lost; each sound hole is now stood in by `&name s=white` while the need is read (`standIn`, `@yggi/cells/repository/holes`). A fragment with no sound hole reads as before.
 
 ## v0.9.0 — 2026-10-22
 

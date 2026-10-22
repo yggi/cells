@@ -33,8 +33,12 @@ describe('what a fragment uses and defines', () => {
     expect(holes('&x step=1m &( 0 1 )').defines).toEqual(['&x']);
   });
 
-  it('every rhythm uses nothing: it taps the main meter and defines the rest', () => {
-    for (const f of RHYTHM_FRAGMENTS) expect(holes(f.text).uses, f.id).toEqual([]);
+  it('every rhythm uses nothing but a sound: the five claves’ `&claves`, which an instrument fills (#244)', () => {
+    for (const f of RHYTHM_FRAGMENTS) {
+      const h = holes(f.text);
+      expect(h.uses, f.id).toEqual(f.id.includes('clave') ? ['&claves'] : []);
+      expect(h.sounds, f.id).toEqual(h.uses);
+    }
   });
 });
 

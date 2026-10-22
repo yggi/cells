@@ -14,9 +14,8 @@ source: seed
 ```cells
 &clave step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!3 &claves ~!7
 &percussion map=midi(10) [&clave * .5]
-&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)
 ```
 
 The son clave, 3-2: x..x..x. ..x.x... over two bars of eighths. It is where the bossa nova clave and Funk's Bo Diddley beat come from, and sits halfway between Bossa nova and Funk.
 
-Five strokes of a clave (`&claves`, General MIDI's 75), a sound of its own beside the drum bar's rim, at half the level (velocity 90). Its names (`&clave`, `&percussion`, `&claves`) are none of the drum bars', so it layers on any of them in one text.
+Five strokes of a clave (`&claves`, General MIDI's 75), a sound of its own beside the drum bar's rim, at half the level (velocity 90). `&claves` is a hole, a sound the core kit (or the General MIDI kit) fills with the line this fragment used to carry word for word (decision 054, rung 2: #244). Its other names (`&clave`, `&percussion`) are none of the drum bars', so it layers on any of them in one text.

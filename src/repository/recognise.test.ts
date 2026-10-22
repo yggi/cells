@@ -118,8 +118,10 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
   });
 
   it('a bar of the two-bar bossa nova clave, its second, is recognised as the clave from its bar 1', () => {
-    const second = '&clave step=16n ~!4 &claves ~!5 &claves ~!5\n&percussion map=midi(10) [&clave * .5]\n&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)';
-    expect(found(recogniser.recognise(second, LIBRARY, DRUM_OPTIONS))).toEqual(['bossa nova clave [] bar 1 at 0']);
+    // (the clave leaves its voice to an instrument: the workbench brings the core kit's `&claves`)
+    const claves = '&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)';
+    const second = '&clave step=16n ~!4 &claves ~!5 &claves ~!5\n&percussion map=midi(10) [&clave * .5]';
+    expect(found(recogniser.recognise(second, LIBRARY, { ...DRUM_OPTIONS, workbench: `${DRUMS}\n${claves}` }))).toEqual(['bossa nova clave [] bar 1 at 0']);
   });
 
   it('a bar of a vamp, its fifth, is recognised as the vamp to the seventh from its bar 4', () => {

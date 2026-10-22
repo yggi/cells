@@ -8,7 +8,10 @@ import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
+import { soundsIdentical } from '../engine/sameness';
 import { createRepository, type StylePoint } from './fragments';
+import { holesOf } from './holes';
+import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
@@ -25,6 +28,9 @@ const rhythms = createRepository(RHYTHM_FRAGMENTS);
 const meters = createRepository(METER_FRAGMENTS);
 const byId = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!;
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
+const coreKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!.text;
+/** The core kit's line for a voice (`&claves s=sine …`): what a clave leaves to an instrument. */
+const kitLine = (name: string) => coreKit.split('\n').find((l) => l.startsWith(`&${name} `))!;
 
 /** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments. */
 const hosted = (meter: string, bpm: number, ...fragments: string[]) => [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...fragments].join('\n');
@@ -88,10 +94,10 @@ describe('the rhythm fragments', () => {
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s is open on its meter: no meter of its own, and alone it asks for one', (_, text) => {
     expect(text).not.toMatch(/&bar|meter\(|scan\(/);
-    const alone = compileSource(text);
+    const alone = compileSource(text.includes('&claves') ? [text, kitLine('claves')].join('\n') : text);
     expect(alone.mainMeter).toBeUndefined();
     expect(alone.diagnostics.map((d) => d.message).join('\n')).toMatch(/taps the piece's main meter, and it has none/);
-    const filled = compileSource(hosted(meterText('7/8'), 90, text));
+    const filled = compileSource(hosted(meterText('7/8'), 90, text, ...(text.includes('&claves') ? [kitLine('claves')] : [])));
     expect(filled.diagnostics).toEqual([]);
     expect(filled.mainMeter).toBe('bar');
   });
@@ -158,20 +164,62 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
 
 describe('the claves', () => {
   it.each(Object.entries(CLAVES))('%s plays its five strokes over its bars, and comes round', (id, { bars, strokes }) => {
-    const { hits, diagnostics } = played(hosted(meterText('4/4'), 120, byId(id).text), 120, 32 * bars);
+    const { hits, diagnostics } = played(hosted(meterText('4/4'), 120, byId(id).text, coreKit), 120, 32 * bars);
     expect(diagnostics).toEqual([]);
     expect(hits.map((h) => h.step)).toEqual([...strokes, ...strokes.map((s) => s + 16 * bars)]);
     expect(new Set(hits.map((h) => [h.note, h.length, h.velocity].join()))).toEqual(new Set(['75,1,90']));
   });
 
   it.each(Object.keys(CLAVES).flatMap((clave) => drumBars.map((w) => [clave, w.preset, clave, w] as const)))('%s layers on %s drums in one text', (_, __, clave, w) => {
-    const both = played(hosted(meterText('4/4'), w.bpm, w.fragment.text, byId(clave).text), w.bpm, 32);
+    const both = played(hosted(meterText('4/4'), w.bpm, w.fragment.text, byId(clave).text, kitLine('claves')), w.bpm, 32);
     expect(both.diagnostics).toEqual([]);
     const drums = played(hosted(meterText('4/4'), w.bpm, w.fragment.text), w.bpm, 32).hits;
-    const strokes = played(hosted(meterText('4/4'), w.bpm, byId(clave).text), w.bpm, 32).hits;
+    const strokes = played(hosted(meterText('4/4'), w.bpm, byId(clave).text, kitLine('claves')), w.bpm, 32).hits;
     expect(both.hits).toEqual(sorted([...drums, ...strokes]));
     // (a line of its own with a sound of its own: the clave's note is none the drum bar strikes, so a shared step is two sounds, #140)
     expect(drums.filter((h) => h.note === 75)).toEqual([]);
+  });
+});
+
+// Decision 054, rung 2 (#244): a stand-in voice goes where the core kit's line is its own word for word (the five claves'
+// `&claves`: 5 lines of the rhythms' 35); the eight drum bars keep their `&bd s=white …`, which the kit's voices don't
+// sound as (a pitch and an envelope of their own: S1 and S2 fail), as overrides.
+const STAND_INS: Record<string, string[]> = {
+  'Synth-pop drums': ['bd', 'sd', 'hh'],
+  'Techno drums': ['bd', 'hh', 'oh', 'sd'],
+  'Deep house drums': ['bd', 'hh', 'sd'],
+  'Ambient drums': ['bd', 'hh', 'sd'],
+  'Lo-fi hip hop drums': ['bd', 'rim', 'sd', 'hh'],
+  'Funk drums': ['bd', 'rim', 'hh', 'oh', 'sd'],
+  'Bossa nova drums': ['bd', 'rim', 'sd', 'hh'],
+  'Swing jazz drums': ['bd', 'rd', 'ph', 'sd'],
+};
+
+describe('the rhythms’ holes (decision 054, rung 2)', () => {
+  const compiled = (text: string) => compileSource(text);
+  const heard = (text: string) => text.split('\n').flatMap((l) => (/^&(\w+) .*\bs=/.exec(l) ? [/^&(\w+)/.exec(l)![1]!] : []));
+
+  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the voice lines it keeps are the stand-ins it overrides, its other strikes are sound holes', (id, text) => {
+    const holes = holesOf(text, compiled);
+    expect(heard(text)).toEqual(STAND_INS[id] ?? []);
+    const struck = [...new Set([...text.matchAll(/&(bd|sd|hh|oh|rim|rd|ph|claves)\b/g)].map((m) => `&${m[1]}`))].sort();
+    const kept = (STAND_INS[id] ?? []).map((n) => `&${n}`).sort();
+    expect(holes.uses).toEqual(struck.filter((n) => !kept.includes(n)));
+    expect(holes.sounds).toEqual(holes.uses);
+    expect(holes.defines).toEqual(expect.arrayContaining(kept));
+  });
+
+  it.each(Object.keys(CLAVES))('%s with the core kit sounds identical (S1, the whole window) to the clave with its line written out', (id) => {
+    const out = hosted(meterText('4/4'), 120, byId(id).text, kitLine('claves'));
+    const was = hosted(meterText('4/4'), 120, byId(id).text.replace('&percussion', `${'&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)'}\n&percussion`));
+    expect(soundsIdentical(was, out)).toBe(true);
+    expect(soundsIdentical(was, hosted(meterText('4/4'), 120, byId(id).text, coreKit))).toBe(true);
+  });
+
+  it('the five claves’ lines the kit carries word for word are gone: 5 of 35', () => {
+    const lines = RHYTHM_FRAGMENTS.flatMap((f) => f.text.split('\n')).filter((l) => /^&\w+ .*\bs=/.test(l));
+    expect(lines).toHaveLength(30);
+    expect(RHYTHM_FRAGMENTS.flatMap((f) => f.text.split('\n')).filter((l) => l.startsWith('&claves s='))).toEqual([]);
   });
 });
 

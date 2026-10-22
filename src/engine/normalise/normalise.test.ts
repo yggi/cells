@@ -67,7 +67,13 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     for (const f of LIBRARY) {
       const defines = holesOf(f.text, compileSource).defines;
       const bench = defines.includes('&key') ? meter : defines.includes('&harm') ? keyed : bar;
-      const text = compileSource(f.text).ok ? f.text : unionOf(f.text, bench).text;
+      // (a clave's `&claves` is a sound hole: the core kit's line fills it, #244)
+      const kit = holesOf(f.text, compileSource).sounds.includes('&claves')
+        ? `\n${LIBRARY.find((k) => k.id === 'core kit')!
+            .text.split('\n')
+            .find((l) => l.startsWith('&claves '))!}`
+        : '';
+      const text = compileSource(f.text).ok ? f.text : `${unionOf(f.text, bench).text}${kit}`;
       expect([f.id, compileSource(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
     }
   });

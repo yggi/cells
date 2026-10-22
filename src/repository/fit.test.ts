@@ -26,6 +26,10 @@ vi.mock('../engine/compile', async (original) => {
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
 /** The host's workbench: a meter at a tempo, as a host sets one (`setTiming`), then the fragments already on it. */
+/** The core kit's line for the claves' voice, the hole its five claves leave (#244). */
+const CLAVES_LINE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!
+  .text.split('\n')
+  .find((l) => l.startsWith('&claves '))!;
 const bench = (meter: string, bpm = 120, ...fragments: string[]) => [setTiming(meterText(meter), 'bar', 'step', `${bpm}bpm`), ...fragments].join('\n');
 
 describe('the union of lines', () => {
@@ -155,7 +159,8 @@ describe('every rhythm against every meter of the library', () => {
 
   it('a two-bar clave compiles under 7/8, and doesn’t fit it: 28 sixteenths in its two bars, 32 in its braid', () => {
     const clave = rhythm('son clave 3-2');
-    expect(compileSource(bench('7/8', 90, clave)).diagnostics).toEqual([]);
+    // (its `&claves` is a hole the core kit fills: #244)
+    expect(compileSource(bench('7/8', 90, clave, CLAVES_LINE)).diagnostics).toEqual([]);
     const f = fitOf(clave, bench('7/8', 90));
     expect(f.fits).toBe(false);
     expect(f.unmet).toEqual([{ cell: '&clave', meter: null, tap: '16n', bars: 2, steps: 32, rate: 1, bar: 16 }]);
@@ -275,7 +280,8 @@ describe('what it costs', () => {
   const workbench = ['Funk drums', 'Techno drums', 'rumba clave 3-2', 'bossa nova clave (one bar)'].reduce((text, id) => unionOf(rhythm(id), text).text, bench('4/4', 104));
 
   it('the workbench of five compiles clean and every rhythm still fits it, renamed where it collides', () => {
-    expect(compileSource(workbench).diagnostics).toEqual([]);
+    // (the claves' voice is a hole an instrument fills: the core kit's line)
+    expect(compileSource(`${workbench}\n${CLAVES_LINE}`).diagnostics).toEqual([]);
     for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(true);
   });
 

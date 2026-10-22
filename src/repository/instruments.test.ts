@@ -145,7 +145,7 @@ describe('every rhythm with the core kit plays each hit on its General MIDI note
   it('is shown firing: a hit on another note is caught', () => expect(synthPop.map((h) => ({ ...h, note: h.note + 1 }))).not.toEqual(synthPop));
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the kit after the groove, and the groove after the kit', (_, text) => {
-    const alone = played(hosted(text), 32);
+    const alone = played(hosted(text, ...(text.includes('&claves') ? [coreKit.text.split('\n').find((l) => l.startsWith('&claves '))!] : [])), 32);
     expect(alone.hits.length).toBeGreaterThan(0);
     const kitAfter = fitOf(coreKit.text, hosted(text));
     expect(kitAfter.fits).toBe(true);

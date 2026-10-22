@@ -26,7 +26,7 @@ import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
 import type { CompileResult, Resolve } from '../engine/program';
 import { parse } from '../engine/parser';
-import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, type ClockNeed, type TappedNeed } from './holes';
+import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
 /** A fragment added to a workbench: the text, and what became of the fragment's names there. */
 export interface Union {
@@ -174,12 +174,14 @@ export function fitOf(fragment: string, workbench: string, compiledBy?: (text: s
   const read = linesRead(fragment, resolve);
   const sound = readOnlyAsSound(parse(read).cells);
   const union = unionOf(fragment, workbench);
-  const alone = clockNeeds(read, compiled(fragment));
+  // (alone, with a stand-in for each sound hole: a line that strikes one doesn't compile without, and states no need)
+  const aloneStand = holes.sounds.map(standIn);
+  const alone = clockNeeds([read, ...aloneStand].join('\n'), compiled([fragment, ...aloneStand].join('\n')));
   const unmet = alone.filter((t) => !meets(bench, t)).map((t) => t.need);
   const failed = { fits: false, union, missing, sounds, unmet };
   if (missing.length || union.twice.length || unmet.length) return failed;
   // (a stand-in voice for each sound hole the workbench leaves: one a stand-in lets the compile reach is added, and so on)
-  const judged = (): string => [union.text, ...sounds.map((n) => `${n} s=white`)].join('\n');
+  const judged = (): string => [union.text, ...sounds.map(standIn)].join('\n');
   let result = compiled(judged());
   for (;;) {
     const more = unknownCells(result).filter((n) => sound(n) && !sounds.includes(n) && !benchNames.has(n) && !union.names.includes(n));

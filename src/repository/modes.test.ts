@@ -197,8 +197,10 @@ describe('the bell and scale', () => {
       const fit = fitOf(bell.text, fitOf(rhythm.text, meter()).union.text);
       expect(fit.fits, rhythm.id).toBe(true);
       expect(fit.union.renamed.size, rhythm.id).toBe(0);
+      // (a clave's `&claves` is a hole the General MIDI kit fills: #244)
+      const clavesLine = gmKit.text.split('\n').find((l) => l.startsWith('&claves '))!;
       expect(
-        compileSource(fit.union.text).diagnostics.map((d) => d.message),
+        compileSource(rhythm.id.includes('clave') ? `${fit.union.text}\n${clavesLine}` : fit.union.text).diagnostics.map((d) => d.message),
         rhythm.id,
       ).toEqual([]);
     }

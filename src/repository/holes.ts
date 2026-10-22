@@ -120,6 +120,9 @@ export function readOnlyAsSound(decls: readonly CellDecl[]): (name: string) => b
  */
 export const linesRead = (text: string, resolve?: Resolve): string => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
 
+/** The line that stands in for a sound hole while a fragment is judged without its instrument (`&bd s=white`, as the seed's rhythms wrote theirs). */
+export const standIn = (name: string): string => `${name} s=white`;
+
 /** A fragment's holes, read off its declarations and its compile alone (`compiled`, which may be cached by text). */
 export function holesOf(text: string, compiled: (text: string) => CompileResult, resolve?: Resolve): Holes {
   const read = linesRead(text, resolve);
@@ -133,10 +136,15 @@ export function holesOf(text: string, compiled: (text: string) => CompileResult,
   const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
   const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
   const sound = readOnlyAsSound(all);
+  const sounds = uses.filter(sound);
+  // A line that strikes a hole (`&clave`'s `&claves`) doesn't compile until an instrument fills it, so its clock is read
+  // with each sound hole stood in by a voice (#244): the need is the line's whatever sounds it.
+  const stand = sounds.map(standIn).join('\n');
+  const filled = stand ? `${read}\n${stand}` : read;
   return {
     uses,
-    sounds: uses.filter(sound),
+    sounds,
     defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
-    clock: clockNeeds(read, result).map((t) => t.need),
+    clock: clockNeeds(filled, stand ? compiled(`${text}\n${stand}`) : result).map((t) => t.need),
   };
 }

@@ -1,7 +1,7 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
 import { parse } from "../engine/parser/index.js";
-import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound } from "./holes.js";
+import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn } from "./holes.js";
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const USE = /^use\s/;
@@ -96,12 +96,13 @@ export function fitOf(fragment, workbench, compiledBy, resolve) {
     const read = linesRead(fragment, resolve);
     const sound = readOnlyAsSound(parse(read).cells);
     const union = unionOf(fragment, workbench);
-    const alone = clockNeeds(read, compiled(fragment));
+    const aloneStand = holes.sounds.map(standIn);
+    const alone = clockNeeds([read, ...aloneStand].join('\n'), compiled([fragment, ...aloneStand].join('\n')));
     const unmet = alone.filter((t) => !meets(bench, t)).map((t) => t.need);
     const failed = { fits: false, union, missing, sounds, unmet };
     if (missing.length || union.twice.length || unmet.length)
         return failed;
-    const judged = () => [union.text, ...sounds.map((n) => `${n} s=white`)].join('\n');
+    const judged = () => [union.text, ...sounds.map(standIn)].join('\n');
     let result = compiled(judged());
     for (;;) {
         const more = unknownCells(result).filter((n) => sound(n) && !sounds.includes(n) && !benchNames.has(n) && !union.names.includes(n));
