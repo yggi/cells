@@ -8,7 +8,7 @@ The cells language: a minimal language for music where everything is a **cell**,
 
 ## The family
 
-The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells passes version 1 of `euclid` and `notes`, and records where it differs ([testing.md](testing.md)).
+The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells passes version 1 of `euclid`, `notes` and `swing` (with `:pairs`), and of `meter`'s names; it records where it differs (`meter`'s levels of four groups or more, which it doesn't halve) ([testing.md](testing.md)).
 
 The language's open questions live in this tracker, [yggi/cells' issues](https://github.com/yggi/cells/issues); the frontends' trackers point here ([music-commons#14](https://github.com/yggi/music-commons/issues/14)).
 

@@ -1,13 +1,14 @@
 /**
  * The family's contracts (yggi/music-commons `contracts/`), run against the parts of them cells implements: `euclid`
- * (Bjorklund's set, the turn, and the canonical set behind `scale(tonic, phase)`) and `notes` (C4 = 60, A4 = 440 Hz).
+ * (Bjorklund's set, the turn, and the canonical set behind `scale(tonic, phase)`), `notes` (C4 = 60, A4 = 440 Hz),
+ * `meter` (what each signature names, and the levels of its steps) and `swing` (where a swung meter's steps play).
  * The vectors are copied into `fixtures/contracts/`, each with a `lifted` line naming the hub and the commit it came
  * from; the hub's README for each contract is the rule. A vector that disagrees with cells is recorded here as what
  * cells does, not changed in cells: a change to what the language means is a decision, not a test's.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { bjorklund } from './engine/parser/generators';
+import { bjorklund, SIGNATURES } from './engine/parser/generators';
 import { parse } from './engine/parser';
 import { compileSource } from './engine/compile';
 import { codeShifts, noteFrequency } from './engine/program';
@@ -30,6 +31,19 @@ interface EuclidVector {
   readonly even: readonly number[];
   readonly bjorklund: readonly number[];
   readonly offset: number;
+}
+interface MeterVector {
+  readonly groups: readonly number[];
+  readonly levels: readonly number[];
+  readonly positions: readonly number[];
+  readonly grades: string;
+}
+interface SwingVector {
+  readonly name: string;
+  readonly groups: readonly number[];
+  readonly swing: readonly { readonly level: '8n' | '16n'; readonly share: number }[];
+  readonly s?: number;
+  readonly onsets: readonly number[];
 }
 interface NoteVector {
   readonly midi: number;
@@ -190,5 +204,89 @@ describe('the notes contract (music-commons contracts/notes, version 1)', () => 
     expect(keys.slice(60, 72).map((v) => ascii(noteName(v.hz)))).toEqual(mixed);
     expect(mixed).not.toEqual(keys.slice(60, 72).map((v) => v.sharp));
     expect(mixed).not.toEqual(keys.slice(60, 72).map((v) => v.flat));
+  });
+});
+
+describe('the meter contract (music-commons contracts/meter, version 1)', () => {
+  const meter = contract<MeterVector>('meter') as Contract<MeterVector> & { names: Record<string, number[]>; stepsPerEighth: number };
+  const of = (groups: readonly number[]) => meter.vectors.find((v) => v.groups.join('+') === groups.join('+'))!;
+  /** A signature as cells writes it, at the contract's 2 steps to the eighth: `sub` counts steps a beat in an x/4, steps an eighth in an x/8. */
+  const written = (name: string) => {
+    const r = parse(`&bar meter("${name}", ${name.endsWith('/4') ? 4 : 2})`);
+    expect(r.diagnostics, name).toEqual([]);
+    const b = r.cells[0].braid;
+    return b.kind === 'list' ? b.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [];
+  };
+
+  it('is the version cells passes, every grouping of 2s and 3s from 2 to 12 eighths, lifted with its source named', () => {
+    expect([meter.contract, meter.version, meter.stepsPerEighth]).toEqual(['meter', 1, 2]);
+    expect(meter.lifted).toMatch(/^Lifted from yggi\/music-commons contracts\/meter\/vectors\.json @ [0-9a-f]{7,40}$/);
+    expect(meter.vectors).toHaveLength(47);
+  });
+
+  it('every signature the contract names is one cells names, grouped as the contract groups it (an x/4 writes beats, each two eighths)', () => {
+    expect(Object.keys(SIGNATURES).sort()).toEqual(Object.keys(meter.names).sort());
+    for (const [name, groups] of Object.entries(meter.names)) expect(name.endsWith('/4') ? SIGNATURES[name].map((b) => 2 * b) : SIGNATURES[name], name).toEqual(groups);
+  });
+
+  it('meter(signature) has the contract’s levels for a bar of two or three groups: 2/4 3/4 5/8 6/8 7/8 9/8', () => {
+    for (const name of ['2/4', '3/4', '5/8', '6/8', '7/8', '9/8']) expect(written(name), name).toEqual(of(meter.names[name]).levels);
+  });
+
+  it('…but not for four groups or more, which cells doesn’t halve: every group’s start is a beat, + (recorded, not a failure)', () => {
+    // The contract halves four or more groups by even(2, count), as Jambot's accents do (4/4 * . - . + . - . an eighth at a
+    // time); cells grades each group's start 1, a beat. Recorded as what cells does, levels one a step at 2 steps an eighth.
+    const recorded: Record<string, string> = {
+      '4/4': '0434143414341434',
+      '5/4': '04341434143414341434',
+      '10/8': '04343414341434341434',
+      '12/8': '043434143434143434143434',
+    };
+    for (const [name, levels] of Object.entries(recorded)) {
+      expect(written(name).join(''), name).toBe(levels);
+      expect(of(meter.names[name]).levels.join(''), name).not.toBe(levels);
+      // (the same steps but each half's start: the contract's 2 is cells' 1)
+      expect(
+        of(meter.names[name])
+          .levels.map((l) => (l === 2 ? 1 : l))
+          .join(''),
+        name,
+      ).toBe(levels);
+    }
+  });
+
+  it('the 37 groupings no signature names are not written by meter(…) yet: 2+2+3 written out is #17 (recorded)', () => {
+    const named = new Set(Object.values(meter.names).map((g) => g.join('+')));
+    expect(meter.vectors.filter((v) => !named.has(v.groups.join('+')))).toHaveLength(37);
+    expect(parse('&bar meter("2+2+3")').diagnostics).not.toEqual([]);
+  });
+});
+
+describe('the swing contract (music-commons contracts/swing, version 1)', () => {
+  const swing = contract<SwingVector>('swing');
+  /** Where a named meter's 16ths play in its first bar, in steps from the downbeat: swung as Jambot's section text writes it (8n with :pairs, or without). */
+  const played = (v: SwingVector, pairs = true) => {
+    const levels = v.swing.map(({ level, share }) => `${level}:${share}${level === '8n' && pairs ? ':pairs' : ''}`).join(',');
+    const r = compileSource(`&bar meter("${v.name}") step=60bpm${levels && ` swing=${levels}`}\n&x step=16n 0\n&v s=sine loop=C4\n&out map=sample [&x * &v]`);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    const seconds = r.cells.get('bar')!.steps / r.clocks.get('bar')!.perSecond;
+    return eventsBetween(plan(r, codeShifts(r)), 0, seconds - 1e-6).map((e) => (e.at / seconds) * v.onsets.length);
+  };
+  const meets = (v: SwingVector, at: readonly number[]) => at.length === v.onsets.length && at.every((x, s) => Math.abs(x - v.onsets[s]) < 1e-9);
+
+  it('is the version cells passes, every named meter at each level alone and the readers’ path, lifted with its source named', () => {
+    expect([swing.contract, swing.version]).toEqual(['swing', 1]);
+    expect(swing.lifted).toMatch(/^Lifted from yggi\/music-commons contracts\/swing\/vectors\.json @ [0-9a-f]{7,40}$/);
+    expect(swing.vectors).toHaveLength(131);
+  });
+
+  it('swing=<level>:<share> on meter(…), 8n with :pairs, places every step within 1e-9 of the contract, for every vector', () => {
+    for (const v of swing.vectors) expect(meets(v, played(v)), `${v.name} ${JSON.stringify(v.swing)}`).toBe(true);
+  });
+
+  it('…and without :pairs, a group of three leans at 8n (decision 040): the 30 vectors of a meter with one, at each 8n share, differ (recorded)', () => {
+    const differ = swing.vectors.filter((v) => !meets(v, played(v, false)));
+    expect(differ).toHaveLength(30);
+    expect(differ.every((v) => v.groups.includes(3) && v.swing.some((l) => l.level === '8n' && l.share !== 0.5))).toBe(true);
   });
 });
