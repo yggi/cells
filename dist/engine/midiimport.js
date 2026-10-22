@@ -9,48 +9,17 @@ import { compileSource } from "./compile.js";
 import { MAX_REPS } from "./parser/scanner.js";
 import { codeShifts } from "./program.js";
 import { eventsBetween, plan } from "./realize.js";
-import { gmDrumNote, kitNotes } from "./midi.js";
+import { GM_KIT, gmDrumNote, kitNotes } from "./midi.js";
+import { INSTRUMENT_FRAGMENTS } from "../repository/instruments.js";
 const DIVISIONS = [1, 2, 3, 4, 6, 8, 12, 16];
 const ON_GRID = 0.995;
-const DRUM_OF = {
-    35: 'bd',
-    36: 'bd',
-    37: 'rim',
-    38: 'sd',
-    39: 'cp',
-    40: 'sd',
-    41: 'lo',
-    42: 'hh',
-    43: 'lo',
-    44: 'hh',
-    45: 'mid',
-    46: 'oh',
-    47: 'mid',
-    48: 'hi',
-    49: 'crash',
-    50: 'hi',
-    51: 'ride',
-    52: 'crash',
-    53: 'ride',
-    55: 'crash',
-    57: 'crash',
-    59: 'ride',
-    75: 'claves',
-};
-const DRUMS = {
-    bd: 's=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)',
-    sd: 's=white hpf=1500 env=&(map=adsr 0 .12 0 .05)',
-    hh: 's=white hpf=8000 env=&(map=adsr 0 .04 0 .02)',
-    oh: 's=white hpf=7000 env=&(map=adsr 0 .25 0 .1)',
-    rim: 's=sine loop=E5 env=&(map=adsr 0 .03 0 .02)',
-    cp: 's=white hpf=1000 env=&(map=adsr 0 .08 0 .05)',
-    lo: 's=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)',
-    mid: 's=sine loop=C3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .2 0 .05)',
-    hi: 's=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .15 0 .05)',
-    crash: 's=white hpf=5000 env=&(map=adsr 0 .8 0 .3)',
-    ride: 's=white hpf=9000 env=&(map=adsr 0 .4 0 .2)',
-    claves: 's=sine loop=D7 env=&(map=adsr 0 .06 0 .03)',
-};
+const DRUM_OF = Object.fromEntries(GM_KIT.map((d) => [d.note, d.name]));
+const DRUMS = Object.fromEntries(INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')
+    .text.split('\n')
+    .flatMap((line) => {
+    const m = /^&(\w+) (.*)$/.exec(line);
+    return m ? [[m[1], m[2]]] : [];
+}));
 const TUNED = 's=sine env=&(map=adsr 0 .3 0 .05)';
 const NOISE = 's=white hpf=6000 env=&(map=adsr 0 .1 0 .05)';
 function kitOf(name, notes) {
