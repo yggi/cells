@@ -152,6 +152,36 @@ describe('docs: the README shows the language as it is', () => {
   });
 });
 
+/** The relative links of a shipped page that point at a file the package's `files` doesn't ship (#78). */
+const unshipped = (page: string, text: string, files: string[]): string[] => {
+  const shipped = (path: string) => files.some((f) => !f.startsWith('!') && (path === f || path.startsWith(`${f}/`)));
+  const root = resolve(DOCS, '..');
+  return [...text.replace(/^```[\s\S]*?^```/gm, '').matchAll(/\]\(([^)\s]+)\)/g)]
+    .map((m) => m[1]!)
+    .filter((t) => !/^(https?:|mailto:|#)/.test(t))
+    .filter(
+      (t) =>
+        !shipped(
+          relative(root, resolve(dirname(page), t.split('#')[0]!))
+            .split('\\')
+            .join('/'),
+        ),
+    );
+};
+
+describe('docs: shipped pages link only what the package ships (#78)', () => {
+  const { files } = JSON.parse(read(resolve(DOCS, '../package.json'))) as { files: string[] };
+  const shippedPages = [...markdown(join(DOCS, 'language')), resolve(DOCS, '../README.md')];
+
+  it('is shown firing: a page linking ../architecture.md fails, an absolute link passes', () => {
+    const page = join(DOCS, 'language/x.md');
+    expect(unshipped(page, '[a](../architecture.md) [b](overview.md)', files)).toEqual(['../architecture.md']);
+    expect(unshipped(page, '[a](https://github.com/yggi/cells/blob/main/docs/architecture.md)', files)).toEqual([]);
+  });
+
+  for (const page of shippedPages) it(`${relative(resolve(DOCS, '..'), page)} links no file the package lacks`, () => expect(unshipped(page, read(page), files)).toEqual([]));
+});
+
 describe('docs: the drum names', () => {
   const names = (text: string) =>
     [...(/^- \*\*Drum names\.\*\* (.*)$/m.exec(text)?.[1] ?? '').matchAll(/((?:`[a-z]+` )+)(\d+)/g)].flatMap((m) =>

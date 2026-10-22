@@ -12,7 +12,7 @@ That is Frère Jacques ([`examples/steps.md`](examples/steps.md)). One cell per 
 
 ## Use
 
-It is the shared core of [Cell studio](https://github.com/yggi/cell-studio), the workbench, and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend, which depend on a tag, never a branch (what changed: [CHANGELOG.md](CHANGELOG.md)):
+It is the shared core of [Cell studio](https://github.com/yggi/cell-studio), the workbench, and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend, which depend on a tag, never a branch (what changed: [CHANGELOG.md](https://github.com/yggi/cells/blob/main/CHANGELOG.md)):
 
 ```json
 "@yggi/cells": "github:yggi/cells#v0.9.0"
