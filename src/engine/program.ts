@@ -387,6 +387,12 @@ export interface TapeReturn {
   readonly through: Output['through'];
 }
 
+/** A cell a text uses and declares nowhere (`&harm`): its name, without the `&`, and each place it is used. */
+export interface UnknownCell {
+  readonly name: string;
+  readonly at: readonly Span[];
+}
+
 export interface CompileResult {
   readonly ok: boolean;
   readonly tapes: readonly AudioTape[];
@@ -398,6 +404,8 @@ export interface CompileResult {
   /** Node ids of cells written `off`. */
   readonly off: ReadonlySet<string>;
   readonly diagnostics: readonly Diagnostic[];
+  /** The cells the text uses and declares nowhere (the `Unknown cell &name` errors, as data), each with where it is used; in the order first reported. */
+  readonly unknown: readonly UnknownCell[];
   /** The `show=` plugins the piece carries, by name (plugins.ts). */
   readonly plugins: ReadonlyMap<string, ShowPlugin>;
   /** Sections of an arrangement (decisions 016 and 044), each to its table: what a selector reading the table switches. */

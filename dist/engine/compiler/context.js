@@ -4,9 +4,12 @@ export function context(parsed, env) {
     const error = (message, span) => diagnostics.push({ severity: 'error', message, span });
     const warn = (message, span) => diagnostics.push({ severity: 'warning', message, span });
     const broken = new Set(parsed.broken);
+    const unknown = new Map();
     const unknownCell = (name, span) => {
-        if (!broken.has(name))
-            error(`Unknown cell &${name}`, span);
+        if (broken.has(name))
+            return;
+        error(`Unknown cell &${name}`, span);
+        unknown.set(name, [...(unknown.get(name) ?? []), span]);
     };
     const unknownEnv = new Set();
     const rateOf = (st) => {
@@ -25,5 +28,5 @@ export function context(parsed, env) {
         }
         return null;
     };
-    return { parsed, env, diagnostics, error, warn, broken, unknownCell, rateOf };
+    return { parsed, env, diagnostics, error, warn, broken, unknown, unknownCell, rateOf };
 }

@@ -12,7 +12,9 @@ export interface Ctx {
      * uses aren't reported again (no "Unknown cell", no "nothing to play" for them).
      */
     readonly broken: Set<string>;
-    /** `Unknown cell &name` — unless its own line failed: that error has said it already. */
+    /** The cells used and declared nowhere, by name, each with its uses in the order reported (what `unknownCell` records). */
+    readonly unknown: Map<string, Span[]>;
+    /** `Unknown cell &name` — unless its own line failed: that error has said it already. Recorded in `unknown`. */
     readonly unknownCell: (name: string, span: Span) => void;
     /** A rate written as a number, or read from the environment (an unknown name is an error, once). */
     readonly rateOf: (st: CellDecl['step']) => number | null;

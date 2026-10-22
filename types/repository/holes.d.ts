@@ -3,7 +3,7 @@
  * needs, all read off the compiler's own results, never written beside the text and never parsed a second time.
  *
  * - **Defines:** the cells its lines declare (the parser's declarations; an unnamed cell `&( … )` is part of its line).
- * - **Uses:** each name its compile reports as an unknown cell (`Unknown cell &harm`: the compiler's one place for a name
+ * - **Uses:** each name its compile reports as unknown (`CompileResult.unknown`: the compiler's one place for a name
  *   used and declared nowhere), and `key` when a line reads the main key (`over=key`, #130) and the text has none of its
  *   own. A name the compiler doesn't reach, for an earlier error on the same line, isn't listed; the fit's compile of the
  *   union still says it (`fit.ts`).

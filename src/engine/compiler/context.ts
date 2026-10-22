@@ -13,7 +13,9 @@ export interface Ctx {
    * uses aren't reported again (no "Unknown cell", no "nothing to play" for them).
    */
   readonly broken: Set<string>;
-  /** `Unknown cell &name` — unless its own line failed: that error has said it already. */
+  /** The cells used and declared nowhere, by name, each with its uses in the order reported (what `unknownCell` records). */
+  readonly unknown: Map<string, Span[]>;
+  /** `Unknown cell &name` — unless its own line failed: that error has said it already. Recorded in `unknown`. */
   readonly unknownCell: (name: string, span: Span) => void;
   /** A rate written as a number, or read from the environment (an unknown name is an error, once). */
   readonly rateOf: (st: CellDecl['step']) => number | null;
@@ -27,8 +29,11 @@ export function context(parsed: ParseResult, env: Env): Ctx {
   const error = (message: string, span: Span) => diagnostics.push({ severity: 'error', message, span });
   const warn = (message: string, span: Span) => diagnostics.push({ severity: 'warning', message, span });
   const broken = new Set(parsed.broken);
+  const unknown = new Map<string, Span[]>();
   const unknownCell = (name: string, span: Span) => {
-    if (!broken.has(name)) error(`Unknown cell &${name}`, span);
+    if (broken.has(name)) return;
+    error(`Unknown cell &${name}`, span);
+    unknown.set(name, [...(unknown.get(name) ?? []), span]);
   };
   // a rate written as a number, or read from the environment
   const unknownEnv = new Set<CellDecl['step']>();
@@ -44,5 +49,5 @@ export function context(parsed: ParseResult, env: Env): Ctx {
     }
     return null;
   };
-  return { parsed, env, diagnostics, error, warn, broken, unknownCell, rateOf };
+  return { parsed, env, diagnostics, error, warn, broken, unknown, unknownCell, rateOf };
 }

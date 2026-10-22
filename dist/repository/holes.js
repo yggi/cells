@@ -4,7 +4,6 @@ import { tapPositions } from "../engine/meter.js";
 import { MAIN_KEY } from "../engine/program.js";
 import { expansion, hasUse } from "../engine/use.js";
 export const INTERFACE_NAMES = ['&bar', 'key', '&harm'];
-const UNKNOWN_CELL = /^Unknown cell &([A-Za-z_][A-Za-z0-9_]*)$/;
 const WHOLE = 1e-9;
 const isWhole = (x) => Math.abs(x - Math.round(x)) < WHOLE;
 export const lapMeets = (need, taps) => need.steps > 0 && isWhole((taps * need.rate) / need.steps);
@@ -44,10 +43,7 @@ export function holesOf(text, compiled, resolve) {
     const all = parse(read).cells;
     const decls = all.filter((d) => !d.lambda);
     const result = compiled(text);
-    const unknown = result.diagnostics.flatMap((d) => {
-        const m = UNKNOWN_CELL.exec(d.message);
-        return m ? [`&${m[1]}`] : [];
-    });
+    const unknown = result.unknown.map((u) => `&${u.name}`);
     const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
     const uses = [...new Set([...unknown, ...(readsKey ? ['key'] : [])])].sort();
     const sound = readOnlyAsSound(all);
