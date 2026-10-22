@@ -1,23 +1,27 @@
-# A witness, not the gate: the gate is `npm run verify` in the pre-push hook, which costs no Actions minutes.
-# The family's CI budget (yggi/music-commons): one job, only on pull requests out of draft, a superseded run cancelled,
-# a timeout; the slow tests by hand (Run workflow, `slow: true`).
+# A witness, not the gate: the gate is `npm run verify` in the pre-push hook (AGENTS.md). Now that the repository is public
+# and GitHub's standard runners are free for it (#242), the witness is a fuller one: on every push to a pull request out
+# of draft, `verify` and the slow tests (the folder over whole pieces and the MIDI library, its ratchets, the timings) as
+# two jobs side by side, which together are `npm run test:all` and the rest of verify; the same nightly on `main`; and by
+# hand (Run workflow) on any branch, as the release skill's first step. Each job writes its test count to its summary.
+# A pull request still meets the family's switch (yggi/music-commons CI-BUDGET.md): it runs where Actions is free (public)
+# or on (variable CI = on), and a draft runs nothing; the nightly and a run by hand don't ask. A superseded run is cancelled.
 name: ci
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
+  schedule:
+    - cron: '17 3 * * *'
   workflow_dispatch:
-    inputs:
-      slow:
-        description: Run the slow tests too
-        type: boolean
-        default: false
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+# (`shell: bash` given is `bash -eo pipefail`, so a test run piped through `tee` still fails its step)
+defaults:
+  run:
+    shell: bash
 jobs:
   verify:
-    # The switch (yggi/music-commons CI-BUDGET.md): runs only where Actions is free (public) or on (variable CI = on).
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.draft == false && (!github.event.repository.private || vars.CI == 'on'))
+    if: github.event_name != 'pull_request' || (github.event.pull_request.draft == false && (!github.event.repository.private || vars.CI == 'on'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -27,6 +31,24 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm run verify
-      - if: inputs.slow
-        run: npm run test:slow
+      - run: npm run verify 2>&1 | tee verify.log
+      - if: always()
+        run: |
+          count=$(sed 's/\x1b\[[0-9;]*m//g' verify.log | grep -E '^ *Tests ' | tail -1 | sed 's/^ *//' || true)
+          echo "verify on $(git rev-parse --short HEAD): ${count:-no count}" >>"$GITHUB_STEP_SUMMARY"
+  slow:
+    if: github.event_name != 'pull_request' || (github.event.pull_request.draft == false && (!github.event.repository.private || vars.CI == 'on'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run test:slow 2>&1 | tee slow.log
+      - if: always()
+        run: |
+          count=$(sed 's/\x1b\[[0-9;]*m//g' slow.log | grep -E '^ *Tests ' | tail -1 | sed 's/^ *//' || true)
+          echo "the slow tests on $(git rev-parse --short HEAD): ${count:-no count}" >>"$GITHUB_STEP_SUMMARY"
