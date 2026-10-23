@@ -4,7 +4,7 @@
  * re-exported here as it was before #155.
  */
 import { compileSource } from '../compile';
-import { ROOT } from '../program';
+import { ROOT, type CompileOptions } from '../program';
 import { declWords, spansLines } from '../edit';
 import type { Rewrite } from '../rewrite';
 
@@ -34,13 +34,14 @@ export interface Candidate {
   readonly grid: boolean;
 }
 
-/** The cells whose steps are written out one by one, and safe to rewrite. */
-export function candidates(source: string): { result: Result; cells: Candidate[] } {
-  const r = compileSource(source);
+/** The cells whose steps are written out one by one, and safe to rewrite: the piece's own (a used line is its fragment's, #241). */
+export function candidates(source: string, options: CompileOptions = {}): { result: Result; cells: Candidate[] } {
+  const r = compileSource(source, undefined, options);
+  const used = usedNames(r);
   const readAsTable = new Set([...r.cells.values()].flatMap((c) => (c.over ? [c.over] : [])));
   const out: Candidate[] = [];
   for (const c of r.cells.values()) {
-    if (c.lambda || c.implicit || c.voice || c.mix || c.sink || c.kit || c.note || c.map) continue;
+    if (c.lambda || c.implicit || c.voice || c.mix || c.sink || c.kit || c.note || c.map || used.has(c.name)) continue;
     if (readAsTable.has(c.name) || spansLines(source, c.name)) continue;
     const w = declWords(source, c.name);
     if (!w || w.braid.length < 2 || w.braid.some((t) => t.startsWith('[') && t.includes('&'))) continue;
@@ -50,6 +51,9 @@ export function candidates(source: string): { result: Result; cells: Candidate[]
   }
   return { result: r, cells: out };
 }
+
+/** The names a piece's `use` lines gave it (bare): their lines are the fragments', not the piece's to rewrite. */
+export const usedNames = (r: Result): ReadonlySet<string> => new Set((r.uses ?? []).flatMap((u) => u.gave.map((n) => n.replace(/^&/, ''))));
 
 /** The code's length: runs of spaces count as one (the padding that keeps comments aligned isn't code). */
 export const size = (source: string) => source.replace(/[ \t]+/g, ' ').length;

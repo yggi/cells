@@ -30,7 +30,7 @@ export interface Recognised {
 }
 /** What a recognition may say: the workbench both are read under, the tolerance, the depth, and Vary's options. */
 export interface RecogniseOptions extends Omit<VaryOptions, 'operators'> {
-    /** The operators a path may use, in this order; by default all six. */
+    /** The operators a path may use, in this order; by default all eight. */
     readonly operators?: readonly Operator[];
     /** The most notes that may differ, a whole number ≥ 0 (the licence's); by default 0, the notes exactly. */
     readonly tolerance?: number;

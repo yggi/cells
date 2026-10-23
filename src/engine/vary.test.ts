@@ -192,8 +192,19 @@ describe("Vary gives the decision's bass variations (rung 2)", () => {
     expect(anchorsOf(fragment, workbench)).toEqual(SOURCES[1]!.notes.map((step) => ({ line: '&bass', step, reason: 'root' })));
   });
 
-  it('6 of them: 4 transpositions, 1 inversion, 1 retrograde', () => {
-    expect(all.map((v) => v.by)).toEqual(['transpose &bass -2', 'transpose &bass -1', 'transpose &bass 1', 'transpose &bass 2', 'invert &bass', 'reverse &bass']);
+  it('10 of them: 4 transpositions, 1 inversion, 1 retrograde, 3 bends (the fourth plays its source) and 1 trim', () => {
+    expect(all.map((v) => v.by)).toEqual([
+      'transpose &bass -2',
+      'transpose &bass -1',
+      'transpose &bass 1',
+      'transpose &bass 2',
+      'invert &bass',
+      'reverse &bass',
+      'bend &bass -2',
+      'bend &bass 1',
+      'bend &bass 2',
+      'trim &bass 7',
+    ]);
   });
 
   for (const v of written)

@@ -5,6 +5,7 @@
  */
 import { declLine, declWords, setAttr, splitComment } from '../edit';
 import { soundsIdentical } from '../sameness';
+import type { CompileOptions } from '../program';
 import { saves, type Result, type ShortenRewrite } from './harness';
 
 /** Split at a separator outside brackets and parentheses. */
@@ -53,7 +54,7 @@ const entryOf = (e: string) => {
 /** How a pan is written: .35, 0, 1. */
 const written = (p: number) => String(+p.toFixed(3)).replace(/^0\./, '.');
 
-export function stereo(source: string, result: Result): ShortenRewrite[] {
+export function stereo(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   const out: ShortenRewrite[] = [];
   const lines = source.split('\n');
   for (const card of result.cells.values()) {
@@ -112,7 +113,7 @@ export function stereo(source: string, result: Result): ShortenRewrite[] {
       after: voices.map((v, i) => `&${v} pan=${written(pans[i])}`).join(' · '),
       apply,
     };
-    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source))) out.push(s);
+    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options)) out.push(s);
   }
   return out;
 }

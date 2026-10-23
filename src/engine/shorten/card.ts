@@ -13,6 +13,7 @@ import { CARD, parse, pieceMeta, plainLabel } from '../parser';
 import { isNote } from '../ast';
 import { isPieceFile, writePiece, type PieceFrontmatter } from '../piecefile';
 import { soundsIdentical } from '../sameness';
+import type { CompileOptions } from '../program';
 import type { ShortenRewrite } from './harness';
 
 /** The card a text says what the piece is on: the first note with a title=, else the note `&piece`; null for none. */
@@ -52,10 +53,10 @@ export function movedCard(text: string): { frontmatter: PieceFrontmatter; text: 
 }
 
 /** A card that says what the piece is: the piece as a file, its title, tags, tier and description in the frontmatter. */
-export function card(source: string): ShortenRewrite[] {
+export function card(source: string, options: CompileOptions = {}): ShortenRewrite[] {
   const moved = movedCard(source);
   const name = cardOf(source);
-  if (!moved || !name || !soundsIdentical(source, moved.text)) return [];
+  if (!moved || !name || !soundsIdentical(source, moved.text, undefined, options)) return [];
   const apply = (s: string) => {
     const m = movedCard(s);
     return m ? writePiece({ frontmatter: m.frontmatter, text: m.text, prose: '' }) : s;

@@ -6,6 +6,7 @@
 import { declLine, setAttr } from '../edit';
 import { tapFor } from '../compiler/clocks';
 import { soundsIdentical } from '../sameness';
+import type { CompileOptions } from '../program';
 import type { Result, ShortenRewrite } from './harness';
 
 /** The tap that says what &name's step= says (slowed `by` times, for the fractions), or null (not stepped by a meter's own steps). */
@@ -23,7 +24,7 @@ export function tapOfRaw(result: Result, name: string, by = 1): string | null {
 }
 
 /** Each line stepped by a meter's own steps: its tap, if it plays the same notes. */
-export function taps(source: string, result: Result): ShortenRewrite[] {
+export function taps(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   const out: ShortenRewrite[] = [];
   const seen = new Set<string>();
   for (const c of result.cells.values()) {
@@ -34,7 +35,7 @@ export function taps(source: string, result: Result): ShortenRewrite[] {
     seen.add(line);
     const apply = (s: string) => setAttr(s, line, 'step', tap);
     const next = apply(source);
-    if (next === source || !soundsIdentical(source, next)) continue;
+    if (next === source || !soundsIdentical(source, next, undefined, options)) continue;
     const at = declLine(source, line);
     out.push({
       id: `tap:${line}`,

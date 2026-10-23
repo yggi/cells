@@ -2,12 +2,12 @@ import { declLine, renameCell } from "../edit.js";
 import { soundsIdentical } from "../sameness.js";
 const FROM = 'parts';
 const TO = 'sections';
-export function sections(source, result) {
+export function sections(source, result, options = {}) {
     if (![...(result.sections?.values() ?? [])].includes(FROM) || declLine(source, TO) >= 0)
         return [];
     const apply = (s) => renameCell(s, FROM, TO);
     const next = apply(source);
-    if (next === source || !soundsIdentical(source, next))
+    if (next === source || !soundsIdentical(source, next, undefined, options))
         return [];
     const at = declLine(source, FROM);
     return [

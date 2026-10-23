@@ -1,7 +1,7 @@
 import { attrsOf, setAttr } from "../edit.js";
 import { soundsIdentical } from "../sameness.js";
 import { saves } from "./harness.js";
-export function progressions(source, result) {
+export function progressions(source, result, options = {}) {
     const out = [];
     for (const c of result.cells.values()) {
         if (c.lambda || c.implicit || c.voice || c.mix || c.sink || c.map || !c.loops || !c.steps)
@@ -21,7 +21,7 @@ export function progressions(source, result) {
             after: `step=${step}`,
             apply: (src) => setAttr(setAttr(src, c.name, 'loop', null), c.name, 'step', step),
         };
-        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source)))
+        if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options))
             out.push(s);
     }
     return out;

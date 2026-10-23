@@ -39,10 +39,10 @@ export function movedCard(text) {
         text: goes ? lines.join('\n') : next,
     };
 }
-export function card(source) {
+export function card(source, options = {}) {
     const moved = movedCard(source);
     const name = cardOf(source);
-    if (!moved || !name || !soundsIdentical(source, moved.text))
+    if (!moved || !name || !soundsIdentical(source, moved.text, undefined, options))
         return [];
     const apply = (s) => {
         const m = movedCard(s);

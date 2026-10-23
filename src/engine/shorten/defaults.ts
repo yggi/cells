@@ -4,9 +4,10 @@
  */
 import { attrsOf, setAttr } from '../edit';
 import { soundsIdentical } from '../sameness';
+import type { CompileOptions } from '../program';
 import { saves, type Result, type ShortenRewrite } from './harness';
 
-export function defaults(source: string, result: Result): ShortenRewrite[] {
+export function defaults(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   const out: ShortenRewrite[] = [];
   const offer = (name: string, key: string, why: string) => {
     const value = attrsOf(source, name).get(key);
@@ -19,7 +20,7 @@ export function defaults(source: string, result: Result): ShortenRewrite[] {
       after: '',
       apply: (src) => setAttr(src, name, key, null),
     };
-    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source))) out.push(s);
+    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options)) out.push(s);
   };
   for (const c of result.cells.values()) {
     if (c.implicit || c.lambda) continue;

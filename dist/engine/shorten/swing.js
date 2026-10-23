@@ -1,7 +1,7 @@
 import { attrsOf, declLine, setAttr } from "../edit.js";
 import { bareSwingLevel, noteValue, swingLevelProblem } from "../meter.js";
 import { soundsIdentical } from "../sameness.js";
-export function swings(source, result) {
+export function swings(source, result, options = {}) {
     const out = [];
     for (const c of result.cells.values()) {
         const m = c.meter;
@@ -14,7 +14,7 @@ export function swings(source, result) {
             continue;
         const apply = (s) => setAttr(s, c.name, 'swing', `${level}:${written}`);
         const next = apply(source);
-        if (next === source || !soundsIdentical(source, next))
+        if (next === source || !soundsIdentical(source, next, undefined, options))
             continue;
         const at = declLine(source, c.name);
         out.push({

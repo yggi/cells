@@ -18,12 +18,16 @@
  *  - **transpose**: every other note n degrees of its table, n each of `degrees` (−2, −1, 1, 2), as `&x^n` plays them;
  *  - **invert**: every other note mirrored about the line's first note f, in degrees, as `degree(inverse(&x), 2f)`;
  *  - **reverse**: the notes of each span between two anchored notes (the whole lap where there are none) in reverse
- *    order, as `&x[::-1]` reads a span.
+ *    order, as `&x[::-1]` reads a span;
+ *  - **bend**: the last note moved to the note before it, n degrees of its table from it, n each of `BENDS` (−2, −1, 1,
+ *    2), as `&x^n` plays the note before (the lead's bend, yggi/jambot#424);
+ *  - **trim**: the last note left out, the note before it then held to the lap's end (a line holds a note to the next
+ *    onset), where the line keeps `TRIM_FEWEST` notes (the lead's drop: a rhythm `drop` leaves any one note out).
  *
  * Each operator acts on the lines it is for: the rhythm ones on lines of hits, the pitched ones on pitched lines.
  * In Jambot's order (yggi/jambot `variations`, so its draws pick the same one): the lines in the order the lap first plays
  * them (by onset, then pitch), and for each its rotation, its drops in the order its notes play, its adds by step, then
- * its transpositions in the order of `degrees`, its inversion, its retrograde. None
+ * its transpositions in the order of `degrees`, its inversion, its retrograde, its bends in the order of `BENDS`, its trim. None
  * plays the notes of its source or of one given before it (compared as its steps write them: each note's onset, length
  * and voice; nothing is compiled per variation), none strikes one sound twice at one onset, none keeps fewer than
  * `fewest` notes. The anchors (`anchors.ts`: the kick's line and the backbeat's), and the lines the frontend keeps, are
@@ -43,16 +47,22 @@ import { linesOf, moved, pitchKey, pitchOf, tapWhole, written, type Line, type L
 export { backbeatOf, type Anchor } from './anchors';
 
 /** The operators: the rhythm ones (rung 1) and the pitched ones (rung 2). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse';
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim';
 
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export const RHYTHM_OPERATORS: readonly Operator[] = ['rotate', 'drop', 'add'];
 
 /** The pitched operators, in their order: for a bass, a lead. */
-export const PITCHED_OPERATORS: readonly Operator[] = ['transpose', 'invert', 'reverse'];
+export const PITCHED_OPERATORS: readonly Operator[] = ['transpose', 'invert', 'reverse', 'bend', 'trim'];
 
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export const DEGREES: readonly number[] = [-2, -1, 1, 2];
+
+/** A bend's amounts, in degrees of the table read from the note before the last: 1 or 2, either way (yggi/jambot#424). */
+export const BENDS: readonly number[] = [-2, -1, 1, 2];
+
+/** The fewest notes a trimmed line keeps: its last note left out, at least two stay (the lead's shapes, yggi/jambot#424). */
+export const TRIM_FEWEST = 2;
 
 /** One change to one line: a rewrite of the tool `vary`, whose `apply` gives the varied fragment. */
 export interface Variation extends Rewrite<Operator> {
@@ -207,9 +217,29 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
   for (const i of order) {
     const line = lines[i]!;
     const levels = line.levels?.tokens;
+    // (the last note in time, and the one before it: what bend and trim act on, unless the last is anchored)
+    const [before, last] = line.notes.slice(-2);
+    const ends = line.notes.length >= 2 && !pinned(line, last!);
     for (const operator of operators) {
       if (PITCHED_OPERATORS.includes(operator) !== !!line.pitched) continue;
-      if (operator === 'transpose')
+      if (operator === 'bend') {
+        if (ends)
+          for (const n of BENDS) {
+            const notes = line.notes.map((x) => (x === last ? { ...x, pitch: moved(before!.pitch!, 1, n) } : x));
+            offer(
+              i,
+              operator,
+              notes,
+              n,
+              written(line, notes),
+              `its last note bent to ${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'} ${n > 0 ? 'above' : 'below'} the one before it`,
+            );
+          }
+      } else if (operator === 'trim') {
+        if (!ends || line.notes.length - 1 < TRIM_FEWEST) continue;
+        const notes = line.notes.filter((x) => x !== last);
+        offer(i, operator, notes, last!.step, written(line, notes), `its last note, on step ${last!.step}, left out: the one before it held`);
+      } else if (operator === 'transpose')
         for (const n of degrees) {
           const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch!, 1, n) }));
           offer(i, operator, notes, n, written(line, notes), `every note ${n > 0 ? 'up' : 'down'} ${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'}`);

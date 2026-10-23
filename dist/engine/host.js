@@ -4,8 +4,8 @@ import { grab, resetPhysics } from "./physics.js";
 import { physicsOf } from "./clocking.js";
 import { plan } from "./realize.js";
 import { windowAt } from "./schedule.js";
-export function planOf(code, env) {
-    const r = compileSource(code, env);
+export function planOf(code, env, options) {
+    const r = compileSource(code, env, options);
     return plan(r, codeShifts(r), r.off);
 }
 export function grabIn(p, cell, t, speed) {
@@ -14,13 +14,13 @@ export function grabIn(p, cell, t, speed) {
         grab(p.result, w, t, speed);
 }
 export const emptyWindow = (from, length) => ({ from, to: from + length, events: [], tapes: [] });
-export function createHost(now = () => performance.now()) {
+export function createHost(now = () => performance.now(), { resolve } = {}) {
     let p = null;
     return (m) => {
         switch (m.type) {
             case 'load': {
                 const t0 = now();
-                p = planOf(m.code, m.env);
+                p = planOf(m.code, m.env, { ...(resolve ? { resolve } : {}), ...(m.locked ? { locked: m.locked } : {}) });
                 return { type: 'loaded', ms: now() - t0, ok: p.result.ok };
             }
             case 'window': {

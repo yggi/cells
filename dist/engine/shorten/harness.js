@@ -2,12 +2,13 @@ import { compileSource } from "../compile.js";
 import { ROOT } from "../program.js";
 import { declWords, spansLines } from "../edit.js";
 export { samePiece, sameNotes, SAMENESS_SECONDS } from "../sameness.js";
-export function candidates(source) {
-    const r = compileSource(source);
+export function candidates(source, options = {}) {
+    const r = compileSource(source, undefined, options);
+    const used = usedNames(r);
     const readAsTable = new Set([...r.cells.values()].flatMap((c) => (c.over ? [c.over] : [])));
     const out = [];
     for (const c of r.cells.values()) {
-        if (c.lambda || c.implicit || c.voice || c.mix || c.sink || c.kit || c.note || c.map)
+        if (c.lambda || c.implicit || c.voice || c.mix || c.sink || c.kit || c.note || c.map || used.has(c.name))
             continue;
         if (readAsTable.has(c.name) || spansLines(source, c.name))
             continue;
@@ -21,6 +22,7 @@ export function candidates(source) {
     }
     return { result: r, cells: out };
 }
+export const usedNames = (r) => new Set((r.uses ?? []).flatMap((u) => u.gave.map((n) => n.replace(/^&/, ''))));
 export const size = (source) => source.replace(/[ \t]+/g, ' ').length;
 export const saves = (source, r) => {
     try {

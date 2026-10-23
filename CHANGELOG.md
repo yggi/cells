@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.10.0`.
+### Added
+- **Vary bends and trims a pitched line's last note** (#267, yggi/jambot#424, decision 052): two pitched operators, after reverse in `PITCHED_OPERATORS`. **`bend`** moves the last note to 1 or 2 degrees either side of the note before it (`BENDS`, −2, −1, 1, 2: `bend &lead 2`); **`trim`** leaves the last note out, the note before it then held (`trim &lead 12`), where the line keeps 2 notes (`TRIM_FEWEST`). Neither touches an anchored last note (a root on a chord change), and a result that plays its source's notes, or an earlier variation's, is left out as before. **What a frontend sees at its next pin:** one that passes `PITCHED_OPERATORS` gets more variations, after the ones it got, which keep their order (each bass seed but the root bass gains 4 bends and a trim, 20 in all; Jambot's bass passes it, so its E41 numbers move, and a draw lands on another index); one that names its operators, or passes `RHYTHM_OPERATORS`, gets what it got. Recognition's default operators (`ALL_OPERATORS`) hold the two, so a heard bass or lead one bend or trim from a fragment is recognised as it, by that operator, at distance 0 (the bass seeds' 44 variations are). No piece sounds different.
+- **The engine host and Shorten take the resolver** (#241, decision 054): `planOf(code, env, { resolve, locked })`; `createHost(now, { resolve })`, made with the resolver (a function can't cross `postMessage`), and a `load` message's `locked`, the lockfile's hashes; `shorten(source, { resolve, locked })` and `shortenAll(source, rounds, { resolve, locked })`. A piece with `use "core kit"` loads in a host made with `resolveSeed` (it loaded as `ok: false` before), and Shorten offers for it what it offers for the piece written out (`expand`), less any rewrite of a used line. Called as before, each does what it did.
 
 ## v0.10.0 — 2026-10-22
 

@@ -8,8 +8,10 @@ import { anchorsAmong } from "./anchors.js";
 import { linesOf, moved, pitchKey, pitchOf, tapWhole, written } from "./lines.js";
 export { backbeatOf } from "./anchors.js";
 export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
-export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse'];
+export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse', 'bend', 'trim'];
 export const DEGREES = [-2, -1, 1, 2];
+export const BENDS = [-2, -1, 1, 2];
+export const TRIM_FEWEST = 2;
 function read(fragment, workbench = '') {
     const own = new Set(declarations(fragment).map((l) => l.name));
     const bench = declarations(workbench)
@@ -107,10 +109,25 @@ export function readVariations(fragment, options = {}) {
     for (const i of order) {
         const line = lines[i];
         const levels = line.levels?.tokens;
+        const [before, last] = line.notes.slice(-2);
+        const ends = line.notes.length >= 2 && !pinned(line, last);
         for (const operator of operators) {
             if (PITCHED_OPERATORS.includes(operator) !== !!line.pitched)
                 continue;
-            if (operator === 'transpose')
+            if (operator === 'bend') {
+                if (ends)
+                    for (const n of BENDS) {
+                        const notes = line.notes.map((x) => (x === last ? { ...x, pitch: moved(before.pitch, 1, n) } : x));
+                        offer(i, operator, notes, n, written(line, notes), `its last note bent to ${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'} ${n > 0 ? 'above' : 'below'} the one before it`);
+                    }
+            }
+            else if (operator === 'trim') {
+                if (!ends || line.notes.length - 1 < TRIM_FEWEST)
+                    continue;
+                const notes = line.notes.filter((x) => x !== last);
+                offer(i, operator, notes, last.step, written(line, notes), `its last note, on step ${last.step}, left out: the one before it held`);
+            }
+            else if (operator === 'transpose')
                 for (const n of degrees) {
                     const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch, 1, n) }));
                     offer(i, operator, notes, n, written(line, notes), `every note ${n > 0 ? 'up' : 'down'} ${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'}`);
