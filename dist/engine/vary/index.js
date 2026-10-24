@@ -133,8 +133,8 @@ export function readVariations(fragment, options = {}) {
                     offer(i, operator, notes, n, written(line, notes), `every note ${n > 0 ? 'up' : 'down'} ${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'}`);
                 }
             else if (operator === 'invert') {
-                const f = line.notes[0].pitch.written;
-                if (typeof f !== 'number')
+                const { written: f, alter } = line.notes[0].pitch;
+                if (typeof f !== 'number' || alter)
                     continue;
                 const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch, -1, 2 * f) }));
                 offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`);

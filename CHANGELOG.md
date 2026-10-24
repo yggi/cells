@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.10.1`.
+### Added
+- **Vary reads a pitched line with an accidental** (#268, from #267, decision 052): a degree with one `b` or `#` (`4b`, `2#!2`) is read as the note it plays, where before it left the whole line unread, so a lead bent off the key had no variation. Each pitched operator writes it back as the same note moved: transpose and bend keep the accidental with the degree (`4b` up 1 is `5b`), and **invert flips it, as `inverse(…)` does** (`4b` mirrored about 0 is `-4#`); invert gives nothing for a line whose first note, its axis, has an accidental. **What a frontend sees at its next pin:** a line with an accidental gets the variations it did not get before (Jambot's lead, once a player bends it); a line without one, every bass seed among them, gets exactly what it got, in the same order. No piece sounds different.
 
 ## v0.10.1 — 2026-10-23
 
