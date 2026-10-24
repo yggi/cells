@@ -16,7 +16,8 @@
  * anchored notes (the roots on its chord changes, which keep their place and their pitch):
  *
  *  - **transpose**: every other note n degrees of its table, n each of `degrees` (−2, −1, 1, 2), as `&x^n` plays them;
- *  - **invert**: every other note mirrored about the line's first note f, in degrees, as `degree(inverse(&x), 2f)`;
+ *  - **invert**: every other note mirrored about the line's first note f, in degrees, as `degree(inverse(&x), 2f)`, an
+ *    accidental flipped as `inverse` flips it (`4b` about 0 is `-4#`); none where f is a splice or has an accidental;
  *  - **reverse**: the notes of each span between two anchored notes (the whole lap where there are none) in reverse
  *    order, as `&x[::-1]` reads a span;
  *  - **bend**: the last note moved to the note before it, n degrees of its table from it, n each of `BENDS` (−2, −1, 1,
@@ -112,7 +113,7 @@ export const variations = (fragment: string, options?: VaryOptions): readonly Va
  * One note as recognition compares it (#224, decision 055): its onset in whole notes from its lap's start (null where
  * its line's grid is none of the meter's, its line's own step then in `key`), and the rest of what it is for S2: its
  * length (its line's step), the sound it strikes (a drum's General MIDI note, else its voice) and a pitched note's pitch,
- * its voice by its place among the pitched voices (`&bassV` is the first), as S1 numbers voices (#186).
+ * its voice by its place among the pitched voices (`&bassV` is the first), as S1 numbered voices before decision 057.
  */
 export interface HeardNote {
   readonly at: number | null;
@@ -245,8 +246,9 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
           offer(i, operator, notes, n, written(line, notes), `every note ${n > 0 ? 'up' : 'down'} ${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'}`);
         }
       else if (operator === 'invert') {
-        const f = line.notes[0]!.pitch!.written;
-        if (typeof f !== 'number') continue;
+        // (about its first note's degree: a first note that is a splice, or bent off it by an accidental, is no axis)
+        const { written: f, alter } = line.notes[0]!.pitch!;
+        if (typeof f !== 'number' || alter) continue;
         const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch!, -1, 2 * f) }));
         offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`);
       } else if (operator === 'reverse') {

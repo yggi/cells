@@ -26,7 +26,7 @@ Two ladders, each rung named once in the code. A rung is implied by the one abov
 
 | rung | name | holds when | built |
 |---|---|---|---|
-| S1 | **sounds identical** | every event alike: voice (by its place among the voices, #186), onset, length, pitch, gains, bends, levels, moving parameters, envelope. That is the snapshot's `notes` and `events` hashes | `soundsIdentical` |
+| S1 | **sounds identical** | every event alike: voice (by its sound, decision 057; by its place among the voices before it, #186), onset, length, pitch, gains, bends, levels, moving parameters, envelope. That is the snapshot's `notes` and `events` hashes | `soundsIdentical` |
 | S2 | plays the same notes | voice, onset, length and pitch alike; gains and the rest free | `playsSameNotes` |
 | S3 | the same notes in named cells | the named cells' flattened steps alike | `sameNotes` |
 
@@ -45,6 +45,6 @@ Rejected: one equality for everything (renaming and respelling are not the same 
 
 ## Consequences
 
-- **S1 reads a voice by its place, not its name** (#186, the owner: as recommended). An event names its voice, so S1 and S2 number the voices heard in the order the text declares them: a voice renamed sounds identical, so E2 ⇒ S1 holds for every cell; two voices' parts swapped don't; a cell added that isn't a voice moves no number. The snapshot keeps the names: its hashes witness how a piece is seen as well as heard, and no example's moves.
+- **S1 reads a voice by its place, not its name** (#186, the owner: as recommended; amended by [057](057-a-voice-by-its-sound.md): by its sound, and a place is a name too). An event names its voice, so S1 and S2 number the voices heard in the order the text declares them: a voice renamed sounds identical, so E2 ⇒ S1 holds for every cell; two voices' parts swapped don't; a cell added that isn't a voice moves no number. The snapshot keeps the names: its hashes witness how a piece is seen as well as heard, and no example's moves.
 - **The tools check by S1 over the whole window** (`soundsIdentical`): `rewriteAll` (Normalise, and Migrate when it starts) and every Shorten rule that checked by `samePiece`. On every example, fixture and fragment Shorten offers what it did, and its tests run as fast (about 10 s). `samePiece` stays S1 over the first minute, for the tests of equal spellings and its public subpath; `phrases` keeps S3 (`sameNotes`) for the cells it reads through a table.
 - #177's target ratchet scores "the result plays the input" as S1 over the whole window. Its measure is decision 049's (`engine/measure`, #183).

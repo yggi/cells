@@ -5,10 +5,11 @@
  * hits of a voice (`&hh`, `&hh:0:.25`, `~!5`, a chord of hits `[&bd,&hh]`), a subsequence of them on one step
  * (`step=1m [&rim ~ ~ &rim …]`), or a Euclid of a voice (`&rim(5,16,4)`), each times at most one `map=amp` cell of
  * levels, one a step. Rung 2 reads the lines a pitched part writes: a cell of degrees of the table it reads (`over=&harm`)
- * times one voice (`&bass * &bassV`), its steps rests, whole numbers (`0`, `-1`, `0!8`) or another cell spliced in
+ * times one voice (`&bass * &bassV`), its steps rests, whole numbers with at most one accidental (`0`, `-1`, `0!8`, `4b`,
+ * `2#!2`) or another cell spliced in
  * (`&bassNext`, `&bassNext^$-1`, and as the operators write one back, `degree(inverse(&bassNext), 2)`) that plays one note
- * on its step. A line written any other way (`@`, a choice, an
- * accidental, a subsequence of degrees) is not read, and so not varied. Pure.
+ * on its step. A line written any other way (`@`, a choice, two
+ * accidentals, a subsequence of degrees) is not read, and so not varied. Pure.
  */
 import { declWords, splitWords } from '../edit';
 import { flatten } from '../flatten';
@@ -53,9 +54,15 @@ export const moved = (p: Pitch, sign: 1 | -1, by: number): Pitch => ({ ...p, sig
 /** What a pitch plays, for S2: its table, its degree there, its accidental and its grid steps. */
 export const pitchKey = (p: Pitch): string => `${p.table}:${p.sign * p.value + p.by}:${p.sign * p.alter}:${p.transpose}`;
 
-/** A pitch's text: a degree as a number; a splice wrapped in `inverse(…)` and moved by `^n` (on a bare reference) or `degree(…, n)`. */
+/**
+ * A pitch's text: a degree as a number, its accidental kept and, mirrored, flipped (`4b` mirrored about 0 is `-4#`), as
+ * `inverse(…)` reads one; a splice wrapped in `inverse(…)` and moved by `^n` (on a bare reference) or `degree(…, n)`.
+ */
 export function pitchText(p: Pitch): string {
-  if (typeof p.written === 'number') return String(p.sign * p.written + p.by);
+  if (typeof p.written === 'number') {
+    const alter = p.sign * p.alter;
+    return `${p.sign * p.written + p.by}${alter > 0 ? '#' : alter < 0 ? 'b' : ''}`;
+  }
   const inner = p.sign === -1 ? `inverse(${p.written})` : p.written;
   if (p.by === 0) return inner;
   return /^&[A-Za-z_][A-Za-z0-9_]*$/.test(inner) ? `${inner}^${p.by}` : `degree(${inner}, ${p.by})`;
@@ -98,7 +105,7 @@ const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
 const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
-const DEGREE = /^(-?\d+)(?:!(\d+))?$/;
+const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
 const REF = String.raw`&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
 /** A splice, as written or as an operator writes it back (`pitchText`): `&x`, `&x^$-1`, `inverse(&x)`, `degree(inverse(&x), 2)`. */
 const SPLICE = new RegExp(String.raw`^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);

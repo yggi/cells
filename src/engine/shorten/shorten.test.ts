@@ -8,6 +8,7 @@ import { PRESETS } from '../presets';
 import { expand } from '../use';
 import type { Resolve } from '../program';
 import { resolveSeed } from '../../repository/library';
+import { soundsIdentical } from '../sameness';
 
 const tail = '\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
 const sounds = (src: string, until = SAMENESS_SECONDS) => {
@@ -140,6 +141,22 @@ describe('shorten: turns, alike cells, and all the way', () => {
     expect(next).not.toMatch(/^&b /m);
     expect(next).toContain('&t step=4 &a 2 &a 5');
     expect(sounds(next)).toEqual(sounds(src));
+  });
+  it('two voices written alike: one where a MIDI export is the same too, as two FM operators; two parts stay apart (#192, decision 057)', () => {
+    // (two operators alike, routed nowhere: merged, the piece sounds and exports as it did)
+    const fm =
+      '&bar step=2 0\n&t step=&bar 0 4 7\n&m1 s=sine ratio=1\n&m2 s=sine ratio=1\n&a s=sine loop=C3 fm=&m1 index=1\n&b s=sine loop=C4 fm=&m2 index=1\n&out map=sample [&t * &a * .2, &t * &b * .2]';
+    const s = shorten(fm).find((x) => x.kind === 'same')!;
+    expect(s.id).toBe('same:m1,m2');
+    expect(s.apply(fm)).toContain('&b s=sine loop=C4 fm=&m1 index=1');
+    expect(soundsIdentical(fm, s.apply(fm))).toBe(true);
+    // (two parts on voices alike: one sound, S1, but a MIDI export has them on two channels, so they stay apart)
+    const parts = '&bar step=2 0\n&t step=&bar 0 4 7\n&u step=&bar 2 5\n&a s=saw loop=C3 lpf=900\n&b s=saw loop=C3 lpf=900\n&out map=sample [&t * &a * .2, &u * &b * .2]';
+    expect(soundsIdentical(parts, parts.replace('&u * &b', '&u * &a'))).toBe(true);
+    expect(shorten(parts).filter((x) => x.kind === 'same')).toEqual([]);
+    // (a kit's members on a MIDI card: two white noises alike, but &bd sends 36 and &hh 42)
+    const kit = '&bar meter("4/4") step=120bpm\n&kit &bd &hh\n&t over=&kit step=8n 0 1 0 1\n&drums map=midi(10) [&t]\n&bd s=white\n&hh s=white';
+    expect(shorten(kit).filter((x) => x.kind === 'same')).toEqual([]);
   });
   it('a piece with use: what the piece written out is offered, read through the resolver (#241)', () => {
     const src = 'use "core kit"\n&bar meter("4/4") step=100bpm\n&a &bd ~ &hh ~ &sd ~ &hh &hh\n&b &bd ~ &hh ~ &sd ~ &hh &hh\n&beat step=8n &a &b &a &b\n&out map=sample [&beat]\n';

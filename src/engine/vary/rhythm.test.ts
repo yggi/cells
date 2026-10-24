@@ -14,6 +14,7 @@ import { windowAt } from '../schedule';
 import { rewriteAll } from '../rewrite';
 import { unionOf } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
+import { resolveSeed } from '../../repository/library';
 import { METER_FRAGMENTS } from '../../repository/meters';
 import { anchorsOf, backbeatOf, drawn, variations, varied, type Variation } from '.';
 
@@ -28,6 +29,8 @@ const OPTIONS = { workbench: WORKBENCH, keep: ['&fill'], fewest: 3 };
 /** E31's bars: each preset's drum part without its `&bar`, the seed's rhythm fragment word for word. */
 const BARS = e31.witnesses.map((w) => ({ preset: w.preset, fragment: w.text.split('\n').slice(1).join('\n'), hits: w.hits }));
 const under = (fragment: string) => unionOf(fragment, WORKBENCH).text;
+/** A bar under its workbench, its stand-ins (`&hh s=white`) left out for the core kit's voices. */
+const inKit = (fragment: string) => `use "core kit"\n${under(fragment.replace(/^&\w+ s=white\n?/gm, ''))}`;
 
 // ---- Lifted from yggi/jambot @ 0a56da9: the reference, kept here as code, not imported.
 
@@ -182,7 +185,9 @@ describe('what a variation is', () => {
     for (const b of ALL) {
       const played = [b.fragment, ...texts(b)].map(notesOf);
       expect(new Set(played).size, b.preset).toBe(played.length);
-      for (const text of texts(b)) expect(playsSameNotes(under(b.fragment), under(text), 2)).toBe(false);
+      // (S2 reads a voice by its sound, decision 057: E31's stand-ins are one white noise, so it hears them in the core kit)
+      expect(compileSource(inKit(b.fragment), undefined, { resolve: resolveSeed }).ok, b.preset).toBe(true);
+      for (const text of texts(b)) expect(playsSameNotes(inKit(b.fragment), inKit(text), 2, { resolve: resolveSeed })).toBe(false);
     }
   });
 
