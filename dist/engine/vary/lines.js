@@ -7,8 +7,10 @@ import { codeShifts } from "../program.js";
 export const moved = (p, sign, by) => ({ ...p, sign: (p.sign * sign), by: p.by * sign + by });
 export const pitchKey = (p) => `${p.table}:${p.sign * p.value + p.by}:${p.sign * p.alter}:${p.transpose}`;
 export function pitchText(p) {
-    if (typeof p.written === 'number')
-        return String(p.sign * p.written + p.by);
+    if (typeof p.written === 'number') {
+        const alter = p.sign * p.alter;
+        return `${p.sign * p.written + p.by}${alter > 0 ? '#' : alter < 0 ? 'b' : ''}`;
+    }
     const inner = p.sign === -1 ? `inverse(${p.written})` : p.written;
     if (p.by === 0)
         return inner;
@@ -21,7 +23,7 @@ const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
 const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
-const DEGREE = /^(-?\d+)(?:!(\d+))?$/;
+const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
 const REF = String.raw `&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
 const SPLICE = new RegExp(String.raw `^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);
 function hitOf(token) {

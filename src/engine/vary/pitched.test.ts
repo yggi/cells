@@ -231,6 +231,48 @@ describe('the pitched operators', () => {
     for (const v of ends) expect(compileSource(unionOf(v.apply(shape), HOST).text).diagnostics).toEqual([]);
   });
 
+  it('a line with an accidental is varied, the accidental kept and, mirrored, flipped (#268)', () => {
+    // the 4 a flat (Fb, an E): moved with its degree, flipped by invert as `inverse(&lead)` flips it, carried by the bend
+    const bent = lead('0 ~ ~ 2 ~ -1 ~ ~ 4b ~ ~ ~ 0 ~ ~ ~');
+    const options = { workbench: HOST, operators: PITCHED_OPERATORS };
+    const all = variations(bent, options);
+    expect(all.map((v) => [v.by, v.after.split('\n')[0]!.slice('&lead over=key step=16n '.length)])).toEqual([
+      ['transpose &lead -2', '-2 ~ ~ 0 ~ -3 ~ ~ 2b ~ ~ ~ -2 ~ ~ ~'],
+      ['transpose &lead -1', '-1 ~ ~ 1 ~ -2 ~ ~ 3b ~ ~ ~ -1 ~ ~ ~'],
+      ['transpose &lead 1', '1 ~ ~ 3 ~ 0 ~ ~ 5b ~ ~ ~ 1 ~ ~ ~'],
+      ['transpose &lead 2', '2 ~ ~ 4 ~ 1 ~ ~ 6b ~ ~ ~ 2 ~ ~ ~'],
+      ['invert &lead', '0 ~ ~ -2 ~ 1 ~ ~ -4# ~ ~ ~ 0 ~ ~ ~'],
+      ['reverse &lead', '~ ~ ~ 0 ~ ~ ~ 4b ~ ~ -1 ~ 2 ~ ~ 0'],
+      ['bend &lead -2', '0 ~ ~ 2 ~ -1 ~ ~ 4b ~ ~ ~ 2b ~ ~ ~'],
+      ['bend &lead -1', '0 ~ ~ 2 ~ -1 ~ ~ 4b ~ ~ ~ 3b ~ ~ ~'],
+      ['bend &lead 1', '0 ~ ~ 2 ~ -1 ~ ~ 4b ~ ~ ~ 5b ~ ~ ~'],
+      ['bend &lead 2', '0 ~ ~ 2 ~ -1 ~ ~ 4b ~ ~ ~ 6b ~ ~ ~'],
+      ['trim &lead 12', '0 ~ ~ 2 ~ -1 ~ ~ 4b ~ ~ ~ ~ ~ ~ ~'],
+    ]);
+    const source = unionOf(bent, HOST).text;
+    const form = (f: string) => source.replace('[&lead * &leadV]', '[&t * &leadV]') + `\n&t step=16n ${f}`;
+    for (const [k, v] of all.entries()) {
+      const text = unionOf(v.apply(bent), HOST).text;
+      expect(
+        compileSource(text).diagnostics.map((d) => d.message),
+        v.by,
+      ).toEqual([]);
+      const sorted = (notes: readonly { at: number | null; key: string }[]) => notes.map((n) => `${n.at} ${n.key}`).sort();
+      expect(sorted(readVariations(v.apply(bent), options).notes!), v.by).toEqual(sorted(readVariations(bent, options).variations[k]!.notes));
+      // (the language's own forms: over the key, no anchor, and the first note 0, the axis)
+      if (v.rule === 'transpose') expect(playsSameNotes(text, form(`&lead^${v.by.split(' ').at(-1)}`)), v.by).toBe(true);
+      if (v.rule === 'invert') expect(playsSameNotes(text, form('inverse(&lead)')), v.by).toBe(true);
+    }
+  });
+
+  it('a sharp repeated (`2#!2`) is read as its two notes; invert has no axis on a first note with an accidental', () => {
+    const sharp = lead('0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 2#!2 ~ ~');
+    expect(variations(sharp, { workbench: HOST, operators: ['transpose'], degrees: [1] }).map((v) => v.after.split('\n')[0])).toEqual([
+      '&lead over=key step=16n 1 ~ ~ 3 ~ 0 ~ ~ 5 ~ ~ ~ 3# 3# ~ ~',
+    ]);
+    expect(variations(lead('4b ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 0 ~ ~ ~'), { workbench: HOST, operators: ['invert'] })).toEqual([]);
+  });
+
   it('trim keeps two notes: a line of two gives bends and no trim', () => {
     expect(variations(lead('0 ~ ~ ~ ~ ~ ~ ~ 4 ~ ~ ~ ~ ~ ~ ~'), { workbench: HOST, operators: ['bend', 'trim'] }).map((v) => v.by)).toEqual([
       'bend &lead -2',
