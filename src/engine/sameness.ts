@@ -3,10 +3,10 @@
  * are `identity.ts`'s. Every tool that rewrites a piece promises S1 (decision 049): Migrate, Normalise and Shorten check a
  * rewrite against it before they offer or apply it. Lifted out of `shorten/harness.ts` (#155). Pure.
  *
- *  - S1 `soundsIdentical`: every event alike, voice, onset, length, pitch, gains, bends, levels, moving parameters,
- *    envelope (the snapshot's `notes` and `events` hashes), over the whole piece (`wholeWindow`): what the tools check a
- *    rewrite by. `samePiece` is S1 over the first minute, kept for the tests of equal spellings and its public subpath.
- *  - S2 `playsSameNotes`: every event's voice, onset, length and pitch alike, gains and the rest free.
+ *  - S1 `soundsIdentical`: every event alike, voice (by its sound, and on a MIDI card what it sends: decision 057), onset,
+ *    length, pitch, gains, bends, levels, moving parameters, envelope (the snapshot's `notes` and `events` hashes), over
+ *    the whole piece (`wholeWindow`): what the tools check a rewrite by. `samePiece` is S1 over the first minute, kept for the tests of equal spellings and its public subpath.
+ *  - S2 `playsSameNotes`: every event's voice (as S1 reads it), onset, length and pitch alike, gains and the rest free.
  *  - S3 `sameNotes`: the named cells' flattened steps alike.
  */
 import { compileSource } from './compile';
@@ -14,6 +14,8 @@ import { codeShifts, type CompileOptions } from './program';
 import { eventsBetween, plan } from './realize';
 import { flatten } from './flatten';
 import { pieceTime } from './duration';
+import { CELL_PARAMS } from './attributes';
+import { channelTable, midiNote, router, routesOf } from './midi';
 
 type Result = ReturnType<typeof compileSource>;
 
@@ -41,13 +43,62 @@ export const SAMENESS_SECONDS = 60;
 
 /**
  * One event as two pieces are compared: all of it (S1), or the note it plays (S2: voice, onset, length, pitch). Its voice
- * is read by its place among the voices heard, in the order the text declares them, not by its name (#186): a voice
- * renamed sounds identical, as a renamed text is E2, and two voices' names swapped don't.
+ * is read by what it sounds like (`soundOf`, decision 057), not by its name (#186) or its place among the voices: a voice
+ * renamed sounds identical, as a renamed text is E2; two voices' names swapped don't, unless they sound alike; and two
+ * voices alike merged into one sound as the two did.
  */
 type Event = ReturnType<typeof eventsBetween>[number];
 const whole = (e: Event, voice: string) =>
   `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
 const note = (e: Event, voice: string) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
+
+/** A voice's attributes its events already carry: its gain and pan in their gains, its legato in their lengths. */
+const IN_EVENTS: ReadonlySet<string> = new Set(['gain', 'pan', 'legato']);
+
+/**
+ * What a voice sounds like apart from the events it plays (decision 057): every attribute of its cell that shapes its
+ * sound, the cells those name read the same way in their turn (an `env=`, an `fm=`, a `map=` table, a moving parameter's
+ * factors), its own braid as its steps flatten. No name enters it, so a voice renamed, or two voices alike merged into
+ * one, sound as they did.
+ */
+function soundOf(r: Result): (voice: string) => string {
+  const shifts = codeShifts(r);
+  const memo = new Map<string, string>();
+  const of = (name: string, seen: ReadonlySet<string>): string => {
+    const known = memo.get(name);
+    if (known !== undefined) return known;
+    const c = r.cells.get(name);
+    if (!c || seen.has(name)) return c ? '(loop)' : name;
+    const inner = new Set([...seen, name]);
+    const ref = (n: string | null) => (n ? of(n, inner) : null);
+    const params = Object.entries(c.params)
+      .filter(([k]) => !IN_EVENTS.has(k))
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => [k, typeof v === 'string' && CELL_PARAMS.has(k) ? ref(v) : v]);
+    const moving = Object.entries(c.paramCells)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, m]) => [k, m.range, m.factors.map((f) => ref(f))]);
+    const steps = flatten(r, name, shifts).map((e) => `${e.step.toFixed(6)}:${e.duration.toFixed(6)}:${e.value + e.alter + (e.transpose ?? 0)}`);
+    const out = JSON.stringify([
+      c.map?.kind === 'table' ? ref(c.map.table) : c.map,
+      c.freq,
+      c.loops,
+      c.steps,
+      c.glide,
+      c.oneshot,
+      c.kit,
+      ref(c.env),
+      ref(c.pitch),
+      c.exciters ?? null,
+      params,
+      moving,
+      steps,
+    ]);
+    if (!seen.size) memo.set(name, out);
+    return out;
+  };
+  return (voice) => of(voice, new Set());
+}
 
 /** Do two texts compile and play the same events, each read as `key` reads it, from 0 to `until` seconds? Their `use` lines read through `options`. */
 function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Result) => number), key: (e: Event, voice: string) => string, options: CompileOptions = {}): boolean {
@@ -57,12 +108,19 @@ function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Resu
     if (!ra.ok || !rb.ok) return false;
     const to = typeof until === 'number' ? until : until(ra, rb);
     const play = (r: Result) => {
-      const events = eventsBetween(plan(r, codeShifts(r)), 0, to);
-      // (the voices heard, numbered in the order the text declares them: a cell that isn't a voice moves no number)
-      const heard = new Set(events.map((e) => e.voice));
-      const place = new Map([...r.cells.keys()].filter((name) => heard.has(name)).map((name, i) => [name, `#${i}`]));
+      const events = eventsBetween(plan(r, codeShifts(r)), 0, to, true);
+      // (each voice heard read as what it sounds like, not by its name or place: two voices alike are one, decision 057;
+      // and, sent on a MIDI card, what MIDI out sends: its entry's channel, and a kit member's drum note, its name's,
+      // which its output tells)
+      const sound = soundOf(r);
+      const route = router(r, channelTable(r));
+      const sent = (e: Event) =>
+        routesOf(e.midi ? route(e) : null)
+          .map((x) => midiNote(e, x))
+          .map((m) => (m ? `${m.channel}:${m.note}` : '-'))
+          .join(',');
       return events
-        .map((e) => key(e, place.get(e.voice) ?? e.voice))
+        .map((e) => key(e, `${sound(e.voice)} ${sent(e)}`))
         .sort()
         .join('\n');
     };

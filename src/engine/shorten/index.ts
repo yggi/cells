@@ -55,7 +55,7 @@ export function shorten(source: string, options: CompileOptions = {}): Suggestio
     ...runs(source, cells),
     ...phrases(source, cells, result, options),
     ...fractions(source, cells, result),
-    ...sameCells(source, result),
+    ...sameCells(source, result, options),
     ...defaults(source, result, options),
     ...progressions(source, result, options),
     ...wrappers(source, result, options),

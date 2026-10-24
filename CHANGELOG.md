@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.10.1`.
+### Changed
+- **S1 and S2 read a voice by what it sounds like, not by its place** (#192, decision 057, amending 050's point on #186): `soundsIdentical`, `playsSameNotes` and `samePiece` key a voice on its cell's attributes that shape its sound (its waveform, static parameters, envelope, `fm=` operator…, the cells it names read the same way), with no name. A voice renamed, two voices' definitions swapped with their names, and two voices alike merged into one now sound identical; two voices' parts swapped still don't, unless the voices sound alike. On a MIDI card each event's channel and a kit member's drum note count as well, so a rewrite that moves either is no longer S1 (the rest of a MIDI card is #273). **Shorten's `same` merges two voices written alike** where S1 holds and the piece's MIDI export is the same (its tracks' names aside), so two parts stay apart, each on its channel. Over the examples it offers two more merges (`phase`'s and `tines`' FM operators, 19 characters each). **Fixed with it:** S1 no longer passes a rewrite that changes a voice's own sound, which it passed before because no event carries it (`&v s=saw` to `&v s=sine`, a voice's `lpf=` changed or dropped). **What a frontend sees at its next pin:** a frontend that calls S1 or S2 gets "the same" for a renaming, a reordering or a merge of voices alike, and "not the same" for a voice's sound changed, or a channel or drum note moved on a MIDI card. Two white-noise stand-ins (`&hh s=white`, `&oh s=white`) are one sound. Recognition and Vary keep their own reading of names (decision 055). No piece sounds different, and no event snapshot moves.
 
 ## v0.10.1 — 2026-10-23
 

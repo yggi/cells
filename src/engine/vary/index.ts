@@ -112,7 +112,7 @@ export const variations = (fragment: string, options?: VaryOptions): readonly Va
  * One note as recognition compares it (#224, decision 055): its onset in whole notes from its lap's start (null where
  * its line's grid is none of the meter's, its line's own step then in `key`), and the rest of what it is for S2: its
  * length (its line's step), the sound it strikes (a drum's General MIDI note, else its voice) and a pitched note's pitch,
- * its voice by its place among the pitched voices (`&bassV` is the first), as S1 numbers voices (#186).
+ * its voice by its place among the pitched voices (`&bassV` is the first), as S1 numbered voices before decision 057.
  */
 export interface HeardNote {
   readonly at: number | null;

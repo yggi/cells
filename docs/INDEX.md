@@ -32,7 +32,6 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
   - [notes/README.md](notes/README.md) — what a note is, its header, when it is written and when it is deleted (lifted from Cell studio)
   - [notes/10-language-pass.md](notes/10-language-pass.md) — the language pass: the invariants, Strudel and dough, the four primitives (moved from Cell studio)
   - [notes/10-examples-pass.md](notes/10-examples-pass.md) — the examples pass: drums on a kit, no extra mixers (moved from Cell studio)
-  - [notes/192-voices-alike.md](notes/192-voices-alike.md) — two voices alike: S1 by what a voice sounds like, not its place; a prototype measured, the options, a recommendation (#192)
   - [notes/22-open-fragments.md](notes/22-open-fragments.md) — open fragments: a fragment that leaves `&bar` and `&key` to the host, four options measured on three cases, and a recommendation (`tools/open-fragments.ts`, #22)
   - [notes/gate-node.md](notes/gate-node.md) — the gate node: what a gate gates, kits and MIDI as receivers, ports and bands (moved from Cell studio)
   - [notes/95-chord-in-force.md](notes/95-chord-in-force.md) — the chord in force: how a line reads the chord sounding, four options measured on Jambot's E33 bars, a proposal (`tools/chord-in-force.ts`, #95)
