@@ -32,7 +32,10 @@ export interface Pitch {
 export declare const moved: (p: Pitch, sign: 1 | -1, by: number) => Pitch;
 /** What a pitch plays, for S2: its table, its degree there, its accidental and its grid steps. */
 export declare const pitchKey: (p: Pitch) => string;
-/** A pitch's text: a degree as a number; a splice wrapped in `inverse(…)` and moved by `^n` (on a bare reference) or `degree(…, n)`. */
+/**
+ * A pitch's text: a degree as a number, its accidental kept and, mirrored, flipped (`4b` mirrored about 0 is `-4#`), as
+ * `inverse(…)` reads one; a splice wrapped in `inverse(…)` and moved by `^n` (on a bare reference) or `degree(…, n)`.
+ */
 export declare function pitchText(p: Pitch): string;
 /** How a line's trigger is written: steps, a subsequence on one step, or a Euclid of one voice. */
 type Form = 'steps' | 'seq' | 'euclid';
