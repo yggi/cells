@@ -73,7 +73,7 @@ describe('the equalities a tool promises, over their window (#180)', () => {
     expect(soundsIdentical('&a over=&nowhere 0', '&a over=&nowhere 0')).toBe(false);
   });
 
-  it('S1 reads a voice by its place among the voices heard, not its name (#186)', () => {
+  it('S1 and S2 read a voice by what it sounds like, not its name (#186) nor its place (#192, decision 057)', () => {
     const TWO = (first: string, second: string) => `&bar meter("4/4") step=120bpm
 &t over=scale(major) step=8n 0 2 4 2
 &u over=scale(major) step=4n 7 4
@@ -85,7 +85,49 @@ describe('the equalities a tool promises, over their window (#180)', () => {
     expect(playsSameNotes(TWO('a', 'b'), renamed)).toBe(true);
     // (the lines swap voices: each note on the other voice)
     expect(soundsIdentical(TWO('a', 'b'), TWO('b', 'a'))).toBe(false);
-    // (a cell that isn't a voice, added before the voices, moves no voice's number)
+    expect(playsSameNotes(TWO('a', 'b'), TWO('b', 'a'))).toBe(false);
+    // (a cell that isn't a voice, added before the voices, changes nothing)
     expect(soundsIdentical(TWO('a', 'b'), TWO('a', 'b').replace('&a s=saw', '&m 0 2\n&a s=saw'))).toBe(true);
+    // (the voices' definitions swapped with their names, so each voice's place moves: a renaming still)
+    expect(soundsIdentical(TWO('a', 'b'), TWO('b', 'a').replace('&a s=saw loop=C4\n&b s=sine loop=C3', '&a s=sine loop=C3\n&b s=saw loop=C4'))).toBe(true);
+  });
+
+  it('two voices alike, merged into one, sound as the two did, the voices after them too (#192); unlike, they do not', () => {
+    const THREE = (b: string, second: string) => `&bar step=2 0
+&t step=&bar 0 4 7
+&u step=&bar 2 5
+&w step=&bar 9
+&a s=saw loop=C3 lpf=900
+&b ${b}
+&c s=sine loop=C5
+&out map=sample [&t * &a * .2, &u * &${second} * .2, &w * &c * .1]`;
+    const alike = THREE('s=saw loop=C3 lpf=900', 'b');
+    const merged = THREE('s=saw loop=C3 lpf=900', 'a').replace(/^&b .*\n/m, '');
+    expect(soundsIdentical(alike, merged)).toBe(true);
+    expect(playsSameNotes(alike, merged)).toBe(true);
+    // (a voice it names read by its sound in its turn: an envelope alike, under two names)
+    const enveloped = (env: string) =>
+      alike.replace('&b s=saw loop=C3 lpf=900', `&b s=saw loop=C3 lpf=900 env=&${env}`).replace('&a s=saw loop=C3 lpf=900', '&a s=saw loop=C3 lpf=900 env=&e1');
+    const envs = '\n&e1 map=adsr .01 .2 .5 .3\n&e2 map=adsr .01 .2 .5 .3';
+    expect(soundsIdentical(enveloped('e2') + envs, enveloped('e1').replace('&u * &b', '&u * &a') + envs)).toBe(true);
+    const unlike = THREE('s=saw loop=C3 lpf=1200', 'b');
+    expect(soundsIdentical(unlike, unlike.replace('&u * &b', '&u * &a'))).toBe(false);
+    expect(playsSameNotes(unlike, unlike.replace('&u * &b', '&u * &a'))).toBe(false);
+    expect(playsSameNotes(THREE('s=sine loop=C3 lpf=900', 'b'), THREE('s=sine loop=C3 lpf=900', 'a'))).toBe(false);
+    // (a voice's own sound, which no event carries: its waveform, a filter changed or dropped)
+    for (const b of ['s=sine loop=C3 lpf=900', 's=saw loop=C3 lpf=300', 's=saw loop=C3']) expect(soundsIdentical(alike, THREE(b, 'b')), b).toBe(false);
+  });
+
+  it('on a MIDI card, what MIDI out sends counts: a kit member by its name sends its drum note (#192)', () => {
+    // (two stand-ins alike, white noise, but a kit sends &bd as 36 and &hh as 42)
+    const kit = (second: string) => `&bar meter("4/4") step=120bpm
+&kit &bd &${second}
+&t over=&kit step=8n 0 1 0 1
+&drums map=midi(10) [&t]
+&bd s=white
+&hh s=white`;
+    expect(soundsIdentical(kit('hh'), kit('bd'))).toBe(false);
+    expect(playsSameNotes(kit('hh'), kit('bd'))).toBe(false);
+    expect(soundsIdentical(kit('hh'), kit('hh'))).toBe(true);
   });
 });

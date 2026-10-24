@@ -3,10 +3,10 @@
  * are `identity.ts`'s. Every tool that rewrites a piece promises S1 (decision 049): Migrate, Normalise and Shorten check a
  * rewrite against it before they offer or apply it. Lifted out of `shorten/harness.ts` (#155). Pure.
  *
- *  - S1 `soundsIdentical`: every event alike, voice, onset, length, pitch, gains, bends, levels, moving parameters,
- *    envelope (the snapshot's `notes` and `events` hashes), over the whole piece (`wholeWindow`): what the tools check a
- *    rewrite by. `samePiece` is S1 over the first minute, kept for the tests of equal spellings and its public subpath.
- *  - S2 `playsSameNotes`: every event's voice, onset, length and pitch alike, gains and the rest free.
+ *  - S1 `soundsIdentical`: every event alike, voice (by its sound, and on a MIDI card what it sends: decision 057), onset,
+ *    length, pitch, gains, bends, levels, moving parameters, envelope (the snapshot's `notes` and `events` hashes), over
+ *    the whole piece (`wholeWindow`): what the tools check a rewrite by. `samePiece` is S1 over the first minute, kept for the tests of equal spellings and its public subpath.
+ *  - S2 `playsSameNotes`: every event's voice (as S1 reads it), onset, length and pitch alike, gains and the rest free.
  *  - S3 `sameNotes`: the named cells' flattened steps alike.
  */
 import { compileSource } from './compile';

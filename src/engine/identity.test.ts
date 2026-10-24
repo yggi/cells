@@ -20,7 +20,7 @@ describe('the text ladder, E0 to E3 (decision 050, #180)', () => {
     expect(rungs(PIECE, b)).toEqual([false, true, true, true]);
     expect(soundsIdentical(PIECE, b)).toBe(true);
   });
-  it('E2, not E1: a cell renamed, a voice too (S1 reads a voice by its place, #186)', () => {
+  it('E2, not E1: a cell renamed, a voice too (S1 reads a voice by its sound, decision 057)', () => {
     const b = PIECE.replaceAll('&tune', '&line');
     expect(rungs(PIECE, b)).toEqual([false, false, true, true]);
     expect(soundsIdentical(PIECE, b)).toBe(true);
