@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.10.1`.
+### Fixed
+- **Convert to cells chooses its fold by the folder's measure again** (#247): `cellsFromMidi` compared its candidates (the fold or the notes written out, a line a track or a line a voice, in sections or not) by their characters, comments and names counted. Since the card went to the frontmatter (#191) the fold's own comment outweighed its saving, so swing, mirrors, automaton and focus came back written out, or split into numbered voices. It compares them by `bare` (`fold/score.ts`, what the folder's ratchet scores: no comments, no sound lines), so those four fold as they did, and most examples fold shorter (the baseline's phrases back 66 → 75). Royal, whose 12 sections by key are now within the sections' allowance (1.149 of its plain fold), is folded in sections (11755 → 13503: the trade recorded, the owner on #247). **What a frontend sees at its next pin:** opening a MIDI file can give another text for the same notes (folded where it was written out, in sections where it wasn't); every one plays the notes it did. No piece sounds different.
 
 ## v0.10.1 — 2026-10-23
 
