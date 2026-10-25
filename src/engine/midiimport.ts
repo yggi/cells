@@ -26,6 +26,7 @@ import type { Folded } from './fold/ir';
 import { bestKey, inDegrees, keyName, scaleText } from './fold/degrees';
 import { cutLines, keyAreas } from './fold/sections';
 import { voicesOf } from './fold/voices';
+import { bare } from './fold/score';
 import { compileSource } from './compile';
 import { MAX_REPS } from './parser/scanner';
 import { codeShifts } from './program';
@@ -198,7 +199,7 @@ export function cellsFromMidi(
     story?: boolean;
   } = {},
 ): Imported {
-  // a line a track, and a line a voice where a track holds several (a fugue's hands): the shorter fold taken, told
+  // a line a track, and a line a voice where a track holds several (a fugue's hands): the shorter fold (`bare`) taken, told
   // as one fold (each one's moves, then the one taken, `done`)
   if (shorten && split !== 'tracks') {
     const apart = byVoice(smf);
@@ -207,7 +208,7 @@ export function cellsFromMidi(
     const options = { free, shorten, credit, pitches, story, split: 'tracks' as const };
     const inTracks = split === 'voices' && apart ? null : cellsFromMidi(smf, title, { ...options, watch: told('') });
     const inVoices = apart && cellsFromMidi(apart, title, { ...options, watch: told('in voices') });
-    const taken = inVoices?.folded && (!inTracks || !inTracks.folded || inVoices.source.length < inTracks.source.length) ? inVoices : inTracks!;
+    const taken = inVoices?.folded && (!inTracks || !inTracks.folded || bare(inVoices.source) < bare(inTracks.source)) ? inVoices : inTracks!;
     watch?.(() => taken.source, { tool: 'done', round: 0 });
     return taken;
   }
@@ -490,10 +491,12 @@ export function cellsFromMidi(
         return { source: c.print(fr.folded, fixed), says };
       });
     };
-    // (the shorter first, sections counted at their allowance; each taken only if it is shorter than the notes written
-    // out and plays them)
-    for (const c of candidates.sort((a, b) => a.source.length / (a.allowance ?? 1) - b.source.length / (b.allowance ?? 1)))
-      if (c.source.length < flat.length && sameNotes(flat, c.source)) {
+    // (the shorter first, by the folder's measure (`bare`: no comments, no sound lines, as its ratchet scores it, #247),
+    // sections counted at their allowance; each taken only if it is shorter than the notes written out and plays them)
+    const sizes = new Map(candidates.map((c) => [c, bare(c.source)]));
+    const flatSize = bare(flat);
+    for (const c of candidates.sort((a, b) => sizes.get(a)! / (a.allowance ?? 1) - sizes.get(b)! / (b.allowance ?? 1)))
+      if (sizes.get(c)! < flatSize && sameNotes(flat, c.source)) {
         [source, folded, inKey] = [c.source, true, c.key];
         if (story) told = tell(c);
         break;
@@ -576,7 +579,8 @@ export function byVoice(smf: Smf): Smf | null {
 
 /** A piece in sections (#346) reads as its form: taken when at most this much longer than the shortest fold without, as
  * a phrase said as a phrase is (`STRUCTURE`, engine/fold). Measured: at 1.05 one piece of the MIDI library takes
- * sections, at 1.15 seven (the library 1 % longer), at 1.2 eleven (and the examples 3 % longer). */
+ * sections, at 1.15 seven (the library 1 % longer), at 1.2 eleven (and the examples 3 % longer); measured in characters,
+ * before the folds were compared by `bare` (#247), which takes Royal's 12 sections at 1.149 of its plain fold. */
 const SECTIONS = 1.15;
 
 /** Steps as a braid, a run of one written `x!n`. */

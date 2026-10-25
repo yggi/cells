@@ -1,15 +1,15 @@
 {
   "anh113-minuet": {"taken":true,"score":980},
   "anh114-minuet": {"taken":true,"score":898},
-  "anh115-minuet": {"taken":true,"score":956},
+  "anh115-minuet": {"taken":true,"score":947},
   "anh116-minuet": {"taken":true,"score":1056},
-  "anh117b-polonaise": {"taken":true,"score":1133},
+  "anh117b-polonaise": {"taken":true,"score":1116},
   "anh118-minuet": {"taken":true,"score":990},
   "anh119-polonaise": {"taken":true,"score":691},
   "anh120-minuet": {"taken":true,"score":841},
   "anh121-minuet": {"taken":true,"score":756},
   "anh126-musette": {"taken":true,"score":681},
-  "anh127-march": {"taken":true,"score":1318},
+  "anh127-march": {"taken":true,"score":1271},
   "anh128-polonaise": {"taken":true,"score":809},
   "anh131-air": {"taken":true,"score":526},
   "bwv691-chorale-prelude": {"taken":true,"score":1042},
@@ -17,5 +17,5 @@
   "bwv511-chorale": {"taken":true,"score":628},
   "bwv512-chorale": {"taken":true,"score":637},
   "bwv515-aria": {"taken":true,"score":604},
-  "bwv516-aria": {"taken":true,"score":817}
+  "bwv516-aria": {"taken":true,"score":793}
 }

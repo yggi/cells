@@ -5,6 +5,7 @@ import { useOrder } from "./fold/print.js";
 import { bestKey, inDegrees, keyName, scaleText } from "./fold/degrees.js";
 import { cutLines, keyAreas } from "./fold/sections.js";
 import { voicesOf } from "./fold/voices.js";
+import { bare } from "./fold/score.js";
 import { compileSource } from "./compile.js";
 import { MAX_REPS } from "./parser/scanner.js";
 import { codeShifts } from "./program.js";
@@ -95,7 +96,7 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
         const options = { free, shorten, credit, pitches, story, split: 'tracks' };
         const inTracks = split === 'voices' && apart ? null : cellsFromMidi(smf, title, { ...options, watch: told('') });
         const inVoices = apart && cellsFromMidi(apart, title, { ...options, watch: told('in voices') });
-        const taken = inVoices?.folded && (!inTracks || !inTracks.folded || inVoices.source.length < inTracks.source.length) ? inVoices : inTracks;
+        const taken = inVoices?.folded && (!inTracks || !inTracks.folded || bare(inVoices.source) < bare(inTracks.source)) ? inVoices : inTracks;
         watch?.(() => taken.source, { tool: 'done', round: 0 });
         return taken;
     }
@@ -347,8 +348,10 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
                 return { source: c.print(fr.folded, fixed), says };
             });
         };
-        for (const c of candidates.sort((a, b) => a.source.length / (a.allowance ?? 1) - b.source.length / (b.allowance ?? 1)))
-            if (c.source.length < flat.length && sameNotes(flat, c.source)) {
+        const sizes = new Map(candidates.map((c) => [c, bare(c.source)]));
+        const flatSize = bare(flat);
+        for (const c of candidates.sort((a, b) => sizes.get(a) / (a.allowance ?? 1) - sizes.get(b) / (b.allowance ?? 1)))
+            if (sizes.get(c) < flatSize && sameNotes(flat, c.source)) {
                 [source, folded, inKey] = [c.source, true, c.key];
                 if (story)
                     told = tell(c);
