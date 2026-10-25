@@ -93,4 +93,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 055 · Recognition · → decisions/055-recognition.md
 - 056 · Modes are fragments; two facets · → decisions/056-the-mode-facet.md
 - 057 · S1 and S2 read a voice by its sound · → decisions/057-a-voice-by-its-sound.md
-- 058 · The performer is a gate, with a role; the register is the instrument's · → decisions/058-the-performer-is-a-gate.md
+- 058 · The performer is a gate, its name its role; the register is the instrument's · → decisions/058-the-performer-is-a-gate.md
