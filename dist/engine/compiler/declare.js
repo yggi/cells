@@ -1,3 +1,4 @@
+import { refLabel } from "../ast.js";
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from "../program.js";
 import { SCALE_KEY } from "../parser/generators.js";
 import { VOICE_PARAMS } from "../attributes.js";
@@ -226,9 +227,9 @@ function gates(decls, implicit, error) {
         const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
         const of = decls.get(notes);
         let plays = notes;
-        if (move?.degree && of) {
-            plays = `${notes}^${move.degree}`;
-            const copy = {
+        if (move && of) {
+            plays = `${notes}${refLabel({ pick: null, shift: 0, ...move })}`;
+            const stub = {
                 name: plays,
                 span: d.span,
                 over: null,
@@ -242,20 +243,24 @@ function gates(decls, implicit, error) {
                 paramSpans: {},
                 braid: { kind: 'blank' },
             };
+            const splice = {
+                kind: 'ref',
+                name: notes,
+                pick: null,
+                shift: 0,
+                ...(move.transpose ? { transpose: move.transpose } : {}),
+                ...(move.degree ? { values: { mul: 1, add: move.degree } } : {}),
+            };
             if (!decls.has(plays))
-                decls.set(plays, overdub(copy, of, { name: notes, pick: null, shift: 0, degree: move.degree, span: notesSpan }, (m) => error(m, notesSpan)));
+                decls.set(plays, {
+                    ...overdub(stub, of, { name: notes, pick: null, shift: 0, span: notesSpan }, (m) => error(m, notesSpan)),
+                    shift: null,
+                    laps: of.laps ?? null,
+                    braid: { kind: 'list', tokens: [{ atom: splice, repeat: 1, subdivide: 1, elongate: 1, span: notesSpan }] },
+                });
             implicit.add(plays);
         }
-        const notesExpr = move?.transpose
-            ? {
-                k: 'sum',
-                span: notesSpan,
-                items: [
-                    { e: ref(plays, notesSpan), sign: 1 },
-                    { e: { k: 'num', value: move.transpose, span: notesSpan }, sign: 1 },
-                ],
-            }
-            : ref(plays, notesSpan);
+        const notesExpr = ref(plays, notesSpan);
         const exprs = played.map((r) => ({
             k: 'prod',
             span: r.span,

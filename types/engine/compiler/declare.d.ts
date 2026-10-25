@@ -1,5 +1,5 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
-import type { CellDecl, Ref, Token } from '../ast';
+import { type CellDecl, type Ref, type Token } from '../ast';
 import type { Ctx } from './context';
 /** The declarations, as declare() hands them on. */
 export interface Declared {

@@ -1,5 +1,5 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
-import type { Atom, CellDecl, Expr, Ref, Span, Token } from '../ast';
+import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { SCALE_KEY } from '../parser/generators';
 import { VOICE_PARAMS } from '../attributes';
@@ -213,8 +213,8 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
  * played), and Shorten rewrites it (shorten/gates.ts). Either way the gate's spec is `CellDecl.gate`, and the
  * parameters it was written with are taken off the cell (a gate's play= is no tape's read head).
  *
- * A gate transposes what it plays (decision 058): `play=&tune^$-12` is the product of `(&tune + -12)`, the pitch sum
- * (so its outputs keep &tune's id); `play=&tune^2` reads a copy of &tune moved two degrees, as `base=&tune^2` is.
+ * A gate transposes what it plays (decision 058): `play=&tune^$-12` (grid steps) and `play=&tune^2` (degrees) read an
+ * implicit cell `&tune^$-12`, which plays &tune as a braid splicing `&tune^$-12` does.
  */
 function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error']): void {
   const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
@@ -270,13 +270,14 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
     const gainOf = old ? p.gain : p.level;
     const gain = typeof gainOf === 'number' ? gainOf : 1;
     const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
-    // (moved by degrees: a copy of the notes, moved, as base=&notes^n writes it; by grid steps: the pitch sum)
+    // (moved: a copy of the notes that splices them moved, &tune^$-12 or &tune^2, as a braid plays them; it takes their
+    // table, clock and laps, their turn in the splice, and is off when they are)
     const of = decls.get(notes);
     let plays = notes;
-    if (move?.degree && of) {
-      // (named as written, so an output's id reads its part: lead:tune^2:…; two gates moving it alike share it)
-      plays = `${notes}^${move.degree}`;
-      const copy: CellDecl = {
+    if (move && of) {
+      // (named as written, so an output's id reads its part: lead:tune^$-12:…; two gates moving it alike share it)
+      plays = `${notes}${refLabel({ pick: null, shift: 0, ...move })}`;
+      const stub: CellDecl = {
         name: plays,
         span: d.span,
         over: null,
@@ -290,23 +291,24 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
         paramSpans: {},
         braid: { kind: 'blank' },
       };
+      const splice: Atom = {
+        kind: 'ref',
+        name: notes,
+        pick: null,
+        shift: 0,
+        ...(move.transpose ? { transpose: move.transpose } : {}),
+        ...(move.degree ? { values: { mul: 1, add: move.degree } } : {}),
+      };
       if (!decls.has(plays))
-        decls.set(
-          plays,
-          overdub(copy, of, { name: notes, pick: null, shift: 0, degree: move.degree, span: notesSpan }, (m) => error(m, notesSpan)),
-        );
+        decls.set(plays, {
+          ...overdub(stub, of, { name: notes, pick: null, shift: 0, span: notesSpan }, (m) => error(m, notesSpan)),
+          shift: null,
+          laps: of.laps ?? null,
+          braid: { kind: 'list', tokens: [{ atom: splice, repeat: 1, subdivide: 1, elongate: 1, span: notesSpan }] },
+        });
       implicit.add(plays);
     }
-    const notesExpr: Expr = move?.transpose
-      ? {
-          k: 'sum',
-          span: notesSpan,
-          items: [
-            { e: ref(plays, notesSpan), sign: 1 },
-            { e: { k: 'num', value: move.transpose, span: notesSpan }, sign: 1 },
-          ],
-        }
-      : ref(plays, notesSpan);
+    const notesExpr: Expr = ref(plays, notesSpan);
     const exprs: Expr[] = played.map((r) => ({
       k: 'prod',
       span: r.span,
