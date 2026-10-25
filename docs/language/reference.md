@@ -214,5 +214,7 @@ Every cell has a sort, decided by its own line, never by where it is written in 
 ## Gates: a product with a name
 
 - `play=&x`: A gate: it plays the notes of &x on the voices in its braid (one voice, a kit, or several), as the product [&x * &voice] does. On a cell with no braid, play= is a read head. [→](mix.md) `&leadOut play=&tune &lead`
+- `play=&x^$n` · `play=&x^n`: A gate transposes what it plays, as a braid moves a cell: ^$n n grid steps (semitones on the 12), ^n n degrees of the part's table. [→](mix.md) `&bass play=&bassline^$-12 &bassV` · `&lead play=&tune^2 &leadV`
+- `&drums &bass &pad &stab &lead`: A performer's role is its gate's name (decision 058), as a kit member's drum note is its name: a trailing number a copy (&lead2), any other name no role. [→](mix.md) `&bass play=&bassline level=.8 &bassV` · `&lead2 play=&answer &bell`
 - `level=&a*&b*n`: How loud a gate plays: the product of its level cells and a gain (level=.4 a gain alone). [→](mix.md) `&leadOut play=&tune level=&accent*&duck*.4 &lead`
 - `[&a, &b]`: A gate plays a chord of voices all at once; several bare voices (&a &b) are a kit, its notes picking one. [→](mix.md) `&leadOut play=&tune [&lead, &bell]`

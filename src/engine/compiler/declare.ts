@@ -5,6 +5,7 @@ import { SCALE_KEY } from '../parser/generators';
 import { VOICE_PARAMS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
+import { overdub } from '../parser/base';
 import type { Ctx } from './context';
 
 /** The declarations, as declare() hands them on. */
@@ -211,6 +212,9 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
  * The old spelling still reads (`trigger=` for play=, `velocity=` `gate=` `gain=` for level=, several bare voices all
  * played), and Shorten rewrites it (shorten/gates.ts). Either way the gate's spec is `CellDecl.gate`, and the
  * parameters it was written with are taken off the cell (a gate's play= is no tape's read head).
+ *
+ * A gate transposes what it plays (decision 058): `play=&tune^$-12` is the product of `(&tune + -12)`, the pitch sum
+ * (so its outputs keep &tune's id); `play=&tune^2` reads a copy of &tune moved two degrees, as `base=&tune^2` is.
  */
 function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error']): void {
   const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
@@ -223,6 +227,7 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
     if (notes === null) continue;
     const port = old ? 'trigger' : 'play';
     const notesSpan = d.paramSpans[port] ?? d.span;
+    const move = old ? undefined : d.playMove;
     // what it plays: a chord of voices (all), one voice or kit, or several bare voices (a kit; the old spelling: all)
     const plain = (a: Atom) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
     const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;
@@ -265,14 +270,51 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
     const gainOf = old ? p.gain : p.level;
     const gain = typeof gainOf === 'number' ? gainOf : 1;
     const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
+    // (moved by degrees: a copy of the notes, moved, as base=&notes^n writes it; by grid steps: the pitch sum)
+    const of = decls.get(notes);
+    let plays = notes;
+    if (move?.degree && of) {
+      // (named as written, so an output's id reads its part: lead:tune^2:…; two gates moving it alike share it)
+      plays = `${notes}^${move.degree}`;
+      const copy: CellDecl = {
+        name: plays,
+        span: d.span,
+        over: null,
+        shift: null,
+        off: false,
+        step: null,
+        map: null,
+        stride: null,
+        cycle: null,
+        params: {},
+        paramSpans: {},
+        braid: { kind: 'blank' },
+      };
+      if (!decls.has(plays))
+        decls.set(
+          plays,
+          overdub(copy, of, { name: notes, pick: null, shift: 0, degree: move.degree, span: notesSpan }, (m) => error(m, notesSpan)),
+        );
+      implicit.add(plays);
+    }
+    const notesExpr: Expr = move?.transpose
+      ? {
+          k: 'sum',
+          span: notesSpan,
+          items: [
+            { e: ref(plays, notesSpan), sign: 1 },
+            { e: { k: 'num', value: move.transpose, span: notesSpan }, sign: 1 },
+          ],
+        }
+      : ref(plays, notesSpan);
     const exprs: Expr[] = played.map((r) => ({
       k: 'prod',
       span: r.span,
       factors: [
-        ref(notes, notesSpan),
+        notesExpr,
         ...levels.map((l) => ref(l.name, l.span)),
         // (notes read through the kit it plays are its sound already: &drums over=&kit, then &out play=&drums &kit)
-        ...(decls.get(notes)?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
+        ...(of?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
         ...(gain !== 1 ? [{ k: 'num', value: gain, span: gainSpan } as Expr] : []),
       ],
     }));
@@ -283,7 +325,7 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
       ...d,
       params,
       paramCells,
-      gate: { notes, port, levels: levels.map(({ name, port }) => ({ name, port })), gain, receivers: named.map((r) => r.name) },
+      gate: { notes, ...(move ? { move } : {}), plays, port, levels: levels.map(({ name, port }) => ({ name, port })), gain, receivers: named.map((r) => r.name) },
       braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs, gate: d.name }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] },
     });
   }

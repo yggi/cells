@@ -5,7 +5,7 @@
  * diagnostics and the environment (context.ts).
  */
 import type { ParseResult, Span } from '../ast';
-import type { AudioTape, CompileResult, Env, ResolvedCell } from '../program';
+import { roleOf, type AudioTape, type CompileResult, type Env, type Performer, type ResolvedCell } from '../program';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
 import type { ShowPlugin } from '../plugins';
 import { context } from './context';
@@ -72,6 +72,12 @@ export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string>
         .map((h) => ({ head: h.name, at: num(h, 'at', 0), wander: num(h, 'wander', 0), wanderhz: num(h, 'wanderhz', 0.2) })),
     }));
   const plugins = pluginsOf(parsed);
+  // (the gates, as performers: decision 058)
+  const performers: Performer[] = [...decls.values()].flatMap((d) =>
+    d.gate && !declared.implicit.has(d.name)
+      ? [{ name: d.name, role: roleOf(d.name), part: d.gate.notes, ...(d.gate.move ? { move: d.gate.move } : {}), voices: d.gate.receivers }]
+      : [],
+  );
   return {
     ok,
     cells,
@@ -84,6 +90,7 @@ export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string>
     returns,
     resonances,
     plugins,
+    performers,
     sections: declared.sections,
     ...(timed.mainMeter ? { mainMeter: timed.mainMeter } : {}),
     ...(declared.mainKey ? { mainKey: declared.mainKey } : {}),

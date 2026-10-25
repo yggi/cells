@@ -87,6 +87,25 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 &out loop=SAMPLE_RATE map=sample [&drums]
 ```
 
+**A gate transposes what it plays**, as a braid moves a cell ([decision 058](https://github.com/yggi/cells/blob/main/docs/decisions/058-the-performer-is-a-gate.md)): `play=&x^$n` moves every note
+n grid steps (semitones on the 12), `play=&x^n` n degrees of the table &x reads. The register is the voice's, and the gate
+plays the part where it wants it:
+
+```cells
+&bar scan(1 1 1 1) step=120bpm
+&bassline over=scale(minor, A) step=4n 0 0 4 3
+&bassV s=saw loop=C2 lpf=900 env=&(map=adsr .01 .2 .5 .1)
+&bass play=&bassline^$-12 level=.8 &bassV                # an octave below where the voice sits
+&out loop=SAMPLE_RATE map=sample [&bass]
+```
+
+**A gate is a performer, and its name is its role**, as a kit member's name is its drum note (`&bd2` a kick): `drums`,
+`bass`, `pad`, `stab` and `lead` are roles, a trailing number a copy (`&lead2`, a second lead), and any other name
+(`&leadOut`) a gate with no role, which plays as written. There is no `role=`: the name is the one place it is said.
+`&drums` above is the drummer. Nothing sounds different by its role; what was compiled lists the gates as performers
+(`CompileResult.performers`: each one's name, its role, the part it plays, its move and its voices), so a frontend reads
+who plays what without parsing an output id.
+
 `play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
 still reads (`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
 played), and Shorten rewrites it. A gate times nothing itself: `over=`, `step=` and the like on it do nothing, and warn

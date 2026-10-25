@@ -50,6 +50,20 @@ export const GATE_SYNTAX: readonly Syntax[] = [
   ),
   syntax(
     'gate',
+    'play=&x^$n · play=&x^n',
+    "A gate transposes what it plays, as a braid moves a cell: ^$n n grid steps (semitones on the 12), ^n n degrees of the part's table.",
+    ['&bass play=&bassline^$-12 &bassV', '&lead play=&tune^2 &leadV'],
+    'mix.md',
+  ),
+  syntax(
+    'gate',
+    '&drums &bass &pad &stab &lead',
+    "A performer's role is its gate's name (decision 058), as a kit member's drum note is its name: a trailing number a copy (&lead2), any other name no role.",
+    ['&bass play=&bassline level=.8 &bassV', '&lead2 play=&answer &bell'],
+    'mix.md',
+  ),
+  syntax(
+    'gate',
     'level=&a*&b*n',
     'How loud a gate plays: the product of its level cells and a gain (level=.4 a gain alone).',
     ['&leadOut play=&tune level=&accent*&duck*.4 &lead'],

@@ -39,6 +39,8 @@ interface Body {
   readonly paramSpans: Record<string, Span>;
   readonly paramCells: Record<string, ParamCells>;
   readonly paramClocks: Record<string, StepSpec>;
+  /** play=&x^$n or ^n: a gate's move (decision 058), where its caret is (a read head's move is ignored, and warns). */
+  playMove: { transpose?: number; degree?: number; at: number; len: number; as: string } | null;
 }
 
 /** Reads one attribute's value (the scanner is just past `key=`) into the body. */
@@ -304,10 +306,27 @@ const CELL_WANTS: Readonly<Record<string, string>> = {
 
 /** A parameter naming a cell: fm= its modulator; write= a tape's source; play= a read head's tape … */
 const readCellParam: Reader = (s, b, word) => {
+  if (word === 'play') return readPlay(s, b);
   const r = s.cellRef(CELL_WANTS[word], `after ${word}=`);
   b.params[word] = r.name;
   b.paramSpans[word] = r.span;
 };
+
+/**
+ * play=: a read head's tape, or the notes a gate plays, moved as a braid moves them (decision 058): `play=&tune^$-12`
+ * 12 grid steps down, `play=&tune^2` two degrees up. Which it is waits for the braid (parseBody).
+ */
+function readPlay(s: LineScanner, b: Body): void {
+  const at = s.i;
+  const r = s.ref(CELL_WANTS.play);
+  s.rejectTap(at);
+  b.params.play = r.name;
+  b.paramSpans.play = r.span;
+  if (r.transpose || r.degree) {
+    const caret = s.text.lastIndexOf('^', s.i - 1);
+    b.playMove = { ...(r.transpose ? { transpose: r.transpose } : {}), ...(r.degree ? { degree: r.degree } : {}), at: caret, len: s.i - caret, as: s.text.slice(at, s.i) };
+  }
+}
 
 /**
  * swing= (#18): by level, `swing=8n:.67` (a meter's eighths, each pair's second two thirds through; a share is a decimal or a
@@ -567,6 +586,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     paramSpans: {},
     paramCells: {},
     paramClocks: {},
+    playMove: null,
   };
   // each setting, as it was first written
   const seen = new Map<string, string>();
@@ -690,6 +710,17 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     if (b.over) s.fail('scale(…) reads through a key of its own: drop over=, or write the key as a cell (&mode over=&key scan(…))', b.over.span.col - 1, b.over.span.len);
     b.over = scaleKey;
   }
+  // (play= with no braid is a read head: it reads the tape itself, so a move is dropped)
+  if (b.playMove && braid.kind === 'blank')
+    s.warn(
+      `${b.playMove.as} after play=: ^ and ^$ move what a gate plays (one with a braid: &out play=${b.playMove.as} &lead); a read head reads the tape itself, so the move is ignored`,
+      b.playMove.at,
+      b.playMove.len,
+    );
+  const playMove =
+    b.playMove && braid.kind !== 'blank'
+      ? { ...(b.playMove.transpose ? { transpose: b.playMove.transpose } : {}), ...(b.playMove.degree ? { degree: b.playMove.degree } : {}) }
+      : null;
   const {
     over,
     base,
@@ -747,6 +778,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     paramSpans,
     paramCells,
     paramClocks,
+    ...(playMove ? { playMove } : {}),
     braid,
     frees: [...s.frees],
   };

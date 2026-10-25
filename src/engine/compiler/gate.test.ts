@@ -105,3 +105,57 @@ describe('a gate (play=, level=): decision 023', () => {
     );
   });
 });
+
+describe('a gate is a performer (decision 058): its name its role, and it transposes what it plays', () => {
+  const performers = (src: string) => compileSource(BASE + src).performers;
+  // (semitones from C4, as the voice at C5 plays them: 12 is the tune's 0)
+  const semis = (src: string) => {
+    const r = compileSource(BASE + src);
+    // (BASE's own step=&bar*2 warns; nothing else may)
+    expect(r.diagnostics.map((d) => d.message).filter((m) => !m.startsWith('step=&bar*2'))).toEqual([]);
+    return eventsBetween(plan(r, codeShifts(r)), 0, 2).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + 0);
+  };
+
+  it('reads a role off its name, a trailing number a copy, any other name none', () => {
+    const roles = performers(
+      '&bass play=&tune &lead\n&lead2 play=&tune &bell\n&drums play=&tune &kit\n&leadOut play=&tune &lead\n&out map=sample [&bass, &lead2, &drums, &leadOut]',
+    );
+    expect(roles.map((p) => [p.name, p.role])).toEqual([
+      ['bass', 'bass'],
+      ['lead2', 'lead'],
+      ['drums', 'drums'],
+      ['leadOut', null],
+    ]);
+  });
+
+  it('says who plays which part, on what, moved how', () => {
+    expect(performers('&bass play=&tune^$-12 level=&accent*.8 [&lead, &bell]\n&out map=sample &bass')).toEqual([
+      { name: 'bass', role: 'bass', part: 'tune', move: { transpose: -12 }, voices: ['lead', 'bell'] },
+    ]);
+    expect(performers('&lead2 play=&tune^2 &lead\n&out map=sample &lead2')).toEqual([{ name: 'lead2', role: 'lead', part: 'tune', move: { degree: 2 }, voices: ['lead'] }]);
+    expect(performers('&out map=sample [&tune * &lead]')).toEqual([]);
+  });
+
+  it('play=&tune^$-12 plays every note 12 semitones down, as the pitch sum does', () => {
+    const as = semis('&g play=&tune &lead\n&out map=sample &g');
+    expect(as).toEqual([12, 16, 19, 16, 12, 16, 19, 16]);
+    expect(semis('&g play=&tune^$-12 &lead\n&out map=sample &g')).toEqual(as.map((n) => n - 12));
+    expect(played('&g play=&tune^$-12 level=.5 &lead\n&out map=sample &g')).toEqual(played('&g [(&tune + -12) * &lead * .5]\n&out map=sample &g'));
+    // (and its outputs keep the part's id)
+    expect(compileSource(BASE + '&g play=&tune^$-12 &lead\n&out map=sample &g').outputs.map((o) => o.id.split(':').slice(0, 2).join(':'))).toEqual(['lead:tune']);
+  });
+
+  it('play=&tune^2 plays two degrees up, over the tune’s table', () => {
+    // (C D E F G A B over C major: the tune's 0 2 4 2 is C E G E, two degrees up E G B G)
+    expect(semis('&g play=&tune^2 &lead\n&out map=sample &g')).toEqual([16, 19, 23, 19, 16, 19, 23, 19]);
+    expect(semis('&g play=&tune^-1 &lead\n&out map=sample &g')).toEqual([11, 14, 17, 14, 11, 14, 17, 14]);
+    expect(played('&g play=&tune^2 &lead\n&out map=sample &g')).toEqual(played('&up base=&tune^2\n&g play=&up &lead\n&out map=sample &g'));
+  });
+
+  it('a read head reads its tape itself: a move there is ignored, and warns', () => {
+    const r = compileSource(BASE + '&tape write=&tune length=1\n&h play=&tape^$-12');
+    expect(r.diagnostics.map((d) => d.message).filter((m) => !m.startsWith('step=&bar*2'))).toEqual([
+      expect.stringMatching(/^&tape\^\$-12 after play=: .*a read head reads the tape itself, so the move is ignored/),
+    ]);
+  });
+});
