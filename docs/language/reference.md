@@ -39,6 +39,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `x(k,n,r)`: A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers. [→](cell.md) `&groove step=1 &bd(3,8) &hh(5,8,2)` · `&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)`
 - `x?` · `x?p`: Chance, as Strudel's degradeBy: the step is dropped with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence. [→](cell.md) `&hats step=4 0 0? 0?.3 0` · `&ghost chance=.8 step=4 0? 0? 0? 0?`
 - `&x:0:gain`: A hit's own gain, as Strudel spells a sound's fields (s("hh:0:.4")): its number in its table (0; a pitched hit is not yet), then its gain, linear (1 as it is). In a groove, and in its chords: [&bd, &hh:0:.4]. [→](cell.md) `&beat step=8 [&bd,&hh] &hh:0:.4 [&sd,&hh] &hh:0:.4`
+- `n:gain`: A number's own gain, as a hit's (&hh:0:.4): 2:.4 is 2 at .4, linear (1 as it is), in chords too ([0:.5, 5:.3]). A kit's hit by its number, or a note's velocity. [→](cell.md) `&groove over=&kit step=8n [0, 5:.3] 5:.3 [2:.6, 5:.3] 5:.3`
 
 ## References
 

@@ -20,3 +20,12 @@ export function parseFields(s: LineScanner): number | undefined {
   if (gain === null) return s.fail('A hit’s gain: a number, &bd:0:.3 (1 as it is)', g, 1);
   return parseFloat(gain);
 }
+
+/** After a number, its own gain (`2:.4`, decision 058's drums: a kit member's hit by its number): linear, 1 as it is. */
+export function parseGain(s: LineScanner): number {
+  s.i++;
+  const g = s.i;
+  const gain = s.match(/[0-9]*\.[0-9]+|[0-9]+/y);
+  if (gain === null) return s.fail('A number’s gain: 2:.4 (1 as it is)', g, 1);
+  return parseFloat(gain);
+}

@@ -99,10 +99,10 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it('are the General MIDI kit, the core kit and the bass, each once at the centre of style space as the facet instrument, the core kit weighted first', () => {
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm kit', 'core kit', 'bass']);
+  it('are the General MIDI kit, the core kit, the bass, the keys, the pad and the lead, each once at the centre of style space as the facet instrument, the core kit weighted first', () => {
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm kit', 'core kit', 'bass', 'keys', 'pad', 'lead']);
     for (const f of INSTRUMENT_FRAGMENTS) expect(f.association.map((wp) => [wp.point, wp.facet])).toEqual([[{ sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 }, 'instrument']]);
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([0.5, 1, 0.25]);
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([0.5, 1, 0.25, 0.25, 0.25, 0.25]);
     expect(
       createRepository(LIBRARY)
         .query(AMBIENT, 3, {}, { facet: 'instrument' })
@@ -159,6 +159,32 @@ describe('every rhythm with the core kit plays each hit on its General MIDI note
       const { hits, diagnostics } = played(union, 32);
       expect(diagnostics).toEqual([]);
       expect(hits).toEqual(alone.hits);
+    }
+  });
+});
+
+// The melodic instruments (#278, decision 058): one voice each, holding the register Jambot's section text sounds that
+// part at (yggi/jambot packages/score/src/section-text.ts @ 24a528b: PIN_VOICES, the comp at C3, the lead at C4).
+describe('the keys, the pad and the lead', () => {
+  it('each define one voice at its register, use nothing and compile clean', () => {
+    expect(['keys', 'pad', 'lead'].map((id) => byId(id).text)).toEqual(['&keysV loop=C3', '&padV loop=C3', '&leadV loop=C4']);
+    for (const id of ['keys', 'pad', 'lead']) expect(compileSource(byId(id).text).diagnostics).toEqual([]);
+  });
+
+  it('each sounds a part played on it, at its register', () => {
+    for (const [id, voice, note] of [
+      ['keys', 'keysV', 48],
+      ['pad', 'padV', 48],
+      ['lead', 'leadV', 60],
+    ] as const) {
+      const plan = planOf(hosted('&part step=4n 0 ~ ~ ~', byId(id).text, `&out map=midi(1) [&part * &${voice}]`));
+      const route = router(plan.result, channelTable(plan.result));
+      const notes = windowAt(plan, 0, 2 - 1e-9).events.flatMap((e) => routesOf(route(e)).flatMap((r) => [midiNote(e, r)?.note]));
+      expect(
+        plan.result.diagnostics.map((d) => d.message),
+        id,
+      ).toEqual([]);
+      expect(notes, id).toEqual([note]);
     }
   });
 });

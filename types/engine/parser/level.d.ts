@@ -5,3 +5,5 @@ import type { LineScanner } from './scanner';
  * number in its table, then `:gain`, its own gain (linear). The hit's gain, if one is written; none, undefined.
  */
 export declare function parseFields(s: LineScanner): number | undefined;
+/** After a number, its own gain (`2:.4`, decision 058's drums: a kit member's hit by its number): linear, 1 as it is. */
+export declare function parseGain(s: LineScanner): number;

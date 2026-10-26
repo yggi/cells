@@ -33,7 +33,15 @@ export const STUBS: ReadonlySet<string> = new Set([
  * (decision 047): it goes on a tier with a piece whose cells it clusters. `use "id"` (decision 054) waits for the examples
  * to take a kit by it (#196's rung 4).
  */
-export const PENDING: ReadonlySet<string> = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags', 'line use "id"']);
+export const PENDING: ReadonlySet<string> = new Set([
+  'step <a b c>',
+  'modifier x/n',
+  'modifier x(k,n,r)',
+  'parameter legato',
+  'attribute tags',
+  'line use "id"',
+  'modifier n:gain',
+]);
 
 /**
  * A form's key, from its reference entry: an attribute or a parameter by its word (`over`, `lpf`);
@@ -397,7 +405,7 @@ export function formsUsed(source: string): Set<string> {
     if (t.subdivide > 1) use('modifier x*n');
     if (t.elongate !== 1) use('modifier x@n');
     if (t.chance !== undefined) use('modifier x?');
-    if (t.level !== undefined) use('modifier &x:0:gain');
+    if (t.level !== undefined) use(t.atom.kind === 'note' ? 'modifier n:gain' : 'modifier &x:0:gain');
     const a = t.atom;
     if (a.kind === 'note') {
       use('step n');
@@ -407,6 +415,7 @@ export function formsUsed(source: string): Set<string> {
     else if (a.kind === 'chord') {
       use('step [a, b, c]');
       if (a.alters.some(Boolean)) use('step n#');
+      if (a.levels) use('modifier n:gain');
     } else if (a.kind === 'choice') {
       use('step [a|b|c]');
       if (a.alters.some(Boolean)) use('step n#');

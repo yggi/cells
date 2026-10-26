@@ -3,7 +3,7 @@ import type { Atom, Euclid, Token, ValueMap } from '../ast';
 import { lapsOf } from '../subseq';
 import { bjorklund } from './generators';
 import { MAX_NESTING, MAX_REPS, type LineScanner } from './scanner';
-import { parseFields } from './level';
+import { parseFields, parseGain } from './level';
 import { isMixChord, parseMixChord } from './mix';
 import { syntax, type Syntax } from './syntax';
 
@@ -204,7 +204,15 @@ function parseBracket(s: LineScanner, depth: number): Atom {
   // [0, 4, 7] (and [0]): a chord of plain numbers or names; anything else is a subsequence, or a stack of them
   if (single) {
     const pitched = notes.map((n) => !!n.pitched);
-    return { kind: 'chord', notes: notes.map((n) => n.value), alters: notes.map((n) => n.alter), ...(pitched.some(Boolean) ? { pitched } : {}) };
+    // (a number's own gain, [0:.5, 5:.3])
+    const levels = layers.some((l) => l[0].level !== undefined) ? layers.map((l) => l[0].level ?? 1) : undefined;
+    return {
+      kind: 'chord',
+      notes: notes.map((n) => n.value),
+      alters: notes.map((n) => n.alter),
+      ...(pitched.some(Boolean) ? { pitched } : {}),
+      ...(levels ? { levels } : {}),
+    };
   }
   return { kind: 'seq', layers };
 }
@@ -316,6 +324,14 @@ export const LEVEL_SYNTAX = syntax(
   'cell.md',
 );
 
+export const GAIN_SYNTAX = syntax(
+  'modifier',
+  'n:gain',
+  "A number's own gain, as a hit's (&hh:0:.4): 2:.4 is 2 at .4, linear (1 as it is), in chords too ([0:.5, 5:.3]). A kit's hit by its number, or a note's velocity.",
+  ['&groove over=&kit step=8n [0, 5:.3] 5:.3 [2:.6, 5:.3] 5:.3'],
+  'cell.md',
+);
+
 export function parseToken(s: LineScanner, depth = 0): Token {
   const start = s.i;
   let atom = parseAtom(s, depth);
@@ -325,8 +341,9 @@ export function parseToken(s: LineScanner, depth = 0): Token {
   let level: number | undefined;
   let slow: number | undefined;
   const seen = new Set<string>();
-  // (a voice's hit fields, &hh:0:.4: its gain)
+  // (a voice's hit fields, &hh:0:.4: its gain; a number's, 2:.4, a kit member's hit by its number)
   if (atom.kind === 'ref') level = parseFields(s);
+  else if (atom.kind === 'note' && !atom.pitched && s.peek() === ':') level = parseGain(s);
   // x(k,n,r): struck by a euclid, straight after the step (then its other modifiers)
   const euclid = s.peek() === '(' ? parseEuclidOn(s) : undefined;
   while (s.peek() in MODIFIERS || s.peek() === '?' || s.peek() === '/') {

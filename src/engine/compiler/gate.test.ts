@@ -177,3 +177,18 @@ describe('a gate is a performer (decision 058): its name its role, and it transp
     ]);
   });
 });
+
+// (#282's probe: a part with legato= read as a kit's member, so a braid splicing it, or a gate playing it moved, was a kit)
+describe('a line’s own parameters make no voice of it', () => {
+  const diagnostics = (src: string) =>
+    compileSource(BASE + src)
+      .diagnostics.map((d) => d.message)
+      .filter((m) => !m.startsWith('step=&bar*2'));
+  it('a gate plays a part with legato= moved, beside a kit', () => {
+    expect(diagnostics('&t over=&major step=&bar*2 legato=.5 0 2\n&g play=&t^$-12 &lead\n&drums play=&tune &kit\n&out map=sample [&g, &drums]')).toEqual([]);
+    expect(played('&t over=&major step=&bar*2 legato=.5 0 2\n&g play=&t^$-12 &lead\n&out map=sample &g')).toHaveLength(8);
+  });
+  it('a braid splicing a line with legato= is that line', () => {
+    expect(diagnostics('&t step=&bar*2 legato=.5 0 2\n&up step=&bar*2 &t\n&g play=&up &lead\n&out map=sample &g')).toEqual([]);
+  });
+});

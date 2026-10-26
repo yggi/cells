@@ -1,7 +1,7 @@
 /** Phase 3: who plays what — kits, the sound card's channels, MIDI cards' channels, mixes expanded (instruments, sends), voices marked. */
 import type { Binding, CellDecl, Span } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
-import { ATTRIBUTES, VOICE_PARAMS } from '../attributes';
+import { ATTRIBUTES, memberParams, VOICE_PARAMS } from '../attributes';
 import { canonicalTag, TUTORIAL } from '../tags';
 import { isMidiCard, type MidiDest, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
@@ -13,7 +13,8 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   const cells = new Map(given);
   // ---- voices: the signal of every binding (the factor that is a sound: algebra.ts), and cells with sound parameters.
   // A cell made only of &refs to voices is a kit: numbers pick a voice.
-  const hasParams = (n: string) => Object.keys(decls.get(n)?.params ?? {}).length > 0;
+  // (a line's own parameters, legato=, make no member: memberParams)
+  const hasParams = (n: string) => memberParams(decls.get(n)?.params ?? {});
   const isKit = (c: ResolvedCell) => c.units.length > 0 && c.units.every((u) => u.atom.kind === 'ref' && hasParams(u.atom.name));
   for (const c of [...cells.values()]) if (!c.voice && !c.root && isKit(c)) cells.set(c.name, { ...c, kit: true });
   // ---- the sound card: cells with map=sample; their entries are channels (mix cells)

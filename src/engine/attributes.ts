@@ -272,6 +272,17 @@ export const MOVING_PARAMS: ReadonlySet<string> = new Set(Object.keys(ATTRIBUTES
 /** Parameters that make a cell a voice; the rest are a physical cell's (motor=, write=, scope= …) and make none. */
 export const VOICE_PARAMS: ReadonlySet<string> = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].voice));
 
+/** A line's own parameters, its timing (legato= swing= beat= …), acting on a clocked or driven line and never on a voice; not a motor's. */
+export const LINE_PARAMS: ReadonlySet<string> = new Set(
+  Object.keys(PARAMS).filter((k) => PARAMS[k].doc !== 'physics.md' && PARAMS[k].on?.every((r) => r === 'clock' || r === 'driven')),
+);
+
+/**
+ * Does a cell's line give it a parameter of a kit's member: any but a line's own (legato= on a part makes it no voice, so
+ * a braid splicing it, or a gate playing it moved, &bassline^$-12, is no kit: #282).
+ */
+export const memberParams = (params: Readonly<Record<string, unknown>>): boolean => Object.keys(params).some((k) => !LINE_PARAMS.has(k));
+
 /** Who an attribute acts on, in words: "a voice", "a tape or a read head". */
 export function rolesText(on: readonly Role[]): string {
   const NAMES: Record<Role, string> = {
