@@ -27,7 +27,9 @@ const BARS = e31.witnesses.map((w) => ({
     .split('\n')
     .slice(1)
     .filter((l) => !/^&\w+ s=white$/.test(l))
-    .join('\n'),
+    .join('\n')
+    // (its card is the workbench's: the seed's mix is &groove, #291)
+    .replace('&drums map=midi(10) [', '&groove ['),
 }));
 /** The bass seeds' workbench over I–vi–IV–V (`src/engine/vary/pitched.test.ts`). */
 const BASS = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]\n${kit('bass')}`;

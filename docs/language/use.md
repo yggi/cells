@@ -49,7 +49,7 @@ Each of these is said on the piece's `use` line it came through, and so is what 
 
 A piece with no card is heard through the built-in one ([mix.md](mix.md)): every sound nothing reads.
 A used fragment's voices aren't among them, so a piece using the General MIDI kit doesn't hold its 47 voices: the `&beat` above is heard, the kit's unread toms aren't.
-A used fragment that should sound brings its card, or the piece reads its lines.
+The piece reads a used fragment's lines on a card of its own (`&out map=midi(10) &groove`): the seed's pattern fragments carry no card, since where their notes go is the piece's (#291).
 
 ## The resolver: cells resolves nothing itself
 

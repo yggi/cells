@@ -1,4 +1,4 @@
-import { declWords, splitWords } from "../edit.js";
+import { declWords, splitComment, splitWords } from "../edit.js";
 import { flatten } from "../flatten.js";
 import { gmDrumNote } from "../midi.js";
 import { noteValue } from "../meter.js";
@@ -88,11 +88,30 @@ function entriesOf(source, card) {
         .map((entry) => entry.trim());
 }
 export function linesOf(source, result) {
-    const cards = [...result.cells.values()].filter((c) => (c.map?.kind === 'midi' || c.sink) && !c.implicit);
+    const readBy = new Set(source.split('\n').flatMap((raw) => [
+        ...splitComment(raw)[0]
+            .replace(/^\s*&[A-Za-z_][A-Za-z0-9_]*/, '')
+            .matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g),
+    ].map((m) => m[1])));
+    const unread = [...result.cells.values()].filter((c) => !c.implicit && !c.lambda && !readBy.has(c.name));
+    const cards = [
+        ...[...result.cells.values()].filter((c) => (c.map?.kind === 'midi' || c.sink) && !c.implicit).map((c) => c.name),
+        ...unread.filter((c) => !c.map && !c.voice && !c.step && entriesOf(source, c.name).length).map((c) => c.name),
+    ];
     const out = [];
-    for (const card of cards) {
-        const entries = entriesOf(source, card.name);
+    const seen = new Set();
+    const read = (card) => {
+        if (seen.has(card))
+            return;
+        seen.add(card);
+        const entries = entriesOf(source, card);
         for (const entry of entries) {
+            const mix = /^&([A-Za-z_][A-Za-z0-9_]*)$/.exec(entry)?.[1];
+            const cell = mix ? result.cells.get(mix) : undefined;
+            if (cell && !cell.voice && !cell.step && entriesOf(source, mix).length) {
+                read(mix);
+                continue;
+            }
             const factors = entry.split('*').map((f) => f.trim());
             const refs = factors.filter((f) => f.startsWith('&'));
             if (factors.some((f) => !/^&[A-Za-z_][A-Za-z0-9_]*$/.test(f) && !NUMBER.test(f)))
@@ -103,7 +122,7 @@ export function linesOf(source, result) {
             const levelCells = cells.filter((c) => c.map?.kind === 'amp');
             const triggers = cells.filter((c) => c.map?.kind !== 'amp');
             const voices = triggers.filter((c) => c.voice);
-            const at = { name: card.name, entries, entry };
+            const at = { name: card, entries, entry };
             if (triggers.length === 2 && voices.length === 1 && !levelCells.length) {
                 const line = pitchedLineOf(source, result, triggers.find((c) => !c.voice).name, voices[0].name, at);
                 if (line)
@@ -116,6 +135,15 @@ export function linesOf(source, result) {
             if (line)
                 out.push(line);
         }
+    };
+    for (const card of cards)
+        read(card);
+    for (const c of unread) {
+        if (!c.over || !c.step || c.voice || c.map)
+            continue;
+        const line = pitchedLineOf(source, result, c.name, null, { name: c.name, entries: [], entry: `&${c.name}` });
+        if (line)
+            out.push(line);
     }
     return out;
 }
@@ -204,7 +232,7 @@ function pitchedLineOf(source, result, trigger, voice, card) {
             continue;
         const e = at[0];
         const pitch = { written: w, sign: 1, by: 0, table: `${e.table}:${e.tableShift}`, value: e.value, alter: e.alter, transpose: e.transpose ?? 0 };
-        notes.push({ step, voice: `&${voice}`, own: null, level: 1, pitch });
+        notes.push({ step, voice: voice === null ? '' : `&${voice}`, own: null, level: 1, pitch });
     }
     if (events.length !== notes.length)
         return null;
@@ -217,7 +245,7 @@ function pitchedLineOf(source, result, trigger, voice, card) {
         notes,
         stepWhole: tapWhole(cell.step.tap, meter),
         meter,
-        pitched: { table: cell.over, voice: `&${voice}` },
+        pitched: { table: cell.over, voice: voice === null ? '' : `&${voice}` },
     };
 }
 const hitText = (n) => (n.own === null ? n.voice : `${n.voice}:0:${n.own}`);

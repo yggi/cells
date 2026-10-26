@@ -34,12 +34,11 @@ lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
-&bass over=&harm step=2n 0 0
-&bassOut map=midi(2) [&bass * &bassV]
+&bassline over=&harm step=2n 0 0
 ```
 
 Jambot's bass pattern `root`: the root of the chord in force on one and on three, the bar's downbeat and its half (`bass.ts` weighs them 1 and 0.6).
-Its own lines read the host's `&harm` (`over=&harm`: each index a tone of the chord sounding) and tap the host's main meter, so it fits any workbench whose `&bar` and `&harm` are written first; its card sends it on Jambot's bass channel, 2.
+Its own lines read the host's `&harm` (`over=&harm`: each index a tone of the chord sounding) and tap the host's main meter, so it fits any workbench whose `&bar` and `&harm` are written first; it has no card (#291): it is the part the bass performer plays (`&bassline`, decision 058), and the workbench's card sends it.
 
 At the point where the root is all `bass.ts` plays: there its blend weighs the pump, the eighths and the funk line 0 (no sync, no energy, legato), so the root's share is 1.
 Of the points where it is 1, this is the nearest to Ambient's, the preset where the root's share is greatest (0.68): Ambient's harmony, its sync and energy at 0.
