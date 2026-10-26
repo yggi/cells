@@ -1,21 +1,29 @@
-# `use`: a fragment taken by its id
+# `use`: a fragment's lines, taken by its id
 
-A piece takes a fragment of a library into itself by naming it: `use "core kit"`, a line of its own, the fragment's id in double quotes ([decision 054](https://github.com/yggi/cells/blob/main/docs/decisions/054-instruments-and-use.md)).
+A piece takes lines of a library's fragment into itself by naming them, and the fragment: a line of its own ([decision 054](https://github.com/yggi/cells/blob/main/docs/decisions/054-instruments-and-use.md), [decision 059](https://github.com/yggi/cells/blob/main/docs/decisions/059-named-use.md)).
 It has no name, no attributes and no braid.
 
 ```cells
-use "core kit"
+use &bd, &sd, &hh from "core kit"
 &bar meter("4/4") step=100bpm
 &beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]
 ```
 
+- **`use &bd, &sd from <id>`** takes the named cells, and the lines they read within the fragment: the names a taken line writes (`&x`) that the fragment defines, followed until none is left. Those the use doesn't name are the fragment's *helpers*: `use &bass from "funk bass"` takes `&bass` and the `&bassNext` it reads, and not the fragment's card.
+- **`use * from <id>`** takes every line.
+- **`use &x`** is `use &x from x`: the fragment whose id is `x`, which defines `&x`.
+- **The id** is a word (`bass`), or any id in double quotes (`"core kit"`); a word is written bare.
+- **`use "core kit"`**, the old way, reads as `use * from "core kit"`, and warns; Normalise writes the new.
+
+What a line reads without writing it, the main meter a `step=16n` taps or the main key `over=key` reads, is never taken: it is the piece's.
+
 ## The expansion: the piece's own lines win
 
-What the compiler reads, the *expansion*, is the piece's own lines, then each used fragment's lines the piece doesn't define, in the order the `use` lines are written.
+What the compiler reads, the *expansion*, is the piece's own lines, then the lines each `use` takes that the piece doesn't define, in the order the `use` lines are written.
 So a piece overrides a voice of the kit by writing it, and every line that reads `&sd` reads the piece's:
 
 ```cells
-use "core kit"
+use * from "core kit"
 &bar meter("4/4") step=100bpm
 &beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]
 # the piece's own snare: it wins over the kit's
@@ -26,7 +34,10 @@ use "core kit"
 A used fragment may itself `use`: its own lines win over what it uses, and the piece's over all.
 
 - A line two used fragments give word for word (comments aside, whitespace collapsed) is one line.
-- An id used twice gives its lines once, at its first `use`; the second warns that it adds nothing.
+- A line taken twice from one id is taken once, at its first `use`; a use that then takes nothing warns that it adds nothing.
+- A name a use asks for that the fragment doesn't define is an error naming the names it does: `&cb is not in "core kit": it defines &bd, &rim, &sd, …`.
+- A name a use asks for that the piece defines is the piece's, and warns that taking it adds nothing; so does a `use * from` whose every line the piece defines.
+- A helper the piece also defines is an error: the piece didn't ask for it, so its line would change what the named cell reads. Rename the piece's, or name the helper in the use, which makes it an override.
 - A name two used fragments define by different lines, and the piece doesn't, is an error naming the name and both ids: the piece writes the line itself, or drops one `use`.
   `use` never renames: a voice's General MIDI note is read off its name ([midi.md](midi.md)), and `&bd2` would send another.
 - A cycle is an error naming it, and so is a depth past 8 (a kit in a groove in a section in a piece is 3).
@@ -46,7 +57,7 @@ The host hands each compile a resolver, from an id (and the hash a lockfile reco
 `resolveSeed` is the seed library's (`fragments/`), the current version of each fragment; a frontend's library, Jambot's learned layer or Cell studio's, is another.
 Without a resolver, every `use` is an error.
 
-What each `use` resolved to is data on the result, `CompileResult.uses`: its id, its line, the hash of the text it resolved to, the names it gave and the names the piece overrode.
+What each `use` resolved to is data on the result, `CompileResult.uses`: its id, the names it asked for (`names`, null for `*`), its line, the hash of the text it resolved to, the names it gave (its helpers among them) and the names the piece overrode.
 
 ## The lockfile
 
@@ -65,7 +76,7 @@ uses:
 
 ## Normalise and the measure
 
-Normalise keeps every `use` line, in its order, never expanded ([canonical.md](canonical.md)): there is one spelling, `use "id"`.
+Normalise keeps every `use` line, in its order, never expanded ([canonical.md](canonical.md)), in one spelling: `use * from …`, `use &a, &b from …`, `use &x` for `use &x from x`, an id bare where it is a word.
 Shorten's measure counts a `use` line as one leaf, a reference; the used fragment's lines are the library's.
 
 ## Fragments with holes

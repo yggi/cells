@@ -47,9 +47,10 @@ const hash = (s: string) => {
 
 /** A fragment's bench: a meter it fits at 120 bpm and the kits (a rhythm), 4/4 with the General MIDI kit (the bell), a key, a harmony and the bass instrument (a bass line). */
 const benchOf = (id: string, text: string) => {
-  if (BASS_FRAGMENTS.some((f) => f.id === id)) return 'use "bass"\n&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=key step=1m [0,2,4] [3,5,7] [4,6,8] [0,2,4]';
-  if (id === 'bell and scale') return 'use "gm kit"\n&bar meter("4/4") step=120bpm';
-  return `use "core kit"\nuse "gm kit"\n${METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(text, m).fits)!}`;
+  if (BASS_FRAGMENTS.some((f) => f.id === id))
+    return 'use * from bass\n&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=key step=1m [0,2,4] [3,5,7] [4,6,8] [0,2,4]';
+  if (id === 'bell and scale') return 'use * from "gm kit"\n&bar meter("4/4") step=120bpm';
+  return `use * from "core kit"\nuse * from "gm kit"\n${METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(text, m).fits)!}`;
 };
 
 /** What a text sends over its first 16 s: each note's channel, MIDI note, onset and end (s) and velocity, in order. */

@@ -1,8 +1,8 @@
-// `use "core kit"` (decision 054, rung 3: #232): a fragment taken into a piece by its id, the piece's own lines winning,
+// `use * from "core kit"` (decision 054, rung 3: #232): a fragment taken into a piece by its id, the piece's own lines winning,
 // read through a resolver the host hands each compile, with the lockfile a piece file keeps.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
-import { parse } from './parser';
+import { parse, USE_FORM, writeUse } from './parser';
 import { expand, fragmentHash, USE_DEPTH } from './use';
 import { setTiming } from './edit';
 import { lockfileOf, readPiece, withLockfile, writePiece, type PieceFile } from './piecefile';
@@ -38,11 +38,11 @@ const KIT = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!.text;
 const KIT_NAMES = parse(KIT)
   .cells.filter((c) => !c.lambda)
   .map((c) => c.name);
-const GROOVE = 'use "core kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
+const GROOVE = 'use * from "core kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
 
 describe('the use line', () => {
   it('is a line of its own, the id in double quotes, read in the order written', () => {
-    expect(parse('use "core kit"\n&a s=sine\n  use   "gm kit"  # a comment').uses?.map((u) => [u.id, u.span.line])).toEqual([
+    expect(parse('use * from "core kit"\n&a s=sine\n  use   "gm kit"  # a comment').uses?.map((u) => [u.id, u.span.line])).toEqual([
       ['core kit', 1],
       ['gm kit', 3],
     ]);
@@ -50,11 +50,23 @@ describe('the use line', () => {
   });
 
   it('written any other way is an error of its own', () => {
-    for (const bad of ['use core kit', "use 'core kit'", 'use "core kit" &bd', 'use ""', 'use'])
+    for (const bad of [
+      'use core kit',
+      "use 'core kit'",
+      'use "core kit" &bd',
+      'use ""',
+      'use',
+      'use * from',
+      'use &bd from',
+      'use &bd, from kit',
+      'use * from core kit',
+      'use &bd &sd from kit',
+      'use bd from kit',
+    ])
       expect(
         parse(bad).diagnostics.map((d) => d.message),
         bad,
-      ).toEqual(['A use line names a fragment by its id, in double quotes, on a line of its own: use "core kit"']);
+      ).toEqual([USE_FORM]);
     expect(parse('&user s=sine').diagnostics).toEqual([]);
   });
 });
@@ -68,7 +80,8 @@ describe('the expansion', () => {
     expect(r.uses).toEqual([
       {
         id: 'core kit',
-        span: { line: 1, col: 1, len: 14 },
+        names: null,
+        span: { line: 1, col: 1, len: 21 },
         hash: fragmentHash(KIT),
         gave: KIT_NAMES.filter((n) => n !== 'sd').map((n) => `&${n}`),
         overrode: ['&sd'],
@@ -77,7 +90,7 @@ describe('the expansion', () => {
     expect(r.cells.get('sd')?.params.hpf).toBe(900);
     const out = expand(text, resolveSeed);
     expect(out.startsWith('&bar meter("4/4") step=100bpm\n&beat')).toBe(true);
-    expect(out).not.toContain('use "core kit"');
+    expect(out).not.toContain('use * from "core kit"');
     expect(out.split('\n').filter((l) => l.startsWith('&sd'))).toEqual(['&sd s=white hpf=900 env=&(map=adsr 0 .12 0 .05)']);
     expect(soundsIdentical(text, out, undefined, seed)).toBe(true);
   });
@@ -89,27 +102,27 @@ describe('the expansion', () => {
   });
 
   it('a used fragment may use another: its own lines win over what it uses, the piece’s over all', () => {
-    const resolve = library({ groove: 'use "kit"\n&beat step=8n &bd ~ &sd ~\n&sd s=white hpf=2000', kit: '&bd s=sine loop=A1\n&sd s=white' });
-    const r = compileSource('use "groove"\n&bar meter("4/4") step=100bpm\n&bd s=sine loop=C2\n&out map=sample [&beat]', undefined, { resolve });
+    const resolve = library({ groove: 'use * from kit\n&beat step=8n &bd ~ &sd ~\n&sd s=white hpf=2000', kit: '&bd s=sine loop=A1\n&sd s=white' });
+    const r = compileSource('use * from groove\n&bar meter("4/4") step=100bpm\n&bd s=sine loop=C2\n&out map=sample [&beat]', undefined, { resolve });
     expect(r.diagnostics).toEqual([]);
     expect(r.uses?.[0]).toMatchObject({ gave: ['&beat', '&sd'], overrode: ['&bd'] });
     expect(r.cells.get('sd')?.params.hpf).toBe(2000);
   });
 
   it('an id used twice gives its lines once, and the second use says it adds nothing', () => {
-    const r = compileSource(`${GROOVE}&out map=sample [&beat]\nuse "core kit"`, undefined, seed);
-    expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['warning', 'use "core kit" is written already, on line 1: this one adds nothing', 5]]);
+    const r = compileSource(`${GROOVE}&out map=sample [&beat]\nuse * from "core kit"`, undefined, seed);
+    expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['warning', '"core kit" is used already, on line 1: this use adds nothing', 5]]);
     expect(r.uses?.map((u) => [u.hash, u.gave.length])).toEqual([
       [fragmentHash(KIT), KIT_NAMES.length],
       [fragmentHash(KIT), 0],
     ]);
-    const resolve = library({ twice: 'use "kit"\nuse "kit"\n&beat step=8n &bd ~', kit: '&bd s=sine loop=A1' });
-    expect(errors('&bar meter("4/4") step=100bpm\nuse "twice"', resolve)).toEqual([]);
+    const resolve = library({ twice: 'use * from kit\nuse * from kit\n&beat step=8n &bd ~', kit: '&bd s=sine loop=A1' });
+    expect(errors('&bar meter("4/4") step=100bpm\nuse * from twice', resolve)).toEqual([]);
   });
 
   it('a line two used fragments give word for word is one line', () => {
     const resolve = library({ a: '&bd s=sine loop=A1\n&x s=saw', b: '&bd  s=sine   loop=A1 # the same\n&y s=saw' });
-    const r = compileSource('use "a"\nuse "b"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd &x &y', undefined, { resolve });
+    const r = compileSource('use * from a\nuse * from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd &x &y', undefined, { resolve });
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     expect(r.uses?.map((u) => u.gave)).toEqual([
       ['&bd', '&x'],
@@ -118,9 +131,122 @@ describe('the expansion', () => {
   });
 });
 
+describe('a named use (decision 059)', () => {
+  const BENCH = '&bar meter("4/4") step=104bpm\n&key scale(dorian, D)\n&harm over=key step=1m [0,2,4]';
+  const read = (text: string, resolve: Resolve = resolveSeed) => {
+    const r = compileSource(text, undefined, { resolve });
+    // (a bench with no card of its own: that nothing plays isn't what these say)
+    const said = r.diagnostics.filter((d) => !d.message.startsWith('Nothing plays yet'));
+    return { uses: r.uses, said: said.map((d) => [d.severity, d.message, d.span.line]) };
+  };
+
+  it('reads its forms: the names, every name, and a fragment named as its cell', () => {
+    expect(parse('use &bd, &sd from core_kit\nuse * from "core kit"\nuse &aeolian\nuse &a,\n  &b from x').uses?.map((u) => [u.id, u.names])).toEqual([
+      ['core_kit', ['&bd', '&sd']],
+      ['core kit', null],
+      ['aeolian', ['&aeolian']],
+      ['x', ['&a', '&b']],
+    ]);
+    expect(writeUse({ id: 'core kit', names: null })).toBe('use * from "core kit"');
+    expect(writeUse({ id: 'aeolian', names: ['&aeolian'] })).toBe('use &aeolian');
+    expect(writeUse({ id: 'core_kit', names: ['&bd', '&sd'] })).toBe('use &bd, &sd from core_kit');
+  });
+
+  it('use "id" is the old way: it reads as use * from "id", and warns', () => {
+    expect(parse('use "core kit"').diagnostics.map((d) => [d.severity, d.message])).toEqual([
+      ['warning', 'use "core kit" is the old way: write use * from "core kit" (or name what it takes: use &a, &b from …)'],
+    ]);
+    expect(parse('use * from "core kit"\nuse &bd from x\nuse &aeolian').diagnostics).toEqual([]);
+    const old = compileSource(GROOVE.replace('use * from "core kit"', 'use "core kit"'), undefined, seed);
+    expect(old.uses).toEqual(compileSource(GROOVE, undefined, seed).uses?.map((u) => ({ ...u, span: { ...u.span, len: 14 } })));
+  });
+
+  it('takes the named cells and the lines they read within the fragment, its helpers', () => {
+    const text = `use &bass from "funk bass"\nuse * from bass\n${BENCH}`;
+    const { uses, said } = read(text);
+    expect(said.filter(([s]) => s === 'error')).toEqual([]);
+    expect(uses?.[0]).toMatchObject({ names: ['&bass'], gave: ['&bass', '&bassNext'], overrode: [] });
+    // (the card &bassOut, named by no use and read by no named line, isn't taken)
+    expect(expand(text, resolveSeed)).not.toContain('&bassOut');
+    expect(compileSource(text, undefined, seed).cells.has('bassNext')).toBe(true);
+  });
+
+  it('naming every name a fragment defines expands as use * does, for every seed', () => {
+    for (const f of LIBRARY) {
+      const all = compileSource(`use * from ${JSON.stringify(f.id)}`, undefined, seed).uses![0]!.gave;
+      const named = `use ${all.join(', ')} from ${JSON.stringify(f.id)}`;
+      expect(expand(named, resolveSeed), f.id).toBe(expand(`use * from ${JSON.stringify(f.id)}`, resolveSeed));
+      expect(expand(`use * from ${JSON.stringify(f.id)}`, resolveSeed), f.id).toBe(expand(`use "${f.id}"`, resolveSeed));
+    }
+  });
+
+  it('use &x is use &x from x', () => {
+    // (a mode whose head is named as its fragment: the first scale, so over=key reads it)
+    const resolve: Resolve = (id) => (id === 'phrygian' ? '&phrygian scale(phrygian, E)' : resolveSeed(id));
+    const r = read(`use &phrygian\n&bar meter("4/4") step=100bpm\n&tune over=key step=8n 0 2 4\n&out map=sample [&tune * &v]\n&v s=sine`, resolve);
+    expect(r.said).toEqual([]);
+    expect(r.uses?.[0]).toMatchObject({ id: 'phrygian', names: ['&phrygian'], gave: ['&phrygian'] });
+    // (the seed modes' head is &key: use &key from aeolian)
+    expect(read('use &aeolian\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&aeolian is not in "aeolian": it defines &key', 1]]);
+  });
+
+  it('a name the fragment doesn’t define is an error, naming those it does', () => {
+    expect(read(`use &bassline from "funk bass"\n${BENCH}`).said).toEqual([['error', '&bassline is not in "funk bass": it defines &bass, &bassNext, &bassOut', 1]]);
+    expect(read('use &bass\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&bass is not in "bass": it defines &bassV', 1]]);
+  });
+
+  it('a helper the piece also defines is an error (the owner’s ruling 1); naming it makes it the piece’s', () => {
+    const helper = `use &bass from "funk bass"\nuse * from bass\n${BENCH}\n&bassNext over=&harm 2`;
+    expect(read(helper).said.filter(([s]) => s === 'error')).toEqual([
+      ['error', "&bassNext is \"funk bass\"'s, read by its &bass, and the piece's too: rename the piece's, or name &bassNext in the use to override it", 1],
+    ]);
+    const named = read(helper.replace('use &bass from', 'use &bass, &bassNext from'));
+    expect(named.said).toEqual([['warning', 'The piece defines &bassNext, so taking it from "funk bass" adds nothing', 1]]);
+    expect(named.uses?.[0]).toMatchObject({ gave: ['&bass'], overrode: ['&bassNext'] });
+    // (a helper two named cells read is said once)
+    const twice = library({ f: '&a [&h * 1]\n&b [&h * 2]\n&h s=sine' });
+    expect(errors('use &a, &b from f\n&h s=saw', twice)).toHaveLength(1);
+    // (a fragment's own helper collision is said through it)
+    const resolve = library({ outer: 'use &a from inner\n&h s=saw', inner: '&a [&h * 1]\n&h s=sine' });
+    expect(errors('use * from outer', resolve)).toEqual([
+      '&h is "inner"\'s, read by its &a, and "outer"\'s too: rename "outer"\'s, or name &h in the use to override it (in "outer")',
+    ]);
+  });
+
+  it('a use that adds nothing says so: twice on the issue’s section, on no seed fragment', () => {
+    const section = [
+      'use * from "4/4 leaning on 16n"',
+      'use * from dorian',
+      'use * from "vamp to the seventh"',
+      'use * from "Funk drums"',
+      'use * from "core kit"',
+      'use * from "funk bass"',
+      'use * from bass',
+      '&bar meter("4/4") step=104bpm swing=16n:.6',
+      '&key scale(dorian, D)',
+    ].join('\n');
+    expect(read(section).said).toEqual([
+      ['warning', 'The piece defines all "4/4 leaning on 16n" gives (&bar): this use adds nothing', 1],
+      ['warning', 'The piece defines all "dorian" gives (&key): this use adds nothing', 2],
+    ]);
+    expect(read(`use &bar from "4/4 leaning on 16n"\n${BENCH}`).said).toEqual([['warning', 'The piece defines &bar, so taking it from "4/4 leaning on 16n" adds nothing', 1]]);
+    for (const f of LIBRARY)
+      expect(
+        compileSource(f.text, undefined, seed).diagnostics.filter((d) => /adds nothing|old way/.test(d.message)),
+        f.id,
+      ).toEqual([]);
+  });
+
+  it('two named uses of one id take each its names, a line once', () => {
+    const r = read('use &bd from "core kit"\nuse &bd, &sd from "core kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &sd ~\n&out map=sample [&beat]');
+    expect(r.said).toEqual([]);
+    expect(r.uses?.map((u) => u.gave)).toEqual([['&bd'], ['&sd']]);
+  });
+});
+
 describe('the errors, each on its use line', () => {
   it('an unresolved id names it, and the piece’s other lines compile', () => {
-    const r = compileSource('&bar meter("4/4") step=100bpm\nuse "nowhere"\n&a step=8n 0 2\n&m [&a * &v]\n&v s=sine', undefined, seed);
+    const r = compileSource('&bar meter("4/4") step=100bpm\nuse * from nowhere\n&a step=8n 0 2\n&m [&a * &v]\n&v s=sine', undefined, seed);
     expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['error', 'No fragment "nowhere" to use', 2]]);
     expect(r.uses?.[0]).toMatchObject({ id: 'nowhere', hash: null, gave: [] });
     expect(r.cells.has('a')).toBe(true);
@@ -128,30 +254,30 @@ describe('the errors, each on its use line', () => {
   });
 
   it('a cycle names it', () => {
-    const resolve = library({ a: 'use "b"\n&x s=sine', b: 'use "a"\n&y s=sine' });
-    expect(errors('use "a"', resolve)).toEqual(['use "a" is a cycle: "a" → "b" → "a"']);
-    expect(errors('use "self"', library({ self: 'use "self"' }))).toEqual(['use "self" is a cycle: "self" → "self"']);
+    const resolve = library({ a: 'use * from b\n&x s=sine', b: 'use * from a\n&y s=sine' });
+    expect(errors('use * from a', resolve)).toEqual(['use "a" is a cycle: "a" → "b" → "a"']);
+    expect(errors('use * from self', library({ self: 'use "self"' }))).toEqual(['use "self" is a cycle: "self" → "self"']);
   });
 
   it(`a depth past ${USE_DEPTH} names it: ${USE_DEPTH} passes, ${USE_DEPTH + 1} fails`, () => {
     // (f1 uses f2 … fn uses nothing: the piece's use of f1 is depth 1, fn's line is depth n)
     const chain = (n: number) =>
-      library(Object.fromEntries(Array.from({ length: n }, (_, i) => [`f${i + 1}`, i + 1 < n ? `use "f${i + 2}"\n&v${i + 1} s=sine` : `&v${n} s=sine`])));
-    expect(errors('use "f1"', chain(USE_DEPTH))).toEqual([]);
-    expect(compileSource('use "f1"', undefined, { resolve: chain(USE_DEPTH) }).uses?.[0]?.gave).toHaveLength(USE_DEPTH);
+      library(Object.fromEntries(Array.from({ length: n }, (_, i) => [`f${i + 1}`, i + 1 < n ? `use * from "f${i + 2}"\n&v${i + 1} s=sine` : `&v${n} s=sine`])));
+    expect(errors('use * from f1', chain(USE_DEPTH))).toEqual([]);
+    expect(compileSource('use * from f1', undefined, { resolve: chain(USE_DEPTH) }).uses?.[0]?.gave).toHaveLength(USE_DEPTH);
     const path = Array.from({ length: USE_DEPTH + 1 }, (_, i) => `"f${i + 1}"`).join(' → ');
-    expect(errors('use "f1"', chain(USE_DEPTH + 1))).toEqual([`use "f${USE_DEPTH + 1}" nests past ${USE_DEPTH} deep: ${path}`]);
+    expect(errors('use * from f1', chain(USE_DEPTH + 1))).toEqual([`use "f${USE_DEPTH + 1}" nests past ${USE_DEPTH} deep: ${path}`]);
   });
 
   it('two used fragments defining one name by different lines name it and both ids; the piece’s own line settles it', () => {
     const resolve = library({ a: '&bd s=sine loop=A1', b: '&bd s=white' });
-    const r = compileSource('use "a"\nuse "b"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~', undefined, { resolve });
+    const r = compileSource('use * from a\nuse * from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~', undefined, { resolve });
     expect(r.diagnostics.map((d) => [d.message, d.span.line])).toEqual([['&bd is defined by "a" and by "b", by different lines: write it in the piece, or drop one use', 2]]);
-    expect(errors('use "a"\nuse "b"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~\n&bd s=sine loop=C2', resolve)).toEqual([]);
+    expect(errors('use * from a\nuse * from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~\n&bd s=sine loop=C2', resolve)).toEqual([]);
   });
 
   it('what the compiler says of a used line is said on the use line it came through', () => {
-    const r = compileSource('&bar meter("4/4") step=100bpm\nuse "broken"', undefined, { resolve: library({ broken: '&a step=8n 0 2\n&m [&a * &nowhere]' }) });
+    const r = compileSource('&bar meter("4/4") step=100bpm\nuse * from broken', undefined, { resolve: library({ broken: '&a step=8n 0 2\n&m [&a * &nowhere]' }) });
     expect(r.diagnostics.filter((d) => d.severity === 'error').map((d) => [d.message, d.span.line])).toEqual([['Unknown cell &nowhere', 2]]);
   });
 });
@@ -176,7 +302,7 @@ describe('the rhythms with the core kit (S1)', () => {
     it(`${rhythm.id}, on a meter it fits, sounds identical to the same text written out`, () => {
       const meter = METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(rhythm.text, m).fits)!;
       // (heard through a card: the rhythms carry none, #291)
-      const piece = `use "core kit"\n${meter}\n${strip(rhythm.text)}\n${heard(rhythm.text)}`;
+      const piece = `use * from "core kit"\n${meter}\n${strip(rhythm.text)}\n${heard(rhythm.text)}`;
       const r = compileSource(piece, undefined, seed);
       expect(r.diagnostics, meter).toEqual([]);
       expect(r.uses?.[0]?.overrode).toEqual([]);
@@ -244,9 +370,15 @@ describe('the lockfile', () => {
 
 describe('the tools keep use', () => {
   it('Normalise keeps the use line, in its order, never expanded', () => {
-    const text = 'use "core kit"\nuse "gm kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
+    const text = 'use * from "core kit"\nuse * from "gm kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
     const out = normalise(text, seed).source;
     expect(out).toBe(text.replace('cutoff=', 'lpf='));
+    // (the old spelling, use "id", is written use * from "id"; an id that is a word, bare; use &x from x, use &x)
+    const old = 'use "core kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &kick ~ &snare ~';
+    const resolve = (id: string) => (id === 'kit' ? '&kick s=sine\n&snare s=white' : id === 'pulse' ? '&pulse s=sine loop=A4' : resolveSeed(id));
+    expect(normalise(old, { resolve }).source).toBe(
+      'use * from "core kit"  # the kit\nuse &pulse\nuse &kick, &snare from kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &kick ~ &snare ~',
+    );
   });
 
   it('the measure counts a use line as one leaf', () => {
@@ -263,7 +395,7 @@ describe('the fit (decision 047) with use', () => {
   it('what a workbench’s use lines give counts as defined there', () => {
     const groove = '&beat step=8n &bd ~\n&back step=8n ~ &sd\n&out map=sample [&beat, &back]';
     expect(holesOf(groove, compiled).uses).toEqual(['&bd', '&sd']);
-    const fit = fitOf(groove, 'use "core kit"\n&bar meter("4/4") step=100bpm', compiled);
+    const fit = fitOf(groove, 'use * from "core kit"\n&bar meter("4/4") step=100bpm', compiled);
     expect([fit.fits, fit.missing, fit.sounds]).toEqual([true, [], []]);
   });
 
@@ -286,10 +418,10 @@ describe('the fit (decision 047) with use', () => {
     // (a two-bar clave doesn't fit 7/8, used or written out)
     const clave = RHYTHM_FRAGMENTS.find((f) => f.id === 'son clave 3-2')!.text;
     expect(fitOf(clave, bench('7/8')).fits).toBe(false);
-    const used = fitOf('use "son clave 3-2"', bench('7/8'), undefined, resolveSeed);
+    const used = fitOf('use * from "son clave 3-2"', bench('7/8'), undefined, resolveSeed);
     expect([used.fits, used.unmet.map((n) => n.cell)]).toEqual([false, ['&clave']]);
-    expect(fitOf('use "son clave 3-2"', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
-    expect(holesOf('use "son clave 3-2"', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
+    expect(fitOf('use * from "son clave 3-2"', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
+    expect(holesOf('use * from "son clave 3-2"', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
     // (a used groove without its stand-ins: its voices are sounds, as written out)
     const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'Funk drums')!.text;
     const bare = funk
@@ -297,13 +429,15 @@ describe('the fit (decision 047) with use', () => {
       .filter((l) => !/ s=white$/.test(l))
       .join('\n');
     const resolve: Resolve = (id) => (id === 'bare funk' ? bare : resolveSeed(id));
-    const fit = fitOf('use "bare funk"', bench('4/4'), undefined, resolve);
+    const fit = fitOf('use * from "bare funk"', bench('4/4'), undefined, resolve);
     expect([fit.fits, fit.missing, fit.sounds]).toEqual([true, [], ['&bd', '&hh', '&oh', '&rim', '&sd']]);
-    expect(fitOf('use "bare funk"', 'use "core kit"\n' + bench('4/4'), undefined, resolve).sounds).toEqual([]);
+    expect(fitOf('use * from "bare funk"', 'use * from "core kit"\n' + bench('4/4'), undefined, resolve).sounds).toEqual([]);
   });
 
   it('a union carries a fragment’s use lines, once', () => {
-    expect(unionOf('use "core kit"\n&beat step=8n &bd ~', 'use "core kit"\n&bar meter("4/4")').text).toBe('use "core kit"\n&bar meter("4/4")\n&beat step=8n &bd ~');
-    expect(unionOf('use "gm kit"\n&beat step=8n &bd ~', '&bar meter("4/4")').text).toBe('&bar meter("4/4")\nuse "gm kit"\n&beat step=8n &bd ~');
+    expect(unionOf('use * from "core kit"\n&beat step=8n &bd ~', 'use * from "core kit"\n&bar meter("4/4")').text).toBe(
+      'use * from "core kit"\n&bar meter("4/4")\n&beat step=8n &bd ~',
+    );
+    expect(unionOf('use * from "gm kit"\n&beat step=8n &bd ~', '&bar meter("4/4")').text).toBe('&bar meter("4/4")\nuse * from "gm kit"\n&beat step=8n &bd ~');
   });
 });

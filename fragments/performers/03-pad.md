@@ -61,7 +61,7 @@ source: seed
 ---
 
 ```cells
-use "pad"
+use &padV from pad
 &pad play=&padline level=&padLevel &padV
 ```
 

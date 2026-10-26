@@ -450,7 +450,7 @@ export interface Performer {
 }
 
 /**
- * Where a piece's `use "id"` lines are read from (decision 054): a fragment's text by its id, and the hash its lockfile
+ * Where a piece's `use` lines are read from (decision 054): a fragment's text by its id, and the hash its lockfile
  * recorded for it where it has one, or null where the library has none of that id. A library that no longer has the
  * version hashed gives its current one: the compile warns.
  */
@@ -468,17 +468,22 @@ export interface CompileOptions {
   readonly locked?: readonly Locked[];
 }
 
-/** A `use` line, as compiled (decision 054). */
+/** A `use` line, as compiled (decisions 054, 059). */
 export interface Used {
   /** The fragment's id, as written. */
   readonly id: string;
+  /** The names it asks for (`use &bd, &sd from …`: `['&bd', '&sd']`), or null for every name (`use * from …`). */
+  readonly names: readonly string[] | null;
   /** The line it is on. */
   readonly span: Span;
   /** The hash of the text it resolved to (`e1:…`: the text up to layout, decision 050), or null where it didn't resolve. */
   readonly hash: string | null;
-  /** The names it gave the piece (`&bd`), in the order the expansion writes them: its own lines, then those it used. */
+  /**
+   * The names it gave the piece (`&bd`), in the order the expansion writes them: its own lines, then those it used. For a
+   * named use, the names it asks for and the fragment's lines they read (its helpers), less what the piece defines.
+   */
   readonly gave: readonly string[];
-  /** The names it defines that the piece's own lines define instead. */
+  /** The names it asks for (or, for `*`, defines) that the piece's own lines define instead. */
   readonly overrode: readonly string[];
 }
 

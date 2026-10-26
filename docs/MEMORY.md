@@ -42,6 +42,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - `map=midi` a MIDI card, entries channels; `midi(10)`, `midi(10, 2)` (slot 2) → [midi](language/midi.md)
 - voices `s=` `loop=`, `env=` `pitch=` `map=adsr|amp|lin|db`; a line's articulation `legato=.5` (Strudel's) → [sound](language/sound.md)
 - belts, tape, resonators, FM → [physics](language/physics.md)
+- `use &bd, &sd from "core kit"` the named cells and what they read, `use * from …` every line, `use &x` from x; the piece's lines win → [use](language/use.md)
 - a piece's file: `title:` `tags:` `tier:` in its frontmatter (the card's `title=` `tags=` `tier=` the old way, a warning); `label=` `show=`, a cell's `tags=`; loudness: the card's `postgain=` (linear) → [display](language/display.md); a `show=` of the piece's own → [plugins](language/plugins.md)
 
 ## Decisions
@@ -89,8 +90,9 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 051 · Literate cells · → decisions/051-literate-cells.md
 - 052 · Variations are operators · → decisions/052-variations-as-operators.md
 - 053 · `swing=8n:r:pairs` leans the pairs alone · → decisions/053-the-pairs-alone.md
-- 054 · Instruments are fragments; `use` · → decisions/054-instruments-and-use.md
+- 054 · Instruments are fragments; `use` (its forms amended by 059) · → decisions/054-instruments-and-use.md
 - 055 · Recognition · → decisions/055-recognition.md
 - 056 · Modes are fragments; two facets · → decisions/056-the-mode-facet.md
 - 057 · S1 and S2 read a voice by its sound · → decisions/057-a-voice-by-its-sound.md
 - 058 · The performer is a gate, its name its role; the register is the instrument's · → decisions/058-the-performer-is-a-gate.md
+- 059 · A `use` says what it takes: `use &bd from core_kit`, `use * from …`, `use &x` · → decisions/059-named-use.md

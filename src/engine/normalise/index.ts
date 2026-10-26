@@ -5,17 +5,19 @@
  * writes is listed, each with its reason, in docs/language/canonical.md. One rule a file:
  *
  *  - aliases.ts:  Strudel's or dough's name for a parameter as ours, whatever its length: cutoff= → lpf=, clip= → legato=
+ *  - uses.ts:     a `use` line in its one spelling (decision 059): use "core kit" → use * from "core kit"
  *
- * The canonical table's other rows join as the owner rules them (#27). A `use` line (decision 054) is kept, in its one
- * spelling (`use "id"`, the only one the parser reads), in its order, never expanded: expanding adds cells, Shorten's side
- * of decision 049's line (`expand` writes it out). Its fragment is read through `options.resolve`. Pure.
+ * The canonical table's other rows join as the owner rules them (#27). A `use` line (decision 054) is kept, in its
+ * order, never expanded: expanding adds cells, Shorten's side of decision 049's line (`expand` writes it out). Its
+ * fragment is read through `options.resolve`. Pure.
  */
 import { rewriteAll, ROUNDS, type Rewrite } from '../rewrite';
 import type { CompileOptions, CompileResult } from '../program';
 import { aliases } from './aliases';
+import { uses } from './uses';
 
 /** Every rewrite into the canonical spelling a text has. */
-export const normalisations = (source: string, result: CompileResult): Rewrite[] => [...aliases(source, result)];
+export const normalisations = (source: string, result: CompileResult): Rewrite[] => [...uses(source), ...aliases(source, result)];
 
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */
 export const normalise = (source: string, options?: CompileOptions): { source: string; steps: string[] } => rewriteAll(source, normalisations, ROUNDS, options);
