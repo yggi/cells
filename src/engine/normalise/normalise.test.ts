@@ -6,7 +6,7 @@ import { compileSource } from '../compile';
 import { samePiece } from '../sameness';
 import { shorten } from '../shorten';
 import { PRESETS } from '../presets';
-import { LIBRARY } from '../../repository/library';
+import { LIBRARY, resolveSeed } from '../../repository/library';
 import { unionOf } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
 
@@ -64,14 +64,23 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const meter = '&bar meter("4/4") step=100bpm';
     const keyed = `${meter}\n&key scale(major, C)`;
     const bar = `${keyed}\n&harm over=key step=1m [0,2,4] [3,5,7]`;
+    // (a performer's part and its levels, the score's holes (decision 058), filled by a line each; its `use` lines resolved)
+    const compiled = (t: string) => compileSource(t, undefined, { resolve: resolveSeed });
+    const parts = Object.fromEntries([
+      ...['bass', 'pad', 'stab', 'lead'].flatMap((n) => [
+        [`&${n}line`, `&${n}line over=&harm step=4n 0 2`],
+        [`&${n}Level`, `&${n}Level map=amp .8`],
+      ]),
+    ]);
     for (const f of LIBRARY) {
-      const defines = holesOf(f.text, compileSource).defines;
-      const bench = defines.includes('&key') ? meter : defines.includes('&harm') ? keyed : bar;
+      const holes = holesOf(f.text, compiled, resolveSeed);
+      const bench = holes.defines.includes('&key') ? meter : holes.defines.includes('&harm') ? keyed : bar;
       // (a fragment's sound holes, the voices an instrument fills (#244), are filled by the General MIDI kit's and the bass's lines)
       const voices = [...LIBRARY.find((k) => k.id === 'gm kit')!.text.split('\n'), ...LIBRARY.find((k) => k.id === 'bass')!.text.split('\n')];
-      const kit = holesOf(f.text, compileSource).sounds.map((n) => `\n${voices.find((l) => l.startsWith(`${n} `))!}`);
-      const text = `${compileSource(f.text).ok ? f.text : unionOf(f.text, bench).text}${kit.join('')}`;
-      expect([f.id, compileSource(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
+      const kit = holes.sounds.map((n) => `\n${voices.find((l) => l.startsWith(`${n} `))!}`);
+      const part = holes.uses.filter((n) => parts[n]).map((n) => `\n${parts[n]}`);
+      const text = `${compiled(f.text).ok ? f.text : unionOf(f.text, bench).text}${kit.join('')}${part.join('')}`;
+      expect([f.id, compiled(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
     }
   });
 

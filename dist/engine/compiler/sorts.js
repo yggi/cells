@@ -1,5 +1,5 @@
 import { leaves } from "../subseq.js";
-import { VOICE_PARAMS } from "../attributes.js";
+import { memberParams, VOICE_PARAMS } from "../attributes.js";
 import { AlgebraError, distribute } from "../algebra.js";
 import { syntax } from "../parser/syntax.js";
 const isMixDecl = (d) => !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
@@ -7,7 +7,7 @@ const isKitDecl = (d, { decls }) => !!d &&
     !Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) &&
     d.braid.kind === 'list' &&
     d.braid.tokens.length > 0 &&
-    d.braid.tokens.every((t) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).length > 0);
+    d.braid.tokens.every((t) => t.atom.kind === 'ref' && memberParams(decls.get(t.atom.name)?.params ?? {}));
 const turns = (d, { rateOf }) => {
     if (!d.step || d.step.kind === 'driven' || d.step.kind === 'tap')
         return null;

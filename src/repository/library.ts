@@ -1,6 +1,7 @@
 /**
  * The repository's library: every fragment built so far, the meters, the rhythms, the bass lines, the harmonies, the
- * instruments and the modes, their points associated as `meter`, `rhythm`, `bass`, `harmony`, `instrument` and `mode` (the
+ * instruments, the modes and the performers, their points associated as `meter`, `rhythm`, `bass`, `harmony`, `instrument`,
+ * `mode` and `performer` (the
  * bell and scale both `mode` and `rhythm`). A query names its facet (`{ facet: 'meter' }`) and measures only the points
  * of that facet, so adding fragments of another never changes what it returns.
  */
@@ -11,10 +12,19 @@ import { HARMONY_FRAGMENTS } from './harmony';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
+import { PERFORMER_FRAGMENTS } from './performers';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, then the modes: forty-four fragments. */
-export const LIBRARY: readonly Fragment[] = [...METER_FRAGMENTS, ...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...HARMONY_FRAGMENTS, ...INSTRUMENT_FRAGMENTS, ...MODE_FRAGMENTS];
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, then the performers: fifty-one fragments. */
+export const LIBRARY: readonly Fragment[] = [
+  ...METER_FRAGMENTS,
+  ...RHYTHM_FRAGMENTS,
+  ...BASS_FRAGMENTS,
+  ...HARMONY_FRAGMENTS,
+  ...INSTRUMENT_FRAGMENTS,
+  ...MODE_FRAGMENTS,
+  ...PERFORMER_FRAGMENTS,
+];
 
 const BY_ID = new Map(LIBRARY.map((f) => [f.id, f.text]));
 

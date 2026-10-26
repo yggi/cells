@@ -59,6 +59,13 @@ export declare const TIME_PARAMS: ReadonlySet<string>;
 export declare const MOVING_PARAMS: ReadonlySet<string>;
 /** Parameters that make a cell a voice; the rest are a physical cell's (motor=, write=, scope= …) and make none. */
 export declare const VOICE_PARAMS: ReadonlySet<string>;
+/** A line's own parameters, its timing (legato= swing= beat= …), acting on a clocked or driven line and never on a voice; not a motor's. */
+export declare const LINE_PARAMS: ReadonlySet<string>;
+/**
+ * Does a cell's line give it a parameter of a kit's member: any but a line's own (legato= on a part makes it no voice, so
+ * a braid splicing it, or a gate playing it moved, &bassline^$-12, is no kit: #282).
+ */
+export declare const memberParams: (params: Readonly<Record<string, unknown>>) => boolean;
 /** Who an attribute acts on, in words: "a voice", "a tape or a read head". */
 export declare function rolesText(on: readonly Role[]): string;
 /** The nearest attribute to a misspelt one (one or two edits away), or null. */

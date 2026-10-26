@@ -1,11 +1,11 @@
 import { DOUGH_SOURCES } from "../dough-params.js";
-import { ATTRIBUTES, VOICE_PARAMS } from "../attributes.js";
+import { ATTRIBUTES, memberParams, VOICE_PARAMS } from "../attributes.js";
 import { canonicalTag, TUTORIAL } from "../tags.js";
 import { isMidiCard } from "../program.js";
 export function bindVoices(ctx, decls, given, typed) {
     const { error, warn, unknownCell } = ctx;
     const cells = new Map(given);
-    const hasParams = (n) => Object.keys(decls.get(n)?.params ?? {}).length > 0;
+    const hasParams = (n) => memberParams(decls.get(n)?.params ?? {});
     const isKit = (c) => c.units.length > 0 && c.units.every((u) => u.atom.kind === 'ref' && hasParams(u.atom.name));
     for (const c of [...cells.values()])
         if (!c.voice && !c.root && isKit(c))

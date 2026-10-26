@@ -1,7 +1,7 @@
 /** The mix algebra's view of the cells (algebra.ts): what each cell is, from its own line; a mix's expressions typed. */
 import { leaves } from '../subseq';
 import type { Atom, Binding, CellDecl, Expr, Ref } from '../ast';
-import { VOICE_PARAMS } from '../attributes';
+import { memberParams, VOICE_PARAMS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
 import { syntax, type Syntax } from '../parser/syntax';
 import type { Ctx } from './context';
@@ -22,7 +22,7 @@ const isKitDecl = (d: CellDecl | undefined, { decls }: Seen) =>
   !Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) &&
   d.braid.kind === 'list' &&
   d.braid.tokens.length > 0 &&
-  d.braid.tokens.every((t) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).length > 0);
+  d.braid.tokens.every((t) => t.atom.kind === 'ref' && memberParams(decls.get(t.atom.name)?.params ?? {}));
 /** How often its braid turns: loop=r, or step=r over its k steps. */
 const turns = (d: CellDecl, { rateOf }: Seen): number | null => {
   if (!d.step || d.step.kind === 'driven' || d.step.kind === 'tap') return null;

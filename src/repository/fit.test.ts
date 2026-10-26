@@ -299,8 +299,8 @@ describe('what it costs', () => {
     const r = (await import('./fragments')).createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
-    // (the 13 rhythms, the 3 instruments and the 5 modes)
-    expect(first).toHaveLength(21);
+    // (the 13 rhythms, the 6 instruments and the 5 modes: a performer's part is a hole no workbench of drums fills)
+    expect(first).toHaveLength(24);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
     expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);
