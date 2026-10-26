@@ -289,9 +289,14 @@ export function shiftsAt(result, statics, seconds) {
     const played = playedCells(result);
     const read = readThrough(result);
     const steps = new Map();
-    return (name) => {
+    const shiftOf = (name) => {
         const base = statics(name);
         const c = result.cells.get(name);
+        const tonic = c?.tonic ? result.cells.get(c.tonic) : undefined;
+        if (c && tonic?.step && tonic.clock) {
+            const now = shiftedUnits(result, tonic.name, shiftOf(tonic.name))[0]?.atom;
+            return now?.kind === 'note' ? base - c.shift + mod(now.value + now.alter, 12) : base;
+        }
         if (!c || !c.step || !c.clock || result.clocks.has(name) || selects(result, name) || c.loops || (played.has(name) && !read.has(name)))
             return base;
         let s = steps.get(c.clock);
@@ -310,6 +315,7 @@ export function shiftsAt(result, statics, seconds) {
         const lap = Math.floor(b / own.length);
         return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
     };
+    return shiftOf;
 }
 export const playing = (now, statics, cell) => (name) => name === cell ? statics(name) : now(name);
 export const ownLength = (result, name) => {

@@ -5,6 +5,7 @@
 // plays a stack of lines, one per drum role, and each hit still names its line: the role the feel reads.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
+import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
@@ -16,7 +17,7 @@ import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TE
 
 const BPM = 120;
 // (a host as Jambot's section text writes one: the meter, the key, the harmony)
-const HOST = [`&bar meter("4/4") step=${BPM}bpm`, '&key scale(aeolian, A)', '&harm over=key step=1m [0,2,4] [3,5,7]'].join('\n');
+const HOST = [`&bar meter("4/4") step=${BPM}bpm`, '&key scale(aeolian, A)', '&harm over=&key step=1m [0,2,4] [3,5,7]'].join('\n');
 
 /** What a text sends over MIDI in its first bars (two unless said): each note's channel, note, velocity, onset and length (in 16ths), in order. */
 function sent(text: string, bars = 2): { notes: string[]; diagnostics: string[] } {
@@ -65,14 +66,14 @@ const PARTS = {
   },
   lead: {
     jambot: [
-      '&lead over=key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
+      '&lead over=&key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
       '&leadLevel map=amp step=16n .7@2 .5 .6@5 ~@8 .5 .6@3 .7@4 ~@8',
       '&leadOut play=&lead level=&leadLevel &leadV',
       '&leadV loop=C4',
       '&out map=midi &leadOut',
     ],
     performer: [
-      '&leadline over=key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
+      '&leadline over=&key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
       '&leadLevel map=amp step=16n .7@2 .5 .6@5 ~@8 .5 .6@3 .7@4 ~@8',
       'use * from "lead performer"',
       '&out map=midi &lead',
@@ -134,7 +135,7 @@ describe('the drums performer', () => {
   const library = createRepository(LIBRARY);
   // (each under the meter the repository finds at its preset's point: Lo-fi hip hop's and Funk's swing)
   const section = ({ point, text }: (typeof DRUM_BARS)[number]) =>
-    [library.query(point, 1, {}, { facet: 'meter' })[0]!.fragment.text.replace(/$/m, ` step=${BPM}bpm`), text].join('\n');
+    [setTiming(library.query(point, 1, {}, { facet: 'meter' })[0]!.fragment.text, 'bar', 'step', `${BPM}bpm`), text].join('\n');
   const today = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\nuse * from "core kit"\n&drums [${w.lines}]\n&out map=midi ~!9 &drums`;
   const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\nuse * from "drums performer"\n&out map=midi ~!9 &drums`;
 

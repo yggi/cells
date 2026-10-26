@@ -4,7 +4,7 @@
  *
  * - **Defines:** the cells its lines declare (the parser's declarations; an unnamed cell `&( … )` is part of its line).
  * - **Uses:** each name its compile reports as unknown (`CompileResult.unknown`: the compiler's one place for a name
- *   used and declared nowhere), and `key` when a line reads the main key (`over=key`, #130) and the text has none of its
+ *   used and declared nowhere), and `key` when a line reads the main key the old way (`over=key`, #130; #301) and the text has none of its
  *   own. A name the compiler doesn't reach, for an earlier error on the same line, isn't listed; the fit's compile of the
  *   union still says it (`fit.ts`).
  * - **Clock needs:** each line that taps a meter it doesn't define (`step=16n`, the main meter; `step=&m:16n`) needs its
@@ -46,7 +46,7 @@ export interface ClockNeed {
 
 /** A fragment's holes: what it uses and doesn't define, what it defines, what its clock needs. */
 export interface Holes {
-  /** Names it reads and declares nowhere (`&harm`), and `key` for the main key; sorted. */
+  /** Names it reads and declares nowhere (`&harm`, `&key`), and `key` for the main key read the old way (`over=key`); sorted. */
   readonly uses: readonly string[];
   /** Of those, the names read only as a sound (a braid's step, a mix's term): they don't block the fit; sorted. */
   readonly sounds: readonly string[];
@@ -55,8 +55,8 @@ export interface Holes {
   readonly clock: readonly ClockNeed[];
 }
 
-/** The interface names: what fragments agree on and a union never renames (decision 047, point 2; more as facets need them). */
-export const INTERFACE_NAMES: readonly string[] = ['&bar', 'key', '&harm'];
+/** The interface names (decision 047, point 2): defined in `program.ts`, which a named use's closure reads too (decision 060). */
+export { INTERFACE_NAMES } from '../engine/program';
 
 /** How far a count may sit from a whole number and still be one (a rate written as a decimal, `16n*1.5`). */
 const WHOLE = 1e-9;

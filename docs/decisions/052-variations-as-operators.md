@@ -116,7 +116,7 @@ A bass line over the chord in force on its workbench, and three of its 10 variat
 # source: a bass over the chord in force, the host's meter, key and harmony first
 &bar meter("4/4") step=120bpm
 &key scale(minor, A)
-&harm over=key step=2n [0,2,4] [3,5,7]
+&harm over=&key step=2n [0,2,4] [3,5,7]
 
 &bass over=&harm step=8n 0 ~ 1 2 0 ~ 2 1
 &low s=tri loop=C2
@@ -127,7 +127,7 @@ A bass line over the chord in force on its workbench, and three of its 10 variat
 # by: transpose &bass 1
 &bar meter("4/4") step=120bpm
 &key scale(minor, A)
-&harm over=key step=2n [0,2,4] [3,5,7]
+&harm over=&key step=2n [0,2,4] [3,5,7]
 
 &bass over=&harm step=8n 0 ~ 2 3 0 ~ 3 2
 &low s=tri loop=C2
@@ -138,7 +138,7 @@ A bass line over the chord in force on its workbench, and three of its 10 variat
 # by: invert &bass
 &bar meter("4/4") step=120bpm
 &key scale(minor, A)
-&harm over=key step=2n [0,2,4] [3,5,7]
+&harm over=&key step=2n [0,2,4] [3,5,7]
 
 &bass over=&harm step=8n 0 ~ -1 -2 0 ~ -2 -1
 &low s=tri loop=C2
@@ -149,7 +149,7 @@ A bass line over the chord in force on its workbench, and three of its 10 variat
 # by: reverse &bass
 &bar meter("4/4") step=120bpm
 &key scale(minor, A)
-&harm over=key step=2n [0,2,4] [3,5,7]
+&harm over=&key step=2n [0,2,4] [3,5,7]
 
 &bass over=&harm step=8n 0 2 1 ~ 0 1 2 ~
 &low s=tri loop=C2

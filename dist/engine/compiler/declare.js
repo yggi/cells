@@ -5,6 +5,7 @@ import { VOICE_PARAMS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
 import { leaves } from "../subseq.js";
 import { overdub } from "../parser/base.js";
+import { mod } from "../../theory/modes.js";
 export function declare(ctx) {
     const { parsed, error, unknownCell } = ctx;
     const decls = new Map();
@@ -16,6 +17,7 @@ export function declare(ctx) {
             decls.set(c.name, c);
     }
     const mainKey = mainKeyOf(ctx, decls);
+    tonics(ctx, decls);
     const sections = sectionTables(decls, error);
     const stacks = gates(decls, implicit, error);
     mixSelectors(ctx, decls);
@@ -90,15 +92,38 @@ export function declare(ctx) {
         checkOver(name, []);
     return { decls, implicit, implicitRoot, overOk, sections, stacks, ...(mainKey ? { mainKey } : {}) };
 }
+function tonics(ctx, decls) {
+    for (const [name, d] of decls) {
+        if (!d.tonic)
+            continue;
+        const t = decls.get(d.tonic.name);
+        if (!t) {
+            ctx.unknownCell(d.tonic.name, d.tonic.span);
+            continue;
+        }
+        const tokens = t.braid.kind === 'list' ? t.braid.tokens : [];
+        const notes = tokens.every((k) => k.subdivide === 1 && k.atom.kind === 'note' && Number.isInteger(k.atom.value)) ? tokens : [];
+        const first = notes[0]?.atom;
+        if (first?.kind !== 'note' || (!t.step && (notes.length !== 1 || notes[0].repeat !== 1))) {
+            ctx.error(t.step
+                ? `&${t.name} holds a key's tonic (scale(…, &${t.name})), stepped: write a note a step, a name or a pitch class (&${t.name} step=1m/8 D F)`
+                : `&${t.name} holds a key's tonic (scale(…, &${t.name})): write one note, a name or a pitch class (&${t.name} D, &${t.name} 2), or step it (&${t.name} step=1m/8 D F)`, t.span);
+            continue;
+        }
+        decls.set(name, { ...d, shift: mod(first.value + first.alter, 12) });
+    }
+}
 function mainKeyOf(ctx, decls) {
     const main = [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;
     for (const d of [...decls.values()]) {
         if (d.over?.name !== MAIN_KEY)
             continue;
-        if (main)
+        if (main) {
+            ctx.warn(`over=key is the old way: name the key, over=&${main}`, d.over.span);
             decls.set(d.name, { ...d, over: { ...d.over, name: main } });
+        }
         else {
-            ctx.error(`over=key reads the piece's main key, the first scale(…) in the text, and the piece has no main key: write one (&key scale(major, C))`, d.over.span);
+            ctx.error(`over=key is the old way, and the piece has no main key (the first scale(…) in the text) for it to read: name a key, over=&key, and write it (&key scale(major, C))`, d.over.span);
             ctx.broken.add(MAIN_KEY);
         }
     }

@@ -34,7 +34,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 
 - `&name … ` one cell per line; steps `0 2 ~ 4@2 0!4 [0,2,4]` → [cell](language/cell.md)
 - `scan(…)` `euclid(k,n)` `sin(n)`; `&t[i]` `&t[$i]` `&t[a:b]` `&t[<<n]` `&t^n` (degrees) `&t^$n` (grid steps) → [braid](language/braid.md)
-- `over=&t` `scale(name, tonic)` `shift=n` `cycle=n`; `over=key` the main key (the first `scale(…)`) → [tables](language/tables.md)
+- `over=&t` `scale(name, tonic)` `shift=n` `cycle=n`; the key named, `over=&key` (`over=key` the old way); a tonic read from a cell, `scale(dorian, &tonic)`, `&tonic D`, stepped `&tonic step=1m/8 D F`, free `&tonic free(D)` → [tables](language/tables.md)
 - `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), taps of a meter (`pulse` `beat` `16n` `4n.` `8t` `1m`, `&m:16n`, `cycle=n` bars), `beat=`, swing on the bar (`swing=8n:.67`, `:pairs` its pairs alone), `stride=`, `laps=` → [time](language/time.md)
 - `map=edo|ed(r)|ratios`, note names → [tuning](language/tuning.md)
 - `free(default, lo..hi)`, `free(0 2 4 ~)` a braid, recorded → [free](language/free.md)
@@ -96,3 +96,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 057 · S1 and S2 read a voice by its sound · → decisions/057-a-voice-by-its-sound.md
 - 058 · The performer is a gate, its name its role; the register is the instrument's · → decisions/058-the-performer-is-a-gate.md
 - 059 · A `use` says what it takes: `use &bd from core_kit`, `use * from …`, `use &x` · → decisions/059-named-use.md
+- 060 · The key is named, `over=&key` (`over=key` the old way); a tonic is a cell, stepped or free · → decisions/060-the-key-is-named.md

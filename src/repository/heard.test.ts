@@ -48,8 +48,8 @@ const hash = (s: string) => {
 /** A fragment's bench: a meter it fits at 120 bpm and the kits (a rhythm), 4/4 with the General MIDI kit (the bell), a key, a harmony and the bass instrument (a bass line). */
 const benchOf = (id: string, text: string) => {
   if (BASS_FRAGMENTS.some((f) => f.id === id))
-    return 'use * from bass\n&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=key step=1m [0,2,4] [3,5,7] [4,6,8] [0,2,4]';
-  if (id === 'bell and scale') return 'use * from "gm kit"\n&bar meter("4/4") step=120bpm';
+    return 'use * from bass\n&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7] [4,6,8] [0,2,4]';
+  if (id === 'bell and scale') return 'use * from "gm kit"\n&bar meter("4/4") step=120bpm\n&tonic C';
   return `use * from "core kit"\nuse * from "gm kit"\n${METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(text, m).fits)!}`;
 };
 
@@ -82,12 +82,12 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
     expect(LIBRARY.filter((f) => /map=(midi|sample)/.test(f.text)).map((f) => f.id)).toEqual([]);
   });
 
-  it('a text with nothing to hear gets no card', () => expect(heard('&harm over=key step=1m [0,2,4]')).toBe(''));
+  it('a text with nothing to hear gets no card', () => expect(heard('&harm over=&key step=1m [0,2,4]')).toBe(''));
 });
 
 describe('a bass line fills the bass performer’s hole (#285)', () => {
   it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s, with the host and use * from "bass performer", compiles with no diagnostic', (_, text) => {
-    const host = '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bass';
+    const host = '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bass';
     const r = compileSource(`use * from "bass performer"\n${host}\n${text}`, undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
     expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bass', 'bass', 'bassline']]);

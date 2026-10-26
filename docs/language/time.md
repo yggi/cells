@@ -31,6 +31,8 @@ A meter is a cell whose braid is a `scan` or a `meter(…)`: `scan(27 23 26 24)`
 
 **`meter(signature, steps a pulse)`** writes a bar as levels, one per step: 0 the downbeat, 1 a beat, then finer subdivisions. `meter("4/4", 2)` is eight steps, `*.+.+.+.`; `meter("6/8")` six; levels can be written directly, `meter("*.+.+..")`. Read through a kit, each level picks its own sound (the Metronome).
 
+**A meter's tempo read from a cell** ([#290](https://github.com/yggi/cells/issues/290)): `&bar meter("4/4") step=&tempo` with `&tempo step=104bpm`, a cell that is a rate alone (no braid), keeps time as `&bar meter("4/4") step=104bpm` does, its swing and its beats as written, so it is the piece's main meter and its taps read it; `step=&tempo*2` doubles it. A fragment that leaves its tempo to the text that uses it reads it so, a hole like a name (the seed meters do). A meter stepped by any other cell steps by that cell's steps, as before.
+
 A meter knows four things ([decision 040](https://github.com/yggi/cells/blob/main/docs/decisions/040-pulse-beat-and-laps.md)):
 
 | | What it is | 3/4 | 4/4 | 6/8 | 9/8 | 12/8 | 7/8 |
@@ -80,7 +82,7 @@ A line taps a meter by pulse, beat or note value, never by the meter cell's own 
 - **`step=beat`**, **`step=beat*k`** — each beat, or each in k equal steps: in 7/8, `beat` is a dotted quarter and two quarters, `beat*3` three eighths and two triplets.
 - **Note values**: `1n` `2n` `4n` `8n` `16n` `32n`, triplets `4t` `8t` `16t`, dotted `2n.` `4n.` `8n.`, and the bar, `1m`.
 - **A tap comes round at the bar**: a note value longer than what is left of the bar is cut at the bar line. `1n` in 3/4 is one step a bar, a bar long; `4n.` in 4/4 is 3+3+2 eighths, the tresillo. **`cycle=n`** on the tap runs it n bars before it comes round: `step=1n cycle=4` in 3/4 is three whole notes over four bars.
-- A tap reads the piece's **main meter**, the first meter in the text with a tempo of its own; another is named: `step=&bar2:16n`, `step=&swing:pulse`. A line reads the piece's **main key** the same way, `over=key` ([tables.md](tables.md)).
+- A tap reads the piece's **main meter**, the first meter in the text with a tempo of its own; another is named: `step=&bar2:16n`, `step=&swing:pulse`. A line once read the piece's **main key** the same way, `over=key`, the old way now: the key is named, `over=&key` ([tables.md](tables.md), decision 060).
 - A time parameter (`delaytime=`, a tape's `length=`, a head's `at=`) reads a tap as a length: `delaytime=8n` is an eighth at the meter's tempo (.25 s at 120 bpm), `4n.` is .75 s even where the bar line cuts it, `&bar2:8n` reads another meter. A pulse, a beat or the bar is the mean of its steps over the bar (`beat` in 7/8 as 3+2+2 at 90 bpm is 2/3 s: a parameter is one number). Like a clock's, it is fixed at the piece's tempo when compiled, and a swing leaves it as it is.
 - The meter places the tap's steps: a scan bends them, `swing=` leans them (each node keeping its ends), a motor drags them. A part of a step (a subsequence's steps, a Euclid's strokes, a note's end under `legato=`) is placed from where it is written through the swing, even between the points of the finest level the swing leans, so it lands where a tap of that level does: `&euclid step=1m &rim(7,16,0)` under `swing=16n:.6` strikes where `step=16n` does ([#121](https://github.com/yggi/cells/issues/121)). On a tap the swing doesn't place so (`8t` under swung eighths), its parts are even within its step.
 

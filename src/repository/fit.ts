@@ -6,12 +6,12 @@
  * workbench does (its code, comments aside, whitespace collapsed) is the same line and kept once (owner, on #22); a name
  * both define by different lines is the fragment's own and renamed, `&kick` to `&kick2` (the first `&kick<n>`, n from 2,
  * that neither text names), with every use of it in the fragment, until no private name collides (a rename can make a
- * shared line differ, `[&kick, &sd]`, and so rename it too). The interface names (`INTERFACE_NAMES`: `&bar`, `key`,
- * `&harm`) are never renamed: one the fragment defines differently is defined twice, and the fragment doesn't fit.
+ * shared line differ, `[&kick, &sd]`, and so rename it too). The interface names (`INTERFACE_NAMES`: `&bar`, `&tempo`,
+ * `&key`, `&tonic`, `&harm`) are never renamed: one the fragment defines differently is defined twice, and the fragment doesn't fit.
  * Lines of the fragment that declare nothing (blank, a comment alone) aren't carried over, but for its `use` lines
  * (decision 054), each carried over unless the workbench has it, before its declarations.
  *
- * **The fit:** every name the fragment uses is defined on the workbench (`key`: the workbench has a main key), no name is
+ * **The fit:** every name the fragment uses is defined on the workbench (`key`, the old way: the workbench has a main key), no name is
  * defined twice by different lines, every clock need is met by the meter the workbench gives it (its main meter, or the
  * one named), and the union compiles with no diagnostic the workbench alone doesn't have (its own warnings, or an error a
  * hole of its own makes, are no fault of the fragment's). The checks run cheapest first, and the union is compiled only

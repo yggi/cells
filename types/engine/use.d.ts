@@ -1,5 +1,5 @@
 import type { Diagnostic, Span } from './ast';
-import type { CompileOptions, Resolve, Used } from './program';
+import { type CompileOptions, type Resolve, type Used } from './program';
 /** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
 export declare const USE_DEPTH = 8;
 /** Does this text have a `use` line? (Cheap: a text without one compiles as it always has.) */

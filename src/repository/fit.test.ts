@@ -87,9 +87,13 @@ describe('the fit', () => {
     const line = '&line step=8n 0 2 4 7 over=&harm\n&out [&line * &lead]\n&lead s=saw loop=C3';
     expect(fitOf(line, four).missing).toEqual(['&harm']);
     expect(fitOf(line, `${four}\n&harm step=1m scale(major, C)`).fits).toBe(true);
-    const keyed = '&line step=8n 0 2 4 7 over=key\n&out [&line * &lead]\n&lead s=saw loop=C3';
-    expect(fitOf(keyed, four).missing).toEqual(['key']);
+    const keyed = '&line step=8n 0 2 4 7 over=&key\n&out [&line * &lead]\n&lead s=saw loop=C3';
+    expect(fitOf(keyed, four).missing).toEqual(['&key']);
     expect(fitOf(keyed, `${four}\n&key scale(major, C)`).fits).toBe(true);
+    // (the old way, over=key: the main key, whatever its name)
+    const old = keyed.replace('over=&key', 'over=key');
+    expect(fitOf(old, four).missing).toEqual(['key']);
+    expect(fitOf(old, `${four}\n&chords scale(major, C)`).missing).toEqual([]);
   });
 
   it('a fragment that defines an interface name differently doesn’t fit', () => {
@@ -259,9 +263,13 @@ describe('a query given the workbench', () => {
     const r = createRepository(LIBRARY);
     const all = r.query(BOSSA_NOVA, LIBRARY.length).map((f) => f.fragment.id);
     const fitting = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('4/4') }).map((f) => f.fragment.id);
-    // (the rhythms that fit 4/4, and the kits and the modes, which fit any workbench with no key: they use no name)
-    const open = [...INSTRUMENT_FRAGMENTS, ...MODE_FRAGMENTS].map((f) => f.id);
+    // (the rhythms that fit 4/4, and the kits, which fit any workbench: they use no name; the modes read the tonic (#290), a
+    // hole the workbench fills, so they fit once it gives one)
+    const open = INSTRUMENT_FRAGMENTS.map((f) => f.id);
+    const modes = MODE_FRAGMENTS.map((f) => f.id);
     expect(fitting).toEqual(all.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id) || open.includes(id)));
+    const toned = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: `${bench('4/4')}\n&tonic D` }).map((f) => f.fragment.id);
+    expect(toned).toEqual(all.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id) || open.includes(id) || modes.includes(id)));
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('7/8') }).map((f) => f.fragment.id)).toEqual(all.filter((id) => open.includes(id)));
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('4/4') })).toEqual([]);
     expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('4/4') }).map((f) => f.fragment.id)).toEqual(fitting.filter((id) => !open.includes(id)).slice(0, 2));
@@ -301,8 +309,8 @@ describe('what it costs', () => {
     const r = (await import('./fragments')).createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
-    // (the 13 rhythms, the 6 instruments and the 5 modes: a performer's part is a hole no workbench of drums fills)
-    expect(first).toHaveLength(24);
+    // (the 13 rhythms and the 6 instruments: a performer's part, and a mode's tonic (#290), are holes no workbench of drums fills)
+    expect(first).toHaveLength(19);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
     expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);

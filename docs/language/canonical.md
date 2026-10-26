@@ -36,6 +36,14 @@ the same units (decision 027). Normalise writes ours, whatever its length; Short
 An alias written beside its own name (`cutoff=800 lpf=900`) is one parameter given twice, which the parser says; Normalise
 leaves it for the author.
 
+## The main key: named, `over=&key`
+
+`over=key`, the main key read the old way ([tables.md](tables.md), [decision 060](https://github.com/yggi/cells/blob/main/docs/decisions/060-the-key-is-named.md)), is written `over=&key`, the cell it reads, by its name (`normalise/mainkey.ts`): the first cell in the text whose braid is `scale(…)`, whatever it is called (`over=&chords` where `&chords scale(aeolian, A)` comes first). The two read one table, so the rewrite plays the same notes. A text with no main key is left as it is: its `over=key` is an error.
+
+| written | Normalise writes |
+|---|---|
+| `over=key` | `over=&key`, the main key by its name |
+
 ## `use`: one spelling, kept, never expanded
 
 A `use` line ([use.md](use.md), decisions 054 and 059) is written in one spelling (`normalise/uses.ts`): `use * from …`
