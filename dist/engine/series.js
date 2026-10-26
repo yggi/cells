@@ -120,7 +120,7 @@ function rampedSeries(p, m, from, to, valueOf) {
     out.push({ at: to, v: valueAt(c1 - 1e-6), ramp: true });
     return out;
 }
-export function levelSeries(p, m, from, to) {
+export function levelSeries(p, m, from, to, written) {
     const val = (e) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter));
     if (m.events.length === 0)
         return [{ at: from, level: 0 }];
@@ -143,7 +143,8 @@ export function levelSeries(p, m, from, to) {
                 best = Math.max(best, val(e));
         return best < 0 ? 0 : best;
     };
-    const out = [{ at: from, level: levelAt(c0) }];
+    const w = written === undefined ? NaN : clocking(p.result, p.statics).written(m.clock).stepAt(Math.max(0, written)) * m.rate;
+    const out = [{ at: from, level: levelAt(Number.isFinite(w) ? w : c0) }];
     const edges = new Set();
     for (let lap = Math.floor(c0 / m.period); lap * m.period < c1; lap++)
         for (const e of m.events)

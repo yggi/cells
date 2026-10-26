@@ -178,6 +178,47 @@ describe('a gate is a performer (decision 058): its name its role, and it transp
   });
 });
 
+// #287: a gate plays a stack of lines, each as if it were its one line, so each keeps its own name in what sounds
+describe('a gate plays a stack of lines', () => {
+  const two = '&lo over=&major step=&bar*2 0 2\n&hi over=&major step=&bar 4 7\n';
+  const lines = two + '&both [&lo, &hi]\n';
+  const ids = (src: string) => compileSource(BASE + src).outputs.map((o) => o.id.split(':').slice(0, 2).join(':'));
+
+  it('plays each line as it plays one, at its level, on each of its voices', () => {
+    expect(played(lines + '&pad play=&both level=&accent*.5 [&lead, &bell]\n&out map=sample &pad')).toEqual(
+      played(two + '&pad [&lo * &accent * &lead * .5, &lo * &accent * &bell * .5, &hi * &accent * &lead * .5, &hi * &accent * &bell * .5]\n&out map=sample &pad'),
+    );
+    expect(ids(lines + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(['lead:lo', 'lead:hi']);
+    expect(compileSource(BASE + lines + '&pad play=&both &lead\n&out map=sample &pad').performers).toEqual([{ name: 'pad', role: 'pad', part: 'both', voices: ['lead'] }]);
+  });
+
+  it('moves each line, and a pick on a line is kept', () => {
+    expect(played(lines + '&pad play=&both^$-12 &lead\n&out map=sample &pad')).toEqual(
+      played(two + '&p1 play=&lo^$-12 &lead\n&p2 play=&hi^$-12 &lead\n&out map=sample [&p1, &p2]'),
+    );
+    expect(ids(lines + '&pad play=&both^$-12 &lead\n&out map=sample &pad')).toEqual(['lead:lo^$-12', 'lead:hi^$-12']);
+    expect(played(two + '&both [&lo, &hi[<<1]]\n&pad play=&both &lead\n&out map=sample &pad')).toEqual(played(two + '&pad [&lo * &lead, &hi[<<1] * &lead]\n&out map=sample &pad'));
+  });
+
+  it('a kit plays lines of numbers and lines of its voices alike, each by its own name', () => {
+    const numbers = '&kick step=&bar*2 0 ~ 0 ~\n&hat step=&bar*4 2\n&beat [&kick, &hat]\n&drums play=&beat &kit\n&out map=sample &drums';
+    expect(played(numbers)).toEqual(played('&kick over=&kit step=&bar*2 0 ~ 0 ~\n&hat over=&kit step=&bar*4 2\n&out map=sample [&kick, &hat]'));
+    const voices = '&kick step=&bar*2 &bd ~ &bd ~\n&hat step=&bar*4 &hh:0:.4\n&beat [&kick, &hat]\n&drums play=&beat &kit\n&out map=sample &drums';
+    expect(played(voices)).toEqual(played('&kick step=&bar*2 &bd ~ &bd ~\n&hat step=&bar*4 &hh:0:.4\n&out map=sample [&kick, &hat]'));
+    expect(compileSource(BASE + voices).outputs.map((o) => o.id.split(':').slice(0, 3).join(':'))).toEqual(['kit:voices:kick', 'kit:voices:hat']);
+  });
+
+  it('a member is a line times its levels, which scale its notes as in a mix; a sound beside a line is refused', () => {
+    expect(played(lines.replace('[&lo, &hi]', '[&lo * &accent, &hi * .5]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(
+      played(two + '&pad [&lo * &accent * &lead, &hi * &lead * .5]\n&out map=sample &pad'),
+    );
+    expect(ids(lines.replace('[&lo, &hi]', '[&lo * &accent, &hi * .5]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(['lead:lo', 'lead:hi']);
+    expect(errors(lines.replace('[&lo, &hi]', '[&lo * &bell, &hi]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual([
+      '&both is a stack of lines, each times its levels: &bell is a sound, not a level (a cell with map=amp, map=db or map=lin, or a number)',
+    ]);
+  });
+});
+
 // (#282's probe: a part with legato= read as a kit's member, so a braid splicing it, or a gate playing it moved, was a kit)
 describe('a line’s own parameters make no voice of it', () => {
   const diagnostics = (src: string) =>

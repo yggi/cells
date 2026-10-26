@@ -210,7 +210,16 @@ export function clocking(result, statics, seconds = 0) {
         }
         return m;
     };
-    return { map, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
+    const written = (clock) => {
+        const tap = result.clocks.get(clock)?.tap;
+        if (!tap?.written)
+            return map(clock);
+        let m = maps.get(`${clock}\0written`);
+        if (!m)
+            maps.set(`${clock}\0written`, (m = tapMap({ ...tap, positions: tap.written }, base(tap.meter))));
+        return m;
+    };
+    return { map, written, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
 export function shiftsAt(result, statics, seconds) {
     const clk = clocking(result, statics, seconds);
