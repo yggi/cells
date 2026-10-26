@@ -14,15 +14,7 @@ export const STUBS = new Set([
         .filter((k) => PARAMS[k].stub)
         .map((k) => `parameter ${k}`),
 ]);
-export const PENDING = new Set([
-    'step <a b c>',
-    'modifier x/n',
-    'modifier x(k,n,r)',
-    'parameter legato',
-    'attribute tags',
-    'line use "id"',
-    'modifier n:gain',
-]);
+export const PENDING = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags', 'line use "id"']);
 export function formKey(e) {
     if (e.section === 'attribute' || e.section === 'parameter')
         return `${e.section} ${e.form.split('=')[0]}`;
@@ -348,7 +340,7 @@ export function formsUsed(source) {
         if (t.chance !== undefined)
             use('modifier x?');
         if (t.level !== undefined)
-            use(t.atom.kind === 'note' ? 'modifier n:gain' : 'modifier &x:0:gain');
+            use('modifier &x:0:gain');
         const a = t.atom;
         if (a.kind === 'note') {
             use('step n');
@@ -363,8 +355,6 @@ export function formsUsed(source) {
             use('step [a, b, c]');
             if (a.alters.some(Boolean))
                 use('step n#');
-            if (a.levels)
-                use('modifier n:gain');
         }
         else if (a.kind === 'choice') {
             use('step [a|b|c]');

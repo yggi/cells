@@ -30,5 +30,4 @@ export declare const SLOW_SYNTAX: Syntax;
 export declare const EUCLID_SYNTAX: Syntax;
 export declare const CHANCE_SYNTAX: Syntax;
 export declare const LEVEL_SYNTAX: Syntax;
-export declare const GAIN_SYNTAX: Syntax;
 export declare function parseToken(s: LineScanner, depth?: number): Token;

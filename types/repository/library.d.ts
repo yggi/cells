@@ -7,7 +7,7 @@
  */
 import type { Resolve } from '../engine/program';
 import type { Fragment } from './fragments';
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, then the performers: fifty-two fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, then the performers: fifty-one fragments. */
 export declare const LIBRARY: readonly Fragment[];
 /**
  * The seed library as a `use` line's resolver (decision 054): a fragment's text by its id, or null for none. It holds

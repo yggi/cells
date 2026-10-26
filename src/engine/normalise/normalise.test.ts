@@ -67,7 +67,6 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     // (a performer's part and its levels, the score's holes (decision 058), filled by a line each; its `use` lines resolved)
     const compiled = (t: string) => compileSource(t, undefined, { resolve: resolveSeed });
     const parts = Object.fromEntries([
-      ['&groove', '&groove step=16n [0:.5, 5] ~ 2 5'],
       ...['bass', 'pad', 'stab', 'lead'].flatMap((n) => [
         [`&${n}line`, `&${n}line over=&harm step=4n 0 2`],
         [`&${n}Level`, `&${n}Level map=amp .8`],

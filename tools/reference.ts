@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { CORE, PARAMS, PARAM_ALIASES, rolesText, type Attribute } from '../src/engine/attributes';
 import { BODIES } from '../src/engine/program';
 import { DOUGH_SOURCES } from '../src/engine/dough-params';
-import { CHANCE_SYNTAX, EUCLID_SYNTAX, GAIN_SYNTAX, LEVEL_SYNTAX, MODIFIERS, SLOW_SYNTAX, STEP_SYNTAX } from '../src/engine/parser/braid';
+import { CHANCE_SYNTAX, EUCLID_SYNTAX, LEVEL_SYNTAX, MODIFIERS, SLOW_SYNTAX, STEP_SYNTAX } from '../src/engine/parser/braid';
 import { KEYS, LINE_SYNTAX, SHOWS, SHOW_CONVENTIONS } from '../src/engine/parser/cell';
 import { BUILTIN_PLUGINS } from '../src/engine/builtinPlugins';
 import { FREE_SYNTAX } from '../src/engine/parser/free';
@@ -51,7 +51,6 @@ export function entries(): Syntax[] {
     EUCLID_SYNTAX,
     CHANCE_SYNTAX,
     LEVEL_SYNTAX,
-    GAIN_SYNTAX,
     ...REFERENCE_SYNTAX,
     // (the waveforms share one entry)
     ...new Set(Object.values(GENERATORS).map((g) => g.syntax)),

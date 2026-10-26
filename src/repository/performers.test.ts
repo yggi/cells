@@ -1,7 +1,7 @@
-// The performers (#282, decision 058): Jambot's drums, bass, pad, stab and lead as gates named by their roles, each
+// The performers (#282, decision 058): Jambot's bass, pad, stab and lead as gates named by their roles, each
 // playing a part the score fills on the instrument it uses. Each reads its role, its part and its move; its holes are its
 // part and its levels; over a workbench that fills them it compiles clean and sends what Jambot's section text sends for
-// that part (its own voice line at Jambot's register); and a query for a performer at any preset finds the five.
+// that part (its own voice line at Jambot's register); and a query for a performer at any preset finds the four. (The drums wait on #287: a gate's part keeps no line's name.)
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { planOf } from '../engine/host';
@@ -77,29 +77,13 @@ const PARTS = {
       '&out map=midi &lead',
     ],
   },
-  drums: {
-    jambot: [
-      '&kick step=16n &bd:0:.547833 ~ ~ ~ &bd:0:.536239 ~ ~ ~ &bd:0:.547833 ~ ~ ~ &bd:0:.536239 ~ ~ ~',
-      '&backbeat step=16n ~ ~ ~ ~ &sd:0:.458553 ~ ~ ~ ~ ~ ~ ~ &sd:0:.469279 ~ ~ ~',
-      '&hat step=16n &hh:0:.278319 ~ &hh ~ &hh:0:.278319 ~ &hh ~ &hh:0:.278319 ~ &hh ~ &rd:0:.2 ~ &oh ~',
-      '&drums [&kick, &backbeat, &hat]',
-      'use "core kit"',
-      '&out map=midi ~ ~ ~ ~!6 &drums',
-    ],
-    performer: [
-      '&groove step=16n [0:.547833, 5:.278319] ~ 5 ~ [0:.536239, 2:.458553, 5:.278319] ~ 5 ~ [0:.547833, 5:.278319] ~ 5 ~ [0:.536239, 2:.469279, 11:.2] ~ 8 ~',
-      'use "drums performer"',
-      '&out map=midi ~ ~ ~ ~!6 &drums',
-    ],
-  },
 } as const;
 
 describe('the performers', () => {
-  it('are the drums, the bass, the pad, the stab and the lead, each one gate named by its role, playing its part on the instrument it uses', () => {
-    expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['drums performer', 'bass performer', 'pad performer', 'stab performer', 'lead performer']);
+  it('are the bass, the pad, the stab and the lead, each one gate named by its role, playing its part on the instrument it uses', () => {
+    expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['bass performer', 'pad performer', 'stab performer', 'lead performer']);
     const read = PERFORMER_FRAGMENTS.map((f) => compileSource(f.text, undefined, { resolve: resolveSeed }).performers);
     expect(read).toEqual([
-      [{ name: 'drums', role: 'drums', part: 'groove', voices: ['kit'] }],
       [{ name: 'bass', role: 'bass', part: 'bassline', move: { transpose: -12 }, voices: ['bassV'] }],
       [{ name: 'pad', role: 'pad', part: 'padline', voices: ['padV'] }],
       [{ name: 'stab', role: 'stab', part: 'stabline', voices: ['keysV'] }],
@@ -109,7 +93,12 @@ describe('the performers', () => {
 
   it('leave the part and its levels to the score: those are their holes', () => {
     const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
-    expect(holes).toEqual([['&groove'], ['&bassLevel', '&bassline'], ['&padLevel', '&padline'], ['&stabLevel', '&stabline'], ['&leadLevel', '&leadline']]);
+    expect(holes).toEqual([
+      ['&bassLevel', '&bassline'],
+      ['&padLevel', '&padline'],
+      ['&stabLevel', '&stabline'],
+      ['&leadLevel', '&leadline'],
+    ]);
   });
 
   for (const [part, { jambot, performer }] of Object.entries(PARTS))
@@ -122,7 +111,7 @@ describe('the performers', () => {
       expect(now.notes).toEqual(was.notes);
     });
 
-  it('are found, all five, by a query for a performer at each of Jambot’s presets', () => {
+  it('are found, all four, by a query for a performer at each of Jambot’s presets', () => {
     const library = createRepository(LIBRARY);
     for (const preset of [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ])
       expect(

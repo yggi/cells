@@ -18,11 +18,3 @@ export function parseFields(s) {
         return s.fail('A hit’s gain: a number, &bd:0:.3 (1 as it is)', g, 1);
     return parseFloat(gain);
 }
-export function parseGain(s) {
-    s.i++;
-    const g = s.i;
-    const gain = s.match(/[0-9]*\.[0-9]+|[0-9]+/y);
-    if (gain === null)
-        return s.fail('A number’s gain: 2:.4 (1 as it is)', g, 1);
-    return parseFloat(gain);
-}

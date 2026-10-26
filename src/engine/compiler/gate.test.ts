@@ -191,4 +191,9 @@ describe('a line’s own parameters make no voice of it', () => {
   it('a braid splicing a line with legato= is that line', () => {
     expect(diagnostics('&t step=&bar*2 legato=.5 0 2\n&up step=&bar*2 &t\n&g play=&up &lead\n&out map=sample &g')).toEqual([]);
   });
+  it('and is said to be a melody, not a kit, where it lacks a voice (the bindings read members as the sorts do)', () => {
+    expect(diagnostics('&t step=&bar*2 legato=.5 0 2\n&up step=&bar*2 &t\n&out map=midi &up')).toEqual([
+      '&up is a melody without a voice: a MIDI channel plays notes on a voice, [&up * &voice]',
+    ]);
+  });
 });

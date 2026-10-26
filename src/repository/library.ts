@@ -15,7 +15,7 @@ import { MODE_FRAGMENTS } from './modes';
 import { PERFORMER_FRAGMENTS } from './performers';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, then the performers: fifty-two fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, then the performers: fifty-one fragments. */
 export const LIBRARY: readonly Fragment[] = [
   ...METER_FRAGMENTS,
   ...RHYTHM_FRAGMENTS,

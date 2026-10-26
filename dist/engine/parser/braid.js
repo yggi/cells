@@ -1,7 +1,7 @@
 import { lapsOf } from "../subseq.js";
 import { bjorklund } from "./generators.js";
 import { MAX_NESTING, MAX_REPS } from "./scanner.js";
-import { parseFields, parseGain } from "./level.js";
+import { parseFields } from "./level.js";
 import { isMixChord, parseMixChord } from "./mix.js";
 import { syntax } from "./syntax.js";
 export const STEP_SYNTAX = [
@@ -135,14 +135,7 @@ function parseBracket(s, depth) {
     }
     if (single) {
         const pitched = notes.map((n) => !!n.pitched);
-        const levels = layers.some((l) => l[0].level !== undefined) ? layers.map((l) => l[0].level ?? 1) : undefined;
-        return {
-            kind: 'chord',
-            notes: notes.map((n) => n.value),
-            alters: notes.map((n) => n.alter),
-            ...(pitched.some(Boolean) ? { pitched } : {}),
-            ...(levels ? { levels } : {}),
-        };
+        return { kind: 'chord', notes: notes.map((n) => n.value), alters: notes.map((n) => n.alter), ...(pitched.some(Boolean) ? { pitched } : {}) };
     }
     return { kind: 'seq', layers };
 }
@@ -219,7 +212,6 @@ export const SLOW_SYNTAX = syntax('modifier', 'x/n', "Slow, as Strudel's x/n: th
 export const EUCLID_SYNTAX = syntax('modifier', 'x(k,n,r)', "A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers.", ['&groove step=1 &bd(3,8) &hh(5,8,2)', '&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)'], 'cell.md');
 export const CHANCE_SYNTAX = syntax('modifier', 'x? · x?p', "Chance, as Strudel's degradeBy: the step is dropped with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence.", ['&hats step=4 0 0? 0?.3 0', '&ghost chance=.8 step=4 0? 0? 0? 0?'], 'cell.md');
 export const LEVEL_SYNTAX = syntax('modifier', '&x:0:gain', 'A hit\'s own gain, as Strudel spells a sound\'s fields (s("hh:0:.4")): its number in its table (0; a pitched hit is not yet), then its gain, linear (1 as it is). In a groove, and in its chords: [&bd, &hh:0:.4].', ['&beat step=8 [&bd,&hh] &hh:0:.4 [&sd,&hh] &hh:0:.4'], 'cell.md');
-export const GAIN_SYNTAX = syntax('modifier', 'n:gain', "A number's own gain, as a hit's (&hh:0:.4): 2:.4 is 2 at .4, linear (1 as it is), in chords too ([0:.5, 5:.3]). A kit's hit by its number, or a note's velocity.", ['&groove over=&kit step=8n [0, 5:.3] 5:.3 [2:.6, 5:.3] 5:.3'], 'cell.md');
 export function parseToken(s, depth = 0) {
     const start = s.i;
     let atom = parseAtom(s, depth);
@@ -231,8 +223,6 @@ export function parseToken(s, depth = 0) {
     const seen = new Set();
     if (atom.kind === 'ref')
         level = parseFields(s);
-    else if (atom.kind === 'note' && !atom.pitched && s.peek() === ':')
-        level = parseGain(s);
     const euclid = s.peek() === '(' ? parseEuclidOn(s) : undefined;
     while (s.peek() in MODIFIERS || s.peek() === '?' || s.peek() === '/') {
         if (s.peek() === '/') {

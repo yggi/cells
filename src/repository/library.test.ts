@@ -35,8 +35,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the thirteen rhythms, the five bass lines, the five harmonies, the six instruments, the five modes and the five performers, every point associated as its facet, the bell and scale as two: fifty-two', () => {
-    expect(LIBRARY).toHaveLength(52);
+  it('is the thirteen meters, the thirteen rhythms, the five bass lines, the five harmonies, the six instruments, the five modes and the four performers, every point associated as its facet, the bell and scale as two: fifty-one', () => {
+    expect(LIBRARY).toHaveLength(51);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -53,7 +53,7 @@ describe('the library', () => {
       INSTRUMENT_FRAGMENTS.length,
       MODE_FRAGMENTS.length,
       PERFORMER_FRAGMENTS.length,
-    ]).toEqual([13, 13, 5, 5, 6, 5, 5]);
+    ]).toEqual([13, 13, 5, 5, 6, 5, 4]);
   });
 
   it('a query of the meters over it returns what the meters alone return, at every one of 661 points', () => {
