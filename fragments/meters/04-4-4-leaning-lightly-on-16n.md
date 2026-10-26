@@ -19,7 +19,8 @@ source: seed
 ---
 
 ```cells
-&bar meter("4/4") swing=16n:.6
+&bar meter("4/4") step=&tempo swing=16n:.6
 ```
 
 Jambot's swing .3. At Deep house's and Funk's points, whose swing is the same.
+Its tempo is the text's: `step=&tempo` reads a cell the text that uses it writes, a rate alone (`&tempo step=104bpm`, #290).

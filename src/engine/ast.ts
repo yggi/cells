@@ -160,6 +160,11 @@ export interface GateSpec {
   readonly move?: Move;
   /** The cell its products read for its notes: &tune, or (moved by degrees) a copy of it, moved. */
   readonly plays: string;
+  /**
+   * A stack it plays (#287: `play=&drumlines`, `&drumlines [&kick, &backbeat, &hat]`): each line as written, and the cell
+   * its products read for it (the line, or a copy of it moved), each played as a gate's one line is. Absent for one line.
+   */
+  readonly lines?: readonly { readonly line: string; readonly plays: string }[];
   /** The port it was written on: `play` (or the old `trigger`). */
   readonly port: 'play' | 'trigger';
   readonly levels: readonly { readonly name: string; readonly port: string }[];
@@ -307,6 +312,11 @@ export interface CellDecl {
    */
   readonly base?: Ref | null;
   readonly shift: number | null;
+  /**
+   * The key of a `scale(name, &tonic)` (#290): the cell its shift is read from, one note (`&tonic D`), the tonic a hole
+   * the text that uses the key fills. Resolved by compile (declare.ts), which sets `shift`.
+   */
+  readonly tonic?: Ref;
   /** `off`: switched off — silences it and everything that reads through it or plays it. */
   readonly off: boolean;
   /** `oneshot`: a voice plays each note as long as its envelope's attack and decay, whatever its step (a drum hit). */

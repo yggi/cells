@@ -11,7 +11,7 @@ import type { Ctx } from './context';
 /** The cells a declaration's braid reads: its steps' splices, a mix's or a card's terms, inside subsequences too. */
 export declare const braidReadsOf: (d: CellDecl) => string[];
 /**
- * Every other cell a declaration reads: over=, base=, a step=/loop= driver, a map= table, env= and pitch=, a parameter's
+ * Every other cell a declaration reads: over=, a key's tonic (`scale(…, &tonic)`), base=, a step=/loop= driver, a map= table, env= and pitch=, a parameter's
  * cells and clocks, and the parameters that take a cell (play= write= excite= couple= fm= …: attributes.ts). Not about=:
  * a note's links are annotation only, so a note that explains its oscillator (`&oscNote label="…" about=&a`) leaves it
  * heard.

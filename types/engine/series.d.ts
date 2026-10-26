@@ -67,7 +67,7 @@ export declare function heldAt(p: Plan, m: Series, at: number): StepEvent | null
  * Levels are the values as written (map=amp: 1 full, 0 silent); a rest is
  * silence; a stream that doesn't move holds its first value.
  */
-export declare function levelSeries(p: Plan, m: Series, from: number, to: number): {
+export declare function levelSeries(p: Plan, m: Series, from: number, to: number, written?: number): {
     at: number;
     level: number;
     ramp?: boolean;

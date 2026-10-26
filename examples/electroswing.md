@@ -56,11 +56,11 @@ The verse is that bar and what operators make of it: two degrees down (`&call^-2
 The break cuts it into pieces with picks: its first three notes (`&call[0:3]`) and rests, its tail moved, its first two as a stutter (`&call[0:2]!4`), its top note hammered (`&call[3]!4`).
 
 ```cells
-&call over=key step=8n 4 5 6 7@2 6 4@2
-&turn over=key step=8n 6 7 6 5 4@2 ~@2
-&verse over=key step=8n &call &call^-2 &call &turn &call^-3 degree(&call[::-1], -3) &call^-3 &turn
-&chop over=key step=8n &call[0:3] ~@5 &call[0:3] ~ &call[0:3] ~ &call[3:]^-2 ~@3 &call[0:2]!4
-&chopA over=key step=8n degree(&call[0:3], -3) ~@5 degree(&call[0:3], -3) ~ degree(&call[0:3], -3) ~ &turn &call[3]!4
+&call over=&key step=8n 4 5 6 7@2 6 4@2
+&turn over=&key step=8n 6 7 6 5 4@2 ~@2
+&verse over=&key step=8n &call &call^-2 &call &turn &call^-3 degree(&call[::-1], -3) &call^-3 &turn
+&chop over=&key step=8n &call[0:3] ~@5 &call[0:3] ~ &call[0:3] ~ &call[3:]^-2 ~@3 &call[0:2]!4
+&chopA over=&key step=8n degree(&call[0:3], -3) ~@5 degree(&call[0:3], -3) ~ degree(&call[0:3], -3) ~ &turn &call[3]!4
 &leadline step=8n ~@64 &verse &chop &chopA &verse
 &callNote label="One bar: everything the clarinet plays is this bar, moved by degrees (^n), turned backwards ([::-1]) or cut ([0:3]): its call, its answer, its break." about=(&call &verse &chop &chopA)
 ```

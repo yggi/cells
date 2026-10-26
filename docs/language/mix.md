@@ -87,6 +87,30 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 &out loop=SAMPLE_RATE map=sample [&drums]
 ```
 
+A gate also plays a **stack of lines**: `play=&drumlines`, where `&drumlines [&kick, &backbeat, &euclid * &euclidLevel]`
+is a chord of lines, each times its levels if it has any (level cells and numbers, as in a mix; a sound beside a line
+is refused). It plays each line as it would play that line alone, on each of its voices at its level, so each keeps its
+own name in what sounds: a hit of `&kick` is still the kick's ([#287](https://github.com/yggi/cells/issues/287)), the
+drum role the feel reads. A line may name its own voices, a hit with its own gain as Strudel writes it (`&hh:0:.4`,
+`s("hh:0:.4")`); played on a kit, it strikes only the kit's voices. A stack a gate plays is that gate's part, not a
+sound: mix or send the gate.
+
+```cells
+&bar scan(1 1 1 1) step=120bpm
+&bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
+&sd s=white env=&(map=adsr 0 .15 0 .05)
+&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&kit &bd &sd &hh
+&kick step=8n &bd ~ ~ &bd ~ ~ &bd ~
+&backbeat step=4n ~ &sd ~ &sd
+&hat step=8n &hh:0:.5 &hh:0:.3
+&rim step=1m &sd(3,8)
+&rimLevel map=amp step=8n .4 0 0 .3 0 0 .5 0
+&drumlines [&kick, &backbeat, &hat, &rim * &rimLevel]
+&drums play=&drumlines level=.6 &kit            # the drummer: each hit its line's, kick, backbeat or hat
+&out loop=SAMPLE_RATE map=sample [&drums]
+```
+
 A gate moves what it plays as a braid moves a cell (`play=&tune^$-12`, `^2`). Its name is its role ([decision 058](https://github.com/yggi/cells/blob/main/docs/decisions/058-the-performer-is-a-gate.md)):
 `drums` `bass` `pad` `stab` `lead`, `&lead2` a copy, others none.
 

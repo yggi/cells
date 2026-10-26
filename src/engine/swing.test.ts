@@ -173,7 +173,8 @@ describe('the pairs alone, `swing=8n:r:pairs` (#204, decision 053): a level’s 
       : /swing=/.test(text)
         ? text.replace('swing=', 'swing=8n:2/3:pairs,')
         : `${text} swing=8n:2/3:pairs`;
-  const meterOf = (text: string) => text.replace(/^&bar /, '');
+  // (a meter fragment's tempo is a hole, `step=&tempo` (#290): `onsets` writes one)
+  const meterOf = (text: string) => text.replace(/^&bar /, '').replace(' step=&tempo', '');
   // Where each eighth of one bar is played, in the meter's pulses, under the meter's own text with :pairs: a pair's second
   // eighth two thirds through it, a group of three at thirds of its beat (an eighth each). Literal, one row a meter.
   const expected: Record<string, readonly number[]> = {
@@ -279,5 +280,23 @@ describe('`:pairs` as written', () => {
       'swing=8n:.6666666666666666:pairs leans nothing on &bar: every group of 8n in it is three, and :pairs keeps those straight',
     ]);
     expect(warnings(`&bar meter("7/8") step=60bpm swing=8n:2/3:pairs\n&x step=8n 0${VOICE}`)).toEqual([]);
+  });
+});
+
+// #287: a level line multiplying a line is read at each note's written step, before the swing, as Strudel's .gain is read
+// at a hit's onset in the cycle; so a straight Euclid on 1m, times a level line on 16n under a leaning meter, keeps its levels.
+describe('a note’s level is read where it is written', () => {
+  const levels = (meter: string, line: string) => {
+    const r = compiled(
+      `&bar ${meter} step=60bpm\n${line}\n&lv map=amp step=16n .1 .2 .3 .4 .5 .6 .7 .8 .9 1 .11 .12 .13 .14 .15 .16\n&v s=sine loop=C4\n&out map=sample [&x * &lv * &v]`,
+    );
+    return eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-6).map((e) => +(e.levels[0]?.level ?? NaN).toFixed(4));
+  };
+  it('a straight stroke on a leaned sixteenth reads that sixteenth’s level, not the one before', () => {
+    const straight = levels('meter("4/4")', '&x step=1m [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]');
+    expect(straight).toEqual([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16]);
+    expect(levels('meter("4/4") swing=16n:.65', '&x step=1m [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]')).toEqual(straight);
+    // (a swung line reads its own swung step, as it did)
+    expect(levels('meter("4/4") swing=16n:.65', '&x step=16n 0')).toEqual(straight);
   });
 });

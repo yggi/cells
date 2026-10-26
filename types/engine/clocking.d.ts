@@ -41,6 +41,8 @@ export interface Clocking {
     /** Fractional step count of a clock at `seconds`. */
     stepOf(clock: string): number;
     map(clock: string): TimeMap;
+    /** A clock's time map as written: a swung meter's taps without its swing (#287), else its map. */
+    written(clock: string): TimeMap;
 }
 /**
  * The physics of a physical cell (a meter with a motor, or a belted cell): to put a hand on it, and

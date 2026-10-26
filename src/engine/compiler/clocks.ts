@@ -49,12 +49,25 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   const { rateOf, error, warn, unknownCell, broken } = ctx;
   const cells = new Map(given);
   const clocks = new Map<string, Clock>();
+  // a meter's rate read from a tempo cell (#290): `&bar meter("4/4") step=&tempo`, `&tempo step=104bpm`, a cell that is a
+  // rate alone (no steps, no meter); the meter keeps time as if the rate were written on it, so it is the main meter
+  const tempoOf = (d: CellDecl): number | null => {
+    const st = d.step;
+    if (st?.kind !== 'driven' || st.whole || st.cycle || !cells.get(d.name)?.meter) return null;
+    const t = decls.get(st.driver.name);
+    const tc = cells.get(st.driver.name);
+    if (t?.step?.kind !== 'rate' || t.step.whole || t.braid.kind !== 'blank' || !tc || tc.voice || tc.kit || tc.meter) return null;
+    const r = rateOf(t.step);
+    return r === null ? null : r * st.ratio;
+  };
   // ---- clocks: non-voice cells moved at a rate
   for (const [name, d] of decls) {
     const c = cells.get(name);
-    if (!c || c.voice || c.kit || (d.step?.kind !== 'rate' && d.step?.kind !== 'env')) continue;
-    const r = rateOf(d.step);
-    if (r === null) continue;
+    if (!c || c.voice || c.kit) continue;
+    const tempo = tempoOf(d);
+    if (tempo === null && d.step?.kind !== 'rate' && d.step?.kind !== 'env') continue;
+    const r = tempo ?? rateOf(d.step);
+    if (r === null || !d.step) continue;
     // (decision 040: beat= states a meter's beats; its old meaning, steps a beat, is gone)
     if (typeof d.params.beat === 'number' && !c.meter)
       warn(`beat= says how many beats a meter(…) or scan(…) counts (alla breve: meter("4/4") beat=2); on &${name}, a list, it does nothing`, d.paramSpans?.beat ?? d.span);
@@ -65,7 +78,8 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       );
     // the bpm counts beats (decision 040): a meter's steps a beat, from its pulses and beats (beat= on it, or meter(…)) —
     // so a meter can step in eighths and still read 96 for its quarter notes, and 7/8 at 90 is a bar of 2 s
-    const perSecond = (d.step.whole ? r * Math.max(1, c.steps) : r) * (d.step.whole ? 1 : c.beat);
+    const lapped = tempo === null && d.step.whole;
+    const perSecond = (lapped ? r * Math.max(1, c.steps) : r) * (lapped ? 1 : c.beat);
     // swing= (#18): on a meter, levels of its bar (a bare one, the level of its own steps); on a list, pairs of its steps
     const swingSpan = d.paramSpans?.swing ?? d.span;
     let swing: number | undefined;
@@ -166,8 +180,14 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       const lapPulses = m.pulses * bars;
       const fine = plain.flatMap((p, i) => Array.from({ length: split }, (_, k) => p + (k * ((plain[i + 1] ?? lapPulses) - p)) / split));
       const positions = fine.map((p) => swingAt(m, p) * per);
+      const written = fine.map((p) => p * per);
       const lap = m.levels.length * bars;
-      clocks.set(key, { cell: meter, perSecond: (clocks.get(meter)!.perSecond * positions.length) / lap, positional: false, tap: { meter, positions, lap } });
+      clocks.set(key, {
+        cell: meter,
+        perSecond: (clocks.get(meter)!.perSecond * positions.length) / lap,
+        positional: false,
+        tap: { meter, positions, lap, ...(written.some((w, i) => Math.abs(w - positions[i]!) > 1e-12) ? { written } : {}) },
+      });
     }
     const ratio = st.ratio / split;
     // (a scan tapped that drives others, scan(2 1) step=8n: a meter of its own, as one stepped by &bar is)

@@ -1,4 +1,4 @@
-// The modes (#228, decision 056): four fragments that state a mode, `&key scale(mode, free(C))`, each found first at
+// The modes (#228, decision 056): four fragments that state a mode, `&key scale(mode, &tonic)`, each found first at
 // distance 0 at the point of each of Jambot's presets that plays it; every harmony and bass seed fits a workbench with
 // each and compiles there with no diagnostic; and the bell and scale, a mode and a rhythm in one, plays the bell and reads
 // as the major scale.
@@ -53,9 +53,10 @@ const SCALE: Record<Mode, readonly number[]> = {
 const byId = (id: string) => MODE_FRAGMENTS.find((f) => f.id === id)!;
 const bell = byId('bell and scale');
 const MODES = MODE_FRAGMENTS.filter((f) => f !== bell);
-const meter = (m = '4/4') => setTiming(`&bar meter("${m}")`, 'bar', 'step', '60bpm');
+/** A workbench: a meter at 60 bpm, and the tonic the modes read (#290), C unless it says. */
+const meter = (m = '4/4', tonic = 'C') => `${setTiming(`&bar meter("${m}")`, 'bar', 'step', '60bpm')}\n&tonic ${tonic}`;
 /** A line that plays the main key's eight degrees up from the tonic, one a beat, on channel 3. */
-const PROBE = '&tune over=key step=4n 0 1 2 3 4 5 6 7\n&tuneV loop=C4\n&tuneOut map=midi(3) [&tune * &tuneV]';
+const PROBE = '&tune over=&key step=4n 0 1 2 3 4 5 6 7\n&tuneV loop=C4\n&tuneOut map=midi(3) [&tune * &tuneV]';
 
 /** What a text sends on a channel in its first `seconds`: each note's time and number, in time order. */
 function sent(text: string, channel: number, seconds: number): { at: number; note: number }[] {
@@ -73,9 +74,9 @@ describe('the mode fragments', () => {
     expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell and scale', 'harmonic minor']);
   });
 
-  it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s defines key and uses nothing but a sound, so it fits any meter', (id, text) => {
+  it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s defines key and uses its tonic and nothing else but a sound, so it fits any meter', (id, text) => {
     const holes = holesOf(text, compileSource);
-    expect(holes.uses).toEqual(id === 'bell and scale' ? ['&highagogo'] : []);
+    expect(holes.uses).toEqual(id === 'bell and scale' ? ['&highagogo', '&tonic'] : ['&tonic']);
     expect(holes.defines).toContain('&key');
     for (const m of ['4/4', '6/8', '12/8', '7/8']) expect(fitOf(text, meter(m)).fits, m).toBe(true);
   });
@@ -87,10 +88,11 @@ describe('the mode fragments', () => {
     expect(sent(piece, 3, 8).map((n) => n.note - 60)).toEqual([...SCALE[mode], 12]);
   });
 
-  it('leave the tonic to the host: free(…), which moves every note', () => {
+  it('leave the tonic to the text that uses them: &tonic, a hole the workbench fills, which moves every note (#290)', () => {
     for (const f of MODE_FRAGMENTS) {
-      expect(f.text).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic), free\(C\)\)/);
-      const inA = `${filled(fitOf(f.text.replace('free(C)', 'free(A)'), meter()).union.text)}\n${PROBE}`;
+      expect(f.text).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic), &tonic\)/);
+      expect(fitOf(f.text, setTiming('&bar meter("4/4")', 'bar', 'step', '60bpm')).missing).toEqual(['&tonic']);
+      const inA = `${filled(fitOf(f.text, meter('4/4', 'A')).union.text)}\n${PROBE}`;
       const inC = `${filled(fitOf(f.text, meter()).union.text)}\n${PROBE}`;
       expect(sent(inA, 3, 8).map((n) => n.note)).toEqual(sent(inC, 3, 8).map((n) => n.note + 9));
     }

@@ -26,8 +26,8 @@ vi.mock('../compile', async (original) => {
 // (the bass lines leave `&bassV`, their voice, as a hole: the bass instrument fills it, #244)
 const HOST = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n${INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text}`;
 const PROGRESSIONS: Record<string, { harm: string; bars: number }> = {
-  'I–vi–IV–V': { harm: '&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]', bars: 4 },
-  'ii–V–I': { harm: '&harm over=key step=1m [1,3,5,7] [4,6,8,10] [0,2,4,6]', bars: 3 },
+  'I–vi–IV–V': { harm: '&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]', bars: 4 },
+  'ii–V–I': { harm: '&harm over=&key step=1m [1,3,5,7] [4,6,8,10] [0,2,4,6]', bars: 3 },
 };
 const SEEDS = BASS_FRAGMENTS.map((f) => ({ id: f.id, fragment: f.text }));
 const OPTIONS = (name: string) => ({ workbench: `${HOST}\n${PROGRESSIONS[name]!.harm}`, operators: PITCHED_OPERATORS });
@@ -189,7 +189,7 @@ describe('the pitched operators', () => {
   });
 
   it('a chord change on the half bar anchors the root there too: the root bass, both its notes anchored, has no variation', () => {
-    const halves = { workbench: `${HOST}\n&harm over=key step=2n [0,2,4] [3,5,7]`, operators: PITCHED_OPERATORS };
+    const halves = { workbench: `${HOST}\n&harm over=&key step=2n [0,2,4] [3,5,7]`, operators: PITCHED_OPERATORS };
     const root = SEEDS.find((s) => s.id === 'root bass')!.fragment;
     expect(anchorsOf(root, halves.workbench).map((a) => a.step)).toEqual([0, 1]);
     expect(variations(root, halves)).toEqual([]);
@@ -201,7 +201,7 @@ describe('the pitched operators', () => {
   });
 
   it('a line over the key, not a harmony, has no root to keep', () => {
-    const scale = '&bass over=key step=4n 0 1 2 4\n&bassV loop=C2\n&bassOut map=midi(2) [&bass * &bassV]';
+    const scale = '&bass over=&key step=4n 0 1 2 4\n&bassV loop=C2\n&bassOut map=midi(2) [&bass * &bassV]';
     expect(anchorsOf(scale, options.workbench)).toEqual([]);
     expect(variations(scale, options).map((v) => v.by)).toContain('invert &bass');
   });
@@ -213,18 +213,18 @@ describe('the pitched operators', () => {
   });
 
   // (a lead's line, one bar over the key, as Jambot writes it: yggi/jambot#424)
-  const lead = (steps: string) => `&lead over=key step=16n ${steps}\n&leadV loop=C4\n&leadOut map=midi(3) [&lead * &leadV]`;
+  const lead = (steps: string) => `&lead over=&key step=16n ${steps}\n&leadV loop=C4\n&leadOut map=midi(3) [&lead * &leadV]`;
 
   it('bend and trim: the last note moved to 1 or 2 degrees either side of the note before it, or left out (#267)', () => {
     // the last note, 0 on step 12, after a 4: bent to 2, 3, 5 and 6, then left out
     const shape = lead('0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 0 ~ ~ ~');
     const ends = variations(shape, { workbench: HOST, operators: ['bend', 'trim'] });
     expect(ends.map((v) => [v.by, v.after.split('\n')[0]])).toEqual([
-      ['bend &lead -2', '&lead over=key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 2 ~ ~ ~'],
-      ['bend &lead -1', '&lead over=key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 3 ~ ~ ~'],
-      ['bend &lead 1', '&lead over=key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 5 ~ ~ ~'],
-      ['bend &lead 2', '&lead over=key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 6 ~ ~ ~'],
-      ['trim &lead 12', '&lead over=key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ ~ ~ ~ ~'],
+      ['bend &lead -2', '&lead over=&key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 2 ~ ~ ~'],
+      ['bend &lead -1', '&lead over=&key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 3 ~ ~ ~'],
+      ['bend &lead 1', '&lead over=&key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 5 ~ ~ ~'],
+      ['bend &lead 2', '&lead over=&key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 6 ~ ~ ~'],
+      ['trim &lead 12', '&lead over=&key step=16n 0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ ~ ~ ~ ~'],
     ]);
     // after the other pitched operators, in their order
     expect(
@@ -240,7 +240,7 @@ describe('the pitched operators', () => {
     const bent = lead('0 ~ ~ 2 ~ -1 ~ ~ 4b ~ ~ ~ 0 ~ ~ ~');
     const options = { workbench: HOST, operators: PITCHED_OPERATORS };
     const all = variations(bent, options);
-    expect(all.map((v) => [v.by, v.after.split('\n')[0]!.slice('&lead over=key step=16n '.length)])).toEqual([
+    expect(all.map((v) => [v.by, v.after.split('\n')[0]!.slice('&lead over=&key step=16n '.length)])).toEqual([
       ['transpose &lead -2', '-2 ~ ~ 0 ~ -3 ~ ~ 2b ~ ~ ~ -2 ~ ~ ~'],
       ['transpose &lead -1', '-1 ~ ~ 1 ~ -2 ~ ~ 3b ~ ~ ~ -1 ~ ~ ~'],
       ['transpose &lead 1', '1 ~ ~ 3 ~ 0 ~ ~ 5b ~ ~ ~ 1 ~ ~ ~'],
@@ -272,7 +272,7 @@ describe('the pitched operators', () => {
   it('a sharp repeated (`2#!2`) is read as its two notes; invert has no axis on a first note with an accidental', () => {
     const sharp = lead('0 ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 2#!2 ~ ~');
     expect(variations(sharp, { workbench: HOST, operators: ['transpose'], degrees: [1] }).map((v) => v.after.split('\n')[0])).toEqual([
-      '&lead over=key step=16n 1 ~ ~ 3 ~ 0 ~ ~ 5 ~ ~ ~ 3# 3# ~ ~',
+      '&lead over=&key step=16n 1 ~ ~ 3 ~ 0 ~ ~ 5 ~ ~ ~ 3# 3# ~ ~',
     ]);
     expect(variations(lead('4b ~ ~ 2 ~ -1 ~ ~ 4 ~ ~ ~ 0 ~ ~ ~'), { workbench: HOST, operators: ['invert'] })).toEqual([]);
   });
@@ -296,12 +296,12 @@ describe('the pitched operators', () => {
   });
 
   it('a last note that is an anchor, a root on a chord change, is neither bent nor trimmed', () => {
-    const changes = `${HOST}\n&harm over=key step=4n [0,2,4] [0,2,4] [0,2,4] [3,5,7]`;
+    const changes = `${HOST}\n&harm over=&key step=4n [0,2,4] [0,2,4] [0,2,4] [3,5,7]`;
     const walk = '&bass over=&harm step=4n 0 1 2 0\n&bassOut map=midi(2) [&bass * &bassV]';
     expect(anchorsOf(walk, changes).map((a) => a.step)).toEqual([0, 3]);
     expect(variations(walk, { workbench: changes, operators: ['bend', 'trim'] })).toEqual([]);
     // (the same line on one chord: its last note is no anchor, and is bent, but for the bend to 0 it plays, and trimmed)
-    expect(variations(walk, { workbench: `${HOST}\n&harm over=key step=1m [0,2,4]`, operators: ['bend', 'trim'] }).map((v) => v.by)).toEqual([
+    expect(variations(walk, { workbench: `${HOST}\n&harm over=&key step=1m [0,2,4]`, operators: ['bend', 'trim'] }).map((v) => v.by)).toEqual([
       'bend &bass -1',
       'bend &bass 1',
       'bend &bass 2',

@@ -16,6 +16,12 @@ export const ROOT = 'fifths12TET';
  */
 export const MAIN_KEY = 'key:main';
 /**
+ * The interface names: what fragments agree on and a union never renames (decision 047, point 2; more as facets need them):
+ * the meter and its tempo, the key and its tonic (#290), the harmony. A named use's closure leaves one the piece defines
+ * to the piece (decision 060), as it left the main key `over=key` read.
+ */
+export const INTERFACE_NAMES: readonly string[] = ['&bar', '&tempo', '&key', '&tonic', '&harm'];
+/**
  * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
  * more is a compile error. The largest in examples/ is 1,120 (bwv847's &tempo).
  */
@@ -115,6 +121,11 @@ export interface ResolvedCell {
   readonly scan: { readonly lap: number; readonly steps: readonly number[] } | null;
   /** shift= as written. */
   readonly shift: number;
+  /**
+   * The key of a `scale(…, &tonic)` (#290): the cell its tonic is read from. Its `shift` is the tonic's first note; a
+   * stepped tonic (`&tonic step=1m/8 D F`, #301) turns it, the note in force its shift (`shiftsAt`).
+   */
+  readonly tonic?: string;
   /** `off` as written. */
   readonly off: boolean;
   /** `oneshot` as written: a voice's note lasts its envelope's attack and decay, not its step. */
@@ -265,9 +276,10 @@ export interface Clock {
   readonly swung?: readonly number[];
   /**
    * A tap of a meter (decision 040: `step=16n`, `step=beat`): its steps at these positions, in the meter's steps, in a lap
-   * of `lap` of them (the bar, or cycle= bars), laid through the meter's time map. `cell` is the meter.
+   * of `lap` of them (the bar, or cycle= bars), laid through the meter's time map. `cell` is the meter. `written`: the
+   * positions as written, before a swung meter's swing (#287: where a level line is read for a note); absent when the same.
    */
-  readonly tap?: { readonly meter: string; readonly positions: readonly number[]; readonly lap: number };
+  readonly tap?: { readonly meter: string; readonly positions: readonly number[]; readonly lap: number; readonly written?: readonly number[] };
 }
 
 /** A pitch term of an out sum. */
@@ -412,7 +424,7 @@ export interface CompileResult {
   readonly sections?: ReadonlyMap<string, string>;
   /** The meter a tap that names none reads (decision 040): the first meter in the text with a tempo of its own. */
   readonly mainMeter?: string;
-  /** The key a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */
+  /** The key a bare `over=key` reads, the old way (#124; #301, decision 060): the first cell in the text whose braid is `scale(…)`. */
   readonly mainKey?: string;
   /**
    * The built-in card's name, when the piece writes no card (decision 028): a sound card (`map=sample`) compile added,

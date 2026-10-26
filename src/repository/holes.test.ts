@@ -22,7 +22,12 @@ describe('what a fragment uses and defines', () => {
     });
   });
 
-  it('uses the main key where a line reads it and the text has none, as `key`', () => {
+  it('uses the key it names, &key, as any name (#301, decision 060)', () => {
+    expect(holes('&line step=8n 0 2 4 over=&key').uses).toEqual(['&key']);
+    expect(holes('&key scale(major, C)\n&line step=8n 0 2 4 over=&key').uses).toEqual([]);
+  });
+
+  it('uses the main key where a line reads it the old way (over=key) and the text has none, as `key`', () => {
     expect(holes('&line step=8n 0 2 4 over=key').uses).toEqual(['key']);
     expect(holes('&key scale(major, C)\n&line step=8n 0 2 4 over=key').uses).toEqual([]);
   });

@@ -35,18 +35,33 @@ export function clockCells(ctx, decls, given) {
     const { rateOf, error, warn, unknownCell, broken } = ctx;
     const cells = new Map(given);
     const clocks = new Map();
+    const tempoOf = (d) => {
+        const st = d.step;
+        if (st?.kind !== 'driven' || st.whole || st.cycle || !cells.get(d.name)?.meter)
+            return null;
+        const t = decls.get(st.driver.name);
+        const tc = cells.get(st.driver.name);
+        if (t?.step?.kind !== 'rate' || t.step.whole || t.braid.kind !== 'blank' || !tc || tc.voice || tc.kit || tc.meter)
+            return null;
+        const r = rateOf(t.step);
+        return r === null ? null : r * st.ratio;
+    };
     for (const [name, d] of decls) {
         const c = cells.get(name);
-        if (!c || c.voice || c.kit || (d.step?.kind !== 'rate' && d.step?.kind !== 'env'))
+        if (!c || c.voice || c.kit)
             continue;
-        const r = rateOf(d.step);
-        if (r === null)
+        const tempo = tempoOf(d);
+        if (tempo === null && d.step?.kind !== 'rate' && d.step?.kind !== 'env')
+            continue;
+        const r = tempo ?? rateOf(d.step);
+        if (r === null || !d.step)
             continue;
         if (typeof d.params.beat === 'number' && !c.meter)
             warn(`beat= says how many beats a meter(…) or scan(…) counts (alla breve: meter("4/4") beat=2); on &${name}, a list, it does nothing`, d.paramSpans?.beat ?? d.span);
         if (d.params.pulse !== undefined && (d.braid.kind !== 'scan' || typeof d.params.pulse !== 'string' || noteValue(d.params.pulse) === null))
             warn(`pulse= says the note value of a scan's entries (pulse=16n: sixteenths, its bpm counting quarters); ${d.braid.kind === 'scan' ? `${d.params.pulse} is not one (16n, 8t, 4n.)` : `on &${name}, not a scan, it does nothing`}`, d.paramSpans?.pulse ?? d.span);
-        const perSecond = (d.step.whole ? r * Math.max(1, c.steps) : r) * (d.step.whole ? 1 : c.beat);
+        const lapped = tempo === null && d.step.whole;
+        const perSecond = (lapped ? r * Math.max(1, c.steps) : r) * (lapped ? 1 : c.beat);
         const swingSpan = d.paramSpans?.swing ?? d.span;
         let swing;
         let swung = null;
@@ -128,8 +143,14 @@ export function clockCells(ctx, decls, given) {
             const lapPulses = m.pulses * bars;
             const fine = plain.flatMap((p, i) => Array.from({ length: split }, (_, k) => p + (k * ((plain[i + 1] ?? lapPulses) - p)) / split));
             const positions = fine.map((p) => swingAt(m, p) * per);
+            const written = fine.map((p) => p * per);
             const lap = m.levels.length * bars;
-            clocks.set(key, { cell: meter, perSecond: (clocks.get(meter).perSecond * positions.length) / lap, positional: false, tap: { meter, positions, lap } });
+            clocks.set(key, {
+                cell: meter,
+                perSecond: (clocks.get(meter).perSecond * positions.length) / lap,
+                positional: false,
+                tap: { meter, positions, lap, ...(written.some((w, i) => Math.abs(w - positions[i]) > 1e-12) ? { written } : {}) },
+            });
         }
         const ratio = st.ratio / split;
         const c = cells.get(name);

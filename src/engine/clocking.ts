@@ -186,6 +186,8 @@ export interface Clocking {
   /** Fractional step count of a clock at `seconds`. */
   stepOf(clock: string): number;
   map(clock: string): TimeMap;
+  /** A clock's time map as written: a swung meter's taps without its swing (#287), else its map. */
+  written(clock: string): TimeMap;
 }
 
 const belts = new WeakMap<CompileResult, Map<string, Warp>>();
@@ -269,7 +271,14 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
     }
     return m;
   };
-  return { map, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
+  const written = (clock: string): TimeMap => {
+    const tap = result.clocks.get(clock)?.tap;
+    if (!tap?.written) return map(clock);
+    let m = maps.get(`${clock}\0written`);
+    if (!m) maps.set(`${clock}\0written`, (m = tapMap({ ...tap, positions: tap.written }, base(tap.meter))));
+    return m;
+  };
+  return { map, written, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
 
 /**
@@ -285,9 +294,16 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
   const played = playedCells(result);
   const read = readThrough(result);
   const steps = new Map<string, number>();
-  return (name) => {
+  const shiftOf: Shifts = (name) => {
     const base = statics(name);
     const c = result.cells.get(name);
+    // a key whose tonic steps (#301, `&tonic step=1m/8 D F`): its turn is the tonic's note in force, its pitch class, where its
+    // static shift is the first note's
+    const tonic = c?.tonic ? result.cells.get(c.tonic) : undefined;
+    if (c && tonic?.step && tonic.clock) {
+      const now = shiftedUnits(result, tonic.name, shiftOf(tonic.name))[0]?.atom;
+      return now?.kind === 'note' ? base - c.shift + mod(now.value + now.alter, 12) : base;
+    }
     // a meter (a clock of its own) places time: read as a table, it doesn't turn;
     // a selector sequences its parts: it steps, it doesn't turn either
     // … and what loops (loop=) oscillates: it doesn't turn either
@@ -311,6 +327,7 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
     const lap = Math.floor(b / own.length);
     return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
   };
+  return shiftOf;
 }
 
 /**

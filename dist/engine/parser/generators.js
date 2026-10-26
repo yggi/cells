@@ -255,6 +255,7 @@ export function parseScale(s, start) {
     let steps;
     let tonic = 0;
     let tonicText = '0';
+    let tonicRef = null;
     const legacy = s.match(/-?[0-9]+/y);
     const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
     if (quoted !== null) {
@@ -307,12 +308,16 @@ export function parseScale(s, start) {
                 tonic = (((TONICS[note[0]] + (note[1] === '#' ? 1 : note[1] === 'b' ? -1 : 0)) % 12) + 12) % 12;
                 tonicText = String(tonic);
             }
+            else if (s.peek() === '&') {
+                tonicRef = s.cellRef('the cell that holds the tonic, like scale(dorian, &tonic)', 'as the tonic');
+                tonicText = `&${tonicRef.name}`;
+            }
             else if (s.text.startsWith('free(', s.i)) {
                 tonic = Math.round(parseFree(s, 'tonic', false).value);
                 tonicText = s.text.slice(t0, s.i);
             }
             else {
-                tonic = s.int('the tonic: a note name (D, F#, Bb), a number or free(…)');
+                tonic = s.int('the tonic: a note name (D, F#, Bb), a number, a cell (&tonic) or free(…)');
                 tonicText = String(tonic);
                 if (Math.abs(tonic) > 11)
                     s.warn(`scale(…, ${tonic}): the tonic is a pitch class, 0 (C) to 11 (B)`, t0, s.i - t0);
@@ -329,6 +334,7 @@ export function parseScale(s, start) {
         lambda: `shift=${tonicText}`,
         over: null,
         shift: tonic,
+        ...(tonicRef ? { tonic: tonicRef } : {}),
         off: false,
         step: null,
         map: null,
@@ -380,7 +386,7 @@ export const GENERATORS = {
     square: { parse: parseWave('square'), syntax: WAVE_SYNTAX },
     scale: {
         parse: (s, start) => s.fail('scale(…) is read by its cell', start, 5),
-        syntax: syntax('generator', 'scale(name) · scale(name, tonic) · scale("tonic:name")', `A scale by name over the 12, turned to its tonic (a note name, a number or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`, ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))', '&scale scale("F#:harmonic:minor")'], 'tables.md'),
+        syntax: syntax('generator', 'scale(name) · scale(name, tonic) · scale("tonic:name")', `A scale by name over the 12, turned to its tonic (a note name, a number, a cell holding one, or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`, ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))', '&key scale(dorian, &tonic)', '&scale scale("F#:harmonic:minor")'], 'tables.md'),
     },
     fifths: {
         parse: (s, start) => s.fail('fifths(…) is read by its cell', start, 6),

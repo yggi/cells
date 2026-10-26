@@ -17,7 +17,9 @@ export interface Declared {
      * was; the table is then a table.
      */
     readonly sections: ReadonlyMap<string, string>;
-    /** The piece's main key, which a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */
+    /** The stacks a gate plays (#287: `&drums play=&drumlines &kit`): parts, each line played, not mixes of their own. */
+    readonly stacks: ReadonlySet<string>;
+    /** The piece's main key, which a bare `over=key` reads, the old way (#124, #301): the first cell in the text whose braid is `scale(…)`. */
     readonly mainKey?: string;
 }
 export declare function declare(ctx: Ctx): Declared;

@@ -15,7 +15,7 @@ use &bd, &sd, &hh from "core kit"
 - **The id** is a word (`bass`), or any id in double quotes (`"core kit"`); a word is written bare.
 - **`use "core kit"`**, the old way, reads as `use * from "core kit"`, and warns; Normalise writes the new.
 
-What a line reads without writing it, the main meter a `step=16n` taps or the main key `over=key` reads, is never taken: it is the piece's.
+What a line reads without writing it, the main meter a `step=16n` taps, is never taken: it is the piece's. Nor is an interface name the piece defines (`&key`, `&bar`, `&tempo`, `&tonic`, `&harm`): a taken line that reads `&key` reads the piece's, where it has one (decision 060), as it read the main key, `over=key`, the old way.
 
 ## The expansion: the piece's own lines win
 

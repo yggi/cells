@@ -11,7 +11,7 @@ import { LIBRARY, resolveSeed } from './library';
 import { ELECTRO_SWING, SWING_JAZZ } from './presets';
 import { STAB_FRAGMENTS } from './stab';
 
-const HOST = '&bar meter("4/4") step=120bpm\n&key scale(harmonic, D)\n&harm over=key step=1m [0,2,4] [4,6,8]';
+const HOST = '&bar meter("4/4") step=120bpm\n&key scale(harmonic, D)\n&harm over=&key step=1m [0,2,4] [4,6,8]';
 
 describe('the stab lines', () => {
   it('are the Charleston, associated as the facet stab at the point proposed for Electro swing', () => {

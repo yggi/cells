@@ -10,6 +10,7 @@ export function otherReadsOf(d) {
     const out = [];
     for (const r of [
         d.over,
+        d.tonic,
         d.base,
         d.env,
         d.pitch,
