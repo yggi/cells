@@ -186,7 +186,7 @@ describe('identity, until the hash', () => {
       ]),
     );
     expect(sameText(`${son.text.replace(' &claves', '   &claves')} // the son`, son.text)?.size).toBe(0);
-    expect(canonicalText(son.text)).toBe(['&#1 step=16n cycle=2 &claves:0:.5 ~!5 &claves:0:.5 ~!5 &claves:0:.5 ~!7 &claves:0:.5 ~!3 &claves:0:.5 ~!7', '&#2 [&#1]'].join('\n'));
+    expect(canonicalText(son.text)).toBe(['&#1 step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!3 &claves ~!7', '&#2 [&#1 * .5]'].join('\n'));
   });
 
   it('but not one that differs, nor one that renames an interface name or a name it uses and doesn’t define', () => {

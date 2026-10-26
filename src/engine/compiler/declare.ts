@@ -316,9 +316,15 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
     };
     // what it plays: one line, or a stack of lines (#287: &drumlines [&kick, &backbeat, &hat]), each played as if it were
     // the gate's play= alone, so each keeps its own name in what sounds (kit:voices:kick:…, the feel's role)
-    const stack = stackOf(decls.get(notes));
+    const stack = stackOf(decls, decls.get(notes), error);
     if (stack) stacks.add(notes);
-    const lines = (stack ?? [{ name: notes, pick: null, shift: 0, span: notesSpan }]).map((r) => ({ line: r.name, plays: moved(r.name, r.span), ref: r, span: r.span }));
+    const lines = (stack ?? [{ line: { name: notes, pick: null, shift: 0, span: notesSpan }, by: [] as Expr[] }]).map(({ line, by }) => ({
+      line: line.name,
+      plays: moved(line.name, line.span),
+      ref: line,
+      by,
+      span: line.span,
+    }));
     // (a line that names its own voices, a groove: its sound is those voices, which the kit it is played on must hold)
     const grooveVoices = (line: string) => (grooves?.cells.has(line) ? voicesIn(decls, line) : null);
     const exprs: Expr[] = lines.flatMap((l) => {
@@ -333,6 +339,7 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
           span: r.span,
           factors: [
             { k: 'ref', ref: { ...l.ref, name: l.plays } },
+            ...l.by,
             ...levels.map((x) => ref(x.name, x.span)),
             // (notes read through the kit it plays are its sound already: &drums over=&kit, then &out play=&drums &kit;
             // and so are a groove's, its voices the kit's: &kick &bd ~ &bd, then &drums play=&kick &kit)
@@ -377,15 +384,38 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
 }
 
 /**
- * A stack of lines: one chord of names and nothing else (`&drumlines [&kick, &backbeat, &hat[<<2]]`), each a line, its
- * levels its own (a hit's gain, `&hh:0:.4`, as Strudel's `s("hh:0:.4")`). Null for anything else.
+ * A stack of lines: one chord and nothing else (`&drumlines [&kick, &hat[<<2], &euclid * &euclidLevel, &clave * .5]`), each
+ * member a line, its first name, times its levels: level cells and numbers, which scale its notes as in a mix. Null for
+ * anything else; a member that multiplies by a sound (a voice, a mix, a gate) is said once, here.
  */
-function stackOf(d: CellDecl | undefined): Ref[] | null {
+function stackOf(decls: ReadonlyMap<string, CellDecl>, d: CellDecl | undefined, error: Ctx['error']): { line: Ref; by: Expr[] }[] | null {
   if (!d || d.map || d.gate || Object.keys(d.params).length || d.braid.kind !== 'list' || d.braid.tokens.length !== 1) return null;
   const a = d.braid.tokens[0].atom;
   if (a.kind !== 'mix' || a.gate || !a.exprs.length) return null;
-  const lines = a.exprs.flatMap((e) => (e.k === 'ref' && !('level' in e && e.level !== undefined) ? [e.ref] : []));
-  return lines.length === a.exprs.length ? lines : null;
+  const member = (e: Expr): { line: Ref; by: Expr[] } | null => {
+    if (e.k === 'ref') return 'level' in e && e.level !== undefined ? null : { line: e.ref, by: [] };
+    if (e.k !== 'prod' || e.factors[0]?.k !== 'ref' || !e.factors.slice(1).every((f) => f.k === 'num' || (f.k === 'ref' && !f.ref.pick && !f.ref.shift))) return null;
+    return { line: e.factors[0].ref, by: e.factors.slice(1) };
+  };
+  const members = a.exprs.map(member);
+  if (!members.every((m) => m !== null)) return null;
+  // (a level is no sound: a voice, a mix or a gate beside a line would make the member a sound, not a line)
+  const sound = (n: string) => {
+    const x = decls.get(n);
+    return (
+      !!x &&
+      (!!x.gate || Object.keys(x.params).some((k) => VOICE_PARAMS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix'))
+    );
+  };
+  // (said here, and left out of what the gate plays, so the product isn't refused again as two sounds)
+  return (members as { line: Ref; by: Expr[] }[]).map((m) => ({
+    line: m.line,
+    by: m.by.filter((f) => {
+      if (f.k !== 'ref' || !sound(f.ref.name)) return true;
+      error(`&${d.name} is a stack of lines, each times its levels: &${f.ref.name} is a sound, not a level (a cell with map=amp, map=db or map=lin, or a number)`, f.ref.span);
+      return false;
+    }),
+  }));
 }
 
 /** A kit's members (`&kit &bd &sd &hh`: a braid of names, each a voice), or null for anything else. */

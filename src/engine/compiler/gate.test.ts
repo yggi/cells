@@ -208,10 +208,14 @@ describe('a gate plays a stack of lines', () => {
     expect(compileSource(BASE + voices).outputs.map((o) => o.id.split(':').slice(0, 3).join(':'))).toEqual(['kit:voices:kick', 'kit:voices:hat']);
   });
 
-  it('a stack holds lines alone: a level beside a line is no stack', () => {
-    expect(errors(lines.replace('[&lo, &hi]', '[&lo * &accent, &hi]') + '&pad play=&both &lead\n&out map=sample &pad').join()).toMatch(
-      /play=&both: a gate's play= takes the notes it plays/,
+  it('a member is a line times its levels, which scale its notes as in a mix; a sound beside a line is refused', () => {
+    expect(played(lines.replace('[&lo, &hi]', '[&lo * &accent, &hi * .5]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(
+      played(two + '&pad [&lo * &accent * &lead, &hi * &lead * .5]\n&out map=sample &pad'),
     );
+    expect(ids(lines.replace('[&lo, &hi]', '[&lo * &accent, &hi * .5]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(['lead:lo', 'lead:hi']);
+    expect(errors(lines.replace('[&lo, &hi]', '[&lo * &bell, &hi]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual([
+      '&both is a stack of lines, each times its levels: &bell is a sound, not a level (a cell with map=amp, map=db or map=lin, or a number)',
+    ]);
   });
 });
 

@@ -264,10 +264,16 @@ function gates(decls, implicit, error) {
             implicit.add(plays);
             return plays;
         };
-        const stack = stackOf(decls.get(notes));
+        const stack = stackOf(decls, decls.get(notes), error);
         if (stack)
             stacks.add(notes);
-        const lines = (stack ?? [{ name: notes, pick: null, shift: 0, span: notesSpan }]).map((r) => ({ line: r.name, plays: moved(r.name, r.span), ref: r, span: r.span }));
+        const lines = (stack ?? [{ line: { name: notes, pick: null, shift: 0, span: notesSpan }, by: [] }]).map(({ line, by }) => ({
+            line: line.name,
+            plays: moved(line.name, line.span),
+            ref: line,
+            by,
+            span: line.span,
+        }));
         const grooveVoices = (line) => (grooves?.cells.has(line) ? voicesIn(decls, line) : null);
         const exprs = lines.flatMap((l) => {
             const of = decls.get(l.line);
@@ -282,6 +288,7 @@ function gates(decls, implicit, error) {
                     span: r.span,
                     factors: [
                         { k: 'ref', ref: { ...l.ref, name: l.plays } },
+                        ...l.by,
                         ...levels.map((x) => ref(x.name, x.span)),
                         ...(of?.over?.name === r.name || (voices && members) ? [] : [ref(r.name, r.span)]),
                         ...(gain !== 1 ? [{ k: 'num', value: gain, span: gainSpan }] : []),
@@ -322,14 +329,36 @@ function gates(decls, implicit, error) {
     }
     return stacks;
 }
-function stackOf(d) {
+function stackOf(decls, d, error) {
     if (!d || d.map || d.gate || Object.keys(d.params).length || d.braid.kind !== 'list' || d.braid.tokens.length !== 1)
         return null;
     const a = d.braid.tokens[0].atom;
     if (a.kind !== 'mix' || a.gate || !a.exprs.length)
         return null;
-    const lines = a.exprs.flatMap((e) => (e.k === 'ref' && !('level' in e && e.level !== undefined) ? [e.ref] : []));
-    return lines.length === a.exprs.length ? lines : null;
+    const member = (e) => {
+        if (e.k === 'ref')
+            return 'level' in e && e.level !== undefined ? null : { line: e.ref, by: [] };
+        if (e.k !== 'prod' || e.factors[0]?.k !== 'ref' || !e.factors.slice(1).every((f) => f.k === 'num' || (f.k === 'ref' && !f.ref.pick && !f.ref.shift)))
+            return null;
+        return { line: e.factors[0].ref, by: e.factors.slice(1) };
+    };
+    const members = a.exprs.map(member);
+    if (!members.every((m) => m !== null))
+        return null;
+    const sound = (n) => {
+        const x = decls.get(n);
+        return (!!x &&
+            (!!x.gate || Object.keys(x.params).some((k) => VOICE_PARAMS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix')));
+    };
+    return members.map((m) => ({
+        line: m.line,
+        by: m.by.filter((f) => {
+            if (f.k !== 'ref' || !sound(f.ref.name))
+                return true;
+            error(`&${d.name} is a stack of lines, each times its levels: &${f.ref.name} is a sound, not a level (a cell with map=amp, map=db or map=lin, or a number)`, f.ref.span);
+            return false;
+        }),
+    }));
 }
 function kitMembers(d) {
     if (!d || d.map || d.gate || d.braid.kind !== 'list' || !d.braid.tokens.length)
