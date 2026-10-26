@@ -7,6 +7,7 @@ import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
 import { overdub } from '../parser/base';
 import type { Ctx } from './context';
+import { mod } from '../../theory/modes';
 
 /** The declarations, as declare() hands them on. */
 export interface Declared {
@@ -24,7 +25,7 @@ export interface Declared {
    * was; the table is then a table.
    */
   readonly sections: ReadonlyMap<string, string>;
-  /** The piece's main key, which a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */
+  /** The piece's main key, which a bare `over=key` reads, the old way (#124, #301): the first cell in the text whose braid is `scale(…)`. */
   readonly mainKey?: string;
 }
 
@@ -113,8 +114,10 @@ export function declare(ctx: Ctx): Declared {
 
 /**
  * A key's tonic read from a cell (#290, `scale(dorian, &tonic)`): the cell holds one note, a name (`&tonic D`) or a
- * pitch class (`&tonic 2`), and the key's shift is it. A tonic the text doesn't define is a hole, said as any unknown
- * cell is; one that holds anything else is an error.
+ * pitch class (`&tonic 2`), and the key's shift is it. A stepped tonic (#301, `&tonic step=1m/8 D F`) holds a note a step,
+ * held or repeated, and the key's shift is its first; it turns as the tonic steps (`shiftsAt`). A braid left free
+ * (`&tonic free(D)`) is a tonic as any braid is. A tonic the text doesn't define is a hole, said as any unknown cell is;
+ * one that holds anything else is an error.
  */
 function tonics(ctx: Ctx, decls: Map<string, CellDecl>): void {
   for (const [name, d] of decls) {
@@ -125,27 +128,40 @@ function tonics(ctx: Ctx, decls: Map<string, CellDecl>): void {
       continue;
     }
     const tokens = t.braid.kind === 'list' ? t.braid.tokens : [];
-    const only = tokens.length === 1 && tokens[0]!.repeat === 1 && tokens[0]!.subdivide === 1 ? tokens[0]!.atom : null;
-    if (only?.kind !== 'note' || !Number.isInteger(only.value)) {
-      ctx.error(`&${t.name} holds a key's tonic (scale(…, &${t.name})): write one note, a name or a pitch class (&${t.name} D, &${t.name} 2)`, t.span);
+    const notes = tokens.every((k) => k.subdivide === 1 && k.atom.kind === 'note' && Number.isInteger(k.atom.value)) ? tokens : [];
+    const first = notes[0]?.atom;
+    if (first?.kind !== 'note' || (!t.step && (notes.length !== 1 || notes[0]!.repeat !== 1))) {
+      ctx.error(
+        t.step
+          ? `&${t.name} holds a key's tonic (scale(…, &${t.name})), stepped: write a note a step, a name or a pitch class (&${t.name} step=1m/8 D F)`
+          : `&${t.name} holds a key's tonic (scale(…, &${t.name})): write one note, a name or a pitch class (&${t.name} D, &${t.name} 2), or step it (&${t.name} step=1m/8 D F)`,
+        t.span,
+      );
       continue;
     }
-    decls.set(name, { ...d, shift: (((only.value + only.alter) % 12) + 12) % 12 });
+    decls.set(name, { ...d, shift: mod(first.value + first.alter, 12) });
   }
 }
 
 /**
  * The piece's main key (#124), which a bare `over=key` reads, as a bare tap reads the main meter (decision 040): the first
  * cell in the text whose own braid is `scale(…)` (`&key scale(dorian, D)`), not an unnamed one or a copy (`base=`). Each
- * `over=key` is set to read it by name; with none, each is an error, never a default key.
+ * `over=key` is set to read it by name, with a warning that names it (the old way, #301, decision 060); with none, each
+ * is an error, never a default key.
  */
 function mainKeyOf(ctx: Ctx, decls: Map<string, CellDecl>): string | null {
   const main = [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;
   for (const d of [...decls.values()]) {
     if (d.over?.name !== MAIN_KEY) continue;
-    if (main) decls.set(d.name, { ...d, over: { ...d.over, name: main } });
-    else {
-      ctx.error(`over=key reads the piece's main key, the first scale(…) in the text, and the piece has no main key: write one (&key scale(major, C))`, d.over.span);
+    if (main) {
+      // (the old way, #301, decision 060: the main key is a cell, and a line names it)
+      ctx.warn(`over=key is the old way: name the key, over=&${main}`, d.over.span);
+      decls.set(d.name, { ...d, over: { ...d.over, name: main } });
+    } else {
+      ctx.error(
+        `over=key is the old way, and the piece has no main key (the first scale(…) in the text) for it to read: name a key, over=&key, and write it (&key scale(major, C))`,
+        d.over.span,
+      );
       // (said here, so not again as an unknown cell)
       ctx.broken.add(MAIN_KEY);
     }

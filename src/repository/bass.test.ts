@@ -142,7 +142,7 @@ const MOST_SHARE: Record<string, number> = {
 const HOST = '&bar meter("4/4") step=120bpm\n&key scale(major, C)';
 const PROGRESSIONS: Record<string, { harm: string; chords: readonly (readonly number[])[] }> = {
   'I–vi–IV–V': {
-    harm: '&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]',
+    harm: '&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]',
     chords: [
       [0, 4, 7],
       [9, 0, 4],
@@ -151,7 +151,7 @@ const PROGRESSIONS: Record<string, { harm: string; chords: readonly (readonly nu
     ],
   },
   'ii–V–I': {
-    harm: '&harm over=key step=1m [1,3,5,7] [4,6,8,10] [0,2,4,6]',
+    harm: '&harm over=&key step=1m [1,3,5,7] [4,6,8,10] [0,2,4,6]',
     chords: [
       [2, 5, 9, 0],
       [7, 11, 2, 5],
@@ -288,7 +288,7 @@ describe('the bass lines send the notes they always sent, through the bass instr
       }),
     );
   };
-  const progression = '&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]';
+  const progression = '&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]';
   for (const tonic of Object.keys(SENT))
     it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))(`%s, in ${tonic}: its absolute MIDI notes on channel 2`, (id, text) => {
       const host = `&bar meter("4/4") step=120bpm\n&key scale(major, ${tonic})\n${progression}`;

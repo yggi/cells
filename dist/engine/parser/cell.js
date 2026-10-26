@@ -62,8 +62,8 @@ const timing = (s, b, word) => {
 const BLANK_TABLE = { over: null, shift: null, off: false, step: null, map: null, stride: null, cycle: null, params: {}, paramSpans: {} };
 export const KEYS = {
     over: {
-        form: 'over=&table · over=&table[<<n] · over=scale(name, tonic) · over=key',
-        examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4', '&bass over=key step=16n 0 4 7'],
+        form: 'over=&table · over=&table[<<n] · over=scale(name, tonic)',
+        examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4', '&bass over=&key step=16n 0 4 7'],
         read: (s, b) => {
             const bare = /key(?![A-Za-z0-9_])/y;
             bare.lastIndex = s.i;
@@ -71,7 +71,7 @@ export const KEYS = {
                 const at = s.i;
                 s.i += 3;
                 if (s.peek() === '[')
-                    s.fail('over=key reads the main key whole: to turn it, name it (over=&key[<<2])', s.i, 1);
+                    s.fail('over=key is the old way: name the key, and turn it there (over=&key[<<2])', s.i, 1);
                 b.over = { name: MAIN_KEY, pick: null, shift: 0, span: s.place(at) };
             }
             else if (s.text.startsWith('scale(', s.i)) {
@@ -83,7 +83,7 @@ export const KEYS = {
                 b.over = { name, pick: null, shift: 0, span: sc.span };
             }
             else
-                b.over = s.cellRef('a cell, scale(name, tonic) or key after over=, like over=&scale, over=scale(minor, A) or over=key', 'after over=');
+                b.over = s.cellRef('a cell or scale(name, tonic) after over=, like over=&key or over=scale(minor, A)', 'after over=');
             if (b.over.pick)
                 s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over.span.col - 1, b.over.span.len);
         },

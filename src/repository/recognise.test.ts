@@ -30,7 +30,7 @@ const BARS = e31.witnesses.map((w) => ({
     .join('\n'),
 }));
 /** The bass seeds' workbench over I–vi–IV–V (`src/engine/vary/pitched.test.ts`). */
-const BASS = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&harm over=key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]\n${kit('bass')}`;
+const BASS = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]\n${kit('bass')}`;
 
 const recogniser = createRecogniser();
 
@@ -134,7 +134,7 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
   });
 
   it('a bar of a vamp, its fifth, is recognised as the vamp to the seventh from its bar 4', () => {
-    expect(found(recogniser.recognise('&harm over=key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual(['vamp to the seventh [] bar 4 at 0']);
+    expect(found(recogniser.recognise('&harm over=&key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual(['vamp to the seventh [] bar 4 at 0']);
   });
 
   it('a groove the band filed and the composer’s variation of it, recognised by the `by` it was filed with', () => {

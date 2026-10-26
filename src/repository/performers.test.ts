@@ -15,7 +15,7 @@ import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TE
 
 const BPM = 120;
 // (a host as Jambot's section text writes one: the meter, the key, the harmony)
-const HOST = [`&bar meter("4/4") step=${BPM}bpm`, '&key scale(aeolian, A)', '&harm over=key step=1m [0,2,4] [3,5,7]'].join('\n');
+const HOST = [`&bar meter("4/4") step=${BPM}bpm`, '&key scale(aeolian, A)', '&harm over=&key step=1m [0,2,4] [3,5,7]'].join('\n');
 
 /** What a text sends over MIDI in its first two bars: each note's channel, note, velocity, onset and length (in 16ths), in order. */
 function sent(text: string): { notes: string[]; diagnostics: string[] } {
@@ -64,14 +64,14 @@ const PARTS = {
   },
   lead: {
     jambot: [
-      '&lead over=key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
+      '&lead over=&key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
       '&leadLevel map=amp step=16n .7@2 .5 .6@5 ~@8 .5 .6@3 .7@4 ~@8',
       '&leadOut play=&lead level=&leadLevel &leadV',
       '&leadV loop=C4',
       '&out map=midi &leadOut',
     ],
     performer: [
-      '&leadline over=key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
+      '&leadline over=&key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
       '&leadLevel map=amp step=16n .7@2 .5 .6@5 ~@8 .5 .6@3 .7@4 ~@8',
       'use * from "lead performer"',
       '&out map=midi &lead',

@@ -20,7 +20,7 @@ const events = (src: string, seconds: number) => {
   return eventsBetween(plan(r, codeShifts(r), r.off), 0, seconds).map((e) => [+e.at.toFixed(9), +e.dur.toFixed(9), +e.freq.toFixed(6), e.voice]);
 };
 /** A bass and a kick over the main meter and the main key. */
-const BODY = lines('&kick step=16n 0 ~ 2 ~ 4 ~ 0 ~', '&bass over=key step=8n 0 2 4 6', '&v loop=C2', '&out map=sample [&bass * &v, &kick * &v]');
+const BODY = lines('&kick step=16n 0 ~ 2 ~ 4 ~ 0 ~', '&bass over=&key step=8n 0 2 4 6', '&v loop=C2', '&out map=sample [&bass * &v, &kick * &v]');
 
 describe('a meter’s tempo read from a cell', () => {
   for (const [meter, bpm, swing] of [
@@ -73,8 +73,64 @@ describe('a key’s tonic read from a cell', () => {
   it('a tonic cell holds one note: anything else is an error at it', () => {
     for (const held of ['D E', '~', '[0,4]'])
       expect(messages(lines('&bar meter("4/4") step=104bpm', '&key scale(dorian, &tonic)', `&tonic ${held}`, BODY))).toEqual([
-        "&tonic holds a key's tonic (scale(…, &tonic)): write one note, a name or a pitch class (&tonic D, &tonic 2)",
+        "&tonic holds a key's tonic (scale(…, &tonic)): write one note, a name or a pitch class (&tonic D, &tonic 2), or step it (&tonic step=1m/8 D F)",
       ]);
+  });
+});
+
+describe('a stepped tonic, and one left free (#301, decision 060)', () => {
+  const head = '&bar meter("4/4") step=60bpm';
+  const body = lines(
+    '&bass over=&key step=8n 0 2 4 6 7 6 4 2',
+    '&harm over=&key step=2n [0,2,4] [3,5,7]',
+    '&pad over=&harm step=4n 0 1 2 0',
+    '&v loop=C3',
+    '&out map=sample [&bass * &v, &pad * &v]',
+  );
+  /** The events of bar `n` (from 0; a bar is 4 s at 60 bpm). */
+  const bar = (src: string, n: number) => events(src, 4 * (n + 1) - 1e-6).filter(([at]) => (at as number) >= 4 * n - 1e-9);
+  const written = (tonic: string) => lines(head, `&key scale(dorian, ${tonic})`, body);
+  const over = (tonic: string) => lines(head, '&key scale(dorian, &tonic)', `&tonic ${tonic}`, body);
+
+  it('a tonic a bar: each bar plays what the key written out for it plays, and it comes round', () => {
+    const src = over('step=1m D F');
+    expect(messages(src)).toEqual([]);
+    for (const [n, tonic] of [
+      [0, 'D'],
+      [1, 'F'],
+      [2, 'D'],
+      [3, 'F'],
+    ] as const)
+      expect(bar(src, n), `bar ${n + 1}`).toEqual(bar(written(tonic), n));
+    // (the comparison can fail)
+    expect(bar(written('D'), 1)).not.toEqual(bar(written('F'), 1));
+  });
+
+  it('a tonic held (@n) or repeated (!n) stays in force as many steps; a rate of its own, 1m/2, two bars a step', () => {
+    const held = over('step=1m D@2 F');
+    expect([0, 1, 2].map((n) => bar(held, n))).toEqual([bar(written('D'), 0), bar(written('D'), 1), bar(written('F'), 2)]);
+    expect(bar(over('step=1m D!2 Bb'), 2)).toEqual(bar(written('Bb'), 2));
+    expect(bar(over('step=1m/2 D F'), 1)).toEqual(bar(written('D'), 1));
+    expect(bar(over('step=1m/2 D F'), 2)).toEqual(bar(written('F'), 2));
+  });
+
+  it('a stepped tonic holds a note a step: a rest or a chord is an error at it', () => {
+    for (const held of ['step=1m D ~', 'step=1m D [0,4]'])
+      expect(messages(over(held))).toEqual(["&tonic holds a key's tonic (scale(…, &tonic)), stepped: write a note a step, a name or a pitch class (&tonic step=1m/8 D F)"]);
+  });
+
+  it('left free, free(D), is a braid left to the performer (decision 018): it plays as written, and a take held in its place is the tonic', () => {
+    const src = over('free(F)');
+    expect(messages(src)).toEqual([]);
+    expect(
+      compiled(src)
+        .cells.get('tonic')!
+        .frees.map((f) => [f.key, f.braid]),
+    ).toEqual([['braid', 'F']]);
+    expect(events(src, 8)).toEqual(events(written('F'), 8));
+    expect(events(over('free(A)'), 8)).toEqual(events(written('A'), 8));
+    // (stepped, free(D F): the performer's room over the sections)
+    expect(bar(over('step=1m free(D F)'), 1)).toEqual(bar(written('F'), 1));
   });
 });
 
@@ -105,6 +161,6 @@ describe('the seeds', () => {
     for (const f of METER_FRAGMENTS) expect(messages(lines(bench, f.text, tune(''))), f.id).toEqual([]);
     const meter = '&bar meter("4/4") step=&tempo';
     // (the bell and scale strikes the General MIDI kit's agogô, a hole its instrument fills)
-    for (const f of MODE_FRAGMENTS) expect(messages(lines(bench, meter, f.text, 'use &highagogo from "gm kit"', tune('over=key '))), f.id).toEqual([]);
+    for (const f of MODE_FRAGMENTS) expect(messages(lines(bench, meter, f.text, 'use &highagogo from "gm kit"', tune('over=&key '))), f.id).toEqual([]);
   });
 });

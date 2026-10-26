@@ -55,7 +55,7 @@ const MODES = MODE_FRAGMENTS.filter((f) => f !== bell);
 /** A workbench: a meter at 60 bpm, and the tonic the modes read (#290), C unless it says. */
 const meter = (m = '4/4', tonic = 'C') => `${setTiming(`&bar meter("${m}")`, 'bar', 'step', '60bpm')}\n&tonic ${tonic}`;
 /** A line that plays the main key's eight degrees up from the tonic, one a beat, on channel 3. */
-const PROBE = '&tune over=key step=4n 0 1 2 3 4 5 6 7\n&tuneV loop=C4\n&tuneOut map=midi(3) [&tune * &tuneV]';
+const PROBE = '&tune over=&key step=4n 0 1 2 3 4 5 6 7\n&tuneV loop=C4\n&tuneOut map=midi(3) [&tune * &tuneV]';
 
 /** What a text sends on a channel in its first `seconds`: each note's time and number, in time order. */
 function sent(text: string, channel: number, seconds: number): { at: number; note: number }[] {

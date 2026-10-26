@@ -131,7 +131,7 @@ describe('the expansion', () => {
 });
 
 describe('a named use (decision 059)', () => {
-  const BENCH = '&bar meter("4/4") step=104bpm\n&key scale(dorian, D)\n&harm over=key step=1m [0,2,4]';
+  const BENCH = '&bar meter("4/4") step=104bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4]';
   const read = (text: string, resolve: Resolve = resolveSeed) => {
     const r = compileSource(text, undefined, { resolve });
     // (a bench with no card of its own: that nothing plays isn't what these say)
@@ -180,9 +180,9 @@ describe('a named use (decision 059)', () => {
   });
 
   it('use &x is use &x from x', () => {
-    // (a mode whose head is named as its fragment: the first scale, so over=key reads it)
+    // (a mode whose head is named as its fragment, read by its name (decision 060))
     const resolve: Resolve = (id) => (id === 'phrygian' ? '&phrygian scale(phrygian, E)' : resolveSeed(id));
-    const r = read(`use &phrygian\n&bar meter("4/4") step=100bpm\n&tune over=key step=8n 0 2 4\n&out map=sample [&tune * &v]\n&v s=sine`, resolve);
+    const r = read(`use &phrygian\n&bar meter("4/4") step=100bpm\n&tune over=&phrygian step=8n 0 2 4\n&out map=sample [&tune * &v]\n&v s=sine`, resolve);
     expect(r.said).toEqual([]);
     expect(r.uses?.[0]).toMatchObject({ id: 'phrygian', names: ['&phrygian'], gave: ['&phrygian'] });
     // (the seed modes' head is &key: use &key from aeolian)
@@ -192,6 +192,25 @@ describe('a named use (decision 059)', () => {
   it('a name the fragment doesn’t define is an error, naming those it does', () => {
     expect(read(`use &bassline from "funk bass"\n${BENCH}`).said).toEqual([['error', '&bassline is not in "funk bass": it defines &bass, &bassNext, &bassOut', 1]]);
     expect(read('use &bass\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&bass is not in "bass": it defines &bassV', 1]]);
+  });
+
+  it('an interface name the piece defines is the piece’s, read by the taken line, as the main key was (decision 060)', () => {
+    const section = ['&key scale(aeolian, A)', '&chords over=&key step=1m [0,2,4] [3,5,7]', '&pad over=&chords step=4n 0 1 2'].join('\n');
+    const resolve: Resolve = (id) => (id === 'section' ? section : resolveSeed(id));
+    const piece = `use &pad from section\n&bar meter("4/4") step=100bpm\n&key scale(dorian, D)\n&v s=sine\n&out map=sample [&pad * &v]`;
+    const r = read(piece, resolve);
+    expect(r.said).toEqual([]);
+    expect(r.uses?.[0]).toMatchObject({ names: ['&pad'], gave: ['&chords', '&pad'] });
+    // (the piece's key is the one read: its &key in D dorian, not the section's A aeolian)
+    const r2 = compileSource(piece, undefined, { resolve });
+    expect(r2.cells.get('chords')!.over).toBe('key');
+    expect(r2.cells.get('key')!.scan!.steps).toEqual([2, 1, 2, 2, 2, 1, 2]);
+    // (a helper that is no interface name still clashes)
+    const clash = read(
+      `use &pad from section\n&bar meter("4/4") step=100bpm\n&key scale(dorian, D)\n&chords over=&key step=1m [0,2,4]\n&v s=sine\n&out map=sample [&pad * &v]`,
+      resolve,
+    );
+    expect(clash.said.map((x) => x[1])).toEqual([expect.stringMatching(/^&chords is "section"'s, read by its &pad/)]);
   });
 
   it('a helper the piece also defines is an error (the owner’s ruling 1); naming it makes it the piece’s', () => {
