@@ -24,7 +24,7 @@ export declare function waveValues(shape: WaveShape, n: number): number[];
 export declare const SCALE_KEY = "key:\u03BB";
 /**
  * `scale(name, tonic)`: a scale by name over the 12 turned to its tonic. What it stands for is two cells: the key (the
- * 12, `shift=` the tonic: a note name, a number or free(…)) and the scale's steps over it, `scan(…)`. The key is declared
+ * 12, `shift=` the tonic: a note name, a number, a cell holding one (`&tonic`, #290) or free(…)) and the scale's steps over it, `scan(…)`. The key is declared
  * here, unnamed and not drawn (`key:…`); the scan and the key are the caller's to place — a cell's own braid reading
  * through it, or a table of its own after over=. The old `scale(tonic, phase)` (a mode by number) still reads, with a
  * warning that says it by name.

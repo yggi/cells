@@ -26,12 +26,12 @@ source: seed
 ---
 
 ```cells
-&key scale(ionian, free(C))
+&key scale(ionian, &tonic)
 ```
 
 The major: the key Jambot's composer plays at Ambient's, Bossa nova's and Swing jazz's points (`PRESETS`' `mode`, yggi/jambot packages/engine/src/style.ts).
-It defines `key`, the piece's main key (decision 047's interface name, decision 056), and uses nothing, so it fits any workbench that has no key yet; the harmonies and the bass lines read it (`over=key`, then `over=&harm`).
-The tonic is left to the host, `free(C)`: a number left to the performer, which Jambot's key plan sets as it moves; C is `scale(…)`'s own default.
+It defines `key`, the piece's main key (decision 047's interface name, decision 056), and uses `&tonic`, a cell holding the key's tonic (`&tonic D`, #290), so it fits any workbench that has no key yet and gives the tonic; the harmonies and the bass lines read it (`over=key`, then `over=&harm`).
+The tonic is left to the text that uses it, a hole: there is no default, since a default tonic plays a wrong key silently (#117); the performer's room, `free(…)`, is the tonic cell's to give (`&tonic free(…)`, not yet a form).
 
 At the point of each preset that plays it, weight 1, so a query for the mode at one of them finds ionian first, at distance 0.
 The bell and scale (`05-bell-and-scale.md`) is ionian too, elsewhere.

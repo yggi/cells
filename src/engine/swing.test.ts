@@ -173,7 +173,8 @@ describe('the pairs alone, `swing=8n:r:pairs` (#204, decision 053): a level’s 
       : /swing=/.test(text)
         ? text.replace('swing=', 'swing=8n:2/3:pairs,')
         : `${text} swing=8n:2/3:pairs`;
-  const meterOf = (text: string) => text.replace(/^&bar /, '');
+  // (a meter fragment's tempo is a hole, `step=&tempo` (#290): `onsets` writes one)
+  const meterOf = (text: string) => text.replace(/^&bar /, '').replace(' step=&tempo', '');
   // Where each eighth of one bar is played, in the meter's pulses, under the meter's own text with :pairs: a pair's second
   // eighth two thirds through it, a group of three at thirds of its beat (an eighth each). Literal, one row a meter.
   const expected: Record<string, readonly number[]> = {
