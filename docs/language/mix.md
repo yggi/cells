@@ -91,12 +91,16 @@ A gate moves what it plays as a braid moves a cell (`play=&tune^$-12`, `^2`). It
 `drums` `bass` `pad` `stab` `lead`, `&lead2` a copy, others none.
 
 `play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
-(`trigger=`, `velocity=`, `gate=`, `gain=`) still reads, and Shorten rewrites it.
-`over=`, `step=` and the like on a gate do nothing, and warn (they go on its notes). Its `level=` is 0 or more (a negative one warns), and its notes and level cells aren't sounds:
+(`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
+played) still reads, and Shorten rewrites it.
+A gate times nothing itself: `over=`, `step=` and the like on it do nothing, and warn
+(they go on its notes). Its `level=` is 0 or more (a negative one warns), and its notes and level cells aren't sounds:
 `level=&otherGate` says so.
 
-A gate is where notes become sound, named: the graph draws it as a level meter, its notes going out to its voices ([graph.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/graph.md),
-[decision 022](https://github.com/yggi/cell-studio/blob/main/docs/decisions/022-gates-send-notes.md)). On a MIDI card a gate is an entry as any mix is (`&synth map=midi &leadOut ~!8 &drums`: all its voices on that channel, a kit's by drum note, [midi.md](midi.md)); without a card, MIDI out sends each gate as one part. The anonymous product stays its short form, drawn as a small gate meter.
+A gate is where notes become sound, named: the graph draws it as a level meter, a bar per note in its colour, as tall as
+its level, its notes going out to the voices it plays and their sound on from them ([graph.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/graph.md),
+[decision 022](https://github.com/yggi/cell-studio/blob/main/docs/decisions/022-gates-send-notes.md)). On a MIDI card a gate is an entry as any mix is (`&synth map=midi &leadOut ~!8 &drums`: all its voices on that channel, a kit's by drum note, [midi.md](midi.md)); without a card, MIDI out sends each gate as one part. The anonymous product,
+`[&tune * &accent * &solo * &lead * .5]`, stays its short form, drawn as a small gate meter.
 
 ## The sound card
 
