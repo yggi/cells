@@ -384,6 +384,11 @@ export interface CellDecl {
      */
     readonly base?: Ref | null;
     readonly shift: number | null;
+    /**
+     * The key of a `scale(name, &tonic)` (#290): the cell its shift is read from, one note (`&tonic D`), the tonic a hole
+     * the text that uses the key fills. Resolved by compile (declare.ts), which sets `shift`.
+     */
+    readonly tonic?: Ref;
     /** `off`: switched off — silences it and everything that reads through it or plays it. */
     readonly off: boolean;
     /** `oneshot`: a voice plays each note as long as its envelope's attack and decay, whatever its step (a drum hit). */

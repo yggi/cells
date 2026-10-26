@@ -31,6 +31,8 @@ A meter is a cell whose braid is a `scan` or a `meter(…)`: `scan(27 23 26 24)`
 
 **`meter(signature, steps a pulse)`** writes a bar as levels, one per step: 0 the downbeat, 1 a beat, then finer subdivisions. `meter("4/4", 2)` is eight steps, `*.+.+.+.`; `meter("6/8")` six; levels can be written directly, `meter("*.+.+..")`. Read through a kit, each level picks its own sound (the Metronome).
 
+**A meter's tempo read from a cell** ([#290](https://github.com/yggi/cells/issues/290)): `&bar meter("4/4") step=&tempo` with `&tempo step=104bpm`, a cell that is a rate alone (no braid), keeps time as `&bar meter("4/4") step=104bpm` does, its swing and its beats as written, so it is the piece's main meter and its taps read it; `step=&tempo*2` doubles it. A fragment that leaves its tempo to the text that uses it reads it so, a hole like a name (the seed meters do). A meter stepped by any other cell steps by that cell's steps, as before.
+
 A meter knows four things ([decision 040](https://github.com/yggi/cells/blob/main/docs/decisions/040-pulse-beat-and-laps.md)):
 
 | | What it is | 3/4 | 4/4 | 6/8 | 9/8 | 12/8 | 7/8 |

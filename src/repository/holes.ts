@@ -56,7 +56,7 @@ export interface Holes {
 }
 
 /** The interface names: what fragments agree on and a union never renames (decision 047, point 2; more as facets need them). */
-export const INTERFACE_NAMES: readonly string[] = ['&bar', 'key', '&harm'];
+export const INTERFACE_NAMES: readonly string[] = ['&bar', '&tempo', 'key', '&tonic', '&harm'];
 
 /** How far a count may sit from a whole number and still be one (a rate written as a decimal, `16n*1.5`). */
 const WHOLE = 1e-9;

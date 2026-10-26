@@ -37,6 +37,7 @@ export function declare(ctx: Ctx): Declared {
     else decls.set(c.name, c);
   }
   const mainKey = mainKeyOf(ctx, decls);
+  tonics(ctx, decls);
   const sections = sectionTables(decls, error);
   gates(decls, implicit, error);
   mixSelectors(ctx, decls);
@@ -108,6 +109,29 @@ export function declare(ctx: Ctx): Declared {
   };
   for (const name of decls.keys()) checkOver(name, []);
   return { decls, implicit, implicitRoot, overOk, sections, ...(mainKey ? { mainKey } : {}) };
+}
+
+/**
+ * A key's tonic read from a cell (#290, `scale(dorian, &tonic)`): the cell holds one note, a name (`&tonic D`) or a
+ * pitch class (`&tonic 2`), and the key's shift is it. A tonic the text doesn't define is a hole, said as any unknown
+ * cell is; one that holds anything else is an error.
+ */
+function tonics(ctx: Ctx, decls: Map<string, CellDecl>): void {
+  for (const [name, d] of decls) {
+    if (!d.tonic) continue;
+    const t = decls.get(d.tonic.name);
+    if (!t) {
+      ctx.unknownCell(d.tonic.name, d.tonic.span);
+      continue;
+    }
+    const tokens = t.braid.kind === 'list' ? t.braid.tokens : [];
+    const only = tokens.length === 1 && tokens[0]!.repeat === 1 && tokens[0]!.subdivide === 1 ? tokens[0]!.atom : null;
+    if (only?.kind !== 'note' || !Number.isInteger(only.value)) {
+      ctx.error(`&${t.name} holds a key's tonic (scale(…, &${t.name})): write one note, a name or a pitch class (&${t.name} D, &${t.name} 2)`, t.span);
+      continue;
+    }
+    decls.set(name, { ...d, shift: (((only.value + only.alter) % 12) + 12) % 12 });
+  }
 }
 
 /**

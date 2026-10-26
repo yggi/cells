@@ -12,7 +12,8 @@ source: seed
 ---
 
 ```cells
-&bar meter("4/4") swing=8n:2/3
+&bar meter("4/4") step=&tempo swing=8n:2/3
 ```
 
 Jambot's swing 1: the triplet swing, 2/3, on the eighths; the sixteenths straight. At Swing jazz's point. A meter swung on `8n` brings in Jambot's jazz kit (yggi/jambot#360).
+Its tempo is the text's: `step=&tempo` reads a cell the text that uses it writes, a rate alone (`&tempo step=104bpm`, #290).

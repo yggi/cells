@@ -58,9 +58,9 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
 
   it('every example, and every fragment of the seed library, is normal already', () => {
     for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source).steps]).toEqual([key, []]);
-    // (a meter compiles alone; a rhythm is open on its meter, a bass line on its meter and its harmony, and a harmony on
-    // its meter and its key, so each is read on a 4/4 at a tempo, with a key and, unless it writes its own, a harmony,
-    // where it fits; a mode writes its own key)
+    // (a meter is open on its tempo, a mode on its tonic (#290); a rhythm on its meter, a bass line on its meter and its
+    // harmony, and a harmony on its meter and its key, so each is read on a 4/4 at a tempo, with a key and, unless it
+    // writes its own, a harmony, where it fits; a mode writes its own key)
     const meter = '&bar meter("4/4") step=100bpm';
     const keyed = `${meter}\n&key scale(major, C)`;
     const bar = `${keyed}\n&harm over=key step=1m [0,2,4] [3,5,7]`;
@@ -74,7 +74,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     ]);
     for (const f of LIBRARY) {
       const holes = holesOf(f.text, compiled, resolveSeed);
-      const bench = holes.defines.includes('&key') ? meter : holes.defines.includes('&harm') ? keyed : bar;
+      const bench = holes.defines.includes('&bar') ? '&tempo step=100bpm' : holes.defines.includes('&key') ? `${meter}\n&tonic C` : holes.defines.includes('&harm') ? keyed : bar;
       // (a fragment's sound holes, the voices an instrument fills (#244), are filled by the General MIDI kit's and the bass's lines)
       const voices = [...LIBRARY.find((k) => k.id === 'gm kit')!.text.split('\n'), ...LIBRARY.find((k) => k.id === 'bass')!.text.split('\n')];
       const kit = holes.sounds.map((n) => `\n${voices.find((l) => l.startsWith(`${n} `))!}`);

@@ -279,7 +279,7 @@ export const SCALE_KEY = 'key:λ';
 
 /**
  * `scale(name, tonic)`: a scale by name over the 12 turned to its tonic. What it stands for is two cells: the key (the
- * 12, `shift=` the tonic: a note name, a number or free(…)) and the scale's steps over it, `scan(…)`. The key is declared
+ * 12, `shift=` the tonic: a note name, a number, a cell holding one (`&tonic`, #290) or free(…)) and the scale's steps over it, `scan(…)`. The key is declared
  * here, unnamed and not drawn (`key:…`); the scan and the key are the caller's to place — a cell's own braid reading
  * through it, or a table of its own after over=. The old `scale(tonic, phase)` (a mode by number) still reads, with a
  * warning that says it by name.
@@ -290,6 +290,7 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
   let steps: number[];
   let tonic = 0;
   let tonicText = '0';
+  let tonicRef: Ref | null = null;
   const legacy = s.match(/-?[0-9]+/y);
   const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
   if (quoted !== null) {
@@ -344,12 +345,16 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
         // (a pitch class: Cb is B, B# is C)
         tonic = (((TONICS[note[0]] + (note[1] === '#' ? 1 : note[1] === 'b' ? -1 : 0)) % 12) + 12) % 12;
         tonicText = String(tonic);
+      } else if (s.peek() === '&') {
+        // a tonic read from a cell holding a note (#290): a hole the text that uses the key fills, as it fills a name
+        tonicRef = s.cellRef('the cell that holds the tonic, like scale(dorian, &tonic)', 'as the tonic');
+        tonicText = `&${tonicRef.name}`;
       } else if (s.text.startsWith('free(', s.i)) {
         // a tonic left to the performer: its slider is the cell's own ('tonic'), its value the key's shift
         tonic = Math.round(parseFree(s, 'tonic', false).value);
         tonicText = s.text.slice(t0, s.i);
       } else {
-        tonic = s.int('the tonic: a note name (D, F#, Bb), a number or free(…)');
+        tonic = s.int('the tonic: a note name (D, F#, Bb), a number, a cell (&tonic) or free(…)');
         tonicText = String(tonic);
         if (Math.abs(tonic) > 11) s.warn(`scale(…, ${tonic}): the tonic is a pitch class, 0 (C) to 11 (B)`, t0, s.i - t0);
       }
@@ -365,6 +370,7 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
     lambda: `shift=${tonicText}`,
     over: null,
     shift: tonic,
+    ...(tonicRef ? { tonic: tonicRef } : {}),
     off: false,
     step: null,
     map: null,
@@ -451,8 +457,8 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     syntax: syntax(
       'generator',
       'scale(name) · scale(name, tonic) · scale("tonic:name")',
-      `A scale by name over the 12, turned to its tonic (a note name, a number or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`,
-      ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))', '&scale scale("F#:harmonic:minor")'],
+      `A scale by name over the 12, turned to its tonic (a note name, a number, a cell holding one, or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`,
+      ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))', '&key scale(dorian, &tonic)', '&scale scale("F#:harmonic:minor")'],
       'tables.md',
     ),
   },

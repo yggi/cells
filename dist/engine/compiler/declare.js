@@ -16,6 +16,7 @@ export function declare(ctx) {
             decls.set(c.name, c);
     }
     const mainKey = mainKeyOf(ctx, decls);
+    tonics(ctx, decls);
     const sections = sectionTables(decls, error);
     gates(decls, implicit, error);
     mixSelectors(ctx, decls);
@@ -89,6 +90,24 @@ export function declare(ctx) {
     for (const name of decls.keys())
         checkOver(name, []);
     return { decls, implicit, implicitRoot, overOk, sections, ...(mainKey ? { mainKey } : {}) };
+}
+function tonics(ctx, decls) {
+    for (const [name, d] of decls) {
+        if (!d.tonic)
+            continue;
+        const t = decls.get(d.tonic.name);
+        if (!t) {
+            ctx.unknownCell(d.tonic.name, d.tonic.span);
+            continue;
+        }
+        const tokens = t.braid.kind === 'list' ? t.braid.tokens : [];
+        const only = tokens.length === 1 && tokens[0].repeat === 1 && tokens[0].subdivide === 1 ? tokens[0].atom : null;
+        if (only?.kind !== 'note' || !Number.isInteger(only.value)) {
+            ctx.error(`&${t.name} holds a key's tonic (scale(…, &${t.name})): write one note, a name or a pitch class (&${t.name} D, &${t.name} 2)`, t.span);
+            continue;
+        }
+        decls.set(name, { ...d, shift: (((only.value + only.alter) % 12) + 12) % 12 });
+    }
 }
 function mainKeyOf(ctx, decls) {
     const main = [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;

@@ -267,7 +267,7 @@ describe('the anchors', () => {
 
   it('the backbeat falls where Jambot’s backbeatOf has it, on each of the seed library’s 13 meters', () => {
     const eighths = METER_FRAGMENTS.map((f) => {
-      const r = compileSource(`${f.text} step=120bpm`);
+      const r = compileSource(`${f.text}\n&tempo step=120bpm`);
       return [f.id, backbeatOf(r.cells.get('bar')!.meter!).map((w) => w * 8)];
     });
     // (each of Jambot's meters by its name in cells: the five 4/4s are 4/4; 2/4 and the alla breve, which Jambot doesn't
