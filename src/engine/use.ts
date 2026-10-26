@@ -9,7 +9,8 @@
  *   &aeolian` is `use &aeolian from aeolian`.
  * - A name the use asks for and the fragment doesn't define is an error naming the ones it does; a name it asks for
  *   that the piece defines is the piece's (it overrides), and says the use of it adds nothing; a helper the piece
- *   defines is an error (decision 059: a helper is the fragment's, and the piece's line would change what it reads).
+ *   defines is an error (decision 059: a helper is the fragment's, and the piece's line would change what it reads), but
+ *   an interface name (`&key`, `&bar` …: `INTERFACE_NAMES`), which is the piece's, read by the fragment's line (decision 060).
  * - A line two used fragments give word for word (its code: comments aside, whitespace collapsed) is one line; a name
  *   they define by different lines, and the piece doesn't, is an error naming it and both ids. `use` never renames: a
  *   renamed voice changes its drum note (#117).
@@ -26,7 +27,7 @@
 import { splitComment } from './edit';
 import { readUse, USE_FORM, type UseForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
-import type { CompileOptions, Resolve, Used } from './program';
+import { INTERFACE_NAMES, type CompileOptions, type Resolve, type Used } from './program';
 
 /** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
 export const USE_DEPTH = 8;
@@ -113,6 +114,9 @@ interface Merged {
   readonly per: readonly { readonly gave: readonly string[]; readonly overrode: readonly string[] }[];
 }
 
+/** The interface names, bare (`bar`, `key` …). */
+const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
+
 /**
  * A level's own lines, then the lines each use takes that its own don't define, in order: a line given word for word
  * twice kept once, a name given by different lines an error (said by `say`, with the index of the `use` that gave it
@@ -141,6 +145,8 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       for (const r of byName.get(n)!.reads) {
         if (!byName.has(r) || take.has(r) || asked.has(r) || clashed.has(r)) continue;
         if (!defined.has(r)) queue.push(r);
+        // (an interface name the level defines is the level's: what the fragment's line reads, as the main key was, decision 060)
+        else if (INTERFACE.has(r)) continue;
         else {
           clashed.add(r);
           say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);

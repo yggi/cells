@@ -1,5 +1,6 @@
 import { splitComment } from "./edit.js";
 import { readUse, USE_FORM } from "./parser/use.js";
+import { INTERFACE_NAMES } from "./program.js";
 export const USE_DEPTH = 8;
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const READS = /&([A-Za-z_][A-Za-z0-9_]*)/g;
@@ -40,6 +41,7 @@ export const fragmentHash = (text) => `e1:${hash64(linesOf(text)
     .join('\n'))}`;
 const quoted = (id) => JSON.stringify(id);
 const pathOf = (path) => path.map(quoted).join(' → ');
+const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
 function merge(own, used, say, host) {
     const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
     const given = new Map();
@@ -68,6 +70,8 @@ function merge(own, used, say, host) {
                     continue;
                 if (!defined.has(r))
                     queue.push(r);
+                else if (INTERFACE.has(r))
+                    continue;
                 else {
                     clashed.add(r);
                     say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);

@@ -87,7 +87,7 @@ export interface Use {
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 const NAME = /&([A-Za-z_][A-Za-z0-9_]*)/g;
 
-/** A text's own names, bare, in the order it declares them: those it defines but the interface names (`&bar`, `key`, `&harm`). */
+/** A text's own names, bare, in the order it declares them: those it defines but the interface names (`&bar`, `&tempo`, `&key`, `&tonic`, `&harm`). */
 const ownNames = (text: string): string[] => [...new Set(declarations(text).map((l) => l.name))].filter((name) => !INTERFACE.has(name));
 
 /**

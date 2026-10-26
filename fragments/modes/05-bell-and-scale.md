@@ -28,7 +28,7 @@ The West African standard bell pattern, x.x.xx.x.x.x, seven strokes over twelve 
 So one cell is both: `&key` is the major scale, the piece's main key, and stepped seven times a bar, each step as long as its interval, it is the bell's timeline, which `&bell` strikes (`step=&key:pulse`).
 The repository's first fragment of two facets, a `mode`, ionian, and a `rhythm`, the bell, each at a place of its own: "the bell is a world-music associated rhythm-facet and a western music associated harmony / scale-facet" (the owner, decision 046).
 
-A stepped key that nothing plays doesn't turn, so a line over it (`over=key`) reads the major scale as `&key scale(ionian, &tonic)` does, note for note; the tonic is left to the text that uses it, `&tonic`, as the mode fragments leave it (#290).
+A stepped key that nothing plays doesn't turn, so a line over it (`over=&key`) reads the major scale as `&key scale(ionian, &tonic)` does, note for note; the tonic is left to the text that uses it, `&tonic`, as the mode fragments leave it (#290).
 `step=1m*7` lays the bell over the bar of any meter, as twelve twelfths: over 12/8 they are its pulses, the bell as it is played.
 
 Seven strokes of a high agogô (`&highagogo`, General MIDI's 67, a hole the General MIDI kit fills with its line), the example's accents, at half the level; its mix, `&agogo` (the level, no card: where its notes go is the workbench's, #291), is none of the drum bars' or the claves', so it layers on any of them.

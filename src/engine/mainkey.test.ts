@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
+import { normalise } from './normalise';
 import { codeShifts, type CompileResult } from './program';
 import { eventsBetween, plan } from './realize';
 
 // #124: a bare over=key reads the piece's main key, as a bare tap reads its main meter (decision 040): the first cell in
-// the text whose own braid is scale(…). With none, it is an error, never a default key (#117).
+// the text whose own braid is scale(…). With none, it is an error, never a default key (#117). Since #301 (decision 060)
+// it is the old way: it reads as it did, and warns, naming the key (over=&key), which Normalise writes.
 
 const lines = (...xs: string[]) => xs.join('\n');
 /** Funk's bass, #117's case 2 (tools/open-fragments.ts, FUNK_BASS), with its table written `over=` as given. */
@@ -38,6 +40,20 @@ describe("over=key reads the piece's main key", () => {
       expect(compiled(lines(host(key), bass('key'))).cells.get('bass')!.over).toBe('key');
     });
 
+  it('is the old way: a warning at the word names the key, and Normalise writes it', () => {
+    const src = lines(host('scale(dorian, D)'), bass('key'));
+    expect(compileSource(src).diagnostics.map((d) => ({ severity: d.severity, message: d.message, line: d.span.line, col: d.span.col }))).toEqual([
+      { severity: 'warning', message: 'over=key is the old way: name the key, over=&key', line: 3, col: 12 },
+    ]);
+    const n = normalise(src);
+    expect(n.source).toBe(lines(host('scale(dorian, D)'), bass('&key')));
+    expect(n.steps).toEqual(['over=key is written over=&key, the key it reads']);
+    // (whatever the main key's name)
+    expect(normalise(lines('&bar meter("4/4") step=104bpm', '&chords scale(aeolian, A)', bass('key'))).source).toBe(
+      lines('&bar meter("4/4") step=104bpm', '&chords scale(aeolian, A)', bass('&chords')),
+    );
+  });
+
   it('differs between the two keys (the comparison can fail)', () => {
     expect(notes(lines(host('scale(dorian, D)'), bass('key')))).not.toEqual(notes(lines(host('scale(aeolian, A)'), bass('key'))));
   });
@@ -64,9 +80,7 @@ describe("over=key reads the piece's main key", () => {
 describe('with no main key', () => {
   it('over=key is an error at the word, saying the piece has none: no default key plays', () => {
     const src = lines('&bar meter("4/4") step=104bpm', '&tune over=scale(minor, A) step=1 0', bass('key'));
-    expect(errors(src)).toEqual([
-      { message: expect.stringMatching(/^over=key reads the piece's main key.*the piece has no main key: write one \(&key scale/), line: 3, col: 12, len: 3 },
-    ]);
+    expect(errors(src)).toEqual([{ message: expect.stringMatching(/^over=key is the old way, and the piece has no main key .*write it \(&key scale/), line: 3, col: 12, len: 3 }]);
     expect(compileSource(src).ok).toBe(false);
   });
 
@@ -79,13 +93,13 @@ describe('with no main key', () => {
 describe('over=key as written', () => {
   it('reads the main key whole: a turn of it names the cell', () => {
     expect(errors(lines(host('scale(dorian, D)'), '&bass over=key[<<1] step=16n 0')).map((e) => e.message)).toEqual([
-      expect.stringMatching(/^over=key reads the main key whole: to turn it, name it \(over=&key\[<<2\]\)/),
+      expect.stringMatching(/^over=key is the old way: name the key, and turn it there \(over=&key\[<<2\]\)/),
     ]);
   });
 
   it('is the word key alone: another bare word is still an error', () => {
     expect(errors(lines(host('scale(dorian, D)'), '&bass over=keys step=16n 0')).map((e) => e.message)).toEqual([
-      expect.stringMatching(/^Expected a cell, scale\(name, tonic\) or key after over=/),
+      expect.stringMatching(/^Expected a cell or scale\(name, tonic\) after over=/),
     ]);
   });
 });

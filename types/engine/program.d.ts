@@ -8,6 +8,12 @@ export declare const ROOT = "fifths12TET";
  */
 export declare const MAIN_KEY = "key:main";
 /**
+ * The interface names: what fragments agree on and a union never renames (decision 047, point 2; more as facets need them):
+ * the meter and its tempo, the key and its tonic (#290), the harmony. A named use's closure leaves one the piece defines
+ * to the piece (decision 060), as it left the main key `over=key` read.
+ */
+export declare const INTERFACE_NAMES: readonly string[];
+/**
  * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
  * more is a compile error. The largest in examples/ is 1,120 (bwv847's &tempo).
  */
@@ -112,6 +118,11 @@ export interface ResolvedCell {
     } | null;
     /** shift= as written. */
     readonly shift: number;
+    /**
+     * The key of a `scale(…, &tonic)` (#290): the cell its tonic is read from. Its `shift` is the tonic's first note; a
+     * stepped tonic (`&tonic step=1m/8 D F`, #301) turns it, the note in force its shift (`shiftsAt`).
+     */
+    readonly tonic?: string;
     /** `off` as written. */
     readonly off: boolean;
     /** `oneshot` as written: a voice's note lasts its envelope's attack and decay, not its step. */
@@ -399,7 +410,7 @@ export interface CompileResult {
     readonly sections?: ReadonlyMap<string, string>;
     /** The meter a tap that names none reads (decision 040): the first meter in the text with a tempo of its own. */
     readonly mainMeter?: string;
-    /** The key a bare `over=key` reads (#124): the first cell in the text whose braid is `scale(…)`. */
+    /** The key a bare `over=key` reads, the old way (#124; #301, decision 060): the first cell in the text whose braid is `scale(…)`. */
     readonly mainKey?: string;
     /**
      * The built-in card's name, when the piece writes no card (decision 028): a sound card (`map=sample`) compile added,

@@ -63,7 +63,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     // writes its own, a harmony, where it fits; a mode writes its own key)
     const meter = '&bar meter("4/4") step=100bpm';
     const keyed = `${meter}\n&key scale(major, C)`;
-    const bar = `${keyed}\n&harm over=key step=1m [0,2,4] [3,5,7]`;
+    const bar = `${keyed}\n&harm over=&key step=1m [0,2,4] [3,5,7]`;
     // (a performer's part and its levels, the score's holes (decision 058), filled by a line each; its `use` lines resolved)
     const compiled = (t: string) => compileSource(t, undefined, { resolve: resolveSeed });
     const parts = Object.fromEntries([

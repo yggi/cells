@@ -1,6 +1,7 @@
 import { pickLabel } from "./ast.js";
 export const ROOT = 'fifths12TET';
 export const MAIN_KEY = 'key:main';
+export const INTERFACE_NAMES = ['&bar', '&tempo', '&key', '&tonic', '&harm'];
 export const MAX_EVENTS = 50_000;
 export const MAX_NOTES_PER_SECOND = 2_000;
 export const MAX_SPLICE_DEPTH = 256;
