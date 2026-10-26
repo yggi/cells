@@ -5,11 +5,12 @@ description: "A house kick under a walking bass, Charleston stabs and a gypsy cl
 ---
 
 Electro swing is a jazz record cut up over a house beat: four on the floor, the eighths swung, a walking bass, brass stabs on the Charleston and a clarinet in a minor key.
-Here the band comes from the seed library, taken by name: the kit's voices, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, the bass, stab and lead players, and the beat and the stabs this piece gave the library (`Electro swing drums`, `Charleston stabs`).
-The piece writes only what is its own: the meter and the key, the beat, the tune, and the sound of each instrument.
+Here the band comes from the seed library, taken by name: the drummer and its kit, the key, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, the bass, stab and lead players, and the beat and the stabs this piece gave the library (`Electro swing drums`, `Charleston stabs`).
+The piece writes only what is its own: the meter, the key's tonic, the tune, the form, and the sound of each instrument.
 
 ```cells
-use &bd, &sd, &cp, &hh, &oh from "core kit"
+use &drums from "drums performer"
+use &key from "harmonic minor"
 use &harm from "vamp to the fifth"
 use &bassline from "walking bass"
 use &kick, &clap, &hats, &ticks from "Electro swing drums"
@@ -17,25 +18,26 @@ use &stabline from "Charleston stabs"
 use &bass, &bassV from "bass performer"
 use &stab, &keysV from "stab performer"
 use &lead, &leadV from "lead performer"
-&useNote label="The band is the library's: each use names what it takes. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own." about=(&bassV &keysV &leadV)
+&useNote label="The band is the library's: each use names what it takes. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
 ```
 
 The meter swings its eighths, a little less than triplets; the tempo and the swing are both sliders.
-The key is D harmonic minor, so the vamp's fifth is A major: four bars of D minor, four of A.
+The key is harmonic minor, from the library, on the piece's tonic, D (`&tonic`): the vamp's fifth is then A major, four bars of D minor, four of A.
 
 ```cells
 &bar meter("4/4") step=free(124bpm, 112..132) swing=8n:free(.64, .5..0.75)
-&key scale(harmonic, D)
+&tonic D
 &swingNote label="Every line taps the meter (step=4n, 8n, 16n), so every line swings: the open hats on the off-beats, the stabs, the clarinet." about=&bar
 ```
 
 ## The beat
 
 `Electro swing drums`, used above: a kick on every beat, the clap on two and four, the open hat on every swung off-beat; a sixteenth hat with some strokes left to chance and a ghost of the snare on the last.
-The piece takes its four limbs by name, to give each its place in the form below, and leaves the fragment's `&groove` mix.
+The piece takes its four limbs by name and hands them to the drummer as a stack, `&drumlines`, each times its level in the form below; the fragment's own `&groove` mix it leaves.
 The crackle is the piece's own, a record's: a tick of noise on a few sixteenths, by chance.
 
 ```cells
+&drumlines [&kick * &kickForm, &clap * &clapForm, &hats, &ticks]
 &crackle step=16n 0?.8!16
 &beatNote label="The beat is a fragment: &kick, &clap, &hats and &ticks come from Electro swing drums, their levels in their hits." about=(&kick &clap &hats &ticks)
 ```
@@ -98,6 +100,6 @@ An upright-ish bass, a brass stab, a clarinet with a slow vibrato, and the crack
 &leadV s=square loop=C4 lpf=2400 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=5.5 0 .12 0 -.12 0)
 &vinyl s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
 
-&out map=sample postgain=1 [&kick * &kickForm, &clap * &clapForm, &hats, &ticks,
+&out map=sample postgain=1 [&drums,
                          &crackle * &vinyl * .04, &bass, &stab * .4, &lead * .5, &lead2 * .5]
 ```
