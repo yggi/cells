@@ -5,10 +5,10 @@ import { IDENT, LineError, LineScanner, stripComment } from "./scanner.js";
 import { parseBody, parseCell, SHOWS } from "./cell.js";
 import { splitPlugins } from "../plugins.js";
 import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
-import { readUse, USE_FORM } from "./use.js";
+import { readUse, USE_FORM, useQuoted } from "./use.js";
 export { meterLevels, SIGNATURES } from "./generators.js";
 export { SHOWS } from "./cell.js";
-export { readUse, USE_FORM } from "./use.js";
+export { readUse, USE_FORM, writeUse } from "./use.js";
 export function parse(whole) {
     const cells = [];
     const uses = [];
@@ -43,8 +43,11 @@ export function parse(whole) {
             const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
             if (use === null)
                 diagnostics.push({ severity: 'error', message: USE_FORM, span });
-            else
-                uses.push({ id: use, span });
+            else {
+                uses.push({ id: use.id, names: use.names, span });
+                if (use.form === 'quoted')
+                    diagnostics.push({ severity: 'warning', message: useQuoted(use.id), span });
+            }
             return;
         }
         try {

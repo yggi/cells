@@ -487,8 +487,10 @@ export interface ParseResult {
     /** Its `use` lines, in the order written (decision 054); absent for none. */
     readonly uses?: readonly UseLine[];
 }
-/** A `use "id"` line (decision 054): the fragment's id, and where the line is. */
+/** A `use` line (decisions 054, 059): the fragment's id, the names it asks for, and where the line is. */
 export interface UseLine {
     readonly id: string;
+    /** The names it asks for (`&bd`), or null for every name the fragment defines (`use * from …`). */
+    readonly names: readonly string[] | null;
     readonly span: Span;
 }

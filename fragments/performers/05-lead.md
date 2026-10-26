@@ -61,7 +61,7 @@ source: seed
 ---
 
 ```cells
-use "lead"
+use &leadV from lead
 &lead play=&leadline level=&leadLevel &leadV
 ```
 

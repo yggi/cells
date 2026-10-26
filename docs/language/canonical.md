@@ -36,9 +36,11 @@ the same units (decision 027). Normalise writes ours, whatever its length; Short
 An alias written beside its own name (`cutoff=800 lpf=900`) is one parameter given twice, which the parser says; Normalise
 leaves it for the author.
 
-## `use`: kept, never expanded
+## `use`: one spelling, kept, never expanded
 
-A `use "id"` line ([use.md](use.md), decision 054) has one spelling, the only one the parser reads, so Normalise keeps it
-as written, in its order. It never writes the used fragment's lines into the piece: that adds cells, a change of
+A `use` line ([use.md](use.md), decisions 054 and 059) is written in one spelling (`normalise/uses.ts`): `use * from …`
+for every line, `use &a, &b from …` for the names (a comma and a space between them), `use &x` where it takes `&x` from
+`x`, the id bare where it is a word and in double quotes where it isn't. So `use "core kit"`, the old way, is written
+`use * from "core kit"`: the two read as one. Normalise keeps each `use` line in its order. It never writes the used fragment's lines into the piece: that adds cells, a change of
 structure, Shorten's side of decision 049's line (`expand` writes them out on request). A text with `use` lines is
 normalised with the host's resolver, `normalise(source, { resolve })`, so that it compiles.

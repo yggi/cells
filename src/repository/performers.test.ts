@@ -50,17 +50,17 @@ const PARTS = {
     performer: [
       '&bassline over=&harm step=16n 0@4 ~@4 2@2 ~@2 0@4 0@8 ~@8',
       '&bassLevel map=amp step=16n .6@4 ~@4 .4@2 ~@2 .5@4 .6@8 ~@8',
-      'use "bass performer"',
+      'use * from "bass performer"',
       '&out map=midi ~ &bass',
     ],
   },
   pad: {
     jambot: ['&pad over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padOut play=&pad level=.3 &compV', '&compV loop=C3', '&out map=midi ~ ~ &padOut'],
-    performer: ['&padline over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padLevel map=amp .3', 'use "pad performer"', '&out map=midi ~ ~ &pad'],
+    performer: ['&padline over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padLevel map=amp .3', 'use * from "pad performer"', '&out map=midi ~ ~ &pad'],
   },
   stab: {
     jambot: ['&stab over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabOut play=&stab level=.5 &compV', '&compV loop=C3', '&out map=midi ~ ~ &stabOut'],
-    performer: ['&stabline over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabLevel map=amp .5', 'use "stab performer"', '&out map=midi ~ ~ &stab'],
+    performer: ['&stabline over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabLevel map=amp .5', 'use * from "stab performer"', '&out map=midi ~ ~ &stab'],
   },
   lead: {
     jambot: [
@@ -73,7 +73,7 @@ const PARTS = {
     performer: [
       '&leadline over=key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
       '&leadLevel map=amp step=16n .7@2 .5 .6@5 ~@8 .5 .6@3 .7@4 ~@8',
-      'use "lead performer"',
+      'use * from "lead performer"',
       '&out map=midi &lead',
     ],
   },

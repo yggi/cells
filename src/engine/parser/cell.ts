@@ -514,9 +514,9 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
   syntax(
     'line',
-    'use "id"',
-    "A fragment taken into the piece by its id (decision 054): its lines the piece doesn't define are read after the piece's own, which win. A line of its own, the id in double quotes; the host's resolver finds it.",
-    ['use "core kit"'],
+    'use &a, &b from id · use * from id · use &x',
+    'A fragment\'s lines taken into the piece by its id (decisions 054, 059): the named cells and the lines they read within it, every line (`*`), or `use &x`, &x from the fragment x. What the piece doesn\'t define is read after the piece\'s own lines, which win. A line of its own; the id a word, or in double quotes; the host\'s resolver finds it. `use "id"` is the old way of `use * from "id"`.',
+    ['use &bd, &sd from "core kit"', 'use * from "core kit"'],
     'use.md',
   ),
   syntax(
