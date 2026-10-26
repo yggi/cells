@@ -5,13 +5,15 @@ description: "A house kick under a walking bass, Charleston stabs and a gypsy cl
 ---
 
 Electro swing is a jazz record cut up over a house beat: four on the floor, the eighths swung, a walking bass, brass stabs on the Charleston and a clarinet in a minor key.
-Here the band comes from the seed library, taken by name: the kit's voices, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, and the bass, stab and lead players.
+Here the band comes from the seed library, taken by name: the kit's voices, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, the bass, stab and lead players, and the beat and the stabs this piece gave the library (`Electro swing drums`, `Charleston stabs`).
 The piece writes only what is its own: the meter and the key, the beat, the tune, and the sound of each instrument.
 
 ```cells
 use &bd, &sd, &cp, &hh, &oh from "core kit"
 use &harm from "vamp to the fifth"
 use &bassline from "walking bass"
+use &kick, &clap, &hats, &ticks from "Electro swing drums"
+use &stabline from "Charleston stabs"
 use &bass, &bassV from "bass performer"
 use &stab, &keysV from "stab performer"
 use &lead, &leadV from "lead performer"
@@ -29,28 +31,22 @@ The key is D harmonic minor, so the vamp's fifth is A major: four bars of D mino
 
 ## The beat
 
-A kick on every beat, the clap on two and four, the open hat on every swung off-beat; a sixteenth hat with some strokes left to chance and a ghost of the snare on the last.
-The crackle is a record's: a tick of noise on a few sixteenths, by chance.
+`Electro swing drums`, used above: a kick on every beat, the clap on two and four, the open hat on every swung off-beat; a sixteenth hat with some strokes left to chance and a ghost of the snare on the last.
+The piece takes its four limbs by name, to give each its place in the form below, and leaves the fragment's `&groove` mix.
+The crackle is the piece's own, a record's: a tick of noise on a few sixteenths, by chance.
 
 ```cells
-&kick step=4n &bd!4
-&clap step=4n ~ &cp ~ &cp
-&hats step=8n ~ &oh ~ &oh ~ &oh ~ &oh
-&ticks step=16n &hh &hh? &hh &hh?.7 &hh &hh? &hh [&hh,&sd:0:.15]
 &crackle step=16n 0?.8!16
+&beatNote label="The beat is a fragment: &kick, &clap, &hats and &ticks come from Electro swing drums, their levels in their hits." about=(&kick &clap &hats &ticks)
 ```
 
 ## The stabs
 
-The Charleston: a chord on one and on the and of two.
-Every fourth bar pushes, and leans into the next chord's third and fifth with its root on top.
+`Charleston stabs`, used above, is the stab player's part: the Charleston, a chord on one and on the and of two, three bars, and a fourth that pushes, leaning into the next chord's third and fifth with its root on top.
 The stab player reads the chords in force, `over=&harm`, so the same rhythm is D minor in one half of the vamp and A major in the other.
 
 ```cells
-&charleston over=&harm step=8n [0,1,2] ~ ~ [0,1,2] ~@4
-&push over=&harm step=8n [0,1,2] ~ ~ [0,1,2] ~ [0,1,2] ~ [1,2,3]
-&stabline step=8n &charleston!3 &push
-&charlestonNote label="The Charleston: one, and the and of two." about=&charleston
+&charlestonNote label="The Charleston: one, and the and of two, a fragment's (Charleston stabs)." about=&stabline
 ```
 
 ## The tune: one bar, moved and cut up
@@ -102,6 +98,6 @@ An upright-ish bass, a brass stab, a clarinet with a slow vibrato, and the crack
 &leadV s=square loop=C4 lpf=2400 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=5.5 0 .12 0 -.12 0)
 &vinyl s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
 
-&out map=sample postgain=1 [&kick * &kickForm, &clap * &clapForm * .6, &hats * .4, &ticks * .2,
+&out map=sample postgain=1 [&kick * &kickForm, &clap * &clapForm, &hats, &ticks,
                          &crackle * &vinyl * .04, &bass, &stab * .4, &lead * .5, &lead2 * .5]
 ```

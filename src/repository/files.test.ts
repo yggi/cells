@@ -13,6 +13,7 @@ import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TE
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { SEED } from './seed';
 import { SEED_FILES } from './seed.generated';
+import { STAB_FRAGMENTS } from './stab';
 
 const read = (markdown: string): FragmentFile => {
   const r = readFragment(markdown);
@@ -52,7 +53,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are fifty-one', () => expect(files).toHaveLength(51));
+  it('are fifty-four', () => expect(files).toHaveLength(54));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -112,16 +113,25 @@ describe('the seed files', () => {
       ).toEqual(points);
   });
 
-  it('each says it is a seed, every drum bar, bass line and harmony where it was lifted from, and each has prose', () => {
+  it('each says it is a seed, every drum bar, bass line and harmony and what an example gave where it was lifted from, and each has prose', () => {
     expect(SEED.every((f) => f.meta.source === 'seed' && f.prose.length > 0)).toBe(true);
     expect(new Set(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id))).toEqual(
-      new Set([...RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith(' drums')), ...BASS_FRAGMENTS, ...HARMONY_FRAGMENTS].map((f) => f.id)),
+      new Set(
+        [
+          ...RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith(' drums')),
+          ...BASS_FRAGMENTS,
+          ...HARMONY_FRAGMENTS,
+          ...STAB_FRAGMENTS,
+          ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic minor'),
+        ].map((f) => f.id),
+      ),
     );
     expect(new Set(SEED.map((f) => f.meta.lifted).filter(Boolean))).toEqual(
       new Set([
         'yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8',
         'yggi/jambot packages/engine/src/bass.ts @ 1037a80',
         'yggi/jambot packages/engine/src/themes.ts @ 0a56da9',
+        'yggi/cells examples/electroswing.md @ 2c120d4',
       ]),
     );
   });
