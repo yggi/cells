@@ -53,6 +53,7 @@ So it is an error, as 054's collision between two fragments is, naming the helpe
 
 - **A name the fragment doesn't define is an error**, naming the names it does: `&cb is not in "core kit": it defines &bd, &rim, &sd, …`.
 - **A named cell the piece also defines warns that taking it adds nothing**: `The piece defines &bar, so taking it from … adds nothing`.
+  Amended (electroswing, #196's scouting): not where a line the use takes reads it, a helper named to override it (ruling 1's remedy), which said nothing else; otherwise the remedy ruling 1's error names warned in its turn, and an instrument's voice couldn't be given a sound with no diagnostic.
 - **A `use * from` the piece overrides entirely warns the same**: `The piece defines all "dorian" gives (&key): this use adds nothing`.
 - An id whose lines an earlier use took warns, as 054's second `use` of an id did.
 - **`CompileResult.uses`** lists, for each use, the names it asked for (`names`, null for `*`), beside 054's id, hash, `gave` and `overrode`; `gave` holds the helpers too.

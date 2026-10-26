@@ -199,8 +199,15 @@ describe('a named use (decision 059)', () => {
       ['error', "&bassNext is \"funk bass\"'s, read by its &bassline, and the piece's too: rename the piece's, or name &bassNext in the use to override it", 1],
     ]);
     const named = read(helper.replace('use &bassline from', 'use &bassline, &bassNext from'));
-    expect(named.said).toEqual([['warning', 'The piece defines &bassNext, so taking it from "funk bass" adds nothing', 1]]);
+    // (an override a taken line reads is what the use does, so it says nothing: an instrument's voice given a sound)
+    expect(named.said).toEqual([]);
     expect(named.uses?.[0]).toMatchObject({ gave: ['&bassline'], overrode: ['&bassNext'] });
+    expect(read(`use &bass, &bassV from "bass performer"\n${BENCH}\n&bassline over=&harm step=4n 0\n&bassLevel map=amp .8\n&bassV s=tri loop=C2`).said).toEqual([]);
+    // (one no taken line reads still adds nothing, and says so)
+    expect(read(`${helper.replace('use &bassline from', 'use &bassline, &bassNext from')}\n&bassline over=&harm 0`).said).toEqual([
+      ['warning', 'The piece defines &bassline, so taking it from "funk bass" adds nothing', 1],
+      ['warning', 'The piece defines &bassNext, so taking it from "funk bass" adds nothing', 1],
+    ]);
     // (a helper two named cells read is said once)
     const twice = library({ f: '&a [&h * 1]\n&b [&h * 2]\n&h s=sine' });
     expect(errors('use &a, &b from f\n&h s=saw', twice)).toHaveLength(1);
