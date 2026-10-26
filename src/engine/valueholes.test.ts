@@ -83,8 +83,10 @@ describe('the seeds', () => {
   const seconds = (8 * 4 * 60) / 104;
 
   it('a text of uses alone, with &tempo and &tonic, compiles clean and plays what it plays with &bar and &key written out', () => {
-    const holes = lines(...uses, '&tempo step=104bpm', '&tonic D');
-    const written = lines('&bar meter("4/4") step=104bpm swing=16n:.65', '&key scale(dorian, D)', ...uses.slice(2));
+    // (the seeds carry no card since #299: the text's own sends the drums and the bass)
+    const card = '&out map=midi ~ [&bassline * &bassV] ~!7 &groove';
+    const holes = lines(...uses, '&tempo step=104bpm', '&tonic D', card);
+    const written = lines('&bar meter("4/4") step=104bpm swing=16n:.65', '&key scale(dorian, D)', ...uses.slice(2), card);
     expect(messages(holes)).toEqual([]);
     expect(messages(written)).toEqual([]);
     const played = events(holes, seconds);

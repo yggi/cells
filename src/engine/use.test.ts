@@ -16,6 +16,7 @@ import { METER_FRAGMENTS } from '../repository/meters';
 import { RHYTHM_FRAGMENTS } from '../repository/rhythms';
 import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 import { fitOf, unionOf } from '../repository/fit';
+import { heard } from '../repository/heard';
 import { holesOf } from '../repository/holes';
 
 const seed = { resolve: resolveSeed };
@@ -161,12 +162,10 @@ describe('a named use (decision 059)', () => {
   });
 
   it('takes the named cells and the lines they read within the fragment, its helpers', () => {
-    const text = `use &bass from "funk bass"\nuse * from bass\n${BENCH}`;
+    const text = `use &bassline from "funk bass"\nuse * from bass\n${BENCH}`;
     const { uses, said } = read(text);
     expect(said.filter(([s]) => s === 'error')).toEqual([]);
-    expect(uses?.[0]).toMatchObject({ names: ['&bass'], gave: ['&bass', '&bassNext'], overrode: [] });
-    // (the card &bassOut, named by no use and read by no named line, isn't taken)
-    expect(expand(text, resolveSeed)).not.toContain('&bassOut');
+    expect(uses?.[0]).toMatchObject({ names: ['&bassline'], gave: ['&bassline', '&bassNext'], overrode: [] });
     expect(compileSource(text, undefined, seed).cells.has('bassNext')).toBe(true);
   });
 
@@ -190,18 +189,18 @@ describe('a named use (decision 059)', () => {
   });
 
   it('a name the fragment doesn’t define is an error, naming those it does', () => {
-    expect(read(`use &bassline from "funk bass"\n${BENCH}`).said).toEqual([['error', '&bassline is not in "funk bass": it defines &bass, &bassNext, &bassOut', 1]]);
+    expect(read(`use &bass from "funk bass"\n${BENCH}`).said).toEqual([['error', '&bass is not in "funk bass": it defines &bassline, &bassNext', 1]]);
     expect(read('use &bass\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&bass is not in "bass": it defines &bassV', 1]]);
   });
 
   it('a helper the piece also defines is an error (the owner’s ruling 1); naming it makes it the piece’s', () => {
-    const helper = `use &bass from "funk bass"\nuse * from bass\n${BENCH}\n&bassNext over=&harm 2`;
+    const helper = `use &bassline from "funk bass"\nuse * from bass\n${BENCH}\n&bassNext over=&harm 2`;
     expect(read(helper).said.filter(([s]) => s === 'error')).toEqual([
-      ['error', "&bassNext is \"funk bass\"'s, read by its &bass, and the piece's too: rename the piece's, or name &bassNext in the use to override it", 1],
+      ['error', "&bassNext is \"funk bass\"'s, read by its &bassline, and the piece's too: rename the piece's, or name &bassNext in the use to override it", 1],
     ]);
-    const named = read(helper.replace('use &bass from', 'use &bass, &bassNext from'));
+    const named = read(helper.replace('use &bassline from', 'use &bassline, &bassNext from'));
     expect(named.said).toEqual([['warning', 'The piece defines &bassNext, so taking it from "funk bass" adds nothing', 1]]);
-    expect(named.uses?.[0]).toMatchObject({ gave: ['&bass'], overrode: ['&bassNext'] });
+    expect(named.uses?.[0]).toMatchObject({ gave: ['&bassline'], overrode: ['&bassNext'] });
     // (a helper two named cells read is said once)
     const twice = library({ f: '&a [&h * 1]\n&b [&h * 2]\n&h s=sine' });
     expect(errors('use &a, &b from f\n&h s=saw', twice)).toHaveLength(1);
@@ -300,7 +299,8 @@ describe('the rhythms with the core kit (S1)', () => {
   for (const rhythm of RHYTHM_FRAGMENTS)
     it(`${rhythm.id}, on a meter it fits, sounds identical to the same text written out`, () => {
       const meter = METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(rhythm.text, m).fits)!;
-      const piece = `use * from "core kit"\n${meter}\n${strip(rhythm.text)}`;
+      // (heard through a card: the rhythms carry none, #291)
+      const piece = `use * from "core kit"\n${meter}\n${strip(rhythm.text)}\n${heard(rhythm.text)}`;
       const r = compileSource(piece, undefined, seed);
       expect(r.diagnostics, meter).toEqual([]);
       expect(r.uses?.[0]?.overrode).toEqual([]);

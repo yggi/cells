@@ -1,0 +1,95 @@
+// A pattern fragment carries no card (#291): heard through the one `heard` supplies, on Jambot's channels, each of the
+// 19 that carried one sends what it sent with its own (a hash of each note's channel, MIDI note, onset, end and
+// velocity over 16 s, recorded with the cards still in, at cells bbb9eb2); no seed holds a card; and a bass line fills
+// the bass performer's hole (#285).
+import { describe, expect, it } from 'vitest';
+import { compileSource } from '../engine/compile';
+import { setTiming } from '../engine/edit';
+import { planOf } from '../engine/host';
+import { channelTable, midiNote, router, routesOf } from '../engine/midi';
+import { windowAt } from '../engine/schedule';
+import { BASS_FRAGMENTS } from './bass';
+import { fitOf } from './fit';
+import { heard } from './heard';
+import { LIBRARY, resolveSeed } from './library';
+import { METER_FRAGMENTS } from './meters';
+import { MODE_FRAGMENTS } from './modes';
+import { RHYTHM_FRAGMENTS } from './rhythms';
+
+/** What each sent with its own card, on its bench: the hash of its notes, and how many. */
+const SENT: Record<string, [string, number]> = {
+  'Synth-pop drums': ['397a56b4', 96],
+  'Techno drums': ['9519e0ef', 224],
+  'Deep house drums': ['b61199ca', 120],
+  'Ambient drums': ['6a2f2372', 144],
+  'Lo-fi hip hop drums': ['4f755bb6', 136],
+  'Funk drums': ['737e888c', 192],
+  'Bossa nova drums': ['b559941c', 128],
+  'Swing jazz drums': ['0204bcbe', 112],
+  'son clave 3-2': ['e26ed209', 20],
+  'son clave 2-3': ['59aedae1', 20],
+  'rumba clave 3-2': ['9c8b2f29', 20],
+  'bossa nova clave': ['58b2f541', 20],
+  'bossa nova clave (one bar)': ['6fe7442d', 40],
+  'root bass': ['73332dc6', 16],
+  'pumping bass': ['70f9f848', 32],
+  'eighths bass': ['cc5be690', 64],
+  'funk bass': ['181a19df', 64],
+  'walking bass': ['d438922a', 32],
+  'bell and scale': ['cc8d357e', 56],
+};
+
+const hash = (s: string) => {
+  let a = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) a = Math.imul(a ^ s.charCodeAt(i), 0x01000193);
+  return (a >>> 0).toString(16).padStart(8, '0');
+};
+
+/** A fragment's bench: a meter it fits at 120 bpm and the kits (a rhythm), 4/4 with the General MIDI kit (the bell), a key, a harmony and the bass instrument (a bass line). */
+const benchOf = (id: string, text: string) => {
+  if (BASS_FRAGMENTS.some((f) => f.id === id))
+    return 'use * from bass\n&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=key step=1m [0,2,4] [3,5,7] [4,6,8] [0,2,4]';
+  if (id === 'bell and scale') return 'use * from "gm kit"\n&bar meter("4/4") step=120bpm\n&tonic C';
+  return `use * from "core kit"\nuse * from "gm kit"\n${METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(text, m).fits)!}`;
+};
+
+/** What a text sends over its first 16 s: each note's channel, MIDI note, onset and end (s) and velocity, in order. */
+function sent(text: string): (string | number)[][] {
+  const plan = planOf(text, undefined, { resolve: resolveSeed });
+  expect(plan.result.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+  const route = router(plan.result, channelTable(plan.result));
+  return windowAt(plan, 0, 16)
+    .events.flatMap((e) =>
+      routesOf(route(e)).flatMap((r) => {
+        const n = midiNote(e, r);
+        return n ? [[n.channel, n.note, +n.at.toFixed(6), +n.end.toFixed(6), n.velocity]] : [];
+      }),
+    )
+    .sort((a, b) => a[2]! - b[2]! || a[1]! - b[1]!);
+}
+
+describe('a pattern fragment heard through the card `heard` supplies (#291)', () => {
+  const carried = [...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.id === 'bell and scale')];
+
+  it('is each of the 19 that carried a card', () => expect(carried.map((f) => f.id).sort()).toEqual(Object.keys(SENT).sort()));
+
+  it.each(carried.map((f) => [f.id, f.text] as const))('%s sends what it sent with its own card', (id, text) => {
+    const notes = sent(`${benchOf(id, text)}\n${text}\n${heard(text)}`);
+    expect([hash(JSON.stringify(notes)), notes.length]).toEqual(SENT[id]);
+  });
+
+  it('no seed fragment holds a card', () => {
+    expect(LIBRARY.filter((f) => /map=(midi|sample)/.test(f.text)).map((f) => f.id)).toEqual([]);
+  });
+
+  it('a text with nothing to hear gets no card', () => expect(heard('&harm over=key step=1m [0,2,4]')).toBe(''));
+});
+
+describe('a bass line fills the bass performer’s hole (#285)', () => {
+  it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s, with the host and use * from "bass performer", compiles with no diagnostic', (_, text) => {
+    const host = '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bass';
+    const r = compileSource(`use * from "bass performer"\n${host}\n${text}`, undefined, { resolve: resolveSeed });
+    expect(r.diagnostics).toEqual([]);
+    expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bass', 'bass', 'bassline']]);
+  });
+});

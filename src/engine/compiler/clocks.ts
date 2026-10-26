@@ -180,8 +180,14 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       const lapPulses = m.pulses * bars;
       const fine = plain.flatMap((p, i) => Array.from({ length: split }, (_, k) => p + (k * ((plain[i + 1] ?? lapPulses) - p)) / split));
       const positions = fine.map((p) => swingAt(m, p) * per);
+      const written = fine.map((p) => p * per);
       const lap = m.levels.length * bars;
-      clocks.set(key, { cell: meter, perSecond: (clocks.get(meter)!.perSecond * positions.length) / lap, positional: false, tap: { meter, positions, lap } });
+      clocks.set(key, {
+        cell: meter,
+        perSecond: (clocks.get(meter)!.perSecond * positions.length) / lap,
+        positional: false,
+        tap: { meter, positions, lap, ...(written.some((w, i) => Math.abs(w - positions[i]!) > 1e-12) ? { written } : {}) },
+      });
     }
     const ratio = st.ratio / split;
     // (a scan tapped that drives others, scan(2 1) step=8n: a meter of its own, as one stepped by &bar is)

@@ -71,6 +71,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
         [`&${n}line`, `&${n}line over=&harm step=4n 0 2`],
         [`&${n}Level`, `&${n}Level map=amp .8`],
       ]),
+      ['&drumlines', '&kick step=4n &bd ~ &bd ~\n&drumlines [&kick]'],
     ]);
     for (const f of LIBRARY) {
       const holes = holesOf(f.text, compiled, resolveSeed);

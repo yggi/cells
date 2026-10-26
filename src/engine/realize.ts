@@ -604,7 +604,9 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       // (&x:0:g: the hit's own gain)
       const level: { at: number; level: number; ramp?: boolean }[] = [{ at, level: (t.output.gate ? own : 1) * (e.level ?? 1) }];
       if (t.levels.length) {
-        const series = t.levels.map((m) => levelSeries(p, m, at, at + dur));
+        // (each read at the note's written time, before a swung meter's swing: #287)
+        const written = clk.written(t.clock).q(s / t.rate);
+        const series = t.levels.map((m) => levelSeries(p, m, at, at + dur, written));
         const times = [...new Set(series.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
         const base = level[0].level;
         level.length = 0;

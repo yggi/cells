@@ -5,13 +5,14 @@
  * hits of a voice (`&hh`, `&hh:0:.25`, `~!5`, a chord of hits `[&bd,&hh]`), a subsequence of them on one step
  * (`step=1m [&rim ~ ~ &rim …]`), or a Euclid of a voice (`&rim(5,16,4)`), each times at most one `map=amp` cell of
  * levels, one a step. Rung 2 reads the lines a pitched part writes: a cell of degrees of the table it reads (`over=&harm`)
- * times one voice (`&bass * &bassV`), its steps rests, whole numbers with at most one accidental (`0`, `-1`, `0!8`, `4b`,
+ * times one voice (`&bass * &bassV`), or alone where nothing reads it (a bass line's `&bassline`, which the workbench
+ * plays, #291), its steps rests, whole numbers with at most one accidental (`0`, `-1`, `0!8`, `4b`,
  * `2#!2`) or another cell spliced in
  * (`&bassNext`, `&bassNext^$-1`, and as the operators write one back, `degree(inverse(&bassNext), 2)`) that plays one note
  * on its step. A line written any other way (`@`, a choice, two
  * accidentals, a subsequence of degrees) is not read, and so not varied. Pure.
  */
-import { declWords, splitWords } from '../edit';
+import { declWords, splitComment, splitWords } from '../edit';
 import { flatten } from '../flatten';
 import { gmDrumNote } from '../midi';
 import { noteValue, type Meter } from '../meter';
@@ -21,7 +22,7 @@ import { codeShifts, type CompileResult } from '../program';
 /** One note of a line: its step on the line's grid, the voice it strikes, its own level as written, its level in all. */
 export interface LineNote {
   readonly step: number;
-  /** The voice, as written: `&hh` (a pitched line's: the voice it is a product with, `&bassV`). */
+  /** The voice, as written: `&hh` (a pitched line's: the voice it is a product with, `&bassV`, or `''` for none). */
   readonly voice: string;
   /** Its own level as written (`.25` of `&hh:0:.25`), or null: none, at 1. */
   readonly own: string | null;
@@ -175,14 +176,40 @@ function entriesOf(source: string, card: string): string[] {
 
 /**
  * The lines of a fragment, read off its text and its compile (the fragment under its workbench): every entry of every
- * card (a MIDI card, a sound card) whose trigger is a cell this module reads, in the order the cards write them.
+ * card (a MIDI card, a sound card) whose trigger is a cell this module reads, in the order the cards write them. An
+ * entry that is a mix of its own (a drum bar's `&groove`, which the workbench's card sends: #291) is read as a card is,
+ * its entries the lines, in its place. A fragment with no card (#291: where its notes go is the workbench's) is read
+ * through what nothing in it reads: a mix of its own is read as a card, after the cards, and a pitched line (a cell of
+ * degrees over a table) as a line with no voice of its own, after those.
  */
 export function linesOf(source: string, result: CompileResult): Line[] {
-  const cards = [...result.cells.values()].filter((c) => (c.map?.kind === 'midi' || c.sink) && !c.implicit);
+  const readBy = new Set(
+    source.split('\n').flatMap((raw) =>
+      [
+        ...splitComment(raw)[0]
+          .replace(/^\s*&[A-Za-z_][A-Za-z0-9_]*/, '')
+          .matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g),
+      ].map((m) => m[1]!),
+    ),
+  );
+  const unread = [...result.cells.values()].filter((c) => !c.implicit && !c.lambda && !readBy.has(c.name));
+  const cards = [
+    ...[...result.cells.values()].filter((c) => (c.map?.kind === 'midi' || c.sink) && !c.implicit).map((c) => c.name),
+    ...unread.filter((c) => !c.map && !c.voice && !c.step && entriesOf(source, c.name).length).map((c) => c.name),
+  ];
   const out: Line[] = [];
-  for (const card of cards) {
-    const entries = entriesOf(source, card.name);
+  const seen = new Set<string>();
+  const read = (card: string) => {
+    if (seen.has(card)) return;
+    seen.add(card);
+    const entries = entriesOf(source, card);
     for (const entry of entries) {
+      const mix = /^&([A-Za-z_][A-Za-z0-9_]*)$/.exec(entry)?.[1];
+      const cell = mix ? result.cells.get(mix) : undefined;
+      if (cell && !cell.voice && !cell.step && entriesOf(source, mix!).length) {
+        read(mix!);
+        continue;
+      }
       const factors = entry.split('*').map((f) => f.trim());
       const refs = factors.filter((f) => f.startsWith('&'));
       if (factors.some((f) => !/^&[A-Za-z_][A-Za-z0-9_]*$/.test(f) && !NUMBER.test(f))) continue;
@@ -191,7 +218,7 @@ export function linesOf(source: string, result: CompileResult): Line[] {
       const levelCells = cells.filter((c) => c!.map?.kind === 'amp');
       const triggers = cells.filter((c) => c!.map?.kind !== 'amp');
       const voices = triggers.filter((c) => c!.voice);
-      const at = { name: card.name, entries, entry };
+      const at = { name: card, entries, entry };
       if (triggers.length === 2 && voices.length === 1 && !levelCells.length) {
         const line = pitchedLineOf(source, result, triggers.find((c) => !c!.voice)!.name, voices[0]!.name, at);
         if (line) out.push(line);
@@ -201,6 +228,12 @@ export function linesOf(source: string, result: CompileResult): Line[] {
       const line = lineOf(source, result, triggers[0]!.name, levelCells[0]?.name, at);
       if (line) out.push(line);
     }
+  };
+  for (const card of cards) read(card);
+  for (const c of unread) {
+    if (!c.over || !c.step || c.voice || c.map) continue;
+    const line = pitchedLineOf(source, result, c.name, null, { name: c.name, entries: [], entry: `&${c.name}` });
+    if (line) out.push(line);
   }
   return out;
 }
@@ -256,7 +289,7 @@ function lineOf(source: string, result: CompileResult, trigger: string, levelCel
  * A pitched line: a cell of degrees and splices times one voice. Each step is a rest or one note, which its flattened
  * events say it plays (one event, one step long); null where a step is written any other way or plays otherwise.
  */
-function pitchedLineOf(source: string, result: CompileResult, trigger: string, voice: string, card: Line['card']): Line | null {
+function pitchedLineOf(source: string, result: CompileResult, trigger: string, voice: string | null, card: Line['card']): Line | null {
   const words = declWords(source, trigger);
   const cell = result.cells.get(trigger)!;
   if (!words || !cell.step) return null;
@@ -279,7 +312,7 @@ function pitchedLineOf(source: string, result: CompileResult, trigger: string, v
     if (w === null) continue;
     const e = at[0]!;
     const pitch: Pitch = { written: w, sign: 1, by: 0, table: `${e.table}:${e.tableShift}`, value: e.value, alter: e.alter, transpose: e.transpose ?? 0 };
-    notes.push({ step, voice: `&${voice}`, own: null, level: 1, pitch });
+    notes.push({ step, voice: voice === null ? '' : `&${voice}`, own: null, level: 1, pitch });
   }
   if (events.length !== notes.length) return null;
   return {
@@ -291,7 +324,7 @@ function pitchedLineOf(source: string, result: CompileResult, trigger: string, v
     notes,
     stepWhole: tapWhole(cell.step.tap, meter),
     meter,
-    pitched: { table: cell.over, voice: `&${voice}` },
+    pitched: { table: cell.over, voice: voice === null ? '' : `&${voice}` },
   };
 }
 
