@@ -61,7 +61,7 @@ source: seed
 ---
 
 ```cells
-use "keys"
+use &keysV from keys
 &stab play=&stabline level=&stabLevel &keysV
 ```
 

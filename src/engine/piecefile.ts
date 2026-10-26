@@ -145,7 +145,7 @@ export function withLockfile(file: PieceFile, uses: readonly Used[]): PieceFile 
 }
 
 /** The ids a text's `use` lines name. */
-const usedIds = (text: string): Set<string> => new Set(text.split('\n').flatMap((raw) => readUse(splitComment(raw)[0]) ?? []));
+const usedIds = (text: string): Set<string> => new Set(text.split('\n').flatMap((raw) => readUse(splitComment(raw)[0])?.id ?? []));
 
 /** The frontmatter with its lockfile's entries no `use` line names dropped, and the key gone with the last one. */
 function pruned(frontmatter: PieceFrontmatter, text: string): PieceFrontmatter {

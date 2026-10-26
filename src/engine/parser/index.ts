@@ -20,11 +20,11 @@ import { IDENT, LineError, LineScanner, stripComment } from './scanner';
 import { parseBody, parseCell, SHOWS } from './cell';
 import { splitPlugins } from '../plugins';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
-import { readUse, USE_FORM } from './use';
+import { readUse, USE_FORM, useQuoted } from './use';
 
 export { meterLevels, SIGNATURES } from './generators';
 export { SHOWS } from './cell';
-export { readUse, USE_FORM } from './use';
+export { readUse, USE_FORM, writeUse, type UseForm } from './use';
 
 export function parse(whole: string): ParseResult {
   const cells: CellDecl[] = [];
@@ -57,7 +57,10 @@ export function parse(whole: string): ParseResult {
       const col = text.search(/\S/);
       const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
       if (use === null) diagnostics.push({ severity: 'error', message: USE_FORM, span });
-      else uses.push({ id: use, span });
+      else {
+        uses.push({ id: use.id, names: use.names, span });
+        if (use.form === 'quoted') diagnostics.push({ severity: 'warning', message: useQuoted(use.id), span });
+      }
       return;
     }
     try {

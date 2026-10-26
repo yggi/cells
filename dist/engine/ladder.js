@@ -14,7 +14,7 @@ export const STUBS = new Set([
         .filter((k) => PARAMS[k].stub)
         .map((k) => `parameter ${k}`),
 ]);
-export const PENDING = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags', 'line use "id"']);
+export const PENDING = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags', 'line use &a, &b from id']);
 export function formKey(e) {
     if (e.section === 'attribute' || e.section === 'parameter')
         return `${e.section} ${e.form.split('=')[0]}`;

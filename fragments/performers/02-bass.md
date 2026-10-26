@@ -61,7 +61,7 @@ source: seed
 ---
 
 ```cells
-use "bass"
+use &bassV from bass
 &bass play=&bassline^$-12 level=&bassLevel &bassV
 ```
 
