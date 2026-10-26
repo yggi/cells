@@ -28,7 +28,7 @@ function meterOf(d) {
     }));
 }
 export const stepsPerBeat = (m) => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
-export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk }, typed) {
+export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stacks }, typed) {
     const { rateOf, error, warn, broken, unknownCell } = ctx;
     const cells = new Map();
     const lengthOf = (name) => lengthIn(decls, name);
@@ -158,9 +158,11 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk }, typ
                                 ? { kind: 'midi', channel: d.map.channel, port: d.map.port }
                                 : { kind: d.map.kind }
                 : null,
-            mix: units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
-                ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
-                : null,
+            mix: stacks.has(name)
+                ? []
+                : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
+                    ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
+                    : null,
             sink: d.map?.kind === 'sample',
             ...(d.map?.kind === 'midi' ? { chords: units.map((u) => (u.atom.kind === 'mix' ? typed(u.atom) : null)) } : {}),
             clock: null,

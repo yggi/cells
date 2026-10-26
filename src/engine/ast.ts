@@ -160,6 +160,11 @@ export interface GateSpec {
   readonly move?: Move;
   /** The cell its products read for its notes: &tune, or (moved by degrees) a copy of it, moved. */
   readonly plays: string;
+  /**
+   * A stack it plays (#287: `play=&drumlines`, `&drumlines [&kick, &backbeat, &hat]`): each line as written, and the cell
+   * its products read for it (the line, or a copy of it moved), each played as a gate's one line is. Absent for one line.
+   */
+  readonly lines?: readonly { readonly line: string; readonly plays: string }[];
   /** The port it was written on: `play` (or the old `trigger`). */
   readonly port: 'play' | 'trigger';
   readonly levels: readonly { readonly name: string; readonly port: string }[];

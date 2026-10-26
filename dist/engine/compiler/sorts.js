@@ -120,9 +120,10 @@ export function sorts(ctx, decls) {
             const d = decls.get(n);
             return !!d && (!!d.gate || isMixDecl(d) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
         };
-        const sounding = spec && [{ name: spec.notes, port: spec.port }, ...spec.levels].find((x) => sound(x.name));
+        const notes = spec ? (spec.lines?.map((l) => l.line) ?? [spec.notes]).map((name) => ({ name, port: spec.port })) : [];
+        const sounding = spec && [...notes, ...spec.levels].find((x) => sound(x.name));
         if (spec && sounding) {
-            const wants = sounding.name === spec.notes ? 'the notes it plays (a melody, &tune)' : 'a level (a volume: a cell with map=amp, map=db or map=lin)';
+            const wants = notes.some((x) => x.name === sounding.name) ? 'the notes it plays (a melody, &tune)' : 'a level (a volume: a cell with map=amp, map=db or map=lin)';
             error(`${sounding.port}=&${sounding.name}: a gate's ${sounding.port}= takes ${wants}, and &${sounding.name} is a sound (${decls.get(sounding.name)?.gate ? 'a gate' : isMixDecl(decls.get(sounding.name)) ? 'a mix' : 'a voice'})`, ref(sounding.name)?.span ?? decls.get(atom.gate).span);
             typedMixes.set(atom, out);
             return out;
