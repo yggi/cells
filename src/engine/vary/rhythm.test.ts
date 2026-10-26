@@ -13,9 +13,11 @@ import { playsSameNotes, sameNotes } from '../sameness';
 import { windowAt } from '../schedule';
 import { rewriteAll } from '../rewrite';
 import { unionOf } from '../../repository/fit';
+import { heard } from '../../repository/heard';
 import { holesOf } from '../../repository/holes';
 import { resolveSeed } from '../../repository/library';
 import { METER_FRAGMENTS } from '../../repository/meters';
+import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
 import { anchorsOf, backbeatOf, drawn, variations, varied, type Variation } from '.';
 
 vi.mock('../compile', async (original) => {
@@ -334,4 +336,16 @@ describe('what it costs', () => {
     }
     vi.resetModules(); // (and afresh again for the files after this one)
   });
+});
+
+describe('a drum bar with no card of its own (#291)', () => {
+  it.each(RHYTHM_FRAGMENTS.slice(0, 8).map((f) => [f.id, f.text] as const))(
+    '%s: read alone, its mix is its card; under a workbench card that sends it, the same lines',
+    (_, text) => {
+      const kit = { ...OPTIONS, workbench: `${WORKBENCH}\n${resolveSeed('core kit')!}` };
+      const alone = variations(text, kit).map((v) => [v.by, v.after]);
+      expect(alone.length).toBeGreaterThan(0);
+      expect(variations(text, { ...kit, workbench: `${kit.workbench}\n${heard(text)}` }).map((v) => [v.by, v.after])).toEqual(alone);
+    },
+  );
 });

@@ -11,6 +11,7 @@ import { windowAt } from '../engine/schedule';
 import { soundsIdentical } from '../engine/sameness';
 import { createRepository, type StylePoint } from './fragments';
 import { fitOf } from './fit';
+import { heard } from './heard';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { METER_FRAGMENTS } from './meters';
@@ -35,8 +36,11 @@ const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text
 /** The core kit's lines: every voice the rhythms leave as a hole (#244). */
 const coreKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!.text;
 
-/** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments. */
-const hosted = (meter: string, bpm: number, ...fragments: string[]) => [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...fragments].join('\n');
+/** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments, and a card that hears them (#291). */
+const hosted = (meter: string, bpm: number, ...fragments: string[]) => {
+  const card = heard(fragments.join('\n'));
+  return [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...fragments, ...(card ? [card] : [])].join('\n');
+};
 
 /** What a text sends on channel 10 in its first `steps` sixteenths at a tempo, as E31's `cellsDrums` reads it, and what its compiler said. */
 function played(text: string, bpm: number, steps = 16): { hits: Hit[]; diagnostics: string[] } {
@@ -92,8 +96,13 @@ describe('the rhythm fragments', () => {
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: its drum bar is E31’s text word for word, without its &bar line and its stand-in voices', (_, w) => {
     const [bar, ...rest] = w.text.split('\n');
     expect(bar).toMatch(/^&bar scan\(1 1 1 1\) step=\d+bpm$/);
-    // (the stand-in voices `&bd s=white` …, E31's own, are holes the kit fills: #244)
-    expect(w.fragment.text).toBe(rest.filter((l) => !/^&\w+ s=white$/.test(l)).join('\n'));
+    // (the stand-in voices `&bd s=white` …, E31's own, are holes the kit fills: #244; its card is the workbench's, its mix &groove: #291)
+    expect(w.fragment.text).toBe(
+      rest
+        .filter((l) => !/^&\w+ s=white$/.test(l))
+        .join('\n')
+        .replace('&drums map=midi(10) [', '&groove ['),
+    );
   });
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s is open on its meter: no meter of its own, and alone it asks for one', (_, text) => {
