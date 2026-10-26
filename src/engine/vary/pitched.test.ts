@@ -13,6 +13,7 @@ import { windowAt } from '../schedule';
 import { unionOf } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
 import { BASS_FRAGMENTS } from '../../repository/bass';
+import { heard } from '../../repository/heard';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { anchorsOf, PITCHED_OPERATORS, readVariations, variations, varied } from '.';
 
@@ -28,17 +29,17 @@ const PROGRESSIONS: Record<string, { harm: string; bars: number }> = {
   'I–vi–IV–V': { harm: '&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]', bars: 4 },
   'ii–V–I': { harm: '&harm over=&key step=1m [1,3,5,7] [4,6,8,10] [0,2,4,6]', bars: 3 },
 };
-const OPTIONS = (name: string) => ({ workbench: `${HOST}\n${PROGRESSIONS[name]!.harm}`, operators: PITCHED_OPERATORS });
 const SEEDS = BASS_FRAGMENTS.map((f) => ({ id: f.id, fragment: f.text }));
+const OPTIONS = (name: string) => ({ workbench: `${HOST}\n${PROGRESSIONS[name]!.harm}`, operators: PITCHED_OPERATORS });
 
 /** Each seed's variations, as `by` names them, on either workbench: 24 of the first three's 30, the rest playing their source's notes; then the bends and the trim. */
-const ENDS = (last: number) => ['bend &bass -2', 'bend &bass -1', 'bend &bass 1', 'bend &bass 2', `trim &bass ${last}`];
+const ENDS = (last: number) => ['bend &bassline -2', 'bend &bassline -1', 'bend &bassline 1', 'bend &bassline 2', `trim &bassline ${last}`];
 const EXPECTED: Record<string, readonly string[]> = {
-  'root bass': ['transpose &bass -2', 'transpose &bass -1', 'transpose &bass 1', 'transpose &bass 2'],
-  'pumping bass': ['transpose &bass -2', 'transpose &bass -1', 'transpose &bass 1', 'transpose &bass 2', 'reverse &bass', ...ENDS(7)],
-  'eighths bass': ['transpose &bass -2', 'transpose &bass -1', 'transpose &bass 1', 'transpose &bass 2', ...ENDS(7)],
-  'funk bass': ['transpose &bass -2', 'transpose &bass -1', 'transpose &bass 1', 'transpose &bass 2', 'reverse &bass', ...ENDS(14)],
-  'walking bass': ['transpose &bass -2', 'transpose &bass -1', 'transpose &bass 1', 'transpose &bass 2', 'invert &bass', 'reverse &bass', ...ENDS(3)],
+  'root bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2'],
+  'pumping bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'reverse &bassline', ...ENDS(7)],
+  'eighths bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', ...ENDS(7)],
+  'funk bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'reverse &bassline', ...ENDS(14)],
+  'walking bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'invert &bassline', 'reverse &bassline', ...ENDS(3)],
 };
 /** Each seed's line: its tap and its lap in steps, and its anchored steps (the root on the downbeat, where each chord changes). */
 const LINE: Record<string, { tap: string; steps: number; anchored: readonly number[] }> = {
@@ -51,7 +52,8 @@ const LINE: Record<string, { tap: string; steps: number; anchored: readonly numb
 
 /** What a text sends on channel 2 over `bars` bars of 4/4 at 120 bpm: each note's sixteenth from the start, and its MIDI note. */
 function played(text: string, bars: number): Map<number, number[]> {
-  const plan = planOf(text);
+  // (a seed has no card: the one a bass line is heard through, where the text has none of its own, #291)
+  const plan = planOf(/map=midi/.test(text) ? text : `${text}\n${heard(text)}`);
   const sixteenth = 60 / 120 / 4;
   const route = router(plan.result, channelTable(plan.result));
   const out = new Map<number, number[]>();
@@ -68,8 +70,8 @@ function played(text: string, bars: number): Map<number, number[]> {
   return out;
 }
 
-/** The text with its card playing a form of `&bass` instead (`&t step=<tap> <form>`): the language's own reading of an operator. */
-const asForm = (text: string, tap: string, form: string) => text.replace('[&bass * &bassV]', '[&t * &bassV]') + `\n&t step=${tap} ${form}`;
+/** The text with its card playing a form of `&bassline` instead (`&t step=<tap> <form>`): the language's own reading of an operator. */
+const asForm = (text: string, tap: string, form: string) => text.replace('[&bassline * &bassV]', '[&t * &bassV]') + `\n&t step=${tap} ${form}`;
 
 for (const name of Object.keys(PROGRESSIONS)) {
   const options = OPTIONS(name);
@@ -78,7 +80,9 @@ for (const name of Object.keys(PROGRESSIONS)) {
     for (const { id, fragment } of SEEDS) {
       const { tap, steps, anchored } = LINE[id]!;
       const all = variations(fragment, options);
-      const source = unionOf(fragment, options.workbench).text;
+      // (played on its workbench with the card that hears it: the seeds carry none, #291)
+      const bench = `${options.workbench}\n${heard(fragment)}`;
+      const source = unionOf(fragment, bench).text;
       const before = played(source, bars);
       const sixteenths = 16 / steps;
       /** The sixteenths, over the bars played, where an anchored step falls. */
@@ -86,17 +90,17 @@ for (const name of Object.keys(PROGRESSIONS)) {
 
       describe(id, () => {
         it(`its anchors: the root on the downbeat, where each chord changes (${anchored.length ? 'step 0' : 'none: the pump rests there'})`, () => {
-          expect(anchorsOf(fragment, options.workbench)).toEqual(anchored.map((step) => ({ line: '&bass', step, reason: 'root' })));
+          expect(anchorsOf(fragment, options.workbench)).toEqual(anchored.map((step) => ({ line: '&bassline', step, reason: 'root' })));
         });
 
         it(`its variations: ${EXPECTED[id]!.length}, as named`, () => {
           expect(all.map((v) => v.by)).toEqual(EXPECTED[id]);
-          expect(all.every((v) => v.tool === 'vary' && v.line === '&bass')).toBe(true);
+          expect(all.every((v) => v.tool === 'vary' && v.line === '&bassline')).toBe(true);
         });
 
         for (const [k, v] of all.entries())
           describe(v.by, () => {
-            const text = unionOf(v.apply(fragment), options.workbench).text;
+            const text = unionOf(v.apply(fragment), bench).text;
             const after = played(text, bars);
 
             it('compiles on its workbench with no diagnostic, and changes only its line', () => {
@@ -105,12 +109,12 @@ for (const name of Object.keys(PROGRESSIONS)) {
                 .apply(fragment)
                 .split('\n')
                 .filter((l, j) => l !== fragment.split('\n')[j]);
-              expect(changed.map((l) => l.split(' ')[0])).toEqual(['&bass']);
+              expect(changed.map((l) => l.split(' ')[0])).toEqual(['&bassline']);
             });
 
             it('plays other notes than its source and than the variations before it (S2)', () => {
               expect(playsSameNotes(source, text)).toBe(false);
-              for (const other of all.slice(0, k)) expect(playsSameNotes(unionOf(other.apply(fragment), options.workbench).text, text), other.by).toBe(false);
+              for (const other of all.slice(0, k)) expect(playsSameNotes(unionOf(other.apply(fragment), bench).text, text), other.by).toBe(false);
             });
 
             it("keeps its source's holes, and the root on each chord change", () => {
@@ -135,14 +139,14 @@ for (const name of Object.keys(PROGRESSIONS)) {
               const lasts = (m: Map<number, number[]>) => [...m.keys()].filter((at) => at % 16 === last);
               if (v.rule === 'bend') {
                 // the last note plays what the note before it plays moved `^n`; every other note as it was
-                const moved = played(asForm(source, tap, `&bass^${v.by.split(' ').at(-1)}`), bars);
+                const moved = played(asForm(source, tap, `&bassline^${v.by.split(' ').at(-1)}`), bars);
                 expect(lasts(after).map((at) => after.get(at))).toEqual(lasts(before).map((at) => moved.get(at - last! + prev!)));
                 expect([...after].filter(([at]) => at % 16 !== last)).toEqual([...before].filter(([at]) => at % 16 !== last));
               } else if (v.rule === 'trim') expect(after).toEqual(new Map([...before].filter(([at]) => at % 16 !== last)));
               else if (v.rule === 'transpose' || v.rule === 'invert') {
-                const form = v.rule === 'transpose' ? `&bass^${v.by.split(' ').at(-1)}` : `inverse(&bass)`; // (f is the root, 0)
+                const form = v.rule === 'transpose' ? `&bassline^${v.by.split(' ').at(-1)}` : `inverse(&bassline)`; // (f is the root, 0)
                 expect(free(after)).toEqual(free(played(asForm(source, tap, form), bars)));
-              } else if (!anchored.length) expect(after).toEqual(played(asForm(source, tap, '&bass[::-1]'), bars));
+              } else if (!anchored.length) expect(after).toEqual(played(asForm(source, tap, '&bassline[::-1]'), bars));
               else {
                 // one chord a bar, so a note plays the same at every step of its bar: each free note is its mirror's
                 // within the span after the downbeat's anchor
@@ -174,13 +178,13 @@ describe('the pitched operators', () => {
     // the left out: an inversion about a root that is every note's (the root, the eighths, the pump, the funk: all 0, and
     // the funk's anticipation, mirrored round its own table's root, is that root); a retrograde of one note (the root's
     // half) or of eight alike (the eighths)
-    expect(SEEDS.flatMap(({ id }) => ['invert &bass', 'reverse &bass'].filter((by) => !EXPECTED[id]!.includes(by)).map((by) => `${id}: ${by}`))).toEqual([
-      'root bass: invert &bass',
-      'root bass: reverse &bass',
-      'pumping bass: invert &bass',
-      'eighths bass: invert &bass',
-      'eighths bass: reverse &bass',
-      'funk bass: invert &bass',
+    expect(SEEDS.flatMap(({ id }) => ['invert &bassline', 'reverse &bassline'].filter((by) => !EXPECTED[id]!.includes(by)).map((by) => `${id}: ${by}`))).toEqual([
+      'root bass: invert &bassline',
+      'root bass: reverse &bassline',
+      'pumping bass: invert &bassline',
+      'eighths bass: invert &bassline',
+      'eighths bass: reverse &bassline',
+      'funk bass: invert &bassline',
     ]);
   });
 
@@ -307,13 +311,13 @@ describe('the pitched operators', () => {
 
   it('transpose by the degrees a frontend names, in its order', () => {
     const walk = SEEDS.find((s) => s.id === 'walking bass')!.fragment;
-    expect(variations(walk, { ...options, operators: ['transpose'], degrees: [2] }).map((v) => v.after)).toEqual(['&bass over=&harm step=4n 0 3 4 degree(&bassNext^$-1, 2)']);
+    expect(variations(walk, { ...options, operators: ['transpose'], degrees: [2] }).map((v) => v.after)).toEqual(['&bassline over=&harm step=4n 0 3 4 degree(&bassNext^$-1, 2)']);
   });
 
   it('a draw picks among them as among the rhythm ones', () => {
     const walk = SEEDS.find((s) => s.id === 'walking bass')!.fragment;
-    expect(varied(walk, 0, options)!.by).toBe('transpose &bass -2');
-    expect(varied(walk, 0.999, options)!.by).toBe('trim &bass 3');
+    expect(varied(walk, 0, options)!.by).toBe('transpose &bassline -2');
+    expect(varied(walk, 0.999, options)!.by).toBe('trim &bassline 3');
   });
 
   it('cost one compile a call, the fragment under its workbench; applying them, none', async () => {

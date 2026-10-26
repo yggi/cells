@@ -172,7 +172,7 @@ function rampedSeries(p: Plan, m: Series, from: number, to: number, valueOf: (e:
  * Levels are the values as written (map=amp: 1 full, 0 silent); a rest is
  * silence; a stream that doesn't move holds its first value.
  */
-export function levelSeries(p: Plan, m: Series, from: number, to: number): { at: number; level: number; ramp?: boolean }[] {
+export function levelSeries(p: Plan, m: Series, from: number, to: number, written?: number): { at: number; level: number; ramp?: boolean }[] {
   const val = (e: StepEvent) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter));
   if (m.events.length === 0) return [{ at: from, level: 0 }];
   if (!m.clock) return [{ at: from, level: val(m.events[0]) }];
@@ -190,7 +190,10 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number): { at:
     for (const e of m.events) if (local >= e.step - EPS && local < e.step + e.duration - EPS) best = Math.max(best, val(e));
     return best < 0 ? 0 : best;
   };
-  const out: { at: number; level: number }[] = [{ at: from, level: levelAt(c0) }];
+  // (a note's level is read where it is written, before a swung meter's swing (#287): at the step of this line, as written,
+  // that holds the note's written time; a level line on 16n under a lean gives a straight stroke its own level)
+  const w = written === undefined ? NaN : clocking(p.result, p.statics).written(m.clock).stepAt(Math.max(0, written)) * m.rate;
+  const out: { at: number; level: number }[] = [{ at: from, level: levelAt(Number.isFinite(w) ? w : c0) }];
   const edges = new Set<number>();
   for (let lap = Math.floor(c0 / m.period); lap * m.period < c1; lap++)
     for (const e of m.events) for (const s of [lap * m.period + e.step, lap * m.period + e.step + e.duration]) if (s > c0 + EPS && s < c1 - EPS) edges.add(s);

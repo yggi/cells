@@ -49,7 +49,7 @@ function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato'>): Me
 /** A meter's steps a beat: what its bpm is read through (1 when it has no meter). */
 export const stepsPerBeat = (m: Meter | null): number => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
 
-export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }: Declared, typed: Typed): Cells {
+export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, stacks }: Declared, typed: Typed): Cells {
   const { rateOf, error, warn, broken, unknownCell } = ctx;
   const cells = new Map<string, ResolvedCell>();
   const lengthOf = (name: string) => lengthIn(decls, name);
@@ -187,8 +187,10 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk }
         : null,
       // a mix: one chord of sounds — or, on a sound card, its channels written in place (all their voices); a MIDI
       // card's entries are channels of notes, not a mix (bindings.ts reads them)
-      mix:
-        units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
+      // (a stack a gate plays is its part, each line played by the gate: no sound of its own, so it mixes nothing)
+      mix: stacks.has(name)
+        ? []
+        : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
           ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
           : null,
       sink: d.map?.kind === 'sample',

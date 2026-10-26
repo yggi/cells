@@ -1,9 +1,11 @@
-// The performers (#282, decision 058): Jambot's bass, pad, stab and lead as gates named by their roles, each
+// The performers (#282, #287, decision 058): Jambot's drums, bass, pad, stab and lead as gates named by their roles, each
 // playing a part the score fills on the instrument it uses. Each reads its role, its part and its move; its holes are its
 // part and its levels; over a workbench that fills them it compiles clean and sends what Jambot's section text sends for
-// that part (its own voice line at Jambot's register); and a query for a performer at any preset finds the four. (The drums wait on #287: a gate's part keeps no line's name.)
+// that part (its own voice line at Jambot's register); and a query for a performer at any preset finds the five. The drummer
+// plays a stack of lines, one per drum role, and each hit still names its line: the role the feel reads.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
+import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
@@ -17,13 +19,13 @@ const BPM = 120;
 // (a host as Jambot's section text writes one: the meter, the key, the harmony)
 const HOST = [`&bar meter("4/4") step=${BPM}bpm`, '&key scale(aeolian, A)', '&harm over=&key step=1m [0,2,4] [3,5,7]'].join('\n');
 
-/** What a text sends over MIDI in its first two bars: each note's channel, note, velocity, onset and length (in 16ths), in order. */
-function sent(text: string): { notes: string[]; diagnostics: string[] } {
+/** What a text sends over MIDI in its first bars (two unless said): each note's channel, note, velocity, onset and length (in 16ths), in order. */
+function sent(text: string, bars = 2): { notes: string[]; diagnostics: string[] } {
   const plan = planOf(text, undefined, { resolve: resolveSeed });
   const sixteenth = 60 / BPM / 4;
   const route = router(plan.result, channelTable(plan.result));
   const round = (x: number) => Math.round(x * 1e6) / 1e6;
-  const notes = windowAt(plan, 0, 32 * sixteenth - 1e-9).events.flatMap((e) =>
+  const notes = windowAt(plan, 0, 16 * bars * sixteenth - 1e-9).events.flatMap((e) =>
     routesOf(route(e)).flatMap((r) => {
       const n = midiNote(e, r);
       return n ? [{ ...n, at: round(n.at / sixteenth), dur: round((n.end - n.at) / sixteenth) }] : [];
@@ -80,10 +82,11 @@ const PARTS = {
 } as const;
 
 describe('the performers', () => {
-  it('are the bass, the pad, the stab and the lead, each one gate named by its role, playing its part on the instrument it uses', () => {
-    expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['bass performer', 'pad performer', 'stab performer', 'lead performer']);
+  it('are the drums, the bass, the pad, the stab and the lead, each one gate named by its role, playing its part on the instrument it uses', () => {
+    expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['drums performer', 'bass performer', 'pad performer', 'stab performer', 'lead performer']);
     const read = PERFORMER_FRAGMENTS.map((f) => compileSource(f.text, undefined, { resolve: resolveSeed }).performers);
     expect(read).toEqual([
+      [{ name: 'drums', role: 'drums', part: 'drumlines', voices: ['kit'] }],
       [{ name: 'bass', role: 'bass', part: 'bassline', move: { transpose: -12 }, voices: ['bassV'] }],
       [{ name: 'pad', role: 'pad', part: 'padline', voices: ['padV'] }],
       [{ name: 'stab', role: 'stab', part: 'stabline', voices: ['keysV'] }],
@@ -93,12 +96,7 @@ describe('the performers', () => {
 
   it('leave the part and its levels to the score: those are their holes', () => {
     const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
-    expect(holes).toEqual([
-      ['&bassLevel', '&bassline'],
-      ['&padLevel', '&padline'],
-      ['&stabLevel', '&stabline'],
-      ['&leadLevel', '&leadline'],
-    ]);
+    expect(holes).toEqual([['&drumlines'], ['&bassLevel', '&bassline'], ['&padLevel', '&padline'], ['&stabLevel', '&stabline'], ['&leadLevel', '&leadline']]);
   });
 
   for (const [part, { jambot, performer }] of Object.entries(PARTS))
@@ -111,7 +109,7 @@ describe('the performers', () => {
       expect(now.notes).toEqual(was.notes);
     });
 
-  it('are found, all four, by a query for a performer at each of Jambot’s presets', () => {
+  it('are found, all five, by a query for a performer at each of Jambot’s presets', () => {
     const library = createRepository(LIBRARY);
     for (const preset of [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ])
       expect(
@@ -120,5 +118,71 @@ describe('the performers', () => {
           .map((f) => f.fragment.id)
           .sort(),
       ).toEqual(PERFORMER_FRAGMENTS.map((f) => f.id).sort());
+  });
+});
+
+// The drums (#287): each preset's drum bar (E31's, the rhythm seeds), its mix as today's section text sends it on
+// channel 10 (`&drums [&kick, &backbeat …]` over the core kit), and the same lines as the drummer's part.
+const DRUM_BARS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ].map((point, i) => {
+  const preset = ['Synth-pop', 'Techno', 'Deep house', 'Ambient', 'Lo-fi hip hop', 'Funk', 'Bossa nova', 'Swing jazz'][i]!;
+  const text = LIBRARY.find((f) => f.id === `${preset} drums`)!.text;
+  return { preset, point, lines: /^&groove \[(.*)\]$/m.exec(text)![1]!, text: text.replace(/^&groove .*$/m, '') };
+});
+/** Jambot's drum roles, in its order (yggi/jambot packages/engine/src/events.ts @ 24a528b, `DRUM_ROLES`). */
+const DRUM_ROLES = ['kick', 'backbeat', 'fill', 'ghost', 'hat', 'pedal', 'euclid', 'clave'];
+
+describe('the drums performer', () => {
+  const library = createRepository(LIBRARY);
+  // (each under the meter the repository finds at its preset's point: Lo-fi hip hop's and Funk's swing)
+  const section = ({ point, text }: (typeof DRUM_BARS)[number]) =>
+    [setTiming(library.query(point, 1, {}, { facet: 'meter' })[0]!.fragment.text, 'bar', 'step', `${BPM}bpm`), text].join('\n');
+  const today = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\nuse * from "core kit"\n&drums [${w.lines}]\n&out map=midi ~!9 &drums`;
+  const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\nuse * from "drums performer"\n&out map=midi ~!9 &drums`;
+
+  it.each(DRUM_BARS.map((w) => [w.preset, w] as const))('%s: sends what its section text sends, over 64 bars', (_, w) => {
+    const was = sent(today(w), 64);
+    const now = sent(played(w), 64);
+    expect(was.diagnostics).toEqual([]);
+    expect(now.diagnostics).toEqual([]);
+    expect(now.notes.length).toBeGreaterThan(0);
+    expect(now.notes).toEqual(was.notes);
+  });
+
+  it('keeps each hit’s line, its drum role, in what it plays: the eight presets’ roles', () => {
+    const roles = DRUM_BARS.map((w) => {
+      const r = compileSource(played(w), undefined, { resolve: resolveSeed });
+      // (the feel's reading, contracts/feel v1.1: kit:voices:<role>:…)
+      return [w.preset, [...new Set(r.outputs.map((o) => /^kit:voices:(\w+):/.exec(o.id)?.[1] ?? o.id))]];
+    });
+    expect(roles).toEqual([
+      ['Synth-pop', ['kick', 'backbeat', 'fill', 'ghost', 'hat']],
+      ['Techno', ['kick', 'backbeat', 'fill', 'hat']],
+      ['Deep house', ['kick', 'backbeat', 'fill', 'ghost', 'hat']],
+      ['Ambient', ['kick', 'backbeat', 'fill', 'hat']],
+      ['Lo-fi hip hop', ['kick', 'backbeat', 'fill', 'ghost', 'hat', 'euclid']],
+      ['Funk', ['kick', 'backbeat', 'fill', 'ghost', 'hat', 'euclid']],
+      ['Bossa nova', ['kick', 'backbeat', 'fill', 'ghost', 'hat', 'euclid']],
+      ['Swing jazz', ['kick', 'backbeat', 'fill', 'ghost', 'hat', 'pedal']],
+    ]);
+    for (const [, rs] of roles) expect(rs).toEqual(DRUM_ROLES.filter((r) => (rs as string[]).includes(r)));
+  });
+
+  it('plays a clave the composer chose beside the bar as a line of its own, its role clave', () => {
+    const clave = LIBRARY.find((f) => f.id === 'bossa nova clave')!.text.replace(/^&percussion .*$/m, '');
+    const w = DRUM_BARS.find((b) => b.preset === 'Bossa nova')!;
+    const both = { ...w, text: `${w.text}\n${clave}`, lines: `${w.lines}, &clave` };
+    expect(sent(played(both), 64).notes).toEqual(sent(today(both), 64).notes);
+    const r = compileSource(played(both), undefined, { resolve: resolveSeed });
+    expect(r.outputs.map((o) => o.id.split(':')[2])).toContain('clave');
+  });
+
+  it('refuses a line the kit doesn’t hold, and a stack mixed as a sound beside it', () => {
+    const messages = (t: string) => compileSource(`&bar meter("4/4") step=${BPM}bpm\n${t}`, undefined, { resolve: resolveSeed }).diagnostics.map((d) => d.message);
+    expect(messages('&cb s=sine\n&cowbell step=4n &cb\n&drumlines [&cowbell]\nuse * from "drums performer"\n&out map=midi ~!9 &drums')).toEqual([
+      "&cowbell plays &cb, which &kit doesn't hold: a kit's lines play its own voices",
+    ]);
+    expect(messages('&kick step=4n &bd\n&drumlines [&kick]\nuse * from "drums performer"\n&out map=midi ~!9 [&drums, &drumlines]')).toEqual([
+      '&drumlines is the part &drums plays, a stack of lines and no sound: mix or send &drums',
+    ]);
   });
 });

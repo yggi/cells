@@ -276,9 +276,10 @@ export interface Clock {
   readonly swung?: readonly number[];
   /**
    * A tap of a meter (decision 040: `step=16n`, `step=beat`): its steps at these positions, in the meter's steps, in a lap
-   * of `lap` of them (the bar, or cycle= bars), laid through the meter's time map. `cell` is the meter.
+   * of `lap` of them (the bar, or cycle= bars), laid through the meter's time map. `cell` is the meter. `written`: the
+   * positions as written, before a swung meter's swing (#287: where a level line is read for a note); absent when the same.
    */
-  readonly tap?: { readonly meter: string; readonly positions: readonly number[]; readonly lap: number };
+  readonly tap?: { readonly meter: string; readonly positions: readonly number[]; readonly lap: number; readonly written?: readonly number[] };
 }
 
 /** A pitch term of an out sum. */

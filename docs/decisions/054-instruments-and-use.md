@@ -99,7 +99,8 @@ Four questions were put, and ruled as recommended.
 - **Shorten's measure** (049, ruling 2) counts a `use` line as one leaf, a reference, and the used fragment's lines nowhere in the piece: they are the library's.
   So the rule saves structure wherever it removes a line, and an override line equal to the used fragment's is a line Shorten offers to remove.
 - **The built-in card (decision 028) hears what the piece's own lines leave unread, not a used fragment's** (ruled, as recommended).
-  A piece with no card that uses the General MIDI kit would otherwise hear 47 voices held; a used fragment that should sound brings its card, as the seed's rhythms and bass lines do, or the piece reads its lines.
+  A piece with no card that uses the General MIDI kit would otherwise hear 47 voices held; a used fragment that should sound brings its card, as the seed's rhythms and bass lines did, or the piece reads its lines.
+  *Amended (#291, 2026-10-26):* the pattern fragments carry no card; where their notes go is the workbench's and the performer's (decision 058), so the piece reads their lines (a drum bar's `&groove`, a bass line's `&bassline`).
 - **MIDI out is unchanged**: a kit's notes are its members' (`kitNotes`), the voices a kit or a mix reads, so a used voice nothing plays sends nothing.
 
 ## The forms, as this decision would have them

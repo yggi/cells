@@ -25,6 +25,8 @@ export interface Declared {
    * was; the table is then a table.
    */
   readonly sections: ReadonlyMap<string, string>;
+  /** The stacks a gate plays (#287: `&drums play=&drumlines &kit`): parts, each line played, not mixes of their own. */
+  readonly stacks: ReadonlySet<string>;
   /** The piece's main key, which a bare `over=key` reads, the old way (#124, #301): the first cell in the text whose braid is `scale(…)`. */
   readonly mainKey?: string;
 }
@@ -40,7 +42,7 @@ export function declare(ctx: Ctx): Declared {
   const mainKey = mainKeyOf(ctx, decls);
   tonics(ctx, decls);
   const sections = sectionTables(decls, error);
-  gates(decls, implicit, error);
+  const stacks = gates(decls, implicit, error);
   mixSelectors(ctx, decls);
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
@@ -109,7 +111,7 @@ export function declare(ctx: Ctx): Declared {
     return ok;
   };
   for (const name of decls.keys()) checkOver(name, []);
-  return { decls, implicit, implicitRoot, overOk, sections, ...(mainKey ? { mainKey } : {}) };
+  return { decls, implicit, implicitRoot, overOk, sections, stacks, ...(mainKey ? { mainKey } : {}) };
 }
 
 /**
@@ -256,8 +258,11 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
  * A gate transposes what it plays (decision 058): `play=&tune^$-12` (grid steps) and `play=&tune^2` (degrees) read an
  * implicit cell `&tune^$-12`, which plays &tune as a braid splicing `&tune^$-12` does.
  */
-function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error']): void {
+function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error']): Set<string> {
+  const stacks = new Set<string>();
   const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
+  // (the lines that name their own voices, read before any gate is rewritten: a gate's line is no groove)
+  const grooves = voiceGrooves(decls);
   for (const d of [...decls.values()]) {
     const p = d.params;
     const tokens = d.braid.kind === 'list' ? d.braid.tokens : [];
@@ -312,11 +317,11 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
     const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
     // (moved: a copy of the notes that splices them moved, &tune^$-12 or &tune^2, as a braid plays them; it takes their
     // table, clock and laps, their turn in the splice, and is off when they are)
-    const of = decls.get(notes);
-    let plays = notes;
-    if (move && of) {
+    const moved = (line: string, span: Span): string => {
+      const of = decls.get(line);
+      if (!move || !of) return line;
       // (named as written, so an output's id reads its part: lead:tune^$-12:…; two gates moving it alike share it)
-      plays = `${notes}${refLabel({ pick: null, shift: 0, ...move })}`;
+      const plays = `${line}${refLabel({ pick: null, shift: 0, ...move })}`;
       const stub: CellDecl = {
         name: plays,
         span: d.span,
@@ -333,7 +338,7 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
       };
       const splice: Atom = {
         kind: 'ref',
-        name: notes,
+        name: line,
         pick: null,
         shift: 0,
         ...(move.transpose ? { transpose: move.transpose } : {}),
@@ -341,25 +346,49 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
       };
       if (!decls.has(plays))
         decls.set(plays, {
-          ...overdub(stub, of, { name: notes, pick: null, shift: 0, span: notesSpan }, (m) => error(m, notesSpan)),
+          ...overdub(stub, of, { name: line, pick: null, shift: 0, span }, (m) => error(m, span)),
           shift: null,
           laps: of.laps ?? null,
-          braid: { kind: 'list', tokens: [{ atom: splice, repeat: 1, subdivide: 1, elongate: 1, span: notesSpan }] },
+          braid: { kind: 'list', tokens: [{ atom: splice, repeat: 1, subdivide: 1, elongate: 1, span }] },
         });
       implicit.add(plays);
-    }
-    const notesExpr: Expr = ref(plays, notesSpan);
-    const exprs: Expr[] = played.map((r) => ({
-      k: 'prod',
-      span: r.span,
-      factors: [
-        notesExpr,
-        ...levels.map((l) => ref(l.name, l.span)),
-        // (notes read through the kit it plays are its sound already: &drums over=&kit, then &out play=&drums &kit)
-        ...(of?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
-        ...(gain !== 1 ? [{ k: 'num', value: gain, span: gainSpan } as Expr] : []),
-      ],
+      return plays;
+    };
+    // what it plays: one line, or a stack of lines (#287: &drumlines [&kick, &backbeat, &hat]), each played as if it were
+    // the gate's play= alone, so each keeps its own name in what sounds (kit:voices:kick:…, the feel's role)
+    const stack = stackOf(decls, decls.get(notes), error);
+    if (stack) stacks.add(notes);
+    const lines = (stack ?? [{ line: { name: notes, pick: null, shift: 0, span: notesSpan }, by: [] as Expr[] }]).map(({ line, by }) => ({
+      line: line.name,
+      plays: moved(line.name, line.span),
+      ref: line,
+      by,
+      span: line.span,
     }));
+    // (a line that names its own voices, a groove: its sound is those voices, which the kit it is played on must hold)
+    const grooveVoices = (line: string) => (grooves?.cells.has(line) ? voicesIn(decls, line) : null);
+    const exprs: Expr[] = lines.flatMap((l) => {
+      const of = decls.get(l.line);
+      const voices = grooveVoices(l.line);
+      return played.map((r): Expr => {
+        const members = kitMembers(decls.get(r.name));
+        const missing = voices && members ? voices.filter((v) => !members.includes(v)) : [];
+        if (missing.length) error(`&${l.line} plays ${missing.map((v) => '&' + v).join(', ')}, which &${r.name} doesn't hold: a kit's lines play its own voices`, l.span);
+        return {
+          k: 'prod',
+          span: r.span,
+          factors: [
+            { k: 'ref', ref: { ...l.ref, name: l.plays } },
+            ...l.by,
+            ...levels.map((x) => ref(x.name, x.span)),
+            // (notes read through the kit it plays are its sound already: &drums over=&kit, then &out play=&drums &kit;
+            // and so are a groove's, its voices the kit's: &kick &bd ~ &bd, then &drums play=&kick &kit)
+            ...(of?.over?.name === r.name || (voices && members) ? [] : [ref(r.name, r.span)]),
+            ...(gain !== 1 ? [{ k: 'num', value: gain, span: gainSpan } as Expr] : []),
+          ],
+        };
+      });
+    });
     // (the parameters it was written with are the gate's now: none is a tape's, a sound card's or a voice's)
     const params = Object.fromEntries(Object.entries(p).filter(([k]) => !['play', 'trigger', 'velocity', 'gate', 'gain', 'level'].includes(k)));
     const paramCells = Object.fromEntries(Object.entries(d.paramCells ?? {}).filter(([k]) => k !== 'level'));
@@ -367,10 +396,86 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
       ...d,
       params,
       paramCells,
-      gate: { notes, ...(move ? { move } : {}), plays, port, levels: levels.map(({ name, port }) => ({ name, port })), gain, receivers: named.map((r) => r.name) },
+      gate: {
+        notes,
+        ...(move ? { move } : {}),
+        plays: lines[0].plays,
+        ...(stack ? { lines: lines.map(({ line, plays }) => ({ line, plays })) } : {}),
+        port,
+        levels: levels.map(({ name, port }) => ({ name, port })),
+        gain,
+        receivers: named.map((r) => r.name),
+      },
       braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs, gate: d.name }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] },
     });
   }
+  // (a stack a gate plays is its part, not a sound: mixed or sent itself it would sound nothing, so say who plays it)
+  const playedBy = new Map([...decls.values()].flatMap((d) => (d.gate?.lines ? [[d.gate.notes, d.name] as const] : [])));
+  const refsIn = (e: Expr): Ref[] => (e.k === 'ref' ? [e.ref] : e.k === 'sum' ? e.items.flatMap((x) => refsIn(x.e)) : e.k === 'prod' ? e.factors.flatMap(refsIn) : []);
+  for (const d of decls.values()) {
+    if (d.gate || d.braid.kind !== 'list') continue;
+    for (const a of d.braid.tokens.flatMap((t) => leaves(t.atom))) {
+      const refs = a.kind === 'ref' ? [{ name: a.name, span: d.span }] : a.kind === 'mix' ? a.exprs.flatMap(refsIn) : [];
+      for (const r of refs)
+        if (playedBy.has(r.name)) error(`&${r.name} is the part &${playedBy.get(r.name)} plays, a stack of lines and no sound: mix or send &${playedBy.get(r.name)}`, r.span);
+    }
+  }
+  return stacks;
+}
+
+/**
+ * A stack of lines: one chord and nothing else (`&drumlines [&kick, &hat[<<2], &euclid * &euclidLevel, &clave * .5]`), each
+ * member a line, its first name, times its levels: level cells and numbers, which scale its notes as in a mix. Null for
+ * anything else; a member that multiplies by a sound (a voice, a mix, a gate) is said once, here.
+ */
+function stackOf(decls: ReadonlyMap<string, CellDecl>, d: CellDecl | undefined, error: Ctx['error']): { line: Ref; by: Expr[] }[] | null {
+  if (!d || d.map || d.gate || Object.keys(d.params).length || d.braid.kind !== 'list' || d.braid.tokens.length !== 1) return null;
+  const a = d.braid.tokens[0].atom;
+  if (a.kind !== 'mix' || a.gate || !a.exprs.length) return null;
+  const member = (e: Expr): { line: Ref; by: Expr[] } | null => {
+    if (e.k === 'ref') return 'level' in e && e.level !== undefined ? null : { line: e.ref, by: [] };
+    if (e.k !== 'prod' || e.factors[0]?.k !== 'ref' || !e.factors.slice(1).every((f) => f.k === 'num' || (f.k === 'ref' && !f.ref.pick && !f.ref.shift))) return null;
+    return { line: e.factors[0].ref, by: e.factors.slice(1) };
+  };
+  const members = a.exprs.map(member);
+  if (!members.every((m) => m !== null)) return null;
+  // (a level is no sound: a voice, a mix or a gate beside a line would make the member a sound, not a line)
+  const sound = (n: string) => {
+    const x = decls.get(n);
+    return (
+      !!x &&
+      (!!x.gate || Object.keys(x.params).some((k) => VOICE_PARAMS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix'))
+    );
+  };
+  // (said here, and left out of what the gate plays, so the product isn't refused again as two sounds)
+  return (members as { line: Ref; by: Expr[] }[]).map((m) => ({
+    line: m.line,
+    by: m.by.filter((f) => {
+      if (f.k !== 'ref' || !sound(f.ref.name)) return true;
+      error(`&${d.name} is a stack of lines, each times its levels: &${f.ref.name} is a sound, not a level (a cell with map=amp, map=db or map=lin, or a number)`, f.ref.span);
+      return false;
+    }),
+  }));
+}
+
+/** A kit's members (`&kit &bd &sd &hh`: a braid of names, each a voice), or null for anything else. */
+function kitMembers(d: CellDecl | undefined): string[] | null {
+  if (!d || d.map || d.gate || d.braid.kind !== 'list' || !d.braid.tokens.length) return null;
+  const names = d.braid.tokens.flatMap((t) => (t.atom.kind === 'ref' ? [t.atom.name] : []));
+  return names.length === d.braid.tokens.length ? names : null;
+}
+
+/** The voices a groove names, its drum motifs' followed. */
+function voicesIn(decls: ReadonlyMap<string, CellDecl>, name: string, seen: readonly string[] = []): string[] {
+  const d = decls.get(name);
+  if (!d || seen.includes(name) || d.braid.kind !== 'list') return [];
+  const sounds = (n: string) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+  const out = new Set<string>();
+  for (const a of d.braid.tokens.flatMap((t) => leaves(t.atom))) {
+    const refs = a.kind === 'ref' ? [a.name] : a.kind === 'mix' ? a.exprs.flatMap((e) => (e.k === 'ref' ? [e.ref.name] : [])) : [];
+    for (const r of refs) for (const v of sounds(r) ? [r] : voicesIn(decls, r, [...seen, name])) out.add(v);
+  }
+  return [...out];
 }
 
 /**

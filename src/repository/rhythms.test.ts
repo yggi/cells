@@ -11,6 +11,7 @@ import { windowAt } from '../engine/schedule';
 import { soundsIdentical } from '../engine/sameness';
 import { createRepository, type StylePoint } from './fragments';
 import { fitOf } from './fit';
+import { heard } from './heard';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { METER_FRAGMENTS } from './meters';
@@ -35,8 +36,11 @@ const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text
 /** The core kit's lines: every voice the rhythms leave as a hole (#244). */
 const coreKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!.text;
 
-/** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments. */
-const hosted = (meter: string, bpm: number, ...fragments: string[]) => [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...fragments].join('\n');
+/** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments, and a card that hears them (#291). */
+const hosted = (meter: string, bpm: number, ...fragments: string[]) => {
+  const card = heard(fragments.join('\n'));
+  return [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...fragments, ...(card ? [card] : [])].join('\n');
+};
 
 /** What a text sends on channel 10 in its first `steps` sixteenths at a tempo, as E31's `cellsDrums` reads it, and what its compiler said. */
 function played(text: string, bpm: number, steps = 16): { hits: Hit[]; diagnostics: string[] } {
@@ -92,8 +96,13 @@ describe('the rhythm fragments', () => {
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: its drum bar is E31’s text word for word, without its &bar line and its stand-in voices', (_, w) => {
     const [bar, ...rest] = w.text.split('\n');
     expect(bar).toMatch(/^&bar scan\(1 1 1 1\) step=\d+bpm$/);
-    // (the stand-in voices `&bd s=white` …, E31's own, are holes the kit fills: #244)
-    expect(w.fragment.text).toBe(rest.filter((l) => !/^&\w+ s=white$/.test(l)).join('\n'));
+    // (the stand-in voices `&bd s=white` …, E31's own, are holes the kit fills: #244; its card is the workbench's, its mix &groove: #291)
+    expect(w.fragment.text).toBe(
+      rest
+        .filter((l) => !/^&\w+ s=white$/.test(l))
+        .join('\n')
+        .replace('&drums map=midi(10) [', '&groove ['),
+    );
   });
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s is open on its meter: no meter of its own, and alone it asks for one', (_, text) => {
@@ -133,16 +142,14 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
   // Under the meter the repository finds at the preset's point, which plays the preset's swing: each hit where Jambot's
   // leanMap puts its sixteenth, as long as from there to the next sixteenth's onset, at E31's note and velocity. All but
   // the rim, where a meter leans the sixteenths (Lo-fi hip hop's, Funk's): a Euclid on 1m doesn't swing with its meter
-  // (#121), so its strokes stay straight, and on a sixteenth the meter leans, the level line they are multiplied by, which
-  // does swing, reads 0 (velocity 1). 132 of the 144 swing as Jambot's band does; 5 of the 12 rim strokes lose their level.
+  // (#121), so its strokes stay straight; the level line they are multiplied by swings, but a note's level is read where
+  // it is written (#287), so each stroke keeps its own. 132 of the 144 swing as Jambot's band does; the 12 rim strokes keep their level.
   const RIM_UNSWUNG = ['Lo-fi hip hop', 'Funk'];
   const underOwnMeter = (w: (typeof drumBars)[number]) => {
     const { point, swing } = PRESETS[w.preset]!;
     const onsets = [...path.find((v) => v.s === swing)!.onsets, 16];
     const rimUnswung = (h: Hit) => RIM_UNSWUNG.includes(w.preset) && h.note === 37;
-    const want = sorted(
-      w.hits.map((h) => (rimUnswung(h) ? { ...h, velocity: h.step % 2 ? 1 : h.velocity } : { ...h, step: onsets[h.step]!, length: onsets[h.step + 1]! - onsets[h.step]! })),
-    );
+    const want = sorted(w.hits.map((h) => (rimUnswung(h) ? h : { ...h, step: onsets[h.step]!, length: onsets[h.step + 1]! - onsets[h.step]! })));
     return { want, rimUnswung, ...played(hosted(meters.query(point, 1)[0]!.fragment.text, w.bpm, w.fragment.text, coreKit), w.bpm) };
   };
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: under its own meter, every hit through Jambot’s swing but the unswung rim (#121)', (_, w) => {
@@ -155,14 +162,15 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
     want.forEach((h, i) => expect([hits[i]!.note, hits[i]!.velocity]).toEqual([h.note, h.velocity]));
   });
 
-  it('under their own meters, 132 of 144 swing as the band does, and 12 rim strokes stay straight, 5 of them at velocity 1 (#121)', () => {
+  it('under their own meters, 132 of 144 swing as the band does, and 12 rim strokes stay straight, each at its level (#121, #287)', () => {
     const counts = drumBars.map((w) => {
       const { rimUnswung } = underOwnMeter(w);
       const rims = w.hits.filter(rimUnswung);
-      return { rims: rims.length, levelLost: rims.filter((h) => h.step % 2).length, rest: w.hits.length - rims.length };
+      const { hits } = underOwnMeter(w);
+      return { rims: rims.length, levelLost: hits.filter((h) => h.note === 37 && h.velocity === 1).length, rest: w.hits.length - rims.length };
     });
     const sum = (key: 'rims' | 'levelLost' | 'rest') => counts.reduce((n, c) => n + c[key], 0);
-    expect([sum('rest'), sum('rims'), sum('levelLost')]).toEqual([132, 12, 5]);
+    expect([sum('rest'), sum('rims'), sum('levelLost')]).toEqual([132, 12, 0]);
   });
 });
 

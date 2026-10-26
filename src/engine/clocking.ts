@@ -186,6 +186,8 @@ export interface Clocking {
   /** Fractional step count of a clock at `seconds`. */
   stepOf(clock: string): number;
   map(clock: string): TimeMap;
+  /** A clock's time map as written: a swung meter's taps without its swing (#287), else its map. */
+  written(clock: string): TimeMap;
 }
 
 const belts = new WeakMap<CompileResult, Map<string, Warp>>();
@@ -269,7 +271,14 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
     }
     return m;
   };
-  return { map, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
+  const written = (clock: string): TimeMap => {
+    const tap = result.clocks.get(clock)?.tap;
+    if (!tap?.written) return map(clock);
+    let m = maps.get(`${clock}\0written`);
+    if (!m) maps.set(`${clock}\0written`, (m = tapMap({ ...tap, positions: tap.written }, base(tap.meter))));
+    return m;
+  };
+  return { map, written, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
 
 /**

@@ -435,7 +435,8 @@ function plainEvents(p, from, to, outputs) {
             const own = t.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter);
             const level = [{ at, level: (t.output.gate ? own : 1) * (e.level ?? 1) }];
             if (t.levels.length) {
-                const series = t.levels.map((m) => levelSeries(p, m, at, at + dur));
+                const written = clk.written(t.clock).q(s / t.rate);
+                const series = t.levels.map((m) => levelSeries(p, m, at, at + dur, written));
                 const times = [...new Set(series.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
                 const base = level[0].level;
                 level.length = 0;
