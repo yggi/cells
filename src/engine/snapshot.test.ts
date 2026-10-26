@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
+import { resolveSeed } from '../repository/library';
 import { notesAt, valuesAt } from './values';
 import { liveAt } from './live';
 import { PRESETS } from './presets';
@@ -43,7 +44,7 @@ const VALUE_TIMES = [0.5, 3.3, 11.7, 29.1];
 const LIVE_TIMES = [2.1, 13.3, 37.9];
 
 const pieces = Object.entries(PRESETS).map(([key, { source }]) => {
-  const result = compileSource(source);
+  const result = compileSource(source, undefined, { resolve: resolveSeed });
   const shifts = codeShifts(result);
   return { key, result, shifts, played: plan(result, shifts) };
 });

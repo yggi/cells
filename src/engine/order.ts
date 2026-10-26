@@ -70,6 +70,7 @@ export const ORDER = [
   'focus',
   'hypercell',
   'onemore',
+  'electroswing',
   'brothers',
   'ghosts',
   'tines',

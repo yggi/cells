@@ -9,6 +9,10 @@ import { pieceMeta } from './parser';
 import { readPiece, writePiece } from './piecefile';
 import { movedCard } from './shorten/card';
 import { canonicalTag, parseTag, VOCABULARY } from './tags';
+import { resolveSeed } from '../repository/library';
+
+/** The examples' `use` lines read the seed library (docs/language/use.md), as a frontend's library would. */
+const seed = { resolve: resolveSeed };
 
 /** The kinds' order a piece's tags are written in: the tutorial, its genres, its artists, its topics (each kind in its own order). */
 const KIND_ORDER = ['tutorial', 'genre', 'artist', 'topic'];
@@ -43,7 +47,7 @@ describe('examples/*.md', () => {
   });
   for (const [key, p] of Object.entries(PRESETS)) {
     test(`${key}: compiles without diagnostics, has a title, a description, tags, and its card's postgain= or the built-in card`, () => {
-      const r = compileSource(p.source);
+      const r = compileSource(p.source, undefined, seed);
       expect(r.diagnostics).toEqual([]);
       const m = pieceMeta(p.file);
       expect(m?.title, 'title:').toBeTruthy();
@@ -68,7 +72,7 @@ describe('examples/*.md', () => {
 
   for (const [key, p] of Object.entries(PRESETS)) {
     test(`${key}: no card (the frontmatter says what the piece is), and its notes are named …Note`, () => {
-      const r = compileSource(p.source);
+      const r = compileSource(p.source, undefined, seed);
       expect(r.cells.has('piece'), 'a card, &piece: its label is the description').toBe(false);
       for (const c of r.cells.values()) if (c.note) expect(c.name, `note &${c.name}`).toMatch(/Note$/);
     });
@@ -79,10 +83,13 @@ describe('examples/*.md', () => {
       const old = oldForm(p.file);
       // (the same card, but on no note: the file's frontmatter says it all)
       expect(pieceMeta(p.file)).toEqual({ ...pieceMeta(old), cell: null });
-      expect(compileSource(old).diagnostics.map((d) => d.message)).toEqual([expect.stringMatching(/frontmatter now .*Shorten moves them there/)]);
+      expect(compileSource(old, undefined, seed).diagnostics.map((d) => d.message)).toEqual([expect.stringMatching(/frontmatter now .*Shorten moves them there/)]);
       const moved = movedCard(old)!;
       expect(moved.text).toBe(p.source);
-      expect(writePiece({ ...moved, prose: '' })).toBe(p.file);
+      // (its layout and prose as the file has them: a literate piece's blocks and the prose between them)
+      const piece = readPiece(p.file);
+      if ('problems' in piece) throw new Error(key);
+      expect(writePiece({ ...moved, layout: piece.layout, prose: piece.prose })).toBe(p.file);
     });
   }
 });
