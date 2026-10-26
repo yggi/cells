@@ -48,6 +48,11 @@ export function holesOf(text, compiled, resolve) {
     const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
     const sound = readOnlyAsSound(all);
     const found = new Set(unknown.filter(sound));
+    const declared = new Set(all.map((d) => `&${d.name}`));
+    if (found.size)
+        for (const n of new Set(decls.flatMap((d) => braidReadsOf(d)).map((m) => `&${m}`)))
+            if (sound(n) && !declared.has(n))
+                found.add(n);
     let last = result;
     for (;;) {
         if (!found.size)
