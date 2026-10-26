@@ -83,13 +83,17 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh
 &beat step=8n 0 2 1 2
-&drums play=&beat level=.6 &kit                 # each number picks the drum: 0 the kick, 1 the snare, 2 the hat
+&drums play=&beat level=.6 &kit                 # the drummer: 0 the kick, 1 the snare, 2 the hat
 &out loop=SAMPLE_RATE map=sample [&drums]
 ```
 
+A gate moves what it plays as a braid moves a cell (`play=&tune^$-12`, `^2`). Its name is its role ([decision 058](https://github.com/yggi/cells/blob/main/docs/decisions/058-the-performer-is-a-gate.md)):
+`drums` `bass` `pad` `stab` `lead`, `&lead2` a copy, others none.
+
 `play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
-still reads (`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
-played), and Shorten rewrites it. A gate times nothing itself: `over=`, `step=` and the like on it do nothing, and warn
+(`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
+played) still reads, and Shorten rewrites it.
+A gate times nothing itself: `over=`, `step=` and the like on it do nothing, and warn
 (they go on its notes). Its `level=` is 0 or more (a negative one warns), and its notes and level cells aren't sounds:
 `level=&otherGate` says so.
 

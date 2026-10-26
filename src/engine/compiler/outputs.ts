@@ -53,7 +53,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       continue;
     }
     // (a kit is played by a pattern read through it, or as a gate's receiver, picked by its trigger)
-    const gateNotes = [...via, ...through].map((n) => cells.get(n)?.gate?.notes).find((n) => !!n && b.pitches.some((t) => t.ref.name === n));
+    const gateNotes = [...via, ...through].map((n) => cells.get(n)?.gate?.plays).find((n) => !!n && b.pitches.some((t) => t.ref.name === n));
     // (the term that reads the kit: its numbers pick the member, decision 029; the rest of the product acts on it)
     const kitRead = voice.kit ? b.pitches.find((t) => decls.get(t.ref.name)?.over?.name === voice.name || t.ref.name === gateNotes) : undefined;
     if (voice.kit && !kitRead) {

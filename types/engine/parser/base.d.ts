@@ -14,6 +14,8 @@
  * A base of a base works; a base that comes round to the cell itself is an error on `base=`; one that names no cell is
  * left on the cell, for compile to say (`Unknown cell`), as it does of every reference.
  */
-import type { ParseResult } from '../ast';
+import type { CellDecl, ParseResult, Ref } from '../ast';
 /** The cells of a parse with every `base=` resolved into a plain cell; an error where one can't be. */
 export declare function applyBases(p: ParseResult): ParseResult;
+/** A cell over its base: the base's braid changed where the cell says, the base's attributes where it sets none. */
+export declare function overdub(c: CellDecl, base: CellDecl, ref: Ref, fail: (message: string) => void): CellDecl;

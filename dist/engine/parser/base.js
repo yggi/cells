@@ -62,7 +62,7 @@ export function applyBases(p) {
 }
 const keepsInside = (c) => c.braid.kind === 'list' && c.braid.tokens.some((t) => innerSteps(t.atom).some((x) => x.atom.kind === 'rest' && x.atom.keep));
 const keeps = (c) => c.braid.kind === 'list' && c.braid.tokens.some((t) => t.atom.kind === 'rest' && t.atom.keep);
-function overdub(c, base, ref, fail) {
+export function overdub(c, base, ref, fail) {
     const inherited = {};
     for (const k of INHERITED)
         if (c[k] == null && base[k] != null)

@@ -140,6 +140,12 @@ export interface Token {
   readonly span: Span;
 }
 
+/** A move as a braid writes it (decision 015): `^$n` n grid steps after the tables (`transpose`), `^n` n degrees of them. */
+export interface Move {
+  readonly transpose?: number;
+  readonly degree?: number;
+}
+
 /** What sits in a cell's grid. */
 /**
  * A gate (#234, docs/language/mix.md: a gate; decision 023): `&leadOut play=&tune level=&accent*&duck*.4 [&lead, &bell]`.
@@ -148,7 +154,12 @@ export interface Token {
  * them; several bare voices: a kit, the notes pick one). Read from either spelling (the old `trigger=` too).
  */
 export interface GateSpec {
+  /** The part it plays, as written (play=&tune). */
   readonly notes: string;
+  /** play=&tune^$n, ^n (decision 058): what it plays is &tune moved, n grid steps (`transpose`) or degrees (`degree`). */
+  readonly move?: Move;
+  /** The cell its products read for its notes: &tune, or (moved by degrees) a copy of it, moved. */
+  readonly plays: string;
   /** The port it was written on: `play` (or the old `trigger`). */
   readonly port: 'play' | 'trigger';
   readonly levels: readonly { readonly name: string; readonly port: string }[];
@@ -329,6 +340,8 @@ export interface CellDecl {
   readonly paramCells?: Readonly<Record<string, ParamCells>>;
   /** A gate (#234): what it plays, how loud, on what (declare.ts reads it from play= or trigger=). */
   readonly gate?: GateSpec;
+  /** play=&x^$n or play=&x^n on a cell with a braid: the move a gate plays its notes by (decision 058; declare.ts). */
+  readonly playMove?: Move;
   /** laps=n: it plays n laps, then nothing it drives sounds (a piece that ends). */
   readonly laps?: number | null;
   /** size=: how large it's drawn (and how much room the layout gives it), against the others (1). */

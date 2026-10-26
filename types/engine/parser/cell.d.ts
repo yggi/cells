@@ -36,6 +36,14 @@ interface Body {
     readonly paramSpans: Record<string, Span>;
     readonly paramCells: Record<string, ParamCells>;
     readonly paramClocks: Record<string, StepSpec>;
+    /** play=&x^$n or ^n: a gate's move (decision 058), where its caret is (a read head's move is ignored, and warns). */
+    playMove: {
+        transpose?: number;
+        degree?: number;
+        at: number;
+        len: number;
+        as: string;
+    } | null;
 }
 /** Reads one attribute's value (the scanner is just past `key=`) into the body. */
 type Reader = (s: LineScanner, b: Body, word: string, at: number) => void;

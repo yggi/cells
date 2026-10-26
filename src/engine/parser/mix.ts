@@ -44,7 +44,7 @@ export const GATE_SYNTAX: readonly Syntax[] = [
   syntax(
     'gate',
     'play=&x',
-    'A gate: it plays the notes of &x on the voices in its braid (one voice, a kit, or several), as the product [&x * &voice] does. On a cell with no braid, play= is a read head.',
+    'A gate: it plays the notes of &x on the voices in its braid (one voice, a kit, or several), as the product [&x * &voice] does, moved as a braid moves it (&x^$-12). On a cell with no braid, play= is a read head.',
     ['&leadOut play=&tune &lead'],
     'mix.md',
   ),

@@ -247,10 +247,23 @@ const CELL_WANTS = {
     gate: 'a level cell, like gate=&duck',
 };
 const readCellParam = (s, b, word) => {
+    if (word === 'play')
+        return readPlay(s, b);
     const r = s.cellRef(CELL_WANTS[word], `after ${word}=`);
     b.params[word] = r.name;
     b.paramSpans[word] = r.span;
 };
+function readPlay(s, b) {
+    const at = s.i;
+    const r = s.ref(CELL_WANTS.play);
+    s.rejectTap(at);
+    b.params.play = r.name;
+    b.paramSpans.play = r.span;
+    if (r.transpose || r.degree) {
+        const caret = s.text.lastIndexOf('^', s.i - 1);
+        b.playMove = { ...(r.transpose ? { transpose: r.transpose } : {}), ...(r.degree ? { degree: r.degree } : {}), at: caret, len: s.i - caret, as: s.text.slice(at, s.i) };
+    }
+}
 const readLevels = (s, b, word) => {
     if (!/^[1-9][0-9]*(?:n\.?|t):/.test(s.text.slice(s.i)))
         return readParam(s, b, word);
@@ -466,6 +479,7 @@ export function parseBody(s, head) {
         paramSpans: {},
         paramCells: {},
         paramClocks: {},
+        playMove: null,
     };
     const seen = new Map();
     let off = false;
@@ -582,6 +596,11 @@ export function parseBody(s, head) {
             s.fail('scale(…) reads through a key of its own: drop over=, or write the key as a cell (&mode over=&key scan(…))', b.over.span.col - 1, b.over.span.len);
         b.over = scaleKey;
     }
+    if (b.playMove && braid.kind === 'blank')
+        s.warn(`${b.playMove.as} after play=: ^ and ^$ move what a gate plays (one with a braid: &out play=${b.playMove.as} &lead); a read head reads the tape itself, so the move is ignored`, b.playMove.at, b.playMove.len);
+    const playMove = b.playMove && braid.kind !== 'blank'
+        ? { ...(b.playMove.transpose ? { transpose: b.playMove.transpose } : {}), ...(b.playMove.degree ? { degree: b.playMove.degree } : {}) }
+        : null;
     const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, laps, chance, seed, size, swing, legato, params, paramSpans, paramCells, paramClocks, } = b;
     return {
         name: head.name,
@@ -613,6 +632,7 @@ export function parseBody(s, head) {
         paramSpans,
         paramCells,
         paramClocks,
+        ...(playMove ? { playMove } : {}),
         braid,
         frees: [...s.frees],
     };

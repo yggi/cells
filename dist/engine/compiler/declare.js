@@ -1,8 +1,10 @@
+import { refLabel } from "../ast.js";
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from "../program.js";
 import { SCALE_KEY } from "../parser/generators.js";
 import { VOICE_PARAMS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
 import { leaves } from "../subseq.js";
+import { overdub } from "../parser/base.js";
 export function declare(ctx) {
     const { parsed, error, unknownCell } = ctx;
     const decls = new Map();
@@ -186,6 +188,7 @@ function gates(decls, implicit, error) {
             continue;
         const port = old ? 'trigger' : 'play';
         const notesSpan = d.paramSpans[port] ?? d.span;
+        const move = old ? undefined : d.playMove;
         const plain = (a) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
         const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;
         const bare = tokens.every((t) => plain(t.atom) && t.repeat === 1 && t.subdivide === 1 && t.elongate === 1);
@@ -222,13 +225,49 @@ function gates(decls, implicit, error) {
         const gainOf = old ? p.gain : p.level;
         const gain = typeof gainOf === 'number' ? gainOf : 1;
         const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
+        const of = decls.get(notes);
+        let plays = notes;
+        if (move && of) {
+            plays = `${notes}${refLabel({ pick: null, shift: 0, ...move })}`;
+            const stub = {
+                name: plays,
+                span: d.span,
+                over: null,
+                shift: null,
+                off: false,
+                step: null,
+                map: null,
+                stride: null,
+                cycle: null,
+                params: {},
+                paramSpans: {},
+                braid: { kind: 'blank' },
+            };
+            const splice = {
+                kind: 'ref',
+                name: notes,
+                pick: null,
+                shift: 0,
+                ...(move.transpose ? { transpose: move.transpose } : {}),
+                ...(move.degree ? { values: { mul: 1, add: move.degree } } : {}),
+            };
+            if (!decls.has(plays))
+                decls.set(plays, {
+                    ...overdub(stub, of, { name: notes, pick: null, shift: 0, span: notesSpan }, (m) => error(m, notesSpan)),
+                    shift: null,
+                    laps: of.laps ?? null,
+                    braid: { kind: 'list', tokens: [{ atom: splice, repeat: 1, subdivide: 1, elongate: 1, span: notesSpan }] },
+                });
+            implicit.add(plays);
+        }
+        const notesExpr = ref(plays, notesSpan);
         const exprs = played.map((r) => ({
             k: 'prod',
             span: r.span,
             factors: [
-                ref(notes, notesSpan),
+                notesExpr,
                 ...levels.map((l) => ref(l.name, l.span)),
-                ...(decls.get(notes)?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
+                ...(of?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
                 ...(gain !== 1 ? [{ k: 'num', value: gain, span: gainSpan }] : []),
             ],
         }));
@@ -238,7 +277,7 @@ function gates(decls, implicit, error) {
             ...d,
             params,
             paramCells,
-            gate: { notes, port, levels: levels.map(({ name, port }) => ({ name, port })), gain, receivers: named.map((r) => r.name) },
+            gate: { notes, ...(move ? { move } : {}), plays, port, levels: levels.map(({ name, port }) => ({ name, port })), gain, receivers: named.map((r) => r.name) },
             braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs, gate: d.name }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] },
         });
     }

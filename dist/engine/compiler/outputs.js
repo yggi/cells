@@ -43,7 +43,7 @@ export function outputsOf(ctx, decls, cells, clocks, { sinks, cards, bindings, s
             });
             continue;
         }
-        const gateNotes = [...via, ...through].map((n) => cells.get(n)?.gate?.notes).find((n) => !!n && b.pitches.some((t) => t.ref.name === n));
+        const gateNotes = [...via, ...through].map((n) => cells.get(n)?.gate?.plays).find((n) => !!n && b.pitches.some((t) => t.ref.name === n));
         const kitRead = voice.kit ? b.pitches.find((t) => decls.get(t.ref.name)?.over?.name === voice.name || t.ref.name === gateNotes) : undefined;
         if (voice.kit && !kitRead) {
             error(`A kit is a table of voices: read the pattern through it, &drums over=&${voice.name}, and mix &drums`, b.voice.span);

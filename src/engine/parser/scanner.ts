@@ -279,7 +279,7 @@ export class LineScanner {
     const caret = this.text.lastIndexOf('^', this.i - 1);
     if (caret >= at && caret > this.text.lastIndexOf(')', this.i - 1))
       this.warn(
-        `${this.text.slice(at, this.i)} ${where}: ^ and ^$ move a cell a braid plays (and base=&cell^n, a copy); here it is the cell itself, so the move is ignored`,
+        `${this.text.slice(at, this.i)} ${where}: ^ and ^$ move a cell a braid plays (and base=&cell^n, a copy, and a gate's play=&cell^n); here it is the cell itself, so the move is ignored`,
         caret,
         this.i - caret,
       );

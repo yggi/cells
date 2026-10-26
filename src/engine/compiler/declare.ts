@@ -1,10 +1,11 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
-import type { Atom, CellDecl, Expr, Ref, Span, Token } from '../ast';
+import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { SCALE_KEY } from '../parser/generators';
 import { VOICE_PARAMS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
+import { overdub } from '../parser/base';
 import type { Ctx } from './context';
 
 /** The declarations, as declare() hands them on. */
@@ -211,6 +212,9 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
  * The old spelling still reads (`trigger=` for play=, `velocity=` `gate=` `gain=` for level=, several bare voices all
  * played), and Shorten rewrites it (shorten/gates.ts). Either way the gate's spec is `CellDecl.gate`, and the
  * parameters it was written with are taken off the cell (a gate's play= is no tape's read head).
+ *
+ * A gate transposes what it plays (decision 058): `play=&tune^$-12` (grid steps) and `play=&tune^2` (degrees) read an
+ * implicit cell `&tune^$-12`, which plays &tune as a braid splicing `&tune^$-12` does.
  */
 function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error']): void {
   const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
@@ -223,6 +227,7 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
     if (notes === null) continue;
     const port = old ? 'trigger' : 'play';
     const notesSpan = d.paramSpans[port] ?? d.span;
+    const move = old ? undefined : d.playMove;
     // what it plays: a chord of voices (all), one voice or kit, or several bare voices (a kit; the old spelling: all)
     const plain = (a: Atom) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
     const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;
@@ -265,14 +270,53 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
     const gainOf = old ? p.gain : p.level;
     const gain = typeof gainOf === 'number' ? gainOf : 1;
     const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
+    // (moved: a copy of the notes that splices them moved, &tune^$-12 or &tune^2, as a braid plays them; it takes their
+    // table, clock and laps, their turn in the splice, and is off when they are)
+    const of = decls.get(notes);
+    let plays = notes;
+    if (move && of) {
+      // (named as written, so an output's id reads its part: lead:tune^$-12:…; two gates moving it alike share it)
+      plays = `${notes}${refLabel({ pick: null, shift: 0, ...move })}`;
+      const stub: CellDecl = {
+        name: plays,
+        span: d.span,
+        over: null,
+        shift: null,
+        off: false,
+        step: null,
+        map: null,
+        stride: null,
+        cycle: null,
+        params: {},
+        paramSpans: {},
+        braid: { kind: 'blank' },
+      };
+      const splice: Atom = {
+        kind: 'ref',
+        name: notes,
+        pick: null,
+        shift: 0,
+        ...(move.transpose ? { transpose: move.transpose } : {}),
+        ...(move.degree ? { values: { mul: 1, add: move.degree } } : {}),
+      };
+      if (!decls.has(plays))
+        decls.set(plays, {
+          ...overdub(stub, of, { name: notes, pick: null, shift: 0, span: notesSpan }, (m) => error(m, notesSpan)),
+          shift: null,
+          laps: of.laps ?? null,
+          braid: { kind: 'list', tokens: [{ atom: splice, repeat: 1, subdivide: 1, elongate: 1, span: notesSpan }] },
+        });
+      implicit.add(plays);
+    }
+    const notesExpr: Expr = ref(plays, notesSpan);
     const exprs: Expr[] = played.map((r) => ({
       k: 'prod',
       span: r.span,
       factors: [
-        ref(notes, notesSpan),
+        notesExpr,
         ...levels.map((l) => ref(l.name, l.span)),
         // (notes read through the kit it plays are its sound already: &drums over=&kit, then &out play=&drums &kit)
-        ...(decls.get(notes)?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
+        ...(of?.over?.name === r.name ? [] : [ref(r.name, r.span)]),
         ...(gain !== 1 ? [{ k: 'num', value: gain, span: gainSpan } as Expr] : []),
       ],
     }));
@@ -283,7 +327,7 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
       ...d,
       params,
       paramCells,
-      gate: { notes, port, levels: levels.map(({ name, port }) => ({ name, port })), gain, receivers: named.map((r) => r.name) },
+      gate: { notes, ...(move ? { move } : {}), plays, port, levels: levels.map(({ name, port }) => ({ name, port })), gain, receivers: named.map((r) => r.name) },
       braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs, gate: d.name }, repeat: 1, subdivide: 1, elongate: 1, span: d.span }] },
     });
   }

@@ -90,7 +90,7 @@ const keepsInside = (c: CellDecl) => c.braid.kind === 'list' && c.braid.tokens.s
 const keeps = (c: CellDecl) => c.braid.kind === 'list' && c.braid.tokens.some((t) => t.atom.kind === 'rest' && t.atom.keep);
 
 /** A cell over its base: the base's braid changed where the cell says, the base's attributes where it sets none. */
-function overdub(c: CellDecl, base: CellDecl, ref: Ref, fail: (message: string) => void): CellDecl {
+export function overdub(c: CellDecl, base: CellDecl, ref: Ref, fail: (message: string) => void): CellDecl {
   const inherited: Record<string, unknown> = {};
   for (const k of INHERITED) if (c[k] == null && base[k] != null) inherited[k] = base[k];
   const params = { ...base.params, ...c.params };

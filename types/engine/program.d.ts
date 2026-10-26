@@ -1,4 +1,4 @@
-import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, GateSpec } from './ast';
+import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, GateSpec, Move } from './ast';
 import type { ShowPlugin } from './plugins';
 import type { Meter } from './meter';
 export declare const ROOT = "fifths12TET";
@@ -406,6 +406,26 @@ export interface CompileResult {
     readonly builtinCard?: string;
     /** What each of the piece's `use` lines resolved to and gave it (decision 054), in the order written; absent for none. */
     readonly uses?: readonly Used[];
+    /** Its gates, the performers (decision 058), in the order written: who plays which part, on what. */
+    readonly performers: readonly Performer[];
+}
+/** The roles a performer's name says (decision 058), the parts the feel contract plays. */
+export declare const ROLES: readonly ["drums", "bass", "pad", "stab", "lead"];
+export type Role = (typeof ROLES)[number];
+/** A gate's role, read off its name as a kit member's drum note is (`gmDrumNote`): `bass`, `lead2` a copy, or null (`leadOut`). */
+export declare function roleOf(name: string): Role | null;
+/** A gate, as a performer (decision 058): `&bass play=&bassline^$-12 level=.8 &bassV`. */
+export interface Performer {
+    /** The gate's name (`bass`). */
+    readonly name: string;
+    /** The role its name says (`bass`; `lead2` a second lead), or null: a performer with no role. */
+    readonly role: Role | null;
+    /** The part it plays: the cell its play= names (`bassline`). */
+    readonly part: string;
+    /** What it moves the part by (`play=&bassline^$-12`: `{ transpose: -12 }`), or none. */
+    readonly move?: Move;
+    /** The voices it plays the part on, as its braid writes them (a voice, a kit, a chord of voices). */
+    readonly voices: readonly string[];
 }
 /**
  * Where a piece's `use "id"` lines are read from (decision 054): a fragment's text by its id, and the hash its lockfile

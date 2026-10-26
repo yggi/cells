@@ -105,3 +105,75 @@ describe('a gate (play=, level=): decision 023', () => {
     );
   });
 });
+
+describe('a gate is a performer (decision 058): its name its role, and it transposes what it plays', () => {
+  const performers = (src: string) => compileSource(BASE + src).performers;
+  // (semitones from C4, as the voice at C5 plays them: 12 is the tune's 0)
+  const semis = (src: string) => {
+    const r = compileSource(BASE + src);
+    // (BASE's own step=&bar*2 warns; nothing else may)
+    expect(r.diagnostics.map((d) => d.message).filter((m) => !m.startsWith('step=&bar*2'))).toEqual([]);
+    return eventsBetween(plan(r, codeShifts(r)), 0, 2).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + 0);
+  };
+
+  it('reads a role off its name, a trailing number a copy, any other name none', () => {
+    const roles = performers(
+      '&bass play=&tune &lead\n&lead2 play=&tune &bell\n&drums play=&tune &kit\n&leadOut play=&tune &lead\n&out map=sample [&bass, &lead2, &drums, &leadOut]',
+    );
+    expect(roles.map((p) => [p.name, p.role])).toEqual([
+      ['bass', 'bass'],
+      ['lead2', 'lead'],
+      ['drums', 'drums'],
+      ['leadOut', null],
+    ]);
+  });
+
+  it('says who plays which part, on what, moved how', () => {
+    expect(performers('&bass play=&tune^$-12 level=&accent*.8 [&lead, &bell]\n&out map=sample &bass')).toEqual([
+      { name: 'bass', role: 'bass', part: 'tune', move: { transpose: -12 }, voices: ['lead', 'bell'] },
+    ]);
+    expect(performers('&lead2 play=&tune^2 &lead\n&out map=sample &lead2')).toEqual([{ name: 'lead2', role: 'lead', part: 'tune', move: { degree: 2 }, voices: ['lead'] }]);
+    expect(performers('&out map=sample [&tune * &lead]')).toEqual([]);
+  });
+
+  it('play=&tune^$-12 plays every note 12 semitones down', () => {
+    const as = semis('&g play=&tune &lead\n&out map=sample &g');
+    expect(as).toEqual([12, 16, 19, 16, 12, 16, 19, 16]);
+    expect(semis('&g play=&tune^$-12 &lead\n&out map=sample &g')).toEqual(as.map((n) => n - 12));
+    // (an output's id reads the part, moved)
+    expect(compileSource(BASE + '&g play=&tune^$-12 &lead\n&out map=sample &g').outputs.map((o) => o.id.split(':').slice(0, 2).join(':'))).toEqual(['lead:tune^$-12']);
+  });
+
+  it('play=&tune^2 plays two degrees up, over the tune’s table', () => {
+    // (C D E F G A B over C major: the tune's 0 2 4 2 is C E G E, two degrees up E G B G)
+    expect(semis('&g play=&tune^2 &lead\n&out map=sample &g')).toEqual([16, 19, 23, 19, 16, 19, 23, 19]);
+    expect(semis('&g play=&tune^-1 &lead\n&out map=sample &g')).toEqual([11, 14, 17, 14, 11, 14, 17, 14]);
+    expect(played('&g play=&tune^2 &lead\n&out map=sample &g')).toEqual(played('&up base=&tune^2\n&g play=&up &lead\n&out map=sample &g'));
+  });
+
+  it('moves as a braid playing the part moved does: by the grid’s steps, the part’s turn, laps and off kept', () => {
+    const as = (tune: string, gate: string) => {
+      const braid = played(`${tune}\n&up over=&major step=&bar*2 &t${gate}\n&g play=&up &lead\n&out map=sample &g`);
+      expect(played(`${tune}\n&g play=&t${gate} &lead\n&out map=sample &g`)).toEqual(braid);
+      return braid;
+    };
+    // (19 steps of a 19-tone grid: an octave)
+    const edo = '&edo19 cycle=19 map=edo\n&k19 over=&edo19 scan(3 3 2 3 3 3 2)\n&t over=&k19 step=&bar*2 0 1 2 3';
+    expect(played(`${edo}\n&g play=&t^$-19 &lead\n&out map=sample &g`).map((e) => Math.round(+e.split(' ')[2] * 2))).toEqual(
+      played(`${edo}\n&g play=&t &lead\n&out map=sample &g`).map((e) => Math.round(+e.split(' ')[2])),
+    );
+    as('&t over=&major step=&bar*2 shift=1 0 [2 4] 1 3', '^$-12');
+    // (a part's laps= are its own: the gate plays them, where a braid splicing it would loop it)
+    expect(played('&t over=&major step=&bar*2 laps=1 0 2\n&g play=&t^2 &lead\n&out map=sample &g')).toHaveLength(2);
+    // (a part written off: the gate is silent with it)
+    const off = compileSource(BASE + '&t over=&major step=&bar*2 off 0 2\n&g play=&t^$7 &lead\n&out map=sample &g');
+    expect(eventsBetween(plan(off, codeShifts(off), off.off), 0, 2)).toEqual([]);
+  });
+
+  it('a read head reads its tape itself: a move there is ignored, and warns', () => {
+    const r = compileSource(BASE + '&tape write=&tune length=1\n&h play=&tape^$-12');
+    expect(r.diagnostics.map((d) => d.message).filter((m) => !m.startsWith('step=&bar*2'))).toEqual([
+      expect.stringMatching(/^&tape\^\$-12 after play=: .*a read head reads the tape itself, so the move is ignored/),
+    ]);
+  });
+});
