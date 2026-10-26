@@ -202,6 +202,9 @@ describe('a named use (decision 059)', () => {
     const named = read(helper.replace('use &bass from', 'use &bass, &bassNext from'));
     expect(named.said).toEqual([['warning', 'The piece defines &bassNext, so taking it from "funk bass" adds nothing', 1]]);
     expect(named.uses?.[0]).toMatchObject({ gave: ['&bass'], overrode: ['&bassNext'] });
+    // (a helper two named cells read is said once)
+    const twice = library({ f: '&a [&h * 1]\n&b [&h * 2]\n&h s=sine' });
+    expect(errors('use &a, &b from f\n&h s=saw', twice)).toHaveLength(1);
     // (a fragment's own helper collision is said through it)
     const resolve = library({ outer: 'use &a from inner\n&h s=saw', inner: '&a [&h * 1]\n&h s=sine' });
     expect(errors('use * from outer', resolve)).toEqual([

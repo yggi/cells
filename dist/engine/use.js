@@ -57,18 +57,21 @@ function merge(own, used, say, host) {
         const asked = names ?? new Set(byName.keys());
         const overrode = [...asked].filter((n) => byName.has(n) && defined.has(n)).map((n) => `&${n}`);
         const take = new Set();
+        const clashed = new Set();
         const queue = [...asked].filter((n) => byName.has(n) && !defined.has(n));
         for (let n = queue.shift(); n !== undefined; n = queue.shift()) {
             if (take.has(n))
                 continue;
             take.add(n);
             for (const r of byName.get(n).reads) {
-                if (!byName.has(r) || take.has(r) || asked.has(r))
+                if (!byName.has(r) || take.has(r) || asked.has(r) || clashed.has(r))
                     continue;
-                if (defined.has(r))
-                    say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);
-                else
+                if (!defined.has(r))
                     queue.push(r);
+                else {
+                    clashed.add(r);
+                    say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);
+                }
             }
         }
         const gave = new Set();

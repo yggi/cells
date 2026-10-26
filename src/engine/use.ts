@@ -133,14 +133,18 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
     const overrode = [...asked].filter((n) => byName.has(n) && defined.has(n)).map((n) => `&${n}`);
     // (the closure: what the asked-for lines read within the fragment, but where the level writes its own)
     const take = new Set<string>();
+    const clashed = new Set<string>();
     const queue = [...asked].filter((n) => byName.has(n) && !defined.has(n));
     for (let n = queue.shift(); n !== undefined; n = queue.shift()) {
       if (take.has(n)) continue;
       take.add(n);
       for (const r of byName.get(n)!.reads) {
-        if (!byName.has(r) || take.has(r) || asked.has(r)) continue;
-        if (defined.has(r)) say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);
-        else queue.push(r);
+        if (!byName.has(r) || take.has(r) || asked.has(r) || clashed.has(r)) continue;
+        if (!defined.has(r)) queue.push(r);
+        else {
+          clashed.add(r);
+          say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);
+        }
       }
     }
     const gave = new Set<string>();
