@@ -111,6 +111,22 @@ export function swingAt(m, p) {
     const beat = m.beats[i] ?? P;
     return bar * P + at + swungIn(x - at, beat, levels);
 }
+export function swungKnots(m) {
+    if (!m.swing?.length)
+        return null;
+    const grain = Math.min(...m.swing.map((l) => l.whole * m.unit));
+    if (!(grain > 0))
+        return null;
+    const written = [];
+    let at = 0;
+    for (const beat of m.beats.length ? m.beats : [m.pulses]) {
+        for (let x = 0; x < beat - 1e-9; x += grain)
+            written.push(at + x);
+        at += beat;
+    }
+    written.push(m.pulses);
+    return { written, swung: written.map((w) => (w >= m.pulses - 1e-9 ? m.pulses : swingAt(m, w))) };
+}
 export function swungSteps(m) {
     const per = stepsPerPulse(m);
     const out = m.levels.map((_, i) => swingAt(m, i / per) * per);

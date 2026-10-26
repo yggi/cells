@@ -10,6 +10,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from './he
 import { footOf, leaves, slots, type Laps } from './subseq';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
 import { mod } from '../theory/modes';
+import { stepsPerPulse, swungKnots } from './meter';
 
 export const EPS = 1e-9;
 
@@ -32,7 +33,7 @@ export interface TimeMap {
  */
 export function timeMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap {
   // (a tap reads its meter unswung: its own positions carry the swing, #18)
-  if (clock.tap) return tapMap(clock.tap, plainMap(result, result.clocks.get(clock.tap.meter)!, shifts));
+  if (clock.tap) return tapMap(clock.tap, plainMap(result, result.clocks.get(clock.tap.meter)!, shifts), swungMeter(result, clock.tap.meter));
   const plain = plainMap(result, clock, shifts);
   return clock.swung ? swungMap(clock.swung, plain) : plain;
 }
@@ -110,7 +111,9 @@ function plainMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap 
  * the meter's steps, and that laid through the meter's own map — so it swings, bends with a scan and runs with a motor
  * as the meter does, and comes round at the bar. Fractional steps interpolate within the meter's steps.
  */
-function tapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap): TimeMap {
+function tapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap, swung: ((w: number) => number) | null = null): TimeMap {
+  const placed = swung ? swungTapMap(tap, meter, swung) : null;
+  if (placed) return placed;
   const { positions, lap } = tap;
   const k = Math.max(1, positions.length);
   // even steps (16n in 4/4, pulse, 8t): a rate on the meter, worked out as one — the same floats as step=&bar*4 had
@@ -132,6 +135,69 @@ function tapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap): TimeMap {
     while (i + 1 < k && at(i + 1) <= r) i++;
     const span = at(i + 1) - at(i);
     return b * k + i + (span > 0 ? (r - at(i)) / span : 0);
+  };
+  return { beats: k, q: (j) => meter.q(meterStep(j)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
+}
+
+/** A meter that swings, as a tap reads it: where a written place is played, in the meter's steps (`swungKnots`). */
+function swungMeter(result: CompileResult, meter: string): ((w: number) => number) | null {
+  const m = result.cells.get(meter)?.meter;
+  const knots = m ? swungKnots(m) : null;
+  if (!m || !knots) return null;
+  const per = stepsPerPulse(m);
+  const { written, swung } = knots;
+  const P = m.pulses;
+  return (w: number) => {
+    const p = w / per;
+    const bar = Math.floor(p / P + 1e-12);
+    const x = p - bar * P;
+    let i = 0;
+    while (i + 2 < written.length && written[i + 1] <= x + 1e-12) i++;
+    const span = written[i + 1] - written[i];
+    return (bar * P + swung[i] + (span > 0 ? ((x - written[i]) / span) * (swung[i + 1] - swung[i]) : 0)) * per;
+  };
+}
+
+/**
+ * A tap of a swung meter (#121): its steps where the swing puts them, as any tap's, and the parts of a step (a Euclid's
+ * strokes, a subsequence's steps, a note's end under legato=) from where they are written through the swing, even
+ * between the points of the finest level it leans (`swungKnots`), as a tap of that level is: `&rim(7,16,0)` on `1m` lands
+ * where `step=16n` does. A tap whose own steps the swing doesn't place so (`8t` under swung eighths, straight within its
+ * beat) keeps its parts even between its steps.
+ */
+function swungTapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap, S: (w: number) => number): TimeMap | null {
+  const { positions, lap } = tap;
+  const written = tap.written ?? positions;
+  const k = Math.max(1, positions.length);
+  if (!positions.every((p, i) => Math.abs(S(written[i]) - p) < 1e-9)) return null;
+  const wAt = (i: number) => (i < k ? written[i] : lap);
+  const pAt = (i: number) => (i < k ? positions[i] : lap);
+  const meterStep = (j: number) => {
+    const n = Math.floor(j);
+    const b = Math.floor(n / k);
+    const i = n - b * k;
+    // (a step itself on the same floats as before)
+    if (j === n) return b * lap + pAt(i);
+    return b * lap + S(wAt(i) + (j - n) * (wAt(i + 1) - wAt(i)));
+  };
+  const stepAt = (t: number) => {
+    const x = meter.stepAt(t);
+    const b = Math.floor(x / lap);
+    const r = x - b * lap;
+    let i = 0;
+    while (i + 1 < k && pAt(i + 1) <= r) i++;
+    const w0 = wAt(i);
+    const w1 = wAt(i + 1);
+    if (w1 <= w0 || r <= pAt(i)) return b * k + i;
+    // (S is monotone: the written place it puts at r, by bisection within the step)
+    let lo = 0;
+    let hi = 1;
+    for (let it = 0; it < 52; it++) {
+      const mid = (lo + hi) / 2;
+      if (S(w0 + mid * (w1 - w0)) <= r) lo = mid;
+      else hi = mid;
+    }
+    return b * k + i + lo;
   };
   return { beats: k, q: (j) => meter.q(meterStep(j)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
 }
@@ -231,7 +297,7 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
     if (!m) {
       const info = result.clocks.get(clock)!;
       // a tap: through its meter's map as the meter moves (physics and all), unswung: its positions carry the swing (#18)
-      if (info.tap) m = tapMap(info.tap, base(info.tap.meter));
+      if (info.tap) m = tapMap(info.tap, base(info.tap.meter), swungMeter(result, info.tap.meter));
       else m = info.swung ? swungMap(info.swung, base(clock)) : base(clock);
       maps.set(clock, m);
     }

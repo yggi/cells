@@ -299,3 +299,29 @@ describe('a note’s level is read where it is written', () => {
     expect(levels('meter("4/4") swing=16n:.65', '&x step=16n 0')).toEqual(straight);
   });
 });
+
+// #121: the parts of a step (a subsequence, a Euclid's strokes) are placed through the swing from where they are written,
+// as a tap of their level is: what a Euclid on 1m or a pair inside a beat plays lands where the finer tap's steps land.
+describe('the parts of a step swing as a tap of their level does', () => {
+  const at = (meter: string, line: string) => rounded(onsetsOf(meter, line));
+  const onsetsOf = (meter: string, line: string) => {
+    const r = compiled(`&bar ${meter} step=60bpm\n${line}${VOICE}`);
+    const bar = r.cells.get('bar')!;
+    const barSeconds = bar.steps / r.clocks.get('bar')!.perSecond;
+    return eventsBetween(plan(r, codeShifts(r)), 0, barSeconds - 1e-6).map((e) => (e.at / barSeconds) * bar.meter!.pulses);
+  };
+  it('a Euclid on 1m strikes where step=16n does', () => {
+    // (its strokes' sixteenths, read under a straight 4/4: a pulse is a quarter, four sixteenths)
+    const strokes = onsetsOf('meter("4/4")', '&x step=1m 0(5,16,3)').map((p) => Math.round(p * 4));
+    expect(strokes).toEqual([3, 6, 9, 12, 15]);
+    for (const m of ['meter("4/4") swing=16n:.6', 'meter("4/4") swing=8n:.67', 'meter("4/4") swing=8n:.6,16n:.55']) {
+      const sixteenths = onsetsOf(m, '&x step=16n 0');
+      expect(at(m, '&x step=1m 0(5,16,3)'), m).toEqual(rounded(strokes.map((s) => sixteenths[s]!)));
+    }
+  });
+  it('a pair inside a beat plays where step=8n does; a triplet tap stays even', () => {
+    expect(at('meter("4/4") swing=8n:.67', '&x step=4n [0 0]')).toEqual(at('meter("4/4") swing=8n:.67', '&x step=8n 0'));
+    expect(at('meter("4/4") swing=16n:.6', '&x step=4n [0 0 0 0]')).toEqual(at('meter("4/4") swing=16n:.6', '&x step=16n 0'));
+    expect(at('meter("4/4") swing=8n:.67', '&x step=8t 0')).toEqual(at('meter("4/4")', '&x step=8t 0'));
+  });
+});

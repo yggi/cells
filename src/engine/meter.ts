@@ -214,6 +214,25 @@ export function swingAt(m: Meter, p: number): number {
   return bar * P + at + swungIn(x - at, beat, levels);
 }
 
+/**
+ * A bar's knots under its swing (#121): each beat's points on the finest level the swing leans, as written and where the
+ * swing puts them, in pulses (the bar's end the last), so a place between two is even between where they are played.
+ * Null where the meter doesn't swing.
+ */
+export function swungKnots(m: Meter): { readonly written: readonly number[]; readonly swung: readonly number[] } | null {
+  if (!m.swing?.length) return null;
+  const grain = Math.min(...m.swing.map((l) => l.whole * m.unit));
+  if (!(grain > 0)) return null;
+  const written: number[] = [];
+  let at = 0;
+  for (const beat of m.beats.length ? m.beats : [m.pulses]) {
+    for (let x = 0; x < beat - 1e-9; x += grain) written.push(at + x);
+    at += beat;
+  }
+  written.push(m.pulses);
+  return { written, swung: written.map((w) => (w >= m.pulses - 1e-9 ? m.pulses : swingAt(m, w))) };
+}
+
 /** The meter's own steps under its swing, in steps of one bar; null where none moves. */
 export function swungSteps(m: Meter): number[] | null {
   const per = stepsPerPulse(m);
