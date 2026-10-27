@@ -189,6 +189,14 @@ describe('review prepare.sh', () => {
     expect(prepare(['7', join(root, 'wt')]).stdout).toContain(says);
   });
 
+  it('names a change to the live view apart from the ladder, since it is what a graph shows, not what a piece plays', () => {
+    onPullRequest('src/engine/live.snapshot.txt', 'moved\n', 'Step 4: the live view');
+    const { stdout } = prepare(['7', join(root, 'wt')]);
+    expect(stdout).toContain('Live view: what the graph shows moves (src/engine/live.snapshot.txt)');
+    expect(stdout).not.toContain('Ladder:');
+    expect(stdout).not.toContain('Changelog:');
+  });
+
   it('asks about the changelog when src/ changes beyond its tests and CHANGELOG.md does not', () => {
     onPullRequest('src/engine/a.test.ts', 'x\n', 'Step 4: a test');
     expect(prepare(['7', join(root, 'wt')]).stdout).not.toContain('Changelog:');

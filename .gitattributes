@@ -7,3 +7,4 @@ CHANGELOG.md merge=union
 docs/MEMORY.md merge=union
 docs/decisions/README.md merge=union
 src/engine/snapshot.txt merge=union
+src/engine/live.snapshot.txt merge=union

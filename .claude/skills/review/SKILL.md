@@ -28,7 +28,7 @@ It prints:
 
 - the commits and every changed file;
 - each result with its test count;
-- `Ladder:` for a change on the escalation ladder's last rung (AGENTS.md, "Stop, push back, recommend"): the event snapshot (`src/engine/snapshot.txt`, what a piece plays), the hub's contract vectors (`fixtures/contracts/`), the purity gate (`tsconfig.pure.json`, `src/host.d.ts`), the declarations a frontend typechecks against (`types/`); `Ratchet:` for a folder's ratchet recorded anew;
+- `Ladder:` for a change on the escalation ladder's last rung (AGENTS.md, "Stop, push back, recommend"): the event snapshot (`src/engine/snapshot.txt`, what a piece plays; the live view's `live.snapshot.txt` has a line of its own, `Live view:`, off the ladder), the hub's contract vectors (`fixtures/contracts/`), the purity gate (`tsconfig.pure.json`, `src/host.d.ts`), the declarations a frontend typechecks against (`types/`); `Ratchet:` for a folder's ratchet recorded anew;
 - `Changelog:` when `src/` changes beyond its tests and `CHANGELOG.md` doesn't;
 - when `main` has moved on since the pull request branched, how far, and the files a merge would conflict in; with `--against`, the files it conflicts in with another pull request: say so in the review (both reviews, for `--against`);
 - when a check fails, vitest's block of failed tests, or the end of the output where there is none;
