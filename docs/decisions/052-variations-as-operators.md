@@ -1,6 +1,6 @@
 # 052 · The ladder's variations are operators in cells, from a fragment's text to texts: rotate, drop and add first, then transpose, invert and reverse; anchors derived from the text; which and when stays the frontend's
 
-**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (proposed in its pull request, the owner's word pending)
+**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (accepted, owner, 2026-10-27: `base=` rather than `mask`, "it is more powerful")
 
 ## Context
 
