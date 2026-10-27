@@ -92,6 +92,24 @@ describe('a gate (play=, level=): decision 023', () => {
     expect(played('&leadOut play=&tune level=.5*&accent &lead\n&out map=sample &leadOut')).toEqual(played('&leadOut [&tune * &accent * &lead * .5]\n&out map=sample &leadOut'));
   });
 
+  // (lifted from yggi/cell-studio src/layout/gate.drawn.test.ts @ 23a5972, #326: a gate's reading is the compiler's)
+  it('a gate’s play= is what it plays, its level= the levels and a gain, its cells the receivers, as written', () => {
+    const r = compileSource(BASE + '&duck map=amp step=4n 1 .25\n&leadOut play=&tune level=&accent*&duck*.4 [&lead, &bell]\n&out map=sample &leadOut');
+    expect(r.diagnostics.filter((d) => d.severity === 'error').map((d) => d.message)).toEqual([]);
+    expect(r.cells.get('leadOut')!.gate).toEqual({
+      notes: 'tune',
+      plays: 'tune',
+      port: 'play',
+      levels: [
+        { name: 'accent', port: 'level' },
+        { name: 'duck', port: 'level' },
+      ],
+      gain: 0.4,
+      receivers: ['lead', 'bell'],
+    });
+    expect(r.tapes).toEqual([]);
+  });
+
   it('a chord of voices plays all of them', () => {
     expect(played('&leadOut play=&tune [&lead, &bell]\n&out map=sample &leadOut')).toEqual(played('&leadOut [&tune * &lead, &tune * &bell]\n&out map=sample &leadOut'));
   });
