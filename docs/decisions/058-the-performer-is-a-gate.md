@@ -2,6 +2,8 @@
 
 **Date:** 2026-10-25 · **Status:** accepted (owner, 2026-10-25: "the gate is the perfect place for the performer … jambot-preset-performers as fragments, with 'use' of their instrument-fragments. register belongs to the instrument; the performer/gate can transpose"; revised the same day: "no role=, name is the role, just like for the drum note names") · Issues: #280, #281, #282, #278, #81, yggi/jambot#490, yggi/jambot#497, yggi/music-commons#35, yggi/cell-studio#492
 
+*§1 amended by [decision 061](061-the-band.md): a gate may be named anything, and its role is the role cell's that lists it (`&lead map=role &violin`); no role is read off a name, and cells holds no list of roles.*
+
 ## Context
 
 The owner's picture of the jam (2026-10-25), which this decision keeps:
