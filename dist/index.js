@@ -9,6 +9,7 @@ export { anchorsOf, varied, variations } from "./engine/vary/index.js";
 export { fold } from "./engine/fold/index.js";
 export { cellsFromMidi } from "./engine/midiimport.js";
 export { pieceMidi } from "./engine/midiexport.js";
+export { spanOf, LONGEST, TAIL, UNBOUNDED } from "./engine/span.js";
 export { readMidi, writeMidi, isMidi } from "./engine/midifile.js";
 export { PRESETS } from "./engine/presets.js";
 export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece } from "./engine/piecefile.js";

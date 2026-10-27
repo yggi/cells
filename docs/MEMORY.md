@@ -16,7 +16,7 @@ The language's open questions live in this tracker, [yggi/cells' issues](https:/
 
 The whole map, module by module: [architecture.md](architecture.md).
 
-- `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, Vary (`vary/`, decision 052), the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), the time analysis (`time/`)
+- `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, Vary (`vary/`, decision 052), the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), a render's span (`span`), the time analysis (`time/`)
 - `theory/` modes and tonal's scale names
 - `repository/` fragments found by their place in style space, with a learned layer (`fragments.ts`, `learned.ts`); files, holes and the fit (`files.ts`, `holes.ts`, `fit.ts`); the seed library, a module a facet, all in `library.ts`
 - `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>` (`theory/`, `repository/` alike)

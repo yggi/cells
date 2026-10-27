@@ -2,15 +2,21 @@ import { legatoNotes, channelTable, midiNote, noteOf, routesOf, router, BEND_CEN
 import { keyName } from "./miditext.js";
 import { mainMeter } from "./midiclock.js";
 import { clocking } from "./clocking.js";
-import { mainLength, pieceTime } from "./duration.js";
+import { spanOf } from "./span.js";
 import { eventsBetween, plan } from "./realize.js";
 import { DEFAULT_FREQ } from "./program.js";
 const PPQ = 480;
 const SAME_TEMPO = 2;
-const LONGEST = 3600;
-export function pieceMidi(result, shifts, muted = result.off, name) {
+function meterOf(result, root) {
+    const own = result.cells.get(root)?.meter;
+    if (own)
+        return own;
+    const on = [...result.cells.values()].filter((c) => c.meter && c.step?.driver === root);
+    return on.length === 1 ? on[0].meter : undefined;
+}
+export function pieceMidi(result, shifts, muted = result.off, name, span = {}) {
     const p = plan(result, shifts, muted);
-    const seconds = Math.min(LONGEST, Number.isFinite(p.end) ? p.end : (mainLength(pieceTime(result)) ?? 60));
+    const seconds = spanOf(result, p, { ...span, from: 0 }).to;
     const events = eventsBetween(p, 0, seconds, true, { until: seconds })
         .flatMap(legatoNotes)
         .filter((e) => e.at < seconds);
@@ -90,7 +96,9 @@ export function pieceMidi(result, shifts, muted = result.off, name) {
         bends: t.at.map((b) => ({ ...b, channel })),
         programs: [],
     }));
-    return { smf: { format: 1, ppq: PPQ, ...(name !== undefined ? { name } : {}), tracks, tempos, meters: [] }, dropped };
+    const m = meter ? meterOf(result, meter.cell) : undefined;
+    const meters = m && m.unit === 4 && m.beats.every((b) => b === 1) && m.pulses > 0 ? [{ tick: 0, num: m.pulses, den: 4 }] : [];
+    return { smf: { format: 1, ppq: PPQ, ...(name !== undefined ? { name } : {}), tracks, tempos, meters }, dropped };
 }
 function kitName(result, kit) {
     return kit
