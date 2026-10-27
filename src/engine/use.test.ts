@@ -308,7 +308,7 @@ describe('the errors, each on its use line', () => {
 
 describe('the built-in card hears only what the piece’s own lines leave unread', () => {
   it('a piece using the General MIDI kit sounds its own groove, not 47 held voices', () => {
-    const text = GROOVE.replace('core kit', 'gm kit');
+    const text = GROOVE;
     expect(voices(text)).toEqual(['bd', 'hh', 'sd']);
     // (written out, the kit's lines are the piece's own, and the card hears every one)
     expect(voices(expand(text, resolveSeed)).length).toBeGreaterThan(3);
@@ -366,7 +366,7 @@ describe('the lockfile', () => {
   it('an entry no use names is dropped on the next save, and the key with the last one', () => {
     const two = file([
       { id: 'gm_kit', hash: 'e1:1' },
-      { id: 'gm kit', hash: 'e1:2' },
+      { id: 'harmonic minor', hash: 'e1:2' },
     ]);
     expect(lockfileOf(readPiece(writePiece(two)) as PieceFile)).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
     expect(writePiece({ ...two, text: '&a s=sine' })).not.toContain('uses');
@@ -458,6 +458,6 @@ describe('the fit (decision 047) with use', () => {
 
   it('a union carries a fragment’s use lines, once', () => {
     expect(unionOf('use * from gm_kit\n&beat step=8n &bd ~', 'use * from gm_kit\n&bar meter("4/4")').text).toBe('use * from gm_kit\n&bar meter("4/4")\n&beat step=8n &bd ~');
-    expect(unionOf('use * from "gm kit"\n&beat step=8n &bd ~', '&bar meter("4/4")').text).toBe('&bar meter("4/4")\nuse * from "gm kit"\n&beat step=8n &bd ~');
+    expect(unionOf('use * from gm_kit\n&beat step=8n &bd ~', '&bar meter("4/4")').text).toBe('&bar meter("4/4")\nuse * from gm_kit\n&beat step=8n &bd ~');
   });
 });

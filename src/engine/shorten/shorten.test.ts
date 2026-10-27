@@ -159,14 +159,14 @@ describe('shorten: turns, alike cells, and all the way', () => {
     expect(shorten(kit).filter((x) => x.kind === 'same')).toEqual([]);
   });
   it('a piece with use: what the piece written out is offered, read through the resolver (#241)', () => {
-    const src = 'use "core kit"\n&bar meter("4/4") step=100bpm\n&a &bd ~ &hh ~ &sd ~ &hh &hh\n&b &bd ~ &hh ~ &sd ~ &hh &hh\n&beat step=8n &a &b &a &b\n&out map=sample [&beat]\n';
+    const src = 'use "gm_kit"\n&bar meter("4/4") step=100bpm\n&a &bd ~ &hh ~ &sd ~ &hh &hh\n&b &bd ~ &hh ~ &sd ~ &hh &hh\n&beat step=8n &a &b &a &b\n&out map=sample [&beat]\n';
     const seed = { resolve: resolveSeed };
     expect(shorten(src)).toEqual([]);
     const offered = shorten(src, seed);
     expect(offered.map((s) => [s.id, s.saving])).toEqual(shorten(expand(src, resolveSeed)).map((s) => [s.id, s.saving]));
     expect(offered.map((s) => s.id)).toEqual(['same:a,b']);
     const { source } = shortenAll(src, 60, seed);
-    expect(source).toContain('use "core kit"');
+    expect(source).toContain('use "gm_kit"');
     expect(source).toContain('&beat step=8n &a &a &a &a');
     expect(compileSource(source, undefined, seed).ok).toBe(true);
   });

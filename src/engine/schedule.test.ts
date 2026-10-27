@@ -85,7 +85,7 @@ describe('host: the engine behind messages (what runs in the worker)', () => {
   });
 
   it('a piece with use loads through the resolver the host was made with, its windows those of planOf with it (#241)', () => {
-    const src = 'use "core kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n&out map=sample [&beat]\n';
+    const src = 'use * from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n&out map=sample [&beat]\n';
     expect(createHost()({ type: 'load', code: src })).toMatchObject({ type: 'loaded', ok: false });
     const host = createHost(undefined, { resolve: resolveSeed });
     expect(host({ type: 'load', code: src, locked: [] })).toMatchObject({ type: 'loaded', ok: true });

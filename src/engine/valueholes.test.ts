@@ -135,7 +135,7 @@ describe('a stepped tonic, and one left free (#301, decision 060)', () => {
 });
 
 describe('the seeds', () => {
-  const uses = ['4/4 leaning on 16n', 'dorian', 'vamp to the seventh', 'Funk drums', 'core kit', 'funk bass', 'bass'].map((id) => `use * from "${id}"`);
+  const uses = ['4/4 leaning on 16n', 'dorian', 'vamp to the seventh', 'Funk drums', 'gm_kit', 'funk bass', 'bass'].map((id) => `use * from "${id}"`);
   const seconds = (8 * 4 * 60) / 104;
 
   it('a text of uses alone, with &tempo and &tonic, compiles clean and plays what it plays with &bar and &key written out', () => {
@@ -163,7 +163,7 @@ describe('the seeds', () => {
     for (const f of METER_FRAGMENTS) expect(messages(lines(bench, f.text, tune(''))), f.id).toEqual([]);
     const meter = '&bar meter("4/4") step=&tempo';
     // (the bell and scale strikes the General MIDI kit's agogô, a hole its instrument fills)
-    for (const f of MODE_FRAGMENTS) expect(messages(lines(bench, meter, f.text, 'use &highagogo from "gm kit"', tune('over=&key '))), f.id).toEqual([]);
+    for (const f of MODE_FRAGMENTS) expect(messages(lines(bench, meter, f.text, 'use &highagogo from gm_kit', tune('over=&key '))), f.id).toEqual([]);
   });
 });
 
