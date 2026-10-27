@@ -1,6 +1,6 @@
 # 052 · The ladder's variations are operators in cells, from a fragment's text to texts: rotate, drop and add first, then transpose, invert and reverse; anchors derived from the text; which and when stays the frontend's
 
-**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425
+**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (accepted, owner, 2026-10-27: `base=` rather than `mask`, "it is more powerful")
 
 ## Context
 
@@ -270,6 +270,24 @@ No rung changes how any piece sounds: no snapshot moves, and nothing of #29 is n
 6. **A variation in its source's orbit (rotate, transpose, invert, reverse): its own text, or a reference to its source with the operator** (#49's requirement 1, `fragment(h)^5`)? Ruled, as recommended: its own text now, since references wait for the hash; `varies` and `by` keep what a reference would need.
 7. **The pitched operators' amounts:** transpose by −2, −1, 1, 2 degrees of the table read; invert about the line's first note; reverse within each span between anchors (the whole lap where there is none). Ruled, as recommended: these, each a default the frontend may narrow (`degrees`, `operators`).
 8. **Where it lives:** `src/engine/vary/`, a fifth tool beside Shorten and Normalise sharing their `Rewrite` (`Tool` gains `vary`), its promise "other notes, anchors kept" where theirs is S1; never run by `rewriteAll`. Ruled, as recommended: yes.
+
+### 7. A variation's reference, beside its text (#293)
+
+Point 6.6 kept a variation's own text, and the path only in `by:`; a text that plays the variation then loses what was varied. Each variation now also carries its **reference**, `Variation.reference`: the varied line as a form on the line it varies, in the forms the language already has, and a cell that plays it (`reference.line(name)`), to read where the line was read. The text stays what is filed (6.6 holds); the reference is what a text that keeps its source writes instead (Jambot's section text by reference, yggi/jambot#498).
+
+| operator | its reference | where it has none |
+|---|---|---|
+| rotate | `&x[<<]`, a pick, which a mix reads as an entry (`[&kick, &hat[<<]]`) | a line ending on a run (`~!7`, which a turn of one step would split), a Euclid |
+| transpose | `&x^n`; with an anchored note, `base=&x^n` and the anchored notes written (`base=&bassline^-1 0`) | where it is longer than the line written out (`0 0`) |
+| invert | `inverse(&x)`, `degree(inverse(&x), 2f)` about a first note f; with an anchored note it moves, the picks around it mirrored | as transpose |
+| reverse | `&x[::-1]`; with anchors, each span between two read backwards (`&x[0] &x[:0:-1]`) | as transpose |
+| drop, add, trim, bend | `base=` (decision 026), the copy changed on the one step it changes: `base=&hat =!6 ~`, `base=&hat =!3 &hh:0:.4`, `base=&bassline =!14 &bassNext^1` | a line with a cell of levels, a Euclid |
+
+- **Asked (#293, 2): a form for drop, add, bend and trim.** None new: `base=`, a copy changed where it says, is each of them already, and keeps anchors and runs (`=!5` keeps five steps of a run). Strudel's `mask` (decision 027) would write a drop alone, as a second line of rests and ones beside the line, and nothing for an add or a bend.
+- **A line of hits is referred to by a pick or by `base=`, never by a braid of its slices:** a cell that splices one has no voice (`&r step=16n &hat[:4] ~ &hat[5:]` is an error), so a slice of a drum line can't play. A pitched line's slices play.
+- **Point 2's "why not" answered in part:** a reference keeps an anchor inside a line (`base=&x^n` and the anchor written), and stands beside its source, not alone: the layer still files the text.
+- **Measured** (`src/engine/vary/reference.test.ts`): over the 14 seed rhythms (Jambot's options) and the 5 bass lines on both of their workbenches, Vary gives 535 variations, **472 with a reference**; every one plays the notes of its variation (S2) read where the line was, and each is no longer than the line written out by `bare`, 470 shorter. Of the four operators that had a form before (rotate, transpose, invert, reverse), 63 of 73. None is given on the Euclid lines (their 33 adds and drops, 3 rotations), the claves' rotations (5, a last run), and 22 more where the line written out is no longer. Reading a reference costs no compile.
+- **Recognition** (decision 055) reads a reference as its path, with no search: a heard text that uses a fragment (`use &hats from "Electro swing drums"`) and writes one of its variations' forms on a line it takes (`&hats2 base=&hats =!3 ~`, an entry `&hats[<<]`, `&late step=8n &gypsy^-2`) is that fragment by that operator, at distance 0, with no compile of the heard text.
 
 ## Why
 

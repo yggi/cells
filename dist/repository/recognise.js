@@ -1,4 +1,6 @@
 import { PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS } from "../engine/vary/index.js";
+import { declWords, splitComment } from "../engine/edit.js";
+import { readUse } from "../engine/parser/use.js";
 export const ALL_OPERATORS = [...RHYTHM_OPERATORS, ...PITCHED_OPERATORS];
 const counted = (keys) => {
     const out = new Map();
@@ -43,6 +45,16 @@ function windowsOf(c, width) {
     return out;
 }
 const candidate = (path, notes, r) => ({ path, notes, span: r.span, bar: r.bar, windows: new Map() });
+const codeLines = (text) => text.split('\n').map((l) => splitComment(l)[0].replace(/\s+/g, ' ').trim());
+function inMix(code, form) {
+    for (let at = code.indexOf(form); at >= 0; at = code.indexOf(form, at + 1)) {
+        const before = code.slice(0, at).trimEnd().at(-1);
+        const after = code.slice(at + form.length).trimStart()[0];
+        if ((before === '[' || before === ',') && (after === ']' || after === ',' || after === '*'))
+            return true;
+    }
+    return false;
+}
 export function createRecogniser() {
     const readings = new Map();
     const read = (text, vary) => {
@@ -93,6 +105,40 @@ export function createRecogniser() {
         candidates.set(key, out);
         return out;
     };
+    const referencesIn = (text, library, vary) => {
+        const code = codeLines(text);
+        const used = new Map();
+        for (const l of code) {
+            const u = readUse(l);
+            if (!u)
+                continue;
+            const had = used.get(u.id);
+            used.set(u.id, had === null || u.names === null ? null : [...(had ?? []), ...u.names]);
+        }
+        if (!used.size)
+            return [];
+        const out = [];
+        for (const fragment of library) {
+            if (!used.has(fragment.id))
+                continue;
+            const names = used.get(fragment.id);
+            for (const { variation: v } of read(fragment.text, vary).variations) {
+                const ref = v.reference;
+                if (!ref || (names && !names.includes(v.line)))
+                    continue;
+                const written = code.some((l) => {
+                    const name = /^&([A-Za-z_][A-Za-z0-9_]*)\s/.exec(l)?.[1];
+                    const w = name ? declWords(l, name) : null;
+                    return (w && [...w.attrs.filter((a) => a.startsWith('base=')), ...w.braid].join(' ') === ref.form) || (ref.line('r').startsWith('&r [') && inMix(l, ref.form));
+                });
+                if (written) {
+                    out.push({ fragment, path: [{ operator: v.rule, line: v.line, by: v.by }], bar: 0, distance: 0 });
+                    break;
+                }
+            }
+        }
+        return out;
+    };
     return {
         recognise(text, library, options = {}) {
             const { tolerance = 0, depth = 1, operators = ALL_OPERATORS, ...rest } = options;
@@ -101,6 +147,9 @@ export function createRecogniser() {
             if (depth !== 0 && depth !== 1 && depth !== 2)
                 throw new Error(`recognise: depth is ${String(depth)}, not 0, 1 or 2`);
             const vary = { ...rest, operators };
+            const referred = referencesIn(text, library, vary);
+            if (referred.length)
+                return referred;
             const reading = readVariations(text, { ...vary, operators: [] });
             if (!reading.notes?.length)
                 return [];

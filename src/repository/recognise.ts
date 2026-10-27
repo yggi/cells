@@ -6,6 +6,8 @@
  * the share of bars recognised, and the ladder it drives, are the frontend's. Pure.
  */
 import { PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, type HeardNote, type Operator, type Readings, type VaryOptions } from '../engine/vary';
+import { declWords, splitComment } from '../engine/edit';
+import { readUse } from '../engine/parser/use';
 import type { Fragment } from './fragments';
 
 /** Every operator, in decision 052's order: what recognition tries where a frontend names none. */
@@ -116,12 +118,30 @@ function windowsOf(c: Candidate, width: number | null): readonly Window[] {
 
 const candidate = (path: readonly PathStep[], notes: readonly HeardNote[], r: Readings): Candidate => ({ path, notes, span: r.span, bar: r.bar, windows: new Map() });
 
+/** A text's lines of code, a run of spaces one: what a reference's line is compared with. */
+const codeLines = (text: string) => text.split('\n').map((l) => splitComment(l)[0].replace(/\s+/g, ' ').trim());
+
+/** Whether `form` stands as an entry of a mix in `code`: `[&kick, &hat[<<]]`. */
+function inMix(code: string, form: string): boolean {
+  for (let at = code.indexOf(form); at >= 0; at = code.indexOf(form, at + 1)) {
+    const before = code.slice(0, at).trimEnd().at(-1);
+    const after = code.slice(at + form.length).trimStart()[0];
+    if ((before === '[' || before === ',') && (after === ']' || after === ',' || after === '*')) return true;
+  }
+  return false;
+}
+
 export interface Recogniser {
   /**
    * The fragments of the library the heard text is within the tolerance, nearest first (by distance, then the shorter
    * path, then the library's order), each by its nearest path; none where nothing is within it. A fragment that plays
    * no notes Vary reads (a meter) is never recognised, nor is a heard text that plays none. Throws on a tolerance that
    * isn't a whole number ≥ 0, or a depth that isn't 0, 1 or 2.
+   *
+   * A heard text that writes a variation by its reference (#293: it uses the fragment, `use &hat from funk_drums`, and
+   * writes a line as one of its variations' forms on it, `&hat2 base=&hat =!6 ~`, or a mix's entry, `&hat[<<]`) is
+   * read as that path, with no search: the fragments it refers to so, in the library's order, each at distance 0, and
+   * nothing else. Its notes aren't compared, nor is it compiled.
    */
   recognise(text: string, library: readonly Fragment[], options?: RecogniseOptions): Recognised[];
 }
@@ -175,12 +195,49 @@ export function createRecogniser(): Recogniser {
     return out;
   };
 
+  /** The library's fragments the text uses and writes a variation of by its reference, each by that one path. */
+  const referencesIn = (text: string, library: readonly Fragment[], vary: VaryOptions): Recognised[] => {
+    const code = codeLines(text);
+    // (each id the text uses, and the names it takes from it: null, every line)
+    const used = new Map<string, readonly string[] | null>();
+    for (const l of code) {
+      const u = readUse(l);
+      if (!u) continue;
+      const had = used.get(u.id);
+      used.set(u.id, had === null || u.names === null ? null : [...(had ?? []), ...u.names]);
+    }
+    if (!used.size) return [];
+    const out: Recognised[] = [];
+    for (const fragment of library) {
+      if (!used.has(fragment.id)) continue;
+      const names = used.get(fragment.id);
+      for (const { variation: v } of read(fragment.text, vary).variations) {
+        const ref = v.reference;
+        if (!ref || (names && !names.includes(v.line))) continue;
+        const written = code.some((l) => {
+          // (a line whose braid is the form, its own clock and table aside: `&late step=8n &gypsy^-2`, `&hat2 base=&hat =!6 ~`;
+          // a pick, rotate's, may stand in a mix as it is)
+          const name = /^&([A-Za-z_][A-Za-z0-9_]*)\s/.exec(l)?.[1];
+          const w = name ? declWords(l, name) : null;
+          return (w && [...w.attrs.filter((a) => a.startsWith('base=')), ...w.braid].join(' ') === ref.form) || (ref.line('r').startsWith('&r [') && inMix(l, ref.form));
+        });
+        if (written) {
+          out.push({ fragment, path: [{ operator: v.rule, line: v.line, by: v.by }], bar: 0, distance: 0 });
+          break;
+        }
+      }
+    }
+    return out;
+  };
+
   return {
     recognise(text, library, options = {}) {
       const { tolerance = 0, depth = 1, operators = ALL_OPERATORS, ...rest } = options;
       if (!(Number.isInteger(tolerance) && tolerance >= 0)) throw new Error(`recognise: tolerance is ${String(tolerance)}, not a whole number ≥ 0`);
       if (depth !== 0 && depth !== 1 && depth !== 2) throw new Error(`recognise: depth is ${String(depth)}, not 0, 1 or 2`);
       const vary: VaryOptions = { ...rest, operators };
+      const referred = referencesIn(text, library, vary);
+      if (referred.length) return referred;
       const reading = readVariations(text, { ...vary, operators: [] });
       if (!reading.notes?.length) return [];
       const heard = windowsOf(candidate([], reading.notes, { ...reading, span: null }), null)[0]!;
