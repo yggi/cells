@@ -7,6 +7,7 @@ import { codeShifts } from './program';
 import { plan } from './realize';
 import { pieceMidi } from './midiexport';
 import { LONGEST, spanOf, TAIL, UNBOUNDED } from './span';
+import { resolveSeed } from '../repository/library';
 
 const spanFor = (text: string, options = {}) => {
   const r = compileSource(text);
@@ -58,6 +59,16 @@ describe('the MIDI file’s signature', () => {
   });
   it('is left out where the beat is another value: the file writes a beat as a quarter, so 6/8 would draw wrong bars', () => {
     for (const bar of ['meter("6/8")', 'meter("12/8")', 'meter("7/8")', 'meter("4/4") beat=2']) expect(meters(bar), bar).toEqual([]);
+  });
+  it('is the meter’s where its rate is a cell (step=&tempo), as a seed meter’s is', () => {
+    const at = (text: string) => {
+      const r = compileSource(text, undefined, { resolve: resolveSeed });
+      expect(r.diagnostics, text).toEqual([]);
+      return pieceMidi(r, codeShifts(r)).smf.meters;
+    };
+    expect(at(`&tempo step=60bpm\n&bar meter("3/4") step=&tempo laps=2\n&t step=1m 0!2${V}`)).toEqual([{ tick: 0, num: 3, den: 4 }]);
+    expect(at(`use &bar from "4/4 swung on 8n"\n&tempo step=120bpm\n&t step=1m 0!2${V}`)).toEqual([{ tick: 0, num: 4, den: 4 }]);
+    expect(at(`use &bar from "6/8"\n&tempo step=120bpm\n&t step=1m 0!2${V}`)).toEqual([]);
   });
   it('is left out with no main meter', () => {
     const r = compileSource(`&t step=4 0 2 4 7${V}`);

@@ -7,6 +7,13 @@ import { eventsBetween, plan } from "./realize.js";
 import { DEFAULT_FREQ } from "./program.js";
 const PPQ = 480;
 const SAME_TEMPO = 2;
+function meterOf(result, root) {
+    const own = result.cells.get(root)?.meter;
+    if (own)
+        return own;
+    const on = [...result.cells.values()].filter((c) => c.meter && c.step?.driver === root);
+    return on.length === 1 ? on[0].meter : undefined;
+}
 export function pieceMidi(result, shifts, muted = result.off, name, span = {}) {
     const p = plan(result, shifts, muted);
     const seconds = spanOf(result, p, { ...span, from: 0 }).to;
@@ -89,7 +96,7 @@ export function pieceMidi(result, shifts, muted = result.off, name, span = {}) {
         bends: t.at.map((b) => ({ ...b, channel })),
         programs: [],
     }));
-    const m = meter ? result.cells.get(meter.cell)?.meter : undefined;
+    const m = meter ? meterOf(result, meter.cell) : undefined;
     const meters = m && m.unit === 4 && m.beats.every((b) => b === 1) && m.pulses > 0 ? [{ tick: 0, num: m.pulses, den: 4 }] : [];
     return { smf: { format: 1, ppq: PPQ, ...(name !== undefined ? { name } : {}), tracks, tempos, meters }, dropped };
 }

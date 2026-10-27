@@ -22,6 +22,17 @@ import type { Smf, SmfNote, SmfTrack } from './midifile';
 const PPQ = 480;
 /** A tempo change smaller than this (microseconds a quarter) is rounding, not a change. */
 const SAME_TEMPO = 2;
+/**
+ * The meter the main meter's root is: its own, or where the root is a rate alone (`&bar meter("4/4") step=&tempo`, #290,
+ * as every seed meter is) the one meter stepping on it; none where several do.
+ */
+function meterOf(result: CompileResult, root: string) {
+  const own = result.cells.get(root)?.meter;
+  if (own) return own;
+  const on = [...result.cells.values()].filter((c) => c.meter && c.step?.driver === root);
+  return on.length === 1 ? on[0]!.meter : undefined;
+}
+
 /** The piece's notes as a MIDI file (to `writeMidi`), and how many notes no MIDI key could carry. */
 export function pieceMidi(result: CompileResult, shifts: Shifts, muted: ReadonlySet<string> = result.off, name?: string, span: SpanOptions = {}): { smf: Smf; dropped: number } {
   const p = plan(result, shifts, muted);
@@ -109,7 +120,7 @@ export function pieceMidi(result: CompileResult, shifts: Shifts, muted: Readonly
       programs: [],
     }));
   // (its signature, where the file's quarter, the meter's beat, is the quarter note it says)
-  const m = meter ? result.cells.get(meter.cell)?.meter : undefined;
+  const m = meter ? meterOf(result, meter.cell) : undefined;
   const meters = m && m.unit === 4 && m.beats.every((b) => b === 1) && m.pulses > 0 ? [{ tick: 0, num: m.pulses, den: 4 }] : [];
   return { smf: { format: 1, ppq: PPQ, ...(name !== undefined ? { name } : {}), tracks, tempos, meters }, dropped };
 }
