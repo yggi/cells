@@ -8,7 +8,7 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { shiftsAt, timeMap } from './clocking';
 import { flatten } from './flatten';
-import { eventsBetween, plan } from './realize';
+import { eventsBetween, plan, returnGains } from './realize';
 import { liveAt } from './live';
 import { routing } from './routing';
 import { PRESETS } from './presets';
@@ -1725,5 +1725,47 @@ describe('DTMF: a number typed, then dialled — spell(free("…"), &keys, "name
         .map((d) => d.message)
         .join(),
     ).toMatch(/4 names need 3 equal whole steps/);
+  });
+});
+
+// (lifted from yggi/cell-studio src/audio/wiring.test.ts and src/layout/realize.drawn.test.ts @ 23a5972, #326:
+// a return's levels and a note's envelope and FM are what realize gives a voice, whoever then sounds it)
+describe('what a return, an envelope and FM give the voice', () => {
+  const at = (r: ReturnType<typeof compileSource>, from: number, to: number) => eventsBetween(plan(r, codeShifts(r)), from, to);
+
+  it('with nothing off, returns and lone resonators reach the sound card at the levels compile gives them, in every example (#165)', () => {
+    let checked = 0;
+    for (const { source } of Object.values(PRESETS)) {
+      const r = compileSource(source, undefined, { resolve: resolveSeed });
+      for (const x of [...r.returns, ...r.resonances]) {
+        expect(returnGains(x, new Set())).toEqual([x.gains[0], x.gains[1]]);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it('map=adsr shapes each note it multiplies, in seconds', () => {
+    const r = compileSource('&m step=1\n&t step=&m 0 7\n&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t * &(map=adsr .01 .2 .5 .8) * &v]');
+    expect(r.diagnostics).toEqual([]);
+    expect(at(r, 0, 1.9).map((e) => e.env)).toEqual([
+      { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.8 },
+      { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.8 },
+    ]);
+  });
+
+  it('a voice’s own env= shapes every note it plays, the same as the envelope written in the mix', () => {
+    const base = '&m step=1\n&t step=&m 0 7\n';
+    const own = compileSource(base + '&v s=tri loop=C4 env=&(map=adsr .01 .2 .5 .3)\n&mix loop=SAMPLE_RATE map=sample [&t * &v]');
+    const mixed = compileSource(base + '&v s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&t * &(map=adsr .01 .2 .5 .3) * &v]');
+    expect(own.diagnostics).toEqual([]);
+    expect(at(own, 0, 1.9).map((e) => e.env)).toEqual(at(mixed, 0, 1.9).map((e) => e.env));
+  });
+
+  it('FM: a carrier names its modulator (fm=, index=), the modulator a voice with a ratio=', () => {
+    const r = compileSource('&bar step=120bpm 0 0 0 0\n&t step=&bar 0 4 7\n&op s=sine ratio=3.5\n&car s=sine loop=C4 fm=&op index=2\n&out loop=SAMPLE_RATE map=sample [&t * &car]');
+    expect(r.diagnostics).toEqual([]);
+    expect(r.cells.get('car')!.params).toMatchObject({ fm: 'op', index: 2 });
+    expect(r.cells.get('op')!.params).toMatchObject({ ratio: 3.5 });
   });
 });

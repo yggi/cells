@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { SAILOR_WITH_KIT } from '../fixtures';
 import { setFree } from '../edit';
 import { compileSource } from '../compile';
-import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, type Shifts } from '../program';
+import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, MAX_SPLICE_DEPTH, type Shifts } from '../program';
+import { writtenGraph } from '../graph';
 import { MAX_NESTING } from '../parser/scanner';
 import { START as LAW_START } from '../fiveto12';
 import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entries, lookup, resolveIn, resolvePitch, shiftedUnits } from '../helix';
@@ -265,6 +266,26 @@ describe('step=, loop=, clocks and voices', () => {
     expect(msgs('&v s=saw lpf=high')).toMatch(/lpf= takes a number/);
     expect(msgs('&k stride=7 0')).toMatch(/stride= only matters/);
     expect(msgs('&v loop=440 map=&nope\n&m step=1\n&t step=&m 0\n&mix_ [&t * &v]\n&out_ loop=44k map=sample &mix_')).toMatch(/Unknown cell &nope/);
+  });
+});
+
+describe('splices nest, to a depth', () => {
+  // (lifted from yggi/cell-studio src/layout/compile.drawn.test.ts @ 23a5972, #326: the depth is the language's)
+  const piece = (tune: string) => `${tune}\n&pluck s=tri loop=C4\n&mix loop=SAMPLE_RATE map=sample [&tune * &pluck]`;
+  const chain = (n: number) => [...Array.from({ length: n }, (_, i) => `&c${i} ${i === n - 1 ? '0 1' : `&c${i + 1}`}`), '&tune step=120bpm &c0'].join('\n');
+  const errorsOf = (src: string) => compileSource(src).diagnostics.filter((d) => d.severity === 'error');
+
+  it(`cells splice into each other ${MAX_SPLICE_DEPTH} deep at most: deeper is one error, never a stack overflow (#160)`, () => {
+    expect(errorsOf(piece(chain(MAX_SPLICE_DEPTH)))).toEqual([]);
+    for (const n of [MAX_SPLICE_DEPTH + 1, 5000]) {
+      let r: ReturnType<typeof compileSource> | undefined;
+      expect(() => (r = compileSource(piece(chain(n))))).not.toThrow();
+      expect(r!.diagnostics.filter((d) => d.severity === 'error').map((d) => d.message)).toEqual([
+        expect.stringMatching(new RegExp(`^&c0 splices cells into each other more than ${MAX_SPLICE_DEPTH} deep`)),
+      ]);
+      expect(() => eventsBetween(plan(r!, codeShifts(r!)), 0, 4)).not.toThrow();
+      expect(() => writtenGraph(r!)).not.toThrow();
+    }
   });
 });
 
