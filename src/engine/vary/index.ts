@@ -223,6 +223,8 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
     const ends = line.notes.length >= 2 && !pinned(line, last!);
     for (const operator of operators) {
       if (PITCHED_OPERATORS.includes(operator) !== !!line.pitched) continue;
+      // (a line with a held note is moved in pitch alone: reverse, bend and trim would move where its notes fall and end)
+      if (line.notes.some((n) => n.hold) && !['transpose', 'invert'].includes(operator)) continue;
       if (operator === 'bend') {
         if (ends)
           for (const n of BENDS) {

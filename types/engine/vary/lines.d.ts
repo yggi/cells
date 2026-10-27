@@ -11,6 +11,8 @@ export interface LineNote {
     readonly level: number;
     /** A pitched line's note: what it plays; absent on a line of hits. */
     readonly pitch?: Pitch;
+    /** A held note's length in steps (`7@2`: 2), written back as it was; absent for a note one step long. */
+    readonly hold?: number;
 }
 /**
  * A pitched note: its step as written (a degree, or a splice), then mirrored and moved by the operators, so it plays
