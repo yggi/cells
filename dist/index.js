@@ -24,6 +24,7 @@ export { HARMONY_FRAGMENTS } from "./repository/harmony.js";
 export { INSTRUMENT_FRAGMENTS } from "./repository/instruments.js";
 export { MODE_FRAGMENTS } from "./repository/modes.js";
 export { PERFORMER_FRAGMENTS } from "./repository/performers.js";
+export { STAB_FRAGMENTS } from "./repository/stab.js";
 export { LIBRARY, resolveSeed } from "./repository/library.js";
 export { ALL_OPERATORS, createRecogniser } from "./repository/recognise.js";
 export { holesOf, INTERFACE_NAMES } from "./repository/holes.js";

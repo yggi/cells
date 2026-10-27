@@ -8,6 +8,7 @@ import { liveAt } from './live';
 import { PRESETS } from './presets';
 import { codeShifts } from './program';
 import { variations, varied, type Variation } from './vary';
+import { resolveSeed } from '../repository/library';
 
 describe('what the engine costs', () => {
   // (as `routing.test.ts` works them out: a piece is opened or edited and this runs once, so a sign if one example is slow)
@@ -15,7 +16,7 @@ describe('what the engine costs', () => {
     const t0 = performance.now();
     let n = 0;
     for (const p of Object.values(PRESETS)) {
-      const r = compileSource(p.source);
+      const r = compileSource(p.source, undefined, { resolve: resolveSeed });
       liveAt(r, codeShifts(r), r.off, 0);
       n++;
     }

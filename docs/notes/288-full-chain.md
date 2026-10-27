@@ -16,7 +16,7 @@ Three things in the language keep a text from staying fragmented:
 
 Each is an issue below, and none needs a new idea, only the ones already here carried through: holes, tables, operators, names that say what they are.
 
-All measurements are at cells 981ea22 and yggi/jambot 24a528b, compiled with the seed resolver; the probes were scratch runs, not committed, and the two blocks marked `cells` below are compiled by `docs.test.ts`.
+All measurements are at cells 981ea22 and yggi/jambot 24a528b, compiled with the seed resolver; the probes were scratch runs, not committed, and the blocks marked `cells` below record them as run then: `docs.test.ts` compiles only the language pages' blocks, so a note's are not checked.
 
 ## 1. The chain today
 
