@@ -16,7 +16,7 @@ The language's open questions live in this tracker, [yggi/cells' issues](https:/
 
 The whole map, module by module: [architecture.md](architecture.md).
 
-- `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, Vary (`vary/`, decision 052), the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), the time analysis (`time/`)
+- `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, Vary (`vary/`, decision 052), the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), a render's span (`span`), the time analysis (`time/`)
 - `theory/` modes and tonal's scale names
 - `repository/` fragments found by their place in style space, with a learned layer (`fragments.ts`, `learned.ts`); files, holes and the fit (`files.ts`, `holes.ts`, `fit.ts`); the seed library, a module a facet, all in `library.ts`
 - `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>` (`theory/`, `repository/` alike)
@@ -88,7 +88,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 049 · Four tools: Migrate, Normalise, Shorten, Fold · → decisions/049-four-tools-over-a-piece.md
 - 050 · The equalities: E0–E5 and S1–S3 · → decisions/050-the-equalities.md
 - 051 · Literate cells · → decisions/051-literate-cells.md
-- 052 · Variations are operators · → decisions/052-variations-as-operators.md
+- 052 · Variations are operators; each with its reference, a form on its source (point 7, #293) · → decisions/052-variations-as-operators.md
 - 053 · `swing=8n:r:pairs` leans the pairs alone · → decisions/053-the-pairs-alone.md
 - 054 · Instruments are fragments; `use` (its forms amended by 059) · → decisions/054-instruments-and-use.md
 - 055 · Recognition · → decisions/055-recognition.md
