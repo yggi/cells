@@ -170,7 +170,7 @@ describe('restart= on a section or a selector (decision 032)', () => {
   it('another word, or another cell, says so', () => {
     expect(messages(onSection('again'))).toEqual(['warning: restart=again: what switching a part on does to its time is restart, resume or free — this plays as restart']);
     expect(messages(SONG.replace('&lead s=square', '&lead restart=resume s=square'))).toEqual([
-      'warning: restart= acts on a section (a name a stepped table of names declares) or a selector (over= a table of sections): on &lead it does nothing',
+      'warning: restart= acts on a section (a name a stepped table of names declares), a performer (a gate or a role a band names) or a selector (over= a table of sections, or a band): on &lead it does nothing',
     ]);
   });
 });

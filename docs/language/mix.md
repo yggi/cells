@@ -132,6 +132,7 @@ Nothing is read off a gate's name, and cells holds no list of roles: the names a
 
 A role is no sound: it is not mixed, sent or played (`[&lead]` says so; mix or send its gates), its entries are gates
 as written, and a gate plays one role.
+A band, a table of performers a selector reads, switches who plays when, each part keeping its time ([time.md](time.md)).
 
 `play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
 (`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all

@@ -6,7 +6,13 @@ import { leaves } from '../subseq';
 import type { CellDecl } from '../ast';
 import type { Cells, Ctx } from './context';
 
-export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, sections: ReadonlyMap<string, string> = new Map()): void {
+export function checkCells(
+  ctx: Ctx,
+  decls: ReadonlyMap<string, CellDecl>,
+  cells: Cells,
+  sections: ReadonlyMap<string, string> = new Map(),
+  bands: ReadonlyMap<string, readonly string[]> = new Map(),
+): void {
   const { error, warn, unknownCell } = ctx;
   // resonators: body= one of the known bodies; couple= another resonator; excite= a mix
   for (const c of cells.values()) {
@@ -137,10 +143,11 @@ export function checkCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells
     if (d.map?.kind === 'edo' && (d.over !== null || d.braid.kind !== 'blank'))
       error(`A grid (map=edo, map=ed(r)) reads nothing and has no braid: &${d.name} cycle=19 map=edo`, d.map.span);
   // a table is its numbers: cells spliced into one are skipped when it is read (over=), unless it is a
-  // kit (a table of voices) or a table of sections (its entries are clocks, a selector switches them: decision 016)
+  // kit (a table of voices), a table of sections (its entries are clocks, a selector switches them: decision 016) or a
+  // band (its entries performers, a selector switches their sound: decision 061)
   for (const d of decls.values()) {
     const t = d.over ? cells.get(d.over.name) : undefined;
-    if (!t || t.kit) continue;
+    if (!t || t.kit || bands.has(t.name)) continue;
     const refs = refsOf(t);
     // (a selector of mixes, the form before decision 016, has said so already: declare.ts)
     if (!refs.length || refs.every((r) => sections.get(r) === t.name) || ctx.broken.has(d.name)) continue;

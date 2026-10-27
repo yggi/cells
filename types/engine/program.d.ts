@@ -313,6 +313,8 @@ export interface Output {
         readonly cell: string;
         readonly entry: number;
         readonly part: string;
+        /** A band's selector (decision 061): `part` is the performer's entry, a gate or its role; its time runs on unless restart= says. */
+        readonly performer?: true;
     }[];
     /** A send: played into what it feeds (a resonator, a tape), not heard from its voice itself. */
     readonly silent?: boolean;
