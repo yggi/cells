@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.11.1`.
+### Fixed
+- **The graph draws a role and a stack of lines as written** (#329, `writtenGraph`): a role cell (`&drums map=role &drumOut`, decision 061) is one wire from each gate it names, no sound, where it drew the voices the gate plays (`kit → drums`); a stack a gate plays (`play=&drumlines`, `&drumlines [&kick * &kickForm, &hats]`, #302) has each member wired into its cell as a gate's terms are, its line on `play`, its levels on `level`, where it had none. **What a frontend sees at its next pin:** Cell studio's graph draws these wires; nothing a piece plays changes.
 
 ## v0.11.1 — 2026-10-27
 

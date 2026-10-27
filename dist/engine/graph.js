@@ -97,7 +97,7 @@ export function writtenGraph(result) {
     for (let grew = true; grew;) {
         grew = false;
         for (const c of result.cells.values())
-            if (!heard.has(c.name) && spliced(c).some((k) => heard.has(k))) {
+            if (!heard.has(c.name) && c.map?.kind !== 'role' && spliced(c).some((k) => heard.has(k))) {
                 heard.add(c.name);
                 grew = true;
             }
@@ -219,6 +219,10 @@ export function writtenGraph(result) {
                 link({ id: edgeId(id, cellId(child)), source: id, target: cellId(child), count, transforms: AS_IS, ...wire('midi', 'cv', id, cellId(child), 1, true) });
                 continue;
             }
+            if (c.map?.kind === 'role') {
+                link({ id: edgeId(id, cellId(child)), source: id, target: cellId(child), count, transforms: AS_IS, ...wire('braid', 'none', id, cellId(child), 1, true, true) });
+                continue;
+            }
             const gate = result.cells.get(child);
             if (gate?.gate && spliceBand(child) === 'audio') {
                 through.add(edgeId(id, cellId(child)));
@@ -294,6 +298,7 @@ export function writtenGraph(result) {
                 });
     }
     const junctions = [];
+    const stacks = new Set();
     for (const c of result.cells.values()) {
         const g = c.gate;
         if (!g)
@@ -319,6 +324,31 @@ export function writtenGraph(result) {
                 routes: [pairs, flows],
                 ...wire(port, 'cv', cellId(name), into, name === g.notes ? chord(name) : 1),
             });
+        }
+        const stack = g.lines?.length ? result.cells.get(g.notes) : undefined;
+        if (stack && !stacks.has(stack.name)) {
+            stacks.add(stack.name);
+            const lines = new Set(g.lines.map((l) => l.line));
+            const into = cellId(stack.name);
+            for (const u of stack.units) {
+                if (u.atom.kind !== 'mix')
+                    continue;
+                for (const e of u.atom.exprs)
+                    for (const r of e.k === 'ref' ? [e.ref] : e.k === 'prod' ? e.factors.flatMap((f) => (f.k === 'ref' ? [f.ref] : [])) : []) {
+                        if (!result.cells.has(r.name))
+                            continue;
+                        const port = lines.has(r.name) ? 'play' : 'level';
+                        const from = cellId(r.name);
+                        link({
+                            id: edgeId(from, into),
+                            source: from,
+                            target: into,
+                            count: 1,
+                            transforms: [refTransform(r)],
+                            ...wire(port, 'cv', from, into, port === 'play' ? chord(r.name) : 1),
+                        });
+                    }
+            }
         }
         const notes = result.cells.has(g.notes) ? g.notes : null;
         for (const r of receivers) {
