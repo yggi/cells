@@ -1,12 +1,12 @@
 ---
 title: Electro swing, in pieces
 tags: [genre:electronic, genre:dance, genre:jazz, harmony, rhythm, arrangement]
-description: "A house kick under a walking bass, Charleston stabs and a gypsy clarinet, in D harmonic minor: the band is the seed library's, used, and the tune is one bar, moved and cut up."
+description: "A house kick under a walking bass, Charleston stabs, and a clarinet and a muted trumpet trading a call and its answer in D harmonic minor: the band, the tune and its form are the seed library's."
 ---
 
 Electro swing is a jazz record cut up over a house beat: four on the floor, the eighths swung, a walking bass, brass stabs on the Charleston and a clarinet in a minor key.
-Here the band comes from the seed library, taken by name: the drummer and its kit, the key, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, the bass, stab and lead players, and the beat and the stabs this piece gave the library (`Electro swing drums`, `Charleston stabs`).
-The piece writes only what is its own: the meter, the key's tonic, the tune, the form, and the sound of each instrument.
+Here the band comes from the seed library, taken by name, and so does the tune: the drummer and its kit, the key, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, the bass, stab and lead players, and the beat and the stabs this piece gave the library (`Electro swing drums`, `Charleston stabs`); the tune is the motif `gypsy`, its call, shaped by two forms, `call and answer` and `AABA`.
+The piece writes only what is its own: the meter, the key's tonic, the break, who plays when, and the sound of each instrument.
 
 ```cells
 use &drums from "drums performer"
@@ -51,31 +51,43 @@ The stab player reads the chords in force, `over=&harm`, so the same rhythm is D
 &charlestonNote label="The Charleston: one, and the and of two, a fragment's (Charleston stabs)." about=&stabline
 ```
 
-## The tune: one bar, moved and cut up
+## The tune: one bar, a call and its answer, in AABA
 
-The clarinet's call is one bar, A B♭ C♯ D, back down to A.
-The verse is that bar and what operators make of it: two degrees down (`&call^-2`), its turn, three degrees down over the A chord (`&call^-3`: E F G A, A's phrygian dominant), and that backwards (`degree(&call[::-1], -3)`).
-The break cuts it into pieces with picks: its first three notes (`&call[0:3]`) and rests, its tail moved, its first two as a stutter (`&call[0:2]!4`), its top note hammered (`&call[3]!4`).
+The tune is one bar from the library, the motif `gypsy`: A B♭ C♯ D and back to A, the clarinet's call.
+Two forms from the library make a chorus of it.
+- **`call and answer`** makes the A: the call, then its answer, the call two degrees down (`&call^-2`), F G A B♭ and back to F.
+- **`AABA`** makes the chorus of four As, the bridge before the last. Its bridge, by default A a fourth up, is named in its use and moved to where the harmony goes: three degrees down (`&a^-3`), over the vamp's A chord, E F G A, A's phrygian dominant.
+
+The break cuts the motif into pieces with picks: its first three notes (`&gypsy[0:3]`) and rests, its tail moved, its first two as a stutter (`&gypsy[0:2]!4`), its top note hammered (`&gypsy[3]!4`).
 
 ```cells
-&call over=&key step=8n 4 5 6 7@2 6 4@2
+use &gypsy
+use &phrase from "call and answer"
+use &chorus, &b from AABA
+&call step=8n &gypsy
+&a step=8n &phrase
+&b step=8n &a^-3
 &turn over=&key step=8n 6 7 6 5 4@2 ~@2
-&verse over=&key step=8n &call &call^-2 &call &turn &call^-3 degree(&call[::-1], -3) &call^-3 &turn
-&chop over=&key step=8n &call[0:3] ~@5 &call[0:3] ~ &call[0:3] ~ &call[3:]^-2 ~@3 &call[0:2]!4
-&chopA over=&key step=8n degree(&call[0:3], -3) ~@5 degree(&call[0:3], -3) ~ degree(&call[0:3], -3) ~ &turn &call[3]!4
-&leadline step=8n &verse!2 &chop &chopA &verse
-&callNote label="One bar: everything the clarinet plays is this bar, moved by degrees (^n), turned backwards ([::-1]) or cut ([0:3]): its call, its answer, its break." about=(&call &verse &chop &chopA)
+&chop over=&key step=8n &gypsy[0:3] ~@5 &gypsy[0:3] ~ &gypsy[0:3] ~ &gypsy[3:]^-2 ~@3 &gypsy[0:2]!4
+&chopA over=&key step=8n degree(&gypsy[0:3], -3) ~@5 degree(&gypsy[0:3], -3) ~ degree(&gypsy[0:3], -3) ~ &turn &gypsy[3]!4
+&leadline step=8n &chorus!2 &chop &chopA &chorus
+&callNote label="One bar: the motif gypsy is the call, call and answer makes an A of it (the call, then the call two degrees down), and AABA a chorus, its bridge A moved three degrees down." about=(&call &a &b)
 ```
 
-A second clarinet doubles the last verse an octave up: a copy of the lead player, `&lead2`, playing the same line moved twelve steps of the grid.
+## Two leads, call and answer
+
+The clarinet calls and a muted trumpet answers: two players of one line, each heard on its own bars.
+The trumpet is a second gate on the lead's line, `&lead2`; the clarinet is the lead player, `&lead`.
+Each one's level is a two-bar step, `[.5 0]` for the clarinet and `[0 .45]` for the trumpet, so they trade bar by bar: the call, then the answer; in the bridge, its call, then its answer; in the break, the pieces back and forth.
 
 ```cells
-&lead2 play=&leadline^$12 level=&lead2Level &leadV
+&lead2 play=&leadline level=&lead2Level &trumpetV
+&dialogueNote label="The clarinet plays the odd bars, the trumpet the even ones: the call and its answer, traded between two players." about=(&lead &lead2)
 ```
 
 ## The form, in levels
 
-The song is 32 bars, four times round the vamp: the stabs and the hats alone, then the kick and the bass, the verse, the break with the kick and the bass out, and the verse again, doubled.
+The song is 32 bars, four times round the vamp: the stabs and the hats alone, then the kick and the bass, the chorus, the break with the kick and the bass out, and the chorus again.
 It is written as each part's level, bar by bar, the clarinet's entry too (its line plays from the top, silent for the first eight bars), so every part keeps tapping the swung meter.
 The players' levels are holes their fragments leave; here they are the form.
 It is the form written six times over, and waits on #304: a selector over the performers, each step naming who plays, would write it once.
@@ -83,23 +95,24 @@ It is the form written six times over, and waits on #304: a selector over the pe
 ```cells
 &bassLevel map=amp step=1m 0!4 .8!12 0!8 .8!8
 &stabLevel map=amp step=1m .5!16 0!8 .6!8
-&leadLevel map=amp step=1m 0!8 .5!24
-&lead2Level map=amp step=1m 0!24 .25!8
+&leadLevel map=amp step=1m/2 0!4 [.5 0]!12
+&lead2Level map=amp step=1m/2 0!4 [0 .45]!12
 &kickForm map=amp step=1m 0!4 1!12 0!8 1!8
 &clapForm map=amp step=1m 0!8 1!8 .6!8 1!8
-&formNote label="The form: intro (4 bars), the band (4), the verse (8), the break (8), the verse doubled (8)." about=(&bassLevel &stabLevel &leadLevel &kickForm &clapForm)
+&formNote label="The form: intro (4 bars), the band (4), the chorus (8), the break (8), the chorus (8)." about=(&bassLevel &stabLevel &leadLevel &lead2Level &kickForm &clapForm)
 ```
 
 ## The sound
 
 The instruments the players play are voices with no sound of their own: the piece gives each one.
-An upright-ish bass, a brass stab, a clarinet with a slow vibrato, and the crackle's noise.
+An upright-ish bass, a brass stab, a clarinet with a slow vibrato, a muted trumpet, darker and with a slower one, and the crackle's noise.
 In giving the bass its sound the piece gives it its register too, which is the instrument's (decision 058): the library's `bass` sits at C2 and the bass player plays it an octave down, at C1; this `&bassV` sits at C3, so the walk sounds at C2, an octave above the library's, where a laptop's speakers still carry it.
 
 ```cells
 &bassV s=saw loop=C3 lpf=700 env=&(map=adsr .005 .3 .25 .08)
 &keysV s=saw loop=C3 lpf=1800 env=&(map=adsr .01 .12 .25 .1)
 &leadV s=square loop=C4 lpf=2400 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=5.5 0 .12 0 -.12 0)
+&trumpetV s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .03 .1 .6 .12) pitch=&(map=lin loop=4.5 0 .08 0 -.08 0)
 &vinyl s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
 
 &out map=sample postgain=1.11 [&drums,
