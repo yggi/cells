@@ -2,7 +2,8 @@
  * Recognition (decision 055, #224): given a heard text (a bar or a section the Muse wrote) and a library (the seed and a
  * learned layer's filed fragments), which fragments it is, by which of decision 052's operators, and how far: the
  * homeostat's sensor (yggi/jambot#237). A fragment's reading and its variations' are kept by text, so a recogniser warmed
- * on a library compiles only the heard text; the cache changes no answer. Stateless as the repository is (decision 048):
+ * on a library compiles only the heard text; it keeps the 512 texts used last (#277), so a run of hours holds its memory
+ * and its cost, and the cache changes no answer. Stateless as the repository is (decision 048):
  * the share of bars recognised, and the ladder it drives, are the frontend's. Pure.
  */
 import { type Operator, type VaryOptions } from '../engine/vary';
@@ -51,5 +52,24 @@ export interface Recogniser {
      */
     recognise(text: string, library: readonly Fragment[], options?: RecogniseOptions): Recognised[];
 }
-/** A recogniser: it keeps each fragment's readings by its text and the options read under, which changes no answer. */
-export declare function createRecogniser(): Recogniser;
+/** How many texts a recogniser keeps by default (#277): each a text read under one set of options. */
+export declare const RECOGNISER_CAPACITY = 512;
+/** How a recogniser keeps what it has read. */
+export interface RecogniserOptions {
+    /**
+     * The most texts it keeps read, each under one set of options, a whole number ≥ 1 or `Infinity`; by default
+     * `RECOGNISER_CAPACITY`. Past it, the text used longest ago is forgotten, and read again if it is met again.
+     */
+    readonly capacity?: number;
+}
+/** A recogniser that says how many texts it keeps. */
+export interface KeepingRecogniser extends Recogniser {
+    /** The texts it keeps read now, never more than its capacity. */
+    readonly size: number;
+}
+/**
+ * A recogniser: it keeps the texts it reads, each fragment's readings and candidates by its text and the options read
+ * under, the `capacity` used last (least recently used, #277), which changes no answer: a text forgotten is read again.
+ * Throws on a capacity that isn't a whole number ≥ 1 or `Infinity`.
+ */
+export declare function createRecogniser({ capacity }?: RecogniserOptions): KeepingRecogniser;

@@ -55,16 +55,23 @@ function inMix(code, form) {
     }
     return false;
 }
-export function createRecogniser() {
-    const readings = new Map();
-    const read = (text, vary) => {
+export const RECOGNISER_CAPACITY = 512;
+export function createRecogniser({ capacity = RECOGNISER_CAPACITY } = {}) {
+    if (!((Number.isInteger(capacity) || capacity === Infinity) && capacity >= 1))
+        throw new Error(`createRecogniser: capacity is ${String(capacity)}, not a whole number ≥ 1 or Infinity`);
+    const kept = new Map();
+    const keep = (text, vary) => {
         const key = JSON.stringify([text, vary.workbench ?? '', vary.operators, vary.keep ?? [], vary.fewest ?? 1, vary.degrees ?? null]);
-        let r = readings.get(key);
-        if (!r)
-            readings.set(key, (r = readVariations(text, vary)));
-        return r;
+        const known = kept.get(key);
+        if (known)
+            kept.delete(key);
+        const k = known ?? { readings: readVariations(text, vary), candidates: [] };
+        kept.set(key, k);
+        if (kept.size > capacity)
+            kept.delete(kept.keys().next().value);
+        return k;
     };
-    const candidates = new Map();
+    const read = (text, vary) => keep(text, vary).readings;
     const exact = new WeakMap();
     const exactOf = (cs, width) => {
         const byWidth = exact.get(cs) ?? new Map();
@@ -83,12 +90,12 @@ export function createRecogniser() {
         return index;
     };
     const of = (fragment, vary, depth) => {
-        const key = JSON.stringify([fragment.text, depth, vary.workbench ?? '', vary.operators, vary.keep ?? [], vary.fewest ?? 1, vary.degrees ?? null]);
-        const known = candidates.get(key);
+        const k = keep(fragment.text, vary);
+        const known = k.candidates[depth];
         if (known)
             return known;
         const out = [];
-        const source = read(fragment.text, vary);
+        const source = k.readings;
         if (source.notes?.length) {
             out.push(candidate([], source.notes, source));
             const step = (v) => ({ operator: v.rule, line: v.line, by: v.by });
@@ -96,13 +103,13 @@ export function createRecogniser() {
                 for (const v of source.variations) {
                     out.push(candidate([step(v.variation)], v.notes, source));
                     if (depth >= 2) {
-                        const twice = read(v.variation.apply(fragment.text), vary);
+                        const twice = readVariations(v.variation.apply(fragment.text), vary);
                         for (const w of twice.variations)
                             out.push(candidate([step(v.variation), step(w.variation)], w.notes, twice));
                     }
                 }
         }
-        candidates.set(key, out);
+        k.candidates[depth] = out;
         return out;
     };
     const referencesIn = (text, library, vary) => {
@@ -140,6 +147,9 @@ export function createRecogniser() {
         return out;
     };
     return {
+        get size() {
+            return kept.size;
+        },
         recognise(text, library, options = {}) {
             const { tolerance = 0, depth = 1, operators = ALL_OPERATORS, ...rest } = options;
             if (!(Number.isInteger(tolerance) && tolerance >= 0))

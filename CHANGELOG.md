@@ -8,7 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.11.2`.
+### Changed
+- **A recogniser keeps at most 512 texts** (#277, decision 055, point 5): `createRecogniser()` forgets the text used longest ago past its capacity, so a run of hours holds its memory and a recognition's cost (a 3-hour E45 walk kept 6,199 texts and 1.36 GB unbounded; now 512). It takes an optional `{ capacity }` (a whole number ≥ 1, or `Infinity` for the old behaviour), and returns a `KeepingRecogniser`, a `Recogniser` with `size`, the texts it keeps. `RecogniserOptions`, `KeepingRecogniser` and `RECOGNISER_CAPACITY` are exported. **What a frontend sees at its next pin:** the same answers on every recognition; Jambot's E45 can share one recogniser across its runs again. No piece sounds different.
 
 ## v0.11.2 — 2026-10-27
 
