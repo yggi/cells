@@ -1,9 +1,12 @@
 /**
- * What every example plays, as one line per piece in `snapshot.txt` (#142): its notes over the first 40 s,
- * the values its cells hold at a few moments, and the live view at a few more, hashed. A change to what a
- * piece plays fails here and names the piece; when it is meant, refresh with `npx vitest run
- * src/engine/snapshot.test.ts -u` (the flag after the path) and say in the PR which pieces changed and why
- * (docs/testing.md).
+ * What every example plays, as one line per piece in `snapshot.txt` (#142): its notes over the first 40 s and
+ * the values its cells hold at a few moments, hashed. A change to what a piece plays fails here and names the
+ * piece; when it is meant, refresh with `npx vitest run src/engine/snapshot.test.ts -u` (the flag after the
+ * path) and say in the PR which pieces changed and why (docs/testing.md).
+ *
+ * The live view at a few moments (`liveAt`: which wires carry sound, what is dimmed, the state a workbench's
+ * graph draws) is hashed apart, one line per piece in `live.snapshot.txt` (#325): a change to it alone is not a
+ * change to what a piece plays, so it doesn't move `snapshot.txt`, the ladder's last rung (AGENTS.md).
  *
  * Beside it, two promises about time that hold for every example: two plans are the same, and a plan's
  * events over two windows are its events over one.
@@ -50,15 +53,21 @@ const pieces = Object.entries(PRESETS).map(([key, { source }]) => {
 });
 
 describe('every example plays what it played (snapshot.txt)', () => {
-  it('notes, values and the live view, hashed per piece', async () => {
+  it('notes and values, hashed per piece', async () => {
     const lines = pieces.map(({ key, result, shifts, played }) => {
       const events = eventsBetween(played, 0, 40);
       const names = [...result.cells.keys()].sort();
       const values = VALUE_TIMES.map((t) => names.map((n) => [n, valuesAt(result, shifts, n, t), notesAt(result, shifts, n, t)]));
-      const live = LIVE_TIMES.map((t) => liveAt(result, shifts, new Set(), t));
-      return `${key}  ${events.length} notes  notes ${hash(notesOf(events))}  events ${hash(events)}  values ${hash(values)}  live ${hash(live)}`;
+      return `${key}  ${events.length} notes  notes ${hash(notesOf(events))}  events ${hash(events)}  values ${hash(values)}`;
     });
     await expect(lines.join('\n') + '\n').toMatchFileSnapshot('./snapshot.txt');
+  });
+});
+
+describe('every example shows the live view it showed (live.snapshot.txt)', () => {
+  it('the live view at three moments, hashed per piece', async () => {
+    const lines = pieces.map(({ key, result, shifts }) => `${key}  live ${hash(LIVE_TIMES.map((t) => liveAt(result, shifts, new Set(), t)))}`);
+    await expect(lines.join('\n') + '\n').toMatchFileSnapshot('./live.snapshot.txt');
   });
 });
 

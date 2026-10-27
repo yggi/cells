@@ -211,6 +211,10 @@ watch=''
 moved=$(ladder '^src/engine/snapshot\.txt$')
 [ -n "$moved" ] && watch="${watch}Ladder: what a piece plays moves ($moved): asked first, the pieces named, the changelog says?
 "
+# (the live view is what a workbench's graph shows, not what a piece plays: a frontend sees it, the ladder doesn't, #325)
+moved=$(ladder '^src/engine/live\.snapshot\.txt$')
+[ -n "$moved" ] && watch="${watch}Live view: what the graph shows moves ($moved): the pieces named, and Cell studio's drawing in mind?
+"
 moved=$(ladder '^fixtures/contracts/')
 [ -n "$moved" ] && watch="${watch}Ladder: the hub's contract vectors change ($moved): a handshake with every implementer?
 "
@@ -223,7 +227,7 @@ moved=$(ladder '^types/')
 moved=$(ladder '^src/engine/fold/ratchet\..*\.json$')
 [ -n "$moved" ] && watch="${watch}Ratchet: recorded anew ($moved): is the trade named?
 "
-if printf '%s\n' "$changed" | grep -E '^src/' | grep -qvE '\.test\.ts$|^src/engine/snapshot\.txt$' &&
+if printf '%s\n' "$changed" | grep -E '^src/' | grep -qvE '\.test\.ts$|^src/engine/(live\.)?snapshot\.txt$' &&
   ! printf '%s\n' "$changed" | grep -qx 'CHANGELOG.md'; then
   watch="${watch}Changelog: src/ changes beyond its tests, and CHANGELOG.md doesn't: would a frontend notice?
 "
