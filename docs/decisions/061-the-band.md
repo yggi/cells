@@ -66,6 +66,7 @@ So 058 §1 reads: a performer is a gate, named anything; a role cell names the g
   - `restart`: its part starts from its top at the switch; on whole bars (`step=1m`, `1m/2`) its notes keep their places in the bar, and its swing, and a switch off the bar warns;
   - `resume`: its part goes on where it stopped, warning off the bar alike.
   - On the selector for all its performers, or on a performer's own line (a gate's, a role's) for it alone, as on a section's.
+  - A part a section also steps keeps the section's default, `restart`: a band's `free` gives way to it, and a band's selector naming a performer at consecutive steps keeps it on, unless `restart=` is said there.
 - **Sections stay** as 016 has them: the switch of time on the meter's bus. A selector's table is of sections or of performers; this adds the switch of sound, on the performer, which is 016's point 8 converging.
 
 ## The rungs

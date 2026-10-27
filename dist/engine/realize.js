@@ -68,12 +68,15 @@ function thrown(result, t, e, lap) {
     return { ...e, value: o.value, alter: o.alter };
 }
 function restartOf(result, select) {
+    let restart = false;
     for (const x of select) {
-        const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart ?? (x.performer ? 'free' : undefined);
+        const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart;
         if (word === 'resume' || word === 'free')
             return word;
+        if (word === 'restart' || !x.performer)
+            restart = true;
     }
-    return 'restart';
+    return restart ? 'restart' : 'free';
 }
 export function picksNow(result, statics, name, seconds) {
     const c = result.cells.get(name);
@@ -547,22 +550,29 @@ function plainEvents(p, from, to, outputs) {
             continue;
         }
         const policy = restartOf(result, t.output.select);
+        const join = (ws) => ws.reduce((all, w) => {
+            const last = all[all.length - 1];
+            if (last && Math.abs(w.a - last.b) < EPS)
+                all[all.length - 1] = { a: last.a, b: w.b };
+            else
+                all.push(w);
+            return all;
+        }, []);
+        const of = (i, a) => {
+            const x = t.output.select[i];
+            const ws = windowsOf(p, t.selects[i], a, until);
+            const said = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart;
+            return x.performer && said !== 'restart' ? join(ws) : ws;
+        };
         const windowsFrom = (a) => {
-            let ws = windowsOf(p, t.selects[0], a, until);
-            for (const sel of t.selects.slice(1)) {
-                const other = windowsOf(p, sel, a, until);
+            let ws = of(0, a);
+            for (const i of t.selects.keys()) {
+                if (i === 0)
+                    continue;
+                const other = of(i, a);
                 ws = ws.flatMap((w) => other.flatMap((x) => (Math.max(w.a, x.a) < Math.min(w.b, x.b) ? [{ a: Math.max(w.a, x.a), b: Math.min(w.b, x.b) }] : [])));
             }
-            if (policy === 'restart')
-                return ws;
-            return ws.reduce((all, w) => {
-                const last = all[all.length - 1];
-                if (last && Math.abs(w.a - last.b) < EPS)
-                    all[all.length - 1] = { a: last.a, b: w.b };
-                else
-                    all.push(w);
-                return all;
-            }, []);
+            return policy === 'restart' ? ws : join(ws);
         };
         const windows = windowsFrom(policy === 'resume' ? 0 : from);
         let held = 0;

@@ -189,14 +189,18 @@ function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number):
 /**
  * What switching a part on does to its time (decision 032): the policy its section's line states, else its selector's; with
  * several selectors on one track, the first that names one other than restart. A performer a band's selector switches runs
- * on unless one says (`free`: decision 061), as a player who sits out comes back in time.
+ * on unless one says (`free`: decision 061), as a player who sits out comes back in time; a section's own default
+ * (restart) wins over a band's.
  */
 function restartOf(result: CompileResult, select: Output['select']): 'restart' | 'resume' | 'free' {
+  // (restart, said on a selector or its part, or a section's own default: a band's free gives way to it)
+  let restart = false;
   for (const x of select) {
-    const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart ?? (x.performer ? 'free' : undefined);
+    const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart;
     if (word === 'resume' || word === 'free') return word;
+    if (word === 'restart' || !x.performer) restart = true;
   }
-  return 'restart';
+  return restart ? 'restart' : 'free';
 }
 
 /** The entries a selector picks right now. */
@@ -727,21 +731,31 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     // restart= (decision 032): from its beginning each time (restart), from where it stopped (resume), or on the clock
     // it was never stopped on (free); `base` is the step its lap 0 begins at, in the window
     const policy = restartOf(result, t.output.select);
-    const windowsFrom = (a: number): { a: number; b: number }[] => {
-      let ws = windowsOf(p, t.selects[0], a, until);
-      for (const sel of t.selects.slice(1)) {
-        const other = windowsOf(p, sel, a, until);
-        ws = ws.flatMap((w) => other.flatMap((x) => (Math.max(w.a, x.a) < Math.min(w.b, x.b) ? [{ a: Math.max(w.a, x.a), b: Math.min(w.b, x.b) }] : [])));
-      }
-      // (resume and free: a part named again by the selector's next step stays on, so a note held across the step
-      // isn't cut there; restart starts it again, from its top, at each step that names it)
-      if (policy === 'restart') return ws;
-      return ws.reduce<{ a: number; b: number }[]>((all, w) => {
+    // (windows that meet, one window: a part named again by the next step stays on)
+    const join = (ws: { a: number; b: number }[]) =>
+      ws.reduce<{ a: number; b: number }[]>((all, w) => {
         const last = all[all.length - 1];
         if (last && Math.abs(w.a - last.b) < EPS) all[all.length - 1] = { a: last.a, b: w.b };
         else all.push(w);
         return all;
       }, []);
+    // (a band's selector naming a performer at consecutive steps keeps it on, unless restart= is said there: decision 061)
+    const of = (i: number, a: number) => {
+      const x = t.output.select[i]!;
+      const ws = windowsOf(p, t.selects[i]!, a, until);
+      const said = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart;
+      return x.performer && said !== 'restart' ? join(ws) : ws;
+    };
+    const windowsFrom = (a: number): { a: number; b: number }[] => {
+      let ws = of(0, a);
+      for (const i of t.selects.keys()) {
+        if (i === 0) continue;
+        const other = of(i, a);
+        ws = ws.flatMap((w) => other.flatMap((x) => (Math.max(w.a, x.a) < Math.min(w.b, x.b) ? [{ a: Math.max(w.a, x.a), b: Math.min(w.b, x.b) }] : [])));
+      }
+      // (resume and free: a part named again by the selector's next step stays on, so a note held across the step
+      // isn't cut there; restart starts it again, from its top, at each step that names it)
+      return policy === 'restart' ? ws : join(ws);
     };
     // (resume: the time it spent on before each window, so from the start of play)
     const windows = windowsFrom(policy === 'resume' ? 0 : from);

@@ -117,4 +117,25 @@ describe('a band: a selector over the performers (decision 061)', () => {
     const all = at(score(''));
     expect(at(score('&band &bass\n&form over=&band step=1m 0 ~'))).toEqual(all.filter((e) => Math.floor(Number(e.split(' ')[0]) / BAR) % 2 === 0));
   });
+  it('keeps a part a section steps as the section plays it, where a band only keeps it on (the section restarts it)', () => {
+    const song = `&bar scan(1 1 1 1) step=120bpm
+&major scale(major)
+&sections step=4n &keysBar &tuneBar &drumBar
+&song over=&sections step=1m/4 laps=1 0 [0,1] [0,2] [0,1,2] 0
+&chords over=&major step=&keysBar/4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
+&tune over=&major step=&tuneBar*2 4 4 5 7 9
+&kick step=&drumBar 0 ~ 0 ~
+&keys s=tri loop=C4
+&lead s=square loop=C5
+&bd s=sine loop=A1
+&player play=&tune &lead
+&out map=sample [&chords * &keys * .15, &player * .2, &kick * &bd * .6]
+`;
+    const notes = (src: string) => {
+      const r = compileSource(src);
+      expect(r.diagnostics.map((d) => d.message)).toEqual([]);
+      return eventsBetween(plan(r, codeShifts(r)), 0, 40).map((e) => `${e.voice} ${Math.round(e.at * 1e4) / 1e4} ${Math.round(e.freq)}`);
+    };
+    expect(notes(song + '&band &player\n&form over=&band step=1m 0')).toEqual(notes(song));
+  });
 });
