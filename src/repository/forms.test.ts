@@ -42,7 +42,7 @@ const piece = (form: string, motif: string) => {
     `&leadline step=8n &${head}`,
     '&leadLevel map=amp .5',
     '&leadV s=sine loop=C4',
-    '&out map=sample [&lead]',
+    '&out map=sample [&leadOut]',
   ].join('\n');
 };
 
