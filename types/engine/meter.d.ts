@@ -85,6 +85,15 @@ export declare function pairsProblem(m: Meter, whole: number): string | null;
  * the beat's tree (`swungIn`). Every beat and every bar line stays where it is.
  */
 export declare function swingAt(m: Meter, p: number): number;
+/**
+ * A bar's knots under its swing (#121): each beat's points on the finest level the swing leans, as written and where the
+ * swing puts them, in pulses (the bar's end the last), so a place between two is even between where they are played.
+ * Null where the meter doesn't swing.
+ */
+export declare function swungKnots(m: Meter): {
+    readonly written: readonly number[];
+    readonly swung: readonly number[];
+} | null;
 /** The meter's own steps under its swing, in steps of one bar; null where none moves. */
 export declare function swungSteps(m: Meter): number[] | null;
 /**
