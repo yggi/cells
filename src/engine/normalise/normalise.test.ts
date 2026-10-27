@@ -64,7 +64,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const meter = '&bar meter("4/4") step=100bpm';
     const keyed = `${meter}\n&key scale(major, C)`;
     const bar = `${keyed}\n&harm over=&key step=1m [0,2,4] [3,5,7]`;
-    // (a performer's part and its levels, the score's holes (decision 058), filled by a line each; its `use` lines resolved)
+    // (a performer's part and its levels, the score's holes (decision 058), and a form's, filled by a line each; its `use` lines resolved)
     const compiled = (t: string) => compileSource(t, undefined, { resolve: resolveSeed });
     const parts = Object.fromEntries([
       ...['bass', 'pad', 'stab', 'lead'].flatMap((n) => [
@@ -72,15 +72,21 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
         [`&${n}Level`, `&${n}Level map=amp .8`],
       ]),
       ['&drumlines', '&kick step=4n &bd ~ &bd ~\n&drumlines [&kick]'],
+      // (a form's hole, a motif in eighths over the key: #294)
+      ['&call', '&call over=&key step=8n 0 2 4@2 2 0 ~ ~'],
+      ['&a', '&a over=&key step=8n 0 2 4@2 2 0 ~ ~'],
     ]);
     for (const f of LIBRARY) {
       const holes = holesOf(f.text, compiled, resolveSeed);
       const bench = holes.defines.includes('&bar') ? '&tempo step=100bpm' : holes.defines.includes('&key') ? `${meter}\n&tonic C` : holes.defines.includes('&harm') ? keyed : bar;
       // (a fragment's sound holes, the voices an instrument fills (#244), are filled by the General MIDI kit's and the bass's lines)
       const voices = [...LIBRARY.find((k) => k.id === 'gm kit')!.text.split('\n'), ...LIBRARY.find((k) => k.id === 'bass')!.text.split('\n')];
-      const kit = holes.sounds.map((n) => `\n${voices.find((l) => l.startsWith(`${n} `))!}`);
+      // (a form's hole is read as a splice alone, as a sound is: a part fills it, not a voice)
+      const kit = holes.sounds.filter((n) => !parts[n]).map((n) => `\n${voices.find((l) => l.startsWith(`${n} `))!}`);
       const part = holes.uses.filter((n) => parts[n]).map((n) => `\n${parts[n]}`);
-      const text = `${compiled(f.text).ok ? f.text : unionOf(f.text, bench).text}${kit.join('')}${part.join('')}`;
+      // (a form is a braid of splices, its head no sound until a voice plays it: #294)
+      const form = f.association.some((wp) => wp.facet === 'form') ? `\n&formV loop=C4\n&formOut [&${/^&(\w+)/.exec(f.text)![1]} * &formV]` : '';
+      const text = `${compiled(f.text).ok ? f.text : unionOf(f.text, bench).text}${kit.join('')}${part.join('')}${form}`;
       expect([f.id, compiled(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
     }
   });

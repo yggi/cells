@@ -34,6 +34,8 @@ export function checkRoles(ctx: Ctx, { decls, implicit, sections }: Declared, ce
     if (c.over && [...sections.values()].includes(c.over)) r.add('selector');
     return r;
   };
+  // (a cell a meter reads its swing from, swing=&swing: its swing= is the meter's, #308)
+  const swingHolders = new Set([...decls.values()].flatMap((d) => (d.swingFrom ? [d.swingFrom.name] : [])));
   for (const d of decls.values()) {
     const c = cells.get(d.name);
     if (!c || implicit.has(d.name)) continue;
@@ -69,7 +71,8 @@ export function checkRoles(ctx: Ctx, { decls, implicit, sections }: Declared, ce
         );
       else if (k === 'pan' && typeof d.params.pan === 'number' && (d.params.pan < 0 || d.params.pan > 1))
         warn(`pan=${d.params.pan}: pan runs from 0 (left) to 1 (right); ${d.params.pan < 0 ? 'this plays hard left' : 'this plays hard right'}`, span);
-      else if (a?.on && !a.on.some((r) => has.has(r))) warn(`${k}= acts on ${rolesText(a.on)}: on &${d.name} it does nothing`, span);
+      else if (a?.on && !a.on.some((r) => has.has(r)) && !(k === 'swing' && swingHolders.has(d.name)))
+        warn(`${k}= acts on ${rolesText(a.on)}: on &${d.name} it does nothing`, span);
       // restart= (decision 032): restart, resume or free
       else if (k === 'restart' && !RESTARTS.includes(d.params.restart as string))
         warn(`restart=${d.params.restart}: what switching a part on does to its time is restart, resume or free — this plays as restart`, span);

@@ -335,3 +335,21 @@ describe('the pitched operators', () => {
     expect(counts).toEqual(SEEDS.map(() => 1));
   });
 });
+
+describe('a held note (#294: the motifs hold theirs)', () => {
+  const bench = '&bar meter("4/4") step=120bpm\n&key scale(major, C)';
+  const line = '&tune over=&key step=8n 4 5 6 7@2 6 4@2';
+  const options = { workbench: bench, operators: PITCHED_OPERATORS };
+  it('is read: a held line is moved in pitch alone, by transpose and invert, and written back held', () => {
+    const vs = variations(line, options);
+    expect(vs.map((v) => v.by)).toEqual(['transpose &tune -2', 'transpose &tune -1', 'transpose &tune 1', 'transpose &tune 2', 'invert &tune']);
+    expect(vs[0]!.apply(line)).toBe('&tune over=&key step=8n 2 3 4 5@2 4 2@2');
+    expect(vs.at(-1)!.apply(line)).toBe('&tune over=&key step=8n 4 3 2 1@2 2 4@2');
+  });
+
+  it('plays what the line moved by the language plays: transpose -2 is &tune^-2', () => {
+    const [down] = variations(line, options);
+    const voice = '\n&v s=sine loop=C4\n&o map=sample [&play * &v]';
+    expect(playsSameNotes(`${bench}\n${down!.apply(line)}\n&play step=8n &tune${voice}`, `${bench}\n${line}\n&play step=8n &tune^-2${voice}`)).toBe(true);
+  });
+});

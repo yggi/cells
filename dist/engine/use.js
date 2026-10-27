@@ -56,7 +56,21 @@ function merge(own, used, say, host) {
             for (const n of lacking)
                 say(i, `&${n} is not in ${quoted(id)}: it defines ${[...byName.keys()].map((m) => `&${m}`).join(', ')}`);
         }
-        const asked = names ?? new Set(byName.keys());
+        const shadowed = new Set();
+        if (!names)
+            for (let more = true; more;) {
+                more = false;
+                for (const n of byName.keys()) {
+                    if (defined.has(n) || shadowed.has(n))
+                        continue;
+                    const readers = theirs.filter((l) => l.name && l.name !== n && l.reads.includes(n));
+                    if (readers.length && readers.every((l) => defined.has(l.name) || shadowed.has(l.name))) {
+                        shadowed.add(n);
+                        more = true;
+                    }
+                }
+            }
+        const asked = names ?? new Set([...byName.keys()].filter((n) => !shadowed.has(n)));
         const overrode = [...asked].filter((n) => byName.has(n) && defined.has(n)).map((n) => `&${n}`);
         const take = new Set();
         const clashed = new Set();
