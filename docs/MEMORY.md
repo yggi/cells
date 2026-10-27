@@ -59,7 +59,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 012 · A pick is a fixed reader on a turning wheel · → decisions/012-picks-are-taps.md
 - 013 · `scale(name, tonic)` is a generator · → decisions/013-scale-generator.md
 - 015 · `&x^n` moves by degrees, `&x^$n` by grid steps · → decisions/015-caret-is-degrees.md
-- 016 · Arranging at the input: sections switched on the meter's bus · → decisions/016-arranging-at-the-input.md
+- 016 · Arranging at the input: sections switched on the meter's bus (point 8 amended by 061) · → decisions/016-arranging-at-the-input.md
 - 017 · Two tools: Shorten and Normalise · → decisions/017-shorten-and-normalise.md
 - 018 · `free(0 2 4 ~)`, a braid left to the performer, recorded · → decisions/018-free-braid.md
 - 019 · MIDI out: a MIDI card, `map=midi` · → decisions/019-midi-card.md
@@ -94,6 +94,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 055 · Recognition · → decisions/055-recognition.md
 - 056 · Modes are fragments; two facets · → decisions/056-the-mode-facet.md
 - 057 · S1 and S2 read a voice by its sound · → decisions/057-a-voice-by-its-sound.md
-- 058 · The performer is a gate, its name its role; the register is the instrument's · → decisions/058-the-performer-is-a-gate.md
+- 058 · The performer is a gate, its name its role (amended by 061: a role cell's); the register is the instrument's · → decisions/058-the-performer-is-a-gate.md
 - 059 · A `use` says what it takes: `use &bd from core_kit`, `use * from …`, `use &x` · → decisions/059-named-use.md
 - 060 · The key is named, `over=&key` (`over=key` the old way); a tonic is a cell, stepped or free · → decisions/060-the-key-is-named.md
+- 061 · The band: a role cell says what its gates play as; a selector over the performers says when · → decisions/061-the-band.md
