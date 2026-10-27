@@ -25,4 +25,4 @@ It holds no `&bar`, so the host's meter swings it: under `4/4 swung on 8n` (or t
 Its lines strike the kit's names (`&bd` `&cp` `&oh` `&hh` `&sd`), holes the core kit fills, and carry no card (#291): `&groove` is the mix, its levels in the hits.
 A piece arranging it takes its limbs by name (`use &kick, &clap, &hats, &ticks from "Electro swing drums"`), as the example does, each under a level of its own.
 
-At the point proposed for an Electro swing preset (sync .55, harm .75, artic .6, energy .75: `ELECTRO_SWING`, `src/repository/presets.ts`), which Jambot has no preset at yet; weight 1.
+At a point proposed for an Electro swing preset (sync .55, harm .75, artic .6, energy .75), weight 1: no preset of Jambot's sits there yet, and the axes are Jambot's (decision 041), so the point is this file's, Jambot's to adopt.

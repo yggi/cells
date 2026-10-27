@@ -20,4 +20,4 @@ The minor with a raised seventh: the gypsy jazz key of [Electro swing, in pieces
 It defines `&key`, the key (decision 047's interface name, decision 056, named since decision 060), and uses `&tonic`, a cell holding the key's tonic (`&tonic D`, #290), so it fits any workbench that has no key yet and gives the tonic; the harmonies and the bass lines read it (`over=&key`, then `over=&harm`).
 The tonic is left to the text that uses it, a hole, as the other modes leave theirs.
 
-At the point proposed for an Electro swing preset (`ELECTRO_SWING`, `src/repository/presets.ts`), weight 1; Jambot's composer has no harmonic minor among its modes yet (`COMPOSER_MODES`, yggi/jambot packages/engine/src/key.ts).
+At a point proposed for an Electro swing preset (sync .55, harm .75, artic .6, energy .75), weight 1, Jambot's to adopt (decision 041); Jambot's composer has no harmonic minor among its modes yet (`COMPOSER_MODES`, yggi/jambot packages/engine/src/key.ts).

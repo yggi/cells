@@ -44,7 +44,7 @@ The crackle is the piece's own, a record's: a tick of noise on a few sixteenths,
 
 ## The stabs
 
-`Charleston stabs`, used above, is the stab player's part: the Charleston, a chord on one and on the and of two, three bars, and a fourth that pushes, leaning into the next chord's third and fifth with its root on top.
+`Charleston stabs`, used above, is the stab player's part: the Charleston, a chord on one and on the and of two, three bars, and a fourth that pushes: its last stab, on the and of four, comes early with the next chord, its third and fifth with its root on top.
 The stab player reads the chords in force, `over=&harm`, so the same rhythm is D minor in one half of the vamp and A major in the other.
 
 ```cells
@@ -63,7 +63,7 @@ The break cuts it into pieces with picks: its first three notes (`&call[0:3]`) a
 &verse over=&key step=8n &call &call^-2 &call &turn &call^-3 degree(&call[::-1], -3) &call^-3 &turn
 &chop over=&key step=8n &call[0:3] ~@5 &call[0:3] ~ &call[0:3] ~ &call[3:]^-2 ~@3 &call[0:2]!4
 &chopA over=&key step=8n degree(&call[0:3], -3) ~@5 degree(&call[0:3], -3) ~ degree(&call[0:3], -3) ~ &turn &call[3]!4
-&leadline step=8n ~@64 &verse &chop &chopA &verse
+&leadline step=8n &verse!2 &chop &chopA &verse
 &callNote label="One bar: everything the clarinet plays is this bar, moved by degrees (^n), turned backwards ([::-1]) or cut ([0:3]): its call, its answer, its break." about=(&call &verse &chop &chopA)
 ```
 
@@ -76,23 +76,25 @@ A second clarinet doubles the last verse an octave up: a copy of the lead player
 ## The form, in levels
 
 The song is 32 bars, four times round the vamp: the stabs and the hats alone, then the kick and the bass, the verse, the break with the kick and the bass out, and the verse again, doubled.
-It is written as each part's level, bar by bar, so every part keeps tapping the swung meter: a section's own clock steps its parts straight.
+It is written as each part's level, bar by bar, the clarinet's entry too (its line plays from the top, silent for the first eight bars), so every part keeps tapping the swung meter.
 The players' levels are holes their fragments leave; here they are the form.
+It is the form written six times over, and waits on #304: a selector over the performers, each step naming who plays, would write it once.
 
 ```cells
 &bassLevel map=amp step=1m 0!4 .8!12 0!8 .8!8
 &stabLevel map=amp step=1m .5!16 0!8 .6!8
-&leadLevel map=amp .5
+&leadLevel map=amp step=1m 0!8 .5!24
 &lead2Level map=amp step=1m 0!24 .25!8
 &kickForm map=amp step=1m 0!4 1!12 0!8 1!8
 &clapForm map=amp step=1m 0!8 1!8 .6!8 1!8
-&formNote label="The form: intro (4 bars), the band (4), the verse (8), the break (8), the verse doubled (8)." about=(&bassLevel &stabLevel &kickForm &clapForm)
+&formNote label="The form: intro (4 bars), the band (4), the verse (8), the break (8), the verse doubled (8)." about=(&bassLevel &stabLevel &leadLevel &kickForm &clapForm)
 ```
 
 ## The sound
 
 The instruments the players play are voices with no sound of their own: the piece gives each one.
 An upright-ish bass, a brass stab, a clarinet with a slow vibrato, and the crackle's noise.
+In giving the bass its sound the piece gives it its register too, which is the instrument's (decision 058): the library's `bass` sits at C2 and the bass player plays it an octave down, at C1; this `&bassV` sits at C3, so the walk sounds at C2, an octave above the library's, where a laptop's speakers still carry it.
 
 ```cells
 &bassV s=saw loop=C3 lpf=700 env=&(map=adsr .005 .3 .25 .08)

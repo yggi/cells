@@ -15,7 +15,7 @@
  * (`fit.ts`), read off its text: under the library's meters both fit each 4/4 and nothing else. Their names (`&clave`, `&percussion`,
  * `&claves`) are none of the drum bars', so a clave layers on any of them in one text. Their associations are written by
  * hand, near Bossa nova and Funk. The fourteenth, `Electro swing drums`, is lifted from examples/electroswing.md, at the point
- * proposed for an Electro swing preset (`ELECTRO_SWING`).
+ * proposed for an Electro swing preset (written in its file; Jambot's to adopt, decision 041: Jambot owns the axes).
  *
  * Every point of a rhythm is associated as the facet `rhythm`: a hint a query names, not what the fragment can fill.
  * Each is a file of the seed library, `fragments/rhythms/*.md` (`seed.ts`), whose prose says what it is and where it sits.

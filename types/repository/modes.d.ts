@@ -10,7 +10,7 @@
  * preset is mixolydian, which sits halfway between Funk's point and Bossa nova's. A fifth, the bell and scale, is ionian
  * and a rhythm at once: the West African bell is the major scale's intervals, so its key stepped is its timeline. A sixth,
  * harmonic minor, is lifted from examples/electroswing.md and sits at the point proposed for an Electro swing preset
- * (`ELECTRO_SWING`); Jambot's composer plays none of it yet.
+ * (written in its file; Jambot's to adopt); Jambot's composer plays none of it yet.
  * Each is a file of the seed library, `fragments/modes/*.md` (`seed.ts`), whose prose says what it is, where it sits and why.
  */
 import type { Fragment } from './fragments';
