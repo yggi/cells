@@ -102,6 +102,6 @@ In giving the bass its sound the piece gives it its register too, which is the i
 &leadV s=square loop=C4 lpf=2400 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=5.5 0 .12 0 -.12 0)
 &vinyl s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
 
-&out map=sample postgain=1 [&drums,
+&out map=sample postgain=1.11 [&drums,
                          &crackle * &vinyl * .04, &bass, &stab * .4, &lead * .5, &lead2 * .5]
 ```
