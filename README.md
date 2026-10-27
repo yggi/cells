@@ -1,5 +1,7 @@
 # cells
 
+[![CI, nightly on main](https://github.com/yggi/cells/actions/workflows/ci.yml/badge.svg?branch=main&event=schedule)](https://github.com/yggi/cells/actions/workflows/ci.yml?query=branch%3Amain+event%3Aschedule)
+
 A minimal language for music where everything is a cell: a helix with a braid in its grid, on top of Strudel's mini-notation. Text in, events out, with no host of its own.
 
 ```cells
