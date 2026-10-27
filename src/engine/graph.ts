@@ -294,7 +294,7 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
   for (let grew = true; grew;) {
     grew = false;
     for (const c of result.cells.values())
-      if (!heard.has(c.name) && spliced(c).some((k) => heard.has(k))) {
+      if (!heard.has(c.name) && c.map?.kind !== 'role' && spliced(c).some((k) => heard.has(k))) {
         heard.add(c.name);
         grew = true;
       }
@@ -420,6 +420,11 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
         link({ id: edgeId(id, cellId(child)), source: id, target: cellId(child), count, transforms: AS_IS, ...wire('midi', 'cv', id, cellId(child), 1, true) });
         continue;
       }
+      // a role's gates (decision 061): a role names the gates that play it, no sound, so each is one wire into it as written
+      if (c.map?.kind === 'role') {
+        link({ id: edgeId(id, cellId(child)), source: id, target: cellId(child), count, transforms: AS_IS, ...wire('braid', 'none', id, cellId(child), 1, true, true) });
+        continue;
+      }
       // a gate spliced in (`&out map=sample &drums`): its sound is the voices it plays, each in from its own wheel (#234)
       const gate = result.cells.get(child);
       if (gate?.gate && spliceBand(child) === 'audio') {
@@ -509,6 +514,7 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
   const junctions: GraphNode[] = [];
   // a gate (play=, #234, decision 022): a named junction, drawn as a node of its own — its notes and levels in on ports
   // of their own, its notes out to the voices it plays; no junction for each of its products
+  const stacks = new Set<string>();
   for (const c of result.cells.values()) {
     const g = c.gate;
     if (!g) continue;
@@ -531,6 +537,31 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
         routes: [pairs, flows],
         ...wire(port, 'cv', cellId(name), into, name === g.notes ? chord(name) : 1),
       });
+    }
+    // a stack of lines it plays (#302, `play=&drumlines`, `&drumlines [&kick * &kickForm, &hats]`): each member written
+    // into the stack's cell as a gate's own terms go into the gate, its line on `play`, its levels on `level` (#329)
+    const stack = g.lines?.length ? result.cells.get(g.notes) : undefined;
+    if (stack && !stacks.has(stack.name)) {
+      stacks.add(stack.name);
+      const lines = new Set(g.lines!.map((l) => l.line));
+      const into = cellId(stack.name);
+      for (const u of stack.units) {
+        if (u.atom.kind !== 'mix') continue;
+        for (const e of u.atom.exprs)
+          for (const r of e.k === 'ref' ? [e.ref] : e.k === 'prod' ? e.factors.flatMap((f) => (f.k === 'ref' ? [f.ref] : [])) : []) {
+            if (!result.cells.has(r.name)) continue;
+            const port = lines.has(r.name) ? 'play' : 'level';
+            const from = cellId(r.name);
+            link({
+              id: edgeId(from, into),
+              source: from,
+              target: into,
+              count: 1,
+              transforms: [refTransform(r)],
+              ...wire(port, 'cv', from, into, port === 'play' ? chord(r.name) : 1),
+            });
+          }
+      }
     }
     // its one output: a note bus to the voices it plays (a strand per note at once, its notes' chords), each voice
     // reading its notes there; their sound leaves from the voices themselves (below, `product`), not from the gate

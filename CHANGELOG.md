@@ -8,7 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.11.1`.
+Nothing has changed since `v0.11.2`.
+
+## v0.11.2 — 2026-10-27
+
+### Fixed
+- **The graph draws a role and a stack of lines as written** (#329, `writtenGraph`): a role cell (`&drums map=role &drumOut`, decision 061) is one wire from each gate it names, no sound, where it drew the voices the gate plays (`kit → drums`); a stack a gate plays (`play=&drumlines`, `&drumlines [&kick * &kickForm, &hats]`, #302) has each member wired into its cell as a gate's terms are, its line on `play`, its levels on `level`, where it had none. **What a frontend sees at its next pin:** Cell studio's graph draws these wires; nothing a piece plays changes.
+- **A hole read as a line, `Holes.lines`** (#314): a hole a braid reads through an operator on it (a degree `&call^-2`, `inverse(&call)`, a pick `&call[::-1]`, a shift `&call[<<]`, a transposition `&call^$7`) is a line, which a text fills with a line (`&call step=8n &gypsy`), not a sound an instrument fills: `holesOf` lists it in the new field `lines` and no longer in `sounds`, and `fitOf` lists it in `missing`, not in `sounds`, so a composer asks for a motif, not an instrument. The four seed forms read their hole so (`&call`, `&a`), and no other fragment of the library: every other fragment's holes are what they were. A form's clock needs, read before off `&call` stood in as a one-step voice, are now none alone (#322 asks for its need filled). **What a frontend sees at its next pin:** a new field on `Holes` (a frontend that builds one by hand adds `lines`); no piece sounds different, and no event snapshot moves.
 
 ## v0.11.1 — 2026-10-27
 

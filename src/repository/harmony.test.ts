@@ -106,7 +106,7 @@ describe('the harmonies', () => {
   });
 
   it.each(HARMONY_FRAGMENTS.map((f) => [f.id, f.text]))('%s uses the key and defines &harm, and nothing else', (_, text) => {
-    expect(holesOf(text, compileSource)).toEqual({ uses: ['&key'], sounds: [], defines: ['&harm'], clock: [] });
+    expect(holesOf(text, compileSource)).toEqual({ uses: ['&key'], sounds: [], lines: [], defines: ['&harm'], clock: [] });
     expect(fitOf(text, '&bar meter("4/4") step=120bpm').missing).toEqual(['&key']);
   });
 
