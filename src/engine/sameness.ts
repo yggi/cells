@@ -48,8 +48,10 @@ export const SAMENESS_SECONDS = 60;
  * voices alike merged into one sound as the two did.
  */
 type Event = ReturnType<typeof eventsBetween>[number];
+/** A number as the snapshot reads it, to 9 significant digits (`snapshot.test.ts`), so two sums of one time in another order agree. */
+const nine = (_: string, v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? +v.toPrecision(9) : v);
 const whole = (e: Event, voice: string) =>
-  `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
+  `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null], nine)}`;
 const note = (e: Event, voice: string) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
 
 /** A voice's attributes its events already carry: its gain and pan in their gains, its legato in their lengths. */

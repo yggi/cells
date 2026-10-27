@@ -69,6 +69,15 @@ describe('the equalities a tool promises, over their window (#180)', () => {
     expect(soundsIdentical(PRESETS.bwv847!.source, generated)).toBe(true);
   });
 
+  it('S1 reads every number of an event as the snapshot does, to 9 significant digits: one time summed two ways is one time (#196)', () => {
+    // (a scan of four beats and meter("4/4") place the same notes, their times summed in another order: 1e-15 s apart)
+    const bar = (meter: string, vibrato = '.1') =>
+      `&bar ${meter} step=92bpm\n&tune over=scale(major) step=8n 0 2 4 5 7 5 4 2\n&lead s=sine loop=C4 pitch=&(map=lin loop=5 0 ${vibrato} 0 -${vibrato} 0)\n&out map=sample [&tune * &lead * .5]`;
+    expect(soundsIdentical(bar('scan(1 1 1 1)'), bar('meter("4/4")'))).toBe(true);
+    // (a bend that differs is still heard)
+    expect(soundsIdentical(bar('scan(1 1 1 1)'), bar('meter("4/4")', '.11'))).toBe(false);
+  });
+
   it('a text that does not compile is the same as nothing', () => {
     expect(soundsIdentical('&a over=&nowhere 0', '&a over=&nowhere 0')).toBe(false);
   });

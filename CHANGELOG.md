@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.11.2`.
+### Fixed
+
+- **S1 reads an event's every number as the snapshot does** (#196): `soundsIdentical` compared an event's bends, levels, moving parameters and envelope digit for digit, where the snapshot it stands for reads every number to 9 significant digits. So one time summed two ways, 1e-15 s apart, failed it: `scan(1 1 1 1)` against `meter("4/4")` failed in 39 of the 54 examples that write it, though their snapshot hashes agree. Now 49 of the 54 pass. Four still fail because they read `&bar` as more than a meter (baustelle, effects, moving, waveforms), and tape because its physics differs by 2e-8 cents. **What a frontend sees at its next pin:** Migrate, Normalise and Shorten keep a rewrite that differed only so, where before they dropped it; nothing a piece plays changes.
 
 ## v0.11.2 — 2026-10-27
 
