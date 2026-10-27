@@ -96,6 +96,11 @@ export declare function tapWhole(tap: string | undefined, meter: Meter | null): 
  */
 export declare function linesOf(source: string, result: CompileResult): Line[];
 /**
+ * A line with these notes, each step's token as `written` writes it: a rest, a hit, a chord of hits, a degree; null on
+ * a step a held note holds through (a held note is written held, `7@2`, the steps it holds through left out).
+ */
+export declare function stepTokens(line: Line, notes: readonly LineNote[]): (string | null)[];
+/**
  * A line with these notes, as the braids to write: each cell's tokens. Its steps as plain steps on its grid (a step of
  * two hits a chord, `[&bd,&hh]`); a subsequence or a Euclid as a subsequence on its one step, but a Euclid turned
  * (`rotated`), which stays a Euclid with the next turn. Its levels as given. A line left with no note leaves its card (a

@@ -39,6 +39,7 @@ interface RecogniseOptions extends VaryOptions {
 - **The order:** by distance, then the shorter path, then the earlier bar, then the library's order. A fragment is reported by its nearest path, and among paths at one distance by the shortest, then by the earliest bar, then by Vary's order.
 - **Recognised** means the list is not empty. The homeostat counts a bar as recognised when it is. The tolerance is the licence's n notes.
 - **What is never recognised:** a fragment that plays no notes Vary reads and defines no harmony (a meter, an instrument) is never a match. A heard text that plays none (one that doesn't compile, or one written in forms Vary doesn't read) recognises nothing.
+- **A reference is read as its path** (#293, decision 052, point 7): a heard text that uses a library fragment and writes a line it takes as one of its variations' references (`&hats2 base=&hats =!3 ~`, `[&kick, &hats[<<]]`, `&late step=8n &gypsy^-2`) is that fragment by that one operator, at distance 0, with no search and no compile of the heard text; the fragments it refers to so are the answer.
 - **The library** is whatever the frontend passes: the seed library and its learned layer, `repository.merge(layer).fragments`, as a query merges them. A groove the band filed is recognised as a seed is, and the composer's variation of it by the `by` it was filed with (`varies`, `by`, decision 052, point 4).
 
 ### 2. The distance: the notes, as Vary reads them

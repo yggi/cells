@@ -345,6 +345,20 @@ function pitchedLineOf(source: string, result: CompileResult, trigger: string, v
 const hitText = (n: { voice: string; own: string | null }) => (n.own === null ? n.voice : `${n.voice}:0:${n.own}`);
 
 /**
+ * A line with these notes, each step's token as `written` writes it: a rest, a hit, a chord of hits, a degree; null on
+ * a step a held note holds through (a held note is written held, `7@2`, the steps it holds through left out).
+ */
+export function stepTokens(line: Line, notes: readonly LineNote[]): (string | null)[] {
+  const holding = new Set(notes.flatMap((n) => Array.from({ length: (n.hold ?? 1) - 1 }, (_, k) => n.step + k + 1)));
+  return Array.from({ length: line.steps }, (_, step) => {
+    if (holding.has(step)) return null;
+    const at = notes.filter((n) => n.step === step);
+    const hits = at.map((n) => (n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n)));
+    return hits.length === 0 ? '~' : hits.length === 1 ? hits[0]! : `[${hits.join(',')}]`;
+  });
+}
+
+/**
  * A line with these notes, as the braids to write: each cell's tokens. Its steps as plain steps on its grid (a step of
  * two hits a chord, `[&bd,&hh]`); a subsequence or a Euclid as a subsequence on its one step, but a Euclid turned
  * (`rotated`), which stays a Euclid with the next turn. Its levels as given. A line left with no note leaves its card (a
@@ -362,14 +376,7 @@ export function written(line: Line, notes: readonly LineNote[], levels?: readonl
     const { voice, k, n, r } = line.euclid;
     out.set(line.trigger, [`${voice}(${k},${n},${(r + 1) % n})`]);
   } else {
-    // (a held note is written held, `7@2`, the steps it holds through left out)
-    const holding = new Set(notes.flatMap((n) => Array.from({ length: (n.hold ?? 1) - 1 }, (_, k) => n.step + k + 1)));
-    const tokens = Array.from({ length: line.steps }, (_, step) => {
-      if (holding.has(step)) return null;
-      const at = notes.filter((n) => n.step === step);
-      const hits = at.map((n) => (n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n)));
-      return hits.length === 0 ? '~' : hits.length === 1 ? hits[0]! : `[${hits.join(',')}]`;
-    }).filter((t): t is string => t !== null);
+    const tokens = stepTokens(line, notes).filter((t): t is string => t !== null);
     out.set(line.trigger, line.form === 'steps' ? tokens : [`[${tokens.join(' ')}]`]);
   }
   if (line.levels && levels) out.set(line.levels.cell, [...levels]);

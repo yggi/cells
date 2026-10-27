@@ -1,6 +1,8 @@
 import type { Rewrite } from '../rewrite';
 import { type Anchor } from './anchors';
+import { type Reference } from './reference';
 export { backbeatOf, type Anchor } from './anchors';
+export type { Reference } from './reference';
 /** The operators: the rhythm ones (rung 1) and the pitched ones (rung 2). */
 export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim';
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
@@ -19,6 +21,12 @@ export interface Variation extends Rewrite<Operator> {
     readonly line: string;
     /** For a frontmatter's `by:`: the operator, the line and its amount (a step, degrees), `drop &hat 6`, `rotate &hat`, `transpose &bass -1`. */
     readonly by: string;
+    /**
+     * The varied line as forms on the line it varies (#293), for a text that keeps what was varied: `&hat[<<]`,
+     * `&bassline^-1`, `&hat[:6] ~ &hat[7:]`; absent where the line can't be spliced or the forms would be longer than the
+     * line written out (`reference.ts`).
+     */
+    readonly reference?: Reference;
 }
 /** The frontend's policy: cells knows none of it. */
 export interface VaryOptions {

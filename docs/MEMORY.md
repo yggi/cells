@@ -88,7 +88,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 049 · Four tools: Migrate, Normalise, Shorten, Fold · → decisions/049-four-tools-over-a-piece.md
 - 050 · The equalities: E0–E5 and S1–S3 · → decisions/050-the-equalities.md
 - 051 · Literate cells · → decisions/051-literate-cells.md
-- 052 · Variations are operators · → decisions/052-variations-as-operators.md
+- 052 · Variations are operators; each with its reference, a form on its source (point 7, #293) · → decisions/052-variations-as-operators.md
 - 053 · `swing=8n:r:pairs` leans the pairs alone · → decisions/053-the-pairs-alone.md
 - 054 · Instruments are fragments; `use` (its forms amended by 059) · → decisions/054-instruments-and-use.md
 - 055 · Recognition · → decisions/055-recognition.md

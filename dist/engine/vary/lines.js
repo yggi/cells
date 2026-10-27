@@ -258,6 +258,16 @@ function pitchedLineOf(source, result, trigger, voice, card) {
     };
 }
 const hitText = (n) => (n.own === null ? n.voice : `${n.voice}:0:${n.own}`);
+export function stepTokens(line, notes) {
+    const holding = new Set(notes.flatMap((n) => Array.from({ length: (n.hold ?? 1) - 1 }, (_, k) => n.step + k + 1)));
+    return Array.from({ length: line.steps }, (_, step) => {
+        if (holding.has(step))
+            return null;
+        const at = notes.filter((n) => n.step === step);
+        const hits = at.map((n) => (n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n)));
+        return hits.length === 0 ? '~' : hits.length === 1 ? hits[0] : `[${hits.join(',')}]`;
+    });
+}
 export function written(line, notes, levels, rotated = false) {
     const out = new Map();
     if (!notes.length) {
@@ -271,14 +281,7 @@ export function written(line, notes, levels, rotated = false) {
         out.set(line.trigger, [`${voice}(${k},${n},${(r + 1) % n})`]);
     }
     else {
-        const holding = new Set(notes.flatMap((n) => Array.from({ length: (n.hold ?? 1) - 1 }, (_, k) => n.step + k + 1)));
-        const tokens = Array.from({ length: line.steps }, (_, step) => {
-            if (holding.has(step))
-                return null;
-            const at = notes.filter((n) => n.step === step);
-            const hits = at.map((n) => (n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n)));
-            return hits.length === 0 ? '~' : hits.length === 1 ? hits[0] : `[${hits.join(',')}]`;
-        }).filter((t) => t !== null);
+        const tokens = stepTokens(line, notes).filter((t) => t !== null);
         out.set(line.trigger, line.form === 'steps' ? tokens : [`[${tokens.join(' ')}]`]);
     }
     if (line.levels && levels)
