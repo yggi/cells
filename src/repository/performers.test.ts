@@ -82,6 +82,17 @@ const PARTS = {
 } as const;
 
 describe('the performers', () => {
+  it('come by their role: a named use of the role brings its gate, and of the gate alone, no role (decisions 059 and 061)', () => {
+    const score = '&bassline over=&harm step=4n 0 0 1 2\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut';
+    const performers = (use: string) => {
+      const r = compileSource(`${use}\n${HOST}\n${score}`, undefined, { resolve: resolveSeed });
+      expect(r.diagnostics.map((d) => d.message)).toEqual([]);
+      return r.performers.map((p) => [p.name, p.role]);
+    };
+    expect(performers('use &bass from "bass performer"')).toEqual([['bassOut', 'bass']]);
+    expect(performers('use &bassOut from "bass performer"')).toEqual([['bassOut', undefined]]);
+  });
+
   it('are the drums, the bass, the pad, the stab and the lead, each one gate whose role a role cell gives, playing its part on the instrument it uses', () => {
     expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['drums performer', 'bass performer', 'pad performer', 'stab performer', 'lead performer']);
     const read = PERFORMER_FRAGMENTS.map((f) => compileSource(f.text, undefined, { resolve: resolveSeed }).performers);
