@@ -7,6 +7,8 @@ import { EXAMPLE_FILES } from '../engine/examples.generated';
 import { readPiece } from '../engine/piecefile';
 import { SEED_FILES } from './seed.generated';
 import { holesOf, lapMeets, meterMeets, type ClockNeed } from './holes';
+import { FORM_FRAGMENTS } from './forms';
+import { LIBRARY, resolveSeed } from './library';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 const holes = (text: string) => holesOf(text, compileSource);
@@ -17,6 +19,7 @@ describe('what a fragment uses and defines', () => {
     expect(holes('&line step=8n 0 2 4 over=&harm\n&out [&line * &lead]\n&lead s=saw loop=C3')).toEqual({
       uses: ['&harm'],
       sounds: [],
+      lines: [],
       defines: ['&line', '&out', '&lead'],
       clock: [],
     });
@@ -53,6 +56,26 @@ describe('what a fragment uses and defines', () => {
     const h = holes('&t step=16n [&hh,&sd] &hh!15');
     expect(h.sounds).toEqual(['&hh', '&sd']);
     expect(h.clock).toEqual([need('&t', '16n', 1, 16, 1, 16)]);
+  });
+});
+
+describe('a hole read as a line (#314)', () => {
+  it('is one a braid reads through an operator: a degree, inverse(…), a pick, a shift, a transposition; never a sound', () => {
+    for (const read of ['&call^-2', 'inverse(&call)', '&call[::-1]', '&call[<<]', '&call^$7']) {
+      const h = holes(`&phrase step=8n &call ${read}`);
+      expect([h.uses, h.sounds, h.lines], read).toEqual([['&call'], [], ['&call']]);
+    }
+  });
+
+  it('a step struck bare, or by a modifier (&bd(3,8)), is still a sound', () => {
+    const h = holes('&t step=16n &bd(3,8) &sd');
+    expect([h.sounds, h.lines]).toEqual([['&bd', '&sd'], []]);
+  });
+
+  it('no fragment of the library but the four forms reads a hole as a line, so no other’s holes move', () => {
+    const forms = new Set(FORM_FRAGMENTS.map((f) => f.id));
+    const read = LIBRARY.filter((f) => holesOf(f.text, compileSource, resolveSeed).lines.length).map((f) => f.id);
+    expect(new Set(read)).toEqual(forms);
   });
 });
 

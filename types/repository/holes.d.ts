@@ -15,6 +15,10 @@
  * - **Sounds:** the uses read only as a sound, a step of a braid or a term of a mix (a groove's `&bd`), never as a table,
  *   a clock or a parameter: decision 054 rules that such a hole doesn't block the fit (the composer asks for the
  *   instrument next).
+ * - **Lines:** the uses a braid reads through an operator on it (a degree `&call^-2`, `inverse(&call)`, a pick
+ *   `&call[::-1]`, a shift `&call[<<]`, a transposition `&call^$7`), which only a line has the steps or the values for: a
+ *   form's hole (#314), a part a text fills with a line (`&call step=8n &gypsy`), never a sound, so it is never stood in
+ *   by a voice and the fit asks for it.
  * - A text with `use` lines (decision 054) is read over its expansion, given the resolver its compile reads them by
  *   (`resolve`): a used fragment's holes, sounds and clock needs are the text's, less what the text and the other used
  *   fragments define, and it defines what they give (`CompileResult.uses`). Without one, only its own lines are read.
@@ -45,6 +49,8 @@ export interface Holes {
     readonly uses: readonly string[];
     /** Of those, the names read only as a sound (a braid's step, a mix's term): they don't block the fit; sorted. */
     readonly sounds: readonly string[];
+    /** Of those, the names a braid reads through an operator (`&call^-2`, `&call[::-1]`): a line, not a sound; sorted. */
+    readonly lines: readonly string[];
     /** Names its lines declare (`&kick`), in the order written, then those its `use` lines give. */
     readonly defines: readonly string[];
     readonly clock: readonly ClockNeed[];
@@ -66,7 +72,12 @@ export interface TappedNeed {
  * main meter is a need unless the main meter is one of `own`. A cell that didn't compile states no need here.
  */
 export declare function clockNeeds(text: string, result: CompileResult, of?: ReadonlySet<string>, own?: ReadonlySet<string>): TappedNeed[];
-/** Whether declarations read a name (`&bd`) only as a sound: a step of a braid or a term of a mix, never a table, a clock or a parameter. */
+/** The names declarations' braids read through an operator (`&call^-2`, `&call[::-1]`): as a line, which a sound isn't. */
+export declare const readAsLine: (decls: readonly CellDecl[]) => ReadonlySet<string>;
+/**
+ * Whether declarations read a name (`&bd`) only as a sound: a step of a braid or a term of a mix, never a table, a clock,
+ * a parameter, or through an operator on a step (a line: a form's `&call^-2`).
+ */
 export declare function readOnlyAsSound(decls: readonly CellDecl[]): (name: string) => boolean;
 /**
  * The lines a text's compile reads: its expansion where it has `use` lines and a resolver (decision 054: a used

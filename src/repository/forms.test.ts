@@ -8,6 +8,7 @@ import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
 import { FORM_FRAGMENTS } from './forms';
+import { fitOf } from './fit';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
@@ -74,6 +75,20 @@ describe('the forms', () => {
     for (const f of FORM_FRAGMENTS) {
       expect(f.association, f.id).toEqual([{ point: { sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 }, weight: 1, facet: 'form' }]);
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual([`&${FORMS[f.id]!.hole}`]);
+    }
+  });
+
+  // (#314: a form's hole is a line, which a piece fills with a motif, not a sound an instrument fills)
+  it('each read their hole as a line, not a sound: the fit asks for it, not for an instrument', () => {
+    for (const f of FORM_FRAGMENTS) {
+      const hole = `&${FORMS[f.id]!.hole}`;
+      const h = holesOf(f.text, compileSource);
+      expect([h.lines, h.sounds], f.id).toEqual([[hole], []]);
+      const fit = fitOf(f.text, BENCH);
+      expect([fit.fits, fit.missing, fit.sounds], f.id).toEqual([false, [hole], []]);
+      // (filled by a line, nothing is missing and no instrument asked for; its clock need is #322's)
+      const filled = fitOf(f.text, `${BENCH}\nuse &gypsy\n${hole} step=8n &gypsy`, undefined, resolveSeed);
+      expect([filled.missing, filled.sounds, filled.diagnostics], f.id).toEqual([[], [], []]);
     }
   });
 
