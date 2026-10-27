@@ -60,8 +60,12 @@ export function createRecogniser({ capacity = RECOGNISER_CAPACITY } = {}) {
     if (!((Number.isInteger(capacity) || capacity === Infinity) && capacity >= 1))
         throw new Error(`createRecogniser: capacity is ${String(capacity)}, not a whole number ≥ 1 or Infinity`);
     const kept = new Map();
+    const written = new WeakMap();
     const keep = (text, vary) => {
-        const key = JSON.stringify([text, vary.workbench ?? '', vary.operators, vary.keep ?? [], vary.fewest ?? 1, vary.degrees ?? null]);
+        let options = written.get(vary);
+        if (options === undefined)
+            written.set(vary, (options = JSON.stringify([vary.workbench ?? '', vary.operators, vary.keep ?? [], vary.fewest ?? 1, vary.degrees ?? null])));
+        const key = `${options}\n${text}`;
         const known = kept.get(key);
         if (known)
             kept.delete(key);
@@ -160,7 +164,7 @@ export function createRecogniser({ capacity = RECOGNISER_CAPACITY } = {}) {
             const referred = referencesIn(text, library, vary);
             if (referred.length)
                 return referred;
-            const reading = readVariations(text, { ...vary, operators: [] });
+            const reading = read(text, vary);
             if (!reading.notes?.length)
                 return [];
             const heard = windowsOf(candidate([], reading.notes, { ...reading, span: null }), null)[0];

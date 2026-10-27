@@ -186,6 +186,22 @@ describe('random bars, and the cost', () => {
       expect(compiles.mock.calls.length - before).toBe(1);
     }
   });
+
+  // (#337: a bar's text read once, as heard, is the reading it has when it joins the next bar's library, what was played lately)
+  it('a heard text joining the next bar’s library is not compiled again', async () => {
+    vi.resetModules();
+    const compiles = vi.mocked((await import('../engine/compile')).compileSource);
+    const warm = (await import('./recognise')).createRecogniser();
+    warm.recognise(BARS[0]!.fragment, LIBRARY, DRUM_OPTIONS);
+    for (const [played, next] of bars.slice(0, 50).map((t, i) => [t, bars[i + 1]!] as const)) {
+      warm.recognise(played, LIBRARY, DRUM_OPTIONS);
+      const lately: Fragment = { id: 'lately', text: played, association: [] };
+      const before = compiles.mock.calls.length;
+      warm.recognise(next, [...LIBRARY, lately], DRUM_OPTIONS);
+      expect(compiles.mock.calls.length - before).toBe(1);
+      expect(warm.recognise(played, [...LIBRARY, lately], DRUM_OPTIONS).some((r) => r.fragment === lately)).toBe(true);
+    }
+  });
 });
 
 /**

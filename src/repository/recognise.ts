@@ -2,8 +2,9 @@
  * Recognition (decision 055, #224): given a heard text (a bar or a section the Muse wrote) and a library (the seed and a
  * learned layer's filed fragments), which fragments it is, by which of decision 052's operators, and how far: the
  * homeostat's sensor (yggi/jambot#237). A fragment's reading and its variations' are kept by text, so a recogniser warmed
- * on a library compiles only the heard text; it keeps the 512 texts used last (#277), so a run of hours holds its memory
- * and its cost, and the cache changes no answer. Stateless as the repository is (decision 048):
+ * on a library compiles only the heard text, which it keeps alike, read once when it joins the next library (#337); it
+ * keeps the 512 texts used last (#277), so a run of hours holds its memory and its cost, and the cache changes no answer.
+ * Stateless as the repository is (decision 048):
  * the share of bars recognised, and the ladder it drives, are the frontend's. Pure.
  */
 import { PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, type HeardNote, type Operator, type Readings, type VaryOptions } from '../engine/vary';
@@ -181,8 +182,12 @@ export function createRecogniser({ capacity = RECOGNISER_CAPACITY }: RecogniserO
     throw new Error(`createRecogniser: capacity is ${String(capacity)}, not a whole number ≥ 1 or Infinity`);
   // (a Map keeps its keys in the order set: one read is set again, last, and the first is the one used longest ago)
   const kept = new Map<string, Kept>();
+  // (the options' part of a key, written once for each set of options a call reads under, not once for each fragment)
+  const written = new WeakMap<VaryOptions, string>();
   const keep = (text: string, vary: VaryOptions): Kept => {
-    const key = JSON.stringify([text, vary.workbench ?? '', vary.operators, vary.keep ?? [], vary.fewest ?? 1, vary.degrees ?? null]);
+    let options = written.get(vary);
+    if (options === undefined) written.set(vary, (options = JSON.stringify([vary.workbench ?? '', vary.operators, vary.keep ?? [], vary.fewest ?? 1, vary.degrees ?? null])));
+    const key = `${options}\n${text}`;
     const known = kept.get(key);
     if (known) kept.delete(key);
     const k = known ?? { readings: readVariations(text, vary), candidates: [] };
@@ -277,7 +282,9 @@ export function createRecogniser({ capacity = RECOGNISER_CAPACITY }: RecogniserO
       const vary: VaryOptions = { ...rest, operators };
       const referred = referencesIn(text, library, vary);
       if (referred.length) return referred;
-      const reading = readVariations(text, { ...vary, operators: [] });
+      // (read as a library's fragment is, kept by its text and these options: a heard text joins the next bar's library,
+      // what was played lately, and is read once, #337; its notes, its lap and its bar are the same by any operators)
+      const reading = read(text, vary);
       if (!reading.notes?.length) return [];
       const heard = windowsOf(candidate([], reading.notes, { ...reading, span: null }), null)[0]!;
       const out: Recognised[] = [];
