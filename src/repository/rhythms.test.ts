@@ -140,19 +140,16 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
   });
 
   // Under the meter the repository finds at the preset's point, which plays the preset's swing: each hit where Jambot's
-  // leanMap puts its sixteenth, as long as from there to the next sixteenth's onset, at E31's note and velocity. All but
-  // the rim, where a meter leans the sixteenths (Lo-fi hip hop's, Funk's): a Euclid on 1m doesn't swing with its meter
-  // (#121), so its strokes stay straight; the level line they are multiplied by swings, but a note's level is read where
-  // it is written (#287), so each stroke keeps its own. 132 of the 144 swing as Jambot's band does; the 12 rim strokes keep their level.
-  const RIM_UNSWUNG = ['Lo-fi hip hop', 'Funk'];
+  // leanMap puts its sixteenth, as long as from there to the next sixteenth's onset, at E31's note and velocity. The rim
+  // too, where a meter leans the sixteenths (Lo-fi hip hop's, Funk's): a Euclid on 1m swings with its meter (#121), its
+  // strokes on the sixteenths it leans, and each reads its own level (#287). 144 of the 144 swing as Jambot's band does.
   const underOwnMeter = (w: (typeof drumBars)[number]) => {
     const { point, swing } = PRESETS[w.preset]!;
     const onsets = [...path.find((v) => v.s === swing)!.onsets, 16];
-    const rimUnswung = (h: Hit) => RIM_UNSWUNG.includes(w.preset) && h.note === 37;
-    const want = sorted(w.hits.map((h) => (rimUnswung(h) ? h : { ...h, step: onsets[h.step]!, length: onsets[h.step + 1]! - onsets[h.step]! })));
-    return { want, rimUnswung, ...played(hosted(meters.query(point, 1)[0]!.fragment.text, w.bpm, w.fragment.text, coreKit), w.bpm) };
+    const want = sorted(w.hits.map((h) => ({ ...h, step: onsets[h.step]!, length: onsets[h.step + 1]! - onsets[h.step]! })));
+    return { want, ...played(hosted(meters.query(point, 1)[0]!.fragment.text, w.bpm, w.fragment.text, coreKit), w.bpm) };
   };
-  it.each(drumBars.map((w) => [w.preset, w] as const))('%s: under its own meter, every hit through Jambot’s swing but the unswung rim (#121)', (_, w) => {
+  it.each(drumBars.map((w) => [w.preset, w] as const))('%s: under its own meter, every hit through Jambot’s swing, the rim’s Euclid too (#121)', (_, w) => {
     const { hits, diagnostics, want } = underOwnMeter(w);
     expect(diagnostics).toEqual([]);
     expect(hits).toHaveLength(want.length);
@@ -162,15 +159,15 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
     want.forEach((h, i) => expect([hits[i]!.note, hits[i]!.velocity]).toEqual([h.note, h.velocity]));
   });
 
-  it('under their own meters, 132 of 144 swing as the band does, and 12 rim strokes stay straight, each at its level (#121, #287)', () => {
+  it('under their own meters, 144 of 144 swing as the band does, the 17 rim strokes among them, each at its level (#121, #287)', () => {
     const counts = drumBars.map((w) => {
-      const { rimUnswung } = underOwnMeter(w);
-      const rims = w.hits.filter(rimUnswung);
-      const { hits } = underOwnMeter(w);
-      return { rims: rims.length, levelLost: hits.filter((h) => h.note === 37 && h.velocity === 1).length, rest: w.hits.length - rims.length };
+      const { hits, want } = underOwnMeter(w);
+      const rims = want.filter((h) => h.note === 37);
+      const swung = want.filter((h, i) => hits[i] && Math.abs(hits[i]!.step - h.step) < 1e-9 && hits[i]!.velocity === h.velocity).length;
+      return { rims: rims.length, swung, levelLost: hits.filter((h) => h.note === 37 && h.velocity === 1).length };
     });
-    const sum = (key: 'rims' | 'levelLost' | 'rest') => counts.reduce((n, c) => n + c[key], 0);
-    expect([sum('rest'), sum('rims'), sum('levelLost')]).toEqual([132, 12, 0]);
+    const sum = (key: 'rims' | 'swung' | 'levelLost') => counts.reduce((n, c) => n + c[key], 0);
+    expect([sum('swung'), sum('rims'), sum('levelLost')]).toEqual([144, 17, 0]);
   });
 });
 
