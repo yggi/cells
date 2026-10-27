@@ -32,9 +32,11 @@ export function clockNeeds(text, result, of, own) {
         return [{ need: { ...base, bar: fewestBar(base) }, tap: step.tap }];
     });
 }
+const atomLineReads = (a) => a.kind === 'ref' ? (a.pick || a.shift || a.transpose || a.values ? [a.name] : []) : a.kind === 'seq' ? a.layers.flatMap((l) => l.flatMap((t) => atomLineReads(t.atom))) : [];
+export const readAsLine = (decls) => new Set(decls.flatMap((d) => (d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => atomLineReads(t.atom)) : [])).map((n) => `&${n}`));
 export function readOnlyAsSound(decls) {
     const inBraid = new Set(decls.flatMap((d) => braidReadsOf(d)).map((n) => `&${n}`));
-    const elsewhere = new Set(decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`));
+    const elsewhere = new Set([...decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`), ...readAsLine(decls)]);
     return (name) => inBraid.has(name) && !elsewhere.has(name);
 }
 export const linesRead = (text, resolve) => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
@@ -65,11 +67,13 @@ export function holesOf(text, compiled, resolve) {
     }
     const uses = [...new Set([...unknown, ...found, ...(readsKey ? ['key'] : [])])].sort();
     const sounds = uses.filter(sound);
+    const asLine = readAsLine(all);
     const stand = sounds.map(standIn).join('\n');
     const filled = stand ? `${read}\n${stand}` : read;
     return {
         uses,
         sounds,
+        lines: uses.filter((n) => asLine.has(n)),
         defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
         clock: clockNeeds(filled, stand ? last : result).map((t) => t.need),
     };
