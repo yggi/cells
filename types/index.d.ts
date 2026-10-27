@@ -25,6 +25,7 @@ export { anchorsOf, varied, variations, type Anchor, type Operator, type Variati
 export { fold } from './engine/fold';
 export { cellsFromMidi } from './engine/midiimport';
 export { pieceMidi } from './engine/midiexport';
+export { spanOf, LONGEST, TAIL, UNBOUNDED, type Span, type SpanOptions } from './engine/span';
 export { readMidi, writeMidi, isMidi } from './engine/midifile';
 export { PRESETS, type Preset } from './engine/presets';
 export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece, type PieceFile, type PieceFileProblems, type PieceFrontmatter } from './engine/piecefile';
