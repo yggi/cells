@@ -48,7 +48,9 @@ leaves it for the author.
 
 A `use` line ([use.md](use.md), decisions 054 and 059) is written in one spelling (`normalise/uses.ts`): `use * from …`
 for every line, `use &a, &b from …` for the names (a comma and a space between them), `use &x` where it takes `&x` from
-`x`, the id bare where it is a word and in double quotes where it isn't. So `use "core kit"`, the old way, is written
-`use * from "core kit"`: the two read as one. Normalise keeps each `use` line in its order. It never writes the used fragment's lines into the piece: that adds cells, a change of
+`x`, the id bare where it is a word and in double quotes where it isn't. So `use "harmonic minor"`, the old way, is written
+`use * from "harmonic minor"`: the two read as one. A use of a fragment that only forwards, whose text is one `use` and
+nothing else, is written as the use it forwards to (`normalise/forwarded.ts`): a retired id, so `use * from "core kit"`
+is `use &bd, &rim, … from gm_kit`, and a use that names what it takes keeps its names (#196). Normalise keeps each `use` line in its order. It never writes the used fragment's lines into the piece: that adds cells, a change of
 structure, Shorten's side of decision 049's line (`expand` writes them out on request). A text with `use` lines is
 normalised with the host's resolver, `normalise(source, { resolve })`, so that it compiles.

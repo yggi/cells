@@ -177,7 +177,7 @@ describe('a MIDI file as a piece', () => {
     expect(dropped).toBe(0);
     // (each voice it writes is the kit's line for that note, word for word)
     const kit = new Map(
-      INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')!
+      INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!
         .text.split('\n')
         .map((l) => [gmDrumNote(/^&(\w+)/.exec(l)![1]!), l.replace(/^&\w+ /, '')]),
     );

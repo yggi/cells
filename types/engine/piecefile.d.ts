@@ -36,7 +36,7 @@
  *
  * ```
  * uses:
- *   - id: gm kit
+ *   - id: gm_kit
  *     hash: e1:6de2201770fbb2d7
  * ```
  */

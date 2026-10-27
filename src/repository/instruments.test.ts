@@ -1,24 +1,27 @@
 // The instruments (#225, decision 054): the General MIDI kit, a voice for each of General MIDI's 47 percussion notes,
-// each sounding on its own note over MIDI out; the core kit, 13 of its voices, the same lines; both fit any workbench, and
-// every rhythm with the core kit plays each hit on the note it plays alone.
+// each sounding on its own note over MIDI out, fitting any workbench; 13 of its voices taken by name (the retired core
+// kit), with which every rhythm plays each hit on the note it plays alone.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, GM_KIT, gmDrumNote, midiNote, router, routesOf } from '../engine/midi';
+import { expand } from '../engine/use';
 import { windowAt } from '../engine/schedule';
 import { fitOf } from './fit';
 import { createRepository } from './fragments';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, FUNK } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 const byId = (id: string) => INSTRUMENT_FRAGMENTS.find((f) => f.id === id)!;
-const gmKit = byId('gm kit');
-const coreKit = byId('core kit');
+const gmKit = byId('gm_kit');
+/** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
+const CORE_USE = 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
+const coreKit = { text: expand(CORE_USE, resolveSeed).trim() };
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
 const BPM = 120;
 const hosted = (...fragments: string[]) => [setTiming(meterText('4/4'), 'bar', 'step', `${BPM}bpm`), ...fragments].join('\n');
@@ -99,25 +102,26 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it('are the General MIDI kit, the core kit, the bass, the keys, the pad and the lead, each once at the centre of style space as the facet instrument, the core kit weighted first', () => {
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm kit', 'core kit', 'bass', 'keys', 'pad', 'lead']);
+  it('are the General MIDI kit, the bass, the keys, the pad and the lead, each once at the centre of style space as the facet instrument, the kit weighted first', () => {
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm_kit', 'bass', 'keys', 'pad', 'lead']);
     for (const f of INSTRUMENT_FRAGMENTS) expect(f.association.map((wp) => [wp.point, wp.facet])).toEqual([[{ sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 }, 'instrument']]);
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([0.5, 1, 0.25, 0.25, 0.25, 0.25]);
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25]);
     expect(
       createRepository(LIBRARY)
         .query(AMBIENT, 3, {}, { facet: 'instrument' })
         .map((f) => f.fragment.id),
-    ).toEqual(['core kit', 'gm kit', 'bass']);
+    ).toEqual(['gm_kit', 'bass', 'keys']);
     expect(
       createRepository(LIBRARY)
         .query(FUNK, 3, {}, { facet: 'instrument' })
         .map((f) => f.fragment.id),
-    ).toEqual(['core kit', 'gm kit', 'bass']);
+    ).toEqual(['gm_kit', 'bass', 'keys']);
   });
 
-  it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order, and the core kit 13 of its lines word for word', () => {
+  it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order; 13 of them taken by name are its lines word for word, as the retired core kit forwards them (#196)', () => {
     const gm = linesOf(gmKit.text);
     expect([...gm.keys()]).toEqual(GM_KIT.map((d) => d.name));
+    expect(RETIRED.get('core kit')).toBe(CORE_USE);
     const core = linesOf(coreKit.text);
     expect([...core.keys()]).toEqual(['bd', 'rim', 'sd', 'cp', 'lt', 'hh', 'ph', 'mt', 'oh', 'ht', 'cr', 'rd', 'claves']);
     for (const [name, line] of core) expect(line, name).toBe(gm.get(name));
@@ -141,7 +145,7 @@ describe('the instrument fragments', () => {
   });
 });
 
-describe('every rhythm with the core kit plays each hit on its General MIDI note (13 of 13)', () => {
+describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit on its General MIDI note (13 of 13)', () => {
   const { hits: synthPop } = played(hosted(RHYTHM_FRAGMENTS.find((f) => f.id === 'Synth-pop drums')!.text, coreKit.text), 32);
   it('is shown firing: a hit on another note is caught', () => expect(synthPop.map((h) => ({ ...h, note: h.note + 1 }))).not.toEqual(synthPop));
 

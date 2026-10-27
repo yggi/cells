@@ -42,7 +42,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - `map=midi` a MIDI card, entries channels; `midi(10)`, `midi(10, 2)` (slot 2) → [midi](language/midi.md)
 - voices `s=` `loop=`, `env=` `pitch=` `map=adsr|amp|lin|db`; a line's articulation `legato=.5` (Strudel's) → [sound](language/sound.md)
 - belts, tape, resonators, FM → [physics](language/physics.md)
-- `use &bd, &sd from "core kit"` the named cells and what they read, `use * from …` every line, `use &x` from x; the piece's lines win → [use](language/use.md)
+- `use &bd, &sd from gm_kit` the named cells and what they read, `use * from …` every line, `use &x` from x; the piece's lines win → [use](language/use.md)
 - a piece's file: `title:` `tags:` `tier:` in its frontmatter (the card's `title=` `tags=` `tier=` the old way, a warning); `label=` `show=`, a cell's `tags=`; loudness: the card's `postgain=` (linear) → [display](language/display.md); a `show=` of the piece's own → [plugins](language/plugins.md)
 
 ## Decisions

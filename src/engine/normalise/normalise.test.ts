@@ -80,7 +80,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       const holes = holesOf(f.text, compiled, resolveSeed);
       const bench = holes.defines.includes('&bar') ? '&tempo step=100bpm' : holes.defines.includes('&key') ? `${meter}\n&tonic C` : holes.defines.includes('&harm') ? keyed : bar;
       // (a fragment's sound holes, the voices an instrument fills (#244), are filled by the General MIDI kit's and the bass's lines)
-      const voices = [...LIBRARY.find((k) => k.id === 'gm kit')!.text.split('\n'), ...LIBRARY.find((k) => k.id === 'bass')!.text.split('\n')];
+      const voices = [...LIBRARY.find((k) => k.id === 'gm_kit')!.text.split('\n'), ...LIBRARY.find((k) => k.id === 'bass')!.text.split('\n')];
       // (a form's hole is read as a splice alone, as a sound is: a part fills it, not a voice)
       const kit = holes.sounds.filter((n) => !parts[n]).map((n) => `\n${voices.find((l) => l.startsWith(`${n} `))!}`);
       const part = holes.uses.filter((n) => parts[n]).map((n) => `\n${parts[n]}`);
@@ -89,6 +89,27 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       const text = `${compiled(f.text).ok ? f.text : unionOf(f.text, bench).text}${kit.join('')}${part.join('')}${form}`;
       expect([f.id, compiled(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
     }
+  });
+
+  it('a use of a retired id as the use it forwards to (#196): the core kit as 13 of gm_kit, the old gm kit as gm_kit', () => {
+    const groove = '&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&out map=sample [&beat]';
+    const thirteen = 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
+    for (const [old, now] of [
+      ['use * from "core kit"', thirteen],
+      ['use "core kit"  # the kit', `${thirteen}  # the kit`],
+      ['use &bd, &hh, &sd from "core kit"', 'use &bd, &hh, &sd from gm_kit'],
+      ['use * from "gm kit"', 'use * from gm_kit'],
+      ['use &bd, &hh, &sd from "gm kit"', 'use &bd, &hh, &sd from gm_kit'],
+    ]) {
+      const { source, steps } = normalise(`${old}\n${groove}`, { resolve: resolveSeed });
+      expect([old, source]).toEqual([old, `${now}\n${groove}`]);
+      expect(steps.length, old).toBeGreaterThan(0);
+      expect(compileSource(source, undefined, { resolve: resolveSeed }).diagnostics, old).toEqual([]);
+    }
+    // (a name the forward doesn't give is left as written: the compile says so)
+    expect(normalise(`use &agogo from "core kit"\n${groove}`, { resolve: resolveSeed }).steps).toEqual([]);
+    // (with no resolver, nothing is forwarded)
+    expect(normalise(`use * from "core kit"\n${groove}`).steps).toEqual([]);
   });
 
   it('docs/language/canonical.md lists every alias it writes, and what it writes', () => {

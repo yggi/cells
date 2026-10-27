@@ -516,7 +516,7 @@ export const LINE_SYNTAX: readonly Syntax[] = [
     'line',
     'use &a, &b from id · use * from id · use &x',
     'A fragment\'s lines taken into the piece by its id (decisions 054, 059): the named cells and the lines they read within it, every line (`*`), or `use &x`, &x from the fragment x. What the piece doesn\'t define is read after the piece\'s own lines, which win. A line of its own; the id a word, or in double quotes; the host\'s resolver finds it. `use "id"` is the old way of `use * from "id"`.',
-    ['use &bd, &sd from "core kit"', 'use * from "core kit"'],
+    ['use &bd, &sd from gm_kit', 'use * from "harmonic minor"'],
     'use.md',
   ),
   syntax(

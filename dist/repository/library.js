@@ -20,5 +20,9 @@ export const LIBRARY = [
     ...MOTIF_FRAGMENTS,
     ...FORM_FRAGMENTS,
 ];
-const BY_ID = new Map(LIBRARY.map((f) => [f.id, f.text]));
+export const RETIRED = new Map([
+    ['core kit', 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
+    ['gm kit', 'use * from gm_kit'],
+]);
+const BY_ID = new Map([...LIBRARY.map((f) => [f.id, f.text]), ...RETIRED]);
 export const resolveSeed = (id) => BY_ID.get(id) ?? null;

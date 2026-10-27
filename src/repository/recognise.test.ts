@@ -8,7 +8,8 @@ import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
 import { BASS_FRAGMENTS } from './bass';
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed } from './library';
+import { expand } from '../engine/use';
 import { createRepository, EMPTY_LAYER, type Fragment } from './fragments';
 import { fileFragment } from './learned';
 import { createRecogniser, RECOGNISER_CAPACITY, type RecogniseOptions, type Recognised } from './recognise';
@@ -20,8 +21,8 @@ vi.mock('../engine/compile', async (original) => {
 
 /** E31's drum bars on Jambot's workbench, varied as Jambot varies them (`src/engine/vary/rhythm.test.ts`). */
 const kit = (id: string) => LIBRARY.find((f) => f.id === id)!.text;
-// (the rhythms leave their voices as holes, #244: the workbench brings the core kit)
-const DRUMS = `&bar meter("4/4") step=120bpm\n${kit('core kit')}`;
+// (the rhythms leave their voices as holes, #244: the workbench brings 13 of the General MIDI kit's voices)
+const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
 const DRUM_OPTIONS = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
 const BARS = e31.witnesses.map((w) => ({
   preset: w.preset,

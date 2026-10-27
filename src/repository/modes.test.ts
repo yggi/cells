@@ -16,7 +16,7 @@ import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
-const AGOGO = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')!
+const AGOGO = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!
   .text.split('\n')
   .find((l) => l.startsWith('&highagogo '))!;
 /** A text with the General MIDI kit's high agogô where it strikes one: the bell's hole, filled (#244). */
@@ -206,7 +206,7 @@ describe('the bell and scale', () => {
   });
 
   it('layers on every rhythm, and its high agogô is a hole the General MIDI kit fills (#244)', () => {
-    const gmKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')!;
+    const gmKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!;
     expect(gmKit.text.split('\n').some((l) => l.startsWith('&highagogo '))).toBe(true);
     expect(bell.text).not.toMatch(/^&highagogo /m);
     const alone = fitOf(bell.text, meter());

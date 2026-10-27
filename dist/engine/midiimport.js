@@ -15,7 +15,7 @@ import { INSTRUMENT_FRAGMENTS } from "../repository/instruments.js";
 const DIVISIONS = [1, 2, 3, 4, 6, 8, 12, 16];
 const ON_GRID = 0.995;
 const DRUM_OF = Object.fromEntries(GM_KIT.map((d) => [d.note, d.name]));
-const DRUMS = Object.fromEntries(INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')
+const DRUMS = Object.fromEntries(INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')
     .text.split('\n')
     .flatMap((line) => {
     const m = /^&(\w+) (.*)$/.exec(line);

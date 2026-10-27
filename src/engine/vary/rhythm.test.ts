@@ -16,6 +16,7 @@ import { unionOf } from '../../repository/fit';
 import { heard } from '../../repository/heard';
 import { holesOf } from '../../repository/holes';
 import { resolveSeed } from '../../repository/library';
+import { expand } from '../use';
 import { METER_FRAGMENTS } from '../../repository/meters';
 import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
 import { anchorsOf, backbeatOf, drawn, variations, varied, type Variation } from '.';
@@ -31,8 +32,8 @@ const OPTIONS = { workbench: WORKBENCH, keep: ['&fill'], fewest: 3 };
 /** E31's bars: each preset's drum part without its `&bar`, the seed's rhythm fragment word for word. */
 const BARS = e31.witnesses.map((w) => ({ preset: w.preset, fragment: w.text.split('\n').slice(1).join('\n'), hits: w.hits }));
 const under = (fragment: string) => unionOf(fragment, WORKBENCH).text;
-/** A bar under its workbench, its stand-ins (`&hh s=white`) left out for the core kit's voices. */
-const inKit = (fragment: string) => `use "core kit"\n${under(fragment.replace(/^&\w+ s=white\n?/gm, ''))}`;
+/** A bar under its workbench, its stand-ins (`&hh s=white`) left out for 13 of the General MIDI kit's voices. */
+const inKit = (fragment: string) => `use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit\n${under(fragment.replace(/^&\w+ s=white\n?/gm, ''))}`;
 
 // ---- Lifted from yggi/jambot @ 0a56da9: the reference, kept here as code, not imported.
 
@@ -187,7 +188,7 @@ describe('what a variation is', () => {
     for (const b of ALL) {
       const played = [b.fragment, ...texts(b)].map(notesOf);
       expect(new Set(played).size, b.preset).toBe(played.length);
-      // (S2 reads a voice by its sound, decision 057: E31's stand-ins are one white noise, so it hears them in the core kit)
+      // (S2 reads a voice by its sound, decision 057: E31's stand-ins are one white noise, so it hears them in the General MIDI kit)
       expect(compileSource(inKit(b.fragment), undefined, { resolve: resolveSeed }).ok, b.preset).toBe(true);
       for (const text of texts(b)) expect(playsSameNotes(inKit(b.fragment), inKit(text), 2, { resolve: resolveSeed })).toBe(false);
     }
@@ -342,7 +343,7 @@ describe('a drum bar with no card of its own (#291)', () => {
   it.each(RHYTHM_FRAGMENTS.slice(0, 8).map((f) => [f.id, f.text] as const))(
     '%s: read alone, its mix is its card; under a workbench card that sends it, the same lines',
     (_, text) => {
-      const kit = { ...OPTIONS, workbench: `${WORKBENCH}\n${resolveSeed('core kit')!}` };
+      const kit = { ...OPTIONS, workbench: `${WORKBENCH}\n${expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}` };
       const alone = variations(text, kit).map((v) => [v.by, v.after]);
       expect(alone.length).toBeGreaterThan(0);
       expect(variations(text, { ...kit, workbench: `${kit.workbench}\n${heard(text)}` }).map((v) => [v.by, v.after])).toEqual(alone);

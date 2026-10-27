@@ -19,4 +19,4 @@ The voice the bass lines play through (decision 054, rung 7's first; #244): `&ba
 It has no sound of its own (`s=`): the lines go out on a MIDI card, which sends notes and not a sound, and says so of a voice that has one; a bass that sounds in a built-in synth comes with a card that plays it.
 It defines the one voice the five bass lines read and uses nothing, so it fills their hole on any workbench; the lines no longer carry a voice of their own.
 
-Associated as the kits are, once as the facet `instrument` at the centre of style space, at a quarter of the core kit's weight, so a query for an instrument finds the kits first; the composer asks for the bass by its id.
+Associated as the kit is, once as the facet `instrument` at the centre of style space, at a quarter of its weight, so a query for an instrument finds the kit first; the composer asks for the bass by its id.

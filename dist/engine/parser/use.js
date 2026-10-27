@@ -31,5 +31,5 @@ export function writeUse({ id, names }) {
         return `use &${id}`;
     return `use ${names.join(', ')} from ${from}`;
 }
-export const USE_FORM = 'A use line says what it takes from which fragment: use &bd, &sd from core_kit, use * from core_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "core kit"';
+export const USE_FORM = 'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "harmonic minor"';
 export const useQuoted = (id) => `use "${id}" is the old way: write ${writeUse({ id, names: null })} (or name what it takes: use &a, &b from …)`;
