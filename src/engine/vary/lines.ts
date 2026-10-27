@@ -9,7 +9,8 @@
  * plays, #291), its steps rests, whole numbers with at most one accidental (`0`, `-1`, `0!8`, `4b`,
  * `2#!2`) or another cell spliced in
  * (`&bassNext`, `&bassNext^$-1`, and as the operators write one back, `degree(inverse(&bassNext), 2)`) that plays one note
- * on its step. A line written any other way (`@`, a choice, two
+ * on its step, or a degree held (`7@2`, #294: one note, two steps long), which only the operators that move pitches,
+ * transpose and invert, vary, writing it back held. A line written any other way (a choice, two
  * accidentals, a subsequence of degrees) is not read, and so not varied. Pure.
  */
 import { declWords, splitComment, splitWords } from '../edit';
@@ -30,6 +31,8 @@ export interface LineNote {
   readonly level: number;
   /** A pitched line's note: what it plays; absent on a line of hits. */
   readonly pitch?: Pitch;
+  /** A held note's length in steps (`7@2`: 2), written back as it was; absent for a note one step long. */
+  readonly hold?: number;
 }
 
 /**
@@ -107,6 +110,8 @@ const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
+/** A degree held for n steps (`7@2`, `4b@3`): one note, n steps long. */
+const HELD = /^(-?\d+)[#b]?@(\d+)$/;
 const REF = String.raw`&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
 /** A splice, as written or as an operator writes it back (`pitchText`): `&x`, `&x^$-1`, `inverse(&x)`, `degree(inverse(&x), 2)`. */
 const SPLICE = new RegExp(String.raw`^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);
@@ -294,13 +299,20 @@ function pitchedLineOf(source: string, result: CompileResult, trigger: string, v
   const cell = result.cells.get(trigger)!;
   if (!words || !cell.step) return null;
   const meter = result.cells.get(cell.step.driver)?.meter ?? null;
-  const written: (number | string | null)[] = [];
+  // (a held note's later steps are HOLDING: no note starts there, and the note before lasts through them)
+  const HOLDING = Symbol('held');
+  const written: (number | string | null | typeof HOLDING)[] = [];
+  const holds = new Map<number, number>();
   for (const token of words.braid) {
     const rest = REST.exec(token);
     const degree = DEGREE.exec(token);
+    const held = HELD.exec(token);
     if (rest) for (let i = 0; i < Number(rest[1] ?? 1); i++) written.push(null);
     else if (degree) for (let i = 0; i < Number(degree[2] ?? 1); i++) written.push(Number(degree[1]));
-    else if (SPLICE.test(token)) written.push(token);
+    else if (held && Number(held[2]) >= 2) {
+      holds.set(written.length, Number(held[2]));
+      written.push(Number(held[1]), ...Array<typeof HOLDING>(Number(held[2]) - 1).fill(HOLDING));
+    } else if (SPLICE.test(token)) written.push(token);
     else return null;
   }
   if (!written.length || written.length !== cell.steps) return null;
@@ -308,11 +320,12 @@ function pitchedLineOf(source: string, result: CompileResult, trigger: string, v
   const notes: LineNote[] = [];
   for (const [step, w] of written.entries()) {
     const at = events.filter((e) => Math.abs(e.step - step) < 1e-9);
-    if (w === null ? at.length : at.length !== 1 || Math.abs(at[0]!.duration - 1) > 1e-9) return null;
-    if (w === null) continue;
+    const length = holds.get(step) ?? 1;
+    if (w === null || w === HOLDING ? at.length : at.length !== 1 || Math.abs(at[0]!.duration - length) > 1e-9) return null;
+    if (w === null || w === HOLDING) continue;
     const e = at[0]!;
     const pitch: Pitch = { written: w, sign: 1, by: 0, table: `${e.table}:${e.tableShift}`, value: e.value, alter: e.alter, transpose: e.transpose ?? 0 };
-    notes.push({ step, voice: voice === null ? '' : `&${voice}`, own: null, level: 1, pitch });
+    notes.push({ step, voice: voice === null ? '' : `&${voice}`, own: null, level: 1, pitch, ...(length > 1 ? { hold: length } : {}) });
   }
   if (events.length !== notes.length) return null;
   return {
@@ -349,10 +362,14 @@ export function written(line: Line, notes: readonly LineNote[], levels?: readonl
     const { voice, k, n, r } = line.euclid;
     out.set(line.trigger, [`${voice}(${k},${n},${(r + 1) % n})`]);
   } else {
+    // (a held note is written held, `7@2`, the steps it holds through left out)
+    const holding = new Set(notes.flatMap((n) => Array.from({ length: (n.hold ?? 1) - 1 }, (_, k) => n.step + k + 1)));
     const tokens = Array.from({ length: line.steps }, (_, step) => {
-      const hits = notes.filter((n) => n.step === step).map((n) => (n.pitch ? pitchText(n.pitch) : hitText(n)));
+      if (holding.has(step)) return null;
+      const at = notes.filter((n) => n.step === step);
+      const hits = at.map((n) => (n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n)));
       return hits.length === 0 ? '~' : hits.length === 1 ? hits[0]! : `[${hits.join(',')}]`;
-    });
+    }).filter((t): t is string => t !== null);
     out.set(line.trigger, line.form === 'steps' ? tokens : [`[${tokens.join(' ')}]`]);
   }
   if (line.levels && levels) out.set(line.levels.cell, [...levels]);

@@ -54,7 +54,7 @@ A note is one key: its onset in whole notes, its length (its line's step), the s
 
 This is decision 050's S2 as Vary already computes it (`lines.ts`), not over compiled events. A heard text costs one compile, and every variation in the library is read in the compile of its source, the way `variations` reads them.
 
-The cost is reach. A text Vary can't read (`@`, a choice, a subsequence of degrees) is never recognised.
+The cost is reach. A text Vary can't read (a choice, a subsequence of degrees) is never recognised. A held degree (`7@2`) is read since #294, so a motif that holds its notes is recognised, by transpose and invert.
 
 Vary's reader now reads back what its own pitched operators write: a splice moved or mirrored (`degree(&bassNext^$-1, -2)`, `inverse(&bassNext)`). Without that, a transposed walking bass couldn't be recognised as one, and Vary couldn't vary a variation of it.
 

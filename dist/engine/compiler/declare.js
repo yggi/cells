@@ -18,6 +18,7 @@ export function declare(ctx) {
     }
     const mainKey = mainKeyOf(ctx, decls);
     tonics(ctx, decls);
+    swings(ctx, decls);
     const sections = sectionTables(decls, error);
     const stacks = gates(decls, implicit, error);
     mixSelectors(ctx, decls);
@@ -111,6 +112,41 @@ function tonics(ctx, decls) {
             continue;
         }
         decls.set(name, { ...d, shift: mod(first.value + first.alter, 12) });
+    }
+}
+function swings(ctx, decls) {
+    for (const [name, d] of decls) {
+        const pc = d.paramCells?.swing;
+        if (!pc)
+            continue;
+        const [ref] = pc.factors;
+        const t = ref && decls.get(ref.name);
+        const { swing: _, ...cells } = d.paramCells;
+        const unswung = () => decls.set(name, { ...d, paramCells: cells });
+        if (pc.factors.length !== 1 || pc.range || ref.pick || ref.shift) {
+            ctx.error(`swing= reads one cell, a swing alone: swing=&swing, with &swing swing=8n:2/3`, pc.span);
+            unswung();
+            continue;
+        }
+        if (!t) {
+            ctx.unknownCell(ref.name, ref.span);
+            unswung();
+            continue;
+        }
+        const alone = t.braid.kind === 'blank' && !t.step && !t.over && !t.map && typeof t.params.swing === 'number' && Object.keys(t.params).every((k) => k === 'swing' || k === 'label');
+        if (!alone) {
+            ctx.error(`&${t.name} holds a meter's swing (swing=&${t.name}): write a swing alone, &${t.name} swing=8n:2/3`, t.span);
+            unswung();
+            continue;
+        }
+        decls.set(name, {
+            ...d,
+            params: { ...d.params, swing: t.params.swing },
+            paramSpans: { ...d.paramSpans, swing: pc.span },
+            paramCells: cells,
+            ...(t.swing ? { swing: t.swing } : {}),
+            swingFrom: ref,
+        });
     }
 }
 function mainKeyOf(ctx, decls) {

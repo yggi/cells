@@ -114,6 +114,8 @@ export function readVariations(fragment, options = {}) {
         for (const operator of operators) {
             if (PITCHED_OPERATORS.includes(operator) !== !!line.pitched)
                 continue;
+            if (line.notes.some((n) => n.hold) && !['transpose', 'invert'].includes(operator))
+                continue;
             if (operator === 'bend') {
                 if (ends)
                     for (const n of BENDS) {

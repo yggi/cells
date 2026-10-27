@@ -24,6 +24,7 @@ const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
+const HELD = /^(-?\d+)[#b]?@(\d+)$/;
 const REF = String.raw `&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
 const SPLICE = new RegExp(String.raw `^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);
 function hitOf(token) {
@@ -205,16 +206,23 @@ function pitchedLineOf(source, result, trigger, voice, card) {
     if (!words || !cell.step)
         return null;
     const meter = result.cells.get(cell.step.driver)?.meter ?? null;
+    const HOLDING = Symbol('held');
     const written = [];
+    const holds = new Map();
     for (const token of words.braid) {
         const rest = REST.exec(token);
         const degree = DEGREE.exec(token);
+        const held = HELD.exec(token);
         if (rest)
             for (let i = 0; i < Number(rest[1] ?? 1); i++)
                 written.push(null);
         else if (degree)
             for (let i = 0; i < Number(degree[2] ?? 1); i++)
                 written.push(Number(degree[1]));
+        else if (held && Number(held[2]) >= 2) {
+            holds.set(written.length, Number(held[2]));
+            written.push(Number(held[1]), ...Array(Number(held[2]) - 1).fill(HOLDING));
+        }
         else if (SPLICE.test(token))
             written.push(token);
         else
@@ -226,13 +234,14 @@ function pitchedLineOf(source, result, trigger, voice, card) {
     const notes = [];
     for (const [step, w] of written.entries()) {
         const at = events.filter((e) => Math.abs(e.step - step) < 1e-9);
-        if (w === null ? at.length : at.length !== 1 || Math.abs(at[0].duration - 1) > 1e-9)
+        const length = holds.get(step) ?? 1;
+        if (w === null || w === HOLDING ? at.length : at.length !== 1 || Math.abs(at[0].duration - length) > 1e-9)
             return null;
-        if (w === null)
+        if (w === null || w === HOLDING)
             continue;
         const e = at[0];
         const pitch = { written: w, sign: 1, by: 0, table: `${e.table}:${e.tableShift}`, value: e.value, alter: e.alter, transpose: e.transpose ?? 0 };
-        notes.push({ step, voice: voice === null ? '' : `&${voice}`, own: null, level: 1, pitch });
+        notes.push({ step, voice: voice === null ? '' : `&${voice}`, own: null, level: 1, pitch, ...(length > 1 ? { hold: length } : {}) });
     }
     if (events.length !== notes.length)
         return null;
@@ -262,10 +271,14 @@ export function written(line, notes, levels, rotated = false) {
         out.set(line.trigger, [`${voice}(${k},${n},${(r + 1) % n})`]);
     }
     else {
+        const holding = new Set(notes.flatMap((n) => Array.from({ length: (n.hold ?? 1) - 1 }, (_, k) => n.step + k + 1)));
         const tokens = Array.from({ length: line.steps }, (_, step) => {
-            const hits = notes.filter((n) => n.step === step).map((n) => (n.pitch ? pitchText(n.pitch) : hitText(n)));
+            if (holding.has(step))
+                return null;
+            const at = notes.filter((n) => n.step === step);
+            const hits = at.map((n) => (n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n)));
             return hits.length === 0 ? '~' : hits.length === 1 ? hits[0] : `[${hits.join(',')}]`;
-        });
+        }).filter((t) => t !== null);
         out.set(line.trigger, line.form === 'steps' ? tokens : [`[${tokens.join(' ')}]`]);
     }
     if (line.levels && levels)

@@ -134,7 +134,22 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       const lacking = [...names].filter((n) => !byName.has(n));
       for (const n of lacking) say(i, `&${n} is not in ${quoted(id)}: it defines ${[...byName.keys()].map((m) => `&${m}`).join(', ')}`);
     }
-    const asked = names ?? new Set(byName.keys());
+    // (all of it, `*`: but a line the fragment's own lines read, where every one that reads it the level overrides, goes
+    // with them, as a helper of the overridden line: `use * from "4/4 swung on 8n"` under the piece's own &bar takes no &swing)
+    const shadowed = new Set<string>();
+    if (!names)
+      for (let more = true; more;) {
+        more = false;
+        for (const n of byName.keys()) {
+          if (defined.has(n) || shadowed.has(n)) continue;
+          const readers = theirs.filter((l) => l.name && l.name !== n && l.reads.includes(n));
+          if (readers.length && readers.every((l) => defined.has(l.name!) || shadowed.has(l.name!))) {
+            shadowed.add(n);
+            more = true;
+          }
+        }
+      }
+    const asked = names ?? new Set([...byName.keys()].filter((n) => !shadowed.has(n)));
     const overrode = [...asked].filter((n) => byName.has(n) && defined.has(n)).map((n) => `&${n}`);
     // (the closure: what the asked-for lines read within the fragment, but where the level writes its own)
     const take = new Set<string>();

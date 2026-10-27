@@ -14,6 +14,7 @@ import { RHYTHM_FRAGMENTS } from './rhythms';
 import { SEED } from './seed';
 import { SEED_FILES } from './seed.generated';
 import { STAB_FRAGMENTS } from './stab';
+import { MOTIF_FRAGMENTS } from './motifs';
 
 const read = (markdown: string): FragmentFile => {
   const r = readFragment(markdown);
@@ -53,7 +54,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are fifty-five', () => expect(files).toHaveLength(55));
+  it('are sixty-eight', () => expect(files).toHaveLength(68));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -123,6 +124,7 @@ describe('the seed files', () => {
           ...HARMONY_FRAGMENTS,
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic minor'),
+          ...MOTIF_FRAGMENTS.filter((f) => f.id === 'gypsy'),
         ].map((f) => f.id),
       ),
     );
@@ -132,6 +134,7 @@ describe('the seed files', () => {
         'yggi/jambot packages/engine/src/bass.ts @ 1037a80',
         'yggi/jambot packages/engine/src/themes.ts @ 0a56da9',
         'yggi/cells examples/electroswing.md @ 2c120d4',
+        'yggi/cells examples/electroswing.md @ 7622a87',
       ]),
     );
   });

@@ -44,6 +44,7 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
             r.add('performer');
         return r;
     };
+    const swingHolders = new Set([...decls.values()].flatMap((d) => (d.swingFrom ? [d.swingFrom.name] : [])));
     for (const d of decls.values()) {
         const c = cells.get(d.name);
         if (!c || implicit.has(d.name))
@@ -69,7 +70,7 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
                 warn(`pan= places a voice: on ${c.sink ? 'the sound card' : isMidiCard(c) ? 'a MIDI card' : `the mix &${d.name}`} it does nothing — put it on the voice (&voice pan=${d.params.pan})`, span);
             else if (k === 'pan' && typeof d.params.pan === 'number' && (d.params.pan < 0 || d.params.pan > 1))
                 warn(`pan=${d.params.pan}: pan runs from 0 (left) to 1 (right); ${d.params.pan < 0 ? 'this plays hard left' : 'this plays hard right'}`, span);
-            else if (a?.on && !a.on.some((r) => has.has(r)))
+            else if (a?.on && !a.on.some((r) => has.has(r)) && !(k === 'swing' && swingHolders.has(d.name)))
                 warn(`${k}= acts on ${rolesText(a.on)}: on &${d.name} it does nothing`, span);
             else if (k === 'restart' && !RESTARTS.includes(d.params.restart))
                 warn(`restart=${d.params.restart}: what switching a part on does to its time is restart, resume or free — this plays as restart`, span);
