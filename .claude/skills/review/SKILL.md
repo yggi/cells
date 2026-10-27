@@ -1,6 +1,6 @@
 ---
 name: review
-description: Review a cells pull request. Fetches it into its own worktree, installs, runs `npm run verify` there (and the slow tests when it reaches them), re-runs the pull request's own claims, and walks cells' rules (purity, the event snapshots, the contracts, the changelog, the escalation ladder) before posting one review with inline comments. Use when asked to review a pull request by number or branch, or to check that a branch is ready to merge.
+description: Review a cells pull request. Fetches it into its own worktree, installs, reuses CI's run on the head when verify and the slow tests passed there (or runs them itself), re-runs the pull request's own claims, and walks cells' rules (purity, the event snapshots, the contracts, the changelog, the escalation ladder) before posting one review with inline comments. Use when asked to review a pull request by number or branch, or to check that a branch is ready to merge.
 ---
 
 # Review a pull request
@@ -11,7 +11,7 @@ Cell studio's `senior` and Jambot's `review-pr` stay their repositories' own.
 ## 1. Prepare
 
 ```sh
-.claude/skills/review/prepare.sh <number | branch> [--from <commit>] [--against <number | branch>] [worktree directory]
+.claude/skills/review/prepare.sh <number | branch> [--from <commit>] [--against <number | branch>] [--verify] [worktree directory]
 ```
 
 If your checkout doesn't have the script, your branch is behind `main`; run `main`'s copy instead:
@@ -21,7 +21,10 @@ git fetch -q origin +main:refs/remotes/origin/main
 git show origin/main:.claude/skills/review/prepare.sh | sh -s -- <number | branch> …
 ```
 
-It fetches the pull request and `main`, checks the head out in its own worktree (put it in your scratchpad: the last argument), runs `npm ci` and `npm run verify` there, and `npm run test:slow` when the pull request touches what the slow tests read (`src/engine/fold/`, `midiimport`, `midi/`), and prints:
+It fetches the pull request and `main`, checks the head out in its own worktree (put it in your scratchpad: the last argument), runs `npm ci` there, and then asks GitHub for CI's check runs on the head commit.
+When the `ci` workflow's `verify` and `slow` jobs both passed on it (a pull request out of draft runs them on its merge with `main`), that run is the witness, and neither runs again here: the summary links it.
+Otherwise (a draft, a push CI hasn't finished, a red job, GitHub out of reach, or `--verify`) it runs `npm run verify`, and `npm run test:slow` when the pull request touches what the slow tests read (`src/engine/fold/`, `midiimport`, `midi/`).
+It prints:
 
 - the commits and every changed file;
 - each result with its test count;
@@ -36,15 +39,16 @@ Several reviews started at once run one at a time (each waits for the one before
 
 Read the diff from git (the `Diff:` line), not from the GitHub files API, which returns every patch as one JSON blob.
 
-CI is a witness, and may not have run (AGENTS.md): this verify run is the check that counts.
-Say in the review which commit you verified and what verify (and the slow tests) gave.
+Each check runs once per commit: the author's hook is the gate, CI the witness, and the review doesn't run either again on a commit CI passed; its own time goes to the claims and the break-its below.
+Say in the review which commit was verified, and by what: CI's run (its link), or this one (its counts).
 
 ## 2. Re-run the pull request's own claims
 
 Read the pull request's body and `AGENTS.md` first.
 Every claim in *Verified* and *What and why* that a command can check, check in the worktree:
 
-- **The count.** The hook's `verify passed, N tests` should match this run's count on that commit, or the difference has a reason (tests added since).
+- **The commit.** The pull request names the commit that passed the hook: it is the head, or the commits since are a merge of `main` or something CI passed.
+- **The count**, when verify ran here: the hook's `verify passed, N tests` should match this run's count on that commit, or the difference has a reason (tests added since).
 - **"Shown firing."** A new or changed check has a test that shows it failing; undo the change in the worktree (`git -C <wt> show <base>:<file> > <file>`) and run that test: it must fail. Restore with `git -C <wt> checkout -- <file>`.
 - **"Nothing sounds different."** `npx vitest run src/engine/snapshot.test.ts` passes unchanged, and `src/engine/snapshot.txt` isn't in the diff. A moved line names the piece; the pull request must name it too.
 - **A measured number** (a ratchet's score, a size, a time): run what measured it and compare.

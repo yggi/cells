@@ -1,0 +1,9 @@
+# Files whose merge conflicts are two branches each adding lines: keep both sides' lines (git's built-in `union` merge)
+# instead of stopping at a conflict. It applies to local merges (`git merge`); GitHub's own "Update branch" may not
+# honour it. Not for a file where order matters beyond the lines themselves, and the tests still say when both sides'
+# lines together are wrong (a decision number used twice, a snapshot line a merge changed on both sides).
+# Lifted from yggi/cell-studio .gitattributes @ aaf5323.
+CHANGELOG.md merge=union
+docs/MEMORY.md merge=union
+docs/decisions/README.md merge=union
+src/engine/snapshot.txt merge=union

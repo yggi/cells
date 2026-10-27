@@ -21,6 +21,10 @@ const env: NodeJS.ProcessEnv = {
   GIT_COMMITTER_EMAIL: 'test@example.com',
 };
 const passing = 'echo "      Tests  12 passed (12)"';
+// CI's check runs, as GitHub's API answers for a commit; by default the lookup fails, as it does offline.
+const noCi = 'exit 1';
+const checkRuns = (...runs: [name: string, conclusion: string][]) =>
+  `echo '${JSON.stringify({ check_runs: runs.map(([name, conclusion], id) => ({ id, name, status: 'completed', conclusion, html_url: `https://ci/${name}` })) })}'`;
 
 let root: string;
 let clone: string;
@@ -42,12 +46,15 @@ function onPullRequest(file: string, text: string, message: string) {
   git(clone, 'checkout', '-q', 'main');
 }
 
-/** Runs prepare.sh in the clone, with `verify` standing in for install and `npm run verify`, and `slow` for the slow tests. */
-function prepare(args: string[], verify = passing, input?: string, slow?: string) {
+/**
+ * Runs prepare.sh in the clone, with `verify` standing in for install and `npm run verify`, `slow` for the slow tests,
+ * and `ci` for the lookup of CI's check runs.
+ */
+function prepare(args: string[], verify = passing, input?: string, slow?: string, ci = noCi) {
   const run = spawnSync('sh', input === undefined ? [script, ...args] : ['-s', '--', ...args], {
     cwd: clone,
     input,
-    env: { ...env, CELLS_REVIEW_VERIFY: verify, ...(slow && { CELLS_REVIEW_SLOW: slow }) },
+    env: { ...env, CELLS_REVIEW_VERIFY: verify, CELLS_REVIEW_INSTALL: 'echo installed', CELLS_REVIEW_CI: ci, ...(slow && { CELLS_REVIEW_SLOW: slow }) },
     encoding: 'utf8',
     // A run left waiting on the lock fails, rather than hang the suite.
     timeout: 15_000,
@@ -57,7 +64,7 @@ function prepare(args: string[], verify = passing, input?: string, slow?: string
 
 /** Runs prepare.sh like `prepare`, without waiting for it. */
 function prepareAsync(args: string[], verify: string) {
-  const run = spawn('sh', [script, ...args], { cwd: clone, env: { ...env, CELLS_REVIEW_VERIFY: verify } });
+  const run = spawn('sh', [script, ...args], { cwd: clone, env: { ...env, CELLS_REVIEW_VERIFY: verify, CELLS_REVIEW_CI: noCi } });
   let stdout = '';
   let stderr = '';
   run.stdout.on('data', (data: Buffer) => (stdout += data.toString()));
@@ -140,6 +147,34 @@ describe('review prepare.sh', () => {
     expect(failed.stdout).toContain('npm run test:slow FAILS');
     expect(failed.stdout).toContain('the ratchet lost a fold');
     expect(failed.stdout).not.toContain('verify noise');
+  });
+
+  it("reuses CI's run on the head when verify and the slow tests both passed there, and runs them itself otherwise", () => {
+    onPullRequest('src/engine/fold/fold.ts', 'x\n', 'Step 4: the folder');
+    const ranHere = 'echo ran locally; exit 1';
+    const witnessed = prepare(['7', join(root, 'wt')], ranHere, undefined, ranHere, checkRuns(['verify', 'success'], ['slow', 'success']));
+    expect(witnessed.stdout).toContain('CI passed verify and the slow tests on this commit, so neither ran here (--verify runs them): https://ci/verify');
+    expect(witnessed.stdout).not.toContain('ran locally');
+    for (const ci of [checkRuns(['verify', 'success'], ['slow', 'failure']), checkRuns(['verify', 'success']), noCi, 'echo not json']) {
+      const { stdout } = prepare(['7', join(root, 'wt')], passing, undefined, 'echo "      Tests  3 passed (3)"', ci);
+      expect(stdout).toContain('npm run verify passes');
+      expect(stdout).toContain('npm run test:slow passes');
+    }
+    const forced = prepare(['7', '--verify', join(root, 'wt')], passing, undefined, undefined, checkRuns(['verify', 'success'], ['slow', 'success']));
+    expect(forced.stdout).toContain('npm run verify passes');
+  });
+
+  it("reads CI's latest run of a job, so a re-run that passed counts and one that failed after a pass doesn't", () => {
+    const runs = (first: string, second: string) =>
+      `echo '${JSON.stringify({
+        check_runs: [
+          { id: 2, name: 'verify', status: 'completed', conclusion: second, html_url: 'https://ci/2' },
+          { id: 1, name: 'verify', status: 'completed', conclusion: first, html_url: 'https://ci/1' },
+          { id: 3, name: 'slow', status: 'completed', conclusion: 'success' },
+        ],
+      })}'`;
+    expect(prepare(['7', join(root, 'wt')], passing, undefined, undefined, runs('failure', 'success')).stdout).toContain('https://ci/2');
+    expect(prepare(['7', join(root, 'wt')], passing, undefined, undefined, runs('success', 'failure')).stdout).toContain('npm run verify passes');
   });
 
   it.each([
