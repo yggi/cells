@@ -135,10 +135,10 @@ export const PARAMS = {
     },
     channels: { help: 'a spectrum or waterfall: sum (one, the default) or split (each channel its own)', doc: 'display.md', value: 'word', on: ['scope'] },
     restart: {
-        help: 'what switching a part on does to its time (on a selector: for all its sections) — restart (from its top, the default), resume (where it stopped), free (its time runs on, only its sound is switched)',
+        help: 'what switching a part on does to its time (on a selector: for all its sections) — restart (from its top, the default), resume (where it stopped), free (its time runs on, only its sound is switched; a performer’s default)',
         doc: 'time.md',
         value: 'word',
-        on: ['section', 'selector'],
+        on: ['section', 'performer', 'selector'],
         stub: true,
     },
     law: { help: 'a law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music)', doc: 'time.md', value: 'word', on: ['law'] },
@@ -191,7 +191,8 @@ export function rolesText(on) {
         modulator: 'a voice another’s fm= names',
         gate: 'a gate (play= with a braid)',
         section: 'a section (a name a stepped table of names declares)',
-        selector: 'a selector (over= a table of sections)',
+        performer: 'a performer (a gate or a role a band names)',
+        selector: 'a selector (over= a table of sections, or a band)',
     };
     const ws = on.map((r) => NAMES[r]);
     return ws.length < 2 ? (ws[0] ?? '') : `${ws.slice(0, -1).join(', ')} or ${ws[ws.length - 1]}`;

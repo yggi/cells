@@ -7,7 +7,7 @@
  * What a cell is, as far as an attribute cares. A cell can be several: a meter
  * with a motor is a `clock` and a `motor`.
  */
-export type Role = 'voice' | 'clock' | 'driven' | 'motor' | 'tape' | 'head' | 'resonator' | 'scope' | 'law' | 'card' | 'note' | 'carrier' | 'modulator' | 'gate' | 'section' | 'selector';
+export type Role = 'voice' | 'clock' | 'driven' | 'motor' | 'tape' | 'head' | 'resonator' | 'scope' | 'law' | 'card' | 'note' | 'carrier' | 'modulator' | 'gate' | 'section' | 'performer' | 'selector';
 export interface Attribute {
     /** What it means, as the node editor shows it. */
     readonly help: string;

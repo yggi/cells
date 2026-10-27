@@ -2,7 +2,7 @@ import { BODIES, isMidiCard } from "../program.js";
 import { MOVING_PARAMS } from "../attributes.js";
 import { refsOf } from "../readers.js";
 import { leaves } from "../subseq.js";
-export function checkCells(ctx, decls, cells, sections = new Map()) {
+export function checkCells(ctx, decls, cells, sections = new Map(), bands = new Map()) {
     const { error, warn, unknownCell } = ctx;
     for (const c of cells.values()) {
         const span = (k) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name).span;
@@ -159,7 +159,7 @@ export function checkCells(ctx, decls, cells, sections = new Map()) {
             error(`A grid (map=edo, map=ed(r)) reads nothing and has no braid: &${d.name} cycle=19 map=edo`, d.map.span);
     for (const d of decls.values()) {
         const t = d.over ? cells.get(d.over.name) : undefined;
-        if (!t || t.kit)
+        if (!t || t.kit || bands.has(t.name))
             continue;
         const refs = refsOf(t);
         if (!refs.length || refs.every((r) => sections.get(r) === t.name) || ctx.broken.has(d.name))

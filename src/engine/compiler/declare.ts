@@ -528,8 +528,9 @@ function voicesIn(decls: ReadonlyMap<string, CellDecl>, name: string, seen: read
  * broken, so where its sound is used (`&out &song`, `[&song * .8]`) says nothing more (context.ts: `broken`).
  */
 function mixSelectors(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): void {
+  // (a gate is a performer, not a mix: a table of them is a band, decision 061)
   const isMix = (d: CellDecl | undefined) =>
-    !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
+    !!d && !d.gate && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
   for (const d of decls.values()) {
     const t = d.over ? decls.get(d.over.name) : undefined;
     if (!t || t.braid.kind !== 'list' || !t.braid.tokens.length || !t.braid.tokens.every((x) => x.atom.kind === 'ref' && isMix(decls.get(x.atom.name)))) continue;
