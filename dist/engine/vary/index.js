@@ -6,6 +6,7 @@ import { declWords, setBraid } from "../edit.js";
 import { gmDrumNote } from "../midi.js";
 import { anchorsAmong } from "./anchors.js";
 import { linesOf, moved, pitchKey, pitchOf, tapWhole, written } from "./lines.js";
+import { referenceOf } from "./reference.js";
 export { backbeatOf } from "./anchors.js";
 export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
 export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse', 'bend', 'trim'];
@@ -67,7 +68,7 @@ export function readVariations(fragment, options = {}) {
     const seen = new Set([signature(-1, [])]);
     const out = [];
     const words = new Map();
-    const offer = (i, operator, notes, amount, braids, what) => {
+    const offer = (i, operator, notes, amount, braids, what, about = amount) => {
         if (!braids || total - lines[i].notes.length + notes.length < fewest)
             return;
         const strikes = lines.flatMap((_, j) => (j === i ? strikesOf(i, notes) : strikeKeys[j]));
@@ -84,6 +85,9 @@ export function readVariations(fragment, options = {}) {
             const w = words.get(name);
             return w ? [...w.head, ...w.attrs, ...(braid ?? w.braid)].join(' ') : '';
         };
+        const own = declWords(fragment, lines[i].trigger);
+        const pins = new Set(lines[i].notes.filter((n) => pinned(lines[i], n) && !(operator === 'invert' && n.pitch?.written === (about ?? 0) / 2 && !n.pitch.alter)).map((n) => n.step));
+        const reference = own && referenceOf(lines[i], own.braid, own.attrs, operator, notes, pins, about);
         const variation = {
             id: `vary:${operator}:${line}${amount === null ? '' : `:${amount}`}:${out.length}`,
             tool: 'vary',
@@ -94,6 +98,7 @@ export function readVariations(fragment, options = {}) {
             apply: (source) => [...braids].reduce((text, [name, braid]) => setBraid(text, name, braid), source),
             line,
             by: `${operator} ${line}${amount === null ? '' : ` ${amount}`}`,
+            ...(reference ? { reference } : {}),
         };
         out.push({ variation, notes: [...lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j])), ...fixed] });
     };
@@ -139,7 +144,7 @@ export function readVariations(fragment, options = {}) {
                 if (typeof f !== 'number' || alter)
                     continue;
                 const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch, -1, 2 * f) }));
-                offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`);
+                offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`, 2 * f);
             }
             else if (operator === 'reverse') {
                 const notes = inOrder(reversed(line, (n) => pinned(line, n)));

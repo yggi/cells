@@ -43,6 +43,11 @@ export interface Recogniser {
      * path, then the library's order), each by its nearest path; none where nothing is within it. A fragment that plays
      * no notes Vary reads (a meter) is never recognised, nor is a heard text that plays none. Throws on a tolerance that
      * isn't a whole number ≥ 0, or a depth that isn't 0, 1 or 2.
+     *
+     * A heard text that writes a variation by its reference (#293: it uses the fragment, `use &hat from funk_drums`, and
+     * writes a line as one of its variations' forms on it, `&hat2 base=&hat =!6 ~`, or a mix's entry, `&hat[<<]`) is
+     * read as that path, with no search: the fragments it refers to so, in the library's order, each at distance 0, and
+     * nothing else. Its notes aren't compared, nor is it compiled.
      */
     recognise(text: string, library: readonly Fragment[], options?: RecogniseOptions): Recognised[];
 }

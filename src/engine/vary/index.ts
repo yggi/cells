@@ -32,7 +32,9 @@
  * plays the notes of its source or of one given before it (compared as its steps write them: each note's onset, length
  * and voice; nothing is compiled per variation), none strikes one sound twice at one onset, none keeps fewer than
  * `fewest` notes. The anchors (`anchors.ts`: the kick's line and the backbeat's), and the lines the frontend keeps, are
- * never varied. A variation rewrites only its line's braid (and its cell of levels), as plain steps on its own grid. Pure.
+ * never varied. A variation rewrites only its line's braid (and its cell of levels), as plain steps on its own grid; beside
+ * it, its reference (`reference.ts`, #293): the varied line as a form on the line it varies, `&hat[<<]`, `base=&hat =!6 ~`.
+ * Pure.
  */
 import { declarations } from '../../repository/fit';
 import { compileSource } from '../compile';
@@ -44,8 +46,10 @@ import { gmDrumNote } from '../midi';
 import type { Rewrite } from '../rewrite';
 import { anchorsAmong, type Anchor } from './anchors';
 import { linesOf, moved, pitchKey, pitchOf, tapWhole, written, type Line, type LineNote } from './lines';
+import { referenceOf, type Reference } from './reference';
 
 export { backbeatOf, type Anchor } from './anchors';
+export type { Reference } from './reference';
 
 /** The operators: the rhythm ones (rung 1) and the pitched ones (rung 2). */
 export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim';
@@ -71,6 +75,12 @@ export interface Variation extends Rewrite<Operator> {
   readonly line: string;
   /** For a frontmatter's `by:`: the operator, the line and its amount (a step, degrees), `drop &hat 6`, `rotate &hat`, `transpose &bass -1`. */
   readonly by: string;
+  /**
+   * The varied line as forms on the line it varies (#293), for a text that keeps what was varied: `&hat[<<]`,
+   * `&bassline^-1`, `&hat[:6] ~ &hat[7:]`; absent where the line can't be spliced or the forms would be longer than the
+   * line written out (`reference.ts`).
+   */
+  readonly reference?: Reference;
 }
 
 /** The frontend's policy: cells knows none of it. */
@@ -179,7 +189,15 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
   const out: { variation: Variation; notes: HeardNote[] }[] = [];
   const words = new Map<string, ReturnType<typeof declWords>>();
   /** A candidate kept where it is a variation: enough notes, no sound struck twice at an onset, other notes than any before. */
-  const offer = (i: number, operator: Operator, notes: readonly LineNote[], amount: number | null, braids: Map<string, string[]> | null, what: string) => {
+  const offer = (
+    i: number,
+    operator: Operator,
+    notes: readonly LineNote[],
+    amount: number | null,
+    braids: Map<string, string[]> | null,
+    what: string,
+    about: number | null = amount,
+  ) => {
     if (!braids || total - lines[i]!.notes.length + notes.length < fewest) return;
     const strikes = lines.flatMap((_, j) => (j === i ? strikesOf(i, notes) : strikeKeys[j]!));
     if (new Set(strikes).size < strikes.length) return;
@@ -192,6 +210,12 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
       const w = words.get(name);
       return w ? [...w.head, ...w.attrs, ...(braid ?? w.braid)].join(' ') : '';
     };
+    // (its reference: the line's anchored steps kept, but for an inversion the ones its mirror leaves where they are)
+    const own = declWords(fragment, lines[i]!.trigger);
+    const pins = new Set(
+      lines[i]!.notes.filter((n) => pinned(lines[i]!, n) && !(operator === 'invert' && n.pitch?.written === (about ?? 0) / 2 && !n.pitch.alter)).map((n) => n.step),
+    );
+    const reference = own && referenceOf(lines[i]!, own.braid, own.attrs, operator, notes, pins, about);
     const variation: Variation = {
       id: `vary:${operator}:${line}${amount === null ? '' : `:${amount}`}:${out.length}`,
       tool: 'vary',
@@ -202,6 +226,7 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
       apply: (source) => [...braids].reduce((text, [name, braid]) => setBraid(text, name, braid), source),
       line,
       by: `${operator} ${line}${amount === null ? '' : ` ${amount}`}`,
+      ...(reference ? { reference } : {}),
     };
     out.push({ variation, notes: [...lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j]!)), ...fixed] });
   };
@@ -252,7 +277,7 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
         const { written: f, alter } = line.notes[0]!.pitch!;
         if (typeof f !== 'number' || alter) continue;
         const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch!, -1, 2 * f) }));
-        offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`);
+        offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`, 2 * f);
       } else if (operator === 'reverse') {
         const notes = inOrder(reversed(line, (n) => pinned(line, n)));
         offer(i, operator, notes, null, written(line, notes), 'its notes in reverse order between its anchors');
