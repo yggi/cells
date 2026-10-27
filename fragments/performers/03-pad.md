@@ -62,10 +62,11 @@ source: seed
 
 ```cells
 use &padV from pad
-&pad play=&padline level=&padLevel &padV
+&padOut play=&padline level=&padLevel &padV
+&pad map=role &padOut
 ```
 
-The pad player (decision 058): a gate named `pad`, playing the part `&padline` on the `pad` instrument, at its register (`&padV loop=C3`, where Jambot's section text sounds its comp: `PIN_VOICES.comp`, yggi/jambot `packages/score/src/section-text.ts` @ 24a528b), so with no move.
+The pad player (decisions 058 and 061): a gate, `&padOut` (Jambot's section text's name for it), whose role is `pad` (`&pad map=role &padOut`), playing the part `&padline` on the `pad` instrument, at its register (`&padV loop=C3`, where Jambot's section text sounds its comp: `PIN_VOICES.comp`, yggi/jambot `packages/score/src/section-text.ts` @ 24a528b), so with no move.
 Its two holes are the score's: `&padline`, the line, and `&padLevel`, its velocities as written, a line of levels or one level.
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`presets.ts`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.

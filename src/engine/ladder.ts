@@ -294,13 +294,15 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   },
   {
     name: 'Gates, performing and MIDI',
-    concept: 'a gate: a product with a name; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
+    concept: 'a gate: a product with a name, and a role, the gates that play it; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
     forms: [
       // a gate (decision 023): play= with a braid, its level a product, its voices a chord
       'gate play=&x',
       'gate level=&a*&b*n',
       'parameter level',
       'gate [&a, &b]',
+      // a role: the gates that play it (decision 061)
+      'map map=role',
       // a braid left to the performer
       'free free(0 2 4 ~ …)',
       // MIDI out

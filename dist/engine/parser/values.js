@@ -94,6 +94,7 @@ export const MAP_KINDS = {
     midi: syntax('map', 'map=midi', 'A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent, not heard.', ['&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove'], 'midi.md'),
     edo: syntax('map', 'map=edo', 'A grid: cycle= equal steps to the octave.', ['&edo19 cycle=19 map=edo'], 'tuning.md'),
     ratios: syntax('map', 'map=ratios', "A grid of ratios: one period's tones, then the period (the last).", ['&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2'], 'tuning.md'),
+    role: syntax('map', 'map=role', 'A role: its name is the role, its entries the gates that play it (two entries, two players); a gate no role names plays as written.', ['&comp map=role &violin2 &viola'], 'mix.md'),
 };
 export const MAP_SYNTAX = [
     syntax('map', 'map=ed(r)', 'A grid: cycle= equal steps to the ratio r (a number or a fraction): ed(2) the octave, ed(3/2) the fifth.', ['&bp cycle=13 map=ed(3)', '&fifths cycle=7 map=ed(3/2)'], 'tuning.md'),

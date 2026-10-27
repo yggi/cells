@@ -2,6 +2,7 @@ import { leaves } from "../subseq.js";
 import { memberParams, VOICE_PARAMS } from "../attributes.js";
 import { AlgebraError, distribute } from "../algebra.js";
 import { syntax } from "../parser/syntax.js";
+import { noSound } from "./band.js";
 const isMixDecl = (d) => !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
 const isKitDecl = (d, { decls }) => !!d &&
     !Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) &&
@@ -125,6 +126,13 @@ export function sorts(ctx, decls) {
         if (spec && sounding) {
             const wants = notes.some((x) => x.name === sounding.name) ? 'the notes it plays (a melody, &tune)' : 'a level (a volume: a cell with map=amp, map=db or map=lin)';
             error(`${sounding.port}=&${sounding.name}: a gate's ${sounding.port}= takes ${wants}, and &${sounding.name} is a sound (${decls.get(sounding.name)?.gate ? 'a gate' : isMixDecl(decls.get(sounding.name)) ? 'a mix' : 'a voice'})`, ref(sounding.name)?.span ?? decls.get(atom.gate).span);
+            typedMixes.set(atom, out);
+            return out;
+        }
+        const role = (n) => decls.get(n)?.map?.kind === 'role';
+        const roleIn = [...notes.map((x) => x.name), ...atom.exprs.flatMap(refsOf)].find(role);
+        if (roleIn) {
+            error(noSound(roleIn), ref(roleIn)?.span ?? decls.get(atom.gate ?? roleIn).span);
             typedMixes.set(atom, out);
             return out;
         }

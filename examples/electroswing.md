@@ -17,7 +17,7 @@ use &kick, &clap, &hats, &ticks from "Electro swing drums"
 use &stabline from "Charleston stabs"
 use &bass, &bassV from "bass performer"
 use &stab, &keysV from "stab performer"
-use &lead, &leadV from "lead performer"
+use &leadOut, &leadV from "lead performer"
 &useNote label="The band is the library's: each use names what it takes. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
 ```
 
@@ -80,12 +80,13 @@ use &chorus, &b from AABA
 ## Two leads, call and answer
 
 The clarinet calls and a muted trumpet answers: two players of one line, each heard on its own bars.
-The trumpet is a second gate on the lead's line, `&lead2`; the clarinet is the lead player, `&lead`.
+The trumpet is a second gate on the lead's line, `&lead2`; the clarinet is the lead player's gate, `&leadOut`. Both play as the lead (`&lead map=role &leadOut &lead2`, decision 061), so the piece takes the lead player's gate and writes the role itself.
 Each one's level is a two-bar step, `[.5 0]` for the clarinet and `[0 .45]` for the trumpet, so they trade bar by bar: the call, then the answer; in the bridge, its call, then its answer; in the break, the pieces back and forth.
 
 ```cells
 &lead2 play=&leadline level=&lead2Level &trumpetV
-&dialogueNote label="The clarinet plays the odd bars, the trumpet the even ones: the call and its answer, traded between two players." about=(&lead &lead2)
+&lead map=role &leadOut &lead2
+&dialogueNote label="The clarinet plays the odd bars, the trumpet the even ones: the call and its answer, traded between two players." about=(&leadOut &lead2)
 ```
 
 ## The form, in levels
@@ -118,6 +119,6 @@ In giving the bass its sound the piece gives it its register too, which is the i
 &trumpetV s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .03 .1 .6 .12) pitch=&(map=lin loop=4.5 0 .08 0 -.08 0)
 &vinyl s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
 
-&out map=sample postgain=1.11 [&drums,
-                         &crackle * &vinyl * .04, &bass, &stab * .4, &lead * .5, &lead2 * .5]
+&out map=sample postgain=1.11 [&drumsOut,
+                         &crackle * &vinyl * .04, &bassOut, &stabOut * .4, &leadOut * .5, &lead2 * .5]
 ```

@@ -227,12 +227,13 @@ export const TIERS = [
     },
     {
         name: 'Gates, performing and MIDI',
-        concept: 'a gate: a product with a name; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
+        concept: 'a gate: a product with a name, and a role, the gates that play it; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
         forms: [
             'gate play=&x',
             'gate level=&a*&b*n',
             'parameter level',
             'gate [&a, &b]',
+            'map map=role',
             'free free(0 2 4 ~ …)',
             'map map=midi',
             'map map=midi(c)',

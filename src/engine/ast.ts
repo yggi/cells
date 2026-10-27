@@ -259,9 +259,10 @@ export type StepSpec = { readonly whole: boolean } & (
  *   adsr    an envelope: attack decay sustain release (seconds; sustain a level) for each note
  *   midi    the cell is a MIDI card: its entries are MIDI channels, in order; midi(c) all on channel c,
  *           midi(c, p) on output slot p (the MIDI page's pth output; slot 1 the first)
+ *   role    the cell is a role: its name the role, its entries the gates that play it (decision 061)
  */
 export type MapSpec =
-  | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db'; readonly span: Span }
+  | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role'; readonly span: Span }
   /** A grid: cycle= equal steps to the period — 2 (an octave) for map=edo, r for map=ed(r). */
   | { readonly kind: 'edo'; readonly period: number; readonly span: Span }
   /** A MIDI card: each entry a channel in order (channel null), or all on one channel; on an output slot (the MIDI page's output of that number, 1 the first). */
