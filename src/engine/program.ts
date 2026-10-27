@@ -335,7 +335,13 @@ export interface Output {
    * Selectors it plays through (a cell reading a table of sections, the section that steps it: decision 016): it sounds while each picks its
    * entry, and starts again from its beginning each time it's picked — reading a table splices.
    */
-  readonly select: readonly { readonly cell: string; readonly entry: number; readonly part: string }[];
+  readonly select: readonly {
+    readonly cell: string;
+    readonly entry: number;
+    readonly part: string;
+    /** A band's selector (decision 061): `part` is the performer's entry, a gate or its role; its time runs on unless restart= says. */
+    readonly performer?: true;
+  }[];
   /** A send: played into what it feeds (a resonator, a tape), not heard from its voice itself. */
   readonly silent?: boolean;
   /** Where it goes out as MIDI (map=midi cards); absent: on no MIDI card. Only here, and on no sound card: sent, not heard. */

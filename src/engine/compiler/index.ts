@@ -21,7 +21,7 @@ import { displayCells } from './display';
 import { checkRoles } from './roles';
 import { checkLimits } from './limits';
 import { sectioned } from './sections';
-import { performersOf } from './band';
+import { banded, bandsOf, checkBands, performersOf } from './band';
 
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
@@ -33,18 +33,22 @@ export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string>
   const declared = builtinCard(ctx, declare(ctx), used);
   const { decls, builtin } = declared;
   const typed = sorts(ctx, decls);
+  // (tables of performers a selector switches: decision 061)
+  const bands = bandsOf(ctx, decls);
   const resolved = resolveCells(ctx, declared, typed);
   const bound = bindVoices(ctx, decls, resolved, typed);
   const timed = clockCells(ctx, decls, bound.cells);
   const { clocks } = timed;
-  checkCells(ctx, decls, timed.cells, declared.sections);
+  checkCells(ctx, decls, timed.cells, declared.sections, bands);
+  checkBands(ctx, decls, timed.cells, bands);
   const made = outputsOf(ctx, decls, timed.cells, clocks, bound);
   const { returns, resonances } = made;
   // (decision 016) what a section steps plays while a selector reading its table picks it
-  const outputs = sectioned(made.outputs, timed.cells, declared.sections);
+  // (decision 061) what a performer in a band plays sounds while a selector reading the band picks it
+  const outputs = banded(sectioned(made.outputs, timed.cells, declared.sections), timed.cells, bands);
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
   const cells = displayCells(timed.cells);
-  checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed));
+  checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands);
   // (the gates, as performers, and their roles: decisions 058 and 061)
   const performers = performersOf(ctx, decls, declared.implicit);
 

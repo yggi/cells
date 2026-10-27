@@ -52,10 +52,10 @@ So 058 §1 reads: a performer is a gate, named anything; a role cell names the g
 
 ### 2. A selector over the performers says when they play
 
-- **A band is a table whose entries are performers:** gates, or role cells, a role cell standing for all its players.
+- **A band is a table whose entries are performers:** gates, or role cells, a role cell standing for all its players. It is a table as a kit is, with no step= of its own: the selector reading it steps (a step= on it warns). A gate is one entry of a band, itself or in one role there.
 
   ```text
-  &band step=1m &lead &comp &bass
+  &band &lead &comp &bass
   &form over=&band step=1m [0,2] [0,1,2]!3
   ```
 
@@ -63,14 +63,16 @@ So 058 §1 reads: a performer is a gate, named anything; a role cell names the g
 - **The parts keep their time.** They tap the meter, so they swing, and a part a text `use`s is arranged as it is used.
 - **`restart=` keeps its three meanings,** on a performer's part:
   - `free`: its time runs on, the default for a performer, as a player who sits out comes back in time;
-  - `restart`: its time is set back by a whole number of the meter's bars at the switch, so its tree, and its swing, stays where it was; a switch not on a bar, or on a span the swing repeats in, warns;
-  - `resume`: paused by whole bars.
+  - `restart`: its part starts from its top at the switch; on whole bars (`step=1m`, `1m/2`) its notes keep their places in the bar, and its swing, and a switch off the bar warns;
+  - `resume`: its part goes on where it stopped, warning off the bar alike.
+  - On the selector for all its performers, or on a performer's own line (a gate's, a role's) for it alone, as on a section's.
+  - A part a section also steps keeps the section's default, `restart`: a band's `free` gives way to it, and a band's selector naming a performer at consecutive steps keeps it on, unless `restart=` is said there.
 - **Sections stay** as 016 has them: the switch of time on the meter's bus. A selector's table is of sections or of performers; this adds the switch of sound, on the performer, which is 016's point 8 converging.
 
 ## The rungs
 
 1. **#292:** `map=role`, `Performer.role` from it and its errors; `ROLES`, `roleOf` and `Role` removed. The seed performers keep their parts (`&bassline` …), take Jambot's gate names (`&drumsOut`, `&bassOut`, `&padOut`, `&stabOut`, `&leadOut`), and each holds its role cell (`&bass map=role &bassOut`). *Unreleased*'s lines for #281 and #282 are rewritten.
-2. **#304 B:** a selector over a table of performers or role cells, `restart=` as above. Bound: #305's electroswing writes its form as one selector in place of its level lines, sending the same MIDI.
+2. **#304 B:** a selector over a table of performers or role cells, `restart=` as above. Bound: a part a text `use`s, switched by a band, plays what it plays unswitched in the bars it is on (`band.test.ts`); #305's electroswing taking its form from a band is its own change.
 3. **Elsewhere:** feel v1.2 reads `performers[].role` (yggi/music-commons#35); Jambot's section text names its parts `&…line`, its gates `&…Out`, and writes the role cells (yggi/jambot#490).
 
 ## What it changes
