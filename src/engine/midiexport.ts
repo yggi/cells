@@ -3,14 +3,17 @@
  * keys, velocities and bends; decision 005, what is sent is what sounds), on the main meter's steps (`midiclock.ts`): a
  * quarter note a beat (`beat=` steps), the tempo each step's length, so a scan's or a motor's tempo map is the file's
  * and a note on a step is on the grid (a swing is tempos that alternate, not notes off the grid; a note between steps
- * sits where it sounds). A piece with no main meter is laid at 120 bpm. A piece that ends is written whole; a loop,
- * one cycle (`mainLength`); an hour at most.
+ * sits where it sounds). A piece with no main meter is laid at 120 bpm. How much is written is the span every render
+ * takes (`span.ts`, #315): a piece that ends whole, a loop one cycle, an hour at most, or what the caller gives.
+ * The main meter's signature is written where its beat is a quarter note (2/4, 3/4, 4/4, 5/4, a scan counted in
+ * quarters), the file's quarter being the meter's beat; a meter whose beat is another value (6/8's dotted quarter, alla
+ * breve's half) is written without one, its bars still the meter's.
  */
 import { legatoNotes, channelTable, midiNote, noteOf, routesOf, router, BEND_CENTRE } from './midi';
 import { keyName } from './miditext';
 import { mainMeter } from './midiclock';
 import { clocking } from './clocking';
-import { mainLength, pieceTime } from './duration';
+import { spanOf, type SpanOptions } from './span';
 import { eventsBetween, plan } from './realize';
 import { DEFAULT_FREQ, type CompileResult, type Shifts } from './program';
 import type { Smf, SmfNote, SmfTrack } from './midifile';
@@ -19,13 +22,10 @@ import type { Smf, SmfNote, SmfTrack } from './midifile';
 const PPQ = 480;
 /** A tempo change smaller than this (microseconds a quarter) is rounding, not a change. */
 const SAME_TEMPO = 2;
-/** At most this long is written (s): a day's piece would be a very long file. */
-const LONGEST = 3600;
-
 /** The piece's notes as a MIDI file (to `writeMidi`), and how many notes no MIDI key could carry. */
-export function pieceMidi(result: CompileResult, shifts: Shifts, muted: ReadonlySet<string> = result.off, name?: string): { smf: Smf; dropped: number } {
+export function pieceMidi(result: CompileResult, shifts: Shifts, muted: ReadonlySet<string> = result.off, name?: string, span: SpanOptions = {}): { smf: Smf; dropped: number } {
   const p = plan(result, shifts, muted);
-  const seconds = Math.min(LONGEST, Number.isFinite(p.end) ? p.end : (mainLength(pieceTime(result)) ?? 60));
+  const seconds = spanOf(result, p, { ...span, from: 0 }).to;
   // (each note with its output: the router reads a kit's from it)
   // (a drone's note held to the file's end: decision 028)
   // (a glide's run as its notes, each into the next, legato (#334); the run's notes past the file's end left out, as any
@@ -108,7 +108,10 @@ export function pieceMidi(result: CompileResult, shifts: Shifts, muted: Readonly
       bends: t.at.map((b) => ({ ...b, channel })),
       programs: [],
     }));
-  return { smf: { format: 1, ppq: PPQ, ...(name !== undefined ? { name } : {}), tracks, tempos, meters: [] }, dropped };
+  // (its signature, where the file's quarter, the meter's beat, is the quarter note it says)
+  const m = meter ? result.cells.get(meter.cell)?.meter : undefined;
+  const meters = m && m.unit === 4 && m.beats.every((b) => b === 1) && m.pulses > 0 ? [{ tick: 0, num: m.pulses, den: 4 }] : [];
+  return { smf: { format: 1, ppq: PPQ, ...(name !== undefined ? { name } : {}), tracks, tempos, meters }, dropped };
 }
 
 /**
