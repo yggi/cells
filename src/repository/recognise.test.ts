@@ -2,14 +2,16 @@
 // recognised as its source's, by its operator, at distance 0, against the whole library; random bars of hits are
 // recognised as nothing; a recognition on a warmed recogniser compiles only the heard text (its milliseconds:
 // `timing.slow.test.ts`).
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
 import { BASS_FRAGMENTS } from './bass';
 import { LIBRARY } from './library';
-import { createRepository, EMPTY_LAYER } from './fragments';
+import { createRepository, EMPTY_LAYER, type Fragment } from './fragments';
 import { fileFragment } from './learned';
-import { createRecogniser, type Recognised } from './recognise';
+import { createRecogniser, RECOGNISER_CAPACITY, type RecogniseOptions, type Recognised } from './recognise';
 
 vi.mock('../engine/compile', async (original) => {
   const actual = await original<typeof import('../engine/compile')>();
@@ -182,6 +184,49 @@ describe('random bars, and the cost', () => {
       const before = compiles.mock.calls.length;
       warm.recognise(text, LIBRARY, DRUM_OPTIONS);
       expect(compiles.mock.calls.length - before).toBe(1);
+    }
+  });
+});
+
+/**
+ * The recognitions of a 3-hour E45 walk (#277, `fixtures/jambot-e45.json.gz`): each call's bar, heard text, options, its
+ * library's texts and what an unbounded recogniser found, as indices; `recognise.slow.test.ts` replays all of it.
+ */
+interface E45 {
+  readonly bars: number;
+  readonly seconds: readonly number[];
+  readonly options: readonly RecogniseOptions[];
+  readonly texts: readonly string[];
+  readonly calls: readonly (readonly [bar: number, text: number, options: number, library: readonly number[], found: readonly number[]])[];
+}
+const e45 = JSON.parse(gunzipSync(readFileSync('fixtures/jambot-e45.json.gz')).toString('utf8')) as E45;
+
+describe('a bounded recogniser (#277)', () => {
+  it('keeps 512 texts by default, and throws on a capacity that isn’t a whole number ≥ 1 or Infinity', () => {
+    expect(RECOGNISER_CAPACITY).toBe(512);
+    expect(createRecogniser({ capacity: Infinity }).size).toBe(0);
+    for (const capacity of [0, -1, 1.5, NaN]) expect(() => createRecogniser({ capacity }), String(capacity)).toThrow(/capacity/);
+  });
+
+  it('a capacity of 4 on E31’s variations: never more than 4 kept, and the same answers', () => {
+    const small = createRecogniser({ capacity: 4 });
+    for (const b of BARS.slice(0, 2))
+      for (const v of variations(b.fragment, DRUM_OPTIONS).slice(0, 3)) {
+        expect(found(small.recognise(v.apply(b.fragment), LIBRARY, DRUM_OPTIONS)), `${b.preset}, ${v.by}`).toEqual(
+          found(recogniser.recognise(v.apply(b.fragment), LIBRARY, DRUM_OPTIONS)),
+        );
+        expect(small.size).toBeLessThanOrEqual(4);
+      }
+  });
+
+  // (its whole run, at the default capacity, in `recognise.slow.test.ts`)
+  it('a capacity of 32 over E45’s first 32 bars: never more than 32 kept, and what the unbounded one found', () => {
+    const small = createRecogniser({ capacity: 32 });
+    for (const [bar, text, options, library, hits] of e45.calls.filter(([bar]) => bar < 32)) {
+      const fragments: Fragment[] = library.map((i) => ({ id: String(i), text: e45.texts[i]!, association: [] }));
+      const got = small.recognise(e45.texts[text]!, fragments, e45.options[options]).map((r) => fragments.indexOf(r.fragment));
+      expect(got, `bar ${bar}`).toEqual(hits);
+      expect(small.size).toBeLessThanOrEqual(32);
     }
   });
 });

@@ -2,7 +2,8 @@
  * Recognition (decision 055, #224): given a heard text (a bar or a section the Muse wrote) and a library (the seed and a
  * learned layer's filed fragments), which fragments it is, by which of decision 052's operators, and how far: the
  * homeostat's sensor (yggi/jambot#237). A fragment's reading and its variations' are kept by text, so a recogniser warmed
- * on a library compiles only the heard text; the cache changes no answer. Stateless as the repository is (decision 048):
+ * on a library compiles only the heard text; it keeps the 512 texts used last (#277), so a run of hours holds its memory
+ * and its cost, and the cache changes no answer. Stateless as the repository is (decision 048):
  * the share of bars recognised, and the ladder it drives, are the frontend's. Pure.
  */
 import { PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, type HeardNote, type Operator, type Readings, type VaryOptions } from '../engine/vary';
@@ -146,16 +147,50 @@ export interface Recogniser {
   recognise(text: string, library: readonly Fragment[], options?: RecogniseOptions): Recognised[];
 }
 
-/** A recogniser: it keeps each fragment's readings by its text and the options read under, which changes no answer. */
-export function createRecogniser(): Recogniser {
-  const readings = new Map<string, Readings>();
-  const read = (text: string, vary: VaryOptions) => {
+/** How many texts a recogniser keeps by default (#277): each a text read under one set of options. */
+export const RECOGNISER_CAPACITY = 512;
+
+/** How a recogniser keeps what it has read. */
+export interface RecogniserOptions {
+  /**
+   * The most texts it keeps read, each under one set of options, a whole number ≥ 1 or `Infinity`; by default
+   * `RECOGNISER_CAPACITY`. Past it, the text used longest ago is forgotten, and read again if it is met again.
+   */
+  readonly capacity?: number;
+}
+
+/** A recogniser that says how many texts it keeps. */
+export interface KeepingRecogniser extends Recogniser {
+  /** The texts it keeps read now, never more than its capacity. */
+  readonly size: number;
+}
+
+/** What a recogniser keeps of one text read under one set of options: its readings, and its candidates by depth. */
+interface Kept {
+  readonly readings: Readings;
+  readonly candidates: (readonly Candidate[] | undefined)[];
+}
+
+/**
+ * A recogniser: it keeps the texts it reads, each fragment's readings and candidates by its text and the options read
+ * under, the `capacity` used last (least recently used, #277), which changes no answer: a text forgotten is read again.
+ * Throws on a capacity that isn't a whole number ≥ 1 or `Infinity`.
+ */
+export function createRecogniser({ capacity = RECOGNISER_CAPACITY }: RecogniserOptions = {}): KeepingRecogniser {
+  if (!((Number.isInteger(capacity) || capacity === Infinity) && capacity >= 1))
+    throw new Error(`createRecogniser: capacity is ${String(capacity)}, not a whole number ≥ 1 or Infinity`);
+  // (a Map keeps its keys in the order set: one read is set again, last, and the first is the one used longest ago)
+  const kept = new Map<string, Kept>();
+  const keep = (text: string, vary: VaryOptions): Kept => {
     const key = JSON.stringify([text, vary.workbench ?? '', vary.operators, vary.keep ?? [], vary.fewest ?? 1, vary.degrees ?? null]);
-    let r = readings.get(key);
-    if (!r) readings.set(key, (r = readVariations(text, vary)));
-    return r;
+    const known = kept.get(key);
+    if (known) kept.delete(key);
+    const k = known ?? { readings: readVariations(text, vary), candidates: [] };
+    kept.set(key, k);
+    if (kept.size > capacity) kept.delete(kept.keys().next().value!);
+    return k;
   };
-  const candidates = new Map<string, readonly Candidate[]>();
+  const read = (text: string, vary: VaryOptions) => keep(text, vary).readings;
   /** A fragment's candidates' windows by their notes, for an exact match (tolerance 0): the nearest of each, by width. */
   const exact = new WeakMap<readonly Candidate[], Map<number | null, Map<string, { path: readonly PathStep[]; bar: number }>>>();
   const exactOf = (cs: readonly Candidate[], width: number | null) => {
@@ -174,11 +209,11 @@ export function createRecogniser(): Recogniser {
     return index;
   };
   const of = (fragment: Fragment, vary: VaryOptions, depth: number) => {
-    const key = JSON.stringify([fragment.text, depth, vary.workbench ?? '', vary.operators, vary.keep ?? [], vary.fewest ?? 1, vary.degrees ?? null]);
-    const known = candidates.get(key);
+    const k = keep(fragment.text, vary);
+    const known = k.candidates[depth];
     if (known) return known;
     const out: Candidate[] = [];
-    const source = read(fragment.text, vary);
+    const source = k.readings;
     if (source.notes?.length) {
       out.push(candidate([], source.notes, source));
       const step = (v: Readings['variations'][number]['variation']): PathStep => ({ operator: v.rule, line: v.line, by: v.by });
@@ -186,12 +221,13 @@ export function createRecogniser(): Recogniser {
         for (const v of source.variations) {
           out.push(candidate([step(v.variation)], v.notes, source));
           if (depth >= 2) {
-            const twice = read(v.variation.apply(fragment.text), vary);
+            // (a variation's own reading is kept only in its fragment's candidates: kept apart, depth 2 would fill the capacity)
+            const twice = readVariations(v.variation.apply(fragment.text), vary);
             for (const w of twice.variations) out.push(candidate([step(v.variation), step(w.variation)], w.notes, twice));
           }
         }
     }
-    candidates.set(key, out);
+    k.candidates[depth] = out;
     return out;
   };
 
@@ -231,6 +267,9 @@ export function createRecogniser(): Recogniser {
   };
 
   return {
+    get size() {
+      return kept.size;
+    },
     recognise(text, library, options = {}) {
       const { tolerance = 0, depth = 1, operators = ALL_OPERATORS, ...rest } = options;
       if (!(Number.isInteger(tolerance) && tolerance >= 0)) throw new Error(`recognise: tolerance is ${String(tolerance)}, not a whole number ≥ 0`);
