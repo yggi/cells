@@ -8,9 +8,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.11.0`.
+Nothing has changed since `v0.11.1`.
 
-## v0.11.0 — 2026-10-27
+## v0.11.1 — 2026-10-27
+
+The release the tag `v0.11.1` names (64f3e43). The tag `v0.11.0` names v0.10.1's commit (094ed45), tagged by mistake: it adds nothing to v0.10.1, so a frontend moves from `v0.10.1` straight to `v0.11.1`. Inside the tagged commit, `package.json` and this heading still said 0.11.0; this one says what was tagged.
 
 ### Added
 - **A variation's reference** (#293, decision 052, point 7): each `Variation` Vary gives may carry `reference`: the varied line as a form on the line it varies, in forms the language already has (`form`: `&hat[<<]` for rotate, `&bassline^-1`, `inverse(&bassline)`, `&bassline[::-1]`, and `base=` for drop, add, trim and bend, `base=&hat =!6 ~`; with an anchored note, `base=&bassline^-1 0` or the line's picks around it), and `line(name)`, a cell that plays it, to read where the line was read. Absent on a Euclid, a line with a cell of levels, a rotation whose last token is a run, and where it would be longer than the line written out. Over the seed rhythms and bass lines, 472 of 535 variations have one, each playing the variation's notes (S2). **Recognition reads a reference as its path** (decision 055): a heard text that uses a fragment and writes a line it takes as one of its variations' references is that fragment by that operator, at distance 0, without a search. The type `Reference` is exported. **What a frontend sees at its next pin:** an optional field, additive; `by`, `apply` and every variation are as they were. No piece sounds different.
