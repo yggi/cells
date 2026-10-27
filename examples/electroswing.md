@@ -6,7 +6,7 @@ description: "A house kick under a walking bass, Charleston stabs, and a clarine
 
 Electro swing is a jazz record cut up over a house beat: four on the floor, the eighths swung, a walking bass, brass stabs on the Charleston and a clarinet in a minor key.
 Here the band comes from the seed library, taken by name, and so does the tune: the drummer and its kit, the key, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, the bass, stab and lead players, and the beat and the stabs this piece gave the library (`Electro swing drums`, `Charleston stabs`); the tune is the motif `gypsy`, its call, shaped by two forms, `call and answer` and `AABA`.
-The piece writes only what is its own: the meter, the key's tonic, the break, who plays when, and the sound of each instrument.
+The piece writes only what is its own: the tempo and the swing, the key's tonic, the break, who plays when, and the sound of each instrument.
 
 ```cells
 use &drums from "drums performer"
@@ -21,11 +21,14 @@ use &lead, &leadV from "lead performer"
 &useNote label="The band is the library's: each use names what it takes. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
 ```
 
-The meter swings its eighths, a little less than triplets; the tempo and the swing are both sliders.
+The meter is the library's too, `4/4 swung on 8n`, Jambot's Swing jazz meter, which leaves its tempo to the piece (`&tempo`) and swings its eighths by a cell of its own, `&swing`, triplets (2/3).
+The piece names that cell in its use and writes its own: the eighths a little less than triplets, .64. The tempo and the swing are both sliders.
 The key is harmonic minor, from the library, on the piece's tonic, D (`&tonic`): the vamp's fifth is then A major, four bars of D minor, four of A.
 
 ```cells
-&bar meter("4/4") step=free(124bpm, 112..132) swing=8n:free(.64, .5..0.75)
+use &bar, &swing from "4/4 swung on 8n"
+&tempo step=free(124bpm, 112..132)
+&swing swing=8n:free(.64, .5..0.75)
 &tonic D
 &swingNote label="Every line taps the meter (step=4n, 8n, 16n), so every line swings: the open hats on the off-beats, the stabs, the clarinet." about=&bar
 ```
