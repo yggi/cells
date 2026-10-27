@@ -188,11 +188,12 @@ function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number):
 
 /**
  * What switching a part on does to its time (decision 032): the policy its section's line states, else its selector's; with
- * several selectors on one track, the first that names one other than restart.
+ * several selectors on one track, the first that names one other than restart. A performer a band's selector switches runs
+ * on unless one says (`free`: decision 061), as a player who sits out comes back in time.
  */
 function restartOf(result: CompileResult, select: Output['select']): 'restart' | 'resume' | 'free' {
   for (const x of select) {
-    const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart;
+    const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart ?? (x.performer ? 'free' : undefined);
     if (word === 'resume' || word === 'free') return word;
   }
   return 'restart';

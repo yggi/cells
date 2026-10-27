@@ -139,4 +139,23 @@ A section may have a line of its own with attributes only, and stays a section (
 &out map=sample [&tune * &lead]
 ```
 
+- **A band** switches performers: who plays when ([decision 061](https://github.com/yggi/cells/blob/main/docs/decisions/061-the-band.md), `src/engine/compiler/band.ts`). A table whose entries are performers, gates or roles ([mix.md](mix.md)), is a band, a table as a kit is, with no step= of its own; a selector reading it steps through it, each of its steps naming the entries that play. A role stands for all its players, and a gate named itself is switched alone; a gate is one entry of a band. The selector switches their sound and leaves their time on the meter: their parts tap it as they did, so they swing, and a part a text `use`s is arranged as it is used, with no section to step it. So a performer's `restart=` is **`free`** unless one is written, as a player who sits out comes back in time; `restart` and `resume` work as on a section, on the selector or on a performer's own line, and warn where the selector switches off the bar (`step=1m` keeps each note's place in the bar).
+
+```cells
+&bar meter("4/4") step=120bpm swing=8n:2/3
+&key scale(major, G)
+&violinV s=saw loop=G4 env=&(map=adsr .05 .2 .7 .3)
+&celloV s=saw loop=G2 env=&(map=adsr .05 .2 .7 .3)
+&melody over=&key step=8n 0 2 4 5 4 2 0 ~
+&harmony over=&key step=4n -3 0 -1 0
+&violin play=&melody level=.6 &violinV
+&violin2 play=&harmony^$-12 level=.4 &violinV
+&cellist play=&harmony &celloV
+&lead map=role &violin
+&comp map=role &violin2 &cellist
+&band &lead &comp
+&form over=&band step=1m 1 [0,1]!3 ~ 0   # the comp alone, then all, then a bar's rest, then the lead
+&out loop=SAMPLE_RATE map=sample [&violin, &violin2, &cellist]
+```
+
 The transport marks a selector's steps and jumps to them ([../ui/transport.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/transport.md)). Selectors reading in a voice's or a melody's position are not built ([../limits.md](https://github.com/yggi/cell-studio/blob/main/docs/limits.md)).

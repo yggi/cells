@@ -406,7 +406,7 @@ function voicesIn(decls, name, seen = []) {
     return [...out];
 }
 function mixSelectors(ctx, decls) {
-    const isMix = (d) => !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
+    const isMix = (d) => !!d && !d.gate && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
     for (const d of decls.values()) {
         const t = d.over ? decls.get(d.over.name) : undefined;
         if (!t || t.braid.kind !== 'list' || !t.braid.tokens.length || !t.braid.tokens.every((x) => x.atom.kind === 'ref' && isMix(decls.get(x.atom.name))))

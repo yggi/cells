@@ -69,7 +69,7 @@ function thrown(result, t, e, lap) {
 }
 function restartOf(result, select) {
     for (const x of select) {
-        const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart;
+        const word = result.cells.get(x.part)?.params.restart ?? result.cells.get(x.cell)?.params.restart ?? (x.performer ? 'free' : undefined);
         if (word === 'resume' || word === 'free')
             return word;
     }

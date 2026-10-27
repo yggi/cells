@@ -3,7 +3,7 @@ import { ATTRIBUTES, rolesText } from "../attributes.js";
 import { PLUGIN_SYNTAX } from "../plugins.js";
 import { isMidiCard } from "../program.js";
 const RESTARTS = ['restart', 'resume', 'free'];
-export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, plugins) {
+export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, plugins, bands = new Map()) {
     const { warn } = ctx;
     const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
     const roles = (c) => {
@@ -38,8 +38,10 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
             r.add('modulator');
         if (sections.has(c.name))
             r.add('section');
-        if (c.over && [...sections.values()].includes(c.over))
+        if (c.over && ([...sections.values()].includes(c.over) || bands.has(c.over)))
             r.add('selector');
+        if ([...bands.values()].some((es) => es.includes(c.name)))
+            r.add('performer');
         return r;
     };
     for (const d of decls.values()) {
