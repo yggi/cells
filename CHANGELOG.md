@@ -9,7 +9,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 ## Unreleased
 
 ### Changed
+
 - **A recogniser keeps at most 512 texts** (#277, decision 055, point 5): `createRecogniser()` forgets the text used longest ago past its capacity, so a run of hours holds its memory and a recognition's cost (a 3-hour E45 walk kept 6,199 texts and 1.36 GB unbounded; now 512). It takes an optional `{ capacity }` (a whole number ≥ 1, or `Infinity` for the old behaviour), and returns a `KeepingRecogniser`, a `Recogniser` with `size`, the texts it keeps. `RecogniserOptions`, `KeepingRecogniser` and `RECOGNISER_CAPACITY` are exported. **What a frontend sees at its next pin:** the same answers on every recognition; Jambot's E45 can share one recogniser across its runs again. No piece sounds different.
+
+### Fixed
+
+- **S1 reads an event's every number as the snapshot does** (#196): `soundsIdentical` compared an event's bends, levels, moving parameters and envelope digit for digit, where the snapshot it stands for reads every number to 9 significant digits. So one time summed two ways, 1e-15 s apart, failed it: `scan(1 1 1 1)` against `meter("4/4")` failed in 39 of the 54 examples that write it, though their snapshot hashes agree. Now 49 of the 54 pass. Four still fail because they read `&bar` as more than a meter (baustelle, effects, moving, waveforms), and tape because its physics differs by 2e-8 cents. **What a frontend sees at its next pin:** Migrate, Normalise and Shorten keep a rewrite that differed only so, where before they dropped it; nothing a piece plays changes.
 
 ## v0.11.2 — 2026-10-27
 

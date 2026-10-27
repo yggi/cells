@@ -21,7 +21,8 @@ export function sameNotes(a, b, names, options = {}) {
     }
 }
 export const SAMENESS_SECONDS = 60;
-const whole = (e, voice) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null])}`;
+const nine = (_, v) => (typeof v === 'number' && Number.isFinite(v) ? +v.toPrecision(9) : v);
+const whole = (e, voice) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(5)).join(',')} ${JSON.stringify([e.bends, e.levels, e.params ?? null, e.env ?? null], nine)}`;
 const note = (e, voice) => `${voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)}`;
 const IN_EVENTS = new Set(['gain', 'pan', 'legato']);
 function soundOf(r) {
