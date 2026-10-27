@@ -10,6 +10,7 @@ import { flatten } from '../flatten';
 import { eventsBetween, plan } from '../realize';
 import { parse } from '../parser';
 import { PRESETS } from '../presets';
+import { resolveSeed } from '../../repository/library';
 import { modeName } from '../../theory/modes';
 
 type R = ReturnType<typeof compileSource>;
@@ -280,9 +281,9 @@ describe('errors', () => {
     expect(msgs('&fifths12TET 0 1 2')).toMatch(/default grid/);
   });
 
-  it('every preset compiles cleanly', () => {
+  it('every preset compiles cleanly (its uses read from the seed library)', () => {
     for (const [key, p] of Object.entries(PRESETS)) {
-      const r = compileSource(p.source);
+      const r = compileSource(p.source, undefined, { resolve: resolveSeed });
       expect(r.diagnostics, key).toEqual([]);
       expect(r.outputs.length, key).toBeGreaterThan(0);
     }

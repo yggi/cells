@@ -10,9 +10,10 @@ import { eventsBetween, plan } from './realize';
 import { shortenAll } from './shorten';
 import { SAMENESS_SECONDS } from './sameness';
 import { PRESETS } from './presets';
+import { resolveSeed } from '../repository/library';
 
 const sounds = (src: string, seconds = SAMENESS_SECONDS) => {
-  const r = compileSource(src);
+  const r = compileSource(src, undefined, { resolve: resolveSeed });
   expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   return eventsBetween(plan(r, codeShifts(r)), 0, seconds);
 };
@@ -63,7 +64,7 @@ describe('scale(tonic, phase) is a key and a mode written out', () => {
 describe('Shorten is idempotent', () => {
   // BWV 847 is left out for time: Shorten takes about 5 s on it, twice here (its generator already applies it, #82)
   it.each(examples.filter(([key]) => key !== 'bwv847'))('%s', (_, { source }) => {
-    const once = shortenAll(source).source;
-    expect(shortenAll(once).source).toBe(once);
+    const once = shortenAll(source, undefined, { resolve: resolveSeed }).source;
+    expect(shortenAll(once, undefined, { resolve: resolveSeed }).source).toBe(once);
   });
 });

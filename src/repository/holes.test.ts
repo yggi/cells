@@ -48,6 +48,12 @@ describe('what a fragment uses and defines', () => {
       expect(h.sounds, f.id).toEqual(h.uses);
     }
   });
+
+  it('a chord of two hits is two sounds, and its line one step: [&hh,&sd] reads as a chord of voices once &hh is stood in', () => {
+    const h = holes('&t step=16n [&hh,&sd] &hh!15');
+    expect(h.sounds).toEqual(['&hh', '&sd']);
+    expect(h.clock).toEqual([need('&t', '16n', 1, 16, 1, 16)]);
+  });
 });
 
 describe('what its clock needs', () => {

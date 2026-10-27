@@ -24,10 +24,13 @@ const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOG
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY } from './library';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+
+/** The point proposed for an Electro swing preset, as harmonic minor's file writes it: no preset of Jambot's (decision 041). */
+const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
-type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian';
+type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian' | 'harmonic';
 
 // Lifted from yggi/jambot packages/engine/src/style.ts @ bf96210 (`PRESETS`, each preset's `mode`).
 const PRESETS: { name: string; point: StylePoint; mode: Mode }[] = [
@@ -47,6 +50,7 @@ const SCALE: Record<Mode, readonly number[]> = {
   dorian: [0, 2, 3, 5, 7, 9, 10],
   mixolydian: [0, 2, 4, 5, 7, 9, 10],
   aeolian: [0, 2, 3, 5, 7, 8, 10],
+  harmonic: [0, 2, 3, 5, 7, 8, 11],
 };
 
 const byId = (id: string) => MODE_FRAGMENTS.find((f) => f.id === id)!;
@@ -69,8 +73,8 @@ function sent(text: string, channel: number, seconds: number): { at: number; not
 }
 
 describe('the mode fragments', () => {
-  it('are the four modes of Jambot’s composer, then the bell and scale', () => {
-    expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell and scale']);
+  it('are the four modes of Jambot’s composer, the bell and scale, then harmonic minor, the electroswing example’s', () => {
+    expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell and scale', 'harmonic minor']);
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s defines key and uses its tonic and nothing else but a sound, so it fits any meter', (id, text) => {
@@ -81,7 +85,7 @@ describe('the mode fragments', () => {
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s is the main key, and plays its mode up from C with no diagnostic', (id, text) => {
-    const mode = (id === 'bell and scale' ? 'ionian' : id) as Mode;
+    const mode = (id === 'bell and scale' ? 'ionian' : id === 'harmonic minor' ? 'harmonic' : id) as Mode;
     const piece = `${filled(fitOf(text, meter()).union.text)}\n${PROBE}`;
     expect(compileSource(piece).diagnostics.map((d) => d.message)).toEqual([]);
     expect(sent(piece, 3, 8).map((n) => n.note - 60)).toEqual([...SCALE[mode], 12]);
@@ -89,7 +93,7 @@ describe('the mode fragments', () => {
 
   it('leave the tonic to the text that uses them: &tonic, a hole the workbench fills, which moves every note (#290)', () => {
     for (const f of MODE_FRAGMENTS) {
-      expect(f.text).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian), &tonic\)/);
+      expect(f.text).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic), &tonic\)/);
       expect(fitOf(f.text, setTiming('&bar meter("4/4")', 'bar', 'step', '60bpm')).missing).toEqual(['&tonic']);
       const inA = `${filled(fitOf(f.text, meter('4/4', 'A')).union.text)}\n${PROBE}`;
       const inC = `${filled(fitOf(f.text, meter()).union.text)}\n${PROBE}`;
@@ -107,12 +111,14 @@ describe('the presets find their modes', () => {
     expect(second!.distance).toBeGreaterThan(0);
   });
 
-  it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian)', () => {
+  it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian); harmonic minor at the point proposed for Electro swing', () => {
     for (const f of MODES) {
       const points =
-        f.id === 'mixolydian'
-          ? [Object.fromEntries(Object.keys(FUNK).map((axis) => [axis, (FUNK[axis]! + BOSSA_NOVA[axis]!) / 2]))]
-          : PRESETS.filter((p) => p.mode === f.id).map((p) => p.point);
+        f.id === 'harmonic minor'
+          ? [PROPOSED]
+          : f.id === 'mixolydian'
+            ? [Object.fromEntries(Object.keys(FUNK).map((axis) => [axis, (FUNK[axis]! + BOSSA_NOVA[axis]!) / 2]))]
+            : PRESETS.filter((p) => p.mode === f.id).map((p) => p.point);
       expect(f.association.map((wp) => wp.point)).toEqual(points);
       expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
     }

@@ -36,7 +36,7 @@ A used fragment may itself `use`: its own lines win over what it uses, and the p
 - A line two used fragments give word for word (comments aside, whitespace collapsed) is one line.
 - A line taken twice from one id is taken once, at its first `use`; a use that then takes nothing warns that it adds nothing.
 - A name a use asks for that the fragment doesn't define is an error naming the names it does: `&cb is not in "core kit": it defines &bd, &rim, &sd, …`.
-- A name a use asks for that the piece defines is the piece's, and warns that taking it adds nothing; so does a `use * from` whose every line the piece defines.
+- A name a use asks for that the piece defines is the piece's, and warns that taking it adds nothing, unless a line the use takes reads it: then naming it is how the piece overrides it, and says nothing (`use &bass, &bassV from "bass performer"` with the piece's own `&bassV s=saw loop=C3`: the bass player, on the piece's sound). A `use * from` whose every line the piece defines warns too.
 - A helper the piece also defines is an error: the piece didn't ask for it, so its line would change what the named cell reads. Rename the piece's, or name the helper in the use, which makes it an override.
 - A name two used fragments define by different lines, and the piece doesn't, is an error naming the name and both ids: the piece writes the line itself, or drops one `use`.
   `use` never renames: a voice's General MIDI note is read off its name ([midi.md](midi.md)), and `&bd2` would send another.

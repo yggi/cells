@@ -12,6 +12,7 @@ import { eventsBetween, plan } from './realize';
 import { liveAt } from './live';
 import { routing } from './routing';
 import { PRESETS } from './presets';
+import { resolveSeed } from '../repository/library';
 
 type R = ReturnType<typeof compileSource>;
 const midi = (f: number) => Math.round(69 + 12 * Math.log2(f / 440));
@@ -139,7 +140,7 @@ describe('sound', () => {
 
   it('every preset sounds every out()', () => {
     for (const [key, pr] of Object.entries(PRESETS)) {
-      const r = compileSource(pr.source);
+      const r = compileSource(pr.source, undefined, { resolve: resolveSeed });
       expect(r.diagnostics, key).toEqual([]);
       // within 12 s — or longer, for a piece that unfolds (BWV 847's fugue waits out the prelude; the Ricercar adds a voice a pass;
       // the arranged songs bring their parts in section by section)
@@ -159,6 +160,7 @@ describe('sound', () => {
             baustelle: 110,
             hypercell: 75,
             onemore: 80,
+            electroswing: 40, // the clarinet comes in at bar 9, 15.5 s at 124 bpm
             brothers: 120,
             ghosts: 60,
           } as Record<string, number>

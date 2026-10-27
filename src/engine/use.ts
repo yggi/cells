@@ -8,9 +8,10 @@
  *   followed within the fragment: what the closure takes and the use doesn't name are the fragment's helpers); `use
  *   &aeolian` is `use &aeolian from aeolian`.
  * - A name the use asks for and the fragment doesn't define is an error naming the ones it does; a name it asks for
- *   that the piece defines is the piece's (it overrides), and says the use of it adds nothing; a helper the piece
- *   defines is an error (decision 059: a helper is the fragment's, and the piece's line would change what it reads), but
- *   an interface name (`&key`, `&bar` …: `INTERFACE_NAMES`), which is the piece's, read by the fragment's line (decision 060).
+ *   that the piece defines is the piece's (it overrides), and says the use of it adds nothing, unless a line the use
+ *   takes reads it (a helper named to override it: `use &bass, &bassV from …`); a helper the piece defines and the use
+ *   doesn't name is an error (decision 059: a helper is the fragment's, and the piece's line would change what it reads),
+ *   but an interface name (`&key`, `&bar` …: `INTERFACE_NAMES`), which is the piece's, read by the fragment's line (decision 060).
  * - A line two used fragments give word for word (its code: comments aside, whitespace collapsed) is one line; a name
  *   they define by different lines, and the piece doesn't, is an error naming it and both ids. `use` never renames: a
  *   renamed voice changes its drum note (#117).
@@ -111,7 +112,7 @@ interface Taken {
 /** What a level of the expansion gave: its lines, and, for each of its `use` lines, what that gave and what was overridden. */
 interface Merged {
   readonly lines: readonly Line[];
-  readonly per: readonly { readonly gave: readonly string[]; readonly overrode: readonly string[] }[];
+  readonly per: readonly { readonly gave: readonly string[]; readonly overrode: readonly string[]; readonly read: readonly string[] }[];
 }
 
 /** The interface names, bare (`bar`, `key` …). */
@@ -167,7 +168,9 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       gave.add(`&${l.name}`);
       lines.push(l);
     }
-    return { gave: [...gave], overrode };
+    // (an override a taken line reads changes what it plays: the use of it is the override, not a use that adds nothing)
+    const read = overrode.filter((n) => [...take].some((t) => byName.get(t)!.reads.includes(n.slice(1))));
+    return { gave: [...gave], overrode, read };
   });
   return { lines, per };
 }
@@ -245,13 +248,13 @@ export function expansion(text: string, { resolve, locked = [] }: CompileOptions
   const merged = merge(own, used, (i, message) => diagnostics.push({ severity: 'error', message, span: spanOf(uses[i]!) }), 'the piece');
   // (a use that adds nothing says so: what it names the piece defines, or an earlier use of its id took it all)
   uses.forEach((u, i) => {
-    const { gave, overrode } = merged.per[i]!;
+    const { gave, overrode, read } = merged.per[i]!;
     if (!used[i]!.resolved) return;
     const warn = (message: string) => diagnostics.push({ severity: 'warning', message, span: spanOf(u) });
     const { id, names } = u.use;
     const earlier = uses.findIndex((v) => v.use.id === id);
     if (!gave.length && earlier < i) warn(`${quoted(id)} is used already, on line ${uses[earlier]!.line}: this use adds nothing`);
-    else if (names) for (const n of overrode) warn(`The piece defines ${n}, so taking it from ${quoted(id)} adds nothing`);
+    else if (names) for (const n of overrode.filter((o) => !read.includes(o))) warn(`The piece defines ${n}, so taking it from ${quoted(id)} adds nothing`);
     else if (!gave.length && overrode.length) warn(`The piece defines all ${quoted(id)} gives (${overrode.join(', ')}): this use adds nothing`);
   });
   // (the used lines after the piece's, each remembering the use it came through)
