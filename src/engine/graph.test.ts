@@ -34,3 +34,31 @@ describe('a meter is a meter in the graph, written meter(…) or scan(…) (#123
     expect(writtenGraph(r).nodes.some((n) => n.kind === 'cell' && n.isMeter)).toBe(false);
   });
 });
+
+describe('a role and a stack of lines in the graph (#329)', () => {
+  const BASE = `&bar meter("4/4") step=120bpm
+&bd s=sine loop=A1
+&hh s=white
+&kit &bd &hh
+&kick step=8n 0 ~ 0 ~
+&hat step=8n ~ 1 ~ 1
+&accent map=amp step=4n 1 .5
+`;
+  const wires = (src: string, cell: string) =>
+    writtenGraph(compileSource(BASE + src))
+      .edges.filter((e) => e.from === cellId(cell) || e.to === cellId(cell))
+      .map((e) => `${e.from.slice(5)}->${e.to.slice(5)} ${e.port} ${e.band}`)
+      .sort();
+
+  it('a role is one wire from each gate it names, no sound: not the voices the gate plays', () => {
+    const src = '&drumsOut play=&kick &kit\n&drums map=role &drumsOut\n&out map=sample &drumsOut';
+    expect(compileSource(BASE + src).diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(wires(src, 'drums')).toEqual(['drumsOut->drums braid none']);
+  });
+
+  it('a stack a gate plays is wired as it is written: each line on play, each of its levels on level', () => {
+    const src = '&lines [&kick * &accent, &hat]\n&drumsOut play=&lines &kit\n&out map=sample &drumsOut';
+    expect(compileSource(BASE + src).diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(wires(src, 'lines')).toEqual(['accent->lines level cv', 'hat->lines play cv', 'kick->lines play cv', 'lines->drumsOut play cv']);
+  });
+});
