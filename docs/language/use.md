@@ -10,7 +10,7 @@ use &bd, &sd, &hh from "core kit"
 ```
 
 - **`use &bd, &sd from <id>`** takes the named cells, and the lines they read within the fragment: the names a taken line writes (`&x`) that the fragment defines, followed until none is left. Those the use doesn't name are the fragment's *helpers*: `use &bass from "funk bass"` takes `&bass` and the `&bassNext` it reads, and not the fragment's card.
-- **`use * from <id>`** takes every line.
+- **`use * from <id>`** takes every line, but a line read only by lines the piece overrides: it goes with them, a helper of what the piece wrote itself (`use * from "4/4 swung on 8n"` under the piece's own `&bar` takes no `&swing`, and says the use adds nothing).
 - **`use &x`** is `use &x from x`: the fragment whose id is `x`, which defines `&x`.
 - **The id** is a word (`bass`), or any id in double quotes (`"core kit"`); a word is written bare.
 - **`use "core kit"`**, the old way, reads as `use * from "core kit"`, and warns; Normalise writes the new.

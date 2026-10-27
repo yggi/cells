@@ -173,7 +173,12 @@ describe('the pairs alone, `swing=8n:r:pairs` (#204, decision 053): a level’s 
       : /swing=/.test(text)
         ? text.replace('swing=', 'swing=8n:2/3:pairs,')
         : `${text} swing=8n:2/3:pairs`;
-  // (a meter fragment's tempo is a hole, `step=&tempo` (#290): `onsets` writes one)
+  // (a meter fragment's tempo is a hole, `step=&tempo` (#290): `onsets` writes one; its swing, a cell of its own the meter
+  // reads, `swing=&swing` (#308), is read back onto it, so the swing it plays is the one written here)
+  const inline = (text: string) => {
+    const own = /\n&swing swing=(\S+)/.exec(text);
+    return own ? text.replace(own[0], '').replace('swing=&swing', `swing=${own[1]}`) : text;
+  };
   const meterOf = (text: string) => text.replace(/^&bar /, '').replace(' step=&tempo', '');
   // Where each eighth of one bar is played, in the meter's pulses, under the meter's own text with :pairs: a pair's second
   // eighth two thirds through it, a group of three at thirds of its beat (an eighth each). Literal, one row a meter.
@@ -198,12 +203,12 @@ describe('the pairs alone, `swing=8n:r:pairs` (#204, decision 053): a level’s 
     expect(METER_FRAGMENTS).toHaveLength(13);
   });
 
-  it.each(METER_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: its eighths with :pairs land where the table says', (id, text) => {
+  it.each(METER_FRAGMENTS.map((f) => [f.id, inline(f.text)] as const))('%s: its eighths with :pairs land where the table says', (id, text) => {
     const meter = meterOf(pairsOn(text));
     expect(onsets(meter, '8n')).toEqual(expected[id]!.map((x) => expect.closeTo(x, 12)));
   });
 
-  it.each(METER_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: a pair leans exactly as swing=8n does, a group of three exactly as straight', (_, text) => {
+  it.each(METER_FRAGMENTS.map((f) => [f.id, inline(f.text)] as const))('%s: a pair leans exactly as swing=8n does, a group of three exactly as straight', (_, text) => {
     const meter = meterOf(pairsOn(text));
     const pairs = onsets(meter, '8n');
     const leaned = onsets(meter.replace(':pairs', ''), '8n');

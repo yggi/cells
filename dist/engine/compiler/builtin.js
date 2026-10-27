@@ -11,6 +11,7 @@ export function otherReadsOf(d) {
     for (const r of [
         d.over,
         d.tonic,
+        d.swingFrom,
         d.base,
         d.env,
         d.pitch,

@@ -166,3 +166,46 @@ describe('the seeds', () => {
     for (const f of MODE_FRAGMENTS) expect(messages(lines(bench, meter, f.text, 'use &highagogo from "gm kit"', tune('over=&key '))), f.id).toEqual([]);
   });
 });
+
+// #308: a meter's swing read from a cell that is a swing alone (`swing=&swing`, `&swing swing=8n:2/3`), as its tempo is
+// read from a rate alone; the swung seed meters give theirs as a helper, a text that swings otherwise names it.
+describe('a meter’s swing read from a cell', () => {
+  const at = (swing: string) => lines(`&bar meter("4/4") step=104bpm swing=${swing}`, '&key scale(dorian, D)', BODY);
+  for (const swing of ['8n:2/3', '16n:.6', '8n:.6,16n:.55', '8n:2/3:pairs', '8n:free(.64, .5..0.75)'])
+    it(`swing=&swing with &swing swing=${swing}: plays what swing=${swing} on the meter plays`, () => {
+      const read = lines(at('&swing'), `&swing swing=${swing}`);
+      expect(messages(read)).toEqual([]);
+      expect(events(read, 8)).toEqual(events(at(swing), 8));
+    });
+
+  it('reads one cell, a swing alone; anything else is an error, said once', () => {
+    expect(messages(at('&nope'))).toEqual(['Unknown cell &nope']);
+    expect(messages(lines(at('&swing'), '&swing step=4n 0 1'))).toEqual(["&swing holds a meter's swing (swing=&swing): write a swing alone, &swing swing=8n:2/3"]);
+  });
+
+  it('the four swung seed meters swing by a helper of their own, and compile to the swing they wrote (as Jambot reads them)', () => {
+    const swung = METER_FRAGMENTS.filter((f) => f.text.includes('swing='));
+    expect(swung.map((f) => f.id)).toEqual(['4/4 swung on 8n', '4/4 leaning on 16n', '4/4 leaning lightly on 16n', '4/4 leaning faintly on 16n']);
+    const shares = [2 / 3, 0.65, 0.6, 31 / 60];
+    swung.forEach((f, k) => {
+      expect(f.text, f.id).toMatch(/^&bar meter\("4\/4"\) step=&tempo swing=&swing\n&swing swing=\d+n:[\d./]+$/);
+      expect(compileSource(f.text.replace('step=&tempo', 'step=120bpm')).cells.get('bar')!.meter!.swing![0]!.share, f.id).toBeCloseTo(shares[k]!, 12);
+    });
+  });
+
+  it('a use takes the seed’s swing with its meter; a text names it to swing its own, and the piece’s own &bar takes none', () => {
+    const tempo = '&tempo step=104bpm\n&key scale(dorian, D)';
+    const own = lines('use &bar, &swing from "4/4 swung on 8n"', '&swing swing=8n:.64', tempo, BODY);
+    expect(messages(own)).toEqual([]);
+    expect(events(own, 8)).toEqual(events(at('8n:.64'), 8));
+    expect(events(lines('use &bar from "4/4 swung on 8n"', tempo, BODY), 8)).toEqual(events(at('8n:2/3'), 8));
+    // (an &swing of the piece's own, the use not naming it, is the helper's collision: decision 059's ruling 1)
+    expect(messages(lines('use &bar from "4/4 swung on 8n"', '&swing swing=8n:.64', tempo, BODY))).toEqual([
+      "&swing is \"4/4 swung on 8n\"'s, read by its &bar, and the piece's too: rename the piece's, or name &swing in the use to override it",
+    ]);
+    // (use * under the piece's own &bar: the helper goes with the line it helps, so the use adds nothing, and says so)
+    expect(messages(lines('use * from "4/4 swung on 8n"', '&bar meter("4/4") step=104bpm', '&key scale(dorian, D)', BODY))).toEqual([
+      'The piece defines all "4/4 swung on 8n" gives (&bar): this use adds nothing',
+    ]);
+  });
+});

@@ -368,6 +368,11 @@ export interface CellDecl {
    * `swing=.6`.
    */
   readonly swing?: readonly { readonly level: string; readonly share: number; readonly pairs?: boolean }[];
+  /**
+   * A meter's swing read from a cell (#308): `swing=&swing` with `&swing swing=8n:2/3`, a cell that is a swing alone, as a
+   * tempo is read from a cell that is a rate alone (`step=&tempo`). Resolved by compile (declare.ts), which sets `swing`.
+   */
+  readonly swingFrom?: Ref;
   /** legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none. */
   readonly legato?: readonly { readonly level: string; readonly share: number }[];
   /** dough parameters (s=saw lpf=1800 …): a cell with any of these is a voice. */
