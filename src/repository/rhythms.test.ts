@@ -88,8 +88,8 @@ const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
 const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(`${w.preset} drums`) }));
 
 describe('the rhythm fragments', () => {
-  it('are E31’s eight drum bars, one per preset, and five claves, every point associated as the facet rhythm', () => {
-    expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([...Object.keys(PRESETS).map((p) => `${p} drums`), ...Object.keys(CLAVES)]);
+  it('are E31’s eight drum bars, one per preset, five claves, and the electroswing example’s beat, every point associated as the facet rhythm', () => {
+    expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([...Object.keys(PRESETS).map((p) => `${p} drums`), ...Object.keys(CLAVES), ...Object.keys(LIFTED)]);
     expect(RHYTHM_FRAGMENTS.flatMap((f) => f.association.map((wp) => wp.facet))).toEqual(RHYTHM_FRAGMENTS.map(() => 'rhythm'));
   });
 
@@ -205,11 +205,16 @@ const STRUCK: Record<string, string[]> = {
   'Swing jazz drums': ['&bd', '&ph', '&rd', '&sd'],
 };
 
+// The rhythms lifted from an example, each with the names it strikes: none ever carried a voice of its own.
+const LIFTED: Record<string, string[]> = {
+  'Electro swing drums': ['&bd', '&cp', '&hh', '&oh', '&sd'],
+};
+
 describe('the rhythms’ holes (decision 054, rung 2)', () => {
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s defines no voice, and every name it strikes is a sound hole', (id, text) => {
     expect(text.split('\n').filter((l) => / (s|loop)=/.test(l))).toEqual([]);
     const holes = holesOf(text, compileSource);
-    expect(holes.uses).toEqual(STRUCK[id] ?? ['&claves']);
+    expect(holes.uses).toEqual(STRUCK[id] ?? LIFTED[id] ?? ['&claves']);
     expect(holes.sounds).toEqual(holes.uses);
   });
 

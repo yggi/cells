@@ -94,7 +94,8 @@ function merge(own, used, say, host) {
             gave.add(`&${l.name}`);
             lines.push(l);
         }
-        return { gave: [...gave], overrode };
+        const read = overrode.filter((n) => [...take].some((t) => byName.get(t).reads.includes(n.slice(1))));
+        return { gave: [...gave], overrode, read };
     });
     return { lines, per };
 }
@@ -157,7 +158,7 @@ export function expansion(text, { resolve, locked = [] } = {}) {
     });
     const merged = merge(own, used, (i, message) => diagnostics.push({ severity: 'error', message, span: spanOf(uses[i]) }), 'the piece');
     uses.forEach((u, i) => {
-        const { gave, overrode } = merged.per[i];
+        const { gave, overrode, read } = merged.per[i];
         if (!used[i].resolved)
             return;
         const warn = (message) => diagnostics.push({ severity: 'warning', message, span: spanOf(u) });
@@ -166,7 +167,7 @@ export function expansion(text, { resolve, locked = [] } = {}) {
         if (!gave.length && earlier < i)
             warn(`${quoted(id)} is used already, on line ${uses[earlier].line}: this use adds nothing`);
         else if (names)
-            for (const n of overrode)
+            for (const n of overrode.filter((o) => !read.includes(o)))
                 warn(`The piece defines ${n}, so taking it from ${quoted(id)} adds nothing`);
         else if (!gave.length && overrode.length)
             warn(`The piece defines all ${quoted(id)} gives (${overrode.join(', ')}): this use adds nothing`);

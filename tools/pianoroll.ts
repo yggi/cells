@@ -20,6 +20,7 @@ import { compileSource } from '../src/engine/compile';
 import { PRESETS } from '../src/engine/presets';
 import { isPieceFile, readPiece } from '../src/engine/piecefile';
 import { codeShifts } from '../src/engine/program';
+import { resolveSeed } from '../src/repository/library';
 import { eventsBetween, plan } from '../src/engine/realize';
 
 /** A note as the event snapshot reads it: its voice, onset and length in seconds, and its pitch as a MIDI number (A4 = 69, fractional between). */
@@ -39,9 +40,9 @@ export interface Roll {
 /** The window drawn, in seconds: 8 s by default, a few bars at the examples' tempi. */
 export const WINDOW = { from: 0, to: 8 };
 
-/** The notes a cells text plays that start in [from, to), with a pitch (a note without one, a noise's, is left out). */
+/** The notes a cells text plays (its `use` lines read from the seed library) that start in [from, to), with a pitch (a note without one, a noise's, is left out). */
 export function notesOf(source: string, from = WINDOW.from, to = WINDOW.to): Note[] {
-  const result = compileSource(source);
+  const result = compileSource(source, undefined, { resolve: resolveSeed });
   if (!result.ok) throw new Error(`the text doesn't compile: ${result.diagnostics.map((d) => d.message).join('; ')}`);
   return eventsBetween(plan(result, codeShifts(result)), from, to)
     .filter((e) => Number.isFinite(e.freq) && e.freq > 0)

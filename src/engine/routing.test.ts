@@ -4,6 +4,7 @@ import { codeShifts, type CompileResult } from './program';
 import { liveAt } from './live';
 import { routing } from './routing';
 import { PRESETS } from './presets';
+import { resolveSeed } from '../repository/library';
 
 const OUT = '&out loop=SAMPLE_RATE map=sample';
 const src = (...lines: string[]) => compileSource(lines.join('\n'));
@@ -45,7 +46,7 @@ describe('at rest, nothing is dimmed (#201)', () => {
   // (how fast: `timing.slow.test.ts`, #237)
   it('the heads at rest (the live state at time 0) are worked out for every example', () => {
     for (const p of Object.values(PRESETS)) {
-      const r = compileSource(p.source);
+      const r = compileSource(p.source, undefined, { resolve: resolveSeed });
       expect(liveAt(r, codeShifts(r), r.off, 0).seconds).toBe(0);
     }
   });

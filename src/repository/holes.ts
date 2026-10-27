@@ -133,6 +133,10 @@ export function holesOf(text: string, compiled: (text: string) => CompileResult,
   // one unknown cell a line: so each sound hole is stood in by a voice, and the compile asked again for the next, until
   // none is left (#244). The clock is read there too: the need is the line's whatever sounds it.
   const found = new Set(unknown.filter(sound));
+  // (and every name a braid reads only as a sound and no line declares: once one of a chord's hits is stood in, `[&hh,&sd]`
+  // reads as a chord of voices, and the compile no longer says &sd is unknown, so the loop alone would stop short of it)
+  const declared = new Set(all.map((d) => `&${d.name}`));
+  if (found.size) for (const n of new Set(decls.flatMap((d) => braidReadsOf(d)).map((m) => `&${m}`))) if (sound(n) && !declared.has(n)) found.add(n);
   let last = result;
   for (;;) {
     if (!found.size) break;

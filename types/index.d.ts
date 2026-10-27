@@ -3,7 +3,7 @@
  * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
  * shorter, `normalise` in the canonical spelling, `variations` and `varied` vary a fragment (its anchors: `anchorsOf`), `fold` and `cellsFromMidi` write cells from notes, `pieceMidi` and
  * `readMidi` carry MIDI files. `createRepository` holds fragments and finds them by their place in style space and by how
- * often they were used together; `METER_FRAGMENTS` are its meters, `RHYTHM_FRAGMENTS` its rhythms, `BASS_FRAGMENTS` its bass lines, `HARMONY_FRAGMENTS` its harmonies, `INSTRUMENT_FRAGMENTS` its instruments, `MODE_FRAGMENTS` its modes, `LIBRARY` all, read
+ * often they were used together; `METER_FRAGMENTS` are its meters, `RHYTHM_FRAGMENTS` its rhythms, `BASS_FRAGMENTS` its bass lines, `HARMONY_FRAGMENTS` its harmonies, `INSTRUMENT_FRAGMENTS` its instruments, `MODE_FRAGMENTS` its modes, `STAB_FRAGMENTS` its stab lines, `LIBRARY` all, read
  * from the seed library's files (`fragments/`);
  * `readFragment` and `writeFragment` read and write a fragment as a file, Markdown with YAML frontmatter; `readPiece` and
  * `writePiece` a piece (an example, a person's) as the same kind of file, its title, tags and tier in the frontmatter,
@@ -42,6 +42,7 @@ export { HARMONY_FRAGMENTS } from './repository/harmony';
 export { INSTRUMENT_FRAGMENTS } from './repository/instruments';
 export { MODE_FRAGMENTS } from './repository/modes';
 export { PERFORMER_FRAGMENTS } from './repository/performers';
+export { STAB_FRAGMENTS } from './repository/stab';
 export { LIBRARY, resolveSeed } from './repository/library';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';

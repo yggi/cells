@@ -157,13 +157,17 @@ describe('putting a rewritten code back', () => {
   });
 });
 
+/** The examples written as literate cells (decision 051): prose between their blocks. */
+const LITERATE_EXAMPLES = new Set(['electroswing']);
+
 describe('every example and fragment reads as before', () => {
-  it('an example is one block: its text is the block, its prose what follows', () => {
+  it('an example is its blocks joined, its prose between and after them; all but the literate ones are one block', () => {
     for (const [key, { file, source }] of Object.entries(PRESETS)) {
       const read_ = read(file);
       expect(read_.text, key).toBe(source);
-      expect(read_.layout.blocks, key).toHaveLength(1);
+      if (!LITERATE_EXAMPLES.has(key)) expect(read_.layout.blocks, key).toHaveLength(1);
     }
+    for (const key of LITERATE_EXAMPLES) expect(read(PRESETS[key as keyof typeof PRESETS].file).layout.blocks.length, key).toBeGreaterThan(1);
   });
 
   it('a fragment file reads and writes as before', () => {

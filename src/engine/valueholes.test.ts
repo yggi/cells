@@ -150,10 +150,10 @@ describe('the seeds', () => {
     expect(played).toEqual(events(written, seconds));
   });
 
-  it('the 13 meters read &tempo, and the 5 modes &tonic, with no default', () => {
+  it('the 13 meters read &tempo, and the 6 modes &tonic, with no default', () => {
     expect(METER_FRAGMENTS).toHaveLength(13);
     for (const f of METER_FRAGMENTS) expect(f.text, f.id).toMatch(/^&bar meter\("[0-9]+\/[0-9]+"\) step=&tempo(\s|$)/);
-    expect(MODE_FRAGMENTS).toHaveLength(5);
+    expect(MODE_FRAGMENTS).toHaveLength(6);
     for (const f of MODE_FRAGMENTS) expect(f.text, f.id).toMatch(/^&key scale\([a-z]+, &tonic\)/);
   });
 

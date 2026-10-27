@@ -12,7 +12,7 @@ import { soundsIdentical } from '../sameness';
 
 const tail = '\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
 const sounds = (src: string, until = SAMENESS_SECONDS) => {
-  const r = compileSource(src);
+  const r = compileSource(src, undefined, { resolve: resolveSeed });
   expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   return eventsBetween(plan(r, codeShifts(r)), 0, until)
     .map((e) => `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(4)).join(',')}`)
@@ -112,7 +112,7 @@ describe('shorten, on every example: every suggestion sounds the same, and is sh
     it(
       key,
       () => {
-        const suggestions = shorten(p.source);
+        const suggestions = shorten(p.source, { resolve: resolveSeed });
         const before = sounds(p.source);
         for (const s of suggestions) {
           const next = s.apply(p.source);
