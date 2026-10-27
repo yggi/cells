@@ -1,6 +1,7 @@
 /**
  * The performers: the repository's facet `performer` (decision 058; #282), who plays which part. Each fragment holds one
- * gate named by its role (`&drums`, `&bass`, `&pad`, `&stab`, `&lead`), which plays a part the score fills (a hole: `&drumlines`, `&bassline`,
+ * gate, named as Jambot's section text names it (`&drumsOut`, `&bassOut`, `&padOut`, `&stabOut`, `&leadOut`), and its role
+ * cell (decision 061: `&bass map=role &bassOut`, the roles the feel plays), and the gate plays a part the score fills (a hole: `&drumlines`, `&bassline`,
  * `&padline`, `&stabline`, `&leadline`) at the levels it writes (a hole too: `&bassLevel` …), on the instrument it `use`s, moved where the instrument's register isn't the part's
  * (`play=&bassline^$-12`).
  *

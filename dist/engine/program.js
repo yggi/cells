@@ -60,11 +60,6 @@ export function balance(pan) {
     return [Math.min(1, 2 * (1 - p)), Math.min(1, 2 * p)];
 }
 export const isMidiCard = (c) => c?.map?.kind === 'midi';
-export const ROLES = ['drums', 'bass', 'pad', 'stab', 'lead'];
-export function roleOf(name) {
-    const bare = name.replace(/\d+$/, '');
-    return ROLES.includes(bare) ? bare : null;
-}
 export const codeShifts = (result) => (name) => result.cells.get(name)?.shift ?? 0;
 export const DEFAULT_ENV = { SAMPLE_RATE: 48000, A4: 440 };
 const LETTERS = { C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 };

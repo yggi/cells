@@ -43,7 +43,7 @@ The package ships TypeScript (Node won't strip it under `node_modules`: [#11](ht
 - [Generators](docs/language/reference.md#generators): 7 forms
 - [free(): left to the performer](docs/language/reference.md#free-left-to-the-performer): 5 forms
 - [step= and loop=](docs/language/reference.md#step--and-loop-): 16 forms
-- [map=](docs/language/reference.md#map-): 11 forms
+- [map=](docs/language/reference.md#map-): 12 forms
 - [Attributes](docs/language/reference.md#attributes): 18 forms
 - [Parameters](docs/language/reference.md#parameters): 59 forms
 - [Sorts: what a cell is in a mix](docs/language/reference.md#sorts-what-a-cell-is-in-a-mix): 8 forms

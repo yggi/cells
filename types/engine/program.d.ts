@@ -157,7 +157,7 @@ export interface ResolvedCell {
     readonly paramClocks: Readonly<Record<string, NonNullable<ResolvedCell['step']>>>;
     /** map= (how values become output): amp, sin or a table. */
     readonly map: {
-        readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'db';
+        readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'db' | 'role';
     } | {
         readonly kind: 'edo';
         readonly period: number;
@@ -422,17 +422,12 @@ export interface CompileResult {
     /** Its gates, the performers (decision 058), in the order written: who plays which part, on what. */
     readonly performers: readonly Performer[];
 }
-/** The roles a performer's name says (decision 058), the parts the feel contract plays. */
-export declare const ROLES: readonly ["drums", "bass", "pad", "stab", "lead"];
-export type Role = (typeof ROLES)[number];
-/** A gate's role, read off its name as a kit member's drum note is (`gmDrumNote`): `bass`, `lead2` a copy, or null (`leadOut`). */
-export declare function roleOf(name: string): Role | null;
-/** A gate, as a performer (decision 058): `&bass play=&bassline^$-12 level=.8 &bassV`. */
+/** A gate, as a performer (decision 058), any name, and its role a role cell's (decision 061): `&bassOut play=&bassline^$-12 level=.8 &bassV`. */
 export interface Performer {
-    /** The gate's name (`bass`). */
+    /** The gate's name (`bassOut`). */
     readonly name: string;
-    /** The role its name says (`bass`; `lead2` a second lead), or null: a performer with no role. */
-    readonly role: Role | null;
+    /** The role cell's name that lists it (decision 061: `&comp map=role &violin2`), or none: a performer with no role, which plays as written. */
+    readonly role?: string;
     /** The part it plays: the cell its play= names (`bassline`). */
     readonly part: string;
     /** What it moves the part by (`play=&bassline^$-12`: `{ transpose: -12 }`), or none. */

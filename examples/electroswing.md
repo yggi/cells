@@ -17,7 +17,7 @@ use &kick, &clap, &hats, &ticks from "Electro swing drums"
 use &stabline from "Charleston stabs"
 use &bass, &bassV from "bass performer"
 use &stab, &keysV from "stab performer"
-use &lead, &leadV from "lead performer"
+use &leadOut, &leadV from "lead performer"
 &useNote label="The band is the library's: each use names what it takes. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
 ```
 
@@ -67,10 +67,11 @@ The break cuts it into pieces with picks: its first three notes (`&call[0:3]`) a
 &callNote label="One bar: everything the clarinet plays is this bar, moved by degrees (^n), turned backwards ([::-1]) or cut ([0:3]): its call, its answer, its break." about=(&call &verse &chop &chopA)
 ```
 
-A second clarinet doubles the last verse an octave up: a copy of the lead player, `&lead2`, playing the same line moved twelve steps of the grid.
+A second clarinet doubles the last verse an octave up: a second player of the lead, `&lead2`, playing the same line moved twelve steps of the grid. Both play as the lead (`&lead map=role &leadOut &lead2`, decision 061), so the piece takes the lead player's gate, `&leadOut`, and writes the role itself.
 
 ```cells
 &lead2 play=&leadline^$12 level=&lead2Level &leadV
+&lead map=role &leadOut &lead2
 ```
 
 ## The form, in levels
@@ -102,6 +103,6 @@ In giving the bass its sound the piece gives it its register too, which is the i
 &leadV s=square loop=C4 lpf=2400 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=5.5 0 .12 0 -.12 0)
 &vinyl s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
 
-&out map=sample postgain=1.11 [&drums,
-                         &crackle * &vinyl * .04, &bass, &stab * .4, &lead * .5, &lead2 * .5]
+&out map=sample postgain=1.11 [&drumsOut,
+                         &crackle * &vinyl * .04, &bassOut, &stabOut * .4, &leadOut * .5, &lead2 * .5]
 ```

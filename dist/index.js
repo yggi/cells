@@ -14,7 +14,6 @@ export { PRESETS } from "./engine/presets.js";
 export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece } from "./engine/piecefile.js";
 export { fileLine, readLiterate, rewrite } from "./engine/literate.js";
 export { movedCard } from "./engine/shorten/card.js";
-export { ROLES, roleOf } from "./engine/program.js";
 export { expand, fragmentHash } from "./engine/use.js";
 export { createRepository, EMPTY_LAYER, layerProblems, } from "./repository/fragments.js";
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";
