@@ -1,4 +1,4 @@
-// The performers (#282, #287, decision 058): Jambot's drums, bass, pad, stab and lead as gates named by their roles, each
+// The performers (#282, #287, decisions 058 and 061): Jambot's drums, bass, pad, stab and lead as gates, each in its role, each
 // playing a part the score fills on the instrument it uses. Each reads its role, its part and its move; its holes are its
 // part and its levels; over a workbench that fills them it compiles clean and sends what Jambot's section text sends for
 // that part (its own voice line at Jambot's register); and a query for a performer at any preset finds the five. The drummer
@@ -53,16 +53,16 @@ const PARTS = {
       '&bassline over=&harm step=16n 0@4 ~@4 2@2 ~@2 0@4 0@8 ~@8',
       '&bassLevel map=amp step=16n .6@4 ~@4 .4@2 ~@2 .5@4 .6@8 ~@8',
       'use * from "bass performer"',
-      '&out map=midi ~ &bass',
+      '&out map=midi ~ &bassOut',
     ],
   },
   pad: {
     jambot: ['&pad over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padOut play=&pad level=.3 &compV', '&compV loop=C3', '&out map=midi ~ ~ &padOut'],
-    performer: ['&padline over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padLevel map=amp .3', 'use * from "pad performer"', '&out map=midi ~ ~ &pad'],
+    performer: ['&padline over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padLevel map=amp .3', 'use * from "pad performer"', '&out map=midi ~ ~ &padOut'],
   },
   stab: {
     jambot: ['&stab over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabOut play=&stab level=.5 &compV', '&compV loop=C3', '&out map=midi ~ ~ &stabOut'],
-    performer: ['&stabline over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabLevel map=amp .5', 'use * from "stab performer"', '&out map=midi ~ ~ &stab'],
+    performer: ['&stabline over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabLevel map=amp .5', 'use * from "stab performer"', '&out map=midi ~ ~ &stabOut'],
   },
   lead: {
     jambot: [
@@ -76,21 +76,21 @@ const PARTS = {
       '&leadline over=&key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
       '&leadLevel map=amp step=16n .7@2 .5 .6@5 ~@8 .5 .6@3 .7@4 ~@8',
       'use * from "lead performer"',
-      '&out map=midi &lead',
+      '&out map=midi &leadOut',
     ],
   },
 } as const;
 
 describe('the performers', () => {
-  it('are the drums, the bass, the pad, the stab and the lead, each one gate named by its role, playing its part on the instrument it uses', () => {
+  it('are the drums, the bass, the pad, the stab and the lead, each one gate whose role a role cell gives, playing its part on the instrument it uses', () => {
     expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['drums performer', 'bass performer', 'pad performer', 'stab performer', 'lead performer']);
     const read = PERFORMER_FRAGMENTS.map((f) => compileSource(f.text, undefined, { resolve: resolveSeed }).performers);
     expect(read).toEqual([
-      [{ name: 'drums', role: 'drums', part: 'drumlines', voices: ['kit'] }],
-      [{ name: 'bass', role: 'bass', part: 'bassline', move: { transpose: -12 }, voices: ['bassV'] }],
-      [{ name: 'pad', role: 'pad', part: 'padline', voices: ['padV'] }],
-      [{ name: 'stab', role: 'stab', part: 'stabline', voices: ['keysV'] }],
-      [{ name: 'lead', role: 'lead', part: 'leadline', voices: ['leadV'] }],
+      [{ name: 'drumsOut', role: 'drums', part: 'drumlines', voices: ['kit'] }],
+      [{ name: 'bassOut', role: 'bass', part: 'bassline', move: { transpose: -12 }, voices: ['bassV'] }],
+      [{ name: 'padOut', role: 'pad', part: 'padline', voices: ['padV'] }],
+      [{ name: 'stabOut', role: 'stab', part: 'stabline', voices: ['keysV'] }],
+      [{ name: 'leadOut', role: 'lead', part: 'leadline', voices: ['leadV'] }],
     ]);
   });
 
@@ -137,7 +137,7 @@ describe('the drums performer', () => {
   const section = ({ point, text }: (typeof DRUM_BARS)[number]) =>
     [setTiming(library.query(point, 1, {}, { facet: 'meter' })[0]!.fragment.text, 'bar', 'step', `${BPM}bpm`), text].join('\n');
   const today = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\nuse * from "core kit"\n&drums [${w.lines}]\n&out map=midi ~!9 &drums`;
-  const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\nuse * from "drums performer"\n&out map=midi ~!9 &drums`;
+  const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\nuse * from "drums performer"\n&out map=midi ~!9 &drumsOut`;
 
   it.each(DRUM_BARS.map((w) => [w.preset, w] as const))('%s: sends what its section text sends, over 64 bars', (_, w) => {
     const was = sent(today(w), 64);
@@ -178,11 +178,11 @@ describe('the drums performer', () => {
 
   it('refuses a line the kit doesn’t hold, and a stack mixed as a sound beside it', () => {
     const messages = (t: string) => compileSource(`&bar meter("4/4") step=${BPM}bpm\n${t}`, undefined, { resolve: resolveSeed }).diagnostics.map((d) => d.message);
-    expect(messages('&cb s=sine\n&cowbell step=4n &cb\n&drumlines [&cowbell]\nuse * from "drums performer"\n&out map=midi ~!9 &drums')).toEqual([
+    expect(messages('&cb s=sine\n&cowbell step=4n &cb\n&drumlines [&cowbell]\nuse * from "drums performer"\n&out map=midi ~!9 &drumsOut')).toEqual([
       "&cowbell plays &cb, which &kit doesn't hold: a kit's lines play its own voices",
     ]);
-    expect(messages('&kick step=4n &bd\n&drumlines [&kick]\nuse * from "drums performer"\n&out map=midi ~!9 [&drums, &drumlines]')).toEqual([
-      '&drumlines is the part &drums plays, a stack of lines and no sound: mix or send &drums',
+    expect(messages('&kick step=4n &bd\n&drumlines [&kick]\nuse * from "drums performer"\n&out map=midi ~!9 [&drumsOut, &drumlines]')).toEqual([
+      '&drumlines is the part &drumsOut plays, a stack of lines and no sound: mix or send &drumsOut',
     ]);
   });
 });

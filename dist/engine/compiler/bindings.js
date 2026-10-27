@@ -2,6 +2,7 @@ import { DOUGH_SOURCES } from "../dough-params.js";
 import { ATTRIBUTES, memberParams, VOICE_PARAMS } from "../attributes.js";
 import { canonicalTag, TUTORIAL } from "../tags.js";
 import { isMidiCard } from "../program.js";
+import { noSound } from "./band.js";
 export function bindVoices(ctx, decls, given, typed) {
     const { error, warn, unknownCell } = ctx;
     const cells = new Map(given);
@@ -13,7 +14,7 @@ export function bindVoices(ctx, decls, given, typed) {
     const sinks = [...cells.values()].filter((c) => c.sink);
     for (const [name, d] of decls) {
         const c = cells.get(name);
-        if (c && !c.mix && !isMidiCard(c) && c.units.some((u) => u.atom.kind === 'mix'))
+        if (c && !c.mix && !isMidiCard(c) && c.map?.kind !== 'role' && c.units.some((u) => u.atom.kind === 'mix'))
             error(c.sink ? `A sound card's channels are all mixes: [left …] [right …], or &left &right` : `A mix is one chord of sounds: &${name} [&a * &v, &b * &w]`, d.span);
     }
     const expand = (b, through = []) => {
@@ -42,7 +43,7 @@ export function bindVoices(ctx, decls, given, typed) {
             if (!mix || !bindings) {
                 if (u.atom.kind === 'ref' && ctx.broken.has(u.atom.name))
                     return;
-                error(`A channel of the sound card is a mix: &mix, or [&theme * &lead] written in place`, d.span);
+                error(u.atom.kind === 'ref' && mix?.map?.kind === 'role' ? noSound(u.atom.name) : `A channel of the sound card is a mix: &mix, or [&theme * &lead] written in place`, d.span);
                 return;
             }
             for (const { b, through, top } of bindings.flatMap((x) => expand(x).map((e) => ({ ...e, top: x })))) {
@@ -126,9 +127,11 @@ export function bindVoices(ctx, decls, given, typed) {
                 else if (throughKit(name) || c.voice || c.kit)
                     entry = { bindings: [alone], mix: null };
                 else {
-                    error(isMidiCard(c)
-                        ? `&${name} is a MIDI card: a card's entries are what it sends (a mix, a mix cell, a pattern read through a kit), not another card — name &${name}'s entries here`
-                        : `&${name} is a melody without a voice: a MIDI channel plays notes on a voice, [&${name} * &voice]`, span);
+                    error(c.map?.kind === 'role'
+                        ? noSound(name)
+                        : isMidiCard(c)
+                            ? `&${name} is a MIDI card: a card's entries are what it sends (a mix, a mix cell, a pattern read through a kit), not another card — name &${name}'s entries here`
+                            : `&${name} is a melody without a voice: a MIDI channel plays notes on a voice, [&${name} * &voice]`, span);
                     return;
                 }
             }

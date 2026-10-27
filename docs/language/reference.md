@@ -98,6 +98,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `map=midi`: A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent, not heard. [→](midi.md) `&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove`
 - `map=edo`: A grid: cycle= equal steps to the octave. [→](tuning.md) `&edo19 cycle=19 map=edo`
 - `map=ratios`: A grid of ratios: one period's tones, then the period (the last). [→](tuning.md) `&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2`
+- `map=role`: A role: its name is the role, its entries the gates that play it (two entries, two players); a gate no role names plays as written. [→](mix.md) `&comp map=role &violin2 &viola`
 - `map=ed(r)`: A grid: cycle= equal steps to the ratio r (a number or a fraction): ed(2) the octave, ed(3/2) the fifth. [→](tuning.md) `&bp cycle=13 map=ed(3)` · `&fifths cycle=7 map=ed(3/2)`
 - `map=midi(c)` · `map=midi(c, p)`: A MIDI card on one channel c (1–16), and on output slot p (1–16; the nth output of the MIDI page, 1 the first). [→](midi.md) `&drums map=midi(10) &groove` · `&keys map=midi(1, 2) [&theme * &reed]`
 - `map=&table`: Each value looked up in a table cell first, then sounded as amp. [→](sound.md) `&shaped loop=220 map=&curve 0 1 2 3`

@@ -106,7 +106,7 @@ describe('a gate (play=, level=): decision 023', () => {
   });
 });
 
-describe('a gate is a performer (decision 058): its name its role, and it transposes what it plays', () => {
+describe("a gate is a performer (decision 058), its role a role cell's (decision 061), and it transposes what it plays", () => {
   const performers = (src: string) => compileSource(BASE + src).performers;
   // (semitones from C4, as the voice at C5 plays them: 12 is the tune's 0)
   const semis = (src: string) => {
@@ -116,24 +116,45 @@ describe('a gate is a performer (decision 058): its name its role, and it transp
     return eventsBetween(plan(r, codeShifts(r)), 0, 2).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + 0);
   };
 
-  it('reads a role off its name, a trailing number a copy, any other name none', () => {
+  it('takes its role from the role cell that names it, and none from its name (decision 061)', () => {
     const roles = performers(
-      '&bass play=&tune &lead\n&lead2 play=&tune &bell\n&drums play=&tune &kit\n&leadOut play=&tune &lead\n&out map=sample [&bass, &lead2, &drums, &leadOut]',
+      '&first play=&tune &lead\n&second play=&tune &bell\n&bass play=&tune &bell\n&lead2 play=&tune &lead\n&melody map=role &first\n&comp map=role &second &lead2\n&out map=sample [&first, &second, &bass, &lead2]',
     );
     expect(roles.map((p) => [p.name, p.role])).toEqual([
-      ['bass', 'bass'],
-      ['lead2', 'lead'],
-      ['drums', 'drums'],
-      ['leadOut', null],
+      ['first', 'melody'],
+      ['second', 'comp'],
+      ['bass', undefined],
+      ['lead2', 'comp'],
     ]);
   });
 
   it('says who plays which part, on what, moved how', () => {
-    expect(performers('&bass play=&tune^$-12 level=&accent*.8 [&lead, &bell]\n&out map=sample &bass')).toEqual([
-      { name: 'bass', role: 'bass', part: 'tune', move: { transpose: -12 }, voices: ['lead', 'bell'] },
+    expect(performers('&bassOut play=&tune^$-12 level=&accent*.8 [&lead, &bell]\n&bass map=role &bassOut\n&out map=sample &bassOut')).toEqual([
+      { name: 'bassOut', role: 'bass', part: 'tune', move: { transpose: -12 }, voices: ['lead', 'bell'] },
     ]);
-    expect(performers('&lead2 play=&tune^2 &lead\n&out map=sample &lead2')).toEqual([{ name: 'lead2', role: 'lead', part: 'tune', move: { degree: 2 }, voices: ['lead'] }]);
+    expect(performers('&g play=&tune^2 &lead\n&out map=sample &g')).toEqual([{ name: 'g', part: 'tune', move: { degree: 2 }, voices: ['lead'] }]);
     expect(performers('&out map=sample [&tune * &lead]')).toEqual([]);
+  });
+
+  it('refuses a role that names no gate, a gate in two roles, and a role played as a sound', () => {
+    const errors = (src: string) =>
+      compileSource(BASE + '&g play=&tune &lead\n&h play=&tune &bell\n' + src)
+        .diagnostics.filter((d) => d.severity === 'error')
+        .map((d) => d.message);
+    const noSound = '&r is a role: it names the gates that play it, and is no sound to mix, send or play (name its gates here)';
+    expect(errors('&r map=role &g\n&s map=role &g &h\n&out map=sample [&g, &h]')).toEqual(['&g plays two roles, &r and &s: a gate plays one']);
+    expect(errors('&r map=role &g &h &g\n&out map=sample [&g, &h]')).toEqual([]);
+    expect(errors('&r map=role\n&out map=sample [&g, &h]')).toEqual(['&r is a role: name the gates that play it (&r map=role &player)']);
+    expect(errors('&r map=role &g &tune\n&out map=sample [&g, &h]')).toEqual(["&tune: a role's entries are gates, as written (&player play=&part &voice), and &tune is not one"]);
+    expect(errors('&r map=role &g ~ &h^$2\n&out map=sample [&g, &h]')).toEqual([
+      "a role's entries are the gates that play it, as written (&r map=role &player &player2)",
+      "&h: a role's entries are gates, as written (&player play=&part &voice), and &h is not one",
+    ]);
+    expect(errors('&r map=role &g\n&out map=sample [&r]')).toEqual([noSound]);
+    expect(errors('&r map=role &g\n&out map=sample &r')).toEqual([noSound]);
+    expect(errors('&r map=role &g\n&out map=midi &r')).toEqual([noSound]);
+    expect(errors('&r map=role &g\n&p play=&r &lead\n&out map=sample [&p]')).toEqual([noSound]);
+    expect(errors('&r map=role &nobody\n&out map=sample [&g, &h]')).toEqual(['Unknown cell &nobody']);
   });
 
   it('play=&tune^$-12 plays every note 12 semitones down', () => {
@@ -189,7 +210,7 @@ describe('a gate plays a stack of lines', () => {
       played(two + '&pad [&lo * &accent * &lead * .5, &lo * &accent * &bell * .5, &hi * &accent * &lead * .5, &hi * &accent * &bell * .5]\n&out map=sample &pad'),
     );
     expect(ids(lines + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(['lead:lo', 'lead:hi']);
-    expect(compileSource(BASE + lines + '&pad play=&both &lead\n&out map=sample &pad').performers).toEqual([{ name: 'pad', role: 'pad', part: 'both', voices: ['lead'] }]);
+    expect(compileSource(BASE + lines + '&pad play=&both &lead\n&out map=sample &pad').performers).toEqual([{ name: 'pad', part: 'both', voices: ['lead'] }]);
   });
 
   it('moves each line, and a pick on a line is kept', () => {

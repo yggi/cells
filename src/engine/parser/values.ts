@@ -157,6 +157,13 @@ export const MAP_KINDS: Readonly<Record<MapWord, Syntax>> = {
   ),
   edo: syntax('map', 'map=edo', 'A grid: cycle= equal steps to the octave.', ['&edo19 cycle=19 map=edo'], 'tuning.md'),
   ratios: syntax('map', 'map=ratios', "A grid of ratios: one period's tones, then the period (the last).", ['&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2'], 'tuning.md'),
+  role: syntax(
+    'map',
+    'map=role',
+    'A role: its name is the role, its entries the gates that play it (two entries, two players); a gate no role names plays as written.',
+    ['&comp map=role &violin2 &viola'],
+    'mix.md',
+  ),
 };
 /** The forms of map= besides the words. */
 export const MAP_SYNTAX: readonly Syntax[] = [
@@ -205,7 +212,7 @@ export function parseMap(s: LineScanner): MapSpec {
   if (w === null) s.fail(`map= takes ${Object.keys(MAP_KINDS).join(', ')}, ed(r), midi(c, p) or a table cell (&curve)`);
   if (w === 'edo') return { kind: 'edo', period: 2, span: s.span(start) };
   if (w === 'midi') return parseMidi(s, start);
-  return { kind: w as 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db', span: s.span(start) };
+  return { kind: w as 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role', span: s.span(start) };
 }
 
 /** midi, midi(c) or midi(c, p): a MIDI card, its channel (1–16) when all its entries share one, its output slot (1–16, 1 by default). */

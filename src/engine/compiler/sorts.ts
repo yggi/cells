@@ -5,6 +5,7 @@ import { memberParams, VOICE_PARAMS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
 import { syntax, type Syntax } from '../parser/syntax';
 import type { Ctx } from './context';
+import { noSound } from './band';
 
 /** typed(atom): a mix chord's bindings, typed and distributed once (errors reported once). */
 export type Typed = (atom: Extract<Atom, { kind: 'mix' }>) => Binding[];
@@ -161,6 +162,14 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
         `${sounding.port}=&${sounding.name}: a gate's ${sounding.port}= takes ${wants}, and &${sounding.name} is a sound (${decls.get(sounding.name)?.gate ? 'a gate' : isMixDecl(decls.get(sounding.name)) ? 'a mix' : 'a voice'})`,
         ref(sounding.name)?.span ?? decls.get(atom.gate!)!.span,
       );
+      typedMixes.set(atom, out);
+      return out;
+    }
+    // (a role names gates: it is no sound, and its gates are what a mix or a gate wants)
+    const role = (n: string) => decls.get(n)?.map?.kind === 'role';
+    const roleIn = [...notes.map((x) => x.name), ...atom.exprs.flatMap(refsOf)].find(role);
+    if (roleIn) {
+      error(noSound(roleIn), ref(roleIn)?.span ?? decls.get(atom.gate ?? roleIn)!.span);
       typedMixes.set(atom, out);
       return out;
     }

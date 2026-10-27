@@ -87,9 +87,9 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
 
 describe('a bass line fills the bass performer’s hole (#285)', () => {
   it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s, with the host and use * from "bass performer", compiles with no diagnostic', (_, text) => {
-    const host = '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bass';
+    const host = '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut';
     const r = compileSource(`use * from "bass performer"\n${host}\n${text}`, undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
-    expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bass', 'bass', 'bassline']]);
+    expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bassOut', 'bass', 'bassline']]);
   });
 });

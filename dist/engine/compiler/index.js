@@ -1,4 +1,3 @@
-import { roleOf } from "../program.js";
 import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
 import { context } from "./context.js";
 import { declare } from "./declare.js";
@@ -13,6 +12,7 @@ import { displayCells } from "./display.js";
 import { checkRoles } from "./roles.js";
 import { checkLimits } from "./limits.js";
 import { sectioned } from "./sections.js";
+import { performersOf } from "./band.js";
 const pluginsOf = (parsed) => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
 export function compile(parsed, env, used = new Set()) {
     const ctx = context(parsed, env);
@@ -30,6 +30,7 @@ export function compile(parsed, env, used = new Set()) {
     checkLimits(ctx, decls, timed.cells, clocks, outputs);
     const cells = displayCells(timed.cells);
     checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed));
+    const performers = performersOf(ctx, decls, declared.implicit);
     const { diagnostics } = ctx;
     const ok = !diagnostics.some((x) => x.severity === 'error');
     diagnostics.sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
@@ -55,9 +56,6 @@ export function compile(parsed, env, used = new Set()) {
             .map((h) => ({ head: h.name, at: num(h, 'at', 0), wander: num(h, 'wander', 0), wanderhz: num(h, 'wanderhz', 0.2) })),
     }));
     const plugins = pluginsOf(parsed);
-    const performers = [...decls.values()].flatMap((d) => d.gate && !declared.implicit.has(d.name)
-        ? [{ name: d.name, role: roleOf(d.name), part: d.gate.notes, ...(d.gate.move ? { move: d.gate.move } : {}), voices: d.gate.receivers }]
-        : []);
     return {
         ok,
         cells,

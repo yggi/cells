@@ -63,10 +63,11 @@ source: seed
 ```cells
 use * from "core kit"
 &kit &bd &rim &sd &cp &lt &hh &ph &mt &oh &ht &cr &rd &claves
-&drums play=&drumlines &kit
+&drumsOut play=&drumlines &kit
+&drums map=role &drumsOut
 ```
 
-The drummer (decision 058, #287): a gate named `drums`, playing the part `&drumlines` on the core kit.
+The drummer (decisions 058 and 061, #287): a gate, `&drumsOut` (named as Jambot's section text names its gates), whose role is `drums` (`&drums map=role &drumsOut`), playing the part `&drumlines` on the core kit.
 The part is a stack of lines, one per role, as Jambot's section text writes its drums (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b, `drumLines`): `&drumlines [&kick, &backbeat, &fill, &ghost, &hat, &euclid * &euclidLevel]`.
 A gate plays a stack line by line, each as if it were its one line, so every hit still says which line struck it (`kit:voices:kick:…`), the drum role the feel reads (`contracts/feel` v1.1).
 Each line names its own voices, and a hit its level either way, as Strudel has it: its own gain (`&bd:0:.645 ~ ~ &bd`, `s("bd:0:.645 ~ ~ bd")`), or the line times a line of levels in the stack (`&euclid * &euclidLevel`, `s("rim(7,16)").gain("…")`), read at each note's written step, so a straight Euclid under a swung meter keeps its levels, and a number (`&clave * .5`). So the drummer has no level of its own, and its one hole is the score's: `&drumlines`.

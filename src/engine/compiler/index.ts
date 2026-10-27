@@ -5,7 +5,7 @@
  * diagnostics and the environment (context.ts).
  */
 import type { ParseResult, Span } from '../ast';
-import { roleOf, type AudioTape, type CompileResult, type Env, type Performer, type ResolvedCell } from '../program';
+import type { AudioTape, CompileResult, Env, ResolvedCell } from '../program';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
 import type { ShowPlugin } from '../plugins';
 import { context } from './context';
@@ -21,6 +21,7 @@ import { displayCells } from './display';
 import { checkRoles } from './roles';
 import { checkLimits } from './limits';
 import { sectioned } from './sections';
+import { performersOf } from './band';
 
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
@@ -44,6 +45,8 @@ export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string>
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
   const cells = displayCells(timed.cells);
   checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed));
+  // (the gates, as performers, and their roles: decisions 058 and 061)
+  const performers = performersOf(ctx, decls, declared.implicit);
 
   const { diagnostics } = ctx;
   const ok = !diagnostics.some((x) => x.severity === 'error');
@@ -72,12 +75,6 @@ export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string>
         .map((h) => ({ head: h.name, at: num(h, 'at', 0), wander: num(h, 'wander', 0), wanderhz: num(h, 'wanderhz', 0.2) })),
     }));
   const plugins = pluginsOf(parsed);
-  // (the gates, as performers: decision 058)
-  const performers: Performer[] = [...decls.values()].flatMap((d) =>
-    d.gate && !declared.implicit.has(d.name)
-      ? [{ name: d.name, role: roleOf(d.name), part: d.gate.notes, ...(d.gate.move ? { move: d.gate.move } : {}), voices: d.gate.receivers }]
-      : [],
-  );
   return {
     ok,
     cells,

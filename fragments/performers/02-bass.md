@@ -62,10 +62,11 @@ source: seed
 
 ```cells
 use &bassV from bass
-&bass play=&bassline^$-12 level=&bassLevel &bassV
+&bassOut play=&bassline^$-12 level=&bassLevel &bassV
+&bass map=role &bassOut
 ```
 
-The bass player (decision 058): a gate named `bass`, playing the part `&bassline` on the `bass` instrument an octave down.
+The bass player (decisions 058 and 061): a gate, `&bassOut` (Jambot's section text's name for it), whose role is `bass` (`&bass map=role &bassOut`), playing the part `&bassline` on the `bass` instrument an octave down.
 The instrument holds the register, `&bassV loop=C2`, and Jambot's section text sounds its bass at C1 (`PIN_VOICES.bass`, yggi/jambot `packages/score/src/section-text.ts` @ 24a528b), so the gate moves the part 12 grid steps down (`^$-12`), and the bass sends the MIDI notes it sends today.
 Its two holes are the score's: `&bassline`, the line (degrees over the chord in force or the key, held and shared as the section text writes them), and `&bassLevel`, its velocities as written: a line of levels (`map=amp step=16n`), or one level where they are all one (`&bassLevel map=amp .8`).
 

@@ -107,12 +107,31 @@ sound: mix or send the gate.
 &rim step=1m &sd(3,8)
 &rimLevel map=amp step=8n .4 0 0 .3 0 0 .5 0
 &drumlines [&kick, &backbeat, &hat, &rim * &rimLevel]
-&drums play=&drumlines level=.6 &kit            # the drummer: each hit its line's, kick, backbeat or hat
-&out loop=SAMPLE_RATE map=sample [&drums]
+&drummer play=&drumlines level=.6 &kit          # the drummer: each hit its line's, kick, backbeat or hat
+&out loop=SAMPLE_RATE map=sample [&drummer]
 ```
 
-A gate moves what it plays as a braid moves a cell (`play=&tune^$-12`, `^2`). Its name is its role ([decision 058](https://github.com/yggi/cells/blob/main/docs/decisions/058-the-performer-is-a-gate.md)):
-`drums` `bass` `pad` `stab` `lead`, `&lead2` a copy, others none.
+A gate moves what it plays as a braid moves a cell (`play=&tune^$-12`, `^2`). A gate is a performer ([decision 058](https://github.com/yggi/cells/blob/main/docs/decisions/058-the-performer-is-a-gate.md)),
+named anything, and a **role** says what its gates play as ([decision 061](https://github.com/yggi/cells/blob/main/docs/decisions/061-the-band.md)):
+a cell with `map=role`, its name the role and its entries the gates that play it, two entries two players of it.
+Nothing is read off a gate's name, and cells holds no list of roles: the names are the reader's (the feel plays `drums`,
+`bass`, `pad`, `stab` and `lead`), and a gate no role names plays as written.
+
+```cells
+&bar meter("4/4") step=96bpm
+&key scale(major, G)
+&violinV s=saw loop=G4 env=&(map=adsr .05 .2 .7 .3)
+&melody over=&key step=8n 0 2 4 5 4 2 0 ~
+&harmony over=&key step=4n -3 0 -1 0
+&violin play=&melody level=.6 &violinV
+&violin2 play=&harmony^$-12 level=.4 &violinV   # a violin too, but it comps
+&lead map=role &violin
+&comp map=role &violin2
+&out loop=SAMPLE_RATE map=sample [&violin, &violin2]
+```
+
+A role is no sound: it is not mixed, sent or played (`[&lead]` says so; mix or send its gates), its entries are gates
+as written, and a gate plays one role.
 
 `play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
 (`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
