@@ -1,6 +1,6 @@
 # 049 · Four tools over a piece: Migrate, Normalise, Shorten, Fold
 
-**Date:** 2026-10-18 · **Status:** accepted (the four definitions are the owner's, 2026-10-18; questions 1, 2 and 5 "as suggested", 3 and 4 ruled, 6 waiting with Migrate, the owner, 2026-10-18) · Issues: #154 (the epic), #161 (the shared layer, built), #155, #156, #28, #157, #158, #27, #35 · Supersedes [decision 017](017-shorten-and-normalise.md) in part
+**Date:** 2026-10-18 · **Status:** accepted (the four definitions are the owner's, 2026-10-18; questions 1, 2 and 5 "as suggested", 3 and 4 ruled, 6 waiting with Migrate, the owner, 2026-10-18) · Issues: #154 (the epic), #161 (the shared layer, built), #155, #156, #28, #157, #158, #27, #35 · Supersedes [decision 017](017-shorten-and-normalise.md) in part · **Amended** 2026-10-27 (#196): Normalise writes the canonical form, which may change, add and remove cells ([below](#amendment-normalise-writes-the-canonical-form-2026-10-27))
 
 ## Context
 
@@ -67,6 +67,15 @@ Rejected: Migrate inside Normalise (a retired form is not a valid one, and a pie
 4. **`&parts` → `&sections`:** Migrate offers it for one minor version, then it is retired.
 5. **The folder stops writing text: accepted as the direction**, each writer retired only when the ratchets hold without it. Fold reads events from any loader, Jambot's Muse among them, live, a section at a time: `hints(events)` takes a span (a section, or what has been heard so far), not a whole file, and a hint carries when it was heard and in which voice (#158).
 6. **A retired form:** waits with Migrate, which starts with v1.0.0.
+
+## Amendment: Normalise writes the canonical form (2026-10-27)
+
+The owner, on #196: "amend 049, maybe even further. normalize rewrites to a 'canonical form', which may alter, add, remove cells"; on the interface names, "yes, if it can unambiguously identify it. same for &bar, &tempo, &tonic"; and on what is a bar, "not every meter is a bar. imho a meter has to be used in the bpm range (40-300 to be really generous) to be a bar."
+
+- **Normalise's promise is the canonical form, not the structure as written.** It writes one text for each meaning, and that text may have more cells, fewer, or other names than the author's: a piece's meter named `&bar` with its rate a cell, `&tempo`, is one more cell than `&bar scan(1 1 1 1) step=120bpm`. What it keeps is the sound (S1, every rewrite checked by `rewriteAll`) and idempotence (the canonical form is normal). It is still a command, never offered while a piece is being written (017).
+- **What is canonical is ruled row by row** ([language/canonical.md](../language/canonical.md), #27), as before: a row names what it writes and when. A name is the author's unless a row says otherwise; the interface names (`&bar`, `&tempo`, `&key`, `&tonic`) are written only where the compile identifies them unambiguously, and a meter is `&bar` only where it is a bar, its beats at 40 to 300 bpm.
+- **The line to Shorten is the purpose, not the structure.** Normalise converges: every piece of one meaning to one text, applied, for the corpus, the round trip and a hash. Shorten offers: a more compact structure by its measure (question 2), the author's to take. `expand`, writing a `use`'s lines into the piece, stays out of Normalise: it is no canonical form.
+- **What a hash reads** (ruling 1) is unchanged: Normalise, then the identity step.
 
 ## The questions as they were asked
 

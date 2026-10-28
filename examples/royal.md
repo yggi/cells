@@ -7,7 +7,8 @@ description: Bach's royal theme through every key in fifths, then every mode.
 ```cells
 # Bach's royal theme. Every pass of &theme moves &key a fifth (C G D A …);
 # every full circle of &key (12 passes) moves &scale one degree.
-&bar scan(27 23 26 24) step=free(84bpm, 60..120)               # the clock: 4/4, bent * . + .
+&bar scan(27 23 26 24) step=&tempo                             # the clock: 4/4, bent * . + .
+&tempo step=free(84bpm, 60..120)
 &key step=cycle(&theme) stride=7            # the 12, a fifth per pass, round the circle
 &scale over=&key scan(2 1 2 2 1 2 2) step=cycle(&key)           # Aeolian, a degree per circle, all seven
 

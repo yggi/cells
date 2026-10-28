@@ -11,7 +11,8 @@ description: "Slow, serene and looping: four soft chords with bells drifting abo
 # Cell in Focus — in the spirit of a slow, glowing Aphex Twin loop: an original. D major,
 # four chords of four bars: Dmaj7, Bm9, Gmaj7, A6. The arpeggio reads each chord's
 # tones an octave up; a few notes rest by chance, differently every time round.
-&bar scan(1 1 1 1) step=free(62bpm, 48..80)
+&bar meter("4/4") step=&tempo
+&tempo step=free(62bpm, 48..80)
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
 &chords over=&major step=1m/4 label="Dmaj7 · Bm9 · Gmaj7 · A6" [0,2,4,6] [-2,0,2,4,8] [-4,-2,0,2] [-3,-1,1,2]
 &roots over=&major step=1m/4 -7 -9 -11 -10

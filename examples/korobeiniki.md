@@ -11,7 +11,8 @@ description: "Korobeiniki, in the form of the puzzle game's music: A · A · B �
 # then a slower middle section (B, our own), then the song again — and round.
 &formNote label="&tetris picks the parts, eight bars a step." about=&tetris
 &sectionsNote label="A is the folk song; B, slower, in half notes, is our own." about=(&tune &chorale)
-&bar scan(1 1 1 1) step=free(144bpm, 100..200)
+&bar meter("4/4") step=&tempo
+&tempo step=free(144bpm, 100..200)
 
 &a tags="lead" 7@2 2 3 5@2 3 2 0@2 0 3 7@2 5 3                 # in A minor (A = 0); two bars
 &b tags="lead" 2@3 3 5@2 7@2

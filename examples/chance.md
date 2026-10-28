@@ -8,10 +8,11 @@ description: "A line that is never quite the same twice round: steps that may no
 ```cells
 &chanceNote label="0?.7 is dropped seven times in ten; a bare 0? takes the cell's chance=. It is the same every time you play the piece; seed= picks another sequence." about=(&ghosts &hats)
 &choiceNote label="[4|5|7]: one of them, chosen afresh each time round." about=&tune
-&bar scan(1 1 1 1) step=free(moderato)
-&major scale(major)
+&bar meter("4/4") step=&tempo
+&tempo step=free(moderato)
+&key scale(major)
 
-&tune over=&major step=8n 0 2 [4|5|7] 4 [2|7] 0 [4|9] ~
+&tune over=&key step=8n 0 2 [4|5|7] 4 [2|7] 0 [4|9] ~
 &hats step=16n 0 0? 0 0?.7 0 0? 0 0?.2
 &ghosts chance=.75 seed=3 step=16n 0?!8
 

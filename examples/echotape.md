@@ -13,7 +13,8 @@ description: "A tape loop of notes: a write head records the tune and read heads
 # moves with &reel, a physical motor (wow, and your hand). The read heads (play=, at=) are cells:
 # play them like any melody. erase=.45: each pass keeps 55% — the ghosts.
 &reel step=84bpm motor=1.5 mass=1 friction=.1 wow=.015 0
-&bar scan(1 1 1 1) step=84bpm
+&bar meter("4/4") step=&tempo
+&tempo step=84bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
 &tune over=&major step=8n label="the tune" 0 ~ 4 ~ 7 ~!3 11 ~ 9 ~ 7 ~!3 4 ~ 5 ~ 4 2 ~!2 0 ~!7
 &tape step=&reel write=&tune length=6 erase=.45 varispeed=1 label="the tape: 6 s, a loop"

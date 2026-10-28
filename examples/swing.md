@@ -8,7 +8,7 @@ description: "Eighths played long and short: a swing clock, and the same feel fr
 ```cells
 &clockNote label="&swing is a clock of its own: scan(2 1), a long step and a short, two to a beat. What steps with it swings." about=&swing
 &swingNote label="swing=8n:.67 on a bar says the same: its eighths lean, the second of each pair two thirds of the way through its beat, and every beat stays where it is. &comp taps it by the eighth, &bar2:8n." about=&bar2
-&bar scan(1 1 1 1) step=free(moderato)
+&bar meter("4/4") step=free(moderato)
 &swing scan(2 1) step=4n                         # long, short: a pair a beat
 &bar2 meter("4/4", 2) step=free(moderato) swing=8n:.67   # the same, written on the bar: its eighths
 

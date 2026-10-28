@@ -6,8 +6,9 @@ description: "After Terry Riley's In C: four of its fifty-three cells, each play
 
 ```cells
 &resumeNote label="restart=resume: a player switched off is not rewound. Take restart=resume off &song (the default, restart) to hear each come back at the top of their score." about=&song
-&bar meter("4/4") step=free(104bpm, 60..140)
-&major scale(major)
+&bar meter("4/4") step=&tempo
+&tempo step=free(104bpm, 60..140)
+&key scale(major)
 
 # the cells (after the score's first four, simplified), in eighths
 &c1 0 2 0 2 0 2
@@ -16,9 +17,9 @@ description: "After Terry Riley's In C: four of its fifty-three cells, each play
 &c4 ~ 2 3 4
 
 # a player's score: each cell repeated, then on to the next. Each player is a section of &sections and moves at their own pace
-&alice over=&major step=&aliceBar*2 &c1!8 &c2!6 &c3!4 &c4!4
-&bob over=&major step=&bobBar*2 &c1!6 &c2!6 &c3!6 &c4!2
-&carol over=&major step=&carolBar*2 &c2!6 &c3!8 &c4!6
+&alice over=&key step=&aliceBar*2 &c1!8 &c2!6 &c3!4 &c4!4
+&bob over=&key step=&bobBar*2 &c1!6 &c2!6 &c3!6 &c4!2
+&carol over=&key step=&carolBar*2 &c2!6 &c3!8 &c4!6
 
 &sections step=4n &aliceBar &bobBar &carolBar
 # who plays, a bar a step: Alice from the start, Bob in and out, Carol late, then everyone

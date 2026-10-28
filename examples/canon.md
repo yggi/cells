@@ -9,7 +9,8 @@ description: "Frère Jacques as a round: four voices, each a bar behind the last
 # "Are you sleeping, Brother John?" as a round. One theme made of four
 # two-bar units; each voice reads it one unit later: &john[<<] is the theme
 # shifted back one unit, two bars behind.
-&bar scan(1 1 1 1) step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &a 0@2 1@2 2@2 0@2                     # are you sleep-ing
 &b 2@2 3@2 4@4                         # bro-ther John
 &c 4 5 4 3 2@2 0@2                     # morn-ing bells are ring-ing

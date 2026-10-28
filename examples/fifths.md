@@ -8,7 +8,8 @@ description: "A key that turns a fifth each pass: round the circle of fifths and
 ```cells
 # &key turns once per pass of &tune, a fifth at a time (stride=7): C G D A E …
 # After twelve fifths it is home: a table that turns comes round after its own length.
-&bar scan(27 23 26 24) step=110bpm
+&bar scan(27 23 26 24) step=&tempo
+&tempo step=110bpm
 &key label="key: **{tonic}** — a fifth up each pass" step=cycle(&tune) stride=7
 &circle label="the circle, as a table: {notes}" fifths()     # the same twelve in one line; fifths(1) would start on G
 &tune over=&key step=4n 0 4 7 12 7 4 0@2       # chromatic numbers: a major arpeggio

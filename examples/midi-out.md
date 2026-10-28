@@ -8,7 +8,8 @@ description: "The piece names where its notes go: a melody and a bass on a synth
 ```cells
 &cardNote label="map=midi makes a MIDI card: its entries are channels, in order: the theme on the reed goes out on 1, the bass on the sub on 2; ~ would skip one. &sub is on no sound card: it plays only on MIDI." about=&synth
 &drumNote label="map=midi(10): the whole card on channel 10, the drums by General MIDI note (bd 36, sd 38, hh 42). map=midi(10, 2) would send it to output slot 2, a device chosen in the MIDI page." about=&drums
-&bar scan(1 1 1 1) step=104bpm
+&bar meter("4/4") step=&tempo
+&tempo step=104bpm
 
 &theme over=scale(minor, A) step=4n 0 2 4 2 3 1 0 ~
 &bass over=scale(minor, A) step=2n 0 5 3 4

@@ -11,7 +11,8 @@ description: "A tape loop on a machine that turns: it spins up from rest, the pi
 # Tape Machine — the meter is the capstan: a motor (spinning up from rest), a little wow (its
 # speed swings 0.55 times a second), varispeed=1 (pitch follows speed, as on tape), and a spring
 # that holds for 40 s, then gives out: a tape stop. The hats ride a slack belt: they lag, then swing.
-&bar scan(1 1 1 1) step=78bpm motor=1.4 mass=1 friction=.3 wow=.012 wind=40 varispeed=1
+&bar scan(1 1 1 1) step=&tempo motor=1.4 mass=1 friction=.3 wow=.012 wind=40 varispeed=1
+&tempo step=78bpm
 &minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"
 &loop over=&minor step=8n label="the loop" 4 ~ 2 0 ~ 2 4 7@2 ~ 6 4 2 ~ 4@2 -1 ~
 &chords over=&minor step=1m label="i · VI" [0,2,4,6] [-2,0,2,4]

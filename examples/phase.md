@@ -9,7 +9,8 @@ description: "After Steve Reich's Piano Phase, an original: two pianos, one patt
 &woodNote label="A quiet euclid(5, 12) on low wood marks the left player's twelve." about=(&wood &left)
 # Cell Phase — no tempo is nudged: the drift is a ratio of clocks. &left steps in sixteenths
 # (step=16n); &right in pulse*81/20 — a sixteenth times 80/81. Every 81 of its notes, it's one ahead.
-&bar scan(1 1 1) step=free(144bpm, 100..180)
+&bar scan(1 1 1) step=&tempo
+&tempo step=free(144bpm, 100..180)
 &minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"
 &pattern 0 2 4 5 7 5 4 2 1 4 7 9
 &left over=&minor step=16n label="left: in time" &pattern

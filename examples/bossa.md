@@ -7,7 +7,7 @@ description: A bossa nova whose guitar strums on the clave's five strokes, over 
 ```cells
 # Bossa nova. The clave is a meter: five strokes over a bar of sixteenths,
 # scan(3 3 4 3 3) — x..x..x...x..x.. — and the guitar strums on its strokes.
-&bar scan(1 1 1 1) step=free(128bpm, 90..170)
+&bar meter("4/4") step=free(128bpm, 90..170)
 &clave scan(3 3 4 3 3) step=pulse*5/4                 # five strokes a bar
 &dorian scan(2 1 2 2 2 1 2)                            # D Dorian (the voices sit on D)
 

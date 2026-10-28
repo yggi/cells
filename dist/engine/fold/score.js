@@ -22,10 +22,10 @@ export function bare(source) {
 export function heard(source, seconds) {
     const r = compileSource(source);
     const p = plan(r, codeShifts(r), r.off);
-    return eventsBetween(p, 0, seconds)
+    return (eventsBetween(p, 0, seconds)
         .filter((e) => e.freq > 0)
         .map((e) => ({ key: noteOf(e.freq).note, at: e.at }))
-        .sort((a, b) => a.at - b.at || a.key - b.key);
+        .sort((a, b) => Math.round(a.at * 1e6) - Math.round(b.at * 1e6) || a.key - b.key));
 }
 export function same(a, b) {
     return differ(a, b) === '';

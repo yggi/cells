@@ -8,11 +8,13 @@ description: A struck fork sets its twin singing, and a harp's strings answer a 
 ```cells
 &coupleNote label="couple=&forkB: the two forks share a table, and coupling= says how strongly; only &forkA is struck." about=(&forkA &forkB)
 &exciteNote label="excite=&played: the flute's sound drives the strings, which ring where it meets their notes." about=&strings
-&bar scan(1 1 1 1) step=72bpm
-&minor scale(minor, A)
+&bar meter("4/4") step=&tempo
+&tempo step=72bpm
+&key scale(minor, &tonic)
+&tonic A
 
 &hits step=1m/2 0
-&tune over=&minor step=4n 4 ~ 2 ~ 0@2 ~@2 2 4 7 ~ 4@4
+&tune over=&key step=4n 4 ~ 2 ~ 0@2 ~@2 2 4 7 ~ 4@4
 
 &forkA body=fork loop=A4 ring=8 hard=.35 board=none couple=&forkB coupling=.08 0
 &forkB body=fork loop=A4 ring=8 hard=.35 board=none 0

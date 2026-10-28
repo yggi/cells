@@ -12,7 +12,8 @@ description: "A drum part written with the drums' names: a beat, a fill with rat
 &euclidNote label="euclid(5, 16): five hits spread as evenly as they go over sixteen steps." about=&clave
 &hitNote label="oneshot: the hat plays its envelope through, whatever its step: a hit, as on a drum machine." about=&hh
 &kitNote label="A braid of voices read with over= is a kit: its numbers pick the voices, 0 the first." about=(&kit &toms)
-&bar scan(1 1 1 1) step=free(moderato)
+&bar meter("4/4") step=&tempo
+&tempo step=free(moderato)
 
 &beat &bd ~ &hh:0:.5 ~ &sd ~ &hh:0:.5 [&bd,&hh]
 &fill &sd [&sd &sd] &sd &sd*3

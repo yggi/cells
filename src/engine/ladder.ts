@@ -85,10 +85,13 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   },
   {
     name: 'Time and voice',
-    concept: 'a clock: a bar, its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
+    concept:
+      'a clock: a bar (meter("4/4"), or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
     forms: [
       // a clock
       'generator scan(i …)',
+      // the bar in its canonical form (#196, the owner: the form Normalise writes is taught where the bar is first met)
+      'generator meter("sig")',
       'rate nbpm',
       'rate step=&x',
       'rate step=&x*n',
@@ -157,7 +160,6 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'parameter pulse',
       // swing
       'parameter swing',
-      'generator meter("sig")',
     ],
   },
   {

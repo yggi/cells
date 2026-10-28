@@ -11,6 +11,9 @@ export function mainMeter(result) {
         const driver = result.cells.get(name)?.step?.driver;
         if (!driver || !result.clocks.has(driver))
             break;
+        const by = result.clocks.get(driver);
+        if (result.cells.get(name)?.meter && !result.cells.get(driver)?.meter && !by.positional && by.swing === undefined && !by.swung)
+            break;
         name = driver;
     }
     const root = name ? result.clocks.get(name) : undefined;

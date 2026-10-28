@@ -39,10 +39,13 @@ export function bare(source: string): number {
 export function heard(source: string, seconds: number) {
   const r = compileSource(source);
   const p = plan(r, codeShifts(r), r.off);
-  return eventsBetween(p, 0, seconds)
-    .filter((e) => e.freq > 0)
-    .map((e) => ({ key: noteOf(e.freq).note, at: e.at }))
-    .sort((a, b) => a.at - b.at || a.key - b.key);
+  return (
+    eventsBetween(p, 0, seconds)
+      .filter((e) => e.freq > 0)
+      .map((e) => ({ key: noteOf(e.freq).note, at: e.at }))
+      // (notes at one moment by their keys: two sums of one time 1e-15 s apart are one moment, #196)
+      .sort((a, b) => Math.round(a.at * 1e6) - Math.round(b.at * 1e6) || a.key - b.key)
+  );
 }
 /** Do two pieces play the same notes (the same keys, each start within 10 ms)? If not, how they differ. */
 export function same(a: { key: number; at: number }[], b: { key: number; at: number }[]): boolean {

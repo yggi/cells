@@ -8,7 +8,8 @@ description: A study in counterpoint on the King's theme, from strict to free, i
 &passesNote label="A pass each: 1 the theme alone · 2 note against note, above · 3 note against note, below · 4 two against one · 5 four against one · 6 free, in three voices." about=(&upper &lower)
 &consonanceNote label="On every note of the theme the voices agree (consonances only); between, a dissonance only passes, by step." about=(&theme &upper &lower)
 
-&bar scan(27 23 26 24) step=free(66bpm, 40..96) laps=30          # thirty bars: six passes of the theme, then it ends
+&bar scan(27 23 26 24) step=&tempo laps=30                       # thirty bars: six passes of the theme, then it ends
+&tempo step=free(66bpm, 40..96)
 &theme over=&scale step=4n label="the King's theme" 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
 &scale over=&key scan(2 1 2 2 1 2 2)                   # … read in C minor,
 &key step=cycle(&theme) stride=free(0, 0..7) cycle=24 label="per tonos · in **{tonic}**"   # raise stride: a key higher each pass

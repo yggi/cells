@@ -13,7 +13,8 @@ description: "A mechanical band on belts, all turned by one drum: bells, a drumm
 &shoveNote label="Grab the big drum and shove it: watch the belts stretch, hear the arms drag and the woodblock slip." about=&bar
 # Automaton — one motor, belts of different give. belt= stiffness (taut 3000, slack 25),
 # mass= the arm, damping= how soon it stops swinging (3 is what it is anyway: a little bounce), slip= its grip: past it the belt slips and the arm falls behind for good.
-&bar scan(1 1 1 1) step=104bpm motor=4 mass=1 friction=.2
+&bar meter("4/4") step=&tempo motor=4 mass=1 friction=.2
+&tempo step=104bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
 &bells over=&major step=8n belt=3000 label="the bells: a taut belt" 0 4 7 4 9 7 4 2 0 4 7 9 11 9 7 4
 &drums step=16n belt=25 mass=1 damping=3 label="the drummer" &bd ~ &sd &bd ~ &bd &sd ~ &bd ~ &sd &bd ~ &bd &sd &sd
