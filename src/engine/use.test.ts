@@ -1,4 +1,4 @@
-// `use * from "core kit"` (decision 054, rung 3: #232): a fragment taken into a piece by its id, the piece's own lines winning,
+// `use * from gm_kit` (decision 054, rung 3: #232): a fragment taken into a piece by its id, the piece's own lines winning,
 // read through a resolver the host hands each compile, with the lockfile a piece file keeps.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
@@ -34,11 +34,11 @@ const voices = (text: string) => {
   return [...new Set(eventsBetween(plan(r, codeShifts(r)), 0, 4).map((e) => e.voice))].sort();
 };
 
-const KIT = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!.text;
+const KIT = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!.text;
 const KIT_NAMES = parse(KIT)
   .cells.filter((c) => !c.lambda)
   .map((c) => c.name);
-const GROOVE = 'use * from "core kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
+const GROOVE = 'use * from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
 
 describe('the use line', () => {
   it('is a line of its own, the id in double quotes, read in the order written', () => {
@@ -79,9 +79,9 @@ describe('the expansion', () => {
     expect(r.diagnostics).toEqual([]);
     expect(r.uses).toEqual([
       {
-        id: 'core kit',
+        id: 'gm_kit',
         names: null,
-        span: { line: 1, col: 1, len: 21 },
+        span: { line: 1, col: 1, len: 17 },
         hash: fragmentHash(KIT),
         gave: KIT_NAMES.filter((n) => n !== 'sd').map((n) => `&${n}`),
         overrode: ['&sd'],
@@ -90,7 +90,7 @@ describe('the expansion', () => {
     expect(r.cells.get('sd')?.params.hpf).toBe(900);
     const out = expand(text, resolveSeed);
     expect(out.startsWith('&bar meter("4/4") step=100bpm\n&beat')).toBe(true);
-    expect(out).not.toContain('use * from "core kit"');
+    expect(out).not.toContain('use * from gm_kit');
     expect(out.split('\n').filter((l) => l.startsWith('&sd'))).toEqual(['&sd s=white hpf=900 env=&(map=adsr 0 .12 0 .05)']);
     expect(soundsIdentical(text, out, undefined, seed)).toBe(true);
   });
@@ -110,8 +110,8 @@ describe('the expansion', () => {
   });
 
   it('an id used twice gives its lines once, and the second use says it adds nothing', () => {
-    const r = compileSource(`${GROOVE}&out map=sample [&beat]\nuse * from "core kit"`, undefined, seed);
-    expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['warning', '"core kit" is used already, on line 1: this use adds nothing', 5]]);
+    const r = compileSource(`${GROOVE}&out map=sample [&beat]\nuse * from gm_kit`, undefined, seed);
+    expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['warning', '"gm_kit" is used already, on line 1: this use adds nothing', 5]]);
     expect(r.uses?.map((u) => [u.hash, u.gave.length])).toEqual([
       [fragmentHash(KIT), KIT_NAMES.length],
       [fragmentHash(KIT), 0],
@@ -157,8 +157,8 @@ describe('a named use (decision 059)', () => {
       ['warning', 'use "core kit" is the old way: write use * from "core kit" (or name what it takes: use &a, &b from …)'],
     ]);
     expect(parse('use * from "core kit"\nuse &bd from x\nuse &aeolian').diagnostics).toEqual([]);
-    const old = compileSource(GROOVE.replace('use * from "core kit"', 'use "core kit"'), undefined, seed);
-    expect(old.uses).toEqual(compileSource(GROOVE, undefined, seed).uses?.map((u) => ({ ...u, span: { ...u.span, len: 14 } })));
+    const old = compileSource(GROOVE.replace('use * from gm_kit', 'use "gm_kit"'), undefined, seed);
+    expect(old.uses).toEqual(compileSource(GROOVE, undefined, seed).uses?.map((u) => ({ ...u, span: { ...u.span, len: 12 } })));
   });
 
   it('takes the named cells and the lines they read within the fragment, its helpers', () => {
@@ -243,7 +243,7 @@ describe('a named use (decision 059)', () => {
       'use * from dorian',
       'use * from "vamp to the seventh"',
       'use * from "Funk drums"',
-      'use * from "core kit"',
+      'use * from gm_kit',
       'use * from "funk bass"',
       'use * from bass',
       '&bar meter("4/4") step=104bpm swing=16n:.6',
@@ -262,7 +262,7 @@ describe('a named use (decision 059)', () => {
   });
 
   it('two named uses of one id take each its names, a line once', () => {
-    const r = read('use &bd from "core kit"\nuse &bd, &sd from "core kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &sd ~\n&out map=sample [&beat]');
+    const r = read('use &bd from gm_kit\nuse &bd, &sd from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &sd ~\n&out map=sample [&beat]');
     expect(r.said).toEqual([]);
     expect(r.uses?.map((u) => u.gave)).toEqual([['&bd'], ['&sd']]);
   });
@@ -274,7 +274,7 @@ describe('the errors, each on its use line', () => {
     expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['error', 'No fragment "nowhere" to use', 2]]);
     expect(r.uses?.[0]).toMatchObject({ id: 'nowhere', hash: null, gave: [] });
     expect(r.cells.has('a')).toBe(true);
-    expect(compileSource('use "core kit"').diagnostics.map((d) => d.message)).toContain('No library to use "core kit" from: compileSource(text, env, { resolve })');
+    expect(compileSource('use "gm_kit"').diagnostics.map((d) => d.message)).toContain('No library to use "gm_kit" from: compileSource(text, env, { resolve })');
   });
 
   it('a cycle names it', () => {
@@ -308,14 +308,14 @@ describe('the errors, each on its use line', () => {
 
 describe('the built-in card hears only what the piece’s own lines leave unread', () => {
   it('a piece using the General MIDI kit sounds its own groove, not 47 held voices', () => {
-    const text = GROOVE.replace('core kit', 'gm kit');
+    const text = GROOVE;
     expect(voices(text)).toEqual(['bd', 'hh', 'sd']);
     // (written out, the kit's lines are the piece's own, and the card hears every one)
     expect(voices(expand(text, resolveSeed)).length).toBeGreaterThan(3);
   });
 });
 
-describe('the rhythms with the core kit (S1)', () => {
+describe('the rhythms with the General MIDI kit (S1)', () => {
   // (until rung 2 takes them out, a rhythm's stand-in voices are stripped here, so the kit's lines are the ones read)
   const strip = (text: string) =>
     text
@@ -326,7 +326,7 @@ describe('the rhythms with the core kit (S1)', () => {
     it(`${rhythm.id}, on a meter it fits, sounds identical to the same text written out`, () => {
       const meter = METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(rhythm.text, m).fits)!;
       // (heard through a card: the rhythms carry none, #291)
-      const piece = `use * from "core kit"\n${meter}\n${strip(rhythm.text)}\n${heard(rhythm.text)}`;
+      const piece = `use * from gm_kit\n${meter}\n${strip(rhythm.text)}\n${heard(rhythm.text)}`;
       const r = compileSource(piece, undefined, seed);
       expect(r.diagnostics, meter).toEqual([]);
       expect(r.uses?.[0]?.overrode).toEqual([]);
@@ -340,48 +340,46 @@ describe('the lockfile', () => {
 
   it('round-trips: writePiece(readPiece(f)) keeps uses:', () => {
     const written = writePiece(withLockfile(file(), compileSource(GROOVE, undefined, seed).uses!));
-    expect(written).toContain(`uses:\n  - id: core kit\n    hash: ${fragmentHash(KIT)}\n`);
+    expect(written).toContain(`uses:\n  - id: gm_kit\n    hash: ${fragmentHash(KIT)}\n`);
     const read = readPiece(written);
     expect('problems' in read).toBe(false);
     expect(writePiece(read as PieceFile)).toBe(written);
-    expect(lockfileOf(read as PieceFile)).toEqual([{ id: 'core kit', hash: fragmentHash(KIT) }]);
+    expect(lockfileOf(read as PieceFile)).toEqual([{ id: 'gm_kit', hash: fragmentHash(KIT) }]);
   });
 
   it('a recorded hash the library no longer gives plays the current version, with a warning naming the id', () => {
-    const locked = lockfileOf(file([{ id: 'core kit', hash: 'e1:0000000000000000' }]));
+    const locked = lockfileOf(file([{ id: 'gm_kit', hash: 'e1:0000000000000000' }]));
     const r = compileSource(GROOVE, undefined, { ...seed, locked });
     expect(r.ok).toBe(true);
-    expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([
-      ['warning', '"core kit" has changed since this piece was saved: its current version plays', 1],
-    ]);
+    expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['warning', '"gm_kit" has changed since this piece was saved: its current version plays', 1]]);
     expect(r.uses?.[0]?.hash).toBe(fragmentHash(KIT));
-    expect(compileSource(GROOVE, undefined, { ...seed, locked: [{ id: 'core kit', hash: fragmentHash(KIT) }] }).diagnostics).toEqual([]);
+    expect(compileSource(GROOVE, undefined, { ...seed, locked: [{ id: 'gm_kit', hash: fragmentHash(KIT) }] }).diagnostics).toEqual([]);
   });
 
   it('the resolver is asked for the recorded hash', () => {
     const asked: (string | undefined)[] = [];
-    compileSource(GROOVE, undefined, { resolve: (id, hash) => (asked.push(hash), resolveSeed(id)), locked: [{ id: 'core kit', hash: 'e1:ab' }] });
+    compileSource(GROOVE, undefined, { resolve: (id, hash) => (asked.push(hash), resolveSeed(id)), locked: [{ id: 'gm_kit', hash: 'e1:ab' }] });
     compileSource(GROOVE, undefined, { resolve: (id, hash) => (asked.push(hash), resolveSeed(id)) });
     expect(asked).toEqual(['e1:ab', undefined]);
   });
 
   it('an entry no use names is dropped on the next save, and the key with the last one', () => {
     const two = file([
-      { id: 'core kit', hash: 'e1:1' },
-      { id: 'gm kit', hash: 'e1:2' },
+      { id: 'gm_kit', hash: 'e1:1' },
+      { id: 'harmonic minor', hash: 'e1:2' },
     ]);
-    expect(lockfileOf(readPiece(writePiece(two)) as PieceFile)).toEqual([{ id: 'core kit', hash: 'e1:1' }]);
+    expect(lockfileOf(readPiece(writePiece(two)) as PieceFile)).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
     expect(writePiece({ ...two, text: '&a s=sine' })).not.toContain('uses');
   });
 
   it('a lockfile that isn’t a list of id and hash is a problem', () => {
-    expect(readPiece('---\nuses: [core kit]\n---\n\n```cells\nuse "core kit"\n```\n')).toHaveProperty('problems');
+    expect(readPiece('---\nuses: [core kit]\n---\n\n```cells\nuse "gm_kit"\n```\n')).toHaveProperty('problems');
   });
 
   it('a use that didn’t resolve keeps the entry it had', () => {
-    const had = file([{ id: 'core kit', hash: 'e1:1' }]);
+    const had = file([{ id: 'gm_kit', hash: 'e1:1' }]);
     const uses = compileSource(GROOVE, undefined, { resolve: () => null }).uses!;
-    expect(lockfileOf(withLockfile(had, uses))).toEqual([{ id: 'core kit', hash: 'e1:1' }]);
+    expect(lockfileOf(withLockfile(had, uses))).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
   });
 
   it('the hash is the text’s up to layout, its rung written first', () => {
@@ -394,14 +392,14 @@ describe('the lockfile', () => {
 
 describe('the tools keep use', () => {
   it('Normalise keeps the use line, in its order, never expanded', () => {
-    const text = 'use * from "core kit"\nuse * from "gm kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
+    const text = 'use * from gm_kit\nuse &key from "harmonic minor"\n&tonic D\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
     const out = normalise(text, seed).source;
     expect(out).toBe(text.replace('cutoff=', 'lpf='));
     // (the old spelling, use "id", is written use * from "id"; an id that is a word, bare; use &x from x, use &x)
-    const old = 'use "core kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &kick ~ &snare ~';
+    const old = 'use "gm_kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &kick ~ &snare ~';
     const resolve = (id: string) => (id === 'kit' ? '&kick s=sine\n&snare s=white' : id === 'pulse' ? '&pulse s=sine loop=A4' : resolveSeed(id));
     expect(normalise(old, { resolve }).source).toBe(
-      'use * from "core kit"  # the kit\nuse &pulse\nuse &kick, &snare from kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &kick ~ &snare ~',
+      'use * from gm_kit  # the kit\nuse &pulse\nuse &kick, &snare from kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &kick ~ &snare ~',
     );
   });
 
@@ -419,7 +417,7 @@ describe('the fit (decision 047) with use', () => {
   it('what a workbench’s use lines give counts as defined there', () => {
     const groove = '&beat step=8n &bd ~\n&back step=8n ~ &sd\n&out map=sample [&beat, &back]';
     expect(holesOf(groove, compiled).uses).toEqual(['&bd', '&sd']);
-    const fit = fitOf(groove, 'use * from "core kit"\n&bar meter("4/4") step=100bpm', compiled);
+    const fit = fitOf(groove, 'use * from gm_kit\n&bar meter("4/4") step=100bpm', compiled);
     expect([fit.fits, fit.missing, fit.sounds]).toEqual([true, [], []]);
   });
 
@@ -455,13 +453,11 @@ describe('the fit (decision 047) with use', () => {
     const resolve: Resolve = (id) => (id === 'bare funk' ? bare : resolveSeed(id));
     const fit = fitOf('use * from "bare funk"', bench('4/4'), undefined, resolve);
     expect([fit.fits, fit.missing, fit.sounds]).toEqual([true, [], ['&bd', '&hh', '&oh', '&rim', '&sd']]);
-    expect(fitOf('use * from "bare funk"', 'use * from "core kit"\n' + bench('4/4'), undefined, resolve).sounds).toEqual([]);
+    expect(fitOf('use * from "bare funk"', 'use * from gm_kit\n' + bench('4/4'), undefined, resolve).sounds).toEqual([]);
   });
 
   it('a union carries a fragment’s use lines, once', () => {
-    expect(unionOf('use * from "core kit"\n&beat step=8n &bd ~', 'use * from "core kit"\n&bar meter("4/4")').text).toBe(
-      'use * from "core kit"\n&bar meter("4/4")\n&beat step=8n &bd ~',
-    );
-    expect(unionOf('use * from "gm kit"\n&beat step=8n &bd ~', '&bar meter("4/4")').text).toBe('&bar meter("4/4")\nuse * from "gm kit"\n&beat step=8n &bd ~');
+    expect(unionOf('use * from gm_kit\n&beat step=8n &bd ~', 'use * from gm_kit\n&bar meter("4/4")').text).toBe('use * from gm_kit\n&bar meter("4/4")\n&beat step=8n &bd ~');
+    expect(unionOf('use * from gm_kit\n&beat step=8n &bd ~', '&bar meter("4/4")').text).toBe('&bar meter("4/4")\nuse * from gm_kit\n&beat step=8n &bd ~');
   });
 });

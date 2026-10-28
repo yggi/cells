@@ -3,8 +3,8 @@
  * **expansion**, is the piece's own lines, then the lines each `use` takes that the piece doesn't define, in the order
  * the `use` lines are written; a used fragment that uses others is expanded first, its own lines winning over theirs.
  *
- * - `use * from core_kit` takes every line (`use "core kit"`, the old way, is the same, and warns); `use &bd, &sd from
- *   core_kit` takes the named cells and the fragment's lines they read, their closure (the names they write, `&x`,
+ * - `use * from gm_kit` takes every line (`use "gm_kit"`, the old way, is the same, and warns); `use &bd, &sd from
+ *   gm_kit` takes the named cells and the fragment's lines they read, their closure (the names they write, `&x`,
  *   followed within the fragment: what the closure takes and the use doesn't name are the fragment's helpers); `use
  *   &aeolian` is `use &aeolian from aeolian`.
  * - A name the use asks for and the fragment doesn't define is an error naming the ones it does; a name it asks for

@@ -6,7 +6,7 @@ import { createRepository, type Fragment, type StylePoint } from './fragments';
 import { BASS_FRAGMENTS } from './bass';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
 import { PERFORMER_FRAGMENTS } from './performers';
@@ -38,8 +38,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the fourteen rhythms, the five bass lines, the five harmonies, the six instruments, the six modes, the five performers, the stab line, the nine motifs and the four forms, every point associated as its facet, the bell and scale as two: sixty-eight', () => {
-    expect(LIBRARY).toHaveLength(68);
+  it('is the thirteen meters, the fourteen rhythms, the five bass lines, the five harmonies, the five instruments, the six modes, the five performers, the stab line, the nine motifs and the four forms, every point associated as its facet, the bell and scale as two: sixty-seven', () => {
+    expect(LIBRARY).toHaveLength(67);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -62,7 +62,19 @@ describe('the library', () => {
       STAB_FRAGMENTS.length,
       MOTIF_FRAGMENTS.length,
       FORM_FRAGMENTS.length,
-    ]).toEqual([13, 14, 5, 5, 6, 6, 5, 1, 9, 4]);
+    ]).toEqual([13, 14, 5, 5, 5, 6, 5, 1, 9, 4]);
+  });
+
+  it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
+    for (const [id, text] of RETIRED) {
+      expect(
+        LIBRARY.some((f) => f.id === id),
+        id,
+      ).toBe(false);
+      expect(resolveSeed(id)).toBe(text);
+    }
+    expect([...RETIRED.keys()]).toEqual(['core kit', 'gm kit']);
+    expect(resolveSeed('gm_kit')).toBe(LIBRARY.find((f) => f.id === 'gm_kit')!.text);
   });
 
   it('a query of the meters over it returns what the meters alone return, at every one of 661 points', () => {

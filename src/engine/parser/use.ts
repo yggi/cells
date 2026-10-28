@@ -2,13 +2,13 @@
 
 /** A `use` line, read: the fragment's id, and the names it asks for. */
 export interface UseForm {
-  /** The fragment's id: a word as written (`core_kit`), or what the double quotes hold (`"core kit"`). */
+  /** The fragment's id: a word as written (`gm_kit`), or what the double quotes hold (`"harmonic minor"`). */
   readonly id: string;
   /** The names it asks for (`&bd`), in the order written, each once; null for every name the fragment defines. */
   readonly names: readonly string[] | null;
   /**
-   * How it is written: `named` (`use &bd, &sd from core_kit`), `short` (`use &aeolian`, the fragment named as its
-   * cell), `all` (`use * from core_kit`), or `quoted` (`use "core kit"`, the old way: `use * from "core kit"`).
+   * How it is written: `named` (`use &bd, &sd from gm_kit`), `short` (`use &aeolian`, the fragment named as its
+   * cell), `all` (`use * from gm_kit`), or `quoted` (`use "harmonic minor"`, the old way: `use * from "harmonic minor"`).
    */
   readonly form: 'named' | 'short' | 'all' | 'quoted';
 }
@@ -53,7 +53,7 @@ export function writeUse({ id, names }: Pick<UseForm, 'id' | 'names'>): string {
 
 /** What a malformed `use` line is told. */
 export const USE_FORM =
-  'A use line says what it takes from which fragment: use &bd, &sd from core_kit, use * from core_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "core kit"';
+  'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "harmonic minor"';
 
 /** What the old spelling, `use "id"`, is told: it reads as `use * from "id"`. */
 export const useQuoted = (id: string): string => `use "${id}" is the old way: write ${writeUse({ id, names: null })} (or name what it takes: use &a, &b from …)`;

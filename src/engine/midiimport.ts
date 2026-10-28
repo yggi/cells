@@ -78,7 +78,7 @@ const ON_GRID = 0.995;
  */
 const DRUM_OF: Readonly<Record<number, string>> = Object.fromEntries(GM_KIT.map((d) => [d.note, d.name]));
 const DRUMS: Readonly<Record<string, string>> = Object.fromEntries(
-  INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm kit')!
+  INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!
     .text.split('\n')
     // (its voice lines: a comment or a blank line in the fragment is none)
     .flatMap((line) => {

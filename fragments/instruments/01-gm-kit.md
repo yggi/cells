@@ -1,12 +1,12 @@
 ---
-id: gm kit
+id: gm_kit
 association:
   - point:
       sync: 0.5
       harm: 0.5
       artic: 0.5
       energy: 0.5
-    weight: 0.5
+    weight: 1
     facet: instrument
 source: seed
 ---
@@ -64,6 +64,7 @@ source: seed
 General MIDI's drum kit (decision 054, #225): a voice for each of its 47 percussion notes, 35 to 81, in General MIDI's order, each under its kit name (`GM_KIT` in `src/engine/midi.ts`), so MIDI out sends each on its own note.
 The names are Strudel's short names where Strudel has one (`&bd`, `&sd`, `&hh`, `&oh`, `&cp`, `&rim`, `&lt`, `&mt`, `&ht`, `&cr`, `&rd`, `&cb`, `&tb`, `&sh`), else General MIDI's, spelled as one word (`&lowmidtom`, `&crashcymbaltwo`); General MIDI's names for the first are aliases (`kick`, `cowbell`), which name the same note.
 
-It defines voices and uses nothing, so it fills the holes a groove leaves (`&bd &sd &hh`), fits any workbench, and sounds only what a piece plays through it. Each sound is a first pass in cells' own parameters: a sine dropping in pitch for the drums and toms, filtered noise for the snares, hats and cymbals, a tuned sine or triangle for the hand percussion; the voices the core kit holds are its lines word for word.
+It defines voices and uses nothing, so it fills the holes a groove leaves (`&bd &sd &hh`), fits any workbench, and sounds only what a piece plays through it. Each sound is a first pass in cells' own parameters: a sine dropping in pitch for the drums and toms, filtered noise for the snares, hats and cymbals, a tuned sine or triangle for the hand percussion.
+A piece takes the voices it needs by name, so a groove need not bring in 47: `use &bd, &sd, &hh from gm_kit`. The drummer takes 13 so (`drums performer`); a kit of its own, the core kit, did that before `use` could name what it takes, and is retired (#196).
 
-A kit is style-neutral: it is associated once, as the facet `instrument`, at the centre of style space (every axis at 0.5), the point nearest the farthest preset, at half the core kit's weight, so a query for an instrument finds the core kit first and this one beside it.
+A kit is style-neutral: it is associated once, as the facet `instrument`, at the centre of style space (every axis at 0.5), the point nearest the farthest preset, at weight 1, so a query for an instrument finds it first.

@@ -7,10 +7,18 @@
  */
 import type { Resolve } from '../engine/program';
 import type { Fragment } from './fragments';
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, the performers, the stab lines, the motifs, then the forms: sixty-eight fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, the performers, the stab lines, the motifs, then the forms: sixty-seven fragments. */
 export declare const LIBRARY: readonly Fragment[];
 /**
- * The seed library as a `use` line's resolver (decision 054): a fragment's text by its id, or null for none. It holds
- * each fragment's current version only: a lockfile's older hash plays the current one (the compile warns).
+ * The ids the library no longer lists, each still read for one minor version as a fragment that only forwards: a `use`
+ * of the fragment that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
+ * `use` could name what it takes; the General MIDI kit is `gm_kit`, a word. Normalise writes a use of one as the use it
+ * forwards to (`normalise/forwarded.ts`), so a piece that names one plays as before and is respelled.
+ */
+export declare const RETIRED: ReadonlyMap<string, string>;
+/**
+ * The seed library as a `use` line's resolver (decision 054): a fragment's text by its id, a retired id's forwarding
+ * text (`RETIRED`), or null for none. It holds each fragment's current version only: a lockfile's older hash plays the
+ * current one (the compile warns).
  */
 export declare const resolveSeed: Resolve;

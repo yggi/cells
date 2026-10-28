@@ -13,7 +13,8 @@ import { createRepository, type StylePoint } from './fragments';
 import { fitOf } from './fit';
 import { heard } from './heard';
 import { holesOf } from './holes';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
+import { resolveSeed } from './library';
+import { expand } from '../engine/use';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
@@ -33,8 +34,8 @@ const rhythms = createRepository(RHYTHM_FRAGMENTS);
 const meters = createRepository(METER_FRAGMENTS);
 const byId = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!;
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
-/** The core kit's lines: every voice the rhythms leave as a hole (#244). */
-const coreKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!.text;
+/** 13 of the General MIDI kit's lines, taken by name as the drummer takes them: every voice the rhythms leave as a hole (#244). */
+const coreKit = expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim();
 
 /** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments, and a card that hears them (#291). */
 const hosted = (meter: string, bpm: number, ...fragments: string[]) => {
@@ -191,9 +192,9 @@ describe('the claves', () => {
 });
 
 // Decision 054, rung 2 (#244): no rhythm carries a voice of its own. Every name a rhythm strikes (`&bd`, `&claves`) is a
-// hole read only as a sound, which an instrument fills: the core kit, or the General MIDI kit. The eight drum bars' 30
+// hole read only as a sound, which an instrument fills: the General MIDI kit. The eight drum bars' 30
 // `&bd s=white …` lines, bare white noise standing in for a kick and a hat alike, and the five claves' `&claves` (the
-// core kit's line word for word) are gone: 35 lines.
+// General MIDI kit's line word for word) are gone: 35 lines.
 const STRUCK: Record<string, string[]> = {
   'Synth-pop drums': ['&bd', '&hh', '&sd'],
   'Techno drums': ['&bd', '&hh', '&oh', '&sd'],
@@ -223,13 +224,16 @@ describe('the rhythms’ holes (decision 054, rung 2)', () => {
     expect(RHYTHM_FRAGMENTS.flatMap((f) => f.text.split('\n')).filter((l) => /^&\w+ s=/.test(l))).toEqual([]);
   });
 
-  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s fits a workbench with a meter and no kit, and with the core kit, and the kit fills every hole', (_, text) => {
-    expect(fitOf(text, hosted(meterText('4/4'), 120)).fits).toBe(true);
-    const withKit = fitOf(text, hosted(meterText('4/4'), 120, coreKit));
-    expect([withKit.fits, withKit.sounds]).toEqual([true, []]);
-  });
+  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))(
+    '%s fits a workbench with a meter and no kit, and with the General MIDI kit’s 13, and the kit fills every hole',
+    (_, text) => {
+      expect(fitOf(text, hosted(meterText('4/4'), 120)).fits).toBe(true);
+      const withKit = fitOf(text, hosted(meterText('4/4'), 120, coreKit));
+      expect([withKit.fits, withKit.sounds]).toEqual([true, []]);
+    },
+  );
 
-  it.each(Object.keys(CLAVES))('%s with the core kit sounds identical (S1, the whole window) to the clave with its line written out', (id) => {
+  it.each(Object.keys(CLAVES))('%s with the General MIDI kit’s 13 sounds identical (S1, the whole window) to the clave with its line written out', (id) => {
     const out = hosted(meterText('4/4'), 120, byId(id).text, coreKit);
     const was = hosted(meterText('4/4'), 120, byId(id).text.replace('&percussion', `&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)\n&percussion`));
     expect(soundsIdentical(was, out)).toBe(true);

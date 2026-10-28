@@ -147,7 +147,7 @@ describe('the drums performer', () => {
   // (each under the meter the repository finds at its preset's point: Lo-fi hip hop's and Funk's swing)
   const section = ({ point, text }: (typeof DRUM_BARS)[number]) =>
     [setTiming(library.query(point, 1, {}, { facet: 'meter' })[0]!.fragment.text, 'bar', 'step', `${BPM}bpm`), text].join('\n');
-  const today = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\nuse * from "core kit"\n&drums [${w.lines}]\n&out map=midi ~!9 &drums`;
+  const today = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\nuse * from gm_kit\n&drums [${w.lines}]\n&out map=midi ~!9 &drums`;
   const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\nuse * from "drums performer"\n&out map=midi ~!9 &drumsOut`;
 
   it.each(DRUM_BARS.map((w) => [w.preset, w] as const))('%s: sends what its section text sends, over 64 bars', (_, w) => {

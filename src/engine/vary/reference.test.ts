@@ -11,6 +11,7 @@ import { unionOf } from '../../repository/fit';
 import { heard } from '../../repository/heard';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { resolveSeed } from '../../repository/library';
+import { expand } from '../use';
 import { createRecogniser } from '../../repository/recognise';
 import { MOTIF_FRAGMENTS } from '../../repository/motifs';
 import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
@@ -18,8 +19,8 @@ import { declWords } from '../edit';
 import { PITCHED_OPERATORS, variations, type Variation, type VaryOptions } from '.';
 
 const KIT = { resolve: resolveSeed };
-/** Jambot's reading of a drum bar (`rhythm.test.ts`), with the core kit to strike. */
-const DRUMS = `&bar meter("4/4") step=120bpm\n${resolveSeed('core kit')!}`;
+/** Jambot's reading of a drum bar (`rhythm.test.ts`), with 13 of the General MIDI kit's voices to strike. */
+const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
 const DRUM_OPTIONS: VaryOptions = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
 /** The bass seeds' workbenches (`pitched.test.ts`): 4/4 at 120 bpm in C major, one chord a bar, over two progressions. */
 const HOST = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n${INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text}`;

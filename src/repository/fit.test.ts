@@ -11,7 +11,8 @@ import { windowAt } from '../engine/schedule';
 import { cachedCompile, fitOf, unionOf } from './fit';
 import { createRepository } from './fragments';
 import { heard } from './heard';
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed } from './library';
+import { expand } from '../engine/use';
 import { METER_FRAGMENTS } from './meters';
 import { BOSSA_NOVA, FUNK } from './presets';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
@@ -27,8 +28,8 @@ vi.mock('../engine/compile', async (original) => {
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
 /** The host's workbench: a meter at a tempo, as a host sets one (`setTiming`), then the fragments already on it. */
-/** The core kit's lines: the voices the rhythms leave as holes (#244). */
-const KIT = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'core kit')!.text;
+/** 13 of the General MIDI kit's lines, taken by name as the drummer takes them: the voices the rhythms leave as holes (#244). */
+const KIT = expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim();
 const bench = (meter: string, bpm = 120, ...fragments: string[]) => [setTiming(meterText(meter), 'bar', 'step', `${bpm}bpm`), ...fragments].join('\n');
 
 describe('the union of lines', () => {
@@ -163,7 +164,7 @@ describe('every rhythm against every meter of the library', () => {
 
   it('a two-bar clave compiles under 7/8, and doesn’t fit it: 28 sixteenths in its two bars, 32 in its braid', () => {
     const clave = rhythm('son clave 3-2');
-    // (its `&claves` is a hole the core kit fills: #244)
+    // (its `&claves` is a hole the General MIDI kit fills: #244)
     expect(compileSource(bench('7/8', 90, clave, KIT)).diagnostics).toEqual([]);
     const f = fitOf(clave, bench('7/8', 90));
     expect(f.fits).toBe(false);
@@ -288,7 +289,7 @@ describe('what it costs', () => {
   const workbench = ['Funk drums', 'Techno drums', 'rumba clave 3-2', 'bossa nova clave (one bar)'].reduce((text, id) => unionOf(rhythm(id), text).text, bench('4/4', 104));
 
   it('the workbench of five compiles clean and every rhythm still fits it, renamed where it collides', () => {
-    // (the claves' voice is a hole an instrument fills: the core kit's line)
+    // (the claves' voice is a hole an instrument fills: the General MIDI kit's line)
     expect(compileSource(`${workbench}\n${KIT}`).diagnostics).toEqual([]);
     for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(true);
   });
@@ -310,8 +311,8 @@ describe('what it costs', () => {
     const r = (await import('./fragments')).createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
-    // (the 14 rhythms and the 6 instruments: a performer's part, a mode's tonic (#290) and a stab line's &harm are holes no workbench of drums fills)
-    expect(first).toHaveLength(20);
+    // (the 14 rhythms and the 5 instruments: a performer's part, a mode's tonic (#290) and a stab line's &harm are holes no workbench of drums fills)
+    expect(first).toHaveLength(19);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
     expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);

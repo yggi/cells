@@ -19,4 +19,4 @@ The voice Jambot's pad plays through: `&padV`, whose `loop=C3` sets the register
 It has no sound of its own (`s=`), as `bass` has none: the parts go out on a MIDI card, which sends notes and not a sound, and says so of a voice that has one; one that sounds in a built-in synth comes with a card that plays it.
 Its register is its own (decision 058): a performer that plays it higher or lower says so on its gate (`play=&part^$12`).
 
-Associated as `bass` is, once as the facet `instrument` at the centre of style space, at a quarter of the core kit's weight; a performer asks for it by its id.
+Associated as `bass` is, once as the facet `instrument` at the centre of style space, at a quarter of the kit's weight; a performer asks for it by its id.
