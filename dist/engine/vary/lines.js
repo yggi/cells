@@ -259,14 +259,25 @@ function pitchedLineOf(source, result, trigger, voice, card) {
 }
 const hitText = (n) => (n.own === null ? n.voice : `${n.voice}:0:${n.own}`);
 export function stepTokens(line, notes) {
-    const holding = new Set(notes.flatMap((n) => Array.from({ length: (n.hold ?? 1) - 1 }, (_, k) => n.step + k + 1)));
-    return Array.from({ length: line.steps }, (_, step) => {
-        if (holding.has(step))
-            return null;
-        const at = notes.filter((n) => n.step === step);
-        const hits = at.map((n) => (n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n)));
-        return hits.length === 0 ? '~' : hits.length === 1 ? hits[0] : `[${hits.join(',')}]`;
-    });
+    const out = Array(line.steps).fill('~');
+    const hits = new Map();
+    for (const n of notes) {
+        if (!Number.isInteger(n.step))
+            continue;
+        for (let k = 1; k < (n.hold ?? 1); k++)
+            if (n.step + k < line.steps)
+                out[n.step + k] = null;
+        const hit = n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n);
+        const at = hits.get(n.step);
+        if (at)
+            at.push(hit);
+        else
+            hits.set(n.step, [hit]);
+    }
+    for (const [step, at] of hits)
+        if (step >= 0 && step < line.steps && out[step] !== null)
+            out[step] = at.length === 1 ? at[0] : `[${at.join(',')}]`;
+    return out;
 }
 export function written(line, notes, levels, rotated = false) {
     const out = new Map();

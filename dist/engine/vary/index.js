@@ -61,18 +61,51 @@ export function readVariations(fragment, options = {}) {
     const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
     const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
     const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
-    const signature = (i, notes) => lines
-        .flatMap((_, j) => (j === i ? keysOf(i, notes) : noteKeys[j]))
-        .sort()
-        .join('|');
+    const others = new Map();
+    const othersOf = (i) => {
+        let o = others.get(i);
+        if (!o) {
+            const strikes = lines.flatMap((_, j) => (j === i ? [] : strikeKeys[j]));
+            const set = new Set(strikes);
+            o = { keys: lines.flatMap((_, j) => (j === i ? [] : noteKeys[j])).sort(), strikes: set.size < strikes.length ? null : set };
+            others.set(i, o);
+        }
+        return o;
+    };
+    const signature = (i, notes) => {
+        const a = othersOf(i).keys;
+        const b = i < 0 ? [] : keysOf(i, notes).sort();
+        const merged = [];
+        let x = 0;
+        let y = 0;
+        while (x < a.length || y < b.length)
+            merged.push(y >= b.length || (x < a.length && a[x] <= b[y]) ? a[x++] : b[y++]);
+        return merged.join('|');
+    };
+    const struckOnce = (i, notes) => {
+        const other = othersOf(i).strikes;
+        if (!other)
+            return false;
+        const mine = new Set();
+        for (const k of strikesOf(i, notes)) {
+            if (other.has(k) || mine.has(k))
+                return false;
+            mine.add(k);
+        }
+        return true;
+    };
     const seen = new Set([signature(-1, [])]);
     const out = [];
     const words = new Map();
+    const wordsOf = (name) => {
+        if (!words.has(name))
+            words.set(name, declWords(fragment, name));
+        return words.get(name);
+    };
     const offer = (i, operator, notes, amount, braids, what, about = amount) => {
         if (!braids || total - lines[i].notes.length + notes.length < fewest)
             return;
-        const strikes = lines.flatMap((_, j) => (j === i ? strikesOf(i, notes) : strikeKeys[j]));
-        if (new Set(strikes).size < strikes.length)
+        if (!struckOnce(i, notes))
             return;
         const sig = signature(i, notes);
         if (seen.has(sig))
@@ -80,12 +113,10 @@ export function readVariations(fragment, options = {}) {
         seen.add(sig);
         const line = lines[i].name;
         const code = (name, braid) => {
-            if (!words.has(name))
-                words.set(name, declWords(fragment, name));
-            const w = words.get(name);
+            const w = wordsOf(name);
             return w ? [...w.head, ...w.attrs, ...(braid ?? w.braid)].join(' ') : '';
         };
-        const own = declWords(fragment, lines[i].trigger);
+        const own = wordsOf(lines[i].trigger);
         const pins = new Set(lines[i].notes.filter((n) => pinned(lines[i], n) && !(operator === 'invert' && n.pitch?.written === (about ?? 0) / 2 && !n.pitch.alter)).map((n) => n.step));
         const reference = own && referenceOf(lines[i], own.braid, own.attrs, operator, notes, pins, about);
         const variation = {

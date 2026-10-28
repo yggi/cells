@@ -2,8 +2,9 @@
  * Recognition (decision 055, #224): given a heard text (a bar or a section the Muse wrote) and a library (the seed and a
  * learned layer's filed fragments), which fragments it is, by which of decision 052's operators, and how far: the
  * homeostat's sensor (yggi/jambot#237). A fragment's reading and its variations' are kept by text, so a recogniser warmed
- * on a library compiles only the heard text; it keeps the 512 texts used last (#277), so a run of hours holds its memory
- * and its cost, and the cache changes no answer. Stateless as the repository is (decision 048):
+ * on a library compiles only the heard text, which it keeps alike, read once when it joins the next library (#337); it
+ * keeps the 512 texts used last (#277), so a run of hours holds its memory and its cost, and the cache changes no answer.
+ * Stateless as the repository is (decision 048):
  * the share of bars recognised, and the ladder it drives, are the frontend's. Pure.
  */
 import { type Operator, type VaryOptions } from '../engine/vary';

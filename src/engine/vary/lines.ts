@@ -349,13 +349,19 @@ const hitText = (n: { voice: string; own: string | null }) => (n.own === null ? 
  * a step a held note holds through (a held note is written held, `7@2`, the steps it holds through left out).
  */
 export function stepTokens(line: Line, notes: readonly LineNote[]): (string | null)[] {
-  const holding = new Set(notes.flatMap((n) => Array.from({ length: (n.hold ?? 1) - 1 }, (_, k) => n.step + k + 1)));
-  return Array.from({ length: line.steps }, (_, step) => {
-    if (holding.has(step)) return null;
-    const at = notes.filter((n) => n.step === step);
-    const hits = at.map((n) => (n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n)));
-    return hits.length === 0 ? '~' : hits.length === 1 ? hits[0]! : `[${hits.join(',')}]`;
-  });
+  // (one pass over the notes, each step's in the order given, not one for each step)
+  const out: (string | null)[] = Array<string | null>(line.steps).fill('~');
+  const hits = new Map<number, string[]>();
+  for (const n of notes) {
+    if (!Number.isInteger(n.step)) continue;
+    for (let k = 1; k < (n.hold ?? 1); k++) if (n.step + k < line.steps) out[n.step + k] = null;
+    const hit = n.pitch ? `${pitchText(n.pitch)}${n.hold ? `@${n.hold}` : ''}` : hitText(n);
+    const at = hits.get(n.step);
+    if (at) at.push(hit);
+    else hits.set(n.step, [hit]);
+  }
+  for (const [step, at] of hits) if (step >= 0 && step < line.steps && out[step] !== null) out[step] = at.length === 1 ? at[0]! : `[${at.join(',')}]`;
+  return out;
 }
 
 /**

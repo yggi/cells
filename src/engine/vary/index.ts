@@ -179,15 +179,47 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
   const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
   const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
   const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
-  const signature = (i: number, notes: readonly LineNote[]) =>
-    lines
-      .flatMap((_, j) => (j === i ? keysOf(i, notes) : noteKeys[j]!))
-      .sort()
-      .join('|');
+  // (the other lines' keys sorted, and their strikes, once for each line: a candidate's signature merges its line's keys
+  // into them, and its strikes are checked against them, rather than sorting and counting every line's again)
+  const others = new Map<number, { keys: readonly string[]; strikes: ReadonlySet<string> | null }>();
+  const othersOf = (i: number) => {
+    let o = others.get(i);
+    if (!o) {
+      const strikes = lines.flatMap((_, j) => (j === i ? [] : strikeKeys[j]!));
+      const set = new Set(strikes);
+      o = { keys: lines.flatMap((_, j) => (j === i ? [] : noteKeys[j]!)).sort(), strikes: set.size < strikes.length ? null : set };
+      others.set(i, o);
+    }
+    return o;
+  };
+  const signature = (i: number, notes: readonly LineNote[]) => {
+    const a = othersOf(i).keys;
+    const b = i < 0 ? [] : keysOf(i, notes).sort();
+    const merged: string[] = [];
+    let x = 0;
+    let y = 0;
+    while (x < a.length || y < b.length) merged.push(y >= b.length || (x < a.length && a[x]! <= b[y]!) ? a[x++]! : b[y++]!);
+    return merged.join('|');
+  };
+  /** Whether a candidate on line `i` strikes no sound twice at an onset. */
+  const struckOnce = (i: number, notes: readonly LineNote[]) => {
+    const other = othersOf(i).strikes;
+    if (!other) return false;
+    const mine = new Set<string>();
+    for (const k of strikesOf(i, notes)) {
+      if (other.has(k) || mine.has(k)) return false;
+      mine.add(k);
+    }
+    return true;
+  };
   const seen = new Set([signature(-1, [])]);
 
   const out: { variation: Variation; notes: HeardNote[] }[] = [];
   const words = new Map<string, ReturnType<typeof declWords>>();
+  const wordsOf = (name: string) => {
+    if (!words.has(name)) words.set(name, declWords(fragment, name));
+    return words.get(name)!;
+  };
   /** A candidate kept where it is a variation: enough notes, no sound struck twice at an onset, other notes than any before. */
   const offer = (
     i: number,
@@ -199,19 +231,17 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
     about: number | null = amount,
   ) => {
     if (!braids || total - lines[i]!.notes.length + notes.length < fewest) return;
-    const strikes = lines.flatMap((_, j) => (j === i ? strikesOf(i, notes) : strikeKeys[j]!));
-    if (new Set(strikes).size < strikes.length) return;
+    if (!struckOnce(i, notes)) return;
     const sig = signature(i, notes);
     if (seen.has(sig)) return;
     seen.add(sig);
     const line = lines[i]!.name;
     const code = (name: string, braid?: readonly string[]) => {
-      if (!words.has(name)) words.set(name, declWords(fragment, name));
-      const w = words.get(name);
+      const w = wordsOf(name);
       return w ? [...w.head, ...w.attrs, ...(braid ?? w.braid)].join(' ') : '';
     };
     // (its reference: the line's anchored steps kept, but for an inversion the ones its mirror leaves where they are)
-    const own = declWords(fragment, lines[i]!.trigger);
+    const own = wordsOf(lines[i]!.trigger);
     const pins = new Set(
       lines[i]!.notes.filter((n) => pinned(lines[i]!, n) && !(operator === 'invert' && n.pitch?.written === (about ?? 0) / 2 && !n.pitch.alter)).map((n) => n.step),
     );
