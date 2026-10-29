@@ -251,6 +251,17 @@ export function writtenGraph(result) {
                 ...wire('braid', spliceBand(child), id, cellId(child), chord(child), true, true),
             });
         }
+        const scale = c.over ? result.cells.get(c.over) : undefined;
+        const tonic = c.tonic ?? (scale?.implicit ? scale.tonic : undefined);
+        if (tonic && result.cells.has(tonic) && shown(tonic))
+            link({
+                id: edgeId(id, cellId(tonic)),
+                source: id,
+                target: cellId(tonic),
+                count: 1,
+                transforms: AS_IS,
+                ...wire('braid', 'cv', id, cellId(tonic), 1, true, true),
+            });
         for (const target of c.about)
             if (result.cells.has(target))
                 link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), count: 1, transforms: AS_IS, ...wire('about', 'none', id, cellId(target)) });
@@ -308,10 +319,17 @@ export function writtenGraph(result) {
         const flows = [...new Set(receivers.map((r) => edgeId(cellId(r.via), into)))];
         for (const f of flows)
             through.add(f);
+        const stack = g.lines?.length ? result.cells.get(g.notes) : undefined;
+        const members = stack ? g.lines.map((l) => l.line).filter((n) => result.cells.has(n)) : [];
+        const pairsOf = (name) => receivers.flatMap((r) => soundsOf(result, r.via).map((v) => edgeId(cellId(name), cellId(v))));
+        const intoVoices = (name) => receivers.flatMap((r) => [r.name, ...(result.cells.get(r.name)?.kit ? [VOICE_KIT] : [])].map((v) => edgeId(cellId(name), cellId(v))));
+        const intoGate = members.map((m) => edgeId(cellId(m), into));
+        for (const id of intoGate)
+            through.add(id);
         for (const { name, port } of [{ name: g.notes, port: g.port }, ...g.levels]) {
             if (!result.cells.has(name))
                 continue;
-            const pairs = receivers.flatMap((r) => soundsOf(result, r.via).map((v) => edgeId(cellId(name), cellId(v))));
+            const pairs = [...pairsOf(name), ...(name === g.notes ? members.flatMap((m) => [...pairsOf(m), ...intoVoices(m)]) : [])];
             for (const id of pairs)
                 through.add(id);
             link({
@@ -321,11 +339,10 @@ export function writtenGraph(result) {
                 count: 1,
                 transforms: AS_IS,
                 ...(receivers[0] ? { sound: receivers[0].name } : {}),
-                routes: [pairs, flows],
+                routes: [pairs, name === g.notes ? [...flows, ...intoGate] : flows],
                 ...wire(port, 'cv', cellId(name), into, name === g.notes ? chord(name) : 1),
             });
         }
-        const stack = g.lines?.length ? result.cells.get(g.notes) : undefined;
         if (stack && !stacks.has(stack.name)) {
             stacks.add(stack.name);
             const lines = new Set(g.lines.map((l) => l.line));
@@ -339,12 +356,15 @@ export function writtenGraph(result) {
                             continue;
                         const port = lines.has(r.name) ? 'play' : 'level';
                         const from = cellId(r.name);
+                        for (const id of [...pairsOf(r.name), ...intoVoices(r.name)])
+                            through.add(id);
                         link({
                             id: edgeId(from, into),
                             source: from,
                             target: into,
                             count: 1,
                             transforms: [refTransform(r)],
+                            routes: [[...pairsOf(r.name), ...intoVoices(r.name), ...(port === 'play' ? [edgeId(from, cellId(c.name))] : [])]],
                             ...wire(port, 'cv', from, into, port === 'play' ? chord(r.name) : 1),
                         });
                     }

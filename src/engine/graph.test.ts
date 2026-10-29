@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { writtenGraph } from './graph';
+import { routing } from './routing';
 import { cellId } from './ids';
 import { edgeLabel } from './transform';
 
@@ -60,5 +61,55 @@ describe('a role and a stack of lines in the graph (#329)', () => {
     const src = '&lines [&kick * &accent, &hat]\n&drumsOut play=&lines &kit\n&out map=sample &drumsOut';
     expect(compileSource(BASE + src).diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     expect(wires(src, 'lines')).toEqual(['accent->lines level cv', 'hat->lines play cv', 'kick->lines play cv', 'lines->drumsOut play cv']);
+  });
+});
+
+describe("a key's tonic read from a cell is a wire, as a spliced cell's (#290)", () => {
+  it('scale(minor, &tonic): a braid wire from the tonic into the key', () => {
+    const r = compileSource('&bar meter("4/4") step=96bpm\n&key scale(minor, &tonic)\n&tonic A\n&roots over=&key step=1m 0 3 4 0\n&bass s=tri\n&out map=sample [&roots * &bass]');
+    expect(r.diagnostics).toEqual([]);
+    const wires = writtenGraph(r).edges.filter((e) => e.from === cellId('tonic') || e.to === cellId('tonic'));
+    expect(wires.map((e) => ({ from: e.from, to: e.to, port: e.port, band: e.band }))).toEqual([{ from: cellId('tonic'), to: cellId('key'), port: 'braid', band: 'cv' }]);
+  });
+  it('a tonic written as a note draws no wire', () => {
+    const r = compileSource('&bar meter("4/4") step=96bpm\n&key scale(minor, A)\n&roots over=&key step=1m 0 3 4 0\n&bass s=tri\n&out map=sample [&roots * &bass]');
+    expect(writtenGraph(r).edges.filter((e) => e.port === 'braid' && e.to === cellId('key'))).toEqual([]);
+  });
+});
+
+describe('a stack a gate plays is on the way, as the routing has it (#329)', () => {
+  const src = `&bar meter("4/4") step=120bpm
+&bd s=sine loop=A1
+&hh s=white
+&kit &bd &hh
+&kick step=8n 0 ~ 0 ~
+&hat step=8n ~ 1 ~ 1
+&accent map=amp step=4n 1 .5
+&lines [&kick * &accent, &hat]
+&drumsOut play=&lines &kit
+&out map=sample &drumsOut`;
+  it('the stack is routed, and each wire into it routed by what the routing takes through it: its lines and their levels', () => {
+    const r = compileSource(src);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    const all = routing(r, r.off);
+    expect(all.nodes.has(cellId('lines'))).toBe(true);
+    const model = writtenGraph(r);
+    // (a wire is routed when, of each of its groups, the routing has one: engine/graph.ts, `routes`)
+    const routed = (from: string, to: string) => {
+      const e = model.edges.find((x) => x.from === cellId(from) && x.to === cellId(to));
+      return !!e?.routes?.length && e.routes.every((g) => g.some((id) => all.edges.has(id)));
+    };
+    expect(['kick', 'hat', 'accent'].map((m) => [m, routed(m, 'lines')])).toEqual([
+      ['kick', true],
+      ['hat', true],
+      ['accent', true],
+    ]);
+    expect(routed('lines', 'drumsOut')).toBe(true);
+    // (each pair the routing takes past the stack, into the gate or the voices, is drawn, or drawn through it)
+    for (const id of all.edges) {
+      const [a, b] = id.split(/->|~>/);
+      if (model.nodes.some((n) => n.id === a) && model.nodes.some((n) => n.id === b))
+        expect(model.edges.some((e) => e.id === id) || model.through.has(id), `${id} is drawn`).toBe(true);
+    }
   });
 });
