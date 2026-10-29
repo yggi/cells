@@ -520,21 +520,24 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       const gateEnd = e.at + dur;
       const end = gateEnd + env.release * 4 + 0.05;
       const levels = e.levels.filter((l) => finite(l.at) && finite(l.level));
-      let lvl: Auto | null = null;
-      if (levels.length > 1 || (levels[0] && levels[0].level !== 1)) {
-        lvl = new Auto(1);
-        lvl.push({ at: e.at, value: levels[0]?.level ?? 1, kind: 'set' });
-        for (const l of levels.slice(1)) lvl.push(l.ramp ? { at: l.at, value: l.level, kind: 'lin' } : { at: l.at, value: l.level, kind: 'target', tau: 0.004 });
-      }
+      // (made for each note it becomes: an Auto is read at times that only grow, so two chains can't share one)
+      const lvl = (): Auto | null => {
+        if (!(levels.length > 1 || (levels[0] && levels[0].level !== 1))) return null;
+        const a = new Auto(1);
+        a.push({ at: e.at, value: levels[0]?.level ?? 1, kind: 'set' });
+        for (const l of levels.slice(1)) a.push(l.ramp ? { at: l.at, value: l.level, kind: 'lin' } : { at: l.at, value: l.level, kind: 'target', tau: 0.004 });
+        return a;
+      };
       const bends = e.bends.filter((b) => finite(b.at) && finite(b.cents));
-      let cents: Auto | null = null;
-      if (bends.length) {
-        cents = new Auto(0);
-        cents.push({ at: e.at, value: 0, kind: 'set' });
-        for (const b of bends) cents.push({ at: b.at, value: b.cents, kind: b.ramp ? 'lin' : 'set' });
-      }
+      const cents = (): Auto | null => {
+        if (!bends.length) return null;
+        const a = new Auto(0);
+        a.push({ at: e.at, value: 0, kind: 'set' });
+        for (const b of bends) a.push({ at: b.at, value: b.cents, kind: b.ramp ? 'lin' : 'set' });
+        return a;
+      };
       const params = e.params ?? {};
-      const semis = params.pitch ? pitchShape(params.pitch, e.at, dur) : null;
+      const semis = () => (params.pitch ? pitchShape(params.pitch, e.at, dur) : null);
       for (const k of FILTER) {
         const track = params[k];
         const auto = v.autos[k];
@@ -561,10 +564,10 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           left: Math.cos(x) * share.left,
           right: Math.sin(x) * share.right,
           env,
-          level: lvl,
+          level: lvl(),
           freq: e.freq,
-          semis,
-          cents,
+          semis: semis(),
+          cents: cents(),
           grain: v.noise ? Math.floor(grainOffset(v.seed, e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
           phase: 0,
         };

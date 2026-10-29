@@ -14,6 +14,8 @@ const compiled = (text: string) => compileSource(text, undefined, { resolve: res
 /** A text, rendered. */
 const audio = (text: string, options: Parameters<typeof pieceAudio>[2]) => {
   const r = compiled(text);
+  // (a text that doesn't compile renders silence, which proves nothing)
+  expect(r.ok, r.diagnostics.map((d) => d.message).join('; ')).toBe(true);
   return pieceAudio(r, codeShifts(r), options);
 };
 const example = (key: string) => compiled((PRESETS as Record<string, { source: string }>)[key]!.source);
@@ -54,6 +56,12 @@ describe('the renderer', () => {
     const whole = inChunks(r, 8, [8 * 48000]);
     expect(bits(inChunks(r, 8, [1, 31, 128, 777, 5000]))).toEqual(bits(whole));
     expect(bits(inChunks(r, 8, [128]))).toEqual(bits(whole));
+  });
+
+  it('a moving filter in chunks is the moving filter whole: its coefficients are taken every 32 frames from the render’s start, not a chunk’s', () => {
+    // (a chunk's start isn't a block's: counted from each chunk, this differs from the whole by 5.6e-3)
+    const r = compiled('&sw map=adsr .3 .2 .2 .1\n&v s=sawtooth loop=A2 lpf=200..4000 * &sw lpq=6\n&n step=2 0 3 5 7\n&out map=sample [&n * &v]');
+    expect(bits(inChunks(r, 2, [1, 31, 100, 777]))).toEqual(bits(inChunks(r, 2, [2 * 48000])));
   });
 
   it('a stream, each window’s events added as it comes, is the render whole', () => {
@@ -110,6 +118,19 @@ describe('the renderer', () => {
     }
   });
 
+  it('a voice in two entries with a moving level is split without drift: each share reads its level, bends and shape on its own', () => {
+    const lv =
+      '&bar meter("4/4") step=120bpm\n&lv map=amp step=16n 1 .2 1 .2\n&v s=saw loop=A3 lpf=900 pitch=0..2 * &(map=lin loop=3 0 1 0)\n&n step=4 0 2 4 5\n&a [&n * &v * &lv]\n';
+    for (const card of ['&out map=sample [&a, &a * .5]', '&out map=sample [&a, &a * .5] [&a * .3]']) {
+      const entries = audio(lv + card, { seconds: 2, tracks: 'entries' });
+      const plain = audio(lv + card, { seconds: 2 });
+      expect(plain.loudness.rms, card).toBeGreaterThan(-60);
+      let most = 0;
+      for (const ch of [0, 1] as const) for (let i = 0; i < plain.mix[ch].length; i++) most = Math.max(most, Math.abs(entries.mix[ch][i]! - plain.mix[ch][i]!));
+      expect(most, card).toBeLessThan(1e-6);
+    }
+  });
+
   it('a card of two channels names an entry by its side, and an entry on the left is heard on the left alone', () => {
     const a = pieceAudio(example('just'), codeShifts(example('just')), { seconds: 2, tracks: 'entries' });
     expect(a.stems.map((s) => s.name)).toEqual(['pure*organ:left', 'tempered*organ:right']);
@@ -133,6 +154,14 @@ describe('the renderer', () => {
   it('a voice heard only on a MIDI card is sent, not heard (decision 019): it renders silent', () => {
     const a = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=midi [&n * &v]', { seconds: 1 });
     expect(a.loudness.rms).toBe(-Infinity);
+  });
+
+  it('a note is articulated: its gate open for 90 % of its length, then it falls away over its release', () => {
+    const a = audio('&v s=sine loop=A3\n&n step=1 0\n&out map=sample postgain=1 [&n * &v]', { seconds: 1, tail: 0 });
+    const level = (from: number, to: number) => loudness([a.mix[0].subarray(Math.round(from * 48000), Math.round(to * 48000))]).rms;
+    // open at .85 s; .05 s after its gate shuts at .9 s, three of its release's time constants down (about -26 dB)
+    expect(Math.abs(level(0.84, 0.86) - level(0.4, 0.6))).toBeLessThan(0.2);
+    expect(level(0.94, 0.96) - level(0.4, 0.6)).toBeLessThan(-20);
   });
 
   it('a sample rate out of its range is refused', () => {

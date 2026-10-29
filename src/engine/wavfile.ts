@@ -13,11 +13,12 @@ export function writeWav(channels: readonly Float32Array[], sampleRate: number, 
   if (channels.some((c) => c.length !== frames)) throw new RangeError('a WAV file’s channels are all one length');
   const bytes = format === 'pcm16' ? 2 : format === 'pcm24' ? 3 : 4;
   const data = frames * chs * bytes;
-  const out = new Uint8Array(44 + data);
+  // (a chunk of an odd size is padded to an even one, as RIFF asks; the pad isn't counted in its size)
+  const out = new Uint8Array(44 + data + (data % 2));
   const view = new DataView(out.buffer);
   const text = (at: number, s: string) => [...s].forEach((c, i) => view.setUint8(at + i, c.charCodeAt(0)));
   text(0, 'RIFF');
-  view.setUint32(4, 36 + data, true);
+  view.setUint32(4, 36 + data + (data % 2), true);
   text(8, 'WAVE');
   text(12, 'fmt ');
   view.setUint32(16, 16, true);
