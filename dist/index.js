@@ -7,6 +7,7 @@ export { shorten, shortenAll } from "./engine/shorten/index.js";
 export { normalise } from "./engine/normalise/index.js";
 export { anchorsOf, varied, variations } from "./engine/vary/index.js";
 export { fold } from "./engine/fold/index.js";
+export { hints, MIN_NOTES } from "./engine/fold/hints.js";
 export { cellsFromMidi } from "./engine/midiimport.js";
 export { pieceMidi } from "./engine/midiexport.js";
 export { spanOf, LONGEST, TAIL, UNBOUNDED } from "./engine/span.js";
