@@ -5,6 +5,7 @@ description: "The changes of Giant Steps: three keys a major third apart, B, G a
 ---
 
 ```cells
+use &pluck, &snap from envelopes
 # The changes of Giant Steps: three keys a major third apart — B, G, Eb — round
 # the octave. The key turns down a major third each bar (stride=-4); the line plays
 # 1-2-3-5 in it, then the dominant of the next key. The line is our own.
@@ -18,9 +19,9 @@ description: "The changes of Giant Steps: three keys a major third apart, B, G a
 &ride step=&swing:pulse &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 &cym:0:.9 ~ &cym:0:.6 &cym:0:.5
 
 &sax s=saw loop=C4 lpf=1800 room=.25 env=&(map=adsr .02 .12 .6 .1)
-&bass s=tri loop=C2 env=&(map=adsr .005 .25 .5 .1)
+&bass s=tri loop=C2 env=&pluck
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .3 .2)
-&cym gain=.22 s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
+&cym gain=.22 s=white hpf=8000 env=&snap
 
 &mix postgain=1.5 map=sample [&line * &sax * .4, &walk * &bass * .8, &comp * &keys * .3, &ride]
 ```

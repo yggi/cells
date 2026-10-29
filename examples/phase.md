@@ -5,6 +5,7 @@ description: "After Steve Reich's Piano Phase, an original: two pianos, one patt
 ---
 
 ```cells
+use &tap from envelopes
 &driftNote label="The right one plays 81 notes in the time of the left one's 80 — it slips a note ahead every 81, through all twelve alignments, back to unison after 81 rounds." about=(&left &right)
 &woodNote label="A quiet euclid(5, 12) on low wood marks the left player's twelve." about=(&wood &left)
 # Cell Phase — no tempo is nudged: the drift is a ratio of clocks. &left steps in sixteenths
@@ -21,7 +22,7 @@ description: "After Steve Reich's Piano Phase, an original: two pianos, one patt
 &mR s=sine ratio=1
 &pianoL pan=.15 s=sine loop=E4 fm=&mL index=.2..1.6 * &(map=adsr .001 .3 .1 .2) room=.25 env=&(map=adsr .002 .6 .2 .2)
 &pianoR pan=.85 s=sine loop=E4 fm=&mR index=.2..1.6 * &(map=adsr .001 .3 .1 .2) room=.25 env=&(map=adsr .002 .6 .2 .2)
-&woodv s=sine loop=E2 pitch=0..12 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .09 0 .04)
+&woodv s=sine loop=E2 pitch=0..12 * &(map=adsr 0 .03 0 0) env=&tap
 
 &out postgain=1.41 map=sample [&left * &pianoL * .2, &right * &pianoR * .2, &wood * &woodv * .1]
 ```

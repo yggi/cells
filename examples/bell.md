@@ -5,6 +5,7 @@ description: "The bell, x.x.xx.x.x.x, has the major scale's intervals: 2 2 1 2 2
 ---
 
 ```cells
+use &tap, &click from envelopes
 # The West African standard bell pattern — seven strokes over twelve pulses,
 # x.x.xx.x.x.x — has the same intervals as the major scale: 2 2 1 2 2 2 1.
 # So one cell is both: the melody steps with the bell, and reads it as its scale.
@@ -17,10 +18,10 @@ description: "The bell, x.x.xx.x.x.x, has the major scale's intervals: 2 2 1 2 2
 &drums step=8t [&dundun,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [&dundun:0:.5,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [
        &dundun:0:.8,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [&dundun:0:.5,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3   # the twelve pulses, the low drum on the beats
 
-&gankogui gain=.25 s=square loop=C6 lpf=4000 env=&(map=adsr 0 .08 0 .05)
+&gankogui gain=.25 s=square loop=C6 lpf=4000 env=&tap
 &voice s=tri loop=C4 env=&(map=adsr .02 .2 .6 .2)
 &dundun gain=.7 oneshot s=sine loop=C2 pitch=0..12 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .25 0 .1)
-&shekere gain=.15 s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
+&shekere gain=.15 s=white hpf=6000 env=&click
 
 &mix postgain=1.26 map=sample [&strokes, &song * &voice * .45, &drums]
 ```

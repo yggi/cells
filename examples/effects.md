@@ -6,6 +6,7 @@ description: "What shapes a voice after its source: filters, a reverb and an ech
 ---
 
 ```cells
+use &pluck from envelopes
 &filterNote label="lpf= lets the lows through (a cutoff in Hz) and lpq= rings at the cutoff; hpf= and hpq= the same from above." about=(&warm &thin)
 &effectsNote label="room= sends to a reverb, delay= to an echo: delaytime= apart, delayfeedback= how long it repeats. distort= and crush= add grit." about=(&glass &grit)
 &vibratoNote label="pitch= is a voice's own pitch on every note: here a vibrato, a cell that turns three times a beat, in semitones." about=&warm
@@ -20,6 +21,6 @@ description: "What shapes a voice after its source: filters, a reverb and an ech
 &warm s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .08 .2 .7 .4) pitch=&(loop=&bar*3 0 .15 0 -.15)
 &thin s=saw loop=C4 hpf=2500 hpq=3 env=&(map=adsr .005 .2 .2 .2)
 &glass s=sine loop=C5 room=.6 delay=.4 delaytime=.33 delayfeedback=.5 env=&(map=adsr .01 .8 0 .8)
-&grit s=square loop=C2 lpf=900 distort=.3 crush=8 env=&(map=adsr .005 .2 .6 .1)
+&grit s=square loop=C2 lpf=900 distort=.3 crush=8 env=&pluck
 &out map=sample postgain=1.68 [&tune * &thin * .2, &line * &warm * .15, &sparkle * &glass * .2, &bass * &grit * .3]
 ```

@@ -23,9 +23,10 @@ use &bar from "4/4"
 &toms over=&kit step=16n ~!12 0 1 2 1
 
 use &bd, &sd, &rim from gm_kit
-&hh oneshot s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
-&lo s=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
+use &click, &thump, &snap from envelopes
+&hh oneshot s=white hpf=8000 env=&click
+&lo s=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&thump
 &mid s=sine loop=C3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .2 0 .05)
-&hi s=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .15 0 .05)
+&hi s=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&snap
 &out map=sample postgain=.944 [&groove * .6, &clave * &rim * .15, &toms * .4]
 ```

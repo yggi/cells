@@ -16,6 +16,7 @@ description: A cycle of twelve scenes, each a fifth from the last, and home.
 # and Kraftwerk (the sequence, the filters). Every layer reads one Lydian scale, and
 # the scale's key turns a fifth with each scene: C G D A E B F# C# G# D# A# F, and home.
 use &bar from "4/4"
+use &pluck from envelopes
 &tempo step=free(72bpm, 50..96)
 &key step=1m/8 stride=7 label="**{tonic}**, a fifth each scene"
 &lydian over=&key scan(2 2 2 1 2 2 1) label="{mode} on {tonic}"
@@ -40,7 +41,7 @@ use &bar from "4/4"
 &voiceA tags="canon" pan=.18 s=tri loop=C5 lpf=2600 room=.35 env=&(map=adsr .05 .3 .7 .6)
 &voiceB tags="canon" pan=.82 s=saw loop=C5 lpf=1500 room=.4 env=&(map=adsr .08 .3 .7 .8)
 &bell tags="bells" pan=.83 s=sine loop=C5 room=.6 delaytime=&bar*2/3 delay=.4 delayfeedback=.5 env=&(map=adsr .005 1.2 0 2.5) pitch=&(map=lin loop=.07 0 .3 0 -.3 0)
-&bass tags="pulse" s=tri loop=C2 lpf=400..1400 * &breath env=&(map=adsr .005 .2 .4 .1)
+&bass tags="pulse" s=tri loop=C2 lpf=400..1400 * &breath env=&pluck
 &glass tags="glass" pan=.21 s=sine loop=C5 room=.7 env=&(map=adsr 3 1 .7 4) pitch=&(map=lin loop=.11 0 .25 0 -.25 0)
 
 # the score: which layers play in each of the twelve scenes (0 drone 1 sequence 2 leader

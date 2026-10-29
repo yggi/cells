@@ -19,7 +19,7 @@ import { STAB_FRAGMENTS } from './stab';
 import { MOTIF_FRAGMENTS } from './motifs';
 import { FORM_FRAGMENTS } from './forms';
 
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, then the forms: seventy-five fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, then the forms: seventy-six fragments. */
 export const LIBRARY: readonly Fragment[] = [
   ...METER_FRAGMENTS,
   ...RHYTHM_FRAGMENTS,
