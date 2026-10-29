@@ -71,6 +71,7 @@ export const ORDER = [
   'hypercell',
   'onemore',
   'electroswing',
+  'spooky',
   'brothers',
   'ghosts',
   'tines',

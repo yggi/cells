@@ -1,4 +1,4 @@
-// The motifs and the forms (#294): nine motifs, eight at Jambot's presets and the electroswing example's call, each a line
+// The motifs and the forms (#294): ten motifs, eight at Jambot's presets, the electroswing example's call and the Dies irae, each a line
 // over the key; four forms, each a braid of holes. Every form over every motif compiles over a meter and a key with no
 // diagnostic and plays its length in bars, through the lead performer; and recognition reads the answer of a call and
 // answer as the call transposed two degrees down, by one operator.
@@ -12,13 +12,24 @@ import { fitOf } from './fit';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
-import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { createRecogniser } from './recognise';
 
 /** The point proposed for an Electro swing preset, as the electroswing seeds' files write it: no preset of Jambot's (decision 041). */
 const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
 /** Each motif and the point it sits at. */
-const MOTIFS = { hook: SYNTH_POP, octaves: TECHNO, sigh: DEEP_HOUSE, rising: AMBIENT, lazy: LO_FI, riff: FUNK, tresillo: BOSSA_NOVA, bebop: SWING_JAZZ, gypsy: PROPOSED };
+const MOTIFS = {
+  hook: SYNTH_POP,
+  octaves: TECHNO,
+  sigh: DEEP_HOUSE,
+  rising: AMBIENT,
+  lazy: LO_FI,
+  riff: FUNK,
+  tresillo: BOSSA_NOVA,
+  bebop: SWING_JAZZ,
+  gypsy: PROPOSED,
+  diesIrae: SPOOKY,
+};
 /** Each form: its head, the hole it reads, and its length in bars over a one-bar motif. */
 const FORMS: Record<string, { head: string; hole: string; bars: number }> = {
   'call and answer': { head: 'phrase', hole: 'call', bars: 2 },
@@ -51,7 +62,7 @@ const piece = (form: string, motif: string) => {
 const moved = (braid: string, n: number) => braid.replace(/(^|\s)(-?\d+)/g, (_, space: string, d: string) => `${space}${Number(d) + n}`);
 
 describe('the motifs', () => {
-  it('are nine, each a line over the key named for its fragment, at its point as the facet motif', () => {
+  it('are ten, each a line over the key named for its fragment, at its point as the facet motif', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
       expect(f.text, f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));

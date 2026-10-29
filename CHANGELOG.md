@@ -10,7 +10,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ### Added
 
-- **Phrygian, lydian and locrian as mode fragments** (yggi/jambot#516, the owner: "jambot should be able to play all 7 modes. they should all be fragments"): with aeolian, dorian, ionian and mixolydian, every diatonic mode is a fragment, `&key scale(<mode>, &tonic)`. No preset plays them; each sits at a point of its own, placed by hand (phrygian at sync .6, harm .6, artic .7, energy .85; lydian at .15, .6, .15, .3; locrian at .9, 1, .6, .9). The library is 70 fragments. **What a frontend sees at its next pin:** a mode query at each of Jambot's presets finds what it did, at distance 0; between them, nearer one of the three, it finds that one. No example sounds different, and no event snapshot moves.
+- **Phrygian, lydian and locrian as mode fragments** (yggi/jambot#516, the owner: "jambot should be able to play all 7 modes. they should all be fragments"): with aeolian, dorian, ionian and mixolydian, every diatonic mode is a fragment, `&key scale(<mode>, &tonic)`. No preset plays them; each sits at a point of its own, placed by hand (phrygian at sync .6, harm .6, artic .7, energy .85; lydian at .15, .6, .15, .3; locrian at .9, 1, .6, .9). The library is 74 fragments. **What a frontend sees at its next pin:** a mode query at each of Jambot's presets finds what it did, at distance 0; between them, nearer one of the three, it finds that one. No example sounds different, and no event snapshot moves.
+## v0.12.0 — 2026-10-29
+
+### Added
+
+- **Seeds for two presets Jambot is to adopt, Electro swing and Spooky, and the example *Spooky, in pieces*** (#349; yggi/jambot#517). The library is 71 fragments.
+  - **Electro swing** (sync .55, harm .75, artic .6, energy .75): `4/4 swung on 8n` and `walking bass`, what its example plays, are associated there too; a query there found 10/8.
+  - **Spooky** (sync .2, harm .9, artic .3, energy .35): `5/4` there, `6/8` and `3/4` near it (0.08 off in energy, 0.04 by the repository's distance), `harmonic minor` there too, and four new seeds: `Spooky drums` (a heartbeat, a ride's tick, the rim's E(3,8); its lines named by Jambot's drum roles, every line a beat long or the bar's, so it fits every meter but 7/8), `creeping bass` (the root, a semitone above it, the root), `dark cadence` (i, ♭VI, iv, V, four bars a lap) and the motif `diesIrae` (the chant's head).
+  - The example, in 5/4, takes its band, beat, bass, harmony and tune from the library, its sounds a round bass, an organ, a celesta and a theremin; its `postgain=` from Cell studio's measure (−28.4 dB, now −24).
+  - **What a frontend sees at its next pin:** at Jambot's eight presets, every facet's query finds first what it did, at the same distance, but the harmony at the five with none near (Synth-pop, Deep house, Lo-fi hip hop, Bossa nova, Swing jazz), where the dark cadence is now the nearest: four bars, it is no progression Jambot's composer reads, so they play as before. Further down a ranking a fragment can come nearer by a point it gained. `ELECTRO_SWING` and `SPOOKY` are exported beside the presets' points. No example sounds different, and no event snapshot moves; one line is added for the new example.
 
 ### Changed
 

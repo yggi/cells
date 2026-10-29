@@ -9,7 +9,7 @@ import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { SEED } from './seed';
 import { SEED_FILES } from './seed.generated';
@@ -54,7 +54,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are seventy', () => expect(files).toHaveLength(70));
+  it('are seventy-four', () => expect(files).toHaveLength(74));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -80,7 +80,8 @@ describe('the seed files', () => {
   it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       '4/4': [SYNTH_POP, TECHNO, BOSSA_NOVA],
-      '4/4 swung on 8n': [SWING_JAZZ],
+      '4/4 swung on 8n': [SWING_JAZZ, ELECTRO_SWING],
+      '5/4': [{ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }, SPOOKY],
       '4/4 leaning on 16n': [LO_FI],
       '4/4 leaning lightly on 16n': [DEEP_HOUSE, FUNK],
       '4/4 leaning faintly on 16n': [AMBIENT],
@@ -93,7 +94,11 @@ describe('the seed files', () => {
       'Bossa nova drums': [BOSSA_NOVA],
       'Swing jazz drums': [SWING_JAZZ],
       'funk bass': [FUNK, LO_FI, BOSSA_NOVA],
-      'walking bass': [SWING_JAZZ],
+      'walking bass': [SWING_JAZZ, ELECTRO_SWING],
+      'creeping bass': [SPOOKY],
+      'dark cadence': [SPOOKY],
+      'Spooky drums': [SPOOKY],
+      'harmonic minor': [ELECTRO_SWING, SPOOKY],
       aeolian: [SYNTH_POP, TECHNO, LO_FI],
       dorian: [DEEP_HOUSE, FUNK],
       ionian: [AMBIENT, BOSSA_NOVA, SWING_JAZZ],
@@ -114,14 +119,16 @@ describe('the seed files', () => {
       ).toEqual(points);
   });
 
-  it('each says it is a seed, every drum bar, bass line and harmony and what an example gave where it was lifted from, and each has prose', () => {
+  // (the seeds written by hand for the point proposed for a Spooky preset, #349, and lifted from nothing)
+  const WRITTEN = new Set(['Spooky drums', 'creeping bass', 'dark cadence']);
+  it('each says it is a seed, every drum bar, bass line and harmony and what an example gave where it was lifted from, but those written for Spooky, and each has prose', () => {
     expect(SEED.every((f) => f.meta.source === 'seed' && f.prose.length > 0)).toBe(true);
     expect(new Set(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id))).toEqual(
       new Set(
         [
-          ...RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith(' drums')),
-          ...BASS_FRAGMENTS,
-          ...HARMONY_FRAGMENTS,
+          ...RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith(' drums') && !WRITTEN.has(f.id)),
+          ...BASS_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
+          ...HARMONY_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic minor'),
           ...MOTIF_FRAGMENTS.filter((f) => f.id === 'gypsy'),

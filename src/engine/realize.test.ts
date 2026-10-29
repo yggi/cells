@@ -163,6 +163,7 @@ describe('sound', () => {
             hypercell: 75,
             onemore: 80,
             electroswing: 40, // the clarinet comes in at bar 9, 15.5 s at 124 bpm
+            spooky: 30, // the celesta comes in at bar 9, 24 s at 100 bpm in 5/4
             brothers: 120,
             ghosts: 60,
           } as Record<string, number>

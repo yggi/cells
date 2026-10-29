@@ -24,7 +24,7 @@ const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOG
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY } from './library';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 
 /** The point proposed for an Electro swing preset, as harmonic minor's file writes it: no preset of Jambot's (decision 041). */
 const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
@@ -114,12 +114,12 @@ describe('the presets find their modes', () => {
     expect(second!.distance).toBeGreaterThan(0);
   });
 
-  it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian); harmonic minor at the point proposed for Electro swing; phrygian, lydian and locrian each at a point of its own, placed by hand', () => {
+  it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian); harmonic minor at the points proposed for Electro swing and Spooky (#349); phrygian, lydian and locrian each at a point of its own, placed by hand', () => {
     const OWN: Record<string, StylePoint> = { phrygian: at(0.6, 0.6, 0.7, 0.85), lydian: at(0.15, 0.6, 0.15, 0.3), locrian: at(0.9, 1, 0.6, 0.9) };
     for (const f of MODES) {
       const points =
         f.id === 'harmonic minor'
-          ? [PROPOSED]
+          ? [PROPOSED, SPOOKY]
           : OWN[f.id]
             ? [OWN[f.id]!]
             : f.id === 'mixolydian'

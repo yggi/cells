@@ -16,3 +16,5 @@ export declare const LO_FI: Readonly<Record<string, number>>;
 export declare const FUNK: Readonly<Record<string, number>>;
 export declare const BOSSA_NOVA: Readonly<Record<string, number>>;
 export declare const SWING_JAZZ: Readonly<Record<string, number>>;
+export declare const ELECTRO_SWING: Readonly<Record<string, number>>;
+export declare const SPOOKY: Readonly<Record<string, number>>;
