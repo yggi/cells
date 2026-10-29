@@ -8,7 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.12.0`.
+### Fixed
+
+- **A key's tonic read from a cell is a wire in the graph** (#290): `scale(minor, &tonic)` drew `&tonic` with no wire, unconnected; `writtenGraph` now draws a braid wire from it into the key, as from a cell the key splices in. Since v0.12.0 four examples write their key so (chords, mirrors, sympathy, worn), and every Jambot mode fragment. **What a frontend sees at its next pin:** one wire more in those graphs; nothing a piece plays changes.
+- **A stack a gate plays is on the way** (#329): `routing` routed a stack's lines straight into the gate (`&kick` into `&drumsOut`), where the graph draws them into the stack (`&kick` → `&drumlines` → `&drumsOut`), so the live view never lit the stack or the wires into it. The stack is now routed, and each wire into it is routed by what the routing takes through it (`routes`), the pairs past it drawn through it (`through`). The live view of electroswing and spooky changes (`live.snapshot.txt`); nothing a piece plays changes. **What a frontend sees at its next pin:** a followed Jambot session, whose drums go through the drummer's stack, lights its stack and its lines as they play.
 
 ## v0.12.0 — 2026-10-29
 
