@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+### Added
+
+- **Phrygian, lydian and locrian as mode fragments** (yggi/jambot#516, the owner: "jambot should be able to play all 7 modes. they should all be fragments"): with aeolian, dorian, ionian and mixolydian, every diatonic mode is a fragment, `&key scale(<mode>, &tonic)`. No preset plays them; each sits at a point of its own, placed by hand (phrygian at sync .6, harm .6, artic .7, energy .85; lydian at .15, .6, .15, .3; locrian at .9, 1, .6, .9). The library is 74 fragments. **What a frontend sees at its next pin:** a mode query at each of Jambot's presets finds what it did, at distance 0; between them, nearer one of the three, it finds that one. No example sounds different, and no event snapshot moves.
+
 ### Fixed
 
 - **Spooky drums' rim lands on a sixteenth in every meter it fits** (yggi/jambot#521): its Euclid spread over the bar (`&euclid step=1m &rim(3,8,2)`) put the knocks between the sixteenths of every bar but 4/4's and 12/8's, so a reader on the bar's sixteenths, as Jambot's drummer is, couldn't play the fragment under 3/4, 5/4, 6/8 or 10/8, where the fit takes it. The rim now knocks once, at the middle of the bar (`&euclid step=1m [~ &rim]`), half of every bar the library's meters make being a whole number of sixteenths; a test holds it for every straight meter it fits. **What a frontend sees at its next pin:** Spooky drums read under every meter but 7/8, its rim one knock a bar where it was three. *Spooky, in pieces* plays the one knock (its event snapshot moves, 337 notes where 365), and its `postgain=` is 1.71, from Cell studio's measure (−28.6 dB); no other example moves.
