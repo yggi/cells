@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since `v0.12.0`.
+### Added
+
+- **cells renders audio** (decision 062, #315): `pieceAudio(result, shifts, options)` renders a piece over the span every render takes, as `pieceMidi` writes it; `createRenderer` takes events and renders frames in blocks (a stream and a file are one sound); `writeWav` writes 16- or 24-bit PCM or 32-bit float; `loudness` measures it; `npm run render -- example:<key>` writes a WAV in Node. Stage R1 sounds the waveforms, noise, envelopes, levels, pan, bends, a pitch's shape and the filters (47 of the 81 examples whole); a parameter of a later stage (effects, FM, resonators, tapes) is said and rendered dry. A parameter means what superdough documents, at Cell studio's level scale. Nothing a piece plays changes, and nothing a frontend reads moves.
 
 ## v0.12.0 — 2026-10-29
 
