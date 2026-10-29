@@ -58,7 +58,8 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
   });
 
   it('every example, and every fragment of the seed library, is normal already', () => {
-    for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source).steps]).toEqual([key, []]);
+    // (an example read as Cell studio reads it, its `use` lines resolved, and the seed library's lines taken by `use`: #196)
+    for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source, { resolve: resolveSeed, library: LIBRARY }).steps]).toEqual([key, []]);
     // (a meter is open on its tempo, a mode on its tonic (#290); a rhythm on its meter, a bass line on its meter and its
     // harmony, and a harmony on its meter and its key, so each is read on a 4/4 at a tempo, with a key and, unless it
     // writes its own, a harmony, where it fits; a mode writes its own key)
@@ -138,6 +139,27 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     // (a rate already a cell, and a key with no tonic of its own (the voice's loop= gives it))
     const open = `&bar meter("4/4") step=&r\n&r step=96bpm\n&key scale(major)\n${tune('&key')}`;
     expect(normalise(open).steps).toEqual([]);
+  });
+
+  it('writes a line that is a library fragment’s word for word as a use of it (#196): one use a fragment, where its first line was', () => {
+    const seed = { resolve: resolveSeed, library: LIBRARY };
+    const beat = '&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&out map=sample [&beat]';
+    const kit = LIBRARY.find((f) => f.id === 'gm_kit')!.text.split('\n');
+    const line = (name: string) => kit.find((l) => l.startsWith(`&${name} `))!;
+    const written = `&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n${line('bd')}\n${line('sd')}\n${line('hh')}\n${beat}`;
+    const { source, steps } = normalise(written, seed);
+    expect(source).toBe(`use &bar from "4/4"  # four beats\n&tempo step=100bpm\nuse &bd, &sd, &hh from gm_kit\n${beat}`);
+    expect(steps).toHaveLength(2);
+    expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
+    expect(normalise(source, seed)).toEqual({ source, steps: [] });
+    // (a use of the fragment already written takes the names too)
+    expect(normalise(`use &bd from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${line('sd')}\n${line('hh')}\n${beat}`, seed).source).toBe(
+      `use &bd, &sd, &hh from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${beat}`.replace('&bar meter("4/4") step=&tempo', 'use &bar from "4/4"'),
+    );
+    // (a line that differs by a word stays the piece's; with no library given, nothing is taken)
+    const own = written.replace(line('hh'), line('hh').replace('hpf=8000', 'hpf=7000'));
+    expect(normalise(own, seed).source).toContain(line('hh').replace('hpf=8000', 'hpf=7000'));
+    expect(normalise(written, { resolve: resolveSeed }).steps).toEqual([]);
   });
 
   it('docs/language/canonical.md lists every alias it writes, and what it writes', () => {

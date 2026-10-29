@@ -12,7 +12,7 @@ description: "A drum part written with the drums' names: a beat, a fill with rat
 &euclidNote label="euclid(5, 16): five hits spread as evenly as they go over sixteen steps." about=&clave
 &hitNote label="oneshot: the hat plays its envelope through, whatever its step: a hit, as on a drum machine." about=&hh
 &kitNote label="A braid of voices read with over= is a kit: its numbers pick the voices, 0 the first." about=(&kit &toms)
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=free(moderato)
 
 &beat &bd ~ &hh:0:.5 ~ &sd ~ &hh:0:.5 [&bd,&hh]
@@ -22,10 +22,8 @@ description: "A drum part written with the drums' names: a beat, a fill with rat
 &kit &lo &mid &hi
 &toms over=&kit step=16n ~!12 0 1 2 1
 
-&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
-&sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .05)
+use &bd, &sd, &rim from gm_kit
 &hh oneshot s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
-&rim s=sine loop=E5 env=&(map=adsr 0 .03 0 .02)
 &lo s=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
 &mid s=sine loop=C3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .2 0 .05)
 &hi s=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .15 0 .05)

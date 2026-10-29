@@ -5,6 +5,7 @@ import { pieceMeta } from './parser';
 import { ORDER } from './order';
 import { PRESETS } from './presets';
 import { canonicalTags, TUTORIAL } from './tags';
+import { resolveSeed } from '../repository/library';
 
 // The tutorial (#170) in tiers: every form of the reference on exactly one tier, and the pieces of a tier together show all of its forms.
 const pieces = Object.entries(PRESETS).map(([key, p]) => ({ key, source: p.source, meta: pieceMeta(p.file) }));
@@ -46,7 +47,7 @@ describe('the tutorial, in tiers', () => {
     const known = new Set<string>();
     for (const [i, tier] of TIERS.entries()) {
       const mine = tutorial.filter((p) => p.meta?.tier === i + 1);
-      const usedBy = new Map(mine.map((p) => [p.key, formsUsed(p.source)]));
+      const usedBy = new Map(mine.map((p) => [p.key, formsUsed(p.source, { resolve: resolveSeed })]));
       for (const k of tier.forms) known.add(k);
       // (a form of a later tier, in a piece that comes before its tier)
       for (const [key, used] of usedBy) {

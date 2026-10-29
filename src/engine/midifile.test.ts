@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { readMidi, secondsAt, SmfError, writeMidi, type Smf } from './midifile';
 import { pieceMidi } from './midiexport';
-import { compileSource } from './compile';
+import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { noteOf } from './midi';
 import { PRESETS } from './presets';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 /** A format 0 file by hand: 96 ticks a quarter, a tempo, a name, two notes in running status, one ended by velocity 0. */
 const HAND = Uint8Array.from([

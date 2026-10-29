@@ -1,3 +1,4 @@
+import { type CompileOptions } from './program';
 /** Forms named before they are built (an attribute's `stub`, restart=: decision 032): in the reference, on no tier until they are. */
 export declare const STUBS: ReadonlySet<string>;
 /**
@@ -30,5 +31,5 @@ export declare const TIERS: readonly {
     readonly concept: string;
     readonly forms: readonly string[];
 }[];
-/** Every form a piece uses (formKey), read from its text as parsed. */
-export declare function formsUsed(source: string): Set<string>;
+/** Every form a piece uses (formKey), read from its text as parsed and as compiled, its `use` lines through `options.resolve`. */
+export declare function formsUsed(source: string, options?: CompileOptions): Set<string>;

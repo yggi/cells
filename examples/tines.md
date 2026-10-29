@@ -13,7 +13,7 @@ description: "FM, after the DX7: an electric piano, bells and a punchy bass, all
 # Cell Tines — frequency modulation: a modulator (a voice with ratio=) swings its carrier's
 # frequency (fm=&op) by index × its own frequency. Whole-number ratios sound harmonic
 # (pianos, basses), others not (bells). The index moves: index=lo..hi * &envelope.
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=free(84bpm, 60..110)
 &major scan(2 2 1 2 2 2 1)
 &chord [0,2,4,6]@3 [0,2,4,6] ~@2 [0,2,4,6]@2                    # a seventh chord, in its rhythm

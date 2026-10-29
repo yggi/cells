@@ -67,6 +67,20 @@ None is written where the name is taken, where the line runs on to the next, or 
 |---|---|
 | `&bar scan(1 1 1 1) step=&tempo` | `&bar meter("4/4") step=&tempo` |
 
+## The library's lines: a `use`
+
+A line of the piece that is a library fragment's line word for word, its comment aside, is written as a `use` of that fragment (`normalise/library.ts`, #196): the piece says what it takes from the library rather than writing it again. A line reads the fragment's holes as the piece's, so a bar in the interface names, `&bar meter("4/4") step=&tempo` with the piece's `&tempo`, is the `4/4` fragment's line.
+
+- A line has one home: the first fragment, in the library's order, that holds it.
+- The lines taken from one fragment are one `use`, written where the first of them was, their comments kept; a `use` of that fragment the piece already writes takes the names too.
+- Nothing is taken where it would not sound identical (a fragment whose helper the piece writes otherwise, which the compile refuses).
+- The library comes with the call, `normalise(source, { resolve, library })`; `npm run normalise` reads the seed library. With none given, Normalise takes nothing.
+
+| written | Normalise writes |
+|---|---|
+| `&bar meter("4/4") step=&tempo  # four beats` | `use &bar from "4/4"  # four beats` |
+| the General MIDI kit's `&bd`, `&sd` and `&hh` lines, word for word | `use &bd, &sd, &hh from gm_kit` |
+
 ## `use`: one spelling, kept, never expanded
 
 A `use` line ([use.md](use.md), decisions 054 and 059) is written in one spelling (`normalise/uses.ts`): `use * from …`

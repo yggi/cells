@@ -17,7 +17,7 @@ description: "For the test bench, in the spirit of Hainbach: old sine generators
 # (wind=) gives out after two and a half minutes: the tape stop is the ending. &scope, the test
 # bench's oscilloscope, shows what goes on the tape and what two of its heads read back.
 &reel step=60bpm motor=1 mass=1.4 friction=.2 wow=.025 wind=150 0
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=60bpm
 &dial map=ratios 1 1.5 2 2.25 3 3.75 4.5 6 8 label="the dial: a harmonic series, on 110 Hz"
 &drones over=&dial step=1m label="the sine generator: long tones" 0 ~ [1,4] ~ 2 [0,5] ~ 3 ~ [2,6] ~ ~

@@ -12,7 +12,7 @@ description: "90s happy hardcore and eurodance, an original: three minutes of eu
 &dropsNote label="Risers and snare rolls into every drop." about=(&roll &riser)
 &songNote label="Fifteen sections of eight bars: three minutes, then it ends." about=&song
 # Hypercell — Am F C G, a bar each; everything in semitones from C. The hook is our own.
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=free(160bpm, 140..180)
 &prog step=1m tags="bass" 9 5 0 7                                        # A F C G: the bass moves with it
 &off tags="bass" step=&bassBar*2 ~ 0 ~ 0 ~ 0 ~ 0                             # the eurodance bass: on the offbeats

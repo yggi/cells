@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SAILOR_WITH_KIT } from '../fixtures';
 import { setFree } from '../edit';
-import { compileSource } from '../compile';
+import { compileSource as compileAlone } from '../compile';
 import { noteFrequency, codeShifts, LABEL_FIELDS, MAX_EVENTS, MAX_NOTES_PER_SECOND, MAX_SPLICE_DEPTH, type Shifts } from '../program';
 import { writtenGraph } from '../graph';
 import { MAX_NESTING } from '../parser/scanner';
@@ -13,6 +13,8 @@ import { parse } from '../parser';
 import { PRESETS } from '../presets';
 import { resolveSeed } from '../../repository/library';
 import { modeName } from '../../theory/modes';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 type R = ReturnType<typeof compileSource>;
 const with_ =

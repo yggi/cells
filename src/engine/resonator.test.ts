@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { compileSource } from './compile';
+import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { PRESETS } from './presets';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 describe('resonators: persistent bodies — notes strike them, their value is where', () => {
   const src = (PRESETS as Record<string, { source: string }>).forks.source;

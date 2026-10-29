@@ -8,7 +8,7 @@ description: Four chords in A minor, struck on the beat, and the bass that follo
 ```cells
 &chordNote label="[0,2,4] is a chord: three steps at once, in the scale the cell reads. 6# raises the seventh a semitone: the dominant E major." about=&chords
 &sumNote label="&chords + &strike: a sum of pitches. The finer one, &strike, starts the notes; the chords hold under it and move it." about=&strike
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=free(andante)
 &key scale(minor, &tonic) label="{mode} on {tonic}"     # A minor
 &tonic A
