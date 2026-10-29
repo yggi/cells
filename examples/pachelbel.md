@@ -7,7 +7,8 @@ description: Eight bass notes, over and over; three violins play one line, each 
 ```cells
 # Johann Pachelbel, Canon in D. Eight bass notes, over and over (the ground);
 # three violins play one line, each entering two bars after the last.
-&bar scan(1 1 1 1) step=free(66bpm, 40..100)
+&bar meter("4/4") step=&tempo
+&tempo step=free(66bpm, 40..100)
 &ground step=4n 0 -5 -3 -8 -7 -12 -7 -5                   # D A B F# G D G A — two bars, forever
 
 # the line: three variations of two bars each (D = 0)

@@ -22,7 +22,7 @@ const LITERATE =
     '# The tune', //  6
     '', //  7
     '```cells', //  8
-    '&bar scan(1 1 1 1) step=120bpm', //  9
+    '&bar meter("4/4") step=&tempo', //  9
     '&tune over=scale(major) step=4n 0 2 4 2', // 10
     '```', // 11
     '', // 12
@@ -42,9 +42,10 @@ const LITERATE =
     '', // 26
     '```cells', // 27
     '&mix [&tune * &lead]', // 28
-    '```', // 29
-    '', // 30
-    'The end.', // 31
+    '&tempo step=120bpm', // 29
+    '```', // 30
+    '', // 31
+    'The end.', // 32
   ].join('\n') + '\n';
 
 const read = (markdown: string): Literate => {
@@ -57,11 +58,12 @@ describe('literate cells: the code is the join of the blocks', () => {
   it('a file of three blocks with prose between them compiles as their join, and a diagnostic points at the right line', () => {
     const file = read(LITERATE);
     expect(file.text.split('\n')).toEqual([
-      '&bar scan(1 1 1 1) step=120bpm',
+      '&bar meter("4/4") step=&tempo',
       '&tune over=scale(major) step=4n 0 2 4 2',
       '&lead s=saw loop=C4 cutoff=800',
       '&oops @@',
       '&mix [&tune * &lead]',
+      '&tempo step=120bpm',
     ]);
     // (a fence of another language is prose, even with a cells fence inside it)
     expect(file.text).not.toContain('not code');
@@ -70,7 +72,7 @@ describe('literate cells: the code is the join of the blocks', () => {
     expect(error.span!.line).toBe(4);
     expect(file.map[error.span!.line - 1]).toEqual({ block: 1, line: 22 });
     expect(fileLine(file.map, error.span!.line)).toBe(22);
-    expect(file.map.map((m) => m.block)).toEqual([0, 0, 1, 1, 2]);
+    expect(file.map.map((m) => m.block)).toEqual([0, 0, 1, 1, 2, 2]);
   });
 
   it('a piece file reads as the join, and writes back byte for byte, prose between the blocks and all', () => {

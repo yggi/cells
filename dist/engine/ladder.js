@@ -55,9 +55,10 @@ export const TIERS = [
     },
     {
         name: 'Time and voice',
-        concept: 'a clock: a bar, its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
+        concept: 'a clock: a bar (meter("4/4"), or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
         forms: [
             'generator scan(i …)',
+            'generator meter("sig")',
             'rate nbpm',
             'rate step=&x',
             'rate step=&x*n',
@@ -115,7 +116,6 @@ export const TIERS = [
             'parameter beat',
             'parameter pulse',
             'parameter swing',
-            'generator meter("sig")',
         ],
     },
     {

@@ -46,6 +46,26 @@ describe('the main meter', () => {
   });
 });
 
+describe('a meter stepped by a rate alone (#290, #196)', () => {
+  // (`&bar … step=&tempo` with `&tempo step=92bpm`, as every seed meter and Normalise write a meter: the meter, its beat
+  // and its uneven beats are the ones followed, as with the rate written on it)
+  const tune = '&high over=scale(major) step=8n 0 2 4 2\n&v s=sine loop=C4\n&out map=sample [&high * &v]';
+  const both = (meter: string) => [`&bar ${meter} step=92bpm\n${tune}`, `&bar ${meter} step=&tempo\n&tempo step=92bpm\n${tune}`].map((t) => compileSource(t));
+  it.each(['scan(27 23 26 24)', 'meter("6/8")', 'meter("4/4") beat=2'])('%s: the same main meter and the same ticks, the rate written or a cell', (meter) => {
+    const [written, held] = both(meter);
+    expect(mainMeter(held!)).toEqual(mainMeter(written!));
+    const ticks = (r: ReturnType<typeof compileSource>) => ticksBetween(plan(r, codeShifts(r)), 0, 4)!.at.map((t) => t.toFixed(9));
+    expect(ticks(held!)).toEqual(ticks(written!));
+  });
+
+  it('is shown firing: an uneven scan’s ticks, followed up to the rate, would be even', () => {
+    const [written] = both('scan(27 23 26 24)');
+    const beats = ticksBetween(plan(written!, codeShifts(written!)), 0, 4)!.at.filter((_, i) => i % PPQN === 0);
+    const lengths = beats.slice(1).map((t, i) => (t - beats[i]!).toFixed(3));
+    expect(new Set(lengths).size).toBeGreaterThan(1);
+  });
+});
+
 describe('the ticks', () => {
   it('are 96 to a 4/4 bar at a steady tempo, 24 a beat, each where its index puts it', () => {
     const p = piece('&bar scan(1 1 1 1) step=120bpm');

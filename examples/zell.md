@@ -15,7 +15,8 @@ description: Zelluläre Aktivität — it builds, layer by layer, and ends.
 &bassNote label="Bass: octaves, transposed (^n)." about=&bassline
 &arpNote label="Arpeggio: one shape, read on the chord's step of the scale." about=(&shape &arp)
 &melodyNote label="Melody: plain, with echoes in time (delaytime=&bar)." about=(&melody &lead)
-&bar scan(1 1 1 1) step=free(112bpm, 90..140)
+&bar meter("4/4") step=&tempo
+&tempo step=free(112bpm, 90..140)
 &minor scan(2 1 2 2 1 2 2)                                   # A minor (the voices sit on A)
 
 &oct tags="bass" 0 12 0 12 0 12 0 12                                     # Oktaven: a bar of eighths

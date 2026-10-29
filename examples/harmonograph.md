@@ -11,7 +11,8 @@ description: "Two tuning forks, struck together, each draw one axis of an oscill
 &figureNote label="Each fork drives one axis of an oscilloscope, x and y, and the figure they draw is a Lissajous curve — 3 : 2, slowly turning (the fifth is tempered), shrinking as they ring away." about=&screen
 # Harmonograph — two resonators (forks), struck together every six seconds. &screen is an
 # oscilloscope (scope=xy): its first channel across, its second up. A fifth draws a 3 : 2 figure.
-&bar scan(1 1 1 1) step=60bpm
+&bar meter("4/4") step=&tempo
+&tempo step=60bpm
 &strike step=pulse/6 label="struck together" 0
 &tonic body=fork loop=A3 ring=7 hard=.3 board=none label="the tonic" 0
 &fifth body=fork loop=A3 ring=7 hard=.3 board=none label="its fifth" 7

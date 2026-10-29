@@ -392,14 +392,15 @@ describe('the lockfile', () => {
 
 describe('the tools keep use', () => {
   it('Normalise keeps the use line, in its order, never expanded', () => {
-    const text = 'use * from gm_kit\nuse &key from "harmonic minor"\n&tonic D\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
+    const text =
+      'use * from gm_kit\nuse &key from "harmonic minor"\n&tonic D\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
     const out = normalise(text, seed).source;
     expect(out).toBe(text.replace('cutoff=', 'lpf='));
     // (the old spelling, use "id", is written use * from "id"; an id that is a word, bare; use &x from x, use &x)
-    const old = 'use "gm_kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &kick ~ &snare ~';
+    const old = 'use "gm_kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~';
     const resolve = (id: string) => (id === 'kit' ? '&kick s=sine\n&snare s=white' : id === 'pulse' ? '&pulse s=sine loop=A4' : resolveSeed(id));
     expect(normalise(old, { resolve }).source).toBe(
-      'use * from gm_kit  # the kit\nuse &pulse\nuse &kick, &snare from kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &kick ~ &snare ~',
+      'use * from gm_kit  # the kit\nuse &pulse\nuse &kick, &snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~',
     );
   });
 

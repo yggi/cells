@@ -9,7 +9,8 @@ description: "I – V – vi – IV, arranged by a selector: intro, verses, chor
 # over the major scale, each chord comes out the right kind: C, G, Am, F.
 # Arranged: each part is a section stepped by the bar, and &song switches the sections,
 # four bars a step — intro, verses, choruses, a break, an outro and an end.
-&bar scan(1 1 1 1) step=free(100bpm, 70..140)
+&bar scan(1 1 1 1) step=&tempo
+&tempo step=free(100bpm, 70..140)
 &major scan(2 2 1 2 2 2 1)
 &chords tags="keys" over=&major step=&keysBar*2 [0,2,4]!8 [4,6,8]!8 [5,7,9]!8 [3,5,7]!8
 &roots tags="bass" over=&major step=&bassBar*2 0!8 4!8 5!8 3!8

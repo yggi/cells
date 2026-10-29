@@ -14,7 +14,8 @@ description: "An original in the manner of Einstürzende Neubauten: struck metal
 # 1 : 2.76 : 5.40 : 8.93, so each metal gets a grid of its own partials (map=ratios), and
 # a hit is a chord of them. Some hits fall only sometimes (?), some choose ([a|b]):
 # the percussionist's hand. Under it: a sub-bass kick, a crushed riff, the Bassfeder.
-&bar scan(1 1 1 1) step=free(118bpm, 90..150)
+&bar scan(1 1 1 1) step=&tempo
+&tempo step=free(118bpm, 90..150)
 
 # ---- the metals: their partials (the last number is just where each grid repeats)
 &beam tags="metal" map=ratios 1 2.756 5.404 8.933 16 label="beam: 1 : 2.76 : 5.40 : 8.93"

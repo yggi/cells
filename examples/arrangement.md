@@ -8,11 +8,12 @@ description: "Three parts, and a song that picks which of them play: an intro, a
 ```cells
 &partsNote label="A part is a section stepped by the bar: &sections names them (step=4n), and what a section steps plays while &song picks it, four bars a step, from its top: a number picks one section, a chord several." about=(&sections &song)
 &lapsNote label="laps=1: the song plays once, then ends. off switches a cell off, and everything that plays it: take it from &click to hear the beat." about=&song
-&bar scan(1 1 1 1) step=free(moderato)
-&major scale(major)
+&bar meter("4/4") step=&tempo
+&tempo step=free(moderato)
+&key scale(major)
 
-&chords over=&major step=&keysBar/4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
-&tune over=&major step=&tuneBar*2 4 4 5 7 7 5 4 2 0 0 2 4 4@2 2@2
+&chords over=&key step=&keysBar/4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
+&tune over=&key step=&tuneBar*2 4 4 5 7 7 5 4 2 0 0 2 4 4@2 2@2
 &kick step=&drumBar &bd ~ &bd ~
 &click off step=&drumBar 12 0!3                       # a click on the beat, switched off
 

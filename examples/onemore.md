@@ -12,7 +12,8 @@ description: "French filter house, an original: maj7 chords chopped in a funky r
 &loopNote label="A loop: open it up and let it ride." about=&song
 # One more Cell — the chords are one shape (maj7) moved F G A B♭ (&prog): parallel, as the
 # filter-house records did. The pump: the chords duck on every beat (a volume stream).
-&bar scan(1 1 1 1) step=free(122bpm, 110..130)
+&bar scan(1 1 1 1) step=&tempo
+&tempo step=free(122bpm, 110..130)
 &prog step=1m/2 tags="chords" 0 2 4 5                                        # F G A B♭, two bars each
 &c tags="chords" [0,4,7,11]
 &chop tags="chords" step=&choppyBar*4 label="the chop" &c ~ &c!2 ~ &c ~ &c ~ &c!2 ~ &c ~ &c!2

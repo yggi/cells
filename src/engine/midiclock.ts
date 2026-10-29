@@ -36,7 +36,7 @@ const meters = new WeakMap<CompileResult, MainMeter | null>();
 
 /**
  * The piece's main meter: the clock of its first played cell, followed up the step= chain to its root, the clock with a
- * rate of its own. It is a meter if it places steps in a bar (a scan, `meter(…)`), says what a beat is (`beat=`,
+ * rate of its own, or the meter a rate alone steps (`step=&tempo`). It is a meter if it places steps in a bar (a scan, `meter(…)`), says what a beat is (`beat=`,
  * `swing=`), or other cells step with it; a lone cell stepping at a rate (`&tune step=4 0 2 4`) is not, and a piece
  * without one sends no clock.
  */
@@ -49,6 +49,10 @@ export function mainMeter(result: CompileResult): MainMeter | null {
   for (let guard = 0; name && guard < 16; guard++) {
     const driver = result.cells.get(name)?.step?.driver;
     if (!driver || !result.clocks.has(driver)) break;
+    // (a meter stepped by a rate alone, `&bar meter("4/4") step=&tempo` with `&tempo step=120bpm` (#290, as every seed
+    // meter is): the meter is the one to follow, as it is with its rate written on it; the rate places no beats of its own)
+    const by = result.clocks.get(driver)!;
+    if (result.cells.get(name)?.meter && !result.cells.get(driver)?.meter && !by.positional && by.swing === undefined && !by.swung) break;
     name = driver;
   }
   const root = name ? result.clocks.get(name) : undefined;

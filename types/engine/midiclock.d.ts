@@ -16,7 +16,7 @@ export interface ClockTicks {
 }
 /**
  * The piece's main meter: the clock of its first played cell, followed up the step= chain to its root, the clock with a
- * rate of its own. It is a meter if it places steps in a bar (a scan, `meter(…)`), says what a beat is (`beat=`,
+ * rate of its own, or the meter a rate alone steps (`step=&tempo`). It is a meter if it places steps in a bar (a scan, `meter(…)`), says what a beat is (`beat=`,
  * `swing=`), or other cells step with it; a lone cell stepping at a rate (`&tune step=4 0 2 4`) is not, and a piece
  * without one sends no clock.
  */

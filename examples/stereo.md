@@ -9,7 +9,8 @@ description: "Mary Had a Little Lamb across two channels: the bell on the left, 
 &glideNote label="glide=.12: the cello bows its line, each note sliding on from the last in .12 s, its envelope once (no new attack). A rest or a chord would end the run." about=&cello
 # pan= places a voice between the sound card's two channels: 0 left, .5 the centre (as
 # without it), 1 right; the far side fades. .15: the left full, the right at .3.
-&bar scan(27 23 26 24) step=92bpm
+&bar scan(27 23 26 24) step=&tempo
+&tempo step=92bpm
 &high label="*Mary had a little lamb*" over=scale(major) step=4n 2 1 0 1 2 2 2@2
 &low over=scale(major) step=2n 0 3 4 0
 

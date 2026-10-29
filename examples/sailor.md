@@ -6,8 +6,10 @@ description: Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit.
 
 ```cells
 # D Dorian. The second line is the first, a step lower: &A^-1.
-&bar scan(1 1 1 1) step=free(112bpm, 90..140)
-&dorian scale(dorian, D)
+&bar meter("4/4") step=&tempo
+&tempo step=free(112bpm, 90..140)
+&key scale(dorian, &tonic)
+&tonic D
 
 &m1 4!4
 &m2 4 4 0 2
@@ -15,9 +17,9 @@ description: Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit.
 &m4 0@2!2
 &A &m1 &m2
 &C &m3 &m4
-&tune over=&dorian step=8n &A &A^-1 &A &C
+&tune over=&key step=8n &A &A^-1 &A &C
 
-&bassline over=&dorian step=4n 4!4 3!4
+&bassline over=&key step=4n 4!4 3!4
 &drums step=8n &bd &hh &sd &hh!4           # kick, hat, snare, hat
 
 &fiddle s=saw loop=C5 lpf=3000 env=&(map=adsr .01 .15 .5 .1)

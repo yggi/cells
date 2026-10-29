@@ -8,11 +8,12 @@ description: A bell and an electric piano, each a sine whose frequency another s
 ```cells
 &fmNote label="fm=&bm: &bm swings the bell's frequency. ratio= is the modulator's frequency against the carrier's (3.5: a bell, not a harmonic); index= how far it swings, 0 a plain sine." about=(&bell &bm)
 &moveNote label="index= can move: on the piano it falls on every note, bright when struck and a sine as it rings." about=&epiano
-&bar scan(1 1 1 1) step=free(andante)
-&major scale(major)
+&bar meter("4/4") step=&tempo
+&tempo step=free(andante)
+&key scale(major)
 
-&tune over=&major step=4n 7 4 5 2 4 0 2@2 7 9 8 7 4@4
-&chords over=&major step=1m [0,2,4] [3,5,7] [1,3,5] [0,2,4]
+&tune over=&key step=4n 7 4 5 2 4 0 2@2 7 9 8 7 4@4
+&chords over=&key step=1m [0,2,4] [3,5,7] [1,3,5] [0,2,4]
 
 &bm s=sine ratio=3.5
 &bell s=sine loop=C5 fm=&bm index=3 env=&(map=adsr .001 1.6 0 1.2)

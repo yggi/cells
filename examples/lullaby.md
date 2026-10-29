@@ -7,17 +7,18 @@ description: Brahms' lullaby on a music box, its notes ringing on.
 ```cells
 # Brahms, Wiegenlied (1868). A music box over a slow 3/4. The second phrase is
 # the first a step lower (&rock^-1): a sequence, as Brahms wrote it.
-&bar scan(28 37 35) step=free(56bpm, 40..72)
-&scale scale(major)                       # C major
+&bar scan(28 37 35) step=&tempo
+&tempo step=free(56bpm, 40..72)
+&key scale(major)                       # C major
 
 &rock 4@3 2 2@2 4@3 2 4@2                    # lul-la-by and good night
 &rise 7@2 6@3 5 5@2 4@2 1 2                  # with ro-ses be-dight
 &turn 6@2 5 4@2 6 7@4 0 0
 &high 7@3 5 3@2 4@3 2 0@2                    # sung twice
 &home 3@2 2@2 1@2 0@4 2 2                    # … and the next pickup
-&song over=&scale step=8n &rock &rise &rock^-1 &turn &high 3@2 4@2 5@2 4@4 0 0 &high &home
+&song over=&key step=8n &rock &rise &rock^-1 &turn &high 3@2 4@2 5@2 4@4 0 0 &high &home
 
-&roots over=&scale step=1m 0!3 4!4 0 3 0 4 0 3 0 4 0
+&roots over=&key step=1m 0!3 4!4 0 3 0 4 0 3 0 4 0
 
 &ring map=lin loop=&song 1 .35 .1           # each note rings and fades away: a ramped volume
 &box s=sine loop=C5 room=.5 env=&(map=adsr .005 .1 1 .9)

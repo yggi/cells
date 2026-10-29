@@ -11,7 +11,8 @@ description: "A clockwork music box: wound, it spins up from rest, plays its tun
 # Music Box — the meter is a body that turns: a motor (its spring) pulls it to 96 bpm, its
 # mass resists, friction drags; over 36 s the spring runs down, and it coasts to a stop.
 # Everything it drives slows with it — the tune, the bass, the tick of the escapement.
-&bar scan(1 1 1) step=96bpm motor=6 mass=1.2 friction=.4 wind=36
+&bar scan(1 1 1) step=&tempo motor=6 mass=1.2 friction=.4 wind=36
+&tempo step=96bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
 &tune over=&major step=8n label="the comb" 4 2 0 2 4 4 4@2 3 2 1 2 3 1 -1 1 3 3 3@2 2 1 0@2
 &low over=&major step=4n label="the bass" -14 -12 -10 -14 -12 -10!2 -8 -6 -10 -8 -6

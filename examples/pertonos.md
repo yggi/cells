@@ -9,7 +9,8 @@ description: A canon on the royal theme that rises a whole tone each pass, as in
 # The royal theme on top; below it a canon at the fifth, one bar apart;
 # and every pass the whole piece rises a whole tone: C D E F# G# A# …
 # (Bach's design; the inner voices here are written for this example.)
-&bar scan(27 23 26 24) step=free(72bpm, 56..92)
+&bar scan(27 23 26 24) step=&tempo
+&tempo step=free(72bpm, 56..92)
 &key step=cycle(&theme) stride=2 cycle=24      # a whole tone per pass: up two octaves, then round
 &scale over=&key scan(2 1 2 2 1 2 2)                  # C minor (Aeolian); 6# is the leading tone
 

@@ -45,13 +45,15 @@ describe("over=key reads the piece's main key", () => {
     expect(compileSource(src).diagnostics.map((d) => ({ severity: d.severity, message: d.message, line: d.span.line, col: d.span.col }))).toEqual([
       { severity: 'warning', message: 'over=key is the old way: name the key, over=&key', line: 3, col: 12 },
     ]);
+    // (the old way first, then the interface names, #196: its rate &tempo, its tonic &tonic)
     const n = normalise(src);
-    expect(n.source).toBe(lines(host('scale(dorian, D)'), bass('&key')));
-    expect(n.steps).toEqual(['over=key is written over=&key, the key it reads']);
-    // (whatever the main key's name)
-    expect(normalise(lines('&bar meter("4/4") step=104bpm', '&chords scale(aeolian, A)', bass('key'))).source).toBe(
-      lines('&bar meter("4/4") step=104bpm', '&chords scale(aeolian, A)', bass('&chords')),
-    );
+    expect(n.steps[0]).toBe('over=key is written over=&key, the key it reads');
+    const canonical = (mode: string, tonic: string) => lines('&bar meter("4/4") step=&tempo', '&tempo step=104bpm', `&key scale(${mode}, &tonic)`, `&tonic ${tonic}`, bass('&key'));
+    expect(n.source).toBe(canonical('dorian', 'D'));
+    // (whatever the main key's name: it is read first, then named &key)
+    const chords = normalise(lines('&bar meter("4/4") step=104bpm', '&chords scale(aeolian, A)', bass('key')));
+    expect(chords.steps[0]).toBe('over=key is written over=&chords, the key it reads');
+    expect(chords.source).toBe(canonical('aeolian', 'A'));
   });
 
   it('differs between the two keys (the comparison can fail)', () => {
