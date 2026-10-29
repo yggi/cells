@@ -5,6 +5,7 @@ import { SORT_RULES } from "./compiler/sorts.js";
 import { parse } from "./parser/index.js";
 import { stripComment } from "./parser/scanner.js";
 import { DEFAULT_ENV } from "./program.js";
+import { expand } from "./use.js";
 import { CORE, PARAMS } from "./attributes.js";
 export const STUBS = new Set([
     ...Object.keys(CORE)
@@ -14,7 +15,7 @@ export const STUBS = new Set([
         .filter((k) => PARAMS[k].stub)
         .map((k) => `parameter ${k}`),
 ]);
-export const PENDING = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags', 'line use &a, &b from id']);
+export const PENDING = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags']);
 export function formKey(e) {
     if (e.section === 'attribute' || e.section === 'parameter')
         return `${e.section} ${e.form.split('=')[0]}`;
@@ -55,10 +56,10 @@ export const TIERS = [
     },
     {
         name: 'Time and voice',
-        concept: 'a clock: a bar (meter("4/4"), or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
+        concept: 'a clock: a bar (use &bar from "4/4", the library\'s, or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
         forms: [
             'generator scan(i …)',
-            'generator meter("sig")',
+            'line use &a, &b from id',
             'rate nbpm',
             'rate step=&x',
             'rate step=&x*n',
@@ -116,6 +117,7 @@ export const TIERS = [
             'parameter beat',
             'parameter pulse',
             'parameter swing',
+            'generator meter("sig")',
         ],
     },
     {
@@ -242,7 +244,7 @@ export const TIERS = [
 ];
 const TEMPO_MARKINGS = /free\(\s*(largo|larghetto|adagio|andante|moderato|allegro|vivace|presto)\s*\)/;
 const UNIT_AFTER = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(bpm|hz|min|wk|h|d|k)\b/;
-export function formsUsed(source) {
+export function formsUsed(source, options = {}) {
     const used = new Set();
     const use = (k) => used.add(k);
     const parsed = parse(source);
@@ -278,8 +280,11 @@ export function formsUsed(source) {
             use(`generator ${form}`);
     if (TEMPO_MARKINGS.test(code))
         use('free free(marking)');
-    const compiled = compileSource(source);
-    const grooves = voiceGrooves(decls);
+    if (parsed.uses?.length)
+        use('line use &a, &b from id');
+    const compiled = compileSource(source, undefined, options);
+    const all = options.resolve ? new Map(parse(expand(source, options.resolve)).cells.map((d) => [d.name, d])) : decls;
+    const grooves = voiceGrooves(all);
     const ctx = context(parsed, DEFAULT_ENV);
     const seen = { decls, rateOf: ctx.rateOf };
     const ref = (r) => {
@@ -383,7 +388,7 @@ export function formsUsed(source) {
                 sortOf(a.name);
         }
         else if (a.kind === 'ref') {
-            if (groove && Object.keys(decls.get(a.name)?.params ?? {}).length)
+            if (groove && Object.keys(all.get(a.name)?.params ?? {}).length)
                 use('step &voice (stepped)');
             else
                 use('step &x');

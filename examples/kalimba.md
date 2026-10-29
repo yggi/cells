@@ -13,7 +13,7 @@ description: "The smallest tuned instrument: one resonator, its braid its tines,
 # (none written: the twelve). body=tine is what each is; they share a board (board=box: a box, an octave down, as without it)
 # and each rings the others through it. The tune reads through the kalimba (over=&kalimba): its tines are
 # its table, and a note plucks the tine at its place.
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=92bpm
 &tune over=&kalimba step=8n label="the tune" 0 2 4 ~ 3 4 5 ~ 4 2 1 ~ 0 ~!3 5 ~ 4 3 2 ~ 1 2 0 ~!3 7 6 5 ~
 &kalimba body=tine loop=C4 ring=3 hard=.3 board=box coupling=.06 label="the kalimba: eight tines on one board" 0 2 4 7 9 12 14 16

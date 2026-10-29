@@ -9,7 +9,7 @@ description: A flute recorded onto a worn tape loop and played back by two heads
 &wornNote label="A tape that records a mix records its sound: tone= darkens it each pass, drive= saturates it, hiss= is its noise; print= a faint pre-echo printgap= ahead; dropout= brief gaps." about=&tape
 &wanderNote label="wander= lets a head drift either way along the tape, wanderhz= times a second: a flying head." about=&far
 &reel step=72bpm motor=1 mass=1 friction=.1 wow=.02 0
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=72bpm
 &key scale(minor, &tonic)
 &tonic D

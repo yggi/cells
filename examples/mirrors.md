@@ -8,7 +8,7 @@ description: One motif heard forwards, backwards, higher, upside down, and taken
 ```cells
 &sliceNote label="&m[::-1] is the motif backwards (its retrograde); &m[0:4] its first four steps; &m[-1] its last; &m^$7 all of it seven steps of the grid up (on the twelve, a fifth)." about=&tune
 &inverseNote label="inverse(&m) mirrors it within the scale, round its first degree: up becomes down. Played against the tune from the start: a mirror for the motif, and degree(…, 4) for its reverse." about=&answer
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=free(andante)
 &key scale(dorian, &tonic) label="{mode} on {tonic}"
 &tonic D

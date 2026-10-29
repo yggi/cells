@@ -9,6 +9,8 @@
  *  - mainkey.ts:  the main key named (decision 060): over=key → over=&key
  *  - names.ts:    the interface names where they are unambiguous (#196): the main meter &bar, its rate &tempo, the main key
  *                 &key, its tonic &tonic; and scan(1 1 1 1), the meter of four beats, as meter("4/4")
+ *  - library.ts:  a line that is a library fragment's word for word as a use of it (#196): &bar meter("4/4") step=&tempo
+ *                 → use &bar from "4/4", with the library the call gives (`NormaliseOptions.library`)
  *  - forwarded.ts: a use of a fragment that only forwards as the use it forwards to (#196): use * from "core kit" → use &bd, … from gm_kit
  *
  * The canonical table's other rows join as the owner rules them (#27). A `use` line (decision 054) is kept, in its
@@ -17,10 +19,15 @@
  */
 import { type Rewrite } from '../rewrite';
 import type { CompileOptions, CompileResult } from '../program';
+import { type LibraryFragment } from './library';
+/** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
+export interface NormaliseOptions extends CompileOptions {
+    readonly library?: readonly LibraryFragment[];
+}
 /** Every rewrite into the canonical spelling a text has, its `use` lines' fragments read through `options.resolve`. */
-export declare const normalisations: (options?: CompileOptions) => (source: string, result: CompileResult) => Rewrite[];
+export declare const normalisations: (options?: NormaliseOptions) => (source: string, result: CompileResult) => Rewrite[];
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */
-export declare const normalise: (source: string, options?: CompileOptions) => {
+export declare const normalise: (source: string, options?: NormaliseOptions) => {
     source: string;
     steps: string[];
 };

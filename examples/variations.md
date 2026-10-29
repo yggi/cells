@@ -7,7 +7,7 @@ description: "One subject entered three times, as a fugue begins: as it is, a fi
 
 ```cells
 &copyNote label="base=&subject makes a cell a copy of &subject. = keeps a step as it is there, a value changes it, =!n keeps n of them and =@n keeps one held n; base=&subject^$7 is the copy a fifth up." about=(&answer &low)
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=free(andante)
 
 &subject 0 -1 0@2 -5@2 -4@2 0 -1 0 2 -5@4
