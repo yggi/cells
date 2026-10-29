@@ -3,10 +3,16 @@ import type { Binding, CellDecl, Span } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
 import { ATTRIBUTES, memberParams, VOICE_PARAMS } from '../attributes';
 import { canonicalTag, TUTORIAL } from '../tags';
-import { isMidiCard, type MidiDest, type ResolvedCell } from '../program';
+import { isMidiCard, type MidiDest, type Output, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 import type { Typed } from './sorts';
 import { noSound } from './band';
+
+/**
+ * A sound card's entry, named by the cells its term names (`&crackle * &vinyl * .04` is `crackle*vinyl`), a cell written in
+ * place (`&(map=adsr …)`, named `λ…`) left out: a stem's name.
+ */
+const entryLabel = (b: Binding) => [...b.pitches.map((t) => t.ref.name), b.voice.name].filter((n) => !n.startsWith('λ')).join('*') || b.voice.name;
 
 /** Marks kits and voices on a copy of the cells it is given; returns it with the sound card's bindings. */
 export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells, typed: Typed) {
@@ -30,7 +36,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     span: Span;
     gains: [number, number];
     via: Set<string>;
-    parts: { mix: string; sink: string; gains: [number, number] }[];
+    parts: Output['parts'][number][];
     through: Set<string>;
     /** Played, but not heard: a mix that only excites a resonator or feeds a tape (a send). */
     silent?: boolean;
@@ -75,7 +81,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         );
         return;
       }
-      for (const { b, through, top } of bindings.flatMap((x) => expand(x).map((e) => ({ ...e, top: x })))) {
+      for (const { b, through, top, index } of bindings.flatMap((x, index) => expand(x).map((e) => ({ ...e, top: x, index })))) {
         const key = termKey(b);
         let g = gathered.get(key);
         // (the built-in card is in no line: what is said about a sound it hears is said on the sound's own line)
@@ -86,7 +92,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         const part: [number, number] = channels.length === 1 ? [b.gain, b.gain] : ch === 0 ? [b.gain, 0] : [0, b.gain];
         g.gains[0] += part[0];
         g.gains[1] += part[1];
-        g.parts.push({ mix: mix.name, sink: sink.name, gains: part });
+        g.parts.push({ mix: mix.name, sink: sink.name, gains: part, entry: { channel: ch, index, label: entryLabel(top) } });
         g.via.add(mix.name).add(sink.name);
       }
     });

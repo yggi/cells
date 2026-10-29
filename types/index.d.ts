@@ -2,7 +2,7 @@
  * The cells language. Text in, events out: `compileSource` reads a piece, `plan` and `windowAt` realize it a window at a
  * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
  * shorter, `normalise` in the canonical spelling, `variations` and `varied` vary a fragment (its anchors: `anchorsOf`), `fold` and `cellsFromMidi` write cells from notes, `pieceMidi` and
- * `readMidi` carry MIDI files. `createRepository` holds fragments and finds them by their place in style space and by how
+ * `readMidi` carry MIDI files, `pieceAudio`, `createRenderer` and `writeWav` render audio (decision 062). `createRepository` holds fragments and finds them by their place in style space and by how
  * often they were used together; `METER_FRAGMENTS` are its meters, `RHYTHM_FRAGMENTS` its rhythms, `BASS_FRAGMENTS` its bass lines, `HARMONY_FRAGMENTS` its harmonies, `INSTRUMENT_FRAGMENTS` its instruments, `EXPRESSION_FRAGMENTS` its expressions (a vibrato), `MODE_FRAGMENTS` its modes, `STAB_FRAGMENTS` its stab lines, `MOTIF_FRAGMENTS` its motifs, `FORM_FRAGMENTS` its forms, `LIBRARY` all, read
  * from the seed library's files (`fragments/`);
  * `readFragment` and `writeFragment` read and write a fragment as a file, Markdown with YAML frontmatter; `readPiece` and
@@ -27,6 +27,9 @@ export { cellsFromMidi } from './engine/midiimport';
 export { pieceMidi } from './engine/midiexport';
 export { spanOf, LONGEST, TAIL, UNBOUNDED, type Span, type SpanOptions } from './engine/span';
 export { readMidi, writeMidi, isMidi } from './engine/midifile';
+export { pieceAudio, type AudioOptions, type PieceAudio } from './engine/audioexport';
+export { createRenderer, loudness, DEFAULT_RATE, type Renderer, type RenderOptions, type RenderDiagnostic, type Rendered, type Tracks } from './engine/render';
+export { writeWav, type WavFormat } from './engine/wavfile';
 export { PRESETS, type Preset } from './engine/presets';
 export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece, type PieceFile, type PieceFileProblems, type PieceFrontmatter } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
