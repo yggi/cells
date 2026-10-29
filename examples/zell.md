@@ -16,6 +16,7 @@ description: Zelluläre Aktivität — it builds, layer by layer, and ends.
 &arpNote label="Arpeggio: one shape, read on the chord's step of the scale." about=(&shape &arp)
 &melodyNote label="Melody: plain, with echoes in time (delaytime=&bar)." about=(&melody &lead)
 use &bar from "4/4"
+use &strike, &thump, &snap, &click from envelopes
 &tempo step=free(112bpm, 90..140)
 &minor scan(2 1 2 2 1 2 2)                                   # A minor (the voices sit on A)
 
@@ -31,12 +32,12 @@ use &bar from "4/4"
 &beat tags="beat" step=&beatBar &bd &sd &bd &sd
 &ticks tags="beat" map=amp step=&ticksBar*4 .5 .2 .3 .2 .5 .2 .3 .6
 
-&bass tags="bass" s=square loop=A1 lpf=600 env=&(map=adsr .005 .12 .5 .05)
+&bass tags="bass" s=square loop=A1 lpf=600 env=&strike
 &arpeggio tags="arpeggio" s=square loop=A3 lpf=300..4000 * &sweep lpq=4 env=&(map=adsr .002 .1 .2 .05)
 &lead tags="melody" s=saw loop=A4 lpf=2200 delaytime=&bar delay=.3 delayfeedback=.3 room=.2 env=&(map=adsr .03 .2 .7 .2)
-&bd tags="beat" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
-&sd tags="beat" gain=.35 s=white hpf=1200 env=&(map=adsr 0 .14 0 .05)
-&metal tags="beat" s=square loop=A7 hpf=5000 env=&(map=adsr 0 .03 0 .02)
+&bd tags="beat" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&thump
+&sd tags="beat" gain=.35 s=white hpf=1200 env=&snap
+&metal tags="beat" s=square loop=A7 hpf=5000 env=&click
 
 # Aufbau: the sections the song stacks — eight bars (the progression) a step
 &teile step=4n &beatBar &ticksBar &bassBar &arpBar &melodyBar

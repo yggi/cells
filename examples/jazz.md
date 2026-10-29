@@ -5,6 +5,7 @@ description: "A 12-bar blues with swung eighths: the blues scale and the minor p
 ---
 
 ```cells
+use &pluck, &snap from envelopes
 &swingNote label="The swing is a slider." about=&swing
 # A 12-bar blues in C, swung. The eighths are a meter of their own: long, short —
 # their ratio is free (1 straight, 2 the triplet swing, 3 hard). Two scales, both scans:
@@ -25,9 +26,9 @@ description: "A 12-bar blues with swung eighths: the blues scale and the minor p
 &ride step=&swing:pulse &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 # ding, ding-a ding, ding-a
 
 &horn s=saw loop=C4 lpf=1600 room=.3 env=&(map=adsr .02 .15 .6 .12)
-&bass s=tri loop=C2 env=&(map=adsr .005 .25 .5 .1)
+&bass s=tri loop=C2 env=&pluck
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .2 .2)
-&cym gain=.25 s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
+&cym gain=.25 s=white hpf=8000 env=&snap
 
 &mix postgain=1.78 map=sample [&lick * &horn * .5,
                                   (&walk + &changes) * &bass * .8,

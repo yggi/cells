@@ -10,7 +10,7 @@ import { textOf } from './structure';
 describe('tools/structure.ts: npm run structure, its inputs', () => {
   it('an example by key is its piece file’s cells block, as the language reads it', () => {
     expect(textOf('example:bwv847')).toBe(PRESETS.bwv847!.source);
-    expect(structureOf(textOf('example:bwv847')).total).toBe(1118);
+    expect(structureOf(textOf('example:bwv847')).total).toBe(1113);
   });
   it('a literate file is the join of all its blocks', () => {
     const dir = mkdtempSync(join(tmpdir(), 'structure-'));

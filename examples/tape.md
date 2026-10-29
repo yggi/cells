@@ -5,6 +5,7 @@ description: "A tape loop on a machine that turns: it spins up from rest, the pi
 ---
 
 ```cells
+use &click, &thump from envelopes
 &capstanNote label="Hold the capstan with your finger: a tape stop, the pitch diving; let go and it spins back up." about=&bar
 &slackNote label="The hats ride a slack belt, dragging behind." about=&hats
 &springEndNote label="At the end the spring gives out and the tape stops for good." about=&bar
@@ -21,8 +22,8 @@ description: "A tape loop on a machine that turns: it spins up from rest, the pi
 
 &keys pan=.375 s=tri loop=D4 lpf=2200 room=.4 delaytime=&bar*4/3 delay=.3 delayfeedback=.4 env=&(map=adsr .004 .5 .3 .4)
 &pad s=saw loop=D3 lpf=700 room=.6 env=&(map=adsr 1 1 .8 2)
-&hh pan=.6 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
-&bd s=sine loop=D1 pitch=0..16 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
+&hh pan=.6 s=white hpf=7000 env=&click
+&bd s=sine loop=D1 pitch=0..16 * &(map=adsr 0 .05 0 0) env=&thump
 
 &out postgain=2.24 map=sample [&loop * &keys * .16, &chords * &pad * .05, &hats * &hh * .1, &kick * &bd * .5]
 ```

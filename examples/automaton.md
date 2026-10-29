@@ -6,6 +6,7 @@ description: "A mechanical band on belts, all turned by one drum: bells, a drumm
 ---
 
 ```cells
+use &thump, &tap, &click from envelopes
 &drumMotorNote label="The drum (the meter, a motor) turns them all." about=&bar
 &bellsNote label="The bells on a taut belt, exact." about=&bells
 &drummerNote label="The drummer's arm on a slack belt, lagging and swinging." about=&drums
@@ -22,9 +23,9 @@ description: "A mechanical band on belts, all turned by one drum: bells, a drumm
 
 &bell pan=.36 s=sine loop=C5 fm=&bm index=.3..2 * &(map=adsr .001 .1 .1 .1) room=.3 env=&(map=adsr .002 .9 0 .6)
 &bm s=sine ratio=3.5
-&bd s=sine loop=A1 pitch=0..20 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .25 0 .05)
-&sd s=white hpf=1200 env=&(map=adsr 0 .08 0 .04)
-&blk pan=.64 s=square loop=C6 hpf=900 lpf=3000 env=&(map=adsr 0 .03 0 .02)
+&bd s=sine loop=A1 pitch=0..20 * &(map=adsr 0 .05 0 0) env=&thump
+&sd s=white hpf=1200 env=&tap
+&blk pan=.64 s=square loop=C6 hpf=900 lpf=3000 env=&click
 
 &out postgain=.944 map=sample [&bells * &bell * .14, &drums * .6, &wood * &blk * .07]
 ```

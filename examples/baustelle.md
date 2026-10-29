@@ -5,6 +5,7 @@ description: "An original in the manner of Einstürzende Neubauten: struck metal
 ---
 
 ```cells
+use &strike from envelopes
 &metalsNote label="Beams, pipes and plates struck and tuned to their own partials." about=(&beams &pipes &plates)
 &springNote label="A giant bass spring." about=(&feder &bassfeder)
 &toolsNote label="A grinder and a drill." about=(&grind &drill)
@@ -50,7 +51,7 @@ description: "An original in the manner of Einstürzende Neubauten: struck metal
 &pipev tags="metal" s=sine loop=233 room=.25 env=&(map=adsr 0 .3 0 .6)
 &platev tags="metal" s=sine loop=415 room=.4 distort=.2 env=&(map=adsr 0 .25 0 1.4)
 &sub tags="low" s=sine loop=E1 pitch=0..14 * &(map=adsr 0 .07 0 0) distort=.15 env=&(map=adsr .002 .45 .5 .15)
-&grit tags="low" s=saw loop=E1 distort=.85 crush=6 lpf=90..2200 * &(map=adsr .003 .18 .15 .08) * &accent lpq=7 env=&(map=adsr .002 .12 .5 .05)
+&grit tags="low" s=saw loop=E1 distort=.85 crush=6 lpf=90..2200 * &(map=adsr .003 .18 .15 .08) * &accent lpq=7 env=&strike
 &bassfeder tags="low" s=saw loop=A1 pitch=0..9 * &(map=adsr 0 .09 0 0) distort=.6 lpf=160..1300 * &(map=adsr .002 .3 .1 .3) lpq=9 delaytime=.019 delay=.55 delayfeedback=.84 env=&(map=adsr .002 .6 .2 .5)
 &grinder tags="tools" s=white distort=.7 lpf=900..7000 * &edge hpf=500 lpq=3 env=&(map=adsr .05 .4 .8 .3)
 &drillv tags="tools" s=saw loop=E4 distort=1 crush=8 lpf=4000 env=&(map=adsr .02 .1 .9 .1) pitch=&(map=lin loop=23 0 .7 0 -.7 0)

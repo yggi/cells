@@ -13,6 +13,7 @@ description: "Big beat, an original in the manner of the Chemical Brothers: grit
 # Cellular Brothers — the break is a bar of voices in sixteenths; the acid line opens its filter
 # on every note, further on the accents. Everything in semitones from E.
 use &bar from "4/4"
+use &thump, &snap, &click, &strike from envelopes
 &tempo step=free(112bpm, 96..132)
 &b1 tags="break" &bd ~ &hh ~ &sd ~ &hh &bd ~ &bd &sd ~ &hh &bd &sd &hh
 &b2 tags="break" &bd ~ &hh &bd &sd ~ &hh ~ &bd &bd ~ &hh &sd ~ &sd*2 &hh
@@ -27,10 +28,10 @@ use &bar from "4/4"
 &lift tags="build" step=&buildBar/32 0
 &up tags="build" map=lin loop=&bar/32 0 .3 1 0
 
-&bd tags="break" oneshot s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .06 0 0) distort=.5 env=&(map=adsr 0 .3 0 .05)
-&sd tags="break" s=white hpf=900 distort=.6 crush=7 env=&(map=adsr 0 .12 0 .05)
-&hh tags="break" s=white hpf=7000 crush=6 env=&(map=adsr 0 .03 0 .02)
-&tb tags="acid" s=saw loop=E2 lpf=120..3600 * &(map=adsr .003 .17 .1 .06) * &accent lpq=14 distort=.3 env=&(map=adsr .002 .14 .6 .05)
+&bd tags="break" oneshot s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .06 0 0) distort=.5 env=&thump
+&sd tags="break" s=white hpf=900 distort=.6 crush=7 env=&snap
+&hh tags="break" s=white hpf=7000 crush=6 env=&click
+&tb tags="acid" s=saw loop=E2 lpf=120..3600 * &(map=adsr .003 .17 .1 .06) * &accent lpq=14 distort=.3 env=&strike
 &stab tags="riff" s=square loop=E3 distort=.9 lpf=2600 room=.2 env=&(map=adsr .003 .2 .3 .1)
 &siren1 tags="siren" s=sine loop=E5 delaytime=&bar*4/3 delay=.3 delayfeedback=.35 env=&(map=adsr .3 .5 .9 .6)
 &subv tags="sub" s=sine loop=E1 env=&(map=adsr .005 .4 .6 .1)

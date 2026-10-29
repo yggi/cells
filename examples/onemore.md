@@ -6,6 +6,7 @@ description: "French filter house, an original: maj7 chords chopped in a funky r
 
 ```cells
 use &vibrato
+use &strike, &thump, &snap, &click from envelopes
 &chordsNote label="Parallel maj7 chords chopped in a funky sixteenth rhythm, F G A B♭." about=(&chop &prog)
 &sweepNote label="One long filter sweep, pumping on every beat." about=(&filt &pump)
 &discoNote label="Disco octaves and a robotic lead." about=(&disco &robot)
@@ -25,13 +26,13 @@ use &vibrato
 &beat tags="groove" step=&grooveBar*2 &bd &oh [&bd,&cp] &oh &bd &oh [&bd,&cp] &oh   # four on the floor, the clap on two and four, the open hat between
 &shake tags="groove" step=&grooveBar*4 0? 0?.7 0? 0?.7
 
-&keys tags="chords" s=square loop=F3 lpf=200..6500 * &filt lpq=5 env=&(map=adsr .003 .12 .5 .06)
-&bass tags="bass" s=square loop=F1 lpf=700 env=&(map=adsr .004 .15 .6 .05)
+&keys tags="chords" s=square loop=F3 lpf=200..6500 * &filt lpq=5 env=&strike
+&bass tags="bass" s=square loop=F1 lpf=700 env=&strike
 &lead tags="robot" s=square loop=F4 lpf=1400 lpq=9 delaytime=&bar*4/3 delay=.25 delayfeedback=.3 env=&(map=adsr .02 .2 .7 .15) pitch=&vibrato
-&bd tags="groove" gain=.8 oneshot s=sine loop=A1 pitch=0..26 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
-&cp tags="groove" gain=.3 oneshot s=white hpf=1300 room=.25 env=&(map=adsr 0 .14 0 .06)
+&bd tags="groove" gain=.8 oneshot s=sine loop=A1 pitch=0..26 * &(map=adsr 0 .05 0 0) env=&thump
+&cp tags="groove" gain=.3 oneshot s=white hpf=1300 room=.25 env=&snap
 &oh tags="groove" gain=.15 s=white hpf=7000 env=&(map=adsr 0 .18 0 .08)
-&sh tags="groove" s=white hpf=10000 env=&(map=adsr 0 .03 0 .02)
+&sh tags="groove" s=white hpf=10000 env=&click
 
 &sections step=4n &grooveBar &choppyBar &discBar &robBar
 &song over=&sections step=1m/8 label="filtered · groove · lead · breakdown" [0,1] [0,1,2] [0,1,2,3] [1,3]

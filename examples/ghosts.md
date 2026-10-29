@@ -12,6 +12,7 @@ description: Dark and looping, in the manner of an instrumental Nine Inch Nails 
 # Ghost-Cells — D minor. The piano phrase is seven eighths long and the bar eight: it comes
 # back a step later every bar, and lines up again only after seven bars.
 use &bar from "4/4"
+use &click from envelopes
 &tempo step=free(76bpm, 60..96)
 &minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"
 &phrase over=&minor step=8n label="the piano: seven against eight" 0 4 3 ~ 7 5 ~
@@ -29,7 +30,7 @@ use &bar from "4/4"
 &low s=saw loop=D1 distort=.8 lpf=120..600 * &grit lpq=3 env=&(map=adsr 4 2 .9 6)
 &noise s=brown crush=5 lpf=200..2400 * &haze hpf=80 room=.4 env=&(map=adsr 6 2 .8 8)
 &bd s=sine loop=D1 pitch=0..20 * &(map=adsr 0 .08 0 0) distort=.9 env=&(map=adsr 0 .5 0 .1)
-&tick pan=.7 s=square loop=D6 hpf=4000 crush=4 env=&(map=adsr 0 .03 0 .02)
+&tick pan=.7 s=square loop=D6 hpf=4000 crush=4 env=&click
 &blip pan=.64 s=sine loop=D6 crush=3 env=&(map=adsr 0 .05 0 .03)
 
 &out postgain=.891 map=sample [&phrase * &piano * .22, &answer * &cello * .16, &drone * &low * .18, &hiss * &noise * .25, &kick * &bd * .55, &metal * &tick * .1, &glitch * &blip * .07]

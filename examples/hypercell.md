@@ -13,6 +13,7 @@ description: "90s happy hardcore and eurodance, an original: three minutes of eu
 &songNote label="Fifteen sections of eight bars: three minutes, then it ends." about=&song
 # Hypercell — Am F C G, a bar each; everything in semitones from C. The hook is our own.
 use &bar from "4/4"
+use &thump, &click, &snap, &tap, &strike from envelopes
 &tempo step=free(160bpm, 140..180)
 &prog step=1m tags="bass" 9 5 0 7                                        # A F C G: the bass moves with it
 &off tags="bass" step=&bassBar*2 ~ 0 ~ 0 ~ 0 ~ 0                             # the eurodance bass: on the offbeats
@@ -28,11 +29,11 @@ use &bar from "4/4"
 &lift tags="rise" step=&riseBar/32 0
 &up tags="rise" map=lin loop=&bar/32 0 .2 .45 1 0
 
-&bd tags="drums" gain=.8 oneshot s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .05 0 0) distort=.2 env=&(map=adsr 0 .28 0 .05)
-&hh tags="drums" gain=.2 s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
-&cp tags="drums" gain=.35 oneshot s=white hpf=1400 room=.2 env=&(map=adsr 0 .12 0 .06)
-&sn tags="drums" gain=.25 s=white hpf=900 env=&(map=adsr 0 .07 0 .03)
-&bass tags="bass" s=saw loop=C2 lpf=900 lpq=4 env=&(map=adsr .003 .12 .6 .05)
+&bd tags="drums" gain=.8 oneshot s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .05 0 0) distort=.2 env=&thump
+&hh tags="drums" gain=.2 s=white hpf=8000 env=&click
+&cp tags="drums" gain=.35 oneshot s=white hpf=1400 room=.2 env=&snap
+&sn tags="drums" gain=.25 s=white hpf=900 env=&tap
+&bass tags="bass" s=saw loop=C2 lpf=900 lpq=4 env=&strike
 &stab tags="synths" s=square loop=C4 lpf=2800 room=.25 env=&(map=adsr .002 .14 .1 .1)
 &sawA tags="synths" s=saw loop=C5 lpf=5200 room=.3 delaytime=&bar*8/3 delay=.2 delayfeedback=.3 env=&(map=adsr .01 .2 .7 .2)
 &sawB tags="synths" s=saw loop=527.4 lpf=5200 room=.3 env=&(map=adsr .01 .2 .7 .2)

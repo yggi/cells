@@ -10,6 +10,7 @@ description: "Frère Jacques as a round: four voices, each a bar behind the last
 # two-bar units; each voice reads it one unit later: &john[<<] is the theme
 # shifted back one unit, two bars behind.
 use &bar from "4/4"
+use &pluck from envelopes
 &tempo step=120bpm
 &a 0@2 1@2 2@2 0@2                     # are you sleep-ing
 &b 2@2 3@2 4@4                         # bro-ther John
@@ -18,8 +19,8 @@ use &bar from "4/4"
 &john over=scale(major) step=8n &a!2 &b!2 &c!2 &d!2          # C Ionian
 
 &v1 s=tri loop=C5 env=&(map=adsr .005 .3 .5 .2)
-&v2 s=square loop=C4 lpf=1800 env=&(map=adsr .005 .3 .4 .1)
-&v3 s=saw loop=C4 lpf=1200 env=&(map=adsr .005 .3 .4 .1)
+&v2 s=square loop=C4 lpf=1800 env=&pluck
+&v3 s=saw loop=C4 lpf=1200 env=&pluck
 &v4 s=sine loop=C3 env=&(map=adsr .005 .4 .6 .1)
 
 &left  [&john * &v1 * 0.6, &john[<<] * &v2 * 0.4, &john[<<2] * &v3 * 0.1, &john[<<3] * &v4 * 0.8]

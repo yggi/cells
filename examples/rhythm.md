@@ -6,6 +6,7 @@ description: The tresillo over a meter of its own, with hats, triplets and chord
 ---
 
 ```cells
+use &thump, &click from envelopes
 # A meter is a scan: the intervals between its beats, adding up to the bar.
 # scan(27 23 26 24): beats at 0 27 50 76 % — the first long, the third leaning.
 &bar scan(27 23 26 24) step=100bpm             # 4/4, bent
@@ -18,9 +19,9 @@ description: The tresillo over a meter of its own, with hats, triplets and chord
 &chord label="chords: {notes}" over=scale(minor) step=2n [0,2,4] [-2,0,2]
 
 # each voice with its envelope (env=, map=adsr: attack decay sustain release)
-&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
-&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
-&sh s=white hpf=4000 env=&(map=adsr 0 .02 0 .02)
+&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&thump
+&hh s=white hpf=7000 env=&click
+&sh s=white hpf=4000 env=&click
 &keys s=saw loop=C4 lpf=900 env=&(map=adsr .02 .4 .3 .3)
 &mix postgain=1.41 map=sample [&kick * &bd, &hats * &hh * 0.4, &shake * &sh * 0.3, &chord * &keys * 0.5]
 ```

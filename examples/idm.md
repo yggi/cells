@@ -13,6 +13,7 @@ description: A breakbeat backwards every other bar, with ratchets and hats.
 # Lydian scale turns a step every two bars, and pad, acid and lead all read it;
 # one breath: a slow filter sweep moves the pad and the lead together.
 use &bar from "4/4"
+use &tap, &click, &strike from envelopes
 &tempo step=free(160bpm, 110..200)
 &lydian scan(2 2 2 1 2 2 1) step=1m/2 stride=1 cycle=2 label="the harmony: {mode} on {tonic}"     # C, then D: a step every two bars
 
@@ -27,11 +28,11 @@ use &bar from "4/4"
 &breath map=lin loop=&bar/8 .15 1 .15                       # one breath, for pad and lead
 
 &bd oneshot s=sine loop=A1 pitch=0..36 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)
-&sd s=white hpf=900 env=&(map=adsr 0 .1 0 .04)
-&hh s=white hpf=9000 env=&(map=adsr 0 .025 0 .01)
+&sd s=white hpf=900 env=&tap
+&hh s=white hpf=9000 env=&click
 &tick gain=.2 s=white hpf=11000 env=&(map=adsr 0 .015 0 .01)
 &bleep s=tri loop=C5 lpf=800..5000 * &breath delaytime=&bar*4/3 delay=.3 delayfeedback=.4 room=.25 env=&(map=adsr .003 .12 .3 .1)
-&saw303 s=saw loop=C2 lpf=150..2600 * &(map=adsr .002 .16 .12 .06) * &accent lpq=12 env=&(map=adsr .002 .12 .4 .05)
+&saw303 s=saw loop=C2 lpf=150..2600 * &(map=adsr .002 .16 .12 .06) * &accent lpq=12 env=&strike
 &pad1 s=saw loop=C4 lpf=500..2200 * &breath env=&(map=adsr 1.2 .5 .7 2) pitch=&(map=lin loop=.3 0 .15 0 -.15 0)
 
 &mix postgain=.944 map=sample [&break * .7, &hats, &bleeps * &bleep * .3,

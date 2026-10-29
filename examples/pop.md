@@ -6,6 +6,7 @@ description: "I – V – vi – IV, arranged by a selector: intro, verses, chor
 
 ```cells
 use &vibrato
+use &strike, &thump, &snap, &click from envelopes
 # The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees
 # over the major scale, each chord comes out the right kind: C, G, Am, F.
 # Arranged: each part is a section stepped by the bar, and &song switches the sections,
@@ -24,10 +25,10 @@ use &vibrato
 
 &lead tags="hook" s=square loop=C5 lpf=3000 env=&(map=adsr .01 .2 .6 .2) pitch=&vibrato
 &keys tags="keys" s=tri loop=C4 env=&(map=adsr .005 .3 .3 .2)
-&bass tags="bass" s=square loop=C2 lpf=500 env=&(map=adsr .005 .15 .5 .05)
-&bd tags="drums" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
-&sd tags="drums" gain=.4 s=white hpf=1200 env=&(map=adsr 0 .15 0 .05)
-&hh tags="drums" gain=.2 s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)
+&bass tags="bass" s=square loop=C2 lpf=500 env=&strike
+&bd tags="drums" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&thump
+&sd tags="drums" gain=.4 s=white hpf=1200 env=&snap
+&hh tags="drums" gain=.2 s=white hpf=8000 env=&click
 
 &final tags="keys" over=&major step=&endBar [0,2,4,7]@4                  # the last chord: C
 
