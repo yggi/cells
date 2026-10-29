@@ -7,6 +7,7 @@ description: "After Terry Riley's In C: four of its fifty-three cells, each play
 ```cells
 &resumeNote label="restart=resume: a player switched off is not rewound. Take restart=resume off &song (the default, restart) to hear each come back at the top of their score." about=&song
 use &bar from "4/4"
+use &click from envelopes
 &tempo step=free(104bpm, 60..140)
 &key scale(major)
 
@@ -25,7 +26,7 @@ use &bar from "4/4"
 # who plays, a bar a step: Alice from the start, Bob in and out, Carol late, then everyone
 &song over=&sections restart=resume step=1m laps=1 0 [0,1]!2 0 [0,2] [0,1,2] [0,1,2] [1,2] [0,1,2] [0,1,2] [0,2] [0,1,2]
 
-&pulse s=sine loop=C6 env=&(map=adsr 0 .04 0 .03)
+&pulse s=sine loop=C6 env=&click
 &marimba s=tri loop=C4 env=&(map=adsr .005 .25 0 .15)
 &vibes s=sine loop=C5 env=&(map=adsr .005 .5 .1 .3)
 &bell s=sine loop=C3 env=&(map=adsr .005 .8 0 .4)

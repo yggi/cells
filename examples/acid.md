@@ -11,6 +11,7 @@ description: "Acid-Cell — everybody needs a 303: a saw through a resonant filt
 &filterNote label="Every note opens the filter (&fenv); accents open it further, and play louder (&accent)." about=(&fenv &accent)
 &knobsNote label="Two knobs turn slowly, the cutoff and the resonance: listen to the squeal as they meet." about=(&knob &res)
 use &bar from "4/4"
+use &strike, &thump, &snap, &click from envelopes
 &tempo step=free(126bpm, 100..150)
 &minor scan(2 1 2 2 1 2 2)                                   # A minor (the voices sit on A)
 
@@ -26,10 +27,10 @@ use &bar from "4/4"
 &b2 [&bd,&cp,&hh:0:.3] &hh:0:.2 [&hh:0:.5,&oh:0:.5] &hh:0:.2                # … with the clap
 &beat step=16n &b1 &b2 &b1 &b2
 
-&tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35 env=&(map=adsr .002 .15 .6 .05)
-&bd gain=.8 oneshot s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
-&cp gain=.35 oneshot s=white hpf=1500 env=&(map=adsr 0 .12 0 .06) room=.2
-&hh gain=.25 s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)
+&tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35 env=&strike
+&bd gain=.8 oneshot s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump
+&cp gain=.35 oneshot s=white hpf=1500 env=&snap room=.2
+&hh gain=.25 s=white hpf=8000 env=&click
 &oh gain=.2 oneshot s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
 
 &mix postgain=1.06 map=sample [&line * &accent * &tb303 * .45, &beat]

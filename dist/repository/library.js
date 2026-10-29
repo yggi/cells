@@ -1,5 +1,6 @@
 import { BASS_FRAGMENTS } from "./bass.js";
 import { HARMONY_FRAGMENTS } from "./harmony.js";
+import { EXPRESSION_FRAGMENTS } from "./expression.js";
 import { INSTRUMENT_FRAGMENTS } from "./instruments.js";
 import { METER_FRAGMENTS } from "./meters.js";
 import { MODE_FRAGMENTS } from "./modes.js";
@@ -14,6 +15,7 @@ export const LIBRARY = [
     ...BASS_FRAGMENTS,
     ...HARMONY_FRAGMENTS,
     ...INSTRUMENT_FRAGMENTS,
+    ...EXPRESSION_FRAGMENTS,
     ...MODE_FRAGMENTS,
     ...PERFORMER_FRAGMENTS,
     ...STAB_FRAGMENTS,

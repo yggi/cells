@@ -9,6 +9,7 @@ description: Twinkle Twinkle from three motifs, one of them read a step up the s
 # Three motifs make the whole tune. The middle line is &down again,
 # a step up the scale: &down^1.
 use &bar from "4/4"
+use &swell from envelopes
 &tempo step=96bpm
 &key label="{mode} on {tonic}" scale(major)                 # C major
 
@@ -21,7 +22,7 @@ use &bar from "4/4"
 &bd 3 0 4 0
 &roots over=&key step=2n &bu &bd &bu^1!2 &bu &bd       # the bass moves the same way
 
-&lead s=tri loop=C5 env=&(map=adsr .01 .3 .4 .3)
+&lead s=tri loop=C5 env=&swell
 &bass s=sine loop=C3 env=&(map=adsr .005 .5 .5 .1)
 &mix postgain=1.58 map=sample [&tune * &lead, &roots * &bass * 0.8]
 ```

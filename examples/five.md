@@ -5,6 +5,7 @@ description: An original tune in 5/4, felt as 3 + 2, after the groove of Take Fi
 ---
 
 ```cells
+use &pluck, &snap from envelopes
 # Five: an original tune in 5/4, the bar felt as 3 + 2 — after the groove of Take Five.
 # It builds on the blues: the same swing meter, the minor pentatonic (here on Eb).
 &bar scan(1 1 1 1 1) step=free(172bpm, 120..220)    # five beats
@@ -21,8 +22,8 @@ description: An original tune in 5/4, felt as 3 + 2, after the groove of Take Fi
 
 &horn s=saw loop=Eb4 lpf=1400 room=.3 env=&(map=adsr .02 .15 .6 .15)
 &piano s=tri loop=Eb4 env=&(map=adsr .005 .35 .15 .2)
-&bass s=tri loop=Eb2 env=&(map=adsr .005 .3 .5 .1)
-&cym gain=.22 s=white hpf=8000 env=&(map=adsr 0 .12 0 .05)
+&bass s=tri loop=Eb2 env=&pluck
+&cym gain=.22 s=white hpf=8000 env=&snap
 &click gain=.3 oneshot s=white hpf=3000 env=&(map=adsr 0 .03 0 .02)
 
 &mix postgain=1.58 map=sample [&tune * &horn * .45,

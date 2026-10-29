@@ -5,6 +5,8 @@ description: A canon on the royal theme that rises a whole tone each pass, as in
 ---
 
 ```cells
+use &vibrato
+use &swell from envelopes
 # After Bach, Musical Offering: "Ascendenteque Modulatione ascendat Gloria Regis".
 # The royal theme on top; below it a canon at the fifth, one bar apart;
 # and every pass the whole piece rises a whole tone: C D E F# G# A# …
@@ -19,8 +21,8 @@ description: A canon on the royal theme that rises a whole tone each pass, as in
 # the canon: five one-bar motifs, written in place; the cello reads them a bar later (&alto[<<])
 &alto over=&scale step=4n &(4 4 7 7) &(7!4) &(8 4 7 5) &(8 7 5# 3) &(8 4 8 8)
 
-&reed pan=.28 s=saw loop=C4 lpf=2600 lpq=1 room=.35 env=&(map=adsr .03 .4 .6 .3) pitch=&(map=lin loop=5 0 .12 0 -.12 0)
-&viola pan=.2 loop=C3 lpf=1400 room=.3 env=&(map=adsr .02 .3 .5 .25) 0 1
+&reed pan=.28 s=saw loop=C4 lpf=2600 lpq=1 room=.35 env=&(map=adsr .03 .4 .6 .3) pitch=&vibrato
+&viola pan=.2 loop=C3 lpf=1400 room=.3 env=&swell 0 1
 &cello pan=.81 s=tri loop=C2 env=&(map=adsr .01 .5 .6 .3)
 
 # stereo: each voice placed with its own pan= (the reed and the viola left, the cello right)

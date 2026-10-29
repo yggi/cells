@@ -8,6 +8,7 @@ description: "One subject entered three times, as a fugue begins: as it is, a fi
 ```cells
 &copyNote label="base=&subject makes a cell a copy of &subject. = keeps a step as it is there, a value changes it, =!n keeps n of them and =@n keeps one held n; base=&subject^$7 is the copy a fifth up." about=(&answer &low)
 use &bar from "4/4"
+use &swell from envelopes
 &tempo step=free(andante)
 
 &subject 0 -1 0@2 -5@2 -4@2 0 -1 0 2 -5@4
@@ -18,8 +19,8 @@ use &bar from "4/4"
 &soprano step=16n ~@16 &answer ~@20
 &bass step=16n ~@32 &low
 
-&flute s=tri loop=C5 env=&(map=adsr .02 .3 .5 .3)
-&reed s=tri loop=C4 env=&(map=adsr .02 .3 .5 .3)
-&cello s=saw loop=C3 lpf=1200 env=&(map=adsr .03 .3 .6 .3)
+&flute s=tri loop=C5 env=&swell
+&reed s=tri loop=C4 env=&swell
+&cello s=saw loop=C3 lpf=1200 env=&swell
 &out map=sample postgain=3.98 [&soprano * &flute * .3, &alto * &reed * .3, &bass * &cello * .25]
 ```

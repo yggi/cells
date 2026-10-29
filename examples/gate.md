@@ -11,6 +11,7 @@ description: "Where notes become sound, named: a gate plays its voices with each
 &roleNote label="&drums is a role: it names the gates that play it, here &drumOut. A reader that knows the role (the feel's drums) plays its gates so; a gate no role names, &leadOut, plays as written. It is no sound: the card sends the gates." about=&drums
 &productNote label="The bass is the same thing unnamed: a product in the sound card." about=&bass
 use &bar from "4/4"
+use &strike, &snap, &click from envelopes
 &tempo step=free(96bpm, 60..140)
 &key scale(major)
 
@@ -20,10 +21,10 @@ use &bar from "4/4"
 
 &lead s=tri loop=C5 env=&(map=adsr .01 .2 .4 .2)
 &bell s=sine loop=C6 env=&(map=adsr 0 .6 0 .3)
-&bass s=square loop=C2 lpf=500 env=&(map=adsr .005 .15 .5 .05)
+&bass s=square loop=C2 lpf=500 env=&strike
 &bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
-&sd s=white env=&(map=adsr 0 .15 0 .05)
-&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&sd s=white env=&snap
+&hh s=white hpf=7000 env=&click
 &kit &bd &sd &hh
 &beat step=8n 0 2 1 2
 

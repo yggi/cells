@@ -6,6 +6,7 @@ import { createRepository, type Fragment, type StylePoint } from './fragments';
 import { BASS_FRAGMENTS } from './bass';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
+import { EXPRESSION_FRAGMENTS } from './expression';
 import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
@@ -38,13 +39,14 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the fifteen rhythms, the six bass lines, the six harmonies, the thirteen instruments, the nine modes, the five performers, the stab line, the ten motifs and the four forms, every point associated as its facet, the bell and scale as two: eighty-two', () => {
-    expect(LIBRARY).toHaveLength(82);
+  it('is the thirteen meters, the fifteen rhythms, the six bass lines, the six harmonies, the thirteen instruments, the vibrato and the envelopes, the nine modes, the five performers, the stab line, the ten motifs and the four forms, every point associated as its facet, the bell and scale as two: seventy-six', () => {
+    expect(LIBRARY).toHaveLength(84);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'harmony')).toEqual(HARMONY_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'instrument')).toEqual(INSTRUMENT_FRAGMENTS);
+    expect(LIBRARY.filter((f) => facetsOf(f).join() === 'expression')).toEqual(EXPRESSION_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f)[0] === 'mode')).toEqual(MODE_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'performer')).toEqual(PERFORMER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'stab')).toEqual(STAB_FRAGMENTS);
@@ -57,12 +59,13 @@ describe('the library', () => {
       BASS_FRAGMENTS.length,
       HARMONY_FRAGMENTS.length,
       INSTRUMENT_FRAGMENTS.length,
+      EXPRESSION_FRAGMENTS.length,
       MODE_FRAGMENTS.length,
       PERFORMER_FRAGMENTS.length,
       STAB_FRAGMENTS.length,
       MOTIF_FRAGMENTS.length,
       FORM_FRAGMENTS.length,
-    ]).toEqual([13, 15, 6, 6, 13, 9, 5, 1, 10, 4]);
+    ]).toEqual([13, 15, 6, 6, 13, 2, 9, 5, 1, 10, 4]);
   });
 
   it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
@@ -124,7 +127,7 @@ describe('the points proposed for two more presets (#349)', () => {
   // no progression Jambot's composer reads, which takes eight (yggi/jambot packages/engine/src/harmony-query.ts), so
   // those five presets generate their harmony as before)
   it('change nothing Jambot’s eight presets find first, in any facet, nor how far it is, but the dark cadence where no harmony was near', () => {
-    expect(facets).toHaveLength(10);
+    expect(facets).toHaveLength(11);
     const NAMES = ['Synth-pop', 'Techno', 'Deep house', 'Ambient', 'Lo-fi hip hop', 'Funk', 'Bossa nova', 'Swing jazz'];
     const first = (r: typeof library, point: StylePoint, facet: string) => ranked(r.query(point, 1, {}, { facet }));
     const moved = PRESETS.flatMap((point, i) =>

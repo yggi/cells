@@ -9,6 +9,7 @@ description: "A line that is never quite the same twice round: steps that may no
 &chanceNote label="0?.7 is dropped seven times in ten; a bare 0? takes the cell's chance=. It is the same every time you play the piece; seed= picks another sequence." about=(&ghosts &hats)
 &choiceNote label="[4|5|7]: one of them, chosen afresh each time round." about=&tune
 use &bar from "4/4"
+use &click, &tap from envelopes
 &tempo step=free(moderato)
 &key scale(major)
 
@@ -17,7 +18,7 @@ use &bar from "4/4"
 &ghosts chance=.75 seed=3 step=16n 0?!8
 
 &lead s=tri loop=C5 env=&(map=adsr .005 .2 .3 .2)
-&hh s=white hpf=8000 env=&(map=adsr 0 .03 0 .02)
-&sd s=white hpf=1500 env=&(map=adsr 0 .08 0 .04)
+&hh s=white hpf=8000 env=&click
+&sd s=white hpf=1500 env=&tap
 &out map=sample postgain=1.58 [&tune * &lead * .3, &hats * &hh * .1, &ghosts * &sd * .1]
 ```

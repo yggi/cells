@@ -17,7 +17,7 @@ use &bar from "4/4"
 
 &pluck s=tri loop=C4 env=&(map=adsr .005 .3 .1 .2)        # quick to start, quick to fade: a pluck
 &pad s=saw loop=C4 env=&(map=adsr .5 .3 .6 .8)            # slow in, held, slow out: a swell
-&low s=square loop=C2 env=&(map=adsr .005 .2 .6 .1)
+&low s=square loop=C2 env=&(map=adsr .005 .25 .5 .1)
 &air s=pink env=&(map=adsr .3 .2 .5 .6)                   # a noise: no note of its own
 &out map=sample postgain=6.31 [&tune * &pluck * .3, &line * &pad * .06, &bass * &low * .12, &line * &air * .04]
 ```

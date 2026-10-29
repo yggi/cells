@@ -9,6 +9,7 @@ import type { Resolve } from '../engine/program';
 import { BASS_FRAGMENTS } from './bass';
 import type { Fragment } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
+import { EXPRESSION_FRAGMENTS } from './expression';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
@@ -18,13 +19,14 @@ import { STAB_FRAGMENTS } from './stab';
 import { MOTIF_FRAGMENTS } from './motifs';
 import { FORM_FRAGMENTS } from './forms';
 
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, the performers, the stab lines, the motifs, then the forms: sixty-seven fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, then the forms: seventy-six fragments. */
 export const LIBRARY: readonly Fragment[] = [
   ...METER_FRAGMENTS,
   ...RHYTHM_FRAGMENTS,
   ...BASS_FRAGMENTS,
   ...HARMONY_FRAGMENTS,
   ...INSTRUMENT_FRAGMENTS,
+  ...EXPRESSION_FRAGMENTS,
   ...MODE_FRAGMENTS,
   ...PERFORMER_FRAGMENTS,
   ...STAB_FRAGMENTS,

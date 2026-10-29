@@ -20,7 +20,8 @@ use &bar from "4/4"
 &keys s=tri loop=C4 env=&(map=adsr .01 .5 .3 .3)
 &lead s=square loop=C5 lpf=2500 env=&(map=adsr .01 .2 .5 .2)
 use &rim from gm_kit
-&bd gain=.6 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
+use &thump from envelopes
+&bd gain=.6 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&thump
 
 &sections step=4n &keysBar &tuneBar &drumBar
 &song over=&sections step=1m/4 laps=1 label="intro · verse · chorus · end" 0 [0,2] [0,1,2] 0

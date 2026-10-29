@@ -18,6 +18,11 @@ describe('npm run normalise: files in the canonical spelling (#28)', () => {
     expect(steps).toHaveLength(1);
   });
 
+  it('a fragment of the library is normalised against the others, never as a use of itself (#196)', () => {
+    const vibrato = readFileSync('fragments/expression/01-vibrato.md', 'utf8');
+    expect(normaliseFile('fragments/expression/01-vibrato.md', vibrato)).toEqual({ text: vibrato, steps: [] });
+  });
+
   it('every example file is normal', () => {
     for (const f of readdirSync('examples').filter((x) => x.endsWith('.md'))) {
       const text = readFileSync(`examples/${f}`, 'utf8');

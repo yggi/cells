@@ -23,9 +23,10 @@ use &key from dorian
 &drums step=8n &bd &hh &sd &hh!4           # kick, hat, snare, hat
 
 &fiddle s=saw loop=C5 lpf=3000 env=&(map=adsr .01 .15 .5 .1)
-&bass s=square loop=C2 lpf=600 env=&(map=adsr .005 .25 0 .05)
-&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
-&sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .04)
-&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&bass s=square loop=C2 lpf=600 env=&thump
+&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&thump
+use &sd from gm_kit
+use &thump, &click from envelopes
+&hh s=white hpf=7000 env=&click
 &mix postgain=1.78 map=sample [&tune * &fiddle * 0.6, &bassline * &bass * 0.8, &drums * 0.6]
 ```
