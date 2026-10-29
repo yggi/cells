@@ -12,7 +12,8 @@ import { context } from './compiler/context';
 import { SORT_RULES } from './compiler/sorts';
 import { parse } from './parser';
 import { stripComment } from './parser/scanner';
-import { DEFAULT_ENV } from './program';
+import { DEFAULT_ENV, type CompileOptions } from './program';
+import { expand } from './use';
 import { CORE, PARAMS } from './attributes';
 
 /** Forms named before they are built (an attribute's `stub`, restart=: decision 032): in the reference, on no tier until they are. */
@@ -33,7 +34,7 @@ export const STUBS: ReadonlySet<string> = new Set([
  * (decision 047): it goes on a tier with a piece whose cells it clusters. `use` (decisions 054, 059) waits for the examples
  * to take a kit by it (#196's rung 4).
  */
-export const PENDING: ReadonlySet<string> = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags', 'line use &a, &b from id']);
+export const PENDING: ReadonlySet<string> = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags']);
 
 /**
  * A form's key, from its reference entry: an attribute or a parameter by its word (`over`, `lpf`);
@@ -86,12 +87,12 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Time and voice',
     concept:
-      'a clock: a bar (meter("4/4"), or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
+      'a clock: a bar (use &bar from "4/4", the library\'s, or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
     forms: [
       // a clock
       'generator scan(i …)',
-      // the bar in its canonical form (#196, the owner: the form Normalise writes is taught where the bar is first met)
-      'generator meter("sig")',
+      // the bar taken from the library (#196, the owner: the canonical form is taught where the bar is first met)
+      'line use &a, &b from id',
       'rate nbpm',
       'rate step=&x',
       'rate step=&x*n',
@@ -160,6 +161,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'parameter pulse',
       // swing
       'parameter swing',
+      'generator meter("sig")',
     ],
   },
   {
@@ -317,8 +319,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
 const TEMPO_MARKINGS = /free\(\s*(largo|larghetto|adagio|andante|moderato|allegro|vivace|presto)\s*\)/;
 const UNIT_AFTER = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(bpm|hz|min|wk|h|d|k)\b/;
 
-/** Every form a piece uses (formKey), read from its text as parsed. */
-export function formsUsed(source: string): Set<string> {
+/** Every form a piece uses (formKey), read from its text as parsed and as compiled, its `use` lines through `options.resolve`. */
+export function formsUsed(source: string, options: CompileOptions = {}): Set<string> {
   const used = new Set<string>();
   const use = (k: string) => used.add(k);
   const parsed = parse(source);
@@ -352,9 +354,13 @@ export function formsUsed(source: string): Set<string> {
   ])
     if (new RegExp(`\\b${word}\\(`).test(code)) use(`generator ${form}`);
   if (TEMPO_MARKINGS.test(code)) use('free free(marking)');
+  // (a fragment taken from the library, decision 059: read through the host's resolver, as the compile reads it)
+  if (parsed.uses?.length) use('line use &a, &b from id');
 
-  const compiled = compileSource(source);
-  const grooves = voiceGrooves(decls);
+  const compiled = compileSource(source, undefined, options);
+  // (a voice a used fragment gives is a voice all the same: the grooves and the voices are read in the expansion)
+  const all = options.resolve ? new Map(parse(expand(source, options.resolve)).cells.map((d) => [d.name, d])) : decls;
+  const grooves = voiceGrooves(all);
   const ctx = context(parsed, DEFAULT_ENV);
   const seen = { decls, rateOf: ctx.rateOf };
 
@@ -427,7 +433,7 @@ export function formsUsed(source: string): Set<string> {
       ref(a);
       if (!isMix(a.name)) sortOf(a.name);
     } else if (a.kind === 'ref') {
-      if (groove && Object.keys(decls.get(a.name)?.params ?? {}).length) use('step &voice (stepped)');
+      if (groove && Object.keys(all.get(a.name)?.params ?? {}).length) use('step &voice (stepped)');
       else use('step &x');
       ref(a);
     } else if (groove) {

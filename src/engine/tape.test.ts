@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { compileSource } from './compile';
+import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 const base = (tape: string, head: string, mix: string) =>
   `&bar step=120bpm 0 0 0 0\n&tune step=&bar 0 4 7 ~ ~ ~ ~ ~\n${tape}\n${head}\n&v s=sine loop=C4\n&w s=tri loop=C4\n&out loop=SAMPLE_RATE map=sample [${mix}]`;

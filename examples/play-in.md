@@ -9,7 +9,7 @@ description: "A riff left to the performer: free(…) around a braid. It plays a
 &recordNote label="Press ● (record) and play one pass of the riff on the keys: a MIDI keyboard, the computer's (a setting) or the on-screen ones. The take is held in its place; Save writes it into the code, Revert goes back." about=&riff
 &lengthNote label="Its length is the frame a take fills: sixteen steps here, a bar of sixteenths." about=&riff
 &key scan(2 2 1 2 2 2 1)
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=96bpm
 
 &riff over=&key step=16n free(0 2 4 ~ 4 2 0 ~ 0 2 4 ~ 7@2 ~ ~)

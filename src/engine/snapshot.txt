@@ -11,7 +11,7 @@ transpose  56 notes  notes c57f554a57c452a3  events 598bdfcd55451367  values f2f
 twinkle  88 notes  notes 0ccea2b71be068d4  events 0557c7ec4ab2733c  values e21f6072e405e21c
 chords  78 notes  notes 5e1aa7ec1a14a506  events 5124a5860b6c14d7  values ef4d18db4a31f884
 rhythm  386 notes  notes 22b41b76626915b0  events 81bc7c0db5f5ebc8  values 61bd684abd49054a
-drums  297 notes  notes a7f4dec41e1babc4  events 3c6ac407f7bf029b  values 48d8cd1ad6d9aa70
+drums  297 notes  notes a7f4dec41e1babc4  events 3c6ac407f7bf029b  values 81ccd3963c78fb8c
 swing  304 notes  notes d3860876e7e140e7  events b9988ae540a7ac5b  values 7f8a0667a4bf2653
 breve  200 notes  notes 58afd0c86e8c54a3  events 88bb2d64c5ebd2e0  values 1a77ac28cc111801
 canon  320 notes  notes 375d44f193024265  events dc690ef9ec9f54f6  values 7b9fa40e46f47287
@@ -19,7 +19,7 @@ mirrors  183 notes  notes 2fd36ffb7cfe49e9  events 70a6d4ffca101a9a  values 4cde
 variations  144 notes  notes c9bc5a525f3c6d55  events 3b65f4da8fefd65d  values 7e32f0fd5a7784ab
 chance  440 notes  notes cf80b35d615d46e2  events 94c4b78d4fbf36b7  values 9419dc05ddb047e6
 fifths  65 notes  notes c338371cdcec0309  events 0a0b836bbe21e877  values a8d217971d60fd2f
-arrangement  124 notes  notes 8cce0f21954cb4b4  events baacd7d5ec458cb4  values ee8aa91f0a33c90f
+arrangement  124 notes  notes 8cce0f21954cb4b4  events baacd7d5ec458cb4  values a37157bfb89ed2fb
 stereo  56 notes  notes d23210bd260e6335  events e9c10974daf63589  values 0b1806e962cefbbc
 waveforms  152 notes  notes ba941fa73dc45374  events f9a1c3f1783c83a3  values a35a95913117580a
 moving  247 notes  notes 19baf812baae7e0d  events 917f77ca04804aa7  values 4da7637dd37d6452
@@ -37,12 +37,12 @@ dtmf  212 notes  notes a41810e3d88fdf1f  events 3bd1397bdcb95d5a  values e841fd6
 daytime  171 notes  notes 071639a05432c34c  events 350bf2e284726f43  values 0adc64f88c0a7c73
 gate  384 notes  notes 829478a942bf5aa6  events c4963f20a6e4e43f  values 65ac937aeebc304f
 play-in  224 notes  notes 7dbbdeac90f2801e  events 4773545ce900dc1a  values 262073b6d56efd36
-midi-out  184 notes  notes 37d740ec4ae060a0  events 60564a66713d80cc  values ebc54af5dff852f3
+midi-out  184 notes  notes 37d740ec4ae060a0  events 60564a66713d80cc  values 79e7640ec7ecd45a
 lullaby  52 notes  notes 7bd4bd55efe1623d  events 38139accb1482d82  values fe5bda38f490e57d
 jazz  416 notes  notes f772f7ec60e42575  events 3c35f9511940bd77  values 2db2dba346842425
 five  745 notes  notes 19ae7b522ff682fa  events 43a5144a8e0e0841  values 17170fa0b654dca8
 waltz  339 notes  notes e83f3b157bbc8abe  events 4e66614aa3f6f3bf  values b83b725eeaee8197
-sailor  367 notes  notes f2551a73f8192fd1  events 42fe459b34cbd7eb  values 3fc6b383127ba292
+sailor  367 notes  notes f2551a73f8192fd1  events 42fe459b34cbd7eb  values 3a9ea6e04e9c9c28
 royal  60 notes  notes a8ba34895ddf5909  events a8d847f669808eb4  values a61fb5c07b406d82
 pertonos  122 notes  notes 5c1f87d2168584ee  events 76d7ae346dec6b9b  values 4f6ba4a39bc94237
 ricercar  37 notes  notes 9d985d1b2b865b8d  events bb3db98e69cf37d2  values 48943dcd43ceb463
@@ -67,6 +67,7 @@ focus  78 notes  notes dbe4ba10038decaa  events d36536ee3b464a74  values 3ac89f1
 hypercell  560 notes  notes b08b59b1453fd852  events 8f6db73ec0bb36cf  values 5933f186c677f1db
 onemore  1283 notes  notes cc16bc6cd27b8dc2  events 91357dc90cf57e9a  values 4659576b23937925
 electroswing  756 notes  notes d7d46bff40367479  events fd526a81ccce993a  values 239df4c3b3835d87
+spooky  365 notes  notes fe1d71d2fec411e2  events 70b18817a67bdef2  values dbac94692b2bb53d
 brothers  284 notes  notes 4e2de0fd53fa576a  events 1166591397845f1f  values f7d25400a92f2488
 ghosts  157 notes  notes 5cd68f48d87c47ca  events ed325ece4cc67bb1  values c3c72c2a3bbcc1cf
 tines  423 notes  notes 219db45d4075ff9f  events f39cdb3533f3c4ee  values db5a9f92d2d31f14

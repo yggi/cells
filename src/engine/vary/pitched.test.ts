@@ -40,6 +40,7 @@ const EXPECTED: Record<string, readonly string[]> = {
   'eighths bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', ...ENDS(7)],
   'funk bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'reverse &bassline', ...ENDS(14)],
   'walking bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'invert &bassline', 'reverse &bassline', ...ENDS(3)],
+  'creeping bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2'],
 };
 /** Each seed's line: its tap and its lap in steps, and its anchored steps (the root on the downbeat, where each chord changes). */
 const LINE: Record<string, { tap: string; steps: number; anchored: readonly number[] }> = {
@@ -48,6 +49,7 @@ const LINE: Record<string, { tap: string; steps: number; anchored: readonly numb
   'eighths bass': { tap: '8n', steps: 8, anchored: [0] },
   'funk bass': { tap: '16n', steps: 16, anchored: [0] },
   'walking bass': { tap: '4n', steps: 4, anchored: [0] },
+  'creeping bass': { tap: '4n', steps: 4, anchored: [0] },
 };
 
 /** What a text sends on channel 2 over `bars` bars of 4/4 at 120 bpm: each note's sixteenth from the start, and its MIDI note. */
@@ -171,13 +173,14 @@ for (const name of Object.keys(PROGRESSIONS)) {
 describe('the pitched operators', () => {
   const options = OPTIONS('I–vi–IV–V');
 
-  it('are 24 of the 30 on the five seeds, the 6 left out each playing its source’s notes; and 20 bends and trims', () => {
+  it('are 28 of the 36 on the six seeds, the 8 left out each playing its source’s notes or none to vary; and 20 bends and trims', () => {
     const all = SEEDS.flatMap(({ fragment }) => variations(fragment, options));
-    expect(all.filter((v) => v.rule !== 'bend' && v.rule !== 'trim')).toHaveLength(24);
+    expect(all.filter((v) => v.rule !== 'bend' && v.rule !== 'trim')).toHaveLength(28);
     expect(all.filter((v) => v.rule === 'bend' || v.rule === 'trim')).toHaveLength(20);
     // the left out: an inversion about a root that is every note's (the root, the eighths, the pump, the funk: all 0, and
     // the funk's anticipation, mirrored round its own table's root, is that root); a retrograde of one note (the root's
-    // half) or of eight alike (the eighths)
+    // half) or of eight alike (the eighths); the creep's, whose only notes besides its root are the root moved a step of
+    // the grid, a semitone, by a reference (`&creep^$1`), which neither operator reads into
     expect(SEEDS.flatMap(({ id }) => ['invert &bassline', 'reverse &bassline'].filter((by) => !EXPECTED[id]!.includes(by)).map((by) => `${id}: ${by}`))).toEqual([
       'root bass: invert &bassline',
       'root bass: reverse &bassline',
@@ -185,6 +188,8 @@ describe('the pitched operators', () => {
       'eighths bass: invert &bassline',
       'eighths bass: reverse &bassline',
       'funk bass: invert &bassline',
+      'creeping bass: invert &bassline',
+      'creeping bass: reverse &bassline',
     ]);
   });
 

@@ -207,7 +207,8 @@ describe('the splices', () => {
     const { codeShifts } = await import('../program');
     const { plan } = await import('../realize');
     const { PRESETS } = await import('../presets');
-    const r = compileSource(PRESETS.korobeiniki.source);
+    const { resolveSeed } = await import('../../repository/library');
+    const r = compileSource(PRESETS.korobeiniki.source, undefined, { resolve: resolveSeed });
     const s = splices(plan(r, codeShifts(r)), 90);
     // (the second half begins: &end then &c, as at the unwritten swells heard at 19.7, 60.3, 86.5 s)
     const halves = s.filter((x) => x.after === 'end' && x.cell === 'c').map((x) => x.at);

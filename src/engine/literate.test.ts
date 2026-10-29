@@ -22,7 +22,7 @@ const LITERATE =
     '# The tune', //  6
     '', //  7
     '```cells', //  8
-    '&bar meter("4/4") step=&tempo', //  9
+    'use &bar from "4/4"', //  9
     '&tune over=scale(major) step=4n 0 2 4 2', // 10
     '```', // 11
     '', // 12
@@ -58,7 +58,7 @@ describe('literate cells: the code is the join of the blocks', () => {
   it('a file of three blocks with prose between them compiles as their join, and a diagnostic points at the right line', () => {
     const file = read(LITERATE);
     expect(file.text.split('\n')).toEqual([
-      '&bar meter("4/4") step=&tempo',
+      'use &bar from "4/4"',
       '&tune over=scale(major) step=4n 0 2 4 2',
       '&lead s=saw loop=C4 cutoff=800',
       '&oops @@',
@@ -160,7 +160,7 @@ describe('putting a rewritten code back', () => {
 });
 
 /** The examples written as literate cells (decision 051): prose between their blocks. */
-const LITERATE_EXAMPLES = new Set(['electroswing']);
+const LITERATE_EXAMPLES = new Set(['electroswing', 'spooky']);
 
 describe('every example and fragment reads as before', () => {
   it('an example is its blocks joined, its prose between and after them; all but the literate ones are one block', () => {

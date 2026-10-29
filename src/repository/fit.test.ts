@@ -129,7 +129,8 @@ describe('the fit', () => {
 
 // Every (rhythm, meter) pair of the library, the fit as a literal: every drum bar and every clave fits each 4/4, straight,
 // swung, leaning and alla breve, and nothing else; no drum bar or two-bar clave fits 7/8, 5/4 or 12/8, the one-bar clave
-// 4/4 only. No meter of the library has a bar of 32 sixteenths, so "a multiple of 16" is "16" here.
+// 4/4 only. The Spooky beat (#349) cycles on a beat or spans the bar, so it fits every meter but 7/8, whose bar is no
+// whole number of quarters. No meter of the library has a bar of 32 sixteenths, so "a multiple of 16" is "16" here.
 const FOUR_FOURS = ['4/4', '4/4 swung on 8n', '4/4 leaning on 16n', '4/4 leaning lightly on 16n', '4/4 leaning faintly on 16n', '4/4 alla breve'];
 const FITS: Record<string, readonly string[]> = {
   'Synth-pop drums': FOUR_FOURS,
@@ -146,6 +147,20 @@ const FITS: Record<string, readonly string[]> = {
   'bossa nova clave': FOUR_FOURS,
   'bossa nova clave (one bar)': FOUR_FOURS,
   'Electro swing drums': FOUR_FOURS,
+  'Spooky drums': [
+    '4/4',
+    '4/4 swung on 8n',
+    '4/4 leaning on 16n',
+    '4/4 leaning lightly on 16n',
+    '4/4 leaning faintly on 16n',
+    '4/4 alla breve',
+    '2/4',
+    '3/4',
+    '6/8',
+    '12/8',
+    '5/4',
+    '10/8',
+  ],
 };
 
 describe('every rhythm against every meter of the library', () => {
@@ -311,8 +326,8 @@ describe('what it costs', () => {
     const r = (await import('./fragments')).createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
-    // (the 14 rhythms and the 5 instruments: a performer's part, a mode's tonic (#290) and a stab line's &harm are holes no workbench of drums fills)
-    expect(first).toHaveLength(19);
+    // (the 15 rhythms and the 5 instruments: a performer's part, a mode's tonic (#290) and a stab line's &harm are holes no workbench of drums fills)
+    expect(first).toHaveLength(20);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
     expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);

@@ -8,7 +8,7 @@ description: "A bar sets the tempo, and every part steps with it: on the beat, t
 ```cells
 &barNote label="&bar is the clock: a meter of 4/4, four even beats, stepped by &tempo; step=free(andante) a tempo marking, a slider from 76 to 108 beats a minute." about=(&bar &tempo)
 &ratesNote label="Each part taps the bar by a note value: step=4n a step a beat (a quarter), 8n two steps a beat, 2n a step every two beats." about=(&tune &eighths &bass)
-&bar meter("4/4") step=&tempo                 # four beats, andante
+use &bar from "4/4"  # four beats, andante
 &tempo step=free(andante)
 
 &tune step=4n 0 4 7 4 5 9 7@2 4 7 5 2 0@4       # a step a beat

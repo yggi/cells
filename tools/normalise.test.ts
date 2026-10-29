@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { normaliseFile } from './normalise';
 
-const PIECE = `&bar meter("4/4") step=&tempo
+const PIECE = `use &bar from "4/4"
 &tempo step=120bpm
 &tune over=scale(major) step=4n 0 2 4 2
 &lead s=saw loop=C4 cutoff=800

@@ -15,6 +15,8 @@ import { pieceMidi } from '../midiexport';
 import { readMidi, writeMidi } from '../midifile';
 import { cellsFromMidi } from '../midiimport';
 import { bare, heard, phrases, same } from './score';
+import { expand } from '../use';
+import { resolveSeed } from '../../repository/library';
 
 interface Row {
   readonly kept: boolean;
@@ -28,7 +30,9 @@ describe('the ratchet: every example through MIDI, folded', () => {
   it('is no worse than the baseline, over the library', () => {
     const now: Record<string, Row> = {};
     for (const [key, p] of Object.entries(PRESETS)) {
-      const r = compileSource(p.source);
+      // (an example as its expansion, its `use` lines written out: a text of its own, playing as the example does, #196)
+      const source = expand(p.source, resolveSeed);
+      const r = compileSource(source);
       // (a law's notes are computed, not written: nothing to fold)
       if (!r.ok || [...r.cells.values()].some((c) => c.params.law !== undefined)) continue;
       const midi = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
@@ -37,10 +41,10 @@ describe('the ratchet: every example through MIDI, folded', () => {
       const fr = compileSource(flat.source);
       const seconds = plan(fr, codeShifts(fr), fr.off).end;
       const folded = cellsFromMidi(midi, key, { shorten: true }).source;
-      const mine = phrases(p.source);
+      const mine = phrases(source);
       const theirs = new Set(phrases(folded).values());
       now[key] = {
-        kept: same(heard(p.source, seconds), heard(folded, seconds)),
+        kept: same(heard(source, seconds), heard(folded, seconds)),
         score: bare(folded),
         back: [...mine.values()].filter((s) => theirs.has(s)).length,
         of: mine.size,

@@ -20,3 +20,8 @@ export const LO_FI = at(0.5, 0.75, 0.35, 0.5); // swing .45: 16n at .65
 export const FUNK = at(1, 0.12, 0.85, 0.75); // swing .3: 16n at .6
 export const BOSSA_NOVA = at(0.75, 0.85, 0.45, 0.45);
 export const SWING_JAZZ = at(0.35, 1, 0.3, 0.6); // swing 1: 8n at 2/3, the jazz kit and the walking bass (yggi/jambot#360)
+
+// Two points proposed for presets Jambot is to adopt (#349, yggi/jambot#517): the seeds placed there say so in their
+// files, and the axes are Jambot's (decision 041).
+export const ELECTRO_SWING = at(0.55, 0.75, 0.6, 0.75); // the meter 4/4 swung on 8n, the example's at .64
+export const SPOOKY = at(0.2, 0.9, 0.3, 0.35); // the meter 5/4, with 6/8 and 3/4 near

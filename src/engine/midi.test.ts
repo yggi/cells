@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { compileSource } from './compile';
-import { planOf } from './host';
+import { compileSource as compileAlone } from './compile';
+import { planOf as planAlone } from './host';
 import { eventsBetween, type Played } from './realize';
 import { BEND_CENTRE, bendValue, channelTable, gmDrumNote, kitNotes, legatoNotes, melodicChannel, midiNote, noteOf, Rotation, rotationChannels, router, velocityOf } from './midi';
 import { PRESETS } from './presets';
 import { codeShifts } from './program';
 import { pieceMidi } from './midiexport';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
+const planOf: typeof planAlone = (code, env, options) => planAlone(code, env, { resolve: resolveSeed, ...options });
 
 const played = (e: Partial<Played>): Played => ({ at: 0, dur: 1, voice: 'v', freq: 440, bends: [], gains: [1, 1], levels: [{ at: 0, level: 1 }], ...e });
 
@@ -171,13 +175,14 @@ describe('channels', () => {
     const t = channelTable(r);
     expect(t.voices).toEqual([{ voice: 'rim', channel: 1, port: 1 }]);
     expect(t.kits).toEqual([{ port: 1, channel: 10 }]);
+    // (in the order the expansion declares them: the piece's own lines, then those its `use` takes, decision 054)
     expect(t.kit).toEqual([
-      { member: 'bd', note: 36 },
-      { member: 'sd', note: 38 },
       { member: 'hh', note: 42 },
       { member: 'lo', note: 41 },
       { member: 'mid', note: 45 },
       { member: 'hi', note: 48 },
+      { member: 'bd', note: 36 },
+      { member: 'sd', note: 38 },
     ]);
     const route = router(r, t);
     const events = eventsBetween(planOf(PRESETS.drums.source), 0, 4, true);

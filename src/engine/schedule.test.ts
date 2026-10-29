@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS } from './presets';
-import { createHost, planOf } from './host';
+import { createHost, planOf as planAlone } from './host';
 import { resolveSeed } from '../repository/library';
 import { eventsBetween } from './realize';
 import { retime, tapeSpeeds, windowAt, type Window } from './schedule';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const planOf: typeof planAlone = (code, env, options) => planAlone(code, env, { resolve: resolveSeed, ...options });
 
 /** A window's events retimed once (to retime them again: `code` must survive). */
 const r0 = (w: Window) => retime(w, 10, 0.5).events;
@@ -73,7 +75,7 @@ describe('schedule: what to play next, as plain data', () => {
 
 describe('host: the engine behind messages (what runs in the worker)', () => {
   it('answers a window exactly as the plan here would, in the order asked', () => {
-    const host = createHost();
+    const host = createHost(undefined, { resolve: resolveSeed });
     const src = PRESETS.prelude.source;
     expect(host({ type: 'load', code: src })).toMatchObject({ type: 'loaded', ok: true });
     const here = planOf(src);

@@ -12,7 +12,7 @@ description: "Big beat, an original in the manner of the Chemical Brothers: grit
 &buildsNote label="Builds with snare rolls and a riser." about=(&roll &riser)
 # Cellular Brothers — the break is a bar of voices in sixteenths; the acid line opens its filter
 # on every note, further on the accents. Everything in semitones from E.
-&bar meter("4/4") step=&tempo
+use &bar from "4/4"
 &tempo step=free(112bpm, 96..132)
 &b1 tags="break" &bd ~ &hh ~ &sd ~ &hh &bd ~ &bd &sd ~ &hh &bd &sd &hh
 &b2 tags="break" &bd ~ &hh &bd &sd ~ &hh ~ &bd &bd ~ &hh &sd ~ &sd*2 &hh
