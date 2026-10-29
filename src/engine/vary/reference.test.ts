@@ -45,10 +45,10 @@ const WITH = ALL.filter(({ v }) => v.reference);
 const byOperator = (list: typeof ALL) => Object.fromEntries([...new Set(ALL.map(({ v }) => v.rule))].map((op) => [op, list.filter(({ v }) => v.rule === op).length]));
 
 describe("the seeds' variations by reference", () => {
-  it('gives 480 of the 553 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter', () => {
-    expect(ALL.length).toBe(553);
+  it('gives 480 of the 547 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter', () => {
+    expect(ALL.length).toBe(547);
     expect(WITH.length).toBe(480);
-    expect(byOperator(ALL)).toEqual({ rotate: 26, drop: 116, add: 315, transpose: 48, reverse: 6, bend: 32, trim: 8, invert: 2 });
+    expect(byOperator(ALL)).toEqual({ rotate: 26, drop: 114, add: 311, transpose: 48, reverse: 6, bend: 32, trim: 8, invert: 2 });
     expect(byOperator(WITH)).toEqual({ rotate: 17, drop: 90, add: 279, transpose: 48, reverse: 4, bend: 32, trim: 8, invert: 2 });
     // (the four operators with a form before #293: 71 of their 82)
     expect(['rotate', 'transpose', 'invert', 'reverse'].reduce((n, op) => n + byOperator(WITH)[op]!, 0)).toBe(71);

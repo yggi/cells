@@ -206,6 +206,11 @@ function notesOf(acc: RouteAcc, o: Output, how: NotesOf) {
   }
   how.braid(acc, o);
   acc.clock(o.cell);
+  // (a gate that plays a stack of lines, `play=&drumlines`: the stack is on the way, its lines going in through it)
+  for (const t of [...o.via, ...o.through]) {
+    const g = acc.result.cells.get(t)?.gate;
+    if (g?.lines?.length && acc.result.cells.has(g.notes)) acc.node(g.notes);
+  }
   // played off a tape: its source onto the tape, the tape under the head, the head into the voice (and what moves the tape)
   if (o.tape) {
     acc.edge(o.cell, o.tape.tape);

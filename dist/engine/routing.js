@@ -163,6 +163,11 @@ function notesOf(acc, o, how) {
     }
     how.braid(acc, o);
     acc.clock(o.cell);
+    for (const t of [...o.via, ...o.through]) {
+        const g = acc.result.cells.get(t)?.gate;
+        if (g?.lines?.length && acc.result.cells.has(g.notes))
+            acc.node(g.notes);
+    }
     if (o.tape) {
         acc.edge(o.cell, o.tape.tape);
         acc.edge(o.tape.tape, o.tape.head);
