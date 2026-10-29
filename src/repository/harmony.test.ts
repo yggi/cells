@@ -16,10 +16,13 @@ import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
-import { AMBIENT, at, FUNK, TECHNO } from './presets';
+import { AMBIENT, at, FUNK, SPOOKY, TECHNO } from './presets';
 import { SEED } from './seed';
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
+/** The vamps, Jambot's themes' (`VAMPS`); the harmony written by hand for the point proposed for Spooky (#349) is not one. */
+const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter((f) => f.id !== 'dark cadence');
+
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 
 type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian';
@@ -69,7 +72,7 @@ const triad = (mode: Mode, degree: number): number[] => [0, 2, 4].map((k) => pc(
 const host = (mode: Mode) => `&bar meter("4/4") step=120bpm\n&key scale(${mode}, A)`;
 /** A card that plays the chord in force, so a host with nothing else plays it (as the meters' frame does). */
 const PROBE = '&padV loop=C4\n&pad map=midi(3) [&harm * &padV]';
-const byDegrees = (chords: readonly number[]) => HARMONY_FRAGMENTS.find((f) => degreesOf(f.text).join() === layout(chords, 0).join())!;
+const byDegrees = (chords: readonly number[]) => VAMP_FRAGMENTS.find((f) => degreesOf(f.text).join() === layout(chords, 0).join())!;
 
 /** The degree of the chord each bar plays (the stack's lowest), over the eight bars of the lap, read off the compiler. */
 function degreesOf(fragment: string): number[] {
@@ -94,15 +97,15 @@ function chordsPlayed(text: string): number[][] {
 }
 
 describe('the harmonies', () => {
-  it('are five texts, each one or two triads over the key, eight bars a lap', () => {
-    expect(HARMONY_FRAGMENTS.map((f) => f.id)).toEqual(['tonic vamp', 'vamp to the seventh', 'vamp to the fourth', 'vamp to the sixth', 'vamp to the fifth']);
-    expect(HARMONY_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
+  it('are five vamps, each one or two triads over the key, eight bars a lap, and the dark cadence', () => {
+    expect(HARMONY_FRAGMENTS.map((f) => f.id)).toEqual(['tonic vamp', 'vamp to the seventh', 'vamp to the fourth', 'vamp to the sixth', 'vamp to the fifth', 'dark cadence']);
+    expect(VAMP_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
   });
 
   it("are every mode's vamps, each of the twelve one of the five", () => {
     const vamps = MODES.flatMap((mode) => VAMPS[mode].map((chords) => byDegrees(chords).id));
     expect(vamps).toHaveLength(12);
-    expect(new Set(vamps)).toEqual(new Set(HARMONY_FRAGMENTS.map((f) => f.id)));
+    expect(new Set(vamps)).toEqual(new Set(VAMP_FRAGMENTS.map((f) => f.id)));
   });
 
   it.each(HARMONY_FRAGMENTS.map((f) => [f.id, f.text]))('%s uses the key and defines &harm, and nothing else', (_, text) => {
@@ -125,7 +128,7 @@ describe('the harmonies', () => {
     });
 
   it('lays each vamp out as themes.ts does under harm 0.15, and not as it does from 0.15 to 0.33 (two bars a chord), which differs for every two-chord vamp', () => {
-    for (const f of HARMONY_FRAGMENTS) {
+    for (const f of VAMP_FRAGMENTS) {
       const degrees = degreesOf(f.text);
       const chords = [...new Set(degrees)];
       expect(degrees).toEqual(layout(chords, 0.12));
@@ -142,7 +145,7 @@ describe('the harmonies', () => {
   });
 
   it("sit at those points only: Techno's and Funk's exactly, Ambient's with its harmony at 0.12; mixolydian adds none", () => {
-    for (const f of HARMONY_FRAGMENTS) {
+    for (const f of VAMP_FRAGMENTS) {
       const modes = MODES.filter((mode) => POINT[mode] && VAMPS[mode].some((chords) => byDegrees(chords) === f));
       expect(
         f.association.map((wp) => wp.point),
@@ -175,5 +178,31 @@ describe('the harmonies', () => {
         const root = (bar: number) => pc(TONIC + SCALE[mode][degrees[bar]!]!);
         for (const n of downbeats) expect(pc(n!.note), `${f.id} in ${mode}, bar ${n!.at / 2}`).toBe(root(Math.round(n!.at / 2)));
       }
+  });
+});
+
+describe('the dark cadence (#349)', () => {
+  const cadence = HARMONY_FRAGMENTS.find((f) => f.id === 'dark cadence')!;
+  it('is i, ♭VI, iv and V, a chord a bar, four bars a lap', () => {
+    expect(degreesOf(cadence.text)).toEqual([0, 5, 3, 4]);
+  });
+
+  it('in D harmonic minor plays D minor, B♭ major, G minor and A major: the fifth a dominant', () => {
+    const host = '&bar meter("4/4") step=120bpm\n&tonic D\n&key scale(harmonic, &tonic)';
+    const text = `${fitOf(cadence.text, host).union.text}\n${PROBE}`;
+    const dm = [2, 5, 9],
+      bb = [2, 5, 10],
+      gm = [2, 7, 10],
+      a = [1, 4, 9];
+    expect(chordsPlayed(text)).toEqual([dm, bb, gm, a, dm, bb, gm, a]);
+  });
+
+  it('sits at the point proposed for Spooky alone, found there first at distance 0', () => {
+    expect(cadence.association).toEqual([{ point: SPOOKY, weight: 1, facet: 'harmony' }]);
+    expect(
+      createRepository(LIBRARY)
+        .query(SPOOKY, 1, {}, { facet: 'harmony' })
+        .map((f) => [f.fragment.id, f.distance]),
+    ).toEqual([['dark cadence', 0]]);
   });
 });

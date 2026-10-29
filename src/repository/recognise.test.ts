@@ -1,4 +1,4 @@
-// Recognition (decision 055, #224): each of Jambot's 284 variations on E31's bars, and each of the bass seeds' 44, is
+// Recognition (decision 055, #224): each of Jambot's 284 variations on E31's bars, and each of the bass seeds' 48, is
 // recognised as its source's, by its operator, at distance 0, against the whole library; random bars of hits are
 // recognised as nothing; a recognition on a warmed recogniser compiles only the heard text (its milliseconds:
 // `timing.slow.test.ts`).
@@ -61,7 +61,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     ]);
   });
 
-  it('each of the bass seeds’ 44 (24, and the 20 bends and trims, #267)', () => {
+  it('each of the bass seeds’ 48 (28, and the 20 bends and trims, #267)', () => {
     const options = { workbench: BASS, operators: PITCHED_OPERATORS };
     let n = 0;
     for (const f of BASS_FRAGMENTS)
@@ -70,7 +70,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
         expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${f.id}, ${v.by}`).toEqual([f.id, [v.by], 0]);
         n++;
       }
-    expect(n).toBe(44);
+    expect(n).toBe(48);
   });
 
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {
