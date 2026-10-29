@@ -154,8 +154,7 @@ describe('the points proposed for two more presets (#349)', () => {
       ['walking bass'],
       ['harmonic minor'],
       ['Charleston stabs'],
-      // (the motif proposed with it first, then the second written for it, #369)
-      ['gypsy', 'lindy'],
+      ['gypsy'],
     ]);
     expect(['meter', 'rhythm', 'bass', 'harmony', 'mode', 'motif'].map((facet) => at(SPOOKY, facet))).toEqual([
       ['5/4'],
@@ -163,7 +162,7 @@ describe('the points proposed for two more presets (#349)', () => {
       ['creeping bass'],
       ['dark cadence'],
       ['harmonic minor'],
-      ['diesIrae', 'toll'],
+      ['diesIrae'],
     ]);
   });
 });

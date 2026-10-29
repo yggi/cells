@@ -5,7 +5,7 @@ association:
       sync: 0.12
       harm: 0
       artic: 1
-      energy: 0.8
+      energy: 0.9
     weight: 1
     facet: motif
 source: seed
@@ -19,4 +19,4 @@ The tonic struck on every beat and the third once, all short: a line that is mos
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&pulse`), so `use &pulse` takes it; a form reads it as its `&call` (`&call step=8n &pulse`), the line the form moves and answers.
 
-At Techno's point, after `octaves` (#369), weight 1, as the facet `motif`.
+Near Techno's point, 0.1 higher in energy, so a query there finds `octaves` first and this one 0.05 away (#369), weight 1, as the facet `motif`.

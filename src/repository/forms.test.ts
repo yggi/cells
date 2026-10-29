@@ -10,7 +10,7 @@ import { eventsBetween, plan } from '../engine/realize';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
 import { FORM_FRAGMENTS } from './forms';
 import { fitOf } from './fit';
-import type { StylePoint } from './fragments';
+import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
@@ -19,6 +19,8 @@ import { createRecogniser } from './recognise';
 
 /** The point proposed for an Electro swing preset, as the electroswing seeds' files write it: no preset of Jambot's (decision 041). */
 const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
+/** A point 0.1 higher in energy, to the hundredth. */
+const above = (p: StylePoint): StylePoint => ({ ...p, energy: Math.round((p.energy + 0.1) * 100) / 100 });
 /** Each motif, the point it sits at, and the meter it is a bar of (4/4 where none is named). */
 const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   hook: { point: SYNTH_POP },
@@ -31,17 +33,17 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   bebop: { point: SWING_JAZZ },
   gypsy: { point: PROPOSED },
   diesIrae: { point: SPOOKY },
-  // (#369: a second at each preset's point, after its first)
-  refrain: { point: SYNTH_POP },
-  pulse: { point: TECHNO },
-  soul: { point: DEEP_HOUSE },
-  drift: { point: AMBIENT },
-  dusty: { point: LO_FI },
-  slap: { point: FUNK },
-  saudade: { point: BOSSA_NOVA },
-  blue: { point: SWING_JAZZ },
-  lindy: { point: ELECTRO_SWING },
-  toll: { point: SPOOKY },
+  // (#369: a second near each preset's point, 0.1 higher in energy, so a query at the point finds the first first)
+  refrain: { point: above(SYNTH_POP) },
+  pulse: { point: above(TECHNO) },
+  soul: { point: above(DEEP_HOUSE) },
+  drift: { point: above(AMBIENT) },
+  dusty: { point: above(LO_FI) },
+  slap: { point: above(FUNK) },
+  saudade: { point: above(BOSSA_NOVA) },
+  blue: { point: above(SWING_JAZZ) },
+  lindy: { point: above(ELECTRO_SWING) },
+  toll: { point: above(SPOOKY) },
   // (one at each point of a meter with none, a bar of it)
   waltz: { point: at(0, 0.7, 0.3, 0), meter: '3/4' },
   musicBox: { point: at(0.2, 0.9, 0.3, 0.43), meter: '3/4' },
@@ -115,6 +117,19 @@ describe('the motifs', () => {
       expect(f.association, f.id).toEqual([{ point: MOTIFS[f.id]!.point, weight: 1, facet: 'motif' }]);
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&key']);
     }
+  });
+
+  // (cells breaks a tie by id, so a second motif sits off the point: at it, the first is found first, alone at distance 0)
+  it('find each preset’s first motif first at its point, alone at distance 0, and its second 0.05 away', () => {
+    const motifs = createRepository(MOTIF_FRAGMENTS);
+    const firsts = Object.keys(MOTIFS).slice(0, 10);
+    const seconds = Object.keys(MOTIFS).slice(10, 20);
+    firsts.forEach((id, i) => {
+      const found = motifs.query(MOTIFS[id]!.point, 36, {}, { facet: 'motif' });
+      expect(found[0]!.fragment.id, id).toBe(id);
+      expect(found.filter((f) => f.distance === 0).length, id).toBe(1);
+      expect(found.find((f) => f.fragment.id === seconds[i])!.distance, seconds[i]).toBeCloseTo(0.05, 9);
+    });
   });
 
   it('are each varied by the pitched operators, held notes and all: transpose and invert keep every note’s place and length', () => {
