@@ -5,20 +5,36 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
+import { codeShifts } from '../engine/program';
+import { pieceAudio } from '../engine/audioexport';
 import { channelTable, GM_KIT, gmDrumNote, midiNote, router, routesOf } from '../engine/midi';
 import { expand } from '../engine/use';
 import { windowAt } from '../engine/schedule';
 import { fitOf } from './fit';
-import { createRepository } from './fragments';
+import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { METER_FRAGMENTS } from './meters';
-import { AMBIENT, FUNK } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 const byId = (id: string) => INSTRUMENT_FRAGMENTS.find((f) => f.id === id)!;
 const gmKit = byId('gm_kit');
+const CENTRE = { sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 };
+/** The default instruments, the performers' (#278). */
+const DEFAULTS = ['bass', 'keys', 'pad', 'lead'];
+/** The instruments with a sound, for the two presets (#350), each at its preset's point, and the default whose voice it defines. */
+const AT_PRESET: Record<string, StylePoint> = {
+  'upright bass': ELECTRO_SWING,
+  'brass stab': ELECTRO_SWING,
+  clarinet: ELECTRO_SWING,
+  'muted trumpet': ELECTRO_SWING,
+  'round bass': SPOOKY,
+  organ: SPOOKY,
+  theremin: SPOOKY,
+  celesta: SPOOKY,
+};
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
 const coreKit = { text: expand(CORE_USE, resolveSeed).trim() };
@@ -102,20 +118,24 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it('are the General MIDI kit, the bass, the keys, the pad and the lead, each once at the centre of style space as the facet instrument, the kit weighted first', () => {
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm_kit', 'bass', 'keys', 'pad', 'lead']);
-    for (const f of INSTRUMENT_FRAGMENTS) expect(f.association.map((wp) => [wp.point, wp.facet])).toEqual([[{ sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 }, 'instrument']]);
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25]);
-    expect(
+  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the eight for Electro swing and Spooky, each once at its preset, at half a default's weight (#350)", () => {
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm_kit', ...DEFAULTS, ...Object.keys(AT_PRESET)]);
+    for (const f of INSTRUMENT_FRAGMENTS)
+      expect(
+        f.association.map((wp) => [wp.point, wp.facet]),
+        f.id,
+      ).toEqual([[AT_PRESET[f.id] ?? CENTRE, 'instrument']]);
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25, ...Array<number>(8).fill(0.125)]);
+  });
+
+  it('a query finds the kit and the defaults first at the eight presets, and at Electro swing and Spooky their own (#350)', () => {
+    const found = (point: StylePoint, k: number) =>
       createRepository(LIBRARY)
-        .query(AMBIENT, 3, {}, { facet: 'instrument' })
-        .map((f) => f.fragment.id),
-    ).toEqual(['gm_kit', 'bass', 'keys']);
-    expect(
-      createRepository(LIBRARY)
-        .query(FUNK, 3, {}, { facet: 'instrument' })
-        .map((f) => f.fragment.id),
-    ).toEqual(['gm_kit', 'bass', 'keys']);
+        .query(point, k, {}, { facet: 'instrument' })
+        .map((f) => f.fragment.id);
+    for (const preset of [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ]) expect(found(preset, 3)).toEqual(['gm_kit', 'bass', 'keys']);
+    expect(found(ELECTRO_SWING, 4)).toEqual(['brass stab', 'clarinet', 'muted trumpet', 'upright bass']);
+    expect(found(SPOOKY, 4)).toEqual(['celesta', 'organ', 'round bass', 'theremin']);
   });
 
   it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order; 13 of them taken by name are its lines word for word, as the retired core kit forwards them (#196)', () => {
@@ -142,6 +162,49 @@ describe('the instrument fragments', () => {
     const { hits, diagnostics } = played(hosted(strikes(GM_KIT.map((d) => d.name)), gmKit.text), 48);
     expect(diagnostics).toEqual([]);
     expect(hits.map((h) => [h.step, h.note])).toEqual(GM_KIT.map((d, i) => [i, d.note]));
+  });
+});
+
+describe('the instruments for Electro swing and Spooky (#350)', () => {
+  const voiceOf = (text: string) => /^&(\w+)/.exec(text)![1]!;
+  const defaultFor = (voice: string) => INSTRUMENT_FRAGMENTS.find((f) => DEFAULTS.includes(f.id) && voiceOf(f.text) === voice)!;
+  /** A line of the key's degrees played by a gate on the voice, on a MIDI card and a sound card: each note it sends over two bars, and the piece. */
+  const piece = (instrument: string) =>
+    hosted('&key scale(minor, D)', '&line over=&key step=4n 0 2 4 7 -3 ~ 1 6', `&g play=&line &${voiceOf(instrument)}`, '&m map=midi(1) &g', '&out map=sample &g', instrument);
+  /** What a note is over MIDI but its bends: a vibrato (`pitch=`) is the instrument's, and goes out as bends. */
+  const note = ({ channel, note, velocity, at, end }: { channel: number; note: number; velocity: number; at: number; end: number }) => ({ channel, note, velocity, at, end });
+  const sent = (text: string) => {
+    const plan = planOf(text);
+    const route = router(plan.result, channelTable(plan.result));
+    return windowAt(plan, 0, 4 - 1e-9).events.flatMap((e) => routesOf(route(e)).flatMap((r) => midiNote(e, r) ?? []));
+  };
+
+  it.each(Object.keys(AT_PRESET))('%s defines one voice a default instrument defines, with a sound of its own (s=)', (id) => {
+    const lines = byId(id).text.split('\n');
+    expect(lines).toHaveLength(1);
+    expect(defaultFor(voiceOf(lines[0]!)), voiceOf(lines[0]!)).toBeTruthy();
+    expect(lines[0]).toMatch(/ s=(sine|tri|saw|square)\b/);
+  });
+
+  it.each(Object.keys(AT_PRESET))('%s sends over MIDI the notes the default it stands in for sends: channel, note, velocity, onset and end (a vibrato adds bends)', (id) => {
+    const instrument = byId(id).text;
+    const played = sent(piece(instrument));
+    expect(played).toHaveLength(7);
+    expect(played.map(note)).toEqual(sent(piece(defaultFor(voiceOf(instrument)).text)).map(note));
+  });
+
+  it('is shown firing: an instrument an octave off sends other notes', () => {
+    const clarinet = byId('clarinet').text;
+    expect(sent(piece(clarinet.replace('loop=C4', 'loop=C5'))).map(note)).not.toEqual(sent(piece(clarinet)).map(note));
+  });
+
+  it.each(Object.keys(AT_PRESET))('%s is heard in the renderer’s first stage, with no parameter left dry (decision 062, R1)', (id) => {
+    const r = compileSource(piece(byId(id).text));
+    expect(r.diagnostics).toEqual([]);
+    const audio = pieceAudio(r, codeShifts(r));
+    expect(audio.diagnostics).toEqual([]);
+    expect(audio.loudness.rms).toBeGreaterThan(-60);
+    expect(audio.loudness.clipped).toBe(0);
   });
 });
 

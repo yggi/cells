@@ -107,8 +107,11 @@ describe('the pull', () => {
     expect(moved).toBeGreaterThan(900);
   });
 
-  it('with nothing chosen, no pull changes a query: over 1,000 points', () => {
+  // (the 1,000 points in two halves, each its own test: a query merges a layer that counts every pair of the library, so
+  // its cost grows with the square of the library's size)
+  it.each([0, 500])('with nothing chosen, no pull changes a query: over 1,000 points, 500 from %i', (from) => {
     for (const [i, point] of POINTS.entries()) {
+      if (i < from || i >= from + 500) continue;
       const { chosen: _, ...unchosen } = optionsAt(i);
       const asked = ranked(library.query(point, 27, {}, unchosen));
       for (const pull of [0, 0.5, 10]) expect(ranked(library.query(point, 27, {}, { ...unchosen, pull })), `${JSON.stringify(point)} pull ${pull}`).toEqual(asked);
