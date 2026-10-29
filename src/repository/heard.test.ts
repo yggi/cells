@@ -69,8 +69,8 @@ function sent(text: string): (string | number)[][] {
 }
 
 describe('a pattern fragment heard through the card `heard` supplies (#291)', () => {
-  // (the seeds made after #291, which never carried a card: an example's beat)
-  const born = ['Electro swing drums'];
+  // (the seeds made after #291, which never carried a card: an example's beat, the Spooky beat and bass of #349)
+  const born = ['Electro swing drums', 'Spooky drums', 'creeping bass'];
   const carried = [...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.id === 'bell and scale')].filter((f) => !born.includes(f.id));
 
   it('is each of the 19 that carried a card', () => expect(carried.map((f) => f.id).sort()).toEqual(Object.keys(SENT).sort()));

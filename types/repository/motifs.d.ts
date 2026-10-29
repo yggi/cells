@@ -7,8 +7,8 @@
  * Eight are written by hand, one at each of Jambot's presets' points, in that style's idiom and mode: Jambot's lead
  * fixture records its own lead bar by bar but not the key each was in, so its notes can't be read as degrees without
  * the band that chose the key. The ninth, `gypsy`, is lifted from examples/electroswing.md, at the point proposed for an
- * Electro swing preset. Each is a file of the seed library, `fragments/motifs/*.md` (`seed.ts`).
+ * Electro swing preset; the tenth, `diesIrae`, the chant's head, is at the point proposed for a Spooky one (#349). Each is a file of the seed library, `fragments/motifs/*.md` (`seed.ts`).
  */
 import type { Fragment } from './fragments';
-/** The motifs built so far: eight by hand at Jambot's presets, and the electroswing example's call, as the facet `motif`. */
+/** The motifs built so far: eight by hand at Jambot's presets, the electroswing example's call and the Dies irae, as the facet `motif`. */
 export declare const MOTIF_FRAGMENTS: readonly Fragment[];

@@ -14,7 +14,7 @@ import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { compileSource } from '../engine/compile';
 import { heard } from './heard';
 import { LIBRARY } from './library';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 
 const PATTERNS = ['root', 'pump', 'eight', 'funk', 'walk'] as const;
 type Pattern = (typeof PATTERNS)[number];
@@ -105,6 +105,10 @@ const POINT: Record<Pattern, StylePoint> = {
   walk: SWING_JAZZ,
 };
 // Each preset with its meter's swing on 8n (Swing jazz's 2/3 is 1; the others play straight or lean on 16n).
+// The points proposed for presets Jambot is to adopt (#349), placed by hand where an example plays a pattern: the walk at
+// Electro swing's, as examples/electroswing.md walks.
+const PROPOSED: Record<string, readonly StylePoint[]> = { 'walking bass': [ELECTRO_SWING] };
+
 const PRESETS: Record<string, { point: StylePoint; eighth: number }> = {
   'Synth-pop': { point: SYNTH_POP, eighth: 0 },
   Techno: { point: TECHNO, eighth: 0 },
@@ -197,12 +201,15 @@ function expected(pattern: Pattern, chords: readonly (readonly number[])[]): [nu
 }
 
 describe('the bass lines', () => {
-  it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most', () => {
-    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual(PATTERNS.map((p) => ID[p]));
+  it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most, and the Spooky bass written by hand', () => {
+    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping bass']);
     for (const p of PATTERNS) {
       const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
-      expect(byId(ID[p]).association, p).toEqual([POINT[p], ...presets.map((name) => PRESETS[name]!.point)].map((point) => ({ point, weight: 1, facet: 'bass' })));
+      expect(byId(ID[p]).association, p).toEqual(
+        [POINT[p], ...presets.map((name) => PRESETS[name]!.point), ...(PROPOSED[ID[p]] ?? [])].map((point) => ({ point, weight: 1, facet: 'bass' })),
+      );
     }
+    expect(byId('creeping bass').association).toEqual([{ point: SPOOKY, weight: 1, facet: 'bass' }]);
   });
 
   it('each uses &harm alone, read off its text: its voice is the instrument the performer or the card plays it on (#291)', () => {
@@ -261,7 +268,8 @@ describe('what each plays is what bass.ts plays for its pattern alone at its poi
 
 // The register the lines were written in, pinned in absolute MIDI notes (#244): what each line sent on channel 2 over the
 // first four bars of I–vi–IV–V, in C and in D, while each carried its own `&bassV loop=C2`. Through the `bass` instrument
-// they send these notes still; an instrument an octave off moves every one (Jambot's bass reads this register).
+// they send these notes still; an instrument an octave off moves every one (Jambot's bass reads this register). The
+// creeping bass, written later (#349), in the same register: the root, a semitone above it, the root.
 const SENT: Record<string, Record<string, readonly number[]>> = {
   C: {
     'root bass': [36, 36, 45, 45, 41, 41, 43, 43],
@@ -269,6 +277,7 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
     'eighths bass': [...Array<number>(8).fill(36), ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43)],
     'funk bass': [36, 36, 36, 36, 36, 36, ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43), 48, 48],
     'walking bass': [36, 40, 43, 44, 45, 48, 52, 40, 41, 45, 48, 42, 43, 47, 50, 47],
+    'creeping bass': [36, 37, 36, 45, 46, 45, 41, 42, 41, 43, 44, 43],
   },
   D: {
     'root bass': [38, 38, 47, 47, 43, 43, 45, 45],
@@ -276,6 +285,7 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
     'eighths bass': [...Array<number>(8).fill(38), ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45)],
     'funk bass': [38, 38, 38, 38, 38, 38, ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45), 50, 50],
     'walking bass': [38, 42, 45, 46, 47, 50, 54, 42, 43, 47, 50, 44, 45, 49, 52, 49],
+    'creeping bass': [38, 39, 38, 47, 48, 47, 43, 44, 43, 45, 46, 45],
   },
 };
 

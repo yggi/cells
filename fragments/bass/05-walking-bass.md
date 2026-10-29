@@ -8,6 +8,13 @@ association:
       energy: 0.6
     weight: 1
     facet: bass
+  - point:
+      sync: 0.55
+      harm: 0.75
+      artic: 0.6
+      energy: 0.75
+    weight: 1
+    facet: bass
 source: seed
 lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
@@ -26,3 +33,4 @@ The swing is the meter's, not a style axis, so the point says only the harmony.
 Swing jazz is the only preset where the walk is what `bass.ts` plays most, and this point is Swing jazz's (#209); at the presets whose harmony moves but whose meter doesn't swing, the pattern played most is associated there and is found before the walk.
 
 What `bass.ts` draws that a fixed line chooses: the second and third beats each the third, the fifth or the seventh (the fifth twice over where the chord has none), a third each, so this line is one walk it plays, up through the chord; the approach from below or above, half each, so this one from below. Under a harmony that changes on the bar's half it leads into that change too. The octave, the voice leading and the velocity are the performer's.
+Also at the point proposed for an Electro swing preset (#349), weight 1: the walk [Electro swing, in pieces](../../examples/electroswing.md) plays. It is placed by hand, not by `bass.ts`'s blend, which has no such preset.

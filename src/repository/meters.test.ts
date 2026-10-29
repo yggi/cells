@@ -9,6 +9,7 @@ import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { createRepository, type StylePoint } from './fragments';
 import { METER_FRAGMENTS } from './meters';
+import { ELECTRO_SWING, SPOOKY } from './presets';
 
 /** Jambot's swing axis, the readers' path of the swing contract (music-commons contracts/swing): 4/4 at each s from 0 to 1 in twentieths. */
 const path = swing.vectors.filter((v) => v.s !== undefined);
@@ -120,9 +121,16 @@ describe('the presets find their meters', () => {
   // meters have: one of the two, or a third preset's that is nearer than both (halfway between Synth-pop and Bossa nova is
   // nearer Lo-fi hip hop). No other meter takes a point the presets' meters hold.
   const onMeterAxes = ({ swing: _swing, bpm: _bpm, ...axes }: StylePoint) => axes;
-  const presets = createRepository(PRESETS.map((p) => ({ id: p.name, text: p.names, association: [{ point: onMeterAxes(p.point), weight: 1 }] })));
+  // (and the points proposed for two more presets, #349: Electro swing's swung 4/4, Spooky's 5/4 with 6/8 and 3/4 near it)
+  const proposed = [
+    { name: 'Electro swing', point: ELECTRO_SWING, names: '4/4 swung on 8n' },
+    { name: 'Spooky', point: SPOOKY, names: '5/4' },
+    { name: 'Spooky, less energy', point: { ...SPOOKY, energy: 0.27 }, names: '6/8' },
+    { name: 'Spooky, more energy', point: { ...SPOOKY, energy: 0.43 }, names: '3/4' },
+  ];
+  const presets = createRepository([...PRESETS, ...proposed].map((p) => ({ id: p.name, text: p.names, association: [{ point: onMeterAxes(p.point), weight: 1 }] })));
   const nearestMeters = (point: StylePoint) => {
-    const found = presets.query(point, PRESETS.length);
+    const found = presets.query(point, PRESETS.length + proposed.length);
     return new Set(found.filter((f) => f.distance - found[0]!.distance < 1e-12).map((f) => f.fragment.text));
   };
   const pairs = PRESETS.flatMap((a, i) => PRESETS.slice(i + 1).map((b) => [a, b] as const));
@@ -139,5 +147,21 @@ describe('the presets find their meters', () => {
     const ranked = (p: StylePoint) => repository.query(p, ids.length).map((f) => [f.fragment.id, f.distance]);
     expect(ranked(point)).toEqual(ranked(shared));
     expect(ranked({ ...point, swing: 0.5, bpm: 60, entropy: 1 })).toEqual(ranked(shared));
+  });
+});
+
+describe('the points proposed for two more presets (#349)', () => {
+  const ranked = (point: StylePoint, n: number) => repository.query(point, n).map((f) => [f.fragment.id, +f.distance.toFixed(9)]);
+  it('Electro swing finds the swung 4/4 its example plays, at distance 0', () => {
+    expect(ranked(ELECTRO_SWING, 1)).toEqual([['4/4 swung on 8n', 0]]);
+  });
+
+  // (0.08 off on energy alone, which the repository's distance, over four axes, counts as 0.04)
+  it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.08 off in energy, for the ladder to fetch', () => {
+    expect(ranked(SPOOKY, 3)).toEqual([
+      ['5/4', 0],
+      ['6/8', 0.04],
+      ['3/4', 0.04],
+    ]);
   });
 });
