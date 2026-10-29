@@ -28,12 +28,12 @@ The key is harmonic minor, from the library, on the piece's tonic, D (`&tonic`):
 use &bar from "5/4"
 &tempo step=free(100bpm, 80..120)
 &tonic D
-&fiveNote label="Five beats a bar: every line taps the meter, so the heart beats five times and the knocks spread over five." about=&bar
+&fiveNote label="Five beats a bar: every line taps the meter, so the heart beats five times and the knock falls at the middle of the bar, between the third beat's strokes." about=&bar
 ```
 
 ## The beat
 
-`Spooky drums`, used above: a heartbeat on every beat, its second stroke a sixteenth late and softer, the ride ticking each beat like a clock, the rim knocking three times over the bar, never on the one.
+`Spooky drums`, used above: a heartbeat on every beat, its second stroke a sixteenth late and softer, the ride ticking each beat like a clock, the rim knocking once, at the middle of the bar.
 The piece takes its three limbs by name and hands them to the drummer as a stack, `&drumlines`, the heart under a level of the form's.
 
 ```cells
@@ -66,7 +66,7 @@ use &diesIrae
 
 ## The form, in levels
 
-Sixteen bars, four times round the cadence: the heart and the knocks alone; then the organ and the bass, and the theremin; then the celesta joins; the heart drops out for the last lap and comes back on the last bar.
+Sixteen bars, four times round the cadence: the heart and the knock alone; then the organ and the bass, and the theremin; then the celesta joins; the heart drops out for the last lap and comes back on the last bar.
 Each player's level is a hole its fragment leaves; here it is the form.
 
 ```cells
@@ -91,5 +91,5 @@ A round bass, an organ, a celesta an octave and more above the stab player's reg
 &windline step=1m 0 ~ ~ ~
 &howl s=brown lpf=700 env=&(map=adsr 2 1 .5 2)
 
-&out map=sample postgain=1.67 [&drumsOut, &bassOut, &padOut * .25, &stabOut * .3, &leadOut * .5, &windline * &howl * .1]
+&out map=sample postgain=1.71 [&drumsOut, &bassOut, &padOut * .25, &stabOut * .3, &leadOut * .5, &windline * &howl * .1]
 ```

@@ -8,6 +8,8 @@ import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
+import { eventsBetween, plan } from '../engine/realize';
+import { codeShifts } from '../engine/program';
 import { soundsIdentical } from '../engine/sameness';
 import { createRepository, type StylePoint } from './fragments';
 import { fitOf } from './fit';
@@ -263,5 +265,28 @@ describe('where the rhythms are found', () => {
     expect(first(FUNK, claves)).toBe('rumba clave 3-2');
     const son = byId('son clave 3-2');
     expect(rhythms.query(BOSSA_NOVA, 12).find((f) => f.fragment === son)!.distance).toBeCloseTo(rhythms.query(FUNK, 12).find((f) => f.fragment === son)!.distance, 12);
+  });
+});
+
+// (Jambot's drummer reads a rhythm on its bar's sixteenths, the meter played straight: a hit between them is one it can't
+// play, yggi/jambot#521)
+describe('Spooky drums, in every meter it fits', () => {
+  const spooky = RHYTHM_FRAGMENTS.find((f) => f.id === 'Spooky drums')!;
+  const STRAIGHT = METER_FRAGMENTS.filter((m) => !/swung|leaning/.test(m.id));
+  const fits = STRAIGHT.filter((m) => fitOf(spooky.text, setTiming(m.text, 'bar', 'step', '60bpm')).fits);
+  it('fits every straight meter of the library but 7/8', () => {
+    expect(STRAIGHT.filter((m) => !fits.includes(m)).map((m) => m.id)).toEqual(['7/8']);
+  });
+  it.each(fits.map((m) => [m.id, m.text] as const))('under %s lands every hit on a sixteenth of the bar, the rim at its middle', (id, meter) => {
+    const r = compileSource(hosted(meter, 60, spooky.text, coreKit));
+    expect(r.diagnostics).toEqual([]);
+    const events = eventsBetween(plan(r, codeShifts(r)), 0, 30);
+    // (the rim knocks once a bar, so two knocks apart are a bar; a meter's sixteenths are twice its eighths)
+    const rims = events.filter((e) => e.voice === 'rim').map((e) => e.at);
+    const bar = rims[1]! - rims[0]!;
+    const [count, unit] = id.split(' ')[0]!.split('/').map(Number) as [number, number];
+    const sixteenth = bar / ((count * 8) / unit) / 2;
+    expect(rims[0]! / bar).toBeCloseTo(0.5, 9);
+    for (const e of events) expect(Math.abs(e.at / sixteenth - Math.round(e.at / sixteenth)), `${e.voice} at ${e.at}`).toBeLessThan(1e-6);
   });
 });
