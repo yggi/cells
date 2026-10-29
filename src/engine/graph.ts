@@ -455,6 +455,19 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
         ...wire('braid', spliceBand(child), id, cellId(child), chord(child), true, true),
       });
     }
+    // a key's tonic read from a cell (`scale(minor, &tonic)`, #290): written in its braid, a wire into it as a spliced
+    // cell's is (the scale itself is a hidden cell the key reads over=, and holds the tonic)
+    const scale = c.over ? result.cells.get(c.over) : undefined;
+    const tonic = c.tonic ?? (scale?.implicit ? scale.tonic : undefined);
+    if (tonic && result.cells.has(tonic) && shown(tonic))
+      link({
+        id: edgeId(id, cellId(tonic)),
+        source: id,
+        target: cellId(tonic),
+        count: 1,
+        transforms: AS_IS,
+        ...wire('braid', 'cv', id, cellId(tonic), 1, true, true),
+      });
     // a note's links: what it explains
     for (const target of c.about)
       if (result.cells.has(target))
@@ -523,9 +536,17 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
     // (the written pairs the routing knows: each term into each voice it plays, each voice into the gate)
     const flows = [...new Set(receivers.map((r) => edgeId(cellId(r.via), into)))];
     for (const f of flows) through.add(f);
+    // (a stack of lines it plays: the routing takes each line into the gate as its own term, drawn through the stack)
+    const stack = g.lines?.length ? result.cells.get(g.notes) : undefined;
+    const members = stack ? g.lines!.map((l) => l.line).filter((n) => result.cells.has(n)) : [];
+    const pairsOf = (name: string) => receivers.flatMap((r) => soundsOf(result, r.via).map((v) => edgeId(cellId(name), cellId(v))));
+    // (and into each voice it plays: a stack's level goes there, as a kit's stream does, `kit:voices`)
+    const intoVoices = (name: string) => receivers.flatMap((r) => [r.name, ...(result.cells.get(r.name)?.kit ? [VOICE_KIT] : [])].map((v) => edgeId(cellId(name), cellId(v))));
+    const intoGate = members.map((m) => edgeId(cellId(m), into));
+    for (const id of intoGate) through.add(id);
     for (const { name, port } of [{ name: g.notes, port: g.port as string }, ...g.levels]) {
       if (!result.cells.has(name)) continue;
-      const pairs = receivers.flatMap((r) => soundsOf(result, r.via).map((v) => edgeId(cellId(name), cellId(v))));
+      const pairs = [...pairsOf(name), ...(name === g.notes ? members.flatMap((m) => [...pairsOf(m), ...intoVoices(m)]) : [])];
       for (const id of pairs) through.add(id);
       link({
         id: edgeId(cellId(name), into),
@@ -534,13 +555,13 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
         count: 1,
         transforms: AS_IS,
         ...(receivers[0] ? { sound: receivers[0].name } : {}),
-        routes: [pairs, flows],
+        routes: [pairs, name === g.notes ? [...flows, ...intoGate] : flows],
         ...wire(port, 'cv', cellId(name), into, name === g.notes ? chord(name) : 1),
       });
     }
     // a stack of lines it plays (#302, `play=&drumlines`, `&drumlines [&kick * &kickForm, &hats]`): each member written
-    // into the stack's cell as a gate's own terms go into the gate, its line on `play`, its levels on `level` (#329)
-    const stack = g.lines?.length ? result.cells.get(g.notes) : undefined;
+    // into the stack's cell as a gate's own terms go into the gate, its line on `play`, its levels on `level` (#329); a
+    // line's wire is routed when the routing takes it into the gate
     if (stack && !stacks.has(stack.name)) {
       stacks.add(stack.name);
       const lines = new Set(g.lines!.map((l) => l.line));
@@ -552,12 +573,15 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
             if (!result.cells.has(r.name)) continue;
             const port = lines.has(r.name) ? 'play' : 'level';
             const from = cellId(r.name);
+            // (a level of a line goes, in the routing, straight into the voices the gate plays)
+            for (const id of [...pairsOf(r.name), ...intoVoices(r.name)]) through.add(id);
             link({
               id: edgeId(from, into),
               source: from,
               target: into,
               count: 1,
               transforms: [refTransform(r)],
+              routes: [[...pairsOf(r.name), ...intoVoices(r.name), ...(port === 'play' ? [edgeId(from, cellId(c.name))] : [])]],
               ...wire(port, 'cv', from, into, port === 'play' ? chord(r.name) : 1),
             });
           }
