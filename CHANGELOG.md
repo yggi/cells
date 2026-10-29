@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+### Changed
+
+- **A vibrato in the library, and the examples' vibratos take it** (#196, the owner: "collapse examples with minimal differences in the parameters to the same, audio/hash changes accepted as long as the 'spirit and style of the piece' is preserved"). A new fragment, `vibrato` (`fragments/expression/`, the facet `expression`, `EXPRESSION_FRAGMENTS`), is `&vibrato map=lin loop=5 0 .1 0 -.1 0`, the vibrato the examples wrote out most: five times a second, a tenth of a semitone. Normalise writes a fragment's cell written inline (`pitch=&(map=lin loop=5 0 .1 0 -.1 0)`) as the cell by name and a `use` of it (`normalise/library.ts`). Nine examples take it: bossa, BWV 847 and pop wrote it already, and sound as before; alpha, ricercar, pachelbel, pertonos, royal and onemore wrote one near it (five to six a second, .08 to .15 of a semitone), now the library's, so their bends move a little and their event snapshot's `notes` and `events` hashes with them. A drift that takes seconds (cellscape, focus, ghosts, idm), a flutter (baustelle), a wide vibrato (spooky) and electroswing's two, each the piece's own, stay as written. The library is 75 fragments. `npm run normalise` normalises a fragment's file against the rest of the library, never as a `use` of itself. **What a frontend sees at its next pin:** a new fragment and facet; an instrument query finds `vibrato` nowhere (another facet); those nine examples have a `use &vibrato` line.
+
 Nothing has changed since `v0.12.1`.
 
 ## v0.12.1 — 2026-10-29

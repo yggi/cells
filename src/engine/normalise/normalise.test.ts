@@ -162,6 +162,21 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     expect(normalise(written, { resolve: resolveSeed }).steps).toEqual([]);
   });
 
+  it('writes a fragment cell written inline as the cell by name, and a use of it (#196): every place, once', () => {
+    const seed = { resolve: resolveSeed, library: LIBRARY };
+    const vib = '&(map=lin loop=5 0 .1 0 -.1 0)';
+    // (the bar the 4/4 fragment's: the use goes after the piece's own use lines)
+    const base = BASE.replace('&bar meter("4/4") step=&tempo', 'use &bar from "4/4"');
+    const written = `${base}&lead s=saw loop=C4 pitch=${vib}\n&pad s=tri loop=C3 pitch=${vib}\n&mix [&tune * &lead, &tune * &pad]`;
+    const { source, steps } = normalise(written, seed);
+    expect(source).toBe(written.replace('use &bar from "4/4"', 'use &bar from "4/4"\nuse &vibrato').replaceAll(vib, '&vibrato'));
+    expect(steps).toHaveLength(1);
+    expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
+    // (a vibrato a word off is the piece's own; a piece that names &vibrato itself keeps its inline cell)
+    expect(normalise(written.replaceAll('.1 0 -.1', '.12 0 -.12'), seed).steps).toEqual([]);
+    expect(normalise(`${written}\n&vibrato 0`, seed).source).toContain(`pitch=${vib}`);
+  });
+
   it('docs/language/canonical.md lists every alias it writes, and what it writes', () => {
     const page = readFileSync('docs/language/canonical.md', 'utf8');
     for (const [alias, ours] of Object.entries(PARAM_ALIASES)) expect([alias, new RegExp(`\\|[^|\\n]*\`${alias}=\`[^|\\n]*\\| \`${ours}=\``).test(page)]).toEqual([alias, true]);

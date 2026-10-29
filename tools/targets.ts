@@ -35,6 +35,8 @@ import { parse } from '../src/engine/parser';
 import { codeShifts } from '../src/engine/program';
 import { eventsBetween, plan } from '../src/engine/realize';
 import { structureOf } from '../src/engine/measure';
+import { expand } from '../src/engine/use';
+import { resolveSeed } from '../src/repository/library';
 
 /** Steps a boundary may be off and still be found: a bar of sixteenths. */
 export const TOLERANCE = 16;
@@ -73,7 +75,8 @@ export interface Score {
 /** A target from its files: the piece (an example's key) and `fixtures/targets/<key>.json`. */
 export function targetOf(key: string): Target {
   const file = readFileSync(`examples/${key}.md`, 'utf8');
-  const text = /```cells\n([\s\S]*?)```/.exec(file)![1]!;
+  // (its `use` lines written out, from the seed library: a text of its own that plays as the example does, #196)
+  const text = expand(/```cells\n([\s\S]*?)```/.exec(file)![1]!, resolveSeed);
   const { sections, themes } = JSON.parse(readFileSync(`fixtures/targets/${key}.json`, 'utf8')) as { sections: number[]; themes: string[] };
   return { key, text, sections, themes };
 }

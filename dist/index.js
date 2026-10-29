@@ -26,6 +26,7 @@ export { INSTRUMENT_FRAGMENTS } from "./repository/instruments.js";
 export { MODE_FRAGMENTS } from "./repository/modes.js";
 export { PERFORMER_FRAGMENTS } from "./repository/performers.js";
 export { STAB_FRAGMENTS } from "./repository/stab.js";
+export { EXPRESSION_FRAGMENTS } from "./repository/expression.js";
 export { MOTIF_FRAGMENTS } from "./repository/motifs.js";
 export { FORM_FRAGMENTS } from "./repository/forms.js";
 export { LIBRARY, resolveSeed } from "./repository/library.js";

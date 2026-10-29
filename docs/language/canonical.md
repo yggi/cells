@@ -80,6 +80,9 @@ A line of the piece that is a library fragment's line word for word, its comment
 |---|---|
 | `&bar meter("4/4") step=&tempo  # four beats` | `use &bar from "4/4"  # four beats` |
 | the General MIDI kit's `&bd`, `&sd` and `&hh` lines, word for word | `use &bd, &sd, &hh from gm_kit` |
+| `pitch=&(map=lin loop=5 0 .1 0 -.1 0)`, the `vibrato` fragment's cell written inline | `pitch=&vibrato` and `use &vibrato` |
+
+A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `use` of it joins the piece's (after its own `use` lines, or first). Not where the piece defines the name itself. A fragment's own file is normalised against the rest of the library, never as a `use` of itself.
 
 ## `use`: one spelling, kept, never expanded
 

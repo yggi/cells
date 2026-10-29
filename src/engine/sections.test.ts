@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { PRESETS } from './presets';
-import { compileSource } from './compile';
+import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 // Decision 016: arranging at the input. A stepped table of names declares them as sections (decision 044); a selector
 // reading the table switches them; what a section steps plays while it is picked, from its top each time.

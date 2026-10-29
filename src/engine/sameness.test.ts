@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { compileSource } from './compile';
+import { compileSource as compileAlone } from './compile';
 import { PRESETS } from './presets';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { playsSameNotes, samePiece, SAMENESS_SECONDS, soundsIdentical, wholeWindow, WHOLE_PIECE_LIMIT } from './sameness';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 // A line that ends (laps=1) 80 s in, at 60 bpm: one note a second, the last after the first minute.
 const ENDS = (last: string, gain = '.5') => `&bar meter("4/4") step=60bpm
@@ -66,7 +69,7 @@ describe('the equalities a tool promises, over their window (#180)', () => {
   it('BWV 847 by hand sounds identical to the text the generator wrote, all 189 s of it (#181)', () => {
     const generated = readFileSync('fixtures/bwv847-generated.cells', 'utf8');
     expect(window(PRESETS.bwv847!.source, generated)).toBeGreaterThan(180);
-    expect(soundsIdentical(PRESETS.bwv847!.source, generated)).toBe(true);
+    expect(soundsIdentical(PRESETS.bwv847!.source, generated, undefined, { resolve: resolveSeed })).toBe(true);
   });
 
   it('S1 reads every number of an event as the snapshot does, to 9 significant digits: one time summed two ways is one time (#196)', () => {

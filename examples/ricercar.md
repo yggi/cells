@@ -5,6 +5,7 @@ description: A study in counterpoint on the King's theme, from strict to free, i
 ---
 
 ```cells
+use &vibrato
 &passesNote label="A pass each: 1 the theme alone · 2 note against note, above · 3 note against note, below · 4 two against one · 5 four against one · 6 free, in three voices." about=(&upper &lower)
 &consonanceNote label="On every note of the theme the voices agree (consonances only); between, a dissonance only passes, by step." about=(&theme &upper &lower)
 
@@ -25,7 +26,7 @@ description: A study in counterpoint on the King's theme, from strict to free, i
 &lower step=8n ~@80 &under ~@80 &under                         # the bass: in pass 3, and again under the free line
 
 &organ loop=C4 map=lin 0 1 env=&(map=adsr .03 .25 .7 .6)        # one pipe, one breath: the theme
-&flute pan=.28 s=sine loop=C4 env=&(map=adsr .03 .1 .8 .2) pitch=&(map=lin loop=5 0 .08 0 -.08 0)
+&flute pan=.28 s=sine loop=C4 env=&(map=adsr .03 .1 .8 .2) pitch=&vibrato
 &bourdon pan=.7 s=tri loop=C4 lpf=900 env=&(map=adsr .02 .15 .8 .3)
 
 &out postgain=3.16 map=sample [&theme * &organ * .5, &upper * &flute * .45, &lower * &bourdon * .5]

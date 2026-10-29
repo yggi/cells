@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Smf, SmfNote } from '../../src/engine/midifile';
-import { compileSource } from '../../src/engine/compile';
+import { compileSource as compileAlone } from '../../src/engine/compile';
+import { resolveSeed } from '../../src/repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196). */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 import { codeShifts } from '../../src/engine/program';
 import { PRESETS } from '../../src/engine/presets';
 import { pieceMidi } from '../../src/engine/midiexport';
