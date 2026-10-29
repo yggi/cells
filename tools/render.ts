@@ -44,6 +44,7 @@ export function readArgs(argv: readonly string[]): RenderArgs {
   if (!format) throw new Error(`--bits is 16, 24 or 32f, not ${bits}`);
   const stems = flag('--stems');
   if (argv.includes('--stems') && stems !== 'voices' && stems !== 'entries') throw new Error(`--stems is voices or entries, not ${stems ?? 'nothing'}`);
+  const tracks: Tracks = stems === 'voices' || stems === 'entries' ? stems : 'mix';
   const seconds = flag('--seconds');
   const name = input.startsWith('example:') ? input.slice('example:'.length) : basename(input).replace(/\.(md|cells)$/, '');
   return {
@@ -52,7 +53,7 @@ export function readArgs(argv: readonly string[]): RenderArgs {
     rate: Number(flag('--rate') ?? 48000),
     format,
     seconds: seconds === undefined ? undefined : Number(seconds),
-    tracks: stems ?? 'mix',
+    tracks,
   };
 }
 
