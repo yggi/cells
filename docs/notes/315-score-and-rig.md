@@ -86,7 +86,8 @@ It compiles with no diagnostic; `performers` is `bassOut`, role `bass`, part `ba
 - **The style vector reaches the sound through the text** (the owner's ruling, §8): one cell, `&style map=style`, stepped with the bar (`step=1m`) for the section's length, each step an inline cell holding that bar's vector, `&(.3 .45 .55 .55 .3)`; a comment before it and after it names the style in words, where the section starts and where it ends (`# section starting between 'funk' (80%) and 'bossa nova'`).
   - `map=style` is new (today `map=` refuses it, checked at 6fe981e); a braid of inline cells stepped by the bar already parses.
   - An instrument and a performer read an axis as any moving parameter reads a cell ([sound.md](../language/sound.md): "a range times cells"), so Jambot's `timbreOf` becomes lines of its default instruments, and a saved session replays its style.
-  - The axes stay Jambot's to name (#81: "Jambot owns the axes"). The tempo stays `&tempo`, not an axis of the vector.
+  - The tempo stays `&tempo`, not an axis of the vector (ruled, §8).
+  - Where the axes live and how the style is written were reopened by the owner the same day: §8's second round.
   - Open for 063: where the axes' names and order are stated (the vector is positional), and how a line reads one axis (`&style` picked by name or by index, against the pick `&t[i]` that today picks a step).
 - **The routing is the rig's.** Jambot's channel map is its default rig's MIDI card; a person with a fifth synth gives the stab channel 4 in their rig (`&midi map=midi &leadOut &bassOut &padOut &stabOut ~!5 &drumsOut`). The single MIDI card of the section text goes, and with it the reason #333 was found (a section silent on a MIDI card alone). #333's ruling stands for every other text.
 - **Open for decision 063:** a rig with no performer for a part the score writes (played as written on the built-in card, with a warning?), and a score that leaves out a part the rig's performer plays (today an undefined name; a silent performer, as a band's selector mutes one, 061 §2, would let a rig outlive sections that drop a role).
@@ -154,4 +155,15 @@ Rungs 3 to 6 are cells', and 4 to 6 can run side by side once 1 and 2 are ruled.
 4. **A rig never travels.**
 5. **The rig's id is `band`.**
 
-Left for decision 063 ([#354](https://github.com/yggi/cells/issues/354)): the axes' names and order, how a line reads one axis, and the two edges of §2 (a part with no performer, a performer with no part).
+### The second round (the owner, later on 2026-10-29): the style's form reopened
+
+- **The axes may move to cells**, Jambot consuming them, not owning them. Positional was "my first instinct for a short form. open to suggestions."
+- **Per bar, or a start and an end?** "do we really need style per bar or can we simplify to start and end, linear interpolation in between if needed?"
+- **Is `&style` the right idea?** "it is not audible, more like a label or a scope", for instance `&about style=[...] label="Jambot Session 'Mellow Pool' - … - Section 1 (Intro) - Bars 1 to 8 - close to 'Funk' - A minor - 120 BPM"`.
+- **Each axis an attribute?** "it would make it very powerful, everything could declare a style-association or -wish" (`&about style['articulation']=0.7`, the syntax to be discussed), at the cost of a longer list of attributes.
+- **Reading an axis is reading an envelope's value:** "how would one access the individual values of an ADSR-envelope? that would be the same."
+- **Ruled:** `&tempo` stays independent, and a tempo may itself be a style-associated fragment (`use &tempo from adagio`, then the piece's `&tempo free(…)`); `&band` stays.
+
+The options and a recommendation are on [#354](https://github.com/yggi/cells/issues/354); this round's answer is decision 063's.
+
+Left for decision 063 ([#354](https://github.com/yggi/cells/issues/354)): the style's form (above), how a line reads one axis, and the two edges of §2 (a part with no performer, a performer with no part).
