@@ -7,8 +7,12 @@ export declare const RATES: {
     readonly lowest: 8000;
     readonly highest: 192000;
 };
-/** What a stem is (decision 062): `mix`, the mix alone; `voices`, a stem for each voice heard, and the mix. */
-export type Tracks = 'mix' | 'voices';
+/**
+ * What a stem is (decision 062): `mix`, the mix alone; `voices`, a stem for each voice heard; `entries`, a stem for each
+ * entry of the sound card (each term of its mix, or of a channel's: what the piece mixes, at the level it mixes it). The
+ * mix is given with either, and the stems sum to it.
+ */
+export type Tracks = 'mix' | 'voices' | 'entries';
 export interface RenderOptions {
     /** Hz: `DEFAULT_RATE` where left out. */
     readonly sampleRate?: number;
@@ -22,19 +26,23 @@ export interface RenderDiagnostic {
     readonly param: string;
     readonly message: string;
 }
-/** Frames rendered: the mix's two channels, and a stem's for each voice heard when `tracks: 'voices'`. */
+/** Frames rendered: the mix's two channels, and each stem's (`tracks: 'voices'` or `'entries'`), by its name. */
 export interface Rendered {
     readonly mix: readonly [Float32Array, Float32Array];
     readonly stems: ReadonlyMap<string, readonly [Float32Array, Float32Array]>;
 }
 export interface Renderer {
     readonly sampleRate: number;
-    /** The voices that have a stem, in the order the text defines them (`tracks: 'voices'`; none for `mix`). */
+    /**
+     * The stems' names, in order: the voices heard, in the order the text defines them (`'voices'`); the card's entries,
+     * named by the cells they name (`crackle*vinyl`, a second of a name `#2`, on a card of two channels `:left`, `:right`),
+     * in the card's order (`'entries'`); none for `'mix'`.
+     */
     readonly stems: readonly string[];
     /** Frames rendered so far: the next `render` starts here. */
     readonly position: number;
     readonly diagnostics: readonly RenderDiagnostic[];
-    /** Notes to sound. One that starts before `position` sounds from there on. */
+    /** Notes to sound. One that starts before `position` sounds from there on. Stems by entry need each note's `output` (`eventsBetween(…, true)`). */
     add(events: readonly Played[]): void;
     /** The next `frames` frames. */
     render(frames: number): Rendered;

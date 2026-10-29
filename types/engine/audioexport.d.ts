@@ -13,9 +13,9 @@ export interface PieceAudio {
     readonly span: Span;
     /** The mix: left and right. */
     readonly mix: readonly [Float32Array, Float32Array];
-    /** A stem a voice heard, in the text's order (`tracks: 'voices'`); they sum to the mix. */
+    /** The stems, by name: a voice each (`tracks: 'voices'`) or an entry of the card each (`'entries'`); they sum to the mix. */
     readonly stems: readonly {
-        readonly voice: string;
+        readonly name: string;
         readonly channels: readonly [Float32Array, Float32Array];
     }[];
     readonly diagnostics: readonly RenderDiagnostic[];

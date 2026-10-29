@@ -23,8 +23,8 @@ export interface PieceAudio {
   readonly span: Span;
   /** The mix: left and right. */
   readonly mix: readonly [Float32Array, Float32Array];
-  /** A stem a voice heard, in the text's order (`tracks: 'voices'`); they sum to the mix. */
-  readonly stems: readonly { readonly voice: string; readonly channels: readonly [Float32Array, Float32Array] }[];
+  /** The stems, by name: a voice each (`tracks: 'voices'`) or an entry of the card each (`'entries'`); they sum to the mix. */
+  readonly stems: readonly { readonly name: string; readonly channels: readonly [Float32Array, Float32Array] }[];
   readonly diagnostics: readonly RenderDiagnostic[];
   /** The mix's loudness: RMS and peak in dB below full scale, and the samples that reached it. */
   readonly loudness: { readonly rms: number; readonly peak: number; readonly clipped: number };
@@ -45,7 +45,7 @@ export function pieceAudio(result: CompileResult, shifts: Shifts, options: Audio
     sampleRate: r.sampleRate,
     span,
     mix: out.mix,
-    stems: r.stems.map((voice) => ({ voice, channels: out.stems.get(voice)! })),
+    stems: r.stems.map((name) => ({ name, channels: out.stems.get(name)! })),
     diagnostics: r.diagnostics,
     loudness: loudness(out.mix),
   };

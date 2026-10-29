@@ -17,7 +17,7 @@ export function pieceAudio(result, shifts, options = {}) {
         sampleRate: r.sampleRate,
         span,
         mix: out.mix,
-        stems: r.stems.map((voice) => ({ voice, channels: out.stems.get(voice) })),
+        stems: r.stems.map((name) => ({ name, channels: out.stems.get(name) })),
         diagnostics: r.diagnostics,
         loudness: loudness(out.mix),
     };

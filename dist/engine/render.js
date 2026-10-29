@@ -279,15 +279,13 @@ export function createRenderer(result, shifts, options = {}) {
         }
         const moves = c.paramCells ?? {};
         const start = (k, d) => (typeof c.params[k] === 'number' ? c.params[k] : (moves[k]?.range?.[0] ?? d));
-        const filters = {};
         const autos = {};
-        if (typeof c.params.lpf === 'number' || moves.lpf) {
-            filters.lpf = new Biquad('lowpass');
+        const has = { lpf: typeof c.params.lpf === 'number' || !!moves.lpf, hpf: typeof c.params.hpf === 'number' || !!moves.hpf };
+        if (has.lpf) {
             autos.lpf = new Auto(start('lpf', 2000));
             autos.lpq = new Auto(start('lpq', 1));
         }
-        if (typeof c.params.hpf === 'number' || moves.hpf) {
-            filters.hpf = new Biquad('highpass');
+        if (has.hpf) {
             autos.hpf = new Auto(start('hpf', 200));
             autos.hpq = new Auto(start('hpq', 1));
         }
@@ -296,15 +294,75 @@ export function createRenderer(result, shifts, options = {}) {
             seed: c.seed,
             wave,
             noise: isNoise ? noise(src, rate) : null,
-            filters,
+            has,
             autos,
-            notes: [],
-            dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)],
+            chains: [],
         };
         voices.set(name, v);
         return v;
     };
-    const stems = tracks === 'voices' ? [...result.cells.values()].filter((c) => c.voice && heard.has(c.name)).map((c) => c.name) : [];
+    const chainOf = (v, key) => {
+        let ch = v.chains.find((x) => x.key === key);
+        if (!ch) {
+            ch = { key, filters: {}, notes: [], dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
+            if (v.has.lpf)
+                ch.filters.lpf = new Biquad('lowpass');
+            if (v.has.hpf)
+                ch.filters.hpf = new Biquad('highpass');
+            v.chains.push(ch);
+            v.chains.sort((a, b) => (entryOrder.get(a.key) ?? -1) - (entryOrder.get(b.key) ?? -1));
+        }
+        return ch;
+    };
+    const sinks = [...result.cells.values()].filter((c) => c.sink).map((c) => c.name);
+    const entries = new Map();
+    for (const o of result.outputs)
+        if (heard.has(o.voice) || o.kit)
+            for (const p of o.parts)
+                if (p.entry)
+                    entries.set(`${p.sink}|${p.entry.channel}|${p.entry.index}`, { sink: p.sink, ...p.entry });
+    const entryKeys = [...entries.keys()].sort((a, b) => {
+        const x = entries.get(a);
+        const y = entries.get(b);
+        return sinks.indexOf(x.sink) - sinks.indexOf(y.sink) || x.channel - y.channel || x.index - y.index;
+    });
+    const entryOrder = new Map(entryKeys.map((k, i) => [k, i]));
+    const entryName = new Map();
+    {
+        const stereo = new Set([...entries.values()].filter((e) => e.channel > 0).map((e) => e.sink));
+        const taken = new Map();
+        for (const k of entryKeys) {
+            const e = entries.get(k);
+            const base = `${e.label}${stereo.has(e.sink) ? (e.channel ? ':right' : ':left') : ''}`;
+            const n = (taken.get(base) ?? 0) + 1;
+            taken.set(base, n);
+            entryName.set(k, n > 1 ? `${base}#${n}` : base);
+        }
+    }
+    const outputsById = new Map(result.outputs.map((o) => [o.id, o]));
+    const sharesOf = (e) => {
+        const o = e.output ? outputsById.get(e.output) : undefined;
+        if (!o)
+            return null;
+        const by = new Map();
+        for (const p of o.parts) {
+            if (!p.entry || muted.has(cellId(p.mix)) || muted.has(cellId(p.sink)))
+                continue;
+            const key = `${p.sink}|${p.entry.channel}|${p.entry.index}`;
+            const g = by.get(key) ?? [0, 0];
+            g[0] += p.gains[0];
+            g[1] += p.gains[1];
+            by.set(key, g);
+        }
+        const total = [...by.values()].reduce((t, g) => [t[0] + g[0], t[1] + g[1]], [0, 0]);
+        return [...by].map(([key, g]) => ({ key, left: total[0] ? g[0] / total[0] : 0, right: total[1] ? g[1] / total[1] : 0 }));
+    };
+    const UNROUTED = 'unrouted';
+    const stems = tracks === 'voices'
+        ? [...result.cells.values()].filter((c) => c.voice && heard.has(c.name)).map((c) => c.name)
+        : tracks === 'entries'
+            ? entryKeys.map((k) => entryName.get(k))
+            : [];
     let position = 0;
     const add = (events) => {
         const sorted = [...events].sort((a, b) => a.at - b.at || (a.voice < b.voice ? -1 : a.voice > b.voice ? 1 : 0) || a.freq - b.freq || a.dur - b.dur);
@@ -357,33 +415,48 @@ export function createRenderer(result, shifts, options = {}) {
             for (const k of Object.keys(params))
                 if (LATER[k] || k === 'index')
                     say(e.voice, k, `&${e.voice}'s moving ${k}= is sounded from stage R2: rendered without it`);
-            const note = {
-                start: Math.max(0, Math.ceil(e.at * rate - 1e-9)),
-                at: e.at,
-                end,
-                gateEnd,
-                peak: NOTE_PEAK * level * (v.noise ? NOISE_PEAK : 1),
-                left: Math.cos(x),
-                right: Math.sin(x),
-                env,
-                level: lvl,
-                freq: e.freq,
-                semis,
-                cents,
-                grain: v.noise ? Math.floor(grainOffset(v.seed, e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
-                phase: 0,
-            };
-            let i = v.notes.length;
-            while (i > 0 && v.notes[i - 1].at > note.at)
-                i--;
-            v.notes.splice(i, 0, note);
+            let shares = [{ key: '', left: 1, right: 1 }];
+            if (tracks === 'entries') {
+                const found = sharesOf(e);
+                if (!found) {
+                    say(e.voice, 'output', `a note of &${e.voice} names no output, so no entry of the card: it goes to the stem "${UNROUTED}" (render the events of eventsBetween(…, true))`);
+                    if (!stems.includes(UNROUTED))
+                        stems.push(UNROUTED);
+                }
+                shares = found ?? [{ key: UNROUTED, left: 1, right: 1 }];
+            }
+            for (const share of shares) {
+                if (!share.left && !share.right)
+                    continue;
+                const note = {
+                    start: Math.max(0, Math.ceil(e.at * rate - 1e-9)),
+                    at: e.at,
+                    end,
+                    gateEnd,
+                    peak: NOTE_PEAK * level * (v.noise ? NOISE_PEAK : 1),
+                    left: Math.cos(x) * share.left,
+                    right: Math.sin(x) * share.right,
+                    env,
+                    level: lvl,
+                    freq: e.freq,
+                    semis,
+                    cents,
+                    grain: v.noise ? Math.floor(grainOffset(v.seed, e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
+                    phase: 0,
+                };
+                const chain = chainOf(v, share.key);
+                let i = chain.notes.length;
+                while (i > 0 && chain.notes[i - 1].at > note.at)
+                    i--;
+                chain.notes.splice(i, 0, note);
+            }
         }
     };
-    const sound = (v, from, to, blockStart) => {
-        const [dl, dr] = v.dry;
+    const sound = (v, ch, from, to, blockStart) => {
+        const [dl, dr] = ch.dry;
         dl.fill(0, from - blockStart, to - blockStart);
         dr.fill(0, from - blockStart, to - blockStart);
-        for (const n of v.notes) {
+        for (const n of ch.notes) {
             if (n.start >= to)
                 break;
             const lastFrame = Math.ceil(n.end * rate);
@@ -425,20 +498,20 @@ export function createRenderer(result, shifts, options = {}) {
             }
         }
         const done = Math.ceil;
-        v.notes = v.notes.filter((n) => done(n.end * rate) > to);
+        ch.notes = ch.notes.filter((n) => done(n.end * rate) > to);
     };
-    const filter = (v, from, to, blockStart) => {
+    const filter = (v, ch, from, to, blockStart) => {
         const t = blockStart / rate;
         for (const k of ['lpf', 'hpf']) {
-            const bq = v.filters[k];
+            const bq = ch.filters[k];
             if (!bq)
                 continue;
             const q = k === 'lpf' ? 'lpq' : 'hpq';
             bq.set(v.autos[k].at(t), v.autos[q].at(t), rate);
             for (let f = from; f < to; f++) {
                 const i = f - blockStart;
-                v.dry[0][i] = bq.run(v.dry[0][i], 0);
-                v.dry[1][i] = bq.run(v.dry[1][i], 1);
+                ch.dry[0][i] = bq.run(ch.dry[0][i], 0);
+                ch.dry[1][i] = bq.run(ch.dry[1][i], 1);
             }
         }
     };
@@ -446,6 +519,7 @@ export function createRenderer(result, shifts, options = {}) {
         const n = Math.max(0, Math.floor(frames));
         const mix = [new Float32Array(n), new Float32Array(n)];
         const stemOut = new Map(stems.map((s) => [s, [new Float32Array(n), new Float32Array(n)]]));
+        const stemOf = (ch, voice) => tracks === 'voices' ? stemOut.get(voice) : tracks === 'entries' ? stemOut.get(ch.key === UNROUTED ? UNROUTED : (entryName.get(ch.key) ?? '')) : undefined;
         const order = [...result.cells.values()].filter((c) => c.voice && heard.has(c.name)).map((c) => c.name);
         const end = position + n;
         for (let from = position; from < end;) {
@@ -453,29 +527,47 @@ export function createRenderer(result, shifts, options = {}) {
             const to = Math.min(end, blockStart + BLOCK);
             for (const name of order) {
                 const v = voices.get(name);
-                if (!v || (!v.notes.length && !v.filters.lpf && !v.filters.hpf))
+                if (!v)
                     continue;
-                sound(v, from, to, blockStart);
-                filter(v, from, to, blockStart);
-                const stem = stemOut.get(name);
-                for (let f = from; f < to; f++) {
-                    const i = f - blockStart;
-                    const l = v.dry[0][i] * VOICE_GAIN * master;
-                    const r = v.dry[1][i] * VOICE_GAIN * master;
-                    if (stem) {
-                        stem[0][f - position] = l;
-                        stem[1][f - position] = r;
-                        mix[0][f - position] += stem[0][f - position];
-                        mix[1][f - position] += stem[1][f - position];
-                    }
-                    else {
-                        mix[0][f - position] += Math.fround(l);
-                        mix[1][f - position] += Math.fround(r);
+                for (const ch of v.chains) {
+                    if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf)
+                        continue;
+                    sound(v, ch, from, to, blockStart);
+                    filter(v, ch, from, to, blockStart);
+                    const stem = stemOf(ch, name);
+                    for (let f = from; f < to; f++) {
+                        const i = f - blockStart;
+                        const l = ch.dry[0][i] * VOICE_GAIN * master;
+                        const r = ch.dry[1][i] * VOICE_GAIN * master;
+                        if (tracks === 'entries') {
+                            if (stem) {
+                                stem[0][f - position] += l;
+                                stem[1][f - position] += r;
+                            }
+                        }
+                        else if (stem) {
+                            stem[0][f - position] = l;
+                            stem[1][f - position] = r;
+                            mix[0][f - position] += stem[0][f - position];
+                            mix[1][f - position] += stem[1][f - position];
+                        }
+                        else {
+                            mix[0][f - position] += Math.fround(l);
+                            mix[1][f - position] += Math.fround(r);
+                        }
                     }
                 }
             }
             from = to;
         }
+        if (tracks === 'entries')
+            for (const s of stems) {
+                const [l, r] = stemOut.get(s);
+                for (let i = 0; i < n; i++) {
+                    mix[0][i] += l[i];
+                    mix[1][i] += r[i];
+                }
+            }
         position = end;
         return { mix, stems: stemOut };
     };

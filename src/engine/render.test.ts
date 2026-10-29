@@ -74,7 +74,7 @@ describe('the renderer', () => {
 
   it('the stems, a voice each, sum to the mix exactly', () => {
     const a = pieceAudio(example('electroswing'), codeShifts(example('electroswing')), { seconds: 6, tracks: 'voices' });
-    expect(a.stems.map((s) => s.voice)).toEqual(expect.arrayContaining(['bd', 'hh', 'bassV', 'leadV']));
+    expect(a.stems.map((s) => s.name)).toEqual(expect.arrayContaining(['bd', 'hh', 'bassV', 'leadV']));
     for (const ch of [0, 1] as const) {
       const sum = new Float32Array(a.mix[ch].length);
       for (const s of a.stems) for (let i = 0; i < sum.length; i++) sum[i]! += s.channels[ch][i]!;
@@ -82,6 +82,39 @@ describe('the renderer', () => {
     }
     // and asking for stems moves no sample of the mix
     expect(bits(pieceAudio(example('electroswing'), codeShifts(example('electroswing')), { seconds: 6 }).mix)).toEqual(bits(a.mix));
+  });
+
+  it('the stems, an entry of the card each, sum to the mix exactly, and the mix is the mix to float rounding', () => {
+    const r = example('electroswing');
+    const a = pieceAudio(r, codeShifts(r), { seconds: 6, tracks: 'entries' });
+    expect(a.stems.map((s) => s.name)).toEqual(['drumsOut', 'crackle*vinyl', 'bassOut', 'stabOut', 'leadOut', 'lead2']);
+    const plain = pieceAudio(r, codeShifts(r), { seconds: 6 });
+    for (const ch of [0, 1] as const) {
+      const sum = new Float32Array(a.mix[ch].length);
+      for (const s of a.stems) for (let i = 0; i < sum.length; i++) sum[i]! += s.channels[ch][i]!;
+      expect(bits([sum])).toEqual(bits([a.mix[ch]]));
+      // (the same notes, summed by entry rather than by voice: the order of the additions, no more)
+      for (let i = 0; i < sum.length; i++) expect(Math.abs(a.mix[ch][i]! - plain.mix[ch][i]!)).toBeLessThan(1e-6);
+    }
+  });
+
+  it('a voice in two entries is split between their stems at the levels the card gives it, each filtered as the mix is', () => {
+    const text = '&v s=saw loop=A3 lpf=800\n&a step=4 0 2 4 5\n&b step=4 7 ~ 9 ~\n&out map=sample postgain=1 [&a * &v, &b * &v * .5, &a * &v * .25]';
+    const a = audio(text, { seconds: 1, tracks: 'entries' });
+    expect(a.stems.map((s) => s.name)).toEqual(['a*v', 'b*v', 'a*v#2']);
+    const one = audio('&v s=saw loop=A3 lpf=800\n&a step=4 0 2 4 5\n&out map=sample postgain=1 [&a * &v]', { seconds: 1 });
+    // the first entry's stem is &a on &v at 1, as that piece alone; the third its quarter
+    for (let i = 0; i < one.mix[0].length; i++) {
+      expect(a.stems[0]!.channels[0][i]).toBeCloseTo(one.mix[0][i]!, 6);
+      expect(a.stems[2]!.channels[0][i]).toBeCloseTo(one.mix[0][i]! * 0.25, 6);
+    }
+  });
+
+  it('a card of two channels names an entry by its side, and an entry on the left is heard on the left alone', () => {
+    const a = pieceAudio(example('just'), codeShifts(example('just')), { seconds: 2, tracks: 'entries' });
+    expect(a.stems.map((s) => s.name)).toEqual(['pure*organ:left', 'tempered*organ:right']);
+    expect(loudness([a.stems[0]!.channels[1]]).rms).toBe(-Infinity);
+    expect(loudness([a.stems[1]!.channels[0]]).rms).toBe(-Infinity);
   });
 
   it('a piece sounds the same every time, noise and all', () => {
