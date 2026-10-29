@@ -29,5 +29,5 @@ use &vibrato
 &flute pan=.28 s=sine loop=C4 env=&(map=adsr .03 .1 .8 .2) pitch=&vibrato
 &bourdon pan=.7 s=tri loop=C4 lpf=900 env=&(map=adsr .02 .15 .8 .3)
 
-&out postgain=3.16 map=sample [&theme * &organ * .5, &upper * &flute * .45, &lower * &bourdon * .5]
+&out postgain=2.2 map=sample [&theme * &organ * .5, &upper * &flute * .45, &lower * &bourdon * .5]
 ```

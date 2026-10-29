@@ -27,5 +27,5 @@ description: Sine mixtures on Stockhausen's scale of 25 equal steps to 5:1, with
 &swell pan=.14 s=sine loop=100 env=&(map=adsr 1.5 .5 .8 1.5)            # 100 Hz: the scale's first tone
 &fade pan=.86 s=sine loop=100 env=&(map=adsr .01 1.5 .3 1.5)
 
-&out postgain=5.62 map=sample [&forward * &dyn * &swell * .07, &backward * &fade * .07]
+&out postgain=11.3 map=sample [&forward * &dyn * &swell * .07, &backward * &fade * .07]
 ```

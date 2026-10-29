@@ -37,7 +37,7 @@ use &strike, &thump, &snap, &click from envelopes
 &sections step=4n &bassBar &keysBar &hookBar &hatsBar &beatBar &endBar
 &song over=&sections step=1m/4 laps=1 label="intro · verse · verse · chorus · chorus · break · chorus · chorus · outro · end" [1,3] [0,1,3,4]!2 [0,1,2,3,4]!2 [1,2] [0,1,2,3,4]!2 [1] 5
 
-&out postgain=1.78 map=sample [&hats,
+&out postgain=2.31 map=sample [&hats,
                          &beat,
                          &roots * &bass * .5,
                          &chords * &keys * .15,

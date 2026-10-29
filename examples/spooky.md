@@ -91,5 +91,5 @@ A round bass, an organ, a celesta an octave and more above the stab player's reg
 &windline step=1m 0 ~ ~ ~
 &howl s=brown lpf=700 env=&(map=adsr 2 1 .5 2)
 
-&out map=sample postgain=1.71 [&drumsOut, &bassOut, &padOut * .25, &stabOut * .3, &leadOut * .5, &windline * &howl * .1]
+&out map=sample postgain=1.93 [&drumsOut, &bassOut, &padOut * .25, &stabOut * .3, &leadOut * .5, &windline * &howl * .1]
 ```

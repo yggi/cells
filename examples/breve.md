@@ -13,5 +13,5 @@ description: beat=2 counts a 4/4 bar in halves, and pulse=16n gives a scan's ent
 &run over=scale(minor) step=&sixteenths:16n 0 2 4 2
 
 &bell s=sine loop=A2 env=&(map=adsr 0 .3 0 .1)
-&out map=sample postgain=1.41 [&low * &bell * .6, &run * &bell * .3]
+&out map=sample postgain=6.02 [&low * &bell * .6, &run * &bell * .3]
 ```

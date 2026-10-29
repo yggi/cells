@@ -25,6 +25,6 @@ use &thump from envelopes
 
 &sections step=4n &keysBar &tuneBar &drumBar
 &song over=&sections step=1m/4 laps=1 label="intro · verse · chorus · end" 0 [0,2] [0,1,2] 0
-&out map=sample postgain=2 [&chords * &keys * .15, &tune * &lead * .2,
+&out map=sample postgain=6.46 [&chords * &keys * .15, &tune * &lead * .2,
                          &kick, &click * &rim * .1]   # a long line can go on: it ends with a comma
 ```
