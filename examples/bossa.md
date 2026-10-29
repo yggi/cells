@@ -5,6 +5,7 @@ description: A bossa nova whose guitar strums on the clave's five strokes, over 
 ---
 
 ```cells
+use &vibrato
 # Bossa nova. The clave is a meter: five strokes over a bar of sixteenths,
 # scan(3 3 4 3 3) — x..x..x...x..x.. — and the guitar strums on its strokes.
 &bar meter("4/4") step=free(128bpm, 90..170)
@@ -19,7 +20,7 @@ description: A bossa nova whose guitar strums on the clave's five strokes, over 
 
 &guitar s=tri loop=D3 lpf=2200 env=&(map=adsr .003 .5 .15 .3)
 &bass s=sine loop=D2 env=&(map=adsr .01 .4 .5 .2)
-&flute glide=.08 s=sine loop=D4 env=&(map=adsr .06 .2 .7 .4) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
+&flute glide=.08 s=sine loop=D4 env=&(map=adsr .06 .2 .7 .4) pitch=&vibrato
 &click gain=.3 s=white hpf=2500 env=&(map=adsr 0 .03 0 .02)
 &shh gain=.12 s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
 

@@ -5,6 +5,7 @@ description: "Wendy Carlos' alpha scale: nine equal steps to a pure fifth, and n
 ---
 
 ```cells
+use &vibrato
 # Wendy Carlos' alpha scale: equal steps of about 78 cents, nine to a pure fifth —
 # and no octave at all. Five steps make a near-pure major third (5:4), four a minor
 # third (6:5), so triads ring true: 0 5 9 is major, 0 4 9 minor.
@@ -15,7 +16,7 @@ description: "Wendy Carlos' alpha scale: nine equal steps to a pure fifth, and n
 &chords over=&alpha step=1m [0,5,9] [4,8,13] [9,14,18] [5,9,14]       # major · minor · major · minor
 &tune over=&alpha step=8n 9 14 18 14 13 8 4 8 18 23 27 23 22 18 14 9 14 18 23 18 14 13 9@2 5 9 14 18 14 9@3
 
-&brass s=saw loop=C4 lpf=2200 lpq=3 env=&(map=adsr .04 .2 .7 .3) pitch=&(map=lin loop=5 0 .08 0 -.08 0)
+&brass s=saw loop=C4 lpf=2200 lpq=3 env=&(map=adsr .04 .2 .7 .3) pitch=&vibrato
 &pad s=tri loop=C3 env=&(map=adsr .4 .3 .8 .8)
 
 &mix postgain=2.37 map=sample [&tune * &brass * .35, &chords * &pad * .3]

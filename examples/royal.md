@@ -5,6 +5,7 @@ description: Bach's royal theme through every key in fifths, then every mode.
 ---
 
 ```cells
+use &vibrato
 # Bach's royal theme. Every pass of &theme moves &key a fifth (C G D A …);
 # every full circle of &key (12 passes) moves &scale one degree.
 &bar scan(27 23 26 24) step=&tempo                             # the clock: 4/4, bent * . + .
@@ -16,7 +17,7 @@ description: Bach's royal theme through every key in fifths, then every mode.
 &pedal over=&scale step=2n 0                  # one note every two beats
 
 # voices: loop= is pitch 0 (turns per second); sound in dough notation
-&lead s=saw loop=C4 lpf=2200 lpq=2 room=.3 env=&(map=adsr .01 .3 .4 .4) pitch=&(map=lin loop=5 0 .15 0 -.15 0)
+&lead s=saw loop=C4 lpf=2200 lpq=2 room=.3 env=&(map=adsr .01 .3 .4 .4) pitch=&vibrato
 &bass s=tri loop=C2 env=&(map=adsr .01 .5 .5 .3)
 
 &mix postgain=2.51 map=sample [&theme * &lead * 0.6, &pedal * &bass * 0.7]                          # the sound card: two channels, the same mix

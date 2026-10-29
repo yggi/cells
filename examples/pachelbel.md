@@ -8,6 +8,7 @@ description: Eight bass notes, over and over; three violins play one line, each 
 # Johann Pachelbel, Canon in D. Eight bass notes, over and over (the ground);
 # three violins play one line, each entering two bars after the last.
 use &bar from "4/4"
+use &vibrato
 &tempo step=free(66bpm, 40..100)
 &ground step=4n 0 -5 -3 -8 -7 -12 -7 -5                   # D A B F# G D G A — two bars, forever
 
@@ -15,7 +16,7 @@ use &bar from "4/4"
 &line step=8n show=notes &(16@2 14@2 12@2 11@2 9@2 7@2 9@2 11@2) &(12@2 11@2 9@2 7@2 5@2 4@2 5@2 2@2) &(0 4 7 5 4 0 4 2 0 -3 0 7 5 9 7 5)
 
 &cello s=saw loop=D3 lpf=900 env=&(map=adsr .03 .3 .7 .3)
-&violin s=saw loop=D4 lpf=2600 env=&(map=adsr .08 .2 .8 .4) pitch=&(map=lin loop=5 0 .12 0 -.12 0)
+&violin s=saw loop=D4 lpf=2600 env=&(map=adsr .08 .2 .8 .4) pitch=&vibrato
 
 # the canon: each violin is the line a variation later ([<<]); each enters a ground later
 &out postgain=2.51 map=sample [&ground * &cello * .6,

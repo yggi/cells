@@ -18,10 +18,13 @@ import {
   splitWords,
   usersOf,
 } from './edit';
-import { compileSource } from './compile';
+import { compileSource as compileAlone } from './compile';
 import { flatten, tapped } from './flatten';
 import { codeShifts } from './program';
 import { PRESETS } from './presets';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 describe('source edits', () => {
   const src = `# a comment &key shift=9

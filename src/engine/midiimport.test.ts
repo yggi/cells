@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { cellsFromMidi } from './midiimport';
 import { readMidi, writeMidi, type Smf } from './midifile';
 import { pieceMidi } from './midiexport';
-import { compileSource } from './compile';
+import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { GM_KIT, gmDrumNote, kitNotes, noteOf } from './midi';
@@ -10,6 +10,9 @@ import { PRESETS } from './presets';
 import { pieceMeta } from './parser';
 import { writePiece } from './piecefile';
 import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 /** A piece's notes as (key, start, length), in order: what a file must give back. */
 function notesOf(source: string) {

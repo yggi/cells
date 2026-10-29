@@ -20,7 +20,9 @@ export function normaliseFile(path: string, text: string): { text: string; steps
   }
   const file = readLiterate(text);
   if ('problems' in file) return { text, steps: [] };
-  const { source, steps } = normalise(file.text, SEED);
+  // (a fragment of the library is normalised against the others: its own lines are their own home)
+  const own = /^---\n[\s\S]*?^id: *"?([^"\n]+?)"? *$/m.exec(text)?.[1];
+  const { source, steps } = normalise(file.text, own ? { ...SEED, library: SEED.library.filter((f) => f.id !== own) } : SEED);
   if (file.raw) return { text: source, steps };
   if (!steps.length) return { text, steps };
   return { text: renderFile(file, rewrite(file.layout, source.trimEnd())), steps };

@@ -10,7 +10,8 @@
  *  - names.ts:    the interface names where they are unambiguous (#196): the main meter &bar, its rate &tempo, the main key
  *                 &key, its tonic &tonic; and scan(1 1 1 1), the meter of four beats, as meter("4/4")
  *  - library.ts:  a line that is a library fragment's word for word as a use of it (#196): &bar meter("4/4") step=&tempo
- *                 → use &bar from "4/4", with the library the call gives (`NormaliseOptions.library`)
+ *                 → use &bar from "4/4", and a fragment's cell written inline as it by name: pitch=&(map=lin …)
+ *                 → pitch=&vibrato, use &vibrato; with the library the call gives (`NormaliseOptions.library`)
  *  - forwarded.ts: a use of a fragment that only forwards as the use it forwards to (#196): use * from "core kit" → use &bd, … from gm_kit
  *
  * The canonical table's other rows join as the owner rules them (#27). A `use` line (decision 054) is kept, in its

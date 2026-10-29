@@ -29,8 +29,8 @@ describe("the structure measure: decision 049's (leaves, attribute values, cells
     const piece = (lpf: string) => `&bar meter("4/4") step=120bpm\n&tune step=8n 0 2\n&v s=saw loop=C4 ${lpf}\n&out map=sample [&tune * &v]`;
     expect(structureOf(piece('cutoff=800'))).toEqual(structureOf(piece('lpf=800')));
   });
-  it('BWV 847: the generator wrote 1,396, by hand 1,125 (#181, #182)', () => {
+  it('BWV 847: the generator wrote 1,396, by hand 1,118 (#181, #182; its vibrato the library’s since #196)', () => {
     expect(structureOf(readFileSync('fixtures/bwv847-generated.cells', 'utf8')).total).toBe(1396);
-    expect(structureOf(PRESETS.bwv847!.source).total).toBe(1125);
+    expect(structureOf(PRESETS.bwv847!.source).total).toBe(1118);
   });
 });

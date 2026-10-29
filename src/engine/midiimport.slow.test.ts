@@ -5,7 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { cellsFromMidi } from './midiimport';
 import { readMidi, writeMidi } from './midifile';
 import { pieceMidi } from './midiexport';
-import { compileSource } from './compile';
+import { compileSource as compileAlone } from './compile';
+import { resolveSeed } from '../repository/library';
+/** As Cell studio compiles an example: its `use` lines read the seed library (#196). */
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { noteOf } from './midi';

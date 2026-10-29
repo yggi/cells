@@ -5,6 +5,7 @@ description: "I – V – vi – IV, arranged by a selector: intro, verses, chor
 ---
 
 ```cells
+use &vibrato
 # The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees
 # over the major scale, each chord comes out the right kind: C, G, Am, F.
 # Arranged: each part is a section stepped by the bar, and &song switches the sections,
@@ -21,7 +22,7 @@ description: "I – V – vi – IV, arranged by a selector: intro, verses, chor
 &beat tags="drums" step=&beatBar &bd &sd &bd &sd
 &hats tags="drums" step=&hatsBar*2 &hh:0:.5 &hh:0:.25 &hh:0:.5 &hh:0:.25 &hh:0:.5 &hh:0:.25 &hh:0:.5 &hh:0:.3
 
-&lead tags="hook" s=square loop=C5 lpf=3000 env=&(map=adsr .01 .2 .6 .2) pitch=&(map=lin loop=5 0 .1 0 -.1 0)
+&lead tags="hook" s=square loop=C5 lpf=3000 env=&(map=adsr .01 .2 .6 .2) pitch=&vibrato
 &keys tags="keys" s=tri loop=C4 env=&(map=adsr .005 .3 .3 .2)
 &bass tags="bass" s=square loop=C2 lpf=500 env=&(map=adsr .005 .15 .5 .05)
 &bd tags="drums" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)

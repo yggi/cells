@@ -7,7 +7,7 @@
  */
 import type { Resolve } from '../engine/program';
 import type { Fragment } from './fragments';
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, the performers, the stab lines, the motifs, then the forms: sixty-seven fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, then the forms: seventy-five fragments. */
 export declare const LIBRARY: readonly Fragment[];
 /**
  * The ids the library no longer lists, each still read for one minor version as a fragment that only forwards: a `use`
