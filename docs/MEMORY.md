@@ -16,7 +16,7 @@ The language's open questions live in this tracker, [yggi/cells' issues](https:/
 
 The whole map, module by module: [architecture.md](architecture.md).
 
-- `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, Vary (`vary/`, decision 052), the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), a render's span (`span`), the time analysis (`time/`)
+- `engine/` parse, compile, realize (plan → events), schedule (windows), the headless host, edit, Shorten, Vary (`vary/`, decision 052), the folder (`fold/`, MIDI → cells), physics, FM, MIDI files (`midifile`, `midiimport`, `midiexport`, `miditext`), a render's span (`span`), audio (`render`, `audioexport`, `wavfile`, decision 062), the time analysis (`time/`)
 - `theory/` modes and tonal's scale names
 - `repository/` fragments found by their place in style space, with a learned layer (`fragments.ts`, `learned.ts`); files, holes and the fit (`files.ts`, `holes.ts`, `fit.ts`); the seed library, a module a facet, all in `library.ts`
 - `index.ts` the package's surface; every module is also `@yggi/cells/engine/<module>` (`theory/`, `repository/` alike)
@@ -98,3 +98,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 059 · A `use` says what it takes: `use &bd from core_kit`, `use * from …`, `use &x` · → decisions/059-named-use.md
 - 060 · The key is named, `over=&key` (`over=key` the old way); a tonic is a cell, stepped or free · → decisions/060-the-key-is-named.md
 - 061 · The band: a role cell says what its gates play as; a selector over the performers says when · → decisions/061-the-band.md
+- 062 · Cells renders audio: events in, samples out, in blocks; superdough's meaning at the examples' level · → decisions/062-cells-renders-audio.md

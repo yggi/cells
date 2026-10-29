@@ -304,6 +304,15 @@ export interface Output {
         readonly mix: string;
         readonly sink: string;
         readonly gains: readonly [number, number];
+        /**
+         * The sound card's entry it comes through (a term of the card's mix, or of a channel's: `&bassOut`, `&crackle * &vinyl
+         * * .04`): its channel, its place, and the cells it names (`crackle*vinyl`). What a render's stem by entry is (decision 062).
+         */
+        readonly entry?: {
+            readonly channel: number;
+            readonly index: number;
+            readonly label: string;
+        };
     }[];
     /**
      * Selectors it plays through (a cell reading a table of sections, the section that steps it: decision 016): it sounds while each picks its

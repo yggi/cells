@@ -3,6 +3,7 @@ import { ATTRIBUTES, memberParams, VOICE_PARAMS } from "../attributes.js";
 import { canonicalTag, TUTORIAL } from "../tags.js";
 import { isMidiCard } from "../program.js";
 import { noSound } from "./band.js";
+const entryLabel = (b) => [...b.pitches.map((t) => t.ref.name), b.voice.name].filter((n) => !n.startsWith('λ')).join('*') || b.voice.name;
 export function bindVoices(ctx, decls, given, typed) {
     const { error, warn, unknownCell } = ctx;
     const cells = new Map(given);
@@ -46,7 +47,7 @@ export function bindVoices(ctx, decls, given, typed) {
                 error(u.atom.kind === 'ref' && mix?.map?.kind === 'role' ? noSound(u.atom.name) : `A channel of the sound card is a mix: &mix, or [&theme * &lead] written in place`, d.span);
                 return;
             }
-            for (const { b, through, top } of bindings.flatMap((x) => expand(x).map((e) => ({ ...e, top: x })))) {
+            for (const { b, through, top, index } of bindings.flatMap((x, index) => expand(x).map((e) => ({ ...e, top: x, index })))) {
                 const key = termKey(b);
                 let g = gathered.get(key);
                 const span = sink.implicit ? top.voice.span : mix.span;
@@ -57,7 +58,7 @@ export function bindVoices(ctx, decls, given, typed) {
                 const part = channels.length === 1 ? [b.gain, b.gain] : ch === 0 ? [b.gain, 0] : [0, b.gain];
                 g.gains[0] += part[0];
                 g.gains[1] += part[1];
-                g.parts.push({ mix: mix.name, sink: sink.name, gains: part });
+                g.parts.push({ mix: mix.name, sink: sink.name, gains: part, entry: { channel: ch, index, label: entryLabel(top) } });
                 g.via.add(mix.name).add(sink.name);
             }
         });

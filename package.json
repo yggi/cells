@@ -59,6 +59,7 @@
     "reference": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/reference.ts",
     "normalise": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/normalise.ts",
     "structure": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/structure.ts",
+    "render": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/render.ts",
     "types": "tsc -p tsconfig.types.json",
     "dist": "node --experimental-strip-types --no-warnings tools/dist.ts"
   },
