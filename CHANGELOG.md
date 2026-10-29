@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since `v0.12.0`.
+
+## v0.12.0 — 2026-10-29
+
 ### Added
 
 - **Seeds for two presets Jambot is to adopt, Electro swing and Spooky, and the example *Spooky, in pieces*** (#349; yggi/jambot#517). The library is 71 fragments.
