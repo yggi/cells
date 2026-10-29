@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since `v0.12.1`.
+
+## v0.12.1 — 2026-10-29
+
 ### Added
 
 - **Phrygian, lydian and locrian as mode fragments** (yggi/jambot#516, the owner: "jambot should be able to play all 7 modes. they should all be fragments"): with aeolian, dorian, ionian and mixolydian, every diatonic mode is a fragment, `&key scale(<mode>, &tonic)`. No preset plays them; each sits at a point of its own, placed by hand (phrygian at sync .6, harm .6, artic .7, energy .85; lydian at .15, .6, .15, .3; locrian at .9, 1, .6, .9). The library is 74 fragments. **What a frontend sees at its next pin:** a mode query at each of Jambot's presets finds what it did, at distance 0; between them, nearer one of the three, it finds that one. No example sounds different, and no event snapshot moves.
