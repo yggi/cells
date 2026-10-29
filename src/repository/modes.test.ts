@@ -30,7 +30,7 @@ import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP
 const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
-type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian' | 'harmonic';
+type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian' | 'harmonic' | 'phrygian' | 'lydian' | 'locrian';
 
 // Lifted from yggi/jambot packages/engine/src/style.ts @ bf96210 (`PRESETS`, each preset's `mode`).
 const PRESETS: { name: string; point: StylePoint; mode: Mode }[] = [
@@ -51,6 +51,9 @@ const SCALE: Record<Mode, readonly number[]> = {
   mixolydian: [0, 2, 4, 5, 7, 9, 10],
   aeolian: [0, 2, 3, 5, 7, 8, 10],
   harmonic: [0, 2, 3, 5, 7, 8, 11],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+  lydian: [0, 2, 4, 6, 7, 9, 11],
+  locrian: [0, 1, 3, 5, 6, 8, 10],
 };
 
 const byId = (id: string) => MODE_FRAGMENTS.find((f) => f.id === id)!;
@@ -73,8 +76,8 @@ function sent(text: string, channel: number, seconds: number): { at: number; not
 }
 
 describe('the mode fragments', () => {
-  it('are the four modes of Jambot’s composer, the bell and scale, then harmonic minor, the electroswing example’s', () => {
-    expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell and scale', 'harmonic minor']);
+  it('are the four modes of Jambot’s composer, the bell and scale, harmonic minor, the electroswing example’s, then the other three of the seven (yggi/jambot#516)', () => {
+    expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell and scale', 'harmonic minor', 'phrygian', 'lydian', 'locrian']);
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s defines key and uses its tonic and nothing else but a sound, so it fits any meter', (id, text) => {
@@ -93,7 +96,7 @@ describe('the mode fragments', () => {
 
   it('leave the tonic to the text that uses them: &tonic, a hole the workbench fills, which moves every note (#290)', () => {
     for (const f of MODE_FRAGMENTS) {
-      expect(f.text).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic), &tonic\)/);
+      expect(f.text).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic|phrygian|lydian|locrian), &tonic\)/);
       expect(fitOf(f.text, setTiming('&bar meter("4/4")', 'bar', 'step', '60bpm')).missing).toEqual(['&tonic']);
       const inA = `${filled(fitOf(f.text, meter('4/4', 'A')).union.text)}\n${PROBE}`;
       const inC = `${filled(fitOf(f.text, meter()).union.text)}\n${PROBE}`;
@@ -111,14 +114,17 @@ describe('the presets find their modes', () => {
     expect(second!.distance).toBeGreaterThan(0);
   });
 
-  it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian); harmonic minor at the point proposed for Electro swing', () => {
+  it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian); harmonic minor at the point proposed for Electro swing; phrygian, lydian and locrian each at a point of its own, placed by hand', () => {
+    const OWN: Record<string, StylePoint> = { phrygian: at(0.6, 0.6, 0.7, 0.85), lydian: at(0.15, 0.6, 0.15, 0.3), locrian: at(0.9, 1, 0.6, 0.9) };
     for (const f of MODES) {
       const points =
         f.id === 'harmonic minor'
           ? [PROPOSED]
-          : f.id === 'mixolydian'
-            ? [Object.fromEntries(Object.keys(FUNK).map((axis) => [axis, (FUNK[axis]! + BOSSA_NOVA[axis]!) / 2]))]
-            : PRESETS.filter((p) => p.mode === f.id).map((p) => p.point);
+          : OWN[f.id]
+            ? [OWN[f.id]!]
+            : f.id === 'mixolydian'
+              ? [Object.fromEntries(Object.keys(FUNK).map((axis) => [axis, (FUNK[axis]! + BOSSA_NOVA[axis]!) / 2]))]
+              : PRESETS.filter((p) => p.mode === f.id).map((p) => p.point);
       expect(f.association.map((wp) => wp.point)).toEqual(points);
       expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
     }
