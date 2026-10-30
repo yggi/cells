@@ -3,6 +3,12 @@
  * until every layer (melodies, meters, what oscillates, what selects, what turns)
  * is back at its start together: the least common multiple of their periods. With
  * chance, the notes still differ every time round. Estimates, at the tempo as set.
+ *
+ * What oscillates counts where it moves on the piece's time: a modulation of a sound
+ * (a pitch term on a line, a voice's moving parameter) whose clock is one a line plays
+ * on, or a tap of the meter one does (`lpf=300..1200 * &sweep`, `&sweep step=1m …`). One
+ * on a clock of its own, set in seconds or hertz (a vibrato, `pitch=&(map=lin loop=5.5 …)`;
+ * a tide of 19 s), is the sound's, not the form's: it doesn't set the piece's length (#376).
  */
 import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from './fiveto12';
 import { codeShifts, type CompileResult } from './program';
@@ -59,13 +65,21 @@ export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
   };
   const periods: number[] = [];
   let chance = false;
+  // (a clock and the meter it taps, or the driver a belt follows, are one time)
+  const timeOf = (clock: string): string => {
+    const info = result.clocks.get(clock);
+    const under = info?.tap?.meter ?? info?.belt?.driver;
+    return under && under !== clock ? timeOf(under) : clock;
+  };
+  const played = new Set(p.tracks.map((t) => timeOf(t.clock)));
+  const onThePiece = (clock: string) => played.has(timeOf(clock));
   for (const t of p.tracks) {
     const lap = secondsOf(t.clock, t.period / t.rate);
     // (<a b>, x/n: its laps come round after as many as they alternate over)
     const laps = t.events.reduce((m, e) => (e.laps ? Number((BigInt(m) * BigInt(e.laps.of)) / gcd(BigInt(m), BigInt(e.laps.of))) : m), 1);
     if (lap) periods.push(lap * laps);
     if (t.events.some((e) => e.chance !== undefined || e.options || e.chosen)) chance = true;
-    for (const m of [...t.mods, ...t.levels, ...t.selects.map((x) => x.series)]) {
+    for (const m of [...t.mods.filter((m) => m.clock && onThePiece(m.clock)), ...t.levels, ...t.selects.map((x) => x.series)]) {
       const s = m.clock ? secondsOf(m.clock, m.period / m.rate) : null;
       if (s) periods.push(s);
     }
@@ -73,7 +87,7 @@ export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
   for (const params of p.voiceParams.values())
     for (const prm of Object.values(params))
       for (const m of prm.series) {
-        const s = m.clock ? secondsOf(m.clock, m.period / m.rate) : null;
+        const s = m.clock && onThePiece(m.clock) ? secondsOf(m.clock, m.period / m.rate) : null;
         if (s) periods.push(s);
       }
   // tables that turn (stride=, cycle=): back where they began after cycle / gcd(cycle, stride) turns
