@@ -22,4 +22,4 @@ Its head is named for it (`&pulse`), so `use &pulse` takes it; a form reads it a
 
 Near Techno's point, 0.1 higher in energy, so a query there finds `octaves` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&pulse from &key`. `&pulse from pulse &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &pulse from pulse`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&pulse from &key`. `&pulse from pulse &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &pulse from pulse`, it reads `&key` by name, as before.

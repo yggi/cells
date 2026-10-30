@@ -22,4 +22,4 @@ Its head is named for it (`&musicBox`), so `use &musicBox` takes it; a form read
 
 At 3/4's point near Spooky (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&musicBox from &key`. `&musicBox from musicBox &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &musicBox from musicBox`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&musicBox from &key`. `&musicBox from musicBox &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &musicBox from musicBox`, it reads `&key` by name, as before.

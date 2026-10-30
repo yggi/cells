@@ -9,7 +9,7 @@ import { resolveSeed } from '../repository/library';
 import { bodyOf, signatureOf } from './use';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
-// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
 const OLD_USE = /^use is the old way/;
 const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
   const r = compiledWithOldUse(...args);
@@ -163,7 +163,7 @@ describe('the seeds', () => {
   it('the 13 meters read &tempo, and the 9 modes &tonic, with no default', () => {
     expect(METER_FRAGMENTS).toHaveLength(13);
     for (const f of METER_FRAGMENTS) expect(bodyOf(f.text), f.id).toMatch(/^&bar meter\("[0-9]+\/[0-9]+"\) step=&tempo(\s|$)/);
-    // (each declares it, decision 064: its main parameter)
+    // (each declares it, decision 065: its main parameter)
     for (const f of [...METER_FRAGMENTS, ...MODE_FRAGMENTS]) expect(signatureOf(f.text)?.main, f.id).toBe(f.text.includes('&tempo') ? '&tempo' : '&tonic');
     expect(MODE_FRAGMENTS).toHaveLength(9);
     for (const f of MODE_FRAGMENTS) expect(bodyOf(f.text), f.id).toMatch(/^&key scale\([a-z]+, &tonic\)/);
@@ -212,7 +212,7 @@ describe('a meter’s swing read from a cell', () => {
     expect(events(own, 8)).toEqual(events(at('8n:.64'), 8));
     expect(events(lines('use &bar from "4/4 swung on 8n"', tempo, BODY), 8)).toEqual(events(at('8n:2/3'), 8));
     // (an &swing of the piece's own, the use not naming it, was the helper's collision (decision 059's ruling 1); the seed
-    // declares it a parameter now (decision 064), so the piece's line is its argument, as named)
+    // declares it a parameter now (decision 065), so the piece's line is its argument, as named)
     expect(messages(lines('use &bar from "4/4 swung on 8n"', '&swing swing=8n:.64', tempo, BODY))).toEqual([]);
     expect(events(lines('use &bar from "4/4 swung on 8n"', '&swing swing=8n:.64', tempo, BODY), 8)).toEqual(events(own, 8));
     // (use * under the piece's own &bar: the helper goes with the line it helps, so the use adds nothing, and says so)

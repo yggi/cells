@@ -69,8 +69,8 @@ source: seed
 ```
 
 The lead player (decisions 058 and 061): a gate, `&leadOut` (Jambot's section text's name for it), whose role is `lead` (`&lead map=role &leadOut`), playing the part `&leadline` on the `lead` instrument, at its register (`&leadV loop=C4`, where Jambot's section text sounds its lead: `PIN_VOICES.lead`, yggi/jambot `packages/score/src/section-text.ts` @ 24a528b), so with no move.
-Its two inputs are the score's (decision 064: the line its main parameter, the level an optional one, one level of .8 by default): `&leadline`, the line (degrees over the melodic scale or the key), and `&leadLevel`, its velocities as written, a line of levels or one level.
+Its two inputs are the score's (decision 065: the line its main parameter, the level an optional one, one level of .8 by default): `&leadline`, the line (degrees over the melodic scale or the key), and `&leadLevel`, its velocities as written, a line of levels or one level.
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`presets.ts`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
 
-**Its signature** (decision 064): `&lead, &leadOut from (&leadLevel) &leadline`. `&lead from "lead performer" &line` takes a copy of it, `&leadline` its main argument; `&leadLevel` an optional parameter, its line its default (`"lead performer"(leadLevel=…)`). Taken the old way, `use &lead from "lead performer"`, it reads `&leadline` by name, as before.
+**Its signature** (decision 065): `&lead, &leadOut from (&leadLevel) &leadline`. `&lead from "lead performer" &line` takes a copy of it, `&leadline` its main argument; `&leadLevel` an optional parameter, its line its default (`"lead performer"(leadLevel=…)`). Taken the old way, `use &lead from "lead performer"`, it reads `&leadline` by name, as before.

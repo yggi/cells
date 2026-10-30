@@ -17,7 +17,7 @@ import { splitComment } from '../edit';
 import { parse } from '../parser';
 import { isWordId, readFrom, readUse, writeUse } from '../parser/use';
 
-/** A line that takes names from a fragment by name: a `use` line, or a `from` line with no argument (decision 064). */
+/** A line that takes names from a fragment by name: a `use` line, or a `from` line with no argument (decision 065). */
 function taking(code: string): { readonly id: string; readonly names: readonly string[] | null; readonly from: boolean } | null {
   const use = readUse(code);
   if (use) return { ...use, from: false };

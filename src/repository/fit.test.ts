@@ -27,7 +27,7 @@ vi.mock('../engine/compile', async (original) => {
   return { ...actual, compileSource: vi.fn(actual.compileSource) };
 });
 
-/** A meter's lines, as a host puts them on a workbench by hand: its signature aside (decision 064). */
+/** A meter's lines, as a host puts them on a workbench by hand: its signature aside (decision 065). */
 const meterText = (id: string) => bodyOf(METER_FRAGMENTS.find((f) => f.id === id)!.text);
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
 /** The host's workbench: a meter at a tempo, as a host sets one (`setTiming`), then the fragments already on it. */

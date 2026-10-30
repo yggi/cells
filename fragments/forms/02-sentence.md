@@ -22,4 +22,4 @@ With a one-bar call it is 4 bars, with a two-bar call 8.
 It taps the host's meter by the eighth (`step=8n`), and a splice plays its whole line at the splicing braid's rate, so a motif written in eighths keeps its rhythm in it. It has no voice and no card (#291): the lead performer plays it as its `&leadline` (`&leadline step=8n &sentence`), or a piece splices it where it likes.
 At the centre of style space, as the facet `form`, weight 1: a form fits any style, and a query for one finds them in this order.
 
-**Its signature** (decision 064): `&sentence from (&continuation) &call`. `&sentence from sentence &motif` takes a copy of it, `&call` its main argument; `&continuation` an optional parameter, its line its default (`sentence(continuation=…)`). Taken the old way, `use &sentence from sentence`, it reads `&call` by name, as before.
+**Its signature** (decision 065): `&sentence from (&continuation) &call`. `&sentence from sentence &motif` takes a copy of it, `&call` its main argument; `&continuation` an optional parameter, its line its default (`sentence(continuation=…)`). Taken the old way, `use &sentence from sentence`, it reads `&call` by name, as before.

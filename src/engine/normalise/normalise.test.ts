@@ -104,7 +104,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       ['use &bd, &hh, &sd from "gm kit"', 'use &bd, &hh, &sd from gm_kit'],
     ]) {
       const { source, steps } = normalise(`${old}\n${groove}`, { resolve: resolveSeed });
-      // (and then, a collection's use, as its from line: decision 064)
+      // (and then, a collection's use, as its from line: decision 065)
       expect([old, source]).toEqual([old, `${now.replace(/^use /, '')}\n${groove}`]);
       expect(steps.length, old).toBeGreaterThan(0);
       expect(compileSource(source, undefined, { resolve: resolveSeed }).diagnostics, old).toEqual([]);
@@ -149,7 +149,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const line = (name: string) => kit.find((l) => l.startsWith(`&${name} `))!;
     const written = `&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n${line('bd')}\n${line('sd')}\n${line('hh')}\n${beat}`;
     const { source, steps } = normalise(written, seed);
-    // (and each use as its from line, the tempo only the meter read written in: decision 064)
+    // (and each use as its from line, the tempo only the meter read written in: decision 065)
     expect(source).toBe(`&bar from "4/4" 100bpm  # four beats\n&bd, &sd, &hh from gm_kit\n${beat}`);
     expect(steps).toHaveLength(4);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
@@ -175,7 +175,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     expect(steps).toHaveLength(3);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     // (a vibrato a word off is the piece's own; a piece that names &vibrato itself keeps its inline cell)
-    expect(normalise(written.replaceAll('.1 0 -.1', '.12 0 -.12'), seed).steps.filter((step) => !step.includes('decision 064'))).toEqual([]);
+    expect(normalise(written.replaceAll('.1 0 -.1', '.12 0 -.12'), seed).steps.filter((step) => !step.includes('decision 065'))).toEqual([]);
     expect(normalise(`${written}\n&vibrato 0`, seed).source).toContain(`pitch=${vib}`);
   });
 

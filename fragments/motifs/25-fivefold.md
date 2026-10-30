@@ -22,4 +22,4 @@ Its head is named for it (`&fivefold`), so `use &fivefold` takes it; a form read
 
 At 5/4's first point (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&fivefold from &key`. `&fivefold from fivefold &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &fivefold from fivefold`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&fivefold from &key`. `&fivefold from fivefold &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &fivefold from fivefold`, it reads `&key` by name, as before.

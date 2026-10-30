@@ -26,4 +26,4 @@ Techno, the preset where their share is greatest (0.24), is as near two of those
 
 What `bass.ts` adds that a fixed line doesn't: the fifth one step in five and an octave up one in four, off the downbeat; the thinning by the energy (here 1.15: each eighth sounds but about one in twelve); the octave, the voice leading and the velocity, the performer's.
 
-**Its signature** (decision 064): `&bassline from &harm`. `&bassline from "eighths bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "eighths bass"`, it reads `&harm` by name, as before.
+**Its signature** (decision 065): `&bassline from &harm`. `&bassline from "eighths bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "eighths bass"`, it reads `&harm` by name, as before.

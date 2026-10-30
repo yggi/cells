@@ -41,4 +41,4 @@ At full sync `bass.ts` anticipates the next chord nine times in ten on a step of
 
 What `bass.ts` adds that a fixed line doesn't: the tenth time, the root or the fifth there; the fifth one step in five and an octave up one in four elsewhere off the downbeat; the thinning by each step's weight and the energy (here 1: the 0.3 and the 0.4 sound about one section in three); the octave, the voice leading and the velocity, the performer's.
 
-**Its signature** (decision 064): `&bassline from &harm`. `&bassline from "funk bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "funk bass"`, it reads `&harm` by name, as before.
+**Its signature** (decision 065): `&bassline from &harm`. `&bassline from "funk bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "funk bass"`, it reads `&harm` by name, as before.

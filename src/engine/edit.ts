@@ -22,7 +22,7 @@ const headOf = (name: string) => new RegExp(`^(\\s*&${name})(?=\\s|$)`);
 /** 0-based index of the line declaring &name, or -1. */
 export function declLine(source: string, name: string): number {
   const head = headOf(name);
-  // (a from line declares none of the text's own: decision 064)
+  // (a from line declares none of the text's own: decision 065)
   return source.split('\n').findIndex((l) => head.test(splitComment(l)[0]) && readFrom(splitComment(l)[0].trim()) === undefined);
 }
 

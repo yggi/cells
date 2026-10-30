@@ -22,4 +22,4 @@ Its head is named for it (`&dusty`), so `use &dusty` takes it; a form reads it a
 
 Near Lo-fi hip hop's point, 0.1 higher in energy, so a query there finds `lazy` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&dusty from &key`. `&dusty from dusty &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &dusty from dusty`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&dusty from &key`. `&dusty from dusty &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &dusty from dusty`, it reads `&key` by name, as before.

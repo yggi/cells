@@ -20,7 +20,7 @@ import { heard } from '../repository/heard';
 import { holesOf } from '../repository/holes';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
-// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
 const OLD_USE = /^use is the old way/;
 const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
   const r = compiledWithOldUse(...args);
@@ -161,9 +161,9 @@ describe('a named use (decision 059)', () => {
     expect(writeUse({ id: 'core_kit', names: ['&bd', '&sd'] })).toBe('use &bd, &sd from core_kit');
   });
 
-  it('use is the old way (decision 064): every use line says its from line; use "id" reads as use * from "id"', () => {
+  it('use is the old way (decision 065): every use line says its from line; use "id" reads as use * from "id"', () => {
     const said = (text: string) => parse(text).diagnostics.map((d) => [d.severity, d.message]);
-    const oldWay = (line: string) => ['warning', `use is the old way: say where the cells come from, ${line} (decision 064; Normalise writes it, with a template's arguments)`];
+    const oldWay = (line: string) => ['warning', `use is the old way: say where the cells come from, ${line} (decision 065; Normalise writes it, with a template's arguments)`];
     expect(said('use "core kit"')).toEqual([oldWay('* from "core kit"')]);
     expect(said('use * from "core kit"\nuse &bd from x\nuse &aeolian')).toEqual([oldWay('* from "core kit"'), oldWay('&bd from x'), oldWay('&aeolian from aeolian')]);
     const old = compileSource(GROOVE.replace('use * from gm_kit', 'use "gm_kit"'), undefined, seed);
@@ -400,7 +400,7 @@ describe('the lockfile', () => {
 });
 
 describe('the tools keep use', () => {
-  it('Normalise writes the use line as its from line (decision 064), in its order, never expanded', () => {
+  it('Normalise writes the use line as its from line (decision 065), in its order, never expanded', () => {
     const text =
       'use * from gm_kit\nuse &key from "harmonic minor"\n&tonic D\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
     const out = normalise(text, seed).source;

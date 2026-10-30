@@ -33,4 +33,4 @@ It is also at Techno's, the preset where the pump is what `bass.ts` plays most (
 
 What `bass.ts` adds that a fixed line doesn't: the fifth one step in five and an octave up one in four, by a draw per section and step; the thinning by the energy (here 0.55: each offbeat sounds about one section in two); the octave, the voice leading and the velocity, the performer's.
 
-**Its signature** (decision 064): `&bassline from &harm`. `&bassline from "pumping bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "pumping bass"`, it reads `&harm` by name, as before.
+**Its signature** (decision 065): `&bassline from &harm`. `&bassline from "pumping bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "pumping bass"`, it reads `&harm` by name, as before.

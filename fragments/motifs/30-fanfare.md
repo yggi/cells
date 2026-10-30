@@ -22,4 +22,4 @@ Its head is named for it (`&fanfare`), so `use &fanfare` takes it; a form reads 
 
 At 4/4 alla breve's point (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&fanfare from &key`. `&fanfare from fanfare &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &fanfare from fanfare`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&fanfare from &key`. `&fanfare from fanfare &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &fanfare from fanfare`, it reads `&key` by name, as before.

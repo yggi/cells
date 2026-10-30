@@ -1,5 +1,5 @@
 /**
- * From (decision 064, rung 3: #387): a `use` line as the `from` line that plays the same, the Migrate step for the old
+ * From (decision 065, rung 3: #387): a `use` line as the `from` line that plays the same, the Migrate step for the old
  * form. A collection's (a fragment with no signature): `use &bd, &sd from gm_kit` → `&bd, &sd from gm_kit`, `use * from
  * gm_kit` → `* from gm_kit`, `use &vibrato` → `&vibrato from vibrato`. A template's (one with a signature): the heads it
  * takes, and those the piece reads besides; each parameter the piece defines, which the old use read by name, bound to
@@ -118,7 +118,7 @@ function asFrom(source: string, line: number, use: UseForm, resolve: Resolve): {
   return { after: `${taken.join(', ')} from ${idText(use.id)}${args.length ? `(${args.join(', ')})` : ''}${main}`, drop };
 }
 
-/** Each `use` line the piece can say as a `from` line, so said (Migrate, decision 064). */
+/** Each `use` line the piece can say as a `from` line, so said (Migrate, decision 065). */
 export function fromUses(source: string, resolve?: Resolve): Rewrite<'from'>[] {
   if (!resolve) return [];
   return source.split('\n').flatMap((raw, i) => {
@@ -135,7 +135,7 @@ export function fromUses(source: string, resolve?: Resolve): Rewrite<'from'>[] {
         id: `from:${i + 1}`,
         tool: 'normalise' as const,
         rule: 'from' as const,
-        title: `${before} is written ${after}${dropped ? `, its ${dropped.trim()} written in` : ''} (decision 064)`,
+        title: `${before} is written ${after}${dropped ? `, its ${dropped.trim()} written in` : ''} (decision 065)`,
         before,
         after,
         apply: (src: string) =>

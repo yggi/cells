@@ -1,6 +1,6 @@
 # `from`: where a line's cells come from
 
-A line says where its cells come from: a fragment of a library, by its id ([decision 064](https://github.com/yggi/cells/blob/main/docs/decisions/064-fragments-take-arguments.md), [#387](https://github.com/yggi/cells/issues/387); before it, [decision 054](https://github.com/yggi/cells/blob/main/docs/decisions/054-instruments-and-use.md) and [decision 059](https://github.com/yggi/cells/blob/main/docs/decisions/059-named-use.md)'s `use`).
+A line says where its cells come from: a fragment of a library, by its id ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md), [#387](https://github.com/yggi/cells/issues/387); before it, [decision 054](https://github.com/yggi/cells/blob/main/docs/decisions/054-instruments-and-use.md) and [decision 059](https://github.com/yggi/cells/blob/main/docs/decisions/059-named-use.md)'s `use`).
 
 ```cells
 &bar from "4/4 swung on 8n"(swing=8n:.64) 120bpm
@@ -31,7 +31,7 @@ What a line reads without writing it, the main meter a `step=16n` taps, is never
 ## `use`, the old way
 
 `use &bd, &sd from gm_kit`, `use * from gm_kit` and `use &x` (`use &x from x`) still read, for a release, as the `from` lines of a collection do, and each warns that it is the old way, naming its `from` line; Normalise writes it, with a template's arguments ([canonical.md](canonical.md)).
-A `use` of a template takes its lines as they are, and reads its parameters by name, as before decision 064: a line the piece writes for one of them (`&tonic D`, `&swing …`) is its argument, as an interface name the piece defines is (`&key`, `&bar`, `&tempo`, `&tonic`, `&harm`, decision 060). `use * from` a fragment takes every line but one read only by lines the piece overrides (`use * from "4/4 swung on 8n"` under the piece's own `&bar` takes no `&swing`, and says the use adds nothing). `use "harmonic minor"`, older still, reads as `use * from "harmonic minor"`.
+A `use` of a template takes its lines as they are, and reads its parameters by name, as before decision 065: a line the piece writes for one of them (`&tonic D`, `&swing …`) is its argument, as an interface name the piece defines is (`&key`, `&bar`, `&tempo`, `&tonic`, `&harm`, decision 060). `use * from` a fragment takes every line but one read only by lines the piece overrides (`use * from "4/4 swung on 8n"` under the piece's own `&bar` takes no `&swing`, and says the use adds nothing). `use "harmonic minor"`, older still, reads as `use * from "harmonic minor"`.
 
 ## The expansion: the piece's own lines win
 

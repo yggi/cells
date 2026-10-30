@@ -22,4 +22,4 @@ Its head is named for it (`&saudade`), so `use &saudade` takes it; a form reads 
 
 Near Bossa nova's point, 0.1 higher in energy, so a query there finds `tresillo` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&saudade from &key`. `&saudade from saudade &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &saudade from saudade`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&saudade from &key`. `&saudade from saudade &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &saudade from saudade`, it reads `&key` by name, as before.

@@ -22,4 +22,4 @@ Its head is named for it (`&shuffle`), so `use &shuffle` takes it; a form reads 
 
 At 12/8's point (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&shuffle from &key`. `&shuffle from shuffle &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &shuffle from shuffle`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&shuffle from &key`. `&shuffle from shuffle &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &shuffle from shuffle`, it reads `&key` by name, as before.

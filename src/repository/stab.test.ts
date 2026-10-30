@@ -15,7 +15,7 @@ const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
 import { STAB_FRAGMENTS } from './stab';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
-// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
 const OLD_USE = /^use is the old way/;
 const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
   const r = compiledWithOldUse(...args);

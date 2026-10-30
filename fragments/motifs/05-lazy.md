@@ -22,4 +22,4 @@ Its head is named for it (`&lazy`), so `use &lazy` takes it; a form reads it as 
 
 At Lo-fi hip hop's point (`presets.ts`), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&lazy from &key`. `&lazy from lazy &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &lazy from lazy`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&lazy from &key`. `&lazy from lazy &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &lazy from lazy`, it reads `&key` by name, as before.

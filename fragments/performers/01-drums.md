@@ -76,4 +76,4 @@ Its kit is the drummer's own set-up of those 13 voices, the kick, the side stick
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`presets.ts`), at weight 1: every preset's section text plays its drums the same way, on these 13 voices on channel 10, so the eight share this one drummer, and what a preset's drums sound like is its lines, not its player.
 
-**Its signature** (decision 064): `&drums, &drumsOut from (&kit) &drumlines`. `&drums from "drums performer" &groove` takes a copy of it, `&drumlines` its main argument; `&kit` an optional parameter, its line its default (`"drums performer"(kit=…)`). Taken the old way, `use &drums from "drums performer"`, it reads `&drumlines` by name, as before.
+**Its signature** (decision 065): `&drums, &drumsOut from (&kit) &drumlines`. `&drums from "drums performer" &groove` takes a copy of it, `&drumlines` its main argument; `&kit` an optional parameter, its line its default (`"drums performer"(kit=…)`). Taken the old way, `use &drums from "drums performer"`, it reads `&drumlines` by name, as before.

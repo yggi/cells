@@ -22,4 +22,4 @@ Its head is named for it (`&sigh`), so `use &sigh` takes it; a form reads it as 
 
 At Deep house's point (`presets.ts`), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&sigh from &key`. `&sigh from sigh &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &sigh from sigh`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&sigh from &key`. `&sigh from sigh &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &sigh from sigh`, it reads `&key` by name, as before.

@@ -23,7 +23,7 @@ The piece writes only what is its own: the tempo and the swing, the key's tonic,
 
 The meter is the library's too, `4/4 swung on 8n`, Jambot's Swing jazz meter, which leaves its tempo to the piece (`&tempo`) and swings its eighths by a cell of its own, `&swing`, triplets (2/3).
 The piece gives its own, an argument of the meter's (`swing=&swing`): the eighths a little less than triplets, .64. The tempo and the swing are both sliders.
-The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from "harmonic minor" D`, decision 064): the vamp's fifth is then A major, four bars of D minor, four of A.
+The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from "harmonic minor" D`, decision 065): the vamp's fifth is then A major, four bars of D minor, four of A.
 
 ```cells
 &bar from "4/4 swung on 8n"(swing=&swing) &tempo

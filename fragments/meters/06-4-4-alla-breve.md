@@ -19,4 +19,4 @@ source: seed
 Alla breve: the bpm counts half notes; fast, bright, marching.
 Its tempo is the text's: `step=&tempo` reads a cell the text that uses it writes, a rate alone (`&tempo step=104bpm`, #290).
 
-**Its signature** (decision 064): `&bar from &tempo`. `&bar from "4/4 alla breve" 120bpm` takes a copy of it, `&tempo` its main argument. Taken the old way, `use &bar from "4/4 alla breve"`, it reads `&tempo` by name, as before.
+**Its signature** (decision 065): `&bar from &tempo`. `&bar from "4/4 alla breve" 120bpm` takes a copy of it, `&tempo` its main argument. Taken the old way, `use &bar from "4/4 alla breve"`, it reads `&tempo` by name, as before.

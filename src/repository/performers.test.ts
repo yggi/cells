@@ -17,7 +17,7 @@ import { PERFORMER_FRAGMENTS } from './performers';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
-// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
 const OLD_USE = /^use is the old way/;
 const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
   const r = compiledWithOldUse(...args);
@@ -115,7 +115,7 @@ describe('the performers', () => {
     ]);
   });
 
-  it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 064)', () => {
+  it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 065)', () => {
     const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
     expect(holes).toEqual([['&drumlines'], ['&bassline'], ['&padline'], ['&stabline'], ['&leadline']]);
     expect(PERFORMER_FRAGMENTS.map((f) => signatureOf(f.text))).toEqual([

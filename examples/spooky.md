@@ -22,7 +22,7 @@ The piece writes only what is its own: the tempo, the key's tonic, the stabs, wh
 ```
 
 The meter is the library's, `5/4`, five beats to the bar, which leaves its tempo to the piece (`&tempo`), a slider.
-The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from "harmonic minor" D`, decision 064): its fifth is then A major, a dominant, and its sixth B♭ sits a semitone above it.
+The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from "harmonic minor" D`, decision 065): its fifth is then A major, a dominant, and its sixth B♭ sits a semitone above it.
 
 ```cells
 &bar from "5/4" &tempo

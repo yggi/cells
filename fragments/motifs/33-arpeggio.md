@@ -22,4 +22,4 @@ Its head is named for it (`&arpeggio`), so `use &arpeggio` takes it; a form read
 
 At the centre, 0.2 lower in harmony (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&arpeggio from &key`. `&arpeggio from arpeggio &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &arpeggio from arpeggio`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&arpeggio from &key`. `&arpeggio from arpeggio &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &arpeggio from arpeggio`, it reads `&key` by name, as before.
