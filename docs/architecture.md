@@ -79,4 +79,4 @@ The repository of fragments ([decision 041](decisions/041-fragments-by-style.md)
 - `stab.ts`: `STAB_FRAGMENTS` (`fragments/stab/`), the parts the stab performer plays (`&stabline`), their points associated as `stab`: the Charleston, lifted from the electroswing example.
 - `motifs.ts`: `MOTIF_FRAGMENTS` (`fragments/motifs/`), lines of one bar over the key, each headed by its own name (`&gypsy`), their points associated as `motif` (#294): eight by hand at Jambot's presets, and the electroswing example's call.
 - `forms.ts`: `FORM_FRAGMENTS` (`fragments/forms/`), braids of holes a composer fills with motifs, associated as `form` at the centre (#294): call and answer, the sentence, the period, AABA.
-- `library.ts`: `LIBRARY`, the meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, the performers, the stab lines, the motifs and the forms, sixty-eight.
+- `library.ts`: `LIBRARY`, the meters, the rhythms, the bass lines, the harmonies, the instruments, the modes, the performers, the stab lines, the motifs and the forms, a hundred and ten.

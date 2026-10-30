@@ -1,6 +1,6 @@
 {
   "name": "@yggi/cells",
-  "version": "0.12.1",
+  "version": "0.12.3",
   "description": "The cells language: parse, compile, realize, the headless engine, Shorten, the folder (MIDI to cells).",
   "license": "MIT",
   "type": "module",
