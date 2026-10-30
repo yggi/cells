@@ -1,6 +1,6 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
-import { parse } from "../engine/parser/index.js";
+import { parse, readFrom } from "../engine/parser/index.js";
 import { braidReadsOf } from "../engine/compiler/builtin.js";
 import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn } from "./holes.js";
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
@@ -19,7 +19,7 @@ export function declarations(text) {
             continue;
         const whole = carry.code.join(' ').trim().split(/\s+/).join(' ');
         const name = HEAD.exec(whole)?.[1];
-        if (name)
+        if (name && readFrom(whole) === undefined)
             out.push({ name, written: carry.written.join('\n'), code: whole });
         carry = null;
     }
@@ -32,7 +32,7 @@ const namesIn = (text) => new Set(text
 const useLines = (text) => text
     .split('\n')
     .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
-    .filter((code) => USE.test(code));
+    .filter((code) => USE.test(code) || readFrom(code)?.kind === 'use');
 export function unionOf(fragment, workbench) {
     const bench = new Map(declarations(workbench).map((l) => [l.name, l]));
     const taken = new Set([...namesIn(workbench), ...namesIn(fragment)]);

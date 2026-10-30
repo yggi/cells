@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&slap from &key
 &slap over=&key step=8n 0 0 ~ 6 0 ~ 4 ~
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&slap`), so `use &slap` takes it; a form reads it as its `&call` (`&call step=8n &slap`), the line the form moves and answers.
 
 Near Funk's point, 0.1 higher in energy, so a query there finds `riff` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&slap from &key`. `&slap from slap &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &slap from slap`, it reads `&key` by name, as before.

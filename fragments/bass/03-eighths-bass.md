@@ -13,6 +13,7 @@ lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
+&bassline from &harm
 &bassline over=&harm step=8n 0!8
 ```
 
@@ -24,3 +25,5 @@ The eighths are what `bass.ts` plays most at no preset, so unlike the others the
 Techno, the preset where their share is greatest (0.24), is as near two of those points (Techno legato, and Techno with its harmony moving), so it sits at the root bass's point with the energy at 1: there `bass.ts` moves from the root alone to the eighths by the energy alone.
 
 What `bass.ts` adds that a fixed line doesn't: the fifth one step in five and an octave up one in four, off the downbeat; the thinning by the energy (here 1.15: each eighth sounds but about one in twelve); the octave, the voice leading and the velocity, the performer's.
+
+**Its signature** (decision 065): `&bassline from &harm`. `&bassline from "eighths bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "eighths bass"`, it reads `&harm` by name, as before.

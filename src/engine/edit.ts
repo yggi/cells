@@ -4,6 +4,7 @@
  * small rewrite of the cell's own line, keeping its comment and the rest of
  * the line as written. Pure string → string, so the code view stays 1:1.
  */
+import { readFrom } from './parser/use';
 
 /** Split a line into code and its trailing comment (`//`, or `#` at start / after a space; neither inside quotes). */
 export function splitComment(line: string): [string, string] {
@@ -21,7 +22,8 @@ const headOf = (name: string) => new RegExp(`^(\\s*&${name})(?=\\s|$)`);
 /** 0-based index of the line declaring &name, or -1. */
 export function declLine(source: string, name: string): number {
   const head = headOf(name);
-  return source.split('\n').findIndex((l) => head.test(splitComment(l)[0]));
+  // (a from line declares none of the text's own: decision 065)
+  return source.split('\n').findIndex((l) => head.test(splitComment(l)[0]) && readFrom(splitComment(l)[0].trim()) === undefined);
 }
 
 /**
@@ -217,7 +219,7 @@ export function usersOf(source: string, name: string): string[] {
   for (const line of source.split('\n')) {
     const code = splitComment(line)[0];
     const head = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(code);
-    if (!head || head[1] === name) continue;
+    if (!head || head[1] === name || readFrom(code) !== undefined) continue;
     if (re.test(code.slice(head[0].length))) users.push(head[1]);
   }
   return users;

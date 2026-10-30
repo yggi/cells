@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&question from &key
 &question over=&key step=8n 0 1 2@2 4@4
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&question`), so `use &question` takes it; a form reads it as its `&call` (`&call step=8n &question`), the line the form moves and answers.
 
 At the centre of style space (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&question from &key`. `&question from question &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &question from question`, it reads `&key` by name, as before.

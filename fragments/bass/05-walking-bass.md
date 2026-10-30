@@ -20,6 +20,7 @@ lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
+&bassline from &harm
 &bassline over=&harm step=4n 0 1 2 &bassNext^$-1
 &bassNext over=&harm[>>] 0
 ```
@@ -34,3 +35,5 @@ Swing jazz is the only preset where the walk is what `bass.ts` plays most, and t
 
 What `bass.ts` draws that a fixed line chooses: the second and third beats each the third, the fifth or the seventh (the fifth twice over where the chord has none), a third each, so this line is one walk it plays, up through the chord; the approach from below or above, half each, so this one from below. Under a harmony that changes on the bar's half it leads into that change too. The octave, the voice leading and the velocity are the performer's.
 Also at the point proposed for an Electro swing preset (#349), weight 1: the walk [Electro swing, in pieces](../../examples/electroswing.md) plays. It is placed by hand, not by `bass.ts`'s blend, which has no such preset.
+
+**Its signature** (decision 065): `&bassline from &harm`. `&bassline from "walking bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "walking bass"`, it reads `&harm` by name, as before.

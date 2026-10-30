@@ -20,7 +20,7 @@ What a line reads without writing it, the main meter a `step=16n` taps, is never
 ## `from` lines: a template's copy, and its arguments
 
 [Decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md) ([#387](https://github.com/yggi/cells/issues/387)): a line says where its cells come from, and a fragment declares what it takes.
-`use` still reads as above; the seed library gains its signatures, and the examples their `from` lines, in the rungs after this one.
+`use` still reads as above. The seed library's templates have their signatures (the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers; `signatureOf`, and `bodyOf` for a fragment's lines without it); the examples take their `from` lines in the rung after this one. Taken the old way, a template's lines are read as they are, and a piece's own line for one of its declared parameters is its argument, as an interface name's is.
 
 ```text
 &key from harmonic_minor D                    # the rest of the line: the main argument

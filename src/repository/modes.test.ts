@@ -2,6 +2,7 @@
 // distance 0 at the point of each of Jambot's presets that plays it; every harmony and bass seed fits a workbench with
 // each and compiles there with no diagnostic; and the bell and scale, a mode and a rhythm in one, plays the bell and reads
 // as the major scale.
+import { bodyOf } from '../engine/use';
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
@@ -96,7 +97,7 @@ describe('the mode fragments', () => {
 
   it('leave the tonic to the text that uses them: &tonic, a hole the workbench fills, which moves every note (#290)', () => {
     for (const f of MODE_FRAGMENTS) {
-      expect(f.text).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic|phrygian|lydian|locrian), &tonic\)/);
+      expect(bodyOf(f.text)).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic|phrygian|lydian|locrian), &tonic\)/);
       expect(fitOf(f.text, setTiming('&bar meter("4/4")', 'bar', 'step', '60bpm')).missing).toEqual(['&tonic']);
       const inA = `${filled(fitOf(f.text, meter('4/4', 'A')).union.text)}\n${PROBE}`;
       const inC = `${filled(fitOf(f.text, meter()).union.text)}\n${PROBE}`;

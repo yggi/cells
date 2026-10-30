@@ -93,6 +93,19 @@ function lineOf(code: string, written = code, line = 0): Line {
 /** Does this text have a `use` or a `from` line? (Cheap: a text without one compiles as it always has.) */
 export const hasUse = (text: string): boolean => /^\s*use(?![A-Za-z0-9_])/m.test(text) || /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,]).*\sfrom(?:\s|$)/m.test(text);
 
+/** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
+export function signatureOf(text: string): Extract<FromForm, { kind: 'signature' }> | null {
+  for (const l of linesOf(text)) if (l.from?.kind === 'signature') return l.from;
+  return null;
+}
+
+/** A fragment's text without its signature: its lines, as a host that puts them on a workbench by hand reads them. */
+export const bodyOf = (text: string): string =>
+  text
+    .split('\n')
+    .filter((raw) => readFrom(splitComment(raw)[0].trim())?.kind !== 'signature')
+    .join('\n');
+
 /** A string's hash, 64 bits as 16 hex digits (two FNV-1a passes, 32 bits each, from different offsets). */
 function hash64(s: string): string {
   let a = 0x811c9dc5;
@@ -123,6 +136,8 @@ interface Taken {
   readonly lines: readonly Line[];
   /** Did its fragment resolve? (An unresolved one is said already: what it lacks isn't.) */
   readonly resolved: boolean;
+  /** A template's parameters (bare), where a `use` line takes it the old way: the piece's own of these names are its arguments. */
+  readonly parameters?: ReadonlySet<string>;
 }
 
 /** What a level of the expansion gave: its lines, and, for each of its `use` lines, what that gave and what was overridden. */
@@ -143,7 +158,7 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
   const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
   const given = new Map<string, { id: string; code: string }>();
   const lines: Line[] = own.filter((l) => l.name);
-  const per = used.map(({ id, names, lines: theirs, resolved }, i) => {
+  const per = used.map(({ id, names, lines: theirs, resolved, parameters }, i) => {
     const byName = new Map<string, Line>();
     for (const l of theirs) if (l.name && !byName.has(l.name)) byName.set(l.name, l);
     if (names && resolved) {
@@ -177,8 +192,9 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       for (const r of byName.get(n)!.reads) {
         if (!byName.has(r) || take.has(r) || asked.has(r) || clashed.has(r)) continue;
         if (!defined.has(r)) queue.push(r);
-        // (an interface name the level defines is the level's: what the fragment's line reads, as the main key was, decision 060)
-        else if (INTERFACE.has(r)) continue;
+        // (an interface name the level defines is the level's: what the fragment's line reads, as the main key was, decision
+        // 060; and so is a template's parameter, taken the old way: the level's line is its argument, decision 065)
+        else if (INTERFACE.has(r) || parameters?.has(r)) continue;
         else {
           clashed.add(r);
           say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);
@@ -335,7 +351,9 @@ function give(entry: NonNullable<ReturnType<typeof entryOf>>, path: readonly str
       say(
         `${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`,
       );
-    return { taken: { id, names: namesOf(entry), lines: sharedLines(fragmentLines(path, text, resolve, say)), resolved: true }, copy: [] };
+    const parameters = new Set(signatures.flatMap((g) => [...g.optional, ...(g.main ? [g.main] : [])]).map((n) => n.slice(1)));
+    const lines = sharedLines(fragmentLines(path, text, resolve, say));
+    return { taken: { id, names: namesOf(entry), lines, resolved: true, ...(parameters.size ? { parameters } : {}) }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
   return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken);
@@ -552,7 +570,8 @@ export function expansion(text: string, { resolve, locked = [] }: CompileOptions
         ...(args[i] ? { args: args[i] } : {}),
       };
     }),
-    given: new Set(added.flatMap((l) => (l.name ? [l.name] : []))),
+    // (a copy's lines are the piece's own, as if written there: the built-in card hears them; what was taken by name isn't)
+    given: new Set(added.flatMap((l) => (l.name && l.shared ? [l.name] : []))),
     diagnostics,
     through: (line) => (line > head ? (through[line - head - 1] ?? null) : null),
   };

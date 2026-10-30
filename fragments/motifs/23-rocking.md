@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&rocking from &key
 &rocking over=&key step=8n 0@2 2 4@2 2
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 6/8: it
 Its head is named for it (`&rocking`), so `use &rocking` takes it; a form reads it as its `&call` (`&call step=8n &rocking`), the line the form moves and answers.
 
 At 6/8's first point (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&rocking from &key`. `&rocking from rocking &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &rocking from rocking`, it reads `&key` by name, as before.

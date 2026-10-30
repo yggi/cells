@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&run from &key
 &run over=&key step=8n 0 1 2 3 4 5 6 7
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&run`), so `use &run` takes it; a form reads it as its `&call` (`&call step=8n &run`), the line the form moves and answers.
 
 At the centre, 0.2 higher in harmony (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&run from &key`. `&run from run &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &run from run`, it reads `&key` by name, as before.

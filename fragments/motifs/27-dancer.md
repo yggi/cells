@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&dancer from &key
 &dancer over=&key step=8n 0 ~ 2 4 ~ 5 4 2 1 0
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 10/8: i
 Its head is named for it (`&dancer`), so `use &dancer` takes it; a form reads it as its `&call` (`&call step=8n &dancer`), the line the form moves and answers.
 
 At 10/8's point (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&dancer from &key`. `&dancer from dancer &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &dancer from dancer`, it reads `&key` by name, as before.

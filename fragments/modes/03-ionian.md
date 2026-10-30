@@ -26,6 +26,7 @@ source: seed
 ---
 
 ```cells
+&key from &tonic
 &key scale(ionian, &tonic)
 ```
 
@@ -35,3 +36,5 @@ The tonic is left to the text that uses it, a hole: there is no default, since a
 
 At the point of each preset that plays it, weight 1, so a query for the mode at one of them finds ionian first, at distance 0.
 The bell and scale (`05-bell-and-scale.md`) is ionian too, elsewhere.
+
+**Its signature** (decision 065): `&key from &tonic`. `&key from ionian D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from ionian`, it reads `&tonic` by name, as before.
