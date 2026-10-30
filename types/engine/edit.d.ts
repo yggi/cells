@@ -1,9 +1,3 @@
-/**
- * Source edits for the visual editor. The code is the single source of truth:
- * every change made in the graph (turning a cell, switching it off) is a
- * small rewrite of the cell's own line, keeping its comment and the rest of
- * the line as written. Pure string → string, so the code view stays 1:1.
- */
 /** Split a line into code and its trailing comment (`//`, or `#` at start / after a space; neither inside quotes). */
 export declare function splitComment(line: string): [string, string];
 /** 0-based index of the line declaring &name, or -1. */

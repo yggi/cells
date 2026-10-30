@@ -20,6 +20,7 @@ lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
+&bassline from &harm
 &bassline over=&harm step=8n ~ 0 ~ 0 ~ 0 ~ 0
 ```
 
@@ -31,3 +32,5 @@ That is Techno's harmony and articulation, its sync and energy at 0.
 It is also at Techno's, the preset where the pump is what `bass.ts` plays most (0.50), as the meters are at theirs (#209).
 
 What `bass.ts` adds that a fixed line doesn't: the fifth one step in five and an octave up one in four, by a draw per section and step; the thinning by the energy (here 0.55: each offbeat sounds about one section in two); the octave, the voice leading and the velocity, the performer's.
+
+**Its signature** (decision 064): `&bassline from &harm`. `&bassline from "pumping bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "pumping bass"`, it reads `&harm` by name, as before.

@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&neighbour from &key
 &neighbour over=&key step=8n 0 1 0 -1 0@4
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&neighbour`), so `use &neighbour` takes it; a form reads it as its `&call` (`&call step=8n &neighbour`), the line the form moves and answers.
 
 At the centre, 0.2 lower in articulation (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&neighbour from &key`. `&neighbour from neighbour &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &neighbour from neighbour`, it reads `&key` by name, as before.

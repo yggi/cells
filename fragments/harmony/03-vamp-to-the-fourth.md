@@ -27,6 +27,7 @@ lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
 
 ```cells
+&harm from &key
 &harm over=&key step=1m cycle=8 [0,2,4]!4 [3,5,7]!4
 ```
 
@@ -38,3 +39,5 @@ The layout is `buildTheme`'s under harm 0.15, one chord per four bars: the first
 From 0.15 to 0.33 it lays the same chords two bars each, twice over (`[0, 0, c, c]`), and over 0.33 it walks the mode's transition table instead, which stays Jambot's generator on a miss.
 
 At the points where `buildTheme` plays it: aeolian at Techno's point; dorian at Funk's point; ionian at Ambient's point with its harmony at 0.12. A mode's vamps are drawn alike (`next() · vamps.length`), so each weighs 1, and a query for the harmony at a mode's point finds all of that mode's vamps at distance 0.
+
+**Its signature** (decision 064): `&harm from &key`. `&harm from "vamp to the fourth" &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &harm from "vamp to the fourth"`, it reads `&key` by name, as before.

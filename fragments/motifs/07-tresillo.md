@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&tresillo from &key
 &tresillo over=&key step=8n 4@3 2@3 0@2
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&tresillo`), so `use &tresillo` takes it; a form reads it as its `&call` (`&call step=8n &tresillo`), the line the form moves and answers.
 
 At Bossa nova's point (`presets.ts`), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&tresillo from &key`. `&tresillo from tresillo &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &tresillo from tresillo`, it reads `&key` by name, as before.

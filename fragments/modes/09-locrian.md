@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&key from &tonic
 &key scale(locrian, &tonic)
 ```
 
@@ -20,3 +21,5 @@ It defines `&key`, the key (decision 047's interface name, decision 056, named s
 The tonic is left to the text that uses it, a hole, as the other modes leave theirs.
 
 No preset of Jambot's plays it yet (yggi/jambot#516). Placed by hand at an edge of the space, frantic: off the beat, the harmony at its richest, clipped and loud (sync .9, harm 1, artic .6, energy .9), weight 1, so no preset's neighbourhood finds it before its own mode.
+
+**Its signature** (decision 064): `&key from &tonic`. `&key from locrian D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from locrian`, it reads `&tonic` by name, as before.

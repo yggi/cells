@@ -19,6 +19,7 @@ source: seed
 ---
 
 ```cells
+&key from &tonic
 &key scale(dorian, &tonic)
 ```
 
@@ -27,3 +28,5 @@ It defines `&key`, the key (decision 047's interface name, decision 056, named s
 The tonic is left to the text that uses it, a hole: there is no default, since a default tonic plays a wrong key silently (#117); the performer's room, `free(…)`, is the tonic cell's to give (`&tonic free(…)`, not yet a form).
 
 At the point of each preset that plays it, weight 1, so a query for the mode at one of them finds dorian first, at distance 0.
+
+**Its signature** (decision 064): `&key from &tonic`. `&key from dorian D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from dorian`, it reads `&tonic` by name, as before.

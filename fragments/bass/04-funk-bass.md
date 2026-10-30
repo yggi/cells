@@ -27,6 +27,7 @@ lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
+&bassline from &harm
 &bassline over=&harm step=16n 0 ~ ~ 0 ~ ~ 0 0 ~ ~ 0 0 ~ &bassNext &bassNext ~
 &bassNext over=&harm[>>] 0
 ```
@@ -39,3 +40,5 @@ It is also at the two other presets where the funk line is what `bass.ts` plays 
 At full sync `bass.ts` anticipates the next chord nine times in ten on a step of the bar's last three that isn't a change (`0.9 × sync`), so this line plays the anticipation.
 
 What `bass.ts` adds that a fixed line doesn't: the tenth time, the root or the fifth there; the fifth one step in five and an octave up one in four elsewhere off the downbeat; the thinning by each step's weight and the energy (here 1: the 0.3 and the 0.4 sound about one section in three); the octave, the voice leading and the velocity, the performer's.
+
+**Its signature** (decision 064): `&bassline from &harm`. `&bassline from "funk bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "funk bass"`, it reads `&harm` by name, as before.

@@ -5,6 +5,7 @@
 // plays a stack of lines, one per drum role, and each hit still names its line: the role the feel reads.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
+import { signatureOf } from '../engine/use';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
@@ -105,9 +106,16 @@ describe('the performers', () => {
     ]);
   });
 
-  it('leave the part and its levels to the score: those are their holes', () => {
+  it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 064)', () => {
     const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
-    expect(holes).toEqual([['&drumlines'], ['&bassLevel', '&bassline'], ['&padLevel', '&padline'], ['&stabLevel', '&stabline'], ['&leadLevel', '&leadline']]);
+    expect(holes).toEqual([['&drumlines'], ['&bassline'], ['&padline'], ['&stabline'], ['&leadline']]);
+    expect(PERFORMER_FRAGMENTS.map((f) => signatureOf(f.text))).toEqual([
+      { kind: 'signature', names: ['&drums'], optional: ['&kit'], main: '&drumlines' },
+      { kind: 'signature', names: ['&bass'], optional: ['&bassLevel'], main: '&bassline' },
+      { kind: 'signature', names: ['&pad'], optional: ['&padLevel'], main: '&padline' },
+      { kind: 'signature', names: ['&stab'], optional: ['&stabLevel'], main: '&stabline' },
+      { kind: 'signature', names: ['&lead'], optional: ['&leadLevel'], main: '&leadline' },
+    ]);
   });
 
   for (const [part, { jambot, performer }] of Object.entries(PARTS))

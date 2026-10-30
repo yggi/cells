@@ -32,6 +32,16 @@ function lineOf(code, written = code, line = 0) {
     return { name: head?.[1] ?? null, use, reads, written, code, line };
 }
 export const hasUse = (text) => /^\s*use(?![A-Za-z0-9_])/m.test(text) || /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,]).*\sfrom(?:\s|$)/m.test(text);
+export function signatureOf(text) {
+    for (const l of linesOf(text))
+        if (l.from?.kind === 'signature')
+            return l.from;
+    return null;
+}
+export const bodyOf = (text) => text
+    .split('\n')
+    .filter((raw) => readFrom(splitComment(raw)[0].trim())?.kind !== 'signature')
+    .join('\n');
 function hash64(s) {
     let a = 0x811c9dc5;
     let b = 0x01000193 ^ 0x5bd1e995;
@@ -52,7 +62,7 @@ function merge(own, used, say, host) {
     const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
     const given = new Map();
     const lines = own.filter((l) => l.name);
-    const per = used.map(({ id, names, lines: theirs, resolved }, i) => {
+    const per = used.map(({ id, names, lines: theirs, resolved, parameters }, i) => {
         const byName = new Map();
         for (const l of theirs)
             if (l.name && !byName.has(l.name))
@@ -90,7 +100,7 @@ function merge(own, used, say, host) {
                     continue;
                 if (!defined.has(r))
                     queue.push(r);
-                else if (INTERFACE.has(r))
+                else if (INTERFACE.has(r) || parameters?.has(r))
                     continue;
                 else {
                     clashed.add(r);
@@ -209,7 +219,9 @@ function give(entry, path, text, resolve, say, taken) {
     if (!from || !signatures.length) {
         if (from && (from.head.length || from.args || from.main !== null))
             say(`${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`);
-        return { taken: { id, names: namesOf(entry), lines: sharedLines(fragmentLines(path, text, resolve, say)), resolved: true }, copy: [] };
+        const parameters = new Set(signatures.flatMap((g) => [...g.optional, ...(g.main ? [g.main] : [])]).map((n) => n.slice(1)));
+        const lines = sharedLines(fragmentLines(path, text, resolve, say));
+        return { taken: { id, names: namesOf(entry), lines, resolved: true, ...(parameters.size ? { parameters } : {}) }, copy: [] };
     }
     if (signatures.length > 1)
         say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
@@ -418,7 +430,7 @@ export function expansion(text, { resolve, locked = [] } = {}) {
                 ...(args[i] ? { args: args[i] } : {}),
             };
         }),
-        given: new Set(added.flatMap((l) => (l.name ? [l.name] : []))),
+        given: new Set(added.flatMap((l) => (l.name && l.shared ? [l.name] : []))),
         diagnostics,
         through: (line) => (line > head ? (through[line - head - 1] ?? null) : null),
     };

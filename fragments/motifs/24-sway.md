@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&sway from &key
 &sway over=&key step=8n 0@3 -1 -2 -1
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 6/8: it
 Its head is named for it (`&sway`), so `use &sway` takes it; a form reads it as its `&call` (`&call step=8n &sway`), the line the form moves and answers.
 
 At 6/8's point near Spooky (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&sway from &key`. `&sway from sway &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &sway from sway`, it reads `&key` by name, as before.

@@ -5,6 +5,7 @@
 // degrees down, by one operator.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
+import { bodyOf } from '../engine/use';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
@@ -113,7 +114,7 @@ describe('the motifs', () => {
   it('are thirty-six, each a line over the key named for its fragment, at its point as the facet motif', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
-      expect(f.text, f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
+      expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
       expect(f.association, f.id).toEqual([{ point: MOTIFS[f.id]!.point, weight: 1, facet: 'motif' }]);
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&key']);
     }
@@ -193,7 +194,7 @@ describe('the forms', () => {
 describe('recognition reads an answer as an operator on its call (#294)', () => {
   const recogniser = createRecogniser();
   it.each(MOTIF_FRAGMENTS.map((f) => [f.id, f.text] as const))('the answer of %s, two degrees down, is the motif transposed by -2', (id, text) => {
-    const braid = text.replace(/^&\w+ over=&key step=8n /, '');
+    const braid = bodyOf(text).replace(/^&\w+ over=&key step=8n /, '');
     const heard = `&heard over=&key step=8n ${moved(braid, -2)}`;
     const found = recogniser.recognise(heard, LIBRARY, { workbench: benchOf(id) });
     const mine = found.find((r) => r.fragment.id === id);

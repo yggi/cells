@@ -6,6 +6,7 @@ import { holesOf } from '../repository/holes';
 import { METER_FRAGMENTS } from '../repository/meters';
 import { MODE_FRAGMENTS } from '../repository/modes';
 import { resolveSeed } from '../repository/library';
+import { bodyOf, signatureOf } from './use';
 
 // #290: a value a fragment leaves open is a hole like a name: a meter's rate read from a tempo cell (`step=&tempo`,
 // `&tempo step=104bpm`), a key's tonic from a cell holding a note (`scale(dorian, &tonic)`, `&tonic D`).
@@ -152,9 +153,11 @@ describe('the seeds', () => {
 
   it('the 13 meters read &tempo, and the 9 modes &tonic, with no default', () => {
     expect(METER_FRAGMENTS).toHaveLength(13);
-    for (const f of METER_FRAGMENTS) expect(f.text, f.id).toMatch(/^&bar meter\("[0-9]+\/[0-9]+"\) step=&tempo(\s|$)/);
+    for (const f of METER_FRAGMENTS) expect(bodyOf(f.text), f.id).toMatch(/^&bar meter\("[0-9]+\/[0-9]+"\) step=&tempo(\s|$)/);
+    // (each declares it, decision 064: its main parameter)
+    for (const f of [...METER_FRAGMENTS, ...MODE_FRAGMENTS]) expect(signatureOf(f.text)?.main, f.id).toBe(f.text.includes('&tempo') ? '&tempo' : '&tonic');
     expect(MODE_FRAGMENTS).toHaveLength(9);
-    for (const f of MODE_FRAGMENTS) expect(f.text, f.id).toMatch(/^&key scale\([a-z]+, &tonic\)/);
+    for (const f of MODE_FRAGMENTS) expect(bodyOf(f.text), f.id).toMatch(/^&key scale\([a-z]+, &tonic\)/);
   });
 
   it('each compiles over a workbench that defines the two, with no diagnostic', () => {
@@ -188,7 +191,7 @@ describe('a meter’s swing read from a cell', () => {
     expect(swung.map((f) => f.id)).toEqual(['4/4 swung on 8n', '4/4 leaning on 16n', '4/4 leaning lightly on 16n', '4/4 leaning faintly on 16n']);
     const shares = [2 / 3, 0.65, 0.6, 31 / 60];
     swung.forEach((f, k) => {
-      expect(f.text, f.id).toMatch(/^&bar meter\("4\/4"\) step=&tempo swing=&swing\n&swing swing=\d+n:[\d./]+$/);
+      expect(bodyOf(f.text), f.id).toMatch(/^&bar meter\("4\/4"\) step=&tempo swing=&swing\n&swing swing=\d+n:[\d./]+$/);
       expect(compileSource(f.text.replace('step=&tempo', 'step=120bpm')).cells.get('bar')!.meter!.swing![0]!.share, f.id).toBeCloseTo(shares[k]!, 12);
     });
   });
@@ -199,10 +202,10 @@ describe('a meter’s swing read from a cell', () => {
     expect(messages(own)).toEqual([]);
     expect(events(own, 8)).toEqual(events(at('8n:.64'), 8));
     expect(events(lines('use &bar from "4/4 swung on 8n"', tempo, BODY), 8)).toEqual(events(at('8n:2/3'), 8));
-    // (an &swing of the piece's own, the use not naming it, is the helper's collision: decision 059's ruling 1)
-    expect(messages(lines('use &bar from "4/4 swung on 8n"', '&swing swing=8n:.64', tempo, BODY))).toEqual([
-      "&swing is \"4/4 swung on 8n\"'s, read by its &bar, and the piece's too: rename the piece's, or name &swing in the use to override it",
-    ]);
+    // (an &swing of the piece's own, the use not naming it, was the helper's collision (decision 059's ruling 1); the seed
+    // declares it a parameter now (decision 064), so the piece's line is its argument, as named)
+    expect(messages(lines('use &bar from "4/4 swung on 8n"', '&swing swing=8n:.64', tempo, BODY))).toEqual([]);
+    expect(events(lines('use &bar from "4/4 swung on 8n"', '&swing swing=8n:.64', tempo, BODY), 8)).toEqual(events(own, 8));
     // (use * under the piece's own &bar: the helper goes with the line it helps, so the use adds nothing, and says so)
     expect(messages(lines('use * from "4/4 swung on 8n"', '&bar meter("4/4") step=104bpm', '&key scale(dorian, D)', BODY))).toEqual([
       'The piece defines all "4/4 swung on 8n" gives (&bar): this use adds nothing',

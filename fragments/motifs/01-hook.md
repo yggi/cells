@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&hook from &key
 &hook over=&key step=8n 4 4 3 2@2 ~ 0 2
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&hook`), so `use &hook` takes it; a form reads it as its `&call` (`&call step=8n &hook`), the line the form moves and answers.
 
 At Synth-pop's point (`presets.ts`), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&hook from &key`. `&hook from hook &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &hook from hook`, it reads `&key` by name, as before.

@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&sigh from &key
 &sigh over=&key step=8n 4@3 3 2@2 ~ ~
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&sigh`), so `use &sigh` takes it; a form reads it as its `&call` (`&call step=8n &sigh`), the line the form moves and answers.
 
 At Deep house's point (`presets.ts`), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&sigh from &key`. `&sigh from sigh &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &sigh from sigh`, it reads `&key` by name, as before.

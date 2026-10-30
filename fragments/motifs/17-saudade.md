@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&saudade from &key
 &saudade over=&key step=8n 2 ~ 3 2 ~ 1 0@2
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&saudade`), so `use &saudade` takes it; a form reads it as its `&call` (`&call step=8n &saudade`), the line the form moves and answers.
 
 Near Bossa nova's point, 0.1 higher in energy, so a query there finds `tresillo` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&saudade from &key`. `&saudade from saudade &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &saudade from saudade`, it reads `&key` by name, as before.

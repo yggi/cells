@@ -19,6 +19,7 @@ source: seed
 ---
 
 ```cells
+&key, &bell, &agogo from &tonic
 &key scale(ionian, &tonic) step=1m*7
 &bell step=&key:pulse &highagogo &highagogo:0:.5 &highagogo:0:.7 &highagogo:0:.5 &highagogo:0:.6 &highagogo:0:.5 &highagogo:0:.7
 &agogo [&bell * .5]
@@ -34,3 +35,5 @@ A stepped key that nothing plays doesn't turn, so a line over it (`over=&key`) r
 Seven strokes of a high agogô (`&highagogo`, General MIDI's 67, a hole the General MIDI kit fills with its line), the example's accents, at half the level; its mix, `&agogo` (the level, no card: where its notes go is the workbench's, #291), is none of the drum bars' or the claves', so it layers on any of them.
 As a rhythm its point is a timeline's: off the beat (sync 0.8), over one static chord (harm 0.1), struck (artic 0.9), steady and fairly dense (energy 0.6), where no preset is.
 As a mode it is where the major is played: the centroid of the three presets that play ionian, Ambient's, Bossa nova's and Swing jazz's (each axis their mean, to three decimals), where no preset is, so at each of them the plain `ionian` is found first, at distance 0.
+
+**Its signature** (decision 064): `&key, &bell, &agogo from &tonic`. `&key, &bell, &agogo from "bell and scale" D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key, &bell, &agogo from "bell and scale"`, it reads `&tonic` by name, as before.

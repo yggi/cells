@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&fanfare from &key
 &fanfare over=&key step=8n 0 0 0 2@2 4@2 ~
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4 all
 Its head is named for it (`&fanfare`), so `use &fanfare` takes it; a form reads it as its `&call` (`&call step=8n &fanfare`), the line the form moves and answers.
 
 At 4/4 alla breve's point (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&fanfare from &key`. `&fanfare from fanfare &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &fanfare from fanfare`, it reads `&key` by name, as before.

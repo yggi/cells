@@ -1,9 +1,16 @@
+import { type FromForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
 import { type CompileOptions, type Resolve, type Used } from './program';
 /** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
 export declare const USE_DEPTH = 8;
 /** Does this text have a `use` or a `from` line? (Cheap: a text without one compiles as it always has.) */
 export declare const hasUse: (text: string) => boolean;
+/** A fragment's signature (decision 064): what its `from` line with no id declares; null for a collection, which has none. */
+export declare function signatureOf(text: string): Extract<FromForm, {
+    kind: 'signature';
+}> | null;
+/** A fragment's text without its signature: its lines, as a host that puts them on a workbench by hand reads them. */
+export declare const bodyOf: (text: string) => string;
 /** A fragment's hash: `e1:` and the hash of its text up to layout (its lines' code, one to a line). */
 export declare const fragmentHash: (text: string) => string;
 /** The expansion of a text, as the compiler reads it. */

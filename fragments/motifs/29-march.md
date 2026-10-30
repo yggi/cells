@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&march from &key
 &march over=&key step=8n 4 4 0 ~
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 2/4: it
 Its head is named for it (`&march`), so `use &march` takes it; a form reads it as its `&call` (`&call step=8n &march`), the line the form moves and answers.
 
 At 2/4's point (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&march from &key`. `&march from march &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &march from march`, it reads `&key` by name, as before.

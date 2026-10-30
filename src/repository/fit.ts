@@ -24,7 +24,7 @@ import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
 import type { CompileResult, Resolve } from '../engine/program';
-import { parse } from '../engine/parser';
+import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
 import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
@@ -82,7 +82,8 @@ export function declarations(text: string): Line[] {
     if (CONTINUES.test(code)) continue;
     const whole = carry.code.join(' ').trim().split(/\s+/).join(' ');
     const name = HEAD.exec(whole)?.[1];
-    if (name) out.push({ name, written: carry.written.join('\n'), code: whole });
+    // (a from line declares none of the text's own: a use's cells are the fragment's, a signature declares what it takes, decision 064)
+    if (name && readFrom(whole) === undefined) out.push({ name, written: carry.written.join('\n'), code: whole });
     carry = null;
   }
   return out;
@@ -97,12 +98,12 @@ const namesIn = (text: string) =>
       .map((m) => m[1] ?? ''),
   );
 
-/** A text's `use` lines, their code collapsed, in order. */
+/** A text's `use` lines and the `from` lines that take from a fragment (decision 064), their code collapsed, in order. */
 const useLines = (text: string): string[] =>
   text
     .split('\n')
     .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
-    .filter((code) => USE.test(code));
+    .filter((code) => USE.test(code) || readFrom(code)?.kind === 'use');
 
 /** The union of a fragment with a workbench (see the module's comment). */
 export function unionOf(fragment: string, workbench: string): Union {

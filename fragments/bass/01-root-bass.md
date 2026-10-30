@@ -34,6 +34,7 @@ lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
+&bassline from &harm
 &bassline over=&harm step=2n 0 0
 ```
 
@@ -45,3 +46,5 @@ Of the points where it is 1, this is the nearest to Ambient's, the preset where 
 It is also at the three presets where the root is what `bass.ts` plays most, as the meters are at theirs (#209): Synth-pop's (0.32, the funk line 0.27), Deep house's (0.31, tied with the funk line, which the root takes as first in `bass.ts`'s order) and Ambient's (0.68). A preset plays a blend, and its nearest pattern's point needn't be the pattern it plays most.
 
 What `bass.ts` adds that a fixed line doesn't: on three it plays the fifth one section in five and an octave up one in four, by a draw per section and step; it thins the line by the energy (each step sounds when a held draw falls under its weight times 0.55 + 0.6 × energy); the octave, the voice leading and the velocity are the performer's.
+
+**Its signature** (decision 064): `&bassline from &harm`. `&bassline from "root bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "root bass"`, it reads `&harm` by name, as before.

@@ -20,6 +20,7 @@ lifted: yggi/cells examples/electroswing.md @ 2c120d4
 ---
 
 ```cells
+&key from &tonic
 &key scale(harmonic, &tonic)
 ```
 
@@ -29,3 +30,5 @@ The tonic is left to the text that uses it, a hole, as the other modes leave the
 
 At a point proposed for an Electro swing preset (sync .55, harm .75, artic .6, energy .75), weight 1, Jambot's to adopt (decision 041); Jambot's composer has no harmonic minor among its modes yet (`COMPOSER_MODES`, yggi/jambot packages/engine/src/key.ts).
 Also at the point proposed for a Spooky preset (sync .2, harm .9, artic .3, energy .35; #349), weight 1: the key of [Spooky, in pieces](../../examples/spooky.md), its augmented second between the sixth and the seventh the sound of a horror film's minor.
+
+**Its signature** (decision 064): `&key from &tonic`. `&key from "harmonic minor" D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from "harmonic minor"`, it reads `&tonic` by name, as before.

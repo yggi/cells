@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&bebop from &key
 &bebop over=&key step=8n 0 2 4 6 7@2 6 4
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&bebop`), so `use &bebop` takes it; a form reads it as its `&call` (`&call step=8n &bebop`), the line the form moves and answers.
 
 At Swing jazz's point (`presets.ts`), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&bebop from &key`. `&bebop from bebop &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &bebop from bebop`, it reads `&key` by name, as before.

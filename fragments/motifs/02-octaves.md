@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&octaves from &key
 &octaves over=&key step=8n 0 ~ 7 ~ 0 0 ~ 7
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&octaves`), so `use &octaves` takes it; a form reads it as its `&call` (`&call step=8n &octaves`), the line the form moves and answers.
 
 At Techno's point (`presets.ts`), weight 1, as the facet `motif`.
+
+**Its signature** (decision 064): `&octaves from &key`. `&octaves from octaves &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &octaves from octaves`, it reads `&key` by name, as before.

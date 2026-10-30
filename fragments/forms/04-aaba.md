@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&chorus from (&b) &a
 &chorus step=8n &a &a &b &a
 &b step=8n &a^3
 ```
@@ -20,3 +21,5 @@ The thirty-two-bar song form, AABA, in its letters: an A three times, the bridge
 With a one-bar A it is 4 bars, with a two-bar A 8.
 It taps the host's meter by the eighth (`step=8n`), and a splice plays its whole line at the splicing braid's rate, so a motif written in eighths keeps its rhythm in it. It has no voice and no card (#291): the lead performer plays it as its `&leadline` (`&leadline step=8n &chorus`), or a piece splices it where it likes.
 At the centre of style space, as the facet `form`, weight 1: a form fits any style, and a query for one finds them in this order.
+
+**Its signature** (decision 064): `&chorus from (&b) &a`. `&chorus from AABA &motif` takes a copy of it, `&a` its main argument; `&b` an optional parameter, its line its default (`AABA(b=…)`). Taken the old way, `use &chorus from AABA`, it reads `&a` by name, as before.

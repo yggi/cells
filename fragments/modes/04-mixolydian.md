@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&key from &tonic
 &key scale(mixolydian, &tonic)
 ```
 
@@ -20,3 +21,5 @@ It defines `&key`, the key (decision 047's interface name, decision 056, named s
 The tonic is left to the text that uses it, a hole: there is no default, since a default tonic plays a wrong key silently (#117); the performer's room, `free(…)`, is the tonic cell's to give (`&tonic free(…)`, not yet a form).
 
 Between the major and the dorian minor (it shares the major's third and the dorian's seventh), it sits halfway between Funk's point (dorian) and Bossa nova's (ionian), where the son clave 3-2 sits too: the funk and rock of a major key with a flat seventh. It is the nearest mode there only, since each preset's own mode is at distance 0 at its point.
+
+**Its signature** (decision 064): `&key from &tonic`. `&key from mixolydian D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from mixolydian`, it reads `&tonic` by name, as before.
