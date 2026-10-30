@@ -22,6 +22,29 @@ const MAX_PHRASE = 16;
 /** … and saves at least this much beyond its own line: a new name is something to look up (a toll for reading). */
 const TOLL = 12;
 const use = (name: string, ref: string) => `&${name}${ref}`;
+/** … and is looked up turned when it is at most twelve (a lap of the chromatic grid). */
+const MAX_TURN = 12;
+
+/** A phrase's turns round a helix whose lap is `lap`: begun k steps on, the k that wrap climbing a lap (`[>>k]`), or back (`[<<k]`). */
+function turnsOf(tokens: readonly string[], lap: number): { key: string; ref: string }[] {
+  const L = tokens.length;
+  if (L > MAX_TURN) return [];
+  const climb = (t: string, by: number) => {
+    const m = NOTE.exec(t);
+    return m ? `${+m[1] + by}${m[2]}` : t.startsWith('~') ? t : null;
+  };
+  const key = tokens.join(' ');
+  const out: { key: string; ref: string }[] = [];
+  for (let k = 1; k < L; k++)
+    for (const dir of ['>>', '<<'] as const) {
+      const turned =
+        dir === '>>' ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))] : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
+      if (turned.some((t) => t === null) || turned.join(' ') === key) continue;
+      out.push({ key: turned.join(' '), ref: `[${dir}${k === 1 ? '' : k}]` });
+    }
+  return out;
+}
+
 /** An occurrence moved by degrees (`^d`), not grid steps (`^$d`). */
 const isDegree = (ref: string) => ref.startsWith('^') && !ref.startsWith('^$');
 
@@ -38,13 +61,6 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
   const laps = new Map(cells.map((c) => [c.name, period(result, c.name)]));
   const lapValues = [...new Set(laps.values())];
   const tokensOf = new Map(cells.map((c) => [c.name, c.tokens]));
-  // every place a run of tokens is written, as it is
-  const placesOf = (ts: readonly string[]) =>
-    cells.flatMap((c) => {
-      const out: { cell: string; at: number }[] = [];
-      for (let i = 0; i + ts.length <= c.tokens.length; i++) if (ts.every((t, j) => c.tokens[i + j] === t)) out.push({ cell: c.name, at: i });
-      return out;
-    });
   // what repeats, as written, moved or backwards: the folder's hints over the cells as written (#158), one finder for
   // both tools. Every window of a repeat is one too, at its places shifted, so a phrase is any of them, whichever saves
   // most (a figure that comes back may be begun on any of its notes)
@@ -83,6 +99,24 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
         }
       }
   }
+  // (a phrase written once and turned once doesn't repeat as the hints read it: a turn climbs by its table's lap,
+  // which only Shorten knows, so every window of four to twelve steps is a phrase where one of its turns is written)
+  const at = new Map<string, Occ[]>();
+  for (const c of cells)
+    for (let L = MIN_PHRASE; L <= Math.min(MAX_TURN, c.tokens.length); L++)
+      for (let i = 0; i + L <= c.tokens.length; i++) {
+        const key = c.tokens.slice(i, i + L).join(' ');
+        at.set(key, [...(at.get(key) ?? []), { cell: c.name, at: i, ref: '' }]);
+      }
+  for (const c of cells)
+    for (let L = MIN_PHRASE; L <= Math.min(MAX_TURN, c.tokens.length); L++)
+      for (let i = 0; i + L <= c.tokens.length; i++) {
+        const tokens = c.tokens.slice(i, i + L);
+        const key = tokens.join(' ');
+        if (windows.has(key) || tokens.every((t) => t === tokens[0])) continue;
+        const lap = laps.get(c.name)!;
+        if (turnsOf(tokens, lap).some((t) => (at.get(t.key) ?? []).some((o) => laps.get(o.cell) === lap))) windows.set(key, { tokens, places: [{ cell: c.name, at: i, ref: '' }] });
+      }
   for (const [key, { tokens, places }] of windows) {
     const L = tokens.length;
     // its occurrences: as written first, then moved, backwards, turned — none overlapping in a cell
@@ -98,21 +132,7 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
     for (const o of [...places].sort((a, b) => +(a.ref !== '') - +(b.ref !== '') || a.cell.localeCompare(b.cell) || a.at - b.at)) take(o.cell, o.at, o.ref);
     // turned round the helix: begun k steps on ([>>k]: the k that wrap round climb a lap) or back
     // ([<<k]) — once per lap there is (12 on the chromatic grid, 7 in a scale …)
-    if (L <= 12)
-      for (const lap of lapValues) {
-        const climb = (t: string, by: number) => {
-          const m = NOTE.exec(t);
-          return m ? `${+m[1] + by}${m[2]}` : t.startsWith('~') ? t : null;
-        };
-        for (let k = 1; k < L; k++)
-          for (const dir of ['>>', '<<'] as const) {
-            const turned =
-              dir === '>>' ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))] : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
-            if (turned.some((t) => t === null)) continue;
-            if (turned.join(' ') === key) continue;
-            for (const at of placesOf(turned as string[])) if (laps.get(at.cell) === lap) take(at.cell, at.at, `[${dir}${k === 1 ? '' : k}]`);
-          }
-      }
+    for (const lap of lapValues) for (const turn of turnsOf(tokens, lap)) for (const o of at.get(turn.key) ?? []) if (laps.get(o.cell) === lap) take(o.cell, o.at, turn.ref);
     if (occs.length < 2) continue;
     // a rough saving, to rank (each is measured exactly once it's a suggestion)
     const saving = occs.reduce((a, o) => a + key.length - use('m1', o.ref).length, 0) - (key.length + 6);

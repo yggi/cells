@@ -8,6 +8,26 @@ const MIN_PHRASE = 4;
 const MAX_PHRASE = 16;
 const TOLL = 12;
 const use = (name, ref) => `&${name}${ref}`;
+const MAX_TURN = 12;
+function turnsOf(tokens, lap) {
+    const L = tokens.length;
+    if (L > MAX_TURN)
+        return [];
+    const climb = (t, by) => {
+        const m = NOTE.exec(t);
+        return m ? `${+m[1] + by}${m[2]}` : t.startsWith('~') ? t : null;
+    };
+    const key = tokens.join(' ');
+    const out = [];
+    for (let k = 1; k < L; k++)
+        for (const dir of ['>>', '<<']) {
+            const turned = dir === '>>' ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))] : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
+            if (turned.some((t) => t === null) || turned.join(' ') === key)
+                continue;
+            out.push({ key: turned.join(' '), ref: `[${dir}${k === 1 ? '' : k}]` });
+        }
+    return out;
+}
 const isDegree = (ref) => ref.startsWith('^') && !ref.startsWith('^$');
 export function phrases(source, cells, result, options = {}) {
     const copied = new Set([...source.matchAll(/\bbase=&(\w+)/g)].map((m) => m[1]));
@@ -17,13 +37,6 @@ export function phrases(source, cells, result, options = {}) {
     const laps = new Map(cells.map((c) => [c.name, period(result, c.name)]));
     const lapValues = [...new Set(laps.values())];
     const tokensOf = new Map(cells.map((c) => [c.name, c.tokens]));
-    const placesOf = (ts) => cells.flatMap((c) => {
-        const out = [];
-        for (let i = 0; i + ts.length <= c.tokens.length; i++)
-            if (ts.every((t, j) => c.tokens[i + j] === t))
-                out.push({ cell: c.name, at: i });
-        return out;
-    });
     const windows = new Map();
     for (const h of writtenHints(cells)) {
         const first = h.spans[0];
@@ -58,6 +71,24 @@ export function phrases(source, cells, result, options = {}) {
                 }
             }
     }
+    const at = new Map();
+    for (const c of cells)
+        for (let L = MIN_PHRASE; L <= Math.min(MAX_TURN, c.tokens.length); L++)
+            for (let i = 0; i + L <= c.tokens.length; i++) {
+                const key = c.tokens.slice(i, i + L).join(' ');
+                at.set(key, [...(at.get(key) ?? []), { cell: c.name, at: i, ref: '' }]);
+            }
+    for (const c of cells)
+        for (let L = MIN_PHRASE; L <= Math.min(MAX_TURN, c.tokens.length); L++)
+            for (let i = 0; i + L <= c.tokens.length; i++) {
+                const tokens = c.tokens.slice(i, i + L);
+                const key = tokens.join(' ');
+                if (windows.has(key) || tokens.every((t) => t === tokens[0]))
+                    continue;
+                const lap = laps.get(c.name);
+                if (turnsOf(tokens, lap).some((t) => (at.get(t.key) ?? []).some((o) => laps.get(o.cell) === lap)))
+                    windows.set(key, { tokens, places: [{ cell: c.name, at: i, ref: '' }] });
+            }
     for (const [key, { tokens, places }] of windows) {
         const L = tokens.length;
         const taken = new Map();
@@ -74,24 +105,11 @@ export function phrases(source, cells, result, options = {}) {
         };
         for (const o of [...places].sort((a, b) => +(a.ref !== '') - +(b.ref !== '') || a.cell.localeCompare(b.cell) || a.at - b.at))
             take(o.cell, o.at, o.ref);
-        if (L <= 12)
-            for (const lap of lapValues) {
-                const climb = (t, by) => {
-                    const m = NOTE.exec(t);
-                    return m ? `${+m[1] + by}${m[2]}` : t.startsWith('~') ? t : null;
-                };
-                for (let k = 1; k < L; k++)
-                    for (const dir of ['>>', '<<']) {
-                        const turned = dir === '>>' ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))] : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
-                        if (turned.some((t) => t === null))
-                            continue;
-                        if (turned.join(' ') === key)
-                            continue;
-                        for (const at of placesOf(turned))
-                            if (laps.get(at.cell) === lap)
-                                take(at.cell, at.at, `[${dir}${k === 1 ? '' : k}]`);
-                    }
-            }
+        for (const lap of lapValues)
+            for (const turn of turnsOf(tokens, lap))
+                for (const o of at.get(turn.key) ?? [])
+                    if (laps.get(o.cell) === lap)
+                        take(o.cell, o.at, turn.ref);
         if (occs.length < 2)
             continue;
         const saving = occs.reduce((a, o) => a + key.length - use('m1', o.ref).length, 0) - (key.length + 6);
