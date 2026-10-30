@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since v0.12.2.
+
+## v0.12.2 — 2026-10-30
+
 ### Added
 
 - **Instruments with a sound for Electro swing and Spooky** (#350; yggi/jambot#517, #497): eight instrument fragments, each defining one of the default instruments' voices at the default's register, with a sound of its own within the renderer's first stage (decision 062: a wave, a low-pass with its resonance, an envelope, a vibrato). At Electro swing's point: `upright bass` (`&bassV`), `brass stab` (`&keysV`), `clarinet` and `muted trumpet` (`&leadV`). At Spooky's: `round bass` (`&bassV`), `organ` (`&padV`), `theremin` (`&leadV`) and `celesta` (`&keysV`). Each is lifted from its example's voice, at the default's register where the example plays it elsewhere (the two basses at C2, not C3; the celesta at C3, not C5). The library is 82 fragments. Each is associated at half a default's weight (0.125), so an instrument query finds the kit and the defaults first at each of Jambot's eight presets, and these first at their own. **What a frontend sees at its next pin:** a performer that plays one of them in place of its default sends the same notes over MIDI (channel, note, velocity, onset, end), and pitch bends where it has a vibrato (the clarinet, the trumpet, the theremin). `INSTRUMENT_FRAGMENTS` lists 13; a frontend that picks the line for a voice from every instrument fragment, as Jambot's `INSTRUMENT_LINES` does by its order and then by id, now finds `&leadV`, `&keysV` and `&padV` in more than one (`clarinet` sorts before `lead`), so it names the defaults in its order. No example sounds different, and no event snapshot moves.
