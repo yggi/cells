@@ -10,7 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Nothing has changed since v0.12.2.
 
-## v0.12.2 — 2026-10-29
+## v0.12.2 — 2026-10-30
 
 ### Added
 
