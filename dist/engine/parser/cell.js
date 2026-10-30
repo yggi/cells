@@ -7,6 +7,7 @@ import { IDENT, LineScanner } from "./scanner.js";
 import { OPERATIONS, parseToken, pushStep } from "./braid.js";
 import { FREE_BRAID_WHOLE, parseFree } from "./free.js";
 import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generators.js";
+import { MODE_WORDS } from "../../theory/modes.js";
 import { atTap, parseMap, parseStep } from "./values.js";
 import { syntax } from "./syntax.js";
 import { AXIS_NAMES } from "../style.js";
@@ -80,7 +81,14 @@ export const KEYS = {
                 s.i += 5;
                 const sc = parseScale(s, at0);
                 const name = `scale:λ${s.line}_${at0 + s.offset}`;
-                s.lambdas.push({ ...BLANK_TABLE, name, span: sc.span, lambda: s.text.slice(at0, s.i), over: sc.key, braid: { kind: 'scan', steps: sc.steps, span: sc.span } });
+                s.lambdas.push({
+                    ...BLANK_TABLE,
+                    name,
+                    span: sc.span,
+                    lambda: s.text.slice(at0, s.i),
+                    over: sc.key,
+                    braid: { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) },
+                });
                 b.over = { name, pick: null, shift: 0, span: sc.span };
             }
             else
@@ -423,7 +431,7 @@ export const LINE_SYNTAX = [
     syntax('line', 'oneshot', 'On a voice: each note plays its envelope through (its attack and decay), whatever its step: a drum hit on any grid.', ['&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)'], 'sound.md'),
     syntax('line', '# … · // …', 'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.', ['&tune step=2 0 2 4  # the opening'], 'cell.md'),
     syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
-    syntax('line', 'use &a, &b from id · use * from id · use &x', 'A fragment\'s lines taken into the piece by its id (decisions 054, 059): the named cells and the lines they read within it, every line (`*`), or `use &x`, &x from the fragment x. What the piece doesn\'t define is read after the piece\'s own lines, which win. A line of its own; the id a word, or in double quotes; the host\'s resolver finds it. `use "id"` is the old way of `use * from "id"`.', ['use &bd, &sd from gm_kit', 'use * from "harmonic minor"'], 'use.md'),
+    syntax('line', '&x from id(name=…) … · &a, &b from id · * from id', "Where a line's cells come from (decision 065): a fragment by its id, the id a word or in double quotes, the host's resolver finding it. A template (a fragment with a signature) gives a copy, its head named as the line names it, its named arguments in parentheses and its main one the rest of the line; attributes before `from` are the head's. A collection gives the cells it names by their names, or every line (`*`). With no id, a fragment's signature: its head, its optional parameters in parentheses, its main one after them. `use &a, &b from id` is the old way, and warns.", ['&key from "harmonic minor" D', '&bar from "4/4 swung on 8n"(swing=8n:.64) 120bpm', '&bd, &sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'], 'use.md'),
     syntax('line', '&sections step=&bar &a &b', 'Sections of an arrangement (decision 016): a stepped table of names declares them, each stepped as the table is. What a section steps plays while a selector reading the table picks it (`over=&sections`), from its top each time.', ['&sections step=&bar &verseBar &chorusBar'], 'time.md'),
 ];
 function parseFreeBraid(s) {
@@ -553,7 +561,7 @@ export function parseBody(s, head) {
             }
             else if (word === 'scale') {
                 const sc = parseScale(s, at);
-                generator = { kind: 'scan', steps: sc.steps, span: sc.span };
+                generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) };
                 scaleKey = sc.key;
             }
             else
@@ -579,7 +587,7 @@ export function parseBody(s, head) {
             oneshot = true;
             continue;
         }
-        if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_'))
+        if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_' || Object.hasOwn(MODE_WORDS, word)))
             s.i = at;
         else if (word !== null)
             s.fail(`Unexpected '${word}'`, at, word.length);

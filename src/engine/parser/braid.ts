@@ -6,6 +6,10 @@ import { MAX_NESTING, MAX_REPS, type LineScanner } from './scanner';
 import { parseFields } from './level';
 import { isMixChord, parseMixChord } from './mix';
 import { syntax, type Syntax } from './syntax';
+import { MODE_WORDS } from '../../theory/modes';
+
+/** A diatonic mode's name as a step (`&mode dorian`), a word on its own. */
+export const MODE_WORD = new RegExp(`(?:${Object.keys(MODE_WORDS).join('|')})(?![A-Za-z0-9_])`, 'y');
 
 /** What a braid's steps can be. */
 export const STEP_SYNTAX: readonly Syntax[] = [
@@ -160,6 +164,9 @@ function parseAtom(s: LineScanner, depth: number): Atom {
   // a note by name: a pitch, whatever the tables (C, F#, Bb3; octave 4 left out)
   const name = s.noteName();
   if (name !== null) return { kind: 'note', value: name, alter: 0, pitched: true };
+  // a diatonic mode by name (#363): its phase, darkest to brightest, as a note name reads as its pitch
+  const mode = s.match(MODE_WORD);
+  if (mode !== null) return { kind: 'note', value: MODE_WORDS[mode]!, alter: 0 };
   return s.fail(`Unexpected '${c}' — expected a number, a note name (C, F#), ~, [chord], &cell or key=value`);
 }
 

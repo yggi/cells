@@ -11,8 +11,7 @@ description: Two tuning forks on one table, one struck now and then, the other s
 # Two Tuning Forks — resonators (body=): persistent objects with their modes (a fork: its tone, and
 # a clang 6.27× higher that dies at once). Notes strike them; a note's value is where (0 … 7).
 # couple= sets one ringing from the other, both ways, through the table (coupling= how much).
-use &bar from "4/4"
-&tempo step=60bpm
+&bar from "4/4" 60bpm
 &hits step=1m/2 label="a strike, every eight seconds" 4
 &forkA pan=.35 body=fork loop=A4 ring=10 hard=.35 board=none couple=&forkB coupling=.1 label="fork A: struck" 0
 &forkB pan=.65 body=fork loop=free(440hz, 434..446) ring=10 hard=.35 board=none label="fork B: only the table rings it" 0

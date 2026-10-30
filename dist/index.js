@@ -19,7 +19,7 @@ export { PRESETS } from "./engine/presets.js";
 export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece } from "./engine/piecefile.js";
 export { fileLine, readLiterate, rewrite } from "./engine/literate.js";
 export { movedCard } from "./engine/shorten/card.js";
-export { expand, fragmentHash } from "./engine/use.js";
+export { bodyOf, expand, fragmentHash, signatureOf } from "./engine/use.js";
 export { createRepository, EMPTY_LAYER, layerProblems, } from "./repository/fragments.js";
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";
 export { METER_FRAGMENTS } from "./repository/meters.js";

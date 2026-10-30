@@ -237,6 +237,8 @@ export type Braid = {
     readonly kind: 'scan';
     readonly steps: readonly number[];
     readonly span: Span;
+    /** `scale(&mode, …)` (#363): the cell its mode is read from, one mode (`&mode major`); compile sets the steps (declare.ts). */
+    readonly mode?: Ref;
 }
 /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
  | {

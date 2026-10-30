@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&waltz from &key
 &waltz over=&key step=8n 0@2 2 4 4@2
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 3/4: it
 Its head is named for it (`&waltz`), so `use &waltz` takes it; a form reads it as its `&call` (`&call step=8n &waltz`), the line the form moves and answers.
 
 At 3/4's first point (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&waltz from &key`. `&waltz from waltz &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &waltz from waltz`, it reads `&key` by name, as before.

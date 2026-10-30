@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&shuffle from &key
 &shuffle over=&key step=8n 0@2 2 3@2 4 4@2 2 0@2 ~
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 12/8: i
 Its head is named for it (`&shuffle`), so `use &shuffle` takes it; a form reads it as its `&call` (`&call step=8n &shuffle`), the line the form moves and answers.
 
 At 12/8's point (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&shuffle from &key`. `&shuffle from shuffle &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &shuffle from shuffle`, it reads `&key` by name, as before.

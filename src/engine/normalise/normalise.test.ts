@@ -104,7 +104,8 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       ['use &bd, &hh, &sd from "gm kit"', 'use &bd, &hh, &sd from gm_kit'],
     ]) {
       const { source, steps } = normalise(`${old}\n${groove}`, { resolve: resolveSeed });
-      expect([old, source]).toEqual([old, `${now}\n${groove}`]);
+      // (and then, a collection's use, as its from line: decision 065)
+      expect([old, source]).toEqual([old, `${now.replace(/^use /, '')}\n${groove}`]);
       expect(steps.length, old).toBeGreaterThan(0);
       expect(compileSource(source, undefined, { resolve: resolveSeed }).diagnostics, old).toEqual([]);
     }
@@ -148,13 +149,14 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const line = (name: string) => kit.find((l) => l.startsWith(`&${name} `))!;
     const written = `&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n${line('bd')}\n${line('sd')}\n${line('hh')}\n${beat}`;
     const { source, steps } = normalise(written, seed);
-    expect(source).toBe(`use &bar from "4/4"  # four beats\n&tempo step=100bpm\nuse &bd, &sd, &hh from gm_kit\n${beat}`);
-    expect(steps).toHaveLength(2);
+    // (and each use as its from line, the tempo only the meter read written in: decision 065)
+    expect(source).toBe(`&bar from "4/4" 100bpm  # four beats\n&bd, &sd, &hh from gm_kit\n${beat}`);
+    expect(steps).toHaveLength(4);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     expect(normalise(source, seed)).toEqual({ source, steps: [] });
     // (a use of the fragment already written takes the names too)
     expect(normalise(`use &bd from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${line('sd')}\n${line('hh')}\n${beat}`, seed).source).toBe(
-      `use &bd, &sd, &hh from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${beat}`.replace('&bar meter("4/4") step=&tempo', 'use &bar from "4/4"'),
+      `&bd, &sd, &hh from gm_kit\n&bar from "4/4" 100bpm\n${beat}`,
     );
     // (a line that differs by a word stays the piece's; with no library given, nothing is taken)
     const own = written.replace(line('hh'), line('hh').replace('hpf=8000', 'hpf=7000'));
@@ -169,11 +171,11 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const base = BASE.replace('&bar meter("4/4") step=&tempo', 'use &bar from "4/4"');
     const written = `${base}&lead s=saw loop=C4 pitch=${vib}\n&pad s=tri loop=C3 pitch=${vib}\n&mix [&tune * &lead, &tune * &pad]`;
     const { source, steps } = normalise(written, seed);
-    expect(source).toBe(written.replace('use &bar from "4/4"', 'use &bar from "4/4"\nuse &vibrato').replaceAll(vib, '&vibrato'));
-    expect(steps).toHaveLength(1);
+    expect(source).toBe(written.replace('use &bar from "4/4"\n&tempo step=120bpm', '&bar from "4/4" 120bpm\n&vibrato from vibrato').replaceAll(vib, '&vibrato'));
+    expect(steps).toHaveLength(3);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     // (a vibrato a word off is the piece's own; a piece that names &vibrato itself keeps its inline cell)
-    expect(normalise(written.replaceAll('.1 0 -.1', '.12 0 -.12'), seed).steps).toEqual([]);
+    expect(normalise(written.replaceAll('.1 0 -.1', '.12 0 -.12'), seed).steps.filter((step) => !step.includes('decision 065'))).toEqual([]);
     expect(normalise(`${written}\n&vibrato 0`, seed).source).toContain(`pitch=${vib}`);
   });
 

@@ -1,3 +1,4 @@
+import { readFrom } from "./parser/use.js";
 export function splitComment(line) {
     let quoted = false;
     for (let i = 0; i < line.length; i++) {
@@ -12,7 +13,7 @@ export function splitComment(line) {
 const headOf = (name) => new RegExp(`^(\\s*&${name})(?=\\s|$)`);
 export function declLine(source, name) {
     const head = headOf(name);
-    return source.split('\n').findIndex((l) => head.test(splitComment(l)[0]));
+    return source.split('\n').findIndex((l) => head.test(splitComment(l)[0]) && readFrom(splitComment(l)[0].trim()) === undefined);
 }
 function sectionLine(lines, name) {
     return lines.findIndex((l) => {
@@ -175,7 +176,7 @@ export function usersOf(source, name) {
     for (const line of source.split('\n')) {
         const code = splitComment(line)[0];
         const head = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(code);
-        if (!head || head[1] === name)
+        if (!head || head[1] === name || readFrom(code) !== undefined)
             continue;
         if (re.test(code.slice(head[0].length)))
             users.push(head[1]);

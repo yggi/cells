@@ -4,7 +4,8 @@
 // in bars, through the lead performer; and recognition reads the answer of a call and answer as the call transposed two
 // degrees down, by one operator.
 import { describe, expect, it } from 'vitest';
-import { compileSource } from '../engine/compile';
+import { compileSource as compiledWithOldUse } from '../engine/compile';
+import { bodyOf } from '../engine/use';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
@@ -16,6 +17,15 @@ import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
 import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { createRecogniser } from './recognise';
+
+// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
+// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+const OLD_USE = /^use is the old way/;
+const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
+  const r = compiledWithOldUse(...args);
+  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
+  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
+};
 
 /** The point proposed for an Electro swing preset, as the electroswing seeds' files write it: no preset of Jambot's (decision 041). */
 const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
@@ -113,7 +123,7 @@ describe('the motifs', () => {
   it('are thirty-six, each a line over the key named for its fragment, at its point as the facet motif', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
-      expect(f.text, f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
+      expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
       expect(f.association, f.id).toEqual([{ point: MOTIFS[f.id]!.point, weight: 1, facet: 'motif' }]);
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&key']);
     }
@@ -193,7 +203,7 @@ describe('the forms', () => {
 describe('recognition reads an answer as an operator on its call (#294)', () => {
   const recogniser = createRecogniser();
   it.each(MOTIF_FRAGMENTS.map((f) => [f.id, f.text] as const))('the answer of %s, two degrees down, is the motif transposed by -2', (id, text) => {
-    const braid = text.replace(/^&\w+ over=&key step=8n /, '');
+    const braid = bodyOf(text).replace(/^&\w+ over=&key step=8n /, '');
     const heard = `&heard over=&key step=8n ${moved(braid, -2)}`;
     const found = recogniser.recognise(heard, LIBRARY, { workbench: benchOf(id) });
     const mine = found.find((r) => r.fragment.id === id);

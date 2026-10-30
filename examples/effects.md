@@ -6,7 +6,7 @@ description: "What shapes a voice after its source: filters, a reverb and an ech
 ---
 
 ```cells
-use &pluck from envelopes
+&pluck from envelopes
 &filterNote label="lpf= lets the lows through (a cutoff in Hz) and lpq= rings at the cutoff; hpf= and hpq= the same from above." about=(&warm &thin)
 &effectsNote label="room= sends to a reverb, delay= to an echo: delaytime= apart, delayfeedback= how long it repeats. distort= and crush= add grit." about=(&glass &grit)
 &vibratoNote label="pitch= is a voice's own pitch on every note: here a vibrato, a cell that turns three times a beat, in semitones." about=&warm

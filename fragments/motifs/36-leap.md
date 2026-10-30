@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&leap from &key
 &leap over=&key step=8n 0@2 4@2 3 2 1 0
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&leap`), so `use &leap` takes it; a form reads it as its `&call` (`&call step=8n &leap`), the line the form moves and answers.
 
 At the centre, 0.2 higher in articulation (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&leap from &key`. `&leap from leap &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &leap from leap`, it reads `&key` by name, as before.

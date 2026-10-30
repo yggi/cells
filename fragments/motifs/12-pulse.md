@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&pulse from &key
 &pulse over=&key step=8n 0 ~ 0 ~ 2 ~ 0 ~
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&pulse`), so `use &pulse` takes it; a form reads it as its `&call` (`&call step=8n &pulse`), the line the form moves and answers.
 
 Near Techno's point, 0.1 higher in energy, so a query there finds `octaves` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&pulse from &key`. `&pulse from pulse &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &pulse from pulse`, it reads `&key` by name, as before.

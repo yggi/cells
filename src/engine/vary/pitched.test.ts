@@ -16,6 +16,7 @@ import { BASS_FRAGMENTS } from '../../repository/bass';
 import { heard } from '../../repository/heard';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { anchorsOf, PITCHED_OPERATORS, readVariations, variations, varied } from '.';
+import { bodyOf } from '../use';
 
 vi.mock('../compile', async (original) => {
   const actual = await original<typeof import('../compile')>();
@@ -132,7 +133,7 @@ for (const name of Object.keys(PROGRESSIONS)) {
             it(`plays on its other notes what the language's own form plays`, () => {
               const free = (m: Map<number, number[]>) => [...m].filter(([at]) => !fixed.has(at));
               // (the last note's sixteenth in each bar, and the one before it: every seed is a bar long)
-              const [prev, last] = fragment
+              const [prev, last] = bodyOf(fragment)
                 .split('\n')[0]!
                 .split(' ')
                 .slice(3)

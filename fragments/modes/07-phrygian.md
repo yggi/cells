@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&key from &tonic
 &key scale(phrygian, &tonic)
 ```
 
@@ -20,3 +21,5 @@ It defines `&key`, the key (decision 047's interface name, decision 056, named s
 The tonic is left to the text that uses it, a hole, as the other modes leave theirs.
 
 No preset of Jambot's plays it yet (the owner, 2026-10-29: "jambot should be able to play all 7 modes. they should all be fragments", yggi/jambot#516). Placed by hand where it is heard, dark and driven: off the beat, rich, clipped and loud (sync .6, harm .6, artic .7, energy .85), weight 1.
+
+**Its signature** (decision 065): `&key from &tonic`. `&key from phrygian D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from phrygian`, it reads `&tonic` by name, as before.

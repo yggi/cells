@@ -5,7 +5,7 @@ description: "A 12-bar blues with swung eighths: the blues scale and the minor p
 ---
 
 ```cells
-use &pluck, &snap from envelopes
+&pluck, &snap from envelopes
 &swingNote label="The swing is a slider." about=&swing
 # A 12-bar blues in C, swung. The eighths are a meter of their own: long, short —
 # their ratio is free (1 straight, 2 the triplet swing, 3 hard). Two scales, both scans:

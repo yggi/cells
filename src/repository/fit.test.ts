@@ -4,6 +4,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { compileSource } from '../engine/compile';
+import { bodyOf } from '../engine/use';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
@@ -26,7 +27,8 @@ vi.mock('../engine/compile', async (original) => {
   return { ...actual, compileSource: vi.fn(actual.compileSource) };
 });
 
-const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
+/** A meter's lines, as a host puts them on a workbench by hand: its signature aside (decision 065). */
+const meterText = (id: string) => bodyOf(METER_FRAGMENTS.find((f) => f.id === id)!.text);
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
 /** The host's workbench: a meter at a tempo, as a host sets one (`setTiming`), then the fragments already on it. */
 /** 13 of the General MIDI kit's lines, taken by name as the drummer takes them: the voices the rhythms leave as holes (#244). */

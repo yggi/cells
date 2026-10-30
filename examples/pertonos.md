@@ -5,8 +5,8 @@ description: A canon on the royal theme that rises a whole tone each pass, as in
 ---
 
 ```cells
-use &vibrato
-use &swell from envelopes
+&vibrato from vibrato
+&swell from envelopes
 # After Bach, Musical Offering: "Ascendenteque Modulatione ascendat Gloria Regis".
 # The royal theme on top; below it a canon at the fifth, one bar apart;
 # and every pass the whole piece rises a whole tone: C D E F# G# A# …

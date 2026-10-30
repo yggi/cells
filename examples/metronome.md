@@ -6,7 +6,7 @@ description: A bar and the clicks it plays, in a meter you choose.
 ---
 
 ```cells
-use &tap, &click from envelopes
+&tap, &click from envelopes
 &chooseNote label="Choose the time signature and the grid — a click on every beat, eighth, sixteenth or triplet — the tempo and the swing." about=&bar
 &levelsNote label="The bar's own steps carry their levels (the downbeat, the beats, the subdivisions): the clicks read them through a kit." about=(&bar &clicks)
 # The bar is a meter: meter(signature, steps a pulse) writes it as levels — 0 the downbeat (*),

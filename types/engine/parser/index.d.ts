@@ -1,7 +1,7 @@
 import type { ParseResult } from '../ast';
 export { meterLevels, SIGNATURES } from './generators';
 export { SHOWS } from './cell';
-export { readUse, USE_FORM, writeUse, type UseForm } from './use';
+export { readFrom, readUse, USE_FORM, USE_OLD, writeUse, type FromForm, type UseForm } from './use';
 export declare function parse(whole: string): ParseResult;
 /**
  * A piece's card: its title, its description, its tags and its tier. From a file (`piecefile.ts`, decision 047): the

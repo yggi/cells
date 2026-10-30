@@ -509,6 +509,11 @@ export interface Used {
   readonly gave: readonly string[];
   /** The names it asks for (or, for `*`, defines) that the piece's own lines define instead. */
   readonly overrode: readonly string[];
+  /**
+   * A `from` line's arguments (decision 065), as written: each named one (`swing=8n:.64`), and the main one under the
+   * name of the parameter it binds (`tempo: '&tempo'`). Absent for a `use` line and for a collection.
+   */
+  readonly args?: Readonly<Record<string, string>>;
 }
 
 /** Shift of every cell; missing names use the code's shift=. */

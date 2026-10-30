@@ -61,12 +61,16 @@ source: seed
 ---
 
 ```cells
-use &keysV from keys
+&stab, &stabOut from (&stabLevel) &stabline
+&keysV from keys
 &stabOut play=&stabline level=&stabLevel &keysV
 &stab map=role &stabOut
+&stabLevel map=amp .8
 ```
 
 The stab player (decisions 058 and 061): a gate, `&stabOut` (Jambot's section text's name for it), whose role is `stab` (`&stab map=role &stabOut`), playing the part `&stabline` on the `keys` instrument, at its register (`&keysV loop=C3`, where Jambot's section text sounds its comp: `PIN_VOICES.comp`, yggi/jambot `packages/score/src/section-text.ts` @ 24a528b), so with no move.
-Its two holes are the score's: `&stabline`, the line, and `&stabLevel`, its velocities as written, a line of levels or one level. Jambot sends the pad and the stab on one channel, 3: the score's card puts both gates in one entry (`[&padOut, &stabOut]`).
+Its two inputs are the score's (decision 065: the line its main parameter, the level an optional one, one level of .8 by default): `&stabline`, the line, and `&stabLevel`, its velocities as written, a line of levels or one level. Jambot sends the pad and the stab on one channel, 3: the score's card puts both gates in one entry (`[&padOut, &stabOut]`).
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`presets.ts`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
+
+**Its signature** (decision 065): `&stab, &stabOut from (&stabLevel) &stabline`. `&stab from "stab performer" &line` takes a copy of it, `&stabline` its main argument; `&stabLevel` an optional parameter, its line its default (`"stab performer"(stabLevel=…)`). Taken the old way, `use &stab from "stab performer"`, it reads `&stabline` by name, as before.

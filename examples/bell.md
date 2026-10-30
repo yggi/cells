@@ -5,7 +5,7 @@ description: "The bell, x.x.xx.x.x.x, has the major scale's intervals: 2 2 1 2 2
 ---
 
 ```cells
-use &tap, &click from envelopes
+&tap, &click from envelopes
 # The West African standard bell pattern — seven strokes over twelve pulses,
 # x.x.xx.x.x.x — has the same intervals as the major scale: 2 2 1 2 2 2 1.
 # So one cell is both: the melody steps with the bell, and reads it as its scale.

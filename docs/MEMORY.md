@@ -34,7 +34,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 
 - `&name … ` one cell per line; steps `0 2 ~ 4@2 0!4 [0,2,4]` → [cell](language/cell.md)
 - `scan(…)` `euclid(k,n)` `sin(n)`; `&t[i]` `&t[$i]` `&t[a:b]` `&t[<<n]` `&t^n` (degrees) `&t^$n` (grid steps) → [braid](language/braid.md)
-- `over=&t` `scale(name, tonic)` `shift=n` `cycle=n`; the key named, `over=&key` (`over=key` the old way); a tonic read from a cell, `scale(dorian, &tonic)`, `&tonic D`, stepped `&tonic step=1m/8 D F`, free `&tonic free(D)` → [tables](language/tables.md)
+- `over=&t` `scale(name, tonic)` `shift=n` `cycle=n`; the key named, `over=&key` (`over=key` the old way); a tonic read from a cell, `scale(dorian, &tonic)`, `&tonic D`, a mode read from a cell `scale(&mode, &tonic)`, `&mode dorian` (locrian 0 … lydian 6), stepped `&tonic step=1m/8 D F`, free `&tonic free(D)` → [tables](language/tables.md)
 - `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), taps of a meter (`pulse` `beat` `16n` `4n.` `8t` `1m`, `&m:16n`, `cycle=n` bars), `beat=`, swing on the bar (`swing=8n:.67`, `:pairs` its pairs alone), `stride=`, `laps=` → [time](language/time.md)
 - `map=edo|ed(r)|ratios`, note names → [tuning](language/tuning.md)
 - `free(default, lo..hi)`, `free(0 2 4 ~)` a braid, recorded → [free](language/free.md)
@@ -42,7 +42,9 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - `map=midi` a MIDI card, entries channels; `midi(10)`, `midi(10, 2)` (slot 2) → [midi](language/midi.md)
 - voices `s=` `loop=`, `env=` `pitch=` `map=adsr|amp|lin|db`; a line's articulation `legato=.5` (Strudel's) → [sound](language/sound.md)
 - belts, tape, resonators, FM → [physics](language/physics.md)
+- `&key from dorian D` a template's copy, `&bar from "4/4 swung on 8n"(swing=8n:.6) &tempo` its arguments, a signature `&bar from (&swing) &tempo` (decision 065); `&bd, &sd from gm_kit` a collection's cells, `* from gm_kit` every line; the piece's lines win; `use &bd from gm_kit` the old way → [from](language/use.md)
 - `use &bd, &sd from gm_kit` the named cells and what they read, `use * from …` every line, `use &x` from x; the piece's lines win → [use](language/use.md)
+- `&key from dorian D` a template's copy, `&bar from swung(swing=8n:.6) &tempo` its arguments, a signature `&bar from (&swing) &tempo` (decision 065); `&bd, &sd from gm_kit` a collection's cells → [use](language/use.md)
 - a piece's file: `title:` `tags:` `tier:` in its frontmatter (the card's `title=` `tags=` `tier=` the old way, a warning); `label=` `show=`, a cell's `tags=`; loudness: the card's `postgain=` (linear) → [display](language/display.md); a `show=` of the piece's own → [plugins](language/plugins.md)
 
 ## Decisions
@@ -99,5 +101,6 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 060 · The key is named, `over=&key` (`over=key` the old way); a tonic is a cell, stepped or free · → decisions/060-the-key-is-named.md
 - 061 · The band: a role cell says what its gates play as; a selector over the performers says when · → decisions/061-the-band.md
 - 062 · Cells renders audio: events in, samples out, in blocks; superdough's meaning at the examples' level · → decisions/062-cells-renders-audio.md
-- 063 · The score and the band: the score ends in `use * from band`, each client's band its own; the style a note, read by name · → decisions/063-the-score-and-the-band.md
+- 063 · The score and the band: the score ends in `* from band` (`use * from band` before 065), each client's band its own; the style a note, read by name · → decisions/063-the-score-and-the-band.md
 - 064 · What sounds: heard on any card, a MIDI card too; any written card replaces the built-in one; an out is a sound wired into a card, a voice each · → decisions/064-what-sounds.md
+- 065 · Fragments take arguments: `&key from harmonic_minor D`; a signature declares one main parameter and optional ones; `use` retires · → decisions/065-fragments-take-arguments.md

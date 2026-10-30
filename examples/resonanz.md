@@ -11,8 +11,7 @@ description: "The building site again, now the metal itself rings: struck plate,
 # Baustelle II: Resonanz — resonators (body=) struck by notes: a note's value is where (0 … 7).
 # &site goes onto a tape (write=); its heads, mixed into &echo, drive the pipes (excite=) —
 # sound into bodies. The pipes aren't recorded: no loop through the tape and back.
-use &bar from "4/4"
-&tempo step=104bpm
+&bar from "4/4" 104bpm
 &reel step=104bpm motor=1.4 mass=1 friction=.1 wow=.02 0
 &hammer step=8n label="the hammer: where on the plate" 1 ~ 5 ~ ~ 3 7 ~ 1 ~ ~ 6 ~ 2 ~ 4
 &beam step=4n label="the beam" 4 ~ ~ 0 ~ 4 ~ ~

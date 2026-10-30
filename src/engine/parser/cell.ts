@@ -9,6 +9,7 @@ import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE, parseFree } from './free';
 import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
+import { MODE_WORDS } from '../../theory/modes';
 import { atTap, parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
 import { AXIS_NAMES } from '../style';
@@ -138,7 +139,14 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
         s.i += 5;
         const sc = parseScale(s, at0);
         const name = `scale:λ${s.line}_${at0 + s.offset}`;
-        s.lambdas.push({ ...BLANK_TABLE, name, span: sc.span, lambda: s.text.slice(at0, s.i), over: sc.key, braid: { kind: 'scan', steps: sc.steps, span: sc.span } });
+        s.lambdas.push({
+          ...BLANK_TABLE,
+          name,
+          span: sc.span,
+          lambda: s.text.slice(at0, s.i),
+          over: sc.key,
+          braid: { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) },
+        });
         b.over = { name, pick: null, shift: 0, span: sc.span };
       } else b.over = s.cellRef('a cell or scale(name, tonic) after over=, like over=&key or over=scale(minor, A)', 'after over=');
       if (b.over!.pick) s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over!.span.col - 1, b.over!.span.len);
@@ -515,9 +523,9 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
   syntax(
     'line',
-    'use &a, &b from id · use * from id · use &x',
-    'A fragment\'s lines taken into the piece by its id (decisions 054, 059): the named cells and the lines they read within it, every line (`*`), or `use &x`, &x from the fragment x. What the piece doesn\'t define is read after the piece\'s own lines, which win. A line of its own; the id a word, or in double quotes; the host\'s resolver finds it. `use "id"` is the old way of `use * from "id"`.',
-    ['use &bd, &sd from gm_kit', 'use * from "harmonic minor"'],
+    '&x from id(name=…) … · &a, &b from id · * from id',
+    "Where a line's cells come from (decision 065): a fragment by its id, the id a word or in double quotes, the host's resolver finding it. A template (a fragment with a signature) gives a copy, its head named as the line names it, its named arguments in parentheses and its main one the rest of the line; attributes before `from` are the head's. A collection gives the cells it names by their names, or every line (`*`). With no id, a fragment's signature: its head, its optional parameters in parentheses, its main one after them. `use &a, &b from id` is the old way, and warns.",
+    ['&key from "harmonic minor" D', '&bar from "4/4 swung on 8n"(swing=8n:.64) 120bpm', '&bd, &sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'],
     'use.md',
   ),
   syntax(
@@ -672,7 +680,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       } else if (word === 'scale') {
         // scale(name, tonic): its steps the cell's braid, read through the key it brings
         const sc = parseScale(s, at);
-        generator = { kind: 'scan', steps: sc.steps, span: sc.span };
+        generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) };
         scaleKey = sc.key;
       } else generator = parseGenerator(s, word, at);
       continue;
@@ -696,7 +704,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     }
     // a note by name is a step (C, Bb3): read again as one
     // (and _, the step before it held one longer)
-    if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_')) s.i = at;
+    if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_' || Object.hasOwn(MODE_WORDS, word))) s.i = at;
     else if (word !== null) s.fail(`Unexpected '${word}'`, at, word.length);
     if (generator && freeBraid && s.peek() === ')') s.fail(`A ')' with nothing to close: free(${freeSteps}) ends at its first ')'`, at, 1);
     if (generator && at === freeEnd && /[@!*/?:]/.test(s.peek())) {

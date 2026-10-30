@@ -5,10 +5,10 @@ import { IDENT, LineError, LineScanner, stripComment } from "./scanner.js";
 import { parseBody, parseCell, SHOWS } from "./cell.js";
 import { splitPlugins } from "../plugins.js";
 import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
-import { readUse, USE_FORM, useQuoted } from "./use.js";
+import { FROM_FORM, readFrom, readUse, USE_FORM, useOld } from "./use.js";
 export { meterLevels, SIGNATURES } from "./generators.js";
 export { SHOWS } from "./cell.js";
-export { readUse, USE_FORM, writeUse } from "./use.js";
+export { readFrom, readUse, USE_FORM, USE_OLD, writeUse } from "./use.js";
 export function parse(whole) {
     const cells = [];
     const uses = [];
@@ -45,9 +45,18 @@ export function parse(whole) {
                 diagnostics.push({ severity: 'error', message: USE_FORM, span });
             else {
                 uses.push({ id: use.id, names: use.names, span });
-                if (use.form === 'quoted')
-                    diagnostics.push({ severity: 'warning', message: useQuoted(use.id), span });
+                diagnostics.push({ severity: 'warning', message: useOld(use), span });
             }
+            return;
+        }
+        const from = readFrom(text);
+        if (from !== undefined) {
+            const col = text.search(/\S/);
+            const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
+            if (from === null)
+                diagnostics.push({ severity: 'error', message: FROM_FORM, span });
+            else if (from.kind === 'use')
+                uses.push({ id: from.id, names: from.names, span });
             return;
         }
         try {

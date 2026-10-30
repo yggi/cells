@@ -13,8 +13,7 @@ description: "Sound, on a tape loop: a plucked tune and a soft pad go to the spe
 # (drive=), with a little hiss=. The read heads are readers; in a mix they return to the speakers.
 # The tape moves with &reel: when the reel slows, the heads' delays stretch and the pitch drops.
 &reel step=72bpm motor=1.2 mass=1 friction=.05 wow=.02 0
-use &bar from "4/4"
-&tempo step=72bpm
+&bar from "4/4" 72bpm
 &minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"
 &tune over=&minor step=8n label="the tune" 0 ~ 7 ~!2 4 ~!2 2 ~!7 9 ~ 7 ~ 4 ~!3 2 ~ 0 ~!5
 &pad over=&minor step=1m/2 label="the pad" [0,2,4] [-2,0,2]

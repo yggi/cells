@@ -26,6 +26,18 @@ export const SCALES = {
     blues: { steps: [3, 2, 1, 1, 3, 2], name: 'Blues' },
     wholetone: { steps: [2, 2, 2, 2, 2, 2], name: 'Whole tone' },
 };
+export const MODE_WORDS = {
+    locrian: 0,
+    phrygian: 1,
+    aeolian: 2,
+    minor: 2,
+    dorian: 3,
+    mixolydian: 4,
+    ionian: 5,
+    major: 5,
+    lydian: 6,
+};
+export const diatonicSteps = (phase) => intervals(even(7, 12, phase), 12);
 export function scaleOfPhase(phase) {
     const mode = MODES[phase]?.name.toLowerCase() ?? 'major';
     return mode === 'ionian' ? 'major' : mode === 'aeolian' ? 'minor' : mode;

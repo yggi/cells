@@ -33,6 +33,7 @@ export declare function parseScale(s: LineScanner, start: number): {
     steps: number[];
     key: Ref;
     span: Span;
+    mode?: Ref;
 };
 /**
  * `fifths()`, `fifths(n)`, `fifths(G)`: the circle of fifths, the twelve pitch classes a fifth apart (C G D A E B F#

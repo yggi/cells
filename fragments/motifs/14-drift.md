@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&drift from &key
 &drift over=&key step=8n 4@4 3@4
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&drift`), so `use &drift` takes it; a form reads it as its `&call` (`&call step=8n &drift`), the line the form moves and answers.
 
 Near Ambient's point, 0.1 higher in energy, so a query there finds `rising` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&drift from &key`. `&drift from drift &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &drift from drift`, it reads `&key` by name, as before.

@@ -12,6 +12,7 @@ source: seed
 ---
 
 ```cells
+&rising from &key
 &rising over=&key step=8n 0@2 2@2 4@4
 ```
 
@@ -20,3 +21,5 @@ It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: it
 Its head is named for it (`&rising`), so `use &rising` takes it; a form reads it as its `&call` (`&call step=8n &rising`), the line the form moves and answers.
 
 At Ambient's point (`presets.ts`), weight 1, as the facet `motif`.
+
+**Its signature** (decision 065): `&rising from &key`. `&rising from rising &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &rising from rising`, it reads `&key` by name, as before.
