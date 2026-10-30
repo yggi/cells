@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since v0.13.0.
+
+## v0.13.0 — 2026-10-30
+
 ### Added
 
 - **What sounds out, from cells** (decision 064, #380): `outs(result)` (`engine/outs.ts`) gives each sound wired into a card, a sound card's or a MIDI card's, the built-in card's included: its edge, its source, the card and its kind, a MIDI card's channel, a two-channel card's side. An out is a voice (a gate's voices one each), a kit, a mix or a read head, one per card it reaches. `soundRole(result, cell)` says what a cell does with sound (`maker`, `gate`, `mixer`, `card`, or none), and every resolved cell carries its sort (`ResolvedCell.sort`: `signal`, `wave`, `pitch`, `volume`, `plain`). `writtenGraph(result, { card: true })` holds the built-in card as a node, with an edge from each sound it hears, under the ids the routing gives them. **What a frontend sees at its next pin:** new exports and a new field; what Cell studio derives today (`withCard`, `soundRole`, the tower's `cards()`) can read these instead (yggi/cell-studio#523). Nothing a piece plays changes.
