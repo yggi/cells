@@ -42,7 +42,7 @@ export interface Played {
   readonly value?: number;
   /** Its envelope (map=adsr, seconds), or absent for the voice's own. */
   readonly env?: { readonly attack: number; readonly decay: number; readonly sustain: number; readonly release: number };
-  /** Sent on a MIDI card, and heard on no sound card: the voices leave it out, MIDI out sends it. */
+  /** Heard nowhere: its gains are 0 on every card that is on (a sound card's, or a MIDI card's entry: decision 064). The voices leave it out. */
   readonly unheard?: true;
   /** The MIDI cards' entries it goes out on (those switched on): MIDI out sends it there and nowhere else. */
   readonly midi?: Output['midi'];
@@ -267,6 +267,18 @@ export function liveGains(o: Output, muted: ReadonlySet<string>): [number, numbe
   return partsGains(o.parts, muted);
 }
 
+/**
+ * An output's level as heard (decision 064): on a sound card, its gains there (`liveGains`); on MIDI cards alone, the
+ * loudest of its entries' gains there, in the middle (a MIDI card is heard as well as sent). A send is heard only in what
+ * it feeds.
+ */
+export function heardGains(o: Output, muted: ReadonlySet<string>): [number, number] {
+  const g = liveGains(o, muted);
+  if (o.silent || audible(g)) return g;
+  const gain = liveMidi(o, muted).reduce((m, d) => (Math.abs(d.gain) > Math.abs(m) ? d.gain : m), 0);
+  return [gain, gain];
+}
+
 /** What a read head's return or a resonator ringing alone in a mix reaches the sound card at, with what is switched off. */
 export function returnGains(x: { readonly parts: Output['parts']; readonly through: Output['through'] }, muted: ReadonlySet<string>): [number, number] {
   return x.through.some((t) => muted.has(cellId(t))) ? [0, 0] : partsGains(x.parts, muted);
@@ -286,11 +298,10 @@ function partsGains(parts: Output['parts'], muted: ReadonlySet<string>): [number
 /** Does a pair of channel gains sound? Any but 0 does: a negative one is an inverted voice (gains of opposite signs cancel). */
 const audible = (g: readonly [number, number]): boolean => g[0] !== 0 || g[1] !== 0;
 
-/** Is it heard: on, and reaching a sound card through what is on (a send: into what it feeds)? */
+/** Is it heard: on, and reaching a card (a sound card, or a MIDI card: decision 064) through what is on (a send: into what it feeds)? */
 export function outputSounds(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean {
   if (!outputOn(result, o, muted)) return false;
-  const g = liveGains(o, muted);
-  return audible(g);
+  return audible(heardGains(o, muted));
 }
 
 /** Does it play at all: heard (`outputSounds`), or sent on a MIDI card that is on (`outputSent`)? What the plan plays. */
@@ -461,8 +472,8 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
   // a law (law=fiveto12): its notes computed, not written — any moment of its day at once
   for (const o of p.result.outputs) {
     if (p.result.cells.get(o.cell)?.params.law !== 'fiveto12') continue;
-    const g = liveGains(o, p.muted);
-    // (on a MIDI card too: its notes are sent there, and heard only if a sound card hears them)
+    const g = heardGains(o, p.muted);
+    // (on a MIDI card too: its notes are sent there, and heard on it as well: decision 064)
     const midi = o.midi ? liveMidi(o, p.muted) : [];
     const heard = audible(g);
     if (!heard && !midi.length) continue;
@@ -633,7 +644,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         const [l, r] = balance(result.cells.get(v.voice)?.params.pan);
         return [g[0] * l * k, g[1] * r * k];
       };
-      const gains = memberPan(liveGains(t.output, p.muted));
+      const gains = memberPan(heardGains(t.output, p.muted));
       const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
       if (!(freq > 0 && freq < 20000 && level.some((l) => l.level > 0))) return null;
       return {
@@ -645,7 +656,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         value: e.value + e.alter,
         gains,
         levels: level,
-        // (on MIDI cards only, or its sound card switched off: sent, not heard)
+        // (its cards switched off, or at a gain of 0 on each: heard nowhere)
         ...(!t.output.silent && !audible(gains) ? { unheard: true as const } : {}),
         ...(midi.length ? { midi } : {}),
         ...(env ? { env } : {}),
@@ -851,7 +862,7 @@ function droneEvents(p: Plan, from: number, to: number, outputs: boolean, held: 
         : [{ at, level: 1 }];
       const freq = voice.freq * Math.pow(2, (o.offset + start) / 12);
       if (!(freq > 0 && freq < 20000) || !levels.some((l) => l.level > 0)) continue;
-      const gains = liveGains(o, p.muted);
+      const gains = heardGains(o, p.muted);
       const midi = o.midi ? liveMidi(o, p.muted) : [];
       const params = paramTracks(p, o.voice, at, dur);
       out.push({

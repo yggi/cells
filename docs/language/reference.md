@@ -95,7 +95,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `map=db`: A volume in decibels (0 as it is, −6 about half). [→](sound.md) `&fade map=db step=&bar 0 -6 -12`
 - `map=adsr a d s r`: An envelope: attack, decay, release in seconds, sustain a level; one per note. [→](sound.md) `&pluck map=adsr .01 .3 .5 .4`
 - `map=sample`: The sound card: its entries are channels, one (mono) or two (left, right). [→](mix.md) `&out loop=SAMPLE_RATE map=sample &left &right`
-- `map=midi`: A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent, not heard. [→](midi.md) `&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove`
+- `map=midi`: A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent and heard, at its entry's gain. [→](midi.md) `&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove`
 - `map=edo`: A grid: cycle= equal steps to the octave. [→](tuning.md) `&edo19 cycle=19 map=edo`
 - `map=ratios`: A grid of ratios: one period's tones, then the period (the last). [→](tuning.md) `&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2`
 - `map=role`: A role: its name is the role, its entries the gates that play it (two entries, two players); a gate no role names plays as written. [→](mix.md) `&comp map=role &violin2 &viola`

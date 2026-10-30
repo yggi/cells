@@ -8,7 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.12.2.
+### Changed
+
+- **A voice on a MIDI card alone is heard as well as sent** (decision 064, #333; amends 019): a note is heard on any card that is on, a MIDI card at its entry's gain there (the numbers its velocity reads), in the middle, the loudest of several. `unheard` now means heard nowhere (its cards off, or holding it at 0); realize gives such a note its gains (`heardGains`), and the renderer sounds it, so a piece whose card is MIDI alone, as a Jambot section text is, renders with sound. **What a frontend sees at its next pin:** notes that were `unheard` with gains `[0, 0]` and a `midi` now come with gains and no `unheard`; Cell studio's `heardHere` (its decision 039) becomes a no-op and can go. `midi-out`'s `&sub` is heard: its events' hash moves, its notes' doesn't, and its `postgain=` is set to the -24 dB convention it was left out of (#367: .891 → 1.375, measured by `pieceAudio`: -24.00 dB). The warning on a voice only on a MIDI card now says its sound is heard here but isn't sent. MIDI out sends what it sent. No other example moves.
+- **Decision 028's built-in card, in the words of the code** (decision 064): any written card, sound or MIDI, replaces it.
 
 ## v0.12.2 — 2026-10-30
 

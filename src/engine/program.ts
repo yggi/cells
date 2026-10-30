@@ -353,7 +353,7 @@ export interface Output {
   }[];
   /** A send: played into what it feeds (a resonator, a tape), not heard from its voice itself. */
   readonly silent?: boolean;
-  /** Where it goes out as MIDI (map=midi cards); absent: on no MIDI card. Only here, and on no sound card: sent, not heard. */
+  /** Where it goes out as MIDI (map=midi cards); absent: on no MIDI card. Only here, and on no sound card: sent, and heard at its entry's gain (decision 064). */
   readonly midi?: readonly MidiDest[];
   /** Played off a tape: its source's notes, through the tape (a read head at= after the write head). */
   readonly tape?: { readonly head: string; readonly tape: string; readonly at: number; readonly length: number; readonly erase: number };
