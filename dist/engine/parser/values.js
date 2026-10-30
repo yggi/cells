@@ -91,7 +91,7 @@ export const MAP_KINDS = {
     db: syntax('map', 'map=db', 'A volume in decibels (0 as it is, −6 about half).', ['&fade map=db step=&bar 0 -6 -12'], 'sound.md'),
     adsr: syntax('map', 'map=adsr a d s r', 'An envelope: attack, decay, release in seconds, sustain a level; one per note.', ['&pluck map=adsr .01 .3 .5 .4'], 'sound.md'),
     sample: syntax('map', 'map=sample', 'The sound card: its entries are channels, one (mono) or two (left, right).', ['&out loop=SAMPLE_RATE map=sample &left &right'], 'mix.md'),
-    midi: syntax('map', 'map=midi', 'A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent, not heard.', ['&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove'], 'midi.md'),
+    midi: syntax('map', 'map=midi', "A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent and heard, at its entry's gain.", ['&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove'], 'midi.md'),
     edo: syntax('map', 'map=edo', 'A grid: cycle= equal steps to the octave.', ['&edo19 cycle=19 map=edo'], 'tuning.md'),
     ratios: syntax('map', 'map=ratios', "A grid of ratios: one period's tones, then the period (the last).", ['&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2'], 'tuning.md'),
     role: syntax('map', 'map=role', 'A role: its name is the role, its entries the gates that play it (two entries, two players); a gate no role names plays as written.', ['&comp map=role &violin2 &viola'], 'mix.md'),

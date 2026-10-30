@@ -135,6 +135,13 @@ export function liveGains(o, muted) {
         return o.via.some((m) => muted.has(cellId(m)) && !o.midi?.some((d) => d.card === m)) ? [0, 0] : [o.gains[0], o.gains[1]];
     return partsGains(o.parts, muted);
 }
+export function heardGains(o, muted) {
+    const g = liveGains(o, muted);
+    if (o.silent || audible(g))
+        return g;
+    const gain = liveMidi(o, muted).reduce((m, d) => (Math.abs(d.gain) > Math.abs(m) ? d.gain : m), 0);
+    return [gain, gain];
+}
 export function returnGains(x, muted) {
     return x.through.some((t) => muted.has(cellId(t))) ? [0, 0] : partsGains(x.parts, muted);
 }
@@ -151,8 +158,7 @@ const audible = (g) => g[0] !== 0 || g[1] !== 0;
 export function outputSounds(result, o, muted) {
     if (!outputOn(result, o, muted))
         return false;
-    const g = liveGains(o, muted);
-    return audible(g);
+    return audible(heardGains(o, muted));
 }
 export function outputPlays(result, o, muted) {
     if (!outputOn(result, o, muted))
@@ -300,7 +306,7 @@ export function eventsBetween(p, from, to, outputs = false, held = {}) {
     for (const o of p.result.outputs) {
         if (p.result.cells.get(o.cell)?.params.law !== 'fiveto12')
             continue;
-        const g = liveGains(o, p.muted);
+        const g = heardGains(o, p.muted);
         const midi = o.midi ? liveMidi(o, p.muted) : [];
         const heard = audible(g);
         if (!heard && !midi.length)
@@ -460,7 +466,7 @@ function plainEvents(p, from, to, outputs) {
                 const [l, r] = balance(result.cells.get(v.voice)?.params.pan);
                 return [g[0] * l * k, g[1] * r * k];
             };
-            const gains = memberPan(liveGains(t.output, p.muted));
+            const gains = memberPan(heardGains(t.output, p.muted));
             const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
             if (!(freq > 0 && freq < 20000 && level.some((l) => l.level > 0)))
                 return null;
@@ -647,7 +653,7 @@ function droneEvents(p, from, to, outputs, held) {
             const freq = voice.freq * Math.pow(2, (o.offset + start) / 12);
             if (!(freq > 0 && freq < 20000) || !levels.some((l) => l.level > 0))
                 continue;
-            const gains = liveGains(o, p.muted);
+            const gains = heardGains(o, p.muted);
             const midi = o.midi ? liveMidi(o, p.muted) : [];
             const params = paramTracks(p, o.voice, at, dur);
             out.push({

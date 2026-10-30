@@ -247,12 +247,36 @@ function route(result, muted, outs, how, keeping) {
             sound.clock(n);
     for (const n of heard)
         sound.timed(n);
+    namesOf(result, sound);
     for (const c of result.cells.values())
         if (typeof c.params.scope === 'string' && !sound.off(c.name))
             for (const k of c.children.keys())
                 if (sound.nodes.has(cellId(k)))
                     sound.edge(c.name, k);
     return sound;
+}
+function namesOf(result, sound) {
+    const on = (name) => sound.nodes.has(cellId(name));
+    for (const c of result.cells.values()) {
+        if (sound.off(c.name))
+            continue;
+        if (c.gate && on(c.name))
+            for (const r of c.gate.receivers) {
+                const kit = result.cells.get(r);
+                if (!kit?.kit || on(r) || sound.off(r))
+                    continue;
+                const struck = kit.units.flatMap((u) => (u.atom.kind === 'ref' && on(u.atom.name) ? [u.atom.name] : []));
+                if (!struck.length)
+                    continue;
+                sound.node(r);
+                for (const m of struck)
+                    sound.edge(r, m);
+            }
+        if (c.map?.kind === 'role')
+            for (const u of c.units)
+                if (u.atom.kind === 'ref' && on(u.atom.name))
+                    sound.edge(c.name, u.atom.name);
+    }
 }
 function plays(result, muted, o) {
     return !!o.drone || new RouteAcc(result, muted).braid(o.cell, ROOT);

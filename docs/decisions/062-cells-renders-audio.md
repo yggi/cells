@@ -80,7 +80,7 @@ So:
 
 ### 7. What is heard
 
-What realize says is heard on a sound card. A voice on a MIDI card alone is sent, not heard (decision 019), until #333 amends it.
+What realize says is heard: on a sound card, or on a MIDI card alone at its entry's gain ([decision 064](064-what-sounds.md), which amends 019 on this).
 
 ### 8. Stems: a voice each, or an entry of the card each
 
