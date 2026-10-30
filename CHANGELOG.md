@@ -11,6 +11,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 ### Added
 
 - **Twenty-six more motifs, thirty-six in all** (#369): a second near each of Jambot's ten presets' points, 0.1 higher in energy (`refrain`, `pulse`, `soul`, `drift`, `dusty`, `slap`, `saudade`, `blue`, `lindy`, `toll`); one at each point of a meter that had none, a bar of that meter (`waltz` and `musicBox` in 3/4, `rocking` and `sway` in 6/8, `fivefold` in 5/4, `limp` in 7/8, `dancer` in 10/8, `shuffle` in 12/8, `march` in 2/4, `fanfare` alla breve); and six general-purpose near the centre of style space (`question`, `reply`, `arpeggio`, `run`, `neighbour`, `leap`). A query for a motif at a preset's point still finds its first motif first, alone at distance 0, and its second 0.05 away (cells breaks a tie by id, so a second at the same point could have come first). Nothing a piece plays changes. A frontend that queries the facet `motif` finds more: Jambot's lead (yggi/jambot#524) reaches the odd meters' motifs where it had none.
+Nothing has changed since v0.12.3.
+
+## v0.12.3 — 2026-10-30
+
+### Fixed
+
+- **`moving` plays under Cell studio's loudness ceiling again** (#377): its `postgain=` is 5.55, where #374 set 9.11. `pieceAudio` heard it at −24.00 dB, its peak at −3.96, but Cell studio heard it 4.3 dB louder, at −19.7 dB with a peak of +0.3 and 14 samples clipped. Its `lpq=10` cutoff is swept on every note, and there R1's resonant filter and Cell studio's part ways (#377's second half). Measured in Cell studio, as #374 did for the pieces the renderer doesn't sound whole: about −24 dB, its peak about −4. **How loud `moving` sounds changes in both frontends**; what it plays doesn't.
 
 ## v0.12.2 — 2026-10-30
 
