@@ -42,8 +42,8 @@ export interface ValueMap {
   readonly add: number;
 }
 
-export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: number; degree?: number }) =>
-  (pickLabel(r.pick) || shiftLabel(r.shift)) + (r.degree ? `^${r.degree}` : '') + (r.transpose ? `^$${r.transpose}` : '');
+export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: number; degree?: number; slot?: string }) =>
+  (r.slot ? `[${r.slot}]` : pickLabel(r.pick) || shiftLabel(r.shift)) + (r.degree ? `^${r.degree}` : '') + (r.transpose ? `^$${r.transpose}` : '');
 
 /**
  * `&name`, optionally viewed through brackets: a pick from the braid as
@@ -53,6 +53,11 @@ export const refLabel = (r: { pick: Pick | null; shift: number; transpose?: numb
 export interface Ref {
   readonly name: string;
   readonly pick: Pick | null;
+  /**
+   * A slot by name (`&env[sustain]`, `&funk[artic]`, decision 063): one its map names (`SLOTS`, style.ts). Read before
+   * compile as the slot's position as written (`pick` `[$2]`, `compiler/slots.ts`), so nothing after sees a name.
+   */
+  readonly slot?: string;
   readonly shift: number;
   /** ^$n: what it plays, n grid steps up (^$-n down), after its tables (absolute: a semitone on the 12). */
   readonly transpose?: number;
@@ -100,7 +105,15 @@ export type Atom =
   | { readonly kind: 'choice'; readonly values: readonly number[]; readonly alters: readonly number[] }
   /** transpose: grid steps up (or down) after its tables, absolute: &subject^$7, &subject^$-12 (&subject^1 is a degree: values). */
   /** values: degree(…) / inverse(…) around it — its values moved before its tables read them. */
-  | { readonly kind: 'ref'; readonly name: string; readonly pick: Pick | null; readonly shift: number; readonly transpose?: number; readonly values?: ValueMap }
+  | {
+      readonly kind: 'ref';
+      readonly name: string;
+      readonly pick: Pick | null;
+      readonly shift: number;
+      readonly transpose?: number;
+      readonly values?: ValueMap;
+      readonly slot?: string;
+    }
   /**
    * A mix chord `[&theme * &lead, …]`: its expressions as written; compile types them (algebra.ts). `gate`: the gate it
    * stands for (`declare.ts: gates`): a kit among its receivers is played as its voice, picked by the trigger.
@@ -268,7 +281,7 @@ export type StepSpec = { readonly whole: boolean } & (
  *   role    the cell is a role: its name the role, its entries the gates that play it (decision 061)
  */
 export type MapSpec =
-  | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role'; readonly span: Span }
+  | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role' | 'style'; readonly span: Span }
   /** A grid: cycle= equal steps to the period — 2 (an octave) for map=edo, r for map=ed(r). */
   | { readonly kind: 'edo'; readonly period: number; readonly span: Span }
   /** A MIDI card: each entry a channel in order (channel null), or all on one channel; on an output slot (the MIDI page's output of that number, 1 the first). */

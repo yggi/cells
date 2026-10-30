@@ -22,6 +22,13 @@ export const REFERENCE_SYNTAX: readonly Syntax[] = [
   ),
   syntax(
     'reference',
+    '&name[slot]',
+    "One slot by its name, as its map names them (decision 063): an envelope's attack, decay, sustain, release (map=adsr); a style's axes (map=style). The slot's fixed position, as written: &env[sustain] is &env[$2].",
+    ['&held step=4n &level[sustain] &level[attack]', '&leaning map=lin step=1m &funk[artic] &swing[artic]'],
+    'style.md',
+  ),
+  syntax(
+    'reference',
     '&name[<<n] · &name[>>n]',
     'Shifted back or forward n places (1 if left out), on top of its own shift=: rotating it, climbing the helix.',
     ['&canon step=2 &theme[>>4]', '&mode over=&scale[<<] 0 2 4'],
@@ -218,6 +225,13 @@ export class LineScanner {
         this.skipSpace();
         this.expect(']', `']' to close &${name}[${dir}…]`);
         return { name, pick, shift, ...this.transposition(name), span: this.span(at) };
+      }
+      // a slot by name: what the cell's map names (&env[sustain], &funk[artic], decision 063), its position as written
+      const slot = this.match(/[a-z][A-Za-z]*(?=\s*\])/y);
+      if (slot !== null) {
+        this.skipSpace();
+        this.expect(']', `']' to close &${name}[${slot}]`);
+        return { name, pick, shift, slot, ...this.transposition(name), span: this.span(at) };
       }
       // $: as written (absolute); without, as the cell is turned now
       if (this.text.startsWith('free(', this.i))

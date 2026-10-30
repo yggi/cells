@@ -31,6 +31,7 @@ function parseRefOrOperation(s) {
             name: r.name,
             pick: r.pick,
             shift: r.shift,
+            ...(r.slot ? { slot: r.slot } : {}),
             ...(r.transpose ? { transpose: r.transpose } : {}),
             ...(r.degree ? { values: { mul: 1, add: r.degree } } : {}),
         };
@@ -60,6 +61,7 @@ function parseRefOrOperation(s) {
         name: inner.name,
         pick: inner.pick,
         shift: inner.shift,
+        ...(inner.slot ? { slot: inner.slot } : {}),
         ...(inner.transpose ? { transpose: inner.transpose } : {}),
         ...(m.mul === 1 && m.add === 0 ? {} : { values: m }),
     };

@@ -34,7 +34,16 @@ export const STUBS: ReadonlySet<string> = new Set([
  * (decision 047): it goes on a tier with a piece whose cells it clusters. `use` (decisions 054, 059) waits for the examples
  * to take a kit by it (#196's rung 4).
  */
-export const PENDING: ReadonlySet<string> = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags']);
+// (a style and a value read by name, decision 063: their piece comes with a voice reading the section's style, #390)
+export const PENDING: ReadonlySet<string> = new Set([
+  'step <a b c>',
+  'modifier x/n',
+  'modifier x(k,n,r)',
+  'parameter legato',
+  'attribute tags',
+  'reference &name[slot]',
+  'map map=style',
+]);
 
 /**
  * A form's key, from its reference entry: an attribute or a parameter by its word (`over`, `lpf`);
@@ -364,8 +373,9 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
   const ctx = context(parsed, DEFAULT_ENV);
   const seen = { decls, rateOf: ctx.rateOf };
 
-  const ref = (r: Pick<Ref, 'pick' | 'shift' | 'transpose'> & { values?: Extract<Atom, { kind: 'ref' }>['values'] }) => {
+  const ref = (r: Pick<Ref, 'pick' | 'shift' | 'transpose' | 'slot'> & { values?: Extract<Atom, { kind: 'ref' }>['values'] }) => {
     use('reference &name');
+    if (r.slot) use('reference &name[slot]');
     if (r.pick?.kind === 'at') use('reference &name[i]');
     if (r.pick?.kind === 'slice') use('reference &name[a:b]');
     if (r.shift) use('reference &name[<<n]');

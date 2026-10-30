@@ -155,7 +155,7 @@ export interface ResolvedCell {
   readonly paramClocks: Readonly<Record<string, NonNullable<ResolvedCell['step']>>>;
   /** map= (how values become output): amp, sin or a table. */
   readonly map:
-    | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'db' | 'role' }
+    | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'db' | 'role' | 'style' }
     | { readonly kind: 'edo'; readonly period: number }
     /** A grid of ratios: one period's tones, then the period (the last). */
     | { readonly kind: 'ratios'; readonly ratios: readonly number[] }

@@ -13,8 +13,10 @@ import { checkRoles } from "./roles.js";
 import { checkLimits } from "./limits.js";
 import { sectioned } from "./sections.js";
 import { banded, bandsOf, checkBands, performersOf } from "./band.js";
+import { readSlots } from "./slots.js";
 const pluginsOf = (parsed) => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
-export function compile(parsed, env, used = new Set()) {
+export function compile(written, env, used = new Set()) {
+    const parsed = readSlots(written);
     const ctx = context(parsed, env);
     const declared = builtinCard(ctx, declare(ctx), used);
     const { decls, builtin } = declared;

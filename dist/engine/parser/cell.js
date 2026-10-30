@@ -10,6 +10,7 @@ import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generato
 import { MODE_WORDS } from "../../theory/modes.js";
 import { atTap, parseMap, parseStep } from "./values.js";
 import { syntax } from "./syntax.js";
+import { AXIS_NAMES } from "../style.js";
 export const SHOWS = [
     'braid',
     'pattern',
@@ -499,12 +500,23 @@ export function parseBody(s, head) {
     let freeBraid = false;
     let freeEnd = -1;
     let freeSteps = '';
+    const axes = new Map();
     while (!s.done()) {
         const at = s.i;
         const word = s.match(IDENT);
         if (word !== null && s.peek() === '=') {
             s.i++;
             const key = word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
+            if (key === null && AXIS_NAMES.includes(word)) {
+                if (axes.has(word))
+                    s.fail(`${word}= is given twice`, at, word.length);
+                const vat = s.i;
+                s.num(`a number after ${word}= (an axis of a style, 0 to 1)`);
+                axes.set(word, { value: s.text.slice(vat, s.i), at });
+                if (!s.atBoundary())
+                    s.fail(`Unexpected '${s.peek()}'`);
+                continue;
+            }
             if (key === null) {
                 if (word in RETIRED_KEYS)
                     s.fail(RETIRED_KEYS[word], at, word.length);
@@ -588,6 +600,21 @@ export function parseBody(s, head) {
         if (generator)
             s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
         pushStep(s, tokens, parseToken(s));
+    }
+    if (axes.size) {
+        const [first, { at }] = [...axes][0];
+        if (b.map?.kind !== 'style')
+            s.fail(`${first}= is an axis of a style: it goes on a map=style cell (&funk map=style sync=.3 harm=.45 artic=.55 energy=.55)`, at, first.length);
+        if (generator || tokens.length)
+            s.fail('A style writes its axes by name (sync=.3) or in order (.3 .45 .55 .55), not both', at, first.length);
+        const missing = AXIS_NAMES.filter((n) => !axes.has(n));
+        if (missing.length)
+            s.fail(`A style names every axis: ${missing.map((n) => `${n}=`).join(' ')} ${missing.length === 1 ? 'is' : 'are'} missing (its axes: ${AXIS_NAMES.join(' ')})`, at, first.length);
+        for (const name of AXIS_NAMES) {
+            const { value, at: where } = axes.get(name);
+            const inner = s.within(value, where + name.length + 1);
+            pushStep(inner, tokens, parseToken(inner));
+        }
     }
     const braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
     if (oneshot && typeof b.params.glide === 'number' && b.params.glide > 0) {
