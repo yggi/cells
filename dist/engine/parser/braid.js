@@ -4,6 +4,8 @@ import { MAX_NESTING, MAX_REPS } from "./scanner.js";
 import { parseFields } from "./level.js";
 import { isMixChord, parseMixChord } from "./mix.js";
 import { syntax } from "./syntax.js";
+import { MODE_WORDS } from "../../theory/modes.js";
+export const MODE_WORD = new RegExp(`(?:${Object.keys(MODE_WORDS).join('|')})(?![A-Za-z0-9_])`, 'y');
 export const STEP_SYNTAX = [
     syntax('step', 'n', "A number: an index into the table it reads (over=), or a value (a volume, a waveform's level). Negative and decimal numbers work. A note by name (C, F#, Bb3; octave 4 left out) is a pitch instead: a place on the grid at the root of its tables, whatever they are.", ['&tune step=2 0 2 4 -1 .5', '&tune step=2 C E G C5'], 'cell.md'),
     syntax('step', 'n# · nb · ns · nf', 'A number with accidentals: one step up (# or s) or down (b or f) on the grid below the table it reads — 6# over a scale is its 7th degree raised a semitone; s and f are Strudel’s spelling of the same, mixed and repeated as it allows (6s, 2sb).', ['&tune over=&major step=2 0 4 6# 7 3b', '&tune over=&major step=2 0 4 6s 7 3f'], 'tables.md'),
@@ -94,6 +96,9 @@ function parseAtom(s, depth) {
     const name = s.noteName();
     if (name !== null)
         return { kind: 'note', value: name, alter: 0, pitched: true };
+    const mode = s.match(MODE_WORD);
+    if (mode !== null)
+        return { kind: 'note', value: MODE_WORDS[mode], alter: 0 };
     return s.fail(`Unexpected '${c}' — expected a number, a note name (C, F#), ~, [chord], &cell or key=value`);
 }
 function parseBracket(s, depth) {

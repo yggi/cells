@@ -7,7 +7,7 @@ import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
 import { overdub } from '../parser/base';
 import type { Ctx } from './context';
-import { mod } from '../../theory/modes';
+import { diatonicSteps, mod } from '../../theory/modes';
 
 /** The declarations, as declare() hands them on. */
 export interface Declared {
@@ -41,6 +41,7 @@ export function declare(ctx: Ctx): Declared {
   }
   const mainKey = mainKeyOf(ctx, decls);
   tonics(ctx, decls);
+  modes(ctx, decls);
   swings(ctx, decls);
   const sections = sectionTables(decls, error);
   const stacks = gates(decls, implicit, error);
@@ -143,6 +144,36 @@ function tonics(ctx: Ctx, decls: Map<string, CellDecl>): void {
       continue;
     }
     decls.set(name, { ...d, shift: mod(first.value + first.alter, 12) });
+  }
+}
+
+/**
+ * A diatonic mode read from a cell (#363, `scale(&mode, &tonic)`): the cell holds one mode, a word (`&mode major`, `&mode
+ * dorian`) or its phase (`&mode 5`), 0 the darkest (locrian) to 6 the brightest (lydian), and the scale's steps are that
+ * mode's, the tonic fixed (`even(7, 12, phase)`). A mode the text doesn't define is a hole, said as any unknown cell is;
+ * one that holds anything else, or more than one mode, is an error (a stepped mode is not yet a form).
+ */
+function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
+  for (const [name, d] of decls) {
+    if (d.braid.kind !== 'scan' || !d.braid.mode) continue;
+    const m = decls.get(d.braid.mode.name);
+    if (!m) {
+      ctx.unknownCell(d.braid.mode.name, d.braid.mode.span);
+      continue;
+    }
+    const tokens = m.braid.kind === 'list' ? m.braid.tokens : [];
+    const atom = tokens.length === 1 && tokens[0]!.repeat === 1 && tokens[0]!.subdivide === 1 ? tokens[0]!.atom : null;
+    const phase = atom?.kind === 'note' && !atom.pitched && atom.alter === 0 ? atom.value : null;
+    if (m.step || phase === null || !Number.isInteger(phase) || phase < 0 || phase > 6) {
+      ctx.error(
+        m.step
+          ? `&${m.name} holds a scale's mode (scale(&${m.name}, …)): a stepped mode is not yet a form; write one (&${m.name} dorian)`
+          : `&${m.name} holds a scale's mode (scale(&${m.name}, …)): write one, a name or its phase from the darkest (&${m.name} major, &${m.name} dorian, &${m.name} 3)`,
+        m.span,
+      );
+      continue;
+    }
+    decls.set(name, { ...d, braid: { ...d.braid, steps: diatonicSteps(phase) } });
   }
 }
 

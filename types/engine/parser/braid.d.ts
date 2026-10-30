@@ -2,6 +2,8 @@
 import type { Token } from '../ast';
 import { type LineScanner } from './scanner';
 import { type Syntax } from './syntax';
+/** A diatonic mode's name as a step (`&mode dorian`), a word on its own. */
+export declare const MODE_WORD: RegExp;
 /** What a braid's steps can be. */
 export declare const STEP_SYNTAX: readonly Syntax[];
 /** Operations on a reference's values, by name: degree(&x, n), inverse(&x) — nested as you like. */

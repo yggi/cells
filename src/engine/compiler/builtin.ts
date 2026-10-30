@@ -27,7 +27,7 @@ const atomRefs = (a: Atom): string[] =>
 export const braidReadsOf = (d: CellDecl): string[] => (d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => atomRefs(t.atom)) : []);
 
 /**
- * Every other cell a declaration reads: over=, a key's tonic (`scale(…, &tonic)`), base=, a step=/loop= driver, a map= table, env= and pitch=, a parameter's
+ * Every other cell a declaration reads: over=, a key's tonic (`scale(…, &tonic)`) and a scale's mode (`scale(&mode, …)`), base=, a step=/loop= driver, a map= table, env= and pitch=, a parameter's
  * cells and clocks, and the parameters that take a cell (play= write= excite= couple= fm= …: attributes.ts). Not about=:
  * a note's links are annotation only, so a note that explains its oscillator (`&oscNote label="…" about=&a`) leaves it
  * heard.
@@ -37,6 +37,7 @@ export function otherReadsOf(d: CellDecl): string[] {
   for (const r of [
     d.over,
     d.tonic,
+    d.braid.kind === 'scan' ? d.braid.mode : null,
     d.swingFrom,
     d.base,
     d.env,

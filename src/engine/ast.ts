@@ -178,7 +178,13 @@ export type Braid =
   /** A list; written as meter(…), its steps a beat (`perBeat`) and, from a time signature, its pulses and beats (`signature`). */
   | { readonly kind: 'list'; readonly tokens: readonly Token[]; readonly perBeat?: number; readonly signature?: Signature }
   /** Running totals of intervals: scan(2 2 1 2 2 2 1) → 0 2 4 5 7 9 11, lap 12. Scales, meters, rhythms. */
-  | { readonly kind: 'scan'; readonly steps: readonly number[]; readonly span: Span }
+  | {
+      readonly kind: 'scan';
+      readonly steps: readonly number[];
+      readonly span: Span;
+      /** `scale(&mode, …)` (#363): the cell its mode is read from, one mode (`&mode major`); compile sets the steps (declare.ts). */
+      readonly mode?: Ref;
+    }
   /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
   | { readonly kind: 'wave'; readonly shape: WaveShape; readonly n: number; readonly span: Span };
 

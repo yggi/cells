@@ -43,6 +43,26 @@ export const SCALES: Readonly<Record<string, { readonly steps: readonly number[]
   wholetone: { steps: [2, 2, 2, 2, 2, 2], name: 'Whole tone' },
 };
 
+/**
+ * The diatonic modes as words a braid reads (#363, decision 064): each its phase, darkest to brightest, as a note name
+ * reads as its pitch class. `major` and `minor` are ionian's and aeolian's. The words belong to the diatonic necklace,
+ * `even(7, 12, phase)`, its tonic fixed: one phase brighter raises one note a semitone, a fifth round the circle.
+ */
+export const MODE_WORDS: Readonly<Record<string, number>> = {
+  locrian: 0,
+  phrygian: 1,
+  aeolian: 2,
+  minor: 2,
+  dorian: 3,
+  mixolydian: 4,
+  ionian: 5,
+  major: 5,
+  lydian: 6,
+};
+
+/** The steps of the diatonic mode at a phase (0 the darkest), up the 12: what `scale(&mode, …)` reads. */
+export const diatonicSteps = (phase: number): number[] => intervals(even(7, 12, phase), 12);
+
 /** A scale's name for a phase of the seven modes (0 the darkest): what `scale(tonic, phase)` is now written as. */
 export function scaleOfPhase(phase: number): string {
   const mode = MODES[phase]?.name.toLowerCase() ?? 'major';
