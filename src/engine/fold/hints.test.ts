@@ -33,9 +33,9 @@ describe('a repeat (#158)', () => {
     const m = [0, 4, 7, 4];
     const phrase = [...m, ...up(m, 2), ...up(m, 5), 12, ~~0, 12, 0];
     const hs = hints([line('arp', [...phrase, ...phrase, ...phrase])]);
-    // (Re-Pair is greedy: the motif's first three notes are a symbol in all nine places, its fourth taken with what follows)
+    // (every place the motif stands, wherever Re-Pair's greedy pairing put it)
     const motif = hs.find((h) => h.spans.length === 9)!;
-    expect(motif.length).toBe(3);
+    expect(motif.length).toBe(4);
     expect(new Set(motif.transforms.map((t) => (t.kind === 'transposed' ? t.by : 0)))).toEqual(new Set([0, 2, 5]));
     expect(hs[0]!.length).toBe(16);
     expect(at(hs[0]!)).toEqual(['arp 0-16', 'arp 16-32', 'arp 32-48']);
@@ -55,6 +55,14 @@ describe('a repeat (#158)', () => {
     const [h] = hints([line('tune', [...D, ...D, ...D.map(third), ...D.map(third), '7', '6#'])]);
     expect(h!.length).toBe(8);
     expect(h!.transforms).toEqual([{ kind: 'same' }, { kind: 'same' }, { kind: 'transposed', by: 2 }, { kind: 'transposed', by: 2 }]);
+  });
+
+  it('read backwards too, says where a phrase comes back reversed, and moved', () => {
+    const fwd = [0, 4, 2, 7, 5, 9];
+    const [h] = hints([line('tune', [...fwd, 11, ...up([...fwd].reverse(), 3)])], { retrograde: true });
+    expect(at(h!)).toEqual(['tune 0-6', 'tune 7-13']);
+    expect(h!.transforms).toEqual([{ kind: 'same' }, { kind: 'reversed', by: 3 }]);
+    expect(hints([line('tune', [...fwd, 11, ...up([...fwd].reverse(), 3)])])).toEqual([]);
   });
 
   it('is not an interval: two notes moved alike are no repeat', () => {
