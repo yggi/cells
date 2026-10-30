@@ -17,7 +17,7 @@ export declare const SCALES: Readonly<Record<string, {
     readonly name: string;
 }>>;
 /**
- * The diatonic modes as words a braid reads (#363, decision 064): each its phase, darkest to brightest, as a note name
+ * The diatonic modes as words a braid reads (#363, decision 065): each its phase, darkest to brightest, as a note name
  * reads as its pitch class. `major` and `minor` are ionian's and aeolian's. The words belong to the diatonic necklace,
  * `even(7, 12, phase)`, its tonic fixed: one phase brighter raises one note a semitone, a fifth round the circle.
  */

@@ -25,7 +25,7 @@ export declare const USE_FORM = "A use line says what it takes from which fragme
 /** What the old spelling, `use "id"`, is told: it reads as `use * from "id"`. */
 export declare const useQuoted: (id: string) => string;
 /**
- * A `from` line (decision 064): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from
+ * A `from` line (decision 065): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from
  * gm_kit`, `* from gm_kit`; or, with no id, a fragment's signature: `&bar from (&swing) &tempo`.
  */
 export type FromForm = {
@@ -60,7 +60,7 @@ export declare function topTokens(text: string): {
 /** A token that is an attribute, `key=value`. */
 export declare const isAttribute: (token: string) => boolean;
 /**
- * A `from` line (decision 064), read: a use of a fragment or a signature; null where the line has a top-level `from`
+ * A `from` line (decision 065), read: a use of a fragment or a signature; null where the line has a top-level `from`
  * after its names and isn't one; undefined where it isn't a `from` line at all (a cell, a `use` line).
  */
 export declare function readFrom(code: string): FromForm | null | undefined;
