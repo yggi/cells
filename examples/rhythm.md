@@ -23,5 +23,5 @@ use &thump, &click from envelopes
 &hh s=white hpf=7000 env=&click
 &sh s=white hpf=4000 env=&click
 &keys s=saw loop=C4 lpf=900 env=&(map=adsr .02 .4 .3 .3)
-&mix postgain=1.41 map=sample [&kick * &bd, &hats * &hh * 0.4, &shake * &sh * 0.3, &chord * &keys * 0.5]
+&mix postgain=2.86 map=sample [&kick * &bd, &hats * &hh * 0.4, &shake * &sh * 0.3, &chord * &keys * 0.5]
 ```

@@ -21,5 +21,5 @@ use &tap, &click from envelopes
 &half s=sine loop=A5 pitch=0..3 * &(map=adsr 0 .005 0 0) env=&click
 &sub s=sine loop=E5 env=&click
 &fine s=sine loop=B4 env=&(map=adsr 0 .018 0 .01)
-&mix postgain=1.58 map=sample [&bar * free(.8, 0..1)]
+&mix postgain=11.3 map=sample [&bar * free(.8, 0..1)]
 ```

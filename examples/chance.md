@@ -20,5 +20,5 @@ use &click, &tap from envelopes
 &lead s=tri loop=C5 env=&(map=adsr .005 .2 .3 .2)
 &hh s=white hpf=8000 env=&click
 &sd s=white hpf=1500 env=&tap
-&out map=sample postgain=1.58 [&tune * &lead * .3, &hats * &hh * .1, &ghosts * &sd * .1]
+&out map=sample postgain=10.1 [&tune * &lead * .3, &hats * &hh * .1, &ghosts * &sd * .1]
 ```

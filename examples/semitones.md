@@ -10,5 +10,5 @@ description: "A number is a note: so many semitones above the voice's own. Up th
 
 &climb step=6 0 2 4 5 7 9 11 12 11 9 7 5 4 2 0 -5 0@2   # the scale, then the fifth below C and home
 &voice s=sine loop=C4
-&out map=sample postgain=2 [&climb * &voice * .5]
+&out map=sample postgain=2.42 [&climb * &voice * .5]
 ```

@@ -10,5 +10,5 @@ description: "One note, played as a rhythm: some steps rest, some are held, some
 
 &rhythm step=4 0 ~ 0 ~ 0!2 ~ 0@2 ~ ~ 0 0 ~ 0 _ _   # one note, in time
 &voice s=tri loop=C3
-&out map=sample postgain=2 [&rhythm * &voice * .5]
+&out map=sample postgain=3.48 [&rhythm * &voice * .5]
 ```

@@ -26,7 +26,7 @@ use &pluck, &snap from envelopes
 &cym gain=.22 s=white hpf=8000 env=&snap
 &click gain=.3 oneshot s=white hpf=3000 env=&(map=adsr 0 .03 0 .02)
 
-&mix postgain=1.58 map=sample [&tune * &horn * .45,
+&mix postgain=2.06 map=sample [&tune * &horn * .45,
                                   &walk * &bass * .8,
                                   (&comp + &harmony) * &piano * .3,
                                   &ride]

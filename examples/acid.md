@@ -33,5 +33,5 @@ use &strike, &thump, &snap, &click from envelopes
 &hh gain=.25 s=white hpf=8000 env=&click
 &oh gain=.2 oneshot s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
 
-&mix postgain=1.06 map=sample [&line * &accent * &tb303 * .45, &beat]
+&mix postgain=1.76 map=sample [&line * &accent * &tb303 * .45, &beat]
 ```

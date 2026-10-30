@@ -26,5 +26,5 @@ use &swell from envelopes
 &cello pan=.81 s=tri loop=C2 env=&(map=adsr .01 .5 .6 .3)
 
 # stereo: each voice placed with its own pan= (the reed and the viola left, the cello right)
-&out postgain=1.33 map=sample [&theme * &reed * 0.45, &alto * &viola * 0.3, (&alto[<<] - 7) * &cello * 0.9]   # the cello a bar behind, a fifth below
+&out postgain=1.58 map=sample [&theme * &reed * 0.45, &alto * &viola * 0.3, (&alto[<<] - 7) * &cello * 0.9]   # the cello a bar behind, a fifth below
 ```

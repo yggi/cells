@@ -20,5 +20,5 @@ use &bar from "4/4"
 &classes scope=spectrum fold=12 channels=split label="their pitch classes, a ring each" &tonic &fifth
 &bands scope=waterfall bins=24 label="their sound, in 24 bands, over time" &tonic &fifth
 
-&out postgain=.708 map=sample [&strike * &tonic * .5] [&strike * &fifth * .5]
+&out postgain=.871 map=sample [&strike * &tonic * .5] [&strike * &fifth * .5]
 ```

@@ -28,5 +28,5 @@ use &key from dorian
 use &sd from gm_kit
 use &thump, &click from envelopes
 &hh s=white hpf=7000 env=&click
-&mix postgain=1.78 map=sample [&tune * &fiddle * 0.6, &bassline * &bass * 0.8, &drums * 0.6]
+&mix postgain=2.03 map=sample [&tune * &fiddle * 0.6, &bassline * &bass * 0.8, &drums * 0.6]
 ```

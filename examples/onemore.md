@@ -37,7 +37,7 @@ use &strike, &thump, &snap, &click from envelopes
 &sections step=4n &grooveBar &choppyBar &discBar &robBar
 &song over=&sections step=1m/8 label="filtered · groove · lead · breakdown" [0,1] [0,1,2] [0,1,2,3] [1,3]
 
-&out postgain=.944 map=sample [&beat, &shake * &sh * .1,
+&out postgain=2.57 map=sample [&beat, &shake * &sh * .1,
                             (&chop + &prog) * &pump * &keys * .07,
                             (&disco + &prog) * &bass * .35,
                             &robot * &lead * .1]
