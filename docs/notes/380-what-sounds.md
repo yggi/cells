@@ -67,6 +67,17 @@ A role cell (`&drums map=role &drumsOut`, 061) is never routed either, so it is 
 
 **What has a spire**, then: every out, and only outs. Whatever a card's entry sounds stands as one socket at the entry's base frequency, its voices' wires joining there, and its spire the sum of what they sound (`heard()` already sums a kit's drums). One strip lane per out, the same unit as the stems a render makes.
 
+## Ruled (the owner, 2026-10-30) and built
+
+[Decision 064](../decisions/064-what-sounds.md) records it.
+- **The built-in card when only a MIDI card is written:** "I lean towards no, but we should go with whatever is the 'natural shape', avoid an extra case for no reason." The natural shape is the code's: any written card, sound or MIDI, replaces the built-in one. 028's wording changes, the code doesn't.
+- **A socket per voice, not per entry:** "the gate is the performer, the voice is what actually sounds. a performer with two instruments has two voices." So (3) above is amended: an out is a sound wired into a card (a voice, a gate's voices one each, a kit, a mix, a read head), on either card. The 18-of-81 difference against card entries doesn't change what is drawn; entries stay the stems' unit.
+- **Built**, one pull request from `claude/cell-studio-tower-view-846lme`:
+  - heard on any card (#333: realize's `heardGains`, `midi-out` set to -24 dB);
+  - one kit, tables lit (#379);
+  - `outs()`, `soundRole()`, `ResolvedCell.sort`, and `writtenGraph(result, { card: true })`.
+- **Not built here:** the routing rebuilt to start from the outs. Rung 4 is done in what it was for: the outs are read from the graph's own edges, and the routing and the graph agree on every drum and role (#379's test). Folding the two traversals into one is a refactor with no bug behind it, filed as a follow-up.
+
 ## What goes
 
 - **In cells:**

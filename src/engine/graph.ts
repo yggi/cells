@@ -215,8 +215,12 @@ export interface WrittenGraph {
   readonly through: ReadonlySet<string>;
 }
 
-/** The graph of what is written (WrittenGraph). */
-export function writtenGraph(result: CompileResult): WrittenGraph {
+/**
+ * The graph of what is written (WrittenGraph). `card`: with the built-in card (decision 028), an implicit cell never
+ * written, as a node and an edge from each sound it hears, as a written card's are (decision 064: what a frontend draws
+ * as its outs, `outs()`).
+ */
+export function writtenGraph(result: CompileResult, { card = false }: { readonly card?: boolean } = {}): WrittenGraph {
   const edges: GraphEdge[] = [];
   const depth = new Map<string, number>();
   // meters: cells whose bar keeps time, meter(…) or scan(…) alike (#123) — not a vibrato looping at a rate
@@ -264,7 +268,7 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
   const kitOfGate = (o: Output) => o.through.some((m) => result.cells.get(m)?.gate?.receivers.some((r) => result.cells.get(r)?.kit));
   const voiceKitPlayed = result.outputs.filter((o) => o.voice === VOICE_KIT);
   const voiceKitShown = !voiceKitPlayed.length || !voiceKitPlayed.every(kitOfGate);
-  const shown = (name: string) => !result.cells.get(name)?.implicit || (name === VOICE_KIT && voiceKitShown);
+  const shown = (name: string) => !result.cells.get(name)?.implicit || (name === VOICE_KIT && voiceKitShown) || (card && name === result.builtinCard);
   const nodes: GraphNode[] = [];
   const seen = new Set<string>();
   // (the tables of sections whose bus is drawn already)

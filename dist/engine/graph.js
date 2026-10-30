@@ -18,7 +18,7 @@ function refTransform(r) {
     ];
 }
 export const isTurntable = (c) => typeof c.params.motor === 'number' || typeof c.params.belt === 'number' || typeof c.params.write === 'string' || typeof c.params.body === 'string';
-export function writtenGraph(result) {
+export function writtenGraph(result, { card = false } = {}) {
     const edges = [];
     const depth = new Map();
     const meters = new Set([...result.clocks.keys()].filter((name) => keepsTime(result, name)));
@@ -71,7 +71,7 @@ export function writtenGraph(result) {
     const kitOfGate = (o) => o.through.some((m) => result.cells.get(m)?.gate?.receivers.some((r) => result.cells.get(r)?.kit));
     const voiceKitPlayed = result.outputs.filter((o) => o.voice === VOICE_KIT);
     const voiceKitShown = !voiceKitPlayed.length || !voiceKitPlayed.every(kitOfGate);
-    const shown = (name) => !result.cells.get(name)?.implicit || (name === VOICE_KIT && voiceKitShown);
+    const shown = (name) => !result.cells.get(name)?.implicit || (name === VOICE_KIT && voiceKitShown) || (card && name === result.builtinCard);
     const nodes = [];
     const seen = new Set();
     const buses = new Set();

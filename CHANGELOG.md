@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+### Added
+
+- **What sounds out, from cells** (decision 064, #380): `outs(result)` (`engine/outs.ts`) gives each sound wired into a card, a sound card's or a MIDI card's, the built-in card's included: its edge, its source, the card and its kind, a MIDI card's channel, a two-channel card's side. An out is a voice (a gate's voices one each), a kit, a mix or a read head, one per card it reaches. `soundRole(result, cell)` says what a cell does with sound (`maker`, `gate`, `mixer`, `card`, or none), and every resolved cell carries its sort (`ResolvedCell.sort`: `signal`, `wave`, `pitch`, `volume`, `plain`). `writtenGraph(result, { card: true })` holds the built-in card as a node, with an edge from each sound it hears, under the ids the routing gives them. **What a frontend sees at its next pin:** new exports and a new field; what Cell studio derives today (`withCard`, `soundRole`, the tower's `cards()`) can read these instead (yggi/cell-studio#523). Nothing a piece plays changes.
+
 ### Changed
 
 - **A voice on a MIDI card alone is heard as well as sent** (decision 064, #333; amends 019): a note is heard on any card that is on, a MIDI card at its entry's gain there (the numbers its velocity reads), in the middle, the loudest of several. `unheard` now means heard nowhere (its cards off, or holding it at 0); realize gives such a note its gains (`heardGains`), and the renderer sounds it, so a piece whose card is MIDI alone, as a Jambot section text is, renders with sound. **What a frontend sees at its next pin:** notes that were `unheard` with gains `[0, 0]` and a `midi` now come with gains and no `unheard`; Cell studio's `heardHere` (its decision 039) becomes a no-op and can go. `midi-out`'s `&sub` is heard: its events' hash moves, its notes' doesn't, and its `postgain=` is set to the -24 dB convention it was left out of (#367: .891 → 1.375, measured by `pieceAudio`: -24.00 dB). The warning on a voice only on a MIDI card now says its sound is heard here but isn't sent. MIDI out sends what it sent. No other example moves.

@@ -1,6 +1,7 @@
 import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, GateSpec, Move } from './ast';
 import type { ShowPlugin } from './plugins';
 import type { Meter } from './meter';
+import type { Sort } from './algebra';
 export declare const ROOT = "fifths12TET";
 /**
  * What a bare `over=key` names until compile reads it as the piece's main key (#124, declare.ts): no cell can be called
@@ -180,6 +181,12 @@ export interface ResolvedCell {
     readonly mix: readonly Binding[] | null;
     /** The sound card (`map=sample`): its entries are channels. */
     readonly sink: boolean;
+    /**
+     * What the mix algebra reads it as (decision 006, `compiler/sorts.ts`): a sound (`signal`: a voice, a mix, a gate, a
+     * pattern through a kit, a read head), a braid at audio rate (`wave`), a `pitch`, a `volume`, or `plain`. What a
+     * frontend asks "does it sound?" of (decision 064).
+     */
+    readonly sort: Sort;
     /** A MIDI card's (map=midi) products written on it, typed, unit by unit (null: a unit that isn't a chord of them). */
     readonly chords?: readonly (readonly Binding[] | null)[];
     /** The clock this cell's stepping comes from, and its shifts per clock step. */
