@@ -194,8 +194,14 @@ export interface WrittenGraph {
     readonly edges: readonly GraphEdge[];
     readonly through: ReadonlySet<string>;
 }
-/** The graph of what is written (WrittenGraph). */
-export declare function writtenGraph(result: CompileResult): WrittenGraph;
+/**
+ * The graph of what is written (WrittenGraph). `card`: with the built-in card (decision 028), an implicit cell never
+ * written, as a node and an edge from each sound it hears, as a written card's are (decision 064: what a frontend draws
+ * as its outs, `outs()`).
+ */
+export declare function writtenGraph(result: CompileResult, { card }?: {
+    readonly card?: boolean;
+}): WrittenGraph;
 /**
  * The nets among the edges: a table read by two or more (over=), a melody or a voice by two or more, a cell read at
  * delays (a canon's copies, a tape's heads: docs/decisions/010-canon-copies.md), and each meter's ticks to every cell
