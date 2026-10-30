@@ -2,12 +2,21 @@
 // taken whole, a loop one cycle, a piece that never comes round its longest layer or a minute; the caller's seconds win,
 // every span is capped, and each says why it is that long.
 import { describe, expect, it } from 'vitest';
-import { compileSource } from './compile';
+import { compileSource as compiledWithOldUse } from './compile';
 import { codeShifts } from './program';
 import { plan } from './realize';
 import { pieceMidi } from './midiexport';
 import { LONGEST, spanOf, TAIL, UNBOUNDED } from './span';
 import { resolveSeed } from '../repository/library';
+
+// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
+// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+const OLD_USE = /^use is the old way/;
+const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
+  const r = compiledWithOldUse(...args);
+  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
+  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
+};
 
 const spanFor = (text: string, options = {}) => {
   const r = compileSource(text);

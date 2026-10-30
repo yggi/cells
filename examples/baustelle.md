@@ -5,7 +5,7 @@ description: "An original in the manner of Einstürzende Neubauten: struck metal
 ---
 
 ```cells
-use &strike from envelopes
+&strike from envelopes
 &metalsNote label="Beams, pipes and plates struck and tuned to their own partials." about=(&beams &pipes &plates)
 &springNote label="A giant bass spring." about=(&feder &bassfeder)
 &toolsNote label="A grinder and a drill." about=(&grind &drill)

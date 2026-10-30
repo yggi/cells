@@ -4,7 +4,7 @@
 // that part (its own voice line at Jambot's register); and a query for a performer at any preset finds the five. The drummer
 // plays a stack of lines, one per drum role, and each hit still names its line: the role the feel reads.
 import { describe, expect, it } from 'vitest';
-import { compileSource } from '../engine/compile';
+import { compileSource as compiledWithOldUse } from '../engine/compile';
 import { signatureOf } from '../engine/use';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
@@ -15,6 +15,15 @@ import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { PERFORMER_FRAGMENTS } from './performers';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+
+// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
+// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+const OLD_USE = /^use is the old way/;
+const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
+  const r = compiledWithOldUse(...args);
+  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
+  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
+};
 
 const BPM = 120;
 // (a host as Jambot's section text writes one: the meter, the key, the harmony)
@@ -34,7 +43,7 @@ function sent(text: string, bars = 2): { notes: string[]; diagnostics: string[] 
   );
   return {
     notes: notes.sort((a, b) => a.at - b.at || a.channel - b.channel || a.note - b.note).map((n) => `${n.channel} ${n.note} ${n.velocity} ${n.at} ${n.dur}`),
-    diagnostics: plan.result.diagnostics.map((d) => d.message),
+    diagnostics: plan.result.diagnostics.filter((d) => !OLD_USE.test(d.message)).map((d) => d.message),
   };
 }
 
@@ -110,11 +119,11 @@ describe('the performers', () => {
     const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
     expect(holes).toEqual([['&drumlines'], ['&bassline'], ['&padline'], ['&stabline'], ['&leadline']]);
     expect(PERFORMER_FRAGMENTS.map((f) => signatureOf(f.text))).toEqual([
-      { kind: 'signature', names: ['&drums'], optional: ['&kit'], main: '&drumlines' },
-      { kind: 'signature', names: ['&bass'], optional: ['&bassLevel'], main: '&bassline' },
-      { kind: 'signature', names: ['&pad'], optional: ['&padLevel'], main: '&padline' },
-      { kind: 'signature', names: ['&stab'], optional: ['&stabLevel'], main: '&stabline' },
-      { kind: 'signature', names: ['&lead'], optional: ['&leadLevel'], main: '&leadline' },
+      { kind: 'signature', names: ['&drums', '&drumsOut'], optional: ['&kit'], main: '&drumlines' },
+      { kind: 'signature', names: ['&bass', '&bassOut'], optional: ['&bassLevel'], main: '&bassline' },
+      { kind: 'signature', names: ['&pad', '&padOut'], optional: ['&padLevel'], main: '&padline' },
+      { kind: 'signature', names: ['&stab', '&stabOut'], optional: ['&stabLevel'], main: '&stabline' },
+      { kind: 'signature', names: ['&lead', '&leadOut'], optional: ['&leadLevel'], main: '&leadline' },
     ]);
   });
 

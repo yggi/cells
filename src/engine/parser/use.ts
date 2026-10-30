@@ -55,9 +55,6 @@ export function writeUse({ id, names }: Pick<UseForm, 'id' | 'names'>): string {
 export const USE_FORM =
   'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "harmonic minor"';
 
-/** What the old spelling, `use "id"`, is told: it reads as `use * from "id"`. */
-export const useQuoted = (id: string): string => `use "${id}" is the old way: write ${writeUse({ id, names: null })} (or name what it takes: use &a, &b from …)`;
-
 /**
  * A `from` line (decision 064): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from
  * gm_kit`, `* from gm_kit`; or, with no id, a fragment's signature: `&bar from (&swing) &tempo`.
@@ -186,3 +183,13 @@ export function readFrom(code: string): FromForm | null | undefined {
 /** What a malformed `from` line is told. */
 export const FROM_FORM =
   'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
+
+/** How what a `use` line is told begins: a reader that sets that aside (the fit) reads it. */
+export const USE_OLD = 'use is the old way';
+
+/**
+ * What a `use` line is told (decision 064): it is the old way, and says what the `from` line is. A template's arguments,
+ * which the `use` read by name, are Normalise's to write (its Migrate step), since only the fragment says what they are.
+ */
+export const useOld = ({ id, names }: Pick<UseForm, 'id' | 'names'>): string =>
+  `${USE_OLD}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 064; Normalise writes it, with a template's arguments)`;

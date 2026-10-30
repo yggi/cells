@@ -13,6 +13,7 @@
  *                 → use &bar from "4/4", and a fragment's cell written inline as it by name: pitch=&(map=lin …)
  *                 → pitch=&vibrato, use &vibrato; with the library the call gives (`NormaliseOptions.library`)
  *  - forwarded.ts: a use of a fragment that only forwards as the use it forwards to (#196): use * from "core kit" → use &bd, … from gm_kit
+ *  - from.ts:     a `use` line as the `from` line that plays the same (decision 064): use &key from dorian, &tonic D → &key from dorian D
  *
  * The canonical table's other rows join as the owner rules them (#27). A `use` line (decision 054) is kept, in its
  * order, never expanded: a used fragment's lines written in are no canonical form (`expand` writes them out). Its

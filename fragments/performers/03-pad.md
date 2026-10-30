@@ -61,7 +61,7 @@ source: seed
 ---
 
 ```cells
-&pad from (&padLevel) &padline
+&pad, &padOut from (&padLevel) &padline
 &padV from pad
 &padOut play=&padline level=&padLevel &padV
 &pad map=role &padOut
@@ -73,4 +73,4 @@ Its two inputs are the score's (decision 064: the line its main parameter, the l
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`presets.ts`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
 
-**Its signature** (decision 064): `&pad from (&padLevel) &padline`. `&pad from "pad performer" &line` takes a copy of it, `&padline` its main argument; `&padLevel` an optional parameter, its line its default (`"pad performer"(padLevel=…)`). Taken the old way, `use &pad from "pad performer"`, it reads `&padline` by name, as before.
+**Its signature** (decision 064): `&pad, &padOut from (&padLevel) &padline`. `&pad from "pad performer" &line` takes a copy of it, `&padline` its main argument; `&padLevel` an optional parameter, its line its default (`"pad performer"(padLevel=…)`). Taken the old way, `use &pad from "pad performer"`, it reads `&padline` by name, as before.

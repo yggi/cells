@@ -6,10 +6,9 @@ description: Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit.
 
 ```cells
 # D Dorian. The second line is the first, a step lower: &A^-1.
-use &bar from "4/4"
+&bar from "4/4" &tempo
 &tempo step=free(112bpm, 90..140)
-use &key from dorian
-&tonic D
+&key from dorian D
 
 &m1 4!4
 &m2 4 4 0 2
@@ -25,8 +24,8 @@ use &key from dorian
 &fiddle s=saw loop=C5 lpf=3000 env=&(map=adsr .01 .15 .5 .1)
 &bass s=square loop=C2 lpf=600 env=&thump
 &bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&thump
-use &sd from gm_kit
-use &thump, &click from envelopes
+&sd from gm_kit
+&thump, &click from envelopes
 &hh s=white hpf=7000 env=&click
 &mix postgain=2.03 map=sample [&tune * &fiddle * 0.6, &bassline * &bass * 0.8, &drums * 0.6]
 ```

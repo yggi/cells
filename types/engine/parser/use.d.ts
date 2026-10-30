@@ -22,8 +22,6 @@ export declare function readUse(code: string): UseForm | null | undefined;
 export declare function writeUse({ id, names }: Pick<UseForm, 'id' | 'names'>): string;
 /** What a malformed `use` line is told. */
 export declare const USE_FORM = "A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from \"harmonic minor\"";
-/** What the old spelling, `use "id"`, is told: it reads as `use * from "id"`. */
-export declare const useQuoted: (id: string) => string;
 /**
  * A `from` line (decision 064): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from
  * gm_kit`, `* from gm_kit`; or, with no id, a fragment's signature: `&bar from (&swing) &tempo`.
@@ -66,3 +64,10 @@ export declare const isAttribute: (token: string) => boolean;
 export declare function readFrom(code: string): FromForm | null | undefined;
 /** What a malformed `from` line is told. */
 export declare const FROM_FORM = "A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head\u2019s attributes go before from (&key label=\"\u2026\" from \u2026), the named arguments in parentheses; with no id, a fragment\u2019s signature: &bar from (&swing) &tempo";
+/** How what a `use` line is told begins: a reader that sets that aside (the fit) reads it. */
+export declare const USE_OLD = "use is the old way";
+/**
+ * What a `use` line is told (decision 064): it is the old way, and says what the `from` line is. A template's arguments,
+ * which the `use` read by name, are Normalise's to write (its Migrate step), since only the fragment says what they are.
+ */
+export declare const useOld: ({ id, names }: Pick<UseForm, "id" | "names">) => string;

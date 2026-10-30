@@ -1,7 +1,7 @@
 // The stab lines (the facet `stab`): the part the stab performer plays, lifted from examples/electroswing.md. Each uses
 // `&harm` alone, fits a workbench with a meter and a harmony, and played by the stab performer sounds the chords in force.
 import { describe, expect, it } from 'vitest';
-import { compileSource } from '../engine/compile';
+import { compileSource as compiledWithOldUse } from '../engine/compile';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { fitOf } from './fit';
@@ -13,6 +13,15 @@ import { at, SWING_JAZZ } from './presets';
 /** The point proposed for an Electro swing preset, as the stab line's file writes it: no preset of Jambot's (decision 041). */
 const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
 import { STAB_FRAGMENTS } from './stab';
+
+// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
+// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+const OLD_USE = /^use is the old way/;
+const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
+  const r = compiledWithOldUse(...args);
+  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
+  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
+};
 
 const HOST = '&bar meter("4/4") step=120bpm\n&key scale(harmonic, D)\n&harm over=&key step=1m [0,2,4] [4,6,8]';
 

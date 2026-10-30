@@ -8,7 +8,7 @@ description: "Four voices, each a source and an envelope: a pluck, a swell, a ba
 ```cells
 &sourceNote label="s= is the source: sine, tri, saw, square, pulse, or a noise (white, pink, brown); loop=C4 is its note." about=(&pluck &pad &low &air)
 &envNote label="env= is its volume on every note: map=adsr, attack, decay and release in seconds, sustain a level. Written where it is used, &( … ) is a cell without a name." about=&pluck
-use &bar from "4/4"
+&bar from "4/4" &tempo
 &tempo step=free(moderato)
 
 &tune step=8n 0 4 7 12 7 4 0 ~ 2 5 9 14 9 5 2 ~

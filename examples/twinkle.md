@@ -8,9 +8,8 @@ description: Twinkle Twinkle from three motifs, one of them read a step up the s
 ```cells
 # Three motifs make the whole tune. The middle line is &down again,
 # a step up the scale: &down^1.
-use &bar from "4/4"
-use &swell from envelopes
-&tempo step=96bpm
+&bar from "4/4" 96bpm
+&swell from envelopes
 &key label="{mode} on {tonic}" scale(major)                 # C major
 
 &up label="*twinkle twinkle, little star*" 0 0 4 4 5 5 4@2                    # twin-kle twin-kle lit-tle star

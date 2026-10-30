@@ -5,7 +5,7 @@ description: "The changes of Giant Steps: three keys a major third apart, B, G a
 ---
 
 ```cells
-use &pluck, &snap from envelopes
+&pluck, &snap from envelopes
 # The changes of Giant Steps: three keys a major third apart — B, G, Eb — round
 # the octave. The key turns down a major third each bar (stride=-4); the line plays
 # 1-2-3-5 in it, then the dominant of the next key. The line is our own.

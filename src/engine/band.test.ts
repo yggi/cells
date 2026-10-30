@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { compileSource } from './compile';
+import { compileSource as compiledWithOldUse } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { resolveSeed } from '../repository/library';
+
+// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
+// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+const OLD_USE = /^use is the old way/;
+const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
+  const r = compiledWithOldUse(...args);
+  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
+  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
+};
 
 // Decision 061: a band is a table of performers, gates or role cells; a selector reading it switches their sound, and
 // their parts keep their time on the meter (restart=free, a performer's default), so they swing as they did.

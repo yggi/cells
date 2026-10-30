@@ -61,7 +61,7 @@ source: seed
 ---
 
 ```cells
-&stab from (&stabLevel) &stabline
+&stab, &stabOut from (&stabLevel) &stabline
 &keysV from keys
 &stabOut play=&stabline level=&stabLevel &keysV
 &stab map=role &stabOut
@@ -73,4 +73,4 @@ Its two inputs are the score's (decision 064: the line its main parameter, the l
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`presets.ts`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
 
-**Its signature** (decision 064): `&stab from (&stabLevel) &stabline`. `&stab from "stab performer" &line` takes a copy of it, `&stabline` its main argument; `&stabLevel` an optional parameter, its line its default (`"stab performer"(stabLevel=…)`). Taken the old way, `use &stab from "stab performer"`, it reads `&stabline` by name, as before.
+**Its signature** (decision 064): `&stab, &stabOut from (&stabLevel) &stabline`. `&stab from "stab performer" &line` takes a copy of it, `&stabline` its main argument; `&stabLevel` an optional parameter, its line its default (`"stab performer"(stabLevel=…)`). Taken the old way, `use &stab from "stab performer"`, it reads `&stabline` by name, as before.

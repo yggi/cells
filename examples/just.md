@@ -12,7 +12,7 @@ description: "Just intonation: the same four chords twice, pure on the left and 
 &justPureNote label="Left: just — thirds 5/4, fifths 3/2." about=(&just &pure)
 &temperedBeatsNote label="Right: tempered — listen to it beat." about=(&equal &tempered)
 &justFifthNote label="In ii (D F A) the just fifth is 40/27: out of tune." about=&chords
-use &bar from "4/4"
+&bar from "4/4" &tempo
 &tempo step=free(48bpm, 30..90)
 &just label="just: {notes}" map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2        # C major, pure: one octave's tones, then the octave
 &equal label="tempered: {notes}" scan(2 2 1 2 2 2 1)                            # C major, in equal steps

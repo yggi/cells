@@ -9,27 +9,26 @@ Here the band comes from the seed library, taken by name, and so does the tune: 
 The piece writes only what is its own: the tempo and the swing, the key's tonic, the break, who plays when, and the sound of each instrument.
 
 ```cells
-use &drums from "drums performer"
-use &key from "harmonic minor"
-use &harm from "vamp to the fifth"
-use &bassline from "walking bass"
-use &kick, &clap, &hats, &ticks from "Electro swing drums"
-use &stabline from "Charleston stabs"
-use &bass, &bassV from "bass performer"
-use &stab, &keysV from "stab performer"
-use &leadOut, &leadV from "lead performer"
-&useNote label="The band is the library's: each use names what it takes. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
+&drums, &drumsOut from "drums performer" &drumlines
+&key from "harmonic minor" D
+&harm from "vamp to the fifth" &key
+&bassline from "walking bass" &harm
+&kick, &clap, &hats, &ticks from "Electro swing drums"
+&stabline from "Charleston stabs" &harm
+&bass, &bassOut from "bass performer"(bassLevel=&bassLevel) &bassline
+&stab, &stabOut from "stab performer"(stabLevel=&stabLevel) &stabline
+&leadOut from "lead performer"(leadLevel=&leadLevel) &leadline
+&useNote label="The band is the library's: each line names what it takes from it. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
 ```
 
 The meter is the library's too, `4/4 swung on 8n`, Jambot's Swing jazz meter, which leaves its tempo to the piece (`&tempo`) and swings its eighths by a cell of its own, `&swing`, triplets (2/3).
-The piece names that cell in its use and writes its own: the eighths a little less than triplets, .64. The tempo and the swing are both sliders.
-The key is harmonic minor, from the library, on the piece's tonic, D (`&tonic`): the vamp's fifth is then A major, four bars of D minor, four of A.
+The piece gives its own, an argument of the meter's (`swing=&swing`): the eighths a little less than triplets, .64. The tempo and the swing are both sliders.
+The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from "harmonic minor" D`, decision 064): the vamp's fifth is then A major, four bars of D minor, four of A.
 
 ```cells
-use &bar, &swing from "4/4 swung on 8n"
+&bar from "4/4 swung on 8n"(swing=&swing) &tempo
 &tempo step=free(124bpm, 112..132)
 &swing swing=8n:free(.64, .5..0.75)
-&tonic D
 &swingNote label="Every line taps the meter (step=4n, 8n, 16n), so every line swings: the open hats on the off-beats, the stabs, the clarinet." about=&bar
 ```
 
@@ -64,9 +63,9 @@ Two forms from the library make a chorus of it.
 The break cuts the motif into pieces with picks: its first three notes (`&gypsy[0:3]`) and rests, its tail moved, its first two as a stutter (`&gypsy[0:2]!4`), its top note hammered (`&gypsy[3]!4`).
 
 ```cells
-use &gypsy
-use &phrase from "call and answer"
-use &chorus, &b from AABA
+&gypsy from gypsy &key
+&phrase from "call and answer" &call
+&chorus from AABA(b=&b) &a
 &call step=8n &gypsy
 &a step=8n &phrase
 &b step=8n &a^-3

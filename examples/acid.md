@@ -10,8 +10,8 @@ description: "Acid-Cell — everybody needs a 303: a saw through a resonant filt
 # turns the cutoff and the resonance, slowly (all of it lpf=… * &cells). Echo: a dotted eighth.
 &filterNote label="Every note opens the filter (&fenv); accents open it further, and play louder (&accent)." about=(&fenv &accent)
 &knobsNote label="Two knobs turn slowly, the cutoff and the resonance: listen to the squeal as they meet." about=(&knob &res)
-use &bar from "4/4"
-use &strike, &thump, &snap, &click from envelopes
+&bar from "4/4" &tempo
+&strike, &thump, &snap, &click from envelopes
 &tempo step=free(126bpm, 100..150)
 &minor scan(2 1 2 2 1 2 2)                                   # A minor (the voices sit on A)
 

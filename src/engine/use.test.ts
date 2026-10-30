@@ -1,7 +1,7 @@
 // `use * from gm_kit` (decision 054, rung 3: #232): a fragment taken into a piece by its id, the piece's own lines winning,
 // read through a resolver the host hands each compile, with the lockfile a piece file keeps.
 import { describe, expect, it } from 'vitest';
-import { compileSource } from './compile';
+import { compileSource as compiledWithOldUse } from './compile';
 import { parse, USE_FORM, writeUse } from './parser';
 import { expand, fragmentHash, USE_DEPTH } from './use';
 import { setTiming } from './edit';
@@ -18,6 +18,15 @@ import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 import { fitOf, unionOf } from '../repository/fit';
 import { heard } from '../repository/heard';
 import { holesOf } from '../repository/holes';
+
+// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
+// decision 064: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+const OLD_USE = /^use is the old way/;
+const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
+  const r = compiledWithOldUse(...args);
+  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
+  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
+};
 
 const seed = { resolve: resolveSeed };
 const errors = (text: string, resolve: Resolve = resolveSeed) =>
@@ -152,11 +161,11 @@ describe('a named use (decision 059)', () => {
     expect(writeUse({ id: 'core_kit', names: ['&bd', '&sd'] })).toBe('use &bd, &sd from core_kit');
   });
 
-  it('use "id" is the old way: it reads as use * from "id", and warns', () => {
-    expect(parse('use "core kit"').diagnostics.map((d) => [d.severity, d.message])).toEqual([
-      ['warning', 'use "core kit" is the old way: write use * from "core kit" (or name what it takes: use &a, &b from …)'],
-    ]);
-    expect(parse('use * from "core kit"\nuse &bd from x\nuse &aeolian').diagnostics).toEqual([]);
+  it('use is the old way (decision 064): every use line says its from line; use "id" reads as use * from "id"', () => {
+    const said = (text: string) => parse(text).diagnostics.map((d) => [d.severity, d.message]);
+    const oldWay = (line: string) => ['warning', `use is the old way: say where the cells come from, ${line} (decision 064; Normalise writes it, with a template's arguments)`];
+    expect(said('use "core kit"')).toEqual([oldWay('* from "core kit"')]);
+    expect(said('use * from "core kit"\nuse &bd from x\nuse &aeolian')).toEqual([oldWay('* from "core kit"'), oldWay('&bd from x'), oldWay('&aeolian from aeolian')]);
     const old = compileSource(GROOVE.replace('use * from gm_kit', 'use "gm_kit"'), undefined, seed);
     expect(old.uses).toEqual(compileSource(GROOVE, undefined, seed).uses?.map((u) => ({ ...u, span: { ...u.span, len: 12 } })));
   });
@@ -391,16 +400,17 @@ describe('the lockfile', () => {
 });
 
 describe('the tools keep use', () => {
-  it('Normalise keeps the use line, in its order, never expanded', () => {
+  it('Normalise writes the use line as its from line (decision 064), in its order, never expanded', () => {
     const text =
       'use * from gm_kit\nuse &key from "harmonic minor"\n&tonic D\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
     const out = normalise(text, seed).source;
-    expect(out).toBe(text.replace('cutoff=', 'lpf='));
-    // (the old spelling, use "id", is written use * from "id"; an id that is a word, bare; use &x from x, use &x)
+    // (a collection's use its from line; a template's, its tonic, which only it read, written in)
+    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('use * from gm_kit\nuse &key from "harmonic minor"\n&tonic D', '* from gm_kit\n&key from "harmonic minor" D'));
+    // (the old spellings, use "id" and use &x, are written * from "id" and &x from x; an id that is a word, bare)
     const old = 'use "gm_kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~';
     const resolve = (id: string) => (id === 'kit' ? '&kick s=sine\n&snare s=white' : id === 'pulse' ? '&pulse s=sine loop=A4' : resolveSeed(id));
     expect(normalise(old, { resolve }).source).toBe(
-      'use * from gm_kit  # the kit\nuse &pulse\nuse &kick, &snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~',
+      '* from gm_kit  # the kit\n&pulse from pulse\n&kick, &snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~',
     );
   });
 

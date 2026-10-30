@@ -61,7 +61,7 @@ source: seed
 ---
 
 ```cells
-&lead from (&leadLevel) &leadline
+&lead, &leadOut from (&leadLevel) &leadline
 &leadV from lead
 &leadOut play=&leadline level=&leadLevel &leadV
 &lead map=role &leadOut
@@ -73,4 +73,4 @@ Its two inputs are the score's (decision 064: the line its main parameter, the l
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`presets.ts`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
 
-**Its signature** (decision 064): `&lead from (&leadLevel) &leadline`. `&lead from "lead performer" &line` takes a copy of it, `&leadline` its main argument; `&leadLevel` an optional parameter, its line its default (`"lead performer"(leadLevel=…)`). Taken the old way, `use &lead from "lead performer"`, it reads `&leadline` by name, as before.
+**Its signature** (decision 064): `&lead, &leadOut from (&leadLevel) &leadline`. `&lead from "lead performer" &line` takes a copy of it, `&leadline` its main argument; `&leadLevel` an optional parameter, its line its default (`"lead performer"(leadLevel=…)`). Taken the old way, `use &lead from "lead performer"`, it reads `&leadline` by name, as before.

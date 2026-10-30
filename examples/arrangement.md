@@ -8,7 +8,7 @@ description: "Three parts, and a song that picks which of them play: an intro, a
 ```cells
 &partsNote label="A part is a section stepped by the bar: &sections names them (step=4n), and what a section steps plays while &song picks it, four bars a step, from its top: a number picks one section, a chord several." about=(&sections &song)
 &lapsNote label="laps=1: the song plays once, then ends. off switches a cell off, and everything that plays it: take it from &click to hear the beat." about=&song
-use &bar from "4/4"
+&bar from "4/4" &tempo
 &tempo step=free(moderato)
 &key scale(major)
 
@@ -19,8 +19,8 @@ use &bar from "4/4"
 
 &keys s=tri loop=C4 env=&(map=adsr .01 .5 .3 .3)
 &lead s=square loop=C5 lpf=2500 env=&(map=adsr .01 .2 .5 .2)
-use &rim from gm_kit
-use &thump from envelopes
+&rim from gm_kit
+&thump from envelopes
 &bd gain=.6 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&thump
 
 &sections step=4n &keysBar &tuneBar &drumBar

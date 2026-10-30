@@ -5,7 +5,7 @@ description: "A tape loop on a machine that turns: it spins up from rest, the pi
 ---
 
 ```cells
-use &click, &thump from envelopes
+&click, &thump from envelopes
 &capstanNote label="Hold the capstan with your finger: a tape stop, the pitch diving; let go and it spins back up." about=&bar
 &slackNote label="The hats ride a slack belt, dragging behind." about=&hats
 &springEndNote label="At the end the spring gives out and the tape stops for good." about=&bar

@@ -5,9 +5,11 @@ import { forwardedUses } from "./forwarded.js";
 import { libraryCells, libraryLines } from "./library.js";
 import { fourFour, interfaceNames } from "./names.js";
 import { uses } from "./uses.js";
+import { fromUses } from "./from.js";
 export const normalisations = (options = {}) => (source, result) => [
     ...uses(source),
     ...forwardedUses(source, options.resolve),
+    ...fromUses(source, options.resolve),
     ...mainKey(source, result),
     ...interfaceNames(source, result),
     ...fourFour(source, result),

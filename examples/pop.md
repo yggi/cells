@@ -5,8 +5,8 @@ description: "I – V – vi – IV, arranged by a selector: intro, verses, chor
 ---
 
 ```cells
-use &vibrato
-use &strike, &thump, &snap, &click from envelopes
+&vibrato from vibrato
+&strike, &thump, &snap, &click from envelopes
 # The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees
 # over the major scale, each chord comes out the right kind: C, G, Am, F.
 # Arranged: each part is a section stepped by the bar, and &song switches the sections,

@@ -12,7 +12,7 @@ description: "A drum part written with the drums' names: a beat, a fill with rat
 &euclidNote label="euclid(5, 16): five hits spread as evenly as they go over sixteen steps." about=&clave
 &hitNote label="oneshot: the hat plays its envelope through, whatever its step: a hit, as on a drum machine." about=&hh
 &kitNote label="A braid of voices read with over= is a kit: its numbers pick the voices, 0 the first." about=(&kit &toms)
-use &bar from "4/4"
+&bar from "4/4" &tempo
 &tempo step=free(moderato)
 
 &beat &bd ~ &hh:0:.5 ~ &sd ~ &hh:0:.5 [&bd,&hh]
@@ -22,8 +22,8 @@ use &bar from "4/4"
 &kit &lo &mid &hi
 &toms over=&kit step=16n ~!12 0 1 2 1
 
-use &bd, &sd, &rim from gm_kit
-use &click, &thump, &snap from envelopes
+&bd, &sd, &rim from gm_kit
+&click, &thump, &snap from envelopes
 &hh oneshot s=white hpf=8000 env=&click
 &lo s=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&thump
 &mid s=sine loop=C3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .2 0 .05)
