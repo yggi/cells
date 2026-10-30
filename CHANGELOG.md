@@ -11,7 +11,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 ### Added
 
 - **Twenty-six more motifs, thirty-six in all** (#369): a second near each of Jambot's ten presets' points, 0.1 higher in energy (`refrain`, `pulse`, `soul`, `drift`, `dusty`, `slap`, `saudade`, `blue`, `lindy`, `toll`); one at each point of a meter that had none, a bar of that meter (`waltz` and `musicBox` in 3/4, `rocking` and `sway` in 6/8, `fivefold` in 5/4, `limp` in 7/8, `dancer` in 10/8, `shuffle` in 12/8, `march` in 2/4, `fanfare` alla breve); and six general-purpose near the centre of style space (`question`, `reply`, `arpeggio`, `run`, `neighbour`, `leap`). A query for a motif at a preset's point still finds its first motif first, alone at distance 0, and its second 0.05 away (cells breaks a tie by id, so a second at the same point could have come first). Nothing a piece plays changes. A frontend that queries the facet `motif` finds more: Jambot's lead (yggi/jambot#524) reaches the odd meters' motifs where it had none.
-Nothing has changed since v0.12.3.
 
 ## v0.12.3 — 2026-10-30
 
