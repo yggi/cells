@@ -21,6 +21,7 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 - [language/physics.md](language/physics.md) — motors, belts, tape, resonators, FM
 - [language/display.md](language/display.md) — titles, tags, labels, `show=`, loudness (the card's `postgain=`)
 - [language/plugins.md](language/plugins.md) — a piece's own `show=`: a block of code in the piece
+- [language/style.md](language/style.md) — a style: `map=style`, the table of axes, a value read by name (`&x[slot]`)
 - [language/use.md](language/use.md) — `use &bd, &sd from gm_kit`, `use * from …`, `use &x`: a fragment's lines taken by its id, the resolver, the lockfile
 - [language/canonical.md](language/canonical.md) — the canonical spellings: what Normalise writes
 - [language/reference.md](language/reference.md) — every form the parser reads, generated from it

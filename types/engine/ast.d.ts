@@ -44,6 +44,7 @@ export declare const refLabel: (r: {
     shift: number;
     transpose?: number;
     degree?: number;
+    slot?: string;
 }) => string;
 /**
  * `&name`, optionally viewed through brackets: a pick from the braid as
@@ -53,6 +54,11 @@ export declare const refLabel: (r: {
 export interface Ref {
     readonly name: string;
     readonly pick: Pick | null;
+    /**
+     * A slot by name (`&env[sustain]`, `&funk[artic]`, decision 063): one its map names (`SLOTS`, style.ts). Read before
+     * compile as the slot's position as written (`pick` `[$2]`, `compiler/slots.ts`), so nothing after sees a name.
+     */
+    readonly slot?: string;
     readonly shift: number;
     /** ^$n: what it plays, n grid steps up (^$-n down), after its tables (absolute: a semitone on the 12). */
     readonly transpose?: number;
@@ -123,6 +129,7 @@ export type Atom = {
     readonly shift: number;
     readonly transpose?: number;
     readonly values?: ValueMap;
+    readonly slot?: string;
 }
 /**
  * A mix chord `[&theme * &lead, …]`: its expressions as written; compile types them (algebra.ts). `gate`: the gate it
@@ -330,7 +337,7 @@ export type StepSpec = {
  *   role    the cell is a role: its name the role, its entries the gates that play it (decision 061)
  */
 export type MapSpec = {
-    readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role';
+    readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role' | 'style';
     readonly span: Span;
 }
 /** A grid: cycle= equal steps to the period — 2 (an octave) for map=edo, r for map=ed(r). */

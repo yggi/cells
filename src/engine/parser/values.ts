@@ -157,6 +157,13 @@ export const MAP_KINDS: Readonly<Record<MapWord, Syntax>> = {
   ),
   edo: syntax('map', 'map=edo', 'A grid: cycle= equal steps to the octave.', ['&edo19 cycle=19 map=edo'], 'tuning.md'),
   ratios: syntax('map', 'map=ratios', "A grid of ratios: one period's tones, then the period (the last).", ['&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2'], 'tuning.md'),
+  style: syntax(
+    'map',
+    'map=style',
+    "A style: a point in style space, one value an axis in the table's order (sync harm artic energy, each 0 to 1), or each by its name (sync=.3); it doesn't sound. A pick reads an axis by name: &funk[artic].",
+    ['&funk map=style .3 .45 .55 .55', '&funk map=style sync=.3 harm=.45 artic=.55 energy=.55'],
+    'style.md',
+  ),
   role: syntax(
     'map',
     'map=role',
@@ -212,7 +219,7 @@ export function parseMap(s: LineScanner): MapSpec {
   if (w === null) s.fail(`map= takes ${Object.keys(MAP_KINDS).join(', ')}, ed(r), midi(c, p) or a table cell (&curve)`);
   if (w === 'edo') return { kind: 'edo', period: 2, span: s.span(start) };
   if (w === 'midi') return parseMidi(s, start);
-  return { kind: w as 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role', span: s.span(start) };
+  return { kind: w as 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role' | 'style', span: s.span(start) };
 }
 
 /** midi, midi(c) or midi(c, p): a MIDI card, its channel (1–16) when all its entries share one, its output slot (1–16, 1 by default). */

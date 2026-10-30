@@ -4,6 +4,7 @@ export const REFERENCE_SYNTAX = [
     syntax('reference', '&name', 'A cell, by name: in a braid (spliced in), after an attribute (over=&scale), in a mix.', ['&theme step=2 &motif 0'], 'cell.md'),
     syntax('reference', '&name[i]', 'One entry of its braid as it is turned now (a fixed reader: it follows shift=), counted from 0; negative from the end (&x[-1] the last). &name[$i]: as written.', ['&tune step=2 &motif[0] &motif[-1] &key[$0]'], 'braid.md'),
     syntax('reference', '&name[a:b] · &name[a:b:s]', 'A slice, Python-style: from a up to b (either may be left out), every s-th; [::-1] backwards (retrograde). As turned; [$a:b] as written.', ['&tune step=2 &motif[1:3] &motif[:-1] &motif[::-1] &motif[::2]'], 'braid.md'),
+    syntax('reference', '&name[slot]', "One slot by its name, as its map names them (decision 063): an envelope's attack, decay, sustain, release (map=adsr); a style's axes (map=style). The slot's fixed position, as written: &env[sustain] is &env[$2].", ['&held step=4n &level[sustain] &level[attack]', '&leaning map=lin step=1m &funk[artic] &swing[artic]'], 'style.md'),
     syntax('reference', '&name[<<n] · &name[>>n]', 'Shifted back or forward n places (1 if left out), on top of its own shift=: rotating it, climbing the helix.', ['&canon step=2 &theme[>>4]', '&mode over=&scale[<<] 0 2 4'], 'braid.md'),
     syntax('reference', '&name^n · degree(&name, n)', 'In a braid, moved n steps of the table it is read through (degrees, in a scale; relative): its values plus n, before the table reads them. n may be negative. &name^n is the short form.', ['&tune over=&major step=2 &motif &motif^1 &motif^-2', '&tune over=&major step=2 degree(inverse(&motif), 4)'], 'braid.md'),
     syntax('reference', '&name^$n', 'In a braid, transposed: what it plays, n grid steps up (^$-n down) after its tables (absolute: semitones on the 12).', ['&answer step=2 &subject^$7 &subject^$-12'], 'braid.md'),
@@ -164,6 +165,12 @@ export class LineScanner {
                 this.skipSpace();
                 this.expect(']', `']' to close &${name}[${dir}…]`);
                 return { name, pick, shift, ...this.transposition(name), span: this.span(at) };
+            }
+            const slot = this.match(/[a-z][A-Za-z]*(?=\s*\])/y);
+            if (slot !== null) {
+                this.skipSpace();
+                this.expect(']', `']' to close &${name}[${slot}]`);
+                return { name, pick, shift, slot, ...this.transposition(name), span: this.span(at) };
             }
             if (this.text.startsWith('free(', this.i))
                 this.fail(`&${name}[…] picks by a number written in place: free(…) is a cell's whole braid (free(0 2 4 ~)), or a number in an attribute`, this.i, 5);

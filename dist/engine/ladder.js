@@ -15,7 +15,15 @@ export const STUBS = new Set([
         .filter((k) => PARAMS[k].stub)
         .map((k) => `parameter ${k}`),
 ]);
-export const PENDING = new Set(['step <a b c>', 'modifier x/n', 'modifier x(k,n,r)', 'parameter legato', 'attribute tags']);
+export const PENDING = new Set([
+    'step <a b c>',
+    'modifier x/n',
+    'modifier x(k,n,r)',
+    'parameter legato',
+    'attribute tags',
+    'reference &name[slot]',
+    'map map=style',
+]);
 export function formKey(e) {
     if (e.section === 'attribute' || e.section === 'parameter')
         return `${e.section} ${e.form.split('=')[0]}`;
@@ -289,6 +297,8 @@ export function formsUsed(source, options = {}) {
     const seen = { decls, rateOf: ctx.rateOf };
     const ref = (r) => {
         use('reference &name');
+        if (r.slot)
+            use('reference &name[slot]');
         if (r.pick?.kind === 'at')
             use('reference &name[i]');
         if (r.pick?.kind === 'slice')

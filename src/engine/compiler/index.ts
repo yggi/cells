@@ -22,12 +22,15 @@ import { checkRoles } from './roles';
 import { checkLimits } from './limits';
 import { sectioned } from './sections';
 import { banded, bandsOf, checkBands, performersOf } from './band';
+import { readSlots } from './slots';
 
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
 
 /** A parsed piece, compiled; `used` names the cells a `use` line gave it (decision 054), which the built-in card doesn't hear. */
-export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string> = new Set()): CompileResult {
+export function compile(written: ParseResult, env: Env, used: ReadonlySet<string> = new Set()): CompileResult {
+  // (a pick by name, &env[sustain], read as its slot's position first: decision 063)
+  const parsed = readSlots(written);
   const ctx = context(parsed, env);
   // (no card written: the built-in one, decision 028)
   const declared = builtinCard(ctx, declare(ctx), used);

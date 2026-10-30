@@ -23,6 +23,7 @@ export { expand, fragmentHash } from "./engine/use.js";
 export { createRepository, EMPTY_LAYER, layerProblems, } from "./repository/fragments.js";
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";
 export { METER_FRAGMENTS } from "./repository/meters.js";
+export { AXES, AXIS_NAMES, SLOTS } from "./engine/style.js";
 export { RHYTHM_FRAGMENTS } from "./repository/rhythms.js";
 export { BASS_FRAGMENTS } from "./repository/bass.js";
 export { HARMONY_FRAGMENTS } from "./repository/harmony.js";

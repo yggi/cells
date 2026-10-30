@@ -55,6 +55,7 @@ export {
 } from './repository/fragments';
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
 export { METER_FRAGMENTS } from './repository/meters';
+export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
 export { RHYTHM_FRAGMENTS } from './repository/rhythms';
 export { BASS_FRAGMENTS } from './repository/bass';
 export { HARMONY_FRAGMENTS } from './repository/harmony';

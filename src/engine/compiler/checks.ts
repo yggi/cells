@@ -1,4 +1,5 @@
 /** Phase 5: what the physical and sounding cells refer to, and what their values say — resonators, tapes, FM, moving parameters, envelopes, grids. */
+import { AXES } from '../style';
 import { BODIES, isMidiCard } from '../program';
 import { MOVING_PARAMS } from '../attributes';
 import { refsOf } from '../readers';
@@ -131,6 +132,16 @@ export function checkCells(
     const vals = d.braid.kind === 'list' ? d.braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [];
     if (vals.length !== 4 || vals.some((v) => !(v >= 0)) || vals[2] > 1)
       error(`map=adsr takes four numbers: attack decay sustain release — seconds, and sustain a level 0…1 (map=adsr .01 .3 .5 .4)`, d.map.span);
+  }
+  // a style (decision 063): a value for each axis, in the table's order, each within its range
+  for (const d of decls.values()) {
+    if (d.map?.kind !== 'style') continue;
+    const vals = d.braid.kind === 'list' ? d.braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [];
+    if (vals.length !== AXES.length || vals.some((v, i) => !(v >= AXES[i]!.range[0] && v <= AXES[i]!.range[1])))
+      error(
+        `map=style takes a value for each axis, in order: ${AXES.map((a) => `${a.name} (${a.range[0]} to ${a.range[1]})`).join(', ')} (map=style .3 .45 .55 .55, or sync=.3 harm=.45 artic=.55 energy=.55)`,
+        d.map.span,
+      );
   }
   for (const d of decls.values()) {
     if (d.map?.kind !== 'ratios') continue;

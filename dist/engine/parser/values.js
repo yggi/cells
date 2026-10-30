@@ -94,6 +94,7 @@ export const MAP_KINDS = {
     midi: syntax('map', 'map=midi', "A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent and heard, at its entry's gain.", ['&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove'], 'midi.md'),
     edo: syntax('map', 'map=edo', 'A grid: cycle= equal steps to the octave.', ['&edo19 cycle=19 map=edo'], 'tuning.md'),
     ratios: syntax('map', 'map=ratios', "A grid of ratios: one period's tones, then the period (the last).", ['&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2'], 'tuning.md'),
+    style: syntax('map', 'map=style', "A style: a point in style space, one value an axis in the table's order (sync harm artic energy, each 0 to 1), or each by its name (sync=.3); it doesn't sound. A pick reads an axis by name: &funk[artic].", ['&funk map=style .3 .45 .55 .55', '&funk map=style sync=.3 harm=.45 artic=.55 energy=.55'], 'style.md'),
     role: syntax('map', 'map=role', 'A role: its name is the role, its entries the gates that play it (two entries, two players); a gate no role names plays as written.', ['&comp map=role &violin2 &viola'], 'mix.md'),
 };
 export const MAP_SYNTAX = [
