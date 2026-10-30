@@ -112,13 +112,13 @@ describe('the smallest piece: &a loop=A4', () => {
     expect(messages(compileSource('&t step=1 0 2 4')).join()).toMatch(/Nothing plays yet/);
     expect(messages(compileSource('&a loop=A4'))).toEqual([]);
   });
-  it('a piece that writes a MIDI card sends what its cards name, and nothing goes to a built-in card (decision 019)', () => {
+  it('a piece that writes a MIDI card sends and hears what its cards name, and nothing goes to a built-in card (decisions 019, 064)', () => {
     const r = compileSource('&t step=1 0 2\n&a s=saw\n&pad s=sine loop=C3\n&synth map=midi [&t * &a]');
     expect(r.builtinCard).toBeUndefined();
-    // (&pad, on no card, plays nowhere; &a is sent, not heard)
+    // (&pad, on no card, plays nowhere: a written card, of either kind, replaces the built-in one; &a is sent and heard)
     expect(notes(r, 0, 2).map((e) => [e.voice, e.unheard ?? false])).toEqual([
-      ['a', true],
-      ['a', true],
+      ['a', false],
+      ['a', false],
     ]);
   });
   it('is in no line: the text is the source of truth, and no edit writes it', () => {

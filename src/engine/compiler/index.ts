@@ -11,7 +11,7 @@ import type { ShowPlugin } from '../plugins';
 import { context } from './context';
 import { declare } from './declare';
 import { builtinCard } from './builtin';
-import { sorts } from './sorts';
+import { sortOfCells, sorts } from './sorts';
 import { resolveCells } from './resolve';
 import { bindVoices } from './bindings';
 import { clockCells } from './clocks';
@@ -33,9 +33,10 @@ export function compile(parsed: ParseResult, env: Env, used: ReadonlySet<string>
   const declared = builtinCard(ctx, declare(ctx), used);
   const { decls, builtin } = declared;
   const typed = sorts(ctx, decls);
+  const sortOf = sortOfCells(ctx, decls);
   // (tables of performers a selector switches: decision 061)
   const bands = bandsOf(ctx, decls);
-  const resolved = resolveCells(ctx, declared, typed);
+  const resolved = resolveCells(ctx, declared, typed, sortOf);
   const bound = bindVoices(ctx, decls, resolved, typed);
   const timed = clockCells(ctx, decls, bound.cells);
   const { clocks } = timed;

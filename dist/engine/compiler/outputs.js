@@ -208,7 +208,7 @@ export function outputsOf(ctx, decls, cells, clocks, { sinks, cards, bindings, s
     if (sentOnly) {
         const d = decls.get(sentOnly.voice);
         const sound = Object.keys(d.params).filter((k) => VOICE_PARAMS.has(k));
-        warn(`&${sentOnly.voice} is only on a MIDI card: its sound (${sound.map((k) => `${k}=`).join(' ')}) isn't sent — MIDI carries its notes, velocity and bends; the device makes the sound`, d.paramSpans[sound[0]] ?? d.span);
+        warn(`&${sentOnly.voice} is only on a MIDI card: its sound (${sound.map((k) => `${k}=`).join(' ')}) is heard here but isn't sent — MIDI carries its notes, velocity and bends; the device makes its own`, d.paramSpans[sound[0]] ?? d.span);
     }
     if (sinks.length === 0 && cards.length === 0 && parsed.cells.length > 0 && !parsed.broken?.length)
         warn('Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])', IMPLICIT);

@@ -2,11 +2,11 @@
 title: "MIDI out: a band on a synth"
 tags: [tutorial, genre:electronic, MIDI]
 tier: 9
-description: "The piece names where its notes go: a melody and a bass on a synth's channels 1 and 2, the drums on 10. The bass is sent, not heard."
+description: "The piece names where its notes go: a melody and a bass on a synth's channels 1 and 2, the drums on 10. The bass is on the synth alone: sent, and heard at its entry's gain."
 ---
 
 ```cells
-&cardNote label="map=midi makes a MIDI card: its entries are channels, in order: the theme on the reed goes out on 1, the bass on the sub on 2; ~ would skip one. &sub is on no sound card: it plays only on MIDI." about=&synth
+&cardNote label="map=midi makes a MIDI card: its entries are channels, in order: the theme on the reed goes out on 1, the bass on the sub on 2; ~ would skip one. &sub is on no sound card: it is sent on 2, and heard as the MIDI card hears it, at its entry's gain." about=&synth
 &drumNote label="map=midi(10): the whole card on channel 10, the drums by General MIDI note (bd 36, sd 38, hh 42). map=midi(10, 2) would send it to output slot 2, a device chosen in the MIDI page." about=&drums
 &bar from "4/4" 104bpm
 
@@ -18,7 +18,7 @@ description: "The piece names where its notes go: a melody and a bass on a synth
 &sub loop=C2
 &bd, &sd, &hh from gm_kit
 
-&out map=sample postgain=.891 [&theme * &reed * .5, &groove * .6]
+&out map=sample postgain=1.375 [&theme * &reed * .5, &groove * .6]
 &synth map=midi [&theme * &reed] [&bass * &sub]
 &drums map=midi(10) &groove
 ```

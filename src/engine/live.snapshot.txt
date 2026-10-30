@@ -38,6 +38,9 @@ daytime  live 71ca15c20760da5e
 gate  live 3ccfa6ab2b981ef3
 play-in  live ce29f08f51e88004
 midi-out  live e235754a9d7e9378
+gate  live 400caf4aa6182ac4
+play-in  live 0da707207ad6f5bd
+midi-out  live 66aca93150be69f2
 lullaby  live e72c2693e211dad7
 jazz  live 78d56c8b672fdf91
 five  live 3b7916eeac8d24b3
@@ -68,6 +71,8 @@ hypercell  live 102d8396baef9e1e
 onemore  live d6681d54413c2e59
 electroswing  live e7c2638461d4bd09
 spooky  live f62fb04f18db57ce
+electroswing  live 4629bcc3e54f549a
+spooky  live dad35e05348ade7b
 brothers  live 89d8f5a03778cd82
 ghosts  live e4109e6f71217d64
 tines  live 6457d4cb35a66a85

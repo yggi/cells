@@ -5,7 +5,7 @@ import { type CompileOptions, type Resolve, type Used } from './program';
 export declare const USE_DEPTH = 8;
 /** Does this text have a `use` or a `from` line? (Cheap: a text without one compiles as it always has.) */
 export declare const hasUse: (text: string) => boolean;
-/** A fragment's signature (decision 064): what its `from` line with no id declares; null for a collection, which has none. */
+/** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
 export declare function signatureOf(text: string): Extract<FromForm, {
     kind: 'signature';
 }> | null;
