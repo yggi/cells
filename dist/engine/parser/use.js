@@ -139,4 +139,4 @@ export function readFrom(code) {
 }
 export const FROM_FORM = 'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
 export const USE_OLD = 'use is the old way';
-export const useOld = ({ id, names }) => `${USE_OLD}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 064; Normalise writes it, with a template's arguments)`;
+export const useOld = ({ id, names }) => `${USE_OLD}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 065; Normalise writes it, with a template's arguments)`;

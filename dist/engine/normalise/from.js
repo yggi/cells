@@ -122,7 +122,7 @@ export function fromUses(source, resolve) {
                 id: `from:${i + 1}`,
                 tool: 'normalise',
                 rule: 'from',
-                title: `${before} is written ${after}${dropped ? `, its ${dropped.trim()} written in` : ''} (decision 064)`,
+                title: `${before} is written ${after}${dropped ? `, its ${dropped.trim()} written in` : ''} (decision 065)`,
                 before,
                 after,
                 apply: (src) => src
