@@ -8,7 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.13.0.
+### Added
+
+- **`from` lines: a fragment takes arguments** (decision 065, #387, its first rung). A line says where its cells come from: `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from gm_kit`, `* from gm_kit`. A fragment's signature, a `from` line with no id (`&bar from (&swing) &tempo`), declares its head, its optional parameters (their lines its defaults) and its one required main parameter; a `from` line takes a copy of it, its head named as the line names it and its other names its own (`&key_tonic`), so a template can be used twice. An argument that is one bare reference is that cell; anything else is a cell of the copy's, a named one its default changed where it says. Attributes before `from` are the head's, after the id the main argument's. A template that reads a name it neither defines nor declares is an error, a sound read by name aside. `CompileResult.uses` gains `args`. **Nothing a piece plays changes**: `use` reads as before, with no warning yet, and no seed fragment has a signature yet (the next rung); a frontend that parses lines itself sees a new line form, `… from …`, which was an error before.
+- **A mode read from a cell: `scale(&mode, &tonic)`** (#363). `&mode dorian`, or its number: the seven diatonic modes darkest to brightest, the tonic fixed, `locrian` 0 to `lydian` 6 (`minor` 2, `major` 5), the order `scale(tonic, phase)` reads. A mode word reads as its number in any braid, as a note name does. A stepped mode is not yet a form. Nothing a piece plays changes.
 
 ## v0.13.0 — 2026-10-30
 

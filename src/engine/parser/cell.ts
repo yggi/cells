@@ -9,6 +9,7 @@ import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE, parseFree } from './free';
 import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
+import { MODE_WORDS } from '../../theory/modes';
 import { atTap, parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
 
@@ -137,7 +138,14 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
         s.i += 5;
         const sc = parseScale(s, at0);
         const name = `scale:λ${s.line}_${at0 + s.offset}`;
-        s.lambdas.push({ ...BLANK_TABLE, name, span: sc.span, lambda: s.text.slice(at0, s.i), over: sc.key, braid: { kind: 'scan', steps: sc.steps, span: sc.span } });
+        s.lambdas.push({
+          ...BLANK_TABLE,
+          name,
+          span: sc.span,
+          lambda: s.text.slice(at0, s.i),
+          over: sc.key,
+          braid: { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) },
+        });
         b.over = { name, pick: null, shift: 0, span: sc.span };
       } else b.over = s.cellRef('a cell or scale(name, tonic) after over=, like over=&key or over=scale(minor, A)', 'after over=');
       if (b.over!.pick) s.fail('over= takes a whole table (shifting it is fine: over=&scale[<<])', b.over!.span.col - 1, b.over!.span.len);
@@ -661,7 +669,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       } else if (word === 'scale') {
         // scale(name, tonic): its steps the cell's braid, read through the key it brings
         const sc = parseScale(s, at);
-        generator = { kind: 'scan', steps: sc.steps, span: sc.span };
+        generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) };
         scaleKey = sc.key;
       } else generator = parseGenerator(s, word, at);
       continue;
@@ -685,7 +693,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     }
     // a note by name is a step (C, Bb3): read again as one
     // (and _, the step before it held one longer)
-    if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_')) s.i = at;
+    if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_' || Object.hasOwn(MODE_WORDS, word))) s.i = at;
     else if (word !== null) s.fail(`Unexpected '${word}'`, at, word.length);
     if (generator && freeBraid && s.peek() === ')') s.fail(`A ')' with nothing to close: free(${freeSteps}) ends at its first ')'`, at, 1);
     if (generator && at === freeEnd && /[@!*/?:]/.test(s.peek())) {

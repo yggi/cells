@@ -1,6 +1,6 @@
 import { syntax } from "./syntax.js";
 import { parseFree } from "./free.js";
-import { agogic as agogicPositions, even as evenPositions, intervals, SCALES, scaleOfPhase } from "../../theory/modes.js";
+import { agogic as agogicPositions, diatonicSteps, even as evenPositions, intervals, MODE_WORDS, SCALES, scaleOfPhase } from "../../theory/modes.js";
 import { TONAL_SCALES } from "../../theory/tonal.js";
 function parseScan(s, start) {
     s.i++;
@@ -256,6 +256,7 @@ export function parseScale(s, start) {
     let tonic = 0;
     let tonicText = '0';
     let tonicRef = null;
+    let modeRef = null;
     const legacy = s.match(/-?[0-9]+/y);
     const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
     if (quoted !== null) {
@@ -293,11 +294,17 @@ export function parseScale(s, start) {
     }
     else {
         const at = s.i;
-        const name = s.match(/[a-z]+/y);
-        const scale = name ? SCALES[name] : undefined;
-        if (!scale)
-            s.fail(`scale(name, tonic): a scale by name — ${Object.keys(SCALES).join(' ')}`, at, Math.max(1, (name ?? '').length));
-        steps = [...scale.steps];
+        if (s.peek() === '&') {
+            modeRef = s.cellRef('the cell that holds the mode, like scale(&mode, &tonic)', 'as the mode');
+            steps = diatonicSteps(MODE_WORDS.major);
+        }
+        else {
+            const name = s.match(/[a-z]+/y);
+            const scale = name ? SCALES[name] : undefined;
+            if (!scale)
+                s.fail(`scale(name, tonic): a scale by name — ${Object.keys(SCALES).join(' ')}, or a cell holding a mode (&mode)`, at, Math.max(1, (name ?? '').length));
+            steps = [...scale.steps];
+        }
         s.skipSpace();
         if (s.peek() === ',') {
             s.i++;
@@ -344,7 +351,7 @@ export function parseScale(s, start) {
         paramSpans: {},
         braid: { kind: 'blank' },
     });
-    return { steps, key: { name: key, pick: null, shift: 0, span }, span };
+    return { steps, key: { name: key, pick: null, shift: 0, span }, span, ...(modeRef ? { mode: modeRef } : {}) };
 }
 export function parseFifths(s, start) {
     s.i++;
@@ -386,7 +393,14 @@ export const GENERATORS = {
     square: { parse: parseWave('square'), syntax: WAVE_SYNTAX },
     scale: {
         parse: (s, start) => s.fail('scale(…) is read by its cell', start, 5),
-        syntax: syntax('generator', 'scale(name) · scale(name, tonic) · scale("tonic:name")', `A scale by name over the 12, turned to its tonic (a note name, a number, a cell holding one, or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`, ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))', '&key scale(dorian, &tonic)', '&scale scale("F#:harmonic:minor")'], 'tables.md'),
+        syntax: syntax('generator', 'scale(name) · scale(name, tonic) · scale("tonic:name")', `A scale by name over the 12, turned to its tonic (a note name, a number, a cell holding one, or free(…); C if left out): the scan of its steps over a key of its own. Its name may be a cell holding a diatonic mode (&mode dorian, its phase from the darkest: locrian 0 … lydian 6). Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`, [
+            '&scale scale(minor, D)',
+            '&blues scale(blues)',
+            '&scale scale(dorian, free(2, 0..11))',
+            '&key scale(dorian, &tonic)',
+            '&key scale(&mode, &tonic)',
+            '&scale scale("F#:harmonic:minor")',
+        ], 'tables.md'),
     },
     fifths: {
         parse: (s, start) => s.fail('fifths(…) is read by its cell', start, 6),

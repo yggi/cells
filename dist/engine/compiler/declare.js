@@ -5,7 +5,7 @@ import { VOICE_PARAMS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
 import { leaves } from "../subseq.js";
 import { overdub } from "../parser/base.js";
-import { mod } from "../../theory/modes.js";
+import { diatonicSteps, mod } from "../../theory/modes.js";
 export function declare(ctx) {
     const { parsed, error, unknownCell } = ctx;
     const decls = new Map();
@@ -18,6 +18,7 @@ export function declare(ctx) {
     }
     const mainKey = mainKeyOf(ctx, decls);
     tonics(ctx, decls);
+    modes(ctx, decls);
     swings(ctx, decls);
     const sections = sectionTables(decls, error);
     const stacks = gates(decls, implicit, error);
@@ -112,6 +113,27 @@ function tonics(ctx, decls) {
             continue;
         }
         decls.set(name, { ...d, shift: mod(first.value + first.alter, 12) });
+    }
+}
+function modes(ctx, decls) {
+    for (const [name, d] of decls) {
+        if (d.braid.kind !== 'scan' || !d.braid.mode)
+            continue;
+        const m = decls.get(d.braid.mode.name);
+        if (!m) {
+            ctx.unknownCell(d.braid.mode.name, d.braid.mode.span);
+            continue;
+        }
+        const tokens = m.braid.kind === 'list' ? m.braid.tokens : [];
+        const atom = tokens.length === 1 && tokens[0].repeat === 1 && tokens[0].subdivide === 1 ? tokens[0].atom : null;
+        const phase = atom?.kind === 'note' && !atom.pitched && atom.alter === 0 ? atom.value : null;
+        if (m.step || phase === null || !Number.isInteger(phase) || phase < 0 || phase > 6) {
+            ctx.error(m.step
+                ? `&${m.name} holds a scale's mode (scale(&${m.name}, …)): a stepped mode is not yet a form; write one (&${m.name} dorian)`
+                : `&${m.name} holds a scale's mode (scale(&${m.name}, …)): write one, a name or its phase from the darkest (&${m.name} major, &${m.name} dorian, &${m.name} 3)`, m.span);
+            continue;
+        }
+        decls.set(name, { ...d, braid: { ...d.braid, steps: diatonicSteps(phase) } });
     }
 }
 function swings(ctx, decls) {

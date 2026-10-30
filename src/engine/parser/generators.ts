@@ -4,7 +4,7 @@ import type { Signature } from '../meter';
 import { syntax, type Syntax } from './syntax';
 import type { LineScanner } from './scanner';
 import { parseFree } from './free';
-import { agogic as agogicPositions, even as evenPositions, intervals, SCALES, scaleOfPhase } from '../../theory/modes';
+import { agogic as agogicPositions, diatonicSteps, even as evenPositions, intervals, MODE_WORDS, SCALES, scaleOfPhase } from '../../theory/modes';
 import { TONAL_SCALES } from '../../theory/tonal';
 
 /** scan(…): intervals, separated by spaces or commas; any positive numbers. */
@@ -284,13 +284,14 @@ export const SCALE_KEY = 'key:λ';
  * through it, or a table of its own after over=. The old `scale(tonic, phase)` (a mode by number) still reads, with a
  * warning that says it by name.
  */
-export function parseScale(s: LineScanner, start: number): { steps: number[]; key: Ref; span: Span } {
+export function parseScale(s: LineScanner, start: number): { steps: number[]; key: Ref; span: Span; mode?: Ref } {
   s.i++; // (
   s.skipSpace();
   let steps: number[];
   let tonic = 0;
   let tonicText = '0';
   let tonicRef: Ref | null = null;
+  let modeRef: Ref | null = null;
   const legacy = s.match(/-?[0-9]+/y);
   const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
   if (quoted !== null) {
@@ -331,10 +332,16 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
     s.warn(`scale(${tonic}, ${phase}) is written scale(${scaleOfPhase(phase)}, ${tonicName(tonic)}): the mode by name, then the tonic`, start, s.i - start);
   } else {
     const at = s.i;
-    const name = s.match(/[a-z]+/y);
-    const scale = name ? SCALES[name] : undefined;
-    if (!scale) s.fail(`scale(name, tonic): a scale by name — ${Object.keys(SCALES).join(' ')}`, at, Math.max(1, (name ?? '').length));
-    steps = [...scale!.steps];
+    if (s.peek() === '&') {
+      // a diatonic mode read from a cell holding one (#363): `&mode major`, its phase; compile sets the steps (declare.ts)
+      modeRef = s.cellRef('the cell that holds the mode, like scale(&mode, &tonic)', 'as the mode');
+      steps = diatonicSteps(MODE_WORDS.major!);
+    } else {
+      const name = s.match(/[a-z]+/y);
+      const scale = name ? SCALES[name] : undefined;
+      if (!scale) s.fail(`scale(name, tonic): a scale by name — ${Object.keys(SCALES).join(' ')}, or a cell holding a mode (&mode)`, at, Math.max(1, (name ?? '').length));
+      steps = [...scale!.steps];
+    }
     s.skipSpace();
     if (s.peek() === ',') {
       s.i++;
@@ -380,7 +387,7 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
     paramSpans: {},
     braid: { kind: 'blank' },
   });
-  return { steps, key: { name: key, pick: null, shift: 0, span }, span };
+  return { steps, key: { name: key, pick: null, shift: 0, span }, span, ...(modeRef ? { mode: modeRef } : {}) };
 }
 
 /**
@@ -457,8 +464,15 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     syntax: syntax(
       'generator',
       'scale(name) · scale(name, tonic) · scale("tonic:name")',
-      `A scale by name over the 12, turned to its tonic (a note name, a number, a cell holding one, or free(…); C if left out): the scan of its steps over a key of its own. Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`,
-      ['&scale scale(minor, D)', '&blues scale(blues)', '&scale scale(dorian, free(2, 0..11))', '&key scale(dorian, &tonic)', '&scale scale("F#:harmonic:minor")'],
+      `A scale by name over the 12, turned to its tonic (a note name, a number, a cell holding one, or free(…); C if left out): the scan of its steps over a key of its own. Its name may be a cell holding a diatonic mode (&mode dorian, its phase from the darkest: locrian 0 … lydian 6). Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`,
+      [
+        '&scale scale(minor, D)',
+        '&blues scale(blues)',
+        '&scale scale(dorian, free(2, 0..11))',
+        '&key scale(dorian, &tonic)',
+        '&key scale(&mode, &tonic)',
+        '&scale scale("F#:harmonic:minor")',
+      ],
       'tables.md',
     ),
   },

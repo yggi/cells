@@ -7,6 +7,7 @@ import { IDENT, LineScanner } from "./scanner.js";
 import { OPERATIONS, parseToken, pushStep } from "./braid.js";
 import { FREE_BRAID_WHOLE, parseFree } from "./free.js";
 import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generators.js";
+import { MODE_WORDS } from "../../theory/modes.js";
 import { atTap, parseMap, parseStep } from "./values.js";
 import { syntax } from "./syntax.js";
 export const SHOWS = [
@@ -79,7 +80,14 @@ export const KEYS = {
                 s.i += 5;
                 const sc = parseScale(s, at0);
                 const name = `scale:λ${s.line}_${at0 + s.offset}`;
-                s.lambdas.push({ ...BLANK_TABLE, name, span: sc.span, lambda: s.text.slice(at0, s.i), over: sc.key, braid: { kind: 'scan', steps: sc.steps, span: sc.span } });
+                s.lambdas.push({
+                    ...BLANK_TABLE,
+                    name,
+                    span: sc.span,
+                    lambda: s.text.slice(at0, s.i),
+                    over: sc.key,
+                    braid: { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) },
+                });
                 b.over = { name, pick: null, shift: 0, span: sc.span };
             }
             else
@@ -541,7 +549,7 @@ export function parseBody(s, head) {
             }
             else if (word === 'scale') {
                 const sc = parseScale(s, at);
-                generator = { kind: 'scan', steps: sc.steps, span: sc.span };
+                generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) };
                 scaleKey = sc.key;
             }
             else
@@ -567,7 +575,7 @@ export function parseBody(s, head) {
             oneshot = true;
             continue;
         }
-        if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_'))
+        if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_' || Object.hasOwn(MODE_WORDS, word)))
             s.i = at;
         else if (word !== null)
             s.fail(`Unexpected '${word}'`, at, word.length);
