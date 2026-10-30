@@ -71,15 +71,15 @@ describe('compile: a MIDI card', () => {
     expect(by('kit:voices').midi!.map((m) => m.channel)).toEqual([10]);
   });
 
-  it('a voice only on a MIDI card is planned and sent, not heard; on both, the same notes on both', () => {
+  it("a voice only on a MIDI card is planned, sent and heard, at its entry's gain (decision 064); on both, the same notes on both", () => {
     const src = `${BAND}\n${OUT}\n&synth map=midi [&theme * &reed] [&bass * &sub]`;
     const { r } = compiled(src);
     const sub = r.outputs.find((o) => o.voice === 'sub')!;
-    expect([outputSounds(r, sub, new Set()), outputPlays(r, sub, new Set())]).toEqual([false, true]);
+    expect([outputSounds(r, sub, new Set()), outputPlays(r, sub, new Set())]).toEqual([true, true]);
     const events = eventsOf(src);
     const subs = events.filter((e) => e.voice === 'sub');
     expect(subs.length).toBeGreaterThan(0);
-    for (const e of subs) expect([e.unheard, e.gains, e.midi?.[0].channel]).toEqual([true, [0, 0], 2]);
+    for (const e of subs) expect([e.unheard, e.gains, e.midi?.[0].channel]).toEqual([undefined, [1, 1], 2]);
     // the reed: heard (its gains), and sent on 1 — the very notes, not a copy
     const reeds = events.filter((e) => e.voice === 'reed');
     for (const e of reeds) expect([e.unheard, e.gains[0] > 0, e.midi?.[0].channel]).toEqual([undefined, true, 1]);
@@ -87,14 +87,17 @@ describe('compile: a MIDI card', () => {
     expect(reeds.map((e) => [e.at, e.dur, e.freq])).toEqual(alone.map((e) => [e.at, e.dur, e.freq]));
   });
 
-  it('switched off: a MIDI card takes away what only it sends; the sound card, what it hears', () => {
+  it('switched off: a MIDI card takes away what only it sends and hears; the sound card, what it hears, leaving what the MIDI card hears', () => {
     const src = `${BAND}\n${OUT}\n&synth map=midi [&theme * &reed] [&bass * &sub]`;
     expect(eventsOf(src, 4, new Set([cellId('synth')])).filter((e) => e.voice === 'sub')).toEqual([]);
     const reeds = eventsOf(src, 4, new Set([cellId('synth')])).filter((e) => e.voice === 'reed');
     expect(reeds.every((e) => !e.midi && !e.unheard)).toBe(true);
     const sent = eventsOf(src, 4, new Set([cellId('out')])).filter((e) => e.voice === 'reed');
     expect(sent.length).toBeGreaterThan(0);
-    expect(sent.every((e) => e.unheard && e.midi?.[0].channel === 1)).toBe(true);
+    // (the reed is still on the MIDI card: heard there, at its entry's gain, in the middle)
+    expect(sent.every((e) => !e.unheard && e.gains[0] === 1 && e.gains[1] === 1 && e.midi?.[0].channel === 1)).toBe(true);
+    // (switch both off: heard nowhere, sent nowhere)
+    expect(eventsOf(src, 4, new Set([cellId('out'), cellId('synth')])).filter((e) => e.voice === 'reed')).toEqual([]);
   });
 
   it('a melody without a voice is an error that names it; so are numbers as an entry, and loop=', () => {
@@ -112,7 +115,7 @@ describe('compile: a MIDI card', () => {
   it("warns: a voice only on MIDI says once that its sound isn't sent; pan= and level= on a card do nothing", () => {
     const sounds = `${BAND}\n&lead s=saw lpf=900 loop=110\n&keys s=sine loop=220\n${OUT}\n&synth map=midi [&bass * &lead] [&theme * &keys]`;
     expect(compiled(sounds).warnings).toEqual([
-      "&lead is only on a MIDI card: its sound (s= lpf=) isn't sent — MIDI carries its notes, velocity and bends; the device makes the sound",
+      "&lead is only on a MIDI card: its sound (s= lpf=) is heard here but isn't sent — MIDI carries its notes, velocity and bends; the device makes its own",
     ]);
     expect(compiled(`${BAND}\n${OUT}\n&synth map=midi [&bass * &sub]`).warnings).toEqual([]);
     // (a voice heard through another melody is not "only on a MIDI card")
@@ -122,10 +125,10 @@ describe('compile: a MIDI card', () => {
     expect(compiled(`${BAND}\n${OUT}\n&synth level=-3 map=midi [&bass * &sub]`).warnings[0]).toMatch(/level= acts on .*: on &synth it does nothing/);
   });
 
-  it('a piece with only a MIDI card is not told that nothing plays', () => {
+  it('a piece with only a MIDI card is not told that nothing plays, and is heard', () => {
     const { warnings, errors } = compiled(`${BAND}\n&synth map=midi [&bass * &sub]`);
     expect([...errors, ...warnings]).toEqual([]);
-    expect(eventsOf(`${BAND}\n&synth map=midi [&bass * &sub]`).every((e) => e.unheard)).toBe(true);
+    expect(eventsOf(`${BAND}\n&synth map=midi [&bass * &sub]`).every((e) => !e.unheard && e.gains[0] === 1)).toBe(true);
   });
 
   it('an entry may be a mix cell; switching the mix off takes its notes away', () => {

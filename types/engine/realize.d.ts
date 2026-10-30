@@ -36,7 +36,7 @@ export interface Played {
         readonly sustain: number;
         readonly release: number;
     };
-    /** Sent on a MIDI card, and heard on no sound card: the voices leave it out, MIDI out sends it. */
+    /** Heard nowhere: its gains are 0 on every card that is on (a sound card's, or a MIDI card's entry: decision 064). The voices leave it out. */
     readonly unheard?: true;
     /** The MIDI cards' entries it goes out on (those switched on): MIDI out sends it there and nowhere else. */
     readonly midi?: Output['midi'];
@@ -132,12 +132,18 @@ export declare function picksNow(result: CompileResult, statics: Shifts, name: s
 export declare const chainMuted: (result: CompileResult, table: string, muted: ReadonlySet<string>) => boolean;
 /** An output's level per channel, leaving out mixes (or sound cards) that are switched off. */
 export declare function liveGains(o: Output, muted: ReadonlySet<string>): [number, number];
+/**
+ * An output's level as heard (decision 064): on a sound card, its gains there (`liveGains`); on MIDI cards alone, the
+ * loudest of its entries' gains there, in the middle (a MIDI card is heard as well as sent). A send is heard only in what
+ * it feeds.
+ */
+export declare function heardGains(o: Output, muted: ReadonlySet<string>): [number, number];
 /** What a read head's return or a resonator ringing alone in a mix reaches the sound card at, with what is switched off. */
 export declare function returnGains(x: {
     readonly parts: Output['parts'];
     readonly through: Output['through'];
 }, muted: ReadonlySet<string>): [number, number];
-/** Is it heard: on, and reaching a sound card through what is on (a send: into what it feeds)? */
+/** Is it heard: on, and reaching a card (a sound card, or a MIDI card: decision 064) through what is on (a send: into what it feeds)? */
 export declare function outputSounds(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean;
 /** Does it play at all: heard (`outputSounds`), or sent on a MIDI card that is on (`outputSent`)? What the plan plays. */
 export declare function outputPlays(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean;

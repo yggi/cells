@@ -9,6 +9,7 @@ import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
 import type { Typed } from './sorts';
+import type { Sort } from '../algebra';
 
 class Abort extends Error {}
 
@@ -49,7 +50,7 @@ function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato'>): Me
 /** A meter's steps a beat: what its bpm is read through (1 when it has no meter). */
 export const stepsPerBeat = (m: Meter | null): number => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
 
-export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, stacks }: Declared, typed: Typed): Cells {
+export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, stacks }: Declared, typed: Typed, sortOf: (name: string) => Sort): Cells {
   const { rateOf, error, warn, broken, unknownCell } = ctx;
   const cells = new Map<string, ResolvedCell>();
   const lengthOf = (name: string) => lengthIn(decls, name);
@@ -194,6 +195,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
           ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
           : null,
       sink: d.map?.kind === 'sample',
+      sort: sortOf(name),
       ...(d.map?.kind === 'midi' ? { chords: units.map((u) => (u.atom.kind === 'mix' ? typed(u.atom) : null)) } : {}),
       clock: null,
       rate: 0,

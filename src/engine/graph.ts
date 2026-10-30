@@ -6,7 +6,7 @@
  * Depth grows outward from the roots: a cell sits one ring beyond the table
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
-import { isMidiCard, keepsTime, type CompileResult, type ResolvedCell } from './program';
+import { isMidiCard, keepsTime, type CompileResult, type Output, type ResolvedCell } from './program';
 import type { Atom, Binding, Pick, ValueMap } from './ast';
 import { leaves } from './subseq';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
@@ -215,8 +215,12 @@ export interface WrittenGraph {
   readonly through: ReadonlySet<string>;
 }
 
-/** The graph of what is written (WrittenGraph). */
-export function writtenGraph(result: CompileResult): WrittenGraph {
+/**
+ * The graph of what is written (WrittenGraph). `card`: with the built-in card (decision 028), an implicit cell never
+ * written, as a node and an edge from each sound it hears, as a written card's are (decision 064: what a frontend draws
+ * as its outs, `outs()`).
+ */
+export function writtenGraph(result: CompileResult, { card = false }: { readonly card?: boolean } = {}): WrittenGraph {
   const edges: GraphEdge[] = [];
   const depth = new Map<string, number>();
   // meters: cells whose bar keeps time, meter(…) or scan(…) alike (#123) — not a vibrato looping at a rate
@@ -259,7 +263,12 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
 
   // (the implicit cells stay hidden, but for the kit the grooves read: drawn as the piece's drum kit, the voices only
   // grooves play its pieces, each name a groove writes a wire into its piece; decision 021; docs/ui/graph.md)
-  const shown = (name: string) => !result.cells.get(name)?.implicit || name === VOICE_KIT;
+  // — unless a gate's own kit holds them and every one of them is played through such a gate: then that kit is the
+  // drums' kit, and the grooves' is not drawn again beside it, #379)
+  const kitOfGate = (o: Output) => o.through.some((m) => result.cells.get(m)?.gate?.receivers.some((r) => result.cells.get(r)?.kit));
+  const voiceKitPlayed = result.outputs.filter((o) => o.voice === VOICE_KIT);
+  const voiceKitShown = !voiceKitPlayed.length || !voiceKitPlayed.every(kitOfGate);
+  const shown = (name: string) => !result.cells.get(name)?.implicit || (name === VOICE_KIT && voiceKitShown) || (card && name === result.builtinCard);
   const nodes: GraphNode[] = [];
   const seen = new Set<string>();
   // (the tables of sections whose bus is drawn already)
@@ -592,7 +601,8 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
     const notes = result.cells.has(g.notes) ? g.notes : null;
     for (const r of receivers) {
       const v = cellId(r.name);
-      const pairs = notes ? soundsOf(result, r.via).map((x) => edgeId(cellId(notes), cellId(x))) : [];
+      // (a stack's lines each go into the voices themselves, as the routing takes them)
+      const pairs = notes ? [notes, ...members].flatMap((n) => soundsOf(result, r.via).map((x) => edgeId(cellId(n), cellId(x)))) : [];
       link({
         id: edgeId(into, v),
         source: into,
@@ -601,7 +611,7 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
         transforms: AS_IS,
         sound: r.name,
         ...(notes ? { notes } : {}),
-        routes: pairs.length ? [pairs, [edgeId(cellId(r.via), into)]] : [[edgeId(cellId(r.via), into)]],
+        routes: pairs.length ? [pairs, [edgeId(cellId(r.via), into), ...intoGate]] : [[edgeId(cellId(r.via), into), ...intoGate]],
         ...wire('voice', 'cv', into, v, notes ? chord(notes) : 1),
       });
     }
@@ -632,7 +642,8 @@ export function writtenGraph(result: CompileResult): WrittenGraph {
           count: 1,
           transforms: gain,
           sound: r.name,
-          routes: [[edgeId(cellId(r.via), voice)], [flow]],
+          // (a stack's lines go into the gate each on its own, as the routing takes them)
+          routes: [[edgeId(cellId(r.via), voice), ...(gate.gate!.lines ?? []).map((l) => edgeId(cellId(l.line), voice))], [flow]],
           ...wire(port, band, v, into, width),
         });
       }
@@ -754,7 +765,10 @@ const isLevel = (c: ResolvedCell, inSum: boolean) => c.map?.kind === 'amp' || c.
 function gateVoices(result: CompileResult, c: ResolvedCell): { name: string; via: string }[] {
   const vias = new Set((c.mix ?? []).map((b) => b.voice.name));
   const kit = `${c.name}:kit`;
-  return (c.gate?.receivers ?? []).filter((r) => result.cells.has(r)).map((name) => ({ name, via: vias.has(name) ? name : vias.has(kit) ? kit : name }));
+  // (a kit whose lines name their drums plays them through the grooves' kit, `kit:voices`, which it holds: #379)
+  const via = (name: string) =>
+    vias.has(name) ? name : vias.has(kit) ? kit : result.cells.get(name)?.kit && [...vias].some((v) => soundsOf(result, v).includes(VOICE_KIT)) ? VOICE_KIT : name;
+  return (c.gate?.receivers ?? []).filter((r) => result.cells.has(r)).map((name) => ({ name, via: via(name) }));
 }
 
 function soundsOf(result: CompileResult, name: string, guard = 0): string[] {

@@ -363,7 +363,7 @@ function pitchShape(track: ParamTrack, time: number, dur: number): Auto {
   return a;
 }
 
-/** The voices heard on a sound card: an output's voice, or a kit's members (decision 019: a MIDI card alone is sent, not heard). */
+/** The voices heard on a card, sound or MIDI (decision 064): an output's voice, or a kit's members. */
 function heardVoices(result: CompileResult, muted: ReadonlySet<string>): Set<string> {
   const off = (name: string) => muted.has(cellId(name));
   return new Set(

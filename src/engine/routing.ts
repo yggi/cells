@@ -284,10 +284,33 @@ function route(result: CompileResult, muted: ReadonlySet<string>, outs: readonly
   for (const n of heard) if (keeps(result, n)) sound.clock(n);
   // a read head's at= clock, as a tape's length=: a tap of the clock (the head sounds, not a tape of notes: notesOf has no say)
   for (const n of heard) sound.timed(n);
+  // a table that names what sounds is on while it does (decision 064): a gate's kit, its drums lit, and a role, its gates
+  namesOf(result, sound);
   // an oscilloscope watches: on when what it watches is
   for (const c of result.cells.values())
     if (typeof c.params.scope === 'string' && !sound.off(c.name)) for (const k of c.children.keys()) if (sound.nodes.has(cellId(k))) sound.edge(c.name, k);
   return sound;
+}
+
+/**
+ * The tables that name sounds, lit with what they name (decision 064, #379): a gate's receiver that is a kit, while a
+ * drum of it sounds (its wires to those drums too); a role cell (decision 061), while a gate it names sounds.
+ */
+function namesOf(result: CompileResult, sound: RouteAcc): void {
+  const on = (name: string) => sound.nodes.has(cellId(name));
+  for (const c of result.cells.values()) {
+    if (sound.off(c.name)) continue;
+    if (c.gate && on(c.name))
+      for (const r of c.gate.receivers) {
+        const kit = result.cells.get(r);
+        if (!kit?.kit || on(r) || sound.off(r)) continue;
+        const struck = kit.units.flatMap((u) => (u.atom.kind === 'ref' && on(u.atom.name) ? [u.atom.name] : []));
+        if (!struck.length) continue;
+        sound.node(r);
+        for (const m of struck) sound.edge(r, m);
+      }
+    if (c.map?.kind === 'role') for (const u of c.units) if (u.atom.kind === 'ref' && on(u.atom.name)) sound.edge(c.name, u.atom.name);
+  }
 }
 
 /** Does it play at all (anything in its braid, through tables that are on)? */

@@ -246,7 +246,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     const d = decls.get(sentOnly.voice)!;
     const sound = Object.keys(d.params).filter((k) => VOICE_PARAMS.has(k));
     warn(
-      `&${sentOnly.voice} is only on a MIDI card: its sound (${sound.map((k) => `${k}=`).join(' ')}) isn't sent — MIDI carries its notes, velocity and bends; the device makes the sound`,
+      `&${sentOnly.voice} is only on a MIDI card: its sound (${sound.map((k) => `${k}=`).join(' ')}) is heard here but isn't sent — MIDI carries its notes, velocity and bends; the device makes its own`,
       d.paramSpans[sound[0]] ?? d.span,
     );
   }
