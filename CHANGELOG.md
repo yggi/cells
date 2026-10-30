@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.12.2.
+### Fixed
+
+- **`moving` plays under Cell studio's loudness ceiling again** (#377): its `postgain=` is 5.55, where #374 set 9.11. `pieceAudio` heard it at −24.00 dB, its peak at −3.96, but Cell studio heard it 4.3 dB louder, at −19.7 dB with a peak of +0.3 and 14 samples clipped. Its `lpq=10` cutoff is swept on every note, and there R1's resonant filter and Cell studio's part ways (#377's second half). Measured in Cell studio, as #374 did for the pieces the renderer doesn't sound whole: about −24 dB, its peak about −4. **How loud `moving` sounds changes in both frontends**; what it plays doesn't.
 
 ## v0.12.2 — 2026-10-30
 
