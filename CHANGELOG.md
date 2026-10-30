@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.12.2.
+### Fixed
+
+- **A vibrato no longer sets a piece's length** (#376; yggi/jambot#528). `pieceTime` took every period into the piece's cycle, a modulation of a sound on a clock of its own among them, so a vibrato at 5.5 Hz made Jambot's 8-bar Electro swing section 480 s long (its bars 15.48 s) and *Electro swing, in pieces* 1,920 s (its 32 bars 61.94 s, shown by Cell studio as 32 minutes). Now a modulation of a sound (a pitch term on a line, a voice's moving parameter) counts where its clock is one a line plays on, or a tap of that meter, or a belt it drives: a filter swept over two bars still makes the piece two bars. One on a clock of its own, set in seconds or hertz, doesn't: a vibrato, an arpeggio at 20 Hz, a tide of 19 s. **What a frontend sees at its next pin:** fourteen examples' cycles shorten, and with them the length `mainLength` gives (Cell studio's transport) where it was the cycle: korobeiniki 200 → 66.67 s, bossa 15 → 3.75 s, pachelbel 960 → 87.27 s, idm 30 → 6 s, alpha 80 → 11.43 s, cellscape 1,600 → 320 s. Two lengthen, their notes' own cycle now within the half hour that `mainLength` takes, where the longest layer stood in for it: focus 61.94 → 185.81 s, ghosts 50.53 → 353.68 s. Six keep their length while their cycle shortens (ricercar, cellscape2, baustelle, onemore, electroswing, testtones). Nothing a piece plays changes, and no event snapshot moves.
 
 ## v0.12.2 — 2026-10-30
 
