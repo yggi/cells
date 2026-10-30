@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource as compileAlone } from './compile';
 import { anchoredAt, clockText, durationText, pieceTime } from './duration';
 import { PRESETS } from './presets';
+import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
@@ -14,10 +15,33 @@ describe('how long a piece is', () => {
     expect(time('bwv847').ends).toBeGreaterThan(180);
   });
   it('a loop: when every layer is back together', () => {
-    expect(time('korobeiniki').cycle).toBeCloseTo(200, 3); // five sections of 13⅓ s, and the 40 s of its parts
+    expect(time('korobeiniki').cycle).toBeCloseTo(200 / 3, 3); // five sections of 13⅓ s (its square's 20 Hz arpeggio is the sound's, #376)
     expect(time('royal').cycle).toBeCloseTo(1200, 1); // 12 keys × 7 modes of a 14 s theme
     expect(time('metronome').cycle).toBeCloseTo(2.4, 6); // a bar at 100
   });
+  it('a modulation of the sound on a clock of its own sets no length: a vibrato, a tide (#376)', () => {
+    const bar = ['&bar meter("4/4") step=124bpm', '&line step=4n 0 2 4 7'];
+    const lengthOf = (...lines: string[]) => pieceTime(compileSource([...bar, ...lines].join('\n')));
+    // (a bar at 124 is 240/124 s; a vibrato at 5.5 Hz would make it 480 s, where they next line up)
+    expect(lengthOf('&v s=sine loop=C4', '&out map=sample [&line * &v]').cycle).toBeCloseTo(240 / 124, 9);
+    expect(lengthOf('&v s=sine loop=C4 pitch=&(map=lin loop=5.5 0 .12 0 -.12 0)', '&out map=sample [&line * &v]').cycle).toBeCloseTo(240 / 124, 9);
+    expect(lengthOf('&tide map=lin loop=.0526 .1 1 .3 .1', '&v s=saw loop=C4 lpf=300..3000 * &tide', '&out map=sample [&line * &v]').cycle).toBeCloseTo(240 / 124, 9);
+    // (one that steps on the piece's meter is the form's: a sweep over two bars makes it two bars)
+    expect(lengthOf('&sweep step=1m 0 1', '&v s=saw loop=C4 lpf=300..3000 * &sweep', '&out map=sample [&line * &v]').cycle).toBeCloseTo(480 / 124, 9);
+    // (and is shown firing: the same sweep on a tap, two bars of eighths, as a pitch term on the line)
+    expect(lengthOf('&shape step=8n 0!8 1!8', '&v s=sine loop=C4', '&out map=sample [&line * &shape * &v]').cycle).toBeCloseTo(480 / 124, 9);
+  });
+
+  it('the example Electro swing is its 32 bars, its vibratos aside, and Jambot’s section on cells’ clarinet its 8 (#376)', () => {
+    expect(time('electroswing').cycle).toBeCloseTo((32 * 240) / 124, 6);
+    // (as Jambot's section writes it: the performer used, the instrument found at the style's point written in the piece)
+    const section = ['&bar meter("4/4") step=124bpm', '&leadline step=1m 0 2 4 7 0 2 4 7', '&leadLevel map=amp .8', 'use * from "lead performer"'];
+    const line = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'clarinet')!.text;
+    const clarinet = compileSource([...section, line, '&out map=sample &leadOut'].join('\n'));
+    expect(clarinet.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(pieceTime(clarinet).cycle).toBeCloseTo((8 * 240) / 124, 6);
+  });
+
   it('chance: the notes differ every time round, whatever the cycle', () => {
     expect(time('cellscape2').chance).toBe(true);
     expect(time('cellscape2').cycle).toBeGreaterThan(86400);
