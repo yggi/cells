@@ -41,6 +41,13 @@ export function pieceTime(result, seen) {
     };
     const periods = [];
     let chance = false;
+    const timeOf = (clock) => {
+        const info = result.clocks.get(clock);
+        const under = info?.tap?.meter ?? info?.belt?.driver;
+        return under && under !== clock ? timeOf(under) : clock;
+    };
+    const played = new Set(p.tracks.map((t) => timeOf(t.clock)));
+    const onThePiece = (clock) => played.has(timeOf(clock));
     for (const t of p.tracks) {
         const lap = secondsOf(t.clock, t.period / t.rate);
         const laps = t.events.reduce((m, e) => (e.laps ? Number((BigInt(m) * BigInt(e.laps.of)) / gcd(BigInt(m), BigInt(e.laps.of))) : m), 1);
@@ -48,7 +55,7 @@ export function pieceTime(result, seen) {
             periods.push(lap * laps);
         if (t.events.some((e) => e.chance !== undefined || e.options || e.chosen))
             chance = true;
-        for (const m of [...t.mods, ...t.levels, ...t.selects.map((x) => x.series)]) {
+        for (const m of [...t.mods.filter((m) => m.clock && onThePiece(m.clock)), ...t.levels, ...t.selects.map((x) => x.series)]) {
             const s = m.clock ? secondsOf(m.clock, m.period / m.rate) : null;
             if (s)
                 periods.push(s);
@@ -57,7 +64,7 @@ export function pieceTime(result, seen) {
     for (const params of p.voiceParams.values())
         for (const prm of Object.values(params))
             for (const m of prm.series) {
-                const s = m.clock ? secondsOf(m.clock, m.period / m.rate) : null;
+                const s = m.clock && onThePiece(m.clock) ? secondsOf(m.clock, m.period / m.rate) : null;
                 if (s)
                     periods.push(s);
             }
