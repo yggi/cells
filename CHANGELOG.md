@@ -12,6 +12,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 - **Twenty-six more motifs, thirty-six in all** (#369): a second near each of Jambot's ten presets' points, 0.1 higher in energy (`refrain`, `pulse`, `soul`, `drift`, `dusty`, `slap`, `saudade`, `blue`, `lindy`, `toll`); one at each point of a meter that had none, a bar of that meter (`waltz` and `musicBox` in 3/4, `rocking` and `sway` in 6/8, `fivefold` in 5/4, `limp` in 7/8, `dancer` in 10/8, `shuffle` in 12/8, `march` in 2/4, `fanfare` alla breve); and six general-purpose near the centre of style space (`question`, `reply`, `arpeggio`, `run`, `neighbour`, `leap`). A query for a motif at a preset's point still finds its first motif first, alone at distance 0, and its second 0.05 away (cells breaks a tie by id, so a second at the same point could have come first). Nothing a piece plays changes. A frontend that queries the facet `motif` finds more: Jambot's lead (yggi/jambot#524) reaches the odd meters' motifs where it had none.
 
+### Changed
+
+- **Shorten's phrases and Fold's hints are one finder** (#158, the owner: "moving shorten to a shared architecture, more capabilities for imports and hearing"). Shorten's phrases rule no longer scans every stretch of a cell's tokens: it reads the repeats from `writtenHints`, Fold's hints over the cells as written, and weighs every window of each, written at each of its places, as before. The hints gain what Shorten needed and an import can use: a repeat is found at every place its shape stands (not only where Re-Pair's greedy pairing put it), grown at both ends while every place agrees, and, with `hints(lines, { retrograde: true })`, found backwards too (a `reversed` place). **What a frontend sees at its next pin:** Shorten may offer other phrases than before, often saving more (BWV 847's text: 196 characters where 170); a transposed phrase is still only offered where every step is a number or a rest. `hints` has an option and a transform kind more. Nothing a piece plays changes.
+
 ## v0.12.3 — 2026-10-30
 
 ### Fixed
