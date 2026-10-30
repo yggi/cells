@@ -134,6 +134,12 @@ describe('shorten: turns, alike cells, and all the way', () => {
     expect(s.apply(src)).toContain('[>>2]');
     expect(sounds(s.apply(src))).toEqual(sounds(src));
   });
+  it('a phrase written once and turned once: &m[>>2] (#375 review)', () => {
+    const src = '&t step=4 0 2 4 5 7 9 11 14 16 17 19 21 3 4 5 7 9 11 14 16 17 19 21 12 14' + tail;
+    const s = shorten(src).find((x) => x.kind === 'phrase' && x.title.includes('turned'))!;
+    expect(s).toBeTruthy();
+    expect(sounds(s.apply(src))).toEqual(sounds(src));
+  });
   it('two cells written exactly alike: one, used by both', () => {
     const src = '&a 0 4 7 11 14 11 7 4\n&b 0 4 7 11 14 11 7 4\n&t step=4 &a 2 &b 5\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
     const s = shorten(src).find((x) => x.kind === 'same')!;

@@ -1,54 +1,96 @@
 import { period } from "../helix.js";
 import { declLine, freshName, setBraid } from "../edit.js";
 import { sameNotes } from "../sameness.js";
+import { writtenHints } from "../fold/hints.js";
 import { saves } from "./harness.js";
 const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/;
 const MIN_PHRASE = 4;
+const MAX_PHRASE = 16;
 const TOLL = 12;
 const use = (name, ref) => `&${name}${ref}`;
+const MAX_TURN = 12;
+function turnsOf(tokens, lap) {
+    const L = tokens.length;
+    if (L > MAX_TURN)
+        return [];
+    const climb = (t, by) => {
+        const m = NOTE.exec(t);
+        return m ? `${+m[1] + by}${m[2]}` : t.startsWith('~') ? t : null;
+    };
+    const key = tokens.join(' ');
+    const out = [];
+    for (let k = 1; k < L; k++)
+        for (const dir of ['>>', '<<']) {
+            const turned = dir === '>>' ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))] : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
+            if (turned.some((t) => t === null) || turned.join(' ') === key)
+                continue;
+            out.push({ key: turned.join(' '), ref: `[${dir}${k === 1 ? '' : k}]` });
+        }
+    return out;
+}
 const isDegree = (ref) => ref.startsWith('^') && !ref.startsWith('^$');
 export function phrases(source, cells, result, options = {}) {
     const copied = new Set([...source.matchAll(/\bbase=&(\w+)/g)].map((m) => m[1]));
     cells = cells.filter((c) => !copied.has(c.name) && !new RegExp(`^&${c.name}\\b[^\\n]*\\bbase=&`, 'm').test(source));
     const found = [];
-    const maxLen = 16;
-    const where = new Map();
-    for (const c of cells)
-        for (let L = MIN_PHRASE; L <= Math.min(maxLen, c.tokens.length); L++)
-            for (let i = 0; i + L <= c.tokens.length; i++) {
-                const key = c.tokens.slice(i, i + L).join(' ');
-                const list = where.get(key) ?? [];
-                list.push({ cell: c.name, at: i });
-                where.set(key, list);
-            }
     const grid = new Map(cells.map((c) => [c.name, c.grid]));
     const laps = new Map(cells.map((c) => [c.name, period(result, c.name)]));
     const lapValues = [...new Set(laps.values())];
     const tokensOf = new Map(cells.map((c) => [c.name, c.tokens]));
-    const shapeOf = (ts) => {
-        const m = ts.map((t) => NOTE.exec(t));
-        if (m.some((x) => !x))
-            return null;
-        const v0 = +m[0][1];
-        return { key: m.map((x) => `${+x[1] - v0}${x[2]}`).join(' '), first: v0 };
-    };
-    const byShape = new Map();
-    for (const c of cells) {
-        for (let L = MIN_PHRASE; L <= Math.min(maxLen, c.tokens.length); L++)
-            for (let i = 0; i + L <= c.tokens.length; i++) {
-                const sh = shapeOf(c.tokens.slice(i, i + L));
-                if (!sh)
+    const windows = new Map();
+    for (const h of writtenHints(cells)) {
+        const first = h.spans[0];
+        const whole = tokensOf.get(first.line).slice(first.from, first.to);
+        for (let L = MIN_PHRASE; L <= Math.min(MAX_PHRASE, whole.length); L++)
+            for (let k = 0; k + L <= whole.length; k++) {
+                const tokens = whole.slice(k, k + L);
+                if (tokens.every((t) => t === tokens[0]))
                     continue;
-                const list = byShape.get(sh.key) ?? [];
-                list.push({ cell: c.name, at: i, first: sh.first });
-                byShape.set(sh.key, list);
+                const moves = tokens.every((t) => NOTE.test(t) || /^~(@\d+)?$/.test(t));
+                const anchors = h.spans.flatMap((sp, i) => {
+                    const t = h.transforms[i];
+                    return t.kind === 'reversed' || (t.kind === 'transposed' && !moves) ? [] : [{ cell: sp.line, at: sp.from + k, by: t.kind === 'same' ? 0 : t.by }];
+                });
+                for (const a of anchors) {
+                    const text = tokensOf.get(a.cell).slice(a.at, a.at + L);
+                    const key = text.join(' ');
+                    const w = windows.get(key) ?? { tokens: text, places: [] };
+                    h.spans.forEach((sp, i) => {
+                        const t = h.transforms[i];
+                        const by = (t.kind === 'same' ? 0 : t.by) - a.by;
+                        if (t.kind === 'reversed') {
+                            if (by === 0)
+                                w.places.push({ cell: sp.line, at: sp.to - k - L, ref: '[::-1]' });
+                        }
+                        else if (by === 0)
+                            w.places.push({ cell: sp.line, at: sp.from + k, ref: '' });
+                        else if (moves)
+                            w.places.push({ cell: sp.line, at: sp.from + k, ref: grid.get(sp.line) ? `^$${by}` : `^${by}` });
+                    });
+                    windows.set(key, w);
+                }
             }
     }
-    for (const [key, list] of where) {
-        const tokens = key.split(' ');
+    const at = new Map();
+    for (const c of cells)
+        for (let L = MIN_PHRASE; L <= Math.min(MAX_TURN, c.tokens.length); L++)
+            for (let i = 0; i + L <= c.tokens.length; i++) {
+                const key = c.tokens.slice(i, i + L).join(' ');
+                at.set(key, [...(at.get(key) ?? []), { cell: c.name, at: i, ref: '' }]);
+            }
+    for (const c of cells)
+        for (let L = MIN_PHRASE; L <= Math.min(MAX_TURN, c.tokens.length); L++)
+            for (let i = 0; i + L <= c.tokens.length; i++) {
+                const tokens = c.tokens.slice(i, i + L);
+                const key = tokens.join(' ');
+                if (windows.has(key) || tokens.every((t) => t === tokens[0]))
+                    continue;
+                const lap = laps.get(c.name);
+                if (turnsOf(tokens, lap).some((t) => (at.get(t.key) ?? []).some((o) => laps.get(o.cell) === lap)))
+                    windows.set(key, { tokens, places: [{ cell: c.name, at: i, ref: '' }] });
+            }
+    for (const [key, { tokens, places }] of windows) {
         const L = tokens.length;
-        if (tokens.every((t) => t === tokens[0]))
-            continue;
         const taken = new Map();
         const occs = [];
         const take = (cell, at, ref) => {
@@ -61,38 +103,13 @@ export function phrases(source, cells, result, options = {}) {
             taken.set(cell, used);
             occs.push({ cell, at, ref });
         };
-        for (const o of list)
-            take(o.cell, o.at, '');
-        const back = where.get([...tokens].reverse().join(' '));
-        if (back && tokens.join(' ') !== [...tokens].reverse().join(' '))
-            for (const o of back)
-                take(o.cell, o.at, '[::-1]');
-        if (L >= MIN_PHRASE && L <= 12)
-            for (const lap of lapValues) {
-                const climb = (t, by) => {
-                    const m = NOTE.exec(t);
-                    return m ? `${+m[1] + by}${m[2]}` : t.startsWith('~') ? t : null;
-                };
-                for (let k = 1; k < L; k++)
-                    for (const dir of ['>>', '<<']) {
-                        const turned = dir === '>>' ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))] : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
-                        if (turned.some((t) => t === null))
-                            continue;
-                        const tkey = turned.join(' ');
-                        if (tkey === key)
-                            continue;
-                        for (const at of where.get(tkey) ?? [])
-                            if (laps.get(at.cell) === lap)
-                                take(at.cell, at.at, `[${dir}${k === 1 ? '' : k}]`);
-                    }
-            }
-        const sh = shapeOf(tokens);
-        if (sh && L >= MIN_PHRASE)
-            for (const o of byShape.get(sh.key) ?? []) {
-                const d = o.first - sh.first;
-                if (d !== 0)
-                    take(o.cell, o.at, grid.get(o.cell) ? `^$${d}` : `^${d}`);
-            }
+        for (const o of [...places].sort((a, b) => +(a.ref !== '') - +(b.ref !== '') || a.cell.localeCompare(b.cell) || a.at - b.at))
+            take(o.cell, o.at, o.ref);
+        for (const lap of lapValues)
+            for (const turn of turnsOf(tokens, lap))
+                for (const o of at.get(turn.key) ?? [])
+                    if (laps.get(o.cell) === lap)
+                        take(o.cell, o.at, turn.ref);
         if (occs.length < 2)
             continue;
         const saving = occs.reduce((a, o) => a + key.length - use('m1', o.ref).length, 0) - (key.length + 6);
