@@ -19,7 +19,7 @@ use &vibrato
 &violin s=saw loop=D4 lpf=2600 env=&(map=adsr .08 .2 .8 .4) pitch=&vibrato
 
 # the canon: each violin is the line a variation later ([<<]); each enters a ground later
-&out postgain=2.51 map=sample [&ground * &cello * .6,
+&out postgain=2.12 map=sample [&ground * &cello * .6,
                                   &line[<<] * &(map=amp step=cycle(&ground) 0 1!11) * &violin * .35,
                                   &line[<<2] * &(map=amp step=cycle(&ground) 0 0 1!10) * &violin * .25] [
                                   &ground * &cello * .6,

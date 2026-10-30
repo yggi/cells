@@ -48,7 +48,7 @@ use &thump, &click, &snap, &tap, &strike from envelopes
 &song over=&sections step=1m/8 laps=1 label="intro · groove · build · drop · drop · break · build · drop · drop · bass · break · build · drop · drop · out" [
       4] [0,4] [0,4,5,6] [0,1,2,4]!2 [2,3] [3,5,6] [0,1,2,4]!2 [0,4] 3 [3,5,6] [0,1,2,4]!2 4
 
-&out postgain=1.41 map=sample [&beat, &bassPart, &stabs * &stab * .1, &hookPart,
+&out postgain=2.05 map=sample [&beat, &bassPart, &stabs * &stab * .1, &hookPart,
                          &lift * &riser * .12, &padPart, &roll]
 &eq scope=spectrum bins=20 label="the whole track, in 20 bands" &beat &bassPart &hookPart &padPart
 ```

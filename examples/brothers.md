@@ -41,7 +41,7 @@ use &thump, &snap, &click, &strike from envelopes
 &sections step=4n &acidBar &riffBar &breakBar &sirenBar &buildBar &subBar
 &song over=&sections step=1m/8 laps=1 label="break · bass · acid · build · riff · all · siren · build · all" [2] [2,5] [0,2,5] 4 [0,1,2,5] [0,1,2,3,5] [0,3] 4 [0,1,2,3,5]
 
-&out postgain=.708 map=sample [&break * .7,
+&out postgain=.743 map=sample [&break * .7,
                           &acid * &accent * &tb * .3,
                           &riff * &stab * .1,
                           (&siren + &wail) * &siren1 * .08,

@@ -25,5 +25,5 @@ use &click, &thump from envelopes
 &hh pan=.6 s=white hpf=7000 env=&click
 &bd s=sine loop=D1 pitch=0..16 * &(map=adsr 0 .05 0 0) env=&thump
 
-&out postgain=2.24 map=sample [&loop * &keys * .16, &chords * &pad * .05, &hats * &hh * .1, &kick * &bd * .5]
+&out postgain=9.03 map=sample [&loop * &keys * .16, &chords * &pad * .05, &hats * &hh * .1, &kick * &bd * .5]
 ```

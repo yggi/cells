@@ -30,5 +30,5 @@ use &click from envelopes
 &marimba s=tri loop=C4 env=&(map=adsr .005 .25 0 .15)
 &vibes s=sine loop=C5 env=&(map=adsr .005 .5 .1 .3)
 &bell s=sine loop=C3 env=&(map=adsr .005 .8 0 .4)
-&out map=sample postgain=2 [&alice * &marimba * .35, &bob * &vibes * .3, &carol * &bell * .35]
+&out map=sample postgain=3.8 [&alice * &marimba * .35, &bob * &vibes * .3, &carol * &bell * .35]
 ```

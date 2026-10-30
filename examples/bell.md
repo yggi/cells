@@ -23,5 +23,5 @@ use &tap, &click from envelopes
 &dundun gain=.7 oneshot s=sine loop=C2 pitch=0..12 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .25 0 .1)
 &shekere gain=.15 s=white hpf=6000 env=&click
 
-&mix postgain=1.26 map=sample [&strokes, &song * &voice * .45, &drums]
+&mix postgain=3.9 map=sample [&strokes, &song * &voice * .45, &drums]
 ```

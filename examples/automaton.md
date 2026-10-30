@@ -27,5 +27,5 @@ use &thump, &tap, &click from envelopes
 &sd s=white hpf=1200 env=&tap
 &blk pan=.64 s=square loop=C6 hpf=900 lpf=3000 env=&click
 
-&out postgain=.944 map=sample [&bells * &bell * .14, &drums * .6, &wood * &blk * .07]
+&out postgain=3.14 map=sample [&bells * &bell * .14, &drums * .6, &wood * &blk * .07]
 ```

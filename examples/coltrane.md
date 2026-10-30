@@ -23,5 +23,5 @@ use &pluck, &snap from envelopes
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .3 .2)
 &cym gain=.22 s=white hpf=8000 env=&snap
 
-&mix postgain=1.5 map=sample [&line * &sax * .4, &walk * &bass * .8, &comp * &keys * .3, &ride]
+&mix postgain=2.16 map=sample [&line * &sax * .4, &walk * &bass * .8, &comp * &keys * .3, &ride]
 ```

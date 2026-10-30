@@ -31,5 +31,5 @@ use &strike, &snap, &click from envelopes
 &leadOut play=&tune level=&accent*.4 [&lead, &bell]
 &drumOut play=&beat level=.5 &kit
 &drums map=role &drumOut
-&out map=sample [&leadOut, &drumOut, &roots * &bass * .5]
+&out map=sample postgain=2.54 [&leadOut, &drumOut, &roots * &bass * .5]
 ```

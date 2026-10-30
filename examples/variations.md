@@ -22,5 +22,5 @@ use &swell from envelopes
 &flute s=tri loop=C5 env=&swell
 &reed s=tri loop=C4 env=&swell
 &cello s=saw loop=C3 lpf=1200 env=&swell
-&out map=sample postgain=3.98 [&soprano * &flute * .3, &alto * &reed * .3, &bass * &cello * .25]
+&out map=sample postgain=6.49 [&soprano * &flute * .3, &alto * &reed * .3, &bass * &cello * .25]
 ```

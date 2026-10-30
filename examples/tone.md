@@ -10,5 +10,5 @@ description: "The smallest piece that sounds: a note every second, played by a s
 
 &note step=1 0
 &voice s=sine loop=A4
-&out map=sample postgain=2 [&note * &voice]
+&out map=sample postgain=1.64 [&note * &voice]
 ```
