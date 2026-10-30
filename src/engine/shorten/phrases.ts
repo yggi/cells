@@ -3,17 +3,22 @@
  * where it was: exactly (&m), backwards (&m[::-1]), or — where the numbers are steps of
  * a grid — transposed (&m^$7), or where they are steps of a table, moved by degrees
  * (&m^2: the same shape two steps up the scale), or turned round its helix (&m[>>2]: begun two steps on,
- * the steps that wrap round climbing a lap).
+ * the steps that wrap round climbing a lap). What repeats, as written, moved or backwards, is the folder's to find
+ * (`writtenHints`, #158: one finder for Shorten and the import); the turns, which climb by a table's lap, are looked up
+ * here, and the rewrite and its saving are Shorten's.
  */
 import { period } from '../helix';
 import { declLine, freshName, setBraid } from '../edit';
 import { sameNotes } from '../sameness';
 import type { CompileOptions } from '../program';
+import { writtenHints } from '../fold/hints';
 import { saves, type Candidate, type Result, type ShortenRewrite } from './harness';
 
 const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/; // a plain step: a whole number, perhaps held (transposable)
-/** A phrase worth a name has at least four steps … */
+/** A phrase worth a name has at least four steps (the folder's hints find three or more) … */
 const MIN_PHRASE = 4;
+/** … and at most sixteen: a longer one is two. */
+const MAX_PHRASE = 16;
 /** … and saves at least this much beyond its own line: a new name is something to look up (a toll for reading). */
 const TOLL = 12;
 const use = (name: string, ref: string) => `&${name}${ref}`;
@@ -28,45 +33,59 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
   const copied = new Set([...source.matchAll(/\bbase=&(\w+)/g)].map((m) => m[1]));
   cells = cells.filter((c) => !copied.has(c.name) && !new RegExp(`^&${c.name}\\b[^\\n]*\\bbase=&`, 'm').test(source));
   const found: { key: string; tokens: string[]; occs: Occ[]; saving: number }[] = [];
-  const maxLen = 16;
-  // every stretch of 2–16 steps, keyed as written
-  const where = new Map<string, { cell: string; at: number }[]>();
-  for (const c of cells)
-    for (let L = MIN_PHRASE; L <= Math.min(maxLen, c.tokens.length); L++)
-      for (let i = 0; i + L <= c.tokens.length; i++) {
-        const key = c.tokens.slice(i, i + L).join(' ');
-        const list = where.get(key) ?? [];
-        list.push({ cell: c.name, at: i });
-        where.set(key, list);
-      }
   const grid = new Map(cells.map((c) => [c.name, c.grid]));
   // each cell's lap: how far a step that wraps round climbs (its table's period)
   const laps = new Map(cells.map((c) => [c.name, period(result, c.name)]));
   const lapValues = [...new Set(laps.values())];
   const tokensOf = new Map(cells.map((c) => [c.name, c.tokens]));
-  // the same shape, transposed: whole numbers (perhaps held), keyed by their steps from the first
-  const shapeOf = (ts: string[]) => {
-    const m = ts.map((t) => NOTE.exec(t));
-    if (m.some((x) => !x)) return null;
-    const v0 = +m[0]![1];
-    return { key: m.map((x) => `${+x![1] - v0}${x![2]}`).join(' '), first: v0 };
-  };
-  const byShape = new Map<string, { cell: string; at: number; first: number }[]>();
-  for (const c of cells) {
-    for (let L = MIN_PHRASE; L <= Math.min(maxLen, c.tokens.length); L++)
-      for (let i = 0; i + L <= c.tokens.length; i++) {
-        const sh = shapeOf(c.tokens.slice(i, i + L));
-        if (!sh) continue;
-        const list = byShape.get(sh.key) ?? [];
-        list.push({ cell: c.name, at: i, first: sh.first });
-        byShape.set(sh.key, list);
+  // every place a run of tokens is written, as it is
+  const placesOf = (ts: readonly string[]) =>
+    cells.flatMap((c) => {
+      const out: { cell: string; at: number }[] = [];
+      for (let i = 0; i + ts.length <= c.tokens.length; i++) if (ts.every((t, j) => c.tokens[i + j] === t)) out.push({ cell: c.name, at: i });
+      return out;
+    });
+  // what repeats, as written, moved or backwards: the folder's hints over the cells as written (#158), one finder for
+  // both tools. Every window of a repeat is one too, at its places shifted, so a phrase is any of them, whichever saves
+  // most (a figure that comes back may be begun on any of its notes)
+  const windows = new Map<string, { tokens: string[]; places: Occ[] }>();
+  for (const h of writtenHints(cells)) {
+    const first = h.spans[0]!;
+    const whole = tokensOf.get(first.line)!.slice(first.from, first.to);
+    for (let L = MIN_PHRASE; L <= Math.min(MAX_PHRASE, whole.length); L++)
+      for (let k = 0; k + L <= whole.length; k++) {
+        const tokens = whole.slice(k, k + L);
+        if (tokens.every((t) => t === tokens[0])) continue; // (that's a run)
+        // (a transposition moves every step it reads, so only a phrase of numbers, and rests, is moved: the finder
+        // matches a chord or a reference as written, and keeps it where it is)
+        const moves = tokens.every((t) => NOTE.test(t) || /^~(@\d+)?$/.test(t));
+        // (the cell may be written as any of its places is, the others moved from it: each is weighed, as its text
+        // and the references it makes are shorter or longer)
+        const anchors = h.spans.flatMap((sp, i) => {
+          const t = h.transforms[i]!;
+          return t.kind === 'reversed' || (t.kind === 'transposed' && !moves) ? [] : [{ cell: sp.line, at: sp.from + k, by: t.kind === 'same' ? 0 : t.by }];
+        });
+        for (const a of anchors) {
+          const text = tokensOf.get(a.cell)!.slice(a.at, a.at + L);
+          const key = text.join(' ');
+          const w = windows.get(key) ?? { tokens: text, places: [] };
+          // (moved by grid steps where the numbers are a grid's, wherever the cell is read; else by steps of its table:
+          // degrees; backwards as it is, a reversal moved too being no reference of one step)
+          h.spans.forEach((sp, i) => {
+            const t = h.transforms[i]!;
+            const by = (t.kind === 'same' ? 0 : t.by) - a.by;
+            if (t.kind === 'reversed') {
+              if (by === 0) w.places.push({ cell: sp.line, at: sp.to - k - L, ref: '[::-1]' });
+            } else if (by === 0) w.places.push({ cell: sp.line, at: sp.from + k, ref: '' });
+            else if (moves) w.places.push({ cell: sp.line, at: sp.from + k, ref: grid.get(sp.line) ? `^$${by}` : `^${by}` });
+          });
+          windows.set(key, w);
+        }
       }
   }
-  for (const [key, list] of where) {
-    const tokens = key.split(' ');
+  for (const [key, { tokens, places }] of windows) {
     const L = tokens.length;
-    if (tokens.every((t) => t === tokens[0])) continue; // (that's a run)
-    // its occurrences: as written, backwards, transposed — none overlapping in a cell
+    // its occurrences: as written first, then moved, backwards, turned — none overlapping in a cell
     const taken = new Map<string, Set<number>>();
     const occs: Occ[] = [];
     const take = (cell: string, at: number, ref: string) => {
@@ -76,12 +95,10 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
       taken.set(cell, used);
       occs.push({ cell, at, ref });
     };
-    for (const o of list) take(o.cell, o.at, '');
-    const back = where.get([...tokens].reverse().join(' '));
-    if (back && tokens.join(' ') !== [...tokens].reverse().join(' ')) for (const o of back) take(o.cell, o.at, '[::-1]');
+    for (const o of [...places].sort((a, b) => +(a.ref !== '') - +(b.ref !== '') || a.cell.localeCompare(b.cell) || a.at - b.at)) take(o.cell, o.at, o.ref);
     // turned round the helix: begun k steps on ([>>k]: the k that wrap round climb a lap) or back
-    // ([<<k]) — once per lap there is (12 on the chromatic grid, 7 in a scale …), looked up directly
-    if (L >= MIN_PHRASE && L <= 12)
+    // ([<<k]) — once per lap there is (12 on the chromatic grid, 7 in a scale …)
+    if (L <= 12)
       for (const lap of lapValues) {
         const climb = (t: string, by: number) => {
           const m = NOTE.exec(t);
@@ -92,17 +109,9 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
             const turned =
               dir === '>>' ? [...tokens.slice(k), ...tokens.slice(0, k).map((t) => climb(t, lap))] : [...tokens.slice(L - k).map((t) => climb(t, -lap)), ...tokens.slice(0, L - k)];
             if (turned.some((t) => t === null)) continue;
-            const tkey = turned.join(' ');
-            if (tkey === key) continue;
-            for (const at of where.get(tkey) ?? []) if (laps.get(at.cell) === lap) take(at.cell, at.at, `[${dir}${k === 1 ? '' : k}]`);
+            if (turned.join(' ') === key) continue;
+            for (const at of placesOf(turned as string[])) if (laps.get(at.cell) === lap) take(at.cell, at.at, `[${dir}${k === 1 ? '' : k}]`);
           }
-      }
-    const sh = shapeOf(tokens);
-    if (sh && L >= MIN_PHRASE)
-      for (const o of byShape.get(sh.key) ?? []) {
-        const d = o.first - sh.first;
-        // (grid steps where the numbers are a grid's, wherever the cell is read; else steps of its table: degrees)
-        if (d !== 0) take(o.cell, o.at, grid.get(o.cell) ? `^$${d}` : `^${d}`);
       }
     if (occs.length < 2) continue;
     // a rough saving, to rank (each is measured exactly once it's a suggestion)
