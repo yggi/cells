@@ -99,3 +99,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 060 · The key is named, `over=&key` (`over=key` the old way); a tonic is a cell, stepped or free · → decisions/060-the-key-is-named.md
 - 061 · The band: a role cell says what its gates play as; a selector over the performers says when · → decisions/061-the-band.md
 - 062 · Cells renders audio: events in, samples out, in blocks; superdough's meaning at the examples' level · → decisions/062-cells-renders-audio.md
+- 063 · The score and the band: the score ends in `use * from band`, each client's band its own; the style a note, read by name · → decisions/063-the-score-and-the-band.md
