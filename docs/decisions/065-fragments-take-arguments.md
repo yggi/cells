@@ -1,4 +1,4 @@
-# 064 · Fragments take arguments: `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`; a signature declares them, one main and the rest optional; `use` retires
+# 065 · Fragments take arguments: `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`; a signature declares them, one main and the rest optional; `use` retires
 
 **Date:** 2026-10-30 · **Status:** accepted (owner, 2026-10-30: "we drop use and keep the parentheses for named arguments", "keep &key", "only for declared parameters, with a distinction between required/no-default and optional/with default … there may be one required argument, the main argument. all named parameters are optional"; then, on the signature, a single reference and a step on an argument: "accepted as suggested") · Amends [047](047-fragments-are-files.md) (points 1–3: what a fragment reads is declared, not only derived), [054](054-instruments-and-use.md), [059](059-named-use.md) and [060](060-the-key-is-named.md) (§3, the interface names) · Issues: #387, #81, #290, #296, #354
 

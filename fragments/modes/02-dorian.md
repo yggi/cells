@@ -29,4 +29,4 @@ The tonic is left to the text that uses it, a hole: there is no default, since a
 
 At the point of each preset that plays it, weight 1, so a query for the mode at one of them finds dorian first, at distance 0.
 
-**Its signature** (decision 064): `&key from &tonic`. `&key from dorian D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from dorian`, it reads `&tonic` by name, as before.
+**Its signature** (decision 065): `&key from &tonic`. `&key from dorian D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from dorian`, it reads `&tonic` by name, as before.

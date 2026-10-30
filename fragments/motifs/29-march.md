@@ -22,4 +22,4 @@ Its head is named for it (`&march`), so `use &march` takes it; a form reads it a
 
 At 2/4's point (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&march from &key`. `&march from march &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &march from march`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&march from &key`. `&march from march &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &march from march`, it reads `&key` by name, as before.

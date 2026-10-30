@@ -63,7 +63,7 @@ export function parse(whole: string): ParseResult {
       }
       return;
     }
-    // a from line (decision 064): its cells are the expansion's (use.ts), a signature none of the text's own
+    // a from line (decision 065): its cells are the expansion's (use.ts), a signature none of the text's own
     const from = readFrom(text);
     if (from !== undefined) {
       const col = text.search(/\S/);

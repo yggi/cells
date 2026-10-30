@@ -22,4 +22,4 @@ Its head is named for it (`&waltz`), so `use &waltz` takes it; a form reads it a
 
 At 3/4's first point (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&waltz from &key`. `&waltz from waltz &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &waltz from waltz`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&waltz from &key`. `&waltz from waltz &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &waltz from waltz`, it reads `&key` by name, as before.

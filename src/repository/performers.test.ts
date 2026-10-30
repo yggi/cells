@@ -106,7 +106,7 @@ describe('the performers', () => {
     ]);
   });
 
-  it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 064)', () => {
+  it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 065)', () => {
     const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
     expect(holes).toEqual([['&drumlines'], ['&bassline'], ['&padline'], ['&stabline'], ['&leadline']]);
     expect(PERFORMER_FRAGMENTS.map((f) => signatureOf(f.text))).toEqual([

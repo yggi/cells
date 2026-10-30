@@ -40,4 +40,4 @@ From 0.15 to 0.33 it lays the same chords two bars each, twice over (`[0, 0, c, 
 
 At the points where `buildTheme` plays it: aeolian at Techno's point; dorian at Funk's point; ionian at Ambient's point with its harmony at 0.12. A mode's vamps are drawn alike (`next() · vamps.length`), so each weighs 1, and a query for the harmony at a mode's point finds all of that mode's vamps at distance 0.
 
-**Its signature** (decision 064): `&harm from &key`. `&harm from "vamp to the fourth" &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &harm from "vamp to the fourth"`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&harm from &key`. `&harm from "vamp to the fourth" &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &harm from "vamp to the fourth"`, it reads `&key` by name, as before.

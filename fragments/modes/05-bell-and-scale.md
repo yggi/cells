@@ -36,4 +36,4 @@ Seven strokes of a high agogô (`&highagogo`, General MIDI's 67, a hole the Gene
 As a rhythm its point is a timeline's: off the beat (sync 0.8), over one static chord (harm 0.1), struck (artic 0.9), steady and fairly dense (energy 0.6), where no preset is.
 As a mode it is where the major is played: the centroid of the three presets that play ionian, Ambient's, Bossa nova's and Swing jazz's (each axis their mean, to three decimals), where no preset is, so at each of them the plain `ionian` is found first, at distance 0.
 
-**Its signature** (decision 064): `&key, &bell, &agogo from &tonic`. `&key, &bell, &agogo from "bell and scale" D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key, &bell, &agogo from "bell and scale"`, it reads `&tonic` by name, as before.
+**Its signature** (decision 065): `&key, &bell, &agogo from &tonic`. `&key, &bell, &agogo from "bell and scale" D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key, &bell, &agogo from "bell and scale"`, it reads `&tonic` by name, as before.

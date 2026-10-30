@@ -22,4 +22,4 @@ Its head is named for it (`&blue`), so `use &blue` takes it; a form reads it as 
 
 Near Swing jazz's point, 0.1 higher in energy, so a query there finds `bebop` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&blue from &key`. `&blue from blue &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &blue from blue`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&blue from &key`. `&blue from blue &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &blue from blue`, it reads `&key` by name, as before.

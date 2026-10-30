@@ -1,4 +1,4 @@
-// `from` lines (decision 064, #387): a line says where its cells come from. A fragment with a signature is a template, and
+// `from` lines (decision 065, #387): a line says where its cells come from. A fragment with a signature is a template, and
 // a line takes a copy of it, its parameters bound to the arguments, its other names its own; one with none is a collection,
 // its cells taken by name.
 import { describe, expect, it } from 'vitest';

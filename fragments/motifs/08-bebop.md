@@ -22,4 +22,4 @@ Its head is named for it (`&bebop`), so `use &bebop` takes it; a form reads it a
 
 At Swing jazz's point (`presets.ts`), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&bebop from &key`. `&bebop from bebop &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &bebop from bebop`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&bebop from &key`. `&bebop from bebop &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &bebop from bebop`, it reads `&key` by name, as before.

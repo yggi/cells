@@ -22,4 +22,4 @@ Its head is named for it (`&limp`), so `use &limp` takes it; a form reads it as 
 
 At 7/8's point (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&limp from &key`. `&limp from limp &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &limp from limp`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&limp from &key`. `&limp from limp &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &limp from limp`, it reads `&key` by name, as before.

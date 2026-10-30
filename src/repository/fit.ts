@@ -82,7 +82,7 @@ export function declarations(text: string): Line[] {
     if (CONTINUES.test(code)) continue;
     const whole = carry.code.join(' ').trim().split(/\s+/).join(' ');
     const name = HEAD.exec(whole)?.[1];
-    // (a from line declares none of the text's own: a use's cells are the fragment's, a signature declares what it takes, decision 064)
+    // (a from line declares none of the text's own: a use's cells are the fragment's, a signature declares what it takes, decision 065)
     if (name && readFrom(whole) === undefined) out.push({ name, written: carry.written.join('\n'), code: whole });
     carry = null;
   }
@@ -98,7 +98,7 @@ const namesIn = (text: string) =>
       .map((m) => m[1] ?? ''),
   );
 
-/** A text's `use` lines and the `from` lines that take from a fragment (decision 064), their code collapsed, in order. */
+/** A text's `use` lines and the `from` lines that take from a fragment (decision 065), their code collapsed, in order. */
 const useLines = (text: string): string[] =>
   text
     .split('\n')

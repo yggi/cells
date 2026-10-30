@@ -22,4 +22,4 @@ Its head is named for it (`&neighbour`), so `use &neighbour` takes it; a form re
 
 At the centre, 0.2 lower in articulation (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&neighbour from &key`. `&neighbour from neighbour &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &neighbour from neighbour`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&neighbour from &key`. `&neighbour from neighbour &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &neighbour from neighbour`, it reads `&key` by name, as before.

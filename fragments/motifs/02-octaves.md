@@ -22,4 +22,4 @@ Its head is named for it (`&octaves`), so `use &octaves` takes it; a form reads 
 
 At Techno's point (`presets.ts`), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&octaves from &key`. `&octaves from octaves &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &octaves from octaves`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&octaves from &key`. `&octaves from octaves &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &octaves from octaves`, it reads `&key` by name, as before.

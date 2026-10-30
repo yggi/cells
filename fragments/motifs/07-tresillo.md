@@ -22,4 +22,4 @@ Its head is named for it (`&tresillo`), so `use &tresillo` takes it; a form read
 
 At Bossa nova's point (`presets.ts`), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&tresillo from &key`. `&tresillo from tresillo &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &tresillo from tresillo`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&tresillo from &key`. `&tresillo from tresillo &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &tresillo from tresillo`, it reads `&key` by name, as before.

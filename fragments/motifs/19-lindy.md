@@ -22,4 +22,4 @@ Its head is named for it (`&lindy`), so `use &lindy` takes it; a form reads it a
 
 Near Electro swing's point, 0.1 higher in energy, so a query there finds `gypsy` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&lindy from &key`. `&lindy from lindy &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &lindy from lindy`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&lindy from &key`. `&lindy from lindy &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &lindy from lindy`, it reads `&key` by name, as before.

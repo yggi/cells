@@ -22,4 +22,4 @@ Its head is named for it (`&reply`), so `use &reply` takes it; a form reads it a
 
 At the centre, 0.2 lower in energy (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&reply from &key`. `&reply from reply &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &reply from reply`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&reply from &key`. `&reply from reply &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &reply from reply`, it reads `&key` by name, as before.

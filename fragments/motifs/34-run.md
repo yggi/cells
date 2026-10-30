@@ -22,4 +22,4 @@ Its head is named for it (`&run`), so `use &run` takes it; a form reads it as it
 
 At the centre, 0.2 higher in harmony (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&run from &key`. `&run from run &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &run from run`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&run from &key`. `&run from run &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &run from run`, it reads `&key` by name, as before.

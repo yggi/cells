@@ -22,4 +22,4 @@ Its head is named for it (`&leap`), so `use &leap` takes it; a form reads it as 
 
 At the centre, 0.2 higher in articulation (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&leap from &key`. `&leap from leap &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &leap from leap`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&leap from &key`. `&leap from leap &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &leap from leap`, it reads `&key` by name, as before.

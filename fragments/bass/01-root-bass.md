@@ -47,4 +47,4 @@ It is also at the three presets where the root is what `bass.ts` plays most, as 
 
 What `bass.ts` adds that a fixed line doesn't: on three it plays the fifth one section in five and an octave up one in four, by a draw per section and step; it thins the line by the energy (each step sounds when a held draw falls under its weight times 0.55 + 0.6 × energy); the octave, the voice leading and the velocity are the performer's.
 
-**Its signature** (decision 064): `&bassline from &harm`. `&bassline from "root bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "root bass"`, it reads `&harm` by name, as before.
+**Its signature** (decision 065): `&bassline from &harm`. `&bassline from "root bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "root bass"`, it reads `&harm` by name, as before.

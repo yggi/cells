@@ -22,4 +22,4 @@ Its head is named for it (`&dancer`), so `use &dancer` takes it; a form reads it
 
 At 10/8's point (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&dancer from &key`. `&dancer from dancer &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &dancer from dancer`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&dancer from &key`. `&dancer from dancer &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &dancer from dancer`, it reads `&key` by name, as before.

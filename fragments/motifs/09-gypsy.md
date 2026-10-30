@@ -23,4 +23,4 @@ Its head is named for it (`&gypsy`), so `use &gypsy` takes it; a form reads it a
 
 At the point proposed for an Electro swing preset (sync 0.55, harm 0.75, artic 0.6, energy 0.75), as the example's other seeds are: Jambot's to adopt (decision 041).
 
-**Its signature** (decision 064): `&gypsy from &key`. `&gypsy from gypsy &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &gypsy from gypsy`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&gypsy from &key`. `&gypsy from gypsy &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &gypsy from gypsy`, it reads `&key` by name, as before.

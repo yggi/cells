@@ -22,4 +22,4 @@ Its head is named for it (`&question`), so `use &question` takes it; a form read
 
 At the centre of style space (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&question from &key`. `&question from question &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &question from question`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&question from &key`. `&question from question &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &question from question`, it reads `&key` by name, as before.

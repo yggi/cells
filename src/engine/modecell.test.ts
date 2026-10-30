@@ -4,7 +4,7 @@ import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { MODE_WORDS, scaleOfPhase } from '../theory/modes';
 
-// #363, decision 064: a diatonic mode is a value, darkest to brightest (locrian 0 … lydian 6), and a scale reads it from
+// #363, decision 065: a diatonic mode is a value, darkest to brightest (locrian 0 … lydian 6), and a scale reads it from
 // a cell (`scale(&mode, &tonic)`, `&mode major`), as it reads its tonic (#290).
 
 const lines = (...xs: string[]) => xs.join('\n');

@@ -1,4 +1,4 @@
-// The seed library's signatures (decision 064, rung 2: #387): each template declares what it takes, and a `from` line
+// The seed library's signatures (decision 065, rung 2: #387): each template declares what it takes, and a `from` line
 // takes a copy of it over a workbench that gives its main argument, with no diagnostic (a performer, with what it says
 // written out by hand: it plays on a card). A collection (a kit, an
 // instrument, a groove, the envelopes) has none.

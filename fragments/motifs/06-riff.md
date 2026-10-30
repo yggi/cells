@@ -22,4 +22,4 @@ Its head is named for it (`&riff`), so `use &riff` takes it; a form reads it as 
 
 At Funk's point (`presets.ts`), weight 1, as the facet `motif`.
 
-**Its signature** (decision 064): `&riff from &key`. `&riff from riff &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &riff from riff`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&riff from &key`. `&riff from riff &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &riff from riff`, it reads `&key` by name, as before.
