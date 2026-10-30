@@ -54,7 +54,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are seventy-six', () => expect(files).toHaveLength(76));
+  it('are eighty-four', () => expect(files).toHaveLength(84));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -102,6 +102,14 @@ describe('the seed files', () => {
       aeolian: [SYNTH_POP, TECHNO, LO_FI],
       dorian: [DEEP_HOUSE, FUNK],
       ionian: [AMBIENT, BOSSA_NOVA, SWING_JAZZ],
+      'upright bass': [ELECTRO_SWING],
+      'brass stab': [ELECTRO_SWING],
+      clarinet: [ELECTRO_SWING],
+      'muted trumpet': [ELECTRO_SWING],
+      'round bass': [SPOOKY],
+      organ: [SPOOKY],
+      theremin: [SPOOKY],
+      celesta: [SPOOKY],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
     const AFTER_OWN_POINT: Record<string, readonly object[]> = { 'root bass': [SYNTH_POP, DEEP_HOUSE, AMBIENT], 'pumping bass': [TECHNO] };
@@ -132,6 +140,7 @@ describe('the seed files', () => {
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic minor'),
           ...MOTIF_FRAGMENTS.filter((f) => f.id === 'gypsy'),
+          ...INSTRUMENT_FRAGMENTS.filter((f) => !['gm_kit', 'bass', 'keys', 'pad', 'lead'].includes(f.id)),
         ].map((f) => f.id),
       ),
     );
@@ -142,6 +151,8 @@ describe('the seed files', () => {
         'yggi/jambot packages/engine/src/themes.ts @ 0a56da9',
         'yggi/cells examples/electroswing.md @ 2c120d4',
         'yggi/cells examples/electroswing.md @ 7622a87',
+        'yggi/cells examples/electroswing.md @ 6d1bfa7',
+        'yggi/cells examples/spooky.md @ 6d1bfa7',
       ]),
     );
   });

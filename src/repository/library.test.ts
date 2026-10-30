@@ -39,8 +39,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the fifteen rhythms, the six bass lines, the six harmonies, the five instruments, the vibrato and the envelopes, the nine modes, the five performers, the stab line, the ten motifs and the four forms, every point associated as its facet, the bell and scale as two: seventy-six', () => {
-    expect(LIBRARY).toHaveLength(76);
+  it('is the thirteen meters, the fifteen rhythms, the six bass lines, the six harmonies, the thirteen instruments, the vibrato and the envelopes, the nine modes, the five performers, the stab line, the ten motifs and the four forms, every point associated as its facet, the bell and scale as two: seventy-six', () => {
+    expect(LIBRARY).toHaveLength(84);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -65,7 +65,7 @@ describe('the library', () => {
       STAB_FRAGMENTS.length,
       MOTIF_FRAGMENTS.length,
       FORM_FRAGMENTS.length,
-    ]).toEqual([13, 15, 6, 6, 5, 2, 9, 5, 1, 10, 4]);
+    ]).toEqual([13, 15, 6, 6, 13, 2, 9, 5, 1, 10, 4]);
   });
 
   it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
