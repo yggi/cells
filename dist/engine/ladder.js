@@ -56,10 +56,10 @@ export const TIERS = [
     },
     {
         name: 'Time and voice',
-        concept: 'a clock: a bar (use &bar from "4/4", the library\'s, or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
+        concept: 'a clock: a bar (&bar from "4/4" 120bpm, the library\'s, or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato',
         forms: [
             'generator scan(i …)',
-            'line use &a, &b from id',
+            'line &x from id(name=…) …',
             'rate nbpm',
             'rate step=&x',
             'rate step=&x*n',
@@ -281,7 +281,7 @@ export function formsUsed(source, options = {}) {
     if (TEMPO_MARKINGS.test(code))
         use('free free(marking)');
     if (parsed.uses?.length)
-        use('line use &a, &b from id');
+        use('line &x from id(name=…) …');
     const compiled = compileSource(source, undefined, options);
     const all = options.resolve ? new Map(parse(expand(source, options.resolve)).cells.map((d) => [d.name, d])) : decls;
     const grooves = voiceGrooves(all);

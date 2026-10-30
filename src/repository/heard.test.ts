@@ -3,7 +3,7 @@
 // velocity over 16 s, recorded with the cards still in, at cells bbb9eb2); no seed holds a card; and a bass line fills
 // the bass performer's hole (#285).
 import { describe, expect, it } from 'vitest';
-import { compileSource } from '../engine/compile';
+import { compileSource as compiledWithOldUse } from '../engine/compile';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
@@ -15,6 +15,15 @@ import { LIBRARY, resolveSeed } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
 import { RHYTHM_FRAGMENTS } from './rhythms';
+
+// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
+// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+const OLD_USE = /^use is the old way/;
+const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
+  const r = compiledWithOldUse(...args);
+  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
+  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
+};
 
 /** What each sent with its own card, on its bench: the hash of its notes, and how many. */
 const SENT: Record<string, [string, number]> = {

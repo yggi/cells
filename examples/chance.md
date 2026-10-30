@@ -8,8 +8,8 @@ description: "A line that is never quite the same twice round: steps that may no
 ```cells
 &chanceNote label="0?.7 is dropped seven times in ten; a bare 0? takes the cell's chance=. It is the same every time you play the piece; seed= picks another sequence." about=(&ghosts &hats)
 &choiceNote label="[4|5|7]: one of them, chosen afresh each time round." about=&tune
-use &bar from "4/4"
-use &click, &tap from envelopes
+&bar from "4/4" &tempo
+&click, &tap from envelopes
 &tempo step=free(moderato)
 &key scale(major)
 

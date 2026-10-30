@@ -6,7 +6,7 @@ description: "A mechanical band on belts, all turned by one drum: bells, a drumm
 ---
 
 ```cells
-use &thump, &tap, &click from envelopes
+&thump, &tap, &click from envelopes
 &drumMotorNote label="The drum (the meter, a motor) turns them all." about=&bar
 &bellsNote label="The bells on a taut belt, exact." about=&bells
 &drummerNote label="The drummer's arm on a slack belt, lagging and swinging." about=&drums

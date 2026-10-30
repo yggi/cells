@@ -9,25 +9,24 @@ Here the band comes from the seed library, taken by name, and so does the tune: 
 The piece writes only what is its own: the tempo, the key's tonic, the stabs, who plays when, and the sound of each instrument.
 
 ```cells
-use &drums from "drums performer"
-use &key from "harmonic minor"
-use &harm from "dark cadence"
-use &bassline from "creeping bass"
-use &kick, &hat, &euclid from "Spooky drums"
-use &bass, &bassV from "bass performer"
-use &pad, &padV from "pad performer"
-use &stab, &keysV from "stab performer"
-use &leadOut, &leadV from "lead performer"
+&drums, &drumsOut from "drums performer" &drumlines
+&key from "harmonic minor" D
+&harm from "dark cadence" &key
+&bassline from "creeping bass" &harm
+&kick, &hat, &euclid from "Spooky drums"
+&bass, &bassOut from "bass performer"(bassLevel=&bassLevel) &bassline
+&pad, &padOut from "pad performer"(padLevel=&padLevel) &padline
+&stab, &stabOut from "stab performer"(stabLevel=&stabLevel) &stabline
+&leadOut from "lead performer"(leadLevel=&leadLevel) &leadline
 &useNote label="The band is the library's: each use names what it takes. &bassV, &padV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own." about=(&bassV &padV &keysV &leadV)
 ```
 
 The meter is the library's, `5/4`, five beats to the bar, which leaves its tempo to the piece (`&tempo`), a slider.
-The key is harmonic minor, from the library, on the piece's tonic, D (`&tonic`): its fifth is then A major, a dominant, and its sixth B♭ sits a semitone above it.
+The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from "harmonic minor" D`, decision 065): its fifth is then A major, a dominant, and its sixth B♭ sits a semitone above it.
 
 ```cells
-use &bar from "5/4"
+&bar from "5/4" &tempo
 &tempo step=free(100bpm, 80..120)
-&tonic D
 &fiveNote label="Five beats a bar: every line taps the meter, so the heart beats five times and the knock falls at the middle of the bar, between the third beat's strokes." about=&bar
 ```
 
@@ -59,7 +58,7 @@ The tune is the motif `diesIrae`, the chant's head: F E F D E C♯ D, in eighths
 The theremin sings it over D minor, rests over B♭, sings it again three degrees up over G minor, and rests over A: one call a chord, two chords a phrase.
 
 ```cells
-use &diesIrae
+&diesIrae from diesIrae &key
 &leadline step=8n &diesIrae ~@2 ~@10 &diesIrae^3 ~@2 ~@10
 &tuneNote label="The Dies irae, over D minor, then three degrees up over G minor." about=&leadline
 ```

@@ -396,6 +396,16 @@ function instantiate(
       else say(`&${n} is not a head of ${quoted(id)}: its head${heads.length > 1 ? 's are' : ' is'} ${heads.map((h) => `&${h}`).join(', ')}`);
     }
   const one = names.size === 1;
+  // (a copy takes the heads it names and what they read within the template, as a named use took its closure: a head it
+  // doesn't name, and what only that reads, it leaves)
+  const reached = new Set<string>();
+  const byName = new Map(full.flatMap((l) => (l.name ? [[l.name, l] as const] : [])));
+  for (const queue = [...names.keys()]; queue.length;) {
+    const n = queue.shift()!;
+    if (reached.has(n)) continue;
+    reached.add(n);
+    for (const r of byName.get(n)?.reads ?? []) if (byName.has(r)) queue.push(r);
+  }
   if (from.head.length && !one) say(`The attributes before from are the head's, and this line takes ${names.size} heads from ${quoted(id)}: write them on each head's own line`);
   // (the arguments: a bare reference is that cell, anything else a cell of the copy's)
   const args = new Map((from.args ?? []).map((a) => [a.name, a.value] as const));
@@ -439,14 +449,15 @@ function instantiate(
   const copy: Line[] = [];
   for (const l of own) {
     const p = l.name!;
-    if (byReference.has(p)) continue;
+    if (byReference.has(p) || !reached.has(p)) continue;
     let code = renamed(l.code, names);
     if (values.has(p)) code = inherited(names.get(p)!, code, asCell(values.get(p)!, p, own));
     if (heads.includes(p) && from.head.length && one) code = withAttributes(code, from.head);
     copy.push(lineOf(code));
   }
   if (main && from.main !== null && !byReference.has(main)) copy.push(lineOf(`&${names.get(main)!} ${asCell(from.main, main, own)}`));
-  const given = { id, names: new Set(shared.map((l) => l.name!)), lines: shared, resolved: true };
+  const sharing = shared.filter((l) => reached.has(l.name!));
+  const given = { id, names: new Set(sharing.map((l) => l.name!)), lines: sharing, resolved: true };
   return { taken: given, copy, args: Object.fromEntries(values) };
 }
 

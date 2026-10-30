@@ -78,9 +78,9 @@ A line of the piece that is a library fragment's line word for word, its comment
 
 | written | Normalise writes |
 |---|---|
-| `&bar meter("4/4") step=&tempo  # four beats` | `use &bar from "4/4"  # four beats` |
-| the General MIDI kit's `&bd`, `&sd` and `&hh` lines, word for word | `use &bd, &sd, &hh from gm_kit` |
-| `pitch=&(map=lin loop=5 0 .1 0 -.1 0)`, the `vibrato` fragment's cell written inline | `pitch=&vibrato` and `use &vibrato` |
+| `&bar meter("4/4") step=&tempo  # four beats` | `use &bar from "4/4"  # four beats`, then its `from` line (below) |
+| the General MIDI kit's `&bd`, `&sd` and `&hh` lines, word for word | `use &bd, &sd, &hh from gm_kit`, then `&bd, &sd, &hh from gm_kit` |
+| `pitch=&(map=lin loop=5 0 .1 0 -.1 0)`, the `vibrato` fragment's cell written inline | `pitch=&vibrato` and `use &vibrato`, then `&vibrato from vibrato` |
 
 A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `use` of it joins the piece's (after its own `use` lines, or first). Not where the piece defines the name itself. A fragment's own file is normalised against the rest of the library, never as a `use` of itself.
 
@@ -94,3 +94,20 @@ nothing else, is written as the use it forwards to (`normalise/forwarded.ts`): a
 is `use &bd, &rim, … from gm_kit`, and a use that names what it takes keeps its names (#196). Normalise keeps each `use` line in its order. It never writes the used fragment's lines into the piece: that is no canonical form
 (decision 049; `expand` writes them out on request). A text with `use` lines is
 normalised with the host's resolver, `normalise(source, { resolve })`, so that it compiles.
+
+## `from`: a `use` line as the line that says where its cells come from
+
+A `use` line is the old way ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md)), and Normalise writes it as the `from` line that plays the same (`normalise/from.ts`, the Migrate step), with the host's resolver. A library line written as a `use` above, or joined to one, goes on to its `from` line the same way; one already a collection's `from` line takes the names too.
+
+- **A collection's** (a fragment with no signature): `use &bd, &sd from gm_kit` is `&bd, &sd from gm_kit`, `use * from gm_kit` is `* from gm_kit`, `use &vibrato` is `&vibrato from vibrato`.
+- **A template's** (one with a signature): the heads the use names, and those the piece reads besides (a performer's gate, its old helper); each optional parameter the piece defines, which the old use read by name, as an argument naming the piece's cell (`(swing=&swing)`); and the main argument the piece's cell (`&tempo`), or, where nothing else reads that cell, it reads no other and holds no slider, label or comment, its body written in its place and its line gone, as the template reads it: `use &key from dorian` with `&tonic D` is `&key from dorian D`, `use &bar from "4/4"` with `&tempo step=96bpm` is `&bar from "4/4" 96bpm`.
+- A use it can't say so exactly is left as it is: a name the use took that the copy keeps to itself, or a parameter the piece doesn't give.
+
+| Written | Normal |
+| --- | --- |
+| `use &key from "harmonic minor"` and `&tonic D` | `&key from "harmonic minor" D` |
+| `use &bar, &swing from "4/4 swung on 8n"` and the piece's `&swing`, `&tempo step=free(…)` | `&bar from "4/4 swung on 8n"(swing=&swing) &tempo` |
+| `use &bass, &bassV from "bass performer"`, the piece's `&bassLevel`, `&bassline` and a card reading `&bassOut` | `&bass, &bassOut from "bass performer"(bassLevel=&bassLevel) &bassline` |
+| `use * from gm_kit` | `* from gm_kit` |
+
+The cell written in takes the copy's name (`&key_tonic`, `&bar_tempo`): what plays is the same, note for note (no event snapshot moves), and the examples' values snapshot, keyed by cell names, records the new names.

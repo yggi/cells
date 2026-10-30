@@ -96,5 +96,5 @@ A `from` line with no id, in a fragment, is its signature:
 - Rungs (#387): the language (the parser, the copy per use, the checks, `CompileResult.uses` with arguments, `use` the old way); the seed library's signatures, with the ids as words (#296); Normalise's migration, the examples and the docs; the repository reading signatures, `INTERFACE_NAMES` gone once the frontends have migrated; the frontends' issues.
 - No example's event snapshot moves: `use &key from dorian` with `&tonic D`, which only the fragment reads, is `&key from dorian D` by construction.
 - A minor version; the changelog names the migration. Jambot's section text and `mode-repository.ts`, and Cell studio's used group (its decision 038), follow at the pin that carries the examples' rung.
-- Decision 063's score ends in `use * from band`: it is `* from band`; whichever lands second writes it so.
+- Decision 063's score ends in `use * from band`: it is `* from band`. 063 landed first, so its line in the decisions list and the cheatsheet says so (its record keeps what was ruled).
 - **Open:** whether a main parameter may have a line of attributes alone, inherited by its argument (`&call step=8n`, so `&a from call_and_answer &gypsy` needs no `step=8n`).

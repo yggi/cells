@@ -32,7 +32,6 @@ export function writeUse({ id, names }) {
     return `use ${names.join(', ')} from ${from}`;
 }
 export const USE_FORM = 'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "harmonic minor"';
-export const useQuoted = (id) => `use "${id}" is the old way: write ${writeUse({ id, names: null })} (or name what it takes: use &a, &b from …)`;
 export function topTokens(text) {
     const out = [];
     let depth = 0;
@@ -139,3 +138,5 @@ export function readFrom(code) {
     return { kind: 'use', id: idOf(idText), names, head, args, main: main || null };
 }
 export const FROM_FORM = 'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
+export const USE_OLD = 'use is the old way';
+export const useOld = ({ id, names }) => `${USE_OLD}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 065; Normalise writes it, with a template's arguments)`;

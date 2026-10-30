@@ -24,7 +24,7 @@ import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
 import type { CompileResult, Resolve } from '../engine/program';
-import { parse, readFrom } from '../engine/parser';
+import { parse, readFrom, USE_OLD } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
 import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
@@ -203,6 +203,8 @@ export function fitOf(fragment: string, workbench: string, compiledBy?: (text: s
   const diagnostics = result.diagnostics.filter((d) => {
     const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
     if (m && standNames.has(m[1]!)) return false;
+    // (nor is a use line's spelling, the old way, decision 065: it says how the text is written, not what the union plays)
+    if (d.message.startsWith(USE_OLD)) return false;
     const i = before.findIndex((b) => sameDiagnostic(b, d));
     if (i < 0) return true;
     before.splice(i, 1);

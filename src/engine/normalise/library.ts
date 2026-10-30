@@ -15,7 +15,19 @@
  */
 import { splitComment } from '../edit';
 import { parse } from '../parser';
-import { readUse, writeUse } from '../parser/use';
+import { isWordId, readFrom, readUse, writeUse } from '../parser/use';
+
+/** A line that takes names from a fragment by name: a `use` line, or a `from` line with no argument (decision 065). */
+function taking(code: string): { readonly id: string; readonly names: readonly string[] | null; readonly from: boolean } | null {
+  const use = readUse(code);
+  if (use) return { ...use, from: false };
+  const f = readFrom(code.trim());
+  return f?.kind === 'use' && !f.args && f.main === null && !f.head.length ? { id: f.id, names: f.names, from: true } : null;
+}
+
+/** Such a line, written as it was: a `use` line, or a `from` line. */
+const writeTaking = (id: string, names: readonly string[] | null, from: boolean): string =>
+  from ? `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}` : writeUse({ id, names });
 import type { Rewrite } from '../rewrite';
 
 /** A fragment as the library gives it: its id and its text. */
@@ -58,9 +70,9 @@ export function libraryLines(source: string, library: readonly LibraryFragment[]
   });
   return [...byId].map(([id, { at, names }]) => {
     // (a use of the fragment already written takes the names too, where it names what it takes)
-    const already = lines.findIndex((l) => readUse(splitComment(l)[0])?.id === id);
-    const prior = already >= 0 ? readUse(splitComment(lines[already]!)[0])! : null;
-    const use = writeUse({ id, names: prior && !prior.names ? null : [...(prior?.names ?? []), ...names.filter((n) => !prior?.names?.includes(n))] });
+    const already = lines.findIndex((l) => taking(splitComment(l)[0])?.id === id);
+    const prior = already >= 0 ? taking(splitComment(lines[already]!)[0])! : null;
+    const use = writeTaking(id, prior && !prior.names ? null : [...(prior?.names ?? []), ...names.filter((n) => !prior?.names?.includes(n))], !!prior?.from);
     const where = already >= 0 ? already : at[0]!;
     const comments = at.map((i) => splitComment(lines[i]!)[1].trim()).filter(Boolean);
     return {
@@ -116,16 +128,16 @@ export function libraryCells(source: string, library: readonly LibraryFragment[]
         const [code, comment] = splitComment(l);
         return inline.reduce((c, x) => c.split(x).join(`&${name}`), code) + comment;
       });
-      const at = lines.findIndex((l) => readUse(splitComment(l)[0])?.id === id);
+      const at = lines.findIndex((l) => taking(splitComment(l)[0])?.id === id);
       if (at >= 0) {
-        const prior = readUse(splitComment(lines[at]!)[0])!;
-        if (prior.names && !prior.names.includes(`&${name}`)) lines[at] = writeUse({ id, names: [...prior.names, `&${name}`] }) + splitComment(lines[at]!)[1];
+        const prior = taking(splitComment(lines[at]!)[0])!;
+        if (prior.names && !prior.names.includes(`&${name}`)) lines[at] = writeTaking(id, [...prior.names, `&${name}`], prior.from) + splitComment(lines[at]!)[1];
         return lines.join('\n');
       }
-      // (after the piece's own `use` lines, or first)
+      // (after the piece's own `use` and `from` lines, or first)
       let last = -1;
       lines.forEach((l, i) => {
-        if (readUse(splitComment(l)[0])) last = i;
+        if (readUse(splitComment(l)[0]) || readFrom(splitComment(l)[0].trim())?.kind === 'use') last = i;
       });
       lines.splice(last + 1, 0, writeUse({ id, names: [`&${name}`] }));
       return lines.join('\n');

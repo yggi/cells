@@ -15,8 +15,8 @@ description: A cycle of twelve scenes, each a fifth from the last, and home.
 # Cellscape — an ambient cycle of twelve, after Bach (the canon, the circle of keys)
 # and Kraftwerk (the sequence, the filters). Every layer reads one Lydian scale, and
 # the scale's key turns a fifth with each scene: C G D A E B F# C# G# D# A# F, and home.
-use &bar from "4/4"
-use &pluck from envelopes
+&bar from "4/4" &tempo
+&pluck from envelopes
 &tempo step=free(72bpm, 50..96)
 &key step=1m/8 stride=7 label="**{tonic}**, a fifth each scene"
 &lydian over=&key scan(2 2 2 1 2 2 1) label="{mode} on {tonic}"

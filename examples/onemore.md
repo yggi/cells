@@ -5,8 +5,8 @@ description: "French filter house, an original: maj7 chords chopped in a funky r
 ---
 
 ```cells
-use &vibrato
-use &strike, &thump, &snap, &click from envelopes
+&vibrato from vibrato
+&strike, &thump, &snap, &click from envelopes
 &chordsNote label="Parallel maj7 chords chopped in a funky sixteenth rhythm, F G A B♭." about=(&chop &prog)
 &sweepNote label="One long filter sweep, pumping on every beat." about=(&filt &pump)
 &discoNote label="Disco octaves and a robotic lead." about=(&disco &robot)

@@ -10,8 +10,8 @@ description: "Where notes become sound, named: a gate plays its voices with each
 &drumNote label="&drumOut plays a kit: each number of &beat picks the drum, 0 the kick, 1 the snare, 2 the hat, as &beat over=&kit would." about=&drumOut
 &roleNote label="&drums is a role: it names the gates that play it, here &drumOut. A reader that knows the role (the feel's drums) plays its gates so; a gate no role names, &leadOut, plays as written. It is no sound: the card sends the gates." about=&drums
 &productNote label="The bass is the same thing unnamed: a product in the sound card." about=&bass
-use &bar from "4/4"
-use &strike, &snap, &click from envelopes
+&bar from "4/4" &tempo
+&strike, &snap, &click from envelopes
 &tempo step=free(96bpm, 60..140)
 &key scale(major)
 

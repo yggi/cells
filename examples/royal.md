@@ -5,7 +5,7 @@ description: Bach's royal theme through every key in fifths, then every mode.
 ---
 
 ```cells
-use &vibrato
+&vibrato from vibrato
 # Bach's royal theme. Every pass of &theme moves &key a fifth (C G D A …);
 # every full circle of &key (12 passes) moves &scale one degree.
 &bar scan(27 23 26 24) step=&tempo                             # the clock: 4/4, bent * . + .

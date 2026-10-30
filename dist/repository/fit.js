@@ -1,6 +1,6 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
-import { parse, readFrom } from "../engine/parser/index.js";
+import { parse, readFrom, USE_OLD } from "../engine/parser/index.js";
 import { braidReadsOf } from "../engine/compiler/builtin.js";
 import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn } from "./holes.js";
 const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
@@ -123,6 +123,8 @@ export function fitOf(fragment, workbench, compiledBy, resolve) {
     const diagnostics = result.diagnostics.filter((d) => {
         const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
         if (m && standNames.has(m[1]))
+            return false;
+        if (d.message.startsWith(USE_OLD))
             return false;
         const i = before.findIndex((b) => sameDiagnostic(b, d));
         if (i < 0)
