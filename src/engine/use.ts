@@ -23,7 +23,7 @@
  * - A fragment's hash is `e1:` and a hash of its text up to layout (decision 050's E1, its rung written first, so it
  *   still checks once E4 exists).
  *
- * `from` lines (decision 064) are read here too. One that takes from a fragment with no signature, a collection (`&bd, &sd
+ * `from` lines (decision 065) are read here too. One that takes from a fragment with no signature, a collection (`&bd, &sd
  * from gm_kit`, `* from gm_kit`), is the `use` of those names. One that takes from a fragment with a signature, a
  * template (`&key from harmonic_minor D`), is a copy of it (`instantiate`): its head named as the line names it, its
  * parameters bound to the arguments, every other name it defines private to the copy, and what it took from collections
@@ -45,7 +45,7 @@ interface Line {
   readonly name: string | null;
   /** Its `use`, read; null for a malformed one, undefined for a line that isn't one. */
   readonly use: UseForm | null | undefined;
-  /** Its `from` (decision 064), read; null for a malformed one, undefined for a line that isn't one. */
+  /** Its `from` (decision 065), read; null for a malformed one, undefined for a line that isn't one. */
   readonly from?: FromForm | null | undefined;
   /** Did it come from a collection (a `use`, a `from` without a signature)? Its names are shared, never a copy's own. */
   readonly shared?: boolean;
@@ -209,7 +209,7 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
 /** A use's names, bare, or null for all: a `use` line's, or a `from` line's. */
 const namesOf = (u: { readonly names: readonly string[] | null }): ReadonlySet<string> | null => (u.names ? new Set(u.names.map((n) => n.slice(1))) : null);
 
-/** A `from` line that takes from a fragment (decision 064). */
+/** A `from` line that takes from a fragment (decision 065). */
 type FromUse = Extract<FromForm, { kind: 'use' }>;
 
 /** The use a line makes, a `use` line's or a `from` line's: the fragment's id and what it asks for; null for none. */
@@ -231,7 +231,7 @@ function withAttributes(code: string, attributes: readonly string[]): string {
 }
 
 /**
- * A value argument's line (decision 064 §6): its default's attributes where it sets none, and its own braid, the
+ * A value argument's line (decision 065 §6): its default's attributes where it sets none, and its own braid, the
  * default's dropped whole.
  */
 function inherited(name: string, defaultCode: string, body: string): string {
@@ -246,7 +246,7 @@ function inherited(name: string, defaultCode: string, body: string): string {
 const ALONE = new Set(['step', 'loop', 'swing']);
 
 /**
- * An argument as the cell it fills (decision 064 §5): a body as written, or, where it has no attribute and the template
+ * An argument as the cell it fills (decision 065 §5): a body as written, or, where it has no attribute and the template
  * reads the parameter only through one attribute that reads a cell as that attribute alone (`step=&tempo`,
  * `swing=&swing`), that attribute set to it (`124bpm` is `step=124bpm`, a rate alone).
  */
@@ -269,7 +269,7 @@ function asCell(body: string, parameter: string, lines: readonly Line[]): string
 /**
  * Does a line read this name as a value, not as a sound: in an attribute (`over=&key`, `step=&tempo`), a generator's or
  * an operation's arguments (`scale(dorian, &tonic)`), or through an operator (`&call^-2`, `&g[0:3]`)? A step of a braid
- * or a term of a mix (`&bd`, `&cp:0:.6`, `[&kick * &level]`) is a sound: the kit's vocabulary, read by name (decision 064 §3).
+ * or a term of a mix (`&bd`, `&cp:0:.6`, `[&kick * &level]`) is a sound: the kit's vocabulary, read by name (decision 065 §3).
  */
 function readsAsValue(code: string, name: string): boolean {
   const stack: ('call' | 'lambda' | 'group')[] = [];
@@ -342,7 +342,7 @@ function give(entry: NonNullable<ReturnType<typeof entryOf>>, path: readonly str
 }
 
 /**
- * A copy of a template (decision 064): its head named as the line names it, its parameters bound to the arguments (a
+ * A copy of a template (decision 065): its head named as the line names it, its parameters bound to the arguments (a
  * bare reference is that cell; anything else a cell of the copy's, a named one its default changed where it says), and
  * every other name it defines its own, `&<head>_<name>`. What it took from collections is shared by name. What it reads
  * and neither defines nor declares, but as a sound, is an error.

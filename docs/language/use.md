@@ -19,7 +19,7 @@ What a line reads without writing it, the main meter a `step=16n` taps, is never
 
 ## `from` lines: a template's copy, and its arguments
 
-[Decision 064](https://github.com/yggi/cells/blob/main/docs/decisions/064-fragments-take-arguments.md) ([#387](https://github.com/yggi/cells/issues/387)): a line says where its cells come from, and a fragment declares what it takes.
+[Decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md) ([#387](https://github.com/yggi/cells/issues/387)): a line says where its cells come from, and a fragment declares what it takes.
 `use` still reads as above; the seed library gains its signatures, and the examples their `from` lines, in the rungs after this one.
 
 ```text

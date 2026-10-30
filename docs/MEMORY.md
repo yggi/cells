@@ -43,7 +43,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - voices `s=` `loop=`, `env=` `pitch=` `map=adsr|amp|lin|db`; a line's articulation `legato=.5` (Strudel's) → [sound](language/sound.md)
 - belts, tape, resonators, FM → [physics](language/physics.md)
 - `use &bd, &sd from gm_kit` the named cells and what they read, `use * from …` every line, `use &x` from x; the piece's lines win → [use](language/use.md)
-- `&key from dorian D` a template's copy, `&bar from swung(swing=8n:.6) &tempo` its arguments, a signature `&bar from (&swing) &tempo` (decision 064); `&bd, &sd from gm_kit` a collection's cells → [use](language/use.md)
+- `&key from dorian D` a template's copy, `&bar from swung(swing=8n:.6) &tempo` its arguments, a signature `&bar from (&swing) &tempo` (decision 065); `&bd, &sd from gm_kit` a collection's cells → [use](language/use.md)
 - a piece's file: `title:` `tags:` `tier:` in its frontmatter (the card's `title=` `tags=` `tier=` the old way, a warning); `label=` `show=`, a cell's `tags=`; loudness: the card's `postgain=` (linear) → [display](language/display.md); a `show=` of the piece's own → [plugins](language/plugins.md)
 
 ## Decisions
@@ -100,4 +100,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 060 · The key is named, `over=&key` (`over=key` the old way); a tonic is a cell, stepped or free · → decisions/060-the-key-is-named.md
 - 061 · The band: a role cell says what its gates play as; a selector over the performers says when · → decisions/061-the-band.md
 - 062 · Cells renders audio: events in, samples out, in blocks; superdough's meaning at the examples' level · → decisions/062-cells-renders-audio.md
-- 064 · Fragments take arguments: `&key from harmonic_minor D`; a signature declares one main parameter and optional ones; `use` retires · → decisions/064-fragments-take-arguments.md
+- 065 · Fragments take arguments: `&key from harmonic_minor D`; a signature declares one main parameter and optional ones; `use` retires · → decisions/065-fragments-take-arguments.md

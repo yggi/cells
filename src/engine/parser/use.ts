@@ -59,7 +59,7 @@ export const USE_FORM =
 export const useQuoted = (id: string): string => `use "${id}" is the old way: write ${writeUse({ id, names: null })} (or name what it takes: use &a, &b from …)`;
 
 /**
- * A `from` line (decision 064): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from
+ * A `from` line (decision 065): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from
  * gm_kit`, `* from gm_kit`; or, with no id, a fragment's signature: `&bar from (&swing) &tempo`.
  */
 export type FromForm =
@@ -137,7 +137,7 @@ const QUOTED_ID = /^"[^"]*\S[^"]*"/;
 export const isAttribute = (token: string): boolean => /^[A-Za-z_][A-Za-z0-9_]*=/.test(token);
 
 /**
- * A `from` line (decision 064), read: a use of a fragment or a signature; null where the line has a top-level `from`
+ * A `from` line (decision 065), read: a use of a fragment or a signature; null where the line has a top-level `from`
  * after its names and isn't one; undefined where it isn't a `from` line at all (a cell, a `use` line).
  */
 export function readFrom(code: string): FromForm | null | undefined {
