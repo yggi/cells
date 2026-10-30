@@ -151,7 +151,7 @@ export const MAP_KINDS: Readonly<Record<MapWord, Syntax>> = {
   midi: syntax(
     'map',
     'map=midi',
-    'A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent, not heard.',
+    "A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent and heard, at its entry's gain.",
     ['&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove'],
     'midi.md',
   ),

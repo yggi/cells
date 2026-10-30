@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts, type CompileResult } from './program';
+import { cellId } from './ids';
 import { eventsBetween, plan } from './realize';
 import { createRenderer, loudness } from './render';
 import { pieceAudio } from './audioexport';
@@ -151,9 +152,14 @@ describe('the renderer', () => {
     expect(bits(wet.mix)).toEqual(bits(dry.mix));
   });
 
-  it('a voice heard only on a MIDI card is sent, not heard (decision 019): it renders silent', () => {
-    const a = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=midi [&n * &v]', { seconds: 1 });
-    expect(a.loudness.rms).toBe(-Infinity);
+  it("a voice on a MIDI card alone is heard as well as sent (decision 064): it renders as it would on a sound card at its entry's gain", () => {
+    const midi = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=midi [&n * &v * .5]', { seconds: 1 });
+    const sound = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=sample postgain=1 [&n * &v * .5]', { seconds: 1 });
+    expect(midi.loudness.rms).toBeGreaterThan(-Infinity);
+    expect(Math.abs(midi.loudness.rms - sound.loudness.rms)).toBeLessThan(0.01);
+    // (switched off, the card takes it away)
+    const r = compiled('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=midi [&n * &v * .5]');
+    expect(pieceAudio(r, codeShifts(r), { seconds: 1, muted: new Set([cellId('out')]) }).loudness.rms).toBe(-Infinity);
   });
 
   it('a note is articulated: its gate open for 90 % of its length, then it falls away over its release', () => {

@@ -28,7 +28,7 @@ function meterOf(d) {
     }));
 }
 export const stepsPerBeat = (m) => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
-export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stacks }, typed) {
+export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stacks }, typed, sortOf) {
     const { rateOf, error, warn, broken, unknownCell } = ctx;
     const cells = new Map();
     const lengthOf = (name) => lengthIn(decls, name);
@@ -165,6 +165,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
                     ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
                     : null,
             sink: d.map?.kind === 'sample',
+            sort: sortOf(name),
             ...(d.map?.kind === 'midi' ? { chords: units.map((u) => (u.atom.kind === 'mix' ? typed(u.atom) : null)) } : {}),
             clock: null,
             rate: 0,

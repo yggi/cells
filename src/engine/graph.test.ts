@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { writtenGraph } from './graph';
 import { routing } from './routing';
-import { cellId } from './ids';
+import { cellId, edgeId } from './ids';
 import { edgeLabel } from './transform';
 
 describe('a tap on a belt says itself on its wire (#92)', () => {
@@ -111,5 +111,46 @@ describe('a stack a gate plays is on the way, as the routing has it (#329)', () 
       if (model.nodes.some((n) => n.id === a) && model.nodes.some((n) => n.id === b))
         expect(model.edges.some((e) => e.id === id) || model.through.has(id), `${id} is drawn`).toBe(true);
     }
+  });
+});
+
+describe('a drummer: a gate whose kit holds the drums its lines name (#379, decision 064)', () => {
+  const src = [
+    '&bar meter("4/4") step=120bpm',
+    '&bd s=sine loop=A1',
+    '&sd s=white',
+    '&hh s=white hpf=8000',
+    '&rim s=white',
+    '&kit &bd &sd &hh &rim',
+    '&kick step=8n &bd ~ &bd ~',
+    '&hat step=8n &hh &hh',
+    '&lines [&kick, &hat]',
+    '&drumsOut play=&lines &kit',
+    '&drums map=role &drumsOut',
+    '&out map=sample [&drumsOut]',
+  ].join('\n');
+  const r = compileSource(src);
+  const g = writtenGraph(r);
+  const rt = routing(r, new Set());
+  const routed = (e: (typeof g.edges)[number]) => rt.edges.has(e.id) || !!e.routes?.every((any) => any.some((id) => rt.edges.has(id)));
+
+  it('compiles without diagnostics', () => expect(r.diagnostics).toEqual([]));
+
+  it("draws one kit, the gate's own: the grooves' kit isn't drawn again beside it", () => {
+    expect(g.nodes.some((n) => n.id === cellId('kit:voices'))).toBe(false);
+    expect(g.edges.some((e) => e.source === cellId('kit:voices') || e.target === cellId('kit:voices'))).toBe(false);
+  });
+
+  it('lights the kit, its struck drums and its wires while they play; a drum no line strikes stays unrouted', () => {
+    expect(rt.nodes.has(cellId('kit'))).toBe(true);
+    for (const id of [edgeId(cellId('kit'), cellId('out')), edgeId(cellId('drumsOut'), cellId('kit')), edgeId(cellId('kit'), cellId('bd')), edgeId(cellId('kit'), cellId('hh'))])
+      expect(routed(g.edges.find((e) => e.id === id)!), id).toBe(true);
+    expect(rt.nodes.has(cellId('rim'))).toBe(false);
+    expect(rt.edges.has(edgeId(cellId('kit'), cellId('rim')))).toBe(false);
+  });
+
+  it('lights a role cell with the gate it names (decision 061)', () => {
+    expect(rt.nodes.has(cellId('drums'))).toBe(true);
+    expect(routed(g.edges.find((e) => e.id === edgeId(cellId('drums'), cellId('drumsOut')))!)).toBe(true);
   });
 });

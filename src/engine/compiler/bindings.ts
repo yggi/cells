@@ -126,7 +126,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   }
   // MIDI cards (map=midi): their entries are channels, in order (or all on one), each a mix written in place, a mix
   // cell, or a pattern read through a kit; ~ skips a channel. What a card names goes out as notes on its channel; a
-  // binding a sound card plays too is the same output (heard and sent), one only a card names is sent, not heard.
+  // binding a sound card plays too is the same output (heard and sent), one only a MIDI card names is sent, and heard there (decision 064).
   const cards = [...cells.values()].filter((c) => isMidiCard(c));
   for (const card of cards) {
     const d = decls.get(card.name)!;
