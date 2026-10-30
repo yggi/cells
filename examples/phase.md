@@ -24,5 +24,5 @@ use &tap from envelopes
 &pianoR pan=.85 s=sine loop=E4 fm=&mR index=.2..1.6 * &(map=adsr .001 .3 .1 .2) room=.25 env=&(map=adsr .002 .6 .2 .2)
 &woodv s=sine loop=E2 pitch=0..12 * &(map=adsr 0 .03 0 0) env=&tap
 
-&out postgain=1.41 map=sample [&left * &pianoL * .2, &right * &pianoR * .2, &wood * &woodv * .1]
+&out postgain=3.58 map=sample [&left * &pianoL * .2, &right * &pianoR * .2, &wood * &woodv * .1]
 ```

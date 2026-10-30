@@ -43,7 +43,7 @@ use &strike, &thump, &snap, &click from envelopes
 &teile step=4n &beatBar &ticksBar &bassBar &arpBar &melodyBar
 &lied over=&teile step=1m/8 laps=1 label="Aufbau: Klick · Bass · Takt · Arpeggio · Melodie · Pause · alles · Klick" 1 [1,2] [0,1,2] [0,1,2,3] [0,1,2,3,4] [2,3] [0,1,2,3,4] 1
 
-&out postgain=1.78 map=sample [&ticks * &metal * .12,
+&out postgain=2.41 map=sample [&ticks * &metal * .12,
                          &beat,
                          &bassline * &bass * .5,
                          &arp * &arpeggio * .18,

@@ -66,7 +66,7 @@ use &strike from envelopes
 &tag over=&teile step=1m/4 laps=1 label="metal · grinder · spring · groove · drill · scream · break · spring · groove · all · all · collapse · Einsturz" [0] [
      0,5] [0,2,4] [0,1,2,3,4] [0,1,2,3,4,6] [0,1,2,3,4,5,7] [4,5,7] [4] [0,1,2,3,4,5] [0,1,2,3,4,5,6,7]!2 [5,7] 8
 
-&out postgain=.282 map=sample [&metalPart, &plates * &platev * .05, &kick * &sub * .55,
+&out postgain=.785 map=sample [&metalPart, &plates * &platev * .05, &kick * &sub * .55,
                            &riff * &accent * &grit * .2, &feder * &bassfeder * .3,
                            &grind * &swell * &grinder * .14, &drill * &drillv * .06,
                            (&schrei + &slide) * &voice * .1, &schrei * &breath * .06, &einsturz]
