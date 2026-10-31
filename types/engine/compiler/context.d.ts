@@ -7,6 +7,8 @@ export interface Ctx {
     readonly diagnostics: Diagnostic[];
     readonly error: (message: string, span: Span) => void;
     readonly warn: (message: string, span: Span) => void;
+    /** Said, not wrong: silence where a score and its band don't meet (decision 063 §4). */
+    readonly info: (message: string, span: Span) => void;
     /**
      * Cells whose own line failed (the parser said why), and the cells that couldn't be resolved for using one: their
      * uses aren't reported again (no "Unknown cell", no "nothing to play" for them).

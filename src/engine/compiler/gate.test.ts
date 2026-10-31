@@ -130,7 +130,12 @@ describe("a gate is a performer (decision 058), its role a role cell's (decision
   const semis = (src: string) => {
     const r = compileSource(BASE + src);
     // (BASE's own step=&bar*2 warns; nothing else may)
-    expect(r.diagnostics.map((d) => d.message).filter((m) => !m.startsWith('step=&bar*2'))).toEqual([]);
+    expect(
+      r.diagnostics
+        .filter((d) => d.severity !== 'info')
+        .map((d) => d.message)
+        .filter((m) => !m.startsWith('step=&bar*2')),
+    ).toEqual([]);
     return eventsBetween(plan(r, codeShifts(r)), 0, 2).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + 0);
   };
 
@@ -211,9 +216,12 @@ describe("a gate is a performer (decision 058), its role a role cell's (decision
 
   it('a read head reads its tape itself: a move there is ignored, and warns', () => {
     const r = compileSource(BASE + '&tape write=&tune length=1\n&h play=&tape^$-12');
-    expect(r.diagnostics.map((d) => d.message).filter((m) => !m.startsWith('step=&bar*2'))).toEqual([
-      expect.stringMatching(/^&tape\^\$-12 after play=: .*a read head reads the tape itself, so the move is ignored/),
-    ]);
+    expect(
+      r.diagnostics
+        .filter((d) => d.severity !== 'info')
+        .map((d) => d.message)
+        .filter((m) => !m.startsWith('step=&bar*2')),
+    ).toEqual([expect.stringMatching(/^&tape\^\$-12 after play=: .*a read head reads the tape itself, so the move is ignored/)]);
   });
 });
 
@@ -260,9 +268,11 @@ describe('a gate plays a stack of lines', () => {
 
 // (#282's probe: a part with legato= read as a kit's member, so a braid splicing it, or a gate playing it moved, was a kit)
 describe('a line’s own parameters make no voice of it', () => {
+  // (what is wrong: the base's own lines a test leaves unplayed are said as infos, decision 063 §4)
   const diagnostics = (src: string) =>
     compileSource(BASE + src)
-      .diagnostics.map((d) => d.message)
+      .diagnostics.filter((d) => d.severity !== 'info')
+      .map((d) => d.message)
       .filter((m) => !m.startsWith('step=&bar*2'));
   it('a gate plays a part with legato= moved, beside a kit', () => {
     expect(diagnostics('&t over=&major step=&bar*2 legato=.5 0 2\n&g play=&t^$-12 &lead\n&drums play=&tune &kit\n&out map=sample [&g, &drums]')).toEqual([]);

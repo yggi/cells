@@ -113,7 +113,8 @@ describe('the cells a text uses and declares nowhere, as data', () => {
   // the messages the list replaced: `Unknown cell &x`, one per use, once the diagnostics are sorted by place
   const fromMessages = (text: string) => {
     const r = compileSource(text);
-    return r.diagnostics.flatMap((d) => /^Unknown cell &([A-Za-z_][A-Za-z0-9_]*)$/.exec(d.message)?.[1] ?? []);
+    // (a gate's part that no line writes rests, said as an info, and is a name declared nowhere all the same: decision 063 §4)
+    return r.diagnostics.flatMap((d) => /^(?:Unknown cell &|&\w+ plays &)([A-Za-z_][A-Za-z0-9_]*)(?:$|, which no line writes)/.exec(d.message)?.[1] ?? []);
   };
 
   it('names each with its uses, in order of first use', () => {

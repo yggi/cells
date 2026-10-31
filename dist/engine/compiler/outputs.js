@@ -5,6 +5,7 @@ import { IMPLICIT } from "./tables.js";
 import { VOICE_PARAMS } from "../attributes.js";
 export function outputsOf(ctx, decls, cells, clocks, { sinks, cards, bindings, soundHead }) {
     const { parsed, error, warn, unknownCell } = ctx;
+    const partsOfGates = new Set([...decls.values()].flatMap((d) => (d.gate ? [d.gate.notes, d.gate.plays, ...(d.gate.lines ?? []).flatMap((l) => [l.line, l.plays])] : [])));
     const outputs = [];
     const returns = [];
     const resonances = [];
@@ -188,7 +189,7 @@ export function outputsOf(ctx, decls, cells, clocks, { sinks, cards, bindings, s
             error(`&${cell.name} has no steps to play`, t.ref.span);
             continue;
         }
-        if (!tapeOf.has(t) && onlyRests(cells, cell, t.ref.pick))
+        if (!tapeOf.has(t) && !partsOfGates.has(cell.name) && onlyRests(cells, cell, t.ref.pick))
             warn(`&${cell.name}${t.ref.pick ? pickLabel(t.ref.pick) : ''} plays only rests (~): nothing sounds on &${voice.name}`, t.ref.span);
         outputs.push({
             id: `${voice.name}:${cell.name}:${t.ref.span.line}:${t.ref.span.col}`,

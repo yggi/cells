@@ -9,7 +9,8 @@ export interface Span {
 }
 
 export interface Diagnostic {
-  readonly severity: 'error' | 'warning';
+  /** `info`: something a reader should know that is not wrong (decision 063: where a score and its band don't meet). */
+  readonly severity: 'error' | 'warning' | 'info';
   readonly message: string;
   readonly span: Span;
 }

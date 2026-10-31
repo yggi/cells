@@ -8,6 +8,8 @@ export interface Ctx {
   readonly diagnostics: Diagnostic[];
   readonly error: (message: string, span: Span) => void;
   readonly warn: (message: string, span: Span) => void;
+  /** Said, not wrong: silence where a score and its band don't meet (decision 063 §4). */
+  readonly info: (message: string, span: Span) => void;
   /**
    * Cells whose own line failed (the parser said why), and the cells that couldn't be resolved for using one: their
    * uses aren't reported again (no "Unknown cell", no "nothing to play" for them).
@@ -28,6 +30,7 @@ export function context(parsed: ParseResult, env: Env): Ctx {
   const diagnostics: Diagnostic[] = [...parsed.diagnostics];
   const error = (message: string, span: Span) => diagnostics.push({ severity: 'error', message, span });
   const warn = (message: string, span: Span) => diagnostics.push({ severity: 'warning', message, span });
+  const info = (message: string, span: Span) => diagnostics.push({ severity: 'info', message, span });
   const broken = new Set(parsed.broken);
   const unknown = new Map<string, Span[]>();
   const unknownCell = (name: string, span: Span) => {
@@ -49,5 +52,5 @@ export function context(parsed: ParseResult, env: Env): Ctx {
     }
     return null;
   };
-  return { parsed, env, diagnostics, error, warn, broken, unknown, unknownCell, rateOf };
+  return { parsed, env, diagnostics, error, warn, info, broken, unknown, unknownCell, rateOf };
 }

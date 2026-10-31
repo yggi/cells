@@ -3,6 +3,7 @@ export function context(parsed, env) {
     const diagnostics = [...parsed.diagnostics];
     const error = (message, span) => diagnostics.push({ severity: 'error', message, span });
     const warn = (message, span) => diagnostics.push({ severity: 'warning', message, span });
+    const info = (message, span) => diagnostics.push({ severity: 'info', message, span });
     const broken = new Set(parsed.broken);
     const unknown = new Map();
     const unknownCell = (name, span) => {
@@ -28,5 +29,5 @@ export function context(parsed, env) {
         }
         return null;
     };
-    return { parsed, env, diagnostics, error, warn, broken, unknown, unknownCell, rateOf };
+    return { parsed, env, diagnostics, error, warn, info, broken, unknown, unknownCell, rateOf };
 }

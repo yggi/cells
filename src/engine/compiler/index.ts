@@ -23,6 +23,7 @@ import { checkLimits } from './limits';
 import { sectioned } from './sections';
 import { banded, bandsOf, checkBands, performersOf } from './band';
 import { readSlots } from './slots';
+import { restingParts, unplayed } from './parts';
 
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
@@ -30,8 +31,11 @@ const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new 
 /** A parsed piece, compiled; `used` names the cells a `use` line gave it (decision 054), which the built-in card doesn't hear. */
 export function compile(written: ParseResult, env: Env, used: ReadonlySet<string> = new Set()): CompileResult {
   // (a pick by name, &env[sustain], read as its slot's position first: decision 063)
-  const parsed = readSlots(written);
+  // (and a part a gate plays that no line writes rests: decision 063 §4)
+  const { parsed, rested } = restingParts(readSlots(written));
   const ctx = context(parsed, env);
+  // (a part that rests is declared nowhere all the same: a hole, as an unknown name is, but no error)
+  for (const [name, span] of rested) ctx.unknown.set(name, [span]);
   // (no card written: the built-in one, decision 028)
   const declared = builtinCard(ctx, declare(ctx), used);
   const { decls, builtin } = declared;
@@ -51,6 +55,8 @@ export function compile(written: ParseResult, env: Env, used: ReadonlySet<string
   // (decision 061) what a performer in a band plays sounds while a selector reading the band picks it
   const outputs = banded(sectioned(made.outputs, timed.cells, declared.sections), timed.cells, bands);
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
+  // (a line nothing plays or reads is silent, and said: decision 063 §4)
+  unplayed(ctx, decls, timed.cells, outputs, clocks);
   const cells = displayCells(timed.cells);
   checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands);
   // (the gates, as performers, and their roles: decisions 058 and 061)
