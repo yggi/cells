@@ -47,7 +47,7 @@ The package ships TypeScript (Node won't strip it under `node_modules`: [#11](ht
 - [step= and loop=](docs/language/reference.md#step--and-loop-): 16 forms
 - [map=](docs/language/reference.md#map-): 13 forms
 - [Attributes](docs/language/reference.md#attributes): 19 forms
-- [Parameters](docs/language/reference.md#parameters): 59 forms
+- [Parameters](docs/language/reference.md#parameters): 61 forms
 - [Sorts: what a cell is in a mix](docs/language/reference.md#sorts-what-a-cell-is-in-a-mix): 8 forms
 - [Mixes](docs/language/reference.md#mixes): 6 forms
 - [Gates: a product with a name](docs/language/reference.md#gates-a-product-with-a-name): 3 forms

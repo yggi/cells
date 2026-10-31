@@ -201,8 +201,8 @@ function expected(pattern: Pattern, chords: readonly (readonly number[])[]): [nu
 }
 
 describe('the bass lines', () => {
-  it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most, and the Spooky bass written by hand', () => {
-    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping bass']);
+  it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most, and the Spooky basses written by hand', () => {
+    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping bass', 'tiptoe bass']);
     for (const p of PATTERNS) {
       const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
       expect(byId(ID[p]).association, p).toEqual(
@@ -210,6 +210,7 @@ describe('the bass lines', () => {
       );
     }
     expect(byId('creeping bass').association).toEqual([{ point: SPOOKY, weight: 1, facet: 'bass' }]);
+    expect(byId('tiptoe bass').association).toEqual([{ point: { ...SPOOKY, artic: 0.25, energy: 0.3 }, weight: 1, facet: 'bass' }]);
   });
 
   it('each uses &harm alone, read off its text: its voice is the instrument the performer or the card plays it on (#291)', () => {
@@ -269,7 +270,8 @@ describe('what each plays is what bass.ts plays for its pattern alone at its poi
 // The register the lines were written in, pinned in absolute MIDI notes (#244): what each line sent on channel 2 over the
 // first four bars of I–vi–IV–V, in C and in D, while each carried its own `&bassV loop=C2`. Through the `bass` instrument
 // they send these notes still; an instrument an octave off moves every one (Jambot's bass reads this register). The
-// creeping bass, written later (#349), in the same register: the root, a semitone above it, the root.
+// creeping bass, written later (#349), in the same register: the root, a semitone above it, the root; and the tiptoe bass:
+// the root, and the chord's fifth below it.
 const SENT: Record<string, Record<string, readonly number[]>> = {
   C: {
     'root bass': [36, 36, 45, 45, 41, 41, 43, 43],
@@ -278,6 +280,7 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
     'funk bass': [36, 36, 36, 36, 36, 36, ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43), 48, 48],
     'walking bass': [36, 40, 43, 44, 45, 48, 52, 40, 41, 45, 48, 42, 43, 47, 50, 47],
     'creeping bass': [36, 37, 36, 45, 46, 45, 41, 42, 41, 43, 44, 43],
+    'tiptoe bass': [36, 31, 45, 40, 41, 36, 43, 38],
   },
   D: {
     'root bass': [38, 38, 47, 47, 43, 43, 45, 45],
@@ -286,6 +289,7 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
     'funk bass': [38, 38, 38, 38, 38, 38, ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45), 50, 50],
     'walking bass': [38, 42, 45, 46, 47, 50, 54, 42, 43, 47, 50, 44, 45, 49, 52, 49],
     'creeping bass': [38, 39, 38, 47, 48, 47, 43, 44, 43, 45, 46, 45],
+    'tiptoe bass': [38, 33, 47, 42, 43, 38, 45, 40],
   },
 };
 

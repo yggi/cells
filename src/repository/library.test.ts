@@ -40,8 +40,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the fifteen rhythms, the six bass lines, the six harmonies, the thirteen instruments, the vibrato and the envelopes, the nine modes, the five performers, the stab line, the thirty-six motifs, the four forms and the band, every point associated as its facet, the bell and scale as two: a hundred and eleven', () => {
-    expect(LIBRARY).toHaveLength(111);
+  it('is the thirteen meters, the sixteen rhythms, the seven bass lines, the seven harmonies, the fourteen instruments, the vibrato and the envelopes, the nine modes, the five performers, the stab line, the forty motifs, the four forms and the band, every point associated as its facet, the bell and scale as two: a hundred and nineteen', () => {
+    expect(LIBRARY).toHaveLength(119);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -68,7 +68,7 @@ describe('the library', () => {
       MOTIF_FRAGMENTS.length,
       FORM_FRAGMENTS.length,
       BAND_FRAGMENTS.length,
-    ]).toEqual([13, 15, 6, 6, 13, 2, 9, 5, 1, 36, 4, 1]);
+    ]).toEqual([13, 16, 7, 7, 14, 2, 9, 5, 1, 40, 4, 1]);
   });
 
   it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
@@ -90,11 +90,11 @@ describe('the library', () => {
 
   it('and so do the rhythms, with the bell and scale: the bass lines, the harmonies and the modes change no rhythm query', () => {
     for (const point of POINTS)
-      expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 16, {}, { facet: 'rhythm' })));
+      expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 17, {}, { facet: 'rhythm' })));
   });
 
   it('and so do the bass lines: the harmonies change no bass query', () => {
-    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'bass' })), JSON.stringify(point)).toEqual(ranked(basses.query(point, 6)));
+    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'bass' })), JSON.stringify(point)).toEqual(ranked(basses.query(point, 7)));
   });
 
   it('and so does one that names chosen fragments with no use recorded', () => {
@@ -119,28 +119,41 @@ describe('the points proposed for two more presets (#349)', () => {
     '3/4': { ...SPOOKY, energy: 0.43 },
   };
   const same = (a: StylePoint, b: StylePoint) => AXES.every((axis) => a[axis] === b[axis]);
-  const NEW = new Set(['Spooky drums', 'creeping bass', 'dark cadence', 'diesIrae']);
+  // (and the ghost-house fragments near Spooky, added after: the presets' first finds are what they were before either)
+  const NEW = new Set([
+    'Spooky drums',
+    'creeping bass',
+    'dark cadence',
+    'diesIrae',
+    'Ghost drums',
+    'tiptoe bass',
+    'haunted progression',
+    'wail',
+    'haunt',
+    'lament',
+    'peek',
+    'haunted pad',
+  ]);
   const before = createRepository(
     LIBRARY.filter((f) => !NEW.has(f.id)).map((f) => ({ ...f, association: f.association.filter((wp) => !(ADDED[f.id] && same(wp.point, ADDED[f.id]!))) })),
   );
   const facets = [...new Set(LIBRARY.flatMap((f) => f.association.map((wp) => wp.facet!)))];
 
   // (further down a ranking a fragment can move up, nearer by the point it gained: the ladder's fetch from near by, not
-  // the preset itself. And where no harmony is near a preset, the dark cadence is nearer than any vamp: four bars, it is
-  // no progression Jambot's composer reads, which takes eight (yggi/jambot packages/engine/src/harmony-query.ts), so
-  // those five presets generate their harmony as before)
-  it('change nothing Jambot’s eight presets find first, in any facet, nor how far it is, but the dark cadence where no harmony was near', () => {
+  // the preset itself. And at Swing jazz, where no harmony is near, the dark cadence is nearer than any vamp, though
+  // beyond the miss distance at its weight, 0.4 (#404), and four bars, no progression Jambot's composer reads, which
+  // takes eight (yggi/jambot packages/engine/src/harmony-query.ts), so it generates its harmony as before)
+  it('change nothing Jambot’s eight presets find first, in any facet, nor how far it is, but the dark cadence at Swing jazz, where no harmony was near', () => {
     expect(facets).toHaveLength(12);
     const NAMES = ['Synth-pop', 'Techno', 'Deep house', 'Ambient', 'Lo-fi hip hop', 'Funk', 'Bossa nova', 'Swing jazz'];
     const first = (r: typeof library, point: StylePoint, facet: string) => ranked(r.query(point, 1, {}, { facet }));
     const moved = PRESETS.flatMap((point, i) =>
       facets
         .filter((facet) => JSON.stringify(first(library, point, facet)) !== JSON.stringify(first(before, point, facet)))
-        .map((facet) => [NAMES[i], facet, first(library, point, facet)[0]![0], first(before, point, facet)[0]![1]]),
+        .map((facet) => [NAMES[i], facet, first(library, point, facet)[0]![0], first(before, point, facet)[0]![1], first(library, point, facet)[0]![1]]),
     );
-    expect(moved.map(([name, facet, id]) => `${name}, ${facet}: ${id}`)).toEqual(
-      ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, harmony: dark cadence`),
-    );
+    expect(moved.map(([name, facet, id]) => `${name}, ${facet}: ${id}`)).toEqual(['Swing jazz, harmony: dark cadence']);
+    for (const [, , , , now] of moved) expect(now).toBeGreaterThan(0.3);
     for (const [, , , was] of moved) expect(was).toBeGreaterThan(0.35);
     expect(HARMONY_FRAGMENTS.find((f) => f.id === 'dark cadence')!.text).toMatch(/ cycle=4 /);
   });
@@ -167,5 +180,67 @@ describe('the points proposed for two more presets (#349)', () => {
       ['harmonic minor'],
       ['diesIrae'],
     ]);
+  });
+});
+
+// A seed placed for one preset is no other preset's first find within Jambot's miss distance (#404): where a preset has
+// nothing of its own near in a facet, its composer would take the nearest fragment of anyone's within 0.3 (yggi/jambot
+// `MISS_DISTANCE`, `meter-query.ts`) and play another preset's in its place. A fragment is placed for the preset nearest
+// its point of that facet; one with a point at the centre of style space is everyone's default (the instruments). The
+// facets are those a frontend asks for at its style point: Jambot's seven, and the stab and expression it is to ask for
+// (yggi/jambot#541); a performer and a form are taken by name.
+describe('a seed placed for one preset (#404)', () => {
+  const MISS_DISTANCE = 0.3;
+  const ALL_PRESETS: Record<string, StylePoint> = {
+    'Synth-pop': SYNTH_POP,
+    Techno: TECHNO,
+    'Deep house': DEEP_HOUSE,
+    Ambient: AMBIENT,
+    'Lo-fi hip hop': LO_FI,
+    Funk: FUNK,
+    'Bossa nova': BOSSA_NOVA,
+    'Swing jazz': SWING_JAZZ,
+    'Electro swing': ELECTRO_SWING,
+    Spooky: SPOOKY,
+  };
+  const CENTRE = { sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 };
+  const plain = (a: StylePoint, b: StylePoint) => Math.hypot(...AXES.map((axis) => a[axis]! - b[axis]!));
+  const placedFor = (fragment: Fragment, facet: string): string[] =>
+    fragment.association
+      .filter((wp) => wp.facet === undefined || wp.facet === facet)
+      .flatMap((wp) => {
+        if (AXES.every((axis) => wp.point[axis] === CENTRE[axis])) return Object.keys(ALL_PRESETS);
+        const nearest = Math.min(...Object.values(ALL_PRESETS).map((p) => plain(p, wp.point)));
+        return Object.entries(ALL_PRESETS)
+          .filter(([, p]) => plain(p, wp.point) === nearest)
+          .map(([name]) => name);
+      });
+  /** Each preset's first find in each facet that lies within the miss distance and was placed for another preset. */
+  const leaks = (fragments: readonly Fragment[]) => {
+    const repository = createRepository(fragments);
+    const facets = ['meter', 'mode', 'rhythm', 'bass', 'harmony', 'motif', 'instrument', 'stab', 'expression'];
+    return Object.entries(ALL_PRESETS).flatMap(([name, point]) =>
+      facets.flatMap((facet) => {
+        const first = repository.query(point, 1, {}, { facet })[0];
+        if (!first || first.distance > MISS_DISTANCE || placedFor(first.fragment, facet).includes(name)) return [];
+        return [`${name}, ${facet}: ${first.fragment.id}`];
+      }),
+    );
+  };
+  const weighted = (id: string, weight: number) => LIBRARY.map((f) => (f.id === id ? { ...f, association: f.association.map((wp) => ({ ...wp, weight })) } : f));
+
+  it('holds over the library: no preset finds another’s first within 0.3, in any facet', () => {
+    expect(leaks(LIBRARY)).toEqual([]);
+  });
+
+  it('fires where it should: the dark cadence and the Charleston stabs at weight 1, the haunted progression at 1', () => {
+    const near = ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'];
+    expect(leaks(weighted('dark cadence', 1))).toEqual(near.map((name) => `${name}, harmony: dark cadence`));
+    expect(leaks(weighted('Charleston stabs', 1))).toEqual(
+      ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, stab: Charleston stabs`),
+    );
+    expect(leaks(weighted('haunted progression', 1).filter((f) => f.id !== 'dark cadence'))).toEqual(
+      ['Synth-pop', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, harmony: haunted progression`),
+    );
   });
 });

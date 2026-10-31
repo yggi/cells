@@ -188,6 +188,19 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     value: 'number',
     on: ['gate'],
   },
+  // a performer's widths (decision 063 §2): how far the default performer plays from what is written
+  licence: {
+    help: 'on a gate: its performer’s licence, how far it loosens velocity and length, a share of the feel’s (1 as the contract plays; 0 exactly as written)',
+    doc: 'mix.md',
+    value: 'number',
+    on: ['gate'],
+  },
+  accents: {
+    help: 'on a gate: its performer’s own accents, a share of the feel’s (1 as the contract plays; 0 none)',
+    doc: 'mix.md',
+    value: 'number',
+    on: ['gate'],
+  },
   // (the old spelling of a gate, still read; Shorten rewrites it: decision 023)
   trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
   gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },

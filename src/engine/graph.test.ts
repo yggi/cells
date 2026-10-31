@@ -154,3 +154,19 @@ describe('a drummer: a gate whose kit holds the drums its lines name (#379, deci
     expect(routed(g.edges.find((e) => e.id === edgeId(cellId('drums'), cellId('drumsOut')))!)).toBe(true);
   });
 });
+
+describe('a performer that plays its part moved, play=&line^$-12 (decision 058): its wires lit while it plays (#385)', () => {
+  const r = compileSource(
+    ['&bar meter("4/4") step=120bpm', '&line step=4n 0 2 4 7', '&bassV s=saw loop=C3', '&bassOut play=&line^$-12 &bassV', '&out map=sample [&bassOut]'].join('\n'),
+  );
+  const g = writtenGraph(r);
+  const rt = routing(r, new Set());
+  const routed = (from: string, to: string) => {
+    const e = g.edges.find((x) => x.from === cellId(from) && x.to === cellId(to))!;
+    return rt.edges.has(e.id) || !!e.routes?.every((any) => any.some((id) => rt.edges.has(id)));
+  };
+  it('compiles', () => expect(r.diagnostics).toEqual([]));
+  it('the part into the gate, the gate into its voice, the voice into the card', () => {
+    expect([routed('line', 'bassOut'), routed('bassOut', 'bassV'), routed('bassV', 'out')]).toEqual([true, true, true]);
+  });
+});

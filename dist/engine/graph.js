@@ -3,6 +3,7 @@ import { leaves } from "./subseq.js";
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from "./ids.js";
 import { VOICE_KIT } from "./compiler/declare.js";
 import { refsOf } from "./readers.js";
+import { gatePairs, gateVoices, productOutputs, termPairs } from "./plays.js";
 export const isCellNode = (n) => n.kind !== 'junction';
 const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base']);
 export const feeds = (e) => !STRUCTURE.has(e.port) && e.band !== 'sync';
@@ -229,8 +230,9 @@ export function writtenGraph(result, { card = false } = {}) {
             const gate = result.cells.get(child);
             if (gate?.gate && spliceBand(child) === 'audio') {
                 through.add(edgeId(id, cellId(child)));
-                for (const r of gateVoices(result, gate)) {
+                for (const r of gateVoices(result, child)) {
                     const v = cellId(r.name);
+                    const { notes, sound } = gatePairs(result, child, r.outputs);
                     link({
                         id: edgeId(id, v),
                         source: id,
@@ -238,7 +240,7 @@ export function writtenGraph(result, { card = false } = {}) {
                         count,
                         transforms: AS_IS,
                         sound: r.name,
-                        routes: [[edgeId(cellId(r.via), cellId(child))], [edgeId(id, cellId(child))]],
+                        routes: [notes, sound, [edgeId(id, cellId(child))]],
                         ...wire('braid', 'audio', id, v, 1, true),
                     });
                 }
@@ -318,23 +320,19 @@ export function writtenGraph(result, { card = false } = {}) {
         if (!g)
             continue;
         const into = cellId(c.name);
-        const receivers = gateVoices(result, c);
-        const flows = [...new Set(receivers.map((r) => edgeId(cellId(r.via), into)))];
-        for (const f of flows)
+        const receivers = gateVoices(result, c.name);
+        const all = gatePairs(result, c.name, receivers.flatMap((r) => r.outputs));
+        const allOf = (made) => gatePairs(result, c.name, made);
+        for (const f of all.sound)
             through.add(f);
         const stack = g.lines?.length ? result.cells.get(g.notes) : undefined;
-        const members = stack ? g.lines.map((l) => l.line).filter((n) => result.cells.has(n)) : [];
-        const pairsOf = (name) => receivers.flatMap((r) => soundsOf(result, r.via).map((v) => edgeId(cellId(name), cellId(v))));
-        const intoVoices = (name) => receivers.flatMap((r) => [r.name, ...(result.cells.get(r.name)?.kit ? [VOICE_KIT] : [])].map((v) => edgeId(cellId(name), cellId(v))));
-        const intoGate = members.map((m) => edgeId(cellId(m), into));
-        for (const id of intoGate)
+        const plays = (line) => g.lines?.find((l) => l.line === line)?.plays ?? line;
+        const outputsOf = (line) => receivers.flatMap((r) => r.outputs).filter((o) => o.cell === plays(line));
+        for (const id of [...all.notes, ...all.terms])
             through.add(id);
         for (const { name, port } of [{ name: g.notes, port: g.port }, ...g.levels]) {
             if (!result.cells.has(name))
                 continue;
-            const pairs = [...pairsOf(name), ...(name === g.notes ? members.flatMap((m) => [...pairsOf(m), ...intoVoices(m)]) : [])];
-            for (const id of pairs)
-                through.add(id);
             link({
                 id: edgeId(cellId(name), into),
                 source: cellId(name),
@@ -342,7 +340,7 @@ export function writtenGraph(result, { card = false } = {}) {
                 count: 1,
                 transforms: AS_IS,
                 ...(receivers[0] ? { sound: receivers[0].name } : {}),
-                routes: [pairs, name === g.notes ? [...flows, ...intoGate] : flows],
+                routes: [all.notes, all.sound],
                 ...wire(port, 'cv', cellId(name), into, name === g.notes ? chord(name) : 1),
             });
         }
@@ -353,30 +351,32 @@ export function writtenGraph(result, { card = false } = {}) {
             for (const u of stack.units) {
                 if (u.atom.kind !== 'mix')
                     continue;
-                for (const e of u.atom.exprs)
-                    for (const r of e.k === 'ref' ? [e.ref] : e.k === 'prod' ? e.factors.flatMap((f) => (f.k === 'ref' ? [f.ref] : [])) : []) {
+                for (const e of u.atom.exprs) {
+                    const refs = e.k === 'ref' ? [e.ref] : e.k === 'prod' ? e.factors.flatMap((f) => (f.k === 'ref' ? [f.ref] : [])) : [];
+                    const made = refs.flatMap((r) => (lines.has(r.name) ? outputsOf(r.name) : []));
+                    const { notes, sound } = allOf(made);
+                    for (const r of refs) {
                         if (!result.cells.has(r.name))
                             continue;
                         const port = lines.has(r.name) ? 'play' : 'level';
                         const from = cellId(r.name);
-                        for (const id of [...pairsOf(r.name), ...intoVoices(r.name)])
-                            through.add(id);
                         link({
                             id: edgeId(from, into),
                             source: from,
                             target: into,
                             count: 1,
                             transforms: [refTransform(r)],
-                            routes: [[...pairsOf(r.name), ...intoVoices(r.name), ...(port === 'play' ? [edgeId(from, cellId(c.name))] : [])]],
+                            routes: [notes, sound],
                             ...wire(port, 'cv', from, into, port === 'play' ? chord(r.name) : 1),
                         });
                     }
+                }
             }
         }
         const notes = result.cells.has(g.notes) ? g.notes : null;
         for (const r of receivers) {
             const v = cellId(r.name);
-            const pairs = notes ? [notes, ...members].flatMap((n) => soundsOf(result, r.via).map((x) => edgeId(cellId(n), cellId(x)))) : [];
+            const mine = allOf(r.outputs);
             link({
                 id: edgeId(into, v),
                 source: into,
@@ -385,7 +385,7 @@ export function writtenGraph(result, { card = false } = {}) {
                 transforms: AS_IS,
                 sound: r.name,
                 ...(notes ? { notes } : {}),
-                routes: pairs.length ? [pairs, [edgeId(cellId(r.via), into), ...intoGate]] : [[edgeId(cellId(r.via), into), ...intoGate]],
+                routes: [mine.notes, mine.sound],
                 ...wire('voice', 'cv', into, v, notes ? chord(notes) : 1),
             });
         }
@@ -403,8 +403,9 @@ export function writtenGraph(result, { card = false } = {}) {
         const gate = result.cells.get(b.voice.name);
         if (!terms.length && port === 'mix' && gate.gate) {
             through.add(flow);
-            for (const r of gateVoices(result, gate)) {
+            for (const r of gateVoices(result, gate.name)) {
                 const v = cellId(r.name);
+                const { notes, sound } = gatePairs(result, gate.name, r.outputs);
                 link({
                     id: edgeId(v, into),
                     source: v,
@@ -412,7 +413,7 @@ export function writtenGraph(result, { card = false } = {}) {
                     count: 1,
                     transforms: gain,
                     sound: r.name,
-                    routes: [[edgeId(cellId(r.via), voice), ...(gate.gate.lines ?? []).map((l) => edgeId(cellId(l.line), voice))], [flow]],
+                    routes: [notes, sound, [flow]],
                     ...wire(port, band, v, into, width),
                 });
             }
@@ -426,7 +427,7 @@ export function writtenGraph(result, { card = false } = {}) {
         const tags = c.tags.length ? c.tags : (result.cells.get(b.voice.name)?.tags ?? []);
         through.add(flow);
         const sound = b.voice.name;
-        const voices = soundsOf(result, b.voice.name);
+        const made = productOutputs(result, c.name, b.voice.name);
         const byTerm = new Map();
         for (const t of terms)
             byTerm.set(t.ref.name, [...(byTerm.get(t.ref.name) ?? []), t]);
@@ -434,7 +435,7 @@ export function writtenGraph(result, { card = false } = {}) {
             const at = `${o.voice}:${o.cell}:${t.ref.span.line}:${t.ref.span.col}`;
             return o.id === at || o.id.startsWith(at + '@');
         });
-        const starter = terms.find(startsAt) ?? terms.find((t) => result.outputs.some((o) => voices.includes(o.voice) && (o.tape?.head ?? o.cell) === t.ref.name && !o.gate));
+        const starter = terms.find(startsAt) ?? terms.find((t) => made.some((o) => (o.tape?.head ?? o.cell) === t.ref.name && !o.gate));
         const portOf = (name, inSum) => {
             const c0 = result.cells.get(name);
             return starter?.ref.name === name ? 'voice' : c0.map?.kind === 'adsr' ? 'env' : isLevel(c0, inSum) ? 'level' : 'pitch';
@@ -456,7 +457,7 @@ export function writtenGraph(result, { card = false } = {}) {
             const t = ts[0];
             const lead = !!starter && starter.ref.name === name;
             const port = portOf(name, !!t.inSum);
-            const pairs = voices.map((v) => edgeId(cellId(name), cellId(v)));
+            const pairs = termPairs(made, name);
             for (const id of pairs)
                 through.add(id);
             link({
@@ -510,19 +511,6 @@ export function writtenGraph(result, { card = false } = {}) {
     return { nodes: [...placed, ...junctions], edges, through };
 }
 const isLevel = (c, inSum) => c.map?.kind === 'amp' || c.map?.kind === 'db' || (c.map?.kind === 'lin' && !inSum);
-function gateVoices(result, c) {
-    const vias = new Set((c.mix ?? []).map((b) => b.voice.name));
-    const kit = `${c.name}:kit`;
-    const via = (name) => vias.has(name) ? name : vias.has(kit) ? kit : result.cells.get(name)?.kit && [...vias].some((v) => soundsOf(result, v).includes(VOICE_KIT)) ? VOICE_KIT : name;
-    return (c.gate?.receivers ?? []).filter((r) => result.cells.has(r)).map((name) => ({ name, via: via(name) }));
-}
-function soundsOf(result, name, guard = 0) {
-    const c = result.cells.get(name);
-    if (c?.mix && !c.sink && guard < 16)
-        return c.mix.flatMap((b) => soundsOf(result, b.voice.name, guard + 1));
-    const kit = c?.over ? result.cells.get(c.over) : undefined;
-    return [kit?.kit ? kit.name : name];
-}
 const rateOf = (c) => rateTransform(c.step, typeof c.params.belt === 'number' ? c.params.belt : undefined);
 function rateTransform(s, belt) {
     if (!s.chain.length && !s.cycle && !s.whole && belt === undefined)

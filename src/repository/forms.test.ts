@@ -1,5 +1,5 @@
-// The motifs and the forms (#294, #369): thirty-six motifs, two at each of Jambot's ten presets, one at each point of a
-// meter that had none, and six general-purpose, each a line over the key and a bar of its meter; four forms, each a braid
+// The motifs and the forms (#294, #369): forty motifs, two at each of Jambot's ten presets, one at each point of a
+// meter that had none, six general-purpose, and four more near Spooky's, each a line over the key and a bar of its meter; four forms, each a braid
 // of holes. Every form over every motif compiles over its motif's meter and a key with no diagnostic and plays its length
 // in bars, through the lead performer; and recognition reads the answer of a call and answer as the call transposed two
 // degrees down, by one operator.
@@ -72,6 +72,11 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   run: { point: at(0.5, 0.7, 0.5, 0.5) },
   neighbour: { point: at(0.5, 0.5, 0.3, 0.5) },
   leap: { point: at(0.5, 0.5, 0.7, 0.5) },
+  // (four ghost-house idioms near Spooky's point, each 0.05 to 0.11 from it, nearer than the second, toll)
+  wail: { point: at(0.2, 0.9, 0.3, 0.3) },
+  haunt: { point: at(0.15, 0.9, 0.25, 0.35) },
+  lament: { point: at(0.2, 0.9, 0.25, 0.3) },
+  peek: { point: at(0.3, 0.9, 0.3, 0.3) },
 };
 /** Each form: its head, the hole it reads, and its length in bars over a one-bar motif. */
 const FORMS: Record<string, { head: string; hole: string; bars: number }> = {
@@ -120,7 +125,7 @@ const piece = (form: string, motif: string) => {
 const moved = (braid: string, n: number) => braid.replace(/(^|\s)(-?\d+)/g, (_, space: string, d: string) => `${space}${Number(d) + n}`);
 
 describe('the motifs', () => {
-  it('are thirty-six, each a line over the key named for its fragment, at its point as the facet motif', () => {
+  it('are forty, each a line over the key named for its fragment, at its point as the facet motif', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
       expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
