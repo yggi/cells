@@ -6,7 +6,7 @@ association:
       harm: 0.75
       artic: 0.6
       energy: 0.75
-    weight: 1
+    weight: 0.4
     facet: stab
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 2c120d4
@@ -25,6 +25,6 @@ It is the part the stab performer plays (`&stabline`, decision 058), the first o
 `&charleston`, `&push` and `&ahead` are its helpers: `use &stabline from "Charleston stabs"` takes them.
 It is the example's line at the commit it was lifted from, but for that last stab, which there read the chord in force (the owner's review of #305).
 
-At a point proposed for an Electro swing preset (sync .55, harm .75, artic .6, energy .75), weight 1: no preset of Jambot's sits there yet, and the axes are Jambot's (decision 041), so the point is this file's, Jambot's to adopt.
+At a point proposed for an Electro swing preset (sync .55, harm .75, artic .6, energy .75), weight 0.4, so no other preset finds it within Jambot's miss distance (0.3; at weight 1 it was the first stab of five, #404): no preset of Jambot's sits there yet, and the axes are Jambot's (decision 041), so the point is this file's, Jambot's to adopt.
 
 **Its signature** (decision 065): `&stabline from &harm`. `&stabline from "Charleston stabs" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &stabline from "Charleston stabs"`, it reads `&harm` by name, as before.
