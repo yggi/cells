@@ -1,6 +1,6 @@
 import { readBlocks, rewrite, writeBody } from "./literate.js";
 import { readYaml, writeYaml, yamlValue } from "../repository/yaml.js";
-import { readUse } from "./parser/use.js";
+import { readFrom, readUse } from "./parser/use.js";
 import { splitComment } from "./edit.js";
 const CELLS_FENCE = /^`{3,}\s*cells\s*$/m;
 export const isPieceFile = (source) => /^---\r?\n/.test(source) || CELLS_FENCE.test(source);
@@ -60,7 +60,11 @@ export function withLockfile(file, uses) {
     const once = entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
     return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(once) } };
 }
-const usedIds = (text) => new Set(text.split('\n').flatMap((raw) => readUse(splitComment(raw)[0])?.id ?? []));
+const usedIds = (text) => new Set(text.split('\n').flatMap((raw) => {
+    const code = splitComment(raw)[0];
+    const from = readFrom(code);
+    return readUse(code)?.id ?? (from?.kind === 'use' ? from.id : []);
+}));
 function pruned(frontmatter, text) {
     if (!('uses' in frontmatter) || !Array.isArray(frontmatter.uses))
         return frontmatter;

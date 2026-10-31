@@ -381,6 +381,14 @@ describe('the lockfile', () => {
     expect(writePiece({ ...two, text: '&a s=sine' })).not.toContain('uses');
   });
 
+  it('keeps the entry of a from line on the next save, as of a use line (decision 065)', () => {
+    const fromText = '&bd, &sd, &hh from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
+    const piece = { ...file([{ id: 'gm_kit', hash: 'e1:1' }]), text: fromText };
+    expect(lockfileOf(readPiece(writePiece(piece)) as PieceFile)).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
+    const recorded = writePiece(withLockfile({ ...file(), text: fromText }, compileSource(fromText, undefined, seed).uses!));
+    expect(lockfileOf(readPiece(recorded) as PieceFile)).toEqual([{ id: 'gm_kit', hash: fragmentHash(KIT) }]);
+  });
+
   it('a lockfile that isn’t a list of id and hash is a problem', () => {
     expect(readPiece('---\nuses: [core kit]\n---\n\n```cells\nuse "gm_kit"\n```\n')).toHaveProperty('problems');
   });

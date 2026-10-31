@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.14.0.
+### Fixed
+
+- **A piece file keeps a `from` line's lockfile entry** (decision 065): `writePiece` dropped every entry no `use` line named, so a piece written with `from` lines, as every example is since v0.14.0, lost its lockfile on its next save, and with it the version each fragment was saved at. A `from` line names its fragment as a `use` line does. Found by yggi/cell-studio's pin to v0.14.0 (yggi/cell-studio#526). What a piece plays doesn't change.
 
 ## v0.14.0 — 2026-10-31
 
