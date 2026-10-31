@@ -8,6 +8,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+### Added
+
+- **`kitOf(result, name)`** (`engine/plays.ts`, #385): the kit a cell sounds through (itself, or the kit a pattern is read through) and its drums, said once. **What a frontend sees at its next pin:** a new export; Cell studio's `voicesOf` (`ui/heard.ts`) and the kit reading in `socketHeights` can read it instead of `over=`.
+
+### Changed
+
+- **The graph's gates and products read what the routing plays** (#385, the refactor left from #380): which voices a gate plays, which kit its lines play through, and which written pairs a drawn wire stands for (its `routes`, and `through`) now come from the outputs, through one module both read (`engine/plays.ts`: `sourceOf`, `noteEdge`, `gateVoices`, `gatePairs`, `productOutputs`, `termPairs`), not from the graph's own guesses (`gateVoices`, `soundsOf` and the pair lists in `writtenGraph` go). Over the 81 examples every drawn wire is routed as before (2571 wires, compared over the full routing and the live one at 1, 7, 20 and 45 s), but for one fix below; no event snapshot and no live view's hash moves.
+
+### Fixed
+
+- **A performer that plays its part moved is lit while it plays** (#385): a gate playing `play=&line^$-12` (decision 058; the `bass performer` fragment: Electro swing, Spooky) plays a moved copy, `&line^$-12`, which the graph's guess missed, so a frontend drew the part's wire into the gate and the gate's note bus into its voice as not sounding. Drawing only.
+
 ## v0.14.1 — 2026-10-31
 
 ### Fixed

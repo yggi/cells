@@ -24,6 +24,7 @@ import { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from './ids';
 import { chainMuted, outputPlays } from './realize';
 import type { GraphModel } from './graph';
 import { flows } from './flows';
+import { noteEdge, sourceOf } from './plays';
 
 export interface Routing {
   /** Node ids (`cell:name`). */
@@ -37,12 +38,6 @@ export type State = 'off' | 'unrouted' | 'on' | 'idle' | 'live';
 
 /** What keeps sound: a sound tape (its loop), a resonator (its ring). */
 const keeps = (result: CompileResult, name: string) => result.tapes.some((t) => t.name === name) || typeof result.cells.get(name)?.params.body === 'string';
-
-/** What its mixes name: the voice, or a kit's stream (&drums, read through the kit, maybe held under a melody); a gate names the kit it plays. */
-const sourceOf = (result: CompileResult, o: Output) => {
-  const read = o.mods.find((m) => m.picks)?.cell ?? o.cell;
-  return o.kit && result.cells.get(read)?.over === o.voice ? read : o.voice;
-};
 
 const playable = (c: ResolvedCell) => c.units.some((u) => leaves(u.atom).some((a) => a.kind === 'note' || a.kind === 'chord' || a.kind === 'choice'));
 
@@ -218,7 +213,7 @@ function notesOf(acc: RouteAcc, o: Output, how: NotesOf) {
     acc.edge(o.tape.head, o.voice);
     acc.clock(o.tape.tape);
     acc.timed(o.tape.head);
-  } else acc.edge(o.cell, o.voice);
+  } else acc.edge(o.cell, o.voice, noteEdge(o)!);
   for (const m of [...o.mods, ...o.levels])
     if (!acc.off(m.cell)) {
       acc.edge(m.cell, o.voice);

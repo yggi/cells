@@ -12,6 +12,7 @@ import { leaves } from './subseq';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
 import { VOICE_KIT } from './compiler/declare';
 import { refsOf } from './readers';
+import { gatePairs, gateVoices, productOutputs, termPairs } from './plays';
 import type { Transform } from './transform';
 
 export type GraphNode =
@@ -438,8 +439,9 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
       const gate = result.cells.get(child);
       if (gate?.gate && spliceBand(child) === 'audio') {
         through.add(edgeId(id, cellId(child)));
-        for (const r of gateVoices(result, gate)) {
+        for (const r of gateVoices(result, child)) {
           const v = cellId(r.name);
+          const { notes, sound } = gatePairs(result, child, r.outputs);
           link({
             id: edgeId(id, v),
             source: id,
@@ -447,7 +449,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
             count,
             transforms: AS_IS,
             sound: r.name,
-            routes: [[edgeId(cellId(r.via), cellId(child))], [edgeId(id, cellId(child))]],
+            routes: [notes, sound, [edgeId(id, cellId(child))]],
             ...wire('braid', 'audio', id, v, 1, true),
           });
         }
@@ -541,22 +543,22 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
     const g = c.gate;
     if (!g) continue;
     const into = cellId(c.name);
-    const receivers = gateVoices(result, c);
-    // (the written pairs the routing knows: each term into each voice it plays, each voice into the gate)
-    const flows = [...new Set(receivers.map((r) => edgeId(cellId(r.via), into)))];
-    for (const f of flows) through.add(f);
+    const receivers = gateVoices(result, c.name);
+    // (what its outputs take into it, all of them and a receiver's: the routing's pairs, plays.ts)
+    const all = gatePairs(
+      result,
+      c.name,
+      receivers.flatMap((r) => r.outputs),
+    );
+    const allOf = (made: readonly Output[]) => gatePairs(result, c.name, made);
+    for (const f of all.sound) through.add(f);
     // (a stack of lines it plays: the routing takes each line into the gate as its own term, drawn through the stack)
     const stack = g.lines?.length ? result.cells.get(g.notes) : undefined;
-    const members = stack ? g.lines!.map((l) => l.line).filter((n) => result.cells.has(n)) : [];
-    const pairsOf = (name: string) => receivers.flatMap((r) => soundsOf(result, r.via).map((v) => edgeId(cellId(name), cellId(v))));
-    // (and into each voice it plays: a stack's level goes there, as a kit's stream does, `kit:voices`)
-    const intoVoices = (name: string) => receivers.flatMap((r) => [r.name, ...(result.cells.get(r.name)?.kit ? [VOICE_KIT] : [])].map((v) => edgeId(cellId(name), cellId(v))));
-    const intoGate = members.map((m) => edgeId(cellId(m), into));
-    for (const id of intoGate) through.add(id);
+    const plays = (line: string) => g.lines?.find((l) => l.line === line)?.plays ?? line;
+    const outputsOf = (line: string) => receivers.flatMap((r) => r.outputs).filter((o) => o.cell === plays(line));
+    for (const id of [...all.notes, ...all.terms]) through.add(id);
     for (const { name, port } of [{ name: g.notes, port: g.port as string }, ...g.levels]) {
       if (!result.cells.has(name)) continue;
-      const pairs = [...pairsOf(name), ...(name === g.notes ? members.flatMap((m) => [...pairsOf(m), ...intoVoices(m)]) : [])];
-      for (const id of pairs) through.add(id);
       link({
         id: edgeId(cellId(name), into),
         source: cellId(name),
@@ -564,36 +566,39 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
         count: 1,
         transforms: AS_IS,
         ...(receivers[0] ? { sound: receivers[0].name } : {}),
-        routes: [pairs, name === g.notes ? [...flows, ...intoGate] : flows],
+        routes: [all.notes, all.sound],
         ...wire(port, 'cv', cellId(name), into, name === g.notes ? chord(name) : 1),
       });
     }
     // a stack of lines it plays (#302, `play=&drumlines`, `&drumlines [&kick * &kickForm, &hats]`): each member written
     // into the stack's cell as a gate's own terms go into the gate, its line on `play`, its levels on `level` (#329); a
-    // line's wire is routed when the routing takes it into the gate
+    // member's wire is routed when an output of its line is
     if (stack && !stacks.has(stack.name)) {
       stacks.add(stack.name);
       const lines = new Set(g.lines!.map((l) => l.line));
       const into = cellId(stack.name);
       for (const u of stack.units) {
         if (u.atom.kind !== 'mix') continue;
-        for (const e of u.atom.exprs)
-          for (const r of e.k === 'ref' ? [e.ref] : e.k === 'prod' ? e.factors.flatMap((f) => (f.k === 'ref' ? [f.ref] : [])) : []) {
+        for (const e of u.atom.exprs) {
+          const refs = e.k === 'ref' ? [e.ref] : e.k === 'prod' ? e.factors.flatMap((f) => (f.k === 'ref' ? [f.ref] : [])) : [];
+          // (the line this term of the stack plays, or levels: the outputs of its line)
+          const made = refs.flatMap((r) => (lines.has(r.name) ? outputsOf(r.name) : []));
+          const { notes, sound } = allOf(made);
+          for (const r of refs) {
             if (!result.cells.has(r.name)) continue;
             const port = lines.has(r.name) ? 'play' : 'level';
             const from = cellId(r.name);
-            // (a level of a line goes, in the routing, straight into the voices the gate plays)
-            for (const id of [...pairsOf(r.name), ...intoVoices(r.name)]) through.add(id);
             link({
               id: edgeId(from, into),
               source: from,
               target: into,
               count: 1,
               transforms: [refTransform(r)],
-              routes: [[...pairsOf(r.name), ...intoVoices(r.name), ...(port === 'play' ? [edgeId(from, cellId(c.name))] : [])]],
+              routes: [notes, sound],
               ...wire(port, 'cv', from, into, port === 'play' ? chord(r.name) : 1),
             });
           }
+        }
       }
     }
     // its one output: a note bus to the voices it plays (a strand per note at once, its notes' chords), each voice
@@ -601,8 +606,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
     const notes = result.cells.has(g.notes) ? g.notes : null;
     for (const r of receivers) {
       const v = cellId(r.name);
-      // (a stack's lines each go into the voices themselves, as the routing takes them)
-      const pairs = notes ? [notes, ...members].flatMap((n) => soundsOf(result, r.via).map((x) => edgeId(cellId(n), cellId(x)))) : [];
+      const mine = allOf(r.outputs);
       link({
         id: edgeId(into, v),
         source: into,
@@ -611,7 +615,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
         transforms: AS_IS,
         sound: r.name,
         ...(notes ? { notes } : {}),
-        routes: pairs.length ? [pairs, [edgeId(cellId(r.via), into), ...intoGate]] : [[edgeId(cellId(r.via), into), ...intoGate]],
+        routes: [mine.notes, mine.sound],
         ...wire('voice', 'cv', into, v, notes ? chord(notes) : 1),
       });
     }
@@ -633,8 +637,9 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
     const gate = result.cells.get(b.voice.name)!;
     if (!terms.length && port === 'mix' && gate.gate) {
       through.add(flow);
-      for (const r of gateVoices(result, gate)) {
+      for (const r of gateVoices(result, gate.name)) {
         const v = cellId(r.name);
+        const { notes, sound } = gatePairs(result, gate.name, r.outputs);
         link({
           id: edgeId(v, into),
           source: v,
@@ -642,8 +647,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
           count: 1,
           transforms: gain,
           sound: r.name,
-          // (a stack's lines go into the gate each on its own, as the routing takes them)
-          routes: [[edgeId(cellId(r.via), voice), ...(gate.gate!.lines ?? []).map((l) => edgeId(cellId(l.line), voice))], [flow]],
+          routes: [notes, sound, [flow]],
           ...wire(port, band, v, into, width),
         });
       }
@@ -657,8 +661,8 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
     const tags = c.tags.length ? c.tags : (result.cells.get(b.voice.name)?.tags ?? []);
     through.add(flow);
     const sound = b.voice.name;
-    // (the voices the routing plays it on: an instrument's own, a kit for a pattern read through one)
-    const voices = soundsOf(result, b.voice.name);
+    // (the outputs it makes, on the voices the routing plays it on: an instrument's own, a kit for a pattern read through one)
+    const made = productOutputs(result, c.name, b.voice.name);
     const byTerm = new Map<string, typeof terms>();
     for (const t of terms) byTerm.set(t.ref.name, [...(byTerm.get(t.ref.name) ?? []), t]);
     // the term that starts notes: an output's, where it is written (a product written again, in another mix, is the
@@ -668,7 +672,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
         const at = `${o.voice}:${o.cell}:${t.ref.span.line}:${t.ref.span.col}`;
         return o.id === at || o.id.startsWith(at + '@');
       });
-    const starter = terms.find(startsAt) ?? terms.find((t) => result.outputs.some((o) => voices.includes(o.voice) && (o.tape?.head ?? o.cell) === t.ref.name && !o.gate));
+    const starter = terms.find(startsAt) ?? terms.find((t) => made.some((o) => (o.tape?.head ?? o.cell) === t.ref.name && !o.gate));
     // what each term is in the product: the one that starts notes, an envelope, a level, a pitch
     const portOf = (name: string, inSum: boolean) => {
       const c0 = result.cells.get(name)!;
@@ -691,7 +695,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
       const t = ts[0];
       const lead = !!starter && starter.ref.name === name;
       const port = portOf(name, !!t.inSum);
-      const pairs = voices.map((v) => edgeId(cellId(name), cellId(v)));
+      const pairs = termPairs(made, name);
       for (const id of pairs) through.add(id);
       link({
         id: edgeId(cellId(name), j),
@@ -756,27 +760,6 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
 
 /** In a product, a volume rather than a pitch: map=amp or db, or map=lin as a bare factor (algebra.ts). */
 const isLevel = (c: ResolvedCell, inSum: boolean) => c.map?.kind === 'amp' || c.map?.kind === 'db' || (c.map?.kind === 'lin' && !inSum);
-
-/** The voices a mix's entry plays on (as compile expands it): an instrument's own, the kit a pattern is read through. */
-/**
- * The voices a gate plays, as drawn (decision 022): each receiver it names, with the voice its product plays (`via`):
- * the receiver itself, or the kit it made of several bare voices (declare.ts: gates).
- */
-function gateVoices(result: CompileResult, c: ResolvedCell): { name: string; via: string }[] {
-  const vias = new Set((c.mix ?? []).map((b) => b.voice.name));
-  const kit = `${c.name}:kit`;
-  // (a kit whose lines name their drums plays them through the grooves' kit, `kit:voices`, which it holds: #379)
-  const via = (name: string) =>
-    vias.has(name) ? name : vias.has(kit) ? kit : result.cells.get(name)?.kit && [...vias].some((v) => soundsOf(result, v).includes(VOICE_KIT)) ? VOICE_KIT : name;
-  return (c.gate?.receivers ?? []).filter((r) => result.cells.has(r)).map((name) => ({ name, via: via(name) }));
-}
-
-function soundsOf(result: CompileResult, name: string, guard = 0): string[] {
-  const c = result.cells.get(name);
-  if (c?.mix && !c.sink && guard < 16) return c.mix.flatMap((b) => soundsOf(result, b.voice.name, guard + 1));
-  const kit = c?.over ? result.cells.get(c.over) : undefined;
-  return [kit?.kit ? kit.name : name];
-}
 
 /** A step's rate as written (step=&x*3/2, cycle(&x), loop=, belt=); nothing when it is the driver's own. */
 const rateOf = (c: ResolvedCell): Transform => rateTransform(c.step!, typeof c.params.belt === 'number' ? c.params.belt : undefined);
