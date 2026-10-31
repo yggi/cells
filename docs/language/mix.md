@@ -87,6 +87,12 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 &out loop=SAMPLE_RATE map=sample [&drums]
 ```
 
+**A gate's part is a performer's** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §4).
+A part that rests is written as a rest (`&leadline step=1m ~`, a tacet), and nothing is said of it.
+A part a gate plays that no line writes rests too, and an info says so (`&lead2 plays &lead2line, which no line writes: it rests`): a band's own player the score has no part for.
+In a piece with performers, a line that steps and that nothing plays or reads is silent, as it always was, and now an info says so: a part with no performer for it (not the harmony, the key or the style a score offers its band, which a band may leave unread).
+An info is said, never an error: a name read anywhere else and declared nowhere is still `Unknown cell`.
+
 A gate also plays a **stack of lines**: `play=&drumlines`, where `&drumlines [&kick, &backbeat, &euclid * &euclidLevel]`
 is a chord of lines, each times its levels if it has any (level cells and numbers, as in a mix; a sound beside a line
 is refused). It plays each line as it would play that line alone, on each of its voices at its level, so each keeps its

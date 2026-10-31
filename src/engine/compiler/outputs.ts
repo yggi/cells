@@ -9,6 +9,8 @@ import type { Cells, Ctx } from './context';
 
 export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, clocks: ReadonlyMap<string, Clock>, { sinks, cards, bindings, soundHead }: Bound) {
   const { parsed, error, warn, unknownCell } = ctx;
+  // (the parts the gates play, what each reads for its notes: a part a score rests is a tacet)
+  const partsOfGates = new Set([...decls.values()].flatMap((d) => (d.gate ? [d.gate.notes, d.gate.plays, ...(d.gate.lines ?? []).flatMap((l) => [l.line, l.plays])] : [])));
   // ---- outputs: one per voice binding. Articulation (rule 2): the step= term
   // starts notes — of several, the finest (a melody over its harmony: the coarser
   // ones hold, as loop= terms do); loop= terms bend them; terms that don't move hold.
@@ -220,8 +222,9 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
       error(`&${cell.name} has no steps to play`, t.ref.span);
       continue;
     }
-    // (a melody of rests only, its splices and picks followed: &e ~, then &mel &e[0]; not a braid left free for a take)
-    if (!tapeOf.has(t) && onlyRests(cells, cell, t.ref.pick))
+    // (a melody of rests only, its splices and picks followed: &e ~, then &mel &e[0]; not a braid left free for a take;
+    // not a performer's part, which a score rests on purpose, a tacet: &leadline step=1m ~, decision 063 §4)
+    if (!tapeOf.has(t) && !partsOfGates.has(cell.name) && onlyRests(cells, cell, t.ref.pick))
       warn(`&${cell.name}${t.ref.pick ? pickLabel(t.ref.pick) : ''} plays only rests (~): nothing sounds on &${voice.name}`, t.ref.span);
     outputs.push({
       id: `${voice.name}:${cell.name}:${t.ref.span.line}:${t.ref.span.col}`,

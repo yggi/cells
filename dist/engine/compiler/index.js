@@ -14,10 +14,13 @@ import { checkLimits } from "./limits.js";
 import { sectioned } from "./sections.js";
 import { banded, bandsOf, checkBands, performersOf } from "./band.js";
 import { readSlots } from "./slots.js";
+import { restingParts, unplayed } from "./parts.js";
 const pluginsOf = (parsed) => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
 export function compile(written, env, used = new Set()) {
-    const parsed = readSlots(written);
+    const { parsed, rested } = restingParts(readSlots(written));
     const ctx = context(parsed, env);
+    for (const [name, span] of rested)
+        ctx.unknown.set(name, [span]);
     const declared = builtinCard(ctx, declare(ctx), used);
     const { decls, builtin } = declared;
     const typed = sorts(ctx, decls);
@@ -33,6 +36,7 @@ export function compile(written, env, used = new Set()) {
     const { returns, resonances } = made;
     const outputs = banded(sectioned(made.outputs, timed.cells, declared.sections), timed.cells, bands);
     checkLimits(ctx, decls, timed.cells, clocks, outputs);
+    unplayed(ctx, decls, timed.cells, outputs, clocks);
     const cells = displayCells(timed.cells);
     checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands);
     const performers = performersOf(ctx, decls, declared.implicit);

@@ -218,7 +218,9 @@ describe('a gate', () => {
       }),
     ]);
     expect(spans(G + '&g play=&tune [&v]\n&h trigger=&tune velocity=&g &v')[0].message).toMatch(/^velocity=&g: a gate's velocity= takes a level/);
-    expect(spans(G + '&h play=&v [&v]')[0].message).toMatch(/^play=&v: a gate's play= takes the notes it plays .* and &v is a sound \(a voice\)/);
+    expect(spans(G + '&h play=&v [&v]').filter((d) => d.severity !== 'info')[0].message).toMatch(
+      /^play=&v: a gate's play= takes the notes it plays .* and &v is a sound \(a voice\)/,
+    );
   });
 });
 
