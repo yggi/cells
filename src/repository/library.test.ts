@@ -39,8 +39,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the fifteen rhythms, the six bass lines, the six harmonies, the thirteen instruments, the vibrato and the envelopes, the nine modes, the five performers, the stab line, the thirty-six motifs and the four forms, every point associated as its facet, the bell and scale as two: a hundred and ten', () => {
-    expect(LIBRARY).toHaveLength(110);
+  it('is the thirteen meters, the sixteen rhythms, the seven bass lines, the seven harmonies, the fourteen instruments, the vibrato and the envelopes, the nine modes, the five performers, the stab line, the forty motifs and the four forms, every point associated as its facet, the bell and scale as two: a hundred and eighteen', () => {
+    expect(LIBRARY).toHaveLength(118);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -65,7 +65,7 @@ describe('the library', () => {
       STAB_FRAGMENTS.length,
       MOTIF_FRAGMENTS.length,
       FORM_FRAGMENTS.length,
-    ]).toEqual([13, 15, 6, 6, 13, 2, 9, 5, 1, 36, 4]);
+    ]).toEqual([13, 16, 7, 7, 14, 2, 9, 5, 1, 40, 4]);
   });
 
   it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
@@ -87,11 +87,11 @@ describe('the library', () => {
 
   it('and so do the rhythms, with the bell and scale: the bass lines, the harmonies and the modes change no rhythm query', () => {
     for (const point of POINTS)
-      expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 16, {}, { facet: 'rhythm' })));
+      expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 17, {}, { facet: 'rhythm' })));
   });
 
   it('and so do the bass lines: the harmonies change no bass query', () => {
-    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'bass' })), JSON.stringify(point)).toEqual(ranked(basses.query(point, 6)));
+    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'bass' })), JSON.stringify(point)).toEqual(ranked(basses.query(point, 7)));
   });
 
   it('and so does one that names chosen fragments with no use recorded', () => {
@@ -116,7 +116,21 @@ describe('the points proposed for two more presets (#349)', () => {
     '3/4': { ...SPOOKY, energy: 0.43 },
   };
   const same = (a: StylePoint, b: StylePoint) => AXES.every((axis) => a[axis] === b[axis]);
-  const NEW = new Set(['Spooky drums', 'creeping bass', 'dark cadence', 'diesIrae']);
+  // (and the ghost-house fragments near Spooky, added after: the presets' first finds are what they were before either)
+  const NEW = new Set([
+    'Spooky drums',
+    'creeping bass',
+    'dark cadence',
+    'diesIrae',
+    'Ghost drums',
+    'tiptoe bass',
+    'haunted progression',
+    'wail',
+    'haunt',
+    'lament',
+    'peek',
+    'haunted pad',
+  ]);
   const before = createRepository(
     LIBRARY.filter((f) => !NEW.has(f.id)).map((f) => ({ ...f, association: f.association.filter((wp) => !(ADDED[f.id] && same(wp.point, ADDED[f.id]!))) })),
   );

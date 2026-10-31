@@ -61,7 +61,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     ]);
   });
 
-  it('each of the bass seeds’ 48 (28, and the 20 bends and trims, #267)', () => {
+  it('each of the bass seeds’ 53 (32, and the 21 bends and trims, #267)', () => {
     const options = { workbench: BASS, operators: PITCHED_OPERATORS };
     let n = 0;
     for (const f of BASS_FRAGMENTS)
@@ -70,7 +70,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
         expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${f.id}, ${v.by}`).toEqual([f.id, [v.by], 0]);
         n++;
       }
-    expect(n).toBe(48);
+    expect(n).toBe(53);
   });
 
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {

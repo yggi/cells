@@ -11,17 +11,17 @@ import { codeShifts } from '../engine/program';
 import { windowAt } from '../engine/schedule';
 import { BASS_FRAGMENTS } from './bass';
 import { fitOf } from './fit';
-import { createRepository, type StylePoint } from './fragments';
+import { createRepository, fragmentDistance, type StylePoint } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
-import { AMBIENT, at, FUNK, SPOOKY, TECHNO } from './presets';
+import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { SEED } from './seed';
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
 /** The vamps, Jambot's themes' (`VAMPS`); the harmony written by hand for the point proposed for Spooky (#349) is not one. */
-const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter((f) => f.id !== 'dark cadence');
+const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter((f) => !['dark cadence', 'haunted progression'].includes(f.id));
 
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 
@@ -97,8 +97,16 @@ function chordsPlayed(text: string): number[][] {
 }
 
 describe('the harmonies', () => {
-  it('are five vamps, each one or two triads over the key, eight bars a lap, and the dark cadence', () => {
-    expect(HARMONY_FRAGMENTS.map((f) => f.id)).toEqual(['tonic vamp', 'vamp to the seventh', 'vamp to the fourth', 'vamp to the sixth', 'vamp to the fifth', 'dark cadence']);
+  it('are five vamps, each one or two triads over the key, eight bars a lap, the dark cadence and the haunted progression', () => {
+    expect(HARMONY_FRAGMENTS.map((f) => f.id)).toEqual([
+      'tonic vamp',
+      'vamp to the seventh',
+      'vamp to the fourth',
+      'vamp to the sixth',
+      'vamp to the fifth',
+      'dark cadence',
+      'haunted progression',
+    ]);
     expect(VAMP_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
   });
 
@@ -204,5 +212,36 @@ describe('the dark cadence (#349)', () => {
         .query(SPOOKY, 1, {}, { facet: 'harmony' })
         .map((f) => [f.fragment.id, f.distance]),
     ).toEqual([['dark cadence', 0]]);
+  });
+});
+
+describe('the haunted progression', () => {
+  const haunted = HARMONY_FRAGMENTS.find((f) => f.id === 'haunted progression')!;
+  it('is i, III, iv, V, ♭VI, ii, V and i, a chord a bar, eight bars a lap: a progression Jambot reads', () => {
+    expect(degreesOf(haunted.text)).toEqual([0, 2, 3, 4, 5, 1, 4, 0]);
+  });
+
+  it('in D harmonic minor passes through both unstable triads: F augmented and E diminished', () => {
+    const host = '&bar meter("4/4") step=120bpm\n&tonic D\n&key scale(harmonic, &tonic)';
+    const text = `${fitOf(haunted.text, host).union.text}\n${PROBE}`;
+    const dm = [2, 5, 9],
+      faug = [1, 5, 9],
+      gm = [2, 7, 10],
+      a = [1, 4, 9],
+      bb = [2, 5, 10],
+      edim = [4, 7, 10];
+    expect(chordsPlayed(text)).toEqual([dm, faug, gm, a, bb, edim, a, dm]);
+  });
+
+  // (at half weight, so it is found within Jambot's miss distance, 0.3, of Spooky's point alone)
+  it('sits 0.05 below Spooky in energy at half weight, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
+    expect(haunted.association).toEqual([{ point: { ...SPOOKY, energy: 0.3 }, weight: 0.5, facet: 'harmony' }]);
+    const repository = createRepository(LIBRARY);
+    expect(repository.query(SPOOKY, 2, {}, { facet: 'harmony' }).map((f) => [f.fragment.id, Math.round(f.distance * 100) / 100])).toEqual([
+      ['dark cadence', 0],
+      ['haunted progression', 0.05],
+    ]);
+    const others = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ, ELECTRO_SWING };
+    for (const [name, point] of Object.entries(others)) expect(fragmentDistance(haunted, point, {}, 'harmony'), name).toBeGreaterThan(0.3);
   });
 });
