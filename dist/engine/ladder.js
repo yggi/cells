@@ -24,6 +24,8 @@ export const PENDING = new Set([
     'reference &name[slot]',
     'map map=style',
     'attribute style',
+    'parameter licence',
+    'parameter accents',
 ]);
 export function formKey(e) {
     if (e.section === 'attribute' || e.section === 'parameter')
