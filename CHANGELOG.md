@@ -11,6 +11,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 ### Added
 
 - **The default performer, in cells** (decision 063 §2, #392). `perform(event, route, bar, read, widths)` plays one of cells' events as the family's feel contract plays it (yggi/music-commons `contracts/feel`, version 1, minor 1): its velocity loosened and accented, its length gated, by draws keyed by the bar and step, never its onset; `played`, `feelOf`, `readerOf`, `readingOf` the rule, and `swungAt`, `writtenAt` a bar's swing. Lifted from Cell studio's (`src/session/feel.ts`, `perform.ts`, `swing.ts` @ d5e7634), written there from the hub's page; the hub's vectors run here (`fixtures/contracts/feel.json`): 7,140 of 7,140 events at Jambot's velocities and lengths, none recorded. **A performer's widths:** `licence=` and `accents=` on a gate (`widthsOf`), each a share of the feel's, 1 where unwritten (the contract's bits), 0 exactly as written, `free(…)` allowed. **What a frontend sees at its next pin:** Cell studio's and Jambot's own copies of the feel can go for cells' (yggi/cell-studio#525, yggi/jambot#531); two new attributes on a gate. Nothing a piece plays changes (cells sounds a piece as written; a frontend applies the performer), and no event snapshot moves.
+### Changed
+
+- **A seed placed for one preset is no other's within Jambot's miss distance** (#404). A new gate in `library.test.ts`: over Jambot's ten preset points and the facets a frontend asks for at its point (meter, mode, rhythm, bass, harmony, motif, instrument, stab, expression), no preset's first find within 0.3 was placed for another preset. To meet it, `dark cadence`, `haunted progression` and `Charleston stabs` are weighted 0.4, not 1 (and 0.5): at 1, the dark cadence was the nearest harmony to Synth-pop, Deep house, Lo-fi hip hop, Bossa nova and Swing jazz, and the Charleston stabs the nearest stab to the same five, all within 0.3. At their own presets they are found first as before, at distance 0 (the haunted progression 0.06). **What a frontend sees at its next pin:** a harmony or stab query away from Spooky and Electro swing finds them farther; Jambot reads neither a four-bar progression nor the facet `stab` yet (yggi/jambot#538, #541), so nothing it plays changes. No example names a weight, and no event snapshot moves.
+
+### Added
+
+- **Eight ghost-house seeds near Spooky's point** (yggi/jambot#517's Spooky: sync .2, harm .9, artic .3, energy .35), the idioms of a haunted-house cue and no quotation of any tune: four motifs, `wail` (a held note sagging by semitones), `haunt` (the augmented triad up and back), `lament` (a chromatic fall from the fifth to the tonic) and `peek` (the semitones either side of the tonic); the `haunted progression`, eight bars of i, III+, iv, V, ♭VI, ii°, V, i, at weight 0.4 so it is found within 0.3 of Spooky alone (#404); the `tiptoe bass` (the root, then the chord's fifth below, a beat's rest after each); `Ghost drums` (one heartbeat a bar, a faint tick each beat, a knock at mid-bar: the only rhythm that fits 7/8 too); and the `haunted pad`, a slow-swelling `&padV`, 0.05 below Spooky in energy so the organ stays Spooky's pad.
+  The seven but the pad sit 0.025 to 0.07 from Spooky's point by cells' distance (each 0.05 to 0.1 off it on one or two axes; the pad, at an instrument's weight, 0.2), so at Spooky a query finds what it found before first, and these next: a frontend that takes the nearest and moves on when it tires (Jambot's composer) plays them in turn. No preset of Jambot's eight finds a new first fragment in any facet; the library is a hundred and eighteen. No example, no event snapshot moves.
+### Added
+
+- **`kitOf(result, name)`** (`engine/plays.ts`, #385): the kit a cell sounds through (itself, or the kit a pattern is read through) and its drums, said once. **What a frontend sees at its next pin:** a new export; Cell studio's `voicesOf` (`ui/heard.ts`) and the kit reading in `socketHeights` can read it instead of `over=`.
+
+### Changed
+
+- **The graph's gates and products read what the routing plays** (#385, the refactor left from #380): which voices a gate plays, which kit its lines play through, and which written pairs a drawn wire stands for (its `routes`, and `through`) now come from the outputs, through one module both read (`engine/plays.ts`: `sourceOf`, `noteEdge`, `gateVoices`, `gatePairs`, `productOutputs`, `termPairs`), not from the graph's own guesses (`gateVoices`, `soundsOf` and the pair lists in `writtenGraph` go). Over the 81 examples every drawn wire is routed as before (2571 wires, compared over the full routing and the live one at 1, 7, 20 and 45 s), but for one fix below; no event snapshot and no live view's hash moves.
+
+### Fixed
+
+- **A performer that plays its part moved is lit while it plays** (#385): a gate playing `play=&line^$-12` (decision 058; the `bass performer` fragment: Electro swing, Spooky) plays a moved copy, `&line^$-12`, which the graph's guess missed, so a frontend drew the part's wire into the gate and the gate's note bus into its voice as not sounding. Drawing only.
 
 ## v0.14.1 — 2026-10-31
 

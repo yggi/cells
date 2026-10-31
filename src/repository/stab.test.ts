@@ -28,7 +28,7 @@ const HOST = '&bar meter("4/4") step=120bpm\n&key scale(harmonic, D)\n&harm over
 describe('the stab lines', () => {
   it('are the Charleston, associated as the facet stab at the point proposed for Electro swing', () => {
     expect(STAB_FRAGMENTS.map((f) => f.id)).toEqual(['Charleston stabs']);
-    expect(STAB_FRAGMENTS[0]!.association).toEqual([{ point: PROPOSED, weight: 1, facet: 'stab' }]);
+    expect(STAB_FRAGMENTS[0]!.association).toEqual([{ point: PROPOSED, weight: 0.4, facet: 'stab' }]);
   });
 
   it.each(STAB_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s uses &harm alone, and fits a workbench that writes it', (_, text) => {
