@@ -54,7 +54,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are a hundred and nineteen', () => expect(files).toHaveLength(119));
+  it('are a hundred and twenty', () => expect(files).toHaveLength(120));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);

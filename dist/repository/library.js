@@ -10,6 +10,7 @@ import { STAB_FRAGMENTS } from "./stab.js";
 import { MOTIF_FRAGMENTS } from "./motifs.js";
 import { FORM_FRAGMENTS } from "./forms.js";
 import { BAND_FRAGMENTS } from "./bands.js";
+import { STYLE_FRAGMENTS } from "./styles.js";
 export const LIBRARY = [
     ...METER_FRAGMENTS,
     ...RHYTHM_FRAGMENTS,
@@ -23,6 +24,7 @@ export const LIBRARY = [
     ...MOTIF_FRAGMENTS,
     ...FORM_FRAGMENTS,
     ...BAND_FRAGMENTS,
+    ...STYLE_FRAGMENTS,
 ];
 export const RETIRED = new Map([
     ['core kit', 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],

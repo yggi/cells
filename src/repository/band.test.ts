@@ -185,7 +185,8 @@ describe('which instrument a performer plays at a style: the band’s choice, at
     expect(scoreStyle('&a map=style 0 0 0 0\n&b map=style 1 1 1 1\n&style style=[&a * .25, &b * .75]')).toEqual({ sync: 0.75, harm: 0.75, artic: 0.75, energy: 0.75 });
     expect(scoreStyle('&style style=&(map=style sync=.2 harm=.9 artic=.3 energy=.35)')).toEqual(SPOOKY);
     expect(scoreStyle('&bar meter("4/4")')).toBeNull();
-    expect(scoreStyle('&style style=&funk\n&funk from styles')).toBeNull();
+    // (a style taken by name is read through the score's expansion: the seed library's `styles`, `styles.test.ts`)
+    expect(scoreStyle('&style style=&funk\n&funk from styles')).toEqual(FUNK);
   });
 
   it('answers `band` with the band at the score’s style, the centre where it names none, and every other id as the library does', () => {

@@ -41,10 +41,11 @@ export declare function instrumentsAt(point: StylePoint, fragments?: readonly Fr
 export declare function bandAt(point: StylePoint, band?: string, fragments?: readonly Fragment[]): string;
 /**
  * The style a score starts on: where its `&style` note's `style=` starts (a range's first end), as a point on the axes;
- * null where the score names no style, or names one by a cell it takes from elsewhere (`&funk from styles`), which
- * only its compile reads.
+ * null where the score names no style. A style it takes from elsewhere (`&funk from styles`, `&style style=&funk`) is
+ * read through its expansion by `resolve` (the seed library by default), its band left out: a band reads the style, it
+ * never sets it.
  */
-export declare function scoreStyle(score: string): StylePoint | null;
+export declare function scoreStyle(score: string, resolve?: Resolve): StylePoint | null;
 /**
  * A resolver that answers `band` with the default band at the score's style (`bandAt` at `scoreStyle`, the centre where
  * it names none), and every other id as `resolve` does (the seed library by default, or a client's own library): what

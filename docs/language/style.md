@@ -88,6 +88,18 @@ A factor written out, `* &curve`, sets where between the two ends instead: a lin
 
 A pick of a slot as a factor reads its value, held: `lpf=0..1000 * &pluck[sustain]` is 500 Hz with `&pluck map=adsr .01 .3 .5 .4`.
 
+## The presets' styles: styles
+
+The seed library holds Jambot's ten presets as styles, the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing` and `&spooky`, each at the point its preset plays.
+A score takes one by name where its section sits exactly on it, and writes its numbers, or a mix of styles, where it doesn't ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §3).
+
+```cells
+&funk, &bossaNova from styles
+&style label="Funk, turning to Bossa nova" style=&funk..&bossaNova
+```
+
+The collection is associated at each of the ten points as the facet `style`, so the style nearest a point is a query too.
+
 ## The default band: a score played as its style says
 
 A score ends in `* from band`, and the client's resolver answers `band` ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §1).
@@ -104,9 +116,10 @@ It sends the score on a MIDI card on Jambot's channels and hears it on a sound c
 &padline over=&harm step=1m [0,1,2]
 &stabline step=1m ~
 &leadline over=&key step=8n 4 ~ 3 2 0@4
-&style label="Funk, a section" style=&(map=style 1 .12 .85 .75)
+&funk from styles
+&style label="Funk, a section" style=&funk
 * from band
 ```
 
-Which instrument a performer plays at a style is the band's choice too, made at resolution: `resolveBand(score)` answers `band` with each pitched voice the instrument the library ranks first at the score's style (a clarinet at Electro swing's point, a theremin at Spooky's), and the band as written at Jambot's eight presets (`src/repository/band.ts`).
+Which instrument a performer plays at a style is the band's choice too, made at resolution: `resolveBand(score)` answers `band` with each pitched voice the instrument the library ranks first at the score's style, named or written as numbers, (a clarinet at Electro swing's point, a theremin at Spooky's), and the band as written at Jambot's eight presets (`src/repository/band.ts`).
 A line can't make that choice: a voice reads a style as a moving parameter, and a wave or an envelope's times are not one.
