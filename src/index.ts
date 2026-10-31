@@ -66,6 +66,8 @@ export { STAB_FRAGMENTS } from './repository/stab';
 export { EXPRESSION_FRAGMENTS } from './repository/expression';
 export { MOTIF_FRAGMENTS } from './repository/motifs';
 export { FORM_FRAGMENTS } from './repository/forms';
+export { BAND_FRAGMENTS } from './repository/bands';
+export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES, type FoundInstrument, type VoicedPart } from './repository/band';
 export { LIBRARY, resolveSeed } from './repository/library';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';

@@ -117,6 +117,8 @@ describe('a band: a selector over the performers (decision 061)', () => {
         '&bassLevel map=amp .8',
         form,
         '&out map=midi ~ &bassOut',
+        // (heard on a sound card too: the bass has a sound of its own, which MIDI doesn't send, #391)
+        '&hear map=sample [&bassOut]',
       ].join('\n');
     const at = (src: string) => {
       const r = compileSource(src, undefined, { resolve: resolveSeed });

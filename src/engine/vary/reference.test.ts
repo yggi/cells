@@ -37,8 +37,8 @@ const CASES = [
   ),
 ];
 
-/** The text read with the reference where the line was: the entry that read the line reads a cell that plays it. */
-const referred = (text: string, v: Variation) => `${text.replace(new RegExp(`(\\[|, )${v.line}(?=[,\\] *])`), '$1&referred')}\n${v.reference!.line('referred')}`;
+/** The text read with the reference where the line was: each entry that read the line (a card's, a bass line's two: #391) reads a cell that plays it. */
+const referred = (text: string, v: Variation) => `${text.replace(new RegExp(`(\\[|, )${v.line}(?=[,\\] *])`, 'g'), '$1&referred')}\n${v.reference!.line('referred')}`;
 
 const ALL = CASES.flatMap((c) => variations(c.fragment, c.options).map((v) => ({ ...c, v })));
 const WITH = ALL.filter(({ v }) => v.reference);

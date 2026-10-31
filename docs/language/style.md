@@ -84,3 +84,26 @@ With no meter, it glides in seconds.
 A factor written out, `* &curve`, sets where between the two ends instead: a line of numbers from 0 to 1, on its own clock.
 
 A pick of a slot as a factor reads its value, held: `lpf=0..1000 * &pluck[sustain]` is 500 Hz with `&pluck map=adsr .01 .3 .5 .4`.
+
+## The default band: a score played as its style says
+
+A score ends in `* from band`, and the client's resolver answers `band` ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §1).
+The seed library's band, `band` (`fragments/bands/01-band.md`), plays Jambot's five roles on instruments with a sound, and reads the score's `&style` where Jambot's synth reads its style: the bass's cutoff opens with articulation (`lpf=450..900 * &style[artic]`), the lead's with energy (`lpf=1400..3600 * &style[energy]`).
+It sends the score on a MIDI card on Jambot's channels and hears it on a sound card.
+
+```cells
+&bar meter("4/4") step=104bpm
+&key scale(dorian, D)
+&harm over=&key step=1m [0,2,4] [3,5,7]
+&kick step=4n &bd &bd &bd &bd
+&drumlines [&kick]
+&bassline over=&harm step=8n 0 ~ 0 2 ~ 0 4 ~
+&padline over=&harm step=1m [0,1,2]
+&stabline step=1m ~
+&leadline over=&key step=8n 4 ~ 3 2 0@4
+&style label="Funk, a section" style=&(map=style 1 .12 .85 .75)
+* from band
+```
+
+Which instrument a performer plays at a style is the band's choice too, made at resolution: `resolveBand(score)` answers `band` with each pitched voice the instrument the library ranks first at the score's style (a clarinet at Electro swing's point, a theremin at Spooky's), and the band as written at Jambot's eight presets (`src/repository/band.ts`).
+A line can't make that choice: a voice reads a style as a moving parameter, and a wave or an envelope's times are not one.

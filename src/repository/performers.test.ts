@@ -93,7 +93,7 @@ const PARTS = {
 
 describe('the performers', () => {
   it('come by their role: a named use of the role brings its gate, and of the gate alone, no role (decisions 059 and 061)', () => {
-    const score = '&bassline over=&harm step=4n 0 0 1 2\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut';
+    const score = '&bassline over=&harm step=4n 0 0 1 2\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]';
     const performers = (use: string) => {
       const r = compileSource(`${use}\n${HOST}\n${score}`, undefined, { resolve: resolveSeed });
       expect(r.diagnostics.map((d) => d.message)).toEqual([]);
@@ -132,7 +132,9 @@ describe('the performers', () => {
       const was = sent([HOST, ...jambot].join('\n'));
       const now = sent([HOST, ...performer].join('\n'));
       expect(was.diagnostics).toEqual([]);
-      expect(now.diagnostics).toEqual([]);
+      // (the instrument has a sound of its own now, #391, which a MIDI card alone says it doesn't send: decision 064)
+      expect(now.diagnostics).toHaveLength(1);
+      expect(now.diagnostics[0]).toMatch(/^&(bassV|padV|keysV|leadV) is only on a MIDI card: its sound \(s=/);
       expect(now.notes.length).toBeGreaterThan(0);
       expect(now.notes).toEqual(was.notes);
     });
