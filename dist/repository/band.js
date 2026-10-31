@@ -1,4 +1,5 @@
 import { parse } from "../engine/parser/index.js";
+import { expand } from "../engine/use.js";
 import { AXES } from "../engine/style.js";
 import { createRepository } from "./fragments.js";
 import { INSTRUMENT_FRAGMENTS } from "./instruments.js";
@@ -61,14 +62,14 @@ function pointOf(p, decls) {
         return null;
     return AXES.map((_, i) => terms.reduce((a, t) => a + t.w * t.v[i], 0));
 }
-export function scoreStyle(score) {
-    const { cells } = parse(score);
+export function scoreStyle(score, resolve = resolveSeed) {
+    const { cells } = parse(expand(score, (id, hash) => (id === 'band' ? null : resolve(id, hash))));
     const decls = new Map(cells.map((c) => [c.name, c]));
     const style = decls.get('style')?.style;
     const v = style ? pointOf(style.from, decls) : null;
     return v ? Object.fromEntries(AXES.map((a, i) => [a.name, v[i]])) : null;
 }
 export function resolveBand(score, resolve = resolveSeed) {
-    const text = bandAt(scoreStyle(score) ?? CENTRE);
+    const text = bandAt(scoreStyle(score, resolve) ?? CENTRE);
     return (id, hash) => (id === 'band' ? text : resolve(id, hash));
 }

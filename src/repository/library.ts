@@ -1,7 +1,7 @@
 /**
  * The repository's library: every fragment built so far, the meters, the rhythms, the bass lines, the harmonies, the
- * instruments, the modes, the performers, the stab lines, the motifs, the forms and the band, their points associated as `meter`,
- * `rhythm`, `bass`, `harmony`, `instrument`, `mode`, `performer`, `stab`, `motif`, `form` and `band` (the
+ * instruments, the modes, the performers, the stab lines, the motifs, the forms, the band and the styles, their points associated as `meter`,
+ * `rhythm`, `bass`, `harmony`, `instrument`, `mode`, `performer`, `stab`, `motif`, `form`, `band` and `style` (the
  * bell and scale both `mode` and `rhythm`). A query names its facet (`{ facet: 'meter' }`) and measures only the points
  * of that facet, so adding fragments of another never changes what it returns.
  */
@@ -19,8 +19,9 @@ import { STAB_FRAGMENTS } from './stab';
 import { MOTIF_FRAGMENTS } from './motifs';
 import { FORM_FRAGMENTS } from './forms';
 import { BAND_FRAGMENTS } from './bands';
+import { STYLE_FRAGMENTS } from './styles';
 
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, the forms, then the band: a hundred and eleven fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, the forms, the band, then the styles: a hundred and twelve fragments. */
 export const LIBRARY: readonly Fragment[] = [
   ...METER_FRAGMENTS,
   ...RHYTHM_FRAGMENTS,
@@ -34,6 +35,7 @@ export const LIBRARY: readonly Fragment[] = [
   ...MOTIF_FRAGMENTS,
   ...FORM_FRAGMENTS,
   ...BAND_FRAGMENTS,
+  ...STYLE_FRAGMENTS,
 ];
 
 /**

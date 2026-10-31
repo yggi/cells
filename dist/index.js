@@ -35,6 +35,7 @@ export { EXPRESSION_FRAGMENTS } from "./repository/expression.js";
 export { MOTIF_FRAGMENTS } from "./repository/motifs.js";
 export { FORM_FRAGMENTS } from "./repository/forms.js";
 export { BAND_FRAGMENTS } from "./repository/bands.js";
+export { STYLE_FRAGMENTS } from "./repository/styles.js";
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES } from "./repository/band.js";
 export { LIBRARY, resolveSeed } from "./repository/library.js";
 export { ALL_OPERATORS, createRecogniser } from "./repository/recognise.js";

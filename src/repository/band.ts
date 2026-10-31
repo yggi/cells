@@ -15,6 +15,7 @@
  * Pure.
  */
 import { parse } from '../engine/parser';
+import { expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
 import { AXES } from '../engine/style';
 import type { CellDecl, StylePoint as WrittenStyle } from '../engine/ast';
@@ -103,11 +104,12 @@ function pointOf(p: WrittenStyle, decls: ReadonlyMap<string, CellDecl>): number[
 
 /**
  * The style a score starts on: where its `&style` note's `style=` starts (a range's first end), as a point on the axes;
- * null where the score names no style, or names one by a cell it takes from elsewhere (`&funk from styles`), which
- * only its compile reads.
+ * null where the score names no style. A style it takes from elsewhere (`&funk from styles`, `&style style=&funk`) is
+ * read through its expansion by `resolve` (the seed library by default), its band left out: a band reads the style, it
+ * never sets it.
  */
-export function scoreStyle(score: string): StylePoint | null {
-  const { cells } = parse(score);
+export function scoreStyle(score: string, resolve: Resolve = resolveSeed): StylePoint | null {
+  const { cells } = parse(expand(score, (id, hash) => (id === 'band' ? null : resolve(id, hash))));
   const decls = new Map(cells.map((c) => [c.name, c]));
   const style = decls.get('style')?.style;
   const v = style ? pointOf(style.from, decls) : null;
@@ -121,6 +123,6 @@ export function scoreStyle(score: string): StylePoint | null {
  * with that instead, its own lines its choice of instruments.
  */
 export function resolveBand(score: string, resolve: Resolve = resolveSeed): Resolve {
-  const text = bandAt(scoreStyle(score) ?? CENTRE);
+  const text = bandAt(scoreStyle(score, resolve) ?? CENTRE);
   return (id, hash) => (id === 'band' ? text : resolve(id, hash));
 }
