@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since v0.14.0.
+
+## v0.14.0 — 2026-10-31
+
 ### Added
 
 - **Where a score and its band don't meet: silence, said** (decision 063 §4, #390, step 3 of 3). A diagnostic's severity may be **`info`**: said, never wrong (`ok` reads errors only). A part a gate plays that no line writes rests, with an info (`&lead2 plays &lead2line, which no line writes: it rests`), where it was `Unknown cell`; any other name read and declared nowhere stays an error. In a piece with performers (a gate), a line that steps and that nothing plays or reads is silent, as before, with an info naming it; not a fragment compiled alone (a part waiting for a performer), and not what a score offers its band (an interface name: `&harm`, `&key`, `&style` …). A part that rests is recorded in `CompileResult.unknown` all the same, a hole of the piece (`holesOf`), with no error. A performer's part written as rests, a tacet (`&leadline step=1m ~`), no longer warns that it plays only rests. **What a frontend sees at its next pin:** `Diagnostic.severity` may be `'info'`, which a frontend shows apart from warnings (or not at all); a band's extra gate whose part a score doesn't write compiles. No example has an info, nothing a piece plays changes, and no event snapshot moves.
