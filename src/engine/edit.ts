@@ -43,10 +43,50 @@ function sectionLine(lines: readonly string[], name: string): number {
  * Rewrite the code part of &name's line; comments and other lines untouched. A section without a line of its own gets
  * one, under its table's (`&keysBar off`); a section's line left with nothing but its name goes again.
  */
-function editDecl(source: string, name: string, f: (code: string, head: RegExp) => string): string {
+/**
+ * The line that takes &name from a template, as its one head (decision 065: `&gypsy from gypsy &key`), and where its
+ * `from` is, or null: the only line an attribute of the head can be written on, before `from`. A line that takes several
+ * heads, or none of its arguments (`&bd from gm_kit`, maybe a collection, which takes none), has no head of its own.
+ */
+function copyHead(lines: readonly string[], name: string): { line: number; from: number } | null {
+  for (let i = 0; i < lines.length; i++) {
+    const code = splitComment(lines[i]!.replace(/\r$/, ''))[0];
+    const form = readFrom(code);
+    if (!form || form.kind !== 'use' || form.names?.length !== 1 || form.names[0] !== `&${name}`) continue;
+    if (form.args === null && form.main === null) return null;
+    // (where `from` is: the first word that is it, outside quotes and brackets)
+    let at = 0;
+    for (const w of splitWords(code)) {
+      at = code.indexOf(w, at);
+      if (w === 'from') return { line: i, from: at };
+      at += w.length;
+    }
+  }
+  return null;
+}
+
+/** Does a `from` line take &name by name (decision 065)? Then no table of sections declares it. */
+const takenFrom = (lines: readonly string[], name: string) =>
+  lines.some((l) => {
+    const form = readFrom(splitComment(l)[0]);
+    return form?.kind === 'use' && form.names?.includes(`&${name}`) === true;
+  });
+
+function editDecl(source: string, name: string, f: (code: string, head: RegExp) => string, onCopy = false): string {
   const lines = source.split('\n');
   let i = declLine(source, name);
-  const table = sectionLine(lines, name);
+  if (i < 0 && onCopy) {
+    // (a template's copy: its head's attributes go before `from`, the rest of the line as written)
+    const copy = copyHead(lines, name);
+    if (copy) {
+      const cr = lines[copy.line]!.endsWith('\r') ? '\r' : '';
+      const line = cr ? lines[copy.line]!.slice(0, -1) : lines[copy.line]!;
+      const before = line.slice(0, copy.from).replace(/\s+$/, '');
+      lines[copy.line] = `${f(before, headOf(name))} ${line.slice(copy.from)}${cr}`;
+      return lines.join('\n');
+    }
+  }
+  const table = i < 0 && takenFrom(lines, name) ? -1 : sectionLine(lines, name);
   if (i < 0) {
     if (table < 0) return source;
     // (with the table's line ending: a CRLF file stays CRLF)
@@ -71,15 +111,23 @@ function editDecl(source: string, name: string, f: (code: string, head: RegExp) 
   return lines.join('\n');
 }
 
-/** Set (or with null, remove) a `key=value` attribute on &name. New attributes go right after the name. */
+/**
+ * Set (or with null, remove) a `key=value` attribute on &name. New attributes go right after the name; on a template's copy,
+ * its head's, before `from` (`&gypsy show=braid from gypsy &key`).
+ */
 export function setAttr(source: string, name: string, key: string, value: string | null): string {
-  return editDecl(source, name, (code, head) => {
-    // a value is a word, or a word with (…) in it (free(0, 0..6), cycle(&bar)*2)
-    const val = `(?:"[^"]*"|[^\\s(]*\\([^)]*\\)[^\\s]*|\\S+)`;
-    const attr = new RegExp(`(\\s)${key}=${val}`);
-    if (attr.test(code)) return value === null ? code.replace(new RegExp(`\\s${key}=${val}`), '') : code.replace(attr, `$1${key}=${value}`);
-    return value === null ? code : code.replace(head, `$1 ${key}=${value}`);
-  });
+  return editDecl(
+    source,
+    name,
+    (code, head) => {
+      // a value is a word, or a word with (…) in it (free(0, 0..6), cycle(&bar)*2)
+      const val = `(?:"[^"]*"|[^\\s(]*\\([^)]*\\)[^\\s]*|\\S+)`;
+      const attr = new RegExp(`(\\s)${key}=${val}`);
+      if (attr.test(code)) return value === null ? code.replace(new RegExp(`\\s${key}=${val}`), '') : code.replace(attr, `$1${key}=${value}`);
+      return value === null ? code : code.replace(head, `$1 ${key}=${value}`);
+    },
+    true,
+  );
 }
 
 /** Respell a `key=` on &name as `to=`, its value and place kept (an alias as ours: cutoff=800 → lpf=800). */
