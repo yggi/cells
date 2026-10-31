@@ -54,7 +54,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are a hundred and twelve', () => expect(files).toHaveLength(112));
+  it('are a hundred and twenty', () => expect(files).toHaveLength(120));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -127,8 +127,8 @@ describe('the seed files', () => {
       ).toEqual(points);
   });
 
-  // (the seeds written by hand for the point proposed for a Spooky preset, #349, and lifted from nothing)
-  const WRITTEN = new Set(['Spooky drums', 'creeping bass', 'dark cadence']);
+  // (the seeds written by hand for the point proposed for a Spooky preset, #349, or near it, and lifted from nothing)
+  const WRITTEN = new Set(['Spooky drums', 'creeping bass', 'dark cadence', 'Ghost drums', 'tiptoe bass', 'haunted progression', 'haunted pad']);
   it('each says it is a seed, every drum bar, bass line and harmony and what an example gave where it was lifted from, but those written for Spooky, and each has prose', () => {
     expect(SEED.every((f) => f.meta.source === 'seed' && f.prose.length > 0)).toBe(true);
     expect(new Set(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id))).toEqual(
@@ -140,7 +140,7 @@ describe('the seed files', () => {
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic minor'),
           ...MOTIF_FRAGMENTS.filter((f) => f.id === 'gypsy'),
-          ...INSTRUMENT_FRAGMENTS.filter((f) => !['gm_kit', 'bass', 'keys', 'pad', 'lead'].includes(f.id)),
+          ...INSTRUMENT_FRAGMENTS.filter((f) => !['gm_kit', 'bass', 'keys', 'pad', 'lead'].includes(f.id) && !WRITTEN.has(f.id)),
         ].map((f) => f.id),
       ),
     );

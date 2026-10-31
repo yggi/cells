@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { writtenGraph } from './graph';
 import { outs, soundRole } from './outs';
+import { kitOf } from './plays';
 import { PRESETS } from './presets';
 import { resolveSeed } from '../repository/library';
 
@@ -71,4 +72,14 @@ describe('soundRole: what a cell does with sound, from its sort', () => {
     ['t', null],
   ])('&%s: %s', (n, want) => expect(role(n)).toBe(want));
   it('carries the sort on the cell', () => expect([r.cells.get('a')!.sort, r.cells.get('w')!.sort, r.cells.get('t')!.sort]).toEqual(['signal', 'wave', 'pitch']));
+});
+
+describe('kitOf: the kit a cell sounds through, and its drums (#385)', () => {
+  const r = compiled('&bd s=sine loop=A1\n&hh s=white\n&kit &bd &hh\n&groove over=&kit step=1 0 1\n&t step=1 0\n&out map=sample [&groove, &t * &bd]');
+  it.each([
+    ['kit', { kit: 'kit', drums: ['bd', 'hh'] }],
+    ['groove', { kit: 'kit', drums: ['bd', 'hh'] }],
+    ['bd', null],
+    ['t', null],
+  ])('&%s', (n, want) => expect(kitOf(r, n)).toEqual(want));
 });

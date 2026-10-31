@@ -87,7 +87,7 @@ describe('what a query costs', () => {
     const r = createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench(120) });
     const t0 = performance.now();
-    expect(r.query(FUNK, LIBRARY.length, {}, { workbench })).toHaveLength(31); // (the rhythms, the instruments, the vibrato, the envelopes and the styles: the modes wait on a &tonic, #290)
+    expect(r.query(FUNK, LIBRARY.length, {}, { workbench })).toHaveLength(33); // (the 16 rhythms, the 14 instruments, the vibrato, the envelopes and the styles, as fit.test.ts counts them: the modes wait on a &tonic, #290)
     r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] });
     expect(r.query(FUNK, 1, {}, { workbench: `${workbench}\n&more loop=A4` })).toHaveLength(1);
     expect(performance.now() - t0).toBeLessThan(10_000);

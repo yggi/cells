@@ -34,6 +34,8 @@ const AT_PRESET: Record<string, StylePoint> = {
   organ: SPOOKY,
   theremin: SPOOKY,
   celesta: SPOOKY,
+  // (0.05 below Spooky in energy: at its point it would tie with the organ, and take &padV from it by id)
+  'haunted pad': { ...SPOOKY, energy: 0.3 },
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
@@ -118,14 +120,14 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the eight for Electro swing and Spooky, each once at its preset, at half a default's weight (#350)", () => {
+  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the nine for Electro swing and Spooky, each once at or near its preset, at half a default's weight (#350)", () => {
     expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm_kit', ...DEFAULTS, ...Object.keys(AT_PRESET)]);
     for (const f of INSTRUMENT_FRAGMENTS)
       expect(
         f.association.map((wp) => [wp.point, wp.facet]),
         f.id,
       ).toEqual([[AT_PRESET[f.id] ?? CENTRE, 'instrument']]);
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25, ...Array<number>(8).fill(0.125)]);
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25, ...Array<number>(9).fill(0.125)]);
   });
 
   it('a query finds the kit and the defaults first at the eight presets, and at Electro swing and Spooky their own (#350)', () => {
@@ -136,6 +138,7 @@ describe('the instrument fragments', () => {
     for (const preset of [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ]) expect(found(preset, 3)).toEqual(['gm_kit', 'bass', 'keys']);
     expect(found(ELECTRO_SWING, 4)).toEqual(['brass stab', 'clarinet', 'muted trumpet', 'upright bass']);
     expect(found(SPOOKY, 4)).toEqual(['celesta', 'organ', 'round bass', 'theremin']);
+    expect(found({ ...SPOOKY, energy: 0.3 }, 1)).toEqual(['haunted pad']);
   });
 
   it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order; 13 of them taken by name are its lines word for word, as the retired core kit forwards them (#196)', () => {

@@ -4,11 +4,8 @@ import { tableChain } from "./helix.js";
 import { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from "./ids.js";
 import { chainMuted, outputPlays } from "./realize.js";
 import { flows } from "./flows.js";
+import { noteEdge, sourceOf } from "./plays.js";
 const keeps = (result, name) => result.tapes.some((t) => t.name === name) || typeof result.cells.get(name)?.params.body === 'string';
-const sourceOf = (result, o) => {
-    const read = o.mods.find((m) => m.picks)?.cell ?? o.cell;
-    return o.kit && result.cells.get(read)?.over === o.voice ? read : o.voice;
-};
 const playable = (c) => c.units.some((u) => leaves(u.atom).some((a) => a.kind === 'note' || a.kind === 'chord' || a.kind === 'choice'));
 export class RouteAcc {
     result;
@@ -176,7 +173,7 @@ function notesOf(acc, o, how) {
         acc.timed(o.tape.head);
     }
     else
-        acc.edge(o.cell, o.voice);
+        acc.edge(o.cell, o.voice, noteEdge(o));
     for (const m of [...o.mods, ...o.levels])
         if (!acc.off(m.cell)) {
             acc.edge(m.cell, o.voice);
