@@ -17,7 +17,7 @@ That is Frère Jacques ([`examples/steps.md`](examples/steps.md)). One cell per 
 It is the shared core of [Cell studio](https://github.com/yggi/cell-studio), the workbench, and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend, which depend on a tag, never a branch (what changed: [CHANGELOG.md](https://github.com/yggi/cells/blob/main/CHANGELOG.md)):
 
 ```json
-"@yggi/cells": "github:yggi/cells#v0.14.0"
+"@yggi/cells": "github:yggi/cells#v0.14.1"
 ```
 
 `compileSource` reads a piece, `planOf` makes what it plays, `windowAt` realizes a window of it as events; `createHost` answers the same as messages, in a worker or in node:
@@ -47,7 +47,7 @@ The package ships TypeScript (Node won't strip it under `node_modules`: [#11](ht
 - [step= and loop=](docs/language/reference.md#step--and-loop-): 16 forms
 - [map=](docs/language/reference.md#map-): 13 forms
 - [Attributes](docs/language/reference.md#attributes): 19 forms
-- [Parameters](docs/language/reference.md#parameters): 59 forms
+- [Parameters](docs/language/reference.md#parameters): 61 forms
 - [Sorts: what a cell is in a mix](docs/language/reference.md#sorts-what-a-cell-is-in-a-mix): 8 forms
 - [Mixes](docs/language/reference.md#mixes): 6 forms
 - [Gates: a product with a name](docs/language/reference.md#gates-a-product-with-a-name): 3 forms
