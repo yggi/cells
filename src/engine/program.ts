@@ -21,7 +21,7 @@ export const MAIN_KEY = 'key:main';
  * the meter and its tempo, the key and its tonic (#290), the harmony. A named use's closure leaves one the piece defines
  * to the piece (decision 060), as it left the main key `over=key` read.
  */
-export const INTERFACE_NAMES: readonly string[] = ['&bar', '&tempo', '&key', '&tonic', '&harm'];
+export const INTERFACE_NAMES: readonly string[] = ['&bar', '&tempo', '&key', '&tonic', '&harm', '&style'];
 /**
  * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
  * more is a compile error. The largest in examples/ is 1,120 (bwv847's &tempo).
