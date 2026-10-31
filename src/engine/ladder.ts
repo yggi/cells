@@ -44,6 +44,8 @@ export const PENDING: ReadonlySet<string> = new Set([
   'reference &name[slot]',
   'map map=style',
   'attribute style',
+  'parameter licence',
+  'parameter accents',
 ]);
 
 /**

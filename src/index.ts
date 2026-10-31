@@ -56,6 +56,22 @@ export {
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
 export { METER_FRAGMENTS } from './repository/meters';
 export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
+export {
+  CONTRACT_WIDTHS,
+  feelOf,
+  played,
+  readerOf,
+  readingOf,
+  type DrumRole,
+  type FeelEvent,
+  type FeelFrame,
+  type FeelPart,
+  type Reading,
+  type SectionType,
+  type Widths,
+} from './engine/perform/feel';
+export { perform, widthsOf, type Performance, type TextBar } from './engine/perform/perform';
+export { swungAt, writtenAt, type SwingLevel } from './engine/perform/swing';
 export { RHYTHM_FRAGMENTS } from './repository/rhythms';
 export { BASS_FRAGMENTS } from './repository/bass';
 export { HARMONY_FRAGMENTS } from './repository/harmony';
