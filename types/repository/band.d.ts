@@ -26,7 +26,7 @@ export interface FoundInstrument {
     readonly id: string;
     readonly line: string;
 }
-/** The centre of style space: every axis at its middle, where a score that names no style is played. */
+/** The centre of style space as a point (the language's, `CENTRE` in `engine/style.ts`), where a score that names no style is played. */
 export declare const CENTRE: StylePoint;
 /**
  * The instrument each pitched performer plays at a style's point, where it isn't the performer's own: the first that

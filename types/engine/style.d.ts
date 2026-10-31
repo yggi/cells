@@ -20,3 +20,10 @@ export declare const AXES: readonly Axis[];
 export declare const AXIS_NAMES: readonly string[];
 /** The slots a map names, in their order (a slot is its position): an envelope's four, a style's axes. */
 export declare const SLOTS: Readonly<Record<string, readonly string[]>>;
+/** The section's style, an interface name (decision 063 §3): the composer's to write, a score's note `&style`. */
+export declare const STYLE = "style";
+/**
+ * The centre of style space: each axis at the middle of its range. What a reader of `&style` plays where no line writes
+ * it (a fragment heard alone, a text that names no style): the language's default, so no fragment defines `&style`.
+ */
+export declare const CENTRE: readonly number[];

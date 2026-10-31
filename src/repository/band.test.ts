@@ -97,9 +97,12 @@ describe('the default band (#391)', () => {
     expect(sent(`${score('&(map=style .5 .5 .5 .5)', four)}\n&leadline step=1m ~`).filter((n) => n.endsWith(' leadV'))).toEqual([]);
   });
 
-  it('is shown firing: a score that names no style is an error, the band’s voices reading it', () => {
+  it('plays a score that names no style at the centre of style space, and says so; it defines no &style of its own', () => {
     const text = score('&(map=style .5 .5 .5 .5)').replace(/^&style .*$/m, '');
-    expect(compileSource(text, undefined, { resolve: resolveSeed }).diagnostics.map((d) => d.message)).toContain('Unknown cell &style');
+    const r = compileSource(text, undefined, { resolve: resolveSeed });
+    expect(r.diagnostics.map((d) => [d.severity, d.message])).toEqual([['info', expect.stringMatching(/^no line writes &style: /)]]);
+    expect(sent(text)).toEqual(sent(score('&(map=style .5 .5 .5 .5)')));
+    expect(band.split('\n').some((l) => l.startsWith('&style '))).toBe(false);
   });
 });
 

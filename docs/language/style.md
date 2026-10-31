@@ -78,6 +78,9 @@ A pick reads its value on an axis, `&style[artic]`, and a voice's moving paramet
 &out map=sample [&line * &bassV]
 ```
 
+**`&style` is the composer's.** A fragment reads it and never defines it: a used fragment with a line for `&style` is an error, whether or not the piece writes its own, since two fragments' styles would collide and the section's style is the score's to say (#391, the owner's ruling on yggi/cells#405).
+**Where no line writes it, a pick of an axis reads the centre of style space**, the middle of each axis's range (`CENTRE`, `src/engine/style.ts`): an instrument heard alone plays as it does at the centre (`lpf=450..900 * &style[artic]` is 675 Hz). In a piece with performers, a score played, an info says so (`no line writes &style: &style[artic] reads the centre of style space …`), as a part no line writes is said; an instrument heard alone says nothing. A bare reference to an unwritten `&style` is still unknown.
+
 **A range glides over the cell's scope, the piece's length** (its bars, as cells finds it: [time.md](time.md)).
 Bar k of n begins at a + (b − a)·k/n, in a straight line sixteen steps a bar, on the piece's meter: the glide comes round with the piece and follows its tempo, and doesn't lengthen it.
 With no meter, it glides in seconds.
@@ -88,7 +91,7 @@ A pick of a slot as a factor reads its value, held: `lpf=0..1000 * &pluck[sustai
 ## The default band: a score played as its style says
 
 A score ends in `* from band`, and the client's resolver answers `band` ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §1).
-The seed library's band, `band` (`fragments/bands/01-band.md`), plays Jambot's five roles on instruments with a sound, and reads the score's `&style` where Jambot's synth reads its style: the bass's cutoff opens with articulation (`lpf=450..900 * &style[artic]`), the lead's with energy (`lpf=1400..3600 * &style[energy]`).
+The seed library's band, `band` (`fragments/bands/01-band.md`), plays Jambot's five roles on the default instruments, which read the score's `&style` where Jambot's synth reads its style: the bass's cutoff opens with articulation (`&bassV … lpf=450..900 * &style[artic]`), the lead's with energy (`&leadV … lpf=1400..3600 * &style[energy]`). Neither the instruments nor the band define `&style`.
 It sends the score on a MIDI card on Jambot's channels and hears it on a sound card.
 
 ```cells

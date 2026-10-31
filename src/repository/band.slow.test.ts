@@ -65,7 +65,8 @@ describe("Jambot's twenty sections, played on the default band (#391)", () => {
   it('is shown firing: a band whose bass sits an octave up sends other notes', () => {
     const section = sections.sections[0]!;
     const score = scoreOf(section);
-    const band = resolveBand(score)('band')!.replace('&bassV s=saw loop=C2', '&bassV s=saw loop=C3');
+    // (the band's own line for the bass wins over its instrument's)
+    const band = `${resolveBand(score)('band')!}\n&bassV s=saw loop=C3`;
     const resolve: Resolve = (id) => (id === 'band' ? band : resolveSeed(id));
     expect(mismatched(sent(section.text, resolveSeed), sent(score, resolve))).toBeGreaterThan(0);
   });

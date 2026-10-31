@@ -16,7 +16,7 @@
  */
 import { parse } from '../engine/parser';
 import type { Resolve } from '../engine/program';
-import { AXES } from '../engine/style';
+import { AXES, CENTRE as CENTRE_VALUES } from '../engine/style';
 import type { CellDecl, StylePoint as WrittenStyle } from '../engine/ast';
 import { createRepository, type Fragment, type Repository, type StylePoint } from './fragments';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
@@ -39,8 +39,8 @@ export interface FoundInstrument {
   readonly line: string;
 }
 
-/** The centre of style space: every axis at its middle, where a score that names no style is played. */
-export const CENTRE: StylePoint = Object.fromEntries(AXES.map((a) => [a.name, (a.range[0] + a.range[1]) / 2]));
+/** The centre of style space as a point (the language's, `CENTRE` in `engine/style.ts`), where a score that names no style is played. */
+export const CENTRE: StylePoint = Object.fromEntries(AXES.map((a, i) => [a.name, CENTRE_VALUES[i]!]));
 
 const repositories = new WeakMap<readonly Fragment[], Repository>();
 

@@ -1,5 +1,5 @@
 import { parse } from "../engine/parser/index.js";
-import { AXES } from "../engine/style.js";
+import { AXES, CENTRE as CENTRE_VALUES } from "../engine/style.js";
 import { createRepository } from "./fragments.js";
 import { INSTRUMENT_FRAGMENTS } from "./instruments.js";
 import { resolveSeed } from "./library.js";
@@ -9,7 +9,7 @@ export const PERFORMER_VOICES = {
     stab: { voice: 'keysV', own: 'keys' },
     lead: { voice: 'leadV', own: 'lead' },
 };
-export const CENTRE = Object.fromEntries(AXES.map((a) => [a.name, (a.range[0] + a.range[1]) / 2]));
+export const CENTRE = Object.fromEntries(AXES.map((a, i) => [a.name, CENTRE_VALUES[i]]));
 const repositories = new WeakMap();
 const lineOf = (text, voice) => text.split('\n').find((l) => l.startsWith(`&${voice} `));
 export function instrumentsAt(point, fragments = INSTRUMENT_FRAGMENTS) {

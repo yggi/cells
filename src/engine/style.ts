@@ -32,3 +32,12 @@ export const SLOTS: Readonly<Record<string, readonly string[]>> = {
   adsr: ['attack', 'decay', 'sustain', 'release'],
   style: AXIS_NAMES,
 };
+
+/** The section's style, an interface name (decision 063 §3): the composer's to write, a score's note `&style`. */
+export const STYLE = 'style';
+
+/**
+ * The centre of style space: each axis at the middle of its range. What a reader of `&style` plays where no line writes
+ * it (a fragment heard alone, a text that names no style): the language's default, so no fragment defines `&style`.
+ */
+export const CENTRE: readonly number[] = AXES.map((a) => (a.range[0] + a.range[1]) / 2);

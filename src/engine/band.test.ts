@@ -115,6 +115,7 @@ describe('a band: a selector over the performers (decision 061)', () => {
         '&key scale(dorian, D)',
         '&harm over=&key step=1m [0,2,4] [3,5,7]',
         '&bassLevel map=amp .8',
+        '&style style=&(map=style .5 .5 .5 .5)',
         form,
         '&out map=midi ~ &bassOut',
         // (heard on a sound card too: the bass has a sound of its own, which MIDI doesn't send, #391)

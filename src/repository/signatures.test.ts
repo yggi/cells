@@ -23,7 +23,9 @@ const WORKBENCH: Record<string, (head: string, use: string) => string> = {
   '&a': (head, use) => lines(METER, KEY, '&m over=&key step=8n 0 2 4 7', `${head} from ${use} &m`, '&heard step=8n &x', SOUND),
 };
 const PERFORMER = (head: string, use: string, main: string) =>
-  main === '&drumlines' ? lines(METER, '&dl step=8n &bd &sd', `${head} from ${use} &dl`) : lines(METER, KEY, '&line over=&key step=8n 0 2 4', `${head} from ${use} &line`);
+  main === '&drumlines'
+    ? lines(METER, '&dl step=8n &bd &sd', `${head} from ${use} &dl`)
+    : lines(METER, KEY, '&line over=&key step=8n 0 2 4', `${head} from ${use} &line`, '&style style=&(map=style .5 .5 .5 .5)');
 
 const templates = LIBRARY.filter((f) => signatureOf(f.text));
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';

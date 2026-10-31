@@ -1,5 +1,6 @@
 import { splitComment } from "./edit.js";
 import { FROM_FORM, isAttribute, readFrom, readUse, topTokens, USE_FORM } from "./parser/use.js";
+import { STYLE } from "./style.js";
 import { INTERFACE_NAMES } from "./program.js";
 export const USE_DEPTH = 8;
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
@@ -108,9 +109,13 @@ function merge(own, used, say, host) {
                 }
             }
         }
+        if (byName.has(STYLE))
+            say(i, `&${STYLE} is the composer's, the section's style: ${quoted(id)} defines it, where a fragment only reads it (the score writes &${STYLE} style=…; a reader with none plays the centre)`);
         const gave = new Set();
         for (const l of theirs) {
             if (!l.name || !take.has(l.name))
+                continue;
+            if (l.name === STYLE)
                 continue;
             const there = given.get(l.name);
             if (there) {
