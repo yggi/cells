@@ -184,6 +184,8 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `wander=n` · `wander=free(n, lo..hi)`: A read head: how far it wanders either way (tape-seconds) — a flying head — on a read head (play=) [→](physics.md)
 - `wanderhz=n` · `wanderhz=free(n, lo..hi)`: A read head: how fast it wanders (times a second) — on a read head (play=) [→](physics.md)
 - `level=n` · `level=free(n, lo..hi)`: On a gate: how loud, a product of level cells and a gain (level=&accent*&duck*.4) — on a gate (play= with a braid) [→](mix.md)
+- `licence=n` · `licence=free(n, lo..hi)`: On a gate: its performer’s licence, how far it loosens velocity and length, a share of the feel’s (1 as the contract plays; 0 exactly as written) — on a gate (play= with a braid) [→](mix.md)
+- `accents=n` · `accents=free(n, lo..hi)`: On a gate: its performer’s own accents, a share of the feel’s (1 as the contract plays; 0 none) — on a gate (play= with a braid) [→](mix.md)
 - `gain=n` · `gain=free(n, lo..hi)`: On a voice: its own gain, dough’s, times every gain it is played at (1 by default, a negative one inverts the phase; a kit member’s balance); on a gate written the old way (trigger=): the number in level= — on a voice or a gate (play= with a braid) [→](sound.md)
 - `scope=word`: A scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels — on a scope (scope=) [→](display.md)
 - `fold=n` · `fold=free(n, lo..hi)`: A spectrum or waterfall: pitches folded by this stride into as many bins (12: by pitch class, the default) — on a scope (scope=) [→](display.md)

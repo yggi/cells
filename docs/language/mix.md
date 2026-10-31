@@ -87,6 +87,17 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 &out loop=SAMPLE_RATE map=sample [&drums]
 ```
 
+**A gate's performer plays with a feel** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §2): the default performer (`perform`, `src/engine/perform/`) loosens each note's velocity and gates its length by keyed draws, and adds accents of its own, as far as the bar's feel goes (its swing, its entropy, its articulation: the family's feel contract).
+Two attributes on the gate set how far: `licence=` (velocity and length) and `accents=` (its own accents), each a share of the feel's, 1 where unwritten (as the contract plays) and 0 exactly as written; either may be `free(…)`.
+
+```cells
+&bar meter("4/4") step=120bpm
+&tune step=8n 0 2 4 7
+&v s=saw loop=C4
+&leadOut play=&tune licence=.5 accents=free(0, 0..1) &v
+&out map=sample &leadOut
+```
+
 **A gate's part is a performer's** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §4).
 A part that rests is written as a rest (`&leadline step=1m ~`, a tacet), and nothing is said of it.
 A part a gate plays that no line writes rests too, and an info says so (`&lead2 plays &lead2line, which no line writes: it rests`): a band's own player the score has no part for.
