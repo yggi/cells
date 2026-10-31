@@ -4,6 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { compileSource as compileAlone } from './compile';
 import { PRESETS } from './presets';
 import { AXES, AXIS_NAMES, SLOTS } from './style';
+import { pieceTime } from './duration';
+import { INTERFACE_NAMES } from './program';
+import { codeShifts } from './program';
+import { eventsBetween, plan } from './realize';
 import { LIBRARY, resolveSeed } from '../repository/library';
 
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
@@ -101,5 +105,85 @@ describe('a pick by name, &x[slot]', () => {
     ]);
     expect(errors([bar, '&x step=4n 1 2', '&y step=4n &x[sustain]'].join('\n'))[0]).toMatch(/^&x\[sustain\]: &x's map names no slots \(it has no map=\)/);
     expect(errors([bar, '&x map=lin step=4n 1 2', '&y step=4n &x[sustain]'].join('\n'))[0]).toMatch(/^&x\[sustain\]: &x's map names no slots \(map=lin\)/);
+  });
+});
+
+describe('style= and the note &style, read by a voice (#390, step 2)', () => {
+  const styles = ['&funk map=style .3 .45 .2 .55', '&bossa map=style .5 .75 .8 .5'];
+  /** A piece of eight bars of a meter at 120, a note a bar on a voice whose cutoff reads &style[artic] (0 to 1000 Hz), and its &style. */
+  const piece = (style: string, sig = '4/4', lpf = 'lpf=0..1000 * &style[artic]', more: string[] = []) =>
+    [
+      `&bar meter("${sig}") step=120bpm`,
+      ...styles,
+      ...more,
+      '&line step=1m 0!8',
+      `&v s=saw loop=C4 ${lpf}`,
+      '&out map=sample [&line * &v]',
+      `&style label="the section" ${style}`,
+    ].join('\n');
+  /** Each note's cutoff at its start, over the first `seconds`. */
+  const cutoffs = (text: string, seconds: number) => {
+    const r = compileSource(text);
+    expect(r.diagnostics, text).toEqual([]);
+    return eventsBetween(plan(r, codeShifts(r)), 0, seconds).map((e) => {
+      const lpf = e.params?.lpf;
+      return lpf?.kind === 'points' ? lpf.points[0]!.value : NaN;
+    });
+  };
+
+  it('a style held: its value on the axis, every bar', () => {
+    expect(cutoffs(piece('style=&funk'), 16)).toEqual(Array<number>(8).fill(200));
+  });
+
+  it('a mix of styles by weight: the point it computes', () => {
+    for (const v of cutoffs(piece('style=[&funk * .5, &bossa * .5]'), 16)) expect(v).toBeCloseTo(500, 9);
+    for (const v of cutoffs(piece('style=[&funk * .25, &bossa * .75]'), 16)) expect(v).toBeCloseTo(650, 9);
+  });
+
+  it.each([
+    ['4/4', 2],
+    ['5/4', 2.5],
+    ['6/8', 1],
+  ])('a range glides over the piece in %s: bar k of 8 starts at a + (b − a)·k/8, and the glide comes round with it', (sig, bar) => {
+    const values = cutoffs(piece('style=&funk..&bossa', sig), 16 * bar);
+    expect(values).toHaveLength(16);
+    for (const [k, v] of values.entries()) expect(v, `bar ${k}`).toBeCloseTo(200 + (600 * (k % 8)) / 8, 9);
+  });
+
+  it('a glide leaves the piece’s length as its bars (#376)', () => {
+    for (const [sig, bar] of [
+      ['4/4', 2],
+      ['5/4', 2.5],
+      ['6/8', 1],
+    ] as const)
+      expect(pieceTime(compileSource(piece('style=&funk..&bossa', sig))).cycle).toBeCloseTo(8 * bar, 9);
+  });
+
+  it('a range to an unnamed style, and from a mix', () => {
+    const v = cutoffs(piece('style=[&funk * .5, &bossa * .5]..&(map=style .5 .5 1 .5)'), 16);
+    for (const [k, x] of v.entries()) expect(x).toBeCloseTo(500 + (500 * k) / 8, 9);
+  });
+
+  it('a curve written out takes the place of time: shown firing against the glide', () => {
+    const curved = cutoffs(piece('style=&funk..&bossa * &rise', '4/4', undefined, ['&rise map=lin step=1m 0 0 0 0 1 1 1 1']), 16);
+    expect(curved.slice(0, 4)).toEqual([200, 200, 200, 200]);
+    expect(curved.slice(4)).toEqual([800, 800, 800, 800]);
+    expect(curved).not.toEqual(cutoffs(piece('style=&funk..&bossa'), 16));
+  });
+
+  it('a slot of an envelope or a style read as a factor: its value, held', () => {
+    expect(cutoffs(piece('style=&funk', '4/4', 'lpf=0..1000 * &pluck[sustain]', ['&pluck map=adsr .01 .3 .5 .4']), 16)).toEqual(Array<number>(8).fill(500));
+    expect(cutoffs(piece('style=&funk', '4/4', 'lpf=0..1000 * &bossa[artic]'), 16)).toEqual(Array<number>(8).fill(800));
+  });
+
+  it('refuses a style that is no style, and one a mix takes outside the axes', () => {
+    expect(errors(piece('style=&line'))[0]).toMatch(/^style=&line: a style is a map=style cell/);
+    expect(errors(piece('style=[&funk * 2]'))[0]).toMatch(/^&style style=: its style lies outside the axes on energy \(each 0 to 1\)/);
+    expect(errors(piece('style=&funk..&bossa * &line'))[0]).toBeUndefined();
+    expect(errors(piece('style=&funk..&bossa * &curve', '4/4', undefined, ['&curve step=1m [0,1] 1']))[0]).toMatch(/^style=a\.\.b \* &curve: a curve is a line of numbers/);
+  });
+
+  it('&style is an interface name', () => {
+    expect(INTERFACE_NAMES).toContain('&style');
   });
 });

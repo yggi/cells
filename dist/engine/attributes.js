@@ -21,6 +21,7 @@ export const CORE = {
     title: { ...core('on a note: the piece’s title (its card), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']), old: 'title: in the frontmatter' },
     tags: core('on a cell: its clusters in the graph, comma-separated (on the piece’s card, the old spelling of its tags: its file’s frontmatter holds them)', 'display.md'),
     about: core('on a note: the cells it explains', 'display.md', ['note']),
+    style: core('its style: a map=style cell, &(map=style …), or a mix of them by weight; or a range from one to another over its scope (style=&funk..&bossa). On the note &style, the section’s, read by axis (&style[artic])', 'style.md'),
     tier: {
         ...core('on a piece’s card: its tier of the tutorial (1 the first), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']),
         old: 'tier: in the frontmatter',

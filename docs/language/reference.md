@@ -127,6 +127,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 - `seed=n`: A different sequence of chance. [→](cell.md) `&ghost seed=7 step=4 0? 0? 0? 0?`
 - `tags="tag, tag"`: On a cell: its clusters in the graph, comma-separated (on the piece’s card, the old spelling of its tags: its file’s frontmatter holds them) [→](display.md) `&lead tags="melody" s=saw loop=C4` · `&beam tags="metal" map=ratios 1 2.756 5.404`
 - `about=&cell` · `about=(&a &b …)`: On a note: the cells it explains — on a note (a label= and nothing else) [→](display.md) `&fenvNote label="The filter opens on every note." about=&fenv` · `&why label="Two cells at once." about=(&fenv &accent)`
+- `style=&s` · `style=[&a * w, &b * w]` · `style=a..b` · `style=a..b * &curve`: Its style: a map=style cell, &(map=style …), or a mix of them by weight; or a range from one to another over its scope (style=&funk..&bossa). On the note &style, the section’s, read by axis (&style[artic]) [→](style.md) `&style label="Funk" style=&funk` · `&style label="close to Funk, then Bossa nova" style=[&funk * .8, &bossa * .2]..&bossa`
 
 ## Parameters
 

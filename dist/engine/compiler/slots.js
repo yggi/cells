@@ -1,6 +1,6 @@
 import { SLOTS } from "../style.js";
 export function readSlots(parsed) {
-    const maps = new Map(parsed.cells.map((c) => [c.name, c.map?.kind ?? null]));
+    const maps = new Map(parsed.cells.map((c) => [c.name, c.map?.kind ?? (c.style ? 'style' : null)]));
     const diagnostics = [];
     const read = (o, cell) => {
         const { slot, ...rest } = o;
@@ -17,7 +17,7 @@ export function readSlots(parsed) {
             severity: 'error',
             message: slots
                 ? `&${name}[${slot}]: &${name} (map=${kind}) has no slot ${slot}; its slots are ${slots.join(', ')}`
-                : `&${name}[${slot}]: &${name}'s map names no slots (${kind ? `map=${kind}` : 'it has no map='}); pick by position (&${name}[$0]), or name the slots with map=${Object.keys(SLOTS).join(' or map=')}`,
+                : `&${name}[${slot}]: &${name}'s map names no slots (${kind ? `map=${kind}` : 'it has no map='}); pick by position (&${name}[$0]), name the slots with map=${Object.keys(SLOTS).join(' or map=')}, or give it a style= (its axes)`,
             span,
         });
         return { ...rest, pick: null };

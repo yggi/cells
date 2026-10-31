@@ -220,6 +220,26 @@ export const KEYS = {
             b.paramSpans.tier = s.place(at);
         },
     },
+    style: {
+        form: 'style=&s · style=[&a * w, &b * w] · style=a..b · style=a..b * &curve',
+        examples: ['&style label="Funk" style=&funk', '&style label="close to Funk, then Bossa nova" style=[&funk * .8, &bossa * .2]..&bossa'],
+        read: (s, b, _word, at) => {
+            const from = readStylePoint(s);
+            let to = null;
+            let curve = null;
+            if (s.text.startsWith('..', s.i)) {
+                s.i += 2;
+                to = readStylePoint(s);
+                if (/^\s*\*\s*&/.test(s.text.slice(s.i))) {
+                    s.skipSpace();
+                    s.i++;
+                    s.skipSpace();
+                    curve = s.cellRef('a curve after style=a..b *, like * &rise', 'in style=');
+                }
+            }
+            b.style = { from, to, ...(curve ? { curve } : {}), span: s.place(at) };
+        },
+    },
     about: {
         form: 'about=&cell · about=(&a &b …)',
         examples: ['&fenvNote label="The filter opens on every note." about=&fenv', '&why label="Two cells at once." about=(&fenv &accent)'],
@@ -245,6 +265,28 @@ export const KEYS = {
         },
     },
 };
+function readStylePoint(s) {
+    const what = 'a style after style=, like style=&funk, style=&(map=style .3 .45 .55 .55) or style=[&funk * .8, &bossa * .2]';
+    if (s.peek() !== '[')
+        return { kind: 'cell', ref: s.cellRef(what, 'in style=') };
+    s.i++;
+    const terms = [];
+    for (;;) {
+        s.skipSpace();
+        const ref = s.cellRef(what, 'in style=[…]');
+        s.skipSpace();
+        s.expect('*', `'*' and a weight after &${ref.name}: style=[&${ref.name} * .8, …]`);
+        s.skipSpace();
+        terms.push({ ref, weight: s.num(`a weight after &${ref.name} *`).value });
+        s.skipSpace();
+        if (s.peek() === ',') {
+            s.i++;
+            continue;
+        }
+        s.expect(']', `']' to close style=[…]`);
+        return { kind: 'mix', terms };
+    }
+}
 const CELL_WANTS = {
     fm: 'a voice after fm=, like fm=&op',
     write: 'what the tape records, like write=&melody',
@@ -479,6 +521,7 @@ export function parseBody(s, head) {
         tags: null,
         tier: null,
         about: null,
+        style: null,
         chance: null,
         seed: null,
         size: null,
@@ -636,7 +679,7 @@ export function parseBody(s, head) {
     const playMove = b.playMove && braid.kind !== 'blank'
         ? { ...(b.playMove.transpose ? { transpose: b.playMove.transpose } : {}), ...(b.playMove.degree ? { degree: b.playMove.degree } : {}) }
         : null;
-    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, laps, chance, seed, size, swing, legato, params, paramSpans, paramCells, paramClocks, } = b;
+    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, style, laps, chance, seed, size, swing, legato, params, paramSpans, paramCells, paramClocks, } = b;
     return {
         name: head.name,
         span: head.span,
@@ -657,6 +700,7 @@ export function parseBody(s, head) {
         tags,
         tier,
         about: about ?? undefined,
+        ...(style ? { style } : {}),
         laps,
         chance,
         seed,

@@ -1,6 +1,6 @@
 /** A cell's line: its name, then attributes and its braid, in any order. */
 import { leaves } from '../subseq';
-import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, Token } from '../ast';
+import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, StylePoint, StyleSpec, Token } from '../ast';
 import { TIME_PARAMS } from '../attributes';
 import { RETIRED_PARAMS } from '../dough-params';
 import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from '../program';
@@ -32,6 +32,7 @@ interface Body {
   tags: string | null;
   tier: number | null;
   about: Ref[] | null;
+  style: StyleSpec | null;
   chance: number | null;
   seed: number | null;
   size: number | null;
@@ -278,6 +279,28 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       b.paramSpans.tier = s.place(at);
     },
   },
+  style: {
+    form: 'style=&s · style=[&a * w, &b * w] · style=a..b · style=a..b * &curve',
+    examples: ['&style label="Funk" style=&funk', '&style label="close to Funk, then Bossa nova" style=[&funk * .8, &bossa * .2]..&bossa'],
+    read: (s, b, _word, at) => {
+      // a style, or a range from one to another over the cell's scope (decision 063)
+      const from = readStylePoint(s);
+      let to: StylePoint | null = null;
+      let curve: Ref | null = null;
+      if (s.text.startsWith('..', s.i)) {
+        s.i += 2;
+        to = readStylePoint(s);
+        // (a curve written out: where between them, in place of time through the scope)
+        if (/^\s*\*\s*&/.test(s.text.slice(s.i))) {
+          s.skipSpace();
+          s.i++;
+          s.skipSpace();
+          curve = s.cellRef('a curve after style=a..b *, like * &rise', 'in style=');
+        }
+      }
+      b.style = { from, to, ...(curve ? { curve } : {}), span: s.place(at) };
+    },
+  },
   about: {
     form: 'about=&cell · about=(&a &b …)',
     examples: ['&fenvNote label="The filter opens on every note." about=&fenv', '&why label="Two cells at once." about=(&fenv &accent)'],
@@ -300,6 +323,29 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     },
   },
 };
+
+/** One style in style=: a style cell, or a mix of them by weight, `[&funk * .8, &bossa * .2]`. */
+function readStylePoint(s: LineScanner): StylePoint {
+  const what = 'a style after style=, like style=&funk, style=&(map=style .3 .45 .55 .55) or style=[&funk * .8, &bossa * .2]';
+  if (s.peek() !== '[') return { kind: 'cell', ref: s.cellRef(what, 'in style=') };
+  s.i++;
+  const terms: { ref: Ref; weight: number }[] = [];
+  for (;;) {
+    s.skipSpace();
+    const ref = s.cellRef(what, 'in style=[…]');
+    s.skipSpace();
+    s.expect('*', `'*' and a weight after &${ref.name}: style=[&${ref.name} * .8, …]`);
+    s.skipSpace();
+    terms.push({ ref, weight: s.num(`a weight after &${ref.name} *`).value });
+    s.skipSpace();
+    if (s.peek() === ',') {
+      s.i++;
+      continue;
+    }
+    s.expect(']', `']' to close style=[…]`);
+    return { kind: 'mix', terms };
+  }
+}
 
 /** What each parameter that names a cell asks for. */
 const CELL_WANTS: Readonly<Record<string, string>> = {
@@ -586,6 +632,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     tags: null,
     tier: null,
     about: null,
+    style: null,
     chance: null,
     seed: null,
     size: null,
@@ -774,6 +821,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     tags,
     tier,
     about,
+    style,
     laps,
     chance,
     seed,
@@ -805,6 +853,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     tags,
     tier,
     about: about ?? undefined,
+    ...(style ? { style } : {}),
     laps,
     chance,
     seed,
