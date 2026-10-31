@@ -2,7 +2,10 @@
 export declare function splitComment(line: string): [string, string];
 /** 0-based index of the line declaring &name, or -1. */
 export declare function declLine(source: string, name: string): number;
-/** Set (or with null, remove) a `key=value` attribute on &name. New attributes go right after the name. */
+/**
+ * Set (or with null, remove) a `key=value` attribute on &name. New attributes go right after the name; on a template's copy,
+ * its head's, before `from` (`&gypsy show=braid from gypsy &key`).
+ */
 export declare function setAttr(source: string, name: string, key: string, value: string | null): string;
 /** Respell a `key=` on &name as `to=`, its value and place kept (an alias as ours: cutoff=800 → lpf=800). */
 export declare function renameAttr(source: string, name: string, from: string, to: string): string;
