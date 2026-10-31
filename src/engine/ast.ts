@@ -217,6 +217,18 @@ export type WaveShape = 'sin' | 'saw' | 'tri' | 'square';
  * positive number, read left to right: `*3/2` is three steps per two.
  */
 /** A parameter given by cells: a range scaled by them, or (no range) one cell's values as they are. */
+/** A style as an attribute writes it (decision 063): a style cell (`&funk`, `&(map=style …)`), or a mix of them by weight. */
+export type StylePoint = { readonly kind: 'cell'; readonly ref: Ref } | { readonly kind: 'mix'; readonly terms: readonly { readonly ref: Ref; readonly weight: number }[] };
+
+/** style=: a style, or a range from one to another over the cell's scope (`style=&funk..&bossa`). */
+export interface StyleSpec {
+  readonly from: StylePoint;
+  readonly to: StylePoint | null;
+  /** `style=a..b * &curve`: where between the two ends, by a line from 0 to 1, in place of time through the scope. */
+  readonly curve?: Ref;
+  readonly span: Span;
+}
+
 export interface ParamCells {
   readonly range: readonly [number, number] | null;
   readonly factors: readonly Ref[];
@@ -363,6 +375,8 @@ export interface CellDecl {
   readonly tier?: number | null;
   /** On a note: the cells it explains, drawn as links from the note (`about=&fenv`, `about=(&fenv &accent)`). */
   readonly about?: readonly Ref[];
+  /** style= (decision 063): its style, or a range over its scope; on the note `&style`, the section's, which a pick reads by axis. */
+  readonly style?: StyleSpec;
   /**
    * Sound parameters that move: lpf=&sweep (the cell's values are the parameter's),
    * lpf=200..3000 * &fenv * &accent (a range, scaled by cells from 0 to 1 — an

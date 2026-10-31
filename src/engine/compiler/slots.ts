@@ -9,7 +9,8 @@ import { SLOTS } from '../style';
 
 /** The piece with every pick by name read as its slot's position, and an error for each that can't be. */
 export function readSlots(parsed: ParseResult): ParseResult {
-  const maps = new Map(parsed.cells.map((c) => [c.name, c.map?.kind ?? null]));
+  // (a cell with style= has a style's slots, its axes: &style[artic], decision 063)
+  const maps = new Map(parsed.cells.map((c) => [c.name, c.map?.kind ?? (c.style ? 'style' : null)]));
   const diagnostics: Diagnostic[] = [];
   const read = (o: Record<string, unknown>, cell: CellDecl): Record<string, unknown> => {
     const { slot, ...rest } = o as { slot: string; name: string; pick: unknown; span?: CellDecl['span'] };
@@ -25,7 +26,7 @@ export function readSlots(parsed: ParseResult): ParseResult {
       severity: 'error',
       message: slots
         ? `&${name}[${slot}]: &${name} (map=${kind}) has no slot ${slot}; its slots are ${slots.join(', ')}`
-        : `&${name}[${slot}]: &${name}'s map names no slots (${kind ? `map=${kind}` : 'it has no map='}); pick by position (&${name}[$0]), or name the slots with map=${Object.keys(SLOTS).join(' or map=')}`,
+        : `&${name}[${slot}]: &${name}'s map names no slots (${kind ? `map=${kind}` : 'it has no map='}); pick by position (&${name}[$0]), name the slots with map=${Object.keys(SLOTS).join(' or map=')}, or give it a style= (its axes)`,
       span,
     });
     return { ...rest, pick: null };

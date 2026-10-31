@@ -43,6 +43,7 @@ export const PENDING: ReadonlySet<string> = new Set([
   'attribute tags',
   'reference &name[slot]',
   'map map=style',
+  'attribute style',
 ]);
 
 /**

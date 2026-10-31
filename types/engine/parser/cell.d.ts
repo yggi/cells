@@ -1,4 +1,4 @@
-import type { CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec } from '../ast';
+import type { CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, StyleSpec } from '../ast';
 import { CORE } from '../attributes';
 import { LineScanner } from './scanner';
 import { type Syntax } from './syntax';
@@ -20,6 +20,7 @@ interface Body {
     tags: string | null;
     tier: number | null;
     about: Ref[] | null;
+    style: StyleSpec | null;
     chance: number | null;
     seed: number | null;
     size: number | null;
