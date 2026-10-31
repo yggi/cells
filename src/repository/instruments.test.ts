@@ -236,9 +236,25 @@ describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit
 // The melodic instruments (#278, decision 058): one voice each, holding the register Jambot's section text sounds that
 // part at (yggi/jambot packages/score/src/section-text.ts @ 24a528b: PIN_VOICES, the comp at C3, the lead at C4).
 describe('the keys, the pad and the lead', () => {
-  it('each define one voice at its register, use nothing and compile clean', () => {
-    expect(['keys', 'pad', 'lead'].map((id) => byId(id).text)).toEqual(['&keysV loop=C3', '&padV loop=C3', '&leadV loop=C4']);
-    for (const id of ['keys', 'pad', 'lead']) expect(compileSource(byId(id).text).diagnostics).toEqual([]);
+  it('each define one voice at its register, with a sound of its own (#391), use nothing and compile clean', () => {
+    expect(['bass', 'keys', 'pad', 'lead'].map((id) => /^&\w+ s=(\w+) loop=(\w+)/.exec(byId(id).text)!.slice(1))).toEqual([
+      ['saw', 'C2'],
+      ['tri', 'C3'],
+      ['tri', 'C3'],
+      ['square', 'C4'],
+    ]);
+    for (const id of ['bass', 'keys', 'pad', 'lead']) expect(byId(id).text.split('\n'), id).toHaveLength(1);
+    for (const id of ['bass', 'keys', 'pad', 'lead']) expect(compileSource(byId(id).text).diagnostics, id).toEqual([]);
+  });
+
+  it.each(['bass', 'keys', 'pad', 'lead'])('%s is heard in the renderer’s first stage, with no parameter left dry (decision 062, R1)', (id) => {
+    const voice = /^&(\w+)/.exec(byId(id).text)![1]!;
+    const r = compileSource(hosted('&part step=4n 0 2 4 7', byId(id).text, `&out map=sample [&part * &${voice}]`));
+    expect(r.diagnostics).toEqual([]);
+    const audio = pieceAudio(r, codeShifts(r), { seconds: 2 });
+    expect(audio.diagnostics).toEqual([]);
+    expect(audio.loudness.rms).toBeGreaterThan(-60);
+    expect(audio.loudness.clipped).toBe(0);
   });
 
   it('each sounds a part played on it, at its register', () => {
@@ -247,7 +263,8 @@ describe('the keys, the pad and the lead', () => {
       ['pad', 'padV', 48],
       ['lead', 'leadV', 60],
     ] as const) {
-      const plan = planOf(hosted('&part step=4n 0 ~ ~ ~', byId(id).text, `&out map=midi(1) [&part * &${voice}]`));
+      // (sent on a MIDI card and heard on a sound card: a sound of its own isn't sent, decision 064)
+      const plan = planOf(hosted('&part step=4n 0 ~ ~ ~', byId(id).text, `&out map=midi(1) [&part * &${voice}]`, `&hear map=sample [&part * &${voice}]`));
       const route = router(plan.result, channelTable(plan.result));
       const notes = windowAt(plan, 0, 2 - 1e-9).events.flatMap((e) => routesOf(route(e)).flatMap((r) => [midiNote(e, r)?.note]));
       expect(

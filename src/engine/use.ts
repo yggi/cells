@@ -34,6 +34,7 @@
 import { splitComment } from './edit';
 import { FROM_FORM, isAttribute, readFrom, readUse, topTokens, USE_FORM, type FromForm, type UseForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
+import { STYLE } from './style';
 import { INTERFACE_NAMES, type CompileOptions, type Resolve, type Used } from './program';
 
 /** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
@@ -201,9 +202,16 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
         }
       }
     }
+    // (the section's style is the composer's: a fragment reads it, a score writes it, decision 063 §3; #391)
+    if (byName.has(STYLE))
+      say(
+        i,
+        `&${STYLE} is the composer's, the section's style: ${quoted(id)} defines it, where a fragment only reads it (the score writes &${STYLE} style=…; a reader with none plays the centre)`,
+      );
     const gave = new Set<string>();
     for (const l of theirs) {
       if (!l.name || !take.has(l.name)) continue;
+      if (l.name === STYLE) continue;
       const there = given.get(l.name);
       if (there) {
         // (a line taken twice from one id is taken once; from another id, word for word, it is one line both give)

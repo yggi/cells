@@ -14,7 +14,7 @@
  */
 import type { CellDecl, Diagnostic, ParseResult, Ref, StylePoint } from './ast';
 import { parse } from './parser';
-import { AXES } from './style';
+import { AXES, CENTRE, STYLE } from './style';
 
 /** The span a glide runs over: the piece's meter and its steps over the piece, or seconds where it has no meter. */
 export type Scope = { readonly bars: number } | { readonly seconds: number };
@@ -96,13 +96,27 @@ export function readStyles(parsed: ParseResult, scope: Scope | null): { parsed: 
   // the cells made: one for each (cell, slot) a factor reads, shared by every factor that reads it
   const made = new Map<string, CellDecl>();
   let glides = false;
+  let centred = false;
+  // (a gate: play= with a braid of voices, as compiler/parts.ts reads one)
+  const performed = parsed.cells.some((c) => typeof (c.params.play ?? c.params.trigger) === 'string' && c.braid.kind !== 'blank');
   const cellOf = (r: Ref): string | null => {
     if (!r.pick || r.pick.kind !== 'at' || !r.pick.abs) return null;
     const i = r.pick.i;
     const d = decls.get(r.name);
     const style = styles.get(r.name);
     let body: string | null = null;
-    if (style) {
+    if (!d && r.name === STYLE) {
+      // (the section's style, which no line writes: the centre, said once; the composer writes &style, never a fragment)
+      body = text(CENTRE[i]!);
+      // (said in a piece with performers, a score played, as a missing part is: not an instrument heard alone, compiler/parts.ts)
+      if (!centred && performed)
+        diagnostics.push({
+          severity: 'info',
+          message: `no line writes &${STYLE}: &${STYLE}[${AXES[i]!.name}] reads the centre of style space, ${text(CENTRE[i]!)} on each axis (a score names its style as the note &${STYLE} style=…, decision 063)`,
+          span: r.span,
+        });
+      centred = true;
+    } else if (style) {
       const a = style.from[i]!;
       const b = style.to ? style.to[i]! : a;
       if (style.to && !style.curve) glides = true;

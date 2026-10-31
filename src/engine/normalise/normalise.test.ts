@@ -77,6 +77,8 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       // (a form's hole, a motif in eighths over the key: #294)
       ['&call', '&call over=&key step=8n 0 2 4@2 2 0 ~ ~'],
       ['&a', '&a over=&key step=8n 0 2 4@2 2 0 ~ ~'],
+      // (the band's, the score's style: #391)
+      ['&style', '&style style=&(map=style .5 .5 .5 .5)'],
     ]);
     for (const f of LIBRARY) {
       const holes = holesOf(f.text, compiled, resolveSeed);

@@ -9,3 +9,5 @@ export const SLOTS = {
     adsr: ['attack', 'decay', 'sustain', 'release'],
     style: AXIS_NAMES,
 };
+export const STYLE = 'style';
+export const CENTRE = AXES.map((a) => (a.range[0] + a.range[1]) / 2);

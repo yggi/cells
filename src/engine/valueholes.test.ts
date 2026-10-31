@@ -150,7 +150,8 @@ describe('the seeds', () => {
 
   it('a text of uses alone, with &tempo and &tonic, compiles clean and plays what it plays with &bar and &key written out', () => {
     // (the seeds carry no card since #299: the text's own sends the drums and the bass)
-    const card = '&out map=midi ~ [&bassline * &bassV] ~!7 &groove';
+    // (the bass heard on a sound card too: it has a sound of its own, which MIDI doesn't send, #391)
+    const card = '&out map=midi ~ [&bassline * &bassV] ~!7 &groove\n&hear map=sample [&bassline * &bassV]';
     const holes = lines(...uses, '&tempo step=104bpm', '&tonic D', card);
     const written = lines('&bar meter("4/4") step=104bpm swing=16n:.65', '&key scale(dorian, D)', ...uses.slice(2), card);
     expect(messages(holes)).toEqual([]);

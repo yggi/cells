@@ -187,3 +187,37 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
     expect(INTERFACE_NAMES).toContain('&style');
   });
 });
+
+describe('&style is the composer’s: a fragment reads it, and no fragment defines it (#391)', () => {
+  const lpfOf = (text: string) => {
+    const r = compileSource(text);
+    const e = eventsBetween(plan(r, codeShifts(r)), 0, 1).find((x) => x.voice === 'bassV');
+    const lpf = e?.params?.lpf;
+    return { lpf: lpf?.kind === 'points' ? lpf.points[0]!.value : NaN, said: r.diagnostics.map((d) => [d.severity, d.message]) };
+  };
+  const bass = '&bassV s=saw loop=C2 lpf=450..900 * &style[artic]';
+  const alone = `${bar}\n&line step=4n 0 2\n${bass}\n&out map=sample [&line * &bassV]`;
+  const performed = `${bar}\n&line step=4n 0 2\n${bass}\n&bassOut play=&line &bassV\n&out map=sample [&bassOut]`;
+
+  it('read where no line writes it, an axis is the centre of its range; said in a piece with performers, not in an instrument heard alone', () => {
+    expect(lpfOf(alone)).toEqual({ lpf: 675, said: [] });
+    const played = lpfOf(performed);
+    expect(played.lpf).toBe(675);
+    expect(played.said).toEqual([['info', expect.stringMatching(/^no line writes &style: &style\[artic\] reads the centre of style space/)]]);
+    // (written, it is the score's)
+    expect(lpfOf(`${performed}\n&style style=&(map=style .5 .5 1 .5)`)).toEqual({ lpf: 900, said: [] });
+  });
+
+  it('a fragment that defines it is an error, whether or not the piece writes its own; a template’s copy keeps its own private', () => {
+    const resolve = (id: string) => (id === 'inst' ? `${bass}\n&style style=&(map=style .5 .5 .5 .5)` : resolveSeed(id));
+    const used = `${bar}\n&line step=4n 0 2\n&bassV from inst\n&out map=sample [&line * &bassV]`;
+    for (const text of [used, `${used}\n&style style=&(map=style .5 .5 1 .5)`])
+      expect(compileSource(text, undefined, { resolve }).diagnostics.map((d) => d.message)).toEqual([
+        expect.stringMatching(/^&style is the composer's, the section's style: "inst" defines it/),
+      ]);
+  });
+
+  it('no seed fragment defines it', () => {
+    expect(LIBRARY.filter((f) => f.text.split('\n').some((l) => /^&style[\s,]/.test(l))).map((f) => f.id)).toEqual([]);
+  });
+});

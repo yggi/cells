@@ -1,6 +1,8 @@
-import { SLOTS } from "../style.js";
+import { SLOTS, STYLE } from "../style.js";
 export function readSlots(parsed) {
     const maps = new Map(parsed.cells.map((c) => [c.name, c.map?.kind ?? (c.style ? 'style' : null)]));
+    if (!maps.has(STYLE))
+        maps.set(STYLE, 'style');
     const diagnostics = [];
     const read = (o, cell) => {
         const { slot, ...rest } = o;

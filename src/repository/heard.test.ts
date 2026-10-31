@@ -89,16 +89,32 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
     expect([hash(JSON.stringify(notes)), notes.length]).toEqual(SENT[id]);
   });
 
-  it('no seed fragment holds a card', () => {
-    expect(LIBRARY.filter((f) => /map=(midi|sample)/.test(f.text)).map((f) => f.id)).toEqual([]);
+  it('no seed fragment holds a card but the band, whose cards are its routing (decision 063 §1, #391)', () => {
+    expect(LIBRARY.filter((f) => /map=(midi|sample)/.test(f.text)).map((f) => f.id)).toEqual(['band']);
   });
 
   it('a text with nothing to hear gets no card', () => expect(heard('&harm over=&key step=1m [0,2,4]')).toBe(''));
+
+  it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))(
+    '%s, heard on its bench, says nothing: the bass’s sound is heard on a sound card as well as sent (#391)',
+    (id, text) => {
+      const bench = benchOf(id, text);
+      const said = (cards: string) =>
+        compiledWithOldUse(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed })
+          .diagnostics.filter((d) => !OLD_USE.test(d.message))
+          .map((d) => d.message);
+      expect(said(heard(text))).toEqual([]);
+      // (it fires: the MIDI card alone says the sound isn't sent)
+      expect(said(heard(text).replace(/\n&bassSound .*$/m, ''))).toEqual([expect.stringMatching(/^&bassV is only on a MIDI card: its sound/)]);
+    },
+  );
 });
 
 describe('a bass line fills the bass performer’s hole (#285)', () => {
+  // (sent on the bass's channel and heard on a sound card: the bass has a sound of its own, which MIDI doesn't send, #391)
   it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s, with the host and use * from "bass performer", compiles with no diagnostic', (_, text) => {
-    const host = '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut';
+    const host =
+      '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
     const r = compileSource(`use * from "bass performer"\n${host}\n${text}`, undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
     expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bassOut', 'bass', 'bassline']]);
