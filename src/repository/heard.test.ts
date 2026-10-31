@@ -94,6 +94,20 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
   });
 
   it('a text with nothing to hear gets no card', () => expect(heard('&harm over=&key step=1m [0,2,4]')).toBe(''));
+
+  it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))(
+    '%s, heard on its bench, says nothing: the bass’s sound is heard on a sound card as well as sent (#391)',
+    (id, text) => {
+      const bench = benchOf(id, text);
+      const said = (cards: string) =>
+        compiledWithOldUse(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed })
+          .diagnostics.filter((d) => !OLD_USE.test(d.message))
+          .map((d) => d.message);
+      expect(said(heard(text))).toEqual([]);
+      // (it fires: the MIDI card alone says the sound isn't sent)
+      expect(said(heard(text).replace(/\n&bassSound .*$/m, ''))).toEqual([expect.stringMatching(/^&bassV is only on a MIDI card: its sound/)]);
+    },
+  );
 });
 
 describe('a bass line fills the bass performer’s hole (#285)', () => {

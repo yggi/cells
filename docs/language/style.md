@@ -122,4 +122,5 @@ It sends the score on a MIDI card on Jambot's channels and hears it on a sound c
 ```
 
 Which instrument a performer plays at a style is the band's choice too, made at resolution: `resolveBand(score)` answers `band` with each pitched voice the instrument the library ranks first at the score's style, named or written as numbers, (a clarinet at Electro swing's point, a theremin at Spooky's), and the band as written at Jambot's eight presets (`src/repository/band.ts`).
+The instruments are found where the score's style starts: a range, `style=&funk..&electroSwing`, plays Funk's instruments, the defaults, throughout, and the reverse plays Electro swing's. A found instrument is voiced for its point and reads no `&style`, so where it plays, the style moves no cutoff of that voice.
 A line can't make that choice: a voice reads a style as a moving parameter, and a wave or an envelope's times are not one.

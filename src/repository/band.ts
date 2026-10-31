@@ -72,6 +72,10 @@ export function instrumentsAt(point: StylePoint, fragments: readonly Fragment[] 
 /**
  * A band's text at a style's point: each pitched voice the found instrument's line (`instrumentsAt`), in place of the
  * band's own line for it, or after the band's lines where it writes none; the band as it is where nothing is found.
+ * A found instrument is voiced for its own point (#350, #366): it reads no `&style`, so where one plays, the style moves
+ * no cutoff of that voice; the default instruments it stands in for read it (`lpf=450..900 * &style[artic]`). The point
+ * is the score's style where it starts (`scoreStyle`): a section that glides from one style to another plays the
+ * instruments found at its first end throughout.
  */
 export function bandAt(point: StylePoint, band: string = resolveSeed('band')!, fragments: readonly Fragment[] = INSTRUMENT_FRAGMENTS): string {
   const found = Object.values(instrumentsAt(point, fragments));
