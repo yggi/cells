@@ -24,10 +24,42 @@ function sectionLine(lines, name) {
         return rest.length > 0 && rest.every((w) => /^&\w+$/.test(w)) && rest.includes(`&${name}`);
     });
 }
-function editDecl(source, name, f) {
+function copyHead(lines, name) {
+    for (let i = 0; i < lines.length; i++) {
+        const code = splitComment(lines[i].replace(/\r$/, ''))[0];
+        const form = readFrom(code);
+        if (!form || form.kind !== 'use' || form.names?.length !== 1 || form.names[0] !== `&${name}`)
+            continue;
+        if (form.args === null && form.main === null)
+            return null;
+        let at = 0;
+        for (const w of splitWords(code)) {
+            at = code.indexOf(w, at);
+            if (w === 'from')
+                return { line: i, from: at };
+            at += w.length;
+        }
+    }
+    return null;
+}
+const takenFrom = (lines, name) => lines.some((l) => {
+    const form = readFrom(splitComment(l)[0]);
+    return form?.kind === 'use' && form.names?.includes(`&${name}`) === true;
+});
+function editDecl(source, name, f, onCopy = false) {
     const lines = source.split('\n');
     let i = declLine(source, name);
-    const table = sectionLine(lines, name);
+    if (i < 0 && onCopy) {
+        const copy = copyHead(lines, name);
+        if (copy) {
+            const cr = lines[copy.line].endsWith('\r') ? '\r' : '';
+            const line = cr ? lines[copy.line].slice(0, -1) : lines[copy.line];
+            const before = line.slice(0, copy.from).replace(/\s+$/, '');
+            lines[copy.line] = `${f(before, headOf(name))} ${line.slice(copy.from)}${cr}`;
+            return lines.join('\n');
+        }
+    }
+    const table = i < 0 && takenFrom(lines, name) ? -1 : sectionLine(lines, name);
     if (i < 0) {
         if (table < 0)
             return source;
@@ -56,7 +88,7 @@ export function setAttr(source, name, key, value) {
         if (attr.test(code))
             return value === null ? code.replace(new RegExp(`\\s${key}=${val}`), '') : code.replace(attr, `$1${key}=${value}`);
         return value === null ? code : code.replace(head, `$1 ${key}=${value}`);
-    });
+    }, true);
 }
 export function renameAttr(source, name, from, to) {
     return editDecl(source, name, (code) => code.replace(new RegExp(`(\\s)${from}=`), `$1${to}=`));

@@ -172,6 +172,25 @@ describe('editor operations', () => {
     expect(setAttr(crlf, 'tune', 'label', '"t"').split('\n')[1]).toBe('&tune label="t" step=&bar 0 2 4\r');
   });
 
+  it('writes a template copy’s attribute on its head, before from, never as a second definition (decision 065)', () => {
+    // (`&call step=8n &gypsy` looks like a table of sections naming &gypsy: a from line that takes it says it is none)
+    const piece = '&gypsy from gypsy &key // the call\r\n&call step=8n &gypsy';
+    const shown = setAttr(piece, 'gypsy', 'show', 'braid');
+    expect(shown).toBe('&gypsy show=braid from gypsy &key // the call\r\n&call step=8n &gypsy');
+    expect(setAttr(shown, 'gypsy', 'show', 'pattern')).toBe(shown.replace('braid', 'pattern'));
+    expect(setAttr(shown, 'gypsy', 'show', null)).toBe(piece);
+    // (the main argument's attributes, after the id, are its own)
+    expect(setAttr('&key from major label="the tonic" free(D)', 'key', 'label', '"k"')).toBe('&key label="k" from major label="the tonic" free(D)');
+    // (several heads, or no arguments, maybe a collection: no head of its own to write on, so nothing is written)
+    for (const taken of ['&bd, &sd from gm_kit\n&k step=8n &bd', '&bd from gm_kit\n&k step=8n &bd']) expect(setAttr(taken, 'bd', 'show', 'braid')).toBe(taken);
+    // (a piece from the library: shown, it says what it said before)
+    const swing = PRESETS.electroswing!.source;
+    const said = (text: string) => compileSource(text).diagnostics.map((d) => d.message);
+    expect(said(setAttr(swing, 'gypsy', 'show', 'braid'))).toEqual(said(swing));
+    // (a flag is no attribute: a head before from takes only key=value)
+    expect(setOff(piece, 'gypsy', true)).toBe(piece);
+  });
+
   it('step and loop are one setting', () => {
     const a = setTiming(src, 'lead', 'step', '440');
     expect(attrsOf(a, 'lead').get('step')).toBe('440');

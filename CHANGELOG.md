@@ -11,6 +11,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 ### Fixed
 
 - **A piece file keeps a `from` line's lockfile entry** (decision 065): `writePiece` dropped every entry no `use` line named, so a piece written with `from` lines, as every example is since v0.14.0, lost its lockfile on its next save, and with it the version each fragment was saved at. A `from` line names its fragment as a `use` line does. Found by yggi/cell-studio's pin to v0.14.0 (yggi/cell-studio#526). What a piece plays doesn't change.
+- **A graph edit of a template's copy writes its head, before `from`** (decision 065 §4): `setAttr` on a cell a `from` line takes as its one head (`&gypsy from gypsy &key`) wrote a second line, `&gypsy show=braid`, which a piece reads as a second definition (`&gypsy is already defined`); it writes `&gypsy show=braid from gypsy &key`, and a line that steps over a taken cell alone (`&call step=8n &gypsy`) is no longer read as a table of sections naming it. A line that takes several heads, or takes one with no arguments (maybe a collection, which takes none), has no head of its own to write on, and is left as it is. Found by yggi/cell-studio's pin to v0.14.0 (yggi/cell-studio#526). What a piece plays doesn't change.
 
 ## v0.14.0 — 2026-10-31
 
