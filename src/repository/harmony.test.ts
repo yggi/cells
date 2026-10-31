@@ -206,7 +206,7 @@ describe('the dark cadence (#349)', () => {
   });
 
   it('sits at the point proposed for Spooky alone, found there first at distance 0', () => {
-    expect(cadence.association).toEqual([{ point: SPOOKY, weight: 1, facet: 'harmony' }]);
+    expect(cadence.association).toEqual([{ point: SPOOKY, weight: 0.4, facet: 'harmony' }]);
     expect(
       createRepository(LIBRARY)
         .query(SPOOKY, 1, {}, { facet: 'harmony' })
@@ -233,13 +233,13 @@ describe('the haunted progression', () => {
     expect(chordsPlayed(text)).toEqual([dm, faug, gm, a, bb, edim, a, dm]);
   });
 
-  // (at half weight, so it is found within Jambot's miss distance, 0.3, of Spooky's point alone)
-  it('sits 0.05 below Spooky in energy at half weight, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
-    expect(haunted.association).toEqual([{ point: { ...SPOOKY, energy: 0.3 }, weight: 0.5, facet: 'harmony' }]);
+  // (at weight 0.4, as the dark cadence is, so it is found within Jambot's miss distance, 0.3, of Spooky's point alone, #404)
+  it('sits 0.05 below Spooky in energy at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
+    expect(haunted.association).toEqual([{ point: { ...SPOOKY, energy: 0.3 }, weight: 0.4, facet: 'harmony' }]);
     const repository = createRepository(LIBRARY);
     expect(repository.query(SPOOKY, 2, {}, { facet: 'harmony' }).map((f) => [f.fragment.id, Math.round(f.distance * 100) / 100])).toEqual([
       ['dark cadence', 0],
-      ['haunted progression', 0.05],
+      ['haunted progression', 0.06],
     ]);
     const others = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ, ELECTRO_SWING };
     for (const [name, point] of Object.entries(others)) expect(fragmentDistance(haunted, point, {}, 'harmony'), name).toBeGreaterThan(0.3);

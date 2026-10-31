@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+### Changed
+
+- **A seed placed for one preset is no other's within Jambot's miss distance** (#404). A new gate in `library.test.ts`: over Jambot's ten preset points and the facets a frontend asks for at its point (meter, mode, rhythm, bass, harmony, motif, instrument, stab, expression), no preset's first find within 0.3 was placed for another preset. To meet it, `dark cadence`, `haunted progression` and `Charleston stabs` are weighted 0.4, not 1 (and 0.5): at 1, the dark cadence was the nearest harmony to Synth-pop, Deep house, Lo-fi hip hop, Bossa nova and Swing jazz, and the Charleston stabs the nearest stab to the same five, all within 0.3. At their own presets they are found first as before, at distance 0 (the haunted progression 0.06). **What a frontend sees at its next pin:** a harmony or stab query away from Spooky and Electro swing finds them farther; Jambot reads neither a four-bar progression nor the facet `stab` yet (yggi/jambot#538, #541), so nothing it plays changes. No example names a weight, and no event snapshot moves.
+
 ### Added
 
 - **Eight ghost-house seeds near Spooky's point** (yggi/jambot#517's Spooky: sync .2, harm .9, artic .3, energy .35), the idioms of a haunted-house cue and no quotation of any tune: four motifs, `wail` (a held note sagging by semitones), `haunt` (the augmented triad up and back), `lament` (a chromatic fall from the fifth to the tonic) and `peek` (the semitones either side of the tonic); the `haunted progression`, eight bars of i, III+, iv, V, ♭VI, ii°, V, i, at half weight so it is found within 0.3 of Spooky alone; the `tiptoe bass` (the root, then the chord's fifth below, a beat's rest after each); `Ghost drums` (one heartbeat a bar, a faint tick each beat, a knock at mid-bar: the only rhythm that fits 7/8 too); and the `haunted pad`, a slow-swelling `&padV`, 0.05 below Spooky in energy so the organ stays Spooky's pad.
