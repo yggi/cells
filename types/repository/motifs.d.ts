@@ -14,6 +14,11 @@
  * of that meter in eighths grouped as its pulses group (3/4 and 6/8 twice, 5/4, 7/8, 10/8, 12/8, 2/4, alla breve); and
  * six general-purpose, at the centre of style space and 0.2 from it on one axis each. Each is a file of the seed
  * library, `fragments/motifs/*.md` (`seed.ts`).
+ *
+ * Six more are two children's songs in pieces, traditional and in the public domain: Twinkle's call and answer
+ * (`twinkle`, `wonder`), and Hänschen klein's call, open and closing answers and bridge (`haenschen`, `hinein`, `heim`,
+ * `weinet`), at the point proposed for a preset of children's songs (`NURSERY`) and 0.1 to 0.2 from it, so a query
+ * there finds each call first; the forms `ternary` and `rounded binary` put each tune together.
  */
 import type { Fragment } from './fragments';
 /** The motifs built so far: two at or near each of Jambot's presets, one at each meter's point, and six general-purpose, as the facet `motif`. */

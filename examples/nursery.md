@@ -1,13 +1,12 @@
 ---
 title: Nursery songs, in pieces
 tags: [genre:folk, diatonic, motifs, arrangement]
-description: "Twinkle and Hänschen klein from the seed library: each tune's lines are motifs, each tune's shape a form, over a vamp of two chords, a root bass and the plainest beat."
+description: "Twinkle and Hänschen klein from the seed library: each tune's lines are motifs, each tune's shape a form, over a vamp of two chords, a root bass and the plainest beat, the piece's own."
 ---
 
 Two children's songs, the kind a learner plays first, made of the seed library's pieces.
 Each tune is its lines, each a motif of one bar: Twinkle's call `twinkle` and its answer `wonder`; Hänschen klein's call `haenschen`, its open answer `hinein`, its close `heim` and its bridge `weinet`.
 Each tune's shape is a form: Twinkle's is `ternary`, A B A, its bridge the answer a step up; Hänschen klein's is `rounded binary`, A A′ B A′.
-The band is the library's too: the plainest beat, `Nursery drums`, a vamp of two chords, the tonic for four bars and the fifth for four, and the root bass under it.
 
 ```cells
 &bar from "4/4" &tempo
@@ -15,12 +14,14 @@ The band is the library's too: the plainest beat, `Nursery drums`, a vamp of two
 &key from ionian C
 &harm from "vamp to the fifth" &key
 &bassline from "root bass" &harm
-&kick, &backbeat, &hat from "Nursery drums"
 &drums, &drumsOut from "drums performer" &drumlines
 &bass, &bassOut from "bass performer" &bassline
 &leadOut from "lead performer" &leadline
+&kick step=2n &bd:0:.5
+&backbeat step=2n [~ &sd:0:.35]
+&hat step=4n &hh:0:.18
 &drumlines [&kick, &backbeat, &hat]
-&bandNote label="The band: the nursery beat, a vamp of the tonic and the fifth, the root bass, all from the library." about=(&drumlines &harm &bassline)
+&bandNote label="The band: a vamp of the tonic and the fifth and the root bass from the library, and the plainest beat, the piece's own." about=(&drumlines &harm &bassline)
 ```
 
 ## The tunes, in pieces

@@ -88,14 +88,14 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
 /** The centre of style space, where a form for any style sits. */
 const CENTRE = at(0.5, 0.5, 0.5, 0.5);
 /** Each form: its head, the hole it reads, its length in bars over a one-bar motif, and its point. */
-const FORMS: Record<string, { head: string; hole: string; bars: number; point: StylePoint }> = {
+const FORMS: Record<string, { head: string; hole: string; bars: number; point: StylePoint; weight?: number }> = {
   'call and answer': { head: 'phrase', hole: 'call', bars: 2, point: CENTRE },
   sentence: { head: 'sentence', hole: 'call', bars: 4, point: CENTRE },
   period: { head: 'period', hole: 'call', bars: 4, point: CENTRE },
   AABA: { head: 'chorus', hole: 'a', bars: 4, point: CENTRE },
   // (Twinkle's and Hänschen klein's, at their tunes' points, #371)
-  ternary: { head: 'song', hole: 'call', bars: 6, point: NURSERY },
-  'rounded binary': { head: 'song', hole: 'call', bars: 8, point: at(0.1, 0.12, 0.6, 0.45) },
+  ternary: { head: 'song', hole: 'call', bars: 6, point: NURSERY, weight: 0.5 },
+  'rounded binary': { head: 'song', hole: 'call', bars: 8, point: at(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
 };
 
 type Meter = '4/4' | '3/4' | '6/8' | '5/4' | '7/8' | '10/8' | '12/8' | '2/4' | 'alla breve';
@@ -172,7 +172,7 @@ describe('the forms', () => {
   it('are call and answer, the sentence, the period and AABA at the centre of style space, and the ternary and the rounded binary song at their tunes’ points, as the facet form', () => {
     expect(FORM_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(FORMS));
     for (const f of FORM_FRAGMENTS) {
-      expect(f.association, f.id).toEqual([{ point: FORMS[f.id]!.point, weight: 1, facet: 'form' }]);
+      expect(f.association, f.id).toEqual([{ point: FORMS[f.id]!.point, weight: FORMS[f.id]!.weight ?? 1, facet: 'form' }]);
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual([`&${FORMS[f.id]!.hole}`]);
     }
   });
