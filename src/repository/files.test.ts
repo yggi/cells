@@ -9,7 +9,7 @@ import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, NURSERY, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { SEED } from './seed';
 import { SEED_FILES } from './seed.generated';
@@ -54,7 +54,7 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are a hundred and eighteen', () => expect(files).toHaveLength(118));
+  it('are a hundred and twenty-seven', () => expect(files).toHaveLength(127));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -98,6 +98,7 @@ describe('the seed files', () => {
       'creeping bass': [SPOOKY],
       'dark cadence': [SPOOKY],
       'Spooky drums': [SPOOKY],
+      'Nursery drums': [NURSERY],
       'harmonic minor': [ELECTRO_SWING, SPOOKY],
       aeolian: [SYNTH_POP, TECHNO, LO_FI],
       dorian: [DEEP_HOUSE, FUNK],
@@ -128,7 +129,7 @@ describe('the seed files', () => {
   });
 
   // (the seeds written by hand for the point proposed for a Spooky preset, #349, or near it, and lifted from nothing)
-  const WRITTEN = new Set(['Spooky drums', 'creeping bass', 'dark cadence', 'Ghost drums', 'tiptoe bass', 'haunted progression', 'haunted pad']);
+  const WRITTEN = new Set(['Spooky drums', 'creeping bass', 'dark cadence', 'Ghost drums', 'tiptoe bass', 'haunted progression', 'haunted pad', 'Nursery drums']);
   it('each says it is a seed, every drum bar, bass line and harmony and what an example gave where it was lifted from, but those written for Spooky, and each has prose', () => {
     expect(SEED.every((f) => f.meta.source === 'seed' && f.prose.length > 0)).toBe(true);
     expect(new Set(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id))).toEqual(
