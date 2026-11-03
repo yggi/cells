@@ -285,6 +285,8 @@ export interface ParamCells {
     readonly range: readonly [number, number] | null;
     readonly factors: readonly Ref[];
     readonly span: Span;
+    /** A blend of two waves, `s=tri..square * &x` (#411): the second wave; the first is `params.s`, the range 0 to 1 the share of the second. */
+    readonly to?: string;
 }
 /** One factor of a rate as written: `*2` (×) or `/2` (÷). */
 export interface RateOp {

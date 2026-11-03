@@ -24,7 +24,7 @@ export const DOUGH_SOURCES: Readonly<Record<string, 'sine' | 'triangle' | 'sawto
 
 /** Parameters that are gone, and what says the same thing now. */
 const ENVELOPE = (k: string) =>
-  `${k}= is gone: an envelope is a cell — in the mix, &theme * &(map=adsr .01 .3 .5 .4) * &lead, or an instrument, &lead [&(map=adsr .01 .3 .5 .4) * &saw]`;
+  `${k}= is gone: an envelope is a cell — in the mix, &theme * &(map=adsr .01 .3 .5 .4) * &lead, or an instrument, &lead [&(map=adsr .01 .3 .5 .4) * &saw]; on the envelope, its slots by name: &(map=adsr attack=.01 decay=.3 sustain=.5 release=.4)`;
 const PITCH_DROP = (k: string) => `${k}= is gone: a pitch drop is a pitch shape, an envelope in semitones — penv=30 pdec=.04 is pitch=0..30 * &(map=adsr 0 .04 0 0)`;
 export const RETIRED_PARAMS: Readonly<Record<string, string>> = {
   attack: ENVELOPE('attack'),

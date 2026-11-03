@@ -5,7 +5,7 @@ import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from "./clocking.
 import { ExpansionLimit, flatten, stepsOf } from "./flatten.js";
 import { cellId } from "./ids.js";
 import { refsOf } from "./readers.js";
-import { heldAt, levelSeries, modulation, paramTracks, pitchOf, valueThen } from "./series.js";
+import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen } from "./series.js";
 import { warpOf } from "./physics.js";
 import { tapShare } from "./meter.js";
 import { mod } from "../theory/modes.js";
@@ -188,19 +188,31 @@ function outputOn(result, o, muted) {
 }
 export function plan(result, statics, muted = new Set()) {
     if (!result.ok)
-        return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), end: Infinity };
+        return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
     const tracks = [];
     const drones = [];
     const voiceParams = new Map();
+    const series = (cell, pick, shift, sign) => {
+        const m = result.cells.get(cell);
+        const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
+        return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, period: Math.max(1, stepsOf(result, cell, pick)), events };
+    };
+    const envParams = new Map();
+    for (const c of result.cells.values()) {
+        if (c.map?.kind !== 'adsr' || !Object.keys(c.paramCells).length)
+            continue;
+        try {
+            envParams.set(c.name, Object.fromEntries(Object.entries(c.paramCells).map(([k, pc]) => [k, { range: pc.range, series: pc.factors.map((f) => series(f, null, 0, 1)), env: null }])));
+        }
+        catch (e) {
+            if (!(e instanceof ExpansionLimit))
+                throw e;
+        }
+    }
     for (const o of result.outputs) {
         if (!outputPlays(result, o, muted))
             continue;
         const c = result.cells.get(o.cell);
-        const series = (cell, pick, shift, sign) => {
-            const m = result.cells.get(cell);
-            const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
-            return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, period: Math.max(1, stepsOf(result, cell, pick)), events };
-        };
         try {
             for (const voice of o.kit ? refsOf(result.cells.get(o.voice)) : [o.voice]) {
                 if (voiceParams.has(voice))
@@ -264,7 +276,21 @@ export function plan(result, statics, muted = new Set()) {
             stops = Math.max(stops, at);
     }
     const lapsEnd = ends.length ? Math.max(...ends) : Infinity;
-    return { result, statics, muted, tracks, drones, played: playedCells(result), voiceParams, end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity) };
+    return { result, statics, muted, tracks, drones, played: playedCells(result), voiceParams, envParams, end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity) };
+}
+function envelopeAt(p, cell, env, at) {
+    const slots = env && cell ? p.envParams.get(cell) : undefined;
+    if (!slots)
+        return env;
+    const out = { ...env };
+    for (const [k, prm] of Object.entries(slots)) {
+        const v = paramAt(p, prm, at);
+        if (k === 'attack' || k === 'decay' || k === 'release')
+            out[k] = Math.max(0, v);
+        else if (k === 'sustain')
+            out.sustain = Math.min(1, Math.max(0, v));
+    }
+    return out;
 }
 function memberEnvelope(result, voice) {
     const name = result.cells.get(voice)?.env;
@@ -411,7 +437,9 @@ function plainEvents(p, from, to, outputs) {
             const v = by && voiceFor(result, t.output, by.value);
             if (!v || p.muted.has(cellId(v.voice)))
                 return null;
-            const hit = result.cells.get(v.voice)?.oneshot ? (t.output.envelope ?? memberEnvelope(result, v.voice)) : null;
+            const envCell = t.output.envelope ? t.output.envelopeCell : t.output.kit ? result.cells.get(v.voice)?.env : null;
+            const envelope = envelopeAt(p, envCell, t.output.envelope ?? (t.output.kit ? memberEnvelope(result, v.voice) : null), at);
+            const hit = result.cells.get(v.voice)?.oneshot ? (envelope ?? memberEnvelope(result, v.voice)) : null;
             const dur = hit ? hit.attack + hit.decay : Number.isFinite(ends) ? ends - at : 8;
             const selects = t.output.kit && !t.picker;
             let semis = selects || t.output.gate ? t.output.offset : t.sign * pitchOf(p, e, at) + t.output.offset;
@@ -458,7 +486,7 @@ function plainEvents(p, from, to, outputs) {
             }
             const freq = v.freq * Math.pow(2, semis / 12);
             const params = paramTracks(p, v.voice, at, dur);
-            const env = t.output.envelope ?? (t.output.kit ? memberEnvelope(result, v.voice) : null);
+            const env = envelope;
             const memberPan = (g) => {
                 const k = voiceGain(result, v.voice);
                 if (!t.output.kit)
@@ -667,7 +695,7 @@ function droneEvents(p, from, to, outputs, held) {
                 held: true,
                 ...(!o.silent && !audible(gains) ? { unheard: true } : {}),
                 ...(midi.length ? { midi } : {}),
-                ...(o.envelope ? { env: o.envelope } : {}),
+                ...(o.envelope ? { env: envelopeAt(p, o.envelopeCell, o.envelope, at) } : {}),
                 ...(o.through.length ? { instrument: o.through[0] } : {}),
                 ...(params ? { params } : {}),
                 ...(outputs ? { output: o.id } : {}),

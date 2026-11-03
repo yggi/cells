@@ -237,11 +237,12 @@ describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit
 // part at (yggi/jambot packages/score/src/section-text.ts @ 24a528b: PIN_VOICES, the comp at C3, the lead at C4).
 describe('the keys, the pad and the lead', () => {
   it('each define one voice at its register, with a sound of its own (#391), use nothing and compile clean', () => {
-    expect(['bass', 'keys', 'pad', 'lead'].map((id) => /^&\w+ s=(\w+) loop=(\w+)/.exec(byId(id).text)!.slice(1))).toEqual([
+    expect(['bass', 'keys', 'pad', 'lead'].map((id) => /^&\w+ s=(\S+)(?: \* \S+)? loop=(\w+)/.exec(byId(id).text)!.slice(1))).toEqual([
       ['saw', 'C2'],
       ['tri', 'C3'],
       ['tri', 'C3'],
-      ['square', 'C4'],
+      // (from a soft triangle to a bright square as the articulation rises: #411)
+      ['tri..square', 'C4'],
     ]);
     for (const id of ['bass', 'keys', 'pad', 'lead']) expect(byId(id).text.split('\n'), id).toHaveLength(1);
     for (const id of ['bass', 'keys', 'pad', 'lead']) expect(compileSource(byId(id).text).diagnostics, id).toEqual([]);

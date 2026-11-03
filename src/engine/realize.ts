@@ -14,7 +14,7 @@ import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from './clocking'
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { refsOf } from './readers';
-import { heldAt, levelSeries, modulation, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
+import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
 import { tapShare } from './meter';
 import { mod } from '../theory/modes';
@@ -117,6 +117,8 @@ export interface Plan {
   readonly played: ReadonlySet<string>;
   /** Each voice's moving parameters: their cells as series (an envelope among them, apart). */
   readonly voiceParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
+  /** Each envelope's moving slots (`attack=.3..0.01 * &style[artic]`, #411): read at each note's start (`envelopeAt`). */
+  readonly envParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
   /** When the piece ends, in seconds: the last track's end — Infinity if anything loops (or nothing plays). */
   readonly end: number;
 }
@@ -335,18 +337,31 @@ function outputOn(result: CompileResult, o: Output, muted: ReadonlySet<string>):
 
 /** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<string> = new Set()): Plan {
-  if (!result.ok) return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), end: Infinity };
+  if (!result.ok) return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
   const tracks: PlanTrack[] = [];
   const drones: DroneTrack[] = [];
   const voiceParams = new Map<string, Record<string, VoiceParam>>();
+  const series = (cell: string, pick: Pick | null, shift: number, sign: 1 | -1): Series => {
+    const m = result.cells.get(cell)!;
+    const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
+    return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, period: Math.max(1, stepsOf(result, cell, pick)), events };
+  };
+  // the envelopes' moving slots (attack=.3..0.01 * &style[artic], #411): their cells, as series, read at each note's start
+  const envParams = new Map<string, Record<string, VoiceParam>>();
+  for (const c of result.cells.values()) {
+    if (c.map?.kind !== 'adsr' || !Object.keys(c.paramCells).length) continue;
+    try {
+      envParams.set(
+        c.name,
+        Object.fromEntries(Object.entries(c.paramCells).map(([k, pc]) => [k, { range: pc.range, series: pc.factors.map((f) => series(f, null, 0, 1)), env: null }])),
+      );
+    } catch (e) {
+      if (!(e instanceof ExpansionLimit)) throw e;
+    }
+  }
   for (const o of result.outputs) {
     if (!outputPlays(result, o, muted)) continue;
     const c = result.cells.get(o.cell)!;
-    const series = (cell: string, pick: Pick | null, shift: number, sign: 1 | -1): Series => {
-      const m = result.cells.get(cell)!;
-      const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
-      return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, period: Math.max(1, stepsOf(result, cell, pick)), events };
-    };
     try {
       // the voices' moving parameters (lpf=200..3000 * &fenv …): their cells, as series
       for (const voice of o.kit ? refsOf(result.cells.get(o.voice)) : [o.voice]) {
@@ -408,7 +423,25 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     if (at != null) stops = Math.max(stops, at);
   }
   const lapsEnd = ends.length ? Math.max(...ends) : Infinity;
-  return { result, statics, muted, tracks, drones, played: playedCells(result), voiceParams, end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity) };
+  return { result, statics, muted, tracks, drones, played: playedCells(result), voiceParams, envParams, end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity) };
+}
+
+/** An envelope as a note starting at `at` plays it: its moving slots read then (#411), the rest as written. */
+function envelopeAt<E extends { readonly attack: number; readonly decay: number; readonly sustain: number; readonly release: number } | null>(
+  p: Plan,
+  cell: string | null | undefined,
+  env: E,
+  at: number,
+): E {
+  const slots = env && cell ? p.envParams.get(cell) : undefined;
+  if (!slots) return env;
+  const out = { ...env! } as { attack: number; decay: number; sustain: number; release: number };
+  for (const [k, prm] of Object.entries(slots)) {
+    const v = paramAt(p, prm, at);
+    if (k === 'attack' || k === 'decay' || k === 'release') out[k] = Math.max(0, v);
+    else if (k === 'sustain') out.sustain = Math.min(1, Math.max(0, v));
+  }
+  return out as E;
 }
 
 /**
@@ -582,7 +615,9 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       const v = by && voiceFor(result, t.output, by.value);
       if (!v || p.muted.has(cellId(v.voice))) return null;
       // (a oneshot voice: a hit, as long as its envelope's attack and decay, whatever its step)
-      const hit = result.cells.get(v.voice)?.oneshot ? (t.output.envelope ?? memberEnvelope(result, v.voice)) : null;
+      const envCell = t.output.envelope ? t.output.envelopeCell : t.output.kit ? result.cells.get(v.voice)?.env : null;
+      const envelope = envelopeAt(p, envCell, t.output.envelope ?? (t.output.kit ? memberEnvelope(result, v.voice) : null), at);
+      const hit = result.cells.get(v.voice)?.oneshot ? (envelope ?? memberEnvelope(result, v.voice)) : null;
       const dur = hit ? hit.attack + hit.decay : Number.isFinite(ends) ? ends - at : 8;
       // a gate starts notes at pitch 0, at its own level; a kit read only selects, adding no pitch (decision 029): the
       // member picked plays at its own, moved by the rest of the product as any voice is
@@ -635,7 +670,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       }
       const freq = v.freq * Math.pow(2, semis / 12);
       const params = paramTracks(p, v.voice, at, dur);
-      const env = t.output.envelope ?? (t.output.kit ? memberEnvelope(result, v.voice) : null);
+      const env = envelope;
       // a kit's member placed by its own pan= (a voice's own is in its output's gains already); every voice at its own
       // gain= (a kit member's balance)
       const memberPan = (g: [number, number]): [number, number] => {
@@ -876,7 +911,7 @@ function droneEvents(p: Plan, from: number, to: number, outputs: boolean, held: 
         held: true,
         ...(!o.silent && !audible(gains) ? { unheard: true as const } : {}),
         ...(midi.length ? { midi } : {}),
-        ...(o.envelope ? { env: o.envelope } : {}),
+        ...(o.envelope ? { env: envelopeAt(p, o.envelopeCell, o.envelope, at) } : {}),
         ...(o.through.length ? { instrument: o.through[0] } : {}),
         ...(params ? { params } : {}),
         ...(outputs ? { output: o.id } : {}),

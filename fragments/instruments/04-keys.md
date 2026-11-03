@@ -12,11 +12,11 @@ source: seed
 ---
 
 ```cells
-&keysV s=tri loop=C3 env=&(map=adsr .155 0 1 .41)
+&keysV s=tri loop=C3 env=&(map=adsr attack=.3..0.01 * &style[artic] decay=0 sustain=1 release=.7..0.12 * &style[artic])
 ```
 
 The voice Jambot's comp plays its stabs through, and any keyboard part: `&keysV`, whose `loop=C3` sets the register, where Jambot's section text sounds its comp (`PIN_VOICES.comp`, yggi/jambot `packages/score/src/section-text.ts` @ 24a528b), so a stab played on it sends the MIDI notes it sends today, with no move on its gate.
-Its sound is Jambot's chords at the centre of style space (`timbreOf`, yggi/jambot `packages/engine/src/sound.ts` @ 227aa74): a triangle that swells in over .155 s and dies over .41 s, where Jambot's attack shortens from .3 s at legato to .01 s at staccato and its release from .7 s to .12 s (#391). An envelope's times are numbers, not a moving parameter, so it plays this one at every style until they can move (#411); a text that wants the staccato end writes its own `&keysV`.
+Its sound is Jambot's chords (`timbreOf`, yggi/jambot `packages/engine/src/sound.ts` @ 227aa74): a triangle whose attack shortens from .3 s at legato to .01 s at staccato and its release from .7 s to .12 s, its envelope's slots read from the section's style at each note's start (`attack=.3..0.01 * &style[artic]`, decision 066; #391, #411). Where no line writes the style, the centre's: .155 s and .41 s.
 It sounds within the renderer's first stage (decision 062, R1), and changes no note MIDI out sends.
 Its register is its own (decision 058): a performer that plays it higher or lower says so on its gate (`play=&part^$12`).
 

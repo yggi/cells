@@ -43,6 +43,8 @@ export type ParamTrack = {
     readonly sustain: number;
     readonly release: number;
 };
+/** A moving value at one moment: its factors multiplied there, laid on its range (an envelope's slot at a note's start, #411). */
+export declare function paramAt(p: Plan, prm: VoiceParam, at: number): number;
 /** A voice's moving parameters over one note [at, at + dur). */
 export declare function paramTracks(p: Plan, voice: string, at: number, dur: number): Record<string, ParamTrack> | undefined;
 /** Pitch of a step event, in semitones, looking tables up as they stand at `at`. */

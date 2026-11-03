@@ -1,7 +1,8 @@
 /** Phase 5: what the physical and sounding cells refer to, and what their values say — resonators, tapes, FM, moving parameters, envelopes, grids. */
-import { AXES } from '../style';
+import { AXES, SLOTS } from '../style';
 import { BODIES, isMidiCard } from '../program';
 import { MOVING_PARAMS } from '../attributes';
+import { DOUGH_SOURCES } from '../dough-params';
 import { refsOf } from '../readers';
 import { leaves } from '../subseq';
 import type { CellDecl } from '../ast';
@@ -74,7 +75,18 @@ export function checkCells(
   // parameters that move: only those that can, through cells that exist; one envelope at most
   for (const d of decls.values())
     for (const [key, pc] of Object.entries(d.paramCells ?? {})) {
-      if (!MOVING_PARAMS.has(key)) error(`${key}= can't move: it takes a number (these can: ${[...MOVING_PARAMS].join(' ')})`, pc.span);
+      // (an envelope's slots move on a map=adsr cell, and s= as a blend of two waves: #411)
+      const slot = d.map?.kind === 'adsr' && SLOTS.adsr!.includes(key);
+      const blend = key === 's' && pc.to !== undefined;
+      if (blend) {
+        const waves = [d.params.s, pc.to].map((w) => (typeof w === 'string' ? DOUGH_SOURCES[w] : undefined));
+        if (waves.some((w) => w === undefined || w === 'white' || w === 'pink' || w === 'brown'))
+          error(`s=${d.params.s}..${pc.to}: a blend is of two of the waves, sine tri saw square (or their other names)`, pc.span);
+      } else if (!MOVING_PARAMS.has(key) && !slot)
+        error(
+          `${key}= can't move: it takes a number (these can: ${[...MOVING_PARAMS].join(' ')}; on a map=adsr cell, its slots; s= as a blend of two waves, s=tri..square * &x)`,
+          pc.span,
+        );
       if (pc.range && !(pc.range[0] >= 0 && pc.range[1] >= 0)) error(`${key}=: a range of positive values, low..high`, pc.span);
       let envs = 0;
       for (const f of pc.factors) {

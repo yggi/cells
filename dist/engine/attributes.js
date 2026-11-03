@@ -28,7 +28,9 @@ export const CORE = {
     },
 };
 export const PARAMS = {
-    s: sound('sound source: sine tri saw square pulse white pink brown', { value: 'word' }),
+    s: sound('sound source: sine tri saw square pulse white pink brown; or a blend of two waves, the share of the second moved by cells: s=tri..square * &style[artic]', {
+        value: 'word',
+    }),
     lpf: sound('low-pass cutoff, Hz', { moves: true, hz: true }),
     lpq: sound('low-pass resonance', { moves: true }),
     hpf: sound('high-pass cutoff, Hz', { moves: true, hz: true }),

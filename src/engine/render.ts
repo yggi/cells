@@ -194,8 +194,15 @@ function waveOf(real: ArrayLike<number>, imag: ArrayLike<number>): Wave {
   return { tables: raw.map((t) => Float32Array.from(t, (v) => v * scale)) };
 }
 
+type Builtin = 'sine' | 'triangle' | 'sawtooth' | 'square';
+
 /** The built-in waveforms' harmonics, as Web Audio's oscillators define them (sine terms). */
-function builtin(type: 'sine' | 'triangle' | 'sawtooth' | 'square'): Wave {
+function builtin(type: Builtin): Wave {
+  return waveOf(new Float64Array(MOST_HARMONICS + 1), builtinTerms(type));
+}
+
+/** A built-in waveform's sine terms, by harmonic. */
+function builtinTerms(type: Builtin): Float64Array {
   const n = type === 'sine' ? 1 : MOST_HARMONICS;
   const imag = new Float64Array(n + 1);
   for (let k = 1; k <= n; k++)
@@ -207,7 +214,7 @@ function builtin(type: 'sine' | 'triangle' | 'sawtooth' | 'square'): Wave {
           : type === 'square'
             ? (2 / (Math.PI * k)) * (1 - (k % 2 ? -1 : 1))
             : (8 * Math.sin((Math.PI * k) / 2)) / (Math.PI * k) ** 2;
-  return waveOf(new Float64Array(n + 1), imag);
+  return imag;
 }
 
 const BUILTIN = new Map<string, Wave>();
@@ -216,6 +223,50 @@ const builtinWave = (type: 'sine' | 'triangle' | 'sawtooth' | 'square') => {
   if (!w) BUILTIN.set(type, (w = builtin(type)));
   return w;
 };
+
+/** How finely a blend's share is read: in hundredths, each share's wave made once. */
+const BLEND_STEPS = 100;
+const BLENDS = new Map<string, Wave>();
+
+/**
+ * A blend of two built-in waves (`s=tri..square * &x`, #411): their harmonics crossfaded, the share of the second `w`
+ * (0 the first wave, 1 the second), heard at one peak as each wave alone is (`waveOf`). Read at each note's start.
+ */
+function blendWave(a: Builtin, b: Builtin, w: number): Wave {
+  const share = Math.round(Math.min(1, Math.max(0, w)) * BLEND_STEPS);
+  const key = `${a}|${b}|${share}`;
+  let wave = BLENDS.get(key);
+  if (!wave) {
+    const x = builtinTerms(a);
+    const y = builtinTerms(b);
+    // (each at its own peak, then mixed: the first wave alone at 0, the second at 1)
+    const [px, py] = [peakOf(a), peakOf(b)];
+    const n = Math.max(x.length, y.length);
+    const imag = new Float64Array(n);
+    for (let k = 0; k < n; k++) imag[k] = ((1 - share / BLEND_STEPS) * (x[k] ?? 0)) / px + ((share / BLEND_STEPS) * (y[k] ?? 0)) / py;
+    BLENDS.set(key, (wave = waveOf(new Float64Array(n), imag)));
+  }
+  return wave;
+}
+
+const PEAKS = new Map<Builtin, number>();
+/** A built-in wave's peak, its sine terms summed over one cycle. */
+const peakOf = (type: Builtin): number => {
+  let p = PEAKS.get(type);
+  if (p === undefined) PEAKS.set(type, (p = peakTerms(builtinTerms(type))));
+  return p;
+};
+
+/** The peak of a wave its sine terms make, over one cycle. */
+function peakTerms(imag: Float64Array): number {
+  let peak = 0;
+  for (let i = 0; i < TABLE; i++) {
+    let v = 0;
+    for (let k = 1; k < imag.length; k++) if (imag[k]) v += imag[k]! * SINES[(k * i) % TABLE]!;
+    peak = Math.max(peak, Math.abs(v));
+  }
+  return peak || 1;
+}
 
 /** The table to read at a frequency: the fullest whose harmonics all stay under the Nyquist frequency (null: none fits). */
 function tableFor(w: Wave, freq: number, rate: number): Float32Array | null {
@@ -264,6 +315,8 @@ interface Voice {
   readonly name: string;
   readonly seed: number;
   readonly wave: Wave | null;
+  /** A blend of two built-in waves (`s=tri..square * &x`, #411): each note plays the share it starts on. */
+  readonly blend: { readonly from: Builtin; readonly to: Builtin } | null;
   readonly noise: Float32Array | null;
   /** Which filters it has; their parameters move for all its chains alike. */
   readonly has: { readonly lpf: boolean; readonly hpf: boolean };
@@ -293,6 +346,8 @@ interface Note {
   readonly left: number;
   readonly right: number;
   readonly env: { readonly attack: number; readonly decay: number; readonly sustain: number; readonly release: number };
+  /** Its own wave, a blend's at its start (#411); the voice's where absent. */
+  readonly wave?: Wave;
   readonly level: Auto | null;
   /** Its pitch: Hz at the start, and what moves it (semitones from a shape, cents from bends), or none. */
   readonly freq: number;
@@ -404,7 +459,9 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     const src = c.params.s !== undefined ? DOUGH_SOURCES[String(c.params.s)] : null;
     const isNoise = src === 'white' || src === 'pink' || src === 'brown';
     let wave: Wave | null = null;
-    if (src && !isNoise) wave = builtinWave(src as 'sine' | 'triangle' | 'sawtooth' | 'square');
+    const to = c.paramCells?.s?.to !== undefined ? DOUGH_SOURCES[c.paramCells.s.to] : undefined;
+    const blend = src && !isNoise && to && to !== 'white' && to !== 'pink' && to !== 'brown' ? { from: src as Builtin, to } : null;
+    if (src && !isNoise) wave = builtinWave(src as Builtin);
     else if (!src) {
       // the braid is the waveform
       const { real, imag } = harmonics(waveform(result, name, shifts));
@@ -426,6 +483,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       name,
       seed: c.seed,
       wave,
+      blend,
       noise: isNoise ? noise(src, rate) : null,
       has,
       autos,
@@ -538,6 +596,9 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       };
       const params = e.params ?? {};
       const semis = () => (params.pitch ? pitchShape(params.pitch, e.at, dur) : null);
+      // (a blend's share where the note starts: the wave it plays through)
+      const shareOf = params.s?.kind === 'points' ? params.s.points[0]?.value : undefined;
+      const blended = v.blend && shareOf !== undefined ? blendWave(v.blend.from, v.blend.to, shareOf) : undefined;
       for (const k of FILTER) {
         const track = params[k];
         const auto = v.autos[k];
@@ -564,6 +625,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           left: Math.cos(x) * share.left,
           right: Math.sin(x) * share.right,
           env,
+          ...(blended ? { wave: blended } : {}),
           level: lvl(),
           freq: e.freq,
           semis: semis(),
@@ -598,7 +660,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           let hz = n.freq;
           if (n.semis) hz *= Math.pow(2, n.semis.at(t) / 12);
           if (n.cents) hz *= Math.pow(2, n.cents.at(t) / 1200);
-          const table = tableFor(v.wave!, hz, rate);
+          const table = tableFor(n.wave ?? v.wave!, hz, rate);
           if (table) {
             const p = n.phase * TABLE;
             const i = Math.floor(p);

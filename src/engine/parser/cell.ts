@@ -12,7 +12,10 @@ import { isGenerator, parseFifths, parseGenerator, parseScale } from './generato
 import { MODE_WORDS } from '../../theory/modes';
 import { atTap, parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
-import { AXIS_NAMES } from '../style';
+import { AXIS_NAMES, SLOTS } from '../style';
+
+/** An envelope's slots, by name (`map=adsr`'s, `SLOTS`). */
+const ADSR_SLOTS = SLOTS.adsr!;
 
 /** What a cell's attributes have set so far, as its line is read. */
 interface Body {
@@ -491,6 +494,28 @@ function readParam(s: LineScanner, b: Body, key: string): void {
     b.paramSpans[key] = s.span(vs);
     return;
   }
+  // a blend of two waves: s=tri..square * &style[artic], the share of the second each note starts on (#411)
+  const blend = key === 's' ? s.text.slice(s.i).match(/^([A-Za-z]+)\.\.([A-Za-z]+)/) : null;
+  if (blend) {
+    s.i += blend[0].length;
+    const factors: Ref[] = [];
+    for (;;) {
+      const save = s.i;
+      s.skipSpace();
+      if (s.peek() !== '*') {
+        s.i = save;
+        break;
+      }
+      s.i++;
+      s.skipSpace();
+      factors.push(s.cellRef(`a cell after *, like s=${blend[0]} * &style[artic]`, 'in s='));
+    }
+    if (factors.length === 0) s.fail(`s=${blend[0]}: a blend of two waves is moved by cells, the share of the second: s=${blend[0]} * &style[artic]`, vs, s.i - vs);
+    b.params.s = blend[1]!;
+    b.paramCells.s = { range: [0, 1], factors, span: s.span(vs), to: blend[2]! };
+    b.paramSpans.s = s.span(vs);
+    return;
+  }
   // moving: lpf=&sweep, lpf=200..3000 * &fenv * &accent
   const range = s.text.slice(s.i).match(/^([0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\.([0-9]+(?:\.[0-9]+)?|\.[0-9]+)/);
   if (s.peek() === '&' || range) {
@@ -659,6 +684,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   let freeSteps = '';
   // a style's axes by name (sync=.3, decision 063): its braid, in the axes' order, once the line is read
   const axes = new Map<string, { value: string; at: number }>();
+  // an envelope's slots by name (attack=.3..0.01 * &style[artic]): its braid, in the slots' order, once the line is read
+  const adsr = new Map<string, number>();
 
   while (!s.done()) {
     const at = s.i;
@@ -667,6 +694,14 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       s.i++;
       // (an alias, Strudel's or dough's other name, reads as ours: cutoff= is lpf=)
       const key = word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
+      // an envelope's slots by name (attack=.01, decision 063's names; #411): a number, or a range moved by cells, read at each note's start
+      if (key === null && ADSR_SLOTS.includes(word)) {
+        if (adsr.has(word)) s.fail(`${word}= is given twice`, at, word.length);
+        adsr.set(word, at);
+        readParam(s, b, word);
+        if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+        continue;
+      }
       if (key === null && AXIS_NAMES.includes(word)) {
         if (axes.has(word)) s.fail(`${word}= is given twice`, at, word.length);
         const vat = s.i;
@@ -777,6 +812,30 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     for (const name of AXIS_NAMES) {
       const { value, at: where } = axes.get(name)!;
       const inner = s.within(value, where + name.length + 1);
+      pushStep(inner, tokens, parseToken(inner));
+    }
+  }
+  if (adsr.size) {
+    const [first, at] = [...adsr][0]!;
+    // (on any other cell, Strudel's spelling: an envelope is a cell of its own)
+    if (b.map?.kind !== 'adsr') s.fail(RETIRED_KEYS[first] ?? `${first}= is a slot of an envelope: it goes on a map=adsr cell`, at, first.length);
+    if (generator || tokens.length) s.fail('An envelope writes its slots by name (attack=.01) or in order (.01 .3 .5 .4), not both', at, first.length);
+    const missing = ADSR_SLOTS.filter((n) => !adsr.has(n));
+    if (missing.length)
+      s.fail(
+        `An envelope names every slot: ${missing.map((n) => `${n}=`).join(' ')} ${missing.length === 1 ? 'is' : 'are'} missing (its slots: ${ADSR_SLOTS.join(' ')})`,
+        at,
+        first.length,
+      );
+    // (in the slots' order: a number as written, a moving one at its range's first end until a note reads it)
+    for (const name of ADSR_SLOTS) {
+      const where = adsr.get(name)!;
+      const moving = b.paramCells[name];
+      if (moving && !moving.range) s.fail(`${name}=: a moving slot is a range scaled by cells, ${name}=.3..0.01 * &style[artic]`, where, name.length);
+      const value = moving ? String(moving.range![0]) : b.params[name];
+      if (typeof value !== 'number' && typeof value !== 'string') s.fail(`${name}= takes a number, or a range scaled by cells`, where, name.length);
+      delete b.params[name];
+      const inner = s.within(String(value), where + name.length + 1);
       pushStep(inner, tokens, parseToken(inner));
     }
   }
