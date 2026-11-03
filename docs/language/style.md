@@ -78,9 +78,49 @@ A pick reads its value on an axis, `&style[artic]`, and a voice's moving paramet
 &out map=sample [&line * &bassV]
 ```
 
+**`&style` is the composer's.** A fragment reads it and never defines it: a used fragment with a line for `&style` is an error, whether or not the piece writes its own, since two fragments' styles would collide and the section's style is the score's to say (#391, the owner's ruling on yggi/cells#405).
+**Where no line writes it, a pick of an axis reads the centre of style space**, the middle of each axis's range (`CENTRE`, `src/engine/style.ts`): an instrument heard alone plays as it does at the centre (`lpf=450..900 * &style[artic]` is 675 Hz). In a piece with performers, a score played, an info says so (`no line writes &style: &style[artic] reads the centre of style space …`), as a part no line writes is said; an instrument heard alone says nothing. A bare reference to an unwritten `&style` is still unknown.
+
 **A range glides over the cell's scope, the piece's length** (its bars, as cells finds it: [time.md](time.md)).
 Bar k of n begins at a + (b − a)·k/n, in a straight line sixteen steps a bar, on the piece's meter: the glide comes round with the piece and follows its tempo, and doesn't lengthen it.
 With no meter, it glides in seconds.
 A factor written out, `* &curve`, sets where between the two ends instead: a line of numbers from 0 to 1, on its own clock.
 
 A pick of a slot as a factor reads its value, held: `lpf=0..1000 * &pluck[sustain]` is 500 Hz with `&pluck map=adsr .01 .3 .5 .4`.
+
+## The presets' styles: styles
+
+The seed library holds Jambot's ten presets as styles, the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing` and `&spooky`, each at the point its preset plays.
+A score takes one by name where its section sits exactly on it, and writes its numbers, or a mix of styles, where it doesn't ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §3).
+
+```cells
+&funk, &bossaNova from styles
+&style label="Funk, turning to Bossa nova" style=&funk..&bossaNova
+```
+
+The collection is associated at each of the ten points as the facet `style`, so the style nearest a point is a query too.
+
+## The default band: a score played as its style says
+
+A score ends in `* from band`, and the client's resolver answers `band` ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §1).
+The seed library's band, `band` (`fragments/bands/01-band.md`), plays Jambot's five roles on the default instruments, which read the score's `&style` where Jambot's synth reads its style: the bass's cutoff opens with articulation (`&bassV … lpf=450..900 * &style[artic]`), the lead's with energy (`&leadV … lpf=1400..3600 * &style[energy]`). Neither the instruments nor the band define `&style`.
+It sends the score on a MIDI card on Jambot's channels and hears it on a sound card.
+
+```cells
+&bar meter("4/4") step=104bpm
+&key scale(dorian, D)
+&harm over=&key step=1m [0,2,4] [3,5,7]
+&kick step=4n &bd &bd &bd &bd
+&drumlines [&kick]
+&bassline over=&harm step=8n 0 ~ 0 2 ~ 0 4 ~
+&padline over=&harm step=1m [0,1,2]
+&stabline step=1m ~
+&leadline over=&key step=8n 4 ~ 3 2 0@4
+&funk from styles
+&style label="Funk, a section" style=&funk
+* from band
+```
+
+Which instrument a performer plays at a style is the band's choice too, made at resolution: `resolveBand(score)` answers `band` with each pitched voice the instrument the library ranks first at the score's style, named or written as numbers, (a clarinet at Electro swing's point, a theremin at Spooky's), and the band as written at Jambot's eight presets (`src/repository/band.ts`).
+The instruments are found where the score's style starts: a range, `style=&funk..&electroSwing`, plays Funk's instruments, the defaults, throughout, and the reverse plays Electro swing's. A found instrument is voiced for its point and reads no `&style`, so where it plays, the style moves no cutoff of that voice.
+A line can't make that choice: a voice reads a style as a moving parameter, and a wave or an envelope's times are not one.

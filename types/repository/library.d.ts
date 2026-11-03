@@ -1,13 +1,13 @@
 /**
  * The repository's library: every fragment built so far, the meters, the rhythms, the bass lines, the harmonies, the
- * instruments, the modes, the performers, the stab lines, the motifs and the forms, their points associated as `meter`,
- * `rhythm`, `bass`, `harmony`, `instrument`, `mode`, `performer`, `stab`, `motif` and `form` (the
+ * instruments, the modes, the performers, the stab lines, the motifs, the forms, the band and the styles, their points associated as `meter`,
+ * `rhythm`, `bass`, `harmony`, `instrument`, `mode`, `performer`, `stab`, `motif`, `form`, `band` and `style` (the
  * bell and scale both `mode` and `rhythm`). A query names its facet (`{ facet: 'meter' }`) and measures only the points
  * of that facet, so adding fragments of another never changes what it returns.
  */
 import type { Resolve } from '../engine/program';
 import type { Fragment } from './fragments';
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, then the forms: a hundred and ten fragments. */
+/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, the forms, the band, then the styles: a hundred and twelve fragments. */
 export declare const LIBRARY: readonly Fragment[];
 /**
  * The ids the library no longer lists, each still read for one minor version as a fragment that only forwards: a `use`

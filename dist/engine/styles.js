@@ -1,5 +1,5 @@
 import { parse } from "./parser/index.js";
-import { AXES } from "./style.js";
+import { AXES, CENTRE, STYLE } from "./style.js";
 const valuesOf = (d) => {
     if (!d || d.braid.kind !== 'list')
         return null;
@@ -62,6 +62,8 @@ export function readStyles(parsed, scope) {
     }
     const made = new Map();
     let glides = false;
+    let centred = false;
+    const performed = parsed.cells.some((c) => typeof (c.params.play ?? c.params.trigger) === 'string' && c.braid.kind !== 'blank');
     const cellOf = (r) => {
         if (!r.pick || r.pick.kind !== 'at' || !r.pick.abs)
             return null;
@@ -69,7 +71,17 @@ export function readStyles(parsed, scope) {
         const d = decls.get(r.name);
         const style = styles.get(r.name);
         let body = null;
-        if (style) {
+        if (!d && r.name === STYLE) {
+            body = text(CENTRE[i]);
+            if (!centred && performed)
+                diagnostics.push({
+                    severity: 'info',
+                    message: `no line writes &${STYLE}: &${STYLE}[${AXES[i].name}] reads the centre of style space, ${text(CENTRE[i])} on each axis (a score names its style as the note &${STYLE} style=…, decision 063)`,
+                    span: r.span,
+                });
+            centred = true;
+        }
+        else if (style) {
             const a = style.from[i];
             const b = style.to ? style.to[i] : a;
             if (style.to && !style.curve)
