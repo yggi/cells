@@ -8,7 +8,7 @@ description: Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit.
 # D Dorian. The second line is the first, a step lower: &A^-1.
 &bar from meter_4_4 &tempo
 &tempo step=free(112bpm, 90..140)
-&key from dorian D
+&key from diatonic(mode=dorian) D
 
 &m1 4!4
 &m2 4 4 0 2
