@@ -19,7 +19,7 @@ export { parse, pieceMeta, type PieceMeta } from './engine/parser';
 export { plan, type Plan, type Played } from './engine/realize';
 export { windowAt, type Window } from './engine/schedule';
 export { createHost, planOf, type ToEngine, type FromEngine } from './engine/host';
-export { shorten, shortenAll } from './engine/shorten';
+export { shorten, shortenAll, type ShortenOptions } from './engine/shorten';
 export { normalise } from './engine/normalise';
 export { migrate } from './engine/migrate';
 export { anchorsOf, varied, variations, type Anchor, type Operator, type Variation, type VaryOptions } from './engine/vary';

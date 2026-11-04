@@ -11,7 +11,7 @@ import { period } from '../helix';
 import { declLine, freshName, setBraid } from '../edit';
 import { sameNotes } from '../sameness';
 import type { CompileOptions } from '../program';
-import { writtenHints } from '../fold/hints';
+import { placedHints, writtenHints, type Hint } from '../fold/hints';
 import { saves, type Candidate, type Result, type ShortenRewrite } from './harness';
 
 const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/; // a plain step: a whole number, perhaps held (transposable)
@@ -67,7 +67,11 @@ function withSplicers(result: Result, names: readonly string[]): string[] {
   return [...out];
 }
 
-export function phrases(source: string, cells: readonly Candidate[], result: Result, options: CompileOptions = {}): ShortenRewrite[] {
+/**
+ * Every phrase worth a cell of its own. `given`: hints found elsewhere (`hints(lines)` over what was heard, a MIDI file's
+ * notes), placed on the cells as written (`placedHints`) and weighed beside the text's own (#157).
+ */
+export function phrases(source: string, cells: readonly Candidate[], result: Result, options: CompileOptions = {}, given: readonly Hint[] = []): ShortenRewrite[] {
   type Occ = { cell: string; at: number; ref: string };
   // (not in a cell another copies, base=&x: a copy counts its base's steps, =!3, so a phrase cut out of the base
   // would move every copy's changes; nor in a copy, whose steps are changes to its base's)
@@ -83,7 +87,7 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
   // both tools. Every window of a repeat is one too, at its places shifted, so a phrase is any of them, whichever saves
   // most (a figure that comes back may be begun on any of its notes)
   const windows = new Map<string, { tokens: string[]; places: Occ[] }>();
-  for (const h of writtenHints(cells)) {
+  for (const h of [...writtenHints(cells), ...placedHints(given, cells)]) {
     const first = h.spans[0]!;
     const whole = tokensOf.get(first.line)!.slice(first.from, first.to);
     for (let L = MIN_PHRASE; L <= Math.min(MAX_PHRASE, whole.length); L++)
