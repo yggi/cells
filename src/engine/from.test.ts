@@ -16,6 +16,7 @@ const LIB: Record<string, string> = {
   diatonic: lines('&key from (&mode) &tonic', '&key scale(&mode, &tonic)', '&mode major'),
   swung: lines('&bar from (&swing) &tempo', '&bar meter("4/4") step=&tempo swing=&swing', '&swing swing=8n:2/3'),
   aaba: lines('&chorus from (&b) &a', '&chorus step=8n &a &a &b &a', '&b step=8n &a^3'),
+  vca: lines('&vca from (&eg, &level) &in', '&vca [&eg * &level * &in]', '&eg map=adsr .005 .2 .7 .1', '&level map=amp 1'),
   vamp: lines('&harm from &key', '&harm over=&key step=1m [0,2,4] [3,5,7]'),
   walk: lines('&line from &harm', '&line over=&harm step=4n 0 0 0 &next', '&next over=&harm[>>] 0'),
   synth: lines('&voice from', '&voice s=saw loop=C3 lpf=900'),
@@ -167,6 +168,19 @@ describe('the arguments', () => {
     expect(added(text)).toEqual(['&chorus step=8n &a &a &chorus_b &a', '&chorus_b step=8n &a^-3']);
     expect(events(text)).toEqual(events(lines(METER, '&a step=8n 0 2 4 7', '&chorus step=8n &a &a &b &a', '&b step=8n &a^-3', '&v s=sine loop=C4', '&out [&chorus * &v]')));
     expect(added(lines('&line step=8n 0', '&p from player(level=.5) &line'))).toContain('&p_level map=amp .5');
+  });
+
+  it('an inline cell is that cell: its body, read as the default is, its braid the default’s replaced (#428)', () => {
+    const played = (vca: string) => {
+      const r = compiled(lines(METER, '&tune step=4n 0 3 7 10', '&f s=saw loop=C2', vca, '&out map=sample [&tune * &a * .4]'));
+      expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+      return eventsBetween(plan(r, codeShifts(r), r.off), 0, 2).map((e) => [e.at, e.freq, e.env]);
+    };
+    expect(added(lines('&f s=saw loop=C2', '&a from vca(eg=&(map=adsr .002 .3 .5 .06)) &f'))).toContain('&a_eg map=adsr .002 .3 .5 .06');
+    expect(played('&a from vca(eg=&(map=adsr .002 .3 .5 .06)) &f')).toEqual(played(lines('&amp map=adsr .002 .3 .5 .06', '&a from vca(eg=&amp) &f')));
+    expect(played('&a from vca(eg=&(map=adsr .002 .3 .5 .06)) &f')).not.toEqual(played('&a from vca &f'));
+    // (a braid of two inline cells is not one)
+    expect(added(lines('&x step=8n 0', '&c from aaba(b=&(step=4n 0) &(step=4n 2)) &x'))).toContain('&c_b step=8n &(step=4n 0) &(step=4n 2)');
   });
 
   it('the head’s attributes before from override its line’s, the rest inherited; after the id they are the main argument’s', () => {

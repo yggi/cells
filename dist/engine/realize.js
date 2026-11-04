@@ -1,10 +1,10 @@
 import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from "./fiveto12.js";
-import { adsrOf, balance } from "./program.js";
+import { adsrOf, balance, CV_LAPS } from "./program.js";
 import { tableChain } from "./helix.js";
 import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from "./clocking.js";
 import { ExpansionLimit, flatten, stepsOf } from "./flatten.js";
 import { cellId } from "./ids.js";
-import { refsOf } from "./readers.js";
+import { refsOf, stepsPerSecond } from "./readers.js";
 import { VOICE_PARAMS } from "./attributes.js";
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen } from "./series.js";
 import { warpOf } from "./physics.js";
@@ -198,6 +198,10 @@ export function plan(result, statics, muted = new Set()) {
         const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
         return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, period: Math.max(1, stepsOf(result, cell, pick)), events };
     };
+    const capped = (m, cell) => {
+        const laps = (stepsPerSecond(result, cell) ?? 0) / m.period;
+        return laps > CV_LAPS ? { ...m, rate: (m.rate * CV_LAPS) / laps } : m;
+    };
     const envParams = new Map();
     for (const c of result.cells.values()) {
         if (c.map?.kind !== 'adsr' || !Object.keys(c.paramCells).length)
@@ -224,7 +228,7 @@ export function plan(result, statics, muted = new Set()) {
                     const envCell = pc.factors.find((f) => result.cells.get(f)?.map?.kind === 'adsr');
                     out[key] = {
                         range: pc.range,
-                        series: pc.factors.filter((f) => f !== envCell).map((f) => series(f, null, 0, 1)),
+                        series: pc.factors.filter((f) => f !== envCell).map((f) => capped(series(f, null, 0, 1), f)),
                         env: envCell ? adsrOf(result.cells.get(envCell)) : null,
                     };
                 }
