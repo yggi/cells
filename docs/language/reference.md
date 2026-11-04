@@ -72,7 +72,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 
 ## step= and loop=
 
-- `step=r` · `loop=r`: step= moves a cell a step at a time, r steps a second; loop= turns its whole braid r times a second (loop=r is step=r·k for k steps). One of the two. [→](time.md) `&tune step=2 0 2 4` · `&lead loop=261.63 0 1`
+- `step=r` · `loop=r`: step= moves a cell a step at a time, r steps a second, each step a note; loop= turns its whole braid r times a second (the rate of step=r·k for k steps) and reads it as a signal, each value held, no note started each step: a bend, a waveform, a voice's frequency (a voice alone sounds as one held note, &a loop=A4) (decision 068: dilate, then a held ramp). One of the two. [→](time.md) `&tune step=2 0 2 4` · `&lead loop=261.63 0 1`
 - `loop=NAME`: A value from the environment: SAMPLE_RATE, A4, or a note name (C4, F#3, Bb2) as its frequency. [→](time.md) `&lead s=saw loop=C4` · `&out loop=SAMPLE_RATE map=sample &mix`
 - `step=&x` · `loop=&x`: Driven by another cell: a step (or a whole turn) per step of &x. [→](time.md) `&tune step=&bar 0 2 4`
 - `step=cycle(&x)`: A step per cycle of &x (each time its braid comes round). [→](time.md) `&key step=cycle(&theme) stride=7`
@@ -112,7 +112,7 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 - `over=&table` · `over=&table[<<n]` · `over=scale(name, tonic)`: The table its numbers read. [→](tables.md) `&tune over=&major step=2 0 2 4` · `&mode over=&major[<<2] 0 2 4` · `&tune over=scale(minor, A) step=2 0 2 4` · `&bass over=&key step=16n 0 4 7`
 - `base=&cell` · `base=&cell^$n` · `base=&cell^n`: The cell it is a copy of, changed where it says: its braid step by step over the base’s (= keeps a step), its attributes where it sets none. [→](braid.md) `&answer base=&subject^$7 =!3 12@2` · `&last base=&subject =!21 3@2`
 - `step=…`: What moves it, step by step. [→](time.md) `&tune step=4n 0 2 4` · `&tune step=&clock 0 2 4`
-- `loop=…`: What moves it, the whole braid at a time. [→](time.md) `&lead s=saw loop=C4`
+- `loop=…`: What moves it, the whole braid at a time, read as a signal: each value held, no note started each step (a voice alone sounds as one held note, &a loop=A4) [→](time.md) `&lead s=saw loop=C4`
 - `shift=n` · `shift=free(n, lo..hi)`: How far it is turned. [→](tables.md) `&mode over=&major shift=5 0 2 4` · `&key shift=free(0, 0..11)`
 - `stride=n` · `stride=free(n, lo..hi)`: How far each step turns it. [→](time.md) `&key step=cycle(&theme) stride=7`
 - `map=…`: How its values sound. [→](sound.md) `&accent map=amp step=&bar 1 .5`

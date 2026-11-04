@@ -5,7 +5,7 @@ export const CORE = {
     over: core('the table its numbers read', 'tables.md'),
     base: core('the cell it is a copy of, changed where it says: its braid step by step over the base’s (= keeps a step), its attributes where it sets none', 'braid.md'),
     step: core('what moves it, step by step', 'time.md'),
-    loop: core('what moves it, the whole braid at a time', 'time.md'),
+    loop: core('what moves it, the whole braid at a time, read as a signal: each value held, no note started each step (a voice alone sounds as one held note, &a loop=A4)', 'time.md'),
     shift: core('how far it is turned', 'tables.md'),
     stride: core('how far each step turns it', 'time.md'),
     map: core('how its values sound', 'sound.md'),

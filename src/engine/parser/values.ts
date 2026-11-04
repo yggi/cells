@@ -11,7 +11,7 @@ export const STEP_SYNTAX: readonly Syntax[] = [
   syntax(
     'rate',
     'step=r · loop=r',
-    'step= moves a cell a step at a time, r steps a second; loop= turns its whole braid r times a second (loop=r is step=r·k for k steps). One of the two.',
+    "step= moves a cell a step at a time, r steps a second, each step a note; loop= turns its whole braid r times a second (the rate of step=r·k for k steps) and reads it as a signal, each value held, no note started each step: a bend, a waveform, a voice's frequency (a voice alone sounds as one held note, &a loop=A4) (decision 068: dilate, then a held ramp). One of the two.",
     ['&tune step=2 0 2 4', '&lead loop=261.63 0 1'],
     'time.md',
   ),
