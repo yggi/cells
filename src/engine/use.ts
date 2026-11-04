@@ -267,6 +267,25 @@ function inherited(name: string, defaultCode: string, body: string): string {
   return [`&${name}`, ...kept, body].join(' ');
 }
 
+/**
+ * An argument written as one inline cell, `&(map=adsr .002 .3 .5 .06)`, is that cell (#428): its attributes and braid, as
+ * a named one's would be, not a braid of one reference to it. Anything else is as written.
+ */
+function unwrapped(body: string): string {
+  const b = body.trim();
+  if (!b.startsWith('&(') || !b.endsWith(')')) return body;
+  let depth = 0;
+  let quoted = false;
+  for (let i = 1; i < b.length; i++) {
+    const c = b[i]!;
+    if (c === '"') quoted = !quoted;
+    if (quoted) continue;
+    if (c === '(') depth++;
+    else if (c === ')' && --depth === 0) return i === b.length - 1 ? b.slice(2, -1).trim() : body;
+  }
+  return body;
+}
+
 /** The attributes that read a cell as that attribute alone (`step=&tempo`: a rate alone, `swing=&swing`: a swing alone). */
 const ALONE = new Set(['step', 'loop', 'swing']);
 
@@ -275,7 +294,8 @@ const ALONE = new Set(['step', 'loop', 'swing']);
  * reads the parameter only through one attribute that reads a cell as that attribute alone (`step=&tempo`,
  * `swing=&swing`), that attribute set to it (`124bpm` is `step=124bpm`, a rate alone).
  */
-function asCell(body: string, parameter: string, lines: readonly Line[]): string {
+function asCell(written: string, parameter: string, lines: readonly Line[]): string {
+  const body = unwrapped(written);
   if (topTokens(body).some((t) => isAttribute(t.text))) return body;
   const keys = new Set<string>();
   let other = false;

@@ -151,8 +151,28 @@ function inherited(name, defaultCode, body) {
         .flatMap((t) => (isAttribute(t.text) && !set.has(keyOf(t.text)) ? [t.text] : []));
     return [`&${name}`, ...kept, body].join(' ');
 }
+function unwrapped(body) {
+    const b = body.trim();
+    if (!b.startsWith('&(') || !b.endsWith(')'))
+        return body;
+    let depth = 0;
+    let quoted = false;
+    for (let i = 1; i < b.length; i++) {
+        const c = b[i];
+        if (c === '"')
+            quoted = !quoted;
+        if (quoted)
+            continue;
+        if (c === '(')
+            depth++;
+        else if (c === ')' && --depth === 0)
+            return i === b.length - 1 ? b.slice(2, -1).trim() : body;
+    }
+    return body;
+}
 const ALONE = new Set(['step', 'loop', 'swing']);
-function asCell(body, parameter, lines) {
+function asCell(written, parameter, lines) {
+    const body = unwrapped(written);
     if (topTokens(body).some((t) => isAttribute(t.text)))
         return body;
     const keys = new Set();

@@ -59,6 +59,7 @@ studie  live ef1f715bd960c201
 just  live b435a14594200d57
 bwv847  live 911668b002380183
 acid  live a9c25fbdd46f8fdc
+patchbay  live f65784b6cba5fe8e
 zell  live edce01b317db7bdc
 cellscape  live ccf37739be4cd496
 cellscape2  live 3382caea8b0e37e0

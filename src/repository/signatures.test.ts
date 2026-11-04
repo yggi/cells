@@ -27,7 +27,8 @@ const PERFORMER = (head: string, use: string, main: string) =>
     ? lines(METER, '&dl step=8n &bd &sd', `${head} from ${use} &dl`)
     : lines(METER, KEY, '&line over=&key step=8n 0 2 4', `${head} from ${use} &line`, '&style style=&(map=style .5 .5 .5 .5)');
 
-const templates = LIBRARY.filter((f) => signatureOf(f.text));
+// (the modules, whose main parameter is the audio they take, or none, are played in a patch of their own: modules.test.ts)
+const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.some((wp) => wp.facet === 'module'));
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {

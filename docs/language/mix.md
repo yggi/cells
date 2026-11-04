@@ -220,7 +220,7 @@ A mix can be used like a voice — an instrument: the pitches, volumes and gain 
 &bar meter("4/4") step=120bpm
 &tune step=8n 0 3 7 10 12 10 7 3
 &contour map=adsr .002 .2 .1 .1
-&sweep loop=&bar/2 sin(12)
+&sweep map=lin loop=&bar/2 .5 1 .5 0
 &saw s=saw loop=C2
 &sub s=square loop=C1
 &vcf lpf=70..4800 * &contour * &sweep lpq=8 [&saw, &sub * .5]

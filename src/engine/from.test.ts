@@ -169,6 +169,13 @@ describe('the arguments', () => {
     expect(added(lines('&line step=8n 0', '&p from player(level=.5) &line'))).toContain('&p_level map=amp .5');
   });
 
+  it('an inline cell is that cell, its attributes and braid, the default’s kept where it sets none (#428)', () => {
+    expect(added(lines('&line step=8n 0', '&p from player(level=&(map=amp .3)) &line'))).toContain('&p_level map=amp .3');
+    expect(added(lines('&line step=8n 0', '&p from player(level=&(.3)) &line'))).toContain('&p_level map=amp .3');
+    // (one written as part of something more is a reference in that braid, as before)
+    expect(added(lines('&line step=8n 0', '&p from player(level=&(.3) &(.4)) &line'))).toContain('&p_level map=amp &(.3) &(.4)');
+  });
+
   it('the head’s attributes before from override its line’s, the rest inherited; after the id they are the main argument’s', () => {
     expect(added('&key label="my key" from diatonic label="the tonic" free(D)')).toEqual([
       '&key scale(&key_mode, &key_tonic) label="my key"',

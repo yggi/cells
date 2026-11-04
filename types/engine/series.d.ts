@@ -12,6 +12,11 @@ export interface Series {
     /** The cell's length in its own steps. */
     readonly period: number;
     readonly events: readonly StepEvent[];
+    /**
+     * A step as it is drawn on a lap (`<a b>`, `x?`, `[a|b]`: decision 031, keyed on the seed, the cell, the lap and the step,
+     * as a melody's are), or null where it doesn't play; absent, each step as written.
+     */
+    readonly drawn?: (e: StepEvent, lap: number) => StepEvent | null;
 }
 export interface VoiceParam {
     readonly range: readonly [number, number] | null;

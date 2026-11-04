@@ -1457,6 +1457,26 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
     expect(parse('&t [0|4').diagnostics[0].message).toMatch(/choice/);
     expect(parse('&t chance=3 0?').diagnostics[0].message).toMatch(/chance= is a probability/);
   });
+  // (#457: a level's and a moving parameter's steps were read as written, the first option always)
+  it('a level and a moving parameter draw their steps as a melody does: a choice, a chance, a lap', () => {
+    const levels = (cell: string) => {
+      const r = compileSource(`&t step=10 0\n&l map=amp step=10 ${cell}\n&v s=sine loop=C4 lpf=0..1000 * &l\n&out loop=SAMPLE_RATE map=sample [&t * &l * &v]`);
+      expect(r.diagnostics).toEqual([]);
+      const ev = events(r, 0, 40);
+      return { gains: ev.map((e) => e.levels[0]!.level), cutoffs: ev.map((e) => (e.params?.lpf?.kind === 'points' ? e.params.lpf.points[0]!.value : NaN)) };
+    };
+    const chosen = levels('[.2|.5|.8]');
+    expect(new Set(chosen.gains)).toEqual(new Set([0.2, 0.5, 0.8]));
+    expect(chosen.cutoffs).toEqual(chosen.gains.map((g) => g * 1000));
+    // (the same every time: keyed on the seed, the cell, the lap and the step)
+    expect(levels('[.2|.5|.8]')).toEqual(chosen);
+    // (a step dropped is silence: the note it would have levelled doesn't sound, about half of them)
+    const dropped = levels('.6?').gains;
+    expect(new Set(dropped)).toEqual(new Set([0.6]));
+    expect(dropped.length).toBeGreaterThan(400 * 0.4);
+    expect(dropped.length).toBeLessThan(400 * 0.6);
+    expect(levels('<.2 .8>').gains.slice(0, 4)).toEqual([0.2, 0.8, 0.2, 0.8]);
+  });
 });
 
 describe('Cellscape II feat. Stockhausen', () => {

@@ -21,6 +21,7 @@ import { MOTIF_FRAGMENTS } from './motifs';
 import { FORM_FRAGMENTS } from './forms';
 import { BAND_FRAGMENTS } from './bands';
 import { STYLE_FRAGMENTS } from './styles';
+import { MODULE_FRAGMENTS } from './modules';
 
 /** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, the forms, the band, then the styles: a hundred and twelve fragments. */
 export const LIBRARY: readonly Fragment[] = [
@@ -37,6 +38,7 @@ export const LIBRARY: readonly Fragment[] = [
   ...FORM_FRAGMENTS,
   ...BAND_FRAGMENTS,
   ...STYLE_FRAGMENTS,
+  ...MODULE_FRAGMENTS,
 ];
 
 /**

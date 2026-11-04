@@ -20,7 +20,15 @@ export interface Series {
   /** The cell's length in its own steps. */
   readonly period: number;
   readonly events: readonly StepEvent[];
+  /**
+   * A step as it is drawn on a lap (`<a b>`, `x?`, `[a|b]`: decision 031, keyed on the seed, the cell, the lap and the step,
+   * as a melody's are), or null where it doesn't play; absent, each step as written.
+   */
+  readonly drawn?: (e: StepEvent, lap: number) => StepEvent | null;
 }
+
+/** A series' step on a lap, as drawn (a step that doesn't play: null). */
+const drawnOf = (m: Series, e: StepEvent, lap: number): StepEvent | null => (m.drawn ? m.drawn(e, lap) : e);
 
 export interface VoiceParam {
   readonly range: readonly [number, number] | null;
@@ -144,6 +152,11 @@ function rampedSeries(p: Plan, m: Series, from: number, to: number, valueOf: (e:
   const tm = clocking(p.result, p.statics).map(m.clock!);
   const starts = [...new Map(m.events.map((e) => [e.step, e])).values()].sort((a, b) => a.step - b.step);
   const at = (c: number) => tm.q(c / m.rate);
+  // (a step as drawn on its lap; one that doesn't play is a rest, 0)
+  const value = (e: StepEvent, lap: number, time: number) => {
+    const d = drawnOf(m, e, lap);
+    return d ? valueOf(d, time) : 0;
+  };
   // the value at step c: between the step before and the step after (laps wrap)
   const valueAt = (c: number) => {
     const lap = Math.floor(c / m.period);
@@ -152,11 +165,11 @@ function rampedSeries(p: Plan, m: Series, from: number, to: number, valueOf: (e:
     for (let k = 0; k < starts.length; k++) if (starts[k].step <= local + EPS) i = k;
     const a = starts[i];
     const aStep = a.step > local + EPS ? a.step - m.period : a.step;
-    const va = valueOf(a, at(lap * m.period + aStep));
+    const va = value(a, aStep < 0 ? lap - 1 : lap, at(lap * m.period + aStep));
     // the last value holds: a braid ramps through its values, and starting again is a step
     if (i === starts.length - 1 || aStep < 0) return va;
     const b = starts[i + 1];
-    const vb = valueOf(b, at(lap * m.period + b.step));
+    const vb = value(b, lap, at(lap * m.period + b.step));
     return va + ((vb - va) * (local - aStep)) / Math.max(EPS, b.step - aStep);
   };
   let c0 = tm.stepAt(Math.max(0, from)) * m.rate;
@@ -168,7 +181,7 @@ function rampedSeries(p: Plan, m: Series, from: number, to: number, valueOf: (e:
   for (let lap = Math.floor(c0 / m.period); lap * m.period < c1; lap++)
     for (const e of starts) {
       const c = lap * m.period + e.step;
-      if (c > c0 + EPS && c < c1 - EPS) out.push({ at: at(c), v: valueOf(e, at(c)), ramp: e !== starts[0] });
+      if (c > c0 + EPS && c < c1 - EPS) out.push({ at: at(c), v: value(e, lap, at(c)), ramp: e !== starts[0] });
     }
   out.push({ at: to, v: valueAt(c1 - 1e-6), ramp: true }); // just before the end, not the next pass's start
   return out;
@@ -192,9 +205,14 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number, writte
   if (!Number.isFinite(c1)) c1 = c0;
   // the level at a step: the event sounding there (chords: the loudest), else silence
   const levelAt = (c: number) => {
-    const local = c - Math.floor(c / m.period) * m.period;
+    const lap = Math.floor(c / m.period);
+    const local = c - lap * m.period;
     let best = -1;
-    for (const e of m.events) if (local >= e.step - EPS && local < e.step + e.duration - EPS) best = Math.max(best, val(e));
+    for (const e of m.events) {
+      if (!(local >= e.step - EPS && local < e.step + e.duration - EPS)) continue;
+      const d = drawnOf(m, e, lap);
+      if (d) best = Math.max(best, val(d));
+    }
     return best < 0 ? 0 : best;
   };
   // (a note's level is read where it is written, before a swung meter's swing (#287): at the step of this line, as written,
