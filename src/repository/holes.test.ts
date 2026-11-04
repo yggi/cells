@@ -81,7 +81,7 @@ describe('a hole read as a line (#314)', () => {
 
 describe('what its clock needs', () => {
   it('a braid of 32 sixteenths on cycle=2 needs bars of 16 sixteenths', () => {
-    expect(holes(RHYTHM_FRAGMENTS.find((f) => f.id === 'son clave 3-2')!.text).clock).toEqual([need('&clave', '16n', 2, 32, 1, 16)]);
+    expect(holes(RHYTHM_FRAGMENTS.find((f) => f.id === 'son_clave_3_2')!.text).clock).toEqual([need('&clave', '16n', 2, 32, 1, 16)]);
   });
 
   it('a one-bar line of 16 sixteenths needs bars of 16; one step on 1m, bars of one', () => {

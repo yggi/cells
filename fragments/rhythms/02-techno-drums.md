@@ -1,5 +1,5 @@
 ---
-id: Techno drums
+id: techno_drums
 association:
   - point:
       sync: 0.12

@@ -1,5 +1,5 @@
 ---
-id: son clave 3-2
+id: son_clave_3_2
 association:
   - point:
       sync: 0.875

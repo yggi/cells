@@ -9,6 +9,7 @@ import { forwardedUses } from "./forwarded.js";
 import { fromUses } from "./from.js";
 import { grids } from "./grids.js";
 import { laps } from "./laps.js";
+import { renamedIds } from "./renamed.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
     ...taps(source, result, options),
@@ -20,5 +21,6 @@ export const migrations = (options = {}) => (source, result) => [
     ...fromUses(source, options.resolve),
     ...grids(source, result, options),
     ...laps(source, result),
+    ...renamedIds(source, options.resolve),
 ];
 export const migrate = (source, options = {}) => rewriteAll(source, migrations(options), ROUNDS, options);

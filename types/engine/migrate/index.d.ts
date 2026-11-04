@@ -8,24 +8,25 @@
  *  - taps.ts:      a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
  *  - sections.ts:  a table of sections named &parts as &sections (decision 044; a name, offered for one minor version)
  *  - swing.ts:     a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
- *  - uses.ts:      a `use` line in its one spelling: use "harmonic minor" → use * from "harmonic minor" (decision 059)
+ *  - uses.ts:      a `use` line in its one spelling: use "my riff" → use * from "my riff" (decision 059)
  *  - mainkey.ts:   over=key as the cell it reads, over=&key (decision 060)
  *  - forwarded.ts: a use of a retired id as the use it forwards to: "core kit" → &bd, … from gm_kit (#338)
  *  - from.ts:      a `use` line as the `from` line that plays the same, a template's arguments said (decision 065)
  *  - grids.ts:     a grid's size written cycle=19 map=edo as its map's, map=edo(19), map=ed(7, 3/2) (decision 040, #75)
  *  - laps.ts:      a turning table's cycle= in steps as laps, cycle=24 on a 12 → cycle=2 (decision 040, #75): exact by
  *                  construction against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
+ *  - renamed.ts:   a seed id that became a word as the word: "harmonic minor" → harmonic_minor (#387)
  *
  * The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
  * a text a piece file, so `migrate` leaves it: Shorten offers it, and `movedCard` (`shorten/card.ts`) does it.
  *
- * Shorten keeps offering its four (gate, tap, swing, section) as suggestions, and Normalise keeps running all eight
+ * Shorten keeps offering its four (gate, tap, swing, section) as suggestions, and Normalise keeps running all nine
  * before its own, for one minor version (decision 049's bound): delegated here, then gone with a CHANGELOG line. Pure.
  */
 import { type Find, type Rewrite } from '../rewrite';
 import type { CompileOptions } from '../program';
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'section' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from' | 'grid' | 'laps';
+export type MigrationRule = 'gate' | 'tap' | 'section' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from' | 'grid' | 'laps' | 'renamed';
 export type Migration = Rewrite<MigrationRule>;
 /** Every migration a text has, in the order its form was retired; a `use` line's fragment read through `options.resolve`. */
 export declare const migrations: (options?: CompileOptions) => Find;

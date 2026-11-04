@@ -33,7 +33,7 @@ export function keyOfNotes(smf: Smf): Key | null {
 const TONIC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 /** A tonality as an index names it (`C♯ minor`, `E♭ major`): its tonic and whether it's minor. */
 function parse(name: string): { tonic: number; minor: boolean } {
-  const m = /^([A-G])([♯#♭b]?)\s+(major|minor)/.exec(name.replace('harmonic minor', 'minor').replace('melodic minor', 'minor'));
+  const m = /^([A-G])([♯#♭b]?)\s+(major|minor)/.exec(name.replace('harmonic_minor', 'minor').replace('melodic minor', 'minor'));
   if (!m) throw new Error(`a tonality: ${name}`);
   const alter = m[2] === '♯' || m[2] === '#' ? 1 : m[2] === '♭' || m[2] === 'b' ? -1 : 0;
   return { tonic: (TONIC[m[1]!]! + alter + 12) % 12, minor: m[3] === 'minor' };

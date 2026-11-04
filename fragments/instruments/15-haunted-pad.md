@@ -1,5 +1,5 @@
 ---
-id: haunted pad
+id: haunted_pad
 association:
   - point:
       sync: 0.2

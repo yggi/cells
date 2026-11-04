@@ -1,5 +1,5 @@
 ---
-id: Kinderlied drums
+id: kinderlied_drums
 association:
   - point:
       sync: 0.1

@@ -1,5 +1,5 @@
 ---
-id: walking bass
+id: walking_bass
 association:
   - point:
       sync: 0.35
@@ -29,11 +29,11 @@ Jambot's bass pattern `walk`, a note on every beat: the root of the chord in for
 The semitone can't be an index: over the chord in force an accidental moves a degree of the key, so `0b` over `&harm[>>]` is a semitone only where the key's degree below the next root is one.
 Its own lines read the host's `&harm` and tap the host's main meter; it has no card (#291): it is the part the bass performer plays (`&bassline`, decision 058), and the workbench's card sends it.
 
-At Swing jazz's point, under its meter swung on `8n` (`4/4 swung on 8n`): `bass.ts` walks only where the meter swings its eighths (`eighthSwing`) and the harmony moves (`harm ≥ 2/3`), and there the walk's share of its blend is the greatest it gets, 0.74, the funk line, the pump and the eighths all 0.
+At Swing jazz's point, under its meter swung on `8n` (`meter_4_4_swung_on_8n`): `bass.ts` walks only where the meter swings its eighths (`eighthSwing`) and the harmony moves (`harm ≥ 2/3`), and there the walk's share of its blend is the greatest it gets, 0.74, the funk line, the pump and the eighths all 0.
 The swing is the meter's, not a style axis, so the point says only the harmony.
 Swing jazz is the only preset where the walk is what `bass.ts` plays most, and this point is Swing jazz's (#209); at the presets whose harmony moves but whose meter doesn't swing, the pattern played most is associated there and is found before the walk.
 
 What `bass.ts` draws that a fixed line chooses: the second and third beats each the third, the fifth or the seventh (the fifth twice over where the chord has none), a third each, so this line is one walk it plays, up through the chord; the approach from below or above, half each, so this one from below. Under a harmony that changes on the bar's half it leads into that change too. The octave, the voice leading and the velocity are the performer's.
 Also at the point proposed for an Electro swing preset (#349), weight 1: the walk [Electro swing, in pieces](../../examples/electroswing.md) plays. It is placed by hand, not by `bass.ts`'s blend, which has no such preset.
 
-**Its signature** (decision 065): `&bassline from &harm`. `&bassline from "walking bass" &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from "walking bass"`, it reads `&harm` by name, as before.
+**Its signature** (decision 065): `&bassline from &harm`. `&bassline from walking_bass &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &bassline from walking_bass`, it reads `&harm` by name, as before.

@@ -1,5 +1,6 @@
 // The rhythms (#138): E31's eight drum bars, lifted word for word but their `&bar`, play E31's 144 hits under a host's
 // meter; the claves play their patterns on General MIDI's claves (#140); every rhythm is open on its meter and finds its place by its association.
+import { wordOf } from '../engine/renamed';
 import { describe, expect, it } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import swing from '../../fixtures/contracts/swing.json';
@@ -35,7 +36,7 @@ interface Hit {
 const rhythms = createRepository(RHYTHM_FRAGMENTS);
 const meters = createRepository(METER_FRAGMENTS);
 const byId = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!;
-const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
+const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === wordOf(id))!.text;
 /** 13 of the General MIDI kit's lines, taken by name as the drummer takes them: every voice the rhythms leave as a hole (#244). */
 const coreKit = expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim();
 
@@ -81,18 +82,23 @@ const PRESETS: Record<string, { point: StylePoint; swing: number }> = {
 // Each clave's strokes, in sixteenths of 4/4 over its bars: over two, a stroke on every eighth of the cut-time pattern
 // (x..x..x...x.x... doubled); over one, the cut-time pattern itself.
 const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
-  'son clave 3-2': { bars: 2, strokes: [0, 6, 12, 20, 24] },
-  'son clave 2-3': { bars: 2, strokes: [4, 8, 16, 22, 28] },
-  'rumba clave 3-2': { bars: 2, strokes: [0, 6, 14, 20, 24] },
-  'bossa nova clave': { bars: 2, strokes: [0, 6, 12, 20, 26] },
-  'bossa nova clave (one bar)': { bars: 1, strokes: [0, 3, 6, 10, 13] },
+  son_clave_3_2: { bars: 2, strokes: [0, 6, 12, 20, 24] },
+  son_clave_2_3: { bars: 2, strokes: [4, 8, 16, 22, 28] },
+  rumba_clave_3_2: { bars: 2, strokes: [0, 6, 14, 20, 24] },
+  bossa_nova_clave: { bars: 2, strokes: [0, 6, 12, 20, 26] },
+  bossa_nova_clave_one_bar: { bars: 1, strokes: [0, 3, 6, 10, 13] },
 };
 
-const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(`${w.preset} drums`) }));
+const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(wordOf(`${w.preset} drums`)) }));
 
 describe('the rhythm fragments', () => {
   it('are E31’s eight drum bars, one per preset, five claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, every point associated as the facet rhythm', () => {
-    expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([...Object.keys(PRESETS).map((p) => `${p} drums`), ...Object.keys(CLAVES), ...Object.keys(LIFTED), ...Object.keys(WRITTEN)]);
+    expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([
+      ...Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)),
+      ...Object.keys(CLAVES),
+      ...Object.keys(LIFTED),
+      ...Object.keys(WRITTEN),
+    ]);
     expect(RHYTHM_FRAGMENTS.flatMap((f) => f.association.map((wp) => wp.facet))).toEqual(RHYTHM_FRAGMENTS.map(() => 'rhythm'));
   });
 
@@ -113,7 +119,7 @@ describe('the rhythm fragments', () => {
     const alone = compileSource([text, coreKit].join('\n'));
     expect(alone.mainMeter).toBeUndefined();
     expect(alone.diagnostics.map((d) => d.message).join('\n')).toMatch(/taps the piece's main meter, and it has none/);
-    const filled = compileSource(hosted(meterText('7/8'), 90, text, coreKit));
+    const filled = compileSource(hosted(meterText('meter_7_8'), 90, text, coreKit));
     expect(filled.diagnostics).toEqual([]);
     expect(filled.mainMeter).toBe('bar');
   });
@@ -127,7 +133,7 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
 
   // (the host writes the repository's 4/4 first, at the preset's bpm: E31's own meter, the bar the band writes its hits in)
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: every hit, its note, step, written length and velocity, under 4/4 at its bpm', (_, w) => {
-    const { hits, diagnostics } = played(hosted(meterText('4/4'), w.bpm, w.fragment.text, coreKit), w.bpm);
+    const { hits, diagnostics } = played(hosted(meterText('meter_4_4'), w.bpm, w.fragment.text, coreKit), w.bpm);
     expect(diagnostics).toEqual([]);
     const want = sorted(w.hits);
     expect(hits).toHaveLength(want.length);
@@ -136,7 +142,7 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
 
   it('144 of 144, counted', () => {
     const matched = drumBars.reduce((n, w) => {
-      const { hits } = played(hosted(meterText('4/4'), w.bpm, w.fragment.text, coreKit), w.bpm);
+      const { hits } = played(hosted(meterText('meter_4_4'), w.bpm, w.fragment.text, coreKit), w.bpm);
       return n + sorted(w.hits).filter((h, i) => hits[i] && sameHit(hits[i], h)).length;
     }, 0);
     expect(matched).toBe(144);
@@ -176,17 +182,17 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
 
 describe('the claves', () => {
   it.each(Object.entries(CLAVES))('%s plays its five strokes over its bars, and comes round', (id, { bars, strokes }) => {
-    const { hits, diagnostics } = played(hosted(meterText('4/4'), 120, byId(id).text, coreKit), 120, 32 * bars);
+    const { hits, diagnostics } = played(hosted(meterText('meter_4_4'), 120, byId(id).text, coreKit), 120, 32 * bars);
     expect(diagnostics).toEqual([]);
     expect(hits.map((h) => h.step)).toEqual([...strokes, ...strokes.map((s) => s + 16 * bars)]);
     expect(new Set(hits.map((h) => [h.note, h.length, h.velocity].join()))).toEqual(new Set(['75,1,90']));
   });
 
   it.each(Object.keys(CLAVES).flatMap((clave) => drumBars.map((w) => [clave, w.preset, clave, w] as const)))('%s layers on %s drums in one text', (_, __, clave, w) => {
-    const both = played(hosted(meterText('4/4'), w.bpm, w.fragment.text, byId(clave).text, coreKit), w.bpm, 32);
+    const both = played(hosted(meterText('meter_4_4'), w.bpm, w.fragment.text, byId(clave).text, coreKit), w.bpm, 32);
     expect(both.diagnostics).toEqual([]);
-    const drums = played(hosted(meterText('4/4'), w.bpm, w.fragment.text, coreKit), w.bpm, 32).hits;
-    const strokes = played(hosted(meterText('4/4'), w.bpm, byId(clave).text, coreKit), w.bpm, 32).hits;
+    const drums = played(hosted(meterText('meter_4_4'), w.bpm, w.fragment.text, coreKit), w.bpm, 32).hits;
+    const strokes = played(hosted(meterText('meter_4_4'), w.bpm, byId(clave).text, coreKit), w.bpm, 32).hits;
     expect(both.hits).toEqual(sorted([...drums, ...strokes]));
     // (a line of its own with a sound of its own: the clave's note is none the drum bar strikes, so a shared step is two sounds, #140)
     expect(drums.filter((h) => h.note === 75)).toEqual([]);
@@ -198,26 +204,26 @@ describe('the claves', () => {
 // `&bd s=white …` lines, bare white noise standing in for a kick and a hat alike, and the five claves' `&claves` (the
 // General MIDI kit's line word for word) are gone: 35 lines.
 const STRUCK: Record<string, string[]> = {
-  'Synth-pop drums': ['&bd', '&hh', '&sd'],
-  'Techno drums': ['&bd', '&hh', '&oh', '&sd'],
-  'Deep house drums': ['&bd', '&hh', '&sd'],
-  'Ambient drums': ['&bd', '&hh', '&sd'],
-  'Lo-fi hip hop drums': ['&bd', '&hh', '&rim', '&sd'],
-  'Funk drums': ['&bd', '&hh', '&oh', '&rim', '&sd'],
-  'Bossa nova drums': ['&bd', '&hh', '&rim', '&sd'],
-  'Swing jazz drums': ['&bd', '&ph', '&rd', '&sd'],
+  synth_pop_drums: ['&bd', '&hh', '&sd'],
+  techno_drums: ['&bd', '&hh', '&oh', '&sd'],
+  deep_house_drums: ['&bd', '&hh', '&sd'],
+  ambient_drums: ['&bd', '&hh', '&sd'],
+  lo_fi_hip_hop_drums: ['&bd', '&hh', '&rim', '&sd'],
+  funk_drums: ['&bd', '&hh', '&oh', '&rim', '&sd'],
+  bossa_nova_drums: ['&bd', '&hh', '&rim', '&sd'],
+  swing_jazz_drums: ['&bd', '&ph', '&rd', '&sd'],
 };
 
 // The rhythms lifted from an example, each with the names it strikes: none ever carried a voice of its own.
 const LIFTED: Record<string, string[]> = {
-  'Electro swing drums': ['&bd', '&cp', '&hh', '&oh', '&sd'],
+  electro_swing_drums: ['&bd', '&cp', '&hh', '&oh', '&sd'],
 };
 
 // The rhythms written by hand for a proposed preset (#349), or near it, each with the names it strikes.
 const WRITTEN: Record<string, string[]> = {
-  'Spooky drums': ['&bd', '&rd', '&rim'],
-  'Ghost drums': ['&bd', '&rd', '&rim'],
-  'Kinderlied drums': ['&bd', '&hh', '&sd'],
+  spooky_drums: ['&bd', '&rd', '&rim'],
+  ghost_drums: ['&bd', '&rd', '&rim'],
+  kinderlied_drums: ['&bd', '&hh', '&sd'],
 };
 
 describe('the rhythms’ holes (decision 054, rung 2)', () => {
@@ -236,15 +242,15 @@ describe('the rhythms’ holes (decision 054, rung 2)', () => {
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))(
     '%s fits a workbench with a meter and no kit, and with the General MIDI kit’s 13, and the kit fills every hole',
     (_, text) => {
-      expect(fitOf(text, hosted(meterText('4/4'), 120)).fits).toBe(true);
-      const withKit = fitOf(text, hosted(meterText('4/4'), 120, coreKit));
+      expect(fitOf(text, hosted(meterText('meter_4_4'), 120)).fits).toBe(true);
+      const withKit = fitOf(text, hosted(meterText('meter_4_4'), 120, coreKit));
       expect([withKit.fits, withKit.sounds]).toEqual([true, []]);
     },
   );
 
   it.each(Object.keys(CLAVES))('%s with the General MIDI kit’s 13 sounds identical (S1, the whole window) to the clave with its line written out', (id) => {
-    const out = hosted(meterText('4/4'), 120, byId(id).text, coreKit);
-    const was = hosted(meterText('4/4'), 120, byId(id).text.replace('&percussion', `&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)\n&percussion`));
+    const out = hosted(meterText('meter_4_4'), 120, byId(id).text, coreKit);
+    const was = hosted(meterText('meter_4_4'), 120, byId(id).text.replace('&percussion', `&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)\n&percussion`));
     expect(soundsIdentical(was, out)).toBe(true);
   });
 });
@@ -253,7 +259,7 @@ describe('where the rhythms are found', () => {
   const first = (point: StylePoint, ids = RHYTHM_FRAGMENTS.map((f) => f.id)) => rhythms.query(point, RHYTHM_FRAGMENTS.length).find((f) => ids.includes(f.fragment.id))!.fragment.id;
 
   it.each(Object.entries(PRESETS))('at %s, its drum bar first', (preset, { point }) => {
-    expect(first(point)).toBe(`${preset} drums`);
+    expect(first(point)).toBe(wordOf(`${preset} drums`));
   });
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.association[0]!.point] as const))('%s is found first at its own point', (id, point) => {
@@ -262,10 +268,10 @@ describe('where the rhythms are found', () => {
 
   it('the claves nearest Bossa nova are the bossa nova claves, the one-bar first; nearest Funk the rumba clave; the son clave 3-2 as near both', () => {
     const claves = Object.keys(CLAVES);
-    expect(first(BOSSA_NOVA, claves)).toBe('bossa nova clave (one bar)');
-    expect(first(BOSSA_NOVA, claves.slice(0, 4))).toBe('bossa nova clave');
-    expect(first(FUNK, claves)).toBe('rumba clave 3-2');
-    const son = byId('son clave 3-2');
+    expect(first(BOSSA_NOVA, claves)).toBe('bossa_nova_clave_one_bar');
+    expect(first(BOSSA_NOVA, claves.slice(0, 4))).toBe('bossa_nova_clave');
+    expect(first(FUNK, claves)).toBe('rumba_clave_3_2');
+    const son = byId('son_clave_3_2');
     expect(rhythms.query(BOSSA_NOVA, 12).find((f) => f.fragment === son)!.distance).toBeCloseTo(rhythms.query(FUNK, 12).find((f) => f.fragment === son)!.distance, 12);
   });
 });
@@ -273,11 +279,11 @@ describe('where the rhythms are found', () => {
 // (Jambot's drummer reads a rhythm on its bar's sixteenths, the meter played straight: a hit between them is one it can't
 // play, yggi/jambot#521)
 describe('Spooky drums, in every meter it fits', () => {
-  const spooky = RHYTHM_FRAGMENTS.find((f) => f.id === 'Spooky drums')!;
+  const spooky = RHYTHM_FRAGMENTS.find((f) => f.id === 'spooky_drums')!;
   const STRAIGHT = METER_FRAGMENTS.filter((m) => !/swung|leaning/.test(m.id));
   const fits = STRAIGHT.filter((m) => fitOf(spooky.text, setTiming(m.text, 'bar', 'step', '60bpm')).fits);
   it('fits every straight meter of the library but 7/8', () => {
-    expect(STRAIGHT.filter((m) => !fits.includes(m)).map((m) => m.id)).toEqual(['7/8']);
+    expect(STRAIGHT.filter((m) => !fits.includes(m)).map((m) => m.id)).toEqual(['meter_7_8']);
   });
   it.each(fits.map((m) => [m.id, m.text] as const))('under %s lands every hit on a sixteenth of the bar, the rim at its middle', (id, meter) => {
     const r = compileSource(hosted(meter, 60, spooky.text, coreKit));
@@ -286,7 +292,7 @@ describe('Spooky drums, in every meter it fits', () => {
     // (the rim knocks once a bar, so two knocks apart are a bar; a meter's sixteenths are twice its eighths)
     const rims = events.filter((e) => e.voice === 'rim').map((e) => e.at);
     const bar = rims[1]! - rims[0]!;
-    const [count, unit] = id.split(' ')[0]!.split('/').map(Number) as [number, number];
+    const [count, unit] = id.split('_').slice(1, 3).map(Number) as [number, number];
     const sixteenth = bar / ((count * 8) / unit) / 2;
     expect(rims[0]! / bar).toBeCloseTo(0.5, 9);
     for (const e of events) expect(Math.abs(e.at / sixteenth - Math.round(e.at / sixteenth)), `${e.voice} at ${e.at}`).toBeLessThan(1e-6);
