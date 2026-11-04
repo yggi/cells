@@ -16,7 +16,7 @@ Driven forms and taps take a chain of `*n` (n per one: faster) and `/n` (one per
 A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/engine/program.ts`): faster, `step=1000000`, is an error, and the player keeps the last piece that compiled. A rate left `free(…)` has its slider stop where the cap does, with a warning when its written range goes past it (`step=free(100bpm, 60..9999999)`). Cells at audio rate that start no notes (a voice's wave, a vibrato) aren't counted.
 
 - **`stride=n`** — each step moves a stepped table n places (`stride=7`: fifths).
-- **`cycle=n`** — how many before it comes round; see [tables.md](tables.md). On a tap, how many bars it runs before it comes round.
+- **`cycle=n`** — how many laps before it comes round ([decision 040](https://github.com/yggi/cells/blob/main/docs/decisions/040-pulse-beat-and-laps.md), #75): a table's own length, an index read through it, or, on a tap, its bars; `cycle=0` holds the first entry. See [tables.md](tables.md).
 - Rates can be a **free** number: `step=free(90bpm, 60..240)`; see [free.md](free.md).
 
 ```cells

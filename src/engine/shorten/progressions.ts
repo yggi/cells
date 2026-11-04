@@ -6,7 +6,7 @@
 import { attrsOf, setAttr } from '../edit';
 import { soundsIdentical } from '../sameness';
 import type { CompileOptions } from '../program';
-import { saves, type Result, type ShortenRewrite } from './harness';
+import { savesChars, type Result, type ShortenRewrite } from './harness';
 
 export function progressions(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   const out: ShortenRewrite[] = [];
@@ -26,7 +26,7 @@ export function progressions(source: string, result: Result, options: CompileOpt
       after: `step=${step}`,
       apply: (src) => setAttr(setAttr(src, c.name, 'loop', null), c.name, 'step', step),
     };
-    if ((saves(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options)) out.push(s);
+    if ((savesChars(source, s) ?? 0) > 0 && soundsIdentical(source, s.apply(source), undefined, options)) out.push(s);
   }
   return out;
 }

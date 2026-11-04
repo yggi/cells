@@ -6,7 +6,7 @@ import { saves } from "./harness.js";
 const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/;
 const MIN_PHRASE = 4;
 const MAX_PHRASE = 16;
-const TOLL = 12;
+const TOLL = 1;
 const use = (name, ref) => `&${name}${ref}`;
 const MAX_TURN = 12;
 function turnsOf(tokens, lap) {
@@ -29,6 +29,18 @@ function turnsOf(tokens, lap) {
     return out;
 }
 const isDegree = (ref) => ref.startsWith('^') && !ref.startsWith('^$');
+function withSplicers(result, names) {
+    const out = new Set(names);
+    for (let grew = true; grew;) {
+        grew = false;
+        for (const c of result.cells.values())
+            if (!out.has(c.name) && c.units.some((u) => u.atom.kind === 'ref' && out.has(u.atom.name))) {
+                out.add(c.name);
+                grew = true;
+            }
+    }
+    return [...out];
+}
 export function phrases(source, cells, result, options = {}) {
     const copied = new Set([...source.matchAll(/\bbase=&(\w+)/g)].map((m) => m[1]));
     cells = cells.filter((c) => !copied.has(c.name) && !new RegExp(`^&${c.name}\\b[^\\n]*\\bbase=&`, 'm').test(source));
@@ -112,8 +124,8 @@ export function phrases(source, cells, result, options = {}) {
                         take(o.cell, o.at, turn.ref);
         if (occs.length < 2)
             continue;
-        const saving = occs.reduce((a, o) => a + key.length - use('m1', o.ref).length, 0) - (key.length + 6);
-        if (saving > 4)
+        const saving = occs.length * (L - 1) - L - 1;
+        if (saving >= TOLL)
             found.push({ key, tokens, occs, saving });
     }
     found.sort((a, b) => b.saving - a.saving || b.tokens.length - a.tokens.length);
@@ -156,7 +168,6 @@ export function phrases(source, cells, result, options = {}) {
                             ? `${o.ref.slice(1)} degrees`
                             : `turned ${o.ref}`)),
         ];
-        const turnedAny = f.occs.some((o) => o.ref.startsWith('[>>') || o.ref.startsWith('[<<') || isDegree(o.ref));
         const s = {
             id: `phrase:${f.key}`,
             tool: 'shorten',
@@ -167,7 +178,8 @@ export function phrases(source, cells, result, options = {}) {
             apply,
         };
         const saving = saves(source, s) ?? 0;
-        if (saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))], options)))
+        if (saving >= TOLL &&
+            sameNotes(source, s.apply(source), withSplicers(result, f.occs.map((o) => o.cell)), options))
             out.push(s);
     }
     return out;

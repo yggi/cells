@@ -13,7 +13,7 @@
 import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from './fiveto12';
 import { codeShifts, type CompileResult } from './program';
 import type { FreeSpec } from './ast';
-import { clocking, ownLength, selects } from './clocking';
+import { clocking, ownLength, selects, turnLap } from './clocking';
 import { plan } from './realize';
 
 export interface PieceTime {
@@ -98,9 +98,12 @@ export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
     const turn = secondsOf(c.clock, 1 / c.rate);
     if (!turn) continue;
     const stride = Math.max(1, Math.abs(Math.round(c.stride || 1)));
-    // (where its turns wrap: its cycle=, else its own number of steps — as shiftsAt turns it)
-    const wrap = Math.max(1, Math.round(c.wrap ?? ownLength(result, c.name)));
-    const turns = wrap / Number(gcd(BigInt(wrap), BigInt(stride)));
+    // (where its turns wrap: its cycle= laps of its own number of steps, else one, or a tapped table's tap's lap — as
+    // shiftsAt turns it; cycle=0 doesn't turn)
+    if (c.wrap === 0) continue;
+    const { per, laps } = turnLap(result, c);
+    const wrap = Math.max(1, Math.round(laps * ownLength(result, c.name)));
+    const turns = per ?? wrap / Number(gcd(BigInt(wrap), BigInt(stride)));
     periods.push(turn * turns);
   }
   seen?.push(...periods);

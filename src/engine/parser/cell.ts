@@ -215,11 +215,13 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   },
   cycle: {
     form: 'cycle=n',
-    examples: ['&key step=cycle(&theme) stride=7 cycle=12', '&edo19 cycle=19 map=edo'],
-    read: (s, b) => {
+    examples: ['&key step=cycle(&theme) stride=2 cycle=2', '&wheel cycle=1 0 4 7', '&drone cycle=0 0 4 7'],
+    read: (s, b, _word, at) => {
       const vs = s.i;
       b.cycle = s.int('a whole number after cycle=');
-      if (b.cycle < 1) s.fail('cycle must be at least 1', vs, s.i - vs);
+      // (laps, decision 040, #75: 0 holds the first entry, whatever the index)
+      if (b.cycle < 0) s.fail('cycle= counts laps: 0 or more', vs, s.i - vs);
+      b.paramSpans.cycle = s.place(at);
       // (a grid of that many steps is built step by step: past the cap it would run out of memory before saying so)
       if (b.cycle > MAX_EVENTS)
         s.fail(

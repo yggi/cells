@@ -4,6 +4,7 @@ import type { LineScanner } from './scanner';
 import { parseFree } from './free';
 import { syntax, type Syntax } from './syntax';
 import { perSecond, UNIT } from './units';
+import { MAX_EVENTS } from '../program';
 
 /** step= and loop=: what moves a cell — the forms besides the units. */
 export const STEP_SYNTAX: readonly Syntax[] = [
@@ -197,6 +198,12 @@ const MAP_WORD = new RegExp(
   'y',
 );
 
+/** A grid's size, at most MAX_EVENTS (a grid is built step by step: past the cap it would run out of memory first). */
+function gridSize(s: LineScanner, n: number, at: number): number {
+  if (n > MAX_EVENTS) s.fail(`${n} steps: at most ${MAX_EVENTS.toLocaleString('en')}, the most a grid can hold to its period`, at, String(n).length);
+  return n;
+}
+
 export function parseMap(s: LineScanner): MapSpec {
   const start = s.i;
   if (s.peek() === '&') {
@@ -205,19 +212,39 @@ export function parseMap(s: LineScanner): MapSpec {
     return { kind: 'table', table, span: s.span(start) };
   }
   if (s.match(/sin\b/y)) s.fail('map=sin is gone: write the sine as the braid, sin(12) — or map=&table', start, 3);
-  // ed(r): equal divisions of a ratio — a number or a fraction, ed(5), ed(3/2)
+  // ed(r): equal divisions of a ratio — a number or a fraction, ed(5), ed(3/2); ed(n, r): n of them, ed(7, 3/2) (#75)
   if (s.match(/ed\(/y)) {
+    const ratio = () => {
+      const at = s.i;
+      const r = s.match(/[0-9]+(?:\.[0-9]+)?(?:\/[0-9]+(?:\.[0-9]+)?)?/y);
+      const [a, b = '1'] = (r ?? '').split('/');
+      const period = parseFloat(a) / parseFloat(b);
+      if (r === null || !(period > 1)) s.fail('ed(r) divides a ratio above 1: ed(2) is the octave, ed(3/2) the fifth, ed(7, 3/2) seven steps to it', at);
+      return period;
+    };
     const at = s.i;
-    const r = s.match(/[0-9]+(?:\.[0-9]+)?(?:\/[0-9]+(?:\.[0-9]+)?)?/y);
-    const [a, b = '1'] = (r ?? '').split('/');
-    const period = parseFloat(a) / parseFloat(b);
-    if (r === null || !(period > 1)) s.fail('ed(r) divides a ratio above 1: ed(2) is the octave, ed(3/2) the fifth, ed(5)', at);
+    const sized = s.match(/([0-9]+)\s*,\s*/y);
+    const steps = sized === null ? null : gridSize(s, parseInt(sized, 10), at);
+    if (steps !== null && steps < 1) s.fail('ed(n, r): n steps to the ratio, at least 1', at);
+    const period = ratio();
     s.expect(')', `')' to close ed(…)`);
-    return { kind: 'edo', period, span: s.span(start) };
+    return { kind: 'edo', period, steps, span: s.span(start) };
   }
   const w = s.match(MAP_WORD);
   if (w === null) s.fail(`map= takes ${Object.keys(MAP_KINDS).join(', ')}, ed(r), midi(c, p) or a table cell (&curve)`);
-  if (w === 'edo') return { kind: 'edo', period: 2, span: s.span(start) };
+  if (w === 'edo') {
+    // edo(n): n equal steps to the octave (#75: the grid's size, where cycle= said it before)
+    let steps: number | null = null;
+    if (s.peek() === '(') {
+      s.i++;
+      const at = s.i;
+      const n = s.match(/[0-9]+/y);
+      if (n === null || parseInt(n, 10) < 1) s.fail('edo(n): n equal steps to the octave, edo(19)', at);
+      steps = gridSize(s, parseInt(n!, 10), at);
+      s.expect(')', `')' to close edo(…)`);
+    }
+    return { kind: 'edo', period: 2, steps, span: s.span(start) };
+  }
   if (w === 'midi') return parseMidi(s, start);
   return { kind: w as 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role' | 'style', span: s.span(start) };
 }

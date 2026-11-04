@@ -23,7 +23,7 @@ describe('pan=', () => {
 
 describe('show=mix:&grid', () => {
   it('on a cell that is no mix is a warning on the attribute', () => {
-    const d = diags('&e cycle=19 map=edo\n' + BASE + '&w s=sine show=mix:&e\n&out map=sample [&mel * &v, &mel * &w]');
+    const d = diags('&e map=edo(19)\n' + BASE + '&w s=sine show=mix:&e\n&out map=sample [&mel * &v, &mel * &w]');
     expect(d).toEqual([expect.objectContaining({ severity: 'warning', line: 5, col: 16, message: expect.stringMatching(/does nothing on &w: .*isn't a mix/) })]);
   });
   it('names a missing cell at the attribute, not the whole line', () => {
@@ -32,7 +32,7 @@ describe('show=mix:&grid', () => {
   });
   it('an empty one, or one with a space, says what it takes', () => {
     for (const bad of ['show=mix:', 'show=mix: &e'])
-      expect(messages(BASE + `&e cycle=19 map=edo\n&m ${bad} map=sample [&mel * &v]`)).toEqual([expect.stringMatching(/show=mix:&grid: the grid .*no space after the colon/)]);
+      expect(messages(BASE + `&e map=edo(19)\n&m ${bad} map=sample [&mel * &v]`)).toEqual([expect.stringMatching(/show=mix:&grid: the grid .*no space after the colon/)]);
   });
 });
 
@@ -60,7 +60,7 @@ describe('a degree or a shift that leaves hearing', () => {
     ]);
   });
   it('a large grid has more steps to an octave: 1500 steps of a 1200 step grid is quiet', () => {
-    expect(messages('&e cycle=1200 map=edo\n&bar step=1\n&m step=&bar 0 2\n&t over=&e step=&bar degree(&m, 1500)\n&v s=sine\n&out map=sample [&t * &v]')).toEqual([]);
+    expect(messages('&e map=edo(1200)\n&bar step=1\n&m step=&bar 0 2\n&t over=&e step=&bar degree(&m, 1500)\n&v s=sine\n&out map=sample [&t * &v]')).toEqual([]);
   });
   it('an ordinary degree is quiet', () => {
     expect(messages('&bar step=1\n&m step=&bar 0 2\n&t step=&bar degree(&m, -7)\n&v s=sine\n&out map=sample [&t * &v]')).toEqual([]);
@@ -324,6 +324,11 @@ describe('a grid too big to build', () => {
         len: 10,
       },
     ]);
+    // (and a grid's size in its map, #75)
+    for (const map of ['edo(1000000000)', 'ed(1000000000, 3/2)'])
+      expect(spans(`&e map=${map}`)).toEqual([
+        { severity: 'error', message: '1000000000 steps: at most 50,000, the most a grid can hold to its period', line: 1, col: map.startsWith('edo') ? 12 : 11, len: 10 },
+      ]);
   });
 });
 

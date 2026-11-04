@@ -1,0 +1,6 @@
+# a turning key's cycle= written when it counted steps (decision 040, #75): a whole tone a pass, two octaves, then round
+&bar meter("4/4") step=180bpm
+&theme over=&key step=8n 0 4 7 12 7 4
+&key step=cycle(&theme) stride=2 cycle=24
+&lead s=tri loop=C4
+&out map=sample [&theme * &lead * .5]

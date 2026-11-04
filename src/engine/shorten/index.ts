@@ -1,7 +1,7 @@
 /**
  * Shorten: read the code like a linter, find what's written out longhand, and
- * offer it shorter — the measure is the code's length, the promise that it
- * sounds the same. One rule a file:
+ * offer it more compact — the measure is the structure (decision 049: each leaf a braid writes, one per attribute value,
+ * one per cell, names and comments free; `harness.ts`, #157), the promise that it sounds the same. One rule a file:
  *
  *  - runs.ts:      0 0 0 0 → 0!4
  *  - phrases.ts:   a phrase written twice or more becomes a cell of its own, used where it was
@@ -26,7 +26,7 @@
  */
 import { compileSource } from '../compile';
 import type { CompileOptions } from '../program';
-import { candidates, size, suggestion, type ShortenRewrite, type Suggestion } from './harness';
+import { candidates, savesChars, size, structure, suggestion, type ShortenRewrite, type Suggestion } from './harness';
 import { runs } from './runs';
 import { phrases } from './phrases';
 import { fractions } from './fractions';
@@ -69,8 +69,20 @@ export function shorten(source: string, options: CompileOptions = {}): Suggestio
     ...card(source, options),
   ];
   const kept = result.uses?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
-  return kept.map((r) => suggestion(source, r)).sort((a, b) => b.saving - a.saving);
+  // (the structure saved first; a respelling, which saves none, by the characters it saves)
+  const chars = new Map(kept.map((r) => [r.id, savesChars(source, r) ?? 0]));
+  return kept
+    .map((r) => suggestion(source, r))
+    .filter((s) => RESPELLINGS.has(s.kind) || s.saving > 0)
+    .sort((a, b) => b.saving - a.saving || chars.get(b.id)! - chars.get(a.id)!);
 }
+
+/**
+ * The kinds offered whatever structure they save (#157): the migrations (Migrate's, delegated for one minor version,
+ * decision 049's bound), and the respellings Shorten keeps until #27 rules their rows (`alias`, Normalise's;
+ * `fraction`, `progression`), each offered by its rule where it is shorter in characters.
+ */
+const RESPELLINGS: ReadonlySet<Suggestion['kind']> = new Set(['gate', 'tap', 'swing', 'section', 'card', 'alias', 'fraction', 'progression']);
 
 const overridden = (r: ReturnType<typeof compileSource>) =>
   (r.uses ?? [])
@@ -88,7 +100,11 @@ function keepsUsed(r: ShortenRewrite, source: string, options: CompileOptions, b
   }
 }
 
-/** Shorten again and again — the best each time — until nothing more pays. */
+/**
+ * Shorten again and again — the best each time — until nothing more pays (#157): the rewrite that saves the most
+ * structure, or, where none saves any, a respelling that saves characters and adds no structure. Each step makes the
+ * structure smaller, or the characters at the same structure, so it ends.
+ */
 export function shortenAll(source: string, rounds = 60, options: CompileOptions = {}): { source: string; steps: string[] } {
   let now = source;
   const steps: string[] = [];
@@ -97,8 +113,9 @@ export function shortenAll(source: string, rounds = 60, options: CompileOptions 
     const best = shorten(now, options).find((s) => s.kind !== 'card');
     if (!best) break;
     const next = best.apply(now);
-    if (size(next) >= size(now)) break;
-    steps.push(`−${best.saving}: ${best.title}`);
+    const saved = structure(now) - structure(next);
+    if (saved < 0 || (saved === 0 && size(next) >= size(now))) break;
+    steps.push(saved ? `−${saved}: ${best.title}` : `−${size(now) - size(next)} characters: ${best.title}`);
     now = next;
   }
   return { source: now, steps };

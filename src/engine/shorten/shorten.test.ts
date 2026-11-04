@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../compile';
 import { shorten, shortenAll } from '.';
-import { SAMENESS_SECONDS, size } from './harness';
+import { SAMENESS_SECONDS, size, structure } from './harness';
 import { eventsBetween, plan } from '../realize';
 import { codeShifts } from '../program';
 import { PRESETS } from '../presets';
@@ -26,6 +26,8 @@ describe('shorten', () => {
     const s = first(src, 'run');
     expect(s.apply(src)).toContain('&t step=4 0!4 4 7!3');
     expect(sounds(s.apply(src))).toEqual(sounds(src));
+    // (an elongation is the step before it held, no step of its own: `0 _ _` has no run, and `_!2` is no form)
+    expect(shorten('&t step=4 0 _ _ 4' + tail).some((x) => x.kind === 'run')).toBe(false);
   });
   it('a phrase in two cells: one cell, used in both (when it pays: the new line costs too)', () => {
     const src = '&t step=4 0 4 7 11 14 11 7 4 2 5 9 1' + tail.replace('[&t * &v]', '[&t * &v, &u * &v]') + '\n&u step=4 3 0 4 7 11 14 11 7 4 2 5 9';
@@ -33,7 +35,9 @@ describe('shorten', () => {
     const next = s.apply(src);
     expect(next).toMatch(/&m1 0 4 7 11 14 11 7 4 2 5 9/);
     expect(sounds(next)).toEqual(sounds(src));
-    expect(s.saving).toBe(src.length - next.length);
+    // (the saving is the structure saved, decision 049's measure: 11 leaves twice, now once, a cell and two uses, #157)
+    expect(s.saving).toBe(structure(src) - structure(next));
+    expect(s.saving).toBe(11 * 2 - (11 + 1 + 2));
   });
   it('a phrase backwards: &m[::-1]', () => {
     const src = '&t step=4 0 4 7 11 14 17 21 24 28 31 35 38 1 38 35 31 28 24 21 17 14 11 7 4 0' + tail;
@@ -97,9 +101,10 @@ describe('shorten', () => {
     expect(next).toContain('&t step=&bar [4@2 2@2] 2 0@2');
     expect(sounds(next)).toEqual(sounds(src));
   });
-  it('a phrase too short to pay for its own line is left as it is', () => {
-    const src = '&t step=4 0 4 7 2 5 9 1 0 4 7 2 5 9' + tail;
-    expect(shorten(src).filter((x) => x.kind === 'phrase')).toEqual([]);
+  it('a phrase pays for its own cell by structure (#157): four steps written twice save one, three are too few to name', () => {
+    const src = '&t step=4 0 4 7 2 1 0 4 7 2' + tail;
+    expect(first(src, 'phrase').saving).toBe(1);
+    expect(shorten('&t step=4 0 4 7 1 0 4 7' + tail).filter((x) => x.kind === 'phrase')).toEqual([]);
   });
   it('… and leaves alone what something else splices in (it would hear the lengths)', () => {
     const src = '&m 4@2 2@2\n&t step=4 &m 0' + tail;
@@ -107,7 +112,7 @@ describe('shorten', () => {
   });
 });
 
-describe('shorten, on every example: every suggestion sounds the same, and is shorter', () => {
+describe('shorten, on every example: every suggestion sounds the same, and saves structure (a respelling: characters)', () => {
   for (const [key, p] of Object.entries(PRESETS)) {
     it(
       key,
@@ -116,7 +121,8 @@ describe('shorten, on every example: every suggestion sounds the same, and is sh
         const before = sounds(p.source);
         for (const s of suggestions) {
           const next = s.apply(p.source);
-          expect(size(next), s.title).toBeLessThan(size(p.source));
+          if (s.saving > 0) expect(structure(p.source) - structure(next), s.title).toBe(s.saving);
+          else expect(size(next), s.title).toBeLessThan(size(p.source));
           expect(sounds(next), `${key}: ${s.title}`).toEqual(before);
         }
       },
@@ -245,23 +251,23 @@ describe('shorten: whole lines (#10)', () => {
     expect(sounds(s.apply(src), 40)).toEqual(sounds(src, 40));
     expect(shortenAll(src).source).toContain('0!4 5!2 0!2');
   });
-  it('defaults: loop=SAMPLE_RATE on the sound card, a cycle= that is the table’s own length, pan=.5', () => {
-    const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=12\n&t over=&key step=&bar 0 4 7\n&v s=sine loop=C4 pan=.5\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
+  it('defaults: loop=SAMPLE_RATE on the sound card, a turning table’s cycle=1 (one lap, #75), pan=.5', () => {
+    const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=1\n&t over=&key step=&bar 0 4 7\n&v s=sine loop=C4 pan=.5\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
     const kinds = shorten(src)
       .filter((x) => x.kind === 'default')
       .map((x) => x.before)
       .sort();
-    expect(kinds).toEqual(['cycle=12', 'loop=SAMPLE_RATE', 'pan=.5']);
+    expect(kinds).toEqual(['cycle=1', 'loop=SAMPLE_RATE', 'pan=.5']);
     expect(sounds(shortenAll(src).source)).toEqual(sounds(src));
     // (a grid's cycle= is its size: not a default to drop)
     expect(shorten('&edo cycle=19 map=edo\n&t over=&edo step=2 0 1' + tail).some((x) => x.before.startsWith('cycle='))).toBe(false);
   });
-  it('the measure is the code: the spaces that keep a comment aligned aren’t counted', () => {
-    const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=12          # the 12\n&t over=&key step=&bar 0 4 7' + tail;
-    const s = shorten(src).find((x) => x.before === 'cycle=12')!;
-    expect(s.saving).toBe(9);
+  it('the measure is the structure (#157): an attribute value dropped saves one, its comment and spacing free', () => {
+    const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=1          # one lap\n&t over=&key step=&bar 0 4 7' + tail;
+    const s = shorten(src).find((x) => x.before === 'cycle=1')!;
+    expect(s.saving).toBe(1);
     expect(s.apply(src)).toContain('stride=7');
-    expect(s.apply(src)).toContain('# the 12');
+    expect(s.apply(src)).toContain('# one lap');
   });
 });
 

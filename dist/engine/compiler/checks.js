@@ -1,5 +1,5 @@
 import { AXES, SLOTS } from "../style.js";
-import { BODIES, isMidiCard } from "../program.js";
+import { BODIES, isMidiCard, ROOT } from "../program.js";
 import { MOVING_PARAMS } from "../attributes.js";
 import { DOUGH_SOURCES } from "../dough-params.js";
 import { refsOf } from "../readers.js";
@@ -33,7 +33,7 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
         else if (!g)
             unknownCell(named, span);
         else if (!g.root)
-            warn(`show=mix:&${named}: a mix's colours follow a grid (a cell with cycle= or map=edo), not &${named}`, span);
+            warn(`show=mix:&${named}: a mix's colours follow a grid (a cell with map=edo), not &${named}`, span);
     }
     for (const c of cells.values()) {
         const span = (k) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name).span;
@@ -132,6 +132,12 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
         if (d.stride !== null && d.step?.kind !== 'driven' && d.step?.kind !== 'tap')
             warn(`stride= only matters with step=&cell or a tap (step=1m)`, d.paramSpans?.stride ?? d.span);
     for (const d of decls.values()) {
+        const own = cells.get(d.name)?.cycle ?? 0;
+        if (d.step?.kind !== 'driven' || d.cycle === null || d.map || own < 2 || d.cycle < own || d.cycle % own !== 0)
+            continue;
+        warn(`cycle=${d.cycle} on &${d.name} counts laps: ${d.cycle} of its ${own} steps. Written before v0.16, when it counted steps, it says cycle=${d.cycle / own} (Migrate rewrites it, decision 040)`, d.paramSpans.cycle ?? d.span);
+    }
+    for (const d of decls.values()) {
         for (const [key, r] of [
             ['env', d.env],
             ['pitch', d.pitch],
@@ -170,9 +176,22 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
         else if (vals.length < 2 || vals.some((v, i) => !(v > 0) || (i > 0 && !(v > vals[i - 1]))))
             error(`map=ratios lists one period's tones as rising ratios, the last the period: map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2`, d.map.span);
     }
-    for (const d of decls.values())
-        if (d.map?.kind === 'edo' && (d.over !== null || d.braid.kind !== 'blank'))
-            error(`A grid (map=edo, map=ed(r)) reads nothing and has no braid: &${d.name} cycle=19 map=edo`, d.map.span);
+    for (const d of decls.values()) {
+        if (d.map?.kind !== 'edo')
+            continue;
+        if (d.over !== null || d.braid.kind !== 'blank')
+            error(`A grid (map=edo, map=ed(r)) reads nothing and has no braid: &${d.name} map=edo(19)`, d.map.span);
+        else if (d.cycle !== null && d.name !== ROOT) {
+            const map = d.map.period === 2 ? `edo(${d.cycle})` : `ed(${d.cycle}, ${ratioText(d.map.period)})`;
+            const span = d.paramSpans.cycle ?? d.span;
+            if (d.cycle === 0)
+                error(`A grid has at least one step: its size is its map's, map=edo(19)`, span);
+            else if (d.map.steps !== null)
+                warn(`cycle=${d.cycle} does nothing on a grid whose map says its size (map=${d.map.period === 2 ? 'edo' : 'ed'}(${d.map.steps}…)): leave it out`, span);
+            else
+                warn(`cycle= on a grid is the old way: its size is its map's, map=${map} (Migrate rewrites it)`, span);
+        }
+    }
     for (const d of decls.values()) {
         const t = d.over ? cells.get(d.over.name) : undefined;
         if (!t || t.kit || bands.has(t.name))
@@ -229,3 +248,13 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
 }
 const FAR_OCTAVES = 100;
 const FAR_LAPS = 20;
+export function ratioText(r) {
+    if (Number.isInteger(r))
+        return String(r);
+    for (let q = 2; q <= 1000; q++) {
+        const p = Math.round(r * q);
+        if (Math.abs(p / q - r) < 1e-6)
+            return `${p}/${q}`;
+    }
+    return String(r);
+}

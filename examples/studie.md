@@ -12,7 +12,7 @@ description: Sine mixtures on Stockhausen's scale of 25 equal steps to 5:1, with
 # One player goes forward, swelling; the other plays it backwards, eight steps higher, fading.
 &time scan(geo(5, 25, 0 10 5 20 15)) step=free(24bpm, 12..48)  # five durations: 5^(k/25)
 &dyn map=db step=4n 0 -10 -4 -16 -8                              # their intensities, in decibels
-&steps cycle=25 map=ed(5)                                        # 25 steps to 5:1
+&steps map=ed(25, 5)                                             # 25 steps to 5:1
 
 # the five mixtures: five sines, 1 to 5 steps apart …
 &m1 label="mixture: 1 step apart" [0,1,2,3,4]

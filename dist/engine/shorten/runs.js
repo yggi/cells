@@ -10,7 +10,7 @@ export function runs(source, cells) {
             while (i + k < c.tokens.length && c.tokens[i + k] === c.tokens[i])
                 k++;
             const t = c.tokens[i];
-            if (k >= 2 && !t.includes('!')) {
+            if (k >= 2 && !t.includes('!') && t !== '_') {
                 next.push(`${t}!${k}`);
                 if (shown.length < 2)
                     shown.push(`${Array(Math.min(k, 4)).fill(t).join(' ')}${k > 4 ? ' …' : ''} → ${t}!${k}`);

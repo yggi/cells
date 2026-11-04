@@ -10,19 +10,21 @@ description: A breakbeat backwards every other bar, with ratchets and hats.
 # Intelligent dance music, in the manner of Aphex Twin — an original. A breakbeat
 # of voices, every other bar its retrograde ([::-1]); ratchets (&hh*3: a
 # sixteenth split in three); hats seven against four. One harmony for all: the
-# Lydian scale turns a step every two bars, and pad, acid and lead all read it;
+# Lydian scale, I for two bars and II for two (^1: a degree up), in pad, acid and lead;
 # one breath: a slow filter sweep moves the pad and the lead together.
 &bar from meter_4_4 &tempo
 &tap, &click, &strike from envelopes
 &tempo step=free(160bpm, 110..200)
-&lydian scan(2 2 2 1 2 2 1) step=1m/2 stride=1 cycle=2 label="the harmony: {mode} on {tonic}"     # C, then D: a step every two bars
+&lydian scan(2 2 2 1 2 2 1) label="the harmony: {mode} on {tonic}"     # C, then D: two bars each
 
 &pat &bd ~ &hh &hh*2 &sd ~ &bd &hh ~ &bd &sd &hh*3 ~ &bd &sd*4!2   # a bar of sixteenths
 &break step=16n &pat &pat[::-1]                            # … then the same bar backwards
 &hats step=pulse*7/4 &tick:0:.6 &tick:0:.3 &tick:0:.4 &tick:0:.3 &tick:0:.5 &tick:0:.3 &tick:0:.4  # seven to the bar
-&pad over=&lydian step=1m/2 [0,2,4,6]                      # the chord, as the scale turns
-&bleeps over=&lydian step=8t 7 ~ 9 11 ~ 13 ~ 11 ~ ~ 9 ~     # the lead: the chord's own tones, in triplets
-&acid over=&lydian step=16n 0 0 7 0 ~ 0 14 ~ 0 3 0 ~ 7 0 ~ 10
+&pad over=&lydian step=1m/2 [0,2,4,6] [1,3,5,7]            # the chord, I then II
+&lead 7 ~ 9 11 ~ 13 ~ 11 ~ ~ 9 ~                            # the lead: the chord's own tones, in triplets
+&bleeps over=&lydian step=8t &lead!2 &lead^1!2
+&riff 0 0 7 0 ~ 0 14 ~ 0 3 0 ~ 7 0 ~ 10
+&acid over=&lydian step=16n &riff!2 &riff^1!2
 &accent map=amp step=16n 1 .5 .8 .5 0 .5 1 0 .6 .5 .9 0 .7 .5 0 1      # louder, and brighter
 
 &breath map=lin loop=&bar/8 .15 1 .15                       # one breath, for pad and lead

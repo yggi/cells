@@ -7,6 +7,8 @@ import { uses } from "./uses.js";
 import { mainKey } from "./mainkey.js";
 import { forwardedUses } from "./forwarded.js";
 import { fromUses } from "./from.js";
+import { grids } from "./grids.js";
+import { laps } from "./laps.js";
 import { renamedIds } from "./renamed.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
@@ -17,6 +19,8 @@ export const migrations = (options = {}) => (source, result) => [
     ...mainKey(source, result),
     ...forwardedUses(source, options.resolve),
     ...fromUses(source, options.resolve),
+    ...grids(source, result, options),
+    ...laps(source, result),
     ...renamedIds(source, options.resolve),
 ];
 export const migrate = (source, options = {}) => rewriteAll(source, migrations(options), ROUNDS, options);

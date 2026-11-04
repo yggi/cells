@@ -5,7 +5,7 @@
  * step= chain steps). Nothing loops by itself: every stepped cell's shift is a
  * function of time.
  */
-import type { CompileResult, Clock, Shifts } from './program';
+import type { CompileResult, Clock, ResolvedCell, Shifts } from './program';
 import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from './helix';
 import { footOf, leaves, slots, type Laps } from './subseq';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
@@ -378,17 +378,22 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
     let s = steps.get(c.clock);
     if (s === undefined) steps.set(c.clock, (s = clk.stepOf(c.clock)));
     // a turning table comes round after its own length (a key of 12 after 12, a scale after 7, a
-    // braid of chords after its chords); cycle= says otherwise (cycle=24: two laps, climbing, then round)
-    const step = Math.floor(c.rate * s + EPS);
+    // braid of chords after its chords); cycle= says after how many laps (cycle=2: two laps, climbing, then round, #75)
+    // (cycle=0: constant, the first entry whatever the turn, #75)
+    if (c.wrap === 0) return base;
+    // (a tapped table's lap is the bar, decision 040: with cycle=n it comes round where its tap does, after n bars, its
+    //  turns begun again there; an untapped one after n laps of its own length)
+    const { per, laps } = turnLap(result, c);
+    const step = per ? mod(Math.floor(c.rate * s + EPS), per) : Math.floor(c.rate * s + EPS);
     const turns = step * c.stride;
     const own = ownSteps(result, name);
     if (!own) {
-      const wrap = c.wrap ?? ownLength(result, name);
+      const wrap = laps * ownLength(result, name);
       return base + (wrap > 0 ? mod(turns, wrap) : turns);
     }
     // (a subsequence turns within its step: how far through it)
-    const at = turns + Math.min(1 - EPS, Math.max(0, c.rate * s - step));
-    const wrap = c.wrap ?? own.length;
+    const at = turns + Math.min(1 - EPS, Math.max(0, c.rate * s - Math.floor(c.rate * s + EPS)));
+    const wrap = laps * own.length;
     const b = wrap > 0 ? mod(at, wrap) : at;
     const lap = Math.floor(b / own.length);
     return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
@@ -405,6 +410,18 @@ export const playing =
   (now: Shifts, statics: Shifts, cell: string): Shifts =>
   (name) =>
     name === cell ? statics(name) : now(name);
+
+/**
+ * How a turning table comes round (decision 040, #75): `per`, the steps it takes before its turns begin again (a tapped
+ * table with cycle=: its tap's lap, cycle= bars; else none), and `laps`, how many laps of its own length its turns climb
+ * before they come round (cycle= on an untapped table; else one; 0: they climb until the tap comes round).
+ */
+export function turnLap(result: CompileResult, c: ResolvedCell): { per: number | null; laps: number } {
+  if (c.wrap === null) return { per: null, laps: 1 };
+  const tap = c.step?.tap && c.clock ? result.clocks.get(c.clock)?.tap : undefined;
+  if (tap) return { per: Math.max(1, Math.round(tap.positions.length * c.rate)), laps: 0 };
+  return { per: null, laps: c.wrap };
+}
 
 /** Where a turning table comes round by itself: its braid's own length in steps (a key of 12 after 12, `[0,2,4]@3 [5,7,9]` after 4). */
 export const ownLength = (result: CompileResult, name: string) => {

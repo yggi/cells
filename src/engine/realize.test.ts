@@ -439,9 +439,9 @@ describe('a turning table comes round after its own length; cycle= says otherwis
   const src = (cycle: string) =>
     `&m step=1\n&t step=&m 0\n&k step=cycle(&t) stride=7 ${cycle}\n&u over=&k step=&m 0\n&v s=tri loop=C4\n&mix [&u * &v]\n&out loop=SAMPLE_RATE map=sample &mix`;
   const pitches = (r: R) => events(r, 0, 3.9).map((e) => midi(e.freq) - 60);
-  it('without cycle= the 12 comes round after 12: 0, 7, 2, 9 — the same as cycle=12', () => {
+  it('without cycle= the 12 comes round after 12: 0, 7, 2, 9 — the same as cycle=1, one lap (#75)', () => {
     expect(pitches(compileSource(src('')))).toEqual([0, 7, 2, 9]);
-    expect(pitches(compileSource(src('cycle=12')))).toEqual([0, 7, 2, 9]);
+    expect(pitches(compileSource(src('cycle=1')))).toEqual([0, 7, 2, 9]);
   });
   it('a pick is a fixed reader: &k[0] follows the key as it turns, &k[$0] stays', () => {
     const picked = (pick: string) => src('').replace('&u over=&k step=&m 0', `&u step=&m ${pick}`);
@@ -468,7 +468,7 @@ describe('a turning table comes round after its own length; cycle= says otherwis
       .replace(/[[\],]/g, ' ')
       .trim()
       .split(/\s+/);
-    const strided = p.replace(line[0], `&chords step=&bar/4 stride=5 cycle=${n.length} ${n.join(' ')}`);
+    const strided = p.replace(line[0], `&chords step=&bar/4 stride=5 cycle=1 ${n.join(' ')}`);
     const all = (src: string) => events(compileSource(src), 0, 150).map((e) => `${e.at.toFixed(4)} ${e.freq.toFixed(2)}`);
     expect(all(p)).toEqual(all(strided));
   });
