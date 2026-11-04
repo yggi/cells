@@ -78,7 +78,7 @@ A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a p
 
 ## Parameters as cells
 
-A sound parameter can be a range times cells, so it moves with the music: `lpf=110..3800 * &fenv * &accent * &knob` sweeps the filter from 110 to 3800 Hz by an envelope per note (`map=adsr`), accents (`map=amp`) and a slow knob (`map=lin`); `lpq=&res` takes a cell too. Parameters that are times take a clock as well as seconds: `delaytime=&bar*4/3` is a dotted eighth at whatever the tempo is. Each factor is a value that moves (a CV), not a sound: a voice in it (`&lfo s=sine loop=.5`) moves nothing and says so; write its braid, `&lfo loop=.5 sin(12)`. A factor turning faster than 20 laps a second (`CV_LAPS`, the sorts' edge between a pitch and a wave) is read turning at 20, with a warning: a sound moved at an audio rate is FM's (`fm=`).
+A sound parameter can be a range times cells, so it moves with the music: `lpf=110..3800 * &fenv * &accent * &knob` sweeps the filter from 110 to 3800 Hz by an envelope per note (`map=adsr`), accents (`map=amp`) and a slow knob (`map=lin`); `lpq=&res` takes a cell too. Parameters that are times take a clock as well as seconds: `delaytime=&bar*4/3` is a dotted eighth at whatever the tempo is. Each factor is a value that moves (a CV), not a sound: a voice in it (`&lfo s=sine loop=.5`) moves nothing and says so; write its braid, `&lfo loop=.5 sin(12)`. A factor turning 20 laps a second or faster (`CV_LAPS`, the sorts' edge between a pitch and a wave) is a warning, and one faster than 20 is read turning at 20: a sound moved at an audio rate is FM's (`fm=`).
 
 ```cells
 &bar scan(4 4 4 4) step=120bpm

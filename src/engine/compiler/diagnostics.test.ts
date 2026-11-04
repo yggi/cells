@@ -399,10 +399,16 @@ describe('a modular patch (docs/notes/modular.md)', () => {
     ]);
     expect(messages(PATCH + '&lfo loop=.5 sin(12)\n' + lfo)).toEqual([]);
   });
-  it(`a CV turning faster than ${CV_LAPS} laps a second is a warning, and read turning at that (#427)`, () => {
+  it(`a CV turning ${CV_LAPS} laps a second or faster is a warning, and one faster is read turning at that (#427)`, () => {
     const cv = (loop: number) => `&a loop=${loop} sin(12)\n&v s=saw loop=A2 lpf=200..3000 * &a\n&out map=sample [&tune * &v * .4]`;
     expect(messages(PATCH + cv(220))).toEqual([expect.stringMatching(/lpf= \* &a: &a turns at an audio rate, .* at most 20 times a second/)]);
     expect(messages(PATCH + cv(CV_LAPS - 1))).toEqual([]);
+    // (the edge: at CV_LAPS it warns and plays as itself; one lap more warns and plays as CV_LAPS)
+    expect(messages(PATCH + cv(CV_LAPS))).toHaveLength(1);
+    expect(messages(PATCH + cv(CV_LAPS + 1))).toHaveLength(1);
+    const rounded = (loop: number) => JSON.stringify(params(cv(loop)), (_, v: unknown) => (typeof v === 'number' ? +v.toFixed(9) : v));
+    expect(rounded(CV_LAPS + 1)).toBe(rounded(CV_LAPS));
+    expect(params(cv(CV_LAPS))).not.toEqual(params(cv(CV_LAPS - 1)));
     // (a 220 Hz CV is read as one at 20: a point every 1/240 s over the note, as at loop=20)
     expect(params(cv(220))).toEqual(params(cv(CV_LAPS)));
     expect(JSON.stringify(params(cv(220))).length).toBeLessThan(3000);
