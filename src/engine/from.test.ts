@@ -12,7 +12,7 @@ import { resolveSeed } from '../repository/library';
 const lines = (...xs: string[]) => xs.join('\n');
 /** A few templates, and the seed library behind them. */
 const LIB: Record<string, string> = {
-  dorian: lines('&key from &tonic', '&key scale(dorian, &tonic)'),
+  dorian: lines('&key from &tonic', '&key scale(harmonic, &tonic)'),
   diatonic: lines('&key from (&mode) &tonic', '&key scale(&mode, &tonic)', '&mode major'),
   swung: lines('&bar from (&swing) &tempo', '&bar meter("4/4") step=&tempo swing=&swing', '&swing swing=8n:2/3'),
   aaba: lines('&chorus from (&b) &a', '&chorus step=8n &a &a &b &a', '&b step=8n &a^3'),
@@ -69,7 +69,7 @@ describe('the forms', () => {
   });
 
   it('not a from line: a cell, a use line, from inside quotes', () => {
-    for (const code of ['&key scale(dorian, D)', 'use &bd from gm_kit', '&n label="taken from the kit" 0']) expect(readFrom(code)).toBeUndefined();
+    for (const code of ['&key scale(harmonic, D)', 'use &bd from gm_kit', '&n label="taken from the kit" 0']) expect(readFrom(code)).toBeUndefined();
   });
 
   it('a malformed one is null, and the parser says what a from line is', () => {
@@ -79,16 +79,16 @@ describe('the forms', () => {
   });
 
   it('a from line declares no cell of the text’s own, and a signature none at all', () => {
-    expect(parse(lines('&key from dorian D', '&a 0')).cells.map((c) => c.name)).toEqual(['a']);
-    expect(parse(lines('&key from &tonic', '&key scale(dorian, &tonic)')).cells.flatMap((c) => (c.lambda ? [] : [c.name]))).toEqual(['key']);
-    expect(parse('&key from dorian D').uses).toEqual([{ id: 'dorian', names: ['&key'], span: { line: 1, col: 1, len: 18 } }]);
+    expect(parse(lines('&key from harmonic_minor D', '&a 0')).cells.map((c) => c.name)).toEqual(['a']);
+    expect(parse(lines('&key from &tonic', '&key scale(harmonic, &tonic)')).cells.flatMap((c) => (c.lambda ? [] : [c.name]))).toEqual(['key']);
+    expect(parse('&key from harmonic_minor D').uses).toEqual([{ id: 'harmonic_minor', names: ['&key'], span: { line: 1, col: 1, len: 26 } }]);
   });
 });
 
 describe('a copy of a template', () => {
   it('plays what the template written out with its argument plays', () => {
-    expect(messages(lines('&key from dorian D', METER, TUNE))).toEqual([]);
-    expect(events(lines('&key from dorian D', METER, TUNE))).toEqual(events(lines('&key scale(dorian, D)', METER, TUNE)));
+    expect(messages(lines('&key from harmonic_minor D', METER, TUNE))).toEqual([]);
+    expect(events(lines('&key from harmonic_minor D', METER, TUNE))).toEqual(events(lines('&key scale(harmonic, D)', METER, TUNE)));
   });
 
   it('its head takes the line’s name, and every other name it defines is its own', () => {
@@ -98,8 +98,8 @@ describe('a copy of a template', () => {
   it('is a copy: one template twice, and a chain of copies, each its own (the bound: two keys, two walking basses)', () => {
     const text = lines(
       METER,
-      '&keyA from dorian D',
-      '&keyB from dorian A',
+      '&keyA from harmonic_minor D',
+      '&keyB from harmonic_minor A',
       '&hA from vamp &keyA',
       '&hB from vamp &keyB',
       '&wA from walk &hA',
@@ -114,8 +114,8 @@ describe('a copy of a template', () => {
       events(
         lines(
           METER,
-          '&keyA scale(dorian, D)',
-          '&keyB scale(dorian, A)',
+          '&keyA scale(harmonic, D)',
+          '&keyB scale(harmonic, A)',
           '&hA over=&keyA step=1m [0,2,4] [3,5,7]',
           '&hB over=&keyB step=1m [0,2,4] [3,5,7]',
           '&wA over=&hA step=4n 0 0 0 &na',
@@ -130,16 +130,23 @@ describe('a copy of a template', () => {
   });
 
   it('a cell of the piece that shares a parameter’s name is not bound to it (the bound: the drone)', () => {
-    const drone = lines('&key from dorian D', '&tonic s=tri loop=A3 label="a drone" 7', METER, '&tune over=&key step=8n 0 1 2', '&v s=sine loop=C4', '&out [&tune * &v, &tonic]');
+    const drone = lines(
+      '&key from harmonic_minor D',
+      '&tonic s=tri loop=A3 label="a drone" 7',
+      METER,
+      '&tune over=&key step=8n 0 1 2',
+      '&v s=sine loop=C4',
+      '&out [&tune * &v, &tonic]',
+    );
     const keyOn = (text: string) => events(text).filter((e) => e[3] === 'v');
     expect(keyOn(drone)).toEqual(
-      keyOn(lines('&key scale(dorian, D)', '&tonic s=tri loop=A3 7', METER, '&tune over=&key step=8n 0 1 2', '&v s=sine loop=C4', '&out [&tune * &v, &tonic]')),
+      keyOn(lines('&key scale(harmonic, D)', '&tonic s=tri loop=A3 7', METER, '&tune over=&key step=8n 0 1 2', '&v s=sine loop=C4', '&out [&tune * &v, &tonic]')),
     );
   });
 
   it('the old use of a template reads its lines as they are, its parameters by name', () => {
-    expect(added(lines('use &key from dorian', '&tonic D'))).toEqual(['&key scale(dorian, &tonic)']);
-    expect(events(lines('use &key from dorian', '&tonic D', METER, TUNE))).toEqual(events(lines('&key from dorian D', METER, TUNE)));
+    expect(added(lines('use &key from harmonic_minor', '&tonic D'))).toEqual(['&key scale(harmonic, &tonic)']);
+    expect(events(lines('use &key from harmonic_minor', '&tonic D', METER, TUNE))).toEqual(events(lines('&key from harmonic_minor D', METER, TUNE)));
   });
 
   it('several heads are taken by their names, those it doesn’t name its own; * takes them all', () => {
@@ -151,7 +158,7 @@ describe('a copy of a template', () => {
 
 describe('the arguments', () => {
   it('a bare reference is that cell: the piece’s own, its slider kept', () => {
-    expect(added(lines('&t D', '&key from dorian &t'))).toEqual(['&key scale(dorian, &t)']);
+    expect(added(lines('&t D', '&key from harmonic_minor &t'))).toEqual(['&key scale(harmonic, &t)']);
     expect(added(lines('&tempo step=free(110bpm, 90..130)', '&bar from swung &tempo'))).toEqual(['&bar meter("4/4") step=&tempo swing=&bar_swing', '&bar_swing swing=8n:2/3']);
   });
 
@@ -217,15 +224,15 @@ describe('nesting and collections', () => {
   });
 
   it('expand writes the copy out, the from line gone', () => {
-    expect(expand(lines('&key from dorian D', METER), resolve)).toBe(lines(METER, '&key scale(dorian, &key_tonic)', '&key_tonic D'));
+    expect(expand(lines('&key from harmonic_minor D', METER), resolve)).toBe(lines(METER, '&key scale(harmonic, &key_tonic)', '&key_tonic D'));
   });
 });
 
 describe('what the compiler says', () => {
   it('a template’s main argument missing, a main argument it doesn’t take, a keyword it lacks', () => {
-    expect(errors('&key from dorian')).toContain('"dorian" needs its main argument, &tonic, after its id: &key from dorian …');
+    expect(errors('&key from harmonic_minor')).toContain('"harmonic_minor" needs its main argument, &tonic, after its id: &key from harmonic_minor …');
     expect(errors('&v from synth C')).toContain('"synth" takes no main argument: its signature has none (&voice from )');
-    expect(errors('&key from dorian(mode=major) D')).toEqual(['"dorian" takes no mode=: it has no optional parameters']);
+    expect(errors('&key from harmonic_minor(mode=major) D')).toEqual(['"harmonic_minor" takes no mode=: it has no optional parameters']);
     expect(errors('&key from diatonic(tonic=D) D')).toEqual(['"diatonic" takes no tonic=: its optional parameters are mode=']);
   });
 

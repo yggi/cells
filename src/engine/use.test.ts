@@ -193,8 +193,8 @@ describe('a named use (decision 059)', () => {
     const r = read(`use &phrygian\n&bar meter("4/4") step=100bpm\n&tune over=&phrygian step=8n 0 2 4\n&out map=sample [&tune * &v]\n&v s=sine`, resolve);
     expect(r.said).toEqual([]);
     expect(r.uses?.[0]).toMatchObject({ id: 'phrygian', names: ['&phrygian'], gave: ['&phrygian'] });
-    // (the seed modes' head is &key: use &key from aeolian)
-    expect(read('use &aeolian\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&aeolian is not in "aeolian": it defines &key', 1]]);
+    // (the seed modes' head is &key: use &key from harmonic_minor)
+    expect(read('use &harmonic_minor\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&harmonic_minor is not in "harmonic_minor": it defines &key', 1]]);
   });
 
   it('a name the fragment doesn’t define is an error, naming those it does', () => {
@@ -249,18 +249,18 @@ describe('a named use (decision 059)', () => {
   it('a use that adds nothing says so: twice on the issue’s section, on no seed fragment', () => {
     const section = [
       'use * from meter_4_4_leaning_on_16n',
-      'use * from dorian',
+      'use * from harmonic_minor',
       'use * from vamp_to_the_seventh',
       'use * from funk_drums',
       'use * from gm_kit',
       'use * from funk_bass',
       'use * from bass',
       '&bar meter("4/4") step=104bpm swing=16n:.6',
-      '&key scale(dorian, D)',
+      '&key scale(harmonic, D)',
     ].join('\n');
     expect(read(section).said).toEqual([
       ['warning', 'The piece defines all "meter_4_4_leaning_on_16n" gives (&bar): this use adds nothing', 1],
-      ['warning', 'The piece defines all "dorian" gives (&key): this use adds nothing', 2],
+      ['warning', 'The piece defines all "harmonic_minor" gives (&key): this use adds nothing', 2],
     ]);
     expect(read(`use &bar from meter_4_4_leaning_on_16n\n${BENCH}`).said).toEqual([
       ['warning', 'The piece defines &bar, so taking it from "meter_4_4_leaning_on_16n" adds nothing', 1],

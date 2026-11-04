@@ -1,4 +1,5 @@
 import { RENAMED_IDS } from "../engine/renamed.js";
+import { SEED } from "./seed.js";
 import { BASS_FRAGMENTS } from "./bass.js";
 import { HARMONY_FRAGMENTS } from "./harmony.js";
 import { EXPRESSION_FRAGMENTS } from "./expression.js";
@@ -31,7 +32,7 @@ export const RETIRED = new Map([
     ['core kit', 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
     ['gm kit', 'use * from gm_kit'],
 ]);
-const CURRENT = new Map(LIBRARY.map((f) => [f.id, f.text]));
+const CURRENT = new Map([...SEED.map((f) => [f.fragment.id, f.fragment.text]), ...LIBRARY.map((f) => [f.id, f.text])]);
 const RENAMED = [...RENAMED_IDS].map(([old, word]) => [old, CURRENT.get(word)]);
 const BY_ID = new Map([...CURRENT, ...RENAMED, ...RETIRED]);
 export const resolveSeed = (id) => BY_ID.get(id) ?? null;

@@ -57,7 +57,9 @@ const SCALE: Record<Mode, readonly number[]> = {
   locrian: [0, 1, 3, 5, 6, 8, 10],
 };
 
-const byId = (id: string) => MODE_FRAGMENTS.find((f) => f.id === id)!;
+/** The mode a fragment plays: `diatonic(mode=aeolian)` is aeolian (#387), any other its own id. */
+const modeOf = (id: string) => /^diatonic\(mode=(\w+)\)$/.exec(id)?.[1] ?? id;
+const byId = (id: string) => MODE_FRAGMENTS.find((f) => modeOf(f.id) === id)!;
 const bell = byId('bell_and_scale');
 const MODES = MODE_FRAGMENTS.filter((f) => f !== bell);
 /** A workbench: a meter at 60 bpm, and the tonic the modes read (#290), C unless it says. */
@@ -77,8 +79,12 @@ function sent(text: string, channel: number, seconds: number): { at: number; not
 }
 
 describe('the mode fragments', () => {
-  it('are the four modes of Jambot’s composer, the bell and scale, harmonic minor, the electroswing example’s, then the other three of the seven (yggi/jambot#516)', () => {
-    expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell_and_scale', 'harmonic_minor', 'phrygian', 'lydian', 'locrian']);
+  it('are the seven diatonic modes, one fragment taken with each mode (#387), then the bell and scale and harmonic minor (yggi/jambot#516)', () => {
+    expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual([
+      ...['aeolian', 'dorian', 'ionian', 'mixolydian', 'phrygian', 'lydian', 'locrian'].map((m) => `diatonic(mode=${m})`),
+      'bell_and_scale',
+      'harmonic_minor',
+    ]);
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s defines key and uses its tonic and nothing else but a sound, so it fits any meter', (id, text) => {
@@ -89,7 +95,7 @@ describe('the mode fragments', () => {
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s is the main key, and plays its mode up from C with no diagnostic', (id, text) => {
-    const mode = (id === 'bell_and_scale' ? 'ionian' : id === 'harmonic_minor' ? 'harmonic' : id) as Mode;
+    const mode = (id === 'bell_and_scale' ? 'ionian' : id === 'harmonic_minor' ? 'harmonic' : modeOf(id)) as Mode;
     const piece = `${filled(fitOf(text, meter()).union.text)}\n${PROBE}`;
     expect(compileSource(piece).diagnostics.map((d) => d.message)).toEqual([]);
     expect(sent(piece, 3, 8).map((n) => n.note - 60)).toEqual([...SCALE[mode], 12]);
@@ -110,7 +116,7 @@ describe('the presets find their modes', () => {
   const repository = createRepository(LIBRARY);
   it.each(PRESETS.map((p) => [p.name, p.mode, p.point] as const))('%s: %s, first and at distance 0', (_, mode, point) => {
     const [first, second] = repository.query(point, 2, {}, { facet: 'mode' });
-    expect(first!.fragment.id).toBe(mode);
+    expect(first!.fragment.id).toBe(`diatonic(mode=${mode})`);
     expect(first!.distance).toBe(0);
     expect(second!.distance).toBeGreaterThan(0);
   });
@@ -118,14 +124,15 @@ describe('the presets find their modes', () => {
   it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian); harmonic minor at the points proposed for Electro swing and Spooky (#349); phrygian, lydian and locrian each at a point of its own, placed by hand', () => {
     const OWN: Record<string, StylePoint> = { phrygian: at(0.6, 0.6, 0.7, 0.85), lydian: at(0.15, 0.6, 0.15, 0.3), locrian: at(0.9, 1, 0.6, 0.9) };
     for (const f of MODES) {
+      const id = modeOf(f.id);
       const points =
-        f.id === 'harmonic_minor'
+        id === 'harmonic_minor'
           ? [PROPOSED, SPOOKY]
-          : OWN[f.id]
-            ? [OWN[f.id]!]
-            : f.id === 'mixolydian'
+          : OWN[id]
+            ? [OWN[id]!]
+            : id === 'mixolydian'
               ? [Object.fromEntries(Object.keys(FUNK).map((axis) => [axis, (FUNK[axis]! + BOSSA_NOVA[axis]!) / 2]))]
-              : PRESETS.filter((p) => p.mode === f.id).map((p) => p.point);
+              : PRESETS.filter((p) => p.mode === id).map((p) => p.point);
       expect(f.association.map((wp) => wp.point)).toEqual(points);
       expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
     }

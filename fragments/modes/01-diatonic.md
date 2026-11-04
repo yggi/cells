@@ -1,0 +1,126 @@
+---
+id: diatonic
+association:
+  - point:
+      sync: 0.3
+      harm: 0.45
+      artic: 0.55
+      energy: 0.55
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
+  - point:
+      sync: 0.12
+      harm: 0
+      artic: 1
+      energy: 0.8
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
+  - point:
+      sync: 0.5
+      harm: 0.75
+      artic: 0.35
+      energy: 0.5
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
+  - point:
+      sync: 0.35
+      harm: 0.55
+      artic: 0.65
+      energy: 0.65
+    weight: 1
+    facet: mode
+    args:
+      mode: dorian
+  - point:
+      sync: 1
+      harm: 0.12
+      artic: 0.85
+      energy: 0.75
+    weight: 1
+    facet: mode
+    args:
+      mode: dorian
+  - point:
+      sync: 0.05
+      harm: 0.3
+      artic: 0
+      energy: 0.2
+    weight: 1
+    facet: mode
+    args:
+      mode: ionian
+  - point:
+      sync: 0.75
+      harm: 0.85
+      artic: 0.45
+      energy: 0.45
+    weight: 1
+    facet: mode
+    args:
+      mode: ionian
+  - point:
+      sync: 0.35
+      harm: 1
+      artic: 0.3
+      energy: 0.6
+    weight: 1
+    facet: mode
+    args:
+      mode: ionian
+  - point:
+      sync: 0.875
+      harm: 0.485
+      artic: 0.65
+      energy: 0.6
+    weight: 1
+    facet: mode
+    args:
+      mode: mixolydian
+  - point:
+      sync: 0.6
+      harm: 0.6
+      artic: 0.7
+      energy: 0.85
+    weight: 1
+    facet: mode
+    args:
+      mode: phrygian
+  - point:
+      sync: 0.15
+      harm: 0.6
+      artic: 0.15
+      energy: 0.3
+    weight: 1
+    facet: mode
+    args:
+      mode: lydian
+  - point:
+      sync: 0.9
+      harm: 1
+      artic: 0.6
+      energy: 0.9
+    weight: 1
+    facet: mode
+    args:
+      mode: locrian
+source: seed
+---
+
+```cells
+&key from (&mode) &tonic
+&key scale(&mode, &tonic)
+&mode major
+```
+
+The diatonic key, its mode a parameter: the one source of the seven modes (#363, the owner's ruling B; #387, B1). The mode is a number, darkest to brightest, decision 013's phase (locrian 0, phrygian 1, aeolian or minor 2, dorian 3, mixolydian 4, ionian or major 5, lydian 6), and a mode word reads as its number, as a note name does (`C` is 0). Major unless the use says otherwise.
+It defines `&key`, the key (decision 060), and reads `&tonic`, its main argument, required: a default tonic plays a wrong key silently (#117). `&mode` is optional, its default `major`.
+
+**Each point says which mode it is** (`args: mode: …`): the mode Jambot's composer plays at a preset's point (`PRESETS`' `mode`, yggi/jambot packages/engine/src/style.ts), weight 1, so a query for the mode at one of them finds that mode first, at distance 0. A query answers with `diatonic(mode=aeolian)`, the fragment with its argument, which is how a `from` line takes it: `&key from diatonic(mode=aeolian) D`. Aeolian, the natural minor, is the mode the band opens in (`INITIAL_KEY`, A aeolian). These were the seven mode fragments (`aeolian` … `locrian`), which read for one minor version as these (#387).
+
+**Its signature** (decision 065): `&key from (&mode) &tonic`. `&key from diatonic C` is C major; `&key from diatonic(mode=dorian) D` is D dorian; with the piece's own cells, `&key from diatonic(mode=&mode) &tonic` binds both, so a host's slider on either keeps working. A stepped mode is not yet a form (`&mode step=…` is an error that says so).

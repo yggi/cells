@@ -42,7 +42,7 @@ lullaby  52 notes  notes 7bd4bd55efe1623d  events 38139accb1482d82  values fe5bd
 jazz  416 notes  notes f772f7ec60e42575  events 3c35f9511940bd77  values 9adffbbdb88f0d0e
 five  745 notes  notes 19ae7b522ff682fa  events a755915c44f8a8ec  values 60616cee5227cf81
 waltz  339 notes  notes e83f3b157bbc8abe  events 4e66614aa3f6f3bf  values b83b725eeaee8197
-sailor  367 notes  notes f2551a73f8192fd1  events 5c8180d52d56c71a  values 853a2ebb9c72bb35
+sailor  367 notes  notes f2551a73f8192fd1  events 5c8180d52d56c71a  values 50d65f3bc49f9b4e
 royal  60 notes  notes e2184f610e374d8e  events 35575aaec2ea3a58  values 444b0b19fb493edb
 pertonos  122 notes  notes cd391a42b5741dca  events 43248164146dd479  values 2371411a61a4c04b
 ricercar  37 notes  notes 478abcd71161e2ff  events 7d471d41464dccf8  values 0f147fafcd7ccf59
@@ -68,7 +68,7 @@ hypercell  560 notes  notes f745cbddeddc9fdd  events b2119676d3c4a437  values b6
 onemore  1283 notes  notes fda71f4e3e7730f4  events 0f8c4da8c0c4af0c  values 1c051579d0db0058
 electroswing  756 notes  notes d7d46bff40367479  events fd526a81ccce993a  values b7f355648b71520d
 spooky  337 notes  notes f9d7e920c0cb0ce6  events ca1a4c308adc806d  values ead13df03c6a460f
-kinderlied  259 notes  notes b2f45e2cee9a24cd  events d34a4189ce7cfab8  values bb34767850f44637
+kinderlied  259 notes  notes b2f45e2cee9a24cd  events d34a4189ce7cfab8  values 09adbf0f361c7964
 brothers  284 notes  notes 4e2de0fd53fa576a  events be568af1b7b60345  values 7cb36b014dbfb9e6
 ghosts  157 notes  notes 5cd68f48d87c47ca  events ed325ece4cc67bb1  values a3faa7d69594d903
 tines  423 notes  notes 219db45d4075ff9f  events f39cdb3533f3c4ee  values db5a9f92d2d31f14

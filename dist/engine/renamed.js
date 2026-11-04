@@ -58,6 +58,13 @@ export const RENAMED_IDS = new Map([
     ['harmonic minor', 'harmonic_minor'],
     ['rounded binary', 'rounded_binary'],
     ['call and answer', 'call_and_answer'],
+    ['aeolian', 'diatonic(mode=aeolian)'],
+    ['dorian', 'diatonic(mode=dorian)'],
+    ['ionian', 'diatonic(mode=ionian)'],
+    ['mixolydian', 'diatonic(mode=mixolydian)'],
+    ['phrygian', 'diatonic(mode=phrygian)'],
+    ['lydian', 'diatonic(mode=lydian)'],
+    ['locrian', 'diatonic(mode=locrian)'],
 ]);
 export function wordOf(id) {
     if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(id))
