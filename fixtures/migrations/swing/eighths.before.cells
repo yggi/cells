@@ -1,0 +1,5 @@
+# a bare swing= on a meter that holds its eighths leans the meter cell's own steps (#18)
+&bar meter("4/4", 2) step=110bpm swing=.67
+&tune over=scale(major) step=8n 0 2 4 2 4 5 7 4
+&lead s=saw loop=C4
+&mix [&tune * &lead]

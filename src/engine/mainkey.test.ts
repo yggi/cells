@@ -40,10 +40,10 @@ describe("over=key reads the piece's main key", () => {
       expect(compiled(lines(host(key), bass('key'))).cells.get('bass')!.over).toBe('key');
     });
 
-  it('is the old way: a warning at the word names the key, and Normalise writes it', () => {
+  it('is the old way: a warning at the word names the key, and Migrate writes it', () => {
     const src = lines(host('scale(dorian, D)'), bass('key'));
     expect(compileSource(src).diagnostics.map((d) => ({ severity: d.severity, message: d.message, line: d.span.line, col: d.span.col }))).toEqual([
-      { severity: 'warning', message: 'over=key is the old way: name the key, over=&key', line: 3, col: 12 },
+      { severity: 'warning', message: 'over=key is the old way: name the key, over=&key (Migrate rewrites it)', line: 3, col: 12 },
     ]);
     // (the old way first, then the interface names, #196: its rate &tempo, its tonic &tonic)
     const n = normalise(src);

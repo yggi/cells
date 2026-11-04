@@ -12,7 +12,7 @@ export function mainKey(source, result) {
         return [
             {
                 id: `main key:${line}:${col}`,
-                tool: 'normalise',
+                tool: 'migrate',
                 rule: 'main key',
                 title: `over=key is written ${after}, the key it reads`,
                 before: 'over=key',

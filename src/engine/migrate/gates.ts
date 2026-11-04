@@ -1,13 +1,13 @@
 /**
- * A gate in the old spelling (decision 023): `&leadOut trigger=&tune velocity=&accent gate=&duck gain=.4 &lead &bell`
+ * Migrate: a gate in the old spelling (decision 023): `&leadOut trigger=&tune velocity=&accent gate=&duck gain=.4 &lead &bell`
  * rewritten as `&leadOut play=&tune level=&accent*&duck*.4 [&lead, &bell]`: play= for trigger=, one level= for the
  * three levels, and the voices it plays all of as a chord (several bare voices are a kit now, the notes picking one).
  * Not always shorter: a migration, offered whatever its length when it plays the same notes (checked here).
  */
 import { attrsOf, declLine, declWords, setAttr, setBraid } from '../edit';
 import { soundsIdentical } from '../sameness';
-import type { CompileOptions } from '../program';
-import type { Result, ShortenRewrite } from './harness';
+import type { CompileOptions, CompileResult as Result } from '../program';
+import type { Rewrite } from '../rewrite';
 
 /** The rewrite of one gate written the old way, or null (not one, or its line can't be rewritten in place). */
 function rewrite(source: string, name: string): string | null {
@@ -27,8 +27,8 @@ function rewrite(source: string, name: string): string | null {
 }
 
 /** Each gate written the old way: its rewrite, if it plays the same notes. */
-export function gates(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
-  const out: ShortenRewrite[] = [];
+export function gates(source: string, result: Result, options: CompileOptions = {}): Rewrite<'gate'>[] {
+  const out: Rewrite<'gate'>[] = [];
   for (const c of result.cells.values()) {
     if (c.gate?.port !== 'trigger') continue;
     const next = rewrite(source, c.name);

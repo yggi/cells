@@ -1,13 +1,13 @@
 /**
- * A migration (decision 040): a line stepped by a meter cell's own steps (`step=&bar*2`) rewritten as the tap of the
+ * Migrate (decision 040): a line stepped by a meter cell's own steps (`step=&bar*2`) rewritten as the tap of the
  * meter that says the same (`step=8n`, `step=pulse*3/4`, `step=1m/4`, `step=&swing:pulse`): the tap the compiler's
  * warning names. Offered whatever its length when it plays the same notes (checked here).
  */
 import { declLine, setAttr } from '../edit';
 import { tapFor } from '../compiler/clocks';
 import { soundsIdentical } from '../sameness';
-import type { CompileOptions } from '../program';
-import type { Result, ShortenRewrite } from './harness';
+import type { CompileOptions, CompileResult as Result } from '../program';
+import type { Rewrite } from '../rewrite';
 
 /** The tap that says what &name's step= says (slowed `by` times, for the fractions), or null (not stepped by a meter's own steps). */
 export function tapOfRaw(result: Result, name: string, by = 1): string | null {
@@ -24,8 +24,8 @@ export function tapOfRaw(result: Result, name: string, by = 1): string | null {
 }
 
 /** Each line stepped by a meter's own steps: its tap, if it plays the same notes. */
-export function taps(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
-  const out: ShortenRewrite[] = [];
+export function taps(source: string, result: Result, options: CompileOptions = {}): Rewrite<'tap'>[] {
+  const out: Rewrite<'tap'>[] = [];
   const seen = new Set<string>();
   for (const c of result.cells.values()) {
     const tap = tapOfRaw(result, c.name);

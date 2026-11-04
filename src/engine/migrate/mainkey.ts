@@ -19,7 +19,7 @@ export function mainKey(source: string, result: CompileResult): Rewrite<'main ke
     return [
       {
         id: `main key:${line}:${col}`,
-        tool: 'normalise' as const,
+        tool: 'migrate' as const,
         rule: 'main key' as const,
         title: `over=key is written ${after}, the key it reads`,
         before: 'over=key',

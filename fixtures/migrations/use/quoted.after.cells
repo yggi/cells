@@ -1,0 +1,5 @@
+# a use of every line, the old way: an id in quotes, no from (decision 059), and use itself (decision 065)
+* from gm_kit
+&bar meter("4/4") step=120bpm
+&beat step=8n &bd ~ &hh ~ &sd ~ &hh &hh
+&out map=sample [&beat * .6]

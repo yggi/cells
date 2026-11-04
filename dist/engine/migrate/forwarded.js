@@ -34,7 +34,7 @@ export function forwardedUses(source, resolve) {
         return [
             {
                 id: `forwarded:${i + 1}`,
-                tool: 'normalise',
+                tool: 'migrate',
                 rule: 'forwarded',
                 title: `${before} takes what ${JSON.stringify(use.id)} forwards: ${after}`,
                 before,

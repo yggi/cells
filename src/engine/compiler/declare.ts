@@ -44,7 +44,7 @@ export function declare(ctx: Ctx): Declared {
   modes(ctx, decls);
   swings(ctx, decls);
   const sections = sectionTables(decls, error);
-  const stacks = gates(decls, implicit, error);
+  const stacks = gates(decls, implicit, error, ctx.warn);
   mixSelectors(ctx, decls);
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
@@ -233,7 +233,7 @@ function mainKeyOf(ctx: Ctx, decls: Map<string, CellDecl>): string | null {
     if (d.over?.name !== MAIN_KEY) continue;
     if (main) {
       // (the old way, #301, decision 060: the main key is a cell, and a line names it)
-      ctx.warn(`over=key is the old way: name the key, over=&${main}`, d.over.span);
+      ctx.warn(`over=key is the old way: name the key, over=&${main} (Migrate rewrites it)`, d.over.span);
       decls.set(d.name, { ...d, over: { ...d.over, name: main } });
     } else {
       ctx.error(
@@ -328,13 +328,13 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
  * sounds, routes and draws as that named mix does; the product stays its anonymous form.
  *
  * The old spelling still reads (`trigger=` for play=, `velocity=` `gate=` `gain=` for level=, several bare voices all
- * played), and Shorten rewrites it (shorten/gates.ts). Either way the gate's spec is `CellDecl.gate`, and the
+ * played), with a warning, and Migrate rewrites it (migrate/gates.ts). Either way the gate's spec is `CellDecl.gate`, and the
  * parameters it was written with are taken off the cell (a gate's play= is no tape's read head).
  *
  * A gate transposes what it plays (decision 058): `play=&tune^$-12` (grid steps) and `play=&tune^2` (degrees) read an
  * implicit cell `&tune^$-12`, which plays &tune as a braid splicing `&tune^$-12` does.
  */
-function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error']): Set<string> {
+function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error'], warn: Ctx['warn']): Set<string> {
   const stacks = new Set<string>();
   const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
   // (the lines that name their own voices, read before any gate is rewritten: a gate's line is no groove)
@@ -349,6 +349,11 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
     const port = old ? 'trigger' : 'play';
     const notesSpan = d.paramSpans[port] ?? d.span;
     const move = old ? undefined : d.playMove;
+    if (old)
+      warn(
+        `&${d.name} is a gate written the old way: play= for trigger=, one level= for velocity=, gate= and gain=, the voices it plays all of as a chord (Migrate rewrites it, decision 023)`,
+        notesSpan,
+      );
     // what it plays: a chord of voices (all), one voice or kit, or several bare voices (a kit; the old spelling: all)
     const plain = (a: Atom) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
     const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;

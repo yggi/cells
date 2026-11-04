@@ -1,19 +1,19 @@
 /**
- * A migration (decision 044): a table of sections named `&parts` (decision 016) renamed `&sections`, where no cell has that
+ * Migrate (decision 044): a table of sections named `&parts` (decision 016) renamed `&sections`, where no cell has that
  * name. "Part" is Jambot's word for a voice of the band, so the examples' table says what it holds. The name is the
  * author's: only `&parts` is offered, whatever its length, when it plays the same notes (checked here).
  */
 import { declLine, renameCell } from '../edit';
 import { soundsIdentical } from '../sameness';
-import type { CompileOptions } from '../program';
-import type { Result, ShortenRewrite } from './harness';
+import type { CompileOptions, CompileResult as Result } from '../program';
+import type { Rewrite } from '../rewrite';
 
 /** The name the examples' table of sections had, and the one it has. */
 const FROM = 'parts';
 const TO = 'sections';
 
 /** A table of sections named &parts: its rename to &sections, if it plays the same notes. */
-export function sections(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
+export function sections(source: string, result: Result, options: CompileOptions = {}): Rewrite<'section'>[] {
   if (![...(result.sections?.values() ?? [])].includes(FROM) || declLine(source, TO) >= 0) return [];
   const apply = (s: string) => renameCell(s, FROM, TO);
   const next = apply(source);
