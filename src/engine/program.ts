@@ -192,6 +192,11 @@ export interface ResolvedCell {
   readonly kit: boolean;
   /** A gate (#234): whose notes it plays, its levels and gain, its receivers (declare.ts). */
   readonly gate?: GateSpec;
+  /**
+   * The sound parameters it takes from the instruments it plays through (decision 067), each by the instrument that
+   * writes it: in `params`, `paramCells` and `paramClocks` as its own are, but not written on its line.
+   */
+  readonly inherited?: Readonly<Record<string, string>>;
 }
 
 /** A cell moved at a rate (step=84bpm, loop=2). */
