@@ -1,6 +1,6 @@
 # Modular synthesis in cells: a patch is a piece
 
-Date: 2026-11-04 · Status: a plan; the rule accepted (owner, 2026-11-04), questions 1, 2, 5 and 6 under discussion · Issues: the rule [#423](https://github.com/yggi/cells/issues/423), the probes' bugs [#424](https://github.com/yggi/cells/issues/424)–[#428](https://github.com/yggi/cells/issues/428), the central roadmap [#81](https://github.com/yggi/cells/issues/81); the graph's API [#327](https://github.com/yggi/cells/issues/327) · Probed at 2129a3e with the compiler and the renderer (scripts kept out of the tree; the texts are below)
+Date: 2026-11-04 · Status: a plan; its questions decided (owner, 2026-11-04): [decision 067](../decisions/067-a-module-after-its-voices.md) · Issues: the rule [#423](https://github.com/yggi/cells/issues/423), the probes' bugs [#424](https://github.com/yggi/cells/issues/424)–[#428](https://github.com/yggi/cells/issues/428), the central roadmap [#81](https://github.com/yggi/cells/issues/81); the graph's API [#327](https://github.com/yggi/cells/issues/327) · Probed at 2129a3e with the compiler and the renderer (scripts kept out of the tree; the texts are below)
 
 The question: VCO, VCF, VCA as fragments, CV as edges, a showcase piece, modular wheels with connectors in Cell studio, and patch cables dragged in the graph, all within the paradigms there are.
 The answer probed here: **cells is already a modular synthesizer; it is missing one law and a picture.**
@@ -63,42 +63,42 @@ The VCF and the echo are written twice, once on each oscillator, since a filter 
 
 ### As a patch, on module fragments
 
-The same piece, each module a line, each cable a reference; it needs rung 1 (below) and the fragments of rung 3.
-The oscillators stay voices: a VCO fragment would only rename `s=saw loop=C2` (open question 3).
+The same piece, each module a line, each cable a reference; it needs rung 1 (below) and the fragments of rung 3 (named as decision 067 names them).
+The oscillators are plain voices here; `osc` (067 §3) gives them a panel.
 
 ```text
 &saw s=saw loop=C2
 &sub s=square loop=C1 pitch=&drift
-&vcf delay=.3 delaytime=&bar*3/16 delayfeedback=.45 from vcf(eg=&contour, cutoff=&sweep, res=&jitter) [&saw, &sub * .5]
-&vca from vca(eg=&amp) &vcf
+&vcf delay=.3 delaytime=&bar*3/16 delayfeedback=.45 from lowpass(eg=&contour, cutoff=&sweep, res=&jitter) [&saw, &sub * .5]
+&vca from amp(eg=&amp) &vcf
 &out map=sample [(&seq + &changes) * &accent * &vca * .35, &beat]
 ```
 
 The fragments, as probed (a resolver handed to `compileSource`):
 
 ```text
-# vcf: a resonant low-pass; its jacks the contour, the cutoff and the resonance, each a knob at its default
-&vcf from (&cutoff, &res, &eg) &in
-&vcf lpf=70..4800 * &eg * &cutoff lpq=4..16 * &res [&in]
+# lowpass: a resonant low-pass; its jacks the contour, the cutoff and the resonance, each a knob at its default
+&lowpass from (&cutoff, &res, &eg) &in
+&lowpass lpf=70..4800 * &eg * &cutoff lpq=4..16 * &res [&in]
 &cutoff map=lin .5
 &res map=lin .3
 &eg map=adsr 0 0 1 0
 
-# vca: an envelope and a level on what comes in
-&vca from (&eg, &level) &in
-&vca [&eg * &level * &in]
+# amp: an envelope and a level on what comes in
+&amp from (&eg, &level) &in
+&amp [&eg * &level * &in]
 &eg map=adsr .005 .2 .7 .1
 &level map=amp 1
 ```
 
-`&vcf … from vcf(…) [&saw, &sub * .5]` takes the echo's attributes on its head (decision 065 §4, as `base=` does), the mix as a new cell for its main argument (§5), and each cable as a reference argument, which is the piece's own cell (§5): a slider on `&sweep` keeps working through the module.
+`&vcf … from lowpass(…) [&saw, &sub * .5]` takes the echo's attributes on its head (decision 065 §4, as `base=` does), the mix as a new cell for its main argument (§5), and each cable as a reference argument, which is the piece's own cell (§5): a slider on `&sweep` keeps working through the module.
 Expanded, it is `&vcf lpf=70..4800 * &contour * &sweep lpq=4..16 * &jitter … [&vcf_in]` with `&vcf_in [&saw, &sub * .5]`: plain cells, so Shorten, Normalise, the folder and MIDI out need nothing new.
 **Both spellings must play the same events** (the patch's events with the filter distributed over its voices are the flat text's): that equality is the test rung 4 lands on.
 
 ## What the probes found
 
 1. **A sound parameter on a mix does nothing.** `&vcf lpf=… [&saw, &sub]` warns `lpf= acts on a voice`; the VCA (an instrument with an envelope) plays. This is the one gap in the patch.
-2. **…and silently, once the mix carries a sound parameter of its own.** `&vcf delay=.3 … from vcf(…)` (the head given an attribute) compiles with no diagnostic and drops the filter: the events carry no `lpf`. A silent case (a bug to file).
+2. **…and silently, once the mix carries a sound parameter of its own.** `&vcf delay=.3 … from lowpass(…)` (the head given an attribute) compiles with no diagnostic and drops the filter: the events carry no `lpf`. A silent case (a bug to file).
 3. **`&vcf lpf=800 &vco`**, a voice's braid naming a voice, compiles with no diagnostic and plays `&vcf` at C4, ignoring `&vco` (a bug to file: say it, or read it as the mix).
 4. **An oscillator read as CV is silent CV.** `&lfo s=sine loop=.5` into `lpf=… * &lfo` holds the cutoff at its bottom; `&lfo loop=.5 sin(12)` sweeps it. A patcher reaches for the first. Either `s=` gives a CV cell its wave (an LFO is a VCO turned slowly: one idea, not two), or a diagnostic says to write the braid.
 5. **CV at an audio rate is automation, not filter FM.** `lpf=… * &a` with `&a loop=220 sin(12)` expands to some 29 000 characters of points per note; nothing says it. A bound for a diagnostic (a CV faster than this many laps a second: choose it and name it; 30 Hz a guess).
@@ -121,20 +121,22 @@ Proposed as decision 067 (the next after cells' 066 and Cell studio's 039):
 
 1. **cells: the law** (decision 067): the compiler distributes a mix's sound parameters onto its voices' notes (`paramCells` read through the instrument, `realize.ts`'s `voiceParams`), the warning retires, probe 2 and 3 become diagnostics (#424, #425). Test: the patch's expansion plays the flat text's events.
 2. **cells: CV that says what it does** (probes 4–6): `s=` on a cell read as CV, or its diagnostic (#426); the audio-rate bound (#427); the inline argument fixed (#428). And the CV sum (question 4, accepted): `lpf=… * (&a + &b)`, its issue to file.
-3. **cells: the modules as fragments**, `fragments/modules/`: `vcf` (low-pass), `hpf` (high-pass, or one `vcf` with a mode: open question 5), `vca`, `lfo` (`&lfo from (&rate) …`, a sine on `loop=&rate`), `sh` (a stepped, chancy cell on a tap). Each a signature whose optional parameters are its jacks and whose defaults are the knobs; the EGs are the seed's envelopes; and a minimal `vco` (question 3, accepted): `&vco from (&pitch, &fm)`, its wave and register the head's attributes (`&sub s=square loop=C1 from vco(pitch=&drift)`, probed: it compiles).
+3. **cells: the modules as fragments**, `fragments/modules/`: `lowpass`, `highpass`, `amp`, `lfo` (`&lfo from (&rate) …`, a sine on `loop=&rate`), `sh` (a stepped, chancy cell on a tap). Each a signature whose optional parameters are its jacks and whose defaults are the knobs; the EGs are the seed's envelopes; and a minimal `osc` (067 §3): `&osc from (&pitch, &fm)`, its wave and register the head's attributes (`&sub s=square loop=C1 from osc(pitch=&drift)`, probed as `vco`: it compiles). The names are 067's; `vcf`, `vca`, `vco` their associations.
 4. **cells: the reference piece**, `examples/patchbay.md`, written as the patch, with its card's `postgain=` from a loudness check, its event snapshot taken, and an equality test against the flat text. The tutorial may take it as the tier where an instrument is built from modules.
 5. **cells: jacks in the graph's model** (#327's module, the workbench's API): `jacksOf(result, cell)`, each port a cell offers whether patched or not: for a voice its moving attributes (`moves`), `env=`, `pitch=`, `fm=`; for a fragment's use its signature's parameters, each with its band (a reference to a sound is audio, else CV), its default and what is patched there now. Today the model has only wires that are written; a jack is a port with or without one.
-6. **cells: patching as an edit** (`engine/edit.ts`, which stays cells' whatever #327 decides): `patch(source, from, cell, port)` and `unpatch(…)`, each one line rewritten. Into a fragment's jack, the argument (`vcf(cutoff=&lfo)`, removed back to its default); into a moving parameter, a factor (`lpf=70..4800 * &eg` → `… * &eg * &lfo`; into a fixed `lpf=800`, a range around it: its spelling an open question 6); into an audio input, a reference in the mix. Jambot gets them too.
+6. **cells: patching as an edit** (`engine/edit.ts`, which stays cells' whatever #327 decides): `patch(source, from, cell, port)` and `unpatch(…)`, each one line rewritten. Into a fragment's jack, the argument (`lowpass(cutoff=&lfo)`, removed back to its default); into a moving parameter, a factor (`lpf=70..4800 * &eg` → `… * &eg * &lfo`; into a fixed `lpf=800`, a range of zero width, `lpf=800..800 * &lfo`, the knob plus an attenuated CV once the sum is built: 067 §4); into an audio input, a reference in the mix. Jambot gets them too.
 7. **Cell studio: the module wheel, mocked up** (its `gallery` skill: a contact sheet, before anything is built). A `from` line with a signature, today a use's cluster (Cell studio's decision 038), drawn as one wheel: its face the head's own glyph (a filter's response curve, a VCA's level meter, an LFO's wave), its jacks on its rim, inputs below and the output on top as the tower lays sound upward; a patched jack takes its cable in the band's stroke (CV solid, audio a wave: the palette of nets.md §6), an unpatched one is a knob at its default, turnable (it writes the argument). A voice's CV ports are the same jacks on its own wheel.
 8. **Cell studio: cables dragged** (after 5–7): drag from a wheel's output to a jack patches (rung 6's edit), the jacks of the band it can take lit while dragging; drag a cable off its jack unpatches; each drag is one line of the text, so the source-of-truth rule holds and undo is the editor's.
 
 Rungs 1–4 are the language's and can land without the frontends; 5 and 6 are its API for them; 7 and 8 are Cell studio's, each its own issue there linking this note.
 
-## Open questions for the owner
+## The questions, decided
 
-1. A parameter on both an instrument and its voice: the voice's wins (inheritance), or two stages in series?
-2. `distort=` and `crush=` on an instrument: per voice, on the instrument's sum, or refused there?
-3. A `vco` fragment: **yes, minimal** (owner, 2026-11-04).
-4. A CV sum (`lpf=… * (&a + &b)`, an offset plus an LFO): **yes** (owner, 2026-11-04).
-5. The modules' names: the patch's vocabulary (`vcf`, `vca`, `lfo`, `sh`) or the language's (`filter`, `amp`)? And one filter fragment with a mode, or one for each?
-6. Patching into a fixed parameter (`lpf=800` and a cable): which range does the edit write, `lpf=200..3200 * &lfo` (two octaves either way), or the attribute table's?
+The owner's answers (2026-11-04) are [decision 067](../decisions/067-a-module-after-its-voices.md); where they differ from what this note proposed above, the decision holds.
+
+1. A parameter on both an instrument and its voice: **in series**, the voice's first (067 §1).
+2. `distort=` and `crush=` on an instrument: **on the instrument's sum**, a module after its voices with a chain of its own (067 §1–2).
+3. An oscillator fragment: **yes, minimal**, named `osc` (067 §3).
+4. A CV sum: **yes** (067 §3).
+5. The names: **the language's words**, `osc` `lowpass` `highpass` `amp` `lfo` `sh`, one fragment a filter's kind; `vcf` and the like as associations (067 §3).
+6. A cable into a fixed parameter: **at zero depth now**, `lpf=800..800 * &lfo`; **the knob plus an attenuated CV** once the sum is built (067 §4).
