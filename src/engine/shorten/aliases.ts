@@ -4,8 +4,8 @@
  * only what saves characters.
  */
 import { aliases as written } from '../normalise/aliases';
-import { saves, type Result, type ShortenRewrite } from './harness';
+import { savesChars, type Result, type ShortenRewrite } from './harness';
 
 export function aliases(source: string, result: Result): ShortenRewrite[] {
-  return written(source, result, (alias, ours) => ours.length < alias.length).filter((s) => (saves(source, s) ?? 0) > 0);
+  return written(source, result, (alias, ours) => ours.length < alias.length).filter((s) => (savesChars(source, s) ?? 0) > 0);
 }

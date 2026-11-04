@@ -4,7 +4,7 @@
  */
 import { attrsOf, setAttr, setBraid } from '../edit';
 import { tapOfRaw } from './taps';
-import { saves, type Candidate, type Result, type ShortenRewrite } from './harness';
+import { savesChars, type Candidate, type Result, type ShortenRewrite } from './harness';
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
 
@@ -63,7 +63,7 @@ export function fractions(source: string, cells: readonly Candidate[], result: R
       after: `step=${slower}  ${next.slice(0, 5).join(' ')}${next.length > 5 ? ' …' : ''}`,
       apply: (src) => setAttr(setBraid(src, c.name, next), c.name, 'step', slower),
     };
-    if ((saves(source, s) ?? 0) > 0) out.push(s);
+    if ((savesChars(source, s) ?? 0) > 0) out.push(s);
   }
   return out;
 }

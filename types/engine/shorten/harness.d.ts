@@ -15,7 +15,7 @@ export interface Suggestion {
     /** What was written, and what it becomes (short excerpts). */
     readonly before: string;
     readonly after: string;
-    /** Characters saved. */
+    /** The structure saved (decision 049's measure, `structure`): leaves, attribute values and cells. Characters before #157. */
     readonly saving: number;
     /** The rewrite: the text, shorter or migrated; for a `card`, the piece as a file (decision 047). */
     readonly apply: (source: string) => string;
@@ -35,10 +35,22 @@ export declare function candidates(source: string, options?: CompileOptions): {
 };
 /** The names a piece's `use` lines gave it (bare): their lines are the fragments', not the piece's to rewrite. */
 export declare const usedNames: (r: Result) => ReadonlySet<string>;
-/** The code's length: runs of spaces count as one (the padding that keeps comments aligned isn't code). */
+/** The code's length: runs of spaces count as one (the padding that keeps comments aligned isn't code). Shorten's measure until #157. */
 export declare const size: (source: string) => number;
-/** What a rewrite saves (characters, `size`), or null when it changes nothing or its rewrite fails. */
+/**
+ * A text's structure, Shorten's measure (decision 049, question 2; #157): each leaf a braid writes, one per attribute
+ * value, one per cell, names and comments free (`structureOf`). Taken as written: a rewrite of Shorten's changes the
+ * structure and never the spelling, so the normal form (which the measure is defined over, so that two authors'
+ * spellings compare) moves with it and the saving is the same; it costs a parse, where normalising costs a compile a round.
+ */
+export declare const structure: (source: string) => number;
+/** What a rewrite saves (structure, `structure`), or null when it changes nothing or its rewrite fails. */
 export declare const saves: (source: string, r: Pick<Rewrite, "apply">) => number | null;
+/**
+ * What a respelling saves in characters (`size`): for the rules that write the same structure another way, kept in
+ * Shorten until #27 rules their rows (`alias`, `fraction`, `progression`; decision 049), offered where they are shorter.
+ */
+export declare const savesChars: (source: string, r: Pick<Rewrite, "apply">) => number | null;
 /** A Shorten rule's rewrite: offered as a suggestion of the rule's kind. */
 export type ShortenRewrite = Rewrite<Suggestion['kind']>;
 /** A rewrite offered as a suggestion, its saving measured on its result (a rule has checked it changes the text). */

@@ -19,8 +19,8 @@ const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/; // a plain step: a whole number, perh
 const MIN_PHRASE = 4;
 /** … and at most sixteen: a longer one is two. */
 const MAX_PHRASE = 16;
-/** … and saves at least this much beyond its own line: a new name is something to look up (a toll for reading). */
-const TOLL = 12;
+/** … and saves structure beyond its own line (decision 049's measure, #157): the new cell costs one, its uses a leaf each. */
+const TOLL = 1;
 const use = (name: string, ref: string) => `&${name}${ref}`;
 /** … and is looked up turned when it is at most twelve (a lap of the chromatic grid). */
 const MAX_TURN = 12;
@@ -49,6 +49,24 @@ function turnsOf(tokens: readonly string[], lap: number): { key: string; ref: st
 const isDegree = (ref: string) => ref.startsWith('^') && !ref.startsWith('^$');
 
 /** Phrases written more than once (exactly, backwards, or transposed): one cell, used where they were. */
+/**
+ * The cells, and every cell that splices one of them, again and again: a cell with no clock of its own plays only where
+ * it is spliced, so its notes are checked there (#157: a phrase cut from such a cell moved the notes of the line that
+ * splices it, and the cell alone, flattened, said the same).
+ */
+function withSplicers(result: Result, names: readonly string[]): string[] {
+  const out = new Set(names);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const c of result.cells.values())
+      if (!out.has(c.name) && c.units.some((u) => u.atom.kind === 'ref' && out.has(u.atom.name))) {
+        out.add(c.name);
+        grew = true;
+      }
+  }
+  return [...out];
+}
+
 export function phrases(source: string, cells: readonly Candidate[], result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   type Occ = { cell: string; at: number; ref: string };
   // (not in a cell another copies, base=&x: a copy counts its base's steps, =!3, so a phrase cut out of the base
@@ -134,9 +152,10 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
     // ([<<k]) — once per lap there is (12 on the chromatic grid, 7 in a scale …)
     for (const lap of lapValues) for (const turn of turnsOf(tokens, lap)) for (const o of at.get(turn.key) ?? []) if (laps.get(o.cell) === lap) take(o.cell, o.at, turn.ref);
     if (occs.length < 2) continue;
-    // a rough saving, to rank (each is measured exactly once it's a suggestion)
-    const saving = occs.reduce((a, o) => a + key.length - use('m1', o.ref).length, 0) - (key.length + 6);
-    if (saving > 4) found.push({ key, tokens, occs, saving });
+    // a rough saving, to rank (each is measured exactly once it's a suggestion): its steps where it was, less a leaf for
+    // each use, its own steps once and its cell
+    const saving = occs.length * (L - 1) - L - 1;
+    if (saving >= TOLL) found.push({ key, tokens, occs, saving });
   }
   found.sort((a, b) => b.saving - a.saving || b.tokens.length - a.tokens.length);
   // keep the best, and none mostly covering the same steps as a better one
@@ -181,8 +200,6 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
         ),
       ),
     ];
-    // (a turn's climb, and a degree's step, depend on the table it's read through: checked note for note)
-    const turnedAny = f.occs.some((o) => o.ref.startsWith('[>>') || o.ref.startsWith('[<<') || isDegree(o.ref));
     const s: ShortenRewrite = {
       id: `phrase:${f.key}`,
       tool: 'shorten',
@@ -192,9 +209,22 @@ export function phrases(source: string, cells: readonly Candidate[], result: Res
       after: f.occs.map((o) => use('m', o.ref)).join(' … '),
       apply,
     };
-    // (a turn's climb depends on the table it's read through: checked, note for note, before it's offered)
+    // (checked, note for note, before it's offered: a turn's climb depends on the table it's read through, and a short
+    // phrase read backwards or moved can land on other notes where a step is held or a chord's order differs, #157)
     const saving = saves(source, s) ?? 0;
-    if (saving >= TOLL && (!turnedAny || sameNotes(source, s.apply(source), [...new Set(f.occs.map((o) => o.cell))], options))) out.push(s);
+    if (
+      saving >= TOLL &&
+      sameNotes(
+        source,
+        s.apply(source),
+        withSplicers(
+          result,
+          f.occs.map((o) => o.cell),
+        ),
+        options,
+      )
+    )
+      out.push(s);
   }
   return out;
 }

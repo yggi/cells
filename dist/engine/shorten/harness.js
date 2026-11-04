@@ -1,6 +1,8 @@
 import { compileSource } from "../compile.js";
 import { ROOT } from "../program.js";
 import { declWords, spansLines } from "../edit.js";
+import { structureOf } from "../measure.js";
+import { parse } from "../parser/index.js";
 export { samePiece, sameNotes, SAMENESS_SECONDS } from "../sameness.js";
 export function candidates(source, options = {}) {
     const r = compileSource(source, undefined, options);
@@ -24,10 +26,20 @@ export function candidates(source, options = {}) {
 }
 export const usedNames = (r) => new Set((r.uses ?? []).flatMap((u) => u.gave.map((n) => n.replace(/^&/, ''))));
 export const size = (source) => source.replace(/[ \t]+/g, ' ').length;
+export const structure = (source) => structureOf(source, { asWritten: true }).total;
 export const saves = (source, r) => {
     try {
         const next = r.apply(source);
-        return next === source ? null : size(source) - size(next);
+        return next === source || parse(next).broken?.length ? null : structure(source) - structure(next);
+    }
+    catch {
+        return null;
+    }
+};
+export const savesChars = (source, r) => {
+    try {
+        const next = r.apply(source);
+        return next === source || parse(next).broken?.length ? null : size(source) - size(next);
     }
     catch {
         return null;

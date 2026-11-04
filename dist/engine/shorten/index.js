@@ -1,5 +1,5 @@
 import { compileSource } from "../compile.js";
-import { candidates, size, suggestion } from "./harness.js";
+import { candidates, savesChars, size, structure, suggestion } from "./harness.js";
 import { runs } from "./runs.js";
 import { phrases } from "./phrases.js";
 import { fractions } from "./fractions.js";
@@ -35,8 +35,13 @@ export function shorten(source, options = {}) {
         ...card(source, options),
     ];
     const kept = result.uses?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
-    return kept.map((r) => suggestion(source, r)).sort((a, b) => b.saving - a.saving);
+    const chars = new Map(kept.map((r) => [r.id, savesChars(source, r) ?? 0]));
+    return kept
+        .map((r) => suggestion(source, r))
+        .filter((s) => RESPELLINGS.has(s.kind) || s.saving > 0)
+        .sort((a, b) => b.saving - a.saving || chars.get(b.id) - chars.get(a.id));
 }
+const RESPELLINGS = new Set(['gate', 'tap', 'swing', 'section', 'card', 'alias', 'fraction', 'progression']);
 const overridden = (r) => (r.uses ?? [])
     .flatMap((u) => u.overrode)
     .sort()
@@ -58,9 +63,10 @@ export function shortenAll(source, rounds = 60, options = {}) {
         if (!best)
             break;
         const next = best.apply(now);
-        if (size(next) >= size(now))
+        const saved = structure(now) - structure(next);
+        if (saved < 0 || (saved === 0 && size(next) >= size(now)))
             break;
-        steps.push(`−${best.saving}: ${best.title}`);
+        steps.push(saved ? `−${saved}: ${best.title}` : `−${size(now) - size(next)} characters: ${best.title}`);
         now = next;
     }
     return { source: now, steps };
