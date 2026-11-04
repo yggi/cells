@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.16.0.
+### Added
+
+- **Normalise writes the narrowest `from`** (#27's row, the owner on #157: "`* from foo` is just a shorthand for all from foo that are used in this piece"). A collection's `* from gm_kit` is written as the cells of it the piece reads (`&bd, &hh from gm_kit`), and a list of names drops any the piece reads nothing of. A cell the piece defines itself isn't taken, and a line the piece reads nothing of (a band) stays; every rewrite is checked to play the same. No example or seed fragment changes. **What a frontend sees at its next pin:** `normalise` on a piece with `* from` or an over-wide list writes it narrower; Jambot's section texts that end in `* from band` keep it.
 
 ## v0.16.0 — 2026-11-04
 
