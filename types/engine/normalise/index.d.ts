@@ -10,6 +10,8 @@
  *  - library.ts:  a line that is a library fragment's word for word as a use of it (#196): &bar meter("4/4") step=&tempo
  *                 → use &bar from meter_4_4, and a fragment's cell written inline as it by name: pitch=&(map=lin …)
  *                 → pitch=&vibrato, use &vibrato; with the library the call gives (`NormaliseOptions.library`)
+ *  - narrowest.ts: a collection's `* from gm_kit` as the cells of it the piece uses, `&bd, &hh from gm_kit` (#27's row,
+ *                 the owner on #157: `*` is a shorthand for all of it the piece uses)
  *
  * Migrate's rules run first, as decision 049 orders them (Migrate, then Normalise): a retired form a text has, or that a rule
  * here writes on its way (libraryLines writes a `use`, which Migrate's `from` says as a `from` line), is migrated in the same

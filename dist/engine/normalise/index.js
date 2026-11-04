@@ -1,6 +1,7 @@
 import { rewriteAll, ROUNDS } from "../rewrite.js";
 import { aliases } from "./aliases.js";
 import { libraryCells, libraryLines } from "./library.js";
+import { narrowestFroms } from "./narrowest.js";
 import { fourFour, interfaceNames } from "./names.js";
 import { migrations } from "../migrate/index.js";
 export const normalisations = (options = {}) => (source, result) => [
@@ -10,5 +11,6 @@ export const normalisations = (options = {}) => (source, result) => [
     ...aliases(source, result),
     ...libraryLines(source, options.library),
     ...libraryCells(source, options.library),
+    ...narrowestFroms(source, options.resolve),
 ];
 export const normalise = (source, options) => rewriteAll(source, normalisations(options), ROUNDS, options);
