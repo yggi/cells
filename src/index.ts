@@ -54,7 +54,7 @@ export {
   type UsedPair,
   type WeightedPoint,
 } from './repository/fragments';
-export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
+export { canonicalText, fileFragment, sameText, usedTogether, useFragments, renamedLayer, type Filed, type Filing, type Use } from './repository/learned';
 export { METER_FRAGMENTS } from './repository/meters';
 export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
 export {
@@ -87,6 +87,7 @@ export { BAND_FRAGMENTS } from './repository/bands';
 export { STYLE_FRAGMENTS } from './repository/styles';
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES, type FoundInstrument, type VoicedPart } from './repository/band';
 export { LIBRARY, resolveSeed } from './repository/library';
+export { RENAMED_IDS, wordOf } from './engine/renamed';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
 export { fitOf, unionOf, type Fit, type Union } from './repository/fit';

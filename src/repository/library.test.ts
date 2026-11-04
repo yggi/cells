@@ -56,7 +56,7 @@ describe('the library', () => {
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'form')).toEqual(FORM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'band')).toEqual(BAND_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'style')).toEqual(STYLE_FRAGMENTS);
-    expect(LIBRARY.filter((f) => facetsOf(f).length > 1).map((f) => [f.id, facetsOf(f)])).toEqual([['bell and scale', ['mode', 'rhythm']]]);
+    expect(LIBRARY.filter((f) => facetsOf(f).length > 1).map((f) => [f.id, facetsOf(f)])).toEqual([['bell_and_scale', ['mode', 'rhythm']]]);
     expect([
       METER_FRAGMENTS.length,
       RHYTHM_FRAGMENTS.length,
@@ -101,7 +101,7 @@ describe('the library', () => {
   });
 
   it('and so does one that names chosen fragments with no use recorded', () => {
-    for (const point of POINTS.slice(0, 36)) expect(ranked(library.query(point, 25, {}, { facet: 'meter', chosen: ['Funk drums'] }))).toEqual(ranked(meters.query(point, 13)));
+    for (const point of POINTS.slice(0, 36)) expect(ranked(library.query(point, 25, {}, { facet: 'meter', chosen: ['funk_drums'] }))).toEqual(ranked(meters.query(point, 13)));
   });
 
   it('a query that names no facet mixes them: the facet is what keeps the meters apart', () => {
@@ -114,30 +114,30 @@ describe('the library', () => {
 describe('the points proposed for two more presets (#349)', () => {
   // (the library as it was before them: their new fragments out, and the associations they added to old ones)
   const ADDED: Record<string, StylePoint> = {
-    '4/4 swung on 8n': ELECTRO_SWING,
-    'walking bass': ELECTRO_SWING,
-    'harmonic minor': SPOOKY,
-    '5/4': SPOOKY,
-    '6/8': { ...SPOOKY, energy: 0.27 },
-    '3/4': { ...SPOOKY, energy: 0.43 },
+    meter_4_4_swung_on_8n: ELECTRO_SWING,
+    walking_bass: ELECTRO_SWING,
+    harmonic_minor: SPOOKY,
+    meter_5_4: SPOOKY,
+    meter_6_8: { ...SPOOKY, energy: 0.27 },
+    meter_3_4: { ...SPOOKY, energy: 0.43 },
   };
   const same = (a: StylePoint, b: StylePoint) => AXES.every((axis) => a[axis] === b[axis]);
   // (and the ghost-house fragments near Spooky, added after: the presets' first finds are what they were before either)
   const NEW = new Set([
-    'Spooky drums',
-    'creeping bass',
-    'dark cadence',
+    'spooky_drums',
+    'creeping_bass',
+    'dark_cadence',
     'diesIrae',
-    'Ghost drums',
-    'tiptoe bass',
-    'haunted progression',
+    'ghost_drums',
+    'tiptoe_bass',
+    'haunted_progression',
     'wail',
     'haunt',
     'lament',
     'peek',
-    'haunted pad',
+    'haunted_pad',
     // (and Twinkle's and Hänschen klein's pieces, at the point proposed for children's songs)
-    'Kinderlied drums',
+    'kinderlied_drums',
     'twinkle',
     'wonder',
     'haenschen',
@@ -145,7 +145,7 @@ describe('the points proposed for two more presets (#349)', () => {
     'heim',
     'weinet',
     'ternary',
-    'rounded binary',
+    'rounded_binary',
   ]);
   const before = createRepository(
     LIBRARY.filter((f) => !NEW.has(f.id)).map((f) => ({ ...f, association: f.association.filter((wp) => !(ADDED[f.id] && same(wp.point, ADDED[f.id]!))) })),
@@ -165,10 +165,10 @@ describe('the points proposed for two more presets (#349)', () => {
         .filter((facet) => JSON.stringify(first(library, point, facet)) !== JSON.stringify(first(before, point, facet)))
         .map((facet) => [NAMES[i], facet, first(library, point, facet)[0]![0], first(before, point, facet)[0]![1], first(library, point, facet)[0]![1]]),
     );
-    expect(moved.map(([name, facet, id]) => `${name}, ${facet}: ${id}`)).toEqual(['Swing jazz, harmony: dark cadence']);
+    expect(moved.map(([name, facet, id]) => `${name}, ${facet}: ${id}`)).toEqual(['Swing jazz, harmony: dark_cadence']);
     for (const [, , , , now] of moved) expect(now).toBeGreaterThan(0.3);
     for (const [, , , was] of moved) expect(was).toBeGreaterThan(0.35);
-    expect(HARMONY_FRAGMENTS.find((f) => f.id === 'dark cadence')!.text).toMatch(/ cycle=4 /);
+    expect(HARMONY_FRAGMENTS.find((f) => f.id === 'dark_cadence')!.text).toMatch(/ cycle=4 /);
   });
 
   it('find there, at distance 0, what each was proposed with', () => {
@@ -178,19 +178,19 @@ describe('the points proposed for two more presets (#349)', () => {
         .filter((f) => f.distance === 0)
         .map((f) => f.fragment.id);
     expect(['meter', 'rhythm', 'bass', 'mode', 'stab', 'motif'].map((facet) => at(ELECTRO_SWING, facet))).toEqual([
-      ['4/4 swung on 8n'],
-      ['Electro swing drums'],
-      ['walking bass'],
-      ['harmonic minor'],
-      ['Charleston stabs'],
+      ['meter_4_4_swung_on_8n'],
+      ['electro_swing_drums'],
+      ['walking_bass'],
+      ['harmonic_minor'],
+      ['charleston_stabs'],
       ['gypsy'],
     ]);
     expect(['meter', 'rhythm', 'bass', 'harmony', 'mode', 'motif'].map((facet) => at(SPOOKY, facet))).toEqual([
-      ['5/4'],
-      ['Spooky drums'],
-      ['creeping bass'],
-      ['dark cadence'],
-      ['harmonic minor'],
+      ['meter_5_4'],
+      ['spooky_drums'],
+      ['creeping_bass'],
+      ['dark_cadence'],
+      ['harmonic_minor'],
       ['diesIrae'],
     ]);
   });
@@ -248,12 +248,12 @@ describe('a seed placed for one preset (#404)', () => {
 
   it('fires where it should: the dark cadence and the Charleston stabs at weight 1, the haunted progression at 1', () => {
     const near = ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'];
-    expect(leaks(weighted('dark cadence', 1))).toEqual(near.map((name) => `${name}, harmony: dark cadence`));
-    expect(leaks(weighted('Charleston stabs', 1))).toEqual(
-      ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, stab: Charleston stabs`),
+    expect(leaks(weighted('dark_cadence', 1))).toEqual(near.map((name) => `${name}, harmony: dark_cadence`));
+    expect(leaks(weighted('charleston_stabs', 1))).toEqual(
+      ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, stab: charleston_stabs`),
     );
-    expect(leaks(weighted('haunted progression', 1).filter((f) => f.id !== 'dark cadence'))).toEqual(
-      ['Synth-pop', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, harmony: haunted progression`),
+    expect(leaks(weighted('haunted_progression', 1).filter((f) => f.id !== 'dark_cadence'))).toEqual(
+      ['Synth-pop', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, harmony: haunted_progression`),
     );
   });
 });

@@ -3,25 +3,25 @@
 A line says where its cells come from: a fragment of a library, by its id ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md), [#387](https://github.com/yggi/cells/issues/387); before it, [decision 054](https://github.com/yggi/cells/blob/main/docs/decisions/054-instruments-and-use.md) and [decision 059](https://github.com/yggi/cells/blob/main/docs/decisions/059-named-use.md)'s `use`).
 
 ```cells
-&bar from "4/4 swung on 8n"(swing=8n:.64) 120bpm
-&key from "harmonic minor" D
-&harm from "vamp to the fifth" &key
-&bassline from "walking bass" &harm
+&bar from meter_4_4_swung_on_8n(swing=8n:.64) 120bpm
+&key from harmonic_minor D
+&harm from vamp_to_the_fifth &key
+&bassline from walking_bass &harm
 &bd, &sd, &hh from gm_kit
 &beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]
 &bassV s=saw loop=C2
 &out [&beat, &bassline * &bassV]
 ```
 
-- **A template**, a fragment with a signature, gives a copy: `&key from "harmonic minor" D`. The rest of the line is its main argument, its named arguments are in parentheses (`(swing=8n:.64)`), and attributes before `from` are its head's (`&key label="my key" from …`).
+- **A template**, a fragment with a signature, gives a copy: `&key from harmonic_minor D`. The rest of the line is its main argument, its named arguments are in parentheses (`(swing=8n:.64)`), and attributes before `from` are its head's (`&key label="my key" from …`).
 - **A collection**, a fragment with none (a kit, an instrument, the envelopes), gives the cells it names by their names, and the lines they read within it, its *helpers*: `&bd, &sd, &hh from gm_kit`; `* from gm_kit` gives every line.
-- **The id** is a word (`gm_kit`), or any id in double quotes (`"harmonic minor"`); a word is written bare.
+- **The id** is a word (`gm_kit`), or any id in double quotes (`"my riff"`); a word is written bare.
 
 ## A fragment's signature, a template's copy, and its arguments
 
 - **A fragment's signature** is a `from` line with no id: `&bar from (&swing) &tempo`, its head, its optional parameters in parentheses, its main one after them. An optional parameter has a line in the fragment, its default; the main one has none, and is the only one that is required. A keyword is its cell's name (`swing=` binds `&swing`). The seed library's templates have theirs: the meters, the modes, the harmonies, the bass lines, the motifs, the forms, the stabs and the performers (`signatureOf`, and `bodyOf` for a fragment's lines without it).
-- **A `from` line takes a copy of a template.** Its one head takes the name the line gives (`&scale from major C`); several heads are taken by their names (a performer gives its role and its gate, `&bass, &bassOut from "bass performer" &line`), and `*` takes them all. It takes what those heads read, as a named use took its closure. Every other name the copy defines is its own, `&<head>_<name>` (`&key_tonic`), so a template can be used twice and its cells meet none of the piece's. What it took from a collection (a kit, an instrument) keeps its names: a drum's note is its name.
-- **An argument is a cell.** One bare reference is that cell (`&bar from "4/4" &tempo` reads the piece's `&tempo`, its slider and all). Anything else is a cell of the copy's, read as the template reads the parameter: `124bpm` where `step=&tempo` reads it is `step=124bpm`, a rate alone, and `8n:.64` where `swing=&swing` reads it is that swing. A named one is its default changed where it says: it keeps the default's attributes where it sets none, and its braid replaces the default's whole (`AABA(b=&a^-3)` keeps `&b`'s `step=8n`).
+- **A `from` line takes a copy of a template.** Its one head takes the name the line gives (`&scale from major C`); several heads are taken by their names (a performer gives its role and its gate, `&bass, &bassOut from bass_performer &line`), and `*` takes them all. It takes what those heads read, as a named use took its closure. Every other name the copy defines is its own, `&<head>_<name>` (`&key_tonic`), so a template can be used twice and its cells meet none of the piece's. What it took from a collection (a kit, an instrument) keeps its names: a drum's note is its name.
+- **An argument is a cell.** One bare reference is that cell (`&bar from meter_4_4 &tempo` reads the piece's `&tempo`, its slider and all). Anything else is a cell of the copy's, read as the template reads the parameter: `124bpm` where `step=&tempo` reads it is `step=124bpm`, a rate alone, and `8n:.64` where `swing=&swing` reads it is that swing. A named one is its default changed where it says: it keeps the default's attributes where it sets none, and its braid replaces the default's whole (`AABA(b=&a^-3)` keeps `&b`'s `step=8n`).
 - **Attributes before `from` are the head's**, over what its line sets; **after the id, the main argument's** (`… from diatonic label="the tonic" free(D)` labels the tonic, its slider).
 - **What it says:** a main argument missing, or given to a template that takes none; a keyword the signature lacks; a head the template doesn't have; an argument given to a collection; a signature that names what the template doesn't define, or a main parameter with a line. A template that reads a name it neither defines nor declares, in an attribute, a generator or through an operator, is an error: a cell of the piece's that shares the name is never bound to it. A name read as a sound, a step or a mix's term (`&bd`), is the kit's vocabulary, read by name.
 - **`CompileResult.uses`** holds each from line, a copy's arguments as written (`args`), the main one under its parameter's name, and what it gave, its own names among them. A copy's lines are the piece's own, so the built-in card hears them; what a collection gave by name it doesn't.
@@ -31,7 +31,7 @@ What a line reads without writing it, the main meter a `step=16n` taps, is never
 ## `use`, the old way
 
 `use &bd, &sd from gm_kit`, `use * from gm_kit` and `use &x` (`use &x from x`) still read, for a release, as the `from` lines of a collection do, and each warns that it is the old way, naming its `from` line; Normalise writes it, with a template's arguments ([canonical.md](canonical.md)).
-A `use` of a template takes its lines as they are, and reads its parameters by name, as before decision 065: a line the piece writes for one of them (`&tonic D`, `&swing …`) is its argument, as an interface name the piece defines is (`&key`, `&bar`, `&tempo`, `&tonic`, `&harm`, decision 060). `use * from` a fragment takes every line but one read only by lines the piece overrides (`use * from "4/4 swung on 8n"` under the piece's own `&bar` takes no `&swing`, and says the use adds nothing). `use "harmonic minor"`, older still, reads as `use * from "harmonic minor"`.
+A `use` of a template takes its lines as they are, and reads its parameters by name, as before decision 065: a line the piece writes for one of them (`&tonic D`, `&swing …`) is its argument, as an interface name the piece defines is (`&key`, `&bar`, `&tempo`, `&tonic`, `&harm`, decision 060). `use * from` a fragment takes every line but one read only by lines the piece overrides (`use * from meter_4_4_swung_on_8n` under the piece's own `&bar` takes no `&swing`, and says the use adds nothing). `use "harmonic_minor"`, older still, reads as `use * from harmonic_minor`.
 
 ## The expansion: the piece's own lines win
 
@@ -52,7 +52,7 @@ A fragment may itself take from others: its own lines win over what it takes, an
 - A line two used fragments give word for word (comments aside, whitespace collapsed) is one line.
 - A line taken twice from one id is taken once, at its first `use`; a use that then takes nothing warns that it adds nothing.
 - A name a use asks for that the fragment doesn't define is an error naming the names it does: `&agogo is not in "gm_kit": it defines &acousticbassdrum, &bd, &rim, …`.
-- A name a use asks for that the piece defines is the piece's, and warns that taking it adds nothing, unless a line the use takes reads it: then naming it is how the piece overrides it, and says nothing (`use &bass, &bassV from "bass performer"`, the old way, with the piece's own `&bassV s=saw loop=C3`: the bass player, on the piece's sound; a copy reads an instrument's name the same way, `&bass from "bass performer" &line` with the piece's own `&bassV`). A `use * from` whose every line the piece defines warns too.
+- A name a use asks for that the piece defines is the piece's, and warns that taking it adds nothing, unless a line the use takes reads it: then naming it is how the piece overrides it, and says nothing (`use &bass, &bassV from bass_performer`, the old way, with the piece's own `&bassV s=saw loop=C3`: the bass player, on the piece's sound; a copy reads an instrument's name the same way, `&bass from bass_performer &line` with the piece's own `&bassV`). A `use * from` whose every line the piece defines warns too.
 - A helper the piece also defines is an error: the piece didn't ask for it, so its line would change what the named cell reads. Rename the piece's, or name the helper in the use, which makes it an override.
 - A name two used fragments define by different lines, and the piece doesn't, is an error naming the name and both ids: the piece writes the line itself, or drops one `use`.
   `use` never renames: a voice's General MIDI note is read off its name ([midi.md](midi.md)), and `&bd2` would send another.

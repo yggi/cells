@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
-import { shorten } from './shorten';
+import { migrations } from './migrate';
+
+/** Migrate's rule `rule` on a text, if it has one to offer. */
+const migration = (src: string, rule: string) => migrations()(src, compileSource(src)).find((r) => r.rule === rule);
 import swing from '../../fixtures/contracts/swing.json';
 import { METER_FRAGMENTS } from '../repository/meters';
 
@@ -121,22 +124,22 @@ describe('swing on the bar: one level of the meter leans, named by note value', 
     expect(onsets('meter("4/4") swing=4n:.67', '8n')).toEqual(onsets('meter("4/4")', '8n'));
   });
 
-  it('a bare swing= on a meter leans its own steps’ level, with a warning, and Migrate’s rule, which Shorten offers, names the level', () => {
+  it('a bare swing= on a meter leans its own steps’ level, with a warning, and Migrate names the level', () => {
     const bare = `&bar meter("4/4", 2) step=60bpm swing=.67\n&x step=8n 0${VOICE}`;
     expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps: name the level it leans, swing=8n:.67 (Migrate rewrites it)"]);
     expect(onsets('meter("4/4", 2) swing=.67', '8n')).toEqual(onsets('meter("4/4", 2) swing=8n:.67', '8n'));
-    const s = shorten(bare).find((x) => x.kind === 'swing')!;
+    const s = migration(bare, 'swing')!;
     expect(s.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:.67');
     expect(warnings(s.apply(bare))).toEqual([]);
     // (left free, it stays free)
     const free = bare.replace('swing=.67', 'swing=free(.5, .5..75)');
-    expect(shorten(free).find((x) => x.kind === 'swing')!.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:free(.5, .5..75)');
+    expect(migration(free, 'swing')!.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:free(.5, .5..75)');
   });
 
-  it('a bare swing= on beats that are the meter’s own steps is left to the author: the warning stands, Shorten offers nothing (#166)', () => {
+  it('a bare swing= on beats that are the meter’s own steps is left to the author: the warning stands, Migrate offers nothing (#166)', () => {
     const bare = `&bar meter("4/4") step=120bpm swing=.67\n&x step=8n 0${VOICE}`;
     expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:.67"]);
-    expect(shorten(bare).find((x) => x.kind === 'swing')).toBeUndefined();
+    expect(migration(bare, 'swing')).toBeUndefined();
   });
 
   it('several levels at once nest, each node keeping its ends', () => {
@@ -183,19 +186,19 @@ describe('the pairs alone, `swing=8n:r:pairs` (#204, decision 053): a level’s 
   // Where each eighth of one bar is played, in the meter's pulses, under the meter's own text with :pairs: a pair's second
   // eighth two thirds through it, a group of three at thirds of its beat (an eighth each). Literal, one row a meter.
   const expected: Record<string, readonly number[]> = {
-    '4/4': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 swung on 8n': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 leaning on 16n': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 leaning lightly on 16n': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 leaning faintly on 16n': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 alla breve': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '2/4': [0, 2 / 3, 1, 5 / 3],
-    '3/4': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3],
-    '6/8': [0, 1, 2, 3, 4, 5],
-    '12/8': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-    '5/4': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3, 4, 14 / 3],
-    '7/8': [0, 1, 2, 3, 3 + 4 / 3, 5, 5 + 4 / 3],
-    '10/8': [0, 1, 2, 3, 3 + 4 / 3, 5, 6, 7, 8, 8 + 4 / 3],
+    meter_4_4: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_swung_on_8n: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_leaning_on_16n: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_leaning_lightly_on_16n: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_leaning_faintly_on_16n: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_alla_breve: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_2_4: [0, 2 / 3, 1, 5 / 3],
+    meter_3_4: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3],
+    meter_6_8: [0, 1, 2, 3, 4, 5],
+    meter_12_8: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    meter_5_4: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3, 4, 14 / 3],
+    meter_7_8: [0, 1, 2, 3, 3 + 4 / 3, 5, 5 + 4 / 3],
+    meter_10_8: [0, 1, 2, 3, 3 + 4 / 3, 5, 6, 7, 8, 8 + 4 / 3],
   };
 
   it('the table holds every meter of the repository, thirteen', () => {

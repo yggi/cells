@@ -1,5 +1,5 @@
 ---
-id: Funk drums
+id: funk_drums
 association:
   - point:
       sync: 1

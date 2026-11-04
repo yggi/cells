@@ -8,11 +8,7 @@ import { defaults } from "./defaults.js";
 import { progressions } from "./progressions.js";
 import { wrappers } from "./wrappers.js";
 import { stereo } from "./stereo.js";
-import { gates } from "../migrate/gates.js";
 import { aliases } from "./aliases.js";
-import { taps } from "../migrate/taps.js";
-import { swings } from "../migrate/swing.js";
-import { sections } from "../migrate/sections.js";
 import { card } from "./card.js";
 export function shorten(source, options = {}) {
     const { result, cells } = candidates(source, options);
@@ -27,11 +23,7 @@ export function shorten(source, options = {}) {
         ...progressions(source, result, options),
         ...wrappers(source, result, options),
         ...stereo(source, result, options),
-        ...gates(source, result, options),
         ...aliases(source, result),
-        ...taps(source, result, options),
-        ...swings(source, result, options),
-        ...sections(source, result, options),
         ...card(source, options),
     ];
     const kept = result.uses?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
@@ -41,7 +33,7 @@ export function shorten(source, options = {}) {
         .filter((s) => RESPELLINGS.has(s.kind) || s.saving > 0)
         .sort((a, b) => b.saving - a.saving || chars.get(b.id) - chars.get(a.id));
 }
-const RESPELLINGS = new Set(['gate', 'tap', 'swing', 'section', 'card', 'alias', 'fraction', 'progression']);
+const RESPELLINGS = new Set(['card', 'alias', 'fraction', 'progression']);
 const overridden = (r) => (r.uses ?? [])
     .flatMap((u) => u.overrode)
     .sort()

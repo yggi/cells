@@ -1,5 +1,5 @@
 ---
-id: brass stab
+id: brass_stab
 association:
   - point:
       sync: 0.55

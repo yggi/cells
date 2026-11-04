@@ -1,5 +1,5 @@
 ---
-id: bossa nova clave (one bar)
+id: bossa_nova_clave_one_bar
 association:
   - point:
       sync: 0.8

@@ -1,5 +1,5 @@
 ---
-id: Synth-pop drums
+id: synth_pop_drums
 association:
   - point:
       sync: 0.3

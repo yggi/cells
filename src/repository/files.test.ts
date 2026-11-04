@@ -79,41 +79,41 @@ describe('the seed files', () => {
   // by hand, the other meters' and the claves', have the files as their source)
   it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
-      '4/4': [SYNTH_POP, TECHNO, BOSSA_NOVA],
-      '4/4 swung on 8n': [SWING_JAZZ, ELECTRO_SWING],
-      '5/4': [{ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }, SPOOKY],
-      '4/4 leaning on 16n': [LO_FI],
-      '4/4 leaning lightly on 16n': [DEEP_HOUSE, FUNK],
-      '4/4 leaning faintly on 16n': [AMBIENT],
-      'Synth-pop drums': [SYNTH_POP],
-      'Techno drums': [TECHNO],
-      'Deep house drums': [DEEP_HOUSE],
-      'Ambient drums': [AMBIENT],
-      'Lo-fi hip hop drums': [LO_FI],
-      'Funk drums': [FUNK],
-      'Bossa nova drums': [BOSSA_NOVA],
-      'Swing jazz drums': [SWING_JAZZ],
-      'funk bass': [FUNK, LO_FI, BOSSA_NOVA],
-      'walking bass': [SWING_JAZZ, ELECTRO_SWING],
-      'creeping bass': [SPOOKY],
-      'dark cadence': [SPOOKY],
-      'Spooky drums': [SPOOKY],
-      'Kinderlied drums': [KINDERLIED],
-      'harmonic minor': [ELECTRO_SWING, SPOOKY],
+      meter_4_4: [SYNTH_POP, TECHNO, BOSSA_NOVA],
+      meter_4_4_swung_on_8n: [SWING_JAZZ, ELECTRO_SWING],
+      meter_5_4: [{ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }, SPOOKY],
+      meter_4_4_leaning_on_16n: [LO_FI],
+      meter_4_4_leaning_lightly_on_16n: [DEEP_HOUSE, FUNK],
+      meter_4_4_leaning_faintly_on_16n: [AMBIENT],
+      synth_pop_drums: [SYNTH_POP],
+      techno_drums: [TECHNO],
+      deep_house_drums: [DEEP_HOUSE],
+      ambient_drums: [AMBIENT],
+      lo_fi_hip_hop_drums: [LO_FI],
+      funk_drums: [FUNK],
+      bossa_nova_drums: [BOSSA_NOVA],
+      swing_jazz_drums: [SWING_JAZZ],
+      funk_bass: [FUNK, LO_FI, BOSSA_NOVA],
+      walking_bass: [SWING_JAZZ, ELECTRO_SWING],
+      creeping_bass: [SPOOKY],
+      dark_cadence: [SPOOKY],
+      spooky_drums: [SPOOKY],
+      kinderlied_drums: [KINDERLIED],
+      harmonic_minor: [ELECTRO_SWING, SPOOKY],
       aeolian: [SYNTH_POP, TECHNO, LO_FI],
       dorian: [DEEP_HOUSE, FUNK],
       ionian: [AMBIENT, BOSSA_NOVA, SWING_JAZZ],
-      'upright bass': [ELECTRO_SWING],
-      'brass stab': [ELECTRO_SWING],
+      upright_bass: [ELECTRO_SWING],
+      brass_stab: [ELECTRO_SWING],
       clarinet: [ELECTRO_SWING],
-      'muted trumpet': [ELECTRO_SWING],
-      'round bass': [SPOOKY],
+      muted_trumpet: [ELECTRO_SWING],
+      round_bass: [SPOOKY],
       organ: [SPOOKY],
       theremin: [SPOOKY],
       celesta: [SPOOKY],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
-    const AFTER_OWN_POINT: Record<string, readonly object[]> = { 'root bass': [SYNTH_POP, DEEP_HOUSE, AMBIENT], 'pumping bass': [TECHNO] };
+    const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT], pumping_bass: [TECHNO] };
     for (const [id, points] of Object.entries(AT_PRESETS))
       expect(
         LIBRARY.find((f) => f.id === id)!.association.map((wp) => wp.point),
@@ -129,17 +129,17 @@ describe('the seed files', () => {
   });
 
   // (the seeds written by hand for the point proposed for a Spooky preset, #349, or near it, and lifted from nothing)
-  const WRITTEN = new Set(['Spooky drums', 'creeping bass', 'dark cadence', 'Ghost drums', 'tiptoe bass', 'haunted progression', 'haunted pad', 'Kinderlied drums']);
+  const WRITTEN = new Set(['spooky_drums', 'creeping_bass', 'dark_cadence', 'ghost_drums', 'tiptoe_bass', 'haunted_progression', 'haunted_pad', 'kinderlied_drums']);
   it('each says it is a seed, every drum bar, bass line and harmony and what an example gave where it was lifted from, but those written for Spooky, and each has prose', () => {
     expect(SEED.every((f) => f.meta.source === 'seed' && f.prose.length > 0)).toBe(true);
     expect(new Set(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id))).toEqual(
       new Set(
         [
-          ...RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith(' drums') && !WRITTEN.has(f.id)),
+          ...RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith('_drums') && !WRITTEN.has(f.id)),
           ...BASS_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...HARMONY_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...STAB_FRAGMENTS,
-          ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic minor'),
+          ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic_minor'),
           ...MOTIF_FRAGMENTS.filter((f) => f.id === 'gypsy'),
           ...INSTRUMENT_FRAGMENTS.filter((f) => !['gm_kit', 'bass', 'keys', 'pad', 'lead'].includes(f.id) && !WRITTEN.has(f.id)),
         ].map((f) => f.id),

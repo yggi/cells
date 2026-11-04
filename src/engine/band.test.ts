@@ -109,8 +109,8 @@ describe('a band: a selector over the performers (decision 061)', () => {
   it('arranges a part a text uses as it is used: the bass player, its walk from the library, out for the second bar', () => {
     const score = (form: string) =>
       [
-        'use * from "bass performer"',
-        'use &bassline from "walking bass"',
+        'use * from bass_performer',
+        'use &bassline from walking_bass',
         '&bar meter("4/4") step=120bpm swing=8n:2/3',
         '&key scale(dorian, D)',
         '&harm over=&key step=1m [0,2,4] [3,5,7]',

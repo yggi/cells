@@ -1,4 +1,4 @@
-# a piece written before v0.3.0: a gate the old way, lines stepped by the bar's own steps, a bare swing, &parts
+# a piece written before v0.3.0: a gate the old way, lines stepped by the bar's own steps, a bare swing
 &bar meter("4/4", 2) step=100bpm swing=8n:.6
 &sections step=4n &keysBar
 &song over=&sections step=1m laps=1 0 0

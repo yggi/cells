@@ -18,6 +18,7 @@
  * read off its text by the fit (`fit.ts`, decision 047), never off its facets: a query given the workbench ranks only the
  * fragments that fit it.
  */
+import { RENAMED_IDS } from '../engine/renamed';
 import type { FragmentFile } from './files';
 import { cachedFit } from './fit';
 
@@ -217,7 +218,7 @@ export function layerProblems(layer: LearnedLayer): string[] {
       const [a, b] = Array.isArray(ids) ? (ids as unknown[]) : [];
       if (!Array.isArray(ids) || ids.length !== 2 || typeof a !== 'string' || typeof b !== 'string' || !a.trim() || !b.trim())
         return void problems.push(`${where}: its ids are not two names`);
-      if (!(a < b)) problems.push(`${where}: its ids ${a} and ${b} are not two, in order`);
+      if (!(byId(a, b) < 0)) problems.push(`${where}: its ids ${a} and ${b} are not two, in order`);
       if (!(Number.isInteger(pair?.count) && pair!.count! > 0)) problems.push(`${where}: its count ${String(pair?.count)} is not a whole number > 0`);
       const key = JSON.stringify([a, b]);
       if (seen.has(key)) problems.push(`${where}: ${a} and ${b} are counted twice`);
@@ -256,7 +257,13 @@ export function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeig
 }
 
 /** The order of two ids, by code unit: how a layer writes a pair, and a query breaks a tie. */
-export const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+/** A renamed seed id's old spelling (#387), so ties keep the order they had: a query answers as it did before the rename. */
+const WAS = new Map([...RENAMED_IDS].map(([old, word]) => [word, old]));
+const tieKey = (id: string) => WAS.get(id) ?? id;
+export const byId = (a: string, b: string): number => {
+  const [x, y] = [tieKey(a), tieKey(b)];
+  return x < y ? -1 : x > y ? 1 : 0;
+};
 
 /**
  * A repository of these fragments, the seed; it throws on a malformed entry or an id given twice, naming each problem. It

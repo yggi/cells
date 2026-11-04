@@ -2,13 +2,13 @@
 
 /** A `use` line, read: the fragment's id, and the names it asks for. */
 export interface UseForm {
-  /** The fragment's id: a word as written (`gm_kit`), or what the double quotes hold (`"harmonic minor"`). */
+  /** The fragment's id: a word as written (`gm_kit`), or what the double quotes hold (`"my riff"`). */
   readonly id: string;
   /** The names it asks for (`&bd`), in the order written, each once; null for every name the fragment defines. */
   readonly names: readonly string[] | null;
   /**
    * How it is written: `named` (`use &bd, &sd from gm_kit`), `short` (`use &aeolian`, the fragment named as its
-   * cell), `all` (`use * from gm_kit`), or `quoted` (`use "harmonic minor"`, the old way: `use * from "harmonic minor"`).
+   * cell), `all` (`use * from gm_kit`), or `quoted` (`use "my riff"`, the old way: `use * from "my riff"`).
    */
   readonly form: 'named' | 'short' | 'all' | 'quoted';
 }
@@ -53,7 +53,7 @@ export function writeUse({ id, names }: Pick<UseForm, 'id' | 'names'>): string {
 
 /** What a malformed `use` line is told. */
 export const USE_FORM =
-  'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "harmonic minor"';
+  'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "my riff"';
 
 /**
  * A `from` line (decision 065): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from

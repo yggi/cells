@@ -1,6 +1,7 @@
 import { splitComment } from "./edit.js";
 import { FROM_FORM, isAttribute, readFrom, readUse, topTokens, USE_FORM } from "./parser/use.js";
 import { STYLE } from "./style.js";
+import { RENAMED_IDS } from "./renamed.js";
 import { INTERFACE_NAMES } from "./program.js";
 export const USE_DEPTH = 8;
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
@@ -370,6 +371,7 @@ function fragmentLines(path, text, resolve, say) {
     });
     return merge([...own, ...copies], used, (_, message) => sayHere(message), quoted(path.at(-1))).lines;
 }
+const renamedMessage = (id, word) => `${quoted(id)} is renamed ${word}: write from ${word} (#387; Migrate rewrites it)`;
 export function expansion(text, { resolve, locked = [] } = {}) {
     const own = linesOf(text);
     const uses = own.flatMap((l) => {
@@ -404,6 +406,9 @@ export function expansion(text, { resolve, locked = [] } = {}) {
         hashes.push(hash);
         if (recorded && recorded !== hash)
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
+        const word = RENAMED_IDS.get(id);
+        if (word !== undefined && resolve(word) === theirs)
+            diagnostics.push({ severity: 'warning', message: renamedMessage(id, word), span });
         const g = give(u, [id], theirs, resolve, say, taken);
         copies.push(g.copy);
         args.push(g.args);

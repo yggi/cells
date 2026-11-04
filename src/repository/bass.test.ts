@@ -18,7 +18,7 @@ import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SW
 
 const PATTERNS = ['root', 'pump', 'eight', 'funk', 'walk'] as const;
 type Pattern = (typeof PATTERNS)[number];
-const ID: Record<Pattern, string> = { root: 'root bass', pump: 'pumping bass', eight: 'eighths bass', funk: 'funk bass', walk: 'walking bass' };
+const ID: Record<Pattern, string> = { root: 'root_bass', pump: 'pumping_bass', eight: 'eighths_bass', funk: 'funk_bass', walk: 'walking_bass' };
 const byId = (id: string) => BASS_FRAGMENTS.find((f) => f.id === id)!;
 
 // Lifted from yggi/jambot packages/engine/src/bass.ts @ 1037a80: each pattern's weights on 4/4's sixteen steps
@@ -107,7 +107,7 @@ const POINT: Record<Pattern, StylePoint> = {
 // Each preset with its meter's swing on 8n (Swing jazz's 2/3 is 1; the others play straight or lean on 16n).
 // The points proposed for presets Jambot is to adopt (#349), placed by hand where an example plays a pattern: the walk at
 // Electro swing's, as examples/electroswing.md walks.
-const PROPOSED: Record<string, readonly StylePoint[]> = { 'walking bass': [ELECTRO_SWING] };
+const PROPOSED: Record<string, readonly StylePoint[]> = { walking_bass: [ELECTRO_SWING] };
 
 const PRESETS: Record<string, { point: StylePoint; eighth: number }> = {
   'Synth-pop': { point: SYNTH_POP, eighth: 0 },
@@ -202,15 +202,15 @@ function expected(pattern: Pattern, chords: readonly (readonly number[])[]): [nu
 
 describe('the bass lines', () => {
   it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most, and the Spooky basses written by hand', () => {
-    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping bass', 'tiptoe bass']);
+    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping_bass', 'tiptoe_bass']);
     for (const p of PATTERNS) {
       const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
       expect(byId(ID[p]).association, p).toEqual(
         [POINT[p], ...presets.map((name) => PRESETS[name]!.point), ...(PROPOSED[ID[p]] ?? [])].map((point) => ({ point, weight: 1, facet: 'bass' })),
       );
     }
-    expect(byId('creeping bass').association).toEqual([{ point: SPOOKY, weight: 1, facet: 'bass' }]);
-    expect(byId('tiptoe bass').association).toEqual([{ point: { ...SPOOKY, artic: 0.25, energy: 0.3 }, weight: 1, facet: 'bass' }]);
+    expect(byId('creeping_bass').association).toEqual([{ point: SPOOKY, weight: 1, facet: 'bass' }]);
+    expect(byId('tiptoe_bass').association).toEqual([{ point: { ...SPOOKY, artic: 0.25, energy: 0.3 }, weight: 1, facet: 'bass' }]);
   });
 
   it('each uses &harm alone, read off its text: its voice is the instrument the performer or the card plays it on (#291)', () => {
@@ -262,7 +262,7 @@ describe('what each plays is what bass.ts plays for its pattern alone at its poi
 
   it('the walk’s last beat is a semitone below the next chord’s root, over a chord whose key degree below it is a whole tone too', () => {
     // (I–vi: into A from G♯, where the key's degree below A is G, a whole tone: `0b` over the next chord would play G)
-    const { notes } = played(fitOf(byId('walking bass').text, workbench('I–vi–IV–V')).union.text, 1);
+    const { notes } = played(fitOf(byId('walking_bass').text, workbench('I–vi–IV–V')).union.text, 1);
     expect(notes.at(-1)).toEqual([0, 12, 8]);
   });
 });
@@ -274,22 +274,22 @@ describe('what each plays is what bass.ts plays for its pattern alone at its poi
 // the root, and the chord's fifth below it.
 const SENT: Record<string, Record<string, readonly number[]>> = {
   C: {
-    'root bass': [36, 36, 45, 45, 41, 41, 43, 43],
-    'pumping bass': [36, 36, 36, 36, 45, 45, 45, 45, 41, 41, 41, 41, 43, 43, 43, 43],
-    'eighths bass': [...Array<number>(8).fill(36), ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43)],
-    'funk bass': [36, 36, 36, 36, 36, 36, ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43), 48, 48],
-    'walking bass': [36, 40, 43, 44, 45, 48, 52, 40, 41, 45, 48, 42, 43, 47, 50, 47],
-    'creeping bass': [36, 37, 36, 45, 46, 45, 41, 42, 41, 43, 44, 43],
-    'tiptoe bass': [36, 31, 45, 40, 41, 36, 43, 38],
+    root_bass: [36, 36, 45, 45, 41, 41, 43, 43],
+    pumping_bass: [36, 36, 36, 36, 45, 45, 45, 45, 41, 41, 41, 41, 43, 43, 43, 43],
+    eighths_bass: [...Array<number>(8).fill(36), ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43)],
+    funk_bass: [36, 36, 36, 36, 36, 36, ...Array<number>(8).fill(45), ...Array<number>(8).fill(41), ...Array<number>(8).fill(43), 48, 48],
+    walking_bass: [36, 40, 43, 44, 45, 48, 52, 40, 41, 45, 48, 42, 43, 47, 50, 47],
+    creeping_bass: [36, 37, 36, 45, 46, 45, 41, 42, 41, 43, 44, 43],
+    tiptoe_bass: [36, 31, 45, 40, 41, 36, 43, 38],
   },
   D: {
-    'root bass': [38, 38, 47, 47, 43, 43, 45, 45],
-    'pumping bass': [38, 38, 38, 38, 47, 47, 47, 47, 43, 43, 43, 43, 45, 45, 45, 45],
-    'eighths bass': [...Array<number>(8).fill(38), ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45)],
-    'funk bass': [38, 38, 38, 38, 38, 38, ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45), 50, 50],
-    'walking bass': [38, 42, 45, 46, 47, 50, 54, 42, 43, 47, 50, 44, 45, 49, 52, 49],
-    'creeping bass': [38, 39, 38, 47, 48, 47, 43, 44, 43, 45, 46, 45],
-    'tiptoe bass': [38, 33, 47, 42, 43, 38, 45, 40],
+    root_bass: [38, 38, 47, 47, 43, 43, 45, 45],
+    pumping_bass: [38, 38, 38, 38, 47, 47, 47, 47, 43, 43, 43, 43, 45, 45, 45, 45],
+    eighths_bass: [...Array<number>(8).fill(38), ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45)],
+    funk_bass: [38, 38, 38, 38, 38, 38, ...Array<number>(8).fill(47), ...Array<number>(8).fill(43), ...Array<number>(8).fill(45), 50, 50],
+    walking_bass: [38, 42, 45, 46, 47, 50, 54, 42, 43, 47, 50, 44, 45, 49, 52, 49],
+    creeping_bass: [38, 39, 38, 47, 48, 47, 43, 44, 43, 45, 46, 45],
+    tiptoe_bass: [38, 33, 47, 42, 43, 38, 45, 40],
   },
 };
 
@@ -315,7 +315,7 @@ describe('the bass lines send the notes they always sent, through the bass instr
     const host = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n${progression}`;
     const up = BASS_INSTRUMENT.replace('loop=C2', 'loop=C3');
     expect(up).not.toBe(BASS_INSTRUMENT);
-    expect(notesOf(`${host}\n${byId('root bass').text}\n${up}`)).toEqual(SENT['C']!['root bass']!.map((n) => n + 12));
+    expect(notesOf(`${host}\n${byId('root_bass').text}\n${up}`)).toEqual(SENT['C']!['root_bass']!.map((n) => n + 12));
   });
 });
 

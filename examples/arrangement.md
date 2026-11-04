@@ -8,7 +8,7 @@ description: "Three parts, and a song that picks which of them play: an intro, a
 ```cells
 &partsNote label="A part is a section stepped by the bar: &sections names them (step=4n), and what a section steps plays while &song picks it, four bars a step, from its top: a number picks one section, a chord several." about=(&sections &song)
 &lapsNote label="laps=1: the song plays once, then ends. off switches a cell off, and everything that plays it: take it from &click to hear the beat." about=&song
-&bar from "4/4" &tempo
+&bar from meter_4_4 &tempo
 &tempo step=free(moderato)
 &key scale(major)
 

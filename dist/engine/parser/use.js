@@ -31,7 +31,7 @@ export function writeUse({ id, names }) {
         return `use &${id}`;
     return `use ${names.join(', ')} from ${from}`;
 }
-export const USE_FORM = 'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "harmonic minor"';
+export const USE_FORM = 'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "my riff"';
 export function topTokens(text) {
     const out = [];
     let depth = 0;

@@ -89,13 +89,13 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
 const CENTRE = at(0.5, 0.5, 0.5, 0.5);
 /** Each form: its head, the hole it reads, its length in bars over a one-bar motif, and its point. */
 const FORMS: Record<string, { head: string; hole: string; bars: number; point: StylePoint; weight?: number }> = {
-  'call and answer': { head: 'phrase', hole: 'call', bars: 2, point: CENTRE },
+  call_and_answer: { head: 'phrase', hole: 'call', bars: 2, point: CENTRE },
   sentence: { head: 'sentence', hole: 'call', bars: 4, point: CENTRE },
   period: { head: 'period', hole: 'call', bars: 4, point: CENTRE },
   AABA: { head: 'chorus', hole: 'a', bars: 4, point: CENTRE },
   // (Twinkle's and Hänschen klein's, at their tunes' points, #371)
   ternary: { head: 'song', hole: 'call', bars: 6, point: KINDERLIED, weight: 0.5 },
-  'rounded binary': { head: 'song', hole: 'call', bars: 8, point: at(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
+  rounded_binary: { head: 'song', hole: 'call', bars: 8, point: at(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
 };
 
 type Meter = '4/4' | '3/4' | '6/8' | '5/4' | '7/8' | '10/8' | '12/8' | '2/4' | 'alla breve';
@@ -123,7 +123,7 @@ const piece = (form: string, motif: string) => {
   return [
     `use &${motif}`,
     `use &${head} from ${/^\w+$/.test(form) ? form : `"${form}"`}`,
-    'use &lead, &leadV from "lead performer"',
+    'use &lead, &leadV from lead_performer',
     benchOf(motif),
     `&${hole} step=8n &${motif}`,
     `&leadline step=8n &${head}`,

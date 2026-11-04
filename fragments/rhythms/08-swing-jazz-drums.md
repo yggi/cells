@@ -1,5 +1,5 @@
 ---
-id: Swing jazz drums
+id: swing_jazz_drums
 association:
   - point:
       sync: 0.35

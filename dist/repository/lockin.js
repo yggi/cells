@@ -26,7 +26,7 @@ function walk(start, seed) {
     }
     return points;
 }
-const son = RHYTHM_FRAGMENTS.find((f) => f.id === 'son clave 3-2').text;
+const son = RHYTHM_FRAGMENTS.find((f) => f.id === 'son_clave_3_2').text;
 const MADE = {
     meter: ['&bar meter("9/8")', '&bar meter("11/8")', '&bar meter("5/8")', '&bar meter("4/4") swing=16n:.58', '&bar  meter("7/8")', '&bar meter("3/4") // a waltz'],
     rhythm: [

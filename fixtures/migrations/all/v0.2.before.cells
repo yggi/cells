@@ -1,7 +1,7 @@
-# a piece written before v0.3.0: a gate the old way, lines stepped by the bar's own steps, a bare swing, &parts
+# a piece written before v0.3.0: a gate the old way, lines stepped by the bar's own steps, a bare swing
 &bar meter("4/4", 2) step=100bpm swing=.6
-&parts step=4n &keysBar
-&song over=&parts step=1m laps=1 0 0
+&sections step=4n &keysBar
+&song over=&sections step=1m laps=1 0 0
 &keys over=scale(minor) step=&keysBar/4 [0,2,4] [3,5,7]
 &tune over=scale(minor) step=&bar 0 2 4 2 4 5 7 4
 &lead s=tri loop=A4

@@ -12,7 +12,7 @@ description: A breakbeat backwards every other bar, with ratchets and hats.
 # sixteenth split in three); hats seven against four. One harmony for all: the
 # Lydian scale, I for two bars and II for two (^1: a degree up), in pad, acid and lead;
 # one breath: a slow filter sweep moves the pad and the lead together.
-&bar from "4/4" &tempo
+&bar from meter_4_4 &tempo
 &tap, &click, &strike from envelopes
 &tempo step=free(160bpm, 110..200)
 &lydian scan(2 2 2 1 2 2 1) label="the harmony: {mode} on {tonic}"     # C, then D: two bars each

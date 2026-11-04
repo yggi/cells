@@ -322,8 +322,8 @@ export const OPTIONS = ['taps', 'env', 'declared', 'imported', 'imported, voices
 
 /** The meters case 1 is filled by: 4/4, 7/8 (3+2+2) and 7/8 as 2+2+3, written as levels (no signature names it). */
 export const FILLS_1: readonly { readonly fill: string; readonly bar: string; readonly id: string | null }[] = [
-  { fill: '4/4', bar: '&bar meter("4/4") step=104bpm', id: '4/4' },
-  { fill: '7/8 (3+2+2)', bar: '&bar meter("7/8") step=104bpm', id: '7/8' },
+  { fill: '4/4', bar: '&bar meter("4/4") step=104bpm', id: 'meter_4_4' },
+  { fill: '7/8 (3+2+2)', bar: '&bar meter("7/8") step=104bpm', id: 'meter_7_8' },
   { fill: '7/8 (2+2+3)', bar: '&bar meter("*.+.+..") step=104bpm', id: null },
 ];
 /** The keys case 2 is filled by: Funk's own, and another. */

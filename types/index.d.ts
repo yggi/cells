@@ -40,7 +40,7 @@ export type { CompileOptions, CompileResult, Locked, Performer, Resolve, Used } 
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';
 export type { Diagnostic } from './engine/ast';
 export { createRepository, EMPTY_LAYER, layerProblems, type Fragment, type Found, type LearnedLayer, type LearnedPoint, type Merged, type QueryOptions, type Repository, type StylePoint, type UsedPair, type WeightedPoint, } from './repository/fragments';
-export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
+export { canonicalText, fileFragment, sameText, usedTogether, useFragments, renamedLayer, type Filed, type Filing, type Use } from './repository/learned';
 export { METER_FRAGMENTS } from './repository/meters';
 export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
 export { CONTRACT_WIDTHS, feelOf, played, readerOf, readingOf, type DrumRole, type FeelEvent, type FeelFrame, type FeelPart, type Reading, type SectionType, type Widths, } from './engine/perform/feel';
@@ -60,6 +60,7 @@ export { BAND_FRAGMENTS } from './repository/bands';
 export { STYLE_FRAGMENTS } from './repository/styles';
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES, type FoundInstrument, type VoicedPart } from './repository/band';
 export { LIBRARY, resolveSeed } from './repository/library';
+export { RENAMED_IDS, wordOf } from './engine/renamed';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
 export { fitOf, unionOf, type Fit, type Union } from './repository/fit';

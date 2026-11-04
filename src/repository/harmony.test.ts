@@ -21,7 +21,7 @@ import { SEED } from './seed';
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
 /** The vamps, Jambot's themes' (`VAMPS`); the harmony written by hand for the point proposed for Spooky (#349) is not one. */
-const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter((f) => !['dark cadence', 'haunted progression'].includes(f.id));
+const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter((f) => !['dark_cadence', 'haunted_progression'].includes(f.id));
 
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 
@@ -99,13 +99,13 @@ function chordsPlayed(text: string): number[][] {
 describe('the harmonies', () => {
   it('are five vamps, each one or two triads over the key, eight bars a lap, the dark cadence and the haunted progression', () => {
     expect(HARMONY_FRAGMENTS.map((f) => f.id)).toEqual([
-      'tonic vamp',
-      'vamp to the seventh',
-      'vamp to the fourth',
-      'vamp to the sixth',
-      'vamp to the fifth',
-      'dark cadence',
-      'haunted progression',
+      'tonic_vamp',
+      'vamp_to_the_seventh',
+      'vamp_to_the_fourth',
+      'vamp_to_the_sixth',
+      'vamp_to_the_fifth',
+      'dark_cadence',
+      'haunted_progression',
     ]);
     expect(VAMP_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
   });
@@ -190,7 +190,7 @@ describe('the harmonies', () => {
 });
 
 describe('the dark cadence (#349)', () => {
-  const cadence = HARMONY_FRAGMENTS.find((f) => f.id === 'dark cadence')!;
+  const cadence = HARMONY_FRAGMENTS.find((f) => f.id === 'dark_cadence')!;
   it('is i, ♭VI, iv and V, a chord a bar, four bars a lap', () => {
     expect(degreesOf(cadence.text)).toEqual([0, 5, 3, 4]);
   });
@@ -211,12 +211,12 @@ describe('the dark cadence (#349)', () => {
       createRepository(LIBRARY)
         .query(SPOOKY, 1, {}, { facet: 'harmony' })
         .map((f) => [f.fragment.id, f.distance]),
-    ).toEqual([['dark cadence', 0]]);
+    ).toEqual([['dark_cadence', 0]]);
   });
 });
 
 describe('the haunted progression', () => {
-  const haunted = HARMONY_FRAGMENTS.find((f) => f.id === 'haunted progression')!;
+  const haunted = HARMONY_FRAGMENTS.find((f) => f.id === 'haunted_progression')!;
   it('is i, III, iv, V, ♭VI, ii, V and i, a chord a bar, eight bars a lap: a progression Jambot reads', () => {
     expect(degreesOf(haunted.text)).toEqual([0, 2, 3, 4, 5, 1, 4, 0]);
   });
@@ -238,8 +238,8 @@ describe('the haunted progression', () => {
     expect(haunted.association).toEqual([{ point: { ...SPOOKY, energy: 0.3 }, weight: 0.4, facet: 'harmony' }]);
     const repository = createRepository(LIBRARY);
     expect(repository.query(SPOOKY, 2, {}, { facet: 'harmony' }).map((f) => [f.fragment.id, Math.round(f.distance * 100) / 100])).toEqual([
-      ['dark cadence', 0],
-      ['haunted progression', 0.06],
+      ['dark_cadence', 0],
+      ['haunted_progression', 0.06],
     ]);
     const others = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ, ELECTRO_SWING };
     for (const [name, point] of Object.entries(others)) expect(fragmentDistance(haunted, point, {}, 'harmony'), name).toBeGreaterThan(0.3);

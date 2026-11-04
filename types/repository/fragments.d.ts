@@ -1,23 +1,3 @@
-/**
- * The repository of fragments (decision 041): a fragment is cells text with an index entry, an id and an association, the
- * places in style space it is found at, each of which may name the facet it is found under. A query takes a style point
- * and k and returns the k fragments nearest to it, over their points of the facet it names. Fragments come in groups
- * (decision 043): a query weighs how often two were used together with what is already chosen, beside the distance
- * (decision 046), as strongly as the frontend asks (`pull`); how well a group is known saturates, and what was used lately
- * is the frontend's workbench, not the repository's (#151).
- *
- * The repository is built from the seed library and keeps nothing a jam learns (decision 047, point 7; decision 048): a
- * query may be handed a learned layer (`LearnedLayer`: fragments the frontend filed, association points use added,
- * counts of use together), merged with the seed at that query and never stored, so a repository answers the same query
- * with the same layer alike, every time. What changes a layer (filing, use) is `learned.ts`, which returns a new one.
- *
- * The repository doesn't know the axes, nor the facets. A style point maps axis names to numbers, and the frontend names
- * them (Jambot's `sync`, `harm`, …): a distance compares only the axes a query and a point share, so an axis no fragment
- * has is ignored. A facet is a name too (`meter`, `rhythm`), compared and never read: a hint of what a fragment is
- * associated as there (a bell a rhythm in one style, a scale in another), not a classifier. What a fragment can fill is
- * read off its text by the fit (`fit.ts`, decision 047), never off its facets: a query given the workbench ranks only the
- * fragments that fit it.
- */
 import type { FragmentFile } from './files';
 /** A place in style space: axis names to numbers. */
 export type StylePoint = Readonly<Record<string, number>>;
@@ -150,7 +130,6 @@ export declare const pointsOf: (fragment: Fragment, facet?: string) => readonly 
  * distance divided by that point's weight. Infinite when it has no point of that facet.
  */
 export declare function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeights?: StylePoint, facet?: string): number;
-/** The order of two ids, by code unit: how a layer writes a pair, and a query breaks a tie. */
 export declare const byId: (a: string, b: string) => number;
 /**
  * A repository of these fragments, the seed; it throws on a malformed entry or an id given twice, naming each problem. It
