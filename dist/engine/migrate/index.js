@@ -9,6 +9,7 @@ import { fromUses } from "./from.js";
 import { grids } from "./grids.js";
 import { laps } from "./laps.js";
 import { renamedIds } from "./renamed.js";
+import { oneshots } from "./oneshot.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
     ...taps(source, result, options),
@@ -20,6 +21,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...grids(source, result, options),
     ...laps(source, result),
     ...renamedIds(source, options.resolve),
+    ...oneshots(source),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };

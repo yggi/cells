@@ -581,13 +581,6 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   ),
   syntax(
     'line',
-    'oneshot',
-    'On a voice: each note plays its envelope through (its attack and decay), whatever its step: a drum hit on any grid.',
-    ['&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)'],
-    'sound.md',
-  ),
-  syntax(
-    'line',
     '# … · // …',
     'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.',
     ['&tune step=2 0 2 4  # the opening'],
@@ -784,6 +777,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     if (word === 'oneshot' && s.atBoundary()) {
       if (oneshot) s.fail('oneshot is given twice', at, word.length);
       oneshot = true;
+      // (a line holds names, attributes and a braid, decision 068: playing through is a voice's parameter, #440)
+      s.warn('oneshot is retired as a line word: a voice’s parameter, oneshot=1 (Migrate rewrites it, decision 068)', at, word.length);
       continue;
     }
     // a note by name is a step (C, Bb3): read again as one
@@ -842,6 +837,16 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     }
   }
   const braid: Braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
+  // oneshot=1, a voice's parameter (#440): the same as the bare word, read off the parameters
+  if (b.params.oneshot !== undefined) {
+    const at = b.paramSpans.oneshot;
+    const v = b.params.oneshot;
+    if (v !== 0 && v !== 1) s.fail('oneshot= is 1 (each note played through) or 0 (as its step, the default)', at ? at.col - 1 : 0, 7);
+    if (oneshot) s.fail('oneshot is given twice: write oneshot=1 alone', at ? at.col - 1 : 0, 7);
+    oneshot = v === 1;
+    delete b.params.oneshot;
+    delete b.paramSpans.oneshot;
+  }
   // (a voice plays its notes one way: each through, or tied as one)
   if (oneshot && typeof b.params.glide === 'number' && b.params.glide > 0) {
     const at = b.paramSpans.glide;
