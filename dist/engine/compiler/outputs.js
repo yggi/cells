@@ -126,7 +126,11 @@ export function outputsOf(ctx, decls, cells, clocks, { sinks, cards, bindings, s
         const gate = lead.length === 0;
         if (gate)
             lead = levels.filter((x) => articulates(x.c));
-        const [pl, pr] = voice.kit ? [1, 1] : balance(voice.params.pan);
+        const [vl, vr] = voice.kit ? [1, 1] : balance(voice.params.pan);
+        const [pl, pr] = [...through].reduce(([l, r], n) => {
+            const [a, b] = balance(cells.get(n)?.params.pan);
+            return [l * a, r * b];
+        }, [vl, vr]);
         const term = (x) => ({
             cell: x.c.name,
             pick: x.t.ref.pick,

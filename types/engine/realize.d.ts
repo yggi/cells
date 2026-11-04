@@ -27,6 +27,14 @@ export interface Played {
     readonly instrument?: string;
     /** Its voice's moving parameters over the note (lpf=200..3000 * &fenv …). */
     readonly params?: Readonly<Record<string, ParamTrack>>;
+    /**
+     * The instruments it plays through that carry sound parameters of their own (decision 067), the innermost first,
+     * each with its moving parameters over the note: a module after its voice, in series after the voice's own chain.
+     */
+    readonly through?: readonly {
+        readonly instrument: string;
+        readonly params?: Readonly<Record<string, ParamTrack>>;
+    }[];
     /** The value that started it (a resonator reads it as where it's struck). */
     readonly value?: number;
     /** Its envelope (map=adsr, seconds), or absent for the voice's own. */
