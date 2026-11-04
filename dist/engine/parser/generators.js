@@ -205,11 +205,11 @@ function parseMeter(s, start) {
         s.fail(`Unexpected '${s.peek()}'`);
     const levels = meterLevels(sig, sub);
     if (!levels)
-        s.fail(`meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}), groups of eighths as sizes ("2+2+3", each 2 or 3), or levels like "*.-.+.-." (* bar, + beat, - a half's beat, . subdivision, , finer)`, start, span.len);
+        s.fail(`meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}), groups of eighths as sizes ("2+2+3", each 2 or 3), or levels like "*.+.+.+." (* bar, + beat, - a half's beat, . subdivision, , finer; written out, only * and + are beats)`, start, span.len);
     const value = (ch) => Math.max(0, '*+-.,'.indexOf(ch));
     const tokens = [...levels].map((ch) => ({ atom: { kind: 'note', value: value(ch), alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
     const named = !!SIGNATURES[sig] || !!groupsOf(sig);
-    const beats = named ? signatureOf(sig, sub).beats.length : [...levels].filter((ch) => ch === '*' || ch === '+').length || 1;
+    const beats = [...levels].filter((ch) => ch === '*' || ch === '+').length || 1;
     return { kind: 'list', tokens, span, perBeat: levels.length / beats, ...(named ? { signature: signatureOf(sig, sub) } : {}) };
 }
 function numbers(s, name, start) {

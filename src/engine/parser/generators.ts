@@ -221,16 +221,16 @@ function parseMeter(s: LineScanner, start: number): Braid {
   const levels = meterLevels(sig, sub);
   if (!levels)
     s.fail(
-      `meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}), groups of eighths as sizes ("2+2+3", each 2 or 3), or levels like "*.-.+.-." (* bar, + beat, - a half's beat, . subdivision, , finer)`,
+      `meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}), groups of eighths as sizes ("2+2+3", each 2 or 3), or levels like "*.+.+.+." (* bar, + beat, - a half's beat, . subdivision, , finer; written out, only * and + are beats)`,
       start,
       span.len,
     );
   // 0-based: the downbeat is the bar's tonic — * 0, + 1 (a beat), - 2, . 3, , 4 (finer and finer)
   const value = (ch: string) => Math.max(0, '*+-.,'.indexOf(ch));
   const tokens = [...levels].map((ch) => ({ atom: { kind: 'note' as const, value: value(ch), alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
-  // (a signature's beats are its groups, whatever their grades, #17: 4/4's - is a beat; levels written out count * and +)
+  // (a signature's beats are its groups, read from `signature` by meterOf; perBeat marks the braid a meter)
   const named = !!SIGNATURES[sig] || !!groupsOf(sig);
-  const beats = named ? signatureOf(sig, sub).beats.length : [...levels].filter((ch) => ch === '*' || ch === '+').length || 1;
+  const beats = [...levels].filter((ch) => ch === '*' || ch === '+').length || 1;
   return { kind: 'list', tokens, span, perBeat: levels.length / beats, ...(named ? { signature: signatureOf(sig, sub) } : {}) } as Braid;
 }
 

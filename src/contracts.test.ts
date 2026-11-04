@@ -236,7 +236,11 @@ describe('the meter contract (music-commons contracts/meter, version 1)', () => 
   it('every grouping of 2s and 3s, written as sizes, has the contract’s levels, and a named one is its signature’s meter (#17)', () => {
     for (const v of meter.vectors) {
       const name = v.groups.join('+');
-      if (v.groups.length < 2) continue; // (one group is no grouping: "2" and "3" are a beat, not a bar of groups)
+      // (one group is no grouping: "2" and "3" are a beat, not a bar of groups, and an error; the other 45 vectors are written)
+      if (v.groups.length < 2) {
+        expect(parse(`&bar meter("${name}")`).diagnostics, name).not.toEqual([]);
+        continue;
+      }
       expect(written(name), name).toEqual(v.levels);
     }
     // (a signature is a name for one grouping: 7/8 is 3+2+2, the same meter, its pulses and beats too)
