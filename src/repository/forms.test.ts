@@ -15,7 +15,7 @@ import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
-import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, NURSERY, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { createRecogniser } from './recognise';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
@@ -78,7 +78,7 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   lament: { point: at(0.2, 0.9, 0.25, 0.3) },
   peek: { point: at(0.3, 0.9, 0.3, 0.3) },
   // (two children's songs in pieces, their calls and answers, at the point proposed for a preset of them and 0.1 from it)
-  twinkle: { point: NURSERY },
+  twinkle: { point: KINDERLIED },
   wonder: { point: at(0.1, 0.12, 0.5, 0.25) },
   haenschen: { point: at(0.1, 0.12, 0.6, 0.45) },
   hinein: { point: at(0.1, 0.12, 0.6, 0.35) },
@@ -94,7 +94,7 @@ const FORMS: Record<string, { head: string; hole: string; bars: number; point: S
   period: { head: 'period', hole: 'call', bars: 4, point: CENTRE },
   AABA: { head: 'chorus', hole: 'a', bars: 4, point: CENTRE },
   // (Twinkle's and Hänschen klein's, at their tunes' points, #371)
-  ternary: { head: 'song', hole: 'call', bars: 6, point: NURSERY, weight: 0.5 },
+  ternary: { head: 'song', hole: 'call', bars: 6, point: KINDERLIED, weight: 0.5 },
   'rounded binary': { head: 'song', hole: 'call', bars: 8, point: at(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
 };
 

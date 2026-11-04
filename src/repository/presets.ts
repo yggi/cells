@@ -29,4 +29,4 @@ export const SPOOKY = at(0.2, 0.9, 0.3, 0.35); // the meter 5/4, with 6/8 and 3/
 // A point proposed for a preset of children's and learners' songs (yggi/jambot#358's melody rung): a static vamp, the
 // beat on the beat, sung notes neither held nor short, and sparse. Twinkle's and Hänschen klein's motifs and forms sit
 // there, and Jambot is to adopt it; the axes are Jambot's (decision 041).
-export const NURSERY = at(0.1, 0.12, 0.5, 0.35);
+export const KINDERLIED = at(0.1, 0.12, 0.5, 0.35);

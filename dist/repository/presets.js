@@ -9,4 +9,4 @@ export const BOSSA_NOVA = at(0.75, 0.85, 0.45, 0.45);
 export const SWING_JAZZ = at(0.35, 1, 0.3, 0.6);
 export const ELECTRO_SWING = at(0.55, 0.75, 0.6, 0.75);
 export const SPOOKY = at(0.2, 0.9, 0.3, 0.35);
-export const NURSERY = at(0.1, 0.12, 0.5, 0.35);
+export const KINDERLIED = at(0.1, 0.12, 0.5, 0.35);

@@ -18,4 +18,4 @@ export declare const BOSSA_NOVA: Readonly<Record<string, number>>;
 export declare const SWING_JAZZ: Readonly<Record<string, number>>;
 export declare const ELECTRO_SWING: Readonly<Record<string, number>>;
 export declare const SPOOKY: Readonly<Record<string, number>>;
-export declare const NURSERY: Readonly<Record<string, number>>;
+export declare const KINDERLIED: Readonly<Record<string, number>>;

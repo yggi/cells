@@ -17,7 +17,7 @@
  *
  * Six more are two children's songs in pieces, traditional and in the public domain: Twinkle's call and answer
  * (`twinkle`, `wonder`), and Hänschen klein's call, open and closing answers and bridge (`haenschen`, `hinein`, `heim`,
- * `weinet`), at the point proposed for a preset of children's songs (`NURSERY`) and 0.1 to 0.2 from it, so a query
+ * `weinet`), at the point proposed for a preset of children's songs (`KINDERLIED`) and 0.1 to 0.2 from it, so a query
  * there finds each call first; the forms `ternary` and `rounded binary` put each tune together.
  */
 import type { Fragment } from './fragments';
