@@ -414,8 +414,9 @@ describe('the tools keep use', () => {
     const text =
       'use * from gm_kit\nuse &key from harmonic_minor\n&tonic D\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
     const out = normalise(text, seed).source;
-    // (a collection's use its from line; a template's, its tonic, which only it read, written in)
-    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('use * from gm_kit\nuse &key from harmonic_minor\n&tonic D', '* from gm_kit\n&key from harmonic_minor D'));
+    // (a collection's use its from line, the narrowest: the kit's cells the piece reads, &hh its own, #27; a template's,
+    // its tonic, which only it read, written in)
+    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('use * from gm_kit\nuse &key from harmonic_minor\n&tonic D', '&bd, &sd from gm_kit\n&key from harmonic_minor D'));
     // (the old spellings, use "id" and use &x, are written * from "id" and &x from x; an id that is a word, bare)
     const old = 'use "gm_kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~';
     const resolve = (id: string) => (id === 'kit' ? '&kick s=sine\n&snare s=white' : id === 'pulse' ? '&pulse s=sine loop=A4' : resolveSeed(id));

@@ -36,11 +36,7 @@ describe("an instrument's sound parameters are its voices' (decision 067)", () =
     for (const v of ['saw', 'sub']) expect(voice(PATCH, v)).toEqual(voice(FLAT, v));
   });
 
-  it('renders sample for sample as the flat text', () => {
-    const audio = (text: string) => {
-      const r = compiled(text);
-      return pieceAudio(r, codeShifts(r), { seconds: 1 });
-    };
+  it('renders sample for sample as the flat text, its filter a stage after each voice', () => {
     const [flat, patch] = [audio(FLAT), audio(PATCH)];
     expect(patch.diagnostics.filter((d) => d.param.startsWith('l'))).toEqual([]);
     for (const c of [0, 1]) expect(patch.mix[c]).toEqual(flat.mix[c]);
@@ -90,35 +86,62 @@ describe("an instrument's sound parameters are its voices' (decision 067)", () =
   });
 });
 
-describe('what an instrument’s own chain would sound is said, not yet rendered (#432)', () => {
-  it('a parameter on both the voice and its instrument: in series, the voice’s own plays', () => {
-    const text = lines(BASE, '&saw s=saw loop=C2 lpf=3000', '&vcf lpf=800 [&saw]', '&out map=sample [&tune * &vcf * .4]');
-    expect(messages(text)).toEqual([
-      "warning: &saw sets lpf= and plays through &vcf, which sets it too: the two in series aren't rendered yet (decision 067), so &saw's own plays",
-    ]);
-    expect(voice(text, 'saw').params.lpf).toBe(3000);
+/** A text rendered for its first second. */
+const audio = (text: string, seconds = 1) => {
+  const r = compiled(text);
+  expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+  return pieceAudio(r, codeShifts(r), { seconds });
+};
+/** The largest difference between two renders' mixes. */
+const apart = (a: ReturnType<typeof audio>, b: ReturnType<typeof audio>) => {
+  let d = 0;
+  for (const c of [0, 1] as const) for (let i = 0; i < a.mix[c].length; i++) d = Math.max(d, Math.abs(a.mix[c][i]! - (b.mix[c][i] ?? 0)));
+  return d;
+};
+
+describe('an instrument is a module after its voices, with its own stage (#432)', () => {
+  it('a note says the instruments it plays through, the innermost first, with their moving parameters', () => {
+    const nested = lines(PATCH.replace('&out map=sample [&tune * &vcf * .4]', ''), '&amp pan=.3 [&(map=adsr .01 .1 .6 .1) * &vcf]', '&out map=sample [&tune * &amp * .4]');
+    const [n] = eventsBetween(plan(compiled(nested), codeShifts(compiled(nested))), 0, 0.1);
+    expect(n!.through?.map((x) => x.instrument)).toEqual(['vcf', 'amp']);
+    expect(Object.keys(n!.through![0]!.params ?? {}).sort()).toEqual(['lpf']);
+    // (a mix with no sound parameter of its own is no stage)
+    expect(eventsBetween(plan(compiled(FLAT), codeShifts(compiled(FLAT))), 0, 0.1)[0]!.through).toBeUndefined();
   });
 
-  it('two instruments one after the other setting one parameter: the inner plays', () => {
-    const text = lines(BASE, '&saw s=saw loop=C2', '&vcf lpf=800 [&saw]', '&dark lpf=300 [&vcf]', '&out map=sample [&tune * &dark * .4]');
-    expect(messages(text)).toEqual(["warning: &dark and &vcf both set lpf=, one after the other: the two in series aren't rendered yet (decision 067), so &vcf's plays"]);
-    expect(voice(text, 'saw').params.lpf).toBe(800);
+  it('a parameter on both the voice and its instrument: the two in series, as two instruments one after the other', () => {
+    const both = lines(BASE, '&saw s=saw loop=C2 lpf=3000', '&vcf lpf=800 [&saw]', '&out map=sample [&tune * &vcf * .4]');
+    const chain = lines(BASE, '&saw s=saw loop=C2', '&bright lpf=3000 [&saw]', '&vcf lpf=800 [&bright]', '&out map=sample [&tune * &vcf * .4]');
+    expect(messages(both)).toEqual([]);
+    expect(messages(chain)).toEqual([]);
+    expect(voice(both, 'saw').params.lpf).toBe(3000);
+    expect(apart(audio(both), audio(chain))).toBeLessThan(1e-6);
+    const one = lines(BASE, '&saw s=saw loop=C2 lpf=800', '&out map=sample [&tune * &saw * .4]');
+    expect(apart(audio(both), audio(one))).toBeGreaterThan(1e-3);
   });
 
-  it('grit on an instrument acts on the sum: said, and played without it', () => {
-    const text = lines(BASE, '&saw s=saw loop=C2', '&vcf distort=.5 lpf=900 [&saw]', '&out map=sample [&tune * &vcf * .4]');
-    expect(messages(text)).toEqual([
-      'warning: distort= on the instrument &vcf acts on what its voices play together, in a chain of its own: not rendered yet (decision 067), so it plays without it',
-    ]);
-    expect(voice(text, 'saw').params).toEqual({ s: 'saw', lpf: 900 });
-  });
-
-  it('a voice played through the instrument and without it: said, and played as written', () => {
+  it('a voice played through the instrument and without it: each way as written', () => {
     const text = lines(BASE, '&saw s=saw loop=C2', '&vcf lpf=900 [&saw]', '&out map=sample [&tune * &vcf * .4, &tune * &saw * .1]');
-    expect(messages(text)).toEqual([
-      "warning: &saw plays through &vcf and elsewhere without it: a voice has one chain until an instrument has its own (decision 067), so its sound parameters aren't rendered on &saw",
-    ]);
+    const two = lines(BASE, '&saw s=saw loop=C2', '&dark s=saw loop=C2 lpf=900', '&out map=sample [&tune * &dark * .4, &tune * &saw * .1]');
+    expect(messages(text)).toEqual([]);
+    // (its one cell can't say both: it takes nothing, and the instrument's stage plays the filter)
     expect(voice(text, 'saw').params).toEqual({ s: 'saw' });
+    expect(apart(audio(text), audio(two))).toBeLessThan(1e-6);
+  });
+
+  it('pan= on an instrument is a balance after the voice’s, in the notes’ gains', () => {
+    const gains = (text: string) => eventsBetween(plan(compiled(text), codeShifts(compiled(text))), 0, 0.1)[0]!.gains;
+    expect(gains(lines(BASE, '&saw s=saw loop=C2', '&ins pan=.1 [&saw]', '&out map=sample [&tune * &ins]'))).toEqual(
+      gains(lines(BASE, '&saw s=saw loop=C2 pan=.1', '&out map=sample [&tune * &saw]')),
+    );
+    const [l, r] = gains(lines(BASE, '&saw s=saw loop=C2 pan=.25', '&ins pan=.75 [&saw]', '&out map=sample [&tune * &ins]'));
+    expect([l, r]).toEqual([0.5, 0.5]);
+  });
+
+  it('grit on an instrument is sounded from stage R2, as on a voice: said by the render, not the compiler', () => {
+    const text = lines(BASE, '&saw s=saw loop=C2', '&vcf distort=.5 lpf=900 [&saw]', '&out map=sample [&tune * &vcf * .4]');
+    expect(messages(text)).toEqual([]);
+    expect(audio(text).diagnostics.map((d) => d.message)).toContain("&vcf's distort= is sounded from stage R2: rendered without it");
   });
 
   it('what isn’t a processor is a voice’s: an error on an instrument', () => {

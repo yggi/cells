@@ -6,7 +6,6 @@
  *
  *  - gates.ts:     a gate written the old way (trigger=, velocity=, gate=, gain=) as play= and level= (decision 023)
  *  - taps.ts:      a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
- *  - sections.ts:  a table of sections named &parts as &sections (decision 044; a name, offered for one minor version)
  *  - swing.ts:     a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
  *  - uses.ts:      a `use` line in its one spelling: use "my riff" → use * from "my riff" (decision 059)
  *  - mainkey.ts:   over=key as the cell it reads, over=&key (decision 060)
@@ -17,17 +16,18 @@
  *                  construction against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *  - renamed.ts:   a seed id that became a word as the word: "harmonic minor" → harmonic_minor (#387)
  *
- * The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
+ * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
+ * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
  * a text a piece file, so `migrate` leaves it: Shorten offers it, and `movedCard` (`shorten/card.ts`) does it.
  *
- * Shorten keeps offering its four (gate, tap, swing, section) as suggestions, and Normalise keeps running all nine
- * before its own, for one minor version (decision 049's bound): delegated here, then gone with a CHANGELOG line. Pure.
+ * Shorten offered four of them (gate, tap, swing, section) as suggestions for v0.15, delegated here, and no longer does
+ * (#157). Normalise runs these rules before its own, but those exact only against an older meaning (decision 049's order:
+ * Migrate, then Normalise; its library rule writes a `use`, which `from` says as a `from` line). Pure.
  */
 import { rewriteAll, ROUNDS, type Find, type Rewrite } from '../rewrite';
 import type { CompileOptions } from '../program';
 import { gates } from './gates';
 import { taps } from './taps';
-import { sections } from './sections';
 import { swings } from './swing';
 import { uses } from './uses';
 import { mainKey } from './mainkey';
@@ -38,7 +38,7 @@ import { laps } from './laps';
 import { renamedIds } from './renamed';
 
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'section' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from' | 'grid' | 'laps' | 'renamed';
+export type MigrationRule = 'gate' | 'tap' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from' | 'grid' | 'laps' | 'renamed';
 export type Migration = Rewrite<MigrationRule>;
 
 /** Every migration a text has, in the order its form was retired; a `use` line's fragment read through `options.resolve`. */
@@ -47,7 +47,6 @@ export const migrations =
   (source, result): Migration[] => [
     ...gates(source, result, options),
     ...taps(source, result, options),
-    ...sections(source, result, options),
     ...swings(source, result, options),
     ...uses(source),
     ...mainKey(source, result),

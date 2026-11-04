@@ -85,6 +85,7 @@ The owner (2026-11-04) chose Migrate, rebuilt from `main`, as the first work tow
 - **Each is witnessed** by a before and an after in `fixtures/migrations/<rule>/`, and each retired form warns, naming Migrate (`trigger=`, the last silent one, now warns).
 - **The order holds by delegation:** Normalise runs Migrate's rules before its own (a `use` its library rule writes is said as a `from` in the same run), and Shorten keeps offering its four as suggestions for one minor version, then they go with a CHANGELOG line.
 - The draft #165, parked on 2026-10-18, is closed; this replaces it.
+- **v0.16 (#157):** Shorten no longer offers the four migrations; they are Migrate's alone. `&parts` → `&sections`, offered by Migrate for v0.15, is retired, as ruling 4 says. Normalise keeps running Migrate's rules first, as the order says (its `library` rule writes a `use`, which Migrate's `from` says), but none that is exact only against an older meaning.
 
 ## The questions as they were asked
 
