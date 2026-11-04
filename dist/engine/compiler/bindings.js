@@ -29,6 +29,12 @@ export function bindVoices(ctx, decls, given, typed) {
         return v.mix.flatMap((inner) => expand({ voice: inner.voice, pitches: [...b.pitches, ...inner.pitches], offset: b.offset + inner.offset, gain: b.gain * inner.gain }, [...through, v.name]));
     };
     const gathered = new Map();
+    const playings = new Map();
+    const played = (voice, through) => {
+        if (!playings.has(voice))
+            playings.set(voice, []);
+        playings.get(voice).push(through);
+    };
     const termKey = (b) => [b.voice.name, b.offset, ...b.pitches.map((t) => `${t.sign}${t.ref.name}${JSON.stringify(t.ref.pick)}${t.ref.shift}`)].join('|');
     for (const sink of sinks) {
         const d = decls.get(sink.name);
@@ -55,6 +61,7 @@ export function bindVoices(ctx, decls, given, typed) {
                     gathered.set(key, (g = { b, span, gains: [0, 0], via: new Set(), parts: [], through: new Set() }));
                 for (const t of through)
                     g.through.add(t);
+                played(b.voice.name, through);
                 const part = channels.length === 1 ? [b.gain, b.gain] : ch === 0 ? [b.gain, 0] : [0, b.gain];
                 g.gains[0] += part[0];
                 g.gains[1] += part[1];
@@ -85,6 +92,7 @@ export function bindVoices(ctx, decls, given, typed) {
                 if (gathered.has(key) || [...gathered.values()].some((g) => termKey(g.b) === termKey(b)))
                     continue;
                 gathered.set(key, { b, span: mix.span, gains: [b.gain, b.gain], via: new Set([name]), parts: [], through: new Set(through), silent: true });
+                played(b.voice.name, through);
             }
         }
     }
@@ -150,6 +158,7 @@ export function bindVoices(ctx, decls, given, typed) {
                         gathered.set(key, (g = { b, span: card.span, gains: [0, 0], via: new Set(), parts: [], through: new Set() }));
                     for (const t of through)
                         g.through.add(t);
+                    played(b.voice.name, through);
                     (g.midi ??= []).push({ card: card.name, mix, channel, port: map.port, gain: b.gain });
                     g.via.add(card.name);
                     if (mix)
@@ -216,5 +225,5 @@ export function bindVoices(ctx, decls, given, typed) {
         else if (d.step && !d.step.whole)
             error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4${why}`, d.step.span);
     }
-    return { cells: cells, sinks, cards, bindings, soundHead };
+    return { cells: cells, sinks, cards, bindings, soundHead, playings: playings };
 }

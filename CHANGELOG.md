@@ -8,7 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.15.0.
+### Added
+
+- **A sound parameter on an instrument** (decision 067, #423): a mix used like a voice may carry `lpf=` `lpq=` `hpf=` `hpq=` `pan=` `room=` `delay=` `delaytime=` `delayfeedback=`, fixed or moving, each played as its voices' where the voice sets none, so a filter follows a mix (`&vcf lpf=70..4800 * &eg lpq=8 [&saw, &sub * .5]`) and plays, event for event and sample for sample, what the filter written on each oscillator plays. Said and not yet rendered (#432): a parameter on both an instrument and its voice (in series: the voice's own plays), `distort=` or `crush=` on an instrument (on the sum: played without it), a voice played through the instrument and without it (played as written); a voice's own sound (`s=`, `fm=` …) on an instrument is an error. **What a frontend sees at its next pin:** a voice playing through such an instrument carries the instrument's parameters in its `params`, `paramCells` and `paramClocks` as its own, and `ResolvedCell.inherited` names which and from where (the graph draws their wires into the instrument, where they are written); a frontend that builds a voice's chain from its cell plays the filter with no change. No example writes it, and no event snapshot moves.
+
+### Fixed
+
+- **An instrument's filter was dropped silently** once its line carried a fixed sound parameter too (#424): it plays now (above), and where it can't, it is said.
 
 ## v0.15.0 — 2026-11-04
 

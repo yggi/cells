@@ -24,6 +24,7 @@ import { sectioned } from './sections';
 import { banded, bandsOf, checkBands, performersOf } from './band';
 import { readSlots } from './slots';
 import { restingParts, unplayed } from './parts';
+import { instrumentParams, instrumentsOf } from './instruments';
 
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
@@ -57,8 +58,9 @@ export function compile(written: ParseResult, env: Env, used: ReadonlySet<string
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
   // (a line nothing plays or reads is silent, and said: decision 063 §4)
   unplayed(ctx, decls, timed.cells, outputs, clocks);
-  const cells = displayCells(timed.cells);
-  checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands);
+  // (an instrument's sound parameters, its voices': decision 067)
+  const cells = displayCells(instrumentParams(ctx, decls, timed.cells, outputs, bound.playings));
+  checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands, instrumentsOf(outputs, cells));
   // (the gates, as performers, and their roles: decisions 058 and 061)
   const performers = performersOf(ctx, decls, declared.implicit);
 

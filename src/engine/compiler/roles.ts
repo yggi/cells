@@ -1,7 +1,7 @@
 /** Phase 8: attributes where they do nothing — each acts on some roles only (attributes.ts): warnings. */
 import type { Span } from '../ast';
 import { SHOWS } from '../parser/cell';
-import { ATTRIBUTES, rolesText, type Role } from '../attributes';
+import { ATTRIBUTES, rolesText, VOICE_PARAMS, type Role } from '../attributes';
 import { PLUGIN_SYNTAX, type ShowPlugin } from '../plugins';
 import { isMidiCard, type Clock, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
@@ -17,6 +17,7 @@ export function checkRoles(
   clocks: ReadonlyMap<string, Clock>,
   plugins: ReadonlyMap<string, ShowPlugin>,
   bands: ReadonlyMap<string, readonly string[]> = new Map(),
+  instruments: ReadonlySet<string> = new Set(),
 ): void {
   const { warn } = ctx;
   // ---- attributes where they do nothing: each acts on some roles only (attributes.ts)
@@ -66,6 +67,8 @@ export function checkRoles(
     ];
     for (const [k, span] of written) {
       const a = ATTRIBUTES[k];
+      // (an instrument's sound parameters are its voices': said where they are passed on, instruments.ts)
+      if (instruments.has(d.name) && VOICE_PARAMS.has(k)) continue;
       // anchor= on a law: it belongs on the clock the law reads its day through (over=&day)
       if (k === 'anchor' && has.has('law'))
         warn(
