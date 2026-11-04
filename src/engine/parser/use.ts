@@ -189,7 +189,7 @@ export const USE_OLD = 'use is the old way';
 
 /**
  * What a `use` line is told (decision 065): it is the old way, and says what the `from` line is. A template's arguments,
- * which the `use` read by name, are Normalise's to write (its Migrate step), since only the fragment says what they are.
+ * which the `use` read by name, are Migrate's to write, since only the fragment says what they are.
  */
 export const useOld = ({ id, names }: Pick<UseForm, 'id' | 'names'>): string =>
-  `${USE_OLD}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 065; Normalise writes it, with a template's arguments)`;
+  `${USE_OLD}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 065; Migrate writes it, with a template's arguments)`;

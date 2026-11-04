@@ -309,10 +309,10 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(compileSource('&bar meter("4/4") step=60bpm\n&x step=&bar:9n 0').ok).toBe(false);
   });
 
-  it('a raw step=&bar warns with the tap that says the same, and Shorten rewrites it so', () => {
+  it('a raw step=&bar warns with the tap that says the same, and Migrate’s rule, which Shorten offers, rewrites it so', () => {
     const src = `&bar scan(1 1 1 1) step=120bpm\n&x step=&bar*2 0 2 4 5${VOICE}`;
     expect(compileSource(src).diagnostics.map((d) => d.message)).toEqual([
-      "step=&bar*2 steps by the meter cell's own steps: tap the meter by pulse, beat or a note value (step=8n)",
+      "step=&bar*2 steps by the meter cell's own steps: tap the meter by pulse, beat or a note value (step=8n; Migrate rewrites it)",
     ]);
     const tap = shorten(src).find((s) => s.kind === 'tap')!;
     expect(tap.after).toBe('&x step=8n 0 2 4 5');

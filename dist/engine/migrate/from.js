@@ -120,7 +120,7 @@ export function fromUses(source, resolve) {
         return [
             {
                 id: `from:${i + 1}`,
-                tool: 'normalise',
+                tool: 'migrate',
                 rule: 'from',
                 title: `${before} is written ${after}${dropped ? `, its ${dropped.trim()} written in` : ''} (decision 065)`,
                 before,

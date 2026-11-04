@@ -13,7 +13,7 @@ export function uses(source) {
         return [
             {
                 id: `use:${i + 1}`,
-                tool: 'normalise',
+                tool: 'migrate',
                 rule: 'use',
                 title: `${before} is written ${after}`,
                 before,

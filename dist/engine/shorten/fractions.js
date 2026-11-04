@@ -1,5 +1,5 @@
 import { attrsOf, setAttr, setBraid } from "../edit.js";
-import { tapOfRaw } from "./taps.js";
+import { tapOfRaw } from "../migrate/taps.js";
 import { saves } from "./harness.js";
 const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 export function fractions(source, cells, result) {

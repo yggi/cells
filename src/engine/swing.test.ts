@@ -121,9 +121,9 @@ describe('swing on the bar: one level of the meter leans, named by note value', 
     expect(onsets('meter("4/4") swing=4n:.67', '8n')).toEqual(onsets('meter("4/4")', '8n'));
   });
 
-  it('a bare swing= on a meter leans its own steps’ level, with a warning, and Shorten names the level', () => {
+  it('a bare swing= on a meter leans its own steps’ level, with a warning, and Migrate’s rule, which Shorten offers, names the level', () => {
     const bare = `&bar meter("4/4", 2) step=60bpm swing=.67\n&x step=8n 0${VOICE}`;
-    expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps: name the level it leans, swing=8n:.67"]);
+    expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps: name the level it leans, swing=8n:.67 (Migrate rewrites it)"]);
     expect(onsets('meter("4/4", 2) swing=.67', '8n')).toEqual(onsets('meter("4/4", 2) swing=8n:.67', '8n'));
     const s = shorten(bare).find((x) => x.kind === 'swing')!;
     expect(s.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:.67');

@@ -1,5 +1,5 @@
 /**
- * A migration (#18): a bare `swing=.67` on a meter, which leans the meter cell's own steps, written with the level it leans
+ * Migrate (#18): a bare `swing=.67` on a meter, which leans the meter cell's own steps, written with the level it leans
  * (`swing=8n:.67`): the spelling the compiler's warning names, a note value of the meter's and not its cell's steps, so
  * that changing the meter's subdivision doesn't change what the swing means (decision 040). Offered when it plays the
  * same notes (checked here).
@@ -7,12 +7,12 @@
 import { attrsOf, declLine, setAttr } from '../edit';
 import { bareSwingLevel, noteValue, swingLevelProblem } from '../meter';
 import { soundsIdentical } from '../sameness';
-import type { CompileOptions } from '../program';
-import type { Result, ShortenRewrite } from './harness';
+import type { CompileOptions, CompileResult as Result } from '../program';
+import type { Rewrite } from '../rewrite';
 
 /** Each meter with a bare swing=: the same swing with its level named, if it plays the same notes. */
-export function swings(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
-  const out: ShortenRewrite[] = [];
+export function swings(source: string, result: Result, options: CompileOptions = {}): Rewrite<'swing'>[] {
+  const out: Rewrite<'swing'>[] = [];
   for (const c of result.cells.values()) {
     const m = c.meter;
     // (the share as written, free(…) and all; one with its level named already is left alone)

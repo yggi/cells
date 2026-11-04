@@ -5,15 +5,15 @@
  * writes is listed, each with its reason, in docs/language/canonical.md. One rule a file:
  *
  *  - aliases.ts:  Strudel's or dough's name for a parameter as ours, whatever its length: cutoff= → lpf=, clip= → legato=
- *  - uses.ts:     a `use` line in its one spelling (decision 059): use "harmonic minor" → use * from "harmonic minor"
- *  - mainkey.ts:  the main key named (decision 060): over=key → over=&key
  *  - names.ts:    the interface names where they are unambiguous (#196): the main meter &bar, its rate &tempo, the main key
  *                 &key, its tonic &tonic; and scan(1 1 1 1), the meter of four beats, as meter("4/4")
  *  - library.ts:  a line that is a library fragment's word for word as a use of it (#196): &bar meter("4/4") step=&tempo
  *                 → use &bar from "4/4", and a fragment's cell written inline as it by name: pitch=&(map=lin …)
  *                 → pitch=&vibrato, use &vibrato; with the library the call gives (`NormaliseOptions.library`)
- *  - forwarded.ts: a use of a fragment that only forwards as the use it forwards to (#196): use * from "core kit" → use &bd, … from gm_kit
- *  - from.ts:     a `use` line as the `from` line that plays the same (decision 065): use &key from dorian, &tonic D → &key from dorian D
+ *
+ * Migrate's rules run first, as decision 049 orders them (Migrate, then Normalise): a retired form a text has, or that a rule
+ * here writes on its way (libraryLines writes a `use`, which Migrate's `from` says as a `from` line), is migrated in the same
+ * run. They were Normalise's own (the `use` spellings, over=key, the forwards, `from`) until Migrate was built (#156).
  *
  * The canonical table's other rows join as the owner rules them (#27). A `use` line (decision 054) is kept, in its
  * order, never expanded: a used fragment's lines written in are no canonical form (`expand` writes them out). Its
@@ -22,12 +22,9 @@
 import { rewriteAll, ROUNDS, type Rewrite } from '../rewrite';
 import type { CompileOptions, CompileResult } from '../program';
 import { aliases } from './aliases';
-import { mainKey } from './mainkey';
-import { forwardedUses } from './forwarded';
 import { libraryCells, libraryLines, type LibraryFragment } from './library';
 import { fourFour, interfaceNames } from './names';
-import { uses } from './uses';
-import { fromUses } from './from';
+import { migrations } from '../migrate';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
 export interface NormaliseOptions extends CompileOptions {
@@ -38,10 +35,7 @@ export interface NormaliseOptions extends CompileOptions {
 export const normalisations =
   (options: NormaliseOptions = {}) =>
   (source: string, result: CompileResult): Rewrite[] => [
-    ...uses(source),
-    ...forwardedUses(source, options.resolve),
-    ...fromUses(source, options.resolve),
-    ...mainKey(source, result),
+    ...migrations(options)(source, result),
     ...interfaceNames(source, result),
     ...fourFour(source, result),
     ...aliases(source, result),

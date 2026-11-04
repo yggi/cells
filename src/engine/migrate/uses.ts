@@ -20,7 +20,7 @@ export function uses(source: string): Rewrite<'use'>[] {
     return [
       {
         id: `use:${i + 1}`,
-        tool: 'normalise' as const,
+        tool: 'migrate' as const,
         rule: 'use' as const,
         title: `${before} is written ${after}`,
         before,

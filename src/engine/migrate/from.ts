@@ -133,7 +133,7 @@ export function fromUses(source: string, resolve?: Resolve): Rewrite<'from'>[] {
     return [
       {
         id: `from:${i + 1}`,
-        tool: 'normalise' as const,
+        tool: 'migrate' as const,
         rule: 'from' as const,
         title: `${before} is written ${after}${dropped ? `, its ${dropped.trim()} written in` : ''} (decision 065)`,
         before,

@@ -1,6 +1,6 @@
 # 049 · Four tools over a piece: Migrate, Normalise, Shorten, Fold
 
-**Date:** 2026-10-18 · **Status:** accepted (the four definitions are the owner's, 2026-10-18; questions 1, 2 and 5 "as suggested", 3 and 4 ruled, 6 waiting with Migrate, the owner, 2026-10-18) · Issues: #154 (the epic), #161 (the shared layer, built), #155, #156, #28, #157, #158, #27, #35 · Supersedes [decision 017](017-shorten-and-normalise.md) in part · **Amended** 2026-10-27 (#196): Normalise writes the canonical form, which may change, add and remove cells ([below](#amendment-normalise-writes-the-canonical-form-2026-10-27))
+**Date:** 2026-10-18 · **Status:** accepted (the four definitions are the owner's, 2026-10-18; questions 1, 2 and 5 "as suggested", 3 and 4 ruled, 6 waiting with Migrate, the owner, 2026-10-18) · Issues: #154 (the epic), #161 (the shared layer, built), #155, #156, #28, #157, #158, #27, #35 · Supersedes [decision 017](017-shorten-and-normalise.md) in part · **Amended** 2026-11-04 (#156: Migrate built) and 2026-10-27 (#196): Normalise writes the canonical form, which may change, add and remove cells ([below](#amendment-normalise-writes-the-canonical-form-2026-10-27))
 
 ## Context
 
@@ -76,6 +76,15 @@ The owner, on #196: "amend 049, maybe even further. normalize rewrites to a 'can
 - **What is canonical is ruled row by row** ([language/canonical.md](../language/canonical.md), #27), as before: a row names what it writes and when. A name is the author's unless a row says otherwise; the interface names (`&bar`, `&tempo`, `&key`, `&tonic`) are written only where the compile identifies them unambiguously, and a meter is `&bar` only where it is a bar, its beats at 40 to 300 bpm.
 - **The line to Shorten is the purpose, not the structure.** Normalise converges: every piece of one meaning to one text, applied, for the corpus, the round trip and a hash. Shorten offers: a more compact structure by its measure (question 2), the author's to take. `expand`, writing a `use`'s lines into the piece, stays out of Normalise: it is no canonical form.
 - **What a hash reads** (ruling 1) is unchanged: Normalise, then the identity step.
+
+## Amendment: Migrate is built, ahead of v1.0.0 (2026-11-04)
+
+The owner (2026-11-04) chose Migrate, rebuilt from `main`, as the first work toward v1.0.0 (#26, #156); ruling 6's "waits with Migrate, which starts with v1.0.0" becomes: Migrate is built before 1.0, so that at 1.0 a retired form can leave the parser with Migrate as the way an older piece reads.
+
+- **Migrate holds every retired form's rule** (`src/engine/migrate/`): Shorten's four (`gates`, `taps`, `swing`, `sections`) and the four that had gone to Normalise since (`uses`, `mainkey`, `forwarded`, `from`, which this decision had rejected as "Migrate inside Normalise"). The card stays Shorten's, its rewrite a file.
+- **Each is witnessed** by a before and an after in `fixtures/migrations/<rule>/`, and each retired form warns, naming Migrate (`trigger=`, the last silent one, now warns).
+- **The order holds by delegation:** Normalise runs Migrate's rules before its own (a `use` its library rule writes is said as a `from` in the same run), and Shorten keeps offering its four as suggestions for one minor version, then they go with a CHANGELOG line.
+- The draft #165, parked on 2026-10-18, is closed; this replaces it.
 
 ## The questions as they were asked
 

@@ -153,7 +153,7 @@ A band, a table of performers a selector reads, switches who plays when, each pa
 
 `play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
 (`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
-played) still reads, and Shorten rewrites it.
+played) still reads, with a warning, and Migrate rewrites it.
 A gate times nothing itself: `over=`, `step=` and the like on it do nothing, and warn
 (they go on its notes). Its `level=` is 0 or more (a negative one warns), and its notes and level cells aren't sounds:
 `level=&otherGate` says so.

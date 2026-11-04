@@ -43,7 +43,7 @@ export function forwardedUses(source: string, resolve: Resolve | undefined): Rew
     return [
       {
         id: `forwarded:${i + 1}`,
-        tool: 'normalise' as const,
+        tool: 'migrate' as const,
         rule: 'forwarded' as const,
         title: `${before} takes what ${JSON.stringify(use.id)} forwards: ${after}`,
         before,

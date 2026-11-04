@@ -3,7 +3,7 @@
  * slow the clock to match (4 2 0@2, step=&bar/2).
  */
 import { attrsOf, setAttr, setBraid } from '../edit';
-import { tapOfRaw } from './taps';
+import { tapOfRaw } from '../migrate/taps';
 import { saves, type Candidate, type Result, type ShortenRewrite } from './harness';
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
