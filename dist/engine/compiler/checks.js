@@ -1,5 +1,6 @@
 import { AXES, SLOTS } from "../style.js";
-import { BODIES, isMidiCard, ROOT } from "../program.js";
+import { BODIES, CV_LAPS, isMidiCard, ROOT } from "../program.js";
+import { sortOfCells } from "./sorts.js";
 import { MOVING_PARAMS } from "../attributes.js";
 import { DOUGH_SOURCES } from "../dough-params.js";
 import { refsOf } from "../readers.js";
@@ -73,6 +74,7 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
             }
         }
     }
+    const sortOf = sortOfCells(ctx, decls);
     for (const d of decls.values())
         for (const [key, pc] of Object.entries(d.paramCells ?? {})) {
             const slot = d.map?.kind === 'adsr' && SLOTS.adsr.includes(key);
@@ -93,6 +95,10 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
                     unknownCell(f.name, f.span);
                 else if (fc.map?.kind === 'adsr')
                     envs++;
+                else if (sortOf(f.name) === 'signal')
+                    warn(`${key}= * &${f.name}: &${f.name} is a sound, not a value that moves, and moves nothing here. A CV is a braid: &${f.name} loop=.5 sin(12)`, f.span);
+                else if (sortOf(f.name) === 'wave')
+                    warn(`${key}= * &${f.name}: &${f.name} turns at an audio rate, and ${key}= follows a cell turning at most ${CV_LAPS} times a second: it is read turning at that. A sound moved at an audio rate is FM's: fm= a voice`, f.span);
             }
             if (envs > 1)
                 error(`${key}=: one envelope (map=adsr) at most — the other factors scale it`, pc.span);

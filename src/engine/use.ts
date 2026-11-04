@@ -267,6 +267,26 @@ function inherited(name: string, defaultCode: string, body: string): string {
   return [`&${name}`, ...kept, body].join(' ');
 }
 
+/**
+ * An argument written as an inline cell, `&(map=adsr .002 .3 .5 .06)`, as its body (decision 065 §5: it is a new cell,
+ * read as the fragment reads the parameter; #428); anything else as written.
+ */
+function unwrapped(argument: string): string {
+  const v = argument.trim();
+  if (!v.startsWith('&(') || !v.endsWith(')')) return argument;
+  // (the parenthesis that opens it closes it at the end: `&(a) * &(b)` is two)
+  let depth = 0;
+  let quoted = false;
+  for (let i = 1; i < v.length; i++) {
+    const c = v[i]!;
+    if (c === '"') quoted = !quoted;
+    if (quoted) continue;
+    if (c === '(') depth++;
+    else if (c === ')' && --depth === 0 && i < v.length - 1) return argument;
+  }
+  return v.slice(2, -1).trim();
+}
+
 /** The attributes that read a cell as that attribute alone (`step=&tempo`: a rate alone, `swing=&swing`: a swing alone). */
 const ALONE = new Set(['step', 'loop', 'swing']);
 
@@ -426,8 +446,8 @@ function instantiate(
     say(`${quoted(id)} takes no main argument: its signature has none (&${heads[0]} from ${signature.optional.length ? `(${signature.optional.join(', ')})` : ''})`);
   const BARE = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
   const values = new Map<string, string>();
-  for (const [k, v] of args) if (optional.includes(k)) values.set(k, v);
-  if (main && from.main !== null) values.set(main, from.main);
+  for (const [k, v] of args) if (optional.includes(k)) values.set(k, unwrapped(v));
+  if (main && from.main !== null) values.set(main, unwrapped(from.main));
   const byReference = new Set<string>();
   for (const [p, v] of values) {
     const ref = BARE.exec(v);
@@ -464,7 +484,7 @@ function instantiate(
     if (heads.includes(p) && from.head.length && one) code = withAttributes(code, from.head);
     copy.push(lineOf(code));
   }
-  if (main && from.main !== null && !byReference.has(main)) copy.push(lineOf(`&${names.get(main)!} ${asCell(from.main, main, own)}`));
+  if (main && from.main !== null && !byReference.has(main)) copy.push(lineOf(`&${names.get(main)!} ${asCell(values.get(main)!, main, own)}`));
   const sharing = shared.filter((l) => reached.has(l.name!));
   const given = { id, names: new Set(sharing.map((l) => l.name!)), lines: sharing, resolved: true };
   return { taken: given, copy, args: Object.fromEntries(values) };
