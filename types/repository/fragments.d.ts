@@ -140,4 +140,4 @@ export declare const byId: (a: string, b: string) => number;
  * A repository of these fragments, the seed; it throws on a malformed entry or an id given twice, naming each problem. It
  * keeps nothing between calls but a cache of compiles by text (`cachedFit`), which changes no answer.
  */
-export declare function createRepository(entries: readonly Fragment[]): Repository;
+export declare function createRepository(given: readonly Fragment[]): Repository;

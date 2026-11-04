@@ -26,14 +26,14 @@ const LIB: Record<string, string> = {
   groove: lines('&beat from', '&beat step=8n &bd &sd:0:.6 [&bd, &hh]'),
 };
 const resolve: Resolve = (id) => LIB[id] ?? resolveSeed(id);
-const compiled = (text: string) => compileSource(text, undefined, { resolve });
+const compiled = (text: string) => compileSource(text, undefined, { resolve, old: true });
 const messages = (text: string) => compiled(text).diagnostics.map((d) => d.message);
 const errors = (text: string) =>
   compiled(text)
     .diagnostics.filter((d) => d.severity === 'error')
     .map((d) => d.message);
 /** What the expansion adds to a text: the lines its uses gave. */
-const added = (text: string) => expansion(text, { resolve }).text.split('\n').slice(text.split('\n').length);
+const added = (text: string) => expansion(text, { resolve, old: true }).text.split('\n').slice(text.split('\n').length);
 /** Every event of a text's first seconds: time, length, pitch, voice. */
 const events = (text: string, seconds = 4) => {
   const r = compiled(text);

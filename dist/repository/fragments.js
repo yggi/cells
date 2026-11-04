@@ -1,3 +1,4 @@
+import { variantsOf } from "./variants.js";
 import { RENAMED_IDS } from "../engine/renamed.js";
 import { cachedFit } from "./fit.js";
 export const EMPTY_LAYER = Object.freeze({ filed: Object.freeze([]), points: Object.freeze([]), together: Object.freeze([]) });
@@ -112,8 +113,19 @@ export const byId = (a, b) => {
     const [x, y] = [tieKey(a), tieKey(b)];
     return x < y ? -1 : x > y ? 1 : 0;
 };
-export function createRepository(entries) {
-    const problems = entries.flatMap(fragmentProblems);
+function expanded(fragment, problems) {
+    try {
+        return variantsOf(fragment);
+    }
+    catch (e) {
+        problems.push(`${String(fragment?.id)}: ${e instanceof Error ? e.message : String(e)}`);
+        return [];
+    }
+}
+export function createRepository(given) {
+    const problems = [];
+    const entries = given.flatMap((f) => expanded(f, problems));
+    problems.push(...entries.flatMap(fragmentProblems));
     const seen = new Set();
     for (const { id } of entries) {
         if (seen.has(id))
@@ -134,7 +146,13 @@ export function createRepository(entries) {
             throw new Error(`A malformed learned layer: ${wrong.join('; ')}`);
         if (!layer.filed.length && !layer.points.length && !layer.together.length)
             return alone;
-        const filed = new Set(layer.filed.map((f) => f.fragment.id));
+        const filedFragments = layer.filed.flatMap((f) => expanded(f.fragment, wrong));
+        for (const { id } of filedFragments)
+            if (seen.has(id) && !layer.filed.some((f) => f.fragment.id === id))
+                wrong.push(`the layer files ${id}, a seed fragment's id`);
+        if (wrong.length)
+            throw new Error(`A malformed learned layer: ${wrong.join('; ')}`);
+        const filed = new Set(filedFragments.map((f) => f.id));
         const held = (id) => seen.has(id) || filed.has(id);
         const added = new Map();
         const unheld = new Set();
@@ -167,7 +185,7 @@ export function createRepository(entries) {
             count(a, b, n);
             count(b, a, n);
         }
-        return { fragments: [...seed.map(withAdded), ...layer.filed.map((f) => withAdded(f.fragment))], filed, together, unheld: [...unheld].sort(byId) };
+        return { fragments: [...seed.map(withAdded), ...filedFragments.map(withAdded)], filed, together, unheld: [...unheld].sort(byId) };
     }
     return {
         fragments: seed,

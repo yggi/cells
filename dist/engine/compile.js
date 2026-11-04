@@ -30,9 +30,9 @@ function scopeOf(result) {
 }
 export function compileSource(source, env = DEFAULT_ENV, options = {}) {
     if (!hasUse(source))
-        return compile(parse(source), env);
+        return compile(parse(source, { old: options.old ?? false }), env);
     const x = expansion(source, options);
-    const result = compile(parse(x.text), env, x.given);
+    const result = compile(parse(x.text, { old: options.old ?? false }), env, x.given);
     const diagnostics = [...x.diagnostics, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
     return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, uses: x.uses };
 }

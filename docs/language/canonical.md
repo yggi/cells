@@ -111,3 +111,16 @@ A `use` line is the old way ([decision 065](https://github.com/yggi/cells/blob/m
 | `use * from gm_kit` | `* from gm_kit` |
 
 The cell written in takes the copy's name (`&key_tonic`, `&bar_tempo`): what plays is the same, note for note (no event snapshot moves), and the examples' values snapshot, keyed by cell names, records the new names.
+
+## The narrowest `from`: the cells a piece uses
+
+`* from foo` is a shorthand for all of `foo` that the piece uses (the owner, on [#157](https://github.com/yggi/cells/issues/157); [#27](https://github.com/yggi/cells/issues/27)'s row). So a collection's `* from` is written as the cells of it the piece reads, in the fragment's order, and a list of names drops any the piece reads nothing of, keeping the order written (`normalise/narrowest.ts`). A named cell brings what it reads, as `*` did ([use.md](use.md)).
+
+| written | Normalise writes |
+|---|---|
+| `* from gm_kit` and `&beat … &bd ~ &hh …` | `&bd, &hh from gm_kit` |
+| `&bd, &rim, &hh from gm_kit`, `&rim` read by nothing | `&bd, &hh from gm_kit` |
+
+- A cell the piece defines itself is its own, its line winning, so it isn't taken.
+- A `from` line the piece reads nothing of stays as it is: a band of performers plays by itself. Every rewrite is checked to play the same (S1), so a `*` that brings lines which sound on their own stays too.
+- A template's copy (`&key from dorian D`) names its heads already: nothing to narrow.

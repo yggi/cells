@@ -28,9 +28,9 @@ const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnTy
   return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
 };
 
-const seed = { resolve: resolveSeed };
+const seed = { resolve: resolveSeed, old: true };
 const errors = (text: string, resolve: Resolve = resolveSeed) =>
-  compileSource(text, undefined, { resolve })
+  compileSource(text, undefined, { resolve, old: true })
     .diagnostics.filter((d) => d.severity === 'error')
     .map((d) => d.message);
 /** A resolver over a few texts by id. */
@@ -112,7 +112,7 @@ describe('the expansion', () => {
 
   it('a used fragment may use another: its own lines win over what it uses, the piece’s over all', () => {
     const resolve = library({ groove: 'use * from kit\n&beat step=8n &bd ~ &sd ~\n&sd s=white hpf=2000', kit: '&bd s=sine loop=A1\n&sd s=white' });
-    const r = compileSource('use * from groove\n&bar meter("4/4") step=100bpm\n&bd s=sine loop=C2\n&out map=sample [&beat]', undefined, { resolve });
+    const r = compileSource('use * from groove\n&bar meter("4/4") step=100bpm\n&bd s=sine loop=C2\n&out map=sample [&beat]', undefined, { resolve, old: true });
     expect(r.diagnostics).toEqual([]);
     expect(r.uses?.[0]).toMatchObject({ gave: ['&beat', '&sd'], overrode: ['&bd'] });
     expect(r.cells.get('sd')?.params.hpf).toBe(2000);
@@ -131,7 +131,7 @@ describe('the expansion', () => {
 
   it('a line two used fragments give word for word is one line', () => {
     const resolve = library({ a: '&bd s=sine loop=A1\n&x s=saw', b: '&bd  s=sine   loop=A1 # the same\n&y s=saw' });
-    const r = compileSource('use * from a\nuse * from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd &x &y', undefined, { resolve });
+    const r = compileSource('use * from a\nuse * from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd &x &y', undefined, { resolve, old: true });
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     expect(r.uses?.map((u) => u.gave)).toEqual([
       ['&bd', '&x'],
@@ -143,7 +143,7 @@ describe('the expansion', () => {
 describe('a named use (decision 059)', () => {
   const BENCH = '&bar meter("4/4") step=104bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4]';
   const read = (text: string, resolve: Resolve = resolveSeed) => {
-    const r = compileSource(text, undefined, { resolve });
+    const r = compileSource(text, undefined, { resolve, old: true });
     // (a bench with no card of its own: that nothing plays isn't what these say)
     const said = r.diagnostics.filter((d) => !d.message.startsWith('Nothing plays yet'));
     return { uses: r.uses, said: said.map((d) => [d.severity, d.message, d.span.line]) };
@@ -162,9 +162,14 @@ describe('a named use (decision 059)', () => {
   });
 
   it('use is the old way (decision 065): every use line says its from line; use "id" reads as use * from "id"', () => {
-    const said = (text: string) => parse(text).diagnostics.map((d) => [d.severity, d.message]);
+    const said = (text: string) => parse(text, { old: true }).diagnostics.map((d) => [d.severity, d.message]);
     const oldWay = (line: string) => ['warning', `use is the old way: say where the cells come from, ${line} (decision 065; Migrate writes it, with a template's arguments)`];
     expect(said('use "core kit"')).toEqual([oldWay('* from "core kit"')]);
+    // (read as it is now, not the old way: retired, an error, and the text doesn't play, #387)
+    const retired = parse('use * from gm_kit').diagnostics.map((d) => [d.severity, d.message]);
+    expect(retired).toEqual([['error', "use is retired: say where the cells come from, * from gm_kit (decision 065; Migrate writes it, with a template's arguments)"]]);
+    expect(compileSource(GROOVE, undefined, { resolve: resolveSeed }).ok).toBe(false);
+    expect(compileSource(GROOVE, undefined, seed).ok).toBe(true);
     expect(said('use * from "core kit"\nuse &bd from x\nuse &aeolian')).toEqual([oldWay('* from "core kit"'), oldWay('&bd from x'), oldWay('&aeolian from aeolian')]);
     const old = compileSource(GROOVE.replace('use * from gm_kit', 'use "gm_kit"'), undefined, seed);
     expect(old.uses).toEqual(compileSource(GROOVE, undefined, seed).uses?.map((u) => ({ ...u, span: { ...u.span, len: 12 } })));
@@ -210,7 +215,7 @@ describe('a named use (decision 059)', () => {
     expect(r.said).toEqual([]);
     expect(r.uses?.[0]).toMatchObject({ names: ['&pad'], gave: ['&chords', '&pad'] });
     // (the piece's key is the one read: its &key in D dorian, not the section's A aeolian)
-    const r2 = compileSource(piece, undefined, { resolve });
+    const r2 = compileSource(piece, undefined, { resolve, old: true });
     expect(r2.cells.get('chords')!.over).toBe('key');
     expect(r2.cells.get('key')!.scan!.steps).toEqual([2, 1, 2, 2, 2, 1, 2]);
     // (a helper that is no interface name still clashes)
@@ -306,13 +311,13 @@ describe('the errors, each on its use line', () => {
 
   it('two used fragments defining one name by different lines name it and both ids; the piece’s own line settles it', () => {
     const resolve = library({ a: '&bd s=sine loop=A1', b: '&bd s=white' });
-    const r = compileSource('use * from a\nuse * from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~', undefined, { resolve });
+    const r = compileSource('use * from a\nuse * from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~', undefined, { resolve, old: true });
     expect(r.diagnostics.map((d) => [d.message, d.span.line])).toEqual([['&bd is defined by "a" and by "b", by different lines: write it in the piece, or drop one use', 2]]);
     expect(errors('use * from a\nuse * from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~\n&bd s=sine loop=C2', resolve)).toEqual([]);
   });
 
   it('what the compiler says of a used line is said on the use line it came through', () => {
-    const r = compileSource('&bar meter("4/4") step=100bpm\nuse * from broken', undefined, { resolve: library({ broken: '&a step=8n 0 2\n&m [&a * &nowhere]' }) });
+    const r = compileSource('&bar meter("4/4") step=100bpm\nuse * from broken', undefined, { resolve: library({ broken: '&a step=8n 0 2\n&m [&a * &nowhere]' }), old: true });
     expect(r.diagnostics.filter((d) => d.severity === 'error').map((d) => [d.message, d.span.line])).toEqual([['Unknown cell &nowhere', 2]]);
   });
 });
@@ -414,12 +419,13 @@ describe('the tools keep use', () => {
     const text =
       'use * from gm_kit\nuse &key from harmonic_minor\n&tonic D\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
     const out = normalise(text, seed).source;
-    // (a collection's use its from line; a template's, its tonic, which only it read, written in)
-    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('use * from gm_kit\nuse &key from harmonic_minor\n&tonic D', '* from gm_kit\n&key from harmonic_minor D'));
+    // (a collection's use its from line, the narrowest: the kit's cells the piece reads, &hh its own, #27; a template's,
+    // its tonic, which only it read, written in)
+    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('use * from gm_kit\nuse &key from harmonic_minor\n&tonic D', '&bd, &sd from gm_kit\n&key from harmonic_minor D'));
     // (the old spellings, use "id" and use &x, are written * from "id" and &x from x; an id that is a word, bare)
     const old = 'use "gm_kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~';
     const resolve = (id: string) => (id === 'kit' ? '&kick s=sine\n&snare s=white' : id === 'pulse' ? '&pulse s=sine loop=A4' : resolveSeed(id));
-    expect(normalise(old, { resolve }).source).toBe(
+    expect(normalise(old, { resolve, old: true }).source).toBe(
       '* from gm_kit  # the kit\n&pulse from pulse\n&kick, &snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~',
     );
   });
@@ -463,7 +469,7 @@ describe('the fit (decision 047) with use', () => {
     expect(fitOf(clave, bench('7/8')).fits).toBe(false);
     const used = fitOf('use * from son_clave_3_2', bench('7/8'), undefined, resolveSeed);
     expect([used.fits, used.unmet.map((n) => n.cell)]).toEqual([false, ['&clave']]);
-    expect(fitOf('use * from son_clave_3_2', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
+    expect(fitOf('* from son_clave_3_2', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
     expect(holesOf('use * from son_clave_3_2', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
     // (a used groove without its stand-ins: its voices are sounds, as written out)
     const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
@@ -472,9 +478,9 @@ describe('the fit (decision 047) with use', () => {
       .filter((l) => !/ s=white$/.test(l))
       .join('\n');
     const resolve: Resolve = (id) => (id === 'bare funk' ? bare : resolveSeed(id));
-    const fit = fitOf('use * from "bare funk"', bench('4/4'), undefined, resolve);
+    const fit = fitOf('* from "bare funk"', bench('4/4'), undefined, resolve);
     expect([fit.fits, fit.missing, fit.sounds]).toEqual([true, [], ['&bd', '&hh', '&oh', '&rim', '&sd']]);
-    expect(fitOf('use * from "bare funk"', 'use * from gm_kit\n' + bench('4/4'), undefined, resolve).sounds).toEqual([]);
+    expect(fitOf('* from "bare funk"', 'use * from gm_kit\n' + bench('4/4'), undefined, resolve).sounds).toEqual([]);
   });
 
   it('a union carries a fragment’s use lines, once', () => {

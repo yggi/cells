@@ -105,7 +105,7 @@ describe('the seed files', () => {
       harmonic_minor: [ELECTRO_SWING, SPOOKY],
       'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI],
       'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK],
-      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ],
+      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED],
       upright_bass: [ELECTRO_SWING],
       brass_stab: [ELECTRO_SWING],
       clarinet: [ELECTRO_SWING],

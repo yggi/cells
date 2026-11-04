@@ -115,7 +115,7 @@ const KEY = '&key scale(major, C)';
 const BENCH = `${METERS['4/4'].bench}\n${KEY}`;
 /** A motif's bench: its meter's and the key. */
 const benchOf = (motif: string) => `${METERS[MOTIFS[motif]!.meter ?? '4/4'].bench}\n${KEY}`;
-const seed = { resolve: resolveSeed };
+const seed = { resolve: resolveSeed, old: true };
 
 /** A form over a motif, as a piece writes it: the motif as the form's hole, the form as the lead's line. */
 const piece = (form: string, motif: string) => {

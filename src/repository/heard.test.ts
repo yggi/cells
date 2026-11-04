@@ -64,7 +64,7 @@ const benchOf = (id: string, text: string) => {
 
 /** What a text sends over its first 16 s: each note's channel, MIDI note, onset and end (s) and velocity, in order. */
 function sent(text: string): (string | number)[][] {
-  const plan = planOf(text, undefined, { resolve: resolveSeed });
+  const plan = planOf(text, undefined, { resolve: resolveSeed, old: true });
   expect(plan.result.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   const route = router(plan.result, channelTable(plan.result));
   return windowAt(plan, 0, 16)
@@ -100,7 +100,7 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
     (id, text) => {
       const bench = benchOf(id, text);
       const said = (cards: string) =>
-        compiledWithOldUse(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed })
+        compiledWithOldUse(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed, old: true })
           .diagnostics.filter((d) => !OLD_USE.test(d.message))
           .map((d) => d.message);
       expect(said(heard(text))).toEqual([]);
@@ -115,7 +115,7 @@ describe('a bass line fills the bass performer’s hole (#285)', () => {
   it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s, with the host and use * from bass_performer, compiles with no diagnostic', (_, text) => {
     const host =
       '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
-    const r = compileSource(`use * from bass_performer\n${host}\n${text}`, undefined, { resolve: resolveSeed });
+    const r = compileSource(`use * from bass_performer\n${host}\n${text}`, undefined, { resolve: resolveSeed, old: true });
     expect(r.diagnostics).toEqual([]);
     expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bassOut', 'bass', 'bassline']]);
   });

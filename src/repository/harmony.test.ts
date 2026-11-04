@@ -16,7 +16,7 @@ import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
-import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { SEED } from './seed';
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
@@ -152,15 +152,18 @@ describe('the harmonies', () => {
     expect(near).toHaveLength(VAMPS[mode as Mode].length);
   });
 
-  it("sit at those points only: Techno's and Funk's exactly, Ambient's with its harmony at 0.12; mixolydian adds none", () => {
+  it("sit at those points only: Techno's and Funk's exactly, Ambient's with its harmony at 0.12; mixolydian adds none; the vamp to the fifth at Kinderlied's too, at weight 0.5", () => {
     for (const f of VAMP_FRAGMENTS) {
       const modes = MODES.filter((mode) => POINT[mode] && VAMPS[mode].some((chords) => byDegrees(chords) === f));
-      expect(
-        f.association.map((wp) => wp.point),
-        f.id,
-      ).toEqual(modes.map((mode) => POINT[mode]));
-      expect(f.association.every((wp) => wp.facet === 'harmony' && wp.weight === 1)).toBe(true);
+      const atModes = modes.map((mode) => ({ point: POINT[mode], weight: 1, facet: 'harmony' }));
+      expect(f.association, f.id).toEqual(f.id === 'vamp_to_the_fifth' ? [...atModes, { point: KINDERLIED, weight: 0.5, facet: 'harmony' }] : atModes);
     }
+  });
+
+  it('the point proposed for a Kinderlied preset finds the vamp to the fifth first, at distance 0, its tonic and dominant (yggi/jambot#547)', () => {
+    const [first, second] = createRepository(LIBRARY).query(KINDERLIED, 2, {}, { facet: 'harmony' });
+    expect([first!.fragment.id, first!.distance]).toEqual(['vamp_to_the_fifth', 0]);
+    expect(second!.distance).toBeGreaterThan(0);
   });
 
   it('each file names every mode that plays it', () => {

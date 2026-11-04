@@ -184,12 +184,14 @@ export function readFrom(code: string): FromForm | null | undefined {
 export const FROM_FORM =
   'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
 
-/** How what a `use` line is told begins: a reader that sets that aside (the fit) reads it. */
+/** How what a `use` line is told begins, read the old way (`CompileOptions.old`: Migrate, Normalise). */
 export const USE_OLD = 'use is the old way';
+/** How what a `use` line is told begins otherwise: it is retired (#387), an error, which Migrate rewrites. */
+export const USE_RETIRED = 'use is retired';
 
 /**
  * What a `use` line is told (decision 065): it is the old way, and says what the `from` line is. A template's arguments,
  * which the `use` read by name, are Migrate's to write, since only the fragment says what they are.
  */
-export const useOld = ({ id, names }: Pick<UseForm, 'id' | 'names'>): string =>
-  `${USE_OLD}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 065; Migrate writes it, with a template's arguments)`;
+export const useOld = ({ id, names }: Pick<UseForm, 'id' | 'names'>, old = true): string =>
+  `${old ? USE_OLD : USE_RETIRED}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 065; Migrate writes it, with a template's arguments)`;

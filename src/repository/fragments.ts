@@ -18,6 +18,7 @@
  * read off its text by the fit (`fit.ts`, decision 047), never off its facets: a query given the workbench ranks only the
  * fragments that fit it.
  */
+import { variantsOf } from './variants';
 import { RENAMED_IDS } from '../engine/renamed';
 import type { FragmentFile } from './files';
 import { cachedFit } from './fit';
@@ -270,12 +271,25 @@ export const byId = (a: string, b: string): number => {
   return x < y ? -1 : x > y ? 1 : 0;
 };
 
+/** A fragment's variants (`variantsOf`), or none, with a problem, where its arguments don't bind (no signature, a parameter it lacks). */
+function expanded(fragment: Fragment, problems: string[]): Fragment[] {
+  try {
+    return variantsOf(fragment);
+  } catch (e) {
+    problems.push(`${String(fragment?.id)}: ${e instanceof Error ? e.message : String(e)}`);
+    return [];
+  }
+}
+
 /**
  * A repository of these fragments, the seed; it throws on a malformed entry or an id given twice, naming each problem. It
  * keeps nothing between calls but a cache of compiles by text (`cachedFit`), which changes no answer.
  */
-export function createRepository(entries: readonly Fragment[]): Repository {
-  const problems = entries.flatMap(fragmentProblems);
+export function createRepository(given: readonly Fragment[]): Repository {
+  // (a template whose points carry its arguments is a fragment for each set, `diatonic(mode=aeolian)`: #387, B1)
+  const problems: string[] = [];
+  const entries = given.flatMap((f) => expanded(f, problems));
+  problems.push(...entries.flatMap(fragmentProblems));
   const seen = new Set<string>();
   for (const { id } of entries) {
     if (seen.has(id)) problems.push(`${id}: the id is given twice`);
@@ -291,7 +305,11 @@ export function createRepository(entries: readonly Fragment[]): Repository {
     for (const { fragment } of Array.isArray(layer.filed) ? layer.filed : []) if (seen.has(fragment?.id)) wrong.push(`the layer files ${fragment.id}, a seed fragment's id`);
     if (wrong.length) throw new Error(`A malformed learned layer: ${wrong.join('; ')}`);
     if (!layer.filed.length && !layer.points.length && !layer.together.length) return alone;
-    const filed = new Set(layer.filed.map((f) => f.fragment.id));
+    // (a filed template whose points carry its arguments is a fragment for each set, as the seed's is)
+    const filedFragments = layer.filed.flatMap((f) => expanded(f.fragment, wrong));
+    for (const { id } of filedFragments) if (seen.has(id) && !layer.filed.some((f) => f.fragment.id === id)) wrong.push(`the layer files ${id}, a seed fragment's id`);
+    if (wrong.length) throw new Error(`A malformed learned layer: ${wrong.join('; ')}`);
+    const filed = new Set(filedFragments.map((f) => f.id));
     const held = (id: string) => seen.has(id) || filed.has(id);
     const added = new Map<string, WeightedPoint[]>();
     const unheld = new Set<string>();
@@ -321,7 +339,7 @@ export function createRepository(entries: readonly Fragment[]): Repository {
       count(a, b, n);
       count(b, a, n);
     }
-    return { fragments: [...seed.map(withAdded), ...layer.filed.map((f) => withAdded(f.fragment))], filed, together, unheld: [...unheld].sort(byId) };
+    return { fragments: [...seed.map(withAdded), ...filedFragments.map(withAdded)], filed, together, unheld: [...unheld].sort(byId) };
   }
 
   return {

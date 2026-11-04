@@ -58,4 +58,8 @@ export const migrations =
   ];
 
 /** A text with every retired form written as it is now, one rewrite at a time, each playing the same notes; the steps are what each did. */
-export const migrate = (source: string, options: CompileOptions = {}): { source: string; steps: string[] } => rewriteAll(source, migrations(options), ROUNDS, options);
+export const migrate = (source: string, options: CompileOptions = {}): { source: string; steps: string[] } => {
+  // (a retired form is read the old way, so it compiles and its rewrite can be checked against it)
+  const old = { ...options, old: true };
+  return rewriteAll(source, migrations(old), ROUNDS, old);
+};

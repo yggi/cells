@@ -74,6 +74,15 @@ association:
     args:
       mode: ionian
   - point:
+      sync: 0.1
+      harm: 0.12
+      artic: 0.5
+      energy: 0.35
+    weight: 1
+    facet: mode
+    args:
+      mode: ionian
+  - point:
       sync: 0.875
       harm: 0.485
       artic: 0.65
