@@ -57,3 +57,14 @@ export declare function writtenHints(braids: readonly {
     readonly name: string;
     readonly tokens: readonly string[];
 }[]): Hint[];
+/**
+ * Hints found elsewhere (a heard span, a MIDI file's notes: `hints(lines)`, in steps) placed on braids as written, in
+ * token places (#157: Shorten taking hints in), as `writtenHints` places its own. A span lands where it starts and ends
+ * on token edges of its line, a token as long as it is written (`~@3` three steps); one that doesn't, or covers another
+ * number of tokens than the first that lands, is left out, and a hint left with fewer than two places goes. A hint is a
+ * claim: what Shorten makes of it is checked note for note, so one that is wrong costs time, never notes. Pure.
+ */
+export declare function placedHints(found: readonly Hint[], braids: readonly {
+    readonly name: string;
+    readonly tokens: readonly string[];
+}[]): Hint[];

@@ -246,3 +246,52 @@ export function writtenHints(braids: readonly { readonly name: string; readonly 
     return [{ ...h, spans, length: spans[0]!.to - spans[0]!.from }];
   });
 }
+
+/** A written token's length in steps: `x@n` n, `x!n` n (n copies of one step), anything else one (`[a b]`, `x*3`, `_`). */
+const stepsWritten = (t: string): number => {
+  const m = /[@!](\d+)$/.exec(t);
+  return m ? Number(m[1]) : 1;
+};
+
+/**
+ * Hints found elsewhere (a heard span, a MIDI file's notes: `hints(lines)`, in steps) placed on braids as written, in
+ * token places (#157: Shorten taking hints in), as `writtenHints` places its own. A span lands where it starts and ends
+ * on token edges of its line, a token as long as it is written (`~@3` three steps); one that doesn't, or covers another
+ * number of tokens than the first that lands, is left out, and a hint left with fewer than two places goes. A hint is a
+ * claim: what Shorten makes of it is checked note for note, so one that is wrong costs time, never notes. Pure.
+ */
+export function placedHints(found: readonly Hint[], braids: readonly { readonly name: string; readonly tokens: readonly string[] }[]): Hint[] {
+  const edges = new Map(
+    braids.map(({ name, tokens }) => {
+      const starts = new Map<number, number>();
+      const ends = new Map<number, number>();
+      let at = 0;
+      tokens.forEach((t, i) => {
+        starts.set(at, i);
+        at += stepsWritten(t);
+        ends.set(at, i + 1);
+      });
+      return [name, { starts, ends }] as const;
+    }),
+  );
+  return found.flatMap((h) => {
+    const kept: { span: Span; transform: Transform }[] = [];
+    h.spans.forEach((s, i) => {
+      const e = edges.get(s.line);
+      const from = e?.starts.get(s.from);
+      const to = e?.ends.get(s.to);
+      if (from === undefined || to === undefined) return;
+      if (kept.length && to - from !== kept[0]!.span.to - kept[0]!.span.from) return;
+      kept.push({ span: { ...s, from, to }, transform: h.transforms[i]! });
+    });
+    // (the first place kept is the one the others are moved from, so it reads forwards; their moves are taken from its)
+    if (kept.length < 2 || kept[0]!.transform.kind === 'reversed') return [];
+    const moved = (t: Transform) => (t.kind === 'same' ? 0 : t.by);
+    const by0 = moved(kept[0]!.transform);
+    const transforms = kept.map(({ transform: t }): Transform => {
+      const by = moved(t) - by0;
+      return t.kind === 'reversed' ? { kind: 'reversed', by } : by === 0 ? { kind: 'same' } : { kind: 'transposed', by };
+    });
+    return [{ ...h, spans: kept.map((k) => k.span), transforms, length: kept[0]!.span.to - kept[0]!.span.from }];
+  });
+}

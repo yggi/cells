@@ -1,7 +1,7 @@
 import { period } from "../helix.js";
 import { declLine, freshName, setBraid } from "../edit.js";
 import { sameNotes } from "../sameness.js";
-import { writtenHints } from "../fold/hints.js";
+import { placedHints, writtenHints } from "../fold/hints.js";
 import { saves } from "./harness.js";
 const NOTE = /^(-?[0-9]+)((?:@[0-9]+)?)$/;
 const MIN_PHRASE = 4;
@@ -41,7 +41,7 @@ function withSplicers(result, names) {
     }
     return [...out];
 }
-export function phrases(source, cells, result, options = {}) {
+export function phrases(source, cells, result, options = {}, given = []) {
     const copied = new Set([...source.matchAll(/\bbase=&(\w+)/g)].map((m) => m[1]));
     cells = cells.filter((c) => !copied.has(c.name) && !new RegExp(`^&${c.name}\\b[^\\n]*\\bbase=&`, 'm').test(source));
     const found = [];
@@ -50,7 +50,7 @@ export function phrases(source, cells, result, options = {}) {
     const lapValues = [...new Set(laps.values())];
     const tokensOf = new Map(cells.map((c) => [c.name, c.tokens]));
     const windows = new Map();
-    for (const h of writtenHints(cells)) {
+    for (const h of [...writtenHints(cells), ...placedHints(given, cells)]) {
         const first = h.spans[0];
         const whole = tokensOf.get(first.line).slice(first.from, first.to);
         for (let L = MIN_PHRASE; L <= Math.min(MAX_PHRASE, whole.length); L++)

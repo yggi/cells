@@ -16,7 +16,7 @@ export function shorten(source, options = {}) {
         return [];
     const found = [
         ...runs(source, cells),
-        ...phrases(source, cells, result, options),
+        ...phrases(source, cells, result, options, options.hints),
         ...fractions(source, cells, result),
         ...sameCells(source, result, options),
         ...defaults(source, result, options),
