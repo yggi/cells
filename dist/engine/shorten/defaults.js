@@ -23,8 +23,8 @@ export function defaults(source, result, options = {}) {
         const attrs = attrsOf(source, c.name);
         if (c.sink && attrs.get('loop') === 'SAMPLE_RATE')
             offer(c.name, 'loop', 'what the sound card turns at anyway');
-        if (attrs.has('cycle') && c.step && !c.map && c.wrap !== null && c.wrap === (c.units.length || c.cycle))
-            offer(c.name, 'cycle', 'its own length: a turning table comes round there anyway');
+        if (attrs.has('cycle') && c.step && !c.step.tap && !c.map && c.wrap === 1)
+            offer(c.name, 'cycle', 'one lap: a turning table comes round there anyway');
         if (attrs.get('pan') !== undefined && Number(attrs.get('pan')) === 0.5)
             offer(c.name, 'pan', 'the centre');
     }

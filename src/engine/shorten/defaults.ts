@@ -1,6 +1,6 @@
 /**
  * Defaults: an attribute that says what would be so without it — the sound card's loop=SAMPLE_RATE,
- * a turning table's cycle= equal to its own length (decision 008), pan=.5 (the centre).
+ * a turning table's cycle=1, one lap (decisions 008, 040), pan=.5 (the centre).
  */
 import { attrsOf, setAttr } from '../edit';
 import { soundsIdentical } from '../sameness';
@@ -26,9 +26,9 @@ export function defaults(source: string, result: Result, options: CompileOptions
     if (c.implicit || c.lambda) continue;
     const attrs = attrsOf(source, c.name);
     if (c.sink && attrs.get('loop') === 'SAMPLE_RATE') offer(c.name, 'loop', 'what the sound card turns at anyway');
-    // (a grid's cycle= is its size, not a turn: only a table that turns)
-    if (attrs.has('cycle') && c.step && !c.map && c.wrap !== null && c.wrap === (c.units.length || c.cycle))
-      offer(c.name, 'cycle', 'its own length: a turning table comes round there anyway');
+    // (only an untapped table that turns: a tapped one's cycle= counts its tap's bars; and cycle=1 wraps a read through
+    // it where none walks, so the check below keeps it where a read goes past a lap, decision 040, #75)
+    if (attrs.has('cycle') && c.step && !c.step.tap && !c.map && c.wrap === 1) offer(c.name, 'cycle', 'one lap: a turning table comes round there anyway');
     if (attrs.get('pan') !== undefined && Number(attrs.get('pan')) === 0.5) offer(c.name, 'pan', 'the centre');
   }
   return out;

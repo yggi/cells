@@ -12,6 +12,9 @@
  *  - mainkey.ts:   over=key as the cell it reads, over=&key (decision 060)
  *  - forwarded.ts: a use of a retired id as the use it forwards to: "core kit" → &bd, … from gm_kit (#338)
  *  - from.ts:      a `use` line as the `from` line that plays the same, a template's arguments said (decision 065)
+ *  - grids.ts:     a grid's size written cycle=19 map=edo as its map's, map=edo(19), map=ed(7, 3/2) (decision 040, #75)
+ *  - laps.ts:      a turning table's cycle= in steps as laps, cycle=24 on a 12 → cycle=2 (decision 040, #75): exact by
+ *                  construction against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *
  * The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
  * a text a piece file, so `migrate` leaves it: Shorten offers it, and `movedCard` (`shorten/card.ts`) does it.
@@ -22,7 +25,7 @@
 import { type Find, type Rewrite } from '../rewrite';
 import type { CompileOptions } from '../program';
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'section' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from';
+export type MigrationRule = 'gate' | 'tap' | 'section' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from' | 'grid' | 'laps';
 export type Migration = Rewrite<MigrationRule>;
 /** Every migration a text has, in the order its form was retired; a `use` line's fragment read through `options.resolve`. */
 export declare const migrations: (options?: CompileOptions) => Find;

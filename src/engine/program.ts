@@ -71,8 +71,9 @@ export interface ResolvedCell {
   /** Grid size (roots) / number of entries (tables). */
   readonly cycle: number;
   /**
-   * cycle= as written: where a turning cell wraps. Without it a cell's turning
-   * comes round after its own length (decision 008); a larger cycle= keeps it climbing.
+   * cycle= as written, in laps of the cell's own length (decision 040, #75): a turning cell comes round after this many
+   * laps (absent: one, decision 008), an index read through it climbs this many laps and comes round (absent: it walks
+   * the helix for ever), and 0 holds the first entry. On a grid, its size is its map's (`cycle`).
    */
   readonly wrap: number | null;
   /** An unnamed cell (`&( … )`): its body as written. */

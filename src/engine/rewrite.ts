@@ -22,6 +22,12 @@ export interface Rewrite<R extends string = string> {
   readonly before: string;
   readonly after: string;
   readonly apply: (source: string) => string;
+  /**
+   * Exact by construction, against a meaning the compiler no longer reads (a migration of a spelling whose meaning changed,
+   * #75: cycle=24 counted steps, now laps), so `rewriteAll` takes it unchecked: the two texts' notes can't be compared,
+   * the old one now meaning something else. Its witness is its fixture pair. Only Migrate's.
+   */
+  readonly exact?: true;
 }
 
 /** What a tool finds in a text that compiles. */
@@ -49,7 +55,7 @@ export function rewriteAll(source: string, find: Find, rounds = ROUNDS, options:
       } catch {
         continue;
       }
-      if (next !== now && soundsIdentical(now, next, undefined, options)) {
+      if (next !== now && (r.exact || soundsIdentical(now, next, undefined, options))) {
         taken = { next, title: r.title };
         break;
       }

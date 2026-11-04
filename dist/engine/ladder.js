@@ -26,6 +26,7 @@ export const PENDING = new Set([
     'attribute style',
     'parameter licence',
     'parameter accents',
+    'attribute cycle',
 ]);
 export function formKey(e) {
     if (e.section === 'attribute' || e.section === 'parameter')
@@ -175,7 +176,6 @@ export const TIERS = [
             'map map=ed(r)',
             'map map=ratios',
             'step n/d',
-            'attribute cycle',
             'free free(v, lo..hi)',
             'free free(v, lo..hi, "names")',
             'mix free(v, lo..hi)',

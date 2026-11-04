@@ -14,8 +14,9 @@ export const isRootDecl = (d: CellDecl) => d.over === null && ((d.braid.kind ===
 /** Static table for lengths and defaults (no over= → the default grid). */
 export const tableOf = (d: CellDecl): string | null => (isRootDecl(d) ? null : (d.over?.name ?? ROOT));
 
-/** A grid's steps per period: cycle=, or — a ratios grid — its tones before the period. */
-export const gridSteps = (d: CellDecl) => (d.map?.kind === 'ratios' && d.braid.kind === 'list' ? Math.max(1, d.braid.tokens.length - 1) : (d.cycle ?? 12));
+/** A grid's steps per period: its map's size (edo(19), ed(7, 3/2); cycle= the old way), or — a ratios grid — its tones before the period. */
+export const gridSteps = (d: CellDecl) =>
+  d.map?.kind === 'ratios' && d.braid.kind === 'list' ? Math.max(1, d.braid.tokens.length - 1) : ((d.map?.kind === 'edo' ? d.map.steps : null) ?? d.cycle ?? 12);
 export const lengthOf = (decls: ReadonlyMap<string, CellDecl>, name: string, guard = 0): number => {
   const d = decls.get(name);
   if (!d || guard > 64) return 12;

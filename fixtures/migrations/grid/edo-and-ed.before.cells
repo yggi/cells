@@ -1,0 +1,7 @@
+# a grid's size written as cycle=, the old way: nineteen to the octave, seven to a pure fifth (decision 040, #75)
+&edo19 cycle=19 map=edo
+&fifths cycle=7 map=ed(3/2)
+&a over=&edo19 step=4 0 3 6 8 11 14 19
+&b over=&fifths step=4 0 1 2 3 4 5 6 7
+&v s=sine loop=C4
+&out map=sample [&a * &v * .4, &b * &v * .4]

@@ -84,9 +84,12 @@ export function lookup(result, name, x, shifts, extra = 0) {
     const es = entries(result, name, shifts(name) + extra, true);
     if (es.length === 0)
         return { value: 0, alter: 0 };
+    if (c.wrap === 0)
+        return es[0];
     const xi = Math.floor(x);
-    const lap = Math.floor(xi / es.length);
-    const e = es[xi - lap * es.length];
+    const walked = Math.floor(xi / es.length);
+    const lap = c.wrap === null || c.step?.tap ? walked : mod(walked, c.wrap);
+    const e = es[xi - walked * es.length];
     return { value: e.value + lap * period(result, name), alter: e.alter };
 }
 export function resolveIn(result, table, tableShift, value, alter, shifts) {

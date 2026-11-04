@@ -297,8 +297,11 @@ export type StepSpec = { readonly whole: boolean } & (
  */
 export type MapSpec =
   | { readonly kind: 'amp' | 'lin' | 'sample' | 'adsr' | 'ratios' | 'db' | 'role' | 'style'; readonly span: Span }
-  /** A grid: cycle= equal steps to the period — 2 (an octave) for map=edo, r for map=ed(r). */
-  | { readonly kind: 'edo'; readonly period: number; readonly span: Span }
+  /**
+   * A grid: equal steps to the period — 2 (an octave) for map=edo, r for map=ed(r). Its size (`steps`) is the map's first
+   * argument, map=edo(19), map=ed(7, 3/2) (decision 040, #75); null where it doesn't say, 12, or cycle= the old way.
+   */
+  | { readonly kind: 'edo'; readonly period: number; readonly steps: number | null; readonly span: Span }
   /** A MIDI card: each entry a channel in order (channel null), or all on one channel; on an output slot (the MIDI page's output of that number, 1 the first). */
   | { readonly kind: 'midi'; readonly channel: number | null; readonly port: number; readonly span: Span }
   | { readonly kind: 'table'; readonly table: Ref; readonly span: Span };

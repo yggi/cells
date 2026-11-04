@@ -1,6 +1,7 @@
 import { parseFree } from "./free.js";
 import { syntax } from "./syntax.js";
 import { perSecond, UNIT } from "./units.js";
+import { MAX_EVENTS } from "../program.js";
 export const STEP_SYNTAX = [
     syntax('rate', 'step=r · loop=r', 'step= moves a cell a step at a time, r steps a second; loop= turns its whole braid r times a second (loop=r is step=r·k for k steps). One of the two.', ['&tune step=2 0 2 4', '&lead loop=261.63 0 1'], 'time.md'),
     syntax('rate', 'loop=NAME', 'A value from the environment: SAMPLE_RATE, A4, or a note name (C4, F#3, Bb2) as its frequency.', ['&lead s=saw loop=C4', '&out loop=SAMPLE_RATE map=sample &mix'], 'time.md'),
@@ -105,6 +106,11 @@ export const MAP_SYNTAX = [
 const MAP_WORD = new RegExp(Object.keys(MAP_KINDS)
     .sort((a, b) => b.length - a.length)
     .join('|'), 'y');
+function gridSize(s, n, at) {
+    if (n > MAX_EVENTS)
+        s.fail(`${n} steps: at most ${MAX_EVENTS.toLocaleString('en')}, the most a grid can hold to its period`, at, String(n).length);
+    return n;
+}
 export function parseMap(s) {
     const start = s.i;
     if (s.peek() === '&') {
@@ -116,20 +122,40 @@ export function parseMap(s) {
     if (s.match(/sin\b/y))
         s.fail('map=sin is gone: write the sine as the braid, sin(12) — or map=&table', start, 3);
     if (s.match(/ed\(/y)) {
+        const ratio = () => {
+            const at = s.i;
+            const r = s.match(/[0-9]+(?:\.[0-9]+)?(?:\/[0-9]+(?:\.[0-9]+)?)?/y);
+            const [a, b = '1'] = (r ?? '').split('/');
+            const period = parseFloat(a) / parseFloat(b);
+            if (r === null || !(period > 1))
+                s.fail('ed(r) divides a ratio above 1: ed(2) is the octave, ed(3/2) the fifth, ed(7, 3/2) seven steps to it', at);
+            return period;
+        };
         const at = s.i;
-        const r = s.match(/[0-9]+(?:\.[0-9]+)?(?:\/[0-9]+(?:\.[0-9]+)?)?/y);
-        const [a, b = '1'] = (r ?? '').split('/');
-        const period = parseFloat(a) / parseFloat(b);
-        if (r === null || !(period > 1))
-            s.fail('ed(r) divides a ratio above 1: ed(2) is the octave, ed(3/2) the fifth, ed(5)', at);
+        const sized = s.match(/([0-9]+)\s*,\s*/y);
+        const steps = sized === null ? null : gridSize(s, parseInt(sized, 10), at);
+        if (steps !== null && steps < 1)
+            s.fail('ed(n, r): n steps to the ratio, at least 1', at);
+        const period = ratio();
         s.expect(')', `')' to close ed(…)`);
-        return { kind: 'edo', period, span: s.span(start) };
+        return { kind: 'edo', period, steps, span: s.span(start) };
     }
     const w = s.match(MAP_WORD);
     if (w === null)
         s.fail(`map= takes ${Object.keys(MAP_KINDS).join(', ')}, ed(r), midi(c, p) or a table cell (&curve)`);
-    if (w === 'edo')
-        return { kind: 'edo', period: 2, span: s.span(start) };
+    if (w === 'edo') {
+        let steps = null;
+        if (s.peek() === '(') {
+            s.i++;
+            const at = s.i;
+            const n = s.match(/[0-9]+/y);
+            if (n === null || parseInt(n, 10) < 1)
+                s.fail('edo(n): n equal steps to the octave, edo(19)', at);
+            steps = gridSize(s, parseInt(n, 10), at);
+            s.expect(')', `')' to close edo(…)`);
+        }
+        return { kind: 'edo', period: 2, steps, span: s.span(start) };
+    }
     if (w === 'midi')
         return parseMidi(s, start);
     return { kind: w, span: s.span(start) };

@@ -69,7 +69,10 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   label: core('a name to show, in quotes — alone on a cell, a note in the graph', 'display.md'),
   env: core('a voice’s own volume on every note: an envelope', 'sound.md', ['voice']),
   pitch: { ...core('a voice’s own pitch on every note: a vibrato, or a shape in semitones (pitch=0..30 * &(map=adsr 0 .04 0 0): a drop)', 'sound.md', ['voice']), moves: true },
-  cycle: core('where it wraps: turning past this many steps starts again (a grid’s size is map=edo)', 'tables.md'),
+  cycle: core(
+    'laps before it comes round: a turning table’s, an index read through it, a tap’s bars; 0 holds the first entry (a grid’s size is its map’s, map=edo(19))',
+    'tables.md',
+  ),
   size: core('how large it’s drawn, against the others: 2 twice, .5 half', 'display.md'),
   laps: core('how many laps it plays, then it ends', 'time.md'),
   chance: core('what a bare x? means here: the probability it is dropped, or free() for a slider', 'cell.md'),

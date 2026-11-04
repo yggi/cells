@@ -13,7 +13,7 @@ description: A study in counterpoint on the King's theme, from strict to free, i
 &tempo step=free(66bpm, 40..96)
 &theme over=&scale step=4n label="the King's theme" 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
 &scale over=&key scan(2 1 2 2 1 2 2)                   # … read in C minor,
-&key step=cycle(&theme) stride=free(0, 0..7) cycle=24 label="per tonos · in **{tonic}**"   # raise stride: a key higher each pass
+&key step=cycle(&theme) stride=free(0, 0..7) label="per tonos · in **{tonic}**"   # raise stride: a key higher each pass
 
 # the counterpoints, in semitones over the key (they transpose with the theme), in eighths
 &first over=&key label="1 : 1 above — *first species*" 24@4 22@4 19@4 17@4 20@4 ~@2 19@2 20@2 22@2 24@2 20@2 22@4 ~@4
