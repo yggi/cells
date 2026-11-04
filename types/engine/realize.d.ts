@@ -1,4 +1,5 @@
 import { type CompileResult, type Output, type Shifts } from './program';
+import { type StepEvent } from './flatten';
 import { type ParamTrack, type Series, type VoiceParam } from './series';
 export interface Played {
     /** Absolute start in seconds at the code's rates. */
@@ -158,6 +159,16 @@ export declare function outputSounds(result: CompileResult, o: Output, muted: Re
 /** Does it play at all: heard (`outputSounds`), or sent on a MIDI card that is on (`outputSent`)? What the plan plays. */
 export declare function outputPlays(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean;
 /** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
+/**
+ * A line's events laid on a lap of `lap` steps, which it comes round at (#116, decision 040: `cycle=n` on a tapped line
+ * runs it n bars before it comes round): its braid begins again at each lap, a step past the lap is dropped (a note
+ * that crosses it cut there), and a braid shorter than the lap repeats up to its end. Without cycle= a tapped line walks
+ * its own braid across the bar line, as a melody does.
+ */
+export declare function comeRound(events: readonly StepEvent[], period: number, lap: number): {
+    period: number;
+    events: StepEvent[];
+};
 export declare function plan(result: CompileResult, statics: Shifts, muted?: ReadonlySet<string>): Plan;
 /** Which voice a number plays on, and that voice's base frequency. */
 export declare function voiceFor(result: CompileResult, o: Output, value: number): {

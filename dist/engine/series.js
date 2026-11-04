@@ -69,6 +69,9 @@ export function modulation(p, m, from, to) {
     }
     return out;
 }
+function lapOf(c, period) {
+    return Math.floor((c + EPS) / period);
+}
 function inForce(m, c) {
     const lap0 = Math.floor(c / m.period);
     let last = null;
@@ -145,7 +148,7 @@ export function levelSeries(p, m, from, to, written) {
     if (!Number.isFinite(c1))
         c1 = c0;
     const levelAt = (c) => {
-        const lap = Math.floor(c / m.period);
+        const lap = lapOf(c, m.period);
         const local = c - lap * m.period;
         let best = -1;
         for (const e of m.events) {

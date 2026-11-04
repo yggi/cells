@@ -1,0 +1,6 @@
+# a diatonic mode, its own fragment before #387: the one diatonic fragment taken with its mode now
+&key from diatonic(mode=aeolian) A
+&bar meter("4/4") step=100bpm
+&tune over=&key step=8n 0 2 4 2 4 5 7 4
+&lead s=tri loop=A3
+&out map=sample [&tune * &lead * .5]

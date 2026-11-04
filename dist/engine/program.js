@@ -5,6 +5,7 @@ export const INTERFACE_NAMES = ['&bar', '&tempo', '&key', '&tonic', '&harm', '&s
 export const MAX_EVENTS = 50_000;
 export const MAX_NOTES_PER_SECOND = 2_000;
 export const MAX_SPLICE_DEPTH = 256;
+export const CV_LAPS = 20;
 export const LABEL_FIELDS = ['name', 'notes', 'tonic', 'mode', 'steps', 'tempo', 'shift'];
 export const DEFAULT_FREQ = 261.63;
 export const BODIES = {

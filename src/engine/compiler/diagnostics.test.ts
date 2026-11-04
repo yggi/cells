@@ -2,6 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../compile';
 import { freeList } from '../held';
+import { eventsBetween, plan } from '../realize';
+import { codeShifts, CV_LAPS } from '../program';
 
 const BASE = '&bar step=1\n&mel step=&bar 0 2\n&v s=sine\n';
 const diags = (src: string) => compileSource(src).diagnostics.map((d) => ({ severity: d.severity, message: d.message, line: d.span.line, col: d.span.col }));
@@ -372,5 +374,45 @@ describe('the nits of #250', () => {
         len: 2,
       },
     ]);
+  });
+});
+
+describe('a modular patch (docs/notes/modular.md)', () => {
+  const PATCH = '&bar meter("4/4") step=120bpm\n&tune step=4n 0 3 7 10\n';
+  const params = (src: string) => {
+    const r = compileSource(PATCH + src);
+    return eventsBetween(plan(r, codeShifts(r), r.off), 0, 1)[0]!.params;
+  };
+  it('a voice whose braid names a voice is a warning: a voice is no waveform; its mix is an instrument (#425)', () => {
+    expect(diags(PATCH + '&vco s=saw loop=A2\n&vcf lpf=800 &vco\n&out map=sample [&tune * &vcf * .4]')).toEqual([
+      expect.objectContaining({ severity: 'warning', line: 4, message: expect.stringMatching(/&vcf's braid names &vco, a voice: .*write the mix: &vcf … \[&vco\]/) }),
+    ]);
+    expect(messages(PATCH + '&vco s=saw loop=A2\n&vcf lpf=800 [&vco]\n&out map=sample [&tune * &vcf * .4]')).toEqual([]);
+    // (a kit, a groove and a waveform braid are none)
+    const kit = '&bd s=sine loop=A1\n&hh s=white\n&kit &bd &hh\n&beat over=&kit step=8n 0 1\n&groove step=8n &bd ~ &hh\n';
+    expect(messages(PATCH + kit + '&out map=sample [&beat * .5, &groove * .5]')).toEqual([]);
+  });
+  it('a voice read as CV is a warning: it moves nothing (#426)', () => {
+    const lfo = '&v s=saw loop=A2 lpf=200..3000 * &lfo\n&out map=sample [&tune * &v * .4]';
+    expect(diags(PATCH + '&lfo s=sine loop=.5\n' + lfo)).toEqual([
+      expect.objectContaining({ severity: 'warning', line: 4, message: expect.stringMatching(/lpf= \* &lfo: &lfo is a sound, not a value that moves.*&lfo loop=\.5 sin\(12\)/) }),
+    ]);
+    expect(messages(PATCH + '&lfo loop=.5 sin(12)\n' + lfo)).toEqual([]);
+  });
+  it(`a CV turning ${CV_LAPS} laps a second or faster is a warning, and one faster is read turning at that (#427)`, () => {
+    const cv = (loop: number) => `&a loop=${loop} sin(12)\n&v s=saw loop=A2 lpf=200..3000 * &a\n&out map=sample [&tune * &v * .4]`;
+    expect(messages(PATCH + cv(220))).toEqual([expect.stringMatching(/lpf= \* &a: &a turns at an audio rate, .* at most 20 times a second/)]);
+    expect(messages(PATCH + cv(CV_LAPS - 1))).toEqual([]);
+    // (the edge: at CV_LAPS it warns and plays as itself; one lap more warns and plays as CV_LAPS)
+    expect(messages(PATCH + cv(CV_LAPS))).toHaveLength(1);
+    expect(messages(PATCH + cv(CV_LAPS + 1))).toHaveLength(1);
+    const rounded = (loop: number) => JSON.stringify(params(cv(loop)), (_, v: unknown) => (typeof v === 'number' ? +v.toFixed(9) : v));
+    expect(rounded(CV_LAPS + 1)).toBe(rounded(CV_LAPS));
+    expect(params(cv(CV_LAPS))).not.toEqual(params(cv(CV_LAPS - 1)));
+    // (a 220 Hz CV is read as one at 20: a point every 1/240 s over the note, as at loop=20)
+    expect(params(cv(220))).toEqual(params(cv(CV_LAPS)));
+    // (its points counted, not its text's length: read as a share, a bipolar wave's −1…1 is 0…1, none cut off at 0, decision 067 §5)
+    const lpf = params(cv(220))?.['lpf'];
+    expect(lpf && 'points' in lpf ? lpf.points.length : 0).toBeLessThanOrEqual(121);
   });
 });

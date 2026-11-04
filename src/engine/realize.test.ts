@@ -782,20 +782,22 @@ describe('Metronome: any meter — the bar written as levels (meter(…)), read 
     expect(r.diagnostics).toEqual([]);
     return events(r, 0, seconds).map((e) => `${e.at.toFixed(2)}:${e.voice}`);
   };
-  it('4/4, a click a beat, 100 a minute: the downbeat, then the beats', () => {
-    expect(clicks(src)).toEqual(['0.00:down', '0.60:beatc', '1.20:beatc', '1.80:beatc', '2.40:down']);
+  it("4/4, a click a beat, 100 a minute: the downbeat, the half bar's beat, and the beats between a half click (#17)", () => {
+    expect(clicks(src)).toEqual(['0.00:down', '0.60:half', '1.20:beatc', '1.80:half', '2.40:down']);
   });
   it('eighths, swung: the off-beats two thirds through', () => {
     const c = clicks(src.replace('free(0, 0..3, "1 2 3 4")', 'free(1, 0..3, "1 2 3 4")').replace('swing=8n:free(.5,', 'swing=8n:free(.67,'));
-    expect(c.slice(0, 4)).toEqual(['0.00:down', '0.40:sub', '0.60:beatc', '1.00:sub']);
+    expect(c.slice(0, 4)).toEqual(['0.00:down', '0.40:sub', '0.60:half', '1.00:sub']);
   });
   it('6/8: two beats a bar, three eighths each — the bpm counts the beats', () => {
     const c = clicks(src.replace('free(2, 0..7,', 'free(4, 0..7,'), 1.25);
     expect(c).toEqual(['0.00:down', '0.20:sub', '0.40:sub', '0.60:beatc', '0.80:sub', '1.00:sub', '1.20:down']);
   });
-  it('the levels: * the bar, + a beat, . a subdivision, , finer', () => {
-    expect(meterLevels('4/4', 2)).toBe('*.+.+.+.');
-    expect(meterLevels('4/4', 4)).toBe('*,.,+,.,+,.,+,.,');
+  it('the levels: * the bar, + a beat, - a half’s beat (four groups or more, #17), . a subdivision, , finer', () => {
+    expect(meterLevels('4/4', 2)).toBe('*.-.+.-.');
+    expect(meterLevels('4/4', 4)).toBe('*,.,-,.,+,.,-,.,');
+    expect(meterLevels('5/4', 1)).toBe('*--+-'); // (3+2, the second half at the ceiling of half the groups)
+    expect(meterLevels('2+2+3', 1)).toBe('*.+.+..');
     expect(meterLevels('3/4', 3)).toBe('*..+..+..');
     expect(meterLevels('7/8', 1)).toBe('*..+.+.'); // (3+2+2, decision 040)
     expect(meterLevels('*.+.+..', 1)).toBe('*.+.+..');

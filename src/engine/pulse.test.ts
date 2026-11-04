@@ -331,3 +331,32 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(tapPositions(m, { written: '1m', kind: 'bar' }, 3)).toEqual([0, 3, 6]);
   });
 });
+
+describe('a tapped line comes round where cycle= says, every n bars (#116, decision 040)', () => {
+  const kick = '&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .1 0 0)';
+  /** The onsets of &k over its first `bars` bars of 7/8, in sixteenths (14 a bar), read off the bar's own length. */
+  const hits = (line: string, bars = 3) => {
+    const r = compileSource(`&bar meter("7/8") step=60bpm\n${kick}\n${line}\n&out map=sample [&k * .5]`);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    // (a bar of 7/8 is 14 sixteenths: one, from a line that strikes every sixteenth)
+    const each = compileSource(`&bar meter("7/8") step=60bpm\n${kick}\n&k step=16n &bd\n&out map=sample [&k * .5]`);
+    const s16 = eventsBetween(plan(each, codeShifts(each)), 0, 100).map((e) => e.at)[1]!;
+    return eventsBetween(plan(r, codeShifts(r)), 0, 100)
+      .map((e) => e.at)
+      .map((t) => Math.round((t / s16) * 100) / 100)
+      .filter((x) => x < bars * 14 - 1e-6);
+  };
+  const funk = '&bd ~ ~ ~ ~ ~ ~ ~ &bd ~ ~ ~ ~ ~ ~ &bd'; // (16 sixteenths: a 4/4 kick, its last a push into the next bar)
+  it('without cycle=, a line walks its braid across the bar line: 16 sixteenths against bars of 14', () => {
+    expect(hits(`&k step=16n ${funk}`)).toEqual([0, 8, 15, 16, 24, 31, 32, 40]);
+  });
+  it('with cycle=1 it comes round at every bar line: the steps past the bar are dropped', () => {
+    expect(hits(`&k step=16n cycle=1 ${funk}`)).toEqual([0, 8, 14, 22, 28, 36]);
+  });
+  it('a braid shorter than its lap repeats up to the bar line, and begins again there', () => {
+    expect(hits('&k step=16n cycle=1 &bd ~ ~ ~ ~ ~', 2)).toEqual([0, 6, 12, 14, 20, 26]);
+  });
+  it('cycle=2 comes round every two bars', () => {
+    expect(hits(`&k step=16n cycle=2 ${funk}`, 4)).toEqual([0, 8, 15, 16, 24, 28, 36, 43, 44, 52]);
+  });
+});

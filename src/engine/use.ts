@@ -268,22 +268,23 @@ function inherited(name: string, defaultCode: string, body: string): string {
 }
 
 /**
- * An argument written as one inline cell, `&(map=adsr .002 .3 .5 .06)`, is that cell (#428): its attributes and braid, as
- * a named one's would be, not a braid of one reference to it. Anything else is as written.
+ * An argument written as an inline cell, `&(map=adsr .002 .3 .5 .06)`, as its body (decision 065 §5: it is a new cell,
+ * read as the fragment reads the parameter; #428); anything else as written.
  */
-function unwrapped(body: string): string {
-  const b = body.trim();
-  if (!b.startsWith('&(') || !b.endsWith(')')) return body;
+function unwrapped(argument: string): string {
+  const v = argument.trim();
+  if (!v.startsWith('&(') || !v.endsWith(')')) return argument;
+  // (the parenthesis that opens it closes it at the end: `&(a) * &(b)` is two)
   let depth = 0;
   let quoted = false;
-  for (let i = 1; i < b.length; i++) {
-    const c = b[i]!;
+  for (let i = 1; i < v.length; i++) {
+    const c = v[i]!;
     if (c === '"') quoted = !quoted;
     if (quoted) continue;
     if (c === '(') depth++;
-    else if (c === ')' && --depth === 0) return i === b.length - 1 ? b.slice(2, -1).trim() : body;
+    else if (c === ')' && --depth === 0 && i < v.length - 1) return argument;
   }
-  return body;
+  return v.slice(2, -1).trim();
 }
 
 /** The attributes that read a cell as that attribute alone (`step=&tempo`: a rate alone, `swing=&swing`: a swing alone). */
@@ -294,8 +295,7 @@ const ALONE = new Set(['step', 'loop', 'swing']);
  * reads the parameter only through one attribute that reads a cell as that attribute alone (`step=&tempo`,
  * `swing=&swing`), that attribute set to it (`124bpm` is `step=124bpm`, a rate alone).
  */
-function asCell(written: string, parameter: string, lines: readonly Line[]): string {
-  const body = unwrapped(written);
+function asCell(body: string, parameter: string, lines: readonly Line[]): string {
   if (topTokens(body).some((t) => isAttribute(t.text))) return body;
   const keys = new Set<string>();
   let other = false;
@@ -446,8 +446,8 @@ function instantiate(
     say(`${quoted(id)} takes no main argument: its signature has none (&${heads[0]} from ${signature.optional.length ? `(${signature.optional.join(', ')})` : ''})`);
   const BARE = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
   const values = new Map<string, string>();
-  for (const [k, v] of args) if (optional.includes(k)) values.set(k, v);
-  if (main && from.main !== null) values.set(main, from.main);
+  for (const [k, v] of args) if (optional.includes(k)) values.set(k, unwrapped(v));
+  if (main && from.main !== null) values.set(main, unwrapped(from.main));
   const byReference = new Set<string>();
   for (const [p, v] of values) {
     const ref = BARE.exec(v);
@@ -484,7 +484,7 @@ function instantiate(
     if (heads.includes(p) && from.head.length && one) code = withAttributes(code, from.head);
     copy.push(lineOf(code));
   }
-  if (main && from.main !== null && !byReference.has(main)) copy.push(lineOf(`&${names.get(main)!} ${asCell(from.main, main, own)}`));
+  if (main && from.main !== null && !byReference.has(main)) copy.push(lineOf(`&${names.get(main)!} ${asCell(values.get(main)!, main, own)}`));
   const sharing = shared.filter((l) => reached.has(l.name!));
   const given = { id, names: new Set(sharing.map((l) => l.name!)), lines: sharing, resolved: true };
   return { taken: given, copy, args: Object.fromEntries(values) };

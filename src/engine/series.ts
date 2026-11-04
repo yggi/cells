@@ -125,6 +125,14 @@ export function modulation(p: Plan, m: Series, from: number, to: number): { at: 
   return out;
 }
 
+/**
+ * The lap step c of a series falls in, a hair (EPS) early: a step computed from seconds lands a float's width either
+ * side of a lap's start, and one just before it is that lap's start, not the end of the lap before (#341).
+ */
+function lapOf(c: number, period: number): number {
+  return Math.floor((c + EPS) / period);
+}
+
 /** The step in force at step c of a series: the last one starting at or before it (this lap or the one before). */
 function inForce(m: Series, c: number): StepEvent | null {
   const lap0 = Math.floor(c / m.period);
@@ -210,7 +218,7 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number, writte
   if (!Number.isFinite(c1)) c1 = c0;
   // the level at a step: the event sounding there (chords: the loudest), else silence
   const levelAt = (c: number) => {
-    const lap = Math.floor(c / m.period);
+    const lap = lapOf(c, m.period);
     const local = c - lap * m.period;
     let best = -1;
     for (const e of m.events) {

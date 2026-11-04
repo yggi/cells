@@ -35,9 +35,10 @@ export function feelOf({ style, swing }) {
     const weight = clamp01((swing.share - 0.5) * 6 * (swing.level === '8n' ? 1 : 0.5));
     return 0.5 * weight + 0.3 * style.entropy + 0.2 * (1 - style.artic);
 }
+const startsOf = (groups) => groups.map((_, g) => 2 * sum(groups.slice(0, g)));
 function baseOf({ groups, section, style, energy }, { part, role, step }) {
     const steps = 2 * sum(groups);
-    const starts = groups.map((_, g) => 2 * sum(groups.slice(0, g)));
+    const starts = startsOf(groups);
     const onBeat = starts.includes(step);
     const half = 2 * Math.floor(steps / 4);
     const backbeat = starts.filter((_, p) => (starts.length <= 3 ? p > 0 : p % 2 === 1)).at(-1);
@@ -87,11 +88,12 @@ export function played(frame, event, feel = feelOf(frame), widths = CONTRACT_WID
     const { seed, bar } = frame;
     const { part, step, note } = event;
     const base = baseOf(frame, event);
-    const level = event.velocity + (base - Math.round(base));
+    const written = event.velocity + (base - Math.round(base));
     const keys = part === 'drums' ? [bar, step, note] : [bar, step];
     const loose = (draw(seed, VELOCITY[part], ...keys) - 0.5) * feel * 24 * widths.licence;
     const d = draw(seed, OWN_ACCENT, PARTS.indexOf(part), ...keys);
-    const own = (step % 2 === 1 ? -d * 14 * feel : step % 4 === 2 ? d * 10 * feel : (d - 0.5) * 2 * 4 * feel) * widths.accents;
-    const total = part === 'drums' ? level + loose + own : level + (loose + own);
+    const level = step % 2 === 1 ? 4 : startsOf(frame.groups).includes(step) ? 0 : 3;
+    const own = (level === 4 ? -d * 14 * feel : level === 3 ? d * 10 * feel : (d - 0.5) * 2 * 4 * feel) * widths.accents;
+    const total = part === 'drums' ? written + loose + own : written + (loose + own);
     return { velocity: Math.max(1, Math.min(127, Math.round(total))), length: event.length * (1 - draw(seed, LENGTH[part], ...keys) * feel * 0.15 * widths.licence) };
 }

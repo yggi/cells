@@ -151,28 +151,27 @@ function inherited(name, defaultCode, body) {
         .flatMap((t) => (isAttribute(t.text) && !set.has(keyOf(t.text)) ? [t.text] : []));
     return [`&${name}`, ...kept, body].join(' ');
 }
-function unwrapped(body) {
-    const b = body.trim();
-    if (!b.startsWith('&(') || !b.endsWith(')'))
-        return body;
+function unwrapped(argument) {
+    const v = argument.trim();
+    if (!v.startsWith('&(') || !v.endsWith(')'))
+        return argument;
     let depth = 0;
     let quoted = false;
-    for (let i = 1; i < b.length; i++) {
-        const c = b[i];
+    for (let i = 1; i < v.length; i++) {
+        const c = v[i];
         if (c === '"')
             quoted = !quoted;
         if (quoted)
             continue;
         if (c === '(')
             depth++;
-        else if (c === ')' && --depth === 0)
-            return i === b.length - 1 ? b.slice(2, -1).trim() : body;
+        else if (c === ')' && --depth === 0 && i < v.length - 1)
+            return argument;
     }
-    return body;
+    return v.slice(2, -1).trim();
 }
 const ALONE = new Set(['step', 'loop', 'swing']);
-function asCell(written, parameter, lines) {
-    const body = unwrapped(written);
+function asCell(body, parameter, lines) {
     if (topTokens(body).some((t) => isAttribute(t.text)))
         return body;
     const keys = new Set();
@@ -307,9 +306,9 @@ function instantiate(from, id, signature, path, text, resolve, say, taken) {
     const values = new Map();
     for (const [k, v] of args)
         if (optional.includes(k))
-            values.set(k, v);
+            values.set(k, unwrapped(v));
     if (main && from.main !== null)
-        values.set(main, from.main);
+        values.set(main, unwrapped(from.main));
     const byReference = new Set();
     for (const [p, v] of values) {
         const ref = BARE.exec(v);
@@ -351,7 +350,7 @@ function instantiate(from, id, signature, path, text, resolve, say, taken) {
         copy.push(lineOf(code));
     }
     if (main && from.main !== null && !byReference.has(main))
-        copy.push(lineOf(`&${names.get(main)} ${asCell(from.main, main, own)}`));
+        copy.push(lineOf(`&${names.get(main)} ${asCell(values.get(main), main, own)}`));
     const sharing = shared.filter((l) => reached.has(l.name));
     const given = { id, names: new Set(sharing.map((l) => l.name)), lines: sharing, resolved: true };
     return { taken: given, copy, args: Object.fromEntries(values) };

@@ -26,27 +26,38 @@ export function renamedIds(source: string, resolve: Resolve | undefined): Rewrit
     const id = idOf(code);
     const word = id === null ? undefined : RENAMED_IDS.get(id);
     if (word === undefined || resolve(id!) === null || resolve(id!) !== resolve(word)) return [];
-    const quoted = JSON.stringify(id);
+    const quoted = JSON.stringify(id!);
     // (the old way `use "4/4 swung on 8n"` named it alone, quoted: it keeps its form, the word in quotes, for `uses.ts` to respell)
-    const at = code.indexOf(quoted);
-    if (at < 0) return [];
-    const bare = /^\s*use\s+"/.test(code) ? JSON.stringify(word) : word;
-    const before = code.trim();
-    const after = `${code.slice(0, at)}${bare}${code.slice(at + quoted.length)}`;
-    return [
-      {
-        id: `renamed:${i + 1}`,
-        tool: 'migrate' as const,
-        rule: 'renamed' as const,
-        title: `${quoted} is ${word} now: ${after.trim()}`,
-        before,
-        after: after.trim(),
-        apply: (src: string) =>
-          src
-            .split('\n')
-            .map((line, j) => (j === i && line === raw ? `${after}${raw.slice(code.length)}` : line))
-            .join('\n'),
-      },
-    ];
+    if (/^\s*use\s+"/.test(code)) {
+      const at = code.indexOf(quoted);
+      if (at < 0) return [];
+      return [rewrite(i, raw, code, `${code.slice(0, at)}${JSON.stringify(word)}${code.slice(at + quoted.length)}`, id!, word)];
+    }
+    // (after `from`, quoted or bare; a word taken with arguments, diatonic(mode=aeolian), joins those the line gives)
+    const m = new RegExp(`(\\sfrom\\s+)(${escape(quoted)}|${escape(id!)})(?=[\\s(]|$)`).exec(code);
+    if (!m) return [];
+    const end = m.index + m[0].length;
+    const joined = word.endsWith(')') && code[end] === '(' ? `${word.slice(0, -1)}, ${code.slice(end + 1)}` : `${word}${code.slice(end)}`;
+    return [rewrite(i, raw, code, `${code.slice(0, m.index)}${m[1]}${joined}`, id!, word)];
   });
+}
+
+const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The rewrite of line `i`, its code written `after`, its comment kept. */
+function rewrite(i: number, raw: string, code: string, after: string, id: string, word: string): Rewrite<'renamed'> {
+  const before = code.trim();
+  return {
+    id: `renamed:${i + 1}`,
+    tool: 'migrate' as const,
+    rule: 'renamed' as const,
+    title: `${JSON.stringify(id)} is ${word} now: ${after.trim()}`,
+    before,
+    after: after.trim(),
+    apply: (src: string) =>
+      src
+        .split('\n')
+        .map((line, j) => (j === i && line === raw ? `${after}${raw.slice(code.length)}` : line))
+        .join('\n'),
+  };
 }

@@ -8,12 +8,12 @@
  */
 import type { Pick } from './ast';
 import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from './fiveto12';
-import { adsrOf, balance, type CompileResult, type Output, type Shifts } from './program';
+import { adsrOf, balance, CV_LAPS, type CompileResult, type Output, type Shifts } from './program';
 import { tableChain } from './helix';
-import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from './clocking';
+import { clocking, EPS, playedCells, tapeMotion, turnLap, varispeedOf } from './clocking';
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
-import { refsOf } from './readers';
+import { refsOf, stepsPerSecond } from './readers';
 import { VOICE_PARAMS } from './attributes';
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
@@ -347,6 +347,24 @@ function outputOn(result: CompileResult, o: Output, muted: ReadonlySet<string>):
 }
 
 /** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
+/**
+ * A line's events laid on a lap of `lap` steps, which it comes round at (#116, decision 040: `cycle=n` on a tapped line
+ * runs it n bars before it comes round): its braid begins again at each lap, a step past the lap is dropped (a note
+ * that crosses it cut there), and a braid shorter than the lap repeats up to its end. Without cycle= a tapped line walks
+ * its own braid across the bar line, as a melody does.
+ */
+export function comeRound(events: readonly StepEvent[], period: number, lap: number): { period: number; events: StepEvent[] } {
+  if (Math.abs(period - lap) < EPS) return { period, events: [...events] };
+  const out: StepEvent[] = [];
+  for (let k = 0; k * period < lap - EPS; k++)
+    for (const e of events) {
+      const step = e.step + k * period;
+      if (step >= lap - EPS) continue;
+      out.push({ ...e, step, duration: Math.min(e.duration, lap - step) });
+    }
+  return { period: lap, events: out };
+}
+
 export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<string> = new Set()): Plan {
   if (!result.ok) return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
   const tracks: PlanTrack[] = [];
@@ -360,17 +378,24 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     // (a cell whose values run below 0 is bipolar, a wave from −1 to 1: read as a share, its −1…1 is 0…1, decision 067 §5)
     const db = m.map?.kind === 'db';
     const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
+    const period = Math.max(1, stepsOf(result, cell, pick));
+    // (a tapped line with cycle= comes round with its tap, every cycle= bars, #116: decision 040)
+    const lap = turnLap(result, m).per;
     return {
       sign,
       lin: m.map?.kind === 'lin',
       db,
       clock: m.clock,
       rate: m.rate,
-      period: Math.max(1, stepsOf(result, cell, pick)),
-      events,
+      ...(lap ? comeRound(events, period, lap) : { period, events }),
       ...(drawn ? { drawn } : {}),
       ...(bipolar ? { bipolar: true as const } : {}),
     };
+  };
+  // (a CV turning faster than CV_LAPS laps a second is read turning at that: #427, the compiler's warning says so)
+  const capped = (m: Series, cell: string): Series => {
+    const laps = (stepsPerSecond(result, cell) ?? 0) / m.period;
+    return laps > CV_LAPS ? { ...m, rate: (m.rate * CV_LAPS) / laps } : m;
   };
   // the envelopes' moving slots (attack=.3..0.01 * &style[artic], #411): their cells, as series, read at each note's start
   const envParams = new Map<string, Record<string, VoiceParam>>();
@@ -398,7 +423,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
           const envCell = pc.factors.find((f) => result.cells.get(f)?.map?.kind === 'adsr');
           out[key] = {
             range: pc.range,
-            series: pc.factors.filter((f) => f !== envCell).map((f) => series(f, null, 0, 1)),
+            series: pc.factors.filter((f) => f !== envCell).map((f) => capped(series(f, null, 0, 1), f)),
             env: envCell ? adsrOf(result.cells.get(envCell)!) : null,
           };
         }

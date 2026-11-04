@@ -1,10 +1,10 @@
 import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from "./fiveto12.js";
-import { adsrOf, balance } from "./program.js";
+import { adsrOf, balance, CV_LAPS } from "./program.js";
 import { tableChain } from "./helix.js";
-import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from "./clocking.js";
+import { clocking, EPS, playedCells, tapeMotion, turnLap, varispeedOf } from "./clocking.js";
 import { ExpansionLimit, flatten, stepsOf } from "./flatten.js";
 import { cellId } from "./ids.js";
-import { refsOf } from "./readers.js";
+import { refsOf, stepsPerSecond } from "./readers.js";
 import { VOICE_PARAMS } from "./attributes.js";
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen } from "./series.js";
 import { warpOf } from "./physics.js";
@@ -190,6 +190,19 @@ function outputOn(result, o, muted) {
         return false;
     return true;
 }
+export function comeRound(events, period, lap) {
+    if (Math.abs(period - lap) < EPS)
+        return { period, events: [...events] };
+    const out = [];
+    for (let k = 0; k * period < lap - EPS; k++)
+        for (const e of events) {
+            const step = e.step + k * period;
+            if (step >= lap - EPS)
+                continue;
+            out.push({ ...e, step, duration: Math.min(e.duration, lap - step) });
+        }
+    return { period: lap, events: out };
+}
 export function plan(result, statics, muted = new Set()) {
     if (!result.ok)
         return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
@@ -202,17 +215,22 @@ export function plan(result, statics, muted = new Set()) {
         const drawn = events.some((e) => e.laps || e.chance !== undefined || e.options || e.chosen) ? (e, lap) => thrownIn(result, cell, e, lap) : undefined;
         const db = m.map?.kind === 'db';
         const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
+        const period = Math.max(1, stepsOf(result, cell, pick));
+        const lap = turnLap(result, m).per;
         return {
             sign,
             lin: m.map?.kind === 'lin',
             db,
             clock: m.clock,
             rate: m.rate,
-            period: Math.max(1, stepsOf(result, cell, pick)),
-            events,
+            ...(lap ? comeRound(events, period, lap) : { period, events }),
             ...(drawn ? { drawn } : {}),
             ...(bipolar ? { bipolar: true } : {}),
         };
+    };
+    const capped = (m, cell) => {
+        const laps = (stepsPerSecond(result, cell) ?? 0) / m.period;
+        return laps > CV_LAPS ? { ...m, rate: (m.rate * CV_LAPS) / laps } : m;
     };
     const envParams = new Map();
     for (const c of result.cells.values()) {
@@ -240,7 +258,7 @@ export function plan(result, statics, muted = new Set()) {
                     const envCell = pc.factors.find((f) => result.cells.get(f)?.map?.kind === 'adsr');
                     out[key] = {
                         range: pc.range,
-                        series: pc.factors.filter((f) => f !== envCell).map((f) => series(f, null, 0, 1)),
+                        series: pc.factors.filter((f) => f !== envCell).map((f) => capped(series(f, null, 0, 1), f)),
                         env: envCell ? adsrOf(result.cells.get(envCell)) : null,
                     };
                 }
