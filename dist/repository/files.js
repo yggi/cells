@@ -2,7 +2,7 @@ import { readPiece, writePiece } from "../engine/piecefile.js";
 import { fragmentProblems } from "./fragments.js";
 import { readYaml, yamlValue } from "./yaml.js";
 const ENTRY_KEYS = ['id', 'association'];
-const POINT_KEYS = ['point', 'weight', 'facet'];
+const POINT_KEYS = ['point', 'weight', 'facet', 'args'];
 const entry = (node, key) => node.entries.find((e) => e.key === key);
 function association(node, problems) {
     if (node.kind !== 'list') {
@@ -17,7 +17,7 @@ function association(node, problems) {
         }
         for (const e of item.entries)
             if (!POINT_KEYS.includes(e.key))
-                problems.push({ line: e.line, message: `${where}: ${e.key} is none of point, weight, facet` });
+                problems.push({ line: e.line, message: `${where}: ${e.key} is none of point, weight, facet, args` });
         const point = {};
         const axes = entry(item, 'point');
         if (!axes)
@@ -39,7 +39,19 @@ function association(node, problems) {
         const f = facet?.value.kind === 'scalar' ? facet.value.value : undefined;
         if (facet && typeof f !== 'string')
             problems.push({ line: facet.line, message: `${where}: its facet is ${JSON.stringify(yamlValue(facet.value))}, not a name` });
-        return { point, weight: typeof w === 'number' ? w : 0, ...(typeof f === 'string' ? { facet: f } : {}) };
+        const argsEntry = entry(item, 'args');
+        const args = {};
+        if (argsEntry && (argsEntry.value.kind !== 'map' || !argsEntry.value.entries.length))
+            problems.push({ line: argsEntry.line, message: `${where}: its args are a map of parameters to values` });
+        else if (argsEntry && argsEntry.value.kind === 'map')
+            for (const a of argsEntry.value.entries) {
+                const v = a.value.kind === 'scalar' ? a.value.value : undefined;
+                if ((typeof v === 'string' && /^[A-Za-z0-9_.#-]+$/.test(v)) || typeof v === 'number')
+                    args[a.key] = String(v);
+                else
+                    problems.push({ line: a.line, message: `${where}: its arg ${a.key} is ${JSON.stringify(yamlValue(a.value))}, not a word or a number` });
+            }
+        return { point, weight: typeof w === 'number' ? w : 0, ...(typeof f === 'string' ? { facet: f } : {}), ...(Object.keys(args).length ? { args } : {}) };
     });
 }
 export function readFragment(markdown) {
@@ -85,7 +97,12 @@ export function writeFragment({ fragment, meta, prose, layout }) {
     const clash = ENTRY_KEYS.filter((key) => Object.hasOwn(meta, key));
     if (clash.length)
         throw new Error(`writeFragment: the metadata has ${clash.join(' and ')}, which the entry writes`);
-    const association = fragment.association.map(({ point, weight, facet }) => ({ point, weight, ...(facet === undefined ? {} : { facet }) }));
+    const association = fragment.association.map(({ point, weight, facet, args }) => ({
+        point,
+        weight,
+        ...(facet === undefined ? {} : { facet }),
+        ...(args === undefined ? {} : { args }),
+    }));
     return writePiece({ frontmatter: { id: fragment.id, association, ...meta }, text: fragment.text, prose, layout });
 }
 export function readFragments(files) {

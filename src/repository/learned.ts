@@ -23,6 +23,7 @@ import type { FragmentFile, Meta } from './files';
 import { declarations } from './fit';
 import { byId, fragmentProblems, pointDistance, pointsOf, type LearnedLayer, type Repository, type StylePoint, type UsedPair, type WeightedPoint } from './fragments';
 import { INTERFACE_NAMES } from './holes';
+import { argsOf, ofArgs } from './variants';
 import { RENAMED_IDS } from '../engine/renamed';
 
 /**
@@ -127,10 +128,12 @@ const rounded = (weight: number) => Math.round(weight * 1e9) / 1e9;
  */
 function movedAt(repository: Repository, layer: LearnedLayer, id: string, point: StylePoint, facet: string | undefined): LearnedLayer {
   // Every point of the fragment, where it lives: its own (the seed's, fixed; a filed one's, in the layer), then the layer's points for it.
-  const file = layer.filed.find((f) => f.fragment.id === id);
+  // (a filed template's variant, `mine(mode=x)`, lives in the template's own association, as the points carrying those args)
+  const file = layer.filed.find((f) => f.fragment.id === id) ?? layer.filed.find((f) => argsOf(f.fragment, id) !== undefined);
+  const args = file && file.fragment.id !== id ? argsOf(file.fragment, id) : undefined;
   const own = file ? file.fragment.association : repository.fragments.find((f) => f.id === id)!.association;
   type Place = { readonly wp: WeightedPoint; readonly own?: number; readonly row?: number };
-  const places: Place[] = own.map((wp, i) => ({ wp, own: i }));
+  const places: Place[] = own.flatMap((wp, i) => (!file || ofArgs(wp, args) ? [{ wp, own: i }] : []));
   layer.points.forEach((lp, i) => {
     if (lp.id === id) places.push({ wp: lp, row: i });
   });
@@ -142,7 +145,7 @@ function movedAt(repository: Repository, layer: LearnedLayer, id: string, point:
     const d = ofFacet.has(place.wp) ? pointDistance(place.wp.point, point) / place.wp.weight : Infinity;
     if (d <= best && d < Infinity) [found, best] = [place, d];
   }
-  if (!found) return addedAt(layer, id, file, { point: { ...point }, weight: FILING_WEIGHT, ...(facet === undefined ? {} : { facet }) });
+  if (!found) return addedAt(layer, id, file, { point: { ...point }, weight: FILING_WEIGHT, ...(facet === undefined ? {} : { facet }), ...(args ? { args } : {}) });
   const { wp } = found;
   if (wp.weight >= USE_CAP) return layer;
   const weight = rounded(Math.min(USE_CAP, wp.weight + USE_STEP));
