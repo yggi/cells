@@ -163,7 +163,7 @@ describe('a named use (decision 059)', () => {
 
   it('use is the old way (decision 065): every use line says its from line; use "id" reads as use * from "id"', () => {
     const said = (text: string) => parse(text).diagnostics.map((d) => [d.severity, d.message]);
-    const oldWay = (line: string) => ['warning', `use is the old way: say where the cells come from, ${line} (decision 065; Normalise writes it, with a template's arguments)`];
+    const oldWay = (line: string) => ['warning', `use is the old way: say where the cells come from, ${line} (decision 065; Migrate writes it, with a template's arguments)`];
     expect(said('use "core kit"')).toEqual([oldWay('* from "core kit"')]);
     expect(said('use * from "core kit"\nuse &bd from x\nuse &aeolian')).toEqual([oldWay('* from "core kit"'), oldWay('&bd from x'), oldWay('&aeolian from aeolian')]);
     const old = compileSource(GROOVE.replace('use * from gm_kit', 'use "gm_kit"'), undefined, seed);
@@ -341,7 +341,7 @@ describe('the rhythms with the General MIDI kit (S1)', () => {
       expect(r.uses?.[0]?.overrode).toEqual([]);
       expect(soundsIdentical(piece, expand(piece, resolveSeed), undefined, seed)).toBe(true);
     });
-  it('every rhythm is one of the sixteen', () => expect(RHYTHM_FRAGMENTS).toHaveLength(16));
+  it('every rhythm is one of the seventeen', () => expect(RHYTHM_FRAGMENTS).toHaveLength(17));
 });
 
 describe('the lockfile', () => {

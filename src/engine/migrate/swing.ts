@@ -1,0 +1,41 @@
+/**
+ * Migrate (#18): a bare `swing=.67` on a meter, which leans the meter cell's own steps, written with the level it leans
+ * (`swing=8n:.67`): the spelling the compiler's warning names, a note value of the meter's and not its cell's steps, so
+ * that changing the meter's subdivision doesn't change what the swing means (decision 040). Offered when it plays the
+ * same notes (checked here).
+ */
+import { attrsOf, declLine, setAttr } from '../edit';
+import { bareSwingLevel, noteValue, swingLevelProblem } from '../meter';
+import { soundsIdentical } from '../sameness';
+import type { CompileOptions, CompileResult as Result } from '../program';
+import type { Rewrite } from '../rewrite';
+
+/** Each meter with a bare swing=: the same swing with its level named, if it plays the same notes. */
+export function swings(source: string, result: Result, options: CompileOptions = {}): Rewrite<'swing'>[] {
+  const out: Rewrite<'swing'>[] = [];
+  for (const c of result.cells.values()) {
+    const m = c.meter;
+    // (the share as written, free(…) and all; one with its level named already is left alone)
+    const written = m && typeof c.params.swing === 'number' ? attrsOf(source, c.name).get('swing') : undefined;
+    if (!m || !written || /^[1-9][0-9]*(?:n\.?|t):/.test(written) || declLine(source, c.name) < 0) continue;
+    const level = bareSwingLevel(m);
+    // (a level that leans nothing, the beats of a meter with no subdivision, is left to the author: the compiler's warning
+    // names what they may have meant, and that changes the notes, which a migration never does, #166)
+    const whole = level === null ? null : noteValue(level);
+    if (!level || whole === null || swingLevelProblem(m, whole) !== null) continue;
+    const apply = (s: string) => setAttr(s, c.name, 'swing', `${level}:${written}`);
+    const next = apply(source);
+    if (next === source || !soundsIdentical(source, next, undefined, options)) continue;
+    const at = declLine(source, c.name);
+    out.push({
+      id: `swing:${c.name}`,
+      tool: 'migrate',
+      rule: 'swing',
+      title: `&${c.name}'s swing= leans the meter cell's own steps: name the level, swing=${level}:${written} (#18)`,
+      before: source.split('\n')[at].trim(),
+      after: next.split('\n')[at].trim(),
+      apply,
+    });
+  }
+  return out;
+}

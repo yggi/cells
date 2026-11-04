@@ -27,7 +27,7 @@ export interface Attribute {
     readonly clock?: true;
     /** It is a frequency or a rate, in Hz (lpf=1200, wanderhz=.5): its slider over a wide range runs on a log scale. */
     readonly hz?: true;
-    /** An old spelling, still read and rewritten by Shorten: what says it now. Not in the reference. */
+    /** An old spelling, still read and rewritten by Migrate: what says it now. Not in the reference. */
     readonly old?: string;
     /** Named before it is built (some of its values warn and play as the default): in the reference, taught on no tier yet. */
     readonly stub?: true;

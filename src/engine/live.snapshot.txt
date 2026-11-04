@@ -68,6 +68,7 @@ hypercell  live 102d8396baef9e1e
 onemore  live d6681d54413c2e59
 electroswing  live 4835aa50a2db945b
 spooky  live b0ce5cf9eb42c6c0
+kinderlied  live cbfa7e8537abfcd8
 brothers  live 89d8f5a03778cd82
 ghosts  live e4109e6f71217d64
 tines  live 6457d4cb35a66a85

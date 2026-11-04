@@ -72,6 +72,7 @@ export const ORDER = [
   'onemore',
   'electroswing',
   'spooky',
+  'kinderlied',
   'brothers',
   'ghosts',
   'tines',

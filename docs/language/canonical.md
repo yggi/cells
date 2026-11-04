@@ -37,7 +37,7 @@ leaves it for the author.
 
 ## The main key: named, `over=&key`
 
-`over=key`, the main key read the old way ([tables.md](tables.md), [decision 060](https://github.com/yggi/cells/blob/main/docs/decisions/060-the-key-is-named.md)), is written `over=&key`, the cell it reads, by its name (`normalise/mainkey.ts`): the first cell in the text whose braid is `scale(…)`, whatever it is called (`over=&chords` where `&chords scale(aeolian, A)` comes first). The two read one table, so the rewrite plays the same notes. A text with no main key is left as it is: its `over=key` is an error.
+`over=key`, the main key read the old way ([tables.md](tables.md), [decision 060](https://github.com/yggi/cells/blob/main/docs/decisions/060-the-key-is-named.md)), is written `over=&key`, the cell it reads, by its name (Migrate's rule, `migrate/mainkey.ts`, which Normalise runs first): the first cell in the text whose braid is `scale(…)`, whatever it is called (`over=&chords` where `&chords scale(aeolian, A)` comes first). The two read one table, so the rewrite plays the same notes. A text with no main key is left as it is: its `over=key` is an error.
 
 | written | Normalise writes |
 |---|---|
@@ -86,18 +86,18 @@ A fragment's cell written inline, `&(…)` word for word, is taken the same way:
 
 ## `use`: one spelling, kept, never expanded
 
-A `use` line ([use.md](use.md), decisions 054 and 059) is written in one spelling (`normalise/uses.ts`): `use * from …`
+A `use` line ([use.md](use.md), decisions 054 and 059) is written in one spelling (Migrate's rule, `migrate/uses.ts`, which Normalise runs first): `use * from …`
 for every line, `use &a, &b from …` for the names (a comma and a space between them), `use &x` where it takes `&x` from
 `x`, the id bare where it is a word and in double quotes where it isn't. So `use "harmonic minor"`, the old way, is written
 `use * from "harmonic minor"`: the two read as one. A use of a fragment that only forwards, whose text is one `use` and
-nothing else, is written as the use it forwards to (`normalise/forwarded.ts`): a retired id, so `use * from "core kit"`
+nothing else, is written as the use it forwards to (Migrate's rule, `migrate/forwarded.ts`): a retired id, so `use * from "core kit"`
 is `use &bd, &rim, … from gm_kit`, and a use that names what it takes keeps its names (#196). Normalise keeps each `use` line in its order. It never writes the used fragment's lines into the piece: that is no canonical form
 (decision 049; `expand` writes them out on request). A text with `use` lines is
 normalised with the host's resolver, `normalise(source, { resolve })`, so that it compiles.
 
 ## `from`: a `use` line as the line that says where its cells come from
 
-A `use` line is the old way ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md)), and Normalise writes it as the `from` line that plays the same (`normalise/from.ts`, the Migrate step), with the host's resolver. A library line written as a `use` above, or joined to one, goes on to its `from` line the same way; one already a collection's `from` line takes the names too.
+A `use` line is the old way ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md)), and Normalise writes it as the `from` line that plays the same (Migrate's rule, `migrate/from.ts`, which Normalise runs first), with the host's resolver. A library line written as a `use` above, or joined to one, goes on to its `from` line the same way; one already a collection's `from` line takes the names too.
 
 - **A collection's** (a fragment with no signature): `use &bd, &sd from gm_kit` is `&bd, &sd from gm_kit`, `use * from gm_kit` is `* from gm_kit`, `use &vibrato` is `&vibrato from vibrato`.
 - **A template's** (one with a signature): the heads the use names, and those the piece reads besides (a performer's gate, its old helper); each optional parameter the piece defines, which the old use read by name, as an argument naming the piece's cell (`(swing=&swing)`); and the main argument the piece's cell (`&tempo`), or, where nothing else reads that cell, it reads no other and holds no slider, label or comment, its body written in its place and its line gone, as the template reads it: `use &key from dorian` with `&tonic D` is `&key from dorian D`, `use &bar from "4/4"` with `&tempo step=96bpm` is `&bar from "4/4" 96bpm`.

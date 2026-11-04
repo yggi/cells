@@ -21,7 +21,7 @@ export function declare(ctx) {
     modes(ctx, decls);
     swings(ctx, decls);
     const sections = sectionTables(decls, error);
-    const stacks = gates(decls, implicit, error);
+    const stacks = gates(decls, implicit, error, ctx.warn);
     mixSelectors(ctx, decls);
     const implicitRoot = !decls.has(ROOT);
     for (const name of decls.keys())
@@ -177,7 +177,7 @@ function mainKeyOf(ctx, decls) {
         if (d.over?.name !== MAIN_KEY)
             continue;
         if (main) {
-            ctx.warn(`over=key is the old way: name the key, over=&${main}`, d.over.span);
+            ctx.warn(`over=key is the old way: name the key, over=&${main} (Migrate rewrites it)`, d.over.span);
             decls.set(d.name, { ...d, over: { ...d.over, name: main } });
         }
         else {
@@ -260,7 +260,7 @@ export function voiceGrooves(decls) {
             rewrite(d);
     return { voices, cells };
 }
-function gates(decls, implicit, error) {
+function gates(decls, implicit, error, warn) {
     const stacks = new Set();
     const ref = (name, span) => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
     const grooves = voiceGrooves(decls);
@@ -274,6 +274,8 @@ function gates(decls, implicit, error) {
         const port = old ? 'trigger' : 'play';
         const notesSpan = d.paramSpans[port] ?? d.span;
         const move = old ? undefined : d.playMove;
+        if (old)
+            warn(`&${d.name} is a gate written the old way: play= for trigger=, one level= for velocity=, gate= and gain=, the voices it plays all of as a chord (Migrate rewrites it, decision 023)`, notesSpan);
         const plain = (a) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
         const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;
         const bare = tokens.every((t) => plain(t.atom) && t.repeat === 1 && t.subdivide === 1 && t.elongate === 1);
