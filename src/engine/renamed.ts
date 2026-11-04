@@ -1,6 +1,7 @@
 /**
  * The seed ids that became words (#387, decision 065 followed through): each id that wasn't a word, and the word it is
- * now. The rule: lower case; spaces, `-` and `/` as `_`; parentheses dropped; an id that would start with a digit (each
+ * now; and the seven diatonic modes, each the one `diatonic` fragment taken with its mode (`aeolian` is
+ * `diatonic(mode=aeolian)`, how a `from` line takes it and a query answers). The rule: lower case; spaces, `-` and `/` as `_`; parentheses dropped; an id that would start with a digit (each
  * is a meter) after `meter_`. So a `from` line names every seed bare (`&bar from meter_4_4_swung_on_8n &tempo`).
  *
  * An old id still reads for one minor version: the seed library resolves it to the same text as its word, so a piece's
@@ -68,6 +69,14 @@ export const RENAMED_IDS: ReadonlyMap<string, string> = new Map([
   ['harmonic minor', 'harmonic_minor'],
   ['rounded binary', 'rounded_binary'],
   ['call and answer', 'call_and_answer'],
+  // (the seven diatonic modes, each now the one diatonic fragment with its mode: a query answers so, #387 B1)
+  ['aeolian', 'diatonic(mode=aeolian)'],
+  ['dorian', 'diatonic(mode=dorian)'],
+  ['ionian', 'diatonic(mode=ionian)'],
+  ['mixolydian', 'diatonic(mode=mixolydian)'],
+  ['phrygian', 'diatonic(mode=phrygian)'],
+  ['lydian', 'diatonic(mode=lydian)'],
+  ['locrian', 'diatonic(mode=locrian)'],
 ]);
 
 /** An id as a word, by the rule above: `Techno drums` is `techno_drums`, `4/4 swung on 8n` is `meter_4_4_swung_on_8n`; a word stays as it is. */

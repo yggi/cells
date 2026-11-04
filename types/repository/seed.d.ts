@@ -8,5 +8,7 @@ import { type LibraryFile } from './files';
 import type { Fragment } from './fragments';
 /** Every seed file read, in path order: its fragment, its metadata (`source: seed`, where it was lifted from) and its prose. */
 export declare const SEED: readonly LibraryFile[];
-/** The fragments of one folder of the seed library, in file order. */
+/** A seed file's fragments: a template's sets of arguments each a fragment of its own (`variantsOf`). */
+export declare const fragmentsOf: (file: LibraryFile) => Fragment[];
+/** The fragments of one folder of the seed library, in file order (a template's sets of arguments each a fragment of its own). */
 export declare const seedFragments: (folder: string) => Fragment[];

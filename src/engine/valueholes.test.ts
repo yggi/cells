@@ -145,7 +145,7 @@ describe('a stepped tonic, and one left free (#301, decision 060)', () => {
 });
 
 describe('the seeds', () => {
-  const uses = ['meter_4_4_leaning_on_16n', 'dorian', 'vamp_to_the_seventh', 'funk_drums', 'gm_kit', 'funk_bass', 'bass'].map((id) => `use * from "${id}"`);
+  const uses = ['meter_4_4_leaning_on_16n', 'harmonic_minor', 'vamp_to_the_seventh', 'funk_drums', 'gm_kit', 'funk_bass', 'bass'].map((id) => `use * from "${id}"`);
   const seconds = (8 * 4 * 60) / 104;
 
   it('a text of uses alone, with &tempo and &tonic, compiles clean and plays what it plays with &bar and &key written out', () => {
@@ -153,7 +153,7 @@ describe('the seeds', () => {
     // (the bass heard on a sound card too: it has a sound of its own, which MIDI doesn't send, #391)
     const card = '&out map=midi ~ [&bassline * &bassV] ~!7 &groove\n&hear map=sample [&bassline * &bassV]';
     const holes = lines(...uses, '&tempo step=104bpm', '&tonic D', card);
-    const written = lines('&bar meter("4/4") step=104bpm swing=16n:.65', '&key scale(dorian, D)', ...uses.slice(2), card);
+    const written = lines('&bar meter("4/4") step=104bpm swing=16n:.65', '&key scale(harmonic, D)', ...uses.slice(2), card);
     expect(messages(holes)).toEqual([]);
     expect(messages(written)).toEqual([]);
     const played = events(holes, seconds);

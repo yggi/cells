@@ -10,7 +10,7 @@ import type { Pick } from './ast';
 import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from './fiveto12';
 import { adsrOf, balance, CV_LAPS, type CompileResult, type Output, type Shifts } from './program';
 import { tableChain } from './helix';
-import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from './clocking';
+import { clocking, EPS, playedCells, tapeMotion, turnLap, varispeedOf } from './clocking';
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { refsOf, stepsPerSecond } from './readers';
@@ -342,6 +342,24 @@ function outputOn(result: CompileResult, o: Output, muted: ReadonlySet<string>):
 }
 
 /** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
+/**
+ * A line's events laid on a lap of `lap` steps, which it comes round at (#116, decision 040: `cycle=n` on a tapped line
+ * runs it n bars before it comes round): its braid begins again at each lap, a step past the lap is dropped (a note
+ * that crosses it cut there), and a braid shorter than the lap repeats up to its end. Without cycle= a tapped line walks
+ * its own braid across the bar line, as a melody does.
+ */
+export function comeRound(events: readonly StepEvent[], period: number, lap: number): { period: number; events: StepEvent[] } {
+  if (Math.abs(period - lap) < EPS) return { period, events: [...events] };
+  const out: StepEvent[] = [];
+  for (let k = 0; k * period < lap - EPS; k++)
+    for (const e of events) {
+      const step = e.step + k * period;
+      if (step >= lap - EPS) continue;
+      out.push({ ...e, step, duration: Math.min(e.duration, lap - step) });
+    }
+  return { period: lap, events: out };
+}
+
 export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<string> = new Set()): Plan {
   if (!result.ok) return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
   const tracks: PlanTrack[] = [];
@@ -350,7 +368,10 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
   const series = (cell: string, pick: Pick | null, shift: number, sign: 1 | -1): Series => {
     const m = result.cells.get(cell)!;
     const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
-    return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, period: Math.max(1, stepsOf(result, cell, pick)), events };
+    const period = Math.max(1, stepsOf(result, cell, pick));
+    // (a tapped line with cycle= comes round with its tap, every cycle= bars, #116: decision 040)
+    const lap = turnLap(result, m).per;
+    return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, ...(lap ? comeRound(events, period, lap) : { period, events }) };
   };
   // (a CV turning faster than CV_LAPS laps a second is read turning at that: #427, the compiler's warning says so)
   const capped = (m: Series, cell: string): Series => {

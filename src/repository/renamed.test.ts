@@ -13,12 +13,13 @@ const ids = new Set(LIBRARY.map((f) => f.id));
 const piece = (id: string) => `&bar from ${id} 120bpm\n&t step=8n 0 2 4 7\n&v s=tri loop=C4\n&out map=sample [&t * &v]`;
 
 describe('the seed ids as words (#387)', () => {
-  it('every seed id is a word now, and each of the 59 old ones names its word by the rule', () => {
-    expect([...ids].filter((id) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(id))).toEqual([]);
-    expect(RENAMED_IDS.size).toBe(59);
+  it('every seed id is a word now, or a template taken with its arguments; each of the 59 old ones names its word by the rule, and the seven modes the diatonic fragment with theirs', () => {
+    expect([...ids].filter((id) => !/^[A-Za-z_][A-Za-z0-9_]*(\([A-Za-z_]\w*=[\w.#-]+(, [A-Za-z_]\w*=[\w.#-]+)*\))?$/.test(id))).toEqual([]);
+    expect(RENAMED_IDS.size).toBe(66);
     for (const [old, word] of RENAMED_IDS) {
-      expect([old, ids.has(word), wordOf(old)]).toEqual([old, true, word]);
-      expect([old, ids.has(old)]).toEqual([old, false]);
+      expect([old, ids.has(word), ids.has(old)]).toEqual([old, true, false]);
+      if (/^diatonic\(/.test(word)) expect(word).toBe(`diatonic(mode=${old})`);
+      else expect([old, wordOf(old)]).toEqual([old, word]);
     }
   });
 
@@ -77,6 +78,18 @@ describe('a learned layer kept before the rename (#387)', () => {
       { ids: ['bebop', 'walking_bass'], count: 1 },
     ]);
     expect(layerProblems(now)).toEqual([]);
+    expect(repository.merge(now).unheld).toEqual([]);
+  });
+
+  it('a point on a mode before #387 B1 is a point on the diatonic fragment taken with that mode', () => {
+    const modes: LearnedLayer = {
+      filed: [],
+      points: [{ id: 'dorian', point: { sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 }, weight: 1.1 }],
+      together: [{ ids: ['dorian', 'funk_bass'], count: 2 }],
+    };
+    const now = renamedLayer(modes);
+    expect(now.points.map((p) => p.id)).toEqual(['diatonic(mode=dorian)']);
+    expect(now.together).toEqual([{ ids: ['diatonic(mode=dorian)', 'funk_bass'], count: 2 }]);
     expect(repository.merge(now).unheld).toEqual([]);
   });
 

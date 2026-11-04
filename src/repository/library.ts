@@ -7,6 +7,7 @@
  */
 import type { Resolve } from '../engine/program';
 import { RENAMED_IDS } from '../engine/renamed';
+import { SEED } from './seed';
 import { BASS_FRAGMENTS } from './bass';
 import type { Fragment } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
@@ -50,7 +51,9 @@ export const RETIRED: ReadonlyMap<string, string> = new Map([
   ['gm kit', 'use * from gm_kit'],
 ]);
 
-const CURRENT = new Map(LIBRARY.map((f): [string, string] => [f.id, f.text]));
+// (a template whose points carry its arguments is in the library as a fragment for each set, `diatonic(mode=aeolian)`; a from
+// line names the template itself, `diatonic`, so its own text is read by its id too)
+const CURRENT = new Map([...SEED.map((f): [string, string] => [f.fragment.id, f.fragment.text]), ...LIBRARY.map((f): [string, string] => [f.id, f.text])]);
 /** Each id the seed renamed (`RENAMED_IDS`, #387), read for a minor version as the text of its word: the same hash, so a lockfile still holds. */
 const RENAMED = [...RENAMED_IDS].map(([old, word]): [string, string] => [old, CURRENT.get(word)!]);
 const BY_ID = new Map([...CURRENT, ...RENAMED, ...RETIRED]);

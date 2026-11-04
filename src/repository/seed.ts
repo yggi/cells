@@ -6,6 +6,7 @@
  */
 import { readFragments, type LibraryFile } from './files';
 import type { Fragment } from './fragments';
+import { variantsOf } from './variants';
 import { SEED_FILES } from './seed.generated';
 
 function readSeed(): LibraryFile[] {
@@ -17,5 +18,8 @@ function readSeed(): LibraryFile[] {
 /** Every seed file read, in path order: its fragment, its metadata (`source: seed`, where it was lifted from) and its prose. */
 export const SEED: readonly LibraryFile[] = readSeed();
 
-/** The fragments of one folder of the seed library, in file order. */
-export const seedFragments = (folder: string): Fragment[] => SEED.filter((f) => f.path.startsWith(`${folder}/`)).map((f) => f.fragment);
+/** A seed file's fragments: a template's sets of arguments each a fragment of its own (`variantsOf`). */
+export const fragmentsOf = (file: LibraryFile): Fragment[] => variantsOf(file.fragment);
+
+/** The fragments of one folder of the seed library, in file order (a template's sets of arguments each a fragment of its own). */
+export const seedFragments = (folder: string): Fragment[] => SEED.filter((f) => f.path.startsWith(`${folder}/`)).flatMap(fragmentsOf);

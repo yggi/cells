@@ -1,6 +1,7 @@
 import { declarations } from "./fit.js";
 import { byId, fragmentProblems, pointDistance, pointsOf } from "./fragments.js";
 import { INTERFACE_NAMES } from "./holes.js";
+import { argsOf, ofArgs } from "./variants.js";
 import { RENAMED_IDS } from "../engine/renamed.js";
 export const FILING_WEIGHT = 0.1;
 export const USE_STEP = 0.1;
@@ -28,9 +29,10 @@ export function usedTogether(layer, a, b) {
 }
 const rounded = (weight) => Math.round(weight * 1e9) / 1e9;
 function movedAt(repository, layer, id, point, facet) {
-    const file = layer.filed.find((f) => f.fragment.id === id);
+    const file = layer.filed.find((f) => f.fragment.id === id) ?? layer.filed.find((f) => argsOf(f.fragment, id) !== undefined);
+    const args = file && file.fragment.id !== id ? argsOf(file.fragment, id) : undefined;
     const own = file ? file.fragment.association : repository.fragments.find((f) => f.id === id).association;
-    const places = own.map((wp, i) => ({ wp, own: i }));
+    const places = own.flatMap((wp, i) => (!file || ofArgs(wp, args) ? [{ wp, own: i }] : []));
     layer.points.forEach((lp, i) => {
         if (lp.id === id)
             places.push({ wp: lp, row: i });
@@ -44,7 +46,7 @@ function movedAt(repository, layer, id, point, facet) {
             [found, best] = [place, d];
     }
     if (!found)
-        return addedAt(layer, id, file, { point: { ...point }, weight: FILING_WEIGHT, ...(facet === undefined ? {} : { facet }) });
+        return addedAt(layer, id, file, { point: { ...point }, weight: FILING_WEIGHT, ...(facet === undefined ? {} : { facet }), ...(args ? { args } : {}) });
     const { wp } = found;
     if (wp.weight >= USE_CAP)
         return layer;

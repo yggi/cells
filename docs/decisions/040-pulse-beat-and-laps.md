@@ -67,6 +67,13 @@ What the build settled beside them:
 - **Migrating a meaning:** `cycle=24` is valid in both versions, so no compile of the old text says what it played. Migrate's `laps` rule is exact by construction (`Rewrite.exact`), witnessed by the notes the old version played (`fixtures/migrations/laps/*.v0.15.notes`), and never run by Normalise. A table stepped by a cell whose `cycle=` is a whole number of its own lengths warns that it was probably written in steps.
 - Ricercar's `cycle=24` goes rather than becoming `cycle=2`: its melody reads `&key` past two laps, which `cycle=2` would now wrap, and its `stride=` is a slider at 0, so the cycle only ever mattered as the performer raised it (now round after one lap: the circle).
 
+## Built: a tapped line comes round where `cycle=` says (#116, 2026-11-04)
+
+The owner's ruling on #116, option (a):
+- **A tapped line walks its own braid by default**, across the bar line, as a melody does. Of the examples' 301 tapped lines, 31 hold a braid their bar doesn't divide; nearly all are melodies, and none moves.
+- **`cycle=n` on a tapped line comes round every n bars**, completing "`cycle=n` on a tap runs it n bars before it comes round". Its braid begins again at each lap, a step past the lap is dropped (a note crossing it is cut there), and a braid shorter than the lap repeats up to its end (`comeRound`, `realize.ts`). Funk's 16 sixteenths under 7/8 with `cycle=1` play 14 and begin again at each bar line: a rhythm fragment can be laid under any meter.
+- The lines that wrote `cycle=` (the seed harmonies' `&harm step=1m cycle=8`, electroswing's `&stabline`) already filled their bars, so no event snapshot moves.
+
 ## Consequences
 
 - Rungs, each an issue under #15: the taps (pulse, beat, note values, the reset at the bar) with the examples moved to them; `cycle=` in laps with its migration; the proportions in the meter cell, written as a tree and as `swing=` keyed by note value (`swing=8n:.67`), with overrides at the tap (#18). Each measured against the event snapshots.
