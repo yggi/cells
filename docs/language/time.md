@@ -87,7 +87,7 @@ A line taps a meter by pulse, beat or note value, never by the meter cell's own 
 - A time parameter (`delaytime=`, a tape's `length=`, a head's `at=`) reads a tap as a length: `delaytime=8n` is an eighth at the meter's tempo (.25 s at 120 bpm), `4n.` is .75 s even where the bar line cuts it, `&bar2:8n` reads another meter. A pulse, a beat or the bar is the mean of its steps over the bar (`beat` in 7/8 as 3+2+2 at 90 bpm is 2/3 s: a parameter is one number). Like a clock's, it is fixed at the piece's tempo when compiled, and a swing leaves it as it is.
 - The meter places the tap's steps: a scan bends them, `swing=` leans them (each node keeping its ends), a motor drags them. A part of a step (a subsequence's steps, a Euclid's strokes, a note's end under `legato=`) is placed from where it is written through the swing, even between the points of the finest level the swing leans, so it lands where a tap of that level does: `&euclid step=1m &rim(7,16,0)` under `swing=16n:.6` strikes where `step=16n` does ([#121](https://github.com/yggi/cells/issues/121)). On a tap the swing doesn't place so (`8t` under swung eighths), its parts are even within its step.
 
-A line stepped by the meter cell's own steps (`step=&bar*2`) still plays as it did, with a warning that names the tap saying the same (`step=8n`); Migrate rewrites it so (and Shorten offers it), where the notes stay the same.
+A line stepped by the meter cell's own steps (`step=&bar*2`) still plays as it did, with a warning that names the tap saying the same (`step=8n`); Migrate rewrites it so, where the notes stay the same.
 
 ```cells
 &bar meter("7/8") step=90bpm

@@ -60,15 +60,12 @@ describe('Migrate: retired forms written as they are now (decision 049, #156)', 
     expect(migrate(p.after, SEED)).toEqual({ source: p.after, steps: [] });
   });
 
-  it('a retired form warns, and its warning names Migrate; &parts, a name and not a retired form, does not', () => {
-    for (const p of PAIRS) {
-      const said = told(p.before).some((m) => m.includes('Migrate'));
-      expect([p.name, said]).toEqual([p.name, p.rule !== 'section']);
-    }
+  it('a retired form warns, and its warning names Migrate', () => {
+    for (const p of PAIRS) expect([p.name, told(p.before).some((m) => m.includes('Migrate'))]).toEqual([p.name, true]);
   });
 
   it('every rule has a witness of its own', () => {
-    expect(new Set(PAIRS.map((p) => p.rule))).toEqual(new Set(['all', 'gate', 'tap', 'section', 'swing', 'use', 'main-key', 'forwarded', 'from', 'grid', 'laps']));
+    expect(new Set(PAIRS.map((p) => p.rule))).toEqual(new Set(['all', 'gate', 'tap', 'swing', 'use', 'main-key', 'forwarded', 'from', 'grid', 'laps']));
     // (and a migration exact only against the old meaning has a record of what it played, which the before no longer plays)
     for (const p of PAIRS.filter((x) => x.rule === 'laps')) {
       expect(p.played, p.name).not.toBeNull();

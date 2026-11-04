@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
-import { shorten } from './shorten';
+import { migrations } from './migrate';
+
+/** Migrate's rule `rule` on a text, if it has one to offer. */
+const migration = (src: string, rule: string) => migrations()(src, compileSource(src)).find((r) => r.rule === rule);
 import swing from '../../fixtures/contracts/swing.json';
 import { METER_FRAGMENTS } from '../repository/meters';
 
@@ -121,22 +124,22 @@ describe('swing on the bar: one level of the meter leans, named by note value', 
     expect(onsets('meter("4/4") swing=4n:.67', '8n')).toEqual(onsets('meter("4/4")', '8n'));
   });
 
-  it('a bare swing= on a meter leans its own steps’ level, with a warning, and Migrate’s rule, which Shorten offers, names the level', () => {
+  it('a bare swing= on a meter leans its own steps’ level, with a warning, and Migrate names the level', () => {
     const bare = `&bar meter("4/4", 2) step=60bpm swing=.67\n&x step=8n 0${VOICE}`;
     expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps: name the level it leans, swing=8n:.67 (Migrate rewrites it)"]);
     expect(onsets('meter("4/4", 2) swing=.67', '8n')).toEqual(onsets('meter("4/4", 2) swing=8n:.67', '8n'));
-    const s = shorten(bare).find((x) => x.kind === 'swing')!;
+    const s = migration(bare, 'swing')!;
     expect(s.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:.67');
     expect(warnings(s.apply(bare))).toEqual([]);
     // (left free, it stays free)
     const free = bare.replace('swing=.67', 'swing=free(.5, .5..75)');
-    expect(shorten(free).find((x) => x.kind === 'swing')!.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:free(.5, .5..75)');
+    expect(migration(free, 'swing')!.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:free(.5, .5..75)');
   });
 
-  it('a bare swing= on beats that are the meter’s own steps is left to the author: the warning stands, Shorten offers nothing (#166)', () => {
+  it('a bare swing= on beats that are the meter’s own steps is left to the author: the warning stands, Migrate offers nothing (#166)', () => {
     const bare = `&bar meter("4/4") step=120bpm swing=.67\n&x step=8n 0${VOICE}`;
     expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:.67"]);
-    expect(shorten(bare).find((x) => x.kind === 'swing')).toBeUndefined();
+    expect(migration(bare, 'swing')).toBeUndefined();
   });
 
   it('several levels at once nest, each node keeping its ends', () => {

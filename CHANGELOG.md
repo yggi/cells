@@ -14,6 +14,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ### Changed
 
+- **Shorten no longer offers migrations; `&parts` is no longer renamed** (decision 049, #157). The four kinds Shorten offered for v0.15, delegated to Migrate (`gate`, `tap`, `swing`, `section`), are gone from its suggestions: a retired form is Migrate's (`migrate`), whose warning names it. `Suggestion.kind` keeps the four in its type, so a frontend's switch on them still typechecks; they never come. Migrate's `&parts` → `&sections` rename, offered for one minor version, is retired: `&parts` is a valid name. **What a frontend sees at its next pin:** Cell studio's suggestions list no gate, tap or swing migration; run `migrate` on an old piece (or offer it on the warning).
 - **`cycle=` counts laps, and a grid's size is its map's** (decision 040, #75). **A piece written before this may sound different: run Migrate on it.**
   - `cycle=n` on a turning table is n laps of its own length, not n steps: `stride=2 cycle=24` over the 12 is now `cycle=2`. An index read through such a table climbs n laps and comes round (absent, it walks as before), and `cycle=0` holds the first entry.
   - On a tapped table (`step=1m`), `cycle=n` is still its tap's n bars; its turns climb within them and begin again where the tap comes round.

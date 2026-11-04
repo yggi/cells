@@ -1,7 +1,6 @@
 import { rewriteAll, ROUNDS } from "../rewrite.js";
 import { gates } from "./gates.js";
 import { taps } from "./taps.js";
-import { sections } from "./sections.js";
 import { swings } from "./swing.js";
 import { uses } from "./uses.js";
 import { mainKey } from "./mainkey.js";
@@ -12,7 +11,6 @@ import { laps } from "./laps.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
     ...taps(source, result, options),
-    ...sections(source, result, options),
     ...swings(source, result, options),
     ...uses(source),
     ...mainKey(source, result),
