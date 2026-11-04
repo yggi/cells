@@ -1,5 +1,5 @@
 /**
- * The default performer's feel (decision 063 §2, #392; yggi/music-commons `contracts/feel`, version 1, minor 1): how a
+ * The default performer's feel (decision 063 §2, #392; yggi/music-commons `contracts/feel`, version 2, #453): how a
  * performer plays the events cells plays for a bar, its velocity loosened and accented and its length gated, so every
  * frontend plays a session as its host does; and which part and drum role each event is (`readerOf`: its performer's
  * role, or its output's id, `readingOf`). The text says what is composed, and the playing is the player's (decision 037).
@@ -176,7 +176,7 @@ export function played(frame: FeelFrame, event: FeelEvent, feel = feelOf(frame),
   // (a performer's widths scale the contract's numbers last: × 1 is the same double, so the contract's bits come out)
   const loose = (draw(seed, VELOCITY[part], ...keys) - 0.5) * feel * 24 * widths.licence;
   const d = draw(seed, OWN_ACCENT, PARTS.indexOf(part), ...keys);
-  // (by the meter's levels, feel v2, yggi/music-commons#45, #453: a step that starts no eighth, an eighth that starts no
+  // (by the meter's levels, feel v2 (yggi/music-commons#45, #453): a step that starts no eighth, an eighth that starts no
   // group, a group's start; in a meter of 2s, the steps odd, 2 past a multiple of 4, and the rest, as v1 read them)
   const level = step % 2 === 1 ? 4 : startsOf(frame.groups).includes(step) ? 0 : 3;
   const own = (level === 4 ? -d * 14 * feel : level === 3 ? d * 10 * feel : (d - 0.5) * 2 * 4 * feel) * widths.accents;
