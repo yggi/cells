@@ -6,11 +6,13 @@
  * `&sentence`, `&period`, `&chorus`), taps the host's meter by the eighth and has no voice and no card (#291): the lead
  * performer plays one as its `&leadline` (`&leadline step=8n &chorus`).
  *
- * All four sit at the centre of style space, as the facet `form`: a form fits any style. Each is a file of the seed
+ * The four sit at the centre of style space, as the facet `form`: a form fits any style. Two more are children's
+ * songs' forms, at their tunes' points (#371): `ternary` (A B A, Twinkle's) and `rounded binary` (A A′ B A′, Hänschen
+ * klein's), each reading `&call` and naming its answers and bridge as helpers. Each is a file of the seed
  * library, `fragments/forms/*.md` (`seed.ts`).
  */
 import type { Fragment } from './fragments';
 import { seedFragments } from './seed';
 
-/** The forms built so far: call and answer, the sentence, the period and AABA, as the facet `form`. */
+/** The forms built so far: call and answer, the sentence, the period, AABA, the ternary and the rounded binary song, as the facet `form`. */
 export const FORM_FRAGMENTS: readonly Fragment[] = seedFragments('forms');
