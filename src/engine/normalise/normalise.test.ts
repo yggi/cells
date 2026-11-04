@@ -59,7 +59,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
 
   it('every example, and every fragment of the seed library, is normal already', () => {
     // (an example read as Cell studio reads it, its `use` lines resolved, and the seed library's lines taken by `use`: #196)
-    for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source, { resolve: resolveSeed, library: LIBRARY }).steps]).toEqual([key, []]);
+    for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source, { resolve: resolveSeed, old: true, library: LIBRARY }).steps]).toEqual([key, []]);
     // (a meter is open on its tempo, a mode on its tonic (#290); a rhythm on its meter, a bass line on its meter and its
     // harmony, and a harmony on its meter and its key, so each is read on a 4/4 at a tempo, with a key and, unless it
     // writes its own, a harmony, where it fits; a mode writes its own key)
@@ -67,7 +67,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const keyed = `${meter}\n&key scale(major, &tonic)\n&tonic C`;
     const bar = `${keyed}\n&harm over=&key step=1m [0,2,4] [3,5,7]`;
     // (a performer's part and its levels, the score's holes (decision 058), and a form's, filled by a line each; its `use` lines resolved)
-    const compiled = (t: string) => compileSource(t, undefined, { resolve: resolveSeed });
+    const compiled = (t: string) => compileSource(t, undefined, { resolve: resolveSeed, old: true });
     const parts = Object.fromEntries([
       ...['bass', 'pad', 'stab', 'lead'].flatMap((n) => [
         [`&${n}line`, `&${n}line over=&harm step=4n 0 2`],
@@ -105,16 +105,16 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       ['use * from "gm kit"', 'use * from gm_kit'],
       ['use &bd, &hh, &sd from "gm kit"', 'use &bd, &hh, &sd from gm_kit'],
     ]) {
-      const { source, steps } = normalise(`${old}\n${groove}`, { resolve: resolveSeed });
+      const { source, steps } = normalise(`${old}\n${groove}`, { resolve: resolveSeed, old: true });
       // (and then, a collection's use, as its from line, decision 065: the cells of it the groove reads, the narrowest
       // from, #27, in the order written, or the kit's for a *; a comment stays where it was)
       const narrowest = now.includes('&hh, &sd') ? '&bd, &hh, &sd' : '&bd, &sd, &hh';
       expect([old, source]).toEqual([old, `${narrowest} from gm_kit${now.includes('#') ? '  # the kit' : ''}\n${groove}`]);
       expect(steps.length, old).toBeGreaterThan(0);
-      expect(compileSource(source, undefined, { resolve: resolveSeed }).diagnostics, old).toEqual([]);
+      expect(compileSource(source, undefined, { resolve: resolveSeed, old: true }).diagnostics, old).toEqual([]);
     }
     // (a name the forward doesn't give is left as written: the compile says so)
-    expect(normalise(`use &agogo from "core kit"\n${groove}`, { resolve: resolveSeed }).steps).toEqual([]);
+    expect(normalise(`use &agogo from "core kit"\n${groove}`, { resolve: resolveSeed, old: true }).steps).toEqual([]);
     // (with no resolver, nothing is forwarded)
     expect(normalise(`use * from "core kit"\n${groove}`).steps).toEqual([]);
   });
@@ -147,7 +147,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
   });
 
   it('writes a line that is a library fragment’s word for word as a use of it (#196): one use a fragment, where its first line was', () => {
-    const seed = { resolve: resolveSeed, library: LIBRARY };
+    const seed = { resolve: resolveSeed, old: true, library: LIBRARY };
     const beat = '&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&out map=sample [&beat]';
     const kit = LIBRARY.find((f) => f.id === 'gm_kit')!.text.split('\n');
     const line = (name: string) => kit.find((l) => l.startsWith(`&${name} `))!;
@@ -165,11 +165,11 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     // (a line that differs by a word stays the piece's; with no library given, nothing is taken)
     const own = written.replace(line('hh'), line('hh').replace('hpf=8000', 'hpf=7000'));
     expect(normalise(own, seed).source).toContain(line('hh').replace('hpf=8000', 'hpf=7000'));
-    expect(normalise(written, { resolve: resolveSeed }).steps).toEqual([]);
+    expect(normalise(written, { resolve: resolveSeed, old: true }).steps).toEqual([]);
   });
 
   it('writes a fragment cell written inline as the cell by name, and a use of it (#196): every place, once', () => {
-    const seed = { resolve: resolveSeed, library: LIBRARY };
+    const seed = { resolve: resolveSeed, old: true, library: LIBRARY };
     const vib = '&(map=lin loop=5 0 .1 0 -.1 0)';
     // (the bar the 4/4 fragment's: the use goes after the piece's own use lines)
     const base = BASE.replace('&bar meter("4/4") step=&tempo', 'use &bar from meter_4_4');

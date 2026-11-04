@@ -38,7 +38,7 @@ describe('the stab lines', () => {
 
   it('played by the stab performer, the Charleston sounds the chord in force on one and on the and of two', () => {
     const piece = `use &stabline from charleston_stabs\nuse &stab, &keysV from stab_performer\n${HOST}\n&stabLevel map=amp .5\n&keysV s=saw loop=C3\n&out map=sample [&stabOut]`;
-    const r = compileSource(piece, undefined, { resolve: resolveSeed });
+    const r = compileSource(piece, undefined, { resolve: resolveSeed, old: true });
     expect(r.diagnostics).toEqual([]);
     // (at 120 bpm an eighth is .25 s: D F A on one and on the and of two, in the D minor bar; A C♯ E in the A bar)
     const notes = eventsBetween(plan(r, codeShifts(r)), 0, 4).map((e) => [e.at, Math.round(69 + 12 * Math.log2(e.freq / 440))]);

@@ -12,7 +12,7 @@ import { soundsIdentical } from '../sameness';
 
 const tail = '\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
 const sounds = (src: string, until = SAMENESS_SECONDS) => {
-  const r = compileSource(src, undefined, { resolve: resolveSeed });
+  const r = compileSource(src, undefined, { resolve: resolveSeed, old: true });
   expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   return eventsBetween(plan(r, codeShifts(r)), 0, until)
     .map((e) => `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(4)).join(',')}`)
@@ -117,7 +117,7 @@ describe('shorten, on every example: every suggestion sounds the same, and saves
     it(
       key,
       () => {
-        const suggestions = shorten(p.source, { resolve: resolveSeed });
+        const suggestions = shorten(p.source, { resolve: resolveSeed, old: true });
         const before = sounds(p.source);
         for (const s of suggestions) {
           const next = s.apply(p.source);
@@ -172,7 +172,7 @@ describe('shorten: turns, alike cells, and all the way', () => {
   });
   it('a piece with use: what the piece written out is offered, read through the resolver (#241)', () => {
     const src = 'use "gm_kit"\n&bar meter("4/4") step=100bpm\n&a &bd ~ &hh ~ &sd ~ &hh &hh\n&b &bd ~ &hh ~ &sd ~ &hh &hh\n&beat step=8n &a &b &a &b\n&out map=sample [&beat]\n';
-    const seed = { resolve: resolveSeed };
+    const seed = { resolve: resolveSeed, old: true };
     expect(shorten(src)).toEqual([]);
     const offered = shorten(src, seed);
     expect(offered.map((s) => [s.id, s.saving])).toEqual(shorten(expand(src, resolveSeed)).map((s) => [s.id, s.saving]));

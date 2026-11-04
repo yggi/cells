@@ -24,9 +24,10 @@ import { FROM_FORM, readFrom, readUse, USE_FORM, useOld } from './use';
 
 export { meterLevels, SIGNATURES } from './generators';
 export { SHOWS } from './cell';
-export { readFrom, readUse, USE_FORM, USE_OLD, writeUse, type FromForm, type UseForm } from './use';
+export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse, type FromForm, type UseForm } from './use';
 
-export function parse(whole: string): ParseResult {
+/** A text, parsed; `old` reads a retired form (a `use` line) with a warning, where it is otherwise an error (`CompileOptions.old`). */
+export function parse(whole: string, { old = false }: { readonly old?: boolean } = {}): ParseResult {
   const cells: CellDecl[] = [];
   const uses: UseLine[] = [];
   // (plugin blocks are not cells: split off and blanked, so the lines keep their numbers)
@@ -59,7 +60,7 @@ export function parse(whole: string): ParseResult {
       if (use === null) diagnostics.push({ severity: 'error', message: USE_FORM, span });
       else {
         uses.push({ id: use.id, names: use.names, span });
-        diagnostics.push({ severity: 'warning', message: useOld(use), span });
+        diagnostics.push({ severity: old ? 'warning' : 'error', message: useOld(use, old), span });
       }
       return;
     }

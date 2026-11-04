@@ -28,10 +28,10 @@ A line says where its cells come from: a fragment of a library, by its id ([deci
 
 What a line reads without writing it, the main meter a `step=16n` taps, is never taken: it is the piece's.
 
-## `use`, the old way
+## `use`, retired
 
-`use &bd, &sd from gm_kit`, `use * from gm_kit` and `use &x` (`use &x from x`) still read, for a release, as the `from` lines of a collection do, and each warns that it is the old way, naming its `from` line; Normalise writes it, with a template's arguments ([canonical.md](canonical.md)).
-A `use` of a template takes its lines as they are, and reads its parameters by name, as before decision 065: a line the piece writes for one of them (`&tonic D`, `&swing …`) is its argument, as an interface name the piece defines is (`&key`, `&bar`, `&tempo`, `&tonic`, `&harm`, decision 060). `use * from` a fragment takes every line but one read only by lines the piece overrides (`use * from meter_4_4_swung_on_8n` under the piece's own `&bar` takes no `&swing`, and says the use adds nothing). `use "harmonic_minor"`, older still, reads as `use * from harmonic_minor`.
+`use &bd, &sd from gm_kit`, `use * from gm_kit` and `use &x` (`use &x from x`) are retired ([#387](https://github.com/yggi/cells/issues/387)): each is an error that names its `from` line (`use is retired: say where the cells come from, …`), and a text that writes one doesn't play. Migrate writes it, with a template's arguments; it reads the retired form as it read before (`CompileOptions.old`), so a piece written then is rewritten to play the same. Read so, the old way:
+A `use` of a template takes its lines as they are, and reads its parameters by name, as before decision 065: a line the piece writes for one of them (`&tonic D`, `&swing …`) is its argument, as an interface name the piece defines is (`&key`, `&bar`, `&tempo`, `&tonic`, `&harm`, decision 060). `use * from` a fragment takes every line but one read only by lines the piece overrides (`use * from meter_4_4_swung_on_8n` under the piece's own `&bar` takes no `&swing`, and says the use adds nothing). `use "my riff"`, older still, reads as `use * from "my riff"`.
 
 ## The expansion: the piece's own lines win
 

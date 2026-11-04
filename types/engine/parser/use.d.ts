@@ -64,10 +64,12 @@ export declare const isAttribute: (token: string) => boolean;
 export declare function readFrom(code: string): FromForm | null | undefined;
 /** What a malformed `from` line is told. */
 export declare const FROM_FORM = "A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head\u2019s attributes go before from (&key label=\"\u2026\" from \u2026), the named arguments in parentheses; with no id, a fragment\u2019s signature: &bar from (&swing) &tempo";
-/** How what a `use` line is told begins: a reader that sets that aside (the fit) reads it. */
+/** How what a `use` line is told begins, read the old way (`CompileOptions.old`: Migrate, Normalise). */
 export declare const USE_OLD = "use is the old way";
+/** How what a `use` line is told begins otherwise: it is retired (#387), an error, which Migrate rewrites. */
+export declare const USE_RETIRED = "use is retired";
 /**
  * What a `use` line is told (decision 065): it is the old way, and says what the `from` line is. A template's arguments,
  * which the `use` read by name, are Migrate's to write, since only the fragment says what they are.
  */
-export declare const useOld: ({ id, names }: Pick<UseForm, "id" | "names">) => string;
+export declare const useOld: ({ id, names }: Pick<UseForm, "id" | "names">, old?: boolean) => string;

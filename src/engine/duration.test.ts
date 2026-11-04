@@ -5,7 +5,7 @@ import { PRESETS } from './presets';
 import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
-const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
+const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, old: true, ...options });
 
 const time = (key: string) => pieceTime(compileSource((PRESETS as Record<string, { source: string }>)[key].source));
 

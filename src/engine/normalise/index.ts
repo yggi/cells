@@ -49,4 +49,8 @@ export const normalisations =
   ];
 
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */
-export const normalise = (source: string, options?: NormaliseOptions): { source: string; steps: string[] } => rewriteAll(source, normalisations(options), ROUNDS, options);
+export const normalise = (source: string, options?: NormaliseOptions): { source: string; steps: string[] } => {
+  // (it writes every migration before its own rules, for a minor version: a retired form is read the old way)
+  const old = { ...options, old: true };
+  return rewriteAll(source, normalisations(old), ROUNDS, old);
+};

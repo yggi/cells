@@ -1,8 +1,11 @@
 import type { ParseResult } from '../ast';
 export { meterLevels, SIGNATURES } from './generators';
 export { SHOWS } from './cell';
-export { readFrom, readUse, USE_FORM, USE_OLD, writeUse, type FromForm, type UseForm } from './use';
-export declare function parse(whole: string): ParseResult;
+export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse, type FromForm, type UseForm } from './use';
+/** A text, parsed; `old` reads a retired form (a `use` line) with a warning, where it is otherwise an error (`CompileOptions.old`). */
+export declare function parse(whole: string, { old }?: {
+    readonly old?: boolean;
+}): ParseResult;
 /**
  * A piece's card: its title, its description, its tags and its tier. From a file (`piecefile.ts`, decision 047): the
  * frontmatter's title, tags, tier and description (else the label of a card its text still has: a note named `&piece`,

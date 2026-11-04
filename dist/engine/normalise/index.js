@@ -13,4 +13,7 @@ export const normalisations = (options = {}) => (source, result) => [
     ...libraryCells(source, options.library),
     ...narrowestFroms(source, options.resolve),
 ];
-export const normalise = (source, options) => rewriteAll(source, normalisations(options), ROUNDS, options);
+export const normalise = (source, options) => {
+    const old = { ...options, old: true };
+    return rewriteAll(source, normalisations(old), ROUNDS, old);
+};

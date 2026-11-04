@@ -21,4 +21,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...laps(source, result),
     ...renamedIds(source, options.resolve),
 ];
-export const migrate = (source, options = {}) => rewriteAll(source, migrations(options), ROUNDS, options);
+export const migrate = (source, options = {}) => {
+    const old = { ...options, old: true };
+    return rewriteAll(source, migrations(old), ROUNDS, old);
+};
