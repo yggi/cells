@@ -8,12 +8,12 @@
  */
 import type { Pick } from './ast';
 import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from './fiveto12';
-import { adsrOf, balance, type CompileResult, type Output, type Shifts } from './program';
+import { adsrOf, balance, CV_LAPS, type CompileResult, type Output, type Shifts } from './program';
 import { tableChain } from './helix';
 import { clocking, EPS, playedCells, tapeMotion, turnLap, varispeedOf } from './clocking';
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
-import { refsOf } from './readers';
+import { refsOf, stepsPerSecond } from './readers';
 import { VOICE_PARAMS } from './attributes';
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
@@ -373,6 +373,11 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     const lap = turnLap(result, m).per;
     return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, ...(lap ? comeRound(events, period, lap) : { period, events }) };
   };
+  // (a CV turning faster than CV_LAPS laps a second is read turning at that: #427, the compiler's warning says so)
+  const capped = (m: Series, cell: string): Series => {
+    const laps = (stepsPerSecond(result, cell) ?? 0) / m.period;
+    return laps > CV_LAPS ? { ...m, rate: (m.rate * CV_LAPS) / laps } : m;
+  };
   // the envelopes' moving slots (attack=.3..0.01 * &style[artic], #411): their cells, as series, read at each note's start
   const envParams = new Map<string, Record<string, VoiceParam>>();
   for (const c of result.cells.values()) {
@@ -399,7 +404,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
           const envCell = pc.factors.find((f) => result.cells.get(f)?.map?.kind === 'adsr');
           out[key] = {
             range: pc.range,
-            series: pc.factors.filter((f) => f !== envCell).map((f) => series(f, null, 0, 1)),
+            series: pc.factors.filter((f) => f !== envCell).map((f) => capped(series(f, null, 0, 1), f)),
             env: envCell ? adsrOf(result.cells.get(envCell)!) : null,
           };
         }
