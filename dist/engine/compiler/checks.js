@@ -135,7 +135,7 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
         const own = cells.get(d.name)?.cycle ?? 0;
         if (d.step?.kind !== 'driven' || d.cycle === null || d.map || own < 2 || d.cycle < own || d.cycle % own !== 0)
             continue;
-        warn(`cycle=${d.cycle} on &${d.name} counts laps: ${d.cycle} of its ${own} steps. Written before v0.15, when it counted steps, it says cycle=${d.cycle / own} (Migrate rewrites it, decision 040)`, d.paramSpans.cycle ?? d.span);
+        warn(`cycle=${d.cycle} on &${d.name} counts laps: ${d.cycle} of its ${own} steps. Written before v0.16, when it counted steps, it says cycle=${d.cycle / own} (Migrate rewrites it, decision 040)`, d.paramSpans.cycle ?? d.span);
     }
     for (const d of decls.values()) {
         for (const [key, r] of [

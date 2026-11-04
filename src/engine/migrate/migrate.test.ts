@@ -20,7 +20,7 @@ const PAIRS = readdirSync(DIR).flatMap((rule) =>
     .map((f) => {
       const at = `${DIR}/${rule}/${f}`;
       // (a form whose meaning changed, #75: what the before played, recorded under the version it was written for)
-      const old = at.replace('.before.cells', '.v0.14.notes');
+      const old = at.replace('.before.cells', '.v0.15.notes');
       return {
         rule,
         name: `${rule}/${f.replace('.before.cells', '')}`,
@@ -30,7 +30,7 @@ const PAIRS = readdirSync(DIR).flatMap((rule) =>
       };
     }),
 );
-/** A text's notes over its first minute (voice, onset, length, pitch), as `fixtures/migrations/*.v0.14.notes` hold them. */
+/** A text's notes over its first minute (voice, onset, length, pitch), as `fixtures/migrations/*.v0.15.notes` hold them. */
 const notesOf = (src: string) => {
   const r = compileSource(src, undefined, SEED);
   return (

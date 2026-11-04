@@ -1,5 +1,5 @@
-// The motifs and the forms (#294, #369): forty motifs, two at each of Jambot's ten presets, one at each point of a
-// meter that had none, six general-purpose, and four more near Spooky's, each a line over the key and a bar of its meter; four forms, each a braid
+// The motifs and the forms (#294, #369): forty-six motifs, two at each of Jambot's ten presets, one at each point of a
+// meter that had none, six general-purpose, four more near Spooky's, and the six lines of Twinkle and Hänschen klein, each a line over the key and a bar of its meter; six forms, each a braid
 // of holes. Every form over every motif compiles over its motif's meter and a key with no diagnostic and plays its length
 // in bars, through the lead performer; and recognition reads the answer of a call and answer as the call transposed two
 // degrees down, by one operator.
@@ -15,7 +15,7 @@ import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
-import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 import { createRecogniser } from './recognise';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
@@ -77,13 +77,25 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   haunt: { point: at(0.15, 0.9, 0.25, 0.35) },
   lament: { point: at(0.2, 0.9, 0.25, 0.3) },
   peek: { point: at(0.3, 0.9, 0.3, 0.3) },
+  // (two children's songs in pieces, their calls and answers, at the point proposed for a preset of them and 0.1 from it)
+  twinkle: { point: KINDERLIED },
+  wonder: { point: at(0.1, 0.12, 0.5, 0.25) },
+  haenschen: { point: at(0.1, 0.12, 0.6, 0.45) },
+  hinein: { point: at(0.1, 0.12, 0.6, 0.35) },
+  heim: { point: at(0.1, 0.12, 0.6, 0.25) },
+  weinet: { point: at(0.1, 0.12, 0.7, 0.45) },
 };
-/** Each form: its head, the hole it reads, and its length in bars over a one-bar motif. */
-const FORMS: Record<string, { head: string; hole: string; bars: number }> = {
-  'call and answer': { head: 'phrase', hole: 'call', bars: 2 },
-  sentence: { head: 'sentence', hole: 'call', bars: 4 },
-  period: { head: 'period', hole: 'call', bars: 4 },
-  AABA: { head: 'chorus', hole: 'a', bars: 4 },
+/** The centre of style space, where a form for any style sits. */
+const CENTRE = at(0.5, 0.5, 0.5, 0.5);
+/** Each form: its head, the hole it reads, its length in bars over a one-bar motif, and its point. */
+const FORMS: Record<string, { head: string; hole: string; bars: number; point: StylePoint; weight?: number }> = {
+  'call and answer': { head: 'phrase', hole: 'call', bars: 2, point: CENTRE },
+  sentence: { head: 'sentence', hole: 'call', bars: 4, point: CENTRE },
+  period: { head: 'period', hole: 'call', bars: 4, point: CENTRE },
+  AABA: { head: 'chorus', hole: 'a', bars: 4, point: CENTRE },
+  // (Twinkle's and Hänschen klein's, at their tunes' points, #371)
+  ternary: { head: 'song', hole: 'call', bars: 6, point: KINDERLIED, weight: 0.5 },
+  'rounded binary': { head: 'song', hole: 'call', bars: 8, point: at(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
 };
 
 type Meter = '4/4' | '3/4' | '6/8' | '5/4' | '7/8' | '10/8' | '12/8' | '2/4' | 'alla breve';
@@ -125,7 +137,7 @@ const piece = (form: string, motif: string) => {
 const moved = (braid: string, n: number) => braid.replace(/(^|\s)(-?\d+)/g, (_, space: string, d: string) => `${space}${Number(d) + n}`);
 
 describe('the motifs', () => {
-  it('are forty, each a line over the key named for its fragment, at its point as the facet motif', () => {
+  it('are forty-six, each a line over the key named for its fragment, at its point as the facet motif', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
       expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
@@ -157,10 +169,10 @@ describe('the motifs', () => {
 });
 
 describe('the forms', () => {
-  it('are call and answer, the sentence, the period and AABA, at the centre of style space as the facet form', () => {
+  it('are call and answer, the sentence, the period and AABA at the centre of style space, and the ternary and the rounded binary song at their tunes’ points, as the facet form', () => {
     expect(FORM_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(FORMS));
     for (const f of FORM_FRAGMENTS) {
-      expect(f.association, f.id).toEqual([{ point: { sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 }, weight: 1, facet: 'form' }]);
+      expect(f.association, f.id).toEqual([{ point: FORMS[f.id]!.point, weight: FORMS[f.id]!.weight ?? 1, facet: 'form' }]);
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual([`&${FORMS[f.id]!.hole}`]);
     }
   });

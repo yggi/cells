@@ -25,3 +25,8 @@ export const SWING_JAZZ = at(0.35, 1, 0.3, 0.6); // swing 1: 8n at 2/3, the jazz
 // files, and the axes are Jambot's (decision 041).
 export const ELECTRO_SWING = at(0.55, 0.75, 0.6, 0.75); // the meter 4/4 swung on 8n, the example's at .64
 export const SPOOKY = at(0.2, 0.9, 0.3, 0.35); // the meter 5/4, with 6/8 and 3/4 near
+
+// A point proposed for a preset of children's and learners' songs (yggi/jambot#358's melody rung): a static vamp, the
+// beat on the beat, sung notes neither held nor short, and sparse. Twinkle's and Hänschen klein's motifs and forms sit
+// there, and Jambot is to adopt it; the axes are Jambot's (decision 041).
+export const KINDERLIED = at(0.1, 0.12, 0.5, 0.35);

@@ -29,7 +29,7 @@ Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's
 | `cycle=2` | 12 | 0 | two laps |
 | `cycle=0` | 0 | 0 | constant: the first entry, whatever the index or the turn |
 
-On a tapped table (`step=1m`) the lap is the bar: `cycle=n` is its tap's n bars, its turns climbing freely within them and beginning again where the tap comes round (`&harm step=1m cycle=4` and four chords: round after them); an index read through it walks. Before v0.15, `cycle=` counted steps: Migrate rewrites a turning table's `cycle=24` on a 12 as `cycle=2`.
+On a tapped table (`step=1m`) the lap is the bar: `cycle=n` is its tap's n bars, its turns climbing freely within them and beginning again where the tap comes round (`&harm step=1m cycle=4` and four chords: round after them); an index read through it walks. Before v0.16, `cycle=` counted steps: Migrate rewrites a turning table's `cycle=24` on a 12 as `cycle=2`.
 
 ```cells
 &line step=1 over=&scale 0 2 4 2 0

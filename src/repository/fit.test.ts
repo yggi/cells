@@ -180,6 +180,8 @@ const FITS: Record<string, readonly string[]> = {
     '7/8',
     '10/8',
   ],
+  // (its lines lap a half note and a beat, so it fits every meter of the library's)
+  'Kinderlied drums': METER_FRAGMENTS.map((m) => m.id),
 };
 
 describe('every rhythm against every meter of the library', () => {
@@ -306,8 +308,10 @@ describe('a query given the workbench', () => {
     expect(fitting).toEqual(all.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id) || open.includes(id)));
     const toned = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: `${bench('4/4')}\n&tonic D` }).map((f) => f.fragment.id);
     expect(toned).toEqual(all.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id) || open.includes(id) || modes.includes(id)));
-    // (of the rhythms, only Ghost drums fits 7/8: its lines lap the bar, its half and the beat, and nothing a sixteenth off the beat)
-    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('7/8') }).map((f) => f.fragment.id)).toEqual(all.filter((id) => open.includes(id) || id === 'Ghost drums'));
+    // (of the rhythms, only Ghost drums and Kinderlied drums fit 7/8: their lines lap the bar, its half and the beat, and nothing a sixteenth off the beat)
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('7/8') }).map((f) => f.fragment.id)).toEqual(
+      all.filter((id) => open.includes(id) || id === 'Ghost drums' || id === 'Kinderlied drums'),
+    );
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('4/4') })).toEqual([]);
     expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('4/4') }).map((f) => f.fragment.id)).toEqual(fitting.filter((id) => !open.includes(id)).slice(0, 2));
   });
@@ -346,8 +350,8 @@ describe('what it costs', () => {
     const r = (await import('./fragments')).createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('4/4') });
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
-    // (the 16 rhythms, the 14 instruments, the vibrato, the envelopes and the styles: a performer's part, a mode's tonic (#290) and a stab line's &harm are holes no workbench of drums fills)
-    expect(first).toHaveLength(33);
+    // (the 17 rhythms, the 14 instruments, the vibrato, the envelopes and the styles: a performer's part, a mode's tonic (#290) and a stab line's &harm are holes no workbench of drums fills)
+    expect(first).toHaveLength(34);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
     expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['Funk drums'] }))[1]).toBe(0);

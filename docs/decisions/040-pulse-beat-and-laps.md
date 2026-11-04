@@ -64,7 +64,7 @@ The owner's rulings on #75:
 
 What the build settled beside them:
 - **A tapped table's lap is the bar**, as a meter's is. Its `cycle=n` is its tap's n bars: its turns climb freely within them and begin again where the tap comes round, and an index read through it walks. So the seed library's `&harm step=1m cycle=4` (four chords) comes round after its four chords, as before. An untapped table's `cycle=n` is n laps of its own length, for its turns and for an index read through it.
-- **Migrating a meaning:** `cycle=24` is valid in both versions, so no compile of the old text says what it played. Migrate's `laps` rule is exact by construction (`Rewrite.exact`), witnessed by the notes the old version played (`fixtures/migrations/laps/*.v0.14.notes`), and never run by Normalise. A table stepped by a cell whose `cycle=` is a whole number of its own lengths warns that it was probably written in steps.
+- **Migrating a meaning:** `cycle=24` is valid in both versions, so no compile of the old text says what it played. Migrate's `laps` rule is exact by construction (`Rewrite.exact`), witnessed by the notes the old version played (`fixtures/migrations/laps/*.v0.15.notes`), and never run by Normalise. A table stepped by a cell whose `cycle=` is a whole number of its own lengths warns that it was probably written in steps.
 - Ricercar's `cycle=24` goes rather than becoming `cycle=2`: its melody reads `&key` past two laps, which `cycle=2` would now wrap, and its `stride=` is a slider at 0, so the cycle only ever mattered as the performer raised it (now round after one lap: the circle).
 
 ## Consequences
