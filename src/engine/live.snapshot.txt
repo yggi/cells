@@ -58,9 +58,8 @@ alpha  live 1f24a0e4a45aac5a
 studie  live ef1f715bd960c201
 just  live b435a14594200d57
 bwv847  live 911668b002380183
-acid  live a9c25fbdd46f8fdc
-patchbay  live 8ba9153cb6f0c348
 acid  live 77108e7e5c6f5522
+patchbay  live 999ccb73b29fc06e
 zell  live edce01b317db7bdc
 cellscape  live ccf37739be4cd496
 cellscape2  live 3382caea8b0e37e0
