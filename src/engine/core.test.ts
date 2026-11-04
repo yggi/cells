@@ -1,5 +1,5 @@
 /**
- * The core grammar's sugar, checked (#418, `docs/notes/core-grammar.md`): each row of the syntax reference the note calls
+ * The core grammar's sugar, checked (#418, `docs/notes/418-core-grammar.md`): each row of the syntax reference the note calls
  * sugar, its rewrite into core forms sounds identical (S1, `soundsIdentical`) on the reference's own example. Each example
  * is played the least way that sounds it: a sine voice and a card (`&v`, `&out`), the tables it reads (`&major`, `&motif`)
  * and a clock where it taps one. A waveform or a rate the reference shows at audio rate is stepped slowly here, so it starts
