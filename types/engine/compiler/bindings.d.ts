@@ -21,5 +21,6 @@ export declare function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl
         midi?: MidiDest[];
     }[];
     soundHead: (name: string) => boolean;
+    playings: ReadonlyMap<string, readonly (readonly string[])[]>;
 };
 export type Bound = ReturnType<typeof bindVoices>;

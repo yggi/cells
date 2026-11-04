@@ -15,6 +15,7 @@ import { sectioned } from "./sections.js";
 import { banded, bandsOf, checkBands, performersOf } from "./band.js";
 import { readSlots } from "./slots.js";
 import { restingParts, unplayed } from "./parts.js";
+import { instrumentParams, instrumentsOf } from "./instruments.js";
 const pluginsOf = (parsed) => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
 export function compile(written, env, used = new Set()) {
     const { parsed, rested } = restingParts(readSlots(written));
@@ -37,8 +38,8 @@ export function compile(written, env, used = new Set()) {
     const outputs = banded(sectioned(made.outputs, timed.cells, declared.sections), timed.cells, bands);
     checkLimits(ctx, decls, timed.cells, clocks, outputs);
     unplayed(ctx, decls, timed.cells, outputs, clocks);
-    const cells = displayCells(timed.cells);
-    checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands);
+    const cells = displayCells(instrumentParams(ctx, decls, timed.cells, outputs, bound.playings));
+    checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands, instrumentsOf(outputs, cells));
     const performers = performersOf(ctx, decls, declared.implicit);
     const { diagnostics } = ctx;
     const ok = !diagnostics.some((x) => x.severity === 'error');
