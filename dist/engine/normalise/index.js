@@ -11,4 +11,7 @@ export const normalisations = (options = {}) => (source, result) => [
     ...libraryLines(source, options.library),
     ...libraryCells(source, options.library),
 ];
-export const normalise = (source, options) => rewriteAll(source, normalisations(options), ROUNDS, options);
+export const normalise = (source, options) => {
+    const old = { ...options, old: true };
+    return rewriteAll(source, normalisations(old), ROUNDS, old);
+};

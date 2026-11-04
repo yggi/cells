@@ -13,7 +13,7 @@ import { LIBRARY, resolveSeed } from '../../repository/library';
 // The witnesses (#156): a text written the old way and what Migrate makes of it, kept as files, so a migration stays
 // honest after the parser stops reading the form it rewrites. A text's `use` and `from` lines read the seed library.
 const DIR = 'fixtures/migrations';
-const SEED = { resolve: resolveSeed };
+const SEED = { resolve: resolveSeed, old: true };
 const PAIRS = readdirSync(DIR).flatMap((rule) =>
   readdirSync(`${DIR}/${rule}`)
     .filter((f) => f.endsWith('.before.cells'))

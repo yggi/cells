@@ -33,7 +33,7 @@ const OPTIONS = { workbench: WORKBENCH, keep: ['&fill'], fewest: 3 };
 const BARS = e31.witnesses.map((w) => ({ preset: w.preset, fragment: w.text.split('\n').slice(1).join('\n'), hits: w.hits }));
 const under = (fragment: string) => unionOf(fragment, WORKBENCH).text;
 /** A bar under its workbench, its stand-ins (`&hh s=white`) left out for 13 of the General MIDI kit's voices. */
-const inKit = (fragment: string) => `use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit\n${under(fragment.replace(/^&\w+ s=white\n?/gm, ''))}`;
+const inKit = (fragment: string) => `&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit\n${under(fragment.replace(/^&\w+ s=white\n?/gm, ''))}`;
 
 // ---- Lifted from yggi/jambot @ 0a56da9: the reference, kept here as code, not imported.
 
@@ -343,7 +343,7 @@ describe('a drum bar with no card of its own (#291)', () => {
   it.each(RHYTHM_FRAGMENTS.slice(0, 8).map((f) => [f.id, f.text] as const))(
     '%s: read alone, its mix is its card; under a workbench card that sends it, the same lines',
     (_, text) => {
-      const kit = { ...OPTIONS, workbench: `${WORKBENCH}\n${expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}` };
+      const kit = { ...OPTIONS, workbench: `${WORKBENCH}\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}` };
       const alone = variations(text, kit).map((v) => [v.by, v.after]);
       expect(alone.length).toBeGreaterThan(0);
       expect(variations(text, { ...kit, workbench: `${kit.workbench}\n${heard(text)}` }).map((v) => [v.by, v.after])).toEqual(alone);

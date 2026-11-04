@@ -8,8 +8,8 @@ import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
 import { FROM_FORM, readFrom, readUse, USE_FORM, useOld } from "./use.js";
 export { meterLevels, SIGNATURES } from "./generators.js";
 export { SHOWS } from "./cell.js";
-export { readFrom, readUse, USE_FORM, USE_OLD, writeUse } from "./use.js";
-export function parse(whole) {
+export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse } from "./use.js";
+export function parse(whole, { old = false } = {}) {
     const cells = [];
     const uses = [];
     const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole, [...SHOWS, ...BUILTIN_PLUGINS.map((p) => p.name)]);
@@ -45,7 +45,7 @@ export function parse(whole) {
                 diagnostics.push({ severity: 'error', message: USE_FORM, span });
             else {
                 uses.push({ id: use.id, names: use.names, span });
-                diagnostics.push({ severity: 'warning', message: useOld(use), span });
+                diagnostics.push({ severity: old ? 'warning' : 'error', message: useOld(use, old), span });
             }
             return;
         }

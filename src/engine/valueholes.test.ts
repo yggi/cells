@@ -21,7 +21,7 @@ const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnTy
 // `&tempo step=104bpm`), a key's tonic from a cell holding a note (`scale(dorian, &tonic)`, `&tonic D`).
 
 const lines = (...xs: string[]) => xs.join('\n');
-const compiled = (src: string) => compileSource(src, undefined, { resolve: resolveSeed });
+const compiled = (src: string) => compileSource(src, undefined, { resolve: resolveSeed, old: true });
 const messages = (src: string) => compiled(src).diagnostics.map((d) => d.message);
 /** Every event of a text's first `seconds`: time, length, pitch, voice. */
 const events = (src: string, seconds: number) => {

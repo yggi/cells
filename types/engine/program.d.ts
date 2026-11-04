@@ -476,6 +476,11 @@ export interface Locked {
 export interface CompileOptions {
     readonly resolve?: Resolve;
     readonly locked?: readonly Locked[];
+    /**
+     * Read the retired forms as they read before they retired, each with a warning: a `use` line (decision 065, #387). Migrate
+     * and Normalise compile so, to rewrite them; without it a retired form is an error, and the text doesn't play.
+     */
+    readonly old?: boolean;
 }
 /** A `use` line, as compiled (decisions 054, 059). */
 export interface Used {
