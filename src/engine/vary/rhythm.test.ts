@@ -276,8 +276,8 @@ describe('the anchors', () => {
     // (each of Jambot's meters by its name in cells: the five 4/4s are 4/4; 2/4 and the alla breve, which Jambot doesn't
     // name, are two beats a bar, the second its backbeat)
     const jambot = (id: string) => {
-      const unnamed = { '2/4': [2], '4/4 alla breve': [4] }[id];
-      const heights = JAMBOT_METERS[id.split(' ')[0]!]!;
+      const unnamed = { meter_2_4: [2], meter_4_4_alla_breve: [4] }[id];
+      const heights = JAMBOT_METERS[id.split('_').slice(1, 3).join('/')]!;
       return unnamed ?? jambotBackbeatOf(heights).map((pulse) => heights[pulse]!);
     };
     expect(eighths).toHaveLength(13);

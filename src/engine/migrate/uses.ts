@@ -1,7 +1,7 @@
 /**
  * Uses: a `use` line in its one spelling (decision 059): `use * from gm_kit` for every line, `use &a, &b from gm_kit`
  * for the names it takes, `use &aeolian` where it takes &aeolian from aeolian; an id bare where it is a word, in double
- * quotes where it isn't. So `use "harmonic minor"`, the old way, is `use * from "harmonic minor"`. The two read as one, so the
+ * quotes where it isn't. So `use "my riff"`, the old way, is `use * from "my riff"`. The two read as one, so the
  * respelling plays the same by construction. A `use` written over more than one line is left as it is.
  */
 import { splitComment } from '../edit';

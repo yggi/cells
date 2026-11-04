@@ -1,5 +1,5 @@
 ---
-id: muted trumpet
+id: muted_trumpet
 association:
   - point:
       sync: 0.55

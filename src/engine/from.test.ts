@@ -57,7 +57,7 @@ describe('the forms', () => {
       main: 'label="the tonic" D',
     });
     expect(readFrom('&bd, &sd from gm_kit')).toEqual({ kind: 'use', id: 'gm_kit', names: ['&bd', '&sd'], head: [], args: null, main: null });
-    expect(readFrom('* from "harmonic minor"')).toEqual({ kind: 'use', id: 'harmonic minor', names: null, head: [], args: null, main: null });
+    expect(readFrom('* from harmonic_minor')).toEqual({ kind: 'use', id: 'harmonic_minor', names: null, head: [], args: null, main: null });
     expect(readFrom('&bar from swung (swing=8n:.6) &tempo')).toMatchObject({ args: [{ name: 'swing', value: '8n:.6' }], main: '&tempo' });
   });
 

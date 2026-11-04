@@ -1,5 +1,5 @@
 ---
-id: upright bass
+id: upright_bass
 association:
   - point:
       sync: 0.55

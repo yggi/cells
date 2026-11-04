@@ -6,19 +6,19 @@ description: "Twinkle and Hänschen klein from the seed library: each tune's lin
 
 Two children's songs, the kind a learner plays first, made of the seed library's pieces.
 Each tune is its lines, each a motif of one bar: Twinkle's call `twinkle` and its answer `wonder`; Hänschen klein's call `haenschen`, its open answer `hinein`, its close `heim` and its bridge `weinet`.
-Each tune's shape is a form: Twinkle's is `ternary`, A B A, its bridge the answer a step up; Hänschen klein's is `rounded binary`, A A′ B A′.
-The band is the library's too: the plainest beat, `Kinderlied drums` (the kick on one and three, the snare on two and four, a closed hat on every beat), a vamp of two chords, the tonic for four bars and the fifth for four, and the root bass under it.
+Each tune's shape is a form: Twinkle's is `ternary`, A B A, its bridge the answer a step up; Hänschen klein's is `rounded_binary`, A A′ B A′.
+The band is the library's too: the plainest beat, `kinderlied_drums` (the kick on one and three, the snare on two and four, a closed hat on every beat), a vamp of two chords, the tonic for four bars and the fifth for four, and the root bass under it.
 
 ```cells
-&bar from "4/4" &tempo
+&bar from meter_4_4 &tempo
 &tempo step=free(100bpm, 80..120)
 &key from ionian C
-&harm from "vamp to the fifth" &key
-&bassline from "root bass" &harm
-&drums, &drumsOut from "drums performer" &drumlines
-&bass, &bassOut from "bass performer" &bassline
-&leadOut from "lead performer" &leadline
-&kick, &backbeat, &hat from "Kinderlied drums"
+&harm from vamp_to_the_fifth &key
+&bassline from root_bass &harm
+&drums, &drumsOut from drums_performer &drumlines
+&bass, &bassOut from bass_performer &bassline
+&leadOut from lead_performer &leadline
+&kick, &backbeat, &hat from kinderlied_drums
 &drumlines [&kick, &backbeat, &hat]
 &bandNote label="The band: the Kinderlied beat, a vamp of the tonic and the fifth, the root bass, all from the library." about=(&drumlines &harm &bassline)
 ```
@@ -26,7 +26,7 @@ The band is the library's too: the plainest beat, `Kinderlied drums` (the kick o
 ## The tunes, in pieces
 
 Each line is a motif of the library's, a bar of eighths over the key.
-The forms put them together: `ternary` takes Twinkle's call and names its answer, and makes its bridge of the answer a step up, *up above the world so high*; `rounded binary` takes Hänschen klein's call and names its open answer, its close and its bridge, which it plays twice, the second time a step up, *hat ja nun kein Hänschen mehr*.
+The forms put them together: `ternary` takes Twinkle's call and names its answer, and makes its bridge of the answer a step up, *up above the world so high*; `rounded_binary` takes Hänschen klein's call and names its open answer, its close and its bridge, which it plays twice, the second time a step up, *hat ja nun kein Hänschen mehr*.
 
 ```cells
 &twinkle from twinkle &key
@@ -36,7 +36,7 @@ The forms put them together: `ternary` takes Twinkle's call and names its answer
 &heim from heim &key
 &weinet from weinet &key
 &twinkleSong from ternary(answer=&wonder) &twinkle
-&haenschenSong from "rounded binary"(answer=&hinein, close=&heim, bridge=&weinet) &haenschen
+&haenschenSong from rounded_binary(answer=&hinein, close=&heim, bridge=&weinet) &haenschen
 &leadline step=8n ~@16 &twinkleSong &haenschenSong
 &tuneNote label="Twinkle in 6 bars after a 2-bar intro, then Hänschen klein in 8: each tune its motifs, each shape a form." about=(&twinkleSong &haenschenSong)
 ```

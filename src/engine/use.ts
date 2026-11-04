@@ -35,6 +35,7 @@ import { splitComment } from './edit';
 import { FROM_FORM, isAttribute, readFrom, readUse, topTokens, USE_FORM, type FromForm, type UseForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
+import { RENAMED_IDS } from './renamed';
 import { INTERFACE_NAMES, type CompileOptions, type Resolve, type Used } from './program';
 
 /** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
@@ -167,7 +168,7 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       for (const n of lacking) say(i, `&${n} is not in ${quoted(id)}: it defines ${[...byName.keys()].map((m) => `&${m}`).join(', ')}`);
     }
     // (all of it, `*`: but a line the fragment's own lines read, where every one that reads it the level overrides, goes
-    // with them, as a helper of the overridden line: `use * from "4/4 swung on 8n"` under the piece's own &bar takes no &swing)
+    // with them, as a helper of the overridden line: `use * from meter_4_4_swung_on_8n` under the piece's own &bar takes no &swing)
     const shadowed = new Set<string>();
     if (!names)
       for (let more = true; more;) {
@@ -502,6 +503,9 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
   return merge([...own, ...copies], used, (_, message) => sayHere(message), quoted(path.at(-1)!)).lines;
 }
 
+/** What a use of an id the seed renamed says: its start (`is renamed`) is stable, for a frontend that matches it. */
+const renamedMessage = (id: string, word: string) => `${quoted(id)} is renamed ${word}: write from ${word} (#387; Migrate rewrites it)`;
+
 /** The expansion of a text, as the compiler reads it. */
 export interface Expansion {
   /** The piece's own text as written, then the used lines (so the piece's lines keep their numbers). */
@@ -550,6 +554,9 @@ export function expansion(text: string, { resolve, locked = [] }: CompileOptions
     const hash = fragmentHash(theirs);
     hashes.push(hash);
     if (recorded && recorded !== hash) diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
+    // (an id the seed renamed, which this resolver reads as its word: the old way for a minor version, #387)
+    const word = RENAMED_IDS.get(id);
+    if (word !== undefined && resolve!(word) === theirs) diagnostics.push({ severity: 'warning', message: renamedMessage(id, word), span });
     const g = give(u, [id], theirs, resolve!, say, taken);
     copies.push(g.copy);
     args.push(g.args);

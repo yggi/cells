@@ -1,5 +1,5 @@
 ---
-id: Bossa nova drums
+id: bossa_nova_drums
 association:
   - point:
       sync: 0.75

@@ -56,8 +56,8 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     expect(n).toBe(284);
     // (Lo-fi hip hop's bar and Bossa nova's differ by one hat, and their levels: each one's variation plays the other's notes)
     expect(second).toEqual([
-      'Lo-fi hip hop drums, drop &hat 4: Bossa nova drums 0 0; Lo-fi hip hop drums 1 0',
-      'Bossa nova drums, add &hat 4: Lo-fi hip hop drums 0 0; Bossa nova drums 1 0',
+      'lo_fi_hip_hop_drums, drop &hat 4: bossa_nova_drums 0 0; lo_fi_hip_hop_drums 1 0',
+      'bossa_nova_drums, add &hat 4: lo_fi_hip_hop_drums 0 0; bossa_nova_drums 1 0',
     ]);
   });
 
@@ -74,8 +74,8 @@ describe('a variation is recognised as its source’s, by its operator, at dista
   });
 
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {
-    const funk = LIBRARY.find((f) => f.id === 'Funk drums')!;
-    expect(recogniser.recognise(funk.text, LIBRARY, DRUM_OPTIONS).map((r) => [r.fragment.id, r.path.length, r.distance])).toEqual([['Funk drums', 0, 0]]);
+    const funk = LIBRARY.find((f) => f.id === 'funk_drums')!;
+    expect(recogniser.recognise(funk.text, LIBRARY, DRUM_OPTIONS).map((r) => [r.fragment.id, r.path.length, r.distance])).toEqual([['funk_drums', 0, 0]]);
     const [rotate] = variations(funk.text, DRUM_OPTIONS);
     const once = rotate!.apply(funk.text);
     const twice = variations(once, DRUM_OPTIONS)
@@ -83,11 +83,11 @@ describe('a variation is recognised as its source’s, by its operator, at dista
       .apply(once);
     expect(recogniser.recognise(twice, LIBRARY, DRUM_OPTIONS)).toEqual([]);
     const [deep] = recogniser.recognise(twice, LIBRARY, { ...DRUM_OPTIONS, depth: 2 });
-    expect([deep?.fragment.id, deep?.path.map((s) => s.operator), deep?.distance]).toEqual(['Funk drums', ['rotate', 'drop'], 0]);
+    expect([deep?.fragment.id, deep?.path.map((s) => s.operator), deep?.distance]).toEqual(['funk_drums', ['rotate', 'drop'], 0]);
   });
 
   it('within a tolerance: a bar two notes from its source is that far, and nothing at tolerance 1', () => {
-    const funk = LIBRARY.find((f) => f.id === 'Funk drums')!;
+    const funk = LIBRARY.find((f) => f.id === 'funk_drums')!;
     const drops = variations(funk.text, DRUM_OPTIONS).filter((v) => v.rule === 'drop');
     const twice = variations(drops[0]!.apply(funk.text), DRUM_OPTIONS)
       .find((w) => w.rule === 'drop')!
@@ -125,21 +125,21 @@ const found = (rs: readonly Recognised[]) => rs.map((r) => `${r.fragment.id} [${
 
 describe('a pitched voice by its place, a bar of a longer fragment, and the learned layer', () => {
   it('a bass seed and its variation with every name changed are recognised as the seed’s, at distance 0', () => {
-    const walking = BASS_FRAGMENTS.find((f) => f.id === 'walking bass')!;
+    const walking = BASS_FRAGMENTS.find((f) => f.id === 'walking_bass')!;
     // (the line is renamed, not its voice: `&bassV` is the bass instrument's name, the hole it fills)
     const renamed = (text: string) => text.replace(/&bass\b/g, '&low');
-    expect(found(recogniser.recognise(renamed(walking.text), LIBRARY, { workbench: BASS }))).toEqual(['walking bass [] bar 0 at 0']);
+    expect(found(recogniser.recognise(renamed(walking.text), LIBRARY, { workbench: BASS }))).toEqual(['walking_bass [] bar 0 at 0']);
     const [down] = variations(walking.text, { workbench: BASS, operators: PITCHED_OPERATORS });
-    expect(found(recogniser.recognise(renamed(down!.apply(walking.text)), LIBRARY, { workbench: BASS }))).toEqual([`walking bass [${down!.by}] bar 0 at 0`]);
+    expect(found(recogniser.recognise(renamed(down!.apply(walking.text)), LIBRARY, { workbench: BASS }))).toEqual([`walking_bass [${down!.by}] bar 0 at 0`]);
   });
 
   it('a bar of the two-bar bossa nova clave, its second, is recognised as the clave from its bar 1', () => {
     const second = '&clave step=16n ~!4 &claves ~!5 &claves ~!5\n&percussion map=midi(10) [&clave * .5]';
-    expect(found(recogniser.recognise(second, LIBRARY, DRUM_OPTIONS))).toEqual(['bossa nova clave [] bar 1 at 0']);
+    expect(found(recogniser.recognise(second, LIBRARY, DRUM_OPTIONS))).toEqual(['bossa_nova_clave [] bar 1 at 0']);
   });
 
   it('a bar of a vamp, its fifth, is recognised as the vamp to the seventh from its bar 4', () => {
-    expect(found(recogniser.recognise('&harm over=&key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual(['vamp to the seventh [] bar 4 at 0']);
+    expect(found(recogniser.recognise('&harm over=&key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual(['vamp_to_the_seventh [] bar 4 at 0']);
   });
 
   it('a groove the band filed and the composer’s variation of it, recognised by the `by` it was filed with', () => {

@@ -1,5 +1,5 @@
 ---
-id: Lo-fi hip hop drums
+id: lo_fi_hip_hop_drums
 association:
   - point:
       sync: 0.5

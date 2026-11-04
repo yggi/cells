@@ -1,6 +1,7 @@
 import { declarations } from "./fit.js";
 import { byId, fragmentProblems, pointDistance, pointsOf } from "./fragments.js";
 import { INTERFACE_NAMES } from "./holes.js";
+import { RENAMED_IDS } from "../engine/renamed.js";
 export const FILING_WEIGHT = 0.1;
 export const USE_STEP = 0.1;
 export const USE_CAP = 1.2;
@@ -120,4 +121,14 @@ export function fileFragment(repository, layer, filing) {
         id = `${source} ${created} ${n}`;
     const file = { fragment: { id, text, association }, meta: { source, created, ...meta }, prose };
     return { layer: { ...layer, filed: [...layer.filed, file] }, id, file, renamed: new Map() };
+}
+export function renamedLayer(layer) {
+    const word = (id) => RENAMED_IDS.get(id) ?? id;
+    if (![...layer.points.map((p) => p.id), ...layer.together.flatMap((p) => p.ids)].some((id) => RENAMED_IDS.has(id)))
+        return layer;
+    return {
+        ...layer,
+        points: layer.points.map((p) => (RENAMED_IDS.has(p.id) ? { ...p, id: word(p.id) } : p)),
+        together: layer.together.map((p) => ({ ...p, ids: [word(p.ids[0]), word(p.ids[1])].sort(byId) })),
+    };
 }

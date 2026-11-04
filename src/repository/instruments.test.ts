@@ -1,6 +1,7 @@
 // The instruments (#225, decision 054): the General MIDI kit, a voice for each of General MIDI's 47 percussion notes,
 // each sounding on its own note over MIDI out, fitting any workbench; 13 of its voices taken by name (the retired core
 // kit), with which every rhythm plays each hit on the note it plays alone.
+import { wordOf } from '../engine/renamed';
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
@@ -26,21 +27,21 @@ const CENTRE = { sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 };
 const DEFAULTS = ['bass', 'keys', 'pad', 'lead'];
 /** The instruments with a sound, for the two presets (#350), each at its preset's point, and the default whose voice it defines. */
 const AT_PRESET: Record<string, StylePoint> = {
-  'upright bass': ELECTRO_SWING,
-  'brass stab': ELECTRO_SWING,
+  upright_bass: ELECTRO_SWING,
+  brass_stab: ELECTRO_SWING,
   clarinet: ELECTRO_SWING,
-  'muted trumpet': ELECTRO_SWING,
-  'round bass': SPOOKY,
+  muted_trumpet: ELECTRO_SWING,
+  round_bass: SPOOKY,
   organ: SPOOKY,
   theremin: SPOOKY,
   celesta: SPOOKY,
   // (0.05 below Spooky in energy: at its point it would tie with the organ, and take &padV from it by id)
-  'haunted pad': { ...SPOOKY, energy: 0.3 },
+  haunted_pad: { ...SPOOKY, energy: 0.3 },
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
 const coreKit = { text: expand(CORE_USE, resolveSeed).trim() };
-const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id)!.text;
+const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === wordOf(id))!.text;
 const BPM = 120;
 const hosted = (...fragments: string[]) => [setTiming(meterText('4/4'), 'bar', 'step', `${BPM}bpm`), ...fragments].join('\n');
 
@@ -136,9 +137,9 @@ describe('the instrument fragments', () => {
         .query(point, k, {}, { facet: 'instrument' })
         .map((f) => f.fragment.id);
     for (const preset of [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ]) expect(found(preset, 3)).toEqual(['gm_kit', 'bass', 'keys']);
-    expect(found(ELECTRO_SWING, 4)).toEqual(['brass stab', 'clarinet', 'muted trumpet', 'upright bass']);
-    expect(found(SPOOKY, 4)).toEqual(['celesta', 'organ', 'round bass', 'theremin']);
-    expect(found({ ...SPOOKY, energy: 0.3 }, 1)).toEqual(['haunted pad']);
+    expect(found(ELECTRO_SWING, 4)).toEqual(['brass_stab', 'clarinet', 'muted_trumpet', 'upright_bass']);
+    expect(found(SPOOKY, 4)).toEqual(['celesta', 'organ', 'round_bass', 'theremin']);
+    expect(found({ ...SPOOKY, energy: 0.3 }, 1)).toEqual(['haunted_pad']);
   });
 
   it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order; 13 of them taken by name are its lines word for word, as the retired core kit forwards them (#196)', () => {
@@ -212,7 +213,7 @@ describe('the instruments for Electro swing and Spooky (#350)', () => {
 });
 
 describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit on its General MIDI note (13 of 13)', () => {
-  const { hits: synthPop } = played(hosted(RHYTHM_FRAGMENTS.find((f) => f.id === 'Synth-pop drums')!.text, coreKit.text), 32);
+  const { hits: synthPop } = played(hosted(RHYTHM_FRAGMENTS.find((f) => f.id === 'synth_pop_drums')!.text, coreKit.text), 32);
   it('is shown firing: a hit on another note is caught', () => expect(synthPop.map((h) => ({ ...h, note: h.note + 1 }))).not.toEqual(synthPop));
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the kit after the groove, and the groove after the kit', (_, text) => {

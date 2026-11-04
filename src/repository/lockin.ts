@@ -55,7 +55,7 @@ function walk(start: StylePoint, seed: number): StylePoint[] {
 
 // What the composer makes on a miss: one of a few texts, drawn by seed and section. Two of each facet are a seed
 // fragment's text after renaming (or respaced, or commented), so identity adds to that fragment instead.
-const son = RHYTHM_FRAGMENTS.find((f) => f.id === 'son clave 3-2')!.text;
+const son = RHYTHM_FRAGMENTS.find((f) => f.id === 'son_clave_3_2')!.text;
 const MADE: Record<Facet, readonly string[]> = {
   meter: ['&bar meter("9/8")', '&bar meter("11/8")', '&bar meter("5/8")', '&bar meter("4/4") swing=16n:.58', '&bar  meter("7/8")', '&bar meter("3/4") // a waltz'],
   rhythm: [

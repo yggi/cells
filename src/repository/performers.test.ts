@@ -3,6 +3,7 @@
 // part and its levels; over a workbench that fills them it compiles clean and sends what Jambot's section text sends for
 // that part (its own voice line at Jambot's register); and a query for a performer at any preset finds the five. The drummer
 // plays a stack of lines, one per drum role, and each hit still names its line: the role the feel reads.
+import { wordOf } from '../engine/renamed';
 import { describe, expect, it } from 'vitest';
 import { compileSource as compiledWithOldUse } from '../engine/compile';
 import { signatureOf } from '../engine/use';
@@ -62,17 +63,17 @@ const PARTS = {
     performer: [
       '&bassline over=&harm step=16n 0@4 ~@4 2@2 ~@2 0@4 0@8 ~@8',
       '&bassLevel map=amp step=16n .6@4 ~@4 .4@2 ~@2 .5@4 .6@8 ~@8',
-      'use * from "bass performer"',
+      'use * from bass_performer',
       '&out map=midi ~ &bassOut',
     ],
   },
   pad: {
     jambot: ['&pad over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padOut play=&pad level=.3 &compV', '&compV loop=C3', '&out map=midi ~ ~ &padOut'],
-    performer: ['&padline over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padLevel map=amp .3', 'use * from "pad performer"', '&out map=midi ~ ~ &padOut'],
+    performer: ['&padline over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padLevel map=amp .3', 'use * from pad_performer', '&out map=midi ~ ~ &padOut'],
   },
   stab: {
     jambot: ['&stab over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabOut play=&stab level=.5 &compV', '&compV loop=C3', '&out map=midi ~ ~ &stabOut'],
-    performer: ['&stabline over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabLevel map=amp .5', 'use * from "stab performer"', '&out map=midi ~ ~ &stabOut'],
+    performer: ['&stabline over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabLevel map=amp .5', 'use * from stab_performer', '&out map=midi ~ ~ &stabOut'],
   },
   lead: {
     jambot: [
@@ -85,7 +86,7 @@ const PARTS = {
     performer: [
       '&leadline over=&key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
       '&leadLevel map=amp step=16n .7@2 .5 .6@5 ~@8 .5 .6@3 .7@4 ~@8',
-      'use * from "lead performer"',
+      'use * from lead_performer',
       '&out map=midi &leadOut',
     ],
   },
@@ -99,12 +100,12 @@ describe('the performers', () => {
       expect(r.diagnostics.map((d) => d.message)).toEqual([]);
       return r.performers.map((p) => [p.name, p.role]);
     };
-    expect(performers('use &bass from "bass performer"')).toEqual([['bassOut', 'bass']]);
-    expect(performers('use &bassOut from "bass performer"')).toEqual([['bassOut', undefined]]);
+    expect(performers('use &bass from bass_performer')).toEqual([['bassOut', 'bass']]);
+    expect(performers('use &bassOut from bass_performer')).toEqual([['bassOut', undefined]]);
   });
 
   it('are the drums, the bass, the pad, the stab and the lead, each one gate whose role a role cell gives, playing its part on the instrument it uses', () => {
-    expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['drums performer', 'bass performer', 'pad performer', 'stab performer', 'lead performer']);
+    expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['drums_performer', 'bass_performer', 'pad_performer', 'stab_performer', 'lead_performer']);
     const read = PERFORMER_FRAGMENTS.map((f) => compileSource(f.text, undefined, { resolve: resolveSeed }).performers);
     expect(read).toEqual([
       [{ name: 'drumsOut', role: 'drums', part: 'drumlines', voices: ['kit'] }],
@@ -158,7 +159,7 @@ describe('the performers', () => {
 // channel 10 (`&drums [&kick, &backbeat …]` over the core kit), and the same lines as the drummer's part.
 const DRUM_BARS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ].map((point, i) => {
   const preset = ['Synth-pop', 'Techno', 'Deep house', 'Ambient', 'Lo-fi hip hop', 'Funk', 'Bossa nova', 'Swing jazz'][i]!;
-  const text = LIBRARY.find((f) => f.id === `${preset} drums`)!.text;
+  const text = LIBRARY.find((f) => f.id === wordOf(`${preset} drums`))!.text;
   return { preset, point, lines: /^&groove \[(.*)\]$/m.exec(text)![1]!, text: text.replace(/^&groove .*$/m, '') };
 });
 /** Jambot's drum roles, in its order (yggi/jambot packages/engine/src/events.ts @ 24a528b, `DRUM_ROLES`). */
@@ -170,7 +171,7 @@ describe('the drums performer', () => {
   const section = ({ point, text }: (typeof DRUM_BARS)[number]) =>
     [setTiming(library.query(point, 1, {}, { facet: 'meter' })[0]!.fragment.text, 'bar', 'step', `${BPM}bpm`), text].join('\n');
   const today = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\nuse * from gm_kit\n&drums [${w.lines}]\n&out map=midi ~!9 &drums`;
-  const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\nuse * from "drums performer"\n&out map=midi ~!9 &drumsOut`;
+  const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\nuse * from drums_performer\n&out map=midi ~!9 &drumsOut`;
 
   it.each(DRUM_BARS.map((w) => [w.preset, w] as const))('%s: sends what its section text sends, over 64 bars', (_, w) => {
     const was = sent(today(w), 64);
@@ -201,7 +202,7 @@ describe('the drums performer', () => {
   });
 
   it('plays a clave the composer chose beside the bar as a line of its own, its role clave', () => {
-    const clave = LIBRARY.find((f) => f.id === 'bossa nova clave')!.text.replace(/^&percussion .*$/m, '');
+    const clave = LIBRARY.find((f) => f.id === 'bossa_nova_clave')!.text.replace(/^&percussion .*$/m, '');
     const w = DRUM_BARS.find((b) => b.preset === 'Bossa nova')!;
     const both = { ...w, text: `${w.text}\n${clave}`, lines: `${w.lines}, &clave` };
     expect(sent(played(both), 64).notes).toEqual(sent(today(both), 64).notes);
@@ -211,10 +212,10 @@ describe('the drums performer', () => {
 
   it('refuses a line the kit doesn’t hold, and a stack mixed as a sound beside it', () => {
     const messages = (t: string) => compileSource(`&bar meter("4/4") step=${BPM}bpm\n${t}`, undefined, { resolve: resolveSeed }).diagnostics.map((d) => d.message);
-    expect(messages('&cb s=sine\n&cowbell step=4n &cb\n&drumlines [&cowbell]\nuse * from "drums performer"\n&out map=midi ~!9 &drumsOut')).toEqual([
+    expect(messages('&cb s=sine\n&cowbell step=4n &cb\n&drumlines [&cowbell]\nuse * from drums_performer\n&out map=midi ~!9 &drumsOut')).toEqual([
       "&cowbell plays &cb, which &kit doesn't hold: a kit's lines play its own voices",
     ]);
-    expect(messages('&kick step=4n &bd\n&drumlines [&kick]\nuse * from "drums performer"\n&out map=midi ~!9 [&drumsOut, &drumlines]')).toEqual([
+    expect(messages('&kick step=4n &bd\n&drumlines [&kick]\nuse * from drums_performer\n&out map=midi ~!9 [&drumsOut, &drumlines]')).toEqual([
       '&drumlines is the part &drumsOut plays, a stack of lines and no sound: mix or send &drumsOut',
     ]);
   });

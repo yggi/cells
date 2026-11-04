@@ -1,5 +1,5 @@
 ---
-id: Ambient drums
+id: ambient_drums
 association:
   - point:
       sync: 0.05

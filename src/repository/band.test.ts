@@ -150,8 +150,8 @@ describe('which instrument a performer plays at a style: the band’s choice, at
   const EIGHT = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ };
   /** The instruments cells wrote for two presets' points (#366): elsewhere each performer plays its own. */
   const FOUND = {
-    ELECTRO_SWING: [ELECTRO_SWING, { bass: 'upright bass', stab: 'brass stab', lead: 'clarinet' }],
-    SPOOKY: [SPOOKY, { bass: 'round bass', pad: 'organ', stab: 'celesta', lead: 'theremin' }],
+    ELECTRO_SWING: [ELECTRO_SWING, { bass: 'upright_bass', stab: 'brass_stab', lead: 'clarinet' }],
+    SPOOKY: [SPOOKY, { bass: 'round_bass', pad: 'organ', stab: 'celesta', lead: 'theremin' }],
   } as const;
 
   it.each(Object.entries(EIGHT))('at %s, every performer plays its own instrument, as the band writes it', (_, point) => {

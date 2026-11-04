@@ -186,19 +186,19 @@ describe('the pairs alone, `swing=8n:r:pairs` (#204, decision 053): a level’s 
   // Where each eighth of one bar is played, in the meter's pulses, under the meter's own text with :pairs: a pair's second
   // eighth two thirds through it, a group of three at thirds of its beat (an eighth each). Literal, one row a meter.
   const expected: Record<string, readonly number[]> = {
-    '4/4': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 swung on 8n': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 leaning on 16n': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 leaning lightly on 16n': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 leaning faintly on 16n': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '4/4 alla breve': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    '2/4': [0, 2 / 3, 1, 5 / 3],
-    '3/4': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3],
-    '6/8': [0, 1, 2, 3, 4, 5],
-    '12/8': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-    '5/4': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3, 4, 14 / 3],
-    '7/8': [0, 1, 2, 3, 3 + 4 / 3, 5, 5 + 4 / 3],
-    '10/8': [0, 1, 2, 3, 3 + 4 / 3, 5, 6, 7, 8, 8 + 4 / 3],
+    meter_4_4: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_swung_on_8n: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_leaning_on_16n: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_leaning_lightly_on_16n: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_leaning_faintly_on_16n: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_4_4_alla_breve: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    meter_2_4: [0, 2 / 3, 1, 5 / 3],
+    meter_3_4: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3],
+    meter_6_8: [0, 1, 2, 3, 4, 5],
+    meter_12_8: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    meter_5_4: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3, 4, 14 / 3],
+    meter_7_8: [0, 1, 2, 3, 3 + 4 / 3, 5, 5 + 4 / 3],
+    meter_10_8: [0, 1, 2, 3, 3 + 4 / 3, 5, 6, 7, 8, 8 + 4 / 3],
   };
 
   it('the table holds every meter of the repository, thirteen', () => {

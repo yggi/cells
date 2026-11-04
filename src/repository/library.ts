@@ -6,6 +6,7 @@
  * of that facet, so adding fragments of another never changes what it returns.
  */
 import type { Resolve } from '../engine/program';
+import { RENAMED_IDS } from '../engine/renamed';
 import { BASS_FRAGMENTS } from './bass';
 import type { Fragment } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
@@ -49,7 +50,10 @@ export const RETIRED: ReadonlyMap<string, string> = new Map([
   ['gm kit', 'use * from gm_kit'],
 ]);
 
-const BY_ID = new Map([...LIBRARY.map((f): [string, string] => [f.id, f.text]), ...RETIRED]);
+const CURRENT = new Map(LIBRARY.map((f): [string, string] => [f.id, f.text]));
+/** Each id the seed renamed (`RENAMED_IDS`, #387), read for a minor version as the text of its word: the same hash, so a lockfile still holds. */
+const RENAMED = [...RENAMED_IDS].map(([old, word]): [string, string] => [old, CURRENT.get(word)!]);
+const BY_ID = new Map([...CURRENT, ...RENAMED, ...RETIRED]);
 
 /**
  * The seed library as a `use` line's resolver (decision 054): a fragment's text by its id, a retired id's forwarding
