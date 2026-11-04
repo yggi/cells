@@ -61,7 +61,10 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   over: core('the table its numbers read', 'tables.md'),
   base: core('the cell it is a copy of, changed where it says: its braid step by step over the base’s (= keeps a step), its attributes where it sets none', 'braid.md'),
   step: core('what moves it, step by step', 'time.md'),
-  loop: core('what moves it, the whole braid at a time', 'time.md'),
+  loop: core(
+    'what moves it, the whole braid at a time, read as a signal: each value held, no note started each step (a voice alone sounds as one held note, &a loop=A4)',
+    'time.md',
+  ),
   shift: core('how far it is turned', 'tables.md'),
   stride: core('how far each step turns it', 'time.md'),
   map: core('how its values sound', 'sound.md'),
@@ -107,6 +110,12 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   delayfeedback: sound('echo feedback 0–1'),
   glide: {
     help: 'tied notes (each starting as the one before ends) play as one: its envelope once, each next a slide there over this many seconds (dough’s glide; 0 or none: each note its own)',
+    doc: 'sound.md',
+    value: 'number',
+    on: ['voice'],
+  },
+  oneshot: {
+    help: 'on a voice: 1 plays each note’s envelope through (its attack and decay), whatever its step, a drum hit on any grid; 0, the default, as long as its step (decision 068: the bare word oneshot, the old way)',
     doc: 'sound.md',
     value: 'number',
     on: ['voice'],

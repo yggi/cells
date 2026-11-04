@@ -254,3 +254,23 @@ describe('the spellings inside a core or outside row, sounding identical (#418)'
     expect(soundsIdentical(written, rewrite, undefined, OPTIONS)).toBe(true);
   });
 });
+
+describe('loop= is dilate, then a held ramp (decision 068, #438): the rate of step=r·k, read as a signal, starting no notes', () => {
+  const vib = (rate: string) => {
+    const r = compileSource(`&theme step=2 0 4\n&vib ${rate} 0 .1 -.1\n&lead s=sine loop=C4\n&out map=sample [(&theme + &vib) * &lead]`);
+    expect(r.diagnostics).toEqual([]);
+    return eventsBetween(plan(r, codeShifts(r)), 0, 1 - 1e-6);
+  };
+  it('loop=5 over three steps bends the theme every 1/15 s, and starts none of its own: the theme’s 2 notes a second', () => {
+    const played = vib('loop=5');
+    expect(played).toHaveLength(2);
+    expect(played[0]!.bends!.slice(0, 3).map((b) => [Number(b.at.toFixed(6)), Math.round(b.cents)])).toEqual([
+      [Number((1 / 15).toFixed(6)), 10],
+      [Number((2 / 15).toFixed(6)), -10],
+      [Number((3 / 15).toFixed(6)), 0],
+    ]);
+  });
+  it('the same line at step=15, the same rate, starts a note each step: 15 a second', () => {
+    expect(vib('step=15')).toHaveLength(15);
+  });
+});

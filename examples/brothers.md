@@ -28,7 +28,7 @@ description: "Big beat, an original in the manner of the Chemical Brothers: grit
 &lift tags="build" step=&buildBar/32 0
 &up tags="build" map=lin loop=&bar/32 0 .3 1 0
 
-&bd tags="break" oneshot s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .06 0 0) distort=.5 env=&thump
+&bd tags="break" oneshot=1 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .06 0 0) distort=.5 env=&thump
 &sd tags="break" s=white hpf=900 distort=.6 crush=7 env=&snap
 &hh tags="break" s=white hpf=7000 crush=6 env=&click
 &tb tags="acid" s=saw loop=E2 lpf=120..3600 * &(map=adsr .003 .17 .1 .06) * &accent lpq=14 distort=.3 env=&strike

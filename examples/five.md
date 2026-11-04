@@ -24,7 +24,7 @@ description: An original tune in 5/4, felt as 3 + 2, after the groove of Take Fi
 &piano s=tri loop=Eb4 env=&(map=adsr .005 .35 .15 .2)
 &bass s=tri loop=Eb2 env=&pluck
 &cym gain=.22 s=white hpf=8000 env=&snap
-&click gain=.3 oneshot s=white hpf=3000 env=&(map=adsr 0 .03 0 .02)
+&click gain=.3 oneshot=1 s=white hpf=3000 env=&(map=adsr 0 .03 0 .02)
 
 &mix postgain=2.06 map=sample [&tune * &horn * .45,
                                   &walk * &bass * .8,

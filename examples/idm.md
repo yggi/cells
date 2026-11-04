@@ -29,7 +29,7 @@ description: A breakbeat backwards every other bar, with ratchets and hats.
 
 &breath map=lin loop=&bar/8 .15 1 .15                       # one breath, for pad and lead
 
-&bd oneshot s=sine loop=A1 pitch=0..36 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)
+&bd oneshot=1 s=sine loop=A1 pitch=0..36 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)
 &sd s=white hpf=900 env=&tap
 &hh s=white hpf=9000 env=&click
 &tick gain=.2 s=white hpf=11000 env=&(map=adsr 0 .015 0 .01)

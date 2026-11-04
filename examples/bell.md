@@ -20,7 +20,7 @@ description: "The bell, x.x.xx.x.x.x, has the major scale's intervals: 2 2 1 2 2
 
 &gankogui gain=.25 s=square loop=C6 lpf=4000 env=&tap
 &voice s=tri loop=C4 env=&(map=adsr .02 .2 .6 .2)
-&dundun gain=.7 oneshot s=sine loop=C2 pitch=0..12 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .25 0 .1)
+&dundun gain=.7 oneshot=1 s=sine loop=C2 pitch=0..12 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .25 0 .1)
 &shekere gain=.15 s=white hpf=6000 env=&click
 
 &mix postgain=3.9 map=sample [&strokes, &song * &voice * .45, &drums]

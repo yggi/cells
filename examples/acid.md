@@ -28,10 +28,10 @@ description: "Acid-Cell — everybody needs a 303: a saw through a resonant filt
 &beat step=16n &b1 &b2 &b1 &b2
 
 &tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35 env=&strike
-&bd gain=.8 oneshot s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump
-&cp gain=.35 oneshot s=white hpf=1500 env=&snap room=.2
+&bd gain=.8 oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump
+&cp gain=.35 oneshot=1 s=white hpf=1500 env=&snap room=.2
 &hh gain=.25 s=white hpf=8000 env=&click
-&oh gain=.2 oneshot s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
+&oh gain=.2 oneshot=1 s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
 
 &mix postgain=1.76 map=sample [&line * &accent * &tb303 * .45, &beat]
 ```

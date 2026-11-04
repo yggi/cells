@@ -4,7 +4,7 @@ What moves a cell: `step=` and `loop=`, the chains that scale them, `stride=`, m
 
 ## step= and loop=
 
-`step` counts single steps, `loop` whole turns of the braid (a k-step braid: `loop=r` is `step=r·k`):
+`step` counts single steps, each a note; `loop` whole turns of the braid, read as a signal ([decision 068](https://github.com/yggi/cells/blob/main/docs/decisions/068-the-core-grammar.md): dilate, then a held ramp). A k-step braid with `loop=r` moves at the rate of `step=r·k`, but starts no note at each step: each value is held as a bend, a waveform or a voice's frequency (a voice played alone, `&a loop=A4`, sounds as one held note). So `&vib loop=5 0 .1 -.1` in `[(&theme + &vib) * &lead]` bends the theme every 1/15 s, where `&vib step=15 0 .1 -.1` there would play 15 notes a second.
 
 |          | rate (`1`, `84bpm`, `440hz`) | `&x`               | `cycle(&x)`            | a tap (`pulse`, `beat`, `16n`, `1m`) |
 |----------|------------------------------|--------------------|------------------------|--------------------------------------|

@@ -494,7 +494,6 @@ export const LINE_SYNTAX = [
     syntax('line', '&name …', 'A cell: one per line, its name first, then its attributes (key=value) and its braid, in any order.', ['&theme over=&major step=&bar 0 2 4 5'], 'cell.md'),
     syntax('line', '&name label="…"', 'A note: a cell with only a label= (and title=, tags=, about=) explains, in the graph; it does nothing.', ['&why label="The bass walks down a fifth each bar."'], 'display.md'),
     syntax('line', 'off', 'Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph).', ['&drums off over=&kit step=&bar 0 1'], 'cell.md'),
-    syntax('line', 'oneshot', 'On a voice: each note plays its envelope through (its attack and decay), whatever its step: a drum hit on any grid.', ['&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)'], 'sound.md'),
     syntax('line', '# … · // …', 'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.', ['&tune step=2 0 2 4  # the opening'], 'cell.md'),
     syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
     syntax('line', '&x from id(name=…) … · &a, &b from id · * from id', "Where a line's cells come from (decision 065): a fragment by its id, the id a word or in double quotes, the host's resolver finding it. A template (a fragment with a signature) gives a copy, its head named as the line names it, its named arguments in parentheses and its main one the rest of the line; attributes before `from` are the head's. A collection gives the cells it names by their names, or every line (`*`). With no id, a fragment's signature: its head, its optional parameters in parentheses, its main one after them. `use &a, &b from id` is retired: an error, which Migrate rewrites (#387).", ['&key from harmonic_minor D', '&bar from meter_4_4_swung_on_8n(swing=8n:.64) 120bpm', '&bd, &sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'], 'use.md'),
@@ -662,6 +661,7 @@ export function parseBody(s, head) {
             if (oneshot)
                 s.fail('oneshot is given twice', at, word.length);
             oneshot = true;
+            s.warn('oneshot is retired as a line word: a voice’s parameter, oneshot=1 (Migrate rewrites it, decision 068)', at, word.length);
             continue;
         }
         if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_' || Object.hasOwn(MODE_WORDS, word)))
@@ -716,6 +716,17 @@ export function parseBody(s, head) {
         }
     }
     const braid = generator ?? (tokens.length ? { kind: 'list', tokens } : { kind: 'blank' });
+    if (b.params.oneshot !== undefined) {
+        const at = b.paramSpans.oneshot;
+        const v = b.params.oneshot;
+        if (v !== 0 && v !== 1)
+            s.fail('oneshot= is 1 (each note played through) or 0 (as its step, the default)', at ? at.col - 1 : 0, 7);
+        if (oneshot)
+            s.fail('oneshot is given twice: write oneshot=1 alone', at ? at.col - 1 : 0, 7);
+        oneshot = v === 1;
+        delete b.params.oneshot;
+        delete b.paramSpans.oneshot;
+    }
     if (oneshot && typeof b.params.glide === 'number' && b.params.glide > 0) {
         const at = b.paramSpans.glide;
         s.fail('oneshot or glide=: a voice plays each note through, or ties them as one', at ? at.col - 1 : 0, 5);
