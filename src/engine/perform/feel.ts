@@ -106,10 +106,13 @@ export function feelOf({ style, swing }: FeelFrame): number {
   return 0.5 * weight + 0.3 * style.entropy + 0.2 * (1 - style.artic);
 }
 
+/** Each group's first step, in the bar's steps (2 to the eighth): its pulses' starts. */
+const startsOf = (groups: readonly number[]): number[] => groups.map((_, g) => 2 * sum(groups.slice(0, g)));
+
 /** The base an event's bar gives it, unrounded: only its fraction is read, the part MIDI's rounding took from the level cells states. */
 function baseOf({ groups, section, style, energy }: FeelFrame, { part, role, step }: FeelEvent): number {
   const steps = 2 * sum(groups);
-  const starts = groups.map((_, g) => 2 * sum(groups.slice(0, g)));
+  const starts = startsOf(groups);
   const onBeat = starts.includes(step);
   const half = 2 * Math.floor(steps / 4);
   const backbeat = starts.filter((_, p) => (starts.length <= 3 ? p > 0 : p % 2 === 1)).at(-1);
@@ -168,12 +171,15 @@ export function played(frame: FeelFrame, event: FeelEvent, feel = feelOf(frame),
   const { seed, bar } = frame;
   const { part, step, note } = event;
   const base = baseOf(frame, event);
-  const level = event.velocity + (base - Math.round(base));
+  const written = event.velocity + (base - Math.round(base));
   const keys = part === 'drums' ? [bar, step, note] : [bar, step];
   // (a performer's widths scale the contract's numbers last: × 1 is the same double, so the contract's bits come out)
   const loose = (draw(seed, VELOCITY[part], ...keys) - 0.5) * feel * 24 * widths.licence;
   const d = draw(seed, OWN_ACCENT, PARTS.indexOf(part), ...keys);
-  const own = (step % 2 === 1 ? -d * 14 * feel : step % 4 === 2 ? d * 10 * feel : (d - 0.5) * 2 * 4 * feel) * widths.accents;
-  const total = part === 'drums' ? level + loose + own : level + (loose + own);
+  // (by the meter's levels, feel v2, yggi/music-commons#45, #453: a step that starts no eighth, an eighth that starts no
+  // group, a group's start; in a meter of 2s, the steps odd, 2 past a multiple of 4, and the rest, as v1 read them)
+  const level = step % 2 === 1 ? 4 : startsOf(frame.groups).includes(step) ? 0 : 3;
+  const own = (level === 4 ? -d * 14 * feel : level === 3 ? d * 10 * feel : (d - 0.5) * 2 * 4 * feel) * widths.accents;
+  const total = part === 'drums' ? written + loose + own : written + (loose + own);
   return { velocity: Math.max(1, Math.min(127, Math.round(total))), length: event.length * (1 - draw(seed, LENGTH[part], ...keys) * feel * 0.15 * widths.licence) };
 }

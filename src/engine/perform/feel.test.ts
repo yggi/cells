@@ -45,16 +45,33 @@ describe('the feel contract (music-commons contracts/feel, version 1, minor 1)',
     for (const v of contract.vectors) expect(feelOf(v.frame), name(v)).toBe(v.feel);
   });
 
-  it('every event plays at the vector’s velocity and length, equal: 7,140 of 7,140, none recorded (Jambot’s, over its sections)', () => {
+  // (feel v2, yggi/music-commons#45, pending: the own accent reads the meter's levels, #453. On a meter of 2s it is v1's
+  // rule bit for bit; on one with a group of three, v1's vectors hold Jambot's 4/4 parity, yggi/jambot#323. Until v2's
+  // vectors are lifted here, the difference is recorded, as a hub implementer records one)
+  const twos = (v: Vector) => v.frame.groups.every((g) => g === 2);
+  it('every event of a meter of 2s plays at the vector’s velocity and length, equal: 4,895 of 4,895 (Jambot’s, over its sections)', () => {
     let events = 0;
-    for (const v of contract.vectors) {
+    for (const v of contract.vectors.filter(twos)) {
       expect(
         v.events.map((e) => played(v.frame, e)),
         name(v),
       ).toEqual(v.played);
       events += v.events.length;
     }
-    expect(events).toBe(7140);
+    expect(events).toBe(4895);
+  });
+
+  it('on a meter with a group of three, the own accent follows its levels: 782 of 2,245 velocities move from v1’s, no length', () => {
+    let events = 0;
+    let moved = 0;
+    for (const v of contract.vectors.filter((v) => !twos(v)))
+      v.events.forEach((e, i) => {
+        const p = played(v.frame, e);
+        expect(p.length, name(v)).toBe(v.played[i]!.length);
+        if (p.velocity !== v.played[i]!.velocity) moved++;
+        events++;
+      });
+    expect([events, moved]).toEqual([2245, 782]);
   });
 
   it('reads each output a host’s text names an event by as the vector’s part and role, or none: 17 of 17', () => {
