@@ -46,7 +46,7 @@ describe('Migrate: retired forms written as they are now (decision 049, #156)', 
   });
 
   it('every rule has a witness of its own', () => {
-    expect(new Set(PAIRS.map((p) => p.rule))).toEqual(new Set(['all', 'gate', 'tap', 'section', 'swing', 'use', 'main-key', 'forwarded', 'from']));
+    expect(new Set(PAIRS.map((p) => p.rule))).toEqual(new Set(['all', 'gate', 'tap', 'section', 'swing', 'use', 'main-key', 'forwarded', 'from', 'renamed']));
   });
 
   it('every attribute marked old has a witness that rewrites it, or is the card’s, which movedCard moves', () => {

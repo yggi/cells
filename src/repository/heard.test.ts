@@ -27,25 +27,25 @@ const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnTy
 
 /** What each sent with its own card, on its bench: the hash of its notes, and how many. */
 const SENT: Record<string, [string, number]> = {
-  'Synth-pop drums': ['397a56b4', 96],
-  'Techno drums': ['9519e0ef', 224],
-  'Deep house drums': ['b61199ca', 120],
-  'Ambient drums': ['6a2f2372', 144],
-  'Lo-fi hip hop drums': ['4f755bb6', 136],
-  'Funk drums': ['737e888c', 192],
-  'Bossa nova drums': ['b559941c', 128],
-  'Swing jazz drums': ['0204bcbe', 112],
-  'son clave 3-2': ['e26ed209', 20],
-  'son clave 2-3': ['59aedae1', 20],
-  'rumba clave 3-2': ['9c8b2f29', 20],
-  'bossa nova clave': ['58b2f541', 20],
-  'bossa nova clave (one bar)': ['6fe7442d', 40],
-  'root bass': ['73332dc6', 16],
-  'pumping bass': ['70f9f848', 32],
-  'eighths bass': ['cc5be690', 64],
-  'funk bass': ['181a19df', 64],
-  'walking bass': ['d438922a', 32],
-  'bell and scale': ['cc8d357e', 56],
+  synth_pop_drums: ['397a56b4', 96],
+  techno_drums: ['9519e0ef', 224],
+  deep_house_drums: ['b61199ca', 120],
+  ambient_drums: ['6a2f2372', 144],
+  lo_fi_hip_hop_drums: ['4f755bb6', 136],
+  funk_drums: ['737e888c', 192],
+  bossa_nova_drums: ['b559941c', 128],
+  swing_jazz_drums: ['0204bcbe', 112],
+  son_clave_3_2: ['e26ed209', 20],
+  son_clave_2_3: ['59aedae1', 20],
+  rumba_clave_3_2: ['9c8b2f29', 20],
+  bossa_nova_clave: ['58b2f541', 20],
+  bossa_nova_clave_one_bar: ['6fe7442d', 40],
+  root_bass: ['73332dc6', 16],
+  pumping_bass: ['70f9f848', 32],
+  eighths_bass: ['cc5be690', 64],
+  funk_bass: ['181a19df', 64],
+  walking_bass: ['d438922a', 32],
+  bell_and_scale: ['cc8d357e', 56],
 };
 
 const hash = (s: string) => {
@@ -58,7 +58,7 @@ const hash = (s: string) => {
 const benchOf = (id: string, text: string) => {
   if (BASS_FRAGMENTS.some((f) => f.id === id))
     return 'use * from bass\n&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7] [4,6,8] [0,2,4]';
-  if (id === 'bell and scale') return 'use * from gm_kit\n&bar meter("4/4") step=120bpm\n&tonic C';
+  if (id === 'bell_and_scale') return 'use * from gm_kit\n&bar meter("4/4") step=120bpm\n&tonic C';
   return `use * from gm_kit\n${METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(text, m).fits)!}`;
 };
 
@@ -79,8 +79,8 @@ function sent(text: string): (string | number)[][] {
 
 describe('a pattern fragment heard through the card `heard` supplies (#291)', () => {
   // (the seeds made after #291, which never carried a card: an example's beat, the Spooky beat and bass of #349, the ghost-house beat and bass near it, and the Kinderlied beat)
-  const born = ['Electro swing drums', 'Spooky drums', 'creeping bass', 'Ghost drums', 'tiptoe bass', 'Kinderlied drums'];
-  const carried = [...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.id === 'bell and scale')].filter((f) => !born.includes(f.id));
+  const born = ['electro_swing_drums', 'spooky_drums', 'creeping_bass', 'ghost_drums', 'tiptoe_bass', 'kinderlied_drums'];
+  const carried = [...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.id === 'bell_and_scale')].filter((f) => !born.includes(f.id));
 
   it('is each of the 19 that carried a card', () => expect(carried.map((f) => f.id).sort()).toEqual(Object.keys(SENT).sort()));
 
@@ -112,10 +112,10 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
 
 describe('a bass line fills the bass performer’s hole (#285)', () => {
   // (sent on the bass's channel and heard on a sound card: the bass has a sound of its own, which MIDI doesn't send, #391)
-  it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s, with the host and use * from "bass performer", compiles with no diagnostic', (_, text) => {
+  it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s, with the host and use * from bass_performer, compiles with no diagnostic', (_, text) => {
     const host =
       '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
-    const r = compileSource(`use * from "bass performer"\n${host}\n${text}`, undefined, { resolve: resolveSeed });
+    const r = compileSource(`use * from bass_performer\n${host}\n${text}`, undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
     expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bassOut', 'bass', 'bassline']]);
   });

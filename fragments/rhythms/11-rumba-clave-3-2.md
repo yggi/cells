@@ -1,5 +1,5 @@
 ---
-id: rumba clave 3-2
+id: rumba_clave_3_2
 association:
   - point:
       sync: 1

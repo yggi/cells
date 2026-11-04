@@ -1,3 +1,4 @@
+import { RENAMED_IDS } from "../engine/renamed.js";
 import { cachedFit } from "./fit.js";
 export const EMPTY_LAYER = Object.freeze({ filed: Object.freeze([]), points: Object.freeze([]), together: Object.freeze([]) });
 export const CO_USE_PULL = 0.1;
@@ -77,7 +78,7 @@ export function layerProblems(layer) {
             const [a, b] = Array.isArray(ids) ? ids : [];
             if (!Array.isArray(ids) || ids.length !== 2 || typeof a !== 'string' || typeof b !== 'string' || !a.trim() || !b.trim())
                 return void problems.push(`${where}: its ids are not two names`);
-            if (!(a < b))
+            if (!(byId(a, b) < 0))
                 problems.push(`${where}: its ids ${a} and ${b} are not two, in order`);
             if (!(Number.isInteger(pair?.count) && pair.count > 0))
                 problems.push(`${where}: its count ${String(pair?.count)} is not a whole number > 0`);
@@ -105,7 +106,12 @@ export const pointsOf = (fragment, facet) => facet === undefined ? fragment.asso
 export function fragmentDistance(fragment, point, axisWeights = {}, facet) {
     return Math.min(...pointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
 }
-export const byId = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+const WAS = new Map([...RENAMED_IDS].map(([old, word]) => [word, old]));
+const tieKey = (id) => WAS.get(id) ?? id;
+export const byId = (a, b) => {
+    const [x, y] = [tieKey(a), tieKey(b)];
+    return x < y ? -1 : x > y ? 1 : 0;
+};
 export function createRepository(entries) {
     const problems = entries.flatMap(fragmentProblems);
     const seen = new Set();

@@ -1,5 +1,5 @@
 ---
-id: Spooky drums
+id: spooky_drums
 association:
   - point:
       sync: 0.2

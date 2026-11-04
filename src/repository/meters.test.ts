@@ -19,41 +19,41 @@ const ids = METER_FRAGMENTS.map((f) => f.id);
 
 // What each meter is: its pulses, the note value of a pulse, and its beats in pulses (decision 040).
 const SHAPES: Record<string, { pulses: number; unit: number; beats: number[] }> = {
-  '4/4': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  '4/4 swung on 8n': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  '4/4 leaning on 16n': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  '4/4 leaning lightly on 16n': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  '4/4 leaning faintly on 16n': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  '4/4 alla breve': { pulses: 4, unit: 4, beats: [2, 2] },
-  '2/4': { pulses: 2, unit: 4, beats: [1, 1] },
-  '3/4': { pulses: 3, unit: 4, beats: [1, 1, 1] },
-  '6/8': { pulses: 6, unit: 8, beats: [3, 3] },
-  '12/8': { pulses: 12, unit: 8, beats: [3, 3, 3, 3] },
-  '5/4': { pulses: 5, unit: 4, beats: [1, 1, 1, 1, 1] },
-  '7/8': { pulses: 7, unit: 8, beats: [3, 2, 2] },
-  '10/8': { pulses: 10, unit: 8, beats: [3, 2, 3, 2] },
+  meter_4_4: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  meter_4_4_swung_on_8n: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  meter_4_4_leaning_on_16n: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  meter_4_4_leaning_lightly_on_16n: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  meter_4_4_leaning_faintly_on_16n: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  meter_4_4_alla_breve: { pulses: 4, unit: 4, beats: [2, 2] },
+  meter_2_4: { pulses: 2, unit: 4, beats: [1, 1] },
+  meter_3_4: { pulses: 3, unit: 4, beats: [1, 1, 1] },
+  meter_6_8: { pulses: 6, unit: 8, beats: [3, 3] },
+  meter_12_8: { pulses: 12, unit: 8, beats: [3, 3, 3, 3] },
+  meter_5_4: { pulses: 5, unit: 4, beats: [1, 1, 1, 1, 1] },
+  meter_7_8: { pulses: 7, unit: 8, beats: [3, 2, 2] },
+  meter_10_8: { pulses: 10, unit: 8, beats: [3, 2, 3, 2] },
 };
 
 // The levels each meter leans, coarse to fine, and their shares: Jambot's swingShares at its presets' swing (none: straight).
 const SWINGS: Record<string, { level: string; share: number }[]> = {
-  '4/4 swung on 8n': [{ level: '8n', share: 2 / 3 }],
-  '4/4 leaning on 16n': [{ level: '16n', share: 0.65 }],
-  '4/4 leaning lightly on 16n': [{ level: '16n', share: 0.6 }],
-  '4/4 leaning faintly on 16n': [{ level: '16n', share: 31 / 60 }],
+  meter_4_4_swung_on_8n: [{ level: '8n', share: 2 / 3 }],
+  meter_4_4_leaning_on_16n: [{ level: '16n', share: 0.65 }],
+  meter_4_4_leaning_lightly_on_16n: [{ level: '16n', share: 0.6 }],
+  meter_4_4_leaning_faintly_on_16n: [{ level: '16n', share: 31 / 60 }],
 };
 
 // Jambot's eight presets, every axis as Jambot has it today (swing, bpm: axes no fragment has), and the meter each
 // names (yggi/jambot#360, its level and share from swingParts at the preset's swing). Lifted from yggi/jambot
 // packages/engine/src/style.ts @ 7b078e8 (unchanged at 5fcf48f).
 const PRESETS: { name: string; point: StylePoint; names: string }[] = [
-  { name: 'Synth-pop', point: { swing: 0, sync: 0.3, harm: 0.45, artic: 0.55, energy: 0.55, bpm: 108 }, names: '4/4' },
-  { name: 'Techno', point: { swing: 0, sync: 0.12, harm: 0, artic: 1, energy: 0.8, bpm: 130 }, names: '4/4' },
-  { name: 'Deep house', point: { swing: 0.3, sync: 0.35, harm: 0.55, artic: 0.65, energy: 0.65, bpm: 122 }, names: '4/4 leaning lightly on 16n' },
-  { name: 'Ambient', point: { swing: 0.05, sync: 0.05, harm: 0.3, artic: 0, energy: 0.2, bpm: 72 }, names: '4/4 leaning faintly on 16n' },
-  { name: 'Lo-fi hip hop', point: { swing: 0.45, sync: 0.5, harm: 0.75, artic: 0.35, energy: 0.5, bpm: 84 }, names: '4/4 leaning on 16n' },
-  { name: 'Funk', point: { swing: 0.3, sync: 1, harm: 0.12, artic: 0.85, energy: 0.75, bpm: 104 }, names: '4/4 leaning lightly on 16n' },
-  { name: 'Bossa nova', point: { swing: 0, sync: 0.75, harm: 0.85, artic: 0.45, energy: 0.45, bpm: 132 }, names: '4/4' },
-  { name: 'Swing jazz', point: { swing: 1, sync: 0.35, harm: 1, artic: 0.3, energy: 0.6, bpm: 148 }, names: '4/4 swung on 8n' },
+  { name: 'Synth-pop', point: { swing: 0, sync: 0.3, harm: 0.45, artic: 0.55, energy: 0.55, bpm: 108 }, names: 'meter_4_4' },
+  { name: 'Techno', point: { swing: 0, sync: 0.12, harm: 0, artic: 1, energy: 0.8, bpm: 130 }, names: 'meter_4_4' },
+  { name: 'Deep house', point: { swing: 0.3, sync: 0.35, harm: 0.55, artic: 0.65, energy: 0.65, bpm: 122 }, names: 'meter_4_4_leaning_lightly_on_16n' },
+  { name: 'Ambient', point: { swing: 0.05, sync: 0.05, harm: 0.3, artic: 0, energy: 0.2, bpm: 72 }, names: 'meter_4_4_leaning_faintly_on_16n' },
+  { name: 'Lo-fi hip hop', point: { swing: 0.45, sync: 0.5, harm: 0.75, artic: 0.35, energy: 0.5, bpm: 84 }, names: 'meter_4_4_leaning_on_16n' },
+  { name: 'Funk', point: { swing: 0.3, sync: 1, harm: 0.12, artic: 0.85, energy: 0.75, bpm: 104 }, names: 'meter_4_4_leaning_lightly_on_16n' },
+  { name: 'Bossa nova', point: { swing: 0, sync: 0.75, harm: 0.85, artic: 0.45, energy: 0.45, bpm: 132 }, names: 'meter_4_4' },
+  { name: 'Swing jazz', point: { swing: 1, sync: 0.35, harm: 1, artic: 0.3, energy: 0.6, bpm: 148 }, names: 'meter_4_4_swung_on_8n' },
 ];
 const first = (point: StylePoint) => repository.query(point, 1)[0]!.fragment.id;
 
@@ -88,13 +88,13 @@ describe('the meter fragments', () => {
       expect(r.diagnostics).toEqual([]);
       return eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-6).map((e) => e.at);
     };
-    expect(events(METER_FRAGMENTS.find((f) => f.id === '10/8')!.text)).toEqual(events('&bar meter("*..+.+..+.")'));
+    expect(events(METER_FRAGMENTS.find((f) => f.id === 'meter_10_8')!.text)).toEqual(events('&bar meter("*..+.+..+.")'));
   });
 
   it.each(ids)('%s says in its id whether it swings on 8n or leans on 16n', (id) => {
     const levels = (compileSource(inFrame(METER_FRAGMENTS.find((f) => f.id === id)!.text)).cells.get('bar')!.meter!.swing ?? []).map((l) => l.level);
-    expect(id.includes('swung on 8n')).toBe(levels.includes('8n'));
-    expect(/leaning \w* ?on 16n/.test(id)).toBe(levels.includes('16n'));
+    expect(id.includes('swung_on_8n')).toBe(levels.includes('8n'));
+    expect(/leaning_(\w+_)?on_16n/.test(id)).toBe(levels.includes('16n'));
   });
 
   it.each(METER_FRAGMENTS.flatMap((f) => f.association.map((wp, i) => [f.id, i + 1, wp.point] as const)))('%s is found first at its point %i', (id, _, point) => {
@@ -123,10 +123,10 @@ describe('the presets find their meters', () => {
   const onMeterAxes = ({ swing: _swing, bpm: _bpm, ...axes }: StylePoint) => axes;
   // (and the points proposed for two more presets, #349: Electro swing's swung 4/4, Spooky's 5/4 with 6/8 and 3/4 near it)
   const proposed = [
-    { name: 'Electro swing', point: ELECTRO_SWING, names: '4/4 swung on 8n' },
-    { name: 'Spooky', point: SPOOKY, names: '5/4' },
-    { name: 'Spooky, less energy', point: { ...SPOOKY, energy: 0.27 }, names: '6/8' },
-    { name: 'Spooky, more energy', point: { ...SPOOKY, energy: 0.43 }, names: '3/4' },
+    { name: 'Electro swing', point: ELECTRO_SWING, names: 'meter_4_4_swung_on_8n' },
+    { name: 'Spooky', point: SPOOKY, names: 'meter_5_4' },
+    { name: 'Spooky, less energy', point: { ...SPOOKY, energy: 0.27 }, names: 'meter_6_8' },
+    { name: 'Spooky, more energy', point: { ...SPOOKY, energy: 0.43 }, names: 'meter_3_4' },
   ];
   const presets = createRepository([...PRESETS, ...proposed].map((p) => ({ id: p.name, text: p.names, association: [{ point: onMeterAxes(p.point), weight: 1 }] })));
   const nearestMeters = (point: StylePoint) => {
@@ -153,15 +153,15 @@ describe('the presets find their meters', () => {
 describe('the points proposed for two more presets (#349)', () => {
   const ranked = (point: StylePoint, n: number) => repository.query(point, n).map((f) => [f.fragment.id, +f.distance.toFixed(9)]);
   it('Electro swing finds the swung 4/4 its example plays, at distance 0', () => {
-    expect(ranked(ELECTRO_SWING, 1)).toEqual([['4/4 swung on 8n', 0]]);
+    expect(ranked(ELECTRO_SWING, 1)).toEqual([['meter_4_4_swung_on_8n', 0]]);
   });
 
   // (0.08 off on energy alone, which the repository's distance, over four axes, counts as 0.04)
   it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.08 off in energy, for the ladder to fetch', () => {
     expect(ranked(SPOOKY, 3)).toEqual([
-      ['5/4', 0],
-      ['6/8', 0.04],
-      ['3/4', 0.04],
+      ['meter_5_4', 0],
+      ['meter_6_8', 0.04],
+      ['meter_3_4', 0.04],
     ]);
   });
 });

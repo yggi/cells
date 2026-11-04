@@ -152,13 +152,13 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const written = `&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n${line('bd')}\n${line('sd')}\n${line('hh')}\n${beat}`;
     const { source, steps } = normalise(written, seed);
     // (and each use as its from line, the tempo only the meter read written in: decision 065)
-    expect(source).toBe(`&bar from "4/4" 100bpm  # four beats\n&bd, &sd, &hh from gm_kit\n${beat}`);
+    expect(source).toBe(`&bar from meter_4_4 100bpm  # four beats\n&bd, &sd, &hh from gm_kit\n${beat}`);
     expect(steps).toHaveLength(4);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     expect(normalise(source, seed)).toEqual({ source, steps: [] });
     // (a use of the fragment already written takes the names too)
     expect(normalise(`use &bd from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${line('sd')}\n${line('hh')}\n${beat}`, seed).source).toBe(
-      `&bd, &sd, &hh from gm_kit\n&bar from "4/4" 100bpm\n${beat}`,
+      `&bd, &sd, &hh from gm_kit\n&bar from meter_4_4 100bpm\n${beat}`,
     );
     // (a line that differs by a word stays the piece's; with no library given, nothing is taken)
     const own = written.replace(line('hh'), line('hh').replace('hpf=8000', 'hpf=7000'));
@@ -170,10 +170,10 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const seed = { resolve: resolveSeed, library: LIBRARY };
     const vib = '&(map=lin loop=5 0 .1 0 -.1 0)';
     // (the bar the 4/4 fragment's: the use goes after the piece's own use lines)
-    const base = BASE.replace('&bar meter("4/4") step=&tempo', 'use &bar from "4/4"');
+    const base = BASE.replace('&bar meter("4/4") step=&tempo', 'use &bar from meter_4_4');
     const written = `${base}&lead s=saw loop=C4 pitch=${vib}\n&pad s=tri loop=C3 pitch=${vib}\n&mix [&tune * &lead, &tune * &pad]`;
     const { source, steps } = normalise(written, seed);
-    expect(source).toBe(written.replace('use &bar from "4/4"\n&tempo step=120bpm', '&bar from "4/4" 120bpm\n&vibrato from vibrato').replaceAll(vib, '&vibrato'));
+    expect(source).toBe(written.replace('use &bar from meter_4_4\n&tempo step=120bpm', '&bar from meter_4_4 120bpm\n&vibrato from vibrato').replaceAll(vib, '&vibrato'));
     expect(steps).toHaveLength(3);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     // (a vibrato a word off is the piece's own; a piece that names &vibrato itself keeps its inline cell)

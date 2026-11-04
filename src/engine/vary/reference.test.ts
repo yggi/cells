@@ -75,30 +75,30 @@ describe("the seeds' variations by reference", () => {
       Object.fromEntries(
         variations(RHYTHM_FRAGMENTS.find((f) => f.id === id)?.text ?? BASS_FRAGMENTS.find((f) => f.id === id)!.text, options).map((v) => [v.by, v.reference?.form ?? null]),
       );
-    const swing = forms('Electro swing drums');
+    const swing = forms('electro_swing_drums');
     expect(swing['rotate &hats']).toBe('&hats[<<]');
     expect(swing['drop &hats 3']).toBe('base=&hats =!3 ~');
     expect(swing['add &hats 0']).toBe('base=&hats &oh:0:.4');
     // (the claves end on a run, `~!7`, that a turn by one step would split: no reference)
-    expect(forms('son clave 3-2')['rotate &clave']).toBeNull();
-    expect(forms('son clave 3-2')['drop &clave 6']).toBe('base=&clave =!6 ~');
+    expect(forms('son_clave_3_2')['rotate &clave']).toBeNull();
+    expect(forms('son_clave_3_2')['drop &clave 6']).toBe('base=&clave =!6 ~');
     // (a Euclid of one token, with its cell of levels: none)
-    expect(forms('Funk drums')['rotate &euclid']).toBeNull();
+    expect(forms('funk_drums')['rotate &euclid']).toBeNull();
     const bass = { workbench: `${HOST}\n${HARMS[0]!}`, operators: PITCHED_OPERATORS };
-    expect(forms('pumping bass', bass)['transpose &bassline -1']).toBe('&bassline^-1');
-    expect(forms('pumping bass', bass)['reverse &bassline']).toBe('&bassline[::-1]');
+    expect(forms('pumping_bass', bass)['transpose &bassline -1']).toBe('&bassline^-1');
+    expect(forms('pumping_bass', bass)['reverse &bassline']).toBe('&bassline[::-1]');
     // (the root on the downbeat is anchored: the copy moved, the root written as it is)
-    expect(forms('walking bass', bass)['transpose &bassline 2']).toBe('base=&bassline^2 0');
-    expect(forms('walking bass', bass)['invert &bassline']).toBe('inverse(&bassline)');
-    expect(forms('funk bass', bass)['reverse &bassline']).toBe('&bassline[0] &bassline[:0:-1]');
-    expect(forms('funk bass', bass)['bend &bassline 1']).toBe('base=&bassline =!14 &bassNext^1');
-    expect(forms('funk bass', bass)['trim &bassline 14']).toBe('base=&bassline =!14 ~');
+    expect(forms('walking_bass', bass)['transpose &bassline 2']).toBe('base=&bassline^2 0');
+    expect(forms('walking_bass', bass)['invert &bassline']).toBe('inverse(&bassline)');
+    expect(forms('funk_bass', bass)['reverse &bassline']).toBe('&bassline[0] &bassline[:0:-1]');
+    expect(forms('funk_bass', bass)['bend &bassline 1']).toBe('base=&bassline =!14 &bassNext^1');
+    expect(forms('funk_bass', bass)['trim &bassline 14']).toBe('base=&bassline =!14 ~');
   });
 });
 
 describe('recognition reads a reference as its path (#293, decision 055)', () => {
   const library = RHYTHM_FRAGMENTS;
-  const uses = 'use &kick, &clap, &hats, &ticks from "Electro swing drums"';
+  const uses = 'use &kick, &clap, &hats, &ticks from electro_swing_drums';
 
   it('a line that is a reference: the fragment, by that one operator, at distance 0', () => {
     for (const [line, by] of [
@@ -107,7 +107,7 @@ describe('recognition reads a reference as its path (#293, decision 055)', () =>
       ['&late base=&clap &cp:0:.6', 'add &clap 0'],
     ] as const) {
       const found = createRecogniser().recognise(`${uses}\n${line}`, library, DRUM_OPTIONS);
-      expect(found.map((r) => [r.fragment.id, r.path.map((p) => p.by), r.distance])).toEqual([['Electro swing drums', [by], 0]]);
+      expect(found.map((r) => [r.fragment.id, r.path.map((p) => p.by), r.distance])).toEqual([['electro_swing_drums', [by], 0]]);
     }
   });
 
@@ -119,7 +119,7 @@ describe('recognition reads a reference as its path (#293, decision 055)', () =>
 
   it('none where the text takes no such line from it, or writes no reference: then it searches, as before', () => {
     const r = createRecogniser();
-    expect(r.recognise('use &kick from "Electro swing drums"\n&hats2 base=&hats =!3 ~', library, DRUM_OPTIONS)).toEqual([]);
+    expect(r.recognise('use &kick from electro_swing_drums\n&hats2 base=&hats =!3 ~', library, DRUM_OPTIONS)).toEqual([]);
     const plain = `${uses}\n&drumlines [&kick, &clap, &hats, &ticks]`;
     expect(r.recognise(plain, library, DRUM_OPTIONS).filter((x) => x.path.length)).toEqual([]);
   });

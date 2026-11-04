@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { renameCell } from '../engine/edit';
 import { chanceOf } from '../engine/realize';
 import { readFragment, writeFragment } from './files';
-import { createRepository, EMPTY_LAYER, layerProblems, type Fragment, type LearnedLayer, type QueryOptions, type StylePoint } from './fragments';
+import { byId, createRepository, EMPTY_LAYER, layerProblems, type Fragment, type LearnedLayer, type QueryOptions, type StylePoint } from './fragments';
 import { canonicalText, FILING_WEIGHT, fileFragment, sameText, USE_CAP, USE_STEP, usedTogether, useFragments, type Filing } from './learned';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
@@ -45,7 +45,7 @@ const filing = (point: StylePoint, more: Partial<Filing> = {}): Filing => ({
 
 describe('an empty layer', () => {
   const POINTS = drawn(1_000, 'empty');
-  const options: QueryOptions[] = [{}, { facet: 'meter' }, { facet: 'rhythm', chosen: ['4/4'] }, { chosen: ['Funk drums', '4/4 leaning on 16n'] }];
+  const options: QueryOptions[] = [{}, { facet: 'meter' }, { facet: 'rhythm', chosen: ['meter_4_4'] }, { chosen: ['funk_drums', 'meter_4_4_leaning_on_16n'] }];
 
   it('changes no query: over 1,000 points, each query handed it ranks as the seed’s alone', () => {
     expect(POINTS).toHaveLength(1_000);
@@ -64,8 +64,8 @@ describe('an empty layer', () => {
   it('leaves Jambot’s meter query as it is, and so does a layer that learned only rhythms', () => {
     const meters = createRepository(METER_FRAGMENTS);
     const onRhythms = useFragments(library, EMPTY_LAYER, [
-      { id: 'Funk drums', point: FUNK, facet: 'rhythm' },
-      { id: 'son clave 3-2', point: BOSSA_NOVA, facet: 'rhythm' },
+      { id: 'funk_drums', point: FUNK, facet: 'rhythm' },
+      { id: 'son_clave_3_2', point: BOSSA_NOVA, facet: 'rhythm' },
     ]);
     for (const point of [...PRESETS, ...POINTS.slice(0, 200)]) {
       expect(ranked(meters.query(point, 13, {}, { layer: EMPTY_LAYER }))).toEqual(ranked(meters.query(point, 13)));
@@ -81,11 +81,11 @@ describe('the pull', () => {
   const ids = LIBRARY.map((f) => f.id);
   const pick = (tag: string) => ids[Math.floor(chanceOf(tag) * ids.length)]!;
   // (a layer that has learned: every pair of the library used together, 1 to 500 times, drawn; and a jam's points and filings)
-  const together = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => ({ ids: [a, b].sort() as [string, string], count: 1 + Math.floor(chanceOf(`count|${a}|${b}`) * 500) })));
+  const together = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => ({ ids: [a, b].sort(byId) as [string, string], count: 1 + Math.floor(chanceOf(`count|${a}|${b}`) * 500) })));
   let layer: LearnedLayer = fileFragment(library, EMPTY_LAYER, filing(AMBIENT)).layer;
   layer = useFragments(library, layer, [
-    { id: '4/4 swung on 8n', point: LO_FI, facet: 'meter' },
-    { id: 'Lo-fi hip hop drums', point: LO_FI, facet: 'rhythm' },
+    { id: 'meter_4_4_swung_on_8n', point: LO_FI, facet: 'meter' },
+    { id: 'lo_fi_hip_hop_drums', point: LO_FI, facet: 'rhythm' },
   ]);
   layer = { ...layer, together: [...together, ...layer.together.filter((p) => p.ids.includes('composer 2026-10-18T21:04:00Z'))] };
   const facets = [undefined, 'meter', 'rhythm'] as const;
@@ -164,7 +164,7 @@ describe('filing', () => {
     const first = fileFragment(library, EMPTY_LAYER, filing(FUNK));
     const second = fileFragment(library, first.layer, filing(FUNK, { text: '&bar meter("11/8")' }));
     expect(second.id).toBe('composer 2026-10-18T21:04:00Z 2');
-    expect(() => fileFragment(library, EMPTY_LAYER, filing(FUNK, { id: '4/4' }))).toThrow(/the id 4\/4 is taken/);
+    expect(() => fileFragment(library, EMPTY_LAYER, filing(FUNK, { id: 'meter_4_4' }))).toThrow(/the id meter_4_4 is taken/);
     expect(fileFragment(library, EMPTY_LAYER, filing(FUNK, { id: 'nine eighths' })).id).toBe('nine eighths');
   });
 
@@ -178,7 +178,7 @@ describe('filing', () => {
 });
 
 describe('identity, until the hash', () => {
-  const son = LIBRARY.find((f) => f.id === 'son clave 3-2')!;
+  const son = LIBRARY.find((f) => f.id === 'son_clave_3_2')!;
 
   it('a text is the same as another after renaming its own names, with comments and spacing aside', () => {
     // (`&claves` is a hole, no cell of the text's own: a name an instrument gives, which a rename leaves)
@@ -205,8 +205,8 @@ describe('identity, until the hash', () => {
     const point = { sync: 0.2, harm: 0.2, artic: 0.9, energy: 0.2 };
     const text = renameCell(son.text, 'clave', 'cl');
     const { layer, id, file, renamed } = fileFragment(library, EMPTY_LAYER, { text, point, facet: 'rhythm', source: 'muse', created: '2026-10-18T22:00:00Z' });
-    expect([id, file, [...renamed]]).toEqual(['son clave 3-2', null, [['&cl', '&clave']]]);
-    expect(layer).toEqual({ filed: [], points: [{ id: 'son clave 3-2', point: son.association[0]!.point, weight: 1.1, facet: 'rhythm' }], together: [] });
+    expect([id, file, [...renamed]]).toEqual(['son_clave_3_2', null, [['&cl', '&clave']]]);
+    expect(layer).toEqual({ filed: [], points: [{ id: 'son_clave_3_2', point: son.association[0]!.point, weight: 1.1, facet: 'rhythm' }], together: [] });
   });
 
   it('and so does a text the layer filed itself', () => {
@@ -275,16 +275,16 @@ describe('cells stateless', () => {
     let layer = fileFragment(library, EMPTY_LAYER, filing(AMBIENT)).layer;
     layer = fileFragment(library, layer, { text: '&perc step=16n euclid(5,16)', point: FUNK, facet: 'rhythm', source: 'muse', created: 't1' }).layer;
     layer = useFragments(library, layer, [
-      { id: '4/4 swung on 8n', point: LO_FI, facet: 'meter' },
-      { id: 'Lo-fi hip hop drums', point: LO_FI, facet: 'rhythm' },
+      { id: 'meter_4_4_swung_on_8n', point: LO_FI, facet: 'meter' },
+      { id: 'lo_fi_hip_hop_drums', point: LO_FI, facet: 'rhythm' },
     ]);
     return useFragments(library, layer, [
-      { id: '3/4', point: SWING_JAZZ, facet: 'meter' },
+      { id: 'meter_3_4', point: SWING_JAZZ, facet: 'meter' },
       { id: 'muse t1', point: { ...FUNK, sync: 0.9 }, facet: 'rhythm' },
     ]);
   };
   const ask = (repository: typeof library, layer: LearnedLayer) =>
-    POINTS.map((point, i) => ranked(repository.query(point, 5, {}, { facet: i % 2 ? 'rhythm' : 'meter', chosen: ['4/4 swung on 8n'], layer })));
+    POINTS.map((point, i) => ranked(repository.query(point, 5, {}, { facet: i % 2 ? 'rhythm' : 'meter', chosen: ['meter_4_4_swung_on_8n'], layer })));
 
   it('two repositories built from the same seed and handed the same layer answer alike', () => {
     expect(ask(createRepository(LIBRARY), learned())).toEqual(ask(createRepository(LIBRARY), learned()));
@@ -294,7 +294,7 @@ describe('cells stateless', () => {
     const repository = createRepository(LIBRARY);
     const before = ask(repository, learned());
     ask(repository, EMPTY_LAYER);
-    ask(repository, useFragments(repository, learned(), [{ id: '4/4', point: AMBIENT, facet: 'meter' }]));
+    ask(repository, useFragments(repository, learned(), [{ id: 'meter_4_4', point: AMBIENT, facet: 'meter' }]));
     expect(ask(repository, learned())).toEqual(before);
     expect(ask(repository, EMPTY_LAYER)).toEqual(ask(createRepository(LIBRARY), EMPTY_LAYER));
   });
@@ -306,7 +306,7 @@ describe('cells stateless', () => {
     fileFragment(library, layer, filing(TECHNO, { text: '&bar meter("3/4")' }));
     useFragments(library, layer, [
       { id: 'composer 2026-10-18T21:04:00Z', point: AMBIENT, facet: 'meter' },
-      { id: 'Techno drums', point: TECHNO, facet: 'rhythm' },
+      { id: 'techno_drums', point: TECHNO, facet: 'rhythm' },
     ]);
     expect(JSON.stringify(layer)).toBe(copy);
   });
@@ -324,7 +324,7 @@ describe('a malformed layer', () => {
     ['a filed fragment with no text', { ...EMPTY_LAYER, filed: [{ ...file, fragment: { ...file.fragment, text: '' } }] }, /filed 1: .*no text/],
     ['an id filed twice', { ...EMPTY_LAYER, filed: [file, file] }, /filed twice/],
     ['a point with no id', { ...EMPTY_LAYER, points: [{ point: { x: 0 }, weight: 1 }] }, /learned point 1: no id/],
-    ['a point of weight 0', { ...EMPTY_LAYER, points: [{ id: '4/4', point: { x: 0 }, weight: 0 }] }, /learned point 1: weight 0/],
+    ['a point of weight 0', { ...EMPTY_LAYER, points: [{ id: 'meter_4_4', point: { x: 0 }, weight: 0 }] }, /learned point 1: weight 0/],
     ['a pair out of order', { ...EMPTY_LAYER, together: [{ ids: ['b', 'a'], count: 1 }] }, /not two, in order/],
     ['a pair of one', { ...EMPTY_LAYER, together: [{ ids: ['a', 'a'], count: 1 }] }, /not two, in order/],
     ['a count that is no whole number', { ...EMPTY_LAYER, together: [{ ids: ['a', 'b'], count: 1.5 }] }, /count 1.5/],
@@ -346,14 +346,14 @@ describe('a malformed layer', () => {
   });
 
   it('one that files a seed fragment’s id', () => {
-    const layer = { ...EMPTY_LAYER, filed: [{ ...file, fragment: { ...file.fragment, id: '4/4' } }] };
+    const layer = { ...EMPTY_LAYER, filed: [{ ...file, fragment: { ...file.fragment, id: 'meter_4_4' } }] };
     expect(layerProblems(layer)).toEqual([]);
-    expect(() => library.merge(layer)).toThrow(/files 4\/4, a seed fragment's id/);
+    expect(() => library.merge(layer)).toThrow(/files meter_4_4, a seed fragment's id/);
   });
 
   it('a point or a pair naming a fragment nobody holds is left out, and named', () => {
-    const layer: LearnedLayer = { ...EMPTY_LAYER, points: [{ id: 'gone', point: FUNK, weight: 1 }], together: [{ ids: ['4/4', 'gone'], count: 3 }] };
+    const layer: LearnedLayer = { ...EMPTY_LAYER, points: [{ id: 'gone', point: FUNK, weight: 1 }], together: [{ ids: ['meter_4_4', 'gone'], count: 3 }] };
     expect(library.merge(layer).unheld).toEqual(['gone']);
-    expect(ranked(library.query(FUNK, 26, {}, { chosen: ['4/4'], layer }))).toEqual(ranked(library.query(FUNK, 26, {}, { chosen: ['4/4'] })));
+    expect(ranked(library.query(FUNK, 26, {}, { chosen: ['meter_4_4'], layer }))).toEqual(ranked(library.query(FUNK, 26, {}, { chosen: ['meter_4_4'] })));
   });
 });

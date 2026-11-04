@@ -99,3 +99,10 @@ export declare function useFragments(repository: Repository, layer: LearnedLayer
  * point, a taken id, metadata that names what the file writes itself).
  */
 export declare function fileFragment(repository: Repository, layer: LearnedLayer, filing: Filing): Filed;
+/**
+ * A layer kept before the seed's ids became words (#387), its seed ids written as words (`RENAMED_IDS`): its points and
+ * its pairs, each pair in the order it had (`byId` breaks ties by the old id). A layer that names none is returned as it
+ * is. A frontend reads a kept layer through it, so a band keeps what it learned across the rename; the old ids, which a
+ * repository no longer holds, would otherwise be left out with a problem.
+ */
+export declare function renamedLayer(layer: LearnedLayer): LearnedLayer;

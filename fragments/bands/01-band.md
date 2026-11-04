@@ -13,11 +13,11 @@ source: seed
 
 ```cells
 &band &drums &bass &pad &stab &lead
-&drums, &drumsOut from "drums performer" &drumlines
-&bass, &bassOut from "bass performer"(bassLevel=&bassLevel) &bassline
-&pad, &padOut from "pad performer"(padLevel=&padLevel) &padline
-&stab, &stabOut from "stab performer"(stabLevel=&stabLevel) &stabline
-&lead, &leadOut from "lead performer"(leadLevel=&leadLevel) &leadline
+&drums, &drumsOut from drums_performer &drumlines
+&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline
+&pad, &padOut from pad_performer(padLevel=&padLevel) &padline
+&stab, &stabOut from stab_performer(stabLevel=&stabLevel) &stabline
+&lead, &leadOut from lead_performer(leadLevel=&leadLevel) &leadline
 &bassLevel map=amp .8
 &padLevel map=amp .8
 &stabLevel map=amp .8
@@ -30,7 +30,7 @@ The default band (decision 063 §1, #391): who plays a score, on what, and where
 
 **Its head, `&band`,** is decision 061's table of performers: the five role cells, `&drums`, `&bass`, `&pad`, `&stab` and `&lead`, so a score's selector over the band (`&form over=&band step=1m …`) reads the client's players. Who plays when is the score's; who they are, the band's.
 
-**The performers** are the seed library's five (decisions 058 and 061), each a copy taken by its signature (decision 065): its role and its gate, `&bass, &bassOut from "bass performer"(bassLevel=&bassLevel) &bassline`. The part each plays is the score's, by its interface name (`&drumlines`, `&bassline`, `&padline`, `&stabline`, `&leadline`), and so are its levels (`&bassLevel` …). A level the score doesn't write is the band's own, one level of .8, the performers' default; the score's line wins over it, as a piece's line wins over what it takes (decision 054 §2). A part the score doesn't write rests, and cells says so (decision 063 §4); a conductor that rests a role writes it as a tacet (`&padline step=1m ~`), and nothing is said.
+**The performers** are the seed library's five (decisions 058 and 061), each a copy taken by its signature (decision 065): its role and its gate, `&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline`. The part each plays is the score's, by its interface name (`&drumlines`, `&bassline`, `&padline`, `&stabline`, `&leadline`), and so are its levels (`&bassLevel` …). A level the score doesn't write is the band's own, one level of .8, the performers' default; the score's line wins over it, as a piece's line wins over what it takes (decision 054 §2). A part the score doesn't write rests, and cells says so (decision 063 §4); a conductor that rests a role writes it as a tacet (`&padline step=1m ~`), and nothing is said.
 
 **The instruments** are the performers' own (`bass`, `keys`, `pad`, `lead`, and 13 of `gm_kit`'s voices), each with a sound. They read the score's style, `&style` (decision 063 §3), where Jambot's `timbreOf` reads it (yggi/jambot `packages/engine/src/sound.ts` @ 227aa74): the bass's cutoff opens with articulation; the lead blends from a triangle to a square as articulation rises, its cutoff opening with energy; the chords' attack and release shorten as articulation rises (decision 066, #411). The band defines no `&style`: the section's style is the composer's, and the score writes it.
 

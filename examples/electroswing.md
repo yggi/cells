@@ -5,28 +5,28 @@ description: "A house kick under a walking bass, Charleston stabs, and a clarine
 ---
 
 Electro swing is a jazz record cut up over a house beat: four on the floor, the eighths swung, a walking bass, brass stabs on the Charleston and a clarinet in a minor key.
-Here the band comes from the seed library, taken by name, and so does the tune: the drummer and its kit, the key, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, the bass, stab and lead players, and the beat and the stabs this piece gave the library (`Electro swing drums`, `Charleston stabs`); the tune is the motif `gypsy`, its call, shaped by two forms, `call and answer` and `AABA`.
+Here the band comes from the seed library, taken by name, and so does the tune: the drummer and its kit, the key, an eight-bar vamp, the walking bass Jambot plays at Swing jazz, the bass, stab and lead players, and the beat and the stabs this piece gave the library (`electro_swing_drums`, `charleston_stabs`); the tune is the motif `gypsy`, its call, shaped by two forms, `call_and_answer` and `AABA`.
 The piece writes only what is its own: the tempo and the swing, the key's tonic, the break, who plays when, and the sound of each instrument.
 
 ```cells
-&drums, &drumsOut from "drums performer" &drumlines
-&key from "harmonic minor" D
-&harm from "vamp to the fifth" &key
-&bassline from "walking bass" &harm
-&kick, &clap, &hats, &ticks from "Electro swing drums"
-&stabline from "Charleston stabs" &harm
-&bass, &bassOut from "bass performer"(bassLevel=&bassLevel) &bassline
-&stab, &stabOut from "stab performer"(stabLevel=&stabLevel) &stabline
-&leadOut from "lead performer"(leadLevel=&leadLevel) &leadline
+&drums, &drumsOut from drums_performer &drumlines
+&key from harmonic_minor D
+&harm from vamp_to_the_fifth &key
+&bassline from walking_bass &harm
+&kick, &clap, &hats, &ticks from electro_swing_drums
+&stabline from charleston_stabs &harm
+&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline
+&stab, &stabOut from stab_performer(stabLevel=&stabLevel) &stabline
+&leadOut from lead_performer(leadLevel=&leadLevel) &leadline
 &useNote label="The band is the library's: each line names what it takes from it. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
 ```
 
-The meter is the library's too, `4/4 swung on 8n`, Jambot's Swing jazz meter, which leaves its tempo to the piece (`&tempo`) and swings its eighths by a cell of its own, `&swing`, triplets (2/3).
+The meter is the library's too, `meter_4_4_swung_on_8n`, Jambot's Swing jazz meter, which leaves its tempo to the piece (`&tempo`) and swings its eighths by a cell of its own, `&swing`, triplets (2/3).
 The piece gives its own, an argument of the meter's (`swing=&swing`): the eighths a little less than triplets, .64. The tempo and the swing are both sliders.
-The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from "harmonic minor" D`, decision 065): the vamp's fifth is then A major, four bars of D minor, four of A.
+The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from harmonic_minor D`, decision 065): the vamp's fifth is then A major, four bars of D minor, four of A.
 
 ```cells
-&bar from "4/4 swung on 8n"(swing=&swing) &tempo
+&bar from meter_4_4_swung_on_8n(swing=&swing) &tempo
 &tempo step=free(124bpm, 112..132)
 &swing swing=8n:free(.64, .5..0.75)
 &swingNote label="Every line taps the meter (step=4n, 8n, 16n), so every line swings: the open hats on the off-beats, the stabs, the clarinet." about=&bar
@@ -34,7 +34,7 @@ The key is harmonic minor, from the library, on the tonic its line gives it, D (
 
 ## The beat
 
-`Electro swing drums`, used above: a kick on every beat, the clap on two and four, the open hat on every swung off-beat; a sixteenth hat with some strokes left to chance and a ghost of the snare on the last.
+`electro_swing_drums`, used above: a kick on every beat, the clap on two and four, the open hat on every swung off-beat; a sixteenth hat with some strokes left to chance and a ghost of the snare on the last.
 The piece takes its four limbs by name and hands them to the drummer as a stack, `&drumlines`, each times its level in the form below; the fragment's own `&groove` mix it leaves.
 The crackle is the piece's own, a record's: a tick of noise on a few sixteenths, by chance.
 
@@ -46,7 +46,7 @@ The crackle is the piece's own, a record's: a tick of noise on a few sixteenths,
 
 ## The stabs
 
-`Charleston stabs`, used above, is the stab player's part: the Charleston, a chord on one and on the and of two, three bars, and a fourth that pushes: its last stab, on the and of four, comes early with the next chord, its third and fifth with its root on top.
+`charleston_stabs`, used above, is the stab player's part: the Charleston, a chord on one and on the and of two, three bars, and a fourth that pushes: its last stab, on the and of four, comes early with the next chord, its third and fifth with its root on top.
 The stab player reads the chords in force, `over=&harm`, so the same rhythm is D minor in one half of the vamp and A major in the other.
 
 ```cells
@@ -57,14 +57,14 @@ The stab player reads the chords in force, `over=&harm`, so the same rhythm is D
 
 The tune is one bar from the library, the motif `gypsy`: A B♭ C♯ D and back to A, the clarinet's call.
 Two forms from the library make a chorus of it.
-- **`call and answer`** makes the A: the call, then its answer, the call two degrees down (`&call^-2`), F G A B♭ and back to F.
+- **`call_and_answer`** makes the A: the call, then its answer, the call two degrees down (`&call^-2`), F G A B♭ and back to F.
 - **`AABA`** makes the chorus of four As, the bridge before the last. Its bridge, by default A a fourth up, is named in its use and moved to where the harmony goes: three degrees down (`&a^-3`), over the vamp's A chord, E F G A, A's phrygian dominant.
 
 The break cuts the motif into pieces with picks: its first three notes (`&gypsy[0:3]`) and rests, its tail moved, its first two as a stutter (`&gypsy[0:2]!4`), its top note hammered (`&gypsy[3]!4`).
 
 ```cells
 &gypsy from gypsy &key
-&phrase from "call and answer" &call
+&phrase from call_and_answer &call
 &chorus from AABA(b=&b) &a
 &call step=8n &gypsy
 &a step=8n &phrase

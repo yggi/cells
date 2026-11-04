@@ -58,7 +58,7 @@ const SCALE: Record<Mode, readonly number[]> = {
 };
 
 const byId = (id: string) => MODE_FRAGMENTS.find((f) => f.id === id)!;
-const bell = byId('bell and scale');
+const bell = byId('bell_and_scale');
 const MODES = MODE_FRAGMENTS.filter((f) => f !== bell);
 /** A workbench: a meter at 60 bpm, and the tonic the modes read (#290), C unless it says. */
 const meter = (m = '4/4', tonic = 'C') => `${setTiming(`&bar meter("${m}")`, 'bar', 'step', '60bpm')}\n&tonic ${tonic}`;
@@ -78,18 +78,18 @@ function sent(text: string, channel: number, seconds: number): { at: number; not
 
 describe('the mode fragments', () => {
   it('are the four modes of Jambot’s composer, the bell and scale, harmonic minor, the electroswing example’s, then the other three of the seven (yggi/jambot#516)', () => {
-    expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell and scale', 'harmonic minor', 'phrygian', 'lydian', 'locrian']);
+    expect(MODE_FRAGMENTS.map((f) => f.id)).toEqual(['aeolian', 'dorian', 'ionian', 'mixolydian', 'bell_and_scale', 'harmonic_minor', 'phrygian', 'lydian', 'locrian']);
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s defines key and uses its tonic and nothing else but a sound, so it fits any meter', (id, text) => {
     const holes = holesOf(text, compileSource);
-    expect(holes.uses).toEqual(id === 'bell and scale' ? ['&highagogo', '&tonic'] : ['&tonic']);
+    expect(holes.uses).toEqual(id === 'bell_and_scale' ? ['&highagogo', '&tonic'] : ['&tonic']);
     expect(holes.defines).toContain('&key');
     for (const m of ['4/4', '6/8', '12/8', '7/8']) expect(fitOf(text, meter(m)).fits, m).toBe(true);
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s is the main key, and plays its mode up from C with no diagnostic', (id, text) => {
-    const mode = (id === 'bell and scale' ? 'ionian' : id === 'harmonic minor' ? 'harmonic' : id) as Mode;
+    const mode = (id === 'bell_and_scale' ? 'ionian' : id === 'harmonic_minor' ? 'harmonic' : id) as Mode;
     const piece = `${filled(fitOf(text, meter()).union.text)}\n${PROBE}`;
     expect(compileSource(piece).diagnostics.map((d) => d.message)).toEqual([]);
     expect(sent(piece, 3, 8).map((n) => n.note - 60)).toEqual([...SCALE[mode], 12]);
@@ -119,7 +119,7 @@ describe('the presets find their modes', () => {
     const OWN: Record<string, StylePoint> = { phrygian: at(0.6, 0.6, 0.7, 0.85), lydian: at(0.15, 0.6, 0.15, 0.3), locrian: at(0.9, 1, 0.6, 0.9) };
     for (const f of MODES) {
       const points =
-        f.id === 'harmonic minor'
+        f.id === 'harmonic_minor'
           ? [PROPOSED, SPOOKY]
           : OWN[f.id]
             ? [OWN[f.id]!]
@@ -137,8 +137,8 @@ describe('the presets find their modes', () => {
     for (const { point } of PRESETS) {
       for (const facet of ['meter', 'bass', 'harmony', 'instrument']) expect(ranked(repository, point, facet)).toEqual(ranked(without, point, facet));
       const rhythms = ranked(repository, point, 'rhythm');
-      expect(rhythms.filter(([id]) => id !== 'bell and scale')).toEqual(ranked(without, point, 'rhythm'));
-      expect(rhythms[0]![0]).not.toBe('bell and scale');
+      expect(rhythms.filter(([id]) => id !== 'bell_and_scale')).toEqual(ranked(without, point, 'rhythm'));
+      expect(rhythms[0]![0]).not.toBe('bell_and_scale');
     }
   });
 });
@@ -181,7 +181,7 @@ describe('the bell and scale', () => {
     expect(bell.association[1]!.point).not.toEqual(centroid);
     const repository = createRepository(LIBRARY);
     for (const wp of bell.association) {
-      expect(repository.query(wp.point, 1, {}, { facet: wp.facet })[0]!.fragment.id).toBe('bell and scale');
+      expect(repository.query(wp.point, 1, {}, { facet: wp.facet })[0]!.fragment.id).toBe('bell_and_scale');
       for (const { point } of PRESETS) expect(wp.point).not.toEqual(point);
     }
   });

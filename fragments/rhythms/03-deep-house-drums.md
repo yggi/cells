@@ -1,5 +1,5 @@
 ---
-id: Deep house drums
+id: deep_house_drums
 association:
   - point:
       sync: 0.35

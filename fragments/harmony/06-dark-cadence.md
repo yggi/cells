@@ -1,5 +1,5 @@
 ---
-id: dark cadence
+id: dark_cadence
 association:
   - point:
       sync: 0.2
@@ -22,4 +22,4 @@ It defines `&harm` and uses the host's `&key` and main meter, so it fits any wor
 Its lap is four bars, not the vamps' eight: Jambot's composer reads only progressions of eight (yggi/jambot `packages/engine/src/harmony-query.ts`), so it doesn't take this one yet, and where no harmony is near one of its presets (Synth-pop, Deep house, Lo-fi hip hop, Bossa nova, Swing jazz) it generates its harmony as before: this is the nearest there, but beyond the miss distance.
 Written by hand for the point proposed for a Spooky preset (sync .2, harm .9, artic .3, energy .35; #349), Jambot's to adopt (decision 041), at weight 0.4: at weight 1 it was the nearest harmony to five other presets, all within Jambot's miss distance (0.3), so a composer that read four-bar laps would play it there (#404); at 0.4 every other preset is beyond it.
 
-**Its signature** (decision 065): `&harm from &key`. `&harm from "dark cadence" &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &harm from "dark cadence"`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&harm from &key`. `&harm from dark_cadence &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &harm from dark_cadence`, it reads `&key` by name, as before.

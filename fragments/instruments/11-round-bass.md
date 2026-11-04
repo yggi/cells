@@ -1,5 +1,5 @@
 ---
-id: round bass
+id: round_bass
 association:
   - point:
       sync: 0.2

@@ -171,7 +171,7 @@ describe('a named use (decision 059)', () => {
   });
 
   it('takes the named cells and the lines they read within the fragment, its helpers', () => {
-    const text = `use &bassline from "funk bass"\nuse * from bass\n${BENCH}`;
+    const text = `use &bassline from funk_bass\nuse * from bass\n${BENCH}`;
     const { uses, said } = read(text);
     expect(said.filter(([s]) => s === 'error')).toEqual([]);
     expect(uses?.[0]).toMatchObject({ names: ['&bassline'], gave: ['&bassline', '&bassNext'], overrode: [] });
@@ -198,7 +198,7 @@ describe('a named use (decision 059)', () => {
   });
 
   it('a name the fragment doesn’t define is an error, naming those it does', () => {
-    expect(read(`use &bass from "funk bass"\n${BENCH}`).said).toEqual([['error', '&bass is not in "funk bass": it defines &bassline, &bassNext', 1]]);
+    expect(read(`use &bass from funk_bass\n${BENCH}`).said).toEqual([['error', '&bass is not in "funk_bass": it defines &bassline, &bassNext', 1]]);
     expect(read('use &bass\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&bass is not in "bass": it defines &bassV', 1]]);
   });
 
@@ -222,19 +222,19 @@ describe('a named use (decision 059)', () => {
   });
 
   it('a helper the piece also defines is an error (the owner’s ruling 1); naming it makes it the piece’s', () => {
-    const helper = `use &bassline from "funk bass"\nuse * from bass\n${BENCH}\n&bassNext over=&harm 2`;
+    const helper = `use &bassline from funk_bass\nuse * from bass\n${BENCH}\n&bassNext over=&harm 2`;
     expect(read(helper).said.filter(([s]) => s === 'error')).toEqual([
-      ['error', "&bassNext is \"funk bass\"'s, read by its &bassline, and the piece's too: rename the piece's, or name &bassNext in the use to override it", 1],
+      ['error', "&bassNext is \"funk_bass\"'s, read by its &bassline, and the piece's too: rename the piece's, or name &bassNext in the use to override it", 1],
     ]);
     const named = read(helper.replace('use &bassline from', 'use &bassline, &bassNext from'));
     // (an override a taken line reads is what the use does, so it says nothing: an instrument's voice given a sound)
     expect(named.said).toEqual([]);
     expect(named.uses?.[0]).toMatchObject({ gave: ['&bassline'], overrode: ['&bassNext'] });
-    expect(read(`use &bass, &bassV from "bass performer"\n${BENCH}\n&bassline over=&harm step=4n 0\n&bassLevel map=amp .8\n&bassV s=tri loop=C2`).said).toEqual([]);
+    expect(read(`use &bass, &bassV from bass_performer\n${BENCH}\n&bassline over=&harm step=4n 0\n&bassLevel map=amp .8\n&bassV s=tri loop=C2`).said).toEqual([]);
     // (one no taken line reads still adds nothing, and says so)
     expect(read(`${helper.replace('use &bassline from', 'use &bassline, &bassNext from')}\n&bassline over=&harm 0`).said).toEqual([
-      ['warning', 'The piece defines &bassline, so taking it from "funk bass" adds nothing', 1],
-      ['warning', 'The piece defines &bassNext, so taking it from "funk bass" adds nothing', 1],
+      ['warning', 'The piece defines &bassline, so taking it from "funk_bass" adds nothing', 1],
+      ['warning', 'The piece defines &bassNext, so taking it from "funk_bass" adds nothing', 1],
     ]);
     // (a helper two named cells read is said once)
     const twice = library({ f: '&a [&h * 1]\n&b [&h * 2]\n&h s=sine' });
@@ -248,21 +248,23 @@ describe('a named use (decision 059)', () => {
 
   it('a use that adds nothing says so: twice on the issue’s section, on no seed fragment', () => {
     const section = [
-      'use * from "4/4 leaning on 16n"',
+      'use * from meter_4_4_leaning_on_16n',
       'use * from dorian',
-      'use * from "vamp to the seventh"',
-      'use * from "Funk drums"',
+      'use * from vamp_to_the_seventh',
+      'use * from funk_drums',
       'use * from gm_kit',
-      'use * from "funk bass"',
+      'use * from funk_bass',
       'use * from bass',
       '&bar meter("4/4") step=104bpm swing=16n:.6',
       '&key scale(dorian, D)',
     ].join('\n');
     expect(read(section).said).toEqual([
-      ['warning', 'The piece defines all "4/4 leaning on 16n" gives (&bar): this use adds nothing', 1],
+      ['warning', 'The piece defines all "meter_4_4_leaning_on_16n" gives (&bar): this use adds nothing', 1],
       ['warning', 'The piece defines all "dorian" gives (&key): this use adds nothing', 2],
     ]);
-    expect(read(`use &bar from "4/4 leaning on 16n"\n${BENCH}`).said).toEqual([['warning', 'The piece defines &bar, so taking it from "4/4 leaning on 16n" adds nothing', 1]]);
+    expect(read(`use &bar from meter_4_4_leaning_on_16n\n${BENCH}`).said).toEqual([
+      ['warning', 'The piece defines &bar, so taking it from "meter_4_4_leaning_on_16n" adds nothing', 1],
+    ]);
     for (const f of LIBRARY)
       expect(
         compileSource(f.text, undefined, seed).diagnostics.filter((d) => /adds nothing|old way/.test(d.message)),
@@ -375,7 +377,7 @@ describe('the lockfile', () => {
   it('an entry no use names is dropped on the next save, and the key with the last one', () => {
     const two = file([
       { id: 'gm_kit', hash: 'e1:1' },
-      { id: 'harmonic minor', hash: 'e1:2' },
+      { id: 'harmonic_minor', hash: 'e1:2' },
     ]);
     expect(lockfileOf(readPiece(writePiece(two)) as PieceFile)).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
     expect(writePiece({ ...two, text: '&a s=sine' })).not.toContain('uses');
@@ -410,10 +412,10 @@ describe('the lockfile', () => {
 describe('the tools keep use', () => {
   it('Normalise writes the use line as its from line (decision 065), in its order, never expanded', () => {
     const text =
-      'use * from gm_kit\nuse &key from "harmonic minor"\n&tonic D\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
+      'use * from gm_kit\nuse &key from harmonic_minor\n&tonic D\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
     const out = normalise(text, seed).source;
     // (a collection's use its from line; a template's, its tonic, which only it read, written in)
-    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('use * from gm_kit\nuse &key from "harmonic minor"\n&tonic D', '* from gm_kit\n&key from "harmonic minor" D'));
+    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('use * from gm_kit\nuse &key from harmonic_minor\n&tonic D', '* from gm_kit\n&key from harmonic_minor D'));
     // (the old spellings, use "id" and use &x, are written * from "id" and &x from x; an id that is a word, bare)
     const old = 'use "gm_kit"  # the kit\nuse &pulse from "pulse"\nuse &kick,&snare from kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &kick ~ &snare ~';
     const resolve = (id: string) => (id === 'kit' ? '&kick s=sine\n&snare s=white' : id === 'pulse' ? '&pulse s=sine loop=A4' : resolveSeed(id));
@@ -441,7 +443,7 @@ describe('the fit (decision 047) with use', () => {
   });
 
   it('a hole read only as a sound doesn’t block the fit: it is the instrument to ask for next', () => {
-    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'Funk drums')!.text;
+    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
     const bare = funk
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))
@@ -457,14 +459,14 @@ describe('the fit (decision 047) with use', () => {
   it('a used fragment’s holes are judged over the expansion: its clock needs and its sounds the piece’s', () => {
     const bench = (meter: string) => setTiming(`&bar meter("${meter}")`, 'bar', 'step', '120bpm');
     // (a two-bar clave doesn't fit 7/8, used or written out)
-    const clave = RHYTHM_FRAGMENTS.find((f) => f.id === 'son clave 3-2')!.text;
+    const clave = RHYTHM_FRAGMENTS.find((f) => f.id === 'son_clave_3_2')!.text;
     expect(fitOf(clave, bench('7/8')).fits).toBe(false);
-    const used = fitOf('use * from "son clave 3-2"', bench('7/8'), undefined, resolveSeed);
+    const used = fitOf('use * from son_clave_3_2', bench('7/8'), undefined, resolveSeed);
     expect([used.fits, used.unmet.map((n) => n.cell)]).toEqual([false, ['&clave']]);
-    expect(fitOf('use * from "son clave 3-2"', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
-    expect(holesOf('use * from "son clave 3-2"', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
+    expect(fitOf('use * from son_clave_3_2', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
+    expect(holesOf('use * from son_clave_3_2', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
     // (a used groove without its stand-ins: its voices are sounds, as written out)
-    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'Funk drums')!.text;
+    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
     const bare = funk
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))

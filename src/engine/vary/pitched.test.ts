@@ -36,23 +36,23 @@ const OPTIONS = (name: string) => ({ workbench: `${HOST}\n${PROGRESSIONS[name]!.
 /** Each seed's variations, as `by` names them, on either workbench: 24 of the first three's 30, the rest playing their source's notes; then the bends and the trim. */
 const ENDS = (last: number) => ['bend &bassline -2', 'bend &bassline -1', 'bend &bassline 1', 'bend &bassline 2', `trim &bassline ${last}`];
 const EXPECTED: Record<string, readonly string[]> = {
-  'root bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2'],
-  'pumping bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'reverse &bassline', ...ENDS(7)],
-  'eighths bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', ...ENDS(7)],
-  'funk bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'reverse &bassline', ...ENDS(14)],
-  'walking bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'invert &bassline', 'reverse &bassline', ...ENDS(3)],
-  'creeping bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2'],
-  'tiptoe bass': ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'bend &bassline 2'],
+  root_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2'],
+  pumping_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'reverse &bassline', ...ENDS(7)],
+  eighths_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', ...ENDS(7)],
+  funk_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'reverse &bassline', ...ENDS(14)],
+  walking_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'invert &bassline', 'reverse &bassline', ...ENDS(3)],
+  creeping_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2'],
+  tiptoe_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'bend &bassline 2'],
 };
 /** Each seed's line: its tap and its lap in steps, and its anchored steps (the root on the downbeat, where each chord changes). */
 const LINE: Record<string, { tap: string; steps: number; anchored: readonly number[] }> = {
-  'root bass': { tap: '2n', steps: 2, anchored: [0] },
-  'pumping bass': { tap: '8n', steps: 8, anchored: [] },
-  'eighths bass': { tap: '8n', steps: 8, anchored: [0] },
-  'funk bass': { tap: '16n', steps: 16, anchored: [0] },
-  'walking bass': { tap: '4n', steps: 4, anchored: [0] },
-  'creeping bass': { tap: '4n', steps: 4, anchored: [0] },
-  'tiptoe bass': { tap: '4n', steps: 4, anchored: [0] },
+  root_bass: { tap: '2n', steps: 2, anchored: [0] },
+  pumping_bass: { tap: '8n', steps: 8, anchored: [] },
+  eighths_bass: { tap: '8n', steps: 8, anchored: [0] },
+  funk_bass: { tap: '16n', steps: 16, anchored: [0] },
+  walking_bass: { tap: '4n', steps: 4, anchored: [0] },
+  creeping_bass: { tap: '4n', steps: 4, anchored: [0] },
+  tiptoe_bass: { tap: '4n', steps: 4, anchored: [0] },
 };
 
 /** What a text sends on channel 2 over `bars` bars of 4/4 at 120 bpm: each note's sixteenth from the start, and its MIDI note. */
@@ -186,22 +186,22 @@ describe('the pitched operators', () => {
     // the grid, a semitone, by a reference (`&creep^$1`), which neither operator reads into; the tiptoe's, whose inversion (`0 ~ 1 ~`) is its transposition by 2 and whose
     // notes after its anchored root are one, alone in their span
     expect(SEEDS.flatMap(({ id }) => ['invert &bassline', 'reverse &bassline'].filter((by) => !EXPECTED[id]!.includes(by)).map((by) => `${id}: ${by}`))).toEqual([
-      'root bass: invert &bassline',
-      'root bass: reverse &bassline',
-      'pumping bass: invert &bassline',
-      'eighths bass: invert &bassline',
-      'eighths bass: reverse &bassline',
-      'funk bass: invert &bassline',
-      'creeping bass: invert &bassline',
-      'creeping bass: reverse &bassline',
-      'tiptoe bass: invert &bassline',
-      'tiptoe bass: reverse &bassline',
+      'root_bass: invert &bassline',
+      'root_bass: reverse &bassline',
+      'pumping_bass: invert &bassline',
+      'eighths_bass: invert &bassline',
+      'eighths_bass: reverse &bassline',
+      'funk_bass: invert &bassline',
+      'creeping_bass: invert &bassline',
+      'creeping_bass: reverse &bassline',
+      'tiptoe_bass: invert &bassline',
+      'tiptoe_bass: reverse &bassline',
     ]);
   });
 
   it('a chord change on the half bar anchors the root there too: the root bass, both its notes anchored, has no variation', () => {
     const halves = { workbench: `${HOST}\n&harm over=&key step=2n [0,2,4] [3,5,7]`, operators: PITCHED_OPERATORS };
-    const root = SEEDS.find((s) => s.id === 'root bass')!.fragment;
+    const root = SEEDS.find((s) => s.id === 'root_bass')!.fragment;
     expect(anchorsOf(root, halves.workbench).map((a) => a.step)).toEqual([0, 1]);
     expect(variations(root, halves)).toEqual([]);
   });
@@ -321,12 +321,12 @@ describe('the pitched operators', () => {
   });
 
   it('transpose by the degrees a frontend names, in its order', () => {
-    const walk = SEEDS.find((s) => s.id === 'walking bass')!.fragment;
+    const walk = SEEDS.find((s) => s.id === 'walking_bass')!.fragment;
     expect(variations(walk, { ...options, operators: ['transpose'], degrees: [2] }).map((v) => v.after)).toEqual(['&bassline over=&harm step=4n 0 3 4 degree(&bassNext^$-1, 2)']);
   });
 
   it('a draw picks among them as among the rhythm ones', () => {
-    const walk = SEEDS.find((s) => s.id === 'walking bass')!.fragment;
+    const walk = SEEDS.find((s) => s.id === 'walking_bass')!.fragment;
     expect(varied(walk, 0, options)!.by).toBe('transpose &bassline -2');
     expect(varied(walk, 0.999, options)!.by).toBe('trim &bassline 3');
   });
