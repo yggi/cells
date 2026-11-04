@@ -54,8 +54,8 @@ The VCF and the echo are written twice, once on each oscillator, since a filter 
 &sub s=square loop=C1 pitch=&drift lpf=70..4800 * &contour * &accent * &sweep lpq=4..16 * &jitter delay=.3 delaytime=&bar*3/16 delayfeedback=.45
 &mono [&amp * &saw, &amp * &sub * .5]
 
-&kick oneshot s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump gain=.8
-&hat oneshot s=white hpf=7500 env=&click gain=.25
+&kick oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump gain=.8
+&hat oneshot=1 s=white hpf=7500 env=&click gain=.25
 &beat step=16n &kick &hat &hat &hat [&kick,&hat] &hat &hat &hat:0:.5
 
 &out map=sample [(&seq + &changes) * &accent * &mono * .35, &beat]
