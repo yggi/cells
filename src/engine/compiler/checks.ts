@@ -135,6 +135,10 @@ export function checkCells(
   }
   for (const d of decls.values())
     if (d.stride !== null && d.step?.kind !== 'driven' && d.step?.kind !== 'tap') warn(`stride= only matters with step=&cell or a tap (step=1m)`, d.paramSpans?.stride ?? d.span);
+  // (playing each note through is a voice's, #440: on any other cell it does nothing)
+  for (const d of decls.values())
+    if (d.oneshot && cells.get(d.name) && !cells.get(d.name)!.voice)
+      warn(`oneshot=1 is a voice's: &${d.name} is no voice, so it does nothing (put it on the voice that plays its notes)`, d.span);
   // (cycle= counts laps, decision 040, #75: on a table stepped by a cell, one a whole number of its own lengths of two or
   // more steps was very likely written when it counted steps, cycle=24 on a 12 for two laps)
   for (const d of decls.values()) {
