@@ -19,13 +19,22 @@ Reading through a table: `over=`, `shift=` and `scale()` say which grid a cell's
 - **`shift=n`** rotates the braid by n; wrapped entries climb a lap. On a table it turns what reads through it ([time.md](time.md) for a moving shift).
 - **Picks and shifts of a table** (`over=&scale[<<]`) are on [braid.md](braid.md).
 - **A stepped table turns by its braid's own steps** ([#122](https://github.com/yggi/cells/issues/122)): an entry held (`[0,2,4]@3`, or `[0,2,4] _ _`) or repeated (`[0,2,4]!3`) stays in force as many steps, and a subsequence's steps turn within its step (`[[5,7,9] [2,4,6]]` is one stack for the first half, the other for the second; `<a b>` one a lap), as the braid would play. A shift of such a table counts its entries, a subsequence's each one.
-- **A table that also plays turns for what reads through it** ([#167](https://github.com/yggi/cells/issues/167)): a line over it reads the entry sounding, which is the entry the turn brings round when the table isn't played, so one rule covers both. A harmony both heard and read through: `&harm over=&key step=4n [0,2,4] [1,3,5] [2,4,6] [3,5,7]` played on a channel of its own, and `&pad over=&harm step=4n 0 0 0 0` plays each beat's root, C D E F, as it does when nothing plays `&harm`. What the table plays is its own braid, as written. Where the turn and the braid part (`stride=`, a `cycle=` other than its own length), the reader follows the turn. A played cell nothing reads through (no `over=`, no relative pick `&k[0]`) doesn't turn: its moving shift is only its playhead ([#203](https://github.com/yggi/cells/issues/203)).
-- **A turning table comes round after its own length**, its braid's steps: a stepped key of 12 after 12 turns (`&key … stride=7` goes round the circle of fifths), a scale after its 7, a braid of chords after its chords, `[0,2,4]@3 [5,7,9]` after 4. Within that, a turn that wraps climbs a lap, like every shift. **`cycle=n`** has one job everywhere — how many before it comes round — and says otherwise: per tonos' `&key … stride=2 cycle=24` rises two octaves, then starts again; IDM's `cycle=2` turns twice and back ([decision 008](https://github.com/yggi/cells/blob/main/docs/decisions/008-tables-come-round.md)).
+- **A table that also plays turns for what reads through it** ([#167](https://github.com/yggi/cells/issues/167)): a line over it reads the entry sounding, which is the entry the turn brings round when the table isn't played, so one rule covers both. A harmony both heard and read through: `&harm over=&key step=4n [0,2,4] [1,3,5] [2,4,6] [3,5,7]` played on a channel of its own, and `&pad over=&harm step=4n 0 0 0 0` plays each beat's root, C D E F, as it does when nothing plays `&harm`. What the table plays is its own braid, as written. Where the turn and the braid part (`stride=`, a `cycle=` of more than one lap), the reader follows the turn. A played cell nothing reads through (no `over=`, no relative pick `&k[0]`) doesn't turn: its moving shift is only its playhead ([#203](https://github.com/yggi/cells/issues/203)).
+- **A turning table comes round after its own length**, its braid's steps: a stepped key of 12 after 12 turns (`&key … stride=7` goes round the circle of fifths), a scale after its 7, a braid of chords after its chords, `[0,2,4]@3 [5,7,9]` after 4. Within that, a turn that wraps climbs a lap, like every shift. **`cycle=n`** counts laps ([decision 040](https://github.com/yggi/cells/blob/main/docs/decisions/040-pulse-beat-and-laps.md), #75): a turning table comes round after n laps of its own length (per tonos' `&key … stride=2 cycle=2` rises two octaves, then starts again), and an index read through it climbs n laps and comes round:
+
+| `cycle=` | `[12]` of a 12 | `[24]` | |
+|---|---|---|---|
+| absent | 12 | 24 | walks the helix for ever (a turning table: one lap) |
+| `cycle=1` | 0 | 0 | wraps: one lap, the circle |
+| `cycle=2` | 12 | 0 | two laps |
+| `cycle=0` | 0 | 0 | constant: the first entry, whatever the index or the turn |
+
+On a tapped table (`step=1m`) the lap is the bar: `cycle=n` is its tap's n bars, its turns climbing freely within them and beginning again where the tap comes round (`&harm step=1m cycle=4` and four chords: round after them); an index read through it walks. Before v0.16, `cycle=` counted steps: Migrate rewrites a turning table's `cycle=24` on a 12 as `cycle=2`.
 
 ```cells
 &line step=1 over=&scale 0 2 4 2 0
 &scale over=&key scan(2 2 1 2 2 2 1) step=cycle(&line)
-&key step=cycle(&scale) stride=7 cycle=12
+&key step=cycle(&scale) stride=7
 ```
 
 ```cells

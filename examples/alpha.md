@@ -11,7 +11,7 @@ description: "Wendy Carlos' alpha scale: nine equal steps to a pure fifth, and n
 # third (6:5), so triads ring true: 0 5 9 is major, 0 4 9 minor.
 &bar scan(1 1 1 1) step=&tempo
 &tempo step=free(84bpm, 50..120)
-&alpha cycle=9 map=ed(3/2)                          # nine equal steps to 3:2
+&alpha map=ed(9, 3/2)                               # nine equal steps to 3:2
 
 &chords over=&alpha step=1m [0,5,9] [4,8,13] [9,14,18] [5,9,14]       # major · minor · major · minor
 &tune over=&alpha step=8n 9 14 18 14 13 8 4 8 18 23 27 23 22 18 14 9 14 18 23 18 14 13 9@2 5 9 14 18 14 9@3

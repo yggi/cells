@@ -6,7 +6,7 @@ export declare const IMPLICIT: Span;
 export declare const isRootDecl: (d: CellDecl) => boolean;
 /** Static table for lengths and defaults (no over= → the default grid). */
 export declare const tableOf: (d: CellDecl) => string | null;
-/** A grid's steps per period: cycle=, or — a ratios grid — its tones before the period. */
+/** A grid's steps per period: its map's size (edo(19), ed(7, 3/2); cycle= the old way), or — a ratios grid — its tones before the period. */
 export declare const gridSteps: (d: CellDecl) => number;
 export declare const lengthOf: (decls: ReadonlyMap<string, CellDecl>, name: string, guard?: number) => number;
 /** A braid as units: what each step is, with its modifiers. */

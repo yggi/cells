@@ -1,6 +1,6 @@
 # 040 · A meter's pulse and beat, taps by note value, and `cycle=` in laps
 
-**Date:** 2026-10-17 · **Status:** accepted (owner, in the session of 2026-10-16/17 on [#18](https://github.com/yggi/cells/issues/18) and [swing-research.md](../notes/swing-research.md)) · Issues: #15, #18
+**Date:** 2026-10-17 · **Status:** accepted; `cycle=` in laps built (#75, 2026-11-04) (owner, in the session of 2026-10-16/17 on [#18](https://github.com/yggi/cells/issues/18) and [swing-research.md](../notes/swing-research.md)) · Issues: #15, #18
 
 ## Context
 
@@ -54,7 +54,18 @@ The same discussion settled what happens past the end of a lap, for pitch and fo
 
 ## Open
 
-- A kit's default `cycle=` (a drum index past the last drum): `cycle=1` proposed; today's behaviour unchecked.
+- A kit's default `cycle=` (a drum index past the last drum): `cycle=1` proposed. **Settled (#75):** checked on `main`, an index past the last drum already wraps (`0 1 2 3` over two drums plays a b a b), which is `cycle=1`; nothing changes.
+
+## Built: `cycle=` in laps (#75, 2026-11-04)
+
+The owner's rulings on #75:
+- **A grid's size is its map's first argument:** `map=edo(19)`, and `map=ed(7, 3/2)` (steps first, then the period, as "7ed3/2" reads; `edo(n)` is `ed(n, 2)`). `cycle=` on a grid is the old way, still read with a warning.
+- **IDM writes its harmony out.** Its `&lydian … step=1m/2 stride=1 cycle=2` came round after 2 steps of 7 (I, II, I, II), which no number of laps says. Its readers now say I and II themselves (`&pad … [0,2,4,6] [1,3,5,7]`, `&lead!2 &lead^1!2`); its notes are unchanged.
+
+What the build settled beside them:
+- **A tapped table's lap is the bar**, as a meter's is. Its `cycle=n` is its tap's n bars: its turns climb freely within them and begin again where the tap comes round, and an index read through it walks. So the seed library's `&harm step=1m cycle=4` (four chords) comes round after its four chords, as before. An untapped table's `cycle=n` is n laps of its own length, for its turns and for an index read through it.
+- **Migrating a meaning:** `cycle=24` is valid in both versions, so no compile of the old text says what it played. Migrate's `laps` rule is exact by construction (`Rewrite.exact`), witnessed by the notes the old version played (`fixtures/migrations/laps/*.v0.15.notes`), and never run by Normalise. A table stepped by a cell whose `cycle=` is a whole number of its own lengths warns that it was probably written in steps.
+- Ricercar's `cycle=24` goes rather than becoming `cycle=2`: its melody reads `&key` past two laps, which `cycle=2` would now wrap, and its `stride=` is a slider at 0, so the cycle only ever mattered as the performer raised it (now round after one lap: the circle).
 
 ## Consequences
 

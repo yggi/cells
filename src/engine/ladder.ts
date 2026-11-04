@@ -46,6 +46,8 @@ export const PENDING: ReadonlySet<string> = new Set([
   'attribute style',
   'parameter licence',
   'parameter accents',
+  // (cycle= in laps, #75: grids say their size in the map now; a piece that turns a table and shows its laps is wanted)
+  'attribute cycle',
 ]);
 
 /**
@@ -234,7 +236,6 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'map map=ed(r)',
       'map map=ratios',
       'step n/d',
-      'attribute cycle',
       // free
       'free free(v, lo..hi)',
       'free free(v, lo..hi, "names")',

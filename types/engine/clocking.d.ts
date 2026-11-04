@@ -5,7 +5,7 @@
  * step= chain steps). Nothing loops by itself: every stepped cell's shift is a
  * function of time.
  */
-import type { CompileResult, Clock, Shifts } from './program';
+import type { CompileResult, Clock, ResolvedCell, Shifts } from './program';
 import { type Warp } from './physics';
 export declare const EPS = 1e-9;
 export interface TimeMap {
@@ -68,6 +68,15 @@ export declare function shiftsAt(result: CompileResult, statics: Shifts, seconds
  * table it reads through turns as `shiftsAt` turns it, played or not.
  */
 export declare const playing: (now: Shifts, statics: Shifts, cell: string) => Shifts;
+/**
+ * How a turning table comes round (decision 040, #75): `per`, the steps it takes before its turns begin again (a tapped
+ * table with cycle=: its tap's lap, cycle= bars; else none), and `laps`, how many laps of its own length its turns climb
+ * before they come round (cycle= on an untapped table; else one; 0: they climb until the tap comes round).
+ */
+export declare function turnLap(result: CompileResult, c: ResolvedCell): {
+    per: number | null;
+    laps: number;
+};
 /** Where a turning table comes round by itself: its braid's own length in steps (a key of 12 after 12, `[0,2,4]@3 [5,7,9]` after 4). */
 export declare const ownLength: (result: CompileResult, name: string) => number;
 /** Is it a selector (a cell reading a table of sections: decision 016)? */

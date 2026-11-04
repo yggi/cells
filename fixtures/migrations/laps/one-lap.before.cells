@@ -1,0 +1,6 @@
+# a circle of fifths whose cycle= was its own length, one lap: the default now (decisions 008, 040, #75)
+&bar meter("4/4") step=180bpm
+&theme over=&key step=8n 0 4 7 4
+&key step=cycle(&theme) stride=7 cycle=12
+&lead s=tri loop=C4
+&out map=sample [&theme * &lead * .5]

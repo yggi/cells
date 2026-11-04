@@ -55,9 +55,9 @@ describe('a stepped table turns by its braid’s own steps (#122)', () => {
     expect(plays('&k over=&key step=4n <0 ~> 4@2', '&x over=&k step=4n 0', 7)).toEqual([0, 4, 4, 4, 4, 4, 0].map((d) => degree(d)));
   });
 
-  it('a table that steps once per entry turns as before: one a step, its cycle= its entries', () => {
+  it('a table that steps once per entry turns as before: one a step, its tap’s bar, cycle=1, where it comes round (#75)', () => {
     expect(plays('&harm over=&key step=4n [0,2,4] [5,7,9]', '&x over=&harm step=4n 0', 4)).toEqual([C, A, C, A]);
-    expect(plays('&k over=&key step=4n stride=2 cycle=8 0 1 2 3', '&x over=&k step=4n 0', 5)).toEqual([0, 2, 7, 9, 0].map((d) => degree(d)));
+    expect(plays('&k over=&key step=4n stride=2 cycle=1 0 1 2 3', '&x over=&k step=4n 0', 5)).toEqual([0, 2, 7, 9, 0].map((d) => degree(d)));
   });
 
   it('it comes round after its braid’s own length: [0,4,7]@3 [2,5,9] after four steps', () => {
@@ -194,7 +194,7 @@ describe('a table that also plays turns for the lines read through it (#167)', (
       'w:81',
     ]);
     // a grid of five played walks its steps, 0 2.4 4.8 7.2 semitones; a line over it reads the step sounding
-    expect(notes('&g map=edo cycle=5 step=4n\n&x over=&g step=4n 0\n&out map=sample [&g * &v, &x * &w]')).toEqual(['v:60', 'w:72', 'v:62', 'w:74', 'v:65', 'w:77', 'v:67', 'w:79']);
+    expect(notes('&g map=edo(5) step=4n\n&x over=&g step=4n 0\n&out map=sample [&g * &v, &x * &w]')).toEqual(['v:60', 'w:72', 'v:62', 'w:74', 'v:65', 'w:77', 'v:67', 'w:79']);
   });
 });
 

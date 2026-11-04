@@ -100,7 +100,7 @@ const SUGAR: Check[] = [
     piece('&lead s=saw loop=C4 env=&e', '&e map=adsr .01 .3 .5 .4', '&t step=2 0 2', '&out map=sample [&t * &lead]'),
   ],
   // Generators
-  table('Generators · scan(i …)', MAJOR, '&major cycle=12 0 2 4 5 7 9 11', '&tune over=&major step=2 0 2 4 7 -1 9', 'tune'),
+  table('Generators · scan(i …)', MAJOR, '&major 0 2 4 5 7 9 11', '&tune over=&major step=2 0 2 4 7 -1 9', 'tune'),
   table('Generators · scan(i …)', '&tempo scan(1!4 .5!2) step=120bpm', '&tempo scan(1 1 1 1 .5 .5) step=120bpm', '&t step=&tempo 0 2 4', 't'),
   table('Generators · scan(i …)', '&series scan(geo(5, 25, 0 10 5))', `&series scan(1 ${5 ** (10 / 25)} ${5 ** (5 / 25)})`, '&t over=&series step=2 0 1 2 3 4', 't'),
   line('Generators · euclid(k, n)', '&tresillo step=4 euclid(3, 8)', '&tresillo step=4 0 ~ ~ 0 ~ ~ 0 ~', 'tresillo'),

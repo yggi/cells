@@ -35,7 +35,8 @@ export interface NormaliseOptions extends CompileOptions {
 export const normalisations =
   (options: NormaliseOptions = {}) =>
   (source: string, result: CompileResult): Rewrite[] => [
-    ...migrations(options)(source, result),
+    // (but a migration exact only against an older meaning: in a valid text it would change what the text says, #75)
+    ...migrations(options)(source, result).filter((r) => !r.exact),
     ...interfaceNames(source, result),
     ...fourFour(source, result),
     ...aliases(source, result),

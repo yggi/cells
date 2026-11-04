@@ -17,7 +17,7 @@ export function rewriteAll(source, find, rounds = ROUNDS, options = {}) {
             catch {
                 continue;
             }
-            if (next !== now && soundsIdentical(now, next, undefined, options)) {
+            if (next !== now && (r.exact || soundsIdentical(now, next, undefined, options))) {
                 taken = { next, title: r.title };
                 break;
             }

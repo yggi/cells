@@ -1,6 +1,6 @@
 /** Phase 5: what the physical and sounding cells refer to, and what their values say — resonators, tapes, FM, moving parameters, envelopes, grids. */
 import { AXES, SLOTS } from '../style';
-import { BODIES, isMidiCard } from '../program';
+import { BODIES, isMidiCard, ROOT } from '../program';
 import { MOVING_PARAMS } from '../attributes';
 import { DOUGH_SOURCES } from '../dough-params';
 import { refsOf } from '../readers';
@@ -37,7 +37,7 @@ export function checkCells(
     const g = cells.get(named);
     if (!c.mix) warn(`show=mix:&${named} does nothing on &${c.name}: it names the grid a mix's colours follow, and &${c.name} isn't a mix`, span);
     else if (!g) unknownCell(named, span);
-    else if (!g.root) warn(`show=mix:&${named}: a mix's colours follow a grid (a cell with cycle= or map=edo), not &${named}`, span);
+    else if (!g.root) warn(`show=mix:&${named}: a mix's colours follow a grid (a cell with map=edo), not &${named}`, span);
   }
   // tapes: write= names what it records (not a voice); play= names a tape (a cell with write=)
   for (const c of cells.values()) {
@@ -125,6 +125,16 @@ export function checkCells(
   }
   for (const d of decls.values())
     if (d.stride !== null && d.step?.kind !== 'driven' && d.step?.kind !== 'tap') warn(`stride= only matters with step=&cell or a tap (step=1m)`, d.paramSpans?.stride ?? d.span);
+  // (cycle= counts laps, decision 040, #75: on a table stepped by a cell, one a whole number of its own lengths of two or
+  // more steps was very likely written when it counted steps, cycle=24 on a 12 for two laps)
+  for (const d of decls.values()) {
+    const own = cells.get(d.name)?.cycle ?? 0;
+    if (d.step?.kind !== 'driven' || d.cycle === null || d.map || own < 2 || d.cycle < own || d.cycle % own !== 0) continue;
+    warn(
+      `cycle=${d.cycle} on &${d.name} counts laps: ${d.cycle} of its ${own} steps. Written before v0.16, when it counted steps, it says cycle=${d.cycle / own} (Migrate rewrites it, decision 040)`,
+      d.paramSpans.cycle ?? d.span,
+    );
+  }
   for (const d of decls.values()) {
     for (const [key, r] of [
       ['env', d.env],
@@ -162,9 +172,19 @@ export function checkCells(
     else if (vals.length < 2 || vals.some((v, i) => !(v > 0) || (i > 0 && !(v > vals[i - 1]))))
       error(`map=ratios lists one period's tones as rising ratios, the last the period: map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2`, d.map.span);
   }
-  for (const d of decls.values())
-    if (d.map?.kind === 'edo' && (d.over !== null || d.braid.kind !== 'blank'))
-      error(`A grid (map=edo, map=ed(r)) reads nothing and has no braid: &${d.name} cycle=19 map=edo`, d.map.span);
+  for (const d of decls.values()) {
+    if (d.map?.kind !== 'edo') continue;
+    if (d.over !== null || d.braid.kind !== 'blank') error(`A grid (map=edo, map=ed(r)) reads nothing and has no braid: &${d.name} map=edo(19)`, d.map.span);
+    // (a grid's size is its map's, decision 040, #75: cycle= on it is the old way, still read)
+    else if (d.cycle !== null && d.name !== ROOT) {
+      const map = d.map.period === 2 ? `edo(${d.cycle})` : `ed(${d.cycle}, ${ratioText(d.map.period)})`;
+      const span = d.paramSpans.cycle ?? d.span;
+      if (d.cycle === 0) error(`A grid has at least one step: its size is its map's, map=edo(19)`, span);
+      else if (d.map.steps !== null)
+        warn(`cycle=${d.cycle} does nothing on a grid whose map says its size (map=${d.map.period === 2 ? 'edo' : 'ed'}(${d.map.steps}…)): leave it out`, span);
+      else warn(`cycle= on a grid is the old way: its size is its map's, map=${map} (Migrate rewrites it)`, span);
+    }
+  }
   // a table is its numbers: cells spliced into one are skipped when it is read (over=), unless it is a
   // kit (a table of voices), a table of sections (its entries are clocks, a selector switches them: decision 016) or a
   // band (its entries performers, a selector switches their sound: decision 061)
@@ -247,3 +267,13 @@ export function checkCells(
 const FAR_OCTAVES = 100;
 /** A shift past this many laps of its braid climbs past twenty octaves. */
 const FAR_LAPS = 20;
+
+/** A grid's period as written: a whole number, or the simplest fraction within a millionth (3/2, 5/4). */
+export function ratioText(r: number): string {
+  if (Number.isInteger(r)) return String(r);
+  for (let q = 2; q <= 1000; q++) {
+    const p = Math.round(r * q);
+    if (Math.abs(p / q - r) < 1e-6) return `${p}/${q}`;
+  }
+  return String(r);
+}
