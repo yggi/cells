@@ -1,6 +1,6 @@
 # 067 · An instrument with sound parameters is a module after its voices; the modules are fragments, named in the language's words; a cable patched in opens at zero
 
-**Date:** 2026-11-04 · **Status:** accepted (owner, 2026-11-04: the rule "as proposed"; on a parameter both on an instrument and its voice, "B", in series; on `distort=` and `crush=`, "B", on the instrument's sum; the names "as recommended. our names, lowpass, high pass"; a `vco` "yes, even if it's minimal"; a CV sum "yes"; a cable into a fixed parameter "C now, E later") · Issues: #423, #424–#428, #81 · Note: [modular.md](../notes/modular.md)
+**Date:** 2026-11-04 · **Status:** accepted (owner, 2026-11-04: the rule "as proposed"; on a parameter both on an instrument and its voice, "B", in series; on `distort=` and `crush=`, "B", on the instrument's sum; the names "as recommended. our names, lowpass, high pass"; a `vco` "yes, even if it's minimal"; a CV sum "yes"; a cable into a fixed parameter "C now, E later") · Issues: #423, #432, #431, #424–#428, #81 · Note: [modular.md](../notes/modular.md)
 
 *Extends [006](006-mix-algebra.md) (a factor acting on a mix acts on each of its voices) to the sound parameters, and uses [065](065-fragments-take-arguments.md) (a signature) as a module's panel.*
 
@@ -26,14 +26,14 @@ Both renderers already play one chain per voice cell (grit, filters, pan, gain),
 ### 2. Built in two rungs
 
 - **First, the linear parameters, distributed** onto each voice's notes (the renderers unchanged: their voices' chains already filter), with a test that the patch plays the flat text's events. A parameter on both instrument and voice, and grit on an instrument, are said ("in series: not rendered yet", "on the sum: not rendered yet") and the voice's own is played: never silently.
-- **Then the instrument's own chain**, in cells' renderer and in each frontend's: its voices' sum into grit, filters, pan, gain and sends. Series and grit sound from then on.
+- **Then the instrument's own chain** (#432), in cells' renderer and in each frontend's: its voices' sum into grit, filters, pan, gain and sends. Series and grit sound from then on.
 
 ### 3. The modules are fragments, named in the language's words
 
 - **A module is a fragment with a signature** (065): its optional parameters its input jacks, each one's line its default, the knob's place when nothing is patched; its main parameter its audio input; its head its output. A cable is an argument: a reference argument is the piece's own cell (065 §5), so a slider on it keeps working through the module.
 - **The names are the language's**, as the attributes and the seed library's words are: `osc`, `lowpass`, `highpass`, `amp`, and `lfo` and `sh` (sample and hold), which have no plainer words. One fragment a filter's kind, since a kind is a word and a parameter is a cell. The patch's vocabulary (`vco`, `vcf`, `vca`) is for the repository's association, so a query for a `vcf` finds `lowpass`.
 - **`osc` is minimal**: its jacks (`&pitch`, a vibrato's or a drift's input, and `&fm`), its wave and register the head's attributes, `&sub s=square loop=C1 from osc(pitch=&drift)` (065 §4).
-- **A CV sum is part of the language**: `lpf=200..3000 * (&a + &b)`, an offset plus a modulation, as a panel mixes its CV inputs (its own issue).
+- **A CV sum is part of the language**: `lpf=200..3000 * (&a + &b)`, an offset plus a modulation, as a panel mixes its CV inputs (#431).
 
 ### 4. A cable patched into a fixed parameter opens at zero
 
