@@ -59,6 +59,12 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     );
   };
   const gathered = new Map<string, Gathered>();
+  /** Each sound a mix plays, and the instruments it plays it through, once for each way (an instrument's parameters, decision 067). */
+  const playings = new Map<string, (readonly string[])[]>();
+  const played = (voice: string, through: readonly string[]) => {
+    if (!playings.has(voice)) playings.set(voice, []);
+    playings.get(voice)!.push(through);
+  };
   const termKey = (b: Binding) => [b.voice.name, b.offset, ...b.pitches.map((t) => `${t.sign}${t.ref.name}${JSON.stringify(t.ref.pick)}${t.ref.shift}`)].join('|');
   for (const sink of sinks) {
     const d = decls.get(sink.name)!;
@@ -88,6 +94,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         const span = sink.implicit ? top.voice.span : mix.span;
         if (!g) gathered.set(key, (g = { b, span, gains: [0, 0], via: new Set(), parts: [], through: new Set() }));
         for (const t of through) g.through.add(t);
+        played(b.voice.name, through);
         // mono: one channel feeds both sides
         const part: [number, number] = channels.length === 1 ? [b.gain, b.gain] : ch === 0 ? [b.gain, 0] : [0, b.gain];
         g.gains[0] += part[0];
@@ -121,6 +128,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         const key = 'send:' + termKey(b);
         if (gathered.has(key) || [...gathered.values()].some((g) => termKey(g.b) === termKey(b))) continue;
         gathered.set(key, { b, span: mix.span, gains: [b.gain, b.gain], via: new Set([name]), parts: [], through: new Set(through), silent: true });
+        played(b.voice.name, through);
       }
     }
   }
@@ -182,6 +190,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
           let g = gathered.get(key) ?? [...gathered.values()].find((x) => termKey(x.b) === key);
           if (!g) gathered.set(key, (g = { b, span: card.span, gains: [0, 0], via: new Set(), parts: [], through: new Set() }));
           for (const t of through) g.through.add(t);
+          played(b.voice.name, through);
           (g.midi ??= []).push({ card: card.name, mix, channel, port: map.port, gain: b.gain });
           g.via.add(card.name);
           if (mix) g.via.add(mix);
@@ -240,6 +249,6 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     if (d.step?.kind === 'driven' || d.step?.kind === 'tap') error(`A voice moves at a rate — its pitch, like loop=C4${why}`, d.step.span);
     else if (d.step && !d.step.whole) error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4${why}`, d.step.span);
   }
-  return { cells: cells as Cells, sinks, cards, bindings, soundHead };
+  return { cells: cells as Cells, sinks, cards, bindings, soundHead, playings: playings as ReadonlyMap<string, readonly (readonly string[])[]> };
 }
 export type Bound = ReturnType<typeof bindVoices>;
