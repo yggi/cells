@@ -14,6 +14,7 @@ import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from './clocking'
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { refsOf } from './readers';
+import { VOICE_PARAMS } from './attributes';
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
 import { tapShare } from './meter';
@@ -38,6 +39,11 @@ export interface Played {
   readonly instrument?: string;
   /** Its voice's moving parameters over the note (lpf=200..3000 * &fenv …). */
   readonly params?: Readonly<Record<string, ParamTrack>>;
+  /**
+   * The instruments it plays through that carry sound parameters of their own (decision 067), the innermost first,
+   * each with its moving parameters over the note: a module after its voice, in series after the voice's own chain.
+   */
+  readonly through?: readonly { readonly instrument: string; readonly params?: Readonly<Record<string, ParamTrack>> }[];
   /** The value that started it (a resonator reads it as where it's struck). */
   readonly value?: number;
   /** Its envelope (map=adsr, seconds), or absent for the voice's own. */
@@ -363,8 +369,8 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     if (!outputPlays(result, o, muted)) continue;
     const c = result.cells.get(o.cell)!;
     try {
-      // the voices' moving parameters (lpf=200..3000 * &fenv …): their cells, as series
-      for (const voice of o.kit ? refsOf(result.cells.get(o.voice)) : [o.voice]) {
+      // the voices' moving parameters (lpf=200..3000 * &fenv …): their cells, as series; and the instruments' they play through
+      for (const voice of [...(o.kit ? refsOf(result.cells.get(o.voice)) : [o.voice]), ...o.through]) {
         if (voiceParams.has(voice)) continue;
         const vc = result.cells.get(voice);
         const out: Record<string, VoiceParam> = {};
@@ -564,18 +570,32 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
           bends: e.bends.map((b) => ({ ...b, at: through(b.at) })),
           levels: e.levels.map((l) => ({ ...l, at: through(l.at) })),
           gains: [e.gains[0] * g, e.gains[1] * g],
-          ...(e.params
-            ? {
-                params: Object.fromEntries(
-                  Object.entries(e.params).map(([key, tr]) => [key, tr.kind === 'points' ? { ...tr, points: tr.points.map((x) => ({ ...x, at: through(x.at) })) } : tr]),
-                ),
-              }
-            : {}),
+          ...(e.params ? { params: retimed(e.params, through) } : {}),
+          ...(e.through ? { through: e.through.map((x) => (x.params ? { ...x, params: retimed(x.params, through) } : x)) } : {}),
         });
       }
     }
   }
   return out.sort((a, b) => a.at - b.at);
+}
+
+/** A note's moving parameters, their points moved through a tape (`at` the tape's time map). */
+const retimed = (params: Readonly<Record<string, ParamTrack>>, at: (x: number) => number): Record<string, ParamTrack> =>
+  Object.fromEntries(Object.entries(params).map(([key, tr]) => [key, tr.kind === 'points' ? { ...tr, points: tr.points.map((x) => ({ ...x, at: at(x.at) })) } : tr]));
+
+/** The instruments with sound parameters of their own a note plays through, the innermost first (decision 067). */
+function stagesOf(p: Plan, o: Output, at: number, dur: number): { through?: Played['through'] } {
+  const stages = [...o.through]
+    .reverse()
+    .filter((n) => {
+      const c = p.result.cells.get(n);
+      return !!c && [...Object.keys(c.params), ...Object.keys(c.paramCells), ...Object.keys(c.paramClocks)].some((k) => VOICE_PARAMS.has(k));
+    })
+    .map((instrument) => {
+      const params = paramTracks(p, instrument, at, dur);
+      return { instrument, ...(params ? { params } : {}) };
+    });
+  return stages.length ? { through: stages } : {};
 }
 
 function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Played[] {
@@ -697,6 +717,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         ...(env ? { env } : {}),
         ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
         ...(params ? { params } : {}),
+        ...stagesOf(p, t.output, at, dur),
         ...(outputs ? { output: t.output.id } : {}),
       };
     };
@@ -914,6 +935,7 @@ function droneEvents(p: Plan, from: number, to: number, outputs: boolean, held: 
         ...(o.envelope ? { env: envelopeAt(p, o.envelopeCell, o.envelope, at) } : {}),
         ...(o.through.length ? { instrument: o.through[0] } : {}),
         ...(params ? { params } : {}),
+        ...stagesOf(p, o, at, dur),
         ...(outputs ? { output: o.id } : {}),
       });
     }

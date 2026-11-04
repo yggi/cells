@@ -1,20 +1,24 @@
 /**
- * Phase 7½: an instrument's sound parameters (decision 067). A mix used like a voice is a module after its voices: the
- * linear parameters on it (a filter, a pan, a send) are each of its voices', where the voice sets none, since filtering
- * a sum is the sum of the filtered. What its own chain would sound (a parameter on both, in series; grit on the sum) is
- * said and not yet rendered; what isn't a processor (a wave, FM, a glide) belongs on a voice.
+ * Phase 7½: an instrument's sound parameters (decision 067). A mix used like a voice is a module after its voices: its
+ * sound parameters process what its voices play, in series after each voice's own. The renderer plays each instrument's
+ * filters as a stage of its own after the voice's (`render.ts`); its `pan=` is in the outputs' gains, a balance after the
+ * voice's (`outputs.ts`). What isn't a processor (a wave, FM, a glide) belongs on a voice: an error here.
+ *
+ * A voice that plays only through instruments also takes, where it sets none, the linear parameters they write
+ * (`ResolvedCell.inherited`): filtering a sum is the sum of the filtered, so a frontend that builds a voice's chain from
+ * its cell alone plays the instrument's filter (Cell studio, until it builds an instrument's chain). cells' renderer
+ * plays the instrument's stage instead, and leaves what a voice inherited out of the voice's own chain.
  */
 import type { CellDecl, Span } from '../ast';
 import { VOICE_PARAMS } from '../attributes';
 import type { Output, ResolvedCell } from '../program';
 import { refsOf } from '../readers';
 import type { Cells, Ctx } from './context';
-import { IMPLICIT } from './tables';
 
-/** The parameters an instrument passes to its voices: linear, so the sum filtered is the sum of the filtered. */
-export const LINEAR: readonly string[] = ['lpf', 'lpq', 'hpf', 'hpq', 'pan', 'room', 'delay', 'delaytime', 'delayfeedback'];
-/** Grit: not linear, so on an instrument it acts on what its voices play together (its own chain, not yet built). */
-const GRIT: readonly string[] = ['distort', 'crush'];
+/** The parameters a voice takes from the instruments it plays only through: linear, so the sum's is each voice's. */
+export const LINEAR: readonly string[] = ['lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay', 'delaytime', 'delayfeedback'];
+/** The sound parameters an instrument carries: the linear ones, its balance (in its outputs' gains), and grit (on its sum). */
+const PROCESSORS: readonly string[] = [...LINEAR, 'pan', 'distort', 'crush'];
 
 /** The mixes the outputs play through as instruments. */
 export const instrumentsOf = (outputs: readonly Output[], cells: Cells): ReadonlySet<string> => new Set(outputs.flatMap((o) => o.through).filter((n) => !!cells.get(n)?.mix));
@@ -30,7 +34,7 @@ function soundKeys(d: CellDecl): Map<string, Span> {
 
 const has = (c: ResolvedCell, k: string) => k in c.params || k in c.paramCells || k in c.paramClocks;
 
-/** The cells, each voice that plays only through instruments with sound parameters given theirs where it sets none. */
+/** The cells, each voice that plays only through instruments with linear parameters given theirs where it sets none. */
 export function instrumentParams(
   ctx: Ctx,
   decls: ReadonlyMap<string, CellDecl>,
@@ -38,34 +42,26 @@ export function instrumentParams(
   outputs: readonly Output[],
   playings: ReadonlyMap<string, readonly (readonly string[])[]>,
 ): Cells {
-  const { error, warn } = ctx;
+  const { error } = ctx;
   const instruments = instrumentsOf(outputs, cells);
-  // what each instrument writes: the linear parameters it passes on (grit and the rest said once, on its line)
-  const passes = new Map<string, Map<string, Span>>();
+  // what each instrument writes: the linear parameters a voice may take from it (a voice's own sound is an error)
+  const passes = new Map<string, readonly string[]>();
   for (const name of instruments) {
     const d = decls.get(name);
     if (!d) continue;
     const keys = soundKeys(d);
-    const linear = new Map<string, Span>();
     for (const [k, span] of keys)
-      if (LINEAR.includes(k)) linear.set(k, span);
-      else if (GRIT.includes(k))
-        warn(`${k}= on the instrument &${name} acts on what its voices play together, in a chain of its own: not rendered yet (decision 067), so it plays without it`, span);
-      else
+      if (!PROCESSORS.includes(k))
         error(
           `${k}= is a voice's: an instrument (&${name}) processes what its voices play, with ${LINEAR.slice(0, 4)
             .map((x) => `${x}=`)
             .join(' ')} …; put ${k}= on a voice`,
           span,
         );
-    if (linear.size) passes.set(name, linear);
+    const linear = [...keys.keys()].filter((k) => LINEAR.includes(k));
+    if (linear.length) passes.set(name, linear);
   }
   if (!passes.size) return cells;
-  // each voice's playings: what it takes from the instruments it plays through, innermost first, its own winning
-  const said = new Set<string>();
-  const once = (key: string, f: () => void) => {
-    if (!said.has(key)) (said.add(key), f());
-  };
   // (a sound a mix plays is a voice, a kit, or a pattern read through a kit: a kit's members are its voices)
   const voicesOf = (n: string): readonly string[] => {
     const c = cells.get(n);
@@ -73,6 +69,7 @@ export function instrumentParams(
     const kit = c?.kit ? c : over && cells.get(over)?.kit ? cells.get(over) : null;
     return kit ? refsOf(kit) : [n];
   };
+  // each way a voice is played: what it would take from the instruments it plays through, the innermost first, its own winning
   const takes = new Map<string, Map<string, string>[]>();
   for (const [sound, ways] of playings)
     for (const through of ways)
@@ -80,36 +77,16 @@ export function instrumentParams(
         const voice = cells.get(v);
         if (!voice) continue;
         const taken = new Map<string, string>();
-        for (const inst of [...through].reverse()) {
-          for (const [k, span] of passes.get(inst) ?? []) {
-            if (has(voice, k))
-              once(`${inst}:${k}:${v}`, () =>
-                warn(`&${v} sets ${k}= and plays through &${inst}, which sets it too: the two in series aren't rendered yet (decision 067), so &${v}'s own plays`, span),
-              );
-            else if (taken.has(k))
-              once(`${inst}:${k}:${taken.get(k)}`, () =>
-                warn(`&${inst} and &${taken.get(k)} both set ${k}=, one after the other: the two in series aren't rendered yet (decision 067), so &${taken.get(k)}'s plays`, span),
-              );
-            else taken.set(k, inst);
-          }
-        }
+        for (const inst of [...through].reverse()) for (const k of passes.get(inst) ?? []) if (!has(voice, k) && !taken.has(k)) taken.set(k, inst);
         if (!takes.has(v)) takes.set(v, []);
         takes.get(v)!.push(taken);
       }
   const same = (a: Map<string, string>, b: Map<string, string>) => a.size === b.size && [...a].every(([k, i]) => b.get(k) === i);
   const next = new Map(cells);
-  for (const [v, playings] of takes) {
-    const first = playings[0]!;
-    if (!playings.every((p) => same(p, first))) {
-      const from = [...new Set(playings.flatMap((p) => [...p.values()]))];
-      const d = decls.get(v);
-      warn(
-        `&${v} plays through ${from.map((i) => `&${i}`).join(' and ')} and elsewhere without ${from.length > 1 ? 'them' : 'it'}: a voice has one chain until an instrument has its own (decision 067), so ${from.length > 1 ? 'their' : 'its'} sound parameters aren't rendered on &${v}`,
-        d?.span ?? IMPLICIT,
-      );
-      continue;
-    }
-    if (!first.size) continue;
+  for (const [v, ways] of takes) {
+    const first = ways[0]!;
+    // (played through it and without it too, a voice's one cell can't say both: it takes nothing)
+    if (!first.size || !ways.every((p) => same(p, first))) continue;
     const c = cells.get(v)!;
     const params = { ...c.params };
     const paramCells = { ...c.paramCells };

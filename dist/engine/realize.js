@@ -5,6 +5,7 @@ import { clocking, EPS, playedCells, tapeMotion, varispeedOf } from "./clocking.
 import { ExpansionLimit, flatten, stepsOf } from "./flatten.js";
 import { cellId } from "./ids.js";
 import { refsOf } from "./readers.js";
+import { VOICE_PARAMS } from "./attributes.js";
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen } from "./series.js";
 import { warpOf } from "./physics.js";
 import { tapShare } from "./meter.js";
@@ -214,7 +215,7 @@ export function plan(result, statics, muted = new Set()) {
             continue;
         const c = result.cells.get(o.cell);
         try {
-            for (const voice of o.kit ? refsOf(result.cells.get(o.voice)) : [o.voice]) {
+            for (const voice of [...(o.kit ? refsOf(result.cells.get(o.voice)) : [o.voice]), ...o.through]) {
                 if (voiceParams.has(voice))
                     continue;
                 const vc = result.cells.get(voice);
@@ -390,16 +391,27 @@ export function eventsBetween(p, from, to, outputs = false, held = {}) {
                     bends: e.bends.map((b) => ({ ...b, at: through(b.at) })),
                     levels: e.levels.map((l) => ({ ...l, at: through(l.at) })),
                     gains: [e.gains[0] * g, e.gains[1] * g],
-                    ...(e.params
-                        ? {
-                            params: Object.fromEntries(Object.entries(e.params).map(([key, tr]) => [key, tr.kind === 'points' ? { ...tr, points: tr.points.map((x) => ({ ...x, at: through(x.at) })) } : tr])),
-                        }
-                        : {}),
+                    ...(e.params ? { params: retimed(e.params, through) } : {}),
+                    ...(e.through ? { through: e.through.map((x) => (x.params ? { ...x, params: retimed(x.params, through) } : x)) } : {}),
                 });
             }
         }
     }
     return out.sort((a, b) => a.at - b.at);
+}
+const retimed = (params, at) => Object.fromEntries(Object.entries(params).map(([key, tr]) => [key, tr.kind === 'points' ? { ...tr, points: tr.points.map((x) => ({ ...x, at: at(x.at) })) } : tr]));
+function stagesOf(p, o, at, dur) {
+    const stages = [...o.through]
+        .reverse()
+        .filter((n) => {
+        const c = p.result.cells.get(n);
+        return !!c && [...Object.keys(c.params), ...Object.keys(c.paramCells), ...Object.keys(c.paramClocks)].some((k) => VOICE_PARAMS.has(k));
+    })
+        .map((instrument) => {
+        const params = paramTracks(p, instrument, at, dur);
+        return { instrument, ...(params ? { params } : {}) };
+    });
+    return stages.length ? { through: stages } : {};
 }
 function plainEvents(p, from, to, outputs) {
     const out = [];
@@ -512,6 +524,7 @@ function plainEvents(p, from, to, outputs) {
                 ...(env ? { env } : {}),
                 ...(t.output.through.length ? { instrument: t.output.through[0] } : {}),
                 ...(params ? { params } : {}),
+                ...stagesOf(p, t.output, at, dur),
                 ...(outputs ? { output: t.output.id } : {}),
             };
         };
@@ -698,6 +711,7 @@ function droneEvents(p, from, to, outputs, held) {
                 ...(o.envelope ? { env: envelopeAt(p, o.envelopeCell, o.envelope, at) } : {}),
                 ...(o.through.length ? { instrument: o.through[0] } : {}),
                 ...(params ? { params } : {}),
+                ...stagesOf(p, o, at, dur),
                 ...(outputs ? { output: o.id } : {}),
             });
         }

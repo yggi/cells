@@ -4,7 +4,10 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { tapPositions } from './meter';
-import { shorten } from './shorten';
+import { migrations } from './migrate';
+
+/** Migrate's rule `rule` on a text, if it has one to offer. */
+const migration = (src: string, rule: string) => migrations()(src, compileSource(src)).find((r) => r.rule === rule);
 import { mainMeter } from './midiclock';
 
 // Decision 040: a meter knows its bar, its pulse (the numerator) and its beat (what is counted); a line taps it by pulse,
@@ -309,17 +312,17 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(compileSource('&bar meter("4/4") step=60bpm\n&x step=&bar:9n 0').ok).toBe(false);
   });
 
-  it('a raw step=&bar warns with the tap that says the same, and Migrate’s rule, which Shorten offers, rewrites it so', () => {
+  it('a raw step=&bar warns with the tap that says the same, and Migrate rewrites it so', () => {
     const src = `&bar scan(1 1 1 1) step=120bpm\n&x step=&bar*2 0 2 4 5${VOICE}`;
     expect(compileSource(src).diagnostics.map((d) => d.message)).toEqual([
       "step=&bar*2 steps by the meter cell's own steps: tap the meter by pulse, beat or a note value (step=8n; Migrate rewrites it)",
     ]);
-    const tap = shorten(src).find((s) => s.kind === 'tap')!;
+    const tap = migration(src, 'tap')!;
     expect(tap.after).toBe('&x step=8n 0 2 4 5');
     expect(compileSource(tap.apply(src)).diagnostics).toEqual([]);
     // (a meter stepped by another, scan(2 1) step=8n, is tapped by its pulse, by name)
     const swing = `&bar scan(1 1 1 1) step=120bpm\n&swing scan(2 1) step=8n\n&x step=&swing 0 1${VOICE}`;
-    expect(shorten(swing).find((s) => s.kind === 'tap')!.after).toBe('&x step=&swing:pulse 0 1');
+    expect(migration(swing, 'tap')!.after).toBe('&x step=&swing:pulse 0 1');
   });
 
   it('tapPositions: by index, a lap of bars', () => {
