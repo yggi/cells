@@ -214,7 +214,7 @@ export function writtenGraph(result, { card = false } = {}) {
         }
         if (typeof c.params.fm === 'string' && result.cells.has(c.params.fm))
             link({ id: edgeId(cellId(c.params.fm), id), source: cellId(c.params.fm), target: id, count: 1, transforms: AS_IS, ...wire('fm', 'audio', cellId(c.params.fm), id) });
-        for (const [key, pc] of Object.entries(c.paramCells ?? {}))
+        for (const [key, pc] of Object.entries(c.paramCells ?? {}).filter(([k]) => !c.inherited?.[k]))
             for (const f of pc.factors)
                 if (result.cells.has(f))
                     link({ id: edgeId(cellId(f), id), source: cellId(f), target: id, count: 1, transforms: AS_IS, ...wire(key, 'cv', cellId(f), id) });
@@ -302,7 +302,7 @@ export function writtenGraph(result, { card = false } = {}) {
                 ...beltOf(c, result.cells.get(c.step.driver)),
                 ...wire('step', 'sync', id, cellId(c.step.driver), 1, true),
             });
-        for (const [key, k] of Object.entries(c.paramClocks))
+        for (const [key, k] of Object.entries(c.paramClocks).filter(([k]) => !c.inherited?.[k]))
             if (result.cells.has(k.driver))
                 link({
                     id: clockTapId(id, cellId(k.driver), key),

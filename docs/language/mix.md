@@ -214,4 +214,20 @@ A mix can be used like a voice — an instrument: the pitches, volumes and gain 
 &mix loop=SAMPLE_RATE map=sample [&tune * &lead, &roots * &bass]
 ```
 
+**An instrument with sound parameters is a module after its voices** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md)): `lpf=` `lpq=` `hpf=` `hpq=` `pan=` `room=` `delay=` `delaytime=` `delayfeedback=` on it, fixed or moving, act on what its voices play, so one filter follows two oscillators, a VCF after a mixer. They are linear, so filtering the sum is the sum of the filtered, and each is played as each voice's where the voice sets none: the patch below plays exactly what the filter written on each oscillator plays. It nests (a VCA, an instrument with an envelope, after a VCF after a mix), and reaches a kit read through it and a gate playing it.
+
+```cells
+&bar meter("4/4") step=120bpm
+&tune step=8n 0 3 7 10 12 10 7 3
+&contour map=adsr .002 .2 .1 .1
+&sweep loop=&bar/2 sin(12)
+&saw s=saw loop=C2
+&sub s=square loop=C1
+&vcf lpf=70..4800 * &contour * &sweep lpq=8 [&saw, &sub * .5]
+&vca [&(map=adsr .01 .1 .6 .1) * &vcf]
+&out map=sample [&tune * &vca * .4]
+```
+
+What the instrument's own chain would play is said, and not yet rendered (#432): a parameter on both the instrument and its voice, which is two filters in series (the voice's own plays); `distort=` and `crush=` on an instrument, which act on what its voices play together (played without them); a voice played through the instrument and without it too (played as written, since a voice has one chain). A voice's own sound (`s=`, `fm=` …) on an instrument is an error.
+
 Voices, envelopes and volume streams are on [sound.md](sound.md).

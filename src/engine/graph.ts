@@ -421,7 +421,8 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
     if (typeof c.params.fm === 'string' && result.cells.has(c.params.fm))
       link({ id: edgeId(cellId(c.params.fm), id), source: cellId(c.params.fm), target: id, count: 1, transforms: AS_IS, ...wire('fm', 'audio', cellId(c.params.fm), id) });
     // a voice's moving parameters: their cells feed it (lpf, lpq …)
-    for (const [key, pc] of Object.entries(c.paramCells ?? {}))
+    // (not those it takes from an instrument, decision 067: they are wires into the instrument, where they are written)
+    for (const [key, pc] of Object.entries(c.paramCells ?? {}).filter(([k]) => !c.inherited?.[k]))
       for (const f of pc.factors)
         if (result.cells.has(f)) link({ id: edgeId(cellId(f), id), source: cellId(f), target: id, count: 1, transforms: AS_IS, ...wire(key, 'cv', cellId(f), id) });
     for (const [child, count] of c.children) {
@@ -520,7 +521,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
       });
     // a parameter given as a clock (delaytime=&bar*4/3, length=, at=): a tap of the clock's ticks, at its rate as written;
     // into a meter, a tap of its net (ground), as a step is
-    for (const [key, k] of Object.entries(c.paramClocks))
+    for (const [key, k] of Object.entries(c.paramClocks).filter(([k]) => !c.inherited?.[k]))
       if (result.cells.has(k.driver))
         link({
           id: clockTapId(id, cellId(k.driver), key),

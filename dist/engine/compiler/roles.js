@@ -1,9 +1,9 @@
 import { SHOWS } from "../parser/cell.js";
-import { ATTRIBUTES, rolesText } from "../attributes.js";
+import { ATTRIBUTES, rolesText, VOICE_PARAMS } from "../attributes.js";
 import { PLUGIN_SYNTAX } from "../plugins.js";
 import { isMidiCard } from "../program.js";
 const RESTARTS = ['restart', 'resume', 'free'];
-export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, plugins, bands = new Map()) {
+export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, plugins, bands = new Map(), instruments = new Set()) {
     const { warn } = ctx;
     const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
     const roles = (c) => {
@@ -64,6 +64,8 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
         ];
         for (const [k, span] of written) {
             const a = ATTRIBUTES[k];
+            if (instruments.has(d.name) && VOICE_PARAMS.has(k))
+                continue;
             if (k === 'anchor' && has.has('law'))
                 warn(`anchor= sets the clock a law reads, not the law: write it on ${c.over ? `&${c.over}` : 'its day (over=&day, a clock loop=1d)'} — the law on &${d.name} doesn't read it`, span);
             else if (k === 'pan' && (c.mix || c.sink || isMidiCard(c)))
