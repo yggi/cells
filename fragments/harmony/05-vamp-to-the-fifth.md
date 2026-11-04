@@ -8,6 +8,13 @@ association:
       energy: 0.2
     weight: 1
     facet: harmony
+  - point:
+      sync: 0.1
+      harm: 0.12
+      artic: 0.5
+      energy: 0.35
+    weight: 0.5
+    facet: harmony
 source: seed
 lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
@@ -25,5 +32,6 @@ The layout is `buildTheme`'s under harm 0.15, one chord per four bars: the first
 From 0.15 to 0.33 it lays the same chords two bars each, twice over (`[0, 0, c, c]`), and over 0.33 it walks the mode's transition table instead, which stays Jambot's generator on a miss.
 
 At the points where `buildTheme` plays it: ionian at Ambient's point with its harmony at 0.12. A mode's vamps are drawn alike (`next() · vamps.length`), so each weighs 1, and a query for the harmony at a mode's point finds all of that mode's vamps at distance 0.
+At `KINDERLIED` too (`presets.ts`): the tonic and the dominant of a children's song, under Twinkle's and Hänschen klein's motifs, with ionian there (yggi/jambot#547, the owner, 2026-11-04). There at weight 0.5, so its distance counts double: at weight 1 Deep house's point would find it first within 0.3, which the fence of #404 (`library.test.ts`) forbids.
 
 **Its signature** (decision 065): `&harm from &key`. `&harm from vamp_to_the_fifth &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &harm from vamp_to_the_fifth`, it reads `&key` by name, as before.

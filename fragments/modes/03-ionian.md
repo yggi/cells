@@ -22,6 +22,13 @@ association:
       energy: 0.6
     weight: 1
     facet: mode
+  - point:
+      sync: 0.1
+      harm: 0.12
+      artic: 0.5
+      energy: 0.35
+    weight: 1
+    facet: mode
 source: seed
 ---
 
@@ -35,6 +42,7 @@ It defines `&key`, the key (decision 047's interface name, decision 056, named s
 The tonic is left to the text that uses it, a hole: there is no default, since a default tonic plays a wrong key silently (#117); the performer's room, `free(…)`, is the tonic cell's to give (`&tonic free(…)`, not yet a form).
 
 At the point of each preset that plays it, weight 1, so a query for the mode at one of them finds ionian first, at distance 0.
+At `KINDERLIED` too (`presets.ts`), where Twinkle's and Hänschen klein's motifs sit: children's songs are major, and without it the nearest mode there is aeolian, at 0.219, a minor Twinkle (yggi/jambot#547, the owner, 2026-11-04).
 The bell and scale (`05-bell-and-scale.md`) is ionian too, elsewhere.
 
 **Its signature** (decision 065): `&key from &tonic`. `&key from ionian D` takes a copy of it, `&tonic` its main argument. Taken the old way, `use &key from ionian`, it reads `&tonic` by name, as before.
