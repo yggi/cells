@@ -171,7 +171,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             rate: 0,
             stride: d.stride ?? 1,
             params: d.params,
-            paramCells: Object.fromEntries(Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name) }])),
+            paramCells: Object.fromEntries(Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name), ...(v.to !== undefined ? { to: v.to } : {}) }])),
             voice: Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
             freq: d.step?.kind === 'rate' || d.step?.kind === 'env'
                 ? d.step.whole

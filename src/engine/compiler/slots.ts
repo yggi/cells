@@ -5,12 +5,14 @@
  * lacks, is an error that lists the slots there are; the pick is then dropped (the whole cell is read).
  */
 import type { CellDecl, Diagnostic, ParseResult } from '../ast';
-import { SLOTS } from '../style';
+import { SLOTS, STYLE } from '../style';
 
 /** The piece with every pick by name read as its slot's position, and an error for each that can't be. */
 export function readSlots(parsed: ParseResult): ParseResult {
-  // (a cell with style= has a style's slots, its axes: &style[artic], decision 063)
-  const maps = new Map(parsed.cells.map((c) => [c.name, c.map?.kind ?? (c.style ? 'style' : null)]));
+  // (a cell with style= has a style's slots, its axes: &style[artic], decision 063; and so has &style where no line writes
+  // it, the composer's to write: a reader of it plays the centre, styles.ts)
+  const maps = new Map<string, string | null>(parsed.cells.map((c) => [c.name, c.map?.kind ?? (c.style ? 'style' : null)]));
+  if (!maps.has(STYLE)) maps.set(STYLE, 'style');
   const diagnostics: Diagnostic[] = [];
   const read = (o: Record<string, unknown>, cell: CellDecl): Record<string, unknown> => {
     const { slot, ...rest } = o as { slot: string; name: string; pick: unknown; span?: CellDecl['span'] };

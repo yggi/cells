@@ -1,6 +1,7 @@
-import { AXES } from "../style.js";
+import { AXES, SLOTS } from "../style.js";
 import { BODIES, isMidiCard } from "../program.js";
 import { MOVING_PARAMS } from "../attributes.js";
+import { DOUGH_SOURCES } from "../dough-params.js";
 import { refsOf } from "../readers.js";
 import { leaves } from "../subseq.js";
 export function checkCells(ctx, decls, cells, sections = new Map(), bands = new Map()) {
@@ -74,8 +75,15 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
     }
     for (const d of decls.values())
         for (const [key, pc] of Object.entries(d.paramCells ?? {})) {
-            if (!MOVING_PARAMS.has(key))
-                error(`${key}= can't move: it takes a number (these can: ${[...MOVING_PARAMS].join(' ')})`, pc.span);
+            const slot = d.map?.kind === 'adsr' && SLOTS.adsr.includes(key);
+            const blend = key === 's' && pc.to !== undefined;
+            if (blend) {
+                const waves = [d.params.s, pc.to].map((w) => (typeof w === 'string' ? DOUGH_SOURCES[w] : undefined));
+                if (waves.some((w) => w === undefined || w === 'white' || w === 'pink' || w === 'brown'))
+                    error(`s=${d.params.s}..${pc.to}: a blend is of two of the waves, sine tri saw square (or their other names)`, pc.span);
+            }
+            else if (!MOVING_PARAMS.has(key) && !slot)
+                error(`${key}= can't move: it takes a number (these can: ${[...MOVING_PARAMS].join(' ')}; on a map=adsr cell, its slots; s= as a blend of two waves, s=tri..square * &x)`, pc.span);
             if (pc.range && !(pc.range[0] >= 0 && pc.range[1] >= 0))
                 error(`${key}=: a range of positive values, low..high`, pc.span);
             let envs = 0;

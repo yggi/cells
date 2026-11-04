@@ -36,6 +36,13 @@ export type ParamTrack =
   | { readonly kind: 'points'; readonly points: readonly { readonly at: number; readonly value: number; readonly ramp?: boolean }[] }
   | { readonly kind: 'env'; readonly from: number; readonly peak: number; readonly attack: number; readonly decay: number; readonly sustain: number; readonly release: number };
 
+/** A moving value at one moment: its factors multiplied there, laid on its range (an envelope's slot at a note's start, #411). */
+export function paramAt(p: Plan, prm: VoiceParam, at: number): number {
+  // (read over a span past it, as a note's are: a span of EPS ends on a point that may already be the next lap's)
+  const product = prm.series.reduce((a, m) => a * valueThen(levelSeries(p, m, at, at + 1), at, (x) => x.level), 1);
+  return prm.range ? prm.range[0] + (prm.range[1] - prm.range[0]) * product : product;
+}
+
 /** A voice's moving parameters over one note [at, at + dur). */
 export function paramTracks(p: Plan, voice: string, at: number, dur: number): Record<string, ParamTrack> | undefined {
   const vp = p.voiceParams.get(voice);

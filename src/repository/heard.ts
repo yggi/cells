@@ -2,7 +2,8 @@
  * A pattern fragment heard alone (#291): the fragments carry no card, since where their notes go is the workbench's and
  * the performer's, so a test, a preview or a frontend that plays one by itself supplies one, here, once. It sends each
  * on the channel Jambot's band sends that part on: a drum bar's mix (`&groove`), a clave's (`&percussion`) and the
- * bell's (`&agogo`), and their copies (`&groove2`), on 10, General MIDI's drums; a bass line (`&bassline`) on 2, through the bass instrument's `&bassV`.
+ * bell's (`&agogo`), and their copies (`&groove2`), on 10, General MIDI's drums; a bass line (`&bassline`) on 2, through the bass instrument's `&bassV`, and on a sound card
+ * beside it, since the bass has a sound of its own (#391), which MIDI doesn't send.
  * Pure.
  */
 
@@ -13,5 +14,8 @@ const DRUMS = /^\s*&((?:groove|percussion|agogo)\d*)(?=\s|$)/gm;
 export function heard(text: string): string {
   const defines = (name: string) => new RegExp(`^\\s*&${name}(?=\\s|$)`, 'm').test(text);
   const drums = [...text.matchAll(DRUMS)].map((m) => `&${m[1]}`);
-  return [...(drums.length ? [`&drumCard map=midi(10) [${drums.join(', ')}]`] : []), ...(defines('bassline') ? ['&bassCard map=midi(2) [&bassline * &bassV]'] : [])].join('\n');
+  return [
+    ...(drums.length ? [`&drumCard map=midi(10) [${drums.join(', ')}]`] : []),
+    ...(defines('bassline') ? ['&bassCard map=midi(2) [&bassline * &bassV]', '&bassSound map=sample [&bassline * &bassV]'] : []),
+  ].join('\n');
 }
