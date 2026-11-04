@@ -1,6 +1,7 @@
 import { resolveIn, semitones } from "./helix.js";
 import { clocking, EPS, playing, shiftsAt } from "./clocking.js";
 import { tapped } from "./flatten.js";
+const drawnOf = (m, e, lap) => (m.drawn ? m.drawn(e, lap) : e);
 export function paramAt(p, prm, at) {
     const product = prm.series.reduce((a, m) => a * valueThen(levelSeries(p, m, at, at + 1), at, (x) => x.level), 1);
     return prm.range ? prm.range[0] + (prm.range[1] - prm.range[0]) * product : product;
@@ -95,6 +96,10 @@ function rampedSeries(p, m, from, to, valueOf) {
     const tm = clocking(p.result, p.statics).map(m.clock);
     const starts = [...new Map(m.events.map((e) => [e.step, e])).values()].sort((a, b) => a.step - b.step);
     const at = (c) => tm.q(c / m.rate);
+    const value = (e, lap, time) => {
+        const d = drawnOf(m, e, lap);
+        return d ? valueOf(d, time) : 0;
+    };
     const valueAt = (c) => {
         const lap = Math.floor(c / m.period);
         const local = c - lap * m.period;
@@ -104,11 +109,11 @@ function rampedSeries(p, m, from, to, valueOf) {
                 i = k;
         const a = starts[i];
         const aStep = a.step > local + EPS ? a.step - m.period : a.step;
-        const va = valueOf(a, at(lap * m.period + aStep));
+        const va = value(a, aStep < 0 ? lap - 1 : lap, at(lap * m.period + aStep));
         if (i === starts.length - 1 || aStep < 0)
             return va;
         const b = starts[i + 1];
-        const vb = valueOf(b, at(lap * m.period + b.step));
+        const vb = value(b, lap, at(lap * m.period + b.step));
         return va + ((vb - va) * (local - aStep)) / Math.max(EPS, b.step - aStep);
     };
     let c0 = tm.stepAt(Math.max(0, from)) * m.rate;
@@ -122,13 +127,13 @@ function rampedSeries(p, m, from, to, valueOf) {
         for (const e of starts) {
             const c = lap * m.period + e.step;
             if (c > c0 + EPS && c < c1 - EPS)
-                out.push({ at: at(c), v: valueOf(e, at(c)), ramp: e !== starts[0] });
+                out.push({ at: at(c), v: value(e, lap, at(c)), ramp: e !== starts[0] });
         }
     out.push({ at: to, v: valueAt(c1 - 1e-6), ramp: true });
     return out;
 }
 export function levelSeries(p, m, from, to, written) {
-    const val = (e) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter));
+    const val = (e) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : m.bipolar ? Math.max(0, (1 + e.value + e.alter) / 2) : Math.max(0, e.value + e.alter));
     if (m.events.length === 0)
         return [{ at: from, level: 0 }];
     if (!m.clock)
@@ -143,11 +148,16 @@ export function levelSeries(p, m, from, to, written) {
     if (!Number.isFinite(c1))
         c1 = c0;
     const levelAt = (c) => {
-        const local = c - lapOf(c, m.period) * m.period;
+        const lap = lapOf(c, m.period);
+        const local = c - lap * m.period;
         let best = -1;
-        for (const e of m.events)
-            if (local >= e.step - EPS && local < e.step + e.duration - EPS)
-                best = Math.max(best, val(e));
+        for (const e of m.events) {
+            if (!(local >= e.step - EPS && local < e.step + e.duration - EPS))
+                continue;
+            const d = drawnOf(m, e, lap);
+            if (d)
+                best = Math.max(best, val(d));
+        }
         return best < 0 ? 0 : best;
     };
     const w = written === undefined ? NaN : clocking(p.result, p.statics).written(m.clock).stepAt(Math.max(0, written)) * m.rate;

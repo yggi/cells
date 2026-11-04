@@ -1459,6 +1459,50 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
     expect(parse('&t [0|4').diagnostics[0].message).toMatch(/choice/);
     expect(parse('&t chance=3 0?').diagnostics[0].message).toMatch(/chance= is a probability/);
   });
+  // (#457: a level's and a moving parameter's steps were read as written, the first option always)
+  it('a level and a moving parameter draw their steps as a melody does: a choice, a chance, a lap', () => {
+    const levels = (cell: string) => {
+      const r = compileSource(`&t step=10 0\n&l map=amp step=10 ${cell}\n&v s=sine loop=C4 lpf=0..1000 * &l\n&out loop=SAMPLE_RATE map=sample [&t * &l * &v]`);
+      expect(r.diagnostics).toEqual([]);
+      const ev = events(r, 0, 40);
+      return { gains: ev.map((e) => e.levels[0]!.level), cutoffs: ev.map((e) => (e.params?.lpf?.kind === 'points' ? e.params.lpf.points[0]!.value : NaN)) };
+    };
+    const chosen = levels('[.2|.5|.8]');
+    expect(new Set(chosen.gains)).toEqual(new Set([0.2, 0.5, 0.8]));
+    expect(chosen.cutoffs).toEqual(chosen.gains.map((g) => g * 1000));
+    // (the same every time: keyed on the seed, the cell, the lap and the step)
+    expect(levels('[.2|.5|.8]')).toEqual(chosen);
+    // (a step dropped is silence: the note it would have levelled doesn't sound, about half of them)
+    const dropped = levels('.6?').gains;
+    expect(new Set(dropped)).toEqual(new Set([0.6]));
+    expect(dropped.length).toBeGreaterThan(400 * 0.4);
+    expect(dropped.length).toBeLessThan(400 * 0.6);
+    expect(levels('<.2 .8>').gains.slice(0, 4)).toEqual([0.2, 0.8, 0.2, 0.8]);
+  });
+  // (decision 067 §5, the owner on #463: a bipolar wave read as a share is (1 + x)/2, not cut off at 0)
+  it('a bipolar cell read as a share, a level or a parameter’s factor, is (1 + x)/2; one at 0 or above as written; a pitch in semitones', () => {
+    // (a parameter's factor: the cutoff of each of four notes; a volume: their levels, a level of 0 silent)
+    const cutoffs = (cell: string) => {
+      const r = compileSource(`&t step=10 0\n&l step=10 ${cell}\n&v s=sine loop=C4 lpf=0..1000 * &l\n&out loop=SAMPLE_RATE map=sample [&t * &v]`);
+      expect(r.diagnostics).toEqual([]);
+      return events(r, 0, 0.4).map((e) => (e.params?.lpf?.kind === 'points' ? e.params.lpf.points[0]!.value : NaN));
+    };
+    const gains = (cell: string) => {
+      const r = compileSource(`&t step=10 0\n&l map=amp step=10 ${cell}\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &l * &v]`);
+      expect(r.diagnostics).toEqual([]);
+      return events(r, 0, 0.4).map((e) => e.levels[0]!.level);
+    };
+    expect(cutoffs('-1 -.5 0 .5')).toEqual([0, 250, 500, 750]);
+    expect(gains('-1 -.5 0 .5')).toEqual([0.25, 0.5, 0.75]);
+    expect(cutoffs('0 .5 1 .25')).toEqual([0, 500, 1000, 250]);
+    // (sin(4): 0 1 0 −1, read as .5 1 .5 0)
+    expect(cutoffs('sin(4)')).toEqual([500, 1000, 500, 0]);
+    // (as a pitch: a vibrato in semitones, either way)
+    const r = compileSource('&t step=10 0\n&vib loop=1 sin(4)\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [(&t + &vib) * &v]');
+    const semis = events(r, 0, 1).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + (e.bends[0] ? Math.round(e.bends[0].cents / 100) : 0));
+    expect(Math.min(...semis)).toBe(-1);
+    expect(Math.max(...semis)).toBe(1);
+  });
 });
 
 describe('Cellscape II feat. Stockhausen', () => {
