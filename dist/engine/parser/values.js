@@ -3,7 +3,7 @@ import { syntax } from "./syntax.js";
 import { perSecond, UNIT } from "./units.js";
 import { MAX_EVENTS } from "../program.js";
 export const STEP_SYNTAX = [
-    syntax('rate', 'step=r · loop=r', 'step= moves a cell a step at a time, r steps a second; loop= turns its whole braid r times a second (loop=r is step=r·k for k steps). One of the two.', ['&tune step=2 0 2 4', '&lead loop=261.63 0 1'], 'time.md'),
+    syntax('rate', 'step=r · loop=r', "step= moves a cell a step at a time, r steps a second, each step a note; loop= turns its whole braid r times a second (the rate of step=r·k for k steps) and reads it as a signal, each value held, no note started: a bend, a waveform, a voice's frequency (decision 068: dilate, then a held ramp). One of the two.", ['&tune step=2 0 2 4', '&lead loop=261.63 0 1'], 'time.md'),
     syntax('rate', 'loop=NAME', 'A value from the environment: SAMPLE_RATE, A4, or a note name (C4, F#3, Bb2) as its frequency.', ['&lead s=saw loop=C4', '&out loop=SAMPLE_RATE map=sample &mix'], 'time.md'),
     syntax('rate', 'step=&x · loop=&x', 'Driven by another cell: a step (or a whole turn) per step of &x.', ['&tune step=&bar 0 2 4'], 'time.md'),
     syntax('rate', 'step=cycle(&x)', 'A step per cycle of &x (each time its braid comes round).', ['&key step=cycle(&theme) stride=7'], 'time.md'),
