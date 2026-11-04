@@ -1,4 +1,5 @@
 import { leaves } from "../subseq.js";
+import { CV_LAPS } from "../program.js";
 import { memberParams, VOICE_PARAMS } from "../attributes.js";
 import { AlgebraError, distribute } from "../algebra.js";
 import { syntax } from "../parser/syntax.js";
@@ -50,7 +51,7 @@ export const SORT_RULES = [
         sort: 'wave',
         is: 'A braid turning at an audio rate (20 Hz and up) with no sound of its own. Alone in a product it is the sound (a waveform); in a pitch sum, or beside a sound, a pitch that moves at audio rate (FM). One that plays as a voice in the piece is a sound everywhere.',
         example: ['&square loop=220 0 1'],
-        holds: (d, seen) => (turns(d, seen) ?? 0) >= 20,
+        holds: (d, seen) => (turns(d, seen) ?? 0) >= CV_LAPS,
     },
     {
         sort: 'volume',

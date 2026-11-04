@@ -229,36 +229,23 @@ describe('the meter contract (music-commons contracts/meter, version 1)', () => 
     for (const [name, groups] of Object.entries(meter.names)) expect(name.endsWith('/4') ? SIGNATURES[name].map((b) => 2 * b) : SIGNATURES[name], name).toEqual(groups);
   });
 
-  it('meter(signature) has the contract’s levels for a bar of two or three groups: 2/4 3/4 5/8 6/8 7/8 9/8', () => {
-    for (const name of ['2/4', '3/4', '5/8', '6/8', '7/8', '9/8']) expect(written(name), name).toEqual(of(meter.names[name]).levels);
+  it('meter(signature) has the contract’s levels for every name, four groups or more halved (#17, the owner’s ruling (a))', () => {
+    for (const name of Object.keys(meter.names)) expect(written(name), name).toEqual(of(meter.names[name]).levels);
   });
 
-  it('…but not for four groups or more, which cells doesn’t halve: every group’s start is a beat, + (recorded, not a failure)', () => {
-    // The contract halves four or more groups by even(2, count), as Jambot's accents do (4/4 * . - . + . - . an eighth at a
-    // time); cells grades each group's start 1, a beat. Recorded as what cells does, levels one a step at 2 steps an eighth.
-    const recorded: Record<string, string> = {
-      '4/4': '0434143414341434',
-      '5/4': '04341434143414341434',
-      '10/8': '04343414341434341434',
-      '12/8': '043434143434143434143434',
-    };
-    for (const [name, levels] of Object.entries(recorded)) {
-      expect(written(name).join(''), name).toBe(levels);
-      expect(of(meter.names[name]).levels.join(''), name).not.toBe(levels);
-      // (the same steps but each half's start: the contract's 2 is cells' 1)
-      expect(
-        of(meter.names[name])
-          .levels.map((l) => (l === 2 ? 1 : l))
-          .join(''),
-        name,
-      ).toBe(levels);
+  it('every grouping of 2s and 3s, written as sizes, has the contract’s levels, and a named one is its signature’s meter (#17)', () => {
+    for (const v of meter.vectors) {
+      const name = v.groups.join('+');
+      // (one group is no grouping: "2" and "3" are a beat, not a bar of groups, and an error; the other 45 vectors are written)
+      if (v.groups.length < 2) {
+        expect(parse(`&bar meter("${name}")`).diagnostics, name).not.toEqual([]);
+        continue;
+      }
+      expect(written(name), name).toEqual(v.levels);
     }
-  });
-
-  it('the 37 groupings no signature names are not written by meter(…) yet: 2+2+3 written out is #17 (recorded)', () => {
-    const named = new Set(Object.values(meter.names).map((g) => g.join('+')));
-    expect(meter.vectors.filter((v) => !named.has(v.groups.join('+')))).toHaveLength(37);
-    expect(parse('&bar meter("2+2+3")').diagnostics).not.toEqual([]);
+    // (a signature is a name for one grouping: 7/8 is 3+2+2, the same meter, its pulses and beats too)
+    const meterOf = (sig: string) => compileSource(`&bar meter("${sig}", 2) step=60bpm`).cells.get('bar')!.meter;
+    for (const [name, groups] of Object.entries(meter.names)) if (name.endsWith('/8')) expect(meterOf(groups.join('+')), name).toEqual(meterOf(name));
   });
 });
 

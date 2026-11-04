@@ -7,6 +7,7 @@ import { isMidiCard, type MidiDest, type Output, type ResolvedCell } from '../pr
 import type { Cells, Ctx } from './context';
 import type { Typed } from './sorts';
 import { noSound } from './band';
+import { refsOf } from '../readers';
 
 /**
  * A sound card's entry, named by the cells its term names (`&crackle * &vinyl * .04` is `crackle*vinyl`), a cell written in
@@ -251,6 +252,15 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     const src = d.params.s;
     if (src !== undefined && !(String(src) in DOUGH_SOURCES)) error(`Unknown sound '${src}' (${Object.keys(DOUGH_SOURCES).join(', ')})`, d.paramSpans.s ?? d.span);
     if (src !== undefined && d.braid.kind !== 'blank') warn(`s=${src} plays a built-in waveform; the braid is ignored`, d.paramSpans.s);
+    // (#425: a voice by its own sound parameters whose braid names a voice — a voice's braid is its waveform, and a voice
+    // is no waveform; the mix of it is an instrument, decision 067)
+    const own = Object.keys(d.params).find((k) => VOICE_PARAMS.has(k));
+    const named = src === undefined && own ? refsOf(c).find((n) => n !== name && (cells.get(n)?.voice || cells.get(n)?.kit)) : undefined;
+    if (named)
+      warn(
+        `&${name}'s braid names &${named}, a voice: a voice's braid is its waveform, and a voice is none, so &${named} isn't heard. To play it through &${name}'s ${own}=, write the mix: &${name} … [&${named}]`,
+        d.span,
+      );
     for (const [k, v] of Object.entries(d.params)) if (ATTRIBUTES[k]?.value === 'number' && typeof v !== 'number') error(`${k}= takes a number`, d.paramSpans[k]);
     // a voice by its sound parameters, written as a clock: say which parameter made it one
     const made = Object.keys(d.params).find((k) => VOICE_PARAMS.has(k));

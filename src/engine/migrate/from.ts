@@ -5,7 +5,7 @@
  * takes, and those the piece reads besides; each parameter the piece defines, which the old use read by name, bound to
  * the piece's cell (`use &bar, &swing from swung` with the piece's `&swing` → `&bar from swung(swing=&swing) &tempo`); and
  * the main argument the piece's cell, or, where that cell is read by nothing else and holds no slider, written in its
- * place and its line gone (`use &key from dorian` with `&tonic D` → `&key from dorian D`), as the template reads it
+ * place and its line gone (`use &key from dorian` with `&tonic D` → `&key from diatonic(mode=dorian) D`), as the template reads it
  * (`&tempo step=96bpm` → `96bpm`). A use it can't say so exactly (a name it took that the copy keeps to itself, a
  * parameter the piece doesn't give) is left as it is, and every rewrite is checked to play the same.
  */

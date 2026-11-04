@@ -30,6 +30,12 @@ export declare const MAX_NOTES_PER_SECOND = 2000;
  * (5,000 deep overflowed the stack). The deepest in examples/ is 4 (the Lullaby's &roll).
  */
 export declare const MAX_SPLICE_DEPTH = 256;
+/**
+ * The most laps a second a moving parameter's factor turns (#427): a CV, read as a note's points. Faster is a wave by
+ * the sorts' own edge (20 Hz, decision 006), a warning, and the CV is read turning at this. Audio-rate modulation is
+ * FM's (fm=, physics.md). The fastest in examples/ is baustelle's &edge, 2.7 a second (loop=.37).
+ */
+export declare const CV_LAPS = 20;
 /** The fields a label= can hold, {tempo} or {&key:tonic} (filled in by layout/labels.ts); any other is a warning. */
 export declare const LABEL_FIELDS: readonly ["name", "notes", "tonic", "mode", "steps", "tempo", "shift"];
 /** A voice without a rate loops at middle C. */

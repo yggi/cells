@@ -8,7 +8,7 @@ The cells language: a minimal language for music where everything is a **cell**,
 
 ## The family
 
-The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells passes version 1 of `euclid`, `notes` and `swing` (with `:pairs`), and of `meter`'s names; it records where it differs (`meter`'s levels of four groups or more, which it doesn't halve) ([testing.md](testing.md)).
+The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells passes version 1 of `euclid`, `notes`, `swing` (with `:pairs`) and `meter` (every grouping, its names and its sizes, #17) ([testing.md](testing.md)).
 
 The language's open questions live in this tracker, [yggi/cells' issues](https://github.com/yggi/cells/issues); the frontends' trackers point here ([music-commons#14](https://github.com/yggi/music-commons/issues/14)).
 
@@ -42,9 +42,9 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - `map=midi` a MIDI card, entries channels; `midi(10)`, `midi(10, 2)` (slot 2) → [midi](language/midi.md)
 - voices `s=` `loop=`, `env=` `pitch=` `map=adsr|amp|lin|db`; a line's articulation `legato=.5` (Strudel's) → [sound](language/sound.md)
 - belts, tape, resonators, FM → [physics](language/physics.md)
-- `&key from dorian D` a template's copy, `&bar from meter_4_4_swung_on_8n(swing=8n:.6) &tempo` its arguments, a signature `&bar from (&swing) &tempo` (decision 065); `&bd, &sd from gm_kit` a collection's cells, `* from gm_kit` every line; the piece's lines win; `use &bd from gm_kit` the old way → [from](language/use.md)
+- `&key from diatonic(mode=dorian) D` a template's copy, `&bar from meter_4_4_swung_on_8n(swing=8n:.6) &tempo` its arguments, a signature `&bar from (&swing) &tempo` (decision 065); `&bd, &sd from gm_kit` a collection's cells, `* from gm_kit` every line; the piece's lines win; `use &bd from gm_kit` the old way → [from](language/use.md)
 - `use &bd, &sd from gm_kit` the named cells and what they read, `use * from …` every line, `use &x` from x; the piece's lines win → [use](language/use.md)
-- `&key from dorian D` a template's copy, `&bar from swung(swing=8n:.6) &tempo` its arguments, a signature `&bar from (&swing) &tempo` (decision 065); `&bd, &sd from gm_kit` a collection's cells → [use](language/use.md)
+- `&key from diatonic(mode=dorian) D` a template's copy, `&bar from swung(swing=8n:.6) &tempo` its arguments, a signature `&bar from (&swing) &tempo` (decision 065); `&bd, &sd from gm_kit` a collection's cells → [use](language/use.md)
 - a piece's file: `title:` `tags:` `tier:` in its frontmatter (the card's `title=` `tags=` `tier=` the old way, a warning); `label=` `show=`, a cell's `tags=`; loudness: the card's `postgain=` (linear) → [display](language/display.md); a `show=` of the piece's own → [plugins](language/plugins.md)
 
 ## Decisions

@@ -1,5 +1,6 @@
 /** The mix algebra's view of the cells (algebra.ts): what each cell is, from its own line; a mix's expressions typed. */
 import { leaves } from '../subseq';
+import { CV_LAPS } from '../program';
 import type { Atom, Binding, CellDecl, Expr, Ref } from '../ast';
 import { memberParams, VOICE_PARAMS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
@@ -76,7 +77,7 @@ export const SORT_RULES: readonly SortRule[] = [
     sort: 'wave',
     is: 'A braid turning at an audio rate (20 Hz and up) with no sound of its own. Alone in a product it is the sound (a waveform); in a pitch sum, or beside a sound, a pitch that moves at audio rate (FM). One that plays as a voice in the piece is a sound everywhere.',
     example: ['&square loop=220 0 1'],
-    holds: (d, seen) => (turns(d, seen) ?? 0) >= 20,
+    holds: (d, seen) => (turns(d, seen) ?? 0) >= CV_LAPS,
   },
   {
     sort: 'volume',

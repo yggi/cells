@@ -24,7 +24,7 @@ stereo  live 2a23340ac7fbd3be
 waveforms  live fda62d09719584b9
 moving  live 907d4a09ec02fb9d
 grids  live c25d6086a52457cb
-metronome  live 7fbfb4ea5b737680
+metronome  live ce76313c8d9cdd34
 fm  live 4ac8e3f2956e54aa
 musicbox  live c1384fce2e804f85
 automaton  live 3148a0734f1f6970
@@ -68,7 +68,7 @@ hypercell  live 102d8396baef9e1e
 onemore  live d6681d54413c2e59
 electroswing  live 4835aa50a2db945b
 spooky  live b0ce5cf9eb42c6c0
-kinderlied  live cbfa7e8537abfcd8
+kinderlied  live 6b8e8036ff913c18
 brothers  live 89d8f5a03778cd82
 ghosts  live e4109e6f71217d64
 tines  live 6457d4cb35a66a85

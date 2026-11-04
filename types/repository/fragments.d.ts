@@ -7,6 +7,11 @@ export interface WeightedPoint {
     readonly weight: number;
     /** The facet it is associated as here (`meter`, `rhythm`): a hint a query names. With none, the point counts for every facet. */
     readonly facet?: string;
+    /**
+     * A template's arguments at this point (`{ mode: 'aeolian' }`), in a seed file: the seed reads each set as a fragment of its
+     * own, `diatonic(mode=aeolian)`, the template with them bound (`seed.ts`, #387). A fragment as a repository holds it has none.
+     */
+    readonly args?: Readonly<Record<string, string>>;
 }
 /** A fragment: cells text and its index entry. */
 export interface Fragment {
@@ -135,4 +140,4 @@ export declare const byId: (a: string, b: string) => number;
  * A repository of these fragments, the seed; it throws on a malformed entry or an id given twice, naming each problem. It
  * keeps nothing between calls but a cache of compiles by text (`cachedFit`), which changes no answer.
  */
-export declare function createRepository(entries: readonly Fragment[]): Repository;
+export declare function createRepository(given: readonly Fragment[]): Repository;
