@@ -1,6 +1,6 @@
 # The core grammar: every form of the reference in four primitives
 
-Date: 2026-11-04 · Status: open: the owner's answers of 2026-11-04 folded in (1, 2, 4, 5 accepted; 3 under discussion; 6 reshaped into Normalise and a compile tool); decision 067 waits on 3; nothing in the language changes · Issues: [#418](https://github.com/yggi/cells/issues/418), part of [#51](https://github.com/yggi/cells/issues/51) (step 3, a minimal grammar) and on the v1.0.0 tracker [#26](https://github.com/yggi/cells/issues/26); the hypothesis is [multiscale.md](multiscale.md) (its Q4 and its disentangler inventory) and [10-language-pass.md](10-language-pass.md) §3 · Test: `src/engine/core.test.ts`
+Date: 2026-11-04 · Status: done: the owner's answers of 2026-11-04 folded in, ruled as [decision 068](../decisions/068-the-core-grammar.md) (067 went to modular synthesis, #433); nothing in the language changes here, the follow-ups are #434, #438, #439, #440, #441 · Issues: [#418](https://github.com/yggi/cells/issues/418), part of [#51](https://github.com/yggi/cells/issues/51) (step 3, a minimal grammar) and on the v1.0.0 tracker [#26](https://github.com/yggi/cells/issues/26); the hypothesis is [multiscale.md](multiscale.md) (its Q4 and its disentangler inventory) and [10-language-pass.md](10-language-pass.md) §3 · Test: `src/engine/core.test.ts`
 
 Before 1.0 freezes the language, which forms are its **core**, and which are **sugar** that rewrites into the core? The core is what a later version must keep meaning the same. Sugar can be respelled freely: Normalise writes one spelling of it, and Migrate carries a respelling across versions. The hypothesis is that four primitives generate the language, as union, intersection and difference generate a CSG solid:
 
@@ -40,7 +40,7 @@ step     := terminal
           | dilate(step)     @n  /n  inverse  step=r  step=&x  &x*n/d  loop=
           | lookup(step)     &x  &x[i]  over=  map=  a section, a role
           | combine(step*)   [a, b]  a * b  a + b  env=  laps=  the card
-          | ramp(step)       map=lin  map=adsr  swing=  wow=  varispeed=  at=     (the fifth: decision 067 to say)
+          | ramp(step)       map=lin  map=adsr  swing=  wow=  varispeed=  at=     (the fifth: decision 068 to say)
 terminal := number | n/d | ~ | &name                     and the sources: free(…), chance (x?, [a|b], seed=)
 ```
 
@@ -234,7 +234,7 @@ The 61 parameters are a voice's (or a physical cell's) **values**, not grammar: 
 
 | family | rows | verdict |
 |---|---|---|
-| **ramp** | 66 `map=lin`, 68 `map=adsr`, and the soft-time parameters | **a fifth primitive.** A value or a time moved continuously between steps, which no rewrite into steps makes exact. A "shift by a cell's values" (multiscale's other reading) is a ramp again, because the cell must move between steps. Keep it, and name it in decision 067 |
+| **ramp** | 66 `map=lin`, 68 `map=adsr`, and the soft-time parameters | **a fifth primitive.** A value or a time moved continuously between steps, which no rewrite into steps makes exact. A "shift by a cell's values" (multiscale's other reading) is a ramp again, because the cell must move between steps. Keep it, and name it in decision 068 |
 | **chance** | 17 `[a\|b]`, 26 `x?`, 92 `chance=`, 93 `seed=` | **a source, not a primitive.** A seeded stream at the border, read by look up (a choice is a pick by a chance index) or by combine (`x?` is a product with a chance gate). Keep |
 | **sources** | 44 to 48, 57, 109 `free()` | **a source, not a primitive**, like `&bar` and `&key`: as text, each plays its value (S1 ✔). Keep |
 | **inert** | 2, 73, 85, 86, 90, 94, 95, 96 | the graph's and the style's data, outside the sound. Keep: Normalise and S1 already pass them through |
@@ -243,7 +243,7 @@ The 61 parameters are a voice's (or a physical cell's) **values**, not grammar: 
 The inexact claims:
 
 - **`loop=` as `step=`** (rows 49, 81). The rate is exact; what differs is how the line is read. [`loop=` on a line](#loop-on-a-line-question-3) discusses it.
-- **`pitch=`** (row 88). The bends are identical to a sum in the mix. If decision 067 calls `pitch=` sugar, S1 should read a voice's `pitch=` as its bends already do, and not as the voice's sound; otherwise `pitch=` is core combine.
+- **`pitch=`** (row 88). The bends are identical to a sum in the mix. If decision 068 calls `pitch=` sugar, S1 should read a voice's `pitch=` as its bends already do, and not as the voice's sound; otherwise `pitch=` is core combine.
 - **`off`** (row 3). S1 plans without the text's `off` set, so it hears a cell switched off. That is a bug, not a question: [#434](https://github.com/yggi/cells/issues/434).
 
 ## How it meets #27, #151 and #179
@@ -256,7 +256,7 @@ The inexact claims:
 
 1. **The ramp is the fifth primitive.** Accepted.
 2. **Chance and `free()` are sources**, not primitives. Accepted.
-3. **`loop=` on a line**: to discuss. See [below](#loop-on-a-line-question-3).
+3. **`loop=` on a line**: "loop: B, maybe C later". B: the reference narrowed (#438); C may follow if the ramp gets a spelling. See [below](#loop-on-a-line-question-3).
 4. **`oneshot` is retired as a line word** before 1.0, and becomes a voice's parameter, with a migration. Accepted.
 5. **`pitch=` is sugar** of a sum in the mix, and S1 is taught to read it so. Accepted.
 6. **Normalise and a compile tool**: "we have to see what goes into normalize (IMHO it should stay on the human-readable added sugar level) and what might move into a 'compile' tool: de-sugar, minify names (we should be immune to alpha-substitution, right?), fold to most compact minimal grammar form". See [below](#normalise-and-a-compile-tool-question-6).
@@ -275,7 +275,7 @@ So `loop=` and `step=` differ in **what the line is**, not in its rate. A `step=
 |---|---|---|
 | **A. `loop=` starts notes**, as `step=r·k` | the reference's claim becomes true | every vibrato, LFO and `loop=` pitch line in the frontends' pieces retriggers its notes; they would need a new spelling for a signal first. Not viable alone |
 | **B. Narrow the reference** (recommended) | `loop=r` has the rate of `step=r·k` and reads its braid as a signal: dilate, then a ramp that holds each value with no onsets. In the table, row 49 is "core: dilate composed with ramp", and the claim is reworded | nothing plays differently; one sentence of `values.ts`'s table and the reference regenerated |
-| **C. Split rate from reading** | `loop=` becomes pure sugar of `step=r·k`, and the signal reading moves to its own spelling (a `map=` or the ramp's own form) | a migration for every `loop=` line; worth it only if the ramp gets a spelling of its own anyway (decision 067) |
+| **C. Split rate from reading** | `loop=` becomes pure sugar of `step=r·k`, and the signal reading moves to its own spelling (a `map=` or the ramp's own form) | a migration for every `loop=` line; worth it only if the ramp gets a spelling of its own anyway (decision 068) |
 
 B keeps every piece as it sounds and states the grammar honestly: `loop=` is dilate composed with the fifth primitive. C is B's later step, if the ramp gets its own spelling. A breaks too much on its own.
 
@@ -284,13 +284,13 @@ B keeps every piece as it sounds and states the grammar honestly: `loop=` is dil
 The owner's split, set against decision 049's four tools:
 
 - **Normalise stays at the human-readable sugar level.** It writes one spelling per sugar family, the one a person writes (`_` as `@n`, a unit, a generator), and keeps every cell, name, step and reference (049). It never de-sugars. That is 049's Normalise as it stands, with this note's 45 sugar rows as #27's table.
-- **A compile tool** (new) writes the core form: (a) **de-sugar** every sugar row into its core rewrite, as `core.test.ts` writes it; (b) **minify names**; (c) **fold** to the most compact form in the minimal grammar. (c) is close to Shorten's job (049: a more compact structure, measured over the normal form). The difference is that compile measures over the *core* form, and nobody reads the result. Shorten could be compile's last step, or compile could be Shorten run after de-sugaring. That needs its own issue and decision.
+- **A compile tool** (new) writes the core form: (a) **de-sugar** every sugar row into its core rewrite, as `core.test.ts` writes it; (b) **minify names**; (c) **fold** to the most compact form in the minimal grammar. (c) is close to Shorten's job (049: a more compact structure, measured over the normal form). The difference is that compile measures over the *core* form, and nobody reads the result. Shorten could be compile's last step, or compile could be Shorten run after de-sugaring. That is scoped on #441, with its own decision.
 - **Is the language immune to alpha-substitution?** Yes for a text's own names, with one exception:
   - S1 reads every voice by what it sounds like, not by its name (decision 057, #186). A text with its own names renamed sounds identical, and decision 050's ladder has that as its rung E2 (`identicalUpToRenaming`, `src/engine/identity.ts`).
   - The main meter and the main key are found by structure, not by name (`CompileResult.mainMeter`, `mainKey`), so `step=pulse` doesn't care what the bar is called.
   - **The exception is the interface names** (decisions 059, 060: `&bar`, `&tempo`, `&key`, `&tonic`, `&harm`), and any name a text uses without defining it (a fragment's, a host's). E2 already keeps these as written. A fragment reads them and a frontend addresses them, so renaming one changes what the piece plugs into, though not how it sounds alone. Compile's minifier renames everything else and keeps those, or carries a map back.
 
-## The proposal: decision 067
+## Decision 068, as accepted
 
 1. **The core** is the 46 rows marked C: four primitives (shift with carry, dilate, look up, combine), the terminals, and combine's sorts. A later version keeps what they mean.
 2. **A fifth primitive, the ramp**, holds `map=lin`, `map=adsr` and soft time (`swing=`, `wow=`, `varispeed=`, a belt, a read head's `at=` and `wander=`). It is core as well. *(Accepted.)*
@@ -298,6 +298,6 @@ The owner's split, set against decision 049's four tools:
 4. **The sugar** is the 45 rows marked S, `pitch=` among them. S1 learns to read a voice's `pitch=` as the sum it is *(accepted)*, and to plan with `off` (#434). Each exact rewrite stays in `core.test.ts`, so a change that breaks one fails there.
 5. **Normalise writes sugar, not the core.** It stays at the human-readable level, one spelling per sugar family. Writing the core (de-sugar, minify the names but the interface names, fold) is a compile tool's job, to be scoped on its own issue.
 6. **Retire before 1.0**: `oneshot` as a line word; it becomes a voice's parameter, with a migration. *(Accepted.)*
-7. **`loop=`** (open): B above, the reference narrowed (dilate composed with the ramp), is recommended.
+7. **`loop=`**: B, the reference narrowed: dilate composed with the ramp (#438); C maybe later. *(Accepted.)*
 
-Decision 067 is written once question 3 is settled. Its follow-ups are #434, S1 reading `pitch=`, `oneshot`'s migration, and the compile tool's issue.
+Written as [decision 068](../decisions/068-the-core-grammar.md). Its follow-ups: #434 (S1 and `off`), #438 (`loop=`'s wording), #439 (S1 and `pitch=`), #440 (`oneshot`), #441 (the compile tool).
