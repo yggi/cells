@@ -188,3 +188,28 @@ describe('glide=', () => {
     expect(compileSource(SRC('oneshot glide=.1', '0')).diagnostics.some((d) => /oneshot or glide=/.test(d.message))).toBe(true);
   });
 });
+
+describe('a level line that loops (#341)', () => {
+  // (a hit on each bar's first step, at 84 bpm under a meter: a lap's start, read from seconds, landed a float's width early)
+  const hits = (lv: string) => {
+    const r = compileSource(`&bar meter("4/4") step=84bpm
+&hat step=16n 0 ~@15 0 ~@15 0 ~@15 0 ~@15
+&hh s=white env=&(map=adsr 0 .05 0 .05)
+&lv map=amp ${lv}
+&out map=sample [&hat * &hh * &lv]`);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    return eventsBetween(
+      plan(r, () => 0),
+      0,
+      11.4,
+    )
+      .filter((e) => e.gains.some((g) => g > 0))
+      .map((e) => +e.at.toFixed(3));
+  };
+
+  it("levels each lap's first hit as the line written out does: four hits at every tempo", () => {
+    expect(hits('step=16n .5@16')).toEqual([0, 2.857, 5.714, 8.571]);
+    expect(hits('step=16n .5@16 .5@16 .5@16 .5@16')).toEqual([0, 2.857, 5.714, 8.571]);
+    expect(hits('step=4n .5!4')).toEqual([0, 2.857, 5.714, 8.571]);
+  });
+});
