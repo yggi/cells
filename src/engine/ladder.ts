@@ -165,7 +165,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'step [a b c]',
       'generator euclid(k, n)',
       'sort signal: a pattern read through a kit',
-      'line oneshot',
+      'parameter oneshot',
       'modifier &x:0:gain',
       // taps by pulse, of a named meter (decision 040)
       'rate step=pulse',
@@ -464,7 +464,7 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
     use('line &name …');
     if (c?.note) use('line &name label="…"');
     if (d.off) use('line off');
-    if (d.oneshot) use('line oneshot');
+    if (d.oneshot) use('parameter oneshot');
     // (a stepped table of names that declares sections: decision 016)
     if ([...(compiled.sections?.values() ?? [])].includes(d.name)) use('line &sections step=&bar &a &b');
     if (d.lambda) use('reference &( … )');
