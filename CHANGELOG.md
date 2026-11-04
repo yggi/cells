@@ -12,6 +12,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 - **Normalise writes the narrowest `from`** (#27's row, the owner on #157: "`* from foo` is just a shorthand for all from foo that are used in this piece"). A collection's `* from gm_kit` is written as the cells of it the piece reads (`&bd, &hh from gm_kit`), and a list of names drops any the piece reads nothing of. A cell the piece defines itself isn't taken, and a line the piece reads nothing of (a band) stays; every rewrite is checked to play the same. No example or seed fragment changes. **What a frontend sees at its next pin:** `normalise` on a piece with `* from` or an over-wide list writes it narrower; Jambot's section texts that end in `* from band` keep it.
 
+### Changed
+
+- **The point proposed for a Kinderlied preset finds the major and the vamp to the fifth** (yggi/jambot#547, the owner, 2026-11-04): `ionian` and `vamp_to_the_fifth` each hold a second association point at `KINDERLIED`, so a query for the mode or the harmony there finds them first, at distance 0, where it found aeolian at 0.219 and no harmony. The vamp's point weighs 0.5, so no preset finds it in place of its own (the fence of #404). No piece's text or notes move, and no preset's first find in any facet moves; only a frontend's query near `KINDERLIED` does.
+
 ## v0.16.0 — 2026-11-04
 
 Run Migrate on a piece written before it: `cycle=` counts laps (its `laps` and `grid` rules), and the seed ids are words (its `renamed` rule; the old ids read, warning, for this minor version).

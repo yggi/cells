@@ -25,7 +25,7 @@ const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOG
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY } from './library';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
 
 /** The point proposed for an Electro swing preset, as harmonic minor's file writes it: no preset of Jambot's (decision 041). */
 const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
@@ -115,6 +115,12 @@ describe('the presets find their modes', () => {
     expect(second!.distance).toBeGreaterThan(0);
   });
 
+  it('the point proposed for a Kinderlied preset finds ionian first, at distance 0, as Twinkle is major (yggi/jambot#547)', () => {
+    const [first, second] = repository.query(KINDERLIED, 2, {}, { facet: 'mode' });
+    expect([first!.fragment.id, first!.distance]).toEqual(['ionian', 0]);
+    expect(second!.distance).toBeGreaterThan(0);
+  });
+
   it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian); harmonic minor at the points proposed for Electro swing and Spooky (#349); phrygian, lydian and locrian each at a point of its own, placed by hand', () => {
     const OWN: Record<string, StylePoint> = { phrygian: at(0.6, 0.6, 0.7, 0.85), lydian: at(0.15, 0.6, 0.15, 0.3), locrian: at(0.9, 1, 0.6, 0.9) };
     for (const f of MODES) {
@@ -126,7 +132,8 @@ describe('the presets find their modes', () => {
             : f.id === 'mixolydian'
               ? [Object.fromEntries(Object.keys(FUNK).map((axis) => [axis, (FUNK[axis]! + BOSSA_NOVA[axis]!) / 2]))]
               : PRESETS.filter((p) => p.mode === f.id).map((p) => p.point);
-      expect(f.association.map((wp) => wp.point)).toEqual(points);
+      // (ionian at the point proposed for a Kinderlied preset too: children's songs are major, yggi/jambot#547)
+      expect(f.association.map((wp) => wp.point)).toEqual(f.id === 'ionian' ? [...points, KINDERLIED] : points);
       expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
     }
   });
