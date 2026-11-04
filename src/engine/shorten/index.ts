@@ -12,11 +12,8 @@
  *  - stereo.ts:    a sound card's two chords that differ only in gains — one chord, and pan= on each voice
  *  - wrappers.ts:  a cell that only reads motifs through a shifted table — &motif^k where it's used
  *  - aliases.ts:   Strudel's or dough's name for a parameter where ours is shorter: cutoff= → lpf= (decision 027)
- *  - Migrate's four, delegated for one minor version (decision 049; their rules are in ../migrate/):
- *    gates.ts:     a migration: a gate written the old way (trigger=, velocity=, gate=, gain=) as play= and level= (decision 023)
- *    taps.ts:      a migration: a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
- *    swing.ts:     a migration: a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
- *    sections.ts:  a migration: a table of sections named &parts as &sections (decision 044)
+ *  - (Migrate's four, gates, taps, swing and sections, were offered here for v0.15, delegated, and left in v0.16:
+ *    a retired form is Migrate's, decision 049, #157)
  *  - card.ts:      a migration: a card that says what the piece is (title= tags= tier=) as a piece file, those in its
  *                  frontmatter (decision 047); its rewrite is a file, not a text, so shortenAll never takes it
  *
@@ -26,6 +23,7 @@
  */
 import { compileSource } from '../compile';
 import type { CompileOptions } from '../program';
+import type { Hint } from '../fold/hints';
 import { candidates, savesChars, size, structure, suggestion, type ShortenRewrite, type Suggestion } from './harness';
 import { runs } from './runs';
 import { phrases } from './phrases';
@@ -35,37 +33,38 @@ import { defaults } from './defaults';
 import { progressions } from './progressions';
 import { wrappers } from './wrappers';
 import { stereo } from './stereo';
-import { gates } from '../migrate/gates';
 import { aliases } from './aliases';
-import { taps } from '../migrate/taps';
-import { swings } from '../migrate/swing';
-import { sections } from '../migrate/sections';
 import { card } from './card';
 
 export type { Suggestion } from './harness';
+
+/**
+ * What Shorten reads besides the text: the compile's options, and hints (decision 049, #157): what Fold found in the
+ * notes (`hints(lines)`, in steps, over a span heard or a MIDI file), each a claim of where to look. A hint is placed on
+ * the lines as written and weighed as the text's own repeats are; one that doesn't land, or is wrong, costs no notes.
+ */
+export interface ShortenOptions extends CompileOptions {
+  readonly hints?: readonly Hint[];
+}
 
 /**
  * Everything that could be written shorter, the largest saving first. A piece's `use` lines read through `options`
  * (decision 054, #241): what is offered is what the piece written out would be offered, less any rewrite of a used line
  * (one the piece would then define over its fragment's).
  */
-export function shorten(source: string, options: CompileOptions = {}): Suggestion[] {
+export function shorten(source: string, options: ShortenOptions = {}): Suggestion[] {
   const { result, cells } = candidates(source, options);
   if (!result.ok) return [];
   const found = [
     ...runs(source, cells),
-    ...phrases(source, cells, result, options),
+    ...phrases(source, cells, result, options, options.hints),
     ...fractions(source, cells, result),
     ...sameCells(source, result, options),
     ...defaults(source, result, options),
     ...progressions(source, result, options),
     ...wrappers(source, result, options),
     ...stereo(source, result, options),
-    ...gates(source, result, options),
     ...aliases(source, result),
-    ...taps(source, result, options),
-    ...swings(source, result, options),
-    ...sections(source, result, options),
     ...card(source, options),
   ];
   const kept = result.uses?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
@@ -78,11 +77,11 @@ export function shorten(source: string, options: CompileOptions = {}): Suggestio
 }
 
 /**
- * The kinds offered whatever structure they save (#157): the migrations (Migrate's, delegated for one minor version,
- * decision 049's bound), and the respellings Shorten keeps until #27 rules their rows (`alias`, Normalise's;
+ * The kinds offered whatever structure they save (#157): the card's migration (a file, which Migrate can't write), and
+ * the respellings Shorten keeps until #27 rules their rows (`alias`, Normalise's;
  * `fraction`, `progression`), each offered by its rule where it is shorter in characters.
  */
-const RESPELLINGS: ReadonlySet<Suggestion['kind']> = new Set(['gate', 'tap', 'swing', 'section', 'card', 'alias', 'fraction', 'progression']);
+const RESPELLINGS: ReadonlySet<Suggestion['kind']> = new Set(['card', 'alias', 'fraction', 'progression']);
 
 const overridden = (r: ReturnType<typeof compileSource>) =>
   (r.uses ?? [])
@@ -105,7 +104,7 @@ function keepsUsed(r: ShortenRewrite, source: string, options: CompileOptions, b
  * structure, or, where none saves any, a respelling that saves characters and adds no structure. Each step makes the
  * structure smaller, or the characters at the same structure, so it ends.
  */
-export function shortenAll(source: string, rounds = 60, options: CompileOptions = {}): { source: string; steps: string[] } {
+export function shortenAll(source: string, rounds = 60, options: ShortenOptions = {}): { source: string; steps: string[] } {
   let now = source;
   const steps: string[] = [];
   for (let i = 0; i < rounds; i++) {

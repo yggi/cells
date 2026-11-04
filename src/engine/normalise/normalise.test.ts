@@ -106,8 +106,10 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       ['use &bd, &hh, &sd from "gm kit"', 'use &bd, &hh, &sd from gm_kit'],
     ]) {
       const { source, steps } = normalise(`${old}\n${groove}`, { resolve: resolveSeed, old: true });
-      // (and then, a collection's use, as its from line: decision 065)
-      expect([old, source]).toEqual([old, `${now.replace(/^use /, '')}\n${groove}`]);
+      // (and then, a collection's use, as its from line, decision 065: the cells of it the groove reads, the narrowest
+      // from, #27, in the order written, or the kit's for a *; a comment stays where it was)
+      const narrowest = now.includes('&hh, &sd') ? '&bd, &hh, &sd' : '&bd, &sd, &hh';
+      expect([old, source]).toEqual([old, `${narrowest} from gm_kit${now.includes('#') ? '  # the kit' : ''}\n${groove}`]);
       expect(steps.length, old).toBeGreaterThan(0);
       expect(compileSource(source, undefined, { resolve: resolveSeed, old: true }).diagnostics, old).toEqual([]);
     }

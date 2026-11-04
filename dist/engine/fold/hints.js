@@ -143,3 +143,42 @@ export function writtenHints(braids) {
         return [{ ...h, spans, length: spans[0].to - spans[0].from }];
     });
 }
+const stepsWritten = (t) => {
+    const m = /[@!](\d+)$/.exec(t);
+    return m ? Number(m[1]) : 1;
+};
+export function placedHints(found, braids) {
+    const edges = new Map(braids.map(({ name, tokens }) => {
+        const starts = new Map();
+        const ends = new Map();
+        let at = 0;
+        tokens.forEach((t, i) => {
+            starts.set(at, i);
+            at += stepsWritten(t);
+            ends.set(at, i + 1);
+        });
+        return [name, { starts, ends }];
+    }));
+    return found.flatMap((h) => {
+        const kept = [];
+        h.spans.forEach((s, i) => {
+            const e = edges.get(s.line);
+            const from = e?.starts.get(s.from);
+            const to = e?.ends.get(s.to);
+            if (from === undefined || to === undefined)
+                return;
+            if (kept.length && to - from !== kept[0].span.to - kept[0].span.from)
+                return;
+            kept.push({ span: { ...s, from, to }, transform: h.transforms[i] });
+        });
+        if (kept.length < 2 || kept[0].transform.kind === 'reversed')
+            return [];
+        const moved = (t) => (t.kind === 'same' ? 0 : t.by);
+        const by0 = moved(kept[0].transform);
+        const transforms = kept.map(({ transform: t }) => {
+            const by = moved(t) - by0;
+            return t.kind === 'reversed' ? { kind: 'reversed', by } : by === 0 ? { kind: 'same' } : { kind: 'transposed', by };
+        });
+        return [{ ...h, spans: kept.map((k) => k.span), transforms, length: kept[0].span.to - kept[0].span.from }];
+    });
+}
