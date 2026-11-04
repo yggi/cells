@@ -10,7 +10,8 @@ import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generato
 import { MODE_WORDS } from "../../theory/modes.js";
 import { atTap, parseMap, parseStep } from "./values.js";
 import { syntax } from "./syntax.js";
-import { AXIS_NAMES } from "../style.js";
+import { AXIS_NAMES, SLOTS } from "../style.js";
+const ADSR_SLOTS = SLOTS.adsr;
 export const SHOWS = [
     'braid',
     'pattern',
@@ -427,6 +428,28 @@ function readParam(s, b, key) {
         b.paramSpans[key] = s.span(vs);
         return;
     }
+    const blend = key === 's' ? s.text.slice(s.i).match(/^([A-Za-z]+)\.\.([A-Za-z]+)/) : null;
+    if (blend) {
+        s.i += blend[0].length;
+        const factors = [];
+        for (;;) {
+            const save = s.i;
+            s.skipSpace();
+            if (s.peek() !== '*') {
+                s.i = save;
+                break;
+            }
+            s.i++;
+            s.skipSpace();
+            factors.push(s.cellRef(`a cell after *, like s=${blend[0]} * &style[artic]`, 'in s='));
+        }
+        if (factors.length === 0)
+            s.fail(`s=${blend[0]}: a blend of two waves is moved by cells, the share of the second: s=${blend[0]} * &style[artic]`, vs, s.i - vs);
+        b.params.s = blend[1];
+        b.paramCells.s = { range: [0, 1], factors, span: s.span(vs), to: blend[2] };
+        b.paramSpans.s = s.span(vs);
+        return;
+    }
     const range = s.text.slice(s.i).match(/^([0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\.([0-9]+(?:\.[0-9]+)?|\.[0-9]+)/);
     if (s.peek() === '&' || range) {
         if (range)
@@ -544,12 +567,22 @@ export function parseBody(s, head) {
     let freeEnd = -1;
     let freeSteps = '';
     const axes = new Map();
+    const adsr = new Map();
     while (!s.done()) {
         const at = s.i;
         const word = s.match(IDENT);
         if (word !== null && s.peek() === '=') {
             s.i++;
             const key = word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
+            if (key === null && ADSR_SLOTS.includes(word)) {
+                if (adsr.has(word))
+                    s.fail(`${word}= is given twice`, at, word.length);
+                adsr.set(word, at);
+                readParam(s, b, word);
+                if (!s.atBoundary())
+                    s.fail(`Unexpected '${s.peek()}'`);
+                continue;
+            }
             if (key === null && AXIS_NAMES.includes(word)) {
                 if (axes.has(word))
                     s.fail(`${word}= is given twice`, at, word.length);
@@ -656,6 +689,28 @@ export function parseBody(s, head) {
         for (const name of AXIS_NAMES) {
             const { value, at: where } = axes.get(name);
             const inner = s.within(value, where + name.length + 1);
+            pushStep(inner, tokens, parseToken(inner));
+        }
+    }
+    if (adsr.size) {
+        const [first, at] = [...adsr][0];
+        if (b.map?.kind !== 'adsr')
+            s.fail(RETIRED_KEYS[first] ?? `${first}= is a slot of an envelope: it goes on a map=adsr cell`, at, first.length);
+        if (generator || tokens.length)
+            s.fail('An envelope writes its slots by name (attack=.01) or in order (.01 .3 .5 .4), not both', at, first.length);
+        const missing = ADSR_SLOTS.filter((n) => !adsr.has(n));
+        if (missing.length)
+            s.fail(`An envelope names every slot: ${missing.map((n) => `${n}=`).join(' ')} ${missing.length === 1 ? 'is' : 'are'} missing (its slots: ${ADSR_SLOTS.join(' ')})`, at, first.length);
+        for (const name of ADSR_SLOTS) {
+            const where = adsr.get(name);
+            const moving = b.paramCells[name];
+            if (moving && !moving.range)
+                s.fail(`${name}=: a moving slot is a range scaled by cells, ${name}=.3..0.01 * &style[artic]`, where, name.length);
+            const value = moving ? String(moving.range[0]) : b.params[name];
+            if (typeof value !== 'number' && typeof value !== 'string')
+                s.fail(`${name}= takes a number, or a range scaled by cells`, where, name.length);
+            delete b.params[name];
+            const inner = s.within(String(value), where + name.length + 1);
             pushStep(inner, tokens, parseToken(inner));
         }
     }

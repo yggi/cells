@@ -99,6 +99,27 @@ Envelopes are cells. A cell with **`map=adsr`** holds attack, decay, sustain and
 
 Written in place they hang as petals of the voice; named, one envelope serves several voices (`&pluck map=adsr .005 .3 0 .2`, then `env=&pluck`). They're exactly what the same cells would be in the mix (`&tune * &env * &lead`, `(&tune + &vibrato) * &lead`) — written once, on the instrument. As a factor it shapes each note it multiplies, from the note's start through its release.
 
+**An envelope's slots by name** ([decision 066](https://github.com/yggi/cells/blob/main/docs/decisions/066-a-wave-and-an-envelope-move.md)): `attack=`, `decay=`, `sustain=`, `release=` on a `map=adsr` cell, the same four in order. Each is a number, or a range scaled by cells, read at each note's start, so the chords swell at legato and are cut short at staccato:
+
+```cells
+&bar meter("4/4") step=120bpm
+&style style=&(map=style .5 .5 .2 .5)
+&chords map=adsr attack=.3..0.01 * &style[artic] decay=0 sustain=1 release=.7..0.12 * &style[artic]
+&pad s=tri loop=C3 env=&chords
+&line step=1m [0,4,7] [5,9,12]
+&out map=sample [&line * &pad * .3]
+```
+
+**A blend of two waves**, `s=tri..square * &x`: one voice, its wave the first at 0 and the second at 1, their harmonics crossfaded at their own peaks, the share read at each note's start. MIDI out sends one note for each:
+
+```cells
+&bar meter("4/4") step=120bpm
+&style style=&(map=style .5 .5 .8 .5)
+&lead s=tri..square * &style[artic] loop=C4 lpf=2500
+&tune step=8n 0 2 4 7 4 2 0 ~
+&out map=sample [&tune * &lead * .5]
+```
+
 **A pitch shape** is written the way moving parameters are (below): a range in semitones scaled by an envelope, `pitch=lo..hi * &(map=adsr …)`. Each note's pitch follows the envelope from `lo` to `hi` and back, in seconds, whatever the note's length. With no attack it starts at the top: a drop, the click of a kick drum.
 
 ```cells

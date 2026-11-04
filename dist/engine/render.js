@@ -107,6 +107,9 @@ function waveOf(real, imag) {
     return { tables: raw.map((t) => Float32Array.from(t, (v) => v * scale)) };
 }
 function builtin(type) {
+    return waveOf(new Float64Array(MOST_HARMONICS + 1), builtinTerms(type));
+}
+function builtinTerms(type) {
     const n = type === 'sine' ? 1 : MOST_HARMONICS;
     const imag = new Float64Array(n + 1);
     for (let k = 1; k <= n; k++)
@@ -118,7 +121,7 @@ function builtin(type) {
                     : type === 'square'
                         ? (2 / (Math.PI * k)) * (1 - (k % 2 ? -1 : 1))
                         : (8 * Math.sin((Math.PI * k) / 2)) / (Math.PI * k) ** 2;
-    return waveOf(new Float64Array(n + 1), imag);
+    return imag;
 }
 const BUILTIN = new Map();
 const builtinWave = (type) => {
@@ -127,6 +130,42 @@ const builtinWave = (type) => {
         BUILTIN.set(type, (w = builtin(type)));
     return w;
 };
+const BLEND_STEPS = 100;
+const BLENDS = new Map();
+function blendWave(a, b, w) {
+    const share = Math.round(Math.min(1, Math.max(0, w)) * BLEND_STEPS);
+    const key = `${a}|${b}|${share}`;
+    let wave = BLENDS.get(key);
+    if (!wave) {
+        const x = builtinTerms(a);
+        const y = builtinTerms(b);
+        const [px, py] = [peakOf(a), peakOf(b)];
+        const n = Math.max(x.length, y.length);
+        const imag = new Float64Array(n);
+        for (let k = 0; k < n; k++)
+            imag[k] = ((1 - share / BLEND_STEPS) * (x[k] ?? 0)) / px + ((share / BLEND_STEPS) * (y[k] ?? 0)) / py;
+        BLENDS.set(key, (wave = waveOf(new Float64Array(n), imag)));
+    }
+    return wave;
+}
+const PEAKS = new Map();
+const peakOf = (type) => {
+    let p = PEAKS.get(type);
+    if (p === undefined)
+        PEAKS.set(type, (p = peakTerms(builtinTerms(type))));
+    return p;
+};
+function peakTerms(imag) {
+    let peak = 0;
+    for (let i = 0; i < TABLE; i++) {
+        let v = 0;
+        for (let k = 1; k < imag.length; k++)
+            if (imag[k])
+                v += imag[k] * SINES[(k * i) % TABLE];
+        peak = Math.max(peak, Math.abs(v));
+    }
+    return peak || 1;
+}
 function tableFor(w, freq, rate) {
     const allowed = Math.floor(rate / 2 / Math.abs(freq));
     if (!(allowed >= 1))
@@ -271,6 +310,8 @@ export function createRenderer(result, shifts, options = {}) {
         const src = c.params.s !== undefined ? DOUGH_SOURCES[String(c.params.s)] : null;
         const isNoise = src === 'white' || src === 'pink' || src === 'brown';
         let wave = null;
+        const to = c.paramCells?.s?.to !== undefined ? DOUGH_SOURCES[c.paramCells.s.to] : undefined;
+        const blend = src && !isNoise && to && to !== 'white' && to !== 'pink' && to !== 'brown' ? { from: src, to } : null;
         if (src && !isNoise)
             wave = builtinWave(src);
         else if (!src) {
@@ -293,6 +334,7 @@ export function createRenderer(result, shifts, options = {}) {
             name,
             seed: c.seed,
             wave,
+            blend,
             noise: isNoise ? noise(src, rate) : null,
             has,
             autos,
@@ -410,6 +452,8 @@ export function createRenderer(result, shifts, options = {}) {
             };
             const params = e.params ?? {};
             const semis = () => (params.pitch ? pitchShape(params.pitch, e.at, dur) : null);
+            const shareOf = params.s?.kind === 'points' ? params.s.points[0]?.value : undefined;
+            const blended = v.blend && shareOf !== undefined ? blendWave(v.blend.from, v.blend.to, shareOf) : undefined;
             for (const k of FILTER) {
                 const track = params[k];
                 const auto = v.autos[k];
@@ -441,6 +485,7 @@ export function createRenderer(result, shifts, options = {}) {
                     left: Math.cos(x) * share.left,
                     right: Math.sin(x) * share.right,
                     env,
+                    ...(blended ? { wave: blended } : {}),
                     level: lvl(),
                     freq: e.freq,
                     semis: semis(),
@@ -479,7 +524,7 @@ export function createRenderer(result, shifts, options = {}) {
                         hz *= Math.pow(2, n.semis.at(t) / 12);
                     if (n.cents)
                         hz *= Math.pow(2, n.cents.at(t) / 1200);
-                    const table = tableFor(v.wave, hz, rate);
+                    const table = tableFor(n.wave ?? v.wave, hz, rate);
                     if (table) {
                         const p = n.phase * TABLE;
                         const i = Math.floor(p);

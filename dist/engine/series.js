@@ -1,6 +1,10 @@
 import { resolveIn, semitones } from "./helix.js";
 import { clocking, EPS, playing, shiftsAt } from "./clocking.js";
 import { tapped } from "./flatten.js";
+export function paramAt(p, prm, at) {
+    const product = prm.series.reduce((a, m) => a * valueThen(levelSeries(p, m, at, at + 1), at, (x) => x.level), 1);
+    return prm.range ? prm.range[0] + (prm.range[1] - prm.range[0]) * product : product;
+}
 export function paramTracks(p, voice, at, dur) {
     const vp = p.voiceParams.get(voice);
     if (!vp || Object.keys(vp).length === 0)

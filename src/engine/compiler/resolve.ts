@@ -201,7 +201,9 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       rate: 0,
       stride: d.stride ?? 1,
       params: d.params,
-      paramCells: Object.fromEntries(Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name) }])),
+      paramCells: Object.fromEntries(
+        Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name), ...(v.to !== undefined ? { to: v.to } : {}) }]),
+      ),
       // a sound parameter makes a voice; a physical cell's (motor=, write=, postgain= on the sound card …) doesn't
       voice: Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
       freq:

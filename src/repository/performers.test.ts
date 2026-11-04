@@ -133,11 +133,11 @@ describe('the performers', () => {
       const now = sent([HOST, ...performer].join('\n'));
       expect(was.diagnostics).toEqual([]);
       // (the instrument has a sound of its own now, #391, which a MIDI card alone says it doesn't send: decision 064; and
-      // Jambot's text names no style, so the bass and the lead, which read it, play the centre of style space, said)
+      // Jambot's text names no style, so the instruments, which read it, play the centre of style space, said: #391, #411)
       const sentOnly = now.diagnostics.filter((m) => !m.startsWith('no line writes &style'));
       expect(sentOnly).toHaveLength(1);
       expect(sentOnly[0]).toMatch(/^&(bassV|padV|keysV|leadV) is only on a MIDI card: its sound \(s=/);
-      expect(now.diagnostics.length - sentOnly.length).toBe(part === 'bass' || part === 'lead' ? 1 : 0);
+      expect(now.diagnostics.length - sentOnly.length).toBe(1);
       expect(now.notes.length).toBeGreaterThan(0);
       expect(now.notes).toEqual(was.notes);
     });

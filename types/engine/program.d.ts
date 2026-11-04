@@ -195,9 +195,11 @@ export interface ResolvedCell {
     /** dough sound parameters. */
     readonly params: Readonly<Record<string, number | string>>;
     /** Parameters that move: a range scaled by cells (or, no range, one cell's values as they are). */
+    /** Its moving parameters: a range and the cells that move it; `to`, a blend's second wave (`s=tri..square * &x`, #411); on a map=adsr cell, its moving slots (`attack=.3..0.01 * &x`). */
     readonly paramCells: Readonly<Record<string, {
         readonly range: readonly [number, number] | null;
         readonly factors: readonly string[];
+        readonly to?: string;
     }>>;
     /** Used as the voice of an out(…), or has sound parameters. */
     readonly voice: boolean;
