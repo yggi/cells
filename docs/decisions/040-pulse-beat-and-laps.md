@@ -74,6 +74,10 @@ The owner's ruling on #116, option (a):
 - **`cycle=n` on a tapped line comes round every n bars**, completing "`cycle=n` on a tap runs it n bars before it comes round". Its braid begins again at each lap, a step past the lap is dropped (a note crossing it is cut there), and a braid shorter than the lap repeats up to its end (`comeRound`, `realize.ts`). Funk's 16 sixteenths under 7/8 with `cycle=1` play 14 and begin again at each bar line: a rhythm fragment can be laid under any meter.
 - The lines that wrote `cycle=` (the seed harmonies' `&harm step=1m cycle=8`, electroswing's `&stabline`) already filled their bars, so no event snapshot moves.
 
+## Built: groups as sizes, one tree for every grouping (#17, 2026-11-04)
+
+The owner's ruling on #17, option (a): a signature's bar is halved as any grouping is, as Jambot's `depthsOf` and yggi/music-commons `contracts/meter` v1 have it. Of four groups or more, the second half's first group starts a beat (`+`, at the ceiling of half the groups) and the others a half's beat (`-`): 4/4 is `*.-.+.-.`, 5/4 3+2. `meter("2+2+3")` writes groups as sizes (ruling 2 of #15), and a signature names one grouping (`meter("7/8")` is `meter("3+2+2")`). Beats are still the groups (4/4 has four), so bpm, `step=beat` and swing by note value read as before. Every vector of the contract passes. What moved: the levels of 4/4, 5/4, 10/8 and 12/8 (every example's meter values), and so the Metronome's clicks on beats 2 and 4, now its half click; no other example's notes.
+
 ## Consequences
 
 - Rungs, each an issue under #15: the taps (pulse, beat, note values, the reset at the bar) with the examples moved to them; `cycle=` in laps with its migration; the proportions in the meter cell, written as a tree and as `swing=` keyed by note value (`swing=8n:.67`), with overrides at the tap (#18). Each measured against the event snapshots.
