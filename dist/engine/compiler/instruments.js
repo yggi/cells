@@ -1,8 +1,7 @@
 import { VOICE_PARAMS } from "../attributes.js";
 import { refsOf } from "../readers.js";
-import { IMPLICIT } from "./tables.js";
-export const LINEAR = ['lpf', 'lpq', 'hpf', 'hpq', 'pan', 'room', 'delay', 'delaytime', 'delayfeedback'];
-const GRIT = ['distort', 'crush'];
+export const LINEAR = ['lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay', 'delaytime', 'delayfeedback'];
+const PROCESSORS = [...LINEAR, 'pan', 'distort', 'crush'];
 export const instrumentsOf = (outputs, cells) => new Set(outputs.flatMap((o) => o.through).filter((n) => !!cells.get(n)?.mix));
 function soundKeys(d) {
     const out = new Map();
@@ -19,7 +18,7 @@ function soundKeys(d) {
 }
 const has = (c, k) => k in c.params || k in c.paramCells || k in c.paramClocks;
 export function instrumentParams(ctx, decls, cells, outputs, playings) {
-    const { error, warn } = ctx;
+    const { error } = ctx;
     const instruments = instrumentsOf(outputs, cells);
     const passes = new Map();
     for (const name of instruments) {
@@ -27,26 +26,17 @@ export function instrumentParams(ctx, decls, cells, outputs, playings) {
         if (!d)
             continue;
         const keys = soundKeys(d);
-        const linear = new Map();
         for (const [k, span] of keys)
-            if (LINEAR.includes(k))
-                linear.set(k, span);
-            else if (GRIT.includes(k))
-                warn(`${k}= on the instrument &${name} acts on what its voices play together, in a chain of its own: not rendered yet (decision 067), so it plays without it`, span);
-            else
+            if (!PROCESSORS.includes(k))
                 error(`${k}= is a voice's: an instrument (&${name}) processes what its voices play, with ${LINEAR.slice(0, 4)
                     .map((x) => `${x}=`)
                     .join(' ')} …; put ${k}= on a voice`, span);
-        if (linear.size)
+        const linear = [...keys.keys()].filter((k) => LINEAR.includes(k));
+        if (linear.length)
             passes.set(name, linear);
     }
     if (!passes.size)
         return cells;
-    const said = new Set();
-    const once = (key, f) => {
-        if (!said.has(key))
-            (said.add(key), f());
-    };
     const voicesOf = (n) => {
         const c = cells.get(n);
         const over = decls.get(n)?.over?.name;
@@ -61,31 +51,19 @@ export function instrumentParams(ctx, decls, cells, outputs, playings) {
                 if (!voice)
                     continue;
                 const taken = new Map();
-                for (const inst of [...through].reverse()) {
-                    for (const [k, span] of passes.get(inst) ?? []) {
-                        if (has(voice, k))
-                            once(`${inst}:${k}:${v}`, () => warn(`&${v} sets ${k}= and plays through &${inst}, which sets it too: the two in series aren't rendered yet (decision 067), so &${v}'s own plays`, span));
-                        else if (taken.has(k))
-                            once(`${inst}:${k}:${taken.get(k)}`, () => warn(`&${inst} and &${taken.get(k)} both set ${k}=, one after the other: the two in series aren't rendered yet (decision 067), so &${taken.get(k)}'s plays`, span));
-                        else
+                for (const inst of [...through].reverse())
+                    for (const k of passes.get(inst) ?? [])
+                        if (!has(voice, k) && !taken.has(k))
                             taken.set(k, inst);
-                    }
-                }
                 if (!takes.has(v))
                     takes.set(v, []);
                 takes.get(v).push(taken);
             }
     const same = (a, b) => a.size === b.size && [...a].every(([k, i]) => b.get(k) === i);
     const next = new Map(cells);
-    for (const [v, playings] of takes) {
-        const first = playings[0];
-        if (!playings.every((p) => same(p, first))) {
-            const from = [...new Set(playings.flatMap((p) => [...p.values()]))];
-            const d = decls.get(v);
-            warn(`&${v} plays through ${from.map((i) => `&${i}`).join(' and ')} and elsewhere without ${from.length > 1 ? 'them' : 'it'}: a voice has one chain until an instrument has its own (decision 067), so ${from.length > 1 ? 'their' : 'its'} sound parameters aren't rendered on &${v}`, d?.span ?? IMPLICIT);
-            continue;
-        }
-        if (!first.size)
+    for (const [v, ways] of takes) {
+        const first = ways[0];
+        if (!first.size || !ways.every((p) => same(p, first)))
             continue;
         const c = cells.get(v);
         const params = { ...c.params };

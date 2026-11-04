@@ -150,8 +150,16 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     let lead = pitches.filter((x) => articulates(x.c));
     const gate = lead.length === 0;
     if (gate) lead = levels.filter((x) => articulates(x.c));
-    // pan= on the voice: its channel gains (a kit's members are placed note by note, in realize)
-    const [pl, pr] = voice.kit ? [1, 1] : balance(voice.params.pan);
+    // pan= on the voice: its channel gains (a kit's members are placed note by note, in realize); then each instrument's
+    // it plays through, a balance after the voice's (decision 067: in series)
+    const [vl, vr] = voice.kit ? [1, 1] : balance(voice.params.pan);
+    const [pl, pr] = [...through].reduce(
+      ([l, r], n) => {
+        const [a, b] = balance(cells.get(n)?.params.pan);
+        return [l * a, r * b];
+      },
+      [vl, vr],
+    );
     const term = (x: (typeof terms)[number]) => ({
       cell: x.c.name,
       pick: x.t.ref.pick,

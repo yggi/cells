@@ -311,6 +311,29 @@ class Biquad {
 
 // ---- a voice and its notes ----
 
+/** A cell's filters, from its parameters (`keep` the ones it plays itself): which it has, and their parameters' tracks. */
+function filtersOf(
+  c: { readonly params: Readonly<Record<string, number | string>>; readonly paramCells?: Readonly<Record<string, { readonly range: readonly [number, number] | null }>> },
+  keep: (k: string) => boolean,
+) {
+  const moves = c.paramCells ?? {};
+  const start = (k: string, d: number) => (!keep(k) ? d : typeof c.params[k] === 'number' ? (c.params[k] as number) : (moves[k]?.range?.[0] ?? d));
+  const autos: Partial<Record<FilterKey, Auto>> = {};
+  const has = { lpf: keep('lpf') && (typeof c.params.lpf === 'number' || !!moves.lpf), hpf: keep('hpf') && (typeof c.params.hpf === 'number' || !!moves.hpf) };
+  if (has.lpf) {
+    autos.lpf = new Auto(start('lpf', 2000));
+    autos.lpq = new Auto(start('lpq', 1));
+  }
+  if (has.hpf) {
+    autos.hpf = new Auto(start('hpf', 200));
+    autos.hpq = new Auto(start('hpq', 1));
+  }
+  return { has, autos };
+}
+
+/** The stem a chain goes to: its key's first part. */
+const stemKey = (ch: { readonly key: string }) => ch.key.split('\u0000')[0]!;
+
 interface Voice {
   readonly name: string;
   readonly seed: number;
@@ -325,11 +348,24 @@ interface Voice {
   readonly chains: Chain[];
 }
 
+/**
+ * An instrument's filters (decision 067): a module after its voices, in series after each voice's own. Its parameters
+ * move for every voice through it alike, each note through it scheduling them, as a voice's do for its notes; a stage
+ * on each voice's chain is the stage on their sum, since a filter is linear, and keeps a voice's stem its own.
+ */
+interface Stage {
+  readonly name: string;
+  readonly has: { readonly lpf: boolean; readonly hpf: boolean };
+  readonly autos: Partial<Record<FilterKey, Auto>>;
+}
+
 /** A voice's notes going to one stem, through filters of their own (so a stem by entry is filtered as the mix is). */
 interface Chain {
-  /** The stem it goes to: '' (the voice's own), or an entry's key. */
+  /** The stem it goes to: '' (the voice's own), or an entry's key; then the instruments it goes through. */
   readonly key: string;
   readonly filters: Partial<Record<'lpf' | 'hpf', Biquad>>;
+  /** The instruments' stages after its own filters, the innermost first, each with its filters for this chain. */
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<'lpf' | 'hpf', Biquad>> }[];
   /** Its notes sounding or to come, in order of their start. */
   notes: Note[];
   /** Its sound before its filters, this block. */
@@ -467,18 +503,8 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       const { real, imag } = harmonics(waveform(result, name, shifts));
       wave = waveOf(real, imag);
     }
-    const moves = c.paramCells ?? {};
-    const start = (k: string, d: number) => (typeof c.params[k] === 'number' ? (c.params[k] as number) : (moves[k]?.range?.[0] ?? d));
-    const autos: Voice['autos'] = {};
-    const has = { lpf: typeof c.params.lpf === 'number' || !!moves.lpf, hpf: typeof c.params.hpf === 'number' || !!moves.hpf };
-    if (has.lpf) {
-      autos.lpf = new Auto(start('lpf', 2000));
-      autos.lpq = new Auto(start('lpq', 1));
-    }
-    if (has.hpf) {
-      autos.hpf = new Auto(start('hpf', 200));
-      autos.hpq = new Auto(start('hpq', 1));
-    }
+    // (not what it takes from an instrument: that instrument's stage plays it, after the voice's own)
+    const { has, autos } = filtersOf(c, (k) => !c.inherited?.[k]);
     const v: Voice = {
       name,
       seed: c.seed,
@@ -493,16 +519,39 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     return v;
   };
 
-  /** A voice's chain to a stem, made when a note first goes there. */
-  const chainOf = (v: Voice, key: string): Chain => {
+  const stages = new Map<string, Stage>();
+  /** An instrument's stage, made when a note first plays through it: its filters (decision 067). */
+  const stageOf = (name: string): Stage | null => {
+    const known = stages.get(name);
+    if (known) return known;
+    const c = result.cells.get(name);
+    if (!c) return null;
+    for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
+      if (LATER[k]) say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
+    const st: Stage = { name, ...filtersOf(c, () => true) };
+    stages.set(name, st);
+    return st;
+  };
+  const biquads = (has: Voice['has']): Chain['filters'] => ({
+    ...(has.lpf ? { lpf: new Biquad('lowpass') } : {}),
+    ...(has.hpf ? { hpf: new Biquad('highpass') } : {}),
+  });
+
+  /** A voice's chain to a stem through its instruments' stages, made when a note first goes there. */
+  const chainOf = (v: Voice, stem: string, through: readonly Stage[]): Chain => {
+    const key = [stem, ...through.map((st) => st.name)].join('\u0000');
     let ch = v.chains.find((x) => x.key === key);
     if (!ch) {
-      ch = { key, filters: {}, notes: [], dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
-      if (v.has.lpf) ch.filters.lpf = new Biquad('lowpass');
-      if (v.has.hpf) ch.filters.hpf = new Biquad('highpass');
+      ch = {
+        key,
+        filters: biquads(v.has),
+        stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })),
+        notes: [],
+        dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)],
+      };
       // (chains in the order of their stems, so a voice's chains are summed alike however its notes came)
       v.chains.push(ch);
-      v.chains.sort((a, b) => (entryOrder.get(a.key) ?? -1) - (entryOrder.get(b.key) ?? -1));
+      v.chains.sort((a, b) => (entryOrder.get(stemKey(a)) ?? -1) - (entryOrder.get(stemKey(b)) ?? -1) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
     }
     return ch;
   };
@@ -602,7 +651,20 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       for (const k of FILTER) {
         const track = params[k];
         const auto = v.autos[k];
-        if (track && auto) schedule(auto, k, track, e.at, dur);
+        if (track && auto && !c.inherited?.[k]) schedule(auto, k, track, e.at, dur);
+      }
+      // the instruments it plays through, each a stage after the voice's own filters, its parameters moved by this note
+      const through: Stage[] = [];
+      for (const x of e.through ?? []) {
+        const st = stageOf(x.instrument);
+        if (!st || (!st.has.lpf && !st.has.hpf)) continue;
+        for (const k of FILTER) {
+          const track = x.params?.[k];
+          const auto = st.autos[k];
+          if (track && auto) schedule(auto, k, track, e.at, dur);
+        }
+        for (const k of Object.keys(x.params ?? {})) if (LATER[k]) say(x.instrument, k, `&${x.instrument}'s moving ${k}= is sounded from stage R2: rendered without it`);
+        through.push(st);
       }
       for (const k of Object.keys(params)) if (LATER[k] || k === 'index') say(e.voice, k, `&${e.voice}'s moving ${k}= is sounded from stage R2: rendered without it`);
       let shares: { key: string; left: number; right: number }[] = [{ key: '', left: 1, right: 1 }];
@@ -633,7 +695,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           grain: v.noise ? Math.floor(grainOffset(v.seed, e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
           phase: 0,
         };
-        const chain = chainOf(v, share.key);
+        const chain = chainOf(v, share.key, through);
         let i = chain.notes.length;
         while (i > 0 && chain.notes[i - 1]!.at > note.at) i--;
         chain.notes.splice(i, 0, note);
@@ -684,20 +746,21 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     ch.notes = ch.notes.filter((n) => done(n.end * rate) > to);
   };
 
-  /** A chain's filters over the frames, their coefficients the voice's, from the block's first frame. */
+  /** A chain's filters over the frames, their coefficients the voice's, then each stage's the instrument's, from the block's first frame. */
   const filter = (v: Voice, ch: Chain, from: number, to: number, blockStart: number) => {
     const t = blockStart / rate;
-    for (const k of ['lpf', 'hpf'] as const) {
-      const bq = ch.filters[k];
-      if (!bq) continue;
-      const q = k === 'lpf' ? 'lpq' : 'hpq';
-      bq.set(v.autos[k]!.at(t), v.autos[q]!.at(t), rate);
-      for (let f = from; f < to; f++) {
-        const i = f - blockStart;
-        ch.dry[0][i] = bq.run(ch.dry[0][i]!, 0);
-        ch.dry[1][i] = bq.run(ch.dry[1][i]!, 1);
+    for (const [filters, autos] of [[ch.filters, v.autos] as const, ...ch.stages.map((s) => [s.filters, s.stage.autos] as const)])
+      for (const k of ['lpf', 'hpf'] as const) {
+        const bq = filters[k];
+        if (!bq) continue;
+        const q = k === 'lpf' ? 'lpq' : 'hpq';
+        bq.set(autos[k]!.at(t), autos[q]!.at(t), rate);
+        for (let f = from; f < to; f++) {
+          const i = f - blockStart;
+          ch.dry[0][i] = bq.run(ch.dry[0][i]!, 0);
+          ch.dry[1][i] = bq.run(ch.dry[1][i]!, 1);
+        }
       }
-    }
   };
 
   const render = (frames: number): Rendered => {
@@ -705,7 +768,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     const mix: [Float32Array, Float32Array] = [new Float32Array(n), new Float32Array(n)];
     const stemOut = new Map<string, [Float32Array, Float32Array]>(stems.map((s) => [s, [new Float32Array(n), new Float32Array(n)]]));
     const stemOf = (ch: Chain, voice: string) =>
-      tracks === 'voices' ? stemOut.get(voice) : tracks === 'entries' ? stemOut.get(ch.key === UNROUTED ? UNROUTED : (entryName.get(ch.key) ?? '')) : undefined;
+      tracks === 'voices' ? stemOut.get(voice) : tracks === 'entries' ? stemOut.get(stemKey(ch) === UNROUTED ? UNROUTED : (entryName.get(stemKey(ch)) ?? '')) : undefined;
     // (each voice's sum, in the text's order, so the mix is the stems added in that order)
     const order = [...result.cells.values()].filter((c) => c.voice && heard.has(c.name)).map((c) => c.name);
     const end = position + n;
@@ -716,7 +779,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
         const v = voices.get(name);
         if (!v) continue;
         for (const ch of v.chains) {
-          if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf) continue;
+          if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length) continue;
           sound(v, ch, from, to, blockStart);
           filter(v, ch, from, to, blockStart);
           const stem = stemOf(ch, name);

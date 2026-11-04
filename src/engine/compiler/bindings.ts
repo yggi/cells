@@ -66,6 +66,15 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     playings.get(voice)!.push(through);
   };
   const termKey = (b: Binding) => [b.voice.name, b.offset, ...b.pitches.map((t) => `${t.sign}${t.ref.name}${JSON.stringify(t.ref.pick)}${t.ref.shift}`)].join('|');
+  // (played through an instrument with sound parameters of its own, a module after its voices, it is another output
+  // from the same product played without it: decision 067)
+  const stageKey = (through: Iterable<string>) => {
+    const stages = [...through].filter((n) => {
+      const d = decls.get(n);
+      return !!d && [...Object.keys(d.params), ...Object.keys(d.paramCells ?? {}), ...Object.keys(d.paramClocks ?? {})].some((k) => VOICE_PARAMS.has(k));
+    });
+    return stages.length ? `|through:${stages.join(',')}` : '';
+  };
   for (const sink of sinks) {
     const d = decls.get(sink.name)!;
     const channels = sink.units;
@@ -88,7 +97,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         return;
       }
       for (const { b, through, top, index } of bindings.flatMap((x, index) => expand(x).map((e) => ({ ...e, top: x, index })))) {
-        const key = termKey(b);
+        const key = termKey(b) + stageKey(through);
         let g = gathered.get(key);
         // (the built-in card is in no line: what is said about a sound it hears is said on the sound's own line)
         const span = sink.implicit ? top.voice.span : mix.span;
@@ -125,8 +134,8 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       for (const { b, through } of mix.mix!.flatMap((x) => expand(x))) {
         // (a tape head in it drives what it feeds directly — it isn't a note to play)
         if (typeof cells.get(b.voice.name)?.params.play === 'string') continue;
-        const key = 'send:' + termKey(b);
-        if (gathered.has(key) || [...gathered.values()].some((g) => termKey(g.b) === termKey(b))) continue;
+        const key = 'send:' + termKey(b) + stageKey(through);
+        if (gathered.has(key) || [...gathered.values()].some((g) => termKey(g.b) + stageKey(g.through) === termKey(b) + stageKey(through))) continue;
         gathered.set(key, { b, span: mix.span, gains: [b.gain, b.gain], via: new Set([name]), parts: [], through: new Set(through), silent: true });
         played(b.voice.name, through);
       }
@@ -186,7 +195,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       for (let k = 0; k < u.repeat; k++) {
         const channel = map.channel ?? first + k + 1;
         for (const { b, through } of named.flatMap((x) => expand(x))) {
-          const key = termKey(b);
+          const key = termKey(b) + stageKey(through);
           let g = gathered.get(key) ?? [...gathered.values()].find((x) => termKey(x.b) === key);
           if (!g) gathered.set(key, (g = { b, span: card.span, gains: [0, 0], via: new Set(), parts: [], through: new Set() }));
           for (const t of through) g.through.add(t);

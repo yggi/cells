@@ -214,7 +214,7 @@ A mix can be used like a voice — an instrument: the pitches, volumes and gain 
 &mix loop=SAMPLE_RATE map=sample [&tune * &lead, &roots * &bass]
 ```
 
-**An instrument with sound parameters is a module after its voices** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md)): `lpf=` `lpq=` `hpf=` `hpq=` `pan=` `room=` `delay=` `delaytime=` `delayfeedback=` on it, fixed or moving, act on what its voices play, so one filter follows two oscillators, a VCF after a mixer. They are linear, so filtering the sum is the sum of the filtered, and each is played as each voice's where the voice sets none: the patch below plays exactly what the filter written on each oscillator plays. It nests (a VCA, an instrument with an envelope, after a VCF after a mix), and reaches a kit read through it and a gate playing it.
+**An instrument with sound parameters is a module after its voices** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md)): `lpf=` `lpq=` `hpf=` `hpq=` `pan=` `room=` `delay=` `delaytime=` `delayfeedback=` on it, fixed or moving, act on what its voices play, so one filter follows two oscillators, a VCF after a mixer. They are linear, so filtering the sum is the sum of the filtered: the patch below plays exactly what the filter written on each oscillator plays. It nests (a VCA, an instrument with an envelope, after a VCF after a mix), and reaches a kit read through it and a gate playing it.
 
 ```cells
 &bar meter("4/4") step=120bpm
@@ -228,6 +228,8 @@ A mix can be used like a voice — an instrument: the pitches, volumes and gain 
 &out map=sample [&tune * &vca * .4]
 ```
 
-What the instrument's own chain would play is said, and not yet rendered (#432): a parameter on both the instrument and its voice, which is two filters in series (the voice's own plays); `distort=` and `crush=` on an instrument, which act on what its voices play together (played without them); a voice played through the instrument and without it too (played as written, since a voice has one chain). A voice's own sound (`s=`, `fm=` …) on an instrument is an error.
+**In series:** a parameter on both an instrument and its voice is two filters, the voice's and then the instrument's (`&saw lpf=3000` in `&vcf lpf=800 [&saw]` plays as `&bright lpf=3000 [&saw]` in `&vcf lpf=800 [&bright]`), and two instruments one after the other are two stages. A voice played through the instrument and without it plays each way as written. `pan=` on an instrument is a balance after its voices' own (`pan=.25` through `pan=.75` is the centre, each side at half). `distort=` and `crush=` on an instrument act on what its voices play together; cells' renderer sounds them from stage R2, as on a voice ([decision 062](https://github.com/yggi/cells/blob/main/docs/decisions/062-cells-renders-audio.md)). A voice's own sound (`s=`, `fm=` …) on an instrument is an error.
+
+A note says which instruments with sound parameters it plays through, the innermost first, with their moving parameters (`Played.through`): a renderer plays each as a stage after the voice's chain. A voice that plays only through instruments also carries, where it sets none, their linear parameters as its own (`ResolvedCell.inherited`), so a renderer that builds a voice's chain from its cell alone plays the instrument's filter too.
 
 Voices, envelopes and volume streams are on [sound.md](sound.md).
