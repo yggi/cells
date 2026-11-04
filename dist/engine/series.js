@@ -130,7 +130,7 @@ function rampedSeries(p, m, from, to, valueOf) {
     return out;
 }
 export function levelSeries(p, m, from, to, written) {
-    const val = (e) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter));
+    const val = (e) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : m.bipolar ? Math.max(0, (1 + e.value + e.alter) / 2) : Math.max(0, e.value + e.alter));
     if (m.events.length === 0)
         return [{ at: from, level: 0 }];
     if (!m.clock)

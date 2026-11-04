@@ -17,6 +17,11 @@ export interface Series {
      * as a melody's are), or null where it doesn't play; absent, each step as written.
      */
     readonly drawn?: (e: StepEvent, lap: number) => StepEvent | null;
+    /**
+     * Its values run below 0: a bipolar wave (`sin(12)`, −1 to 1). Read as a share, a volume or a moving parameter's
+     * factor, its −1…1 is 0…1, (1 + x)/2, not cut off at 0 (decision 067 §5); as a pitch, semitones as written.
+     */
+    readonly bipolar?: true;
 }
 export interface VoiceParam {
     readonly range: readonly [number, number] | null;

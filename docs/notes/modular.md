@@ -16,7 +16,7 @@ What is missing is that a filter can't stand on its own, after a mix: `lpf=` on 
 | VCF | a voice's `lpf=` `lpq=` `hpf=` `hpq=`, each moving: `lpf=70..4800 * &eg * &lfo`, the range the knob and the attenuator | plays, on a voice only |
 | VCA | an envelope or a level in a product, or an instrument: `&vca [&eg * &level * &in]` (a mix used like a voice, [mix.md](../language/mix.md#instruments)) | plays, nested too |
 | EG | a `map=adsr` cell; the seed's [envelopes](../../fragments/expression/02-envelopes.md) | plays |
-| LFO | a braid turned slowly, `&lfo map=lin loop=&bar/16 .5 1 .5 0` (a share from 0 to 1: a bipolar `sin(12)` is clamped at 0, silent for half its cycle); the seed's [vibrato](../../fragments/expression/01-vibrato.md) | plays as CV, into any moving parameter or `pitch=` |
+| LFO | a braid turned slowly, `&lfo map=lin loop=&bar/16 sin(12)` (a bipolar wave, −1 to 1, read as a share from 0 to 1: decision 067 §5); the seed's [vibrato](../../fragments/expression/01-vibrato.md) | plays as CV, into any moving parameter or `pitch=` |
 | sequencer | a stepped line, quantised by `over=&key`; a transposer as a coarser pitch held under it, `(&seq + &changes)` | plays |
 | sample and hold | a stepped cell, `&sh map=lin step=8n .3 .9 .5 .2`, its values left to chance with `?` | plays |
 | clock, divider | a meter and its taps (`step=16n`, `loop=&bar/8`) | plays |
@@ -46,7 +46,7 @@ The VCF and the echo are written twice, once on each oscillator, since a filter 
 &changes step=1m/2 0 5 3 -2
 &accent map=amp step=16n 1 .4 .6 .4 .9 .4 .6 .4 1 .4 .6 .4 .9 .5 .7 .5
 &contour map=adsr .002 .22 .1 .08
-&sweep map=lin loop=&bar/16 .5 1 .5 0
+&sweep map=lin loop=&bar/16 sin(12)
 &jitter step=8n [0|.25|.5|.75|1]
 &drift loop=&bar/8 map=lin 0 .12 0
 &amp map=adsr .002 .3 .5 .06

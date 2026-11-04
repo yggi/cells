@@ -25,6 +25,11 @@ export interface Series {
    * as a melody's are), or null where it doesn't play; absent, each step as written.
    */
   readonly drawn?: (e: StepEvent, lap: number) => StepEvent | null;
+  /**
+   * Its values run below 0: a bipolar wave (`sin(12)`, −1 to 1). Read as a share, a volume or a moving parameter's
+   * factor, its −1…1 is 0…1, (1 + x)/2, not cut off at 0 (decision 067 §5); as a pitch, semitones as written.
+   */
+  readonly bipolar?: true;
 }
 
 /** A series' step on a lap, as drawn (a step that doesn't play: null). */
@@ -193,7 +198,7 @@ function rampedSeries(p: Plan, m: Series, from: number, to: number, valueOf: (e:
  * silence; a stream that doesn't move holds its first value.
  */
 export function levelSeries(p: Plan, m: Series, from: number, to: number, written?: number): { at: number; level: number; ramp?: boolean }[] {
-  const val = (e: StepEvent) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : Math.max(0, e.value + e.alter));
+  const val = (e: StepEvent) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : m.bipolar ? Math.max(0, (1 + e.value + e.alter) / 2) : Math.max(0, e.value + e.alter));
   if (m.events.length === 0) return [{ at: from, level: 0 }];
   if (!m.clock) return [{ at: from, level: val(m.events[0]) }];
   if (m.lin) return rampedSeries(p, m, from, to, (e) => val(e)).map((x) => ({ at: x.at, level: Math.max(0, x.v), ramp: x.ramp }));

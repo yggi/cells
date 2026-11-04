@@ -357,15 +357,19 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
     // (its steps drawn on each lap as a melody's are, where any is left to a lap, to chance or to a choice)
     const drawn = events.some((e) => e.laps || e.chance !== undefined || e.options || e.chosen) ? (e: StepEvent, lap: number) => thrownIn(result, cell, e, lap) : undefined;
+    // (a cell whose values run below 0 is bipolar, a wave from −1 to 1: read as a share, its −1…1 is 0…1, decision 067 §5)
+    const db = m.map?.kind === 'db';
+    const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
     return {
       sign,
       lin: m.map?.kind === 'lin',
-      db: m.map?.kind === 'db',
+      db,
       clock: m.clock,
       rate: m.rate,
       period: Math.max(1, stepsOf(result, cell, pick)),
       events,
       ...(drawn ? { drawn } : {}),
+      ...(bipolar ? { bipolar: true as const } : {}),
     };
   };
   // the envelopes' moving slots (attack=.3..0.01 * &style[artic], #411): their cells, as series, read at each note's start

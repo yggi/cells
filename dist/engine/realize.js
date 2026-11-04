@@ -200,15 +200,18 @@ export function plan(result, statics, muted = new Set()) {
         const m = result.cells.get(cell);
         const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
         const drawn = events.some((e) => e.laps || e.chance !== undefined || e.options || e.chosen) ? (e, lap) => thrownIn(result, cell, e, lap) : undefined;
+        const db = m.map?.kind === 'db';
+        const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
         return {
             sign,
             lin: m.map?.kind === 'lin',
-            db: m.map?.kind === 'db',
+            db,
             clock: m.clock,
             rate: m.rate,
             period: Math.max(1, stepsOf(result, cell, pick)),
             events,
             ...(drawn ? { drawn } : {}),
+            ...(bipolar ? { bipolar: true } : {}),
         };
     };
     const envParams = new Map();

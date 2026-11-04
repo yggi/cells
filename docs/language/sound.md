@@ -80,6 +80,8 @@ A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a p
 
 A sound parameter can be a range times cells, so it moves with the music: `lpf=110..3800 * &fenv * &accent * &knob` sweeps the filter from 110 to 3800 Hz by an envelope per note (`map=adsr`), accents (`map=amp`) and a slow knob (`map=lin`); `lpq=&res` takes a cell too. Parameters that are times take a clock as well as seconds: `delaytime=&bar*4/3` is a dotted eighth at whatever the tempo is.
 
+**A bipolar wave is a share from 0 to 1** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md) §5): a cell whose values run below 0 (`sin(12)`, `saw(8)`, −1 to 1), read as a parameter's factor or a volume, is read as (1 + x)/2, its middle at .5, so `lpf=200..3000 * &lfo` with `&lfo map=lin loop=.25 sin(12)` sweeps the whole range. A cell that stays at 0 or above is read as written; read as a pitch, a wave is semitones either way.
+
 ```cells
 &bar scan(4 4 4 4) step=120bpm
 &accent map=amp step=16n 1 .4 .8 .4
