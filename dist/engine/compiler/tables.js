@@ -5,7 +5,7 @@ import { waveValues } from "../parser/generators.js";
 export const IMPLICIT = { line: 1, col: 1, len: 1 };
 export const isRootDecl = (d) => d.over === null && ((d.braid.kind === 'blank' && (d.name === ROOT || d.map?.kind === 'edo')) || d.map?.kind === 'ratios');
 export const tableOf = (d) => (isRootDecl(d) ? null : (d.over?.name ?? ROOT));
-export const gridSteps = (d) => (d.map?.kind === 'ratios' && d.braid.kind === 'list' ? Math.max(1, d.braid.tokens.length - 1) : (d.cycle ?? 12));
+export const gridSteps = (d) => d.map?.kind === 'ratios' && d.braid.kind === 'list' ? Math.max(1, d.braid.tokens.length - 1) : ((d.map?.kind === 'edo' ? d.map.steps : null) ?? d.cycle ?? 12);
 export const lengthOf = (decls, name, guard = 0) => {
     const d = decls.get(name);
     if (!d || guard > 64)

@@ -302,15 +302,18 @@ export function shiftsAt(result, statics, seconds) {
         let s = steps.get(c.clock);
         if (s === undefined)
             steps.set(c.clock, (s = clk.stepOf(c.clock)));
-        const step = Math.floor(c.rate * s + EPS);
+        if (c.wrap === 0)
+            return base;
+        const { per, laps } = turnLap(result, c);
+        const step = per ? mod(Math.floor(c.rate * s + EPS), per) : Math.floor(c.rate * s + EPS);
         const turns = step * c.stride;
         const own = ownSteps(result, name);
         if (!own) {
-            const wrap = c.wrap ?? ownLength(result, name);
+            const wrap = laps * ownLength(result, name);
             return base + (wrap > 0 ? mod(turns, wrap) : turns);
         }
-        const at = turns + Math.min(1 - EPS, Math.max(0, c.rate * s - step));
-        const wrap = c.wrap ?? own.length;
+        const at = turns + Math.min(1 - EPS, Math.max(0, c.rate * s - Math.floor(c.rate * s + EPS)));
+        const wrap = laps * own.length;
         const b = wrap > 0 ? mod(at, wrap) : at;
         const lap = Math.floor(b / own.length);
         return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
@@ -318,6 +321,14 @@ export function shiftsAt(result, statics, seconds) {
     return shiftOf;
 }
 export const playing = (now, statics, cell) => (name) => name === cell ? statics(name) : now(name);
+export function turnLap(result, c) {
+    if (c.wrap === null)
+        return { per: null, laps: 1 };
+    const tap = c.step?.tap && c.clock ? result.clocks.get(c.clock)?.tap : undefined;
+    if (tap)
+        return { per: Math.max(1, Math.round(tap.positions.length * c.rate)), laps: 0 };
+    return { per: null, laps: c.wrap };
+}
 export const ownLength = (result, name) => {
     const c = result.cells.get(name);
     return ownSteps(result, name)?.length ?? (c.units.length || c.cycle);

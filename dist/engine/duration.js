@@ -1,6 +1,6 @@
 import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from "./fiveto12.js";
 import { codeShifts } from "./program.js";
-import { clocking, ownLength, selects } from "./clocking.js";
+import { clocking, ownLength, selects, turnLap } from "./clocking.js";
 import { plan } from "./realize.js";
 export function mainLength(t) {
     if (t.ends !== null)
@@ -76,8 +76,11 @@ export function pieceTime(result, seen) {
         if (!turn)
             continue;
         const stride = Math.max(1, Math.abs(Math.round(c.stride || 1)));
-        const wrap = Math.max(1, Math.round(c.wrap ?? ownLength(result, c.name)));
-        const turns = wrap / Number(gcd(BigInt(wrap), BigInt(stride)));
+        if (c.wrap === 0)
+            continue;
+        const { per, laps } = turnLap(result, c);
+        const wrap = Math.max(1, Math.round(laps * ownLength(result, c.name)));
+        const turns = per ?? wrap / Number(gcd(BigInt(wrap), BigInt(stride)));
         periods.push(turn * turns);
     }
     seen?.push(...periods);

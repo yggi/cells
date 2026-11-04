@@ -117,9 +117,13 @@ export function lookup(result: CompileResult, name: string, x: number, shifts: S
   if (c.root) return { value: x + shifts(name) + extra, alter: 0 };
   const es = entries(result, name, shifts(name) + extra, true);
   if (es.length === 0) return { value: 0, alter: 0 };
+  // (cycle= in laps, decision 040, #75: 0 holds the first entry; n climbs n laps and comes round; absent walks for ever)
+  if (c.wrap === 0) return es[0]!;
   const xi = Math.floor(x);
-  const lap = Math.floor(xi / es.length);
-  const e = es[xi - lap * es.length];
+  const walked = Math.floor(xi / es.length);
+  // (a tapped table's cycle= counts its tap's bars, not its laps: an index read through it walks)
+  const lap = c.wrap === null || c.step?.tap ? walked : mod(walked, c.wrap);
+  const e = es[xi - walked * es.length]!;
   return { value: e.value + lap * period(result, name), alter: e.alter };
 }
 

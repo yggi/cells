@@ -58,7 +58,7 @@ export function declare(ctx) {
             shift: null,
             off: false,
             step: null,
-            map: { kind: 'edo', period: 2, span: IMPLICIT },
+            map: { kind: 'edo', period: 2, steps: null, span: IMPLICIT },
             stride: null,
             cycle: 12,
             params: {},

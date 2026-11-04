@@ -50,7 +50,7 @@ These are the laws the S1 checks lean on, each an equation in the four. `x` is a
 - `&x` spliced = its steps written in · `&x[a:b:s]` = its picks · `&x[slot]` = `&x[$i]` · `&( … )` = a named cell
 - `[a, b]` in a step = a mix of one line per voice (the chord *is* combine, at the step's scale) · `play=&t &v` = `[&t * &v]`
 - `step=pulse` = `step=&bar` · `step=16n` = `step=&bar*4` (in 4/4) · `step=cycle(&x)` = `step=&x/k` for `k` steps · `NNbpm` = `NN/60` per beat
-- `scan(i …)` = its running totals, `cycle=` its sum · `map=ed(r)` = `map=ratios r^(k/n) …` · `map=edo` = `map=ed(2)` · `map=db v` = `map=amp 10^(v/20)`
+- `scan(i …)` = its running totals · `map=ed(r)` = `map=ratios r^(k/n) …` · `map=edo` = `map=ed(2)` · `map=db v` = `map=amp 10^(v/20)`
 
 ## The table
 
@@ -116,7 +116,7 @@ These are the laws the S1 checks lean on, each an equation in the four. `x` is a
 
 | # | form | class | primitive, or rewrite | S1 |
 |---|---|---|---|---|
-| 37 | `scan(i …)` | S | its table written, `cycle=` its total: `scan(2 2 1 2 2 2 1)` = `cycle=12 0 2 4 5 7 9 11`; `1!4` and `geo(…)` written out | ✔ ×3 (a scan as a meter: steps of uneven length, `@`, not checked) |
+| 37 | `scan(i …)` | S | its table written: `scan(2 2 1 2 2 2 1)` = `0 2 4 5 7 9 11` (read over the 12, which carries its octave; `cycle=` counts laps, #75); `1!4` and `geo(…)` written out | ✔ ×3 (a scan as a meter: steps of uneven length, `@`, not checked) |
 | 38 | `euclid(k, n)` | S | its steps: `euclid(5, 16, 2)` = `~ ~ 0 ~ ~ 0 …` | ✔ ×2 |
 | 39 | `sin(n)` … `square(n)` | S | its n values written | ✔ ×4 (stepped slowly, not at audio rate) |
 | 40 | `scale(name)` | S | a scan over a key (decision 002): `scale(minor, D)` = `&k shift=2`, `over=&k scan(2 1 2 2 1 2 2)`; `"D:minor"` is the same | ✔ ×3 |

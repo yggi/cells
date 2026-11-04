@@ -251,23 +251,23 @@ describe('shorten: whole lines (#10)', () => {
     expect(sounds(s.apply(src), 40)).toEqual(sounds(src, 40));
     expect(shortenAll(src).source).toContain('0!4 5!2 0!2');
   });
-  it('defaults: loop=SAMPLE_RATE on the sound card, a cycle= that is the table’s own length, pan=.5', () => {
-    const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=12\n&t over=&key step=&bar 0 4 7\n&v s=sine loop=C4 pan=.5\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
+  it('defaults: loop=SAMPLE_RATE on the sound card, a turning table’s cycle=1 (one lap, #75), pan=.5', () => {
+    const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=1\n&t over=&key step=&bar 0 4 7\n&v s=sine loop=C4 pan=.5\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
     const kinds = shorten(src)
       .filter((x) => x.kind === 'default')
       .map((x) => x.before)
       .sort();
-    expect(kinds).toEqual(['cycle=12', 'loop=SAMPLE_RATE', 'pan=.5']);
+    expect(kinds).toEqual(['cycle=1', 'loop=SAMPLE_RATE', 'pan=.5']);
     expect(sounds(shortenAll(src).source)).toEqual(sounds(src));
     // (a grid's cycle= is its size: not a default to drop)
     expect(shorten('&edo cycle=19 map=edo\n&t over=&edo step=2 0 1' + tail).some((x) => x.before.startsWith('cycle='))).toBe(false);
   });
   it('the measure is the structure (#157): an attribute value dropped saves one, its comment and spacing free', () => {
-    const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=12          # the 12\n&t over=&key step=&bar 0 4 7' + tail;
-    const s = shorten(src).find((x) => x.before === 'cycle=12')!;
+    const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=1          # one lap\n&t over=&key step=&bar 0 4 7' + tail;
+    const s = shorten(src).find((x) => x.before === 'cycle=1')!;
     expect(s.saving).toBe(1);
     expect(s.apply(src)).toContain('stride=7');
-    expect(s.apply(src)).toContain('# the 12');
+    expect(s.apply(src)).toContain('# one lap');
   });
 });
 

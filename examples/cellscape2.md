@@ -12,7 +12,7 @@ description: "No octaves, no beat, no instruments: sines and noise on Stockhause
 # 100 Hz, and never meets an octave. Nothing keeps a beat: each layer has a clock of its
 # own (step= in steps a second) and a prime number of steps — 11, 7, 13 — and the slow
 # movements are primes in seconds — 17, 19, 23, 29. They meet again only after ages.
-&steps cycle=25 map=ed(5) label="25 steps to 5:1, no octave"
+&steps map=ed(25, 5) label="25 steps to 5:1, no octave"
 
 # mixtures, Stockhausen's sound: five sines a few steps apart, held long — some, by chance
 &constellations over=&steps step=0.11 label="constellations: 11 mixtures, nine seconds each" [0,1,2,3,4]?.2 ~ [8,10,12,14,16]? [3,6,9,12,15]?.4 ~ [20,25,30,35,40]?.3 [5,7,9,11,13] ~ [12,15,18,21,24]? ~ [1,5,9,13,17]?.4

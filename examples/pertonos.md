@@ -13,7 +13,7 @@ description: A canon on the royal theme that rises a whole tone each pass, as in
 # (Bach's design; the inner voices here are written for this example.)
 &bar scan(27 23 26 24) step=&tempo
 &tempo step=free(72bpm, 56..92)
-&key step=cycle(&theme) stride=2 cycle=24      # a whole tone per pass: up two octaves, then round
+&key step=cycle(&theme) stride=2 cycle=2       # a whole tone per pass: up two octaves, then round
 &scale over=&key scan(2 1 2 2 1 2 2)                  # C minor (Aeolian); 6# is the leading tone
 
 &theme over=&scale step=4n 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
