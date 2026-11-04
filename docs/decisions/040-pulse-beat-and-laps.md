@@ -67,6 +67,10 @@ What the build settled beside them:
 - **Migrating a meaning:** `cycle=24` is valid in both versions, so no compile of the old text says what it played. Migrate's `laps` rule is exact by construction (`Rewrite.exact`), witnessed by the notes the old version played (`fixtures/migrations/laps/*.v0.15.notes`), and never run by Normalise. A table stepped by a cell whose `cycle=` is a whole number of its own lengths warns that it was probably written in steps.
 - Ricercar's `cycle=24` goes rather than becoming `cycle=2`: its melody reads `&key` past two laps, which `cycle=2` would now wrap, and its `stride=` is a slider at 0, so the cycle only ever mattered as the performer raised it (now round after one lap: the circle).
 
+## Built: groups as sizes, one tree for every grouping (#17, 2026-11-04)
+
+The owner's ruling on #17, option (a): a signature's bar is halved as any grouping is, as Jambot's `depthsOf` and yggi/music-commons `contracts/meter` v1 have it. Of four groups or more, the second half's first group starts a beat (`+`, at the ceiling of half the groups) and the others a half's beat (`-`): 4/4 is `*.-.+.-.`, 5/4 3+2. `meter("2+2+3")` writes groups as sizes (ruling 2 of #15), and a signature names one grouping (`meter("7/8")` is `meter("3+2+2")`). Beats are still the groups (4/4 has four), so bpm, `step=beat` and swing by note value read as before. Every vector of the contract passes. What moved: the levels of 4/4, 5/4, 10/8 and 12/8 (every example's meter values), and so the Metronome's clicks on beats 2 and 4, now its half click; no other example's notes.
+
 ## Consequences
 
 - Rungs, each an issue under #15: the taps (pulse, beat, note values, the reset at the bar) with the examples moved to them; `cycle=` in laps with its migration; the proportions in the meter cell, written as a tree and as `swing=` keyed by note value (`swing=8n:.67`), with overrides at the tap (#18). Each measured against the event snapshots.

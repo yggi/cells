@@ -140,28 +140,44 @@ export const SIGNATURES: Record<string, number[]> = {
   '12/8': [3, 3, 3, 3],
   '5/8': [3, 2],
 };
+/** Groups written as sizes (#17, ruling 2): `2+2+3`, each 2 or 3 pulses of an eighth; null where the text isn't that. */
+export const groupsOf = (sig: string): number[] | null => (/^[23](\+[23])+$/.test(sig) ? sig.split('+').map(Number) : null);
+
 /** A time signature's pulses (the numerator), their note value (the denominator) and its beats in pulses (decision 040). */
 export function signatureOf(sig: string, sub: number): Signature {
+  const sized = groupsOf(sig);
+  if (sized) return { pulses: sized.reduce((a, b) => a + b, 0), unit: 8, beats: sized, sub };
   const [num, den] = sig.split('/').map((x) => parseInt(x, 10));
   const groups = SIGNATURES[sig] ?? [];
   // (x/8: a beat a group of eighths; x/4: a beat a pulse)
   return { pulses: num, unit: den, beats: sig.endsWith('/8') ? groups : groups.map(() => 1), sub };
 }
+
+/**
+ * A bar's groups, the grade each starts on (#17, the owner's ruling (a); yggi/music-commons contracts/meter v1): the first
+ * the bar (*), and of four groups or more, the second half's first (+, at the ceiling of half the groups: 5 as 3+2) and
+ * the others a half's beat (-); of two or three, each a beat (+). One tree for every grouping, written as a signature or
+ * as sizes: 4/4 is * . - . + . - . an eighth at a time, as Jambot's depthsOf.
+ */
+const groupStart = (i: number, count: number): string => (i === 0 ? '*' : count < 4 || i === Math.ceil(count / 2) ? '+' : '-');
+
 export function meterLevels(sig: string, sub: number): string {
   if (/^[*+\-.,]+$/.test(sig)) return sig;
-  const groups = SIGNATURES[sig];
+  const sized = groupsOf(sig);
+  const groups = sized ?? SIGNATURES[sig];
   if (!groups) return '';
-  const compound = sig.endsWith('/8');
+  const compound = !!sized || sig.endsWith('/8');
   let out = '';
   groups.forEach((g, i) => {
+    const start = groupStart(i, groups.length);
     if (!compound) {
       // a beat, then its subdivisions: the middle one . (an eighth), the others , (finer)
-      out += i === 0 ? '*' : '+';
+      out += start;
       for (let k = 1; k < sub; k++) out += sub % 2 === 0 && k === sub / 2 ? '.' : sub === 3 ? '.' : ',';
     } else {
-      // a group of eighths: its first the beat, the others ., each eighth split into sub steps (,)
+      // a group of eighths: its first the group's start, the others ., each eighth split into sub steps (,)
       for (let e = 0; e < g; e++) {
-        out += e === 0 ? (i === 0 ? '*' : '+') : '.';
+        out += e === 0 ? start : '.';
         for (let k = 1; k < sub; k++) out += ',';
       }
     }
@@ -173,7 +189,7 @@ export function meterLevels(sig: string, sub: number): string {
  * meter(signature, steps a pulse): a bar as levels, one per step — 0 the downbeat (*, the bar's
  * tonic), 1 a beat (+), 2 a half (-), 3 a subdivision (.), 4 finer (,). Unused levels can be skipped:
  * *-+- and *.+. are both 4/4. The bpm counts the beats, not the steps.
- * meter("4/4", 2): *.+.+.+. ; meter("6/8"): *..+.. ; meter("*.+.+.."): as written.
+ * meter("4/4", 2): *.-.+.-. (four groups: the halves + and their beats -, #17) ; meter("6/8"): *..+.. ; meter("2+2+3"): *.+.+.. ; meter("*.+.+.."): as written.
  */
 function parseMeter(s: LineScanner, start: number): Braid {
   s.i++; // (
@@ -204,12 +220,18 @@ function parseMeter(s: LineScanner, start: number): Braid {
   if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
   const levels = meterLevels(sig, sub);
   if (!levels)
-    s.fail(`meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}) or levels like "*.+.+.+." (* bar, + beat, . subdivision, , finer)`, start, span.len);
+    s.fail(
+      `meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}), groups of eighths as sizes ("2+2+3", each 2 or 3), or levels like "*.-.+.-." (* bar, + beat, - a half's beat, . subdivision, , finer)`,
+      start,
+      span.len,
+    );
   // 0-based: the downbeat is the bar's tonic — * 0, + 1 (a beat), - 2, . 3, , 4 (finer and finer)
   const value = (ch: string) => Math.max(0, '*+-.,'.indexOf(ch));
   const tokens = [...levels].map((ch) => ({ atom: { kind: 'note' as const, value: value(ch), alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
-  const beats = [...levels].filter((ch) => ch === '*' || ch === '+').length || 1;
-  return { kind: 'list', tokens, span, perBeat: levels.length / beats, ...(SIGNATURES[sig] ? { signature: signatureOf(sig, sub) } : {}) } as Braid;
+  // (a signature's beats are its groups, whatever their grades, #17: 4/4's - is a beat; levels written out count * and +)
+  const named = !!SIGNATURES[sig] || !!groupsOf(sig);
+  const beats = named ? signatureOf(sig, sub).beats.length : [...levels].filter((ch) => ch === '*' || ch === '+').length || 1;
+  return { kind: 'list', tokens, span, perBeat: levels.length / beats, ...(named ? { signature: signatureOf(sig, sub) } : {}) } as Braid;
 }
 
 /** Whole numbers between parentheses, comma-separated: euclid(3, 8). The scanner is at '('. */
@@ -491,9 +513,9 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     parse: parseMeter,
     syntax: syntax(
       'generator',
-      'meter("sig") · meter("sig", sub) · meter("levels")',
-      `A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (${Object.keys(SIGNATURES).join(' ')}) with sub steps a pulse, or levels written out (* bar, + beat, - half, . subdivision, , finer). Its bpm counts beats. Each argument can be free(…).`,
-      ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("*.+.+..") step=90bpm'],
+      'meter("sig") · meter("sig", sub) · meter("2+2+3") · meter("levels")',
+      `A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (${Object.keys(SIGNATURES).join(' ')}) with sub steps a pulse; groups of eighths written as sizes, each 2 or 3 (2+2+3: a signature is a name for one grouping, 7/8 is 3+2+2); or levels written out (* bar, + beat, - half, . subdivision, , finer). Of four groups or more, the second half's start is a beat (+) and the others a half's beat (-): 4/4 is *.-.+.-. (#17). Its bpm counts beats, its groups. Each argument can be free(…).`,
+      ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("2+2+3") step=90bpm', '&bar meter("*.+.+..") step=90bpm'],
       'time.md',
     ),
   },

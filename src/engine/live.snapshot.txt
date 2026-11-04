@@ -24,7 +24,7 @@ stereo  live 2a23340ac7fbd3be
 waveforms  live fda62d09719584b9
 moving  live 32ec8a0e47712e43
 grids  live c25d6086a52457cb
-metronome  live 7fbfb4ea5b737680
+metronome  live ce76313c8d9cdd34
 fm  live 4ac8e3f2956e54aa
 musicbox  live c1384fce2e804f85
 automaton  live 3148a0734f1f6970
