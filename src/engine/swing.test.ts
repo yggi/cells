@@ -333,4 +333,41 @@ describe('the parts of a step swing as a tap of their level does', () => {
     expect(at('meter("4/4") swing=16n:.6', '&x step=4n [0 0 0 0]')).toEqual(at('meter("4/4") swing=16n:.6', '&x step=16n 0'));
     expect(at('meter("4/4") swing=8n:.67', '&x step=8t 0')).toEqual(at('meter("4/4")', '&x step=8t 0'));
   });
+
+  // (#15: a division is even within the finest node its length divides, written as a tap or as the parts of a step)
+  const SW = 'meter("4/4") swing=8n:2/3';
+  it('a triplet written inside a beat plays where step=8t does: even in the beat, its third on the swung eighth', () => {
+    expect(at(SW, '&x step=4n [0 0 0]').slice(0, 3)).toEqual([0, 0.3333, 0.6667]);
+    expect(at(SW, '&x step=4n [0 0 0]')).toEqual(at(SW, '&x step=8t 0'));
+    expect(at(SW, '&x step=4n [0 0 0]')).toEqual(at(SW, '&x step=beat*3 0'));
+    expect(at(SW, '&x step=2n [0 0 0]')).toEqual(at(SW, '&x step=4t 0'));
+    expect(at(SW, '&x step=4n [0 0 0 0 0]').slice(0, 5)).toEqual([0, 0.2, 0.4, 0.6, 0.8]);
+  });
+  it('thirds of a swung eighth are even within it, as step=16t: no two notes at once, in order', () => {
+    expect(at(SW, '&x step=16t 0').slice(0, 6)).toEqual([0, 0.2222, 0.4444, 0.6667, 0.7778, 0.8889]);
+    expect(at(SW, '&x step=8n [0 0 0]')).toEqual(at(SW, '&x step=16t 0'));
+    expect(at(SW, '&x step=4n [0 [0 0 0]]').slice(0, 4)).toEqual([0, 0.6667, 0.7778, 0.8889]);
+    for (const line of ['&x step=16t 0', '&x step=4n [0 0 0 0 0 0]', '&x step=4n [[0 0] [0 0 0]]']) {
+      const xs = at(SW, line);
+      expect(
+        xs.every((x, i) => i === 0 || x > xs[i - 1]!),
+        line,
+      ).toBe(true);
+    }
+  });
+  it('a triplet note sounds to the next third, as a tap of thirds does', () => {
+    const lengths = (line: string) => {
+      const r = compiled(`&bar ${SW} step=60bpm\n${line}${VOICE}`);
+      return eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-6).map((e) => +e.dur.toFixed(4));
+    };
+    expect(lengths('&x step=4n [0 0 0]')).toEqual(lengths('&x step=8t 0'));
+  });
+  it('windows cut anywhere play the notes the whole plays', () => {
+    const r = compiled(`&bar ${SW} step=60bpm\n&x step=4n [0 0 0] [0 [0 0 0]] [0 0 0 0 0] [0 0]${VOICE}`);
+    const p = plan(r, codeShifts(r));
+    const whole = eventsBetween(p, 0, 8).map((e) => +e.at.toFixed(6));
+    const cut: number[] = [];
+    for (let t = 0; t < 8 - 1e-9; t += 0.07) cut.push(...eventsBetween(p, t, Math.min(8, t + 0.07)).map((e) => +e.at.toFixed(6)));
+    expect(cut).toEqual(whole);
+  });
 });
