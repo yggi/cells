@@ -9,7 +9,7 @@
 Before 1.0 freezes the language, it should be clear which forms are its **core**, which a later version must keep meaning the same, and which are **sugar**, which rewrite into the core and can be respelled freely. [multiscale.md](../notes/multiscale.md) proposed four primitives that may generate the language: shift with carry, dilate, look up and combine. #418 put each of the reference's 113 forms into one of three classes:
 
 - **core:** 46 forms;
-- **sugar:** 45 forms, 43 of them sounding identical to their rewrite by S1, in 59 rewrites;
+- **sugar:** 45 forms, 43 of them sounding identical to their rewrite by S1, in 59 rewrites (all 45, in 61, since #434 and #439 taught S1 `off` and `pitch=`);
 - **outside:** 22 forms.
 
 The note has every row.

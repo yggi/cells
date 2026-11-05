@@ -4,7 +4,7 @@
  * is played the least way that sounds it: a sine voice and a card (`&v`, `&out`), the tables it reads (`&major`, `&motif`)
  * and a clock where it taps one. A waveform or a rate the reference shows at audio rate is stepped slowly here, so it starts
  * notes S1 can compare. Each check also asks that the written form plays something, so no check passes on silence. The
- * rows whose rewrite is not exact (`off`, `pitch=`, `loop=` as `step=`) are in the note, with why.
+ * one claim that is not exact (`loop=` as `step=`) is in the note, with why; `off` and `pitch=` are exact since #434 and #439.
  */
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
@@ -45,6 +45,12 @@ const GTM = (s: string) => `&tune step=2 0 2 4\n&lead s=saw loop=C4\n${s}`;
 
 const SUGAR: Check[] = [
   // Lines
+  // (a line switched off is the line deleted, with every entry that plays it: S1 plans with the text's off set, #434)
+  [
+    'Lines · off',
+    piece(BAR, '&kit &v', '&a step=2 0 4', '&drums off over=&kit step=&bar 0 1', V, '&out map=sample [&a * &v, &drums]'),
+    piece(BAR, '&a step=2 0 4', V, '&out map=sample [&a * &v]'),
+  ],
   line('Lines · # …', '&tune step=2 0 2 4  # the opening', '&tune step=2 0 2 4', 'tune'),
   [
     'Lines · … +',
@@ -184,6 +190,11 @@ const SUGAR: Check[] = [
     'Gates · [&a, &b]',
     GTM('&bell s=sine loop=C5\n&leadOut play=&tune [&lead, &bell]\n&out map=sample [&leadOut]'),
     GTM('&bell s=sine loop=C5\n&out map=sample [&tune * &lead, &tune * &bell]'),
+  ], // (a voice's pitch= is a term of the sum in every product it's in: S1 hears it in the bends, not in the voice's sound, #439)
+  [
+    'Attributes · pitch=&x',
+    piece('&lead s=saw loop=C4 pitch=&(loop=5 0 .1 -.1)', '&t step=2 0 2', '&out map=sample [&t * &lead]'),
+    piece('&lead s=saw loop=C4', '&vib loop=5 0 .1 -.1', '&t step=2 0 2', '&out map=sample [(&t + &vib) * &lead]'),
   ],
 ];
 

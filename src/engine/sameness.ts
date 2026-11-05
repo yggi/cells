@@ -90,7 +90,9 @@ function soundOf(r: Result): (voice: string) => string {
       c.oneshot,
       c.kit,
       ref(c.env),
-      ref(c.pitch),
+      // (its pitch= is not: a cell read as pitch= joins every product the voice is in as a term of its sum, so its
+      // bends are in the events, as `(&t + &vib) * &lead`'s are, decision 068; a per-note shape, pitch=0..30 * &(…),
+      // is a moving parameter, read above)
       c.exciters ?? null,
       params,
       moving,
@@ -110,7 +112,7 @@ function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Resu
     if (!ra.ok || !rb.ok) return false;
     const to = typeof until === 'number' ? until : until(ra, rb);
     const play = (r: Result) => {
-      const events = eventsBetween(plan(r, codeShifts(r)), 0, to, true);
+      const events = eventsBetween(plan(r, codeShifts(r), r.off), 0, to, true);
       // (each voice heard read as what it sounds like, not by its name or place: two voices alike are one, decision 057;
       // and, sent on a MIDI card, what MIDI out sends: its entry's channel, and a kit member's drum note, its name's,
       // which its output tells)

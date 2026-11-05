@@ -12,6 +12,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 - **`patch` refuses what would lose a setting** (#469, #471's review; decision 067 §4). A jack that takes one cell (`env=`, `pitch=`, `fm=`, a module's argument) takes one cable: one holding a cable, or a value written on the line, refuses another with a `PatchError` until it is cleared, so a patch pulled out gives the text back and the sound never jumps. A cable from a cell the text doesn't define, or from the cell itself, is refused too. In v0.17.0 such a patch replaced what was there, and unpatching brought back the module's default. **What a frontend sees at its next pin:** `patch` throws in those cases; swapping a cable is `unpatch`, then `patch`. Nothing a piece plays changes.
 
+### Fixed
+
+- **S1 (`soundsIdentical`) hears what the host plays: a cell switched `off` is silent, and a voice's `pitch=` is heard in its bends** (#434, #439; decision 068). S1 planned without the text's `off` set, so it heard a muted line, and a rewrite that dropped an `off` passed it; it now plans as the host, `render`, the exports and the folder do. A voice's `pitch=&x` is a term of the sum in every product the voice is in, so its bends are already in the events; S1 counted it a second time in the voice's sound, and `pitch=&vib` and `[(&t + &vib) * &lead]` differed. Now they are identical; a per-note shape (`pitch=0..30 * &(map=adsr …)`) is still read in the sound. All 45 sugar rows of decision 068 are now exact by S1 (`core.test.ts`). Nothing a piece plays changes and no event snapshot moves; what Migrate, Normalise and Shorten accept, and what `samePiece` reports, can.
+
 ## v0.17.0 — 2026-11-05
 
 Run Migrate on a piece written before it: `use` is an error (its `from` rule), the modes are `diatonic(mode=…)` (its `renamed` rule), and `oneshot` is `oneshot=1` (its `oneshot` rule). Four changes sound different with no rule, each said below: a bipolar share, 4/4's half, a tapped `cycle=` coming round, and the own accent on meters with a group of three.

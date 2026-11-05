@@ -16,7 +16,7 @@ This note puts each of the reference's 113 forms (every section but *Parameters*
 | class | rows | of which |
 |---|---:|---|
 | **core** | 46 | look up 10, combine 16 (8 of them the sorts), dilate 8, shift with carry 7, and 5 terminals (a cell, a number, a fraction, a rest, a number in a mix) |
-| **sugar** | 45 | **43 exact by S1**, checked in 59 rewrites; 2 not exact by S1 (`off`, `pitch=`), both explained below |
+| **sugar** | 45 | **45 exact by S1**, checked in 61 rewrites (43 in 59 when the note was written; `off` and `pitch=` since #434 and #439) |
 | **outside** | 22 | inert 8 (the graph's and the style's data), sources 7 (`free()`), chance 4, ramp 2 (`map=lin`, `map=adsr`), a voice's value 1 (`oneshot`) |
 
 What it says:
@@ -62,7 +62,7 @@ These are the laws the S1 checks lean on, each an equation in the four. `x` is a
 |---|---|---|---|---|
 | 1 | `&name …` | C terminal | the cell: a name bound to attributes and a braid; every primitive acts on one | — |
 | 2 | `&name label="…"` | O inert | a note in the graph; it plays nothing. Keep | — |
-| 3 | `off` | S | the line deleted, with every entry that plays it | ✘ by S1 (it plans without `r.off`, [#434](https://github.com/yggi/cells/issues/434)); exact as the host plays it |
+| 3 | `off` | S | the line deleted, with every entry that plays it | ✔ (since [#434](https://github.com/yggi/cells/issues/434): S1 plans with `r.off`, as the host does) |
 | 4 | `oneshot` | O a voice's value | a note's length set by its envelope: a parameter, written as a word | — |
 | 5 | `# …` · `// …` | S | nothing | ✔ |
 | 6 | `… +` (continued) | S | the one line | ✔ |
@@ -187,7 +187,7 @@ These are the laws the S1 checks lean on, each an equation in the four. `x` is a
 | 85 | `show=` | O inert | how it's drawn | ✔ (removed: the same) |
 | 86 | `label=` | O inert | | ✔ |
 | 87 | `env=&e` | C combine | a product, its time restarted at each note | — |
-| 88 | `pitch=&x` | S | a sum in the mix: `pitch=&vib` = `[(&t + &vib) * &lead]` | ✘ by S1: the events (bends) are identical, but S1 reads `pitch=` into the voice's sound (decision 057) |
+| 88 | `pitch=&x` | S | a sum in the mix: `pitch=&vib` = `[(&t + &vib) * &lead]` | ✔ (since [#439](https://github.com/yggi/cells/issues/439): S1 hears `pitch=` in the bends, not in the voice's sound) |
 | 89 | `cycle=n` | C shift | where the carry wraps | — |
 | 90 | `size=` | O inert | | ✔ |
 | 91 | `laps=n` | C combine | a product with a window: it ends | — |

@@ -54,7 +54,6 @@ function soundOf(r) {
             c.oneshot,
             c.kit,
             ref(c.env),
-            ref(c.pitch),
             c.exciters ?? null,
             params,
             moving,
@@ -74,7 +73,7 @@ function sameEvents(a, b, until, key, options = {}) {
             return false;
         const to = typeof until === 'number' ? until : until(ra, rb);
         const play = (r) => {
-            const events = eventsBetween(plan(r, codeShifts(r)), 0, to, true);
+            const events = eventsBetween(plan(r, codeShifts(r), r.off), 0, to, true);
             const sound = soundOf(r);
             const route = router(r, channelTable(r));
             const sent = (e) => routesOf(e.midi ? route(e) : null)
