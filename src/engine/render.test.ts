@@ -377,3 +377,48 @@ describe('grit (decision 062 R2, #452)', () => {
     expect(bits([sine('distort=.5 crush=3').left])).toEqual(bits([sine('crush=3 distort=.5').left]));
   });
 });
+
+describe('FM (decision 062 R2, #452)', () => {
+  const RATE = 48000;
+  /** A held carrier at 440 Hz under the modulator `op`, its own `carrier` parameters: the left channel. */
+  const fm = (carrier: string, op = '&op s=sine ratio=1') => {
+    const r = compiled(`&v s=sine loop=440hz ${carrier} env=&(map=adsr .001 .01 1 .01)\n${op}\n&n step=1 0\n&out map=sample postgain=1 [&n * &v]`);
+    expect(r.ok, r.diagnostics.map((d) => d.message).join('; ')).toBe(true);
+    const a = pieceAudio(r, codeShifts(r), { seconds: 0.5, tail: 0 });
+    return { left: a.mix[0], diagnostics: a.diagnostics };
+  };
+
+  it('a sine modulated by a sine at its frequency is sin(2πft − I·cos 2πft + I): its phase swung by the index', () => {
+    const { left, diagnostics } = fm('fm=&op index=2');
+    expect(diagnostics).toEqual([]);
+    // (against the formula over 20 ms of its sustain, scaled by its level there: correlated to .998, the phase stepped a
+    // frame at a time, as an oscillator steps it, against the formula's continuous one)
+    const from = 0.1 * RATE;
+    const n = 0.02 * RATE;
+    let xy = 0;
+    let xx = 0;
+    let yy = 0;
+    for (let i = 0; i < n; i++) {
+      const t = (from + i) / RATE;
+      const want = Math.sin(2 * Math.PI * 440 * t - 2 * Math.cos(2 * Math.PI * 440 * t) + 2);
+      const got = left[from + i]!;
+      xy += want * got;
+      xx += want * want;
+      yy += got * got;
+    }
+    expect(xy / Math.sqrt(xx * yy)).toBeGreaterThan(0.998);
+  });
+
+  it('index=0 is the carrier alone, bit for bit; without index=, an index of 1', () => {
+    expect(bits([fm('fm=&op index=0').left])).toEqual(bits([fm('').left]));
+    expect(bits([fm('fm=&op').left])).toEqual(bits([fm('fm=&op index=1').left]));
+    expect(bits([fm('fm=&op').left])).not.toEqual(bits([fm('').left]));
+  });
+
+  it("a modulator's own modulator swings it in turn, and its ratio= sets its frequency", () => {
+    const one = fm('fm=&op index=2', '&op s=sine ratio=2');
+    const two = fm('fm=&op index=2', '&op s=sine ratio=2 fm=&op2 index=3\n&op2 s=sine ratio=.5');
+    expect(bits([two.left])).not.toEqual(bits([one.left]));
+    expect(two.diagnostics).toEqual([]);
+  });
+});

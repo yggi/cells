@@ -6,7 +6,6 @@ import { harmonics, waveform } from "./wave.js";
 export const DEFAULT_RATE = 48000;
 export const RATES = { lowest: 8000, highest: 192000 };
 const LATER = {
-    fm: 'R2',
     body: 'R3',
     ring: 'R3',
     hard: 'R3',
@@ -358,6 +357,22 @@ function gritOf(params, keep) {
         out.push(distortion(distort));
     return out;
 }
+function swing(m, t, rate) {
+    const hz = m.freq + (m.inner ? swing(m.inner, t, rate) : 0);
+    const table = tableFor(m.wave, Math.abs(hz), rate);
+    let y = 0;
+    if (table) {
+        const p = m.phase * TABLE;
+        const i = Math.floor(p);
+        const frac = p - i;
+        const s0 = table[((i % TABLE) + TABLE) % TABLE];
+        const s1 = table[(((i + 1) % TABLE) + TABLE) % TABLE];
+        y = s0 + (s1 - s0) * frac;
+    }
+    m.phase += hz / rate;
+    m.phase -= Math.floor(m.phase);
+    return y * m.freq * (m.moving ? m.moving.at(t) : m.index);
+}
 function filtersOf(c, keep) {
     const moves = c.paramCells ?? {};
     const start = (k, d) => (!keep(k) ? d : typeof c.params[k] === 'number' ? c.params[k] : (moves[k]?.range?.[0] ?? d));
@@ -503,6 +518,24 @@ export function createRenderer(result, shifts, options = {}) {
         };
         voices.set(name, v);
         return v;
+    };
+    const fmOf = (of, carrier, depth, index, at, dur) => {
+        const c = result.cells.get(of);
+        const name = c?.params.fm;
+        if (typeof name !== 'string' || depth > 5)
+            return null;
+        const m = result.cells.get(name);
+        if (!m?.voice)
+            return null;
+        const mv = voiceOf(name);
+        const freq = carrier * (typeof m.params.ratio === 'number' ? m.params.ratio : 1);
+        const fixed = typeof c.params.index === 'number' ? c.params.index : 1;
+        let moving = null;
+        if (index) {
+            moving = new Auto(fixed);
+            schedule(moving, 'index', index, at, dur);
+        }
+        return { wave: mv?.wave ?? builtinWave('sine'), freq, index: fixed, moving, inner: fmOf(name, freq, depth + 1, undefined, at, dur), phase: 0 };
     };
     const returns = new Map();
     const returnOf = (name, make) => {
@@ -696,7 +729,7 @@ export function createRenderer(result, shifts, options = {}) {
                 through.push(st);
             }
             for (const k of Object.keys(params))
-                if (LATER[k] || k === 'index')
+                if (LATER[k])
                     say(e.voice, k, `&${e.voice}'s moving ${k}= is sounded from stage R2: rendered without it`);
             let shares = [{ key: '', left: 1, right: 1 }];
             if (tracks === 'entries') {
@@ -726,6 +759,7 @@ export function createRenderer(result, shifts, options = {}) {
                     semis: semis(),
                     cents: cents(),
                     grain: v.noise ? Math.floor(grainOffset(v.seed, e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
+                    fm: v.noise ? null : fmOf(e.voice, e.freq, 0, params.index, e.at, end - e.at),
                     phase: 0,
                 };
                 const chain = chainOf(v, share.key, through);
@@ -757,6 +791,8 @@ export function createRenderer(result, shifts, options = {}) {
                     let hz = n.freq;
                     if (n.semis)
                         hz *= Math.pow(2, n.semis.at(t) / 12);
+                    if (n.fm)
+                        hz += swing(n.fm, t, rate);
                     if (n.cents)
                         hz *= Math.pow(2, n.cents.at(t) / 1200);
                     const table = tableFor(n.wave ?? v.wave, hz, rate);
