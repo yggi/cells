@@ -10,15 +10,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
-### Fixed
-### Changed
-
-- **S1 hears as a listener** (decision 070, #483). `soundsIdentical` and `playsSameNotes` compare what no listener can tell apart: pitch within half a cent, level within 0.1 dB per channel, onsets and ends within 0.25 ms, each a fraction of the smallest audible difference, without rounding edges. One note in both channels is that note in each. A noise is heard by its colour, filters and level, never by a pitch or its samples. The exact comparison still runs first, and the event snapshot stays exact. **What a frontend sees:** Migrate, Normalise and Shorten may accept rewrites that play numbers a hair apart. Normalise now writes four examples' bars as the meter they are: *Pop*, *Alpha* and *One more* as `&bar from meter_4_4 &tempo`, *Tape* as `meter("4/4")`. Their notes don't change; *Alpha*'s and *One more*'s `events` hashes move by a rounding of 10⁻¹⁵ s. Shorten's `same` merges two alike cells that are two channels' entries again: #477 refused that under the old S1, and it plays the same. New in `engine/sameness`: `HEARD`, the thresholds.
-
-Nothing has changed since v0.17.1.
 ### Added
 
 - **The renderer sounds the echo** (decision 062 stage R2, #452): `delay=`, fixed or moving, `delaytime=` and `delayfeedback=` on a voice, as Cell studio's voices sound them, a voice's own echo at its `delaytime=` or the shared one (0.375 s at .35), measured within 0.25 dB of Cell studio's render; and on an instrument (decision 067), one echo of its voices' sum. 51 of 83 examples render with no diagnostic, from 49 (`acid` and `patchbay` join). With `tracks: 'voices'` or `'entries'`, an echo's return is a stem of its own, `echo` or `echo:<voice>`, and the stems still sum to the mix. An echo is no longer a diagnostic; the reverb, grit and FM still are. No event snapshot moves: the renderer only. **What a frontend sees at its next pin:** `pieceAudio` and `createRenderer` sound a piece's echoes, a piece with `delay=` renders louder by its echo, and a render's `stems` can hold an echo's return.
+
+### Changed
+
+- **S1 hears as a listener** (decision 070, #483). `soundsIdentical` and `playsSameNotes` compare what no listener can tell apart: pitch within half a cent, level within 0.1 dB per channel, onsets and ends within 0.25 ms, each a fraction of the smallest audible difference, without rounding edges. One note in both channels is that note in each. A noise is heard by its colour, filters and level, never by a pitch or its samples. The exact comparison still runs first, and the event snapshot stays exact. **What a frontend sees:** Migrate, Normalise and Shorten may accept rewrites that play numbers a hair apart. Normalise now writes four examples' bars as the meter they are: *Pop*, *Alpha* and *One more* as `&bar from meter_4_4 &tempo`, *Tape* as `meter("4/4")`. Their notes don't change; *Alpha*'s and *One more*'s `events` hashes move by a rounding of 10⁻¹⁵ s. Shorten's `same` merges two alike cells that are two channels' entries again: #477 refused that under the old S1, and it plays the same. New in `engine/sameness`: `HEARD`, the thresholds.
 
 ### Fixed
 

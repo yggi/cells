@@ -106,16 +106,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 067 · A module after its voices · → decisions/067-a-module-after-its-voices.md
 - 068 · The core grammar: four primitives and the ramp · → decisions/068-the-core-grammar.md
 - 069 · Compile writes the core · → decisions/069-compile-writes-the-core.md
-- 058 · The performer is a gate, its name its role (amended by 061: a role cell's); the register is the instrument's · → decisions/058-the-performer-is-a-gate.md
-- 059 · A `use` says what it takes: `use &bd from core_kit`, `use * from …`, `use &x` · → decisions/059-named-use.md
-- 060 · The key is named, `over=&key` (`over=key` the old way); a tonic is a cell, stepped or free · → decisions/060-the-key-is-named.md
-- 061 · The band: a role cell says what its gates play as; a selector over the performers says when · → decisions/061-the-band.md
-- 062 · Cells renders audio: events in, samples out, in blocks; superdough's meaning at the examples' level · → decisions/062-cells-renders-audio.md
-- 063 · The score and the band: the score ends in `* from band` (`use * from band` before 065), each client's band its own; the style a note, read by name · → decisions/063-the-score-and-the-band.md
-- 064 · What sounds: heard on any card, a MIDI card too; any written card replaces the built-in one; an out is a sound wired into a card, a voice each · → decisions/064-what-sounds.md
-- 065 · Fragments take arguments: `&key from harmonic_minor D`; a signature declares one main parameter and optional ones; `use` retires · → decisions/065-fragments-take-arguments.md
-- 066 · A wave and an envelope's times move: `attack=.3..0.01 * &x` on a `map=adsr` cell, `s=tri..square * &x`, read at each note's start · → decisions/066-a-wave-and-an-envelope-move.md
-- 067 · An instrument with sound parameters is a module after its voices; the modules are fragments (`lowpass`, `amp`, `lfo` …); a cable opens at zero; a bipolar wave read as a share is (1 + x)/2 · → decisions/067-a-module-after-its-voices.md
-- 068 · The core grammar: four primitives and the ramp; `free()` and chance sources; 45 forms sugar, checked by S1; Normalise writes sugar, a compile tool the core · → decisions/068-the-core-grammar.md
-- 069 · Compile writes the core: de-sugar, minify, a checked core fold; `from` is sugar; `[ ]` a finer tap or core dilate; draws keyed on content · → decisions/069-compile-writes-the-core.md
-- 070 · S1 hears as a listener: ½ cent, 0.1 dB, 0.25 ms; a noise by colour and level; the snapshot stays exact · → decisions/070-s1-hears-as-a-listener.md
+- 070 · S1 hears as a listener · → decisions/070-s1-hears-as-a-listener.md
