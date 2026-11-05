@@ -200,12 +200,20 @@ describe('review prepare.sh', () => {
     expect(stdout).not.toContain('Changelog:');
   });
 
-  it('asks about the changelog when src/ changes beyond its tests and CHANGELOG.md does not', () => {
+  it('asks about the changelog when src/ changes beyond its tests and no entry in changes/ does', () => {
     onPullRequest('src/engine/a.test.ts', 'x\n', 'Step 4: a test');
     expect(prepare(['7', join(root, 'wt')]).stdout).not.toContain('Changelog:');
     onPullRequest('src/engine/a.ts', 'x\n', 'Step 5: the code');
     expect(prepare(['7', join(root, 'wt')]).stdout).toContain('Changelog: src/ changes beyond its tests');
-    onPullRequest('CHANGELOG.md', 'x\n', 'Step 6: its line');
+    onPullRequest('changes/README.md', 'x\n', 'Step 6: the folder, no entry');
+    expect(prepare(['7', join(root, 'wt')]).stdout).toContain('Changelog: src/ changes beyond its tests');
+    onPullRequest('changes/7.md', '### Fixed\n- x\n', 'Step 7: its entry');
+    expect(prepare(['7', join(root, 'wt')]).stdout).not.toContain('Changelog:');
+  });
+
+  it('takes a line in CHANGELOG.md, as a release writes it, for the changelog too', () => {
+    onPullRequest('src/engine/a.ts', 'x\n', 'Step 4: the code');
+    onPullRequest('CHANGELOG.md', 'x\n', 'Step 5: its line');
     expect(prepare(['7', join(root, 'wt')]).stdout).not.toContain('Changelog:');
   });
 

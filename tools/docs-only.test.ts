@@ -52,9 +52,12 @@ function verdict(files: string[], base?: string) {
 }
 
 describe('docs-only.sh', () => {
-  it.each([[['CHANGELOG.md']], [['docs/MEMORY.md', 'docs/decisions/070-x.md', 'docs/notes/1.md']], [['AGENTS.md']]])('says docs for prose alone: %j', (files) => {
-    expect(verdict(files)).toBe('docs');
-  });
+  it.each([[['CHANGELOG.md']], [['changes/12.md']], [['docs/MEMORY.md', 'docs/decisions/070-x.md', 'docs/notes/1.md']], [['AGENTS.md']]])(
+    'says docs for prose alone: %j',
+    (files) => {
+      expect(verdict(files)).toBe('docs');
+    },
+  );
 
   it.each([
     [['a.ts']],
