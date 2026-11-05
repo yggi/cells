@@ -35,6 +35,11 @@ export interface Candidate {
   readonly tokens: string[];
   /** Transposable: its numbers are steps of a grid (no table between them and it). */
   readonly grid: boolean;
+  /**
+   * Read by its units somewhere: picked, sliced or rotated (`&x[1]`, `&x[1:3]`, `&x[<<2]`). A unit is a written step, and
+   * `x!n` or a splice is one, so a rewrite that changes how many there are changes what such a reader reads (#477).
+   */
+  readonly unitRead: boolean;
 }
 
 /** The cells whose steps are written out one by one, and safe to rewrite: the piece's own (a used line is its fragment's, #241). */
@@ -50,7 +55,7 @@ export function candidates(source: string, options: CompileOptions = {}): { resu
     if (!w || w.braid.length < 2 || w.braid.some((t) => t.startsWith('[') && t.includes('&'))) continue;
     const over = c.over ? r.cells.get(c.over) : null;
     if (over?.implicit && over.kit) continue; // a braid of voices: its steps are names, not numbers
-    out.push({ name: c.name, tokens: w.braid, grid: readsGrid(r, c.name) });
+    out.push({ name: c.name, tokens: w.braid, grid: readsGrid(r, c.name), unitRead: new RegExp(`&${c.name}\\[`).test(source) });
   }
   return { result: r, cells: out };
 }

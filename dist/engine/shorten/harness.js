@@ -20,7 +20,7 @@ export function candidates(source, options = {}) {
         const over = c.over ? r.cells.get(c.over) : null;
         if (over?.implicit && over.kit)
             continue;
-        out.push({ name: c.name, tokens: w.braid, grid: readsGrid(r, c.name) });
+        out.push({ name: c.name, tokens: w.braid, grid: readsGrid(r, c.name), unitRead: new RegExp(`&${c.name}\\[`).test(source) });
     }
     return { result: r, cells: out };
 }
