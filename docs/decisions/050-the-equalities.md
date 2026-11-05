@@ -26,14 +26,14 @@ Two ladders, each rung named once in the code. A rung is implied by the one abov
 
 | rung | name | holds when | built |
 |---|---|---|---|
-| S1 | **sounds identical** | every event alike: voice (by its sound, decision 057; by its place among the voices before it, #186), onset, length, pitch, gains, bends, levels, moving parameters, envelope. That is the snapshot's `notes` and `events` hashes | `soundsIdentical` |
+| S1 | **sounds identical** | every event alike: voice (by its sound, decision 057; by its place among the voices before it, #186), onset, length, pitch, gains, bends, levels, moving parameters, envelope, each alike to the ear (amended by [070](070-s1-hears-as-a-listener.md): within half a cent, 0.1 dB, 0.25 ms; a noise by its colour and level). It was the snapshot's `notes` and `events` hashes until 070 | `soundsIdentical` |
 | S2 | plays the same notes | voice, onset, length and pitch alike; gains and the rest free | `playsSameNotes` |
 | S3 | the same notes in named cells | the named cells' flattened steps alike | `sameNotes` |
 
 - **The window is the whole piece** where the piece ends: the later of the two ends (`laps=`). A piece that goes on is compared over its first minute. The window is at most twenty minutes (`wholeWindow`, `WHOLE_PIECE_LIMIT`), and `until` overrides it.
 - **What each promises:**
   - **Every rewriting tool promises S1** (decision 049). Normalise also keeps the structure. Shorten's output is the minified form. Fold promises nothing, since a hint is a claim.
-  - **The snapshot is S1 over 40 s**, plus cell names (its `values` and `live` hashes): how a piece is *seen*, not one of the tools' promises.
+  - **The snapshot is exact over 40 s** (stricter than S1 since 070), plus cell names (its `values` and `live` hashes): how a piece is *seen*, not one of the tools' promises.
   - **The repository's identity is E2 today**, and E4 once the hash is built.
 - **E5 sits beside S1, not above it:** a transposed copy is the same shape and doesn't sound the same.
 

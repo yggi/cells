@@ -3,10 +3,11 @@
  * are `identity.ts`'s. Every tool that rewrites a piece promises S1 (decision 049): Migrate, Normalise and Shorten check a
  * rewrite against it before they offer or apply it. Lifted out of `shorten/harness.ts` (#155). Pure.
  *
- *  - S1 `soundsIdentical`: every event alike, voice (by its sound, and on a MIDI card what it sends: decision 057), onset,
- *    length, pitch, gains, bends, levels, moving parameters, envelope (the snapshot's `notes` and `events` hashes), over
+ *  - S1 `soundsIdentical`: every event alike to the ear (decision 070, `HEARD`), voice (by its sound, and on a MIDI card
+ *    what it sends: decision 057), onset, length, pitch, gains, bends, levels, moving parameters, envelope, a noise by its
+ *    colour and level; the snapshot's hashes stay exact, stricter than S1; over
  *    the whole piece (`wholeWindow`): what the tools check a rewrite by. `samePiece` is S1 over the first minute, kept for the tests of equal spellings and its public subpath.
- *  - S2 `playsSameNotes`: every event's voice (as S1 reads it), onset, length and pitch alike, gains and the rest free.
+ *  - S2 `playsSameNotes`: every event's voice (as S1 reads it), onset, length and pitch alike to the ear, gains and the rest free.
  *  - S3 `sameNotes`: the named cells' flattened steps alike.
  */
 import { compileSource } from './compile';
@@ -19,6 +20,24 @@ export declare function sameNotes(a: string, b: string, names: readonly string[]
  * the longest cycle of most pieces (the longest layers, a day in the sun pieces or twenty minutes in Royal, are never run to the end).
  */
 export declare const SAMENESS_SECONDS = 60;
+/**
+ * What a listener can't tell apart (decision 070, #483): each threshold a fraction of the smallest difference people hear
+ * in the best conditions, so two texts S1 calls identical sound alike to every listener, not to most. The sources and the
+ * fractions are the decision's.
+ *  - `cents`: pitch, a note's, a bend's and a voice's own, 0.5 cent (the frequency JND is about 2 to 5 cents for tones
+ *    in the middle of hearing, 0.2 to 0.3 %: Wier, Jesteadt & Green 1977; Moore 2012).
+ *  - `db`: level, per channel, 0.1 dB (the intensity JND is about 0.5 to 1 dB: Jesteadt, Wier & Green 1977; an
+ *    interaural level difference about 0.5 to 1 dB: Mills 1960).
+ *  - `seconds`: where a note starts and ends, 0.25 ms (two onsets about 1 to 2 ms apart are heard as two: Zera & Green
+ *    1993; a gap in noise about 2 to 3 ms: Fitzgibbons & Wightman 1982).
+ *  - `silent`: an amplitude below −100 dB is none.
+ */
+export declare const HEARD: {
+    readonly cents: 0.5;
+    readonly db: 0.1;
+    readonly seconds: 0.00025;
+    readonly silent: 0.00001;
+};
 /** Does the whole piece play the same notes (voice, onset, length, pitch, level per channel, bends, volumes, moving parameters, envelope) in both, for its first minute? */
 export declare function samePiece(a: string, b: string, until?: number): boolean;
 /**

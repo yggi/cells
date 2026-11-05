@@ -35,7 +35,7 @@ description: "A Berlin-school patch on the modules: two oscillators into one res
 &hat oneshot=1 s=white hpf=7500 env=&click gain=.25
 &beat step=16n &kick &hat &hat &hat [&kick,&hat] &hat &hat &hat:0:.5
 
-&out map=sample postgain=2.34 [(&seq + &changes) * &accent * &vca * .35, &beat]
+&out map=sample postgain=2.81 [(&seq + &changes) * &accent * &vca * .35, &beat]
 ```
 
 The note ([docs/notes/modular.md](../docs/notes/modular.md)) writes the same patch flat, the filter and the echo on each oscillator: it plays the same notes, each through the same filter.
