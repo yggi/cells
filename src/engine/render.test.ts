@@ -145,10 +145,10 @@ describe('the renderer', () => {
     expect(bits(pieceAudio(r, codeShifts(r), { seconds: 4 }).mix)).toEqual(bits(once.mix));
   });
 
-  it('a parameter of a later stage is said, once a voice, and the voice rendered without it', () => {
-    const wet = audio('&v s=saw loop=A3 crush=6 distort=.3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
-    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v crush', 'v distort']);
-    const dry = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
+  it("a parameter of a later stage is said, once a cell, and the sound rendered without it: an instrument's grit", () => {
+    const wet = audio('&a s=saw loop=A3\n&v distort=.3 [&a]\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
+    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v distort']);
+    const dry = audio('&a s=saw loop=A3\n&v [&a]\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
     expect(bits(wet.mix)).toEqual(bits(dry.mix));
   });
 
@@ -331,5 +331,94 @@ describe('the reverb (decision 062 R2, #452)', () => {
     const half = room(RATE, 'room=.5').wet!;
     const full = room(RATE).wet!;
     expect(10 * Math.log10(energy(full[0]) / energy(half[0]))).toBeCloseTo(20 * Math.log10(2), 3);
+  });
+});
+
+describe('grit (decision 062 R2, #452)', () => {
+  const RATE = 48000;
+  /** A sine's peak and its first samples, through the grit `params`. */
+  const sine = (params: string) => {
+    const r = compiled(`&v s=sine loop=110hz ${params}\n&n step=1 0\n&out map=sample postgain=1 [&n * &v]`);
+    const a = pieceAudio(r, codeShifts(r), { seconds: 0.5, tail: 0 });
+    return { left: a.mix[0], diagnostics: a.diagnostics };
+  };
+  const unique = (x: Float32Array) => new Set([...x.subarray(RATE * 0.1, RATE * 0.2)].map((v) => v.toFixed(6))).size;
+
+  it("distort= is Tone's curve, (3 + k) · x · 20° / (π + k · |x|): a quiet sine grows by its slope at silence", () => {
+    const { left, diagnostics } = sine('distort=.3');
+    expect(diagnostics).toEqual([]);
+    const clean = sine('').left;
+    const peak = (x: Float32Array) => x.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+    // (a note's peak .35, panned to the middle: x = .35 · √½ before the voice's .4; through the curve, and then the .4)
+    const k = 30;
+    const x = 0.35 * Math.SQRT1_2;
+    const curve = ((3 + k) * x * 20 * (Math.PI / 180)) / (Math.PI + k * x);
+    expect(peak(left)).toBeCloseTo(curve * 0.4, 2);
+    expect(peak(left)).toBeGreaterThan(peak(clean));
+  });
+
+  it('crush= rounds each sample to 2^(bits − 1) levels a side: a sine at 3 bits takes a few values, at 16 none is taken away', () => {
+    expect(unique(sine('crush=3').left)).toBeLessThan(20);
+    expect(unique(sine('crush=16').left)).toBe(unique(sine('').left));
+    expect(sine('crush=3').diagnostics).toEqual([]);
+  });
+
+  it("crushes first, then distorts, then filters, as Cell studio's chain has them", () => {
+    // (3 bits: levels at quarters; each one then distorted, so every sample, over the voice's .4, is the curve at a quarter,
+    // within the curves' interpolation, .03: distorted first, it would sit on the quarters, .046 and more from these)
+    const k = 50;
+    const curve = (x: number) => (Math.abs(x) < 0.001 ? 0 : ((3 + k) * x * 20 * (Math.PI / 180)) / (Math.PI + k * Math.abs(x)));
+    const allowed = [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1].map(curve);
+    // (all but the few on the crusher's curve between two levels, where it is read between them: 99 %)
+    const samples = [...sine('crush=3 distort=.5').left.subarray(RATE * 0.1, RATE * 0.2)];
+    const on = samples.filter((v) => Math.min(...allowed.map((a) => Math.abs(v / 0.4 - a))) < 0.03).length;
+    expect(on / samples.length).toBeGreaterThan(0.99);
+    // (written the other way round, the chain is the same: crush=, then distort=)
+    expect(bits([sine('distort=.5 crush=3').left])).toEqual(bits([sine('crush=3 distort=.5').left]));
+  });
+});
+
+describe('FM (decision 062 R2, #452)', () => {
+  const RATE = 48000;
+  /** A held carrier at 440 Hz under the modulator `op`, its own `carrier` parameters: the left channel. */
+  const fm = (carrier: string, op = '&op s=sine ratio=1') => {
+    const r = compiled(`&v s=sine loop=440hz ${carrier} env=&(map=adsr .001 .01 1 .01)\n${op}\n&n step=1 0\n&out map=sample postgain=1 [&n * &v]`);
+    expect(r.ok, r.diagnostics.map((d) => d.message).join('; ')).toBe(true);
+    const a = pieceAudio(r, codeShifts(r), { seconds: 0.5, tail: 0 });
+    return { left: a.mix[0], diagnostics: a.diagnostics };
+  };
+
+  it('a sine modulated by a sine at its frequency is sin(2πft − I·cos 2πft + I): its phase swung by the index', () => {
+    const { left, diagnostics } = fm('fm=&op index=2');
+    expect(diagnostics).toEqual([]);
+    // (against the formula over 20 ms of its sustain, scaled by its level there: correlated to .998, the phase stepped a
+    // frame at a time, as an oscillator steps it, against the formula's continuous one)
+    const from = 0.1 * RATE;
+    const n = 0.02 * RATE;
+    let xy = 0;
+    let xx = 0;
+    let yy = 0;
+    for (let i = 0; i < n; i++) {
+      const t = (from + i) / RATE;
+      const want = Math.sin(2 * Math.PI * 440 * t - 2 * Math.cos(2 * Math.PI * 440 * t) + 2);
+      const got = left[from + i]!;
+      xy += want * got;
+      xx += want * want;
+      yy += got * got;
+    }
+    expect(xy / Math.sqrt(xx * yy)).toBeGreaterThan(0.998);
+  });
+
+  it('index=0 is the carrier alone, bit for bit; without index=, an index of 1', () => {
+    expect(bits([fm('fm=&op index=0').left])).toEqual(bits([fm('').left]));
+    expect(bits([fm('fm=&op').left])).toEqual(bits([fm('fm=&op index=1').left]));
+    expect(bits([fm('fm=&op').left])).not.toEqual(bits([fm('').left]));
+  });
+
+  it("a modulator's own modulator swings it in turn, and its ratio= sets its frequency", () => {
+    const one = fm('fm=&op index=2', '&op s=sine ratio=2');
+    const two = fm('fm=&op index=2', '&op s=sine ratio=2 fm=&op2 index=3\n&op2 s=sine ratio=.5');
+    expect(bits([two.left])).not.toEqual(bits([one.left]));
+    expect(two.diagnostics).toEqual([]);
   });
 });
