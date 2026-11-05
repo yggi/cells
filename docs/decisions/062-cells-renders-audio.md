@@ -71,9 +71,11 @@ So:
 | stage | sounds | examples rendered with no diagnostic |
 |---|---|---|
 | **R1** (this decision's first rung) | the waveforms, a braid's own wave, noise; envelopes, volume streams, gain, pan; bends, glides, a pitch's shape; `lpf` and `hpf`, with their resonance, fixed or moving | 47 of 81 |
-| **R2** | `room=`, `delay=`, `delaytime=`, `delayfeedback=`, `distort=`, `crush=`, FM (`fm=`, `ratio=`, `index=`) | (to measure) |
+| **R2** | the echo (`delay=`, fixed or moving, `delaytime=`, `delayfeedback=`) on a voice and on an instrument, built (#452); `room=`, `distort=`, `crush=`, FM (`fm=`, `ratio=`, `index=`), to come | 51 of 83 with the echo (49 without, at 10e1aac) |
 | **R3** | resonators (`body=` and the rest), sound tapes (`write=` and the rest) | (to measure) |
 
+- **The echo is Cell studio's** (`src/audio/voices.ts`, `voice/voice.ts` @ 420e9d6), as R1's levels are: a voice's sound after its filters, through its send (`delay=`; .3 where it gives only `delaytime=`), into a feedback delay heard wet only (Tone's FeedbackDelay at `wet: 1`); its own at its `delaytime=` and `delayfeedback=` (.35 unless given), else the shared one, 0.375 s at .35, whatever the voice's `delayfeedback=`. An instrument's echo is one for its voices' sum (decision 067): each voice through it sends into it at the end of its chain, which, the echo being linear as a filter is, is the echo of the sum, within float rounding (-140 dB of the flat text written with an echo on each voice). A delay in a cycle is at least 128 frames, as in Web Audio, and is read between two frames where it falls between them.
+  - Measured against Cell studio's render (cells v0.17.1, yggi/cell-studio 38fe7a7, 10 s and a 2 s tail at 44.1 kHz): a voice's echo, its own echo at its feedback, its own at the default send, and a moving send are each within 0.25 dB of Cell studio's, average and peak, where the same voice dry is within 0.05 dB.
 - **A parameter of a later stage is said and left out,** never silently. A diagnostic names the voice and the parameter, once a voice, and the voice is rendered dry.
 - **A resonator's notes** are left out, since it has no dry sound. So is a tape.
 - **Clock physics** (`motor=`, belts) is time, already in the events.
@@ -90,8 +92,8 @@ What realize says is heard: on a sound card, or on a MIDI card alone at its entr
   - **Names:** a stem is named by the cells its term names (`crackle*vinyl`), a second of a name `#2`. On a card of two channels it is named by its side too (`pure*organ:left`), and it sounds on that side alone.
   - **A voice heard through several entries** is split between them by the share each gives it, channel by channel, each share through filters of its own. The stems sum to the mix to the bit. That mix differs from the plain mix only by the order of its additions (3 × 10⁻⁸ at most, over the examples measured).
   - **What it needs:** each note's output (`eventsBetween(…, true)`, as `pieceAudio` asks). The compiler records the entry each part of an output comes through (`Output.parts[].entry`). A note with no output goes to a stem `unrouted`, with a diagnostic.
-- **In R1 every stem is dry,** since nothing is a send.
-- **Still open:** the returns of R2's shared effects, a track each.
+- **An echo's return is a stem of its own** (`echo`, the shared one; `echo:<voice>`, a voice's own), after the voices' or the entries' stems, in the order the echoes are first sent to; the stems still sum to the mix, to the bit. A voice's stem is its dry sound.
+- **Still open:** the returns of R2's other shared effects (the reverb), a track each.
 
 ## Consequences
 
