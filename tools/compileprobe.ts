@@ -288,7 +288,7 @@ export interface Row {
 /** Shorten's kinds whose rewrite stays in the core: a phrase as one cell used at its places, cells alike as one, a default dropped. */
 const CORE_KINDS: ReadonlySet<string> = new Set(['phrase', 'same', 'default']);
 
-/** Compile's fold as the probe tries it: Shorten's core kinds only, the best each round, each checked by S1 (Shorten's rules are not, #441's probe). */
+/** Compile's fold as the probe tries it: Shorten's core kinds only, the best each round, each checked by S1 (as `shortenAll` checks its steps since #477). */
 export function coreFold(text: string, rounds = 60): { source: string; steps: string[] } {
   let now = text;
   const steps: string[] = [];

@@ -289,3 +289,30 @@ describe('shorten: stereo twins → one chord and pan= (#10, decision 007)', () 
     none('&m [&t * &a]\n&out loop=SAMPLE_RATE map=sample [&t * &a * .2, &m] [&t * &a * .1, &m]');
   });
 });
+
+// #477: a rewrite Shorten offered that didn't sound as the text did, found by #441's probe.
+describe('Shorten offers only what sounds the same (#477)', () => {
+  const sounds = (src: string) => {
+    for (const s of shorten(src)) expect([s.title, soundsIdentical(src, s.apply(src))]).toEqual([s.title, true]);
+  };
+  it('no run or phrase in a cell a pick or a rotation reads by its units: x!n and a splice are one unit each', () => {
+    const rotated = '&a 0@2 1@2\n&b 2@2 3@2\n&j step=8 &a &a &b &b\n&v s=sine loop=C4\n&out map=sample [&j * &v, &j[<<] * &v]';
+    expect(shorten(rotated).filter((s) => s.kind === 'run')).toEqual([]);
+    sounds(rotated);
+    for (const read of ['&j[<<3]', '&j[2:5]']) {
+      const src = `&j step=8 0 4 7 11 2 0 4 7 11 5 9\n&v s=sine loop=C4\n&out map=sample [${read} * &v]`;
+      expect(shorten(src).filter((s) => s.kind === 'phrase')).toEqual([]);
+    }
+    // (the same line read whole is still offered its phrase)
+    expect(shorten('&j step=8 0 4 7 11 2 0 4 7 11 5 9\n&v s=sine loop=C4\n&out map=sample [&j * &v]').some((s) => s.kind === 'phrase')).toBe(true);
+  });
+  it('no merge of two alike cells that are two channels’ entries: merged, the two notes are one in both channels', () => {
+    const src = '&t step=2 0 4\n&v s=sine loop=C4\n&a map=amp step=2 1 .5\n&b map=amp step=2 1 .5\n&out map=sample [&t * &a * &v * .25] [&t * &b * &v * .25]';
+    expect(shorten(src).filter((s) => s.kind === 'same')).toEqual([]);
+    sounds(src);
+  });
+  it('shortenAll takes only steps that sound as the text did', () => {
+    const src = '&a 0@2 1@2\n&b 2@2 3@2\n&j step=8 &a &a &b &b 0 4 7 0 4 7\n&v s=sine loop=C4\n&out map=sample [&j * &v, &j[<<] * &v]';
+    expect(soundsIdentical(src, shortenAll(src).source)).toBe(true);
+  });
+});
