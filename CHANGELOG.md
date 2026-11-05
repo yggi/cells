@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+### Changed
+
+- **A swing leans pairs: a group of three stays straight, and `:pairs` says nothing more** (decision 070, #15). `swing=8n:r` leaned a group of three eighths (6/8's beat, 7/8's first) long, short, short; it now keeps it even, as a band swinging a mixed meter does, as Jambot's band does (its T16) and as `contracts/swing` v1 reads it, which cells now passes 131 of 131 with no word (30 were recorded as differing). A finer level still leans inside a three. A level with no pair (`meter("6/8") swing=8n:.67`) leans nothing, with a warning (none at .5, straight); so the Metronome's swing slider leans nothing in 6/8, 9/8 and 12/8, where it leaned the threes. `swing=8n:2/3:pairs` is read as `swing=8n:2/3`, still with no diagnostic, and Migrate drops the word (rule `pairs`); a warning comes once Jambot stops writing it. No example's or fragment's events move: none swings a group of three. **What a frontend sees at its next pin:** a text that swings a meter with a group of three plays the three straight; the `SwingLevel.pairs` field and `pairsProblem` are gone from `engine/meter`; `migrations` can offer the rule `pairs`.
+
 ### Added
 
 - **The renderer sounds the echo** (decision 062 stage R2, #452): `delay=`, fixed or moving, `delaytime=` and `delayfeedback=` on a voice, as Cell studio's voices sound them, a voice's own echo at its `delaytime=` or the shared one (0.375 s at .35), measured within 0.25 dB of Cell studio's render; and on an instrument (decision 067), one echo of its voices' sum. 51 of 83 examples render with no diagnostic, from 49 (`acid` and `patchbay` join). With `tracks: 'voices'` or `'entries'`, an echo's return is a stem of its own, `echo` or `echo:<voice>`, and the stems still sum to the mix. An echo is no longer a diagnostic; the reverb, grit and FM still are. No event snapshot moves: the renderer only. **What a frontend sees at its next pin:** `pieceAudio` and `createRenderer` sound a piece's echoes, a piece with `delay=` renders louder by its echo, and a render's `stems` can hold an echo's return.

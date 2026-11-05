@@ -1,6 +1,6 @@
 # 053 · The pairs alone: `swing=8n:r:pairs`
 
-**Date:** 2026-10-20 · **Status:** accepted (the owner ruled for the capability, option A on [yggi/jambot#436](https://github.com/yggi/jambot/issues/436), and accepted this spelling on 2026-10-20, on #222) · Issues: #204, #18, #15
+**Date:** 2026-10-20 · **Status:** accepted (the owner ruled for the capability, option A on [yggi/jambot#436](https://github.com/yggi/jambot/issues/436), and accepted this spelling on 2026-10-20, on #222); amended by [070](070-swing-leans-pairs.md): every swing leans its pairs alone, and the word says nothing more · Issues: #204, #18, #15
 
 ## Context
 

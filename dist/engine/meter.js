@@ -44,17 +44,13 @@ export function swingLevelProblem(m, whole) {
         const q = b / len;
         return Math.abs(q - Math.round(q)) < 1e-9 && Math.round(q) >= 2;
     });
-    return fits
-        ? null
-        : `no beat of this meter divides into two or more of ${noteName(whole) ?? 'them'} (its beats: ${m.beats.map((b) => noteName(b / m.unit) ?? b).join(' ')}), and swing never moves a beat`;
-}
-export function pairsProblem(m, whole) {
-    const len = whole * m.unit;
-    const probe = { ...m, swing: [{ level: noteName(whole) ?? '', whole, share: 0.6, pairs: true }] };
+    if (!fits)
+        return `no beat of this meter divides into two or more of ${noteName(whole) ?? 'them'} (its beats: ${m.beats.map((b) => noteName(b / m.unit) ?? b).join(' ')}), and swing never moves a beat`;
+    const probe = { ...m, swing: [{ level: noteName(whole) ?? '', whole, share: 0.6 }] };
     for (let i = 0; i * len < m.pulses - 1e-9; i++)
         if (Math.abs(swingAt(probe, i * len) - i * len) > 1e-9)
             return null;
-    return `every group of ${noteName(whole) ?? 'them'} in it is three, and :pairs keeps those straight`;
+    return `every group of ${noteName(whole) ?? 'them'} in it is three, and a swing leans pairs alone, its groups of three straight`;
 }
 const held = (v) => {
     for (let k = 0, x = v; k <= 6; k++, x *= 2)
@@ -63,14 +59,9 @@ const held = (v) => {
     return false;
 };
 function knotsOf(parts, lean) {
-    const even = Array.from({ length: parts + 1 }, (_, i) => i / parts);
-    if (lean === null || (parts !== 2 && parts !== 3) || (parts === 3 && lean.pairs))
-        return even;
-    const { share } = lean;
-    if (parts === 2)
-        return [0, Math.min(0.95, Math.max(0.05, share)), 1];
-    const second = Math.min(0.95, Math.max(0.05, share - 1 / 6));
-    return [0, second, (second + 1) / 2, 1];
+    if (lean !== null && parts === 2)
+        return [0, Math.min(0.95, Math.max(0.05, lean.share)), 1];
+    return Array.from({ length: parts + 1 }, (_, i) => i / parts);
 }
 function swungIn(x, n, levels, grid) {
     const finest = Math.min(...levels.map((l) => l.len));
@@ -102,7 +93,7 @@ function swungIn(x, n, levels, grid) {
 export function swingAt(m, p, grid) {
     if (!m.swing?.length)
         return p;
-    const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share, ...(l.pairs ? { pairs: true } : {}) }));
+    const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share }));
     const P = m.pulses;
     const bar = Math.floor(p / P + 1e-9);
     const x = p - bar * P;
