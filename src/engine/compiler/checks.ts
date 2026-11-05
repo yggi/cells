@@ -2,7 +2,7 @@
 import { AXES, SLOTS } from '../style';
 import { BODIES, CV_LAPS, isMidiCard, ROOT } from '../program';
 import { sortOfCells } from './sorts';
-import { MOVING_PARAMS } from '../attributes';
+import { FILTER_MODELS, filterModel, MOVING_PARAMS } from '../attributes';
 import { DOUGH_SOURCES } from '../dough-params';
 import { refsOf } from '../readers';
 import { leaves } from '../subseq';
@@ -23,6 +23,9 @@ export function checkCells(
     if (typeof c.params.body === 'string' && !(c.params.body in BODIES)) error(`body=${c.params.body}: one of ${Object.keys(BODIES).join(', ')}`, span('body'));
     if (typeof c.params.board === 'string' && c.params.board !== 'none' && !(c.params.board in BODIES))
       error(`board=${c.params.board}: none, or one of ${Object.keys(BODIES).join(', ')}`, span('board'));
+    // (its filters' model, decision 074: a word, or superdough's number for one)
+    if (c.params.ftype !== undefined && filterModel(c.params.ftype) === null)
+      error(`ftype=${c.params.ftype}: its filters' model is one of ${FILTER_MODELS.join(', ')} (or superdough's 0, 1, 2)`, span('ftype'));
     if (typeof c.params.couple === 'string') {
       const o = cells.get(c.params.couple);
       if (!o) unknownCell(c.params.couple, span('couple'));

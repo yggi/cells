@@ -3,8 +3,8 @@
  * sound=saw s=saw, clip=.5 legato=.5 (#94: clip warns, Normalise rewrites it). The parser reads the two as one, so
  * the respelling plays the same by construction. Normalise writes every one; Shorten offers those where ours is shorter.
  */
-import { PARAM_ALIASES } from '../attributes';
-import { attrsOf, renameAttr } from '../edit';
+import { FILTER_MODELS, PARAM_ALIASES } from '../attributes';
+import { attrsOf, renameAttr, setAttr } from '../edit';
 import type { CompileResult } from '../program';
 import type { Rewrite } from '../rewrite';
 
@@ -28,6 +28,27 @@ export function aliases(source: string, result: CompileResult, only: (alias: str
         apply: (src) => renameAttr(src, c.name, key, ours),
       });
     }
+  }
+  return out;
+}
+
+/** `ftype=` written as superdough's number for a model, as its word (decision 074): `ftype=2` is `ftype=24db`. */
+export function filterModels(source: string, result: CompileResult): Rewrite<'alias'>[] {
+  const out: Rewrite<'alias'>[] = [];
+  for (const c of result.cells.values()) {
+    if (c.implicit || c.lambda) continue;
+    const written = attrsOf(source, c.name).get('ftype');
+    const word = written !== undefined && /^\d+$/.test(written) ? FILTER_MODELS[Number(written)] : undefined;
+    if (!word) continue;
+    out.push({
+      id: `ftype:${c.name}`,
+      tool: 'normalise',
+      rule: 'alias',
+      title: `&${c.name}: ftype=${written} is superdough's number for ftype=${word} — write the word`,
+      before: `ftype=${written}`,
+      after: `ftype=${word}`,
+      apply: (src) => setAttr(src, c.name, 'ftype', word),
+    });
   }
   return out;
 }

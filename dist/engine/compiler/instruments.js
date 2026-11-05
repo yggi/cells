@@ -1,6 +1,6 @@
 import { VOICE_PARAMS } from "../attributes.js";
 import { refsOf } from "../readers.js";
-export const LINEAR = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq', 'room', 'delay', 'delaytime', 'delayfeedback'];
+export const LINEAR = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq', 'ftype', 'room', 'delay', 'delaytime', 'delayfeedback'];
 const PROCESSORS = [...LINEAR, 'pan', 'distort', 'crush'];
 export const instrumentsOf = (outputs, cells) => new Set(outputs.flatMap((o) => o.through).filter((n) => !!cells.get(n)?.mix));
 function soundKeys(d) {

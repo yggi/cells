@@ -106,6 +106,9 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   hpq: sound('high-pass resonance', { moves: true }),
   bpf: sound('band-pass centre, Hz (decision 074)', { moves: true, hz: true }),
   bpq: sound('band-pass Q: the centre over the bandwidth, 1 unless given (decision 074)', { moves: true }),
+  ftype: sound("its filters' model (decision 074): 12db (the default, one biquad each), 24db (two in series), ladder (a low-pass of its own); or superdough's numbers 0, 2, 1", {
+    value: 'word',
+  }),
   room: sound('reverb send 0–1', { moves: true }),
   delay: sound('delay send 0–1', { moves: true }),
   delaytime: sound('echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — or a tap: 8n, 4n.', { clock: true }),
@@ -366,4 +369,14 @@ function distance(a: string, b: string): number {
       if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
     }
   return d[a.length][b.length];
+}
+
+/** The filters' models `ftype=` names (decision 074), at superdough's numbers for them: 0 `12db`, 1 `ladder`, 2 `24db`. */
+export const FILTER_MODELS = ['12db', 'ladder', '24db'] as const;
+export type FilterModel = (typeof FILTER_MODELS)[number];
+/** A `ftype=` as written, as its model: a word, or superdough's number for one; null for neither. */
+export function filterModel(v: number | string | undefined): FilterModel | null {
+  if (v === undefined) return '12db';
+  if (typeof v === 'number') return Number.isInteger(v) && v >= 0 && v < FILTER_MODELS.length ? FILTER_MODELS[v]! : null;
+  return (FILTER_MODELS as readonly string[]).includes(v) ? (v as FilterModel) : null;
 }

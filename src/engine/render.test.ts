@@ -535,3 +535,47 @@ describe('the band-pass, and a 24 dB low-pass as two stages (decision 074)', () 
     expect(drop24 / drop12).toBeLessThan(2.1);
   });
 });
+
+describe("ftype=: the filters' model (decision 074)", () => {
+  const V = (filters: string) => `&v s=saw loop=110hz ${filters} env=&(map=adsr .05 0 1 .05)\n&n step=.5 0\n`;
+  const render = (text: string) => {
+    const r = compiled(text);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    const a = pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 });
+    return { bits: bits(a.mix), diagnostics: a.diagnostics.map((d) => `${d.voice} ${d.param}`) };
+  };
+  const OUT = (cell: string) => `&out map=sample postgain=1 [&n * ${cell}]`;
+
+  it("24db is two identical biquads in series: the voice's filter, then an instrument's at the same cutoff and Q, sample for sample", () => {
+    const word = render(V('ftype=24db lpf=500 lpq=6') + OUT('&v'));
+    expect(word.bits).toEqual(render(V('lpf=500 lpq=6') + '&lp lpf=500 lpq=6 [&v]\n' + OUT('&lp')).bits);
+    expect(word.bits).not.toEqual(render(V('lpf=500 lpq=6') + OUT('&v')).bits);
+    // (each of its filters, a high-pass and a band-pass, its two stages one after the other, superdough's order: the same
+    // filters as a voice's then an instrument's, in another order, so within float rounding, 1e-6)
+    const mix = (text: string) => {
+      const r = compiled(text);
+      return pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 }).mix[0];
+    };
+    const a = mix(V('ftype=24db hpf=300 bpf=900 bpq=2') + OUT('&v'));
+    const b = mix(V('hpf=300 bpf=900 bpq=2') + '&two hpf=300 bpf=900 bpq=2 [&v]\n' + OUT('&two'));
+    expect(a.reduce((m, x, i) => Math.max(m, Math.abs(x - b[i]!)), 0)).toBeLessThan(1e-6);
+    expect(a.reduce((m, x) => Math.max(m, Math.abs(x)), 0)).toBeGreaterThan(0.01);
+  });
+
+  it("12db is the default; superdough's numbers name the same models; on an instrument, it is the instrument's filters'", () => {
+    expect(render(V('ftype=12db lpf=500 lpq=6') + OUT('&v')).bits).toEqual(render(V('lpf=500 lpq=6') + OUT('&v')).bits);
+    expect(render(V('ftype=0 lpf=500') + OUT('&v')).bits).toEqual(render(V('lpf=500') + OUT('&v')).bits);
+    expect(render(V('ftype=2 lpf=500') + OUT('&v')).bits).toEqual(render(V('ftype=24db lpf=500') + OUT('&v')).bits);
+    expect(render(V('') + '&lp ftype=24db lpf=500 lpq=6 [&v]\n' + OUT('&lp')).bits).toEqual(render(V('ftype=24db lpf=500 lpq=6') + OUT('&v')).bits);
+  });
+
+  it('ladder is said, once a cell, and plays its 12 dB biquad until its rung; anything else is an error', () => {
+    const ladder = render(V('ftype=ladder lpf=500 lpq=6') + OUT('&v'));
+    expect(ladder.diagnostics).toEqual(['v ftype']);
+    expect(ladder.bits).toEqual(render(V('lpf=500 lpq=6') + OUT('&v')).bits);
+    expect(compiled(V('ftype=36db lpf=500') + OUT('&v')).diagnostics.map((d) => d.message)).toContain(
+      "ftype=36db: its filters' model is one of 12db, ladder, 24db (or superdough's 0, 1, 2)",
+    );
+    expect(compiled(V('ftype=3 lpf=500') + OUT('&v')).ok).toBe(false);
+  });
+});

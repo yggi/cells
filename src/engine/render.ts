@@ -11,6 +11,7 @@
  * tapes) is left out, the voice rendered dry, and a diagnostic names the voice and the parameter.
  */
 import { DOUGH_SOURCES } from './dough-params';
+import { filterModel } from './attributes';
 import { cellId } from './ids';
 import { grainOffset, noise, NOISE_SECONDS } from './noise';
 import type { CompileResult, Shifts } from './program';
@@ -592,7 +593,9 @@ function filtersOf(
       autos[key] = new Auto(start(key, from));
       autos[q] = new Auto(start(q, 1));
     }
-  return { has, autos };
+  // (its model: 24db two stages; a ladder, until its rung, its 12 dB biquad, said by the renderer)
+  const model = keep('ftype') ? filterModel(c.params.ftype) : '12db';
+  return { has, autos, stages: model === '24db' ? 2 : 1, ladder: model === 'ladder' };
 }
 
 /** The stem a chain goes to: its key's first part. */
@@ -609,6 +612,8 @@ interface Voice {
   readonly grit: readonly Shaper[];
   /** Which filters it has; their parameters move for all its chains alike. */
   readonly has: Readonly<Record<Filter, boolean>>;
+  /** How many biquads each of its filters is: 1, or 2 under `ftype=24db` (decision 074). */
+  readonly stages: number;
   readonly autos: Partial<Record<FilterKey, Auto>>;
   /** Its sends to an echo (`delay=`) and the reverb (`room=`), after its filters, each at the level it moves to. */
   readonly sends: readonly Send[];
@@ -624,6 +629,8 @@ interface Voice {
 interface Stage {
   readonly name: string;
   readonly has: Readonly<Record<Filter, boolean>>;
+  /** How many biquads each of its filters is: 1, or 2 under `ftype=24db` (decision 074). */
+  readonly stages: number;
   readonly autos: Partial<Record<FilterKey, Auto>>;
   /** Its sends, for its voices' sum: each voice through it sends, as a filter of the sum is one on each (#452). */
   readonly sends: readonly Send[];
@@ -641,7 +648,7 @@ interface Bus {
   /** The stem it goes to: '' (the instrument's own) or an entry's key. */
   readonly stem: string;
   /** Its instrument, then those around it, each with its filters for this bus. */
-  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, Biquad>> }[];
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, Biquad[]>> }[];
   readonly input: [Float64Array, Float64Array];
 }
 
@@ -649,9 +656,9 @@ interface Bus {
 interface Chain {
   /** The stem it goes to: '' (the voice's own), or an entry's key; then the instruments it goes through. */
   readonly key: string;
-  readonly filters: Partial<Record<Filter, Biquad>>;
+  readonly filters: Partial<Record<Filter, Biquad[]>>;
   /** The instruments' stages after its own filters, the innermost first, each with its filters for this chain. */
-  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, Biquad>> }[];
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, Biquad[]>> }[];
   /** Its notes sounding or to come, in order of their start. */
   notes: Note[];
   /** Its sound before its filters, this block. */
@@ -794,7 +801,8 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       wave = waveOf(real, imag);
     }
     // (not what it takes from an instrument: that instrument's stage plays it, after the voice's own)
-    const { has, autos } = filtersOf(c, (k) => !c.inherited?.[k]);
+    const { has, autos, stages, ladder } = filtersOf(c, (k) => !c.inherited?.[k]);
+    if (ladder) say(name, 'ftype', `&${name}'s ftype=ladder is sounded from a later rung (decision 074): rendered as its 12 dB biquad`);
     const sends = sendsOf(name, c, (k) => !c.inherited?.[k]);
     const v: Voice = {
       name,
@@ -805,6 +813,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       grit: gritOf(c.params, (k) => !c.inherited?.[k]),
       has,
       autos,
+      stages,
       sends,
       chains: [],
     };
@@ -878,12 +887,14 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     if (!c) return null;
     for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
       if (LATER[k]) say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-    const st: Stage = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
+    const { ladder, ...filters } = filtersOf(c, () => true);
+    if (ladder) say(name, 'ftype', `&${name}'s ftype=ladder is sounded from a later rung (decision 074): rendered as its 12 dB biquad`);
+    const st: Stage = { name, ...filters, sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
     stages.set(name, st);
     return st;
   };
-  const biquads = (has: Voice['has']): Chain['filters'] => ({
-    ...Object.fromEntries(FILTERS.filter(({ key }) => has[key]).map(({ key, type }) => [key, new Biquad(type)])),
+  const biquads = (has: { readonly has: Voice['has']; readonly stages: number }): Chain['filters'] => ({
+    ...Object.fromEntries(FILTERS.filter(({ key }) => has.has[key]).map(({ key, type }) => [key, Array.from({ length: has.stages }, () => new Biquad(type))])),
   });
 
   /** A voice's chain to a stem through its instruments' stages, made when a note first goes there. */
@@ -893,7 +904,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     const key = [stem, ...through.map((st) => st.name)].join('\u0000');
     let b = buses.get(key);
     if (!b) {
-      b = { key, stem, stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })), input: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
+      b = { key, stem, stages: through.map((stage) => ({ stage, filters: biquads(stage) })), input: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
       buses.set(key, b);
       if (tracks === 'voices' && !stems.includes(through[0]!.name)) stems.push(through[0]!.name);
     }
@@ -908,8 +919,8 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       const inside = gritty < 0 ? through : through.slice(0, gritty);
       ch = {
         key,
-        filters: biquads(v.has),
-        stages: inside.map((stage) => ({ stage, filters: biquads(stage.has) })),
+        filters: biquads(v),
+        stages: inside.map((stage) => ({ stage, filters: biquads(stage) })),
         notes: [],
         dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)],
         bus: gritty < 0 ? null : busOf(stem, through.slice(gritty)),
@@ -1122,14 +1133,15 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     const t = blockStart / rate;
     for (const [filters, autos] of [[ch.filters, v.autos] as const, ...ch.stages.map((s) => [s.filters, s.stage.autos] as const)])
       for (const { key: k } of FILTERS) {
-        const bq = filters[k];
-        if (!bq) continue;
         const q = QOF[k];
-        bq.set(autos[k]!.at(t), autos[q]!.at(t), rate);
-        for (let f = from; f < to; f++) {
-          const i = f - blockStart;
-          ch.dry[0][i] = bq.run(ch.dry[0][i]!, 0);
-          ch.dry[1][i] = bq.run(ch.dry[1][i]!, 1);
+        // (each stage of it in turn, at one cutoff and Q: two under ftype=24db, decision 074)
+        for (const bq of filters[k] ?? []) {
+          bq.set(autos[k]!.at(t), autos[q]!.at(t), rate);
+          for (let f = from; f < to; f++) {
+            const i = f - blockStart;
+            ch.dry[0][i] = bq.run(ch.dry[0][i]!, 0);
+            ch.dry[1][i] = bq.run(ch.dry[1][i]!, 1);
+          }
         }
       }
   };
@@ -1163,7 +1175,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
         for (const sd of v.sends) levels(sd, from, to, blockStart);
         for (const ch of v.chains) {
           for (const { stage } of ch.stages) for (const sd of stage.sends) levels(sd, from, to, blockStart);
-          if (!ch.notes.length && !FILTERS.some(({ key }) => ch.filters[key]) && !ch.stages.length) continue;
+          if (!ch.notes.length && !FILTERS.some(({ key }) => ch.filters[key]?.length) && !ch.stages.length) continue;
           sound(v, ch, from, to, blockStart);
           for (const g of v.grit)
             for (let f = from; f < to; f++) {
@@ -1237,13 +1249,13 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
                 x1[i] = g.run(x1[i]!);
               }
           for (const { key: k } of FILTERS) {
-            const bq = filters[k];
-            if (!bq) continue;
-            bq.set(stage.autos[k]!.at(t), stage.autos[QOF[k]]!.at(t), rate);
-            for (let f = from; f < to; f++) {
-              const i = f - blockStart;
-              x0[i] = bq.run(x0[i]!, 0);
-              x1[i] = bq.run(x1[i]!, 1);
+            for (const bq of filters[k] ?? []) {
+              bq.set(stage.autos[k]!.at(t), stage.autos[QOF[k]]!.at(t), rate);
+              for (let f = from; f < to; f++) {
+                const i = f - blockStart;
+                x0[i] = bq.run(x0[i]!, 0);
+                x1[i] = bq.run(x1[i]!, 1);
+              }
             }
           }
         });

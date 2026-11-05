@@ -70,3 +70,8 @@ export declare const memberParams: (params: Readonly<Record<string, unknown>>) =
 export declare function rolesText(on: readonly Role[]): string;
 /** The nearest attribute to a misspelt one (one or two edits away), or null. */
 export declare function nearestAttribute(word: string): string | null;
+/** The filters' models `ftype=` names (decision 074), at superdough's numbers for them: 0 `12db`, 1 `ladder`, 2 `24db`. */
+export declare const FILTER_MODELS: readonly ["12db", "ladder", "24db"];
+export type FilterModel = (typeof FILTER_MODELS)[number];
+/** A `ftype=` as written, as its model: a word, or superdough's number for one; null for neither. */
+export declare function filterModel(v: number | string | undefined): FilterModel | null;

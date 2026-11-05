@@ -4,7 +4,7 @@
  * a piece is being written (decision 017): for the examples, a corpus, the round trip, and before a hash (#49). What it
  * writes is listed, each with its reason, in docs/language/canonical.md. One rule a file:
  *
- *  - aliases.ts:  Strudel's or dough's name for a parameter as ours, whatever its length: cutoff= → lpf=, clip= → legato=
+ *  - aliases.ts:  Strudel's or dough's name for a parameter as ours, whatever its length: cutoff= → lpf=, clip= → legato=; and ftype='s numbers as its words, ftype=2 → ftype=24db (decision 074)
  *  - names.ts:    the interface names where they are unambiguous (#196): the main meter &bar, its rate &tempo, the main key
  *                 &key, its tonic &tonic; and scan(1 1 1 1), the meter of four beats, as meter("4/4")
  *  - library.ts:  a line that is a library fragment's word for word as a use of it (#196): &bar meter("4/4") step=&tempo

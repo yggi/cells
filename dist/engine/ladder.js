@@ -28,6 +28,7 @@ export const PENDING = new Set([
     'parameter accents',
     'parameter bpf',
     'parameter bpq',
+    'parameter ftype',
     'attribute cycle',
 ]);
 export function formKey(e) {

@@ -4,7 +4,7 @@ import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, StylePo
 import { TIME_PARAMS } from '../attributes';
 import { RETIRED_PARAMS } from '../dough-params';
 import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from '../program';
-import { CELL_PARAMS, CORE, PARAMS, PARAM_ALIASES, nearestAttribute } from '../attributes';
+import { CELL_PARAMS, CORE, filterModel, PARAMS, PARAM_ALIASES, nearestAttribute } from '../attributes';
 import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE, parseFree } from './free';
@@ -543,7 +543,9 @@ function readParam(s: LineScanner, b: Body, key: string): void {
   }
   const v = s.match(/-?[A-Za-z0-9_.]+/y);
   if (v === null) s.fail(`Expected a value after ${key}=`);
-  b.params[key] = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(v) ? parseFloat(v) : v;
+  const value = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(v) ? parseFloat(v) : v;
+  // (ftype= given superdough's number for a model is that model, decision 074: ftype=2 is ftype=24db)
+  b.params[key] = key === 'ftype' && typeof value === 'number' ? (filterModel(value) ?? value) : value;
   b.paramSpans[key] = s.span(vs);
 }
 
