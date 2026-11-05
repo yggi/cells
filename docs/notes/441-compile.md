@@ -1,6 +1,6 @@
 # The compile tool: de-sugar into the core, minify names, fold
 
-Date: 2026-11-05 · Status: proposal, the owner's answers to the questions at the end open; it ends in decision 069's proposal, not yet written · Issues: [#441](https://github.com/yggi/cells/issues/441), from [#418](https://github.com/yggi/cells/issues/418) (question 6) and on the v1.0.0 tracker [#26](https://github.com/yggi/cells/issues/26); the core is [decision 068](../decisions/068-the-core-grammar.md), its rows [418-core-grammar.md](418-core-grammar.md) · Probe: `tools/compileprobe.ts` (and its test)
+Date: 2026-11-05 · Status: done: the owner's answers of 2026-11-05 folded in, ruled as [decision 069](../decisions/069-compile-writes-the-core.md); the follow-ups are #477, #481 and the tool, #482 · Issues: [#441](https://github.com/yggi/cells/issues/441), from [#418](https://github.com/yggi/cells/issues/418) (question 6) and on the v1.0.0 tracker [#26](https://github.com/yggi/cells/issues/26); the core is [decision 068](../decisions/068-the-core-grammar.md), its rows [418-core-grammar.md](418-core-grammar.md) · Probe: `tools/compileprobe.ts` (and its test)
 
 Decision 068 divides the work of writing a piece's form between two tools. Normalise stays at the sugar level, and a **compile** tool writes the core: it de-sugars, minifies the names, and folds to the most compact core form. It is meant for a machine reader: a hash, the learned layer, a comparison of two pieces. This note scopes compile. It answers #441's four questions with a probe that de-sugars every example, family by family, each rewrite checked by S1 against its source and measured by structure (decision 049's measure, as written).
 
@@ -51,7 +51,7 @@ Counted on the de-sugared text: in how many examples each row is still written.
 
 | row | examples | why it needs more than the letters |
 |---|---|---|
-| taps, 54–56 `step=16n` `pulse` `beat` | 73 | a tap is a level of the meter it reads: `&bar*k`, with k from the meter's levels (in 7/8 the beats are unequal, a look up) |
+| taps, 54–56 `step=16n` `pulse` `beat` | 73 | a tap is a level of the meter it reads: written as its pulse with a chain (`16n` = `pulse*4` in 4/4, `pulse*2` in 7/8), so it needs the meter's denominator; `beat` is a look up of its levels (in 7/8 they are unequal). Not `&bar*k`: decision 040 retired the meter cell's own steps as a written form |
 | meters, 42 `meter("sig")` | 54 | a signature's levels are its grouping rule (#17, `meter("2+2+3")`): written out, they are its table |
 | subsequences, 13 16 18 22 25 `_` `[a b]` `<a b>` `x*n` `x(k,n)` | 39 | dilate on a finer step: the line's `step=` changes with them, and a tap's finer step is the meter's next level, or none |
 | sliders, a unit in `free(…)` | 39 | above: the unit is the performer's |
@@ -67,7 +67,18 @@ The de-sugarer runs over a compiled text, not over letters. Six of these rows th
 
 Only 5 of 83 examples are fully in the core after the mechanical families: *Oscillator*, *Tone*, *Semitones*, *Two voices* and *DTMF*.
 
-**The choice in a subsequence.** `0 [2 4]` on `step=4` is `0@2 2 4` on `step=8`, but on `step=8n` it is `step=16n`. That is the meter's next level where it has one, and a tap at `&bar*k` where it doesn't. A `<a b>` is `[a b]/2`, which is a slower step, so it is a second line, not a finer grid. Compile writes the finest grid per line (the least common multiple of its subdivisions). That costs leaves: a line of eighths with one `[a b]` doubles in length. It is exactly what "dilate" is, and the structure measure will show the price.
+**The choice in a subsequence**, measured after the owner asked to discuss it (2026-11-05). The first proposal, the meter's next level and else `&bar*k`, didn't hold: `&bar*k` taps the meter cell's own steps, which decision 040 retired, and a note value fails in 7/8, where halves of unequal beats are none. The chain on the line's own tap does hold: `step=8n 0 [2 4] 5 7` is `step=8n*2 0@2 2 4 5@2 7@2`. Checked by S1:
+
+| written | `T*L` | a note value |
+|---|---|---|
+| 4/4, `step=8n 0 [2 4] 5 7` | `8n*2` ✔ | `16n` ✔ |
+| swung eighths, `step=4n 0 [2 4] 5 7` | `4n*2` ✔ | `8n` ✔ |
+| 4/4, `[2 4 5]` in an eighth | `8n*3` ✔ | `16t` ✔ |
+| 7/8, `step=beat 0 [2 4] 5`, straight or swung | `beat*2` ✔ | `8n` ✘, `pulse*2` ✘ |
+| `legato=16n:.5,8n:.9`, `step=8n 0 [2 4] 5 7` | ✘; ✔ with the line's `legato=.9` stated | `16n` ✘ |
+| swung eighths, `[2 4 5]` in an eighth or a quarter | ✘ | `16t` ✘, `8t` ✘ |
+
+The last row is the one no tap says. A subsequence's parts are placed through the swing (#121), so the thirds of a swung eighth bend with it. A tap of a division the swing doesn't hold is even within its beat, by design ("`8t` under swung eighths stays straight", time.md). The owner chose (a): there, `[ ]` stays in the core, as dilate inside a step, the primitive itself. The other options were (b), a tap placed through the swing too, which would change every swung piece with a triplet line, and (c), compile leaving the sugar.
 
 ## 2. Minify: names are not free
 
@@ -81,7 +92,7 @@ With those kept (a drum's name; a cell that draws, or splices one that does, tra
 So rung E2 (`identicalUpToRenaming`, decision 050) is wider than S1. Two texts E2 says are one can sound different, if they draw or send drums. Two ways out:
 
 - **(a) Compile keeps those names** (the probe's rule). Cheap, and nothing changes how a piece sounds. But a hash over the compiled text then sees a name, and two pieces that differ only in a drawing cell's name hash differently.
-- **(b) A draw is keyed on what the cell is, not its name:** its place in the canonical order, or its text's hash. Every piece that draws would then draw differently once, so the event snapshots of the chance examples move: a change to how pieces sound, the owner's call, with no Migrate rule possible (a draw has no old spelling). Drum names stay meaningful either way: on a MIDI card, a name is a note by design.
+- **(b) A draw is keyed on what the cell is, not its name:** its place in the canonical order, or its text's hash. Every piece that draws would then draw differently once, so the event snapshots of the chance examples move: a change to how pieces sound, the owner's call, with no Migrate rule possible (a draw has no old spelling). Drum names stay meaningful either way: on a MIDI card, a name is a note by design. **The owner's ruling: (b)**, keyed on the cell's content ([#481](https://github.com/yggi/cells/issues/481)); until it lands, minify keeps (a).
 
 ## 3. Fold: compile's fold is not "de-sugar, then Shorten"
 
@@ -105,24 +116,21 @@ Answer: compile's measure is the same structure measure, over the core grammar. 
 - **No inverse.** Re-sugar is roughly Normalise, but compile drops the comments and the names (minify), writes `from` lines in, and folds into phrases the author didn't write. `normalise(compile(x))` plays as `x` and reads as a stranger's text. That is what a machine reader wants, and the reason a frontend shows the source, never the compiled text.
 - **`from`:** writing the fragment in makes the compiled text independent of the library's version: a hash of it is a hash of what plays. It costs +1,556 structure over the examples. The other way, keeping `from id@hash`, is #49's question.
 
-## Proposal: decision 069, *Compile writes the core*
+## Decision 069, as ruled
 
-1. **Compile = de-sugar, minify, core fold**, in that order. Each step is checked by S1, and the whole is idempotent and constant on Normalise's orbit.
-2. **De-sugar reads the compiled program**, not the letters: a tap as its meter's level, a key as its mode and tonic, a gate as its products, `pitch=` as a sum. Each row of #27's table gets its rewrite in the core, tested as `core.test.ts` tests the 45.
-3. **A subsequence is written on its line's finest grid.** A tap's finer step is the meter's level where it has one, else `&bar*k`; a `<a b>` is a line of its own at the slower step.
-4. **Names:** minify keeps the interface names, the names a text uses but doesn't define, a drum's name, and the names that key a draw (option (a) above), until the owner rules on (b).
-5. **The fold:** Shorten's core kinds (phrase, same, default) in a module both tools call, each step checked by S1. Shorten keeps runs and the respellings.
-6. **`from` is written in.** The compiled text holds no reference to the library.
-7. **Not for a frontend's editor:** a hash, the learned layer and comparisons read it.
+The owner's answers (2026-11-05): 1 "draw should not be keyed on the name", 2 "fragments line goes in, from is sugar", 3 "a". [Decision 069](../decisions/069-compile-writes-the-core.md) has the rest:
 
-## Questions for the owner
-
-1. **Draws and names:** (a) compile keeps a drawing cell's name, or (b) a draw is keyed on something name-free, every chance piece drawing differently once (snapshots move)?
-2. **`from` in a hash:** written in (the probe, and the proposal), or kept as `from id@hash` (#49)?
-3. **A subsequence on a tap:** the meter's next level, else `&bar*k` (the proposal), or always `&bar*k`?
+1. Compile is de-sugar, minify, a core fold. Each step is checked by S1, and the whole is idempotent and constant on Normalise's orbit.
+2. De-sugar reads the compiled program.
+3. `from` is sugar: the fragment's lines are written in.
+4. A subsequence is the chain on its own tap (`8n*2`), with the line's legato stated where the meter sets one by level. It is core dilate where no tap plays it.
+5. Minify keeps the interface names, the names used but not defined, and a drum's name.
+6. A draw is keyed on its cell's content (#481).
+7. The fold is Shorten's core kinds, each checked.
 
 ## Follow-ups
 
 - [#477](https://github.com/yggi/cells/issues/477): Shorten checks no rewrite by S1. Its `runs` breaks a cell read by its units, a written piece's too, and its `same` breaks two entries of a mix braid (*Pachelbel* de-sugared).
-- The tool itself (`src/engine/compile/`, after decision 069), with `compile(normalise(x)) = compile(x)` over the examples.
-- `canonicalText` (rung E2) treats every own name as free. A drawing cell's name isn't (section 2): E2 should say so, or keep it.
+- [#482](https://github.com/yggi/cells/issues/482): the tool itself (`src/engine/compile/`), with `compile(normalise(x)) = compile(x)` over the examples.
+- [#481](https://github.com/yggi/cells/issues/481): a draw keyed on its cell's content.
+- `canonicalText` (rung E2) treats every own name as free. A drawing cell's name isn't, until #481 keys draws on content; then E2 implies S1 for draws, and a drum's name on a MIDI card is the one name that means something.

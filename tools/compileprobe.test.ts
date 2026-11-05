@@ -63,3 +63,38 @@ describe('the probe over an example', () => {
     expect(steps.every((s) => !s.startsWith('Runs'))).toBe(true);
   });
 });
+
+// Decision 069 §2 and §4, as measured for the owner on #441: a tap is its pulse with a chain, a subsequence the chain on
+// its own tap, and thirds of a swung eighth no tap at all (they stay core dilate).
+describe('taps and subsequences in the core (decision 069)', () => {
+  const piece = (meter: string, extra: string, line: string) =>
+    `&bar meter("${meter}") step=&tempo ${extra}\n&tempo step=100bpm\n&t ${line}\n&v s=sine loop=C4\n&out map=sample [&t * &v]`;
+  const alike = (meter: string, extra: string, a: string, b: string) => soundsIdentical(piece(meter, extra, a), piece(meter, extra, b), 20);
+  const scale = '0 2 4 5 7 9 11 12';
+  it.each([
+    ['4/4', '', '16n', 'pulse*4'],
+    ['4/4', 'swing=8n:.67', '8n', 'pulse*2'],
+    ['7/8', 'swing=16n:.6', '16n', 'pulse*2'],
+    ['6/8', '', '4n.', 'pulse/3'],
+    ['4/4', 'legato=16n:.5,8n:.9', '8n', 'pulse*2'],
+    ['4/4', '', '1m', 'pulse/4'],
+  ])('%s %s: step=%s is step=%s', (meter, extra, tap, pulse) => expect(alike(meter, extra, `step=${tap} ${scale}`, `step=${pulse} ${scale}`)).toBe(true));
+
+  it('a subsequence is the chain on its own tap: in 4/4, under a swing that holds it, and in 7/8’s unequal beats', () => {
+    expect(alike('4/4', '', 'step=8n 0 [2 4] 5 7', 'step=8n*2 0@2 2 4 5@2 7@2')).toBe(true);
+    expect(alike('4/4', 'swing=8n:.67', 'step=4n 0 [2 4] 5 7', 'step=4n*2 0@2 2 4 5@2 7@2')).toBe(true);
+    expect(alike('7/8', 'swing=8n:.6', 'step=beat 0 [2 4] 5', 'step=beat*2 0@2 2 4 5@2')).toBe(true);
+    // (no note value is half of 7/8's unequal beats)
+    expect(alike('7/8', '', 'step=beat 0 [2 4] 5', 'step=8n 0@2 2 4 5@2')).toBe(false);
+  });
+
+  it('where the meter sets legato by level, the line states what it played', () => {
+    expect(alike('4/4', 'legato=16n:.5,8n:.9', 'step=8n 0 [2 4] 5 7', 'step=8n*2 0@2 2 4 5@2 7@2')).toBe(false);
+    expect(alike('4/4', 'legato=16n:.5,8n:.9', 'step=8n 0 [2 4] 5 7', 'step=8n*2 legato=.9 0@2 2 4 5@2 7@2')).toBe(true);
+  });
+
+  it('thirds of a swung eighth are no tap: their parts bend with the swing, a tap of thirds stays even (core dilate, the owner’s (a))', () => {
+    for (const tap of ['step=8n*3', 'step=16t']) expect(alike('4/4', 'swing=8n:.67', 'step=8n 0 [2 4 5] 7', `${tap} 0@3 2 4 5 7@3`)).toBe(false);
+    expect(alike('4/4', '', 'step=8n 0 [2 4 5] 7', 'step=8n*3 0@3 2 4 5 7@3')).toBe(true);
+  });
+});
