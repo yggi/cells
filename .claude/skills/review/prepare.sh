@@ -2,7 +2,7 @@
 # Prepares a pull request for review: fetches it and main, checks it out in its own worktree, installs, runs
 # `npm run verify` there, and the slow tests too when it touches what they read, and prints a summary: the commits,
 # every changed file, the results with their test counts, the files on cells' escalation ladder it changes, whether
-# CHANGELOG.md moved with `src/`, and whether main has moved on since the pull request branched, with the files a merge
+# an entry in changes/ (or CHANGELOG.md) moved with `src/`, and whether main has moved on since the pull request branched, with the files a merge
 # would conflict in. When a check fails, it shows the failing tests, or the end of the output where there are none. The
 # worktree stays for reading and probing; the summary says how to probe it and how to remove it.
 #
@@ -228,8 +228,8 @@ moved=$(ladder '^src/engine/fold/ratchet\..*\.json$')
 [ -n "$moved" ] && watch="${watch}Ratchet: recorded anew ($moved): is the trade named?
 "
 if printf '%s\n' "$changed" | grep -E '^src/' | grep -qvE '\.test\.ts$|^src/engine/(live\.)?snapshot\.txt$' &&
-  ! printf '%s\n' "$changed" | grep -qx 'CHANGELOG.md'; then
-  watch="${watch}Changelog: src/ changes beyond its tests, and CHANGELOG.md doesn't: would a frontend notice?
+  ! printf '%s\n' "$changed" | grep -v '^changes/README\.md$' | grep -qE '^(CHANGELOG\.md|changes/.+\.md)$'; then
+  watch="${watch}Changelog: src/ changes beyond its tests, and no entry in changes/ (nor CHANGELOG.md) does: would a frontend notice?
 "
 fi
 [ -n "$watch" ] && printf '%s\n' "$watch"

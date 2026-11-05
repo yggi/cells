@@ -404,10 +404,9 @@ export interface CellDecl {
   readonly paramClocks?: Readonly<Record<string, StepSpec>>;
   /**
    * swing= by level (#18): `swing=8n:.67`, `swing=8n:.6,16n:.55`, each a note value of a meter's and a share (params.swing
-   * holds the first share); `pairs` where it says `:pairs`, its groups of three straight (decision 053). Absent for a bare
-   * `swing=.6`.
+   * holds the first share). Absent for a bare `swing=.6`.
    */
-  readonly swing?: readonly { readonly level: string; readonly share: number; readonly pairs?: boolean }[];
+  readonly swing?: readonly { readonly level: string; readonly share: number }[];
   /**
    * A meter's swing read from a cell (#308): `swing=&swing` with `&swing swing=8n:2/3`, a cell that is a swing alone, as a
    * tempo is read from a cell that is a rate alone (`step=&tempo`). Resolved by compile (declare.ts), which sets `swing`.

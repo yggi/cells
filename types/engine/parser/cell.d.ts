@@ -27,7 +27,6 @@ interface Body {
     swing: {
         level: string;
         share: number;
-        pairs?: boolean;
     }[] | null;
     legato: {
         level: string;
