@@ -70,7 +70,6 @@ export interface Renderer {
 
 /** Parameters of the later stages: rendered dry, and said (decision 062's stages R2 and R3). The echo is R2's, built (#452). */
 const LATER: Readonly<Record<string, string>> = {
-  room: 'R2',
   distort: 'R2',
   crush: 'R2',
   fm: 'R2',
@@ -324,7 +323,16 @@ const QUANTUM = 128;
  * Tone's FeedbackDelay at `wet: 1` (y[n] = z[n − D], z[n] = x[n] + feedback · y[n]), the delay read between two frames
  * where it falls between them, as Web Audio's DelayNode reads it.
  */
-class Echo {
+interface Return {
+  /** Its return's stem. */
+  readonly name: string;
+  /** Its input this block, summed from the voices that send to it. */
+  readonly input: [Float64Array, Float64Array];
+  /** Frames [from, to) of the block starting at `blockStart`: what it gives back, written to `out`, its input cleared. */
+  run(from: number, to: number, blockStart: number, out: [Float64Array, Float64Array]): void;
+}
+
+class Echo implements Return {
   /** Its input this block, summed from the voices that send to it. */
   readonly input: [Float64Array, Float64Array] = [new Float64Array(BLOCK), new Float64Array(BLOCK)];
   private readonly line: [Float64Array, Float64Array];
@@ -363,9 +371,109 @@ class Echo {
   }
 }
 
-/** A send to an echo, at the level it moves to (`delay=`). */
+/**
+ * The reverb every voice with a `room=` sends to: Cell studio's (`src/audio/voices.ts` @ 420e9d6), Tone's Reverb at
+ * `decay: 2.8, preDelay: .01, wet: 1`, a burst of noise its impulse: from 10 ms on, an amplitude falling with Tone's time
+ * constant for a 2.8 s decay, ln(3.8) / ln(200) = 0.252 s, through a convolver that normalizes it as Chromium does
+ * (to 10^(−58/20) over its RMS, times 44100 over the sample rate). Its noise is new each session in Cell studio, so
+ * what it fixes is its loudness and its decay, not its samples: a wet energy of 2.81 · 44100² · 10^(−5.8) / rate a
+ * channel (0.196 at 44.1 kHz), what that convolver gives, whatever its noise.
+ */
+const SHARED_ROOM = { preDelay: 0.01, tau: Math.log(2.8 + 1) / Math.log(200), seconds: 2.81 } as const;
+/** The shortest delay lines of the reverb's network on each channel, in ms: mutually prime once in frames, the right a set of its own, so the two sides don't correlate. */
+const ROOM_LINES: readonly (readonly number[])[] = [
+  [29.7, 37.1, 41.1, 43.7, 53.3, 59.3, 61.7, 71.9],
+  [31.3, 35.9, 39.7, 47.1, 51.7, 57.1, 67.3, 73.3],
+];
+
+/**
+ * A reverb (decision 062 R2, #452) as a feedback delay network on each channel: eight lines, mixed by a Hadamard matrix
+ * (orthogonal, so it keeps energy), each attenuated by e^(−length/τ) a pass, so its energy falls as the noise burst's
+ * does; fed after the pre-delay, its output scaled once, by its own impulse's energy, to the convolver's wet energy. A
+ * channel's sound stays on its channel, as a stereo convolver keeps it (left by the left impulse, right by the right).
+ */
+class Reverb implements Return {
+  readonly input: [Float64Array, Float64Array] = [new Float64Array(BLOCK), new Float64Array(BLOCK)];
+  private readonly sides: [Network, Network];
+  private readonly pre: [Float64Array, Float64Array];
+  private n = 0;
+  constructor(
+    readonly name: string,
+    rate: number,
+  ) {
+    const size = Math.max(1, Math.round(SHARED_ROOM.preDelay * rate));
+    this.pre = [new Float64Array(size), new Float64Array(size)];
+    // (the convolver's wet energy a channel: its normalization over the impulse's own energy, 2.81 s of frames)
+    const wet = SHARED_ROOM.seconds * rate * Math.pow(10, -5.8) * Math.pow(44100 / rate, 2);
+    this.sides = [new Network(ROOM_LINES[0]!, SHARED_ROOM.tau, rate, wet), new Network(ROOM_LINES[1]!, SHARED_ROOM.tau, rate, wet)];
+  }
+  run(from: number, to: number, blockStart: number, out: [Float64Array, Float64Array]): void {
+    const size = this.pre[0].length;
+    for (let f = from; f < to; f++) {
+      const i = f - blockStart;
+      for (const ch of [0, 1] as const) {
+        const x = this.pre[ch][this.n]!;
+        this.pre[ch][this.n] = this.input[ch][i]!;
+        this.input[ch][i] = 0;
+        out[ch][i] = this.sides[ch].step(x);
+      }
+      this.n = (this.n + 1) % size;
+    }
+  }
+}
+
+/** A feedback delay network: its lines, each fed the input and the Hadamard mix of all their outputs, each attenuated a pass. */
+class Network {
+  private readonly lines: Float64Array[];
+  private readonly at: number[];
+  private readonly gains: number[];
+  private readonly outs = new Float64Array(8);
+  private readonly scale: number;
+  constructor(ms: readonly number[], tau: number, rate: number, wet: number) {
+    const lengths = ms.map((m) => Math.max(1, Math.round((m / 1000) * rate)));
+    this.lines = lengths.map((l) => new Float64Array(l));
+    this.at = lengths.map(() => 0);
+    this.gains = lengths.map((l) => Math.exp(-l / (tau * rate)));
+    this.scale = 1;
+    // its own impulse's energy, measured once, then the scale that gives the convolver's (its tail past 30 τ is below 10⁻²⁶)
+    let energy = 0;
+    const frames = Math.ceil(30 * tau * rate);
+    for (let f = 0; f < frames; f++) {
+      const y = this.step(f === 0 ? 1 : 0);
+      energy += y * y;
+    }
+    for (const l of this.lines) l.fill(0);
+    this.at.fill(0);
+    this.scale = Math.sqrt(wet / energy);
+  }
+  step(x: number): number {
+    const o = this.outs;
+    for (let k = 0; k < 8; k++) o[k] = this.lines[k]![this.at[k]!]! * this.gains[k]!;
+    // (a fast Hadamard transform, 8 points, over √8: orthogonal)
+    for (let h = 1; h < 8; h *= 2)
+      for (let i = 0; i < 8; i += 2 * h)
+        for (let j = i; j < i + h; j++) {
+          const a = o[j]!;
+          const b = o[j + h]!;
+          o[j] = a + b;
+          o[j + h] = a - b;
+        }
+    let y = 0;
+    for (let k = 0; k < 8; k++) {
+      const line = this.lines[k]!;
+      const out = line[this.at[k]!]! * this.gains[k]!;
+      y += k % 2 ? -out : out;
+      line[this.at[k]!] = x + o[k]! / Math.SQRT2 / 2;
+      this.at[k] = (this.at[k]! + 1) % line.length;
+    }
+    return y * this.scale;
+  }
+}
+
+/** A send to a return (an echo, the reverb), at the level it moves to (`delay=`, `room=`). */
 interface Send {
-  readonly echo: Echo;
+  readonly key: 'delay' | 'room';
+  readonly to: Return;
   readonly level: Auto;
 }
 
@@ -402,8 +510,8 @@ interface Voice {
   /** Which filters it has; their parameters move for all its chains alike. */
   readonly has: { readonly lpf: boolean; readonly hpf: boolean };
   readonly autos: Partial<Record<FilterKey, Auto>>;
-  /** Its send to an echo (`delay=`), after its filters, at the level it moves to; none where it has no echo. */
-  readonly send: Send | null;
+  /** Its sends to an echo (`delay=`) and the reverb (`room=`), after its filters, each at the level it moves to. */
+  readonly sends: readonly Send[];
   /** Its sound on its way to each stem: one chain, or one for each entry of the card it is heard through. */
   readonly chains: Chain[];
 }
@@ -417,8 +525,8 @@ interface Stage {
   readonly name: string;
   readonly has: { readonly lpf: boolean; readonly hpf: boolean };
   readonly autos: Partial<Record<FilterKey, Auto>>;
-  /** Its echo, one for its voices' sum: each voice through it sends into it, as a filter of the sum is one on each (#452). */
-  readonly send: Send | null;
+  /** Its sends, for its voices' sum: each voice through it sends, as a filter of the sum is one on each (#452). */
+  readonly sends: readonly Send[];
 }
 
 /** A voice's notes going to one stem, through filters of their own (so a stem by entry is filtered as the mix is). */
@@ -472,7 +580,7 @@ function envelopeAt(n: Note, t: number): number {
 }
 
 /** A track scheduled on a voice's filter parameter for one note, as a moving parameter does (exponential for a frequency). */
-function schedule(auto: Auto, key: FilterKey | 'delay', track: ParamTrack, time: number, dur: number): void {
+function schedule(auto: Auto, key: FilterKey | Send['key'], track: ParamTrack, time: number, dur: number): void {
   const freq = key === 'lpf' || key === 'hpf';
   const v = (x: number) => (freq ? Math.max(1, x) : x);
   const ramp = freq ? 'exp' : 'lin';
@@ -567,7 +675,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     }
     // (not what it takes from an instrument: that instrument's stage plays it, after the voice's own)
     const { has, autos } = filtersOf(c, (k) => !c.inherited?.[k]);
-    const send = sendOf(name, c, (k) => !c.inherited?.[k]);
+    const sends = sendsOf(name, c, (k) => !c.inherited?.[k]);
     const v: Voice = {
       name,
       seed: c.seed,
@@ -576,41 +684,46 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       noise: isNoise ? noise(src, rate) : null,
       has,
       autos,
-      send,
+      sends,
       chains: [],
     };
     voices.set(name, v);
     return v;
   };
 
-  // the echoes, in the order they are first sent to; each a return of its own among the stems (but in a mix alone)
-  const echoes = new Map<string, Echo>();
-  const echoOf = (name: string, time: number, feedback: number): Echo => {
-    let e = echoes.get(name);
+  // the returns (the echoes, the reverb), in the order they are first sent to; each a stem of its own (but in a mix alone)
+  const returns = new Map<string, Return>();
+  const returnOf = (name: string, make: () => Return): Return => {
+    let e = returns.get(name);
     if (!e) {
-      e = new Echo(name, time, feedback, rate);
-      echoes.set(name, e);
+      e = make();
+      returns.set(name, e);
       if (tracks !== 'mix') stems.push(name);
     }
     return e;
   };
+  const echoOf = (name: string, time: number, feedback: number) => returnOf(name, () => new Echo(name, time, feedback, rate));
 
   /**
-   * A cell's send (`keep` the parameters it plays itself): to its own echo where it gives delaytime=, else to the shared
-   * one where it sends (delay=, fixed or moving); none otherwise.
+   * A cell's sends (`keep` the parameters it plays itself): to its own echo where it gives delaytime=, else to the shared
+   * one where it sends (delay=, fixed or moving); to the reverb where it gives room=, fixed or moving.
    */
-  const sendOf = (
+  const sendsOf = (
     name: string,
     c: { readonly params: Readonly<Record<string, number | string>>; readonly paramCells?: Readonly<Record<string, { readonly range: readonly [number, number] | null }>> },
     keep: (k: string) => boolean,
-  ): Send | null => {
+  ): Send[] => {
+    const out: Send[] = [];
+    const start = (k: 'delay' | 'room') => (keep(k) && typeof c.params[k] === 'number' ? (c.params[k] as number) : keep(k) ? c.paramCells?.[k]?.range?.[0] : undefined);
     const own = typeof c.params.delaytime === 'number' && keep('delaytime');
-    if (!own && !((typeof c.params.delay === 'number' || !!c.paramCells?.delay) && keep('delay'))) return null;
-    const feedback = typeof c.params.delayfeedback === 'number' && keep('delayfeedback') ? c.params.delayfeedback : SHARED_ECHO.feedback;
-    const echo = own ? echoOf(`echo:${name}`, c.params.delaytime as number, feedback) : echoOf('echo', SHARED_ECHO.time, SHARED_ECHO.feedback);
-    const fixed = keep('delay') && typeof c.params.delay === 'number' ? c.params.delay : undefined;
-    const low = keep('delay') ? c.paramCells?.delay?.range?.[0] : undefined;
-    return { echo, level: new Auto(fixed ?? low ?? (own ? OWN_ECHO_SEND : 0)) };
+    if (own || ((typeof c.params.delay === 'number' || !!c.paramCells?.delay) && keep('delay'))) {
+      const feedback = typeof c.params.delayfeedback === 'number' && keep('delayfeedback') ? c.params.delayfeedback : SHARED_ECHO.feedback;
+      const to = own ? echoOf(`echo:${name}`, c.params.delaytime as number, feedback) : echoOf('echo', SHARED_ECHO.time, SHARED_ECHO.feedback);
+      out.push({ key: 'delay', to, level: new Auto(start('delay') ?? (own ? OWN_ECHO_SEND : 0)) });
+    }
+    if ((typeof c.params.room === 'number' || !!c.paramCells?.room) && keep('room'))
+      out.push({ key: 'room', to: returnOf('reverb', () => new Reverb('reverb', rate)), level: new Auto(start('room') ?? 0) });
+    return out;
   };
 
   const stages = new Map<string, Stage>();
@@ -622,7 +735,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     if (!c) return null;
     for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
       if (LATER[k]) say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-    const st: Stage = { name, ...filtersOf(c, () => true), send: sendOf(name, c, () => true) };
+    const st: Stage = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true) };
     stages.set(name, st);
     return st;
   };
@@ -749,18 +862,18 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
         const auto = v.autos[k];
         if (track && auto && !c.inherited?.[k]) schedule(auto, k, track, e.at, dur);
       }
-      if (params.delay && v.send && !c.inherited?.delay) schedule(v.send.level, 'delay', params.delay, e.at, dur);
+      for (const sd of v.sends) if (params[sd.key] && !c.inherited?.[sd.key]) schedule(sd.level, sd.key, params[sd.key]!, e.at, dur);
       // the instruments it plays through, each a stage after the voice's own filters, its parameters moved by this note
       const through: Stage[] = [];
       for (const x of e.through ?? []) {
         const st = stageOf(x.instrument);
-        if (!st || (!st.has.lpf && !st.has.hpf && !st.send)) continue;
+        if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length)) continue;
         for (const k of FILTER) {
           const track = x.params?.[k];
           const auto = st.autos[k];
           if (track && auto) schedule(auto, k, track, e.at, dur);
         }
-        if (x.params?.delay && st.send) schedule(st.send.level, 'delay', x.params.delay, e.at, dur);
+        for (const sd of st.sends) if (x.params?.[sd.key]) schedule(sd.level, sd.key, x.params[sd.key]!, e.at, dur);
         for (const k of Object.keys(x.params ?? {})) if (LATER[k]) say(x.instrument, k, `&${x.instrument}'s moving ${k}= is sounded from stage R2: rendered without it`);
         through.push(st);
       }
@@ -871,8 +984,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     const order = [...result.cells.values()].filter((c) => c.voice && heard.has(c.name)).map((c) => c.name);
     const end = position + n;
     const wet: [Float64Array, Float64Array] = [new Float64Array(BLOCK), new Float64Array(BLOCK)];
-    const level = new Float64Array(BLOCK);
-    // (an instrument's send level over a block, read once a block: its Auto is read at times that only grow)
+    // (a send's level over a block, read once a block: its Auto is read at times that only grow)
     const levels = (send: Send, from: number, to: number, blockStart: number) => {
       // (keyed by the frame it starts on: a block's second part, in the next call, is read again)
       if (sendRead.get(send) === from) return;
@@ -887,11 +999,10 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       for (const name of order) {
         const v = voices.get(name);
         if (!v) continue;
-        // (its send's level over the block, read once, as its chains are summed into the one echo)
-        if (v.send) for (let f = from; f < to; f++) level[f - blockStart] = v.send.level.at(f / rate);
+        // (its sends' levels over the block, and each instrument's it goes through: read once a block for all its chains)
+        for (const sd of v.sends) levels(sd, from, to, blockStart);
         for (const ch of v.chains) {
-          // (each instrument's send it goes through, at the instrument's level over the block: read once a block for all)
-          for (const { stage } of ch.stages) if (stage.send) levels(stage.send, from, to, blockStart);
+          for (const { stage } of ch.stages) for (const sd of stage.sends) levels(sd, from, to, blockStart);
           if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length) continue;
           sound(v, ch, from, to, blockStart);
           filter(v, ch, from, to, blockStart);
@@ -900,15 +1011,16 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
             const i = f - blockStart;
             const l = ch.dry[0][i]! * VOICE_GAIN * master;
             const r = ch.dry[1][i]! * VOICE_GAIN * master;
-            if (v.send) {
-              v.send.echo.input[0][i]! += l * level[i]!;
-              v.send.echo.input[1][i]! += r * level[i]!;
+            for (const sd of v.sends) {
+              const g = sendLevels.get(sd)![i]!;
+              sd.to.input[0][i]! += l * g;
+              sd.to.input[1][i]! += r * g;
             }
             for (const { stage } of ch.stages)
-              if (stage.send) {
-                const g = sendLevels.get(stage.send)![i]!;
-                stage.send.echo.input[0][i]! += l * g;
-                stage.send.echo.input[1][i]! += r * g;
+              for (const sd of stage.sends) {
+                const g = sendLevels.get(sd)![i]!;
+                sd.to.input[0][i]! += l * g;
+                sd.to.input[1][i]! += r * g;
               }
             if (tracks === 'entries') {
               // (an entry's stem gathers its voices; the mix is the entries added below)
@@ -928,10 +1040,10 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           }
         }
       }
-      // the echoes' returns, after every voice: a return a stem of its own, added to the mix as a voice's is
-      for (const echo of echoes.values()) {
-        echo.run(from, to, blockStart, wet);
-        const stem = stemOut.get(echo.name);
+      // the returns, after every voice: each a stem of its own, added to the mix as a voice's is
+      for (const ret of returns.values()) {
+        ret.run(from, to, blockStart, wet);
+        const stem = stemOut.get(ret.name);
         for (let f = from; f < to; f++) {
           const i = f - blockStart;
           if (tracks === 'entries') {
