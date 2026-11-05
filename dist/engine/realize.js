@@ -50,11 +50,14 @@ export function chanceOf(text) {
     return ((h2 >>> 0) * 2 ** 21 + (h1 >>> 11)) / 2 ** 53;
 }
 function thrown(result, t, e, lap) {
+    return thrownIn(result, t.output.cell, e, lap);
+}
+function thrownIn(result, cell, e, lap) {
     if (e.laps && mod(lap, e.laps.of) !== e.laps.is)
         return null;
     if (e.chance === undefined && !e.options && !e.chosen)
         return e;
-    const seed = `${result.cells.get(t.output.cell)?.seed ?? 0}|${t.output.cell}`;
+    const seed = `${result.cells.get(cell)?.seed ?? 0}|${cell}`;
     for (const c of e.chosen ?? [])
         if (Math.floor(chanceOf(`${seed}|${lap + c.lap}|${c.at.toFixed(6)}|${c.id}|picks`) * c.of) !== c.is)
             return null;
@@ -209,9 +212,21 @@ export function plan(result, statics, muted = new Set()) {
     const series = (cell, pick, shift, sign) => {
         const m = result.cells.get(cell);
         const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
+        const drawn = events.some((e) => e.laps || e.chance !== undefined || e.options || e.chosen) ? (e, lap) => thrownIn(result, cell, e, lap) : undefined;
+        const db = m.map?.kind === 'db';
+        const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
         const period = Math.max(1, stepsOf(result, cell, pick));
         const lap = turnLap(result, m).per;
-        return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, ...(lap ? comeRound(events, period, lap) : { period, events }) };
+        return {
+            sign,
+            lin: m.map?.kind === 'lin',
+            db,
+            clock: m.clock,
+            rate: m.rate,
+            ...(lap ? comeRound(events, period, lap) : { period, events }),
+            ...(drawn ? { drawn } : {}),
+            ...(bipolar ? { bipolar: true } : {}),
+        };
     };
     const capped = (m, cell) => {
         const laps = (stepsPerSecond(result, cell) ?? 0) / m.period;

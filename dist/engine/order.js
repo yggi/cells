@@ -60,6 +60,7 @@ export const ORDER = [
     'just',
     'bwv847',
     'acid',
+    'patchbay',
     'zell',
     'cellscape',
     'cellscape2',

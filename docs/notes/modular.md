@@ -1,6 +1,6 @@
 # Modular synthesis in cells: a patch is a piece
 
-Date: 2026-11-04 · Status: a plan; its questions decided (owner, 2026-11-04): [decision 067](../decisions/067-a-module-after-its-voices.md) · Issues: the rule [#423](https://github.com/yggi/cells/issues/423) and its chain [#432](https://github.com/yggi/cells/issues/432), the CV sum [#431](https://github.com/yggi/cells/issues/431), the probes' bugs [#424](https://github.com/yggi/cells/issues/424)–[#428](https://github.com/yggi/cells/issues/428), the central roadmap [#81](https://github.com/yggi/cells/issues/81); the graph's API [#327](https://github.com/yggi/cells/issues/327) · Probed at 2129a3e with the compiler and the renderer (scripts kept out of the tree; the texts are below)
+Date: 2026-11-04 · Status: a plan, its questions decided (owner, 2026-11-04): [decision 067](../decisions/067-a-module-after-its-voices.md); rungs 1–4 built (#433, #446, #457), 5–8 open · Issues: the rule [#423](https://github.com/yggi/cells/issues/423) and its chain [#432](https://github.com/yggi/cells/issues/432), the modules and the piece [#457](https://github.com/yggi/cells/issues/457), the CV sum [#431](https://github.com/yggi/cells/issues/431), the probes' bugs [#424](https://github.com/yggi/cells/issues/424)–[#428](https://github.com/yggi/cells/issues/428), the central roadmap [#81](https://github.com/yggi/cells/issues/81) and its successor [#437](https://github.com/yggi/cells/issues/437); the graph's API [#327](https://github.com/yggi/cells/issues/327) · Probed at 2129a3e with the compiler and the renderer (scripts kept out of the tree; the texts are below)
 
 The question: VCO, VCF, VCA as fragments, CV as edges, a showcase piece, modular wheels with connectors in Cell studio, and patch cables dragged in the graph, all within the paradigms there are.
 The answer probed here: **cells is already a modular synthesizer; it is missing one law and a picture.**
@@ -16,7 +16,7 @@ What is missing is that a filter can't stand on its own, after a mix: `lpf=` on 
 | VCF | a voice's `lpf=` `lpq=` `hpf=` `hpq=`, each moving: `lpf=70..4800 * &eg * &lfo`, the range the knob and the attenuator | plays, on a voice only |
 | VCA | an envelope or a level in a product, or an instrument: `&vca [&eg * &level * &in]` (a mix used like a voice, [mix.md](../language/mix.md#instruments)) | plays, nested too |
 | EG | a `map=adsr` cell; the seed's [envelopes](../../fragments/expression/02-envelopes.md) | plays |
-| LFO | a braid turned slowly, `&lfo loop=&bar/8 sin(12)`; the seed's [vibrato](../../fragments/expression/01-vibrato.md) | plays as CV, into any moving parameter or `pitch=` |
+| LFO | a braid turned slowly, `&lfo map=lin loop=&bar/16 sin(12)` (a bipolar wave, −1 to 1, read as a share from 0 to 1: decision 067 §5); the seed's [vibrato](../../fragments/expression/01-vibrato.md) | plays as CV, into any moving parameter or `pitch=` |
 | sequencer | a stepped line, quantised by `over=&key`; a transposer as a coarser pitch held under it, `(&seq + &changes)` | plays |
 | sample and hold | a stepped cell, `&sh map=lin step=8n .3 .9 .5 .2`, its values left to chance with `?` | plays |
 | clock, divider | a meter and its taps (`step=16n`, `loop=&bar/8`) | plays |
@@ -36,22 +36,23 @@ It compiles with no diagnostic and renders (33 s, dry: the echo is the renderer'
 The VCF and the echo are written twice, once on each oscillator, since a filter belongs to a voice; the VCA is the instrument.
 
 ```cells
-&bar from "4/4" &tempo
+&bar from meter_4_4 &tempo
 &thump, &click from envelopes
 &tempo step=free(116bpm, 90..140)
-&key scale(minor, A)
+&key scale(minor, &tonic)
+&tonic A
 
 &seq over=&key step=16n 0 7 2 7 4 7 2 9 0 7 2 7 4 11 9 7
-&changes step=1m*2 0 5 3 -2
+&changes step=1m/2 0 5 3 -2
 &accent map=amp step=16n 1 .4 .6 .4 .9 .4 .6 .4 1 .4 .6 .4 .9 .5 .7 .5
 &contour map=adsr .002 .22 .1 .08
-&sweep loop=&bar/8 sin(12)
-&jitter map=lin step=8n .3 .9 .5 .2 .7 .4 1 .6
-&drift map=lin loop=&bar/4 0 .12 0
+&sweep map=lin loop=&bar/16 sin(12)
+&jitter step=8n [0|.25|.5|.75|1]
+&drift loop=&bar/8 map=lin 0 .12 0
 &amp map=adsr .002 .3 .5 .06
 
-&saw s=saw loop=C2 lpf=70..4800 * &contour * &accent * &sweep lpq=4..16 * &jitter delay=.3 delaytime=&bar*3/16 delayfeedback=.45
-&sub s=square loop=C1 pitch=&drift lpf=70..4800 * &contour * &accent * &sweep lpq=4..16 * &jitter delay=.3 delaytime=&bar*3/16 delayfeedback=.45
+&saw s=saw loop=C2 lpf=70..4800 * &contour * &sweep lpq=4..16 * &jitter delay=.3 delaytime=8n. delayfeedback=.45
+&sub s=square loop=C1 pitch=&drift lpf=70..4800 * &contour * &sweep lpq=4..16 * &jitter delay=.3 delaytime=8n. delayfeedback=.45
 &mono [&amp * &saw, &amp * &sub * .5]
 
 &kick oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump gain=.8
@@ -63,14 +64,15 @@ The VCF and the echo are written twice, once on each oscillator, since a filter 
 
 ### As a patch, on module fragments
 
-The same piece, each module a line, each cable a reference; it needs rung 1 (below) and the fragments of rung 3 (named as decision 067 names them).
-The oscillators are plain voices here; `osc` (067 §3) gives them a panel.
+The same piece, each module a line, each cable a reference: `examples/patchbay.md`, on the seed's modules (`fragments/modules/`, #457), playing the same events as the text above (`src/repository/modules.test.ts`).
 
 ```text
-&saw s=saw loop=C2
-&sub s=square loop=C1 pitch=&drift
-&vcf delay=.3 delaytime=&bar*3/16 delayfeedback=.45 from lowpass(eg=&contour, cutoff=&sweep, res=&jitter) [&saw, &sub * .5]
-&vca from amp(eg=&amp) &vcf
+&sweep loop=&bar/16 from lfo
+&jitter from sh
+&saw s=saw loop=C2 from osc
+&sub s=square loop=C1 from osc(pitch=&drift)
+&vcf delay=.3 delaytime=8n. delayfeedback=.45 from lowpass(eg=&contour, cutoff=&sweep, res=&jitter) [&saw, &sub * .5]
+&vca from amp(eg=&(map=adsr .002 .3 .5 .06)) &vcf
 &out map=sample [(&seq + &changes) * &accent * &vca * .35, &beat]
 ```
 

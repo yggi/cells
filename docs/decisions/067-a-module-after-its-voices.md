@@ -1,4 +1,4 @@
-# 067 · An instrument with sound parameters is a module after its voices; the modules are fragments, named in the language's words; a cable patched in opens at zero
+# 067 · An instrument with sound parameters is a module after its voices; the modules are fragments, named in the language's words; a cable patched in opens at zero; a bipolar wave read as a share is (1 + x)/2
 
 **Date:** 2026-11-04 · **Status:** accepted (owner, 2026-11-04: the rule "as proposed"; on a parameter both on an instrument and its voice, "B", in series; on `distort=` and `crush=`, "B", on the instrument's sum; the names "as recommended. our names, lowpass, high pass"; a `vco` "yes, even if it's minimal"; a CV sum "yes"; a cable into a fixed parameter "C now, E later") · Issues: #423, #432, #431, #424–#428, #81 · Note: [modular.md](../notes/modular.md)
 
@@ -39,6 +39,15 @@ Both renderers already play one chain per voice cell (grit, filters, pan, gain),
 
 An edit that patches `&lfo` into `lpf=800` writes `lpf=800..800 * &lfo`: the cable is in and its depth is zero, so nothing moves until the range is opened (in the graph, on the jack), as an attenuator turned down. No depth is made up, and the sound doesn't jump.
 Once the CV sum is built (§3), the edit writes the panel's own shape, the knob plus an attenuated CV, `lpf=800 + 0..0 * &lfo` (its spelling settled with the sum).
+
+### 5. A bipolar wave read as a share is (1 + x)/2
+
+(The owner, 2026-11-04, on #463: "no cutoff at 0, read as (1+x)/2".)
+
+- **A cell whose values run below 0 is bipolar**, a wave from −1 to 1 (`sin(12)`, `saw(8)`, `tri(4)`, `square(2)`, or any braid written so).
+- **Read as a share**, a moving parameter's factor (`lpf=70..4800 * &lfo`) or a volume (`[&tune * &tremolo * &v]`), its −1…1 is 0…1, (1 + x)/2: its middle at .5, so an LFO patched into a jack sweeps the whole range, where it was cut off at 0 and silent for half its cycle.
+- **A cell that stays at 0 or above is read as written**, as before; `map=db` keeps its decibels; read as a pitch (`pitch=`, a pitch sum) a wave is semitones either way, as written.
+- No example's events move: none read a bipolar cell as a share (the event snapshot holds).
 
 ## Why not
 

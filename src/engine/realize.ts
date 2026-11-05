@@ -180,10 +180,15 @@ export function chanceOf(text: string): number {
  * step, so they sound or rest together.
  */
 function thrown(result: CompileResult, t: PlanTrack, e: StepEvent, lap: number): StepEvent | null {
+  return thrownIn(result, t.output.cell, e, lap);
+}
+
+/** A step of a cell's, thrown on a lap (`thrown`), keyed on that cell: a melody's on the track's, a level's on its own. */
+function thrownIn(result: CompileResult, cell: string, e: StepEvent, lap: number): StepEvent | null {
   // <a b>, x/n: not its lap
   if (e.laps && mod(lap, e.laps.of) !== e.laps.is) return null;
   if (e.chance === undefined && !e.options && !e.chosen) return e;
-  const seed = `${result.cells.get(t.output.cell)?.seed ?? 0}|${t.output.cell}`;
+  const seed = `${result.cells.get(cell)?.seed ?? 0}|${cell}`;
   // [a b|c]: each choice it is in drawn once a lap of its own frame (keyed where that lap begins), as [a|b|c] is
   for (const c of e.chosen ?? []) if (Math.floor(chanceOf(`${seed}|${lap + c.lap}|${c.at.toFixed(6)}|${c.id}|picks`) * c.of) !== c.is) return null;
   if (e.chance === undefined && !e.options) return e;
@@ -368,10 +373,24 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
   const series = (cell: string, pick: Pick | null, shift: number, sign: 1 | -1): Series => {
     const m = result.cells.get(cell)!;
     const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
+    // (its steps drawn on each lap as a melody's are, where any is left to a lap, to chance or to a choice)
+    const drawn = events.some((e) => e.laps || e.chance !== undefined || e.options || e.chosen) ? (e: StepEvent, lap: number) => thrownIn(result, cell, e, lap) : undefined;
+    // (a cell whose values run below 0 is bipolar, a wave from −1 to 1: read as a share, its −1…1 is 0…1, decision 067 §5)
+    const db = m.map?.kind === 'db';
+    const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
     const period = Math.max(1, stepsOf(result, cell, pick));
     // (a tapped line with cycle= comes round with its tap, every cycle= bars, #116: decision 040)
     const lap = turnLap(result, m).per;
-    return { sign, lin: m.map?.kind === 'lin', db: m.map?.kind === 'db', clock: m.clock, rate: m.rate, ...(lap ? comeRound(events, period, lap) : { period, events }) };
+    return {
+      sign,
+      lin: m.map?.kind === 'lin',
+      db,
+      clock: m.clock,
+      rate: m.rate,
+      ...(lap ? comeRound(events, period, lap) : { period, events }),
+      ...(drawn ? { drawn } : {}),
+      ...(bipolar ? { bipolar: true as const } : {}),
+    };
   };
   // (a CV turning faster than CV_LAPS laps a second is read turning at that: #427, the compiler's warning says so)
   const capped = (m: Series, cell: string): Series => {

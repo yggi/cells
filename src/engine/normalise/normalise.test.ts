@@ -79,6 +79,8 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       ['&a', '&a over=&key step=8n 0 2 4@2 2 0 ~ ~'],
       // (the band's, the score's style: #391)
       ['&style', '&style style=&(map=style .5 .5 .5 .5)'],
+      // (a module's audio in, a filter's or an amp's: an oscillator, decision 067 §3)
+      ['&in', '&in s=saw loop=C3'],
     ]);
     for (const f of LIBRARY) {
       const holes = holesOf(f.text, compiled, resolveSeed);
