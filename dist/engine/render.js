@@ -6,8 +6,6 @@ import { harmonics, waveform } from "./wave.js";
 export const DEFAULT_RATE = 48000;
 export const RATES = { lowest: 8000, highest: 192000 };
 const LATER = {
-    distort: 'R2',
-    crush: 'R2',
     fm: 'R2',
     body: 'R3',
     ring: 'R3',
@@ -316,6 +314,50 @@ class Network {
         return y * this.scale;
     }
 }
+class Shaper {
+    curve;
+    constructor(curve) {
+        this.curve = curve;
+    }
+    run(x) {
+        const c = this.curve;
+        const v = ((c.length - 1) / 2) * (x + 1);
+        if (!(v > 0))
+            return c[0];
+        if (v >= c.length - 1)
+            return c[c.length - 1];
+        const k = Math.floor(v);
+        const f = v - k;
+        return (1 - f) * c[k] + f * c[k + 1];
+    }
+}
+function distortion(amount) {
+    const k = amount * 100;
+    const deg = Math.PI / 180;
+    const curve = new Float32Array(1024);
+    for (let i = 0; i < curve.length; i++) {
+        const x = (i / (curve.length - 1)) * 2 - 1;
+        curve[i] = Math.abs(x) < 0.001 ? 0 : ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return new Shaper(curve);
+}
+function crusher(bits) {
+    const levels = Math.pow(2, Math.round(bits) - 1);
+    const curve = new Float32Array(4096);
+    for (let i = 0; i < curve.length; i++)
+        curve[i] = Math.round(((i / (curve.length - 1)) * 2 - 1) * levels) / levels;
+    return new Shaper(curve);
+}
+function gritOf(params, keep) {
+    const out = [];
+    const crush = params.crush;
+    if (keep('crush') && typeof crush === 'number' && crush >= 1 && crush < 16)
+        out.push(crusher(crush));
+    const distort = params.distort;
+    if (keep('distort') && typeof distort === 'number' && distort > 0)
+        out.push(distortion(distort));
+    return out;
+}
 function filtersOf(c, keep) {
     const moves = c.paramCells ?? {};
     const start = (k, d) => (!keep(k) ? d : typeof c.params[k] === 'number' ? c.params[k] : (moves[k]?.range?.[0] ?? d));
@@ -453,6 +495,7 @@ export function createRenderer(result, shifts, options = {}) {
             wave,
             blend,
             noise: isNoise ? noise(src, rate) : null,
+            grit: gritOf(c.params, (k) => !c.inherited?.[k]),
             has,
             autos,
             sends,
@@ -497,6 +540,9 @@ export function createRenderer(result, shifts, options = {}) {
         for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
             if (LATER[k])
                 say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
+        for (const k of ['distort', 'crush'])
+            if (k in c.params)
+                say(name, k, `&${name}'s ${k}= is on its voices' sum, sounded from a later rung of stage R2: rendered without it`);
         const st = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true) };
         stages.set(name, st);
         return st;
@@ -788,6 +834,12 @@ export function createRenderer(result, shifts, options = {}) {
                     if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length)
                         continue;
                     sound(v, ch, from, to, blockStart);
+                    for (const g of v.grit)
+                        for (let f = from; f < to; f++) {
+                            const i = f - blockStart;
+                            ch.dry[0][i] = g.run(ch.dry[0][i]);
+                            ch.dry[1][i] = g.run(ch.dry[1][i]);
+                        }
                     filter(v, ch, from, to, blockStart);
                     const stem = stemOf(ch, name);
                     for (let f = from; f < to; f++) {
