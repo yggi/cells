@@ -1,24 +1,26 @@
 # Changelog
 
 What changed in the cells language, newest first: what a frontend (Cell studio, Jambot) reads before it moves its pin, `github:yggi/cells#vX.Y.Z`.
-A release is a tag, and it gathers the entries under *Unreleased* beneath its own heading.
+A release is a tag, and it gathers the entries under *Unreleased* and those in [`changes/`](changes/), where what isn't released yet is, beneath its own heading.
 An entry says whether a piece reads and sounds as before; one that breaks a piece names its migration (Migrate writes migrations), and before 1.0 it makes the next release a minor version.
 
-Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifted from yggi/cell-studio CHANGELOG.md @ 6de7ce4, its form). Add a line to *Unreleased* in the pull request that makes the change.
+Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifted from yggi/cell-studio CHANGELOG.md @ 6de7ce4, its form). Add a file to [`changes/`](changes/) in the pull request that makes the change ([`changes/README.md`](changes/README.md)).
 
 ## Unreleased
+
+Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
+
+### Added
+
+- **The renderer sounds the reverb** (decision 062 stage R2, #452): `room=`, fixed or moving, on a voice and on an instrument, sends to one reverb with Cell studio's loudness and decay (its wet energy within 0.1 dB of Cell studio's on noise, a tone's within Cell studio's own spread from one noise to the next), its return a stem of its own, `reverb`. 64 of 83 examples render with no diagnostic, from 51 with the echo alone. Not Cell studio's samples: its impulse is new noise each session there; here a feedback delay network fixes its statistics. **What a frontend sees at its next pin:** a piece with `room=` renders louder by its reverb, and a render's `stems` can hold `reverb`.
+
+- **The renderer sounds the echo** (decision 062 stage R2, #452): `delay=`, fixed or moving, `delaytime=` and `delayfeedback=` on a voice, as Cell studio's voices sound them, a voice's own echo at its `delaytime=` or the shared one (0.375 s at .35), measured within 0.25 dB of Cell studio's render; and on an instrument (decision 067), one echo of its voices' sum. 51 of 83 examples render with no diagnostic, from 49 (`acid` and `patchbay` join). With `tracks: 'voices'` or `'entries'`, an echo's return is a stem of its own, `echo` or `echo:<voice>`, and the stems still sum to the mix. An echo is no longer a diagnostic; grit and FM still are. No event snapshot moves: the renderer only. **What a frontend sees at its next pin:** `pieceAudio` and `createRenderer` sound a piece's echoes, a piece with `delay=` renders louder by its echo, and a render's `stems` can hold an echo's return.
 
 ### Changed
 
 - **A swing leans pairs: a group of three stays straight, and `:pairs` says nothing more** (decision 071, #15). `swing=8n:r` leaned a group of three eighths (6/8's beat, 7/8's first) long, short, short; it now keeps it even, as a band swinging a mixed meter does, as Jambot's band does (its T16) and as `contracts/swing` v1 reads it, which cells now passes 131 of 131 with no word (30 were recorded as differing). A finer level still leans inside a three. A level with no pair (`meter("6/8") swing=8n:.67`) leans nothing, with a warning (none at .5, straight); so the Metronome's swing slider leans nothing in 6/8, 9/8 and 12/8, where it leaned the threes. `swing=8n:2/3:pairs` is read as `swing=8n:2/3`, still with no diagnostic, and Migrate drops the word (rule `pairs`); a warning comes once Jambot stops writing it. No example's or fragment's events move: none swings a group of three. **What a frontend sees at its next pin:** a text that swings a meter with a group of three plays the three straight; the `SwingLevel.pairs` field and `pairsProblem` are gone from `engine/meter`; `migrations` can offer the rule `pairs`.
 
 - **S1 hears as a listener** (decision 070, #483). `soundsIdentical` and `playsSameNotes` compare what no listener can tell apart: pitch within half a cent, level within 0.1 dB per channel, onsets and ends within 0.25 ms, each a fraction of the smallest audible difference, without rounding edges. One note in both channels is that note in each. A noise is heard by its colour, filters and level, never by a pitch or its samples. The exact comparison still runs first, and the event snapshot stays exact. **What a frontend sees:** Migrate, Normalise and Shorten may accept rewrites that play numbers a hair apart. Normalise now writes four examples' bars as the meter they are: *Pop*, *Alpha* and *One more* as `&bar from meter_4_4 &tempo`, *Tape* as `meter("4/4")`. Their notes don't change; *Alpha*'s and *One more*'s `events` hashes move by a rounding of 10⁻¹⁵ s. Shorten's `same` merges two alike cells that are two channels' entries again: #477 refused that under the old S1, and it plays the same. New in `engine/sameness`: `HEARD`, the thresholds.
-
-Nothing has changed since v0.17.1.
-### Added
-
-- **The renderer sounds the reverb** (decision 062 stage R2, #452): `room=`, fixed or moving, on a voice and on an instrument, sends to one reverb with Cell studio's loudness and decay (its wet energy within 0.1 dB of Cell studio's on noise, a tone's within Cell studio's own spread from one noise to the next), its return a stem of its own, `reverb`. 64 of 83 examples render with no diagnostic, from 51 with the echo alone. Not Cell studio's samples: its impulse is new noise each session there; here a feedback delay network fixes its statistics. **What a frontend sees at its next pin:** a piece with `room=` renders louder by its reverb, and a render's `stems` can hold `reverb`.
-- **The renderer sounds the echo** (decision 062 stage R2, #452): `delay=`, fixed or moving, `delaytime=` and `delayfeedback=` on a voice, as Cell studio's voices sound them, a voice's own echo at its `delaytime=` or the shared one (0.375 s at .35), measured within 0.25 dB of Cell studio's render; and on an instrument (decision 067), one echo of its voices' sum. 51 of 83 examples render with no diagnostic, from 49 (`acid` and `patchbay` join). With `tracks: 'voices'` or `'entries'`, an echo's return is a stem of its own, `echo` or `echo:<voice>`, and the stems still sum to the mix. An echo is no longer a diagnostic; grit and FM still are. No event snapshot moves: the renderer only. **What a frontend sees at its next pin:** `pieceAudio` and `createRenderer` sound a piece's echoes, a piece with `delay=` renders louder by its echo, and a render's `stems` can hold an echo's return.
 
 ### Fixed
 
