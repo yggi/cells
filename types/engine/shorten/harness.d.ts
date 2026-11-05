@@ -28,6 +28,11 @@ export interface Candidate {
     readonly tokens: string[];
     /** Transposable: its numbers are steps of a grid (no table between them and it). */
     readonly grid: boolean;
+    /**
+     * Read by its units somewhere: picked, sliced or rotated (`&x[1]`, `&x[1:3]`, `&x[<<2]`). A unit is a written step, and
+     * `x!n` or a splice is one, so a rewrite that changes how many there are changes what such a reader reads (#477).
+     */
+    readonly unitRead: boolean;
 }
 /** The cells whose steps are written out one by one, and safe to rewrite: the piece's own (a used line is its fragment's, #241). */
 export declare function candidates(source: string, options?: CompileOptions): {
