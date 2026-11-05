@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { ALARM, BOOT_SET, CEILING, bootBytes } from './reading-list';
+import { ALARM, alarm, BOOT_SET, CEILING, bootBytes } from './reading-list';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -22,10 +22,13 @@ describe('the boot set', () => {
     // (docs/MEMORY.md moves facts to the pages it points to, and to the modules).
     expect(bytes).toBeLessThanOrEqual(CEILING);
     // The alarm, before the ceiling (#242: #235 found the set 58 B under it): verify's output says so from 90 %.
-    if (bytes >= ALARM * CEILING) console.warn(`the boot set is ${bytes} B, ${Math.round((100 * bytes) / CEILING)} % of its ceiling: condense it, as a change of its own`);
+    const said = alarm(bytes);
+    if (said) console.warn(said);
   });
 
-  it('warns from 90 % of the ceiling', () => {
+  it('is shown firing: the alarm speaks from 90 % of the ceiling, and not below', () => {
     expect(ALARM).toBe(0.9);
+    expect(alarm(Math.ceil(ALARM * CEILING))).toMatch(/^the boot set is \d+ B, 90 % of its ceiling/);
+    expect(alarm(Math.ceil(ALARM * CEILING) - 1)).toBeUndefined();
   });
 });
