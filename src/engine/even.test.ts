@@ -42,4 +42,20 @@ describe('even(k, n, phase) read as a rhythm', () => {
     expect(at.filter((x) => x < 7).map((x) => Math.round((x / 7) * 12))).toEqual([0, 2, 4, 5, 7, 9, 11]);
     expect(at).toEqual(onsets('scan(2 2 1 2 2 2 1)'));
   });
+  it('euclid(k, n, r) strikes even’s places, turned by Bjorklund’s offset (037): its onsets are those of a line stepping on them', () => {
+    const at = (src: string, name: string) => {
+      const r = compileSource(`${src}\n&v s=sine loop=C4\n&out map=sample [&${name} * &v]`);
+      expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+      return eventsBetween(plan(r, codeShifts(r)), 0, 3.999).map((e) => +e.at.toFixed(6));
+    };
+    // (a lap of 2 s: euclid's n steps at n/2 a second, even's places at a lap every 2 s; lengths differ, a hit lasting a step)
+    for (const [k, n, phase] of [
+      [3, 8, 2],
+      [7, 12, 2],
+      [5, 16, 0],
+    ] as const)
+      expect(at(`&e step=${n / 2} euclid(${k}, ${n})`, 'e'), `euclid(${k}, ${n})`).toEqual(at(`&places even(${k}, ${n}, ${phase}) loop=.5\n&p step=&places 0`, 'p'));
+    // (and not at another phase: the turn matters)
+    expect(at('&e step=4 euclid(3, 8)', 'e')).not.toEqual(at('&places even(3, 8, 0) loop=.5\n&p step=&places 0', 'p'));
+  });
 });

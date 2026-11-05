@@ -112,12 +112,13 @@ These are the laws the S1 checks lean on, each an equation in the four. `x` is a
 | 35 | `inverse(&name)` | C dilate | values times −1 before look up (a reflection is a dilate by −1) | spelling ✔ (written out) |
 | 36 | `&( … )` | S | a named cell | ✔ |
 
-### Generators (7)
+### Generators (7, and `even` since decision 072)
 
 | # | form | class | primitive, or rewrite | S1 |
 |---|---|---|---|---|
 | 37 | `scan(i …)` | S | its table written: `scan(2 2 1 2 2 2 1)` = `0 2 4 5 7 9 11` (read over the 12, which carries its octave; `cycle=` counts laps, #75); `1!4` and `geo(…)` written out | ✔ ×3 (a scan as a meter: steps of uneven length, `@`, not checked) |
-| 38 | `euclid(k, n)` | S | its steps: `euclid(5, 16, 2)` = `~ ~ 0 ~ ~ 0 …` | ✔ ×2 |
+| 37a | `even(k, n, phase)` | S | its scan written (decision 072): `even(7, 12, 5)` = `scan(2 2 1 2 2 2 1)`, `even(3, 8, 2)` = `scan(3 3 2)` = `0 3 6` over a lap of 8; the gaps as even as whole numbers allow, its phase the mode | ✔ ×2 |
+| 38 | `euclid(k, n)` | S | its steps: `euclid(5, 16, 2)` = `~ ~ 0 ~ ~ 0 …`; `even`'s places as hits on n steps, turned by Bjorklund's offset (037): `euclid(3, 8)` strikes `even(3, 8, 2)`'s places, `euclid(7, 12)` `even(7, 12, 2)`'s (onsets: a hit lasts a step, a place to the next) | ✔ ×2 (onsets against `even`: `even.test.ts`) |
 | 39 | `sin(n)` … `square(n)` | S | its n values written | ✔ ×4 (stepped slowly, not at audio rate) |
 | 40 | `scale(name)` | S | a scan over a key (decision 002): `scale(minor, D)` = `&k shift=2`, `over=&k scan(2 1 2 2 1 2 2)`; `"D:minor"` is the same | ✔ ×3 |
 | 41 | `fifths()` | S | `0 7 2 9 4 11 6 1 8 3 10 5`; `fifths(G)` = `fifths(1)` | ✔ ×2 |
