@@ -346,7 +346,6 @@ function outputOn(result: CompileResult, o: Output, muted: ReadonlySet<string>):
   return true;
 }
 
-/** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 /**
  * A line's events laid on a lap of `lap` steps, which it comes round at (#116, decision 040: `cycle=n` on a tapped line
  * runs it n bars before it comes round): its braid begins again at each lap, a step past the lap is dropped (a note
@@ -365,6 +364,7 @@ export function comeRound(events: readonly StepEvent[], period: number, lap: num
   return { period: lap, events: out };
 }
 
+/** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<string> = new Set()): Plan {
   if (!result.ok) return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
   const tracks: PlanTrack[] = [];
