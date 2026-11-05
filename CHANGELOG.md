@@ -11,6 +11,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 ### Added
 
 - **The renderer sounds the echo** (decision 062 stage R2, #452): `delay=`, fixed or moving, `delaytime=` and `delayfeedback=` on a voice, as Cell studio's voices sound them, a voice's own echo at its `delaytime=` or the shared one (0.375 s at .35), measured within 0.25 dB of Cell studio's render; and on an instrument (decision 067), one echo of its voices' sum. 51 of 83 examples render with no diagnostic, from 49 (`acid` and `patchbay` join). With `tracks: 'voices'` or `'entries'`, an echo's return is a stem of its own, `echo` or `echo:<voice>`, and the stems still sum to the mix. An echo is no longer a diagnostic; the reverb, grit and FM still are. No event snapshot moves: the renderer only. **What a frontend sees at its next pin:** `pieceAudio` and `createRenderer` sound a piece's echoes, a piece with `delay=` renders louder by its echo, and a render's `stems` can hold an echo's return.
+
 ### Fixed
 
 - **Patchbay's card is 1.6 dB quieter, `postgain=2.34`** (was 2.81): heard through Cell studio, whose voices sound the echo cells' renderer leaves out (stage R2), it peaked at +0.1 dB and clipped 2 samples, over the loudness ceiling of −1 dB (yggi/cell-studio#557's smoke run, 2026-11-05); it peaks about −1.5 dB there now. In cells' renderer it is −25.7 dB on average, peak −6.2 dB (from −24.1 and −4.6). No event snapshot moves (the card's master is not in them). **What a frontend sees at its next pin:** Patchbay plays 1.6 dB quieter.
