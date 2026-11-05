@@ -13,6 +13,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 - **S1 hears as a listener** (decision 070, #483). `soundsIdentical` and `playsSameNotes` compare what no listener can tell apart: pitch within half a cent, level within 0.1 dB per channel, onsets and ends within 0.25 ms, each a fraction of the smallest audible difference, without rounding edges. One note in both channels is that note in each. A noise is heard by its colour, filters and level, never by a pitch or its samples. The exact comparison still runs first, and the event snapshot stays exact. **What a frontend sees:** Migrate, Normalise and Shorten may accept rewrites that play numbers a hair apart. Normalise now writes four examples' bars as the meter they are: *Pop*, *Alpha* and *One more* as `&bar from meter_4_4 &tempo`, *Tape* as `meter("4/4")`. Their notes don't change; *Alpha*'s and *One more*'s `events` hashes move by a rounding of 10⁻¹⁵ s. New in `engine/sameness`: `HEARD`, the thresholds.
 
 Nothing has changed since v0.17.1.
+### Fixed
+
+- **Patchbay's card is 1.6 dB quieter, `postgain=2.34`** (was 2.81): heard through Cell studio, whose voices sound the echo cells' renderer leaves out (stage R2), it peaked at +0.1 dB and clipped 2 samples, over the loudness ceiling of −1 dB (yggi/cell-studio#557's smoke run, 2026-11-05); it peaks about −1.5 dB there now. In cells' renderer it is −25.7 dB on average, peak −6.2 dB (from −24.1 and −4.6). No event snapshot moves (the card's master is not in them). **What a frontend sees at its next pin:** Patchbay plays 1.6 dB quieter.
+
+- **Shorten offers only what sounds the same** (#477, found by #441's probe). Two of its rules offered rewrites that played differently. A run or a phrase (`&a &a` → `&a!2`, a repeat as one cell) changed how many units a cell has, and a pick, a slice or a rotation that reads it (`&j[<<]`, `&j[2:5]`) then read other units: now neither is offered in such a cell. And two alike cells that were the entries of two channels of a card were merged, so one note played in both where two did: every merge is now checked by S1, as a merge of voices was. `shortenAll` also checks each step by S1 and takes the best that passes. No example's text or event snapshot moves; a frontend's Shorten panel no longer offers those rewrites.
 
 ## v0.17.1 — 2026-11-05
 

@@ -23,7 +23,7 @@ function exported(text: string, options: CompileOptions): string | null {
 const keepsVoices = (source: string, next: string, options: CompileOptions) =>
   soundsIdentical(source, next, undefined, options) && exported(next, options) === exported(source, options);
 
-/** Cells written exactly alike: one is enough — its users read the other. A merge of voices is checked (`keepsVoices`). */
+/** Cells written exactly alike: one is enough — its users read the other. Every merge is checked (`keepsVoices` for voices, S1 for the rest). */
 export function sameCells(source: string, result: Result, options: CompileOptions = {}): ShortenRewrite[] {
   const out: ShortenRewrite[] = [];
   const byText = new Map<string, string[]>();
@@ -60,7 +60,9 @@ export function sameCells(source: string, result: Result, options: CompileOption
       apply,
     };
     if ((saves(source, s) ?? 0) <= 0) continue;
-    if (names.some((n) => result.cells.get(n)?.voice) && !keepsVoices(source, apply(source), options)) continue;
+    // (a merge of voices sounds and exports as before; any other, sounds as before: two alike cells in two channels of a
+    // card become one entry in both, which plays one event where it played two, #477)
+    if (names.some((n) => result.cells.get(n)?.voice) ? !keepsVoices(source, apply(source), options) : !soundsIdentical(source, apply(source), undefined, options)) continue;
     out.push(s);
   }
   return out;

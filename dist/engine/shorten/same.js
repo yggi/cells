@@ -52,7 +52,7 @@ export function sameCells(source, result, options = {}) {
         };
         if ((saves(source, s) ?? 0) <= 0)
             continue;
-        if (names.some((n) => result.cells.get(n)?.voice) && !keepsVoices(source, apply(source), options))
+        if (names.some((n) => result.cells.get(n)?.voice) ? !keepsVoices(source, apply(source), options) : !soundsIdentical(source, apply(source), undefined, options))
             continue;
         out.push(s);
     }
