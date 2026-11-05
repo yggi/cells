@@ -1,6 +1,6 @@
 # 027 · Cells sits on top of Strudel: a shared spelling keeps Strudel's meaning; a clean cut before release
 
-**Date:** 2026-10-12 · **Status:** accepted (owner, #10's language pass, #337)
+**Date:** 2026-10-12 · **Status:** accepted (owner, #10's language pass, #337) · Amended by [072](072-even-is-the-foundation.md): `even(k, n, phase)` is a generator again, of a table; `euclid` stays the rhythm
 
 ## Context
 
