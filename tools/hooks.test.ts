@@ -13,7 +13,8 @@ const failing = 'echo verify ran and failed; exit 1';
 
 // A hook run from a linked worktree hands its children GIT_DIR and friends, and they beat `git -C <dir>`: a test's
 // throwaway repository would be this one. Every process here runs without them.
-const env: NodeJS.ProcessEnv = Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/.test(name)));
+// Nor the user's global config: a session signs every commit through it, slow under verify's load (#275).
+const env: NodeJS.ProcessEnv = { ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/.test(name))), GIT_CONFIG_GLOBAL: '/dev/null' };
 
 const repos: string[] = [];
 afterEach(() => {
@@ -109,6 +110,19 @@ describe('pre-push', () => {
     const { status, stderr } = hook(repoWith(['a.ts']), 'head', `echo ' Test Files  3 passed (3)'; echo '      Tests  12 passed (12)'`);
     expect(status).toBe(0);
     expect(stderr.trim().split('\n')).toEqual([expect.stringMatching(/^pre-push: verify passed, 12 tests; tree \w+ stamped$/)]);
+  });
+
+  it('runs only the docs check for a branch that changes prose alone, and stamps nothing (tools/docs-only.sh)', () => {
+    const dir = repoWith(['notes.md']);
+    const passing = `echo '      Tests  3 passed (3)'`;
+    const { status, stderr } = hook(dir, 'head', failing, { CELLS_VERIFY_DOCS: passing });
+    expect(status).toBe(0);
+    expect(stderr).toContain('the docs check passed (the branch changes prose alone), 3 tests; not stamped');
+    expect(hook(dir, 'head', 'true', { CELLS_VERIFY_DOCS: failing }).status).toBe(1);
+  });
+
+  it('runs everything once code changes with the prose', () => {
+    expect(hook(repoWith(['notes.md', 'a.ts']), 'head', failing, { CELLS_VERIFY_DOCS: 'true' }).status).toBe(1);
   });
 
   it('counts the tests through the colours of a terminal', () => {

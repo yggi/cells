@@ -12,9 +12,12 @@ const script = fileURLToPath(new URL('../.claude/skills/review/prepare.sh', impo
 const repository = fileURLToPath(new URL('..', import.meta.url));
 const nodeTs = fileURLToPath(new URL('./node-ts.mjs', import.meta.url));
 
-// Without the GIT_ variables a hook run from a linked worktree hands its children (tools/hooks.test.ts says why).
+// Without the GIT_ variables a hook run from a linked worktree hands its children (tools/hooks.test.ts says why), and
+// without the user's global config: a session signs every commit through it, which under verify's load took this file's
+// git setup past its 10 s hook timeout (#275).
 const env: NodeJS.ProcessEnv = {
   ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/.test(name))),
+  GIT_CONFIG_GLOBAL: '/dev/null',
   GIT_AUTHOR_NAME: 'test',
   GIT_AUTHOR_EMAIL: 'test@example.com',
   GIT_COMMITTER_NAME: 'test',
