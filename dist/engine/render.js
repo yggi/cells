@@ -6,7 +6,6 @@ import { harmonics, waveform } from "./wave.js";
 export const DEFAULT_RATE = 48000;
 export const RATES = { lowest: 8000, highest: 192000 };
 const LATER = {
-    room: 'R2',
     distort: 'R2',
     crush: 'R2',
     fm: 'R2',
@@ -239,6 +238,84 @@ class Echo {
         }
     }
 }
+const SHARED_ROOM = { preDelay: 0.01, tau: Math.log(2.8 + 1) / Math.log(200), seconds: 2.81 };
+const ROOM_LINES = [
+    [29.7, 37.1, 41.1, 43.7, 53.3, 59.3, 61.7, 71.9],
+    [31.3, 35.9, 39.7, 47.1, 51.7, 57.1, 67.3, 73.3],
+];
+class Reverb {
+    name;
+    input = [new Float64Array(BLOCK), new Float64Array(BLOCK)];
+    sides;
+    pre;
+    n = 0;
+    constructor(name, rate) {
+        this.name = name;
+        const size = Math.max(1, Math.round(SHARED_ROOM.preDelay * rate));
+        this.pre = [new Float64Array(size), new Float64Array(size)];
+        const wet = SHARED_ROOM.seconds * rate * Math.pow(10, -5.8) * Math.pow(44100 / rate, 2);
+        this.sides = [new Network(ROOM_LINES[0], SHARED_ROOM.tau, rate, wet), new Network(ROOM_LINES[1], SHARED_ROOM.tau, rate, wet)];
+    }
+    run(from, to, blockStart, out) {
+        const size = this.pre[0].length;
+        for (let f = from; f < to; f++) {
+            const i = f - blockStart;
+            for (const ch of [0, 1]) {
+                const x = this.pre[ch][this.n];
+                this.pre[ch][this.n] = this.input[ch][i];
+                this.input[ch][i] = 0;
+                out[ch][i] = this.sides[ch].step(x);
+            }
+            this.n = (this.n + 1) % size;
+        }
+    }
+}
+class Network {
+    lines;
+    at;
+    gains;
+    outs = new Float64Array(8);
+    scale;
+    constructor(ms, tau, rate, wet) {
+        const lengths = ms.map((m) => Math.max(1, Math.round((m / 1000) * rate)));
+        this.lines = lengths.map((l) => new Float64Array(l));
+        this.at = lengths.map(() => 0);
+        this.gains = lengths.map((l) => Math.exp(-l / (tau * rate)));
+        this.scale = 1;
+        let energy = 0;
+        const frames = Math.ceil(30 * tau * rate);
+        for (let f = 0; f < frames; f++) {
+            const y = this.step(f === 0 ? 1 : 0);
+            energy += y * y;
+        }
+        for (const l of this.lines)
+            l.fill(0);
+        this.at.fill(0);
+        this.scale = Math.sqrt(wet / energy);
+    }
+    step(x) {
+        const o = this.outs;
+        for (let k = 0; k < 8; k++)
+            o[k] = this.lines[k][this.at[k]] * this.gains[k];
+        for (let h = 1; h < 8; h *= 2)
+            for (let i = 0; i < 8; i += 2 * h)
+                for (let j = i; j < i + h; j++) {
+                    const a = o[j];
+                    const b = o[j + h];
+                    o[j] = a + b;
+                    o[j + h] = a - b;
+                }
+        let y = 0;
+        for (let k = 0; k < 8; k++) {
+            const line = this.lines[k];
+            const out = line[this.at[k]] * this.gains[k];
+            y += k % 2 ? -out : out;
+            line[this.at[k]] = x + o[k] / Math.SQRT2 / 2;
+            this.at[k] = (this.at[k] + 1) % line.length;
+        }
+        return y * this.scale;
+    }
+}
 function filtersOf(c, keep) {
     const moves = c.paramCells ?? {};
     const start = (k, d) => (!keep(k) ? d : typeof c.params[k] === 'number' ? c.params[k] : (moves[k]?.range?.[0] ?? d));
@@ -369,7 +446,7 @@ export function createRenderer(result, shifts, options = {}) {
             wave = waveOf(real, imag);
         }
         const { has, autos } = filtersOf(c, (k) => !c.inherited?.[k]);
-        const send = sendOf(name, c, (k) => !c.inherited?.[k]);
+        const sends = sendsOf(name, c, (k) => !c.inherited?.[k]);
         const v = {
             name,
             seed: c.seed,
@@ -378,32 +455,36 @@ export function createRenderer(result, shifts, options = {}) {
             noise: isNoise ? noise(src, rate) : null,
             has,
             autos,
-            send,
+            sends,
             chains: [],
         };
         voices.set(name, v);
         return v;
     };
-    const echoes = new Map();
-    const echoOf = (name, time, feedback) => {
-        let e = echoes.get(name);
+    const returns = new Map();
+    const returnOf = (name, make) => {
+        let e = returns.get(name);
         if (!e) {
-            e = new Echo(name, time, feedback, rate);
-            echoes.set(name, e);
+            e = make();
+            returns.set(name, e);
             if (tracks !== 'mix')
                 stems.push(name);
         }
         return e;
     };
-    const sendOf = (name, c, keep) => {
+    const echoOf = (name, time, feedback) => returnOf(name, () => new Echo(name, time, feedback, rate));
+    const sendsOf = (name, c, keep) => {
+        const out = [];
+        const start = (k) => (keep(k) && typeof c.params[k] === 'number' ? c.params[k] : keep(k) ? c.paramCells?.[k]?.range?.[0] : undefined);
         const own = typeof c.params.delaytime === 'number' && keep('delaytime');
-        if (!own && !((typeof c.params.delay === 'number' || !!c.paramCells?.delay) && keep('delay')))
-            return null;
-        const feedback = typeof c.params.delayfeedback === 'number' && keep('delayfeedback') ? c.params.delayfeedback : SHARED_ECHO.feedback;
-        const echo = own ? echoOf(`echo:${name}`, c.params.delaytime, feedback) : echoOf('echo', SHARED_ECHO.time, SHARED_ECHO.feedback);
-        const fixed = keep('delay') && typeof c.params.delay === 'number' ? c.params.delay : undefined;
-        const low = keep('delay') ? c.paramCells?.delay?.range?.[0] : undefined;
-        return { echo, level: new Auto(fixed ?? low ?? (own ? OWN_ECHO_SEND : 0)) };
+        if (own || ((typeof c.params.delay === 'number' || !!c.paramCells?.delay) && keep('delay'))) {
+            const feedback = typeof c.params.delayfeedback === 'number' && keep('delayfeedback') ? c.params.delayfeedback : SHARED_ECHO.feedback;
+            const to = own ? echoOf(`echo:${name}`, c.params.delaytime, feedback) : echoOf('echo', SHARED_ECHO.time, SHARED_ECHO.feedback);
+            out.push({ key: 'delay', to, level: new Auto(start('delay') ?? (own ? OWN_ECHO_SEND : 0)) });
+        }
+        if ((typeof c.params.room === 'number' || !!c.paramCells?.room) && keep('room'))
+            out.push({ key: 'room', to: returnOf('reverb', () => new Reverb('reverb', rate)), level: new Auto(start('room') ?? 0) });
+        return out;
     };
     const stages = new Map();
     const stageOf = (name) => {
@@ -416,7 +497,7 @@ export function createRenderer(result, shifts, options = {}) {
         for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
             if (LATER[k])
                 say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-        const st = { name, ...filtersOf(c, () => true), send: sendOf(name, c, () => true) };
+        const st = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true) };
         stages.set(name, st);
         return st;
     };
@@ -546,12 +627,13 @@ export function createRenderer(result, shifts, options = {}) {
                 if (track && auto && !c.inherited?.[k])
                     schedule(auto, k, track, e.at, dur);
             }
-            if (params.delay && v.send && !c.inherited?.delay)
-                schedule(v.send.level, 'delay', params.delay, e.at, dur);
+            for (const sd of v.sends)
+                if (params[sd.key] && !c.inherited?.[sd.key])
+                    schedule(sd.level, sd.key, params[sd.key], e.at, dur);
             const through = [];
             for (const x of e.through ?? []) {
                 const st = stageOf(x.instrument);
-                if (!st || (!st.has.lpf && !st.has.hpf && !st.send))
+                if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length))
                     continue;
                 for (const k of FILTER) {
                     const track = x.params?.[k];
@@ -559,8 +641,9 @@ export function createRenderer(result, shifts, options = {}) {
                     if (track && auto)
                         schedule(auto, k, track, e.at, dur);
                 }
-                if (x.params?.delay && st.send)
-                    schedule(st.send.level, 'delay', x.params.delay, e.at, dur);
+                for (const sd of st.sends)
+                    if (x.params?.[sd.key])
+                        schedule(sd.level, sd.key, x.params[sd.key], e.at, dur);
                 for (const k of Object.keys(x.params ?? {}))
                     if (LATER[k])
                         say(x.instrument, k, `&${x.instrument}'s moving ${k}= is sounded from stage R2: rendered without it`);
@@ -679,7 +762,6 @@ export function createRenderer(result, shifts, options = {}) {
         const order = [...result.cells.values()].filter((c) => c.voice && heard.has(c.name)).map((c) => c.name);
         const end = position + n;
         const wet = [new Float64Array(BLOCK), new Float64Array(BLOCK)];
-        const level = new Float64Array(BLOCK);
         const levels = (send, from, to, blockStart) => {
             if (sendRead.get(send) === from)
                 return;
@@ -697,13 +779,12 @@ export function createRenderer(result, shifts, options = {}) {
                 const v = voices.get(name);
                 if (!v)
                     continue;
-                if (v.send)
-                    for (let f = from; f < to; f++)
-                        level[f - blockStart] = v.send.level.at(f / rate);
+                for (const sd of v.sends)
+                    levels(sd, from, to, blockStart);
                 for (const ch of v.chains) {
                     for (const { stage } of ch.stages)
-                        if (stage.send)
-                            levels(stage.send, from, to, blockStart);
+                        for (const sd of stage.sends)
+                            levels(sd, from, to, blockStart);
                     if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length)
                         continue;
                     sound(v, ch, from, to, blockStart);
@@ -713,15 +794,16 @@ export function createRenderer(result, shifts, options = {}) {
                         const i = f - blockStart;
                         const l = ch.dry[0][i] * VOICE_GAIN * master;
                         const r = ch.dry[1][i] * VOICE_GAIN * master;
-                        if (v.send) {
-                            v.send.echo.input[0][i] += l * level[i];
-                            v.send.echo.input[1][i] += r * level[i];
+                        for (const sd of v.sends) {
+                            const g = sendLevels.get(sd)[i];
+                            sd.to.input[0][i] += l * g;
+                            sd.to.input[1][i] += r * g;
                         }
                         for (const { stage } of ch.stages)
-                            if (stage.send) {
-                                const g = sendLevels.get(stage.send)[i];
-                                stage.send.echo.input[0][i] += l * g;
-                                stage.send.echo.input[1][i] += r * g;
+                            for (const sd of stage.sends) {
+                                const g = sendLevels.get(sd)[i];
+                                sd.to.input[0][i] += l * g;
+                                sd.to.input[1][i] += r * g;
                             }
                         if (tracks === 'entries') {
                             if (stem) {
@@ -742,9 +824,9 @@ export function createRenderer(result, shifts, options = {}) {
                     }
                 }
             }
-            for (const echo of echoes.values()) {
-                echo.run(from, to, blockStart, wet);
-                const stem = stemOut.get(echo.name);
+            for (const ret of returns.values()) {
+                ret.run(from, to, blockStart, wet);
+                const stem = stemOut.get(ret.name);
                 for (let f = from; f < to; f++) {
                     const i = f - blockStart;
                     if (tracks === 'entries') {

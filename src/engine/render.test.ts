@@ -3,7 +3,7 @@
 // and every example of stage R1 rendered with no diagnostic.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
-import { codeShifts, type CompileResult } from './program';
+import { codeShifts, DEFAULT_ENV, type CompileResult } from './program';
 import { cellId } from './ids';
 import { eventsBetween, plan } from './realize';
 import { createRenderer, loudness } from './render';
@@ -146,8 +146,8 @@ describe('the renderer', () => {
   });
 
   it('a parameter of a later stage is said, once a voice, and the voice rendered without it', () => {
-    const wet = audio('&v s=saw loop=A3 room=.4 distort=.3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
-    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v room', 'v distort']);
+    const wet = audio('&v s=saw loop=A3 crush=6 distort=.3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
+    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v crush', 'v distort']);
     const dry = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
     expect(bits(wet.mix)).toEqual(bits(dry.mix));
   });
@@ -245,7 +245,7 @@ describe('the echo (decision 062 R2, #452)', () => {
     const rr = createRenderer(r, codeShifts(r), { tracks: 'voices' });
     rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 6, true, { until: 6 }));
     const out = rr.render(6 * RATE);
-    expect(rr.stems).toEqual(['warm', 'thin', 'glass', 'grit', 'echo:glass']);
+    expect(rr.stems).toEqual(['warm', 'thin', 'glass', 'grit', 'echo:glass', 'reverb']);
     // (added in the stems' order, as the mix adds them)
     for (const ch of [0, 1] as const)
       for (let i = 0; i < out.mix[ch].length; i++) {
@@ -277,5 +277,59 @@ describe('the echo (decision 062 R2, #452)', () => {
     rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 1, true, { until: 1 }));
     rr.render(RATE);
     expect([rr.stems, rr.diagnostics]).toEqual([['a', 'b', 'echo:box'], []]);
+  });
+});
+
+describe('the reverb (decision 062 R2, #452)', () => {
+  const RATE = 48000;
+  /** A click through the reverb: the mix and its return, at a rate. */
+  const room = (rate: number, params = 'room=1') => {
+    const r = compileSource(
+      `&v s=white ${params} env=&(map=adsr 0 .002 0 .001)\n&n step=1 0\n&out map=sample postgain=1 [&n * &v]`,
+      { ...DEFAULT_ENV, SAMPLE_RATE: rate },
+      { resolve: resolveSeed },
+    );
+    const rr = createRenderer(r, codeShifts(r), { tracks: 'voices', sampleRate: rate });
+    rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 4, true, { until: 0.5 }));
+    const out = rr.render(4 * rate);
+    return { stems: rr.stems, dry: out.stems.get('v')!, wet: out.stems.get('reverb'), diagnostics: rr.diagnostics };
+  };
+  const energy = (x: Float32Array, from = 0, to = x.length) => {
+    let e = 0;
+    for (let i = from; i < to; i++) e += x[i]! * x[i]!;
+    return e;
+  };
+
+  it("is Cell studio's convolver's wet energy, a channel: 2.81 s · 44100² · 10^(−5.8) over the rate, whatever its noise", () => {
+    for (const rate of [44100, RATE]) {
+      const { stems, dry, wet, diagnostics } = room(rate);
+      expect([stems, diagnostics]).toEqual([['v', 'reverb'], []]);
+      const want = (2.81 * 44100 * 44100 * Math.pow(10, -5.8)) / rate;
+      // (a click's energy times the impulse's: within 0.5 dB, a click not being white)
+      for (const ch of [0, 1] as const) expect(Math.abs(10 * Math.log10(energy(wet![ch]) / energy(dry[ch]) / want))).toBeLessThan(0.5);
+    }
+  });
+
+  it('starts 10 ms on, and falls as the noise burst does: its energy by e^(−2t/τ), τ = ln 3.8 / ln 200', () => {
+    const { wet } = room(RATE);
+    expect(energy(wet![0], 0, 0.009 * RATE)).toBe(0);
+    const tau = Math.log(3.8) / Math.log(200);
+    // (over 0.3 s, before the next click a second on: 2 · 0.3 / τ nepers of energy, within 1 dB)
+    const fall = 10 * Math.log10(energy(wet![0], 0.1 * RATE, 0.4 * RATE) / energy(wet![0], 0.4 * RATE, 0.7 * RATE));
+    expect(Math.abs(fall - (10 * (2 * 0.3)) / tau / Math.LN10)).toBeLessThan(1);
+  });
+
+  it("keeps a channel's sound on its channel, and its two sides don't correlate", () => {
+    const { wet } = room(RATE);
+    let lr = 0;
+    for (let i = 0; i < wet![0].length; i++) lr += wet![0][i]! * wet![1][i]!;
+    expect(Math.abs(lr) / Math.sqrt(energy(wet![0]) * energy(wet![1]))).toBeLessThan(0.1);
+  });
+
+  it('a send is room=, fixed or moving; none, no reverb', () => {
+    expect(room(RATE, '').stems).toEqual(['v']);
+    const half = room(RATE, 'room=.5').wet!;
+    const full = room(RATE).wet!;
+    expect(10 * Math.log10(energy(full[0]) / energy(half[0]))).toBeCloseTo(20 * Math.log10(2), 3);
   });
 });
