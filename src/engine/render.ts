@@ -617,6 +617,22 @@ interface Stage {
   readonly autos: Partial<Record<FilterKey, Auto>>;
   /** Its sends, for its voices' sum: each voice through it sends, as a filter of the sum is one on each (#452). */
   readonly sends: readonly Send[];
+  /** Its grit, on its voices' sum (decision 067): not linear, so its voices' chains meet in a bus first. */
+  readonly grit: readonly Shaper[];
+}
+
+/**
+ * Where the voices through an instrument with grit meet (decision 067, #452): their chains up to it summed, at the level
+ * they leave their voices, then its grit, its filters, the filters of the instruments around it, and the sends of each;
+ * one a stem (an entry's, or by voice the instrument's own, which then holds what its voices play through it).
+ */
+interface Bus {
+  readonly key: string;
+  /** The stem it goes to: '' (the instrument's own) or an entry's key. */
+  readonly stem: string;
+  /** Its instrument, then those around it, each with its filters for this bus. */
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<'lpf' | 'hpf', Biquad>> }[];
+  readonly input: [Float64Array, Float64Array];
 }
 
 /** A voice's notes going to one stem, through filters of their own (so a stem by entry is filtered as the mix is). */
@@ -630,6 +646,8 @@ interface Chain {
   notes: Note[];
   /** Its sound before its filters, this block. */
   readonly dry: [Float64Array, Float64Array];
+  /** The bus it plays into, where an instrument it goes through has grit: its stages are those inside that one. */
+  readonly bus: Bus | null;
 }
 
 interface Note {
@@ -850,9 +868,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     if (!c) return null;
     for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
       if (LATER[k]) say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-    // (an instrument's grit is on its voices' sum, which isn't each voice's: decision 067, the next rung of #452)
-    for (const k of ['distort', 'crush']) if (k in c.params) say(name, k, `&${name}'s ${k}= is on its voices' sum, sounded from a later rung of stage R2: rendered without it`);
-    const st: Stage = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true) };
+    const st: Stage = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
     stages.set(name, st);
     return st;
   };
@@ -862,16 +878,32 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
   });
 
   /** A voice's chain to a stem through its instruments' stages, made when a note first goes there. */
+  /** The buses, in the order they are first played into. */
+  const buses = new Map<string, Bus>();
+  const busOf = (stem: string, through: readonly Stage[]): Bus => {
+    const key = [stem, ...through.map((st) => st.name)].join('\u0000');
+    let b = buses.get(key);
+    if (!b) {
+      b = { key, stem, stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })), input: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
+      buses.set(key, b);
+      if (tracks === 'voices' && !stems.includes(through[0]!.name)) stems.push(through[0]!.name);
+    }
+    return b;
+  };
   const chainOf = (v: Voice, stem: string, through: readonly Stage[]): Chain => {
     const key = [stem, ...through.map((st) => st.name)].join('\u0000');
     let ch = v.chains.find((x) => x.key === key);
     if (!ch) {
+      // (up to the first instrument with grit its own; from there on, a bus its voices share)
+      const gritty = through.findIndex((st) => st.grit.length > 0);
+      const inside = gritty < 0 ? through : through.slice(0, gritty);
       ch = {
         key,
         filters: biquads(v.has),
-        stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })),
+        stages: inside.map((stage) => ({ stage, filters: biquads(stage.has) })),
         notes: [],
         dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)],
+        bus: gritty < 0 ? null : busOf(stem, through.slice(gritty)),
       };
       // (chains in the order of their stems, so a voice's chains are summed alike however its notes came)
       v.chains.push(ch);
@@ -984,7 +1016,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       const through: Stage[] = [];
       for (const x of e.through ?? []) {
         const st = stageOf(x.instrument);
-        if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length)) continue;
+        if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length && !st.grit.length)) continue;
         for (const k of FILTER) {
           const track = x.params?.[k];
           const auto = st.autos[k];
@@ -1136,6 +1168,23 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
             const i = f - blockStart;
             const l = ch.dry[0][i]! * VOICE_GAIN * master;
             const r = ch.dry[1][i]! * VOICE_GAIN * master;
+            if (ch.bus) {
+              // (into the bus at the level it leaves its voice, the card's master after the bus's grit)
+              ch.bus.input[0][i]! += ch.dry[0][i]! * VOICE_GAIN;
+              ch.bus.input[1][i]! += ch.dry[1][i]! * VOICE_GAIN;
+              for (const sd of v.sends) {
+                const g = sendLevels.get(sd)![i]!;
+                sd.to.input[0][i]! += l * g;
+                sd.to.input[1][i]! += r * g;
+              }
+              for (const { stage } of ch.stages)
+                for (const sd of stage.sends) {
+                  const g = sendLevels.get(sd)![i]!;
+                  sd.to.input[0][i]! += l * g;
+                  sd.to.input[1][i]! += r * g;
+                }
+              continue;
+            }
             for (const sd of v.sends) {
               const g = sendLevels.get(sd)![i]!;
               sd.to.input[0][i]! += l * g;
@@ -1162,6 +1211,59 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
               mix[0][f - position]! += Math.fround(l);
               mix[1][f - position]! += Math.fround(r);
             }
+          }
+        }
+      }
+      // the buses, after every voice: their instrument's grit on its voices' sum, then the filters and sends of each stage
+      for (const b of buses.values()) {
+        const t = blockStart / rate;
+        for (const { stage } of b.stages) for (const sd of stage.sends) levels(sd, from, to, blockStart);
+        const [x0, x1] = b.input;
+        b.stages.forEach(({ stage, filters }, j) => {
+          if (j === 0)
+            for (const g of stage.grit)
+              for (let f = from; f < to; f++) {
+                const i = f - blockStart;
+                x0[i] = g.run(x0[i]!);
+                x1[i] = g.run(x1[i]!);
+              }
+          for (const k of ['lpf', 'hpf'] as const) {
+            const bq = filters[k];
+            if (!bq) continue;
+            bq.set(stage.autos[k]!.at(t), stage.autos[k === 'lpf' ? 'lpq' : 'hpq']!.at(t), rate);
+            for (let f = from; f < to; f++) {
+              const i = f - blockStart;
+              x0[i] = bq.run(x0[i]!, 0);
+              x1[i] = bq.run(x1[i]!, 1);
+            }
+          }
+        });
+        const stem = tracks === 'voices' ? stemOut.get(b.stages[0]!.stage.name) : tracks === 'entries' ? stemOut.get(entryName.get(b.stem) ?? '') : undefined;
+        for (let f = from; f < to; f++) {
+          const i = f - blockStart;
+          const l = x0[i]! * master;
+          const r = x1[i]! * master;
+          x0[i] = 0;
+          x1[i] = 0;
+          for (const { stage } of b.stages)
+            for (const sd of stage.sends) {
+              const g = sendLevels.get(sd)![i]!;
+              sd.to.input[0][i]! += l * g;
+              sd.to.input[1][i]! += r * g;
+            }
+          if (tracks === 'entries') {
+            if (stem) {
+              stem[0][f - position]! += l;
+              stem[1][f - position]! += r;
+            }
+          } else if (stem) {
+            stem[0][f - position]! += l;
+            stem[1][f - position]! += r;
+            mix[0][f - position]! += Math.fround(l);
+            mix[1][f - position]! += Math.fround(r);
+          } else {
+            mix[0][f - position]! += Math.fround(l);
+            mix[1][f - position]! += Math.fround(r);
           }
         }
       }
