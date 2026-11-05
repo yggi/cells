@@ -146,8 +146,8 @@ describe('the renderer', () => {
   });
 
   it('a parameter of a later stage is said, once a voice, and the voice rendered without it', () => {
-    const wet = audio('&v s=saw loop=A3 room=.4 delay=.3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
-    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v room', 'v delay']);
+    const wet = audio('&v s=saw loop=A3 room=.4 distort=.3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
+    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v room', 'v distort']);
     const dry = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
     expect(bits(wet.mix)).toEqual(bits(dry.mix));
   });
@@ -191,5 +191,91 @@ describe('the renderer', () => {
     const half = Float32Array.from({ length: 1000 }, (_, i) => (i % 2 ? 0.5 : -0.5));
     expect(loudness([half, half])).toEqual({ rms: 20 * Math.log10(0.5), peak: 20 * Math.log10(0.5), clipped: 0 });
     expect(loudness([new Float32Array(4)]).rms).toBe(-Infinity);
+  });
+});
+
+/** A short click on a voice, the echo's parameters `echo` on it, as the mix and its stems by voice. */
+function click(echo: string, seconds = 2) {
+  const r = compiled(`&v s=sine loop=440hz ${echo} env=&(map=adsr 0 .01 0 .005)\n&n step=1 0\n&out map=sample postgain=1 [&n * &v]`);
+  expect(r.ok, r.diagnostics.map((d) => d.message).join('; ')).toBe(true);
+  const rr = createRenderer(r, codeShifts(r), { tracks: 'voices' });
+  rr.add(eventsBetween(plan(r, codeShifts(r)), 0, seconds, true, { until: 0.5 }));
+  const out = rr.render(Math.round(seconds * rr.sampleRate));
+  return { ...out, stems: rr.stems, diagnostics: rr.diagnostics };
+}
+
+describe('the echo (decision 062 R2, #452)', () => {
+  const RATE = 48000;
+  it("a voice's own echo is its sound again delaytime= later, times delayfeedback= each time round, heard wet only", () => {
+    const { mix, stems, diagnostics } = click('delay=.5 delaytime=.25 delayfeedback=.5');
+    expect(diagnostics).toEqual([]);
+    expect(stems).toEqual(['v', 'echo:v']);
+    const dry = click('').mix[0];
+    const D = 0.25 * RATE;
+    // (the voice's sound, then the echo's: .5 of it a quarter second later, .25 of it half a second later, …)
+    for (const [k, gain] of [
+      [1, 0.5],
+      [2, 0.25],
+      [3, 0.125],
+    ] as const)
+      for (let i = 0; i < 0.02 * RATE; i++) expect(mix[0][k * D + i]).toBeCloseTo(dry[i]! * gain, 6);
+  });
+
+  it('a voice with delay= and no delaytime= sends to the shared echo: 0.375 s, its feedback .35, whatever its own delayfeedback=', () => {
+    const { mix, stems } = click('delay=.4 delayfeedback=.9');
+    expect(stems).toEqual(['v', 'echo']);
+    const dry = click('').mix[0];
+    const D = 0.375 * RATE;
+    for (let i = 0; i < 0.02 * RATE; i++) {
+      expect(mix[0][D + i]).toBeCloseTo(dry[i]! * 0.4, 6);
+      expect(mix[0][2 * D + i]).toBeCloseTo(dry[i]! * 0.4 * 0.35, 6);
+    }
+  });
+
+  it('delaytime= alone sends .3 to its own echo; delayfeedback= alone makes none', () => {
+    const own = click('delaytime=.25');
+    const dry = click('').mix[0];
+    for (let i = 0; i < 0.02 * RATE; i++) expect(own.mix[0][0.25 * RATE + i]).toBeCloseTo(dry[i]! * 0.3, 6);
+    expect(click('delayfeedback=.5').stems).toEqual(['v']);
+    expect(bits(click('delayfeedback=.5').mix)).toEqual(bits(click('').mix));
+  });
+
+  it('its return is a stem of its own: the stems sum to the mix, to the bit, and a render in chunks is the render whole', () => {
+    const r = example('effects');
+    const rr = createRenderer(r, codeShifts(r), { tracks: 'voices' });
+    rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 6, true, { until: 6 }));
+    const out = rr.render(6 * RATE);
+    expect(rr.stems).toEqual(['warm', 'thin', 'glass', 'grit', 'echo:glass']);
+    // (added in the stems' order, as the mix adds them)
+    for (const ch of [0, 1] as const)
+      for (let i = 0; i < out.mix[ch].length; i++) {
+        let sum = 0;
+        for (const s of rr.stems) sum = Math.fround(sum + out.stems.get(s)![ch][i]!);
+        if (sum !== out.mix[ch][i]) expect([ch, i, out.mix[ch][i]]).toEqual([ch, i, sum]);
+      }
+    expect(out.stems.get('echo:glass')![0].reduce((m, x) => Math.max(m, Math.abs(x)), 0)).toBeGreaterThan(0.01);
+    expect(bits(inChunks(r, 6, [1, 31, 128, 777, 5000]))).toEqual(bits(inChunks(r, 6, [6 * RATE])));
+    expect(rr.diagnostics.filter((d) => d.param.startsWith('delay'))).toEqual([]);
+  });
+
+  it('a moving delay= moves the send, note by note', () => {
+    const r = compiled(
+      '&v s=sine loop=440hz delay=0..1 * &d delaytime=.25 env=&(map=adsr 0 .01 0 .005)\n&d map=lin step=1 0 1\n&n step=1 0 0\n&out map=sample postgain=1 [&n * &v]',
+    );
+    const rr = createRenderer(r, codeShifts(r));
+    rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 3, true, { until: 2 }));
+    const m = rr.render(3 * RATE).mix[0];
+    const peak = (from: number) => Math.max(...[...m.subarray(from * RATE, (from + 0.02) * RATE)].map(Math.abs));
+    // (the first note sent at 0, the second at 1: its echo a quarter second after it, as loud as itself)
+    expect(peak(0.25)).toBeLessThan(1e-6);
+    expect(peak(1.25)).toBeCloseTo(peak(1), 4);
+  });
+
+  it("an instrument's echo is one echo of its voices' sum, a return of its own (decision 067)", () => {
+    const r = compiled('&a s=saw loop=A3\n&b s=square loop=A2\n&box delay=.3 delaytime=.2 [&a, &b]\n&n step=4 0 2\n&out map=sample [&n * &box]');
+    const rr = createRenderer(r, codeShifts(r), { tracks: 'voices' });
+    rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 1, true, { until: 1 }));
+    rr.render(RATE);
+    expect([rr.stems, rr.diagnostics]).toEqual([['a', 'b', 'echo:box'], []]);
   });
 });
