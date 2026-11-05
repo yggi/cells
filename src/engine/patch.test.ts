@@ -46,8 +46,8 @@ describe('a cell’s jacks', () => {
     expect(jacksOf(text, 'out')).toEqual([]);
   });
 
-  it('the moving parameters it offers are the attribute table’s', () => {
-    for (const k of MOVING) expect(PARAMS[k]!.moves, k).toBe(true);
+  it('the moving parameters it offers are the attribute table’s, but a line’s legato= and a carrier’s index= (offered where fm= is)', () => {
+    expect(Object.keys(PARAMS).filter((k) => PARAMS[k]!.moves && !['legato', 'index'].includes(k))).toEqual([...MOVING]);
   });
 });
 
@@ -57,8 +57,10 @@ describe('patch and unpatch: one line rewritten', () => {
     expect(lineOf(patched, 'vca')).toBe('&vca from amp(eg=&(map=adsr .002 .3 .5 .06), level=&sweep) &vcf');
     expect(diagnostics(patched)).toEqual([]);
     expect(unpatch(patched, 'vca', 'level', 'sweep', resolveSeed)).toBe(PATCHBAY);
-    // (a cable replaces the cable in it)
-    expect(lineOf(patch(PATCHBAY, 'vcf', 'res', 'drift', resolveSeed), 'vcf')).toContain('lowpass(eg=&contour, cutoff=&sweep, res=&drift)');
+    // (a jack takes one cable: one in it is pulled out before another goes in, and nothing is lost)
+    expect(() => patch(PATCHBAY, 'vcf', 'res', 'drift', resolveSeed)).toThrow(/holds &jitter: pull it out first/);
+    const swapped = patch(unpatch(PATCHBAY, 'vcf', 'res', 'jitter', resolveSeed), 'vcf', 'res', 'drift', resolveSeed);
+    expect(lineOf(swapped, 'vcf')).toContain('lowpass(eg=&contour, cutoff=&sweep, res=&drift)');
     // (pulled out of every jack, the module's own knobs)
     let all = PATCHBAY;
     for (const [port, cell] of [
@@ -103,7 +105,8 @@ describe('patch and unpatch: one line rewritten', () => {
     expect(lineOf(vibrato, 'v')).toBe('&v pitch=&wob s=saw loop=C2 env=&eg');
     expect(diagnostics(vibrato)).toEqual([]);
     expect(unpatch(vibrato, 'v', 'pitch', 'wob')).toBe(text);
-    expect(lineOf(patch(text, 'v', 'env', 'lfo'), 'v')).toBe('&v s=saw loop=C2 env=&lfo');
+    expect(() => patch(text, 'v', 'env', 'lfo')).toThrow(/env= holds &eg: pull it out first/);
+    expect(lineOf(patch(unpatch(text, 'v', 'env', 'eg'), 'v', 'env', 'lfo'), 'v')).toBe('&v env=&lfo s=saw loop=C2');
   });
 
   it('refuses what the text can’t say, and says why', () => {
@@ -111,5 +114,19 @@ describe('patch and unpatch: one line rewritten', () => {
     expect(() => patch(text, 'v', 'lpf', 'eg')).toThrow(/two cells multiply a range/);
     expect(() => patch(text, 'v', 'hpf', 'eg')).toThrow(/write its value first/);
     expect(() => patch(text, 'v', 'nothing', 'eg')).toThrow(/no jack/);
+    // (a cable from a cell the text doesn't define, or from the cell itself)
+    expect(() => patch(text, 'v', 'pitch', 'nosuch')).toThrow(/defined nowhere/);
+    expect(() => patch(text, 'v', 'pitch', 'v')).toThrow(/into itself/);
+    // (a cell a from line takes is defined: Patchbay's modules)
+    expect(lineOf(patch(PATCHBAY, 'hat', 'hpf', 'sweep'), 'hat')).toContain('hpf=7500..7500 * &sweep');
+  });
+
+  // (#471's review: a module's knob given on the line was replaced by a cable and lost when it came out)
+  it('a module’s knob given on the line is kept: a cable is refused until it is cleared, so the sound doesn’t jump', () => {
+    expect(() => patch(PATCHBAY, 'vca', 'eg', 'contour', resolveSeed)).toThrow(/eg is set on the line \(&\(map=adsr \.002 \.3 \.5 \.06\)\)/);
+    // (on &vcf's line: its note's label quotes the line too)
+    const set = PATCHBAY.replace(/^(&vcf .*)res=&jitter/m, '$1res=.7');
+    expect(() => patch(set, 'vcf', 'res', 'drift', resolveSeed)).toThrow(/res is set on the line \(\.7\)/);
+    expect(jacksOf(set, 'vcf', resolveSeed).find((j) => j.port === 'res')).toEqual({ port: 'res', kind: 'argument', band: 'cv', patched: [], knob: '.7' });
   });
 });

@@ -9,6 +9,11 @@
  * - A module's jacks (a cell a `from` line takes from a fragment with a signature: decision 065) are its optional
  *   parameters, a cable its argument (`lowpass(cutoff=&lfo)`), none its knob (the parameter's default); and its main
  *   parameter, an input, a cable a reference in its mix (`[&saw, &sub]`).
+ *
+ * A jack that takes one cell (`env=`, `pitch=` and `fm=` written as a cell, a module's argument) takes one cable, as a
+ * panel's does: one holding a cable, or a value written on the line, refuses another, so nothing is lost and a patch
+ * pulled out gives the text back (#471's review). A cable comes from a cell the text defines, not from the cell itself.
+ * The band is the frontend's to match (`jacksOf` says it): an audio cable into a CV jack is written as asked.
  */
 import { signatureOf } from './use';
 import { declLine, splitComment, splitWords } from './edit';
@@ -191,11 +196,24 @@ export function unpatch(source: string, cell: string, port: string, from: string
   return rewire(source, cell, port, from, 'out', resolve);
 }
 
+/** Does the text define &name: a line of its own, or a `from` line that takes it? */
+function defines(source: string, name: string): boolean {
+  if (declLine(source, name) >= 0) return true;
+  return source.split('\n').some((l) => {
+    const form = readFrom(splitComment(l)[0].trim());
+    return !!form && form.kind === 'use' && !!form.names?.includes(`&${name}`);
+  });
+}
+
 function rewire(source: string, cell: string, port: string, from: string, way: 'in' | 'out', resolve?: Resolve): string {
   const jack = jacksOf(source, cell, resolve).find((j) => j.port === port);
   if (!jack) throw new PatchError(`&${cell} has no jack ${port}`);
   if (way === 'in' && jack.patched.includes(from)) return source;
   if (way === 'out' && !jack.patched.includes(from)) return source;
+  if (way === 'in') {
+    if (from === cell) throw new PatchError(`&${cell} can't be patched into itself`);
+    if (!defines(source, from)) throw new PatchError(`&${from} is defined nowhere in the text: write it first`);
+  }
   const lines = source.split('\n');
   const module = jack.kind === 'attribute' ? null : moduleLine(lines, cell);
   const index = module ? module.index : declLine(source, cell);
@@ -220,7 +238,11 @@ function attributeCode(code: string, cell: string, jack: Jack, from: string, way
     return `${head} ${jack.port}=${value}${code.slice(head.length)}`;
   };
   const single = (CELL as readonly string[]).includes(jack.port) && !(v && v.base.includes('..'));
-  if (single) return way === 'in' ? set(ref) : v && refName(v.base) === from && !v.factors.length ? set(null) : code;
+  if (single) {
+    if (way === 'out') return v && refName(v.base) === from && !v.factors.length ? set(null) : code;
+    if (v) throw new PatchError(`&${cell}'s ${jack.port}= holds ${v.base}: pull it out first (a jack takes one cable)`);
+    return set(ref);
+  }
   if (way === 'in') {
     if (!v) throw new PatchError(`&${cell} has no ${jack.port}= written: write its value first (${jack.port}=…), a knob for the cable to move`);
     if (refName(v.base))
@@ -247,6 +269,14 @@ function moduleCode(code: string, form: Extract<NonNullable<ReturnType<typeof re
   let args = [...(form.args ?? [])];
   let main = form.main;
   if (jack.kind === 'argument') {
+    const given = args.find((a) => a.name === jack.port);
+    const name = form.names![0]!;
+    if (way === 'in' && given)
+      throw new PatchError(
+        refName(given.value)
+          ? `${name}'s ${jack.port} holds &${refName(given.value)}: pull it out first (a jack takes one cable)`
+          : `${name}'s ${jack.port} is set on the line (${given.value}): a cable would replace it, so clear it first (a jack takes one cable; a knob and a cable together are a sum)`,
+      );
     args = args.filter((a) => a.name !== jack.port);
     if (way === 'in') args.push({ name: jack.port, value: ref });
   } else {
