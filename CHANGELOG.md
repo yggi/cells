@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.17.1.
+### Fixed
+
+- **Patchbay's card is 1.6 dB quieter, `postgain=2.34`** (was 2.81): heard through Cell studio, whose voices sound the echo cells' renderer leaves out (stage R2), it peaked at +0.1 dB and clipped 2 samples, over the loudness ceiling of −1 dB (yggi/cell-studio#557's smoke run, 2026-11-05); it peaks about −1.5 dB there now. In cells' renderer it is −25.7 dB on average, peak −6.2 dB (from −24.1 and −4.6). No event snapshot moves (the card's master is not in them). **What a frontend sees at its next pin:** Patchbay plays 1.6 dB quieter.
 
 ### Fixed
 
