@@ -8,12 +8,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since v0.17.1.
+
+## v0.17.1 — 2026-11-05
+
 ### Changed
 
 - **`patch` refuses what would lose a setting** (#469, #471's review; decision 067 §4). A jack that takes one cell (`env=`, `pitch=`, `fm=`, a module's argument) takes one cable: one holding a cable, or a value written on the line, refuses another with a `PatchError` until it is cleared, so a patch pulled out gives the text back and the sound never jumps. A cable from a cell the text doesn't define, or from the cell itself, is refused too. In v0.17.0 such a patch replaced what was there, and unpatching brought back the module's default. **What a frontend sees at its next pin:** `patch` throws in those cases; swapping a cable is `unpatch`, then `patch`. Nothing a piece plays changes.
 
 ### Fixed
 
+- **A parameter a voice takes from an instrument is routed into the instrument** (decision 067, #433). `routing` drew each factor of an inherited parameter into every voice that plays through the instrument (`cell:contour->cell:saw` in Patchbay), where the graph draws it into the instrument, where it is written (`cell:contour->cell:vcf`). So a workbench that lights the routed edges lit one the graph doesn't have. It routes into the instrument now. Patchbay is the one example with an instrument that has sound parameters: its live snapshot moves (`live.snapshot.txt`, what is lit), and its notes and events don't, since routing is what the graph lights, not what plays. **What a frontend sees at its next pin:** `routing(…).edges` names the instrument where it named its voices, for an instrument's parameters (found by yggi/cell-studio's v0.17.0 pin, whose test holds routed and drawn edges equal over every example).
 - **S1 (`soundsIdentical`) hears what the host plays: a cell switched `off` is silent, and a voice's `pitch=` is heard in its bends** (#434, #439; decision 068). S1 planned without the text's `off` set, so it heard a muted line, and a rewrite that dropped an `off` passed it; it now plans as the host, `render`, the exports and the folder do. A voice's `pitch=&x` is a term of the sum in every product the voice is in, so its bends are already in the events; S1 counted it a second time in the voice's sound, and `pitch=&vib` and `[(&t + &vib) * &lead]` differed. Now they are identical; a per-note shape (`pitch=0..30 * &(map=adsr …)`) is still read in the sound. All 45 sugar rows of decision 068 are now exact by S1 (`core.test.ts`). Nothing a piece plays changes and no event snapshot moves; what Migrate, Normalise and Shorten accept, and what `samePiece` reports, can.
 
 ## v0.17.0 — 2026-11-05
