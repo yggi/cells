@@ -416,3 +416,22 @@ describe('a modular patch (docs/notes/modular.md)', () => {
     expect(lpf && 'points' in lpf ? lpf.points.length : 0).toBeLessThanOrEqual(121);
   });
 });
+
+describe('oneshot=1, a voice’s parameter (decision 068, #440)', () => {
+  const V = '&bar step=4 0\n&t step=&bar 0 2 4 2\n';
+  const said = (line: string) => compileSource(`${V}${line}\n&out map=sample [&t * &v]`).diagnostics.map((d) => [d.severity, d.message]);
+  it('is 1 or 0: anything else is an error', () => {
+    for (const v of ['2', '.5']) expect(said(`&v oneshot=${v} s=sine loop=C4`)).toEqual([['error', 'oneshot= is 1 (each note played through) or 0 (as its step, the default)']]);
+    expect(said('&v oneshot=1 s=sine loop=C4')).toEqual([]);
+    expect(said('&v oneshot=0 s=sine loop=C4')).toEqual([]);
+  });
+  it('written both ways, the word and the parameter, is given twice', () => {
+    expect(said('&v oneshot oneshot=1 s=sine loop=C4').filter(([s]) => s === 'error')).toEqual([['error', 'oneshot is given twice: write oneshot=1 alone']]);
+  });
+  it('on a cell that is no voice it warns and does nothing', () => {
+    const src = '&bar step=4 0\n&t oneshot=1 step=&bar 0 2 4 2\n&v s=sine loop=C4\n&out map=sample [&t * &v]';
+    expect(compileSource(src).diagnostics.map((d) => [d.severity, d.message])).toEqual([
+      ['warning', "oneshot=1 is a voice's: &t is no voice, so it does nothing (put it on the voice that plays its notes)"],
+    ]);
+  });
+});
