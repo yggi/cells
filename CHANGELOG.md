@@ -10,6 +10,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Nothing has changed since v0.17.1.
 
+### Fixed
+
+- **Shorten offers only what sounds the same** (#477, found by #441's probe). Two of its rules offered rewrites that played differently. A run or a phrase (`&a &a` → `&a!2`, a repeat as one cell) changed how many units a cell has, and a pick, a slice or a rotation that reads it (`&j[<<]`, `&j[2:5]`) then read other units: now neither is offered in such a cell. And two alike cells that were the entries of two channels of a card were merged, so one note played in both where two did: every merge is now checked by S1, as a merge of voices was. `shortenAll` also checks each step by S1 and takes the best that passes. No example's text or event snapshot moves; a frontend's Shorten panel no longer offers those rewrites.
+
 ## v0.17.1 — 2026-11-05
 
 ### Changed

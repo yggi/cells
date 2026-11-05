@@ -22,6 +22,7 @@
  * tools' own (../sameness.ts).
  */
 import { compileSource } from '../compile';
+import { soundsIdentical } from '../sameness';
 import type { CompileOptions } from '../program';
 import type { Hint } from '../fold/hints';
 import { candidates, savesChars, size, structure, suggestion, type ShortenRewrite, type Suggestion } from './harness';
@@ -55,9 +56,11 @@ export interface ShortenOptions extends CompileOptions {
 export function shorten(source: string, options: ShortenOptions = {}): Suggestion[] {
   const { result, cells } = candidates(source, options);
   if (!result.ok) return [];
+  // (a run or a phrase changes how many units a cell has: never in one a pick or a rotation counts, #477)
+  const counted = cells.filter((c) => !c.unitRead);
   const found = [
-    ...runs(source, cells),
-    ...phrases(source, cells, result, options, options.hints),
+    ...runs(source, counted),
+    ...phrases(source, counted, result, options, options.hints),
     ...fractions(source, cells, result),
     ...sameCells(source, result, options),
     ...defaults(source, result, options),
@@ -108,10 +111,14 @@ export function shortenAll(source: string, rounds = 60, options: ShortenOptions 
   let now = source;
   const steps: string[] = [];
   for (let i = 0; i < rounds; i++) {
-    // (the card's migration rewrites the text as a file: the text is shortened, the file is the frontend's to make)
-    const best = shorten(now, options).find((s) => s.kind !== 'card');
-    if (!best) break;
-    const next = best.apply(now);
+    // (the card's migration rewrites the text as a file: the text is shortened, the file is the frontend's to make; and
+    // the best that sounds as the text did: each rule checks its own, and this checks what they miss, #477)
+    const taken = shorten(now, options)
+      .filter((s) => s.kind !== 'card')
+      .map((s) => ({ best: s, next: s.apply(now) }))
+      .find(({ next }) => soundsIdentical(now, next, undefined, options));
+    if (!taken) break;
+    const { best, next } = taken;
     const saved = structure(now) - structure(next);
     if (saved < 0 || (saved === 0 && size(next) >= size(now))) break;
     steps.push(saved ? `−${saved}: ${best.title}` : `−${size(now) - size(next)} characters: ${best.title}`);
