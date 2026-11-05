@@ -70,7 +70,6 @@ export interface Renderer {
 
 /** Parameters of the later stages: rendered dry, and said (decision 062's stages R2 and R3). The echo is R2's, built (#452). */
 const LATER: Readonly<Record<string, string>> = {
-  fm: 'R2',
   body: 'R3',
   ring: 'R3',
   hard: 'R3',
@@ -521,6 +520,44 @@ function gritOf(params: Readonly<Record<string, number | string>>, keep: (k: str
   return out;
 }
 
+// ---- FM: a modulator swinging its carrier's frequency ----
+
+/**
+ * A note's modulator (decision 062 R2, #452), as Cell studio's voices play one (`voice/voice.ts` @ 420e9d6): an
+ * oscillator of the modulator voice's wave at the carrier's note frequency times its `ratio=` (1 unless given), started
+ * with the note at phase 0, whose output times its own frequency times the carrier's `index=` (1 unless given; moving, as
+ * the note moves it) is added to the carrier's frequency before its bends, as an oscillator's frequency input is added to
+ * its value; and its own modulator swings it the same way, five deep at most.
+ */
+interface Mod {
+  readonly wave: Wave;
+  /** Its frequency (Hz): its carrier's note frequency times its ratio. */
+  readonly freq: number;
+  readonly index: number;
+  /** The carrier's moving index=, over the note; its fixed index where absent. */
+  readonly moving: Auto | null;
+  readonly inner: Mod | null;
+  phase: number;
+}
+
+/** How far a modulator swings its carrier now (Hz), its phase moved on a frame: its own modulator first. */
+function swing(m: Mod, t: number, rate: number): number {
+  const hz = m.freq + (m.inner ? swing(m.inner, t, rate) : 0);
+  const table = tableFor(m.wave, Math.abs(hz), rate);
+  let y = 0;
+  if (table) {
+    const p = m.phase * TABLE;
+    const i = Math.floor(p);
+    const frac = p - i;
+    const s0 = table[((i % TABLE) + TABLE) % TABLE]!;
+    const s1 = table[(((i + 1) % TABLE) + TABLE) % TABLE]!;
+    y = s0 + (s1 - s0) * frac;
+  }
+  m.phase += hz / rate;
+  m.phase -= Math.floor(m.phase);
+  return y * m.freq * (m.moving ? m.moving.at(t) : m.index);
+}
+
 /** A send to a return (an echo, the reverb), at the level it moves to (`delay=`, `room=`). */
 interface Send {
   readonly key: 'delay' | 'room';
@@ -614,6 +651,8 @@ interface Note {
   readonly cents: Auto | null;
   /** A noise note: where in the noise it starts (frames). */
   readonly grain: number;
+  /** Its modulator (`fm=`), swinging its frequency, and the modulator's own, each started with the note; none without. */
+  readonly fm: Mod | null;
   phase: number;
 }
 
@@ -633,7 +672,7 @@ function envelopeAt(n: Note, t: number): number {
 }
 
 /** A track scheduled on a voice's filter parameter for one note, as a moving parameter does (exponential for a frequency). */
-function schedule(auto: Auto, key: FilterKey | Send['key'], track: ParamTrack, time: number, dur: number): void {
+function schedule(auto: Auto, key: FilterKey | Send['key'] | 'index', track: ParamTrack, time: number, dur: number): void {
   const freq = key === 'lpf' || key === 'hpf';
   const v = (x: number) => (freq ? Math.max(1, x) : x);
   const ramp = freq ? 'exp' : 'lin';
@@ -743,6 +782,28 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     };
     voices.set(name, v);
     return v;
+  };
+
+  /**
+   * A note's modulator chain: the modulator `of` names (fm=), at `carrier` Hz times its ratio=, swung by its own, five deep
+   * at most; a modulator's wave its own (a noise one's, as an oscillator given none, a sine). `index`: the carrier's
+   * moving index= over the note, the first modulator's only, as Cell studio schedules it.
+   */
+  const fmOf = (of: string, carrier: number, depth: number, index: ParamTrack | undefined, at: number, dur: number): Mod | null => {
+    const c = result.cells.get(of);
+    const name = c?.params.fm;
+    if (typeof name !== 'string' || depth > 5) return null;
+    const m = result.cells.get(name);
+    if (!m?.voice) return null;
+    const mv = voiceOf(name);
+    const freq = carrier * (typeof m.params.ratio === 'number' ? m.params.ratio : 1);
+    const fixed = typeof c!.params.index === 'number' ? c!.params.index : 1;
+    let moving: Auto | null = null;
+    if (index) {
+      moving = new Auto(fixed);
+      schedule(moving, 'index', index, at, dur);
+    }
+    return { wave: mv?.wave ?? builtinWave('sine'), freq, index: fixed, moving, inner: fmOf(name, freq, depth + 1, undefined, at, dur), phase: 0 };
   };
 
   // the returns (the echoes, the reverb), in the order they are first sent to; each a stem of its own (but in a mix alone)
@@ -933,7 +994,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
         for (const k of Object.keys(x.params ?? {})) if (LATER[k]) say(x.instrument, k, `&${x.instrument}'s moving ${k}= is sounded from stage R2: rendered without it`);
         through.push(st);
       }
-      for (const k of Object.keys(params)) if (LATER[k] || k === 'index') say(e.voice, k, `&${e.voice}'s moving ${k}= is sounded from stage R2: rendered without it`);
+      for (const k of Object.keys(params)) if (LATER[k]) say(e.voice, k, `&${e.voice}'s moving ${k}= is sounded from stage R2: rendered without it`);
       let shares: { key: string; left: number; right: number }[] = [{ key: '', left: 1, right: 1 }];
       if (tracks === 'entries') {
         const found = sharesOf(e);
@@ -960,6 +1021,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           semis: semis(),
           cents: cents(),
           grain: v.noise ? Math.floor(grainOffset(v.seed, e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
+          fm: v.noise ? null : fmOf(e.voice, e.freq, 0, params.index, e.at, end - e.at),
           phase: 0,
         };
         const chain = chainOf(v, share.key, through);
@@ -988,6 +1050,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
         else {
           let hz = n.freq;
           if (n.semis) hz *= Math.pow(2, n.semis.at(t) / 12);
+          if (n.fm) hz += swing(n.fm, t, rate);
           if (n.cents) hz *= Math.pow(2, n.cents.at(t) / 1200);
           const table = tableFor(n.wave ?? v.wave!, hz, rate);
           if (table) {
