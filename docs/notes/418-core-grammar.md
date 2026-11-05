@@ -80,7 +80,7 @@ These are the laws the S1 checks lean on, each an equation in the four. `x` is a
 | 13 | `_` | S | `0 _ _ 2 4 _` = `0@3 2 4@2` | ✔ |
 | 14 | `=` | S | the base's step written: `base=&subject^$7 =!3 12@2` = `7 9 11 12@2 14` | ✔ |
 | 15 | `[a, b, c]` | C combine | things at once, in a step | spelling ✔ (= a mix of one line per voice) |
-| 16 | `[a b c]` | S | dilate on a finer step: `0 [2 4] [5 [7 9]] [0 2@2]` = step×12 `0@12 2@6 4@6 5@6 7@3 9@3 0@4 2@8` | ✔ ×2 |
+| 16 | `[a b c]` | S | dilate on a finer step: `0 [2 4] [5 [7 9]] [0 2@2]` = step×12 `0@12 2@6 4@6 5@6 7@3 9@3 0@4 2@8`; on a tap, the chain `step=8n*2` (decision 069); core dilate where the swing doesn't hold the finer level (thirds of a swung eighth, #441) | ✔ ×2 |
 | 17 | `[a\|b\|c]` | O chance | a pick by a seeded index: look up over a chance source | — |
 | 18 | `<a b c>` | S | `[a b c]/3`: `0 <2 4 7> 4 <5 [7 9]>` = `0 [2 4 7]/3 4 [5 [7 9]]/2` | ✔ |
 | 19 | `&x` | C look up | a cell by name, its steps spliced in its slot | spelling ✔ (= written in) |
@@ -143,8 +143,8 @@ These are the laws the S1 checks lean on, each an equation in the four. `x` is a
 | 51 | `step=&x` | C dilate | a step per step of a clock | — |
 | 52 | `step=cycle(&x)` | S | `step=&x/k`, k its steps | ✔ |
 | 53 | `step=&x*n/d` | C dilate | a rate of a clock | spelling ✔ (`*3/2` = `*1.5`) |
-| 54 | `step=pulse` · `beat` · `*k` | S | `step=&bar`, `&bar*k` (4/4) | ✔ ×3 (in 7/8 the beats are unequal: a look up of the meter's levels, not checked) |
-| 55 | `step=16n` · `8t` · `4n.` · `1m` | S | `&bar*4`; `4n.` = `&bar*2 0@3 0@3 0@2` (cut at the bar line); `1m` = `cycle(&bar)` | ✔ ×3 |
+| 54 | `step=pulse` · `beat` · `*k` | S | `step=&bar`, `&bar*k` (4/4); compile writes the pulse instead (`pulse*k`), since 040 retired a line on the meter cell's own steps (decision 069) | ✔ ×3 (in 7/8 the beats are unequal: a look up of the meter's levels, not checked) |
+| 55 | `step=16n` · `8t` · `4n.` · `1m` | S | `&bar*4`; `4n.` = `&bar*2 0@3 0@3 0@2` (cut at the bar line); `1m` = `cycle(&bar)`; compile writes `pulse*k` (`16n` = `pulse*4` in 4/4, decision 069) | ✔ ×3 |
 | 56 | `step=&m:16n` | S | `&m:8n` = `&m*2` (3/4) | ✔ |
 | 57 | `step=free(…)` | O source | as 44 | spelling ✔ (row 44's check) |
 | 58 | `nbpm` | S | per second: `scan(4 4 4 4) step=84bpm` = `step=1.4` | ✔ |
