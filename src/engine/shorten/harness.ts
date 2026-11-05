@@ -55,6 +55,8 @@ export function candidates(source: string, options: CompileOptions = {}): { resu
     if (!w || w.braid.length < 2 || w.braid.some((t) => t.startsWith('[') && t.includes('&'))) continue;
     const over = c.over ? r.cells.get(c.over) : null;
     if (over?.implicit && over.kit) continue; // a braid of voices: its steps are names, not numbers
+    // (read off the text's letters: a cell handed to a fragment that picks or rotates what it is handed isn't marked; no
+    // seed fragment does, and shortenAll's S1 check catches it where one would, #485's review)
     out.push({ name: c.name, tokens: w.braid, grid: readsGrid(r, c.name), unitRead: new RegExp(`&${c.name}\\[`).test(source) });
   }
   return { result: r, cells: out };

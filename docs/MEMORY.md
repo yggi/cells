@@ -109,3 +109,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 068 · The core grammar: four primitives and the ramp; `free()` and chance sources; 45 forms sugar, checked by S1; Normalise writes sugar, a compile tool the core · → decisions/068-the-core-grammar.md
 - 069 · Compile writes the core: de-sugar, minify, a checked core fold; `from` is sugar; `[ ]` a finer tap (core dilate only inside a tap the swing doesn't place, amended #15); draws keyed on content · → decisions/069-compile-writes-the-core.md
 - 070 · A swing leans pairs: a group of three stays straight, `:pairs` says nothing more (Migrate drops it) · → decisions/070-swing-leans-pairs.md
+- 070 · S1 hears as a listener: ½ cent, 0.1 dB, 0.25 ms; a noise by colour and level; the snapshot stays exact · → decisions/070-s1-hears-as-a-listener.md

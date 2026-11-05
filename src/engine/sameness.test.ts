@@ -4,7 +4,7 @@ import { compileSource as compileAlone } from './compile';
 import { PRESETS } from './presets';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
-import { playsSameNotes, samePiece, SAMENESS_SECONDS, soundsIdentical, wholeWindow, WHOLE_PIECE_LIMIT } from './sameness';
+import { HEARD, playsSameNotes, samePiece, SAMENESS_SECONDS, soundsIdentical, wholeWindow, WHOLE_PIECE_LIMIT } from './sameness';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
@@ -157,5 +157,57 @@ describe('the equalities a tool promises, over their window (#180)', () => {
     expect(soundsIdentical(kit('hh'), kit('bd'))).toBe(false);
     expect(playsSameNotes(kit('hh'), kit('bd'))).toBe(false);
     expect(soundsIdentical(kit('hh'), kit('hh'))).toBe(true);
+  });
+});
+
+// Decision 070 (#483): S1 is what a listener can't tell apart, each dimension within a fraction of its smallest audible
+// difference; the snapshot stays exact.
+describe('S1 hears as a listener does (decision 070, #483)', () => {
+  const line = (voice: string, step = '2', mix = '&t * &v') => `&t step=${step} 0 2 4\n${voice}\n&out map=sample [${mix}]`;
+  const s1 = (a: string, b: string) => soundsIdentical(a, b, 8);
+  const cents = (c: number) => (261.6255653005986 * 2 ** (c / 1200)).toString();
+  const db = (d: number) => (0.5 * 10 ** (d / 20)).toString();
+
+  it('the issue’s four rows sound identical: a pitch to 12 digits or 0.03 cents off, a gain 0.0002 dB off, a rate off by 1e-7', () => {
+    expect(s1(line('&v s=sine loop=C4'), line('&v s=sine loop=261.625565301'))).toBe(true);
+    expect(playsSameNotes(line('&v s=sine loop=C4'), line('&v s=sine loop=261.625565301'), 8)).toBe(true);
+    expect(s1(line('&v s=sine loop=C4'), line('&v s=sine loop=261.63'))).toBe(true);
+    expect(s1(line('&v s=sine loop=C4 gain=.5'), line('&v s=sine loop=C4 gain=.50001'))).toBe(true);
+    expect(s1(line('&v s=sine loop=C4'), line('&v s=sine loop=C4', '2.0000001'))).toBe(true);
+  });
+
+  it('pitch: within half a cent is the same note, two cents (about a JND at best) is not', () => {
+    expect(s1(line('&v s=sine loop=C4'), line(`&v s=sine loop=${cents(HEARD.cents * 0.9)}`))).toBe(true);
+    expect(s1(line('&v s=sine loop=C4'), line(`&v s=sine loop=${cents(2)}`))).toBe(false);
+    expect(playsSameNotes(line('&v s=sine loop=C4'), line(`&v s=sine loop=${cents(2)}`), 8)).toBe(false);
+  });
+
+  it('level: within 0.1 dB is the same, half a dB (about a JND at best) is not; a polarity is heard', () => {
+    expect(s1(line('&v s=sine loop=C4 gain=.5'), line(`&v s=sine loop=C4 gain=${db(HEARD.db * 0.9)}`))).toBe(true);
+    expect(s1(line('&v s=sine loop=C4 gain=.5'), line(`&v s=sine loop=C4 gain=${db(0.5)}`))).toBe(false);
+    expect(s1(line('&v s=sine loop=C4 gain=.5'), line('&v s=sine loop=C4 gain=-.5'))).toBe(false);
+  });
+
+  it('time: onsets within a quarter of a millisecond are together, a millisecond and a half apart are not', () => {
+    // (over 8 s, a rate 1 + r off moves the last onset about 8r seconds)
+    expect(s1(line('&v s=sine loop=C4'), line('&v s=sine loop=C4', String(2 * (1 + 0.00002))))).toBe(true);
+    expect(s1(line('&v s=sine loop=C4'), line('&v s=sine loop=C4', String(2 * (1 + 0.0002))))).toBe(false);
+  });
+
+  it('one note in both channels is the same as that note in each: the channels’ levels are what is heard', () => {
+    const both = `&t step=2 0 4\n&v s=sine loop=C4\n&out map=sample [&t * &v * .25] [&t * &v * .25]`;
+    const each = `&t step=2 0 4\n&v s=sine loop=C4\n&w s=sine loop=C4\n&out map=sample [&t * &v * .25] [&t * &w * .25]`;
+    expect(s1(both, each)).toBe(true);
+    expect(s1(both, each.replace('[&t * &w * .25]', '[&t * &w * .3]'))).toBe(false);
+  });
+
+  it('a noise is heard by its colour, filters and level, never by a pitch or its samples (the owner: white noise at one level is identical)', () => {
+    const noise = (v: string) => line(v);
+    expect(s1(noise('&v s=white'), noise('&v s=white loop=C5'))).toBe(true);
+    expect(s1(noise('&v s=white'), line('&v s=white', '2', '(&t + 7) * &v'))).toBe(true);
+    expect(s1(noise('&v s=white'), noise('&n s=white').replace('&t * &v', '&t * &n'))).toBe(true);
+    expect(s1(noise('&v s=white'), noise('&v s=pink'))).toBe(false);
+    expect(s1(noise('&v s=white lpf=2000'), noise('&v s=white lpf=4000'))).toBe(false);
+    expect(s1(noise('&v s=white gain=.5'), noise(`&v s=white gain=${db(0.5)}`))).toBe(false);
   });
 });
