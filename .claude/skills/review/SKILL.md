@@ -29,7 +29,7 @@ It prints:
 - the commits and every changed file;
 - each result with its test count;
 - `Ladder:` for a change on the escalation ladder's last rung (AGENTS.md, "Stop, push back, recommend"): the event snapshot (`src/engine/snapshot.txt`, what a piece plays; the live view's `live.snapshot.txt` has a line of its own, `Live view:`, off the ladder), the hub's contract vectors (`fixtures/contracts/`), the purity gate (`tsconfig.pure.json`, `src/host.d.ts`), the declarations a frontend typechecks against (`types/`); `Ratchet:` for a folder's ratchet recorded anew;
-- `Changelog:` when `src/` changes beyond its tests and `CHANGELOG.md` doesn't;
+- `Changelog:` when `src/` changes beyond its tests and neither `CHANGELOG.md` nor an entry in `changes/` does;
 - when `main` has moved on since the pull request branched, how far, and the files a merge would conflict in; with `--against`, the files it conflicts in with another pull request: say so in the review (both reviews, for `--against`);
 - when a check fails, vitest's block of failed tests, or the end of the output where there is none;
 - the commands to read the diff, to probe the language under Node, and to remove the worktree.
@@ -69,7 +69,7 @@ For each change:
 - **Pure.** `src/` uses no host type beyond the three globals in `src/host.d.ts`; the purity typecheck sees a type, not a value smuggled through `any` or `globalThis`. Nothing in `src/` imports a frontend.
 - **The text is the single source of truth.** A change to what the language means says so, keeps the examples sounding the same unless the change is the point, and was asked about first. An event snapshot that moves is the ladder's last rung: stop and ask the owner on the issue, not in the review alone.
 - **The contracts.** A vector of the hub's (`fixtures/contracts/`, yggi/music-commons) cells would stop meeting is a handshake with every implementer, not a test to update.
-- **The changelog.** A change a frontend would notice adds a line under *Unreleased*; one that breaks a piece names its migration (Migrate writes migrations) and makes the next release a minor (`release` skill).
+- **The changelog.** A change a frontend would notice adds a file to `changes/` (`changes/README.md`; `npm run changelog -- check` in verify holds its form); one that breaks a piece names its migration (Migrate writes migrations) and makes the next release a minor (`release` skill).
 - **The ladder.** Something out of scope belongs in an issue, not the pull request; a fix beside the change it needs is said in the pull request.
 - **Generated files** (`types/`, `src/engine/examples.generated.ts`, `docs/language/reference.md`) are regenerated, not edited: their staleness tests say so.
 - **The laws.** Meaningful tests (every check shown firing, finite cases tested over every case), true names, generalization (a more general form covering the new case and an old one), the same forms at every level (yggi/music-commons `PRACTICES.md`).

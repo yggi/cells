@@ -12,9 +12,12 @@ const script = fileURLToPath(new URL('../.claude/skills/review/prepare.sh', impo
 const repository = fileURLToPath(new URL('..', import.meta.url));
 const nodeTs = fileURLToPath(new URL('./node-ts.mjs', import.meta.url));
 
-// Without the GIT_ variables a hook run from a linked worktree hands its children (tools/hooks.test.ts says why).
+// Without the GIT_ variables a hook run from a linked worktree hands its children (tools/hooks.test.ts says why), and
+// without the user's global config: a session signs every commit through it, which under verify's load took this file's
+// git setup past its 10 s hook timeout (#275).
 const env: NodeJS.ProcessEnv = {
   ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/.test(name))),
+  GIT_CONFIG_GLOBAL: '/dev/null',
   GIT_AUTHOR_NAME: 'test',
   GIT_AUTHOR_EMAIL: 'test@example.com',
   GIT_COMMITTER_NAME: 'test',
@@ -197,12 +200,20 @@ describe('review prepare.sh', () => {
     expect(stdout).not.toContain('Changelog:');
   });
 
-  it('asks about the changelog when src/ changes beyond its tests and CHANGELOG.md does not', () => {
+  it('asks about the changelog when src/ changes beyond its tests and no entry in changes/ does', () => {
     onPullRequest('src/engine/a.test.ts', 'x\n', 'Step 4: a test');
     expect(prepare(['7', join(root, 'wt')]).stdout).not.toContain('Changelog:');
     onPullRequest('src/engine/a.ts', 'x\n', 'Step 5: the code');
     expect(prepare(['7', join(root, 'wt')]).stdout).toContain('Changelog: src/ changes beyond its tests');
-    onPullRequest('CHANGELOG.md', 'x\n', 'Step 6: its line');
+    onPullRequest('changes/README.md', 'x\n', 'Step 6: the folder, no entry');
+    expect(prepare(['7', join(root, 'wt')]).stdout).toContain('Changelog: src/ changes beyond its tests');
+    onPullRequest('changes/7.md', '### Fixed\n- x\n', 'Step 7: its entry');
+    expect(prepare(['7', join(root, 'wt')]).stdout).not.toContain('Changelog:');
+  });
+
+  it('takes a line in CHANGELOG.md, as a release writes it, for the changelog too', () => {
+    onPullRequest('src/engine/a.ts', 'x\n', 'Step 4: the code');
+    onPullRequest('CHANGELOG.md', 'x\n', 'Step 5: its line');
     expect(prepare(['7', join(root, 'wt')]).stdout).not.toContain('Changelog:');
   });
 

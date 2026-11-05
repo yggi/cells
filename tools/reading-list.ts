@@ -8,7 +8,8 @@
  * Condensing the boot set is its own deliberate change, made when the ceiling
  * is reached, not a trim tucked into a feature's pull request.
  */
-export const BOOT_SET = ['AGENTS.md', 'docs/MEMORY.md'];
+// (`CLAUDE.md` too: a session loads it whole, whatever it holds besides its `@AGENTS.md`)
+export const BOOT_SET = ['CLAUDE.md', 'AGENTS.md', 'docs/MEMORY.md'];
 
 /** In bytes: about 6k tokens, the family's ceiling (Jambot's too), with headroom over today's 17 KB (#259). A ceiling far above the size could never fire. */
 export const CEILING = 24 * 1024;
@@ -19,4 +20,10 @@ export const ALARM = 0.9;
 /** The boot set's size in bytes, given a reader of a path's text. */
 export function bootBytes(read: (path: string) => string): number {
   return BOOT_SET.reduce((sum, path) => sum + Buffer.byteLength(read(path)), 0);
+}
+
+/** What to say of a boot set of `bytes`: a warning from the alarm on, nothing below it. The pre-push hook passes it on. */
+export function alarm(bytes: number, ceiling = CEILING): string | undefined {
+  if (bytes < ALARM * ceiling) return undefined;
+  return `the boot set is ${bytes} B, ${Math.round((100 * bytes) / ceiling)} % of its ceiling: condense it, as a change of its own`;
 }
