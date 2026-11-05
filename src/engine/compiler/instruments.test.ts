@@ -36,10 +36,14 @@ describe("an instrument's sound parameters are its voices' (decision 067)", () =
     for (const v of ['saw', 'sub']) expect(voice(PATCH, v)).toEqual(voice(FLAT, v));
   });
 
-  it('renders sample for sample as the flat text, its filter a stage after each voice', () => {
+  it('renders as the flat text, its filter a stage after each voice, its echo one echo of their sum', () => {
     const [flat, patch] = [audio(FLAT), audio(PATCH)];
-    expect(patch.diagnostics.filter((d) => d.param.startsWith('l'))).toEqual([]);
-    for (const c of [0, 1]) expect(patch.mix[c]).toEqual(flat.mix[c]);
+    expect(patch.diagnostics).toEqual([]);
+    // (the filters sample for sample; the echo of the sum is the sum of the echoes but for its rounding: within 1e-7, -140 dB)
+    for (const c of [0, 1])
+      for (let i = 0; i < flat.mix[c]!.length; i++) if (Math.abs(patch.mix[c]![i]! - flat.mix[c]![i]!) > 1e-7) expect([c, i, patch.mix[c]![i]]).toEqual([c, i, flat.mix[c]![i]]);
+    const dry = (t: string) => audio(t.replaceAll(' delay=.3 delaytime=&bar*3/16', ''));
+    for (const c of [0, 1]) expect(dry(PATCH).mix[c]).toEqual(dry(FLAT).mix[c]);
   });
 
   it('nests: a VCA after a VCF after a mix', () => {
