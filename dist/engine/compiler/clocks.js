@@ -1,5 +1,5 @@
 import { isPositional } from "../program.js";
-import { bareSwingLevel, noteValue, pairsProblem, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions } from "../meter.js";
+import { bareSwingLevel, noteValue, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions } from "../meter.js";
 export const tapClockName = (meter, tap, bars) => `${meter}:${tap.written}${bars > 1 ? `:${bars}` : ''}`;
 export function tapFor(meterSteps, pulses, unit, ratio) {
     const k = (ratio * meterSteps) / Math.max(1, pulses);
@@ -76,16 +76,16 @@ export function clockCells(ctx, decls, given) {
                     ? `swing=${share(d.params.swing)} leans the meter cell's own steps: name the level it leans, swing=${level}:${share(d.params.swing)} (Migrate rewrites it)`
                     : `swing=${share(d.params.swing)} leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:${share(d.params.swing)}`, swingSpan);
             }
-            for (const l of d.swing ?? []) {
+            for (const l of (d.swing ?? []).filter((x) => x.share !== 0.5)) {
                 const whole = noteValue(l.level);
-                const problem = whole === null ? `${l.level} is not a note value (8n, 16n, 8t)` : (swingLevelProblem(m, whole) ?? (l.pairs ? pairsProblem(m, whole) : null));
+                const problem = whole === null ? `${l.level} is not a note value (8n, 16n, 8t)` : swingLevelProblem(m, whole);
                 if (problem)
-                    warn(`swing=${l.level}:${share(l.share)}${l.pairs ? ':pairs' : ''} leans nothing on &${name}: ${problem}`, swingSpan);
+                    warn(`swing=${l.level}:${share(l.share)} leans nothing on &${name}: ${problem}`, swingSpan);
             }
             swung = swungSteps(m);
         }
         else if (typeof d.params.swing === 'number' && d.swing)
-            warn(`swing=${d.swing.map((l) => `${l.level}:${share(l.share)}${l.pairs ? ':pairs' : ''}`).join(',')} leans levels of a meter, and &${name} is not one: write swing=${share(d.params.swing)} (pairs of its steps)`, swingSpan);
+            warn(`swing=${d.swing.map((l) => `${l.level}:${share(l.share)}`).join(',')} leans levels of a meter, and &${name} is not one: write swing=${share(d.params.swing)} (pairs of its steps)`, swingSpan);
         else if (typeof d.params.swing === 'number' && d.params.swing !== 0.5)
             swing = d.params.swing;
         clocks.set(name, { cell: name, perSecond, positional: isPositional(c), ...(swing !== undefined ? { swing } : {}), ...(swung ? { swung } : {}) });

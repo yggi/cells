@@ -360,20 +360,18 @@ const readLevels = (s, b, word) => {
                 share = parseFloat(n);
             }
         }
-        let pairs = false;
         if (s.peek() === ':') {
             const at = s.i;
             s.i++;
             const named = s.match(/[a-z]+/y);
             if (named !== 'pairs')
-                s.fail(`after a share, :pairs leans a level's pairs alone and keeps its groups of three straight: swing=${level}:2/3:pairs`, at, 1 + (named?.length ?? 0));
+                s.fail(`a share takes no word after it: a swing leans a level's pairs alone and keeps its groups of three straight (swing=${level}:2/3)`, at, 1 + (named?.length ?? 0));
             if (word === 'legato')
-                s.fail(`:pairs is swing='s, a level's pairs leaning alone; a legato= share holds every note of its level: legato=${level}:.5`, at, 6);
-            pairs = true;
+                s.fail(`:pairs was swing='s word; a legato= share holds every note of its level: legato=${level}:.5`, at, 6);
             if (free && s.peek() === ',')
                 s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
         }
-        levels.push({ level: level, share, ...(pairs ? { pairs } : {}) });
+        levels.push({ level: level, share });
         if (s.peek() !== ',')
             break;
         s.i++;

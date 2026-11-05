@@ -1,7 +1,7 @@
 /** Phase 4: time — clocks (cells moved at a rate), every cell's steps per step of its clock, times given as clocks. */
 import type { CellDecl, Tap } from '../ast';
 import { isPositional, type Clock } from '../program';
-import { bareSwingLevel, noteValue, pairsProblem, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions } from '../meter';
+import { bareSwingLevel, noteValue, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions } from '../meter';
 import type { Cells, Ctx } from './context';
 
 /** A tap's clock's name: the meter's, the tap and its bars (`bar:16n`, `bar:1n:4`); no cell can be called that. */
@@ -98,15 +98,16 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
           swingSpan,
         );
       }
-      for (const l of d.swing ?? []) {
+      // (a level at .5 asks nothing to lean: no warning that it leans nothing, as the Metronome's slider on 6/8 sits)
+      for (const l of (d.swing ?? []).filter((x) => x.share !== 0.5)) {
         const whole = noteValue(l.level);
-        const problem = whole === null ? `${l.level} is not a note value (8n, 16n, 8t)` : (swingLevelProblem(m, whole) ?? (l.pairs ? pairsProblem(m, whole) : null));
-        if (problem) warn(`swing=${l.level}:${share(l.share)}${l.pairs ? ':pairs' : ''} leans nothing on &${name}: ${problem}`, swingSpan);
+        const problem = whole === null ? `${l.level} is not a note value (8n, 16n, 8t)` : swingLevelProblem(m, whole);
+        if (problem) warn(`swing=${l.level}:${share(l.share)} leans nothing on &${name}: ${problem}`, swingSpan);
       }
       swung = swungSteps(m);
     } else if (typeof d.params.swing === 'number' && d.swing)
       warn(
-        `swing=${d.swing.map((l) => `${l.level}:${share(l.share)}${l.pairs ? ':pairs' : ''}`).join(',')} leans levels of a meter, and &${name} is not one: write swing=${share(d.params.swing)} (pairs of its steps)`,
+        `swing=${d.swing.map((l) => `${l.level}:${share(l.share)}`).join(',')} leans levels of a meter, and &${name} is not one: write swing=${share(d.params.swing)} (pairs of its steps)`,
         swingSpan,
       );
     else if (typeof d.params.swing === 'number' && d.params.swing !== 0.5) swing = d.params.swing;

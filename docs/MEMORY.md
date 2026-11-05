@@ -8,7 +8,7 @@ The cells language: a minimal language for music where everything is a **cell**,
 
 ## The family
 
-The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells passes version 1 of `euclid`, `notes`, `swing` (with `:pairs`) and `meter` (every grouping, its names and its sizes, #17) ([testing.md](testing.md)).
+The music projects share a hub, [yggi/music-commons](https://github.com/yggi/music-commons): its atlas, charter, glossary and contracts. Cells passes version 1 of `euclid`, `notes`, `swing` and `meter` (every grouping, its names and its sizes, #17) ([testing.md](testing.md)).
 
 The language's open questions live in this tracker, [yggi/cells' issues](https://github.com/yggi/cells/issues); the frontends' trackers point here ([music-commons#14](https://github.com/yggi/music-commons/issues/14)).
 
@@ -35,7 +35,7 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 - `&name … ` one cell per line; steps `0 2 ~ 4@2 0!4 [0,2,4]` → [cell](language/cell.md)
 - `scan(…)` `euclid(k,n)` `sin(n)`; `&t[i]` `&t[$i]` `&t[a:b]` `&t[<<n]` `&t^n` (degrees) `&t^$n` (grid steps) → [braid](language/braid.md)
 - `over=&t` `scale(name, tonic)` `shift=n` `cycle=n`; the key named, `over=&key` (`over=key` the old way); a tonic read from a cell, `scale(dorian, &tonic)`, `&tonic D`, a mode read from a cell `scale(&mode, &tonic)`, `&mode dorian` (locrian 0 … lydian 6), stepped `&tonic step=1m/8 D F`, free `&tonic free(D)` → [tables](language/tables.md)
-- `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), taps of a meter (`pulse` `beat` `16n` `4n.` `8t` `1m`, `&m:16n`, `cycle=n` bars), `beat=`, swing on the bar (`swing=8n:.67`, `:pairs` its pairs alone), `stride=`, `laps=` → [time](language/time.md)
+- `step=` `loop=` (rates, `&x`, `cycle(&x)`, `*n` `/n`), taps of a meter (`pulse` `beat` `16n` `4n.` `8t` `1m`, `&m:16n`, `cycle=n` bars), `beat=`, swing on the bar (`swing=8n:.67`, its pairs alone, a three straight), `stride=`, `laps=` → [time](language/time.md)
 - `map=edo|ed(r)|ratios`, note names → [tuning](language/tuning.md)
 - `free(default, lo..hi)`, `free(0 2 4 ~)` a braid, recorded → [free](language/free.md)
 - `[a * &voice, …]` mixes (sorts, `+` `*` commute), `map=sample` `postgain=` (its master, linear); a gate `&g play=&tune level=&a*.4 [&lead, &bell]` → [mix](language/mix.md)
@@ -107,6 +107,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 068 · The core grammar: four primitives and the ramp; `free()` and chance sources; 45 forms sugar, checked by S1; Normalise writes sugar, a compile tool the core · → decisions/068-the-core-grammar.md
 - 069 · Compile writes the core: de-sugar, minify, a checked core fold; `from` is sugar; `[ ]` a finer tap (core dilate only inside a tap the swing doesn't place, amended #15); draws keyed on content · → decisions/069-compile-writes-the-core.md
 - 070 · S1 hears as a listener: ½ cent, 0.1 dB, 0.25 ms; a noise by colour and level; the snapshot stays exact · → decisions/070-s1-hears-as-a-listener.md
+- 071 · A swing leans pairs: a group of three stays straight, `:pairs` says nothing more (Migrate drops it) · → decisions/071-swing-leans-pairs.md
 - 058 · The performer is a gate (amended by 061) · → decisions/058-the-performer-is-a-gate.md
 - 059 · A `use` says what it takes · → decisions/059-named-use.md
 - 060 · The key is named, `over=&key` · → decisions/060-the-key-is-named.md
