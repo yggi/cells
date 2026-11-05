@@ -3,6 +3,7 @@ import { compileSource as compileAlone } from './compile';
 import { codeShifts, type CompileResult } from './program';
 import { liveAt } from './live';
 import { routing } from './routing';
+import { writtenGraph } from './graph';
 import { eventsBetween, plan } from './realize';
 import { mainLength, pieceTime } from './duration';
 import { PRESETS } from './presets';
@@ -53,6 +54,19 @@ describe('at rest, nothing is dimmed (#201)', () => {
       const r = compileSource(p.source, undefined, { resolve: resolveSeed });
       expect(liveAt(r, codeShifts(r), r.off, 0).seconds).toBe(0);
     }
+  });
+});
+
+describe('a parameter a voice takes from an instrument is routed into the instrument (decision 067, #433)', () => {
+  it('Patchbay: the filter contour goes into &vcf, where it is written and drawn, not into each oscillator', () => {
+    const r = compileSource(PRESETS.patchbay.source);
+    expect(r.cells.get('saw')!.inherited?.lpf).toBe('vcf');
+    const { edges } = routing(r, new Set());
+    expect([...edges]).toContain('cell:contour->cell:vcf');
+    expect([...edges].filter((id) => id.startsWith('cell:contour->'))).toEqual(['cell:contour->cell:vcf']);
+    // (every routed edge between two cells is one the graph draws)
+    const drawnIds = new Set(writtenGraph(r).edges.map((e) => e.id));
+    for (const id of ['cell:contour->cell:vcf', 'cell:sweep->cell:vcf', 'cell:jitter->cell:vcf']) expect(drawnIds.has(id), id).toBe(true);
   });
 });
 
