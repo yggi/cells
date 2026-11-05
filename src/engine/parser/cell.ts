@@ -390,7 +390,7 @@ function readPlay(s: LineScanner, b: Body): void {
 
 /**
  * swing= (#18): by level, `swing=8n:.67` (a meter's eighths, each pair's second two thirds through; a share is a decimal or a
- * fraction, `8n:2/3`, decision 042; a level leans its pairs alone, its groups of three straight, decision 070: `8n:2/3:pairs`, decision
+ * fraction, `8n:2/3`, decision 042; a level leans its pairs alone, its groups of three straight, decision 071: `8n:2/3:pairs`, decision
  * 053's word, is read and says nothing more), several levels coarse
  * to fine, `swing=8n:.6,16n:.55`, one level alone left free, `swing=8n:free(.5, .5..75)`; bare, `swing=.6`, as any number.
  * legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none; bare,
@@ -430,7 +430,7 @@ const readLevels: Reader = (s, b, word) => {
       }
     }
     // (:pairs, decision 053's word: a level's pairs leaning alone, its groups of three straight, which every swing does
-    //  since decision 070; read, and left to Migrate to drop)
+    //  since decision 071; read, and left to Migrate to drop)
     if (s.peek() === ':') {
       const at = s.i;
       s.i++;

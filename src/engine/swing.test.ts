@@ -76,7 +76,7 @@ describe('swing on the bar: one level of the meter leans, named by note value', 
     expect(onsets('meter("4/4") swing=8n:.67', 'pulse*2')).toEqual(onsets('meter("4/4") swing=8n:.67', '8n'));
   });
 
-  it('a group of three stays straight, its pairs lean (decision 070): 7/8’s first beat even, 6/8 leaning nothing and saying so', () => {
+  it('a group of three stays straight, its pairs lean (decision 071): 7/8’s first beat even, 6/8 leaning nothing and saying so', () => {
     expect(rounded(onsets('meter("7/8") swing=8n:.67', '8n'))).toEqual([0, 1, 2, 3, 4.34, 5, 6.34]);
     expect(onsets('meter("6/8") swing=8n:.67', '8n')).toEqual(onsets('meter("6/8")', '8n'));
     expect(warnings(`&bar meter("6/8") step=60bpm swing=8n:.67\n&x step=8n 0${VOICE}`)).toEqual([
@@ -167,7 +167,7 @@ describe('Jambot’s swing axis, the readers’ path of the swing contract (fixt
   });
 });
 
-describe('a swing leans the pairs alone (#204, decisions 053 and 070): a level’s pairs lean, its groups of three stay straight', () => {
+describe('a swing leans the pairs alone (#204, decisions 053 and 071): a level’s pairs lean, its groups of three stay straight', () => {
   /** A meter fragment's text with its eighths' pairs leaned at 2/3: a level of its own, coarsest, beside a swing it has. */
   const pairsOn = (text: string) =>
     /swing=8n:[^ ]*/.test(text) ? text.replace(/swing=8n:[^ ,]*/, 'swing=8n:2/3') : /swing=/.test(text) ? text.replace('swing=', 'swing=8n:2/3,') : `${text} swing=8n:2/3`;
@@ -247,7 +247,7 @@ describe('the pairs alone in a mixed meter play the band’s T16 (yggi/jambot do
   });
 });
 
-describe('`:pairs` as written, decision 053’s word: read, and saying nothing more (decision 070)', () => {
+describe('`:pairs` as written, decision 053’s word: read, and saying nothing more (decision 071)', () => {
   const errors = (src: string) =>
     compileSource(src)
       .diagnostics.filter((d) => d.severity === 'error')

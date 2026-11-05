@@ -118,7 +118,7 @@ export const bareSwingLevel = (m: Meter): string | null => noteName(1 / (m.unit 
 
 /**
  * A level a meter can lean: one some beat divides into, two or more of them (swing never moves a beat: decision 040),
- * with a pair among its nodes (a group of three stays even: decision 070). What is wrong with it, or null.
+ * with a pair among its nodes (a group of three stays even: decision 071). What is wrong with it, or null.
  */
 export function swingLevelProblem(m: Meter, whole: number): string | null {
   const len = whole * m.unit;
@@ -141,7 +141,7 @@ const held = (v: number) => {
 
 /**
  * Where a node's children start, as shares of it: even, or leaning (#18). A pair's second starts at the share; every
- * other node, a group of three among them, divides evenly (decision 070: a swing leans pairs alone, as a band swinging
+ * other node, a group of three among them, divides evenly (decision 071: a swing leans pairs alone, as a band swinging
  * 7/8 does and as the family's swing contract reads it).
  */
 function knotsOf(parts: number, lean: { readonly share: number } | null): number[] {

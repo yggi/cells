@@ -1,4 +1,4 @@
-# 070 · A swing leans pairs: a group of three stays straight, and `:pairs` says nothing more
+# 071 · A swing leans pairs: a group of three stays straight, and `:pairs` says nothing more
 
 **Date:** 2026-11-05 · **Status:** accepted (the owner on #15, 2026-11-05: "pairs-alone as the default swing: yes") · Issues: #15, #18, #204 · Amends [040](040-pulse-beat-and-laps.md) (a group of three's lean) and [053](053-the-pairs-alone.md) (its word)
 

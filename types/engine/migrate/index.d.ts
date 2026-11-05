@@ -16,7 +16,7 @@
  *                  construction against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *  - renamed.ts:   a seed id that became a word as the word: "harmonic minor" → harmonic_minor (#387)
  *  - oneshot.ts:   the bare line word oneshot as the voice's parameter, oneshot=1 (decision 068, #440)
- *  - pairs.ts:     a swing's :pairs dropped, what every swing does now (swing=8n:2/3, decision 070, #15)
+ *  - pairs.ts:     a swing's :pairs dropped, what every swing does now (swing=8n:2/3, decision 071, #15)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
  * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes

@@ -1,5 +1,5 @@
 /**
- * Migrate (decision 070, #15): `:pairs` after a swing's share, decision 053's word for a level's pairs leaning alone and
+ * Migrate (decision 071, #15): `:pairs` after a swing's share, decision 053's word for a level's pairs leaning alone and
  * its groups of three straight, which every swing does now: `swing=8n:2/3:pairs` → `swing=8n:2/3`. The word is read and
  * says nothing, so dropping it plays the same by construction; checked anyway. A word in a comment or a quoted text is
  * left as it is.
@@ -28,7 +28,7 @@ export function pairs(source: string): Rewrite<'pairs'>[] {
         id: `pairs:${i + 1}`,
         tool: 'migrate' as const,
         rule: 'pairs' as const,
-        title: `a swing leans a level's pairs alone, its groups of three straight: :pairs says nothing more (decision 070)`,
+        title: `a swing leans a level's pairs alone, its groups of three straight: :pairs says nothing more (decision 071)`,
         before: code.trim(),
         after: after.trim(),
         apply: (src: string) =>

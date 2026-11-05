@@ -1,4 +1,4 @@
-# 7/8 swung as a band swings it, the pairs alone (decision 053's word): what every swing does now (decision 070)
+# 7/8 swung as a band swings it, the pairs alone (decision 053's word): what every swing does now (decision 071)
 &bar meter("7/8") step=90bpm swing=8n:2/3,16n:.55
 &eighths step=8n 0
 &tick s=sine loop=A5 env=&(map=adsr 0 .03 0 .02)

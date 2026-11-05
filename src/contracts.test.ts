@@ -267,7 +267,7 @@ describe('the swing contract (music-commons contracts/swing, version 1)', () => 
     expect(swing.vectors).toHaveLength(131);
   });
 
-  it('swing=<level>:<share> on meter(…) places every step within 1e-9 of the contract, for every vector: a group of three straight (decision 070)', () => {
+  it('swing=<level>:<share> on meter(…) places every step within 1e-9 of the contract, for every vector: a group of three straight (decision 071)', () => {
     for (const v of swing.vectors) expect(meets(v, played(v)), `${v.name} ${JSON.stringify(v.swing)}`).toBe(true);
   });
 

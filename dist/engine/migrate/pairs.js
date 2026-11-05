@@ -19,7 +19,7 @@ export function pairs(source) {
                 id: `pairs:${i + 1}`,
                 tool: 'migrate',
                 rule: 'pairs',
-                title: `a swing leans a level's pairs alone, its groups of three straight: :pairs says nothing more (decision 070)`,
+                title: `a swing leans a level's pairs alone, its groups of three straight: :pairs says nothing more (decision 071)`,
                 before: code.trim(),
                 after: after.trim(),
                 apply: (src) => src

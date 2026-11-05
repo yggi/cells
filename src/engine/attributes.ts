@@ -162,7 +162,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     on: ['clock', 'driven'],
   },
   swing: {
-    help: 'on a meter: a level of its bar leans, named by note value — of each pair of its eighths (swing=8n:.67), the second comes this far through their beat (.5 straight, .67 triplet swing), its pairs alone, a group of three straight (decision 070); every beat and bar line stays. Bare (swing=.6), on a list: pairs of its steps',
+    help: 'on a meter: a level of its bar leans, named by note value — of each pair of its eighths (swing=8n:.67), the second comes this far through their beat (.5 straight, .67 triplet swing), its pairs alone, a group of three straight (decision 071); every beat and bar line stays. Bare (swing=.6), on a list: pairs of its steps',
     doc: 'time.md',
     value: 'number',
     on: ['clock'],

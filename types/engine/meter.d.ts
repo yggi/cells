@@ -70,7 +70,7 @@ export declare function noteName(whole: number): string | null;
 export declare const bareSwingLevel: (m: Meter) => string | null;
 /**
  * A level a meter can lean: one some beat divides into, two or more of them (swing never moves a beat: decision 040),
- * with a pair among its nodes (a group of three stays even: decision 070). What is wrong with it, or null.
+ * with a pair among its nodes (a group of three stays even: decision 071). What is wrong with it, or null.
  */
 export declare function swingLevelProblem(m: Meter, whole: number): string | null;
 /**
