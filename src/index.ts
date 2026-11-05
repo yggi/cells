@@ -36,6 +36,7 @@ export { PRESETS, type Preset } from './engine/presets';
 export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece, type PieceFile, type PieceFileProblems, type PieceFrontmatter } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { movedCard } from './engine/shorten/card';
+export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
 export type { CompileOptions, CompileResult, Locked, Performer, Resolve, Used } from './engine/program';
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';
 export type { Diagnostic } from './engine/ast';
