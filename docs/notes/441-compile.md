@@ -41,7 +41,7 @@ Every family, and all of them together, is **idempotent**: a second pass changes
 
 Three things the probe found that a rule has to know, each a near miss:
 
-- **A number has to be written in full.** S1 hears `loop=261.625565301` (12 digits) as a different note from `loop=C4`, and hears 17 digits as the same note. The core spelling of a note name is the double as JavaScript prints it.
+- **A number has to be written in full.** S1 hears `loop=261.625565301` (12 digits) as a different note from `loop=C4`, and hears 17 digits as the same note. The core spelling of a note name is the double as JavaScript prints it. (No longer since [decision 070](../decisions/070-s1-hears-as-a-listener.md): S1 hears pitch within half a cent, so a few digits do.)
 - **A quoted string is not code.** A label that says "`&( … )` is a cell without a name" (*Voice*) mustn't be lifted. Strings are masked: the label stays as written.
 - **A slider keeps its unit.** `step=free(124bpm, 112..132)` written in hertz plays differently (*Electro swing*): the performer moves the slider in its unit, so the unit belongs to its interface, not its sugar. The units family leaves a `free(…)` as written.
 

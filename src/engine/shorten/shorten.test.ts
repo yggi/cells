@@ -306,9 +306,9 @@ describe('Shorten offers only what sounds the same (#477)', () => {
     // (the same line read whole is still offered its phrase)
     expect(shorten('&j step=8 0 4 7 11 2 0 4 7 11 5 9\n&v s=sine loop=C4\n&out map=sample [&j * &v]').some((s) => s.kind === 'phrase')).toBe(true);
   });
-  it('no merge of two alike cells that are two channels’ entries: merged, the two notes are one in both channels', () => {
+  it('two alike cells that are two channels’ entries merge: one note in both channels is that note in each (decision 070), and S1 checks it', () => {
     const src = '&t step=2 0 4\n&v s=sine loop=C4\n&a map=amp step=2 1 .5\n&b map=amp step=2 1 .5\n&out map=sample [&t * &a * &v * .25] [&t * &b * &v * .25]';
-    expect(shorten(src).filter((s) => s.kind === 'same')).toEqual([]);
+    expect(shorten(src).filter((s) => s.kind === 'same')).toHaveLength(1);
     sounds(src);
   });
   it('shortenAll takes only steps that sound as the text did', () => {
