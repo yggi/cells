@@ -150,6 +150,14 @@ export function patch(source, cell, port, from, resolve) {
 export function unpatch(source, cell, port, from, resolve) {
     return rewire(source, cell, port, from, 'out', resolve);
 }
+function defines(source, name) {
+    if (declLine(source, name) >= 0)
+        return true;
+    return source.split('\n').some((l) => {
+        const form = readFrom(splitComment(l)[0].trim());
+        return !!form && form.kind === 'use' && !!form.names?.includes(`&${name}`);
+    });
+}
 function rewire(source, cell, port, from, way, resolve) {
     const jack = jacksOf(source, cell, resolve).find((j) => j.port === port);
     if (!jack)
@@ -158,6 +166,12 @@ function rewire(source, cell, port, from, way, resolve) {
         return source;
     if (way === 'out' && !jack.patched.includes(from))
         return source;
+    if (way === 'in') {
+        if (from === cell)
+            throw new PatchError(`&${cell} can't be patched into itself`);
+        if (!defines(source, from))
+            throw new PatchError(`&${from} is defined nowhere in the text: write it first`);
+    }
     const lines = source.split('\n');
     const module = jack.kind === 'attribute' ? null : moduleLine(lines, cell);
     const index = module ? module.index : declLine(source, cell);
@@ -179,8 +193,13 @@ function attributeCode(code, cell, jack, from, way) {
         return `${head} ${jack.port}=${value}${code.slice(head.length)}`;
     };
     const single = CELL.includes(jack.port) && !(v && v.base.includes('..'));
-    if (single)
-        return way === 'in' ? set(ref) : v && refName(v.base) === from && !v.factors.length ? set(null) : code;
+    if (single) {
+        if (way === 'out')
+            return v && refName(v.base) === from && !v.factors.length ? set(null) : code;
+        if (v)
+            throw new PatchError(`&${cell}'s ${jack.port}= holds ${v.base}: pull it out first (a jack takes one cable)`);
+        return set(ref);
+    }
     if (way === 'in') {
         if (!v)
             throw new PatchError(`&${cell} has no ${jack.port}= written: write its value first (${jack.port}=…), a knob for the cable to move`);
@@ -207,6 +226,12 @@ function moduleCode(code, form, jack, from, way) {
     let args = [...(form.args ?? [])];
     let main = form.main;
     if (jack.kind === 'argument') {
+        const given = args.find((a) => a.name === jack.port);
+        const name = form.names[0];
+        if (way === 'in' && given)
+            throw new PatchError(refName(given.value)
+                ? `${name}'s ${jack.port} holds &${refName(given.value)}: pull it out first (a jack takes one cable)`
+                : `${name}'s ${jack.port} is set on the line (${given.value}): a cable would replace it, so clear it first (a jack takes one cable; a knob and a cable together are a sum)`);
         args = args.filter((a) => a.name !== jack.port);
         if (way === 'in')
             args.push({ name: jack.port, value: ref });
