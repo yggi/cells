@@ -16,7 +16,7 @@ export interface Jack {
 export declare class PatchError extends Error {
 }
 /** The moving sound parameters a voice offers as jacks; an instrument's are the linear ones among them (decision 067 §1). */
-export declare const MOVING: readonly ["lpf", "lpq", "hpf", "hpq", "room", "delay"];
+export declare const MOVING: readonly ["lpf", "lpq", "hpf", "hpq", "bpf", "bpq", "room", "delay"];
 /** The jacks &cell offers, patched or not (see the module's comment); none for a cell that is no voice, instrument or module. */
 export declare function jacksOf(source: string, cell: string, resolve?: Resolve): Jack[];
 /** &cell's line with a cable from &from patched into `port` (see the module's comment). */

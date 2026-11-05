@@ -39,7 +39,7 @@ export interface Jack {
 export class PatchError extends Error {}
 
 /** The moving sound parameters a voice offers as jacks; an instrument's are the linear ones among them (decision 067 §1). */
-export const MOVING = ['lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay'] as const;
+export const MOVING = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq', 'room', 'delay'] as const;
 /** The jacks that take one cell, as written (`env=&pluck`), or, for `pitch=`, a range scaled by cells as a moving parameter. */
 const CELL = ['pitch', 'env', 'fm'] as const;
 

@@ -30,9 +30,30 @@ describe('the attribute table', () => {
 
   test('sound parameters make a voice; a physical cell’s make none', () => {
     expect([...VOICE_PARAMS].sort()).toEqual(
-      ['s', 'lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay', 'delaytime', 'delayfeedback', 'pan', 'distort', 'crush', 'fm', 'ratio', 'index', 'body', 'ring', 'hard'].sort(),
+      [
+        's',
+        'lpf',
+        'lpq',
+        'hpf',
+        'hpq',
+        'bpf',
+        'bpq',
+        'room',
+        'delay',
+        'delaytime',
+        'delayfeedback',
+        'pan',
+        'distort',
+        'crush',
+        'fm',
+        'ratio',
+        'index',
+        'body',
+        'ring',
+        'hard',
+      ].sort(),
     );
-    expect(Object.keys(PARAMS).length).toBe(65);
+    expect(Object.keys(PARAMS).length).toBe(67);
   });
 
   test('a misspelling finds its nearest attribute', () => {
