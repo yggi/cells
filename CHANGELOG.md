@@ -8,6 +8,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
+Nothing has changed since v0.17.1.
+
+## v0.17.1 — 2026-11-05
+
 ### Changed
 
 - **`patch` refuses what would lose a setting** (#469, #471's review; decision 067 §4). A jack that takes one cell (`env=`, `pitch=`, `fm=`, a module's argument) takes one cable: one holding a cable, or a value written on the line, refuses another with a `PatchError` until it is cleared, so a patch pulled out gives the text back and the sound never jumps. A cable from a cell the text doesn't define, or from the cell itself, is refused too. In v0.17.0 such a patch replaced what was there, and unpatching brought back the module's default. **What a frontend sees at its next pin:** `patch` throws in those cases; swapping a cable is `unpatch`, then `patch`. Nothing a piece plays changes.
