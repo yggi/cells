@@ -25,6 +25,22 @@ describe('the equalities a tool promises, over their window (#180)', () => {
     expect(soundsIdentical(ENDS('4'), ENDS('5'), SAMENESS_SECONDS)).toBe(true);
   });
 
+  it('S1 hears what the host plays: a line switched off is silent, and an off dropped is heard (#434)', () => {
+    const off = '&bar meter("4/4") step=120bpm\n&kit &v\n&a step=2 0 4\n&drums off over=&kit step=&bar 0 1\n&v s=sine loop=C4\n&out map=sample [&a * &v, &drums]';
+    const gone = '&bar meter("4/4") step=120bpm\n&a step=2 0 4\n&v s=sine loop=C4\n&out map=sample [&a * &v]';
+    expect(soundsIdentical(off, gone)).toBe(true);
+    expect(soundsIdentical(off, off.replace('&drums off ', '&drums '))).toBe(false);
+  });
+
+  it('S1 hears a voice’s pitch= in its bends, as a sum in the mix; a different one, or a per-note shape, still differs (#439)', () => {
+    const vib = (v: string) => `&lead s=saw loop=C4 pitch=&(loop=5 ${v})\n&t step=2 0 2\n&out map=sample [&t * &lead]`;
+    expect(soundsIdentical(vib('0 .1 -.1'), '&lead s=saw loop=C4\n&vib loop=5 0 .1 -.1\n&t step=2 0 2\n&out map=sample [(&t + &vib) * &lead]')).toBe(true);
+    expect(soundsIdentical(vib('0 .1 -.1'), vib('0 .2 -.2'))).toBe(false);
+    const kick = (p: string) => `&t step=4 0 0 0 0\n&bd s=sine loop=C2 ${p}\n&out map=sample [&t * &bd]`;
+    expect(soundsIdentical(kick('pitch=0..30 * &(map=adsr 0 .04 0 0)'), kick('pitch=0..12 * &(map=adsr 0 .04 0 0)'))).toBe(false);
+    expect(soundsIdentical(kick('pitch=0..30 * &(map=adsr 0 .04 0 0)'), kick(''))).toBe(false);
+  });
+
   it('S2, plays the same notes, leaves gains free; S1 does not', () => {
     expect(playsSameNotes(ENDS('4'), ENDS('4', '.25'))).toBe(true);
     expect(soundsIdentical(ENDS('4'), ENDS('4', '.25'))).toBe(false);
