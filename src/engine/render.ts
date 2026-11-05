@@ -70,8 +70,6 @@ export interface Renderer {
 
 /** Parameters of the later stages: rendered dry, and said (decision 062's stages R2 and R3). The echo is R2's, built (#452). */
 const LATER: Readonly<Record<string, string>> = {
-  distort: 'R2',
-  crush: 'R2',
   fm: 'R2',
   body: 'R3',
   ring: 'R3',
@@ -470,6 +468,59 @@ class Network {
   }
 }
 
+// ---- grit: a curve each sample goes through ----
+
+/**
+ * A wave shaper's curve, applied as Web Audio's WaveShaperNode applies one (the spec's): the input from −1 to 1 laid
+ * across the curve's points and read between the two it falls between; past either end, that end's point.
+ */
+class Shaper {
+  constructor(private readonly curve: Float32Array) {}
+  run(x: number): number {
+    const c = this.curve;
+    const v = ((c.length - 1) / 2) * (x + 1);
+    if (!(v > 0)) return c[0]!;
+    if (v >= c.length - 1) return c[c.length - 1]!;
+    const k = Math.floor(v);
+    const f = v - k;
+    return (1 - f) * c[k]! + f * c[k + 1]!;
+  }
+}
+
+/**
+ * `distort=`: Tone's Distortion, as Cell studio's voices play it (`voice/voice.ts` @ 420e9d6), its curve Tone's
+ * (`setMap`, 1024 points): (3 + k) · x · 20° / (π + k · |x|), k = 100 · amount, and 0 within .001 of silence. Tone
+ * oversamples it twice there; here it is read at the render's rate, which moves its loudness by less than its aliasing.
+ */
+function distortion(amount: number): Shaper {
+  const k = amount * 100;
+  const deg = Math.PI / 180;
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < curve.length; i++) {
+    const x = (i / (curve.length - 1)) * 2 - 1;
+    curve[i] = Math.abs(x) < 0.001 ? 0 : ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+  }
+  return new Shaper(curve);
+}
+
+/** `crush=`: fewer bits, as Cell studio's voices play it: each sample rounded to 2^(bits − 1) levels a side, a curve of 4096 points. */
+function crusher(bits: number): Shaper {
+  const levels = Math.pow(2, Math.round(bits) - 1);
+  const curve = new Float32Array(4096);
+  for (let i = 0; i < curve.length; i++) curve[i] = Math.round(((i / (curve.length - 1)) * 2 - 1) * levels) / levels;
+  return new Shaper(curve);
+}
+
+/** A cell's grit, in the order its sound goes through it (`keep` the parameters it plays itself): fewer bits, then distortion, as Cell studio's chain has them. */
+function gritOf(params: Readonly<Record<string, number | string>>, keep: (k: string) => boolean): Shaper[] {
+  const out: Shaper[] = [];
+  const crush = params.crush;
+  if (keep('crush') && typeof crush === 'number' && crush >= 1 && crush < 16) out.push(crusher(crush));
+  const distort = params.distort;
+  if (keep('distort') && typeof distort === 'number' && distort > 0) out.push(distortion(distort));
+  return out;
+}
+
 /** A send to a return (an echo, the reverb), at the level it moves to (`delay=`, `room=`). */
 interface Send {
   readonly key: 'delay' | 'room';
@@ -507,6 +558,8 @@ interface Voice {
   /** A blend of two built-in waves (`s=tri..square * &x`, #411): each note plays the share it starts on. */
   readonly blend: { readonly from: Builtin; readonly to: Builtin } | null;
   readonly noise: Float32Array | null;
+  /** Its grit (`crush=`, `distort=`), on its notes' sum, before its filters. */
+  readonly grit: readonly Shaper[];
   /** Which filters it has; their parameters move for all its chains alike. */
   readonly has: { readonly lpf: boolean; readonly hpf: boolean };
   readonly autos: Partial<Record<FilterKey, Auto>>;
@@ -682,6 +735,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       wave,
       blend,
       noise: isNoise ? noise(src, rate) : null,
+      grit: gritOf(c.params, (k) => !c.inherited?.[k]),
       has,
       autos,
       sends,
@@ -735,6 +789,8 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     if (!c) return null;
     for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
       if (LATER[k]) say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
+    // (an instrument's grit is on its voices' sum, which isn't each voice's: decision 067, the next rung of #452)
+    for (const k of ['distort', 'crush']) if (k in c.params) say(name, k, `&${name}'s ${k}= is on its voices' sum, sounded from a later rung of stage R2: rendered without it`);
     const st: Stage = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true) };
     stages.set(name, st);
     return st;
@@ -1005,6 +1061,12 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           for (const { stage } of ch.stages) for (const sd of stage.sends) levels(sd, from, to, blockStart);
           if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length) continue;
           sound(v, ch, from, to, blockStart);
+          for (const g of v.grit)
+            for (let f = from; f < to; f++) {
+              const i = f - blockStart;
+              ch.dry[0][i] = g.run(ch.dry[0][i]!);
+              ch.dry[1][i] = g.run(ch.dry[1][i]!);
+            }
           filter(v, ch, from, to, blockStart);
           const stem = stemOf(ch, name);
           for (let f = from; f < to; f++) {
