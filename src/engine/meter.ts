@@ -169,11 +169,18 @@ function knotsOf(parts: number, lean: { readonly share: number; readonly pairs?:
  * Where a position x within a beat of n pulses is played, its levels leaning (lengths in pulses, with their shares). The
  * beat is a tree: its pulses where it holds several (a group of three eighths), then halves, down to the finest level
  * that leans; each node keeps its ends and divides its span among its children, by a level's share where its children
- * are that level, evenly otherwise. A position on the tree's divisions (or halves of them) is placed through it; one the
- * tree doesn't hold (a triplet in a swung pair) is even within its node, not warped.
+ * are that level, evenly otherwise.
+ *
+ * A division of `grid` pulses (a tap's step, a part of a step) is even within the finest node its length divides: 16ths
+ * and a pair inside a beat go down to the swung eighth and lean with it, `8t` divides the beat and not the eighth, so its
+ * thirds are even in the beat (a triplet under swung eighths stays straight), and `16t` divides the eighth, so its thirds
+ * are even within each swung eighth. A grid that divides no beat (`4n.`), or none given, goes down as far as x is a point
+ * of the tree (or a half of one) and is even within the node where it stops.
  */
-function swungIn(x: number, n: number, levels: readonly { len: number; share: number; pairs?: boolean }[]): number {
+function swungIn(x: number, n: number, levels: readonly { len: number; share: number; pairs?: boolean }[], grid?: number): number {
   const finest = Math.min(...levels.map((l) => l.len));
+  const whole = (q: number) => Math.abs(q - Math.round(q)) < 1e-9 && Math.round(q) >= 1;
+  const g = grid !== undefined && grid > 0 && whole(n / grid) ? grid : undefined;
   let from = 0;
   let len = n;
   let at = 0;
@@ -186,7 +193,7 @@ function swungIn(x: number, n: number, levels: readonly { len: number; share: nu
     const parts = qi === 2 || qi === 3 ? qi : qi % 3 === 0 ? 3 : qi % 2 === 0 ? 2 : qi;
     const child = len / parts;
     const rel = ((x - from) / len) * parts;
-    if (!held(rel)) break;
+    if (g !== undefined ? !whole(child / g) : !held(rel)) break;
     const knots = knotsOf(parts, levels.find((l) => Math.abs(l.len - child) < 1e-9) ?? null);
     const k = Math.min(parts - 1, Math.max(0, Math.floor(rel + 1e-9)));
     from += k * child;
@@ -199,9 +206,10 @@ function swungIn(x: number, n: number, levels: readonly { len: number; share: nu
 
 /**
  * Where a position, in pulses from the first downbeat, is played under the meter's swing (#18): within its beat, through
- * the beat's tree (`swungIn`). Every beat and every bar line stays where it is.
+ * the beat's tree (`swungIn`), as a division of `grid` pulses when it is one (a tap's step, a part of a step). Every beat
+ * and every bar line stays where it is.
  */
-export function swingAt(m: Meter, p: number): number {
+export function swingAt(m: Meter, p: number, grid?: number): number {
   if (!m.swing?.length) return p;
   const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share, ...(l.pairs ? { pairs: true } : {}) }));
   const P = m.pulses;
@@ -211,7 +219,7 @@ export function swingAt(m: Meter, p: number): number {
   let i = 0;
   while (i < m.beats.length - 1 && at + m.beats[i] <= x + 1e-9) at += m.beats[i++];
   const beat = m.beats[i] ?? P;
-  return bar * P + at + swungIn(x - at, beat, levels);
+  return bar * P + at + swungIn(x - at, beat, levels, grid);
 }
 
 /**

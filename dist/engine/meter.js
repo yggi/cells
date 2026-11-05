@@ -72,8 +72,10 @@ function knotsOf(parts, lean) {
     const second = Math.min(0.95, Math.max(0.05, share - 1 / 6));
     return [0, second, (second + 1) / 2, 1];
 }
-function swungIn(x, n, levels) {
+function swungIn(x, n, levels, grid) {
     const finest = Math.min(...levels.map((l) => l.len));
+    const whole = (q) => Math.abs(q - Math.round(q)) < 1e-9 && Math.round(q) >= 1;
+    const g = grid !== undefined && grid > 0 && whole(n / grid) ? grid : undefined;
     let from = 0;
     let len = n;
     let at = 0;
@@ -86,7 +88,7 @@ function swungIn(x, n, levels) {
         const parts = qi === 2 || qi === 3 ? qi : qi % 3 === 0 ? 3 : qi % 2 === 0 ? 2 : qi;
         const child = len / parts;
         const rel = ((x - from) / len) * parts;
-        if (!held(rel))
+        if (g !== undefined ? !whole(child / g) : !held(rel))
             break;
         const knots = knotsOf(parts, levels.find((l) => Math.abs(l.len - child) < 1e-9) ?? null);
         const k = Math.min(parts - 1, Math.max(0, Math.floor(rel + 1e-9)));
@@ -97,7 +99,7 @@ function swungIn(x, n, levels) {
     }
     return at + ((x - from) / len) * span;
 }
-export function swingAt(m, p) {
+export function swingAt(m, p, grid) {
     if (!m.swing?.length)
         return p;
     const levels = m.swing.map((l) => ({ len: l.whole * m.unit, share: l.share, ...(l.pairs ? { pairs: true } : {}) }));
@@ -109,7 +111,7 @@ export function swingAt(m, p) {
     while (i < m.beats.length - 1 && at + m.beats[i] <= x + 1e-9)
         at += m.beats[i++];
     const beat = m.beats[i] ?? P;
-    return bar * P + at + swungIn(x - at, beat, levels);
+    return bar * P + at + swungIn(x - at, beat, levels, grid);
 }
 export function swungKnots(m) {
     if (!m.swing?.length)

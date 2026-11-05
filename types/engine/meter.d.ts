@@ -82,9 +82,10 @@ export declare function swingLevelProblem(m: Meter, whole: number): string | nul
 export declare function pairsProblem(m: Meter, whole: number): string | null;
 /**
  * Where a position, in pulses from the first downbeat, is played under the meter's swing (#18): within its beat, through
- * the beat's tree (`swungIn`). Every beat and every bar line stays where it is.
+ * the beat's tree (`swungIn`), as a division of `grid` pulses when it is one (a tap's step, a part of a step). Every beat
+ * and every bar line stays where it is.
  */
-export declare function swingAt(m: Meter, p: number): number;
+export declare function swingAt(m: Meter, p: number, grid?: number): number;
 /**
  * A bar's knots under its swing (#121): each beat's points on the finest level the swing leans, as written and where the
  * swing puts them, in pulses (the bar's end the last), so a place between two is even between where they are played.

@@ -141,8 +141,9 @@ export function clockCells(ctx, decls, given) {
             const per = stepsPerPulse(m);
             const plain = tapPositions(m, st.tap, bars);
             const lapPulses = m.pulses * bars;
+            const grids = plain.flatMap((p, i) => Array.from({ length: split }, () => ((plain[i + 1] ?? lapPulses) - p) / split));
             const fine = plain.flatMap((p, i) => Array.from({ length: split }, (_, k) => p + (k * ((plain[i + 1] ?? lapPulses) - p)) / split));
-            const positions = fine.map((p) => swingAt(m, p) * per);
+            const positions = fine.map((p, i) => swingAt(m, p, grids[i]) * per);
             const written = fine.map((p) => p * per);
             const lap = m.levels.length * bars;
             clocks.set(key, {

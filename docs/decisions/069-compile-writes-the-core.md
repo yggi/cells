@@ -44,6 +44,8 @@ A `from` line is written as the fragment's lines (`expand`), so the compiled tex
 
 **Where no finer tap plays it, `[ ]` stays in the core** (the owner's (a)). A subsequence's parts are placed through the swing (#121). A tap of a division the swing doesn't hold (`8n*3` or `16t` under swung eighths) is even within its beat, as documented: "`8t` under swung eighths stays straight". So the thirds of a swung eighth are dilate inside a step, the primitive itself. Row 16 of 068's table is sugar wherever a finer tap is exact, and core dilate where it isn't. Nothing changes how a piece sounds.
 
+**Amended (2026-11-05, the owner on #15):** the parts of a step and a tap now follow one rule, *a division is even within the finest node of the tree its length divides*, so a finer tap plays every subsequence of a swung tap: the thirds of a swung eighth are `8n*3` (and `16t`), even within the eighth; the thirds of a beat are `4n*3` (and `8t`), even in the beat. Before, a part was placed between the points of the finest level that leans, so `step=4n [0 0 0]` under swung eighths played its thirds at .44 and .78 of the beat where `step=8t` plays .33 and .67, and `step=16t` played two notes at once. No example's notes or events moved. The one place `[ ]` stays core dilate is a part of a step the swing doesn't place itself (`step=8t [2 4]` under swung eighths: its halves even between its thirds, where `8t*2` is `16t`, even within each eighth).
+
 ### 5. Minify keeps the interface names, the names a text uses but doesn't define, and a drum's name
 
 A drum's name is its MIDI note on a MIDI card (054), by design. The rest are renamed freely.
