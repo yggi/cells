@@ -122,12 +122,16 @@ export class RouteAcc {
             this.stream(v.map.table);
         }
         this.timed(name);
-        for (const pc of Object.values(v.paramCells ?? {}))
+        for (const [key, pc] of Object.entries(v.paramCells ?? {})) {
+            const into = v.inherited?.[key] ?? name;
+            if (into !== name)
+                this.node(into);
             for (const f of pc.factors)
                 if (!this.off(f)) {
-                    this.edge(f, name);
+                    this.edge(f, into);
                     this.stream(f);
                 }
+        }
         const fm = v.params.fm;
         if (typeof fm === 'string' && this.result.cells.has(fm) && !this.off(fm)) {
             this.edge(fm, name);
