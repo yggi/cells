@@ -1,6 +1,6 @@
 ---
 name: release
-description: Release the cells language as a tag, and move the frontends' pins to it. Verifies main, gathers CHANGELOG.md's Unreleased under the new version, bumps package.json, opens that as a pull request, has the owner create the tag, then opens the pin-move pull requests in yggi/cell-studio and yggi/jambot, each with its checks. Use when asked to release, tag, cut a version, or move a frontend to a new cells version.
+description: Release the cells language as a tag, and move the frontends' pins to it. Verifies main, gathers CHANGELOG.md's Unreleased and the entries in changes/ under the new version, bumps package.json, opens that as a pull request, has the owner create the tag, then opens the pin-move pull requests in yggi/cell-studio and yggi/jambot, each with its checks. Use when asked to release, tag, cut a version, or move a frontend to a new cells version.
 ---
 
 # Release cells, and move the pins
@@ -37,7 +37,7 @@ Name the commit and both test counts on the issue (and the run's link, when it r
 
 ## 2. The version
 
-Read *Unreleased* in `CHANGELOG.md` and choose by semver:
+Read *Unreleased* in `CHANGELOG.md` and the entries in `changes/`, and choose by semver:
 
 - **Before 1.0:** a minor (`0.1.0` → `0.2.0`) when an entry breaks a piece (it names a migration) or a frontend's typecheck (an exported signature changed); a patch (`0.1.0` → `0.1.1`) otherwise.
 - **From 1.0:** a major for a break, a minor for something added, a patch for a fix.
@@ -48,7 +48,7 @@ An entry that breaks a piece and names no migration is not ready: say so on the 
 
 On a branch from `origin/main`, one commit:
 
-- `CHANGELOG.md`: a heading `## vX.Y.Z — <date>` under `## Unreleased`, the entries moved beneath it, and *Unreleased* left empty (a line saying nothing has changed since).
+- `CHANGELOG.md`: `npm run changelog -- gather vX.Y.Z` (`tools/changelog.mjs`) puts a heading `## vX.Y.Z — <today>` under `## Unreleased`, what *Unreleased* held and every entry in `changes/` beneath it, grouped by section, leaves *Unreleased* its pointer to `changes/`, and deletes the entries it gathered: commit their deletion with it.
 - `package.json` and `package-lock.json`: `"version": "X.Y.Z"` (`npm version X.Y.Z --no-git-tag-version` writes both and tags nothing).
   `src/docs.test.ts` fails when the changelog has no heading for that version.
 - `README.md`: the pin it shows, `github:yggi/cells#vX.Y.Z` (`src/docs.test.ts` fails when it names another version).
@@ -85,7 +85,7 @@ npm run verify
 npm run build && CHROME_PATH=/opt/pw-browsers/chromium npm run smoke    # every piece started, the covering set played
 ```
 
-Move the tag where its docs name it (`docs/MEMORY.md`; `AGENTS.md` links there), and add a line under *Unreleased* in its `CHANGELOG.md`.
+Move the tag where its docs name it (`docs/MEMORY.md`; `AGENTS.md` links there), and add its entry in `changes/` (its `changes/README.md`).
 The smoke test is the one check that builds the audio of every kind of voice, so a pin move runs it in full and says so in the pull request.
 
 **yggi/jambot** (pnpm; cells is a dependency of `packages/engine`, whose repository of meters the app loads, `packages/engine/src/repository.ts`, and a devDependency of `packages/score`, whose experiments state the band in cells):

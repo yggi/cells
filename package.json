@@ -56,6 +56,8 @@
     "preverify": "node tools/install-first.mjs && sh tools/verified.sh begin",
     "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test -- --reporter=default --reporter=./tools/test-count.ts",
     "postverify": "sh tools/verified.sh end",
+    "verify:docs": "npm run format:check && vitest run --project quick src/docs.test.ts tools/reading-list.test.ts tools/docs-only.test.ts tools/changelog.test.ts src/engine/vary.test.ts",
+    "changelog": "node tools/changelog.mjs",
     "reference": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/reference.ts",
     "normalise": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/normalise.ts",
     "structure": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/structure.ts",
