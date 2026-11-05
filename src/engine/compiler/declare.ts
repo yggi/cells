@@ -180,7 +180,7 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
 /**
  * A meter's swing read from a cell (#308): `&bar meter("4/4") step=&tempo swing=&swing` with `&swing swing=8n:2/3`, a cell
  * that is a swing alone (no braid, no step, nothing but its `swing=`), as `step=&tempo` reads a cell that is a rate alone.
- * The meter swings as if the swing were written on it, every form of one (a fraction, `free(…)`, `:pairs`, several levels),
+ * The meter swings as if the swing were written on it, every form of one (a fraction, `free(…)`, several levels),
  * so a fragment can leave its swing to the text that uses it, or give its own as a helper the text overrides by naming it.
  * Anything else read there is an error.
  */

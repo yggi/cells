@@ -13,8 +13,12 @@ export interface TimeMap {
     readonly beats: number;
     /** A physical clock: how fast it runs at real second t (1 on tempo); absent for an ideal one. */
     speed?(t: number): number;
-    /** Seconds at step s (fractional), relative to step 0. */
-    q(step: number): number;
+    /**
+     * Seconds at step s (fractional), relative to step 0. A note's onset or end that is a part of a step (a subsequence's
+     * step, a Euclid's stroke) passes the note's length in steps as `grid`: under a swing it is a point of a division the
+     * swing places as such (`swingAt`).
+     */
+    q(step: number, grid?: number): number;
     /** Inverse of q for t ≥ 0. */
     stepAt(t: number): number;
 }

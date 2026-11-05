@@ -346,7 +346,6 @@ function outputOn(result: CompileResult, o: Output, muted: ReadonlySet<string>):
   return true;
 }
 
-/** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 /**
  * A line's events laid on a lap of `lap` steps, which it comes round at (#116, decision 040: `cycle=n` on a tapped line
  * runs it n bars before it comes round): its braid begins again at each lap, a step past the lap is dropped (a note
@@ -365,6 +364,7 @@ export function comeRound(events: readonly StepEvent[], period: number, lap: num
   return { period: lap, events: out };
 }
 
+/** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<string> = new Set()): Plan {
   if (!result.ok) return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
   const tracks: PlanTrack[] = [];
@@ -643,6 +643,34 @@ function stagesOf(p: Plan, o: Output, at: number, dur: number): { through?: Play
   return stages.length ? { through: stages } : {};
 }
 
+/** A fraction near x (its denominator at most 10,000), as [numerator, denominator]. */
+function fraction(x: number): [number, number] {
+  let [h0, h1, k0, k1] = [0, 1, 1, 0];
+  let y = x;
+  for (let i = 0; i < 32; i++) {
+    const a = Math.floor(y + 1e-12);
+    [h0, h1] = [h1, a * h1 + h0];
+    [k0, k1] = [k1, a * k1 + k0];
+    if (k1 > 10000) return [h0, k0];
+    if (Math.abs(x - h1 / k1) < 1e-9) break;
+    y = 1 / (y - a);
+  }
+  return [h1, k1];
+}
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+
+/**
+ * The division a note at step s, held `duration` steps, is a point of, in steps (#15): one step for a step's own note,
+ * however long it is held (`0@3`), a third for a triplet's (`[0 0 0]`, `[0@2 0]`), a sixth in `[0 [0 0 0]]`. A swing
+ * places it as a tap of that division plays.
+ */
+function divisionOf(s: number, duration: number): number {
+  const [a, b] = fraction(s - Math.floor(s));
+  const [c, d] = fraction(Math.max(0, duration - Math.floor(duration)));
+  const den = (b * d) / gcd(b, d);
+  return gcd(gcd(a * (den / b), c * (den / d)), den) / den;
+}
+
 function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Played[] {
   const out: Played[] = [];
   const { result, statics } = p;
@@ -655,10 +683,9 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     const c1 = tm.stepAt(Math.max(0, until)) * t.rate;
     if (!Number.isFinite(c0) || !Number.isFinite(c1) || c1 <= c0) continue; // (a clock gone wild: nothing from it)
     // legato= (#94): the share of its written length a note starting at step s sounds, read at its onset
-    const shareAt = (s: number): number => {
+    const shareAt = (s: number, at: number): number => {
       const l = t.share;
       if (typeof l === 'number') return l;
-      const at = tm.q(s / t.rate);
       const x = l.series.reduce((a, m) => {
         const e = heldAt(p, m, at);
         return a * (e ? e.value + e.alter : 1);
@@ -669,12 +696,14 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
     // reading, the share taken before the swing), its end then placed by the time map as its onset is: past the bar line,
     // into the next note, wherever it reaches; only a selector's window (`bound`, a step) and the line's end cut it
     const make = (s: number, e: StepEvent, upto: number, bound = Infinity): Played | null => {
-      const at = tm.q(s / t.rate);
+      // (a part of a step is a division of its length: a swing places it where a tap of that division plays)
+      const grid = divisionOf(s, e.duration) / t.rate;
+      const at = tm.q(s / t.rate, grid);
       if (!Number.isFinite(at)) return null; // (a clock run down: this step never comes)
       if (at >= t.end - EPS) return null;
       // (a note whose clock stops beneath it never reaches its end: it rings 8 s at most)
-      const share = shareAt(s);
-      const ends = Math.min(tm.q((share === 1 ? upto : s + share * (upto - s)) / t.rate), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
+      const share = shareAt(s, at);
+      const ends = Math.min(tm.q((share === 1 ? upto : s + share * (upto - s)) / t.rate, grid), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
       // (a kit read held under a melody picks the member by its number then; the melody's step starts the note)
       const by = t.picker ? heldAt(p, t.picker, at) : e;
       const v = by && voiceFor(result, t.output, by.value);
@@ -790,7 +819,11 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         kl >= minLap &&
         base + kl * t.period + t.events[k].step >= notBefore - EPS &&
         Math.abs(end - start) < EPS &&
-        shareAt(base + kl * t.period + t.events[k].step) >= 1 - EPS &&
+        shareAt(
+          base + kl * t.period + t.events[k].step,
+          tm.q((base + kl * t.period + t.events[k].step) / t.rate, divisionOf(base + kl * t.period + t.events[k].step, t.events[k].duration) / t.rate),
+        ) >=
+          1 - EPS &&
         !!thrown(result, t, t.events[k], kl)
       );
     };

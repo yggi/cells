@@ -15,7 +15,7 @@ import { codeShifts, noteFrequency } from './engine/program';
 import { eventsBetween, plan } from './engine/realize';
 import { noteOf } from './engine/midi';
 import { keyName, keyOf } from './engine/miditext';
-import { even, midiOf, noteName, pitchOfName } from './theory/modes';
+import { even, midiOf, noteName, pitchOfName, scan as scanOf } from './theory/modes';
 
 interface Contract<V> {
   readonly lifted: string;
@@ -101,6 +101,15 @@ describe('the euclid contract (music-commons contracts/euclid, version 1)', () =
         const hits = atom?.kind === 'seq' ? atom.euclid?.hits : undefined;
         expect(hits, `0(${v.k},${v.n},${r})`).toEqual(turn(v.bjorklund, r, v.n));
       }
+  });
+
+  it('the language’s even(k, n, k − 1) is the canonical set, for every vector with k ≥ 1 (decision 072)', () => {
+    for (const v of pairs.filter((x) => x.k >= 1)) {
+      const r = parse(`&t even(${v.k}, ${v.n}, ${v.k - 1})`);
+      expect(r.diagnostics, `even(${v.k}, ${v.n}, ${v.k - 1})`).toEqual([]);
+      const b = r.cells[0].braid;
+      expect(b.kind === 'scan' ? scanOf(b.steps).positions : null, `even(${v.k}, ${v.n}, ${v.k - 1})`).toEqual(turn(v.even, 0, v.n));
+    }
   });
 
   it('theory’s even(k, n, phase) is the canonical set at phase k − 1, turned right by t at phase k − 1 + t·k', () => {
@@ -251,8 +260,8 @@ describe('the meter contract (music-commons contracts/meter, version 1)', () => 
 
 describe('the swing contract (music-commons contracts/swing, version 1)', () => {
   const swing = contract<SwingVector>('swing');
-  /** Where a named meter's 16ths play in its first bar, in steps from the downbeat: swung as Jambot's section text writes it (8n with :pairs, or without). */
-  const played = (v: SwingVector, pairs = true) => {
+  /** Where a named meter's 16ths play in its first bar, in steps from the downbeat: swung as written, or with decision 053's `:pairs` on 8n, as Jambot's section text writes it. */
+  const played = (v: SwingVector, pairs = false) => {
     const levels = v.swing.map(({ level, share }) => `${level}:${share}${level === '8n' && pairs ? ':pairs' : ''}`).join(',');
     const r = compileSource(`&bar meter("${v.name}") step=60bpm${levels && ` swing=${levels}`}\n&x step=16n 0\n&v s=sine loop=C4\n&out map=sample [&x * &v]`);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
@@ -267,13 +276,11 @@ describe('the swing contract (music-commons contracts/swing, version 1)', () => 
     expect(swing.vectors).toHaveLength(131);
   });
 
-  it('swing=<level>:<share> on meter(…), 8n with :pairs, places every step within 1e-9 of the contract, for every vector', () => {
+  it('swing=<level>:<share> on meter(…) places every step within 1e-9 of the contract, for every vector: a group of three straight (decision 071)', () => {
     for (const v of swing.vectors) expect(meets(v, played(v)), `${v.name} ${JSON.stringify(v.swing)}`).toBe(true);
   });
 
-  it('…and without :pairs, a group of three leans at 8n (decision 040): the 30 vectors of a meter with one, at each 8n share, differ (recorded)', () => {
-    const differ = swing.vectors.filter((v) => !meets(v, played(v, false)));
-    expect(differ).toHaveLength(30);
-    expect(differ.every((v) => v.groups.includes(3) && v.swing.some((l) => l.level === '8n' && l.share !== 0.5))).toBe(true);
+  it('…and with decision 053’s :pairs on 8n, as Jambot writes it, the same', () => {
+    for (const v of swing.vectors) expect(played(v, true), `${v.name} ${JSON.stringify(v.swing)}`).toEqual(played(v));
   });
 });

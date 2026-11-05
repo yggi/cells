@@ -447,6 +447,28 @@ function stagesOf(p, o, at, dur) {
     });
     return stages.length ? { through: stages } : {};
 }
+function fraction(x) {
+    let [h0, h1, k0, k1] = [0, 1, 1, 0];
+    let y = x;
+    for (let i = 0; i < 32; i++) {
+        const a = Math.floor(y + 1e-12);
+        [h0, h1] = [h1, a * h1 + h0];
+        [k0, k1] = [k1, a * k1 + k0];
+        if (k1 > 10000)
+            return [h0, k0];
+        if (Math.abs(x - h1 / k1) < 1e-9)
+            break;
+        y = 1 / (y - a);
+    }
+    return [h1, k1];
+}
+const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
+function divisionOf(s, duration) {
+    const [a, b] = fraction(s - Math.floor(s));
+    const [c, d] = fraction(Math.max(0, duration - Math.floor(duration)));
+    const den = (b * d) / gcd(b, d);
+    return gcd(gcd(a * (den / b), c * (den / d)), den) / den;
+}
 function plainEvents(p, from, to, outputs) {
     const out = [];
     const { result, statics } = p;
@@ -460,11 +482,10 @@ function plainEvents(p, from, to, outputs) {
         const c1 = tm.stepAt(Math.max(0, until)) * t.rate;
         if (!Number.isFinite(c0) || !Number.isFinite(c1) || c1 <= c0)
             continue;
-        const shareAt = (s) => {
+        const shareAt = (s, at) => {
             const l = t.share;
             if (typeof l === 'number')
                 return l;
-            const at = tm.q(s / t.rate);
             const x = l.series.reduce((a, m) => {
                 const e = heldAt(p, m, at);
                 return a * (e ? e.value + e.alter : 1);
@@ -472,13 +493,14 @@ function plainEvents(p, from, to, outputs) {
             return l.range ? l.range[0] + (l.range[1] - l.range[0]) * x : x;
         };
         const make = (s, e, upto, bound = Infinity) => {
-            const at = tm.q(s / t.rate);
+            const grid = divisionOf(s, e.duration) / t.rate;
+            const at = tm.q(s / t.rate, grid);
             if (!Number.isFinite(at))
                 return null;
             if (at >= t.end - EPS)
                 return null;
-            const share = shareAt(s);
-            const ends = Math.min(tm.q((share === 1 ? upto : s + share * (upto - s)) / t.rate), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
+            const share = shareAt(s, at);
+            const ends = Math.min(tm.q((share === 1 ? upto : s + share * (upto - s)) / t.rate, grid), bound < Infinity ? tm.q(bound / t.rate) : Infinity, t.end);
             const by = t.picker ? heldAt(p, t.picker, at) : e;
             const v = by && voiceFor(result, t.output, by.value);
             if (!v || p.muted.has(cellId(v.voice)))
@@ -577,7 +599,8 @@ function plainEvents(p, from, to, outputs) {
                 kl >= minLap &&
                 base + kl * t.period + t.events[k].step >= notBefore - EPS &&
                 Math.abs(end - start) < EPS &&
-                shareAt(base + kl * t.period + t.events[k].step) >= 1 - EPS &&
+                shareAt(base + kl * t.period + t.events[k].step, tm.q((base + kl * t.period + t.events[k].step) / t.rate, divisionOf(base + kl * t.period + t.events[k].step, t.events[k].duration) / t.rate)) >=
+                    1 - EPS &&
                 !!thrown(result, t, t.events[k], kl));
         };
         const emit = (s, e, upto, i = -1, lap = 0, base = 0, minLap = 0, bound = Infinity, notBefore = -Infinity) => {

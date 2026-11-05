@@ -6,9 +6,6 @@ import { harmonics, waveform } from "./wave.js";
 export const DEFAULT_RATE = 48000;
 export const RATES = { lowest: 8000, highest: 192000 };
 const LATER = {
-    distort: 'R2',
-    crush: 'R2',
-    fm: 'R2',
     body: 'R3',
     ring: 'R3',
     hard: 'R3',
@@ -316,6 +313,66 @@ class Network {
         return y * this.scale;
     }
 }
+class Shaper {
+    curve;
+    constructor(curve) {
+        this.curve = curve;
+    }
+    run(x) {
+        const c = this.curve;
+        const v = ((c.length - 1) / 2) * (x + 1);
+        if (!(v > 0))
+            return c[0];
+        if (v >= c.length - 1)
+            return c[c.length - 1];
+        const k = Math.floor(v);
+        const f = v - k;
+        return (1 - f) * c[k] + f * c[k + 1];
+    }
+}
+function distortion(amount) {
+    const k = amount * 100;
+    const deg = Math.PI / 180;
+    const curve = new Float32Array(1024);
+    for (let i = 0; i < curve.length; i++) {
+        const x = (i / (curve.length - 1)) * 2 - 1;
+        curve[i] = Math.abs(x) < 0.001 ? 0 : ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return new Shaper(curve);
+}
+function crusher(bits) {
+    const levels = Math.pow(2, Math.round(bits) - 1);
+    const curve = new Float32Array(4096);
+    for (let i = 0; i < curve.length; i++)
+        curve[i] = Math.round(((i / (curve.length - 1)) * 2 - 1) * levels) / levels;
+    return new Shaper(curve);
+}
+function gritOf(params, keep) {
+    const out = [];
+    const crush = params.crush;
+    if (keep('crush') && typeof crush === 'number' && crush >= 1 && crush < 16)
+        out.push(crusher(crush));
+    const distort = params.distort;
+    if (keep('distort') && typeof distort === 'number' && distort > 0)
+        out.push(distortion(distort));
+    return out;
+}
+function swing(m, t, rate) {
+    const hz = m.freq + (m.inner ? swing(m.inner, t, rate) : 0);
+    const table = tableFor(m.wave, Math.abs(hz), rate);
+    let y = 0;
+    if (table) {
+        const p = m.phase * TABLE;
+        const i = Math.floor(p);
+        const frac = p - i;
+        const s0 = table[((i % TABLE) + TABLE) % TABLE];
+        const s1 = table[(((i + 1) % TABLE) + TABLE) % TABLE];
+        y = s0 + (s1 - s0) * frac;
+    }
+    m.phase += hz / rate;
+    m.phase -= Math.floor(m.phase);
+    return y * m.freq * (m.moving ? m.moving.at(t) : m.index);
+}
 function filtersOf(c, keep) {
     const moves = c.paramCells ?? {};
     const start = (k, d) => (!keep(k) ? d : typeof c.params[k] === 'number' ? c.params[k] : (moves[k]?.range?.[0] ?? d));
@@ -453,6 +510,7 @@ export function createRenderer(result, shifts, options = {}) {
             wave,
             blend,
             noise: isNoise ? noise(src, rate) : null,
+            grit: gritOf(c.params, (k) => !c.inherited?.[k]),
             has,
             autos,
             sends,
@@ -460,6 +518,24 @@ export function createRenderer(result, shifts, options = {}) {
         };
         voices.set(name, v);
         return v;
+    };
+    const fmOf = (of, carrier, depth, index, at, dur) => {
+        const c = result.cells.get(of);
+        const name = c?.params.fm;
+        if (typeof name !== 'string' || depth > 5)
+            return null;
+        const m = result.cells.get(name);
+        if (!m?.voice)
+            return null;
+        const mv = voiceOf(name);
+        const freq = carrier * (typeof m.params.ratio === 'number' ? m.params.ratio : 1);
+        const fixed = typeof c.params.index === 'number' ? c.params.index : 1;
+        let moving = null;
+        if (index) {
+            moving = new Auto(fixed);
+            schedule(moving, 'index', index, at, dur);
+        }
+        return { wave: mv?.wave ?? builtinWave('sine'), freq, index: fixed, moving, inner: fmOf(name, freq, depth + 1, undefined, at, dur), phase: 0 };
     };
     const returns = new Map();
     const returnOf = (name, make) => {
@@ -497,7 +573,7 @@ export function createRenderer(result, shifts, options = {}) {
         for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
             if (LATER[k])
                 say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-        const st = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true) };
+        const st = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
         stages.set(name, st);
         return st;
     };
@@ -505,16 +581,31 @@ export function createRenderer(result, shifts, options = {}) {
         ...(has.lpf ? { lpf: new Biquad('lowpass') } : {}),
         ...(has.hpf ? { hpf: new Biquad('highpass') } : {}),
     });
+    const buses = new Map();
+    const busOf = (stem, through) => {
+        const key = [stem, ...through.map((st) => st.name)].join('\u0000');
+        let b = buses.get(key);
+        if (!b) {
+            b = { key, stem, stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })), input: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
+            buses.set(key, b);
+            if (tracks === 'voices' && !stems.includes(through[0].name))
+                stems.push(through[0].name);
+        }
+        return b;
+    };
     const chainOf = (v, stem, through) => {
         const key = [stem, ...through.map((st) => st.name)].join('\u0000');
         let ch = v.chains.find((x) => x.key === key);
         if (!ch) {
+            const gritty = through.findIndex((st) => st.grit.length > 0);
+            const inside = gritty < 0 ? through : through.slice(0, gritty);
             ch = {
                 key,
                 filters: biquads(v.has),
-                stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })),
+                stages: inside.map((stage) => ({ stage, filters: biquads(stage.has) })),
                 notes: [],
                 dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)],
+                bus: gritty < 0 ? null : busOf(stem, through.slice(gritty)),
             };
             v.chains.push(ch);
             v.chains.sort((a, b) => (entryOrder.get(stemKey(a)) ?? -1) - (entryOrder.get(stemKey(b)) ?? -1) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
@@ -633,7 +724,7 @@ export function createRenderer(result, shifts, options = {}) {
             const through = [];
             for (const x of e.through ?? []) {
                 const st = stageOf(x.instrument);
-                if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length))
+                if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length && !st.grit.length))
                     continue;
                 for (const k of FILTER) {
                     const track = x.params?.[k];
@@ -650,7 +741,7 @@ export function createRenderer(result, shifts, options = {}) {
                 through.push(st);
             }
             for (const k of Object.keys(params))
-                if (LATER[k] || k === 'index')
+                if (LATER[k])
                     say(e.voice, k, `&${e.voice}'s moving ${k}= is sounded from stage R2: rendered without it`);
             let shares = [{ key: '', left: 1, right: 1 }];
             if (tracks === 'entries') {
@@ -680,6 +771,7 @@ export function createRenderer(result, shifts, options = {}) {
                     semis: semis(),
                     cents: cents(),
                     grain: v.noise ? Math.floor(grainOffset(v.seed, e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
+                    fm: v.noise ? null : fmOf(e.voice, e.freq, 0, params.index, e.at, end - e.at),
                     phase: 0,
                 };
                 const chain = chainOf(v, share.key, through);
@@ -711,6 +803,8 @@ export function createRenderer(result, shifts, options = {}) {
                     let hz = n.freq;
                     if (n.semis)
                         hz *= Math.pow(2, n.semis.at(t) / 12);
+                    if (n.fm)
+                        hz += swing(n.fm, t, rate);
                     if (n.cents)
                         hz *= Math.pow(2, n.cents.at(t) / 1200);
                     const table = tableFor(n.wave ?? v.wave, hz, rate);
@@ -788,12 +882,34 @@ export function createRenderer(result, shifts, options = {}) {
                     if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length)
                         continue;
                     sound(v, ch, from, to, blockStart);
+                    for (const g of v.grit)
+                        for (let f = from; f < to; f++) {
+                            const i = f - blockStart;
+                            ch.dry[0][i] = g.run(ch.dry[0][i]);
+                            ch.dry[1][i] = g.run(ch.dry[1][i]);
+                        }
                     filter(v, ch, from, to, blockStart);
                     const stem = stemOf(ch, name);
                     for (let f = from; f < to; f++) {
                         const i = f - blockStart;
                         const l = ch.dry[0][i] * VOICE_GAIN * master;
                         const r = ch.dry[1][i] * VOICE_GAIN * master;
+                        if (ch.bus) {
+                            ch.bus.input[0][i] += ch.dry[0][i] * VOICE_GAIN;
+                            ch.bus.input[1][i] += ch.dry[1][i] * VOICE_GAIN;
+                            for (const sd of v.sends) {
+                                const g = sendLevels.get(sd)[i];
+                                sd.to.input[0][i] += l * g;
+                                sd.to.input[1][i] += r * g;
+                            }
+                            for (const { stage } of ch.stages)
+                                for (const sd of stage.sends) {
+                                    const g = sendLevels.get(sd)[i];
+                                    sd.to.input[0][i] += l * g;
+                                    sd.to.input[1][i] += r * g;
+                                }
+                            continue;
+                        }
                         for (const sd of v.sends) {
                             const g = sendLevels.get(sd)[i];
                             sd.to.input[0][i] += l * g;
@@ -821,6 +937,63 @@ export function createRenderer(result, shifts, options = {}) {
                             mix[0][f - position] += Math.fround(l);
                             mix[1][f - position] += Math.fround(r);
                         }
+                    }
+                }
+            }
+            for (const b of buses.values()) {
+                const t = blockStart / rate;
+                for (const { stage } of b.stages)
+                    for (const sd of stage.sends)
+                        levels(sd, from, to, blockStart);
+                const [x0, x1] = b.input;
+                b.stages.forEach(({ stage, filters }, j) => {
+                    if (j === 0)
+                        for (const g of stage.grit)
+                            for (let f = from; f < to; f++) {
+                                const i = f - blockStart;
+                                x0[i] = g.run(x0[i]);
+                                x1[i] = g.run(x1[i]);
+                            }
+                    for (const k of ['lpf', 'hpf']) {
+                        const bq = filters[k];
+                        if (!bq)
+                            continue;
+                        bq.set(stage.autos[k].at(t), stage.autos[k === 'lpf' ? 'lpq' : 'hpq'].at(t), rate);
+                        for (let f = from; f < to; f++) {
+                            const i = f - blockStart;
+                            x0[i] = bq.run(x0[i], 0);
+                            x1[i] = bq.run(x1[i], 1);
+                        }
+                    }
+                });
+                const stem = tracks === 'voices' ? stemOut.get(b.stages[0].stage.name) : tracks === 'entries' ? stemOut.get(entryName.get(b.stem) ?? '') : undefined;
+                for (let f = from; f < to; f++) {
+                    const i = f - blockStart;
+                    const l = x0[i] * master;
+                    const r = x1[i] * master;
+                    x0[i] = 0;
+                    x1[i] = 0;
+                    for (const { stage } of b.stages)
+                        for (const sd of stage.sends) {
+                            const g = sendLevels.get(sd)[i];
+                            sd.to.input[0][i] += l * g;
+                            sd.to.input[1][i] += r * g;
+                        }
+                    if (tracks === 'entries') {
+                        if (stem) {
+                            stem[0][f - position] += l;
+                            stem[1][f - position] += r;
+                        }
+                    }
+                    else if (stem) {
+                        stem[0][f - position] += l;
+                        stem[1][f - position] += r;
+                        mix[0][f - position] += Math.fround(l);
+                        mix[1][f - position] += Math.fround(r);
+                    }
+                    else {
+                        mix[0][f - position] += Math.fround(l);
+                        mix[1][f - position] += Math.fround(r);
                     }
                 }
             }

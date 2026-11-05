@@ -1,4 +1,4 @@
-/** Generators: a braid written as a rule — scan(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
+/** Generators: a braid written as a rule — scan(…), even(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
 import type { Braid, Ref, Span, WaveShape } from '../ast';
 import type { Signature } from '../meter';
 import { type Syntax } from './syntax';

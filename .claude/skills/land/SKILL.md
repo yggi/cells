@@ -35,7 +35,7 @@ Every comment posted from a session ends with a blank line, `---` and `_Generate
       The issue states its bounds as numbers (the `task` template).
    4. **References right:** an issue or pull request in another repository that the merged pull request mentions by a bare number is written `yggi/<repo>#n`, in its body and its comments; a bare `#n` here always means cells' own.
 6. **No deploy.**
-   A change a frontend would notice waits under *Unreleased* in `CHANGELOG.md` until a release; tagging it now is the `release` skill, on the owner's word.
+   A change a frontend would notice waits in `changes/` until a release gathers it into `CHANGELOG.md`; tagging it now is the `release` skill, on the owner's word.
 7. **Say so** in a comment on the pull request: the merge commit, the issues closed, the epic line ticked, and the follow-ups filed, each by its number.
 
 If a step after the merge fails, the merge stands: fix forward on a new branch, and say on the pull request what is left.

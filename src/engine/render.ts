@@ -70,9 +70,6 @@ export interface Renderer {
 
 /** Parameters of the later stages: rendered dry, and said (decision 062's stages R2 and R3). The echo is R2's, built (#452). */
 const LATER: Readonly<Record<string, string>> = {
-  distort: 'R2',
-  crush: 'R2',
-  fm: 'R2',
   body: 'R3',
   ring: 'R3',
   hard: 'R3',
@@ -470,6 +467,97 @@ class Network {
   }
 }
 
+// ---- grit: a curve each sample goes through ----
+
+/**
+ * A wave shaper's curve, applied as Web Audio's WaveShaperNode applies one (the spec's): the input from −1 to 1 laid
+ * across the curve's points and read between the two it falls between; past either end, that end's point.
+ */
+class Shaper {
+  constructor(private readonly curve: Float32Array) {}
+  run(x: number): number {
+    const c = this.curve;
+    const v = ((c.length - 1) / 2) * (x + 1);
+    if (!(v > 0)) return c[0]!;
+    if (v >= c.length - 1) return c[c.length - 1]!;
+    const k = Math.floor(v);
+    const f = v - k;
+    return (1 - f) * c[k]! + f * c[k + 1]!;
+  }
+}
+
+/**
+ * `distort=`: Tone's Distortion, as Cell studio's voices play it (`voice/voice.ts` @ 420e9d6), its curve Tone's
+ * (`setMap`, 1024 points): (3 + k) · x · 20° / (π + k · |x|), k = 100 · amount, and 0 within .001 of silence. Tone
+ * oversamples it twice there; here it is read at the render's rate, which moves its loudness by less than its aliasing.
+ */
+function distortion(amount: number): Shaper {
+  const k = amount * 100;
+  const deg = Math.PI / 180;
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < curve.length; i++) {
+    const x = (i / (curve.length - 1)) * 2 - 1;
+    curve[i] = Math.abs(x) < 0.001 ? 0 : ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+  }
+  return new Shaper(curve);
+}
+
+/** `crush=`: fewer bits, as Cell studio's voices play it: each sample rounded to 2^(bits − 1) levels a side, a curve of 4096 points. */
+function crusher(bits: number): Shaper {
+  const levels = Math.pow(2, Math.round(bits) - 1);
+  const curve = new Float32Array(4096);
+  for (let i = 0; i < curve.length; i++) curve[i] = Math.round(((i / (curve.length - 1)) * 2 - 1) * levels) / levels;
+  return new Shaper(curve);
+}
+
+/** A cell's grit, in the order its sound goes through it (`keep` the parameters it plays itself): fewer bits, then distortion, as Cell studio's chain has them. */
+function gritOf(params: Readonly<Record<string, number | string>>, keep: (k: string) => boolean): Shaper[] {
+  const out: Shaper[] = [];
+  const crush = params.crush;
+  if (keep('crush') && typeof crush === 'number' && crush >= 1 && crush < 16) out.push(crusher(crush));
+  const distort = params.distort;
+  if (keep('distort') && typeof distort === 'number' && distort > 0) out.push(distortion(distort));
+  return out;
+}
+
+// ---- FM: a modulator swinging its carrier's frequency ----
+
+/**
+ * A note's modulator (decision 062 R2, #452), as Cell studio's voices play one (`voice/voice.ts` @ 420e9d6): an
+ * oscillator of the modulator voice's wave at the carrier's note frequency times its `ratio=` (1 unless given), started
+ * with the note at phase 0, whose output times its own frequency times the carrier's `index=` (1 unless given; moving, as
+ * the note moves it) is added to the carrier's frequency before its bends, as an oscillator's frequency input is added to
+ * its value; and its own modulator swings it the same way, five deep at most.
+ */
+interface Mod {
+  readonly wave: Wave;
+  /** Its frequency (Hz): its carrier's note frequency times its ratio. */
+  readonly freq: number;
+  readonly index: number;
+  /** The carrier's moving index=, over the note; its fixed index where absent. */
+  readonly moving: Auto | null;
+  readonly inner: Mod | null;
+  phase: number;
+}
+
+/** How far a modulator swings its carrier now (Hz), its phase moved on a frame: its own modulator first. */
+function swing(m: Mod, t: number, rate: number): number {
+  const hz = m.freq + (m.inner ? swing(m.inner, t, rate) : 0);
+  const table = tableFor(m.wave, Math.abs(hz), rate);
+  let y = 0;
+  if (table) {
+    const p = m.phase * TABLE;
+    const i = Math.floor(p);
+    const frac = p - i;
+    const s0 = table[((i % TABLE) + TABLE) % TABLE]!;
+    const s1 = table[(((i + 1) % TABLE) + TABLE) % TABLE]!;
+    y = s0 + (s1 - s0) * frac;
+  }
+  m.phase += hz / rate;
+  m.phase -= Math.floor(m.phase);
+  return y * m.freq * (m.moving ? m.moving.at(t) : m.index);
+}
+
 /** A send to a return (an echo, the reverb), at the level it moves to (`delay=`, `room=`). */
 interface Send {
   readonly key: 'delay' | 'room';
@@ -507,6 +595,8 @@ interface Voice {
   /** A blend of two built-in waves (`s=tri..square * &x`, #411): each note plays the share it starts on. */
   readonly blend: { readonly from: Builtin; readonly to: Builtin } | null;
   readonly noise: Float32Array | null;
+  /** Its grit (`crush=`, `distort=`), on its notes' sum, before its filters. */
+  readonly grit: readonly Shaper[];
   /** Which filters it has; their parameters move for all its chains alike. */
   readonly has: { readonly lpf: boolean; readonly hpf: boolean };
   readonly autos: Partial<Record<FilterKey, Auto>>;
@@ -527,6 +617,22 @@ interface Stage {
   readonly autos: Partial<Record<FilterKey, Auto>>;
   /** Its sends, for its voices' sum: each voice through it sends, as a filter of the sum is one on each (#452). */
   readonly sends: readonly Send[];
+  /** Its grit, on its voices' sum (decision 067): not linear, so its voices' chains meet in a bus first. */
+  readonly grit: readonly Shaper[];
+}
+
+/**
+ * Where the voices through an instrument with grit meet (decision 067, #452): their chains up to it summed, at the level
+ * they leave their voices, then its grit, its filters, the filters of the instruments around it, and the sends of each;
+ * one a stem (an entry's, or by voice the instrument's own, which then holds what its voices play through it).
+ */
+interface Bus {
+  readonly key: string;
+  /** The stem it goes to: '' (the instrument's own) or an entry's key. */
+  readonly stem: string;
+  /** Its instrument, then those around it, each with its filters for this bus. */
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<'lpf' | 'hpf', Biquad>> }[];
+  readonly input: [Float64Array, Float64Array];
 }
 
 /** A voice's notes going to one stem, through filters of their own (so a stem by entry is filtered as the mix is). */
@@ -540,6 +646,8 @@ interface Chain {
   notes: Note[];
   /** Its sound before its filters, this block. */
   readonly dry: [Float64Array, Float64Array];
+  /** The bus it plays into, where an instrument it goes through has grit: its stages are those inside that one. */
+  readonly bus: Bus | null;
 }
 
 interface Note {
@@ -561,6 +669,8 @@ interface Note {
   readonly cents: Auto | null;
   /** A noise note: where in the noise it starts (frames). */
   readonly grain: number;
+  /** Its modulator (`fm=`), swinging its frequency, and the modulator's own, each started with the note; none without. */
+  readonly fm: Mod | null;
   phase: number;
 }
 
@@ -580,7 +690,7 @@ function envelopeAt(n: Note, t: number): number {
 }
 
 /** A track scheduled on a voice's filter parameter for one note, as a moving parameter does (exponential for a frequency). */
-function schedule(auto: Auto, key: FilterKey | Send['key'], track: ParamTrack, time: number, dur: number): void {
+function schedule(auto: Auto, key: FilterKey | Send['key'] | 'index', track: ParamTrack, time: number, dur: number): void {
   const freq = key === 'lpf' || key === 'hpf';
   const v = (x: number) => (freq ? Math.max(1, x) : x);
   const ramp = freq ? 'exp' : 'lin';
@@ -682,6 +792,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       wave,
       blend,
       noise: isNoise ? noise(src, rate) : null,
+      grit: gritOf(c.params, (k) => !c.inherited?.[k]),
       has,
       autos,
       sends,
@@ -689,6 +800,28 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     };
     voices.set(name, v);
     return v;
+  };
+
+  /**
+   * A note's modulator chain: the modulator `of` names (fm=), at `carrier` Hz times its ratio=, swung by its own, five deep
+   * at most; a modulator's wave its own (a noise one's, as an oscillator given none, a sine). `index`: the carrier's
+   * moving index= over the note, the first modulator's only, as Cell studio schedules it.
+   */
+  const fmOf = (of: string, carrier: number, depth: number, index: ParamTrack | undefined, at: number, dur: number): Mod | null => {
+    const c = result.cells.get(of);
+    const name = c?.params.fm;
+    if (typeof name !== 'string' || depth > 5) return null;
+    const m = result.cells.get(name);
+    if (!m?.voice) return null;
+    const mv = voiceOf(name);
+    const freq = carrier * (typeof m.params.ratio === 'number' ? m.params.ratio : 1);
+    const fixed = typeof c!.params.index === 'number' ? c!.params.index : 1;
+    let moving: Auto | null = null;
+    if (index) {
+      moving = new Auto(fixed);
+      schedule(moving, 'index', index, at, dur);
+    }
+    return { wave: mv?.wave ?? builtinWave('sine'), freq, index: fixed, moving, inner: fmOf(name, freq, depth + 1, undefined, at, dur), phase: 0 };
   };
 
   // the returns (the echoes, the reverb), in the order they are first sent to; each a stem of its own (but in a mix alone)
@@ -735,7 +868,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     if (!c) return null;
     for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
       if (LATER[k]) say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-    const st: Stage = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true) };
+    const st: Stage = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
     stages.set(name, st);
     return st;
   };
@@ -745,16 +878,32 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
   });
 
   /** A voice's chain to a stem through its instruments' stages, made when a note first goes there. */
+  /** The buses, in the order they are first played into. */
+  const buses = new Map<string, Bus>();
+  const busOf = (stem: string, through: readonly Stage[]): Bus => {
+    const key = [stem, ...through.map((st) => st.name)].join('\u0000');
+    let b = buses.get(key);
+    if (!b) {
+      b = { key, stem, stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })), input: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
+      buses.set(key, b);
+      if (tracks === 'voices' && !stems.includes(through[0]!.name)) stems.push(through[0]!.name);
+    }
+    return b;
+  };
   const chainOf = (v: Voice, stem: string, through: readonly Stage[]): Chain => {
     const key = [stem, ...through.map((st) => st.name)].join('\u0000');
     let ch = v.chains.find((x) => x.key === key);
     if (!ch) {
+      // (up to the first instrument with grit its own; from there on, a bus its voices share)
+      const gritty = through.findIndex((st) => st.grit.length > 0);
+      const inside = gritty < 0 ? through : through.slice(0, gritty);
       ch = {
         key,
         filters: biquads(v.has),
-        stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })),
+        stages: inside.map((stage) => ({ stage, filters: biquads(stage.has) })),
         notes: [],
         dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)],
+        bus: gritty < 0 ? null : busOf(stem, through.slice(gritty)),
       };
       // (chains in the order of their stems, so a voice's chains are summed alike however its notes came)
       v.chains.push(ch);
@@ -867,7 +1016,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       const through: Stage[] = [];
       for (const x of e.through ?? []) {
         const st = stageOf(x.instrument);
-        if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length)) continue;
+        if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length && !st.grit.length)) continue;
         for (const k of FILTER) {
           const track = x.params?.[k];
           const auto = st.autos[k];
@@ -877,7 +1026,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
         for (const k of Object.keys(x.params ?? {})) if (LATER[k]) say(x.instrument, k, `&${x.instrument}'s moving ${k}= is sounded from stage R2: rendered without it`);
         through.push(st);
       }
-      for (const k of Object.keys(params)) if (LATER[k] || k === 'index') say(e.voice, k, `&${e.voice}'s moving ${k}= is sounded from stage R2: rendered without it`);
+      for (const k of Object.keys(params)) if (LATER[k]) say(e.voice, k, `&${e.voice}'s moving ${k}= is sounded from stage R2: rendered without it`);
       let shares: { key: string; left: number; right: number }[] = [{ key: '', left: 1, right: 1 }];
       if (tracks === 'entries') {
         const found = sharesOf(e);
@@ -904,6 +1053,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           semis: semis(),
           cents: cents(),
           grain: v.noise ? Math.floor(grainOffset(v.seed, e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
+          fm: v.noise ? null : fmOf(e.voice, e.freq, 0, params.index, e.at, end - e.at),
           phase: 0,
         };
         const chain = chainOf(v, share.key, through);
@@ -932,6 +1082,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
         else {
           let hz = n.freq;
           if (n.semis) hz *= Math.pow(2, n.semis.at(t) / 12);
+          if (n.fm) hz += swing(n.fm, t, rate);
           if (n.cents) hz *= Math.pow(2, n.cents.at(t) / 1200);
           const table = tableFor(n.wave ?? v.wave!, hz, rate);
           if (table) {
@@ -1005,12 +1156,35 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           for (const { stage } of ch.stages) for (const sd of stage.sends) levels(sd, from, to, blockStart);
           if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length) continue;
           sound(v, ch, from, to, blockStart);
+          for (const g of v.grit)
+            for (let f = from; f < to; f++) {
+              const i = f - blockStart;
+              ch.dry[0][i] = g.run(ch.dry[0][i]!);
+              ch.dry[1][i] = g.run(ch.dry[1][i]!);
+            }
           filter(v, ch, from, to, blockStart);
           const stem = stemOf(ch, name);
           for (let f = from; f < to; f++) {
             const i = f - blockStart;
             const l = ch.dry[0][i]! * VOICE_GAIN * master;
             const r = ch.dry[1][i]! * VOICE_GAIN * master;
+            if (ch.bus) {
+              // (into the bus at the level it leaves its voice, the card's master after the bus's grit)
+              ch.bus.input[0][i]! += ch.dry[0][i]! * VOICE_GAIN;
+              ch.bus.input[1][i]! += ch.dry[1][i]! * VOICE_GAIN;
+              for (const sd of v.sends) {
+                const g = sendLevels.get(sd)![i]!;
+                sd.to.input[0][i]! += l * g;
+                sd.to.input[1][i]! += r * g;
+              }
+              for (const { stage } of ch.stages)
+                for (const sd of stage.sends) {
+                  const g = sendLevels.get(sd)![i]!;
+                  sd.to.input[0][i]! += l * g;
+                  sd.to.input[1][i]! += r * g;
+                }
+              continue;
+            }
             for (const sd of v.sends) {
               const g = sendLevels.get(sd)![i]!;
               sd.to.input[0][i]! += l * g;
@@ -1037,6 +1211,59 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
               mix[0][f - position]! += Math.fround(l);
               mix[1][f - position]! += Math.fround(r);
             }
+          }
+        }
+      }
+      // the buses, after every voice: their instrument's grit on its voices' sum, then the filters and sends of each stage
+      for (const b of buses.values()) {
+        const t = blockStart / rate;
+        for (const { stage } of b.stages) for (const sd of stage.sends) levels(sd, from, to, blockStart);
+        const [x0, x1] = b.input;
+        b.stages.forEach(({ stage, filters }, j) => {
+          if (j === 0)
+            for (const g of stage.grit)
+              for (let f = from; f < to; f++) {
+                const i = f - blockStart;
+                x0[i] = g.run(x0[i]!);
+                x1[i] = g.run(x1[i]!);
+              }
+          for (const k of ['lpf', 'hpf'] as const) {
+            const bq = filters[k];
+            if (!bq) continue;
+            bq.set(stage.autos[k]!.at(t), stage.autos[k === 'lpf' ? 'lpq' : 'hpq']!.at(t), rate);
+            for (let f = from; f < to; f++) {
+              const i = f - blockStart;
+              x0[i] = bq.run(x0[i]!, 0);
+              x1[i] = bq.run(x1[i]!, 1);
+            }
+          }
+        });
+        const stem = tracks === 'voices' ? stemOut.get(b.stages[0]!.stage.name) : tracks === 'entries' ? stemOut.get(entryName.get(b.stem) ?? '') : undefined;
+        for (let f = from; f < to; f++) {
+          const i = f - blockStart;
+          const l = x0[i]! * master;
+          const r = x1[i]! * master;
+          x0[i] = 0;
+          x1[i] = 0;
+          for (const { stage } of b.stages)
+            for (const sd of stage.sends) {
+              const g = sendLevels.get(sd)![i]!;
+              sd.to.input[0][i]! += l * g;
+              sd.to.input[1][i]! += r * g;
+            }
+          if (tracks === 'entries') {
+            if (stem) {
+              stem[0][f - position]! += l;
+              stem[1][f - position]! += r;
+            }
+          } else if (stem) {
+            stem[0][f - position]! += l;
+            stem[1][f - position]! += r;
+            mix[0][f - position]! += Math.fround(l);
+            mix[1][f - position]! += Math.fround(r);
+          } else {
+            mix[0][f - position]! += Math.fround(l);
+            mix[1][f - position]! += Math.fround(r);
           }
         }
       }

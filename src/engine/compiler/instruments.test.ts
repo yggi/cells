@@ -142,10 +142,10 @@ describe('an instrument is a module after its voices, with its own stage (#432)'
     expect([l, r]).toEqual([0.5, 0.5]);
   });
 
-  it('grit on an instrument is sounded from stage R2, as on a voice: said by the render, not the compiler', () => {
+  it("grit on an instrument is on its voices' sum, and rendered: nothing said by the compiler or the render", () => {
     const text = lines(BASE, '&saw s=saw loop=C2', '&vcf distort=.5 lpf=900 [&saw]', '&out map=sample [&tune * &vcf * .4]');
     expect(messages(text)).toEqual([]);
-    expect(audio(text).diagnostics.map((d) => d.message)).toContain("&vcf's distort= is sounded from stage R2: rendered without it");
+    expect(audio(text).diagnostics).toEqual([]);
   });
 
   it('what isn’t a processor is a voice’s: an error on an instrument', () => {
