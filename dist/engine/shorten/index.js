@@ -1,4 +1,5 @@
 import { compileSource } from "../compile.js";
+import { soundsIdentical } from "../sameness.js";
 import { candidates, savesChars, size, structure, suggestion } from "./harness.js";
 import { runs } from "./runs.js";
 import { phrases } from "./phrases.js";
@@ -14,9 +15,10 @@ export function shorten(source, options = {}) {
     const { result, cells } = candidates(source, options);
     if (!result.ok)
         return [];
+    const counted = cells.filter((c) => !c.unitRead);
     const found = [
-        ...runs(source, cells),
-        ...phrases(source, cells, result, options, options.hints),
+        ...runs(source, counted),
+        ...phrases(source, counted, result, options, options.hints),
         ...fractions(source, cells, result),
         ...sameCells(source, result, options),
         ...defaults(source, result, options),
@@ -51,10 +53,13 @@ export function shortenAll(source, rounds = 60, options = {}) {
     let now = source;
     const steps = [];
     for (let i = 0; i < rounds; i++) {
-        const best = shorten(now, options).find((s) => s.kind !== 'card');
-        if (!best)
+        const taken = shorten(now, options)
+            .filter((s) => s.kind !== 'card')
+            .map((s) => ({ best: s, next: s.apply(now) }))
+            .find(({ next }) => soundsIdentical(now, next, undefined, options));
+        if (!taken)
             break;
-        const next = best.apply(now);
+        const { best, next } = taken;
         const saved = structure(now) - structure(next);
         if (saved < 0 || (saved === 0 && size(next) >= size(now)))
             break;
