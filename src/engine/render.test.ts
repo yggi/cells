@@ -145,10 +145,10 @@ describe('the renderer', () => {
     expect(bits(pieceAudio(r, codeShifts(r), { seconds: 4 }).mix)).toEqual(bits(once.mix));
   });
 
-  it("a parameter of a later stage is said, once a cell, and the sound rendered without it: an instrument's grit", () => {
-    const wet = audio('&a s=saw loop=A3\n&v distort=.3 [&a]\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
-    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v distort']);
-    const dry = audio('&a s=saw loop=A3\n&v [&a]\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
+  it("a parameter of a later stage is said, once a cell, and the sound rendered without it: a resonator's board (R3)", () => {
+    const wet = audio('&v s=saw loop=A3 board=fork\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
+    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v board']);
+    const dry = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
     expect(bits(wet.mix)).toEqual(bits(dry.mix));
   });
 
@@ -420,5 +420,49 @@ describe('FM (decision 062 R2, #452)', () => {
     const two = fm('fm=&op index=2', '&op s=sine ratio=2 fm=&op2 index=3\n&op2 s=sine ratio=.5');
     expect(bits([two.left])).not.toEqual(bits([one.left]));
     expect(two.diagnostics).toEqual([]);
+  });
+});
+
+describe("an instrument's grit, on its voices' sum (decision 067, #452)", () => {
+  const RATE = 48000;
+  const stems = (text: string) => {
+    const r = compiled(text);
+    expect(r.ok, r.diagnostics.map((d) => d.message).join('; ')).toBe(true);
+    const rr = createRenderer(r, codeShifts(r), { tracks: 'voices' });
+    rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 1, true, { until: 1 }));
+    const out = rr.render(RATE);
+    return { names: rr.stems, of: (n: string) => out.stems.get(n)!, mix: out.mix, diagnostics: rr.diagnostics };
+  };
+  const VOICES = '&a s=saw loop=A2\n&b s=square loop=E3\n&n step=4 0 2\n';
+  const k = 60;
+  const curve = (x: number) => (Math.abs(x) < 0.001 ? 0 : ((3 + k) * x * 20 * (Math.PI / 180)) / (Math.PI + k * Math.abs(x)));
+
+  it("is its curve on what its voices play into it, summed: not each voice's alone", () => {
+    const dry = stems(`${VOICES}&out map=sample postgain=1 [&n * &a, &n * &b]`);
+    const box = stems(`${VOICES}&box distort=.6 [&a, &b]\n&out map=sample postgain=1 [&n * &box]`);
+    expect([box.names, box.diagnostics]).toEqual([['a', 'b', 'box'], []]);
+    let far = 0;
+    let apart = 0;
+    for (let i = 0; i < RATE; i += 7) {
+      const sum = dry.of('a')[0][i]! + dry.of('b')[0][i]!;
+      // (Tone's curve, read between its 1024 points, steep at silence: within .01)
+      far = Math.max(far, Math.abs(box.of('box')[0][i]! - curve(sum)));
+      apart = Math.max(apart, Math.abs(curve(dry.of('a')[0][i]!) + curve(dry.of('b')[0][i]!) - curve(sum)));
+    }
+    expect(far).toBeLessThan(0.01);
+    expect(apart).toBeGreaterThan(0.05);
+    // (its voices play nothing of their own: their sound is the instrument's stem)
+    expect(box.of('a')[0].every((x) => x === 0)).toBe(true);
+  });
+
+  it('its stems sum to the mix, its filters and sends after its grit', () => {
+    const box = stems(`${VOICES}&box crush=6 distort=.3 lpf=900 delay=.3 room=.2 [&a, &b]\n&out map=sample postgain=1 [&n * &box]`);
+    expect([box.names, box.diagnostics]).toEqual([['a', 'b', 'echo', 'reverb', 'box'], []]);
+    for (const ch of [0, 1] as const)
+      for (let i = 0; i < RATE; i++) {
+        let sum = 0;
+        for (const n of box.names) sum = Math.fround(sum + box.of(n)[ch][i]!);
+        if (Math.abs(sum - box.mix[ch][i]!) > 1e-6) expect([ch, i, box.mix[ch][i]]).toEqual([ch, i, sum]);
+      }
   });
 });

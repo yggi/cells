@@ -573,10 +573,7 @@ export function createRenderer(result, shifts, options = {}) {
         for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
             if (LATER[k])
                 say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-        for (const k of ['distort', 'crush'])
-            if (k in c.params)
-                say(name, k, `&${name}'s ${k}= is on its voices' sum, sounded from a later rung of stage R2: rendered without it`);
-        const st = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true) };
+        const st = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
         stages.set(name, st);
         return st;
     };
@@ -584,16 +581,31 @@ export function createRenderer(result, shifts, options = {}) {
         ...(has.lpf ? { lpf: new Biquad('lowpass') } : {}),
         ...(has.hpf ? { hpf: new Biquad('highpass') } : {}),
     });
+    const buses = new Map();
+    const busOf = (stem, through) => {
+        const key = [stem, ...through.map((st) => st.name)].join('\u0000');
+        let b = buses.get(key);
+        if (!b) {
+            b = { key, stem, stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })), input: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
+            buses.set(key, b);
+            if (tracks === 'voices' && !stems.includes(through[0].name))
+                stems.push(through[0].name);
+        }
+        return b;
+    };
     const chainOf = (v, stem, through) => {
         const key = [stem, ...through.map((st) => st.name)].join('\u0000');
         let ch = v.chains.find((x) => x.key === key);
         if (!ch) {
+            const gritty = through.findIndex((st) => st.grit.length > 0);
+            const inside = gritty < 0 ? through : through.slice(0, gritty);
             ch = {
                 key,
                 filters: biquads(v.has),
-                stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })),
+                stages: inside.map((stage) => ({ stage, filters: biquads(stage.has) })),
                 notes: [],
                 dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)],
+                bus: gritty < 0 ? null : busOf(stem, through.slice(gritty)),
             };
             v.chains.push(ch);
             v.chains.sort((a, b) => (entryOrder.get(stemKey(a)) ?? -1) - (entryOrder.get(stemKey(b)) ?? -1) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
@@ -712,7 +724,7 @@ export function createRenderer(result, shifts, options = {}) {
             const through = [];
             for (const x of e.through ?? []) {
                 const st = stageOf(x.instrument);
-                if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length))
+                if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length && !st.grit.length))
                     continue;
                 for (const k of FILTER) {
                     const track = x.params?.[k];
@@ -882,6 +894,22 @@ export function createRenderer(result, shifts, options = {}) {
                         const i = f - blockStart;
                         const l = ch.dry[0][i] * VOICE_GAIN * master;
                         const r = ch.dry[1][i] * VOICE_GAIN * master;
+                        if (ch.bus) {
+                            ch.bus.input[0][i] += ch.dry[0][i] * VOICE_GAIN;
+                            ch.bus.input[1][i] += ch.dry[1][i] * VOICE_GAIN;
+                            for (const sd of v.sends) {
+                                const g = sendLevels.get(sd)[i];
+                                sd.to.input[0][i] += l * g;
+                                sd.to.input[1][i] += r * g;
+                            }
+                            for (const { stage } of ch.stages)
+                                for (const sd of stage.sends) {
+                                    const g = sendLevels.get(sd)[i];
+                                    sd.to.input[0][i] += l * g;
+                                    sd.to.input[1][i] += r * g;
+                                }
+                            continue;
+                        }
                         for (const sd of v.sends) {
                             const g = sendLevels.get(sd)[i];
                             sd.to.input[0][i] += l * g;
@@ -909,6 +937,63 @@ export function createRenderer(result, shifts, options = {}) {
                             mix[0][f - position] += Math.fround(l);
                             mix[1][f - position] += Math.fround(r);
                         }
+                    }
+                }
+            }
+            for (const b of buses.values()) {
+                const t = blockStart / rate;
+                for (const { stage } of b.stages)
+                    for (const sd of stage.sends)
+                        levels(sd, from, to, blockStart);
+                const [x0, x1] = b.input;
+                b.stages.forEach(({ stage, filters }, j) => {
+                    if (j === 0)
+                        for (const g of stage.grit)
+                            for (let f = from; f < to; f++) {
+                                const i = f - blockStart;
+                                x0[i] = g.run(x0[i]);
+                                x1[i] = g.run(x1[i]);
+                            }
+                    for (const k of ['lpf', 'hpf']) {
+                        const bq = filters[k];
+                        if (!bq)
+                            continue;
+                        bq.set(stage.autos[k].at(t), stage.autos[k === 'lpf' ? 'lpq' : 'hpq'].at(t), rate);
+                        for (let f = from; f < to; f++) {
+                            const i = f - blockStart;
+                            x0[i] = bq.run(x0[i], 0);
+                            x1[i] = bq.run(x1[i], 1);
+                        }
+                    }
+                });
+                const stem = tracks === 'voices' ? stemOut.get(b.stages[0].stage.name) : tracks === 'entries' ? stemOut.get(entryName.get(b.stem) ?? '') : undefined;
+                for (let f = from; f < to; f++) {
+                    const i = f - blockStart;
+                    const l = x0[i] * master;
+                    const r = x1[i] * master;
+                    x0[i] = 0;
+                    x1[i] = 0;
+                    for (const { stage } of b.stages)
+                        for (const sd of stage.sends) {
+                            const g = sendLevels.get(sd)[i];
+                            sd.to.input[0][i] += l * g;
+                            sd.to.input[1][i] += r * g;
+                        }
+                    if (tracks === 'entries') {
+                        if (stem) {
+                            stem[0][f - position] += l;
+                            stem[1][f - position] += r;
+                        }
+                    }
+                    else if (stem) {
+                        stem[0][f - position] += l;
+                        stem[1][f - position] += r;
+                        mix[0][f - position] += Math.fround(l);
+                        mix[1][f - position] += Math.fround(r);
+                    }
+                    else {
+                        mix[0][f - position] += Math.fround(l);
+                        mix[1][f - position] += Math.fround(r);
                     }
                 }
             }
