@@ -2,7 +2,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from "./he
 import { footOf, leaves, slots } from "./subseq.js";
 import { beltWarp, onReset, warpOf } from "./physics.js";
 import { mod } from "../theory/modes.js";
-import { stepsPerPulse, swungKnots } from "./meter.js";
+import { stepsPerPulse, swingAt, swungKnots } from "./meter.js";
 export const EPS = 1e-9;
 export function timeMap(result, clock, shifts) {
     if (clock.tap)
@@ -102,14 +102,14 @@ function tapMap(tap, meter, swung = null) {
     return { beats: k, q: (j) => meter.q(meterStep(j)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
 }
 function swungMeter(result, meter) {
-    const m = result.cells.get(meter)?.meter;
+    const m = result.cells.get(meter)?.meter ?? undefined;
     const knots = m ? swungKnots(m) : null;
     if (!m || !knots)
         return null;
     const per = stepsPerPulse(m);
     const { written, swung } = knots;
     const P = m.pulses;
-    return (w) => {
+    const S = (w) => {
         const p = w / per;
         const bar = Math.floor(p / P + 1e-12);
         const x = p - bar * P;
@@ -119,8 +119,14 @@ function swungMeter(result, meter) {
         const span = written[i + 1] - written[i];
         return (bar * P + swung[i] + (span > 0 ? ((x - written[i]) / span) * (swung[i + 1] - swung[i]) : 0)) * per;
     };
+    const finest = Math.min(...m.swing.map((l) => l.whole * m.unit));
+    const held = (grid) => {
+        const k = Math.log2(grid / per / finest);
+        return Math.abs(k - Math.round(k)) < 1e-9;
+    };
+    return { S, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per) };
 }
-function swungTapMap(tap, meter, S) {
+function swungTapMap(tap, meter, { S, at }) {
     const { positions, lap } = tap;
     const written = tap.written ?? positions;
     const k = Math.max(1, positions.length);
@@ -128,13 +134,14 @@ function swungTapMap(tap, meter, S) {
         return null;
     const wAt = (i) => (i < k ? written[i] : lap);
     const pAt = (i) => (i < k ? positions[i] : lap);
-    const meterStep = (j) => {
+    const meterStep = (j, grid) => {
         const n = Math.floor(j);
         const b = Math.floor(n / k);
         const i = n - b * k;
         if (j === n)
             return b * lap + pAt(i);
-        return b * lap + S(wAt(i) + (j - n) * (wAt(i + 1) - wAt(i)));
+        const w = wAt(i) + (j - n) * (wAt(i + 1) - wAt(i));
+        return b * lap + (grid !== undefined && grid > 0 ? at(w, grid * (wAt(i + 1) - wAt(i))) : S(w));
     };
     const stepAt = (t) => {
         const x = meter.stepAt(t);
@@ -158,7 +165,7 @@ function swungTapMap(tap, meter, S) {
         }
         return b * k + i + lo;
     };
-    return { beats: k, q: (j) => meter.q(meterStep(j)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
+    return { beats: k, q: (j, grid) => meter.q(meterStep(j, grid)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
 }
 export function playedCells(result) {
     let out = playedCache.get(result);

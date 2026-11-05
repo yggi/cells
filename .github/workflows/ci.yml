@@ -5,6 +5,8 @@
 # hand (Run workflow) on any branch, as the release skill's first step. Each job writes its test count to its summary.
 # A pull request still meets the family's switch (yggi/music-commons CI-BUDGET.md): it runs where Actions is free (public)
 # or on (variable CI = on), and a draft runs nothing; the nightly and a run by hand don't ask. A superseded run is cancelled.
+# A pull request that changes prose alone (tools/docs-only.sh, the pre-push hook's own test) runs `npm run verify:docs` in
+# `verify` and nothing in `slow`, each job still named and green, so the review skill's reuse of CI's run holds for it.
 name: ci
 on:
   pull_request:
@@ -25,30 +27,47 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # (the whole history, for the merge base tools/docs-only.sh reads)
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: scope
+        run: echo "scope=$([ '${{ github.event_name }}' = pull_request ] && sh tools/docs-only.sh 'origin/${{ github.base_ref }}' || echo code)" >>"$GITHUB_OUTPUT"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm run verify 2>&1 | tee verify.log
+      - run: npm run ${{ steps.scope.outputs.scope == 'docs' && 'verify:docs' || 'verify' }} 2>&1 | tee verify.log
       - if: always()
         run: |
           count=$(sed 's/\x1b\[[0-9;]*m//g' verify.log | grep -E '^ *Tests ' | tail -1 | sed 's/^ *//' || true)
-          echo "verify on $(git rev-parse --short HEAD): ${count:-no count}" >>"$GITHUB_STEP_SUMMARY"
+          what=verify
+          [ '${{ steps.scope.outputs.scope }}' = docs ] && what='the docs check (prose alone)'
+          echo "$what on $(git rev-parse --short HEAD): ${count:-no count}" >>"$GITHUB_STEP_SUMMARY"
   slow:
     if: github.event_name != 'pull_request' || (github.event.pull_request.draft == false && (!github.event.repository.private || vars.CI == 'on'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+        with:
+          fetch-depth: 0
+      - id: scope
+        run: echo "scope=$([ '${{ github.event_name }}' = pull_request ] && sh tools/docs-only.sh 'origin/${{ github.base_ref }}' || echo code)" >>"$GITHUB_OUTPUT"
+      - if: steps.scope.outputs.scope == 'docs'
+        run: |
+          echo "no slow tests on $(git rev-parse --short HEAD): the pull request changes prose alone (tools/docs-only.sh)" >>"$GITHUB_STEP_SUMMARY"
+      - if: steps.scope.outputs.scope != 'docs'
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci --no-audit --no-fund
-      - run: npm run test:slow 2>&1 | tee slow.log
-      - if: always()
+      - if: steps.scope.outputs.scope != 'docs'
+        run: npm ci --no-audit --no-fund
+      - if: steps.scope.outputs.scope != 'docs'
+        run: npm run test:slow 2>&1 | tee slow.log
+      - if: always() && steps.scope.outputs.scope != 'docs'
         run: |
           count=$(sed 's/\x1b\[[0-9;]*m//g' slow.log | grep -E '^ *Tests ' | tail -1 | sed 's/^ *//' || true)
           echo "the slow tests on $(git rev-parse --short HEAD): ${count:-no count}" >>"$GITHUB_STEP_SUMMARY"

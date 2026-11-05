@@ -158,7 +158,6 @@ export declare function returnGains(x: {
 export declare function outputSounds(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean;
 /** Does it play at all: heard (`outputSounds`), or sent on a MIDI card that is on (`outputSent`)? What the plan plays. */
 export declare function outputPlays(result: CompileResult, o: Output, muted: ReadonlySet<string>): boolean;
-/** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 /**
  * A line's events laid on a lap of `lap` steps, which it comes round at (#116, decision 040: `cycle=n` on a tapped line
  * runs it n bars before it comes round): its braid begins again at each lap, a step past the lap is dropped (a note
@@ -169,6 +168,7 @@ export declare function comeRound(events: readonly StepEvent[], period: number, 
     period: number;
     events: StepEvent[];
 };
+/** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 export declare function plan(result: CompileResult, statics: Shifts, muted?: ReadonlySet<string>): Plan;
 /** Which voice a number plays on, and that voice's base frequency. */
 export declare function voiceFor(result: CompileResult, o: Output, value: number): {
