@@ -242,6 +242,15 @@ function parseEuclid(s, start) {
     });
     return { kind: 'list', tokens, span };
 }
+function parseEven(s, start) {
+    const { args, span } = numbers(s, 'even', start);
+    const [k, n, phase = 0] = args;
+    if (args.length < 2 || args.length > 3 || !(k >= 1) || !(n >= k))
+        s.fail('even(k, n): k places spread as evenly as they go over n (1 ≤ k ≤ n), even(k, n, phase) its mode', start, span.len);
+    if (!(phase >= 0 && phase < k))
+        s.fail(`even(${k}, ${n}, phase): the phase is a mode, 0 to ${k - 1}, each one place moved`, start, span.len);
+    return { kind: 'scan', steps: intervals(evenPositions(k, n, phase), n), span };
+}
 const WAVE_NAMES = { sin: 'a sine', saw: 'a saw', tri: 'a triangle', square: 'a square' };
 const parseWave = (shape) => (s, start) => {
     const { args, span } = numbers(s, shape, start);
@@ -395,6 +404,10 @@ export const GENERATORS = {
         parse: parseEuclid,
         syntax: syntax('generator', 'euclid(k, n) · euclid(k, n, shift)', "k hits spread as evenly as they go over n steps (the Euclidean rhythms), turned right by shift steps, as Strudel's (k, n, r).", ['&tresillo euclid(3, 8)', '&clave euclid(5, 16, 2)'], 'braid.md'),
     },
+    even: {
+        parse: parseEven,
+        syntax: syntax('generator', 'even(k, n) · even(k, n, phase)', "k places spread as evenly as they go over n: a table (the scan of its intervals), its phase its mode, 0 to k − 1, each one place moved. The one generator under the diatonic (even(7, 12), its phases the seven modes), the pentatonic, the standard bell, the tresillo and a meter's groups (decision 072); euclid(k, n, r) is its places as a rhythm of n steps, turned as Strudel's.", ['&ionian even(7, 12, 5)', '&pentatonic even(5, 12)', '&minorPentatonic even(5, 12, 3)', '&tresillo even(3, 8, 2)'], 'tables.md'),
+    },
     sin: { parse: parseWave('sin'), syntax: WAVE_SYNTAX },
     saw: { parse: parseWave('saw'), syntax: WAVE_SYNTAX },
     tri: { parse: parseWave('tri'), syntax: WAVE_SYNTAX },
@@ -423,23 +436,7 @@ export const GENERATORS = {
         syntax: syntax('generator', 'spell("text", &table, "names")', 'A text spelled through a table: each character that is one of the names plays that entry of the table, then a pause; anything else rests as long. The text can be free("…"), a field to type in.', ['&dial spell("867 5309", &keys, "1 2 3 A 4 5 6 B 7 8 9 C * 0 # D")', '&dial spell(free("867 5309"), &keys, "1 2 3 A 4 5 6 B 7 8 9 C * 0 # D")'], 'braid.md'),
     },
 };
-function euclidOfEven(k, n, phase) {
-    const want = new Set(evenPositions(k, n, phase).map((x) => ((x % n) + n) % n));
-    const pattern = bjorklund(k, n);
-    for (let r = 0; r < n; r++)
-        if (pattern.every((_, j) => pattern[(((j - r) % n) + n) % n] === want.has(j)))
-            return `euclid(${k}, ${n}${r ? `, ${r}` : ''})`;
-    return Array.from({ length: n }, (_, j) => (want.has(j) ? '0' : '~')).join(' ');
-}
 const RETIRED_GENERATORS = {
-    even: (s, start) => {
-        const { args, span } = numbers(s, 'even', start);
-        const [k, n = 12, phase = 0] = args;
-        const steps = k >= 1 && n >= k ? intervals(evenPositions(k, n, phase), n) : null;
-        return s.fail(steps
-            ? `even(…) is gone: for a scale write scan(${steps.join(' ')}); for a rhythm, ${euclidOfEven(k, n, phase)}`
-            : 'even(…) is gone: write the intervals, scan(2 2 1 2 2 2 1), or a rhythm, euclid(3, 8)', start, span.len);
-    },
     agogic: (s, start) => {
         const { args, span } = numbers(s, 'agogic', start);
         const [n, d] = args;

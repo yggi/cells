@@ -110,6 +110,9 @@ const SUGAR: Check[] = [
   table('Generators · scan(i …)', '&tempo scan(1!4 .5!2) step=120bpm', '&tempo scan(1 1 1 1 .5 .5) step=120bpm', '&t step=&tempo 0 2 4', 't'),
   table('Generators · scan(i …)', '&series scan(geo(5, 25, 0 10 5))', `&series scan(1 ${5 ** (10 / 25)} ${5 ** (5 / 25)})`, '&t over=&series step=2 0 1 2 3 4', 't'),
   line('Generators · euclid(k, n)', '&tresillo step=4 euclid(3, 8)', '&tresillo step=4 0 ~ ~ 0 ~ ~ 0 ~', 'tresillo'),
+  // (decision 072: even is its scan written; euclid strikes even's places, onsets only, in even.test.ts)
+  table('Generators · even(k, n)', '&major even(7, 12, 5)', MAJOR, '&tune over=&major step=2 0 2 4 7 -1 9', 'tune'),
+  table('Generators · even(k, n)', '&pentatonic even(5, 12)', '&pentatonic scan(2 2 3 2 3)', '&tune over=&pentatonic step=2 0 1 2 3 4 5', 'tune'),
   line('Generators · euclid(k, n)', '&clave step=4 euclid(5, 16, 2)', '&clave step=4 ~ ~ 0 ~ ~ 0 ~ ~ 0 ~ ~ 0 ~ ~ 0 ~', 'clave'),
   line('Generators · sin(n) …', '&sine step=2 sin(12)', `&sine step=2 ${Array.from({ length: 12 }, (_, k) => Math.sin((2 * Math.PI * k) / 12).toFixed(15)).join(' ')}`, 'sine'),
   line('Generators · sin(n) …', '&ramp step=2 saw(8)', '&ramp step=2 -1 -.75 -.5 -.25 0 .25 .5 .75', 'ramp'),

@@ -1,4 +1,4 @@
-/** Generators: a braid written as a rule — scan(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
+/** Generators: a braid written as a rule — scan(…), even(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
 import type { Braid, Ref, Span, WaveShape } from '../ast';
 import type { Signature } from '../meter';
 import { syntax, type Syntax } from './syntax';
@@ -266,6 +266,21 @@ function parseEuclid(s: LineScanner, start: number): Braid {
   return { kind: 'list', tokens, span } as Braid;
 }
 
+/**
+ * even(k, n, phase): the maximally even necklace, k places in n, a table (decision 072): each place at
+ * floor((j·n + phase) / k), the same table as the scan of its intervals. Its phase is its mode, 0 … k − 1, each phase one
+ * place moved, every mode starting on 0 (the seven of even(7, 12) are scale(&mode)'s phases). The one generator under the scales (the diatonic, the pentatonic), the even rhythms (the bell, the
+ * tresillo) and a meter's groups; euclid(k, n, r) is the same places as a rhythm of n steps, turned as Strudel's.
+ */
+function parseEven(s: LineScanner, start: number): Braid {
+  const { args, span } = numbers(s, 'even', start);
+  const [k, n, phase = 0] = args;
+  if (args.length < 2 || args.length > 3 || !(k >= 1) || !(n >= k))
+    s.fail('even(k, n): k places spread as evenly as they go over n (1 ≤ k ≤ n), even(k, n, phase) its mode', start, span.len);
+  if (!(phase >= 0 && phase < k)) s.fail(`even(${k}, ${n}, phase): the phase is a mode, 0 to ${k - 1}, each one place moved`, start, span.len);
+  return { kind: 'scan', steps: intervals(evenPositions(k, n, phase), n), span };
+}
+
 type Generator = (s: LineScanner, start: number) => Braid;
 
 /** What each waveform is, in words. */
@@ -476,6 +491,16 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
       'braid.md',
     ),
   },
+  even: {
+    parse: parseEven,
+    syntax: syntax(
+      'generator',
+      'even(k, n) · even(k, n, phase)',
+      "k places spread as evenly as they go over n: a table (the scan of its intervals), its phase its mode, 0 to k − 1, each one place moved. The one generator under the diatonic (even(7, 12), its phases the seven modes), the pentatonic, the standard bell, the tresillo and a meter's groups (decision 072); euclid(k, n, r) is its places as a rhythm of n steps, turned as Strudel's.",
+      ['&ionian even(7, 12, 5)', '&pentatonic even(5, 12)', '&minorPentatonic even(5, 12, 3)', '&tresillo even(3, 8, 2)'],
+      'tables.md',
+    ),
+  },
   sin: { parse: parseWave('sin'), syntax: WAVE_SYNTAX },
   saw: { parse: parseWave('saw'), syntax: WAVE_SYNTAX },
   tri: { parse: parseWave('tri'), syntax: WAVE_SYNTAX },
@@ -531,31 +556,8 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
   },
 };
 
-/**
- * The rhythm even(k, n, phase) played, written now (#7): the euclid(k, n, r) that strikes the same onsets (r found by
- * trying each turn; the two count their phases differently, decision 037), else the steps themselves.
- */
-function euclidOfEven(k: number, n: number, phase: number): string {
-  const want = new Set(evenPositions(k, n, phase).map((x) => ((x % n) + n) % n));
-  const pattern = bjorklund(k, n);
-  for (let r = 0; r < n; r++) if (pattern.every((_, j) => pattern[(((j - r) % n) + n) % n] === want.has(j))) return `euclid(${k}, ${n}${r ? `, ${r}` : ''})`;
-  return Array.from({ length: n }, (_, j) => (want.has(j) ? '0' : '~')).join(' ');
-}
-
 /** Generators that are gone: reading one says what to write instead. */
 const RETIRED_GENERATORS: Readonly<Record<string, Generator>> = {
-  even: (s, start) => {
-    const { args, span } = numbers(s, 'even', start);
-    const [k, n = 12, phase = 0] = args;
-    const steps = k >= 1 && n >= k ? intervals(evenPositions(k, n, phase), n) : null;
-    return s.fail(
-      steps
-        ? `even(…) is gone: for a scale write scan(${steps.join(' ')}); for a rhythm, ${euclidOfEven(k, n, phase)}`
-        : 'even(…) is gone: write the intervals, scan(2 2 1 2 2 2 1), or a rhythm, euclid(3, 8)',
-      start,
-      span.len,
-    );
-  },
   agogic: (s, start) => {
     const { args, span } = numbers(s, 'agogic', start);
     const [n, d] = args;
