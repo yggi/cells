@@ -8,7 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 ## Unreleased
 
-Nothing has changed since v0.17.1.
+### Added
+
+- **The renderer sounds the echo** (decision 062 stage R2, #452): `delay=`, fixed or moving, `delaytime=` and `delayfeedback=` on a voice, as Cell studio's voices sound them, a voice's own echo at its `delaytime=` or the shared one (0.375 s at .35), measured within 0.25 dB of Cell studio's render; and on an instrument (decision 067), one echo of its voices' sum. 51 of 83 examples render with no diagnostic, from 49 (`acid` and `patchbay` join). With `tracks: 'voices'` or `'entries'`, an echo's return is a stem of its own, `echo` or `echo:<voice>`, and the stems still sum to the mix. An echo is no longer a diagnostic; the reverb, grit and FM still are. No event snapshot moves: the renderer only. **What a frontend sees at its next pin:** `pieceAudio` and `createRenderer` sound a piece's echoes, a piece with `delay=` renders louder by its echo, and a render's `stems` can hold an echo's return.
 
 ## v0.17.1 — 2026-11-05
 
