@@ -8,7 +8,24 @@ import { parse } from '../engine/parser';
 import { bandAt, CENTRE, resolveBand, scoreStyle } from './band';
 import { createRepository, pointDistance } from './fragments';
 import { resolveSeed } from './library';
-import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, nearestStyle, SPOOKY, STYLE_FRAGMENTS, STYLES, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import {
+  AMBIENT,
+  at,
+  BOSSA_NOVA,
+  DEEP_HOUSE,
+  ELECTRO_SWING,
+  FUNK,
+  KINDERLIED,
+  LO_FI,
+  nearestStyle,
+  SPOOKY,
+  STYLE_FRAGMENTS,
+  STYLES,
+  stylePoint,
+  SWING_JAZZ,
+  SYNTH_POP,
+  TECHNO,
+} from './styles';
 
 const AXIS_KEYS = ['sync', 'harm', 'artic', 'energy'] as const;
 // (every source file but the generated ones: what a test of restated numbers reads)
