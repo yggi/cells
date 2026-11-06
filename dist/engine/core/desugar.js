@@ -4,7 +4,7 @@ import { noteValue } from "../meter.js";
 import { noteFrequency } from "../program.js";
 import { expansion } from "../use.js";
 import { readFrom, readUse } from "../parser/use.js";
-import { splitComment } from "../edit.js";
+import { declLine, declWords, splitComment } from "../edit.js";
 const num = (x) => String(x);
 const codeWise = (text, f) => text
     .split('\n')
@@ -80,6 +80,16 @@ export const FAMILIES = [
             })),
     },
     {
+        key: 'copies',
+        rows: '79 `base=` (a copy that writes no braid of its own)',
+        rewrite: (text) => copies(text),
+    },
+    {
+        key: 'meters',
+        rows: '42 `meter("sig")`',
+        rewrite: (text, options) => meters(text, options),
+    },
+    {
         key: 'taps',
         rows: '54–55 `step=16n` `8t` `4n.` `1m`',
         rewrite: (text, options) => taps(text, options),
@@ -88,6 +98,11 @@ export const FAMILIES = [
         key: 'subsequences',
         rows: '16, 22 `[a b]` `x*n`, and `@` on the line’s finest grid',
         rewrite: (text, options) => subsequences(text, options),
+    },
+    {
+        key: 'chains',
+        rows: '53 `step=&x*n/d` as one ratio',
+        rewrite: (text) => codeWise(text, chains),
     },
 ];
 const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
@@ -175,7 +190,7 @@ function subsequences(text, options) {
 function chainOf(k) {
     const near = (x) => Math.abs(x - Math.round(x)) < 1e-9;
     if (near(k))
-        return `*${Math.round(k)}`;
+        return Math.round(k) === 1 ? '' : `*${Math.round(k)}`;
     if (near(1 / k))
         return `/${Math.round(1 / k)}`;
     for (let q = 2; q <= 64; q++)
@@ -233,6 +248,55 @@ const repeated = (tok) => {
     return m ? Array.from({ length: +m[2] }, () => m[1]).join(' ') : tok;
 };
 const unitRead = (text) => new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)\[/g)].map((m) => m[1]));
+function chains(code) {
+    return code.replace(/(\bstep=(?:&[A-Za-z_][A-Za-z0-9_]*:)?(?:pulse|beat|&[A-Za-z_][A-Za-z0-9_]*|[0-9]+[ntm]\.?))((?:[*/][0-9]+(?:\.[0-9]+)?)+)(?![0-9A-Za-z_.])/g, (_, head, chain) => {
+        let k = 1;
+        for (const m of chain.matchAll(/([*/])([0-9]+(?:\.[0-9]+)?)/g))
+            k = m[1] === '*' ? k * +m[2] : k / +m[2];
+        return `${head}${chainOf(k)}`;
+    });
+}
+function copies(text) {
+    let now = text;
+    for (const d of parse(text).cells) {
+        if (!d.base || d.base.pick || d.base.shift)
+            continue;
+        const own = declWords(now, d.name);
+        const base = declWords(now, d.base.name);
+        if (!own || !base || own.braid.length || base.attrs.some((a) => a.startsWith('base=')))
+            continue;
+        const set = new Set(own.attrs.map((a) => a.split('=')[0]));
+        const attrs = [...base.attrs.filter((a) => !set.has(a.split('=')[0])), ...own.attrs.filter((a) => !a.startsWith('base='))];
+        const i = declLine(now, d.name);
+        const lines = now.split('\n');
+        const [, comment] = splitComment(lines[i]);
+        const next = [...own.head, ...base.braid, ...attrs].join(' ');
+        lines[i] = comment ? `${next} ${comment.trim()}` : next;
+        now = lines.join('\n');
+    }
+    return now;
+}
+const LEVEL = ['*', '+', '-', '.', ','];
+function meters(text, options) {
+    const r = compileSource(text, undefined, options);
+    if (!r.ok)
+        return text;
+    const each = (c) => {
+        const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(c)?.[1];
+        const meter = name ? r.cells.get(name)?.meter : null;
+        if (!meter || meter.written !== 'meter')
+            return c;
+        return c.replace(/\bmeter\("([^"]*)"(?:,\s*[0-9]+)?\)/, (written, sig) => /^[*+\-.,:;]+$/.test(sig) ? written : `meter("${meter.levels.map((l) => LEVEL[Math.min(l, LEVEL.length - 1)]).join('')}")`);
+    };
+    return text
+        .split('\n')
+        .map((raw) => {
+        const [code, comment] = splitComment(raw);
+        const next = each(code);
+        return next === code ? raw : comment ? `${next}${comment}` : next;
+    })
+        .join('\n');
+}
 function innermost(written) {
     const text = written.replace(/"(?:[^"\\]|\\.)*"/g, (q) => q.replace(/[^"]/g, ' '));
     for (let i = text.indexOf('&('); i >= 0; i = text.indexOf('&(', i + 1)) {
@@ -304,7 +368,12 @@ export const LEFT = [
         test: /\bscan\(.*\bstep=|\bstep=.*\bscan\(/,
         why: 'a scan with a step= is a meter: its numbers are the lengths of its steps, `@`, and what a tap reads of it are its levels',
     },
-    { key: 'meters', rows: '42 `meter("sig")`', test: /\bmeter\(/, why: 'a signature’s levels are the grouping rule (#17): written out they are its table, which the reader has' },
+    {
+        key: 'meters',
+        rows: '42 `meter("sig")` left as written',
+        test: /\bmeter\("[^"]*[0-9/][^"]*"/,
+        why: 'a signature’s levels are the grouping rule (#17): written out where the piece plays the same so',
+    },
     {
         key: 'gates',
         rows: '111–113 `play=` `level=` `[&a, &b]`',

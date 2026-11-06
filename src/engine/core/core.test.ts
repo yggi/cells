@@ -18,6 +18,13 @@ describe('de-sugar: each family’s rewrite plays the same (S1), and a second fi
     ['repeats', '&t step=4 0!3 2\n&v s=sine loop=C4\n&out map=sample [&t * &v]', '&t step=4 0 0 0 2'],
     ['scans', '&major scan(2 2 1 2 2 2 1)\n&t over=&major step=2 0 2 4 6\n&v s=sine loop=C4\n&out map=sample [&t * &v]', '&major 0 2 4 5 7 9 11'],
     ['from', `${BAR}\n&bd from gm_kit\n&t step=8n &bd ~ &bd ~\n&out map=sample [&t]`, '&bd s=sine'],
+    [
+      'copies',
+      `&bar base=&grouping step=&tempo\n&grouping meter("4/4")\n&tempo step=2\n&t step=8n 0 2 4\n&v s=sine loop=C4\n&out map=sample [&t * &v]`,
+      '&bar meter("4/4") step=&tempo',
+    ],
+    ['meters', `&bar meter("4/4", 2) step=&tempo\n&tempo step=2\n&t step=8n 0 2 4\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&bar meter("*.-.+.-.")'],
+    ['chains', `${BAR}\n&t step=pulse*2*2 0 2\n&u step=pulse*1 0 2\n&v s=sine loop=C4\n&out map=sample [&t * &v, &u * &v]`, '&t step=pulse*4 0 2\n&u step=pulse 0 2'],
     ['taps', `${BAR}\n&t step=16n 0 2 4 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=pulse*4 0 2 4 5'],
     ['subsequences', `${BAR}\n&t step=8n 0 [2 4] 5 7*2\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=8n*2 0@2 2 4 5@2 7 7'],
   ];
@@ -87,7 +94,8 @@ describe('toCore: Normalise, de-sugar, fold, minify, until nothing changes', () 
     expect(toCore(c.source, O).source).toBe(c.source);
     expect(toCore(normalise(text, O).source, O).source).toBe(c.source);
     expect(c.source).not.toMatch(/from|bpm|loop=C4|#/);
-    expect(c.left.map((l) => l.key)).toEqual(['meters']);
+    expect(c.left.map((l) => l.key)).toEqual([]);
+    expect(c.source).toMatch(/meter\("\*-\+-"\)/);
     expect(c.source).toMatch(/step=pulse\*2 /);
   });
 });
