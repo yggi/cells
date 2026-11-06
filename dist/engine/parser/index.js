@@ -6,7 +6,7 @@ import { parseBody, parseCell, SHOWS } from "./cell.js";
 import { splitPlugins } from "../plugins.js";
 import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
 import { FROM_FORM, readFrom, readUse, USE_FORM, useOld } from "./use.js";
-export { meterLevels, SIGNATURES } from "./generators.js";
+export { groupingOf, meterLevels } from "./generators.js";
 export { SHOWS } from "./cell.js";
 export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse } from "./use.js";
 export function parse(whole, { old = false } = {}) {
