@@ -124,17 +124,38 @@ function modes(ctx, decls) {
             ctx.unknownCell(d.braid.mode.name, d.braid.mode.span);
             continue;
         }
+        const table = !m.step ? modeTable(m) : null;
+        if (table) {
+            decls.set(name, { ...d, braid: { ...d.braid, steps: table } });
+            continue;
+        }
         const tokens = m.braid.kind === 'list' ? m.braid.tokens : [];
         const atom = tokens.length === 1 && tokens[0].repeat === 1 && tokens[0].subdivide === 1 ? tokens[0].atom : null;
         const phase = atom?.kind === 'note' && !atom.pitched && atom.alter === 0 ? atom.value : null;
         if (m.step || phase === null || !Number.isInteger(phase) || phase < 0 || phase > 6) {
             ctx.error(m.step
                 ? `&${m.name} holds a scale's mode (scale(&${m.name}, …)): a stepped mode is not yet a form; write one (&${m.name} dorian)`
-                : `&${m.name} holds a scale's mode (scale(&${m.name}, …)): write one, a name or its phase from the darkest (&${m.name} major, &${m.name} dorian, &${m.name} 3)`, m.span);
+                : `&${m.name} holds a scale's mode (scale(&${m.name}, …)): write one, a name, its phase from the darkest or its table (&${m.name} major, &${m.name} 3, &${m.name} 0 2 3 5 7 8 10)`, m.span);
             continue;
         }
         decls.set(name, { ...d, braid: { ...d.braid, steps: diatonicSteps(phase) } });
     }
+}
+function modeTable(m) {
+    if (m.braid.kind === 'scan' && !m.braid.mode)
+        return m.braid.steps.every((x) => x > 0) && m.braid.steps.reduce((a, b) => a + b, 0) === 12 ? [...m.braid.steps] : null;
+    if (m.braid.kind !== 'list' || m.braid.tokens.length < 2)
+        return null;
+    const values = [];
+    for (const t of m.braid.tokens) {
+        const a = t.atom;
+        if (a.kind !== 'note' || a.pitched || t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1)
+            return null;
+        values.push(a.value + a.alter);
+    }
+    if (values[0] !== 0 || values.some((v, i) => !Number.isInteger(v) || v >= 12 || (i > 0 && v <= values[i - 1])))
+        return null;
+    return values.map((v, i) => (values[i + 1] ?? 12) - v);
 }
 function swings(ctx, decls) {
     for (const [name, d] of decls) {

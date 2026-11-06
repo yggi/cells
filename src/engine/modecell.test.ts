@@ -58,11 +58,34 @@ describe('a mode read from a cell', () => {
   it('a cell that holds anything but one mode is an error that says what it holds; a stepped one is not yet a form', () => {
     for (const held of ['C', 'lydian locrian', '7', '2.5'])
       expect(messages(lines(`&mode ${held}`, '&key scale(&mode, C)', BODY))).toEqual([
-        "&mode holds a scale's mode (scale(&mode, …)): write one, a name or its phase from the darkest (&mode major, &mode dorian, &mode 3)",
+        "&mode holds a scale's mode (scale(&mode, …)): write one, a name, its phase from the darkest or its table (&mode major, &mode 3, &mode 0 2 3 5 7 8 10)",
       ]);
     expect(messages(lines('&mode step=1m major minor', '&key scale(&mode, C)', BODY))).toEqual([
       "&mode holds a scale's mode (scale(&mode, …)): a stepped mode is not yet a form; write one (&mode dorian)",
     ]);
+  });
+
+  it('a mode written as its table plays as its name: `0 2 3 5 7 8 10` or `scan(2 1 2 2 1 2 2)` is minor, the tonic still a cell (decision 069, keys (a))', () => {
+    const at = (mode: string, tonic: string) =>
+      events(
+        lines(
+          `&mode ${mode}`,
+          '&key scale(&mode, &tonic)',
+          `&tonic ${tonic}`,
+          '&bar meter("4/4") step=120bpm',
+          '&tune over=&key step=8n 0 2 4 5 7 6 -1 9',
+          '&v s=sine loop=C4',
+          '&out [&tune * &v]',
+        ),
+      );
+    for (const tonic of ['D', 'step=1m/2 D F']) {
+      expect(at('0 2 3 5 7 8 10', tonic)).toEqual(at('minor', tonic));
+      expect(at('scan(2 1 2 2 1 2 2)', tonic)).toEqual(at('minor', tonic));
+    }
+    // (any mode of the twelve, not only the diatonic seven: the blues)
+    expect(at('0 3 5 6 7 10', 'C')).toEqual(
+      events(lines('&key scale(blues, C)', '&bar meter("4/4") step=120bpm', '&tune over=&key step=8n 0 2 4 5 7 6 -1 9', '&v s=sine loop=C4', '&out [&tune * &v]')),
+    );
   });
 
   it('a mode word in a melody reads as its number, as a note name reads as its pitch', () => {
