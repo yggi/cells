@@ -38,12 +38,12 @@ describe('de-sugar: each family’s rewrite plays the same (S1), and a second fi
 });
 
 describe('minify: the names that mean something besides themselves are kept', () => {
-  it('a drum’s name, a cell that draws, and a cell that splices one that draws', () => {
+  it('a drum’s name is kept; a cell that draws, and one that splices it, are renamed as any other and draw as they did (#481)', () => {
     const text = `${BAR}\n&a1 0 2? 4\n&arp step=8n &a1 &a1\n&hh s=white\n&kick s=sine loop=A1\n&hat step=8n &hh ~ &kick ~\n&v s=sine loop=C4\n&out map=sample [&arp * &v, &hat]`;
-    expect([...meaningfulNames(text)].sort()).toEqual(['a1', 'arp', 'hh', 'kick']);
+    expect([...meaningfulNames(text)].sort()).toEqual(['hh', 'kick']);
     const min = minify(text);
-    expect(min).not.toMatch(/&hat\b|&v\b|&out\b/);
-    for (const kept of ['&a1', '&arp', '&hh', '&kick']) expect(min).toContain(kept);
+    expect(min).not.toMatch(/&hat\b|&v\b|&out\b|&a1\b|&arp\b/);
+    for (const kept of ['&hh', '&kick']) expect(min).toContain(kept);
     expect(soundsIdentical(text, min, undefined, O)).toBe(true);
   });
 });
@@ -84,17 +84,6 @@ describe('toCore: Normalise, de-sugar, fold, minify, until nothing changes', () 
     expect(toCore(normalise(text, O).source, O).source).toBe(c.source);
     expect(c.source).not.toMatch(/from|bpm|loop=C4|#/);
     expect(c.left.map((l) => l.key)).toEqual(['taps', 'meters']);
-  });
-});
-
-describe('minify: the names that mean something besides themselves are kept', () => {
-  it('a drum’s name, a cell that draws, and a cell that splices one that draws', () => {
-    const text = `${BAR}\n&a1 0 2? 4\n&arp step=8n &a1 &a1\n&hh s=white\n&kick s=sine loop=A1\n&hat step=8n &hh ~ &kick ~\n&v s=sine loop=C4\n&out map=sample [&arp * &v, &hat]`;
-    expect([...meaningfulNames(text)].sort()).toEqual(['a1', 'arp', 'hh', 'kick']);
-    const min = minify(text);
-    expect(min).not.toMatch(/&hat\b|&v\b|&out\b/);
-    for (const kept of ['&a1', '&arp', '&hh', '&kick']) expect(min).toContain(kept);
-    expect(soundsIdentical(text, min, undefined, O)).toBe(true);
   });
 });
 

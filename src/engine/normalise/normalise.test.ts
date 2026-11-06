@@ -29,6 +29,9 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     ['sound=saw', 's=saw', 1],
     ['s=saw resonance=2 verb=.3', 's=saw lpq=2 room=.3', 2],
     ['s=saw dt=.25 delay=.3', 's=saw delaytime=.25 delay=.3', 1],
+    // (ftype='s numbers, superdough's, as its words: decision 074; and bandf= as bpf=)
+    ['s=saw lpf=800 ftype=2', 's=saw lpf=800 ftype=24db', 1],
+    ['s=saw bandf=900 bandq=3', 's=saw bpf=900 bpq=3', 2],
   ])('an alias as ours, whatever its length: %s → %s', (alias, ours, n) => {
     const { source, steps } = normalise(piece(alias));
     expect(source).toBe(piece(ours));

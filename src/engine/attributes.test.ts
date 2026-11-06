@@ -38,6 +38,7 @@ describe('the attribute table', () => {
         'hpq',
         'bpf',
         'bpq',
+        'ftype',
         'room',
         'delay',
         'delaytime',
@@ -53,7 +54,7 @@ describe('the attribute table', () => {
         'hard',
       ].sort(),
     );
-    expect(Object.keys(PARAMS).length).toBe(67);
+    expect(Object.keys(PARAMS).length).toBe(68);
   });
 
   test('a misspelling finds its nearest attribute', () => {

@@ -6,6 +6,7 @@ import { ExpansionLimit, flatten, stepsOf } from "./flatten.js";
 import { cellId } from "./ids.js";
 import { refsOf, stepsPerSecond } from "./readers.js";
 import { VOICE_PARAMS } from "./attributes.js";
+import { drawKeyOf } from "./drawkey.js";
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen } from "./series.js";
 import { warpOf } from "./physics.js";
 import { tapShare } from "./meter.js";
@@ -57,9 +58,9 @@ function thrownIn(result, cell, e, lap) {
         return null;
     if (e.chance === undefined && !e.options && !e.chosen)
         return e;
-    const seed = `${result.cells.get(cell)?.seed ?? 0}|${cell}`;
+    const seed = `${result.cells.get(cell)?.seed ?? 0}|${drawKeyOf(result)(cell)}`;
     for (const c of e.chosen ?? [])
-        if (Math.floor(chanceOf(`${seed}|${lap + c.lap}|${c.at.toFixed(6)}|${c.id}|picks`) * c.of) !== c.is)
+        if (Math.floor(chanceOf(`${seed}|${lap + c.lap}|${c.at.toFixed(6)}|${c.id.replace(/^[^:/]*:/, '')}|picks`) * c.of) !== c.is)
             return null;
     if (e.chance === undefined && !e.options)
         return e;

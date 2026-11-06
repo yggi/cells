@@ -58,7 +58,9 @@ A chance draw is keyed today on `seed|cell name|lap|step`. It will be keyed on t
 - Shorten may merge alike cells that draw;
 - minify needs no exception for them.
 
-Every example that draws sounds different once, its event snapshot moved and named in the CHANGELOG. No Migrate rule is possible: a draw has no old spelling. Until #481 lands, minify keeps a drawing cell's name, and the cells that splice one.
+Every example that draws sounds different once, its event snapshot moved and named in the CHANGELOG. No Migrate rule is possible: a draw has no old spelling.
+
+**Amended (#481, built):** the key is what the cell *plays*, not its text. Keyed on its canonical text, a cell respelled would draw differently: Shorten's run (`0? 0?` as `0?!2`), a phrase made a cell of its own, a chance said on the cell (`chance=.3`) or on the step (`x?.3`). So the key is the hash of the cell's flattened steps (where each plays, how long, its value, its chance, its options, its laps and choices), its seed and its sound's parameters, a cell one names read as that cell's key in turn (`src/engine/drawkey.ts`). A choice's id leaves out the name of the cell it was flattened in. A noise's grain, where a noise note starts in its noise, is keyed on the voice's place among the noise voices in the order the text declares them. A send changed then leaves its noise where it was, and S1 hears a noise by its colour and level, not its samples (070). Minify keeps no drawing cell's name.
 
 ### 7. The fold is Shorten's core kinds, checked
 

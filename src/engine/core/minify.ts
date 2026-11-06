@@ -1,12 +1,11 @@
 /**
  * Minify (decision 069 §5, #482): a text's own names renamed short. Kept: the interface names, the names it uses but
- * doesn't define, a drum's name (on a MIDI card it is its note, decision 054), and, until #481 keys a draw on its cell's
- * content, a cell that draws and the cells that splice one. Lifted from `tools/compileprobe.ts` (#441). Pure.
+ * doesn't define, and a drum's name (on a MIDI card it is its note, decision 054); a cell that draws is renamed freely,
+ * its draws keyed on its content since #481. Lifted from `tools/compileprobe.ts` (#441). Pure.
  */
 import { parse } from '../parser';
 import { INTERFACE_NAMES } from '../program';
 import { GM_KIT } from '../midi';
-import { splitComment } from '../edit';
 
 /** The text's own names (bare), those it defines, in order: the interface names aside. */
 const ownNames = (text: string) => {
@@ -21,24 +20,15 @@ const short = (i: number): string => `${String.fromCharCode(97 + (i % 26))}${i >
 const DRUMS = new Set(GM_KIT.flatMap((d) => [d.name, ...d.aliases]));
 
 /**
- * The names that mean something besides themselves, which minify keeps: a drum's (its MIDI note), and a cell that draws
- * (`x?`, `[a|b]`, `chance=`, `seed=`), or splices one that does, since a draw is keyed on the name of the cell that plays
- * it (`realize.ts`, decision 031).
+ * The names that mean something besides themselves, which minify keeps: a drum's, its MIDI note on a MIDI card (decision
+ * 054). A cell that draws is renamed as freely as any other: a draw is keyed on its cell's content, not its name (#481).
  */
 export function meaningfulNames(text: string): Set<string> {
-  const lines = new Map(parse(text).cells.map((d) => [d.name, text.split('\n')[d.span.line - 1] ?? ''] as const));
-  const keep = new Set([...lines.keys()].filter((n) => DRUMS.has(n.replace(/\d+$/, '').toLowerCase())));
-  const draws = new Set([...lines].filter(([, l]) => /\?|\[[^\]]*\||\b(?:chance|seed)=/.test(splitComment(l)[0])).map(([n]) => n));
-  for (let grew = true; grew;) {
-    grew = false;
-    for (const [n, l] of lines)
-      // (through a braid's splice; a mix's product plays the cell, which keys its own draws)
-      if (!draws.has(n) && !/\*/.test(splitComment(l)[0]) && [...splitComment(l)[0].matchAll(/&([A-Za-z_]\w*)/g)].some((m) => draws.has(m[1]!) && m[1] !== n)) {
-        draws.add(n);
-        grew = true;
-      }
-  }
-  return new Set([...keep, ...draws]);
+  return new Set(
+    parse(text)
+      .cells.map((d) => d.name)
+      .filter((n) => DRUMS.has(n.replace(/\d+$/, '').toLowerCase())),
+  );
 }
 
 /** Minify (question 2): every own name renamed to a short one; the interface names, the names it uses but doesn't define, and `meaningfulNames` kept. */

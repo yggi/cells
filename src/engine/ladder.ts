@@ -48,9 +48,10 @@ export const PENDING: ReadonlySet<string> = new Set([
   'attribute style',
   'parameter licence',
   'parameter accents',
-  // (the band-pass, decision 074: a piece of tier 2's effects that sweeps one is wanted; no example moves for it)
+  // (the band-pass and the filters' model, decision 074: a piece of tier 2's effects that sweeps one is wanted; no example moves for it)
   'parameter bpf',
   'parameter bpq',
+  'parameter ftype',
   // (cycle= in laps, #75: grids say their size in the map now; a piece that turns a table and shows its laps is wanted)
   'attribute cycle',
 ]);

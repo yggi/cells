@@ -1,5 +1,5 @@
-import { PARAM_ALIASES } from "../attributes.js";
-import { attrsOf, renameAttr } from "../edit.js";
+import { FILTER_MODELS, PARAM_ALIASES } from "../attributes.js";
+import { attrsOf, renameAttr, setAttr } from "../edit.js";
 export function aliases(source, result, only = () => true) {
     const out = [];
     for (const c of result.cells.values()) {
@@ -20,6 +20,27 @@ export function aliases(source, result, only = () => true) {
                 apply: (src) => renameAttr(src, c.name, key, ours),
             });
         }
+    }
+    return out;
+}
+export function filterModels(source, result) {
+    const out = [];
+    for (const c of result.cells.values()) {
+        if (c.implicit || c.lambda)
+            continue;
+        const written = attrsOf(source, c.name).get('ftype');
+        const word = written !== undefined && /^\d+$/.test(written) ? FILTER_MODELS[Number(written)] : undefined;
+        if (!word)
+            continue;
+        out.push({
+            id: `ftype:${c.name}`,
+            tool: 'normalise',
+            rule: 'alias',
+            title: `&${c.name}: ftype=${written} is superdough's number for ftype=${word} — write the word`,
+            before: `ftype=${written}`,
+            after: `ftype=${word}`,
+            apply: (src) => setAttr(src, c.name, 'ftype', word),
+        });
     }
     return out;
 }
