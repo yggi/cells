@@ -1,0 +1,3 @@
+### Added
+
+- **`even(k, n)` and `even(k, n, phase)` are a generator again, of a table** (decision 072, #505): k places spread as evenly as they go over n, the same table as the `scan(…)` of their intervals (`even(3, 8, 2)` is `scan(3 3 2)`), its phase its mode, 0 to k − 1. `even(7, 12, p)` is the diatonic mode of phase p, as `scale(&mode)` reads it, and `even(5, 12)` the major pentatonic. `euclid(k, n, r)` stays Strudel's rhythm. Nothing written plays differently, and no event snapshot moves. **What a frontend sees at its next pin:** `even(…)` compiles where it said "even(…) is gone", and the generator table (`GENERATORS`, the reference) has one row more.

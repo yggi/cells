@@ -36,6 +36,8 @@ export const STUBS: ReadonlySet<string> = new Set([
  */
 // (a style and a value read by name, decision 063: their piece comes with a voice reading the section's style, #390)
 export const PENDING: ReadonlySet<string> = new Set([
+  // (even(k, n), decision 072: its piece comes with the fragments that write it, #507)
+  'generator even(k, n)',
   'step <a b c>',
   'modifier x/n',
   'modifier x(k,n,r)',
@@ -359,6 +361,7 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
   for (const [word, form] of [
     ['scan', 'scan(i …)'],
     ['euclid', 'euclid(k, n)'],
+    ['even', 'even(k, n)'],
     ['sin', 'sin(n)'],
     // (the waveforms are one form: saw(n), tri(n), square(n) beside sin(n))
     ['saw', 'sin(n)'],

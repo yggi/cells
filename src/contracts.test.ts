@@ -15,7 +15,7 @@ import { codeShifts, noteFrequency } from './engine/program';
 import { eventsBetween, plan } from './engine/realize';
 import { noteOf } from './engine/midi';
 import { keyName, keyOf } from './engine/miditext';
-import { even, midiOf, noteName, pitchOfName } from './theory/modes';
+import { even, midiOf, noteName, pitchOfName, scan as scanOf } from './theory/modes';
 
 interface Contract<V> {
   readonly lifted: string;
@@ -101,6 +101,15 @@ describe('the euclid contract (music-commons contracts/euclid, version 1)', () =
         const hits = atom?.kind === 'seq' ? atom.euclid?.hits : undefined;
         expect(hits, `0(${v.k},${v.n},${r})`).toEqual(turn(v.bjorklund, r, v.n));
       }
+  });
+
+  it('the language’s even(k, n, k − 1) is the canonical set, for every vector with k ≥ 1 (decision 072)', () => {
+    for (const v of pairs.filter((x) => x.k >= 1)) {
+      const r = parse(`&t even(${v.k}, ${v.n}, ${v.k - 1})`);
+      expect(r.diagnostics, `even(${v.k}, ${v.n}, ${v.k - 1})`).toEqual([]);
+      const b = r.cells[0].braid;
+      expect(b.kind === 'scan' ? scanOf(b.steps).positions : null, `even(${v.k}, ${v.n}, ${v.k - 1})`).toEqual(turn(v.even, 0, v.n));
+    }
   });
 
   it('theory’s even(k, n, phase) is the canonical set at phase k − 1, turned right by t at phase k − 1 + t·k', () => {
