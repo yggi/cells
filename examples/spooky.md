@@ -25,7 +25,7 @@ The meter is the library's, `5/4`, five beats to the bar, which leaves its tempo
 The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from harmonic_minor D`, decision 065): its fifth is then A major, a dominant, and its sixth B♭ sits a semitone above it.
 
 ```cells
-&bar from meter_5_4 &tempo
+&bar from meter(grouping=meter("5/4")) &tempo
 &tempo step=free(100bpm, 80..120)
 &fiveNote label="Five beats a bar: every line taps the meter, so the heart beats five times and the knock falls at the middle of the bar, between the third beat's strokes." about=&bar
 ```

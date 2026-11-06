@@ -72,6 +72,7 @@ a delta. A fugue's entries are this: one subject, each entry a little bent.
 - **Its attributes:** what it doesn't set, the base's (its table, its clock, its shift, a voice's sound); its label,
   notes, `laps=` and `off` are its own. `&lead2 base=&lead lpf=2000` is the lead, brighter.
 - A copy of a copy works; one that comes round to itself is an error on `base=`.
+- **A copy of a meter is a meter** (#507): `&bar base=&grouping step=&tempo swing=&swing` with `&grouping meter("7/8")` is 7/8 at that tempo, swung; the seed `meter` fragment is written so, its grouping an argument.
 
 ```cells
 &bar scan(1 1 1 1) step=90bpm

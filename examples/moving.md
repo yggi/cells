@@ -9,7 +9,7 @@ description: A bass line whose filter opens on every note and swells over four b
 &strike from envelopes
 &rangeNote label="lpf=150..2800 * &fenv * &swell: the cutoff moves in that range, scaled by an envelope on every note and a slow swell." about=&acid
 &dbNote label="map=db: a volume in decibels, 0 as it is, −6 about half." about=&fade
-&bar from meter_4_4 &tempo
+&bar from meter &tempo
 &tempo step=free(moderato)
 
 &line step=16n 0 0 12 0 ~ 0 10 0 0 3 0 ~ 7 0 12 ~

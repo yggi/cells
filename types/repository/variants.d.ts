@@ -4,7 +4,9 @@ export declare const takenAs: (id: string, args: Readonly<Record<string, string>
 /**
  * A template with value arguments bound (#387): each argument's default line gone, its parameter out of the signature, its
  * value written where the parameter was read. `diatonic` with `mode=aeolian` is `&key from &tonic` and
- * `&key scale(aeolian, &tonic)`, the text the old `aeolian` was, so it plays (and hashes) as that did.
+ * `&key scale(aeolian, &tonic)`, the text the old `aeolian` was, so it plays (and hashes) as that did. A parameter
+ * `base=` reads keeps its line, its value its braid, since `base=` takes a cell (`meter` with `grouping=meter("7/8")`:
+ * `&grouping meter("7/8")`, #507).
  */
 export declare function boundText(text: string, args: Readonly<Record<string, string>>): string;
 /**

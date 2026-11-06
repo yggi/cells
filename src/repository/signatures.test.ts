@@ -8,7 +8,8 @@ import { signatureOf } from '../engine/use';
 import { LIBRARY, resolveSeed } from './library';
 
 const lines = (...xs: string[]) => xs.join('\n');
-const quoted = (id: string) => (/^[A-Za-z_][A-Za-z0-9_]*$/.test(id) ? id : JSON.stringify(id));
+// (a word as it is, and a template taken with its arguments as a from line takes it, `meter(grouping=meter("7/8"))`; anything else quoted)
+const quoted = (id: string) => (/^[A-Za-z_][A-Za-z0-9_]*(\(.*\))?$/.test(id) ? id : JSON.stringify(id));
 const METER = '&bar meter("4/4") step=120bpm';
 const KEY = '&key scale(dorian, D)';
 const SOUND = lines('&v s=sine loop=C4', '&out [&heard * &v]');

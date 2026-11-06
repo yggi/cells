@@ -15,7 +15,9 @@ export const takenAs = (id: string, args: Readonly<Record<string, string>>): str
 /**
  * A template with value arguments bound (#387): each argument's default line gone, its parameter out of the signature, its
  * value written where the parameter was read. `diatonic` with `mode=aeolian` is `&key from &tonic` and
- * `&key scale(aeolian, &tonic)`, the text the old `aeolian` was, so it plays (and hashes) as that did.
+ * `&key scale(aeolian, &tonic)`, the text the old `aeolian` was, so it plays (and hashes) as that did. A parameter
+ * `base=` reads keeps its line, its value its braid, since `base=` takes a cell (`meter` with `grouping=meter("7/8")`:
+ * `&grouping meter("7/8")`, #507).
  */
 export function boundText(text: string, args: Readonly<Record<string, string>>): string {
   const signature = signatureOf(text);
@@ -24,6 +26,7 @@ export function boundText(text: string, args: Readonly<Record<string, string>>):
   for (const p of bound) if (!signature.optional.includes(p)) throw new Error(`boundText: ${p} is none of the signature's optional parameters (${signature.optional.join(', ')})`);
   const optional = signature.optional.filter((p) => !bound.includes(p));
   const head = `${signature.names.join(', ')} from ${optional.length ? `(${optional.join(', ')}) ` : ''}${signature.main ?? ''}`.trimEnd();
+  const keptByBase = new Set(bound.filter((p) => new RegExp(`base=${p}(?![A-Za-z0-9_])`).test(text)));
   let wrote = false;
   return text
     .split('\n')
@@ -32,8 +35,10 @@ export function boundText(text: string, args: Readonly<Record<string, string>>):
         wrote = true;
         return [head];
       }
-      if (bound.some((p) => new RegExp(`^\\s*${p}(?![A-Za-z0-9_])`).test(line))) return [];
-      return [Object.entries(args).reduce((l, [k, v]) => l.replace(new RegExp(`&${k}(?![A-Za-z0-9_])`, 'g'), v), line)];
+      // (a parameter base= reads stays a cell, its value its braid: `&grouping meter("7/8")`, #507; any other is written where it's read)
+      const kept = bound.find((p) => new RegExp(`^\\s*${p}(?![A-Za-z0-9_])`).test(line));
+      if (kept) return keptByBase.has(kept) ? [`${kept} ${args[kept.slice(1)]}`] : [];
+      return [Object.entries(args).reduce((l, [k, v]) => (keptByBase.has(`&${k}`) ? l : l.replace(new RegExp(`&${k}(?![A-Za-z0-9_])`, 'g'), v)), line)];
     })
     .join('\n');
 }

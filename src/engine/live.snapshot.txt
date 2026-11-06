@@ -11,7 +11,7 @@ transpose  live ee5f47211d974e0b
 twinkle  live 53e57bf6c9063d61
 chords  live 46a4d40d136de57c
 rhythm  live f2ea0ed992dc8a6f
-drums  live 90917f61f3669cb6
+drums  live 8f12b32a3a968d2f
 swing  live 9bac31b4f029fa4c
 breve  live fdd6e23b656bee54
 canon  live 5ed1acfb8724f8f6
@@ -19,7 +19,7 @@ mirrors  live 65b90037525fe0a0
 variations  live 0f98335972bc907e
 chance  live 7f4543c7cb673938
 fifths  live cca78dfbb2cfc628
-arrangement  live 2a35a5ab64a915c4
+arrangement  live aad39a3366d124a2
 stereo  live 2a23340ac7fbd3be
 waveforms  live fda62d09719584b9
 moving  live 907d4a09ec02fb9d
@@ -37,12 +37,12 @@ dtmf  live b4e8e67829ce9cb6
 daytime  live 71ca15c20760da5e
 gate  live 400caf4aa6182ac4
 play-in  live ce29f08f51e88004
-midi-out  live e235754a9d7e9378
+midi-out  live e54cbc993709f331
 lullaby  live e72c2693e211dad7
 jazz  live 78d56c8b672fdf91
 five  live 3b7916eeac8d24b3
 waltz  live 2bafdd2c5b25dcc8
-sailor  live 7c2fc309d82d0dba
+sailor  live 531c2c74ac306381
 royal  live 5168bf4b4427ad44
 pertonos  live 356b693d068ea8b3
 ricercar  live fda99dfb99f308da
@@ -67,9 +67,9 @@ baustelle  live 08e97567a4eb8585
 focus  live 82fa8f16bbf66861
 hypercell  live 6c1723a0c9f03dc9
 onemore  live c9cb58a6a284e477
-electroswing  live 4835aa50a2db945b
-spooky  live b0ce5cf9eb42c6c0
-kinderlied  live 6b8e8036ff913c18
+electroswing  live 25c5b3114f8d4d0d
+spooky  live fb03903bada906e4
+kinderlied  live 234322165c26d8a7
 brothers  live d8b737d6c9e514e3
 ghosts  live e4109e6f71217d64
 tines  live fbe540030b23d53f

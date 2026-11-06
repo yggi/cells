@@ -11,7 +11,7 @@ description: "A Berlin-school patch on the modules: two oscillators into one res
 # every two bars, plays it.
 &patchNote label="Each module is a fragment: its jacks are its parameters, a knob at its default until a cable (a cell) is patched in: lowpass(eg=&contour, cutoff=&sweep, res=&jitter)." about=(&vcf &vca)
 &modNote label="The modulation: a contour on every note (&contour), an LFO once every eight bars (&sweep), a value at random each eighth, held (&jitter)." about=(&contour &sweep &jitter)
-&bar from meter_4_4 &tempo
+&bar from meter &tempo
 &thump, &click from envelopes
 &tempo step=free(116bpm, 90..140)
 &key scale(minor, &tonic)

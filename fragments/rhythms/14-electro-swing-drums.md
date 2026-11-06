@@ -21,7 +21,7 @@ lifted: yggi/cells examples/electroswing.md @ 2c120d4
 ```
 
 The electro swing beat of [Electro swing, in pieces](../../examples/electroswing.md): house's four on the floor and its clap on two and four, under a jazz record's swung eighths, the open hat on every off-beat and a sixteenth hat with some strokes left to chance (`?`, keyed on the seed: decision 031) and a ghost of the snare on the last.
-It holds no `&bar`, so the host's meter swings it: under `meter_4_4_swung_on_8n` (or the example's lighter `swing=8n:.64`) the open hats fall late, the kick and the clap stay on the beat.
+It holds no `&bar`, so the host's meter swings it: under `meter(swing=8n:2/3)` (or the example's lighter `swing=8n:.64`) the open hats fall late, the kick and the clap stay on the beat.
 Its lines strike the kit's names (`&bd` `&cp` `&oh` `&hh` `&sd`), holes the General MIDI kit fills, and carry no card (#291): `&groove` is the mix, its levels in the hits.
 A piece arranging it takes its limbs by name (`use &kick, &clap, &hats, &ticks from electro_swing_drums`), as the example does, each under a level of its own.
 

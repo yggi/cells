@@ -31,7 +31,7 @@ const sounded = (text: string, seconds = 8) => {
     ]),
   );
 };
-const BASE = lines('&bar from meter_4_4 &tempo', '&tempo step=120bpm', '&tune step=8n 0 3 7 10 12 10 7 3');
+const BASE = lines('&bar from meter &tempo', '&tempo step=120bpm', '&tune step=8n 0 3 7 10 12 10 7 3');
 
 describe('the modules', () => {
   it('are eight, of the facet module, each a signature', () => {
