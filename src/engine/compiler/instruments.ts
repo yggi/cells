@@ -16,7 +16,7 @@ import { refsOf } from '../readers';
 import type { Cells, Ctx } from './context';
 
 /** The parameters a voice takes from the instruments it plays only through: linear, so the sum's is each voice's. */
-export const LINEAR: readonly string[] = ['lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay', 'delaytime', 'delayfeedback'];
+export const LINEAR: readonly string[] = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq', 'room', 'delay', 'delaytime', 'delayfeedback'];
 /** The sound parameters an instrument carries: the linear ones, its balance (in its outputs' gains), and grit (on its sum). */
 const PROCESSORS: readonly string[] = [...LINEAR, 'pan', 'distort', 'crush'];
 

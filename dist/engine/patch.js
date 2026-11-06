@@ -4,7 +4,7 @@ import { readFrom, topTokens } from "./parser/use.js";
 import { VOICE_PARAMS } from "./attributes.js";
 export class PatchError extends Error {
 }
-export const MOVING = ['lpf', 'lpq', 'hpf', 'hpq', 'room', 'delay'];
+export const MOVING = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq', 'room', 'delay'];
 const CELL = ['pitch', 'env', 'fm'];
 const NAME = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
 const refName = (term) => NAME.exec(term)?.[1] ?? null;

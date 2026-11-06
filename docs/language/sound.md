@@ -20,6 +20,7 @@ Sound parameters use dough's names; any of them makes a cell a voice. Strudel's 
 |---|---|
 | `lpf=` `lpq=` | low-pass cutoff (Hz) and resonance; both can move |
 | `hpf=` `hpq=` | high-pass cutoff (Hz) and resonance; both can move |
+| `bpf=` `bpq=` | band-pass centre (Hz) and Q, the centre over the bandwidth (1 unless given); both can move. A voice's filters are in series, low-pass, high-pass, band-pass, each one 12 dB biquad ([decision 074](https://github.com/yggi/cells/blob/main/docs/decisions/074-filters-are-superdoughs.md)): a steeper slope is two in a row, the `lowpass24` module |
 | `room=` | reverb send, 0–1; can move |
 | `delay=` `delaytime=` `delayfeedback=` | echo send (0–1, can move), time (seconds or a clock), feedback (0–1) |
 | `pan=` | where it sits in stereo: 0 left, .5 centre (as without it), 1 right; the far side fades, the near one stays full. Past 0 or 1 it plays hard left or right, and warns; on a mix or the sound card it does nothing, and warns |

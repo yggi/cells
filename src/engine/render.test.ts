@@ -145,10 +145,10 @@ describe('the renderer', () => {
     expect(bits(pieceAudio(r, codeShifts(r), { seconds: 4 }).mix)).toEqual(bits(once.mix));
   });
 
-  it("a parameter of a later stage is said, once a cell, and the sound rendered without it: an instrument's grit", () => {
-    const wet = audio('&a s=saw loop=A3\n&v distort=.3 [&a]\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
-    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v distort']);
-    const dry = audio('&a s=saw loop=A3\n&v [&a]\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
+  it("a parameter of a later stage is said, once a cell, and the sound rendered without it: a resonator's board (R3)", () => {
+    const wet = audio('&v s=saw loop=A3 board=fork\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
+    expect(wet.diagnostics.map((d) => `${d.voice} ${d.param}`)).toEqual(['v board']);
+    const dry = audio('&v s=saw loop=A3\n&n step=4 0 2 4 5\n&out map=sample [&n * &v]', { seconds: 1 });
     expect(bits(wet.mix)).toEqual(bits(dry.mix));
   });
 
@@ -420,5 +420,118 @@ describe('FM (decision 062 R2, #452)', () => {
     const two = fm('fm=&op index=2', '&op s=sine ratio=2 fm=&op2 index=3\n&op2 s=sine ratio=.5');
     expect(bits([two.left])).not.toEqual(bits([one.left]));
     expect(two.diagnostics).toEqual([]);
+  });
+});
+
+describe("an instrument's grit, on its voices' sum (decision 067, #452)", () => {
+  const RATE = 48000;
+  const stems = (text: string) => {
+    const r = compiled(text);
+    expect(r.ok, r.diagnostics.map((d) => d.message).join('; ')).toBe(true);
+    const rr = createRenderer(r, codeShifts(r), { tracks: 'voices' });
+    rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 1, true, { until: 1 }));
+    const out = rr.render(RATE);
+    return { names: rr.stems, of: (n: string) => out.stems.get(n)!, mix: out.mix, diagnostics: rr.diagnostics };
+  };
+  const VOICES = '&a s=saw loop=A2\n&b s=square loop=E3\n&n step=4 0 2\n';
+  const k = 60;
+  const curve = (x: number) => (Math.abs(x) < 0.001 ? 0 : ((3 + k) * x * 20 * (Math.PI / 180)) / (Math.PI + k * Math.abs(x)));
+
+  it("is its curve on what its voices play into it, summed: not each voice's alone", () => {
+    const dry = stems(`${VOICES}&out map=sample postgain=1 [&n * &a, &n * &b]`);
+    const box = stems(`${VOICES}&box distort=.6 [&a, &b]\n&out map=sample postgain=1 [&n * &box]`);
+    expect([box.names, box.diagnostics]).toEqual([['a', 'b', 'box'], []]);
+    let far = 0;
+    let apart = 0;
+    for (let i = 0; i < RATE; i += 7) {
+      const sum = dry.of('a')[0][i]! + dry.of('b')[0][i]!;
+      // (Tone's curve, read between its 1024 points, steep at silence: within .01)
+      far = Math.max(far, Math.abs(box.of('box')[0][i]! - curve(sum)));
+      apart = Math.max(apart, Math.abs(curve(dry.of('a')[0][i]!) + curve(dry.of('b')[0][i]!) - curve(sum)));
+    }
+    expect(far).toBeLessThan(0.01);
+    expect(apart).toBeGreaterThan(0.05);
+    // (its voices play nothing of their own: their sound is the instrument's stem)
+    expect(box.of('a')[0].every((x) => x === 0)).toBe(true);
+  });
+
+  it('its stems sum to the mix, its filters and sends after its grit', () => {
+    const box = stems(`${VOICES}&box crush=6 distort=.3 lpf=900 delay=.3 room=.2 [&a, &b]\n&out map=sample postgain=1 [&n * &box]`);
+    expect([box.names, box.diagnostics]).toEqual([['a', 'b', 'echo', 'reverb', 'box'], []]);
+    for (const ch of [0, 1] as const)
+      for (let i = 0; i < RATE; i++) {
+        let sum = 0;
+        for (const n of box.names) sum = Math.fround(sum + box.of(n)[ch][i]!);
+        if (Math.abs(sum - box.mix[ch][i]!) > 1e-6) expect([ch, i, box.mix[ch][i]]).toEqual([ch, i, sum]);
+      }
+  });
+});
+
+describe('the band-pass, and a 24 dB low-pass as two stages (decision 074)', () => {
+  const RATE = 48000;
+  /** A held sine at `hz` through `filter`, after its first quarter second (one note, its attack soft: no onset's click): its level in dB against the same sine dry. */
+  const through = (hz: number, filter: string, setup = '') => {
+    const level = (f: string) => {
+      const r = compiled(`${setup}&v s=sine loop=${hz}hz ${f} env=&(map=adsr .05 0 1 .05)\n&n step=.5 0\n&out map=sample postgain=1 [&n * &v]`);
+      expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+      const x = pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 }).mix[0];
+      let e = 0;
+      for (let i = RATE / 4; i < RATE; i++) e += x[i]! * x[i]!;
+      return e;
+    };
+    return 10 * Math.log10(level(filter) / level(''));
+  };
+  /** Web Audio's band-pass at `f` Hz, centre `f0`, Q `q`: its gain in dB (the spec's biquad, unity at the centre). */
+  const bandpass = (f: number, f0: number, q: number) => {
+    const w0 = (2 * Math.PI * f0) / RATE;
+    const alpha = Math.sin(w0) / (2 * q);
+    const w = (2 * Math.PI * f) / RATE;
+    const [b0, b2, a0, a1, a2] = [alpha, -alpha, 1 + alpha, -2 * Math.cos(w0), 1 - alpha];
+    const re = (c0: number, c1: number, c2: number) => [c0 + c1 * Math.cos(w) + c2 * Math.cos(2 * w), -c1 * Math.sin(w) - c2 * Math.sin(2 * w)];
+    const [nr, ni] = re(b0, 0, b2);
+    const [dr, di] = re(a0, a1, a2);
+    return 10 * Math.log10((nr * nr + ni * ni) / (dr * dr + di * di));
+  };
+
+  it("passes its centre and takes away what is far from it, as Web Audio's band-pass does: bpq= read linearly", () => {
+    for (const [hz, q] of [
+      [1000, 1],
+      [250, 1],
+      [4000, 1],
+      [1200, 8],
+    ] as const)
+      expect(Math.abs(through(hz, `bpf=1000 bpq=${q}`) - bandpass(hz, 1000, q))).toBeLessThan(0.1);
+    expect(through(1000, 'bpf=1000')).toBeCloseTo(through(1000, 'bpf=1000 bpq=1'), 6);
+    expect(through(4000, 'bpf=1000')).toBeLessThan(-9);
+  });
+
+  it('a narrower band at a higher bpq=; it moves as a cutoff does; on an instrument, its voices hear it', () => {
+    expect(through(1500, 'bpf=1000 bpq=8')).toBeLessThan(through(1500, 'bpf=1000 bpq=1') - 6);
+    expect(through(1000, 'bpf=200..5000 * &d', '&d map=lin .5\n')).toBeLessThan(-1);
+    // (an instrument's band-pass is a stage after its voice, as its low-pass is: decision 067)
+    const mix = (text: string) => {
+      const r = compiled(text);
+      return pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 }).mix[0];
+    };
+    const V = '&v s=saw loop=220hz env=&(map=adsr .05 0 1 .05)\n&n step=.5 0\n';
+    expect(bits([mix(`${V}&bp bpf=1000 bpq=3 [&v]\n&out map=sample postgain=1 [&n * &bp]`)])).toEqual(
+      bits([mix(V.replace('&v s=saw', '&v bpf=1000 bpq=3 s=saw') + '&out map=sample postgain=1 [&n * &v]')]),
+    );
+  });
+
+  it('lowpass24, two of the lowpass stages in series, falls twice as steeply above its cutoff', () => {
+    const LP = '&lp lpf=500 lpq=0 [&v]\n';
+    const LP24 = '&lp lpf=500 lpq=0 [&lp2]\n&lp2 lpf=500 lpq=0 [&v]\n';
+    const at = (hz: number, chain: string) => {
+      const r = compiled(`&v s=sine loop=${hz}hz env=&(map=adsr .05 0 1 .05)\n${chain}&n step=.5 0\n&out map=sample postgain=1 [&n * &lp]`);
+      const x = pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 }).mix[0];
+      let e = 0;
+      for (let i = RATE / 4; i < RATE; i++) e += x[i]! * x[i]!;
+      return 10 * Math.log10(e);
+    };
+    const drop12 = at(500, LP) - at(4000, LP);
+    const drop24 = at(500, LP24) - at(4000, LP24);
+    expect(drop24 / drop12).toBeGreaterThan(1.9);
+    expect(drop24 / drop12).toBeLessThan(2.1);
   });
 });

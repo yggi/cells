@@ -34,8 +34,8 @@ const sounded = (text: string, seconds = 8) => {
 const BASE = lines('&bar from meter_4_4 &tempo', '&tempo step=120bpm', '&tune step=8n 0 3 7 10 12 10 7 3');
 
 describe('the modules', () => {
-  it('are six, of the facet module, each a signature', () => {
-    expect(MODULE_FRAGMENTS.map((f) => f.id)).toEqual(['osc', 'lowpass', 'highpass', 'amp', 'lfo', 'sh']);
+  it('are eight, of the facet module, each a signature', () => {
+    expect(MODULE_FRAGMENTS.map((f) => f.id)).toEqual(['osc', 'lowpass', 'highpass', 'amp', 'lfo', 'sh', 'bandpass', 'lowpass24']);
     for (const f of MODULE_FRAGMENTS) {
       expect(f.association.map((wp) => wp.facet)).toEqual(['module']);
       expect(f.text, f.id).toMatch(new RegExp(`^&${f.id} from\\b`, 'm'));
