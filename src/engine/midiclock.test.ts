@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { plan, type Plan } from './realize';
@@ -38,7 +38,7 @@ describe('the main meter', () => {
 
   it('is found for the examples that have one, and none for those stepping at a bare rate', () => {
     const none: string[] = [];
-    for (const [key, { source }] of Object.entries(PRESETS).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    for (const [key, { source }] of Object.entries(EXAMPLES).sort(([a], [b]) => (a < b ? -1 : 1))) {
       const r = compileSource(source);
       if (r.ok && !mainMeter(r)) none.push(key);
     }
@@ -141,7 +141,7 @@ describe('the ticks', () => {
   });
 
   it('every example: window by window as one piece, eight seconds, none lost or doubled', () => {
-    for (const [f, { source }] of Object.entries(PRESETS)) {
+    for (const [f, { source }] of Object.entries(EXAMPLES)) {
       const r = compileSource(source);
       if (!r.ok || !mainMeter(r)) continue;
       const p = plan(r, codeShifts(r));

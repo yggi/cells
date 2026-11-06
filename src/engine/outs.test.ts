@@ -3,7 +3,7 @@ import { compileSource } from './compile';
 import { writtenGraph } from './graph';
 import { outs, soundRole } from './outs';
 import { kitOf } from './plays';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 
 const compiled = (src: string) => compileSource(src, undefined, { resolve: resolveSeed });
@@ -22,7 +22,7 @@ describe('outs: a sound wired into a card, on either card (decision 064)', () =>
   });
 
   it('a MIDI card: an out each thing it sends, on its channel; a voice on both cards, an out on each', () => {
-    expect(brief((PRESETS as Record<string, { source: string }>)['midi-out'].source)).toEqual(['groove→drums:10', 'reed→out', 'groove→out', 'reed→synth:1', 'sub→synth:2']);
+    expect(brief((EXAMPLES as Record<string, { source: string }>)['midi-out'].source)).toEqual(['groove→drums:10', 'reed→out', 'groove→out', 'reed→synth:1', 'sub→synth:2']);
   });
 
   it('a card of two channels: its first left, its second right', () => {
@@ -34,7 +34,7 @@ describe('outs: a sound wired into a card, on either card (decision 064)', () =>
   });
 
   it('every example has an out, and only cards take them', () => {
-    for (const [key, p] of Object.entries(PRESETS)) {
+    for (const [key, p] of Object.entries(EXAMPLES)) {
       const r = compiled(p.source);
       const o = outs(r);
       expect(o.length, key).toBeGreaterThan(0);

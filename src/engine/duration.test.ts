@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource as compileAlone } from './compile';
 import { anchoredAt, clockText, durationText, pieceTime } from './duration';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, old: true, ...options });
 
-const time = (key: string) => pieceTime(compileSource((PRESETS as Record<string, { source: string }>)[key].source));
+const time = (key: string) => pieceTime(compileSource((EXAMPLES as Record<string, { source: string }>)[key].source));
 
 describe('how long a piece is', () => {
   it('a piece that ends: when', () => {
@@ -54,7 +54,7 @@ describe('how long a piece is', () => {
 
 describe('a piece anchored to the clock', () => {
   it('starts where the day stands: anchor=11.55 at 12:00:30 is 5½ minutes in', () => {
-    const r = compileSource(PRESETS.fiveto12.source);
+    const r = compileSource(EXAMPLES.fiveto12.source);
     expect(anchoredAt(r, new Date(2026, 0, 1, 12, 0, 30))).toBe(330);
     // (before the anchor: the day before's run, still going)
     expect(anchoredAt(r, new Date(2026, 0, 1, 11, 54, 0))).toBe(86400 - 60);
@@ -66,7 +66,7 @@ describe('a piece anchored to the clock', () => {
     expect(anchoredAt(compileSource(law('')), new Date(2026, 0, 1, 12, 0, 30))).toBeNull();
   });
   it('has no anchor otherwise', () => {
-    expect(anchoredAt(compileSource(PRESETS.metronome.source), new Date())).toBeNull();
+    expect(anchoredAt(compileSource(EXAMPLES.metronome.source), new Date())).toBeNull();
   });
 });
 

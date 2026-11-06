@@ -22,7 +22,7 @@ import { appendFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
 import { readMidi, writeMidi, type Smf } from '../../src/engine/midifile';
 import { compileSource } from '../../src/engine/compile';
 import { codeShifts } from '../../src/engine/program';
-import { PRESETS } from '../../src/engine/presets';
+import { EXAMPLES } from '../../src/engine/examples';
 import { pieceMidi } from '../../src/engine/midiexport';
 import { byVoice, cellsFromMidi } from '../../src/engine/midiimport';
 import { bare } from '../../src/engine/fold/score';
@@ -73,7 +73,7 @@ describe.runIf(process.env.BENCH)('the disassembler bench', () => {
     // (the examples, as a MIDI file of each comes in: those whose notes are written, not computed by a law)
     const examples =
       process.env.SET === 'examples'
-        ? Object.entries(PRESETS).flatMap(([key, p]) => {
+        ? Object.entries(EXAMPLES).flatMap(([key, p]) => {
             const r = compileSource(p.source);
             if (!r.ok || [...r.cells.values()].some((c) => c.params.law !== undefined)) return [];
             return [{ set: 'examples', key, title: key, tonality: undefined, smf: (): Smf => readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf)) }];

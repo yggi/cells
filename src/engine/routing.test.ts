@@ -6,7 +6,7 @@ import { routing } from './routing';
 import { writtenGraph } from './graph';
 import { eventsBetween, plan } from './realize';
 import { mainLength, pieceTime } from './duration';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
@@ -36,12 +36,12 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
     expect(n.has('cell:v')).toBe(true);
   });
   it('a table lent by a cell that splices one with its own: only the table its notes read', () => {
-    const r = compileSource(PRESETS.cellscape.source);
+    const r = compileSource(EXAMPLES.cellscape.source);
     expect(on(r).edges.has('cell:canon->cell:lydian')).toBe(false);
     expect(on(r).edges.has('cell:melody->cell:lydian')).toBe(true);
   });
   it('an oscilloscope is on while what it watches is', () => {
-    const r = compileSource(PRESETS.harmonograph.source);
+    const r = compileSource(EXAMPLES.harmonograph.source);
     expect(on(r).nodes.has('cell:screen')).toBe(true);
     expect(on(r, new Set(['cell:tonic', 'cell:fifth'])).nodes.has('cell:screen')).toBe(false);
   });
@@ -50,7 +50,7 @@ describe('routing: one model for what the graph draws as part of the sound (#11)
 describe('at rest, nothing is dimmed (#201)', () => {
   // (how fast: `timing.slow.test.ts`, #237)
   it('the heads at rest (the live state at time 0) are worked out for every example', () => {
-    for (const p of Object.values(PRESETS)) {
+    for (const p of Object.values(EXAMPLES)) {
       const r = compileSource(p.source, undefined, { resolve: resolveSeed });
       expect(liveAt(r, codeShifts(r), r.off, 0).seconds).toBe(0);
     }
@@ -59,7 +59,7 @@ describe('at rest, nothing is dimmed (#201)', () => {
 
 describe('a parameter a voice takes from an instrument is routed into the instrument (decision 067, #433)', () => {
   it('Patchbay: the filter contour goes into &vcf, where it is written and drawn, not into each oscillator', () => {
-    const r = compileSource(PRESETS.patchbay.source);
+    const r = compileSource(EXAMPLES.patchbay.source);
     expect(r.cells.get('saw')!.inherited?.lpf).toBe('vcf');
     const { edges } = routing(r, new Set());
     expect([...edges]).toContain('cell:contour->cell:vcf');
@@ -83,7 +83,7 @@ describe('an envelope is routed into the voice it shapes', () => {
 // (lifted from yggi/cell-studio src/layout/routing.drawn.test.ts @ 23a5972, #326: routing, the live view and the
 // events are the language's three answers to what sounds, and must agree; how a graph draws them stays Cell studio's)
 describe('routing, the live view and the events agree, in every example', () => {
-  for (const [key, { source }] of Object.entries(PRESETS)) {
+  for (const [key, { source }] of Object.entries(EXAMPLES)) {
     it(key, () => {
       const r = compileSource(source, undefined, { resolve: resolveSeed });
       const shifts = codeShifts(r);

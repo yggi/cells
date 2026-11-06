@@ -6,7 +6,7 @@ import { eventsBetween, plan } from './realize';
 import { createRenderer } from './render';
 import { soundsIdentical } from './sameness';
 import { FAMILIES, minify } from './core';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 
 // #481: a draw is keyed on what its cell plays, not its name or its spelling; a noise starts where its place says.
@@ -65,7 +65,7 @@ describe('a noise starts where its place among the noise voices says (#481)', ()
 describe('every example renamed plays as it did (#481)', () => {
   const O = { resolve: resolveSeed };
   const written = FAMILIES.find((f) => f.key === 'from')!.rewrite;
-  it.each(Object.entries(PRESETS))('%s', (_, p) => {
+  it.each(Object.entries(EXAMPLES))('%s', (_, p) => {
     const text = written(p.source, O);
     expect(soundsIdentical(text, minify(text), undefined, O)).toBe(true);
   });

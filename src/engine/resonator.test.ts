@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 
 describe('resonators: persistent bodies — notes strike them, their value is where', () => {
-  const src = (PRESETS as Record<string, { source: string }>).forks.source;
+  const src = (EXAMPLES as Record<string, { source: string }>).forks.source;
   it('Two Tuning Forks: one struck (an output), one heard ringing (a resonance)', () => {
     const r = compileSource(src);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
@@ -35,7 +35,7 @@ describe('resonators: persistent bodies — notes strike them, their value is wh
 
 describe('bodies driven by sound: sends, springs, pipes, wires', () => {
   it('Resonanz: struck bodies heard; pipes driven by tape heads (a send of heads isn’t played as notes)', () => {
-    const r = compileSource((PRESETS as Record<string, { source: string }>).resonanz.source);
+    const r = compileSource((EXAMPLES as Record<string, { source: string }>).resonanz.source);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     expect(r.outputs.map((o) => o.voice).sort()).toEqual(['girder', 'plate', 'spring', 'wire']);
     expect(r.resonances.map((x) => x.cell).sort()).toEqual(['pipeA', 'pipeB']);
@@ -62,7 +62,7 @@ describe('a resonator’s braid is its exciters — semitones from its fundament
     expect(xs.map((x) => x.params.hard ?? null)).toEqual([null, null, null, 0.9, 0.9]);
   });
   it('the Kalimba: one resonator, eight tines', () => {
-    const r = compileSource((PRESETS as Record<string, { source: string }>).kalimba.source);
+    const r = compileSource((EXAMPLES as Record<string, { source: string }>).kalimba.source);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     expect(r.cells.get('kalimba')!.exciters!.map((x) => x.shift)).toEqual([0, 2, 4, 7, 9, 12, 14, 16]);
   });

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
-import { PRESETS } from '../engine/presets';
+import { EXAMPLES } from '../engine/examples';
 import { MODULE_FRAGMENTS } from './modules';
 import { resolveSeed } from './library';
 
@@ -80,7 +80,7 @@ describe('Patchbay, the reference piece', () => {
   const flat = /```cells\n([\s\S]*?)```/.exec(note)![1]!;
 
   it('compiles with no diagnostic, and plays what the flat text plays', () => {
-    const piece = PRESETS.patchbay.source;
+    const piece = EXAMPLES.patchbay.source;
     expect(messages(piece)).toEqual([]);
     expect(messages(flat)).toEqual([]);
     expect(sounded(piece)).toEqual(sounded(flat));

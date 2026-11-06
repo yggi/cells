@@ -4,7 +4,7 @@ import { shorten, shortenAll } from '.';
 import { SAMENESS_SECONDS, size, structure } from './harness';
 import { eventsBetween, plan } from '../realize';
 import { codeShifts } from '../program';
-import { PRESETS } from '../presets';
+import { EXAMPLES } from '../examples';
 import { expand } from '../use';
 import type { Resolve } from '../program';
 import { resolveSeed } from '../../repository/library';
@@ -113,7 +113,7 @@ describe('shorten', () => {
 });
 
 describe('shorten, on every example: every suggestion sounds the same, and saves structure (a respelling: characters)', () => {
-  for (const [key, p] of Object.entries(PRESETS)) {
+  for (const [key, p] of Object.entries(EXAMPLES)) {
     it(
       key,
       () => {
@@ -199,7 +199,7 @@ describe('shorten: turns, alike cells, and all the way', () => {
 });
 
 describe('shorten all the way, on every example: it sounds the same, and is done (#10: idempotence)', () => {
-  for (const [key, p] of Object.entries(PRESETS)) {
+  for (const [key, p] of Object.entries(EXAMPLES)) {
     it(
       key,
       () => {

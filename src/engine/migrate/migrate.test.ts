@@ -6,7 +6,7 @@ import { soundsIdentical } from '../sameness';
 import { codeShifts } from '../program';
 import { eventsBetween, plan } from '../realize';
 import { ATTRIBUTES } from '../attributes';
-import { PRESETS } from '../presets';
+import { EXAMPLES } from '../examples';
 import { movedCard } from '../shorten/card';
 import { LIBRARY, resolveSeed } from '../../repository/library';
 
@@ -89,7 +89,7 @@ describe('Migrate: retired forms written as they are now (decision 049, #156)', 
   });
 
   it('changes no example and no fragment of the seed library, and leaves a card that says what the piece is (a file’s, not a text’s)', () => {
-    for (const [key, p] of Object.entries(PRESETS)) expect([key, migrate(p.source, SEED).steps]).toEqual([key, []]);
+    for (const [key, p] of Object.entries(EXAMPLES)) expect([key, migrate(p.source, SEED).steps]).toEqual([key, []]);
     for (const f of LIBRARY) expect([f.id, migrate(f.text, SEED).steps]).toEqual([f.id, []]);
     const src = '&piece title="A"\n&x 0';
     expect(migrate(src).source).toBe(src);
