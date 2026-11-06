@@ -4,7 +4,7 @@ import { pickLabel, refLabel, type Atom, type Binding } from '../ast';
 import { distribute } from '../algebra';
 import { rateChain } from '../transform';
 import { PARAM_ALIASES } from '../attributes';
-import { even as evenPositions } from '../../theory/modes';
+import { even as evenPositions, scan as scanOf } from '../../theory/modes';
 
 /** The parser keeps a mix as written; typed here as compile would, the voices of these tests being sounds. */
 const SOUNDS = /^(lead|bass|organ|cello|v|w|v2)$/;
@@ -59,9 +59,21 @@ describe('parse: cells', () => {
     expect(parse('&s scan(2 0 1)').diagnostics[0].message).toMatch(/positive intervals/);
   });
 
-  it('even() and agogic() are gone: each says exactly which scan to write', () => {
-    expect(parse('&s even(7,12,2)').diagnostics[0].message).toMatch(/write scan\(2 1 2 2 1 2 2\)/);
-    expect(parse('&s even(3,8,2)').diagnostics[0].message).toMatch(/write scan\(3 3 2\)/);
+  it('even(k, n, phase) is a table, the scan of its intervals: k places in n, its phase its mode (decision 072)', () => {
+    const steps = (src: string) => {
+      const b = one(src).braid;
+      return b.kind === 'scan' ? b.steps : null;
+    };
+    expect(steps('&s even(7, 12, 2)')).toEqual([2, 1, 2, 2, 1, 2, 2]);
+    expect(steps('&s even(3, 8, 2)')).toEqual([3, 3, 2]);
+    expect(steps('&s even(5, 12)')).toEqual([2, 2, 3, 2, 3]);
+    expect(steps('&s even(4, 4)')).toEqual([1, 1, 1, 1]);
+    expect(parse('&s even(8, 7)').diagnostics[0].message).toMatch(/1 ≤ k ≤ n/);
+    expect(parse('&s even(3)').diagnostics[0].message).toMatch(/1 ≤ k ≤ n/);
+    expect(parse('&s even(3, 8, 3)').diagnostics[0].message).toMatch(/the phase is a mode, 0 to 2/);
+  });
+
+  it('agogic() is gone: it says exactly which scan to write', () => {
     expect(parse('&bar agogic(4,4)').diagnostics[0].message).toMatch(/scan\(27 23 26 24\)/);
     expect(parse('&bar agogic(3,4)').diagnostics[0].message).toMatch(/scan\(28 37 35\)/);
   });
@@ -396,20 +408,27 @@ describe('euclid(k, n, shift): Bjorklund’s rhythms', () => {
   it('a written braid like any other: steps to read through a kit, or to play', () => {
     expect(parse('&t step=4 euclid(3, 8)').diagnostics).toEqual([]);
     expect(parse('&t euclid(9, 8)').diagnostics[0].message).toMatch(/euclid\(k, n\)/);
-    expect(parse('&t even(3, 8)').diagnostics[0].message).toMatch(/euclid\(3, 8, 2\)/);
   });
-  it('even(k, n, p) is gone: the rhythm it names plays the onsets even(k, n, p) did, every 1 ≤ k ≤ n ≤ 16, 0 ≤ p < n (#7)', () => {
-    expect(parse('&t even(3, 8, 2)').diagnostics[0].message).toMatch(/for a rhythm, euclid\(3, 8\)$/);
+  it('even(k, n, p) is the places of its necklace, every 1 ≤ k ≤ n ≤ 16 and 0 ≤ p < k; euclid(k, n) strikes the same set, turned (decision 072)', () => {
+    const key = (xs: readonly number[], n: number) => [...xs].map((x) => ((x % n) + n) % n).sort((a, b) => a - b);
+    const turns = (xs: readonly number[], n: number) =>
+      Array.from({ length: n }, (_, r) =>
+        key(
+          xs.map((x) => x + r),
+          n,
+        ).join(),
+      );
     for (let n = 1; n <= 16; n++)
-      for (let k = 1; k <= n; k++)
-        for (let p = 0; p < n; p++) {
-          const said = /for a rhythm, (.*)$/.exec(parse(`&t even(${k}, ${n}, ${p})`).diagnostics[0].message)?.[1];
-          const r = parse(`&t ${said}`);
-          expect(r.diagnostics, `even(${k}, ${n}, ${p}): ${said}`).toEqual([]);
-          const b = r.cells[0].braid;
-          const at = b.kind === 'list' ? b.tokens.flatMap((t, j) => (t.atom.kind === 'note' ? [j] : [])) : null;
-          expect(at, `even(${k}, ${n}, ${p}): ${said}`).toEqual(evenPositions(k, n, p));
+      for (let k = 1; k <= n; k++) {
+        for (let p = 0; p < k; p++) {
+          const b = one(`&t even(${k}, ${n}, ${p})`).braid;
+          const at = b.kind === 'scan' ? scanOf(b.steps).positions : null;
+          expect(at, `even(${k}, ${n}, ${p})`).toEqual(evenPositions(k, n, p));
         }
+        const e = one(`&t euclid(${k}, ${n})`).braid;
+        const hits = e.kind === 'list' ? e.tokens.flatMap((t, j) => (t.atom.kind === 'note' ? [j] : [])) : [];
+        expect(turns(evenPositions(k, n, 0), n), `euclid(${k}, ${n})`).toContain(key(hits, n).join());
+      }
   });
 });
 

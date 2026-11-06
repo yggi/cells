@@ -16,6 +16,7 @@ export const STUBS = new Set([
         .map((k) => `parameter ${k}`),
 ]);
 export const PENDING = new Set([
+    'generator even(k, n)',
     'step <a b c>',
     'modifier x/n',
     'modifier x(k,n,r)',
@@ -281,6 +282,7 @@ export function formsUsed(source, options = {}) {
     for (const [word, form] of [
         ['scan', 'scan(i …)'],
         ['euclid', 'euclid(k, n)'],
+        ['even', 'even(k, n)'],
         ['sin', 'sin(n)'],
         ['saw', 'sin(n)'],
         ['tri', 'sin(n)'],

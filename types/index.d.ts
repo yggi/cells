@@ -1,7 +1,7 @@
 /**
  * The cells language. Text in, events out: `compileSource` reads a piece, `plan` and `windowAt` realize it a window at a
  * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
- * shorter, `normalise` in the canonical spelling, `migrate` a text of an earlier version as it is written now, `variations` and `varied` vary a fragment (its anchors: `anchorsOf`), `fold` and `cellsFromMidi` write cells from notes, `hints` says what repeats in them (#158), `pieceMidi` and
+ * shorter, `normalise` in the canonical spelling, `toCore` in the core grammar for a machine reader (decision 069), `migrate` a text of an earlier version as it is written now, `variations` and `varied` vary a fragment (its anchors: `anchorsOf`), `fold` and `cellsFromMidi` write cells from notes, `hints` says what repeats in them (#158), `pieceMidi` and
  * `readMidi` carry MIDI files, `pieceAudio`, `createRenderer` and `writeWav` render audio (decision 062). `createRepository` holds fragments and finds them by their place in style space and by how
  * often they were used together; `METER_FRAGMENTS` are its meters, `RHYTHM_FRAGMENTS` its rhythms, `BASS_FRAGMENTS` its bass lines, `HARMONY_FRAGMENTS` its harmonies, `INSTRUMENT_FRAGMENTS` its instruments, `EXPRESSION_FRAGMENTS` its expressions (a vibrato), `MODE_FRAGMENTS` its modes, `STAB_FRAGMENTS` its stab lines, `MOTIF_FRAGMENTS` its motifs, `FORM_FRAGMENTS` its forms, `LIBRARY` all, read
  * from the seed library's files (`fragments/`);
@@ -22,6 +22,7 @@ export { createHost, planOf, type ToEngine, type FromEngine } from './engine/hos
 export { shorten, shortenAll, type ShortenOptions } from './engine/shorten';
 export { normalise } from './engine/normalise';
 export { migrate } from './engine/migrate';
+export { toCore, type Core } from './engine/core';
 export { anchorsOf, varied, variations, type Anchor, type Operator, type Variation, type VaryOptions } from './engine/vary';
 export { fold } from './engine/fold';
 export { hints, MIN_NOTES, type Hint, type RepeatHint, type Span as HintSpan, type Transform } from './engine/fold/hints';
