@@ -85,6 +85,11 @@ export const FAMILIES = [
         rewrite: (text) => copies(text),
     },
     {
+        key: 'keys',
+        rows: '40 `scale(name)` `scale(name, tonic)` `scale(&mode, &tonic)`',
+        rewrite: (text, options) => keys(text, options),
+    },
+    {
         key: 'meters',
         rows: '42 `meter("sig")`',
         rewrite: (text, options) => meters(text, options),
@@ -276,6 +281,56 @@ function copies(text) {
     }
     return now;
 }
+function keys(written, options) {
+    const text = named(written);
+    const r = compileSource(text, undefined, options);
+    if (!r.ok)
+        return text;
+    const lines = text.split('\n');
+    const tables = [];
+    const taken = new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]));
+    const decls = parse(text).cells;
+    for (const d of decls) {
+        const c = r.cells.get(d.name);
+        if (d.braid.kind !== 'scan' || !c?.scan)
+            continue;
+        const key = d.over ? decls.find((k) => k.name === d.over.name) : undefined;
+        const shift = d.over ? (r.cells.get(d.over.name)?.shift ?? 0) : c.shift;
+        const i = d.span.line - 1;
+        const [code, comment] = splitComment(lines[i] ?? '');
+        const call = /\bscale\(([^()]*)\)/.exec(code);
+        if (!call || /over=$/.test(code.slice(0, call.index)) || /free\(/.test(call[1]))
+            continue;
+        const mode = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(call[1])?.[1];
+        const held = mode ? decls.find((m) => m.name === mode) : undefined;
+        if (held?.braid.kind === 'list' && held.braid.tokens.length > 1)
+            continue;
+        let at = 0;
+        const table = c.scan.steps.slice(0, -1).map((s) => (at += s));
+        let name = `_m${tables.length + 1}`;
+        while (taken.has(name))
+            name = `_m${tables.length + taken.size + 1}`;
+        taken.add(name);
+        tables.push(`&${name} ${[0, ...table].map(num).join(' ')}`);
+        const tonic = key?.tonic ? `, &${key.tonic.name}` : shift ? `, ${num(shift)}` : '';
+        const next = code.replace(call[0], `scale(&${name}${tonic})`);
+        lines[i] = comment ? `${next}${comment}` : next;
+    }
+    return tables.length ? `${lines.join('\n').replace(/\s+$/, '')}\n${tables.join('\n')}` : written;
+}
+function named(text) {
+    const keys = [];
+    const taken = new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]));
+    const next = codeWise(text, (c) => c.replace(/\bover=scale\(([^()]*)\)/g, (_, args) => {
+        let name = `_k${keys.length + 1}`;
+        while (taken.has(name))
+            name = `_k${keys.length + taken.size + 1}`;
+        taken.add(name);
+        keys.push(`&${name} scale(${args})`);
+        return `over=&${name}`;
+    }));
+    return keys.length ? `${next.replace(/\s+$/, '')}\n${keys.join('\n')}` : text;
+}
 const LEVEL = ['*', '+', '-', '.', ','];
 function meters(text, options) {
     const r = compileSource(text, undefined, options);
@@ -361,7 +416,12 @@ export const LEFT = [
         why: 'a slider’s unit is what the performer moves it in: its range and its steps are in it',
     },
     { key: 'unit reads', rows: '21 `x!n` in a cell read by its units', test: /!\d/, why: '`&a!2` is one unit and `&a &a` two: a pick or a rotation (`&john[<<]`) counts them' },
-    { key: 'keys', rows: '40 `scale(name)`', test: /\bscale\(/, why: 'a key is a mode read from the library and a tonic: two cells, the mode’s table among them' },
+    {
+        key: 'keys',
+        rows: '40 `scale(name)` left as written',
+        test: /\bscale\((?!&)/,
+        why: 'a key whose mode is a name: written as its table where it can be; a key after over= unnamed, or with a slider for a tonic, stays',
+    },
     {
         key: 'meter scans',
         rows: '37 `scan(i …)` on a stepped line',
