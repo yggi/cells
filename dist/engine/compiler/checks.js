@@ -1,7 +1,7 @@
 import { AXES, SLOTS } from "../style.js";
 import { BODIES, CV_LAPS, isMidiCard, ROOT } from "../program.js";
 import { sortOfCells } from "./sorts.js";
-import { MOVING_PARAMS } from "../attributes.js";
+import { FILTER_MODELS, filterModel, MOVING_PARAMS } from "../attributes.js";
 import { DOUGH_SOURCES } from "../dough-params.js";
 import { refsOf } from "../readers.js";
 import { leaves } from "../subseq.js";
@@ -13,6 +13,8 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
             error(`body=${c.params.body}: one of ${Object.keys(BODIES).join(', ')}`, span('body'));
         if (typeof c.params.board === 'string' && c.params.board !== 'none' && !(c.params.board in BODIES))
             error(`board=${c.params.board}: none, or one of ${Object.keys(BODIES).join(', ')}`, span('board'));
+        if (c.params.ftype !== undefined && filterModel(c.params.ftype) === null)
+            error(`ftype=${c.params.ftype}: its filters' model is one of ${FILTER_MODELS.join(', ')} (or superdough's 0, 1, 2)`, span('ftype'));
         if (typeof c.params.couple === 'string') {
             const o = cells.get(c.params.couple);
             if (!o)

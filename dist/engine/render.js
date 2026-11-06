@@ -1,4 +1,5 @@
 import { DOUGH_SOURCES } from "./dough-params.js";
+import { filterModel } from "./attributes.js";
 import { cellId } from "./ids.js";
 import { grainOffset, noise, NOISE_SECONDS } from "./noise.js";
 import { outputSounds } from "./realize.js";
@@ -390,7 +391,8 @@ function filtersOf(c, keep) {
             autos[key] = new Auto(start(key, from));
             autos[q] = new Auto(start(q, 1));
         }
-    return { has, autos };
+    const model = keep('ftype') ? filterModel(c.params.ftype) : '12db';
+    return { has, autos, stages: model === '24db' ? 2 : 1, ladder: model === 'ladder' };
 }
 const stemKey = (ch) => ch.key.split('\u0000')[0];
 const finite = (x) => Number.isFinite(x);
@@ -506,7 +508,9 @@ export function createRenderer(result, shifts, options = {}) {
             const { real, imag } = harmonics(waveform(result, name, shifts));
             wave = waveOf(real, imag);
         }
-        const { has, autos } = filtersOf(c, (k) => !c.inherited?.[k]);
+        const { has, autos, stages, ladder } = filtersOf(c, (k) => !c.inherited?.[k]);
+        if (ladder)
+            say(name, 'ftype', `&${name}'s ftype=ladder is sounded from a later rung (decision 074): rendered as its 12 dB biquad`);
         const sends = sendsOf(name, c, (k) => !c.inherited?.[k]);
         const v = {
             name,
@@ -517,6 +521,7 @@ export function createRenderer(result, shifts, options = {}) {
             grit: gritOf(c.params, (k) => !c.inherited?.[k]),
             has,
             autos,
+            stages,
             sends,
             chains: [],
         };
@@ -577,19 +582,22 @@ export function createRenderer(result, shifts, options = {}) {
         for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
             if (LATER[k])
                 say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-        const st = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
+        const { ladder, ...filters } = filtersOf(c, () => true);
+        if (ladder)
+            say(name, 'ftype', `&${name}'s ftype=ladder is sounded from a later rung (decision 074): rendered as its 12 dB biquad`);
+        const st = { name, ...filters, sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
         stages.set(name, st);
         return st;
     };
     const biquads = (has) => ({
-        ...Object.fromEntries(FILTERS.filter(({ key }) => has[key]).map(({ key, type }) => [key, new Biquad(type)])),
+        ...Object.fromEntries(FILTERS.filter(({ key }) => has.has[key]).map(({ key, type }) => [key, Array.from({ length: has.stages }, () => new Biquad(type))])),
     });
     const buses = new Map();
     const busOf = (stem, through) => {
         const key = [stem, ...through.map((st) => st.name)].join('\u0000');
         let b = buses.get(key);
         if (!b) {
-            b = { key, stem, stages: through.map((stage) => ({ stage, filters: biquads(stage.has) })), input: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
+            b = { key, stem, stages: through.map((stage) => ({ stage, filters: biquads(stage) })), input: [new Float64Array(BLOCK), new Float64Array(BLOCK)] };
             buses.set(key, b);
             if (tracks === 'voices' && !stems.includes(through[0].name))
                 stems.push(through[0].name);
@@ -604,8 +612,8 @@ export function createRenderer(result, shifts, options = {}) {
             const inside = gritty < 0 ? through : through.slice(0, gritty);
             ch = {
                 key,
-                filters: biquads(v.has),
-                stages: inside.map((stage) => ({ stage, filters: biquads(stage.has) })),
+                filters: biquads(v),
+                stages: inside.map((stage) => ({ stage, filters: biquads(stage) })),
                 notes: [],
                 dry: [new Float64Array(BLOCK), new Float64Array(BLOCK)],
                 bus: gritty < 0 ? null : busOf(stem, through.slice(gritty)),
@@ -839,15 +847,14 @@ export function createRenderer(result, shifts, options = {}) {
         const t = blockStart / rate;
         for (const [filters, autos] of [[ch.filters, v.autos], ...ch.stages.map((s) => [s.filters, s.stage.autos])])
             for (const { key: k } of FILTERS) {
-                const bq = filters[k];
-                if (!bq)
-                    continue;
                 const q = QOF[k];
-                bq.set(autos[k].at(t), autos[q].at(t), rate);
-                for (let f = from; f < to; f++) {
-                    const i = f - blockStart;
-                    ch.dry[0][i] = bq.run(ch.dry[0][i], 0);
-                    ch.dry[1][i] = bq.run(ch.dry[1][i], 1);
+                for (const bq of filters[k] ?? []) {
+                    bq.set(autos[k].at(t), autos[q].at(t), rate);
+                    for (let f = from; f < to; f++) {
+                        const i = f - blockStart;
+                        ch.dry[0][i] = bq.run(ch.dry[0][i], 0);
+                        ch.dry[1][i] = bq.run(ch.dry[1][i], 1);
+                    }
                 }
             }
     };
@@ -882,7 +889,7 @@ export function createRenderer(result, shifts, options = {}) {
                     for (const { stage } of ch.stages)
                         for (const sd of stage.sends)
                             levels(sd, from, to, blockStart);
-                    if (!ch.notes.length && !FILTERS.some(({ key }) => ch.filters[key]) && !ch.stages.length)
+                    if (!ch.notes.length && !FILTERS.some(({ key }) => ch.filters[key]?.length) && !ch.stages.length)
                         continue;
                     sound(v, ch, from, to, blockStart);
                     for (const g of v.grit)
@@ -958,14 +965,13 @@ export function createRenderer(result, shifts, options = {}) {
                                 x1[i] = g.run(x1[i]);
                             }
                     for (const { key: k } of FILTERS) {
-                        const bq = filters[k];
-                        if (!bq)
-                            continue;
-                        bq.set(stage.autos[k].at(t), stage.autos[QOF[k]].at(t), rate);
-                        for (let f = from; f < to; f++) {
-                            const i = f - blockStart;
-                            x0[i] = bq.run(x0[i], 0);
-                            x1[i] = bq.run(x1[i], 1);
+                        for (const bq of filters[k] ?? []) {
+                            bq.set(stage.autos[k].at(t), stage.autos[QOF[k]].at(t), rate);
+                            for (let f = from; f < to; f++) {
+                                const i = f - blockStart;
+                                x0[i] = bq.run(x0[i], 0);
+                                x1[i] = bq.run(x1[i], 1);
+                            }
                         }
                     }
                 });

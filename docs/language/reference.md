@@ -140,6 +140,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `hpq=n` · `hpq=free(n, lo..hi)` · `hpq=&x` · `hpq=lo..hi * &a * &b`: High-pass resonance — on a voice; it makes the cell a voice. [→](sound.md)
 - `bpf=n` · `bpf=free(n, lo..hi)` · `bpf=&x` · `bpf=lo..hi * &a * &b`: Band-pass centre, Hz (decision 074) — on a voice; it makes the cell a voice. [→](sound.md)
 - `bpq=n` · `bpq=free(n, lo..hi)` · `bpq=&x` · `bpq=lo..hi * &a * &b`: Band-pass Q: the centre over the bandwidth, 1 unless given (decision 074) — on a voice; it makes the cell a voice. [→](sound.md)
+- `ftype=word`: Its filters' model (decision 074): 12db (the default, one biquad each), 24db (two in series), ladder (a low-pass of its own); or superdough's numbers 0, 2, 1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `room=n` · `room=free(n, lo..hi)` · `room=&x` · `room=lo..hi * &a * &b`: Reverb send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `delay=n` · `delay=free(n, lo..hi)` · `delay=&x` · `delay=lo..hi * &a * &b`: Delay send 0–1 — on a voice; it makes the cell a voice. [→](sound.md)
 - `delaytime=n` · `delaytime=free(n, lo..hi)` · `delaytime=&clock/n`: Echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — or a tap: 8n, 4n. — on a voice; it makes the cell a voice. [→](sound.md)

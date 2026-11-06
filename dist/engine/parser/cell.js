@@ -2,7 +2,7 @@ import { leaves } from "../subseq.js";
 import { TIME_PARAMS } from "../attributes.js";
 import { RETIRED_PARAMS } from "../dough-params.js";
 import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from "../program.js";
-import { CELL_PARAMS, CORE, PARAMS, PARAM_ALIASES, nearestAttribute } from "../attributes.js";
+import { CELL_PARAMS, CORE, filterModel, PARAMS, PARAM_ALIASES, nearestAttribute } from "../attributes.js";
 import { IDENT, LineScanner } from "./scanner.js";
 import { OPERATIONS, parseToken, pushStep } from "./braid.js";
 import { FREE_BRAID_WHOLE, parseFree } from "./free.js";
@@ -478,7 +478,8 @@ function readParam(s, b, key) {
     const v = s.match(/-?[A-Za-z0-9_.]+/y);
     if (v === null)
         s.fail(`Expected a value after ${key}=`);
-    b.params[key] = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(v) ? parseFloat(v) : v;
+    const value = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(v) ? parseFloat(v) : v;
+    b.params[key] = key === 'ftype' && typeof value === 'number' ? (filterModel(value) ?? value) : value;
     b.paramSpans[key] = s.span(vs);
 }
 const RETIRED_KEYS = {
