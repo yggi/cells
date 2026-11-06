@@ -94,6 +94,8 @@ const FILTERS = [
 ] as const;
 type Filter = (typeof FILTERS)[number]['key'];
 const QOF: Readonly<Record<Filter, 'lpq' | 'hpq' | 'bpq'>> = { lpf: 'lpq', hpf: 'hpq', bpf: 'bpq' };
+/** A ladder's drive where `drive=` gives none: superdough's (decision 074 §5). */
+const LADDER_DRIVE = 0.69;
 
 /** Frames between a filter's coefficients, counted from the render's first frame, so a chunk boundary moves nothing. */
 const BLOCK = 32;
@@ -313,6 +315,54 @@ class Biquad {
     this.z1[ch] = this.b1 * x - this.a1 * y + this.z2[ch]!;
     this.z2[ch] = this.b2 * x - this.a2 * y;
     return y;
+  }
+}
+
+// ---- a ladder, a low-pass of its own (decision 074 §5) ----
+
+/** tanh, near enough and cheap, as the ladder's core has it. */
+const fastTanh = (x: number) => {
+  const x2 = x * x;
+  return (x * (27 + x2)) / (27 + 9 * x2);
+};
+
+/**
+ * A ladder low-pass (decision 074 §5): four one-pole stages, each through a tanh, the last fed back by its resonance,
+ * its output a blend of the last stage now and its three samples before. Its core is the MIT one superdough adapts:
+ * Lifted from TheBouteillacBear/webaudioworklet-wasm src/moog/filterKernel.c @ 0632e13 (MIT), its `filter()` and
+ * `fast_tanh`. Around it, superdough's numbers for the same three things (superdough 1.3.0, `worklets.mjs`, read, its
+ * code not copied: it is AGPL, this package MIT), so it sounds as superdough's ladder does:
+ * - the input driven by e^drive (`drive=`, .69 unless given), within .1 and 2000;
+ * - the feedback k = min(8, 0.13 · resonance), the cell's `lpq=` read as superdough's resonance (not in dB);
+ * - its output made up by min(1.75, 1 + k) over the drive.
+ * Its cutoff and resonance are read once a block, as a filter's coefficients are (superdough reads them once a quantum).
+ */
+class Ladder {
+  private cutoff = 0;
+  private k = 0;
+  private makeup = 1;
+  private readonly drive: number;
+  private readonly p = [new Float64Array(7), new Float64Array(7)];
+  constructor(drive: number) {
+    this.drive = Math.min(2000, Math.max(0.1, Math.exp(drive)));
+  }
+  set(freq: number, q: number, rate: number): void {
+    this.cutoff = Math.min(1, (freq * 2 * Math.PI) / rate);
+    this.k = Math.min(8, q * 0.13);
+    this.makeup = (1 / this.drive) * Math.min(1.75, 1 + this.k);
+  }
+  run(x: number, ch: 0 | 1): number {
+    // (p: the four stages, then the last stage's three samples before; as the core's p0 p1 p2 p3 p32 p33 p34)
+    const p = this.p[ch];
+    const out = p[3]! * 0.360891 + p[4]! * 0.41729 + p[5]! * 0.177896 + p[6]! * 0.0439725;
+    p[6] = p[5]!;
+    p[5] = p[4]!;
+    p[4] = p[3]!;
+    p[0]! += (fastTanh(x * this.drive - this.k * out) - fastTanh(p[0]!)) * this.cutoff;
+    p[1]! += (fastTanh(p[0]!) - fastTanh(p[1]!)) * this.cutoff;
+    p[2]! += (fastTanh(p[1]!) - fastTanh(p[2]!)) * this.cutoff;
+    p[3]! += (fastTanh(p[2]!) - fastTanh(p[3]!)) * this.cutoff;
+    return out * this.makeup;
   }
 }
 
@@ -593,9 +643,10 @@ function filtersOf(
       autos[key] = new Auto(start(key, from));
       autos[q] = new Auto(start(q, 1));
     }
-  // (its model: 24db two stages; a ladder, until its rung, its 12 dB biquad, said by the renderer)
+  // (its model: 24db two stages; a ladder its low-pass, driven by drive=, its high- and band-pass biquads)
   const model = keep('ftype') ? filterModel(c.params.ftype) : '12db';
-  return { has, autos, stages: model === '24db' ? 2 : 1, ladder: model === 'ladder' };
+  const drive = keep('drive') && typeof c.params.drive === 'number' ? c.params.drive : LADDER_DRIVE;
+  return { has, autos, stages: model === '24db' ? 2 : 1, ladder: model === 'ladder' && has.lpf ? drive : null };
 }
 
 /** The stem a chain goes to: its key's first part. */
@@ -614,6 +665,8 @@ interface Voice {
   readonly has: Readonly<Record<Filter, boolean>>;
   /** How many biquads each of its filters is: 1, or 2 under `ftype=24db` (decision 074). */
   readonly stages: number;
+  /** Under `ftype=ladder`, its low-pass is a ladder at this drive (decision 074 §5); null otherwise. */
+  readonly ladder: number | null;
   readonly autos: Partial<Record<FilterKey, Auto>>;
   /** Its sends to an echo (`delay=`) and the reverb (`room=`), after its filters, each at the level it moves to. */
   readonly sends: readonly Send[];
@@ -631,6 +684,8 @@ interface Stage {
   readonly has: Readonly<Record<Filter, boolean>>;
   /** How many biquads each of its filters is: 1, or 2 under `ftype=24db` (decision 074). */
   readonly stages: number;
+  /** Under `ftype=ladder`, its low-pass is a ladder at this drive (decision 074 §5); null otherwise. */
+  readonly ladder: number | null;
   readonly autos: Partial<Record<FilterKey, Auto>>;
   /** Its sends, for its voices' sum: each voice through it sends, as a filter of the sum is one on each (#452). */
   readonly sends: readonly Send[];
@@ -648,7 +703,7 @@ interface Bus {
   /** The stem it goes to: '' (the instrument's own) or an entry's key. */
   readonly stem: string;
   /** Its instrument, then those around it, each with its filters for this bus. */
-  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, Biquad[]>> }[];
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, (Biquad | Ladder)[]>> }[];
   readonly input: [Float64Array, Float64Array];
 }
 
@@ -656,9 +711,9 @@ interface Bus {
 interface Chain {
   /** The stem it goes to: '' (the voice's own), or an entry's key; then the instruments it goes through. */
   readonly key: string;
-  readonly filters: Partial<Record<Filter, Biquad[]>>;
+  readonly filters: Partial<Record<Filter, (Biquad | Ladder)[]>>;
   /** The instruments' stages after its own filters, the innermost first, each with its filters for this chain. */
-  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, Biquad[]>> }[];
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, (Biquad | Ladder)[]>> }[];
   /** Its notes sounding or to come, in order of their start. */
   notes: Note[];
   /** Its sound before its filters, this block. */
@@ -802,7 +857,6 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     }
     // (not what it takes from an instrument: that instrument's stage plays it, after the voice's own)
     const { has, autos, stages, ladder } = filtersOf(c, (k) => !c.inherited?.[k]);
-    if (ladder) say(name, 'ftype', `&${name}'s ftype=ladder is sounded from a later rung (decision 074): rendered as its 12 dB biquad`);
     const sends = sendsOf(name, c, (k) => !c.inherited?.[k]);
     const v: Voice = {
       name,
@@ -814,6 +868,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       has,
       autos,
       stages,
+      ladder,
       sends,
       chains: [],
     };
@@ -887,14 +942,17 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     if (!c) return null;
     for (const k of [...Object.keys(c.params), ...Object.keys(c.paramCells ?? {})])
       if (LATER[k]) say(name, k, `&${name}'s ${k}= is sounded from stage ${LATER[k]}: rendered without it`);
-    const { ladder, ...filters } = filtersOf(c, () => true);
-    if (ladder) say(name, 'ftype', `&${name}'s ftype=ladder is sounded from a later rung (decision 074): rendered as its 12 dB biquad`);
-    const st: Stage = { name, ...filters, sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
+    const st: Stage = { name, ...filtersOf(c, () => true), sends: sendsOf(name, c, () => true), grit: gritOf(c.params, () => true) };
     stages.set(name, st);
     return st;
   };
-  const biquads = (has: { readonly has: Voice['has']; readonly stages: number }): Chain['filters'] => ({
-    ...Object.fromEntries(FILTERS.filter(({ key }) => has.has[key]).map(({ key, type }) => [key, Array.from({ length: has.stages }, () => new Biquad(type))])),
+  const biquads = (has: { readonly has: Voice['has']; readonly stages: number; readonly ladder: number | null }): Chain['filters'] => ({
+    ...Object.fromEntries(
+      FILTERS.filter(({ key }) => has.has[key]).map(({ key, type }) => [
+        key,
+        key === 'lpf' && has.ladder !== null ? [new Ladder(has.ladder)] : Array.from({ length: has.stages }, () => new Biquad(type)),
+      ]),
+    ),
   });
 
   /** A voice's chain to a stem through its instruments' stages, made when a note first goes there. */
@@ -915,7 +973,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     let ch = v.chains.find((x) => x.key === key);
     if (!ch) {
       // (up to the first instrument with grit its own; from there on, a bus its voices share)
-      const gritty = through.findIndex((st) => st.grit.length > 0);
+      const gritty = through.findIndex((st) => st.grit.length > 0 || st.ladder !== null);
       const inside = gritty < 0 ? through : through.slice(0, gritty);
       ch = {
         key,

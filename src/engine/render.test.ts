@@ -569,13 +569,99 @@ describe("ftype=: the filters' model (decision 074)", () => {
     expect(render(V('') + '&lp ftype=24db lpf=500 lpq=6 [&v]\n' + OUT('&lp')).bits).toEqual(render(V('ftype=24db lpf=500 lpq=6') + OUT('&v')).bits);
   });
 
-  it('ladder is said, once a cell, and plays its 12 dB biquad until its rung; anything else is an error', () => {
-    const ladder = render(V('ftype=ladder lpf=500 lpq=6') + OUT('&v'));
-    expect(ladder.diagnostics).toEqual(['v ftype']);
-    expect(ladder.bits).toEqual(render(V('lpf=500 lpq=6') + OUT('&v')).bits);
+  it('anything but a model is an error', () => {
     expect(compiled(V('ftype=36db lpf=500') + OUT('&v')).diagnostics.map((d) => d.message)).toContain(
       "ftype=36db: its filters' model is one of 12db, ladder, 24db (or superdough's 0, 1, 2)",
     );
     expect(compiled(V('ftype=3 lpf=500') + OUT('&v')).ok).toBe(false);
+  });
+});
+
+describe('the ladder (decision 074 §5)', () => {
+  const RATE = 48000;
+  const V = (filters: string) => `&v s=saw loop=110hz ${filters} env=&(map=adsr .01 0 1 .05)\n&n step=1 0\n`;
+  const OUT = (cell: string) => `&out map=sample postgain=1 [&n * ${cell}]`;
+  const mix = (text: string, seconds = 1) => {
+    const r = compiled(text);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    const a = pieceAudio(r, codeShifts(r), { seconds, tail: 0 });
+    return { mix: a.mix, diagnostics: a.diagnostics };
+  };
+  /** The ladder written out from decision 074 §5, independently of the renderer: what it makes of `x` at a fixed cutoff, resonance and drive. */
+  const ladder = (x: Float32Array, hz: number, q: number, drive: number) => {
+    const tanh = (v: number) => (v * (27 + v * v)) / (27 + 9 * v * v);
+    const d = Math.min(2000, Math.max(0.1, Math.exp(drive)));
+    const c = Math.min(1, (hz * 2 * Math.PI) / RATE);
+    const k = Math.min(8, q * 0.13);
+    const g = (1 / d) * Math.min(1.75, 1 + k);
+    let [p0, p1, p2, p3, p32, p33, p34] = [0, 0, 0, 0, 0, 0, 0];
+    return Float64Array.from(x, (v) => {
+      const out = p3 * 0.360891 + p32 * 0.41729 + p33 * 0.177896 + p34 * 0.0439725;
+      [p34, p33, p32] = [p33, p32, p3];
+      p0 += (tanh(v * d - k * out) - tanh(p0)) * c;
+      p1 += (tanh(p0) - tanh(p1)) * c;
+      p2 += (tanh(p1) - tanh(p2)) * c;
+      p3 += (tanh(p2) - tanh(p3)) * c;
+      return out * g;
+    });
+  };
+  const farthest = (a: ArrayLike<number>, b: ArrayLike<number>) => {
+    let m = 0;
+    for (let i = 0; i < a.length; i++) m = Math.max(m, Math.abs(a[i]! - b[i]!));
+    return m;
+  };
+
+  it("is its core and superdough's numbers: its low-pass, sample for sample, what the decision writes out", () => {
+    const dry = mix(V('') + OUT('&v')).mix;
+    for (const [q, drive] of [
+      [1, 0.69],
+      [20, 0.69],
+      [10, 2],
+    ] as const) {
+      const { mix: wet, diagnostics } = mix(V(`ftype=ladder lpf=800 lpq=${q} drive=${drive}`) + OUT('&v'));
+      expect(diagnostics).toEqual([]);
+      // (the voice's sound, before its .4, through the ladder, and the .4 again: within 1e-5, the mix being in float32)
+      for (const ch of [0, 1] as const) {
+        const want = ladder(
+          Float32Array.from(dry[ch], (v) => v / 0.4),
+          800,
+          q,
+          drive,
+        ).map((v) => v * 0.4);
+        expect(farthest(wet[ch], want)).toBeLessThan(1e-5);
+      }
+    }
+    expect(farthest(mix(V('ftype=ladder lpf=800') + OUT('&v')).mix[0], mix(V('ftype=ladder lpf=800 drive=.69') + OUT('&v')).mix[0])).toBe(0);
+  });
+
+  it('is a low-pass: under it a high-pass and a band-pass are their biquads', () => {
+    expect(bits(mix(V('ftype=ladder hpf=300 bpf=900') + OUT('&v')).mix)).toEqual(bits(mix(V('hpf=300 bpf=900') + OUT('&v')).mix));
+  });
+
+  it('rings on at a high resonance: its feedback past the point where it sings by itself', () => {
+    // (a note of a quarter second, then three quarters of silence: what is left in the last half second)
+    const tail = (q: number) => {
+      const m = mix(`&v s=saw loop=110hz ftype=ladder lpf=600 lpq=${q} env=&(map=adsr .01 0 1 .02)\n&n step=4 0 ~ ~ ~\n` + OUT('&v')).mix[0];
+      let e = 0;
+      for (let i = RATE / 2; i < RATE; i++) e += m[i]! * m[i]!;
+      return e;
+    };
+    expect(tail(60)).toBeGreaterThan(1e3 * tail(5));
+  });
+
+  it("on an instrument it is on its voices' sum, as grit is (decision 067): a stem of its own", () => {
+    const VOICES = '&a s=saw loop=110hz env=&(map=adsr .01 0 1 .05)\n&b s=square loop=165hz env=&(map=adsr .01 0 1 .05)\n&n step=1 0\n';
+    const r = compiled(`${VOICES}&box ftype=ladder lpf=700 lpq=12 [&a, &b]\n&out map=sample postgain=1 [&n * &box]`);
+    const rr = createRenderer(r, codeShifts(r), { tracks: 'voices' });
+    rr.add(eventsBetween(plan(r, codeShifts(r)), 0, 1, true, { until: 1 }));
+    const out = rr.render(RATE);
+    expect([rr.stems, rr.diagnostics]).toEqual([['a', 'b', 'box'], []]);
+    const dry = compiled(`${VOICES}&out map=sample postgain=1 [&n * &a, &n * &b]`);
+    const rd = createRenderer(dry, codeShifts(dry), { tracks: 'voices' });
+    rd.add(eventsBetween(plan(dry, codeShifts(dry)), 0, 1, true, { until: 1 }));
+    const d = rd.render(RATE);
+    // (the two voices' sum, at the level it leaves them, through one ladder)
+    const sum = Float32Array.from(d.stems.get('a')![0], (v, i) => v + d.stems.get('b')![0][i]!);
+    expect(farthest(out.stems.get('box')![0], ladder(sum, 700, 12, 0.69))).toBeLessThan(1e-5);
   });
 });
