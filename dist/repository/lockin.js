@@ -12,7 +12,7 @@ export const SECTIONS = 1_250;
 const ENTROPY = 0.3;
 const MISS = 0.3;
 export const FACETS = ['meter', 'rhythm'];
-export const LOCK_IN_BOUND = 0.05;
+export const LOCK_IN_BOUND = 0.4;
 const STEP = { sync: 0.08, harm: 0.1, artic: 0.1, energy: 0.06 };
 const reflected = (x) => {
     const around = ((x % 2) + 2) % 2;
@@ -104,9 +104,20 @@ export function topThree(ids) {
     const top = [...counts.values()].sort((a, b) => b - a).slice(0, 3);
     return top.reduce((a, b) => a + b, 0) / ids.length;
 }
-const added = (base, runs, facet) => runs.reduce((sum, r, i) => sum + topThree(r.kept[facet]) - topThree(base[i].alone[facet]), 0) / runs.length;
+const shares = (base, runs, facet) => ({
+    alone: base.reduce((sum, b) => sum + topThree(b.alone[facet]), 0) / base.length,
+    learned: runs.reduce((sum, r) => sum + topThree(r.kept[facet]), 0) / runs.length,
+});
+export const added = (base, runs, facet) => {
+    const s = shares(base, runs, facet);
+    return s.learned - s.alone;
+};
+const taken = (base, runs, facet) => {
+    const s = shares(base, runs, facet);
+    return (s.learned - s.alone) / (1 - s.alone);
+};
 export function lockIn(base, runs, facet) {
-    const perDraw = runs.map((draw, d) => added(base[d], draw, facet));
+    const perDraw = runs.map((draw, d) => taken(base[d], draw, facet));
     const pooled = perDraw.reduce((a, b) => a + b, 0) / perDraw.length;
     const variance = perDraw.reduce((a, b) => a + (b - pooled) ** 2, 0) / Math.max(1, perDraw.length - 1);
     return { perDraw, pooled, standardError: Math.sqrt(variance / perDraw.length) };

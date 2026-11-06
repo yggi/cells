@@ -37,7 +37,7 @@ export declare const USE_STEP = 0.1;
  * fragment more than 1.2 times as far as one used is never found first. Over the lock-in measure's 256 runs of 1,250
  * sections at entropy 0.3 (`lockin.ts`, `lockin.slow.test.ts`), use moves add 1.5 points to the share of sections whose
  * fragment is among its run's 3 most used (meters) and 2.5 (rhythms), and 4.05 to the rhythms' with use together, each
- * under the bound of 5 with twice its standard error (0.2 to 0.4 points); at 1.25 they add 2.2 and 3.9, and 6.1 with
+ * under the bound then, 5 points with twice its standard error (0.2 to 0.4 points; since #533 the bound is relative, decision 048); at 1.25 they add 2.2 and 3.9, and 6.1 with
  * use together at 046's first reach (#162); at 1.5, 4.9 and 7.2; at 1.1, −0.4 and 0.4. The step barely matters (0.02,
  * 0.05 or 0.1, within half a point): the cap decides.
  */
