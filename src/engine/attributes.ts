@@ -106,9 +106,12 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   hpq: sound('high-pass resonance', { moves: true }),
   bpf: sound('band-pass centre, Hz (decision 074)', { moves: true, hz: true }),
   bpq: sound('band-pass Q: the centre over the bandwidth, 1 unless given (decision 074)', { moves: true }),
-  ftype: sound("its filters' model (decision 074): 12db (the default, one biquad each), 24db (two in series), ladder (a low-pass of its own); or superdough's numbers 0, 2, 1", {
-    value: 'word',
-  }),
+  ftype: sound(
+    "its filters' model (decision 074): 12db (the default, one biquad each), 24db (two in series), ladder (its low-pass a ladder, lpq= its resonance, drive= its drive); or superdough's numbers 0, 2, 1",
+    {
+      value: 'word',
+    },
+  ),
   room: sound('reverb send 0–1', { moves: true }),
   delay: sound('delay send 0–1', { moves: true }),
   delaytime: sound('echo time, seconds — or a clock: &bar*2 (an eighth at the tempo) — or a tap: 8n, 4n.', { clock: true }),
@@ -187,7 +190,10 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
   length: physics('a tape: how long its loop is, in seconds of tape (or a clock: length=&bar/4, or a tap: length=1m); none, an open reel', ['tape'], { clock: true }),
   erase: physics('a tape: how much of what was there each pass under the write head wipes (1 all, .3 leaves ghosts)', ['tape']),
   tone: physics('a sound tape: its loss — each pass through the loop darker (Hz: 7000 bright, 1500 worn)', ['tape'], { hz: true }),
-  drive: physics('a sound tape: how hard it saturates each pass (0 clean, .5 warm, 1 crushed)', ['tape']),
+  drive: physics(
+    "how hard it saturates: a sound tape, each pass (0 clean, .5 warm, 1 crushed); a ladder (ftype=ladder, decision 074), its input pushed by e^drive into its stages, .69 unless given (superdough's)",
+    ['tape', 'voice'],
+  ),
   hiss: physics('a sound tape: its noise floor (0 none, .02 a cassette)', ['tape']),
   print: physics('a sound tape: print-through — a faint pre-echo before each head (.03 a whisper)', ['tape']),
   printgap: physics('a sound tape: how far before each head the print-through sits (tape-seconds, .6)', ['tape']),
