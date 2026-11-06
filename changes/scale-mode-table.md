@@ -1,0 +1,3 @@
+### Added
+
+- **A key's mode can be written as its table** (decision 069, keys: the owner's (a)). `scale(&mode, &tonic)` reads a cell that holds a mode's name (`&mode dorian`) or its phase (`&mode 3`), and now also its table: `&mode 0 2 3 5 7 8 10` or `&mode scan(2 1 2 2 1 2 2)` is `minor`. The table is whole numbers from 0, rising, under 12, so any mode of the twelve can be written, not only the seven diatonic ones. The tonic stays a cell the key reads, stepped too (`&tonic step=1m/8 D F`). This lets `toCore` write a key's mode out while its tonic stays a hole a host fills. Nothing a piece plays changes: what was an error now reads.
