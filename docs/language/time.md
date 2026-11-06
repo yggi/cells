@@ -29,11 +29,11 @@ A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/
 
 A meter is a cell whose braid is a `scan` or a `meter(…)`: `scan(27 23 26 24)` is a bent 4/4 bar, `scan(3 3 2)` the tresillo. A scan places its steps within the bar; other clocks step evenly, unless a swing leans them.
 
-**`meter(signature, step)`** writes a bar as levels, one per step. **A meter is two applications of `even`** (decision 072, `contracts/meter` v2):
+**`meter(signature, step)`** writes a bar as levels, one per step. **A meter is two applications of `even`** ([decision 072](https://github.com/yggi/cells/blob/main/docs/decisions/072-even-is-the-foundation.md), [#506](https://github.com/yggi/cells/issues/506), yggi/music-commons `contracts/meter` v2):
 - **Its pulses into beats, by its signature:**
-  - **x/8** (and x/16) is the canonical even set of ⌈x/3⌉ groups, the fewest 2s and 3s as evenly as they go: `3/8` one beat, `7/8` 3+2+2, `8/8` 3+3+2, `11/8` 3+3+3+2.
-  - **x/4 and x/2** count beats of the denominator (`2/2` two halves), or threes where x is a multiple of 3 from 6 (`6/4` two dotted halves, against `3/2`'s three).
-- **Its beats into halves:** two or three groups each start a beat (`+`); four or more are halved by `even(2, count)` (5/4 as 3+2), each half again, a tier for each halving. So `meter("4/4", 2)` is eight steps, `*.-.+.-.`, and `meter("6/8")` six, `*..+..`.
+  - **x/8** (and x/16) is the canonical even set of ⌈x/3⌉ groups, the fewest 2s and 3s as evenly as they go: `3/8` one beat, `5/8` 3+2, `7/8` 3+2+2, `8/8` 3+3+2, `10/8` 3+2+3+2, `11/8` 3+3+3+2, `13/8` 3+3+2+3+2.
+  - **x/4 and x/2** count beats of the denominator (`2/2` two halves, `3/2` three, `7/4` seven quarters), or threes where x is a multiple of 3 from 6 (`6/4` two dotted halves, against `3/2`'s three halves).
+- **Its beats into halves:** two or three groups each start a beat (`+`); four or more are halved by `even(2, count)` (5/4 as 3+2, 7/4 as 4+3), each half again, a tier for each halving: the second half's first is `+`, the others a tier below. So `meter("4/4", 2)` is eight steps, `*.-.+.-.`, and `meter("6/8")` six, `*..+..`.
 
 **Its tiers** run from the bar to the step, and **its grades are its tiers mapped from the ends**:
 - `*` is the bar, `,` the step and `.` the eighth;
@@ -47,7 +47,8 @@ A meter is a cell whose braid is a `scan` or a `meter(…)`: `scan(27 23 26 24)`
 **Groups as sizes:** `meter("2+2+3")` writes eighths in groups of 2 and 3, each 2, 3, 4 or 6, and `meter("2+2+3/4")` quarters. A signature is a name for one grouping (`meter("7/8")` is `meter("3+2+2")`, the same meter). Its beats are its groups, and its bpm counts them.
 
 **Levels can be written directly**, `meter("*.+.+..")`, every mark but `.` and `,` starting a beat: `meter("*.-.+.-.")` is 4/4. Their step's note value is their pulse: alla breve is `meter("*,.,+,.,", 8n)`, a waltz in one `meter("*..", 4n)`.
-- Written out a step a pulse, a signature is the same meter again; one with quarters inside its beats (6/4) reads them as beats.
+- Written out at a step a pulse, every signature from 2/8 to 16/8, 2/4 to 7/4 and 2/2 to 4/2 is the same meter again.
+- One whose quarters sit inside its beats (6/4, or 2/2 in quarters) reads those quarters as beats, and is written by its signature or sizes.
 
 **A meter's tempo read from a cell** ([#290](https://github.com/yggi/cells/issues/290)): `&bar meter("4/4") step=&tempo` with `&tempo step=104bpm`, a cell that is a rate alone (no braid), keeps time as `&bar meter("4/4") step=104bpm` does, its swing and its beats as written, so it is the piece's main meter and its taps read it; `step=&tempo*2` doubles it. A fragment that leaves its tempo to the text that uses it reads it so, a hole like a name (the seed meters do). A meter stepped by any other cell steps by that cell's steps, as before.
 
