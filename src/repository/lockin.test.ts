@@ -1,6 +1,6 @@
 // Lock-in, a witness (decision 048, point 6; #145, #151, #162): the walk of `lockin.ts` over draws 0–3, 32 runs of 1,250
 // sections (40,000), about 5 s. The bound itself is over draws 0–31 in `lockin.slow.test.ts` (`npm run test:all`): 32 runs
-// can't tell 5 points from 6, since a draw of 8 spreads by up to 2.5 points. This one holds what 32 runs can say, and
+// can't tell 40 % from 50 %, since a draw of 8 spreads by up to 20 % (#533). This one holds what 32 runs can say, and
 // that the walk files fragments of its own, finds them again, and keeps its layer small.
 // `LOCKIN_REPORT=1 npx vitest run --silent=false src/repository/lockin.test.ts` prints the numbers.
 import { describe, expect, it } from 'vitest';
@@ -8,11 +8,12 @@ import { DRAW, drift, FACETS, LOCK_IN_BOUND, LOCK_IN_PRESETS, lockIn, lockInDraw
 
 /**
  * What a pool of 4 draws may read when the bound holds over 32: the bound plus twice the standard error of a pool of 4
- * draws, a draw of 8 spreading by up to 2.5 points (`DRAW_SPREAD`, which the slow test holds): 5 + 2 · 2.5 / √4 = 7.5
- * points. It fires on what the bound was built against: a cap of 1.5 reads 7.9 here (use moves, the rhythms) and 8.2
- * (with use together), a reach of 1 (a known group pulling 0.1) 8.0, where the values chosen read 3.2 and 4.6 (#162).
+ * draws, a draw of 8 spreading by up to 20 % (`DRAW_SPREAD`, which the slow test holds): 0.4 + 2 · 0.2 / √4 = 0.6. It
+ * fires on what the bound was built against: a cap of 1.5 reads 0.62 here (use moves, the meters and the rhythms) and
+ * 0.67 (with use together), a reach of 1 (a known group pulling 0.1) 0.76, where the values chosen read 0.32 and 0.38
+ * (the rhythms; #162, restated relative in #533).
  */
-const WITNESS_BOUND = LOCK_IN_BOUND + (2 * 0.025) / Math.sqrt(4);
+const WITNESS_BOUND = LOCK_IN_BOUND + (2 * 0.2) / Math.sqrt(4);
 
 const LEARNINGS = { 'use moves': { move: true, together: false }, 'use moves and use together': { move: true, together: true } };
 const { baselines, learned } = lockInDraws(0, 3, Object.values(LEARNINGS));
@@ -57,7 +58,7 @@ describe('lock-in, a witness over 4 draws of 8 runs, 40,000 sections at entropy 
   });
 
   it.each(ways.flatMap(([name, draws]) => FACETS.map((f) => [name, f, draws] as const)))(
-    '%s add at most 7.5 points to the share among the 3 most used, over 32 runs: %s',
+    '%s take at most 60 % of the share outside the 3 most used, over 32 runs: %s',
     (_, facet, draws) => {
       expect(lockIn(baselines, draws, facet).pooled).toBeLessThanOrEqual(WITNESS_BOUND);
     },

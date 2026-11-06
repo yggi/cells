@@ -45,11 +45,11 @@ const WITH = ALL.filter(({ v }) => v.reference);
 const byOperator = (list: typeof ALL) => Object.fromEntries([...new Set(ALL.map(({ v }) => v.rule))].map((op) => [op, list.filter(({ v }) => v.rule === op).length]));
 
 describe("the seeds' variations by reference", () => {
-  it('gives 490 of the 559 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter', () => {
-    expect(ALL.length).toBe(559);
-    expect(WITH.length).toBe(490);
-    expect(byOperator(ALL)).toEqual({ rotate: 27, drop: 114, add: 312, transpose: 56, reverse: 6, bend: 34, trim: 8, invert: 2 });
-    expect(byOperator(WITH)).toEqual({ rotate: 17, drop: 90, add: 279, transpose: 56, reverse: 4, bend: 34, trim: 8, invert: 2 });
+  it('gives 506 of the 576 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter', () => {
+    expect(ALL.length).toBe(576);
+    expect(WITH.length).toBe(506);
+    expect(byOperator(ALL)).toEqual({ rotate: 28, drop: 119, add: 323, transpose: 56, reverse: 6, bend: 34, trim: 8, invert: 2 });
+    expect(byOperator(WITH)).toEqual({ rotate: 17, drop: 95, add: 290, transpose: 56, reverse: 4, bend: 34, trim: 8, invert: 2 });
     // (the four operators with a form before #293: 79 of their 91)
     expect(['rotate', 'transpose', 'invert', 'reverse'].reduce((n, op) => n + byOperator(WITH)[op]!, 0)).toBe(79);
   });
@@ -67,7 +67,7 @@ describe("the seeds' variations by reference", () => {
       return [bare(v.reference!.line(v.line.slice(1))), bare([...written.head, ...written.attrs, ...written.braid].join(' '))] as const;
     });
     expect(sizes.filter(([ref, line]) => ref > line)).toEqual([]);
-    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(488);
+    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(504);
   });
 
   it('writes each operator in a form the language has', () => {

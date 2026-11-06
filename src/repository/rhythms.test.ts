@@ -80,19 +80,20 @@ const PRESETS: Record<string, { point: StylePoint; swing: number }> = {
 };
 
 // Each clave's strokes, in sixteenths of 4/4 over its bars: over two, a stroke on every eighth of the cut-time pattern
-// (x..x..x...x.x... doubled); over one, the cut-time pattern itself.
+// (x..x..x...x.x... doubled); over one, the cut-time pattern itself, and the cinquillo's x.xx.xx. in eighths.
 const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
   son_clave_3_2: { bars: 2, strokes: [0, 6, 12, 20, 24] },
   son_clave_2_3: { bars: 2, strokes: [4, 8, 16, 22, 28] },
   rumba_clave_3_2: { bars: 2, strokes: [0, 6, 14, 20, 24] },
   bossa_nova_clave: { bars: 2, strokes: [0, 6, 12, 20, 26] },
   bossa_nova_clave_one_bar: { bars: 1, strokes: [0, 3, 6, 10, 13] },
+  cinquillo: { bars: 1, strokes: [0, 4, 6, 10, 12] },
 };
 
 const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(wordOf(`${w.preset} drums`)) }));
 
 describe('the rhythm fragments', () => {
-  it('are E31’s eight drum bars, one per preset, five claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, every point associated as the facet rhythm', () => {
+  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, every point associated as the facet rhythm', () => {
     expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([
       ...Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)),
       ...Object.keys(CLAVES),
@@ -201,7 +202,7 @@ describe('the claves', () => {
 
 // Decision 054, rung 2 (#244): no rhythm carries a voice of its own. Every name a rhythm strikes (`&bd`, `&claves`) is a
 // hole read only as a sound, which an instrument fills: the General MIDI kit. The eight drum bars' 30
-// `&bd s=white …` lines, bare white noise standing in for a kick and a hat alike, and the five claves' `&claves` (the
+// `&bd s=white …` lines, bare white noise standing in for a kick and a hat alike, and the claves' `&claves` (the
 // General MIDI kit's line word for word) are gone: 35 lines.
 const STRUCK: Record<string, string[]> = {
   synth_pop_drums: ['&bd', '&hh', '&sd'],
