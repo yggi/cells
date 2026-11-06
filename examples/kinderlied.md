@@ -10,7 +10,7 @@ Each tune's shape is a form: Twinkle's is `ternary`, A B A, its bridge the answe
 The band is the library's too: the plainest beat, `kinderlied_drums` (the kick on one and three, the snare on two and four, a closed hat on every beat), a vamp of two chords, the tonic for four bars and the fifth for four, and the root bass under it.
 
 ```cells
-&bar from meter_4_4 &tempo
+&bar from meter &tempo
 &tempo step=free(100bpm, 80..120)
 &key from diatonic(mode=ionian) C
 &harm from vamp_to_the_fifth &key

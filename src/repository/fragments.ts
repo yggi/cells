@@ -264,7 +264,8 @@ export function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeig
 
 /** The order of two ids, by code unit: how a layer writes a pair, and a query breaks a tie. */
 /** A renamed seed id's old spelling (#387), so ties keep the order they had: a query answers as it did before the rename. */
-const WAS = new Map([...RENAMED_IDS].map(([old, word]) => [word, old]));
+// (a word renamed twice, `4/4` to `meter_4_4` to `meter` (#387, #507), breaks ties by its oldest id: the first)
+const WAS = new Map([...RENAMED_IDS].reverse().map(([old, word]) => [word, old]));
 const tieKey = (id: string) => WAS.get(id) ?? id;
 export const byId = (a: string, b: string): number => {
   const [x, y] = [tieKey(a), tieKey(b)];

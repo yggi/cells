@@ -36,7 +36,7 @@ It compiles with no diagnostic and renders (33 s, dry: the echo is the renderer'
 The VCF and the echo are written twice, once on each oscillator, since a filter belongs to a voice; the VCA is the instrument.
 
 ```cells
-&bar from meter_4_4 &tempo
+&bar from meter &tempo
 &thump, &click from envelopes
 &tempo step=free(116bpm, 90..140)
 &key scale(minor, &tonic)

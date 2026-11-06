@@ -54,7 +54,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are a hundred and thirty-one (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074)', () => expect(files).toHaveLength(131));
+  it('are a hundred and nineteen (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507)', () =>
+    expect(files).toHaveLength(119));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -65,12 +66,12 @@ describe('the seed files', () => {
   });
 
   it('build the meters, the rhythms, the bass lines, the harmonies, the instruments and the modes, each in file order, and the library is all of them', () => {
-    // (a file whose points carry a template's arguments is a fragment for each set: diatonic is seven, #387)
+    // (a file whose points carry a template's arguments is a fragment for each set: diatonic is seven, #387; meter thirteen, #507)
     expect(SEED.flatMap(fragmentsOf)).toEqual(
       [...LIBRARY].sort((a, b) => SEED.findIndex((f) => fragmentsOf(f).some((x) => x.id === a.id)) - SEED.findIndex((f) => fragmentsOf(f).some((x) => x.id === b.id))),
     );
     expect(SEED.flatMap(fragmentsOf)).toHaveLength(LIBRARY.length);
-    expect(SEED.filter((f) => f.path.startsWith('meters/')).map((f) => f.fragment)).toEqual(METER_FRAGMENTS);
+    expect(SEED.filter((f) => f.path.startsWith('meters/')).flatMap(fragmentsOf)).toEqual(METER_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('rhythms/')).map((f) => f.fragment)).toEqual(RHYTHM_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('bass/')).map((f) => f.fragment)).toEqual(BASS_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('harmony/')).map((f) => f.fragment)).toEqual(HARMONY_FRAGMENTS);
@@ -82,12 +83,12 @@ describe('the seed files', () => {
   // by hand, the other meters' and the claves', have the files as their source)
   it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
-      meter_4_4: [SYNTH_POP, TECHNO, BOSSA_NOVA],
-      meter_4_4_swung_on_8n: [SWING_JAZZ, ELECTRO_SWING],
-      meter_5_4: [{ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }, SPOOKY],
-      meter_4_4_leaning_on_16n: [LO_FI],
-      meter_4_4_leaning_lightly_on_16n: [DEEP_HOUSE, FUNK],
-      meter_4_4_leaning_faintly_on_16n: [AMBIENT],
+      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA],
+      'meter(swing=8n:2/3)': [SWING_JAZZ, ELECTRO_SWING],
+      'meter(grouping=meter("5/4"))': [{ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }, SPOOKY],
+      'meter(swing=16n:.65)': [LO_FI],
+      'meter(swing=16n:.6)': [DEEP_HOUSE, FUNK],
+      'meter(swing=16n:31/60)': [AMBIENT],
       synth_pop_drums: [SYNTH_POP],
       techno_drums: [TECHNO],
       deep_house_drums: [DEEP_HOUSE],

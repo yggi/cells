@@ -10,6 +10,8 @@
  *    of its table (a degree); what the cell writes itself is as it sounds.
  *  - **Its attributes**: what it doesn't set, the base's — its table, its clock, its shift, a voice's sound — not its
  *    label, notes, laps or `off`.
+ *  - **A copy of a meter is a meter** (#507): its levels kept, step for step, it keeps the base's grouping, so
+ *    `&bar base=&grouping step=&tempo swing=&swing` is `&grouping`'s meter at that tempo, swung.
  *
  * A base of a base works; a base that comes round to the cell itself is an error on `base=`; one that names no cell is
  * left on the cell, for compile to say (`Unknown cell`), as it does of every reference.

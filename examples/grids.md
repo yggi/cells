@@ -8,7 +8,7 @@ description: "One tune on three grids in turn: nineteen equal steps to the octav
 ```cells
 &edoNote label="map=edo(19): nineteen equal steps to the octave. map=ed(7, 3/2): seven equal steps to a pure fifth instead." about=(&edo19 &fifths)
 &ratiosNote label="map=ratios: the tones as ratios, one period's worth, the last the period: 1 9/8 5/4 … 2." about=&just
-&bar from meter_4_4 &tempo
+&bar from meter &tempo
 &tempo step=free(andante)
 &edo19 map=edo(19)
 &fifths map=ed(7, 3/2)

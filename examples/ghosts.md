@@ -11,7 +11,7 @@ description: Dark and looping, in the manner of an instrumental Nine Inch Nails 
 &percNote label="Heavy, sparse percussion and glitches, by chance." about=(&kick &metal &glitch)
 # Ghost-Cells — D minor. The piano phrase is seven eighths long and the bar eight: it comes
 # back a step later every bar, and lines up again only after seven bars.
-&bar from meter_4_4 &tempo
+&bar from meter &tempo
 &click from envelopes
 &tempo step=free(76bpm, 60..96)
 &minor scan(2 1 2 2 1 2 2) label="{mode} on {tonic}"

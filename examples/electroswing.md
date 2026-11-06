@@ -21,12 +21,12 @@ The piece writes only what is its own: the tempo and the swing, the key's tonic,
 &useNote label="The band is the library's: each line names what it takes from it. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
 ```
 
-The meter is the library's too, `meter_4_4_swung_on_8n`, Jambot's Swing jazz meter, which leaves its tempo to the piece (`&tempo`) and swings its eighths by a cell of its own, `&swing`, triplets (2/3).
+The meter is the library's too, `meter(swing=8n:2/3)`, Jambot's Swing jazz meter, which leaves its tempo to the piece (`&tempo`) and swings its eighths by a cell of its own, `&swing`, triplets (2/3).
 The piece gives its own, an argument of the meter's (`swing=&swing`): the eighths a little less than triplets, .64. The tempo and the swing are both sliders.
 The key is harmonic minor, from the library, on the tonic its line gives it, D (`&key from harmonic_minor D`, decision 065): the vamp's fifth is then A major, four bars of D minor, four of A.
 
 ```cells
-&bar from meter_4_4_swung_on_8n(swing=&swing) &tempo
+&bar from meter(swing=&swing) &tempo
 &tempo step=free(124bpm, 112..132)
 &swing swing=8n:free(.64, .5..0.75)
 &swingNote label="Every line taps the meter (step=4n, 8n, 16n), so every line swings: the open hats on the off-beats, the stabs, the clarinet." about=&bar

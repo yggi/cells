@@ -12,6 +12,7 @@ export function boundText(text, args) {
             throw new Error(`boundText: ${p} is none of the signature's optional parameters (${signature.optional.join(', ')})`);
     const optional = signature.optional.filter((p) => !bound.includes(p));
     const head = `${signature.names.join(', ')} from ${optional.length ? `(${optional.join(', ')}) ` : ''}${signature.main ?? ''}`.trimEnd();
+    const keptByBase = new Set(bound.filter((p) => new RegExp(`base=${p}(?![A-Za-z0-9_])`).test(text)));
     let wrote = false;
     return text
         .split('\n')
@@ -20,9 +21,10 @@ export function boundText(text, args) {
             wrote = true;
             return [head];
         }
-        if (bound.some((p) => new RegExp(`^\\s*${p}(?![A-Za-z0-9_])`).test(line)))
-            return [];
-        return [Object.entries(args).reduce((l, [k, v]) => l.replace(new RegExp(`&${k}(?![A-Za-z0-9_])`, 'g'), v), line)];
+        const kept = bound.find((p) => new RegExp(`^\\s*${p}(?![A-Za-z0-9_])`).test(line));
+        if (kept)
+            return keptByBase.has(kept) ? [`${kept} ${args[kept.slice(1)]}`] : [];
+        return [Object.entries(args).reduce((l, [k, v]) => (keptByBase.has(`&${k}`) ? l : l.replace(new RegExp(`&${k}(?![A-Za-z0-9_])`, 'g'), v)), line)];
     })
         .join('\n');
 }
