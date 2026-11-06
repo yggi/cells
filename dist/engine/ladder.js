@@ -72,9 +72,8 @@ export const TIERS = [
     },
     {
         name: 'Time and voice',
-        concept: "a clock: a bar (&bar from meter_4_4 120bpm, the library's, or a scan of beats), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato",
+        concept: "a clock: a bar (&bar from meter_4_4 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato",
         forms: [
-            'generator scan(i …)',
             'line &x from id(name=…) …',
             'rate nbpm',
             'rate step=&x',
@@ -100,13 +99,14 @@ export const TIERS = [
     },
     {
         name: 'Melody and harmony',
-        concept: 'tables: over=, scale(), shift=; show= and size=; motifs: splicing, reuse, degrees (^n); chords and a progression: accidentals, a sum of pitches',
+        concept: 'tables: over=, scale() and a scan of steps, shift=; show= and size=; motifs: splicing, reuse, degrees (^n); chords and a progression: accidentals, a sum of pitches',
         forms: [
             'attribute over',
             'attribute shift',
             'attribute show',
             'attribute size',
             'generator scale(name)',
+            'generator scan(i …)',
             'step &x',
             'reference &name^n',
             'step [a, b, c]',

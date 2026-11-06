@@ -6,7 +6,7 @@ twovoices  live cace1486bd1a176a
 steps  live 6e6bede2875689a3
 clock  live 5cd5f7ba085f6f47
 voice  live de3eaf3bd1ad768b
-effects  live 5043108617dd1d3d
+effects  live 8ee7a3eafc4dcd10
 transpose  live ee5f47211d974e0b
 twinkle  live 53e57bf6c9063d61
 chords  live 46a4d40d136de57c
@@ -21,7 +21,7 @@ chance  live 7f4543c7cb673938
 fifths  live cca78dfbb2cfc628
 arrangement  live 2a35a5ab64a915c4
 stereo  live 2a23340ac7fbd3be
-waveforms  live fda62d09719584b9
+waveforms  live 85d1ef5011b0aa43
 moving  live 907d4a09ec02fb9d
 grids  live c25d6086a52457cb
 metronome  live ce76313c8d9cdd34

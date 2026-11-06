@@ -127,7 +127,8 @@ export function modulation(p: Plan, m: Series, from: number, to: number): { at: 
 
 /**
  * The lap step c of a series falls in, a hair (EPS) early: a step computed from seconds lands a float's width either
- * side of a lap's start, and one just before it is that lap's start, not the end of the lap before (#341).
+ * side of a lap's start, and one just before it is that lap's start, not the end of the lap before. Every reader of a
+ * lap takes it here: a level (#341), a ramped line (`map=lin`) and the step in force (#459).
  */
 function lapOf(c: number, period: number): number {
   return Math.floor((c + EPS) / period);
@@ -135,7 +136,7 @@ function lapOf(c: number, period: number): number {
 
 /** The step in force at step c of a series: the last one starting at or before it (this lap or the one before). */
 function inForce(m: Series, c: number): StepEvent | null {
-  const lap0 = Math.floor(c / m.period);
+  const lap0 = lapOf(c, m.period);
   let last: StepEvent | null = null;
   for (const lap of [lap0, lap0 - 1]) {
     for (const e of m.events) if (lap * m.period + e.step <= c + EPS) last = e;
@@ -172,7 +173,7 @@ function rampedSeries(p: Plan, m: Series, from: number, to: number, valueOf: (e:
   };
   // the value at step c: between the step before and the step after (laps wrap)
   const valueAt = (c: number) => {
-    const lap = Math.floor(c / m.period);
+    const lap = lapOf(c, m.period);
     const local = c - lap * m.period;
     let i = starts.length - 1;
     for (let k = 0; k < starts.length; k++) if (starts[k].step <= local + EPS) i = k;

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
+import { codeShifts } from './program';
+import { PRESETS } from './presets';
+import { resolveSeed } from '../repository/library';
 
 const events = (src: string) => {
   const r = compileSource(src);
@@ -211,5 +214,25 @@ describe('a level line that loops (#341)', () => {
     expect(hits('step=16n .5@16')).toEqual([0, 2.857, 5.714, 8.571]);
     expect(hits('step=16n .5@16 .5@16 .5@16 .5@16')).toEqual([0, 2.857, 5.714, 8.571]);
     expect(hits('step=4n .5!4')).toEqual([0, 2.857, 5.714, 8.571]);
+  });
+});
+
+describe('a ramped line that loops (#459)', () => {
+  // (a shape a note, map=lin loop=&tune: each note starts at the shape's first value; a lap's start, read from seconds,
+  // landed a float's width early on some notes, which read the lap before's last value, 0 or .1, and lost their attack)
+  const firstLevels = (key: string, voice: string) => {
+    const r = compileSource((PRESETS as Record<string, { source: string }>)[key]!.source, undefined, { resolve: resolveSeed });
+    return eventsBetween(plan(r, codeShifts(r)), 0, 40)
+      .filter((e) => e.voice === voice)
+      .map((e) => +e.levels[0]!.level.toFixed(6));
+  };
+
+  it("starts every note of a shape a note at its first value: waveforms' &pluck 1 .4 0, lullaby's &ring 1 .35 .1", () => {
+    const pluck = firstLevels('waveforms', 'square');
+    expect(pluck.length).toBeGreaterThan(20);
+    expect(pluck.filter((l) => l !== 1)).toEqual([]);
+    const ring = firstLevels('lullaby', 'box');
+    expect(ring.length).toBeGreaterThan(20);
+    expect(ring.filter((l) => l !== 1)).toEqual([]);
   });
 });
