@@ -162,3 +162,19 @@ describe('taps and subsequences, as the program reads them (decision 069 §2, §
       expect(fam('subsequences')(text, O2)).toBe(text);
   });
 });
+
+describe('keys in the core: the mode as its table, the tonic a cell read (decision 069, keys (a))', () => {
+  const O2 = { resolve: resolveSeed };
+  const fam = FAMILIES.find((f) => f.key === 'keys')!.rewrite;
+  const at = (key: string, tune = '&tune over=&key step=8n 0 2 4 5 7 6 -1 9') => `&bar meter("4/4") step=120bpm\n${key}\n${tune}\n&v s=sine loop=C4\n&out map=sample [&tune * &v]`;
+  it.each([
+    ['a tonic cell', at('&key scale(minor, &tonic)\n&tonic step=1m/2 D F'), ['&key scale(&_m1, &tonic)', '&_m1 0 2 3 5 7 8 10']],
+    ['a tonic written', at('&key scale(dorian, D)'), ['&key scale(&_m1, 2)', '&_m1 0 2 3 5 7 9 10']],
+    ['a mode read from a cell', at('&mode lydian\n&key scale(&mode, &tonic)\n&tonic C'), ['&key scale(&_m1, &tonic)', '&_m1 0 2 4 6 7 9 11']],
+    ['a key after over=, unnamed', at('&x 0', '&tune over=scale(major, G) step=8n 0 2 4 5'), ['&tune over=&_k1 step=8n', '&_k1 scale(&_m1, 7)', '&_m1 0 2 4 5 7 9 11']],
+  ])('%s', (_, text, written) => {
+    const after = fam(text, O2);
+    for (const w of written) expect(after).toContain(w);
+    expect(soundsIdentical(text, after, undefined, O2)).toBe(true);
+  });
+});
