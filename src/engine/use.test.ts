@@ -184,7 +184,8 @@ describe('a named use (decision 059)', () => {
   });
 
   it('naming every name a fragment defines expands as use * does, for every seed', () => {
-    for (const f of LIBRARY) {
+    // (but a template taken with arguments that hold a quote, `meter(grouping=meter("7/8"))`: only a from line takes it, unquoted, #507)
+    for (const f of LIBRARY.filter((x) => !x.id.includes('"'))) {
       const all = compileSource(`use * from ${JSON.stringify(f.id)}`, undefined, seed).uses![0]!.gave;
       const named = `use ${all.join(', ')} from ${JSON.stringify(f.id)}`;
       expect(expand(named, resolveSeed), f.id).toBe(expand(`use * from ${JSON.stringify(f.id)}`, resolveSeed));
@@ -253,7 +254,7 @@ describe('a named use (decision 059)', () => {
 
   it('a use that adds nothing says so: twice on the issue’s section, on no seed fragment', () => {
     const section = [
-      'use * from meter_4_4_leaning_on_16n',
+      'use * from meter',
       'use * from harmonic_minor',
       'use * from vamp_to_the_seventh',
       'use * from funk_drums',
@@ -264,12 +265,10 @@ describe('a named use (decision 059)', () => {
       '&key scale(harmonic, D)',
     ].join('\n');
     expect(read(section).said).toEqual([
-      ['warning', 'The piece defines all "meter_4_4_leaning_on_16n" gives (&bar): this use adds nothing', 1],
+      ['warning', 'The piece defines all "meter" gives (&bar): this use adds nothing', 1],
       ['warning', 'The piece defines all "harmonic_minor" gives (&key): this use adds nothing', 2],
     ]);
-    expect(read(`use &bar from meter_4_4_leaning_on_16n\n${BENCH}`).said).toEqual([
-      ['warning', 'The piece defines &bar, so taking it from "meter_4_4_leaning_on_16n" adds nothing', 1],
-    ]);
+    expect(read(`use &bar from meter\n${BENCH}`).said).toEqual([['warning', 'The piece defines &bar, so taking it from "meter" adds nothing', 1]]);
     for (const f of LIBRARY)
       expect(
         compileSource(f.text, undefined, seed).diagnostics.filter((d) => /adds nothing|old way/.test(d.message)),

@@ -116,12 +116,12 @@ describe('the library', () => {
 describe('the points proposed for two more presets (#349)', () => {
   // (the library as it was before them: their new fragments out, and the associations they added to old ones)
   const ADDED: Record<string, StylePoint> = {
-    meter_4_4_swung_on_8n: ELECTRO_SWING,
+    'meter(swing=8n:2/3)': ELECTRO_SWING,
     walking_bass: ELECTRO_SWING,
     harmonic_minor: SPOOKY,
-    meter_5_4: SPOOKY,
-    meter_6_8: { ...SPOOKY, energy: 0.27 },
-    meter_3_4: { ...SPOOKY, energy: 0.43 },
+    'meter(grouping=meter("5/4"))': SPOOKY,
+    'meter(grouping=meter("6/8"))': { ...SPOOKY, energy: 0.27 },
+    'meter(grouping=meter("3/4"))': { ...SPOOKY, energy: 0.43 },
   };
   const same = (a: StylePoint, b: StylePoint) => AXES.every((axis) => a[axis] === b[axis]);
   // (and the ghost-house fragments near Spooky, added after: the presets' first finds are what they were before either)
@@ -180,7 +180,7 @@ describe('the points proposed for two more presets (#349)', () => {
         .filter((f) => f.distance === 0)
         .map((f) => f.fragment.id);
     expect(['meter', 'rhythm', 'bass', 'mode', 'stab', 'motif'].map((facet) => at(ELECTRO_SWING, facet))).toEqual([
-      ['meter_4_4_swung_on_8n'],
+      ['meter(swing=8n:2/3)'],
       ['electro_swing_drums'],
       ['walking_bass'],
       ['harmonic_minor'],
@@ -188,7 +188,7 @@ describe('the points proposed for two more presets (#349)', () => {
       ['gypsy'],
     ]);
     expect(['meter', 'rhythm', 'bass', 'harmony', 'mode', 'motif'].map((facet) => at(SPOOKY, facet))).toEqual([
-      ['meter_5_4'],
+      ['meter(grouping=meter("5/4"))'],
       ['spooky_drums'],
       ['creeping_bass'],
       ['dark_cadence'],

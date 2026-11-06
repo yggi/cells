@@ -2,11 +2,11 @@
 title: Alla breve and sixteenths
 tags: [tutorial, rhythm]
 tier: 4
-description: beat=2 counts a 4/4 bar in halves, and pulse=16n gives a scan's entries a sixteenth each.
+description: Alla breve, 2/2 a step a quarter, counts a bar in halves, and pulse=16n gives a scan's entries a sixteenth each.
 ---
 
 ```cells
-&bar meter("4/4") beat=2 step=60bpm      # alla breve: two beats a bar, bpm counts half notes
+&bar meter("2/2", 2) step=60bpm      # alla breve: two beats a bar, bpm counts half notes, its steps quarters
 &sixteenths scan(1 1 1 1) pulse=16n step=60bpm   # a scan whose entries are sixteenths
 
 &low step=&bar:beat 0 4

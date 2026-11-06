@@ -107,7 +107,7 @@ export const pointsOf = (fragment, facet) => facet === undefined ? fragment.asso
 export function fragmentDistance(fragment, point, axisWeights = {}, facet) {
     return Math.min(...pointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
 }
-const WAS = new Map([...RENAMED_IDS].map(([old, word]) => [word, old]));
+const WAS = new Map([...RENAMED_IDS].reverse().map(([old, word]) => [word, old]));
 const tieKey = (id) => WAS.get(id) ?? id;
 export const byId = (a, b) => {
     const [x, y] = [tieKey(a), tieKey(b)];

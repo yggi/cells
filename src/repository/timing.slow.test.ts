@@ -67,14 +67,14 @@ describe('what a query costs', () => {
     const uses = (ids: string[]) => ids.map((id) => ({ id }));
     const layer = useFragments(
       r,
-      useFragments(r, EMPTY_LAYER, uses(['meter_4_4', 'bossa_nova_drums', 'bossa_nova_clave'])),
-      uses(['meter_4_4_leaning_lightly_on_16n', 'funk_drums', 'rumba_clave_3_2']),
+      useFragments(r, EMPTY_LAYER, uses(['meter', 'bossa_nova_drums', 'bossa_nova_clave'])),
+      uses(['meter(swing=16n:.6)', 'funk_drums', 'rumba_clave_3_2']),
     );
     const n = 20_000;
     const t0 = performance.now();
     for (let i = 0; i < n; i++) {
       const point = POINTS[i % POINTS.length]!;
-      r.query(point, 25, {}, i % 2 ? { facet: 'rhythm', chosen: ['meter_4_4', 'funk_drums'], layer } : { facet: 'meter', layer });
+      r.query(point, 25, {}, i % 2 ? { facet: 'rhythm', chosen: ['meter', 'funk_drums'], layer } : { facet: 'meter', layer });
     }
     expect((performance.now() - t0) / n).toBeLessThan(1);
   });
@@ -82,7 +82,7 @@ describe('what a query costs', () => {
   // (the queries `fit.test.ts` counts the compiles of, on its workbench of five: ten seconds for the three)
   it('three fitting queries on a workbench of five take under 10 s', () => {
     const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
-    const bench = (bpm: number) => setTiming(METER_FRAGMENTS.find((f) => f.id === 'meter_4_4')!.text, 'bar', 'step', `${bpm}bpm`);
+    const bench = (bpm: number) => setTiming(METER_FRAGMENTS.find((f) => f.id === 'meter')!.text, 'bar', 'step', `${bpm}bpm`);
     const workbench = ['funk_drums', 'techno_drums', 'rumba_clave_3_2', 'bossa_nova_clave_one_bar'].reduce((text, id) => unionOf(rhythm(id), text).text, bench(104));
     const r = createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench(120) });

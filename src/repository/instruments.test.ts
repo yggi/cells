@@ -41,9 +41,9 @@ const AT_PRESET: Record<string, StylePoint> = {
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
 const coreKit = { text: expand(CORE_USE, resolveSeed).trim() };
-const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === wordOf(id))!.text;
+const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id || f.id === wordOf(id))!.text;
 const BPM = 120;
-const hosted = (...fragments: string[]) => [setTiming(meterText('4/4'), 'bar', 'step', `${BPM}bpm`), ...fragments].join('\n');
+const hosted = (...fragments: string[]) => [setTiming(meterText('meter'), 'bar', 'step', `${BPM}bpm`), ...fragments].join('\n');
 
 /** A text's lines as name → line, in the order written. */
 const linesOf = (text: string) => new Map(text.split('\n').map((l) => [/^&(\w+)/.exec(l)![1]!, l]));

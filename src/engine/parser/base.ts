@@ -10,6 +10,8 @@
  *    of its table (a degree); what the cell writes itself is as it sounds.
  *  - **Its attributes**: what it doesn't set, the base's — its table, its clock, its shift, a voice's sound — not its
  *    label, notes, laps or `off`.
+ *  - **A copy of a meter is a meter** (#507): its levels kept, step for step, it keeps the base's grouping, so
+ *    `&bar base=&grouping step=&tempo swing=&swing` is `&grouping`'s meter at that tempo, swung.
  *
  * A base of a base works; a base that comes round to the cell itself is an error on `base=`; one that names no cell is
  * left on the cell, for compile to say (`Unknown cell`), as it does of every reference.
@@ -120,7 +122,12 @@ export function overdub(c: CellDecl, base: CellDecl, ref: Ref, fail: (message: s
       // (=@n: the base's pitch, held n)
       tokens.push(o && o.elongate !== 1 ? { ...b, atom, elongate: o.elongate } : { ...b, atom });
     }
-    braid = { kind: 'list', tokens };
+    // (a copy of a meter is a meter, #507: its levels kept, so are its steps a beat and its signature)
+    const meter =
+      base.braid.perBeat !== undefined && tokens.length === under.length
+        ? { perBeat: base.braid.perBeat, ...(base.braid.signature ? { signature: base.braid.signature } : {}) }
+        : {};
+    braid = { kind: 'list', tokens, ...meter };
   } else if (c.braid.kind === 'blank') braid = base.braid;
   else if (keeps(c)) fail(`&${base.name} is a ${base.braid.kind}(…), not a braid: = keeps steps of a braid`);
 

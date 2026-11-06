@@ -18,6 +18,8 @@ describe('de-sugar: each family’s rewrite plays the same (S1), and a second fi
     ['repeats', '&t step=4 0!3 2\n&v s=sine loop=C4\n&out map=sample [&t * &v]', '&t step=4 0 0 0 2'],
     ['scans', '&major scan(2 2 1 2 2 2 1)\n&t over=&major step=2 0 2 4 6\n&v s=sine loop=C4\n&out map=sample [&t * &v]', '&major 0 2 4 5 7 9 11'],
     ['from', `${BAR}\n&bd from gm_kit\n&t step=8n &bd ~ &bd ~\n&out map=sample [&t]`, '&bd s=sine'],
+    ['taps', `${BAR}\n&t step=16n 0 2 4 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=pulse*4 0 2 4 5'],
+    ['subsequences', `${BAR}\n&t step=8n 0 [2 4] 5 7*2\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=8n*2 0@2 2 4 5@2 7 7'],
   ];
   it.each(cases)('%s', (key, text, written) => {
     const after = family(key)(text, O);
@@ -68,13 +70,15 @@ describe('the core fold: Shorten’s core kinds, and the lines nothing reads, ea
 describe('toCore: Normalise, de-sugar, fold, minify, until nothing changes', () => {
   const piece = (bar: string, kit: string, v: string) =>
     `${bar}\n&tempo step=120bpm\n${kit}\n&beat step=8n &bd ~ &hh ~ &bd &bd &hh ~\n&t step=4n 0 2 4\n${v}\n&mix [&beat * .6, &t * &v]`;
-  it('the core of texts Normalise makes alike is one: an alias, the narrowest from, a 4/4 written as a scan', () => {
+  it('the core of texts Normalise makes alike is one: an alias, the narrowest from, a 4/4 written as a scan; the seed meter sounds as one', () => {
     const core = (bar: string, kit: string, v: string) => toCore(piece(bar, kit, v), O).source;
     const one = core('&bar meter("4/4") step=&tempo', '&bd, &hh from gm_kit', '&v s=saw lpf=800 loop=C4');
     expect(core('&bar meter("4/4") step=&tempo', '&bd, &hh from gm_kit', '&v s=saw cutoff=800 loop=C4')).toBe(one);
     expect(core('&bar meter("4/4") step=&tempo', '* from gm_kit', '&v s=saw lpf=800 loop=C4')).toBe(one);
     expect(core('&bar scan(1 1 1 1) step=&tempo', '&bd, &hh from gm_kit', '&v s=saw lpf=800 loop=C4')).toBe(one);
-    expect(core('&bar from meter_4_4 &tempo', '&bd, &hh from gm_kit', '&v s=saw lpf=800 loop=C4')).toBe(one);
+    // (the seed meter is a template, #507: its core writes its lines in, `base=` and a straight swing, which the compile
+    //  tool doesn't fold yet (#482); it sounds as the bar written by hand)
+    expect(soundsIdentical(core('&bar from meter &tempo', '&bd, &hh from gm_kit', '&v s=saw lpf=800 loop=C4'), one, undefined, O)).toBe(true);
   });
   it('plays the same, is its own core, and says which rows it hasn’t rewritten yet', () => {
     const text = piece('&bar meter("4/4") step=&tempo', '* from gm_kit', '&v s=saw cutoff=800 loop=C4');
@@ -83,7 +87,8 @@ describe('toCore: Normalise, de-sugar, fold, minify, until nothing changes', () 
     expect(toCore(c.source, O).source).toBe(c.source);
     expect(toCore(normalise(text, O).source, O).source).toBe(c.source);
     expect(c.source).not.toMatch(/from|bpm|loop=C4|#/);
-    expect(c.left.map((l) => l.key)).toEqual(['taps', 'meters']);
+    expect(c.left.map((l) => l.key)).toEqual(['meters']);
+    expect(c.source).toMatch(/step=pulse\*2 /);
   });
 });
 
@@ -120,5 +125,32 @@ describe('taps and subsequences in the core (decision 069)', () => {
     for (const tap of ['step=8n*3', 'step=16t']) expect(alike('4/4', 'swing=8n:.67', 'step=8n 0 [2 4 5] 7', `${tap} 0@3 2 4 5 7@3`)).toBe(true);
     for (const tap of ['step=4n*3', 'step=8t']) expect(alike('4/4', 'swing=8n:2/3', 'step=4n 0 [2 4 5] 7', `${tap} 0@3 2 4 5 7@3`)).toBe(true);
     expect(alike('4/4', '', 'step=8n 0 [2 4 5] 7', 'step=8n*3 0@3 2 4 5 7@3')).toBe(true);
+  });
+});
+
+describe('taps and subsequences, as the program reads them (decision 069 §2, §4)', () => {
+  const O2 = { resolve: resolveSeed };
+  const fam = (key: string) => FAMILIES.find((f) => f.key === key)!.rewrite;
+  const at = (meter: string, line: string) => `&bar meter("${meter}") step=&tempo\n&tempo step=100bpm\n&t ${line}\n&v s=sine loop=C4\n&out map=sample [&t * &v]`;
+  it.each([
+    ['7/8', 'step=16n 0 2 4', 'step=pulse*2 0 2 4'],
+    ['6/8', 'step=4n. 0 2', 'step=pulse/3 0 2'],
+    ['4/4', 'step=1m 0 2', 'step=pulse/4 0 2'],
+    ['4/4', 'step=8t 0 2 4', 'step=pulse*3 0 2 4'],
+    ['4/4', 'step=16n*2 0 2', 'step=pulse*4*2 0 2'],
+  ])('%s: %s is written %s, and plays the same', (meter, written, core) => {
+    const text = at(meter, written);
+    const after = fam('taps')(text, O2);
+    expect(after).toContain(`&t ${core}`);
+    expect(soundsIdentical(text, after, undefined, O2)).toBe(true);
+  });
+
+  it('a subsequence stays where a finer grid would change what the line plays: it draws, it is spliced, it is read by its units', () => {
+    for (const text of [
+      at('4/4', 'step=8n 0 [2? 4] 5'),
+      `${BAR}\n&m 0 [2 4]\n&t step=8n &m 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`,
+      `${BAR}\n&t step=8n 0 [2 4] 5\n&v s=sine loop=C4\n&out map=sample [&t * &v, &t[<<] * &v]`,
+    ])
+      expect(fam('subsequences')(text, O2)).toBe(text);
   });
 });

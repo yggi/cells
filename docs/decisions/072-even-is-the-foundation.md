@@ -44,6 +44,7 @@ Both chains grade in the meter's alphabet: 12/8 is `*..-..+..-..`, and C major's
 ## Consequences
 
 - #506 builds point 2, against `contracts/meter` v2 (yggi/music-commons#56): signatures by rule, a tier for each halving and for a group's pairs, grades mapped from the ends and the numbers a meter writes from the ends into five (the owner on #506), sizes with a unit and with 4 and 6, written levels' every mark a beat, the step as a note value. No example's events move.
+- #507's first rung builds the single `meter` fragment of point 3: `&bar base=&grouping step=&tempo swing=&swing`, a copy of a meter being a meter (the owner on #507), its points carrying their grouping or swing; the thirteen meter files one. `diatonic` and the even rhythms written from one `even` template are its second rung.
 - #505 builds point 1. `RETIRED_GENERATORS.even` and its message (#7's `euclidOfEven`) go, and no example's events move.
 - Tests: `even.test.ts` (the seven modes and the pentatonics by S1, the tresillo and the bell as a bar), `parser.test.ts` (its places for every 1 ≤ k ≤ n ≤ 16 and 0 ≤ p < k; `euclid(k, n)` the same set turned), `contracts.test.ts` (`even(k, n, k − 1)` is `contracts/euclid`'s canonical set).
 - What isn't even (harmonic minor, son and rumba clave) stays written. Whether "even, then one move" earns a name is open.

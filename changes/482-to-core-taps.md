@@ -1,0 +1,3 @@
+### Changed
+
+- **`toCore` writes taps and subsequences in the core** (decision 069 §2, §4; #482, its second rung). A tap of a note value is the meter's pulse with its chain: `16n` is `pulse*4` in 4/4 and `pulse*2` in 7/8, `4n.` is `pulse/3` in 6/8, `1m` is `pulse/4` in 4/4. A chain written after it and a meter named stay, and `beat` stays. A line's `[a b]`, `x*n` and `@` are written on its finest grid: `step=8n 0 [2 4] 5` is `step=8n*2 0@2 2 4 5@2`. That is left as written where a finer grid would change what the line plays: it draws, it is spliced or read by its units, its meter sets legato by level, or it is a stack, `<a b>`, a euclid or a choice. `Core.left` no longer lists taps, and reads rows from the code, strings and comments aside. Nothing a piece plays changes.

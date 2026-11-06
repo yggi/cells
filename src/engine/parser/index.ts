@@ -83,6 +83,14 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
         s.i = start;
         const decl = parseCell(s);
         cells.push(decl, ...s.lambdas);
+        // (beat= is retired, #502: a meter counts its beats by its signature, 2/2, 3/8, or its written levels; read the old
+        //  way only for Migrate, which writes the meter that counts them)
+        if (decl.params.beat !== undefined)
+          diagnostics.push({
+            severity: old ? 'warning' : 'error',
+            message: `beat= is retired: a meter counts its beats by its signature or its levels (meter("4/4") beat=2 is meter("2/2", 2); a waltz in one, meter("*..", 4n)); Migrate rewrites it`,
+            span: decl.paramSpans?.beat ?? decl.span,
+          });
       } else s.fail(`A line declares a cell: &name …`, start, word.length);
     } catch (e) {
       if (!(e instanceof LineError)) throw e;

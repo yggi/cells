@@ -93,7 +93,10 @@ export function overdub(c, base, ref, fail) {
             const atom = moved(b.atom, ref);
             tokens.push(o && o.elongate !== 1 ? { ...b, atom, elongate: o.elongate } : { ...b, atom });
         }
-        braid = { kind: 'list', tokens };
+        const meter = base.braid.perBeat !== undefined && tokens.length === under.length
+            ? { perBeat: base.braid.perBeat, ...(base.braid.signature ? { signature: base.braid.signature } : {}) }
+            : {};
+        braid = { kind: 'list', tokens, ...meter };
     }
     else if (c.braid.kind === 'blank')
         braid = base.braid;

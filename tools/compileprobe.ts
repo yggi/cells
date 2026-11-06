@@ -16,7 +16,7 @@ import { PRESETS } from '../src/engine/presets';
 import { soundsIdentical } from '../src/engine/sameness';
 import { structureOf } from '../src/engine/measure';
 import { shortenAll } from '../src/engine/shorten';
-import { coreFold, FAMILIES, LEFT, minify } from '../src/engine/core';
+import { coreFold, FAMILIES, LEFT, minify, stillWritten } from '../src/engine/core';
 import { resolveSeed } from '../src/repository/library';
 
 const OPTIONS = { resolve: resolveSeed };
@@ -55,7 +55,7 @@ export function probe(key: string, source: string, fold = false): Row {
     before: measure(source),
     families,
     core: { after: measure(core), same: same(source, core), idempotent: again === core },
-    context: LEFT.filter((c) => c.test.test(core)).map((c) => c.key),
+    context: LEFT.filter((c) => stillWritten(c, core)).map((c) => c.key),
     minified: { chars: [core.length, min.length], same: same(core, min) },
     ...(cf ? { coreFolded: { after: measure(cf.source), same: same(source, cf.source), steps: cf.steps.length } } : {}),
     ...(folded ? { folded: { after: measure(folded.source), same: same(core, folded.source), steps: folded.steps.length, said: folded.steps } } : {}),

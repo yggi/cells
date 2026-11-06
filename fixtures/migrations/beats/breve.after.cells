@@ -1,0 +1,5 @@
+# alla breve, beat= on a meter (#502): its beats counted by its signature now, meter("2/2", 2)
+&bar meter("2/2", 2) step=60bpm
+&t step=4n 0 2 4 7
+&v s=sine loop=C4
+&out map=sample [&t * &v]

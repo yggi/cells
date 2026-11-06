@@ -109,7 +109,7 @@ const METERS: Record<Meter, { bench: string; bar: number }> = {
   '10/8': { bench: '&bar meter("10/8") step=120bpm', bar: 2 },
   '12/8': { bench: '&bar meter("12/8") step=120bpm', bar: 2 },
   '2/4': { bench: '&bar meter("2/4") step=120bpm', bar: 1 },
-  'alla breve': { bench: '&bar meter("4/4") step=120bpm beat=2', bar: 1 },
+  'alla breve': { bench: '&bar meter("2/2", 2) step=120bpm', bar: 1 },
 };
 const KEY = '&key scale(major, C)';
 const BENCH = `${METERS['4/4'].bench}\n${KEY}`;

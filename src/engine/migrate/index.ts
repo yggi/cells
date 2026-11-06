@@ -16,6 +16,7 @@
  *                  construction against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *  - renamed.ts:   a seed id that became a word as the word: "harmonic minor" → harmonic_minor (#387)
  *  - oneshot.ts:   the bare line word oneshot as the voice's parameter, oneshot=1 (decision 068, #440)
+ *  - beats.ts:     beat=n, retired, as the meter that counts those beats: meter("4/4") beat=2 → meter("2/2", 2) (#502)
  *  - pairs.ts:     a swing's :pairs dropped, what every swing does now (swing=8n:2/3, decision 071, #15)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
@@ -40,9 +41,10 @@ import { laps } from './laps';
 import { renamedIds } from './renamed';
 import { oneshots } from './oneshot';
 import { pairs } from './pairs';
+import { beats } from './beats';
 
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs';
+export type MigrationRule = 'gate' | 'tap' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats';
 export type Migration = Rewrite<MigrationRule>;
 
 /** Every migration a text has, in the order its form was retired; a `use` line's fragment read through `options.resolve`. */
@@ -61,6 +63,7 @@ export const migrations =
     ...renamedIds(source, options.resolve),
     ...oneshots(source),
     ...pairs(source),
+    ...beats(source, result, options),
   ];
 
 /** A text with every retired form written as it is now, one rewrite at a time, each playing the same notes; the steps are what each did. */

@@ -67,7 +67,7 @@ describe('the MIDI file’s signature', () => {
     expect(meters('scan(1 1 1 1)')).toEqual([{ tick: 0, num: 4, den: 4 }]);
   });
   it('is left out where the beat is another value: the file writes a beat as a quarter, so 6/8 would draw wrong bars', () => {
-    for (const bar of ['meter("6/8")', 'meter("12/8")', 'meter("7/8")', 'meter("4/4") beat=2']) expect(meters(bar), bar).toEqual([]);
+    for (const bar of ['meter("6/8")', 'meter("12/8")', 'meter("7/8")', 'meter("2/2", 2)']) expect(meters(bar), bar).toEqual([]);
   });
   it('is the meter’s where its rate is a cell (step=&tempo), as a seed meter’s is', () => {
     const at = (text: string) => {
@@ -76,8 +76,8 @@ describe('the MIDI file’s signature', () => {
       return pieceMidi(r, codeShifts(r)).smf.meters;
     };
     expect(at(`&tempo step=60bpm\n&bar meter("3/4") step=&tempo laps=2\n&t step=1m 0!2${V}`)).toEqual([{ tick: 0, num: 3, den: 4 }]);
-    expect(at(`use &bar from meter_4_4_swung_on_8n\n&tempo step=120bpm\n&t step=1m 0!2${V}`)).toEqual([{ tick: 0, num: 4, den: 4 }]);
-    expect(at(`use &bar from meter_6_8\n&tempo step=120bpm\n&t step=1m 0!2${V}`)).toEqual([]);
+    expect(at(`&bar from meter(swing=8n:2/3) &tempo\n&tempo step=120bpm\n&t step=1m 0!2${V}`)).toEqual([{ tick: 0, num: 4, den: 4 }]);
+    expect(at(`&bar from meter(grouping=meter("6/8")) &tempo\n&tempo step=120bpm\n&t step=1m 0!2${V}`)).toEqual([]);
   });
   it('is left out with no main meter', () => {
     const r = compileSource(`&t step=4 0 2 4 7${V}`);

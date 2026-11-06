@@ -1,9 +1,9 @@
 import { normalise } from "../normalise/index.js";
 import { soundsIdentical } from "../sameness.js";
-import { FAMILIES, LEFT } from "./desugar.js";
+import { FAMILIES, LEFT, stillWritten } from "./desugar.js";
 import { coreFold } from "./fold.js";
 import { minify } from "./minify.js";
-export { FAMILIES, LEFT } from "./desugar.js";
+export { FAMILIES, LEFT, stillWritten } from "./desugar.js";
 export { meaningfulNames, minify } from "./minify.js";
 export { coreFold } from "./fold.js";
 const ROUNDS = 4;
@@ -43,5 +43,5 @@ export function toCore(source, options = {}) {
         now = r.source;
         steps.push(...r.steps);
     }
-    return { source: now, steps, left: LEFT.filter((l) => l.test.test(now)).map(({ key, rows, why }) => ({ key, rows, why })) };
+    return { source: now, steps, left: LEFT.filter((l) => stillWritten(l, now)).map(({ key, rows, why }) => ({ key, rows, why })) };
 }

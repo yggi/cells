@@ -5,6 +5,6 @@
   - `lullaby`: one of `&box`'s notes (at 20.78 s) starts at `&ring`'s 1, not .1: its first 100 ms 13.3 dB louder;
   - `waveforms`, `pertonos`, `pachelbel`, `pop`, `spooky`: 30 notes' vibrato bends move by about 10⁻¹² of a cent (a vibrato line read a hair later), which no one hears.
 
-  - `effects` and `waveforms` are respelled, as Normalise writes them: their `scan(1 1 1 1)` read differently from `meter("4/4")` only by this, so each is `&bar from meter_4_4 …` now (`waveforms` folds its `&tempo` in: `from meter_4_4 100bpm`). Their notes and events stay as above; their values and live views move (the bar's cell is the fragment's), and `waveforms`' inline voice is named by the line it moved to (`λ20_14`, was `λ21_14`). So the tutorial teaches `scan(…)` in tier 3, with a scale's steps (`transpose`), where it taught it in tier 2 with a bar's four beats.
+  - `effects` and `waveforms` are respelled, as Normalise writes them: their `scan(1 1 1 1)` read differently from `meter("4/4")` only by this, so each is `&bar from meter …` now (`waveforms` folds its `&tempo` in: `from meter 100bpm`). Their notes and events stay as above; their values and live views move (the bar's cell is the fragment's), and `waveforms`' inline voice is named by the line it moved to (`λ20_14`, was `λ21_14`). So the tutorial teaches `scan(…)` in tier 3, with a scale's steps (`transpose`), where it taught it in tier 2 with a bar's four beats.
 
   **What a frontend sees at its next pin:** those five notes with their attack; nothing else it can hear.

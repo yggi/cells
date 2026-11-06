@@ -1,4 +1,6 @@
 import { parse } from "../parser/index.js";
+import { compileSource } from "../compile.js";
+import { noteValue } from "../meter.js";
 import { noteFrequency } from "../program.js";
 import { expansion } from "../use.js";
 import { readFrom, readUse } from "../parser/use.js";
@@ -77,7 +79,136 @@ export const FAMILIES = [
                 return steps.map((s) => ((at += s), num(at - s))).join(' ');
             })),
     },
+    {
+        key: 'taps',
+        rows: '54–55 `step=16n` `8t` `4n.` `1m`',
+        rewrite: (text, options) => taps(text, options),
+    },
+    {
+        key: 'subsequences',
+        rows: '16, 22 `[a b]` `x*n`, and `@` on the line’s finest grid',
+        rewrite: (text, options) => subsequences(text, options),
+    },
 ];
+const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
+const ratio = (n, d) => {
+    const g = gcd(n, d) || 1;
+    return [n / g, d / g];
+};
+const times = (a, b) => ratio(a[0] * b[0], a[1] * b[1]);
+function leaves(tokens, lines, dur) {
+    const foot = (t) => t.elongate * t.repeat;
+    const all = tokens.reduce((s, t) => s + foot(t), 0);
+    if (!all || tokens.some((t) => !Number.isInteger(t.elongate)))
+        return null;
+    const out = [];
+    for (const t of tokens) {
+        const each = times(dur, ratio(t.elongate, all));
+        for (let r = 0; r < t.repeat; r++) {
+            const a = t.atom;
+            if (a.kind === 'seq') {
+                if (a.layers.length !== 1 || a.mode || a.euclid || a.slow || a.bare)
+                    return null;
+                const inner = leaves(a.layers[0], lines, each);
+                if (!inner)
+                    return null;
+                for (let s = 0; s < t.subdivide; s++)
+                    out.push(...inner.map((x) => ({ ...x, dur: times(x.dur, ratio(1, t.subdivide)) })));
+                continue;
+            }
+            if (a.kind !== 'note' && a.kind !== 'rest' && a.kind !== 'ref' && a.kind !== 'chord')
+                return null;
+            const written = lines[t.span.line - 1]?.substr(t.span.col - 1, t.span.len) ?? '';
+            const text = written.replace(/(?:@[0-9.]+|![0-9]+|\*[0-9]+)+$/, '').replace(/(?:@[0-9.]+|![0-9]+|\*[0-9]+)(?=[?:]|$)/g, '');
+            if (!text || /[@!*]/.test(text.replace(/^&[A-Za-z_][A-Za-z0-9_]*/, '')))
+                return null;
+            for (let s = 0; s < t.subdivide; s++)
+                out.push({ text, dur: times(each, ratio(1, t.subdivide)) });
+        }
+    }
+    return out;
+}
+function subsequences(text, options) {
+    const r = compileSource(text, undefined, options);
+    if (!r.ok)
+        return text;
+    const lines = text.split('\n');
+    const spliced = new Set([...r.cells.values()].flatMap((c) => c.units.flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : []))));
+    const read = unitRead(text);
+    for (const d of parse(text).cells) {
+        if (d.braid.kind !== 'list' || !d.step || spliced.has(d.name) || read.has(d.name))
+            continue;
+        const tokens = d.braid.tokens;
+        if (!tokens.some((t) => t.atom.kind === 'seq' || t.subdivide > 1))
+            continue;
+        const i = d.span.line - 1;
+        const [code, comment] = splitComment(lines[i] ?? '');
+        if (/[?|]/.test(code) || /\bchance=/.test(code))
+            continue;
+        if (d.step.kind === 'tap' && r.cells.get(d.step.meter?.name ?? r.mainMeter ?? '')?.meter?.legato)
+            continue;
+        const ls = leaves(tokens, lines, [tokens.reduce((n, t) => n + t.elongate * t.repeat, 0), 1]);
+        if (!ls || tokens.some((t) => t.span.line - 1 !== i))
+            continue;
+        const k = ls.reduce((l, x) => (l * x.dur[1]) / gcd(l, x.dur[1]), 1);
+        const braid = ls.map((x) => {
+            const n = (x.dur[0] * k) / x.dur[1];
+            return n === 1 ? x.text : `${x.text}@${n}`;
+        });
+        const step = /\bstep=(\S+)/.exec(code);
+        if (!step)
+            continue;
+        const value = step[1];
+        const finer = /^-?[0-9.]+$/.test(value) ? num(+value * k) : /^(?:&|pulse|beat|[0-9]+[ntm])/.test(value) && !value.startsWith('cycle(') ? `${value}*${k}` : null;
+        if (!finer)
+            continue;
+        const first = tokens[0].span.col - 1;
+        const last = tokens.at(-1);
+        const end = last.span.col - 1 + last.span.len;
+        const tail = code.slice(end).replace(/^(?:\s+_)+/, '');
+        const head = code.slice(0, first).replace(/\bstep=\S+/, `step=${finer}`);
+        const next = `${head}${braid.join(' ')}${tail}`;
+        lines[i] = comment ? `${next}${comment}` : next;
+    }
+    return lines.join('\n');
+}
+function chainOf(k) {
+    const near = (x) => Math.abs(x - Math.round(x)) < 1e-9;
+    if (near(k))
+        return `*${Math.round(k)}`;
+    if (near(1 / k))
+        return `/${Math.round(1 / k)}`;
+    for (let q = 2; q <= 64; q++)
+        if (near(k * q))
+            return `*${Math.round(k * q)}/${q}`;
+    return `*${num(k)}`;
+}
+function taps(text, options) {
+    const r = compileSource(text, undefined, options);
+    if (!r.ok)
+        return text;
+    const lines = text.split('\n');
+    for (const d of parse(text).cells) {
+        const st = d.step;
+        if (st?.kind !== 'tap')
+            continue;
+        const word = st.tap.written;
+        const meter = r.cells.get(st.meter?.name ?? r.mainMeter ?? '')?.meter;
+        if (!meter)
+            continue;
+        const bars = /^([1-9][0-9]*)m$/.exec(word);
+        const length = bars ? (+bars[1] * meter.pulses) / meter.unit : noteValue(word);
+        if (length === null)
+            continue;
+        const i = d.span.line - 1;
+        const [code, comment] = splitComment(lines[i] ?? '');
+        const pattern = new RegExp(`(\\bstep=(?:&[A-Za-z_][A-Za-z0-9_]*:)?)${word.replace('.', '\\.')}(?=[*/\\s]|$)`);
+        const next = code.replace(pattern, `$1pulse${chainOf(1 / meter.unit / length)}`);
+        if (next !== code)
+            lines[i] = comment ? `${next}${comment}` : next;
+    }
+    return lines.join('\n');
+}
 function inPlace(text, resolve) {
     const x = expansion(text, { resolve });
     const own = text.split('\n');
@@ -139,18 +270,25 @@ function tokenWise(text, f) {
     }
     return lines.join('\n');
 }
+export const stillWritten = (row, text) => {
+    const code = text
+        .split('\n')
+        .map((l) => splitComment(l)[0].replace(/"(?:[^"\\]|\\.)*"/g, '""'))
+        .join('\n');
+    return typeof row.test === 'function' ? row.test(code) : row.test.test(code);
+};
 export const LEFT = [
     {
         key: 'taps',
-        rows: '54–56 `step=16n` `pulse` `beat` `&m:8n`',
-        test: /step=(?:&\w+:)?(?:\d+[ntm]\.?|pulse|beat)\b/,
-        why: 'a tap is a level of the meter it reads: `&bar*k` with k from the meter’s levels (and a meter by name, `&bar2:beat`)',
+        rows: '54–56 `step=16n` `8t` `4n.` `1m` on a line that wasn’t rewritten',
+        test: /step=(?:&\w+:)?(?:\d+[ntm]\.?)(?![A-Za-z0-9_])/,
+        why: 'a tap of a note value is the meter’s pulse with its chain (`pulse*4`), where the line plays the same written so',
     },
     {
         key: 'subsequences',
-        rows: '13, 16, 18, 22, 25 `_` `[a b]` `<a b>` `x*n` `x(k,n)`',
-        test: /(?:^|\s)\[[^\]&,]*\s[^\]]*\]|<[^>]*>|[\w\]~]\*\d|\w\(\d+,\s*\d+/m,
-        why: 'dilate on a finer step: the line’s step= changes with it, and a tap’s finer step is the meter’s next level or a new one',
+        rows: '16, 18, 22, 25 `[a b]` `<a b>` `x*n` `x(k,n)` left as written',
+        test: (text) => parse(text).cells.some((d) => d.braid.kind === 'list' && d.braid.tokens.some((t) => t.atom.kind === 'seq' || t.subdivide > 1)),
+        why: 'dilate inside a step, kept where a finer grid would change what the line plays: a line that draws, one spliced or read by its units, a table, a stack, `<a b>`, a euclid, a meter with legato by level',
     },
     {
         key: 'sliders',

@@ -162,7 +162,13 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     on: ['card'],
   },
   // meters and their physics
-  beat: { help: 'on a meter: how many beats it counts, equal (meter("4/4") beat=2: alla breve) — its bpm counts beats', doc: 'time.md', value: 'number', on: ['clock'] },
+  beat: {
+    help: 'on a meter, retired (#502): how many beats it counted, equal; a meter counts its beats by its signature or its levels (meter("2/2", 2): alla breve)',
+    doc: 'time.md',
+    value: 'number',
+    on: ['clock'],
+    old: 'the signature: meter("2/2", 2)',
+  },
   pulse: {
     help: 'on a scan: the note value of its entries (pulse=16n: sixteenths) — its beats then count quarters, and its taps read note values by it',
     doc: 'time.md',

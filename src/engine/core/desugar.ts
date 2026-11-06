@@ -5,6 +5,9 @@
  * rewritten yet: `toCore` reports where they are still written. Pure.
  */
 import { parse } from '../parser';
+import type { Token } from '../ast';
+import { compileSource } from '../compile';
+import { noteValue } from '../meter';
 import { noteFrequency, type CompileOptions } from '../program';
 import { expansion } from '../use';
 import { readFrom, readUse } from '../parser/use';
@@ -115,7 +118,141 @@ export const FAMILIES: readonly Family[] = [
             }),
       ),
   },
+  {
+    key: 'taps',
+    rows: '54–55 `step=16n` `8t` `4n.` `1m`',
+    rewrite: (text, options) => taps(text, options),
+  },
+  {
+    key: 'subsequences',
+    rows: '16, 22 `[a b]` `x*n`, and `@` on the line’s finest grid',
+    rewrite: (text, options) => subsequences(text, options),
+  },
 ];
+
+/** A fraction, n/d in lowest terms. */
+type Ratio = readonly [n: number, d: number];
+const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : Math.abs(a));
+const ratio = (n: number, d: number): Ratio => {
+  const g = gcd(n, d) || 1;
+  return [n / g, d / g];
+};
+const times = (a: Ratio, b: Ratio) => ratio(a[0] * b[0], a[1] * b[1]);
+
+/**
+ * A braid's leaves, each with how many of the line's steps it lasts, as written: a subsequence's steps squeezed into its
+ * one (`[a b]`: half each), `x*n` n copies in one, `x!n` n copies of one each, `x@n` n long. Null where a token is no
+ * plain leaf or plain subsequence of them (a stack, `<a b>`, a euclid, a slower step, a choice): those stay as written.
+ */
+function leaves(tokens: readonly Token[], lines: readonly string[], dur: Ratio): { text: string; dur: Ratio }[] | null {
+  const foot = (t: Token) => t.elongate * t.repeat;
+  const all = tokens.reduce((s, t) => s + foot(t), 0);
+  if (!all || tokens.some((t) => !Number.isInteger(t.elongate))) return null;
+  const out: { text: string; dur: Ratio }[] = [];
+  for (const t of tokens) {
+    const each = times(dur, ratio(t.elongate, all));
+    for (let r = 0; r < t.repeat; r++) {
+      const a = t.atom;
+      if (a.kind === 'seq') {
+        if (a.layers.length !== 1 || a.mode || a.euclid || a.slow || a.bare) return null;
+        const inner = leaves(a.layers[0]!, lines, each);
+        if (!inner) return null;
+        for (let s = 0; s < t.subdivide; s++) out.push(...inner.map((x) => ({ ...x, dur: times(x.dur, ratio(1, t.subdivide)) })));
+        continue;
+      }
+      if (a.kind !== 'note' && a.kind !== 'rest' && a.kind !== 'ref' && a.kind !== 'chord') return null;
+      const written = lines[t.span.line - 1]?.substr(t.span.col - 1, t.span.len) ?? '';
+      // (the leaf as written, its modifiers aside: its length is said by `@` on the finer grid)
+      const text = written.replace(/(?:@[0-9.]+|![0-9]+|\*[0-9]+)+$/, '').replace(/(?:@[0-9.]+|![0-9]+|\*[0-9]+)(?=[?:]|$)/g, '');
+      if (!text || /[@!*]/.test(text.replace(/^&[A-Za-z_][A-Za-z0-9_]*/, ''))) return null;
+      for (let s = 0; s < t.subdivide; s++) out.push({ text, dur: times(each, ratio(1, t.subdivide)) });
+    }
+  }
+  return out;
+}
+
+/**
+ * A line whose braid has subsequences (`[a b]`, `x*n`) written on its finest grid (decision 069 §4, #497): the step k times
+ * finer (`step=8n` → `step=8n*2`, a rate × k), each leaf as long as it was, in `@`. Left as written: a line that draws
+ * (its draws are keyed on its steps), one another braid splices (a splice lasts its own steps there), one a pick or a
+ * rotation reads by its units, one whose meter sets legato by level (a finer tap sounds at its own), and any braid with
+ * a stack, `<a b>`, a euclid or a choice. Each rewrite is checked by S1 where `toCore` takes it.
+ */
+function subsequences(text: string, options: CompileOptions): string {
+  const r = compileSource(text, undefined, options);
+  if (!r.ok) return text;
+  const lines = text.split('\n');
+  const spliced = new Set([...r.cells.values()].flatMap((c) => c.units.flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : []))));
+  const read = unitRead(text);
+  for (const d of parse(text).cells) {
+    if (d.braid.kind !== 'list' || !d.step || spliced.has(d.name) || read.has(d.name)) continue;
+    const tokens = d.braid.tokens;
+    if (!tokens.some((t) => t.atom.kind === 'seq' || t.subdivide > 1)) continue;
+    const i = d.span.line - 1;
+    const [code, comment] = splitComment(lines[i] ?? '');
+    if (/[?|]/.test(code) || /\bchance=/.test(code)) continue;
+    if (d.step.kind === 'tap' && r.cells.get(d.step.meter?.name ?? r.mainMeter ?? '')?.meter?.legato) continue;
+    // (each top step one of the line's steps: the braid as long as its footprints)
+    const ls = leaves(tokens, lines, [tokens.reduce((n, t) => n + t.elongate * t.repeat, 0), 1]);
+    if (!ls || tokens.some((t) => t.span.line - 1 !== i)) continue;
+    const k = ls.reduce((l, x) => (l * x.dur[1]) / gcd(l, x.dur[1]), 1);
+    const braid = ls.map((x) => {
+      const n = (x.dur[0] * k) / x.dur[1];
+      return n === 1 ? x.text : `${x.text}@${n}`;
+    });
+    const step = /\bstep=(\S+)/.exec(code);
+    if (!step) continue;
+    const value = step[1]!;
+    const finer = /^-?[0-9.]+$/.test(value) ? num(+value * k) : /^(?:&|pulse|beat|[0-9]+[ntm])/.test(value) && !value.startsWith('cycle(') ? `${value}*${k}` : null;
+    if (!finer) continue;
+    const first = tokens[0]!.span.col - 1;
+    const last = tokens.at(-1)!;
+    const end = last.span.col - 1 + last.span.len;
+    // (the braid's tail as written past its last token: a hold `_` merged into it is in its length)
+    const tail = code.slice(end).replace(/^(?:\s+_)+/, '');
+    const head = code.slice(0, first).replace(/\bstep=\S+/, `step=${finer}`);
+    const next = `${head}${braid.join(' ')}${tail}`;
+    lines[i] = comment ? `${next}${comment}` : next;
+  }
+  return lines.join('\n');
+}
+
+/** A ratio as a tap's chain writes it: `*4`, `/3`, `*3/2`. */
+function chainOf(k: number): string {
+  const near = (x: number) => Math.abs(x - Math.round(x)) < 1e-9;
+  if (near(k)) return `*${Math.round(k)}`;
+  if (near(1 / k)) return `/${Math.round(1 / k)}`;
+  for (let q = 2; q <= 64; q++) if (near(k * q)) return `*${Math.round(k * q)}/${q}`;
+  return `*${num(k)}`;
+}
+
+/**
+ * A tap of a note value written as the meter's pulse with its chain (decision 069 §2): a pulse is 1/unit of a whole note,
+ * so `16n` in 4/4 is `pulse*4`, in 7/8 `pulse*2`; `4n.` in 6/8 `pulse/3`; the bar, `1m`, `pulse/pulses`. A chain already
+ * written stays after it (`16n*2` is `pulse*4*2`), and so does a meter named (`&bar2:8n`). `beat` stays: a beat is a look
+ * up of the meter's levels (7/8's are unequal). Never the meter cell's own steps, which decision 040 retired.
+ */
+function taps(text: string, options: CompileOptions): string {
+  const r = compileSource(text, undefined, options);
+  if (!r.ok) return text;
+  const lines = text.split('\n');
+  for (const d of parse(text).cells) {
+    const st = d.step;
+    if (st?.kind !== 'tap') continue;
+    const word = st.tap.written;
+    const meter = r.cells.get(st.meter?.name ?? r.mainMeter ?? '')?.meter;
+    if (!meter) continue;
+    const bars = /^([1-9][0-9]*)m$/.exec(word);
+    const length = bars ? (+bars[1]! * meter.pulses) / meter.unit : noteValue(word);
+    if (length === null) continue;
+    const i = d.span.line - 1;
+    const [code, comment] = splitComment(lines[i] ?? '');
+    const pattern = new RegExp(`(\\bstep=(?:&[A-Za-z_][A-Za-z0-9_]*:)?)${word.replace('.', '\\.')}(?=[*/\\s]|$)`);
+    const next = code.replace(pattern, `$1pulse${chainOf(1 / meter.unit / length)}`);
+    if (next !== code) lines[i] = comment ? `${next}${comment}` : next;
+  }
+  return lines.join('\n');
+}
 
 /**
  * A text's `use` and `from` lines written out where each stands, as `expand` writes them after the piece: a fragment's
@@ -189,19 +326,28 @@ function tokenWise(text: string, f: (token: string, cell: string) => string): st
   return lines.join('\n');
 }
 
+/** Is a row still written in a text: its test on the code, strings and comments aside (a label may say `step=8n`). */
+export const stillWritten = (row: (typeof LEFT)[number], text: string): boolean => {
+  const code = text
+    .split('\n')
+    .map((l) => splitComment(l)[0].replace(/"(?:[^"\\]|\\.)*"/g, '""'))
+    .join('\n');
+  return typeof row.test === 'function' ? row.test(code) : row.test.test(code);
+};
+
 /** The rows that need what the text means, not its letters, with why: reported where they are still written, not rewritten (#482's next rungs). */
-export const LEFT: readonly { key: string; rows: string; test: RegExp; why: string }[] = [
+export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: string) => boolean); why: string }[] = [
   {
     key: 'taps',
-    rows: '54–56 `step=16n` `pulse` `beat` `&m:8n`',
-    test: /step=(?:&\w+:)?(?:\d+[ntm]\.?|pulse|beat)\b/,
-    why: 'a tap is a level of the meter it reads: `&bar*k` with k from the meter’s levels (and a meter by name, `&bar2:beat`)',
+    rows: '54–56 `step=16n` `8t` `4n.` `1m` on a line that wasn’t rewritten',
+    test: /step=(?:&\w+:)?(?:\d+[ntm]\.?)(?![A-Za-z0-9_])/,
+    why: 'a tap of a note value is the meter’s pulse with its chain (`pulse*4`), where the line plays the same written so',
   },
   {
     key: 'subsequences',
-    rows: '13, 16, 18, 22, 25 `_` `[a b]` `<a b>` `x*n` `x(k,n)`',
-    test: /(?:^|\s)\[[^\]&,]*\s[^\]]*\]|<[^>]*>|[\w\]~]\*\d|\w\(\d+,\s*\d+/m,
-    why: 'dilate on a finer step: the line’s step= changes with it, and a tap’s finer step is the meter’s next level or a new one',
+    rows: '16, 18, 22, 25 `[a b]` `<a b>` `x*n` `x(k,n)` left as written',
+    test: (text) => parse(text).cells.some((d) => d.braid.kind === 'list' && d.braid.tokens.some((t) => t.atom.kind === 'seq' || t.subdivide > 1)),
+    why: 'dilate inside a step, kept where a finer grid would change what the line plays: a line that draws, one spliced or read by its units, a table, a stack, `<a b>`, a euclid, a meter with legato by level',
   },
   {
     key: 'sliders',

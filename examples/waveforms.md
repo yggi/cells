@@ -8,7 +8,7 @@ description: "Voices made of braids: square, triangle, saw and sine, with envelo
 ```cells
 # A voice is a cell looped at audio rate: one turn of its braid is one cycle
 # of its waveform. Its pitch and its volume are cells too.
-&bar from meter_4_4 100bpm
+&bar from meter 100bpm
 &tune over=scale(major) step=8n 0 2 4 7 4 2 0 ~ 4 5 7 9 7 5 4 ~
 &roots over=scale(major) step=1m 0 3 4 0
 

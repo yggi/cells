@@ -1,5 +1,5 @@
 # a seed id that became a word (#387): the old id still reads for a minor version, as the same fragment
-&bar from meter_4_4_swung_on_8n 120bpm
+&bar from meter(swing=8n:2/3) 120bpm
 &key from harmonic_minor A
 &tune over=&key step=8n 0 2 4 6# 7 4 2 0
 &lead s=tri loop=A3

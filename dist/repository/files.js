@@ -46,10 +46,10 @@ function association(node, problems) {
         else if (argsEntry && argsEntry.value.kind === 'map')
             for (const a of argsEntry.value.entries) {
                 const v = a.value.kind === 'scalar' ? a.value.value : undefined;
-                if ((typeof v === 'string' && /^[A-Za-z0-9_.#-]+$/.test(v)) || typeof v === 'number')
+                if ((typeof v === 'string' && /^[A-Za-z0-9_.#:/+*(),"' -]+$/.test(v) && !/[&=]/.test(v)) || typeof v === 'number')
                     args[a.key] = String(v);
                 else
-                    problems.push({ line: a.line, message: `${where}: its arg ${a.key} is ${JSON.stringify(yamlValue(a.value))}, not a word or a number` });
+                    problems.push({ line: a.line, message: `${where}: its arg ${a.key} is ${JSON.stringify(yamlValue(a.value))}, not a value (a word, a number, 8n:2/3, meter("7/8"))` });
             }
         return { point, weight: typeof w === 'number' ? w : 0, ...(typeof f === 'string' ? { facet: f } : {}), ...(Object.keys(args).length ? { args } : {}) };
     });
