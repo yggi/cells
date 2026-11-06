@@ -17,9 +17,10 @@ export const ROOT = 'fifths12TET';
  */
 export const MAIN_KEY = 'key:main';
 /**
- * The interface names: what fragments agree on and a union never renames (decision 047, point 2; more as facets need them):
- * the meter and its tempo, the key and its tonic (#290), the harmony. A named use's closure leaves one the piece defines
- * to the piece (decision 060), as it left the main key `over=key` read.
+ * The interface names, retired (#387, #454): what fragments agreed on by name, before a template declared its inputs
+ * (decision 065). Nothing in the language or the repository reads them: a `from` line binds its arguments, and the fit
+ * reads a template's signature (`useOn`, `fitsAs`). Kept one minor for a frontend that imports it.
+ * @deprecated Read a template's signature (`signatureOf`) instead; goes in the next minor.
  */
 export const INTERFACE_NAMES: readonly string[] = ['&bar', '&tempo', '&key', '&tonic', '&harm', '&style'];
 /**

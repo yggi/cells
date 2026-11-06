@@ -93,5 +93,5 @@ export { LIBRARY, resolveSeed } from './repository/library';
 export { RENAMED_IDS, wordOf } from './engine/renamed';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
-export { fitOf, unionOf, type Fit, type Union } from './repository/fit';
+export { fitOf, fitsAs, unionOf, useOn, type Fit, type FitAs, type Union, type UseOn, type UseOnOptions } from './repository/fit';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';

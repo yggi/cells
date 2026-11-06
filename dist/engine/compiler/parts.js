@@ -1,5 +1,4 @@
 import { parse } from "../parser/index.js";
-import { INTERFACE_NAMES } from "../program.js";
 export function restingParts(parsed) {
     const declared = new Set(parsed.cells.map((c) => c.name));
     const rests = new Map();
@@ -22,7 +21,7 @@ export function restingParts(parsed) {
         rested: new Map([...rests].map(([name, d]) => [name, d.span])),
     };
 }
-const OFFERED = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
+const offered = (c) => c.units.some((u) => u.atom.kind === 'chord') && c.units.every((u) => u.atom.kind === 'chord' || u.atom.kind === 'rest');
 export function unplayed(ctx, decls, cells, outputs, clocks) {
     if (![...decls.values()].some((d) => d.gate))
         return;
@@ -54,6 +53,6 @@ export function unplayed(ctx, decls, cells, outputs, clocks) {
         if (d.gate)
             visit(d.gate, new Set());
     for (const c of cells.values())
-        if (c.clock && c.units.length && !named.has(c.name) && !clocks.has(c.name) && !ctx.broken.has(c.name) && !OFFERED.has(c.name))
+        if (c.clock && c.units.length && !named.has(c.name) && !clocks.has(c.name) && !ctx.broken.has(c.name) && !offered(c))
             ctx.info(`&${c.name} is written and nothing plays or reads it: it is silent (a part no performer plays)`, c.span);
 }

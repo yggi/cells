@@ -7,14 +7,14 @@
  * - In a piece with performers (a gate), a line that steps on a clock and that nothing plays or reads (`&bassline
  *   step=16n …` with no performer for it): it is silent, as any line is that nothing plays, and an info says so
  *   (`unplayed`). A piece with no performer, a fragment compiled alone (a vamp, a bass line), is a part waiting for
- *   one, and nothing is said; nor of what a score offers its band to read (`&harm`, `&key`, `&style`: the interface
- *   names), which a band may leave unread.
+ *   one, and nothing is said; nor of what a score offers its band to read, a harmony (a line of chords), which a band may
+ *   leave unread.
  *
  * A role that rests for a whole section is written by its conductor as a tacet (`&leadline ~`): read by its gate, it
  * says nothing.
  */
 import type { CellDecl, ParseResult, Span } from '../ast';
-import { type CompileResult } from '../program';
+import type { CompileResult } from '../program';
 import type { Cells, Ctx } from './context';
 /**
  * The piece with a rest for each part a gate plays and no line writes, and an info for each; and those parts, each

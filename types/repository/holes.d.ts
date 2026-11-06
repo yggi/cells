@@ -54,8 +54,18 @@ export interface Holes {
     /** Names its lines declare (`&kick`), in the order written, then those its `use` lines give. */
     readonly defines: readonly string[];
     readonly clock: readonly ClockNeed[];
+    /**
+     * A template's signature (decision 065, #454): its heads, its optional parameters (each with its default line) and its
+     * main one (`&harm`, which `uses` lists too, the one input the template has no line for), as written; absent for a
+     * collection. A template's inputs are these, never a name it happens to share with a workbench.
+     */
+    readonly signature?: {
+        readonly heads: readonly string[];
+        readonly optional: readonly string[];
+        readonly main: string | null;
+    };
 }
-/** The interface names (decision 047, point 2): defined in `program.ts`, which a named use's closure reads too (decision 060). */
+/** The interface names, retired (#387, #454): re-exported one minor for a frontend that imports them from here. */
 export { INTERFACE_NAMES } from '../engine/program';
 /** Whether a lap of `taps` taps (the meter's, in the need's bars) meets the need: its taps times its rate a multiple of its steps. */
 export declare const lapMeets: (need: Pick<ClockNeed, "steps" | "rate">, taps: number) => boolean;

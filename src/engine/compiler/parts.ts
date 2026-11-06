@@ -7,15 +7,15 @@
  * - In a piece with performers (a gate), a line that steps on a clock and that nothing plays or reads (`&bassline
  *   step=16n …` with no performer for it): it is silent, as any line is that nothing plays, and an info says so
  *   (`unplayed`). A piece with no performer, a fragment compiled alone (a vamp, a bass line), is a part waiting for
- *   one, and nothing is said; nor of what a score offers its band to read (`&harm`, `&key`, `&style`: the interface
- *   names), which a band may leave unread.
+ *   one, and nothing is said; nor of what a score offers its band to read, a harmony (a line of chords), which a band may
+ *   leave unread.
  *
  * A role that rests for a whole section is written by its conductor as a tacet (`&leadline ~`): read by its gate, it
  * says nothing.
  */
 import type { CellDecl, Diagnostic, ParseResult, Span } from '../ast';
 import { parse } from '../parser';
-import { INTERFACE_NAMES, type CompileResult } from '../program';
+import type { CompileResult, ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 
 /**
@@ -43,8 +43,12 @@ export function restingParts(parsed: ParseResult): { parsed: ParseResult; rested
   };
 }
 
-/** What a score offers its band to read, which a band may leave unread (the harmony, the key, the style): the interface names. */
-const OFFERED = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
+/**
+ * What a score offers its band to read, which a band may leave unread: a harmony, a line whose every step is a chord or a
+ * rest (`&harm over=&key step=1m [0,2,4]`). Read off what the line is, never its name (#387): a key or a style steps on
+ * no clock, and is never said of anyway. A part of chords nothing plays (a stab's) is not said of either.
+ */
+const offered = (c: ResolvedCell): boolean => c.units.some((u) => u.atom.kind === 'chord') && c.units.every((u) => u.atom.kind === 'chord' || u.atom.kind === 'rest');
 
 /** In a piece with performers, an info for each line that steps on a clock and that nothing plays or reads: its name appears in no other cell, and no output. */
 export function unplayed(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, outputs: CompileResult['outputs'], clocks: CompileResult['clocks']): void {
@@ -69,6 +73,6 @@ export function unplayed(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: 
   // (a gate reads its part, and the lines of a stack it plays, though it plays a copy moved: play=&tune^$-12)
   for (const d of decls.values()) if (d.gate) visit(d.gate, new Set());
   for (const c of cells.values())
-    if (c.clock && c.units.length && !named.has(c.name) && !clocks.has(c.name) && !ctx.broken.has(c.name) && !OFFERED.has(c.name))
+    if (c.clock && c.units.length && !named.has(c.name) && !clocks.has(c.name) && !ctx.broken.has(c.name) && !offered(c))
       ctx.info(`&${c.name} is written and nothing plays or reads it: it is silent (a part no performer plays)`, c.span);
 }
