@@ -150,8 +150,9 @@ function tonics(ctx: Ctx, decls: Map<string, CellDecl>): void {
 /**
  * A diatonic mode read from a cell (#363, `scale(&mode, &tonic)`): the cell holds one mode, a word (`&mode major`, `&mode
  * dorian`) or its phase (`&mode 5`), 0 the darkest (locrian) to 6 the brightest (lydian), and the scale's steps are that
- * mode's, the tonic fixed (`even(7, 12, phase)`). A mode the text doesn't define is a hole, said as any unknown cell is;
- * one that holds anything else, or more than one mode, is an error (a stepped mode is not yet a form).
+ * mode's, the tonic fixed (`even(7, 12, phase)`); or its table (`&mode 0 2 3 5 7 8 10`, `&mode scan(2 1 2 2 1 2 2)`,
+ * `modeTable`), any mode of the twelve. A mode the text doesn't define is a hole, said as any unknown cell is; one that
+ * holds anything else, or more than one mode, is an error (a stepped mode is not yet a form).
  */
 function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
   for (const [name, d] of decls) {
@@ -161,6 +162,13 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
       ctx.unknownCell(d.braid.mode.name, d.braid.mode.span);
       continue;
     }
+    // (a mode written as its table, decision 069 §6's keys, the owner's (a): its steps, `scan(2 1 2 2 1 2 2)` or
+    // `0 2 3 5 7 8 10`, the tonic still the cell's; the core writes a key so, the mode out and the tonic a cell read)
+    const table = !m.step ? modeTable(m) : null;
+    if (table) {
+      decls.set(name, { ...d, braid: { ...d.braid, steps: table } });
+      continue;
+    }
     const tokens = m.braid.kind === 'list' ? m.braid.tokens : [];
     const atom = tokens.length === 1 && tokens[0]!.repeat === 1 && tokens[0]!.subdivide === 1 ? tokens[0]!.atom : null;
     const phase = atom?.kind === 'note' && !atom.pitched && atom.alter === 0 ? atom.value : null;
@@ -168,13 +176,30 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
       ctx.error(
         m.step
           ? `&${m.name} holds a scale's mode (scale(&${m.name}, …)): a stepped mode is not yet a form; write one (&${m.name} dorian)`
-          : `&${m.name} holds a scale's mode (scale(&${m.name}, …)): write one, a name or its phase from the darkest (&${m.name} major, &${m.name} dorian, &${m.name} 3)`,
+          : `&${m.name} holds a scale's mode (scale(&${m.name}, …)): write one, a name, its phase from the darkest or its table (&${m.name} major, &${m.name} 3, &${m.name} 0 2 3 5 7 8 10)`,
         m.span,
       );
       continue;
     }
     decls.set(name, { ...d, braid: { ...d.braid, steps: diatonicSteps(phase) } });
   }
+}
+
+/**
+ * A mode written as its table: a scan's steps, or a list of two or more whole numbers from 0, rising, under 12 (the octave
+ * closes it: `0 2 3 5 7 8 10` is the steps 2 1 2 2 1 2 2). Null for anything else (a word, a phase, which `modes` reads).
+ */
+function modeTable(m: CellDecl): number[] | null {
+  if (m.braid.kind === 'scan' && !m.braid.mode) return m.braid.steps.every((x) => x > 0) && m.braid.steps.reduce((a, b) => a + b, 0) === 12 ? [...m.braid.steps] : null;
+  if (m.braid.kind !== 'list' || m.braid.tokens.length < 2) return null;
+  const values: number[] = [];
+  for (const t of m.braid.tokens) {
+    const a = t.atom;
+    if (a.kind !== 'note' || a.pitched || t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1) return null;
+    values.push(a.value + a.alter);
+  }
+  if (values[0] !== 0 || values.some((v, i) => !Number.isInteger(v) || v >= 12 || (i > 0 && v <= values[i - 1]!))) return null;
+  return values.map((v, i) => (values[i + 1] ?? 12) - v);
 }
 
 /**
