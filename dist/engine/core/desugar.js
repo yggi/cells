@@ -332,16 +332,35 @@ function named(text) {
     return keys.length ? `${next.replace(/\s+$/, '')}\n${keys.join('\n')}` : text;
 }
 const LEVEL = ['*', '+', '-', '.', ','];
+const played = (m) => {
+    const step = m.pulses / (m.unit * m.levels.length);
+    return JSON.stringify([m.levels, +step.toFixed(9), m.beats.map((b) => +(b / m.unit).toFixed(9))]);
+};
 function meters(text, options) {
     const r = compileSource(text, undefined, options);
     if (!r.ok)
         return text;
+    const meterOf = (braid) => {
+        const c = compileSource(`&m ${braid}`);
+        return c.ok ? (c.cells.get('m')?.meter ?? null) : null;
+    };
+    const asLevels = (m) => {
+        const levels = m.levels.map((l) => LEVEL[Math.min(l, LEVEL.length - 1)]).join('');
+        const bare = meterOf(`meter("${levels}")`);
+        if (bare && played(bare) === played(m))
+            return `meter("${levels}")`;
+        const value = (m.unit * m.levels.length) / m.pulses;
+        if (!Number.isInteger(value))
+            return null;
+        const valued = meterOf(`meter("${levels}", ${value}n)`);
+        return valued && played(valued) === played(m) ? `meter("${levels}", ${value}n)` : null;
+    };
     const each = (c) => {
         const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(c)?.[1];
         const meter = name ? r.cells.get(name)?.meter : null;
         if (!meter || meter.written !== 'meter')
             return c;
-        return c.replace(/\bmeter\("([^"]*)"(?:,\s*[0-9]+)?\)/, (written, sig) => /^[*+\-.,:;]+$/.test(sig) ? written : `meter("${meter.levels.map((l) => LEVEL[Math.min(l, LEVEL.length - 1)]).join('')}")`);
+        return c.replace(/\bmeter\("([^"]*)"(?:,\s*[0-9]+)?\)/, (written, sig) => (/^[*+\-.,:;]+$/.test(sig) ? written : (asLevels(meter) ?? written)));
     };
     return text
         .split('\n')
