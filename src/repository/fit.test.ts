@@ -16,7 +16,7 @@ import { heard } from './heard';
 import { LIBRARY, resolveSeed } from './library';
 import { expand } from '../engine/use';
 import { METER_FRAGMENTS } from './meters';
-import { BOSSA_NOVA, FUNK } from './presets';
+import { BOSSA_NOVA, FUNK } from './styles';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { EXPRESSION_FRAGMENTS } from './expression';
 import { STYLE_FRAGMENTS } from './styles';

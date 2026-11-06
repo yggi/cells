@@ -20,6 +20,6 @@ Twinkle's first line, *twinkle, twinkle, little star*: the tonic twice, a leap t
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&twinkle`), so `&twinkle from twinkle &key` takes it; a form reads it as one of its lines (`&call step=8n &twinkle`).
 
-At the point proposed for a preset of children's songs (`KINDERLIED`, `presets.ts`), weight 1, as the facet `motif`, so a query there finds it first.
+At the point proposed for a preset of children's songs (`KINDERLIED`, `styles`), weight 1, as the facet `motif`, so a query there finds it first.
 
 **Its signature** (decision 065): `&twinkle from &key`. `&twinkle from twinkle &key` takes a copy of it, `&key` its main argument.

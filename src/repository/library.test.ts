@@ -11,7 +11,7 @@ import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
 import { PERFORMER_FRAGMENTS } from './performers';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { STAB_FRAGMENTS } from './stab';
 import { MOTIF_FRAGMENTS } from './motifs';

@@ -8,10 +8,8 @@ import { fitOf } from './fit';
 import { createRepository } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
-import { at, SWING_JAZZ } from './presets';
+import { ELECTRO_SWING, SWING_JAZZ } from './styles';
 
-/** The point proposed for an Electro swing preset, as the stab line's file writes it: no preset of Jambot's (decision 041). */
-const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
 import { STAB_FRAGMENTS } from './stab';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
@@ -28,7 +26,7 @@ const HOST = '&bar meter("4/4") step=120bpm\n&key scale(harmonic, D)\n&harm over
 describe('the stab lines', () => {
   it('are the Charleston, associated as the facet stab at the point proposed for Electro swing', () => {
     expect(STAB_FRAGMENTS.map((f) => f.id)).toEqual(['charleston_stabs']);
-    expect(STAB_FRAGMENTS[0]!.association).toEqual([{ point: PROPOSED, weight: 0.4, facet: 'stab' }]);
+    expect(STAB_FRAGMENTS[0]!.association).toEqual([{ point: ELECTRO_SWING, weight: 0.4, facet: 'stab' }]);
   });
 
   it.each(STAB_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s uses &harm alone, and fits a workbench that writes it', (_, text) => {

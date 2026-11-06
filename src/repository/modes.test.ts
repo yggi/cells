@@ -25,10 +25,8 @@ const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOG
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY } from './library';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 
-/** The point proposed for an Electro swing preset, as harmonic minor's file writes it: no preset of Jambot's (decision 041). */
-const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian' | 'harmonic' | 'phrygian' | 'lydian' | 'locrian';
@@ -133,7 +131,7 @@ describe('the presets find their modes', () => {
       const id = modeOf(f.id);
       const points =
         id === 'harmonic_minor'
-          ? [PROPOSED, SPOOKY]
+          ? [ELECTRO_SWING, SPOOKY]
           : OWN[id]
             ? [OWN[id]!]
             : id === 'mixolydian'

@@ -9,7 +9,7 @@ import { unionOf } from './fit';
 import { useFragments } from './learned';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 

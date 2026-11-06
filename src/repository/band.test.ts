@@ -11,7 +11,7 @@ import { bandAt, CENTRE, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyl
 import { BAND_FRAGMENTS } from './bands';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { resolveSeed } from './library';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 
 const band = BAND_FRAGMENTS.find((f) => f.id === 'band')!.text;
 const lineOf = (text: string, voice: string) => text.split('\n').find((l) => l.startsWith(`&${voice} `));
