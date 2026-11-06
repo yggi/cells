@@ -18,7 +18,8 @@
 # - A run that failed leaves its whole output in the git directory (`cells-verify-failed.log`), named in the message:
 #   the last 40 lines shown may not reach the failure.
 # - A branch that differs from `origin/main` in prose alone (markdown outside the folders whose markdown is code,
-#   tools/docs-only.sh) runs the docs check, `npm run verify:docs`, instead of everything, and is not stamped.
+#   tools/docs-only.sh) runs the docs check, `npm run verify:docs`, instead of everything, and is not stamped; a checkout
+#   with no node_modules is installed first (tools/install-first.mjs), as verify is.
 #   Lifted from yggi/cell-studio .githooks/pre-push @ 420e9d6, its list of what counts as prose cells' own.
 # - Deleting a ref and pushing a tag are not checked.
 # CELLS_VERIFY and CELLS_VERIFY_DOCS replace the two checks, for tools/hooks.test.ts.
@@ -80,9 +81,11 @@ fi
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
 # A branch that changes prose alone (tools/docs-only.sh, which CI reads too) runs the docs check in place of verify, and
 # its tree is not stamped: the docs check is not verify.
+# A checkout with no node_modules (a fresh worktree) is installed first, as verify's own preverify does, so the docs
+# check runs the lockfile's Prettier (#529; CELLS_INSTALL replaces the install, tools/install-first.mjs).
 if [ "$(sh "$(dirname "$stamp_tool")/docs-only.sh")" = docs ]; then
   log=$(mktemp)
-  if ! sh -c "${CELLS_VERIFY_DOCS:-npm run -s verify:docs}" >"$log" 2>&1; then
+  if ! node "$(dirname "$stamp_tool")/install-first.mjs" >"$log" 2>&1 || ! sh -c "${CELLS_VERIFY_DOCS:-npm run -s verify:docs}" >>"$log" 2>&1; then
     kept="$gitdir/cells-verify-failed.log"
     mv "$log" "$kept"
     tail -40 "$kept" >&2
