@@ -80,11 +80,13 @@ A version string kept as an example (a build-info test, a page about versions) s
 **yggi/cell-studio** (npm):
 
 ```sh
-npm install github:yggi/cells#vX.Y.Z      # package.json and package-lock.json
+npm install @yggi/cells@github:yggi/cells#vX.Y.Z   # package.json and package-lock.json, its entry at the new tag
 npm run verify
 npm run build && CHROME_PATH=/opt/pw-browsers/chromium npm run smoke    # every piece started, the covering set played
 ```
 
+Name the package as above: editing `package.json` and then running `npm install` can leave the lockfile's `node_modules/@yggi/cells` entry at the old tag, so `npm ci` (CI, the deploy) installs the old commit under the new pin (yggi/cell-studio#546).
+Cell studio's `tools/pins.test.ts` fails on that, so a pin move that passes its verify has moved the lock too.
 Move the tag where its docs name it (`docs/MEMORY.md`; `AGENTS.md` links there), and add its entry in `changes/` (its `changes/README.md`).
 The smoke test is the one check that builds the audio of every kind of voice, so a pin move runs it in full and says so in the pull request.
 
