@@ -14,7 +14,7 @@
  * are the next. Named `core`, not `compile`, beside `compile.ts` (decision 069 says `compile/`). Pure.
  */
 import { type NormaliseOptions } from '../normalise';
-export { FAMILIES, LEFT, type Family } from './desugar';
+export { FAMILIES, LEFT, stillWritten, type Family } from './desugar';
 export { meaningfulNames, minify } from './minify';
 export { coreFold } from './fold';
 /** A text's core: the text, the steps that made it, and the rows of the table still written in it (not yet rewritten, #482). */
