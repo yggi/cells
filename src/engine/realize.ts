@@ -15,6 +15,7 @@ import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { refsOf, stepsPerSecond } from './readers';
 import { VOICE_PARAMS } from './attributes';
+import { drawKeyOf } from './drawkey';
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
 import { tapShare } from './meter';
@@ -174,8 +175,8 @@ export function chanceOf(text: string): number {
 
 /**
  * Chance, thrown: is this step dropped this time round (x?p: it sounds if the throw is under 1 − p), and which does it
- * choose ([a|b|c])? Reproducible — the same seed, cell, lap and step always
- * throw the same — and different each lap. Not the voice (decision 031): a pattern
+ * choose ([a|b|c])? Reproducible — the same seed, cell (its content, not its name: `drawkey.ts`, #481), lap and
+ * step always throw the same — and different each lap. Not the voice (decision 031): a pattern
  * moved onto another voice or a kit keeps its dice. A chord's notes share their
  * step, so they sound or rest together.
  */
@@ -188,9 +189,11 @@ function thrownIn(result: CompileResult, cell: string, e: StepEvent, lap: number
   // <a b>, x/n: not its lap
   if (e.laps && mod(lap, e.laps.of) !== e.laps.is) return null;
   if (e.chance === undefined && !e.options && !e.chosen) return e;
-  const seed = `${result.cells.get(cell)?.seed ?? 0}|${cell}`;
-  // [a b|c]: each choice it is in drawn once a lap of its own frame (keyed where that lap begins), as [a|b|c] is
-  for (const c of e.chosen ?? []) if (Math.floor(chanceOf(`${seed}|${lap + c.lap}|${c.at.toFixed(6)}|${c.id}|picks`) * c.of) !== c.is) return null;
+  // (keyed on what the cell plays, not its name or its spelling: a text renamed or respelled draws as it did, #481)
+  const seed = `${result.cells.get(cell)?.seed ?? 0}|${drawKeyOf(result)(cell)}`;
+  // [a b|c]: each choice it is in drawn once a lap of its own frame (keyed where that lap begins), as [a|b|c] is; its id
+  // is where it stands in the braid, the flattened cell's name before it left out
+  for (const c of e.chosen ?? []) if (Math.floor(chanceOf(`${seed}|${lap + c.lap}|${c.at.toFixed(6)}|${c.id.replace(/^[^:/]*:/, '')}|picks`) * c.of) !== c.is) return null;
   if (e.chance === undefined && !e.options) return e;
   const key = `${seed}|${lap}|${e.step.toFixed(6)}`;
   if (e.chance !== undefined && chanceOf(`${key}|sounds`) >= 1 - e.chance) return null;

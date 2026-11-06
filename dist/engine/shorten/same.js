@@ -25,7 +25,7 @@ export function sameCells(source, result, options = {}) {
             .replace(/^&[A-Za-z_][A-Za-z0-9_]*\s*/, '')
             .replace(/\s+#.*$/, '')
             .trim();
-        if (!body || /[?|]/.test(body))
+        if (!body)
             continue;
         byText.set(body, [...(byText.get(body) ?? []), c.name]);
     }
