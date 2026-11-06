@@ -166,10 +166,10 @@ export function groupingOf(sig: string): Grouping | null {
   return { pulses: x, unit, groups: x % 3 === 0 && x >= 6 ? Array(x / 3).fill(3) : Array(x).fill(1) };
 }
 
-/** A time signature's pulses, their note value and its beats in pulses (decision 040), each pulse in `sub` steps. */
-export function signatureOf(sig: string, sub: number): Signature {
+/** A time signature's pulses, their note value and its beats in pulses (decision 040). */
+export function signatureOf(sig: string): Signature {
   const g = groupingOf(sig);
-  return { pulses: g?.pulses ?? 0, unit: g?.unit ?? 4, beats: g?.groups ?? [], sub };
+  return { pulses: g?.pulses ?? 0, unit: g?.unit ?? 4, beats: g?.groups ?? [] };
 }
 
 /**
@@ -322,7 +322,7 @@ function parseMeter(s: LineScanner, start: number): Braid {
     const starts = [...sig].flatMap((ch, i) => (i === 0 || (ch !== '.' && ch !== ',') ? [i] : []));
     return starts.map((at, i) => (starts[i + 1] ?? sig.length) - at);
   };
-  const signature = grouping ? signatureOf(sig, sub) : stepWhole !== null ? { pulses: sig.length, unit: 1 / stepWhole, beats: beatsOf(), sub: 1 } : undefined;
+  const signature = grouping ? signatureOf(sig) : stepWhole !== null ? { pulses: sig.length, unit: 1 / stepWhole, beats: beatsOf() } : undefined;
   const beats = signature ? signature.beats.length : beatsOf().length;
   return { kind: 'list', tokens, span, perBeat: numbers.length / Math.max(1, beats), ...(signature ? { signature } : {}) } as Braid;
 }
