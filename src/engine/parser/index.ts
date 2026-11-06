@@ -22,7 +22,7 @@ import { splitPlugins } from '../plugins';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
 import { FROM_FORM, readFrom, readUse, USE_FORM, useOld } from './use';
 
-export { meterLevels, SIGNATURES } from './generators';
+export { groupingOf, meterLevels } from './generators';
 export { SHOWS } from './cell';
 export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse, type FromForm, type UseForm } from './use';
 

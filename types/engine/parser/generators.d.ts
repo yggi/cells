@@ -1,6 +1,6 @@
 /** Generators: a braid written as a rule — scan(…), even(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
 import type { Braid, Ref, Span, WaveShape } from '../ast';
-import type { Signature } from '../meter';
+import { type Signature } from '../meter';
 import { type Syntax } from './syntax';
 import type { LineScanner } from './scanner';
 /**
@@ -8,12 +8,28 @@ import type { LineScanner } from './scanner';
  * one group is left — the Euclidean rhythms in their usual form (Toussaint): 3 in 8 x..x..x.
  */
 export declare function bjorklund(k: number, n: number): boolean[];
-/** A time signature's bar as levels: * the bar, + a beat, . a subdivision, , a finer one. */
-export declare const SIGNATURES: Record<string, number[]>;
-/** Groups written as sizes (#17, ruling 2): `2+2+3`, each 2 or 3 pulses of an eighth; null where the text isn't that. */
-export declare const groupsOf: (sig: string) => number[] | null;
-/** A time signature's pulses (the numerator), their note value (the denominator) and its beats in pulses (decision 040). */
+/**
+ * A meter's grouping (yggi/music-commons `contracts/meter` v2, decision 072): its pulses, their note value as a
+ * denominator, and its groups in pulses, each a beat (what bpm counts).
+ */
+export interface Grouping {
+    readonly pulses: number;
+    readonly unit: number;
+    readonly groups: readonly number[];
+}
+/**
+ * A signature's or sizes' grouping by rule, the table of names gone (contracts/meter v2, decision 072: a meter is two
+ * applications of even); null where the text is neither.
+ *  - x/8, x/16, x/32: the gaps of the canonical even set of ⌈x/3⌉ places in x (contracts/euclid), the fewest groups of 2
+ *    and 3 as evenly as they go: 3/8 one group, 7/8 3+2+2, 8/8 3+3+2, 10/8 3+2+3+2, 11/8 3+3+3+2.
+ *  - x/4, x/2: x beats of the denominator, but x/3 groups of three where x is a multiple of 3 from 6 (6/4: two dotted
+ *    halves, against 3/2's three halves).
+ *  - sizes, `2+2+3`, of eighths, or of the denominator after a slash, `2+2+3/4`, `3+3+2/16`: each 2, 3, 4 or 6.
+ */
+export declare function groupingOf(sig: string): Grouping | null;
+/** A time signature's pulses, their note value and its beats in pulses (decision 040), each pulse in `sub` steps. */
 export declare function signatureOf(sig: string, sub: number): Signature;
+/** A meter's grades, one a step (contracts/meter v2): as written, or from its signature or sizes; '' where it is neither. */
 export declare function meterLevels(sig: string, sub: number): string;
 type Generator = (s: LineScanner, start: number) => Braid;
 /**

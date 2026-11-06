@@ -1,5 +1,5 @@
 import type { ParseResult } from '../ast';
-export { meterLevels, SIGNATURES } from './generators';
+export { groupingOf, meterLevels } from './generators';
 export { SHOWS } from './cell';
 export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse, type FromForm, type UseForm } from './use';
 /** A text, parsed; `old` reads a retired form (a `use` line) with a warning, where it is otherwise an error (`CompileOptions.old`). */

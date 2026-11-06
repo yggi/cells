@@ -8,7 +8,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { bjorklund, SIGNATURES } from './engine/parser/generators';
+import { bjorklund, groupingOf, meterLevels } from './engine/parser/generators';
 import { parse } from './engine/parser';
 import { compileSource } from './engine/compile';
 import { codeShifts, noteFrequency } from './engine/program';
@@ -216,45 +216,67 @@ describe('the notes contract (music-commons contracts/notes, version 1)', () => 
   });
 });
 
-describe('the meter contract (music-commons contracts/meter, version 1)', () => {
-  const meter = contract<MeterVector>('meter') as Contract<MeterVector> & { names: Record<string, number[]>; stepsPerEighth: number };
+describe('the meter contract (music-commons contracts/meter, version 2)', () => {
+  const meter = contract<MeterVector>('meter') as Contract<MeterVector> & { names: Record<string, number[]>; stepsPerEighth: number; sizes: number[] };
   const of = (groups: readonly number[]) => meter.vectors.find((v) => v.groups.join('+') === groups.join('+'))!;
-  /** A signature as cells writes it, at the contract's 2 steps to the eighth: `sub` counts steps a beat in an x/4, steps an eighth in an x/8. */
-  const written = (name: string) => {
-    const r = parse(`&bar meter("${name}", ${name.endsWith('/4') ? 4 : 2})`);
-    expect(r.diagnostics, name).toEqual([]);
+  /** The steps a pulse that make the contract's 2 to the eighth: 2 an eighth, 4 a quarter, 8 a half. */
+  const subOf = (unit: number) => (unit >= 8 ? 2 : 16 / unit);
+  /** A meter's numbers as cells writes them in its braid. */
+  const numbers = (text: string) => {
+    const r = parse(`&bar meter(${text})`);
+    expect(r.diagnostics, text).toEqual([]);
     const b = r.cells[0].braid;
     return b.kind === 'list' ? b.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [];
   };
+  /** The contract's levels, its tiers, mapped from the ends into cells' five numbers (#506, the owner's rule): 0 the bar, 4 the step, 3 the eighth, 1 the tier below the bar, 2 the rest. */
+  const fromTheEnds = (levels: readonly number[]) => {
+    const step = Math.max(...levels);
+    return levels.map((t) => (t === 0 ? 0 : t === step ? 4 : t === step - 1 ? 3 : Math.min(t, 2)));
+  };
 
-  it('is the version cells passes, every grouping of 2s and 3s from 2 to 12 eighths, lifted with its source named', () => {
-    expect([meter.contract, meter.version, meter.stepsPerEighth]).toEqual(['meter', 1, 2]);
+  it('is the version cells passes, version 1’s 47 groupings and every grouping with a 4 or a 6 and each name’s, lifted with its source named', () => {
+    expect([meter.contract, meter.version, meter.stepsPerEighth, meter.sizes]).toEqual(['meter', 2, 2, [2, 3, 4, 6]]);
     expect(meter.lifted).toMatch(/^Lifted from yggi\/music-commons contracts\/meter\/vectors\.json @ [0-9a-f]{7,40}$/);
-    expect(meter.vectors).toHaveLength(47);
+    expect(meter.vectors).toHaveLength(149);
   });
 
-  it('every signature the contract names is one cells names, grouped as the contract groups it (an x/4 writes beats, each two eighths)', () => {
-    expect(Object.keys(SIGNATURES).sort()).toEqual(Object.keys(meter.names).sort());
-    for (const [name, groups] of Object.entries(meter.names)) expect(name.endsWith('/4') ? SIGNATURES[name].map((b) => 2 * b) : SIGNATURES[name], name).toEqual(groups);
+  it('every name the contract has is a signature cells groups by the same rule (an x/4 a beat a quarter, two eighths; an x/2 four)', () => {
+    for (const [name, groups] of Object.entries(meter.names)) {
+      const g = groupingOf(name);
+      expect(g, name).not.toBeNull();
+      expect(
+        g!.groups.map((x) => (x * 8) / Math.min(8, g!.unit)),
+        name,
+      ).toEqual(groups);
+    }
   });
 
-  it('meter(signature) has the contract’s levels for every name, four groups or more halved (#17, the owner’s ruling (a))', () => {
-    for (const name of Object.keys(meter.names)) expect(written(name), name).toEqual(of(meter.names[name]).levels);
+  it('meter(signature) has the contract’s grades for every name, and its numbers are the contract’s tiers from the ends', () => {
+    for (const [name, groups] of Object.entries(meter.names)) {
+      const v = of(groups);
+      const sub = subOf(groupingOf(name)!.unit);
+      expect(meterLevels(name, sub), name).toBe(v.grades);
+      expect(numbers(`"${name}", ${sub}`), name).toEqual(fromTheEnds(v.levels));
+    }
   });
 
-  it('every grouping of 2s and 3s, written as sizes, has the contract’s levels, and a named one is its signature’s meter (#17)', () => {
+  it('every grouping of two groups or more, written as sizes of eighths, has the contract’s grades; a named one is its signature’s meter', () => {
+    let written = 0;
     for (const v of meter.vectors) {
       const name = v.groups.join('+');
-      // (one group is no grouping: "2" and "3" are a beat, not a bar of groups, and an error; the other 45 vectors are written)
+      // (one group is no grouping: "3" is a beat, not a bar of groups, and an error; the bar of one group is a signature, 3/8)
       if (v.groups.length < 2) {
         expect(parse(`&bar meter("${name}")`).diagnostics, name).not.toEqual([]);
         continue;
       }
-      expect(written(name), name).toEqual(v.levels);
+      expect(meterLevels(name, 2), name).toBe(v.grades);
+      expect(numbers(`"${name}", 2`), name).toEqual(fromTheEnds(v.levels));
+      written++;
     }
+    expect(written).toBe(meter.vectors.filter((v) => v.groups.length >= 2).length);
     // (a signature is a name for one grouping: 7/8 is 3+2+2, the same meter, its pulses and beats too)
     const meterOf = (sig: string) => compileSource(`&bar meter("${sig}", 2) step=60bpm`).cells.get('bar')!.meter;
-    for (const [name, groups] of Object.entries(meter.names)) if (name.endsWith('/8')) expect(meterOf(groups.join('+')), name).toEqual(meterOf(name));
+    for (const [name, groups] of Object.entries(meter.names)) if (name.endsWith('/8') && groups.length > 1) expect(meterOf(groups.join('+')), name).toEqual(meterOf(name));
   });
 });
 

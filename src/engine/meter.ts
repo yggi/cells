@@ -254,9 +254,9 @@ export function meterOfLevels(levels: readonly number[], signature?: Signature):
   return { tree: root, levels, positions: levels.map((_, i) => i), lap: n, written: 'meter', pulses: shape.pulses, unit: shape.unit, beats: shape.beats };
 }
 
-/** A meter written as levels: its steps its pulses, its beats from each beat (0 or 1) to the next. */
+/** A meter written as levels: its steps its pulses, its beats from each beat (every mark but . and ,: 0, 1 or 2) to the next (#15, item 3). */
 function signatureOfLevels(levels: readonly number[]): Signature {
-  const starts = levels.flatMap((l, i) => (i === 0 || l <= 1 ? [i] : []));
+  const starts = levels.flatMap((l, i) => (i === 0 || l <= 2 ? [i] : []));
   const beats = starts.map((s, i) => (starts[i + 1] ?? levels.length) - s);
   const per = levels.length / Math.max(1, beats.length);
   // (steps a beat a power of two: a pulse that fraction of a quarter; otherwise eighths, grouped)
