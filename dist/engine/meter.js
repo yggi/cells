@@ -144,7 +144,7 @@ export function meterOfLevels(levels, signature) {
     return { tree: root, levels, positions: levels.map((_, i) => i), lap: n, written: 'meter', pulses: shape.pulses, unit: shape.unit, beats: shape.beats };
 }
 function signatureOfLevels(levels) {
-    const starts = levels.flatMap((l, i) => (i === 0 || l <= 1 ? [i] : []));
+    const starts = levels.flatMap((l, i) => (i === 0 || l <= 2 ? [i] : []));
     const beats = starts.map((s, i) => (starts[i + 1] ?? levels.length) - s);
     const per = levels.length / Math.max(1, beats.length);
     const unit = Number.isInteger(Math.log2(per)) ? 4 * per : 8;

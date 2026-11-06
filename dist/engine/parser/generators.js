@@ -1,3 +1,4 @@
+import { noteName, noteValue } from "../meter.js";
 import { syntax } from "./syntax.js";
 import { parseFree } from "./free.js";
 import { agogic as agogicPositions, diatonicSteps, even as evenPositions, intervals, MODE_WORDS, SCALES, scaleOfPhase } from "../../theory/modes.js";
@@ -123,53 +124,98 @@ function parseSpell(s, start) {
         tokens.push(rest);
     return { kind: 'list', tokens, span };
 }
-export const SIGNATURES = {
-    '2/4': [1, 1],
-    '3/4': [1, 1, 1],
-    '4/4': [1, 1, 1, 1],
-    '5/4': [1, 1, 1, 1, 1],
-    '6/8': [3, 3],
-    '7/8': [3, 2, 2],
-    '9/8': [3, 3, 3],
-    '10/8': [3, 2, 3, 2],
-    '12/8': [3, 3, 3, 3],
-    '5/8': [3, 2],
-};
-export const groupsOf = (sig) => (/^[23](\+[23])+$/.test(sig) ? sig.split('+').map(Number) : null);
-export function signatureOf(sig, sub) {
-    const sized = groupsOf(sig);
-    if (sized)
-        return { pulses: sized.reduce((a, b) => a + b, 0), unit: 8, beats: sized, sub };
-    const [num, den] = sig.split('/').map((x) => parseInt(x, 10));
-    const groups = SIGNATURES[sig] ?? [];
-    return { pulses: num, unit: den, beats: sig.endsWith('/8') ? groups : groups.map(() => 1), sub };
+const SIZES = [2, 3, 4, 6];
+export function groupingOf(sig) {
+    const sized = /^([1-9][0-9]*(?:\+[1-9][0-9]*)+)(?:\/(2|4|8|16|32))?$/.exec(sig);
+    if (sized) {
+        const groups = sized[1].split('+').map(Number);
+        if (!groups.every((g) => SIZES.includes(g)))
+            return null;
+        return { pulses: groups.reduce((a, b) => a + b, 0), unit: Number(sized[2] ?? 8), groups };
+    }
+    const named = /^([1-9][0-9]*)\/(2|4|8|16|32)$/.exec(sig);
+    if (!named)
+        return null;
+    const [x, unit] = [Number(named[1]), Number(named[2])];
+    if (x < 2 || x > 32)
+        return null;
+    if (unit >= 8) {
+        const set = evenPositions(Math.ceil(x / 3), x, Math.ceil(x / 3) - 1);
+        return { pulses: x, unit, groups: set.map((j, i) => (set[i + 1] ?? x) - j) };
+    }
+    return { pulses: x, unit, groups: x % 3 === 0 && x >= 6 ? Array(x / 3).fill(3) : Array(x).fill(1) };
 }
-const groupStart = (i, count) => (i === 0 ? '*' : count < 4 || i === Math.ceil(count / 2) ? '+' : '-');
-export function meterLevels(sig, sub) {
-    if (/^[*+\-.,]+$/.test(sig))
-        return sig;
-    const sized = groupsOf(sig);
-    const groups = sized ?? SIGNATURES[sig];
-    if (!groups)
-        return '';
-    const compound = !!sized || sig.endsWith('/8');
-    let out = '';
-    groups.forEach((g, i) => {
-        const start = groupStart(i, groups.length);
-        if (!compound) {
-            out += start;
-            for (let k = 1; k < sub; k++)
-                out += sub % 2 === 0 && k === sub / 2 ? '.' : sub === 3 ? '.' : ',';
+export function signatureOf(sig, sub) {
+    const g = groupingOf(sig);
+    return { pulses: g?.pulses ?? 0, unit: g?.unit ?? 4, beats: g?.groups ?? [], sub };
+}
+function groupTiers(count) {
+    const tier = Array(count).fill(Infinity);
+    const walk = (from, to, depth) => {
+        tier[from] = Math.min(tier[from], depth);
+        if (to - from <= 3) {
+            for (let i = from + 1; i < to; i++)
+                tier[i] = Math.min(tier[i], depth + 1);
+            return;
         }
-        else {
-            for (let e = 0; e < g; e++) {
-                out += e === 0 ? start : '.';
-                for (let k = 1; k < sub; k++)
-                    out += ',';
-            }
-        }
+        const cut = from + evenPositions(2, to - from, 1)[1];
+        walk(from, cut, depth + 1);
+        walk(cut, to, depth + 1);
+    };
+    walk(0, count, 0);
+    return tier;
+}
+function meterTiers(g, sub) {
+    const scale = g.unit >= 8 ? 1 : 8 / g.unit;
+    const eighths = g.groups.map((x) => x * scale);
+    const tree = groupTiers(eighths.length);
+    const deepest = Math.max(0, ...tree);
+    const pairs = eighths.some((e) => e >= 4);
+    const inner = pairs ? deepest + 1 : null;
+    const eighth = (inner ?? deepest) + 1;
+    const step = eighth + 1;
+    const starts = new Map();
+    eighths.reduce((at, size, i) => {
+        starts.set(at, tree[i]);
+        if (inner !== null && size >= 4)
+            for (let q = 2; q < size; q += 2)
+                starts.set(at + q, inner);
+        return at + size;
+    }, 0);
+    const perEighth = g.unit >= 8 ? sub : (sub * g.unit) / 8;
+    const total = g.pulses * sub;
+    const tiers = Array.from({ length: total }, (_, k) => {
+        const p = k / perEighth;
+        const near = (x) => Math.abs(x - Math.round(x)) < 1e-9;
+        if (near(p))
+            return starts.get(Math.round(p)) ?? eighth;
+        if (near(2 * p))
+            return step;
+        return g.unit <= 4 && sub === 3 ? eighth : step;
     });
-    return out;
+    return { tiers, eighth, step };
+}
+const gradeOf = (t, eighth, step) => (t === 0 ? '*' : t === step ? ',' : t === eighth ? '.' : '+-:;'[Math.min(t - 1, 3)]);
+const numberOf = (t, eighth, step) => (t === 0 ? 0 : t === step ? 4 : t === eighth ? 3 : Math.min(t, 2));
+const writtenNumber = (ch) => ({ '*': 0, '+': 1, '-': 2, ':': 2, ';': 2, '.': 3, ',': 4 })[ch] ?? 0;
+const WRITTEN = /^[*+\-:;.,]+$/;
+export function meterLevels(sig, sub) {
+    if (WRITTEN.test(sig))
+        return sig;
+    const g = groupingOf(sig);
+    if (!g)
+        return '';
+    const { tiers, eighth, step } = meterTiers(g, sub);
+    return tiers.map((t) => gradeOf(t, eighth, step)).join('');
+}
+function meterNumbers(sig, sub) {
+    if (WRITTEN.test(sig))
+        return [...sig].map(writtenNumber);
+    const g = groupingOf(sig);
+    if (!g)
+        return [];
+    const { tiers, eighth, step } = meterTiers(g, sub);
+    return tiers.map((t) => numberOf(t, eighth, step));
 }
 function parseMeter(s, start) {
     s.i++;
@@ -185,32 +231,52 @@ function parseMeter(s, start) {
                 return f.labels[Math.round((f.value - f.lo) / ((f.hi - f.lo) / Math.max(1, f.labels.length - 1) || 1))] ?? '';
             return String(f.value);
         }
-        const n = s.match(/[0-9]+/y);
+        const n = s.match(/[1-9][0-9]*(?:n\.?|t)(?![0-9A-Za-z])|[0-9]+/y);
         if (n === null)
-            s.fail(`${what}: in quotes ("4/4"), a number, or free(…)`);
+            s.fail(`${what}: in quotes ("4/4"), a number, a note value (16n) or free(…)`);
         return n;
     };
     const sig = arg('the time signature');
+    const written = WRITTEN.test(sig);
+    const grouping = written ? null : groupingOf(sig);
     s.skipSpace();
     let sub = 1;
+    let stepWhole = null;
     if (s.peek() === ',') {
         s.i++;
         s.skipSpace();
-        sub = Math.max(1, Math.min(8, parseInt(arg('steps a pulse'), 10) || 1));
+        const at = s.i;
+        const text = arg('the step: steps a pulse, or its note value');
+        const whole = noteValue(text);
+        if (whole !== null) {
+            if (grouping) {
+                const per = 1 / grouping.unit / whole;
+                if (!(Math.abs(per - Math.round(per)) < 1e-9 && Math.round(per) >= 1 && Math.round(per) <= 8))
+                    s.fail(`meter("${sig}", ${text}): the step divides the pulse, ${noteName(1 / grouping.unit) ?? `a 1/${grouping.unit}`}, into 1 to 8 steps`, at, text.length);
+                sub = Math.round(per);
+            }
+            else
+                stepWhole = whole;
+        }
+        else
+            sub = Math.max(1, Math.min(8, parseInt(text, 10) || 1));
         s.skipSpace();
     }
     s.expect(')', `')' to close meter(…)`);
     const span = s.span(start);
     if (!s.atBoundary())
         s.fail(`Unexpected '${s.peek()}'`);
-    const levels = meterLevels(sig, sub);
-    if (!levels)
-        s.fail(`meter("${sig}"): a time signature (${Object.keys(SIGNATURES).join(' ')}), groups of eighths as sizes ("2+2+3", each 2 or 3), or levels like "*.+.+.+." (* bar, + beat, - a half's beat, . subdivision, , finer; written out, only * and + are beats)`, start, span.len);
-    const value = (ch) => Math.max(0, '*+-.,'.indexOf(ch));
-    const tokens = [...levels].map((ch) => ({ atom: { kind: 'note', value: value(ch), alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
-    const named = !!SIGNATURES[sig] || !!groupsOf(sig);
-    const beats = [...levels].filter((ch) => ch === '*' || ch === '+').length || 1;
-    return { kind: 'list', tokens, span, perBeat: levels.length / beats, ...(named ? { signature: signatureOf(sig, sub) } : {}) };
+    const numbers = meterNumbers(sig, sub);
+    if (!numbers.length)
+        s.fail(`meter("${sig}"): a time signature (x/2 x/4 x/8 x/16: 4/4, 6/8, 7/8, 2/2), groups as sizes ("2+2+3" of eighths, "2+2+3/4" of quarters; each 2, 3, 4 or 6), or levels like "*.-.+.-." (* the bar, + - : ; beats, the higher the stronger, . the eighth, , finer)`, start, span.len);
+    const tokens = numbers.map((value) => ({ atom: { kind: 'note', value, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
+    const beatsOf = () => {
+        const starts = [...sig].flatMap((ch, i) => (i === 0 || (ch !== '.' && ch !== ',') ? [i] : []));
+        return starts.map((at, i) => (starts[i + 1] ?? sig.length) - at);
+    };
+    const signature = grouping ? signatureOf(sig, sub) : stepWhole !== null ? { pulses: sig.length, unit: 1 / stepWhole, beats: beatsOf(), sub: 1 } : undefined;
+    const beats = signature ? signature.beats.length : beatsOf().length;
+    return { kind: 'list', tokens, span, perBeat: numbers.length / Math.max(1, beats), ...(signature ? { signature } : {}) };
 }
 function numbers(s, name, start) {
     s.i++;
@@ -429,7 +495,7 @@ export const GENERATORS = {
     },
     meter: {
         parse: parseMeter,
-        syntax: syntax('generator', 'meter("sig") · meter("sig", sub) · meter("2+2+3") · meter("levels")', `A bar as levels, one per step: 0 the downbeat, 1 a beat, then finer. A time signature (${Object.keys(SIGNATURES).join(' ')}) with sub steps a pulse; groups of eighths written as sizes, each 2 or 3 (2+2+3: a signature is a name for one grouping, 7/8 is 3+2+2); or levels written out (* bar, + beat, - half, . subdivision, , finer). Of four groups or more, the second half's start is a beat (+) and the others a half's beat (-): 4/4 is *.-.+.-. (#17). Its bpm counts beats, its groups. Each argument can be free(…).`, ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("2+2+3") step=90bpm', '&bar meter("*.+.+..") step=90bpm'], 'time.md'),
+        syntax: syntax('generator', 'meter("sig") · meter("sig", step) · meter("2+2+3") · meter("2+2+3/4") · meter("levels")', `A bar as levels, one per step, its numbers its tiers from the ends: 0 the downbeat, 1 a beat, 2 a half's beat (and any tier between), 3 the eighth, 4 finer. A time signature by rule (contracts/meter v2, decision 072): x/8 and x/16 grouped as the canonical even set of ⌈x/3⌉ groups (7/8 is 3+2+2, 8/8 3+3+2), x/4 and x/2 in beats of the denominator, or in threes where x is a multiple of 3 from 6 (6/4). Its step is a number a pulse or a note value (meter("6/8", 16n)). Groups written as sizes, of eighths or of the denominator after a slash (2+2+3, 2+2+3/4), each 2, 3, 4 or 6. Or levels written out (* the bar, + - : ; beats, . the eighth, , finer), with their step's note value. Of four groups or more, each half's start is the stronger: 4/4 is *.-.+.-. (#17). Its bpm counts beats, its groups. Each argument can be free(…).`, ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("2+2+3") step=90bpm', '&bar meter("2/2", 2) step=60bpm', '&bar meter("*.+.+..") step=90bpm'], 'time.md'),
     },
     spell: {
         parse: parseSpell,
