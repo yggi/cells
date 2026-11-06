@@ -74,7 +74,7 @@ describe('base=: a cell as a copy of another, changed where it says', () => {
   });
 
   it('plays as the cell written out: BWV 847’s answer and its last entry', () => {
-    const head = '&bar scan(1!64) step=89bpm beat=4 laps=1\n&v s=tri loop=C4';
+    const head = '&bar scan(1!64) step=89bpm pulse=64n laps=1\n&v s=tri loop=C4';
     const subject = '&subject 12 11 12@2 7@2 8@2 12 11 12@2 14@2 7@2 12 11 12@2 14@2 5 7 8@4 7 5 3';
     const written = '&answer step=&bar 19 18 19@2 12@2 15@2 19 18 19@2 21@2 14@2 19 18 19@2 21@2 12 14 15@4 14 12 10@2';
     const overdub = '&answer step=&bar base=&subject^$7 =!3 12@2 =!15 10@2';

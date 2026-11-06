@@ -91,7 +91,7 @@ export function withPulse(m: Meter, whole: number): Meter {
 /** How many beats a meter's bpm counts in a bar: one each (7/8: three, unequal), or a scan's beats of `pulse=` (276¼). */
 export const beatCount = (m: Meter): number => m.counted ?? Math.max(1, m.beats.length);
 
-/** beat=n on a meter: n equal beats over its pulses, in place of the beats it was written with (alla breve: `meter("4/4") beat=2`). */
+/** beat=n on a meter, retired (#502) and still read for Migrate: n equal beats over its pulses, in place of the beats it was written with (`meter("4/4") beat=2`, now `meter("2/2", 2)`). */
 export function withBeats(m: Meter, n: number): Meter {
   const k = Math.max(1, Math.round(n));
   const { counted: _, ...rest } = m;

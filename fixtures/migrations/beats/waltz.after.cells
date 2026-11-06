@@ -1,0 +1,5 @@
+# a waltz in one, beat= on a meter (#502): its beat written as a level now, meter("*..", 4n)
+&bar meter("*..", 4n) step=60bpm
+&t step=4n 0 4 7
+&v s=sine loop=C4
+&out map=sample [&t * &v]
