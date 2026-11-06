@@ -60,7 +60,7 @@ export declare function noteValue(v: string): number | null;
 export declare function withPulse(m: Meter, whole: number): Meter;
 /** How many beats a meter's bpm counts in a bar: one each (7/8: three, unequal), or a scan's beats of `pulse=` (276¼). */
 export declare const beatCount: (m: Meter) => number;
-/** beat=n on a meter: n equal beats over its pulses, in place of the beats it was written with (alla breve: `meter("4/4") beat=2`). */
+/** beat=n on a meter, retired (#502) and still read for Migrate: n equal beats over its pulses, in place of the beats it was written with (`meter("4/4") beat=2`, now `meter("2/2", 2)`). */
 export declare function withBeats(m: Meter, n: number): Meter;
 /** swing= on a meter: the levels that lean, those at .5 (straight) left out. */
 export declare function withSwing(m: Meter, levels: readonly SwingLevel[]): Meter;

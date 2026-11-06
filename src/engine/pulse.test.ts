@@ -125,8 +125,8 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(m('meter("10/8")')).toEqual({ pulses: 10, unit: 8, beats: [3, 2, 3, 2] });
     // (a scan: its entries its pulses, each a quarter, and its beats)
     expect(m('scan(27 23 26 24)')).toEqual({ pulses: 4, unit: 4, beats: [1, 1, 1, 1] });
-    // (beat= states another feel: alla breve)
-    expect(m('meter("4/4") beat=2')).toEqual({ pulses: 4, unit: 4, beats: [2, 2] });
+    // (alla breve: 2/2, a pulse a half, its steps quarters; beat= retired, #502)
+    expect(m('meter("2/2", 2)')).toEqual({ pulses: 2, unit: 2, beats: [1, 1] });
   });
 
   it('a note value longer than what is left of the bar is cut at the bar line', () => {
@@ -205,7 +205,7 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
       return c.cells.get('bar')!.steps / c.clocks.get('bar')!.perSecond;
     };
     expect(bar('meter("6/8") step=60bpm')).toBeCloseTo(2, 9);
-    expect(bar('meter("4/4") step=60bpm beat=2')).toBeCloseTo(2, 9);
+    expect(bar('meter("2/2", 2) step=60bpm')).toBeCloseTo(2, 9);
     expect(bar('meter("4/4") step=60bpm')).toBeCloseTo(4, 9);
   });
 

@@ -51,7 +51,7 @@ describe('a meter stepped by a rate alone (#290, #196)', () => {
   // and its uneven beats are the ones followed, as with the rate written on it)
   const tune = '&high over=scale(major) step=8n 0 2 4 2\n&v s=sine loop=C4\n&out map=sample [&high * &v]';
   const both = (meter: string) => [`&bar ${meter} step=92bpm\n${tune}`, `&bar ${meter} step=&tempo\n&tempo step=92bpm\n${tune}`].map((t) => compileSource(t));
-  it.each(['scan(27 23 26 24)', 'meter("6/8")', 'meter("4/4") beat=2'])('%s: the same main meter and the same ticks, the rate written or a cell', (meter) => {
+  it.each(['scan(27 23 26 24)', 'meter("6/8")', 'meter("2/2", 2)'])('%s: the same main meter and the same ticks, the rate written or a cell', (meter) => {
     const [written, held] = both(meter);
     expect(mainMeter(held!)).toEqual(mainMeter(written!));
     const ticks = (r: ReturnType<typeof compileSource>) => ticksBetween(plan(r, codeShifts(r)), 0, 4)!.at.map((t) => t.toFixed(9));
