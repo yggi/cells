@@ -4,7 +4,8 @@
  * sections, in draws of 8, one run from each preset's point. Each section the composer asks for a meter, then for a
  * rhythm with the meter chosen, keeps the first of each within 0.3 (Jambot's `MISS_DISTANCE`), files one of its own on a
  * miss, and uses what it kept at the section's point. The same walk with nothing learned is the baseline. The measure is
- * what learning adds to the share of sections whose fragment is among its run's 3 most used. Pure and seeded: run `i` of
+ * what learning takes of the sections the baseline leaves outside its runs' 3 most used: of the share outside them, how
+ * much learning brings in (amended, #533). Pure and seeded: run `i` of
  * draw `d` starts at the `i`th preset and walks on the seed `8d + i`, so a draw is the same on every machine. Its tests:
  * `lockin.test.ts` (a witness over draws 0–3) and `lockin.slow.test.ts` (the bound, over draws 0–31).
  */
@@ -29,12 +30,14 @@ export const FACETS = ['meter', 'rhythm'] as const;
 export type Facet = (typeof FACETS)[number];
 
 /**
- * The bound (decision 048, point 6; amended by #162): what learning may add to the share of sections whose fragment is
- * among its run's 3 most used, over draws 0–31 (256 runs, 320,000 sections), on each facet and for each way of learning,
- * with room for the measure's own noise: the pooled value plus twice its standard error (the spread of its 32 draws of 8
- * over √32) is at most 5 points.
+ * The bound (decision 048, point 6; amended by #162 and #533): of the sections the baseline leaves outside its runs' 3
+ * most used, learning may bring at most 40 % in, over draws 0–31 (256 runs, 320,000 sections), on each facet and for each
+ * way of learning, with room for the measure's own noise: the pooled value plus twice its standard error (the spread of
+ * its 32 draws of 8 over √32) is at most 0.4. Relative, so a fragment that makes the library more varied (the baseline
+ * less concentrated) doesn't count against learning: the old bound, 5 points added, read the cinquillo as more lock-in
+ * where learning played less concentrated than before (#533).
  */
-export const LOCK_IN_BOUND = 0.05;
+export const LOCK_IN_BOUND = 0.4;
 
 // The radio's step on each of the four axes the fragments are placed on, scaled by the entropy, folded back into [0, 1]:
 // the walk of yggi/jambot packages/engine/src/radio.ts @ 327d6a8 (`walkRadio`, `RADIO.step`), its draws here keyed by
@@ -168,11 +171,25 @@ export function topThree(ids: readonly string[]): number {
   return top.reduce((a, b) => a + b, 0) / ids.length;
 }
 
-/** What learning added, on a facet, to the share among each run's 3 most used, over runs of equal length: pooled over them. */
-const added = (base: readonly Baseline[], runs: readonly LearnedRun[], facet: Facet) =>
-  runs.reduce((sum, r, i) => sum + topThree(r.kept[facet]) - topThree(base[i]!.alone[facet]), 0) / runs.length;
+/** The share among each run's 3 most used, over runs of equal length: pooled over them, with nothing learned and as learned. */
+const shares = (base: readonly Baseline[], runs: readonly LearnedRun[], facet: Facet) => ({
+  alone: base.reduce((sum, b) => sum + topThree(b.alone[facet]), 0) / base.length,
+  learned: runs.reduce((sum, r) => sum + topThree(r.kept[facet]), 0) / runs.length,
+});
 
-/** The lock-in of one way of learning over draws, on a facet: per draw of 8, pooled over all of them, and the pooled value's standard error from the draws' spread. */
+/** What learning added, on a facet, to the share among each run's 3 most used: in points of the share. */
+export const added = (base: readonly Baseline[], runs: readonly LearnedRun[], facet: Facet) => {
+  const s = shares(base, runs, facet);
+  return s.learned - s.alone;
+};
+
+/** What learning took, on a facet, of the share the baseline leaves outside its runs' 3 most used: the measure the bound holds. */
+const taken = (base: readonly Baseline[], runs: readonly LearnedRun[], facet: Facet) => {
+  const s = shares(base, runs, facet);
+  return (s.learned - s.alone) / (1 - s.alone);
+};
+
+/** The lock-in of one way of learning over draws, on a facet (what it took of the share outside the 3 most used): per draw of 8, pooled over all of them, and the pooled value's standard error from the draws' spread. */
 export interface LockIn {
   readonly perDraw: readonly number[];
   readonly pooled: number;
@@ -180,7 +197,7 @@ export interface LockIn {
 }
 
 export function lockIn(base: readonly Baseline[][], runs: readonly LearnedRun[][], facet: Facet): LockIn {
-  const perDraw = runs.map((draw, d) => added(base[d]!, draw, facet));
+  const perDraw = runs.map((draw, d) => taken(base[d]!, draw, facet));
   const pooled = perDraw.reduce((a, b) => a + b, 0) / perDraw.length;
   const variance = perDraw.reduce((a, b) => a + (b - pooled) ** 2, 0) / Math.max(1, perDraw.length - 1);
   return { perDraw, pooled, standardError: Math.sqrt(variance / perDraw.length) };
