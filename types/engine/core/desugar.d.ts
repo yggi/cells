@@ -7,9 +7,9 @@ export interface Family {
 }
 /** The families written as functions of the text alone. */
 export declare const FAMILIES: readonly Family[];
-/** The rows that need what the text means, not its letters, with why: reported where they are still written, not rewritten (#482's next rungs). */
 /** Is a row still written in a text: its test on the code, strings and comments aside (a label may say `step=8n`). */
 export declare const stillWritten: (row: (typeof LEFT)[number], text: string) => boolean;
+/** The rows that need what the text means, not its letters, with why: reported where they are still written, not rewritten (#482's next rungs). */
 export declare const LEFT: readonly {
     key: string;
     rows: string;
