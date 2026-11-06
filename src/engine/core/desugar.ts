@@ -326,7 +326,6 @@ function tokenWise(text: string, f: (token: string, cell: string) => string): st
   return lines.join('\n');
 }
 
-/** The rows that need what the text means, not its letters, with why: reported where they are still written, not rewritten (#482's next rungs). */
 /** Is a row still written in a text: its test on the code, strings and comments aside (a label may say `step=8n`). */
 export const stillWritten = (row: (typeof LEFT)[number], text: string): boolean => {
   const code = text
@@ -336,6 +335,7 @@ export const stillWritten = (row: (typeof LEFT)[number], text: string): boolean 
   return typeof row.test === 'function' ? row.test(code) : row.test.test(code);
 };
 
+/** The rows that need what the text means, not its letters, with why: reported where they are still written, not rewritten (#482's next rungs). */
 export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: string) => boolean); why: string }[] = [
   {
     key: 'taps',
