@@ -133,4 +133,4 @@ The owner's answers (2026-11-05): 1 "draw should not be keyed on the name", 2 "f
 - [#477](https://github.com/yggi/cells/issues/477): Shorten checks no rewrite by S1. Its `runs` breaks a cell read by its units, a written piece's too, and its `same` breaks two entries of a mix braid (*Pachelbel* de-sugared).
 - [#482](https://github.com/yggi/cells/issues/482): the tool itself (`src/engine/compile/`), with `compile(normalise(x)) = compile(x)` over the examples.
 - [#481](https://github.com/yggi/cells/issues/481): a draw keyed on its cell's content.
-- `canonicalText` (rung E2) treats every own name as free. A drawing cell's name isn't, until #481 keys draws on content; then E2 implies S1 for draws, and a drum's name on a MIDI card is the one name that means something.
+- `canonicalText` (rung E2) treats every own name as free, and since #481 every drawing cell's name is (draws keyed on what a cell plays, decision 069 §6 as amended); a drum's name on a MIDI card is the one name that means something.

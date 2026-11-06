@@ -36,7 +36,8 @@ export function sameCells(source: string, result: Result, options: CompileOption
       .replace(/^&[A-Za-z_][A-Za-z0-9_]*\s*/, '')
       .replace(/\s+#.*$/, '')
       .trim();
-    if (!body || /[?|]/.test(body)) continue; // (chance keys on names: merging would throw differently)
+    // (a cell that draws merges as any other: alike cells draw alike, their draws keyed on what they are, #481)
+    if (!body) continue;
     byText.set(body, [...(byText.get(body) ?? []), c.name]);
   }
   for (const [body, names] of byText) {

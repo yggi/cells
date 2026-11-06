@@ -19,6 +19,7 @@ function seeded(seed: number): () => number {
 
 /** Where in the noise a note starts (seconds): from its cell's seed, its voice and its start in the code's seconds. */
 export function grainOffset(seed: number, voice: string, at: number, duration: number): number {
+  // (`voice` is what the voice is keyed on: its place among the noise voices, not its name, #481)
   return chanceOf(`${seed}|${voice}|${at.toFixed(6)}|grain`) * duration;
 }
 
