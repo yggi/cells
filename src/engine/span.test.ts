@@ -67,7 +67,7 @@ describe('the MIDI file’s signature', () => {
     expect(meters('scan(1 1 1 1)')).toEqual([{ tick: 0, num: 4, den: 4 }]);
   });
   it('is left out where the beat is another value: the file writes a beat as a quarter, so 6/8 would draw wrong bars', () => {
-    for (const bar of ['meter("6/8")', 'meter("12/8")', 'meter("7/8")', 'meter("4/4") beat=2']) expect(meters(bar), bar).toEqual([]);
+    for (const bar of ['meter("6/8")', 'meter("12/8")', 'meter("7/8")', 'meter("2/2", 2)']) expect(meters(bar), bar).toEqual([]);
   });
   it('is the meter’s where its rate is a cell (step=&tempo), as a seed meter’s is', () => {
     const at = (text: string) => {

@@ -176,8 +176,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       // taps by pulse, of a named meter (decision 040)
       'rate step=pulse',
       'rate step=&m:16n',
-      // a meter's beats and a scan's note value
-      'parameter beat',
+      // a scan's note value
       'parameter pulse',
       // swing
       'parameter swing',

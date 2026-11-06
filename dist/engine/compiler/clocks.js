@@ -56,8 +56,6 @@ export function clockCells(ctx, decls, given) {
         const r = tempo ?? rateOf(d.step);
         if (r === null || !d.step)
             continue;
-        if (typeof d.params.beat === 'number' && !c.meter)
-            warn(`beat= says how many beats a meter(…) or scan(…) counts (alla breve: meter("4/4") beat=2); on &${name}, a list, it does nothing`, d.paramSpans?.beat ?? d.span);
         if (d.params.pulse !== undefined && (d.braid.kind !== 'scan' || typeof d.params.pulse !== 'string' || noteValue(d.params.pulse) === null))
             warn(`pulse= says the note value of a scan's entries (pulse=16n: sixteenths, its bpm counting quarters); ${d.braid.kind === 'scan' ? `${d.params.pulse} is not one (16n, 8t, 4n.)` : `on &${name}, not a scan, it does nothing`}`, d.paramSpans?.pulse ?? d.span);
         const lapped = tempo === null && d.step.whole;

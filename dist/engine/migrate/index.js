@@ -11,6 +11,7 @@ import { laps } from "./laps.js";
 import { renamedIds } from "./renamed.js";
 import { oneshots } from "./oneshot.js";
 import { pairs } from "./pairs.js";
+import { beats } from "./beats.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
     ...taps(source, result, options),
@@ -24,6 +25,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...renamedIds(source, options.resolve),
     ...oneshots(source),
     ...pairs(source),
+    ...beats(source, result, options),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };

@@ -130,7 +130,6 @@ export const TIERS = [
             'modifier &x:0:gain',
             'rate step=pulse',
             'rate step=&m:16n',
-            'parameter beat',
             'parameter pulse',
             'parameter swing',
             'generator meter("sig")',

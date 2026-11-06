@@ -115,9 +115,9 @@ describe('the fit', () => {
   });
 
   it('a fragment whose union says something the workbench alone doesn’t, doesn’t fit; what the workbench says alone doesn’t count', () => {
-    const f = fitOf('&x step=16n 0!16 beat=2\n&v s=sine\n&o [&x * &v]', four);
+    const f = fitOf('&x step=16n 0!16 swing=8n:2/3\n&v s=sine\n&o [&x * &v]', four);
     expect(f.fits).toBe(false);
-    expect(f.diagnostics!.map((d) => d.message)).toEqual(['beat= acts on a meter (step= a rate): on &x it does nothing']);
+    expect(f.diagnostics!.map((d) => d.message)).toEqual(['swing= acts on a meter (step= a rate): on &x it does nothing']);
     // (the workbench alone: "Nothing plays yet"; the union of a sounding fragment no longer says it)
     expect(compileSource(four).diagnostics).toHaveLength(1);
     expect(fitOf('&x step=16n 0!16\n&v s=sine\n&o [&x * &v]', four).fits).toBe(true);

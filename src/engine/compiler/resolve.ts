@@ -15,7 +15,7 @@ class Abort extends Error {}
 
 /**
  * The Meter a braid is written as: meter(…) (a list of levels, with perBeat) or scan(…); none otherwise. beat=n on it
- * states n equal beats (decision 040: alla breve, `meter("4/4") beat=2`); swing= leans its levels (#18), a bare one the
+ * states n equal beats (decision 040, retired by #502 and read for Migrate: `meter("4/4") beat=2`, now `meter("2/2", 2)`); swing= leans its levels (#18), a bare one the
  * level of its own steps.
  */
 function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato'>): Meter | null {
