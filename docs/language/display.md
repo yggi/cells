@@ -12,7 +12,8 @@ How a cell is shown and described: names, labels, notes, the piece's file and it
 Label templates fill from the cell as it is now, so a key that turns renames itself: `{notes}` (up to 16, then …), `{tonic}`, `{mode}` (bold, the common name first: **Minor** (*Aeolian*)), `{steps}`, `{tempo}` (beats a minute), `{shift}`, `{name}`, and `{&key:tonic}` for another cell's field (a note has none of its own). `**bold**`, `*italic*`, `\n` a new line; other text is escaped. Any other field (`{lap}`, a misspelt `{tempi}`) stays as written, with a warning that lists these.
 
 ```cells
-&bar scan(1 1 1 1) step=100bpm
+&bar meter("4/4") step=&tempo
+&tempo step=100bpm
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}: {notes}"
 &hint label="The major scale: 2 2 1 2 2 2 1." about=&major
 &tuneNote label="A **12-bar** blues sketch.\nSwung, in C." about=&tune
@@ -33,7 +34,8 @@ description: A blues riff, in C.
 ---
 
 ```cells
-&bar scan(1 1 1 1) step=100bpm swing=8n:2/3
+&bar meter("4/4") step=&tempo swing=8n:2/3
+&tempo step=100bpm
 &riff step=8n 0 3 5 6 7 ~ 10 7
 &v s=tri loop=C4
 &out postgain=.501 map=sample [&riff * &v * .3]
@@ -84,7 +86,8 @@ Without `show=` it is inferred (a table of 12 is a `key`, a recognised mode a `s
 **scope=** makes a cell a screen; its braid lists its channels, `&a &b`. A scope is read in the graph's margin, and each cell it watches wears a dot in its channel's colour ([../ui/graph.md](https://github.com/yggi/cell-studio/blob/main/docs/ui/graph.md): the margin). `stack` overlays, `split` a band each, `xy` draws the first against the second (a Lissajous figure). A sound shows its waveform; a stepped or gliding cell its value over the last two seconds. `spectrum` and `waterfall` show frequency: **fold=n** pitches folded by stride (12, by pitch class, default), **bins=n** that many bands without a fold, **channels=sum|split**.
 
 ```cells
-&bar scan(1 1 1 1) step=60bpm
+&bar meter("4/4") step=&tempo
+&tempo step=60bpm
 &strike step=pulse/6 0
 &tonic body=fork loop=A3 ring=7 board=none 0
 &fifth body=fork loop=A3 ring=7 board=none 7

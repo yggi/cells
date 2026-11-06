@@ -41,7 +41,8 @@ FM (`fm=` `ratio=` `index=`) and resonators (`body=` `ring=` `hard=`) are on [ph
 **A stepped braid of voices plays them:** `&groove step=16n &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh*2` is a drum pattern by name, mixed as it is (`[&groove * .6]`); a chord of voices sounds together, a subsequence squeezes them into a step (`&bd [&hh &hh]`, `[&hh ~ &hh, &bd]`), and repeats, ratchets, holds and chance work as on any step. A braid of voices without `step=` that a groove splices is a drum motif: `&fill &sd &sd*2 ~ &hh`, then `&groove step=&bar*4 &bd ~ &fill &fill[::-1]` (spliced, reversed, nested as any braid). It is the pattern below, read through a kit of its voices, without writing the kit; a braid of voices that something reads with `over=` stays that kit.
 
 ```cells
-&bar scan(1 1 1 1) step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
 &sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .04)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
@@ -63,7 +64,8 @@ A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a p
 - It acts on the line that starts the notes (through a gate, its `play=` line), not on a voice; a `oneshot=1` voice plays its envelope through, whatever the share.
 
 ```cells
-&bar meter("4/4") step=100bpm
+&bar meter("4/4") step=&tempo
+&tempo step=100bpm
 &bass step=8n legato=.5 0 0 7 0 5 0 3 2
 &stab step=4n legato=1.75 ~ ~ ~ [0,4,7]
 &v s=saw loop=C2 env=&(map=adsr .005 .1 .7 .05)
@@ -71,7 +73,8 @@ A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a p
 ```
 
 ```cells
-&bar scan(1 1 1 1) step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &bd oneshot=1 s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)
 &hh oneshot=1 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &beat step=8n &bd &hh &bd &hh
@@ -85,7 +88,8 @@ A sound parameter can be a range times cells, so it moves with the music: `lpf=1
 **A bipolar wave is a share from 0 to 1** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md) §5): a cell whose values run below 0 (`sin(12)`, `saw(8)`, −1 to 1), read as a parameter's factor or a volume, is read as (1 + x)/2, its middle at .5, so `lpf=200..3000 * &lfo` with `&lfo map=lin loop=.25 sin(12)` sweeps the whole range. A cell that stays at 0 or above is read as written; read as a pitch, a wave is semitones either way.
 
 ```cells
-&bar scan(4 4 4 4) step=120bpm
+&bar scan(4 4 4 4) step=&tempo
+&tempo step=120bpm
 &accent map=amp step=16n 1 .4 .8 .4
 &fenv map=adsr .003 .18 .1 .06
 &knob map=lin loop=&bar/16 .2 1 .35 .2
@@ -106,7 +110,8 @@ Written in place they hang as petals of the voice; named, one envelope serves se
 **An envelope's slots by name** ([decision 066](https://github.com/yggi/cells/blob/main/docs/decisions/066-a-wave-and-an-envelope-move.md)): `attack=`, `decay=`, `sustain=`, `release=` on a `map=adsr` cell, the same four in order. Each is a number, or a range scaled by cells, read at each note's start, so the chords swell at legato and are cut short at staccato:
 
 ```cells
-&bar meter("4/4") step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &style style=&(map=style .5 .5 .2 .5)
 &chords map=adsr attack=.3..0.01 * &style[artic] decay=0 sustain=1 release=.7..0.12 * &style[artic]
 &pad s=tri loop=C3 env=&chords
@@ -117,7 +122,8 @@ Written in place they hang as petals of the voice; named, one envelope serves se
 **A blend of two waves**, `s=tri..square * &x`: one voice, its wave the first at 0 and the second at 1, their harmonics crossfaded at their own peaks, the share read at each note's start. MIDI out sends one note for each:
 
 ```cells
-&bar meter("4/4") step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &style style=&(map=style .5 .5 .8 .5)
 &lead s=tri..square * &style[artic] loop=C4 lpf=2500
 &tune step=8n 0 2 4 7 4 2 0 ~
