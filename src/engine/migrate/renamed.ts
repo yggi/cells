@@ -33,7 +33,8 @@ export function renamedIds(source: string, resolve: Resolve | undefined): Rewrit
       if (at < 0) return [];
       return [rewrite(i, raw, code, `${code.slice(0, at)}${JSON.stringify(word)}${code.slice(at + quoted.length)}`, id!, word)];
     }
-    // (after `from`, quoted or bare; a word taken with arguments, diatonic(mode=aeolian), joins those the line gives)
+    // (after `from`, quoted or bare; a word taken with arguments joins those the line gives: meter_7_8(swing=8n:2/3) →
+    // meter(grouping=meter("7/8"), swing=8n:2/3), #464)
     const m = new RegExp(`(\\sfrom\\s+)(${escape(quoted)}|${escape(id!)})(?=[\\s(]|$)`).exec(code);
     if (!m) return [];
     const end = m.index + m[0].length;
