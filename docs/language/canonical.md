@@ -20,6 +20,8 @@ the same units (decision 027). Normalise writes ours, whatever its length; Short
 | `resonance=` | `lpq=` |
 | `hcutoff=` `hp=` | `hpf=` |
 | `hresonance=` | `hpq=` |
+| `bandf=` `bp=` | `bpf=` |
+| `bandq=` | `bpq=` |
 | `verb=` `reverb=` | `room=` |
 | `delayt=` `dt=` | `delaytime=` |
 | `delayfb=` `dfb=` | `delayfeedback=` |

@@ -466,3 +466,72 @@ describe("an instrument's grit, on its voices' sum (decision 067, #452)", () => 
       }
   });
 });
+
+describe('the band-pass, and a 24 dB low-pass as two stages (decision 074)', () => {
+  const RATE = 48000;
+  /** A held sine at `hz` through `filter`, after its first quarter second (one note, its attack soft: no onset's click): its level in dB against the same sine dry. */
+  const through = (hz: number, filter: string, setup = '') => {
+    const level = (f: string) => {
+      const r = compiled(`${setup}&v s=sine loop=${hz}hz ${f} env=&(map=adsr .05 0 1 .05)\n&n step=.5 0\n&out map=sample postgain=1 [&n * &v]`);
+      expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+      const x = pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 }).mix[0];
+      let e = 0;
+      for (let i = RATE / 4; i < RATE; i++) e += x[i]! * x[i]!;
+      return e;
+    };
+    return 10 * Math.log10(level(filter) / level(''));
+  };
+  /** Web Audio's band-pass at `f` Hz, centre `f0`, Q `q`: its gain in dB (the spec's biquad, unity at the centre). */
+  const bandpass = (f: number, f0: number, q: number) => {
+    const w0 = (2 * Math.PI * f0) / RATE;
+    const alpha = Math.sin(w0) / (2 * q);
+    const w = (2 * Math.PI * f) / RATE;
+    const [b0, b2, a0, a1, a2] = [alpha, -alpha, 1 + alpha, -2 * Math.cos(w0), 1 - alpha];
+    const re = (c0: number, c1: number, c2: number) => [c0 + c1 * Math.cos(w) + c2 * Math.cos(2 * w), -c1 * Math.sin(w) - c2 * Math.sin(2 * w)];
+    const [nr, ni] = re(b0, 0, b2);
+    const [dr, di] = re(a0, a1, a2);
+    return 10 * Math.log10((nr * nr + ni * ni) / (dr * dr + di * di));
+  };
+
+  it("passes its centre and takes away what is far from it, as Web Audio's band-pass does: bpq= read linearly", () => {
+    for (const [hz, q] of [
+      [1000, 1],
+      [250, 1],
+      [4000, 1],
+      [1200, 8],
+    ] as const)
+      expect(Math.abs(through(hz, `bpf=1000 bpq=${q}`) - bandpass(hz, 1000, q))).toBeLessThan(0.1);
+    expect(through(1000, 'bpf=1000')).toBeCloseTo(through(1000, 'bpf=1000 bpq=1'), 6);
+    expect(through(4000, 'bpf=1000')).toBeLessThan(-9);
+  });
+
+  it('a narrower band at a higher bpq=; it moves as a cutoff does; on an instrument, its voices hear it', () => {
+    expect(through(1500, 'bpf=1000 bpq=8')).toBeLessThan(through(1500, 'bpf=1000 bpq=1') - 6);
+    expect(through(1000, 'bpf=200..5000 * &d', '&d map=lin .5\n')).toBeLessThan(-1);
+    // (an instrument's band-pass is a stage after its voice, as its low-pass is: decision 067)
+    const mix = (text: string) => {
+      const r = compiled(text);
+      return pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 }).mix[0];
+    };
+    const V = '&v s=saw loop=220hz env=&(map=adsr .05 0 1 .05)\n&n step=.5 0\n';
+    expect(bits([mix(`${V}&bp bpf=1000 bpq=3 [&v]\n&out map=sample postgain=1 [&n * &bp]`)])).toEqual(
+      bits([mix(V.replace('&v s=saw', '&v bpf=1000 bpq=3 s=saw') + '&out map=sample postgain=1 [&n * &v]')]),
+    );
+  });
+
+  it('lowpass24, two of the lowpass stages in series, falls twice as steeply above its cutoff', () => {
+    const LP = '&lp lpf=500 lpq=0 [&v]\n';
+    const LP24 = '&lp lpf=500 lpq=0 [&lp2]\n&lp2 lpf=500 lpq=0 [&v]\n';
+    const at = (hz: number, chain: string) => {
+      const r = compiled(`&v s=sine loop=${hz}hz env=&(map=adsr .05 0 1 .05)\n${chain}&n step=.5 0\n&out map=sample postgain=1 [&n * &lp]`);
+      const x = pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 }).mix[0];
+      let e = 0;
+      for (let i = RATE / 4; i < RATE; i++) e += x[i]! * x[i]!;
+      return 10 * Math.log10(e);
+    };
+    const drop12 = at(500, LP) - at(4000, LP);
+    const drop24 = at(500, LP24) - at(4000, LP24);
+    expect(drop24 / drop12).toBeGreaterThan(1.9);
+    expect(drop24 / drop12).toBeLessThan(2.1);
+  });
+});

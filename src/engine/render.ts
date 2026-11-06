@@ -80,8 +80,19 @@ const LATER: Readonly<Record<string, string>> = {
 };
 
 /** A filter's parameters, which move per note on the voice's filter. */
-const FILTER = ['lpf', 'lpq', 'hpf', 'hpq'] as const;
+const FILTER = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq'] as const;
 type FilterKey = (typeof FILTER)[number];
+/**
+ * A cell's filters, in the order its sound goes through them (decision 074, superdough's): each its cutoff's key, its
+ * Q's, its Web Audio type, and where it sits when it has no cutoff written but moves (a low-pass from 2 kHz …).
+ */
+const FILTERS = [
+  { key: 'lpf', q: 'lpq', type: 'lowpass', from: 2000 },
+  { key: 'hpf', q: 'hpq', type: 'highpass', from: 200 },
+  { key: 'bpf', q: 'bpq', type: 'bandpass', from: 1000 },
+] as const;
+type Filter = (typeof FILTERS)[number]['key'];
+const QOF: Readonly<Record<Filter, 'lpq' | 'hpq' | 'bpq'>> = { lpf: 'lpq', hpf: 'hpq', bpf: 'bpq' };
 
 /** Frames between a filter's coefficients, counted from the render's first frame, so a chunk boundary moves nothing. */
 const BLOCK = 32;
@@ -279,17 +290,19 @@ class Biquad {
   private a2 = 0;
   private readonly z1 = [0, 0];
   private readonly z2 = [0, 0];
-  constructor(private readonly type: 'lowpass' | 'highpass') {}
+  constructor(private readonly type: 'lowpass' | 'highpass' | 'bandpass') {}
   set(freq: number, q: number, rate: number): void {
     const f = Math.min(Math.max(freq, 1), rate / 2 - 1);
     const w0 = (2 * Math.PI * f) / rate;
     const cos = Math.cos(w0);
-    const alpha = Math.sin(w0) / (2 * Math.pow(10, q / 20));
+    // (a low- or a high-pass reads its Q in dB, a band-pass linearly, as Web Audio's biquad does: the spec's formulas)
+    const band = this.type === 'bandpass';
+    const alpha = band ? Math.sin(w0) / (2 * Math.max(q, 1e-4)) : Math.sin(w0) / (2 * Math.pow(10, q / 20));
     const a0 = 1 + alpha;
     const low = this.type === 'lowpass';
-    this.b0 = (low ? (1 - cos) / 2 : (1 + cos) / 2) / a0;
-    this.b1 = (low ? 1 - cos : -(1 + cos)) / a0;
-    this.b2 = this.b0;
+    this.b0 = (band ? alpha : low ? (1 - cos) / 2 : (1 + cos) / 2) / a0;
+    this.b1 = (band ? 0 : low ? 1 - cos : -(1 + cos)) / a0;
+    this.b2 = band ? -this.b0 : this.b0;
     this.a1 = (-2 * cos) / a0;
     this.a2 = (1 - alpha) / a0;
   }
@@ -573,15 +586,12 @@ function filtersOf(
   const moves = c.paramCells ?? {};
   const start = (k: string, d: number) => (!keep(k) ? d : typeof c.params[k] === 'number' ? (c.params[k] as number) : (moves[k]?.range?.[0] ?? d));
   const autos: Partial<Record<FilterKey, Auto>> = {};
-  const has = { lpf: keep('lpf') && (typeof c.params.lpf === 'number' || !!moves.lpf), hpf: keep('hpf') && (typeof c.params.hpf === 'number' || !!moves.hpf) };
-  if (has.lpf) {
-    autos.lpf = new Auto(start('lpf', 2000));
-    autos.lpq = new Auto(start('lpq', 1));
-  }
-  if (has.hpf) {
-    autos.hpf = new Auto(start('hpf', 200));
-    autos.hpq = new Auto(start('hpq', 1));
-  }
+  const has = Object.fromEntries(FILTERS.map(({ key }) => [key, keep(key) && (typeof c.params[key] === 'number' || !!moves[key])])) as Record<Filter, boolean>;
+  for (const { key, q, from } of FILTERS)
+    if (has[key]) {
+      autos[key] = new Auto(start(key, from));
+      autos[q] = new Auto(start(q, 1));
+    }
   return { has, autos };
 }
 
@@ -598,7 +608,7 @@ interface Voice {
   /** Its grit (`crush=`, `distort=`), on its notes' sum, before its filters. */
   readonly grit: readonly Shaper[];
   /** Which filters it has; their parameters move for all its chains alike. */
-  readonly has: { readonly lpf: boolean; readonly hpf: boolean };
+  readonly has: Readonly<Record<Filter, boolean>>;
   readonly autos: Partial<Record<FilterKey, Auto>>;
   /** Its sends to an echo (`delay=`) and the reverb (`room=`), after its filters, each at the level it moves to. */
   readonly sends: readonly Send[];
@@ -613,7 +623,7 @@ interface Voice {
  */
 interface Stage {
   readonly name: string;
-  readonly has: { readonly lpf: boolean; readonly hpf: boolean };
+  readonly has: Readonly<Record<Filter, boolean>>;
   readonly autos: Partial<Record<FilterKey, Auto>>;
   /** Its sends, for its voices' sum: each voice through it sends, as a filter of the sum is one on each (#452). */
   readonly sends: readonly Send[];
@@ -631,7 +641,7 @@ interface Bus {
   /** The stem it goes to: '' (the instrument's own) or an entry's key. */
   readonly stem: string;
   /** Its instrument, then those around it, each with its filters for this bus. */
-  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<'lpf' | 'hpf', Biquad>> }[];
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, Biquad>> }[];
   readonly input: [Float64Array, Float64Array];
 }
 
@@ -639,9 +649,9 @@ interface Bus {
 interface Chain {
   /** The stem it goes to: '' (the voice's own), or an entry's key; then the instruments it goes through. */
   readonly key: string;
-  readonly filters: Partial<Record<'lpf' | 'hpf', Biquad>>;
+  readonly filters: Partial<Record<Filter, Biquad>>;
   /** The instruments' stages after its own filters, the innermost first, each with its filters for this chain. */
-  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<'lpf' | 'hpf', Biquad>> }[];
+  readonly stages: readonly { readonly stage: Stage; readonly filters: Partial<Record<Filter, Biquad>> }[];
   /** Its notes sounding or to come, in order of their start. */
   notes: Note[];
   /** Its sound before its filters, this block. */
@@ -691,7 +701,7 @@ function envelopeAt(n: Note, t: number): number {
 
 /** A track scheduled on a voice's filter parameter for one note, as a moving parameter does (exponential for a frequency). */
 function schedule(auto: Auto, key: FilterKey | Send['key'] | 'index', track: ParamTrack, time: number, dur: number): void {
-  const freq = key === 'lpf' || key === 'hpf';
+  const freq = key === 'lpf' || key === 'hpf' || key === 'bpf';
   const v = (x: number) => (freq ? Math.max(1, x) : x);
   const ramp = freq ? 'exp' : 'lin';
   auto.cancel(time);
@@ -873,8 +883,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
     return st;
   };
   const biquads = (has: Voice['has']): Chain['filters'] => ({
-    ...(has.lpf ? { lpf: new Biquad('lowpass') } : {}),
-    ...(has.hpf ? { hpf: new Biquad('highpass') } : {}),
+    ...Object.fromEntries(FILTERS.filter(({ key }) => has[key]).map(({ key, type }) => [key, new Biquad(type)])),
   });
 
   /** A voice's chain to a stem through its instruments' stages, made when a note first goes there. */
@@ -1016,7 +1025,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
       const through: Stage[] = [];
       for (const x of e.through ?? []) {
         const st = stageOf(x.instrument);
-        if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length && !st.grit.length)) continue;
+        if (!st || (!FILTERS.some(({ key }) => st.has[key]) && !st.sends.length && !st.grit.length)) continue;
         for (const k of FILTER) {
           const track = x.params?.[k];
           const auto = st.autos[k];
@@ -1112,10 +1121,10 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
   const filter = (v: Voice, ch: Chain, from: number, to: number, blockStart: number) => {
     const t = blockStart / rate;
     for (const [filters, autos] of [[ch.filters, v.autos] as const, ...ch.stages.map((s) => [s.filters, s.stage.autos] as const)])
-      for (const k of ['lpf', 'hpf'] as const) {
+      for (const { key: k } of FILTERS) {
         const bq = filters[k];
         if (!bq) continue;
-        const q = k === 'lpf' ? 'lpq' : 'hpq';
+        const q = QOF[k];
         bq.set(autos[k]!.at(t), autos[q]!.at(t), rate);
         for (let f = from; f < to; f++) {
           const i = f - blockStart;
@@ -1154,7 +1163,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
         for (const sd of v.sends) levels(sd, from, to, blockStart);
         for (const ch of v.chains) {
           for (const { stage } of ch.stages) for (const sd of stage.sends) levels(sd, from, to, blockStart);
-          if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length) continue;
+          if (!ch.notes.length && !FILTERS.some(({ key }) => ch.filters[key]) && !ch.stages.length) continue;
           sound(v, ch, from, to, blockStart);
           for (const g of v.grit)
             for (let f = from; f < to; f++) {
@@ -1227,10 +1236,10 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
                 x0[i] = g.run(x0[i]!);
                 x1[i] = g.run(x1[i]!);
               }
-          for (const k of ['lpf', 'hpf'] as const) {
+          for (const { key: k } of FILTERS) {
             const bq = filters[k];
             if (!bq) continue;
-            bq.set(stage.autos[k]!.at(t), stage.autos[k === 'lpf' ? 'lpq' : 'hpq']!.at(t), rate);
+            bq.set(stage.autos[k]!.at(t), stage.autos[QOF[k]]!.at(t), rate);
             for (let f = from; f < to; f++) {
               const i = f - blockStart;
               x0[i] = bq.run(x0[i]!, 0);

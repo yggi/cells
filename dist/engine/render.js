@@ -14,7 +14,13 @@ const LATER = {
     coupling: 'R3',
     excite: 'R3',
 };
-const FILTER = ['lpf', 'lpq', 'hpf', 'hpq'];
+const FILTER = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq'];
+const FILTERS = [
+    { key: 'lpf', q: 'lpq', type: 'lowpass', from: 2000 },
+    { key: 'hpf', q: 'hpq', type: 'highpass', from: 200 },
+    { key: 'bpf', q: 'bpq', type: 'bandpass', from: 1000 },
+];
+const QOF = { lpf: 'lpq', hpf: 'hpq', bpf: 'bpq' };
 const BLOCK = 32;
 const NOTE_PEAK = 0.35;
 const NOISE_PEAK = 2.8;
@@ -182,12 +188,13 @@ class Biquad {
         const f = Math.min(Math.max(freq, 1), rate / 2 - 1);
         const w0 = (2 * Math.PI * f) / rate;
         const cos = Math.cos(w0);
-        const alpha = Math.sin(w0) / (2 * Math.pow(10, q / 20));
+        const band = this.type === 'bandpass';
+        const alpha = band ? Math.sin(w0) / (2 * Math.max(q, 1e-4)) : Math.sin(w0) / (2 * Math.pow(10, q / 20));
         const a0 = 1 + alpha;
         const low = this.type === 'lowpass';
-        this.b0 = (low ? (1 - cos) / 2 : (1 + cos) / 2) / a0;
-        this.b1 = (low ? 1 - cos : -(1 + cos)) / a0;
-        this.b2 = this.b0;
+        this.b0 = (band ? alpha : low ? (1 - cos) / 2 : (1 + cos) / 2) / a0;
+        this.b1 = (band ? 0 : low ? 1 - cos : -(1 + cos)) / a0;
+        this.b2 = band ? -this.b0 : this.b0;
         this.a1 = (-2 * cos) / a0;
         this.a2 = (1 - alpha) / a0;
     }
@@ -377,15 +384,12 @@ function filtersOf(c, keep) {
     const moves = c.paramCells ?? {};
     const start = (k, d) => (!keep(k) ? d : typeof c.params[k] === 'number' ? c.params[k] : (moves[k]?.range?.[0] ?? d));
     const autos = {};
-    const has = { lpf: keep('lpf') && (typeof c.params.lpf === 'number' || !!moves.lpf), hpf: keep('hpf') && (typeof c.params.hpf === 'number' || !!moves.hpf) };
-    if (has.lpf) {
-        autos.lpf = new Auto(start('lpf', 2000));
-        autos.lpq = new Auto(start('lpq', 1));
-    }
-    if (has.hpf) {
-        autos.hpf = new Auto(start('hpf', 200));
-        autos.hpq = new Auto(start('hpq', 1));
-    }
+    const has = Object.fromEntries(FILTERS.map(({ key }) => [key, keep(key) && (typeof c.params[key] === 'number' || !!moves[key])]));
+    for (const { key, q, from } of FILTERS)
+        if (has[key]) {
+            autos[key] = new Auto(start(key, from));
+            autos[q] = new Auto(start(q, 1));
+        }
     return { has, autos };
 }
 const stemKey = (ch) => ch.key.split('\u0000')[0];
@@ -405,7 +409,7 @@ function envelopeAt(n, t) {
     return open(n.gateEnd - n.at) * Math.exp(-(t - n.gateEnd) / (Math.max(n.env.release, 0.005) / 3));
 }
 function schedule(auto, key, track, time, dur) {
-    const freq = key === 'lpf' || key === 'hpf';
+    const freq = key === 'lpf' || key === 'hpf' || key === 'bpf';
     const v = (x) => (freq ? Math.max(1, x) : x);
     const ramp = freq ? 'exp' : 'lin';
     auto.cancel(time);
@@ -578,8 +582,7 @@ export function createRenderer(result, shifts, options = {}) {
         return st;
     };
     const biquads = (has) => ({
-        ...(has.lpf ? { lpf: new Biquad('lowpass') } : {}),
-        ...(has.hpf ? { hpf: new Biquad('highpass') } : {}),
+        ...Object.fromEntries(FILTERS.filter(({ key }) => has[key]).map(({ key, type }) => [key, new Biquad(type)])),
     });
     const buses = new Map();
     const busOf = (stem, through) => {
@@ -724,7 +727,7 @@ export function createRenderer(result, shifts, options = {}) {
             const through = [];
             for (const x of e.through ?? []) {
                 const st = stageOf(x.instrument);
-                if (!st || (!st.has.lpf && !st.has.hpf && !st.sends.length && !st.grit.length))
+                if (!st || (!FILTERS.some(({ key }) => st.has[key]) && !st.sends.length && !st.grit.length))
                     continue;
                 for (const k of FILTER) {
                     const track = x.params?.[k];
@@ -835,11 +838,11 @@ export function createRenderer(result, shifts, options = {}) {
     const filter = (v, ch, from, to, blockStart) => {
         const t = blockStart / rate;
         for (const [filters, autos] of [[ch.filters, v.autos], ...ch.stages.map((s) => [s.filters, s.stage.autos])])
-            for (const k of ['lpf', 'hpf']) {
+            for (const { key: k } of FILTERS) {
                 const bq = filters[k];
                 if (!bq)
                     continue;
-                const q = k === 'lpf' ? 'lpq' : 'hpq';
+                const q = QOF[k];
                 bq.set(autos[k].at(t), autos[q].at(t), rate);
                 for (let f = from; f < to; f++) {
                     const i = f - blockStart;
@@ -879,7 +882,7 @@ export function createRenderer(result, shifts, options = {}) {
                     for (const { stage } of ch.stages)
                         for (const sd of stage.sends)
                             levels(sd, from, to, blockStart);
-                    if (!ch.notes.length && !ch.filters.lpf && !ch.filters.hpf && !ch.stages.length)
+                    if (!ch.notes.length && !FILTERS.some(({ key }) => ch.filters[key]) && !ch.stages.length)
                         continue;
                     sound(v, ch, from, to, blockStart);
                     for (const g of v.grit)
@@ -954,11 +957,11 @@ export function createRenderer(result, shifts, options = {}) {
                                 x0[i] = g.run(x0[i]);
                                 x1[i] = g.run(x1[i]);
                             }
-                    for (const k of ['lpf', 'hpf']) {
+                    for (const { key: k } of FILTERS) {
                         const bq = filters[k];
                         if (!bq)
                             continue;
-                        bq.set(stage.autos[k].at(t), stage.autos[k === 'lpf' ? 'lpq' : 'hpq'].at(t), rate);
+                        bq.set(stage.autos[k].at(t), stage.autos[QOF[k]].at(t), rate);
                         for (let f = from; f < to; f++) {
                             const i = f - blockStart;
                             x0[i] = bq.run(x0[i], 0);
