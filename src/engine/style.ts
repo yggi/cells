@@ -9,19 +9,33 @@
  * .45 .55 .55` and `&funk map=style sync=.3 harm=.45 artic=.55 energy=.55` are one point.
  */
 
-/** One axis of style space: its name, its range, and what it measures from one end to the other. */
+/** One axis of style space: its name, its range, the words a frontend shows for it, and what it measures. */
 export interface Axis {
   readonly name: string;
   readonly range: readonly [number, number];
+  /** Its name as a person reads it: `'Syncopation'`. */
+  readonly label: string;
+  /** What its low end and its high end sound like: `['on the beat', 'off the beat']`. */
+  readonly ends: readonly [string, string];
+  /** What it measures from one end to the other, said from its ends: `'On the beat (0) to off the beat (1).'` */
   readonly sentence: string;
 }
 
+/** An axis from its name, range, label and ends; its sentence is said from its ends. */
+const axis = (name: string, range: readonly [number, number], label: string, ends: readonly [string, string]): Axis => ({
+  name,
+  range,
+  label,
+  ends,
+  sentence: `${ends[0][0]!.toUpperCase()}${ends[0].slice(1)} (${range[0]}) to ${ends[1]} (${range[1]}).`,
+});
+
 /** The axes of style space, in their order: a style's slots, and what an association point is written on. */
 export const AXES: readonly Axis[] = [
-  { name: 'sync', range: [0, 1], sentence: 'On the beat (0) to off the beat (1).' },
-  { name: 'harm', range: [0, 1], sentence: 'A static vamp (0) to moving, rich harmony (1).' },
-  { name: 'artic', range: [0, 1], sentence: 'Legato (0) to staccato (1).' },
-  { name: 'energy', range: [0, 1], sentence: 'Sparse (0) to dense (1).' },
+  axis('sync', [0, 1], 'Syncopation', ['on the beat', 'off the beat']),
+  axis('harm', [0, 1], 'Harmony', ['a static vamp', 'moving, rich harmony']),
+  axis('artic', [0, 1], 'Articulation', ['legato', 'staccato']),
+  axis('energy', [0, 1], 'Energy', ['sparse', 'dense']),
 ];
 
 /** The axes' names, in their order. */

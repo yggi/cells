@@ -33,6 +33,22 @@ describe('the table of axes', () => {
     expect(SLOTS.adsr).toEqual(['attack', 'decay', 'sustain', 'release']);
   });
 
+  it('says each axis in words a frontend shows: a label, its two ends, and the sentence said from them', () => {
+    // (the words Jambot's Style sheet wrote for itself, StylePanel.svelte, now read from here: #538)
+    expect(AXES.map((a) => [a.label, ...a.ends])).toEqual([
+      ['Syncopation', 'on the beat', 'off the beat'],
+      ['Harmony', 'a static vamp', 'moving, rich harmony'],
+      ['Articulation', 'legato', 'staccato'],
+      ['Energy', 'sparse', 'dense'],
+    ]);
+    expect(AXES.map((a) => a.sentence)).toEqual([
+      'On the beat (0) to off the beat (1).',
+      'A static vamp (0) to moving, rich harmony (1).',
+      'Legato (0) to staccato (1).',
+      'Sparse (0) to dense (1).',
+    ]);
+  });
+
   it('is what every association point in the seed library is written on, each value within its axis’s range', () => {
     const points = LIBRARY.flatMap((f) => f.association.map((wp) => [f.id, wp.point] as const));
     expect(points.length).toBeGreaterThan(100);

@@ -236,7 +236,8 @@ export function layerProblems(layer: LearnedLayer): string[] {
 
 /**
  * How far apart two points are, over the axes both have: the root of the weighted mean of the squared differences, so
- * that sharing more axes doesn't make a point farther. Infinite when they share none.
+ * that sharing more axes doesn't make a point farther. Infinite when they share none. It is *the* distance between two
+ * styles: a query's, `nearestStyle`'s, and a frontend's (a glow, a name for where a style is), so none keeps its own.
  */
 export function pointDistance(a: StylePoint, b: StylePoint, axisWeights: StylePoint = {}): number {
   let sum = 0;
