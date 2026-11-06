@@ -15,11 +15,11 @@
  */
 import { normalise, type NormaliseOptions } from '../normalise';
 import { soundsIdentical } from '../sameness';
-import { FAMILIES, LEFT } from './desugar';
+import { FAMILIES, LEFT, stillWritten } from './desugar';
 import { coreFold } from './fold';
 import { minify } from './minify';
 
-export { FAMILIES, LEFT, type Family } from './desugar';
+export { FAMILIES, LEFT, stillWritten, type Family } from './desugar';
 export { meaningfulNames, minify } from './minify';
 export { coreFold } from './fold';
 
@@ -69,5 +69,5 @@ export function toCore(source: string, options: NormaliseOptions = {}): Core {
     now = r.source;
     steps.push(...r.steps);
   }
-  return { source: now, steps, left: LEFT.filter((l) => l.test.test(now)).map(({ key, rows, why }) => ({ key, rows, why })) };
+  return { source: now, steps, left: LEFT.filter((l) => stillWritten(l, now)).map(({ key, rows, why }) => ({ key, rows, why })) };
 }
