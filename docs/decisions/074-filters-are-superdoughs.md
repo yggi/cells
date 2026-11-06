@@ -1,6 +1,6 @@
 # 074 · A filter is superdough's: low-pass, high-pass and band-pass in series, `ftype=` their model, a steeper slope two stages; one 12 dB biquad when nothing says otherwise
 
-**Date:** 2026-11-06 · **Status:** accepted (the owner on #509, 2026-11-06: "yes, as suggested") · Issues: #509, yggi/cell-studio#567 · Extends [062](062-cells-renders-audio.md) (§5, what `lpf=` and `hpf=` are) and [067](067-a-module-after-its-voices.md) (a filter on an instrument)
+**Date:** 2026-11-06 · **Status:** accepted (the owner on #509, 2026-11-06: "yes, as suggested"; on the ladder's code: "MIT core + superdough's numbers") · Issues: #509, yggi/cell-studio#567 · Extends [062](062-cells-renders-audio.md) (§5, what `lpf=` and `hpf=` are) and [067](067-a-module-after-its-voices.md) (a filter on an instrument)
 
 ## Context
 
@@ -47,9 +47,15 @@ Superdough, the reference sound (062), says it (superdough 1.3.0, `superdough.mj
 
 ### 5. `ladder` is a model of its own, a low-pass
 
-- **It isn't a composition of biquads:** its resonance self-oscillates and its passband dips as the resonance rises. It is superdough's ladder, ported with a lifted-from line, with its **`drive=`** (.69 unless given), in a rung of its own.
+- **It isn't a composition of biquads:** its resonance self-oscillates and its passband dips as the resonance rises. It is superdough's ladder, in sound: four one-pole stages, each through a tanh, the last fed back.
+- **Its code, and why not superdough's:** superdough is AGPL-3.0 and this package MIT, so superdough's code isn't copied. Its core is the MIT one superdough itself adapts, lifted with its line (`Lifted from TheBouteillacBear/webaudioworklet-wasm src/moog/filterKernel.c @ 0632e13`). Superdough's own three numbers around that core are written from what they are (the owner on #509, 2026-11-06: "MIT core + superdough's numbers"):
+  - its input driven by e^drive, within .1 and 2000;
+  - its feedback k = min(8, 0.13 · resonance), the cell's **`lpq=` read as superdough's resonance**, not in dB as a biquad's (it sings by itself past about 31);
+  - its output made up by min(1.75, 1 + k) over the drive.
+- **`drive=`** is its drive, .69 unless given. The word was a sound tape's already (how hard it saturates each pass): it is now a ladder's too, the same idea, each on its own scale, rather than a second word for one thing.
 - **It is a low-pass.** Under `ftype=ladder` a cell's `lpf=` plays the ladder, and its `hpf=` and `bpf=` play their 12 dB biquads. Superdough plays its ladder for a high-pass and a band-pass too, which is a low-pass where a high-pass was asked for; cells doesn't follow it there.
-- **Until its rung renders it,** a renderer says so, once a cell, and plays the 12 dB biquad in its place, as 062 has a later stage say and leave out.
+- **On an instrument, it is on its voices' sum** ([067](067-a-module-after-its-voices.md)): it isn't linear, so its voices meet in a bus at it, as an instrument's grit does, and by voice its stem is its own.
+- **Its cutoff and resonance are read once a block,** as a filter's coefficients are (superdough reads them once a render quantum).
 
 ### 6. Filters to patch are module fragments, not a new kind of cell
 
@@ -74,7 +80,7 @@ Superdough, the reference sound (062), says it (superdough 1.3.0, `superdough.mj
   1. this decision;
   2. `bpf=` `bpq=` in the language and the renderer, with the `bandpass` and `lowpass24` fragments;
   3. `ftype=` with `12db` and `24db`, and its test against two stages;
-  4. `ladder`, with `drive=`.
+  4. `ladder`, with `drive=`: its core lifted (MIT), superdough's numbers written from what they are.
 - **No example's text or events move.** Rungs 2 and 3 add forms; nothing written today reads differently.
 - **Cell studio** plays one biquad a filter (yggi/cell-studio#567), then `bpf=` and `ftype=` at the pin that carries them, or plays cells' renderer (063).
 - **Jambot** plays through cells' renderer (063), so it plays each rung at its pin.
