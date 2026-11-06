@@ -7,7 +7,7 @@
 import { parse } from '../parser';
 import type { Token } from '../ast';
 import { compileSource } from '../compile';
-import { noteValue } from '../meter';
+import { noteValue, type Meter } from '../meter';
 import { noteFrequency, type CompileOptions } from '../program';
 import { expansion } from '../use';
 import { readFrom, readUse } from '../parser/use';
@@ -347,23 +347,44 @@ function copies(text: string): string {
 /** The levels a meter's steps are written as (`meter("*.-.+.-.")`): a downbeat, a beat, a half's beat, an eighth, finer. */
 const LEVEL = ['*', '+', '-', '.', ','];
 
+/** What a meter plays as: its levels, its step and its beats as lengths in whole notes (its pulses are what its taps read, rewritten after it). */
+const played = (m: Meter) => {
+  const step = m.pulses / (m.unit * m.levels.length);
+  return JSON.stringify([m.levels, +step.toFixed(9), m.beats.map((b) => +(b / m.unit).toFixed(9))]);
+};
+
 /**
  * A meter of a signature written as its levels (068's row 42, decision 069 §2): `meter("4/4")` as `meter("*-+-")`,
  * `meter("4/4", 2)` as `meter("*.-.+.-.")`, `meter("2+2+3")` as its groups' levels; read from the compiled meter, so a
  * grouping ruled by #17 is written as it plays. Its attributes (swing=, legato=, step=) stay. A tap of `pulse` reads the
  * levels' steps as pulses after it: the taps are written after the meters, and each rewrite is checked by S1.
+ * Where the levels alone read another step (a half: `meter("2/2")`; a sixteenth: `meter("6/16")`), they are written with
+ * the step's note value (`meter("*+", 2n)`, #15 item 3); where even that is another meter (6/4's quarters grade `-`,
+ * which written starts a beat: #545), the signature stays as written.
  */
 function meters(text: string, options: CompileOptions): string {
   const r = compileSource(text, undefined, options);
   if (!r.ok) return text;
+  const meterOf = (braid: string) => {
+    const c = compileSource(`&m ${braid}`);
+    return c.ok ? (c.cells.get('m')?.meter ?? null) : null;
+  };
+  /** The levels as written, with the step's note value where the levels alone read another; null where neither is the meter. */
+  const asLevels = (m: Meter): string | null => {
+    const levels = m.levels.map((l) => LEVEL[Math.min(l, LEVEL.length - 1)]).join('');
+    const bare = meterOf(`meter("${levels}")`);
+    if (bare && played(bare) === played(m)) return `meter("${levels}")`;
+    const value = (m.unit * m.levels.length) / m.pulses;
+    if (!Number.isInteger(value)) return null;
+    const valued = meterOf(`meter("${levels}", ${value}n)`);
+    return valued && played(valued) === played(m) ? `meter("${levels}", ${value}n)` : null;
+  };
   // (the line's code whole, its quoted signature in it; its comment aside)
   const each = (c: string) => {
     const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(c)?.[1];
     const meter = name ? r.cells.get(name)?.meter : null;
     if (!meter || meter.written !== 'meter') return c;
-    return c.replace(/\bmeter\("([^"]*)"(?:,\s*[0-9]+)?\)/, (written, sig: string) =>
-      /^[*+\-.,:;]+$/.test(sig) ? written : `meter("${meter.levels.map((l) => LEVEL[Math.min(l, LEVEL.length - 1)]).join('')}")`,
-    );
+    return c.replace(/\bmeter\("([^"]*)"(?:,\s*[0-9]+)?\)/, (written, sig: string) => (/^[*+\-.,:;]+$/.test(sig) ? written : (asLevels(meter) ?? written)));
   };
   return text
     .split('\n')

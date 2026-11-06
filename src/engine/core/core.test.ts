@@ -46,6 +46,57 @@ describe('de-sugar: each family’s rewrite plays the same (S1), and a second fi
   });
 });
 
+// #545: a signature is written as its levels with the step's note value where the levels alone read another step, and
+// left as written where even that is another meter (6/4's quarters, and a half's under x/2 at 2, grade `-`, which written
+// starts a beat). Every signature the rule names at 1, 2 and 3 steps a pulse, under a quarter tap and a beat tap: each
+// rewrite plays the same, and only those stay as written.
+describe('de-sugar meters: every signature, written as levels that play the same, or left (#545)', () => {
+  const SIGS = [
+    '2/4',
+    '3/4',
+    '4/4',
+    '5/4',
+    '7/4',
+    '6/4',
+    '9/4',
+    '12/4',
+    '2/2',
+    '3/2',
+    '4/2',
+    '3/8',
+    '5/8',
+    '6/8',
+    '7/8',
+    '8/8',
+    '9/8',
+    '10/8',
+    '11/8',
+    '12/8',
+    '13/8',
+    '16/8',
+    '6/16',
+    '2+2+3',
+  ];
+  const LEFT = ['6/4', '9/4', '12/4']
+    .flatMap((sig) => [`meter("${sig}")`, `meter("${sig}", 2)`, `meter("${sig}", 3)`])
+    .concat(['meter("2/2", 2)', 'meter("3/2", 2)', 'meter("4/2", 2)']);
+  const written = SIGS.flatMap((sig) => [`meter("${sig}")`, `meter("${sig}", 2)`, `meter("${sig}", 3)`]);
+  const text = (meter: string) => `&bar ${meter} step=60bpm\n&t step=4n 0 2 4 7 4 2\n&u step=&bar:beat 0 7\n&v s=sine loop=C4\n&out map=sample [&t * &v, &u * &v]`;
+  it.each(written)('%s', (meter) => {
+    const after = family('meters')(text(meter), O);
+    if (LEFT.includes(meter)) expect(after).toBe(text(meter));
+    else {
+      expect(after.split('\n')[0]).toMatch(/^&bar meter\("[*+\-.,]+"(, [0-9]+n)?\) step=60bpm$/);
+      expect(soundsIdentical(text(meter), after, undefined, O)).toBe(true);
+    }
+  });
+  it('writes the step’s note value where the levels alone read another: 2/2 in halves, 6/16 in sixteenths', () => {
+    expect(family('meters')(text('meter("2/2")'), O).split('\n')[0]).toBe('&bar meter("*+", 2n) step=60bpm');
+    expect(family('meters')(text('meter("6/16")'), O).split('\n')[0]).toBe('&bar meter("*..+..", 16n) step=60bpm');
+    expect(family('meters')(text('meter("4/4")'), O).split('\n')[0]).toBe('&bar meter("*-+-") step=60bpm');
+  });
+});
+
 describe('minify: the names that mean something besides themselves are kept', () => {
   it('a drum’s name is kept; a cell that draws, and one that splices it, are renamed as any other and draw as they did (#481)', () => {
     const text = `${BAR}\n&a1 0 2? 4\n&arp step=8n &a1 &a1\n&hh s=white\n&kick s=sine loop=A1\n&hat step=8n &hh ~ &kick ~\n&v s=sine loop=C4\n&out map=sample [&arp * &v, &hat]`;
