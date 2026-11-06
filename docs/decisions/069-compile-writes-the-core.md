@@ -66,7 +66,7 @@ The fold takes `phrase` (a phrase as one cell used at its places, moved by `^$n`
 
 ## Consequences
 
-- **The tool:** `src/engine/compile/` (#482). Its test checks S1, idempotence and `compile(normalise(x)) = compile(x)` over the examples.
+- **The tool:** `toCore` in `src/engine/core/` (#482; named `core`, not `compile/`, beside `compile.ts`). Its first rung runs Normalise first (so the core of a text and of its normal form agree by construction), the seven families the letters settle, the core fold with the lines nothing reads, and minify, until the text stops changing. It reports the rows it leaves (`Core.left`). Its tests check S1, idempotence and `toCore(normalise(x)) = toCore(x)` over the examples (`core.slow.test.ts`).
 - **#481 (draws):** the one change here to how pieces sound.
 - **#477:** Shorten's rules checked by S1, which the core fold already does.
 - **068's row 16:** "sugar" except where swing doesn't hold the finer level (note 418 says so).
