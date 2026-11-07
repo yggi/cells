@@ -259,3 +259,36 @@ describe('a slider in the core: its numbers a second, its unit an argument (deci
     expect(said('&v s=sine loop=C4 lpf=free(800, 200..2000, unit=bpm)\n&t step=2 0\n&out map=sample [&t * &v]')).toEqual(['unit=: a unit is for a rate (step=, loop=)']);
   });
 });
+
+describe('gates, pitch= and what nothing reads, in the core (decision 069 §2, #482)', () => {
+  const after = (key: string, text: string) => {
+    const out = family(key)(text, O);
+    expect(soundsIdentical(text, out, undefined, O)).toBe(true);
+    expect(family(key)(out, O)).toBe(out);
+    return out;
+  };
+  it('a note and a label go, and a braid that runs on past its line stays whole', () => {
+    const text = `${BAR}\n&n label="the tune" about=&t\n&t step=8n label="tune" [0] [\n     2,4] 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`;
+    expect(after('inert', text)).toBe(`${BAR}\n&t step=8n [0] [\n     2,4] 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`);
+  });
+  it('a gate is its products: its notes moved, its level, each receiver, one entry each, over a mix written on lines', () => {
+    const text = `${BAR}\n&t step=8n 0 2 4\n&acc .5 1\n&g play=&t^$-12 level=&acc*.4 [&a, &b]\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [&g,\n  &t * &a * .1]`;
+    expect(after('gates', text)).toBe(
+      `${BAR}\n&t step=8n 0 2 4\n&acc .5 1\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [(&t + -12) * &acc * .4 * &a, (&t + -12) * &acc * .4 * &b,\n  &t * &a * .1]`,
+    );
+  });
+  it('a gate a role reads stays: the role is a performer’s part', () => {
+    const text = `${BAR}\n&t step=8n 0 2 4\n&g play=&t &a\n&lead map=role &g\n&a s=sine loop=C4\n&out map=sample [&g]`;
+    expect(family('gates')(text, O)).toBe(text);
+  });
+  it('a voice’s pitch= is a sum in the product it is in: added to its notes, never to a cell read inside another', () => {
+    const text = `${BAR}\n&t step=8n 0 2 4\n&vib map=lin loop=5 0 .1 0 -.1\n&a s=sine loop=C4 pitch=&vib\n&out map=sample [&t * &(map=amp step=cycle(&t) 1 .5) * &a]`;
+    expect(after('pitch', text)).toBe(
+      `${BAR}\n&t step=8n 0 2 4\n&vib map=lin loop=5 0 .1 0 -.1\n&a s=sine loop=C4\n&out map=sample [(&t + &vib) * &(map=amp step=cycle(&t) 1 .5) * &a]`,
+    );
+  });
+  it('a pitch written in place stays', () => {
+    const text = `${BAR}\n&t step=8n 0 2 4\n&a s=sine loop=C4 pitch=&(map=lin loop=5 0 .1 0 -.1)\n&out map=sample [&t * &a]`;
+    expect(family('pitch')(text, O)).toBe(text);
+  });
+});
