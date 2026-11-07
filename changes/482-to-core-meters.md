@@ -1,3 +1,0 @@
-### Changed
-
-- **`toCore` writes meters, copies and chains in the core** (decision 069 §2; #482, its third rung). A meter of a signature is written as its levels, read from the compiled meter: `meter("4/4")` is `meter("*-+-")`, `meter("4/4", 2)` is `meter("*.-.+.-.")`. The taps are written after it, against the pulse the levels count. A copy that writes no braid of its own takes its base's braid and the base's attributes it doesn't set: `&bar base=&grouping step=&tempo` with `&grouping meter("4/4")` is `&bar meter("4/4") step=&tempo`, which the seed's one `meter` fragment writes. A step's chain is one ratio: `pulse*2*2` is `pulse*4`, `pulse*1` is `pulse`. Over the examples, 19 of 83 are now wholly in the core. Nothing a piece plays changes.

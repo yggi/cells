@@ -1,3 +1,0 @@
-### Removed
-
-- **What nothing read on a `Meter` is gone** (#15, rung 3): `Meter.tree` and the `MeterGroup` type, `Meter.positions` and `Meter.lap` (a meter's steps are even; a scan's places are its time map's), and `Signature.sub`; `signatureOf(sig)` in the parser takes no `sub`. Neither Jambot (@ e90a44f) nor Cell studio (@ df4bb5b) reads any of them. What stays has its reader named: `Meter.written` (the core's `meters` rewrite), a list's `perBeat` (the compiler, `base=`, and Cell studio's roll, as the mark of a meter), `swungKnots` (the time map). Nothing plays differently. **What a frontend sees at its next pin:** these names are gone from `engine/meter`'s types.

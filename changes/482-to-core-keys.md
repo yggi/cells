@@ -1,3 +1,0 @@
-### Changed
-
-- **`toCore` writes keys in the core** (decision 069, keys (a); #482). A key's mode is written as its table, a cell of its own, and its tonic stays a cell read where it is one, a hole a host fills: `&key scale(minor, &tonic)` is `&key scale(&_m1, &tonic)` with `&_m1 0 2 3 5 7 8 10`. A tonic written becomes its pitch class (`scale(dorian, D)` is `scale(&_m1, 2)`). A mode read from a cell is written as its table the same way. A key after `over=` unnamed is named first (`over=scale(major, G)` is `over=&_k1`). Over the examples, all 26 keys are written so, each S1-exact, and 26 of 83 examples are now wholly in the core. Nothing a piece plays changes.
