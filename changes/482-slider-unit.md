@@ -1,0 +1,3 @@
+### Added
+
+- **A slider's unit as an argument: `free(2, 1.5..2.5, unit=bpm)`** (decision 069, sliders: the owner's (a); #482). A rate's slider can be written in the core's numbers, a second, with its unit an argument. It is the same slider as `free(120bpm, 90..150)`, shown and moved in bpm, and plays the same. The unit written after the number, and a tempo marking (`free(andante)`), are its sugar, and `toCore` writes every slider so: all 52 examples with one, each exact. The unit is said once, after the number or as `unit=`, and only on a rate (`step=`, `loop=`); each is an error otherwise. Nothing a piece plays changes.

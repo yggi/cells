@@ -1,4 +1,3 @@
-import { scan as scanOf } from "../theory/modes.js";
 export const stepsPerPulse = (m) => m.levels.length / Math.max(1, m.pulses);
 export function noteValue(v) {
     const m = /^([1-9][0-9]*)(n\.?|t)$/.exec(v);
@@ -126,35 +125,19 @@ export function swungSteps(m) {
     return out.some((p, i) => Math.abs(p - i) > 1e-12) ? out : null;
 }
 export function meterOfLevels(levels, signature) {
-    const n = levels.length;
-    const root = { level: 0, from: 0, to: n, groups: [] };
-    const open = [root];
-    for (let i = 1; i < n; i++) {
-        const level = Math.max(1, levels[i]);
-        while (open.length > 1 && open[open.length - 1].level >= level)
-            open.pop();
-        const group = { level, from: i, to: n, groups: [] };
-        for (let j = i + 1; j < n; j++)
-            if (Math.max(1, levels[j]) <= level)
-                ((group.to = j), (j = n));
-        open[open.length - 1].groups.push(group);
-        open.push(group);
-    }
     const shape = signature ?? signatureOfLevels(levels);
-    return { tree: root, levels, positions: levels.map((_, i) => i), lap: n, written: 'meter', pulses: shape.pulses, unit: shape.unit, beats: shape.beats };
+    return { levels, written: 'meter', pulses: shape.pulses, unit: shape.unit, beats: shape.beats };
 }
 function signatureOfLevels(levels) {
     const starts = levels.flatMap((l, i) => (i === 0 || l <= 2 ? [i] : []));
     const beats = starts.map((s, i) => (starts[i + 1] ?? levels.length) - s);
     const per = levels.length / Math.max(1, beats.length);
     const unit = Number.isInteger(Math.log2(per)) ? 4 * per : 8;
-    return { pulses: levels.length, unit, beats, sub: 1 };
+    return { pulses: levels.length, unit, beats };
 }
 export function meterOfScan(steps) {
-    const { positions, lap } = scanOf(steps);
-    const groups = positions.map((_, i) => ({ level: 1, from: i, to: i + 1, groups: [] }));
-    const pulses = positions.length;
-    return { tree: { level: 0, from: 0, to: pulses, groups }, levels: positions.map(() => 1), positions, lap, written: 'scan', pulses, unit: 4, beats: positions.map(() => 1) };
+    const pulses = steps.length;
+    return { levels: steps.map(() => 1), written: 'scan', pulses, unit: 4, beats: steps.map(() => 1) };
 }
 export function tapPositions(m, tap, bars = 1) {
     const out = [];

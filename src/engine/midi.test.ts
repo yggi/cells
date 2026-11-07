@@ -312,3 +312,40 @@ describe('a glide’s run as MIDI (#334)', () => {
     expect(legatoNotes(one)).toEqual([one]);
   });
 });
+
+describe('a key can’t overlap itself in a MIDI file (#104)', () => {
+  const notes = (src: string) => {
+    const r = compileSource(src);
+    return pieceMidi(r, codeShifts(r)).smf.tracks.flatMap((t) => t.notes.map((n) => [n.key, n.tick, n.end]));
+  };
+  const head = '&bar meter("4/4") step=60bpm\n&v s=sine loop=C4';
+
+  it('a note into the next on its key (legato= over 1) ends where the next starts: they meet, never overlap', () => {
+    // (the events keep their 1.5 s; the file's first note-off moves from 720 to 480)
+    expect(notes(`${head}\n&x step=4n legato=1.5 0 0\n&k map=midi(1) [&x * &v]`)).toEqual([
+      [60, 0, 480],
+      [60, 480, 1200],
+    ]);
+  });
+
+  it('and so do two lines on one key and channel; a short note struck under a long one retriggers it, which sounds on to the long one’s end', () => {
+    expect(notes(`${head}\n&a step=1n 0\n&b step=4n ~ 0\n&k map=midi(1) [&a * &v, &b * &v]`)).toEqual([
+      [60, 0, 480],
+      [60, 480, 1440],
+      [60, 1440, 1920],
+    ]);
+  });
+
+  it('two struck at once are left as written, and a note into them cuts both; other keys are left alone', () => {
+    expect(notes(`${head}\n&a step=2n 0\n&b step=4n 0 2\n&k map=midi(1) [&a * &v, &b * &v]`)).toEqual([
+      [60, 0, 960],
+      [60, 0, 480],
+      [62, 480, 960],
+    ]);
+    expect(notes(`${head}\n&a step=1n 0\n&b step=2n 0 ~\n&c step=4n ~ 0 ~ ~\n&k map=midi(1) [&a * &v, &b * &v, &c * &v]`)).toEqual([
+      [60, 0, 480],
+      [60, 0, 480],
+      [60, 480, 1920],
+    ]);
+  });
+});

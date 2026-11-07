@@ -1,6 +1,6 @@
-# 048 · The learned layer is plain data the frontend hands each query; filing gives a point of weight 0.1, use raises the point that found a fragment to 1.25 at most, and a text held after renaming adds to the fragment that holds it; amended (#162): to 1.2 at most, the lock-in bound over 256 runs with room for its noise
+# 048 · The learned layer is plain data the frontend hands each query; filing gives a point of weight 0.1, use raises the point that found a fragment to 1.25 at most, and a text held after renaming adds to the fragment that holds it; amended (#162): to 1.2 at most, the lock-in bound over 256 runs with room for its noise; amended (#533): the bound relative, 40 % of the share outside the 3 most used
 
-**Date:** 2026-10-18 · **Status:** accepted (owner, 2026-10-18, on #152: the filing weight 0.1, use raising the point that found it by 0.1 to 1.25 at most, a filed fragment first on a tie, use adding at most 5 points to the share among the 3 most used); the cap and the measure, amended (owner, 2026-10-18, on #162: "go ahead with 162", below) · Issues: #145, #81, #49, #162
+**Date:** 2026-10-18 · **Status:** accepted (owner, 2026-10-18, on #152: the filing weight 0.1, use raising the point that found it by 0.1 to 1.25 at most, a filed fragment first on a tie, use adding at most 5 points to the share among the 3 most used); the cap and the measure, amended (owner, 2026-10-18, on #162: "go ahead with 162", below); the bound, relative (owner, 2026-11-06, on #533: "revisit the bound … let's try 40 % right away", below) · Issues: #145, #81, #49, #162, #533, #544
 
 ## Context
 
@@ -103,6 +103,33 @@ Why these:
 - **The step stays 0.1**: at the cap of 1.2, a step of 0.02, 0.05 or 0.1 gives the same within half a point.
 
 The rest of 048 and 046 holds: an empty layer, or none, changes no query; a filed fragment is first at its point; at equal distance 5 uses outrank 0 at any pull above 0; a pull of 0 ranks as nothing chosen.
+
+## Amended (owner, 2026-11-06, #533)
+
+Point 6's bound was absolute, points added to the share among a run's 3 most used, and it read a more varied library as more lock-in.
+Adding the cinquillo (#507) moved the rhythms' value with use together from 4.95 to 5.28 with twice its error, past 5, though learning then played less concentrated than before: 88.66 % of sections on a run's 3 most used, against 89.42 %.
+The seed alone had spread out more (85.34 % to 84.22 %, 6.39 to 6.64 rhythms a run), so the difference grew.
+The cap and the reach had been tuned to that edge (#162), so any rhythm the walk reaches would have crossed it, as the Kinderlied beat's weight of 0.25 shows (chosen to stay under it).
+
+1. **The measure is relative:** what learning takes of the share the baseline leaves outside its runs' 3 most used, (learned − alone) / (1 − alone), per draw of 8 from the draw's pooled shares (`lockIn`; `added` keeps the points, for comparison).
+2. **The bound: at most 40 %**, the pooled value plus twice its standard error, on each facet, for both ways of learning (`LOCK_IN_BOUND`).
+   The old 5 points over `main`'s remainder before the cinquillo were 34 % (5 / 14.66); the owner chose 40 % to leave room.
+3. **The spread of a draw of 8 is held to 20 %** (about 15 % measured), and the witness over draws 0–3 to 60 % (0.4 + 2 · 0.2 / √4); it still fires on what it was built against: a cap of 1.5 reads 62 % (use moves) and 67 % (with use together), a reach of 1 76 %.
+
+Measured over draws 0–31, with the cinquillo (what learning takes of the share outside the 3 most used, plus twice the error):
+
+| facet | use moves | with use together | points added, with use together, + 2 SE (the old measure) |
+| --- | --- | --- | --- |
+| meters | 17.2 % (21.1) | 17.2 % (21.1) | 2.33 |
+| rhythms | 18.7 % (23.9) | 28.3 % (33.5) | 5.28 |
+
+Why these:
+
+- **Relative, not absolute:** a lock-in is learning narrowing what the composer plays, and how far it can narrow depends on how much the seed alone leaves outside the 3 most used; a fragment that widens the baseline then counts against learning only as far as learning takes the widening back.
+- **Not the learned share alone** (the composer's top 3 at most some share): it would bound the library's shape and the walk's as much as learning's, and a library of few fragments would fail it with no learning at all.
+- **40 %, not 34 %:** the cap and the reach were chosen against the old edge, so 34 % would leave the next fragment where the cinquillo was.
+
+Open: a bound that depends on the walk's entropy, a pass over the composer's learning (the cap and the reach chosen from what Jambot's composer needs), and the Kinderlied beat's weight back to 1 are [#544](https://github.com/yggi/cells/issues/544)'s.
 
 ## Open
 

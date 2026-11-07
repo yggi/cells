@@ -92,13 +92,41 @@ export function pieceMidi(result, shifts, muted = result.off, name, span = {}) {
         .sort(([a], [b]) => a - b)
         .map(([channel, t]) => ({
         name: [...new Set(names.get(channel) ?? [`channel ${channel}`])].join(' '),
-        notes: t.notes,
+        notes: struckOnce(t.notes),
         bends: t.at.map((b) => ({ ...b, channel })),
         programs: [],
     }));
     const m = meter ? meterOf(result, meter.cell) : undefined;
     const meters = m && m.unit === 4 && m.beats.every((b) => b === 1) && m.pulses > 0 ? [{ tick: 0, num: m.pulses, den: 4 }] : [];
     return { smf: { format: 1, ppq: PPQ, ...(name !== undefined ? { name } : {}), tracks, tempos, meters }, dropped };
+}
+function struckOnce(notes) {
+    const byKey = new Map();
+    notes.forEach((n, i) => {
+        const k = `${n.channel}:${n.key}`;
+        byKey.set(k, [...(byKey.get(k) ?? []), i]);
+    });
+    const placed = [];
+    for (const run of byKey.values()) {
+        const sorted = [...run].sort((a, b) => notes[a].tick - notes[b].tick || a - b);
+        let held = [];
+        for (const i of sorted) {
+            const n = notes[i];
+            const end = Math.max(...held.map((h) => h.note.end));
+            if (held.length && n.tick === held[0].note.tick)
+                held.push({ i, note: n });
+            else if (held.length && n.tick < end) {
+                placed.push(...held.map((h) => ({ i: h.i, note: { ...h.note, end: n.tick } })));
+                held = [{ i, note: { ...n, end: Math.max(end, n.end) } }];
+            }
+            else {
+                placed.push(...held);
+                held = [{ i, note: n }];
+            }
+        }
+        placed.push(...held);
+    }
+    return placed.sort((a, b) => a.note.tick - b.note.tick || a.i - b.i).map((p) => p.note);
 }
 function kitName(result, kit) {
     return kit

@@ -11,7 +11,8 @@
  *
  * The claves are five strokes each, struck as a clave (`&claves`, General MIDI's 75: yggi/cells#140), a sound of its own
  * beside a drum bar's rim: four over two bars of eighths (`step=16n cycle=2`), and the bossa nova clave also in one bar of sixteenths
- * (`step=16n`), the form that matches a bossa bar written in sixteenths, as Jambot's is. What a clave fits is the fit's
+ * (`step=16n`), the form that matches a bossa bar written in sixteenths, as Jambot's is; the sixth, the cinquillo, is one bar
+ * (#507). Four of them are maximally even, `even(k, n, p)`'s places (`even.test.ts`). What a clave fits is the fit's
  * (`fit.ts`), read off its text: under the library's meters both fit each 4/4 and nothing else. Their names (`&clave`, `&percussion`,
  * `&claves`) are none of the drum bars', so a clave layers on any of them in one text. Their associations are written by
  * hand, near Bossa nova and Funk. The fourteenth, `Electro swing drums`, is lifted from examples/electroswing.md, at the point
@@ -21,5 +22,5 @@
  * Each is a file of the seed library, `fragments/rhythms/*.md` (`seed.ts`), whose prose says what it is and where it sits.
  */
 import type { Fragment } from './fragments';
-/** The rhythms built so far: E31's eight drum bars, five claves and the electroswing example's beat, associated as the facet `rhythm`. */
+/** The rhythms built so far: E31's eight drum bars, six claves and the electroswing example's beat, associated as the facet `rhythm`. */
 export declare const RHYTHM_FRAGMENTS: readonly Fragment[];

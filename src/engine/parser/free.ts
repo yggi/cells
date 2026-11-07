@@ -1,11 +1,12 @@
 /** free(…): a number left to the performer — a slider, a tempo marking, named choices, a text; and a braid (parsed with the cell, cell.ts). */
 import type { FreeSpec } from '../ast';
 import type { LineScanner } from './scanner';
-import { UNIT } from './units';
+import { RATE_UNITS, UNIT } from './units';
 import { syntax, type Syntax } from './syntax';
 
 /** Tempo markings for free(…): a range in bpm, centred. */
-const TEMPI: Readonly<Record<string, readonly [number, number]>> = {
+/** The tempo markings a rate's slider can be written as (`free(andante)`), each its range in bpm; it starts at the middle. */
+export const TEMPI: Readonly<Record<string, readonly [number, number]>> = {
   largo: [40, 60],
   larghetto: [60, 66],
   adagio: [66, 76],
@@ -23,6 +24,13 @@ export const FREE_SYNTAX: readonly Syntax[] = [
     'free(v, lo..hi)',
     'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number goes in an attribute (a rate with its units: free(90bpm, 60..240)), in a scan, or as a gain in a mix.',
     ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'],
+    'free.md',
+  ),
+  syntax(
+    'free',
+    'free(v, lo..hi, unit=bpm)',
+    'A rate’s slider in the core’s numbers, a second, its unit an argument: free(2, 1.5..2.5, unit=bpm) is free(120bpm, 90..150), the same slider shown in bpm. The core writes a slider so (decision 069); written after the number, the unit is its sugar.',
+    ['&tempo step=free(2, 1.5..2.5, unit=bpm)'],
     'free.md',
   ),
   syntax(
@@ -115,9 +123,27 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean):
     if (value < lo || value > hi) s.fail(`free(…): ${value} is outside ${lo}..${hi}`, start, s.i - start);
   }
   s.skipSpace();
+  // a rate's unit as an argument, its numbers in the core's (a second): free(2, 1.5..2.5, unit=bpm) is free(120bpm, 90..150),
+  // the slider the same, its unit the performer's (decision 069, sliders: the owner's (a); the unit written inline is sugar)
+  const unitArg = () => {
+    if (!/,\s*unit=/y.test(s.text.slice(s.i))) return;
+    const comma = s.i;
+    s.i++;
+    s.skipSpace();
+    s.match(/unit=/y);
+    const u = s.match(/[a-z]+/y) ?? '';
+    const known = u ? RATE_UNITS[u] : undefined;
+    if (!units || !known) s.fail(units ? `unit=${u}: a rate's unit (${Object.keys(RATE_UNITS).join(', ')})` : `unit=: a unit is for a rate (step=, loop=)`, comma, s.i - comma);
+    if (unit) s.fail(`free(…${unit}, …, unit=${u}): the unit is given twice — written after the number, or as unit= with the numbers a second`, comma, s.i - comma);
+    const back = (n: number) => +((n * known!.per) / known!.times).toPrecision(12);
+    [value, lo, hi] = [back(value), back(lo), back(hi)];
+    unit = u;
+    s.skipSpace();
+  };
+  unitArg();
   // named choices: free(5, 0..15, "1 2 3 A …") — the names spread evenly over the range, a keypad
   let labels: string[] | undefined;
-  if (s.peek() === ',') {
+  if (s.peek() === ',' && !/,\s*unit=/y.test(s.text.slice(s.i))) {
     s.i++;
     s.skipSpace();
     const q = s.match(/"[^"]*"/y);
@@ -142,6 +168,7 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean):
       );
     s.skipSpace();
   }
+  unitArg();
   s.expect(')', `')' to close free(…)`);
   labels ??= names;
   const spec: FreeSpec = {

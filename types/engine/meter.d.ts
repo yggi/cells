@@ -1,21 +1,16 @@
+/**
+ * The compiled Meter: one tree of groups and one time map for a bar, whether it was written as
+ * `meter("4/4")` (levels, its steps even) or `scan(1 1 1 1)` (positions, no levels). A reader of
+ * a bar (the swing clock, the MIDI clock, a tap) reads this and not how it was written.
+ *
+ * It knows its pulse, its beats and the note value of a pulse (decision 040): a line taps the meter by
+ * pulse, beat or note value (`tapPositions`), never by the meter cell's own steps.
+ */
 import type { Tap } from './ast';
-/** A group of steps [from, to) at a level: 0 the bar, then finer (1 a beat, 2 a half, 3 a subdivision, 4 finer). */
-export interface MeterGroup {
-    readonly level: number;
-    readonly from: number;
-    readonly to: number;
-    readonly groups: readonly MeterGroup[];
-}
 export interface Meter {
-    /** The bar: level 0 over all the steps, its groups nested by the levels. A scan's is flat, every step one group at level 1. */
-    readonly tree: MeterGroup;
     /** Each step's level (a scan's: 1 each). */
     readonly levels: readonly number[];
-    /** Each step's position in the bar, 0 ≤ p < lap (the time map's ticks). */
-    readonly positions: readonly number[];
-    /** The bar's length in those positions. */
-    readonly lap: number;
-    /** The form it was written as: `meter(…)` (levels, its steps even) or `scan(…)` (positions, every step level 1). */
+    /** The form it was written as: `meter(…)` (levels, its steps even) or `scan(…)` (positions, every step level 1). Read by the core's `meters` rewrite (`core/desugar.ts`). */
     readonly written: 'meter' | 'scan';
     /** The pulse: the numerator, equal steps of the denominator's length; a scan's are its entries. */
     readonly pulses: number;
@@ -41,12 +36,11 @@ export interface SwingLevel {
     readonly whole: number;
     readonly share: number;
 }
-/** How a time signature writes a meter: its pulses, its note value and its beats (in pulses), each pulse in `sub` steps. */
+/** How a time signature writes a meter: its pulses, its note value and its beats (in pulses). */
 export interface Signature {
     readonly pulses: number;
     readonly unit: number;
     readonly beats: readonly number[];
-    readonly sub: number;
 }
 /** The meter's steps a pulse (meter("4/4", 2): 2; a scan: 1). */
 export declare const stepsPerPulse: (m: Meter) => number;
@@ -82,7 +76,7 @@ export declare function swingAt(m: Meter, p: number, grid?: number): number;
 /**
  * A bar's knots under its swing (#121): each beat's points on the finest level the swing leans, as written and where the
  * swing puts them, in pulses (the bar's end the last), so a place between two is even between where they are played.
- * Null where the meter doesn't swing.
+ * Null where the meter doesn't swing. Its reader is the time map (`clocking.ts`): a note's end, and a part of a step.
  */
 export declare function swungKnots(m: Meter): {
     readonly written: readonly number[];
@@ -96,7 +90,7 @@ export declare function swungSteps(m: Meter): number[] | null;
  * beat (+, *) to the next, a pulse an eighth (a quarter when every step is a beat, a sixteenth when every beat is four).
  */
 export declare function meterOfLevels(levels: readonly number[], signature?: Signature): Meter;
-/** scan(…): positions in the bar, no levels: a flat tree. */
+/** scan(…): its entries, each a pulse at level 1 under the bar (its positions are the time map's, `scan` in `theory/modes`). */
 export declare function meterOfScan(steps: readonly number[]): Meter;
 /**
  * Where a tap's steps fall in `bars` bars of a meter, in pulses from the downbeat (decision 040): `pulse` each pulse,

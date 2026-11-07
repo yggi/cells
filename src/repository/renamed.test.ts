@@ -57,6 +57,9 @@ describe('the seed ids as words (#387)', () => {
     // (and a word that became the meter fragment taken with its grouping, #507)
     expect(migrate(piece('meter_7_8'), SEED).source).toBe(piece('meter(grouping=meter("7/8"))'));
     expect(soundsIdentical(piece('meter_7_8'), piece('meter(grouping=meter("7/8"))'), undefined, SEED)).toBe(true);
+    // (an old meter taken with an argument it still takes: the word's own arguments joined with the line's, #464)
+    expect(migrate(piece('meter_7_8(swing=8n:2/3)'), SEED).source).toBe(piece('meter(grouping=meter("7/8"), swing=8n:2/3)'));
+    expect(soundsIdentical(piece('meter_7_8(swing=8n:2/3)'), piece('meter(grouping=meter("7/8"), swing=8n:2/3)'), undefined, SEED)).toBe(true);
   });
 
   it('a host whose own library holds such an id as another fragment is left alone: no warning, no rewrite', () => {

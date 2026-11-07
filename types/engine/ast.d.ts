@@ -226,7 +226,11 @@ export interface GateSpec {
 export type Braid = {
     readonly kind: 'blank';
 }
-/** A list; written as meter(…), its steps a beat (`perBeat`) and, from a time signature, its pulses and beats (`signature`). */
+/**
+ * A list; written as meter(…), its steps a beat (`perBeat`) and, from a time signature, its pulses and beats (`signature`).
+ * `perBeat` marks a list as a meter: the compiler reads that it is there (`compiler/resolve.ts`, and `base=` keeps it,
+ * `parser/base.ts`), and so does Cell studio's roll (yggi/cell-studio src/layout/roll.ts @ df4bb5b); its value nothing reads.
+ */
  | {
     readonly kind: 'list';
     readonly tokens: readonly Token[];
