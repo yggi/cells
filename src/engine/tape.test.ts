@@ -120,13 +120,13 @@ describe('sound tapes: write= a mix — a delay network, the heads returns', () 
 
 describe('tapes in the graph: their heads and reels are on the way to the sound card', () => {
   it('a note tape and a sound tape: head, tape and reel all routed (not dimmed)', async () => {
-    const { PRESETS } = await import('./presets');
+    const { EXAMPLES } = await import('./examples');
     const { routing } = await import('./routing');
     for (const [k, cells] of [
       ['echotape', ['near', 'mid', 'far', 'tape', 'reel']],
       ['testtones', ['first', 'second', 'third', 'loop', 'reel', 'bench']],
     ] as const) {
-      const r = compileSource((PRESETS as Record<string, { source: string }>)[k].source);
+      const r = compileSource((EXAMPLES as Record<string, { source: string }>)[k].source);
       const routed = routing(r, r.off).nodes;
       for (const c of cells) expect(routed.has(`cell:${c}`), `${k}: &${c}`).toBe(true);
     }

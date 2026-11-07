@@ -6,14 +6,14 @@
  */
 import { parse } from '../parser';
 import { TEMPI } from '../parser/free';
-import type { Token } from '../ast';
+import { isNote, type Token } from '../ast';
 import { compileSource } from '../compile';
 import { noteValue, type Meter } from '../meter';
 import { noteFrequency, type CompileOptions } from '../program';
 import { expansion } from '../use';
 import { readFrom, readUse } from '../parser/use';
 import type { Resolve } from '../program';
-import { declLine, declWords, splitComment } from '../edit';
+import { declLine, declWords, deleteCell, splitComment } from '../edit';
 
 /** A number as a text writes it: every digit of the double, one spelling for one number (S1 would hear a few as the same, decision 070). */
 const num = (x: number) => String(x);
@@ -51,6 +51,11 @@ export const FAMILIES: readonly Family[] = [
         .map((raw) => splitComment(raw)[0].replace(/\s+$/, ''))
         .filter((l) => l.trim())
         .join('\n'),
+  },
+  {
+    key: 'inert',
+    rows: '2, 85–90 a note, `label=` `show=` `size=` `tags=` `about=` `title=` `tier=`',
+    rewrite: (text) => inert(text),
   },
   {
     key: 'from',
@@ -149,6 +154,16 @@ export const FAMILIES: readonly Family[] = [
     key: 'keys',
     rows: '40 `scale(name)` `scale(name, tonic)` `scale(&mode, &tonic)`',
     rewrite: (text, options) => keys(text, options),
+  },
+  {
+    key: 'gates',
+    rows: '111–113 `play=` `level=` `[&a, &b]`',
+    rewrite: (text) => gates(text),
+  },
+  {
+    key: 'pitch',
+    rows: '88 `pitch=&x`',
+    rewrite: (text) => pitches(text),
   },
   {
     key: 'meters',
@@ -432,6 +447,227 @@ function named(text: string): string {
   return keys.length ? `${next.replace(/\s+$/, '')}\n${keys.join('\n')}` : text;
 }
 
+/** The attributes that say how a cell is drawn or named, never how it sounds (068: outside, inert). */
+const INERT = /^(?:label|show|size|about|title|tier)=/;
+
+/**
+ * What plays nothing left out (068's rows 2 and 85–90, inert): a note (a cell with a label or a title and nothing else)
+ * and the attributes that draw or name a cell. The core is for a machine reader: what a piece plays, not how it is drawn.
+ */
+function inert(text: string): string {
+  let now = text;
+  for (const d of parse(text).cells) if (isNote(d)) now = deleteCell(now, d.name);
+  return now
+    .split('\n')
+    .map((raw) => {
+      const name = HEAD_NAME.exec(splitComment(raw)[0])?.[1];
+      const w = name ? declWords(raw, name) : null;
+      if (!w || !w.attrs.some((a) => INERT.test(a))) return raw;
+      // each one cut where it stands: the line's order kept, a braid that runs on past the line left whole
+      const [code, comment] = splitComment(raw);
+      let next = code;
+      for (const a of w.attrs.filter((x) => INERT.test(x))) {
+        const at = next.indexOf(a);
+        if (at > 0) next = (next.slice(0, at).trimEnd() + ' ' + next.slice(at + a.length).trimStart()).trimEnd();
+      }
+      return comment ? `${next} ${comment.trim()}` : next;
+    })
+    .join('\n');
+}
+const HEAD_NAME = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
+
+/** Each entry of each mix chord on a line (`[a, b] [c]`), its top-level commas apart, rewritten by `f` (one entry may become several). */
+function mixEntries(code: string, f: (entry: string) => string[]): string {
+  let out = '';
+  let depth = 0;
+  let open = -1;
+  for (let i = 0; i < code.length; i++) {
+    const ch = code[i]!;
+    if (ch === '[' && depth === 0) {
+      open = i;
+      depth = 1;
+      continue;
+    }
+    if (open < 0) {
+      out += ch;
+      continue;
+    }
+    if (ch === '[' || ch === '(') depth++;
+    else if (ch === ']' || ch === ')') depth--;
+    if (depth === 0) {
+      const body = code.slice(open + 1, i);
+      const entries: string[] = [];
+      let d = 0;
+      let from = 0;
+      for (let j = 0; j <= body.length; j++) {
+        const c = body[j];
+        if (c === '(' || c === '[') d++;
+        else if (c === ')' || c === ']') d--;
+        if (j === body.length || (c === ',' && d === 0)) {
+          entries.push(body.slice(from, j));
+          from = j + 1;
+        }
+      }
+      // (each entry keeps its spacing, so a chord over lines keeps its lines; one made several, the rest after it)
+      const rim = /^(?:\s|\uE000\d+\uE001)*|(?:\s|\uE000\d+\uE001)*$/g;
+      out += `[${entries
+        .flatMap((e) => {
+          if (!e.trim()) return [e];
+          const [lead = '', tail = ''] = e.match(rim) ?? [];
+          const made = f(e.slice(lead.length, e.length - tail.length));
+          return made.map((x, k) => (k ? ' ' : lead) + x + (k === made.length - 1 ? tail : ''));
+        })
+        .join(',')}]`;
+      open = -1;
+    }
+  }
+  return open < 0 ? out : code;
+}
+
+/** A name read as a whole factor (`&g`, not `&g2`, `&g[1]`, `&g:0:.5`, `&g^1`). */
+const factorOf = (name: string) => new RegExp(`&${name}(?![A-Za-z0-9_\\[:^])`);
+
+/** A text with its comments and quoted strings hidden (a bracket or a comma in them is not code), and the way back. */
+function masked(text: string): { code: string; back: (code: string) => string } {
+  const kept: string[] = [];
+  const hide = (s: string) => `\uE000${kept.push(s) - 1}\uE001`;
+  const code = text
+    .split('\n')
+    .map((raw) => {
+      const [c, comment] = splitComment(raw);
+      return c.replace(/"(?:[^"\\]|\\.)*"/g, hide) + (comment ? hide(comment) : '');
+    })
+    .join('\n');
+  return { code, back: (c) => c.replace(/\uE000(\d+)\uE001/g, (_, i: string) => kept[+i]!) };
+}
+
+/** Each entry of each mix chord in a text, over its lines, rewritten by `f`; comments and strings as written. */
+const mixesOf = (text: string, f: (entry: string) => string[]): string => {
+  const m = masked(text);
+  return m.back(mixEntries(m.code, f));
+};
+
+/** Is every reading of `&name` but its own line's head a factor of a mix chord's entry? Then a mix rewrite reaches them all. */
+function onlyInMixes(text: string, name: string): boolean {
+  const { code } = masked(text);
+  const ref = new RegExp(`&${name}(?![A-Za-z0-9_])`, 'g');
+  const factor = new RegExp(factorOf(name).source, 'g');
+  const own = code.split('\n')[declLine(text, name)] ?? '';
+  const head = new RegExp(`^\\s*&${name}(?![A-Za-z0-9_])`).test(own) ? 1 : 0;
+  const total = (code.match(ref) ?? []).length - head;
+  let seen = 0;
+  mixEntries(code, (e) => {
+    const n = (e.match(ref) ?? []).length;
+    if (n && (e.match(factor) ?? []).length === n) seen += n;
+    return [e];
+  });
+  return seen === total;
+}
+
+/**
+ * A gate written as the products it is (068's rows 111–113, decision 023): `&leadOut play=&tune level=&accent*.4 &lead`
+ * read in a mix as `&leadOut` is `&tune * &accent * .4 * &lead` there, a chord of receivers `[&lead, &bell]` one entry
+ * each, a move of grid steps (`play=&bass^$-12`) a sum (`(&bass + -12)`); the gate's line goes. Left: a gate read
+ * anywhere but a mix's entries, one with a degree move or a stack, a tape's read head (`at=`), and one whose receivers
+ * are a kit's bare voices.
+ */
+function gates(text: string): string {
+  let now = text;
+  for (const d of parse(text).cells) {
+    const words = declWords(now, d.name);
+    const play = words?.attrs.find((w) => w.startsWith('play='));
+    if (!words || !play || words.attrs.some((a) => !/^(play|level|label|tags)=/.test(a))) continue;
+    // (what it plays, moved by grid steps or not; a degree move or a stack stays)
+    const notes = /^play=&([A-Za-z_][A-Za-z0-9_]*)(?:\^\$(-?[0-9]+))?$/.exec(play);
+    if (!notes) continue;
+    // (its level: cells and numbers, a product)
+    const level = words.attrs.find((w) => w.startsWith('level='))?.slice('level='.length) ?? '';
+    const factors = level ? level.split('*') : [];
+    if (factors.some((f) => !/^(?:&[A-Za-z_][A-Za-z0-9_]*|-?[0-9]*\.?[0-9]+)$/.test(f))) continue;
+    // (its receivers: one voice, or a chord of them; bare voices, a kit, stay)
+    const braid = words.braid.join(' ');
+    const chord = /^\[((?:&[A-Za-z_][A-Za-z0-9_]*,?\s*)+)\]$/.exec(braid);
+    const receivers = chord ? [...chord[1]!.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!) : /^&[A-Za-z_][A-Za-z0-9_]*$/.test(braid) ? [braid.slice(1)] : [];
+    if (!receivers.length || !onlyInMixes(now, d.name)) continue;
+    const head = notes[2] ? `(&${notes[1]} + ${notes[2]})` : `&${notes[1]}`;
+    const product = (r: string) => [head, ...factors, `&${r}`].join(' * ');
+    now = mixesOf(deleteCell(now, d.name), (e) => {
+      if (!factorOf(d.name).test(e)) return [e];
+      if (/\+/.test(e)) return receivers.length === 1 ? [e.replace(factorOf(d.name), `(${product(receivers[0]!)})`)] : [e];
+      return receivers.map((r) => e.replace(factorOf(d.name), product(r)));
+    });
+  }
+  return now;
+}
+
+/** A text cut at a separator where no bracket or parenthesis is open. */
+function topLevel(text: string, sep: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let from = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '(' || c === '[') depth++;
+    else if (c === ')' || c === ']') depth--;
+    else if (c === sep && depth === 0) {
+      parts.push(text.slice(from, i));
+      from = i + 1;
+    }
+  }
+  return [...parts, text.slice(from)];
+}
+
+/**
+ * An entry of a mix with a voice's `pitch=&x` written in: added to the entry's first pitch, `&t * &lead` as
+ * `(&t + &vib) * &lead` (a ramp, `map=lin`, is a volume as a factor of its own and a pitch only in a sum); with no pitch
+ * of its own, a sum of it alone, `(&vib + 0) * &lead`.
+ */
+function withPitch(entry: string, x: string, voice: string, pitchLike: (name: string) => boolean): string {
+  if (!factorOf(voice).test(entry)) return entry;
+  // (a factor of the product itself, a cell moved or rotated or not: never one read inside another, `cycle(&ground)`)
+  const factors = topLevel(entry, '*').map((f) => f.trim());
+  const first = factors.find((f) => {
+    const m = /^&([A-Za-z_][A-Za-z0-9_]*)(?:\[[^\]]*\]|\^\$?-?[0-9]+)*$/.exec(f);
+    return !!m && m[1] !== voice && pitchLike(m[1]!);
+  });
+  return (first ? factors.map((f) => (f === first ? `(${f} + &${x})` : f)) : factors.map((f) => (factorOf(voice).test(f) && f === `&${voice}` ? `(&${x} + 0) * ${f}` : f))).join(
+    ' * ',
+  );
+}
+
+/**
+ * A voice's `pitch=&x` written into the mix (068's row 88): a term of the sum in every product the voice is in, and two
+ * pitches in a product add, so `[&t * &lead]` with `&lead … pitch=&vib` is `[&t * &vib * &lead]`, the voice's `pitch=`
+ * gone. Left: a voice read anywhere but a mix's entries (a gate, a kit, a braid), or in a sum.
+ */
+function pitches(text: string): string {
+  let now = text;
+  const decls = parse(text).cells;
+  // (a cell that is a pitch in a product: no volume's map, no voice, no gate)
+  const pitchLike = (name: string) => {
+    const c = decls.find((k) => k.name === name);
+    return !!c && !c.gate && !Object.keys(c.params).some((k) => k === 's') && !(c.map && ['amp', 'db', 'lin', 'adsr', 'sample', 'midi'].includes(c.map.kind));
+  };
+  for (const d of decls) {
+    const x = d.pitch;
+    // (a pitch written in place, `pitch=&( … )`, has no name to read in the mix: it stays)
+    if (!x || x.pick || x.shift || declLine(now, x.name) < 0 || !onlyInMixes(now, d.name)) continue;
+    let summed = false;
+    mixesOf(now, (e) => {
+      if (factorOf(d.name).test(e) && /\+/.test(e)) summed = true;
+      return [e];
+    });
+    if (summed) continue;
+    const own = declLine(now, d.name);
+    if (own < 0) continue;
+    const lines = now.split('\n');
+    const [code, comment] = splitComment(lines[own]!);
+    lines[own] = code.replace(new RegExp(`\\s+pitch=&${x.name}(?![A-Za-z0-9_])`), '') + comment;
+    now = mixesOf(lines.join('\n'), (e) => [withPitch(e, x.name, d.name, pitchLike)]);
+  }
+  return now;
+}
+
 /** The levels a meter's steps are written as (`meter("*.-.+.-.")`): a downbeat, a beat, a half's beat, an eighth, finer. */
 const LEVEL = ['*', '+', '-', '.', ','];
 
@@ -560,12 +796,6 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
     why: 'a key whose mode is a name: written as its table where it can be; a key after over= unnamed, or with a slider for a tonic, stays',
   },
   {
-    key: 'meter scans',
-    rows: '37 `scan(i …)` on a stepped line',
-    test: /\bscan\(.*\bstep=|\bstep=.*\bscan\(/,
-    why: 'a scan with a step= is a meter: its numbers are the lengths of its steps, `@`, and what a tap reads of it are its levels',
-  },
-  {
     key: 'meters',
     rows: '42 `meter("sig")` left as written',
     test: /\bmeter\("[^"]*[0-9/][^"]*"/,
@@ -575,10 +805,14 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
     key: 'gates',
     rows: '111–113 `play=` `level=` `[&a, &b]`',
     test: /\b(?:play|level)=/,
-    why: 'a gate is a set of products: each receiver times its notes and levels, written into the card’s mix',
+    why: 'a gate is a set of products, each receiver times its notes and levels, written into the card’s mix; one a role reads (a performer’s part), a tape’s read head (`at=`), or one over a kit stays',
   },
-  { key: 'pitch', rows: '88 `pitch=&x`', test: /pitch=&\w/, why: 'a voice’s pitch= joins every product the voice is in: the mix rewritten, a sum in each' },
-  { key: 'levels', rows: '27 `&x:0:g`', test: /&\w+:\d/, why: 'a hit’s gain is a volume line in the product: a line of its own, stepped as the braid' },
+  {
+    key: 'pitch',
+    rows: '88 `pitch=&x`',
+    test: /pitch=&[\w(]/,
+    why: 'a voice’s pitch= joins every product the voice is in, a sum in each: left where the voice is read but in a mix (a gate, a kit), in a sum, or its pitch written in place',
+  },
   {
     key: 'copies',
     rows: '14, 79 `=` `base=`',

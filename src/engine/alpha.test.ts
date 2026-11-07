@@ -14,7 +14,7 @@ import { eventsBetween, plan } from './realize';
 import { readerOf } from './perform/feel';
 import { soundsIdentical } from './sameness';
 import { signatureOf } from './use';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 
 const O = { resolve: resolveSeed };
@@ -111,14 +111,14 @@ function bound(text: string): string[] {
 
 describe('alpha substitution: every name a text defines renamed, it plays, says and reads as it did', () => {
   describe('the language: each example with its from lines written in, every name renamed', () => {
-    it.each(Object.entries(PRESETS))('%s', (key, p) => {
+    it.each(Object.entries(EXAMPLES))('%s', (key, p) => {
       const text = written(p.source, O);
       expect(broken(text, own(text))).toEqual(WRITTEN_IN[key] ?? []);
     });
   });
 
   describe('the language and its library: each example as written, every name it binds renamed', () => {
-    it.each(Object.entries(PRESETS))('%s', (key, p) => {
+    it.each(Object.entries(EXAMPLES))('%s', (key, p) => {
       const text = p.source;
       expect(broken(text, bound(text))).toEqual(AS_WRITTEN[key] ?? []);
     });

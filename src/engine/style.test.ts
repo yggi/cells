@@ -2,7 +2,7 @@
 // as its slot's position as written; every map=adsr cell in the examples read by name as by position.
 import { describe, expect, it } from 'vitest';
 import { compileSource as compileAlone } from './compile';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { AXES, AXIS_NAMES, SLOTS } from './style';
 import { pieceTime } from './duration';
 import { codeShifts } from './program';
@@ -30,6 +30,22 @@ describe('the table of axes', () => {
     }
     expect(SLOTS.style).toEqual(AXIS_NAMES);
     expect(SLOTS.adsr).toEqual(['attack', 'decay', 'sustain', 'release']);
+  });
+
+  it('says each axis in words a frontend shows: a label, its two ends, and the sentence said from them', () => {
+    // (the words Jambot's Style sheet wrote for itself, StylePanel.svelte, now read from here: #538)
+    expect(AXES.map((a) => [a.label, ...a.ends])).toEqual([
+      ['Syncopation', 'on the beat', 'off the beat'],
+      ['Harmony', 'a static vamp', 'moving, rich harmony'],
+      ['Articulation', 'legato', 'staccato'],
+      ['Energy', 'sparse', 'dense'],
+    ]);
+    expect(AXES.map((a) => a.sentence)).toEqual([
+      'On the beat (0) to off the beat (1).',
+      'A static vamp (0) to moving, rich harmony (1).',
+      'Legato (0) to staccato (1).',
+      'Sparse (0) to dense (1).',
+    ]);
   });
 
   it('is what every association point in the seed library is written on, each value within its axis’s range', () => {
@@ -81,7 +97,7 @@ describe('a pick by name, &x[slot]', () => {
 
   it('reads every map=adsr cell in the examples by name as by position: its four slots each its $i (as the examples compile, with the seed library)', () => {
     let envelopes = 0;
-    for (const [key, ex] of Object.entries(PRESETS as Record<string, { source: string }>)) {
+    for (const [key, ex] of Object.entries(EXAMPLES as Record<string, { source: string }>)) {
       const r = compileSource(ex.source);
       for (const c of r.cells.values()) {
         // (an unnamed envelope, &( … ), can't be named in a probe line)

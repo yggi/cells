@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { structureByCell, structureOf } from './measure';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 
 const at = (text: string, name: string) => structureByCell(text, { asWritten: true }).find((c) => c.name === name)!;
 
@@ -31,6 +31,6 @@ describe("the structure measure: decision 049's (leaves, attribute values, cells
   });
   it('BWV 847: the generator wrote 1,396, by hand 1,113 (#181, #182; its vibrato and its envelopes the library’s since #196)', () => {
     expect(structureOf(readFileSync('fixtures/bwv847-generated.cells', 'utf8')).total).toBe(1396);
-    expect(structureOf(PRESETS.bwv847!.source).total).toBe(1113);
+    expect(structureOf(EXAMPLES.bwv847!.source).total).toBe(1113);
   });
 });

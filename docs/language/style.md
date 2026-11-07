@@ -10,6 +10,8 @@ The axes are cells' own table (`AXES`, `src/engine/style.ts`), each with a name,
 | `artic` | 0 to 1 | legato (0) to staccato (1) |
 | `energy` | 0 to 1 | sparse (0) to dense (1) |
 
+Each axis also carries the words a frontend shows for it, `label` (`Syncopation`, `Harmony`, `Articulation`, `Energy`) and `ends` (`['on the beat', 'off the beat']` …), and its sentence is said from its ends, so a frontend's Style sheet reads its words from here (#538).
+
 A fragment's association points in the repository are written on the same axes ([use.md](use.md)), and a frontend reads them from the table rather than owning them ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md)).
 
 ## map=style
@@ -88,9 +90,17 @@ A factor written out, `* &curve`, sets where between the two ends instead: a lin
 
 A pick of a slot as a factor reads its value, held: `lpf=0..1000 * &pluck[sustain]` is 500 Hz with `&pluck map=adsr .01 .3 .5 .4`.
 
-## The presets' styles: styles
+## The library of styles: styles
 
-The seed library holds Jambot's ten presets as styles, the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing` and `&spooky`, each at the point its preset plays.
+The seed library holds the preset styles as the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing`, `&spooky` and `&kinderlied`.
+Each is a style cell at its point, with its display name as `label=` and its default tempo as `step=`:
+
+```cells
+&funk map=style label="Funk" step=104bpm sync=1 harm=.12 artic=.85 energy=.75
+```
+
+The collection is the presets' one source: a frontend reads it as `STYLES` (`src/repository/styles.ts`), each style `{ id, name, point, tempo }`, in its order (#537).
+Only the library reads `step=` on a style: `style=` and a query read the point alone, so a style has no tempo ([decision 037](https://github.com/yggi/cells/blob/main/docs/decisions/037-the-handshake-with-jambot.md), D6).
 A score takes one by name where its section sits exactly on it, and writes its numbers, or a mix of styles, where it doesn't ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §3).
 
 ```cells
@@ -98,7 +108,8 @@ A score takes one by name where its section sits exactly on it, and writes its n
 &style label="Funk, turning to Bossa nova" style=&funk..&bossaNova
 ```
 
-The collection is associated at each of the ten points as the facet `style`, so the style nearest a point is a query too.
+The collection is associated at each of the eleven points as the facet `style`, so the style nearest a point is a query too.
+`nearestStyle(point)` ranks the styles themselves by it, nearest first: by `pointDistance`, the one distance between two styles, over the axes both have, with `axisWeights` to weigh an axis down and `styles` for a frontend that ranks on an axis of its own as well, such as a tempo (#538).
 
 ## The default band: a score played as its style says
 

@@ -8,8 +8,8 @@
  *   contract's minor 2; #511).
  * - **Its note and velocity** are what cells' MIDI out sends of it, on the host's channels (1 the lead, 2 the bass, 3
  *   the pad and the stab, 10 the drums): the velocity MIDI rounds from its level, the note a drum's or its key.
- * - **Its step and length** are its onset and end in the bar's steps through the swing undone (`writtenAt`): the step
- *   rounded, the length from the onset to the end.
+ * - **Its step and length** are its onset and end in the bar's steps through the swing undone (`writtenPlace`, the bar's
+ *   frame as a meter, `meterOfFrame`: the meter's own rule, #15 rung 2): the step rounded, the length from the onset to the end.
  *
  * The feel moves its velocity and length, never its onset: its level is scaled so that MIDI's velocity is the feel's,
  * and it ends where the host ends it, at its step plus the feel's length, through the swing.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -144,7 +144,7 @@ describe('the examples arranged at the input play the same', () => {
     ['BWV 847: written by hand as a selector over its voices (#177), every note of the text the generator wrote', 'bwv847', 'fixtures/bwv847-generated.cells'],
     ['Pop: six sections stepped by the bar, the parts straight out', 'pop', 'fixtures/pop-input.cells'],
   ])('%s', (_, example, rewired) => {
-    const before = notes(PRESETS[example as 'pop'].source);
+    const before = notes(EXAMPLES[example as 'pop'].source);
     const after = notes(readFileSync(rewired, 'utf8'));
     expect(after.end).toBe(before.end);
     expect(after.notes.length).toBe(before.notes.length);

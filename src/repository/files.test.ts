@@ -9,7 +9,7 @@ import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { fragmentsOf, SEED } from './seed';
 import { SEED_FILES } from './seed.generated';
@@ -79,7 +79,7 @@ describe('the seed files', () => {
     expect(SEED.filter((f) => f.path.startsWith('modes/')).flatMap(fragmentsOf)).toEqual(MODE_FRAGMENTS);
   });
 
-  // (the points that come from Jambot's presets, lifted into presets.ts: a file must write each exactly; the points placed
+  // (the points that come from Jambot's presets, read from the collection `styles` (styles.ts): a file must write each exactly; the points placed
   // by hand, the other meters' and the claves', have the files as their source)
   it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {

@@ -17,7 +17,7 @@ import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { METER_FRAGMENTS } from './meters';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 const byId = (id: string) => INSTRUMENT_FRAGMENTS.find((f) => f.id === id)!;

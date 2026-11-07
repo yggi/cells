@@ -1,11 +1,12 @@
 import { parse } from "../parser/index.js";
 import { TEMPI } from "../parser/free.js";
+import { isNote } from "../ast.js";
 import { compileSource } from "../compile.js";
 import { noteValue } from "../meter.js";
 import { noteFrequency } from "../program.js";
 import { expansion } from "../use.js";
 import { readFrom, readUse } from "../parser/use.js";
-import { declLine, declWords, splitComment } from "../edit.js";
+import { declLine, declWords, deleteCell, splitComment } from "../edit.js";
 const num = (x) => String(x);
 const codeWise = (text, f) => text
     .split('\n')
@@ -26,6 +27,11 @@ export const FAMILIES = [
             .map((raw) => splitComment(raw)[0].replace(/\s+$/, ''))
             .filter((l) => l.trim())
             .join('\n'),
+    },
+    {
+        key: 'inert',
+        rows: '2, 85–90 a note, `label=` `show=` `size=` `tags=` `about=` `title=` `tier=`',
+        rewrite: (text) => inert(text),
     },
     {
         key: 'from',
@@ -102,6 +108,16 @@ export const FAMILIES = [
         key: 'keys',
         rows: '40 `scale(name)` `scale(name, tonic)` `scale(&mode, &tonic)`',
         rewrite: (text, options) => keys(text, options),
+    },
+    {
+        key: 'gates',
+        rows: '111–113 `play=` `level=` `[&a, &b]`',
+        rewrite: (text) => gates(text),
+    },
+    {
+        key: 'pitch',
+        rows: '88 `pitch=&x`',
+        rewrite: (text) => pitches(text),
     },
     {
         key: 'meters',
@@ -345,6 +361,201 @@ function named(text) {
     }));
     return keys.length ? `${next.replace(/\s+$/, '')}\n${keys.join('\n')}` : text;
 }
+const INERT = /^(?:label|show|size|about|title|tier)=/;
+function inert(text) {
+    let now = text;
+    for (const d of parse(text).cells)
+        if (isNote(d))
+            now = deleteCell(now, d.name);
+    return now
+        .split('\n')
+        .map((raw) => {
+        const name = HEAD_NAME.exec(splitComment(raw)[0])?.[1];
+        const w = name ? declWords(raw, name) : null;
+        if (!w || !w.attrs.some((a) => INERT.test(a)))
+            return raw;
+        const [code, comment] = splitComment(raw);
+        let next = code;
+        for (const a of w.attrs.filter((x) => INERT.test(x))) {
+            const at = next.indexOf(a);
+            if (at > 0)
+                next = (next.slice(0, at).trimEnd() + ' ' + next.slice(at + a.length).trimStart()).trimEnd();
+        }
+        return comment ? `${next} ${comment.trim()}` : next;
+    })
+        .join('\n');
+}
+const HEAD_NAME = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
+function mixEntries(code, f) {
+    let out = '';
+    let depth = 0;
+    let open = -1;
+    for (let i = 0; i < code.length; i++) {
+        const ch = code[i];
+        if (ch === '[' && depth === 0) {
+            open = i;
+            depth = 1;
+            continue;
+        }
+        if (open < 0) {
+            out += ch;
+            continue;
+        }
+        if (ch === '[' || ch === '(')
+            depth++;
+        else if (ch === ']' || ch === ')')
+            depth--;
+        if (depth === 0) {
+            const body = code.slice(open + 1, i);
+            const entries = [];
+            let d = 0;
+            let from = 0;
+            for (let j = 0; j <= body.length; j++) {
+                const c = body[j];
+                if (c === '(' || c === '[')
+                    d++;
+                else if (c === ')' || c === ']')
+                    d--;
+                if (j === body.length || (c === ',' && d === 0)) {
+                    entries.push(body.slice(from, j));
+                    from = j + 1;
+                }
+            }
+            const rim = /^(?:\s|\uE000\d+\uE001)*|(?:\s|\uE000\d+\uE001)*$/g;
+            out += `[${entries
+                .flatMap((e) => {
+                if (!e.trim())
+                    return [e];
+                const [lead = '', tail = ''] = e.match(rim) ?? [];
+                const made = f(e.slice(lead.length, e.length - tail.length));
+                return made.map((x, k) => (k ? ' ' : lead) + x + (k === made.length - 1 ? tail : ''));
+            })
+                .join(',')}]`;
+            open = -1;
+        }
+    }
+    return open < 0 ? out : code;
+}
+const factorOf = (name) => new RegExp(`&${name}(?![A-Za-z0-9_\\[:^])`);
+function masked(text) {
+    const kept = [];
+    const hide = (s) => `\uE000${kept.push(s) - 1}\uE001`;
+    const code = text
+        .split('\n')
+        .map((raw) => {
+        const [c, comment] = splitComment(raw);
+        return c.replace(/"(?:[^"\\]|\\.)*"/g, hide) + (comment ? hide(comment) : '');
+    })
+        .join('\n');
+    return { code, back: (c) => c.replace(/\uE000(\d+)\uE001/g, (_, i) => kept[+i]) };
+}
+const mixesOf = (text, f) => {
+    const m = masked(text);
+    return m.back(mixEntries(m.code, f));
+};
+function onlyInMixes(text, name) {
+    const { code } = masked(text);
+    const ref = new RegExp(`&${name}(?![A-Za-z0-9_])`, 'g');
+    const factor = new RegExp(factorOf(name).source, 'g');
+    const own = code.split('\n')[declLine(text, name)] ?? '';
+    const head = new RegExp(`^\\s*&${name}(?![A-Za-z0-9_])`).test(own) ? 1 : 0;
+    const total = (code.match(ref) ?? []).length - head;
+    let seen = 0;
+    mixEntries(code, (e) => {
+        const n = (e.match(ref) ?? []).length;
+        if (n && (e.match(factor) ?? []).length === n)
+            seen += n;
+        return [e];
+    });
+    return seen === total;
+}
+function gates(text) {
+    let now = text;
+    for (const d of parse(text).cells) {
+        const words = declWords(now, d.name);
+        const play = words?.attrs.find((w) => w.startsWith('play='));
+        if (!words || !play || words.attrs.some((a) => !/^(play|level|label|tags)=/.test(a)))
+            continue;
+        const notes = /^play=&([A-Za-z_][A-Za-z0-9_]*)(?:\^\$(-?[0-9]+))?$/.exec(play);
+        if (!notes)
+            continue;
+        const level = words.attrs.find((w) => w.startsWith('level='))?.slice('level='.length) ?? '';
+        const factors = level ? level.split('*') : [];
+        if (factors.some((f) => !/^(?:&[A-Za-z_][A-Za-z0-9_]*|-?[0-9]*\.?[0-9]+)$/.test(f)))
+            continue;
+        const braid = words.braid.join(' ');
+        const chord = /^\[((?:&[A-Za-z_][A-Za-z0-9_]*,?\s*)+)\]$/.exec(braid);
+        const receivers = chord ? [...chord[1].matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]) : /^&[A-Za-z_][A-Za-z0-9_]*$/.test(braid) ? [braid.slice(1)] : [];
+        if (!receivers.length || !onlyInMixes(now, d.name))
+            continue;
+        const head = notes[2] ? `(&${notes[1]} + ${notes[2]})` : `&${notes[1]}`;
+        const product = (r) => [head, ...factors, `&${r}`].join(' * ');
+        now = mixesOf(deleteCell(now, d.name), (e) => {
+            if (!factorOf(d.name).test(e))
+                return [e];
+            if (/\+/.test(e))
+                return receivers.length === 1 ? [e.replace(factorOf(d.name), `(${product(receivers[0])})`)] : [e];
+            return receivers.map((r) => e.replace(factorOf(d.name), product(r)));
+        });
+    }
+    return now;
+}
+function topLevel(text, sep) {
+    const parts = [];
+    let depth = 0;
+    let from = 0;
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (c === '(' || c === '[')
+            depth++;
+        else if (c === ')' || c === ']')
+            depth--;
+        else if (c === sep && depth === 0) {
+            parts.push(text.slice(from, i));
+            from = i + 1;
+        }
+    }
+    return [...parts, text.slice(from)];
+}
+function withPitch(entry, x, voice, pitchLike) {
+    if (!factorOf(voice).test(entry))
+        return entry;
+    const factors = topLevel(entry, '*').map((f) => f.trim());
+    const first = factors.find((f) => {
+        const m = /^&([A-Za-z_][A-Za-z0-9_]*)(?:\[[^\]]*\]|\^\$?-?[0-9]+)*$/.exec(f);
+        return !!m && m[1] !== voice && pitchLike(m[1]);
+    });
+    return (first ? factors.map((f) => (f === first ? `(${f} + &${x})` : f)) : factors.map((f) => (factorOf(voice).test(f) && f === `&${voice}` ? `(&${x} + 0) * ${f}` : f))).join(' * ');
+}
+function pitches(text) {
+    let now = text;
+    const decls = parse(text).cells;
+    const pitchLike = (name) => {
+        const c = decls.find((k) => k.name === name);
+        return !!c && !c.gate && !Object.keys(c.params).some((k) => k === 's') && !(c.map && ['amp', 'db', 'lin', 'adsr', 'sample', 'midi'].includes(c.map.kind));
+    };
+    for (const d of decls) {
+        const x = d.pitch;
+        if (!x || x.pick || x.shift || declLine(now, x.name) < 0 || !onlyInMixes(now, d.name))
+            continue;
+        let summed = false;
+        mixesOf(now, (e) => {
+            if (factorOf(d.name).test(e) && /\+/.test(e))
+                summed = true;
+            return [e];
+        });
+        if (summed)
+            continue;
+        const own = declLine(now, d.name);
+        if (own < 0)
+            continue;
+        const lines = now.split('\n');
+        const [code, comment] = splitComment(lines[own]);
+        lines[own] = code.replace(new RegExp(`\\s+pitch=&${x.name}(?![A-Za-z0-9_])`), '') + comment;
+        now = mixesOf(lines.join('\n'), (e) => [withPitch(e, x.name, d.name, pitchLike)]);
+    }
+    return now;
+}
 const LEVEL = ['*', '+', '-', '.', ','];
 const played = (m) => {
     const step = m.pulses / (m.unit * m.levels.length);
@@ -456,12 +667,6 @@ export const LEFT = [
         why: 'a key whose mode is a name: written as its table where it can be; a key after over= unnamed, or with a slider for a tonic, stays',
     },
     {
-        key: 'meter scans',
-        rows: '37 `scan(i …)` on a stepped line',
-        test: /\bscan\(.*\bstep=|\bstep=.*\bscan\(/,
-        why: 'a scan with a step= is a meter: its numbers are the lengths of its steps, `@`, and what a tap reads of it are its levels',
-    },
-    {
         key: 'meters',
         rows: '42 `meter("sig")` left as written',
         test: /\bmeter\("[^"]*[0-9/][^"]*"/,
@@ -471,10 +676,14 @@ export const LEFT = [
         key: 'gates',
         rows: '111–113 `play=` `level=` `[&a, &b]`',
         test: /\b(?:play|level)=/,
-        why: 'a gate is a set of products: each receiver times its notes and levels, written into the card’s mix',
+        why: 'a gate is a set of products, each receiver times its notes and levels, written into the card’s mix; one a role reads (a performer’s part), a tape’s read head (`at=`), or one over a kit stays',
     },
-    { key: 'pitch', rows: '88 `pitch=&x`', test: /pitch=&\w/, why: 'a voice’s pitch= joins every product the voice is in: the mix rewritten, a sum in each' },
-    { key: 'levels', rows: '27 `&x:0:g`', test: /&\w+:\d/, why: 'a hit’s gain is a volume line in the product: a line of its own, stepped as the braid' },
+    {
+        key: 'pitch',
+        rows: '88 `pitch=&x`',
+        test: /pitch=&[\w(]/,
+        why: 'a voice’s pitch= joins every product the voice is in, a sum in each: left where the voice is read but in a mix (a gate, a kit), in a sum, or its pitch written in place',
+    },
     {
         key: 'copies',
         rows: '14, 79 `=` `base=`',

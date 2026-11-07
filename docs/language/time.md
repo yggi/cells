@@ -20,7 +20,8 @@ A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/
 - Rates can be a **free** number: `step=free(90bpm, 60..240)`; see [free.md](free.md).
 
 ```cells
-&bar scan(4 4 4 4) step=84bpm
+&bar scan(4 4 4 4) step=&tempo
+&tempo step=84bpm
 &tune step=4t 0 2 4
 &fast step=8n 0 1
 ```
@@ -47,6 +48,7 @@ A meter is a cell whose braid is a `scan` or a `meter(…)`: `scan(27 23 26 24)`
 **Groups as sizes:** `meter("2+2+3")` writes eighths in groups of 2 and 3, each 2, 3, 4 or 6, and `meter("2+2+3/4")` quarters. A signature is a name for one grouping (`meter("7/8")` is `meter("3+2+2")`, the same meter). Its beats are its groups, and its bpm counts them.
 
 **Levels can be written directly**, `meter("*.+.+..")`, every mark but `.` and `,` starting a beat: `meter("*.-.+.-.")` is 4/4. Their step's note value is their pulse: alla breve is `meter("*,.,+,.,", 8n)`, a waltz in one `meter("*..", 4n)`.
+The levels are the tree's ([contracts/meter](https://github.com/yggi/music-commons/blob/main/contracts/meter/README.md)'s grades) and the beats are read off them, which is the tree's beat wherever the tier above the eighth is a beat's: every x/8 meter, and x/4 and x/2 in their own beats. Where a tier sits between the beat and the eighth, the quarters of a compound x/4 (6/4, 9/4, 12/4: `*--+--`) and the quarters of x/2 at 2 steps a beat, each `-` written would start a beat, so such a meter is written by its signature, `meter("6/4")`, and the core keeps it so ([#545](https://github.com/yggi/cells/issues/545)).
 - Written out at a step a pulse, every signature from 2/8 to 16/8, 2/4 to 7/4 and 2/2 to 4/2 is the same meter again.
 - One whose quarters sit inside its beats (6/4, or 2/2 in quarters) reads those quarters as beats, and is written by its signature or sizes.
 
@@ -79,7 +81,8 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
 - **`legato=16n:.5`** — the meter's articulation ([#94](https://github.com/yggi/cells/issues/94)), a share of each note's written length by level (its steps, the end swung as the onset is: [sound.md](sound.md)), as swing names its levels: a line that taps the meter and states no `legato=` of its own sounds its notes at the share of its tap's level, the finest level at or above its step (`legato=16n:.5,4n:.8`: `step=16n` and `step=32n` at .5, `step=8n`, `step=pulse` and `step=beat` at .8 in 4/4, `step=2n` as written). An unequal beat (7/8's) is read by its longest. A line's own `legato=` wins ([sound.md](sound.md)); a line at a rate, or stepped by another cell, is as written. With swing, a meter fragment carries a feel: where its notes fall and how long they sound. One level alone can be left free: `legato=16n:free(.5, .25..1)`.
 
 ```cells
-&bar meter("4/4") step=100bpm swing=8n:.6
+&bar meter("4/4") step=&tempo swing=8n:.6
+&tempo step=100bpm
 &eighths step=8n 0
 &tick s=sine loop=A5 env=&(map=adsr 0 .03 0 .02)
 &out loop=SAMPLE_RATE map=sample [&eighths * &tick]
@@ -88,7 +91,8 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
 In 7/8: the eighths of the first beat even, those of the second and third swung.
 
 ```cells
-&bar meter("7/8") step=90bpm swing=8n:2/3
+&bar meter("7/8") step=&tempo swing=8n:2/3
+&tempo step=90bpm
 &eighths step=8n 0
 &tick s=sine loop=A5 env=&(map=adsr 0 .03 0 .02)
 &out loop=SAMPLE_RATE map=sample [&eighths * &tick]
@@ -109,7 +113,8 @@ A line taps a meter by pulse, beat or note value, never by the meter cell's own 
 A line stepped by the meter cell's own steps (`step=&bar*2`) still plays as it did, with a warning that names the tap saying the same (`step=8n`); Migrate rewrites it so, where the notes stay the same.
 
 ```cells
-&bar meter("7/8") step=90bpm
+&bar meter("7/8") step=&tempo
+&tempo step=90bpm
 &count step=beat 0 3 5
 &eighths step=8n 0!7
 &tresillo step=4n. cycle=2 0 0 0 0 0
@@ -134,7 +139,8 @@ A cell with **`law=`** has its notes computed by a law instead of written: `law=
 - **A selector** switches sections: an arrangement ([decision 016](https://github.com/yggi/cells/blob/main/docs/decisions/016-arranging-at-the-input.md)). A stepped table of names (`&sections step=4n &verse &chorus`) declares them as its **sections**, each stepped as the table is; a part's cells are stepped by its section (`step=&verse*2`); the selector reads the table (`over=&sections`) and steps through it, each of its steps naming the sections that are on (a chord of numbers turns several on together). What a section steps plays while it is on, from its top each time it is turned on; the rest stands still. A section steps only what is stepped or looped from it: a drone on a clock of its own plays on. Two selectors reading one table AND together: a section is on only while every one of them has it on (`&song` the form, `&mute` a second selector over the same `&sections`, a section plays where both pick it). The parts' sound goes straight to the sound card. Pop song and 8-bit: Korobeiniki are arranged this way; [BWV 847](../../examples/bwv847.md) the other way round, its table the five voices and its selector's steps the piece's sections, each step naming the voices that play (`[0,1]@384 1@48 …`), with `restart=resume`.
 
 ```cells
-&bar scan(1 1 1 1) step=100bpm
+&bar meter("4/4") step=&tempo
+&tempo step=100bpm
 &lead s=saw loop=C4
 &bass s=saw loop=C2
 &sections step=4n &tuneBar &bassBar
@@ -149,7 +155,8 @@ A section may have a line of its own with attributes only, and stays a section (
 **`restart=`** names what switching a part on does to its time ([decision 032](https://github.com/yggi/cells/blob/main/docs/decisions/032-restart-policies.md)), on a section's line (`&tuneBar restart=resume`) or on the selector, for all its sections (a section's own line wins): **`restart`**, from its top each time (the default); **`resume`**, its time paused while it is off, going on where it stopped; **`free`**, its time running on as if never switched, only its sound gated (Strudel's default), so it lands where an unswitched copy would be. With several selectors on one part, the first that names a policy other than `restart` rules. A part the selector's next step names again stays on: under `resume` and `free` its notes go on through the step, a note held across it held whole; under `restart` it starts again from its top, as each step that names it switches it on. [In C, a sketch](../../examples/in-c.md) needs `resume`: each player repeats a cell until moving on, and one who sits out comes back where they left off.
 
 ```cells
-&bar meter("4/4") step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &major scale(major)
 &sections step=4n &mel
 &mel restart=resume
@@ -162,7 +169,8 @@ A section may have a line of its own with attributes only, and stays a section (
 - **A band** switches performers: who plays when ([decision 061](https://github.com/yggi/cells/blob/main/docs/decisions/061-the-band.md), `src/engine/compiler/band.ts`). A table whose entries are performers, gates or roles ([mix.md](mix.md)), is a band, a table as a kit is, with no step= of its own; a selector reading it steps through it, each of its steps naming the entries that play. A role stands for all its players, and a gate named itself is switched alone; a gate is one entry of a band. The selector switches their sound and leaves their time on the meter: their parts tap it as they did, so they swing, and a part a text `use`s is arranged as it is used, with no section to step it. So a performer's `restart=` is **`free`** unless one is written, as a player who sits out comes back in time; `restart` and `resume` work as on a section, on the selector or on a performer's own line, and warn where the selector switches off the bar (`step=1m` keeps each note's place in the bar). A part a section steps too keeps the section's `restart`: a band that keeps it on step after step changes nothing.
 
 ```cells
-&bar meter("4/4") step=120bpm swing=8n:2/3
+&bar meter("4/4") step=&tempo swing=8n:2/3
+&tempo step=120bpm
 &key scale(major, G)
 &violinV s=saw loop=G4 env=&(map=adsr .05 .2 .7 .3)
 &celloV s=saw loop=G2 env=&(map=adsr .05 .2 .7 .3)

@@ -2,7 +2,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from "./he
 import { footOf, leaves, slots } from "./subseq.js";
 import { beltWarp, onReset, warpOf } from "./physics.js";
 import { mod } from "../theory/modes.js";
-import { stepsPerPulse, swingAt, swungKnots } from "./meter.js";
+import { stepsPerPulse, swingAt, swungKnots, swungPlace, writtenPlace } from "./meter.js";
 export const EPS = 1e-9;
 export function timeMap(result, clock, shifts) {
     if (clock.tap)
@@ -107,24 +107,14 @@ function swungMeter(result, meter) {
     if (!m || !knots)
         return null;
     const per = stepsPerPulse(m);
-    const { written, swung } = knots;
-    const P = m.pulses;
-    const S = (w) => {
-        const p = w / per;
-        const bar = Math.floor(p / P + 1e-12);
-        const x = p - bar * P;
-        let i = 0;
-        while (i + 2 < written.length && written[i + 1] <= x + 1e-12)
-            i++;
-        const span = written[i + 1] - written[i];
-        return (bar * P + swung[i] + (span > 0 ? ((x - written[i]) / span) * (swung[i + 1] - swung[i]) : 0)) * per;
-    };
+    const S = (w) => swungPlace(m, w / per) * per;
+    const W = (s) => writtenPlace(m, s / per) * per;
     const finest = Math.min(...m.swing.map((l) => l.whole * m.unit));
     const held = (grid) => {
         const k = Math.log2(grid / per / finest);
         return Math.abs(k - Math.round(k)) < 1e-9;
     };
-    return { S, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per) };
+    return { S, W, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per), grain: finest * per };
 }
 function swungTapMap(tap, meter, { S, at }) {
     const { positions, lap } = tap;
@@ -289,7 +279,19 @@ export function clocking(result, statics, seconds = 0) {
             maps.set(`${clock}\0written`, (m = tapMap({ ...tap, positions: tap.written }, base(tap.meter))));
         return m;
     };
-    return { map, written, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
+    const played = (clock) => {
+        const sw = result.clocks.get(clock)?.tap ? null : swungMeter(result, clock);
+        if (!sw)
+            return map(clock);
+        let m = maps.get(`${clock}\0played`);
+        if (!m) {
+            const inner = base(clock);
+            m = { beats: inner.beats, q: (w) => inner.q(sw.S(w)), stepAt: (t) => sw.W(inner.stepAt(t)), ...(inner.speed ? { speed: inner.speed } : {}) };
+            maps.set(`${clock}\0played`, m);
+        }
+        return { ...m, q: m.q, stepAt: m.stepAt, grain: sw.grain };
+    };
+    return { map, written, played, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
 export function shiftsAt(result, statics, seconds) {
     const clk = clocking(result, statics, seconds);

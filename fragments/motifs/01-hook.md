@@ -20,6 +20,6 @@ A pop hook: the fifth twice, stepping down to the third and held, a breath, then
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&hook`), so `use &hook` takes it; a form reads it as its `&call` (`&call step=8n &hook`), the line the form moves and answers.
 
-At Synth-pop's point (`presets.ts`), weight 1, as the facet `motif`.
+At Synth-pop's point (`styles`), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&hook from &key`. `&hook from hook &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &hook from hook`, it reads `&key` by name, as before.

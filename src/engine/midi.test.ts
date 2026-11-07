@@ -3,7 +3,7 @@ import { compileSource as compileAlone } from './compile';
 import { planOf as planAlone } from './host';
 import { eventsBetween, type Played } from './realize';
 import { BEND_CENTRE, bendValue, channelTable, gmDrumNote, kitNotes, legatoNotes, melodicChannel, midiNote, noteOf, Rotation, rotationChannels, router, velocityOf } from './midi';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { codeShifts } from './program';
 import { pieceMidi } from './midiexport';
 import { resolveSeed } from '../repository/library';
@@ -171,7 +171,7 @@ describe('channels', () => {
   });
 
   it('a piece: its voices in the order it declares them, its kit members on 10 with their notes', () => {
-    const r = compileSource(PRESETS.drums.source);
+    const r = compileSource(EXAMPLES.drums.source);
     const t = channelTable(r);
     expect(t.voices).toEqual([{ voice: 'rim', channel: 1, port: 1 }]);
     expect(t.kits).toEqual([{ port: 1, channel: 10 }]);
@@ -185,19 +185,19 @@ describe('channels', () => {
       { member: 'sd', note: 38 },
     ]);
     const route = router(r, t);
-    const events = eventsBetween(planOf(PRESETS.drums.source), 0, 4, true);
+    const events = eventsBetween(planOf(EXAMPLES.drums.source), 0, 4, true);
     const kick = events.find((e) => e.voice === 'bd')!;
     expect(route(kick)).toEqual([{ channel: 10, drum: 36, port: 1 }]);
     expect(route(events.find((e) => e.voice === 'rim')!)).toEqual([{ channel: 1, drum: null, port: 1 }]);
   });
 
   it('a kit put on another channel: its members go there, and voices skip it instead of 10', () => {
-    const r = compileSource(PRESETS.drums.source);
+    const r = compileSource(EXAMPLES.drums.source);
     const t = channelTable(r, [{ kit: 1 }]);
     expect(t.kits).toEqual([{ port: 1, channel: 1 }]);
     expect(t.voices).toEqual([{ voice: 'rim', channel: 2, port: 1 }]);
     const route = router(r, t);
-    const events = eventsBetween(planOf(PRESETS.drums.source), 0, 4, true);
+    const events = eventsBetween(planOf(EXAMPLES.drums.source), 0, 4, true);
     expect(route(events.find((e) => e.voice === 'bd')!)).toEqual([{ channel: 1, drum: 36, port: 1 }]);
     expect(Array.from({ length: 5 }, (_, i) => melodicChannel(i, 3))).toEqual([1, 2, 4, 5, 6]);
     expect(rotationChannels(1, 4, true, 3)).toEqual([1, 2, 4]);
@@ -205,7 +205,7 @@ describe('channels', () => {
   });
 
   it('a channel chosen by hand wins; one out of range does not', () => {
-    const r = compileSource(PRESETS.sailor.source);
+    const r = compileSource(EXAMPLES.sailor.source);
     expect(channelTable(r).voices).toEqual([
       { voice: 'fiddle', channel: 1, port: 1 },
       { voice: 'bass', channel: 2, port: 1 },
@@ -217,7 +217,7 @@ describe('channels', () => {
   });
 
   it('a gate is one part: its receivers on its channel, a kit gate on 10', () => {
-    const r = compileSource(PRESETS.gate.source);
+    const r = compileSource(EXAMPLES.gate.source);
     const t = channelTable(r);
     // (&leadOut plays &lead and &bell; &bass is played directly; &drumOut plays the kit)
     expect(t.voices).toEqual([
@@ -226,13 +226,13 @@ describe('channels', () => {
     ]);
     expect(t.kit.map((k) => k.member)).toEqual(['bd', 'sd', 'hh']);
     const route = router(r, channelTable(r, [{ voices: { leadOut: 7 } }]));
-    const events = eventsBetween(planOf(PRESETS.gate.source), 0, 4, true);
+    const events = eventsBetween(planOf(EXAMPLES.gate.source), 0, 4, true);
     for (const v of ['lead', 'bell']) expect(route(events.find((e) => e.voice === v)!)).toEqual([{ channel: 7, drum: null, port: 1 }]);
     expect(route(events.find((e) => e.voice === 'bd')!)).toEqual([{ channel: 10, drum: 36, port: 1 }]);
   });
 
   it('a matrix of outputs: a voice on any output and channel, 0 not sent; outputs after the first send nothing unless chosen', () => {
-    const r = compileSource(PRESETS.drums.source);
+    const r = compileSource(EXAMPLES.drums.source);
     expect(channelTable(r, [{}, {}]).voices).toEqual([{ voice: 'rim', channel: 1, port: 1 }]);
     const t = channelTable(r, [{ voices: { rim: 0 } }, { voices: { rim: 4 }, kit: 10 }, { voices: { rim: 2 } }]);
     expect(t.voices).toEqual([
@@ -244,7 +244,7 @@ describe('channels', () => {
       { port: 2, channel: 10 },
     ]);
     const route = router(r, t);
-    const events = eventsBetween(planOf(PRESETS.drums.source), 0, 4, true);
+    const events = eventsBetween(planOf(EXAMPLES.drums.source), 0, 4, true);
     expect(route(events.find((e) => e.voice === 'rim')!)).toEqual([
       { channel: 4, drum: null, port: 2 },
       { channel: 2, drum: null, port: 3 },

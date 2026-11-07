@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { compileSource as compileAlone } from './compile';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { HEARD, playsSameNotes, samePiece, SAMENESS_SECONDS, soundsIdentical, wholeWindow, WHOLE_PIECE_LIMIT } from './sameness';
@@ -79,13 +79,13 @@ describe('the equalities a tool promises, over their window (#180)', () => {
     const loops = ENDS('4').replace(' laps=1', '');
     expect(window(loops, loops)).toBe(SAMENESS_SECONDS);
     expect(window(ENDS('4'), loops)).toBeCloseTo(80, 6);
-    expect(window(PRESETS.fiveto12!.source, PRESETS.fiveto12!.source)).toBe(WHOLE_PIECE_LIMIT);
+    expect(window(EXAMPLES.fiveto12!.source, EXAMPLES.fiveto12!.source)).toBe(WHOLE_PIECE_LIMIT);
   });
 
   it('BWV 847 by hand sounds identical to the text the generator wrote, all 189 s of it (#181)', () => {
     const generated = readFileSync('fixtures/bwv847-generated.cells', 'utf8');
-    expect(window(PRESETS.bwv847!.source, generated)).toBeGreaterThan(180);
-    expect(soundsIdentical(PRESETS.bwv847!.source, generated, undefined, { resolve: resolveSeed })).toBe(true);
+    expect(window(EXAMPLES.bwv847!.source, generated)).toBeGreaterThan(180);
+    expect(soundsIdentical(EXAMPLES.bwv847!.source, generated, undefined, { resolve: resolveSeed })).toBe(true);
   });
 
   it('S1 reads every number of an event as the snapshot does, to 9 significant digits: one time summed two ways is one time (#196)', () => {

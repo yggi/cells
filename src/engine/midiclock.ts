@@ -72,7 +72,8 @@ export function mainMeter(result: CompileResult): MainMeter | null {
 export function ticksBetween(p: Plan, from: number, to: number): ClockTicks | null {
   const meter = mainMeter(p.result);
   if (!meter || !(to > from)) return null;
-  const map = clocking(p.result, p.statics).map(meter.cell);
+  // (as its swing plays it at every point: a tick between the meter's own steps leans as a tap of it does, #15 rung 1)
+  const map = clocking(p.result, p.statics).played(meter.cell);
   const per = meter.beat / PPQN; // (the meter's steps a tick)
   const end = Math.min(to, p.end);
   const tick = (k: number) => (k < 0 ? -Infinity : map.q(k * per));

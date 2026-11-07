@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { meterOfLevels, meterOfScan } from './meter';
 import { meterLevels } from './parser';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 
 const meterOf = (src: string) => {
   const r = compileSource(src);
@@ -54,7 +54,7 @@ describe('Meter', () => {
   });
   it('in every example, a meter written as meter(…) is a list and one written as scan(…) a scan', () => {
     const seen = { meter: 0, scan: 0 };
-    for (const [name, { source: src }] of Object.entries(PRESETS)) {
+    for (const [name, { source: src }] of Object.entries(EXAMPLES)) {
       const r = compileSource(src);
       if (!r.ok) continue;
       for (const c of r.cells.values()) {

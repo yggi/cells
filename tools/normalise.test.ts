@@ -22,6 +22,15 @@ describe('npm run normalise: files in the canonical spelling (#28)', () => {
     expect(normaliseFile('fragments/expression/01-vibrato.md', vibrato)).toEqual({ text: vibrato, steps: [] });
   });
 
+  it('--blocks: each cells block of a page a piece of its own; --rules: only those rules (#196)', () => {
+    const block = (text: string) => `\`\`\`cells\n${text}\`\`\``;
+    const page = `# A page\n\n${block('&bar scan(1 1 1 1) step=96bpm\n&lead s=saw loop=C4 cutoff=800\n&mix [&lead]\n')}\n\nBetween.\n\n${block('&tune step=4n 0 2\n&v s=sine loop=C4\n&mix [&tune * &v]\n')}\n`;
+    const { text, steps } = normaliseFile('page.md', page, { blocks: true, rules: new Set(['meter', 'tempo']) });
+    expect(text).toBe(page.replace('&bar scan(1 1 1 1) step=96bpm', '&bar meter("4/4") step=&tempo\n&tempo step=96bpm'));
+    expect(steps).toHaveLength(2);
+    expect(normaliseFile('page.md', page, { blocks: true }).text).toContain('lpf=800');
+  });
+
   it('every example file is normal', () => {
     for (const f of readdirSync('examples').filter((x) => x.endsWith('.md'))) {
       const text = readFileSync(`examples/${f}`, 'utf8');

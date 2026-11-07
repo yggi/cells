@@ -47,6 +47,15 @@ export interface Clocking {
     map(clock: string): TimeMap;
     /** A clock's time map as written: a swung meter's taps without its swing (#287), else its map. */
     written(clock: string): TimeMap;
+    /**
+     * A meter's steps as its swing plays them at every point, as a tap of that point plays (#15, rung 1): `meter("4/4")
+     * swing=8n:2/3` puts its step 0.5 where `meter("4/4", 2)` puts its step 1, its own map leaving it straight (the swing
+     * is its taps'). With `grain`, the finest division its swing leans, in its steps. Read by the MIDI clock and the MIDI
+     * export; a clock that doesn't swing is its map.
+     */
+    played(clock: string): TimeMap & {
+        readonly grain?: number;
+    };
 }
 /**
  * The physics of a physical cell (a meter with a motor, or a belted cell): to put a hand on it, and

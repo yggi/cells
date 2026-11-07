@@ -21,8 +21,10 @@ export function pieceMidi(result, shifts, muted = result.off, name, span = {}) {
         .flatMap(legatoNotes)
         .filter((e) => e.at < seconds);
     const meter = mainMeter(result);
-    const map = meter ? clocking(result, p.statics).map(meter.cell) : null;
-    const perBeat = meter?.beat ?? 4;
+    const played = meter ? clocking(result, p.statics).played(meter.cell) : null;
+    const grain = Math.min(1, played?.grain ?? 1);
+    const map = played ? { q: (k) => played.q(k * grain) } : null;
+    const perBeat = (meter?.beat ?? 4) / grain;
     const last = events.reduce((m, e) => Math.max(m, e.at + e.dur), seconds);
     const steps = [];
     for (let k = 0; steps.length < 1_000_000; k++) {
