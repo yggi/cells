@@ -667,12 +667,6 @@ export const LEFT = [
         why: 'a key whose mode is a name: written as its table where it can be; a key after over= unnamed, or with a slider for a tonic, stays',
     },
     {
-        key: 'meter scans',
-        rows: '37 `scan(i …)` on a stepped line',
-        test: /\bscan\(.*\bstep=|\bstep=.*\bscan\(/,
-        why: 'a scan with a step= is a meter: its numbers are the lengths of its steps, `@`, and what a tap reads of it are its levels',
-    },
-    {
         key: 'meters',
         rows: '42 `meter("sig")` left as written',
         test: /\bmeter\("[^"]*[0-9/][^"]*"/,
@@ -690,7 +684,6 @@ export const LEFT = [
         test: /pitch=&[\w(]/,
         why: 'a voice’s pitch= joins every product the voice is in, a sum in each: left where the voice is read but in a mix (a gate, a kit), in a sum, or its pitch written in place',
     },
-    { key: 'levels', rows: '27 `&x:0:g`', test: /&\w+:\d/, why: 'a hit’s gain is a volume line in the product: a line of its own, stepped as the braid' },
     {
         key: 'copies',
         rows: '14, 79 `=` `base=`',
