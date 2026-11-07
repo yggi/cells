@@ -68,6 +68,14 @@ describe('a filed template is taken with its arguments as the seed’s is', () =
     ]);
   });
 
+  it('a use of one set at another set’s point still raises its own, not the nearer one of another set (#464)', () => {
+    const after = useFragments(repository, layerOf(filed), [{ id: 'mine(mode=phrygian)', point: BRIGHT, facet: 'mode' }]);
+    expect(after.filed[0]!.fragment.association.map((wp) => [wp.args?.mode, wp.weight])).toEqual([
+      ['phrygian', 1.1],
+      ['lydian', 1],
+    ]);
+  });
+
   it('a use in a facet the set has no point of adds one, carrying its arguments, so it stays that set’s', () => {
     const where = at(0.5, 0.2, 0.5, 0.2);
     const after = useFragments(repository, layerOf(filed), [{ id: 'mine(mode=lydian)', point: where, facet: 'harmony' }]);

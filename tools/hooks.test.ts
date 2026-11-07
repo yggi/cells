@@ -72,7 +72,8 @@ function hook(dir: string, refs: { local?: string; remote?: string } | 'head' = 
   const run = spawnSync('sh', [`${root}/.githooks/pre-push`, 'origin', 'url'], {
     cwd: dir,
     input: `refs/heads/work ${local} ${remote} ${zero}\n`,
-    env: { ...env, CELLS_VERIFY: verify, ...extra },
+    // (the docs check's install, tools/install-first.mjs, stood in for: a throwaway repository has no node_modules)
+    env: { ...env, CELLS_VERIFY: verify, CELLS_INSTALL: 'true', ...extra },
     encoding: 'utf8',
   });
   return { status: run.status, stderr: run.stderr };
@@ -119,6 +120,15 @@ describe('pre-push', () => {
     expect(status).toBe(0);
     expect(stderr).toContain('the docs check passed (the branch changes prose alone), 3 tests; not stamped');
     expect(hook(dir, 'head', 'true', { CELLS_VERIFY_DOCS: failing }).status).toBe(1);
+  });
+
+  it('installs first for the docs check in a checkout with no node_modules, as verify does, and blocks the push when the install fails (#529)', () => {
+    const dir = repoWith(['notes.md']);
+    const docs = `test -f installed && echo '      Tests  3 passed (3)'`;
+    const { status, stderr } = hook(dir, 'head', failing, { CELLS_VERIFY_DOCS: docs, CELLS_INSTALL: 'touch installed' });
+    expect([status, stderr]).toEqual([0, expect.stringContaining('the docs check passed (the branch changes prose alone), 3 tests')]);
+    rmSync(join(dir, 'installed'));
+    expect(hook(dir, 'head', failing, { CELLS_VERIFY_DOCS: 'true', CELLS_INSTALL: 'exit 1' }).status).toBe(1);
   });
 
   it('runs everything once code changes with the prose', () => {
