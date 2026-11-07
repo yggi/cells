@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MODES, agogic, even, midiOf, modeBrightness, modeName, noteName, pitchHue } from './modes';
+import { MODES, SCALES, agogic, even, midiOf, modeBrightness, modeName, noteName, pitchHue } from './modes';
 
 describe('even (Bresenham)', () => {
   it('walks the diatonic modes darkest → brightest as the phase rises', () => {
@@ -68,4 +68,37 @@ describe('modeBrightness', () => {
     expect(b.map((v) => +v.toFixed(3))).toEqual([0.833, 0.5, 0.167, 1, 0.667, 0.333, 0]);
   });
   it('all alike: half', () => expect(modeBrightness([0, 4, 8], 12)).toEqual([0.5, 0.5, 0.5]));
+});
+
+describe('the scales even generates (decision 072, #507)', () => {
+  // (written out, as a theory book has them: what even() must give, so a wrong even fails here and not only in a piece)
+  it('are the scales as written: the seven modes, the pentatonics, the whole tone', () => {
+    expect(MODES.map((m) => [m.name, m.intervals.join(' ')])).toEqual([
+      ['Locrian', '0 1 3 5 6 8 10'],
+      ['Phrygian', '0 1 3 5 7 8 10'],
+      ['Aeolian', '0 2 3 5 7 8 10'],
+      ['Dorian', '0 2 3 5 7 9 10'],
+      ['Mixolydian', '0 2 4 5 7 9 10'],
+      ['Ionian', '0 2 4 5 7 9 11'],
+      ['Lydian', '0 2 4 6 7 9 11'],
+    ]);
+    const steps = Object.fromEntries(Object.entries(SCALES).map(([k, v]) => [k, v.steps.join(' ')]));
+    expect(steps).toEqual({
+      major: '2 2 1 2 2 2 1',
+      minor: '2 1 2 2 1 2 2',
+      ionian: '2 2 1 2 2 2 1',
+      dorian: '2 1 2 2 2 1 2',
+      phrygian: '1 2 2 2 1 2 2',
+      lydian: '2 2 2 1 2 2 1',
+      mixolydian: '2 2 1 2 2 1 2',
+      aeolian: '2 1 2 2 1 2 2',
+      locrian: '1 2 2 1 2 2 2',
+      harmonic: '2 1 2 2 1 3 1',
+      melodic: '2 1 2 2 2 2 1',
+      pentatonic: '2 2 3 2 3',
+      minorpentatonic: '3 2 2 3 2',
+      blues: '3 2 1 1 3 2',
+      wholetone: '2 2 2 2 2 2',
+    });
+  });
 });

@@ -1,0 +1,3 @@
+### Fixed
+
+- **The core writes a signature as levels that play the same** (#545, decision 069): `meter("2/2")` is `meter("*+", 2n)` and `meter("6/16")` `meter("*..+..", 16n)`, the step's note value written where the levels alone read another; a meter whose levels can't say its beats (6/4, 9/4 and 12/4, and x/2 at 2 steps a beat, whose quarters grade `-`) stays as written. Before, those rewrites didn't play the same, so S1 left the whole family undone for the text: of the 72 signatures and subdivisions the rule names, 41 kept their signature in their core, now 12. No core played differently, before or after.

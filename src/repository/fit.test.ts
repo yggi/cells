@@ -152,6 +152,7 @@ const FITS: Record<string, readonly string[]> = {
   rumba_clave_3_2: FOUR_FOURS,
   bossa_nova_clave: FOUR_FOURS,
   bossa_nova_clave_one_bar: FOUR_FOURS,
+  cinquillo: FOUR_FOURS,
   electro_swing_drums: FOUR_FOURS,
   spooky_drums: [
     'meter',
@@ -352,8 +353,8 @@ describe('what it costs', () => {
     const r = (await import('./fragments')).createRepository(LIBRARY);
     r.query(FUNK, LIBRARY.length, {}, { workbench: bench('meter') });
     const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench }));
-    // (the 17 rhythms, the 14 instruments, the vibrato, the envelopes, the styles and the 8 modules: a performer's part, a mode's tonic (#290) and a stab line's &harm are holes no workbench of drums fills)
-    expect(first).toHaveLength(42);
+    // (the 18 rhythms, the 14 instruments, the vibrato, the envelopes, the styles and the 8 modules: a performer's part, a mode's tonic (#290) and a stab line's &harm are holes no workbench of drums fills)
+    expect(first).toHaveLength(43);
     expect(fresh).toBeGreaterThan(0);
     expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length);
     expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['funk_drums'] }))[1]).toBe(0);

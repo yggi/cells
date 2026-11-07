@@ -107,7 +107,7 @@ export declare const CO_USE_KNOWN = 10;
  * How far a known group pulls, in units of the pull: 0.01 in distance at the default, half Jambot's hold distance, a
  * thirtieth of its miss distance (0.3). Over the lock-in measure's 256 runs (`lockin.ts`, `lockin.slow.test.ts`) use
  * together then adds 1.5 points to the rhythms' share among a run's 3 most used, on top of use moves' 2.5, 4.05 in all,
- * under the bound of 5 with twice its standard error (#162); at 0.2 the total is 5.1, at 0.05 3.4. Any pull adds some,
+ * under the bound then, 5 points with twice its standard error (#162; since #533 the bound is relative, decision 048); at 0.2 the total is 5.1, at 0.05 3.4. Any pull adds some,
  * since among fragments that fit the style about as well a known group wins the tie, and stays (#151).
  */
 export declare const CO_USE_REACH = 0.1;

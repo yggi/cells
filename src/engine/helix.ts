@@ -146,7 +146,9 @@ export function resolveIn(result: CompileResult, table: string, tableShift: numb
   let x = value;
   let pending = alter;
   for (let guard = 0; guard < 64; guard++) {
-    const c: ResolvedCell = result.cells.get(at)!;
+    const c: ResolvedCell | undefined = result.cells.get(at);
+    // (a table that doesn't exist, mid-edit or a fragment the host can't resolve: the path so far, #307)
+    if (!c) return { root: at, position: x, path };
     if (c.root) {
       const position = x + pending + shifts(at) + atShift;
       path.push({ cell: at, index: Math.round(position) });

@@ -1,30 +1,26 @@
 export const mod = (n, m) => ((n % m) + m) % m;
 export const NOTE_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
-export const MODES = [
-    { name: 'Locrian', intervals: [0, 1, 3, 5, 6, 8, 10] },
-    { name: 'Phrygian', intervals: [0, 1, 3, 5, 7, 8, 10] },
-    { name: 'Aeolian', intervals: [0, 2, 3, 5, 7, 8, 10] },
-    { name: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10] },
-    { name: 'Mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10] },
-    { name: 'Ionian', intervals: [0, 2, 4, 5, 7, 9, 11] },
-    { name: 'Lydian', intervals: [0, 2, 4, 6, 7, 9, 11] },
-];
+export const MODES = ['Locrian', 'Phrygian', 'Aeolian', 'Dorian', 'Mixolydian', 'Ionian', 'Lydian'].map((name, phase) => ({
+    name,
+    intervals: even(7, 12, phase),
+}));
+const evenSteps = (k, n, phase) => intervals(even(k, n, phase), n);
 export const SCALES = {
-    major: { steps: [2, 2, 1, 2, 2, 2, 1], name: 'Ionian' },
-    minor: { steps: [2, 1, 2, 2, 1, 2, 2], name: 'Aeolian' },
-    ionian: { steps: [2, 2, 1, 2, 2, 2, 1], name: 'Ionian' },
-    dorian: { steps: [2, 1, 2, 2, 2, 1, 2], name: 'Dorian' },
-    phrygian: { steps: [1, 2, 2, 2, 1, 2, 2], name: 'Phrygian' },
-    lydian: { steps: [2, 2, 2, 1, 2, 2, 1], name: 'Lydian' },
-    mixolydian: { steps: [2, 2, 1, 2, 2, 1, 2], name: 'Mixolydian' },
-    aeolian: { steps: [2, 1, 2, 2, 1, 2, 2], name: 'Aeolian' },
-    locrian: { steps: [1, 2, 2, 1, 2, 2, 2], name: 'Locrian' },
+    major: { steps: evenSteps(7, 12, 5), name: 'Ionian' },
+    minor: { steps: evenSteps(7, 12, 2), name: 'Aeolian' },
+    ionian: { steps: evenSteps(7, 12, 5), name: 'Ionian' },
+    dorian: { steps: evenSteps(7, 12, 3), name: 'Dorian' },
+    phrygian: { steps: evenSteps(7, 12, 1), name: 'Phrygian' },
+    lydian: { steps: evenSteps(7, 12, 6), name: 'Lydian' },
+    mixolydian: { steps: evenSteps(7, 12, 4), name: 'Mixolydian' },
+    aeolian: { steps: evenSteps(7, 12, 2), name: 'Aeolian' },
+    locrian: { steps: evenSteps(7, 12, 0), name: 'Locrian' },
     harmonic: { steps: [2, 1, 2, 2, 1, 3, 1], name: 'Harmonic minor' },
     melodic: { steps: [2, 1, 2, 2, 2, 2, 1], name: 'Melodic minor' },
-    pentatonic: { steps: [2, 2, 3, 2, 3], name: 'Pentatonic' },
-    minorpentatonic: { steps: [3, 2, 2, 3, 2], name: 'Minor pentatonic' },
+    pentatonic: { steps: evenSteps(5, 12, 0), name: 'Pentatonic' },
+    minorpentatonic: { steps: evenSteps(5, 12, 3), name: 'Minor pentatonic' },
     blues: { steps: [3, 2, 1, 1, 3, 2], name: 'Blues' },
-    wholetone: { steps: [2, 2, 2, 2, 2, 2], name: 'Whole tone' },
+    wholetone: { steps: evenSteps(6, 12, 0), name: 'Whole tone' },
 };
 export const MODE_WORDS = {
     locrian: 0,

@@ -73,7 +73,7 @@ function lapOf(c, period) {
     return Math.floor((c + EPS) / period);
 }
 function inForce(m, c) {
-    const lap0 = Math.floor(c / m.period);
+    const lap0 = lapOf(c, m.period);
     let last = null;
     for (const lap of [lap0, lap0 - 1]) {
         for (const e of m.events)
@@ -101,7 +101,7 @@ function rampedSeries(p, m, from, to, valueOf) {
         return d ? valueOf(d, time) : 0;
     };
     const valueAt = (c) => {
-        const lap = Math.floor(c / m.period);
+        const lap = lapOf(c, m.period);
         const local = c - lap * m.period;
         let i = starts.length - 1;
         for (let k = 0; k < starts.length; k++)

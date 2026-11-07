@@ -100,6 +100,8 @@ export function resolveIn(result, table, tableShift, value, alter, shifts) {
     let pending = alter;
     for (let guard = 0; guard < 64; guard++) {
         const c = result.cells.get(at);
+        if (!c)
+            return { root: at, position: x, path };
         if (c.root) {
             const position = x + pending + shifts(at) + atShift;
             path.push({ cell: at, index: Math.round(position) });

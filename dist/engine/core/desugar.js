@@ -1,10 +1,11 @@
 import { parse } from "../parser/index.js";
+import { TEMPI } from "../parser/free.js";
 import { compileSource } from "../compile.js";
 import { noteValue } from "../meter.js";
 import { noteFrequency } from "../program.js";
 import { expansion } from "../use.js";
 import { readFrom, readUse } from "../parser/use.js";
-import { splitComment } from "../edit.js";
+import { declLine, declWords, splitComment } from "../edit.js";
 const num = (x) => String(x);
 const codeWise = (text, f) => text
     .split('\n')
@@ -38,6 +39,19 @@ export const FAMILIES = [
             .split(/(\bfree\([^)]*\))/)
             .map((part, i) => (i % 2 ? part : part.replace(/(?<=[=(,\s*])(-?\d*\.?\d+)(bpm|hz|min|h|d|wk|k)(?![A-Za-z0-9_])/g, (_, n, u) => num(+n * UNIT[u]))))
             .join('')),
+    },
+    {
+        key: 'sliders',
+        rows: '58–64 a unit in `free(…)`',
+        rewrite: (text) => codeWise(text, (c) => c
+            .replace(/\bfree\((-?[0-9]*\.?[0-9]+)(bpm|hz|min|h|d|wk|k),\s*(-?[0-9]*\.?[0-9]+)\.\.(-?[0-9]*\.?[0-9]+)/g, (_, n, u, lo, hi) => `free(${num(+n * UNIT[u])}, ${num(+lo * UNIT[u])}..${num(+hi * UNIT[u])}, unit=${u}`)
+            .replace(/\bfree\(([a-z]+)\)/g, (written, word) => {
+            const range = TEMPI[word];
+            if (!range)
+                return written;
+            const [lo, hi] = range;
+            return `free(${num(Math.round((lo + hi) / 2) / 60)}, ${num(lo / 60)}..${num(hi / 60)}, unit=bpm)`;
+        })),
     },
     {
         key: 'note names',
@@ -80,6 +94,21 @@ export const FAMILIES = [
             })),
     },
     {
+        key: 'copies',
+        rows: '79 `base=` (a copy that writes no braid of its own)',
+        rewrite: (text) => copies(text),
+    },
+    {
+        key: 'keys',
+        rows: '40 `scale(name)` `scale(name, tonic)` `scale(&mode, &tonic)`',
+        rewrite: (text, options) => keys(text, options),
+    },
+    {
+        key: 'meters',
+        rows: '42 `meter("sig")`',
+        rewrite: (text, options) => meters(text, options),
+    },
+    {
         key: 'taps',
         rows: '54–55 `step=16n` `8t` `4n.` `1m`',
         rewrite: (text, options) => taps(text, options),
@@ -88,6 +117,11 @@ export const FAMILIES = [
         key: 'subsequences',
         rows: '16, 22 `[a b]` `x*n`, and `@` on the line’s finest grid',
         rewrite: (text, options) => subsequences(text, options),
+    },
+    {
+        key: 'chains',
+        rows: '53 `step=&x*n/d` as one ratio',
+        rewrite: (text) => codeWise(text, chains),
     },
 ];
 const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
@@ -175,7 +209,7 @@ function subsequences(text, options) {
 function chainOf(k) {
     const near = (x) => Math.abs(x - Math.round(x)) < 1e-9;
     if (near(k))
-        return `*${Math.round(k)}`;
+        return Math.round(k) === 1 ? '' : `*${Math.round(k)}`;
     if (near(1 / k))
         return `/${Math.round(1 / k)}`;
     for (let q = 2; q <= 64; q++)
@@ -233,6 +267,124 @@ const repeated = (tok) => {
     return m ? Array.from({ length: +m[2] }, () => m[1]).join(' ') : tok;
 };
 const unitRead = (text) => new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)\[/g)].map((m) => m[1]));
+function chains(code) {
+    return code.replace(/(\bstep=(?:&[A-Za-z_][A-Za-z0-9_]*:)?(?:pulse|beat|&[A-Za-z_][A-Za-z0-9_]*|[0-9]+[ntm]\.?))((?:[*/][0-9]+(?:\.[0-9]+)?)+)(?![0-9A-Za-z_.])/g, (_, head, chain) => {
+        let k = 1;
+        for (const m of chain.matchAll(/([*/])([0-9]+(?:\.[0-9]+)?)/g))
+            k = m[1] === '*' ? k * +m[2] : k / +m[2];
+        return `${head}${chainOf(k)}`;
+    });
+}
+function copies(text) {
+    let now = text;
+    for (const d of parse(text).cells) {
+        if (!d.base || d.base.pick || d.base.shift)
+            continue;
+        const own = declWords(now, d.name);
+        const base = declWords(now, d.base.name);
+        if (!own || !base || own.braid.length || base.attrs.some((a) => a.startsWith('base=')))
+            continue;
+        const set = new Set(own.attrs.map((a) => a.split('=')[0]));
+        const attrs = [...base.attrs.filter((a) => !set.has(a.split('=')[0])), ...own.attrs.filter((a) => !a.startsWith('base='))];
+        const i = declLine(now, d.name);
+        const lines = now.split('\n');
+        const [, comment] = splitComment(lines[i]);
+        const next = [...own.head, ...base.braid, ...attrs].join(' ');
+        lines[i] = comment ? `${next} ${comment.trim()}` : next;
+        now = lines.join('\n');
+    }
+    return now;
+}
+function keys(written, options) {
+    const text = named(written);
+    const r = compileSource(text, undefined, options);
+    if (!r.ok)
+        return text;
+    const lines = text.split('\n');
+    const tables = [];
+    const taken = new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]));
+    const decls = parse(text).cells;
+    for (const d of decls) {
+        const c = r.cells.get(d.name);
+        if (d.braid.kind !== 'scan' || !c?.scan)
+            continue;
+        const key = d.over ? decls.find((k) => k.name === d.over.name) : undefined;
+        const shift = d.over ? (r.cells.get(d.over.name)?.shift ?? 0) : c.shift;
+        const i = d.span.line - 1;
+        const [code, comment] = splitComment(lines[i] ?? '');
+        const call = /\bscale\(([^()]*)\)/.exec(code);
+        if (!call || /over=$/.test(code.slice(0, call.index)) || /free\(/.test(call[1]))
+            continue;
+        const mode = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(call[1])?.[1];
+        const held = mode ? decls.find((m) => m.name === mode) : undefined;
+        if (held?.braid.kind === 'list' && held.braid.tokens.length > 1)
+            continue;
+        let at = 0;
+        const table = c.scan.steps.slice(0, -1).map((s) => (at += s));
+        let name = `_m${tables.length + 1}`;
+        while (taken.has(name))
+            name = `_m${tables.length + taken.size + 1}`;
+        taken.add(name);
+        tables.push(`&${name} ${[0, ...table].map(num).join(' ')}`);
+        const tonic = key?.tonic ? `, &${key.tonic.name}` : shift ? `, ${num(shift)}` : '';
+        const next = code.replace(call[0], `scale(&${name}${tonic})`);
+        lines[i] = comment ? `${next}${comment}` : next;
+    }
+    return tables.length ? `${lines.join('\n').replace(/\s+$/, '')}\n${tables.join('\n')}` : written;
+}
+function named(text) {
+    const keys = [];
+    const taken = new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]));
+    const next = codeWise(text, (c) => c.replace(/\bover=scale\(([^()]*)\)/g, (_, args) => {
+        let name = `_k${keys.length + 1}`;
+        while (taken.has(name))
+            name = `_k${keys.length + taken.size + 1}`;
+        taken.add(name);
+        keys.push(`&${name} scale(${args})`);
+        return `over=&${name}`;
+    }));
+    return keys.length ? `${next.replace(/\s+$/, '')}\n${keys.join('\n')}` : text;
+}
+const LEVEL = ['*', '+', '-', '.', ','];
+const played = (m) => {
+    const step = m.pulses / (m.unit * m.levels.length);
+    return JSON.stringify([m.levels, +step.toFixed(9), m.beats.map((b) => +(b / m.unit).toFixed(9))]);
+};
+function meters(text, options) {
+    const r = compileSource(text, undefined, options);
+    if (!r.ok)
+        return text;
+    const meterOf = (braid) => {
+        const c = compileSource(`&m ${braid}`);
+        return c.ok ? (c.cells.get('m')?.meter ?? null) : null;
+    };
+    const asLevels = (m) => {
+        const levels = m.levels.map((l) => LEVEL[Math.min(l, LEVEL.length - 1)]).join('');
+        const bare = meterOf(`meter("${levels}")`);
+        if (bare && played(bare) === played(m))
+            return `meter("${levels}")`;
+        const value = (m.unit * m.levels.length) / m.pulses;
+        if (!Number.isInteger(value))
+            return null;
+        const valued = meterOf(`meter("${levels}", ${value}n)`);
+        return valued && played(valued) === played(m) ? `meter("${levels}", ${value}n)` : null;
+    };
+    const each = (c) => {
+        const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(c)?.[1];
+        const meter = name ? r.cells.get(name)?.meter : null;
+        if (!meter || meter.written !== 'meter')
+            return c;
+        return c.replace(/\bmeter\("([^"]*)"(?:,\s*[0-9]+)?\)/, (written, sig) => (/^[*+\-.,:;]+$/.test(sig) ? written : (asLevels(meter) ?? written)));
+    };
+    return text
+        .split('\n')
+        .map((raw) => {
+        const [code, comment] = splitComment(raw);
+        const next = each(code);
+        return next === code ? raw : comment ? `${next}${comment}` : next;
+    })
+        .join('\n');
+}
 function innermost(written) {
     const text = written.replace(/"(?:[^"\\]|\\.)*"/g, (q) => q.replace(/[^"]/g, ' '));
     for (let i = text.indexOf('&('); i >= 0; i = text.indexOf('&(', i + 1)) {
@@ -292,19 +444,29 @@ export const LEFT = [
     },
     {
         key: 'sliders',
-        rows: '58–64 a unit in `free(…)`',
-        test: /\bfree\(-?\d*\.?\d+(?:bpm|hz|min|h|d|wk|k)\b/,
-        why: 'a slider’s unit is what the performer moves it in: its range and its steps are in it',
+        rows: '58–64 a unit in `free(…)`, or a tempo marking, left as written',
+        test: /\bfree\((?:-?\d*\.?\d+(?:bpm|hz|min|h|d|wk|k)\b|[a-z]+\))/,
+        why: 'a slider whose unit is written after its number, or a marking (free(andante)): its numbers in the core’s, the unit an argument',
     },
     { key: 'unit reads', rows: '21 `x!n` in a cell read by its units', test: /!\d/, why: '`&a!2` is one unit and `&a &a` two: a pick or a rotation (`&john[<<]`) counts them' },
-    { key: 'keys', rows: '40 `scale(name)`', test: /\bscale\(/, why: 'a key is a mode read from the library and a tonic: two cells, the mode’s table among them' },
+    {
+        key: 'keys',
+        rows: '40 `scale(name)` left as written',
+        test: /\bscale\((?!&)/,
+        why: 'a key whose mode is a name: written as its table where it can be; a key after over= unnamed, or with a slider for a tonic, stays',
+    },
     {
         key: 'meter scans',
         rows: '37 `scan(i …)` on a stepped line',
         test: /\bscan\(.*\bstep=|\bstep=.*\bscan\(/,
         why: 'a scan with a step= is a meter: its numbers are the lengths of its steps, `@`, and what a tap reads of it are its levels',
     },
-    { key: 'meters', rows: '42 `meter("sig")`', test: /\bmeter\(/, why: 'a signature’s levels are the grouping rule (#17): written out they are its table, which the reader has' },
+    {
+        key: 'meters',
+        rows: '42 `meter("sig")` left as written',
+        test: /\bmeter\("[^"]*[0-9/][^"]*"/,
+        why: 'a signature’s levels are the grouping rule (#17): written out where the piece plays the same so',
+    },
     {
         key: 'gates',
         rows: '111–113 `play=` `level=` `[&a, &b]`',
