@@ -18,5 +18,5 @@ description: A bass line whose filter opens on every note and swells over four b
 &fade map=db step=1m 0 -3 -6 -3
 
 &acid s=saw loop=C2 lpf=150..2800 * &(map=adsr .002 .15 .1 .05) * &swell lpq=10 env=&strike
-&out map=sample postgain=5.55 [&line * &acid * &accent * &fade * .4]
+&out map=sample postgain=9.12 [&line * &acid * &accent * &fade * .4]
 ```
