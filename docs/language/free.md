@@ -12,6 +12,8 @@ A number left to the performer: a slider on the node, and moving it rewrites the
 
 A tempo marking is its range, centred: `step=free(adagio)` (largo larghetto adagio andante moderato allegro vivace presto).
 
+A rate's unit can be an argument, its numbers then the core's (a second): `step=free(2, 1.5..2.5, unit=bpm)` is `step=free(120bpm, 90..150)`, the same slider shown in bpm. The unit written after the number, and a marking, are its sugar: `toCore` writes a slider so (decision 069). The unit is said once, after the number or as `unit=`, and only on a rate.
+
 ```cells
 &bar scan(4 4 4 4) step=free(90bpm, 60..240)
 &slow scan(4 4 4 4) step=free(adagio)

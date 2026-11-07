@@ -376,3 +376,37 @@ describe('the parts of a step swing as a tap of their level does', () => {
     expect(cut).toEqual(whole);
   });
 });
+
+// #15, rung 4: the tests the feature lacked. A list's own swing= (on a list stepping at a rate, its pairs of steps), its
+// onsets and lengths and not only its warnings; and a meter's swing read from a cell, at the meter, as a unit.
+describe('a list’s own swing= leans its pairs of steps', () => {
+  const played = (line: string, seconds: number) => {
+    const r = compiled(`${line}\n${VOICE.trim()}`);
+    return eventsBetween(plan(r, codeShifts(r)), 0, seconds - 1e-6).map((e) => [+e.at.toFixed(9), +e.dur.toFixed(9)]);
+  };
+  it('at a rate: each pair’s second step at the share of the pair, its first as long as that, every pair where it was', () => {
+    // (2 steps a second: a pair is 1 s; at .6 the second starts .6 s in and sounds the .4 s left)
+    expect(played('&x step=2 swing=.6 0 1 2 3', 2)).toEqual([
+      [0, 0.6],
+      [0.6, 0.4],
+      [1, 0.6],
+      [1.6, 0.4],
+    ]);
+    expect(played('&x step=2 swing=.5 0 1 2 3', 2)).toEqual(played('&x step=2 0 1 2 3', 2));
+  });
+  it('on a tap it does nothing, and says so: a tap’s swing is its meter’s', () => {
+    const tapped = `&bar meter("4/4") step=60bpm\n&x step=8n swing=.6 0 1 2 3${VOICE}`;
+    expect(warnings(tapped)).toEqual(['swing= acts on a meter (step= a rate): on &x it does nothing']);
+    expect(onsets('meter("4/4")', '8n')).toEqual([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5]);
+  });
+});
+
+describe('a meter’s swing read from a cell (swing=&swing, #308)', () => {
+  const levels = (src: string) =>
+    compiled(src)
+      .cells.get('bar')!
+      .meter!.swing!.map((l) => [l.level, l.whole, l.share]);
+  it.each(['8n:2/3', '16n:.6', '8n:3/5,16n:11/20'])('swing=&swing with &swing swing=%s: the meter’s levels are swing=%s’s', (swing) => {
+    expect(levels(`&bar meter("4/4") step=60bpm swing=&swing\n&swing swing=${swing}`)).toEqual(levels(`&bar meter("4/4") step=60bpm swing=${swing}`));
+  });
+});

@@ -16,12 +16,6 @@ describe('Meter', () => {
   // (a grade's number from the ends into five: the bar 0, a beat 1, any tier between 2, the eighth 3, finer 4)
   const number = (ch: string) => ({ '*': 0, '+': 1, '-': 2, ':': 2, ';': 2, '.': 3, ',': 4 })[ch];
   for (const sig of sigs) {
-    it(`meter("${sig}") and scan(1!n) give equal positions`, () => {
-      const a = meterOf(`&m meter("${sig}")`);
-      const b = meterOf(`&m scan(${'1 '.repeat(a.levels.length).trim()})`);
-      expect(a.positions).toEqual(b.positions);
-      expect(a.lap).toBe(b.lap);
-    });
     for (const sub of [1, 2, 3]) {
       it(`meter("${sig}", ${sub}) has meterLevels' levels`, () => {
         const m = meterOf(`&m meter("${sig}", ${sub})`);
@@ -29,16 +23,30 @@ describe('Meter', () => {
       });
     }
   }
-  it('a scan is flat under the bar; a meter nests its levels', () => {
-    expect(meterOfScan([1, 1, 1]).tree.groups.map((g) => g.level)).toEqual([1, 1, 1]);
-    const t = meterOfLevels([0, 3, 1, 3]).tree;
-    expect(t.groups.map((g) => [g.level, g.from, g.to])).toEqual([
-      [3, 1, 2],
-      [1, 2, 4],
-    ]);
-    expect(t.groups[1].groups.map((g) => g.from)).toEqual([3]);
+  // (#15, item 3, ruling (a): written as levels, every mark but . and , starts a beat, and the step's note value is its
+  // second argument; so a signature's levels, written out with its note value, are the same meter: its pulses, its note
+  // value, its beats. Not where a signature's beats are groups of quarters, 6/4 and 9/4: their quarters grade `-`, a tier
+  // (contracts/meter v2), and a `-` written starts a beat: yggi/cells#545.)
+  const COMPOUND_QUARTERS = ['6/4', '9/4'];
+  it.each(sigs.filter((sig) => !COMPOUND_QUARTERS.includes(sig)))('meter("%s") written as its levels, with its note value, is the same meter', (sig) => {
+    const named = meterOf(`&m meter("${sig}")`);
+    const written = meterOf(`&m meter("${meterLevels(sig, 1)}", ${named.unit}n)`);
+    expect([written.pulses, written.unit, written.beats, written.levels]).toEqual([named.pulses, named.unit, named.beats, named.levels]);
   });
-  it('says which form it was written as: meter(…), scan(…), and none for a plain list', () => {
+  it('6/4 written as its levels counts six beats where the signature counts two (#545)', () => {
+    const named = meterOf('&m meter("6/4")');
+    const written = meterOf(`&m meter("${meterLevels('6/4', 1)}", 4n)`);
+    expect([named.beats, written.beats]).toEqual([
+      [3, 3],
+      [1, 1, 1, 1, 1, 1],
+    ]);
+  });
+  it('a scan is one level under the bar, a pulse each entry, a quarter each', () => {
+    const m = meterOfScan([1, 2, 1]);
+    expect([m.levels, m.pulses, m.unit, m.beats]).toEqual([[1, 1, 1], 3, 4, [1, 1, 1]]);
+    expect(meterOfLevels([0, 3, 1, 3]).beats).toEqual([2, 2]);
+  });
+  it('says which form it was written as, for the core’s meters rewrite: meter(…), scan(…), and none for a plain list', () => {
     expect(meterOf('&m meter("4/4")').written).toBe('meter');
     expect(meterOf('&m scan(1 1 1 1)').written).toBe('scan');
     const r = compileSource('&m 0 1 2');

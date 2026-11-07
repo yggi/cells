@@ -16,6 +16,7 @@ export const STUBS = new Set([
         .map((k) => `parameter ${k}`),
 ]);
 export const PENDING = new Set([
+    'free free(v, lo..hi, unit=bpm)',
     'generator even(k, n)',
     'step <a b c>',
     'modifier x/n',
@@ -531,6 +532,8 @@ export function formsUsed(source, options = {}) {
                 use('free free("text")');
             else if (f.key === 'gain')
                 use('mix free(v, lo..hi)');
+            else if (/,\s*unit=/.test(textOf(f.span)))
+                use('free free(v, lo..hi, unit=bpm)');
             else if (!TEMPO_MARKINGS.test(textOf(f.span)))
                 use('free free(v, lo..hi)');
             if (f.key === 'step' || f.key === 'loop') {

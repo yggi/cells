@@ -55,6 +55,16 @@ describe('at rest, nothing is dimmed (#201)', () => {
       expect(liveAt(r, codeShifts(r), r.off, 0).seconds).toBe(0);
     }
   });
+
+  it('and with no resolver, where a spliced line reads a table that doesn’t exist: drawn, not thrown (#307)', () => {
+    const r = compileAlone('&bar meter("4/4") step=120bpm\n&v s=sine\n&a over=&missing step=4n 0\n&t step=4n &a 0\n&o map=sample [&t * &v]');
+    expect(r.diagnostics.map((d) => d.message)).toContain('Unknown cell &missing');
+    expect(liveAt(r, codeShifts(r), r.off, 0).seconds).toBe(0);
+    for (const p of Object.values(PRESETS)) {
+      const alone = compileAlone(p.source);
+      expect(liveAt(alone, codeShifts(alone), alone.off, 0).seconds).toBe(0);
+    }
+  });
 });
 
 describe('a parameter a voice takes from an instrument is routed into the instrument (decision 067, #433)', () => {

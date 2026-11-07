@@ -2,6 +2,9 @@
 import type { FreeSpec } from '../ast';
 import type { LineScanner } from './scanner';
 import { type Syntax } from './syntax';
+/** Tempo markings for free(…): a range in bpm, centred. */
+/** The tempo markings a rate's slider can be written as (`free(andante)`), each its range in bpm; it starts at the middle. */
+export declare const TEMPI: Readonly<Record<string, readonly [number, number]>>;
 /** free(…)'s forms. */
 export declare const FREE_SYNTAX: readonly Syntax[];
 /** Why a braid left free stands only as a cell's whole braid (decision 018). */

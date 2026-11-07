@@ -27,8 +27,8 @@ export interface Grouping {
  *  - sizes, `2+2+3`, of eighths, or of the denominator after a slash, `2+2+3/4`, `3+3+2/16`: each 2, 3, 4 or 6.
  */
 export declare function groupingOf(sig: string): Grouping | null;
-/** A time signature's pulses, their note value and its beats in pulses (decision 040), each pulse in `sub` steps. */
-export declare function signatureOf(sig: string, sub: number): Signature;
+/** A time signature's pulses, their note value and its beats in pulses (decision 040). */
+export declare function signatureOf(sig: string): Signature;
 /** A meter's grades, one a step (contracts/meter v2): as written, or from its signature or sizes; '' where it is neither. */
 export declare function meterLevels(sig: string, sub: number): string;
 type Generator = (s: LineScanner, start: number) => Braid;

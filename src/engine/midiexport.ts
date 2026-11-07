@@ -115,7 +115,7 @@ export function pieceMidi(result: CompileResult, shifts: Shifts, muted: Readonly
     .sort(([a], [b]) => a - b)
     .map(([channel, t]) => ({
       name: [...new Set(names.get(channel) ?? [`channel ${channel}`])].join(' '),
-      notes: t.notes,
+      notes: struckOnce(t.notes),
       bends: t.at.map((b) => ({ ...b, channel })),
       programs: [],
     }));
@@ -123,6 +123,45 @@ export function pieceMidi(result: CompileResult, shifts: Shifts, muted: Readonly
   const m = meter ? meterOf(result, meter.cell) : undefined;
   const meters = m && m.unit === 4 && m.beats.every((b) => b === 1) && m.pulses > 0 ? [{ tick: 0, num: m.pulses, den: 4 }] : [];
   return { smf: { format: 1, ppq: PPQ, ...(name !== undefined ? { name } : {}), tracks, tempos, meters }, dropped };
+}
+
+/**
+ * A track's notes as a key can sound them (#104): a key can't overlap itself, so a note struck while earlier ones hold
+ * its channel and key retriggers it, those ending at its start, and it sounds to the latest of their ends and its own:
+ * the key is let go when the last note holding it ends, as MIDI out sends it (yggi/webmidi `src/core/out.ts`: off then
+ * on, and an off only once nothing else covers it). So a note into the next on its key (`legato=` over 1, two lines on
+ * one key) ends at the next one's start. Notes struck at once on one key (a unison) are left as written, each its own
+ * note-on and off, so a file read back keeps them (the folder's ratchet). The events keep their lengths: only the file's
+ * note-offs move.
+ */
+function struckOnce(notes: readonly SmfNote[]): SmfNote[] {
+  // (each note kept at its place in the track, the place it starts at)
+  type Placed = { readonly i: number; readonly note: SmfNote };
+  const byKey = new Map<string, number[]>();
+  notes.forEach((n, i) => {
+    const k = `${n.channel}:${n.key}`;
+    byKey.set(k, [...(byKey.get(k) ?? []), i]);
+  });
+  const placed: Placed[] = [];
+  for (const run of byKey.values()) {
+    const sorted = [...run].sort((a, b) => notes[a]!.tick - notes[b]!.tick || a - b);
+    // (the notes holding the key, all struck at one tick)
+    let held: Placed[] = [];
+    for (const i of sorted) {
+      const n = notes[i]!;
+      const end = Math.max(...held.map((h) => h.note.end));
+      if (held.length && n.tick === held[0]!.note.tick) held.push({ i, note: n });
+      else if (held.length && n.tick < end) {
+        placed.push(...held.map((h) => ({ i: h.i, note: { ...h.note, end: n.tick } })));
+        held = [{ i, note: { ...n, end: Math.max(end, n.end) } }];
+      } else {
+        placed.push(...held);
+        held = [{ i, note: n }];
+      }
+    }
+    placed.push(...held);
+  }
+  return placed.sort((a, b) => a.note.tick - b.note.tick || a.i - b.i).map((p) => p.note);
 }
 
 /**
