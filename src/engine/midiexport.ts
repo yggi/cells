@@ -47,9 +47,13 @@ export function pieceMidi(result: CompileResult, shifts: Shifts, muted: Readonly
 
   // the meter's steps, through its time map, as far as the last note sounds (or eighths at 120 bpm), each a fixed
   // number of ticks (a beat a quarter note) and the tempo its length: a note on a step falls on the grid
+  // (a meter that swings finer than its own steps is laid at the finest division its swing leans, as its swing plays it:
+  // `meter("4/4") swing=8n:2/3` on eighths whose tempos alternate, as `meter("4/4", 2)` is; #15 rung 1)
   const meter = mainMeter(result);
-  const map = meter ? clocking(result, p.statics).map(meter.cell) : null;
-  const perBeat = meter?.beat ?? 4;
+  const played = meter ? clocking(result, p.statics).played(meter.cell) : null;
+  const grain = Math.min(1, played?.grain ?? 1);
+  const map = played ? { q: (k: number) => played.q(k * grain) } : null;
+  const perBeat = (meter?.beat ?? 4) / grain;
   const last = events.reduce((m, e) => Math.max(m, e.at + e.dur), seconds);
   const steps: number[] = [];
   for (let k = 0; steps.length < 1_000_000; k++) {
