@@ -1,6 +1,6 @@
-import { UNIT } from "./units.js";
+import { RATE_UNITS, UNIT } from "./units.js";
 import { syntax } from "./syntax.js";
-const TEMPI = {
+export const TEMPI = {
     largo: [40, 60],
     larghetto: [60, 66],
     adagio: [66, 76],
@@ -12,6 +12,7 @@ const TEMPI = {
 };
 export const FREE_SYNTAX = [
     syntax('free', 'free(v, lo..hi)', 'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number goes in an attribute (a rate with its units: free(90bpm, 60..240)), in a scan, or as a gain in a mix.', ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'], 'free.md'),
+    syntax('free', 'free(v, lo..hi, unit=bpm)', 'A rate’s slider in the core’s numbers, a second, its unit an argument: free(2, 1.5..2.5, unit=bpm) is free(120bpm, 90..150), the same slider shown in bpm. The core writes a slider so (decision 069); written after the number, the unit is its sugar.', ['&tempo step=free(2, 1.5..2.5, unit=bpm)'], 'free.md'),
     syntax('free', 'free(marking)', `A rate as a tempo marking, a slider over its range: ${Object.entries(TEMPI)
         .map(([k, [lo, hi]]) => `${k} ${lo}–${hi}`)
         .join(', ')} (bpm).`, ['&bar scan(4 4 4 4) step=free(andante)'], 'free.md'),
@@ -82,8 +83,27 @@ export function parseFree(s, key, units) {
             s.fail(`free(…): ${value} is outside ${lo}..${hi}`, start, s.i - start);
     }
     s.skipSpace();
+    const unitArg = () => {
+        if (!/,\s*unit=/y.test(s.text.slice(s.i)))
+            return;
+        const comma = s.i;
+        s.i++;
+        s.skipSpace();
+        s.match(/unit=/y);
+        const u = s.match(/[a-z]+/y) ?? '';
+        const known = u ? RATE_UNITS[u] : undefined;
+        if (!units || !known)
+            s.fail(units ? `unit=${u}: a rate's unit (${Object.keys(RATE_UNITS).join(', ')})` : `unit=: a unit is for a rate (step=, loop=)`, comma, s.i - comma);
+        if (unit)
+            s.fail(`free(…${unit}, …, unit=${u}): the unit is given twice — written after the number, or as unit= with the numbers a second`, comma, s.i - comma);
+        const back = (n) => +((n * known.per) / known.times).toPrecision(12);
+        [value, lo, hi] = [back(value), back(lo), back(hi)];
+        unit = u;
+        s.skipSpace();
+    };
+    unitArg();
     let labels;
-    if (s.peek() === ',') {
+    if (s.peek() === ',' && !/,\s*unit=/y.test(s.text.slice(s.i))) {
         s.i++;
         s.skipSpace();
         const q = s.match(/"[^"]*"/y);
@@ -100,6 +120,7 @@ export function parseFree(s, key, units) {
             s.fail(`free(…, "${labels.join(' ')}"): the names spread evenly over ${lo}..${hi} — ${labels.length} names need ${labels.length - 1} equal whole steps (${lo}..${lo + labels.length - 1}, or every 2nd: ${lo}..${lo + 2 * (labels.length - 1)})`, start, s.i - start);
         s.skipSpace();
     }
+    unitArg();
     s.expect(')', `')' to close free(…)`);
     labels ??= names;
     const spec = {

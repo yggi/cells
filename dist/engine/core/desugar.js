@@ -1,4 +1,5 @@
 import { parse } from "../parser/index.js";
+import { TEMPI } from "../parser/free.js";
 import { compileSource } from "../compile.js";
 import { noteValue } from "../meter.js";
 import { noteFrequency } from "../program.js";
@@ -38,6 +39,19 @@ export const FAMILIES = [
             .split(/(\bfree\([^)]*\))/)
             .map((part, i) => (i % 2 ? part : part.replace(/(?<=[=(,\s*])(-?\d*\.?\d+)(bpm|hz|min|h|d|wk|k)(?![A-Za-z0-9_])/g, (_, n, u) => num(+n * UNIT[u]))))
             .join('')),
+    },
+    {
+        key: 'sliders',
+        rows: '58–64 a unit in `free(…)`',
+        rewrite: (text) => codeWise(text, (c) => c
+            .replace(/\bfree\((-?[0-9]*\.?[0-9]+)(bpm|hz|min|h|d|wk|k),\s*(-?[0-9]*\.?[0-9]+)\.\.(-?[0-9]*\.?[0-9]+)/g, (_, n, u, lo, hi) => `free(${num(+n * UNIT[u])}, ${num(+lo * UNIT[u])}..${num(+hi * UNIT[u])}, unit=${u}`)
+            .replace(/\bfree\(([a-z]+)\)/g, (written, word) => {
+            const range = TEMPI[word];
+            if (!range)
+                return written;
+            const [lo, hi] = range;
+            return `free(${num(Math.round((lo + hi) / 2) / 60)}, ${num(lo / 60)}..${num(hi / 60)}, unit=bpm)`;
+        })),
     },
     {
         key: 'note names',
@@ -430,9 +444,9 @@ export const LEFT = [
     },
     {
         key: 'sliders',
-        rows: '58–64 a unit in `free(…)`',
-        test: /\bfree\(-?\d*\.?\d+(?:bpm|hz|min|h|d|wk|k)\b/,
-        why: 'a slider’s unit is what the performer moves it in: its range and its steps are in it',
+        rows: '58–64 a unit in `free(…)`, or a tempo marking, left as written',
+        test: /\bfree\((?:-?\d*\.?\d+(?:bpm|hz|min|h|d|wk|k)\b|[a-z]+\))/,
+        why: 'a slider whose unit is written after its number, or a marking (free(andante)): its numbers in the core’s, the unit an argument',
     },
     { key: 'unit reads', rows: '21 `x!n` in a cell read by its units', test: /!\d/, why: '`&a!2` is one unit and `&a &a` two: a pick or a rotation (`&john[<<]`) counts them' },
     {

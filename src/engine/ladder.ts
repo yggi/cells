@@ -36,6 +36,9 @@ export const STUBS: ReadonlySet<string> = new Set([
  */
 // (a style and a value read by name, decision 063: their piece comes with a voice reading the section's style, #390)
 export const PENDING: ReadonlySet<string> = new Set([
+  // (a slider's unit as an argument, the core's spelling, decision 069: toCore writes it, a tutorial piece doesn't, the
+  // examples staying in their normal form, the unit written after the number)
+  'free free(v, lo..hi, unit=bpm)',
   // (even(k, n), decision 072: its piece comes with the fragments that write it, #507)
   'generator even(k, n)',
   'step <a b c>',
@@ -551,6 +554,7 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
       else if (f.labels) use('free free(v, lo..hi, "names")');
       else if (f.text !== undefined) use('free free("text")');
       else if (f.key === 'gain') use('mix free(v, lo..hi)');
+      else if (/,\s*unit=/.test(textOf(f.span))) use('free free(v, lo..hi, unit=bpm)');
       else if (!TEMPO_MARKINGS.test(textOf(f.span))) use('free free(v, lo..hi)');
       if (f.key === 'step' || f.key === 'loop') {
         use('rate step=free(r, lo..hi)');

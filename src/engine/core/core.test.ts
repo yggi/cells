@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { coreFold, FAMILIES, meaningfulNames, minify, toCore } from '.';
 import { normalise } from '../normalise';
 import { soundsIdentical } from '../sameness';
+import { compileSource } from '../compile';
 import { LIBRARY, resolveSeed } from '../../repository/library';
 
 // The core of a text (decision 069, #482): each pass on a small text, sounding identical; the properties over every
@@ -25,6 +26,11 @@ describe('de-sugar: each family’s rewrite plays the same (S1), and a second fi
     ],
     ['meters', `&bar meter("4/4", 2) step=&tempo\n&tempo step=2\n&t step=8n 0 2 4\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&bar meter("*.-.+.-.")'],
     ['chains', `${BAR}\n&t step=pulse*2*2 0 2\n&u step=pulse*1 0 2\n&v s=sine loop=C4\n&out map=sample [&t * &v, &u * &v]`, '&t step=pulse*4 0 2\n&u step=pulse 0 2'],
+    [
+      'sliders',
+      `&bar meter("4/4") step=&tempo\n&tempo step=free(120bpm, 90..150)\n&t step=8n 0 2 4\n&v s=sine loop=C4\n&out map=sample [&t * &v]`,
+      '&tempo step=free(2, 1.5..2.5, unit=bpm)',
+    ],
     ['taps', `${BAR}\n&t step=16n 0 2 4 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=pulse*4 0 2 4 5'],
     ['subsequences', `${BAR}\n&t step=8n 0 [2 4] 5 7*2\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=8n*2 0@2 2 4 5@2 7 7'],
   ];
@@ -227,5 +233,29 @@ describe('keys in the core: the mode as its table, the tonic a cell read (decisi
     const after = fam(text, O2);
     for (const w of written) expect(after).toContain(w);
     expect(soundsIdentical(text, after, undefined, O2)).toBe(true);
+  });
+});
+
+describe('a slider in the core: its numbers a second, its unit an argument (decision 069, sliders (a))', () => {
+  const at = (tempo: string) => `&bar meter("4/4") step=&tempo\n&tempo step=${tempo}\n&t step=8n 0 2 4 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`;
+  const frees = (text: string) =>
+    compileSource(text)
+      .cells.get('tempo')
+      ?.frees.map(({ span: _, ...f }) => f);
+  it('free(2, 1.5..2.5, unit=bpm) is the slider free(120bpm, 90..150) makes, and plays the same; a marking too', () => {
+    expect(frees(at('free(2, 1.5..2.5, unit=bpm)'))).toEqual(frees(at('free(120bpm, 90..150)')));
+    expect(soundsIdentical(at('free(120bpm, 90..150)'), at('free(2, 1.5..2.5, unit=bpm)'))).toBe(true);
+    const marking = FAMILIES.find((f) => f.key === 'sliders')!.rewrite(at('free(andante)'), {});
+    // (andante: 76–108 bpm, from 92)
+    expect(marking).toContain(`free(${92 / 60}, ${76 / 60}..${108 / 60}, unit=bpm)`);
+    expect(soundsIdentical(at('free(andante)'), marking)).toBe(true);
+  });
+  it('the unit is said once, and only on a rate', () => {
+    const said = (text: string) => compileSource(text).diagnostics.map((d) => d.message);
+    expect(said(at('free(120bpm, 90..150, unit=bpm)'))).toContain(
+      'free(…bpm, …, unit=bpm): the unit is given twice — written after the number, or as unit= with the numbers a second',
+    );
+    expect(said(at('free(2, 1..3, unit=furlongs)'))[0]).toMatch(/^unit=furlongs: a rate's unit/);
+    expect(said('&v s=sine loop=C4 lpf=free(800, 200..2000, unit=bpm)\n&t step=2 0\n&out map=sample [&t * &v]')).toEqual(['unit=: a unit is for a rate (step=, loop=)']);
   });
 });
