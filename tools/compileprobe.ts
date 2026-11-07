@@ -12,7 +12,7 @@
  * `--fold` also runs Shorten over the de-sugared text, to see whether compile is "de-sugar, then Shorten" (question 3).
  */
 import { pathToFileURL } from 'node:url';
-import { PRESETS } from '../src/engine/presets';
+import { EXAMPLES } from '../src/engine/examples';
 import { soundsIdentical } from '../src/engine/sameness';
 import { structureOf } from '../src/engine/measure';
 import { shortenAll } from '../src/engine/shorten';
@@ -66,7 +66,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const args = process.argv.slice(2);
   const fold = args.includes('--fold');
   const keys = args.filter((a) => !a.startsWith('--'));
-  const rows = Object.entries(PRESETS)
+  const rows = Object.entries(EXAMPLES)
     .filter(([k]) => !keys.length || keys.includes(k))
     .map(([k, p]) => probe(k, p.source, fold));
   console.log(JSON.stringify(rows));

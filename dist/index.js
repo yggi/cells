@@ -17,6 +17,7 @@ export { readMidi, writeMidi, isMidi } from "./engine/midifile.js";
 export { pieceAudio } from "./engine/audioexport.js";
 export { createRenderer, loudness, DEFAULT_RATE } from "./engine/render.js";
 export { writeWav } from "./engine/wavfile.js";
+export { EXAMPLES } from "./engine/examples.js";
 export { PRESETS } from "./engine/presets.js";
 export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece } from "./engine/piecefile.js";
 export { fileLine, readLiterate, rewrite } from "./engine/literate.js";

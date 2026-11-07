@@ -6,7 +6,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { compileSource } from './engine/compile';
 import * as cells from './index';
 import { gmDrumNote } from './engine/midi';
-import { PRESETS } from './engine/presets';
+import { EXAMPLES } from './engine/examples';
 import { resolveSeed } from './repository/library';
 
 const DOCS = resolve(import.meta.dirname, '../docs');
@@ -135,7 +135,7 @@ describe('docs: the README shows the language as it is', () => {
     expect(compileSource(piece).diagnostics).toEqual([]);
     const lines = piece.split('\n').filter(Boolean);
     expect(lines.length).toBeLessThanOrEqual(10);
-    const source = Object.values(PRESETS).find(({ source: src }) => lines.every((l) => src.split('\n').includes(l)));
+    const source = Object.values(EXAMPLES).find(({ source: src }) => lines.every((l) => src.split('\n').includes(l)));
     expect(source, 'every line of the README piece is in the text of one example (examples/*.md)').toBeDefined();
   });
 

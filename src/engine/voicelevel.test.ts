@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 
 const events = (src: string) => {
@@ -221,7 +221,7 @@ describe('a ramped line that loops (#459)', () => {
   // (a shape a note, map=lin loop=&tune: each note starts at the shape's first value; a lap's start, read from seconds,
   // landed a float's width early on some notes, which read the lap before's last value, 0 or .1, and lost their attack)
   const firstLevels = (key: string, voice: string) => {
-    const r = compileSource((PRESETS as Record<string, { source: string }>)[key]!.source, undefined, { resolve: resolveSeed });
+    const r = compileSource((EXAMPLES as Record<string, { source: string }>)[key]!.source, undefined, { resolve: resolveSeed });
     return eventsBetween(plan(r, codeShifts(r)), 0, 40)
       .filter((e) => e.voice === voice)
       .map((e) => +e.levels[0]!.level.toFixed(6));

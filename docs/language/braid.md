@@ -75,7 +75,8 @@ a delta. A fugue's entries are this: one subject, each entry a little bent.
 - **A copy of a meter is a meter** (#507): `&bar base=&grouping step=&tempo swing=&swing` with `&grouping meter("7/8")` is 7/8 at that tempo, swung; the seed `meter` fragment is written so, its grouping an argument.
 
 ```cells
-&bar scan(1 1 1 1) step=90bpm
+&bar meter("4/4") step=&tempo
+&tempo step=90bpm
 &subject 0 -1 0@2 -5@2 -4@2 0 -1 0 2 -5@4
 &answer base=&subject^$7 =!3 0@2
 &last base=&subject^$-12 =!9 =@8

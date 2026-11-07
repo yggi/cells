@@ -12,7 +12,7 @@ const compileSource: typeof compileAlone = (text, env, options) => compileAlone(
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { noteOf } from './midi';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { readFileSync } from 'node:fs';
 
 /** A piece's notes as (key, start, length), in order: what a file must give back. */
@@ -30,7 +30,7 @@ const played = (source: string) => notesOf(source).map(({ key, at, dur }) => ({ 
 
 describe('a MIDI file folded (engine/fold)', () => {
   it('BWV 847: the prelude as one figure over its chords, both hands, every note as before', () => {
-    const result = compileSource(PRESETS.bwv847.source);
+    const result = compileSource(EXAMPLES.bwv847.source);
     const smf = readMidi(writeMidi(pieceMidi(result, codeShifts(result)).smf));
     const flat = cellsFromMidi(smf, 'BWV 847');
     const folded = cellsFromMidi(smf, 'BWV 847', { shorten: true });

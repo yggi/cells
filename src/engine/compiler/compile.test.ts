@@ -10,7 +10,7 @@ import { freqHue, gridName, positionOf, voiceGrid, positionHue, semitones, entri
 import { flatten } from '../flatten';
 import { eventsBetween, plan } from '../realize';
 import { parse } from '../parser';
-import { PRESETS } from '../presets';
+import { EXAMPLES } from '../examples';
 import { resolveSeed } from '../../repository/library';
 import { modeName } from '../../theory/modes';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
@@ -66,7 +66,7 @@ describe('cells as helices', () => {
 });
 
 describe('pitch: lookups all the way down', () => {
-  const r = compileSource(PRESETS.royal.source);
+  const r = compileSource(EXAMPLES.royal.source);
   it('the royal theme in C minor through &theme → &scale → &key', () => {
     expect(spell(r, 'theme')).toBe('C Eb G Ab B C B Bb A Ab G');
   });
@@ -304,8 +304,8 @@ describe('errors', () => {
     expect(msgs('&fifths12TET 0 1 2')).toMatch(/default grid/);
   });
 
-  it('every preset compiles cleanly (its uses read from the seed library)', () => {
-    for (const [key, p] of Object.entries(PRESETS)) {
+  it('every example compiles cleanly (its uses read from the seed library)', () => {
+    for (const [key, p] of Object.entries(EXAMPLES)) {
       const r = compileSource(p.source, undefined, { resolve: resolveSeed });
       expect(r.diagnostics, key).toEqual([]);
       expect(r.outputs.length, key).toBeGreaterThan(0);
@@ -527,7 +527,7 @@ describe('tier=: a tier of the tutorial', () => {
 });
 
 describe('transpose example', () => {
-  const r = compileSource(PRESETS.transpose.source);
+  const r = compileSource(EXAMPLES.transpose.source);
   it('turning &key transposes the theme, turning &mode starts the scale elsewhere', () => {
     expect(r.diagnostics).toEqual([]);
     expect(spell(r, 'theme')).toBe('E G B E B G E'); // as written: D major's Dorian, on E

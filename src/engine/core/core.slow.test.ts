@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { toCore } from '.';
 import { normalise } from '../normalise';
-import { PRESETS } from '../presets';
+import { EXAMPLES } from '../examples';
 import { soundsIdentical } from '../sameness';
 import { LIBRARY, resolveSeed } from '../../repository/library';
 
@@ -10,7 +10,7 @@ import { LIBRARY, resolveSeed } from '../../repository/library';
 const O = { resolve: resolveSeed, library: LIBRARY };
 
 describe('the core of every example (decision 069)', () => {
-  it.each(Object.entries(PRESETS))('%s: plays the same, is its own core, and is its normal form’s core', (_, p) => {
+  it.each(Object.entries(EXAMPLES))('%s: plays the same, is its own core, and is its normal form’s core', (_, p) => {
     const c = toCore(p.source, O);
     expect(soundsIdentical(p.source, c.source, undefined, O)).toBe(true);
     expect(toCore(c.source, O).source).toBe(c.source);

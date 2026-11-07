@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { isPieceFile, readPiece, writePiece, type PieceFile } from './piecefile';
 import { pieceMeta } from './parser';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { SEED_FILES } from '../repository/seed.generated';
 
 const read = (markdown: string): PieceFile => {
@@ -50,7 +50,7 @@ describe('a piece file', () => {
   });
 
   it('every example writes back byte for byte', () => {
-    for (const [key, { file }] of Object.entries(PRESETS)) expect(writePiece(read(file)), key).toBe(file);
+    for (const [key, { file }] of Object.entries(EXAMPLES)) expect(writePiece(read(file)), key).toBe(file);
   });
 
   it("is the same kind of file as a fragment's: every seed fragment reads as one, its id and association kept as keys", () => {
@@ -63,7 +63,7 @@ describe('a piece file', () => {
 
   it('is told from a text by its first line', () => {
     expect(isPieceFile(good)).toBe(true);
-    expect(isPieceFile(PRESETS.steps.source)).toBe(false);
+    expect(isPieceFile(EXAMPLES.steps.source)).toBe(false);
     expect(isPieceFile('--- not frontmatter')).toBe(false);
   });
 

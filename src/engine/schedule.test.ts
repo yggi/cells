@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { createHost, planOf as planAlone } from './host';
 import { resolveSeed } from '../repository/library';
 import { eventsBetween } from './realize';
@@ -13,7 +13,7 @@ const r0 = (w: Window) => retime(w, 10, 0.5).events;
 describe('schedule: what to play next, as plain data', () => {
   it('a window holds the notes eventsBetween gives for it, each naming its output', () => {
     for (const key of ['bwv847', 'echotape', 'soundtape', 'hypercell'] as const) {
-      const p = planOf(PRESETS[key].source);
+      const p = planOf(EXAMPLES[key].source);
       const w = windowAt(p, 2, 0.25);
       expect(w.events).toEqual(eventsBetween(p, 2, 2.25, true));
       expect(w.events.map(({ output, ...e }) => (expect(output).toBeTruthy(), e))).toEqual(eventsBetween(p, 2, 2.25));
@@ -22,8 +22,8 @@ describe('schedule: what to play next, as plain data', () => {
   });
 
   it('every window of every example survives a structured clone unchanged (it can cross to and from a worker)', () => {
-    for (const [key, preset] of Object.entries(PRESETS)) {
-      const p = planOf(preset.source);
+    for (const [key, example] of Object.entries(EXAMPLES)) {
+      const p = planOf(example.source);
       for (let from = 0; from < 4; from += 0.25) {
         const w = windowAt(p, from, 0.25);
         expect(structuredClone(w), `${key} at ${from}`).toEqual(w);
@@ -32,13 +32,13 @@ describe('schedule: what to play next, as plain data', () => {
   });
 
   it('moving tapes get their speed every 0.05 s through the window, its end included; steady ones none', () => {
-    const p = planOf(PRESETS.soundtape.source);
+    const p = planOf(EXAMPLES.soundtape.source);
     const [t] = tapeSpeeds(p, 1, 1.25 + 1e-9);
     expect(t.tape).toBe('tape');
     expect(t.points.map((x) => +x.at.toFixed(6))).toEqual([1, 1.05, 1.1, 1.15, 1.2, 1.25]);
     expect(t.points.every((x) => x.speed > 0)).toBe(true);
     // (no tapes at all: nothing to say)
-    expect(tapeSpeeds(planOf(PRESETS.twinkle.source), 0, 1)).toEqual([]);
+    expect(tapeSpeeds(planOf(EXAMPLES.twinkle.source), 0, 1)).toEqual([]);
   });
 
   it('retime puts a window onto the audio clock: starts, bends, levels, parameters and tape points moved, lengths scaled', () => {
@@ -76,7 +76,7 @@ describe('schedule: what to play next, as plain data', () => {
 describe('host: the engine behind messages (what runs in the worker)', () => {
   it('answers a window exactly as the plan here would, in the order asked', () => {
     const host = createHost(undefined, { resolve: resolveSeed });
-    const src = PRESETS.prelude.source;
+    const src = EXAMPLES.prelude.source;
     expect(host({ type: 'load', code: src })).toMatchObject({ type: 'loaded', ok: true });
     const here = planOf(src);
     for (let i = 0; i < 8; i++) {
@@ -101,7 +101,7 @@ describe('host: the engine behind messages (what runs in the worker)', () => {
 
   it('mirrors hands: a grab sent to it changes its windows as the same grab changes them here', async () => {
     const { grabIn } = await import('./host');
-    const src = PRESETS.musicbox.source;
+    const src = EXAMPLES.musicbox.source;
     const host = createHost();
     host({ type: 'load', code: src });
     const here = planOf(src);
