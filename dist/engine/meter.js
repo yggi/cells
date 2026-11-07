@@ -119,6 +119,37 @@ export function swungKnots(m) {
     written.push(m.pulses);
     return { written, swung: written.map((w) => (w >= m.pulses - 1e-9 ? m.pulses : swingAt(m, w))) };
 }
+export function swungPlace(m, w) {
+    return throughKnots(m, w, false);
+}
+export function writtenPlace(m, s) {
+    return throughKnots(m, s, true);
+}
+const builtKnots = new WeakMap();
+function throughKnots(m, x, back) {
+    if (!builtKnots.has(m))
+        builtKnots.set(m, swungKnots(m));
+    const knots = builtKnots.get(m);
+    if (!knots)
+        return x;
+    const [from, to] = back ? [knots.swung, knots.written] : [knots.written, knots.swung];
+    const P = m.pulses;
+    const bar = Math.floor(x / P + 1e-12);
+    const within = x - bar * P;
+    let i = 0;
+    while (i + 2 < from.length && from[i + 1] <= within + 1e-12)
+        i++;
+    const span = from[i + 1] - from[i];
+    return bar * P + to[i] + (span > 0 ? ((within - from[i]) / span) * (to[i + 1] - to[i]) : 0);
+}
+export function meterOfFrame(groups, swing) {
+    const levels = groups.flatMap((g, i) => Array.from({ length: g }, (_, j) => (j > 0 ? 3 : i === 0 ? 0 : 1)));
+    const leans = swing.flatMap((l) => {
+        const whole = noteValue(l.level);
+        return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
+    });
+    return { levels, written: 'meter', pulses: levels.length, unit: 8, beats: groups, ...(leans.length ? { swing: leans } : {}) };
+}
 export function swungSteps(m) {
     const per = stepsPerPulse(m);
     const out = m.levels.map((_, i) => swingAt(m, i / per) * per);

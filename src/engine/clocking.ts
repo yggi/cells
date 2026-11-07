@@ -10,7 +10,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from './he
 import { footOf, leaves, slots, type Laps } from './subseq';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
 import { mod } from '../theory/modes';
-import { stepsPerPulse, swingAt, swungKnots, type Meter } from './meter';
+import { stepsPerPulse, swingAt, swungKnots, swungPlace, writtenPlace, type Meter } from './meter';
 
 export const EPS = 1e-9;
 
@@ -161,26 +161,9 @@ function swungMeter(result: CompileResult, meter: string): Swung | null {
   const knots = m ? swungKnots(m) : null;
   if (!m || !knots) return null;
   const per = stepsPerPulse(m);
-  const { written, swung } = knots;
-  const P = m.pulses;
-  const S = (w: number) => {
-    const p = w / per;
-    const bar = Math.floor(p / P + 1e-12);
-    const x = p - bar * P;
-    let i = 0;
-    while (i + 2 < written.length && written[i + 1] <= x + 1e-12) i++;
-    const span = written[i + 1] - written[i];
-    return (bar * P + swung[i] + (span > 0 ? ((x - written[i]) / span) * (swung[i + 1] - swung[i]) : 0)) * per;
-  };
-  const W = (s: number) => {
-    const p = s / per;
-    const bar = Math.floor(p / P + 1e-12);
-    const x = p - bar * P;
-    let i = 0;
-    while (i + 2 < swung.length && swung[i + 1] <= x + 1e-12) i++;
-    const span = swung[i + 1] - swung[i];
-    return (bar * P + written[i] + (span > 0 ? ((x - swung[i]) / span) * (written[i + 1] - written[i]) : 0)) * per;
-  };
+  // (the meter's own continuous placement, in its steps: meter.ts's `swungPlace` and its inverse)
+  const S = (w: number) => swungPlace(m, w / per) * per;
+  const W = (s: number) => writtenPlace(m, s / per) * per;
   // (a division the tree holds, the finest level that leans halved or doubled, is placed continuously: a quarter's end
   //  under swung eighths where #120 puts it; any other, as a tap of it: a triplet's thirds even in the beat)
   const finest = Math.min(...m.swing!.map((l) => l.whole * m.unit));

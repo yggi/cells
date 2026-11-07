@@ -30,7 +30,7 @@ export { METER_FRAGMENTS } from "./repository/meters.js";
 export { AXES, AXIS_NAMES, SLOTS } from "./engine/style.js";
 export { CONTRACT_WIDTHS, feelOf, played, readerOf, readingOf, } from "./engine/perform/feel.js";
 export { perform, widthsOf } from "./engine/perform/perform.js";
-export { swungAt, writtenAt } from "./engine/perform/swing.js";
+export { meterOfFrame, swungPlace, writtenPlace } from "./engine/meter.js";
 export { RHYTHM_FRAGMENTS } from "./repository/rhythms.js";
 export { BASS_FRAGMENTS } from "./repository/bass.js";
 export { HARMONY_FRAGMENTS } from "./repository/harmony.js";

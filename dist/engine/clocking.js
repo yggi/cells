@@ -2,7 +2,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from "./he
 import { footOf, leaves, slots } from "./subseq.js";
 import { beltWarp, onReset, warpOf } from "./physics.js";
 import { mod } from "../theory/modes.js";
-import { stepsPerPulse, swingAt, swungKnots } from "./meter.js";
+import { stepsPerPulse, swingAt, swungKnots, swungPlace, writtenPlace } from "./meter.js";
 export const EPS = 1e-9;
 export function timeMap(result, clock, shifts) {
     if (clock.tap)
@@ -107,28 +107,8 @@ function swungMeter(result, meter) {
     if (!m || !knots)
         return null;
     const per = stepsPerPulse(m);
-    const { written, swung } = knots;
-    const P = m.pulses;
-    const S = (w) => {
-        const p = w / per;
-        const bar = Math.floor(p / P + 1e-12);
-        const x = p - bar * P;
-        let i = 0;
-        while (i + 2 < written.length && written[i + 1] <= x + 1e-12)
-            i++;
-        const span = written[i + 1] - written[i];
-        return (bar * P + swung[i] + (span > 0 ? ((x - written[i]) / span) * (swung[i + 1] - swung[i]) : 0)) * per;
-    };
-    const W = (s) => {
-        const p = s / per;
-        const bar = Math.floor(p / P + 1e-12);
-        const x = p - bar * P;
-        let i = 0;
-        while (i + 2 < swung.length && swung[i + 1] <= x + 1e-12)
-            i++;
-        const span = swung[i + 1] - swung[i];
-        return (bar * P + written[i] + (span > 0 ? ((x - swung[i]) / span) * (written[i + 1] - written[i]) : 0)) * per;
-    };
+    const S = (w) => swungPlace(m, w / per) * per;
+    const W = (s) => writtenPlace(m, s / per) * per;
     const finest = Math.min(...m.swing.map((l) => l.whole * m.unit));
     const held = (grid) => {
         const k = Math.log2(grid / per / finest);

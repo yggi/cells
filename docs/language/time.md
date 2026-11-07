@@ -48,6 +48,7 @@ A meter is a cell whose braid is a `scan` or a `meter(…)`: `scan(27 23 26 24)`
 **Groups as sizes:** `meter("2+2+3")` writes eighths in groups of 2 and 3, each 2, 3, 4 or 6, and `meter("2+2+3/4")` quarters. A signature is a name for one grouping (`meter("7/8")` is `meter("3+2+2")`, the same meter). Its beats are its groups, and its bpm counts them.
 
 **Levels can be written directly**, `meter("*.+.+..")`, every mark but `.` and `,` starting a beat: `meter("*.-.+.-.")` is 4/4. Their step's note value is their pulse: alla breve is `meter("*,.,+,.,", 8n)`, a waltz in one `meter("*..", 4n)`.
+The levels are the tree's ([contracts/meter](https://github.com/yggi/music-commons/blob/main/contracts/meter/README.md)'s grades) and the beats are read off them, which is the tree's beat wherever the tier above the eighth is a beat's: every x/8 meter, and x/4 and x/2 in their own beats. Where a tier sits between the beat and the eighth, the quarters of a compound x/4 (6/4, 9/4, 12/4: `*--+--`) and the quarters of x/2 at 2 steps a beat, each `-` written would start a beat, so such a meter is written by its signature, `meter("6/4")`, and the core keeps it so ([#545](https://github.com/yggi/cells/issues/545)).
 - Written out at a step a pulse, every signature from 2/8 to 16/8, 2/4 to 7/4 and 2/2 to 4/2 is the same meter again.
 - One whose quarters sit inside its beats (6/4, or 2/2 in quarters) reads those quarters as beats, and is written by its signature or sizes.
 
