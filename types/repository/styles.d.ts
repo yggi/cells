@@ -1,4 +1,4 @@
-import type { Fragment, StylePoint } from './fragments';
+import { type Fragment, type StylePoint } from './fragments';
 /** The styles built so far: the collection `styles`, associated as the facet `style` at each of its points. */
 export declare const STYLE_FRAGMENTS: readonly Fragment[];
 /** One preset style: its id (its cell's name), its display name, its point on the axes and its default tempo in bpm. */
@@ -12,6 +12,21 @@ export interface Style {
 export declare const STYLES: readonly Style[];
 /** A preset style's point by its id; it throws on an id the collection lacks. */
 export declare function stylePoint(id: string): StylePoint;
+/** A style and how far a point is from it. */
+export interface NearStyle {
+    readonly style: Style;
+    readonly distance: number;
+}
+/**
+ * The styles nearest a point, nearest first, by the distance between two styles (`pointDistance`: over the axes both
+ * have, each weighing 1 unless `axisWeights` says), ties in the styles' order; the k nearest, or all. A frontend that
+ * ranks on more than the point (Jambot's tempo) hands `styles` with its own axes added to each point.
+ */
+export declare function nearestStyle(point: StylePoint, options?: {
+    readonly k?: number;
+    readonly axisWeights?: StylePoint;
+    readonly styles?: readonly Style[];
+}): NearStyle[];
 /** A point on the four axes, for a place that is not a preset's (a test's, a fragment's). */
 export declare const at: (sync: number, harm: number, artic: number, energy: number) => StylePoint;
 export declare const SYNTH_POP: Readonly<Record<string, number>>;

@@ -6,9 +6,26 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { parse } from '../engine/parser';
 import { bandAt, CENTRE, resolveBand, scoreStyle } from './band';
-import { createRepository } from './fragments';
+import { createRepository, pointDistance } from './fragments';
 import { resolveSeed } from './library';
-import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, STYLE_FRAGMENTS, STYLES, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import {
+  AMBIENT,
+  at,
+  BOSSA_NOVA,
+  DEEP_HOUSE,
+  ELECTRO_SWING,
+  FUNK,
+  KINDERLIED,
+  LO_FI,
+  nearestStyle,
+  SPOOKY,
+  STYLE_FRAGMENTS,
+  STYLES,
+  stylePoint,
+  SWING_JAZZ,
+  SYNTH_POP,
+  TECHNO,
+} from './styles';
 
 const AXIS_KEYS = ['sync', 'harm', 'artic', 'energy'] as const;
 // (every source file but the generated ones: what a test of restated numbers reads)
@@ -112,5 +129,47 @@ describe('STYLES, the presets a frontend takes', () => {
     // (it fires: the old presets.ts wrote each so)
     expect(restated(`export const FUNK = at(${Object.values(FUNK).join(', ')});`)).toEqual([FUNK]);
     for (const [path, text] of Object.entries(SOURCES)) expect(restated(text), path).toEqual([]);
+  });
+});
+
+describe('nearestStyle, the styles nearest a point', () => {
+  it('finds each style itself at distance 0, first', () => {
+    for (const s of STYLES) expect(nearestStyle(s.point, { k: 1 }), s.id).toEqual([{ style: s, distance: 0 }]);
+  });
+
+  it('ranks every style by pointDistance, nearest first: over all 55 pairs, each the other’s distance', () => {
+    for (const a of STYLES) {
+      const ranked = nearestStyle(a.point);
+      expect(ranked.map((n) => n.style.id).sort(), a.id).toEqual(STYLES.map((s) => s.id).sort());
+      expect(
+        ranked.map((n) => n.distance),
+        a.id,
+      ).toEqual([...ranked.map((n) => n.distance)].sort((x, y) => x - y));
+      for (const { style, distance } of ranked) expect(distance, `${a.id}→${style.id}`).toBe(pointDistance(a.point, style.point));
+    }
+    // (55 distinct pairs, each measured the same both ways)
+    let pairs = 0;
+    for (const [i, a] of STYLES.entries())
+      for (const b of STYLES.slice(i + 1)) {
+        pairs++;
+        expect(pointDistance(a.point, b.point), `${a.id}–${b.id}`).toBe(pointDistance(b.point, a.point));
+      }
+    expect(pairs).toBe(55);
+  });
+
+  it('takes k, axis weights, and a frontend’s own styles with an axis added', () => {
+    expect(nearestStyle(SPOOKY, { k: 3 }).map((n) => n.style.id)).toEqual(['spooky', 'swingJazz', 'lofi']);
+    // (energy weighed 0: a point that differs from Funk only in energy is Funk's, at 0)
+    expect(nearestStyle({ ...FUNK, energy: 0 }, { k: 1, axisWeights: { energy: 0 } })[0]).toEqual({ style: STYLES.find((s) => s.id === 'funk'), distance: 0 });
+    // (a tempo axis a frontend adds tells two styles apart that the point alone ranks the other way)
+    const withTempo = STYLES.map((s) => ({ ...s, point: { ...s.point, bpm: s.tempo / 100 } }));
+    const between = { sync: 0.275, harm: 0.95, artic: 0.3, energy: 0.475 }; // (halfway between Spooky and Swing jazz)
+    expect(nearestStyle({ ...between, bpm: 1.48 }, { k: 1, styles: withTempo })[0]!.style.id).toBe('swingJazz');
+    expect(nearestStyle({ ...between, bpm: 1.0 }, { k: 1, styles: withTempo })[0]!.style.id).toBe('spooky');
+  });
+
+  it('breaks a tie by the styles’ order', () => {
+    const twins = [STYLES[1]!, { ...STYLES[0]!, point: STYLES[1]!.point }];
+    expect(nearestStyle(STYLES[1]!.point, { styles: twins }).map((n) => n.style.id)).toEqual([STYLES[1]!.id, STYLES[0]!.id]);
   });
 });
