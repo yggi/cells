@@ -60,7 +60,7 @@ describe('at rest, nothing is dimmed (#201)', () => {
     const r = compileAlone('&bar meter("4/4") step=120bpm\n&v s=sine\n&a over=&missing step=4n 0\n&t step=4n &a 0\n&o map=sample [&t * &v]');
     expect(r.diagnostics.map((d) => d.message)).toContain('Unknown cell &missing');
     expect(liveAt(r, codeShifts(r), r.off, 0).seconds).toBe(0);
-    for (const p of Object.values(PRESETS)) {
+    for (const p of Object.values(EXAMPLES)) {
       const alone = compileAlone(p.source);
       expect(liveAt(alone, codeShifts(alone), alone.off, 0).seconds).toBe(0);
     }
