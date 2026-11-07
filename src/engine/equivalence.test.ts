@@ -9,7 +9,7 @@ import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { shortenAll } from './shorten';
 import { SAMENESS_SECONDS } from './sameness';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 
 const sounds = (src: string, seconds = SAMENESS_SECONDS) => {
@@ -17,7 +17,7 @@ const sounds = (src: string, seconds = SAMENESS_SECONDS) => {
   expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   return eventsBetween(plan(r, codeShifts(r)), 0, seconds);
 };
-const examples = Object.entries(PRESETS);
+const examples = Object.entries(EXAMPLES);
 
 describe('map=edo is map=ed(2)', () => {
   it.each([12, 19, 31])('%i to the octave', (n) => {

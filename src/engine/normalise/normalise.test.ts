@@ -5,7 +5,7 @@ import { normalise } from './index';
 import { compileSource } from '../compile';
 import { samePiece, soundsIdentical } from '../sameness';
 import { shorten } from '../shorten';
-import { PRESETS } from '../presets';
+import { EXAMPLES } from '../examples';
 import { LIBRARY, resolveSeed } from '../../repository/library';
 import { unionOf } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
@@ -62,7 +62,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
 
   it('every example, and every fragment of the seed library, is normal already', () => {
     // (an example read as Cell studio reads it, its `use` lines resolved, and the seed library's lines taken by `use`: #196)
-    for (const [key, p] of Object.entries(PRESETS)) expect([key, normalise(p.source, { resolve: resolveSeed, old: true, library: LIBRARY }).steps]).toEqual([key, []]);
+    for (const [key, p] of Object.entries(EXAMPLES)) expect([key, normalise(p.source, { resolve: resolveSeed, old: true, library: LIBRARY }).steps]).toEqual([key, []]);
     // (a meter is open on its tempo, a mode on its tonic (#290); a rhythm on its meter, a bass line on its meter and its
     // harmony, and a harmony on its meter and its key, so each is read on a 4/4 at a tempo, with a key and, unless it
     // writes its own, a harmony, where it fits; a mode writes its own key)

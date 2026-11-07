@@ -4,7 +4,7 @@ import { readMidi, writeMidi, type Smf } from './midifile';
 import { pieceMidi } from './midiexport';
 import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
@@ -73,7 +73,7 @@ describe('a MIDI file as text', () => {
   });
 
   it('BWV 847: the file, as text and back, is the same file', () => {
-    const result = compileSource(PRESETS.bwv847.source);
+    const result = compileSource(EXAMPLES.bwv847.source);
     const smf = readMidi(writeMidi(pieceMidi(result, codeShifts(result)).smf));
     const text = midiText(smf, 'bwv847.mid');
     expect(text.split('\n').length).toBeGreaterThan(1765);

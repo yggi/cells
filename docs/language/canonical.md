@@ -4,6 +4,7 @@ The language has several ways to write one thing, and keeps them: a text is its 
 `npm run normalise -- <files>`) writes each such thing one way, for the examples, a corpus, the round trip, and before a
 fragment is hashed. It is a command of its own, never offered while a piece is being written (decision 017). It writes the canonical form, which may change, add and remove cells
 (decision 049, amended for #196); each rewrite sounds identical (S1), or is not made, and a normal text stays as it is. Shorten, which makes a piece more compact, is another tool.
+On a page of the docs, whose cells blocks are each a piece of their own, `npm run normalise -- --blocks <pages>` normalises each block alone; `--rules meter,tempo` keeps a pass to those rules' rows (a Rewrite's `rule`), as the docs' meters were written (#196).
 
 A row joins this page when the owner rules it (the canonical table, [#27](https://github.com/yggi/cells/issues/27)), and
 Normalise writes it from then on.

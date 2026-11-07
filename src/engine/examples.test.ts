@@ -2,8 +2,8 @@
 // says what it is; the library's index and miniatures stay with the workbench. Each is a piece file (piecefile.ts,
 // decision 047): its title, description, tags and tier in the frontmatter, the piece in a cells block, with no card (#196).
 import { describe, expect, test } from 'vitest';
-import { readdirSync } from 'node:fs';
-import { PRESETS } from './presets';
+import { readdirSync, readFileSync } from 'node:fs';
+import { EXAMPLES } from './examples';
 import { compileSource } from './compile';
 import { pieceMeta } from './parser';
 import { readPiece, writePiece } from './piecefile';
@@ -43,9 +43,9 @@ describe('examples/*.md', () => {
       readdirSync('examples').filter((f) => !f.endsWith('.md')),
       'a file that is no piece file',
     ).toEqual([]);
-    expect(Object.keys(PRESETS).sort()).toEqual(files.sort());
+    expect(Object.keys(EXAMPLES).sort()).toEqual(files.sort());
   });
-  for (const [key, p] of Object.entries(PRESETS)) {
+  for (const [key, p] of Object.entries(EXAMPLES)) {
     test(`${key}: compiles without diagnostics, has a title, a description, tags, and its card's postgain= or the built-in card`, () => {
       const r = compileSource(p.source, undefined, seed);
       expect(r.diagnostics).toEqual([]);
@@ -70,7 +70,7 @@ describe('examples/*.md', () => {
     });
   }
 
-  for (const [key, p] of Object.entries(PRESETS)) {
+  for (const [key, p] of Object.entries(EXAMPLES)) {
     test(`${key}: no card (the frontmatter says what the piece is), and its notes are named …Note`, () => {
       const r = compileSource(p.source, undefined, seed);
       expect(r.cells.has('piece'), 'a card, &piece: its label is the description').toBe(false);
@@ -78,7 +78,7 @@ describe('examples/*.md', () => {
     });
   }
 
-  for (const [key, p] of Object.entries(PRESETS)) {
+  for (const [key, p] of Object.entries(EXAMPLES)) {
     test(`${key}: reads the same from its frontmatter as written the old way, and the migration writes its file byte for byte`, () => {
       const old = oldForm(p.file);
       // (the same card, but on no note: the file's frontmatter says it all)
@@ -92,4 +92,26 @@ describe('examples/*.md', () => {
       expect(writePiece({ ...moved, layout: piece.layout, prose: piece.prose })).toBe(p.file);
     });
   }
+});
+
+describe('EXAMPLES is their name (#551)', () => {
+  /** Every TypeScript file under `dir`, recursively. */
+  const tsFiles = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? tsFiles(`${dir}/${e.name}`) : e.name.endsWith('.ts') ? [`${dir}/${e.name}`] : []));
+  /** The deprecated aliases' homes, until the minor after: the module, the key's line and the root's export. */
+  const ALIASES = new Set(['src/engine/presets.ts', 'src/engine/order.ts', 'src/index.ts']);
+
+  test('the old names and the old module appear only in the alias lines', () => {
+    const files = [...tsFiles('src/engine'), ...tsFiles('tools'), 'src/index.ts', 'src/docs.test.ts', ...tsFiles('src/repository').filter((f) => f.endsWith('.test.ts'))];
+    const found = files.flatMap((f) =>
+      readFileSync(f, 'utf8')
+        .split('\n')
+        .flatMap((line, i) => {
+          // In src/repository, `PRESETS` is Jambot's style points (local tables lifted from it), a true name there.
+          const old = f.startsWith('src/repository') ? /\bPresetKey\b|\bPreset\b|engine\/presets'/ : /\bPRESETS\b|\bPresetKey\b|\bPreset\b|engine\/presets'|'\.\.?\/presets'/;
+          return old.test(line) && !(ALIASES.has(f) && /preset/i.test(line)) && f !== 'src/engine/examples.test.ts' ? [`${f}:${i + 1}`] : [];
+        }),
+    );
+    expect(found).toEqual([]);
+  });
 });

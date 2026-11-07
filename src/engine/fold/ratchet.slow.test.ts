@@ -10,7 +10,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { compileSource } from '../compile';
 import { codeShifts } from '../program';
 import { plan } from '../realize';
-import { PRESETS } from '../presets';
+import { EXAMPLES } from '../examples';
 import { pieceMidi } from '../midiexport';
 import { readMidi, writeMidi } from '../midifile';
 import { cellsFromMidi } from '../midiimport';
@@ -29,7 +29,7 @@ const PATH = 'src/engine/fold/ratchet.baseline.json';
 describe('the ratchet: every example through MIDI, folded', () => {
   it('is no worse than the baseline, over the library', () => {
     const now: Record<string, Row> = {};
-    for (const [key, p] of Object.entries(PRESETS)) {
+    for (const [key, p] of Object.entries(EXAMPLES)) {
       // (an example as its expansion, its `use` lines written out: a text of its own, playing as the example does, #196)
       const source = expand(p.source, resolveSeed);
       const r = compileSource(source);

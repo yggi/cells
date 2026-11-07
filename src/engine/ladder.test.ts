@@ -3,12 +3,12 @@ import { entries } from '../../tools/reference';
 import { formKey, formsUsed, PENDING, STUBS, TIERS } from './ladder';
 import { pieceMeta } from './parser';
 import { ORDER } from './order';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { canonicalTags, TUTORIAL } from './tags';
 import { resolveSeed } from '../repository/library';
 
 // The tutorial (#170) in tiers: every form of the reference on exactly one tier, and the pieces of a tier together show all of its forms.
-const pieces = Object.entries(PRESETS).map(([key, p]) => ({ key, source: p.source, meta: pieceMeta(p.file) }));
+const pieces = Object.entries(EXAMPLES).map(([key, p]) => ({ key, source: p.source, meta: pieceMeta(p.file) }));
 const tutorial = pieces.filter((p) => canonicalTags(p.meta?.tags ?? []).includes(TUTORIAL));
 
 describe('the tutorial, in tiers', () => {

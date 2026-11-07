@@ -11,7 +11,7 @@ import { flatten } from './flatten';
 import { eventsBetween, plan, returnGains } from './realize';
 import { liveAt } from './live';
 import { routing } from './routing';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
@@ -122,7 +122,7 @@ describe('sound', () => {
   });
 
   it('switching off a table, a voice or the clock silences what depends on it', () => {
-    const r = compileSource(PRESETS.royal.source);
+    const r = compileSource(EXAMPLES.royal.source);
     const voices = (m: string[]) => [...new Set(events(r, 0, 10, m).map((e) => e.voice))].sort();
     expect(voices([])).toEqual(['bass', 'lead']);
     expect(voices(['cell:scale'])).toEqual([]);
@@ -132,7 +132,7 @@ describe('sound', () => {
   });
 
   it('windows tile: no event lost or doubled across window edges', () => {
-    const r = compileSource(PRESETS.sailor.source);
+    const r = compileSource(EXAMPLES.sailor.source);
     const p = plan(r, codeShifts(r));
     const whole = eventsBetween(p, 0, 8).length;
     let tiled = 0;
@@ -140,8 +140,8 @@ describe('sound', () => {
     expect(tiled).toBe(whole);
   });
 
-  it('every preset sounds every out()', () => {
-    for (const [key, pr] of Object.entries(PRESETS)) {
+  it('every example sounds every out()', () => {
+    for (const [key, pr] of Object.entries(EXAMPLES)) {
       const r = compileSource(pr.source, undefined, { resolve: resolveSeed });
       expect(r.diagnostics, key).toEqual([]);
       // within 12 s — or longer, for a piece that unfolds (BWV 847's fugue waits out the prelude; the Ricercar adds a voice a pass;
@@ -179,7 +179,7 @@ describe('sound', () => {
 });
 
 describe('royal: every key in fifths, then every mode', () => {
-  const r = compileSource(PRESETS.royal.source);
+  const r = compileSource(EXAMPLES.royal.source);
   const pass = (20 * 60) / 84;
   const theme = (n: number) =>
     events(r, n * pass, (n + 1) * pass)
@@ -205,7 +205,7 @@ describe('royal: every key in fifths, then every mode', () => {
 });
 
 describe('live view', () => {
-  const r = compileSource(PRESETS.royal.source);
+  const r = compileSource(EXAMPLES.royal.source);
   const spb = 60 / 84;
   it('turns the key a fifth after one pass', () => {
     expect(liveAt(r, codeShifts(r), new Set(), 21 * spb).shifts('key')).toBe(7);
@@ -257,7 +257,7 @@ describe('modulation: &mix_ [(&theme + &vibrato) * &voice]\n&out_ loop=44k map=s
 });
 
 describe('canon: Brother John', () => {
-  const r = compileSource(PRESETS.canon.source);
+  const r = compileSource(EXAMPLES.canon.source);
   const bar = 2; // 4 beats at 120bpm
   const BASE: Record<string, number> = Object.fromEntries(['v1', 'v2', 'v3', 'v4'].map((v) => [v, r.cells.get(v)!.freq]));
   // each voice as semitones above its own pitch 0, so octaves don't matter
@@ -286,7 +286,7 @@ describe('canon: Brother John', () => {
 });
 
 describe('canon per tonos', () => {
-  const r = compileSource(PRESETS.pertonos.source);
+  const r = compileSource(EXAMPLES.pertonos.source);
   const beat = 60 / 72;
   const pass = 20 * beat;
   const pcs = (from: number, to: number, voice: string) =>
@@ -329,7 +329,7 @@ describe('canon per tonos', () => {
 
 describe('stereo from two mixes', () => {
   it('per tonos: the reed leans left, the cello right', () => {
-    const r = compileSource(PRESETS.pertonos.source);
+    const r = compileSource(EXAMPLES.pertonos.source);
     const g = Object.fromEntries(r.outputs.map((o) => [o.through[0] ?? o.voice, o.gains]));
     expect(g.reed[0]).toBeGreaterThan(g.reed[1]);
     expect(g.cello[1]).toBeGreaterThan(g.cello[0]);
@@ -351,7 +351,7 @@ describe('pulses', () => {
 
 describe('twinkle: motifs and reuse', () => {
   it('three motifs, the middle line a shifted reading of the second — the whole tune', () => {
-    const r = compileSource(PRESETS.twinkle.source);
+    const r = compileSource(EXAMPLES.twinkle.source);
     const bar = 60 / 96;
     const notes = events(r, 0, 48 * bar - 0.01)
       .filter((e) => e.voice === 'lead')
@@ -361,7 +361,7 @@ describe('twinkle: motifs and reuse', () => {
 });
 
 describe('lullaby', () => {
-  const r = compileSource(PRESETS.lullaby.source);
+  const r = compileSource(EXAMPLES.lullaby.source);
   it('compiles clean', () => expect(r.diagnostics).toEqual([]));
   it('the second phrase is the first, a step lower — Brahms’ sequence', () => {
     const eighth = 60 / 56 / 2;
@@ -461,7 +461,7 @@ describe('a turning table comes round after its own length; cycle= says otherwis
   });
   it('a braid of chords comes round after its chords: the Prelude without its cycle=', () => {
     // (as the Prelude was written before: one table of 95 numbers, turned five at a time, cycle= its length)
-    const p = PRESETS.prelude.source;
+    const p = EXAMPLES.prelude.source;
     // (its line, with the lines it continues on: each but the last ends in `[`)
     const line = /^&chords step=1m (\[(?:.*\[\n)*.*)$/m.exec(p)!;
     const n = line[1]
@@ -473,7 +473,7 @@ describe('a turning table comes round after its own length; cycle= says otherwis
     expect(all(p)).toEqual(all(strided));
   });
   it('per tonos rises a whole tone a pass — and an octave after six', () => {
-    const r = compileSource(PRESETS.pertonos.source);
+    const r = compileSource(EXAMPLES.pertonos.source);
     const pass = 20 * (60 / 72);
     const first = (n: number) => midi(events(r, n * pass, (n + 1) * pass).find((e) => (e.instrument ?? e.voice) === 'reed')!.freq);
     expect(first(6) - first(0)).toBe(12);
@@ -522,7 +522,7 @@ describe('easy retirements', () => {
 
 describe('switching off', () => {
   it('switching off one channel’s mix silences only that channel', () => {
-    const r = compileSource(PRESETS.canon.source);
+    const r = compileSource(EXAMPLES.canon.source);
     const p = plan(r, codeShifts(r), new Set(['cell:left']));
     const e = eventsBetween(p, 0, 2).find((x) => (x.instrument ?? x.voice) === 'v1')!;
     expect(e.gains[0]).toBe(0);
@@ -658,7 +658,7 @@ describe('Ricercar: a study in counterpoint, from strict to free', () => {
     }
     return out;
   }
-  const r = compileSource(PRESETS.ricercar.source);
+  const r = compileSource(EXAMPLES.ricercar.source);
   it('compiles clean', () => expect(r.diagnostics).toEqual([]));
   it('a pass each: alone · above · below · two against one · four against one · three voices', () => {
     const who = (n: number) => [...new Set(passOf(r, n).map((e) => e.voice))].sort().join(' ');
@@ -670,7 +670,7 @@ describe('Ricercar: a study in counterpoint, from strict to free', () => {
     for (let n = 0; n < 6; n++) expect(problems(passOf(r, n)), `pass ${n + 1}`).toEqual([]);
   });
   it('per tonos: raised, every voice climbs together — and still obeys', () => {
-    const climbing = compileSource(setFree(PRESETS.ricercar.source, r.cells.get('key')!.frees[0], 5));
+    const climbing = compileSource(setFree(EXAMPLES.ricercar.source, r.cells.get('key')!.frees[0], 5));
     for (let n = 0; n < 6; n++) expect(problems(passOf(climbing, n)), `pass ${n + 1}`).toEqual([]);
     const first = (rr: R, n: number) => midiOf(passOf(rr, n).find((e) => e.voice === 'organ')!.freq);
     expect(first(climbing, 1) - first(r, 1)).toBe(5);
@@ -722,7 +722,7 @@ describe('swing: a meter driven by the bar, its intervals free', () => {
 });
 
 describe('swing blues', () => {
-  const r = compileSource(PRESETS.jazz.source);
+  const r = compileSource(EXAMPLES.jazz.source);
   const beat = 60 / 132;
   const line = (voice: string, from: number, to: number) => events(r, from, to).filter((e) => e.voice === voice);
   const pc = (f: number) => NAMES[((midi(f) % 12) + 12) % 12];
@@ -746,7 +746,7 @@ describe('swing blues', () => {
 });
 
 describe('Five: 5/4, felt 3 + 2', () => {
-  const r = compileSource(PRESETS.five.source);
+  const r = compileSource(EXAMPLES.five.source);
   const beat = 60 / 172;
   const line = (voice: string, from: number, to: number) => events(r, from, to).filter((e) => e.voice === voice);
   const pc = (f: number) => NAMES[((midi(f) % 12) + 12) % 12];
@@ -776,7 +776,7 @@ describe('Five: 5/4, felt 3 + 2', () => {
 });
 
 describe('Metronome: any meter — the bar written as levels (meter(…)), read through a kit', () => {
-  const src = (PRESETS as Record<string, { source: string }>).metronome.source;
+  const src = (EXAMPLES as Record<string, { source: string }>).metronome.source;
   const clicks = (code: string, seconds = 2.45) => {
     const r = compileSource(code);
     expect(r.diagnostics).toEqual([]);
@@ -805,7 +805,7 @@ describe('Metronome: any meter — the bar written as levels (meter(…)), read 
 });
 
 describe('five more examples', () => {
-  const P = PRESETS as Record<string, { source: string }>;
+  const P = EXAMPLES as Record<string, { source: string }>;
   const notes = (r: R, voice: string, from: number, to: number) =>
     events(r, from, to)
       .filter((e) => e.voice === voice)
@@ -882,7 +882,7 @@ describe('five more examples', () => {
 });
 
 describe('three more: Pachelbel, pop, IDM', () => {
-  const P = PRESETS as Record<string, { source: string }>;
+  const P = EXAMPLES as Record<string, { source: string }>;
   const pc = (f: number) => NAMES[((midi(f) % 12) + 12) % 12];
 
   it('Pachelbel: the ground, then the violins one at a time, each a variation behind', () => {
@@ -941,7 +941,7 @@ describe('three more: Pachelbel, pop, IDM', () => {
 });
 
 describe('other grids: Carlos’ alpha, a study after Studie II', () => {
-  const P = PRESETS as Record<string, { source: string }>;
+  const P = EXAMPLES as Record<string, { source: string }>;
   it('Alpha: triads that ring true — 5 steps ≈ 5:4, 9 = 3:2 — and no octave', () => {
     const r = compileSource(P.alpha.source);
     expect(r.diagnostics).toEqual([]);
@@ -979,7 +979,7 @@ describe('other grids: Carlos’ alpha, a study after Studie II', () => {
 });
 
 describe('Just intonation: pure and tempered', () => {
-  const r = compileSource((PRESETS as Record<string, { source: string }>).just.source);
+  const r = compileSource((EXAMPLES as Record<string, { source: string }>).just.source);
   const chord = (side: 0 | 1, n: number) => {
     const bar = (4 * 60) / 48;
     return events(r, n * bar, n * bar + 0.1)
@@ -1003,7 +1003,7 @@ describe('Just intonation: pure and tempered', () => {
 });
 
 describe('Bach, Prelude and Fugue in C minor, BWV 847: every note, against the encoding', () => {
-  const r = compileSource((PRESETS as Record<string, { source: string }>).bwv847.source);
+  const r = compileSource((EXAMPLES as Record<string, { source: string }>).bwv847.source);
   // the CCARH encoding's notes, voice by voice: [onset, length (sixteenths), semitones from C4]
   const reference = bwv847Reference as Record<string, number[][]>;
   it('compiles clean', () => expect(r.diagnostics).toEqual([]));
@@ -1081,7 +1081,7 @@ describe('sound parameters that move', () => {
 });
 
 describe('IDM, Acid-Cell, Zelluläre Aktivität: parameters that move, in pieces', () => {
-  const P = PRESETS as Record<string, { source: string }>;
+  const P = EXAMPLES as Record<string, { source: string }>;
   const pc = (f: number) => NAMES[((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12];
   it('IDM: the lead plays the chord’s own tones — and the chord moves', () => {
     const r = compileSource(P.idm.source);
@@ -1158,7 +1158,7 @@ describe('IDM, Acid-Cell, Zelluläre Aktivität: parameters that move, in pieces
 });
 
 describe('arranged: the pop song and Zelluläre Aktivität, section by section', () => {
-  const P = PRESETS as Record<string, { source: string }>;
+  const P = EXAMPLES as Record<string, { source: string }>;
   const who = (key: string, sec: number, n: number) => {
     const r = compileSource(P[key].source);
     return [...new Set(events(r, n * sec, (n + 1) * sec - 1e-3).map((e) => e.voice))].sort().join(' ');
@@ -1278,7 +1278,7 @@ describe('selectors, live', () => {
 });
 
 describe('Korobeiniki in Tetris form', () => {
-  const r = compileSource((PRESETS as Record<string, { source: string }>).korobeiniki.source);
+  const r = compileSource((EXAMPLES as Record<string, { source: string }>).korobeiniki.source);
   const sec = (32 * 60) / 144;
   const pc = (f: number) => NAMES[((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12];
   it('A · A · B · B · A — and round again', () => {
@@ -1313,7 +1313,7 @@ describe('Korobeiniki in Tetris form', () => {
 });
 
 describe('Cellscape: a cycle of twelve', () => {
-  const r = compileSource((PRESETS as Record<string, { source: string }>).cellscape.source);
+  const r = compileSource((EXAMPLES as Record<string, { source: string }>).cellscape.source);
   const sec = (32 * 60) / 72;
   const midiOf = (f: number) => Math.round(69 + 12 * Math.log2(f / 440));
   const pc = (f: number) => NAMES[((midiOf(f) % 12) + 12) % 12];
@@ -1506,7 +1506,7 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
 });
 
 describe('Cellscape II feat. Stockhausen', () => {
-  const src = (PRESETS as Record<string, { source: string }>).cellscape2.source;
+  const src = (EXAMPLES as Record<string, { source: string }>).cellscape2.source;
   const r = compileSource(src);
   const ev = events(r, 0, 240);
   it('compiles clean; every layer sounds within four minutes', () => {
@@ -1552,7 +1552,7 @@ describe('Cellscape II feat. Stockhausen', () => {
 });
 
 describe('Baustelle', () => {
-  const r = compileSource((PRESETS as Record<string, { source: string }>).baustelle.source);
+  const r = compileSource((EXAMPLES as Record<string, { source: string }>).baustelle.source);
   const sec = (16 * 60) / 118;
   it('compiles clean; builds, breaks, comes back, collapses — and ends', () => {
     expect(r.diagnostics).toEqual([]);
@@ -1592,7 +1592,7 @@ describe('Baustelle', () => {
         .map((e) => (e.at - k * bar).toFixed(3))
         .join(' ');
     expect(new Set([0, 1, 2, 3, 4, 5, 6, 7].map(hits)).size).toBeGreaterThan(1);
-    expect(events(compileSource((PRESETS as Record<string, { source: string }>).baustelle.source), 0, 20).length).toBe(events(r, 0, 20).length);
+    expect(events(compileSource((EXAMPLES as Record<string, { source: string }>).baustelle.source), 0, 20).length).toBe(events(r, 0, 20).length);
   });
   it('grit: distort= and crush= are numbers on the voice', () => {
     expect(r.cells.get('grit')!.params).toMatchObject({ distort: 0.85, crush: 6 });
@@ -1600,7 +1600,7 @@ describe('Baustelle', () => {
 });
 
 describe('five more: Cell in Focus, Hypercell, One more Cell, Cellular Brothers, Ghost-Cells', () => {
-  const P = PRESETS as Record<string, { source: string }>;
+  const P = EXAMPLES as Record<string, { source: string }>;
   const R = (k: string) => compileSource(P[k].source);
   const pc = (f: number) => NAMES[((Math.round(69 + 12 * Math.log2(f / 440)) % 12) + 12) % 12];
   it('all compile clean', () => {
@@ -1699,14 +1699,14 @@ describe('FM: fm=&op, ratio=, index=', () => {
     ).toMatch(/a modulator is a voice/);
   });
   it('Cell Tines compiles clean, and every voice sounds', () => {
-    const r = compileSource((PRESETS as Record<string, { source: string }>).tines.source);
+    const r = compileSource((EXAMPLES as Record<string, { source: string }>).tines.source);
     expect(r.diagnostics).toEqual([]);
     expect([...new Set(events(r, 0, 12).map((e) => e.voice))].sort()).toEqual(['bell', 'body', 'fmbass', 'tine']);
   });
 });
 
 describe('Cell Phase: a ratio of clocks, not a nudged tempo', () => {
-  const r = compileSource((PRESETS as Record<string, { source: string }>).phase.source);
+  const r = compileSource((EXAMPLES as Record<string, { source: string }>).phase.source);
   it('compiles clean', () => expect(r.diagnostics).toEqual([]));
   it('the right player is a note ahead every 81 of its notes, and in unison again after 81 rounds', () => {
     const at = (voice: string) =>
@@ -1729,7 +1729,7 @@ describe('Cell Phase: a ratio of clocks, not a nudged tempo', () => {
 });
 
 describe('DTMF: a number typed, then dialled — spell(free("…"), &keys, "names")', () => {
-  const src = (PRESETS as Record<string, { source: string }>).dtmf.source;
+  const src = (EXAMPLES as Record<string, { source: string }>).dtmf.source;
   const dialled = (code: string, seconds = 1.2) => {
     const r = compileSource(code);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
@@ -1784,7 +1784,7 @@ describe('what a return, an envelope and FM give the voice', () => {
 
   it('with nothing off, returns and lone resonators reach the sound card at the levels compile gives them, in every example (#165)', () => {
     let checked = 0;
-    for (const { source } of Object.values(PRESETS)) {
+    for (const { source } of Object.values(EXAMPLES)) {
       const r = compileSource(source, undefined, { resolve: resolveSeed });
       for (const x of [...r.returns, ...r.resonances]) {
         expect(returnGains(x, new Set())).toEqual([x.gains[0], x.gains[1]]);

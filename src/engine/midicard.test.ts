@@ -8,7 +8,7 @@ import { channelTable, midiNote, router, routesOf } from './midi';
 import { flows } from './flows';
 import { routing } from './routing';
 import { cellId, edgeId } from './ids';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 
 const BAND = `&bar scan(1 1 1 1) step=2
 &theme step=4n 0 2 4 5
@@ -184,7 +184,7 @@ describe('MIDI out from a card: the channel table and the router', () => {
   });
 
   it('a piece with no card keeps the default output: every voice heard, a channel each', () => {
-    const t = channelTable(compileSource(PRESETS.sailor.source));
+    const t = channelTable(compileSource(EXAMPLES.sailor.source));
     expect([t.byPiece, t.ports]).toEqual([undefined, undefined]);
   });
 });

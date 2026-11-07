@@ -21,7 +21,7 @@ import {
 import { compileSource as compileAlone } from './compile';
 import { flatten, tapped } from './flatten';
 import { codeShifts } from './program';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
@@ -91,7 +91,7 @@ describe('source edits', () => {
   });
 
   it('a section without a line of its own gets one under its table, and loses it when it says nothing (decision 016)', () => {
-    const song = PRESETS.pop.source;
+    const song = EXAMPLES.pop.source;
     const off = setOff(song, 'hookBar', true);
     const lines = off.split('\n');
     expect(lines[lines.findIndex((l) => l.startsWith('&sections ')) + 1]).toBe('&hookBar off');
@@ -111,7 +111,7 @@ describe('source edits', () => {
   });
 
   it('round-trips through the compiler: what the graph sets is what the code says', () => {
-    const base = PRESETS.royal.source;
+    const base = EXAMPLES.royal.source;
     const r = compileSource(setOff(setShift(base, 'key', 5), 'theme', true));
     expect(r.ok).toBe(true);
     expect(r.cells.get('key')!.shift).toBe(5);
@@ -184,7 +184,7 @@ describe('editor operations', () => {
     // (several heads, or no arguments, maybe a collection: no head of its own to write on, so nothing is written)
     for (const taken of ['&bd, &sd from gm_kit\n&k step=8n &bd', '&bd from gm_kit\n&k step=8n &bd']) expect(setAttr(taken, 'bd', 'show', 'braid')).toBe(taken);
     // (a piece from the library: shown, it says what it said before)
-    const swing = PRESETS.electroswing!.source;
+    const swing = EXAMPLES.electroswing!.source;
     const said = (text: string) => compileSource(text).diagnostics.map((d) => d.message);
     expect(said(setAttr(swing, 'gypsy', 'show', 'braid'))).toEqual(said(swing));
     // (a flag is no attribute: a head before from takes only key=value)

@@ -6,7 +6,7 @@ import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { GM_KIT, gmDrumNote, kitNotes, noteOf } from './midi';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { pieceMeta } from './parser';
 import { writePiece } from './piecefile';
 import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
@@ -264,8 +264,8 @@ describe('a MIDI file as a piece', () => {
   });
 
   it('BWV 847, saved as MIDI and opened again: every note, at its time and key', () => {
-    const original = notesOf(PRESETS.bwv847.source);
-    const result = compileSource(PRESETS.bwv847.source);
+    const original = notesOf(EXAMPLES.bwv847.source);
+    const result = compileSource(EXAMPLES.bwv847.source);
     const smf = readMidi(writeMidi(pieceMidi(result, codeShifts(result)).smf));
     const { source, notes: count, perQuarter } = cellsFromMidi(smf, 'BWV 847');
     expect(count).toBe(1765);
@@ -302,7 +302,7 @@ describe('a glide’s run through MIDI and back (#334)', () => {
       ['stereo', 0.12],
       ['bossa', 0.08],
     ] as const) {
-      const r = compileSource(PRESETS[key]!.source);
+      const r = compileSource(EXAMPLES[key]!.source);
       const smf = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
       const made = cellsFromMidi(smf, key);
       expect(made.source, key).toContain(` glide=${glide} `);
@@ -312,7 +312,7 @@ describe('a glide’s run through MIDI and back (#334)', () => {
         notesOf(source)
           .filter((n) => n.at < seconds - 1e-6)
           .map((n) => `${n.key} ${n.at.toFixed(2)}`);
-      expect(notes(made.source), key).toEqual(notes(PRESETS[key]!.source));
+      expect(notes(made.source), key).toEqual(notes(EXAMPLES[key]!.source));
     }
   });
   it('leaves a line whose overlaps differ (played in) as it is', () => {

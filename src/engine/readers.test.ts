@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { clocking } from './clocking';
 import { codeShifts } from './program';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { lapOf, ownRate, refsOf, stepsAt, stepsPerSecond } from './readers';
 
 const compiled = (src: string) => {
@@ -50,6 +50,6 @@ describe("a cell's readers", () => {
     expect(stepsAt(clk, r.cells.get('b')!)).toBeCloseTo(stepsAt(clk, c) / 2);
   });
   it('every example keys its cells by their own names (ownRate reads cell.name)', () => {
-    for (const p of Object.values(PRESETS)) for (const [k, c] of compileSource(p.source).cells) expect(c.name).toBe(k);
+    for (const p of Object.values(EXAMPLES)) for (const [k, c] of compileSource(p.source).cells) expect(c.name).toBe(k);
   });
 });

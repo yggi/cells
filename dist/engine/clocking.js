@@ -119,12 +119,22 @@ function swungMeter(result, meter) {
         const span = written[i + 1] - written[i];
         return (bar * P + swung[i] + (span > 0 ? ((x - written[i]) / span) * (swung[i + 1] - swung[i]) : 0)) * per;
     };
+    const W = (s) => {
+        const p = s / per;
+        const bar = Math.floor(p / P + 1e-12);
+        const x = p - bar * P;
+        let i = 0;
+        while (i + 2 < swung.length && swung[i + 1] <= x + 1e-12)
+            i++;
+        const span = swung[i + 1] - swung[i];
+        return (bar * P + written[i] + (span > 0 ? ((x - swung[i]) / span) * (written[i + 1] - written[i]) : 0)) * per;
+    };
     const finest = Math.min(...m.swing.map((l) => l.whole * m.unit));
     const held = (grid) => {
         const k = Math.log2(grid / per / finest);
         return Math.abs(k - Math.round(k)) < 1e-9;
     };
-    return { S, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per) };
+    return { S, W, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per), grain: finest * per };
 }
 function swungTapMap(tap, meter, { S, at }) {
     const { positions, lap } = tap;
@@ -289,7 +299,19 @@ export function clocking(result, statics, seconds = 0) {
             maps.set(`${clock}\0written`, (m = tapMap({ ...tap, positions: tap.written }, base(tap.meter))));
         return m;
     };
-    return { map, written, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
+    const played = (clock) => {
+        const sw = result.clocks.get(clock)?.tap ? null : swungMeter(result, clock);
+        if (!sw)
+            return map(clock);
+        let m = maps.get(`${clock}\0played`);
+        if (!m) {
+            const inner = base(clock);
+            m = { beats: inner.beats, q: (w) => inner.q(sw.S(w)), stepAt: (t) => sw.W(inner.stepAt(t)), ...(inner.speed ? { speed: inner.speed } : {}) };
+            maps.set(`${clock}\0played`, m);
+        }
+        return { ...m, q: m.q, stepAt: m.stepAt, grain: sw.grain };
+    };
+    return { map, written, played, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
 export function shiftsAt(result, statics, seconds) {
     const clk = clocking(result, statics, seconds);

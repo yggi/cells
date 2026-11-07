@@ -84,3 +84,21 @@ describe('the MIDI file’s signature', () => {
     expect(pieceMidi(r, codeShifts(r)).smf.meters).toEqual([]);
   });
 });
+
+// #15, rung 1: the MIDI file's tempo grid under a swing finer than the meter's own steps is that swing's division, as the
+// meter written at that subdivision writes it: tempos that alternate, every note where it sounds.
+describe('the MIDI file under a swing at two subdivisions', () => {
+  const file = (bar: string) => {
+    const r = compileSource(`${bar} laps=2\n&t step=8n 0 2 4 5 7 5 4 2${V}`);
+    return pieceMidi(r, codeShifts(r)).smf;
+  };
+  it.each([
+    ['&bar meter("4/4") step=120bpm swing=8n:2/3', '&bar meter("4/4", 2) step=120bpm swing=8n:2/3'],
+    ['&bar meter("6/8") step=60bpm swing=16n:.6', '&bar meter("6/8", 2) step=60bpm swing=16n:.6'],
+  ])('%s writes the tempos and notes %s writes', (a, b) => {
+    const [x, y] = [file(a), file(b)];
+    expect(x.tempos).toEqual(y.tempos);
+    expect(x.tracks.map((t) => t.notes)).toEqual(y.tracks.map((t) => t.notes));
+    expect(x.tempos.length).toBeGreaterThan(1);
+  });
+});
