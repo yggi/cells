@@ -20,6 +20,6 @@ The tonic and its octave, struck short on and off the beat: the line a techno tr
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&octaves`), so `use &octaves` takes it; a form reads it as its `&call` (`&call step=8n &octaves`), the line the form moves and answers.
 
-At Techno's point (`presets.ts`), weight 1, as the facet `motif`.
+At Techno's point (`styles`), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&octaves from &key`. `&octaves from octaves &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &octaves from octaves`, it reads `&key` by name, as before.

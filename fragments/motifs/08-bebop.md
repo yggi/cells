@@ -20,6 +20,6 @@ Up the seventh chord to the octave, held, and back down through the seventh: a b
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&bebop`), so `use &bebop` takes it; a form reads it as its `&call` (`&call step=8n &bebop`), the line the form moves and answers.
 
-At Swing jazz's point (`presets.ts`), weight 1, as the facet `motif`.
+At Swing jazz's point (`styles`), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&bebop from &key`. `&bebop from bebop &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &bebop from bebop`, it reads `&key` by name, as before.

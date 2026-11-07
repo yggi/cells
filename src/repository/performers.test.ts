@@ -15,7 +15,7 @@ import { createRepository } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { PERFORMER_FRAGMENTS } from './performers';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
 // decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)

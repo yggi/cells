@@ -14,7 +14,7 @@ import { chanceOf } from '../engine/realize';
 import { createRepository, EMPTY_LAYER, type LearnedLayer, type StylePoint } from './fragments';
 import { fileFragment, useFragments, type Use } from './learned';
 import { LIBRARY } from './library';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 /** The presets a draw's runs start from, in order: run `i` of a draw starts at the `i`th. */

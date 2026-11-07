@@ -71,23 +71,35 @@ association:
       energy: 0.35
     weight: 1
     facet: style
+  - point:
+      sync: 0.1
+      harm: 0.12
+      artic: 0.5
+      energy: 0.35
+    weight: 1
+    facet: style
 source: seed
 ---
 
 ```cells
-&synthPop map=style sync=.3 harm=.45 artic=.55 energy=.55
-&techno map=style sync=.12 harm=0 artic=1 energy=.8
-&deepHouse map=style sync=.35 harm=.55 artic=.65 energy=.65
-&ambient map=style sync=.05 harm=.3 artic=0 energy=.2
-&lofi map=style sync=.5 harm=.75 artic=.35 energy=.5
-&funk map=style sync=1 harm=.12 artic=.85 energy=.75
-&bossaNova map=style sync=.75 harm=.85 artic=.45 energy=.45
-&swingJazz map=style sync=.35 harm=1 artic=.3 energy=.6
-&electroSwing map=style sync=.55 harm=.75 artic=.6 energy=.75
-&spooky map=style sync=.2 harm=.9 artic=.3 energy=.35
+&synthPop map=style label="Synth-pop" step=108bpm sync=.3 harm=.45 artic=.55 energy=.55
+&techno map=style label="Techno" step=130bpm sync=.12 harm=0 artic=1 energy=.8
+&deepHouse map=style label="Deep house" step=122bpm sync=.35 harm=.55 artic=.65 energy=.65
+&ambient map=style label="Ambient" step=72bpm sync=.05 harm=.3 artic=0 energy=.2
+&lofi map=style label="Lo-fi hip hop" step=84bpm sync=.5 harm=.75 artic=.35 energy=.5
+&funk map=style label="Funk" step=104bpm sync=1 harm=.12 artic=.85 energy=.75
+&bossaNova map=style label="Bossa nova" step=132bpm sync=.75 harm=.85 artic=.45 energy=.45
+&swingJazz map=style label="Swing jazz" step=148bpm sync=.35 harm=1 artic=.3 energy=.6
+&electroSwing map=style label="Electro swing" step=124bpm sync=.55 harm=.75 artic=.6 energy=.75
+&spooky map=style label="Spooky" step=100bpm sync=.2 harm=.9 artic=.3 energy=.35
+&kinderlied map=style label="Kinderlied" step=96bpm sync=.1 harm=.12 artic=.5 energy=.35
 ```
 
-The styles of Jambot's ten presets (decision 063 §3, #391), each a `map=style` cell at the point the preset plays, its axes by name (cells' table of axes, `AXES`): the eight of the prototype, then Electro swing and Spooky (#349). A score names its section's style by one of them where the section sits exactly on it, and by its numbers or a mix of them where it doesn't:
+The library of styles (decision 063 §3, #391, #537): the eleven preset styles, each a `map=style` cell at its point, its axes by name (cells' table of axes, `AXES`), its display name its `label=` and its default tempo its `step=`. They are Jambot's eight from the prototype, then Electro swing and Spooky (#349), then Kinderlied (yggi/jambot#547), whose 96 bpm is Twinkle's.
+
+This file is the presets' one source: `STYLES` (`src/repository/styles.ts`) reads each as `{ id, name, point, tempo }`, in this order, and a frontend takes its presets from there. Only the library reads the `step=`: `style=` and a query read the point, so a style has no tempo (decision 037, D6).
+
+A score names its section's style by one of them where the section sits exactly on it, and by its numbers or a mix of them where it doesn't:
 
 ```text
 &funk from styles
@@ -96,4 +108,4 @@ The styles of Jambot's ten presets (decision 063 §3, #391), each a `map=style` 
 
 The default band reads the style through `&style` (`band`: its bass's and its lead's cutoff), and so does its choice of instruments (`resolveBand`): Spooky's, named, plays the round bass, the organ, the celesta and the theremin, as its numbers do.
 
-The points are Jambot's (`src/repository/presets.ts`, lifted from yggi/jambot `packages/engine/src/style.ts`), and a test holds the two to each other. Associated once at each of them, as the facet `style`, at weight 1: the style nearest a point is a query (`{ facet: 'style' }`).
+The points were lifted from yggi/jambot `packages/engine/src/style.ts` @ 7b078e8, with their tempos @ dcc414d. Associated once at each of them, as the facet `style`, at weight 1: the style nearest a point is a query (`{ facet: 'style' }`), and a test holds the association to the cells' points.
