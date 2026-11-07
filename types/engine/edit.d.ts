@@ -2,6 +2,24 @@
 export declare function splitComment(line: string): [string, string];
 /** 0-based index of the line declaring &name, or -1. */
 export declare function declLine(source: string, name: string): number;
+/** One word of code from `i`, brackets, parentheses and quotes kept whole, and where it ends. */
+export declare function wordAt(code: string, i: number): {
+    text: string;
+    end: number;
+};
+/** An attribute's value as written: its first word (`70..4800`, `800`, `&lfo`), the cells it is multiplied by, and where it lies. */
+export interface AttrValue {
+    readonly base: string;
+    readonly factors: readonly string[];
+    readonly start: number;
+    readonly end: number;
+}
+/**
+ * `key=`'s value on a line of code, whole: its first word and every ` * term` after it, as the parser reads a moving
+ * parameter (`lpf=70..4800 * &eg * &lfo`: sound.md, *Parameters as cells*); null where it isn't written (#470). A
+ * frontend that sets a moving parameter's range and keeps its cells writes `[base, ...factors].join(' * ')` back.
+ */
+export declare function attrValue(code: string, key: string): AttrValue | null;
 /**
  * Set (or with null, remove) a `key=value` attribute on &name. New attributes go right after the name; on a template's copy,
  * its head's, before `from` (`&gypsy show=braid from gypsy &key`).

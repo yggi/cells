@@ -111,6 +111,53 @@ function editDecl(source: string, name: string, f: (code: string, head: RegExp) 
   return lines.join('\n');
 }
 
+/** One word of code from `i`, brackets, parentheses and quotes kept whole, and where it ends. */
+export function wordAt(code: string, i: number): { text: string; end: number } {
+  let depth = 0;
+  let quoted = false;
+  let j = i;
+  for (; j < code.length; j++) {
+    const c = code[j]!;
+    if (c === '"') quoted = !quoted;
+    if (quoted) continue;
+    if (c === '[' || c === '(') depth++;
+    else if (c === ']' || c === ')') depth = Math.max(0, depth - 1);
+    else if (/\s/.test(c) && depth === 0) break;
+  }
+  return { text: code.slice(i, j), end: j };
+}
+
+/** An attribute's value as written: its first word (`70..4800`, `800`, `&lfo`), the cells it is multiplied by, and where it lies. */
+export interface AttrValue {
+  readonly base: string;
+  readonly factors: readonly string[];
+  readonly start: number;
+  readonly end: number;
+}
+
+/**
+ * `key=`'s value on a line of code, whole: its first word and every ` * term` after it, as the parser reads a moving
+ * parameter (`lpf=70..4800 * &eg * &lfo`: sound.md, *Parameters as cells*); null where it isn't written (#470). A
+ * frontend that sets a moving parameter's range and keeps its cells writes `[base, ...factors].join(' * ')` back.
+ */
+export function attrValue(code: string, key: string): AttrValue | null {
+  const m = new RegExp(`(^|\\s)${key}=`).exec(code);
+  if (!m) return null;
+  const start = m.index + m[0].length;
+  const first = wordAt(code, start);
+  const factors: string[] = [];
+  let end = first.end;
+  for (;;) {
+    const times = /^\s*\*\s*/.exec(code.slice(end));
+    if (!times) break;
+    const term = wordAt(code, end + times[0].length);
+    if (!term.text) break;
+    factors.push(term.text);
+    end = term.end;
+  }
+  return { base: first.text, factors, start, end };
+}
+
 /**
  * Set (or with null, remove) a `key=value` attribute on &name. New attributes go right after the name; on a template's copy,
  * its head's, before `from` (`&gypsy show=braid from gypsy &key`).
@@ -120,11 +167,13 @@ export function setAttr(source: string, name: string, key: string, value: string
     source,
     name,
     (code, head) => {
-      // a value is a word, or a word with (…) in it (free(0, 0..6), cycle(&bar)*2)
-      const val = `(?:"[^"]*"|[^\\s(]*\\([^)]*\\)[^\\s]*|\\S+)`;
-      const attr = new RegExp(`(\\s)${key}=${val}`);
-      if (attr.test(code)) return value === null ? code.replace(new RegExp(`\\s${key}=${val}`), '') : code.replace(attr, `$1${key}=${value}`);
-      return value === null ? code : code.replace(head, `$1 ${key}=${value}`);
+      // (its value whole: a word, brackets, parentheses and quotes kept, and a moving parameter's ` * term`s: #470)
+      const v = attrValue(code, key);
+      if (!v) return value === null ? code : code.replace(head, `$1 ${key}=${value}`);
+      if (value !== null) return code.slice(0, v.start) + value + code.slice(v.end);
+      const at = v.start - key.length - 1;
+      const from = /\s/.test(code[at - 1] ?? '') ? at - 1 : at;
+      return code.slice(0, from) + code.slice(v.end);
     },
     true,
   );
@@ -201,6 +250,24 @@ export function splitWords(code: string): string[] {
 
 const isAttrWord = (w: string) => /^[a-z][a-zA-Z]*=/.test(w) || w === 'off';
 
+/**
+ * Words with a moving parameter's ` * term`s joined to the attribute they multiply (`lpf=70..4800`, `*`, `&eg` →
+ * `lpf=70..4800 * &eg`), as the parser reads them: an attribute's value, not words of the braid (#470).
+ */
+function withFactors(words: readonly string[]): string[] {
+  const out: string[] = [];
+  for (let k = 0; k < words.length; k++) {
+    const w = words[k]!;
+    const last = out[out.length - 1];
+    const open = last !== undefined && isAttrWord(last) && last.includes('=');
+    if (open && (w === '*' || w.startsWith('*') || last.endsWith('*'))) {
+      const joined = w === '*' && k + 1 < words.length ? `${w} ${words[++k]!}` : w;
+      out[out.length - 1] = `${last} ${joined}`;
+    } else out.push(w);
+  }
+  return out;
+}
+
 /** Does &name's declaration continue onto further lines (a mix written over several)? */
 export function spansLines(source: string, name: string): boolean {
   const i = declLine(source, name);
@@ -211,7 +278,7 @@ export function spansLines(source: string, name: string): boolean {
 export function declWords(source: string, name: string): { head: string[]; attrs: string[]; braid: string[] } | null {
   const i = declLine(source, name);
   if (i < 0) return null;
-  const words = splitWords(splitComment(source.split('\n')[i])[0]);
+  const words = withFactors(splitWords(splitComment(source.split('\n')[i])[0]));
   const head = words.slice(0, 1);
   const rest = words.slice(head.length);
   return { head, attrs: rest.filter(isAttrWord), braid: rest.filter((w) => !isAttrWord(w)) };
