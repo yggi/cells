@@ -48,7 +48,7 @@ export function brightness(scale: readonly number[]): number {
 /** The scale a mode fragment plays, by its id: `diatonic(mode=dorian)`, `harmonic_minor`, `bell_and_scale` (ionian). */
 export function scaleOf(id: string): readonly number[] | null {
   const mode = /^diatonic\(mode=(\w+)\)$/.exec(id)?.[1] ?? (id === 'harmonic_minor' ? 'harmonic' : id === 'bell_and_scale' ? 'ionian' : null);
-  return (mode && SCALES[mode]) ?? null;
+  return mode ? (SCALES[mode] ?? null) : null;
 }
 
 /** An option: its name, and a point on the four axes (with brightness, where it has one) as a point on its own axes. */
