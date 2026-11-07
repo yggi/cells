@@ -76,7 +76,7 @@ export {
   type Widths,
 } from './engine/perform/feel';
 export { perform, widthsOf, type Performance, type TextBar } from './engine/perform/perform';
-export { swungAt, writtenAt, type SwingLevel } from './engine/perform/swing';
+export { meterOfFrame, swungPlace, writtenPlace } from './engine/meter';
 export { RHYTHM_FRAGMENTS } from './repository/rhythms';
 export { BASS_FRAGMENTS } from './repository/bass';
 export { HARMONY_FRAGMENTS } from './repository/harmony';

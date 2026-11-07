@@ -8,8 +8,8 @@
  *   contract's minor 2; #511).
  * - **Its note and velocity** are what cells' MIDI out sends of it, on the host's channels (1 the lead, 2 the bass, 3
  *   the pad and the stab, 10 the drums): the velocity MIDI rounds from its level, the note a drum's or its key.
- * - **Its step and length** are its onset and end in the bar's steps through the swing undone (`writtenAt`): the step
- *   rounded, the length from the onset to the end.
+ * - **Its step and length** are its onset and end in the bar's steps through the swing undone (`writtenPlace`, the bar's
+ *   frame as a meter, `meterOfFrame`: the meter's own rule, #15 rung 2): the step rounded, the length from the onset to the end.
  *
  * The feel moves its velocity and length, never its onset: its level is scaled so that MIDI's velocity is the feel's,
  * and it ends where the host ends it, at its step plus the feel's length, through the swing.
@@ -18,7 +18,7 @@ import { midiNote, routesOf, type Routes } from '../midi';
 import type { CompileResult } from '../program';
 import type { Played } from '../realize';
 import { CONTRACT_WIDTHS, played, readingOf, type FeelFrame, type Widths } from './feel';
-import { swungAt, writtenAt } from './swing';
+import { meterOfFrame, swungPlace, writtenPlace } from '../meter';
 
 /** The channels a host's text sends its parts on: the lead, the bass, the pad and stab, the drums. */
 const CHANNELS: ReadonlySet<number> = new Set([1, 2, 3, 10]);
@@ -58,19 +58,20 @@ export function perform(
   const sent = r && midiNote(e, r);
   if (!reading || e.held || !sent) return { event: e, performance: null };
   const { frame } = at;
-  const groups = frame.groups;
-  const swing = [frame.swing];
-  const steps = 2 * groups.reduce((a, b) => a + b, 0);
+  // (the bar's frame as a meter: its eighths its pulses, two steps each, and its swing; a step's place through it)
+  const meter = meterOfFrame(frame.groups, [frame.swing]);
+  const steps = 2 * meter.pulses;
   const stepsOf = (seconds: number) => ((seconds - at.start) / at.seconds) * steps;
-  const onset = writtenAt(stepsOf(e.at), groups, swing);
+  const writtenStep = (s: number) => 2 * writtenPlace(meter, s / 2);
+  const onset = writtenStep(stepsOf(e.at));
   const step = Math.round(onset);
-  const length = writtenAt(stepsOf(e.at + Math.max(0, e.dur)), groups, swing) - onset;
+  const length = writtenStep(stepsOf(e.at + Math.max(0, e.dur))) - onset;
   const p = played(frame, { ...reading, step, note: sent.note, velocity: sent.velocity, length }, undefined, widths(e.output));
   // (MIDI's velocity is 127 √(level × gain): the level scaled so it is the feel's)
   const amp = (e.levels[0]?.level ?? 1) * Math.abs(r.gain ?? Math.max(Math.abs(e.gains[0]), Math.abs(e.gains[1])));
   const k = amp > 0 ? (p.velocity / 127) ** 2 / amp : 1;
   const levels = e.levels.length ? e.levels.map((l) => ({ ...l, level: l.level * k })) : [{ at: e.at, level: k }];
-  const end = at.start + (swungAt(step + p.length, groups, swing) / steps) * at.seconds;
+  const end = at.start + ((2 * swungPlace(meter, (step + p.length) / 2)) / steps) * at.seconds;
   const dur = end > e.at ? end - e.at : e.dur;
   return { event: { ...e, levels, dur }, performance: { bar: at.bar, ...reading, step, note: sent.note, velocity: p.velocity, length: p.length } };
 }

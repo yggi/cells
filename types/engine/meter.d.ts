@@ -82,6 +82,24 @@ export declare function swungKnots(m: Meter): {
     readonly written: readonly number[];
     readonly swung: readonly number[];
 } | null;
+/**
+ * A place under the meter's swing at every point, continuous (#15, rung 2): where a written place, in pulses from the first
+ * downbeat, is played, even between the knots of the finest level the swing leans (`swungKnots`); and its inverse, where a
+ * played place is written. The time map's placement of a note's end and of a meter's steps (`clocking.ts`), and the
+ * performer's reading of an event back onto its bar (`perform.ts`); the meter's own rule, so a place is swung one way
+ * everywhere. A meter that doesn't swing is its places as written.
+ */
+export declare function swungPlace(m: Meter, w: number): number;
+export declare function writtenPlace(m: Meter, s: number): number;
+/**
+ * A host's bar as a meter (#15, rung 2): its groups in eighths, each a beat, under one or more levels of swing, as a
+ * performer reads a bar's frame (`FeelFrame`, yggi/music-commons `contracts/feel` and `contracts/swing`). Its levels: the
+ * bar 0, a group's start 1, an eighth within it 3.
+ */
+export declare function meterOfFrame(groups: readonly number[], swing: readonly {
+    readonly level: string;
+    readonly share: number;
+}[]): Meter;
 /** The meter's own steps under its swing, in steps of one bar; null where none moves. */
 export declare function swungSteps(m: Meter): number[] | null;
 /**

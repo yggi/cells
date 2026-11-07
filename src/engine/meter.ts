@@ -209,6 +209,49 @@ export function swungKnots(m: Meter): { readonly written: readonly number[]; rea
   return { written, swung: written.map((w) => (w >= m.pulses - 1e-9 ? m.pulses : swingAt(m, w))) };
 }
 
+/**
+ * A place under the meter's swing at every point, continuous (#15, rung 2): where a written place, in pulses from the first
+ * downbeat, is played, even between the knots of the finest level the swing leans (`swungKnots`); and its inverse, where a
+ * played place is written. The time map's placement of a note's end and of a meter's steps (`clocking.ts`), and the
+ * performer's reading of an event back onto its bar (`perform.ts`); the meter's own rule, so a place is swung one way
+ * everywhere. A meter that doesn't swing is its places as written.
+ */
+export function swungPlace(m: Meter, w: number): number {
+  return throughKnots(m, w, false);
+}
+export function writtenPlace(m: Meter, s: number): number {
+  return throughKnots(m, s, true);
+}
+/** Each meter's knots, built once: the time map places every note's end through them. */
+const builtKnots = new WeakMap<Meter, ReturnType<typeof swungKnots>>();
+function throughKnots(m: Meter, x: number, back: boolean): number {
+  if (!builtKnots.has(m)) builtKnots.set(m, swungKnots(m));
+  const knots = builtKnots.get(m);
+  if (!knots) return x;
+  const [from, to] = back ? [knots.swung, knots.written] : [knots.written, knots.swung];
+  const P = m.pulses;
+  const bar = Math.floor(x / P + 1e-12);
+  const within = x - bar * P;
+  let i = 0;
+  while (i + 2 < from.length && from[i + 1]! <= within + 1e-12) i++;
+  const span = from[i + 1]! - from[i]!;
+  return bar * P + to[i]! + (span > 0 ? ((within - from[i]!) / span) * (to[i + 1]! - to[i]!) : 0);
+}
+
+/**
+ * A host's bar as a meter (#15, rung 2): its groups in eighths, each a beat, under one or more levels of swing, as a
+ * performer reads a bar's frame (`FeelFrame`, yggi/music-commons `contracts/feel` and `contracts/swing`). Its levels: the
+ * bar 0, a group's start 1, an eighth within it 3.
+ */
+export function meterOfFrame(groups: readonly number[], swing: readonly { readonly level: string; readonly share: number }[]): Meter {
+  const levels = groups.flatMap((g, i) => Array.from({ length: g }, (_, j) => (j > 0 ? 3 : i === 0 ? 0 : 1)));
+  const leans = swing.flatMap((l) => {
+    const whole = noteValue(l.level);
+    return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
+  });
+  return { levels, written: 'meter', pulses: levels.length, unit: 8, beats: groups, ...(leans.length ? { swing: leans } : {}) };
+}
+
 /** The meter's own steps under its swing, in steps of one bar; null where none moves. */
 export function swungSteps(m: Meter): number[] | null {
   const per = stepsPerPulse(m);

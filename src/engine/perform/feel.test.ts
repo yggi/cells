@@ -10,7 +10,7 @@ import { codeShifts } from '../program';
 import { eventsBetween, plan } from '../realize';
 import { CONTRACT_WIDTHS, feelOf, played, readerOf, readingOf, type FeelEvent, type FeelFrame } from './feel';
 import { perform, widthsOf } from './perform';
-import { swungAt, writtenAt, type SwingLevel } from './swing';
+import { meterOfFrame, swungPlace, writtenPlace } from '../meter';
 
 interface Vector {
   readonly preset: string;
@@ -142,15 +142,41 @@ describe('the default performer on cells’ events', () => {
   });
 });
 
+// (read through the meter's own rule, #15 rung 2: each vector's bar as a meter, `meterOfFrame`, its steps two to the
+// eighth, a pulse; the performer reads its events so, and there is no copy of the rule beside it)
 describe('a bar’s swing (music-commons contracts/swing, version 1): a written step played, and back', () => {
-  const swing = fixture<{ vectors: readonly { name: string; groups: readonly number[]; swing: readonly SwingLevel[]; onsets: readonly number[] }[] }>('swing');
+  const swing = fixture<{ vectors: readonly { name: string; groups: readonly number[]; swing: readonly { level: '8n' | '16n'; share: number }[]; onsets: readonly number[] }[] }>(
+    'swing',
+  );
 
   it('plays every step of every vector at its onset, and reads it back, within 1e-9', () => {
     expect(swing.vectors.length).toBeGreaterThan(100);
-    for (const v of swing.vectors)
+    for (const v of swing.vectors) {
+      const meter = meterOfFrame(v.groups, v.swing);
       v.onsets.forEach((onset, step) => {
-        expect(Math.abs(swungAt(step, v.groups, v.swing) - onset), `${v.name} step ${step}`).toBeLessThan(1e-9);
-        expect(Math.abs(writtenAt(onset, v.groups, v.swing) - step), `${v.name} step ${step}`).toBeLessThan(1e-9);
+        expect(Math.abs(2 * swungPlace(meter, step / 2) - onset), `${v.name} step ${step}`).toBeLessThan(1e-9);
+        expect(Math.abs(2 * writtenPlace(meter, onset / 2) - step), `${v.name} step ${step}`).toBeLessThan(1e-9);
       });
+    }
+  });
+});
+
+// #15, rung 2: the performer reads cells' own swung events back onto their written steps through the bar's frame as a
+// meter, the rule cells plays them by; a swung 6/8 and 7/8, eighths and sixteenths, each onset an exact step.
+describe('cells’ swung events read back onto their written steps (#15, rung 2)', () => {
+  it.each([
+    ['meter("6/8") step=60bpm swing=16n:.6', [3, 3], { level: '16n', share: 0.6 }, '16n'],
+    ['meter("7/8") step=90bpm swing=8n:2/3', [3, 2, 2], { level: '8n', share: 2 / 3 }, '8n'],
+    ['meter("7/8") step=90bpm swing=16n:.55', [3, 2, 2], { level: '16n', share: 0.55 }, '16n'],
+  ] as const)('%s', (bar, groups, swing, tap) => {
+    const r = compileSource(`&bar ${bar}\n&t step=${tap} 0 1 2 3 4 5 6 7 8 9 10 11 12 13\n&v s=sine loop=C4\n&out map=sample [&t * &v]`);
+    expect(r.ok).toBe(true);
+    const seconds = r.cells.get('bar')!.steps / r.clocks.get('bar')!.perSecond;
+    const frame = meterOfFrame(groups, [swing]);
+    const steps = eventsBetween(plan(r, codeShifts(r)), 0, 2 * seconds - 1e-9).map((e) => 2 * writtenPlace(frame, (e.at / seconds) * frame.pulses));
+    expect(steps.length).toBeGreaterThan(10);
+    for (const s of steps) expect(Math.abs(s - Math.round(s)), `${bar} step ${s}`).toBeLessThan(1e-9);
+    // (and the bar's own meter, as written, reads each at the same step)
+    expect(steps.map((s) => Math.round(s) % (2 * frame.pulses))).toEqual(steps.map((_, i) => ((tap === '8n' ? 2 : 1) * i) % (2 * frame.pulses)));
   });
 });
