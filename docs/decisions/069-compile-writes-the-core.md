@@ -64,6 +64,14 @@ Every example that draws sounds different once, its event snapshot moved and nam
 
 **Keys (the owner, 2026-11-06: "keys (a)"):** a key whose tonic is a cell (`&key scale(minor, &tonic)`, as Normalise writes it, decision 060) keeps the tonic a cell read, and writes its mode out as a table: `&mode 0 2 3 5 7 8 10`, `&key scale(&mode, &tonic)`. `scale(&mode, …)` reads a mode's table for that, any mode of the twelve. A shift that reads a cell (the other option) would duplicate a sum in the mix and a stepped tonic, so it isn't built.
 
+**Two rows are core, not sugar (2026-11-07, #482's last rungs; the owner's "go ahead" on the recommendation).** The note's table counted both as sugar the compiler resolves. Neither has another spelling in the language:
+- **A meter scan:** `scan(27 23 26 24) step=…`, a scan with a rate. It is the one meter of uneven steps. `meter("…")` writes even steps, and a braid with `@` is no meter a tap reads (`step=&a:pulse` refuses it). It is a dilate of each step, the look up a tap makes of it, core.
+- **A hit's gain:** `&hh:0:.5`, its velocity. Its one other spelling is a voice of its own with `gain=`, one per gain. That costs a voice for each, renames a drum (on a MIDI card, a drum's name is its note: decision 054), and plays the gain as a level that S1 reads apart from the hit's gain. It is a product inside a step, core.
+
+So `Core.left` lists neither, and 66 of 83 examples are wholly in the core. What is left is the rows with a choice or a reader in them: a subsequence a finer grid would change, a cell read by its units, a gate a role reads, a pitch written in place.
+
+**Inert data in the core:** a note, `label=`, `show=`, `size=`, `about=`, `title=` and `tier=` go, as comments and names do (§1), since the core is for a machine reader. 068 §3's "passes through every tool unchanged" holds for the tools that write a source (Normalise, Shorten, Migrate). `tags=` stays: what it groups is read.
+
 ### 7. The fold is Shorten's core kinds, checked
 
 The fold takes `phrase` (a phrase as one cell used at its places, moved by `^$n`, `^n`, `[<<]`, backwards), `same` (alike cells as one) and `default` (a stated default dropped). It takes the best each round, each checked by S1, and lives in a module that both tools call. Shorten keeps runs and the respellings, and compile never takes them. Over the examples, this fold takes the de-sugared text from 13,040 to 12,648, all exact; BWV 847 compiles below its hand-written source (1,113 → 1,102).
