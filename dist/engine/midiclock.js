@@ -30,7 +30,7 @@ export function ticksBetween(p, from, to) {
     const meter = mainMeter(p.result);
     if (!meter || !(to > from))
         return null;
-    const map = clocking(p.result, p.statics).map(meter.cell);
+    const map = clocking(p.result, p.statics).played(meter.cell);
     const per = meter.beat / PPQN;
     const end = Math.min(to, p.end);
     const tick = (k) => (k < 0 ? -Infinity : map.q(k * per));
