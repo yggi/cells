@@ -245,7 +245,9 @@ const SPELLINGS: Check[] = [
   line('Attributes · show= label= size= tags= (inert)', '&tune show=notes label="the theme" size=2 tags="melody" step=2 0 2 4', '&tune step=2 0 2 4', 'tune'),
 ];
 
-const OPTIONS = { resolve: resolveSeed };
+// (read the old way: 068's rows 54–55 state a tap as the meter cell's own steps, `step=pulse` = `step=&bar`, a spelling
+// decision 040 retired and #15's rung 5 made an error; decision 069 keeps their S1 checks, so they read it as Migrate does)
+const OPTIONS = { resolve: resolveSeed, old: true };
 /** How many events the text plays in its first 8 s, as the host plans it; it compiles with no error. */
 const heard = (text: string) => {
   const r = compileSource(text, undefined, OPTIONS);

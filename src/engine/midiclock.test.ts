@@ -8,7 +8,7 @@ import { windowAt } from './schedule';
 import { mainMeter, PPQN, ticksBetween } from './midiclock';
 
 const VOICE = '&v s=sine loop=C4 env=&(map=adsr 0 .1 0 .1)\n&out map=sample [&tune * &v]';
-const piece = (meter: string, tune = '&tune step=&bar 0 2 4 5'): Plan => {
+const piece = (meter: string, tune = '&tune step=pulse 0 2 4 5'): Plan => {
   const r = compileSource(`${meter}\n${tune}\n${VOICE}`);
   if (!r.ok) throw new Error('does not compile');
   return plan(r, codeShifts(r));
@@ -26,7 +26,7 @@ const windowed = (p: Plan, from: number, to: number, length = 0.25) => {
 describe('the main meter', () => {
   it("is the first played cell's clock, followed up its step= chain; its beat as beat= or meter(…) says", () => {
     expect(mainMeter(piece('&bar scan(1 1 1 1) step=120bpm').result)).toEqual({ cell: 'bar', beat: 1 });
-    expect(mainMeter(piece('&bar scan(1 1 1 1) step=120bpm\n&sw scan(2 1) step=&bar', '&tune step=&sw 0 2').result)).toEqual({ cell: 'bar', beat: 1 });
+    expect(mainMeter(piece('&bar scan(1 1 1 1) step=120bpm\n&sw scan(2 1) step=pulse', '&tune step=&sw:pulse 0 2').result)).toEqual({ cell: 'bar', beat: 1 });
     expect(mainMeter(piece('&bar meter("4/4", 2) step=100bpm').result)).toEqual({ cell: 'bar', beat: 2 });
     expect(mainMeter(piece('&bar meter("4/4", 2) step=100bpm swing=8n:.67').result)).toEqual({ cell: 'bar', beat: 2 });
   });

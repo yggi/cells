@@ -192,14 +192,20 @@ describe('motifs and shifted references', () => {
 
 describe('step=, loop=, clocks and voices', () => {
   it('rates multiply along the chain: per step, ×n, ÷n, per cycle', () => {
-    const r = compileSource(`&m scan(27 23 26 24) step=90bpm
+    // (the chain's arithmetic on a meter cell's own steps, the spelling decision 040 retired and #15's rung 5 made an
+    // error: read the old way, as Migrate reads it to write its taps)
+    const r = compileSource(
+      `&m scan(27 23 26 24) step=90bpm
 &a step=&m 0 1 2 3 4
 &b step=&m/2 0
 &c step=&m*3 0
 &d step=cycle(&a) 0
 &e step=cycle(&a)/2 0
 &f step=cycle(&a)*2 0
-&g step=&d*5 0`);
+&g step=&d*5 0`,
+      undefined,
+      { old: true },
+    );
     expect(r.ok).toBe(true);
     const rate = (n: string) => r.cells.get(n)!.rate;
     expect([rate('m'), rate('a'), rate('b'), rate('c')]).toEqual([1, 1, 1 / 2, 3]);

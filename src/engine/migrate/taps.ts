@@ -1,7 +1,8 @@
 /**
  * Migrate (decision 040): a line stepped by a meter cell's own steps (`step=&bar*2`) rewritten as the tap of the
  * meter that says the same (`step=8n`, `step=pulse*3/4`, `step=1m/4`, `step=&swing:pulse`): the tap the compiler's
- * warning names. Offered whatever its length when it plays the same notes (checked here).
+ * warning names, and with its `cycle=` dropped where that is what plays the same (a turning table stepped `&bar/4 cycle=1`).
+ * Offered whatever its length when it plays the same notes (checked here).
  */
 import { declLine, setAttr } from '../edit';
 import { tapFor } from '../compiler/clocks';
@@ -33,9 +34,16 @@ export function taps(source: string, result: Result, options: CompileOptions = {
     const line = result.sections?.get(c.name) ?? c.name;
     if (tap === null || seen.has(line) || declLine(source, line) < 0) continue;
     seen.add(line);
-    const apply = (s: string) => setAttr(s, line, 'step', tap);
+    // (the tap alone; or, where the line counted laps of the meter's own steps with cycle=, which on a tap says after how
+    // many bars it comes round (#116), the tap with cycle= dropped: whichever plays the same)
+    const tapped = (s: string) => setAttr(s, line, 'step', tap);
+    const candidates = [tapped, (s: string) => setAttr(tapped(s), line, 'cycle', null)];
+    const apply = candidates.find((f) => {
+      const n = f(source);
+      return n !== source && soundsIdentical(source, n, undefined, options);
+    });
+    if (!apply) continue;
     const next = apply(source);
-    if (next === source || !soundsIdentical(source, next, undefined, options)) continue;
     const at = declLine(source, line);
     out.push({
       id: `tap:${line}`,

@@ -544,6 +544,8 @@ export interface ParseResult {
     readonly plugins?: readonly ShowPlugin[];
     /** Its `use` lines, in the order written (decision 054); absent for none. */
     readonly uses?: readonly UseLine[];
+    /** Read the old way (`CompileOptions.old`): a retired form the compiler meets warns, where it is otherwise an error. */
+    readonly old?: boolean;
 }
 /** A `use` line (decisions 054, 059): the fragment's id, the names it asks for, and where the line is. */
 export interface UseLine {

@@ -225,7 +225,7 @@ describe('cells inside a subsequence', () => {
   it('a groove of voices: &bd [&hh &hh] plays two hats in a step, as &bd &hh*2 does', () => {
     const voices = '&bar scan(1 1 1 1) step=120bpm\n&bd s=sine loop=A1\n&hh s=white hpf=8000\n&sd s=white hpf=1500\n';
     const play = (g: string, more = '') => {
-      const r = clean(`${voices}${more}&g step=&bar*2 ${g}\n&out map=sample [&g * .6]`);
+      const r = clean(`${voices}${more}&g step=8n ${g}\n&out map=sample [&g * .6]`);
       return eventsBetween(plan(r, codeShifts(r)), 0, 4)
         .map((e) => `${e.voice} ${e.at.toFixed(4)} ${e.dur.toFixed(4)}`)
         .sort();

@@ -43,7 +43,7 @@ describe('bodies driven by sound: sends, springs, pipes, wires', () => {
   });
   it('a mix only a resonator hears (excite=) still plays — as a silent send', () => {
     const r = compileSource(
-      '&bar scan(1 1 1 1) step=60bpm\n&n step=&bar/4 0\n&hiss s=pink\n&noise [&n * &hiss * .3]\n&pl body=plate loop=D3 excite=&noise\n&out loop=SAMPLE_RATE map=sample [&pl * .5]',
+      '&bar scan(1 1 1 1) step=60bpm\n&n step=1m 0\n&hiss s=pink\n&noise [&n * &hiss * .3]\n&pl body=plate loop=D3 excite=&noise\n&out loop=SAMPLE_RATE map=sample [&pl * .5]',
     );
     expect(r.outputs.map((o) => [o.voice, o.silent])).toEqual([['hiss', true]]);
     expect(eventsBetween(plan(r, codeShifts(r)), 0, 1).map((e) => e.voice)).toEqual(['hiss']);
@@ -78,7 +78,7 @@ describe('a resonator’s braid is its exciters — semitones from its fundament
 describe('a scope reads notes exactly: which sound now, and how long ago each began', () => {
   it('notesAt: a note a second — at 0.25 s the first, begun 0.25 s ago', async () => {
     const { notesAt } = await import('./values');
-    const r = compileSource('&bar scan(1 1 1 1) step=60bpm\n&tune step=&bar 0 4 7\n&v s=sine\n&out loop=SAMPLE_RATE map=sample [&tune * &v * .5]');
+    const r = compileSource('&bar scan(1 1 1 1) step=60bpm\n&tune step=4n 0 4 7\n&v s=sine\n&out loop=SAMPLE_RATE map=sample [&tune * &v * .5]');
     const n = notesAt(r, codeShifts(r), 'tune', 0.25);
     expect(n.map((x) => x.value)).toEqual([0]);
     expect(n[0].since).toBeCloseTo(0.25, 5);

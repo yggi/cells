@@ -68,7 +68,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `free(v, lo..hi, unit=bpm)`: A rate’s slider in the core’s numbers, a second, its unit an argument: free(2, 1.5..2.5, unit=bpm) is free(120bpm, 90..150), the same slider shown in bpm. The core writes a slider so (decision 069); written after the number, the unit is its sugar. [→](free.md) `&tempo step=free(2, 1.5..2.5, unit=bpm)`
 - `free(marking)`: A rate as a tempo marking, a slider over its range: largo 40–60, larghetto 60–66, adagio 66–76, andante 76–108, moderato 108–120, allegro 120–156, vivace 156–176, presto 168–200 (bpm). [→](free.md) `&bar scan(4 4 4 4) step=free(andante)`
 - `free(v, lo..hi, "names")`: Named choices: the names spread evenly over the range (one per value, or every 2nd …), shown instead of the numbers. [→](free.md) `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm`
-- `free(0 2 4 ~ …)`: A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n). [→](free.md) `&riff over=&key step=&bar*4 free(0 2 4 ~ 4 2 0 ~)`
+- `free(0 2 4 ~ …)`: A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n). [→](free.md) `&riff over=&key step=16n free(0 2 4 ~ 4 2 0 ~)`
 - `free("text")`: A text left to the performer: a field to type in (for spell(…)). [→](free.md) `&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")`
 
 ## step= and loop=
@@ -77,7 +77,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `loop=NAME`: A value from the environment: SAMPLE_RATE, A4, or a note name (C4, F#3, Bb2) as its frequency. [→](time.md) `&lead s=saw loop=C4` · `&out loop=SAMPLE_RATE map=sample &mix`
 - `step=&x` · `loop=&x`: Driven by another cell: a step (or a whole turn) per step of &x. [→](time.md) `&tune step=&bar 0 2 4`
 - `step=cycle(&x)`: A step per cycle of &x (each time its braid comes round). [→](time.md) `&key step=cycle(&theme) stride=7`
-- `step=&x*n` · `step=&x/n` · `step=&x*n/d`: A chain read left to right, as Strudel's fast and slow: *n n steps per step of &x, /n one per n steps; *3/2 is three per two (triplets). [→](time.md) `&fast step=&bar*2 0 1` · `&trip step=&bar*3/2 0 2 4`
+- `step=&x*n` · `step=&x/n` · `step=&x*n/d`: A chain read left to right, as Strudel's fast and slow: *n n steps per step of &x, /n one per n steps; *3/2 is three per two (triplets). [→](time.md) `&fast step=&clock*2 0 1` · `&trip step=&clock*3/2 0 2 4`
 - `step=pulse` · `step=beat` · `step=pulse*k` · `step=beat*k`: A tap of the piece's main meter (decision 040): each pulse (the numerator: 7/8 has seven), each beat (what is counted: 6/8 has two, 7/8 three unequal), or each in k equal steps; it comes round at the bar. [→](time.md) `&tune step=pulse 0 2 4` · `&hats step=pulse*2 0!8` · `&chords step=beat [0,2,4]`
 - `step=16n` · `step=8t` · `step=4n.` · `step=1m`: A tap by note value: 1n 2n 4n 8n 16n 32n, triplets (4t 8t 16t), dotted (2n. 4n. 8n.), the bar (1m); one longer than what is left of the bar is cut at the bar line. cycle=n runs it n bars before it comes round. [→](time.md) `&drums step=16n 0 ~ 1 ~` · `&tresillo step=4n. 0 0 0` · `&roots step=1n cycle=4 0 5 7`
 - `step=&m:16n`: A tap of another meter than the main one: step=&m:pulse, &m:beat*3, &m:8n. [→](time.md) `&comp step=&bar2:8n 0 2`
@@ -92,7 +92,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 
 ## map=
 
-- `map=amp`: A volume: its values multiply the level (on a voice, the braid as a waveform, its range onto −1…1; the default). [→](sound.md) `&accent map=amp step=&bar*4 1 .4 .8 .4`
+- `map=amp`: A volume: its values multiply the level (on a voice, the braid as a waveform, its range onto −1…1; the default). [→](sound.md) `&accent map=amp step=16n 1 .4 .8 .4`
 - `map=lin`: As amp, ramping from each value to the next: a glide, a triangle. In a mix it is plain: a volume in a product, a pitch in a sum. [→](sound.md) `&swell map=lin loop=&bar/8 .2 1`
 - `map=db`: A volume in decibels (0 as it is, −6 about half). [→](sound.md) `&fade map=db step=&bar 0 -6 -12`
 - `map=adsr a d s r`: An envelope: attack, decay, release in seconds, sustain a level; one per note. [→](sound.md) `&pluck map=adsr .01 .3 .5 .4`

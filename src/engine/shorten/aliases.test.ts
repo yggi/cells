@@ -3,7 +3,7 @@ import { shorten } from './index';
 import { samePiece } from './harness';
 
 const BASE = `&bar scan(1 1 1 1) step=120bpm
-&tune over=scale(major) step=&bar 0 2 4 2
+&tune over=scale(major) step=4n 0 2 4 2
 `;
 
 describe("Shorten: Strudel's or dough's name for a parameter (decision 027)", () => {
