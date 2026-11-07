@@ -7,7 +7,7 @@ import { normaliseFile } from '../../tools/normalise';
 import { fileLine, readBlocks, readLiterate, rewrite, writeBody, type Literate } from './literate';
 import { parse } from './parser';
 import { readPiece, writePiece } from './piecefile';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { SEED_FILES } from '../repository/seed.generated';
 import { readFragment, writeFragment } from '../repository/files';
 
@@ -164,12 +164,12 @@ const LITERATE_EXAMPLES = new Set(['electroswing', 'spooky', 'kinderlied']);
 
 describe('every example and fragment reads as before', () => {
   it('an example is its blocks joined, its prose between and after them; all but the literate ones are one block', () => {
-    for (const [key, { file, source }] of Object.entries(PRESETS)) {
+    for (const [key, { file, source }] of Object.entries(EXAMPLES)) {
       const read_ = read(file);
       expect(read_.text, key).toBe(source);
       if (!LITERATE_EXAMPLES.has(key)) expect(read_.layout.blocks, key).toHaveLength(1);
     }
-    for (const key of LITERATE_EXAMPLES) expect(read(PRESETS[key as keyof typeof PRESETS].file).layout.blocks.length, key).toBeGreaterThan(1);
+    for (const key of LITERATE_EXAMPLES) expect(read(EXAMPLES[key as keyof typeof EXAMPLES].file).layout.blocks.length, key).toBeGreaterThan(1);
   });
 
   it('a fragment file reads and writes as before', () => {

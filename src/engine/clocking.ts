@@ -150,7 +150,11 @@ function tapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap, swung: Swung | n
  */
 interface Swung {
   readonly S: (w: number) => number;
+  /** S's inverse: the written place of a played one. */
+  readonly W: (s: number) => number;
   readonly at: (w: number, grid: number) => number;
+  /** The finest division the swing leans, in the meter's steps (an eighth of `meter("4/4")`: 0.5). */
+  readonly grain: number;
 }
 function swungMeter(result: CompileResult, meter: string): Swung | null {
   const m: Meter | undefined = result.cells.get(meter)?.meter ?? undefined;
@@ -168,6 +172,15 @@ function swungMeter(result: CompileResult, meter: string): Swung | null {
     const span = written[i + 1] - written[i];
     return (bar * P + swung[i] + (span > 0 ? ((x - written[i]) / span) * (swung[i + 1] - swung[i]) : 0)) * per;
   };
+  const W = (s: number) => {
+    const p = s / per;
+    const bar = Math.floor(p / P + 1e-12);
+    const x = p - bar * P;
+    let i = 0;
+    while (i + 2 < swung.length && swung[i + 1] <= x + 1e-12) i++;
+    const span = swung[i + 1] - swung[i];
+    return (bar * P + written[i] + (span > 0 ? ((x - swung[i]) / span) * (written[i + 1] - written[i]) : 0)) * per;
+  };
   // (a division the tree holds, the finest level that leans halved or doubled, is placed continuously: a quarter's end
   //  under swung eighths where #120 puts it; any other, as a tap of it: a triplet's thirds even in the beat)
   const finest = Math.min(...m.swing!.map((l) => l.whole * m.unit));
@@ -175,7 +188,7 @@ function swungMeter(result: CompileResult, meter: string): Swung | null {
     const k = Math.log2(grid / per / finest);
     return Math.abs(k - Math.round(k)) < 1e-9;
   };
-  return { S, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per) };
+  return { S, W, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per), grain: finest * per };
 }
 
 /**
@@ -277,6 +290,13 @@ export interface Clocking {
   map(clock: string): TimeMap;
   /** A clock's time map as written: a swung meter's taps without its swing (#287), else its map. */
   written(clock: string): TimeMap;
+  /**
+   * A meter's steps as its swing plays them at every point, as a tap of that point plays (#15, rung 1): `meter("4/4")
+   * swing=8n:2/3` puts its step 0.5 where `meter("4/4", 2)` puts its step 1, its own map leaving it straight (the swing
+   * is its taps'). With `grain`, the finest division its swing leans, in its steps. Read by the MIDI clock and the MIDI
+   * export; a clock that doesn't swing is its map.
+   */
+  played(clock: string): TimeMap & { readonly grain?: number };
 }
 
 const belts = new WeakMap<CompileResult, Map<string, Warp>>();
@@ -367,7 +387,18 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
     if (!m) maps.set(`${clock}\0written`, (m = tapMap({ ...tap, positions: tap.written }, base(tap.meter))));
     return m;
   };
-  return { map, written, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
+  const played = (clock: string): TimeMap & { readonly grain?: number } => {
+    const sw = result.clocks.get(clock)?.tap ? null : swungMeter(result, clock);
+    if (!sw) return map(clock);
+    let m = maps.get(`${clock}\0played`);
+    if (!m) {
+      const inner = base(clock);
+      m = { beats: inner.beats, q: (w) => inner.q(sw.S(w)), stepAt: (t) => sw.W(inner.stepAt(t)), ...(inner.speed ? { speed: inner.speed } : {}) };
+      maps.set(`${clock}\0played`, m);
+    }
+    return { ...m, q: m.q, stepAt: m.stepAt, grain: sw.grain };
+  };
+  return { map, written, played, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
 
 /**

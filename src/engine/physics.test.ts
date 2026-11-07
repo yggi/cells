@@ -48,9 +48,9 @@ describe('physical clocks: a meter with a motor', () => {
 
 describe('Music Box: a spring that runs down', () => {
   it('spins up, plays, slows, and stops — and the piece ends there', async () => {
-    const { PRESETS } = await import('./presets');
+    const { EXAMPLES } = await import('./examples');
     const { pieceTime } = await import('./duration');
-    const src = (PRESETS as Record<string, { source: string }>).musicbox.source;
+    const src = (EXAMPLES as Record<string, { source: string }>).musicbox.source;
     const r = compileSource(src);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     const ticks = eventsBetween(plan(r, codeShifts(r)), 0, 600)
@@ -114,18 +114,18 @@ describe('varispeed: pitch follows the clock’s speed, as tape does', () => {
 
 describe('BWV 847: its beat a real beat (♩ = 89), the tempo map in sixteenths beneath it', () => {
   it('the slider shows 89 bpm', async () => {
-    const { PRESETS } = await import('./presets');
+    const { EXAMPLES } = await import('./examples');
     const { mainTempo } = await import('./duration');
-    const t = mainTempo(compileSource((PRESETS as Record<string, { source: string }>).bwv847.source))!;
+    const t = mainTempo(compileSource((EXAMPLES as Record<string, { source: string }>).bwv847.source))!;
     expect([t.cell, t.free.value, t.free.unit]).toEqual(['tempo', 89, 'bpm']); // (pulse=16n: its steps sixteenths, its bpm quarters)
   });
 });
 
 describe('Tape Machine and Automaton', () => {
   it('the tape spins up (its pitch with it), wows, and stops — its pitch diving', async () => {
-    const { PRESETS } = await import('./presets');
+    const { EXAMPLES } = await import('./examples');
     const { pieceTime } = await import('./duration');
-    const r = compileSource((PRESETS as Record<string, { source: string }>).tape.source);
+    const r = compileSource((EXAMPLES as Record<string, { source: string }>).tape.source);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     const keys = eventsBetween(plan(r, codeShifts(r)), 0, 200).filter((e) => e.voice === 'keys');
     const end = pieceTime(r).ends!;

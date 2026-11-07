@@ -5,7 +5,7 @@ import { resolveSeed } from '../../src/repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196). */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 import { codeShifts } from '../../src/engine/program';
-import { PRESETS } from '../../src/engine/presets';
+import { EXAMPLES } from '../../src/engine/examples';
 import { pieceMidi } from '../../src/engine/midiexport';
 import { readMidi, writeMidi } from '../../src/engine/midifile';
 import { pathsIn, saving } from './paths';
@@ -47,7 +47,7 @@ describe('paths shared by lines (paths.ts, #381)', () => {
     expect(s.withKey).toBeLessThan(s.folded);
   });
   it('finds the example’s canon per tonos through MIDI', () => {
-    const r = compileSource(PRESETS.pertonos!.source);
+    const r = compileSource(EXAMPLES.pertonos!.source);
     const smf = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
     const path = pathsIn(smf)[0]!;
     // (its plan: every note of a pass, in all three lines, twelve passes a whole tone apart)
@@ -57,7 +57,7 @@ describe('paths shared by lines (paths.ts, #381)', () => {
     expect(s.withKey).toBeLessThan(s.folded);
   });
   it('finds none in a piece that repeats without moving', () => {
-    const r = compileSource(PRESETS.pop!.source);
+    const r = compileSource(EXAMPLES.pop!.source);
     const smf = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
     expect(pathsIn(smf).filter((p) => p.lines > 1 && p.passes >= 4)).toEqual([]);
   });

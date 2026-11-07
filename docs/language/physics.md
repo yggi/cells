@@ -12,7 +12,8 @@ Cells that behave like machines and bodies: motors, belts, tape, resonators and 
 - **varispeed=v** on a clock or tape: notes' pitch follows its speed, `1` fully, `0` not (default).
 
 ```cells
-&bar scan(1 1 1 1) step=96bpm motor=6 mass=1.2 friction=.4 wind=36
+&bar meter("4/4") step=&tempo motor=6 mass=1.2 friction=.4 wind=36
+&tempo step=96bpm
 &tune step=8n 0 4 7 4
 &v s=sine loop=C4
 &out loop=SAMPLE_RATE map=sample [&tune * &v * .3]
@@ -25,7 +26,8 @@ In the graph a physical cell is a turntable: hold it to slow it, turn it to push
 **belt=k** on a cell driven by `step=&meter` makes it follow through a spring of stiffness `k` (default 200; 3000 taut, 25 slack): it lags, swings, catches up. **mass=** is the driven body (1); **damping=** how soon swinging dies (default a little bounce; 0 rings on); **slip=** the grip: past this pull the belt slips and the cell falls behind for good. A cell's time never runs backwards.
 
 ```cells
-&bar scan(1 1 1 1) step=104bpm motor=4 mass=1 friction=.2
+&bar meter("4/4") step=&tempo motor=4 mass=1 friction=.2
+&tempo step=104bpm
 &wood step=8n belt=400 mass=1.5 slip=.4 0 0 ~ 0
 &blk s=square loop=C6 hpf=900 lpf=3000 env=&(map=adsr 0 .03 0 .02)
 &out loop=SAMPLE_RATE map=sample [&wood * &blk * .1]
@@ -41,7 +43,8 @@ A tape is a cell with **write=&melody** (notes) or **write=&mix** (sound), movin
 
 ```cells
 &reel step=84bpm motor=1.5 mass=1 friction=.1 wow=.015 0
-&bar scan(1 1 1 1) step=84bpm
+&bar meter("4/4") step=&tempo
+&tempo step=84bpm
 &tune step=8n 0 ~ 4 ~ 7 ~ ~ ~
 &tape step=&reel write=&tune length=6 erase=.45 varispeed=1
 &near play=&tape at=.375
@@ -60,7 +63,8 @@ A tape stop: a reel with `wind=` and `varispeed=1`, or a hand on it. A sound tap
 - **coupling=c** how strongly they ring each other (up to .2). **couple=&other** another resonator it shares a table with. **excite=&mix** sound that drives it.
 
 ```cells
-&bar scan(1 1 1 1) step=92bpm
+&bar meter("4/4") step=&tempo
+&tempo step=92bpm
 &tune step=8n 0 2 4 ~ 3 4 5 ~
 &kalimba body=tine loop=C4 ring=3 hard=.3 coupling=.06 0 2 4 7 9 12 14 16
 &forkB body=fork loop=A4 ring=6 board=none couple=&forkA coupling=.1 0
@@ -75,7 +79,8 @@ Metal is inharmonic: a `map=ratios` grid of a beam's partials (`1 2.756 5.404 8.
 **fm=&op** modulates a voice by `op`, a voice of its own: **ratio=** its frequency against the carrier's (3.5 a bell); **index=** the depth (0 none, 10 bright), which can move: `index=.8..6 * &(map=adsr …)`. A modulator may have its own `fm=`; chains cannot loop. The spectrum wheel shows the exact lines (Bessel) at the index's top ([display.md](display.md)).
 
 ```cells
-&bar scan(1 1 1 1) step=84bpm
+&bar meter("4/4") step=&tempo
+&tempo step=84bpm
 &tune step=8n 0 2 4 ~
 &m s=sine ratio=3.5
 &bell s=sine loop=C5 fm=&m index=.8..6 * &(map=adsr .001 1.4 .15 1.2) env=&(map=adsr .002 3 0 2.5)

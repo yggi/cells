@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { plan, type Plan } from './realize';
@@ -38,7 +38,7 @@ describe('the main meter', () => {
 
   it('is found for the examples that have one, and none for those stepping at a bare rate', () => {
     const none: string[] = [];
-    for (const [key, { source }] of Object.entries(PRESETS).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    for (const [key, { source }] of Object.entries(EXAMPLES).sort(([a], [b]) => (a < b ? -1 : 1))) {
       const r = compileSource(source);
       if (r.ok && !mainMeter(r)) none.push(key);
     }
@@ -141,7 +141,7 @@ describe('the ticks', () => {
   });
 
   it('every example: window by window as one piece, eight seconds, none lost or doubled', () => {
-    for (const [f, { source }] of Object.entries(PRESETS)) {
+    for (const [f, { source }] of Object.entries(EXAMPLES)) {
       const r = compileSource(source);
       if (!r.ok || !mainMeter(r)) continue;
       const p = plan(r, codeShifts(r));
@@ -156,5 +156,27 @@ describe('the ticks', () => {
         f,
       ).toBe(true);
     }
+  });
+});
+
+// #15, rung 1: one placement for a swung bar's readers. A meter that swings finer than its own steps sends its ticks as
+// its swing plays them, as the same meter written at that subdivision does: the ticks are its taps' placement, not its
+// own steps' straight line.
+describe('the ticks under a swing at two subdivisions', () => {
+  const ticks = (bar: string) => ticksBetween(piece(bar, '&tune step=8n 0 2 4 5'), 0, 8)!.at;
+  it.each([
+    ['&bar meter("4/4") step=120bpm swing=8n:2/3', '&bar meter("4/4", 2) step=120bpm swing=8n:2/3'],
+    ['&bar meter("4/4") step=100bpm swing=16n:.6', '&bar meter("4/4", 4) step=100bpm swing=16n:.6'],
+    ['&bar meter("6/8") step=60bpm swing=16n:.6', '&bar meter("6/8", 2) step=60bpm swing=16n:.6'],
+    ['&bar meter("4/4") step=120bpm swing=8n:3/5,16n:11/20', '&bar meter("4/4", 4) step=120bpm swing=8n:3/5,16n:11/20'],
+  ])('%s sends the ticks %s sends, within 1e-9 s over 4 bars', (a, b) => {
+    const [x, y] = [ticks(a), ticks(b)];
+    expect(x).toHaveLength(y.length);
+    expect(Math.max(...x.map((t, i) => Math.abs(t - y[i]!)))).toBeLessThan(1e-9);
+  });
+  it('the swung eighth’s tick falls where the swing puts the eighth: a beat’s tick 12 at two thirds of it', () => {
+    const x = ticks('&bar meter("4/4") step=120bpm swing=8n:2/3');
+    // (a beat is half a second at 120 bpm, 24 ticks; its eighth, tick 12, at 2/3 of it)
+    expect([x[12]!, x[24]!].map((t) => +t.toFixed(9))).toEqual([+(1 / 3).toFixed(9), 0.5]);
   });
 });

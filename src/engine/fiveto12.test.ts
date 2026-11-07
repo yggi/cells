@@ -97,8 +97,8 @@ describe('5 to 12 in the studio: law=fiveto12 plays the day', () => {
     const { codeShifts } = await import('./program');
     const { eventsBetween, plan } = await import('./realize');
     const { pieceTime, sections } = await import('./duration');
-    const { PRESETS } = await import('./presets');
-    const r = compileSource((PRESETS as Record<string, { source: string }>).fiveto12.source);
+    const { EXAMPLES } = await import('./examples');
+    const r = compileSource((EXAMPLES as Record<string, { source: string }>).fiveto12.source);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     const ev = eventsBetween(plan(r, codeShifts(r)), 0, 12 * SECONDS_PER_STEP - 1e-6);
     expect(new Set(ev.map((e) => e.at.toFixed(3))).size).toBe(7);

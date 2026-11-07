@@ -13,7 +13,8 @@ A cell looped at an audio rate is a voice, and a voice alone plays its own pitch
 One cell per line; attributes go anywhere.
 
 ```cells
-&bar scan(27 23 26 24) step=84bpm                  # the clock, a bent 4/4 bar
+&bar scan(27 23 26 24) step=&tempo                 # the clock, a bent 4/4 bar
+&tempo step=84bpm
 &key step=cycle(&theme) stride=7                   # the 12; a fifth per pass of &theme
 &scale over=&key scan(2 1 2 2 1 2 2) step=cycle(&key)   # Aeolian; a degree per circle of keys
 &theme over=&scale step=4n 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
@@ -68,7 +69,8 @@ Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decisi
 | `s("bd")` and samples | voices made of braids, `s=saw` | no samples |
 
 ```cells
-&bar scan(1 1 1 1) step=120bpm                                 # setcps(.5): this meter's own clock
+&bar meter("4/4") step=&tempo                                 # setcps(.5): this meter's own clock
+&tempo step=120bpm
 &tune over=scale("C:minor:pentatonic") step=8n 0 2 4 2 [3 4] ~ 4 _
 &lead sound=saw loop=C4 cutoff=1200                           # sound= and cutoff= read as s= and lpf=
 &mix [&tune * &lead, &tune^2 * &lead * .5]                     # n(…).scaleTranspose(2), quieter

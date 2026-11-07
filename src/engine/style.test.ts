@@ -2,7 +2,7 @@
 // as its slot's position as written; every map=adsr cell in the examples read by name as by position.
 import { describe, expect, it } from 'vitest';
 import { compileSource as compileAlone } from './compile';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { AXES, AXIS_NAMES, SLOTS } from './style';
 import { pieceTime } from './duration';
 import { INTERFACE_NAMES } from './program';
@@ -82,7 +82,7 @@ describe('a pick by name, &x[slot]', () => {
 
   it('reads every map=adsr cell in the examples by name as by position: its four slots each its $i (as the examples compile, with the seed library)', () => {
     let envelopes = 0;
-    for (const [key, ex] of Object.entries(PRESETS as Record<string, { source: string }>)) {
+    for (const [key, ex] of Object.entries(EXAMPLES as Record<string, { source: string }>)) {
       const r = compileSource(ex.source);
       for (const c of r.cells.values()) {
         // (an unnamed envelope, &( … ), can't be named in a probe line)

@@ -45,7 +45,8 @@ The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is 
 **A kit read only selects** ([decision 029](https://github.com/yggi/cells/blob/main/docs/decisions/029-kits-pass-pitch.md)). A pattern read through a kit picks a member by its number and adds no pitch; the rest of the product acts on the member picked as on any voice: its pitch terms transpose it, its volumes scale it, a clock's varispeed bends it. With no other pitch term (plain drums) each member plays at its own pitch. Of the terms that step, the finest starts notes, as in any product: a melody over a slower kit read plays on the voice the read picks, held while it lasts (orchestration):
 
 ```cells
-&bar scan(1 1 1 1) step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &lead s=saw loop=C4 env=&(map=adsr .01 .2 .4 .2)
 &organ s=square loop=C3 lpf=1500
 &band &lead &organ
@@ -62,7 +63,8 @@ a gain, each as in a product (per note, over time, fixed: how fast a factor move
 read as the product it stands for, one for each voice it plays, so it sounds as the product does:
 
 ```cells
-&bar scan(1 1 1 1) step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &tune step=4n 0 2 4 7
 &accent map=amp step=4n 1 .5 .8 .5
 &solo map=amp step=1m 1 .3                                       # open, then ducked
@@ -77,7 +79,8 @@ the notes' numbers pick the member, 0 the first. So `&drums play=&beat &kit` pla
 that read the kit already play it as well. Several bare voices (`&lead &bell`) are a kit of them, the notes picking one:
 
 ```cells
-&bar scan(1 1 1 1) step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
 &sd s=white env=&(map=adsr 0 .15 0 .05)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
@@ -91,7 +94,8 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 Two attributes on the gate set how far: `licence=` (velocity and length) and `accents=` (its own accents), each a share of the feel's, 1 where unwritten (as the contract plays) and 0 exactly as written; either may be `free(…)`.
 
 ```cells
-&bar meter("4/4") step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &tune step=8n 0 2 4 7
 &v s=saw loop=C4
 &leadOut play=&tune licence=.5 accents=free(0, 0..1) &v
@@ -113,7 +117,8 @@ drum role the feel reads. A line may name its own voices, a hit with its own gai
 sound: mix or send the gate.
 
 ```cells
-&bar scan(1 1 1 1) step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
 &sd s=white env=&(map=adsr 0 .15 0 .05)
 &hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
@@ -135,7 +140,8 @@ Nothing is read off a gate's name, and cells holds no list of roles: the names a
 `bass`, `pad`, `stab` and `lead`), and a gate no role names plays as written.
 
 ```cells
-&bar meter("4/4") step=96bpm
+&bar meter("4/4") step=&tempo
+&tempo step=96bpm
 &key scale(major, G)
 &violinV s=saw loop=G4 env=&(map=adsr .05 .2 .7 .3)
 &melody over=&key step=8n 0 2 4 5 4 2 0 ~
@@ -217,7 +223,8 @@ A mix can be used like a voice — an instrument: the pitches, volumes and gain 
 **An instrument with sound parameters is a module after its voices** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md)): `lpf=` `lpq=` `hpf=` `hpq=` `pan=` `room=` `delay=` `delaytime=` `delayfeedback=` on it, fixed or moving, act on what its voices play, so one filter follows two oscillators, a VCF after a mixer. They are linear, so filtering the sum is the sum of the filtered: the patch below plays exactly what the filter written on each oscillator plays. It nests (a VCA, an instrument with an envelope, after a VCF after a mix), and reaches a kit read through it and a gate playing it.
 
 ```cells
-&bar meter("4/4") step=120bpm
+&bar meter("4/4") step=&tempo
+&tempo step=120bpm
 &tune step=8n 0 3 7 10 12 10 7 3
 &contour map=adsr .002 .2 .1 .1
 &sweep map=lin loop=&bar/2 sin(12)

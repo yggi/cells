@@ -7,7 +7,7 @@
 // PROBE=out.txt npx vitest run tools/canonical.test.ts
 import { describe, expect, it } from 'vitest';
 import { appendFileSync } from 'node:fs';
-import { PRESETS } from '../src/engine/presets';
+import { EXAMPLES } from '../src/engine/examples';
 import { parse } from '../src/engine/parser/index';
 import { stripComment } from '../src/engine/parser/scanner';
 import { VOICE_PARAMS } from '../src/engine/attributes';
@@ -76,7 +76,7 @@ const walk = (tokens: readonly Token[], f: (t: Token) => void) =>
 
 describe('#151: families of equal spellings', () => {
   it('counts each spelling over the library', () => {
-    const pieces = Object.entries(PRESETS);
+    const pieces = Object.entries(EXAMPLES);
     for (const [key, { source }] of pieces) {
       const { cells } = parse(source);
       const decls = new Map(cells.map((d) => [d.name, d]));
