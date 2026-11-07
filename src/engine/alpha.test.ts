@@ -1,4 +1,4 @@
-// Alpha substitution (#387, the core property): a cell's name is a name and nothing else. Rename every name a text
+// Alpha substitution (decision 075, #560; the core property): a cell's name is a name and nothing else. Rename every name a text
 // defines, consistently and to names it doesn't write, and it plays what it played (S1), says what it said (its
 // diagnostics, the names renamed), and the default performer reads each event as the same part (the feel, decision 063
 // §2). Checked over every example twice: its `from` lines written in (the language alone), and as written (the language

@@ -110,6 +110,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 071 · A swing leans pairs: a group of three stays straight, `:pairs` says nothing more (Migrate drops it) · → decisions/071-swing-leans-pairs.md
 - 074 · A filter is superdough's: low-pass, high-pass, band-pass (`bpf=`) in series, `ftype=` `12db` (default) `24db` (two stages) `ladder`; filters to patch are module fragments · → decisions/074-filters-are-superdoughs.md
 - 072 · `even` is the foundation: `even(k, n, phase)` a table again, under the scales, the even rhythms and the meter; `euclid` stays the rhythm · → decisions/072-even-is-the-foundation.md
+- 075 · A name is only a name: rename every name a text defines and it plays, says and is read as it did; no name the piece's by convention (the interface names retire); `alpha.test.ts`, its exceptions only shrinking (#560); proposed · → decisions/075-a-name-is-only-a-name.md
 - 058 · The performer is a gate (amended by 061) · → decisions/058-the-performer-is-a-gate.md
 - 059 · A `use` says what it takes · → decisions/059-named-use.md
 - 060 · The key is named, `over=&key` · → decisions/060-the-key-is-named.md
