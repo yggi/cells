@@ -3,7 +3,7 @@ import { chanceOf } from "../engine/realize.js";
 import { createRepository, EMPTY_LAYER } from "./fragments.js";
 import { fileFragment, useFragments } from "./learned.js";
 import { LIBRARY } from "./library.js";
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from "./presets.js";
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from "./styles.js";
 import { RHYTHM_FRAGMENTS } from "./rhythms.js";
 export const LOCK_IN_PRESETS = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ };
 const STARTS = Object.values(LOCK_IN_PRESETS);

@@ -88,9 +88,17 @@ A factor written out, `* &curve`, sets where between the two ends instead: a lin
 
 A pick of a slot as a factor reads its value, held: `lpf=0..1000 * &pluck[sustain]` is 500 Hz with `&pluck map=adsr .01 .3 .5 .4`.
 
-## The presets' styles: styles
+## The library of styles: styles
 
-The seed library holds Jambot's ten presets as styles, the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing` and `&spooky`, each at the point its preset plays.
+The seed library holds the preset styles as the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing`, `&spooky` and `&kinderlied`.
+Each is a style cell at its point, with its display name as `label=` and its default tempo as `step=`:
+
+```cells
+&funk map=style label="Funk" step=104bpm sync=1 harm=.12 artic=.85 energy=.75
+```
+
+The collection is the presets' one source: a frontend reads it as `STYLES` (`src/repository/styles.ts`), each style `{ id, name, point, tempo }`, in its order (#537).
+Only the library reads `step=` on a style: `style=` and a query read the point alone, so a style has no tempo ([decision 037](https://github.com/yggi/cells/blob/main/docs/decisions/037-the-handshake-with-jambot.md), D6).
 A score takes one by name where its section sits exactly on it, and writes its numbers, or a mix of styles, where it doesn't ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §3).
 
 ```cells
@@ -98,7 +106,7 @@ A score takes one by name where its section sits exactly on it, and writes its n
 &style label="Funk, turning to Bossa nova" style=&funk..&bossaNova
 ```
 
-The collection is associated at each of the ten points as the facet `style`, so the style nearest a point is a query too.
+The collection is associated at each of the eleven points as the facet `style`, so the style nearest a point is a query too.
 
 ## The default band: a score played as its style says
 

@@ -15,7 +15,7 @@ import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
-import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './presets';
+import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
@@ -27,8 +27,6 @@ const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnTy
   return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
 };
 
-/** The point proposed for an Electro swing preset, as the electroswing seeds' files write it: no preset of Jambot's (decision 041). */
-const PROPOSED = at(0.55, 0.75, 0.6, 0.75);
 /** A point 0.1 higher in energy, to the hundredth. */
 const above = (p: StylePoint): StylePoint => ({ ...p, energy: Math.round((p.energy + 0.1) * 100) / 100 });
 /** Each motif, the point it sits at, and the meter it is a bar of (4/4 where none is named). */
@@ -41,7 +39,7 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   riff: { point: FUNK },
   tresillo: { point: BOSSA_NOVA },
   bebop: { point: SWING_JAZZ },
-  gypsy: { point: PROPOSED },
+  gypsy: { point: ELECTRO_SWING },
   diesIrae: { point: SPOOKY },
   // (#369: a second near each preset's point, 0.1 higher in energy, so a query at the point finds the first first)
   refrain: { point: above(SYNTH_POP) },

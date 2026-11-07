@@ -20,6 +20,6 @@ The triad rising slowly, tonic, third, fifth, the last held half the bar: the ow
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&rising`), so `use &rising` takes it; a form reads it as its `&call` (`&call step=8n &rising`), the line the form moves and answers.
 
-At Ambient's point (`presets.ts`), weight 1, as the facet `motif`.
+At Ambient's point (`styles`), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&rising from &key`. `&rising from rising &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &rising from rising`, it reads `&key` by name, as before.

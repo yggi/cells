@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
@@ -44,7 +44,7 @@ function edits(source: string, seed: number): string[] {
 }
 
 describe('fuzz: an example with one deletion never throws', () => {
-  for (const [key, p] of Object.entries(PRESETS)) {
+  for (const [key, p] of Object.entries(EXAMPLES)) {
     test(key, () => {
       let seed = 0;
       for (const c of key) seed = (seed * 31 + c.charCodeAt(0)) | 0;

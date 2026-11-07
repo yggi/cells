@@ -26,7 +26,8 @@ A rate's unit can be an argument, its numbers then the core's (a second): `step=
 
 ```cells
 &key scan(2 2 1 2 2 2 1)
-&bar scan(1 1 1 1) step=96bpm
+&bar meter("4/4") step=&tempo
+&tempo step=96bpm
 &riff over=&key step=16n free(0 2 4 ~ 4 2 0 ~)
 ```
 

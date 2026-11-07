@@ -5,7 +5,7 @@ import { compileSource as compileAlone } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { noteOf } from './midi';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
@@ -107,8 +107,8 @@ describe('writing a MIDI file', () => {
 describe('a piece as a MIDI file', () => {
   /** Each note of a piece as (key, seconds), and the same read back from its file, in the same order: the same notes,
    * the times within rounding (a tick, a tempo rounded to the microsecond). */
-  const roundTrip = (key: keyof typeof PRESETS) => {
-    const result = compileSource(PRESETS[key].source);
+  const roundTrip = (key: keyof typeof EXAMPLES) => {
+    const result = compileSource(EXAMPLES[key].source);
     const shifts = codeShifts(result);
     const { smf, dropped } = pieceMidi(result, shifts);
     const file = readMidi(writeMidi(smf));

@@ -1,13 +1,13 @@
 // Patching as an edit (decision 067 §4, #469): a cell's jacks, and a cable patched in or pulled out, each one line rewritten.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { jacksOf, MOVING, patch, PatchError, unpatch } from './patch';
 import { PARAMS } from './attributes';
 import { resolveSeed } from '../repository/library';
 
 const lines = (...xs: string[]) => xs.join('\n');
-const PATCHBAY = PRESETS.patchbay.source;
+const PATCHBAY = EXAMPLES.patchbay.source;
 const diagnostics = (text: string) => compileSource(text, undefined, { resolve: resolveSeed }).diagnostics.map((d) => d.message);
 const lineOf = (text: string, cell: string) => text.split('\n').find((l) => l.startsWith(`&${cell} `));
 const BASE = lines('&bar meter("4/4") step=120bpm', '&tune step=8n 0 3 7 10', '&eg map=adsr .002 .2 .1 .1', '&lfo map=lin loop=&bar/2 sin(12)', '&wob map=lin loop=&bar*2 sin(12)');

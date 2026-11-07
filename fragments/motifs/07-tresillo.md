@@ -21,6 +21,6 @@ Its durations, 3 3 2 eighths, are `even(3, 8, 2)`, three as even as three go ove
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&tresillo`), so `use &tresillo` takes it; a form reads it as its `&call` (`&call step=8n &tresillo`), the line the form moves and answers.
 
-At Bossa nova's point (`presets.ts`), weight 1, as the facet `motif`.
+At Bossa nova's point (`styles`), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&tresillo from &key`. `&tresillo from tresillo &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &tresillo from tresillo`, it reads `&key` by name, as before.

@@ -8,7 +8,7 @@ import { cellId } from './ids';
 import { eventsBetween, plan } from './realize';
 import { createRenderer, loudness } from './render';
 import { pieceAudio } from './audioexport';
-import { PRESETS } from './presets';
+import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 
 const compiled = (text: string) => compileSource(text, undefined, { resolve: resolveSeed });
@@ -19,7 +19,7 @@ const audio = (text: string, options: Parameters<typeof pieceAudio>[2]) => {
   expect(r.ok, r.diagnostics.map((d) => d.message).join('; ')).toBe(true);
   return pieceAudio(r, codeShifts(r), options);
 };
-const example = (key: string) => compiled((PRESETS as Record<string, { source: string }>)[key]!.source);
+const example = (key: string) => compiled((EXAMPLES as Record<string, { source: string }>)[key]!.source);
 /** A render's bits, to compare two renders exactly. */
 const bits = (channels: readonly Float32Array[]) => channels.map((c) => [...new Uint32Array(c.buffer, c.byteOffset, c.length)].join(','));
 
@@ -178,7 +178,7 @@ describe('the renderer', () => {
 
   it('every example whose voices stage R1 sounds renders with no diagnostic and no sample that isn’t a number (47 of 81)', () => {
     let clean = 0;
-    for (const key of Object.keys(PRESETS)) {
+    for (const key of Object.keys(EXAMPLES)) {
       const r = example(key);
       const a = pieceAudio(r, codeShifts(r), { seconds: 1, tail: 0 });
       for (const c of a.mix) expect(c.every(Number.isFinite), key).toBe(true);

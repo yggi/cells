@@ -7,7 +7,8 @@ A piece can say where its notes go on MIDI: which voice on which channel, and vo
 &reed s=square loop=220
 &bass step=2 0 ~ 5 4
 &sub loop=55
-&bar scan(1 1 1 1) step=2
+&bar meter("4/4") step=&tempo
+&tempo step=2
 &groove step=8n &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh
 &bd s=sine loop=A1
 &sd s=white
@@ -28,7 +29,8 @@ A piece can say where its notes go on MIDI: which voice on which channel, and vo
 A melody on an entry needs `step=` timing to start notes (a tap such as `step=4n`); without it the card says nothing starts notes.
 
 ```cells
-&bar meter("4/4") step=100bpm
+&bar meter("4/4") step=&tempo
+&tempo step=100bpm
 &tune step=4n 0 2 4 5
 &pad loop=220
 &synth map=midi [&tune * &pad]

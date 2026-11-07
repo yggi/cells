@@ -5,7 +5,7 @@
  * swing its arguments, each line its default (4/4, straight). Its points carry the arguments, one a style, and the
  * repository holds it taken with each set: `meter`, `meter(swing=8n:2/3)`, `meter(grouping=meter("7/8"))`, thirteen.
  *
- * The associations are written by hand, on four of Jambot's axes (`presets.ts`). Each of Jambot's eight presets names a
+ * The associations are written by hand, on four of Jambot's axes (`styles.ts`, read from the collection `styles`). Each of Jambot's eight presets names a
  * 4/4 meter (yggi/jambot#360) and is a point of that meter's association: straight 4/4 holds the three that play
  * straight, and each swing the presets that play it. The other groupings sit where no preset is, and where no point
  * halfway between two presets is nearer to them than to the presets' own meters.

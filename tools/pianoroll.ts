@@ -17,7 +17,7 @@ import { existsSync, globSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { compileSource } from '../src/engine/compile';
-import { PRESETS } from '../src/engine/presets';
+import { EXAMPLES } from '../src/engine/examples';
 import { isPieceFile, readPiece } from '../src/engine/piecefile';
 import { codeShifts } from '../src/engine/program';
 import { resolveSeed } from '../src/repository/library';
@@ -194,7 +194,7 @@ export function readInput(input: string, from = WINDOW.from, to = WINDOW.to): Ro
   const [label, what] = eq ? [eq[1], eq[2]] : [null, input];
   if (what.startsWith('example:')) {
     const key = what.slice('example:'.length);
-    const source = (PRESETS as Record<string, { source: string } | undefined>)[key]?.source;
+    const source = (EXAMPLES as Record<string, { source: string } | undefined>)[key]?.source;
     if (source === undefined) throw new Error(`no example ${key}`);
     return { label: label ?? key, notes: notesOf(source, from, to) };
   }

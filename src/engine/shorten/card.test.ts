@@ -3,7 +3,7 @@ import { shorten, shortenAll } from './index';
 import { movedCard } from './card';
 import { compileSource } from '../compile';
 import { readPiece } from '../piecefile';
-import { PRESETS } from '../presets';
+import { EXAMPLES } from '../examples';
 
 // Decision 047 (#146): a card that says what the piece is (title= tags= tier=) is written the old way; the compiler
 // says where they go, and Shorten's migration writes the piece as a file, those in its frontmatter, the rest byte for byte.
@@ -84,12 +84,12 @@ describe('a card written the old way (decision 047)', () => {
 
   it('is offered for no text with no card, nor for a file, and shortenAll never takes it', () => {
     expect(migration('&hint label="x" about=&a\n&a loop=A4')).toBeUndefined();
-    expect(movedCard(PRESETS.steps.file)).toBeNull();
-    expect(movedCard(PRESETS.steps.source)).toBeNull();
+    expect(movedCard(EXAMPLES.steps.file)).toBeNull();
+    expect(movedCard(EXAMPLES.steps.source)).toBeNull();
     expect(shortenAll(OLD).source).toBe(OLD);
   });
 
   it('is offered for no example: every one is a file', () => {
-    for (const [key, { source }] of Object.entries(PRESETS)) expect(migration(source), key).toBeUndefined();
+    for (const [key, { source }] of Object.entries(EXAMPLES)) expect(migration(source), key).toBeUndefined();
   });
 });

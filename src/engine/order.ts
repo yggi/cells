@@ -87,4 +87,7 @@ export const ORDER = [
   'fiveto12',
 ] as const;
 
-export type PresetKey = (typeof ORDER)[number];
+export type ExampleKey = (typeof ORDER)[number];
+
+/** @deprecated: `ExampleKey` (#551). Goes in the minor after. */
+export type PresetKey = ExampleKey;
