@@ -1,5 +1,6 @@
 import { parse } from "../engine/parser/index.js";
 import { AXIS_NAMES } from "../engine/style.js";
+import { pointDistance } from "./fragments.js";
 import { seedFragments } from "./seed.js";
 export const STYLE_FRAGMENTS = seedFragments('styles');
 function styleOf(cell) {
@@ -23,6 +24,14 @@ export function stylePoint(id) {
     if (!style)
         throw new Error(`styles: no style ${id} (there are ${STYLES.map((s) => s.id).join(', ')})`);
     return style.point;
+}
+export function nearestStyle(point, options = {}) {
+    const { k = Infinity, axisWeights = {}, styles = STYLES } = options;
+    return styles
+        .map((style, i) => ({ style, distance: pointDistance(point, style.point, axisWeights), i }))
+        .sort((a, b) => a.distance - b.distance || a.i - b.i)
+        .slice(0, k)
+        .map(({ style, distance }) => ({ style, distance }));
 }
 export const at = (sync, harm, artic, energy) => ({ sync, harm, artic, energy });
 export const SYNTH_POP = stylePoint('synthPop');

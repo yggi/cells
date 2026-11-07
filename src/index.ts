@@ -46,6 +46,7 @@ export {
   createRepository,
   EMPTY_LAYER,
   layerProblems,
+  pointDistance,
   type Fragment,
   type Found,
   type LearnedLayer,
@@ -87,7 +88,7 @@ export { EXPRESSION_FRAGMENTS } from './repository/expression';
 export { MOTIF_FRAGMENTS } from './repository/motifs';
 export { FORM_FRAGMENTS } from './repository/forms';
 export { BAND_FRAGMENTS } from './repository/bands';
-export { STYLE_FRAGMENTS, STYLES, type Style } from './repository/styles';
+export { nearestStyle, STYLE_FRAGMENTS, STYLES, type NearStyle, type Style } from './repository/styles';
 export { MODULE_FRAGMENTS } from './repository/modules';
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES, type FoundInstrument, type VoicedPart } from './repository/band';
 export { LIBRARY, resolveSeed } from './repository/library';

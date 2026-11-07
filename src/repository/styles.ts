@@ -11,7 +11,7 @@
  */
 import { parse } from '../engine/parser';
 import { AXIS_NAMES } from '../engine/style';
-import type { Fragment, StylePoint } from './fragments';
+import { pointDistance, type Fragment, type StylePoint } from './fragments';
 import { seedFragments } from './seed';
 
 /** The styles built so far: the collection `styles`, associated as the facet `style` at each of its points. */
@@ -48,6 +48,26 @@ export function stylePoint(id: string): StylePoint {
   const style = STYLES.find((s) => s.id === id);
   if (!style) throw new Error(`styles: no style ${id} (there are ${STYLES.map((s) => s.id).join(', ')})`);
   return style.point;
+}
+
+/** A style and how far a point is from it. */
+export interface NearStyle {
+  readonly style: Style;
+  readonly distance: number;
+}
+
+/**
+ * The styles nearest a point, nearest first, by the distance between two styles (`pointDistance`: over the axes both
+ * have, each weighing 1 unless `axisWeights` says), ties in the styles' order; the k nearest, or all. A frontend that
+ * ranks on more than the point (Jambot's tempo) hands `styles` with its own axes added to each point.
+ */
+export function nearestStyle(point: StylePoint, options: { readonly k?: number; readonly axisWeights?: StylePoint; readonly styles?: readonly Style[] } = {}): NearStyle[] {
+  const { k = Infinity, axisWeights = {}, styles = STYLES } = options;
+  return styles
+    .map((style, i) => ({ style, distance: pointDistance(point, style.point, axisWeights), i }))
+    .sort((a, b) => a.distance - b.distance || a.i - b.i)
+    .slice(0, k)
+    .map(({ style, distance }) => ({ style, distance }));
 }
 
 /** A point on the four axes, for a place that is not a preset's (a test's, a fragment's). */

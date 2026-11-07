@@ -10,6 +10,8 @@ The axes are cells' own table (`AXES`, `src/engine/style.ts`), each with a name,
 | `artic` | 0 to 1 | legato (0) to staccato (1) |
 | `energy` | 0 to 1 | sparse (0) to dense (1) |
 
+Each axis also carries the words a frontend shows for it, `label` (`Syncopation`, `Harmony`, `Articulation`, `Energy`) and `ends` (`['on the beat', 'off the beat']` …), and its sentence is said from its ends, so a frontend's Style sheet reads its words from here (#538).
+
 A fragment's association points in the repository are written on the same axes ([use.md](use.md)), and a frontend reads them from the table rather than owning them ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md)).
 
 ## map=style
@@ -107,6 +109,7 @@ A score takes one by name where its section sits exactly on it, and writes its n
 ```
 
 The collection is associated at each of the eleven points as the facet `style`, so the style nearest a point is a query too.
+`nearestStyle(point)` ranks the styles themselves by it, nearest first: by `pointDistance`, the one distance between two styles, over the axes both have, with `axisWeights` to weigh an axis down and `styles` for a frontend that ranks on an axis of its own as well, such as a tempo (#538).
 
 ## The default band: a score played as its style says
 

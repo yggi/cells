@@ -1,8 +1,15 @@
+const axis = (name, range, label, ends) => ({
+    name,
+    range,
+    label,
+    ends,
+    sentence: `${ends[0][0].toUpperCase()}${ends[0].slice(1)} (${range[0]}) to ${ends[1]} (${range[1]}).`,
+});
 export const AXES = [
-    { name: 'sync', range: [0, 1], sentence: 'On the beat (0) to off the beat (1).' },
-    { name: 'harm', range: [0, 1], sentence: 'A static vamp (0) to moving, rich harmony (1).' },
-    { name: 'artic', range: [0, 1], sentence: 'Legato (0) to staccato (1).' },
-    { name: 'energy', range: [0, 1], sentence: 'Sparse (0) to dense (1).' },
+    axis('sync', [0, 1], 'Syncopation', ['on the beat', 'off the beat']),
+    axis('harm', [0, 1], 'Harmony', ['a static vamp', 'moving, rich harmony']),
+    axis('artic', [0, 1], 'Articulation', ['legato', 'staccato']),
+    axis('energy', [0, 1], 'Energy', ['sparse', 'dense']),
 ];
 export const AXIS_NAMES = AXES.map((a) => a.name);
 export const SLOTS = {
