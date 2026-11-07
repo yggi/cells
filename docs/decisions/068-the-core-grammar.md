@@ -24,6 +24,7 @@ The note has every row.
   - **look up:** `&x`, `&x[i]`, `over=`, `map=`, a section, a role;
   - **combine:** `[a, b]`, `*`, `+`, `env=`, `laps=`, the card, with the sorts as its types.
 - **The terminals:** a cell, a number, a fraction, a rest.
+- **Amended (decision 069, 2026-11-07):** a scan with a rate (`scan(3 3 2) step=…`, a meter of uneven steps) is dilate, and a hit's gain (`&hh:0:.5`) is combine, a product inside a step. Both are core: the language has no other spelling of either.
 - A later version keeps what each of these 46 forms means. A change to one is a major version after 1.0.
 
 ### 2. The ramp is the fifth primitive
