@@ -65,6 +65,7 @@ export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES, type 
 export { LIBRARY, resolveSeed } from './repository/library';
 export { RENAMED_IDS, wordOf } from './engine/renamed';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
+export { decompose, writtenOut, type Decomposition, type DecomposeOptions, type LineNote } from './repository/decompose';
 export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
 export { fitOf, unionOf, type Fit, type Union } from './repository/fit';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';
