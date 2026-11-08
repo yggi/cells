@@ -65,6 +65,12 @@ export const NUMBER_PLACES = {
     moves: true,
     example: '&mine map=style sync=free(.3, 0..1) harm=.45 artic=.55 energy=.55',
   }),
+  end: place({
+    form: 'lo..hi * &k (a moving range’s ends) · c ± r',
+    name: 'end',
+    cell: NOT_YET('a range’s end is a number or a slider; its cells move what lies between (decision 079)'),
+    example: '&lead s=saw loop=C4 lpf=free(400, 200..800)..free(2400, 1200..4800) * &lfo',
+  }),
   share: place({
     form: 'swing=8n:n · legato=8n:n',
     name: 'share',

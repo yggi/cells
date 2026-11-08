@@ -31,6 +31,7 @@ An axis may be left to the performer, a slider within its range, by name or in o
 The slider is named by its axis, and what reads the style reads its value as it reads a number's.
 An axis may also move, by name: a range within it and the cell that moves it, `artic=.2..0.9 * &drift`, or the cell alone for the axis's whole range, `artic=&drift`.
 What reads the axis (`&style[artic]`, or `&mine[artic]` on the style itself) reads that cell, its numbers from 0 to 1 laid within the range, on the cell's own clock: a line of numbers, a choice drawn afresh each step (`&drift step=1m/8 [0|.25|.5|.75|1]`, a sample-and-hold once a section), nested as deep as wanted.
+The window may be set by a hand, its ends sliders within the axis, `artic=free(.2, 0..1)..free(.9, 0..1) * &drift`, or its centre and reach, `artic=free(.55, 0..1) ± free(.25, 0..0.5) * &drift`, held to the axis ([sound.md](sound.md), decision 079).
 Where nothing reads it moving, the axis is the range's first end.
 One cell moves an axis: a line of numbers, or a sum of them (`&drift [&section * .5 + &song * .3 + &set * .2]`, [mix.md](mix.md), decision 079), each term laid within the range.
 Read through a mix of styles, a moving axis is the mix's weighted sum, a still style's value a constant in it; a range of styles doesn't move with a moving one yet, an error that says so (#576).
