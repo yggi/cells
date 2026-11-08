@@ -10,6 +10,7 @@ describe('the probe over an example', () => {
     expect(Object.values(r.families).every((f) => f === null || f.same)).toBe(true);
     expect(r.core).toMatchObject({ same: true, idempotent: true });
     expect(r.minified.same).toBe(true);
-    expect(r.context).toContain('unit reads');
+    // (wholly in the core: its `&d!2` under a rotation is a count, decision 077)
+    expect(r.context).toEqual([]);
   });
 });

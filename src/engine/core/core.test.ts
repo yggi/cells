@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coreFold, FAMILIES, meaningfulNames, minify, toCore } from '.';
+import { coreFold, FAMILIES, LEFT, meaningfulNames, minify, stillWritten, toCore } from '.';
 import { normalise } from '../normalise';
 import { soundsIdentical } from '../sameness';
 import { compileSource } from '../compile';
@@ -290,5 +290,19 @@ describe('gates, pitch= and what nothing reads, in the core (decision 069 §2, #
   it('a pitch written in place stays', () => {
     const text = `${BAR}\n&t step=8n 0 2 4\n&a s=sine loop=C4 pitch=&(map=lin loop=5 0 .1 0 -.1)\n&out map=sample [&t * &a]`;
     expect(family('pitch')(text, O)).toBe(text);
+  });
+});
+
+describe('Core.left reports only what is left (decision 077)', () => {
+  const left = (text: string) => LEFT.filter((l) => stillWritten(l, text)).map((l) => l.key);
+  it('a tape’s read head, a [ ] kept as dilate and a count are core; x*n, <a b> and a euclid are not yet', () => {
+    expect(left('&h play=&g at=.375 wander=.06')).toEqual([]);
+    expect(left('&t step=pulse*2 0 [2 4] 5')).toEqual([]);
+    expect(left('&t step=pulse*2 &d!2 0!3')).toEqual([]);
+    expect(left('&t step=pulse*2 0 2*2')).toEqual(['subsequences']);
+    expect(left('&t step=pulse*2 0 <2 4>')).toEqual(['subsequences']);
+    expect(left('&t step=pulse*2 [0 2(3,8)] 4')).toEqual(['subsequences']);
+    expect(left('&t step=pulse*2 euclid(5, 16)')).toEqual(['subsequences']);
+    expect(left('&g play=&t &v')).toEqual(['gates']);
   });
 });

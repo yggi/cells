@@ -759,6 +759,9 @@ function tokenWise(text: string, f: (token: string, cell: string) => string): st
   return lines.join('\n');
 }
 
+/** A step that is sugar of a subsequence, at any depth: `x*n`, `<a b>`, `x(k,n)`. */
+const sugared = (t: Token): boolean => t.subdivide > 1 || (t.atom.kind === 'seq' && (t.atom.mode === 'alt' || !!t.atom.euclid || t.atom.layers.some((l) => l.some(sugared))));
+
 /** Is a row still written in a text: its test on the code, strings and comments aside (a label may say `step=8n`). */
 export const stillWritten = (row: (typeof LEFT)[number], text: string): boolean => {
   const code = text
@@ -778,9 +781,10 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
   },
   {
     key: 'subsequences',
-    rows: '16, 18, 22, 25 `[a b]` `<a b>` `x*n` `x(k,n)` left as written',
-    test: (text) => parse(text).cells.some((d) => d.braid.kind === 'list' && d.braid.tokens.some((t) => t.atom.kind === 'seq' || t.subdivide > 1)),
-    why: 'dilate inside a step, kept where a finer grid would change what the line plays: a line that draws, one spliced or read by its units, a table, a stack, `<a b>`, a euclid, a meter with legato by level',
+    rows: '18, 22, 25 `<a b>` `x*n` `x(k,n)` `euclid(k, n)` left as written',
+    // (a `[ ]` no finer tap plays is core dilate, decision 069 §4: not reported)
+    test: (text) => /\beuclid\(/.test(text) || parse(text).cells.some((d) => d.braid.kind === 'list' && d.braid.tokens.some(sugared)),
+    why: 'n of a step within it (`x*n`, which is `[x!n]`), a step a lap (`<a b>`, which is `[a b]/2`), or a euclid, kept where a finer grid would change what the line plays: a line that draws, one spliced or read by its units, a table, a stack, a meter with legato by level',
   },
   {
     key: 'sliders',
@@ -788,7 +792,6 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
     test: /\bfree\((?:-?\d*\.?\d+(?:bpm|hz|min|h|d|wk|k)\b|[a-z]+\))/,
     why: 'a slider whose unit is written after its number, or a marking (free(andante)): its numbers in the core’s, the unit an argument',
   },
-  { key: 'unit reads', rows: '21 `x!n` in a cell read by its units', test: /!\d/, why: '`&a!2` is one unit and `&a &a` two: a pick or a rotation (`&john[<<]`) counts them' },
   {
     key: 'keys',
     rows: '40 `scale(name)` left as written',
@@ -804,8 +807,9 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
   {
     key: 'gates',
     rows: '111–113 `play=` `level=` `[&a, &b]`',
-    test: /\b(?:play|level)=/,
-    why: 'a gate is a set of products, each receiver times its notes and levels, written into the card’s mix; one a role reads (a performer’s part), a tape’s read head (`at=`), or one over a kit stays',
+    // (a tape's read head, `play=&tape at=`, is the ramp's: core, 068 §2)
+    test: (text) => text.split('\n').some((l) => /\b(?:play|level)=/.test(l) && !/\bat=/.test(l)),
+    why: 'a gate is a set of products, each receiver times its notes and levels, written into the card’s mix; one a role reads (a performer’s part), or one over a kit, stays',
   },
   {
     key: 'pitch',
