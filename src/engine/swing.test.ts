@@ -256,7 +256,7 @@ describe('the pairs alone in a mixed meter play the band’s T16 (yggi/jambot do
   });
 });
 
-describe('`:pairs` as written, decision 053’s word: read, and saying nothing more (decision 071)', () => {
+describe('`:pairs` as written, decision 053’s word: read as the swing without it, with a warning that Migrate drops it (decision 071; #15, rung 6)', () => {
   const errors = (src: string) =>
     compileSource(src)
       .diagnostics.filter((d) => d.severity === 'error')
@@ -266,7 +266,7 @@ describe('`:pairs` as written, decision 053’s word: read, and saying nothing m
       .cells.get('bar')!
       .meter!.swing!.map((l) => [l.level, l.share]);
 
-  it('after a level’s share, a decimal, a fraction or one free(…), on one level or several, it is the swing without it', () => {
+  it('after a level’s share, a decimal, a fraction or one free(…), on one level or several, it is the swing without it, and says so', () => {
     for (const [word, plain] of [
       ['swing=8n:.67:pairs', 'swing=8n:.67'],
       ['swing=8n:2/3:pairs,16n:.55', 'swing=8n:2/3,16n:.55'],
@@ -274,7 +274,9 @@ describe('`:pairs` as written, decision 053’s word: read, and saying nothing m
     ]) {
       expect(levels(`meter("7/8") ${word}`)).toEqual(levels(`meter("7/8") ${plain}`));
       expect(onsets(`meter("7/8") ${word}`, '16n')).toEqual(onsets(`meter("7/8") ${plain}`, '16n'));
-      expect(warnings(`&bar meter("7/8") step=60bpm ${word}\n&x step=8n 0${VOICE}`)).toEqual([]);
+      expect(warnings(`&bar meter("7/8") step=60bpm ${word}\n&x step=8n 0${VOICE}`)).toEqual([
+        ":pairs says nothing more: every swing leans a level's pairs alone and keeps its groups of three straight (decision 071); Migrate drops it",
+      ]);
     }
   });
 
