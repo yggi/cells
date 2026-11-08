@@ -115,6 +115,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 077 · The core is sound only, cored up to a named interface (a fragment's signature, a piece's tempo, a score's gates); `x!n` is core, a count · → decisions/077-the-core-is-sound-up-to-an-interface.md
 - 079 · A voiceless mix of cells is the sum of their values; a moving range's ends may be sliders, centre ± reach its sugar · → decisions/079-a-sum-of-cells-and-a-window.md
 - 078 · Every number may be a `free()`, read by one reader over the table of places; a cell moves only a number read while the piece plays · → decisions/078-every-number-may-be-free.md
+- 080 · A meter is a tree placed through a time map: `bend=4n:&table` bends a level's nodes, a tempo map where it spans bars; a meter scan is its sugar · → decisions/080-a-meter-is-a-tree-placed-through-a-time-map.md
 - 058 · The performer is a gate (amended by 061) · → decisions/058-the-performer-is-a-gate.md
 - 059 · A `use` says what it takes · → decisions/059-named-use.md
 - 060 · The key is named, `over=&key` · → decisions/060-the-key-is-named.md
@@ -131,3 +132,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 077 · The core is sound only, up to an interface; repetition a count · → decisions/077-the-core-is-sound-up-to-an-interface.md
 - 079 · A sum of cells; a window and its ± · → decisions/079-a-sum-of-cells-and-a-window.md
 - 078 · Every number may be a `free()`; a cell moves only what plays · → decisions/078-every-number-may-be-free.md
+- 080 · A meter is a tree placed through a time map; `bend=` · → decisions/080-a-meter-is-a-tree-placed-through-a-time-map.md

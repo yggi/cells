@@ -124,7 +124,7 @@ export function adsrOf(c) {
     return { attack: v[0], decay: v[1], sustain: Math.min(1, v[2]), release: v[3] };
 }
 export function isPositional(c) {
-    return c.root || c.scan !== null;
+    return c.root || c.scan !== null || !!c.bend;
 }
 export function keepsTime(result, name) {
     const clock = result.clocks.get(name);

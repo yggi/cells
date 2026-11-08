@@ -177,6 +177,11 @@ export const FAMILIES: readonly Family[] = [
     rewrite: (text, options) => meters(text, options),
   },
   {
+    key: 'meter scans',
+    rows: '37 `scan(i …)` on a stepped line',
+    rewrite: (text, options) => meterScans(text, options),
+  },
+  {
     key: 'taps',
     rows: '54–55 `step=16n` `8t` `4n.` `1m`',
     rewrite: (text, options) => taps(text, options),
@@ -951,6 +956,67 @@ function meters(text: string, options: CompileOptions): string {
     .join('\n');
 }
 
+/**
+ * A meter scan as a meter bent (decision 080): `&bar scan(27 23 26 24) step=r` is `&bar meter("++++") step=r bend=4n:&b`
+ * with `&b 27 23 26 24`, its entries each a beat, level 1, played at their lengths. With `pulse=16n`, the bar is one beat
+ * (`meter("+,,,", 16n)`, a quarter's sixteenths) and the bend spans as many as the scan held, `laps=` counting them: BWV
+ * 847's tempo map. The table is written as the scan's entries are (counts and sliders kept), or as the numbers it made
+ * from a generator. A scan read as a table too (`over=&d`, a pick) stays; each rewrite checked on its own by S1.
+ */
+function meterScans(text: string, options: CoreContext): string {
+  let now = text;
+  for (const d of parse(text).cells) {
+    const r = compileSource(now, undefined, options);
+    const c = r.ok ? r.cells.get(d.name) : undefined;
+    const line = declLine(now, d.name);
+    if (!c?.meter || c.meter.written !== 'scan' || !c.scan || line < 0) continue;
+    const lines = now.split('\n');
+    const [code, comment] = splitComment(lines[line]!);
+    if (!/\bstep=(?!cycle\()/.test(code) || /\bover=/.test(code)) continue;
+    // (read but as a meter, a tap or a table, `over=&d`: a pick, a splice, a cycle — it stays)
+    const ref = new RegExp(`&${d.name}(?![A-Za-z0-9_:])`);
+    const asTable = new RegExp(`\\bover=&${d.name}(?![A-Za-z0-9_])`, 'g');
+    if (
+      lines.some(
+        (l, i) =>
+          i !== line &&
+          ref.test(
+            splitComment(l)[0]
+              .replace(/\bstep=&[A-Za-z_][A-Za-z0-9_]*(?![A-Za-z0-9_:*/(])/g, '')
+              .replace(asTable, ''),
+          ),
+      )
+    )
+      continue;
+    const call = /\bscan\(((?:[^()]|\([^()]*\))*)\)/.exec(code);
+    if (!call) continue;
+    // (a scan that is a table too: the table a cell of its own, its positions as they were)
+    const tabled = lines.some((l, i) => i !== line && asTable.test(splitComment(l)[0]));
+    const k = c.meter.pulses;
+    const pulse = /\bpulse=(\S+)/.exec(code)?.[1];
+    const whole = pulse ? noteValue(pulse) : 1 / 4;
+    const per = whole ? Math.round(1 / 4 / whole) : 0;
+    if (pulse && (per < 1 || k % per !== 0)) continue;
+    const bar = pulse ? `meter("+${','.repeat(per - 1)}", ${pulse})` : `meter("${'+'.repeat(k)}")`;
+    const laps = /\blaps=([0-9]+)\b/.exec(code);
+    const table = /^(?:\s|free\([^()]*\)|-?[0-9]*\.?[0-9]+(?:![0-9]+)?)*$/.test(call[1]!) ? call[1]!.trim() : c.scan.steps.join(' ');
+    const fresh = (stem: string, taken: string) => {
+      let n = `${stem}1`;
+      for (let i = 2; new RegExp(`&${n}(?![A-Za-z0-9_])`).test(taken); i++) n = `${stem}${i}`;
+      return n;
+    };
+    const name = fresh('_s', now);
+    const tableName = tabled ? fresh('_t', now) : null;
+    if (tableName) for (let i = 0; i < lines.length; i++) if (i !== line) lines[i] = lines[i]!.replace(asTable, `over=&${tableName}`);
+    let next = code.replace(call[0], bar).replace(/\s+pulse=\S+/, '');
+    if (pulse && laps) next = next.replace(laps[0], `laps=${(+laps[1]! * k) / per}`);
+    lines[line] = `${next.trimEnd()} bend=${pulse ?? '4n'}:&${name}${comment ? ` ${comment.trim()}` : ''}`;
+    const candidate = `${lines.join('\n').replace(/\s+$/, '')}\n&${name} ${table}${tableName ? `\n&${tableName} ${call[0]}` : ''}`;
+    if (soundsIdentical(now, candidate, undefined, options)) now = candidate;
+  }
+  return now;
+}
+
 /** Where the first innermost `&( … )` stands: from its `&` to past its `)`, and its body. */
 function innermost(written: string): { start: number; end: number; body: string } | null {
   // (a quoted string, a label's, says `&( … )` without writing one: read with its letters masked, cut as written)
@@ -1028,6 +1094,12 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
     rows: '40 `scale(name)` left as written',
     test: /\bscale\((?!&)/,
     why: 'a key whose mode is a name: written as its table where it can be; a key after over= unnamed, or with a slider for a tonic, stays',
+  },
+  {
+    key: 'meter scans',
+    rows: '37 `scan(i …)` on a stepped line, left as written',
+    test: /\bscan\(.*\bstep=|\bstep=.*\bscan\(/,
+    why: 'a meter scan is a meter bent (decision 080): left where it is walked as a table too (`step=cycle(&key)`, its positions both its pitches and its times), or read but as a meter or a table',
   },
   {
     key: 'meters',

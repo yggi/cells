@@ -182,6 +182,13 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     on: ['clock'],
     form: 'swing=8n:r · swing=8n:r,16n:r · swing=8n:free(r, lo..hi) · swing=r',
   },
+  bend: {
+    help: 'on a meter: a level’s nodes played at the lengths a table gives, named by note value — bend=4n:&rubato with &rubato 27 23 26 24 plays the beats 27:23:26:24 of the bar (decision 080); finer levels within each, swung as they would be; a table longer than the bar spans as many bars as it takes, a tempo map. A scan(…) with a rate is its sugar',
+    doc: 'time.md',
+    value: 'cell',
+    on: ['clock'],
+    form: 'bend=4n:&table',
+  },
   motor: physics('on a meter: it turns physically — a motor this strong pulls it to its tempo (from rest)', ['clock']),
   mass: physics('physics: how heavy it turns (inertia); on a cell a meter drives, load', ['clock', 'driven']),
   friction: physics('physics: drag — the meter sags below its tempo, more with more load', ['clock', 'driven']),

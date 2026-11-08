@@ -118,6 +118,15 @@ export interface ResolvedCell {
         readonly lap: number;
         readonly steps: readonly number[];
     } | null;
+    /**
+     * A meter bent (decision 080, `bend=4n:&rubato`): where each of its steps starts over the bars its table spans (`bars`),
+     * and their lap, in the table's lengths. Its clock places its steps there, as a scan's.
+     */
+    readonly bend?: {
+        readonly positions: readonly number[];
+        readonly lap: number;
+        readonly bars: number;
+    };
     /** shift= as written. */
     readonly shift: number;
     /**

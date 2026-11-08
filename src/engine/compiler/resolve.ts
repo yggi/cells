@@ -47,11 +47,46 @@ function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato'>): Me
   );
 }
 
+/**
+ * A meter bent (decision 080): its steps' starts over the bars its table spans. The level's nodes (`bend=4n:`, its beats in
+ * 4/4) take the table's lengths in turn, each node's steps even within it; a table of as many entries as the bar has nodes
+ * bends each bar alike, a longer one spans bars (a tempo map), cycled at the least number of whole bars that holds it.
+ */
+function bentOf(d: CellDecl, warn: Ctx['warn'], declOf: (name: string) => CellDecl | undefined): Partial<{ bend: { positions: number[]; lap: number; bars: number } }> {
+  const m = meterOf(d);
+  const bend = d.bend!;
+  const span = d.paramSpans.bend ?? d.span;
+  if (!m) return (warn(`bend= is on a meter: &${d.name} is none`, span), {});
+  const whole = noteValue(bend.level);
+  const steps = m.levels.length;
+  const per = whole === null ? NaN : (steps * whole * m.unit) / m.pulses;
+  if (!(per >= 1) || !Number.isInteger(per) || steps % per !== 0)
+    return (warn(`bend=${bend.level}: the bar of &${d.name} has no whole number of ${bend.level} nodes to bend`, span), {});
+  const t = declOf(bend.table.name);
+  const table =
+    t?.braid.kind === 'list'
+      ? t.braid.tokens.flatMap((tok) => (tok.atom.kind === 'note' ? Array.from({ length: Math.max(1, tok.repeat) }, () => (tok.atom as { value: number }).value) : [NaN]))
+      : [];
+  if (!table.length || table.some((x) => !(x > 0))) return (warn(`bend=${bend.level}:&${bend.table.name}: a table of lengths, each above 0`, span), {});
+  const nodes = steps / per;
+  const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
+  const bars = table.length / gcd(nodes, table.length);
+  const positions: number[] = [];
+  let at = 0;
+  for (let i = 0; i < nodes * bars; i++) {
+    const len = table[i % table.length]!;
+    for (let k = 0; k < per; k++) positions.push(at + (k * len) / per);
+    at += len;
+  }
+  return { bend: { positions, lap: at, bars } };
+}
+
 /** A meter's steps a beat: what its bpm is read through (1 when it has no meter). */
 export const stepsPerBeat = (m: Meter | null): number => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
 
 export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, stacks }: Declared, typed: Typed, sortOf: (name: string) => Sort): Cells {
   const { rateOf, error, warn, broken, unknownCell } = ctx;
+
   const cells = new Map<string, ResolvedCell>();
   const lengthOf = (name: string) => lengthIn(decls, name);
   const unitsOf = (d: Parameters<typeof unitsIn>[1]) => unitsIn(decls, d);
@@ -152,6 +187,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       braid: o === null ? 'blank' : b.kind,
       units,
       scan: b.kind === 'scan' ? { lap: scanOf(b.steps).lap, steps: b.steps } : null,
+      ...(d.bend ? bentOf(d, warn, (n) => decls.get(n)) : {}),
       shift: d.shift ?? 0,
       ...(d.tonic ? { tonic: d.tonic.name } : {}),
       off: d.off,
