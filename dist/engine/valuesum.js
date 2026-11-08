@@ -16,6 +16,17 @@ function itemOf(e, sign) {
     }
     return null;
 }
+const numeric = (atom) => atom.kind === 'note' || atom.kind === 'rest' || atom.kind === 'choice' || (atom.kind === 'seq' && atom.layers.every((l) => l.every((t) => numeric(t.atom))));
+export function isValueLine(name, decls, seen = new Set()) {
+    const d = decls.get(name);
+    if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)))
+        return false;
+    if (chordOf(d))
+        return valueSumOf(name, decls, seen) !== null;
+    if (d.map && d.map.kind !== 'lin' && d.map.kind !== 'amp' && d.map.kind !== 'db')
+        return false;
+    return d.braid.kind === 'list' && d.braid.tokens.length > 0 && d.braid.tokens.every((t) => numeric(t.atom));
+}
 export function valueSumOf(name, decls, seen = new Set()) {
     const exprs = chordOf(decls.get(name));
     if (!exprs || exprs.length !== 1 || seen.has(name))
@@ -36,13 +47,5 @@ export function valueSumOf(name, decls, seen = new Set()) {
     if (!terms.length || (terms.length === 1 && terms[0].weight === 1 && constant === 0))
         return null;
     const inner = new Set([...seen, name]);
-    return terms.some((t) => isSound(t.cell, decls, inner)) ? null : { terms, constant };
-}
-export function isSound(name, decls, seen = new Set()) {
-    const d = decls.get(name);
-    if (!d)
-        return false;
-    if (d.gate || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)))
-        return true;
-    return chordOf(d) !== null && valueSumOf(name, decls, seen) === null;
+    return terms.every((t) => isValueLine(t.cell, decls, inner)) ? { terms, constant } : null;
 }

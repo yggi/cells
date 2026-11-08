@@ -4,7 +4,7 @@
  * moving parameter, a style's axis or a pick reads a cell (`series.ts`, `styles.ts`). A mix with a voice is a sound,
  * as it was (decision 006): the two are told apart by whether a sound is in it.
  */
-import type { CellDecl, Expr } from './ast';
+import type { CellDecl, Expr, Token } from './ast';
 import { VOICE_PARAMS } from './attributes';
 
 /** One term of a sum: a cell and its weight. */
@@ -38,9 +38,28 @@ function itemOf(e: Expr, sign: 1 | -1): { term: SumTerm } | { constant: number }
   return null;
 }
 
+/** Does an atom hold numbers alone: a note, a rest, a choice, or a subsequence of them (no cell spliced, no sound)? */
+const numeric = (atom: Token['atom']): boolean =>
+  atom.kind === 'note' || atom.kind === 'rest' || atom.kind === 'choice' || (atom.kind === 'seq' && atom.layers.every((l) => l.every((t) => numeric(t.atom))));
+
 /**
- * A declaration as a sum of values, or null: one chord, a sum (or one weighted term) of cells and numbers, no cell in it
- * a sound (a voice, a gate, a mix of sounds), and not a bare cell alone (`[&a]`, which names what it mixes).
+ * Is the cell a line of values: a line of numbers alone, read through no table, a level (map=lin, amp, db), or a sum of
+ * values? Anything that splices a cell, sounds, names a sound or reads through a table is not (a pattern of drum hits is
+ * a sound, read through its kit).
+ */
+export function isValueLine(name: string, decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string> = new Set()): boolean {
+  const d = decls.get(name);
+  // (read through a table, over=, a line is a pattern: a kit's hits are a sound, compile reads drum hits so)
+  if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k))) return false;
+  if (chordOf(d)) return valueSumOf(name, decls, seen) !== null;
+  if (d.map && d.map.kind !== 'lin' && d.map.kind !== 'amp' && d.map.kind !== 'db') return false;
+  return d.braid.kind === 'list' && d.braid.tokens.length > 0 && d.braid.tokens.every((t) => numeric(t.atom));
+}
+
+/**
+ * A declaration as a sum of values, or null: one chord, a sum (or one weighted term) of cells and numbers, each cell a
+ * line of values (`isValueLine`), and not a bare cell alone (`[&a]`, which names what it mixes). Anything else is a mix
+ * of sounds, as it was (decision 006).
  */
 export function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string> = new Set()): ValueSum | null {
   const exprs = chordOf(decls.get(name));
@@ -57,13 +76,5 @@ export function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, s
   }
   if (!terms.length || (terms.length === 1 && terms[0]!.weight === 1 && constant === 0)) return null;
   const inner = new Set([...seen, name]);
-  return terms.some((t) => isSound(t.cell, decls, inner)) ? null : { terms, constant };
-}
-
-/** Is the cell a sound: a voice, a gate, or a mix that sums sounds (a sum of values is not one)? */
-export function isSound(name: string, decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string> = new Set()): boolean {
-  const d = decls.get(name);
-  if (!d) return false;
-  if (d.gate || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k))) return true;
-  return chordOf(d) !== null && valueSumOf(name, decls, seen) === null;
+  return terms.every((t) => isValueLine(t.cell, decls, inner)) ? { terms, constant } : null;
 }
