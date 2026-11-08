@@ -192,6 +192,21 @@ export const FAMILIES: readonly Family[] = [
     rewrite: (text) => codeWise(text, chains),
   },
   {
+    key: 'copy steps',
+    rows: '14 `=` over a base’s steps',
+    rewrite: (text, options) => copySteps(text, options),
+  },
+  {
+    key: 'splice subdivisions',
+    rows: '22 `&x*n`',
+    rewrite: (text, options) => spliceSubdivisions(text, options),
+  },
+  {
+    key: 'euclids',
+    rows: '25 `euclid(k, n)`',
+    rewrite: (text) => euclids(text),
+  },
+  {
     key: 'counts',
     rows: '21, 22 a run as `x!n`, `x*n` as `[x!n]`',
     // (last: the families before read a run written out, as `repeats` writes it each round; decision 077 §3)
@@ -352,6 +367,115 @@ const repeated = (tok: string) => {
   const m = /^(.*)!(\d+)$/.exec(tok);
   return m ? Array.from({ length: +m[2]! }, () => m[1]!).join(' ') : tok;
 };
+
+/**
+ * A copy's braid written over its base's steps (068's row 14, decision 026): `&f base=&e^$7 =!3 0@2` with `&e 0 -1 0@2 -5@2
+ * -4@2` is `&f 7 6 7@2 0@2 3@2`: `=` the base's step moved, `=@n` its pitch held n, a value in its place, and the base's
+ * steps past the copy's braid after. Only a base of plain numbers (`n`, `n@k`, `n!k`) reading no table, so `^$n` is n
+ * semitones, and attributes neither sets but its tags; each copy checked on its own by S1.
+ */
+function copySteps(text: string, options: CoreContext): string {
+  let now = text;
+  for (const d of parse(text).cells) {
+    const copy = declWords(now, d.name);
+    const head = copy?.attrs.find((a) => a.startsWith('base='));
+    const m = head ? /^base=&([A-Za-z_][A-Za-z0-9_]*)(?:\^\$(-?[0-9]+))?$/.exec(head) : null;
+    if (!copy || !m || copy.attrs.some((a) => !/^(base|tags)=/.test(a))) continue;
+    const base = declWords(now, m[1]!);
+    if (!base || base.attrs.some((a) => !/^tags=/.test(a))) continue;
+    const by = +(m[2] ?? 0);
+    // (the base's steps, a count as its steps: value and length)
+    const steps: { v: number; at: string }[] = [];
+    let plain = true;
+    for (const w of base.braid) {
+      const t = /^(-?[0-9]*\.?[0-9]+)(@[0-9]+)?(?:!([0-9]+))?$/.exec(w);
+      if (!t) plain = false;
+      else for (let k = 0; k < +(t[3] ?? 1); k++) steps.push({ v: +t[1]!, at: t[2] ?? '' });
+    }
+    if (!plain) continue;
+    const out: string[] = [];
+    let i = 0;
+    for (const w of copy.braid) {
+      const keep = /^=(@[0-9]+)?(?:!([0-9]+))?$/.exec(w);
+      const n = keep ? +(keep[2] ?? 1) : 1;
+      for (let k = 0; k < n; k++, i++) {
+        const b = steps[i];
+        if (keep && !b) plain = false;
+        else out.push(keep ? `${num(b!.v + by)}${keep[1] ?? b!.at}` : w.replace(/!([0-9]+)$/, ''));
+      }
+      // (a value with a count replaces as many steps)
+      if (!keep && /!([0-9]+)$/.test(w)) {
+        const c = +/!([0-9]+)$/.exec(w)![1]!;
+        for (let k = 1; k < c; k++, i++) out.push(w.replace(/!([0-9]+)$/, ''));
+      }
+    }
+    if (!plain) continue;
+    for (; i < steps.length; i++) out.push(`${num(steps[i]!.v + by)}${steps[i]!.at}`);
+    const line = declLine(now, d.name);
+    const lines = now.split('\n');
+    lines[line] = [...copy.head, ...copy.attrs.filter((a) => !a.startsWith('base=')), ...out].join(' ');
+    const next = lines.join('\n');
+    if (soundsIdentical(now, next, undefined, options)) now = next;
+  }
+  return now;
+}
+
+/**
+ * `x*n` of a splice written out (068's row 22): `&sd*3` is `[&sd &sd &sd]`, n of it in one step's slot, where a count
+ * isn't (`[&sd!3]` plays otherwise, decision 077 §3). Each line checked on its own by S1: a line where the bracket changes
+ * what the splice plays beside it stays.
+ */
+function spliceSubdivisions(text: string, options: CoreContext): string {
+  let now = text;
+  const lines = text.split('\n');
+  for (const d of parse(text).cells) {
+    if (d.braid.kind !== 'list') continue;
+    const edits = d.braid.tokens.flatMap((t) => {
+      const w = lines[t.span.line - 1]?.substr(t.span.col - 1, t.span.len) ?? '';
+      const m = /^(&[A-Za-z_][A-Za-z0-9_]*)\*([0-9]+)(!([0-9]+))?$/.exec(w);
+      return m && t.atom.kind === 'ref' && t.subdivide > 1 ? [{ span: t.span, to: `[${Array.from({ length: +m[2]! }, () => m[1]).join(' ')}]${m[3] ?? ''}` }] : [];
+    });
+    if (!edits.length) continue;
+    const next = now.split('\n');
+    for (const e of [...edits].sort((a, b) => b.span.line - a.span.line || b.span.col - a.span.col)) {
+      const l = next[e.span.line - 1]!;
+      next[e.span.line - 1] = l.slice(0, e.span.col - 1) + e.to + l.slice(e.span.col - 1 + e.span.len);
+    }
+    const candidate = next.join('\n');
+    // (only where the text's lines are as parsed: an earlier line kept its length)
+    if (candidate.split('\n').length === lines.length && soundsIdentical(now, candidate, undefined, options)) now = candidate;
+  }
+  return now;
+}
+
+/**
+ * A euclid written as its steps (068's row 25, every generator sugar): `euclid(3, 8)` is `0 ~ ~ 0 ~ ~ 0 ~`, as the parser
+ * made it; its rests then counted (`0 ~!2 0 ~!2 0 ~`). Only a braid that is the generator alone, its steps plain notes and
+ * rests.
+ */
+function euclids(text: string): string {
+  const lines = text.split('\n');
+  for (const d of parse(text).cells) {
+    if (d.braid.kind !== 'list' || !d.braid.tokens.length) continue;
+    const first = d.braid.tokens[0]!.span;
+    const call = lines[first.line - 1]?.substr(first.col - 1, first.len) ?? '';
+    if (!/^euclid\(/.test(call)) continue;
+    const plain = d.braid.tokens.every(
+      (t) =>
+        t.span.col === first.col &&
+        t.span.line === first.line &&
+        t.repeat === 1 &&
+        t.subdivide === 1 &&
+        t.elongate === 1 &&
+        (t.atom.kind === 'rest' || (t.atom.kind === 'note' && t.atom.alter === 0)),
+    );
+    if (!plain) continue;
+    const steps = d.braid.tokens.map((t) => (t.atom.kind === 'note' ? num(t.atom.value) : '~')).join(' ');
+    const l = lines[first.line - 1]!;
+    lines[first.line - 1] = l.slice(0, first.col - 1) + steps + l.slice(first.col - 1 + first.len);
+  }
+  return lines.join('\n');
+}
 
 /**
  * Repetition as a count (decision 077 §3): every maximal run of alike steps written `x!n` (`0 0 0 2` is `0!3 2`, `~ ~` is
@@ -669,6 +793,21 @@ function gates(text: string, options: CoreContext): string {
     const chord = /^\[((?:&[A-Za-z_][A-Za-z0-9_]*,?\s*)+)\]$/.exec(braid);
     const receivers = chord ? [...chord[1]!.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!) : /^&[A-Za-z_][A-Za-z0-9_]*$/.test(braid) ? [braid.slice(1)] : [];
     if (!receivers.length || !onlyInMixes(now, d.name)) continue;
+    // (a gate over a kit, a table of voices, is no product: its notes read through the kit, `&g over=&kit` with what its
+    // notes' line writes, its level a factor in the mix; a move of a kit's notes, or a line read through a table, stays)
+    const kit = receivers.length === 1 ? kitOf(now, receivers[0]!) : false;
+    if (kit) {
+      const line = declLine(now, d.name);
+      const theirs = declWords(now, notes[1]!);
+      if (notes[2] || line < 0 || !theirs || theirs.attrs.some((a) => a.startsWith('over='))) continue;
+      const lines = now.split('\n');
+      lines[line] = [`&${d.name}`, `over=&${receivers[0]}`, ...theirs.attrs.filter((a) => !/^(label|tags)=/.test(a)), ...theirs.braid].join(' ');
+      const next = factors.length
+        ? mixesOf(lines.join('\n'), (e) => [factorOf(d.name).test(e) ? e.replace(factorOf(d.name), [`&${d.name}`, ...factors].join(' * ')) : e])
+        : lines.join('\n');
+      if (soundsIdentical(now, next, undefined, options)) now = next;
+      continue;
+    }
     const head = notes[2] ? `(&${notes[1]} + ${notes[2]})` : `&${notes[1]}`;
     const product = (r: string) => [head, ...factors, `&${r}`].join(' * ');
     const next = mixesOf(deleteCell(now, d.name), (e) => {
@@ -680,6 +819,12 @@ function gates(text: string, options: CoreContext): string {
     if (soundsIdentical(now, next, undefined, options)) now = next;
   }
   return now;
+}
+
+/** Is a cell a kit: a table of voices, its braid splices alone, no attribute? */
+function kitOf(text: string, name: string): boolean {
+  const d = parse(text).cells.find((c) => c.name === name);
+  return !!d && d.braid.kind === 'list' && d.braid.tokens.length > 0 && d.braid.tokens.every((t) => t.atom.kind === 'ref') && !Object.keys(d.params).length && !d.map;
 }
 
 /** A text cut at a separator where no bracket or parenthesis is open. */
@@ -708,6 +853,9 @@ function withPitch(entry: string, x: string, voice: string, pitchLike: (name: st
   if (!factorOf(voice).test(entry)) return entry;
   // (a factor of the product itself, a cell moved or rotated or not: never one read inside another, `cycle(&ground)`)
   const factors = topLevel(entry, '*').map((f) => f.trim());
+  // (a product's pitch written as a sum, `(&q + &k) * &v`: one more term of it)
+  const sum = factors.find((f) => /^\(.*\)$/.test(f) && topLevel(f.slice(1, -1), '+').length > 1);
+  if (sum) return factors.map((f) => (f === sum ? `(${f.slice(1, -1)} + &${x})` : f)).join(' * ');
   const first = factors.find((f) => {
     const m = /^&([A-Za-z_][A-Za-z0-9_]*)(?:\[[^\]]*\]|\^\$?-?[0-9]+)*$/.exec(f);
     return !!m && m[1] !== voice && pitchLike(m[1]!);
@@ -734,9 +882,10 @@ function pitches(text: string): string {
     const x = d.pitch;
     // (a pitch written in place, `pitch=&( … )`, has no name to read in the mix: it stays)
     if (!x || x.pick || x.shift || declLine(now, x.name) < 0 || !onlyInMixes(now, d.name)) continue;
+    // (a sum that isn't a whole factor, `&a + &b * &v`, is no product's pitch to add to: left)
     let summed = false;
     mixesOf(now, (e) => {
-      if (factorOf(d.name).test(e) && /\+/.test(e)) summed = true;
+      if (factorOf(d.name).test(e) && topLevel(e, '+').length > 1) summed = true;
       return [e];
     });
     if (summed) continue;
@@ -891,7 +1040,7 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
     rows: '111–113 `play=` `level=` `[&a, &b]`',
     // (a tape's read head, `play=&tape at=`, is the ramp's: core, 068 §2)
     test: (text) => text.split('\n').some((l) => /\b(?:play|level)=/.test(l) && !/\bat=/.test(l)),
-    why: 'a gate is a set of products, each receiver times its notes and levels, written into the card’s mix; one a role reads (a performer’s part), or one over a kit, stays',
+    why: 'a gate is a set of products, each receiver times its notes and levels, written into the card’s mix (over a kit, its notes read through it); left where the interface keeps it, it is read but in a mix, or it moves a kit’s notes',
   },
   {
     key: 'pitch',
@@ -903,6 +1052,6 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
     key: 'copies',
     rows: '14, 79 `=` `base=`',
     test: /\bbase=/,
-    why: 'the base’s braid written over: the parser does it (parser/base.ts), so it is mechanical, but needs the base’s text',
+    why: 'the base’s braid written over, step by step: left where the base reads a table (`^$n` its grid steps), sets attributes, or its steps are more than numbers',
   },
 ];
