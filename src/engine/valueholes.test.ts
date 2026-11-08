@@ -193,7 +193,7 @@ describe('the seeds', () => {
 // read from a rate alone; the swung seed meters give theirs as a helper, a text that swings otherwise names it.
 describe('a meter’s swing read from a cell', () => {
   const at = (swing: string) => lines(`&bar meter("4/4") step=104bpm swing=${swing}`, '&key scale(dorian, D)', BODY);
-  for (const swing of ['8n:2/3', '16n:.6', '8n:.6,16n:.55', '8n:2/3:pairs', '8n:free(.64, .5..0.75)'])
+  for (const swing of ['8n:2/3', '16n:.6', '8n:.6,16n:.55', '8n:free(.64, .5..0.75)'])
     it(`swing=&swing with &swing swing=${swing}: plays what swing=${swing} on the meter plays`, () => {
       const read = lines(at('&swing'), `&swing swing=${swing}`);
       expect(messages(read)).toEqual([]);

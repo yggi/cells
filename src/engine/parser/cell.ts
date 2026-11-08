@@ -440,7 +440,8 @@ const readLevels: Reader = (s, b, word) => {
       }
     }
     // (:pairs, decision 053's word: a level's pairs leaning alone, its groups of three straight, which every swing does
-    //  since decision 071; read, and left to Migrate to drop)
+    //  since decision 071; read, with a warning that Migrate drops it (#15, rung 6: Jambot's section texts stopped
+    //  writing it at yggi/jambot#591))
     if (s.peek() === ':') {
       const at = s.i;
       s.i++;
@@ -449,6 +450,7 @@ const readLevels: Reader = (s, b, word) => {
         s.fail(`a share takes no word after it: a swing leans a level's pairs alone and keeps its groups of three straight (swing=${level}:2/3)`, at, 1 + (named?.length ?? 0));
       if (word === 'legato') s.fail(`:pairs was swing='s word; a legato= share holds every note of its level: legato=${level}:.5`, at, 6);
       if (free && s.peek() === ',') s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
+      s.warn(":pairs says nothing more: every swing leans a level's pairs alone and keeps its groups of three straight (decision 071); Migrate drops it", at, 6);
     }
     levels.push({ level: level!, share });
     if (s.peek() !== ',') break;

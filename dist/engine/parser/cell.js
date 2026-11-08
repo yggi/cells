@@ -379,6 +379,7 @@ const readLevels = (s, b, word) => {
                 s.fail(`:pairs was swing='s word; a legato= share holds every note of its level: legato=${level}:.5`, at, 6);
             if (free && s.peek() === ',')
                 s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
+            s.warn(":pairs says nothing more: every swing leans a level's pairs alone and keeps its groups of three straight (decision 071); Migrate drops it", at, 6);
         }
         levels.push({ level: level, share });
         if (s.peek() !== ',')

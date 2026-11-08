@@ -61,9 +61,8 @@ describe('Migrate: retired forms written as they are now (decision 049, #156)', 
   });
 
   it('a retired form warns, and its warning names Migrate', () => {
-    // (but :pairs, decision 071: read silently until Jambot's section texts, which must compile clean, stop writing it)
-    for (const p of PAIRS.filter((x) => x.rule !== 'pairs')) expect([p.name, told(p.before).some((m) => m.includes('Migrate'))]).toEqual([p.name, true]);
-    for (const p of PAIRS.filter((x) => x.rule === 'pairs')) expect([p.name, told(p.before)]).toEqual([p.name, []]);
+    // (:pairs too, since #15's rung 6: Jambot's section texts stopped writing it at yggi/jambot#591)
+    for (const p of PAIRS) expect([p.name, told(p.before).some((m) => m.includes('Migrate'))]).toEqual([p.name, true]);
   });
 
   it('every rule has a witness of its own', () => {
