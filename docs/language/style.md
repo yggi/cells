@@ -29,10 +29,14 @@ The axes' names are read only on a `map=style` cell, so the list of attributes d
 A style names every axis, each within its range; a value outside it, or one missing, is an error that lists them.
 An axis may be left to the performer, a slider within its range, by name or in order: `sync=free(.3, 0..1)`, `&mine map=style free(.3, 0..1) .45 .55 .55` ([free.md](free.md)).
 The slider is named by its axis, and what reads the style reads its value as it reads a number's.
-An axis doesn't move by cells yet: `sync=0..1 * &walk` is an error that says so (#576's next rung).
+An axis may also move, by name: a range within it and the cell that moves it, `artic=.2..0.9 * &drift`, or the cell alone for the axis's whole range, `artic=&drift`.
+What reads the axis (`&style[artic]`, or `&mine[artic]` on the style itself) reads that cell, its numbers from 0 to 1 laid within the range, on the cell's own clock: a line of numbers, a choice drawn afresh each step (`&drift step=1m/8 [0|.25|.5|.75|1]`, a sample-and-hold once a section), nested as deep as wanted.
+Where nothing reads it moving, the axis is the range's first end.
+One cell moves an axis, a line of numbers; a mix or a range of styles doesn't move with a moving one yet; each is an error that says so (#576).
 
 ```cells
-&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=free(.55, 0..1) energy=free(.55, 0..1)
+&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=.2..0.9 * &drift energy=.55
+&drift step=1m/8 [0|.25|.5|.75|1]
 ```
 
 

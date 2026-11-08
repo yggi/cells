@@ -1,15 +1,18 @@
 ---
-title: "Radio: the style on four sliders"
+title: "Radio: a style that drifts"
 tags: [genre:dance, arrangement, modal]
-description: "A score the default band plays, its style left to four sliders: syncopation, harmony, articulation and energy. Move them, and the band's instruments follow."
+description: "A score the default band plays, its style drifting by itself: articulation and energy move once a section, syncopation and harmony are left to sliders. The band's instruments follow."
 ---
 
-The first rung of a radio station written in cells (#576): a score whose section's style, `&style`, is left to the performer, an axis a slider (`free(…)`), instead of a style from the library.
+A radio station written in cells (#576): a score whose section's style, `&style`, moves by itself.
 The score is the default band's: it ends in `* from band`, and the band's instruments read `&style` where they sound, the bass's cutoff and the keys' and the pad's envelopes with articulation, the lead's cutoff with energy.
-So a slider moved is the band played another way: articulation at 0 opens the keys slowly and closes the bass; at 1 the keys strike and the bass bites.
+
+Two of the style's axes drift, each moved by a cell (`artic=.2..0.9 * &drift`): a sample-and-hold, a value drawn afresh each step and held for it, once a section of eight bars for articulation and once every two sections for energy.
+So the band plays the section's style and moves on at the next one: the bass bites or closes, the keys strike or swell, the lead brightens or darkens.
+The other two axes are left to sliders (`free(…)`), for a hand to set.
 
 ```cells
-&slidersNote label="The style, on four sliders: each axis from 0 to 1. Articulation and energy are what the band's instruments read." about=&style
+&slidersNote label="The style: syncopation and harmony on sliders, articulation and energy drifting a section at a time." about=&style
 &bar meter("4/4") step=&tempo
 &tempo step=104bpm
 &key from "diatonic(mode=dorian)" D
@@ -20,10 +23,11 @@ So a slider moved is the band played another way: articulation at 0 opens the ke
 &padline over=&harm step=1m [0,1,2]
 &stabline over=&harm step=2n ~ [0,2,4]
 &leadline over=&key step=8n 4 ~ 3 2 0@4
-&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=free(.55, 0..1) energy=free(.55, 0..1)
+&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=.2..0.9 * &drift energy=.3..0.8 * &swell
+&drift step=1m/8 [0|.25|.5|.75|1]
+&swell step=1m/16 [0|.5|1]
 &style style=&mine
 * from band
 ```
 
-Its sliders start at Synth-pop's point (`&synthPop` in the library's `styles`), so it plays as that preset's score until one is moved.
-The radio's next rungs patch walkers onto these sliders, so the style drifts by itself when no hand moves it (#571, #576).
+The walkers here are single sample-and-holds, a draw each step. The radio's next rungs sum walkers at several rates (a section, a song, a set) and let a slider lean the drift (#571, #576).
