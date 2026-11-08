@@ -222,7 +222,7 @@ Bell and scale, Just and Two Tuning Forks read better as pieces than as rungs (e
 
 0. This note (no code).
 1. #9: Shorten split into `engine/shorten/`, idempotence test, the yardstick script (events and metrics of every example, before/after). No behaviour change.
-2. The owner's decisions on F1–F6 (one record each in `docs/decisions/`, a line in MEMORY.md).
+2. The owner's decisions on F1–F6 (one record each in `docs/decisions/`, a line in `decisions/README.md`).
 3. The additive forms, each with its Shorten rule and tests: `[k+]`/`[k-]` (F1, closes #31), the articulation rule (F2), a stepped braid of voices (F4), then `pan=` (F3) and the default `cycle=` (F6) if decided.
 4. The examples moved to the clean forms, a few at a time, each PR with its list of what changes sound and why; F7, F8, F10, F11's single fixes.
 5. The ladder: the new basics, the trimmed old ones, the ladder test, `docs/examples.md` regenerated.

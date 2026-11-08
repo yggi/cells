@@ -19,6 +19,12 @@ const rel = (p: string) => relative(DOCS, p).split('\\').join('/');
 const pages = markdown(DOCS);
 const read = (p: string) => readFileSync(p, 'utf8');
 
+/** The records a list of decisions (`- NNN · … · → [file](file)`) leaves out, and its lines that name no record. */
+const unlisted = (list: string, records: string[]) => {
+  const linked = [...list.matchAll(/^- \d{3} · .+ · → \[([\w.-]+\.md)\]\(\1\)$/gm)].map((m) => m[1]);
+  return { missing: records.filter((r) => !linked.includes(r)), stray: linked.filter((l) => !records.includes(l)) };
+};
+
 /** The ```cells blocks of a page: each must compile standalone with no diagnostics. */
 const blocks = (text: string): string[] => [...text.matchAll(/^```cells\n([\s\S]*?)^```/gm)].map((m) => m[1]);
 
@@ -59,19 +65,22 @@ describe('docs: structure', () => {
       }
     });
 
-  it('every decision linked from MEMORY.md exists, and every decision is linked', () => {
+  it("every decision MEMORY.md names exists (#602: MEMORY.md names a few; the list of every one is decisions/README.md's)", () => {
     const memory = read(join(DOCS, 'MEMORY.md'));
     const linked = [...memory.matchAll(/→ (decisions\/[\w.-]+\.md)/g)].map((m) => m[1]);
+    expect(linked.length).toBeGreaterThan(0);
     for (const target of linked) expect(existsSync(join(DOCS, target)), target).toBe(true);
-    const records = readdirSync(join(DOCS, 'decisions')).filter((f) => /^\d{3}-.*\.md$/.test(f));
-    for (const r of records) expect(linked, r).toContain(`decisions/${r}`);
+  });
+
+  it('is shown firing: a record missing from the list, or a line with no record, is named', () => {
+    const list = '- 001 · a · → [001-a.md](001-a.md)\n- 003 · c · → [003-c.md](003-c.md)\n';
+    expect(unlisted(list, ['001-a.md', '002-b.md'])).toEqual({ missing: ['002-b.md'], stray: ['003-c.md'] });
+    expect(unlisted(list, ['001-a.md', '003-c.md'])).toEqual({ missing: [], stray: [] });
   });
 
   it('decisions/README.md gives every decision its line, as a link (#259: the substance moved there from MEMORY.md)', () => {
-    const list = read(join(DOCS, 'decisions', 'README.md'));
-    const linked = [...list.matchAll(/^- \d{3} · .+ · → \[([\w.-]+\.md)\]\(\1\)$/gm)].map((m) => m[1]);
     const records = readdirSync(join(DOCS, 'decisions')).filter((f) => /^\d{3}-.*\.md$/.test(f));
-    expect(linked.sort()).toEqual(records.sort());
+    expect(unlisted(read(join(DOCS, 'decisions', 'README.md')), records)).toEqual({ missing: [], stray: [] });
   });
 
   // (two pull requests took 055 at once, #230 and #233, #242: each passed alone, and the second's merge is what fails)
