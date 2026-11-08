@@ -375,6 +375,18 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
   const voiceParams = new Map<string, Record<string, VoiceParam>>();
   const series = (cell: string, pick: Pick | null, shift: number, sign: 1 | -1): Series => {
     const m = result.cells.get(cell)!;
+    // (a sum of values, decision 079: its terms' series, read as their weighted sum by levelSeries)
+    if (m.sum)
+      return {
+        sign,
+        lin: false,
+        db: false,
+        clock: null,
+        rate: 0,
+        period: 1,
+        events: [],
+        sum: { terms: m.sum.terms.map((t) => ({ series: series(t.cell, null, 0, 1), weight: t.weight })), constant: m.sum.constant },
+      };
     const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
     // (its steps drawn on each lap as a melody's are, where any is left to a lap, to chance or to a choice)
     const drawn = events.some((e) => e.laps || e.chance !== undefined || e.options || e.chosen) ? (e: StepEvent, lap: number) => thrownIn(result, cell, e, lap) : undefined;

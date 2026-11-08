@@ -16,7 +16,7 @@ export function bindVoices(ctx, decls, given, typed) {
     const sinks = [...cells.values()].filter((c) => c.sink);
     for (const [name, d] of decls) {
         const c = cells.get(name);
-        if (c && !c.mix && !isMidiCard(c) && c.map?.kind !== 'role' && c.units.some((u) => u.atom.kind === 'mix'))
+        if (c && !c.mix && !c.sum && !isMidiCard(c) && c.map?.kind !== 'role' && c.units.some((u) => u.atom.kind === 'mix'))
             error(c.sink ? `A sound card's channels are all mixes: [left …] [right …], or &left &right` : `A mix is one chord of sounds: &${name} [&a * &v, &b * &w]`, d.span);
     }
     const expand = (b, through = []) => {
