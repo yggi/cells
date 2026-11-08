@@ -18,7 +18,7 @@ A slider rewrites the number in the code, and the piece compiles again. So it be
 - **A structural number** (`cycle=`, `!n`, `&x[$i]`, `euclid(k, …)`, `map=edo(n)`) is the number its `free()` holds now. Moving the slider recompiles, as `shift=` and `stride=` already did.
 - **A whole place** (a count, an index, a turn) takes a `free()` with a whole range, and rounds its value, as `shift=` always did. A slider that moves by less than one, as a frontend's may before it reads `whole`, still compiles. Its spec carries `whole`, so a frontend's slider can move by ones. At `shift=`, `stride=` and a scale's tonic the range isn't checked either, as before (a text that compiled compiles the same).
 - **The range is checked against the place's.** A count's slider stays at 1 or more and a probability's within 0..1. So no position of the slider makes a text that doesn't compile.
-- **A tempo marking is a rate's.** `free(andante)` is read only where a number carries a rate's unit (`step=`, `loop=`).
+- **A tempo marking is a rate's.** `free(andante)` is refused at a whole place, as it already was at a shift, a gain and a tonic. Where a parameter took it before, it still does: nothing that compiled stops.
 - **Two numbers stay plain**, as their places say:
   - `tier=` is the tutorial's order, not the piece's.
   - a hit's number, `&x:0`, is 0 until a hit is pitched.

@@ -100,8 +100,9 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean, 
     names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
   } else if (word !== null) {
     const range = TEMPI[word];
-    // (a marking is a rate's: wherever else a number is left free, decision 078, it is no number)
-    if (!range || !units) s.fail(`free(${word}): a tempo marking (${Object.keys(TEMPI).join(', ')}) — for a rate`, start, s.i - start);
+    // (a marking is a rate's: not a turn, a gain, a tonic, nor a count, a whole place's of decision 078)
+    if (!range || key === 'shift' || key === 'stride' || key === 'gain' || key === 'tonic' || extra.whole)
+      s.fail(`free(${word}): a tempo marking (${Object.keys(TEMPI).join(', ')}) — for a rate`, start, s.i - start);
     [lo, hi] = range;
     value = Math.round((lo + hi) / 2);
     unit = 'bpm';

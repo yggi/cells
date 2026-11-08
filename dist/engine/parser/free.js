@@ -53,7 +53,7 @@ export function parseFree(s, key, units, extra = {}) {
     }
     else if (word !== null) {
         const range = TEMPI[word];
-        if (!range || !units)
+        if (!range || key === 'shift' || key === 'stride' || key === 'gain' || key === 'tonic' || extra.whole)
             s.fail(`free(${word}): a tempo marking (${Object.keys(TEMPI).join(', ')}) — for a rate`, start, s.i - start);
         [lo, hi] = range;
         value = Math.round((lo + hi) / 2);

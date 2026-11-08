@@ -118,8 +118,9 @@ describe('every number may be a free(); a number read while the piece plays may 
     ok('&env map=adsr free(.01, 0..1) .3 .5 .4');
   });
 
-  it('a tempo marking is a rate’s alone', () => {
-    refused('&lead s=saw loop=C4 lpf=free(andante)', /a tempo marking .* for a rate/);
+  it('a tempo marking is a rate’s, never a count', () => {
+    refused('&wheel cycle=free(andante) 0 4 7', /a tempo marking .* for a rate/);
+    refused('&key step=cycle(&theme) shift=free(andante)', /a tempo marking .* for a rate/);
     ok('&tempo step=free(andante)');
   });
 });

@@ -4,4 +4,4 @@
 
 ### Changed
 
-- **A cell where a number shapes the piece is an error that names the rule** (decision 078): `cycle=&k`, `&x[&k]`, `0!&k`, `shift=0..7 * &k`. A cell moves only a number read while the piece plays. A tempo marking, `free(andante)`, is a rate's alone: elsewhere it is an error, where a parameter took it as its middle bpm.
+- **A cell where a number shapes the piece is an error that names the rule** (decision 078): `cycle=&k`, `&x[&k]`, `0!&k`, `shift=0..7 * &k`. A cell moves only a number read while the piece plays.
