@@ -7,7 +7,7 @@
  * Pure.
  */
 import { compileSource } from '../compile';
-import { deleteCell, splitComment } from '../edit';
+import { declLine, deleteCell, splitComment } from '../edit';
 import type { CompileOptions } from '../program';
 import { soundsIdentical } from '../sameness';
 import { shorten } from '../shorten';
@@ -18,32 +18,35 @@ const CORE_KINDS: ReadonlySet<string> = new Set(['phrase', 'same', 'default']);
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 
 /** The cells no other line names and no card plays: a line that does nothing the piece hears, or sounds by itself. */
-function unread(source: string, options: CompileOptions): string[] {
+function unread(source: string, options: CompileOptions, keep: ReadonlySet<string>): string[] {
   const r = compileSource(source, undefined, options);
   if (!r.ok) return [];
   const played = new Set(r.outputs.map((o) => o.cell));
   const codes = source.split('\n').map((l) => splitComment(l)[0]);
   return codes.flatMap((c, i) => {
     const name = HEAD.exec(c)?.[1];
-    if (!name || played.has(name)) return [];
+    // (an interface cell is read from outside the text: a root, decision 077 §2)
+    if (!name || played.has(name) || keep.has(name)) return [];
     const named = new RegExp(`&${name}(?![A-Za-z0-9_])`);
     return codes.some((d, j) => j !== i && named.test(d)) ? [] : [name];
   });
 }
 
 /** The core fold: Shorten's core kinds and unread lines, the best each round, each checked by S1; the steps are what each did. */
-export function coreFold(text: string, options: CompileOptions = {}, rounds = 60): { source: string; steps: string[] } {
+export function coreFold(text: string, options: CompileOptions = {}, rounds = 60, keep: ReadonlySet<string> = new Set()): { source: string; steps: string[] } {
   let now = text;
   const steps: string[] = [];
   const same = (a: string, b: string) => soundsIdentical(a, b, undefined, options);
+  // (a fold that merges an interface cell away, or inlines it, loses what is read from outside)
+  const kept = (t: string) => [...keep].every((n) => declLine(t, n) >= 0);
   for (let i = 0; i < rounds; i++) {
-    const gone = unread(now, options).find((name) => same(now, deleteCell(now, name)));
+    const gone = unread(now, options, keep).find((name) => same(now, deleteCell(now, name)));
     if (gone) {
       now = deleteCell(now, gone);
       steps.push(`&${gone} is read by nothing and plays nothing: gone`);
       continue;
     }
-    const best = shorten(now, options).find((s) => CORE_KINDS.has(s.kind) && same(now, s.apply(now)));
+    const best = shorten(now, options).find((s) => CORE_KINDS.has(s.kind) && kept(s.apply(now)) && same(now, s.apply(now)));
     if (!best) break;
     now = best.apply(now);
     steps.push(best.title);

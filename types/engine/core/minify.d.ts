@@ -3,5 +3,5 @@
  * 054). A cell that draws is renamed as freely as any other: a draw is keyed on its cell's content, not its name (#481).
  */
 export declare function meaningfulNames(text: string): Set<string>;
-/** Minify (question 2): every own name renamed to a short one; the names it uses but doesn't define, and `meaningfulNames`, kept. */
-export declare function minify(text: string): string;
+/** Minify (question 2): every own name renamed to a short one; the names it uses but doesn't define, `meaningfulNames`, and the interface it is cored up to (`keep`, decision 077 §2) kept. */
+export declare function minify(text: string, keep?: ReadonlySet<string>): string;

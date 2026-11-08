@@ -8,8 +8,8 @@ export function meaningfulNames(text) {
         .cells.map((d) => d.name)
         .filter((n) => DRUMS.has(n.replace(/\d+$/, '').toLowerCase())));
 }
-export function minify(text) {
-    const kept = meaningfulNames(text);
+export function minify(text, keep = new Set()) {
+    const kept = new Set([...meaningfulNames(text), ...keep]);
     const own = ownNames(text).filter((n) => !kept.has(n));
     const taken = new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]));
     const to = new Map();

@@ -8,6 +8,7 @@ import { parse } from '../parser';
 import { TEMPI } from '../parser/free';
 import { isNote, type Token } from '../ast';
 import { compileSource } from '../compile';
+import { soundsIdentical } from '../sameness';
 import { noteValue, type Meter } from '../meter';
 import { noteFrequency, type CompileOptions } from '../program';
 import { expansion } from '../use';
@@ -22,7 +23,12 @@ const num = (x: number) => String(x);
 export interface Family {
   readonly key: string;
   readonly rows: string;
-  readonly rewrite: (text: string, options: CompileOptions) => string;
+  readonly rewrite: (text: string, options: CoreContext) => string;
+}
+
+/** What a family reads: the compile options, and the interface the text is cored up to (decision 077 §2), its names bare. */
+export interface CoreContext extends CompileOptions {
+  readonly keep?: ReadonlySet<string>;
 }
 
 /** Each line's code and comment, the code rewritten by `f` (a comment and a string stay as written). */
@@ -158,7 +164,7 @@ export const FAMILIES: readonly Family[] = [
   {
     key: 'gates',
     rows: '111–113 `play=` `level=` `[&a, &b]`',
-    rewrite: (text) => gates(text),
+    rewrite: (text, options) => gates(text, options),
   },
   {
     key: 'pitch',
@@ -571,9 +577,13 @@ function onlyInMixes(text: string, name: string): boolean {
  * anywhere but a mix's entries, one with a degree move or a stack, a tape's read head (`at=`), and one whose receivers
  * are a kit's bare voices.
  */
-function gates(text: string): string {
+function gates(text: string, options: CoreContext): string {
+  const keep = options.keep ?? new Set<string>();
   let now = text;
-  for (const d of parse(text).cells) {
+  // (a role says who plays a gate, and the core is what plays (decision 077 §1): one the interface doesn't keep goes)
+  for (const d of parse(text).cells) if (d.map?.kind === 'role' && !keep.has(d.name)) now = deleteCell(now, d.name);
+  for (const d of parse(now).cells) {
+    if (keep.has(d.name)) continue;
     const words = declWords(now, d.name);
     const play = words?.attrs.find((w) => w.startsWith('play='));
     if (!words || !play || words.attrs.some((a) => !/^(play|level|label|tags)=/.test(a))) continue;
@@ -591,11 +601,13 @@ function gates(text: string): string {
     if (!receivers.length || !onlyInMixes(now, d.name)) continue;
     const head = notes[2] ? `(&${notes[1]} + ${notes[2]})` : `&${notes[1]}`;
     const product = (r: string) => [head, ...factors, `&${r}`].join(' * ');
-    now = mixesOf(deleteCell(now, d.name), (e) => {
+    const next = mixesOf(deleteCell(now, d.name), (e) => {
       if (!factorOf(d.name).test(e)) return [e];
       if (/\+/.test(e)) return receivers.length === 1 ? [e.replace(factorOf(d.name), `(${product(receivers[0]!)})`)] : [e];
       return receivers.map((r) => e.replace(factorOf(d.name), product(r)));
     });
+    // (each gate checked on its own: one over a kit is no product, and stays without holding the others back)
+    if (soundsIdentical(now, next, undefined, options)) now = next;
   }
   return now;
 }
