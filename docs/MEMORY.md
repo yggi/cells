@@ -55,3 +55,48 @@ Every decision, its substance in a line, is in [decisions/README.md](decisions/R
 - 068 · The core grammar: four primitives and the ramp; the rest is sugar, checked by S1 · → decisions/068-the-core-grammar.md
 - 075 · A name is only a name: rename every name a text defines and it plays as it did · → decisions/075-a-name-is-only-a-name.md
 - 077 · The core is sound only, up to a named interface · → decisions/077-the-core-is-sound-up-to-an-interface.md
+- 050 · The equalities: E0–E5 and S1–S3 · → decisions/050-the-equalities.md
+- 051 · Literate cells · → decisions/051-literate-cells.md
+- 052 · Variations are operators · → decisions/052-variations-as-operators.md
+- 053 · `swing=8n:r:pairs` leans the pairs alone · → decisions/053-the-pairs-alone.md
+- 054 · Instruments are fragments; `use` (its forms amended by 059) · → decisions/054-instruments-and-use.md
+- 055 · Recognition · → decisions/055-recognition.md
+- 056 · Modes are fragments; two facets · → decisions/056-the-mode-facet.md
+- 057 · S1 and S2 read a voice by its sound · → decisions/057-a-voice-by-its-sound.md
+- 058 · The performer is a gate, its name its role (amended by 061: a role cell's); the register is the instrument's · → decisions/058-the-performer-is-a-gate.md
+- 059 · A `use` says what it takes: `use &bd from core_kit`, `use * from …`, `use &x` · → decisions/059-named-use.md
+- 060 · The key is named, `over=&key` (`over=key` the old way); a tonic is a cell, stepped or free · → decisions/060-the-key-is-named.md
+- 061 · The band: a role cell says what its gates play as; a selector over the performers says when · → decisions/061-the-band.md
+- 062 · Cells renders audio: events in, samples out, in blocks; superdough's meaning at the examples' level · → decisions/062-cells-renders-audio.md
+- 063 · The score and the band: the score ends in `* from band` (`use * from band` before 065), each client's band its own; the style a note, read by name · → decisions/063-the-score-and-the-band.md
+- 064 · What sounds: heard on any card, a MIDI card too; any written card replaces the built-in one; an out is a sound wired into a card, a voice each · → decisions/064-what-sounds.md
+- 065 · Fragments take arguments: `&key from harmonic_minor D`; a signature declares one main parameter and optional ones; `use` retires · → decisions/065-fragments-take-arguments.md
+- 066 · A wave and an envelope's times move: `attack=.3..0.01 * &x` on a `map=adsr` cell, `s=tri..square * &x`, read at each note's start · → decisions/066-a-wave-and-an-envelope-move.md
+- 067 · An instrument with sound parameters is a module after its voices; the modules are fragments (`lowpass`, `amp`, `lfo` …); a cable opens at zero; a bipolar wave read as a share is (1 + x)/2 · → decisions/067-a-module-after-its-voices.md
+- 068 · The core grammar: four primitives and the ramp; `free()` and chance sources; 45 forms sugar, checked by S1; Normalise writes sugar, a compile tool the core · → decisions/068-the-core-grammar.md
+- 069 · Compile writes the core: de-sugar, minify, a checked core fold; `from` is sugar; `[ ]` a finer tap (core dilate only inside a tap the swing doesn't place, amended #15); draws keyed on content · → decisions/069-compile-writes-the-core.md
+- 070 · S1 hears as a listener: ½ cent, 0.1 dB, 0.25 ms; a noise by colour and level; the snapshot stays exact · → decisions/070-s1-hears-as-a-listener.md
+- 071 · A swing leans pairs: a group of three stays straight, `:pairs` says nothing more (Migrate drops it) · → decisions/071-swing-leans-pairs.md
+- 074 · A filter is superdough's: low-pass, high-pass, band-pass (`bpf=`) in series, `ftype=` `12db` (default) `24db` (two stages) `ladder`; filters to patch are module fragments · → decisions/074-filters-are-superdoughs.md
+- 076 · The style point is `sync harm drive bright`; energy leaves it as intensity, an offset from the style; entropy is the reach · → decisions/076-the-style-axes.md
+- 072 · `even` is the foundation: `even(k, n, phase)` a table again, under the scales, the even rhythms and the meter; `euclid` stays the rhythm · → decisions/072-even-is-the-foundation.md
+- 075 · A name is only a name: rename every name a text defines and it plays, says and is read as it did; no name the piece's by convention (the interface names retire); `alpha.test.ts`, its exceptions only shrinking (#560); a text's interface its signature's heads (`&harm, &key from`), never inferred · → decisions/075-a-name-is-only-a-name.md
+- 077 · The core is sound only, cored up to a named interface (a fragment's signature, a piece's tempo, a score's gates); `x!n` is core, a count · → decisions/077-the-core-is-sound-up-to-an-interface.md
+- 079 · A voiceless mix of cells is the sum of their values; a moving range's ends may be sliders, centre ± reach its sugar · → decisions/079-a-sum-of-cells-and-a-window.md
+- 078 · Every number may be a `free()`, read by one reader over the table of places; a cell moves only a number read while the piece plays · → decisions/078-every-number-may-be-free.md
+- 058 · The performer is a gate (amended by 061) · → decisions/058-the-performer-is-a-gate.md
+- 059 · A `use` says what it takes · → decisions/059-named-use.md
+- 060 · The key is named, `over=&key` · → decisions/060-the-key-is-named.md
+- 061 · The band: role cells and a selector · → decisions/061-the-band.md
+- 062 · Cells renders audio · → decisions/062-cells-renders-audio.md
+- 063 · The score ends in `* from band`, each client's band its own · → decisions/063-the-score-and-the-band.md
+- 064 · What sounds: any card, a MIDI card too · → decisions/064-what-sounds.md
+- 065 · Fragments take arguments; `use` retires · → decisions/065-fragments-take-arguments.md
+- 066 · A wave and an envelope's times move · → decisions/066-a-wave-and-an-envelope-move.md
+- 067 · A module after its voices · → decisions/067-a-module-after-its-voices.md
+- 068 · The core grammar: four primitives and the ramp · → decisions/068-the-core-grammar.md
+- 069 · Compile writes the core · → decisions/069-compile-writes-the-core.md
+- 070 · S1 hears as a listener · → decisions/070-s1-hears-as-a-listener.md
+- 077 · The core is sound only, up to an interface; repetition a count · → decisions/077-the-core-is-sound-up-to-an-interface.md
+- 079 · A sum of cells; a window and its ± · → decisions/079-a-sum-of-cells-and-a-window.md
+- 078 · Every number may be a `free()`; a cell moves only what plays · → decisions/078-every-number-may-be-free.md

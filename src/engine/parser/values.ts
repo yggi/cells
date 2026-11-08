@@ -1,7 +1,7 @@
 /** The values with a syntax of their own: step= and loop= (rates, clocks, chains), map= (kinds, grids, tables). */
 import type { MapSpec, RateOp, StepSpec, Tap } from '../ast';
 import type { LineScanner } from './scanner';
-import { parseFree } from './free';
+import { NUMBER_PLACES } from './numbers';
 import { syntax, type Syntax } from './syntax';
 import { perSecond, UNIT } from './units';
 import { MAX_EVENTS } from '../program';
@@ -76,7 +76,8 @@ function rateChain(s: LineScanner): { ratio: number; chain: RateOp[] } {
   while (s.peek() === '*' || s.peek() === '/') {
     const op = s.text[s.i++];
     const at = s.i;
-    const n = s.match(/[0-9]+(?:\.[0-9]+)?|\.[0-9]+/y);
+    const f = s.freeNumber(NUMBER_PLACES.by);
+    const n = f === null ? s.match(/[0-9]+(?:\.[0-9]+)?|\.[0-9]+/y) : String(f);
     if (n === null || !(parseFloat(n) > 0)) s.fail(`a positive number after ${op}`, at);
     ratio = op === '*' ? ratio * parseFloat(n) : ratio / parseFloat(n);
     chain.push({ op: op === '*' ? '×' : '÷', n: parseFloat(n!) });
@@ -89,8 +90,8 @@ export function parseStep(s: LineScanner, whole: boolean): StepSpec {
   const what = whole ? 'loop' : 'step';
   const tap = whole ? null : tapWord(s);
   if (tap) return { whole, kind: 'tap', meter: null, tap, ...rateChain(s), span: s.span(start) };
-  if (s.text.startsWith('free(', s.i)) {
-    const f = parseFree(s, whole ? 'loop' : 'step', true);
+  const f = s.free(whole ? { ...NUMBER_PLACES.rate, key: 'loop' } : NUMBER_PLACES.rate);
+  if (f !== null) {
     const rate = perSecond(f.value, f.unit);
     if (!(rate > 0)) s.fail('A rate must be positive', start, s.i - start);
     return { whole, kind: 'rate', perSecond: rate, span: s.span(start), free: f };
@@ -216,15 +217,18 @@ export function parseMap(s: LineScanner): MapSpec {
   if (s.match(/ed\(/y)) {
     const ratio = () => {
       const at = s.i;
-      const r = s.match(/[0-9]+(?:\.[0-9]+)?(?:\/[0-9]+(?:\.[0-9]+)?)?/y);
+      const f = s.freeNumber(NUMBER_PLACES.ratio);
+      const r = f === null ? s.match(/[0-9]+(?:\.[0-9]+)?(?:\/[0-9]+(?:\.[0-9]+)?)?/y) : String(f);
       const [a, b = '1'] = (r ?? '').split('/');
       const period = parseFloat(a) / parseFloat(b);
       if (r === null || !(period > 1)) s.fail('ed(r) divides a ratio above 1: ed(2) is the octave, ed(3/2) the fifth, ed(7, 3/2) seven steps to it', at);
       return period;
     };
     const at = s.i;
-    const sized = s.match(/([0-9]+)\s*,\s*/y);
-    const steps = sized === null ? null : gridSize(s, parseInt(sized, 10), at);
+    // (n, then the ratio: n written, or left free, ed(free(7, 5..12), 3/2))
+    const sized = /^(?:[0-9]+|free\([^()]*\))\s*,/.test(s.text.slice(s.i)) ? s.int('the steps, ed(n, r)', NUMBER_PLACES.grid, 'steps') : null;
+    if (sized !== null) s.match(/\s*,\s*/y);
+    const steps = sized === null ? null : gridSize(s, sized, at);
     if (steps !== null && steps < 1) s.fail('ed(n, r): n steps to the ratio, at least 1', at);
     const period = ratio();
     s.expect(')', `')' to close ed(…)`);
@@ -238,7 +242,8 @@ export function parseMap(s: LineScanner): MapSpec {
     if (s.peek() === '(') {
       s.i++;
       const at = s.i;
-      const n = s.match(/[0-9]+/y);
+      const f = s.freeNumber(NUMBER_PLACES.grid, 'steps');
+      const n = f === null ? s.match(/[0-9]+/y) : String(f);
       if (n === null || parseInt(n, 10) < 1) s.fail('edo(n): n equal steps to the octave, edo(19)', at);
       steps = gridSize(s, parseInt(n!, 10), at);
       s.expect(')', `')' to close edo(…)`);
@@ -255,7 +260,8 @@ function parseMidi(s: LineScanner, start: number): MapSpec {
   s.i++;
   const whole = (what: string, example: string) => {
     const at = s.i;
-    const n = s.match(/[0-9]+(?:\.[0-9]+)?/y);
+    const f = s.freeNumber({ ...NUMBER_PLACES.grid, max: 16 }, what === 'A MIDI channel' ? 'channel' : 'port');
+    const n = f === null ? s.match(/[0-9]+(?:\.[0-9]+)?/y) : String(f);
     const v = n === null ? NaN : parseFloat(n);
     if (!(Number.isInteger(v) && v >= 1 && v <= 16)) s.fail(`${what} is a whole number from 1 to 16: ${example}`, at, Math.max(1, n?.length ?? 1));
     return v;

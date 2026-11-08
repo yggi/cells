@@ -2,7 +2,7 @@
 import { parseFields } from './level';
 import type { Atom, Expr } from '../ast';
 import { MAX_NESTING, NUM, type LineScanner } from './scanner';
-import { parseFree } from './free';
+import { NUMBER_PLACES } from './numbers';
 import { syntax, type Syntax } from './syntax';
 
 /** A mix's syntax (what it means is the algebra: decision 006, mix.md). */
@@ -167,8 +167,8 @@ function parseFactor(s: LineScanner, depth: number): Expr {
     const level = parseFields(s);
     return level === undefined ? { k: 'ref', ref } : { k: 'ref', ref, level };
   }
-  if (s.text.startsWith('free(', s.i)) {
-    const f = parseFree(s, 'gain', false);
+  const f = s.free(NUMBER_PLACES.gain);
+  if (f !== null) {
     return { k: 'num', value: f.value, span: s.span(start) };
   }
   const n = s.match(NUM);

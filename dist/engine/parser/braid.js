@@ -5,6 +5,7 @@ import { parseFields } from "./level.js";
 import { isMixChord, parseMixChord } from "./mix.js";
 import { syntax } from "./syntax.js";
 import { MODE_WORDS } from "../../theory/modes.js";
+import { NUMBER_PLACES } from "./numbers.js";
 export const MODE_WORD = new RegExp(`(?:${Object.keys(MODE_WORDS).join('|')})(?![A-Za-z0-9_])`, 'y');
 export const STEP_SYNTAX = [
     syntax('step', 'n', "A number: an index into the table it reads (over=), or a value (a volume, a waveform's level). Negative and decimal numbers work. A note by name (C, F#, Bb3; octave 4 left out) is a pitch instead: a place on the grid at the root of its tables, whatever they are.", ['&tune step=2 0 2 4 -1 .5', '&tune step=2 C E G C5'], 'cell.md'),
@@ -89,8 +90,8 @@ function parseAtom(s, depth) {
     }
     if (c === '<')
         return parseAngle(s, depth);
-    if (c === '-' || c === '.' || (c >= '0' && c <= '9')) {
-        const n = s.num('a number');
+    if (c === '-' || c === '.' || (c >= '0' && c <= '9') || s.text.startsWith('free(', s.i)) {
+        const n = s.num('a number', NUMBER_PLACES.step);
         const more = s.match(/[#bsf]+(?![A-Za-z0-9_])/y) ?? '';
         const alter = n.alter + [...more].reduce((a, ch) => a + (ch === '#' || ch === 's' ? 1 : -1), 0);
         return { kind: 'note', value: n.value, alter };
@@ -181,7 +182,7 @@ function parseEuclidOn(s) {
     const args = [];
     for (;;) {
         s.skipSpace();
-        args.push(s.int('a whole number in x(k, n, r)'));
+        args.push(s.int('a whole number in x(k, n, r)', NUMBER_PLACES.euclidOn));
         s.skipSpace();
         if (s.peek() !== ',')
             break;
@@ -237,7 +238,7 @@ export function parseToken(s, depth = 0) {
                 s.fail(`'/' can only appear once per step`);
             s.i++;
             const at = s.i;
-            const n = s.int('a count after /');
+            const n = s.int('a count after /', NUMBER_PLACES.modifier, 'slow');
             if (n < 1 || n > MAX_REPS)
                 s.fail(`Count must be between 1 and ${MAX_REPS}`, at, s.i - at);
             slow = n;
@@ -248,7 +249,8 @@ export function parseToken(s, depth = 0) {
                 s.fail(`'?' can only appear once per step`);
             s.i++;
             const at = s.i;
-            const p = s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y);
+            const f = s.freeNumber(NUMBER_PLACES.drop);
+            const p = f === null ? s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y) : String(f);
             chance = p === null ? null : parseFloat(p);
             if (p === null && /[0-9]/.test(s.peek() ?? ''))
                 s.fail('A probability is from 0 to 1: x?.3', at, 1);
@@ -260,7 +262,7 @@ export function parseToken(s, depth = 0) {
         seen.add(op);
         s.i++;
         const at = s.i;
-        const n = s.int(`a count after ${op}`);
+        const n = s.int(`a count after ${op}`, NUMBER_PLACES.modifier, MODIFIERS[op].field);
         if (n < 1 || n > MAX_REPS)
             s.fail(`Count must be between 1 and ${MAX_REPS}`, at, s.i - at);
         mods[MODIFIERS[op].field] = n;
