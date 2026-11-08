@@ -4,12 +4,20 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { soundsIdentical } from '../engine/sameness';
 import { bodyOf, signatureOf } from '../engine/use';
-import { cachedFit, fitsAs, useOn } from './fit';
+import { fitsAs, useOn } from './fit';
 
-/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
-const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
+/** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
+const unionOf = (text: string, workbench: string) => {
+  const body = bodyOf(text);
+  const resolve: Resolve = (id) => (id === 'x' ? body : resolveSeed(id));
+  return fitsAs('x', workbench, { resolve }).union!;
+};
 import { holesOf } from './holes';
+import { BASS_FRAGMENTS } from './bass';
+import { createRepository } from './fragments';
 import { LIBRARY, resolveSeed } from './library';
+import { FUNK } from './styles';
+import type { Resolve } from '../engine/program';
 
 const resolve = resolveSeed;
 /** What a compile says but its warning that nothing plays yet (a bench of lines, with no sound). */
@@ -117,5 +125,34 @@ describe('fitsAs: every seed template', () => {
     expect(fit.fits).toBe(true);
     expect(holesOf(resolve(id)!, (t) => compileSource(t, undefined, { resolve }), resolve).signature?.main).toBe(main);
     if (main) expect(fitsAs(id, '', { resolve }).missing).toEqual([main]);
+  });
+});
+
+describe('a query names each facet’s main argument (#587)', () => {
+  const r = createRepository(LIBRARY);
+  const bass = (bench: string, options: { facet?: string; arguments?: Readonly<Record<string, string>> }) =>
+    r
+      .query(FUNK, LIBRARY.length, {}, { workbench: bench, ...options })
+      .map((f) => f.fragment.id)
+      .filter((id) => BASS_FRAGMENTS.some((b) => b.id === id));
+  const BASS_BENCH = `${HARMONY}\n&bassV s=saw loop=C2`;
+
+  it('a template of a facet the query names is taken with that argument; of one it doesn’t, with the one cell that meets it, here none', () => {
+    // (a meter, a key and a harmony each read as a table: a bass line meets all three, so none is picked)
+    expect(bass(BASS_BENCH, { facet: 'bass' })).toEqual([]);
+    expect(bass(BASS_BENCH, { facet: 'bass', arguments: { bass: '&harm' } })).toHaveLength(BASS_FRAGMENTS.length);
+    // (with no facet asked for, a fragment's own facet names its argument)
+    expect(bass(BASS_BENCH, { arguments: { bass: '&harm' } })).toHaveLength(BASS_FRAGMENTS.length);
+    // (named for another facet, it is not this one's)
+    expect(bass(BASS_BENCH, { facet: 'bass', arguments: { motif: '&key' } })).toEqual([]);
+  });
+
+  it('a workbench that offers its harmony is the fallback: the one cell offered that meets it', () => {
+    expect(bass(`&harm from\n${BASS_BENCH}`, { facet: 'bass' })).toHaveLength(BASS_FRAGMENTS.length);
+  });
+
+  it('names nothing by convention: the harmony called &chords, named so, fits as &harm did', () => {
+    const chords = BASS_BENCH.replace(/&harm\b/g, '&chords');
+    expect(bass(chords, { facet: 'bass', arguments: { bass: '&chords' } })).toEqual(bass(BASS_BENCH, { facet: 'bass', arguments: { bass: '&harm' } }));
   });
 });

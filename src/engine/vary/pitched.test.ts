@@ -10,16 +10,22 @@ import { planOf } from '../host';
 import { channelTable, midiNote, router, routesOf } from '../midi';
 import { playsSameNotes } from '../sameness';
 import { windowAt } from '../schedule';
-import { cachedFit } from '../../repository/fit';
+import { fitsAs } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
 import { BASS_FRAGMENTS } from '../../repository/bass';
 import { heard } from '../../repository/heard';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { anchorsOf, PITCHED_OPERATORS, readVariations, variations, varied } from '.';
 import { bodyOf } from '../use';
+import type { Resolve } from '../program';
+import { resolveSeed } from '../../repository/library';
 
-/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
-const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
+/** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
+const unionOf = (text: string, workbench: string) => {
+  const body = bodyOf(text);
+  const resolve: Resolve = (id) => (id === 'x' ? body : resolveSeed(id));
+  return fitsAs('x', workbench, { resolve }).union!;
+};
 
 vi.mock('../compile', async (original) => {
   const actual = await original<typeof import('../compile')>();
