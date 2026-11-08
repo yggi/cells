@@ -7,6 +7,10 @@
  * (yggi/music-commons `contracts/meter`): `*` the root, `+` the fifth, `-` the third, `.` the scale, `,` the chromatic, so
  * C major's tonic is `*,.,-.,+,.,.`, as 12/8's bar is `*..-..+..-..`.
  *
+ * For a key of seven notes this is Lerdahl's basic space. For any other it is the same chain, taken as it is, the
+ * "triad" `even(3, n)` of the key's n degrees: a pentatonic's is a sus2 (C D G in C), a blues scale's a sus4 (C F G), the
+ * whole tone's the augmented triad (C E G#), each the three of its degrees as even as three go (#508, the owner's (a)).
+ *
  * No new form (the owner on #508): a key already is its levels. The query reads the key a text writes (`scale(major, C)`,
  * `scale(&mode, &tonic)`, a scan over a turned twelve), through the tables it reads, as its notes are read. The same chain
  * is playable as tables over the key: `&triad over=&key[>>k] even(3, 7)` is the triad on degree k, `&power over=&triad

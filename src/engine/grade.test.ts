@@ -53,6 +53,13 @@ describe('a key’s basic space (Lerdahl 2001, table 2.1)', () => {
     }
   });
 
+  it('a key that is not seven notes takes the chain as it is: its triad the three of its degrees as even as three go (#508, (a))', () => {
+    // (a pentatonic's a sus2, a blues scale's a sus4, the whole tone's the augmented triad: not Lerdahl's, the chain's)
+    expect(levels(key('&key scale(pentatonic, C)')).slice(0, 3)).toEqual([[0], [0, 7], [0, 2, 7]]);
+    expect(levels(key('&key scale(blues, C)')).slice(0, 3)).toEqual([[0], [0, 7], [0, 5, 7]]);
+    expect(levels(key('&key scale(wholetone, C)')).slice(0, 3)).toEqual([[0], [0, 8], [0, 4, 8]]);
+  });
+
   it('reads the key as written: its tonic from a cell, its mode from a cell, a scan over a turned twelve, shift= walking its modes', () => {
     expect(gradeText(key('&key scale(&mode, &tonic)\n&mode dorian\n&tonic D'))).toBe('.,*,.-,.,+,.');
     expect(gradeText(key('&key scan(2 2 1 2 2 2 1)'))).toBe('*,.,-.,+,.,.');
