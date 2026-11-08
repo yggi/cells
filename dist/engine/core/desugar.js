@@ -140,6 +140,11 @@ export const FAMILIES = [
         rows: '53 `step=&x*n/d` as one ratio',
         rewrite: (text) => codeWise(text, chains),
     },
+    {
+        key: 'counts',
+        rows: '21, 22 a run as `x!n`, `x*n` as `[x!n]`',
+        rewrite: (text) => counts(text),
+    },
 ];
 const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
 const ratio = (n, d) => {
@@ -283,6 +288,64 @@ const repeated = (tok) => {
     const m = /^(.*)!(\d+)$/.exec(tok);
     return m ? Array.from({ length: +m[2] }, () => m[1]).join(' ') : tok;
 };
+function counts(text) {
+    const lines = text.split('\n');
+    const read = unitRead(text);
+    const edits = [];
+    const written = (t) => lines[t.span.line - 1]?.substr(t.span.col - 1, t.span.len) ?? '';
+    const unit = (t, inside) => {
+        if (t.span.col - 1 + t.span.len > (lines[t.span.line - 1]?.length ?? 0))
+            return null;
+        if (inside && t.atom.kind === 'ref')
+            return null;
+        let w = written(t);
+        if (t.repeat > 1) {
+            if (!w.endsWith(`!${t.repeat}`))
+                return null;
+            w = w.slice(0, -`!${t.repeat}`.length);
+        }
+        const star = /^([^\s*!@]+)\*([0-9]+)$/.exec(w);
+        return { base: star && t.subdivide > 1 && t.atom.kind !== 'ref' ? `[${star[1]}!${star[2]}]` : w, n: t.repeat };
+    };
+    const walk = (tokens, inside) => {
+        for (let i = 0; i < tokens.length;) {
+            const first = tokens[i];
+            const u = unit(first, inside);
+            let j = i + 1;
+            let n = u?.n ?? 1;
+            if (u)
+                for (; j < tokens.length; j++) {
+                    const t = tokens[j];
+                    const v = unit(t, inside);
+                    const prev = tokens[j - 1];
+                    const after = t.span.line === prev.span.line && t.span.col >= prev.span.col + prev.span.len;
+                    const between = after ? lines[t.span.line - 1].slice(prev.span.col - 1 + prev.span.len, t.span.col - 1) : null;
+                    if (!v || v.base !== u.base || between === null || between.trim())
+                        break;
+                    n += v.n;
+                }
+            const last = tokens[j - 1];
+            const to = u ? `${u.base}${n > 1 ? `!${n}` : ''}` : null;
+            const len = last.span.col - 1 + last.span.len - (first.span.col - 1);
+            if (to !== null && last.span.line === first.span.line && to !== lines[first.span.line - 1].substr(first.span.col - 1, len))
+                edits.push({ line: first.span.line, col: first.span.col, len, to });
+            else if (j === i + 1 && first.atom.kind === 'seq')
+                for (const layer of first.atom.layers)
+                    walk(layer, true);
+            i = j;
+        }
+    };
+    const args = new Set(['adsr', 'ratios', 'role', 'style', 'table']);
+    for (const d of parse(text).cells)
+        if (d.braid.kind === 'list' && !read.has(d.name) && d.cycle === null && !(d.map && args.has(d.map.kind)))
+            walk(d.braid.tokens, false);
+    edits.sort((a, b) => b.line - a.line || b.col - a.col);
+    for (const e of edits) {
+        const l = lines[e.line - 1];
+        lines[e.line - 1] = l.slice(0, e.col - 1) + e.to + l.slice(e.col - 1 + e.len);
+    }
+    return lines.join('\n');
+}
 const unitRead = (text) => new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)\[/g)].map((m) => m[1]));
 function chains(code) {
     return code.replace(/(\bstep=(?:&[A-Za-z_][A-Za-z0-9_]*:)?(?:pulse|beat|&[A-Za-z_][A-Za-z0-9_]*|[0-9]+[ntm]\.?))((?:[*/][0-9]+(?:\.[0-9]+)?)+)(?![0-9A-Za-z_.])/g, (_, head, chain) => {

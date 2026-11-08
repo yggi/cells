@@ -191,6 +191,12 @@ export const FAMILIES: readonly Family[] = [
     rows: '53 `step=&x*n/d` as one ratio',
     rewrite: (text) => codeWise(text, chains),
   },
+  {
+    key: 'counts',
+    rows: '21, 22 a run as `x!n`, `x*n` as `[x!n]`',
+    // (last: the families before read a run written out, as `repeats` writes it each round; decision 077 §3)
+    rewrite: (text) => counts(text),
+  },
 ];
 
 /** A fraction, n/d in lowest terms. */
@@ -346,6 +352,70 @@ const repeated = (tok: string) => {
   const m = /^(.*)!(\d+)$/.exec(tok);
   return m ? Array.from({ length: +m[2]! }, () => m[1]!).join(' ') : tok;
 };
+
+/**
+ * Repetition as a count (decision 077 §3): every maximal run of alike steps written `x!n` (`0 0 0 2` is `0!3 2`, `~ ~` is
+ * `~!2`, `0!2 0` is `0!3`), at every depth, and `x*n` as `[x!n]`, n of x within one step. A cell read by its units (picked,
+ * rotated, or counting its own laps, `cycle=`) stays as written, where `x!n` and `x x` are two things; a run is of steps
+ * on one line, alike as written; a step that says its count otherwise (`0!2@3`) is a step of its own.
+ */
+function counts(text: string): string {
+  const lines = text.split('\n');
+  const read = unitRead(text);
+  const edits: { line: number; col: number; len: number; to: string }[] = [];
+  const written = (t: Token) => lines[t.span.line - 1]?.substr(t.span.col - 1, t.span.len) ?? '';
+  /** A step's base and count: `0!3` is `0` three times, `&sd*4` is `[&sd!4]` once; null where it says its count otherwise. */
+  const unit = (t: Token, inside: boolean): { base: string; n: number } | null => {
+    // (a step that runs on past its line is a step of its own; a splice inside brackets lasts its slot, and two of it
+    // aren't one counted: `[&sd &sd]` is not `[&sd!2]`)
+    if (t.span.col - 1 + t.span.len > (lines[t.span.line - 1]?.length ?? 0)) return null;
+    if (inside && t.atom.kind === 'ref') return null;
+    let w = written(t);
+    if (t.repeat > 1) {
+      if (!w.endsWith(`!${t.repeat}`)) return null;
+      w = w.slice(0, -`!${t.repeat}`.length);
+    }
+    const star = /^([^\s*!@]+)\*([0-9]+)$/.exec(w);
+    // (`x*n` of a splice is n of it in its slot, which a count inside brackets isn't: as written)
+    return { base: star && t.subdivide > 1 && t.atom.kind !== 'ref' ? `[${star[1]}!${star[2]}]` : w, n: t.repeat };
+  };
+  const walk = (tokens: readonly Token[], inside: boolean) => {
+    for (let i = 0; i < tokens.length;) {
+      const first = tokens[i]!;
+      const u = unit(first, inside);
+      let j = i + 1;
+      let n = u?.n ?? 1;
+      if (u)
+        for (; j < tokens.length; j++) {
+          const t = tokens[j]!;
+          const v = unit(t, inside);
+          const prev = tokens[j - 1]!;
+          // (steps that follow one another in the text: a generator's, `meter(…)` `scan(…)`, share one span, and are no run)
+          const after = t.span.line === prev.span.line && t.span.col >= prev.span.col + prev.span.len;
+          const between = after ? lines[t.span.line - 1]!.slice(prev.span.col - 1 + prev.span.len, t.span.col - 1) : null;
+          if (!v || v.base !== u.base || between === null || between.trim()) break;
+          n += v.n;
+        }
+      const last = tokens[j - 1]!;
+      const to = u ? `${u.base}${n > 1 ? `!${n}` : ''}` : null;
+      const len = last.span.col - 1 + last.span.len - (first.span.col - 1);
+      if (to !== null && last.span.line === first.span.line && to !== lines[first.span.line - 1]!.substr(first.span.col - 1, len))
+        edits.push({ line: first.span.line, col: first.span.col, len, to });
+      // (a step left whole: its own parts counted in turn)
+      else if (j === i + 1 && first.atom.kind === 'seq') for (const layer of first.atom.layers) walk(layer, true);
+      i = j;
+    }
+  };
+  // (a cell whose numbers are a map's arguments, not steps: an envelope's a d s r, a spectrum's ratios, a role's gates)
+  const args = new Set(['adsr', 'ratios', 'role', 'style', 'table']);
+  for (const d of parse(text).cells) if (d.braid.kind === 'list' && !read.has(d.name) && d.cycle === null && !(d.map && args.has(d.map.kind))) walk(d.braid.tokens, false);
+  edits.sort((a, b) => b.line - a.line || b.col - a.col);
+  for (const e of edits) {
+    const l = lines[e.line - 1]!;
+    lines[e.line - 1] = l.slice(0, e.col - 1) + e.to + l.slice(e.col - 1 + e.len);
+  }
+  return lines.join('\n');
+}
 
 /** The cells a text reads by their units: picked (`&x[1]`, `&x[1:3]`) or rotated (`&x[<<]`). */
 const unitRead = (text: string) => new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)\[/g)].map((m) => m[1]!));

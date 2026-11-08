@@ -32,6 +32,7 @@ describe('de-sugar: each family’s rewrite plays the same (S1), and a second fi
       '&tempo step=free(2, 1.5..2.5, unit=bpm)',
     ],
     ['taps', `${BAR}\n&t step=16n 0 2 4 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=pulse*4 0 2 4 5'],
+    ['counts', '&t step=4 0 0 0 2 [4 4] ~ ~ 5*2\n&v s=sine loop=C4\n&out map=sample [&t * &v]', '&t step=4 0!3 2 [4!2] ~!2 [5!2]'],
     ['subsequences', `${BAR}\n&t step=8n 0 [2 4] 5 7*2\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=8n*2 0@2 2 4 5@2 7 7'],
   ];
   it.each(cases)('%s', (key, text, written) => {
@@ -338,5 +339,19 @@ describe('the core up to an interface (decision 077 §2)', () => {
   it('narrowing: cored up to its roles, then to nothing, is cored to nothing', () => {
     const roles = toCore(score, { ...O, interface: 'roles' }).source;
     expect(toCore(roles, O).source).toBe(toCore(score, O).source);
+  });
+});
+
+describe('repetition is a count (decision 077 §3)', () => {
+  const counts = family('counts');
+  it('a run, a run with a count, at any depth; a run of rests ~!n; x*n as [x!n]', () => {
+    expect(counts('&t step=2 0 0 0 2', O)).toBe('&t step=2 0!3 2');
+    expect(counts('&t step=2 0!2 0 ~ ~ ~', O)).toBe('&t step=2 0!3 ~!3');
+    expect(counts('&t step=2 [2 2 4] 0@2 0@2', O)).toBe('&t step=2 [2!2 4] 0@2!2');
+    expect(counts('&t step=2 0 2*3', O)).toBe('&t step=2 0 [2!3]');
+  });
+  it('as written: a cell read by its units, one counting its laps, a map’s arguments, a splice in brackets, a generator', () => {
+    for (const t of ['&j step=4 &a &a 4\n&o [&j[<<]]', '&t step=2 cycle=8 0 0', '&e map=adsr 0 .04 0 0', '&t step=2 [&sd &sd] &sd*3', '&bar meter("*-+-") step=2'])
+      expect(counts(t, O)).toBe(t);
   });
 });
