@@ -35,6 +35,7 @@ Where nothing reads it moving, the axis is the range's first end.
 One cell moves an axis, a line of numbers; a mix or a range of styles doesn't move with a moving one yet; each is an error that says so (#576).
 
 ```cells
+&bar meter("4/4") step=120bpm
 &mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=.2..0.9 * &drift energy=.55
 &drift step=1m/8 [0|.25|.5|.75|1]
 ```
