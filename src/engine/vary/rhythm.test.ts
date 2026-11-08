@@ -12,17 +12,22 @@ import { eventsBetween, plan } from '../realize';
 import { playsSameNotes, sameNotes } from '../sameness';
 import { windowAt } from '../schedule';
 import { rewriteAll } from '../rewrite';
-import { cachedFit } from '../../repository/fit';
+import { fitsAs } from '../../repository/fit';
 import { heard } from '../../repository/heard';
 import { holesOf } from '../../repository/holes';
 import { resolveSeed } from '../../repository/library';
-import { expand } from '../use';
 import { METER_FRAGMENTS } from '../../repository/meters';
 import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
 import { anchorsOf, backbeatOf, drawn, variations, varied, type Variation } from '.';
+import type { Resolve } from '../program';
+import { bodyOf, expand } from '../use';
 
-/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
-const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
+/** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
+const unionOf = (text: string, workbench: string) => {
+  const body = bodyOf(text);
+  const resolve: Resolve = (id) => (id === 'x' ? body : resolveSeed(id));
+  return fitsAs('x', workbench, { resolve }).union!;
+};
 
 vi.mock('../compile', async (original) => {
   const actual = await original<typeof import('../compile')>();

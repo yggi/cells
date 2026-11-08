@@ -7,11 +7,17 @@ import { samePiece, soundsIdentical } from '../sameness';
 import { shorten } from '../shorten';
 import { EXAMPLES } from '../examples';
 import { LIBRARY, resolveSeed } from '../../repository/library';
-import { cachedFit } from '../../repository/fit';
+import { fitsAs } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
+import type { Resolve } from '../program';
+import { bodyOf } from '../use';
 
-/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
-const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
+/** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
+const unionOf = (text: string, workbench: string) => {
+  const body = bodyOf(text);
+  const resolve: Resolve = (id) => (id === 'x' ? body : resolveSeed(id));
+  return fitsAs('x', workbench, { resolve }).union!;
+};
 
 const BASE = `&bar meter("4/4") step=&tempo
 &tempo step=120bpm

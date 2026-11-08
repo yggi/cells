@@ -135,7 +135,11 @@ export function createRepository(given) {
     if (problems.length)
         throw new Error(`A malformed repository: ${problems.join('; ')}`);
     const seed = [...entries];
-    const fits = cachedFit();
+    const resolverOf = (fragments) => {
+        const byId = new Map([...given, ...fragments].map((f) => [f.id, f.text]));
+        return (id) => byId.get(id) ?? null;
+    };
+    const fits = cachedFit(resolverOf(seed));
     const alone = { fragments: seed, filed: new Set(), together: new Map(), unheld: [] };
     function merge(layer) {
         const wrong = layerProblems(layer);
@@ -190,7 +194,7 @@ export function createRepository(given) {
     return {
         fragments: seed,
         merge,
-        query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL } = {}) {
+        query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL, arguments: mains = {} } = {}) {
             if (!(Number.isInteger(k) && k >= 0))
                 throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
             if (!(isFiniteNumber(pull) && pull >= 0))
@@ -220,11 +224,20 @@ export function createRepository(given) {
                 .sort((a, b) => a.score - b.score || Number(filed.has(b.fragment.id)) - Number(filed.has(a.fragment.id)) || byId(a.fragment.id, b.fragment.id));
             if (workbench === undefined)
                 return ranked.slice(0, k);
+            const fit = layer && fragments !== seed ? cachedFit(resolverOf([...fragments, ...layer.filed.map((f) => f.fragment)])) : fits;
+            const mainOf = (f) => {
+                if (facet !== undefined)
+                    return mains[facet];
+                for (const wp of f.association)
+                    if (wp.facet !== undefined && mains[wp.facet] !== undefined)
+                        return mains[wp.facet];
+                return undefined;
+            };
             const fitting = [];
             for (const found of ranked) {
                 if (fitting.length >= k)
                     break;
-                if (fits(found.fragment.text, workbench).fits)
+                if (fit(found.fragment.text, workbench, mainOf(found.fragment)).fits)
                     fitting.push(found);
             }
             return fitting;
