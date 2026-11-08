@@ -82,3 +82,29 @@ describe('the chain as tables over the key: the same pitches as the grades', () 
     expect(power.pcs).toEqual(at(1));
   });
 });
+
+// #508's measured example: the diatonic circle (examples/circle.md), its chords one triad turned through the key, sounds
+// as the sequence written out as degree lists does, and is the smaller text by decision 049's measure.
+describe('a grade in place of a written list of chord tones (examples/circle.md)', () => {
+  const ROOTS = [0, 3, 6, 2, 5, 1, 4];
+  const listed = (head: string) =>
+    [
+      head,
+      `&pad over=&key step=1m ${ROOTS.map((r) => `[${r},${r + 2},${r + 4}]`).join(' ')}`,
+      `&arp over=&key step=8n ${ROOTS.map((r) => [0, 2, 4, 7, 4, 2, 0, 2].map((d) => r + d).join(' ')).join(' ')}`,
+      `&bass over=&key step=4n ${ROOTS.map((r) => [-7, -3, -7, -3].map((d) => r + d).join(' ')).join(' ')}`,
+    ].join('\n');
+  it('sounds as the sequence written out (S1), and is the smaller text', async () => {
+    const { EXAMPLES } = await import('./examples');
+    const { soundsIdentical } = await import('./sameness');
+    const { structureOf } = await import('./measure');
+    const { resolveSeed } = await import('../repository/library');
+    const source = EXAMPLES.circle.source;
+    // (its chain and its parts out, and the two notes on the chain's cells; the parts written as degree lists in their place)
+    const body = source.replace(/^&(degrees|triad|power|pad|arp|bass|triadNote|powerNote)\b[^\n]*\n/gm, '');
+    const written = body.replace('&tonic C\n', `&tonic C\n${listed('')}\n`);
+    const options = { resolve: resolveSeed };
+    expect(soundsIdentical(source, written, undefined, options)).toBe(true);
+    expect(structureOf(source, options).total).toBeLessThan(structureOf(written, options).total);
+  });
+});
