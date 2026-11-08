@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { rewriteAll, type Find, type Rewrite } from './rewrite';
 
 const SRC = `&bar scan(1 1 1 1) step=120bpm
-&tune over=scale(major) step=&bar 0 2 4 2
+&tune over=scale(major) step=4n 0 2 4 2
 &lead s=saw loop=C4 cutoff=800 resonance=2
 &mix [&tune * &lead]`;
 

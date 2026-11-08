@@ -17,7 +17,7 @@ export const FREE_SYNTAX = [
         .map(([k, [lo, hi]]) => `${k} ${lo}–${hi}`)
         .join(', ')} (bpm).`, ['&bar scan(4 4 4 4) step=free(andante)'], 'free.md'),
     syntax('free', 'free(v, lo..hi, "names")', 'Named choices: the names spread evenly over the range (one per value, or every 2nd …), shown instead of the numbers.', ['&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm'], 'free.md'),
-    syntax('free', 'free(0 2 4 ~ …)', "A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n).", ['&riff over=&key step=&bar*4 free(0 2 4 ~ 4 2 0 ~)'], 'free.md'),
+    syntax('free', 'free(0 2 4 ~ …)', "A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n).", ['&riff over=&key step=16n free(0 2 4 ~ 4 2 0 ~)'], 'free.md'),
     syntax('free', 'free("text")', 'A text left to the performer: a field to type in (for spell(…)).', ['&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")'], 'free.md'),
 ];
 export const FREE_BRAID_WHOLE = "free(0 2 4 ~ …), a braid left to the performer, is a cell's whole braid: &riff over=&key free(0 2 4 ~), with nothing else as its braid";

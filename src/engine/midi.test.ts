@@ -260,7 +260,7 @@ describe('channels', () => {
   // decision 029, #356: a kit read beside a pitch term transposes the member it picks, so it goes out at its pitch
   const orch =
     '&bar scan(1 1 1 1) step=120bpm\n&lead s=saw loop=C4\n&organ s=square loop=C3\n&band &lead &organ\n' +
-    '&orch over=&band step=&bar/2 0 1\n&theme step=&bar 0 2 4 7\n&out loop=SAMPLE_RATE map=sample [&theme * &orch * .3]';
+    '&orch over=&band step=2n 0 1\n&theme step=4n 0 2 4 7\n&out loop=SAMPLE_RATE map=sample [&theme * &orch * .3]';
   const keysOf = (src: string) =>
     pieceMidi(compileSource(src), codeShifts(compileSource(src))).smf.tracks.map((t) => ({ name: t.name, notes: t.notes.slice(0, 8).map((n) => `${n.channel}:${n.key}`) }));
 
@@ -277,10 +277,10 @@ describe('channels', () => {
   it('a kit transposed on a MIDI card: at its pitch on the entry channel; plain drums stay drum notes', () => {
     const card = orch + '\n&synth map=midi(3) [&theme * &orch]';
     expect(keysOf(card)).toEqual([{ name: 'lead organ', notes: ['3:60', '3:62', '3:52', '3:55'] }]);
-    const drums = '&bar scan(1 1 1 1) step=120bpm\n&bd s=sine loop=A1\n&hh s=white\n&kit &bd &hh\n&g over=&kit step=&bar 0 1 0 1\n';
+    const drums = '&bar scan(1 1 1 1) step=120bpm\n&bd s=sine loop=A1\n&hh s=white\n&kit &bd &hh\n&g over=&kit step=4n 0 1 0 1\n';
     expect(keysOf(drums + '&out loop=SAMPLE_RATE map=sample [&g * .5]')[0].notes.slice(0, 2)).toEqual(['10:36', '10:42']);
     // (a pitch held under the drums transposes them: the kick (A1) a fifth up, at its pitch, on a channel of its own)
-    expect(keysOf(drums + '&key step=&bar/4 7\n&out loop=SAMPLE_RATE map=sample [&g * &key * .5]')[0].notes.slice(0, 1)).toEqual(['1:40']);
+    expect(keysOf(drums + '&key step=1m 7\n&out loop=SAMPLE_RATE map=sample [&g * &key * .5]')[0].notes.slice(0, 1)).toEqual(['1:40']);
   });
 
   it('rotation takes a free channel, the one free longest, else the first to free', () => {

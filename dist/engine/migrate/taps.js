@@ -23,10 +23,15 @@ export function taps(source, result, options = {}) {
         if (tap === null || seen.has(line) || declLine(source, line) < 0)
             continue;
         seen.add(line);
-        const apply = (s) => setAttr(s, line, 'step', tap);
-        const next = apply(source);
-        if (next === source || !soundsIdentical(source, next, undefined, options))
+        const tapped = (s) => setAttr(s, line, 'step', tap);
+        const candidates = [tapped, (s) => setAttr(tapped(s), line, 'cycle', null)];
+        const apply = candidates.find((f) => {
+            const n = f(source);
+            return n !== source && soundsIdentical(source, n, undefined, options);
+        });
+        if (!apply)
             continue;
+        const next = apply(source);
         const at = declLine(source, line);
         out.push({
             id: `tap:${line}`,

@@ -26,7 +26,7 @@ describe('the equalities a tool promises, over their window (#180)', () => {
   });
 
   it('S1 hears what the host plays: a line switched off is silent, and an off dropped is heard (#434)', () => {
-    const off = '&bar meter("4/4") step=120bpm\n&kit &v\n&a step=2 0 4\n&drums off over=&kit step=&bar 0 1\n&v s=sine loop=C4\n&out map=sample [&a * &v, &drums]';
+    const off = '&bar meter("4/4") step=120bpm\n&kit &v\n&a step=2 0 4\n&drums off over=&kit step=4n 0 1\n&v s=sine loop=C4\n&out map=sample [&a * &v, &drums]';
     const gone = '&bar meter("4/4") step=120bpm\n&a step=2 0 4\n&v s=sine loop=C4\n&out map=sample [&a * &v]';
     expect(soundsIdentical(off, gone)).toBe(true);
     expect(soundsIdentical(off, off.replace('&drums off ', '&drums '))).toBe(false);

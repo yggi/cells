@@ -100,7 +100,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
     }
   });
   // (base=: each copy resolved into a plain cell, decision 026)
-  return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}) });
+  return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}), ...(old ? { old } : {}) });
 }
 
 /**

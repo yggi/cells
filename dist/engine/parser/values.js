@@ -7,7 +7,7 @@ export const STEP_SYNTAX = [
     syntax('rate', 'loop=NAME', 'A value from the environment: SAMPLE_RATE, A4, or a note name (C4, F#3, Bb2) as its frequency.', ['&lead s=saw loop=C4', '&out loop=SAMPLE_RATE map=sample &mix'], 'time.md'),
     syntax('rate', 'step=&x · loop=&x', 'Driven by another cell: a step (or a whole turn) per step of &x.', ['&tune step=&bar 0 2 4'], 'time.md'),
     syntax('rate', 'step=cycle(&x)', 'A step per cycle of &x (each time its braid comes round).', ['&key step=cycle(&theme) stride=7'], 'time.md'),
-    syntax('rate', 'step=&x*n · step=&x/n · step=&x*n/d', "A chain read left to right, as Strudel's fast and slow: *n n steps per step of &x, /n one per n steps; *3/2 is three per two (triplets).", ['&fast step=&bar*2 0 1', '&trip step=&bar*3/2 0 2 4'], 'time.md'),
+    syntax('rate', 'step=&x*n · step=&x/n · step=&x*n/d', "A chain read left to right, as Strudel's fast and slow: *n n steps per step of &x, /n one per n steps; *3/2 is three per two (triplets).", ['&fast step=&clock*2 0 1', '&trip step=&clock*3/2 0 2 4'], 'time.md'),
     syntax('rate', 'step=pulse · step=beat · step=pulse*k · step=beat*k', "A tap of the piece's main meter (decision 040): each pulse (the numerator: 7/8 has seven), each beat (what is counted: 6/8 has two, 7/8 three unequal), or each in k equal steps; it comes round at the bar.", ['&tune step=pulse 0 2 4', '&hats step=pulse*2 0!8', '&chords step=beat [0,2,4]'], 'time.md'),
     syntax('rate', 'step=16n · step=8t · step=4n. · step=1m', 'A tap by note value: 1n 2n 4n 8n 16n 32n, triplets (4t 8t 16t), dotted (2n. 4n. 8n.), the bar (1m); one longer than what is left of the bar is cut at the bar line. cycle=n runs it n bars before it comes round.', ['&drums step=16n 0 ~ 1 ~', '&tresillo step=4n. 0 0 0', '&roots step=1n cycle=4 0 5 7'], 'time.md'),
     syntax('rate', 'step=&m:16n', 'A tap of another meter than the main one: step=&m:pulse, &m:beat*3, &m:8n.', ['&comp step=&bar2:8n 0 2'], 'time.md'),
@@ -87,7 +87,7 @@ export function parseStep(s, whole) {
     return { whole, kind: 'driven', driver, cycle, ...rateChain(s), span: s.span(start) };
 }
 export const MAP_KINDS = {
-    amp: syntax('map', 'map=amp', 'A volume: its values multiply the level (on a voice, the braid as a waveform, its range onto −1…1; the default).', ['&accent map=amp step=&bar*4 1 .4 .8 .4'], 'sound.md'),
+    amp: syntax('map', 'map=amp', 'A volume: its values multiply the level (on a voice, the braid as a waveform, its range onto −1…1; the default).', ['&accent map=amp step=16n 1 .4 .8 .4'], 'sound.md'),
     lin: syntax('map', 'map=lin', 'As amp, ramping from each value to the next: a glide, a triangle. In a mix it is plain: a volume in a product, a pitch in a sum.', ['&swell map=lin loop=&bar/8 .2 1'], 'sound.md'),
     db: syntax('map', 'map=db', 'A volume in decibels (0 as it is, −6 about half).', ['&fade map=db step=&bar 0 -6 -12'], 'sound.md'),
     adsr: syntax('map', 'map=adsr a d s r', 'An envelope: attack, decay, release in seconds, sustain a level; one per note.', ['&pluck map=adsr .01 .3 .5 .4'], 'sound.md'),
