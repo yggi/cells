@@ -1,6 +1,6 @@
 import { parseFields } from "./level.js";
 import { MAX_NESTING, NUM } from "./scanner.js";
-import { parseFree } from "./free.js";
+import { NUMBER_PLACES } from "./numbers.js";
 import { syntax } from "./syntax.js";
 export const MIX_SYNTAX = [
     syntax('mix', '[a, b, …]', 'A mix: one chord of sounds, each a product or a sum. On the sound card (map=sample), one chord is mono, two are left and right.', ['&mix [&theme * &lead, &bass * 0.5]'], 'mix.md'),
@@ -116,8 +116,8 @@ function parseFactor(s, depth) {
         const level = parseFields(s);
         return level === undefined ? { k: 'ref', ref } : { k: 'ref', ref, level };
     }
-    if (s.text.startsWith('free(', s.i)) {
-        const f = parseFree(s, 'gain', false);
+    const f = s.free(NUMBER_PLACES.gain);
+    if (f !== null) {
         return { k: 'num', value: f.value, span: s.span(start) };
     }
     const n = s.match(NUM);

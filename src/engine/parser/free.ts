@@ -22,7 +22,7 @@ export const FREE_SYNTAX: readonly Syntax[] = [
   syntax(
     'free',
     'free(v, lo..hi)',
-    'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number goes in an attribute (a rate with its units: free(90bpm, 60..240)), in a scan, or as a gain in a mix.',
+    'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number is written (decision 078): an attribute (a rate with its units: free(90bpm, 60..240)), a scan, a gain in a mix, a step, a count, a pick; its range within the place’s.',
     ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'],
     'free.md',
   ),
@@ -67,7 +67,7 @@ export const FREE_BRAID_WHOLE = "free(0 2 4 ~ …), a braid left to the performe
  * the value, its range, and where it's written. `units`: what the value may
  * carry (a rate: bpm, hz, k).
  */
-export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean): FreeSpec {
+export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean, extra: { param?: string; whole?: true } = {}): FreeSpec {
   const start = s.i;
   if (s.match(/free\(/y) === null) s.fail('free(…)');
   s.skipSpace();
@@ -100,7 +100,8 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean):
     names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
   } else if (word !== null) {
     const range = TEMPI[word];
-    if (!range || key === 'shift' || key === 'stride' || key === 'gain' || key === 'tonic')
+    // (a marking is a rate's: not a turn, a gain, a tonic, nor a count, a whole place's of decision 078)
+    if (!range || key === 'shift' || key === 'stride' || key === 'gain' || key === 'tonic' || extra.whole)
       s.fail(`free(${word}): a tempo marking (${Object.keys(TEMPI).join(', ')}) — for a rate`, start, s.i - start);
     [lo, hi] = range;
     value = Math.round((lo + hi) / 2);
@@ -178,6 +179,8 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean):
     lo,
     hi,
     span: s.place(start),
+    ...(extra.param !== undefined ? { param: extra.param } : {}),
+    ...(extra.whole ? { whole: true as const } : {}),
     ...(labels ? { labels } : {}),
     ...(named !== null ? { byName: true as const } : {}),
   };

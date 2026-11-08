@@ -2,6 +2,8 @@
 import type { CellDecl, Diagnostic, FreeSpec, Pick, Ref, Span } from '../ast';
 import { syntax, type Syntax } from './syntax';
 import { pitchOfName } from '../../theory/modes';
+import { parseFree } from './free';
+import { BUILT, NUMBER_PLACES, type NumberPlace } from './numbers';
 
 /** References to a cell, and how they pick from it, turn it and transpose it. */
 export const REFERENCE_SYNTAX: readonly Syntax[] = [
@@ -66,6 +68,8 @@ export const REFERENCE_SYNTAX: readonly Syntax[] = [
 
 export const IDENT = /[A-Za-z_][A-Za-z0-9_]*/y;
 const INT = /-?[0-9]+/y;
+/** A range moved by cells, `lo..hi * &k`, where a number is read. */
+const MOVED_RANGE = /-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\.-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\s*\*\s*&/y;
 export const NUM = /-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y;
 // a long rest is legitimate (a voice waiting out a whole prelude: ~@617); this only guards against typos
 export const MAX_REPS = 4096;
@@ -151,12 +155,68 @@ export class LineScanner {
     if (id === null) this.fail(`Expected ${what}`);
     return id;
   }
-  int(what: string): number {
+  /**
+   * The one number reader (decision 078): at a place a number is written, `free(v, lo..hi)` is its number left to the
+   * performer, read here whatever the place, its range checked against the place's. Null if there is none, and then a
+   * cell where only a number may stand (`&k`, `lo..hi * &k`) fails, naming the rule: a cell moves only a number read
+   * while the piece plays. Every place a number is written reads through this, before its own literal (a place that
+   * reads cells reads them first).
+   */
+  free(place: NumberPlace, name: string = place.name): FreeSpec | null {
+    if (!this.text.startsWith('free(', this.i)) {
+      this.refuseCell(place);
+      return null;
+    }
+    const start = this.i;
+    if (place.fixed) this.fail(`${place.form}: a number, not free(…) — ${place.fixed}`, start, 5);
+    const key = place.key ?? 'param';
+    const f = parseFree(this, key, !!place.units, { ...(key === 'param' ? { param: name } : {}), ...(place.whole ? { whole: true as const } : {}) });
+    const len = this.i - start;
+    if (f.text !== undefined && key !== 'choice') this.fail(`free("…") is a text, for spell(…) and meter(…): ${place.form} takes free(v, lo..hi)`, start, len);
+    // (a whole place's range is whole; its value is rounded, so a slider that moves by less still compiles)
+    if (place.whole && !place.rounds && ![f.lo, f.hi].every(Number.isInteger))
+      this.fail(`${place.form} takes a whole number: free(…)'s range whole — free(${Math.round(f.value)}, ${Math.floor(f.lo)}..${Math.ceil(f.hi)})`, start, len);
+    if ((place.min !== undefined && f.lo < place.min) || (place.max !== undefined && f.hi > place.max))
+      this.fail(
+        `${place.form}: free(…) moves within ${place.min ?? '…'}..${place.max ?? '…'} — free(${f.value}, ${Math.max(f.lo, place.min ?? f.lo)}..${Math.min(f.hi, place.max ?? f.hi)})`,
+        start,
+        len,
+      );
+    return f;
+  }
+  /** `free(place)`'s number: a whole place's rounded (a count, a turn). */
+  freeNumber(place: NumberPlace, name?: string): number | null {
+    const f = this.free(place, name);
+    return f === null ? null : place.whole ? Math.round(f.value) : f.value;
+  }
+  /**
+   * A cell, or a range moved by cells, where only a number may stand: it fails, naming the rule (decision 078). (A place
+   * whose cells are read before its number, `moves`, has none left here but a range it doesn't read.)
+   */
+  refuseCell(place: NumberPlace): void {
+    MOVED_RANGE.lastIndex = this.i;
+    const ranged = MOVED_RANGE.test(this.text);
+    if (!ranged && (this.peek() !== '&' || place.moves)) return;
+    const len = Math.max(1, /^[^\s,)\]]*/.exec(this.text.slice(this.i))![0].length);
+    const how = ranged ? 'a range moved by cells' : 'a cell';
+    this.fail(
+      place.cell.startsWith(BUILT)
+        ? `${place.form} is read as the piece is built: a number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
+        : `${place.form} takes a number, or free(v, lo..hi), and ${how} isn't read here — of cells, it takes: ${place.cell} (decision 078)`,
+      this.i,
+      len,
+    );
+  }
+  int(what: string, place: NumberPlace, name?: string): number {
+    const f = this.freeNumber(place, name);
+    if (f !== null) return f;
     const n = this.match(INT);
     if (n === null) this.fail(`Expected ${what}`);
     return parseInt(n, 10);
   }
-  num(what: string): { value: number; alter: number } {
+  num(what: string, place: NumberPlace, name?: string): { value: number; alter: number } {
+    const f = this.freeNumber(place, name);
+    if (f !== null) return { value: f, alter: 0 };
     const n = this.match(NUM);
     if (n === null) this.fail(`Expected ${what}`);
     let value = parseFloat(n);
@@ -220,7 +280,8 @@ export class LineScanner {
       const dir = this.match(/<<|>>/y);
       if (dir) {
         this.skipSpace();
-        const n = this.match(/[0-9]+/y);
+        const f = this.freeNumber(NUMBER_PLACES.turn);
+        const n = f === null ? this.match(/[0-9]+/y) : String(f);
         shift = (dir === '<<' ? -1 : 1) * (n === null ? 1 : parseInt(n, 10));
         this.skipSpace();
         this.expect(']', `']' to close &${name}[${dir}…]`);
@@ -233,17 +294,19 @@ export class LineScanner {
         this.expect(']', `']' to close &${name}[${slot}]`);
         return { name, pick, shift, slot, ...this.transposition(name), span: this.span(at) };
       }
-      // $: as written (absolute); without, as the cell is turned now
-      if (this.text.startsWith('free(', this.i))
-        this.fail(`&${name}[…] picks by a number written in place: free(…) is a cell's whole braid (free(0 2 4 ~)), or a number in an attribute`, this.i, 5);
+      // $: as written (absolute); without, as the cell is turned now; each number written, or left free (decision 078)
       const abs = this.peek() === '$' ? (this.i++, this.skipSpace(), true) : false;
       const $ = abs ? ({ abs: true } as const) : {};
-      const a = this.match(INT);
+      const index = () => {
+        const f = this.freeNumber(NUMBER_PLACES.pick);
+        return f === null ? this.match(INT) : String(f);
+      };
+      const a = index();
       this.skipSpace();
       if (this.peek() === ':') {
         this.i++;
         this.skipSpace();
-        const b = this.match(INT);
+        const b = index();
         this.skipSpace();
         // a third part is the step: [::-1] backwards, [::2] every other
         let step: number | null = null;
@@ -251,7 +314,7 @@ export class LineScanner {
           this.i++;
           this.skipSpace();
           const at = this.i;
-          const st = this.match(INT);
+          const st = index();
           if (st !== null && parseInt(st, 10) === 0) this.fail('A slice step of 0 never moves', at, st.length);
           step = st === null ? null : parseInt(st, 10);
           this.skipSpace();
@@ -309,7 +372,8 @@ export class LineScanner {
     this.i++;
     const abs = this.peek() === '$';
     if (abs) this.i++;
-    const n = this.match(/-?[0-9]+/y);
+    const f = this.freeNumber(NUMBER_PLACES.move);
+    const n = f === null ? this.match(/-?[0-9]+/y) : String(f);
     if (n === null) this.fail(`&${name}^n moves it n steps of its table (&${name}^1, a degree up), &${name}^$n n semitones (&${name}^$7, &${name}^$-12)`, at, 1);
     if (this.peek() === '.' && /[0-9]/.test(this.text[this.i + 1] ?? ''))
       this.fail(

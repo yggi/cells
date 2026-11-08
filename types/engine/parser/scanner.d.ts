@@ -1,6 +1,7 @@
 /** The scanner: one line of a piece (continued lines joined), read left to right. */
 import type { CellDecl, Diagnostic, FreeSpec, Ref, Span } from '../ast';
 import { type Syntax } from './syntax';
+import { type NumberPlace } from './numbers';
 /** References to a cell, and how they pick from it, turn it and transpose it. */
 export declare const REFERENCE_SYNTAX: readonly Syntax[];
 export declare const IDENT: RegExp;
@@ -64,8 +65,23 @@ export declare class LineScanner {
     fail(message: string, start?: number, len?: number): never;
     match(re: RegExp): string | null;
     ident(what: string): string;
-    int(what: string): number;
-    num(what: string): {
+    /**
+     * The one number reader (decision 078): at a place a number is written, `free(v, lo..hi)` is its number left to the
+     * performer, read here whatever the place, its range checked against the place's. Null if there is none, and then a
+     * cell where only a number may stand (`&k`, `lo..hi * &k`) fails, naming the rule: a cell moves only a number read
+     * while the piece plays. Every place a number is written reads through this, before its own literal (a place that
+     * reads cells reads them first).
+     */
+    free(place: NumberPlace, name?: string): FreeSpec | null;
+    /** `free(place)`'s number: a whole place's rounded (a count, a turn). */
+    freeNumber(place: NumberPlace, name?: string): number | null;
+    /**
+     * A cell, or a range moved by cells, where only a number may stand: it fails, naming the rule (decision 078). (A place
+     * whose cells are read before its number, `moves`, has none left here but a range it doesn't read.)
+     */
+    refuseCell(place: NumberPlace): void;
+    int(what: string, place: NumberPlace, name?: string): number;
+    num(what: string, place: NumberPlace, name?: string): {
         value: number;
         alter: number;
     };

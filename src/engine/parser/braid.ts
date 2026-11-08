@@ -7,6 +7,7 @@ import { parseFields } from './level';
 import { isMixChord, parseMixChord } from './mix';
 import { syntax, type Syntax } from './syntax';
 import { MODE_WORDS } from '../../theory/modes';
+import { NUMBER_PLACES } from './numbers';
 
 /** A diatonic mode's name as a step (`&mode dorian`), a word on its own. */
 export const MODE_WORD = new RegExp(`(?:${Object.keys(MODE_WORDS).join('|')})(?![A-Za-z0-9_])`, 'y');
@@ -154,8 +155,9 @@ function parseAtom(s: LineScanner, depth: number): Atom {
     return parseBracket(s, depth);
   }
   if (c === '<') return parseAngle(s, depth);
-  if (c === '-' || c === '.' || (c >= '0' && c <= '9')) {
-    const n = s.num('a number');
+  // (a number, or one left to the performer: free(2, 0..7), decision 078)
+  if (c === '-' || c === '.' || (c >= '0' && c <= '9') || s.text.startsWith('free(', s.i)) {
+    const n = s.num('a number', NUMBER_PLACES.step);
     // (Strudel's other spelling of an accidental on a degree: s a sharp, f a flat, mixed with # and b: `6s`, `7f`)
     const more = s.match(/[#bsf]+(?![A-Za-z0-9_])/y) ?? '';
     const alter = n.alter + [...more].reduce((a, ch) => a + (ch === '#' || ch === 's' ? 1 : -1), 0);
@@ -254,7 +256,7 @@ function parseEuclidOn(s: LineScanner): Euclid {
   const args: number[] = [];
   for (;;) {
     s.skipSpace();
-    args.push(s.int('a whole number in x(k, n, r)'));
+    args.push(s.int('a whole number in x(k, n, r)', NUMBER_PLACES.euclidOn));
     s.skipSpace();
     if (s.peek() !== ',') break;
     s.i++;
@@ -344,7 +346,7 @@ export function parseToken(s: LineScanner, depth = 0): Token {
       if (slow !== undefined) s.fail(`'/' can only appear once per step`);
       s.i++;
       const at = s.i;
-      const n = s.int('a count after /');
+      const n = s.int('a count after /', NUMBER_PLACES.modifier, 'slow');
       if (n < 1 || n > MAX_REPS) s.fail(`Count must be between 1 and ${MAX_REPS}`, at, s.i - at);
       slow = n;
       continue;
@@ -354,7 +356,8 @@ export function parseToken(s: LineScanner, depth = 0): Token {
       if (chance !== undefined) s.fail(`'?' can only appear once per step`);
       s.i++;
       const at = s.i;
-      const p = s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y);
+      const f = s.freeNumber(NUMBER_PLACES.drop);
+      const p = f === null ? s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y) : String(f);
       chance = p === null ? null : parseFloat(p);
       if (p === null && /[0-9]/.test(s.peek() ?? '')) s.fail('A probability is from 0 to 1: x?.3', at, 1);
       continue;
@@ -364,7 +367,7 @@ export function parseToken(s: LineScanner, depth = 0): Token {
     seen.add(op);
     s.i++;
     const at = s.i;
-    const n = s.int(`a count after ${op}`);
+    const n = s.int(`a count after ${op}`, NUMBER_PLACES.modifier, MODIFIERS[op].field);
     if (n < 1 || n > MAX_REPS) s.fail(`Count must be between 1 and ${MAX_REPS}`, at, s.i - at);
     mods[MODIFIERS[op].field] = n;
   }
