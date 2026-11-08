@@ -52,6 +52,7 @@
   "bell": {"kept":true,"score":397,"back":0,"of":1},
   "prelude": {"kept":true,"score":547,"back":1,"of":1},
   "pachelbel": {"kept":true,"score":776,"back":1,"of":3},
+  "circle": {"kept":true,"score":479,"back":0,"of":1},
   "pop": {"kept":true,"score":588,"back":3,"of":4},
   "idm": {"kept":false,"score":921,"back":1,"of":4},
   "alpha": {"kept":true,"score":221,"back":1,"of":1},
