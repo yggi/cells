@@ -27,6 +27,14 @@ It doesn't sound; what reads it is another cell.
 The two spellings are one point: `sync=.5 harm=.75 artic=.35 energy=.5` is the braid `.5 .75 .35 .5`.
 The axes' names are read only on a `map=style` cell, so the list of attributes doesn't grow.
 A style names every axis, each within its range; a value outside it, or one missing, is an error that lists them.
+An axis may be left to the performer, a slider within its range, by name or in order: `sync=free(.3, 0..1)`, `&mine map=style free(.3, 0..1) .45 .55 .55` ([free.md](free.md)).
+The slider is named by its axis, and what reads the style reads its value as it reads a number's.
+An axis doesn't move by cells yet: `sync=0..1 * &walk` is an error that says so (#576's next rung).
+
+```cells
+&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=free(.55, 0..1) energy=free(.55, 0..1)
+```
+
 
 ## A value by name: &x[slot]
 
