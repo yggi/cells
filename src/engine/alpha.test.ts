@@ -70,7 +70,7 @@ const written = FAMILIES.find((f) => f.key === 'from')!.rewrite;
  * `&kick` or `&hat` that drum role) and off a role cell's name (`&bass map=role &bassOut`, decision 061). Renamed, the
  * line plays the same notes and the performer plays them as written.
  */
-const FEEL = ['clock', 'voice', 'effects', 'variations', 'midi-out', 'idm', 'cellscape', 'electroswing', 'spooky', 'kinderlied', 'soundtape'];
+const FEEL = ['clock', 'voice', 'effects', 'variations', 'midi-out', 'idm', 'cellscape', 'electroswing', 'spooky', 'kinderlied', 'soundtape', 'circle'];
 
 /**
  * Where renaming still changes what a piece is (#387's blockers). Written in, a name alone means something only where
