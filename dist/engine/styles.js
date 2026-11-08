@@ -7,10 +7,18 @@ const valuesOf = (d) => {
     return v.some((x) => Number.isNaN(x)) ? null : v;
 };
 const GLIDE_STEPS = 16;
+function mapNumbers(t, f) {
+    const a = t.atom;
+    if (a.kind === 'note')
+        return { ...t, atom: { ...a, value: f(a.value) } };
+    if (a.kind === 'choice')
+        return { ...t, atom: { ...a, values: a.values.map(f) } };
+    if (a.kind === 'seq')
+        return { ...t, atom: { ...a, layers: a.layers.map((l) => l.map((u) => mapNumbers(u, f))) } };
+    return t;
+}
 function between(d, a, b, name, span) {
-    const braid = d.braid.kind === 'list'
-        ? { ...d.braid, tokens: d.braid.tokens.map((t) => (t.atom.kind === 'note' ? { ...t, atom: { ...t.atom, value: a + (b - a) * t.atom.value } } : t)) }
-        : d.braid;
+    const braid = d.braid.kind === 'list' ? { ...d.braid, tokens: d.braid.tokens.map((t) => mapNumbers(t, (v) => a + (b - a) * v)) } : d.braid;
     return { ...d, name, span, braid, label: null, about: undefined, ...(d.style ? { style: undefined } : {}) };
 }
 const text = (x) => String(Math.round(x * 1e9) / 1e9);
@@ -71,6 +79,35 @@ export function readStyles(parsed, scope) {
         const d = decls.get(r.name);
         const style = styles.get(r.name);
         let body = null;
+        const axis = AXES[i]?.name;
+        const movingOf = (name) => {
+            const sd = decls.get(name);
+            return sd?.map?.kind === 'style' && axis ? sd.paramCells?.[axis] : undefined;
+        };
+        const written = d?.style;
+        const named = written ? [written.from, ...(written.to ? [written.to] : [])].flatMap((p) => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref))) : [];
+        const moving = d?.map?.kind === 'style' ? movingOf(r.name) : written?.from.kind === 'cell' && !written.to ? movingOf(written.from.ref.name) : undefined;
+        if (!moving && named.some((n) => movingOf(n.name))) {
+            error(`&${r.name}[${axis}]: a mix or a range of styles doesn't move with them yet; name the moving style alone, style=&${named.find((n) => movingOf(n.name)).name}`, r.span);
+            return null;
+        }
+        if (moving) {
+            const f = moving.factors.length === 1 && !moving.factors[0].pick ? decls.get(moving.factors[0].name) : undefined;
+            if (!f) {
+                if (moving.factors.length !== 1 || moving.factors[0].pick)
+                    error(`${axis}=… * &x: an axis moves by one cell, a line of numbers from 0 to 1 (write several as one)`, moving.span);
+                return null;
+            }
+            if (f.braid.kind !== 'list') {
+                error(`${axis}=… * &${f.name}: an axis moves by a line of numbers from 0 to 1, like &${f.name} step=1m*8 [0|.25|.5|.75|1]`, moving.factors[0].span);
+                return null;
+            }
+            const [a, b] = moving.range ?? AXES[i].range;
+            const name = `λ${r.name}_${i}`;
+            if (!made.has(name))
+                made.set(name, between(f, a, b, name, r.span));
+            return name;
+        }
         if (!d && r.name === STYLE) {
             body = text(CENTRE[i]);
             if (!centred && performed)

@@ -709,14 +709,21 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
         if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
         continue;
       }
-      // a style's axes by name (sync=.3, decision 076's names): a number, or a slider within the axis, sync=free(.3, 0..1) (#576)
+      // a style's axes by name (sync=.3, decision 076's names): a number, a slider within the axis, sync=free(.3, 0..1), or
+      // a range within it moved by a cell, sync=0..1 * &walk, held at its first end in the braid (#576)
       if (key === null && AXIS_NAMES.includes(word)) {
         if (axes.has(word)) s.fail(`${word}= is given twice`, at, word.length);
         const vat = s.i;
         if (s.text.startsWith('free(', s.i)) axes.set(word, { value: String(readAxisFree(s, word).value), at });
-        else if (/^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\./.test(s.text.slice(s.i)))
-          s.fail(`${word}= doesn't move yet: a style's axis is a number, or a slider within it, ${word}=free(.3, 0..1) (a moving axis is #576's next rung)`, vat, 1);
-        else {
+        else if (s.peek() === '&' || /^(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\./.test(s.text.slice(s.i))) {
+          readParam(s, b, word);
+          const pc = b.paramCells[word];
+          if (!pc) s.fail(`${word}=: a moving axis is a range within it and the cell that moves it, ${word}=0..1 * &walk`, vat, s.i - vat);
+          const [lo, hi] = pc!.range ?? AXES.find((a) => a.name === word)!.range;
+          const [alo, ahi] = AXES.find((a) => a.name === word)!.range;
+          if (!(lo >= alo && lo <= ahi && hi >= alo && hi <= ahi)) s.fail(`${word}= moves within the axis, ${alo} to ${ahi}: ${word}=${alo}..${ahi} * &walk`, vat, s.i - vat);
+          axes.set(word, { value: String(lo), at });
+        } else {
           s.num(`a number after ${word}= (an axis of a style, 0 to 1), or a slider, ${word}=free(.3, 0..1)`);
           axes.set(word, { value: s.text.slice(vat, s.i), at });
         }
