@@ -39,6 +39,7 @@ export declare const NUMBER_PLACES: {
     readonly level: NumberPlace;
     readonly slot: NumberPlace;
     readonly axis: NumberPlace;
+    readonly end: NumberPlace;
     readonly share: NumberPlace;
     readonly gain: NumberPlace;
     readonly hit: NumberPlace;

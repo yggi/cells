@@ -222,6 +222,30 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
     ]);
   });
 
+  it('a moving range’s ends may be sliders, and centre ± reach is its sugar: the window a hand sets, the cell wandering inside it (decision 079, #576)', () => {
+    const moving = (axis: string) => piece('style=&mine', '4/4', undefined, ['&walk step=1m 0 1', `&mine map=style sync=.3 harm=.45 artic=${axis} energy=.55`]);
+    expect(cutoffs(moving('free(.4, 0..1)..free(.8, 0..1) * &walk'), 8)).toEqual([400, 800, 400, 800]);
+    expect(cutoffs(moving('free(.6, 0..1) ± free(.2, 0..0.5) * &walk'), 8)).toEqual([400, 800, 400, 800]);
+    expect(cutoffs(moving('.6 +- .2 * &walk'), 8)).toEqual([400, 800, 400, 800]);
+    // (held to the axis: .9 ± .3 is .6..1)
+    expect(cutoffs(moving('.9 ± .3 * &walk'), 8)).toEqual([600, 1000, 600, 1000]);
+    // (each a slider, named: a window's ends low and high, a centre by its axis and its reach)
+    const sliders = (axis: string) =>
+      parse(moving(axis))
+        .cells.find((c) => c.name === 'mine')!
+        .frees!.map((f) => [f.param, f.value, f.lo, f.hi]);
+    expect(sliders('free(.4, 0..1)..free(.8, 0..1) * &walk')).toEqual([
+      ['artic low', 0.4, 0, 1],
+      ['artic high', 0.8, 0, 1],
+    ]);
+    expect(sliders('free(.6, 0..1) ± free(.2, 0..0.5) * &walk')).toEqual([
+      ['artic', 0.6, 0, 1],
+      ['artic reach', 0.2, 0, 0.5],
+    ]);
+    // (a window's end slider outside the axis is refused, shown firing)
+    expect(errors(moving('free(.4, 0..2)..1 * &walk'))).toEqual(["artic=: a window's end moves within the axis, 0 to 1: free(0.4, 0..1)"]);
+  });
+
   it('a mix of cells with no voice is the sum of their values, its gains the weights, held to 0…1 (decision 079, #576)', () => {
     const walkers = ['&a step=1m 0 1', '&b step=1m/4 0 1'];
     // (as a moving parameter's factor: .5 of &a, by the bar, and .5 of &b, by four bars)

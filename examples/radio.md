@@ -7,7 +7,7 @@ description: "A score the default band plays, its style drifting by itself: arti
 A radio station written in cells (#576): a score whose section's style, `&style`, moves by itself.
 The score is the default band's: it ends in `* from band`, and the band's instruments read `&style` where they sound, the bass's cutoff and the keys' and the pad's envelopes with articulation, the lead's cutoff with energy.
 
-Two of the style's axes drift, each moved by a cell (`artic=.2..0.9 * &drift`).
+Two of the style's axes drift, each moved by a cell within a window a hand sets (decision 079): articulation's window by its two ends, `artic=free(.2, 0..1)..free(.9, 0..1) * &drift`, energy's by its centre and reach, `energy=free(.55, 0..1) ± free(.25, 0..0.5) * &swell`.
 Articulation's drift is three sample-and-holds summed (decision 079), each a value drawn afresh each step and held for it: once a section of eight bars, once a song of 32, once a set of 128, weighted .5, .3 and .2, so it moves most from section to section and least over a set, as music's slow fluctuations do.
 Energy's is one sample-and-hold, once every two sections.
 So the band plays the section's style and moves on at the next one: the bass bites or closes, the keys strike or swell, the lead brightens or darkens.
@@ -25,7 +25,7 @@ The other two axes are left to sliders (`free(…)`), for a hand to set.
 &padline over=&harm step=1m [0,1,2]
 &stabline over=&harm step=2n ~ [0,2,4]
 &leadline over=&key step=8n 4 ~ 3 2 0@4
-&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=.2..0.9 * &drift energy=.3..0.8 * &swell
+&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=free(.2, 0..1)..free(.9, 0..1) * &drift energy=free(.55, 0..1) ± free(.25, 0..0.5) * &swell
 &drift [&section * .5 + &song * .3 + &set * .2]
 &section step=1m/8 [0|.25|.5|.75|1]
 &song step=1m/32 [0|.25|.5|.75|1]
@@ -35,4 +35,4 @@ The other two axes are left to sliders (`free(…)`), for a hand to set.
 * from band
 ```
 
-The weights are the drift's spectrum: how much it moves at each rate (`docs/notes/571-style-at-every-scale.md`). The radio's next rung lets a slider lean the drift, the window's ends as sliders (decision 079, #576).
+The weights are the drift's spectrum: how much it moves at each rate (`docs/notes/571-style-at-every-scale.md`). The sliders lean it: a hand moves the window, and the radio wanders inside it.
