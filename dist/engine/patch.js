@@ -1,5 +1,5 @@
 import { signatureOf } from "./use.js";
-import { declLine, splitComment, splitWords } from "./edit.js";
+import { attrValue as valueOf, declLine, splitComment, splitWords, wordAt } from "./edit.js";
 import { readFrom, topTokens } from "./parser/use.js";
 import { VOICE_PARAMS } from "./attributes.js";
 export class PatchError extends Error {
@@ -8,45 +8,6 @@ export const MOVING = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq', 'room', 'delay'
 const CELL = ['pitch', 'env', 'fm'];
 const NAME = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
 const refName = (term) => NAME.exec(term)?.[1] ?? null;
-function wordAt(code, i) {
-    let depth = 0;
-    let quoted = false;
-    let j = i;
-    for (; j < code.length; j++) {
-        const c = code[j];
-        if (c === '"')
-            quoted = !quoted;
-        if (quoted)
-            continue;
-        if (c === '[' || c === '(')
-            depth++;
-        else if (c === ']' || c === ')')
-            depth = Math.max(0, depth - 1);
-        else if (/\s/.test(c) && depth === 0)
-            break;
-    }
-    return { text: code.slice(i, j), end: j };
-}
-function valueOf(code, key) {
-    const m = new RegExp(`(^|\\s)${key}=`).exec(code);
-    if (!m)
-        return null;
-    const start = m.index + m[0].length;
-    const first = wordAt(code, start);
-    const factors = [];
-    let end = first.end;
-    for (;;) {
-        const times = /^\s*\*\s*/.exec(code.slice(end));
-        if (!times)
-            break;
-        const term = wordAt(code, end + times[0].length);
-        if (!term.text)
-            break;
-        factors.push(term.text);
-        end = term.end;
-    }
-    return { base: first.text, factors, start, end };
-}
 const writeValue = (base, factors) => [base, ...factors].join(' * ');
 function moduleLine(lines, cell) {
     for (let i = 0; i < lines.length; i++) {

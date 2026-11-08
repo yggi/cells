@@ -81,13 +81,55 @@ function editDecl(source, name, f, onCopy = false) {
     lines[i] = next + comment + cr;
     return lines.join('\n');
 }
+export function wordAt(code, i) {
+    let depth = 0;
+    let quoted = false;
+    let j = i;
+    for (; j < code.length; j++) {
+        const c = code[j];
+        if (c === '"')
+            quoted = !quoted;
+        if (quoted)
+            continue;
+        if (c === '[' || c === '(')
+            depth++;
+        else if (c === ']' || c === ')')
+            depth = Math.max(0, depth - 1);
+        else if (/\s/.test(c) && depth === 0)
+            break;
+    }
+    return { text: code.slice(i, j), end: j };
+}
+export function attrValue(code, key) {
+    const m = new RegExp(`(^|\\s)${key}=`).exec(code);
+    if (!m)
+        return null;
+    const start = m.index + m[0].length;
+    const first = wordAt(code, start);
+    const factors = [];
+    let end = first.end;
+    for (;;) {
+        const times = /^\s*\*\s*/.exec(code.slice(end));
+        if (!times)
+            break;
+        const term = wordAt(code, end + times[0].length);
+        if (!term.text)
+            break;
+        factors.push(term.text);
+        end = term.end;
+    }
+    return { base: first.text, factors, start, end };
+}
 export function setAttr(source, name, key, value) {
     return editDecl(source, name, (code, head) => {
-        const val = `(?:"[^"]*"|[^\\s(]*\\([^)]*\\)[^\\s]*|\\S+)`;
-        const attr = new RegExp(`(\\s)${key}=${val}`);
-        if (attr.test(code))
-            return value === null ? code.replace(new RegExp(`\\s${key}=${val}`), '') : code.replace(attr, `$1${key}=${value}`);
-        return value === null ? code : code.replace(head, `$1 ${key}=${value}`);
+        const v = attrValue(code, key);
+        if (!v)
+            return value === null ? code : code.replace(head, `$1 ${key}=${value}`);
+        if (value !== null)
+            return code.slice(0, v.start) + value + code.slice(v.end);
+        const at = v.start - key.length - 1;
+        const from = /\s/.test(code[at - 1] ?? '') ? at - 1 : at;
+        return code.slice(0, from) + code.slice(v.end);
     }, true);
 }
 export function renameAttr(source, name, from, to) {
@@ -152,6 +194,21 @@ export function splitWords(code) {
     return out;
 }
 const isAttrWord = (w) => /^[a-z][a-zA-Z]*=/.test(w) || w === 'off';
+function withFactors(words) {
+    const out = [];
+    for (let k = 0; k < words.length; k++) {
+        const w = words[k];
+        const last = out[out.length - 1];
+        const open = last !== undefined && isAttrWord(last) && last.includes('=');
+        if (open && (w === '*' || w.startsWith('*') || last.endsWith('*'))) {
+            const joined = w === '*' && k + 1 < words.length ? `${w} ${words[++k]}` : w;
+            out[out.length - 1] = `${last} ${joined}`;
+        }
+        else
+            out.push(w);
+    }
+    return out;
+}
 export function spansLines(source, name) {
     const i = declLine(source, name);
     return i >= 0 && /[+*,[]\s*$/.test(splitComment(source.split('\n')[i])[0]);
@@ -160,7 +217,7 @@ export function declWords(source, name) {
     const i = declLine(source, name);
     if (i < 0)
         return null;
-    const words = splitWords(splitComment(source.split('\n')[i])[0]);
+    const words = withFactors(splitWords(splitComment(source.split('\n')[i])[0]));
     const head = words.slice(0, 1);
     const rest = words.slice(head.length);
     return { head, attrs: rest.filter(isAttrWord), braid: rest.filter((w) => !isAttrWord(w)) };

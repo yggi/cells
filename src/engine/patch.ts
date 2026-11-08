@@ -16,7 +16,7 @@
  * The band is the frontend's to match (`jacksOf` says it): an audio cable into a CV jack is written as asked.
  */
 import { signatureOf } from './use';
-import { declLine, splitComment, splitWords } from './edit';
+import { attrValue as valueOf, declLine, splitComment, splitWords, wordAt } from './edit';
 import { readFrom, topTokens } from './parser/use';
 import { VOICE_PARAMS } from './attributes';
 import type { Resolve } from './program';
@@ -45,49 +45,6 @@ const CELL = ['pitch', 'env', 'fm'] as const;
 
 const NAME = /^&([A-Za-z_][A-Za-z0-9_]*)$/;
 const refName = (term: string) => NAME.exec(term)?.[1] ?? null;
-
-/** One word of code from `i`, brackets, parentheses and quotes kept whole, and where it ends. */
-function wordAt(code: string, i: number): { text: string; end: number } {
-  let depth = 0;
-  let quoted = false;
-  let j = i;
-  for (; j < code.length; j++) {
-    const c = code[j]!;
-    if (c === '"') quoted = !quoted;
-    if (quoted) continue;
-    if (c === '[' || c === '(') depth++;
-    else if (c === ']' || c === ')') depth = Math.max(0, depth - 1);
-    else if (/\s/.test(c) && depth === 0) break;
-  }
-  return { text: code.slice(i, j), end: j };
-}
-
-/** An attribute's value as written: its first word (`70..4800`, `800`, `&lfo`) and the cells it is multiplied by, and where it lies. */
-interface Value {
-  readonly base: string;
-  readonly factors: readonly string[];
-  readonly start: number;
-  readonly end: number;
-}
-
-/** `key=`'s value on a line of code, its ` * term`s with it (sound.md, *Parameters as cells*), or null where it isn't written. */
-function valueOf(code: string, key: string): Value | null {
-  const m = new RegExp(`(^|\\s)${key}=`).exec(code);
-  if (!m) return null;
-  const start = m.index + m[0].length;
-  const first = wordAt(code, start);
-  const factors: string[] = [];
-  let end = first.end;
-  for (;;) {
-    const times = /^\s*\*\s*/.exec(code.slice(end));
-    if (!times) break;
-    const term = wordAt(code, end + times[0].length);
-    if (!term.text) break;
-    factors.push(term.text);
-    end = term.end;
-  }
-  return { base: first.text, factors, start, end };
-}
 
 const writeValue = (base: string, factors: readonly string[]) => [base, ...factors].join(' * ');
 

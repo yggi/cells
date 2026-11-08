@@ -17,6 +17,7 @@ import {
   splitToken,
   splitWords,
   usersOf,
+  attrValue,
 } from './edit';
 import { compileSource as compileAlone } from './compile';
 import { flatten, tapped } from './flatten';
@@ -264,5 +265,42 @@ describe('a free pitch class by name', () => {
     const src = '&key shift=free(D)\n&t over=&key 0';
     const spec = compileSource(src).cells.get('key')!.frees[0];
     expect(setFree(src, spec, 4)).toBe('&key shift=free(E)\n&t over=&key 0');
+  });
+});
+
+describe('a moving parameter’s value is read and rewritten whole (#470)', () => {
+  const t = '&v s=saw loop=C2 lpf=70..4800 * &eg * &lfo lpq=8 # c';
+
+  it('attrsOf: the range and every * term after it', () => {
+    expect(attrsOf(t, 'v').get('lpf')).toBe('70..4800 * &eg * &lfo');
+    expect(attrsOf(t, 'v').get('lpq')).toBe('8');
+    // (written without spaces it is one word, as it always was)
+    expect(attrsOf('&v s=saw lpf=70..4800*&eg', 'v').get('lpf')).toBe('70..4800*&eg');
+  });
+
+  it('declWords: the factors are the attribute’s, not words of the braid', () => {
+    const w = declWords('&v lpf=200..3000 * &fenv s=saw 0 2 4', 'v')!;
+    expect(w.attrs).toEqual(['lpf=200..3000 * &fenv', 's=saw']);
+    expect(w.braid).toEqual(['0', '2', '4']);
+  });
+
+  it('setAttr replaces the value whole, and removes it whole (a comment kept at its column)', () => {
+    const bare = t.replace(/ # c$/, '');
+    expect(setAttr(bare, 'v', 'lpf', '70..4800 * &eg')).toBe('&v s=saw loop=C2 lpf=70..4800 * &eg lpq=8');
+    expect(setAttr(bare, 'v', 'lpf', '1200')).toBe('&v s=saw loop=C2 lpf=1200 lpq=8');
+    expect(setAttr(bare, 'v', 'lpf', null)).toBe('&v s=saw loop=C2 lpq=8');
+    expect(setAttr(t, 'v', 'lpf', '1200').indexOf('#')).toBe(t.indexOf('#'));
+    // (a value with parentheses or quotes, as before)
+    expect(setAttr('&t step=free(0, 0..6) 0 2', 't', 'step', '8n')).toBe('&t step=8n 0 2');
+    expect(setAttr('&t label="a b" 0', 't', 'label', '"c"')).toBe('&t label="c" 0');
+  });
+
+  it('attrValue: its parts, for a frontend that sets the range and keeps the cells', () => {
+    const code = t.split('#')[0]!;
+    const v = attrValue(code, 'lpf')!;
+    expect([v.base, v.factors]).toEqual(['70..4800', ['&eg', '&lfo']]);
+    expect(code.slice(v.start, v.end)).toBe('70..4800 * &eg * &lfo');
+    expect(setAttr(t, 'v', 'lpf', [`400..1600`, ...v.factors].join(' * '))).toBe('&v s=saw loop=C2 lpf=400..1600 * &eg * &lfo lpq=8 # c');
+    expect(attrValue(code, 'hpf')).toBeNull();
   });
 });
