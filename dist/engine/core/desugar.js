@@ -633,6 +633,7 @@ function tokenWise(text, f) {
     }
     return lines.join('\n');
 }
+const sugared = (t) => t.subdivide > 1 || (t.atom.kind === 'seq' && (t.atom.mode === 'alt' || !!t.atom.euclid || t.atom.layers.some((l) => l.some(sugared))));
 export const stillWritten = (row, text) => {
     const code = text
         .split('\n')
@@ -649,9 +650,9 @@ export const LEFT = [
     },
     {
         key: 'subsequences',
-        rows: '16, 18, 22, 25 `[a b]` `<a b>` `x*n` `x(k,n)` left as written',
-        test: (text) => parse(text).cells.some((d) => d.braid.kind === 'list' && d.braid.tokens.some((t) => t.atom.kind === 'seq' || t.subdivide > 1)),
-        why: 'dilate inside a step, kept where a finer grid would change what the line plays: a line that draws, one spliced or read by its units, a table, a stack, `<a b>`, a euclid, a meter with legato by level',
+        rows: '18, 22, 25 `<a b>` `x*n` `x(k,n)` `euclid(k, n)` left as written',
+        test: (text) => /\beuclid\(/.test(text) || parse(text).cells.some((d) => d.braid.kind === 'list' && d.braid.tokens.some(sugared)),
+        why: 'n of a step within it (`x*n`, which is `[x!n]`), a step a lap (`<a b>`, which is `[a b]/2`), or a euclid, kept where a finer grid would change what the line plays: a line that draws, one spliced or read by its units, a table, a stack, a meter with legato by level',
     },
     {
         key: 'sliders',
@@ -659,7 +660,6 @@ export const LEFT = [
         test: /\bfree\((?:-?\d*\.?\d+(?:bpm|hz|min|h|d|wk|k)\b|[a-z]+\))/,
         why: 'a slider whose unit is written after its number, or a marking (free(andante)): its numbers in the core’s, the unit an argument',
     },
-    { key: 'unit reads', rows: '21 `x!n` in a cell read by its units', test: /!\d/, why: '`&a!2` is one unit and `&a &a` two: a pick or a rotation (`&john[<<]`) counts them' },
     {
         key: 'keys',
         rows: '40 `scale(name)` left as written',
@@ -675,8 +675,8 @@ export const LEFT = [
     {
         key: 'gates',
         rows: '111–113 `play=` `level=` `[&a, &b]`',
-        test: /\b(?:play|level)=/,
-        why: 'a gate is a set of products, each receiver times its notes and levels, written into the card’s mix; one a role reads (a performer’s part), a tape’s read head (`at=`), or one over a kit stays',
+        test: (text) => text.split('\n').some((l) => /\b(?:play|level)=/.test(l) && !/\bat=/.test(l)),
+        why: 'a gate is a set of products, each receiver times its notes and levels, written into the card’s mix; one a role reads (a performer’s part), or one over a kit, stays',
     },
     {
         key: 'pitch',
