@@ -32,6 +32,7 @@ describe('de-sugar: each family’s rewrite plays the same (S1), and a second fi
       '&tempo step=free(2, 1.5..2.5, unit=bpm)',
     ],
     ['taps', `${BAR}\n&t step=16n 0 2 4 5\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=pulse*4 0 2 4 5'],
+    ['counts', '&t step=4 0 0 0 2 [4 4] ~ ~ 5*2\n&v s=sine loop=C4\n&out map=sample [&t * &v]', '&t step=4 0!3 2 [4!2] ~!2 [5!2]'],
     ['subsequences', `${BAR}\n&t step=8n 0 [2 4] 5 7*2\n&v s=sine loop=C4\n&out map=sample [&t * &v]`, '&t step=8n*2 0@2 2 4 5@2 7 7'],
   ];
   it.each(cases)('%s', (key, text, written) => {
@@ -282,9 +283,9 @@ describe('gates, pitch= and what nothing reads, in the core (decision 069 §2, #
     expect(after('gates', text)).toBe(`${BAR}\n&t step=8n 0 2 4\n&a s=sine loop=C4\n&out map=sample [&t * &a]`);
     expect(family('gates')(text, { ...O, keep: new Set(['lead', 'g']) })).toBe(text);
   });
-  it('a gate over a kit is no product: it stays, and the others are taken', () => {
-    const text = `${BAR}\n&t step=8n 0 1\n&g play=&t &k\n&h play=&t &a\n&k &a &b\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [&g, &h]`;
-    expect(after('gates', text)).toBe(`${BAR}\n&t step=8n 0 1\n&g play=&t &k\n&k &a &b\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [&g, &t * &a]`);
+  it('a gate over a kit is its notes read through the kit, its level a factor; the others are products', () => {
+    const text = `${BAR}\n&t step=8n 0 1\n&g play=&t level=.5 &k\n&h play=&t &a\n&k &a &b\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [&g, &h]`;
+    expect(after('gates', text)).toBe(`${BAR}\n&t step=8n 0 1\n&g over=&k step=8n 0 1\n&k &a &b\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [&g * .5, &t * &a]`);
   });
   it('a voice’s pitch= is a sum in the product it is in: added to its notes, never to a cell read inside another', () => {
     const text = `${BAR}\n&t step=8n 0 2 4\n&vib map=lin loop=5 0 .1 0 -.1\n&a s=sine loop=C4 pitch=&vib\n&out map=sample [&t * &(map=amp step=cycle(&t) 1 .5) * &a]`;
@@ -338,5 +339,40 @@ describe('the core up to an interface (decision 077 §2)', () => {
   it('narrowing: cored up to its roles, then to nothing, is cored to nothing', () => {
     const roles = toCore(score, { ...O, interface: 'roles' }).source;
     expect(toCore(roles, O).source).toBe(toCore(score, O).source);
+  });
+});
+
+describe('repetition is a count (decision 077 §3)', () => {
+  const counts = family('counts');
+  it('a run, a run with a count, at any depth; a run of rests ~!n; x*n as [x!n]', () => {
+    expect(counts('&t step=2 0 0 0 2', O)).toBe('&t step=2 0!3 2');
+    expect(counts('&t step=2 0!2 0 ~ ~ ~', O)).toBe('&t step=2 0!3 ~!3');
+    expect(counts('&t step=2 [2 2 4] 0@2 0@2', O)).toBe('&t step=2 [2!2 4] 0@2!2');
+    expect(counts('&t step=2 0 2*3', O)).toBe('&t step=2 0 [2!3]');
+  });
+  it('as written: a cell read by its units, one counting its laps, a map’s arguments, a splice in brackets, a generator', () => {
+    for (const t of ['&j step=4 &a &a 4\n&o [&j[<<]]', '&t step=2 cycle=8 0 0', '&e map=adsr 0 .04 0 0', '&t step=2 [&sd &sd] &sd*3', '&bar meter("*-+-") step=2'])
+      expect(counts(t, O)).toBe(t);
+  });
+});
+
+describe('the mechanical rows (decision 077, #581 rung 4)', () => {
+  const exact = (key: string, text: string, written: string) => {
+    const out = family(key)(text, O);
+    expect(out).toContain(written);
+    expect(soundsIdentical(text, out, undefined, O)).toBe(true);
+    expect(family(key)(out, O)).toBe(out);
+  };
+  const play = (lines: string) => `${BAR}\n${lines}\n&v s=sine loop=C4\n&out map=sample [&t * &v]`;
+  it('a euclid as its steps', () => exact('euclids', play('&t step=pulse*4 euclid(3, 8)'), '&t step=pulse*4 0 ~ ~ 0 ~ ~ 0 ~'));
+  it('a copy’s braid over its base’s steps: kept and moved, held, replaced, the rest after', () =>
+    exact('copy steps', play('&e 0 -1 0@2 -5@2 -4@2\n&f base=&e^$7 =!2 =@4 9\n&t step=pulse*2 &e &f'), '&f 7 6 7@4 9 3@2'));
+  it('x*n of a splice as n of it in brackets', () => {
+    const t = `${BAR}\n&sd s=white env=&(map=adsr 0 .1 0 .01)\n&t step=pulse*2 &sd &sd*3\n&out map=sample [&t]`;
+    exact('splice subdivisions', t, '&t step=pulse*2 &sd [&sd &sd &sd]');
+  });
+  it('a voice’s pitch= in a product whose pitch is a sum: one more term of it', () => {
+    const t = `${BAR}\n&t step=pulse*2 0 2 4\n&u step=pulse 0 7\n&vib map=lin loop=5 0 .1 0 -.1\n&a s=sine loop=C4 pitch=&vib\n&out map=sample [(&t + &u) * &a]`;
+    exact('pitch', t, '[(&t + &u + &vib) * &a]');
   });
 });
