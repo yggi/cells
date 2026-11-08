@@ -9,6 +9,7 @@ A number left to the performer: a slider on the node, and moving it rewrites the
 - `stride=`
 - a gain in a mix: `&strings * free(.4, 0..1)` — a fader
 - inside a generator: `scan(free(2, 1..3) 1)` — the swing ratio of the Swing blues
+- a style's axis: `sync=free(.3, 0..1)`, its range within the axis's ([style.md](style.md); the example *Radio*)
 
 A tempo marking is its range, centred: `step=free(adagio)` (largo larghetto adagio andante moderato allegro vivace presto).
 

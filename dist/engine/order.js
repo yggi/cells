@@ -71,6 +71,7 @@ export const ORDER = [
     'electroswing',
     'spooky',
     'kinderlied',
+    'radio',
     'brothers',
     'ghosts',
     'tines',

@@ -10,7 +10,7 @@ import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generato
 import { MODE_WORDS } from "../../theory/modes.js";
 import { atTap, parseMap, parseStep } from "./values.js";
 import { syntax } from "./syntax.js";
-import { AXIS_NAMES, SLOTS } from "../style.js";
+import { AXES, AXIS_NAMES, SLOTS } from "../style.js";
 const ADSR_SLOTS = SLOTS.adsr;
 export const SHOWS = [
     'braid',
@@ -267,6 +267,15 @@ export const KEYS = {
         },
     },
 };
+function readAxisFree(s, axis) {
+    const at = s.i;
+    const f = parseFree(s, 'param', false);
+    f.param = axis;
+    const [lo, hi] = AXES.find((a) => a.name === axis).range;
+    if (f.lo < lo || f.hi > hi)
+        s.fail(`${axis}=free(…) moves within the axis, ${lo} to ${hi}: ${axis}=free(${f.value}, ${lo}..${hi})`, at, s.i - at);
+    return f;
+}
 function readStylePoint(s) {
     const what = 'a style after style=, like style=&funk, style=&(map=style .3 .45 .55 .55) or style=[&funk * .8, &bossa * .2]';
     if (s.peek() !== '[')
@@ -586,8 +595,14 @@ export function parseBody(s, head) {
                 if (axes.has(word))
                     s.fail(`${word}= is given twice`, at, word.length);
                 const vat = s.i;
-                s.num(`a number after ${word}= (an axis of a style, 0 to 1)`);
-                axes.set(word, { value: s.text.slice(vat, s.i), at });
+                if (s.text.startsWith('free(', s.i))
+                    axes.set(word, { value: String(readAxisFree(s, word).value), at });
+                else if (/^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\./.test(s.text.slice(s.i)))
+                    s.fail(`${word}= doesn't move yet: a style's axis is a number, or a slider within it, ${word}=free(.3, 0..1) (a moving axis is #576's next rung)`, vat, 1);
+                else {
+                    s.num(`a number after ${word}= (an axis of a style, 0 to 1), or a slider, ${word}=free(.3, 0..1)`);
+                    axes.set(word, { value: s.text.slice(vat, s.i), at });
+                }
                 if (!s.atBoundary())
                     s.fail(`Unexpected '${s.peek()}'`);
                 continue;
@@ -614,6 +629,15 @@ export function parseBody(s, head) {
             read(s, b, key, at);
             if (!s.atBoundary())
                 s.fail(`Unexpected '${s.peek()}'`);
+            continue;
+        }
+        if (word === 'free' && s.peek() === '(' && b.map?.kind === 'style' && /^\(\s*[^,()]*,/.test(s.text.slice(s.i))) {
+            const axis = AXIS_NAMES[tokens.length];
+            if (axis === undefined)
+                s.fail(`A style has ${AXIS_NAMES.length} axes (${AXIS_NAMES.join(' ')}): this value is one more`, at, word.length);
+            s.i = at;
+            const inner = s.within(String(readAxisFree(s, axis).value), at);
+            pushStep(inner, tokens, parseToken(inner));
             continue;
         }
         if (word === 'free' && s.peek() === '(') {
