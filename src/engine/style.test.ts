@@ -5,6 +5,7 @@ import { compileSource as compileAlone } from './compile';
 import { EXAMPLES } from './examples';
 import { AXES, AXIS_NAMES, SLOTS } from './style';
 import { pieceTime } from './duration';
+import { parse } from './parser';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { LIBRARY, resolveSeed } from '../repository/library';
@@ -148,6 +149,46 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
 
   it('a style held: its value on the axis, every bar', () => {
     expect(cutoffs(piece('style=&funk'), 16)).toEqual(Array<number>(8).fill(200));
+  });
+
+  it('a style left to sliders, sync=free(.3, 0..1), by name and in order: its value read as a number is, a slider named by its axis (#576)', () => {
+    const slid = (artic: string) => piece('style=&mine', '4/4', undefined, [`&mine map=style sync=.3 harm=.45 artic=${artic} energy=.55`]);
+    // (the slider's value is what the voice reads: as the number it stands for, and it moves with the slider)
+    expect(cutoffs(slid('free(.2, 0..1)'), 16)).toEqual(cutoffs(slid('.2'), 16));
+    expect(cutoffs(slid('free(.9, 0..1)'), 16)).toEqual(Array<number>(8).fill(900));
+    const inOrder = piece('style=&mine', '4/4', undefined, ['&mine map=style .3 .45 free(.2, 0..1) free(.55, 0..1)']);
+    expect(cutoffs(inOrder, 16)).toEqual(Array<number>(8).fill(200));
+    // (each a slider the frontend draws, named by its axis, its range within it)
+    const frees = (text: string) =>
+      parse(text)
+        .cells.find((c) => c.name === 'mine')!
+        .frees!.map((f) => [f.key, f.param, f.value, f.lo, f.hi]);
+    expect(frees(inOrder)).toEqual([
+      ['param', 'artic', 0.2, 0, 1],
+      ['param', 'energy', 0.55, 0, 1],
+    ]);
+    expect(frees(slid('free(.2, .1..0.8)'))).toEqual([['param', 'artic', 0.2, 0.1, 0.8]]);
+  });
+
+  it('the radio example’s band follows its sliders: articulation opens the bass’s cutoff, 450 to 900 Hz (#576)', () => {
+    const bassCutoffs = (artic: string) => {
+      const r = compileSource(EXAMPLES.radio.source.replace('artic=free(.55, 0..1)', `artic=free(${artic}, 0..1)`));
+      expect(r.diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
+      const lpfs = eventsBetween(plan(r, codeShifts(r)), 0, 8).map((e) => (e.params?.lpf?.kind === 'points' ? e.params.lpf.points[0]!.value : NaN));
+      return [...new Set(lpfs.filter((v) => v < 1000).map((v) => Math.round(v)))];
+    };
+    expect(bassCutoffs('.1')).toEqual([495]);
+    expect(bassCutoffs('.9')).toEqual([855]);
+  });
+
+  it('refuses a slider outside its axis, a fifth value in order, and an axis that moves (not yet: #576’s next rung): shown firing', () => {
+    expect(errors(piece('style=&mine', '4/4', undefined, ['&mine map=style sync=free(.3, 0..2) harm=.45 artic=.2 energy=.55']))).toEqual([
+      'sync=free(…) moves within the axis, 0 to 1: sync=free(0.3, 0..1)',
+    ]);
+    expect(errors('&mine map=style .3 .45 .2 .55 free(.5, 0..1)')).toEqual([expect.stringMatching(/^A style has 4 axes \(sync harm artic energy\): this value is one more/)]);
+    expect(errors(piece('style=&mine', '4/4', undefined, ['&mine map=style sync=0..1 * &k harm=.45 artic=.2 energy=.55', '&k .5']))).toEqual([
+      expect.stringMatching(/^sync= doesn't move yet: a style's axis is a number, or a slider within it/),
+    ]);
   });
 
   it('a mix of styles by weight: the point it computes', () => {
