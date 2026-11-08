@@ -113,6 +113,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 072 · `even` is the foundation: `even(k, n, phase)` a table again, under the scales, the even rhythms and the meter; `euclid` stays the rhythm · → decisions/072-even-is-the-foundation.md
 - 075 · A name is only a name: rename every name a text defines and it plays, says and is read as it did; no name the piece's by convention (the interface names retire); `alpha.test.ts`, its exceptions only shrinking (#560); a text's interface its signature's heads (`&harm, &key from`), never inferred · → decisions/075-a-name-is-only-a-name.md
 - 077 · The core is sound only, cored up to a named interface (a fragment's signature, a piece's tempo, a score's gates); `x!n` is core, a count · → decisions/077-the-core-is-sound-up-to-an-interface.md
+- 079 · A voiceless mix of cells is the sum of their values; a moving range's ends may be sliders, centre ± reach its sugar · → decisions/079-a-sum-of-cells-and-a-window.md
 - 058 · The performer is a gate (amended by 061) · → decisions/058-the-performer-is-a-gate.md
 - 059 · A `use` says what it takes · → decisions/059-named-use.md
 - 060 · The key is named, `over=&key` · → decisions/060-the-key-is-named.md
@@ -127,3 +128,4 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 069 · Compile writes the core · → decisions/069-compile-writes-the-core.md
 - 070 · S1 hears as a listener · → decisions/070-s1-hears-as-a-listener.md
 - 077 · The core is sound only, up to an interface; repetition a count · → decisions/077-the-core-is-sound-up-to-an-interface.md
+- 079 · A sum of cells; a window and its ± · → decisions/079-a-sum-of-cells-and-a-window.md
