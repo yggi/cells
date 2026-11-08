@@ -1,3 +1,0 @@
-### Changed
-
-- **`:pairs` warns** (#15, rung 6; decision 071): `swing=8n:2/3:pairs` reads as `swing=8n:2/3`, as since v0.18.0, now with a warning that it says nothing more and that Migrate drops it (its rule `pairs`). Nothing plays differently. **What a frontend sees at its next pin:** a text that writes `:pairs` has a warning; Jambot's section texts stopped writing it at yggi/jambot#591. Cell studio @ 7d4231d writes it in one test, `src/layout/meters.test.ts:71`, which asserts no diagnostic mentions `pairs`: drop `:pairs` from its text (`swing=8n:2/3,16n:.55` reads the same) or let the warning be.
