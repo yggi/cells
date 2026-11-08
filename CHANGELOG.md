@@ -10,6 +10,89 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.21.0 — 2026-11-08
+
+### Added
+
+- **The fit by signature: `useOn` and `fitsAs`** (decision 065, rung 4; #454, #387). `useOn(bench, id, { resolve, head?, main?, args? })` writes `&head from id(args) main` on a workbench and gives what the copy gives (`Used`). Without `head`, it takes the template's own head, numbered clear of the workbench's names (`&bassline2`). A template of several heads is taken by their names. Without `main`, it takes the one cell that meets the main parameter, the copy compiling over it with nothing new said, of what the workbench offers (the heads of its own signature, `&harm from`) or else of all its cells. Where none or several do, it picks nothing, and the fit is `missing` the parameter: no name decides it (decision 075). Jambot's bench, a meter, a key and a harmony, gives a walking bass three cells that meet it, so the host names `main` or the bench offers its harmony. `fitsAs(id, bench, options)` says whether the template fits there, and why not (`missing`, `sounds`, `unmet`, `diagnostics`, as `fitOf` does). A collection is judged as `fitOf` judges it. `holesOf` gives a template's `signature` (heads, optional, main). Two `walking_bass` uses over two harmonies fit and compile with 0 diagnostics, and every seed template fits a workbench that gives its main argument. **What a frontend sees at its next pin:** the new exports. Jambot's `readLine` (`unionOf(walking_bass, bench)`) can move to `useOn`, and its mode repository can read `holesOf(text).signature.main` where it looks for `&tonic` in `uses` (yggi/jambot#562).
+- **Alpha substitution, a core property, tested** (decision 075; #560, #387; [language/overview.md](docs/language/overview.md#a-name-is-only-a-name)). Rename every name a text defines and it plays, says and is read as it was. `src/engine/alpha.test.ts` checks this over every example, with its `from` lines written in and as written. It lists, with why, each example where it doesn't hold yet: a drum's name on a MIDI card (decision 054), the names the default performer reads (the feel's parts and drum roles), and names bound by the library (a collection's cells, a performer's heads, the instruments' `&style`).
+
+- **A style's axis may move** (#576, rung 2): `artic=.2..0.9 * &drift` by name, a range within the axis and the cell that moves it, or `artic=&drift` for its whole range. What reads it (`&style[artic]`, or `&mine[artic]`) reads that cell, its numbers from 0 to 1 laid within the range, on the cell's own clock. A choice drawn each step is a sample-and-hold: `&drift step=1m/8 [0|.25|.5|.75|1]`. One cell moves an axis, and a mix or a range of styles doesn't move with a moving one yet; both are errors that say so.
+
+- **A style's axis may be a slider** (#576, rung 1): `sync=free(.3, 0..1)` by name, or `&mine map=style free(.3, 0..1) .45 .55 .55` in order, its range within the axis's. The slider is named by its axis, and what reads the style (`&style[artic]`) reads its value. An axis moved by cells (`sync=0..1 * &walk`) is an error that names the next rung. A new example, *Radio*, is a score the default band plays with its style on four sliders. Nothing an existing piece plays changes.
+
+- **A mix of cells with no voice is the sum of their values** (decision 079, #576 rung 3): `&drift [&section * .5 + &song * .3 + &set * .2]`, each cell's value at each moment times its gain, and any number added, held to 0…1 where a factor reads it. It moves a parameter or a style's axis like any line. Until now such a mix was an error, so no piece that compiled changes. A style's axis moved by a sum is laid within its range term by term, and a moving style read through a mix of styles (`style=[&funk * .5, &mine * .5]`) is the mix's weighted sum.
+
+- **A moving range's ends may be sliders, and centre ± reach is its sugar** (decision 079, #576 rung 4).
+  - `lpf=free(400, 200..800)..free(2400, 1200..4800) * &lfo` is a window a hand sets, the cell moving the value inside it.
+  - `lpf=free(1200, 800..2000) ± free(400, 0..800) * &lfo` is the same window by its centre and reach, `(c − r)..(c + r)`, held at 0 below and, on a style's axis, to the axis (`+-` reads as `±`).
+  - The sliders are named for what they set: `lpf low` and `lpf high`, or `lpf` and `lpf reach`.
+  - `toCore` writes `1200 ± 400` as `800..1600`, and leaves `±` with a slider as written.
+  - A new place in decision 078's table: a range's end.
+
+  The example *Radio* writes its windows so, at the values it had: its sound doesn't change.
+
+- **Every number may be a slider** (#580, decision 078): `free(v, lo..hi)` goes wherever a number is written. That now includes `cycle=`, `laps=`, `seed=` and `size=`, a style's weight, an envelope's or a style's values in order, `euclid(k, n)` and the other generators' arguments, `fifths(n)`, `map=edo(n)`, `ed(n, r)` and `midi(c, p)`, a step of a braid (`0 free(2, 0..7) 4`), a step's `!n` `@n` `*n` `/n` `?p` and `(k, n, r)`, a pick, a turn and a move (`&x[free(0, 0..3)]`, `&x[>>free(4, 0..7)]`, `&x^free(1, -7..7)`), a hit's gain (`&hh:0:free(.4, 0..1)`) and a clock's `*n`. A number that shapes the piece is the slider's value now, and moving it compiles again. A whole place takes a whole range and rounds its value, and its spec is marked `whole: true`, so a slider can move by ones. Its range stays within the place's. `free.md`'s table of the places is generated from the parser's (`NUMBER_PLACES`). Nothing an existing piece plays changes.
+
+- **`toCore(text, { interface })`: the core up to a named interface** (decision 077 §2; #581, rung 2). An interface is a list of names, or a preset:
+  - `'roles'`: the role cells and the gates each lists (a score cored up to its gates, for the band);
+  - `'signature'`: a fragment's heads and parameters.
+
+  Each interface cell keeps its name, stays a cell read by name and is a root of the fold. A step that would lose one isn't taken. `interfaceOf` says which names an interface keeps.
+
+- **An envelope's slot may be moved by a cell alone** (#597): `attack=&a`, `sustain=&s` on a `map=adsr` cell. The cell's values are the slot's (seconds, or a level from 0 to 1 for `sustain=`), read at each note's start, as a slot moved by a range already is. Until a note reads it, the slot holds 0 in the envelope's braid, which `&env[attack]` reads. A value that is none of the slot's is an error. The errors at a range at a gain in a mix, a hit's gain, a style's weight and a range at a tonic now say what to write instead. Nothing an existing piece plays changes.
+
+- **A key's grades** (#508, decision 072): `gradesOf(result, key, degree)` in `engine/grade` gives a key's tonal hierarchy, Lerdahl's basic space, read as a meter's levels are: each pitch class's grade, 0 the root, 1 the fifth, 2 the third, 3 the scale, 4 the chromatic, from any degree's triad, written `*+-.,` from the ends (C major's tonic `*,.,-.,+,.,.`); for a key of seven notes it is Lerdahl's, for any other the same chain taken as it is (a pentatonic's "triad" is a sus2, C D G). It is the chain of even selections (the key's degrees, the triad `even(3, n)` of them, root and fifth `even(2, 3, 1)` of the triad) read from the key a text writes. No new form: the same chain plays as tables over the key, `&triad over=&key[>>k] even(3, 7)` the triad on degree k (`tables.md`).
+- **An example, `circle`**: the diatonic circle of fifths, I IV vii° iii vi ii V, its chords one triad turned through the key rather than seven written as degree lists; it sounds as the written-out sequence does and is 84 to its 154 by decision 049's measure. No other piece's events move. **What a frontend sees at its next pin:** one more example in the library; `engine/grade` is new.
+
+### Changed
+
+- **No name is the piece's by convention** (#387). The compiler reads no interface names. A `from` line binds what its signature declares, and a collection's lines read only what it defines, plus its sounds and its taps. The old `use` line keeps reading them, under `CompileOptions.old` (Migrate, Normalise). In a piece with performers, every line that steps on a clock and that nothing plays or reads is said to be silent (an info), whatever its name or kind: a score's `&harm` too, where nothing reads it, unless the score offers it, a head of its own signature (`&harm, &key from`, `ParseResult.offers`; decision 075). No example or seed fragment says anything new. **Jambot's section text** says it of `&harm` where its part doesn't read the harmony (a lead's); the migration is one line at its head, `&harm, &key from`, offering both to the band. `canonicalText` and `sameText` keep the names a template's signature declares, plus the names a text uses and doesn't define, and number the rest: `&b meter("3/4")` is now `&bar meter("3/4")` renamed. The same goes for `identicalUpToRenaming`. `minify` renames `&bar`, `&key` and `&tempo` like any other name. **What a frontend sees at its next pin:** nothing it plays changes, and no event snapshot moves. A filed fragment that differs from a held one only by an interface name's spelling is now that fragment renamed.
+
+- **The example *Radio* drifts.** Its articulation moves once a section and its energy once every two, each by a sample-and-hold, and its syncopation and harmony stay sliders. Its event snapshot moves, as the point of the change. No other piece's does.
+
+- **The example *Radio*'s articulation drifts at three rates, summed**: a section, a song and a set, weighted .5, .3 and .2. Its event snapshot moves, as the point of the change. No other piece's does.
+
+- **A cell where a number shapes the piece is an error that names the rule** (decision 078): `cycle=&k`, `&x[&k]`, `0!&k`, `shift=0..7 * &k`. A cell moves only a number read while the piece plays.
+
+- **The core writes repetition as counts** (decision 077 §3; #581, rung 3). A new last family, `counts`, writes every maximal run of alike steps as `x!n`, at every depth: `0 0 0 2` is `0!3 2`, `~ ~` is `~!2`, `0@2 0@2` is `0@2!2`. It writes `x*n` as `[x!n]`. As written:
+  - a cell read by its units (picked or rotated);
+  - a cell that counts its own laps (`cycle=`);
+  - a map's arguments (an envelope's `a d s r`, ratios, a role);
+  - a splice inside brackets, and `x*n` of a splice, where `[&sd &sd]` is not `[&sd!2]`;
+  - a generator's steps.
+
+  `repeats` still writes counts out at the start of each round, so the families between read every step. Over the examples, the core is 3.4 % shorter (72,050 → 69,617 characters; 45 shorter, Musicbox 17 longer, as its fold finds other phrases). Every rewrite is exact by S1. Nothing a piece plays changes.
+
+- **With no interface, the core is what plays and nothing more** (decision 077 §1). A role goes, and the gates it read become products, each gate checked on its own by S1, so a gate over a kit stays without holding the others back. Spooky, Electroswing and Kinderlied have no performer left in their core. Up to their roles they keep them, and cored further to nothing they give their source's core. Nothing a piece plays changes.
+
+- **`Core.left` reports only what is left** (decision 077; #581, rung 1). A tape's read head (`play=&tape at=`) is the ramp's, and a `[ ]` no finer tap plays is core dilate, so neither is reported. The `unit reads` row goes, since `x!n` is core, a count. `subsequences` now reports `x*n`, `<a b>` and a euclid alone. Over the examples, 72 of 83 are wholly in the core (66 before). Nothing a piece plays changes.
+
+- **`toCore` writes the mechanical rows, and every example is wholly in the core** (decision 077; #581, rung 4):
+  - a euclid as its steps: `euclid(3, 8)` is `0 ~ ~ 0 ~ ~ 0 ~`;
+  - a gate over a kit as its notes read through the kit (`&g over=&kit step=…`), its level a factor in the mix;
+  - `x*n` of a splice as n of it in brackets: `&sd*3` is `[&sd &sd &sd]`, each line checked by S1;
+  - a copy's braid over its base's steps: `&f base=&e^$7 =!3 0@2` written as the steps it plays, where its base is plain numbers reading no table;
+  - a voice's `pitch=` in a product whose pitch is a sum, as one more term of it: `(&q + &k + &vib) * &v`.
+
+  Each rewrite is checked by S1. Over the examples, `Core.left` is empty for all 83 (72 before #581's rungs). Nothing a piece plays changes.
+
+- **A repository's query fits by signature** (#587, decision 075; the owner on #587: option (a), with (b) as its fallback). A query given a `workbench` judges a template by `fitsAs`: a copy taken by a `from` line with its main argument. A collection is judged by its lines, as before. Its `from` lines take from the repository's own fragments, the seed's and a layer's filed ones.
+  - **`QueryOptions.arguments`** names each facet's main argument on the workbench: `{ bass: '&harm', motif: '&key', harmony: '&key', mode: '&tonic' }`. The query's facet picks it, or, with no facet asked for, the first of the fragment's own facets the map names.
+  - **The fallback:** a template of a facet the map doesn't name is taken with the one cell that meets its main parameter, of what the workbench offers (`&harm, &key from`) or else all its cells, and fits nowhere that several do. A meter, a key and a harmony all read as tables, so on Jambot's bench a bass line fits only where the query names `&harm` or the bench offers it. A meter is the one cell that meets a mode's tonic on a workbench of a meter alone, so name `mode: '&tonic'`.
+  - **No name is the workbench's by convention:** the union by lines renames a collection's `&bar`, `&key` or `&harm` that differs from the workbench's, as any other name, where it said the name was defined twice. `Union.twice` is gone.
+  - **The API:** `cachedFit(resolve, limit)` answers `(text, workbench, main?) => FitAs`, where it took two texts and answered a `Fit`. `Fit` is no longer exported. `FitAs` gains `union` for a collection.
+  - **The cost:** a query that names each facet's argument compiles at most two a fragment for a new workbench, where it compiled one. One that names none compiles at most one more for each cell of the workbench (`fit.test.ts`).
+
+  **What a frontend sees at its next pin:** a query with a `workbench` and no `arguments` returns fewer templates where the workbench offers several cells that meet one; name the arguments. A filter module (`lowpass` …) fits only where its input is found. Neither frontend asks a query with a workbench today: Jambot fits its benches through `fitOf`, gone since #588, and moves to `fitsAs` (yggi/jambot#562).
+
+- **`:pairs` warns** (#15, rung 6; decision 071): `swing=8n:2/3:pairs` reads as `swing=8n:2/3`, as since v0.18.0, now with a warning that it says nothing more and that Migrate drops it (its rule `pairs`). Nothing plays differently. **What a frontend sees at its next pin:** a text that writes `:pairs` has a warning; Jambot's section texts stopped writing it at yggi/jambot#591. Cell studio @ 7d4231d writes it in one test, `src/layout/meters.test.ts:71`, which asserts no diagnostic mentions `pairs`: drop `:pairs` from its text (`swing=8n:2/3,16n:.55` reads the same) or let the warning be.
+
+### Removed
+
+- **`INTERFACE_NAMES`, `unionOf` and `fitOf`** (#588, decision 075; deprecated by #570). Use `holesOf(text).signature`, `useOn` and `fitsAs`, which bind nothing by name. `cachedFit`, what the repository's queries ask, keeps its judgment by lines until #587, with the names the old union never renamed private to it. The `Fit` and `Union` types stay as its answer. **What a frontend sees at its next pin:** Jambot's `unionOf` and `fitOf` calls (`bass-lines.ts`, `lead-lines.ts`, `progressions.ts`, `rhythms.ts`, `packages/score/experiments/rhythm-query.ts`) no longer typecheck: it moves to `useOn` and `fitsAs`, naming each bench's main argument (yggi/jambot#562). Cell studio uses none of the three.
+- **Migrate no longer reads a `use` line** (#588, after a minor of warnings; the owner: "migrate can stop reading use with the next release"). Every `use` line is an error, `use is retired`, whether read the old way or not. It names no `from` line of its own, since only the fragment says whether that is a collection's or a template's with its arguments, which ends #406's wrong suggestion. Migrate's `use` and `from` rules go, and so do the old way's name rules in the expansion (a template's parameters, the interface names, by name). Gone from `@yggi/cells/engine/parser/use`: `readUse`, `writeUse`, `UseForm`, `USE_FORM`, `USE_OLD` and `useOld`. `USE_RETIRED` stays, with a new message. A text written before v0.15.0 is migrated by Migrate at v0.20.0; `docs/language/use.md` says how to write a `use` line by hand. The retired ids `core kit` and `gm kit` forward by a `from` line (`* from "core kit"`), with a warning, and Migrate's `forwarded` rule writes what they forward to. Normalise's library rule writes a `from` line, where it wrote a `use` line that Migrate then rewrote. **What a frontend sees at its next pin:** no piece that compiled sounds different, and no event snapshot moves. Jambot writes no `use` (yggi/jambot#562, yggi/jambot#609); its recorded section texts in `fixtures/jambot-sections.json` keep their text as lifted, and gain `migrated`, each as Migrate wrote it at v0.20.0.
+
 ## v0.20.0 — 2026-11-08
 
 ### Added
