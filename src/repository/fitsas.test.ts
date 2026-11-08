@@ -18,38 +18,44 @@ const METER = '&bar meter("4/4") step=120bpm';
 /** Jambot's bench for a bass line (`readLine`, yggi/jambot packages/engine/src/bass-lines.ts): a meter, a key, a harmony. */
 const HARMONY = [METER, '&key scale(ionian, C)', '&harm over=&key step=1m [0,2,4] [3,5,7]'].join('\n');
 
+/** The bench, offering its harmony to what it takes (decision 075: the heads of its own signature, `&harm from`). */
+const OFFERING = `&harm from\n${HARMONY}`;
+
 describe('useOn: a template by a from line', () => {
-  it('writes the from line, its head clear of the workbench’s names, its main argument the cell that meets it; the copy’s other names its own', () => {
-    const u = useOn(HARMONY, 'walking_bass', { resolve });
+  it('writes the from line, its head clear of the workbench’s names, its main argument the one cell offered that meets it; the copy’s other names its own', () => {
+    const u = useOn(OFFERING, 'walking_bass', { resolve });
     expect(u.line).toBe('&bassline from walking_bass &harm');
-    expect(u.text).toBe(`${HARMONY}\n&bassline from walking_bass &harm`);
+    expect(u.text).toBe(`${OFFERING}\n&bassline from walking_bass &harm`);
     expect(u.used?.gave).toEqual(['&bassline', '&bassline_bassNext']);
     expect(said(u.text)).toEqual([]);
     // (a head the workbench has is numbered clear of it)
-    expect(useOn(`${HARMONY}\n&bassline step=4n 0`, 'walking_bass', { resolve }).heads).toEqual(['&bassline2']);
+    expect(useOn(`${OFFERING}\n&bassline step=4n 0`, 'walking_bass', { resolve }).heads).toEqual(['&bassline2']);
     // (told its head and its main argument, it writes them)
     expect(useOn(HARMONY, 'walking_bass', { resolve, head: '&walk', main: '&key' }).line).toBe('&walk from walking_bass &key');
   });
 
-  it('finds the main argument by what it is, not its name: a harmony named &chords, with no other table there', () => {
-    const bench = [METER, '&chords over=scale(ionian, C) step=1m [0,2,4] [3,5,7]'].join('\n');
-    expect(useOn(bench, 'walking_bass', { resolve }).main).toBe('&chords');
-    // (two cells that meet it, neither of its name: none, and the fit is missing it)
-    const two = [METER, '&k scale(ionian, C)', '&verse over=&k step=1m [0,2,4]', '&chorus over=&k step=1m [3,5,7]'].join('\n');
-    expect(useOn(two, 'walking_bass', { resolve }).main).toBeNull();
-    expect(fitsAs('walking_bass', two, { resolve })).toMatchObject({ fits: false, missing: ['&harm'] });
+  it('finds the main argument by what a cell is, never its name: one that meets it is it; several, none', () => {
+    // (a rate alone is the one cell a meter's &tempo can be: whatever its name)
+    expect(useOn('&t step=96bpm', 'meter', { resolve }).main).toBe('&t');
+    // (Jambot's bench: the meter, the key and the harmony each read as a table, so a walking bass meets three, and
+    //  none is picked, though one is called &harm; the bench offers one, or the host names it)
+    expect(useOn(HARMONY, 'walking_bass', { resolve }).main).toBeNull();
+    expect(fitsAs('walking_bass', HARMONY, { resolve })).toMatchObject({ fits: false, missing: ['&harm'] });
+    const renamed = OFFERING.replace(/&harm\b/g, '&chords');
+    expect(useOn(renamed, 'walking_bass', { resolve }).main).toBe('&chords');
+    expect(fitsAs('walking_bass', renamed, { resolve })).toMatchObject({ fits: true, diagnostics: [] });
   });
 
   it('plays as the union did, where the union played it (S1)', () => {
     const bench = `${HARMONY}\n&bassV s=saw loop=C2\n&out map=sample [&bassline * &bassV]`;
     const union = unionOf(bodyOf(resolve('walking_bass')!), bench).text;
-    const use = useOn(bench, 'walking_bass', { resolve, head: '&bassline' }).text;
+    const use = useOn(bench, 'walking_bass', { resolve, head: '&bassline', main: '&harm' }).text;
     expect(soundsIdentical(union, use, undefined, { resolve })).toBe(true);
   });
 
   it('takes one template twice, where the union added nothing the second time: two walking basses over two harmonies', () => {
     const bench = `${HARMONY}\n&harm2 over=&key step=1m [4,6,8] [0,2,4]`;
-    const one = useOn(bench, 'walking_bass', { resolve });
+    const one = useOn(bench, 'walking_bass', { resolve, main: '&harm' });
     const two = useOn(one.text, 'walking_bass', { resolve, main: '&harm2' });
     expect(two.line).toBe('&bassline2 from walking_bass &harm2');
     expect(two.used?.gave).toEqual(['&bassline2', '&bassline2_bassNext']);
@@ -99,7 +105,8 @@ describe('fitsAs: every seed template', () => {
 
   it.each(TEMPLATES.map((f) => [f.id]))('%s fits a workbench that gives its main argument, with 0 diagnostics; it is missing on one that doesn’t', (id) => {
     const { main } = signatureOf(resolve(id)!)!;
-    const lines = main ? benches[main]! : [METER];
+    // (each bench offers the cell that is the argument, the heads of its own signature: found by what it is, decision 075)
+    const lines = main ? [`${main} from`, ...benches[main]!] : [METER];
     // (on one of the library's meters, or a bar of 16 eighths: a waltz's line is three beats, #129; a rounded binary form two bars of 4/4)
     const fits = meters.map((m) => fitsAs(id, lines.join('\n').replace(METER, `&bar ${m}`), { resolve }));
     const fit = fits.find((f) => f.fits) ?? fits[0]!;

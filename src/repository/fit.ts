@@ -293,7 +293,7 @@ export interface UseOnOptions {
   readonly resolve: Resolve;
   /** The head's name; by default the template's own, numbered clear of the workbench's (`&bassline2`). */
   readonly head?: string;
-  /** The main argument, as a `from` line writes it (`&harm`, `D`); by default the workbench's cell that meets the main parameter. */
+  /** The main argument, as a `from` line writes it (`&harm`, `D`); by default the one cell of the workbench (or of what it offers) that meets the main parameter. */
   readonly main?: string;
   /** The named arguments (`{ swing: '8n:.64' }`). */
   readonly args?: Readonly<Record<string, string>>;
@@ -324,27 +324,27 @@ function newDiagnostics(result: CompileResult, before: readonly Diagnostic[]): D
 }
 
 /**
- * The workbench's cell a template's main parameter is read from, where useOn isn't told one: of the workbench's cells,
- * those the copy compiles over with nothing said that the workbench alone doesn't say (its sound holes stood in), read
- * the way the template reads its parameter (a table by `over=`, a rate by `step=`, a note as a tonic), a meter aside. One that does is
- * it; where several do, the one the template names its parameter (`&harm`), a convention of the library's that only
- * breaks the tie; else none. The fit is then `missing` the parameter.
+ * The workbench's cell a template's main parameter is read from, where useOn isn't told one (decision 075: by what a
+ * cell is, never its name). The candidates are the workbench's cells, or, where it declares what it offers (the heads of
+ * its own signature, `&harm, &key from`), those. A candidate meets the parameter where the copy compiles over it with
+ * nothing said that the workbench alone doesn't say (its sound holes stood in), read the way the template reads it (a
+ * table by `over=`, a rate by `step=`, a note as a tonic). Exactly one that does is it; none or several,
+ * and there is none: the fit is then `missing` the parameter, and the host names the argument (`main`) or the
+ * workbench says what it offers. A meter reads as a table, so a harmony beside it is two candidates: offer one.
  */
 function mainOn(
   bench: string,
   id: string,
   heads: readonly string[],
-  main: string,
   args: UseOnOptions['args'],
   compiled: (text: string) => CompileResult,
   stand: readonly string[],
 ): string | null {
   const alone = compiled([bench, ...stand].join('\n'));
   const meets = (cell: string) => !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).length;
-  const named = declarations(bench).map((l) => `&${l.name}`);
-  if (named.includes(main) && meets(main)) return main;
-  // (a meter is the workbench's time, which a template taps: never an argument found for it, though it reads as a table)
-  const meeting = named.filter((n) => !heads.includes(n) && n !== main && !alone.cells.get(n.slice(1))?.meter && meets(n));
+  const offers = parse(bench).offers;
+  const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
+  const meeting = named.filter((n) => !heads.includes(n) && meets(n));
   return meeting.length === 1 ? meeting[0]! : null;
 }
 
@@ -361,7 +361,7 @@ function clearOf(bench: string, name: string): string {
 /**
  * A template taken onto a workbench (decision 065, #454): the workbench with `&head from id(args) main` written on it, and
  * what the copy gives. Without `head`, the template's head numbered clear of the workbench's names; a template of several
- * heads is taken by their names. Without `main`, the workbench's cell that meets the main parameter (`mainOn`). A
+ * heads is taken by their names. Without `main`, the one cell of the workbench that meets the main parameter (`mainOn`). A
  * fragment with no signature, a collection, is taken by every name it defines (`* from id`). Replaces `unionOf`, which
  * merges a fragment's lines by name.
  */
@@ -380,7 +380,7 @@ export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
   const stand = holesOf(text, compiled, options.resolve)
     .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
     .map(standIn);
-  const main = options.main ?? (signature.main ? mainOn(bench, id, heads, signature.main, options.args, compiled, stand) : null);
+  const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
   const line = fromLine(heads, id, options.args, main);
   return { text: written(line), line, heads, main, used: usedBy(written(line)) };
 }

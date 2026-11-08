@@ -21,8 +21,7 @@ export function restingParts(parsed) {
         rested: new Map([...rests].map(([name, d]) => [name, d.span])),
     };
 }
-const offered = (c) => c.units.some((u) => u.atom.kind === 'chord') && c.units.every((u) => u.atom.kind === 'chord' || u.atom.kind === 'rest');
-export function unplayed(ctx, decls, cells, outputs, clocks) {
+export function unplayed(ctx, decls, cells, outputs, clocks, offers = new Set()) {
     if (![...decls.values()].some((d) => d.gate))
         return;
     const named = new Set();
@@ -53,6 +52,6 @@ export function unplayed(ctx, decls, cells, outputs, clocks) {
         if (d.gate)
             visit(d.gate, new Set());
     for (const c of cells.values())
-        if (c.clock && c.units.length && !named.has(c.name) && !clocks.has(c.name) && !ctx.broken.has(c.name) && !offered(c))
+        if (c.clock && c.units.length && !named.has(c.name) && !clocks.has(c.name) && !ctx.broken.has(c.name) && !offers.has(c.name))
             ctx.info(`&${c.name} is written and nothing plays or reads it: it is silent (a part no performer plays)`, c.span);
 }

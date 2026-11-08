@@ -11,10 +11,12 @@ const said = (lines: string[]) => compileSource(lines.join('\n')).diagnostics.ma
 describe('where a score and its band don’t meet', () => {
   it('a part the score writes with no performer to play it: 0 errors, 1 info naming it; nothing said of a fragment alone, which has no performer', () => {
     expect(said([bar, '&bassline step=4n 0 2']).filter((d) => d.startsWith('info'))).toEqual([]);
-    // (nor of what a score offers its band, the harmony, unread)
-    expect(
-      said([bar, '&key scale(minor, D)', '&harm over=&key step=1m [0,2,4]', '&tune step=4n 0', '&v s=saw loop=C4', '&tuneOut play=&tune &v', '&out map=sample [&tuneOut]']),
-    ).toEqual([]);
+    // (a harmony nothing reads is silent, and said, whatever its name, decision 075; nothing is said of one the score
+    //  offers its readers, a head of its own signature)
+    const score = [bar, '&key scale(minor, D)', '&harm over=&key step=1m [0,2,4]', '&tune step=4n 0', '&v s=saw loop=C4', '&tuneOut play=&tune &v', '&out map=sample [&tuneOut]'];
+    expect(said(score).filter((d) => d.startsWith('info'))).toEqual([expect.stringMatching(/^info.*&harm is written and nothing plays or reads it/)]);
+    expect(said(score.map((l) => l.replace('&harm ', '&chords ')))).toEqual(said(score).map((d) => d.replace('&harm', '&chords')));
+    expect(said(['&harm, &key from', ...score])).toEqual([]);
     const r = compileSource([bar, '&bassline step=4n 0 2', '&tune step=4n 4 5', '&v s=saw loop=C4', '&tuneOut play=&tune &v', '&out map=sample [&tuneOut]'].join('\n'));
     expect(r.ok).toBe(true);
     expect(r.diagnostics.map((d) => `${d.severity}: ${d.message}`)).toEqual(['info: &bassline is written and nothing plays or reads it: it is silent (a part no performer plays)']);

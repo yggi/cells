@@ -7,8 +7,8 @@
  * - In a piece with performers (a gate), a line that steps on a clock and that nothing plays or reads (`&bassline
  *   step=16n …` with no performer for it): it is silent, as any line is that nothing plays, and an info says so
  *   (`unplayed`). A piece with no performer, a fragment compiled alone (a vamp, a bass line), is a part waiting for
- *   one, and nothing is said; nor of what a score offers its band to read, a harmony (a line of chords), which a band may
- *   leave unread.
+ *   one, and nothing is said; nor of what the text offers its readers, the heads of its own signature (`&harm, &key
+ *   from`), which a band may leave unread (decision 075: what a line is, never its name).
  *
  * A role that rests for a whole section is written by its conductor as a tacet (`&leadline ~`): read by its gate, it
  * says nothing.
@@ -24,5 +24,10 @@ export declare function restingParts(parsed: ParseResult): {
     parsed: ParseResult;
     rested: ReadonlyMap<string, Span>;
 };
-/** In a piece with performers, an info for each line that steps on a clock and that nothing plays or reads: its name appears in no other cell, and no output. */
-export declare function unplayed(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, outputs: CompileResult['outputs'], clocks: CompileResult['clocks']): void;
+/**
+ * In a piece with performers, an info for each line that steps on a clock and that nothing plays or reads: its name
+ * appears in no other cell, and no output (the reach the core fold deletes by, decision 069). Said of what the line is,
+ * never of its name (decision 075): the one line left unsaid is one the text offers its readers, a head of its own
+ * signature (`offers`: `&harm, &key from`), which a reader may leave unread.
+ */
+export declare function unplayed(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, outputs: CompileResult['outputs'], clocks: CompileResult['clocks'], offers?: ReadonlySet<string>): void;

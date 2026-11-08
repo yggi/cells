@@ -183,13 +183,12 @@ function newDiagnostics(result, before) {
         return false;
     });
 }
-function mainOn(bench, id, heads, main, args, compiled, stand) {
+function mainOn(bench, id, heads, args, compiled, stand) {
     const alone = compiled([bench, ...stand].join('\n'));
     const meets = (cell) => !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).length;
-    const named = declarations(bench).map((l) => `&${l.name}`);
-    if (named.includes(main) && meets(main))
-        return main;
-    const meeting = named.filter((n) => !heads.includes(n) && n !== main && !alone.cells.get(n.slice(1))?.meter && meets(n));
+    const offers = parse(bench).offers;
+    const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
+    const meeting = named.filter((n) => !heads.includes(n) && meets(n));
     return meeting.length === 1 ? meeting[0] : null;
 }
 function clearOf(bench, name) {
@@ -217,7 +216,7 @@ export function useOn(bench, id, options) {
     const stand = holesOf(text, compiled, options.resolve)
         .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
         .map(standIn);
-    const main = options.main ?? (signature.main ? mainOn(bench, id, heads, signature.main, options.args, compiled, stand) : null);
+    const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
     const line = fromLine(heads, id, options.args, main);
     return { text: written(line), line, heads, main, used: usedBy(written(line)) };
 }

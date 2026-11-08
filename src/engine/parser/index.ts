@@ -30,6 +30,7 @@ export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse, type FromF
 export function parse(whole: string, { old = false }: { readonly old?: boolean } = {}): ParseResult {
   const cells: CellDecl[] = [];
   const uses: UseLine[] = [];
+  const offers: string[] = [];
   // (plugin blocks are not cells: split off and blanked, so the lines keep their numbers)
   const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole, [...SHOWS, ...BUILTIN_PLUGINS.map((p) => p.name)]);
   const diagnostics: Diagnostic[] = [...pluginDiagnostics];
@@ -71,6 +72,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
       const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
       if (from === null) diagnostics.push({ severity: 'error', message: FROM_FORM, span });
       else if (from.kind === 'use') uses.push({ id: from.id, names: from.names, span });
+      else offers.push(...from.names.map((n) => n.slice(1)));
       return;
     }
     try {
@@ -100,7 +102,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
     }
   });
   // (base=: each copy resolved into a plain cell, decision 026)
-  return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}), ...(old ? { old } : {}) });
+  return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}), ...(offers.length ? { offers } : {}), ...(old ? { old } : {}) });
 }
 
 /**

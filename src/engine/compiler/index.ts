@@ -57,7 +57,7 @@ export function compile(written: ParseResult, env: Env, used: ReadonlySet<string
   const outputs = banded(sectioned(made.outputs, timed.cells, declared.sections), timed.cells, bands);
   checkLimits(ctx, decls, timed.cells, clocks, outputs);
   // (a line nothing plays or reads is silent, and said: decision 063 §4)
-  unplayed(ctx, decls, timed.cells, outputs, clocks);
+  unplayed(ctx, decls, timed.cells, outputs, clocks, new Set(parsed.offers ?? []));
   // (an instrument's sound parameters, its voices': decision 067)
   const cells = displayCells(instrumentParams(ctx, decls, timed.cells, outputs, bound.playings));
   checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands, instrumentsOf(outputs, cells));

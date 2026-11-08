@@ -101,7 +101,7 @@ export interface UseOnOptions {
     readonly resolve: Resolve;
     /** The head's name; by default the template's own, numbered clear of the workbench's (`&bassline2`). */
     readonly head?: string;
-    /** The main argument, as a `from` line writes it (`&harm`, `D`); by default the workbench's cell that meets the main parameter. */
+    /** The main argument, as a `from` line writes it (`&harm`, `D`); by default the one cell of the workbench (or of what it offers) that meets the main parameter. */
     readonly main?: string;
     /** The named arguments (`{ swing: '8n:.64' }`). */
     readonly args?: Readonly<Record<string, string>>;
@@ -111,7 +111,7 @@ export interface UseOnOptions {
 /**
  * A template taken onto a workbench (decision 065, #454): the workbench with `&head from id(args) main` written on it, and
  * what the copy gives. Without `head`, the template's head numbered clear of the workbench's names; a template of several
- * heads is taken by their names. Without `main`, the workbench's cell that meets the main parameter (`mainOn`). A
+ * heads is taken by their names. Without `main`, the one cell of the workbench that meets the main parameter (`mainOn`). A
  * fragment with no signature, a collection, is taken by every name it defines (`* from id`). Replaces `unionOf`, which
  * merges a fragment's lines by name.
  */

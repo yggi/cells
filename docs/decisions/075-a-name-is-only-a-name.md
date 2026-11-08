@@ -1,6 +1,6 @@
 # 075 · A name is only a name: rename every name a text defines, and it plays, says and is read as it did
 
-**Date:** 2026-11-07 · **Status:** proposed (the owner, 2026-11-06, on the work for #387: "make cells-language fully immune to alpha substitution, which should be tested and stated as core property of the language"; the gaps' rulings are open, #556) · Issues: #560 (the road), #387, #454, #556 · Amends [047](047-fragments-are-files.md) point 2, [060](060-the-key-is-named.md) point 1, [065](065-fragments-take-arguments.md) points 4 and 8, [069](069-compile-writes-the-core.md) (minify)
+**Date:** 2026-11-07 · **Status:** accepted (the owner, 2026-11-06, on the work for #387: "make cells-language fully immune to alpha substitution, which should be tested and stated as core property of the language"; on #570, 2026-11-08: "75 accepted", the silent line "should not be a heuristic or based on a name", and for the fit "better pick nothing, we should avoid magic names anywhere"; the gaps' rulings are open, #556) · Issues: #560 (the road), #387, #454, #556 · Amends [047](047-fragments-are-files.md) point 2, [060](060-the-key-is-named.md) point 1, [065](065-fragments-take-arguments.md) points 4 and 8, [069](069-compile-writes-the-core.md) (minify)
 
 ## Context
 
@@ -19,7 +19,7 @@ Renaming was measured on #387, over every example (`src/engine/alpha.test.ts`; S
 1. **Alpha substitution is a property of the language.**
    - **The renaming:** rename every name a text defines, consistently, everywhere it is written (labels and comments too), to names it doesn't write.
    - **What stays the same:** the text plays what it played (S1, decision 070), says what it said (its diagnostics, the names renamed back), and the default performer reads each event as the same part.
-   - **What a cell means:** its line, never its name. This is proposed as invariant **I10** of #26: *a name is only a name*.
+   - **What a cell means:** its line, never its name. It is invariant **I10** of #26: *a name is only a name*.
 2. **Some names are not the text's to rename.**
    - **Free names:** what a text uses and doesn't define, `&bd` in a groove, is a hole. It is filled by whatever the using text binds to it.
    - **Keywords:** a template's keyword is its parameter's name. `swing=` binds `&swing` (065 §2), as an argument's name does in a call. A text that defines the template may rename it. A text that uses the template writes it as the template does.
@@ -36,19 +36,30 @@ Renaming was measured on #387, over every example (`src/engine/alpha.test.ts`; S
    - **Written in** (every `from` line expanded): the language alone.
    - **As written** (every name the text binds itself): the language with its library.
    - `alpha.test.ts` runs both over every example. It lists each example where the property doesn't hold yet, by name and with why, and an example that starts to hold fails until it leaves the list. The list only shrinks.
-5. **What breaks it is a bug against this decision**, each fixed by its own ruling (#560's rungs; the options are on #556):
+5. **A text's interface is declared, never inferred.** A text says what it offers its readers by a signature of heads
+   alone: `&harm, &key from`, a score offering its band the harmony and the key. Two things read that and nothing else:
+   - **The "nothing plays it" info** (decision 063 §4) is said of every line, in a piece with performers, that steps on a
+     clock and that nothing plays or reads. That is the reach the core fold deletes by (069, #561), with no exemption
+     by kind or by name. The one line it isn't said of is one the text offers.
+   - **The fit's main argument found without being named** (`useOn`, `fitsAs`) is the one cell, of what the workbench
+     offers or else of all its cells, that the template's copy compiles over with nothing new said. None or several,
+     and nothing is picked: the fit is `missing` the parameter, and the host names the argument. A meter, a key and a
+     harmony all read as tables, so a workbench with all three offers one, or the host names it.
+6. **What breaks it is a bug against this decision**, each fixed by its own ruling (#560's rungs; the options are on #556):
    - a drum's note on a MIDI card;
    - the feel's parts and roles, which are the hub's (`contracts/feel`, a twin issue there);
    - the names the library binds.
 
-   None is ruled here. Each changes what a name means in a written piece, so each is the owner's to rule, with its migration. Until each is ruled, it stays a listed exception.
+   None is ruled here. Each changes what a name means in a written piece, so each is the owner's to rule, with its
+   migration. Until each is ruled, it stays a listed exception.
 
 ## Consequences
 
 - #454's rung (branch `ccr-926a164a-olcwdz`):
   - `useOn` and `fitsAs`;
   - `INTERFACE_NAMES` read nowhere;
-  - a harmony nothing reads, told by its chords, not by `&harm`;
+  - the silent line said by reach, a text's offered heads (`ParseResult.offers`) aside;
+  - `useOn` picking a main argument only where one cell meets it;
   - `alpha.test.ts` and [language/overview.md](../language/overview.md#a-name-is-only-a-name).
 
   No event snapshot moves.
