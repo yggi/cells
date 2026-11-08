@@ -67,9 +67,7 @@ describe('Migrate: retired forms written as they are now (decision 049, #156)', 
   });
 
   it('every rule has a witness of its own', () => {
-    expect(new Set(PAIRS.map((p) => p.rule))).toEqual(
-      new Set(['all', 'gate', 'tap', 'swing', 'use', 'main-key', 'forwarded', 'from', 'grid', 'laps', 'renamed', 'oneshot', 'pairs', 'beats']),
-    );
+    expect(new Set(PAIRS.map((p) => p.rule))).toEqual(new Set(['all', 'gate', 'tap', 'swing', 'main-key', 'forwarded', 'grid', 'laps', 'renamed', 'oneshot', 'pairs', 'beats']));
     // (and a migration exact only against the old meaning has a record of what it played, which the before no longer plays)
     for (const p of PAIRS.filter((x) => x.rule === 'laps')) {
       expect(p.played, p.name).not.toBeNull();

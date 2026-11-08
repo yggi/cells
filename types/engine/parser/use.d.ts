@@ -1,34 +1,18 @@
-/** The `use` line's forms (decisions 054, 059): read by the parser, the expansion (`../use.ts`) and a piece file's lockfile. */
-/** A `use` line, read: the fragment's id, and the names it asks for. */
-export interface UseForm {
-    /** The fragment's id: a word as written (`gm_kit`), or what the double quotes hold (`"my riff"`). */
-    readonly id: string;
-    /** The names it asks for (`&bd`), in the order written, each once; null for every name the fragment defines. */
-    readonly names: readonly string[] | null;
-    /**
-     * How it is written: `named` (`use &bd, &sd from gm_kit`), `short` (`use &aeolian`, the fragment named as its
-     * cell), `all` (`use * from gm_kit`), or `quoted` (`use "my riff"`, the old way: `use * from "my riff"`).
-     */
-    readonly form: 'named' | 'short' | 'all' | 'quoted';
-}
+/**
+ * The `from` line's forms (decision 065): read by the parser, the expansion (`../use.ts`) and a piece file's lockfile.
+ * A `use` line (decisions 054, 059) is retired: Migrate stopped reading it (#588), and the parser says so.
+ */
 /** An id that can be written bare: a word. */
 export declare const isWordId: (id: string) => boolean;
-/**
- * A `use` line (decisions 054, 059): the fragment it takes from and the names it asks for, or null where the line starts
- * with `use` and isn't one; undefined where it doesn't start with `use`.
- */
-export declare function readUse(code: string): UseForm | null | undefined;
-/** A `use` line in its one spelling (decision 059): `use &x` where it names &x from x, the id bare where it is a word. */
-export declare function writeUse({ id, names }: Pick<UseForm, 'id' | 'names'>): string;
-/** What a malformed `use` line is told. */
-export declare const USE_FORM = "A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from \"my riff\"";
+/** Does the line start with `use`, the retired form? */
+export declare const isUse: (code: string) => boolean;
 /**
  * A `from` line (decision 065): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from
  * gm_kit`, `* from gm_kit`; or, with no id, a fragment's signature: `&bar from (&swing) &tempo`.
  */
 export type FromForm = {
     readonly kind: 'use';
-    /** The fragment's id, as `UseForm`'s. */
+    /** The fragment's id: a word as written (`gm_kit`), or what the double quotes hold (`"my riff"`). */
     readonly id: string;
     /** The names the line takes (`&key`), each once; null for `*`. */
     readonly names: readonly string[] | null;
@@ -64,12 +48,9 @@ export declare const isAttribute: (token: string) => boolean;
 export declare function readFrom(code: string): FromForm | null | undefined;
 /** What a malformed `from` line is told. */
 export declare const FROM_FORM = "A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head\u2019s attributes go before from (&key label=\"\u2026\" from \u2026), the named arguments in parentheses; with no id, a fragment\u2019s signature: &bar from (&swing) &tempo";
-/** How what a `use` line is told begins, read the old way (`CompileOptions.old`: Migrate, Normalise). */
-export declare const USE_OLD = "use is the old way";
-/** How what a `use` line is told begins otherwise: it is retired (#387), an error, which Migrate rewrites. */
-export declare const USE_RETIRED = "use is retired";
 /**
- * What a `use` line is told (decision 065): it is the old way, and says what the `from` line is. A template's arguments,
- * which the `use` read by name, are Migrate's to write, since only the fragment says what they are.
+ * What a `use` line is told (decision 065, #588): it is retired, and the line says where its cells come from. It names no
+ * `from` line of its own, since only the fragment says whether that is a collection's (`&bd, &sd from gm_kit`) or a
+ * template's, with its arguments (`&key from diatonic D`): #406.
  */
-export declare const useOld: ({ id, names }: Pick<UseForm, "id" | "names">, old?: boolean) => string;
+export declare const USE_RETIRED = "use is retired (decision 065): a line says where its cells come from, &bd, &sd from gm_kit (a collection, by name) or &key from diatonic(mode=dorian) D (a template, with its arguments)";

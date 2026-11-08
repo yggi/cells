@@ -3,7 +3,6 @@ import { parse } from "../engine/parser/index.js";
 import { tapPositions } from "../engine/meter.js";
 import { MAIN_KEY } from "../engine/program.js";
 import { expansion, hasUse, signatureOf } from "../engine/use.js";
-export { INTERFACE_NAMES } from "../engine/program.js";
 const WHOLE = 1e-9;
 const isWhole = (x) => Math.abs(x - Math.round(x)) < WHOLE;
 export const lapMeets = (need, taps) => need.steps > 0 && isWhole((taps * need.rate) / need.steps);

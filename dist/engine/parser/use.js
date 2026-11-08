@@ -1,37 +1,7 @@
 const NAME = '&[A-Za-z_][A-Za-z0-9_]*';
-const ID = '([A-Za-z_][A-Za-z0-9_]*|"[^"]*\\S[^"]*")';
-const QUOTED = /^\s*use\s+"([^"]*\S[^"]*)"\s*$/;
-const ALL = new RegExp(`^\\s*use\\s+\\*\\s+from\\s+${ID}\\s*$`);
-const NAMED = new RegExp(`^\\s*use\\s+(${NAME}(?:\\s*,\\s*${NAME})*)\\s+from\\s+${ID}\\s*$`);
-const SHORT = new RegExp(`^\\s*use\\s+&([A-Za-z_][A-Za-z0-9_]*)\\s*$`);
 const idOf = (written) => (written.startsWith('"') ? written.slice(1, -1) : written);
 export const isWordId = (id) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(id);
-export function readUse(code) {
-    if (!/^\s*use(?![A-Za-z0-9_])/.test(code))
-        return undefined;
-    const quoted = QUOTED.exec(code);
-    if (quoted)
-        return { id: quoted[1], names: null, form: 'quoted' };
-    const all = ALL.exec(code);
-    if (all)
-        return { id: idOf(all[1]), names: null, form: 'all' };
-    const named = NAMED.exec(code);
-    if (named)
-        return { id: idOf(named[2]), names: [...new Set(named[1].split(',').map((n) => n.trim()))], form: 'named' };
-    const short = SHORT.exec(code);
-    if (short)
-        return { id: short[1], names: [`&${short[1]}`], form: 'short' };
-    return null;
-}
-export function writeUse({ id, names }) {
-    const from = isWordId(id) ? id : JSON.stringify(id);
-    if (!names)
-        return `use * from ${from}`;
-    if (names.length === 1 && names[0] === `&${id}`)
-        return `use &${id}`;
-    return `use ${names.join(', ')} from ${from}`;
-}
-export const USE_FORM = 'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "my riff"';
+export const isUse = (code) => /^\s*use(?![A-Za-z0-9_])/.test(code);
 export function topTokens(text) {
     const out = [];
     let depth = 0;
@@ -138,6 +108,4 @@ export function readFrom(code) {
     return { kind: 'use', id: idOf(idText), names, head, args, main: main || null };
 }
 export const FROM_FORM = 'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
-export const USE_OLD = 'use is the old way';
-export const USE_RETIRED = 'use is retired';
-export const useOld = ({ id, names }, old = true) => `${old ? USE_OLD : USE_RETIRED}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 065; Migrate writes it, with a template's arguments)`;
+export const USE_RETIRED = 'use is retired (decision 065): a line says where its cells come from, &bd, &sd from gm_kit (a collection, by name) or &key from diatonic(mode=dorian) D (a template, with its arguments)';

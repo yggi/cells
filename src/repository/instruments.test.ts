@@ -11,7 +11,8 @@ import { pieceAudio } from '../engine/audioexport';
 import { channelTable, GM_KIT, gmDrumNote, midiNote, router, routesOf } from '../engine/midi';
 import { expand } from '../engine/use';
 import { windowAt } from '../engine/schedule';
-import { fitOf } from './fit';
+import { fitsAs } from './fit';
+import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
@@ -19,6 +20,13 @@ import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { RHYTHM_FRAGMENTS } from './rhythms';
+
+/** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
+const takenOn = (text: string, bench: string, main?: string) => {
+  const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
+  const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
+  return { ...fit, union: { text: expand(fit.text, resolve) } };
+};
 
 const byId = (id: string) => INSTRUMENT_FRAGMENTS.find((f) => f.id === id)!;
 const gmKit = byId('gm_kit');
@@ -39,7 +47,7 @@ const AT_PRESET: Record<string, StylePoint> = {
   haunted_pad: { ...SPOOKY, energy: 0.3 },
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
-const CORE_USE = 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
+const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
 const coreKit = { text: expand(CORE_USE, resolveSeed).trim() };
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id || f.id === wordOf(id))!.text;
 const BPM = 120;
@@ -159,7 +167,7 @@ describe('the instrument fragments', () => {
   });
 
   it.each(INSTRUMENT_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s fits any workbench: an empty one, a meter, a groove', (_, text) => {
-    for (const bench of ['', hosted(), hosted(RHYTHM_FRAGMENTS[0]!.text)]) expect(fitOf(text, bench).fits, bench.slice(0, 40)).toBe(true);
+    for (const bench of ['', hosted(), hosted(RHYTHM_FRAGMENTS[0]!.text)]) expect(takenOn(text, bench).fits, bench.slice(0, 40)).toBe(true);
   });
 
   it('the General MIDI kit sounds each of its 47 voices on its own note over MIDI out', () => {
@@ -220,11 +228,11 @@ describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit
     // (a rhythm has no voice of its own: it plays through a kit, the kit's lines written out after it)
     const alone = played(hosted(text, coreKit.text), 32);
     expect(alone.hits.length).toBeGreaterThan(0);
-    const kitAfter = fitOf(coreKit.text, hosted(text));
+    const kitAfter = takenOn(coreKit.text, hosted(text));
     expect(kitAfter.fits).toBe(true);
     // (and no sound hole is left on it, as the kit's voices fill every one)
-    expect(fitOf(text, hosted(coreKit.text)).sounds).toEqual([]);
-    const grooveAfter = fitOf(text, hosted(coreKit.text));
+    expect(takenOn(text, hosted(coreKit.text)).sounds).toEqual([]);
+    const grooveAfter = takenOn(text, hosted(coreKit.text));
     expect(grooveAfter.fits).toBe(true);
     for (const union of [kitAfter.union.text, grooveAfter.union.text]) {
       const { hits, diagnostics } = played(union, 32);

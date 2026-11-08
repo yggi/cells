@@ -4,13 +4,22 @@ import { describe, expect, it } from 'vitest';
 import { compileSource as compiledWithOldUse } from '../engine/compile';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
-import { fitOf } from './fit';
+import { fitsAs } from './fit';
+import { expand } from '../engine/use';
+import type { Resolve } from '../engine/program';
 import { createRepository } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { ELECTRO_SWING, SWING_JAZZ } from './styles';
 
 import { STAB_FRAGMENTS } from './stab';
+
+/** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
+const takenOn = (text: string, bench: string, main?: string) => {
+  const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
+  const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
+  return { ...fit, union: { text: expand(fit.text, resolve) } };
+};
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
 // decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
@@ -31,12 +40,12 @@ describe('the stab lines', () => {
 
   it.each(STAB_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s uses &harm alone, and fits a workbench that writes it', (_, text) => {
     expect(holesOf(text, compileSource).uses).toEqual(['&harm']);
-    expect(fitOf(text, HOST).fits).toBe(true);
+    expect(takenOn(text, HOST, '&harm').fits).toBe(true);
   });
 
   it('played by the stab performer, the Charleston sounds the chord in force on one and on the and of two', () => {
-    const piece = `use &stabline from charleston_stabs\nuse &stab, &keysV from stab_performer\n${HOST}\n&stabLevel map=amp .5\n&keysV s=saw loop=C3\n&out map=sample [&stabOut]`;
-    const r = compileSource(piece, undefined, { resolve: resolveSeed, old: true });
+    const piece = `&stabline from charleston_stabs &harm\n&stab, &stabOut from stab_performer(stabLevel=&stabLevel) &stabline\n${HOST}\n&stabLevel map=amp .5\n&keysV s=saw loop=C3\n&out map=sample [&stabOut]`;
+    const r = compileSource(piece, undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
     // (at 120 bpm an eighth is .25 s: D F A on one and on the and of two, in the D minor bar; A C♯ E in the A bar)
     const notes = eventsBetween(plan(r, codeShifts(r)), 0, 4).map((e) => [e.at, Math.round(69 + 12 * Math.log2(e.freq / 440))]);

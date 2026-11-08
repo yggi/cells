@@ -9,8 +9,8 @@
  * `writePiece` a piece (an example, a person's) as the same kind of file, its title, tags and tier in the frontmatter,
  * and `movedCard` takes them out of a text written the old way; a file's code is the join of its cells blocks, the rest prose
  * (`readLiterate`, `fileLine`, `rewrite`).
- * `holesOf` reads what a fragment uses, defines and its clock needs, `unionOf` and `fitOf` add it to a workbench and say
- * whether it fits.
+ * `holesOf` reads what a fragment uses, defines and its clock needs and a template's signature; `useOn` takes a template
+ * onto a workbench by a `from` line, and `fitsAs` says whether it fits there.
  * Every module is also reachable on its own: `@yggi/cells/engine/<module>`, `@yggi/cells/theory/<module>`,
  * `@yggi/cells/repository/<module>`.
  */
@@ -67,6 +67,6 @@ export { LIBRARY, resolveSeed } from './repository/library';
 export { RENAMED_IDS, wordOf } from './engine/renamed';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { decompose, writtenOut, type Decomposition, type DecomposeOptions, type LineNote } from './repository/decompose';
-export { holesOf, INTERFACE_NAMES, type ClockNeed, type Holes } from './repository/holes';
-export { fitOf, fitsAs, unionOf, useOn, type Fit, type FitAs, type Union, type UseOn, type UseOnOptions } from './repository/fit';
+export { holesOf, type ClockNeed, type Holes } from './repository/holes';
+export { fitsAs, useOn, type FitAs, type UseOn, type UseOnOptions } from './repository/fit';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';

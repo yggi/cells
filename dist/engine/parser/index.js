@@ -5,10 +5,10 @@ import { IDENT, LineError, LineScanner, stripComment } from "./scanner.js";
 import { parseBody, parseCell, SHOWS } from "./cell.js";
 import { splitPlugins } from "../plugins.js";
 import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
-import { FROM_FORM, readFrom, readUse, USE_FORM, useOld } from "./use.js";
+import { FROM_FORM, isUse, readFrom, USE_RETIRED } from "./use.js";
 export { groupingOf, meterLevels } from "./generators.js";
 export { SHOWS } from "./cell.js";
-export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse } from "./use.js";
+export { readFrom, USE_RETIRED } from "./use.js";
 export function parse(whole, { old = false } = {}) {
     const cells = [];
     const uses = [];
@@ -38,16 +38,9 @@ export function parse(whole, { old = false } = {}) {
         const s = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
         if (s.done())
             return;
-        const use = readUse(text);
-        if (use !== undefined) {
+        if (isUse(text)) {
             const col = text.search(/\S/);
-            const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
-            if (use === null)
-                diagnostics.push({ severity: 'error', message: USE_FORM, span });
-            else {
-                uses.push({ id: use.id, names: use.names, span });
-                diagnostics.push({ severity: old ? 'warning' : 'error', message: useOld(use, old), span });
-            }
+            diagnostics.push({ severity: 'error', message: USE_RETIRED, span: { line: lineNo, col: col + 1, len: text.trimEnd().length - col } });
             return;
         }
         const from = readFrom(text);

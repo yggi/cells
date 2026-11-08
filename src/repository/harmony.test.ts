@@ -10,14 +10,23 @@ import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { codeShifts } from '../engine/program';
 import { windowAt } from '../engine/schedule';
 import { BASS_FRAGMENTS } from './bass';
-import { fitOf } from './fit';
+import { fitsAs } from './fit';
+import { expand } from '../engine/use';
+import type { Resolve } from '../engine/program';
 import { createRepository, fragmentDistance, type StylePoint } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { SEED } from './seed';
+
+/** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
+const takenOn = (text: string, bench: string, main?: string) => {
+  const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
+  const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
+  return { ...fit, union: { text: expand(fit.text, resolve) } };
+};
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
 /** The vamps, Jambot's themes' (`VAMPS`); the harmony written by hand for the point proposed for Spooky (#349) is not one. */
@@ -125,19 +134,19 @@ describe('the harmonies', () => {
       clock: [],
       signature: { heads: ['&harm'], optional: [], main: '&key' },
     });
-    expect(fitOf(text, '&bar meter("4/4") step=120bpm').missing).toEqual(['&key']);
+    expect(takenOn(text, '').missing).toEqual(['&key']);
   });
 
   for (const mode of MODES)
     describe(`in ${mode}`, () => {
       it.each(HARMONY_FRAGMENTS.map((f) => [f.id, f.text]))('%s fits a host in A, and compiles there with no diagnostic', (_, text) => {
-        const fit = fitOf(text, host(mode));
+        const fit = takenOn(text, host(mode), '&key');
         expect(fit.fits).toBe(true);
         expect(compileSource(`${fit.union.text}\n${PROBE}`).diagnostics.map((d) => d.message)).toEqual([]);
       });
 
       it.each(VAMPS[mode].map((chords) => [chords.join(', '), chords]))('its vamp [%s] plays the chords themes.ts writes, bar for bar over eight bars', (_, chords) => {
-        const text = `${fitOf(byDegrees(chords).text, host(mode)).union.text}\n${PROBE}`;
+        const text = `${takenOn(byDegrees(chords).text, host(mode), '&key').union.text}\n${PROBE}`;
         expect(chordsPlayed(text)).toEqual(layout(chords, 0).map((degree) => triad(mode, degree)));
       });
     });
@@ -184,7 +193,7 @@ describe('the harmonies', () => {
   it.each(BASS_FRAGMENTS.map((b) => [b.id, b.text]))('the %s fits every vamp in every mode, and plays the root of each bar’s chord on the downbeat', (_, bass) => {
     for (const mode of MODES)
       for (const f of HARMONY_FRAGMENTS) {
-        const fit = fitOf(bass, fitOf(f.text, host(mode)).union.text);
+        const fit = takenOn(bass, takenOn(f.text, host(mode), '&key').union.text, '&harm');
         expect(fit.fits, `${f.id} in ${mode}`).toBe(true);
         const plan = planOf(`${fit.union.text}\n${BASS_VOICE}`);
         const route = router(plan.result, channelTable(plan.result));
@@ -207,7 +216,7 @@ describe('the dark cadence (#349)', () => {
 
   it('in D harmonic minor plays D minor, B♭ major, G minor and A major: the fifth a dominant', () => {
     const host = '&bar meter("4/4") step=120bpm\n&tonic D\n&key scale(harmonic, &tonic)';
-    const text = `${fitOf(cadence.text, host).union.text}\n${PROBE}`;
+    const text = `${takenOn(cadence.text, host, '&key').union.text}\n${PROBE}`;
     const dm = [2, 5, 9],
       bb = [2, 5, 10],
       gm = [2, 7, 10],
@@ -233,7 +242,7 @@ describe('the haunted progression', () => {
 
   it('in D harmonic minor passes through both unstable triads: F augmented and E diminished', () => {
     const host = '&bar meter("4/4") step=120bpm\n&tonic D\n&key scale(harmonic, &tonic)';
-    const text = `${fitOf(haunted.text, host).union.text}\n${PROBE}`;
+    const text = `${takenOn(haunted.text, host, '&key').union.text}\n${PROBE}`;
     const dm = [2, 5, 9],
       faug = [1, 5, 9],
       gm = [2, 7, 10],

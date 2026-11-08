@@ -22,4 +22,4 @@ Its head is named for it (`&hook`), so `use &hook` takes it; a form reads it as 
 
 At Synth-pop's point (`styles`), weight 1, as the facet `motif`.
 
-**Its signature** (decision 065): `&hook from &key`. `&hook from hook &key` takes a copy of it, `&key` its main argument. Taken the old way, `use &hook from hook`, it reads `&key` by name, as before.
+**Its signature** (decision 065): `&hook from &key`. `&hook from hook &key` takes a copy of it, `&key` its main argument.

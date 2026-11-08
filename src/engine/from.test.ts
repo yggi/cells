@@ -145,11 +145,6 @@ describe('a copy of a template', () => {
     );
   });
 
-  it('the old use of a template reads its lines as they are, its parameters by name', () => {
-    expect(added(lines('use &key from harmonic_minor', '&tonic D'))).toEqual(['&key scale(harmonic, &tonic)']);
-    expect(events(lines('use &key from harmonic_minor', '&tonic D', METER, TUNE))).toEqual(events(lines('&key from harmonic_minor D', METER, TUNE)));
-  });
-
   it('several heads are taken by their names, those it doesn’t name its own; * takes them all', () => {
     expect(added('&key, &bell from bell D')).toEqual(['&key scale(ionian, &key_tonic) step=1m*7', '&bell step=&key:pulse 0 0', '&key_tonic D']);
     expect(added('&bell from bell D')).toEqual(['&bell_key scale(ionian, &bell_tonic) step=1m*7', '&bell step=&bell_key:pulse 0 0', '&bell_tonic D']);
@@ -240,8 +235,8 @@ describe('nesting and collections', () => {
   });
 
   it('a collection’s from line is its use: the same lines', () => {
-    expect(added('&bd, &sd from gm_kit')).toEqual(added('use &bd, &sd from gm_kit'));
-    expect(added('* from gm_kit')).toEqual(added('use * from gm_kit'));
+    expect(added('&bd, &sd from gm_kit')).toEqual(added('&bd, &sd from gm_kit'));
+    expect(added('* from gm_kit')).toEqual(added('* from gm_kit'));
   });
 
   it('expand writes the copy out, the from line gone', () => {

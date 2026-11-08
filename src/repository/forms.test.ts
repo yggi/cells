@@ -10,13 +10,22 @@ import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
 import { FORM_FRAGMENTS } from './forms';
-import { fitOf } from './fit';
+import { fitsAs } from './fit';
+import { expand } from '../engine/use';
+import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
 import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
+
+/** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
+const takenOn = (text: string, bench: string, main?: string) => {
+  const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
+  const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
+  return { ...fit, union: { text: expand(fit.text, resolve) } };
+};
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
 // decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
@@ -113,15 +122,15 @@ const KEY = '&key scale(major, C)';
 const BENCH = `${METERS['4/4'].bench}\n${KEY}`;
 /** A motif's bench: its meter's and the key. */
 const benchOf = (motif: string) => `${METERS[MOTIFS[motif]!.meter ?? '4/4'].bench}\n${KEY}`;
-const seed = { resolve: resolveSeed, old: true };
+const seed = { resolve: resolveSeed };
 
 /** A form over a motif, as a piece writes it: the motif as the form's hole, the form as the lead's line. */
 const piece = (form: string, motif: string) => {
   const { head, hole } = FORMS[form]!;
   return [
-    `use &${motif}`,
-    `use &${head} from ${/^\w+$/.test(form) ? form : `"${form}"`}`,
-    'use &lead, &leadV from lead_performer',
+    `&${motif} from ${motif} &key`,
+    `&${head} from ${/^\w+$/.test(form) ? form : `"${form}"`} &${hole}`,
+    '&lead, &leadOut from lead_performer(leadLevel=&leadLevel) &leadline',
     benchOf(motif),
     `&${hole} step=8n &${motif}`,
     `&leadline step=8n &${head}`,
@@ -181,10 +190,10 @@ describe('the forms', () => {
       const hole = `&${FORMS[f.id]!.hole}`;
       const h = holesOf(f.text, compileSource);
       expect([h.lines, h.sounds], f.id).toEqual([[hole], []]);
-      const fit = fitOf(f.text, BENCH);
+      const fit = takenOn(f.text, '');
       expect([fit.fits, fit.missing, fit.sounds], f.id).toEqual([false, [hole], []]);
       // (filled by a line, nothing is missing and no instrument asked for; its clock need is #322's)
-      const filled = fitOf(f.text, `${BENCH}\nuse &gypsy\n${hole} step=8n &gypsy`, undefined, resolveSeed);
+      const filled = takenOn(f.text, `${BENCH}\n&gypsy from gypsy &key\n${hole} step=8n &gypsy`, hole);
       expect([filled.missing, filled.sounds, filled.diagnostics], f.id).toEqual([[], [], []]);
     }
   });
@@ -209,8 +218,8 @@ describe('the forms', () => {
       }
     });
 
-  it('AABA’s bridge is a piece’s to override by naming it, with no diagnostic', () => {
-    const text = piece('AABA', 'gypsy').replace('use &chorus from AABA', 'use &chorus, &b from AABA') + '\n&b step=8n &a^-3';
+  it('AABA’s bridge is a piece’s to give as its optional argument, with no diagnostic', () => {
+    const text = piece('AABA', 'gypsy').replace('&chorus from AABA &a', '&chorus from AABA(b=&b) &a') + '\n&b step=8n &a^-3';
     expect(compileSource(text, undefined, seed).diagnostics).toEqual([]);
   });
 });

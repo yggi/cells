@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { soundsIdentical } from '../engine/sameness';
 import { bodyOf, signatureOf } from '../engine/use';
-import { fitsAs, unionOf, useOn } from './fit';
+import { cachedFit, fitsAs, useOn } from './fit';
+
+/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
+const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 

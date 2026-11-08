@@ -1,14 +1,11 @@
 import { splitComment } from "../edit.js";
 import { parse } from "../parser/index.js";
-import { isWordId, readFrom, readUse, writeUse } from "../parser/use.js";
+import { isWordId, readFrom } from "../parser/use.js";
 function taking(code) {
-    const use = readUse(code);
-    if (use)
-        return { ...use, from: false };
     const f = readFrom(code.trim());
-    return f?.kind === 'use' && !f.args && f.main === null && !f.head.length ? { id: f.id, names: f.names, from: true } : null;
+    return f?.kind === 'use' && !f.args && f.main === null && !f.head.length ? { id: f.id, names: f.names } : null;
 }
-const writeTaking = (id, names, from) => from ? `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}` : writeUse({ id, names });
+const writeTaking = (id, names) => `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}`;
 const codeOf = (line) => splitComment(line)[0].trim().replace(/\s+/g, ' ');
 function homes(library) {
     const home = new Map();
@@ -41,7 +38,7 @@ export function libraryLines(source, library) {
     return [...byId].map(([id, { at, names }]) => {
         const already = lines.findIndex((l) => taking(splitComment(l)[0])?.id === id);
         const prior = already >= 0 ? taking(splitComment(lines[already])[0]) : null;
-        const use = writeTaking(id, prior && !prior.names ? null : [...(prior?.names ?? []), ...names.filter((n) => !prior?.names?.includes(n))], !!prior?.from);
+        const use = writeTaking(id, prior && !prior.names ? null : [...(prior?.names ?? []), ...names.filter((n) => !prior?.names?.includes(n))]);
         const where = already >= 0 ? already : at[0];
         const comments = at.map((i) => splitComment(lines[i])[1].trim()).filter(Boolean);
         return {
@@ -99,15 +96,15 @@ export function libraryCells(source, library) {
             if (at >= 0) {
                 const prior = taking(splitComment(lines[at])[0]);
                 if (prior.names && !prior.names.includes(`&${name}`))
-                    lines[at] = writeTaking(id, [...prior.names, `&${name}`], prior.from) + splitComment(lines[at])[1];
+                    lines[at] = writeTaking(id, [...prior.names, `&${name}`]) + splitComment(lines[at])[1];
                 return lines.join('\n');
             }
             let last = -1;
             lines.forEach((l, i) => {
-                if (readUse(splitComment(l)[0]) || readFrom(splitComment(l)[0].trim())?.kind === 'use')
+                if (readFrom(splitComment(l)[0].trim())?.kind === 'use')
                     last = i;
             });
-            lines.splice(last + 1, 0, writeUse({ id, names: [`&${name}`] }));
+            lines.splice(last + 1, 0, writeTaking(id, [`&${name}`]));
             return lines.join('\n');
         },
     }));

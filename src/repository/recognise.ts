@@ -9,7 +9,7 @@
  */
 import { PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, type HeardNote, type Operator, type Readings, type VaryOptions } from '../engine/vary';
 import { declWords, splitComment } from '../engine/edit';
-import { readUse } from '../engine/parser/use';
+import { readFrom } from '../engine/parser/use';
 import type { Fragment } from './fragments';
 
 /** Every operator, in decision 052's order: what recognition tries where a frontend names none. */
@@ -242,8 +242,8 @@ export function createRecogniser({ capacity = RECOGNISER_CAPACITY }: RecogniserO
     // (each id the text uses, and the names it takes from it: null, every line)
     const used = new Map<string, readonly string[] | null>();
     for (const l of code) {
-      const u = readUse(l);
-      if (!u) continue;
+      const u = readFrom(l.trim());
+      if (u?.kind !== 'use') continue;
       const had = used.get(u.id);
       used.set(u.id, had === null || u.names === null ? null : [...(had ?? []), ...u.names]);
     }

@@ -11,7 +11,7 @@ import { compileSource } from '../compile';
 import { noteValue, type Meter } from '../meter';
 import { noteFrequency, type CompileOptions } from '../program';
 import { expansion } from '../use';
-import { readFrom, readUse } from '../parser/use';
+import { readFrom } from '../parser/use';
 import type { Resolve } from '../program';
 import { declLine, declWords, deleteCell, splitComment } from '../edit';
 
@@ -329,7 +329,7 @@ function inPlace(text: string, resolve: Resolve): string {
   return own
     .flatMap((raw, i) => {
       const code = splitComment(raw)[0];
-      const taken = (readUse(code) !== undefined || readFrom(code.trim())?.kind === 'use') && !kept.has(i + 1);
+      const taken = readFrom(code.trim())?.kind === 'use' && !kept.has(i + 1);
       return taken ? (at.get(i + 1) ?? []) : [raw];
     })
     .join('\n');

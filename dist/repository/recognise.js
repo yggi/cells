@@ -1,6 +1,6 @@
 import { PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS } from "../engine/vary/index.js";
 import { declWords, splitComment } from "../engine/edit.js";
-import { readUse } from "../engine/parser/use.js";
+import { readFrom } from "../engine/parser/use.js";
 export const ALL_OPERATORS = [...RHYTHM_OPERATORS, ...PITCHED_OPERATORS];
 const counted = (keys) => {
     const out = new Map();
@@ -120,8 +120,8 @@ export function createRecogniser({ capacity = RECOGNISER_CAPACITY } = {}) {
         const code = codeLines(text);
         const used = new Map();
         for (const l of code) {
-            const u = readUse(l);
-            if (!u)
+            const u = readFrom(l.trim());
+            if (u?.kind !== 'use')
                 continue;
             const had = used.get(u.id);
             used.set(u.id, had === null || u.names === null ? null : [...(had ?? []), ...u.names]);

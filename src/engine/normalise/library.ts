@@ -1,13 +1,13 @@
 /**
- * The library's lines as a `use` (#196, decision 059): a line of the piece that is a fragment's line word for word, its
- * comment aside, is written `use &name from <id>`, the fragment its home, so a piece says what it takes from the library
+ * The library's lines as a `from` (#196, decisions 059, 065): a line of the piece that is a fragment's line word for word,
+ * its comment aside, is written `&name from <id>`, the fragment its home, so a piece says what it takes from the library
  * rather than writing it out again. A line reads a fragment's holes as the piece's (`&bar meter("4/4") step=&tempo`
  * with the piece's own `&tempo`), so a meter a piece names in the interface names (`names.ts`) is the `4/4` fragment's.
  *
  * - A line is taken from the first fragment, in the library's order, that holds it (the owner: a line has one home).
- * - The piece's lines taken from one fragment are one `use`, written where the first of them was, its comment kept; a
- *   `use` of that fragment the piece has already takes the names too.
- * - Nothing is taken where the use would not sound identical (S1: `rewriteAll`), as a line whose fragment also gives a
+ * - The piece's lines taken from one fragment are one `from` line, written where the first of them was, its comment
+ *   kept; a `from` line of that fragment the piece has already takes the names too.
+ * - Nothing is taken where the line would not sound identical (S1: `rewriteAll`), as a line whose fragment also gives a
  *   helper the piece writes otherwise, which the compile refuses.
  *
  * The library comes with the call (`NormaliseOptions.library`), the fragments' ids read through the resolver: Normalise
@@ -15,19 +15,16 @@
  */
 import { splitComment } from '../edit';
 import { parse } from '../parser';
-import { isWordId, readFrom, readUse, writeUse } from '../parser/use';
+import { isWordId, readFrom } from '../parser/use';
 
-/** A line that takes names from a fragment by name: a `use` line, or a `from` line with no argument (decision 065). */
-function taking(code: string): { readonly id: string; readonly names: readonly string[] | null; readonly from: boolean } | null {
-  const use = readUse(code);
-  if (use) return { ...use, from: false };
+/** A line that takes names from a fragment by name: a `from` line with no argument (decision 065). */
+function taking(code: string): { readonly id: string; readonly names: readonly string[] | null } | null {
   const f = readFrom(code.trim());
-  return f?.kind === 'use' && !f.args && f.main === null && !f.head.length ? { id: f.id, names: f.names, from: true } : null;
+  return f?.kind === 'use' && !f.args && f.main === null && !f.head.length ? { id: f.id, names: f.names } : null;
 }
 
-/** Such a line, written as it was: a `use` line, or a `from` line. */
-const writeTaking = (id: string, names: readonly string[] | null, from: boolean): string =>
-  from ? `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}` : writeUse({ id, names });
+/** Such a line, written: `&a, &b from id`, or `* from id` for every name. */
+const writeTaking = (id: string, names: readonly string[] | null): string => `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}`;
 import type { Rewrite } from '../rewrite';
 
 /** A fragment as the library gives it: its id and its text. */
@@ -39,7 +36,7 @@ export interface LibraryFragment {
 /** A line as the library and the piece are compared: its code, its whitespace collapsed. */
 const codeOf = (line: string) => splitComment(line)[0].trim().replace(/\s+/g, ' ');
 
-/** Each fragment's own lines (not its `use` lines), by the cell each declares: where each line's home is. */
+/** Each fragment's own lines (not its `from` lines), by the cell each declares: where each line's home is. */
 function homes(library: readonly LibraryFragment[]): Map<string, { id: string; name: string }> {
   const home = new Map<string, { id: string; name: string }>();
   for (const f of library)
@@ -51,7 +48,7 @@ function homes(library: readonly LibraryFragment[]): Map<string, { id: string; n
   return home;
 }
 
-/** Each fragment the piece writes lines of, word for word, its lines as one `use` of it. */
+/** Each fragment the piece writes lines of, word for word, its lines as one `from` line of it. */
 export function libraryLines(source: string, library: readonly LibraryFragment[] | undefined): Rewrite<'library'>[] {
   if (!library?.length) return [];
   const home = homes(library);
@@ -72,7 +69,7 @@ export function libraryLines(source: string, library: readonly LibraryFragment[]
     // (a use of the fragment already written takes the names too, where it names what it takes)
     const already = lines.findIndex((l) => taking(splitComment(l)[0])?.id === id);
     const prior = already >= 0 ? taking(splitComment(lines[already]!)[0])! : null;
-    const use = writeTaking(id, prior && !prior.names ? null : [...(prior?.names ?? []), ...names.filter((n) => !prior?.names?.includes(n))], !!prior?.from);
+    const use = writeTaking(id, prior && !prior.names ? null : [...(prior?.names ?? []), ...names.filter((n) => !prior?.names?.includes(n))]);
     const where = already >= 0 ? already : at[0]!;
     const comments = at.map((i) => splitComment(lines[i]!)[1].trim()).filter(Boolean);
     return {
@@ -96,8 +93,8 @@ export function libraryLines(source: string, library: readonly LibraryFragment[]
 
 /**
  * Each fragment cell the piece writes inline, word for word (`pitch=&(map=lin loop=5 0 .1 0 -.1 0)`), as the fragment's
- * cell by name (`pitch=&vibrato`) and a `use` of it (#196): every place it is written, once; the `use` joins one of that
- * fragment already written, or goes after the piece's `use` lines (first, where it has none). Not where the piece
+ * cell by name (`pitch=&vibrato`) and a `from` line of it (#196): every place it is written, once; the line joins one of
+ * that fragment already written, or goes after the piece's `from` lines (first, where it has none). Not where the piece
  * defines the name itself.
  */
 export function libraryCells(source: string, library: readonly LibraryFragment[] | undefined): Rewrite<'library'>[] {
@@ -131,15 +128,15 @@ export function libraryCells(source: string, library: readonly LibraryFragment[]
       const at = lines.findIndex((l) => taking(splitComment(l)[0])?.id === id);
       if (at >= 0) {
         const prior = taking(splitComment(lines[at]!)[0])!;
-        if (prior.names && !prior.names.includes(`&${name}`)) lines[at] = writeTaking(id, [...prior.names, `&${name}`], prior.from) + splitComment(lines[at]!)[1];
+        if (prior.names && !prior.names.includes(`&${name}`)) lines[at] = writeTaking(id, [...prior.names, `&${name}`]) + splitComment(lines[at]!)[1];
         return lines.join('\n');
       }
-      // (after the piece's own `use` and `from` lines, or first)
+      // (after the piece's own `from` lines, or first)
       let last = -1;
       lines.forEach((l, i) => {
-        if (readUse(splitComment(l)[0]) || readFrom(splitComment(l)[0].trim())?.kind === 'use') last = i;
+        if (readFrom(splitComment(l)[0].trim())?.kind === 'use') last = i;
       });
-      lines.splice(last + 1, 0, writeUse({ id, names: [`&${name}`] }));
+      lines.splice(last + 1, 0, writeTaking(id, [`&${name}`]));
       return lines.join('\n');
     },
   }));

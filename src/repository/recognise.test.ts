@@ -22,7 +22,7 @@ vi.mock('../engine/compile', async (original) => {
 /** E31's drum bars on Jambot's workbench, varied as Jambot varies them (`src/engine/vary/rhythm.test.ts`). */
 const kit = (id: string) => LIBRARY.find((f) => f.id === id)!.text;
 // (the rhythms leave their voices as holes, #244: the workbench brings 13 of the General MIDI kit's voices)
-const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
+const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
 const DRUM_OPTIONS = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
 const BARS = e31.witnesses.map((w) => ({
   preset: w.preset,

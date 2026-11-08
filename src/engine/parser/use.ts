@@ -1,24 +1,9 @@
-/** The `use` line's forms (decisions 054, 059): read by the parser, the expansion (`../use.ts`) and a piece file's lockfile. */
-
-/** A `use` line, read: the fragment's id, and the names it asks for. */
-export interface UseForm {
-  /** The fragment's id: a word as written (`gm_kit`), or what the double quotes hold (`"my riff"`). */
-  readonly id: string;
-  /** The names it asks for (`&bd`), in the order written, each once; null for every name the fragment defines. */
-  readonly names: readonly string[] | null;
-  /**
-   * How it is written: `named` (`use &bd, &sd from gm_kit`), `short` (`use &aeolian`, the fragment named as its
-   * cell), `all` (`use * from gm_kit`), or `quoted` (`use "my riff"`, the old way: `use * from "my riff"`).
-   */
-  readonly form: 'named' | 'short' | 'all' | 'quoted';
-}
+/**
+ * The `from` line's forms (decision 065): read by the parser, the expansion (`../use.ts`) and a piece file's lockfile.
+ * A `use` line (decisions 054, 059) is retired: Migrate stopped reading it (#588), and the parser says so.
+ */
 
 const NAME = '&[A-Za-z_][A-Za-z0-9_]*';
-const ID = '([A-Za-z_][A-Za-z0-9_]*|"[^"]*\\S[^"]*")';
-const QUOTED = /^\s*use\s+"([^"]*\S[^"]*)"\s*$/;
-const ALL = new RegExp(`^\\s*use\\s+\\*\\s+from\\s+${ID}\\s*$`);
-const NAMED = new RegExp(`^\\s*use\\s+(${NAME}(?:\\s*,\\s*${NAME})*)\\s+from\\s+${ID}\\s*$`);
-const SHORT = new RegExp(`^\\s*use\\s+&([A-Za-z_][A-Za-z0-9_]*)\\s*$`);
 
 /** An id as written: a word as it is, the double quotes taken off. */
 const idOf = (written: string) => (written.startsWith('"') ? written.slice(1, -1) : written);
@@ -26,34 +11,8 @@ const idOf = (written: string) => (written.startsWith('"') ? written.slice(1, -1
 /** An id that can be written bare: a word. */
 export const isWordId = (id: string): boolean => /^[A-Za-z_][A-Za-z0-9_]*$/.test(id);
 
-/**
- * A `use` line (decisions 054, 059): the fragment it takes from and the names it asks for, or null where the line starts
- * with `use` and isn't one; undefined where it doesn't start with `use`.
- */
-export function readUse(code: string): UseForm | null | undefined {
-  if (!/^\s*use(?![A-Za-z0-9_])/.test(code)) return undefined;
-  const quoted = QUOTED.exec(code);
-  if (quoted) return { id: quoted[1]!, names: null, form: 'quoted' };
-  const all = ALL.exec(code);
-  if (all) return { id: idOf(all[1]!), names: null, form: 'all' };
-  const named = NAMED.exec(code);
-  if (named) return { id: idOf(named[2]!), names: [...new Set(named[1]!.split(',').map((n) => n.trim()))], form: 'named' };
-  const short = SHORT.exec(code);
-  if (short) return { id: short[1]!, names: [`&${short[1]}`], form: 'short' };
-  return null;
-}
-
-/** A `use` line in its one spelling (decision 059): `use &x` where it names &x from x, the id bare where it is a word. */
-export function writeUse({ id, names }: Pick<UseForm, 'id' | 'names'>): string {
-  const from = isWordId(id) ? id : JSON.stringify(id);
-  if (!names) return `use * from ${from}`;
-  if (names.length === 1 && names[0] === `&${id}`) return `use &${id}`;
-  return `use ${names.join(', ')} from ${from}`;
-}
-
-/** What a malformed `use` line is told. */
-export const USE_FORM =
-  'A use line says what it takes from which fragment: use &bd, &sd from gm_kit, use * from gm_kit, or use &aeolian (from aeolian); an id of more than a word in double quotes: use * from "my riff"';
+/** Does the line start with `use`, the retired form? */
+export const isUse = (code: string): boolean => /^\s*use(?![A-Za-z0-9_])/.test(code);
 
 /**
  * A `from` line (decision 065): `&key from harmonic_minor D`, `&bar from swung_4_4(swing=8n:.64) &tempo`, `&bd, &sd from
@@ -62,7 +21,7 @@ export const USE_FORM =
 export type FromForm =
   | {
       readonly kind: 'use';
-      /** The fragment's id, as `UseForm`'s. */
+      /** The fragment's id: a word as written (`gm_kit`), or what the double quotes hold (`"my riff"`). */
       readonly id: string;
       /** The names the line takes (`&key`), each once; null for `*`. */
       readonly names: readonly string[] | null;
@@ -184,14 +143,10 @@ export function readFrom(code: string): FromForm | null | undefined {
 export const FROM_FORM =
   'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
 
-/** How what a `use` line is told begins, read the old way (`CompileOptions.old`: Migrate, Normalise). */
-export const USE_OLD = 'use is the old way';
-/** How what a `use` line is told begins otherwise: it is retired (#387), an error, which Migrate rewrites. */
-export const USE_RETIRED = 'use is retired';
-
 /**
- * What a `use` line is told (decision 065): it is the old way, and says what the `from` line is. A template's arguments,
- * which the `use` read by name, are Migrate's to write, since only the fragment says what they are.
+ * What a `use` line is told (decision 065, #588): it is retired, and the line says where its cells come from. It names no
+ * `from` line of its own, since only the fragment says whether that is a collection's (`&bd, &sd from gm_kit`) or a
+ * template's, with its arguments (`&key from diatonic D`): #406.
  */
-export const useOld = ({ id, names }: Pick<UseForm, 'id' | 'names'>, old = true): string =>
-  `${old ? USE_OLD : USE_RETIRED}: say where the cells come from, ${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)} (decision 065; Migrate writes it, with a template's arguments)`;
+export const USE_RETIRED =
+  'use is retired (decision 065): a line says where its cells come from, &bd, &sd from gm_kit (a collection, by name) or &key from diatonic(mode=dorian) D (a template, with its arguments)';

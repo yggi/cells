@@ -1,45 +1,54 @@
 /**
- * Forwarded: a `use` of a fragment that only forwards, whose text is one `use` line and nothing else, written as the use
- * it forwards to (#196). A retired id is read so for a minor version (the seed library's `RETIRED`: `use * from "core
- * kit"` is `use &bd, &rim, … from gm_kit`), so a piece that names one is respelled to what took its place. A use that
- * names what it takes keeps its names, where the forwarded use gives them all; a forward of a forward is followed a
- * round at a time. The two expand to the same lines, so the respelling plays the same by construction.
+ * Forwarded: a `from` line of a fragment that only forwards, whose text is one `from` line of a collection and nothing
+ * else, written as the line it forwards to (#196). A retired id is read so for a minor version (the seed library's
+ * `RETIRED`: `* from "core kit"` is `&bd, &rim, … from gm_kit`), so a piece that names one is respelled to what took its
+ * place. A line that names what it takes keeps its names, where the forwarded line gives them all; a forward of a
+ * forward is followed a round at a time. The two expand to the same lines, so the respelling plays the same by
+ * construction.
  */
 import { splitComment } from '../edit';
-import { readUse, writeUse, type UseForm } from '../parser/use';
+import { isWordId, readFrom, type FromForm } from '../parser/use';
 import type { Resolve } from '../program';
 import type { Rewrite } from '../rewrite';
 
-/** The one `use` a fragment's text is, or null where it is anything more (or less). */
-function forwardOf(text: string): UseForm | null {
+/** A `from` line that takes from a collection by name: no head's attributes, no arguments. */
+type Taking = Extract<FromForm, { kind: 'use' }>;
+const taking = (code: string): Taking | null => {
+  const f = readFrom(code.trim());
+  return f?.kind === 'use' && !f.head.length && !f.args && f.main === null ? f : null;
+};
+
+/** The one `from` line a fragment's text is, or null where it is anything more (or less). */
+function forwardOf(text: string): Taking | null {
   const lines = text
     .split('\n')
     .map((l) => splitComment(l)[0].trim())
     .filter(Boolean);
-  if (lines.length !== 1) return null;
-  return readUse(lines[0]!) ?? null;
+  return lines.length === 1 ? taking(lines[0]!) : null;
 }
 
-/** The use a use of a forwarding fragment is: the names it asks for, from where the fragment forwards them. */
-function forwarded(use: UseForm, to: UseForm): UseForm | null {
-  if (!use.names) return { id: to.id, names: to.names, form: to.names ? 'named' : 'all' };
-  if (to.names && use.names.some((n) => !to.names!.includes(n))) return null;
-  return { id: to.id, names: use.names, form: 'named' };
+/** The names a line of a forwarding fragment takes: the names it asks for, from where the fragment forwards them. */
+function forwarded(names: readonly string[] | null, to: Taking): readonly string[] | null | undefined {
+  if (!names) return to.names;
+  if (to.names && names.some((n) => !to.names!.includes(n))) return undefined;
+  return names;
 }
 
-/** Each `use` of a fragment that only forwards, written as the use it forwards to. */
+const written = (id: string, names: readonly string[] | null) => `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}`;
+
+/** Each `from` line of a fragment that only forwards, written as the line it forwards to. */
 export function forwardedUses(source: string, resolve: Resolve | undefined): Rewrite<'forwarded'>[] {
   if (!resolve) return [];
   return source.split('\n').flatMap((raw, i) => {
     const [code, comment] = splitComment(raw);
-    const use = readUse(code);
+    const use = taking(code);
     if (!use) return [];
     const text = resolve(use.id);
     const to = text === null ? null : forwardOf(text);
-    const now = to && forwarded(use, to);
-    if (!now) return [];
+    const names = to ? forwarded(use.names, to) : undefined;
+    if (!to || names === undefined) return [];
     const before = code.trim();
-    const after = writeUse(now);
+    const after = written(to.id, names);
     return [
       {
         id: `forwarded:${i + 1}`,

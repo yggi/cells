@@ -67,9 +67,6 @@ export interface Holes {
   readonly signature?: { readonly heads: readonly string[]; readonly optional: readonly string[]; readonly main: string | null };
 }
 
-/** The interface names, retired (#387, #454): re-exported one minor for a frontend that imports them from here. */
-export { INTERFACE_NAMES } from '../engine/program';
-
 /** How far a count may sit from a whole number and still be one (a rate written as a decimal, `16n*1.5`). */
 const WHOLE = 1e-9;
 const isWhole = (x: number) => Math.abs(x - Math.round(x)) < WHOLE;
