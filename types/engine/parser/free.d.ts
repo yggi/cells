@@ -14,4 +14,7 @@ export declare const FREE_BRAID_WHOLE = "free(0 2 4 ~ \u2026), a braid left to t
  * the value, its range, and where it's written. `units`: what the value may
  * carry (a rate: bpm, hz, k).
  */
-export declare function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean): FreeSpec;
+export declare function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean, extra?: {
+    param?: string;
+    whole?: true;
+}): FreeSpec;
