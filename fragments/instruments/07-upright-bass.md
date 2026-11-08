@@ -17,7 +17,7 @@ lifted: yggi/cells examples/electroswing.md @ 6d1bfa7
 ```
 
 Electro swing's bass, plucked and dark: a saw closed down to 700 Hz with a short decay and a low sustain, so each note thumps and fades as a slapped string does.
-It defines `&bassV`, the voice the bass performer plays (`use &bassV from bass`), so it fills the same hole as the default `bass` and can stand in for it.
+It defines `&bassV`, the voice the bass performer plays (`&bassV from bass`), so it fills the same hole as the default `bass` and can stand in for it.
 It is [Electro swing, in pieces](../../examples/electroswing.md)'s `&bassV` but for its register: `loop=C2`, the default instrument's, so a bass line played on it sends the MIDI notes it sends on `bass` (the example's `loop=C3` is the piece's own).
 It sounds within the renderer's first stage (decision 062, R1): a wave, a low-pass filter and an envelope.
 

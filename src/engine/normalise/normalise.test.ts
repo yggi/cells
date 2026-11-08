@@ -7,8 +7,11 @@ import { samePiece, soundsIdentical } from '../sameness';
 import { shorten } from '../shorten';
 import { EXAMPLES } from '../examples';
 import { LIBRARY, resolveSeed } from '../../repository/library';
-import { unionOf } from '../../repository/fit';
+import { cachedFit } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
+
+/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
+const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
 
 const BASE = `&bar meter("4/4") step=&tempo
 &tempo step=120bpm
@@ -102,13 +105,13 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
 
   it('a use of a retired id as the use it forwards to (#196): the core kit as 13 of gm_kit, the old gm kit as gm_kit', () => {
     const groove = '&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&out map=sample [&beat]';
-    const thirteen = 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
+    const thirteen = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
     for (const [old, now] of [
-      ['use * from "core kit"', thirteen],
-      ['use "core kit"  # the kit', `${thirteen}  # the kit`],
-      ['use &bd, &hh, &sd from "core kit"', 'use &bd, &hh, &sd from gm_kit'],
-      ['use * from "gm kit"', 'use * from gm_kit'],
-      ['use &bd, &hh, &sd from "gm kit"', 'use &bd, &hh, &sd from gm_kit'],
+      ['* from "core kit"', thirteen],
+      ['* from "core kit"  # the kit', `${thirteen}  # the kit`],
+      ['&bd, &hh, &sd from "core kit"', '&bd, &hh, &sd from gm_kit'],
+      ['* from "gm kit"', '* from gm_kit'],
+      ['&bd, &hh, &sd from "gm kit"', '&bd, &hh, &sd from gm_kit'],
     ]) {
       const { source, steps } = normalise(`${old}\n${groove}`, { resolve: resolveSeed, old: true });
       // (and then, a collection's use, as its from line, decision 065: the cells of it the groove reads, the narrowest
@@ -119,9 +122,9 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       expect(compileSource(source, undefined, { resolve: resolveSeed, old: true }).diagnostics, old).toEqual([]);
     }
     // (a name the forward doesn't give is left as written: the compile says so)
-    expect(normalise(`use &agogo from "core kit"\n${groove}`, { resolve: resolveSeed, old: true }).steps).toEqual([]);
+    expect(normalise(`&agogo from "core kit"\n${groove}`, { resolve: resolveSeed, old: true }).steps).toEqual([]);
     // (with no resolver, nothing is forwarded)
-    expect(normalise(`use * from "core kit"\n${groove}`).steps).toEqual([]);
+    expect(normalise(`* from "core kit"\n${groove}`).steps).toEqual([]);
   });
 
   it('names the interface where the piece names it unambiguously (#196): its meter &bar, its rate &tempo, its key &key, its tonic &tonic', () => {
@@ -151,38 +154,38 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     expect(normalise(open).steps).toEqual([]);
   });
 
-  it('writes a line that is a library fragment’s word for word as a use of it (#196): one use a fragment, where its first line was', () => {
-    const seed = { resolve: resolveSeed, old: true, library: LIBRARY };
+  it('writes a line that is a library fragment’s word for word as a from line of it (#196): one a fragment, where its first line was', () => {
+    const seed = { resolve: resolveSeed, library: LIBRARY };
     const beat = '&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&out map=sample [&beat]';
     const kit = LIBRARY.find((f) => f.id === 'gm_kit')!.text.split('\n');
     const line = (name: string) => kit.find((l) => l.startsWith(`&${name} `))!;
     const written = `&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n${line('bd')}\n${line('sd')}\n${line('hh')}\n${beat}`;
     const { source, steps } = normalise(written, seed);
-    // (and each use as its from line: decision 065; the bar stays the piece's, since the meter is a template whose body is no
-    //  line a piece writes, #507: Normalise recognising a meter as the template with its arguments is a follow-up)
+    // (written as a from line, decision 065, in one step; the bar stays the piece's, since the meter is a template whose body
+    //  is no line a piece writes, #507: Normalise recognising a meter as the template with its arguments is a follow-up)
     expect(source).toBe(`&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n&bd, &sd, &hh from gm_kit\n${beat}`);
-    expect(steps).toHaveLength(2);
+    expect(steps).toHaveLength(1);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     expect(normalise(source, seed)).toEqual({ source, steps: [] });
     // (a use of the fragment already written takes the names too)
-    expect(normalise(`use &bd from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${line('sd')}\n${line('hh')}\n${beat}`, seed).source).toBe(
+    expect(normalise(`&bd from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${line('sd')}\n${line('hh')}\n${beat}`, seed).source).toBe(
       `&bd, &sd, &hh from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${beat}`,
     );
     // (a line that differs by a word stays the piece's; with no library given, nothing is taken)
     const own = written.replace(line('hh'), line('hh').replace('hpf=8000', 'hpf=7000'));
     expect(normalise(own, seed).source).toContain(line('hh').replace('hpf=8000', 'hpf=7000'));
-    expect(normalise(written, { resolve: resolveSeed, old: true }).steps).toEqual([]);
+    expect(normalise(written, { resolve: resolveSeed }).steps).toEqual([]);
   });
 
-  it('writes a fragment cell written inline as the cell by name, and a use of it (#196): every place, once', () => {
-    const seed = { resolve: resolveSeed, old: true, library: LIBRARY };
+  it('writes a fragment cell written inline as the cell by name, and a from line of it (#196): every place, once', () => {
+    const seed = { resolve: resolveSeed, library: LIBRARY };
     const vib = '&(map=lin loop=5 0 .1 0 -.1 0)';
-    // (the bar the 4/4 fragment's: the use goes after the piece's own use lines)
-    const base = BASE.replace('&bar meter("4/4") step=&tempo', 'use &bar from meter');
+    // (the bar the meter fragment's: the from line goes after the piece's own from lines)
+    const base = BASE.replace('&bar meter("4/4") step=&tempo', '&bar from meter &tempo');
     const written = `${base}&lead s=saw loop=C4 pitch=${vib}\n&pad s=tri loop=C3 pitch=${vib}\n&mix [&tune * &lead, &tune * &pad]`;
     const { source, steps } = normalise(written, seed);
-    expect(source).toBe(written.replace('use &bar from meter\n&tempo step=120bpm', '&bar from meter 120bpm\n&vibrato from vibrato').replaceAll(vib, '&vibrato'));
-    expect(steps).toHaveLength(3);
+    expect(source).toBe(written.replace('&bar from meter &tempo\n', '&bar from meter &tempo\n&vibrato from vibrato\n').replaceAll(vib, '&vibrato'));
+    expect(steps).toHaveLength(1);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     // (a vibrato a word off is the piece's own; a piece that names &vibrato itself keeps its inline cell)
     expect(normalise(written.replaceAll('.1 0 -.1', '.12 0 -.12'), seed).steps.filter((step) => !step.includes('decision 065'))).toEqual([]);

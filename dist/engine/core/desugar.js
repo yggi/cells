@@ -5,7 +5,7 @@ import { compileSource } from "../compile.js";
 import { noteValue } from "../meter.js";
 import { noteFrequency } from "../program.js";
 import { expansion } from "../use.js";
-import { readFrom, readUse } from "../parser/use.js";
+import { readFrom } from "../parser/use.js";
 import { declLine, declWords, deleteCell, splitComment } from "../edit.js";
 const num = (x) => String(x);
 const codeWise = (text, f) => text
@@ -273,7 +273,7 @@ function inPlace(text, resolve) {
     return own
         .flatMap((raw, i) => {
         const code = splitComment(raw)[0];
-        const taken = (readUse(code) !== undefined || readFrom(code.trim())?.kind === 'use') && !kept.has(i + 1);
+        const taken = readFrom(code.trim())?.kind === 'use' && !kept.has(i + 1);
         return taken ? (at.get(i + 1) ?? []) : [raw];
     })
         .join('\n');

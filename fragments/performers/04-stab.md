@@ -73,4 +73,4 @@ Its two inputs are the score's (decision 065: the line its main parameter, the l
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`styles`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
 
-**Its signature** (decision 065): `&stab, &stabOut from (&stabLevel) &stabline`. `&stab from stab_performer &line` takes a copy of it, `&stabline` its main argument; `&stabLevel` an optional parameter, its line its default (`"stab_performer"(stabLevel=…)`). Taken the old way, `use &stab from stab_performer`, it reads `&stabline` by name, as before.
+**Its signature** (decision 065): `&stab, &stabOut from (&stabLevel) &stabline`. `&stab from stab_performer &line` takes a copy of it, `&stabline` its main argument; `&stabLevel` an optional parameter, its line its default (`"stab_performer"(stabLevel=…)`).

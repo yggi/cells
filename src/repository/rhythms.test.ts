@@ -13,14 +13,22 @@ import { eventsBetween, plan } from '../engine/realize';
 import { codeShifts } from '../engine/program';
 import { soundsIdentical } from '../engine/sameness';
 import { createRepository, type StylePoint } from './fragments';
-import { fitOf } from './fit';
+import { fitsAs } from './fit';
+import { expand } from '../engine/use';
+import type { Resolve } from '../engine/program';
 import { heard } from './heard';
 import { holesOf } from './holes';
 import { resolveSeed } from './library';
-import { expand } from '../engine/use';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { RHYTHM_FRAGMENTS } from './rhythms';
+
+/** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
+const takenOn = (text: string, bench: string, main?: string) => {
+  const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
+  const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
+  return { ...fit, union: { text: expand(fit.text, resolve) } };
+};
 
 /** Jambot's swing axis, the readers' path of the swing contract (music-commons contracts/swing): 4/4 at each s from 0 to 1 in twentieths. */
 const path = swing.vectors.filter((v) => v.s !== undefined);
@@ -38,7 +46,7 @@ const meters = createRepository(METER_FRAGMENTS);
 const byId = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!;
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id || f.id === wordOf(id))!.text;
 /** 13 of the General MIDI kit's lines, taken by name as the drummer takes them: every voice the rhythms leave as a hole (#244). */
-const coreKit = expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim();
+const coreKit = expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim();
 
 /** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments, and a card that hears them (#291). */
 const hosted = (meter: string, bpm: number, ...fragments: string[]) => {
@@ -243,8 +251,8 @@ describe('the rhythms’ holes (decision 054, rung 2)', () => {
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))(
     '%s fits a workbench with a meter and no kit, and with the General MIDI kit’s 13, and the kit fills every hole',
     (_, text) => {
-      expect(fitOf(text, hosted(meterText('meter'), 120)).fits).toBe(true);
-      const withKit = fitOf(text, hosted(meterText('meter'), 120, coreKit));
+      expect(takenOn(text, hosted(meterText('meter'), 120)).fits).toBe(true);
+      const withKit = takenOn(text, hosted(meterText('meter'), 120, coreKit));
       expect([withKit.fits, withKit.sounds]).toEqual([true, []]);
     },
   );
@@ -282,7 +290,7 @@ describe('where the rhythms are found', () => {
 describe('Spooky drums, in every meter it fits', () => {
   const spooky = RHYTHM_FRAGMENTS.find((f) => f.id === 'spooky_drums')!;
   const STRAIGHT = METER_FRAGMENTS.filter((m) => !/swing=/.test(m.id));
-  const fits = STRAIGHT.filter((m) => fitOf(spooky.text, setTiming(m.text, 'bar', 'step', '60bpm')).fits);
+  const fits = STRAIGHT.filter((m) => takenOn(spooky.text, setTiming(m.text, 'bar', 'step', '60bpm')).fits);
   it('fits every straight meter of the library but 7/8', () => {
     expect(STRAIGHT.filter((m) => !fits.includes(m)).map((m) => m.id)).toEqual(['meter(grouping=meter("7/8"))']);
   });

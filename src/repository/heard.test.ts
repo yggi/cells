@@ -9,7 +9,7 @@ import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { BASS_FRAGMENTS } from './bass';
-import { fitOf } from './fit';
+import { fitsAs } from './fit';
 import { heard } from './heard';
 import { LIBRARY, resolveSeed } from './library';
 import { METER_FRAGMENTS } from './meters';
@@ -56,10 +56,9 @@ const hash = (s: string) => {
 
 /** A fragment's bench: a meter it fits at 120 bpm and the kits (a rhythm), 4/4 with the General MIDI kit (the bell), a key, a harmony and the bass instrument (a bass line). */
 const benchOf = (id: string, text: string) => {
-  if (BASS_FRAGMENTS.some((f) => f.id === id))
-    return 'use * from bass\n&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7] [4,6,8] [0,2,4]';
-  if (id === 'bell_and_scale') return 'use * from gm_kit\n&bar meter("4/4") step=120bpm\n&tonic C';
-  return `use * from gm_kit\n${METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(text, m).fits)!}`;
+  if (BASS_FRAGMENTS.some((f) => f.id === id)) return '* from bass\n&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7] [4,6,8] [0,2,4]';
+  if (id === 'bell_and_scale') return '* from gm_kit\n&bar meter("4/4") step=120bpm\n&tonic C';
+  return `* from gm_kit\n${METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitsAs('x', m, { resolve: (id) => (id === 'x' ? text : resolveSeed(id)) }).fits)!}`;
 };
 
 /** What a text sends over its first 16 s: each note's channel, MIDI note, onset and end (s) and velocity, in order. */
@@ -112,10 +111,10 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
 
 describe('a bass line fills the bass performer’s hole (#285)', () => {
   // (sent on the bass's channel and heard on a sound card: the bass has a sound of its own, which MIDI doesn't send, #391)
-  it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s, with the host and use * from bass_performer, compiles with no diagnostic', (_, text) => {
+  it.each(BASS_FRAGMENTS.map((f) => [f.id] as const))('%s, taken over the host with the bass performer, compiles with no diagnostic', (id) => {
     const host =
       '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
-    const r = compileSource(`use * from bass_performer\n${host}\n${text}`, undefined, { resolve: resolveSeed, old: true });
+    const r = compileSource(`&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline\n&bassline from ${id} &harm\n${host}`, undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
     expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bassOut', 'bass', 'bassline']]);
   });

@@ -35,7 +35,12 @@ describe('how long a piece is', () => {
   it('the example Electro swing is its 32 bars, its vibratos aside, and Jambot’s section on cells’ clarinet its 8 (#376)', () => {
     expect(time('electroswing').cycle).toBeCloseTo((32 * 240) / 124, 6);
     // (as Jambot's section writes it: the performer used, the instrument found at the style's point written in the piece)
-    const section = ['&bar meter("4/4") step=124bpm', '&leadline step=1m 0 2 4 7 0 2 4 7', '&leadLevel map=amp .8', 'use * from lead_performer'];
+    const section = [
+      '&bar meter("4/4") step=124bpm',
+      '&leadline step=1m 0 2 4 7 0 2 4 7',
+      '&leadLevel map=amp .8',
+      '&lead, &leadOut from lead_performer(leadLevel=&leadLevel) &leadline',
+    ];
     const line = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'clarinet')!.text;
     const clarinet = compileSource([...section, line, '&out map=sample &leadOut'].join('\n'));
     expect(clarinet.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);

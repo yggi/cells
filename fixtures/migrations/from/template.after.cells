@@ -1,6 +1,0 @@
-# a use of a template, its main argument the piece's cell (decision 065): from says it on the line
-&key from diatonic(mode=dorian) D
-&bar meter("4/4") step=100bpm
-&tune over=&key step=8n 0 2 4 2 4 5 7 4
-&lead s=tri loop=D4
-&out map=sample [&tune * &lead]

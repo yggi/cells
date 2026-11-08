@@ -30,8 +30,11 @@ What a line reads without writing it, the main meter a `step=16n` taps, is never
 
 ## `use`, retired
 
-`use &bd, &sd from gm_kit`, `use * from gm_kit` and `use &x` (`use &x from x`) are retired ([#387](https://github.com/yggi/cells/issues/387)): each is an error that names its `from` line (`use is retired: say where the cells come from, …`), and a text that writes one doesn't play. Migrate writes it, with a template's arguments; it reads the retired form as it read before (`CompileOptions.old`), so a piece written then is rewritten to play the same. Read so, the old way:
-A `use` of a template takes its lines as they are, and reads its parameters by name, as before decision 065: a line the piece writes for one of them (`&tonic D`, `&swing …`) is its argument, as an interface name the piece defines is (`&key`, `&bar`, `&tempo`, `&tonic`, `&harm`, decision 060). `use * from` a fragment takes every line but one read only by lines the piece overrides (`use * from meter(swing=8n:2/3)` under the piece's own `&bar` takes no `&swing`, and says the use adds nothing). `use "my riff"`, older still, reads as `use * from "my riff"`.
+`use &bd, &sd from gm_kit`, `use * from gm_kit` and `use &x` are retired ([#387](https://github.com/yggi/cells/issues/387)). Since [#588](https://github.com/yggi/cells/issues/588) nothing reads one: the parser says `use is retired`, whether the text is read the old way or not, and a text that writes one doesn't play. Migrate stopped rewriting them in the release after v0.20.0, after a minor of warnings; a piece written before is rewritten by Migrate at v0.20.0, or by hand:
+
+- `use &bd, &sd from gm_kit` is `&bd, &sd from gm_kit`, and `use * from gm_kit` is `* from gm_kit` (a collection).
+- `use &x` is `&x from x`.
+- A `use` of a template is a `from` line with its arguments: `use &key from dorian` with the piece's `&tonic D` is `&key from diatonic(mode=dorian) D`. The old `use` read a template's parameters, and the interface names `&bar`, `&tempo`, `&key`, `&tonic`, `&harm`, by name; a `from` line reads only its arguments ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)).
 
 ## The expansion: the piece's own lines win
 
@@ -50,17 +53,17 @@ So a piece overrides a voice of the kit by writing it, and every line that reads
 A fragment may itself take from others: its own lines win over what it takes, and the piece's over all.
 
 - A line two used fragments give word for word (comments aside, whitespace collapsed) is one line.
-- A line taken twice from one id is taken once, at its first `use`; a use that then takes nothing warns that it adds nothing.
-- A name a use asks for that the fragment doesn't define is an error naming the names it does: `&agogo is not in "gm_kit": it defines &acousticbassdrum, &bd, &rim, …`.
-- A name a use asks for that the piece defines is the piece's, and warns that taking it adds nothing, unless a line the use takes reads it: then naming it is how the piece overrides it, and says nothing (`use &bass, &bassV from bass_performer`, the old way, with the piece's own `&bassV s=saw loop=C3`: the bass player, on the piece's sound; a copy reads an instrument's name the same way, `&bass from bass_performer &line` with the piece's own `&bassV`). A `use * from` whose every line the piece defines warns too.
-- A helper the piece also defines is an error: the piece didn't ask for it, so its line would change what the named cell reads. Rename the piece's, or name the helper in the use, which makes it an override.
-- A name two used fragments define by different lines, and the piece doesn't, is an error naming the name and both ids: the piece writes the line itself, or drops one `use`.
-  `use` never renames: a voice's General MIDI note is read off its name ([midi.md](midi.md)), and `&bd2` would send another.
+- A line taken twice from one id is taken once, at its first `from` line; a line that then takes nothing warns that it adds nothing.
+- A name a line asks for that the fragment doesn't define is an error naming the names it does: `&agogo is not in "gm_kit": it defines &acousticbassdrum, &bd, &rim, …`.
+- A name a line asks for that the piece defines is the piece's, and warns that taking it adds nothing, unless a line it takes reads it: then naming it is how the piece overrides it, and says nothing (a copy reads an instrument's name so, `&bass, &bassOut from bass_performer &line` with the piece's own `&bassV s=saw loop=C3`: the bass player, on the piece's sound). A `* from` whose every line the piece defines warns too.
+- A helper the piece also defines is an error: the piece didn't ask for it, so its line would change what the named cell reads. Rename the piece's, or name the helper in the line, which makes it an override. No name is the piece's by convention: a collection's `&key` the piece writes too is a helper like any other ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)).
+- A name two used fragments define by different lines, and the piece doesn't, is an error naming the name and both ids: the piece writes the line itself, or drops one `from` line.
+  A collection never renames: a voice's General MIDI note is read off its name ([midi.md](midi.md)), and `&bd2` would send another.
 - A cycle is an error naming it, and so is a depth past 8 (a kit in a groove in a section in a piece is 3).
 - An id the library doesn't hold is an error naming it, and the piece's other lines compile as they would without it.
-- **A retired id** is read for a minor version as a fragment that only forwards, one `use` of what took its place, and Normalise writes a use of it as that use (#196): `use * from "core kit"`, the 13 voices a groove needs before a `use` could name what it takes, is `use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit`, and `"gm kit"` is `gm_kit` (`RETIRED` in `src/repository/library.ts`).
+- **A retired id** is read as a fragment that only forwards, one `from` line of what took its place, with a warning, and Migrate writes a line of it as that line (#196): `* from "core kit"`, the 13 voices a groove needs before a line could name what it takes, is `&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit`, and `"gm kit"` is `gm_kit` (`RETIRED` in `src/repository/library.ts`).
 
-Each of these is said on the piece's `use` line it came through, and so is what the compiler says of a used line.
+Each of these is said on the piece's `from` line it came through, and so is what the compiler says of a used line.
 
 ## The built-in card hears only the piece
 
@@ -72,13 +75,13 @@ The piece reads a used fragment's lines on a card of its own (`&out map=midi(10)
 
 The host hands each compile a resolver, from an id (and the hash a lockfile recorded, where it has one) to a fragment's text, or null: `compileSource(text, env, { resolve })`.
 `resolveSeed` is the seed library's (`fragments/`), the current version of each fragment; a frontend's library, Jambot's learned layer or Cell studio's, is another.
-Without a resolver, every `use` is an error.
+Without a resolver, every `from` line that takes from a fragment is an error.
 
-What each `use` resolved to is data on the result, `CompileResult.uses`: its id, the names it asked for (`names`, null for `*`), its line, the hash of the text it resolved to, the names it gave (its helpers among them) and the names the piece overrode.
+What each `from` line resolved to is data on the result, `CompileResult.uses`: its id, the names it asked for (`names`, null for `*`), its line, the hash of the text it resolved to, the names it gave (its helpers among them) and the names the piece overrode.
 
 ## The lockfile
 
-A piece file's frontmatter records what each `use` resolved to, so a saved piece keeps sounding the same when a library moves on:
+A piece file's frontmatter records what each `from` line resolved to, so a saved piece keeps sounding the same when a library moves on:
 
 ```yaml
 uses:
@@ -88,16 +91,16 @@ uses:
 
 - The hash is `e1:` and a hash of the fragment's text up to layout (decision 050's E1, its rung written first, so a lockfile still checks once E4, what a hash reads, exists).
 - `lockfileOf(file)` reads it, for the compile's `locked`; a recorded hash the library no longer gives plays the current version, with a warning naming the id.
-- `withLockfile(file, result.uses)` records a compile's hashes; `writePiece` drops an entry no `use` line names.
+- `withLockfile(file, result.uses)` records a compile's hashes; `writePiece` drops an entry no `from` line names.
 - A raw text, or a file with no frontmatter, has no lockfile: it plays the current version, always.
 
 ## Normalise and the measure
 
-Normalise keeps every `use` line, in its order, never expanded ([canonical.md](canonical.md)), in one spelling: `use * from …`, `use &a, &b from …`, `use &x` for `use &x from x`, an id bare where it is a word.
-Shorten's measure counts a `use` line as one leaf, a reference; the used fragment's lines are the library's.
+Normalise keeps every `from` line, in its order, never expanded ([canonical.md](canonical.md)), a collection's the narrowest: the cells of it the piece reads.
+Shorten's measure counts a `from` line as one leaf, a reference; the used fragment's lines are the library's.
 
 ## Fragments with holes
 
-A piece with `use` is a fragment like any other: its holes are its expansion's, a used fragment's holes the piece's, less what the piece and the other used fragments define.
-`holesOf(text, compiled, resolve)` and `fitOf(fragment, workbench, compiled, resolve)` read it so, given the resolver: a used two-bar clave needs bars a whole number of its taps, as written out, so it doesn't fit 7/8; without a resolver, only the text's own lines are read.
-A hole read only as a sound, a step of a braid or a term of a mix (a groove's `&bd`), never as a table or a clock, doesn't block a fragment's fit on a workbench: `fitOf` lists it in `sounds`, the instrument to ask for next.
+A piece with `from` lines is a fragment like any other: its holes are its expansion's, a used fragment's holes the piece's, less what the piece and the other used fragments define.
+`holesOf(text, compiled, resolve)` and `fitsAs(id, workbench, { resolve })` read it so: a used two-bar clave needs bars a whole number of its taps, as written out, so it doesn't fit 7/8; without a resolver, only the text's own lines are read.
+A hole read only as a sound, a step of a braid or a term of a mix (a groove's `&bd`), never as a table or a clock, doesn't block a fragment's fit on a workbench: `fitsAs` lists it in `sounds`, the instrument to ask for next.

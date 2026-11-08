@@ -1,38 +1,34 @@
 /**
- * `use` (decisions 054, 059): a fragment's lines taken into a piece, by its id. What the compiler reads, the
- * **expansion**, is the piece's own lines, then the lines each `use` takes that the piece doesn't define, in the order
- * the `use` lines are written; a used fragment that uses others is expanded first, its own lines winning over theirs.
+ * `from` lines (decision 065; collections as decisions 054 and 059 ruled them): a fragment's lines taken into a piece, by
+ * its id. What the compiler reads, the **expansion**, is the piece's own lines, then what each `from` line takes, in the
+ * order they are written; a fragment that takes from others is expanded first, its own lines winning over theirs.
  *
- * - `use * from gm_kit` takes every line (`use "gm_kit"`, the old way, is the same, and warns); `use &bd, &sd from
- *   gm_kit` takes the named cells and the fragment's lines they read, their closure (the names they write, `&x`,
- *   followed within the fragment: what the closure takes and the use doesn't name are the fragment's helpers); `use
- *   &aeolian` is `use &aeolian from aeolian`.
- * - A name the use asks for and the fragment doesn't define is an error naming the ones it does; a name it asks for
- *   that the piece defines is the piece's (it overrides), and says the use of it adds nothing, unless a line the use
- *   takes reads it (a helper named to override it: `use &bass, &bassV from …`); a helper the piece defines and the use
- *   doesn't name is an error (decision 059: a helper is the fragment's, and the piece's line would change what it reads),
- *   but, for a `use` line (the old way), an interface name (`&key`, `&bar` …), which is the piece's, read by the fragment's line (decision 060).
- * - A line two used fragments give word for word (its code: comments aside, whitespace collapsed) is one line; a name
- *   they define by different lines, and the piece doesn't, is an error naming it and both ids. `use` never renames: a
+ * - **From a collection** (a fragment with no signature): `* from gm_kit` takes every line; `&bd, &sd from gm_kit` the
+ *   named cells and the fragment's lines they read, their closure (the names they write, `&x`, followed within the
+ *   fragment: what the closure takes and the line doesn't name are the fragment's helpers). A name it asks for and the
+ *   fragment doesn't define is an error naming the ones it does; a name it asks for that the piece defines is the
+ *   piece's (it overrides), and says the line adds nothing, unless a line it takes reads it; a helper the piece defines
+ *   and the line doesn't name is an error (decision 059: a helper is the fragment's, and the piece's line would change
+ *   what it reads). No name is the piece's by convention (decision 075).
+ * - **From a template** (a fragment with a signature: `&key from harmonic_minor D`): a copy of it (`instantiate`), its
+ *   head named as the line names it, its parameters bound to the arguments, every other name it defines private to the
+ *   copy, and what it took from collections shared by name; the copy's lines are the level's own, as if written there.
+ * - A line two collections give word for word (its code: comments aside, whitespace collapsed) is one line; a name they
+ *   define by different lines, and the piece doesn't, is an error naming it and both ids. A collection never renames: a
  *   renamed voice changes its drum note (#117).
- * - A line taken twice from one id is taken once, at its first `use`; a use that then takes nothing says so.
+ * - A line taken twice from one id is taken once, at its first line; a line that then takes nothing says so.
  * - A cycle is an error naming it, and so is a depth past `USE_DEPTH`; an unresolved id is an error naming it, and the
- *   piece's other lines compile as they would without it. Each is said on the piece's `use` line it came through.
+ *   piece's other lines compile as they would without it. Each is said on the piece's line it came through.
  * - Cells resolves nothing itself: the host hands each compile a resolver (`Resolve`), and the hashes its lockfile
  *   recorded (`Locked`); a recorded hash the library no longer gives plays the current version, with a warning.
  * - A fragment's hash is `e1:` and a hash of its text up to layout (decision 050's E1, its rung written first, so it
  *   still checks once E4 exists).
- *
- * `from` lines (decision 065) are read here too. One that takes from a fragment with no signature, a collection (`&bd, &sd
- * from gm_kit`, `* from gm_kit`), is the `use` of those names. One that takes from a fragment with a signature, a
- * template (`&key from harmonic_minor D`), is a copy of it (`instantiate`): its head named as the line names it, its
- * parameters bound to the arguments, every other name it defines private to the copy, and what it took from collections
- * shared by name; the copy's lines are the level's own, as if written there.
+ * - A `use` line is retired (#588): the parser says so, and the expansion reads it as nothing.
  *
  * `expand` writes the expansion out (Cell studio's "write out"); `expansion` is what `compileSource` reads. Pure.
  */
 import { splitComment } from './edit';
-import { FROM_FORM, isAttribute, readFrom, readUse, topTokens, USE_FORM, type FromForm, type UseForm } from './parser/use';
+import { FROM_FORM, isAttribute, readFrom, topTokens, type FromForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
 import { RENAMED_IDS } from './renamed';
@@ -43,13 +39,11 @@ export const USE_DEPTH = 8;
 
 /** A line of a text, as the parser groups them (a line and those it continues onto). */
 interface Line {
-  /** The cell it declares (bare), or null for a `use` line or a line that declares none. */
+  /** The cell it declares (bare), or null for a `from` line or a line that declares none. */
   readonly name: string | null;
-  /** Its `use`, read; null for a malformed one, undefined for a line that isn't one. */
-  readonly use: UseForm | null | undefined;
   /** Its `from` (decision 065), read; null for a malformed one, undefined for a line that isn't one. */
   readonly from?: FromForm | null | undefined;
-  /** Did it come from a collection (a `use`, a `from` without a signature)? Its names are shared, never a copy's own. */
+  /** Did it come from a collection (a `from` of a fragment without a signature)? Its names are shared, never a copy's own. */
   readonly shared?: boolean;
   /** The names its code writes after its head (`&x`, bare): what it reads. */
   readonly reads: readonly string[];
@@ -82,18 +76,17 @@ function linesOf(text: string): Line[] {
   return out;
 }
 
-/** A line of code, read: the cell it declares and what it reads, or its `use` or `from`. */
+/** A line of code, read: the cell it declares and what it reads, or its `from`. */
 function lineOf(code: string, written = code, line = 0): Line {
-  const use = readUse(code);
-  const from = use === undefined ? readFrom(code) : undefined;
-  if (use !== undefined || from !== undefined) return { name: null, use, from, reads: [], written, code, line };
+  const from = readFrom(code);
+  if (from !== undefined) return { name: null, from, reads: [], written, code, line };
   const head = HEAD.exec(code);
   const reads = head ? [...new Set([...code.slice(head[0].length).matchAll(READS)].map((m) => m[1]!))] : [];
-  return { name: head?.[1] ?? null, use, reads, written, code, line };
+  return { name: head?.[1] ?? null, reads, written, code, line };
 }
 
-/** Does this text have a `use` or a `from` line? (Cheap: a text without one compiles as it always has.) */
-export const hasUse = (text: string): boolean => /^\s*use(?![A-Za-z0-9_])/m.test(text) || /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,]).*\sfrom(?:\s|$)/m.test(text);
+/** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
+export const hasUse = (text: string): boolean => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,]).*\sfrom(?:\s|$)/m.test(text);
 
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
 export function signatureOf(text: string): Extract<FromForm, { kind: 'signature' }> | null {
@@ -138,10 +131,6 @@ interface Taken {
   readonly lines: readonly Line[];
   /** Did its fragment resolve? (An unresolved one is said already: what it lacks isn't.) */
   readonly resolved: boolean;
-  /** A template's parameters (bare), where a `use` line takes it the old way: the piece's own of these names are its arguments. */
-  readonly parameters?: ReadonlySet<string>;
-  /** Did a `use` line take it (the old way, `CompileOptions.old`)? Only then are the old interface names the level's by name. */
-  readonly old?: boolean;
 }
 
 /** What a level of the expansion gave: its lines, and, for each of its `use` lines, what that gave and what was overridden. */
@@ -149,14 +138,6 @@ interface Merged {
   readonly lines: readonly Line[];
   readonly per: readonly { readonly gave: readonly string[]; readonly overrode: readonly string[]; readonly read: readonly string[] }[];
 }
-
-/**
- * The names a `use` line, the old way, leaves to the level that defines them (decisions 047 and 060): the meter and its
- * tempo, the key and its tonic, the harmony, the style. A `from` line binds no name by convention: a template's inputs are
- * its signature's, and a collection's lines read only what it defines, its sounds and its taps (decision 065 §4). This goes
- * with `use` itself.
- */
-const OLD_INTERFACE: ReadonlySet<string> = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 
 /**
  * A level's own lines, then the lines each use takes that its own don't define, in order: a line given word for word
@@ -167,7 +148,7 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
   const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
   const given = new Map<string, { id: string; code: string }>();
   const lines: Line[] = own.filter((l) => l.name);
-  const per = used.map(({ id, names, lines: theirs, resolved, parameters, old }, i) => {
+  const per = used.map(({ id, names, lines: theirs, resolved }, i) => {
     const byName = new Map<string, Line>();
     for (const l of theirs) if (l.name && !byName.has(l.name)) byName.set(l.name, l);
     if (names && resolved) {
@@ -201,10 +182,8 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       for (const r of byName.get(n)!.reads) {
         if (!byName.has(r) || take.has(r) || asked.has(r) || clashed.has(r)) continue;
         if (!defined.has(r)) queue.push(r);
-        // (an interface name the level defines is the level's: what the fragment's line reads, as the main key was, decision
-        // 060; and so is a template's parameter, taken the old way: the level's line is its argument, decision 065)
-        // (and &style, which a fragment may not define at all: said once, below)
-        else if ((old && OLD_INTERFACE.has(r)) || parameters?.has(r) || r === STYLE) continue;
+        // (&style, which a fragment may not define at all: said once, below)
+        else if (r === STYLE) continue;
         else {
           clashed.add(r);
           say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);
@@ -239,15 +218,15 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
   return { lines, per };
 }
 
-/** A use's names, bare, or null for all: a `use` line's, or a `from` line's. */
+/** A `from` line's names, bare, or null for all. */
 const namesOf = (u: { readonly names: readonly string[] | null }): ReadonlySet<string> | null => (u.names ? new Set(u.names.map((n) => n.slice(1))) : null);
 
 /** A `from` line that takes from a fragment (decision 065). */
 type FromUse = Extract<FromForm, { kind: 'use' }>;
 
-/** The use a line makes, a `use` line's or a `from` line's: the fragment's id and what it asks for; null for none. */
-const entryOf = (l: Line): { readonly id: string; readonly names: readonly string[] | null; readonly from: FromUse | null } | null =>
-  l.use ? { id: l.use.id, names: l.use.names, from: null } : l.from?.kind === 'use' ? { id: l.from.id, names: l.from.names, from: l.from } : null;
+/** The use a `from` line makes: the fragment's id and what it asks for; null for any other line. */
+const entryOf = (l: Line): { readonly id: string; readonly names: readonly string[] | null; readonly from: FromUse } | null =>
+  l.from?.kind === 'use' ? { id: l.from.id, names: l.from.names, from: l.from } : null;
 
 /** A line's references renamed (`&tonic` → `&key_tonic`), what the double quotes hold left as written. */
 const renamed = (code: string, names: ReadonlyMap<string, string>): string =>
@@ -377,20 +356,18 @@ const sharedLines = (lines: readonly Line[]): Line[] => lines.map((l) => (l.shar
 /**
  * What a use of a resolved fragment gives (`path`: the ids that led here, this one last; `taken`: the names the level
  * holds, which a copy's own names stay clear of). A fragment with no signature is a collection, its lines taken by name;
- * with one, a `from` line takes a copy (`instantiate`), and a `use` line its lines as they are, its parameters read by
- * name as before (the old way).
+ * with one, a `from` line takes a copy (`instantiate`).
  */
 function give(entry: NonNullable<ReturnType<typeof entryOf>>, path: readonly string[], text: string, resolve: Resolve, say: (message: string) => void, taken: Set<string>): Given {
   const { id, from } = entry;
   const signatures = linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []));
-  if (!from || !signatures.length) {
-    if (from && (from.head.length || from.args || from.main !== null))
+  if (!signatures.length) {
+    if (from.head.length || from.args || from.main !== null)
       say(
         `${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`,
       );
-    const parameters = new Set(signatures.flatMap((g) => [...g.optional, ...(g.main ? [g.main] : [])]).map((n) => n.slice(1)));
     const lines = sharedLines(fragmentLines(path, text, resolve, say));
-    return { taken: { id, names: namesOf(entry), lines, resolved: true, ...(parameters.size ? { parameters } : {}), ...(from ? {} : { old: true }) }, copy: [] };
+    return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
   return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken);
@@ -506,8 +483,8 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
   const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
   const copies: Line[] = [];
   const used = own.flatMap((l): Taken[] => {
-    if (l.use === null || l.from === null) {
-      sayHere(l.use === null ? USE_FORM : FROM_FORM);
+    if (l.from === null) {
+      sayHere(FROM_FORM);
       return [];
     }
     const entry = entryOf(l);
@@ -533,6 +510,16 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
 
 /** What a use of an id the seed renamed says: its start (`is renamed`) is stable, for a frontend that matches it. */
 const renamedMessage = (id: string, word: string) => `${quoted(id)} is renamed ${word}: write from ${word} (#387; Migrate rewrites it)`;
+
+/**
+ * The line a fragment forwards to, where its text is one `from` line of a collection and nothing else (a retired id the
+ * library reads so, #196): what a line of it is told, which Migrate's `forwarded` rule writes.
+ */
+function forwardsTo(text: string): string | null {
+  const lines = linesOf(text);
+  const only = lines.length === 1 ? lines[0]!.from : null;
+  return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
+}
 
 /** The expansion of a text, as the compiler reads it. */
 export interface Expansion {
@@ -585,6 +572,9 @@ export function expansion(text: string, { resolve, locked = [] }: CompileOptions
     // (an id the seed renamed, which this resolver reads as its word: the old way for a minor version, #387)
     const word = RENAMED_IDS.get(id);
     if (word !== undefined && resolve!(word) === theirs) diagnostics.push({ severity: 'warning', message: renamedMessage(id, word), span });
+    // (an id that only forwards to another, retired: read as what it forwards to, for a minor version, #196)
+    const to = forwardsTo(theirs);
+    if (to !== null) diagnostics.push({ severity: 'warning', message: `${quoted(id)} only forwards to ${quoted(to)}: take from it (Migrate rewrites it)`, span });
     const g = give(u, [id], theirs, resolve!, say, taken);
     copies.push(g.copy);
     args.push(g.args);
@@ -641,7 +631,7 @@ export function expand(text: string, resolve: Resolve, locked?: CompileOptions['
   const kept = new Set(x.uses.filter((u) => u.hash === null).map((u) => u.span.line));
   const own = text
     .split('\n')
-    .filter((raw, i) => (readUse(splitComment(raw)[0]) === undefined && readFrom(splitComment(raw)[0])?.kind !== 'use') || kept.has(i + 1))
+    .filter((raw, i) => readFrom(splitComment(raw)[0])?.kind !== 'use' || kept.has(i + 1))
     .join('\n');
   const added = x.text.split('\n').slice(text.split('\n').length);
   return [own.replace(/\s+$/, ''), ...added].join('\n') + (text.endsWith('\n') ? '\n' : '');

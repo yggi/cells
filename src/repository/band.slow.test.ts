@@ -29,8 +29,8 @@ function scoreOf({ preset, seed, text, point }: (typeof sections.sections)[numbe
 }
 
 /** What a text sends over MIDI in its first 40 s (the longest section, 8 bars at 72 bpm, is 26.7 s): `channel note velocity onset end`, sorted. */
-function sent(text: string, resolve: Resolve, old = false): string[] {
-  const plan = planOf(text, undefined, { resolve, old });
+function sent(text: string, resolve: Resolve): string[] {
+  const plan = planOf(text, undefined, { resolve });
   const route = router(plan.result, channelTable(plan.result));
   const r = (x: number) => Math.round(x * 1e6) / 1e6;
   return windowAt(plan, 0, 40)
@@ -56,8 +56,8 @@ describe("Jambot's twenty sections, played on the default band (#391)", () => {
     const resolve = resolveBand(score);
     const compiled = compileSource(score, undefined, { resolve });
     expect(compiled.diagnostics).toEqual([]);
-    // (the section as Jambot wrote it at that pin, with `use`: read the old way, as a text from an older version is)
-    const was = sent(section.text, resolveSeed, true);
+    // (the section as Jambot wrote it at that pin, its `use` lines as Migrate wrote them at v0.20.0, the last to read them, #588)
+    const was = sent(section.migrated, resolveSeed);
     const now = sent(score, resolve);
     expect(was.length).toBeGreaterThan(90);
     expect(mismatched(was, now)).toBe(0);
@@ -69,7 +69,7 @@ describe("Jambot's twenty sections, played on the default band (#391)", () => {
     // (the band's own line for the bass wins over its instrument's)
     const band = `${resolveBand(score)('band')!}\n&bassV s=saw loop=C3`;
     const resolve: Resolve = (id) => (id === 'band' ? band : resolveSeed(id));
-    expect(mismatched(sent(section.text, resolveSeed, true), sent(score, resolve))).toBeGreaterThan(0);
+    expect(mismatched(sent(section.migrated, resolveSeed), sent(score, resolve))).toBeGreaterThan(0);
   });
 
   it.each(sections.sections.map((s) => [`${s.preset}, seed ${s.seed}`, s] as const))('%s: its sound card renders with no diagnostic and no clipping', (_, section) => {

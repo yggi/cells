@@ -31,8 +31,8 @@ export const LIBRARY = [
     ...MODULE_FRAGMENTS,
 ];
 export const RETIRED = new Map([
-    ['core kit', 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
-    ['gm kit', 'use * from gm_kit'],
+    ['core kit', '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
+    ['gm kit', '* from gm_kit'],
 ]);
 const CURRENT = new Map([...SEED.map((f) => [f.fragment.id, f.fragment.text]), ...LIBRARY.map((f) => [f.id, f.text])]);
 const RENAMED = [...RENAMED_IDS].map(([old, word]) => [old, CURRENT.get(word)]);

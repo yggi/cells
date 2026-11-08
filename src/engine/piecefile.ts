@@ -42,7 +42,7 @@
  */
 import { readBlocks, rewrite, writeBody, type CodeLine, type Layout } from './literate';
 import { readYaml, writeYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from '../repository/yaml';
-import { readFrom, readUse } from './parser/use';
+import { readFrom } from './parser/use';
 import { splitComment } from './edit';
 import type { Locked, Used } from './program';
 
@@ -144,13 +144,13 @@ export function withLockfile(file: PieceFile, uses: readonly Used[]): PieceFile 
   return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(once) } };
 }
 
-/** The ids a text's `use` and `from` lines name (decision 065: a `from` line is a use, and its lockfile entry is kept). */
+/** The ids a text's `from` lines name (decision 065: a `from` line is a use, and its lockfile entry is kept). */
 const usedIds = (text: string): Set<string> =>
   new Set(
     text.split('\n').flatMap((raw) => {
       const code = splitComment(raw)[0];
       const from = readFrom(code);
-      return readUse(code)?.id ?? (from?.kind === 'use' ? from.id : []);
+      return from?.kind === 'use' ? from.id : [];
     }),
   );
 

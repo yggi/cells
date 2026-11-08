@@ -10,10 +10,10 @@ import type { Fragment } from './fragments';
 /** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, the forms, the band, then the styles: a hundred and twelve fragments. */
 export declare const LIBRARY: readonly Fragment[];
 /**
- * The ids the library no longer lists, each still read for one minor version as a fragment that only forwards: a `use`
- * of the fragment that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
- * `use` could name what it takes; the General MIDI kit is `gm_kit`, a word. Normalise writes a use of one as the use it
- * forwards to (`normalise/forwarded.ts`), so a piece that names one plays as before and is respelled.
+ * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment
+ * that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
+ * `use` could name what it takes; the General MIDI kit is `gm_kit`, a word. Migrate writes a line of one as the line it
+ * forwards to (`migrate/forwarded.ts`), so a piece that names one plays as before and is respelled.
  */
 export declare const RETIRED: ReadonlyMap<string, string>;
 /**

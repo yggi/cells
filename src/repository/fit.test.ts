@@ -1,4 +1,4 @@
-// What fits the workbench (decision 047, points 2 and 3): the union of lines, a line given twice kept once and a colliding
+// What fits the workbench by lines (decision 047, points 2 and 3; what the queries ask until #587, `cachedFit`'s judgment): the union of lines, a line given twice kept once and a colliding
 // private name renamed; the fit over every (rhythm, meter) pair of the library; two drum bars on one workbench, each
 // playing E31's hits as alone; and what it costs.
 import { wordOf } from '../engine/renamed';
@@ -10,7 +10,7 @@ import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
-import { cachedCompile, fitOf, unionOf } from './fit';
+import { cachedCompile, cachedFit } from './fit';
 import { createRepository } from './fragments';
 import { heard } from './heard';
 import { LIBRARY, resolveSeed } from './library';
@@ -30,12 +30,16 @@ vi.mock('../engine/compile', async (original) => {
   return { ...actual, compileSource: vi.fn(actual.compileSource) };
 });
 
+/** The fit by lines, as a query asks it (`cachedFit`, until #587), and its union: the judgment `unionOf` and `fitOf` gave (#588). */
+const fitOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench);
+const unionOf = (fragment: string, workbench: string) => fitOf(fragment, workbench).union;
+
 /** A meter's lines, as a host puts them on a workbench by hand: its signature aside (decision 065). */
 const meterText = (id: string) => bodyOf(METER_FRAGMENTS.find((f) => f.id === id || f.id === wordOf(id))!.text);
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
 /** The host's workbench: a meter at a tempo, as a host sets one (`setTiming`), then the fragments already on it. */
 /** 13 of the General MIDI kit's lines, taken by name as the drummer takes them: the voices the rhythms leave as holes (#244). */
-const KIT = expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim();
+const KIT = expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim();
 const bench = (meter: string, bpm = 120, ...fragments: string[]) => [setTiming(meterText(meter), 'bar', 'step', `${bpm}bpm`), ...fragments].join('\n');
 
 describe('the union of lines', () => {
