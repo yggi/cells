@@ -52,6 +52,7 @@ bossa  live c30e1427322425e6
 bell  live eac2295c4bd4897f
 prelude  live 089d425c7ef8b506
 pachelbel  live e0765d827b6d7111
+circle  live c40a7600b88d5ab1
 pop  live 2ddf177729bcd276
 idm  live cf160d0c1d28a9cf
 alpha  live a48b6224d695faa8
