@@ -1,7 +1,7 @@
 import { attrsOf, declLine, declWords, renameCell, setAttr, spansLines, splitComment } from "../edit.js";
 import { parse } from "../parser/index.js";
 import { clocking } from "../clocking.js";
-import { codeShifts, INTERFACE_NAMES } from "../program.js";
+import { codeShifts } from "../program.js";
 import { plan } from "../realize.js";
 const rewrite = (rule, title, before, after, apply) => ({
     id: `${rule}:${before}`,
@@ -27,7 +27,8 @@ function isBar(result, meter) {
     const bpm = 60 / seconds;
     return Number.isFinite(bpm) && bpm >= BAR_BPM.from && bpm <= BAR_BPM.to;
 }
-const named = (name) => INTERFACE_NAMES.includes(`&${name}`);
+const WRITTEN = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
+const named = (name) => WRITTEN.has(name);
 const free = (source, result, name) => declLine(source, name) < 0 && !result.cells.has(name);
 export function interfaceNames(source, result) {
     const own = new Set(parse(source).cells.map((d) => d.name));

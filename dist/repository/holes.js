@@ -2,7 +2,7 @@ import { braidReadsOf, otherReadsOf } from "../engine/compiler/builtin.js";
 import { parse } from "../engine/parser/index.js";
 import { tapPositions } from "../engine/meter.js";
 import { MAIN_KEY } from "../engine/program.js";
-import { expansion, hasUse } from "../engine/use.js";
+import { expansion, hasUse, signatureOf } from "../engine/use.js";
 export { INTERFACE_NAMES } from "../engine/program.js";
 const WHOLE = 1e-9;
 const isWhole = (x) => Math.abs(x - Math.round(x)) < WHOLE;
@@ -70,11 +70,13 @@ export function holesOf(text, compiled, resolve) {
     const asLine = readAsLine(all);
     const stand = sounds.map(standIn).join('\n');
     const filled = stand ? `${read}\n${stand}` : read;
+    const signature = signatureOf(text);
     return {
         uses,
         sounds,
         lines: uses.filter((n) => asLine.has(n)),
         defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
         clock: clockNeeds(filled, stand ? last : result).map((t) => t.need),
+        ...(signature ? { signature: { heads: signature.names, optional: signature.optional, main: signature.main } } : {}),
     };
 }

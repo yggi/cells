@@ -1,14 +1,20 @@
 import { declarations } from "./fit.js";
 import { byId, fragmentProblems, pointDistance, pointsOf } from "./fragments.js";
-import { INTERFACE_NAMES } from "./holes.js";
+import { signatureOf } from "../engine/use.js";
 import { argsOf, ofArgs } from "./variants.js";
 import { RENAMED_IDS } from "../engine/renamed.js";
 export const FILING_WEIGHT = 0.1;
 export const USE_STEP = 0.1;
 export const USE_CAP = 1.2;
-const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 const NAME = /&([A-Za-z_][A-Za-z0-9_]*)/g;
-const ownNames = (text) => [...new Set(declarations(text).map((l) => l.name))].filter((name) => !INTERFACE.has(name));
+const declared = (text) => {
+    const s = signatureOf(text);
+    return new Set(s ? [...s.names, ...s.optional, ...(s.main ? [s.main] : [])].map((n) => n.slice(1)) : []);
+};
+const ownNames = (text) => {
+    const kept = declared(text);
+    return [...new Set(declarations(text).map((l) => l.name))].filter((name) => !kept.has(name));
+};
 export function canonicalText(text) {
     const index = new Map(ownNames(text).map((name, i) => [name, i + 1]));
     return declarations(text)

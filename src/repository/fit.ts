@@ -6,8 +6,8 @@
  * workbench does (its code, comments aside, whitespace collapsed) is the same line and kept once (owner, on #22); a name
  * both define by different lines is the fragment's own and renamed, `&kick` to `&kick2` (the first `&kick<n>`, n from 2,
  * that neither text names), with every use of it in the fragment, until no private name collides (a rename can make a
- * shared line differ, `[&kick, &sd]`, and so rename it too). The interface names (`INTERFACE_NAMES`: `&bar`, `&tempo`,
- * `&key`, `&tonic`, `&harm`) are never renamed: one the fragment defines differently is defined twice, and the fragment doesn't fit.
+ * shared line differ, `[&kick, &sd]`, and so rename it too). The interface names (`&bar`, `&tempo`, `&key`, `&tonic`,
+ * `&harm`, `&style`) are never renamed: one the fragment defines differently is defined twice, and the fragment doesn't fit.
  * Lines of the fragment that declare nothing (blank, a comment alone) aren't carried over, but for its `use` lines
  * (decision 054), each carried over unless the workbench has it, before its declarations.
  *
@@ -23,10 +23,11 @@
 import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
-import type { CompileResult, Resolve } from '../engine/program';
+import type { CompileResult, Resolve, Used } from '../engine/program';
+import { expansion, signatureOf } from '../engine/use';
 import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
-import { clockNeeds, holesOf, INTERFACE_NAMES, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
+import { clockNeeds, holesOf, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
 /** A fragment added to a workbench: the text, and what became of the fragment's names there. */
 export interface Union {
@@ -56,7 +57,11 @@ export interface Fit {
   readonly diagnostics?: readonly Diagnostic[];
 }
 
-const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
+/**
+ * The names the union never renames (the interface names, retired: #387, #454): the old way's, which goes with `unionOf`
+ * and `fitOf`. `useOn` and `fitsAs` bind nothing by name.
+ */
+const INTERFACE: ReadonlySet<string> = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 
 /** A declaration of a text: its cell's name (bare), its lines as written, and its code (comments aside, whitespace collapsed). */
 export interface Line {
@@ -105,8 +110,13 @@ const useLines = (text: string): string[] =>
     .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
     .filter((code) => USE.test(code) || readFrom(code)?.kind === 'use');
 
-/** The union of a fragment with a workbench (see the module's comment). */
-export function unionOf(fragment: string, workbench: string): Union {
+/**
+ * The union of a fragment with a workbench (see the module's comment).
+ * @deprecated The old way (#454): take a template by a `from` line, `useOn`, which binds nothing by name; goes in the next minor.
+ */
+export const unionOf = (fragment: string, workbench: string): Union => unionByName(fragment, workbench);
+
+function unionByName(fragment: string, workbench: string): Union {
   const bench = new Map(declarations(workbench).map((l) => [l.name, l]));
   const taken = new Set([...namesIn(workbench), ...namesIn(fragment)]);
   const renamed = new Map<string, string>();
@@ -163,8 +173,13 @@ const sameDiagnostic = (a: Diagnostic, b: Diagnostic) => a.severity === b.severi
  * Whether a fragment fits a workbench (see the module's comment); `compiledBy` compiles a text, and may cache it
  * (`cachedCompile`). Their `use` lines (decision 054) read through `resolve`: the fragment is judged over its expansion,
  * its used fragments' holes and clock needs its own; `compiledBy`, where given, must read them through the same.
+ * @deprecated The old way (#454): `fitsAs` reads a template's signature; goes in the next minor.
  */
-export function fitOf(fragment: string, workbench: string, compiledBy?: (text: string) => CompileResult, resolve?: Resolve): Fit {
+export const fitOf = (fragment: string, workbench: string, compiledBy?: (text: string) => CompileResult, resolve?: Resolve): Fit =>
+  fitByName(fragment, workbench, compiledBy, resolve);
+
+/** `fitOf`'s judgment, which `fitsAs` keeps for a collection (its lines read only what it defines, its sounds and its taps). */
+function fitByName(fragment: string, workbench: string, compiledBy?: (text: string) => CompileResult, resolve?: Resolve): Fit {
   const compiled = compiledBy ?? ((text: string) => compileSource(text, undefined, resolve ? { resolve } : {}));
   const holes = holesOf(fragment, compiled, resolve);
   const bench = compiled(workbench);
@@ -174,7 +189,7 @@ export function fitOf(fragment: string, workbench: string, compiledBy?: (text: s
   const missing = unfilled.filter((name) => !sounds.includes(name));
   const read = linesRead(fragment, resolve);
   const sound = readOnlyAsSound(parse(read).cells);
-  const union = unionOf(fragment, workbench);
+  const union = unionByName(fragment, workbench);
   // (alone, with a stand-in for each sound hole: a line that strikes one doesn't compile without, and states no need)
   const aloneStand = holes.sounds.map(standIn);
   const alone = clockNeeds([read, ...aloneStand].join('\n'), compiled([fragment, ...aloneStand].join('\n')));
@@ -250,7 +265,176 @@ export function cachedFit(limit = 512): (fragment: string, workbench: string) =>
   const fit = lru(limit, (key) => {
     const colon = key.indexOf(':');
     const end = colon + 1 + Number(key.slice(0, colon));
-    return fitOf(key.slice(end), key.slice(colon + 1, end), compiled);
+    return fitByName(key.slice(end), key.slice(colon + 1, end), compiled);
   });
   return (fragment, workbench) => fit(`${workbench.length}:${workbench}${fragment}`);
+}
+
+/**
+ * A template taken onto a workbench by a `from` line (decision 065, #454): what `useOn` writes. The copy's names are its
+ * own (`&bassline_bassNext`), its inputs the arguments the line gives, so a template can be taken twice and no name of
+ * the workbench is bound to it by convention.
+ */
+export interface UseOn {
+  /** The workbench as written, then the `from` line. */
+  readonly text: string;
+  /** The `from` line written (`&bassline from walking_bass &harm`). */
+  readonly line: string;
+  /** The names the line takes: the head as named (one), or a template's heads by their names (several). */
+  readonly heads: readonly string[];
+  /** The main argument as written (`&harm`, `D`), or null: the template has no main parameter, or the workbench no cell for it. */
+  readonly main: string | null;
+  /** What the copy gives, as the compile reads it (`CompileResult.uses`); null where the template didn't resolve. */
+  readonly used: Used | null;
+}
+
+/** What `useOn` is told: the head's name, the main argument, the named arguments, and how to read the library. */
+export interface UseOnOptions {
+  readonly resolve: Resolve;
+  /** The head's name; by default the template's own, numbered clear of the workbench's (`&bassline2`). */
+  readonly head?: string;
+  /** The main argument, as a `from` line writes it (`&harm`, `D`); by default the one cell of the workbench (or of what it offers) that meets the main parameter. */
+  readonly main?: string;
+  /** The named arguments (`{ swing: '8n:.64' }`). */
+  readonly args?: Readonly<Record<string, string>>;
+  /** Compiles a text (its `from` lines read through `resolve`), and may cache it (`cachedCompile`). */
+  readonly compiled?: (text: string) => CompileResult;
+}
+
+const ID_ARGS = /^([^(]*)\((.*)\)$/;
+
+/** A `from` line: names, the id with its arguments (the id's own, `meter(swing=8n:2/3)`, then the line's), the main argument. */
+function fromLine(heads: readonly string[], id: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
+  const m = ID_ARGS.exec(id);
+  const written = [...(m ? [m[2]!] : []), ...Object.entries(args ?? {}).map(([k, v]) => `${k}=${v}`)];
+  return `${heads.join(', ')} from ${m ? m[1] : id}${written.length ? `(${written.join(', ')})` : ''}${main ? ` ${main}` : ''}`;
+}
+
+const compilerOf = (resolve: Resolve, compiled?: (text: string) => CompileResult) => compiled ?? ((text: string) => compileSource(text, undefined, { resolve }));
+
+/** What a compile says that another doesn't (each said once as often as the other says it). */
+function newDiagnostics(result: CompileResult, before: readonly Diagnostic[]): Diagnostic[] {
+  const left = [...before];
+  return result.diagnostics.filter((d) => {
+    const i = left.findIndex((b) => sameDiagnostic(b, d));
+    if (i < 0) return true;
+    left.splice(i, 1);
+    return false;
+  });
+}
+
+/**
+ * The workbench's cell a template's main parameter is read from, where useOn isn't told one (decision 075: by what a
+ * cell is, never its name). The candidates are the workbench's cells, or, where it declares what it offers (the heads of
+ * its own signature, `&harm, &key from`), those. A candidate meets the parameter where the copy compiles over it with
+ * nothing said that the workbench alone doesn't say (its sound holes stood in), read the way the template reads it (a
+ * table by `over=`, a rate by `step=`, a note as a tonic). Exactly one that does is it; none or several,
+ * and there is none: the fit is then `missing` the parameter, and the host names the argument (`main`) or the
+ * workbench says what it offers. A meter reads as a table, so a harmony beside it is two candidates: offer one.
+ */
+function mainOn(
+  bench: string,
+  id: string,
+  heads: readonly string[],
+  args: UseOnOptions['args'],
+  compiled: (text: string) => CompileResult,
+  stand: readonly string[],
+): string | null {
+  const alone = compiled([bench, ...stand].join('\n'));
+  const meets = (cell: string) => !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).length;
+  const offers = parse(bench).offers;
+  const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
+  const meeting = named.filter((n) => !heads.includes(n) && meets(n));
+  return meeting.length === 1 ? meeting[0]! : null;
+}
+
+/** A name clear of the workbench's: the name, else the first `name<n>`, n from 2, that the workbench doesn't write. */
+function clearOf(bench: string, name: string): string {
+  const taken = namesIn(bench);
+  const bare = name.replace(/^&/, '');
+  if (!taken.has(bare)) return `&${bare}`;
+  let k = 2;
+  while (taken.has(`${bare}${k}`)) k++;
+  return `&${bare}${k}`;
+}
+
+/**
+ * A template taken onto a workbench (decision 065, #454): the workbench with `&head from id(args) main` written on it, and
+ * what the copy gives. Without `head`, the template's head numbered clear of the workbench's names; a template of several
+ * heads is taken by their names. Without `main`, the one cell of the workbench that meets the main parameter (`mainOn`). A
+ * fragment with no signature, a collection, is taken by every name it defines (`* from id`). Replaces `unionOf`, which
+ * merges a fragment's lines by name.
+ */
+export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
+  const compiled = compilerOf(options.resolve, options.compiled);
+  const text = options.resolve(id);
+  const head = bench.replace(/\s+$/, '');
+  const written = (line: string) => [...(head ? [head] : []), line].join('\n');
+  const usedBy = (whole: string): Used | null => compiled(whole).uses?.at(-1) ?? null;
+  const signature = text === null ? null : signatureOf(text);
+  if (text === null || !signature) {
+    const line = `* from ${id}`;
+    return { text: written(line), line, heads: [], main: null, used: text === null ? null : usedBy(written(line)) };
+  }
+  const heads = signature.names.length === 1 ? [options.head ?? clearOf(bench, signature.names[0]!)] : signature.names;
+  const stand = holesOf(text, compiled, options.resolve)
+    .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
+    .map(standIn);
+  const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
+  const line = fromLine(heads, id, options.args, main);
+  return { text: written(line), line, heads, main, used: usedBy(written(line)) };
+}
+
+/** Whether a template fits a workbench taken by a `from` line, and why not: `fitsAs`'s answer. */
+export interface FitAs {
+  readonly fits: boolean;
+  /** The `from` line on the workbench (`useOn`); for a collection, its union (`unionOf`, the old way). */
+  readonly text: string;
+  /** The copy, where a template was taken (`useOn`); null for a collection. */
+  readonly use: UseOn | null;
+  /** The parameters the workbench has no cell for (the main one, `&harm`); for a collection, the names it uses that the workbench lacks. */
+  readonly missing: readonly string[];
+  /** The names it reads only as a sound that the workbench doesn't define: they don't block the fit. */
+  readonly sounds: readonly string[];
+  /** Its clock needs the workbench's meter doesn't meet. */
+  readonly unmet: readonly ClockNeed[];
+  /** What the compile says that the workbench's alone doesn't; absent when a cheaper check failed first. */
+  readonly diagnostics?: readonly Diagnostic[];
+}
+
+/**
+ * Whether a fragment fits a workbench, read by its signature (decision 065, #454): a template fits where the workbench
+ * gives its main argument (`useOn`: the cell that meets it, or `options.main`), the copy compiles with nothing said that
+ * the workbench alone doesn't say (a sound hole stood in, as `fitOf` stands one), and its clock needs are met by the meter
+ * it taps. Nothing is bound by name. A collection (no signature) is judged as `fitOf` judges it: its lines read only what
+ * it defines, its sounds and its taps. Replaces `fitOf`.
+ */
+export function fitsAs(id: string, bench: string, options: UseOnOptions): FitAs {
+  const compiled = compilerOf(options.resolve, options.compiled);
+  const text = options.resolve(id);
+  if (text === null) return { fits: false, text: bench, use: null, missing: [], sounds: [], unmet: [] };
+  const signature = signatureOf(text);
+  if (!signature) {
+    const f = fitByName(text, bench, compiled, options.resolve);
+    return { fits: f.fits, text: f.union.text, use: null, missing: f.missing, sounds: f.sounds, unmet: f.unmet, ...(f.diagnostics ? { diagnostics: f.diagnostics } : {}) };
+  }
+  const use = useOn(bench, id, { ...options, compiled });
+  if (signature.main && use.main === null) return { fits: false, text: use.text, use, missing: [signature.main], sounds: [], unmet: [] };
+  const benchNames = new Set(namesIn(bench));
+  const sounds = holesOf(text, compiled, options.resolve)
+    .sounds.filter((s) => !benchNames.has(s.slice(1)))
+    .sort();
+  const stand = sounds.map(standIn);
+  const judged = [use.text, ...stand].join('\n');
+  const result = compiled(judged);
+  const standNames = new Set(sounds);
+  const diagnostics = newDiagnostics(result, compiled([bench, ...stand].join('\n')).diagnostics).filter((d) => {
+    const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
+    return !(m && standNames.has(m[1]!));
+  });
+  const gave = new Set((use.used?.gave ?? []).map((n) => n.slice(1)));
+  const unmet = clockNeeds(expansion(judged, { resolve: options.resolve }).text, result, gave, gave)
+    .filter((t) => !meets(result, t))
+    .map((t) => t.need);
+  return { fits: !diagnostics.length && !unmet.length, text: use.text, use, missing: [], sounds, unmet, diagnostics };
 }

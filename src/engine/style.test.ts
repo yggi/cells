@@ -6,7 +6,6 @@ import { EXAMPLES } from './examples';
 import { AXES, AXIS_NAMES, SLOTS } from './style';
 import { pieceTime } from './duration';
 import { parse } from './parser';
-import { INTERFACE_NAMES } from './program';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { LIBRARY, resolveSeed } from '../repository/library';
@@ -238,10 +237,6 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
     expect(errors(piece('style=[&funk * 2]'))[0]).toMatch(/^&style style=: its style lies outside the axes on energy \(each 0 to 1\)/);
     expect(errors(piece('style=&funk..&bossa * &line'))[0]).toBeUndefined();
     expect(errors(piece('style=&funk..&bossa * &curve', '4/4', undefined, ['&curve step=1m [0,1] 1']))[0]).toMatch(/^style=a\.\.b \* &curve: a curve is a line of numbers/);
-  });
-
-  it('&style is an interface name', () => {
-    expect(INTERFACE_NAMES).toContain('&style');
   });
 });
 
