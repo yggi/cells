@@ -5,7 +5,8 @@ import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from "../program.js";
 import { CELL_PARAMS, CORE, filterModel, PARAMS, PARAM_ALIASES, nearestAttribute } from "../attributes.js";
 import { IDENT, LineScanner } from "./scanner.js";
 import { OPERATIONS, parseToken, pushStep } from "./braid.js";
-import { FREE_BRAID_WHOLE, parseFree } from "./free.js";
+import { FREE_BRAID_WHOLE } from "./free.js";
+import { NUMBER_PLACES } from "./numbers.js";
 import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generators.js";
 import { MODE_WORDS } from "../../theory/modes.js";
 import { atTap, parseMap, parseStep } from "./values.js";
@@ -40,7 +41,7 @@ export const SHOWS = [
 ];
 export const SHOW_CONVENTIONS = { notes: ['flats', 'sharps', 'german'], do: ['fixed', 'movable'] };
 const whole = (key) => (s, b, _word, at) => {
-    b[key] = s.text.startsWith('free(', s.i) ? Math.round(parseFree(s, key, false).value) : s.int(`a whole number after ${key}=`);
+    b[key] = s.int(`a whole number after ${key}=`, NUMBER_PLACES[key]);
     b.paramSpans[key] = s.place(at);
 };
 const text = (key, example) => (s, b, _word, start) => {
@@ -160,7 +161,7 @@ export const KEYS = {
         examples: ['&key step=cycle(&theme) stride=2 cycle=2', '&wheel cycle=1 0 4 7', '&drone cycle=0 0 4 7'],
         read: (s, b, _word, at) => {
             const vs = s.i;
-            b.cycle = s.int('a whole number after cycle=');
+            b.cycle = s.int('a whole number after cycle=', NUMBER_PLACES.cycle);
             if (b.cycle < 0)
                 s.fail('cycle= counts laps: 0 or more', vs, s.i - vs);
             b.paramSpans.cycle = s.place(at);
@@ -173,7 +174,8 @@ export const KEYS = {
         examples: ['&theme size=2 step=2 0 2 4'],
         read: (s, b) => {
             const at2 = s.i;
-            const n = s.match(/[0-9]*\.?[0-9]+/y);
+            const f = s.freeNumber(NUMBER_PLACES.size);
+            const n = f === null ? s.match(/[0-9]*\.?[0-9]+/y) : String(f);
             if (n === null || !(+n >= 0.25 && +n <= 4))
                 s.fail('size= is how large it is drawn, from .25 to 4: size=2', at2, Math.max(1, (n ?? '').length));
             b.size = +n;
@@ -183,7 +185,8 @@ export const KEYS = {
         form: 'laps=n',
         examples: ['&bar scan(4 4 4 4) step=84bpm laps=30'],
         read: (s, b, word, at) => {
-            const n = s.match(/[0-9]+/y);
+            const f = s.freeNumber(NUMBER_PLACES.laps);
+            const n = f === null ? s.match(/[0-9]+/y) : String(f);
             if (n === null || !(parseInt(n, 10) >= 1))
                 s.fail('laps= takes a count of laps, 1 or more: laps=1', at, word.length + 1);
             b.laps = parseInt(n, 10);
@@ -193,8 +196,9 @@ export const KEYS = {
         form: 'chance=p · chance=free(p, 0..1)',
         examples: ['&ghost chance=.8 step=4 0? 0? 0? 0?', '&ghost chance=free(.7, 0..1) step=4 0? 0?'],
         read: (s, b) => {
-            if (s.text.startsWith('free(', s.i))
-                b.chance = parseFree(s, 'chance', false).value;
+            const f = s.freeNumber(NUMBER_PLACES.chance);
+            if (f !== null)
+                b.chance = f;
             else {
                 const at2 = s.i;
                 const n = s.match(/(?:0?\.[0-9]+|0|1(?:\.0+)?)(?![0-9])/y);
@@ -204,7 +208,7 @@ export const KEYS = {
             }
         },
     },
-    seed: { form: 'seed=n', examples: ['&ghost seed=7 step=4 0? 0? 0? 0?'], read: (s, b) => (b.seed = s.int('a whole number after seed=')) },
+    seed: { form: 'seed=n', examples: ['&ghost seed=7 step=4 0? 0? 0? 0?'], read: (s, b) => (b.seed = s.int('a whole number after seed=', NUMBER_PLACES.seed)) },
     title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
     tags: {
         form: 'tags="tag, tag"',
@@ -215,6 +219,7 @@ export const KEYS = {
         form: 'tier=n',
         examples: ['&piece title="Steps: a tune on one line" tags="tutorial" tier=1 label="Numbers, rests, holds and repeats."'],
         read: (s, b, word, at) => {
+            s.free(NUMBER_PLACES.tier);
             const n = s.match(/[0-9]+(?![0-9.])/y);
             if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999))
                 s.fail('tier= is a tier of the tutorial, 1 to 9999: tier=1', at, word.length + 1);
@@ -267,10 +272,10 @@ export const KEYS = {
         },
     },
 };
+const FREE_NUMBER = /^\(\s*(?:-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)[a-z]*\s*,)/;
 function readAxisFree(s, axis) {
     const at = s.i;
-    const f = parseFree(s, 'param', false);
-    f.param = axis;
+    const f = s.free(NUMBER_PLACES.axis, axis);
     const [lo, hi] = AXES.find((a) => a.name === axis).range;
     if (f.lo < lo || f.hi > hi)
         s.fail(`${axis}=free(…) moves within the axis, ${lo} to ${hi}: ${axis}=free(${f.value}, ${lo}..${hi})`, at, s.i - at);
@@ -288,7 +293,7 @@ function readStylePoint(s) {
         s.skipSpace();
         s.expect('*', `'*' and a weight after &${ref.name}: style=[&${ref.name} * .8, …]`);
         s.skipSpace();
-        terms.push({ ref, weight: s.num(`a weight after &${ref.name} *`).value });
+        terms.push({ ref, weight: s.num(`a weight after &${ref.name} *`, NUMBER_PLACES.weight).value });
         s.skipSpace();
         if (s.peek() === ',') {
             s.i++;
@@ -337,10 +342,9 @@ const readLevels = (s, b, word) => {
             s.fail(`a level after the comma, a note value and a share: ${word}=8n:.6,16n:.55`);
         s.i++;
         let share;
-        const free = s.text.startsWith('free(', s.i);
+        const f = s.free(NUMBER_PLACES.share, word);
+        const free = f !== null;
         if (free) {
-            const f = parseFree(s, 'param', false);
-            f.param = word;
             share = f.value;
             if (levels.length || s.peek() === ',')
                 s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
@@ -396,7 +400,7 @@ const readLevels = (s, b, word) => {
 };
 function readParam(s, b, key) {
     const vs = s.i;
-    if (key === 'level' && (s.peek() === '&' || /^(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\s*\*/.test(s.text.slice(s.i)))) {
+    if (key === 'level' && (s.peek() === '&' || /^(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+|free\([^()]*\))\s*\*/.test(s.text.slice(s.i)))) {
         const factors = [];
         let gain = 1;
         for (let first = true;; first = false) {
@@ -410,7 +414,8 @@ function readParam(s, b, key) {
                 s.i++;
                 s.skipSpace();
             }
-            const n = s.match(/(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+            const f = s.freeNumber(NUMBER_PLACES.level);
+            const n = f === null ? s.match(/(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y) : String(f);
             if (n !== null)
                 gain *= parseFloat(n);
             else
@@ -427,13 +432,6 @@ function readParam(s, b, key) {
         if (st.kind !== 'driven' && st.kind !== 'tap')
             s.fail(`${key}= takes seconds, a clock or a tap: ${key}=&bar*2, ${key}=8n`, vs, s.i - vs);
         b.paramClocks[key] = st;
-        b.paramSpans[key] = s.span(vs);
-        return;
-    }
-    if (s.text.startsWith('free(', s.i)) {
-        const f = parseFree(s, 'param', false);
-        f.param = key;
-        b.params[key] = f.value;
         b.paramSpans[key] = s.span(vs);
         return;
     }
@@ -482,6 +480,12 @@ function readParam(s, b, key) {
         if (!range && factors.length > 1)
             s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
         b.paramCells[key] = { range: range ? [parseFloat(range[1]), parseFloat(range[2])] : null, factors, span: s.span(vs) };
+        b.paramSpans[key] = s.span(vs);
+        return;
+    }
+    const f = s.free(NUMBER_PLACES.param, key);
+    if (f !== null) {
+        b.params[key] = f.value;
         b.paramSpans[key] = s.span(vs);
         return;
     }
@@ -610,7 +614,7 @@ export function parseBody(s, head) {
                     axes.set(word, { value: String(lo), at });
                 }
                 else {
-                    s.num(`a number after ${word}= (an axis of a style, 0 to 1), or a slider, ${word}=free(.3, 0..1)`);
+                    s.num(`a number after ${word}= (an axis of a style, 0 to 1), or a slider, ${word}=free(.3, 0..1)`, NUMBER_PLACES.axis, word);
                     axes.set(word, { value: s.text.slice(vat, s.i), at });
                 }
                 if (!s.atBoundary())
@@ -648,6 +652,13 @@ export function parseBody(s, head) {
             s.i = at;
             const inner = s.within(String(readAxisFree(s, axis).value), at);
             pushStep(inner, tokens, parseToken(inner));
+            continue;
+        }
+        if (word === 'free' && s.peek() === '(' && FREE_NUMBER.test(s.text.slice(s.i))) {
+            if (generator)
+                s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
+            s.i = at;
+            pushStep(s, tokens, parseToken(s));
             continue;
         }
         if (word === 'free' && s.peek() === '(') {

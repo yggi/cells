@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { PAGE, README, entries, renderReadme, renderReference } from '../../../tools/reference';
+import { FREE_PAGE, PAGE, README, entries, renderFreePage, renderReadme, renderReference } from '../../../tools/reference';
 import { CORE, PARAMS } from '../attributes';
 import { parse } from './index';
 import { MODIFIERS } from './braid';
@@ -38,6 +38,11 @@ describe('the syntax reference', () => {
   test(`the index of forms in ${README} is current`, () => {
     const text = readFileSync(README, 'utf8');
     expect(text, RECORD).toBe(renderReadme(text));
+  });
+
+  test(`the table of places in ${FREE_PAGE} is current (decision 078)`, () => {
+    const text = readFileSync(FREE_PAGE, 'utf8');
+    expect(text, RECORD).toBe(renderFreePage(text));
   });
 
   test('a README without the markers is refused', () => {

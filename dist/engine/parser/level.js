@@ -1,9 +1,11 @@
+import { NUMBER_PLACES } from "./numbers.js";
 export function parseFields(s) {
     if (s.peek() !== ':')
         return undefined;
     s.rejectTap(s.text.slice(0, s.i).search(/&[^\s:,[\]()*+&]*$/));
     s.i++;
     const at = s.i;
+    s.free(NUMBER_PLACES.hitNumber);
     const n = s.match(/[0-9]+/y);
     if (n === null)
         return s.fail('A hit is &bd:n:gain, its number first: &bd:0:.3', at, 1);
@@ -13,7 +15,8 @@ export function parseFields(s) {
         return undefined;
     s.i++;
     const g = s.i;
-    const gain = s.match(/[0-9]*\.[0-9]+|[0-9]+/y);
+    const f = s.freeNumber(NUMBER_PLACES.hit);
+    const gain = f === null ? s.match(/[0-9]*\.[0-9]+|[0-9]+/y) : String(f);
     if (gain === null)
         return s.fail('A hit’s gain: a number, &bd:0:.3 (1 as it is)', g, 1);
     return parseFloat(gain);

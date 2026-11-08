@@ -11,7 +11,7 @@ export const TEMPI = {
     presto: [168, 200],
 };
 export const FREE_SYNTAX = [
-    syntax('free', 'free(v, lo..hi)', 'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number goes in an attribute (a rate with its units: free(90bpm, 60..240)), in a scan, or as a gain in a mix.', ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'], 'free.md'),
+    syntax('free', 'free(v, lo..hi)', 'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number is written (decision 078): an attribute (a rate with its units: free(90bpm, 60..240)), a scan, a gain in a mix, a step, a count, a pick; its range within the place’s.', ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'], 'free.md'),
     syntax('free', 'free(v, lo..hi, unit=bpm)', 'A rate’s slider in the core’s numbers, a second, its unit an argument: free(2, 1.5..2.5, unit=bpm) is free(120bpm, 90..150), the same slider shown in bpm. The core writes a slider so (decision 069); written after the number, the unit is its sugar.', ['&tempo step=free(2, 1.5..2.5, unit=bpm)'], 'free.md'),
     syntax('free', 'free(marking)', `A rate as a tempo marking, a slider over its range: ${Object.entries(TEMPI)
         .map(([k, [lo, hi]]) => `${k} ${lo}–${hi}`)
@@ -21,7 +21,7 @@ export const FREE_SYNTAX = [
     syntax('free', 'free("text")', 'A text left to the performer: a field to type in (for spell(…)).', ['&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")'], 'free.md'),
 ];
 export const FREE_BRAID_WHOLE = "free(0 2 4 ~ …), a braid left to the performer, is a cell's whole braid: &riff over=&key free(0 2 4 ~), with nothing else as its braid";
-export function parseFree(s, key, units) {
+export function parseFree(s, key, units, extra = {}) {
     const start = s.i;
     if (s.match(/free\(/y) === null)
         s.fail('free(…)');
@@ -53,7 +53,7 @@ export function parseFree(s, key, units) {
     }
     else if (word !== null) {
         const range = TEMPI[word];
-        if (!range || key === 'shift' || key === 'stride' || key === 'gain' || key === 'tonic')
+        if (!range || key === 'shift' || key === 'stride' || key === 'gain' || key === 'tonic' || extra.whole)
             s.fail(`free(${word}): a tempo marking (${Object.keys(TEMPI).join(', ')}) — for a rate`, start, s.i - start);
         [lo, hi] = range;
         value = Math.round((lo + hi) / 2);
@@ -130,6 +130,8 @@ export function parseFree(s, key, units) {
         lo,
         hi,
         span: s.place(start),
+        ...(extra.param !== undefined ? { param: extra.param } : {}),
+        ...(extra.whole ? { whole: true } : {}),
         ...(labels ? { labels } : {}),
         ...(named !== null ? { byName: true } : {}),
     };
