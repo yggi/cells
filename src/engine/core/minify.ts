@@ -1,17 +1,14 @@
 /**
- * Minify (decision 069 §5, #482): a text's own names renamed short. Kept: the interface names, the names it uses but
- * doesn't define, and a drum's name (on a MIDI card it is its note, decision 054); a cell that draws is renamed freely,
- * its draws keyed on its content since #481. Lifted from `tools/compileprobe.ts` (#441). Pure.
+ * Minify (decision 069 §5, #482): a text's own names renamed short. Kept: the names it uses but doesn't define, and a
+ * drum's name (on a MIDI card it is its note, decision 054); a cell that draws is renamed freely, its draws keyed on its
+ * content since #481, and so is `&bar`, `&key` or `&tempo`: no name is the piece's by convention (#387). Lifted from
+ * `tools/compileprobe.ts` (#441). Pure.
  */
 import { parse } from '../parser';
-import { INTERFACE_NAMES } from '../program';
 import { GM_KIT } from '../midi';
 
-/** The text's own names (bare), those it defines, in order: the interface names aside. */
-const ownNames = (text: string) => {
-  const keep = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
-  return [...new Set(parse(text).cells.map((d) => d.name))].filter((n) => !keep.has(n) && !n.startsWith('λ'));
-};
+/** The text's own names (bare), those it defines, in order. */
+const ownNames = (text: string) => [...new Set(parse(text).cells.map((d) => d.name))].filter((n) => !n.startsWith('λ'));
 
 /** A short name for the nth: a … z, then a1 …, never one the text keeps. */
 const short = (i: number): string => `${String.fromCharCode(97 + (i % 26))}${i >= 26 ? Math.floor(i / 26) : ''}`;
@@ -31,7 +28,7 @@ export function meaningfulNames(text: string): Set<string> {
   );
 }
 
-/** Minify (question 2): every own name renamed to a short one; the interface names, the names it uses but doesn't define, and `meaningfulNames` kept. */
+/** Minify (question 2): every own name renamed to a short one; the names it uses but doesn't define, and `meaningfulNames`, kept. */
 export function minify(text: string): string {
   const kept = meaningfulNames(text);
   const own = ownNames(text).filter((n) => !kept.has(n));

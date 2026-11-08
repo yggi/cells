@@ -12,6 +12,7 @@ export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse } from "./u
 export function parse(whole, { old = false } = {}) {
     const cells = [];
     const uses = [];
+    const offers = [];
     const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole, [...SHOWS, ...BUILTIN_PLUGINS.map((p) => p.name)]);
     const diagnostics = [...pluginDiagnostics];
     const broken = [];
@@ -57,6 +58,8 @@ export function parse(whole, { old = false } = {}) {
                 diagnostics.push({ severity: 'error', message: FROM_FORM, span });
             else if (from.kind === 'use')
                 uses.push({ id: from.id, names: from.names, span });
+            else
+                offers.push(...from.names.map((n) => n.slice(1)));
             return;
         }
         try {
@@ -91,7 +94,7 @@ export function parse(whole, { old = false } = {}) {
                 broken.push(name);
         }
     });
-    return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}), ...(old ? { old } : {}) });
+    return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}), ...(offers.length ? { offers } : {}), ...(old ? { old } : {}) });
 }
 export const plainLabel = (label) => label
     .replace(/\{[^}]*\}/g, '')

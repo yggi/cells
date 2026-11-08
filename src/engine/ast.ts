@@ -477,6 +477,11 @@ export interface ParseResult {
   readonly plugins?: readonly ShowPlugin[];
   /** Its `use` lines, in the order written (decision 054); absent for none. */
   readonly uses?: readonly UseLine[];
+  /**
+   * What the text offers its readers (decision 075): the heads of its own signature, bare (`&harm, &key from`: a score
+   * offering its band the harmony and the key). A reader may leave one unread, and it is not said to be silent. Absent for none.
+   */
+  readonly offers?: readonly string[];
   /** Read the old way (`CompileOptions.old`): a retired form the compiler meets warns, where it is otherwise an error. */
   readonly old?: boolean;
 }

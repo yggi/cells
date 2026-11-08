@@ -194,9 +194,11 @@ describe('identity, until the hash', () => {
     expect(canonicalText(son.text)).toBe(['&#1 step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!3 &claves ~!7', '&#2 [&#1 * .5]'].join('\n'));
   });
 
-  it('but not one that differs, nor one that renames an interface name or a name it uses and doesn’t define', () => {
+  it('but not one that differs, nor one that renames a name its signature declares or a name it uses and doesn’t define', () => {
     expect(sameText(son.text.replace('~!3', '~!4'), son.text)).toBeNull();
-    expect(sameText('&b meter("3/4")', '&bar meter("3/4")')).toBeNull();
+    // (no name is kept by convention, #454: &bar is renamed as any other; a template's head and parameters are its signature's)
+    expect(sameText('&b meter("3/4")', '&bar meter("3/4")')).toEqual(new Map([['&b', '&bar']]));
+    expect(sameText('&b from (&s) &t\n&b meter("3/4") step=&t swing=&s\n&s 8n:.6', '&bar from (&s) &t\n&bar meter("3/4") step=&t swing=&s\n&s 8n:.6')).toBeNull();
     expect(sameText('&x step=16n &harm', '&x step=16n &chord')).toBeNull();
     expect(sameText('&a step=16n 0 2\n&b step=16n 4', '&b step=16n 4\n&a step=16n 0 2')).toBeNull();
   });

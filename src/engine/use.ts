@@ -11,7 +11,7 @@
  *   that the piece defines is the piece's (it overrides), and says the use of it adds nothing, unless a line the use
  *   takes reads it (a helper named to override it: `use &bass, &bassV from …`); a helper the piece defines and the use
  *   doesn't name is an error (decision 059: a helper is the fragment's, and the piece's line would change what it reads),
- *   but an interface name (`&key`, `&bar` …: `INTERFACE_NAMES`), which is the piece's, read by the fragment's line (decision 060).
+ *   but, for a `use` line (the old way), an interface name (`&key`, `&bar` …), which is the piece's, read by the fragment's line (decision 060).
  * - A line two used fragments give word for word (its code: comments aside, whitespace collapsed) is one line; a name
  *   they define by different lines, and the piece doesn't, is an error naming it and both ids. `use` never renames: a
  *   renamed voice changes its drum note (#117).
@@ -36,7 +36,7 @@ import { FROM_FORM, isAttribute, readFrom, readUse, topTokens, USE_FORM, type Fr
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
 import { RENAMED_IDS } from './renamed';
-import { INTERFACE_NAMES, type CompileOptions, type Resolve, type Used } from './program';
+import type { CompileOptions, Resolve, Used } from './program';
 
 /** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
 export const USE_DEPTH = 8;
@@ -140,6 +140,8 @@ interface Taken {
   readonly resolved: boolean;
   /** A template's parameters (bare), where a `use` line takes it the old way: the piece's own of these names are its arguments. */
   readonly parameters?: ReadonlySet<string>;
+  /** Did a `use` line take it (the old way, `CompileOptions.old`)? Only then are the old interface names the level's by name. */
+  readonly old?: boolean;
 }
 
 /** What a level of the expansion gave: its lines, and, for each of its `use` lines, what that gave and what was overridden. */
@@ -148,8 +150,13 @@ interface Merged {
   readonly per: readonly { readonly gave: readonly string[]; readonly overrode: readonly string[]; readonly read: readonly string[] }[];
 }
 
-/** The interface names, bare (`bar`, `key` …). */
-const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
+/**
+ * The names a `use` line, the old way, leaves to the level that defines them (decisions 047 and 060): the meter and its
+ * tempo, the key and its tonic, the harmony, the style. A `from` line binds no name by convention: a template's inputs are
+ * its signature's, and a collection's lines read only what it defines, its sounds and its taps (decision 065 §4). This goes
+ * with `use` itself.
+ */
+const OLD_INTERFACE: ReadonlySet<string> = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 
 /**
  * A level's own lines, then the lines each use takes that its own don't define, in order: a line given word for word
@@ -160,7 +167,7 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
   const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
   const given = new Map<string, { id: string; code: string }>();
   const lines: Line[] = own.filter((l) => l.name);
-  const per = used.map(({ id, names, lines: theirs, resolved, parameters }, i) => {
+  const per = used.map(({ id, names, lines: theirs, resolved, parameters, old }, i) => {
     const byName = new Map<string, Line>();
     for (const l of theirs) if (l.name && !byName.has(l.name)) byName.set(l.name, l);
     if (names && resolved) {
@@ -196,7 +203,8 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
         if (!defined.has(r)) queue.push(r);
         // (an interface name the level defines is the level's: what the fragment's line reads, as the main key was, decision
         // 060; and so is a template's parameter, taken the old way: the level's line is its argument, decision 065)
-        else if (INTERFACE.has(r) || parameters?.has(r)) continue;
+        // (and &style, which a fragment may not define at all: said once, below)
+        else if ((old && OLD_INTERFACE.has(r)) || parameters?.has(r) || r === STYLE) continue;
         else {
           clashed.add(r);
           say(i, `&${r} is ${quoted(id)}'s, read by its &${n}, and ${host}'s too: rename ${host}'s, or name &${r} in the use to override it`);
@@ -382,7 +390,7 @@ function give(entry: NonNullable<ReturnType<typeof entryOf>>, path: readonly str
       );
     const parameters = new Set(signatures.flatMap((g) => [...g.optional, ...(g.main ? [g.main] : [])]).map((n) => n.slice(1)));
     const lines = sharedLines(fragmentLines(path, text, resolve, say));
-    return { taken: { id, names: namesOf(entry), lines, resolved: true, ...(parameters.size ? { parameters } : {}) }, copy: [] };
+    return { taken: { id, names: namesOf(entry), lines, resolved: true, ...(parameters.size ? { parameters } : {}), ...(from ? {} : { old: true }) }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
   return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken);

@@ -28,7 +28,7 @@ import { braidReadsOf, otherReadsOf } from '../engine/compiler/builtin';
 import { parse } from '../engine/parser';
 import { tapPositions, type Meter } from '../engine/meter';
 import { MAIN_KEY, type CompileResult, type Resolve } from '../engine/program';
-import { expansion, hasUse } from '../engine/use';
+import { expansion, hasUse, signatureOf } from '../engine/use';
 
 /** What a line's clock needs of the meter it taps: its lap of `bars` bars holds its `steps` a whole number of times. */
 export interface ClockNeed {
@@ -59,9 +59,15 @@ export interface Holes {
   /** Names its lines declare (`&kick`), in the order written, then those its `use` lines give. */
   readonly defines: readonly string[];
   readonly clock: readonly ClockNeed[];
+  /**
+   * A template's signature (decision 065, #454): its heads, its optional parameters (each with its default line) and its
+   * main one (`&harm`, which `uses` lists too, the one input the template has no line for), as written; absent for a
+   * collection. A template's inputs are these, never a name it happens to share with a workbench.
+   */
+  readonly signature?: { readonly heads: readonly string[]; readonly optional: readonly string[]; readonly main: string | null };
 }
 
-/** The interface names (decision 047, point 2): defined in `program.ts`, which a named use's closure reads too (decision 060). */
+/** The interface names, retired (#387, #454): re-exported one minor for a frontend that imports them from here. */
 export { INTERFACE_NAMES } from '../engine/program';
 
 /** How far a count may sit from a whole number and still be one (a rate written as a decimal, `16n*1.5`). */
@@ -167,11 +173,13 @@ export function holesOf(text: string, compiled: (text: string) => CompileResult,
   const asLine = readAsLine(all);
   const stand = sounds.map(standIn).join('\n');
   const filled = stand ? `${read}\n${stand}` : read;
+  const signature = signatureOf(text);
   return {
     uses,
     sounds,
     lines: uses.filter((n) => asLine.has(n)),
     defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
     clock: clockNeeds(filled, stand ? last : result).map((t) => t.need),
+    ...(signature ? { signature: { heads: signature.names, optional: signature.optional, main: signature.main } } : {}),
   };
 }

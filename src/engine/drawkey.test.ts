@@ -60,7 +60,7 @@ describe('a noise starts where its place among the noise voices says (#481)', ()
   });
 });
 
-// every example, its `from` lines written in and every name it may rename renamed (minify: the interface names and a
+// every example, its `from` lines written in and every name it may rename renamed (minify: a
 // drum's kept, since on a MIDI card a drum's name is its note), plays as it did: renaming is free, draws and all
 describe('every example renamed plays as it did (#481)', () => {
   const O = { resolve: resolveSeed };

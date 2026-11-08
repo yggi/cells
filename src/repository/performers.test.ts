@@ -28,7 +28,8 @@ const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnTy
 
 const BPM = 120;
 // (a host as Jambot's section text writes one: the meter, the key, the harmony)
-const HOST = [`&bar meter("4/4") step=${BPM}bpm`, '&key scale(aeolian, A)', '&harm over=&key step=1m [0,2,4] [3,5,7]'].join('\n');
+/** Jambot's section text's head: it offers its band the key and the harmony (decision 075), which a lead leaves unread. */
+const HOST = ['&harm, &key from', `&bar meter("4/4") step=${BPM}bpm`, '&key scale(aeolian, A)', '&harm over=&key step=1m [0,2,4] [3,5,7]'].join('\n');
 
 /** What a text sends over MIDI in its first bars (two unless said): each note's channel, note, velocity, onset and length (in 16ths), in order. */
 function sent(text: string, bars = 2): { notes: string[]; diagnostics: string[] } {

@@ -22,7 +22,7 @@
 import type { FragmentFile, Meta } from './files';
 import { declarations } from './fit';
 import { byId, fragmentProblems, pointDistance, pointsOf, type LearnedLayer, type Repository, type StylePoint, type UsedPair, type WeightedPoint } from './fragments';
-import { INTERFACE_NAMES } from './holes';
+import { signatureOf } from '../engine/use';
 import { argsOf, ofArgs } from './variants';
 import { RENAMED_IDS } from '../engine/renamed';
 
@@ -86,17 +86,28 @@ export interface Use {
   readonly facet?: string;
 }
 
-const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.replace(/^&/, '')));
 const NAME = /&([A-Za-z_][A-Za-z0-9_]*)/g;
 
-/** A text's own names, bare, in the order it declares them: those it defines but the interface names (`&bar`, `&tempo`, `&key`, `&tonic`, `&harm`). */
-const ownNames = (text: string): string[] => [...new Set(declarations(text).map((l) => l.name))].filter((name) => !INTERFACE.has(name));
+/** The names a template's signature declares (decision 065), bare: its heads, its optional parameters and its main one; none for a collection. */
+const declared = (text: string): ReadonlySet<string> => {
+  const s = signatureOf(text);
+  return new Set(s ? [...s.names, ...s.optional, ...(s.main ? [s.main] : [])].map((n) => n.slice(1)) : []);
+};
+
+/**
+ * A text's own names, bare, in the order it declares them: those it defines, but those its signature declares (a
+ * template's heads and parameters, what a `from` line names: its interface). No name is kept by convention (#454).
+ */
+const ownNames = (text: string): string[] => {
+  const kept = declared(text);
+  return [...new Set(declarations(text).map((l) => l.name))].filter((name) => !kept.has(name));
+};
 
 /**
  * A text as identity reads it, until the hash: each declaration's code as the union reads it (`fit.ts`: comments aside,
  * whitespace collapsed, a line and those it continues onto as one), its own names numbered in the order it declares
- * them (`&#1`, `&#2`, no name a text can write), the interface names and the names it uses but doesn't define as
- * written. Two texts that read alike are one fragment, renamed.
+ * them (`&#1`, `&#2`, no name a text can write), the names a template's signature declares and the names it uses but
+ * doesn't define as written: `&bar meter("3/4")` and `&m meter("3/4")` are one text (#454). Two texts that read alike are one fragment, renamed.
  */
 export function canonicalText(text: string): string {
   const index = new Map(ownNames(text).map((name, i) => [name, i + 1]));
