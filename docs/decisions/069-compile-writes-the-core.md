@@ -2,6 +2,8 @@
 
 **Date:** 2026-11-05 · **Status:** accepted (the owner's answers on #441, 2026-11-05: 1 "draw should not be keyed on the name", 2 "fragments line goes in, from is sugar", 3 "a")
 
+*Amended by [077](077-the-core-is-sound-up-to-an-interface.md): the core is sound only, cored up to a named interface (§5); `x!n` is core, a count, and compile writes runs (§2, §7).*
+
 *The scoping and its numbers are [441-compile.md](../notes/441-compile.md), measured by `tools/compileprobe.ts` over every example. Read with [068](068-the-core-grammar.md) (the core and its sugar), [049](049-four-tools-over-a-piece.md) (the four tools) and [050](050-the-equalities.md) (the ladder).*
 
 ## Context

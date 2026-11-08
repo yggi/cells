@@ -37,7 +37,7 @@ export function compile(written, env, used = new Set()) {
     const { returns, resonances } = made;
     const outputs = banded(sectioned(made.outputs, timed.cells, declared.sections), timed.cells, bands);
     checkLimits(ctx, decls, timed.cells, clocks, outputs);
-    unplayed(ctx, decls, timed.cells, outputs, clocks);
+    unplayed(ctx, decls, timed.cells, outputs, clocks, new Set(parsed.offers ?? []));
     const cells = displayCells(instrumentParams(ctx, decls, timed.cells, outputs, bound.playings));
     checkRoles(ctx, declared, cells, clocks, pluginsOf(parsed), bands, instrumentsOf(outputs, cells));
     const performers = performersOf(ctx, decls, declared.implicit);

@@ -7,15 +7,15 @@
  * - In a piece with performers (a gate), a line that steps on a clock and that nothing plays or reads (`&bassline
  *   step=16n …` with no performer for it): it is silent, as any line is that nothing plays, and an info says so
  *   (`unplayed`). A piece with no performer, a fragment compiled alone (a vamp, a bass line), is a part waiting for
- *   one, and nothing is said; nor of what a score offers its band to read (`&harm`, `&key`, `&style`: the interface
- *   names), which a band may leave unread.
+ *   one, and nothing is said; nor of what the text offers its readers, the heads of its own signature (`&harm, &key
+ *   from`), which a band may leave unread (decision 075: what a line is, never its name).
  *
  * A role that rests for a whole section is written by its conductor as a tacet (`&leadline ~`): read by its gate, it
  * says nothing.
  */
 import type { CellDecl, Diagnostic, ParseResult, Span } from '../ast';
 import { parse } from '../parser';
-import { INTERFACE_NAMES, type CompileResult } from '../program';
+import type { CompileResult } from '../program';
 import type { Cells, Ctx } from './context';
 
 /**
@@ -43,11 +43,20 @@ export function restingParts(parsed: ParseResult): { parsed: ParseResult; rested
   };
 }
 
-/** What a score offers its band to read, which a band may leave unread (the harmony, the key, the style): the interface names. */
-const OFFERED = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
-
-/** In a piece with performers, an info for each line that steps on a clock and that nothing plays or reads: its name appears in no other cell, and no output. */
-export function unplayed(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: Cells, outputs: CompileResult['outputs'], clocks: CompileResult['clocks']): void {
+/**
+ * In a piece with performers, an info for each line that steps on a clock and that nothing plays or reads: its name
+ * appears in no other cell, and no output (the reach the core fold deletes by, decision 069). Said of what the line is,
+ * never of its name (decision 075): the one line left unsaid is one the text offers its readers, a head of its own
+ * signature (`offers`: `&harm, &key from`), which a reader may leave unread.
+ */
+export function unplayed(
+  ctx: Ctx,
+  decls: ReadonlyMap<string, CellDecl>,
+  cells: Cells,
+  outputs: CompileResult['outputs'],
+  clocks: CompileResult['clocks'],
+  offers: ReadonlySet<string> = new Set(),
+): void {
   if (![...decls.values()].some((d) => d.gate)) return;
   const named = new Set<string>();
   const visit = (x: unknown, seen: Set<unknown>): void => {
@@ -69,6 +78,6 @@ export function unplayed(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells: 
   // (a gate reads its part, and the lines of a stack it plays, though it plays a copy moved: play=&tune^$-12)
   for (const d of decls.values()) if (d.gate) visit(d.gate, new Set());
   for (const c of cells.values())
-    if (c.clock && c.units.length && !named.has(c.name) && !clocks.has(c.name) && !ctx.broken.has(c.name) && !OFFERED.has(c.name))
+    if (c.clock && c.units.length && !named.has(c.name) && !clocks.has(c.name) && !ctx.broken.has(c.name) && !offers.has(c.name))
       ctx.info(`&${c.name} is written and nothing plays or reads it: it is silent (a part no performer plays)`, c.span);
 }

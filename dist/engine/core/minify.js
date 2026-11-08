@@ -1,10 +1,6 @@
 import { parse } from "../parser/index.js";
-import { INTERFACE_NAMES } from "../program.js";
 import { GM_KIT } from "../midi.js";
-const ownNames = (text) => {
-    const keep = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
-    return [...new Set(parse(text).cells.map((d) => d.name))].filter((n) => !keep.has(n) && !n.startsWith('λ'));
-};
+const ownNames = (text) => [...new Set(parse(text).cells.map((d) => d.name))].filter((n) => !n.startsWith('λ'));
 const short = (i) => `${String.fromCharCode(97 + (i % 26))}${i >= 26 ? Math.floor(i / 26) : ''}`;
 const DRUMS = new Set(GM_KIT.flatMap((d) => [d.name, ...d.aliases]));
 export function meaningfulNames(text) {

@@ -2,7 +2,6 @@ import { splitComment } from "./edit.js";
 import { FROM_FORM, isAttribute, readFrom, readUse, topTokens, USE_FORM } from "./parser/use.js";
 import { STYLE } from "./style.js";
 import { RENAMED_IDS } from "./renamed.js";
-import { INTERFACE_NAMES } from "./program.js";
 export const USE_DEPTH = 8;
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const READS = /&([A-Za-z_][A-Za-z0-9_]*)/g;
@@ -59,12 +58,12 @@ export const fragmentHash = (text) => `e1:${hash64(linesOf(text)
     .join('\n'))}`;
 const quoted = (id) => JSON.stringify(id);
 const pathOf = (path) => path.map(quoted).join(' → ');
-const INTERFACE = new Set(INTERFACE_NAMES.map((n) => n.slice(1)));
+const OLD_INTERFACE = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 function merge(own, used, say, host) {
     const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
     const given = new Map();
     const lines = own.filter((l) => l.name);
-    const per = used.map(({ id, names, lines: theirs, resolved, parameters }, i) => {
+    const per = used.map(({ id, names, lines: theirs, resolved, parameters, old }, i) => {
         const byName = new Map();
         for (const l of theirs)
             if (l.name && !byName.has(l.name))
@@ -102,7 +101,7 @@ function merge(own, used, say, host) {
                     continue;
                 if (!defined.has(r))
                     queue.push(r);
-                else if (INTERFACE.has(r) || parameters?.has(r))
+                else if ((old && OLD_INTERFACE.has(r)) || parameters?.has(r) || r === STYLE)
                     continue;
                 else {
                     clashed.add(r);
@@ -246,7 +245,7 @@ function give(entry, path, text, resolve, say, taken) {
             say(`${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`);
         const parameters = new Set(signatures.flatMap((g) => [...g.optional, ...(g.main ? [g.main] : [])]).map((n) => n.slice(1)));
         const lines = sharedLines(fragmentLines(path, text, resolve, say));
-        return { taken: { id, names: namesOf(entry), lines, resolved: true, ...(parameters.size ? { parameters } : {}) }, copy: [] };
+        return { taken: { id, names: namesOf(entry), lines, resolved: true, ...(parameters.size ? { parameters } : {}), ...(from ? {} : { old: true }) }, copy: [] };
     }
     if (signatures.length > 1)
         say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);

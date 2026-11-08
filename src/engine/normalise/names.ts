@@ -18,7 +18,7 @@
 import { attrsOf, declLine, declWords, renameCell, setAttr, spansLines, splitComment } from '../edit';
 import { parse } from '../parser';
 import { clocking } from '../clocking';
-import { codeShifts, INTERFACE_NAMES, type CompileResult } from '../program';
+import { codeShifts, type CompileResult } from '../program';
 import { plan } from '../realize';
 import type { Rewrite } from '../rewrite';
 
@@ -55,8 +55,15 @@ function isBar(result: CompileResult, meter: string): boolean {
   return Number.isFinite(bpm) && bpm >= BAR_BPM.from && bpm <= BAR_BPM.to;
 }
 
-/** Does &name have an interface name already? */
-const named = (name: string) => INTERFACE_NAMES.includes(`&${name}`);
+/**
+ * The names Normalise writes for people (#196): the main meter, its rate, the main key, its tonic, and the harmony and
+ * style it leaves as written. A convention of the tool's, never the language's: a piece that names its meter `&m` plays
+ * as it plays named `&bar` (#387).
+ */
+const WRITTEN = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
+
+/** Does &name have one of the names Normalise writes already? */
+const named = (name: string) => WRITTEN.has(name);
 
 /** Is &name free in the piece: neither its own line nor a used one defines it? */
 const free = (source: string, result: CompileResult, name: string) => declLine(source, name) < 0 && !result.cells.has(name);

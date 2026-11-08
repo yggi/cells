@@ -105,7 +105,18 @@ Two attributes on the gate set how far: `licence=` (velocity and length) and `ac
 **A gate's part is a performer's** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §4).
 A part that rests is written as a rest (`&leadline step=1m ~`, a tacet), and nothing is said of it.
 A part a gate plays that no line writes rests too, and an info says so (`&lead2 plays &lead2line, which no line writes: it rests`): a band's own player the score has no part for.
-In a piece with performers, a line that steps and that nothing plays or reads is silent, as it always was, and now an info says so: a part with no performer for it (not the harmony, the key or the style a score offers its band, which a band may leave unread).
+In a piece with performers, a line that steps and that nothing plays or reads is silent, as it always was, and an info says so: a part with no performer for it, or a harmony nothing reads. It is said of what the line is, whatever its name (decision 075). A score that offers its band a line the band may leave unread says so, by a signature of heads alone, and the info leaves it unsaid:
+
+```cells
+&harm, &key from
+&bar meter("4/4") step=120bpm
+&key scale(dorian, D)
+&harm over=&key step=1m [0,2,4] [3,5,7]
+&tune over=&key step=4n 0 2 4 2
+&v s=saw loop=C4
+&tuneOut play=&tune &v
+&out map=sample [&tuneOut]
+```
 An info is said, never an error: a name read anywhere else and declared nowhere is still `Unknown cell`.
 
 A gate also plays a **stack of lines**: `play=&drumlines`, where `&drumlines [&kick, &backbeat, &euclid * &euclidLevel]`
