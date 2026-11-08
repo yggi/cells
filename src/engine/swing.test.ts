@@ -5,7 +5,7 @@ import { eventsBetween, plan } from './realize';
 import { migrations } from './migrate';
 
 /** Migrate's rule `rule` on a text, if it has one to offer. */
-const migration = (src: string, rule: string) => migrations()(src, compileSource(src)).find((r) => r.rule === rule);
+const migration = (src: string, rule: string) => migrations({ old: true })(src, compileSource(src, undefined, { old: true })).find((r) => r.rule === rule);
 import swing from '../../fixtures/contracts/swing.json';
 import { METER_FRAGMENTS } from '../repository/meters';
 
@@ -13,15 +13,15 @@ import { METER_FRAGMENTS } from '../repository/meters';
 // every node keeps its ends: a bar line, a beat and an odd bar never drift. Taps are placed through it.
 
 const VOICE = '\n&v s=sine loop=C4\n&out map=sample [&x * &v]';
-const compiled = (src: string) => {
-  const r = compileSource(src);
+const compiled = (src: string, old = false) => {
+  const r = compileSource(src, undefined, { old });
   if (!r.ok) throw new Error(r.diagnostics.map((d) => d.message).join('; '));
   return r;
 };
 const warnings = (src: string) => compileSource(src).diagnostics.map((d) => d.message);
 /** Where a tap's notes fall in the first `bars` bars of a meter at 60 bpm, in pulses from the downbeat, unrounded. */
-const onsets = (meter: string, tap: string, bars = 1) => {
-  const r = compiled(`&bar ${meter} step=60bpm\n&x step=${tap} 0${VOICE}`);
+const onsets = (meter: string, tap: string, bars = 1, old = false) => {
+  const r = compiled(`&bar ${meter} step=60bpm\n&x step=${tap} 0${VOICE}`, old);
   const bar = r.cells.get('bar')!;
   const barSeconds = bar.steps / r.clocks.get('bar')!.perSecond;
   return eventsBetween(plan(r, codeShifts(r)), 0, bars * barSeconds - 1e-6).map((e) => (e.at / barSeconds) * bar.meter!.pulses);
@@ -123,10 +123,13 @@ describe('swing on the bar: one level of the meter leans, named by note value', 
     expect(onsets('meter("4/4") swing=4n:.67', '8n')).toEqual(onsets('meter("4/4")', '8n'));
   });
 
-  it('a bare swing= on a meter leans its own steps’ level, with a warning, and Migrate names the level', () => {
+  it('a bare swing= on a meter is retired: an error that names the level, read the old way with a warning, and Migrate writes the level (#15, rung 5)', () => {
     const bare = `&bar meter("4/4", 2) step=60bpm swing=.67\n&x step=8n 0${VOICE}`;
-    expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps: name the level it leans, swing=8n:.67 (Migrate rewrites it)"]);
-    expect(onsets('meter("4/4", 2) swing=.67', '8n')).toEqual(onsets('meter("4/4", 2) swing=8n:.67', '8n'));
+    const said = 'swing=.67 on a meter is retired: name the level it leans, swing=8n:.67 (Migrate rewrites it)';
+    const told = (old: boolean) => compileSource(bare, undefined, { old }).diagnostics.map((d) => [d.severity, d.message]);
+    expect([told(false), told(true)]).toEqual([[['error', said]], [['warning', said]]]);
+    // (read the old way, it leans its own steps' level, as the level named does)
+    expect(onsets('meter("4/4", 2) swing=.67', '8n', 1, true)).toEqual(onsets('meter("4/4", 2) swing=8n:.67', '8n'));
     const s = migration(bare, 'swing')!;
     expect(s.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:.67');
     expect(warnings(s.apply(bare))).toEqual([]);

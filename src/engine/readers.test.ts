@@ -13,12 +13,12 @@ const compiled = (src: string) => {
 
 const SRC = `&bar scan(4) step=120bpm
 &a 0 1 2
-&b step=&bar/2 &a 3 &a!2
-&c step=&bar 0 1
+&b step=1m/2 &a 3 &a!2
+&c step=1m 0 1
 &kit &bd &sd
 &bd s=sine
 &sd s=white
-&drums over=&kit step=&bar 0 1`;
+&drums over=&kit step=1m 0 1`;
 
 describe("a cell's readers", () => {
   const r = compiled(SRC);

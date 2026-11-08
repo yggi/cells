@@ -1,0 +1,5 @@
+# a turning table stepped by the meter cell's own steps, cycle= counting its laps: a tap now, cycle= dropped (#15, rung 5)
+&bar meter("4/4") step=90bpm
+&chords over=scale(major) step=1m stride=3 0 2 4 3 5 7 4 6 8 0 2 4
+&pad s=tri loop=C4
+&out map=sample [&chords * &pad * .3]

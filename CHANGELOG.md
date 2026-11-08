@@ -10,6 +10,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.20.0 — 2026-11-08
+
+### Added
+
+- **A line of several bars decomposed into a form and its motifs** (#512, rung 1; yggi/jambot#580, rung 4). `decompose(line, cell, meter)` (`repository/decompose.ts`) writes a line of degrees of the key as the seed form that plays it and the motifs it is made of, the way *Kinderlieder, in pieces* writes a tune whole: Twinkle written out bar by bar comes back as `&lead from ternary(answer=&wonder) &twinkle`, Hänschen klein as `rounded_binary(answer=&hinein, close=&heim, bridge=&weinet) &haenschen`. Each seed form is tried with every call that fills the line a whole number of times; a helper that doesn't play what the line plays is set to what it plays there, and a call or helper that is a seed motif is named by it. Of these and the line as it was, the one written with the least structure (decision 049's measure) wins, so a line that is no form stays a line. `writtenOut(text, cell, meter)` writes a cell's notes out as a line of eighths, as the Muse files one. Each of the 6 seed forms over each of the 46 seed motifs, written out in the motif's own meter, comes back as itself (`decompose.slow.test.ts`). Nothing that plays changes.
+
+### Changed
+
+- **A meter scan and a hit's gain are core** (decision 069, amended; #482, its last rungs). `scan(27 23 26 24) step=…`, a meter of uneven steps, and `&hh:0:.5`, a hit with its velocity (a terminal: a step's value, as a pitch is), have no other spelling in the language, so `toCore` leaves them as written and `Core.left` no longer lists them. 66 of 83 examples are now wholly in the core. Nothing a piece plays changes.
+
+- **Two retired forms are errors that name their Migrate rule** (#15, rung 5; #26: retired forms only through Migrate): a line stepped by a meter cell's own steps (`step=&bar`, `step=&bar*2`, on a `meter(…)` or a `scan(…)`; decision 040) and a bare `swing=r` on a meter (decision 040's `swing=8n:r` names the level). Each played with a warning; a text that writes either now fails to compile, and read the old way (`CompileOptions.old`, as Migrate and Normalise read) it plays as before with the warning. **Migrate:** its rule `tap` writes the tap that says the same (`step=&bar*2` is `step=8n` in 4/4, `step=&bar` `step=pulse`), now also where the line counted the meter's laps with `cycle=` (dropped, as a tap comes round by its bars, #116); its rule `swing` writes the level. No example, fragment or doc writes either; the reference's examples of a chain, `free(…)` and `map=amp` now tap the meter. A swing that leans the meter's own steps where they are its beats, which Migrate can't name, still leans nothing and says so.
+  **Migration for a frontend at its next pin:** run Migrate on a stored text that fails with "is retired"; in code, write the tap: Cell studio @ 50e7646 writes the form in three tests (`src/layout/belts.test.ts:33`, `step=&bar*2` → `step=8n`; `src/layout/glyph.test.ts:277` and `:298`, `step=&bar` → `step=pulse`). Jambot @ 60bb627 writes neither.
+
+### Removed
+
+- **The performer reads a bar's swing by the meter's own rule; its copy goes** (#15, rung 2): `perform()` reads an event back onto its bar's steps through the bar's frame as a meter (`meterOfFrame`, `swungPlace`, `writtenPlace` in `engine/meter`, also on the package's entry), where it read a copy of the rule written from the hub's `contracts/swing` (`engine/perform/swing.ts`). The copy goes, and with it `swungAt`, `writtenAt` and its `SwingLevel` on the package's entry; neither Jambot (its own `writtenAt`) nor Cell studio (cells' `perform`) imports them. The contract's 131 swing vectors and the feel's 7,140 events pass through the meter's rule, and every event is performed as before. **What a frontend sees at its next pin:** those three names are gone from `@yggi/cells`; `meterOfFrame`, `swungPlace` and `writtenPlace` say the same.
+
+### Fixed
+
+- **A moving parameter's value is read and rewritten whole** (#470): `attrsOf` gives `lpf=70..4800 * &eg * &lfo` as `70..4800 * &eg * &lfo` (it gave `70..4800`), `declWords` keeps its ` * term`s with the attribute (they were words of the braid, so `setBraid` on such a line moved them), and `setAttr` replaces or removes the whole value (it replaced the first word, leaving the old factors after the new value: `lpf=70..4800 * &eg * &eg * &lfo`). New in `engine/edit`: `attrValue(code, key)`, a value's first word, its factors and where it lies (what `patch.ts` read with its own reader), and `wordAt`. No event snapshot moves: an edit, not a meaning. **What a frontend sees at its next pin:** a field that edits an attribute's text shows and replaces a moving value whole (Cell studio's sheet rows); a control that sets a range and keeps its cells writes `[range, ...attrValue(...).factors].join(' * ')` (yggi/cell-studio#598). Jambot doesn't call `setAttr` or `attrsOf`.
+
 ## v0.19.0 — 2026-11-07
 
 ### Added

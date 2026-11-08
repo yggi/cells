@@ -6,9 +6,9 @@ const BASE = `&bar scan(1 1 1 1) step=120bpm
 &major scale(major)
 &lead s=tri loop=C5
 &bell s=sine loop=C6
-&tune over=&major step=&bar*2 0 2 4 2
-&accent map=amp step=&bar*2 1 .5 .8 .5
-&duck map=amp step=&bar 1 .25
+&tune over=&major step=8n 0 2 4 2
+&accent map=amp step=8n 1 .5 .8 .5
+&duck map=amp step=4n 1 .25
 `;
 /** Migrate's gate rule on a text, if it has one to offer. */
 const gate = (src: string) => migrations()(src, compileSource(src)).find((r) => r.rule === 'gate');

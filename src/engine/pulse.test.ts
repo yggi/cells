@@ -7,7 +7,7 @@ import { tapPositions } from './meter';
 import { migrations } from './migrate';
 
 /** Migrate's rule `rule` on a text, if it has one to offer. */
-const migration = (src: string, rule: string) => migrations()(src, compileSource(src)).find((r) => r.rule === rule);
+const migration = (src: string, rule: string) => migrations({ old: true })(src, compileSource(src, undefined, { old: true })).find((r) => r.rule === rule);
 import { mainMeter } from './midiclock';
 
 // Decision 040: a meter knows its bar, its pulse (the numerator) and its beat (what is counted); a line taps it by pulse,
@@ -312,11 +312,11 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(compileSource('&bar meter("4/4") step=60bpm\n&x step=&bar:9n 0').ok).toBe(false);
   });
 
-  it('a raw step=&bar warns with the tap that says the same, and Migrate rewrites it so', () => {
+  it('a raw step=&bar is retired: an error with the tap that says the same, read the old way with a warning, and Migrate rewrites it so (#15, rung 5)', () => {
     const src = `&bar scan(1 1 1 1) step=120bpm\n&x step=&bar*2 0 2 4 5${VOICE}`;
-    expect(compileSource(src).diagnostics.map((d) => d.message)).toEqual([
-      "step=&bar*2 steps by the meter cell's own steps: tap the meter by pulse, beat or a note value (step=8n; Migrate rewrites it)",
-    ]);
+    const said = "step=&bar*2 is retired: a line taps the meter by pulse, beat or a note value, never its cell's own steps (step=8n; Migrate rewrites it)";
+    const told = (old: boolean) => compileSource(src, undefined, { old }).diagnostics.map((d) => [d.severity, d.message]);
+    expect([told(false), told(true)]).toEqual([[['error', said]], [['warning', said]]]);
     const tap = migration(src, 'tap')!;
     expect(tap.after).toBe('&x step=8n 0 2 4 5');
     expect(compileSource(tap.apply(src)).diagnostics).toEqual([]);

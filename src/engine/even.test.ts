@@ -54,8 +54,8 @@ describe('even(k, n, phase) read as a rhythm', () => {
       [7, 12, 2],
       [5, 16, 0],
     ] as const)
-      expect(at(`&e step=${n / 2} euclid(${k}, ${n})`, 'e'), `euclid(${k}, ${n})`).toEqual(at(`&places even(${k}, ${n}, ${phase}) loop=.5\n&p step=&places 0`, 'p'));
+      expect(at(`&e step=${n / 2} euclid(${k}, ${n})`, 'e'), `euclid(${k}, ${n})`).toEqual(at(`&places even(${k}, ${n}, ${phase}) loop=.5\n&p step=4n 0`, 'p'));
     // (and not at another phase: the turn matters)
-    expect(at('&e step=4 euclid(3, 8)', 'e')).not.toEqual(at('&places even(3, 8, 0) loop=.5\n&p step=&places 0', 'p'));
+    expect(at('&e step=4 euclid(3, 8)', 'e')).not.toEqual(at('&places even(3, 8, 0) loop=.5\n&p step=4n 0', 'p'));
   });
 });

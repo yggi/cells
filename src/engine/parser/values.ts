@@ -28,7 +28,7 @@ export const STEP_SYNTAX: readonly Syntax[] = [
     'rate',
     'step=&x*n · step=&x/n · step=&x*n/d',
     "A chain read left to right, as Strudel's fast and slow: *n n steps per step of &x, /n one per n steps; *3/2 is three per two (triplets).",
-    ['&fast step=&bar*2 0 1', '&trip step=&bar*3/2 0 2 4'],
+    ['&fast step=&clock*2 0 1', '&trip step=&clock*3/2 0 2 4'],
     'time.md',
   ),
   syntax(
@@ -136,7 +136,7 @@ export const MAP_KINDS: Readonly<Record<MapWord, Syntax>> = {
     'map',
     'map=amp',
     'A volume: its values multiply the level (on a voice, the braid as a waveform, its range onto −1…1; the default).',
-    ['&accent map=amp step=&bar*4 1 .4 .8 .4'],
+    ['&accent map=amp step=16n 1 .4 .8 .4'],
     'sound.md',
   ),
   lin: syntax(

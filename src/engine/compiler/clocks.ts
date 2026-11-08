@@ -1,5 +1,5 @@
 /** Phase 4: time — clocks (cells moved at a rate), every cell's steps per step of its clock, times given as clocks. */
-import type { CellDecl, Tap } from '../ast';
+import type { CellDecl, Span, Tap } from '../ast';
 import { isPositional, type Clock } from '../program';
 import { bareSwingLevel, noteValue, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions } from '../meter';
 import type { Cells, Ctx } from './context';
@@ -47,6 +47,9 @@ function fraction(x: number): [number, number] | null {
 /** The clocks; each cell's clock, rate and times given as clocks, set on a copy of the cells it is given. */
 export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells): { cells: Cells; clocks: ReadonlyMap<string, Clock>; mainMeter: string | null } {
   const { rateOf, error, warn, unknownCell, broken } = ctx;
+  // (a retired form (#15, rung 5; #26: retired forms only through Migrate): an error that names its Migrate rule, read the
+  // old way, with a warning, only where the text is (`CompileOptions.old`: Migrate and Normalise compile so)
+  const retired = (message: string, span: Span) => (ctx.parsed.old ? warn : error)(message, span);
   const cells = new Map(given);
   const clocks = new Map<string, Clock>();
   // a meter's rate read from a tempo cell (#290): `&bar meter("4/4") step=&tempo`, `&tempo step=104bpm`, a cell that is a
@@ -88,12 +91,13 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         const level = bareSwingLevel(m);
         const whole = level === null ? null : noteValue(level);
         const leans = whole !== null && swingLevelProblem(m, whole) === null;
-        warn(
-          leans
-            ? `swing=${share(d.params.swing)} leans the meter cell's own steps: name the level it leans, swing=${level}:${share(d.params.swing)} (Migrate rewrites it)`
-            : `swing=${share(d.params.swing)} leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:${share(d.params.swing)}`,
-          swingSpan,
-        );
+        if (leans)
+          retired(`swing=${share(d.params.swing)} on a meter is retired: name the level it leans, swing=${level}:${share(d.params.swing)} (Migrate rewrites it)`, swingSpan);
+        else
+          warn(
+            `swing=${share(d.params.swing)} leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:${share(d.params.swing)}`,
+            swingSpan,
+          );
       }
       // (a level at .5 asks nothing to lean: no warning that it leans nothing, as the Metronome's slider on 6/8 sits)
       for (const l of (d.swing ?? []).filter((x) => x.share !== 0.5)) {
@@ -238,8 +242,8 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         const m = cells.get(drv)!.meter!;
         // (a meter stepped by another, scan(2 1) step=&bar: its pulses are its steps, no note value)
         const tap = tapFor(m.levels.length, m.pulses, decls.get(drv)?.step?.kind === 'rate' ? m.unit : 0, st.ratio);
-        warn(
-          `step=&${drv}${chainText(st.chain)} steps by the meter cell's own steps: tap the meter by pulse, beat or a note value (step=${mainMeter() === drv ? '' : `&${drv}:`}${tap}; Migrate rewrites it)`,
+        retired(
+          `step=&${drv}${chainText(st.chain)} is retired: a line taps the meter by pulse, beat or a note value, never its cell's own steps (step=${mainMeter() === drv ? '' : `&${drv}:`}${tap}; Migrate rewrites it)`,
           st.span,
         );
       }

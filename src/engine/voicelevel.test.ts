@@ -26,18 +26,18 @@ const VOICES = `
 describe("a voice's gain=", () => {
   it('is its own gain: a kit of balanced members plays what one product a drum plays', () => {
     const products = events(`${VOICES}
-&kick map=amp step=&bar 1 ~ 1 ~
-&snare map=amp step=&bar ~ 1 ~ 1
+&kick map=amp step=4n 1 ~ 1 ~
+&snare map=amp step=4n ~ 1 ~ 1
 &out map=sample [&kick * &bd * .8, &snare * &sd * .4]`);
     const kit = events(`${VOICES.replace('&bd s=sine', '&bd gain=.8 s=sine').replace('&sd s=white', '&sd gain=.4 s=white')}
-&beat step=&bar &bd &sd &bd &sd
+&beat step=4n &bd &sd &bd &sd
 &out map=sample [&beat]`);
     expect(kit).toEqual(products);
   });
 
   it('is 1 by default, and multiplies every gain a voice is played at', () => {
-    const plain = events(`${VOICES}\n&beat step=&bar &bd ~ &bd ~\n&out map=sample [&beat * .5]`);
-    const half = events(`${VOICES.replace('&bd s=sine', '&bd gain=.5 s=sine')}\n&beat step=&bar &bd ~ &bd ~\n&out map=sample [&beat * .5]`);
+    const plain = events(`${VOICES}\n&beat step=4n &bd ~ &bd ~\n&out map=sample [&beat * .5]`);
+    const half = events(`${VOICES.replace('&bd s=sine', '&bd gain=.5 s=sine')}\n&beat step=4n &bd ~ &bd ~\n&out map=sample [&beat * .5]`);
     expect(half.map((e) => e.gains)).toEqual(plain.map((e) => e.gains.map((g) => g * 0.5)));
   });
 
@@ -60,7 +60,7 @@ describe('oneshot', () => {
   const SRC = (word: string) => `&bar scan(1 1 1 1) step=240bpm
 &bd ${word} s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)
 &hh s=white env=&(map=adsr 0 .04 0 .02)
-&beat step=&bar*2 &bd &hh &bd &hh
+&beat step=8n &bd &hh &bd &hh
 &out map=sample [&beat]`;
 
   it('plays a voice its envelope through, whatever its step: a kick on eighths rings its decay', () => {
@@ -95,18 +95,18 @@ describe("a hit's gain: &x:0:g", () => {
 `;
 
   it("is Strudel's sound fields: its number (0), then its gain", () => {
-    const a = levels(`${V}&t step=&bar &bd &bd:0 &bd:0:.5 &bd:0:1.5\n&out map=sample [&t]`);
+    const a = levels(`${V}&t step=4n &bd &bd:0 &bd:0:.5 &bd:0:1.5\n&out map=sample [&t]`);
     expect(a.map((e) => e.level)).toEqual([1, 1, 0.5, 1.5]);
     // (a pitched hit is not yet; a melody's numbers have no fields)
-    expect(compileSource(`${V}&t step=&bar &bd:2\n&out map=sample [&t]`).diagnostics.some((d) => /pitched hit/.test(d.message))).toBe(true);
-    expect(compileSource(`${V}&t step=&bar 0%50\n&out map=sample [&t * &bd]`).diagnostics.some((d) => d.severity === 'error')).toBe(true);
+    expect(compileSource(`${V}&t step=4n &bd:2\n&out map=sample [&t]`).diagnostics.some((d) => /pitched hit/.test(d.message))).toBe(true);
+    expect(compileSource(`${V}&t step=4n 0%50\n&out map=sample [&t * &bd]`).diagnostics.some((d) => d.severity === 'error')).toBe(true);
   });
 
   it("plays a map=amp pattern's levels on a groove's own hits, and a chord member's alone", () => {
-    const amp = levels(`${V}&hats map=amp step=&bar .5 .25 .5 .25\n&out map=sample [&hats * &hh]`);
-    const groove = levels(`${V}&hats step=&bar &hh:0:.5 &hh:0:.25 &hh:0:.5 &hh:0:.25\n&out map=sample [&hats]`);
+    const amp = levels(`${V}&hats map=amp step=4n .5 .25 .5 .25\n&out map=sample [&hats * &hh]`);
+    const groove = levels(`${V}&hats step=4n &hh:0:.5 &hh:0:.25 &hh:0:.5 &hh:0:.25\n&out map=sample [&hats]`);
     expect(groove).toEqual(amp);
-    const chord = levels(`${V}&beat step=&bar [&bd,&hh:0:.4] &hh\n&out map=sample [&beat]`);
+    const chord = levels(`${V}&beat step=4n [&bd,&hh:0:.4] &hh\n&out map=sample [&beat]`);
     expect(chord.filter((e) => e.at === 0).map((e) => [e.voice, e.level])).toEqual([
       ['bd', 1],
       ['hh', 0.4],
@@ -114,7 +114,7 @@ describe("a hit's gain: &x:0:g", () => {
   });
 
   it('is kept inside a subsequence', () => {
-    const a = levels(`${V}&t step=&bar [&hh:0:.5 &hh] &bd\n&out map=sample [&t]`);
+    const a = levels(`${V}&t step=4n [&hh:0:.5 &hh] &bd\n&out map=sample [&t]`);
     expect(a.slice(0, 3).map((e) => [e.voice, e.at, e.level])).toEqual([
       ['hh', 0, 0.5],
       ['hh', 0.25, 1],
@@ -123,12 +123,12 @@ describe("a hit's gain: &x:0:g", () => {
   });
 
   it('a splice at a gain plays every step of it at that gain', () => {
-    const a = levels(`${V}&fill &bd &bd:0:.5\n&t step=&bar &fill:0:.5 &bd\n&out map=sample [&t]`);
+    const a = levels(`${V}&fill &bd &bd:0:.5\n&t step=4n &fill:0:.5 &bd\n&out map=sample [&t]`);
     expect(a.slice(0, 3).map((e) => e.level)).toEqual([0.5, 0.25, 1]);
   });
 
   it('is no gain in a mix', () => {
-    const r = compileSource(`${V}&t step=&bar 0\n&out map=sample [&t * &bd:0:.5]`);
+    const r = compileSource(`${V}&t step=4n 0\n&out map=sample [&t * &bd:0:.5]`);
     expect(r.diagnostics.some((d) => /a hit's gain/.test(d.message))).toBe(true);
   });
 });

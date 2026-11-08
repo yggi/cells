@@ -5,7 +5,7 @@ import { soundsIdentical } from '../sameness';
 describe('Shorten never folds a sign away (#193: a negative gain is phase inversion)', () => {
   it('a mix of a voice and its inversion keeps sounding as written, whatever it rewrites', () => {
     const src = `&bar scan(1 1 1 1) step=120bpm
-&tune over=scale(major) step=&bar*2 0 2 4 2
+&tune over=scale(major) step=8n 0 2 4 2
 &lead s=tri loop=C5
 &left [&tune * &lead * .4]
 &right [&tune * &lead * -.4]

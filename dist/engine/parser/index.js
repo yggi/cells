@@ -91,7 +91,7 @@ export function parse(whole, { old = false } = {}) {
                 broken.push(name);
         }
     });
-    return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}) });
+    return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}), ...(old ? { old } : {}) });
 }
 export const plainLabel = (label) => label
     .replace(/\{[^}]*\}/g, '')

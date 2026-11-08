@@ -73,7 +73,7 @@ describe('shorten', () => {
     expect(next).toContain('&t step=&bar 4 2 0@2 ~');
     expect(sounds(next)).toEqual(sounds(src));
   });
-  it('fractions of a tap: step=8n held twice is step=4n, and the old spelling is offered as a tap too (#92)', () => {
+  it('fractions of a tap: step=8n held twice is step=4n (#92; the old spelling, step=&bar*2, is an error that Migrate rewrites, #15 rung 5)', () => {
     const bar = '&bar meter("4/4") step=120bpm\n';
     const held = '4@2 2@2 0@2 5@2';
     for (const [step, want] of [
@@ -82,7 +82,6 @@ describe('shorten', () => {
       ['pulse*2', '&t step=pulse 4 2 0 5'],
       ['beat*4', '&t step=beat*2 4 2 0 5'],
       ['1m/2', '&t step=1m/4 4 2 0 5'],
-      ['&bar*2', '&t step=4n 4 2 0 5'],
     ] as const) {
       const src = `${bar}&t step=${step} ${held}${tail}`;
       const next = first(src, 'fraction').apply(src);

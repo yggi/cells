@@ -103,7 +103,9 @@ describe('sound', () => {
   });
 
   it('ratios: ×2 plays twice per beat, ÷2 once per two beats', () => {
-    const r = compileSource(`&m scan(27 23 26 24) step=60bpm\n&f step=&m*2 0 1 2 3\n&s step=&m/2 0 1\n${VOICE}&u s=tri\n&mix_ [&f * &v, &s * &u]\n&out_ loop=44k map=sample &mix_`);
+    const r = compileSource(
+      `&m scan(27 23 26 24) step=60bpm\n&f step=pulse*2 0 1 2 3\n&s step=pulse/2 0 1\n${VOICE}&u s=tri\n&mix_ [&f * &v, &s * &u]\n&out_ loop=44k map=sample &mix_`,
+    );
     const ev = events(r, 0, 3.9);
     expect(ev.filter((e) => e.voice === 'v').map((e) => +e.at.toFixed(2))).toEqual([0, 0.54, 1.08, 1.54, 2, 2.52, 3.04, 3.52]);
     expect(ev.filter((e) => e.voice === 'u').map((e) => +e.at.toFixed(2))).toEqual([0, 2]);
@@ -469,8 +471,9 @@ describe('a turning table comes round after its own length; cycle= says otherwis
       .trim()
       .split(/\s+/);
     const strided = p.replace(line[0], `&chords step=&bar/4 stride=5 cycle=1 ${n.join(' ')}`);
-    const all = (src: string) => events(compileSource(src), 0, 150).map((e) => `${e.at.toFixed(4)} ${e.freq.toFixed(2)}`);
-    expect(all(p)).toEqual(all(strided));
+    // (the old text read the old way: its line on the meter cell's own steps is retired, an error that Migrate rewrites, #15 rung 5)
+    const all = (src: string, old = false) => events(compileSource(src, undefined, { old }), 0, 150).map((e) => `${e.at.toFixed(4)} ${e.freq.toFixed(2)}`);
+    expect(all(p)).toEqual(all(strided, true));
   });
   it('per tonos rises a whole tone a pass — and an octave after six', () => {
     const r = compileSource(EXAMPLES.pertonos.source);
