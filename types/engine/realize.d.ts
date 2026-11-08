@@ -128,6 +128,8 @@ export interface Plan {
     readonly envParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
     /** When the piece ends, in seconds: the last track's end — Infinity if anything loops (or nothing plays). */
     readonly end: number;
+    /** A cell's values as a series, read as a moving parameter reads it (`levelSeries`): `styleAt` reads a style's axes so. */
+    readonly seriesOf: (cell: string) => Series;
 }
 /**
  * When an output stops: laps= on its cell, the chain of cells that step it, its
