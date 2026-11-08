@@ -1,6 +1,6 @@
 /** A cell's line: its name, then attributes and its braid, in any order. */
 import { leaves } from '../subseq';
-import type { Braid, CellDecl, MapSpec, ParamCells, Ref, Span, StepSpec, StylePoint, StyleSpec, Token } from '../ast';
+import type { Braid, CellDecl, FreeSpec, MapSpec, ParamCells, Ref, Span, StepSpec, StylePoint, StyleSpec, Token } from '../ast';
 import { TIME_PARAMS } from '../attributes';
 import { RETIRED_PARAMS } from '../dough-params';
 import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from '../program';
@@ -12,7 +12,7 @@ import { isGenerator, parseFifths, parseGenerator, parseScale } from './generato
 import { MODE_WORDS } from '../../theory/modes';
 import { atTap, parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
-import { AXIS_NAMES, SLOTS } from '../style';
+import { AXES, AXIS_NAMES, SLOTS } from '../style';
 
 /** An envelope's slots, by name (`map=adsr`'s, `SLOTS`). */
 const ADSR_SLOTS = SLOTS.adsr!;
@@ -328,6 +328,16 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     },
   },
 };
+
+/** A style's axis left to a slider, `sync=free(.3, 0..1)` (#576): its range within the axis's, the slider named by the axis. */
+function readAxisFree(s: LineScanner, axis: string): FreeSpec {
+  const at = s.i;
+  const f = parseFree(s, 'param', false);
+  (f as { param?: string }).param = axis;
+  const [lo, hi] = AXES.find((a) => a.name === axis)!.range;
+  if (f.lo < lo || f.hi > hi) s.fail(`${axis}=free(…) moves within the axis, ${lo} to ${hi}: ${axis}=free(${f.value}, ${lo}..${hi})`, at, s.i - at);
+  return f;
+}
 
 /** One style in style=: a style cell, or a mix of them by weight, `[&funk * .8, &bossa * .2]`. */
 function readStylePoint(s: LineScanner): StylePoint {
@@ -699,11 +709,17 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
         if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
         continue;
       }
+      // a style's axes by name (sync=.3, decision 076's names): a number, or a slider within the axis, sync=free(.3, 0..1) (#576)
       if (key === null && AXIS_NAMES.includes(word)) {
         if (axes.has(word)) s.fail(`${word}= is given twice`, at, word.length);
         const vat = s.i;
-        s.num(`a number after ${word}= (an axis of a style, 0 to 1)`);
-        axes.set(word, { value: s.text.slice(vat, s.i), at });
+        if (s.text.startsWith('free(', s.i)) axes.set(word, { value: String(readAxisFree(s, word).value), at });
+        else if (/^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\./.test(s.text.slice(s.i)))
+          s.fail(`${word}= doesn't move yet: a style's axis is a number, or a slider within it, ${word}=free(.3, 0..1) (a moving axis is #576's next rung)`, vat, 1);
+        else {
+          s.num(`a number after ${word}= (an axis of a style, 0 to 1), or a slider, ${word}=free(.3, 0..1)`);
+          axes.set(word, { value: s.text.slice(vat, s.i), at });
+        }
         if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
         continue;
       }
@@ -737,6 +753,15 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (key === 'swing' || key === 'legato' ? readLevels : CELL_PARAMS.has(key) ? readCellParam : readParam);
       read(s, b, key, at);
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+      continue;
+    }
+    if (word === 'free' && s.peek() === '(' && b.map?.kind === 'style' && /^\(\s*[^,()]*,/.test(s.text.slice(s.i))) {
+      // a style's axis in order, left to a slider: &mine map=style free(.3, 0..1) .45 .55 .55 (#576)
+      const axis = AXIS_NAMES[tokens.length];
+      if (axis === undefined) s.fail(`A style has ${AXIS_NAMES.length} axes (${AXIS_NAMES.join(' ')}): this value is one more`, at, word.length);
+      s.i = at;
+      const inner = s.within(String(readAxisFree(s, axis!).value), at);
+      pushStep(inner, tokens, parseToken(inner));
       continue;
     }
     if (word === 'free' && s.peek() === '(') {

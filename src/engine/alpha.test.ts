@@ -70,7 +70,7 @@ const written = FAMILIES.find((f) => f.key === 'from')!.rewrite;
  * `&kick` or `&hat` that drum role) and off a role cell's name (`&bass map=role &bassOut`, decision 061). Renamed, the
  * line plays the same notes and the performer plays them as written.
  */
-const FEEL = ['clock', 'voice', 'effects', 'variations', 'midi-out', 'idm', 'cellscape', 'electroswing', 'spooky', 'kinderlied', 'soundtape'];
+const FEEL = ['clock', 'voice', 'effects', 'variations', 'midi-out', 'idm', 'cellscape', 'electroswing', 'spooky', 'kinderlied', 'soundtape', 'radio', 'circle'];
 
 /**
  * Where renaming still changes what a piece is (#387's blockers). Written in, a name alone means something only where
@@ -87,13 +87,16 @@ const WRITTEN_IN: Readonly<Record<string, readonly string[]>> = {
  * template of several heads is taken by its heads' names, so those are kept here (a band's performers keep their roles'
  * names); and where it reads one:
  * - the instruments (collections) read the section's style by its name, `&style[artic]` (decision 063 §3): renamed, they
- *   read the centre of style space, and an info says so.
+ *   read the centre of style space, and an info says so;
+ * - a score the default band plays (`* from band`, *Radio*, #576) binds `&style` and its parts' lines by the names the
+ *   band and its feel read them by (#560, rungs 2 and 3).
  */
 const AS_WRITTEN: Readonly<Record<string, readonly string[]>> = {
   ...Object.fromEntries(FEEL.filter((k) => !['electroswing', 'spooky', 'kinderlied'].includes(k)).map((k) => [k, ['feel']])),
   electroswing: ['sound', 'diagnostics'],
   kinderlied: ['sound', 'diagnostics'],
   spooky: ['sound', 'diagnostics'],
+  radio: ['sound', 'diagnostics', 'feel'],
 };
 
 /** The names a text's own lines and its one-head template `from` lines define: what it binds itself. */
