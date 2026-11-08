@@ -447,7 +447,7 @@ describe('free(…) around a braid (#210): a braid left to the performer', () =>
   });
   it('not inside a mix, a pick or spell(…), nor where a number goes', () => {
     expect(err('&v s=sine\n&out map=sample [&v * free(0 2 4)]')).toMatch(/a cell's whole braid/);
-    expect(err('&x 0 2\n&r &x[free(1 2)]')).toMatch(/picks by a number written in place/);
+    expect(err('&x 0 2\n&r &x[free(1 2)]')).toMatch(/a cell's whole braid/);
     expect(err('&k 0 1\n&d spell(free(0 2 4), &k, "a b")')).toMatch(/a cell's whole braid/);
     expect(err('&b scan(1 1) step=free(1 2)')).toMatch(/a cell's whole braid/);
     // (a number left free is as it was)

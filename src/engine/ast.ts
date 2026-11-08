@@ -331,6 +331,8 @@ export interface FreeSpec {
   readonly labels?: readonly string[];
   /** Written as a note by name (free(D)): a pitch class 0…11, written back by its name. */
   readonly byName?: true;
+  /** A count, an index, a turn (cycle=, x!n, &x[i] …): its value and range whole, the slider moving by ones (decision 078). */
+  readonly whole?: true;
   /** A text left free (free("867 5309")): drawn as a text field (key 'text'). */
   readonly text?: string;
   /**

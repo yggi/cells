@@ -1,6 +1,7 @@
 import { noteName, noteValue } from "../meter.js";
 import { syntax } from "./syntax.js";
 import { parseFree } from "./free.js";
+import { NUMBER_PLACES } from "./numbers.js";
 import { agogic as agogicPositions, diatonicSteps, even as evenPositions, intervals, MODE_WORDS, SCALES, scaleOfPhase } from "../../theory/modes.js";
 import { TONAL_SCALES } from "../../theory/tonal.js";
 function parseScan(s, start) {
@@ -14,11 +15,11 @@ function parseScan(s, start) {
         if (s.text.startsWith('geo(', s.i)) {
             s.i += 4;
             s.skipSpace();
-            const r = s.num('a ratio, like geo(5, 25, 0 10 5)').value;
+            const r = s.num('a ratio, like geo(5, 25, 0 10 5)', NUMBER_PLACES.geo, 'ratio').value;
             s.skipSpace();
             s.expect(',', `',' then the steps per ratio: geo(${r}, 25, 0 10 5)`);
             s.skipSpace();
-            const n = s.int('the steps per ratio');
+            const n = s.int('the steps per ratio', { ...NUMBER_PLACES.geo, whole: true, min: 1 }, 'steps');
             s.skipSpace();
             s.expect(',', `',' then the exponents: geo(${r}, ${n}, 0 10 5)`);
             const ks = [];
@@ -26,7 +27,7 @@ function parseScan(s, start) {
                 s.skipSpace();
                 if (s.peek() === ')')
                     break;
-                ks.push(s.num('an exponent').value);
+                ks.push(s.num('an exponent', NUMBER_PLACES.geo, 'exponent').value);
             }
             s.i++;
             if (!(r > 0) || n < 1 || ks.length === 0)
@@ -35,8 +36,8 @@ function parseScan(s, start) {
                 steps.push(+Math.pow(r, k / n).toFixed(9));
             continue;
         }
-        if (s.text.startsWith('free(', s.i)) {
-            const f = parseFree(s, 'interval', false);
+        const f = s.free(NUMBER_PLACES.interval);
+        if (f !== null) {
             if (!(f.lo > 0))
                 s.fail('A scan interval stays positive: give free(…) a range above 0', at, s.i - at);
             steps.push(f.value);
@@ -48,7 +49,8 @@ function parseScan(s, start) {
             let times = 1;
             if (s.peek() === '!') {
                 s.i++;
-                const r = s.match(/[0-9]+/y);
+                const k = s.freeNumber(NUMBER_PLACES.intervals);
+                const r = k === null ? s.match(/[0-9]+/y) : String(k);
                 if (r === null || !(parseInt(r, 10) >= 1))
                     s.fail('x!n repeats an interval n times: scan(1!4 2)', at, s.i - at);
                 times = parseInt(r, 10);
@@ -223,8 +225,8 @@ function parseMeter(s, start) {
     const arg = (what) => {
         if (s.peek() === '"')
             return s.match(/"[^"]*"/y).slice(1, -1);
-        if (s.peek() === 'f') {
-            const f = parseFree(s, 'choice', false);
+        const f = s.free(NUMBER_PLACES.meter);
+        if (f !== null) {
             if (f.key === 'text' || f.text !== undefined)
                 return f.text ?? '';
             if (f.labels)
@@ -283,7 +285,7 @@ function numbers(s, name, start) {
     const args = [];
     for (;;) {
         s.skipSpace();
-        args.push(s.int(`a number in ${name}(…)`));
+        args.push(s.int(`a number in ${name}(…)`, NUMBER_PLACES.args, name));
         s.skipSpace();
         if (s.peek() !== ',')
             break;
@@ -365,7 +367,7 @@ export function parseScale(s, start) {
         s.expect(',', "',' then the mode — better by name: scale(minor, A)");
         s.skipSpace();
         const at = s.i;
-        const phase = s.int('the mode, 0 (the darkest) to 6');
+        const phase = s.int('the mode, 0 (the darkest) to 6', NUMBER_PLACES.phase);
         if (phase > 6)
             s.fail(`scale(tonic, phase): the phase is a mode, 0 (the darkest, Locrian) to 6 (the brightest, Lydian) — not ${phase}`, at, String(phase).length);
         tonic = parseInt(legacy, 10);
@@ -402,13 +404,10 @@ export function parseScale(s, start) {
                 tonicRef = s.cellRef('the cell that holds the tonic, like scale(dorian, &tonic)', 'as the tonic');
                 tonicText = `&${tonicRef.name}`;
             }
-            else if (s.text.startsWith('free(', s.i)) {
-                tonic = Math.round(parseFree(s, 'tonic', false).value);
-                tonicText = s.text.slice(t0, s.i);
-            }
             else {
-                tonic = s.int('the tonic: a note name (D, F#, Bb), a number, a cell (&tonic) or free(…)');
-                tonicText = String(tonic);
+                const free = s.text.startsWith('free(', s.i);
+                tonic = s.int('the tonic: a note name (D, F#, Bb), a number, a cell (&tonic) or free(…)', NUMBER_PLACES.tonic);
+                tonicText = free ? s.text.slice(t0, s.i) : String(tonic);
                 if (Math.abs(tonic) > 11)
                     s.warn(`scale(…, ${tonic}): the tonic is a pitch class, 0 (C) to 11 (B)`, t0, s.i - t0);
             }
@@ -446,7 +445,7 @@ export function parseFifths(s, start) {
         if (name !== null)
             shift = ((((name % 12) + 12) % 12) * 7) % 12;
         else
-            shift = s.int('how many fifths round it starts (fifths(1): on G), or the note it starts on: fifths(G)');
+            shift = s.int('how many fifths round it starts (fifths(1): on G), or the note it starts on: fifths(G)', NUMBER_PLACES.fifths);
         if (name === null && Math.abs(shift) > 11) {
             const laps = Math.trunc(shift / 12);
             const rest = shift % 12;
