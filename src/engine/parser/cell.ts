@@ -709,7 +709,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       s.i++;
       // (an alias, Strudel's or dough's other name, reads as ours: cutoff= is lpf=)
       const key = word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
-      // an envelope's slots by name (attack=.01, decision 063's names; #411): a number, or a range moved by cells, read at each note's start
+      // an envelope's slots by name (attack=.01, decision 063's names; #411): a number, a range moved by cells, or a cell, its
+      // values the slot's (attack=&k, #597), read at each note's start
       if (key === null && ADSR_SLOTS.includes(word)) {
         if (adsr.has(word)) s.fail(`${word}= is given twice`, at, word.length);
         adsr.set(word, at);
@@ -873,13 +874,13 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
         at,
         first.length,
       );
-    // (in the slots' order: a number as written, a moving one at its range's first end until a note reads it)
+    // (in the slots' order: a number as written, a moving one at its range's first end until a note reads it, and one moved by
+    //  a cell alone at 0, the least a slot takes: what &env[attack] and the drawing read, #597)
     for (const name of ADSR_SLOTS) {
       const where = adsr.get(name)!;
       const moving = b.paramCells[name];
-      if (moving && !moving.range) s.fail(`${name}=: a moving slot is a range scaled by cells, ${name}=.3..0.01 * &style[artic]`, where, name.length);
-      const value = moving ? String(moving.range![0]) : b.params[name];
-      if (typeof value !== 'number' && typeof value !== 'string') s.fail(`${name}= takes a number, or a range scaled by cells`, where, name.length);
+      const value = moving ? String(moving.range?.[0] ?? 0) : b.params[name];
+      if (typeof value !== 'number' && typeof value !== 'string') s.fail(`${name}= takes a number, a range scaled by cells, or a cell`, where, name.length);
       delete b.params[name];
       const inner = s.within(String(value), where + name.length + 1);
       pushStep(inner, tokens, parseToken(inner));

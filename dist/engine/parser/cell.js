@@ -749,11 +749,9 @@ export function parseBody(s, head) {
         for (const name of ADSR_SLOTS) {
             const where = adsr.get(name);
             const moving = b.paramCells[name];
-            if (moving && !moving.range)
-                s.fail(`${name}=: a moving slot is a range scaled by cells, ${name}=.3..0.01 * &style[artic]`, where, name.length);
-            const value = moving ? String(moving.range[0]) : b.params[name];
+            const value = moving ? String(moving.range?.[0] ?? 0) : b.params[name];
             if (typeof value !== 'number' && typeof value !== 'string')
-                s.fail(`${name}= takes a number, or a range scaled by cells`, where, name.length);
+                s.fail(`${name}= takes a number, a range scaled by cells, or a cell`, where, name.length);
             delete b.params[name];
             const inner = s.within(String(value), where + name.length + 1);
             pushStep(inner, tokens, parseToken(inner));

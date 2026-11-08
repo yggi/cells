@@ -107,7 +107,7 @@ Envelopes are cells. A cell with **`map=adsr`** holds attack, decay, sustain and
 
 Written in place they hang as petals of the voice; named, one envelope serves several voices (`&pluck map=adsr .005 .3 0 .2`, then `env=&pluck`). They're exactly what the same cells would be in the mix (`&tune * &env * &lead`, `(&tune + &vibrato) * &lead`) — written once, on the instrument. As a factor it shapes each note it multiplies, from the note's start through its release.
 
-**An envelope's slots by name** ([decision 066](https://github.com/yggi/cells/blob/main/docs/decisions/066-a-wave-and-an-envelope-move.md)): `attack=`, `decay=`, `sustain=`, `release=` on a `map=adsr` cell, the same four in order. Each is a number, or a range scaled by cells, read at each note's start, so the chords swell at legato and are cut short at staccato:
+**An envelope's slots by name** ([decision 066](https://github.com/yggi/cells/blob/main/docs/decisions/066-a-wave-and-an-envelope-move.md)): `attack=`, `decay=`, `sustain=`, `release=` on a `map=adsr` cell, the same four in order. Each is a number, a range scaled by cells, or a cell alone, its values the slot's (`attack=&a`: seconds; `sustain=&s`: a level, 0 to 1), read at each note's start. A range moved by the style swells the chords at legato and cuts them short at staccato:
 
 ```cells
 &bar meter("4/4") step=&tempo

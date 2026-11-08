@@ -25,12 +25,11 @@ describe('an envelope’s slots by name, each a number or a range scaled by cell
     expect(named.braid.kind === 'list' && named.braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : null))).toEqual([0.01, 0.3, 0.5, 0.4]);
   });
 
-  it('says what is wrong: a slot missing, given twice, both spellings, a moving slot with no range, a slot on a voice', () => {
+  it('says what is wrong: a slot missing, given twice, both spellings, a slot on a voice', () => {
     const first = (text: string) => parse(text).diagnostics[0]?.message;
     expect(first('&env map=adsr attack=.01 decay=.3 sustain=.5')).toMatch(/An envelope names every slot: release= is missing/);
     expect(first('&env map=adsr attack=.01 attack=.02 decay=.3 sustain=.5 release=.4')).toMatch(/attack= is given twice/);
     expect(first('&env map=adsr .01 .3 .5 .4 attack=.01')).toMatch(/by name \(attack=\.01\) or in order/);
-    expect(first('&x step=4n 1\n&env map=adsr attack=&x decay=.3 sustain=.5 release=.4')).toMatch(/a moving slot is a range scaled by cells/);
     // (on any other cell, Strudel's spelling is gone: an envelope is a cell, its slots named on it)
     expect(first('&lead s=saw attack=.3')).toMatch(/attack= is gone: an envelope is a cell.*attack=\.01 decay=\.3/);
   });
@@ -49,6 +48,32 @@ describe('an envelope’s slots by name, each a number or a range scaled by cell
         expect(a).toBeCloseTo(attack, 3);
         expect(r).toBeCloseTo(release, 3);
       }
+  });
+
+  it('a slot moved by a cell alone reads its values as the slot’s, at each note’s start (#597)', () => {
+    const text = `${bar}\n&a map=lin step=4n .02 .4\n&s step=4n .8 .3\n&env map=adsr attack=&a decay=.1 sustain=&s release=.2\n&v s=tri loop=C3 env=&env\n&line step=4n 0 2 4 5\n&out map=sample [&line * &v]`;
+    expect(messages(text)).toEqual([]);
+    const envs = events(text).map((e) => [e.env!.attack, e.env!.sustain]);
+    expect(envs).toHaveLength(2);
+    expect(envs[0]![0]).toBeCloseTo(0.02, 6);
+    expect(envs[0]![1]).toBeCloseTo(0.8, 6);
+    expect(envs[1]![0]).toBeCloseTo(0.4, 6);
+    expect(envs[1]![1]).toBeCloseTo(0.3, 6);
+    // (until a note reads it, the slot holds 0 in the braid: what &env[attack] reads)
+    const braid = parse('&a step=4n .1\n&env map=adsr attack=&a decay=.3 sustain=.5 release=.4').cells[1]!.braid;
+    expect(braid.kind === 'list' && braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : null))).toEqual([0, 0.3, 0.5, 0.4]);
+  });
+
+  it('a slot moved by a cell alone says when its values are none of the slot’s (#597)', () => {
+    expect(messages('&a step=4n .1 -.2\n&env map=adsr attack=&a decay=.3 sustain=.5 release=.4')).toContainEqual(
+      expect.stringMatching(/attack=&a: an attack is seconds, 0 or more, and &a holds -0\.2/),
+    );
+    expect(messages('&s step=4n .5 1.5\n&env map=adsr attack=.01 decay=.3 sustain=&s release=.4')).toContainEqual(
+      expect.stringMatching(/sustain=&s: a sustain is a level, 0 to 1, and &s holds 1\.5/),
+    );
+    expect(messages('&e map=adsr .01 .1 .5 .1\n&env map=adsr attack=&e decay=.3 sustain=.5 release=.4')).toContainEqual(
+      expect.stringMatching(/an envelope runs 0 to 1 — give it a range/),
+    );
   });
 
   it('follows a style that glides: a later note of a section that grows staccato has a shorter attack', () => {
