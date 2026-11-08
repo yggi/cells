@@ -1,4 +1,5 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
+import { valueSumOf } from '../valuesum';
 import { isNote, type Atom, type CellDecl, type Span, type Token } from '../ast';
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
@@ -67,6 +68,8 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       throw new Abort();
     }
     const d = decls.get(name)!;
+    // (a mix of cells with no voice: the sum of their values, decision 079; no sound, so no mix)
+    const sum = stacks.has(name) ? null : valueSumOf(name, decls);
     if (visiting.length >= MAX_SPLICE_DEPTH) {
       // (once: a chain of thousands would otherwise be reported once per 256 of its links)
       if (!tooDeep.size)
@@ -191,9 +194,12 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       // (a stack a gate plays is its part, each line played by the gate: no sound of its own, so it mixes nothing)
       mix: stacks.has(name)
         ? []
-        : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
-          ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
-          : null,
+        : sum
+          ? null
+          : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
+            ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
+            : null,
+      ...(sum ? { sum } : {}),
       sink: d.map?.kind === 'sample',
       sort: sortOf(name),
       ...(d.map?.kind === 'midi' ? { chords: units.map((u) => (u.atom.kind === 'mix' ? typed(u.atom) : null)) } : {}),

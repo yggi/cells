@@ -30,6 +30,8 @@ export interface Series {
    * factor, its −1…1 is 0…1, (1 + x)/2, not cut off at 0 (decision 067 §5); as a pitch, semitones as written.
    */
   readonly bipolar?: true;
+  /** A sum of values (decision 079): its terms' series, each by its weight, and a constant; read as their weighted sum. */
+  readonly sum?: { readonly terms: readonly { readonly series: Series; readonly weight: number }[]; readonly constant: number };
 }
 
 /** A series' step on a lap, as drawn (a step that doesn't play: null). */
@@ -207,6 +209,24 @@ function rampedSeries(p: Plan, m: Series, from: number, to: number, valueOf: (e:
  * silence; a stream that doesn't move holds its first value.
  */
 export function levelSeries(p: Plan, m: Series, from: number, to: number, written?: number): { at: number; level: number; ramp?: boolean }[] {
+  // a sum of values (decision 079): its terms' levels, each by its weight, and the constant, at each change of any term;
+  // held to 0…1, the share a factor reads it as
+  if (m.sum) {
+    const { terms, constant } = m.sum;
+    const parts = terms.map((t) => levelSeries(p, t.series, from, to, written));
+    const times = [...new Set(parts.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
+    return (times.length ? times : [from]).map((at) => ({
+      at,
+      level: Math.min(
+        1,
+        Math.max(
+          0,
+          terms.reduce((a, t, i) => a + t.weight * valueThen(parts[i]!, at, (x) => x.level), constant),
+        ),
+      ),
+      ...(parts.some((s) => s.some((x) => x.ramp && Math.abs(x.at - at) < EPS)) ? { ramp: true } : {}),
+    }));
+  }
   const val = (e: StepEvent) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : m.bipolar ? Math.max(0, (1 + e.value + e.alter) / 2) : Math.max(0, e.value + e.alter));
   if (m.events.length === 0) return [{ at: from, level: 0 }];
   if (!m.clock) return [{ at: from, level: val(m.events[0]) }];

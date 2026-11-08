@@ -1,5 +1,6 @@
 import { parse } from "./parser/index.js";
 import { AXES, CENTRE, STYLE } from "./style.js";
+import { valueSumOf } from "./valuesum.js";
 const valuesOf = (d) => {
     if (!d || d.braid.kind !== 'list')
         return null;
@@ -86,27 +87,97 @@ export function readStyles(parsed, scope) {
         };
         const written = d?.style;
         const named = written ? [written.from, ...(written.to ? [written.to] : [])].flatMap((p) => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref))) : [];
-        const moving = d?.map?.kind === 'style' ? movingOf(r.name) : written?.from.kind === 'cell' && !written.to ? movingOf(written.from.ref.name) : undefined;
-        if (!moving && named.some((n) => movingOf(n.name))) {
-            error(`&${r.name}[${axis}]: a mix or a range of styles doesn't move with them yet; name the moving style alone, style=&${named.find((n) => movingOf(n.name)).name}`, r.span);
+        const ownMoving = d?.map?.kind === 'style' ? movingOf(r.name) : undefined;
+        if (!ownMoving && named.some((n) => movingOf(n.name)) && (written.to || (written.from.kind !== 'cell' && written.from.kind !== 'mix'))) {
+            error(`&${r.name}[${axis}]: a range of styles doesn't move with a moving one yet; name the moving style alone, style=&${named.find((n) => movingOf(n.name)).name}`, r.span);
             return null;
         }
-        if (moving) {
-            const f = moving.factors.length === 1 && !moving.factors[0].pick ? decls.get(moving.factors[0].name) : undefined;
-            if (!f) {
-                if (moving.factors.length !== 1 || moving.factors[0].pick)
-                    error(`${axis}=… * &x: an axis moves by one cell, a line of numbers from 0 to 1 (write several as one)`, moving.span);
-                return null;
-            }
-            if (f.braid.kind !== 'list') {
-                error(`${axis}=… * &${f.name}: an axis moves by a line of numbers from 0 to 1, like &${f.name} step=1m*8 [0|.25|.5|.75|1]`, moving.factors[0].span);
-                return null;
-            }
-            const [a, b] = moving.range ?? AXES[i].range;
-            const name = `λ${r.name}_${i}`;
-            if (!made.has(name))
-                made.set(name, between(f, a, b, name, r.span));
+        const sumCell = (name, terms, constant) => {
+            const at = r.span;
+            const item = (cell, weight) => ({
+                e: {
+                    k: 'prod',
+                    factors: [
+                        { k: 'ref', ref: { name: cell, pick: null, shift: 0, span: at } },
+                        { k: 'num', value: weight, span: at },
+                    ],
+                    span: at,
+                },
+                sign: 1,
+            });
+            const items = [...terms.map((t) => item(t.cell, t.weight)), ...(constant !== 0 ? [{ e: { k: 'num', value: constant, span: at }, sign: 1 }] : [])];
+            const exprs = [{ k: 'sum', items, span: at }];
+            made.set(name, {
+                ...(made.get(terms[0].cell) ?? decls.get(terms[0].cell)),
+                name,
+                span: at,
+                params: {},
+                paramSpans: {},
+                paramCells: undefined,
+                paramClocks: undefined,
+                map: null,
+                step: null,
+                label: null,
+                about: undefined,
+                style: undefined,
+                braid: { kind: 'list', tokens: [{ atom: { kind: 'mix', exprs }, repeat: 1, subdivide: 1, elongate: 1, span: at }] },
+            });
             return name;
+        };
+        const laid = (cell, a, b, name, span) => {
+            if (made.has(name))
+                return name;
+            const sum = valueSumOf(cell, decls);
+            if (sum) {
+                const w = sum.terms.reduce((s, t) => s + t.weight, 0);
+                const terms = sum.terms.map((t, k) => ({ cell: laid(t.cell, a, b, `${name}_${k}`, span), weight: t.weight }));
+                if (terms.some((t) => t.cell === null))
+                    return null;
+                return sumCell(name, terms, a * (1 - w) + (b - a) * sum.constant);
+            }
+            const f = decls.get(cell);
+            if (!f)
+                return null;
+            if (f.braid.kind !== 'list') {
+                error(`${axis}=… * &${f.name}: an axis moves by a line of numbers from 0 to 1, like &${f.name} step=1m*8 [0|.25|.5|.75|1], or a sum of them`, span);
+                return null;
+            }
+            made.set(name, between(f, a, b, name, span));
+            return name;
+        };
+        const movingCell = (pc, name) => {
+            if (pc.factors.length !== 1 || pc.factors[0].pick) {
+                error(`${axis}=… * &x: an axis moves by one cell, a line of numbers or a sum of them, &drift [&a * .5 + &b * .5] (decision 079)`, pc.span);
+                return null;
+            }
+            const [a, b] = pc.range ?? AXES[i].range;
+            return laid(pc.factors[0].name, a, b, name, pc.factors[0].span);
+        };
+        if (ownMoving)
+            return movingCell(ownMoving, `λ${r.name}_${i}`);
+        if (written?.from.kind === 'cell' && !written.to) {
+            const m = movingOf(written.from.ref.name);
+            if (m)
+                return movingCell(m, `λ${written.from.ref.name}_${i}`);
+        }
+        if (written?.from.kind === 'mix' && !written.to && named.some((n) => movingOf(n.name))) {
+            const name = `λ${r.name}_${i}`;
+            if (made.has(name))
+                return name;
+            const terms = [];
+            let constant = 0;
+            for (const t of written.from.terms) {
+                const m = movingOf(t.ref.name);
+                if (m) {
+                    const c = movingCell(m, `λ${t.ref.name}_${i}`);
+                    if (c === null)
+                        return null;
+                    terms.push({ cell: c, weight: t.weight });
+                }
+                else
+                    constant += t.weight * (valuesOf(decls.get(t.ref.name))?.[i] ?? 0);
+            }
+            return sumCell(name, terms, constant);
         }
         if (!d && r.name === STYLE) {
             body = text(CENTRE[i]);

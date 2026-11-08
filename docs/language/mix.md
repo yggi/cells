@@ -55,6 +55,24 @@ The law is about pitches, so it doesn't apply to `12` in `12 * &lead`, which is 
 &out loop=SAMPLE_RATE map=sample [&theme * &orch * .3]
 ```
 
+## A sum of values: a mix with no voice
+
+A mix of cells with no voice in it, no sound to sum, is the sum of their values ([decision 079](https://github.com/yggi/cells/blob/main/docs/decisions/079-a-sum-of-cells-and-a-window.md)): each cell's value at each moment, times its gain, its weight, and any number added.
+It is a line like any other, read where a moving parameter, a style's axis or a pick reads a cell, held to 0…1 as a factor's share is.
+Lines at several rates, summed, drift as music's slow fluctuations do, the weights how much they move at each:
+
+```cells
+&bar meter("4/4") step=120bpm
+&section step=1m/8 [0|.25|.5|.75|1]
+&song step=1m/32 [0|.25|.5|.75|1]
+&drift [&section * .7 + &song * .3]
+&line step=8n 0 2 4 7
+&pad s=saw loop=C3 lpf=300..2400 * &drift
+&out map=sample [&line * &pad * .3]
+```
+
+A mix with a voice is a sound, as it was: which a mix sums, sounds or values, is told by whether a voice is in it.
+
 ## A gate: a product with a name
 
 A product that plays a voice can be written as a cell of its own, a **gate** ([decision 023](https://github.com/yggi/cells/blob/main/docs/decisions/023-gate-spelling.md)):
