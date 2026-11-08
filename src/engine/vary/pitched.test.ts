@@ -10,13 +10,16 @@ import { planOf } from '../host';
 import { channelTable, midiNote, router, routesOf } from '../midi';
 import { playsSameNotes } from '../sameness';
 import { windowAt } from '../schedule';
-import { unionOf } from '../../repository/fit';
+import { cachedFit } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
 import { BASS_FRAGMENTS } from '../../repository/bass';
 import { heard } from '../../repository/heard';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { anchorsOf, PITCHED_OPERATORS, readVariations, variations, varied } from '.';
 import { bodyOf } from '../use';
+
+/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
+const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
 
 vi.mock('../compile', async (original) => {
   const actual = await original<typeof import('../compile')>();

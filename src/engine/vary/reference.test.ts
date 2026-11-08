@@ -7,7 +7,7 @@ import { compileSource } from '../compile';
 import { bare } from '../fold/score';
 import { playsSameNotes } from '../sameness';
 import { BASS_FRAGMENTS } from '../../repository/bass';
-import { unionOf } from '../../repository/fit';
+import { cachedFit } from '../../repository/fit';
 import { heard } from '../../repository/heard';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { resolveSeed } from '../../repository/library';
@@ -18,9 +18,12 @@ import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
 import { declWords } from '../edit';
 import { PITCHED_OPERATORS, variations, type Variation, type VaryOptions } from '.';
 
+/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
+const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
+
 const KIT = { resolve: resolveSeed };
 /** Jambot's reading of a drum bar (`rhythm.test.ts`), with 13 of the General MIDI kit's voices to strike. */
-const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
+const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
 const DRUM_OPTIONS: VaryOptions = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
 /** The bass seeds' workbenches (`pitched.test.ts`): 4/4 at 120 bpm in C major, one chord a bar, over two progressions. */
 const HOST = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n${INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text}`;
@@ -98,7 +101,7 @@ describe("the seeds' variations by reference", () => {
 
 describe('recognition reads a reference as its path (#293, decision 055)', () => {
   const library = RHYTHM_FRAGMENTS;
-  const uses = 'use &kick, &clap, &hats, &ticks from electro_swing_drums';
+  const uses = '&kick, &clap, &hats, &ticks from electro_swing_drums';
 
   it('a line that is a reference: the fragment, by that one operator, at distance 0', () => {
     for (const [line, by] of [
@@ -113,13 +116,13 @@ describe('recognition reads a reference as its path (#293, decision 055)', () =>
 
   it("a motif moved: Electro swing's gypsy two degrees down, as a line of its own, is its transposition", () => {
     const workbench = '&bar meter("4/4") step=124bpm\n&key scale(harmonic, D)';
-    const found = createRecogniser().recognise('use &gypsy\n&late step=8n &gypsy^-2', MOTIF_FRAGMENTS, { workbench });
+    const found = createRecogniser().recognise('&gypsy from gypsy\n&late step=8n &gypsy^-2', MOTIF_FRAGMENTS, { workbench });
     expect(found.map((r) => [r.fragment.id, r.path.map((p) => p.by), r.distance])).toEqual([['gypsy', ['transpose &gypsy -2'], 0]]);
   });
 
   it('none where the text takes no such line from it, or writes no reference: then it searches, as before', () => {
     const r = createRecogniser();
-    expect(r.recognise('use &kick from electro_swing_drums\n&hats2 base=&hats =!3 ~', library, DRUM_OPTIONS)).toEqual([]);
+    expect(r.recognise('&kick from electro_swing_drums\n&hats2 base=&hats =!3 ~', library, DRUM_OPTIONS)).toEqual([]);
     const plain = `${uses}\n&drumlines [&kick, &clap, &hats, &ticks]`;
     expect(r.recognise(plain, library, DRUM_OPTIONS).filter((x) => x.path.length)).toEqual([]);
   });

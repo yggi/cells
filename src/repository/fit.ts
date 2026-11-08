@@ -1,24 +1,24 @@
 /**
- * What fits the workbench (decision 047, points 2 and 3): the union of a fragment with the workbench's text, and whether
- * the fragment fits there. The workbench is a cells text; the fragment's holes are read off its text (`holes.ts`).
+ * What fits the workbench (decision 047, points 2 and 3; decisions 065, 075): a fragment taken onto a workbench, and
+ * whether it fits there. The workbench is a cells text; the fragment's holes are read off its text (`holes.ts`).
  *
- * **The union** is the workbench as written, then the fragment's lines: a line the fragment gives word for word as the
- * workbench does (its code, comments aside, whitespace collapsed) is the same line and kept once (owner, on #22); a name
- * both define by different lines is the fragment's own and renamed, `&kick` to `&kick2` (the first `&kick<n>`, n from 2,
- * that neither text names), with every use of it in the fragment, until no private name collides (a rename can make a
- * shared line differ, `[&kick, &sd]`, and so rename it too). The interface names (`&bar`, `&tempo`, `&key`, `&tonic`,
- * `&harm`, `&style`) are never renamed: one the fragment defines differently is defined twice, and the fragment doesn't fit.
- * Lines of the fragment that declare nothing (blank, a comment alone) aren't carried over, but for its `use` lines
- * (decision 054), each carried over unless the workbench has it, before its declarations.
+ * **By signature** (`useOn`, `fitsAs`, #454): a template is taken by a `from` line, a copy whose inputs are its
+ * arguments, and a collection by every name it defines (`* from id`). Nothing is bound by name: the main argument is the
+ * one cell that meets the main parameter, or the one the host names.
  *
- * **The fit:** every name the fragment uses is defined on the workbench (`key`, the old way: the workbench has a main key), no name is
- * defined twice by different lines, every clock need is met by the meter the workbench gives it (its main meter, or the
- * one named), and the union compiles with no diagnostic the workbench alone doesn't have (its own warnings, or an error a
- * hole of its own makes, are no fault of the fragment's). The checks run cheapest first, and the union is compiled only
- * when the others pass; its compile may be cached by text (`cachedCompile`). A hole read only as a sound (`Holes.sounds`:
- * a groove's `&bd`) doesn't block the fit (decision 054): what the workbench doesn't define of them is `sounds`, the
- * instrument to ask for next (a hole read as a line, a form's `&call`, is `missing`: a line fills it, #314), and the union is judged with a stand-in voice for each (`&bd s=white`), so that only the fragment's other faults count. The stand-ins are in no text the fit returns. What a workbench's `use` lines give it
- * counts as defined there, as its compile says.
+ * **By lines** (`cachedFit`, what the repository's queries ask until #587): the workbench as written, then the fragment's
+ * lines. A line the fragment gives word for word as the workbench does (its code, comments aside, whitespace collapsed)
+ * is the same line and kept once (owner, on #22); a name both define by different lines is the fragment's own and
+ * renamed, `&kick` to `&kick2` (the first `&kick<n>`, n from 2, that neither text names), with every use of it in the
+ * fragment, until no private name collides (a rename can make a shared line differ, `[&kick, &sd]`, and so rename it
+ * too). The names a query's workbench gives a template the old way (`&bar`, `&tempo`, `&key`, `&tonic`, `&harm`,
+ * `&style`) are never renamed: one the fragment defines differently is defined twice, and it doesn't fit; they go with
+ * #587. The fragment's `from` lines are carried over unless the workbench has them, before its declarations. It fits
+ * where every name it uses is defined on the workbench, no name is defined twice by different lines, every clock need is
+ * met by the meter the workbench gives it (its main meter, or the one named), and the union compiles with no diagnostic
+ * the workbench alone doesn't have. A hole read only as a sound (`Holes.sounds`: a groove's `&bd`) doesn't block the fit
+ * (decision 054): it is `sounds`, the instrument to ask for next, and the union is judged with a stand-in voice for each
+ * (`&bd s=white`), in no text the fit returns. `fitsAs` judges a collection so.
  */
 import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
@@ -29,7 +29,7 @@ import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
 import { clockNeeds, holesOf, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
-/** A fragment added to a workbench: the text, and what became of the fragment's names there. */
+/** A fragment's lines added to a workbench (`cachedFit`'s, until #587): the text, and what became of the fragment's names there. */
 export interface Union {
   /** The workbench as written, then the fragment's lines that aren't already on it. */
   readonly text: string;
@@ -43,7 +43,7 @@ export interface Union {
   readonly names: readonly string[];
 }
 
-/** Whether a fragment fits a workbench, and why not. */
+/** Whether a fragment's lines fit a workbench (`cachedFit`'s answer, until #587), and why not. */
 export interface Fit {
   readonly fits: boolean;
   readonly union: Union;
@@ -58,8 +58,9 @@ export interface Fit {
 }
 
 /**
- * The names the union never renames (the interface names, retired: #387, #454): the old way's, which goes with `unionOf`
- * and `fitOf`. `useOn` and `fitsAs` bind nothing by name.
+ * The names the union never renames: what a query's workbench gives a template the old way, by name (the interface
+ * names, retired by #454 and decision 075). Read only by `cachedFit`'s union, and goes with #587. `useOn` and `fitsAs`
+ * bind nothing by name.
  */
 const INTERFACE: ReadonlySet<string> = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 
@@ -71,8 +72,6 @@ export interface Line {
 }
 
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
-/** A `use` line's code, collapsed (decision 054). */
-const USE = /^use\s/;
 const CONTINUES = /[+*,[]\s*$/;
 
 /** A text's declarations, a line (and the lines it continues onto: one ending in `+`, `*`, `,` or `[`) each, as the parser reads them. */
@@ -103,19 +102,14 @@ const namesIn = (text: string) =>
       .map((m) => m[1] ?? ''),
   );
 
-/** A text's `use` lines and the `from` lines that take from a fragment (decision 065), their code collapsed, in order. */
+/** A text's `from` lines that take from a fragment (decision 065), their code collapsed, in order. */
 const useLines = (text: string): string[] =>
   text
     .split('\n')
     .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
-    .filter((code) => USE.test(code) || readFrom(code)?.kind === 'use');
+    .filter((code) => readFrom(code)?.kind === 'use');
 
-/**
- * The union of a fragment with a workbench (see the module's comment).
- * @deprecated The old way (#454): take a template by a `from` line, `useOn`, which binds nothing by name; goes in the next minor.
- */
-export const unionOf = (fragment: string, workbench: string): Union => unionByName(fragment, workbench);
-
+/** The union of a fragment's lines with a workbench (see the module's comment). */
 function unionByName(fragment: string, workbench: string): Union {
   const bench = new Map(declarations(workbench).map((l) => [l.name, l]));
   const taken = new Set([...namesIn(workbench), ...namesIn(fragment)]);
@@ -170,15 +164,11 @@ const unknownCells = (result: CompileResult): string[] => result.unknown.map((u)
 const sameDiagnostic = (a: Diagnostic, b: Diagnostic) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
 
 /**
- * Whether a fragment fits a workbench (see the module's comment); `compiledBy` compiles a text, and may cache it
- * (`cachedCompile`). Their `use` lines (decision 054) read through `resolve`: the fragment is judged over its expansion,
- * its used fragments' holes and clock needs its own; `compiledBy`, where given, must read them through the same.
- * @deprecated The old way (#454): `fitsAs` reads a template's signature; goes in the next minor.
+ * Whether a fragment's lines fit a workbench (see the module's comment); `compiledBy` compiles a text, and may cache it
+ * (`cachedCompile`). Their `from` lines read through `resolve`: the fragment is judged over its expansion, its used
+ * fragments' holes and clock needs its own; `compiledBy`, where given, must read them through the same. `cachedFit`'s
+ * judgment, and `fitsAs`' for a collection (its lines read only what it defines, its sounds and its taps).
  */
-export const fitOf = (fragment: string, workbench: string, compiledBy?: (text: string) => CompileResult, resolve?: Resolve): Fit =>
-  fitByName(fragment, workbench, compiledBy, resolve);
-
-/** `fitOf`'s judgment, which `fitsAs` keeps for a collection (its lines read only what it defines, its sounds and its taps). */
 function fitByName(fragment: string, workbench: string, compiledBy?: (text: string) => CompileResult, resolve?: Resolve): Fit {
   const compiled = compiledBy ?? ((text: string) => compileSource(text, undefined, resolve ? { resolve } : {}));
   const holes = holesOf(fragment, compiled, resolve);
@@ -362,8 +352,7 @@ function clearOf(bench: string, name: string): string {
  * A template taken onto a workbench (decision 065, #454): the workbench with `&head from id(args) main` written on it, and
  * what the copy gives. Without `head`, the template's head numbered clear of the workbench's names; a template of several
  * heads is taken by their names. Without `main`, the one cell of the workbench that meets the main parameter (`mainOn`). A
- * fragment with no signature, a collection, is taken by every name it defines (`* from id`). Replaces `unionOf`, which
- * merges a fragment's lines by name.
+ * fragment with no signature, a collection, is taken by every name it defines (`* from id`).
  */
 export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
   const compiled = compilerOf(options.resolve, options.compiled);
@@ -388,7 +377,7 @@ export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
 /** Whether a template fits a workbench taken by a `from` line, and why not: `fitsAs`'s answer. */
 export interface FitAs {
   readonly fits: boolean;
-  /** The `from` line on the workbench (`useOn`); for a collection, its union (`unionOf`, the old way). */
+  /** The `from` line on the workbench (`useOn`); for a collection, the workbench with its lines (the fit by lines). */
   readonly text: string;
   /** The copy, where a template was taken (`useOn`); null for a collection. */
   readonly use: UseOn | null;
@@ -405,9 +394,9 @@ export interface FitAs {
 /**
  * Whether a fragment fits a workbench, read by its signature (decision 065, #454): a template fits where the workbench
  * gives its main argument (`useOn`: the cell that meets it, or `options.main`), the copy compiles with nothing said that
- * the workbench alone doesn't say (a sound hole stood in, as `fitOf` stands one), and its clock needs are met by the meter
- * it taps. Nothing is bound by name. A collection (no signature) is judged as `fitOf` judges it: its lines read only what
- * it defines, its sounds and its taps. Replaces `fitOf`.
+ * the workbench alone doesn't say (a sound hole stood in, as the fit by lines stands one), and its clock needs are met by the meter
+ * it taps. Nothing is bound by name. A collection (no signature) is judged as the fit by lines judges it: its lines read only what
+ * it defines, its sounds and its taps.
  */
 export function fitsAs(id: string, bench: string, options: UseOnOptions): FitAs {
   const compiled = compilerOf(options.resolve, options.compiled);

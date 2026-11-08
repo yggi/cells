@@ -65,8 +65,6 @@ export interface Holes {
         readonly main: string | null;
     };
 }
-/** The interface names, retired (#387, #454): re-exported one minor for a frontend that imports them from here. */
-export { INTERFACE_NAMES } from '../engine/program';
 /** Whether a lap of `taps` taps (the meter's, in the need's bars) meets the need: its taps times its rate a multiple of its steps. */
 export declare const lapMeets: (need: Pick<ClockNeed, "steps" | "rate">, taps: number) => boolean;
 /** Whether a meter meets a need: its taps of the need's level in the need's bars (`tapPositions`, the compiler's own), against its steps. */

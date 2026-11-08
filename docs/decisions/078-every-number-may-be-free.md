@@ -27,11 +27,10 @@ A slider rewrites the number in the code, and the piece compiles again. So it be
 
 ### 2. A cell is the playing's: it moves only a number read while the piece plays
 
-A range moved by cells (`&k`, `lo..hi * &k`) is read while the piece plays. So it belongs only where a number is read while playing: sound parameters, an envelope's slots, a gate's level, a gain in a mix, a scale's tonic (a note), and a braid's steps, where a cell is spliced.
+A range moved by cells (`&k`, `lo..hi * &k`) is read while the piece plays. So it belongs only where a number is read while playing: sound parameters, an envelope's slots, a style's axes (#594), a gate's level, a gain in a mix, a scale's tonic (a note), and a braid's steps, where a cell is spliced.
 
 - **A structural number moved by a cell** would make the program's shape change while it plays. That is the selectors' work (#51), not a value's, so it stays out. The error names the rule: *read as the piece is built: a number, or free(v, lo..hi) … a cell moves only a number read while the piece plays (decision 078)*.
 - **A number read while playing but not yet moved by cells** is refused with the rule and what the place takes of cells:
-  - a style's axis (#576's next rung);
   - a swing's share;
   - a hit's gain;
   - a style's weight;

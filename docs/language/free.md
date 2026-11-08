@@ -18,7 +18,7 @@ The places, from the parser's own table:
 | lpf=n, and every sound parameter | ✓ | `&k`, `lo..hi * &k`, on a parameter that moves (pan= and postgain= don't: the renderer's) | `&lead s=saw loop=C4 lpf=free(1200, 200..5000)` |
 | level=&a * n (a gate) | ✓ | `&a * &b * n` | `&out play=&tune level=&accent*free(.4, 0..1) &tune` |
 | attack=n (an envelope by name) | ✓ | `lo..hi * &k`; `&k` alone not yet: a slot moves within a range | `&env map=adsr attack=free(.01, 0..1) decay=.3 sustain=.5 release=.4` |
-| sync=n (a style by name) | ✓ | ✗ not yet: #576's next rung | `&mine map=style sync=free(.3, 0..1) harm=.45 artic=.55 energy=.55` |
+| sync=n (a style by name) | ✓ | `&k`, `lo..hi * &k`, within the axis (#576) | `&mine map=style sync=free(.3, 0..1) harm=.45 artic=.55 energy=.55` |
 | swing=8n:n · legato=8n:n | ✓ | ✗ not yet: a share by level is a number | `&bar meter("4/4") step=90bpm swing=8n:free(.6, .5...75)` |
 | [&x * n] (a gain in a mix) | ✓ | `&k`; `lo..hi * &k` not yet: a mix multiplies | `&out [&strings * free(.4, 0..1)]` |
 | &x:0:n (a hit’s gain) | ✓ | ✗ not yet: a hit’s gain is a number | `&beat step=8 &bd &hh:0:free(.4, 0..1)` |

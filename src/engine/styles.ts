@@ -12,7 +12,7 @@
  * And every `style=` is read: a style cell (`map=style`), an unnamed one, or a mix of them by weight, which is exact by
  * definition (the point it computes); each end within the axes' ranges.
  */
-import type { CellDecl, Diagnostic, ParseResult, Ref, StylePoint } from './ast';
+import type { CellDecl, Diagnostic, ParamCells, ParseResult, Ref, StylePoint, Token } from './ast';
 import { parse } from './parser';
 import { AXES, CENTRE, STYLE } from './style';
 
@@ -29,12 +29,18 @@ const valuesOf = (d: CellDecl | undefined): number[] | null => {
 /** A glide's steps a bar: b's value is reached on the bar's last sixteenth. */
 const GLIDE_STEPS = 16;
 
+/** A token with each number v in it read as f(v): a note's, a choice's, and those in a subsequence, as deep as they go. */
+function mapNumbers(t: Token, f: (v: number) => number): Token {
+  const a = t.atom;
+  if (a.kind === 'note') return { ...t, atom: { ...a, value: f(a.value) } };
+  if (a.kind === 'choice') return { ...t, atom: { ...a, values: a.values.map(f) } };
+  if (a.kind === 'seq') return { ...t, atom: { ...a, layers: a.layers.map((l) => l.map((u) => mapNumbers(u, f))) } };
+  return t;
+}
+
 /** A cell's braid with each number v read as a + (b − a)·v: a curve from 0 to 1 laid between two values. */
 function between(d: CellDecl, a: number, b: number, name: string, span: CellDecl['span']): CellDecl {
-  const braid =
-    d.braid.kind === 'list'
-      ? { ...d.braid, tokens: d.braid.tokens.map((t) => (t.atom.kind === 'note' ? { ...t, atom: { ...t.atom, value: a + (b - a) * t.atom.value } } : t)) }
-      : d.braid;
+  const braid = d.braid.kind === 'list' ? { ...d.braid, tokens: d.braid.tokens.map((t) => mapNumbers(t, (v) => a + (b - a) * v)) } : d.braid;
   return { ...d, name, span, braid, label: null, about: undefined, ...(d.style ? { style: undefined } : {}) };
 }
 
@@ -105,6 +111,36 @@ export function readStyles(parsed: ParseResult, scope: Scope | null): { parsed: 
     const d = decls.get(r.name);
     const style = styles.get(r.name);
     let body: string | null = null;
+    // a moving axis (sync=0..1 * &walk, #576): what reads it reads the cell that moves it, its numbers (0 to 1) laid within
+    // the range, on that cell's own clock; through &style style=&mine as on &mine itself; one cell, a line of numbers
+    const axis = AXES[i]?.name;
+    const movingOf = (name: string): ParamCells | undefined => {
+      const sd = decls.get(name);
+      return sd?.map?.kind === 'style' && axis ? sd.paramCells?.[axis] : undefined;
+    };
+    const written = d?.style;
+    const named = written ? [written.from, ...(written.to ? [written.to] : [])].flatMap((p) => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref))) : [];
+    const moving = d?.map?.kind === 'style' ? movingOf(r.name) : written?.from.kind === 'cell' && !written.to ? movingOf(written.from.ref.name) : undefined;
+    if (!moving && named.some((n) => movingOf(n.name))) {
+      error(`&${r.name}[${axis}]: a mix or a range of styles doesn't move with them yet; name the moving style alone, style=&${named.find((n) => movingOf(n.name))!.name}`, r.span);
+      return null;
+    }
+    if (moving) {
+      const f = moving.factors.length === 1 && !moving.factors[0]!.pick ? decls.get(moving.factors[0]!.name) : undefined;
+      if (!f) {
+        if (moving.factors.length !== 1 || moving.factors[0]!.pick)
+          error(`${axis}=… * &x: an axis moves by one cell, a line of numbers from 0 to 1 (write several as one)`, moving.span);
+        return null; // (an unknown cell: compile says so)
+      }
+      if (f.braid.kind !== 'list') {
+        error(`${axis}=… * &${f.name}: an axis moves by a line of numbers from 0 to 1, like &${f.name} step=1m*8 [0|.25|.5|.75|1]`, moving.factors[0]!.span);
+        return null;
+      }
+      const [a, b] = moving.range ?? AXES[i]!.range;
+      const name = `λ${r.name}_${i}`;
+      if (!made.has(name)) made.set(name, between(f, a, b, name, r.span));
+      return name;
+    }
     if (!d && r.name === STYLE) {
       // (the section's style, which no line writes: the centre, said once; the composer writes &style, never a fragment)
       body = text(CENTRE[i]!);

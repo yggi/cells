@@ -6,7 +6,6 @@ import { braidReadsOf } from "../engine/compiler/builtin.js";
 import { clockNeeds, holesOf, linesRead, meterMeets, readOnlyAsSound, standIn } from "./holes.js";
 const INTERFACE = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
-const USE = /^use\s/;
 const CONTINUES = /[+*,[]\s*$/;
 export function declarations(text) {
     const out = [];
@@ -33,8 +32,7 @@ const namesIn = (text) => new Set(text
 const useLines = (text) => text
     .split('\n')
     .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
-    .filter((code) => USE.test(code) || readFrom(code)?.kind === 'use');
-export const unionOf = (fragment, workbench) => unionByName(fragment, workbench);
+    .filter((code) => readFrom(code)?.kind === 'use');
 function unionByName(fragment, workbench) {
     const bench = new Map(declarations(workbench).map((l) => [l.name, l]));
     const taken = new Set([...namesIn(workbench), ...namesIn(fragment)]);
@@ -88,7 +86,6 @@ function meets(result, { need, tap }) {
 }
 const unknownCells = (result) => result.unknown.map((u) => `&${u.name}`);
 const sameDiagnostic = (a, b) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
-export const fitOf = (fragment, workbench, compiledBy, resolve) => fitByName(fragment, workbench, compiledBy, resolve);
 function fitByName(fragment, workbench, compiledBy, resolve) {
     const compiled = compiledBy ?? ((text) => compileSource(text, undefined, resolve ? { resolve } : {}));
     const holes = holesOf(fragment, compiled, resolve);

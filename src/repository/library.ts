@@ -43,14 +43,14 @@ export const LIBRARY: readonly Fragment[] = [
 ];
 
 /**
- * The ids the library no longer lists, each still read for one minor version as a fragment that only forwards: a `use`
- * of the fragment that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
- * `use` could name what it takes; the General MIDI kit is `gm_kit`, a word. Normalise writes a use of one as the use it
- * forwards to (`normalise/forwarded.ts`), so a piece that names one plays as before and is respelled.
+ * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment
+ * that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
+ * `use` could name what it takes; the General MIDI kit is `gm_kit`, a word. Migrate writes a line of one as the line it
+ * forwards to (`migrate/forwarded.ts`), so a piece that names one plays as before and is respelled.
  */
 export const RETIRED: ReadonlyMap<string, string> = new Map([
-  ['core kit', 'use &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
-  ['gm kit', 'use * from gm_kit'],
+  ['core kit', '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
+  ['gm kit', '* from gm_kit'],
 ]);
 
 // (a template whose points carry its arguments is in the library as a fragment for each set, `diatonic(mode=aeolian)`; a from

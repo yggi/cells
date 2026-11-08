@@ -3,7 +3,11 @@ import { type CompileOptions } from '../program';
 export interface Family {
     readonly key: string;
     readonly rows: string;
-    readonly rewrite: (text: string, options: CompileOptions) => string;
+    readonly rewrite: (text: string, options: CoreContext) => string;
+}
+/** What a family reads: the compile options, and the interface the text is cored up to (decision 077 §2), its names bare. */
+export interface CoreContext extends CompileOptions {
+    readonly keep?: ReadonlySet<string>;
 }
 /** The families written as functions of the text alone. */
 export declare const FAMILIES: readonly Family[];

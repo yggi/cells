@@ -56,6 +56,7 @@ export const ORDER = [
   'bell',
   'prelude',
   'pachelbel',
+  'circle',
   'pop',
   'idm',
   'alpha',

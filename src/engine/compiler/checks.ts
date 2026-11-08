@@ -81,7 +81,7 @@ export function checkCells(
   for (const d of decls.values())
     for (const [key, pc] of Object.entries(d.paramCells ?? {})) {
       // (an envelope's slots move on a map=adsr cell, and s= as a blend of two waves: #411)
-      const slot = d.map?.kind === 'adsr' && SLOTS.adsr!.includes(key);
+      const slot = (d.map?.kind === 'adsr' && SLOTS.adsr!.includes(key)) || (d.map?.kind === 'style' && SLOTS.style!.includes(key));
       const blend = key === 's' && pc.to !== undefined;
       if (blend) {
         const waves = [d.params.s, pc.to].map((w) => (typeof w === 'string' ? DOUGH_SOURCES[w] : undefined));
@@ -89,7 +89,7 @@ export function checkCells(
           error(`s=${d.params.s}..${pc.to}: a blend is of two of the waves, sine tri saw square (or their other names)`, pc.span);
       } else if (!MOVING_PARAMS.has(key) && !slot)
         error(
-          `${key}= can't move: it takes a number (these can: ${[...MOVING_PARAMS].join(' ')}; on a map=adsr cell, its slots; s= as a blend of two waves, s=tri..square * &x)`,
+          `${key}= can't move: it takes a number (these can: ${[...MOVING_PARAMS].join(' ')}; on a map=adsr cell, its slots; on a map=style cell, its axes; s= as a blend of two waves, s=tri..square * &x)`,
           pc.span,
         );
       if (pc.range && !(pc.range[0] >= 0 && pc.range[1] >= 0)) error(`${key}=: a range of positive values, low..high`, pc.span);

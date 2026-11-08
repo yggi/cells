@@ -33,7 +33,7 @@ const HOST = ['&harm, &key from', `&bar meter("4/4") step=${BPM}bpm`, '&key scal
 
 /** What a text sends over MIDI in its first bars (two unless said): each note's channel, note, velocity, onset and length (in 16ths), in order. */
 function sent(text: string, bars = 2): { notes: string[]; diagnostics: string[] } {
-  const plan = planOf(text, undefined, { resolve: resolveSeed, old: true });
+  const plan = planOf(text, undefined, { resolve: resolveSeed });
   const sixteenth = 60 / BPM / 4;
   const route = router(plan.result, channelTable(plan.result));
   const round = (x: number) => Math.round(x * 1e6) / 1e6;
@@ -64,17 +64,27 @@ const PARTS = {
     performer: [
       '&bassline over=&harm step=16n 0@4 ~@4 2@2 ~@2 0@4 0@8 ~@8',
       '&bassLevel map=amp step=16n .6@4 ~@4 .4@2 ~@2 .5@4 .6@8 ~@8',
-      'use * from bass_performer',
+      '&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline',
       '&out map=midi ~ &bassOut',
     ],
   },
   pad: {
     jambot: ['&pad over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padOut play=&pad level=.3 &compV', '&compV loop=C3', '&out map=midi ~ ~ &padOut'],
-    performer: ['&padline over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16', '&padLevel map=amp .3', 'use * from pad_performer', '&out map=midi ~ ~ &padOut'],
+    performer: [
+      '&padline over=&harm step=16n legato=.9 [0,1,2]@16 [0,1,2]@16',
+      '&padLevel map=amp .3',
+      '&pad, &padOut from pad_performer(padLevel=&padLevel) &padline',
+      '&out map=midi ~ ~ &padOut',
+    ],
   },
   stab: {
     jambot: ['&stab over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabOut play=&stab level=.5 &compV', '&compV loop=C3', '&out map=midi ~ ~ &stabOut'],
-    performer: ['&stabline over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14', '&stabLevel map=amp .5', 'use * from stab_performer', '&out map=midi ~ ~ &stabOut'],
+    performer: [
+      '&stabline over=&harm step=16n ~@2 [0,2] ~@5 [0,2] ~@7 [1,2]@2 ~@14',
+      '&stabLevel map=amp .5',
+      '&stab, &stabOut from stab_performer(stabLevel=&stabLevel) &stabline',
+      '&out map=midi ~ ~ &stabOut',
+    ],
   },
   lead: {
     jambot: [
@@ -87,27 +97,27 @@ const PARTS = {
     performer: [
       '&leadline over=&key step=16n 4@2 3 2@5 ~@8 4 6@3 7@4 ~@8',
       '&leadLevel map=amp step=16n .7@2 .5 .6@5 ~@8 .5 .6@3 .7@4 ~@8',
-      'use * from lead_performer',
+      '&lead, &leadOut from lead_performer(leadLevel=&leadLevel) &leadline',
       '&out map=midi &leadOut',
     ],
   },
 } as const;
 
 describe('the performers', () => {
-  it('come by their role: a named use of the role brings its gate, and of the gate alone, no role (decisions 059 and 061)', () => {
+  it('come by their role: a from line of the role brings its gate, and of the gate alone, no role (decisions 061, 065)', () => {
     const score = '&bassline over=&harm step=4n 0 0 1 2\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
     const performers = (use: string) => {
-      const r = compileSource(`${use}\n${HOST}\n${score}`, undefined, { resolve: resolveSeed, old: true });
+      const r = compileSource(`${use}\n${HOST}\n${score}`, undefined, { resolve: resolveSeed });
       expect(r.diagnostics.map((d) => d.message)).toEqual([]);
       return r.performers.map((p) => [p.name, p.role]);
     };
-    expect(performers('use &bass from bass_performer')).toEqual([['bassOut', 'bass']]);
-    expect(performers('use &bassOut from bass_performer')).toEqual([['bassOut', undefined]]);
+    expect(performers('&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline')).toEqual([['bassOut', 'bass']]);
+    expect(performers('&bassOut from bass_performer(bassLevel=&bassLevel) &bassline')).toEqual([['bassOut', undefined]]);
   });
 
   it('are the drums, the bass, the pad, the stab and the lead, each one gate whose role a role cell gives, playing its part on the instrument it uses', () => {
     expect(PERFORMER_FRAGMENTS.map((f) => f.id)).toEqual(['drums_performer', 'bass_performer', 'pad_performer', 'stab_performer', 'lead_performer']);
-    const read = PERFORMER_FRAGMENTS.map((f) => compileSource(f.text, undefined, { resolve: resolveSeed, old: true }).performers);
+    const read = PERFORMER_FRAGMENTS.map((f) => compileSource(f.text, undefined, { resolve: resolveSeed }).performers);
     expect(read).toEqual([
       [{ name: 'drumsOut', role: 'drums', part: 'drumlines', voices: ['kit'] }],
       [{ name: 'bassOut', role: 'bass', part: 'bassline', move: { transpose: -12 }, voices: ['bassV'] }],
@@ -118,7 +128,7 @@ describe('the performers', () => {
   });
 
   it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 065)', () => {
-    const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed, old: true }), resolveSeed).uses);
+    const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
     expect(holes).toEqual([['&drumlines'], ['&bassline'], ['&padline'], ['&stabline'], ['&leadline']]);
     expect(PERFORMER_FRAGMENTS.map((f) => signatureOf(f.text))).toEqual([
       { kind: 'signature', names: ['&drums', '&drumsOut'], optional: ['&kit'], main: '&drumlines' },
@@ -171,8 +181,8 @@ describe('the drums performer', () => {
   // (each under the meter the repository finds at its preset's point: Lo-fi hip hop's and Funk's swing)
   const section = ({ point, text }: (typeof DRUM_BARS)[number]) =>
     [setTiming(library.query(point, 1, {}, { facet: 'meter' })[0]!.fragment.text, 'bar', 'step', `${BPM}bpm`), text].join('\n');
-  const today = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\nuse * from gm_kit\n&drums [${w.lines}]\n&out map=midi ~!9 &drums`;
-  const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\nuse * from drums_performer\n&out map=midi ~!9 &drumsOut`;
+  const today = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n* from gm_kit\n&drums [${w.lines}]\n&out map=midi ~!9 &drums`;
+  const played = (w: (typeof DRUM_BARS)[number]) => `${section(w)}\n&drumlines [${w.lines}]\n&drums, &drumsOut from drums_performer &drumlines\n&out map=midi ~!9 &drumsOut`;
 
   it.each(DRUM_BARS.map((w) => [w.preset, w] as const))('%s: sends what its section text sends, over 64 bars', (_, w) => {
     const was = sent(today(w), 64);
@@ -185,7 +195,7 @@ describe('the drums performer', () => {
 
   it('keeps each hit’s line, its drum role, in what it plays: the eight presets’ roles', () => {
     const roles = DRUM_BARS.map((w) => {
-      const r = compileSource(played(w), undefined, { resolve: resolveSeed, old: true });
+      const r = compileSource(played(w), undefined, { resolve: resolveSeed });
       // (the feel's reading, contracts/feel v1.1: kit:voices:<role>:…)
       return [w.preset, [...new Set(r.outputs.map((o) => /^kit:voices:(\w+):/.exec(o.id)?.[1] ?? o.id))]];
     });
@@ -207,16 +217,16 @@ describe('the drums performer', () => {
     const w = DRUM_BARS.find((b) => b.preset === 'Bossa nova')!;
     const both = { ...w, text: `${w.text}\n${clave}`, lines: `${w.lines}, &clave` };
     expect(sent(played(both), 64).notes).toEqual(sent(today(both), 64).notes);
-    const r = compileSource(played(both), undefined, { resolve: resolveSeed, old: true });
+    const r = compileSource(played(both), undefined, { resolve: resolveSeed });
     expect(r.outputs.map((o) => o.id.split(':')[2])).toContain('clave');
   });
 
   it('refuses a line the kit doesn’t hold, and a stack mixed as a sound beside it', () => {
-    const messages = (t: string) => compileSource(`&bar meter("4/4") step=${BPM}bpm\n${t}`, undefined, { resolve: resolveSeed, old: true }).diagnostics.map((d) => d.message);
-    expect(messages('&cb s=sine\n&cowbell step=4n &cb\n&drumlines [&cowbell]\nuse * from drums_performer\n&out map=midi ~!9 &drumsOut')).toEqual([
-      "&cowbell plays &cb, which &kit doesn't hold: a kit's lines play its own voices",
+    const messages = (t: string) => compileSource(`&bar meter("4/4") step=${BPM}bpm\n${t}`, undefined, { resolve: resolveSeed }).diagnostics.map((d) => d.message);
+    expect(messages('&cb s=sine\n&cowbell step=4n &cb\n&drumlines [&cowbell]\n&drums, &drumsOut from drums_performer &drumlines\n&out map=midi ~!9 &drumsOut')).toEqual([
+      "&cowbell plays &cb, which &drums_kit doesn't hold: a kit's lines play its own voices",
     ]);
-    expect(messages('&kick step=4n &bd\n&drumlines [&kick]\nuse * from drums_performer\n&out map=midi ~!9 [&drumsOut, &drumlines]')).toEqual([
+    expect(messages('&kick step=4n &bd\n&drumlines [&kick]\n&drums, &drumsOut from drums_performer &drumlines\n&out map=midi ~!9 [&drumsOut, &drumlines]')).toEqual([
       '&drumlines is the part &drumsOut plays, a stack of lines and no sound: mix or send &drumsOut',
     ]);
   });

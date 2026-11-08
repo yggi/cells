@@ -10,7 +10,9 @@ import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { BASS_FRAGMENTS } from './bass';
-import { fitOf } from './fit';
+import { fitsAs } from './fit';
+import { expand } from '../engine/use';
+import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
@@ -23,11 +25,18 @@ const AGOGO = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!
 /** A text with the General MIDI kit's high agogô where it strikes one: the bell's hole, filled (#244). */
 const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOGO}` : text);
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed } from './library';
 import { MODE_FRAGMENTS } from './modes';
 import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 
 import { RHYTHM_FRAGMENTS } from './rhythms';
+
+/** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
+const takenOn = (text: string, bench: string, main?: string) => {
+  const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
+  const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
+  return { ...fit, union: { text: expand(fit.text, resolve) } };
+};
 
 type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian' | 'harmonic' | 'phrygian' | 'lydian' | 'locrian';
 
@@ -89,12 +98,12 @@ describe('the mode fragments', () => {
     const holes = holesOf(text, compileSource);
     expect(holes.uses).toEqual(id === 'bell_and_scale' ? ['&highagogo', '&tonic'] : ['&tonic']);
     expect(holes.defines).toContain('&key');
-    for (const m of ['4/4', '6/8', '12/8', '7/8']) expect(fitOf(text, meter(m)).fits, m).toBe(true);
+    for (const m of ['4/4', '6/8', '12/8', '7/8']) expect(takenOn(text, meter(m), '&tonic').fits, m).toBe(true);
   });
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('%s is the main key, and plays its mode up from C with no diagnostic', (id, text) => {
     const mode = (id === 'bell_and_scale' ? 'ionian' : id === 'harmonic_minor' ? 'harmonic' : modeOf(id)) as Mode;
-    const piece = `${filled(fitOf(text, meter()).union.text)}\n${PROBE}`;
+    const piece = `${filled(takenOn(text, meter(), '&tonic').union.text)}\n${PROBE}`;
     expect(compileSource(piece).diagnostics.map((d) => d.message)).toEqual([]);
     expect(sent(piece, 3, 8).map((n) => n.note - 60)).toEqual([...SCALE[mode], 12]);
   });
@@ -102,9 +111,9 @@ describe('the mode fragments', () => {
   it('leave the tonic to the text that uses them: &tonic, a hole the workbench fills, which moves every note (#290)', () => {
     for (const f of MODE_FRAGMENTS) {
       expect(bodyOf(f.text)).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic|phrygian|lydian|locrian), &tonic\)/);
-      expect(fitOf(f.text, setTiming('&bar meter("4/4")', 'bar', 'step', '60bpm')).missing).toEqual(['&tonic']);
-      const inA = `${filled(fitOf(f.text, meter('4/4', 'A')).union.text)}\n${PROBE}`;
-      const inC = `${filled(fitOf(f.text, meter()).union.text)}\n${PROBE}`;
+      expect(takenOn(f.text, '').missing).toEqual(['&tonic']);
+      const inA = `${filled(takenOn(f.text, meter('4/4', 'A'), '&tonic').union.text)}\n${PROBE}`;
+      const inC = `${filled(takenOn(f.text, meter(), '&tonic').union.text)}\n${PROBE}`;
       expect(sent(inA, 3, 8).map((n) => n.note)).toEqual(sent(inC, 3, 8).map((n) => n.note + 9));
     }
   });
@@ -158,9 +167,9 @@ describe('the presets find their modes', () => {
 // (the harmonies read `key`; the bass lines read `&harm`: a workbench is a meter, a mode, a vamp and a line)
 describe('the harmonies and the bass lines, over each mode', () => {
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('every vamp fits a workbench with %s, and compiles there with no diagnostic', (_, mode) => {
-    const host = fitOf(mode, meter()).union.text;
+    const host = takenOn(mode, meter(), '&tonic').union.text;
     for (const vamp of HARMONY_FRAGMENTS) {
-      const fit = fitOf(vamp.text, host);
+      const fit = takenOn(vamp.text, host, '&key');
       expect(fit.fits, vamp.id).toBe(true);
       expect(
         compileSource(`${filled(fit.union.text)}\n&padV loop=C4\n&pad map=midi(4) [&harm * &padV]`).diagnostics.map((d) => d.message),
@@ -171,9 +180,9 @@ describe('the harmonies and the bass lines, over each mode', () => {
 
   it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('every bass line fits a workbench with %s and a vamp, and compiles there with no diagnostic', (_, mode) => {
     for (const vamp of HARMONY_FRAGMENTS) {
-      const host = fitOf(vamp.text, fitOf(mode, meter()).union.text).union.text;
+      const host = takenOn(vamp.text, takenOn(mode, meter(), '&tonic').union.text, '&key').union.text;
       for (const bass of BASS_FRAGMENTS) {
-        const fit = fitOf(bass.text, host);
+        const fit = takenOn(bass.text, host, '&harm');
         expect(fit.fits, `${bass.id} over ${vamp.id}`).toBe(true);
         expect(
           compileSource(`${filled(fit.union.text)}\n${BASS_VOICE}`).diagnostics.map((d) => d.message),
@@ -200,7 +209,7 @@ describe('the bell and scale', () => {
 
   it('strikes the bell, x.x.xx.x.x.x, seven strokes over the twelve twelfths of any bar, on the high agogô (67)', () => {
     for (const m of ['12/8', '4/4', '6/8']) {
-      const text = filled(fitOf(bell.text, meter(m)).union.text);
+      const text = filled(takenOn(bell.text, meter(m), '&tonic').union.text);
       const bar = compileSource(text).cells.get('bar')!.meter!;
       const seconds = bar.beats.length; // (at 60 bpm, a beat a second)
       const hits = sent(text, 10, 2 * seconds);
@@ -219,7 +228,7 @@ describe('the bell and scale', () => {
     for (const vamp of HARMONY_FRAGMENTS)
       for (const bass of BASS_FRAGMENTS) {
         const over = (mode: string) =>
-          `${filled(fitOf(bass.text, fitOf(vamp.text, fitOf(mode, meter()).union.text).union.text).union.text)}\n${BASS_VOICE}\n&padV loop=C4\n&pad map=midi(4) [&harm * &padV]`;
+          `${filled(takenOn(bass.text, takenOn(vamp.text, takenOn(mode, meter(), '&tonic').union.text, '&key').union.text, '&harm').union.text)}\n${BASS_VOICE}\n&padV loop=C4\n&pad map=midi(4) [&harm * &padV]`;
         expect(melodic(over(bell.text)), `${bass.id} over ${vamp.id}`).toEqual(melodic(over(ionian)));
       }
   });
@@ -228,13 +237,12 @@ describe('the bell and scale', () => {
     const gmKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!;
     expect(gmKit.text.split('\n').some((l) => l.startsWith('&highagogo '))).toBe(true);
     expect(bell.text).not.toMatch(/^&highagogo /m);
-    const alone = fitOf(bell.text, meter());
+    const alone = takenOn(bell.text, meter(), '&tonic');
     expect([alone.fits, alone.sounds]).toEqual([true, ['&highagogo']]);
-    expect(fitOf(bell.text, `${meter()}\n${gmKit.text}`).sounds).toEqual([]);
+    expect(takenOn(bell.text, `${meter()}\n${gmKit.text}`, '&tonic').sounds).toEqual([]);
     for (const rhythm of RHYTHM_FRAGMENTS) {
-      const fit = fitOf(bell.text, fitOf(rhythm.text, meter()).union.text);
+      const fit = takenOn(bell.text, takenOn(rhythm.text, meter()).union.text, '&tonic');
       expect(fit.fits, rhythm.id).toBe(true);
-      expect(fit.union.renamed.size, rhythm.id).toBe(0);
       // (the rhythm's voices and the bell's are holes the General MIDI kit fills)
       expect(
         compileSource(`${fit.union.text}\n${gmKit.text}`).diagnostics.map((d) => d.message),

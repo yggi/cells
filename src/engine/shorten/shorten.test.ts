@@ -170,20 +170,20 @@ describe('shorten: turns, alike cells, and all the way', () => {
     expect(shorten(kit).filter((x) => x.kind === 'same')).toEqual([]);
   });
   it('a piece with use: what the piece written out is offered, read through the resolver (#241)', () => {
-    const src = 'use "gm_kit"\n&bar meter("4/4") step=100bpm\n&a &bd ~ &hh ~ &sd ~ &hh &hh\n&b &bd ~ &hh ~ &sd ~ &hh &hh\n&beat step=8n &a &b &a &b\n&out map=sample [&beat]\n';
+    const src = '* from "gm_kit"\n&bar meter("4/4") step=100bpm\n&a &bd ~ &hh ~ &sd ~ &hh &hh\n&b &bd ~ &hh ~ &sd ~ &hh &hh\n&beat step=8n &a &b &a &b\n&out map=sample [&beat]\n';
     const seed = { resolve: resolveSeed, old: true };
     expect(shorten(src)).toEqual([]);
     const offered = shorten(src, seed);
     expect(offered.map((s) => [s.id, s.saving])).toEqual(shorten(expand(src, resolveSeed)).map((s) => [s.id, s.saving]));
     expect(offered.map((s) => s.id)).toEqual(['same:a,b']);
     const { source } = shortenAll(src, 60, seed);
-    expect(source).toContain('use "gm_kit"');
+    expect(source).toContain('* from "gm_kit"');
     expect(source).toContain('&beat step=8n &a &a &a &a');
     expect(compileSource(source, undefined, seed).ok).toBe(true);
   });
   it('a piece with use: no rewrite of a used line, which written out would be offered (#241)', () => {
     const resolve: Resolve = (id) => (id === 'kit' ? '&bd s=sine loop=A1 pan=.5\n&hh s=white hpf=8000' : null);
-    const src = 'use "kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &bd &bd &hh ~\n&out map=sample [&beat]\n';
+    const src = '* from "kit"\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &bd &bd &hh ~\n&out map=sample [&beat]\n';
     const out = expand(src, resolve);
     expect(shorten(out).map((s) => s.id)).toContain('default:bd:pan');
     expect(shorten(src, { resolve })).toEqual([]);

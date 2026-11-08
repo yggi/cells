@@ -7,10 +7,8 @@
  *  - gates.ts:     a gate written the old way (trigger=, velocity=, gate=, gain=) as play= and level= (decision 023)
  *  - taps.ts:      a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
  *  - swing.ts:     a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
- *  - uses.ts:      a `use` line in its one spelling: use "my riff" → use * from "my riff" (decision 059)
  *  - mainkey.ts:   over=key as the cell it reads, over=&key (decision 060)
- *  - forwarded.ts: a use of a retired id as the use it forwards to: "core kit" → &bd, … from gm_kit (#338)
- *  - from.ts:      a `use` line as the `from` line that plays the same, a template's arguments said (decision 065)
+ *  - forwarded.ts: a `from` line of a retired id as the line it forwards to: * from "core kit" → &bd, … from gm_kit (#338)
  *  - grids.ts:     a grid's size written cycle=19 map=edo as its map's, map=edo(19), map=ed(7, 3/2) (decision 040, #75)
  *  - laps.ts:      a turning table's cycle= in steps as laps, cycle=24 on a 12 → cycle=2 (decision 040, #75): exact by
  *                  construction against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
@@ -25,17 +23,19 @@
  *
  * Shorten offered four of them (gate, tap, swing, section) as suggestions for v0.15, delegated here, and no longer does
  * (#157). Normalise runs these rules before its own, but those exact only against an older meaning (decision 049's order:
- * Migrate, then Normalise; its library rule writes a `use`, which `from` says as a `from` line). Pure.
+ * Migrate, then Normalise).
+ *
+ * A `use` line (decisions 054, 059) is no longer read: Migrate stopped rewriting it as a `from` line in the minor after v0.20.0 (#588,
+ * after a minor of warnings since v0.14.0). A text that still has one is told so by the parser, and is rewritten by hand
+ * (`docs/language/use.md`), or by Migrate at an earlier version. Pure.
  */
 import { rewriteAll, ROUNDS, type Find, type Rewrite } from '../rewrite';
 import type { CompileOptions } from '../program';
 import { gates } from './gates';
 import { taps } from './taps';
 import { swings } from './swing';
-import { uses } from './uses';
 import { mainKey } from './mainkey';
 import { forwardedUses } from './forwarded';
-import { fromUses } from './from';
 import { grids } from './grids';
 import { laps } from './laps';
 import { renamedIds } from './renamed';
@@ -44,20 +44,18 @@ import { pairs } from './pairs';
 import { beats } from './beats';
 
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'swing' | 'use' | 'main key' | 'forwarded' | 'from' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats';
+export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats';
 export type Migration = Rewrite<MigrationRule>;
 
-/** Every migration a text has, in the order its form was retired; a `use` line's fragment read through `options.resolve`. */
+/** Every migration a text has, in the order its form was retired; a `from` line's fragment read through `options.resolve`. */
 export const migrations =
   (options: CompileOptions = {}): Find =>
   (source, result): Migration[] => [
     ...gates(source, result, options),
     ...taps(source, result, options),
     ...swings(source, result, options),
-    ...uses(source),
     ...mainKey(source, result),
     ...forwardedUses(source, options.resolve),
-    ...fromUses(source, options.resolve),
     ...grids(source, result, options),
     ...laps(source, result),
     ...renamedIds(source, options.resolve),

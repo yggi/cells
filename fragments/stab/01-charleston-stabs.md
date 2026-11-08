@@ -27,4 +27,4 @@ It is the example's line at the commit it was lifted from, but for that last sta
 
 At a point proposed for an Electro swing preset (sync .55, harm .75, artic .6, energy .75), weight 0.4, so no other preset finds it within Jambot's miss distance (0.3; at weight 1 it was the first stab of five, #404): no preset of Jambot's sits there yet, and the axes are Jambot's (decision 041), so the point is this file's, Jambot's to adopt.
 
-**Its signature** (decision 065): `&stabline from &harm`. `&stabline from charleston_stabs &harm` takes a copy of it, `&harm` its main argument. Taken the old way, `use &stabline from charleston_stabs`, it reads `&harm` by name, as before.
+**Its signature** (decision 065): `&stabline from &harm`. `&stabline from charleston_stabs &harm` takes a copy of it, `&harm` its main argument.

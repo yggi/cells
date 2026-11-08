@@ -1,5 +1,5 @@
 import { splitComment } from "./edit.js";
-import { FROM_FORM, isAttribute, readFrom, readUse, topTokens, USE_FORM } from "./parser/use.js";
+import { FROM_FORM, isAttribute, readFrom, topTokens } from "./parser/use.js";
 import { STYLE } from "./style.js";
 import { RENAMED_IDS } from "./renamed.js";
 export const USE_DEPTH = 8;
@@ -24,15 +24,14 @@ function linesOf(text) {
     return out;
 }
 function lineOf(code, written = code, line = 0) {
-    const use = readUse(code);
-    const from = use === undefined ? readFrom(code) : undefined;
-    if (use !== undefined || from !== undefined)
-        return { name: null, use, from, reads: [], written, code, line };
+    const from = readFrom(code);
+    if (from !== undefined)
+        return { name: null, from, reads: [], written, code, line };
     const head = HEAD.exec(code);
     const reads = head ? [...new Set([...code.slice(head[0].length).matchAll(READS)].map((m) => m[1]))] : [];
-    return { name: head?.[1] ?? null, use, reads, written, code, line };
+    return { name: head?.[1] ?? null, reads, written, code, line };
 }
-export const hasUse = (text) => /^\s*use(?![A-Za-z0-9_])/m.test(text) || /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,]).*\sfrom(?:\s|$)/m.test(text);
+export const hasUse = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,]).*\sfrom(?:\s|$)/m.test(text);
 export function signatureOf(text) {
     for (const l of linesOf(text))
         if (l.from?.kind === 'signature')
@@ -58,12 +57,11 @@ export const fragmentHash = (text) => `e1:${hash64(linesOf(text)
     .join('\n'))}`;
 const quoted = (id) => JSON.stringify(id);
 const pathOf = (path) => path.map(quoted).join(' → ');
-const OLD_INTERFACE = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 function merge(own, used, say, host) {
     const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
     const given = new Map();
     const lines = own.filter((l) => l.name);
-    const per = used.map(({ id, names, lines: theirs, resolved, parameters, old }, i) => {
+    const per = used.map(({ id, names, lines: theirs, resolved }, i) => {
         const byName = new Map();
         for (const l of theirs)
             if (l.name && !byName.has(l.name))
@@ -101,7 +99,7 @@ function merge(own, used, say, host) {
                     continue;
                 if (!defined.has(r))
                     queue.push(r);
-                else if ((old && OLD_INTERFACE.has(r)) || parameters?.has(r) || r === STYLE)
+                else if (r === STYLE)
                     continue;
                 else {
                     clashed.add(r);
@@ -135,7 +133,7 @@ function merge(own, used, say, host) {
     return { lines, per };
 }
 const namesOf = (u) => (u.names ? new Set(u.names.map((n) => n.slice(1))) : null);
-const entryOf = (l) => l.use ? { id: l.use.id, names: l.use.names, from: null } : l.from?.kind === 'use' ? { id: l.from.id, names: l.from.names, from: l.from } : null;
+const entryOf = (l) => l.from?.kind === 'use' ? { id: l.from.id, names: l.from.names, from: l.from } : null;
 const renamed = (code, names) => code.replace(/"[^"]*"|&([A-Za-z_][A-Za-z0-9_]*)/g, (m, n) => (n && names.has(n) ? `&${names.get(n)}` : m));
 const keyOf = (attribute) => attribute.slice(0, attribute.indexOf('='));
 function withAttributes(code, attributes) {
@@ -240,12 +238,11 @@ const sharedLines = (lines) => lines.map((l) => (l.shared ? l : { ...l, shared: 
 function give(entry, path, text, resolve, say, taken) {
     const { id, from } = entry;
     const signatures = linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []));
-    if (!from || !signatures.length) {
-        if (from && (from.head.length || from.args || from.main !== null))
+    if (!signatures.length) {
+        if (from.head.length || from.args || from.main !== null)
             say(`${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`);
-        const parameters = new Set(signatures.flatMap((g) => [...g.optional, ...(g.main ? [g.main] : [])]).map((n) => n.slice(1)));
         const lines = sharedLines(fragmentLines(path, text, resolve, say));
-        return { taken: { id, names: namesOf(entry), lines, resolved: true, ...(parameters.size ? { parameters } : {}), ...(from ? {} : { old: true }) }, copy: [] };
+        return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
     }
     if (signatures.length > 1)
         say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
@@ -361,8 +358,8 @@ function fragmentLines(path, text, resolve, say) {
     const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
     const copies = [];
     const used = own.flatMap((l) => {
-        if (l.use === null || l.from === null) {
-            sayHere(l.use === null ? USE_FORM : FROM_FORM);
+        if (l.from === null) {
+            sayHere(FROM_FORM);
             return [];
         }
         const entry = entryOf(l);
@@ -390,6 +387,11 @@ function fragmentLines(path, text, resolve, say) {
     return merge([...own, ...copies], used, (_, message) => sayHere(message), quoted(path.at(-1))).lines;
 }
 const renamedMessage = (id, word) => `${quoted(id)} is renamed ${word}: write from ${word} (#387; Migrate rewrites it)`;
+function forwardsTo(text) {
+    const lines = linesOf(text);
+    const only = lines.length === 1 ? lines[0].from : null;
+    return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
+}
 export function expansion(text, { resolve, locked = [] } = {}) {
     const own = linesOf(text);
     const uses = own.flatMap((l) => {
@@ -427,6 +429,9 @@ export function expansion(text, { resolve, locked = [] } = {}) {
         const word = RENAMED_IDS.get(id);
         if (word !== undefined && resolve(word) === theirs)
             diagnostics.push({ severity: 'warning', message: renamedMessage(id, word), span });
+        const to = forwardsTo(theirs);
+        if (to !== null)
+            diagnostics.push({ severity: 'warning', message: `${quoted(id)} only forwards to ${quoted(to)}: take from it (Migrate rewrites it)`, span });
         const g = give(u, [id], theirs, resolve, say, taken);
         copies.push(g.copy);
         args.push(g.args);
@@ -482,7 +487,7 @@ export function expand(text, resolve, locked) {
     const kept = new Set(x.uses.filter((u) => u.hash === null).map((u) => u.span.line));
     const own = text
         .split('\n')
-        .filter((raw, i) => (readUse(splitComment(raw)[0]) === undefined && readFrom(splitComment(raw)[0])?.kind !== 'use') || kept.has(i + 1))
+        .filter((raw, i) => readFrom(splitComment(raw)[0])?.kind !== 'use' || kept.has(i + 1))
         .join('\n');
     const added = x.text.split('\n').slice(text.split('\n').length);
     return [own.replace(/\s+$/, ''), ...added].join('\n') + (text.endsWith('\n') ? '\n' : '');

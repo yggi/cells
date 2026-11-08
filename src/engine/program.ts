@@ -17,13 +17,6 @@ export const ROOT = 'fifths12TET';
  */
 export const MAIN_KEY = 'key:main';
 /**
- * The interface names, retired (#387, #454): what fragments agreed on by name, before a template declared its inputs
- * (decision 065). Nothing in the language or the repository reads them: a `from` line binds its arguments, and the fit
- * reads a template's signature (`useOn`, `fitsAs`). Kept one minor for a frontend that imports it.
- * @deprecated Read a template's signature (`signatureOf`) instead; goes in the next minor.
- */
-export const INTERFACE_NAMES: readonly string[] = ['&bar', '&tempo', '&key', '&tonic', '&harm', '&style'];
-/**
  * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
  * more is a compile error. The largest in examples/ is 1,120 (bwv847's &tempo).
  */

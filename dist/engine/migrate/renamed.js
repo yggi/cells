@@ -1,10 +1,7 @@
 import { splitComment } from "../edit.js";
-import { readFrom, readUse } from "../parser/use.js";
+import { readFrom } from "../parser/use.js";
 import { RENAMED_IDS } from "../renamed.js";
 function idOf(code) {
-    const use = readUse(code);
-    if (use)
-        return use.id;
     const from = readFrom(code);
     return from?.kind === 'use' ? from.id : null;
 }
@@ -18,12 +15,6 @@ export function renamedIds(source, resolve) {
         if (word === undefined || resolve(id) === null || resolve(id) !== resolve(word))
             return [];
         const quoted = JSON.stringify(id);
-        if (/^\s*use\s+"/.test(code)) {
-            const at = code.indexOf(quoted);
-            if (at < 0)
-                return [];
-            return [rewrite(i, raw, code, `${code.slice(0, at)}${JSON.stringify(word)}${code.slice(at + quoted.length)}`, id, word)];
-        }
         const m = new RegExp(`(\\sfrom\\s+)(${escape(quoted)}|${escape(id)})(?=[\\s(]|$)`).exec(code);
         if (!m)
             return [];

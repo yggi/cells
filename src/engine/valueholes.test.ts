@@ -145,10 +145,19 @@ describe('a stepped tonic, and one left free (#301, decision 060)', () => {
 });
 
 describe('the seeds', () => {
-  const uses = ['meter(swing=16n:.65)', 'harmonic_minor', 'vamp_to_the_seventh', 'funk_drums', 'gm_kit', 'funk_bass', 'bass'].map((id) => `use * from "${id}"`);
+  // (each template's main argument the text's cell, decision 065: the tempo, the tonic, the key and the harmony)
+  const uses = [
+    '&bar from meter(swing=16n:.65) &tempo',
+    '&key from harmonic_minor &tonic',
+    '&harm from vamp_to_the_seventh &key',
+    '* from funk_drums',
+    '* from gm_kit',
+    '&bassline from funk_bass &harm',
+    '* from bass',
+  ];
   const seconds = (8 * 4 * 60) / 104;
 
-  it('a text of uses alone, with &tempo and &tonic, compiles clean and plays what it plays with &bar and &key written out', () => {
+  it('a text of from lines alone, with &tempo and &tonic, compiles clean and plays what it plays with &bar and &key written out', () => {
     // (the seeds carry no card since #299: the text's own sends the drums and the bass)
     // (the bass heard on a sound card too: it has a sound of its own, which MIDI doesn't send, #391)
     const card = '&out map=midi ~ [&bassline * &bassV] ~!7 &groove\n&hear map=sample [&bassline * &bassV]';
@@ -176,7 +185,7 @@ describe('the seeds', () => {
     for (const f of METER_FRAGMENTS) expect(messages(lines(bench, f.text, tune(''))), f.id).toEqual([]);
     const meter = '&bar meter("4/4") step=&tempo';
     // (the bell and scale strikes the General MIDI kit's agogô, a hole its instrument fills)
-    for (const f of MODE_FRAGMENTS) expect(messages(lines(bench, meter, f.text, 'use &highagogo from gm_kit', tune('over=&key '))), f.id).toEqual([]);
+    for (const f of MODE_FRAGMENTS) expect(messages(lines(bench, meter, f.text, '&highagogo from gm_kit', tune('over=&key '))), f.id).toEqual([]);
   });
 });
 

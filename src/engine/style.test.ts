@@ -170,24 +170,53 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
     expect(frees(slid('free(.2, .1..0.8)'))).toEqual([['param', 'artic', 0.2, 0.1, 0.8]]);
   });
 
-  it('the radio example’s band follows its sliders: articulation opens the bass’s cutoff, 450 to 900 Hz (#576)', () => {
-    const bassCutoffs = (artic: string) => {
-      const r = compileSource(EXAMPLES.radio.source.replace('artic=free(.55, 0..1)', `artic=free(${artic}, 0..1)`));
-      expect(r.diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
-      const lpfs = eventsBetween(plan(r, codeShifts(r)), 0, 8).map((e) => (e.params?.lpf?.kind === 'points' ? e.params.lpf.points[0]!.value : NaN));
-      return [...new Set(lpfs.filter((v) => v < 1000).map((v) => Math.round(v)))];
-    };
-    expect(bassCutoffs('.1')).toEqual([495]);
-    expect(bassCutoffs('.9')).toEqual([855]);
+  it('the radio example drifts: articulation moves by a sample-and-hold once a section, the bass’s cutoff with it (#576)', () => {
+    const r = compileSource(EXAMPLES.radio.source);
+    expect(r.diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
+    // (the bass's cutoff, 450..900 Hz * &style[artic], at each of its notes over 32 bars of 104 bpm)
+    const barSeconds = (4 * 60) / 104;
+    const bySection = new Map<number, Set<number>>();
+    for (const e of eventsBetween(plan(r, codeShifts(r)), 0, 32 * barSeconds)) {
+      const lpf = e.params?.lpf?.kind === 'points' ? e.params.lpf.points[0]!.value : NaN;
+      if (!(lpf < 1000)) continue;
+      const section = Math.floor(e.at / barSeconds / 8 + 1e-9);
+      if (!bySection.has(section)) bySection.set(section, new Set());
+      bySection.get(section)!.add(Math.round(lpf));
+    }
+    // (held through each section of 8 bars, within articulation's range .2..0.9: 540 to 855 Hz; and it moves)
+    expect(bySection.size).toBe(4);
+    for (const cutoffs of bySection.values()) {
+      expect(cutoffs.size).toBe(1);
+      for (const v of cutoffs) expect(v >= 540 && v <= 855).toBe(true);
+    }
+    expect(new Set([...bySection.values()].map((c) => [...c][0])).size).toBeGreaterThan(1);
   });
 
-  it('refuses a slider outside its axis, a fifth value in order, and an axis that moves (not yet: #576’s next rung): shown firing', () => {
+  it('an axis that moves, sync=0..1 * &walk: what reads it reads the cell that moves it, laid within the range, on its clock (#576)', () => {
+    const moving = (axis: string, more: string[]) => piece('style=&mine', '4/4', undefined, [`&mine map=style sync=.3 harm=.45 artic=${axis} energy=.55`, ...more]);
+    expect(cutoffs(moving('.2..0.8 * &walk', ['&walk step=1m 0 .5 1 .5']), 16)).toEqual([200, 500, 800, 500, 200, 500, 800, 500]);
+    // (a bare cell is the axis's whole range; one step every two bars)
+    expect(cutoffs(moving('&walk', ['&walk step=1m/2 0 1']), 16)).toEqual([0, 0, 1000, 1000, 0, 0, 1000, 1000]);
+    // (read on the style cell itself, &mine[artic], as through &style)
+    const direct = ['&bar meter("4/4") step=120bpm', '&line step=1m 0!8', '&v s=saw loop=C4 lpf=0..1000 * &mine[artic]', '&out map=sample [&line * &v]'];
+    expect(cutoffs([...direct, '&mine map=style sync=.3 harm=.45 artic=&walk energy=.55', '&walk step=1m/2 0 1'].join('\n'), 16)).toEqual([0, 0, 1000, 1000, 0, 0, 1000, 1000]);
+    // (a sample-and-hold: a choice drawn afresh each step, held for it)
+    const held = cutoffs(moving('&sh', ['&sh step=1m/2 [0|.25|.5|.75|1]']), 16);
+    for (let k = 0; k < 8; k += 2) expect(held[k]).toBe(held[k + 1]);
+    for (const v of held) expect([0, 250, 500, 750, 1000]).toContain(v);
+  });
+
+  it('refuses a slider outside its axis, a fifth value in order, a moving axis outside it, moved by two cells or read through a mix: shown firing', () => {
+    const mine = (artic: string, more: string[] = ['&walk step=1m 0 1'], style = 'style=&mine') =>
+      errors(piece(style, '4/4', undefined, [`&mine map=style sync=.3 harm=.45 artic=${artic} energy=.55`, ...more]));
     expect(errors(piece('style=&mine', '4/4', undefined, ['&mine map=style sync=free(.3, 0..2) harm=.45 artic=.2 energy=.55']))).toEqual([
       'sync=free(…) moves within the axis, 0 to 1: sync=free(0.3, 0..1)',
     ]);
     expect(errors('&mine map=style .3 .45 .2 .55 free(.5, 0..1)')).toEqual([expect.stringMatching(/^A style has 4 axes \(sync harm artic energy\): this value is one more/)]);
-    expect(errors(piece('style=&mine', '4/4', undefined, ['&mine map=style sync=0..1 * &k harm=.45 artic=.2 energy=.55', '&k .5']))).toEqual([
-      expect.stringMatching(/^sync= doesn't move yet: a style's axis is a number, or a slider within it/),
+    expect(mine('0..2 * &walk')).toEqual(['artic= moves within the axis, 0 to 1: artic=0..1 * &walk']);
+    expect(mine('0..1 * &walk * &w2', ['&walk step=1m 0 1', '&w2 step=1m 1 0'])).toEqual([expect.stringMatching(/^artic=… \* &x: an axis moves by one cell/)]);
+    expect(mine('0..1 * &walk', ['&walk step=1m 0 1', '&o map=style .5 .5 .5 .5'], 'style=[&mine * .5, &o * .5]')).toEqual([
+      expect.stringMatching(/^&style\[artic\]: a mix or a range of styles doesn't move with them yet/),
     ]);
   });
 

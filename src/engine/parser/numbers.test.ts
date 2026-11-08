@@ -27,7 +27,7 @@ const ROWS: Readonly<Record<keyof typeof NUMBER_PLACES, readonly [string, string
   param: ['&lead s=saw loop=C4 lpf=X', '1200', 'free(1200, 200..5000)', 'ok', 'ok'],
   level: ['&out play=&tune level=X &tune', '.4', 'free(.4, 0..1)', 'ok', 'ok'],
   slot: ['&env map=adsr attack=X decay=.3 sustain=.5 release=.4', '.01', 'free(.01, 0..1)', /a moving slot is a range/, 'ok'],
-  axis: ['&mine map=style sync=X harm=.45 artic=.55 energy=.55', '.3', 'free(.3, 0..1)', NOT_HERE, /#576's next rung/],
+  axis: ['&mine map=style sync=X harm=.45 artic=.55 energy=.55', '.3', 'free(.3, 0..1)', 'ok', 'ok'],
   share: ['&bar meter("4/4") step=90bpm swing=8n:X', '.6', 'free(.6, .5...75)', NOT_HERE, NOT_HERE],
   gain: ['&out [&strings * X]', '.4', 'free(.4, 0..1)', 'ok', NOT_HERE],
   hit: ['&beat step=8 &bd &hh:0:X', '.4', 'free(.4, 0..1)', NOT_HERE, NOT_HERE],

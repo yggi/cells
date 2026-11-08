@@ -5,7 +5,10 @@ import { describe, expect, it } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { setTiming } from '../engine/edit';
 import { createRepository, EMPTY_LAYER, type StylePoint } from './fragments';
-import { unionOf } from './fit';
+import { cachedFit } from './fit';
+
+/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
+const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
 import { useFragments } from './learned';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';

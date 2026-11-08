@@ -2,10 +2,11 @@ import { parse } from "../parser/index.js";
 import { TEMPI } from "../parser/free.js";
 import { isNote } from "../ast.js";
 import { compileSource } from "../compile.js";
+import { soundsIdentical } from "../sameness.js";
 import { noteValue } from "../meter.js";
 import { noteFrequency } from "../program.js";
 import { expansion } from "../use.js";
-import { readFrom, readUse } from "../parser/use.js";
+import { readFrom } from "../parser/use.js";
 import { declLine, declWords, deleteCell, splitComment } from "../edit.js";
 const num = (x) => String(x);
 const codeWise = (text, f) => text
@@ -112,7 +113,7 @@ export const FAMILIES = [
     {
         key: 'gates',
         rows: '111–113 `play=` `level=` `[&a, &b]`',
-        rewrite: (text) => gates(text),
+        rewrite: (text, options) => gates(text, options),
     },
     {
         key: 'pitch',
@@ -273,7 +274,7 @@ function inPlace(text, resolve) {
     return own
         .flatMap((raw, i) => {
         const code = splitComment(raw)[0];
-        const taken = (readUse(code) !== undefined || readFrom(code.trim())?.kind === 'use') && !kept.has(i + 1);
+        const taken = readFrom(code.trim())?.kind === 'use' && !kept.has(i + 1);
         return taken ? (at.get(i + 1) ?? []) : [raw];
     })
         .join('\n');
@@ -469,9 +470,15 @@ function onlyInMixes(text, name) {
     });
     return seen === total;
 }
-function gates(text) {
+function gates(text, options) {
+    const keep = options.keep ?? new Set();
     let now = text;
-    for (const d of parse(text).cells) {
+    for (const d of parse(text).cells)
+        if (d.map?.kind === 'role' && !keep.has(d.name))
+            now = deleteCell(now, d.name);
+    for (const d of parse(now).cells) {
+        if (keep.has(d.name))
+            continue;
         const words = declWords(now, d.name);
         const play = words?.attrs.find((w) => w.startsWith('play='));
         if (!words || !play || words.attrs.some((a) => !/^(play|level|label|tags)=/.test(a)))
@@ -490,13 +497,15 @@ function gates(text) {
             continue;
         const head = notes[2] ? `(&${notes[1]} + ${notes[2]})` : `&${notes[1]}`;
         const product = (r) => [head, ...factors, `&${r}`].join(' * ');
-        now = mixesOf(deleteCell(now, d.name), (e) => {
+        const next = mixesOf(deleteCell(now, d.name), (e) => {
             if (!factorOf(d.name).test(e))
                 return [e];
             if (/\+/.test(e))
                 return receivers.length === 1 ? [e.replace(factorOf(d.name), `(${product(receivers[0])})`)] : [e];
             return receivers.map((r) => e.replace(factorOf(d.name), product(r)));
         });
+        if (soundsIdentical(now, next, undefined, options))
+            now = next;
     }
     return now;
 }

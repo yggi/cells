@@ -1,36 +1,39 @@
 import { splitComment } from "../edit.js";
-import { readUse, writeUse } from "../parser/use.js";
+import { isWordId, readFrom } from "../parser/use.js";
+const taking = (code) => {
+    const f = readFrom(code.trim());
+    return f?.kind === 'use' && !f.head.length && !f.args && f.main === null ? f : null;
+};
 function forwardOf(text) {
     const lines = text
         .split('\n')
         .map((l) => splitComment(l)[0].trim())
         .filter(Boolean);
-    if (lines.length !== 1)
-        return null;
-    return readUse(lines[0]) ?? null;
+    return lines.length === 1 ? taking(lines[0]) : null;
 }
-function forwarded(use, to) {
-    if (!use.names)
-        return { id: to.id, names: to.names, form: to.names ? 'named' : 'all' };
-    if (to.names && use.names.some((n) => !to.names.includes(n)))
-        return null;
-    return { id: to.id, names: use.names, form: 'named' };
+function forwarded(names, to) {
+    if (!names)
+        return to.names;
+    if (to.names && names.some((n) => !to.names.includes(n)))
+        return undefined;
+    return names;
 }
+const written = (id, names) => `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}`;
 export function forwardedUses(source, resolve) {
     if (!resolve)
         return [];
     return source.split('\n').flatMap((raw, i) => {
         const [code, comment] = splitComment(raw);
-        const use = readUse(code);
+        const use = taking(code);
         if (!use)
             return [];
         const text = resolve(use.id);
         const to = text === null ? null : forwardOf(text);
-        const now = to && forwarded(use, to);
-        if (!now)
+        const names = to ? forwarded(use.names, to) : undefined;
+        if (!to || names === undefined)
             return [];
         const before = code.trim();
-        const after = writeUse(now);
+        const after = written(to.id, names);
         return [
             {
                 id: `forwarded:${i + 1}`,

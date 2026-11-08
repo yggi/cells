@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coreFold, FAMILIES, LEFT, meaningfulNames, minify, stillWritten, toCore } from '.';
+import { coreFold, FAMILIES, interfaceOf, LEFT, meaningfulNames, minify, stillWritten, toCore } from '.';
 import { normalise } from '../normalise';
 import { soundsIdentical } from '../sameness';
 import { compileSource } from '../compile';
@@ -277,9 +277,14 @@ describe('gates, pitch= and what nothing reads, in the core (decision 069 §2, #
       `${BAR}\n&t step=8n 0 2 4\n&acc .5 1\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [(&t + -12) * &acc * .4 * &a, (&t + -12) * &acc * .4 * &b,\n  &t * &a * .1]`,
     );
   });
-  it('a gate a role reads stays: the role is a performer’s part', () => {
+  it('a role goes and its gate is its products; kept by the interface, both stay (decision 077)', () => {
     const text = `${BAR}\n&t step=8n 0 2 4\n&g play=&t &a\n&lead map=role &g\n&a s=sine loop=C4\n&out map=sample [&g]`;
-    expect(family('gates')(text, O)).toBe(text);
+    expect(after('gates', text)).toBe(`${BAR}\n&t step=8n 0 2 4\n&a s=sine loop=C4\n&out map=sample [&t * &a]`);
+    expect(family('gates')(text, { ...O, keep: new Set(['lead', 'g']) })).toBe(text);
+  });
+  it('a gate over a kit is no product: it stays, and the others are taken', () => {
+    const text = `${BAR}\n&t step=8n 0 1\n&g play=&t &k\n&h play=&t &a\n&k &a &b\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [&g, &h]`;
+    expect(after('gates', text)).toBe(`${BAR}\n&t step=8n 0 1\n&g play=&t &k\n&k &a &b\n&a s=sine loop=C4\n&b s=tri loop=C4\n&out map=sample [&g, &t * &a]`);
   });
   it('a voice’s pitch= is a sum in the product it is in: added to its notes, never to a cell read inside another', () => {
     const text = `${BAR}\n&t step=8n 0 2 4\n&vib map=lin loop=5 0 .1 0 -.1\n&a s=sine loop=C4 pitch=&vib\n&out map=sample [&t * &(map=amp step=cycle(&t) 1 .5) * &a]`;
@@ -304,5 +309,34 @@ describe('Core.left reports only what is left (decision 077)', () => {
     expect(left('&t step=pulse*2 [0 2(3,8)] 4')).toEqual(['subsequences']);
     expect(left('&t step=pulse*2 euclid(5, 16)')).toEqual(['subsequences']);
     expect(left('&g play=&t &v')).toEqual(['gates']);
+  });
+});
+
+describe('the core up to an interface (decision 077 §2)', () => {
+  const score = `${BAR}\n&t step=pulse*2 0 2 4\n&g play=&t &v\n&lead map=role &g\n&v s=sine loop=C4\n&out map=sample [&g]`;
+  const performers = (text: string) => (compileSource(text, undefined, O).performers ?? []).map((p) => p.name);
+  it('an interface names cells: a list, the roles and the gates each lists, a signature’s heads and parameters', () => {
+    expect([...interfaceOf(score, ['&tempo', 'v', 'nowhere'])]).toEqual(['tempo', 'v']);
+    expect([...interfaceOf(score, 'roles')]).toEqual(['lead', 'g']);
+    expect([...interfaceOf(score, ['lead'])]).toEqual(['lead', 'g']);
+    expect([...interfaceOf('&bass, &out from (&level) &line\n&bass 0\n&out 1\n&level .8', 'signature')].sort()).toEqual(['bass', 'level', 'out']);
+  });
+  it('with none, the core is what plays: no role, no performer; up to its roles, both stay, by name', () => {
+    const none = toCore(score, O).source;
+    expect(performers(none)).toEqual([]);
+    expect(none).not.toMatch(/map=role/);
+    const roles = toCore(score, { ...O, interface: 'roles' }).source;
+    expect(performers(roles)).toEqual(['g']);
+    expect(roles).toMatch(/^&lead map=role &g$/m);
+    for (const t of [none, roles]) expect(soundsIdentical(score, t, undefined, O)).toBe(true);
+  });
+  it('a piece up to its tempo keeps &tempo, and nothing else of its names', () => {
+    const core = toCore(score, { ...O, interface: ['&tempo'] }).source;
+    expect(core).toMatch(/step=&tempo\b/);
+    expect(core).not.toMatch(/&lead|&out\b/);
+  });
+  it('narrowing: cored up to its roles, then to nothing, is cored to nothing', () => {
+    const roles = toCore(score, { ...O, interface: 'roles' }).source;
+    expect(toCore(roles, O).source).toBe(toCore(score, O).source);
   });
 });

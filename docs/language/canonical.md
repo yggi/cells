@@ -46,16 +46,16 @@ leaves it for the author.
 |---|---|
 | `over=key` | `over=&key`, the main key by its name |
 
-## The interface names: `&bar`, `&tempo`, `&key`, `&tonic`
+## The names for people: `&bar`, `&tempo`, `&key`, `&tonic`
 
-The names the seed library's fragments read (decisions 059 and 060), written where the piece names each unambiguously, so a piece in them takes a fragment as it is (`normalise/names.ts`, #196):
+The names Normalise writes where the piece names each unambiguously (`normalise/names.ts`, #196), so a reader finds the meter, its tempo, the key and its tonic by the same names in every piece. A convention of the tool's, which nothing reads: a piece that names its meter `&m` plays as one that names it `&bar` ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)).
 
 - **`&bar`** is the piece's one meter, of its own lines (the compile's main meter, and no other meter beside it), where it is a bar: its first four beats at 40 to 300 bpm (`BAR_BPM`). A clock that laps a day (fiveto12's `&day`) or a scan of slow durations (studie's `&time`) is a meter and no bar, and keeps its name.
 - **`&tempo`** is a bar's rate written as a value: `step=120bpm` becomes `step=&tempo` and a cell `&tempo step=120bpm`, a slider (`free(…)`) with it.
 - **`&key`** is the piece's one key, the one cell of its own lines whose braid is `scale(…)` (the compile's main key).
 - **`&tonic`** is the key's tonic written as a note: `scale(minor, A)` becomes `scale(minor, &tonic)` and a cell `&tonic A`; a key with none (`scale(major)`, the voice's `loop=` its tonic) has no `&tonic`.
 
-None is written where the name is taken, where the line runs on to the next, or where the cell has an interface name already (BWV 847's tempo map, `&tempo`, isn't renamed `&bar`). A rename rewrites every reference.
+None is written where the name is taken, where the line runs on to the next, or where the cell has one of these names already (BWV 847's tempo map, `&tempo`, isn't renamed `&bar`). A rename rewrites every reference.
 
 | written | Normalise writes |
 |---|---|
@@ -70,50 +70,29 @@ None is written where the name is taken, where the line runs on to the next, or 
 |---|---|
 | `&bar scan(1 1 1 1) step=&tempo` | `&bar meter("4/4") step=&tempo` |
 
-## The library's lines: a `use`
+## The library's lines: a `from` line
 
-A line of the piece that is a library fragment's line word for word, its comment aside, is written as a `use` of that fragment (`normalise/library.ts`, #196): the piece says what it takes from the library rather than writing it again. A line reads the fragment's holes as the piece's, so a bar in the interface names, `&bar meter("4/4") step=&tempo` with the piece's `&tempo`, is the `4/4` fragment's line.
+A line of the piece that is a library fragment's line word for word, its comment aside, is written as a `from` line of that fragment (`normalise/library.ts`, #196): the piece says what it takes from the library rather than writing it again.
 
 - A line has one home: the first fragment, in the library's order, that holds it.
-- The lines taken from one fragment are one `use`, written where the first of them was, their comments kept; a `use` of that fragment the piece already writes takes the names too.
-- Nothing is taken where it would not sound identical (a fragment whose helper the piece writes otherwise, which the compile refuses).
+- The lines taken from one fragment are one `from` line, written where the first of them was, their comments kept; a `from` line of that fragment the piece already writes takes the names too.
+- Nothing is taken where it would not sound identical (a fragment whose helper the piece writes otherwise, which the compile refuses, or a template's line, which a `from` line takes only with its arguments).
 - The library comes with the call, `normalise(source, { resolve, library })`; `npm run normalise` reads the seed library. With none given, Normalise takes nothing.
 
 | written | Normalise writes |
 |---|---|
-| `&bar meter("4/4") step=&tempo  # four beats` | `use &bar from meter  # four beats`, then its `from` line (below) |
-| the General MIDI kit's `&bd`, `&sd` and `&hh` lines, word for word | `use &bd, &sd, &hh from gm_kit`, then `&bd, &sd, &hh from gm_kit` |
-| `pitch=&(map=lin loop=5 0 .1 0 -.1 0)`, the `vibrato` fragment's cell written inline | `pitch=&vibrato` and `use &vibrato`, then `&vibrato from vibrato` |
+| the General MIDI kit's `&bd`, `&sd` and `&hh` lines, word for word | `&bd, &sd, &hh from gm_kit` |
+| `pitch=&(map=lin loop=5 0 .1 0 -.1 0)`, the `vibrato` fragment's cell written inline | `pitch=&vibrato` and `&vibrato from vibrato` |
 
-A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `use` of it joins the piece's (after its own `use` lines, or first). Not where the piece defines the name itself. A fragment's own file is normalised against the rest of the library, never as a `use` of itself.
+A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `from` line of it joins the piece's (after its own `from` lines, or first). Not where the piece defines the name itself. A fragment's own file is normalised against the rest of the library, never as a `from` line of itself.
 
-## `use`: one spelling, kept, never expanded
+## `from`: kept, never expanded
 
-A `use` line ([use.md](use.md), decisions 054 and 059) is written in one spelling (Migrate's rule, `migrate/uses.ts`, which Normalise runs first): `use * from …`
-for every line, `use &a, &b from …` for the names (a comma and a space between them), `use &x` where it takes `&x` from
-`x`, the id bare where it is a word and in double quotes where it isn't. So `use "my riff"`, the old way, is written
-`use * from "my riff"`: the two read as one. A use of a fragment that only forwards, whose text is one `use` and
-nothing else, is written as the use it forwards to (Migrate's rule, `migrate/forwarded.ts`): a retired id, so `use * from "core kit"`
-is `use &bd, &rim, … from gm_kit`, and a use that names what it takes keeps its names (#196). Normalise keeps each `use` line in its order. It never writes the used fragment's lines into the piece: that is no canonical form
-(decision 049; `expand` writes them out on request). A text with `use` lines is
-normalised with the host's resolver, `normalise(source, { resolve })`, so that it compiles.
+Normalise keeps each `from` line in its order, a collection's the narrowest (`* from gm_kit` as the cells of it the piece reads, `normalise/narrowest.ts`, #449). It never writes the used fragment's lines into the piece: that is no canonical form (decision 049; `expand` writes them out on request). A text with `from` lines is normalised with the host's resolver, `normalise(source, { resolve })`, so that it compiles. A `from` line of a fragment that only forwards, a retired id, is written as the line it forwards to (Migrate's rule, `migrate/forwarded.ts`: `* from "core kit"` is `&bd, &rim, … from gm_kit`, #196). A `use` line is retired, and read by nothing since #588 ([use.md](use.md)).
 
-## `from`: a `use` line as the line that says where its cells come from
+## `from`: what a `use` line was
 
-A `use` line is the old way ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md)), and Normalise writes it as the `from` line that plays the same (Migrate's rule, `migrate/from.ts`, which Normalise runs first), with the host's resolver. A library line written as a `use` above, or joined to one, goes on to its `from` line the same way; one already a collection's `from` line takes the names too.
-
-- **A collection's** (a fragment with no signature): `use &bd, &sd from gm_kit` is `&bd, &sd from gm_kit`, `use * from gm_kit` is `* from gm_kit`, `use &vibrato` is `&vibrato from vibrato`.
-- **A template's** (one with a signature): the heads the use names, and those the piece reads besides (a performer's gate, its old helper); each optional parameter the piece defines, which the old use read by name, as an argument naming the piece's cell (`(swing=&swing)`); and the main argument the piece's cell (`&tempo`), or, where nothing else reads that cell, it reads no other and holds no slider, label or comment, its body written in its place and its line gone, as the template reads it: `use &key from dorian` with `&tonic D` is `&key from diatonic(mode=dorian) D`, `use &bar from meter` with `&tempo step=96bpm` is `&bar from meter 96bpm`.
-- A use it can't say so exactly is left as it is: a name the use took that the copy keeps to itself, or a parameter the piece doesn't give.
-
-| Written | Normal |
-| --- | --- |
-| `use &key from harmonic_minor` and `&tonic D` | `&key from harmonic_minor D` |
-| `use &bar, &swing from meter(swing=8n:2/3)` and the piece's `&swing`, `&tempo step=free(…)` | `&bar from meter(swing=&swing) &tempo` |
-| `use &bass, &bassV from bass_performer`, the piece's `&bassLevel`, `&bassline` and a card reading `&bassOut` | `&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline` |
-| `use * from gm_kit` | `* from gm_kit` |
-
-The cell written in takes the copy's name (`&key_tonic`, `&bar_tempo`): what plays is the same, note for note (no event snapshot moves), and the examples' values snapshot, keyed by cell names, records the new names.
+A `use` line was the old way ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md)). Migrate wrote it as the `from` line that plays the same until v0.20.0; since #588 nothing reads one, and [use.md](use.md#use-retired) says how to write it by hand.
 
 ## The narrowest `from`: the cells a piece uses
 

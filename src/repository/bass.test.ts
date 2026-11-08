@@ -7,14 +7,23 @@ import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { BASS_FRAGMENTS } from './bass';
-import { fitOf } from './fit';
+import { fitsAs } from './fit';
+import { expand } from '../engine/use';
+import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { compileSource } from '../engine/compile';
 import { heard } from './heard';
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+
+/** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
+const takenOn = (text: string, bench: string, main?: string) => {
+  const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
+  const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
+  return { ...fit, union: { text: expand(fit.text, resolve) } };
+};
 
 const PATTERNS = ['root', 'pump', 'eight', 'funk', 'walk'] as const;
 type Pattern = (typeof PATTERNS)[number];
@@ -217,7 +226,7 @@ describe('the bass lines', () => {
     for (const f of BASS_FRAGMENTS) {
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&harm']);
       expect(holesOf(f.text, compileSource).sounds, f.id).toEqual([]);
-      expect(fitOf(f.text, HOST).missing, f.id).toEqual(['&harm']);
+      expect(takenOn(f.text, '').missing, f.id).toEqual(['&harm']);
       // (heard through a card, the voice it plays on is a sound the bass instrument fills)
       expect(holesOf(`${f.text}\n${heard(f.text)}`, compileSource).sounds, f.id).toEqual(['&bassV']);
     }
@@ -226,7 +235,7 @@ describe('the bass lines', () => {
   for (const name of Object.keys(PROGRESSIONS))
     it(`each fits a host with &bar and &harm, ${name}, and compiles there with no diagnostic`, () => {
       for (const f of BASS_FRAGMENTS) {
-        const fit = fitOf(f.text, workbench(name));
+        const fit = takenOn(f.text, workbench(name), '&harm');
         expect(fit.fits, f.id).toBe(true);
         expect(fit.diagnostics, f.id).toEqual([]);
         expect(played(fit.union.text, 1).diagnostics, f.id).toEqual([]);
@@ -255,14 +264,14 @@ describe('what each plays is what bass.ts plays for its pattern alone at its poi
   for (const [name, { chords }] of Object.entries(PROGRESSIONS))
     for (const p of PATTERNS)
       it(`${ID[p]}, over ${name} twice: each onset per bar at its pitch class`, () => {
-        const { notes, diagnostics } = played(fitOf(byId(ID[p]).text, workbench(name)).union.text, 2 * chords.length);
+        const { notes, diagnostics } = played(takenOn(byId(ID[p]).text, workbench(name), '&harm').union.text, 2 * chords.length);
         expect(diagnostics).toEqual([]);
         expect(notes).toEqual(expected(p, chords));
       });
 
   it('the walk’s last beat is a semitone below the next chord’s root, over a chord whose key degree below it is a whole tone too', () => {
     // (I–vi: into A from G♯, where the key's degree below A is G, a whole tone: `0b` over the next chord would play G)
-    const { notes } = played(fitOf(byId('walking_bass').text, workbench('I–vi–IV–V')).union.text, 1);
+    const { notes } = played(takenOn(byId('walking_bass').text, workbench('I–vi–IV–V'), '&harm').union.text, 1);
     expect(notes.at(-1)).toEqual([0, 12, 8]);
   });
 });

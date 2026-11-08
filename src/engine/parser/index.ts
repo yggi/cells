@@ -20,13 +20,13 @@ import { IDENT, LineError, LineScanner, stripComment } from './scanner';
 import { parseBody, parseCell, SHOWS } from './cell';
 import { splitPlugins } from '../plugins';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
-import { FROM_FORM, readFrom, readUse, USE_FORM, useOld } from './use';
+import { FROM_FORM, isUse, readFrom, USE_RETIRED } from './use';
 
 export { groupingOf, meterLevels } from './generators';
 export { SHOWS } from './cell';
-export { readFrom, readUse, USE_FORM, USE_OLD, USE_RETIRED, writeUse, type FromForm, type UseForm } from './use';
+export { readFrom, USE_RETIRED, type FromForm } from './use';
 
-/** A text, parsed; `old` reads a retired form (a `use` line) with a warning, where it is otherwise an error (`CompileOptions.old`). */
+/** A text, parsed; `old` reads a retired form (`beat=`, a meter's own `step=&bar`) with a warning, where it is otherwise an error (`CompileOptions.old`). */
 export function parse(whole: string, { old = false }: { readonly old?: boolean } = {}): ParseResult {
   const cells: CellDecl[] = [];
   const uses: UseLine[] = [];
@@ -54,15 +54,10 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
   lines.forEach(({ text, line: lineNo, parts }) => {
     const s: LineScanner = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
     if (s.done()) return;
-    const use = readUse(text);
-    if (use !== undefined) {
+    // a use line (decisions 054, 059): retired, an error, read the old way or not (#588)
+    if (isUse(text)) {
       const col = text.search(/\S/);
-      const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
-      if (use === null) diagnostics.push({ severity: 'error', message: USE_FORM, span });
-      else {
-        uses.push({ id: use.id, names: use.names, span });
-        diagnostics.push({ severity: old ? 'warning' : 'error', message: useOld(use, old), span });
-      }
+      diagnostics.push({ severity: 'error', message: USE_RETIRED, span: { line: lineNo, col: col + 1, len: text.trimEnd().length - col } });
       return;
     }
     // a from line (decision 065): its cells are the expansion's (use.ts), a signature none of the text's own

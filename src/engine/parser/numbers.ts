@@ -61,7 +61,8 @@ export const NUMBER_PLACES = {
   axis: place({
     form: 'sync=n (a style by name)',
     name: 'axis',
-    cell: NOT_YET("#576's next rung"),
+    cell: `${MOVES}, within the axis (#576)`,
+    moves: true,
     example: '&mine map=style sync=free(.3, 0..1) harm=.45 artic=.55 energy=.55',
   }),
   share: place({
