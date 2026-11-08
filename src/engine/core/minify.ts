@@ -28,9 +28,9 @@ export function meaningfulNames(text: string): Set<string> {
   );
 }
 
-/** Minify (question 2): every own name renamed to a short one; the names it uses but doesn't define, and `meaningfulNames`, kept. */
-export function minify(text: string): string {
-  const kept = meaningfulNames(text);
+/** Minify (question 2): every own name renamed to a short one; the names it uses but doesn't define, `meaningfulNames`, and the interface it is cored up to (`keep`, decision 077 §2) kept. */
+export function minify(text: string, keep: ReadonlySet<string> = new Set()): string {
+  const kept = new Set([...meaningfulNames(text), ...keep]);
   const own = ownNames(text).filter((n) => !kept.has(n));
   const taken = new Set([...text.matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!));
   const to = new Map<string, string>();
