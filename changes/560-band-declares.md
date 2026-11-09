@@ -5,6 +5,7 @@
   - **What a score doesn't pass:** a part is a tacet (`&bassline step=1m ~`), and nothing is said; decision 063 §4's "plays &bassline, which no line writes: it rests" is no longer said of the band. A level is .8. A style is the centre of style space, and "no line writes &style" is no longer said of the band.
   - **Read the old way**, a bare `* from band` over a score that writes those cells passes them, with a warning; Migrate's `arguments` rule writes them (fixture `fixtures/migrations/arguments/score`). So every score plays what it played.
   - **The examples:** `radio` passes its parts and its style. No `notes` or `events` hash moves; its `values` and `live` hashes do.
+  - **`*` from a template takes the heads the piece doesn't write**, as `*` from a collection takes what it doesn't define: a score that writes the band's `&drumsOut` itself plays its own line, and what that line reads of the band's copy (`&band_drums_kit`, as the expansion writes it) is kept (cell-studio#610).
   - **The band fits any workbench** now, every input declared and optional, so a query given a workbench ranks it among the fragments that fit.
   - `alpha.test.ts`: `radio` holds as written for sound and diagnostics; the as-written list is the feel's alone.
 
