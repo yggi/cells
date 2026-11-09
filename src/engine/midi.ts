@@ -123,14 +123,16 @@ export function gmDrumNote(name: string): number | null {
 }
 
 /**
- * Each kit member's drum note: by its name where General MIDI has one (`gmDrumNote`), else the next note from 36
- * that no other member has, up to 127 (a member past that has none, and isn't sent).
+ * Each kit member's drum note: the one it writes (`noteOf`: its `note=`, decision 075), else the next note from 36 that no
+ * other member has, up to 127 (a member past that has none, and isn't sent). A member's name gives none: `gm_kit` writes
+ * each General MIDI drum's note on its line. A host reading a list of names it saved itself (`midiimport.ts`) passes
+ * `gmDrumNote`.
  */
-export function kitNotes(members: readonly string[]): Map<string, number> {
+export function kitNotes(members: readonly string[], noteOf: (member: string) => number | null | undefined): Map<string, number> {
   const out = new Map<string, number>();
   for (const m of members) {
-    const n = gmDrumNote(m);
-    if (n !== null) out.set(m, n);
+    const n = noteOf(m);
+    if (n !== null && n !== undefined) out.set(m, n);
   }
   const taken = new Set(out.values());
   let next = 36;
@@ -246,7 +248,7 @@ export function rowsOf(result: CompileResult, voice: string): string[] {
 export function channelTable(result: CompileResult, outputs: readonly OutputChoice[] = [{}]): ChannelTable {
   if (hasMidiCards(result)) return cardTable(result);
   const { voices, members } = routable(result);
-  const notes = kitNotes(members);
+  const notes = kitNotes(members, (m) => result.cells.get(m)?.drumNote);
   const table: { voice: string; channel: number; port: number }[] = [];
   const kits: { port: number; channel: number }[] = [];
   (outputs.length ? outputs : [{}]).forEach((o, i) => {
@@ -285,7 +287,7 @@ function cardTable(result: CompileResult): ChannelTable {
       } else for (const v of o.kit ? membersOf(result, o) : [o.voice]) voices.set(`${v}|${m.channel}|${m.port}`, { voice: v, channel: m.channel, port: m.port });
     }
   for (const c of result.cells.values()) if (c.map?.kind === 'midi') ports.add(c.map.port);
-  const notes = kitNotes([...members].sort(order));
+  const notes = kitNotes([...members].sort(order), (m) => result.cells.get(m)?.drumNote);
   return {
     voices: [...voices.values()].sort((a, b) => order(a.voice, b.voice) || a.port - b.port || a.channel - b.channel),
     kit: [...notes].map(([member, note]) => ({ member, note })),

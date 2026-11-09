@@ -24,9 +24,9 @@ description: "A drum part written with the drums' names: a beat, a fill with rat
 
 &bd, &sd, &rim from gm_kit
 &click, &thump, &snap from envelopes
-&hh oneshot=1 s=white hpf=8000 env=&click
-&lo s=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&thump
-&mid s=sine loop=C3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .2 0 .05)
-&hi s=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&snap
+&hh note=42 oneshot=1 s=white hpf=8000 env=&click
+&lo note=41 s=sine loop=G2 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&thump
+&mid note=45 s=sine loop=C3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .2 0 .05)
+&hi note=48 s=sine loop=F3 pitch=0..12 * &(map=adsr 0 .05 0 0) env=&snap
 &out map=sample postgain=3.12 [&groove * .6, &clave * &rim * .15, &toms * .4]
 ```

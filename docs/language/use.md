@@ -46,7 +46,7 @@ So a piece overrides a voice of the kit by writing it, and every line that reads
 &bar meter("4/4") step=100bpm
 &beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]
 # the piece's own snare: it wins over the kit's
-&sd s=white hpf=900 distort=.6 env=&(map=adsr 0 .12 0 .05)
+&sd note=38 s=white hpf=900 distort=.6 env=&(map=adsr 0 .12 0 .05)
 ```
 
 `expand(text, resolve)` writes the expansion out: the piece's lines, its `from` lines gone, then the kit's 46 other lines.
@@ -58,7 +58,7 @@ A fragment may itself take from others: its own lines win over what it takes, an
 - A name a line asks for that the piece defines is the piece's, and warns that taking it adds nothing, unless a line it takes reads it: then naming it is how the piece overrides it, and says nothing (a copy reads an instrument's name so, `&bass, &bassOut from bass_performer &line` with the piece's own `&bassV s=saw loop=C3`: the bass player, on the piece's sound). A `* from` whose every line the piece defines warns too.
 - A helper the piece also defines is an error: the piece didn't ask for it, so its line would change what the named cell reads. Rename the piece's, or name the helper in the line, which makes it an override. No name is the piece's by convention: a collection's `&key` the piece writes too is a helper like any other ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)).
 - A name two used fragments define by different lines, and the piece doesn't, is an error naming the name and both ids: the piece writes the line itself, or drops one `from` line.
-  A collection never renames: a voice's General MIDI note is read off its name ([midi.md](midi.md)), and `&bd2` would send another.
+  A collection never renames what it gives: a kit member keeps its name, and sends the note it writes (`note=`, [midi.md](midi.md)).
 - A cycle is an error naming it, and so is a depth past 8 (a kit in a groove in a section in a piece is 3).
 - An id the library doesn't hold is an error naming it, and the piece's other lines compile as they would without it.
 - **A retired id** is read as a fragment that only forwards, one `from` line of what took its place, with a warning, and Migrate writes a line of it as that line (#196): `* from "core kit"`, the 13 voices a groove needs before a line could name what it takes, is `&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit`, and `"gm kit"` is `gm_kit` (`RETIRED` in `src/repository/library.ts`).

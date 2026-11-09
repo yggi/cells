@@ -54,7 +54,7 @@ describe('the attribute table', () => {
         'hard',
       ].sort(),
     );
-    expect(Object.keys(PARAMS).length).toBe(69);
+    expect(Object.keys(PARAMS).length).toBe(70);
   });
 
   test('a misspelling finds its nearest attribute', () => {

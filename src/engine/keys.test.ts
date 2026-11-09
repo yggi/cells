@@ -108,9 +108,9 @@ describe('a key on a melody: the nearest pitch its table can play', () => {
 describe('a kit: its members by General MIDI drum note', () => {
   const KIT = `&bar step=4
 &drums step=&bar &bd &hh &sd &hh
-&bd s=sine loop=A1
-&sd s=white
-&hh s=white hpf=7000
+&bd note=36 s=sine loop=A1
+&sd note=38 s=white
+&hh note=42 s=white hpf=7000
 &perc s=white
 &odd step=&bar &perc
 &mix map=sample [&drums, &odd * 0.5]`;
@@ -224,9 +224,9 @@ describe('scaleKeys: the dots on the on-screen keys (#255)', () => {
 describe('kitPads: one pad per member of a kit (#255)', () => {
   const KIT = `&bar step=4
 &drums step=&bar &bd &hh &sd &hh &tick
-&bd s=sine loop=A1
-&sd s=white
-&hh s=white hpf=7000
+&bd note=36 s=sine loop=A1
+&sd note=38 s=white
+&hh note=42 s=white hpf=7000
 &tick s=white
 &lead s=sine loop=C4
 &tune step=&bar 0 4

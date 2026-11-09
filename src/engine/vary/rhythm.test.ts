@@ -4,6 +4,7 @@
 // meter of the seed library; and every variation of a bar costs one compile.
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../../fixtures/jambot-e31.json';
+import { gmDrumNote } from '../midi';
 import { compileSource } from '../compile';
 import { planOf } from '../host';
 import { channelTable, midiNote, router, routesOf } from '../midi';
@@ -38,7 +39,13 @@ vi.mock('../compile', async (original) => {
 const WORKBENCH = '&bar meter("4/4") step=120bpm';
 const OPTIONS = { workbench: WORKBENCH, keep: ['&fill'], fewest: 3 };
 /** E31's bars: each preset's drum part without its `&bar`, the seed's rhythm fragment word for word. */
-const BARS = e31.witnesses.map((w) => ({ preset: w.preset, fragment: w.text.split('\n').slice(1).join('\n'), hits: w.hits }));
+// (each as Migrate's `notes` rule writes it: its stand-in drums, named as General MIDI's, write the note their name gave,
+// decision 075; a bar alone has no meter to be checked on, so it is written here)
+const noted = (text: string) =>
+  text.replace(/^&(\w+) (?!note=)/gm, (line, name: string) =>
+    gmDrumNote(name) === null || !/^&\w+ s=/.test(text.split('\n').find((l) => l.startsWith(line))!) ? line : `&${name} note=${gmDrumNote(name)} `,
+  );
+const BARS = e31.witnesses.map((w) => ({ preset: w.preset, fragment: noted(w.text.split('\n').slice(1).join('\n')), hits: w.hits }));
 const under = (fragment: string) => unionOf(fragment, WORKBENCH).text;
 /** A bar under its workbench, its stand-ins (`&hh s=white`) left out for 13 of the General MIDI kit's voices. */
 const inKit = (fragment: string) => `&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit\n${under(fragment.replace(/^&\w+ s=white\n?/gm, ''))}`;

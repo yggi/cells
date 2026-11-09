@@ -1,5 +1,5 @@
 # a drum hit played through, the bare line word oneshot (decision 068): a voice's parameter now, oneshot=1
 &bar meter("4/4") step=120bpm
-&bd oneshot=1 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)   # the kick rings past its step
+&bd note=36 oneshot=1 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05) # the kick rings past its step
 &beat step=16n &bd ~ ~ ~ &bd ~ ~ ~
 &out map=sample [&beat * .6]

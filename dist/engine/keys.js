@@ -62,7 +62,7 @@ export function keyboardOf(result, cell, shifts, { a4 = 440, mode = 'snap' } = {
         return null;
     const arm = armable(result).find((a) => a.cell === cell);
     if (c.kit || arm?.kit) {
-        const notes = [...kitNotes(kitMembers(result, cell, arm))];
+        const notes = [...kitNotes(kitMembers(result, cell, arm), (m) => result.cells.get(m)?.drumNote)];
         return {
             kind: 'kit',
             cell,
@@ -120,7 +120,7 @@ export function kitPads(result, cell) {
     if (!c || !(c.kit || arm?.kit))
         return [];
     const members = [...new Set(kitMembers(result, cell, arm))];
-    const notes = kitNotes(members);
+    const notes = kitNotes(members, (m) => result.cells.get(m)?.drumNote);
     return members.flatMap((member) => {
         const note = notes.get(member);
         return note === undefined ? [] : [{ member, note }];

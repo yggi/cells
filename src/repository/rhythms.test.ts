@@ -114,7 +114,7 @@ describe('the rhythm fragments', () => {
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: its drum bar is E31’s text word for word, without its &bar line and its stand-in voices', (_, w) => {
     const [bar, ...rest] = w.text.split('\n');
     expect(bar).toMatch(/^&bar scan\(1 1 1 1\) step=\d+bpm$/);
-    // (the stand-in voices `&bd s=white` …, E31's own, are holes the kit fills: #244; its card is the workbench's, its mix &groove: #291)
+    // (the stand-in voices `&bd note=36 s=white` …, E31's own, are holes the kit fills: #244; its card is the workbench's, its mix &groove: #291)
     expect(w.fragment.text).toBe(
       rest
         .filter((l) => !/^&\w+ s=white$/.test(l))
@@ -210,7 +210,7 @@ describe('the claves', () => {
 
 // Decision 054, rung 2 (#244): no rhythm carries a voice of its own. Every name a rhythm strikes (`&bd`, `&claves`) is a
 // hole read only as a sound, which an instrument fills: the General MIDI kit. The eight drum bars' 30
-// `&bd s=white …` lines, bare white noise standing in for a kick and a hat alike, and the claves' `&claves` (the
+// `&bd note=36 s=white …` lines, bare white noise standing in for a kick and a hat alike, and the claves' `&claves` (the
 // General MIDI kit's line word for word) are gone: 35 lines.
 const STRUCK: Record<string, string[]> = {
   synth_pop_drums: ['&bd', '&hh', '&sd'],
@@ -259,7 +259,7 @@ describe('the rhythms’ holes (decision 054, rung 2)', () => {
 
   it.each(Object.keys(CLAVES))('%s with the General MIDI kit’s 13 sounds identical (S1, the whole window) to the clave with its line written out', (id) => {
     const out = hosted(meterText('meter'), 120, byId(id).text, coreKit);
-    const was = hosted(meterText('meter'), 120, byId(id).text.replace('&percussion', `&claves s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)\n&percussion`));
+    const was = hosted(meterText('meter'), 120, byId(id).text.replace('&percussion', `&claves note=75 s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)\n&percussion`));
     expect(soundsIdentical(was, out)).toBe(true);
   });
 });

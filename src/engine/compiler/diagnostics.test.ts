@@ -96,8 +96,8 @@ describe('a mix with something else between its terms', () => {
 
 describe('a groove with a number or a pick of a voice', () => {
   it('says a groove holds voices only', () => {
-    for (const g of ['&bd 0 &hh', '&bd[0] &hh', '&bd^2 &hh'])
-      expect(messages(`&bar step=1\n&mel step=&bar 0 2\n&bd s=sine\n&hh s=sine\n&g step=&bar ${g}\n&out map=sample [&mel * &g]`).join(' '), g).toMatch(
+    for (const g of ['&bd note=36 0 &hh', '&bd[0] &hh', '&bd^2 &hh'])
+      expect(messages(`&bar step=1\n&mel step=&bar 0 2\n&bd note=36 s=sine\n&hh note=42 s=sine\n&g step=&bar ${g}\n&out map=sample [&mel * &g]`).join(' '), g).toMatch(
         /&g mixes voices with numbers or picks: a groove holds only voices/,
       );
   });
@@ -389,7 +389,7 @@ describe('a modular patch (docs/notes/modular.md)', () => {
     ]);
     expect(messages(PATCH + '&vco s=saw loop=A2\n&vcf lpf=800 [&vco]\n&out map=sample [&tune * &vcf * .4]')).toEqual([]);
     // (a kit, a groove and a waveform braid are none)
-    const kit = '&bd s=sine loop=A1\n&hh s=white\n&kit &bd &hh\n&beat over=&kit step=8n 0 1\n&groove step=8n &bd ~ &hh\n';
+    const kit = '&bd note=36 s=sine loop=A1\n&hh note=42 s=white\n&kit &bd &hh\n&beat over=&kit step=8n 0 1\n&groove step=8n &bd ~ &hh\n';
     expect(messages(PATCH + kit + '&out map=sample [&beat * .5, &groove * .5]')).toEqual([]);
   });
   it('a voice read as CV is a warning: it moves nothing (#426)', () => {

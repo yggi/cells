@@ -21,7 +21,7 @@ description: "Three parts, and a song that picks which of them play: an intro, a
 &lead s=square loop=C5 lpf=2500 env=&(map=adsr .01 .2 .5 .2)
 &rim from gm_kit
 &thump from envelopes
-&bd gain=.6 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&thump
+&bd note=36 gain=.6 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .04 0 0) env=&thump
 
 &sections step=4n &keysBar &tuneBar &drumBar
 &song over=&sections step=1m/4 laps=1 label="intro · verse · chorus · end" 0 [0,2] [0,1,2] 0

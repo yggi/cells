@@ -21,11 +21,11 @@ function onsets(lines: string, bars: number, n: number): { places: number[]; dia
   return { places: [...new Set(at.map((x) => Math.round(x * 1e6) / 1e6))].sort((a, b) => a - b), diagnostics: r.diagnostics.map((d) => d.message) };
 }
 
-const clave = (id: string) => `&clave, &percussion from ${id}\n&claves s=sine loop=C6\n&out map=sample [&percussion]`;
+const clave = (id: string) => `&clave, &percussion from ${id}\n&claves note=75 s=sine loop=C6\n&out map=sample [&percussion]`;
 
 /** Each timeline: how it is taken, over how many bars, its grid, and its necklace (k, n) with the phase that is it, or none. */
 const TIMELINES: Record<string, { text: string; bars: number; k: number; n: number; phase: number | null }> = {
-  bell_and_scale: { text: '&key, &bell, &agogo from bell_and_scale C\n&highagogo s=sine loop=C6\n&out map=sample [&agogo]', bars: 1, k: 7, n: 12, phase: 5 },
+  bell_and_scale: { text: '&key, &bell, &agogo from bell_and_scale C\n&highagogo note=67 s=sine loop=C6\n&out map=sample [&agogo]', bars: 1, k: 7, n: 12, phase: 5 },
   tresillo: { text: '&tresillo from tresillo &key\n&key scale(major, C)\n&out map=sample [&tresillo * &v]', bars: 1, k: 3, n: 8, phase: 2 },
   cinquillo: { text: clave('cinquillo'), bars: 1, k: 5, n: 8, phase: 2 },
   bossa_nova_clave_one_bar: { text: clave('bossa_nova_clave_one_bar'), bars: 1, k: 5, n: 16, phase: 2 },

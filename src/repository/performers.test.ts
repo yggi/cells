@@ -223,10 +223,10 @@ describe('the drums performer', () => {
 
   it('refuses a line the kit doesn’t hold, and a stack mixed as a sound beside it', () => {
     const messages = (t: string) => compileSource(`&bar meter("4/4") step=${BPM}bpm\n${t}`, undefined, { resolve: resolveSeed }).diagnostics.map((d) => d.message);
-    expect(messages('&cb s=sine\n&cowbell step=4n &cb\n&drumlines [&cowbell]\n&drums, &drumsOut from drums_performer &drumlines\n&out map=midi ~!9 &drumsOut')).toEqual([
-      "&cowbell plays &cb, which &drums_kit doesn't hold: a kit's lines play its own voices",
-    ]);
-    expect(messages('&kick step=4n &bd\n&drumlines [&kick]\n&drums, &drumsOut from drums_performer &drumlines\n&out map=midi ~!9 [&drumsOut, &drumlines]')).toEqual([
+    expect(
+      messages('&cb note=56 s=sine\n&cowbell note=56 step=4n &cb\n&drumlines [&cowbell]\n&drums, &drumsOut from drums_performer &drumlines\n&out map=midi ~!9 &drumsOut'),
+    ).toEqual(["&cowbell plays &cb, which &drums_kit doesn't hold: a kit's lines play its own voices"]);
+    expect(messages('&kick note=36 step=4n &bd\n&drumlines [&kick]\n&drums, &drumsOut from drums_performer &drumlines\n&out map=midi ~!9 [&drumsOut, &drumlines]')).toEqual([
       '&drumlines is the part &drumsOut plays, a stack of lines and no sound: mix or send &drumsOut',
     ]);
   });

@@ -207,7 +207,7 @@ describe('docs: shipped pages link only what the package ships (#78)', () => {
 
 describe('docs: the drum names', () => {
   const names = (text: string) =>
-    [...(/^- \*\*Drum names\.\*\* (.*)$/m.exec(text)?.[1] ?? '').matchAll(/((?:`[a-z]+` )+)(\d+)/g)].flatMap((m) =>
+    [...(/^- \*\*A drum's note, `note=`\.\*\* (.*)$/m.exec(text)?.[1] ?? '').matchAll(/((?:`[a-z]+` )+)(\d+)/g)].flatMap((m) =>
       m[1]!
         .trim()
         .split(' ')
@@ -216,10 +216,10 @@ describe('docs: the drum names', () => {
   const page = read(join(DOCS, 'language/midi.md'));
 
   it('is shown firing: a name listed on a note it doesn’t send is caught', () => {
-    expect(names('- **Drum names.** `clave` 37, `bd` 36.').filter(([n, note]) => gmDrumNote(n) !== note)).toEqual([['clave', 37]]);
+    expect(names("- **A drum's note, `note=`.** `clave` 37, `bd` 36.").filter(([n, note]) => gmDrumNote(n) !== note)).toEqual([['clave', 37]]);
   });
 
-  it('midi.md lists each name on the note MIDI out sends it as (#140)', () => {
+  it('midi.md lists each name gm_kit writes, on the note it writes (#140, decision 075)', () => {
     // (all 75 names and aliases of `GM_KIT` in `src/engine/midi.ts`)
     expect(names(page)).toHaveLength(75);
     expect(names(page).filter(([n, note]) => gmDrumNote(n) !== note)).toEqual([]);

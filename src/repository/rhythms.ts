@@ -2,7 +2,7 @@
  * The rhythms: the repository's second facet (#138, decisions 041 and 043). Each fragment is open on its meter: its lines
  * tap the host's (`step=16n`, `step=1m`) and it holds no `&bar` of its own, so the host's `&bar` line, written first in the
  * same text, is its main meter and sets its tempo (#22's ruling: taps, no new form). Each carries its own MIDI card on
- * channel 10 and the voices it strikes, named so that General MIDI sends each as its drum note (`gmDrumNote`).
+ * channel 10 and the voices it strikes, the General MIDI kit's, each of which writes its drum note (`note=`, decision 075).
  *
  * The drum bars are Jambot's E31 (yggi/jambot#317): one bar the band writes for each preset, its drum part as cells text,
  * every role and every sound the band's drums play between them, 144 hits. Each is E31's text without its `&bar` line,
