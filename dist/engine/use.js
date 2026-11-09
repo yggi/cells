@@ -290,7 +290,7 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
         if (!definesOwn.has(h))
             say(`${quoted(id)}'s signature names &${h} its head, and it doesn't define it`);
     for (const o of optional)
-        if (!definesOwn.has(o))
+        if (!defines.has(o))
             say(`${quoted(id)}'s &${o} is an optional parameter: its line in the fragment is its default, and it has none`);
     if (main && defines.has(main))
         say(`${quoted(id)}'s &${main} is its main parameter: it has no line, the argument is it`);
@@ -353,7 +353,8 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
     const prefix = names.get(heads[0]) ?? [...names.values()][0] ?? heads[0];
     for (const n of [...names.values()])
         taken.add(n);
-    for (const n of [...definesOwn, ...(main ? [main] : [])]) {
+    const sharedValued = optional.filter((o) => !definesOwn.has(o) && values.has(o) && !byReference.has(o));
+    for (const n of [...definesOwn, ...(main ? [main] : []), ...sharedValued]) {
         if (names.has(n))
             continue;
         let mine = `${prefix}_${n}`;
@@ -402,7 +403,13 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
     }
     if (main && from.main !== null && !byReference.has(main))
         copy.push(lineOf(`&${names.get(main)} ${asCell(values.get(main), main, own)}`));
-    const sharing = shared.filter((l) => reached.has(l.name));
+    for (const p of sharedValued)
+        copy.push(lineOf(inherited(names.get(p), byName.get(p).code, asCell(values.get(p), p, own))));
+    if (level?.warn && !old)
+        for (const o of optional)
+            if (!definesOwn.has(o) && !values.has(o) && level.defines.has(o) && reached.has(o) && level.codes.get(o) !== byName.get(o)?.code)
+                level.warn(`The piece defines &${o}, and ${quoted(id)} takes its &${o} from a collection by default: pass yours, ${from.id}(${o}=&${o}), or rename it`);
+    const sharing = shared.filter((l) => reached.has(l.name) && !byReference.has(l.name) && !sharedValued.includes(l.name));
     const given = { id, names: new Set(sharing.map((l) => l.name)), lines: sharing, resolved: true };
     return { taken: given, copy, args: Object.fromEntries(values) };
 }
@@ -463,7 +470,11 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
     const copies = [];
     const args = [];
     const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
-    const level = { defines: new Set(taken), reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads]] : []))) };
+    const level = {
+        defines: new Set(taken),
+        reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads]] : []))),
+        codes: new Map(own.flatMap((l) => (l.name ? [[l.name, l.code]] : []))),
+    };
     const used = uses.map((u) => {
         const { id } = u;
         const names = namesOf(u);
@@ -491,7 +502,7 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
         const binding = old
             ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
             : undefined;
-        const g = give(u, [id], theirs, resolve, say, taken, binding, level);
+        const g = give(u, [id], theirs, resolve, say, taken, binding, { ...level, warn: (message) => diagnostics.push({ severity: 'warning', message, span }) });
         copies.push(g.copy);
         args.push(g.args);
         return g.taken;

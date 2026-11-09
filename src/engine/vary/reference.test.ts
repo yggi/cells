@@ -18,6 +18,7 @@ import { declWords } from '../edit';
 import { PITCHED_OPERATORS, variations, type Variation, type VaryOptions } from '.';
 import type { Resolve } from '../program';
 import { bodyOf, expand } from '../use';
+import { readFrom } from '../parser/use';
 
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {
@@ -29,14 +30,26 @@ const unionOf = (text: string, workbench: string) => {
 const KIT = { resolve: resolveSeed };
 /** Jambot's reading of a drum bar (`rhythm.test.ts`), with 13 of the General MIDI kit's voices to strike. */
 const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
-const DRUM_OPTIONS: VaryOptions = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
+const DRUM_OPTIONS: VaryOptions = { workbench: DRUMS, keep: ['&fill'], fewest: 3, resolve: resolveSeed };
+/** The kit a drum bar is played on by hand: the 13 voices, but those it takes itself (a groove's own drums, decision 075). */
+const drumsFor = (text: string) => {
+  const taken = new Set(
+    text.split('\n').flatMap((l) => {
+      const f = readFrom(l.trim());
+      return f?.kind === 'use' ? (f.names ?? []) : [];
+    }),
+  );
+  return DRUMS.split('\n')
+    .filter((l) => !taken.has(l.split(' ')[0]!))
+    .join('\n');
+};
 /** The bass seeds' workbenches (`pitched.test.ts`): 4/4 at 120 bpm in C major, one chord a bar, over two progressions. */
 const HOST = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n${INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text}`;
 const HARMS = ['&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]', '&harm over=&key step=1m [1,3,5,7] [4,6,8,10] [0,2,4,6]'];
 
 /** Every seed on its workbench: its text, the workbench with the card that hears it (#291), Vary's options, and how long to compare. */
 const CASES = [
-  ...RHYTHM_FRAGMENTS.map((f) => ({ id: f.id, fragment: f.text, bench: `${DRUMS}\n${heard(f.text)}`, options: DRUM_OPTIONS, seconds: 8 })),
+  ...RHYTHM_FRAGMENTS.map((f) => ({ id: f.id, fragment: f.text, bench: `${drumsFor(f.text)}\n${heard(f.text)}`, options: DRUM_OPTIONS, seconds: 8 })),
   ...HARMS.flatMap((harm) =>
     BASS_FRAGMENTS.map((f) => {
       const workbench = `${HOST}\n${harm}`;

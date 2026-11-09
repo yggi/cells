@@ -2,6 +2,7 @@
 // takes a copy of it over a workbench that gives its main argument, with no diagnostic (a performer, with what it says
 // written out by hand: it plays on a card). A collection (a kit, an
 // instrument, a groove, the envelopes) has none.
+import { RHYTHM_FRAGMENTS } from './rhythms';
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { signatureOf } from '../engine/use';
@@ -33,8 +34,8 @@ const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.so
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {
-  it('109 templates (#572: ten more, two stabs, three bass lines, a harmony and four motifs): the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers, the four instruments that read a style and the band; the rest collections', () => {
-    expect(templates).toHaveLength(109);
+  it('131 templates (#572: ten more, two stabs, three bass lines, a harmony and four motifs; #637: the 22 rhythms): the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
+    expect(templates).toHaveLength(131);
     const collections = LIBRARY.filter((f) => !signatureOf(f.text)).map((f) => f.id);
     expect(collections).toContain('gm_kit');
     expect(collections).toContain('upright_bass');
@@ -46,7 +47,10 @@ describe('the seed library’s signatures', () => {
     for (const id of instruments) expect(signatureOf(LIBRARY.find((f) => f.id === id)!.text), id).toMatchObject({ optional: ['&style'], main: null });
     // (the band: every input optional, the score's parts, levels and style, #560)
     expect(signatureOf(LIBRARY.find((f) => f.id === 'band')!.text)!.main).toBeNull();
-    for (const f of templates.filter((t) => !instruments.includes(t.id) && t.id !== 'band'))
+    // (a rhythm: its drums optional, each the kit's own line by default, #637)
+    for (const f of RHYTHM_FRAGMENTS) expect(signatureOf(f.text)!.main, f.id).toBeNull();
+    const rhythms = new Set(RHYTHM_FRAGMENTS.map((f) => f.id));
+    for (const f of templates.filter((t) => !instruments.includes(t.id) && t.id !== 'band' && !rhythms.has(t.id)))
       expect(signatureOf(f.text)!.main, f.id).toMatch(/^&(tempo|tonic|key|harm|call|a|drumlines|bassline|padline|stabline|leadline)$/);
   });
 
@@ -57,11 +61,13 @@ describe('the seed library’s signatures', () => {
     const piece =
       id === 'band'
         ? lines(METER, KEY, '&bassline over=&key step=4n 0 2', '* from band(bassline=&bassline)')
-        : main === null
-          ? lines(METER, KEY, '&line over=&key step=8n 0 2 4', `&x from ${quoted(id)}`, '&out map=sample [&line * &x]')
-          : /line(s)?$/.test(main)
-            ? PERFORMER(head, quoted(id), main)
-            : WORKBENCH[main]!(head, quoted(id));
+        : RHYTHM_FRAGMENTS.some((f) => f.id === id)
+          ? lines(METER, `* from ${quoted(id)}`, `&out map=sample [${names.at(-1)}]`)
+          : main === null
+            ? lines(METER, KEY, '&line over=&key step=8n 0 2 4', `&x from ${quoted(id)}`, '&out map=sample [&line * &x]')
+            : /line(s)?$/.test(main)
+              ? PERFORMER(head, quoted(id), main)
+              : WORKBENCH[main]!(head, quoted(id));
     const r = compileSource(names.includes('&bell') ? lines(piece, '* from gm_kit') : piece, undefined, { resolve: resolveSeed });
     // (a performer is a role cell over a gate: no sound of its own, so it plays on a card, as it does written out by hand)
     expect(r.diagnostics.map((d) => d.message)).toEqual(main !== null && /line(s)?$/.test(main) ? [NOTHING_PLAYS] : []);

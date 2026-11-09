@@ -259,9 +259,14 @@ describe('the bell and scale', () => {
     for (const rhythm of RHYTHM_FRAGMENTS) {
       const fit = takenOn(bell.text, takenOn(rhythm.text, meter()).union.text, '&tonic');
       expect(fit.fits, rhythm.id).toBe(true);
-      // (the rhythm's voices and the bell's are holes the General MIDI kit fills)
+      // (the bell's voice is a hole the General MIDI kit fills; the rhythm's drums are the kit's own lines already, #637)
+      const defined = new Set(fit.union.text.split('\n').map((l) => l.split(' ')[0]));
+      const kit = gmKit.text
+        .split('\n')
+        .filter((l) => !defined.has(l.split(' ')[0]))
+        .join('\n');
       expect(
-        compileSource(`${fit.union.text}\n${gmKit.text}`).diagnostics.map((d) => d.message),
+        compileSource(`${fit.union.text}\n${kit}`).diagnostics.map((d) => d.message),
         rhythm.id,
       ).toEqual([]);
     }

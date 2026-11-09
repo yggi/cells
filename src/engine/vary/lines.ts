@@ -18,6 +18,7 @@ import { flatten } from '../flatten';
 import { gmDrumNote } from '../midi';
 import { noteValue, type Meter } from '../meter';
 import { bjorklund } from '../parser/generators';
+import { readFrom } from '../parser/use';
 import { codeShifts, type CompileResult } from '../program';
 
 /** One note of a line: its step on the line's grid, the voice it strikes, its own level as written, its level in all. */
@@ -189,13 +190,16 @@ function entriesOf(source: string, card: string): string[] {
  * degrees over a table) as a line with no voice of its own, after those.
  */
 export function linesOf(source: string, result: CompileResult): Line[] {
+  // (a `from` line reads nothing: a signature names its heads, and a use what it takes, decision 065)
   const readBy = new Set(
     source.split('\n').flatMap((raw) =>
-      [
-        ...splitComment(raw)[0]
-          .replace(/^\s*&[A-Za-z_][A-Za-z0-9_]*/, '')
-          .matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g),
-      ].map((m) => m[1]!),
+      readFrom(splitComment(raw)[0].trim()) !== undefined
+        ? []
+        : [
+            ...splitComment(raw)[0]
+              .replace(/^\s*&[A-Za-z_][A-Za-z0-9_]*/, '')
+              .matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g),
+          ].map((m) => m[1]!),
     ),
   );
   const unread = [...result.cells.values()].filter((c) => !c.implicit && !c.lambda && !readBy.has(c.name));

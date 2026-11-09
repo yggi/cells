@@ -11,6 +11,7 @@ import { codeShifts } from '../engine/program';
 import { pieceAudio } from '../engine/audioexport';
 import { channelTable, GM_KIT, gmDrumNote, midiNote, router, routesOf } from '../engine/midi';
 import { bodyOf, expand, signatureOf } from '../engine/use';
+import { readFrom } from '../engine/parser/use';
 import { windowAt } from '../engine/schedule';
 import { fitsAs } from './fit';
 import type { Resolve } from '../engine/program';
@@ -62,7 +63,14 @@ const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &
 const coreKit = { text: expand(CORE_USE, resolveSeed).trim() };
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id || f.id === wordOf(id))!.text;
 const BPM = 120;
-const hosted = (...fragments: string[]) => [setTiming(meterText('meter'), 'bar', 'step', `${BPM}bpm`), ...fragments].join('\n');
+/** A fragment's lines, its `from` lines aside: a rhythm's signature and the kit it takes (decision 075, #637), which the host's kit fills. */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
+
+const hosted = (...fragments: string[]) => [setTiming(meterText('meter'), 'bar', 'step', `${BPM}bpm`), ...fragments.map(linesAlone)].join('\n');
 
 /** A text's lines as name → line, in the order written. */
 const linesOf = (text: string) => new Map(text.split('\n').map((l) => [/^&(\w+)/.exec(l)![1]!, l]));

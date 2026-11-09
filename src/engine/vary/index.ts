@@ -40,7 +40,7 @@ import { declarations } from '../../repository/fit';
 import { compileSource } from '../compile';
 import { flatten } from '../flatten';
 import type { Meter } from '../meter';
-import { codeShifts, type CompileResult } from '../program';
+import { codeShifts, type CompileResult, type Resolve } from '../program';
 import { declWords, setBraid } from '../edit';
 import { gmDrumNote } from '../midi';
 import type { Rewrite } from '../rewrite';
@@ -95,23 +95,28 @@ export interface VaryOptions {
   readonly fewest?: number;
   /** Transposition's amounts, in degrees of the table read; by default −2, −1, 1, 2. */
   readonly degrees?: readonly number[];
+  /**
+   * The library a fragment's `from` lines take from (a groove's drums, `&bd, &sd from gm_kit`, decision 075): the host's
+   * resolver. A fragment read without one compiles only where it takes nothing.
+   */
+  readonly resolve?: Resolve;
 }
 
 /** A fragment read under its workbench: the workbench's lines it doesn't write itself, then its own. */
-function read(fragment: string, workbench = ''): { lines: Line[]; anchors: Anchor[]; result: CompileResult | null; own: ReadonlySet<string> } {
+function read(fragment: string, workbench = '', resolve?: Resolve): { lines: Line[]; anchors: Anchor[]; result: CompileResult | null; own: ReadonlySet<string> } {
   const own = new Set(declarations(fragment).map((l) => l.name));
   const bench = declarations(workbench)
     .filter((l) => !own.has(l.name))
     .map((l) => l.written);
   const text = [...bench, fragment].join('\n');
-  const result = compileSource(text);
+  const result = compileSource(text, undefined, resolve ? { resolve } : {});
   if (!result.ok) return { lines: [], anchors: [], result: null, own };
   const lines = linesOf(text, result);
   return { lines, anchors: anchorsAmong(lines, result), result, own };
 }
 
 /** A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's, the roots on chord changes. */
-export const anchorsOf = (fragment: string, workbench?: string): readonly Anchor[] => read(fragment, workbench).anchors;
+export const anchorsOf = (fragment: string, workbench?: string, resolve?: Resolve): readonly Anchor[] => read(fragment, workbench, resolve).anchors;
 
 /** A line's name as an option may write it: `&fill` or `fill`. */
 const named = (name: string) => (name.startsWith('&') ? name : `&${name}`);
@@ -146,8 +151,8 @@ export interface Readings {
 
 /** `variations`, each with its notes as recognition compares them, and the source's. */
 export function readVariations(fragment: string, options: VaryOptions = {}): Readings {
-  const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES } = options;
-  const { lines, anchors, result, own } = read(fragment, workbench);
+  const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES, resolve } = options;
+  const { lines, anchors, result, own } = read(fragment, workbench, resolve);
   if (!result) return { notes: null, span: null, bar: null, variations: [] };
   const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
   const pinned = (line: Line, n: LineNote) => anchors.some((a) => a.line === line.name && a.step === n.step);

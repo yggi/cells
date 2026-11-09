@@ -13,24 +13,24 @@ export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse', 'bend', 'tri
 export const DEGREES = [-2, -1, 1, 2];
 export const BENDS = [-2, -1, 1, 2];
 export const TRIM_FEWEST = 2;
-function read(fragment, workbench = '') {
+function read(fragment, workbench = '', resolve) {
     const own = new Set(declarations(fragment).map((l) => l.name));
     const bench = declarations(workbench)
         .filter((l) => !own.has(l.name))
         .map((l) => l.written);
     const text = [...bench, fragment].join('\n');
-    const result = compileSource(text);
+    const result = compileSource(text, undefined, resolve ? { resolve } : {});
     if (!result.ok)
         return { lines: [], anchors: [], result: null, own };
     const lines = linesOf(text, result);
     return { lines, anchors: anchorsAmong(lines, result), result, own };
 }
-export const anchorsOf = (fragment, workbench) => read(fragment, workbench).anchors;
+export const anchorsOf = (fragment, workbench, resolve) => read(fragment, workbench, resolve).anchors;
 const named = (name) => (name.startsWith('&') ? name : `&${name}`);
 export const variations = (fragment, options) => readVariations(fragment, options).variations.map((v) => v.variation);
 export function readVariations(fragment, options = {}) {
-    const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES } = options;
-    const { lines, anchors, result, own } = read(fragment, workbench);
+    const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES, resolve } = options;
+    const { lines, anchors, result, own } = read(fragment, workbench, resolve);
     if (!result)
         return { notes: null, span: null, bar: null, variations: [] };
     const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);

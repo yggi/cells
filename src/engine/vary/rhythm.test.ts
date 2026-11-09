@@ -37,7 +37,7 @@ vi.mock('../compile', async (original) => {
 
 /** The workbench Jambot reads a drum bar under: 4/4 played straight, at its reading tempo (`straight('4/4')`). */
 const WORKBENCH = '&bar meter("4/4") step=120bpm';
-const OPTIONS = { workbench: WORKBENCH, keep: ['&fill'], fewest: 3 };
+const OPTIONS = { workbench: WORKBENCH, keep: ['&fill'], fewest: 3, resolve: resolveSeed };
 /** E31's bars: each preset's drum part without its `&bar`, the seed's rhythm fragment word for word. */
 // (each as Migrate's `notes` rule writes it: its stand-in drums, named as General MIDI's, write the note their name gave,
 // decision 075; a bar alone has no meter to be checked on, so it is written here)

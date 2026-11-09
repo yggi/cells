@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { compileSource } from '../engine/compile';
 import { bodyOf, signatureOf } from '../engine/use';
+import { readFrom } from '../engine/parser/use';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
@@ -35,6 +36,12 @@ vi.mock('../engine/compile', async (original) => {
 const fitOf = (fragment: string, workbench: string) => fitsAs('x', workbench, { resolve: (id) => (id === 'x' ? fragment : resolveSeed(id)) });
 const unionOf = (fragment: string, workbench: string) => fitOf(fragment, workbench).union!;
 
+/** A fragment's lines, its signature and its own `from` lines aside: a groove read as a collection's lines (#637). */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
 /** A meter's lines, as a host puts them on a workbench by hand: its signature aside (decision 065). */
 const meterText = (id: string) => bodyOf(METER_FRAGMENTS.find((f) => f.id === id || f.id === wordOf(id))!.text);
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
@@ -206,7 +213,7 @@ describe('every rhythm against every meter of the library', () => {
   it('a two-bar clave compiles under 7/8, and doesn’t fit it: 28 sixteenths in its two bars, 32 in its braid', () => {
     const clave = rhythm('son_clave_3_2');
     // (its `&claves` is a hole the General MIDI kit fills: #244)
-    expect(compileSource(bench('meter(grouping=meter("7/8"))', 90, clave, KIT)).diagnostics).toEqual([]);
+    expect(compileSource(bench('meter(grouping=meter("7/8"))', 90, linesAlone(clave), KIT)).diagnostics).toEqual([]);
     const f = fitOf(clave, bench('meter(grouping=meter("7/8"))', 90));
     expect(f.fits).toBe(false);
     expect(f.unmet).toEqual([{ cell: '&clave', meter: null, tap: '16n', bars: 2, steps: 32, rate: 1, bar: 16 }]);
@@ -255,7 +262,8 @@ function sameLines(first: string, second: string): string[] {
 }
 
 describe('two drum bars on one workbench', () => {
-  const bars = e31.witnesses.map((w) => ({ preset: w.preset, bpm: w.bpm, hits: w.hits, text: rhythm(wordOf(`${w.preset} drums`)) }));
+  // (each bar's lines, as a collection's: the union of two texts by their lines; a groove taken by its `from` line, #637, is the cost test's workbench)
+  const bars = e31.witnesses.map((w) => ({ preset: w.preset, bpm: w.bpm, hits: w.hits, text: linesAlone(rhythm(wordOf(`${w.preset} drums`))) }));
   const pairs = bars.flatMap((a) => bars.filter((b) => b !== a).map((b) => [a.preset, b.preset, a, b] as const));
   const lines = (text: string) => text.split('\n');
 
@@ -342,12 +350,17 @@ describe('a query given the workbench', () => {
 });
 
 describe('what it costs', () => {
-  // A workbench of five fragments, built as a composer builds it: the meter, then each rhythm added by the union.
-  const workbench = ['funk_drums', 'techno_drums', 'rumba_clave_3_2', 'bossa_nova_clave_one_bar'].reduce((text, id) => unionOf(rhythm(id), text).text, bench('meter', 104));
+  // A workbench of five fragments, built as a composer builds it: the meter, then each rhythm taken by its `from` line,
+  // its heads renamed clear of the workbench's where they collide (`&kick2=kick`, #637).
+  const workbench = ['funk_drums', 'techno_drums', 'rumba_clave_3_2', 'bossa_nova_clave_one_bar'].reduce(
+    (text, id) => fitsAs(id, text, { resolve: resolveSeed }).text,
+    bench('meter', 104),
+  );
 
   it('the workbench of five compiles clean and every rhythm still fits it, renamed where it collides', () => {
     // (the claves' voice is a hole an instrument fills: the General MIDI kit's line)
-    expect(compileSource(`${workbench}\n${KIT}`).diagnostics).toEqual([]);
+    expect(compileSource(`${workbench}\n${KIT}`, undefined, { resolve: resolveSeed }).diagnostics).toEqual([]);
+    expect(workbench).toMatch(/^&kick2=kick, /m);
     for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(true);
   });
 

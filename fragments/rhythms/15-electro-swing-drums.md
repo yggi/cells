@@ -12,6 +12,8 @@ lifted: yggi/cells examples/electroswing.md @ 2c120d4
 ---
 
 ```cells
+&kick, &clap, &hats, &ticks, &groove from (&bd, &sd, &cp, &hh, &oh)
+&bd, &sd, &cp, &hh, &oh from gm_kit
 &kick step=4n &bd!4
 &clap step=4n ~ &cp:0:.6 ~ &cp:0:.6
 &hats step=8n ~ &oh:0:.4 ~ &oh:0:.4 ~ &oh:0:.4 ~ &oh:0:.4
@@ -25,3 +27,5 @@ Its lines strike the kit's names (`&bd` `&cp` `&oh` `&hh` `&sd`), holes the Gene
 A piece arranging it takes its limbs by name (`&kick, &clap, &hats, &ticks from electro_swing_drums`), as the example does, each under a level of its own.
 
 At a point proposed for an Electro swing preset (sync .55, harm .75, bite .6, mood .5), weight 1: no preset of Jambot's sits there yet, and the axes are Jambot's (decision 041), so the point is this file's, Jambot's to adopt.
+
+**Its signature** (decision 075, #637): its lines are its heads, and the drums it strikes (`&bd`, `&sd`, `&cp`, `&hh`, `&oh`) are optional parameters, each the General MIDI kit's own line by default, taken inside it (`&bd, &sd, &cp, &hh, &oh from gm_kit`). A piece takes its lines by their names, or renamed (`&kick2=kick`), and passes its own drum where it has one: `electro_swing_drums(bd=&mine)`.
