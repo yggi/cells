@@ -41,6 +41,7 @@ export { movedCard } from './engine/shorten/card';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
 export type { CompileOptions, CompileResult, Locked, Performer, Resolve, Used } from './engine/program';
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';
+export { references, type Reference } from './engine/references';
 export type { Diagnostic } from './engine/ast';
 export {
   createRepository,
@@ -92,7 +93,8 @@ export { BAND_FRAGMENTS } from './repository/bands';
 export { nearestStyle, STYLE_FRAGMENTS, STYLES, type NearStyle, type Style } from './repository/styles';
 export { MODULE_FRAGMENTS } from './repository/modules';
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES, type FoundInstrument, type VoicedPart } from './repository/band';
-export { LIBRARY, resolveSeed } from './repository/library';
+export { LIBRARY, resolveSeed, resolverOf } from './repository/library';
+export { catalogue, type CatalogueEntry } from './repository/catalogue';
 export { RENAMED_IDS, wordOf } from './engine/renamed';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { decompose, writtenOut, type Decomposition, type DecomposeOptions, type LineNote } from './repository/decompose';

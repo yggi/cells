@@ -9,7 +9,7 @@ import type { Resolve } from '../engine/program';
 import { RENAMED_IDS } from '../engine/renamed';
 import { SEED } from './seed';
 import { BASS_FRAGMENTS } from './bass';
-import type { Fragment } from './fragments';
+import { EMPTY_LAYER, type Fragment, type LearnedLayer } from './fragments';
 import { HARMONY_FRAGMENTS } from './harmony';
 import { EXPRESSION_FRAGMENTS } from './expression';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
@@ -23,6 +23,7 @@ import { FORM_FRAGMENTS } from './forms';
 import { BAND_FRAGMENTS } from './bands';
 import { STYLE_FRAGMENTS } from './styles';
 import { MODULE_FRAGMENTS } from './modules';
+import { variantsOf } from './variants';
 
 /** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, the forms, the band, then the styles: a hundred and twelve fragments. */
 export const LIBRARY: readonly Fragment[] = [
@@ -66,3 +67,15 @@ const BY_ID = new Map([...CURRENT, ...RENAMED, ...RETIRED]);
  * current one (the compile warns).
  */
 export const resolveSeed: Resolve = (id) => BY_ID.get(id) ?? null;
+
+/**
+ * The seed library and a person's filed fragments as one resolver (#638): a `from` line's id read from the seed first
+ * (`resolveSeed`, its retired and renamed ids too), then from the layer's filed fragments, a filed template's sets of
+ * arguments as the seed's are (`variantsOf`). The seed first, so a filed fragment never stands in for one of cells' own
+ * (a layer that files a seed id is refused by `merge` already). The layer is read, never changed.
+ */
+export function resolverOf(layer: LearnedLayer = EMPTY_LAYER): Resolve {
+  if (!layer.filed.length) return resolveSeed;
+  const filed = new Map(layer.filed.flatMap(({ fragment }) => variantsOf(fragment).map((v): [string, string] => [v.id, v.text])));
+  return (id, hash) => resolveSeed(id, hash) ?? filed.get(id) ?? null;
+}

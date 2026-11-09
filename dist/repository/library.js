@@ -1,6 +1,7 @@
 import { RENAMED_IDS } from "../engine/renamed.js";
 import { SEED } from "./seed.js";
 import { BASS_FRAGMENTS } from "./bass.js";
+import { EMPTY_LAYER } from "./fragments.js";
 import { HARMONY_FRAGMENTS } from "./harmony.js";
 import { EXPRESSION_FRAGMENTS } from "./expression.js";
 import { INSTRUMENT_FRAGMENTS } from "./instruments.js";
@@ -14,6 +15,7 @@ import { FORM_FRAGMENTS } from "./forms.js";
 import { BAND_FRAGMENTS } from "./bands.js";
 import { STYLE_FRAGMENTS } from "./styles.js";
 import { MODULE_FRAGMENTS } from "./modules.js";
+import { variantsOf } from "./variants.js";
 export const LIBRARY = [
     ...METER_FRAGMENTS,
     ...RHYTHM_FRAGMENTS,
@@ -38,3 +40,9 @@ const CURRENT = new Map([...SEED.map((f) => [f.fragment.id, f.fragment.text]), .
 const RENAMED = [...RENAMED_IDS].map(([old, word]) => [old, CURRENT.get(word)]);
 const BY_ID = new Map([...CURRENT, ...RENAMED, ...RETIRED]);
 export const resolveSeed = (id) => BY_ID.get(id) ?? null;
+export function resolverOf(layer = EMPTY_LAYER) {
+    if (!layer.filed.length)
+        return resolveSeed;
+    const filed = new Map(layer.filed.flatMap(({ fragment }) => variantsOf(fragment).map((v) => [v.id, v.text])));
+    return (id, hash) => resolveSeed(id, hash) ?? filed.get(id) ?? null;
+}
