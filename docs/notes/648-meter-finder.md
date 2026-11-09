@@ -9,7 +9,7 @@ The module's header says how; this note says what it finds, and what it can't.
 
 Run: `node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/cycles.ts [bench …] [--rows]`.
 
-- **examples**: the 54 examples with a fixed meter (written `meter(…)`, not bent, moved or a slider), their first 40 s as played; the truth is the meter the text writes.
+- **examples**: the 55 examples with a fixed meter (written `meter(…)`, not bent, moved or a slider), their first 40 s as played; the truth is the meter the text writes.
 - **synthetic**: a drum pattern (a low kick on the bar line, a kick on each other group, a snare on the last, a hat on every eighth) over each of `contracts/meter`'s groupings up to 12 eighths and 4 groups, at 80, 110 and 150 bpm, straight, swung .6 and swung 2/3: 1035 cases with an exact truth, aksak and swing among them.
 - **groove**: the three Groove MIDI fixtures, played; the truth their tempo map, and their swing as `tools/groove.ts` reads it.
 - **bach**: the MIDI library's 88 files, typeset, with no velocities and some pickups; the truth each file's time signature, its bars from its start.
@@ -19,7 +19,7 @@ On 2026-11-09 (this branch's first commit):
 
 | bench | beat | bar | bar or ×2, ÷2 | start | beats | groups | swing |
 |---|---|---|---|---|---|---|---|
-| examples (54) | 45 | 44 | 45 | 40 | 44 | 41 | 51 |
+| examples (55) | 46 | 45 | 46 | 41 | 45 | 42 | 52 |
 | synthetic (1035) | 451 | 733 | 855 | 478 | 495 | 221 | 783 |
 | groove (3) | 3 | 3 | 3 | 2 | 3 | 3 | 3 |
 | bach (88) | 42 | 35 | 66 | 28 | 53 | 25 | 88 |
@@ -27,7 +27,7 @@ On 2026-11-09 (this branch's first commit):
 ## Against #648's bounds
 
 - **The Groove fixtures' swing within .03: met**, 3 of 3. Their tempo, bar, beats and grouping too; the bar's start on 2 of 3.
-- **The examples' signature and swing exact on 90 %: not met.** The grouping is right on 41 of 54 (76 %), the swing on 51 (94 %).
+- **The examples’ signature and swing exact on 90 %: not met.** The grouping is right on 42 of 55 (76 %), the swing on 52 (95 %).
 - **The MIDI library: not met.** Its beats a bar are right on 53 of 88 (60 %, the bound 80 %), its bar's start within a beat on 28 (32 %).
 
 ## What it can't know, and chooses
