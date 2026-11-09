@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { compileSource as compileAlone } from './compile';
 import { codeShifts, type CompileResult } from './program';
 import { liveAt } from './live';
-import { routing } from './routing';
+import { drawn, routing } from './routing';
+import type { GraphEdge, GraphModel } from './graph';
 import { writtenGraph } from './graph';
 import { eventsBetween, plan } from './realize';
 import { mainLength, pieceTime } from './duration';
@@ -123,4 +124,20 @@ describe('routing, the live view and the events agree, in every example', () => 
         }
     });
   }
+});
+
+describe('the routing as drawn (#618)', () => {
+  it('an edge redrawn as another, a role into its band’s petal: the edge it is drawn as is routed, and its ends', () => {
+    const edge = (source: string, target: string) => ({ id: `${source}->${target}`, source, target }) as unknown as GraphEdge;
+    const model = {
+      nodes: [],
+      edges: [edge('cell:band', 'cell:drumsOut')],
+      nets: [],
+      alias: new Map([['cell:drums->cell:drumsOut', 'cell:band->cell:drumsOut']]),
+      bulbs: new Map(),
+    } as unknown as GraphModel;
+    const r = drawn(model, { nodes: new Set(['cell:drums', 'cell:drumsOut']), edges: new Set(['cell:drums->cell:drumsOut']) });
+    expect([...r.edges]).toEqual(['cell:band->cell:drumsOut']);
+    expect(r.nodes.has('cell:band') && r.nodes.has('cell:drumsOut')).toBe(true);
+  });
 });
