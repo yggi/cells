@@ -20,10 +20,10 @@
 import { normalise, type NormaliseOptions } from '../normalise';
 import { soundsIdentical } from '../sameness';
 import { parse } from '../parser';
-import { declLine } from '../edit';
 import { signatureOf } from '../use';
 import { FAMILIES, LEFT, stillWritten } from './desugar';
 import { coreFold } from './fold';
+import { keepsInterface } from './interface';
 import { minify } from './minify';
 
 export { FAMILIES, LEFT, stillWritten, type CoreContext, type Family } from './desugar';
@@ -47,6 +47,8 @@ export type Interface = readonly string[] | 'signature' | 'roles';
 /** The options of `toCore`: Normalise's, and the interface the text is cored up to. */
 export interface CoreOptions extends NormaliseOptions {
   readonly interface?: Interface;
+  /** De-sugar families left out, by key: a fragment cored under a meter it doesn't define leaves its taps (`taps`) as written. */
+  readonly skip?: readonly string[];
 }
 
 /**
@@ -72,10 +74,10 @@ export function interfaceOf(text: string, spec: Interface = []): Set<string> {
 const ROUNDS = 4;
 
 /** One round of the passes: Normalise, de-sugar, the core fold, minify, each step checked by S1. */
-function round(source: string, options: NormaliseOptions, spec: Interface | undefined, keep: Set<string>): { source: string; steps: string[] } {
+function round(source: string, options: NormaliseOptions, spec: Interface | undefined, keep: Set<string>, skip: ReadonlySet<string>): { source: string; steps: string[] } {
   const same = (a: string, b: string) => soundsIdentical(a, b, undefined, options);
-  // (a step that loses an interface cell loses what is read from outside the text: never taken)
-  const kept = (t: string) => [...keep].every((n) => declLine(t, n) >= 0);
+  // (a step that loses an interface cell, or inlines one, leaves nothing to read it by name: never taken)
+  const kept = (t: string, from = source) => keepsInterface(from, t, keep);
   const normal = normalise(source, options);
   const steps: string[] = [];
   let now = source;
@@ -83,15 +85,16 @@ function round(source: string, options: NormaliseOptions, spec: Interface | unde
   const more = () => {
     for (const n of interfaceOf(now, spec)) keep.add(n);
   };
-  if (kept(normal.source)) {
+  if (kept(normal.source, source)) {
     now = normal.source;
     steps.push(...normal.steps);
     more();
   } else steps.push('left as written: Normalise would rename or remove an interface cell');
   for (const f of FAMILIES) {
+    if (skip.has(f.key)) continue;
     const next = f.rewrite(now, { ...options, keep });
     if (next === now) continue;
-    if (!kept(next)) {
+    if (!kept(next, now)) {
       steps.push(`left as written: ${f.key} (${f.rows}) would remove an interface cell`);
       continue;
     }
@@ -115,12 +118,12 @@ function round(source: string, options: NormaliseOptions, spec: Interface | unde
 
 /** The core of a text (decision 069), up to its interface (077): the passes again until the text stops changing, so the core of a core is itself. */
 export function toCore(source: string, options: CoreOptions = {}): Core {
-  const { interface: spec, ...rest } = options;
+  const { interface: spec, skip = [], ...rest } = options;
   const keep = interfaceOf(source, spec);
   let now = source;
   const steps: string[] = [];
   for (let i = 0; i < ROUNDS; i++) {
-    const r = round(now, rest, spec, keep);
+    const r = round(now, rest, spec, keep, new Set(skip));
     if (r.source === now) break;
     now = r.source;
     steps.push(...r.steps);

@@ -51,5 +51,6 @@ export { RENAMED_IDS, wordOf } from "./engine/renamed.js";
 export { ALL_OPERATORS, createRecogniser } from "./repository/recognise.js";
 export { decompose, writtenOut } from "./repository/decompose.js";
 export { holesOf } from "./repository/holes.js";
+export { coreFragment } from "./repository/corefragment.js";
 export { fitsAs, useOn } from "./repository/fit.js";
 export { readFragment, readFragments, writeFragment } from "./repository/files.js";

@@ -1,7 +1,8 @@
 import { compileSource } from "../compile.js";
-import { declLine, deleteCell, splitComment } from "../edit.js";
+import { deleteCell, splitComment } from "../edit.js";
 import { soundsIdentical } from "../sameness.js";
 import { shorten } from "../shorten/index.js";
+import { keepsInterface } from "./interface.js";
 const CORE_KINDS = new Set(['phrase', 'same', 'default']);
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 function unread(source, options, keep) {
@@ -22,7 +23,7 @@ export function coreFold(text, options = {}, rounds = 60, keep = new Set()) {
     let now = text;
     const steps = [];
     const same = (a, b) => soundsIdentical(a, b, undefined, options);
-    const kept = (t) => [...keep].every((n) => declLine(t, n) >= 0);
+    const kept = (t) => keepsInterface(now, t, keep);
     for (let i = 0; i < rounds; i++) {
         const gone = unread(now, options, keep).find((name) => same(now, deleteCell(now, name)));
         if (gone) {

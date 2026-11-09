@@ -40,6 +40,8 @@ export type Interface = readonly string[] | 'signature' | 'roles';
 /** The options of `toCore`: Normalise's, and the interface the text is cored up to. */
 export interface CoreOptions extends NormaliseOptions {
     readonly interface?: Interface;
+    /** De-sugar families left out, by key: a fragment cored under a meter it doesn't define leaves its taps (`taps`) as written. */
+    readonly skip?: readonly string[];
 }
 /**
  * The names an interface keeps, bare: the ones it names that the text defines, and the gates a kept role lists (what reads
