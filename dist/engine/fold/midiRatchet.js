@@ -4,7 +4,7 @@ import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readMidi } from "../midifile.js";
 import { cellsFromMidi } from "../midiimport.js";
-import { bare } from "./score.js";
+import { bare, grown, PIECE_GROWTH } from "./score.js";
 export const midiSets = () => readdirSync('midi').filter((set) => readdirSync(`midi/${set}`).includes('index.json'));
 export function midiRatchet(testFile) {
     const set = basename(fileURLToPath(testFile)).split('.')[1];
@@ -25,6 +25,7 @@ export function midiRatchet(testFile) {
             expect(Object.keys(now).filter((k) => base[k]?.taken && !now[k]?.taken), 'files whose fold no longer plays their notes').toEqual([]);
             const sum = (rows) => Object.values(rows).reduce((a, r) => a + r.score, 0);
             expect(sum(now), "the score's size: record it (UPDATE_RATCHET=1) if the trade is worth it").toBeLessThanOrEqual(1.01 * sum(base));
+            expect(grown(now, base), `files whose score grew by more than ${PIECE_GROWTH * 100} %: record it (UPDATE_RATCHET=1) if the trade is worth it`).toEqual([]);
         });
     });
 }

@@ -15,6 +15,7 @@ import { holesOf } from '../../repository/holes';
 import { BASS_FRAGMENTS } from '../../repository/bass';
 import { heard } from '../../repository/heard';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
+import { MOTIF_FRAGMENTS } from '../../repository/motifs';
 import { anchorsOf, PITCHED_OPERATORS, readVariations, variations, varied } from '.';
 import { bodyOf } from '../use';
 import type { Resolve } from '../program';
@@ -371,5 +372,33 @@ describe('a held note (#294: the motifs hold theirs)', () => {
     const [down] = variations(line, options);
     const voice = '\n&v s=sine loop=C4\n&o map=sample [&play * &v]';
     expect(playsSameNotes(`${bench}\n${down!.apply(line)}\n&play step=8n &tune${voice}`, `${bench}\n${line}\n&play step=8n &tune^-2${voice}`)).toBe(true);
+  });
+});
+
+describe('a held rest (#410)', () => {
+  const bench = '&bar meter("4/4") step=120bpm\n&key scale(major, C)';
+  const options = { workbench: bench, operators: PITCHED_OPERATORS };
+  /** The text with each run of two rests or more held: `~ ~ ~` as `~@3`. */
+  const held = (text: string) => text.replace(/~(?: ~)+(?= |$)/gm, (run) => `~@${run.split(' ').length}`);
+
+  it('is read as its rests: every seed motif with its runs of rests held is varied as written, by every operator', () => {
+    const runs = MOTIF_FRAGMENTS.filter((f) => held(bodyOf(f.text)) !== bodyOf(f.text)).map((f) => f.id);
+    expect(runs).toEqual(expect.arrayContaining(['sigh', 'peek']));
+    for (const f of MOTIF_FRAGMENTS) {
+      const as = variations(bodyOf(f.text), options).map((v) => v.by);
+      expect(as.length, f.id).toBeGreaterThan(0);
+      expect(
+        variations(held(bodyOf(f.text)), options).map((v) => v.by),
+        f.id,
+      ).toEqual(as);
+    }
+  });
+
+  it('plays what the rests written out play: peek held, transposed, is peek transposed', () => {
+    const text = bodyOf(MOTIF_FRAGMENTS.find((f) => f.id === 'peek')!.text);
+    const [down] = variations(held(text), options);
+    const [plain] = variations(text, options);
+    const voice = `\n&v s=sine loop=C4\n&o map=sample [&peek * &v]`;
+    expect(playsSameNotes(`${bench}\n${down!.apply(held(text))}${voice}`, `${bench}\n${plain!.apply(text)}${voice}`)).toBe(true);
   });
 });

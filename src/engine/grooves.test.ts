@@ -7,7 +7,7 @@ import { liveAt } from './live';
 import { cellId } from './ids';
 
 const voices =
-  '&bar scan(1 1 1 1) step=120bpm\n&bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)\n&hh s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)\n&sd s=white hpf=1500 env=&(map=adsr 0 .1 0 .04)\n';
+  '&bar scan(1 1 1 1) step=120bpm\n&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)\n&hh note=42 s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)\n&sd note=38 s=white hpf=1500 env=&(map=adsr 0 .1 0 .04)\n';
 const plays = (src: string) => {
   const r = compileSource(src);
   expect(r.diagnostics).toEqual([]);
@@ -113,7 +113,7 @@ describe('a kit read only selects: the rest of the product acts on the member it
     expect(notes(src.replace('[&drums * &key]', '[(&key + 12) * &drums]')).map((n) => n.split(' ')[2])).toEqual([12, 12, 12, 12, 19, 19, 19, 19].map(bd));
   });
   it('varispeed on a clock bends a kit member as it bends the voice played alone', () => {
-    const tape = '&bar scan(1 1 1 1) step=78bpm motor=1.4 mass=1 friction=.3 varispeed=1\n&bd s=sine loop=A1\n&hh s=white\n';
+    const tape = '&bar scan(1 1 1 1) step=78bpm motor=1.4 mass=1 friction=.3 varispeed=1\n&bd note=36 s=sine loop=A1\n&hh note=42 s=white\n';
     const groove = notes(tape + '&g step=4n &bd &bd &hh &bd\n&out map=sample [&g * .5]', 6).filter((n) => n.startsWith('bd'));
     const alone = notes(tape + '&k step=4n 0 0 ~ 0\n&out map=sample [&k * &bd * .5]', 6);
     expect(groove).toEqual(alone);

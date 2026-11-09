@@ -29,9 +29,9 @@ description: "French filter house, an original: maj7 chords chopped in a funky r
 &keys tags="chords" s=square loop=F3 lpf=200..6500 * &filt lpq=5 env=&strike
 &bass tags="bass" s=square loop=F1 lpf=700 env=&strike
 &lead tags="robot" s=square loop=F4 lpf=1400 lpq=9 delaytime=&bar*4/3 delay=.25 delayfeedback=.3 env=&(map=adsr .02 .2 .7 .15) pitch=&vibrato
-&bd tags="groove" gain=.8 oneshot=1 s=sine loop=A1 pitch=0..26 * &(map=adsr 0 .05 0 0) env=&thump
-&cp tags="groove" gain=.3 oneshot=1 s=white hpf=1300 room=.25 env=&snap
-&oh tags="groove" gain=.15 s=white hpf=7000 env=&(map=adsr 0 .18 0 .08)
+&bd note=36 tags="groove" gain=.8 oneshot=1 s=sine loop=A1 pitch=0..26 * &(map=adsr 0 .05 0 0) env=&thump
+&cp note=39 tags="groove" gain=.3 oneshot=1 s=white hpf=1300 room=.25 env=&snap
+&oh note=46 tags="groove" gain=.15 s=white hpf=7000 env=&(map=adsr 0 .18 0 .08)
 &sh tags="groove" s=white hpf=10000 env=&click
 
 &sections step=4n &grooveBar &choppyBar &discBar &robBar

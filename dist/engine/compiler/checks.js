@@ -4,9 +4,24 @@ import { sortOfCells } from "./sorts.js";
 import { FILTER_MODELS, filterModel, MOVING_PARAMS } from "../attributes.js";
 import { DOUGH_SOURCES } from "../dough-params.js";
 import { refsOf } from "../readers.js";
+import { gmDrumNote } from "../midi.js";
 import { leaves } from "../subseq.js";
 export function checkCells(ctx, decls, cells, sections = new Map(), bands = new Map()) {
     const { error, warn, unknownCell } = ctx;
+    const told = new Set();
+    for (const c of cells.values()) {
+        if (!c.kit)
+            continue;
+        for (const u of c.units) {
+            const name = u.atom.kind === 'ref' ? u.atom.name : null;
+            const d = name === null ? undefined : decls.get(name);
+            const gm = name === null ? null : gmDrumNote(name);
+            if (!d || gm === null || d.drumNote !== undefined || told.has(name) || !cells.get(name)?.voice)
+                continue;
+            told.add(name);
+            warn(`&${name} is named as General MIDI's drum ${gm}, and a name gives no note: write &${name} note=${gm} (Migrate writes it, decision 075)`, d.span);
+        }
+    }
     for (const c of cells.values()) {
         const span = (k) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name).span;
         if (typeof c.params.body === 'string' && !(c.params.body in BODIES))

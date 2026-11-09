@@ -120,6 +120,11 @@ export interface ResolvedCell {
   readonly pitch: string | null;
   readonly braid: Braid['kind'];
   readonly units: readonly Unit[];
+  /**
+   * A swing's share moved by cells (decision 081): its level, its range (null: a bare cell, its values the share) and its
+   * cells. Read at each bar line by the plan's reader (`clocking.ts`); `meter`'s share for the level is the one held.
+   */
+  readonly swingMoves?: { readonly level: string; readonly range: readonly [number, number] | null; readonly factors: readonly string[] };
   /** A scan(…): its intervals, and its lap (their sum) — the cell climbs by that lap. */
   readonly scan: { readonly lap: number; readonly steps: readonly number[] } | null;
   /**
@@ -138,6 +143,11 @@ export interface ResolvedCell {
   readonly off: boolean;
   /** `oneshot` as written: a voice's note lasts its envelope's attack and decay, not its step. */
   readonly oneshot: boolean;
+  /**
+   * `note=` as written: a kit member's MIDI note on its kit's channel (decision 075). Read the old way
+   * (`CompileOptions.old`), a cell with none takes the note its General MIDI name gave (`gmDrumNote`), for Migrate.
+   */
+  readonly drumNote?: number;
   /** `glide=` as written, seconds (0 off): a run of tied notes is one note, its envelope once, each next sliding there (realize.ts). */
   readonly glide: number;
   /** Cells spliced in with &ref, with how many slots reference each. */
@@ -301,7 +311,14 @@ export interface Clock {
    * of `lap` of them (the bar, or cycle= bars), laid through the meter's time map. `cell` is the meter. `written`: the
    * positions as written, before a swung meter's swing (#287: where a level line is read for a note); absent when the same.
    */
-  readonly tap?: { readonly meter: string; readonly positions: readonly number[]; readonly lap: number; readonly written?: readonly number[] };
+  readonly tap?: {
+    readonly meter: string;
+    readonly positions: readonly number[];
+    readonly lap: number;
+    readonly written?: readonly number[];
+    /** A meter whose swing moves (decision 081): each step's division, in pulses, so each bar places it through its own share. */
+    readonly grids?: readonly number[];
+  };
 }
 
 /** A pitch term of an out sum. */

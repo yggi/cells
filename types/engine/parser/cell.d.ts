@@ -32,6 +32,9 @@ interface Body {
         level: string;
         table: Ref;
     } | null;
+    swingMoves: ({
+        level: string;
+    } & ParamCells) | null;
     legato: {
         level: string;
         share: number;

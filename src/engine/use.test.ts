@@ -66,7 +66,7 @@ describe('the use line, retired (#588)', () => {
 describe('the expansion', () => {
   it('reads the piece’s own lines, then the used fragment’s it doesn’t define, the piece’s winning', () => {
     // (with a card of its own: written out, a piece with none would hear the kit's unread voices, below)
-    const text = `${GROOVE}&out map=sample [&beat]\n&sd s=white hpf=900 env=&(map=adsr 0 .12 0 .05)\n`;
+    const text = `${GROOVE}&out map=sample [&beat]\n&sd note=38 s=white hpf=900 env=&(map=adsr 0 .12 0 .05)\n`;
     const r = compileSource(text, undefined, seed);
     expect(r.diagnostics).toEqual([]);
     expect(r.uses).toEqual([
@@ -83,7 +83,7 @@ describe('the expansion', () => {
     const out = expand(text, resolveSeed);
     expect(out.startsWith('&bar meter("4/4") step=100bpm\n&beat')).toBe(true);
     expect(out).not.toContain('* from gm_kit');
-    expect(out.split('\n').filter((l) => l.startsWith('&sd'))).toEqual(['&sd s=white hpf=900 env=&(map=adsr 0 .12 0 .05)']);
+    expect(out.split('\n').filter((l) => l.startsWith('&sd'))).toEqual(['&sd note=38 s=white hpf=900 env=&(map=adsr 0 .12 0 .05)']);
     expect(soundsIdentical(text, out, undefined, seed)).toBe(true);
   });
 
@@ -94,8 +94,8 @@ describe('the expansion', () => {
   });
 
   it('a used fragment may use another: its own lines win over what it uses, the piece’s over all', () => {
-    const resolve = library({ groove: '* from kit\n&beat step=8n &bd ~ &sd ~\n&sd s=white hpf=2000', kit: '&bd s=sine loop=A1\n&sd s=white' });
-    const r = compileSource('* from groove\n&bar meter("4/4") step=100bpm\n&bd s=sine loop=C2\n&out map=sample [&beat]', undefined, { resolve });
+    const resolve = library({ groove: '* from kit\n&beat step=8n &bd ~ &sd ~\n&sd note=38 s=white hpf=2000', kit: '&bd note=36 s=sine loop=A1\n&sd note=38 s=white' });
+    const r = compileSource('* from groove\n&bar meter("4/4") step=100bpm\n&bd note=36 s=sine loop=C2\n&out map=sample [&beat]', undefined, { resolve });
     expect(r.diagnostics).toEqual([]);
     expect(r.uses?.[0]).toMatchObject({ gave: ['&beat', '&sd'], overrode: ['&bd'] });
     expect(r.cells.get('sd')?.params.hpf).toBe(2000);
@@ -108,12 +108,12 @@ describe('the expansion', () => {
       [fragmentHash(KIT), KIT_NAMES.length],
       [fragmentHash(KIT), 0],
     ]);
-    const resolve = library({ twice: '* from kit\n* from kit\n&beat step=8n &bd ~', kit: '&bd s=sine loop=A1' });
+    const resolve = library({ twice: '* from kit\n* from kit\n&beat step=8n &bd ~', kit: '&bd note=36 s=sine loop=A1' });
     expect(errors('&bar meter("4/4") step=100bpm\n* from twice', resolve)).toEqual([]);
   });
 
   it('a line two used fragments give word for word is one line', () => {
-    const resolve = library({ a: '&bd s=sine loop=A1\n&x s=saw', b: '&bd  s=sine   loop=A1 # the same\n&y s=saw' });
+    const resolve = library({ a: '&bd note=36 s=sine loop=A1\n&x s=saw', b: '&bd  note=36  s=sine   loop=A1 # the same\n&y s=saw' });
     const r = compileSource('* from a\n* from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd &x &y', undefined, { resolve });
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     expect(r.uses?.map((u) => u.gave)).toEqual([
@@ -250,10 +250,10 @@ describe('the errors, each on its use line', () => {
   });
 
   it('two used fragments defining one name by different lines name it and both ids; the piece’s own line settles it', () => {
-    const resolve = library({ a: '&bd s=sine loop=A1', b: '&bd s=white' });
+    const resolve = library({ a: '&bd note=36 s=sine loop=A1', b: '&bd note=36 s=white' });
     const r = compileSource('* from a\n* from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~', undefined, { resolve });
     expect(r.diagnostics.map((d) => [d.message, d.span.line])).toEqual([['&bd is defined by "a" and by "b", by different lines: write it in the piece, or drop one use', 2]]);
-    expect(errors('* from a\n* from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~\n&bd s=sine loop=C2', resolve)).toEqual([]);
+    expect(errors('* from a\n* from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~\n&bd note=36 s=sine loop=C2', resolve)).toEqual([]);
   });
 
   it('what the compiler says of a used line is said on the use line it came through', () => {
@@ -356,7 +356,7 @@ describe('the lockfile', () => {
 
 describe('the tools keep from', () => {
   it('Normalise writes a collection’s from line its narrowest, in its order, never expanded', () => {
-    const text = '* from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh s=white cutoff=8000';
+    const text = '* from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh note=42 s=white cutoff=8000';
     const out = normalise(text, seed).source;
     // (the kit's cells the piece reads, &hh its own, #27)
     expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('* from gm_kit', '&bd, &sd from gm_kit'));

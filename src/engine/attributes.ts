@@ -128,6 +128,13 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     value: 'number',
     on: ['voice'],
   },
+  note: {
+    help: 'on a kit’s member: its MIDI note on the kit’s channel (36 a kick, 38 a snare, General MIDI’s drums: `gm_kit` writes each), a whole number 0–127; its name gives none (decision 075). A member with none takes the next free note from 36',
+    doc: 'midi.md',
+    value: 'number',
+    on: ['voice'],
+    form: 'note=n (a whole number 0–127)',
+  },
   legato: {
     help: 'on a line: each note sounds its written length (@n, _) times this share, its end swung as its onset is, Strudel’s legato (.5 staccato, 1 as written, 1.5 into the next): a number, free(), or a cell of shares read at each onset (legato=&artic); nothing cuts a note at the bar line',
     doc: 'sound.md',

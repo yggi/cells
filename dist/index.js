@@ -1,6 +1,6 @@
 export { compileSource } from "./engine/compile.js";
 export { parse, pieceMeta } from "./engine/parser/index.js";
-export { plan } from "./engine/realize.js";
+export { plan, swingOfBar } from "./engine/realize.js";
 export { windowAt } from "./engine/schedule.js";
 export { createHost, planOf } from "./engine/host.js";
 export { shorten, shortenAll } from "./engine/shorten/index.js";
@@ -51,5 +51,6 @@ export { RENAMED_IDS, wordOf } from "./engine/renamed.js";
 export { ALL_OPERATORS, createRecogniser } from "./repository/recognise.js";
 export { decompose, writtenOut } from "./repository/decompose.js";
 export { holesOf } from "./repository/holes.js";
+export { coreFragment } from "./repository/corefragment.js";
 export { fitsAs, useOn } from "./repository/fit.js";
 export { readFragment, readFragments, writeFragment } from "./repository/files.js";

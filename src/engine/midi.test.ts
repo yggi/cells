@@ -139,7 +139,7 @@ describe('kits: General MIDI drum notes by name', () => {
   });
 
   it('gives a name it does not know the next note from 36 no other member has', () => {
-    expect([...kitNotes(['down', 'bd', 'beat', 'rim', 'sub'])]).toEqual([
+    expect([...kitNotes(['down', 'bd', 'beat', 'rim', 'sub'], gmDrumNote)]).toEqual([
       ['bd', 36],
       ['rim', 37],
       ['down', 38],
@@ -149,8 +149,8 @@ describe('kits: General MIDI drum notes by name', () => {
   });
 
   it('sends a clave as General MIDI’s claves, 75, whatever else its kit holds: not the side stick, not the next free note (#140)', () => {
-    expect([...kitNotes(['claves'])]).toEqual([['claves', 75]]);
-    expect([...kitNotes(['down', 'clave', 'rs'])]).toEqual([
+    expect([...kitNotes(['claves'], gmDrumNote)]).toEqual([['claves', 75]]);
+    expect([...kitNotes(['down', 'clave', 'rs'], gmDrumNote)]).toEqual([
       ['clave', 75],
       ['rs', 37],
       ['down', 36],
@@ -159,7 +159,7 @@ describe('kits: General MIDI drum notes by name', () => {
 
   it('gives no note past 127: a member beyond it has none, and is not sent', () => {
     const names = Array.from({ length: 100 }, (_, i) => `x${String.fromCharCode(97 + (i % 26))}${Math.floor(i / 26)}y`);
-    const notes = kitNotes(names);
+    const notes = kitNotes(names, gmDrumNote);
     expect(notes.size).toBe(128 - 36);
     expect(Math.max(...notes.values())).toBe(127);
   });
@@ -277,7 +277,7 @@ describe('channels', () => {
   it('a kit transposed on a MIDI card: at its pitch on the entry channel; plain drums stay drum notes', () => {
     const card = orch + '\n&synth map=midi(3) [&theme * &orch]';
     expect(keysOf(card)).toEqual([{ name: 'lead organ', notes: ['3:60', '3:62', '3:52', '3:55'] }]);
-    const drums = '&bar scan(1 1 1 1) step=120bpm\n&bd s=sine loop=A1\n&hh s=white\n&kit &bd &hh\n&g over=&kit step=4n 0 1 0 1\n';
+    const drums = '&bar scan(1 1 1 1) step=120bpm\n&bd note=36 s=sine loop=A1\n&hh note=42 s=white\n&kit &bd &hh\n&g over=&kit step=4n 0 1 0 1\n';
     expect(keysOf(drums + '&out loop=SAMPLE_RATE map=sample [&g * .5]')[0].notes.slice(0, 2)).toEqual(['10:36', '10:42']);
     // (a pitch held under the drums transposes them: the kick (A1) a fifth up, at its pitch, on a channel of its own)
     expect(keysOf(drums + '&key step=1m 7\n&out loop=SAMPLE_RATE map=sample [&g * &key * .5]')[0].notes.slice(0, 1)).toEqual(['1:40']);

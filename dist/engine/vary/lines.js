@@ -17,7 +17,7 @@ export function pitchText(p) {
     return /^&[A-Za-z_][A-Za-z0-9_]*$/.test(inner) ? `${inner}^${p.by}` : `degree(${inner}, ${p.by})`;
 }
 export const pitchOf = (voice) => gmDrumNote(voice.slice(1)) ?? 128;
-const REST = /^~(?:!(\d+))?$/;
+const REST = /^~(?:[!@](\d+))?$/;
 const HIT = /^&([A-Za-z_][A-Za-z0-9_]*)(?::0(?::([0-9]*\.?[0-9]+))?)?(?:!(\d+))?$/;
 const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
 const SEQ = /^\[([^[\],]*)\]$/;

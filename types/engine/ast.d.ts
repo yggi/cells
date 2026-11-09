@@ -443,6 +443,8 @@ export interface CellDecl {
     readonly off: boolean;
     /** `oneshot`: a voice plays each note as long as its envelope's attack and decay, whatever its step (a drum hit). */
     readonly oneshot?: boolean;
+    /** `note=36`: a kit member's MIDI note on its kit's channel (decision 075, #560 rung 1): its name gives none. */
+    readonly drumNote?: number;
     readonly step: StepSpec | null;
     readonly map: MapSpec | null;
     /** How far each step moves a stepped table (stride=7 walks a 12-cycle in fifths). */
@@ -504,6 +506,14 @@ export interface CellDecl {
         readonly level: string;
         readonly table: Ref;
     };
+    /**
+     * A swing's share moved by cells (decision 081): `swing=8n:&lean`, `swing=8n:.5...75 * &k`, one level alone, read at each
+     * bar line and held through the bar. `swing`'s share for the level is the held one (a range's first end, a bare cell's
+     * first value: compile sets it), what a reader with no time reads.
+     */
+    readonly swingMoves?: {
+        readonly level: string;
+    } & ParamCells;
     /** legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none. */
     readonly legato?: readonly {
         readonly level: string;

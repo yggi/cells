@@ -307,6 +307,12 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
     expect(errors(piece('style=&funk..&bossa * &line'))[0]).toBeUndefined();
     expect(errors(piece('style=&funk..&bossa * &curve', '4/4', undefined, ['&curve step=1m [0,1] 1']))[0]).toMatch(/^style=a\.\.b \* &curve: a curve is a line of numbers/);
   });
+
+  it('names an unknown cell as any reference does: an end, a mix’s term, a curve (#609)', () => {
+    expect(errors(piece('style=&nowhere'))).toEqual(['Unknown cell &nowhere']);
+    expect(errors(piece('style=&funk..&nope * &none'))).toEqual(['Unknown cell &nope', 'Unknown cell &none']);
+    expect(errors(piece('style=[&funk * .5, &gone * .5]'))).toEqual(['Unknown cell &gone']);
+  });
 });
 
 describe('&style is the composer’s: a fragment reads it, and no fragment defines it (#391)', () => {

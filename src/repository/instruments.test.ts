@@ -122,8 +122,11 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
     expect(Object.entries(before).filter(([n, note]) => gmDrumNote(n) !== note)).toEqual([]);
   });
 
-  it('each name and alias sounds on its own note over MIDI out, 75 of 75', () => {
-    const voices = names.map((n) => `&${n} s=white`).join('\n');
+  it('each name and alias, written with its note=, sounds on it over MIDI out, 75 of 75; alone, a name gives none (decision 075)', () => {
+    const gm = (n: string) => GM_KIT.find((d) => d.name === n || d.aliases.includes(n))!.note;
+    // (named so and writing no note=, each is told what to write, and takes the next free note)
+    expect(played(hosted(strikes(names), names.map((n) => `&${n} s=white`).join('\n')), 80).diagnostics).toHaveLength(names.length);
+    const voices = names.map((n) => `&${n} note=${gm(n)} s=white`).join('\n');
     const { hits, diagnostics } = played(hosted(strikes(names), voices), 80);
     expect(diagnostics).toEqual([]);
     expect(hits.map((h) => h.step)).toEqual(names.map((_, i) => i));

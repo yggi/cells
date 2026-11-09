@@ -1,0 +1,3 @@
+### Added
+
+- **A swing's share may be moved by a cell** (#597, decision 081): `swing=8n:&lean` takes the cell's values as shares, and `swing=8n:.5...75 * &k` puts a cell's 0..1 on a range, its ends sliders or centre ± reach. It is one level alone. Each bar plays the share read at its bar line, held through the bar, so a cell the same meter steps can set it (`&lean step=1m .55 .67`). The meter's own steps, its taps, a note's end and the parts of a step, and the MIDI clock and export, all follow each bar's share. Read with no plan (the meter compiled), it holds a range's first end or the cell's first value. `swingOfBar(plan, meter, bar)` is exported, for a host that builds its frames from a cells meter. Nothing an existing piece plays changes.

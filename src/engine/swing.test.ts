@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { codeShifts } from './program';
-import { eventsBetween, plan } from './realize';
+import { eventsBetween, plan, swingOfBar } from './realize';
+import { toCore } from './core';
 import { migrations } from './migrate';
 
 /** Migrate's rule `rule` on a text, if it has one to offer. */
@@ -413,5 +414,76 @@ describe('a meter’s swing read from a cell (swing=&swing, #308)', () => {
       .meter!.swing!.map((l) => [l.level, l.whole, l.share]);
   it.each(['8n:2/3', '16n:.6', '8n:3/5,16n:11/20'])('swing=&swing with &swing swing=%s: the meter’s levels are swing=%s’s', (swing) => {
     expect(levels(`&bar meter("4/4") step=60bpm swing=&swing\n&swing swing=${swing}`)).toEqual(levels(`&bar meter("4/4") step=60bpm swing=${swing}`));
+  });
+});
+
+describe('a swing’s share moved by cells, read at each bar line and held through the bar (decision 081, #597)', () => {
+  const TEXT = (swing: string, more = '') =>
+    `&tempo step=120bpm\n&bar meter("4/4") step=&tempo ${swing}${more}\n&v s=tri loop=C4\n&hat step=8n 0 0 0 0 0 0 0 0\n&out map=sample [&hat * &v]`;
+  /** The hat's onsets in each of the first `bars` bars, in quarters from its downbeat (a bar of 4/4 at 120 bpm is 2 s). */
+  const bars = (text: string, n = 3) => {
+    const r = compiled(text);
+    const at = eventsBetween(plan(r, codeShifts(r)), 0, 2 * n - 1e-6).map((e) => e.at);
+    return Array.from({ length: n }, (_, b) => rounded(at.filter((t) => t >= 2 * b - 1e-9 && t < 2 * b + 2 - 1e-9).map((t) => (t - 2 * b) * 2)));
+  };
+  const straight = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5];
+  const leaning = (s: number) => [0, s, 1, 1 + s, 2, 2 + s, 3, 3 + s];
+
+  it('a bare cell gives each bar its share: its values, read at the bar line', () => {
+    expect(bars(TEXT('swing=8n:&lean', '\n&lean step=1m .5 .75'))).toEqual([straight, leaning(0.75), straight]);
+  });
+
+  it('a range scaled by a cell puts its 0..1 on the range, a ramp read where each bar starts', () => {
+    expect(bars(TEXT('swing=8n:.5..0.75 * &lean', '\n&lean map=lin step=1m 0 1'))).toEqual([straight, leaning(0.75), straight]);
+    // (centre ± reach, decision 079: .625 ± .125 is .5..0.75)
+    expect(bars(TEXT('swing=8n:.625 ± .125 * &lean', '\n&lean step=1m 0 1'))).toEqual([straight, leaning(0.75), straight]);
+  });
+
+  it('a sixteenth under the moving eighths leans with its bar, even within each swung eighth', () => {
+    const text = TEXT('swing=8n:&lean', '\n&lean step=1m .5 .75').replace('&hat step=8n 0 0 0 0 0 0 0 0', '&hat step=16n 0!16');
+    const [b0, b1] = bars(text, 2);
+    expect(b0).toEqual(rounded(Array.from({ length: 16 }, (_, i) => i / 4)));
+    expect(b1!.slice(0, 4)).toEqual([0, 0.375, 0.75, 0.875]);
+  });
+
+  it('every bar line stays where it is, whatever each bar’s share', () => {
+    const r = compiled(TEXT('swing=8n:&lean', '\n&lean step=1m .5 .9 .6 .7'));
+    const p = plan(r, codeShifts(r));
+    const downbeats = eventsBetween(p, 0, 8 - 1e-6)
+      .map((e) => e.at)
+      .filter((t) => Math.abs(t / 2 - Math.round(t / 2)) < 1e-9);
+    expect(downbeats).toEqual([0, 2, 4, 6]);
+  });
+
+  it('swingOfBar reads it, bar by bar, for a host’s frames; a meter that doesn’t move its swing has one', () => {
+    const r = compiled(TEXT('swing=8n:&lean', '\n&lean step=1m .5 .75'));
+    const p = plan(r, codeShifts(r));
+    expect([0, 1, 2].map((b) => swingOfBar(p, 'bar', b))).toEqual([[{ level: '8n', share: 0.5 }], [{ level: '8n', share: 0.75 }], [{ level: '8n', share: 0.5 }]]);
+    const still = compiled(TEXT('swing=8n:2/3'));
+    expect(swingOfBar(plan(still, codeShifts(still)), 'bar', 5)).toEqual([{ level: '8n', share: 2 / 3 }]);
+  });
+
+  it('with no time (the meter compiled, no plan), it holds a range’s first end, or a bare cell’s first value', () => {
+    expect(compiled(TEXT('swing=8n:&lean', '\n&lean step=1m .6 .75')).cells.get('bar')!.meter!.swing).toEqual([{ level: '8n', whole: 1 / 8, share: 0.6 }]);
+    expect(compiled(TEXT('swing=8n:.55..0.75 * &lean', '\n&lean step=1m 0 1')).cells.get('bar')!.meter!.swing).toEqual([{ level: '8n', whole: 1 / 8, share: 0.55 }]);
+    expect(compiled(TEXT('swing=8n:&lean', '\n&lean step=1m .6 .75')).cells.get('bar')!.params.swing).toBe(0.6);
+  });
+
+  it('says what is wrong: a share outside 0..1, several levels, a cell nobody wrote', () => {
+    expect(warnings(TEXT('swing=8n:&lean', '\n&lean step=1m .5 1.2'))).toContainEqual(expect.stringMatching(/swing=8n:&lean: a share is 0 to 1, and &lean holds 1\.2/));
+    expect(warnings(TEXT('swing=8n:.5..1.5 * &lean', '\n&lean step=1m 0 1'))).toContainEqual(expect.stringMatching(/a share's range lies within 0\.\.1/));
+    expect(warnings(TEXT('swing=8n:&lean,16n:.6', '\n&lean step=1m .5 .75'))).toContainEqual(expect.stringMatching(/a share moved by cells is one level alone/));
+    expect(warnings(TEXT('swing=8n:&nobody'))).toContainEqual(expect.stringMatching(/nobody/));
+  });
+
+  it('read from a swing alone (#308), it moves as written there', () => {
+    expect(bars(TEXT('swing=&sw', '\n&sw swing=8n:&lean\n&lean step=1m .5 .75'))).toEqual([straight, leaning(0.75), straight]);
+  });
+
+  it('toCore keeps it as written, a cell, and its core plays the same', () => {
+    const text = TEXT('swing=8n:&lean', '\n&lean step=1m .5 .75');
+    const core = toCore(text).source;
+    expect(core).toMatch(/swing=8n:&/);
+    expect(bars(core)).toEqual(bars(text));
   });
 });

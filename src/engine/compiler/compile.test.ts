@@ -136,7 +136,7 @@ describe('motifs and shifted references', () => {
   });
 
   it('a rotation is two slices (without the climb); [>>] is the shift (with it)', () => {
-    const r2 = compileSource('&bar 0 1 2 3\n&rot &bar[1:] &bar[:1]\n&sh &bar[>>]\n&back &bar[<<]');
+    const r2 = compileSource('&bar 0 1 2 3\n&rot &bar[1:] &bar[:1]\n&sh note=70 &bar[>>]\n&back &bar[<<]');
     expect(flatten(r2, 'rot', codeShifts(r2)).map((e) => e.value)).toEqual([1, 2, 3, 0]);
     expect(flatten(r2, 'sh', codeShifts(r2)).map((e) => e.value)).toEqual([1, 2, 3, 12]);
     expect(flatten(r2, 'back', codeShifts(r2)).map((e) => e.value)).toEqual([-9, 0, 1, 2]);
@@ -235,13 +235,13 @@ describe('step=, loop=, clocks and voices', () => {
   });
 
   it('kits are tables of voices: a pattern read through one is a signal, mixed as it is', () => {
-    const r = compileSource('&bd s=sine loop=55\n&sd s=white\n&kit &bd &sd\n&m step=1\n&d over=&kit step=&m 0 1\n&mix loop=SAMPLE_RATE map=sample [&d * 0.6]');
+    const r = compileSource('&bd note=36 s=sine loop=55\n&sd note=38 s=white\n&kit &bd &sd\n&m step=1\n&d over=&kit step=&m 0 1\n&mix loop=SAMPLE_RATE map=sample [&d * 0.6]');
     expect(r.diagnostics).toEqual([]);
     expect(r.cells.get('kit')!.kit).toBe(true);
     expect(r.cells.get('d')!.voice).toBe(false); // the pattern isn't a voice: it plays the kit's
     expect(r.outputs[0]).toMatchObject({ voice: 'kit', kit: true, cell: 'd', gains: [0.6, 0.6] });
     // the old form explains the new one
-    const old = compileSource('&bd s=sine loop=55\n&kit &bd\n&m step=1\n&d step=&m 0\n&mix loop=SAMPLE_RATE map=sample [&d * &kit]');
+    const old = compileSource('&bd note=36 s=sine loop=55\n&kit &bd\n&m step=1\n&d step=&m 0\n&mix loop=SAMPLE_RATE map=sample [&d * &kit]');
     expect(old.diagnostics.map((x) => x.message).join()).toMatch(/&kit is a kit, a table of voices: read a pattern through it \(&drums over=&kit\) and mix that/);
   });
 
@@ -862,14 +862,14 @@ describe('about=: a note links to the cells it explains', () => {
 
   it('a pitch shape: pitch=lo..hi * &(map=adsr …) is a drop in semitones (#30)', () => {
     const src = (bd: string) => `&m step=4\n&t step=&m 0 0\n${bd}\n&out loop=SAMPLE_RATE map=sample [&t * &bd]`;
-    const r = compileSource(src('&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)'));
+    const r = compileSource(src('&bd note=36 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)'));
     expect(r.diagnostics).toEqual([]);
     const e = eventsBetween(plan(r, codeShifts(r)), 0, 0.5)[0];
     expect(e.params?.pitch).toEqual({ kind: 'env', from: 0, peak: 30, attack: 0, decay: 0.04, sustain: 0, release: 0 });
     // a vibrato is still pitch=&cell
-    expect(compileSource(src('&bd s=sine loop=A1 pitch=&(loop=5 0 .1 -.1)')).diagnostics).toEqual([]);
+    expect(compileSource(src('&bd note=36 s=sine loop=A1 pitch=&(loop=5 0 .1 -.1)')).diagnostics).toEqual([]);
     // penv= pdec= are gone, and say what replaces them
-    expect(compileSource(src('&bd s=sine loop=A1 penv=30 pdec=.04')).diagnostics[0].message).toMatch(/penv= is gone: .* is pitch=0\.\.30 \* &\(map=adsr 0 \.04 0 0\)/);
+    expect(compileSource(src('&bd note=36 s=sine loop=A1 penv=30 pdec=.04')).diagnostics[0].message).toMatch(/penv= is gone: .* is pitch=0\.\.30 \* &\(map=adsr 0 \.04 0 0\)/);
   });
 });
 

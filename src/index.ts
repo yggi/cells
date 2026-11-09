@@ -16,13 +16,13 @@
  */
 export { compileSource } from './engine/compile';
 export { parse, pieceMeta, type PieceMeta } from './engine/parser';
-export { plan, type Plan, type Played } from './engine/realize';
+export { plan, swingOfBar, type Plan, type Played } from './engine/realize';
 export { windowAt, type Window } from './engine/schedule';
 export { createHost, planOf, type ToEngine, type FromEngine } from './engine/host';
 export { shorten, shortenAll, type ShortenOptions } from './engine/shorten';
 export { normalise } from './engine/normalise';
 export { migrate } from './engine/migrate';
-export { toCore, type Core } from './engine/core';
+export { toCore, type Core, type CoreOptions, type Interface } from './engine/core';
 export { anchorsOf, varied, variations, type Anchor, type Operator, type Variation, type VaryOptions } from './engine/vary';
 export { fold } from './engine/fold';
 export { hints, MIN_NOTES, type Hint, type RepeatHint, type Span as HintSpan, type Transform } from './engine/fold/hints';
@@ -97,5 +97,6 @@ export { RENAMED_IDS, wordOf } from './engine/renamed';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';
 export { decompose, writtenOut, type Decomposition, type DecomposeOptions, type LineNote } from './repository/decompose';
 export { holesOf, type ClockNeed, type Holes } from './repository/holes';
+export { coreFragment, type FragmentCore } from './repository/corefragment';
 export { fitsAs, useOn, type FitAs, type UseOn, type UseOnOptions } from './repository/fit';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';

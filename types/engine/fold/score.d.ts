@@ -4,6 +4,17 @@
  * (a flat piece has stock voices, so they don't compare).
  */
 export declare function bare(source: string): number;
+/**
+ * How much one piece's score may grow over its row in a ratchet's baseline (#263): a set's sum may grow by 1 %, which let
+ * one piece grow by 37 % unnoticed; 10 % a piece would have stopped the smallest of #263's regressions (+16 %).
+ */
+export declare const PIECE_GROWTH = 0.1;
+/** The pieces whose score grew by more than PIECE_GROWTH over their row, each said as `key: base → now`. */
+export declare function grown(now: Readonly<Record<string, {
+    score: number;
+}>>, base: Readonly<Record<string, {
+    score: number;
+}>>): string[];
 /** What a piece plays over [0, seconds): key and start, in order. */
 export declare function heard(source: string, seconds: number): {
     key: number;

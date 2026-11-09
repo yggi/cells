@@ -129,6 +129,7 @@ export const TIERS = [
             'generator euclid(k, n)',
             'sort signal: a pattern read through a kit',
             'parameter oneshot',
+            'parameter note',
             'modifier &x:0:gain',
             'rate step=pulse',
             'rate step=&m:16n',
@@ -434,6 +435,8 @@ export function formsUsed(source, options = {}) {
             use('line off');
         if (d.oneshot)
             use('parameter oneshot');
+        if (d.drumNote !== undefined)
+            use('parameter note');
         if ([...(compiled.sections?.values() ?? [])].includes(d.name))
             use('line &sections step=&bar &a &b');
         if (d.lambda)

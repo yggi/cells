@@ -29,9 +29,9 @@ description: A breakbeat backwards every other bar, with ratchets and hats.
 
 &breath map=lin loop=&bar/8 .15 1 .15                       # one breath, for pad and lead
 
-&bd oneshot=1 s=sine loop=A1 pitch=0..36 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)
-&sd s=white hpf=900 env=&tap
-&hh s=white hpf=9000 env=&click
+&bd note=36 oneshot=1 s=sine loop=A1 pitch=0..36 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .2 0 .05)
+&sd note=38 s=white hpf=900 env=&tap
+&hh note=42 s=white hpf=9000 env=&click
 &tick gain=.2 s=white hpf=11000 env=&(map=adsr 0 .015 0 .01)
 &bleep s=tri loop=C5 lpf=800..5000 * &breath delaytime=&bar*4/3 delay=.3 delayfeedback=.4 room=.25 env=&(map=adsr .003 .12 .3 .1)
 &saw303 s=saw loop=C2 lpf=150..2600 * &(map=adsr .002 .16 .12 .06) * &accent lpq=12 env=&strike

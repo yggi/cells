@@ -38,19 +38,19 @@ FM (`fm=` `ratio=` `index=`) and resonators (`body=` `ring=` `hard=`) are on [ph
 &lead s=saw loop=261.63 lpf=2200
 ```
 
-**A stepped braid of voices plays them:** `&groove step=16n &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh*2` is a drum pattern by name, mixed as it is (`[&groove * .6]`); a chord of voices sounds together, a subsequence squeezes them into a step (`&bd [&hh &hh]`, `[&hh ~ &hh, &bd]`), and repeats, ratchets, holds and chance work as on any step. A braid of voices without `step=` that a groove splices is a drum motif: `&fill &sd &sd*2 ~ &hh`, then `&groove step=&bar*4 &bd ~ &fill &fill[::-1]` (spliced, reversed, nested as any braid). It is the pattern below, read through a kit of its voices, without writing the kit; a braid of voices that something reads with `over=` stays that kit.
+**A stepped braid of voices plays them:** `&groove step=16n &bd ~ &hh ~ [&bd,&sd] ~ &hh &hh*2` is a drum pattern by name, mixed as it is (`[&groove * .6]`); a chord of voices sounds together, a subsequence squeezes them into a step (`&bd note=36 [&hh &hh]`, `[&hh ~ &hh, &bd]`), and repeats, ratchets, holds and chance work as on any step. A braid of voices without `step=` that a groove splices is a drum motif: `&fill &sd &sd*2 ~ &hh`, then `&groove step=&bar*4 &bd ~ &fill &fill[::-1]` (spliced, reversed, nested as any braid). It is the pattern below, read through a kit of its voices, without writing the kit; a braid of voices that something reads with `over=` stays that kit.
 
 ```cells
 &bar meter("4/4") step=&tempo
 &tempo step=120bpm
-&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
-&sd s=white hpf=1500 env=&(map=adsr 0 .12 0 .04)
-&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&bd note=36 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .3 0 .05)
+&sd note=38 s=white hpf=1500 env=&(map=adsr 0 .12 0 .04)
+&hh note=42 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &groove step=8n &bd &hh [&bd,&sd] &hh &bd &bd [&hh,&sd] &hh*2
 &out map=sample [&groove * .6]
 ```
 
-A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=8n 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. A kit read only selects: in a product with a pitch, the pitch transposes the member picked, and a clock's varispeed bends it ([mix.md](mix.md#the-algebra-of-a-mix), [decision 029](https://github.com/yggi/cells/blob/main/docs/decisions/029-kits-pass-pitch.md)). Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it. Each member brings its own balance too: **`gain=` on a voice** is its own gain (dough's `gain`, linear), times every gain it is played at (1 by default), so `&bd gain=.8` and `&sd gain=.4` in one kit play as `[&kick * &bd * .8, &snare * &sd * .4]` did, a pattern a drum.
+A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a pattern read through it, `&drums over=&kit step=8n 0 2 1 2`, is a signal — mix it as it is, `[&drums * 0.6]`; its numbers pick the drum. A kit read only selects: in a product with a pitch, the pitch transposes the member picked, and a clock's varispeed bends it ([mix.md](mix.md#the-algebra-of-a-mix), [decision 029](https://github.com/yggi/cells/blob/main/docs/decisions/029-kits-pass-pitch.md)). Each member brings its own `env=` (a kick's long decay, a hat's short one); an envelope in the product (`[&env * &drums]`) wins over it. Each member brings its own balance too: **`gain=` on a voice** is its own gain (dough's `gain`, linear), times every gain it is played at (1 by default), so `&bd note=36 gain=.8` and `&sd note=38 gain=.4` in one kit play as `[&kick * &bd * .8, &snare * &sd * .4]` did, a pattern a drum.
 
 **`oneshot=1`** on a voice makes it a hit (a voice's parameter, decision 068; the bare word `oneshot`, the old way, still reads and warns, and Migrate writes it `oneshot=1`): each note plays its envelope through (its attack and decay), whatever its step, as a drum machine's does. Without it a note lasts its step, so a kick with a .3 s decay on a grid of .125 s eighths is cut short; with it, kicks and hats can share one fine grid (`&beat step=&bar*2 &bd &hh [&bd,&cp] &hh`) and the kick still rings. It is opt-in: a voice without it plays as before.
 
@@ -75,8 +75,8 @@ A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a p
 ```cells
 &bar meter("4/4") step=&tempo
 &tempo step=120bpm
-&bd oneshot=1 s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)
-&hh oneshot=1 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&bd note=36 oneshot=1 s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)
+&hh note=42 oneshot=1 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &beat step=8n &bd &hh &bd &hh
 &out map=sample [&beat * .6]
 ```
@@ -96,7 +96,7 @@ A sound parameter can be a range times cells, so it moves with the music: `lpf=1
 &fenv map=adsr .003 .18 .1 .06
 &knob map=lin loop=&bar/16 .2 1 .35 .2
 &res map=lin loop=&bar/32 6 19 6
-&tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35
+&tb303 note=54 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35
 ```
 
 ## Envelopes: env= and pitch=
@@ -135,7 +135,7 @@ Written in place they hang as petals of the voice; named, one envelope serves se
 **A pitch shape** is written the way moving parameters are (below): a range in semitones scaled by an envelope, `pitch=lo..hi * &(map=adsr …)`. Each note's pitch follows the envelope from `lo` to `hi` and back, in seconds, whatever the note's length. With no attack it starts at the top: a drop, the click of a kick drum.
 
 ```cells
-&bd s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
+&bd note=36 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
 ```
 
 ## Volume streams

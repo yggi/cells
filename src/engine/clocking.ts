@@ -10,7 +10,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from './he
 import { footOf, leaves, slots, type Laps } from './subseq';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
 import { mod } from '../theory/modes';
-import { stepsPerPulse, swingAt, swungKnots, swungPlace, writtenPlace, type Meter } from './meter';
+import { stepsPerPulse, swingAt, swungKnots, swungPlace, swungSteps, writtenPlace, type Meter, type SwingLevel } from './meter';
 
 export const EPS = 1e-9;
 
@@ -46,22 +46,23 @@ export function timeMap(result: CompileResult, clock: Clock, shifts: Shifts): Ti
  * A meter's own steps under its swing (#18): step i of each bar where `swung` puts it, in its steps, laid through the
  * meter's map as it would be unswung; fractional steps interpolate between them.
  */
-function swungMap(swung: readonly number[], inner: TimeMap): TimeMap {
+function swungMap(swung: readonly number[], inner: TimeMap, ofBar?: (bar: number) => readonly number[]): TimeMap {
   const k = Math.max(1, swung.length);
-  const at = (i: number) => (i < k ? swung[i] : k);
+  // (a swing moved by cells, decision 081: each bar its own steps, the bar's share read at its line)
+  const at = (i: number, b: number) => (i < k ? (ofBar ? ofBar(b) : swung)[i]! : k);
   const S = (s: number) => {
     const j = Math.floor(s);
     const b = Math.floor(j / k);
     const i = j - b * k;
-    return b * k + at(i) + (s - j) * (at(i + 1) - at(i));
+    return b * k + at(i, b) + (s - j) * (at(i + 1, b) - at(i, b));
   };
   const back = (x: number) => {
     const b = Math.floor(x / k);
     const r = x - b * k;
     let i = 0;
-    while (i + 1 < k && at(i + 1) <= r) i++;
-    const span = at(i + 1) - at(i);
-    return b * k + i + (span > 0 ? (r - at(i)) / span : 0);
+    while (i + 1 < k && at(i + 1, b) <= r) i++;
+    const span = at(i + 1, b) - at(i, b);
+    return b * k + i + (span > 0 ? (r - at(i, b)) / span : 0);
   };
   return { beats: inner.beats, q: (s) => inner.q(S(s)), stepAt: (t) => back(inner.stepAt(t)), ...(inner.speed ? { speed: inner.speed } : {}) };
 }
@@ -158,14 +159,17 @@ interface Swung {
   /** The finest division the swing leans, in the meter's steps (an eighth of `meter("4/4")`: 0.5). */
   readonly grain: number;
 }
-function swungMeter(result: CompileResult, meter: string): Swung | null {
+function swungMeter(result: CompileResult, meter: string, ofBar?: (bar: number) => Meter): Swung | null {
   const m: Meter | undefined = result.cells.get(meter)?.meter ?? undefined;
   const knots = m ? swungKnots(m) : null;
   if (!m || !knots) return null;
   const per = stepsPerPulse(m);
+  // (a swing moved by cells, decision 081: a place through its own bar's meter, the bar lines where they are)
+  const K = Math.max(1, m.levels.length);
+  const at$ = (x: number) => (ofBar ? ofBar(Math.floor(x / K + 1e-9)) : m);
   // (the meter's own continuous placement, in its steps: meter.ts's `swungPlace` and its inverse)
-  const S = (w: number) => swungPlace(m, w / per) * per;
-  const W = (s: number) => writtenPlace(m, s / per) * per;
+  const S = (w: number) => swungPlace(at$(w), w / per) * per;
+  const W = (s: number) => writtenPlace(at$(s), s / per) * per;
   // (a division the tree holds, the finest level that leans halved or doubled, is placed continuously: a quarter's end
   //  under swung eighths where #120 puts it; any other, as a tap of it: a triplet's thirds even in the beat)
   const finest = Math.min(...m.swing!.map((l) => l.whole * m.unit));
@@ -173,7 +177,70 @@ function swungMeter(result: CompileResult, meter: string): Swung | null {
     const k = Math.log2(grid / per / finest);
     return Math.abs(k - Math.round(k)) < 1e-9;
   };
-  return { S, W, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per), grain: finest * per };
+  return { S, W, at: (w, grid) => (held(grid) ? S(w) : swingAt(at$(w), w / per, grid / per) * per), grain: finest * per };
+}
+
+/**
+ * A tap of a meter whose swing moves by cells (decision 081): as `swungTapMap`, each lap's steps placed through the meters
+ * of the bars they fall in (`pAt`, a lap's step, from where it is written and its division, as compile placed a held one),
+ * every place read whole, over the laps (`S`). Its bar lines are where they are, whatever each bar's share.
+ */
+function movingTapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap, { S, at }: Swung, place: (w: number, grid: number) => number): TimeMap {
+  const { positions, lap } = tap;
+  const written = tap.written ?? positions;
+  const grids = tap.grids ?? [];
+  const k = Math.max(1, positions.length);
+  const wAt = (i: number) => (i < k ? written[i]! : lap);
+  const pAt = (b: number, i: number) => (i < k ? place(b * lap + wAt(i), grids[i] ?? 0) - b * lap : lap);
+  const meterStep = (j: number, grid?: number) => {
+    const n = Math.floor(j);
+    const b = Math.floor(n / k);
+    const i = n - b * k;
+    if (j === n) return b * lap + pAt(b, i);
+    const w = b * lap + wAt(i) + (j - n) * (wAt(i + 1) - wAt(i));
+    return grid !== undefined && grid > 0 ? at(w, grid * (wAt(i + 1) - wAt(i))) : S(w);
+  };
+  const stepAt = (t: number) => {
+    const x = meter.stepAt(t);
+    const b = Math.floor(x / lap);
+    const r = x - b * lap;
+    let i = 0;
+    while (i + 1 < k && pAt(b, i + 1) <= r) i++;
+    const w0 = b * lap + wAt(i);
+    const w1 = b * lap + wAt(i + 1);
+    if (w1 <= w0 || r <= pAt(b, i)) return b * k + i;
+    let lo = 0;
+    let hi = 1;
+    for (let it = 0; it < 52; it++) {
+      const mid = (lo + hi) / 2;
+      if (S(w0 + mid * (w1 - w0)) - b * lap <= r) lo = mid;
+      else hi = mid;
+    }
+    return b * k + i + lo;
+  };
+  return { beats: k, q: (j, grid) => meter.q(meterStep(j, grid)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
+}
+
+/**
+ * A reader of a moving swing's share at a time (decision 081): a plan's (`realize.ts`), its cells read as a moving
+ * parameter's are; NaN where it reads nothing. With none, a clock holds the share the meter was compiled with.
+ */
+export type ShareReader = (meter: string, seconds: number) => number;
+const readers = new WeakMap<CompileResult, WeakMap<Shifts, ShareReader>>();
+/** Each moving meter's bars, read once: the meter each bar plays (its share in it), by program and shifts. */
+const barMeters = new WeakMap<CompileResult, WeakMap<Shifts, Map<string, Map<number, Meter>>>>();
+/** A moving meter at each share it plays (its knots built once each). */
+const sharedMeters = new WeakMap<Meter, Map<number, Meter>>();
+// (while one bar's share is read, any other a reading reaches holds its compiled share: exact at the bar's line, decision 081 §3)
+let readingShare = false;
+
+/** A plan hands the clocks its reader of moving swings (decision 081); the maps built before it are forgotten. */
+export function readSharesBy(result: CompileResult, statics: Shifts, read: ShareReader): void {
+  let byShifts = readers.get(result);
+  if (!byShifts) readers.set(result, (byShifts = new WeakMap()));
+  byShifts.set(statics, read);
+  built.get(result)?.delete(statics);
+  barMeters.get(result)?.delete(statics);
 }
 
 /**
@@ -282,6 +349,8 @@ export interface Clocking {
    * export; a clock that doesn't swing is its map.
    */
   played(clock: string): TimeMap & { readonly grain?: number };
+  /** A meter's swing in a bar (decision 081): its levels, each bar's share where a cell moves it; null where it doesn't swing. */
+  swingOf(meter: string, bar: number): readonly SwingLevel[] | null;
 }
 
 const belts = new WeakMap<CompileResult, Map<string, Warp>>();
@@ -291,6 +360,7 @@ const built = new WeakMap<CompileResult, WeakMap<Shifts, Map<string, TimeMap>>>(
 onReset((r) => {
   belts.delete(r);
   built.delete(r);
+  barMeters.delete(r);
 });
 
 /**
@@ -320,13 +390,65 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
   if (!byShifts) built.set(result, (byShifts = new WeakMap()));
   const maps = byShifts.get(statics) ?? new Map<string, TimeMap>();
   byShifts.set(statics, maps);
+  const reader = readers.get(result)?.get(statics);
+  // a meter whose swing moves by cells (decision 081): the meter each bar plays, its share read at the bar's line
+  const ofBar = (meter: string): ((bar: number) => Meter) | undefined => {
+    const c = result.cells.get(meter);
+    const mv = c?.swingMoves;
+    const m = c?.meter;
+    if (!mv || !m?.swing || !reader) return undefined;
+    let byShifts = barMeters.get(result);
+    if (!byShifts) barMeters.set(result, (byShifts = new WeakMap()));
+    let byMeter = byShifts.get(statics);
+    if (!byMeter) byShifts.set(statics, (byMeter = new Map()));
+    let bars = byMeter.get(meter);
+    if (!bars) byMeter.set(meter, (bars = new Map()));
+    const known = bars;
+    // (one meter for each share, so its knots are built once: meter.ts keeps them by meter)
+    let byShare = sharedMeters.get(m);
+    if (!byShare) sharedMeters.set(m, (byShare = new Map()));
+    const shares = byShare;
+    const K = Math.max(1, m.levels.length);
+    return (bar) => {
+      const got = known.get(bar);
+      if (got) return got;
+      if (bar < 0 || readingShare) return m;
+      readingShare = true;
+      let read: number;
+      try {
+        read = reader(meter, base(meter).q(bar * K));
+      } finally {
+        readingShare = false;
+      }
+      // (within the bounds every share is held to, as a list's swing is: .05 to .95)
+      const share = Number.isFinite(read) ? Math.min(0.95, Math.max(0.05, Math.round(read * 1e9) / 1e9)) : null;
+      let mb = share === null ? m : shares.get(share);
+      if (!mb) shares.set(share!, (mb = { ...m, swing: m.swing!.map((l) => (l.level === mv.level ? { ...l, share: share! } : l)) }));
+      known.set(bar, mb);
+      return mb;
+    };
+  };
   const map = (clock: string): TimeMap => {
     let m = maps.get(clock);
     if (!m) {
       const info = result.clocks.get(clock)!;
+      const moving = ofBar(info.tap?.meter ?? clock);
+      if (info.tap && moving) {
+        // a tap of a meter whose swing moves (decision 081): each bar's steps placed through that bar's meter
+        const meter = result.cells.get(info.tap.meter)!.meter!;
+        const per = stepsPerPulse(meter);
+        const K = Math.max(1, meter.levels.length);
+        const place = (w: number, grid: number) => swingAt(moving(Math.floor(w / K + 1e-9)), w / per, grid) * per;
+        const sw = swungMeter(result, info.tap.meter, moving);
+        m = sw ? movingTapMap(info.tap, base(info.tap.meter), sw, place) : tapMap(info.tap, base(info.tap.meter), null);
+      }
       // a tap: through its meter's map as the meter moves (physics and all), unswung: its positions carry the swing (#18)
-      if (info.tap) m = tapMap(info.tap, base(info.tap.meter), swungMeter(result, info.tap.meter));
-      else m = info.swung ? swungMap(info.swung, base(clock)) : base(clock);
+      else if (info.tap) m = tapMap(info.tap, base(info.tap.meter), swungMeter(result, info.tap.meter));
+      else if (moving) {
+        const meter = result.cells.get(clock)!.meter!;
+        const straight = meter.levels.map((_, i) => i);
+        m = swungMap(straight, base(clock), (b) => swungSteps(moving(b)) ?? straight);
+      } else m = info.swung ? swungMap(info.swung, base(clock)) : base(clock);
       maps.set(clock, m);
     }
     return m;
@@ -373,7 +495,7 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
     return m;
   };
   const played = (clock: string): TimeMap & { readonly grain?: number } => {
-    const sw = result.clocks.get(clock)?.tap ? null : swungMeter(result, clock);
+    const sw = result.clocks.get(clock)?.tap ? null : swungMeter(result, clock, ofBar(clock));
     if (!sw) return map(clock);
     let m = maps.get(`${clock}\0played`);
     if (!m) {
@@ -383,7 +505,11 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
     }
     return { ...m, q: m.q, stepAt: m.stepAt, grain: sw.grain };
   };
-  return { map, written, played, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
+  const swingOf = (meter: string, bar: number) => {
+    const moving = ofBar(meter);
+    return (moving ? moving(bar) : result.cells.get(meter)?.meter)?.swing ?? null;
+  };
+  return { map, written, played, swingOf, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
 
 /**

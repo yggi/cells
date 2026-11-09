@@ -80,6 +80,7 @@ function meets(result, { need, tap }) {
     return !!meter && meterMeets(need, meter, tap);
 }
 const unknownCells = (result) => result.unknown.map((u) => `&${u.name}`);
+const STAND_IN_SAID = /^(&\w+) (?:is only on a MIDI card: its sound|is named as General MIDI's drum)/;
 const sameDiagnostic = (a, b) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
 function fitByName(fragment, workbench, compiledBy, resolve) {
     const compiled = compiledBy ?? ((text) => compileSource(text, undefined, resolve ? { resolve } : {}));
@@ -116,7 +117,7 @@ function fitByName(fragment, workbench, compiledBy, resolve) {
     const before = [...benchResult.diagnostics];
     const standNames = new Set([...sounds, ...benchStand.map((l) => l.split(' ')[0])].map((n) => (n.startsWith('&') ? n : `&${n}`)));
     const diagnostics = result.diagnostics.filter((d) => {
-        const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
+        const m = STAND_IN_SAID.exec(d.message);
         if (m && standNames.has(m[1]))
             return false;
         const i = before.findIndex((b) => sameDiagnostic(b, d));
@@ -182,7 +183,8 @@ function newDiagnostics(result, before) {
 }
 function mainOn(bench, id, heads, args, compiled, stand) {
     const alone = compiled([bench, ...stand].join('\n'));
-    const meets = (cell) => !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).length;
+    const standNames = new Set(stand.map((l) => l.split(' ')[0]));
+    const meets = (cell) => !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter((d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? '')).length;
     const offers = parse(bench).offers;
     const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
     const meeting = [];
@@ -251,7 +253,7 @@ export function fitsAs(id, bench, options) {
     const result = compiled(judged);
     const standNames = new Set(sounds);
     const diagnostics = newDiagnostics(result, compiled([bench, ...stand].join('\n')).diagnostics).filter((d) => {
-        const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
+        const m = STAND_IN_SAID.exec(d.message);
         return !(m && standNames.has(m[1]));
     });
     const gave = new Set((use.used?.gave ?? []).map((n) => n.slice(1)));

@@ -19,6 +19,12 @@ export function bare(source) {
         .filter((l) => l && !sound.has(/^&(\w+)/.exec(l)?.[1] ?? ''))
         .join('\n').length;
 }
+export const PIECE_GROWTH = 0.1;
+export function grown(now, base) {
+    return Object.entries(now)
+        .filter(([k, r]) => base[k] !== undefined && r.score > (1 + PIECE_GROWTH) * base[k].score)
+        .map(([k, r]) => `${k}: ${base[k].score} → ${r.score}`);
+}
 export function heard(source, seconds) {
     const r = compileSource(source);
     const p = plan(r, codeShifts(r), r.off);

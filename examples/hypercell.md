@@ -29,9 +29,9 @@ description: "90s happy hardcore and eurodance, an original: three minutes of eu
 &lift tags="rise" step=&riseBar/32 0
 &up tags="rise" map=lin loop=&bar/32 0 .2 .45 1 0
 
-&bd tags="drums" gain=.8 oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .05 0 0) distort=.2 env=&thump
-&hh tags="drums" gain=.2 s=white hpf=8000 env=&click
-&cp tags="drums" gain=.35 oneshot=1 s=white hpf=1400 room=.2 env=&snap
+&bd note=36 tags="drums" gain=.8 oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .05 0 0) distort=.2 env=&thump
+&hh note=42 tags="drums" gain=.2 s=white hpf=8000 env=&click
+&cp note=39 tags="drums" gain=.35 oneshot=1 s=white hpf=1400 room=.2 env=&snap
 &sn tags="drums" gain=.25 s=white hpf=900 env=&tap
 &bass tags="bass" s=saw loop=C2 lpf=900 lpq=4 env=&strike
 &stab tags="synths" s=square loop=C4 lpf=2800 room=.25 env=&(map=adsr .002 .14 .1 .1)

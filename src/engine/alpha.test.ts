@@ -73,13 +73,12 @@ const written = FAMILIES.find((f) => f.key === 'from')!.rewrite;
 const FEEL = ['clock', 'voice', 'effects', 'variations', 'midi-out', 'idm', 'cellscape', 'electroswing', 'spooky', 'kinderlied', 'soundtape', 'radio', 'circle'];
 
 /**
- * Where renaming still changes what a piece is (#387's blockers). Written in, a name alone means something only where
- * the language gives it a meaning of its own: the feel's parts and roles (`FEEL`), and a drum's name, its note on a MIDI
- * card (decision 054): `&bd` sends 36, `&zq3` nothing.
+ * Where renaming still changes what a piece is (#560). Written in, a name alone means something only where the language
+ * gives it a meaning of its own: the feel's parts and roles (`FEEL`). A drum's note is its `note=` since #560's rung 1,
+ * so `&bd note=36` renamed sends 36 still.
  */
 const WRITTEN_IN: Readonly<Record<string, readonly string[]>> = {
   ...Object.fromEntries(FEEL.map((k) => [k, ['feel']])),
-  'midi-out': ['sound', 'feel'],
 };
 
 /**

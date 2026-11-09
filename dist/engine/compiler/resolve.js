@@ -3,6 +3,7 @@ import { isNote } from "../ast.js";
 import { footOf, innerSteps, leaves } from "../subseq.js";
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps } from "../program.js";
 import { VOICE_PARAMS } from "../attributes.js";
+import { gmDrumNote } from "../midi.js";
 import { scan as scanOf } from "../../theory/modes.js";
 import { beatCount, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel } from "../meter.js";
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from "./tables.js";
@@ -22,11 +23,11 @@ function meterOf(d) {
     const felt = beaten && d.legato ? { ...beaten, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level) }])) } : beaten;
     if (!felt || typeof params.swing !== 'number')
         return felt;
-    const levels = d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }];
-    return withSwing(felt, levels.flatMap((l) => {
+    const levels = (d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }]).flatMap((l) => {
         const whole = noteValue(l.level);
         return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
-    }));
+    });
+    return d.swingMoves && levels.length ? { ...felt, swing: levels } : withSwing(felt, levels);
 }
 function bentOf(d, warn, declOf) {
     const m = meterOf(d);
@@ -155,6 +156,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(d.base ? { base: { name: d.base.name, ...(d.base.transpose ? { transpose: d.base.transpose } : {}), ...(d.base.degree ? { degree: d.base.degree } : {}) } } : {}),
             beat: stepsPerBeat(meterOf(d)),
             meter: meterOf(d),
+            ...(d.swingMoves ? { swingMoves: { level: d.swingMoves.level, range: d.swingMoves.range, factors: d.swingMoves.factors.map((f) => f.name) } } : {}),
             label: d.label ?? null,
             note: isNote(d),
             env: d.env?.name ?? null,
@@ -167,6 +169,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(d.tonic ? { tonic: d.tonic.name } : {}),
             off: d.off,
             oneshot: !!d.oneshot,
+            ...(d.drumNote !== undefined ? { drumNote: d.drumNote } : ctx.parsed.old && gmDrumNote(d.name) !== null ? { drumNote: gmDrumNote(d.name) } : {}),
             glide: typeof d.params.glide === 'number' && d.params.glide > 0 ? d.params.glide : 0,
             children,
             steps,

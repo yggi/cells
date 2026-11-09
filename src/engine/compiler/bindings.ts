@@ -1,5 +1,5 @@
 /** Phase 3: who plays what — kits, the sound card's channels, MIDI cards' channels, mixes expanded (instruments, sends), voices marked. */
-import type { Binding, CellDecl, Span } from '../ast';
+import type { Binding, CellDecl, Ref, Span, StylePoint, StyleSpec } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
 import { ATTRIBUTES, memberParams, VOICE_PARAMS } from '../attributes';
 import { canonicalTag, TUTORIAL } from '../tags';
@@ -231,6 +231,8 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     if (c.map?.kind === 'table' && !decls.has(c.map.table)) unknownCell(c.map.table, d.map!.span);
     // (a base= the parser couldn't resolve names no cell: parser/base.ts left it here to be said once, as any unknown)
     if (d.base && !decls.has(d.base.name)) unknownCell(d.base.name, d.base.span);
+    // (a style= that names no cell: styles.ts skips it, and it is said here, once, as any unknown)
+    if (d.style) for (const r of styleRefs(d.style)) if (!decls.has(r.name)) unknownCell(r.name, r.span);
     if (d.about) {
       if (!c.note) error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
       for (const r of d.about) if (!decls.has(r.name)) unknownCell(r.name, r.span);
@@ -271,3 +273,9 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   return { cells: cells as Cells, sinks, cards, bindings, soundHead, playings: playings as ReadonlyMap<string, readonly (readonly string[])[]> };
 }
 export type Bound = ReturnType<typeof bindVoices>;
+
+/** The cells a style= names: its ends' cells (or their mixes' terms), and its curve. */
+function styleRefs(s: StyleSpec): Ref[] {
+  const of = (p: StylePoint): Ref[] => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref));
+  return [...of(s.from), ...(s.to ? of(s.to) : []), ...(s.curve ? [s.curve] : [])];
+}

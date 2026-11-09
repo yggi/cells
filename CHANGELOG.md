@@ -10,6 +10,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.21.1 — 2026-11-09
+
+### Added
+
+- **`bend=4n:&table`: a meter's level bent by a table** (decision 080; #566). The nodes of the level named by note value take the table's numbers as their relative lengths, in turn, the bar as long as before:
+  - `&bar meter("*.-.+.-.") step=90bpm bend=4n:&rubato` with `&rubato 27 23 26 24` is a bent 4/4, its eighths leaning within each beat and tapped by level, which no form wrote before;
+  - a table longer than the bar spans bars, a tempo map;
+  - a swing composes with it.
+- **`styleAt(text, seconds)`: the style a piece plays at a time** (#576 rung 5): a point, one value per axis, each as a voice reading `&style[axis]` reads it then: a held axis, a moving one (a line, a sum of cells, a window of sliders), a mix of styles, a range gliding over the piece; the centre where no line writes `&style`. `{ cell }` reads another style cell; `resolve` and `env` pass through. Jambot reads a radio score so at each section's start. `Plan` gains `seriesOf(cell)`, a cell's values as a moving parameter reads them. Nothing plays differently.
+
+### Changed
+
+- **A meter scan is the sugar of a meter bent** (decision 080). `scan(27 23 26 24) step=r` is `meter("++++") step=r bend=4n:&(27 23 26 24)`. With `pulse=16n` the bar is one beat and the bend spans what the scan held, `laps=` counting the beats (BWV 847's tempo map). `toCore` writes all 19 examples' meter scans so, each S1-exact, but Royal's, a scan walked as a table by `step=cycle(…)`. A scan that is a table too gets its table as a cell of its own. A scan stays in the language as written; nothing migrates, and nothing a piece plays changes.
+
 ## v0.21.0 — 2026-11-08
 
 ### Added

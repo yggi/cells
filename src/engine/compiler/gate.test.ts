@@ -7,9 +7,9 @@ import { channelTable, router, routesOf } from '../midi';
 
 const BASE = `&bar scan(1 1 1 1) step=120bpm
 &major scale(major)
-&bd s=sine loop=C2
-&sd s=white
-&hh s=white hpf=6000
+&bd note=36 s=sine loop=C2
+&sd note=38 s=white
+&hh note=42 s=white hpf=6000
 &kit &bd &sd &hh
 &lead s=tri loop=C5
 &bell s=sine loop=C6
@@ -217,7 +217,7 @@ describe("a gate is a performer (decision 058), its role a role cell's (decision
 
 // #287: a gate plays a stack of lines, each as if it were its one line, so each keeps its own name in what sounds
 describe('a gate plays a stack of lines', () => {
-  const two = '&lo over=&major step=8n 0 2\n&hi over=&major step=4n 4 7\n';
+  const two = '&lo note=41 over=&major step=8n 0 2\n&hi note=48 over=&major step=4n 4 7\n';
   const lines = two + '&both [&lo, &hi]\n';
   const ids = (src: string) => compileSource(BASE + src).outputs.map((o) => o.id.split(':').slice(0, 2).join(':'));
 
@@ -238,10 +238,10 @@ describe('a gate plays a stack of lines', () => {
   });
 
   it('a kit plays lines of numbers and lines of its voices alike, each by its own name', () => {
-    const numbers = '&kick step=8n 0 ~ 0 ~\n&hat step=16n 2\n&beat [&kick, &hat]\n&drums play=&beat &kit\n&out map=sample &drums';
-    expect(played(numbers)).toEqual(played('&kick over=&kit step=8n 0 ~ 0 ~\n&hat over=&kit step=16n 2\n&out map=sample [&kick, &hat]'));
-    const voices = '&kick step=8n &bd ~ &bd ~\n&hat step=16n &hh:0:.4\n&beat [&kick, &hat]\n&drums play=&beat &kit\n&out map=sample &drums';
-    expect(played(voices)).toEqual(played('&kick step=8n &bd ~ &bd ~\n&hat step=16n &hh:0:.4\n&out map=sample [&kick, &hat]'));
+    const numbers = '&kick note=36 step=8n 0 ~ 0 ~\n&hat step=16n 2\n&beat [&kick, &hat]\n&drums play=&beat &kit\n&out map=sample &drums';
+    expect(played(numbers)).toEqual(played('&kick note=36 over=&kit step=8n 0 ~ 0 ~\n&hat over=&kit step=16n 2\n&out map=sample [&kick, &hat]'));
+    const voices = '&kick note=36 step=8n &bd ~ &bd ~\n&hat step=16n &hh:0:.4\n&beat [&kick, &hat]\n&drums play=&beat &kit\n&out map=sample &drums';
+    expect(played(voices)).toEqual(played('&kick note=36 step=8n &bd ~ &bd ~\n&hat step=16n &hh:0:.4\n&out map=sample [&kick, &hat]'));
     expect(compileSource(BASE + voices).outputs.map((o) => o.id.split(':').slice(0, 3).join(':'))).toEqual(['kit:voices:kick', 'kit:voices:hat']);
   });
 

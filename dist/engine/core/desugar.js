@@ -90,7 +90,13 @@ export const FAMILIES = [
     {
         key: 'repeats',
         rows: '21 `x!n`',
-        rewrite: (text) => tokenWise(text, (tok, cell) => (unitRead(text).has(cell) ? tok : repeated(tok))),
+        rewrite: (text) => {
+            const read = unitRead(text);
+            for (const d of parse(text).cells)
+                if (d.cycle !== null)
+                    read.add(d.name);
+            return tokenWise(text, (tok, cell) => (read.has(cell) ? tok : repeated(tok)));
+        },
     },
     {
         key: 'scans',
@@ -108,7 +114,7 @@ export const FAMILIES = [
     {
         key: 'copies',
         rows: '79 `base=` (a copy that writes no braid of its own)',
-        rewrite: (text) => copies(text),
+        rewrite: (text, options) => copies(text, options.keep),
     },
     {
         key: 'keys',
@@ -319,7 +325,7 @@ function copySteps(text, options) {
         const copy = declWords(now, d.name);
         const head = copy?.attrs.find((a) => a.startsWith('base='));
         const m = head ? /^base=&([A-Za-z_][A-Za-z0-9_]*)(?:\^\$(-?[0-9]+))?$/.exec(head) : null;
-        if (!copy || !m || copy.attrs.some((a) => !/^(base|tags)=/.test(a)))
+        if (!copy || !m || copy.attrs.some((a) => !/^(base|tags)=/.test(a)) || options.keep?.has(m[1]))
             continue;
         const base = declWords(now, m[1]);
         if (!base || base.attrs.some((a) => !/^tags=/.test(a)))
@@ -482,10 +488,10 @@ function chains(code) {
         return `${head}${chainOf(k)}`;
     });
 }
-function copies(text) {
+function copies(text, keep = new Set()) {
     let now = text;
     for (const d of parse(text).cells) {
-        if (!d.base || d.base.pick || d.base.shift)
+        if (!d.base || d.base.pick || d.base.shift || keep.has(d.base.name))
             continue;
         const own = declWords(now, d.name);
         const base = declWords(now, d.base.name);

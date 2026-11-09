@@ -35,6 +35,7 @@ describe('changelog check', () => {
   it.each([
     ['no heading', '- **A thing**: what it does.\n', 'its first line is no section heading'],
     ['an unknown heading', '### Improved\n- **A thing**: what it does.\n', '"### Improved" is no section the changelog has'],
+    ['an unknown second heading', '### Added\n- **A thing**.\n### Improved\n- **Another**.\n', '"### Improved" is no section the changelog has'],
     ['a heading of another level', '## Added\n- **A thing**: what it does.\n', 'its first line is no section heading'],
     ['no bullet', '### Fixed\n\nA thing works.\n', 'no bullet'],
   ])('fails an entry with %s, and names it', (_, text, says) => {
@@ -74,6 +75,21 @@ describe('changelog gather', () => {
         released,
     );
     expect(readdirSync(join(dir, 'changes'))).toEqual(['README.md']);
+  });
+
+  it('files an entry of two sections each part under its own heading (#568)', () => {
+    const dir = repository({
+      'CHANGELOG.md': `${intro}## Unreleased\n\n${POINTER}\n\n${released}`,
+      'changes/5.md': '### Added\n\n- **Five, added**.\n\n### Changed\n\n- **Five, changed**.\n',
+      'changes/6.md': '### Changed\n\n- **Six, changed**.\n',
+    });
+    const result = run(dir, 'gather', 'v0.2.0', '2026-11-05');
+    expect(result.status, result.stderr).toBe(0);
+    expect(readFileSync(join(dir, 'CHANGELOG.md'), 'utf8')).toBe(
+      `${intro}## Unreleased\n\n${POINTER}\n\n## v0.2.0 — 2026-11-05\n\n` +
+        '### Added\n\n- **Five, added**.\n\n### Changed\n\n- **Five, changed**.\n\n- **Six, changed**.\n\n' +
+        released,
+    );
   });
 
   it("keeps a changelog's tight spacing, a preamble Unreleased held, a heading of its own, and drops a line saying nothing changed", () => {
