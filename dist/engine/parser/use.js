@@ -50,7 +50,8 @@ function listIn(text) {
     }
     return out.length === 1 && out[0] === '' ? [] : out;
 }
-const LEFT = new RegExp(`^\\s*(\\*|${NAME}(?:\\s*,\\s*${NAME})*)(?=\\s|$)`);
+const TAKEN = `${NAME}(?:=[A-Za-z_][A-Za-z0-9_]*)?`;
+const LEFT = new RegExp(`^\\s*(\\*|${TAKEN}(?:\\s*,\\s*${TAKEN})*)(?=\\s|$)`);
 const NAME_ALONE = new RegExp(`^${NAME}$`);
 const WORD_ID = /^[A-Za-z_][A-Za-z0-9_]*/;
 const QUOTED_ID = /^"[^"]*\S[^"]*"/;
@@ -65,13 +66,20 @@ export function readFrom(code) {
     if (from < 0)
         return undefined;
     const all = left[1] === '*';
-    const names = all ? null : [...new Set(left[1].split(',').map((n) => n.trim()))];
+    const pairs = all ? null : left[1].split(',').map((n) => n.trim().split('='));
+    const taken = pairs?.map(([n, t]) => [n, t === undefined ? n : `&${t}`]) ?? null;
+    const once = (xs) => new Set(xs).size === xs.length;
+    if (taken && pairs.some(([, t]) => t !== undefined) && !(once(taken.map(([n]) => n)) && once(taken.map(([, t]) => t))))
+        return null;
+    const unique = taken ? [...new Map(taken)] : null;
+    const names = unique ? unique.map(([n]) => n) : null;
+    const takes = unique ? unique.map(([, t]) => t) : null;
     const head = tokens.filter((t, i) => t.at >= leftEnd && i < from).map((t) => t.text);
     if (head.some((t) => !isAttribute(t)) || (all && head.length))
         return null;
     const rest = code.slice(tokens[from].at + 4).trim();
     if (rest === '' || rest.startsWith('(') || rest.startsWith('&')) {
-        if (!names || head.length)
+        if (!names || head.length || takes.some((t, i) => t !== names[i]))
             return null;
         const after = topTokens(rest);
         const optional = after[0]?.text.startsWith('(') ? listIn(after[0].text) : [];
@@ -105,7 +113,8 @@ export function readFrom(code) {
     else if (tail && !/^\s/.test(tail))
         return null;
     const main = tail.trim();
-    return { kind: 'use', id: idOf(idText), names, head, args, main: main || null };
+    return { kind: 'use', id: idOf(idText), names, takes, head, args, main: main || null };
 }
-export const FROM_FORM = 'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
+export const leftOf = (names, takes = names) => names ? names.map((n, i) => (takes && takes[i] !== n ? `${n}=${takes[i].slice(1)}` : n)).join(', ') : '*';
+export const FROM_FORM = 'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, &kick=bd from gm_kit (the piece’s &kick, the kit’s bd), * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
 export const USE_RETIRED = 'use is retired (decision 065): a line says where its cells come from, &bd, &sd from gm_kit (a collection, by name) or &key from diatonic(mode=dorian) D (a template, with its arguments)';

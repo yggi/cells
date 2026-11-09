@@ -13,15 +13,47 @@ import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { readerOf } from './perform/feel';
 import { soundsIdentical } from './sameness';
-import { signatureOf } from './use';
+import { expansion, signatureOf } from './use';
+import { isAttribute, topTokens } from './parser/use';
 import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 
 const O = { resolve: resolveSeed };
 const NAME = /&([A-Za-z_][A-Za-z0-9_]*)(?![A-Za-z0-9_])/g;
 
+/**
+ * A text's `from` lines written so that each says what it takes by the fragment's name (decision 075 §3a–b): a
+ * collection's `&bd` as `&bd=bd`, a template's several heads likewise, and a `*` as the names it gave, but those the
+ * text defines itself. A template of one head is renamed by its line already (`&x from dorian D`). It plays as written;
+ * renamed, `&bd=bd` is `&zq0=bd`, the fragment's word kept. With the names each such line binds.
+ */
+function explicit(text: string): { text: string; names: string[] } {
+  if (!/\sfrom(\s|$)/.test(text)) return { text, names: [] };
+  const x = expansion(text, O);
+  const mine = new Set(own(text));
+  const names: string[] = [];
+  const out = text.split('\n').map((raw, i) => {
+    const [code, comment] = splitComment(raw);
+    const f = readFrom(code.trim().split(/\s+/).join(' '));
+    if (f?.kind !== 'use') return raw;
+    const t = resolveSeed(f.id);
+    const s = t === null ? null : signatureOf(t);
+    if (s && s.names.length === 1) return raw;
+    const gave = x.uses.find((u) => u.span.line === i + 1)?.gave ?? [];
+    const pairs = f.names ? f.names.map((n, k) => [n, f.takes![k]!] as const) : (s ? s.names : gave.filter((n) => !mine.has(n.slice(1)))).map((n) => [n, n] as const);
+    names.push(...pairs.map(([n]) => n.slice(1)));
+    // (\`&bd=bd\`, written out even where the two are one: renamed, it is \`&zq0=bd\`)
+    const left = pairs.map(([n, t]) => `${n}=${t.slice(1)}`).join(', ');
+    const at = topTokens(code).find((w) => w.text === 'from')!.at;
+    const attributes = topTokens(code.slice(0, at)).flatMap((w) => (isAttribute(w.text) ? [w.text] : []));
+    return `${/^\s*/.exec(code)![0]}${[left, ...attributes].join(' ')} ${code.slice(at)}${comment}`;
+  });
+  return { text: out.join('\n'), names };
+}
+
 /** The text with each of `names` renamed to a fresh name (`&zq0` …), everywhere it is written: what the renaming was, and the text. */
-function renamed(text: string, names: readonly string[]): { text: string; back: (s: string) => string } {
+function renamed(whole: string, names: readonly string[]): { text: string; back: (s: string) => string } {
+  const text = explicit(whole).text;
   const written = new Set([...text.matchAll(NAME)].map((m) => m[1]!));
   const to = new Map<string, string>();
   let k = 0;
@@ -82,9 +114,9 @@ const WRITTEN_IN: Readonly<Record<string, readonly string[]>> = {
 };
 
 /**
- * As written, also where the library binds a name: a collection gives its cells by their names and takes no other, a
- * template of several heads is taken by its heads' names, so those are kept here (a band's performers keep their roles'
- * names); and where it reads one:
+ * As written, every name a `from` line takes is renamed too (`&bd` is `&zq0=bd`, decision 075 §3a–b: a collection's
+ * cells, a template's several heads, a `*` written out by name), so the feel's parts are renamed with them; and where the
+ * library reads a name it doesn't define:
  * - the instruments (collections) read the section's style by its name, `&style[artic]` (decision 063 §3): renamed, they
  *   read the centre of style space, and an info says so;
  * - a score the default band plays (`* from band`, *Radio*, #576) binds `&style` and its parts' lines by the names the
@@ -92,13 +124,13 @@ const WRITTEN_IN: Readonly<Record<string, readonly string[]>> = {
  */
 const AS_WRITTEN: Readonly<Record<string, readonly string[]>> = {
   ...Object.fromEntries(FEEL.filter((k) => !['electroswing', 'spooky', 'kinderlied'].includes(k)).map((k) => [k, ['feel']])),
-  electroswing: ['sound', 'diagnostics'],
-  kinderlied: ['sound', 'diagnostics'],
-  spooky: ['sound', 'diagnostics'],
+  electroswing: ['sound', 'diagnostics', 'feel'],
+  kinderlied: ['sound', 'diagnostics', 'feel'],
+  spooky: ['sound', 'diagnostics', 'feel'],
   radio: ['sound', 'diagnostics', 'feel'],
 };
 
-/** The names a text's own lines and its one-head template `from` lines define: what it binds itself. */
+/** The names a text binds itself: its own lines' and every name its `from` lines take (decision 075 §3a–b). */
 function bound(text: string): string[] {
   const heads: string[] = [];
   for (const raw of text.split('\n')) {
@@ -108,7 +140,7 @@ function bound(text: string): string[] {
     const s = t === null ? null : signatureOf(t);
     if (s && s.names.length === 1) heads.push(f.names[0]!.slice(1));
   }
-  return [...new Set([...own(text), ...heads])];
+  return [...new Set([...own(text), ...heads, ...explicit(text).names])];
 }
 
 describe('alpha substitution: every name a text defines renamed, it plays, says and reads as it did', () => {
@@ -140,5 +172,26 @@ describe('alpha substitution: every name a text defines renamed, it plays, says 
     expect(said(text)).toEqual([]);
     expect(broken(text, bound(text))).toEqual([]);
     expect(renamed(text, bound(text)).text).not.toMatch(/&(bar|tempo|key|tonic|harm|walk)\b/);
+  });
+
+  it('a from line renames what it takes: a collection’s cells, a `*`, a template’s several heads (decision 075 §3a–b)', () => {
+    const text = [
+      '&bar from meter &tempo',
+      '&tempo step=120bpm',
+      '&bd, &sd from gm_kit',
+      '* from envelopes',
+      '&beat step=8n &bd ~ &sd ~',
+      '&out map=sample [&beat]',
+      '&key from diatonic(mode=ionian) C',
+      '&line over=&key step=4n 0 2 4 2',
+      '&bass, &bassOut from bass_performer &line',
+    ].join('\n');
+    expect(said(text).filter((d) => d.startsWith('error'))).toEqual([]);
+    expect(broken(text, bound(text))).toEqual([]);
+    const r = renamed(text, bound(text)).text;
+    expect(r).toMatch(/^&zq\d+=bd, &zq\d+=sd from gm_kit$/m);
+    expect(r).not.toMatch(/^\* from/m);
+    expect(r).toMatch(/^&zq\d+=bass, &zq\d+=bassOut from bass_performer &zq\d+$/m);
+    expect(r).not.toMatch(/&(bd|sd|beat|bass|bassOut)\b/);
   });
 });

@@ -15,16 +15,17 @@
  */
 import { splitComment } from '../edit';
 import { parse } from '../parser';
-import { isWordId, readFrom } from '../parser/use';
+import { isWordId, leftOf, readFrom } from '../parser/use';
 
 /** A line that takes names from a fragment by name: a `from` line with no argument (decision 065). */
-function taking(code: string): { readonly id: string; readonly names: readonly string[] | null } | null {
+function taking(code: string): { readonly id: string; readonly names: readonly string[] | null; readonly takes: readonly string[] | null } | null {
   const f = readFrom(code.trim());
-  return f?.kind === 'use' && !f.args && f.main === null && !f.head.length ? { id: f.id, names: f.names } : null;
+  return f?.kind === 'use' && !f.args && f.main === null && !f.head.length ? { id: f.id, names: f.names, takes: f.takes } : null;
 }
 
-/** Such a line, written: `&a, &b from id`, or `* from id` for every name. */
-const writeTaking = (id: string, names: readonly string[] | null): string => `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}`;
+/** Such a line, written: `&a, &b from id` (`&kick=bd` where it renames), or `* from id` for every name. */
+const writeTaking = (id: string, names: readonly string[] | null, takes: readonly string[] | null = names): string =>
+  `${leftOf(names, takes)} from ${isWordId(id) ? id : JSON.stringify(id)}`;
 import type { Rewrite } from '../rewrite';
 
 /** A fragment as the library gives it: its id and its text. */
@@ -69,7 +70,8 @@ export function libraryLines(source: string, library: readonly LibraryFragment[]
     // (a use of the fragment already written takes the names too, where it names what it takes)
     const already = lines.findIndex((l) => taking(splitComment(l)[0])?.id === id);
     const prior = already >= 0 ? taking(splitComment(lines[already]!)[0])! : null;
-    const use = writeTaking(id, prior && !prior.names ? null : [...(prior?.names ?? []), ...names.filter((n) => !prior?.names?.includes(n))]);
+    const more = names.filter((n) => !prior?.names?.includes(n) && !prior?.takes?.includes(n));
+    const use = prior && !prior.names ? writeTaking(id, null) : writeTaking(id, [...(prior?.names ?? []), ...more], [...(prior?.takes ?? []), ...more]);
     const where = already >= 0 ? already : at[0]!;
     const comments = at.map((i) => splitComment(lines[i]!)[1].trim()).filter(Boolean);
     return {
@@ -128,7 +130,8 @@ export function libraryCells(source: string, library: readonly LibraryFragment[]
       const at = lines.findIndex((l) => taking(splitComment(l)[0])?.id === id);
       if (at >= 0) {
         const prior = taking(splitComment(lines[at]!)[0])!;
-        if (prior.names && !prior.names.includes(`&${name}`)) lines[at] = writeTaking(id, [...prior.names, `&${name}`]) + splitComment(lines[at]!)[1];
+        if (prior.names && !prior.names.includes(`&${name}`))
+          lines[at] = writeTaking(id, [...prior.names, `&${name}`], [...prior.takes!, `&${name}`]) + splitComment(lines[at]!)[1];
         return lines.join('\n');
       }
       // (after the piece's own `from` lines, or first)

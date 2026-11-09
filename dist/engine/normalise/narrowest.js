@@ -1,5 +1,5 @@
 import { splitComment } from "../edit.js";
-import { isWordId, readFrom } from "../parser/use.js";
+import { isWordId, leftOf, readFrom } from "../parser/use.js";
 import { signatureOf } from "../use.js";
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const refersTo = (name) => new RegExp(`&${name}(?![A-Za-z0-9_])`);
@@ -18,13 +18,13 @@ export function narrowestFroms(source, resolve) {
         if (text === null || signatureOf(text))
             return [];
         const heads = [...new Set(text.split('\n').flatMap((l) => HEAD.exec(splitComment(l)[0])?.[1] ?? []))];
-        const asked = f.names?.map((n) => n.slice(1)) ?? heads;
+        const asked = f.names?.map((n, k) => [n, f.takes[k]]) ?? heads.map((h) => [`&${h}`, `&${h}`]);
         const read = (h) => !own.has(h) && codes.some((c, j) => j !== i && refersTo(h).test(c));
-        const used = asked.filter(read);
+        const used = asked.filter(([n]) => read(n.slice(1)));
         if (!used.length)
             return [];
         const before = code.trim();
-        const after = `${used.map((h) => `&${h}`).join(', ')} from ${isWordId(f.id) ? f.id : JSON.stringify(f.id)}`;
+        const after = `${leftOf(used.map(([n]) => n), used.map(([, t]) => t))} from ${isWordId(f.id) ? f.id : JSON.stringify(f.id)}`;
         if (after === before)
             return [];
         return [

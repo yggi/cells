@@ -31,7 +31,7 @@ function lineOf(code, written = code, line = 0) {
     const reads = head ? [...new Set([...code.slice(head[0].length).matchAll(READS)].map((m) => m[1]))] : [];
     return { name: head?.[1] ?? null, reads, written, code, line };
 }
-export const hasUse = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,]).*\sfrom(?:\s|$)/m.test(text);
+export const hasUse = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
 export function signatureOf(text) {
     for (const l of linesOf(text))
         if (l.from?.kind === 'signature')
@@ -235,6 +235,26 @@ function readsAsValue(code, name) {
     }
     return false;
 }
+function renamesOf(from, lines, id, say) {
+    if (!from.names || !from.takes || from.takes.every((t, i) => t === from.names[i]))
+        return null;
+    const defined = new Set(lines.flatMap((l) => (l.name ? [l.name] : [])));
+    const names = new Map();
+    const lacking = new Set();
+    from.names.forEach((n, i) => {
+        const [mine, theirs] = [n.slice(1), from.takes[i].slice(1)];
+        if (!defined.has(theirs)) {
+            say(`&${theirs} is not in ${quoted(id)}: it defines ${[...defined].map((m) => `&${m}`).join(', ')}`);
+            lacking.add(mine);
+        }
+        else if (mine !== theirs) {
+            if (defined.has(mine) && !from.takes.includes(`&${mine}`))
+                say(`&${mine}=${theirs}: ${quoted(id)} defines &${mine} too, by its own line: take &${theirs} under another name`);
+            names.set(theirs, mine);
+        }
+    });
+    return { names, lacking };
+}
 const sharedLines = (lines) => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
 function give(entry, path, text, resolve, say, taken) {
     const { id, from } = entry;
@@ -243,7 +263,13 @@ function give(entry, path, text, resolve, say, taken) {
         if (from.head.length || from.args || from.main !== null)
             say(`${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`);
         const lines = sharedLines(fragmentLines(path, text, resolve, say));
-        return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
+        const renames = renamesOf(from, lines, id, say);
+        if (!renames)
+            return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
+        const asked = new Set(from.names.map((n) => n.slice(1)).filter((n) => !renames.lacking.has(n)));
+        const touches = (l) => (l.name !== null && renames.names.has(l.name)) || l.reads.some((r) => renames.names.has(r));
+        const theirs = lines.map((l) => (touches(l) ? lineOf(renamed(l.code, renames.names), renamed(l.written, renames.names), l.line) : l));
+        return { taken: { id, names: asked, lines: sharedLines(theirs), resolved: true }, copy: [] };
     }
     if (signatures.length > 1)
         say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
@@ -268,15 +294,17 @@ function instantiate(from, id, signature, path, text, resolve, say, taken) {
     if (main && defines.has(main))
         say(`${quoted(id)}'s &${main} is its main parameter: it has no line, the argument is it`);
     const names = new Map();
-    if (from.names?.length === 1 && heads.length === 1)
-        names.set(heads[0], bare(from.names[0]));
+    const takes = from.takes?.map(bare) ?? heads;
+    const binds = from.names?.map(bare) ?? heads;
+    if (binds.length === 1 && heads.length === 1 && (takes[0] === binds[0] || takes[0] === heads[0]))
+        names.set(heads[0], binds[0]);
     else
-        for (const n of from.names?.map(bare) ?? heads) {
-            if (heads.includes(n))
-                names.set(n, n);
+        takes.forEach((t, i) => {
+            if (heads.includes(t))
+                names.set(t, binds[i]);
             else
-                say(`&${n} is not a head of ${quoted(id)}: its head${heads.length > 1 ? 's are' : ' is'} ${heads.map((h) => `&${h}`).join(', ')}`);
-        }
+                say(`&${t} is not a head of ${quoted(id)}: its head${heads.length > 1 ? 's are' : ' is'} ${heads.map((h) => `&${h}`).join(', ')}`);
+        });
     const one = names.size === 1;
     const reached = new Set();
     const byName = new Map(full.flatMap((l) => (l.name ? [[l.name, l]] : [])));

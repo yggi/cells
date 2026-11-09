@@ -23,8 +23,13 @@ export type FromForm =
       readonly kind: 'use';
       /** The fragment's id: a word as written (`gm_kit`), or what the double quotes hold (`"my riff"`). */
       readonly id: string;
-      /** The names the line takes (`&key`), each once; null for `*`. */
+      /** The names the line binds (`&key`, `&kick` of `&kick=bd`), each once; null for `*`. */
       readonly names: readonly string[] | null;
+      /**
+       * What each of `names` takes from the fragment, in the same order (`&bd` of `&kick=bd`; the name itself where the line
+       * writes no `=`, decision 075 §3a); null for `*`. The fragment's name is a word of the line, as a keyword is.
+       */
+      readonly takes: readonly string[] | null;
       /** The head's attributes, written before `from` (`label="my key"`), each a `key=value` as written. */
       readonly head: readonly string[];
       /** The named arguments, in parentheses (`swing=8n:.64`), as written; null where there are none. */
@@ -85,7 +90,9 @@ function listIn(text: string): string[] | null {
   return out.length === 1 && out[0] === '' ? [] : out;
 }
 
-const LEFT = new RegExp(`^\\s*(\\*|${NAME}(?:\\s*,\\s*${NAME})*)(?=\\s|$)`);
+/** A name on a `from` line's left side: `&key`, or `&kick=bd`, the piece's name for the fragment's `bd`. */
+const TAKEN = `${NAME}(?:=[A-Za-z_][A-Za-z0-9_]*)?`;
+const LEFT = new RegExp(`^\\s*(\\*|${TAKEN}(?:\\s*,\\s*${TAKEN})*)(?=\\s|$)`);
 const NAME_ALONE = new RegExp(`^${NAME}$`);
 const WORD_ID = /^[A-Za-z_][A-Za-z0-9_]*/;
 const QUOTED_ID = /^"[^"]*\S[^"]*"/;
@@ -104,13 +111,20 @@ export function readFrom(code: string): FromForm | null | undefined {
   const from = tokens.findIndex((t) => t.at >= leftEnd && t.text === 'from');
   if (from < 0) return undefined;
   const all = left[1] === '*';
-  const names = all ? null : [...new Set(left[1]!.split(',').map((n) => n.trim()))];
+  const pairs = all ? null : left[1]!.split(',').map((n) => n.trim().split('=') as [string, string?]);
+  const taken = pairs?.map(([n, t]) => [n, t === undefined ? n : `&${t}`] as const) ?? null;
+  // (a line that renames binds each name once and takes each of the fragment's once: `&a=bd, &a=sd` is two meanings)
+  const once = (xs: readonly string[]) => new Set(xs).size === xs.length;
+  if (taken && pairs!.some(([, t]) => t !== undefined) && !(once(taken.map(([n]) => n)) && once(taken.map(([, t]) => t)))) return null;
+  const unique = taken ? [...new Map(taken)] : null;
+  const names = unique ? unique.map(([n]) => n) : null;
+  const takes = unique ? unique.map(([, t]) => t) : null;
   const head = tokens.filter((t, i) => t.at >= leftEnd && i < from).map((t) => t.text);
   if (head.some((t) => !isAttribute(t)) || (all && head.length)) return null;
   const rest = code.slice(tokens[from]!.at + 4).trim();
   // (a signature: nothing, a list of parameters or a name after `from`, no id)
   if (rest === '' || rest.startsWith('(') || rest.startsWith('&')) {
-    if (!names || head.length) return null;
+    if (!names || head.length || takes!.some((t, i) => t !== names[i])) return null;
     const after = topTokens(rest);
     const optional = after[0]?.text.startsWith('(') ? listIn(after[0].text) : [];
     if (optional === null || optional.some((p) => !NAME_ALONE.test(p))) return null;
@@ -136,12 +150,16 @@ export function readFrom(code: string): FromForm | null | undefined {
     tail = tail.trimStart().slice(list.length);
   } else if (tail && !/^\s/.test(tail)) return null;
   const main = tail.trim();
-  return { kind: 'use', id: idOf(idText), names, head, args, main: main || null };
+  return { kind: 'use', id: idOf(idText), names, takes, head, args, main: main || null };
 }
+
+/** A `from` line's left side, written: `&kick=bd, &sd`, or `*` for every name. */
+export const leftOf = (names: readonly string[] | null, takes: readonly string[] | null = names): string =>
+  names ? names.map((n, i) => (takes && takes[i] !== n ? `${n}=${takes[i]!.slice(1)}` : n)).join(', ') : '*';
 
 /** What a malformed `from` line is told. */
 export const FROM_FORM =
-  'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
+  'A from line says where its cells come from: &key from harmonic_minor D, &bar from swung_4_4(swing=8n:.64) &tempo, &bd, &sd from gm_kit, &kick=bd from gm_kit (the piece’s &kick, the kit’s bd), * from gm_kit; the head’s attributes go before from (&key label="…" from …), the named arguments in parentheses; with no id, a fragment’s signature: &bar from (&swing) &tempo';
 
 /**
  * What a `use` line is told (decision 065, #588): it is retired, and the line says where its cells come from. It names no
