@@ -1,3 +1,0 @@
-### Changed
-
-- The four forms that sat at the centre of style space are placed where their idioms are (#371; the owner: "form follows idiom"): call and answer at `sync .75 harm .35 bite .65`, AABA at `.45 .85 .4`, the period at `.15 .4 .3` and the sentence at `.2 .55 .5`. A query for the facet `form` no longer finds AABA first everywhere by its id: of `styles`, Funk and Acid find call and answer; Lo-fi hip hop, Bossa nova, Swing jazz, Electro swing and Spooky AABA; Synth-pop, Techno, Deep house, Happy hardcore and Elektro the sentence; Ambient and Dark ambient the period; Kinderlied the ternary song, as before. No piece changes: a piece names its form by id. A frontend that asks the repository for a form (yggi/jambot#547 rung 4) gets the style's.

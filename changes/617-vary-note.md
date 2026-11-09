@@ -1,3 +1,0 @@
-### Changed
-
-- **Vary reads a drum by its `note=`, not its name** (#617, decision 075): the kick and backbeat anchors, the order of a groove's lines and what a variation's notes are compared by read each voice's note as the compile gives it (`drumNote`), where they read `gmDrumNote` of its name. A groove whose drums are renamed (`&k note=36`) gets the variations it got under General MIDI's names, renamed; a drum with no `note=`, which sends no drum note since #626, anchors nothing. Nothing a piece plays changes, only what Vary offers. `pitchOf` (`engine/vary/lines`) takes the compile result first; `drumNoteOf` is new.
