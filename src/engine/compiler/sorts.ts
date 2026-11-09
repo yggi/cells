@@ -4,6 +4,7 @@ import { CV_LAPS } from '../program';
 import type { Atom, Binding, CellDecl, Expr, Ref } from '../ast';
 import { memberParams, VOICE_PARAMS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
+import { valueSumOf } from '../valuesum';
 import { syntax, type Syntax } from '../parser/syntax';
 import type { Ctx } from './context';
 import { noSound } from './band';
@@ -56,7 +57,8 @@ export const SORT_RULES: readonly SortRule[] = [
     sort: 'signal',
     is: 'A mix: an instrument.',
     example: ['&a s=saw loop=C4', '&b s=sine loop=C3', '&organ [&a, &b]'],
-    holds: (d) => isMixDecl(d),
+    // (a mix of cells with no voice is a sum of values, no sound: decision 079)
+    holds: (d, { decls }) => isMixDecl(d) && valueSumOf(d.name, decls) === null,
   },
   {
     sort: 'signal',
@@ -152,7 +154,7 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     // (a voice, a mix or a gate: a pattern read through a kit is a sound too, and the notes a gate plays may be one)
     const sound = (n: string) => {
       const d = decls.get(n);
-      return !!d && (!!d.gate || isMixDecl(d) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
+      return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
     };
     // (a stack's lines, each: the stack itself is a chord, and a gate plays its lines one by one)
     const notes = spec ? (spec.lines?.map((l) => l.line) ?? [spec.notes]).map((name) => ({ name, port: spec.port })) : [];

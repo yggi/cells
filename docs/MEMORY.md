@@ -47,44 +47,9 @@ Details are on the linked pages; this list is only a pointer. → [language/over
 
 ## Decisions
 
-Each in a few words; its line, with the substance, is in [decisions/README.md](decisions/README.md), and the record has the rationale. The numbers are Cell studio's, kept; the workbench's own decisions stay there.
+Every decision, its substance in a line, is in [decisions/README.md](decisions/README.md)'s list; the record has the rationale. The numbers are Cell studio's, kept; the workbench's own decisions stay there. The few that shape any change:
 
-- 002 · `scale(tonic, phase)` shorthand (superseded by 013) · → decisions/002-scale-shorthand.md
-- 003 · `cycle=n` has one job; grids say `map=edo` · → decisions/003-cycle-one-job.md
-- 006 · The mix algebra: a factor's sort comes from the cell · → decisions/006-mix-algebra.md
-- 007 · `pan=` is back, a balance · → decisions/007-pan-is-back.md
-- 008 · A turning table comes round after its own length · → decisions/008-tables-come-round.md
-- 009 · The tutorial covers every form once (rungs superseded by 018) · → decisions/009-tutorial-ladder.md
-- 010 · A canon's `[<<n]` is a copy · → decisions/010-canon-copies.md
-- 012 · A pick is a fixed reader on a turning wheel · → decisions/012-picks-are-taps.md
-- 013 · `scale(name, tonic)` is a generator · → decisions/013-scale-generator.md
-- 015 · `&x^n` moves by degrees, `&x^$n` by grid steps · → decisions/015-caret-is-degrees.md
-- 016 · Arranging at the input: sections switched on the meter's bus (point 8 amended by 061) · → decisions/016-arranging-at-the-input.md
-- 017 · Two tools: Shorten and Normalise · → decisions/017-shorten-and-normalise.md
-- 018 · `free(0 2 4 ~)`, a braid left to the performer, recorded · → decisions/018-free-braid.md
-- 019 · MIDI out: a MIDI card, `map=midi` · → decisions/019-midi-card.md
-- 020 · The tutorial is nine stable tiers · → decisions/020-tutorial-tiers.md
-- 023 · A gate: `play=`, `level=` and what it plays · → decisions/023-gate-spelling.md
-- 026 · A copy of a cell, changed where it says: `base=` · → decisions/026-base.md
-- 027 · Cells sits on top of Strudel · → decisions/027-on-top-of-strudel.md
-- 028 · The smallest piece that sounds is `&a loop=A4` · → decisions/028-the-smallest-piece.md
-- 029 · A kit read only selects · → decisions/029-kits-pass-pitch.md
-- 030 · FM: `fm=` `fmh=`, with feedback · → decisions/030-fm-feedback.md
-- 031 · Chance is keyed on the seed, the cell, the lap and the step · → decisions/031-chance-keyed-on-time.md
-- 032 · `restart=`: what switching a part on does to its time · → decisions/032-restart-policies.md
-- 033 · The folder writes in degrees of its key · → decisions/033-degrees.md
-- 037 · The handshake with Jambot · → decisions/037-the-handshake-with-jambot.md
-- 038 · Jambot's score rulings, carried over · → decisions/038-jambot-rulings-carried-over.md
-- 039 · Live MIDI lives in yggi/webmidi · → decisions/039-midi-lives-in-webmidi.md
-- 040 · A meter's bar, pulse, beat and tree; lines tap it · → decisions/040-pulse-beat-and-laps.md
-- 041 · Fragments found by style · → decisions/041-fragments-by-style.md
-- 042 · A swing share as a fraction · → decisions/042-swing-share-as-a-fraction.md
-- 043 · The composer selects, and generates what doesn't satisfy · → decisions/043-the-composer-selects.md
-- 044 · "Tap" reads the meter; sections, readers, picks · → decisions/044-tap-reads-the-meter.md
-- 045 · Node runs `dist/` · → decisions/045-dist-for-node.md
-- 046 · Facets and co-use · → decisions/046-facets-and-co-use.md
-- 047 · Fragments are files, pieces with holes · → decisions/047-fragments-are-files.md
-- 048 · The learned layer is data the frontend hands in · → decisions/048-the-learned-layer.md
+- 027 · Cells sits on top of Strudel: a spelling shared with its mini-notation keeps Strudel's meaning · → decisions/027-on-top-of-strudel.md
 - 049 · Four tools: Migrate, Normalise, Shorten, Fold · → decisions/049-four-tools-over-a-piece.md
 - 050 · The equalities: E0–E5 and S1–S3 · → decisions/050-the-equalities.md
 - 051 · Literate cells · → decisions/051-literate-cells.md
@@ -133,3 +98,7 @@ Each in a few words; its line, with the substance, is in [decisions/README.md](d
 - 079 · A sum of cells; a window and its ± · → decisions/079-a-sum-of-cells-and-a-window.md
 - 078 · Every number may be a `free()`; a cell moves only what plays · → decisions/078-every-number-may-be-free.md
 - 080 · A meter is a tree placed through a time map; `bend=` · → decisions/080-a-meter-is-a-tree-placed-through-a-time-map.md
+- 050 · The equalities: E0–E5 (text) and S1–S3 (sound) · → decisions/050-the-equalities.md
+- 068 · The core grammar: four primitives and the ramp; the rest is sugar, checked by S1 · → decisions/068-the-core-grammar.md
+- 075 · A name is only a name: rename every name a text defines and it plays as it did · → decisions/075-a-name-is-only-a-name.md
+- 077 · The core is sound only, up to a named interface · → decisions/077-the-core-is-sound-up-to-an-interface.md

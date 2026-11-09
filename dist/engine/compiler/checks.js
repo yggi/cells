@@ -136,6 +136,25 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
                 bad(`&${f.name}: its ${low}`);
         }
     }
+    for (const d of decls.values()) {
+        if (d.map?.kind !== 'adsr')
+            continue;
+        for (const [slot, pc] of Object.entries(d.paramCells ?? {})) {
+            if (pc.range || !SLOTS.adsr.includes(slot))
+                continue;
+            for (const f of pc.factors) {
+                const fd = decls.get(f.name);
+                const values = fd && fd.map?.kind !== 'adsr' && fd.braid.kind === 'list'
+                    ? fd.braid.tokens.flatMap((t) => leaves(t.atom)).flatMap((a) => (a.kind === 'note' ? [a.value + a.alter] : a.kind === 'chord' ? a.notes : []))
+                    : [];
+                const bad = values.find((v) => (slot === 'sustain' ? !(v >= 0 && v <= 1) : !(v >= 0)));
+                if (bad !== undefined)
+                    error(slot === 'sustain'
+                        ? `sustain=&${f.name}: a sustain is a level, 0 to 1, and &${f.name} holds ${bad}`
+                        : `${slot}=&${f.name}: ${slot === 'attack' ? 'an' : 'a'} ${slot} is seconds, 0 or more, and &${f.name} holds ${bad}`, pc.span);
+            }
+        }
+    }
     for (const d of decls.values())
         if (d.stride !== null && d.step?.kind !== 'driven' && d.step?.kind !== 'tap')
             warn(`stride= only matters with step=&cell or a tap (step=1m)`, d.paramSpans?.stride ?? d.span);

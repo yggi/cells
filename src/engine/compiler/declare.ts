@@ -1,4 +1,5 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
+import { valueSumOf } from '../valuesum';
 import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { SCALE_KEY } from '../parser/generators';
@@ -591,7 +592,14 @@ function voicesIn(decls: ReadonlyMap<string, CellDecl>, name: string, seen: read
 function mixSelectors(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): void {
   // (a gate is a performer, not a mix: a table of them is a band, decision 061)
   const isMix = (d: CellDecl | undefined) =>
-    !!d && !d.gate && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
+    !!d &&
+    !d.gate &&
+    d.map?.kind !== 'sample' &&
+    d.map?.kind !== 'midi' &&
+    d.braid.kind === 'list' &&
+    d.braid.tokens.length === 1 &&
+    d.braid.tokens[0].atom.kind === 'mix' &&
+    valueSumOf(d.name, decls) === null;
   for (const d of decls.values()) {
     const t = d.over ? decls.get(d.over.name) : undefined;
     if (!t || t.braid.kind !== 'list' || !t.braid.tokens.length || !t.braid.tokens.every((x) => x.atom.kind === 'ref' && isMix(decls.get(x.atom.name)))) continue;

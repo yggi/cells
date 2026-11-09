@@ -5,16 +5,23 @@ import { describe, expect, it } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { setTiming } from '../engine/edit';
 import { createRepository, EMPTY_LAYER, type StylePoint } from './fragments';
-import { cachedFit } from './fit';
+import { fitsAs } from './fit';
 
-/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
-const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
+/** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
+const unionOf = (text: string, workbench: string) => {
+  const body = bodyOf(text);
+  const resolve: Resolve = (id) => (id === 'x' ? body : resolveSeed(id));
+  return fitsAs('x', workbench, { resolve }).union!;
+};
 import { useFragments } from './learned';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
 import { RHYTHM_FRAGMENTS } from './rhythms';
+import type { Resolve } from '../engine/program';
+import { resolveSeed } from './library';
+import { bodyOf } from '../engine/use';
 
 /** A seeded draw in [0, 1) (mulberry32), as `recognise.test.ts` draws. */
 function draws(seed: number): () => number {
@@ -85,14 +92,17 @@ describe('what a query costs', () => {
   // (the queries `fit.test.ts` counts the compiles of, on its workbench of five: ten seconds for the three)
   it('three fitting queries on a workbench of five take under 10 s', () => {
     const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
-    const bench = (bpm: number) => setTiming(METER_FRAGMENTS.find((f) => f.id === 'meter')!.text, 'bar', 'step', `${bpm}bpm`);
+    // (the meter's lines, its signature aside: a workbench's own signature is what it offers, #587)
+    const bench = (bpm: number) => setTiming(bodyOf(METER_FRAGMENTS.find((f) => f.id === 'meter')!.text), 'bar', 'step', `${bpm}bpm`);
     const workbench = ['funk_drums', 'techno_drums', 'rumba_clave_3_2', 'bossa_nova_clave_one_bar'].reduce((text, id) => unionOf(rhythm(id), text).text, bench(104));
+    const named = { arguments: { bass: '&harm', motif: '&key', harmony: '&key', mode: '&tonic', meter: '&tempo', form: '&call', stab: '&harm', module: '&in' } };
     const r = createRepository(LIBRARY);
-    r.query(FUNK, LIBRARY.length, {}, { workbench: bench(120) });
+    r.query(FUNK, LIBRARY.length, {}, { workbench: bench(120), ...named });
     const t0 = performance.now();
-    expect(r.query(FUNK, LIBRARY.length, {}, { workbench })).toHaveLength(43); // (the 18 rhythms, the 14 instruments, the vibrato, the envelopes, the styles and the 8 modules, as fit.test.ts counts them: the modes wait on a &tonic, #290)
-    r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['funk_drums'] });
-    expect(r.query(FUNK, 1, {}, { workbench: `${workbench}\n&more loop=A4` })).toHaveLength(1);
+    // (each facet's argument named, as a host names them, #587: the rhythms, the instruments, the vibrato, the envelopes, the styles and the modules, as fit.test.ts counts them)
+    expect(r.query(FUNK, LIBRARY.length, {}, { workbench, ...named }).length).toBeGreaterThan(30);
+    r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['funk_drums'], ...named });
+    expect(r.query(FUNK, 1, {}, { workbench: `${workbench}\n&more loop=A4`, ...named })).toHaveLength(1);
     expect(performance.now() - t0).toBeLessThan(10_000);
   });
 });

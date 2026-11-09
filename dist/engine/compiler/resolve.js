@@ -1,3 +1,4 @@
+import { valueSumOf } from "../valuesum.js";
 import { isNote } from "../ast.js";
 import { footOf, innerSteps, leaves } from "../subseq.js";
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps } from "../program.js";
@@ -75,6 +76,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             throw new Abort();
         }
         const d = decls.get(name);
+        const sum = stacks.has(name) ? null : valueSumOf(name, decls);
         if (visiting.length >= MAX_SPLICE_DEPTH) {
             if (!tooDeep.size)
                 error(`&${visiting[0]} splices cells into each other more than ${MAX_SPLICE_DEPTH} deep (&${visiting[0]} → &${visiting[1]} → … → &${name}): write a long chain as one braid`, at);
@@ -192,9 +194,12 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
                 : null,
             mix: stacks.has(name)
                 ? []
-                : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
-                    ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
-                    : null,
+                : sum
+                    ? null
+                    : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
+                        ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
+                        : null,
+            ...(sum ? { sum } : {}),
             sink: d.map?.kind === 'sample',
             sort: sortOf(name),
             ...(d.map?.kind === 'midi' ? { chords: units.map((u) => (u.atom.kind === 'mix' ? typed(u.atom) : null)) } : {}),

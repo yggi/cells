@@ -22,6 +22,14 @@ export interface Series {
      * factor, its −1…1 is 0…1, (1 + x)/2, not cut off at 0 (decision 067 §5); as a pitch, semitones as written.
      */
     readonly bipolar?: true;
+    /** A sum of values (decision 079): its terms' series, each by its weight, and a constant; read as their weighted sum. */
+    readonly sum?: {
+        readonly terms: readonly {
+            readonly series: Series;
+            readonly weight: number;
+        }[];
+        readonly constant: number;
+    };
 }
 export interface VoiceParam {
     readonly range: readonly [number, number] | null;

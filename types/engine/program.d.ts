@@ -2,6 +2,7 @@ import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, Ga
 import type { ShowPlugin } from './plugins';
 import type { Meter } from './meter';
 import type { Sort } from './algebra';
+import type { ValueSum } from './valuesum';
 export declare const ROOT = "fifths12TET";
 /**
  * What a bare `over=key` names until compile reads it as the piece's main key (#124, declare.ts): no cell can be called
@@ -189,6 +190,8 @@ export interface ResolvedCell {
     } | null;
     /** A mix cell (`&mix [&theme * &lead, …]`): its voices, as written. */
     readonly mix: readonly Binding[] | null;
+    /** A mix of cells with no voice: the sum of their values, each by its weight, and a constant (decision 079). */
+    readonly sum?: ValueSum;
     /** The sound card (`map=sample`): its entries are channels. */
     readonly sink: boolean;
     /**

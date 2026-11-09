@@ -37,7 +37,7 @@ A range moved by cells (`&k`, `lo..hi * &k`) is read while the piece plays. So i
   - a range at a gain in a mix or at a tonic;
   - a bare cell at an envelope's slot.
 
-  Each is a rung of its own, and needs no change to this rule.
+  Each is a rung of its own, and needs no change to this rule. Since (#597): a bare cell moves an envelope's slot, its values the slot's, held at 0 in the braid until a note reads it. A range at a gain in a mix is a cell of its own (079's sum), a hit's gain and a style's weight stay numbers (`velocity=`, `style=&a..&b * &curve` move them), and a tonic is a pitch class, never a range. A swing's share is #597's next rung.
 - **Which sound parameters can move** (`pan=` and `postgain=` can't) is the renderer's question, unchanged here.
 
 ### 3. The table is generated

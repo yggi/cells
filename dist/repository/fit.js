@@ -1,10 +1,9 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
-import { expansion, signatureOf } from "../engine/use.js";
+import { expansion, fragmentHash, signatureOf } from "../engine/use.js";
 import { parse, readFrom } from "../engine/parser/index.js";
 import { braidReadsOf } from "../engine/compiler/builtin.js";
 import { clockNeeds, holesOf, linesRead, meterMeets, readOnlyAsSound, standIn } from "./holes.js";
-const INTERFACE = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const CONTINUES = /[+*,[]\s*$/;
 export function declarations(text) {
@@ -43,7 +42,6 @@ function unionByName(fragment, workbench) {
             text = renameCell(text, from, to);
         const lines = declarations(text);
         const shared = [];
-        const twice = [];
         const collide = [];
         for (const line of lines) {
             const there = bench.get(line.name);
@@ -51,8 +49,6 @@ function unionByName(fragment, workbench) {
                 continue;
             if (there.code === line.code)
                 shared.push(line.name);
-            else if (INTERFACE.has(line.name))
-                twice.push(line.name);
             else
                 collide.push(line.name);
         }
@@ -66,7 +62,6 @@ function unionByName(fragment, workbench) {
                 text: [...(head ? [head] : []), ...kept].join('\n'),
                 renamed: new Map([...renamed].map(([from, to]) => [`&${from}`, `&${to}`])),
                 shared: amp(shared),
-                twice: amp([...new Set(twice)]),
                 names: amp([...new Set(lines.map((l) => l.name))]),
             };
         }
@@ -101,7 +96,7 @@ function fitByName(fragment, workbench, compiledBy, resolve) {
     const alone = clockNeeds([read, ...aloneStand].join('\n'), compiled([fragment, ...aloneStand].join('\n')));
     const unmet = alone.filter((t) => !meets(bench, t)).map((t) => t.need);
     const failed = { fits: false, union, missing, sounds, unmet };
-    if (missing.length || union.twice.length || unmet.length)
+    if (missing.length || unmet.length)
         return failed;
     const benchDecls = parse(workbench).cells;
     const benchSound = readOnlyAsSound(benchDecls);
@@ -154,14 +149,19 @@ function lru(limit, make) {
     };
 }
 export const cachedCompile = (limit = 512) => lru(limit, (text) => compileSource(text));
-export function cachedFit(limit = 512) {
-    const compiled = cachedCompile(limit);
+export function cachedFit(resolve, limit = 512) {
+    const own = new Map();
+    const resolving = (id, hash) => own.get(id) ?? resolve(id, hash);
+    const compiled = lru(limit, (text) => compileSource(text, undefined, { resolve: resolving }));
     const fit = lru(limit, (key) => {
-        const colon = key.indexOf(':');
-        const end = colon + 1 + Number(key.slice(0, colon));
-        return fitByName(key.slice(end), key.slice(colon + 1, end), compiled);
+        const { id, workbench, main } = JSON.parse(key);
+        return fitsAs(id, workbench, { resolve: resolving, compiled, ...(main === null ? {} : { main }) });
     });
-    return (fragment, workbench) => fit(`${workbench.length}:${workbench}${fragment}`);
+    return (text, workbench, main) => {
+        const id = `fit_${fragmentHash(text).slice(3)}`;
+        own.set(id, text);
+        return fit(JSON.stringify({ id, workbench, main: main ?? null }));
+    };
 }
 const ID_ARGS = /^([^(]*)\((.*)\)$/;
 function fromLine(heads, id, args, main) {
@@ -185,8 +185,11 @@ function mainOn(bench, id, heads, args, compiled, stand) {
     const meets = (cell) => !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).length;
     const offers = parse(bench).offers;
     const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
-    const meeting = named.filter((n) => !heads.includes(n) && meets(n));
-    return meeting.length === 1 ? meeting[0] : null;
+    const meeting = [];
+    for (const n of named)
+        if (!heads.includes(n) && meets(n) && meeting.push(n) > 1)
+            return null;
+    return meeting[0] ?? null;
 }
 function clearOf(bench, name) {
     const taken = namesIn(bench);
@@ -225,7 +228,16 @@ export function fitsAs(id, bench, options) {
     const signature = signatureOf(text);
     if (!signature) {
         const f = fitByName(text, bench, compiled, options.resolve);
-        return { fits: f.fits, text: f.union.text, use: null, missing: f.missing, sounds: f.sounds, unmet: f.unmet, ...(f.diagnostics ? { diagnostics: f.diagnostics } : {}) };
+        return {
+            fits: f.fits,
+            text: f.union.text,
+            use: null,
+            union: f.union,
+            missing: f.missing,
+            sounds: f.sounds,
+            unmet: f.unmet,
+            ...(f.diagnostics ? { diagnostics: f.diagnostics } : {}),
+        };
     }
     const use = useOn(bench, id, { ...options, compiled });
     if (signature.main && use.main === null)

@@ -214,10 +214,55 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
     ]);
     expect(errors('&mine map=style .3 .45 .2 .55 free(.5, 0..1)')).toEqual([expect.stringMatching(/^A style has 4 axes \(sync harm artic energy\): this value is one more/)]);
     expect(mine('0..2 * &walk')).toEqual(['artic= moves within the axis, 0 to 1: artic=0..1 * &walk']);
-    expect(mine('0..1 * &walk * &w2', ['&walk step=1m 0 1', '&w2 step=1m 1 0'])).toEqual([expect.stringMatching(/^artic=… \* &x: an axis moves by one cell/)]);
-    expect(mine('0..1 * &walk', ['&walk step=1m 0 1', '&o map=style .5 .5 .5 .5'], 'style=[&mine * .5, &o * .5]')).toEqual([
-      expect.stringMatching(/^&style\[artic\]: a mix or a range of styles doesn't move with them yet/),
+    expect(mine('0..1 * &walk * &w2', ['&walk step=1m 0 1', '&w2 step=1m 1 0'])).toEqual([
+      expect.stringMatching(/^artic=… \* &x: an axis moves by one cell, a line of numbers or a sum of them/),
     ]);
+    expect(mine('0..1 * &walk', ['&walk step=1m 0 1', '&o map=style .5 .5 .5 .5'], 'style=&mine..&o')).toEqual([
+      expect.stringMatching(/^&style\[artic\]: a range of styles doesn't move with a moving one yet/),
+    ]);
+  });
+
+  it('a moving range’s ends may be sliders, and centre ± reach is its sugar: the window a hand sets, the cell wandering inside it (decision 079, #576)', () => {
+    const moving = (axis: string) => piece('style=&mine', '4/4', undefined, ['&walk step=1m 0 1', `&mine map=style sync=.3 harm=.45 artic=${axis} energy=.55`]);
+    expect(cutoffs(moving('free(.4, 0..1)..free(.8, 0..1) * &walk'), 8)).toEqual([400, 800, 400, 800]);
+    expect(cutoffs(moving('free(.6, 0..1) ± free(.2, 0..0.5) * &walk'), 8)).toEqual([400, 800, 400, 800]);
+    expect(cutoffs(moving('.6 +- .2 * &walk'), 8)).toEqual([400, 800, 400, 800]);
+    // (held to the axis: .9 ± .3 is .6..1)
+    expect(cutoffs(moving('.9 ± .3 * &walk'), 8)).toEqual([600, 1000, 600, 1000]);
+    // (each a slider, named: a window's ends low and high, a centre by its axis and its reach)
+    const sliders = (axis: string) =>
+      parse(moving(axis))
+        .cells.find((c) => c.name === 'mine')!
+        .frees!.map((f) => [f.param, f.value, f.lo, f.hi]);
+    expect(sliders('free(.4, 0..1)..free(.8, 0..1) * &walk')).toEqual([
+      ['artic low', 0.4, 0, 1],
+      ['artic high', 0.8, 0, 1],
+    ]);
+    expect(sliders('free(.6, 0..1) ± free(.2, 0..0.5) * &walk')).toEqual([
+      ['artic', 0.6, 0, 1],
+      ['artic reach', 0.2, 0, 0.5],
+    ]);
+    // (a window's end slider outside the axis is refused, shown firing)
+    expect(errors(moving('free(.4, 0..2)..1 * &walk'))).toEqual(["artic=: a window's end moves within the axis, 0 to 1: free(0.4, 0..1)"]);
+  });
+
+  it('a mix of cells with no voice is the sum of their values, its gains the weights, held to 0…1 (decision 079, #576)', () => {
+    const walkers = ['&a step=1m 0 1', '&b step=1m/4 0 1'];
+    // (as a moving parameter's factor: .5 of &a, by the bar, and .5 of &b, by four bars)
+    const factor = (sum: string) =>
+      cutoffs(['&bar meter("4/4") step=120bpm', '&line step=1m 0!8', '&v s=saw loop=C4 lpf=0..1000 * &w', '&out map=sample [&line * &v]', ...walkers, `&w ${sum}`].join('\n'), 16);
+    expect(factor('[&a * .5 + &b * .5]')).toEqual([0, 500, 0, 500, 500, 1000, 500, 1000]);
+    // (a constant added; a sum past 1 held at 1)
+    expect(factor('[&a * .5 + .25]')).toEqual([250, 750, 250, 750, 250, 750, 250, 750]);
+    expect(factor('[&a + &b]')).toEqual([0, 1000, 0, 1000, 1000, 1000, 1000, 1000]);
+    // (an axis moved by a sum, laid within its range term by term: .2..0.8)
+    const moving = piece('style=&mine', '4/4', undefined, [...walkers, '&d [&a * .5 + &b * .5]', '&mine map=style sync=.3 harm=.45 artic=.2..0.8 * &d energy=.55']);
+    expect(cutoffs(moving, 16)).toEqual([200, 500, 200, 500, 500, 800, 500, 800]);
+    // (a moving style read through a mix of styles: the mix's weighted sum, a still style a constant in it)
+    const mixed = piece('style=[&mine * .5, &o * .5]', '4/4', undefined, [...walkers, '&mine map=style sync=.3 harm=.45 artic=&a energy=.55', '&o map=style .5 .5 .2 .5']);
+    expect(cutoffs(mixed, 16)).toEqual([100, 600, 100, 600, 100, 600, 100, 600]);
+    // (a mix with a voice is a sound, as it was: shown firing, a voiceless one is no error)
+    expect(errors(['&bar meter("4/4") step=120bpm', ...walkers, '&w [&a * .5 + &b * .5]'].join('\n'))).toEqual([]);
   });
 
   it('a mix of styles by weight: the point it computes', () => {

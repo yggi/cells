@@ -7,19 +7,24 @@ import { compileSource } from '../compile';
 import { bare } from '../fold/score';
 import { playsSameNotes } from '../sameness';
 import { BASS_FRAGMENTS } from '../../repository/bass';
-import { cachedFit } from '../../repository/fit';
+import { fitsAs } from '../../repository/fit';
 import { heard } from '../../repository/heard';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { resolveSeed } from '../../repository/library';
-import { expand } from '../use';
 import { createRecogniser } from '../../repository/recognise';
 import { MOTIF_FRAGMENTS } from '../../repository/motifs';
 import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
 import { declWords } from '../edit';
 import { PITCHED_OPERATORS, variations, type Variation, type VaryOptions } from '.';
+import type { Resolve } from '../program';
+import { bodyOf, expand } from '../use';
 
-/** The fit by lines, as a query asks it (`cachedFit`, until #587): its union, what `unionOf` gave (#588). */
-const unionOf = (fragment: string, workbench: string) => cachedFit()(fragment, workbench).union;
+/** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
+const unionOf = (text: string, workbench: string) => {
+  const body = bodyOf(text);
+  const resolve: Resolve = (id) => (id === 'x' ? body : resolveSeed(id));
+  return fitsAs('x', workbench, { resolve }).union!;
+};
 
 const KIT = { resolve: resolveSeed };
 /** Jambot's reading of a drum bar (`rhythm.test.ts`), with 13 of the General MIDI kit's voices to strike. */

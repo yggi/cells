@@ -273,6 +273,44 @@ export const KEYS = {
     },
 };
 const FREE_NUMBER = /^\(\s*(?:-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)[a-z]*\s*,)/;
+function readRange(s, key) {
+    const save = s.i;
+    const frees = s.frees.length;
+    const end = (name) => {
+        if (s.text.startsWith('free(', s.i))
+            return s.free(NUMBER_PLACES.end, name).value;
+        const n = s.match(/-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?![0-9])/y);
+        return n === null ? null : parseFloat(n);
+    };
+    const back = () => {
+        s.i = save;
+        s.frees.length = frees;
+        return null;
+    };
+    const a = end(`${key} low`);
+    if (a === null)
+        return back();
+    if (s.text.startsWith('..', s.i)) {
+        s.i += 2;
+        const b = end(`${key} high`);
+        if (b === null)
+            s.fail(`${key}=: a range's other end, a number or a slider — ${key}=200..3000 * &a`);
+        return [a, b];
+    }
+    const sugar = /\s*(?:±|\+-)\s*/y;
+    sugar.lastIndex = s.i;
+    if (sugar.test(s.text)) {
+        s.i = sugar.lastIndex;
+        if (s.frees.length > frees)
+            s.frees[frees].param = key;
+        const r = end(`${key} reach`);
+        if (r === null || r < 0)
+            s.fail(`${key}=c ± r: a reach, a number or a slider, 0 or more — ${key}=free(.6, 0..1) ± free(.2, 0..0.5) * &a`);
+        const exact = (x) => Math.round(x * 1e12) / 1e12;
+        return [Math.max(0, exact(a - r)), exact(a + r)];
+    }
+    return back();
+}
 function readAxisFree(s, axis) {
     const at = s.i;
     const f = s.free(NUMBER_PLACES.axis, axis);
@@ -465,10 +503,8 @@ function readParam(s, b, key) {
         b.paramSpans.s = s.span(vs);
         return;
     }
-    const range = s.text.slice(s.i).match(/^([0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\.([0-9]+(?:\.[0-9]+)?|\.[0-9]+)/);
+    const range = readRange(s, key);
     if (s.peek() === '&' || range) {
-        if (range)
-            s.i += range[0].length;
         const factors = [];
         if (!range)
             factors.push(s.cellRef(`a cell after ${key}=`, `in ${key}=`));
@@ -484,10 +520,10 @@ function readParam(s, b, key) {
             factors.push(s.cellRef(`a cell after *, like ${key}=200..3000 * &fenv`, `in ${key}=`));
         }
         if (range && factors.length === 0)
-            s.fail(`${key}=${range[0]}: a range is scaled by cells — ${key}=${range[0]} * &fenv`, vs, s.i - vs);
+            s.fail(`${key}=${s.text.slice(vs, s.i)}: a range is scaled by cells — ${key}=${s.text.slice(vs, s.i)} * &fenv`, vs, s.i - vs);
         if (!range && factors.length > 1)
             s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
-        b.paramCells[key] = { range: range ? [parseFloat(range[1]), parseFloat(range[2])] : null, factors, span: s.span(vs) };
+        b.paramCells[key] = { range, factors, span: s.span(vs) };
         b.paramSpans[key] = s.span(vs);
         return;
     }
@@ -609,17 +645,27 @@ export function parseBody(s, head) {
                 if (axes.has(word))
                     s.fail(`${word}= is given twice`, at, word.length);
                 const vat = s.i;
-                if (s.text.startsWith('free(', s.i))
+                const ranged = /^(?:free\([^)]*\)|-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+))\s*(?:\.\.|±|\+-)/.test(s.text.slice(s.i));
+                if (s.text.startsWith('free(', s.i) && !ranged)
                     axes.set(word, { value: String(readAxisFree(s, word).value), at });
-                else if (s.peek() === '&' || /^(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\.\./.test(s.text.slice(s.i))) {
+                else if (s.peek() === '&' || ranged) {
+                    const frees = s.frees.length;
                     readParam(s, b, word);
                     const pc = b.paramCells[word];
                     if (!pc)
                         s.fail(`${word}=: a moving axis is a range within it and the cell that moves it, ${word}=0..1 * &walk`, vat, s.i - vat);
-                    const [lo, hi] = pc.range ?? AXES.find((a) => a.name === word).range;
                     const [alo, ahi] = AXES.find((a) => a.name === word).range;
-                    if (!(lo >= alo && lo <= ahi && hi >= alo && hi <= ahi))
+                    for (const f of s.frees.slice(frees))
+                        if (f.param !== `${word} reach` && (f.lo < alo || f.hi > ahi))
+                            s.fail(`${word}=: a window's end moves within the axis, ${alo} to ${ahi}: free(${f.value}, ${Math.max(alo, f.lo)}..${Math.min(ahi, f.hi)})`, vat, s.i - vat);
+                    const reach = /±|\+-/.test(s.text.slice(vat, s.i));
+                    let [lo, hi] = pc.range ?? [alo, ahi];
+                    if (reach)
+                        [lo, hi] = [Math.min(ahi, Math.max(alo, lo)), Math.min(ahi, Math.max(alo, hi))];
+                    else if (!(lo >= alo && lo <= ahi && hi >= alo && hi <= ahi))
                         s.fail(`${word}= moves within the axis, ${alo} to ${ahi}: ${word}=${alo}..${ahi} * &walk`, vat, s.i - vat);
+                    if (pc.range)
+                        b.paramCells[word] = { ...pc, range: [lo, hi] };
                     axes.set(word, { value: String(lo), at });
                 }
                 else {
@@ -759,11 +805,9 @@ export function parseBody(s, head) {
         for (const name of ADSR_SLOTS) {
             const where = adsr.get(name);
             const moving = b.paramCells[name];
-            if (moving && !moving.range)
-                s.fail(`${name}=: a moving slot is a range scaled by cells, ${name}=.3..0.01 * &style[artic]`, where, name.length);
-            const value = moving ? String(moving.range[0]) : b.params[name];
+            const value = moving ? String(moving.range?.[0] ?? 0) : b.params[name];
             if (typeof value !== 'number' && typeof value !== 'string')
-                s.fail(`${name}= takes a number, or a range scaled by cells`, where, name.length);
+                s.fail(`${name}= takes a number, a range scaled by cells, or a cell`, where, name.length);
             delete b.params[name];
             const inner = s.within(String(value), where + name.length + 1);
             pushStep(inner, tokens, parseToken(inner));

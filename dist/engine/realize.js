@@ -212,6 +212,17 @@ export function plan(result, statics, muted = new Set()) {
     const voiceParams = new Map();
     const series = (cell, pick, shift, sign) => {
         const m = result.cells.get(cell);
+        if (m.sum)
+            return {
+                sign,
+                lin: false,
+                db: false,
+                clock: null,
+                rate: 0,
+                period: 1,
+                events: [],
+                sum: { terms: m.sum.terms.map((t) => ({ series: series(t.cell, null, 0, 1), weight: t.weight })), constant: m.sum.constant },
+            };
         const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
         const drawn = events.some((e) => e.laps || e.chance !== undefined || e.options || e.chosen) ? (e, lap) => thrownIn(result, cell, e, lap) : undefined;
         const db = m.map?.kind === 'db';

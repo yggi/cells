@@ -17,13 +17,14 @@ The places, from the parser's own table:
 |---|---|---|---|
 | lpf=n, and every sound parameter | ✓ | `&k`, `lo..hi * &k`, on a parameter that moves (pan= and postgain= don't: the renderer's) | `&lead s=saw loop=C4 lpf=free(1200, 200..5000)` |
 | level=&a * n (a gate) | ✓ | `&a * &b * n` | `&out play=&tune level=&accent*free(.4, 0..1) &tune` |
-| attack=n (an envelope by name) | ✓ | `lo..hi * &k`; `&k` alone not yet: a slot moves within a range | `&env map=adsr attack=free(.01, 0..1) decay=.3 sustain=.5 release=.4` |
+| attack=n (an envelope by name) | ✓ | `&k`, `lo..hi * &k`: `&k` its values as the slot's (seconds; sustain a level), held at 0 until a note reads it | `&env map=adsr attack=free(.01, 0..1) decay=.3 sustain=.5 release=.4` |
 | sync=n (a style by name) | ✓ | `&k`, `lo..hi * &k`, within the axis (#576) | `&mine map=style sync=free(.3, 0..1) harm=.45 artic=.55 energy=.55` |
-| swing=8n:n · legato=8n:n | ✓ | ✗ not yet: a share by level is a number | `&bar meter("4/4") step=90bpm swing=8n:free(.6, .5...75)` |
-| [&x * n] (a gain in a mix) | ✓ | `&k`; `lo..hi * &k` not yet: a mix multiplies | `&out [&strings * free(.4, 0..1)]` |
-| &x:0:n (a hit’s gain) | ✓ | ✗ not yet: a hit’s gain is a number | `&beat step=8 &bd &hh:0:free(.4, 0..1)` |
-| style=[&a * n, …] (a weight) | ✓ | ✗ not yet: a weight is a number | `&s style=[&funk * free(.8, 0..1), &bossa * .2]` |
-| scale(name, n) (a tonic) | ✓ whole | `&k` (a note); `lo..hi * &k` not yet: a tonic is a note | `&key scale(dorian, free(2, 0..11))` |
+| lo..hi * &k (a moving range’s ends) · c ± r | ✓ | ✗ not yet: a range’s end is a number or a slider; its cells move what lies between (decision 079) | `&lead s=saw loop=C4 lpf=free(400, 200..800)..free(2400, 1200..4800) * &lfo` |
+| swing=8n:n · legato=8n:n | ✓ | ✗ not yet: #597, a meter’s timing moved at its bar line | `&bar meter("4/4") step=90bpm swing=8n:free(.6, .5...75)` |
+| [&x * n] (a gain in a mix) | ✓ | `&k`; a range moved by cells is a cell of its own, `&g [&k * .6 + .2]`, then `[&x * &g]` (decision 079) | `&out [&strings * free(.4, 0..1)]` |
+| &x:0:n (a hit’s gain) | ✓ | ✗ a hit’s gain is a number; a moving one is `velocity=&accent`, or a gate’s `level=` | `&beat step=8 &bd &hh:0:free(.4, 0..1)` |
+| style=[&a * n, …] (a weight) | ✓ | ✗ a weight is a number; a crossfade is `style=&a..&b * &curve` | `&s style=[&funk * free(.8, 0..1), &bossa * .2]` |
+| scale(name, n) (a tonic) | ✓ whole | `&k` (a note); a tonic is a pitch class, never a range | `&key scale(dorian, free(2, 0..11))` |
 | step=n · loop=n (a rate) | ✓ | a clock (`step=&bar`): another meaning | `&bar scan(4 4 4 4) step=free(90bpm, 60..240)` |
 | step=&bar*n · step=&bar/n | ✓ | ✗ read as the piece is built | `&fast step=&bar*free(2, 1..4) 0 2` |
 | shift=n | ✓ whole | ✗ read as the piece is built | `&key step=cycle(&theme) shift=free(0, 0..11)` |

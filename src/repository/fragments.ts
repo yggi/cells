@@ -22,6 +22,7 @@ import { variantsOf } from './variants';
 import { RENAMED_IDS } from '../engine/renamed';
 import type { FragmentFile } from './files';
 import { cachedFit } from './fit';
+import type { Resolve } from '../engine/program';
 
 /** A place in style space: axis names to numbers. */
 export type StylePoint = Readonly<Record<string, number>>;
@@ -110,11 +111,20 @@ export interface QueryOptions {
    */
   readonly pull?: number;
   /**
-   * The workbench, a cells text: rank only the fragments that fit it (`fitOf`: their uses defined there, no name defined
-   * twice, their clock's needs met, the union compiled with no new diagnostic). Each fragment is tested in the order it
-   * ranks, until k fit; the repository caches each compile by its text.
+   * The workbench, a cells text: rank only the fragments that fit it (`fitsAs`, #587: a template taken by a `from` line with
+   * its main argument, a collection by its lines; their clock's needs met, compiled with no new diagnostic). Each fragment
+   * is tested in the order it ranks, until k fit; the repository caches each compile by its text. Its `from` lines take from
+   * the repository's own fragments.
    */
   readonly workbench?: string;
+  /**
+   * Each facet's main argument on the workbench, as a `from` line writes it (`{ bass: '&harm', motif: '&key', harmony:
+   * '&key', mode: '&tonic' }`, #587): what a template of that facet is taken with. The query's facet names it; with none,
+   * the first of the fragment's own facets that the map names. A template of a facet it doesn't name is taken with the one
+   * cell that meets its main parameter, of what the workbench offers (`&harm, &key from`) or else all its cells, and fits
+   * nowhere that several do (decision 075). No name of the workbench is read by convention.
+   */
+  readonly arguments?: Readonly<Record<string, string>>;
   /** What the frontend has learned, merged with the seed for this query only (`merge`); none, or `EMPTY_LAYER`, ranks the seed alone. */
   readonly layer?: LearnedLayer;
 }
@@ -299,7 +309,12 @@ export function createRepository(given: readonly Fragment[]): Repository {
   }
   if (problems.length) throw new Error(`A malformed repository: ${problems.join('; ')}`);
   const seed = [...entries];
-  const fits = cachedFit();
+  // (the fragments as a from line takes them: each by its id, a template whose points carry its arguments by its own too)
+  const resolverOf = (fragments: readonly Fragment[]): Resolve => {
+    const byId = new Map([...given, ...fragments].map((f): [string, string] => [f.id, f.text]));
+    return (id) => byId.get(id) ?? null;
+  };
+  const fits = cachedFit(resolverOf(seed));
   const alone: Merged = { fragments: seed, filed: new Set(), together: new Map(), unheld: [] };
 
   function merge(layer: LearnedLayer): Merged {
@@ -347,7 +362,7 @@ export function createRepository(given: readonly Fragment[]): Repository {
   return {
     fragments: seed,
     merge,
-    query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL } = {}) {
+    query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL, arguments: mains = {} } = {}) {
       if (!(Number.isInteger(k) && k >= 0)) throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
       if (!(isFiniteNumber(pull) && pull >= 0)) throw new Error(`query: pull is ${String(pull)}, not a number ≥ 0`);
       const wrong = [
@@ -371,10 +386,17 @@ export function createRepository(given: readonly Fragment[]): Repository {
         })
         .sort((a, b) => a.score - b.score || Number(filed.has(b.fragment.id)) - Number(filed.has(a.fragment.id)) || byId(a.fragment.id, b.fragment.id));
       if (workbench === undefined) return ranked.slice(0, k);
+      // (a layer's filed fragments are the from lines' to take too: a fit of its own, for this query)
+      const fit = layer && fragments !== seed ? cachedFit(resolverOf([...fragments, ...layer.filed.map((f) => f.fragment)])) : fits;
+      const mainOf = (f: Fragment): string | undefined => {
+        if (facet !== undefined) return mains[facet];
+        for (const wp of f.association) if (wp.facet !== undefined && mains[wp.facet] !== undefined) return mains[wp.facet];
+        return undefined;
+      };
       const fitting: Found[] = [];
       for (const found of ranked) {
         if (fitting.length >= k) break;
-        if (fits(found.fragment.text, workbench).fits) fitting.push(found);
+        if (fit(found.fragment.text, workbench, mainOf(found.fragment)).fits) fitting.push(found);
       }
       return fitting;
     },

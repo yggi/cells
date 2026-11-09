@@ -2,6 +2,7 @@ import { leaves } from "../subseq.js";
 import { CV_LAPS } from "../program.js";
 import { memberParams, VOICE_PARAMS } from "../attributes.js";
 import { AlgebraError, distribute } from "../algebra.js";
+import { valueSumOf } from "../valuesum.js";
 import { syntax } from "../parser/syntax.js";
 import { noSound } from "./band.js";
 const isMixDecl = (d) => !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
@@ -30,7 +31,7 @@ export const SORT_RULES = [
         sort: 'signal',
         is: 'A mix: an instrument.',
         example: ['&a s=saw loop=C4', '&b s=sine loop=C3', '&organ [&a, &b]'],
-        holds: (d) => isMixDecl(d),
+        holds: (d, { decls }) => isMixDecl(d) && valueSumOf(d.name, decls) === null,
     },
     {
         sort: 'signal',
@@ -120,7 +121,7 @@ export function sorts(ctx, decls) {
         const ref = (name) => atom.exprs.flatMap(refsIn).find((r) => r.name === name);
         const sound = (n) => {
             const d = decls.get(n);
-            return !!d && (!!d.gate || isMixDecl(d) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
+            return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
         };
         const notes = spec ? (spec.lines?.map((l) => l.line) ?? [spec.notes]).map((name) => ({ name, port: spec.port })) : [];
         const sounding = spec && [...notes, ...spec.levels].find((x) => sound(x.name));

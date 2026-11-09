@@ -85,6 +85,8 @@ A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a p
 
 A sound parameter can be a range times cells, so it moves with the music: `lpf=110..3800 * &fenv * &accent * &knob` sweeps the filter from 110 to 3800 Hz by an envelope per note (`map=adsr`), accents (`map=amp`) and a slow knob (`map=lin`); `lpq=&res` takes a cell too. Parameters that are times take a clock as well as seconds: `delaytime=&bar*4/3` is a dotted eighth at whatever the tempo is. Each factor is a value that moves (a CV), not a sound: a voice in it (`&lfo s=sine loop=.5`) moves nothing and says so; write its braid, `&lfo loop=.5 sin(12)`. A factor turning 20 laps a second or faster (`CV_LAPS`, the sorts' edge between a pitch and a wave) is a warning, and one faster than 20 is read turning at 20: a sound moved at an audio rate is FM's (`fm=`).
 
+**A range's ends may be sliders, and centre ± reach is its sugar** ([decision 079](https://github.com/yggi/cells/blob/main/docs/decisions/079-a-sum-of-cells-and-a-window.md)): `lpf=free(400, 200..800)..free(2400, 1200..4800) * &lfo` is a window a hand sets, the cell moving the filter inside it; `lpf=free(1200, 800..2000) ± free(400, 0..800) * &lfo` is the same window by its centre and its reach, `(c − r)..(c + r)`, held at 0 below (`+-` reads as `±`). Written in numbers, `1200 ± 400`, `toCore` writes the range, `800..1600`; with a slider in it, it stays as written.
+
 **A bipolar wave is a share from 0 to 1** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md) §5): a cell whose values run below 0 (`sin(12)`, `saw(8)`, −1 to 1), read as a parameter's factor or a volume, is read as (1 + x)/2, its middle at .5, so `lpf=200..3000 * &lfo` with `&lfo map=lin loop=.25 sin(12)` sweeps the whole range. A cell that stays at 0 or above is read as written; read as a pitch, a wave is semitones either way.
 
 ```cells
@@ -107,7 +109,7 @@ Envelopes are cells. A cell with **`map=adsr`** holds attack, decay, sustain and
 
 Written in place they hang as petals of the voice; named, one envelope serves several voices (`&pluck map=adsr .005 .3 0 .2`, then `env=&pluck`). They're exactly what the same cells would be in the mix (`&tune * &env * &lead`, `(&tune + &vibrato) * &lead`) — written once, on the instrument. As a factor it shapes each note it multiplies, from the note's start through its release.
 
-**An envelope's slots by name** ([decision 066](https://github.com/yggi/cells/blob/main/docs/decisions/066-a-wave-and-an-envelope-move.md)): `attack=`, `decay=`, `sustain=`, `release=` on a `map=adsr` cell, the same four in order. Each is a number, or a range scaled by cells, read at each note's start, so the chords swell at legato and are cut short at staccato:
+**An envelope's slots by name** ([decision 066](https://github.com/yggi/cells/blob/main/docs/decisions/066-a-wave-and-an-envelope-move.md)): `attack=`, `decay=`, `sustain=`, `release=` on a `map=adsr` cell, the same four in order. Each is a number, a range scaled by cells, or a cell alone, its values the slot's (`attack=&a`: seconds; `sustain=&s`: a level, 0 to 1), read at each note's start. A range moved by the style swells the chords at legato and cuts them short at staccato:
 
 ```cells
 &bar meter("4/4") step=&tempo

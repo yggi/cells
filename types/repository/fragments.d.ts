@@ -77,11 +77,20 @@ export interface QueryOptions {
      */
     readonly pull?: number;
     /**
-     * The workbench, a cells text: rank only the fragments that fit it (`fitOf`: their uses defined there, no name defined
-     * twice, their clock's needs met, the union compiled with no new diagnostic). Each fragment is tested in the order it
-     * ranks, until k fit; the repository caches each compile by its text.
+     * The workbench, a cells text: rank only the fragments that fit it (`fitsAs`, #587: a template taken by a `from` line with
+     * its main argument, a collection by its lines; their clock's needs met, compiled with no new diagnostic). Each fragment
+     * is tested in the order it ranks, until k fit; the repository caches each compile by its text. Its `from` lines take from
+     * the repository's own fragments.
      */
     readonly workbench?: string;
+    /**
+     * Each facet's main argument on the workbench, as a `from` line writes it (`{ bass: '&harm', motif: '&key', harmony:
+     * '&key', mode: '&tonic' }`, #587): what a template of that facet is taken with. The query's facet names it; with none,
+     * the first of the fragment's own facets that the map names. A template of a facet it doesn't name is taken with the one
+     * cell that meets its main parameter, of what the workbench offers (`&harm, &key from`) or else all its cells, and fits
+     * nowhere that several do (decision 075). No name of the workbench is read by convention.
+     */
+    readonly arguments?: Readonly<Record<string, string>>;
     /** What the frontend has learned, merged with the seed for this query only (`merge`); none, or `EMPTY_LAYER`, ranks the seed alone. */
     readonly layer?: LearnedLayer;
 }

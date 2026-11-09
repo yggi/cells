@@ -103,6 +103,15 @@ export const FAMILIES: readonly Family[] = [
       ),
   },
   {
+    key: 'reach',
+    rows: 'centre ± reach (decision 079)',
+    // (c ± r, or c +- r, written in numbers: the window it is, (c − r)..(c + r), held at 0 below; a slider in it stays)
+    rewrite: (text) =>
+      codeWise(text, (c) =>
+        c.replace(/(?<=[=\s])(-?[0-9]*\.?[0-9]+)\s*(?:±|\+-)\s*([0-9]*\.?[0-9]+)(?=\s*\*)/g, (_, cs: string, rs: string) => `${num(Math.max(0, +cs - +rs))}..${num(+cs + +rs)}`),
+      ),
+  },
+  {
     key: 'note names',
     rows: '50 `loop=NAME`',
     rewrite: (text) =>
@@ -1088,6 +1097,12 @@ export const LEFT: readonly { key: string; rows: string; test: RegExp | ((text: 
     rows: '58–64 a unit in `free(…)`, or a tempo marking, left as written',
     test: /\bfree\((?:-?\d*\.?\d+(?:bpm|hz|min|h|d|wk|k)\b|[a-z]+\))/,
     why: 'a slider whose unit is written after its number, or a marking (free(andante)): its numbers in the core’s, the unit an argument',
+  },
+  {
+    key: 'reach',
+    rows: 'centre ± reach with a slider in it, left as written (decision 079)',
+    test: /±|\+-/,
+    why: 'a window written as its centre and reach where either is a slider: the window’s ends follow both, which two sliders of their own wouldn’t',
   },
   {
     key: 'keys',
