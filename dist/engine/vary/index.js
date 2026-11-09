@@ -3,9 +3,8 @@ import { compileSource } from "../compile.js";
 import { flatten } from "../flatten.js";
 import { codeShifts } from "../program.js";
 import { declWords, setBraid } from "../edit.js";
-import { gmDrumNote } from "../midi.js";
 import { anchorsAmong } from "./anchors.js";
-import { linesOf, moved, pitchKey, pitchOf, tapWhole, written } from "./lines.js";
+import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written } from "./lines.js";
 import { referenceOf } from "./reference.js";
 export { backbeatOf } from "./anchors.js";
 export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
@@ -39,7 +38,7 @@ export function readVariations(fragment, options = {}) {
         const w = lines[i].stepWhole;
         return w === null ? `${i}@${step}` : (step * w).toFixed(9);
     };
-    const sound = (voice) => String(gmDrumNote(voice.slice(1)) ?? voice);
+    const sound = (voice) => String(drumNoteOf(result, voice) ?? voice);
     const pitch = (n) => (n.pitch ? ` ${pitchKey(n.pitch)}` : '');
     const keysOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${lines[i].stepWhole ?? i} ${n.voice}${pitch(n)}`);
     const strikesOf = (i, notes) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}${pitch(n)}`);
@@ -133,10 +132,10 @@ export function readVariations(fragment, options = {}) {
         };
         out.push({ variation, notes: [...lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j])), ...fixed] });
     };
-    const inOrder = (notes) => notes.sort((a, b) => a.step - b.step || pitchOf(a.voice) - pitchOf(b.voice));
+    const inOrder = (notes) => notes.sort((a, b) => a.step - b.step || pitchOf(result, a.voice) - pitchOf(result, b.voice));
     const first = (i) => {
         const n = lines[i].notes[0];
-        return [n.step * (lines[i].stepWhole ?? 1), pitchOf(n.voice)];
+        return [n.step * (lines[i].stepWhole ?? 1), pitchOf(result, n.voice)];
     };
     const order = lines
         .map((_, i) => i)

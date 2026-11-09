@@ -13,12 +13,12 @@ import { FORM_FRAGMENTS } from './forms';
 import { fitsAs } from './fit';
 import { expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
-import { createRepository, type StylePoint } from './fragments';
+import { createRepository, pointDistance, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
 import { newPoint } from '../engine/migrate/axes';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, STYLES, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
@@ -106,14 +106,13 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   melodie: { point: { ...stylePoint('elektro'), bite: 0.75 } },
   ghostPhrase: { point: stylePoint('darkAmbient') },
 };
-/** The centre of style space, where a form for any style sits. */
-const CENTRE = heldForm(0.5, 0.5, 0.5, 0.5);
 /** Each form: its head, the hole it reads, its length in bars over a one-bar motif, and its point. */
 const FORMS: Record<string, { head: string; hole: string; bars: number; point: StylePoint; weight?: number }> = {
-  call_and_answer: { head: 'phrase', hole: 'call', bars: 2, point: CENTRE },
-  sentence: { head: 'sentence', hole: 'call', bars: 4, point: CENTRE },
-  period: { head: 'period', hole: 'call', bars: 4, point: CENTRE },
-  AABA: { head: 'chorus', hole: 'a', bars: 4, point: CENTRE },
+  // (each where its idiom is, naming no mood: #371, the owner, 2026-11-09, "form follows idiom")
+  call_and_answer: { head: 'phrase', hole: 'call', bars: 2, point: { sync: 0.75, harm: 0.35, bite: 0.65 } },
+  sentence: { head: 'sentence', hole: 'call', bars: 4, point: { sync: 0.2, harm: 0.55, bite: 0.5 } },
+  period: { head: 'period', hole: 'call', bars: 4, point: { sync: 0.15, harm: 0.4, bite: 0.3 } },
+  AABA: { head: 'chorus', hole: 'a', bars: 4, point: { sync: 0.45, harm: 0.85, bite: 0.4 } },
   // (Twinkle's and Hänschen klein's, at their tunes' points, #371)
   ternary: { head: 'song', hole: 'call', bars: 6, point: { sync: KINDERLIED.sync!, harm: KINDERLIED.harm!, bite: KINDERLIED.bite! }, weight: 0.5 },
   rounded_binary: { head: 'song', hole: 'call', bars: 8, point: heldForm(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
@@ -191,12 +190,53 @@ describe('the motifs', () => {
 });
 
 describe('the forms', () => {
-  it('are call and answer, the sentence, the period and AABA at the centre of style space, and the ternary and the rounded binary song at their tunes’ points, as the facet form', () => {
+  it('are call and answer, the sentence, the period and AABA where their idioms are, and the ternary and the rounded binary song at their tunes’ points, as the facet form', () => {
     expect(FORM_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(FORMS));
     for (const f of FORM_FRAGMENTS) {
       expect(f.association, f.id).toEqual([{ point: FORMS[f.id]!.point, weight: FORMS[f.id]!.weight ?? 1, facet: 'form' }]);
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual([`&${FORMS[f.id]!.hole}`]);
     }
+  });
+
+  // (#371: the four placed by idiom no longer tie at the centre, where a query found AABA first everywhere, by its id)
+  it('are each found first at their own point, alone, and the four placed by idiom are at least 0.1 apart', () => {
+    const repository = createRepository(LIBRARY);
+    for (const [id, { point }] of Object.entries(FORMS)) {
+      const [first, second] = repository.query(point, 2, {}, { facet: 'form' });
+      expect([first!.fragment.id, first!.distance], id).toEqual([id, 0]);
+      expect(second!.distance, id).toBeGreaterThan(0);
+    }
+    const four = ['call_and_answer', 'sentence', 'period', 'AABA'];
+    for (const a of four) for (const b of four) if (a < b) expect(pointDistance(FORMS[a]!.point, FORMS[b]!.point), `${a}, ${b}`).toBeGreaterThanOrEqual(0.1);
+  });
+
+  // (the form each style finds first, by idiom: a change here changes the lead's form Jambot plays there, yggi/jambot#547 rung 4)
+  it('are found first at each style of styles by its idiom, with no tie', () => {
+    const repository = createRepository(LIBRARY);
+    const found = Object.fromEntries(
+      STYLES.map((s) => {
+        const [first, second] = repository.query(s.point, 2, {}, { facet: 'form' });
+        expect(second!.distance - first!.distance, s.id).toBeGreaterThan(0);
+        return [s.id, first!.fragment.id];
+      }),
+    );
+    expect(found).toEqual({
+      synthPop: 'sentence',
+      techno: 'sentence',
+      deepHouse: 'sentence',
+      ambient: 'period',
+      lofi: 'AABA',
+      funk: 'call_and_answer',
+      bossaNova: 'AABA',
+      swingJazz: 'AABA',
+      electroSwing: 'AABA',
+      spooky: 'AABA',
+      kinderlied: 'ternary',
+      acid: 'call_and_answer',
+      happyHardcore: 'sentence',
+      elektro: 'sentence',
+      darkAmbient: 'period',
+    });
   });
 
   // (#314: a form's hole is a line, which a piece fills with a motif, not a sound an instrument fills)

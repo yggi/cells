@@ -361,22 +361,26 @@ export function drawn(model: GraphModel, r: Routing): Routing {
   if (!byModel) drawnCache.set(r, (byModel = new WeakMap()));
   let hit = byModel.get(model);
   if (!hit) {
-    const shown = new Set(model.edges.map((e) => e.id));
+    const shown = new Map(model.edges.map((e) => [e.id, e]));
     const edges = new Set<string>();
+    let nodes = r.nodes;
+    const route = (end: string) => {
+      if (nodes.has(end)) return;
+      if (nodes === r.nodes) nodes = new Set(r.nodes);
+      (nodes as Set<string>).add(end);
+    };
     for (const id of r.edges) {
       const to = model.alias.has(id) ? model.alias.get(id) : id;
       // (an edge to a cell that isn't drawn — the implicit grid — isn't either)
-      if (to && shown.has(to)) edges.add(to);
+      if (!to || !shown.has(to)) continue;
+      edges.add(to);
+      // (an edge redrawn as another, a role's into its band's petal: the edge it's drawn as is routed, and so are its ends, #618)
+      if (to !== id) for (const end of [shown.get(to)!.source, shown.get(to)!.target]) route(end);
     }
-    let nodes = r.nodes;
     for (const e of model.edges)
       if (e.routes?.every((any) => any.some((id) => r.edges.has(id)))) {
         edges.add(e.id);
-        for (const end of [e.source, e.target])
-          if (isJunction(end) && !nodes.has(end)) {
-            if (nodes === r.nodes) nodes = new Set(r.nodes);
-            (nodes as Set<string>).add(end);
-          }
+        for (const end of [e.source, e.target]) if (isJunction(end)) route(end);
       }
     byModel.set(model, (hit = { nodes, edges }));
   }

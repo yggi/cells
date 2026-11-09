@@ -42,10 +42,9 @@ import { flatten } from '../flatten';
 import type { Meter } from '../meter';
 import { codeShifts, type CompileResult, type Resolve } from '../program';
 import { declWords, setBraid } from '../edit';
-import { gmDrumNote } from '../midi';
 import type { Rewrite } from '../rewrite';
 import { anchorsAmong, type Anchor } from './anchors';
-import { linesOf, moved, pitchKey, pitchOf, tapWhole, written, type Line, type LineNote } from './lines';
+import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type Line, type LineNote } from './lines';
 import { referenceOf, type Reference } from './reference';
 
 export { backbeatOf, type Anchor } from './anchors';
@@ -162,7 +161,7 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
     const w = lines[i]!.stepWhole;
     return w === null ? `${i}@${step}` : (step * w).toFixed(9);
   };
-  const sound = (voice: string) => String(gmDrumNote(voice.slice(1)) ?? voice);
+  const sound = (voice: string) => String(drumNoteOf(result, voice) ?? voice);
   const pitch = (n: LineNote) => (n.pitch ? ` ${pitchKey(n.pitch)}` : '');
   const keysOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${lines[i]!.stepWhole ?? i} ${n.voice}${pitch(n)}`);
   const strikesOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}${pitch(n)}`);
@@ -266,10 +265,10 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
     out.push({ variation, notes: [...lines.flatMap((_, j) => (j === i ? heardOf(i, notes) : heardKeys[j]!)), ...fixed] });
   };
 
-  const inOrder = (notes: LineNote[]) => notes.sort((a, b) => a.step - b.step || pitchOf(a.voice) - pitchOf(b.voice));
+  const inOrder = (notes: LineNote[]) => notes.sort((a, b) => a.step - b.step || pitchOf(result, a.voice) - pitchOf(result, b.voice));
   const first = (i: number) => {
     const n = lines[i]!.notes[0]!;
-    return [n.step * (lines[i]!.stepWhole ?? 1), pitchOf(n.voice)] as const;
+    return [n.step * (lines[i]!.stepWhole ?? 1), pitchOf(result, n.voice)] as const;
   };
   const order = lines
     .map((_, i) => i)

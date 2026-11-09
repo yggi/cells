@@ -1,16 +1,15 @@
 /**
  * Anchors (decision 052, point 3): what no operator touches, derived from a fragment's text on its workbench by a rule
  * per kind of line, never declared. Rung 1 has the drums' two: the kick (a line every note of which strikes General
- * MIDI's kick, 36: `gmDrumNote`'s `bd`, `kick`, `kd`) and the backbeat (a line every note of which strikes the snare, 38,
+ * MIDI's kick, 36, by its `note=`) and the backbeat (a line every note of which strikes the snare, 38,
  * on the meter's backbeat). Rung 2 has the pitched lines' one: the root on a chord change (a note of a line over a
  * harmony, a braid of stacks, whose onset is where the chord in force changes or its lap starts, and which plays that
  * chord's root, its degree 0 or a lap of it). The cadence joins with harmony (rung 3). Pure.
  */
 import { flatten } from '../flatten';
-import { gmDrumNote } from '../midi';
 import type { Meter } from '../meter';
 import { codeShifts, type CompileResult } from '../program';
-import { tapWhole, type Line } from './lines';
+import { drumNoteOf, tapWhole, type Line } from './lines';
 
 /** What no operator moves: a whole line, or (with the pitched operators) one note of it, its step on the line's grid. */
 export interface Anchor {
@@ -47,8 +46,8 @@ function onBackbeat(line: Line): boolean {
   });
 }
 
-/** Whether every note of a line strikes this drum. */
-const strikes = (line: Line, note: number) => line.notes.length > 0 && line.notes.every((n) => gmDrumNote(n.voice.slice(1)) === note);
+/** Whether every note of a line strikes this drum: its voice's `note=`, not its name (decision 075, #617). */
+const strikes = (line: Line, note: number, result: CompileResult) => line.notes.length > 0 && line.notes.every((n) => drumNoteOf(result, n.voice) === note);
 
 /**
  * A harmony's changes: each onset, in whole notes from its lap's start, where the chord in force changes or its lap
@@ -98,9 +97,9 @@ export function anchorsAmong(lines: readonly Line[], result: CompileResult): Anc
   return lines.flatMap((line): Anchor[] =>
     line.pitched
       ? rootsOf(line, result)
-      : strikes(line, KICK)
+      : strikes(line, KICK, result)
         ? [{ line: line.name, reason: 'kick' }]
-        : strikes(line, SNARE) && onBackbeat(line)
+        : strikes(line, SNARE, result) && onBackbeat(line)
           ? [{ line: line.name, reason: 'backbeat' }]
           : [],
   );

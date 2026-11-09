@@ -283,6 +283,22 @@ describe('the anchors', () => {
     expect(anchorsOf(fragment, WORKBENCH)).toEqual([]);
   });
 
+  it('a drum is read by its note=, not its name: each bar with its drums renamed is varied as written, renamed (decision 075, #617)', () => {
+    for (const b of BARS) {
+      const drums = [...b.fragment.matchAll(/^&(\w+) note=/gm)].map((m) => m[1]!);
+      expect(drums.length, b.preset).toBeGreaterThan(0);
+      const rename = (text: string) => drums.reduce((t, d, k) => t.replace(new RegExp(`&${d}\\b`, 'g'), `&drum${k}`), text);
+      const renamed = rename(b.fragment);
+      expect(anchorsOf(renamed, WORKBENCH), b.preset).toEqual(anchorsOf(b.fragment, WORKBENCH));
+      const as = variations(b.fragment, OPTIONS).map((v) => [v.by, rename(v.apply(b.fragment))]);
+      expect(as.length, b.preset).toBeGreaterThan(0);
+      expect(
+        variations(renamed, OPTIONS).map((v) => [v.by, v.apply(renamed)]),
+        b.preset,
+      ).toEqual(as);
+    }
+  });
+
   it('the backbeat falls where Jambot’s backbeatOf has it, on each of the seed library’s 13 meters', () => {
     const eighths = METER_FRAGMENTS.map((f) => {
       const r = compileSource(`${f.text}\n&tempo step=120bpm`);

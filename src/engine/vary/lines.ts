@@ -15,7 +15,6 @@
  */
 import { declWords, splitComment, splitWords } from '../edit';
 import { flatten } from '../flatten';
-import { gmDrumNote } from '../midi';
 import { noteValue, type Meter } from '../meter';
 import { bjorklund } from '../parser/generators';
 import { readFrom } from '../parser/use';
@@ -101,8 +100,11 @@ export interface Line {
   readonly pitched?: { readonly table: string | null; readonly voice: string };
 }
 
-/** A voice's pitch, as the lines are ordered by it: its General MIDI drum note, else past every drum. */
-export const pitchOf = (voice: string): number => gmDrumNote(voice.slice(1)) ?? 128;
+/** The drum note a voice strikes: its `note=` as the compile reads it (decision 075), not its name; null for none. */
+export const drumNoteOf = (result: CompileResult, voice: string): number | null => result.cells.get(voice.slice(1))?.drumNote ?? null;
+
+/** A voice's pitch, as the lines are ordered by it: its drum note, else past every drum. */
+export const pitchOf = (result: CompileResult, voice: string): number => drumNoteOf(result, voice) ?? 128;
 
 /** A rest, or n of them: repeated (`~!3`) or held (`~@3`), the same n steps of silence. */
 const REST = /^~(?:[!@](\d+))?$/;
@@ -280,7 +282,7 @@ function lineOf(source: string, result: CompileResult, trigger: string, levelCel
   const notes = steps
     .flatMap((hits, step) => hits.map((h) => ({ step, voice: h.voice, own: h.own, level: Number(h.own ?? 1) * Number(levels?.tokens[step] ?? 1) })))
     .filter((n) => n.level > 0)
-    .sort((a, b) => a.step - b.step || pitchOf(a.voice) - pitchOf(b.voice));
+    .sort((a, b) => a.step - b.step || pitchOf(result, a.voice) - pitchOf(result, b.voice));
   return {
     name: `&${trigger}`,
     trigger,
