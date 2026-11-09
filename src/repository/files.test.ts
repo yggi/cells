@@ -4,15 +4,19 @@
 import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { readFragment, readFragments, writeFragment, type FragmentFile } from './files';
-import { BASS_FRAGMENTS } from './bass';
-import { HARMONY_FRAGMENTS } from './harmony';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
-import { METER_FRAGMENTS } from './meters';
-import { MODE_FRAGMENTS } from './modes';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 
 // (the three styles read from the examples, #572)
+
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+const BASS_FRAGMENTS = seedFragments('bass');
+const HARMONY_FRAGMENTS = seedFragments('harmony');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
+const MODE_FRAGMENTS = seedFragments('modes');
+const STAB_FRAGMENTS = seedFragments('stab');
+const MOTIF_FRAGMENTS = seedFragments('motifs');
 const ACID = stylePoint('acid');
 const HAPPY_HARDCORE = stylePoint('happyHardcore');
 const ELEKTRO = stylePoint('elektro');
@@ -22,11 +26,8 @@ const BAROQUE = stylePoint('baroque');
 const BLUES_SHUFFLE = stylePoint('bluesShuffle');
 const SEA_SHANTY = stylePoint('seaShanty');
 const CHIPTUNE = stylePoint('chiptune');
-import { RHYTHM_FRAGMENTS } from './rhythms';
-import { fragmentsOf, SEED } from './seed';
+import { fragmentsOf, SEED, seedFragments } from './seed';
 import { SEED_FILES } from './seed.generated';
-import { STAB_FRAGMENTS } from './stab';
-import { MOTIF_FRAGMENTS } from './motifs';
 
 const read = (markdown: string): FragmentFile => {
   const r = readFragment(markdown);

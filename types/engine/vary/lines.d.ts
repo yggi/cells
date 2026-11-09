@@ -80,8 +80,10 @@ export interface Line {
         readonly voice: string;
     };
 }
-/** A voice's pitch, as the lines are ordered by it: its General MIDI drum note, else past every drum. */
-export declare const pitchOf: (voice: string) => number;
+/** The drum note a voice strikes: its `note=` as the compile reads it (decision 075), not its name; null for none. */
+export declare const drumNoteOf: (result: CompileResult, voice: string) => number | null;
+/** A voice's pitch, as the lines are ordered by it: its drum note, else past every drum. */
+export declare const pitchOf: (result: CompileResult, voice: string) => number;
 /** The steps of n a Euclid strikes, turned right by r, as the parser reads `x(k,n,r)` (`parser/braid.ts`). */
 export declare const euclidHits: (k: number, n: number, r: number) => number[];
 /** A tap's length in whole notes on a meter: a note value (`16n`), a bar (`1m`), a pulse; null for any other. */

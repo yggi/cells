@@ -1,3 +1,5 @@
+const MOTIF_FRAGMENTS = seedFragments('motifs');
+const FORM_FRAGMENTS = seedFragments('forms');
 /**
  * Decomposition (yggi/cells#512, rung 1; yggi/jambot#580, rung 4): a line of several bars, degrees of the key, written
  * as the motif it is made of and the form that plays it, the way a piece writes a tune whole (*Kinderlieder, in pieces*:
@@ -22,9 +24,8 @@ import { codeShifts } from '../engine/program';
 import { structureOf } from '../engine/measure';
 import { tapWhole } from '../engine/vary/lines';
 import type { Fragment } from './fragments';
-import { FORM_FRAGMENTS } from './forms';
 import { resolveSeed } from './library';
-import { MOTIF_FRAGMENTS } from './motifs';
+import { seedFragments } from './seed';
 
 /** A note of a line: where it starts in whole notes from the line's start, its degree and its accidental. */
 export interface LineNote {

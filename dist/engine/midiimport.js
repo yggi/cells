@@ -1,3 +1,4 @@
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 import { secondsAt } from "./midifile.js";
 import { fold, printFolded } from "./fold/index.js";
 import { storyOf } from "./fold/story.js";
@@ -11,7 +12,7 @@ import { MAX_REPS } from "./parser/scanner.js";
 import { codeShifts } from "./program.js";
 import { eventsBetween, plan } from "./realize.js";
 import { GM_KIT, gmDrumNote, kitNotes } from "./midi.js";
-import { INSTRUMENT_FRAGMENTS } from "../repository/instruments.js";
+import { seedFragments } from "../repository/seed.js";
 const DIVISIONS = [1, 2, 3, 4, 6, 8, 12, 16];
 const ON_GRID = 0.995;
 const DRUM_OF = Object.fromEntries(GM_KIT.map((d) => [d.note, d.name]));

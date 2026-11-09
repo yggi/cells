@@ -312,23 +312,31 @@ export function drawn(model, r) {
         drawnCache.set(r, (byModel = new WeakMap()));
     let hit = byModel.get(model);
     if (!hit) {
-        const shown = new Set(model.edges.map((e) => e.id));
+        const shown = new Map(model.edges.map((e) => [e.id, e]));
         const edges = new Set();
+        let nodes = r.nodes;
+        const route = (end) => {
+            if (nodes.has(end))
+                return;
+            if (nodes === r.nodes)
+                nodes = new Set(r.nodes);
+            nodes.add(end);
+        };
         for (const id of r.edges) {
             const to = model.alias.has(id) ? model.alias.get(id) : id;
-            if (to && shown.has(to))
-                edges.add(to);
+            if (!to || !shown.has(to))
+                continue;
+            edges.add(to);
+            if (to !== id)
+                for (const end of [shown.get(to).source, shown.get(to).target])
+                    route(end);
         }
-        let nodes = r.nodes;
         for (const e of model.edges)
             if (e.routes?.every((any) => any.some((id) => r.edges.has(id)))) {
                 edges.add(e.id);
                 for (const end of [e.source, e.target])
-                    if (isJunction(end) && !nodes.has(end)) {
-                        if (nodes === r.nodes)
-                            nodes = new Set(r.nodes);
-                        nodes.add(end);
-                    }
+                    if (isJunction(end))
+                        route(end);
             }
         byModel.set(model, (hit = { nodes, edges }));
     }

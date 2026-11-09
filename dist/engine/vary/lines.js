@@ -1,6 +1,5 @@
 import { declWords, splitComment, splitWords } from "../edit.js";
 import { flatten } from "../flatten.js";
-import { gmDrumNote } from "../midi.js";
 import { noteValue } from "../meter.js";
 import { bjorklund } from "../parser/generators.js";
 import { codeShifts } from "../program.js";
@@ -16,7 +15,8 @@ export function pitchText(p) {
         return inner;
     return /^&[A-Za-z_][A-Za-z0-9_]*$/.test(inner) ? `${inner}^${p.by}` : `degree(${inner}, ${p.by})`;
 }
-export const pitchOf = (voice) => gmDrumNote(voice.slice(1)) ?? 128;
+export const drumNoteOf = (result, voice) => result.cells.get(voice.slice(1))?.drumNote ?? null;
+export const pitchOf = (result, voice) => drumNoteOf(result, voice) ?? 128;
 const REST = /^~(?:[!@](\d+))?$/;
 const HIT = /^&([A-Za-z_][A-Za-z0-9_]*)(?::0(?::([0-9]*\.?[0-9]+))?)?(?:!(\d+))?$/;
 const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
@@ -186,7 +186,7 @@ function lineOf(source, result, trigger, levelCell, card) {
     const notes = steps
         .flatMap((hits, step) => hits.map((h) => ({ step, voice: h.voice, own: h.own, level: Number(h.own ?? 1) * Number(levels?.tokens[step] ?? 1) })))
         .filter((n) => n.level > 0)
-        .sort((a, b) => a.step - b.step || pitchOf(a.voice) - pitchOf(b.voice));
+        .sort((a, b) => a.step - b.step || pitchOf(result, a.voice) - pitchOf(result, b.voice));
     return {
         name: `&${trigger}`,
         trigger,

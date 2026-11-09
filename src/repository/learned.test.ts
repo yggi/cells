@@ -8,8 +8,10 @@ import { readFragment, writeFragment } from './files';
 import { byId, createRepository, EMPTY_LAYER, layerProblems, type Fragment, type LearnedLayer, type QueryOptions, type StylePoint } from './fragments';
 import { canonicalText, FILING_WEIGHT, fileFragment, sameText, USE_CAP, USE_STEP, usedTogether, useFragments, type Filing } from './learned';
 import { LIBRARY } from './library';
-import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { seedFragments } from './seed';
+
+const METER_FRAGMENTS = seedFragments('meters');
 
 const library = createRepository(LIBRARY);
 const PRESETS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ];
@@ -109,11 +111,11 @@ describe('the pull', () => {
     expect(moved).toBeGreaterThan(225);
   });
 
-  // (the 1,000 points in quarters, each its own test: a query merges a layer that counts every pair of the library, so
-  // its cost grows with the square of the library's size)
-  it.each([0, 250, 500, 750])('with nothing chosen, no pull changes a query: over 1,000 points, 250 from %i', (from) => {
+  // (the 1,000 points in eighths, each its own test: a query merges a layer that counts every pair of the library, so
+  // its cost grows with the square of the library's size; a quarter took 9 s here and reached CI's 20 s at #652's)
+  it.each([0, 125, 250, 375, 500, 625, 750, 875])('with nothing chosen, no pull changes a query: over 1,000 points, 125 from %i', (from) => {
     for (const [i, point] of POINTS.entries()) {
-      if (i < from || i >= from + 250) continue;
+      if (i < from || i >= from + 125) continue;
       const { chosen: _, ...unchosen } = optionsAt(i);
       const asked = ranked(library.query(point, 27, {}, unchosen));
       for (const pull of [0, 0.5, 10]) expect(ranked(library.query(point, 27, {}, { ...unchosen, pull })), `${JSON.stringify(point)} pull ${pull}`).toEqual(asked);

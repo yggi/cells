@@ -8,8 +8,10 @@ import { setTiming } from '../engine/edit';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { createRepository, type StylePoint } from './fragments';
-import { METER_FRAGMENTS } from './meters';
 import { ELECTRO_SWING, SPOOKY } from './styles';
+import { seedFragments } from './seed';
+
+const METER_FRAGMENTS = seedFragments('meters');
 
 /** Jambot's swing axis, the readers' path of the swing contract (music-commons contracts/swing): 4/4 at each s from 0 to 1 in twentieths. */
 const path = swing.vectors.filter((v) => v.s !== undefined);
