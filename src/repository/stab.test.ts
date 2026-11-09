@@ -11,8 +11,9 @@ import { createRepository } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { ELECTRO_SWING, SPOOKY, stylePoint, SWING_JAZZ } from './styles';
+import { seedFragments } from './seed';
 
-import { STAB_FRAGMENTS } from './stab';
+const STAB_FRAGMENTS = seedFragments('stab');
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
 const takenOn = (text: string, bench: string, main?: string) => {

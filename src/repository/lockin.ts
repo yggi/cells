@@ -1,3 +1,4 @@
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 /**
  * Lock-in, measured (decision 048, point 6; #145, #151, #162): does learning by use lock the composer onto a few
  * fragments? A seeded walk of the style point at entropy 0.3, as Jambot's radio walks (E30, E34): runs of 1,250
@@ -15,7 +16,7 @@ import { createRepository, EMPTY_LAYER, type LearnedLayer, type StylePoint } fro
 import { fileFragment, useFragments, type Use } from './learned';
 import { LIBRARY } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
-import { RHYTHM_FRAGMENTS } from './rhythms';
+import { seedFragments } from './seed';
 
 /** The presets a draw's runs start from, in order: run `i` of a draw starts at the `i`th. */
 export const LOCK_IN_PRESETS: Readonly<Record<string, StylePoint>> = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ };

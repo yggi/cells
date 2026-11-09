@@ -12,14 +12,16 @@ import { playsSameNotes } from '../sameness';
 import { windowAt } from '../schedule';
 import { fitsAs } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
-import { BASS_FRAGMENTS } from '../../repository/bass';
 import { bassCards } from '../../repository/benches';
-import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
-import { MOTIF_FRAGMENTS } from '../../repository/motifs';
 import { anchorsOf, PITCHED_OPERATORS, readVariations, variations, varied } from '.';
 import { bodyOf } from '../use';
 import type { Resolve } from '../program';
 import { resolveSeed } from '../../repository/library';
+import { seedFragments } from '../../repository/seed';
+
+const BASS_FRAGMENTS = seedFragments('bass');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
+const MOTIF_FRAGMENTS = seedFragments('motifs');
 
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {

@@ -9,17 +9,18 @@ import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { codeShifts } from '../engine/program';
 import { windowAt } from '../engine/schedule';
-import { BASS_FRAGMENTS } from './bass';
 import { fitsAs } from './fit';
 import { expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
 import { createRepository, fragmentDistance, type StylePoint } from './fragments';
-import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, stylePoint, SYNTH_POP, TECHNO } from './styles';
-import { SEED } from './seed';
+import { SEED, seedFragments } from './seed';
+
+const BASS_FRAGMENTS = seedFragments('bass');
+const HARMONY_FRAGMENTS = seedFragments('harmony');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
 const takenOn = (text: string, bench: string, main?: string) => {

@@ -1,3 +1,4 @@
+const METER_FRAGMENTS = seedFragments('meters');
 /**
  * Open fragments (#22): a fragment that leaves `&bar` and `&key` to the host. Each way of filling one is tried on three
  * cases, and the filled fragment's events are compared with the same text written whole. A probe for the proposal in
@@ -30,7 +31,7 @@ import { gmDrumNote } from '../src/engine/midi';
 import { DEFAULT_ENV, codeShifts, type CompileResult } from '../src/engine/program';
 import { eventsBetween, plan } from '../src/engine/realize';
 import type { Fragment } from '../src/repository/fragments';
-import { METER_FRAGMENTS } from '../src/repository/meters';
+import { seedFragments } from '../src/repository/seed';
 
 const lines = (...xs: string[]) => xs.join('\n');
 

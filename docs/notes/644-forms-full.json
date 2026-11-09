@@ -1,0 +1,6 @@
+{
+  "call_and_answer": [{ "point": { "sync": 0.75, "harm": 0.35, "bite": 0.65 }, "facet": "form" }],
+  "AABA": [{ "point": { "sync": 0.45, "harm": 0.85, "bite": 0.4 }, "facet": "form" }],
+  "period": [{ "point": { "sync": 0.15, "harm": 0.4, "bite": 0.3 }, "facet": "form" }],
+  "sentence": [{ "point": { "sync": 0.2, "harm": 0.55, "bite": 0.5 }, "facet": "form" }]
+}

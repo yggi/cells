@@ -6,18 +6,20 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from '../compile';
 import { bare } from '../fold/score';
 import { playsSameNotes } from '../sameness';
-import { BASS_FRAGMENTS } from '../../repository/bass';
 import { fitsAs } from '../../repository/fit';
 import { bassCards, drumCard } from '../../repository/benches';
-import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { resolveSeed } from '../../repository/library';
 import { createRecogniser } from '../../repository/recognise';
-import { MOTIF_FRAGMENTS } from '../../repository/motifs';
-import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
 import { declWords } from '../edit';
 import { PITCHED_OPERATORS, variations, type Variation, type VaryOptions } from '.';
 import type { Resolve } from '../program';
 import { bodyOf, expand } from '../use';
+import { seedFragments } from '../../repository/seed';
+
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+const BASS_FRAGMENTS = seedFragments('bass');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
+const MOTIF_FRAGMENTS = seedFragments('motifs');
 
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {

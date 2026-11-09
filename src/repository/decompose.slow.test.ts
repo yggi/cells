@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { decompose, writtenOut } from './decompose';
-import { FORM_FRAGMENTS } from './forms';
 import { resolveSeed } from './library';
-import { MOTIF_FRAGMENTS } from './motifs';
+import { seedFragments } from './seed';
+
+const MOTIF_FRAGMENTS = seedFragments('motifs');
+const FORM_FRAGMENTS = seedFragments('forms');
 
 /** The meters the seed motifs are written in, 4/4 first: each motif is read in the first whose one or two bars it fills. */
 const METERS = ['4/4', '3/4', '6/8', '5/4', '7/8', '10/8', '12/8', '2/4', '2/2'];

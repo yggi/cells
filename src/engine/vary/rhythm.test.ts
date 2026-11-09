@@ -17,11 +17,13 @@ import { fitsAs } from '../../repository/fit';
 import { drumCard } from '../../repository/benches';
 import { holesOf } from '../../repository/holes';
 import { resolveSeed } from '../../repository/library';
-import { METER_FRAGMENTS } from '../../repository/meters';
-import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
 import { anchorsOf, backbeatOf, drawn, variations, varied, type Variation } from '.';
 import type { Resolve } from '../program';
 import { bodyOf, expand } from '../use';
+import { seedFragments } from '../../repository/seed';
+
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {
@@ -281,6 +283,22 @@ describe('the anchors', () => {
   it('a backbeat off the backbeat, or a kick line that strikes a snare too, is no anchor', () => {
     const fragment = BARS[0]!.fragment.replace('&backbeat step=16n ~ ~ ~ ~ &sd', '&backbeat step=16n ~ ~ ~ &sd ~').replace('&kick step=16n &bd', '&kick step=16n &sd');
     expect(anchorsOf(fragment, WORKBENCH)).toEqual([]);
+  });
+
+  it('a drum is read by its note=, not its name: each bar with its drums renamed is varied as written, renamed (decision 075, #617)', () => {
+    for (const b of BARS) {
+      const drums = [...b.fragment.matchAll(/^&(\w+) note=/gm)].map((m) => m[1]!);
+      expect(drums.length, b.preset).toBeGreaterThan(0);
+      const rename = (text: string) => drums.reduce((t, d, k) => t.replace(new RegExp(`&${d}\\b`, 'g'), `&drum${k}`), text);
+      const renamed = rename(b.fragment);
+      expect(anchorsOf(renamed, WORKBENCH), b.preset).toEqual(anchorsOf(b.fragment, WORKBENCH));
+      const as = variations(b.fragment, OPTIONS).map((v) => [v.by, rename(v.apply(b.fragment))]);
+      expect(as.length, b.preset).toBeGreaterThan(0);
+      expect(
+        variations(renamed, OPTIONS).map((v) => [v.by, v.apply(renamed)]),
+        b.preset,
+      ).toEqual(as);
+    }
   });
 
   it('the backbeat falls where Jambot’s backbeatOf has it, on each of the seed library’s 13 meters', () => {

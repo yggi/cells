@@ -13,12 +13,14 @@ import { normalise } from './normalise/index';
 import { structureOf } from './measure';
 import { LIBRARY, resolveSeed } from '../repository/library';
 import { EXAMPLES } from './examples';
-import { METER_FRAGMENTS } from '../repository/meters';
-import { RHYTHM_FRAGMENTS } from '../repository/rhythms';
-import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 import { fitsAs } from '../repository/fit';
 import { drumCard } from '../repository/benches';
 import { holesOf } from '../repository/holes';
+import { seedFragments } from '../repository/seed';
+
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 
 const seed = { resolve: resolveSeed };
 /** A collection's text onto a workbench, read as the fragment `x` (`fitsAs`: a fragment with no signature fits by its lines, #588). */

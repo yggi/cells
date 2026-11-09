@@ -1,7 +1,6 @@
 import { flatten } from "../flatten.js";
-import { gmDrumNote } from "../midi.js";
 import { codeShifts } from "../program.js";
-import { tapWhole } from "./lines.js";
+import { drumNoteOf, tapWhole } from "./lines.js";
 const KICK = 36;
 const SNARE = 38;
 export function backbeatOf(meter) {
@@ -20,7 +19,7 @@ function onBackbeat(line) {
         return backbeat.some((b) => near(at, b) || near(at, b + bar));
     });
 }
-const strikes = (line, note) => line.notes.length > 0 && line.notes.every((n) => gmDrumNote(n.voice.slice(1)) === note);
+const strikes = (line, note, result) => line.notes.length > 0 && line.notes.every((n) => drumNoteOf(result, n.voice) === note);
 function changesOf(result, table) {
     const cell = result.cells.get(table);
     if (!cell?.step)
@@ -61,9 +60,9 @@ function rootsOf(line, result) {
 export function anchorsAmong(lines, result) {
     return lines.flatMap((line) => line.pitched
         ? rootsOf(line, result)
-        : strikes(line, KICK)
+        : strikes(line, KICK, result)
             ? [{ line: line.name, reason: 'kick' }]
-            : strikes(line, SNARE) && onBackbeat(line)
+            : strikes(line, SNARE, result) && onBackbeat(line)
                 ? [{ line: line.name, reason: 'backbeat' }]
                 : []);
 }

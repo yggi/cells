@@ -6,18 +6,20 @@ import { describe, expect, it } from 'vitest';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
-import { BASS_FRAGMENTS } from './bass';
 import { fitsAs } from './fit';
 import { expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { compileSource } from '../engine/compile';
 import { bassCards } from './benches';
 import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { newPoint } from '../engine/migrate/axes';
+import { seedFragments } from './seed';
+
+const BASS_FRAGMENTS = seedFragments('bass');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
 const takenOn = (text: string, bench: string, main?: string) => {
