@@ -18,7 +18,7 @@ function standIn(name, sound) {
         return `&${bare} scale(major)`;
     return `&${bare} step=pulse*2 0 2 4 5`;
 }
-function entryOf(result, head) {
+function entryOf(result, head, tap) {
     const c = result.cells.get(head);
     if (!c)
         return null;
@@ -33,7 +33,7 @@ function entryOf(result, head) {
     if (c.meter && result.clocks.get(head)?.cell === head)
         return { entry: `&${H.read} * &${H.voice}`, line: `&${H.read} step=&${head}:pulse 0 2 4 5` };
     if (c.meter || c.scan || !c.clock)
-        return { entry: `&${H.read} * &${H.voice}`, line: `&${H.read} over=&${head} step=&${H.line}:pulse 0 1 2 3` };
+        return { entry: `&${H.read} * &${H.voice}`, line: `&${H.read} over=&${head} step=${tap}pulse*2 0 1 2 3` };
     if (c.steps > 0)
         return { entry: `&${head} * &${H.voice}` };
     return null;
@@ -48,8 +48,11 @@ function unreadGone(text, keep) {
             const ref = new RegExp(`&${d.name}(?![A-Za-z0-9_])`);
             const own = declLine(now, d.name);
             if (!now.split('\n').some((l, i) => i !== own && ref.test(l))) {
-                now = deleteCell(now, d.name);
-                gone = true;
+                const next = deleteCell(now, d.name);
+                if (next !== now) {
+                    now = next;
+                    gone = true;
+                }
             }
         }
     }
@@ -71,12 +74,12 @@ export function coreFragment(text, options = {}) {
     const first = compiled(base.join('\n'));
     const heads = sig.names.map((n) => n.replace(/^&/, ''));
     const entries = heads.flatMap((h) => {
-        const e = entryOf(first, h);
+        const e = entryOf(first, h, meterless ? `&${H.meter}:` : '');
         return e ? [e] : [];
     });
     if (!entries.length)
         return { source: text, why: 'no head plays in a host: nothing to hear its rewrites by' };
-    const host = [...base, ...entries.flatMap((e) => (e.line ? [e.line.replace(`step=&`, `step=&`)] : [])), `&${H.card} map=sample [${entries.map((e) => e.entry).join(', ')}]`].join('\n');
+    const host = [...base, ...entries.flatMap((e) => (e.line ? [e.line] : [])), `&${H.card} map=sample [${entries.map((e) => e.entry).join(', ')}]`].join('\n');
     const hosted = compiled(host);
     if (!hosted.ok)
         return { source: text, why: `the host doesn’t compile: ${hosted.diagnostics.find((d) => d.severity === 'error')?.message ?? ''}` };
