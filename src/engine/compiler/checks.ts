@@ -214,7 +214,7 @@ export function checkCells(
     const vals = d.braid.kind === 'list' ? d.braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [];
     if (vals.length !== AXES.length || vals.some((v, i) => !(v >= AXES[i]!.range[0] && v <= AXES[i]!.range[1])))
       error(
-        `map=style takes a value for each axis, in order: ${AXES.map((a) => `${a.name} (${a.range[0]} to ${a.range[1]})`).join(', ')} (map=style .3 .45 .55 .55, or sync=.3 harm=.45 artic=.55 energy=.55)`,
+        `map=style takes a value for each axis, in order: ${AXES.map((a) => `${a.name} (${a.range[0]} to ${a.range[1]})`).join(', ')} (map=style .3 .45 .55 .5, or sync=.3 harm=.45 bite=.55 mood=.5)`,
         d.map.span,
       );
   }

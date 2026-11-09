@@ -124,7 +124,7 @@ export interface Plan {
     readonly played: ReadonlySet<string>;
     /** Each voice's moving parameters: their cells as series (an envelope among them, apart). */
     readonly voiceParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
-    /** Each envelope's moving slots (`attack=.3..0.01 * &style[artic]`, #411): read at each note's start (`envelopeAt`). */
+    /** Each envelope's moving slots (`attack=.3..0.01 * &style[bite]`, #411): read at each note's start (`envelopeAt`). */
     readonly envParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
     /** When the piece ends, in seconds: the last track's end — Infinity if anything loops (or nothing plays). */
     readonly end: number;

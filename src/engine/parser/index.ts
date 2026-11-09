@@ -12,6 +12,7 @@
  *   values.ts      step= / loop= (rates, units, clocks) and map= (kinds, grids, tables)
  *   mix.ts         a mix chord, kept as an expression (compile types it: algebra.ts)
  */
+import { restyled } from '../migrate/axes';
 import { applyBases } from './base';
 import { isNote } from '../ast';
 import { isPieceFile, readPiece } from '../piecefile';
@@ -51,7 +52,18 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
     }
   });
   if (carry) lines.push(carry);
-  lines.forEach(({ text, line: lineNo, parts }) => {
+  lines.forEach(({ text: written, line: lineNo, parts }) => {
+    // (a style on the axes before decision 076, read the old way only for Migrate, as Migrate writes it: migrate/axes.ts)
+    const restyle = old ? restyled(written) : null;
+    if (restyle !== null) {
+      const col = written.search(/\S/);
+      diagnostics.push({
+        severity: 'warning',
+        message: `a style on the axes before v0.23.0 (sync harm artic energy): its axes are sync harm bite mood, bite its articulation and energy off the point (decision 076); Migrate rewrites it`,
+        span: { line: lineNo, col: col + 1, len: written.trimEnd().length - col },
+      });
+    }
+    const text = restyle ?? written;
     const s: LineScanner = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
     if (s.done()) return;
     // a use line (decisions 054, 059): retired, an error, read the old way or not (#588)

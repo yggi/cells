@@ -1,0 +1,7 @@
+# a style written in order on the axes before v0.23.0, sync harm artic energy; the bass's cutoff reads its third (decision 076, #572)
+&bar meter("4/4") step=120bpm
+&funk map=style .3 .45 .55 .55
+&style style=&funk
+&line step=1m 0 3
+&bassV s=saw loop=C2 lpf=300..1200 * &style[$2]
+&out map=sample [&line * &bassV]

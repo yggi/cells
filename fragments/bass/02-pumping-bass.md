@@ -4,15 +4,22 @@ association:
   - point:
       sync: 0
       harm: 0
-      artic: 1
-      energy: 0
+      bite: 1
+      mood: 0.825
     weight: 1
     facet: bass
   - point:
       sync: 0.12
       harm: 0
-      artic: 1
-      energy: 0.8
+      bite: 1
+      mood: 0.4
+    weight: 1
+    facet: bass
+  - point:
+      sync: 0.25
+      harm: 0.45
+      bite: 0.8
+      mood: 0.9
     weight: 1
     facet: bass
 source: seed
@@ -34,3 +41,5 @@ It is also at Techno's, the preset where the pump is what `bass.ts` plays most (
 What `bass.ts` adds that a fixed line doesn't: the fifth one step in five and an octave up one in four, by a draw per section and step; the thinning by the energy (here 0.55: each offbeat sounds about one section in two); the octave, the voice leading and the velocity, the performer's.
 
 **Its signature** (decision 065): `&bassline from &harm`. `&bassline from pumping_bass &harm` takes a copy of it, `&harm` its main argument.
+
+Also at Happy hardcore's point (sync .25, harm .45, bite .8, mood .9), weight 1: the eurodance bass of [Hypercell](../../examples/hypercell.md), the root on every offbeat eighth, is this line (#572).

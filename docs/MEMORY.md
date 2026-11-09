@@ -74,7 +74,7 @@ Every decision, its substance in a line, is in [decisions/README.md](decisions/R
 - 070 · S1 hears as a listener: ½ cent, 0.1 dB, 0.25 ms; a noise by colour and level; the snapshot stays exact · → decisions/070-s1-hears-as-a-listener.md
 - 071 · A swing leans pairs: a group of three stays straight, `:pairs` says nothing more (Migrate drops it) · → decisions/071-swing-leans-pairs.md
 - 074 · A filter is superdough's: low-pass, high-pass, band-pass (`bpf=`) in series, `ftype=` `12db` (default) `24db` (two stages) `ladder`; filters to patch are module fragments · → decisions/074-filters-are-superdoughs.md
-- 076 · The style point is `sync harm drive bright`; energy leaves it as intensity, an offset from the style; entropy is the reach · → decisions/076-the-style-axes.md
+- 076 · The style point is `sync harm bite mood`; energy leaves it as intensity, an offset from the style; entropy is the reach · → decisions/076-the-style-axes.md
 - 072 · `even` is the foundation: `even(k, n, phase)` a table again, under the scales, the even rhythms and the meter; `euclid` stays the rhythm · → decisions/072-even-is-the-foundation.md
 - 075 · A name is only a name: rename every name a text defines and it plays, says and is read as it did; no name the piece's by convention (the interface names retire); `alpha.test.ts`, its exceptions only shrinking (#560); a text's interface its signature's heads (`&harm, &key from`), never inferred · → decisions/075-a-name-is-only-a-name.md
 - 077 · The core is sound only, cored up to a named interface (a fragment's signature, a piece's tempo, a score's gates); `x!n` is core, a count · → decisions/077-the-core-is-sound-up-to-an-interface.md

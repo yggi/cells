@@ -24,7 +24,7 @@ function meterOf(id: string): string | null {
 }
 
 describe('every seed form over every seed motif, written out and decomposed (#512, rung 1)', () => {
-  it('comes back as the same form over the same motif, no helper set, in 100 % of the 276', () => {
+  it('comes back as the same form over the same motif, no helper set, in 100 % of the 300 (six forms over 50 motifs since #572)', () => {
     const wrong: string[] = [];
     let tried = 0;
     for (const motif of MOTIF_FRAGMENTS) {
@@ -40,7 +40,7 @@ describe('every seed form over every seed motif, written out and decomposed (#51
       }
     }
     expect(tried).toBe(FORM_FRAGMENTS.length * MOTIF_FRAGMENTS.length);
-    expect(tried).toBe(276);
+    expect(tried).toBe(300);
     expect(wrong).toEqual([]);
   });
 });

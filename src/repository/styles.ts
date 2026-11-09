@@ -71,7 +71,7 @@ export function nearestStyle(point: StylePoint, options: { readonly k?: number; 
 }
 
 /** A point on the four axes, for a place that is not a preset's (a test's, a fragment's). */
-export const at = (sync: number, harm: number, artic: number, energy: number): StylePoint => ({ sync, harm, artic, energy });
+export const at = (sync: number, harm: number, bite: number, mood: number): StylePoint => ({ sync, harm, bite, mood });
 
 // The presets' points by name, read from the collection.
 export const SYNTH_POP = stylePoint('synthPop');

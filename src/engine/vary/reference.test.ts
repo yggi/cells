@@ -53,13 +53,13 @@ const WITH = ALL.filter(({ v }) => v.reference);
 const byOperator = (list: typeof ALL) => Object.fromEntries([...new Set(ALL.map(({ v }) => v.rule))].map((op) => [op, list.filter(({ v }) => v.rule === op).length]));
 
 describe("the seeds' variations by reference", () => {
-  it('gives 506 of the 576 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter', () => {
-    expect(ALL.length).toBe(576);
-    expect(WITH.length).toBe(506);
-    expect(byOperator(ALL)).toEqual({ rotate: 28, drop: 119, add: 323, transpose: 56, reverse: 6, bend: 34, trim: 8, invert: 2 });
-    expect(byOperator(WITH)).toEqual({ rotate: 17, drop: 95, add: 290, transpose: 56, reverse: 4, bend: 34, trim: 8, invert: 2 });
-    // (the four operators with a form before #293: 79 of their 91)
-    expect(['rotate', 'transpose', 'invert', 'reverse'].reduce((n, op) => n + byOperator(WITH)[op]!, 0)).toBe(79);
+  it('gives 563 of the 644 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572: the four new beats and three bass lines among the seeds)', () => {
+    expect(ALL.length).toBe(644);
+    expect(WITH.length).toBe(563);
+    expect(byOperator(ALL)).toEqual({ rotate: 33, drop: 125, add: 340, transpose: 72, reverse: 8, bend: 50, trim: 12, invert: 4 });
+    expect(byOperator(WITH)).toEqual({ rotate: 18, drop: 98, add: 303, transpose: 72, reverse: 6, bend: 50, trim: 12, invert: 4 });
+    // (the four operators with a form before #293: 100 of their 117)
+    expect(['rotate', 'transpose', 'invert', 'reverse'].reduce((n, op) => n + byOperator(WITH)[op]!, 0)).toBe(100);
   });
 
   it.each(WITH.map((c) => [`${c.id}: ${c.v.by}`, c] as const))('%s plays the notes of its reference (S2)', (_, { fragment, bench, v, seconds }) => {
@@ -75,7 +75,7 @@ describe("the seeds' variations by reference", () => {
       return [bare(v.reference!.line(v.line.slice(1))), bare([...written.head, ...written.attrs, ...written.braid].join(' '))] as const;
     });
     expect(sizes.filter(([ref, line]) => ref > line)).toEqual([]);
-    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(504);
+    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(561);
   });
 
   it('writes each operator in a form the language has', () => {

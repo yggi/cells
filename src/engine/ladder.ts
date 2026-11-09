@@ -34,7 +34,6 @@ export const STUBS: ReadonlySet<string> = new Set([
  * (decision 047): it goes on a tier with a piece whose cells it clusters. `use` (decisions 054, 059) waits for the examples
  * to take a kit by it (#196's rung 4).
  */
-// (a style and a value read by name, decision 063: their piece comes with a voice reading the section's style, #390)
 export const PENDING: ReadonlySet<string> = new Set([
   // (a slider's unit as an argument, the core's spelling, decision 069: toCore writes it, a tutorial piece doesn't, the
   // examples staying in their normal form, the unit written after the number)
@@ -48,9 +47,6 @@ export const PENDING: ReadonlySet<string> = new Set([
   // (decision 080: a meter bent by a table; no example bends one yet, a meter scan its sugar)
   'parameter bend',
   'attribute tags',
-  'reference &name[slot]',
-  'map map=style',
-  'attribute style',
   'parameter licence',
   'parameter accents',
   // (the band-pass and the filters' model, decision 074: a piece of tier 2's effects that sweeps one is wanted; no example moves for it)
@@ -253,6 +249,10 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'free free(v, lo..hi)',
       'free free(v, lo..hi, "names")',
       'mix free(v, lo..hi)',
+      // style: a point the voices read (#621, #572)
+      'map map=style',
+      'attribute style',
+      'reference &name[slot]',
     ],
   },
   {
@@ -510,6 +510,7 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
       ['tags', d.tags],
       ['about', d.about],
       ['tier', d.tier],
+      ['style', d.style],
     ] as const)
       if (v !== null && v !== undefined) use(`attribute ${k}`);
     if (d.env) ref(d.env);

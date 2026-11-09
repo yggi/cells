@@ -77,8 +77,23 @@ function sent(text: string): (string | number)[][] {
 }
 
 describe('a pattern fragment heard through the card `heard` supplies (#291)', () => {
-  // (the seeds made after #291, which never carried a card: an example's beat, the Spooky beat and bass of #349, the ghost-house beat and bass near it, the Kinderlied beat and the cinquillo, #507)
-  const born = ['electro_swing_drums', 'spooky_drums', 'creeping_bass', 'ghost_drums', 'tiptoe_bass', 'kinderlied_drums', 'cinquillo'];
+  // (the seeds made after #291, which never carried a card: an example's beat, the Spooky beat and bass of #349, the ghost-house beat and bass near it, the Kinderlied beat and the cinquillo, #507; the beats and basses read from the examples for Acid, Happy hardcore and Elektro, #572)
+  const born = [
+    'electro_swing_drums',
+    'spooky_drums',
+    'creeping_bass',
+    'ghost_drums',
+    'tiptoe_bass',
+    'kinderlied_drums',
+    'cinquillo',
+    'acid_drums',
+    'happy_hardcore_drums',
+    'elektro_drums',
+    'acid_bass',
+    'octave_bass',
+    'industrial_drums',
+    'drone_bass',
+  ];
   const carried = [...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.id === 'bell_and_scale')].filter((f) => !born.includes(f.id));
 
   it('is each of the 19 that carried a card', () => expect(carried.map((f) => f.id).sort()).toEqual(Object.keys(SENT).sort()));
@@ -113,7 +128,7 @@ describe('a bass line fills the bass performer’s hole (#285)', () => {
   // (sent on the bass's channel and heard on a sound card: the bass has a sound of its own, which MIDI doesn't send, #391)
   it.each(BASS_FRAGMENTS.map((f) => [f.id] as const))('%s, taken over the host with the bass performer, compiles with no diagnostic', (id) => {
     const host =
-      '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
+      '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
     const r = compileSource(`&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline\n&bassline from ${id} &harm\n${host}`, undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
     expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bassOut', 'bass', 'bassline']]);

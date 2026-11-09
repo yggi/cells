@@ -61,7 +61,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     ]);
   });
 
-  it('each of the bass seeds’ 53 (32, and the 21 bends and trims, #267)', () => {
+  it('each of the bass seeds’ 73 (42, and the 31 bends and trims, #267; the acid and octave basses among them, #572)', () => {
     const options = { workbench: BASS, operators: PITCHED_OPERATORS };
     let n = 0;
     for (const f of BASS_FRAGMENTS)
@@ -70,7 +70,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
         expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${f.id}, ${v.by}`).toEqual([f.id, [v.by], 0]);
         n++;
       }
-    expect(n).toBe(53);
+    expect(n).toBe(73);
   });
 
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {
@@ -139,7 +139,11 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
   });
 
   it('a bar of a vamp, its fifth, is recognised as the vamp to the seventh from its bar 4', () => {
-    expect(found(recogniser.recognise('&harm over=&key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual(['vamp_to_the_seventh [] bar 4 at 0']);
+    // (and, since #572, as the axis progression's fourth bar, its VII, found first: named on #572, #542)
+    expect(found(recogniser.recognise('&harm over=&key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual([
+      'axis_progression [] bar 3 at 0',
+      'vamp_to_the_seventh [] bar 4 at 0',
+    ]);
   });
 
   it('a groove the band filed and the composer’s variation of it, recognised by the `by` it was filed with', () => {
