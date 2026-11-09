@@ -56,6 +56,15 @@ export declare function withPulse(m: Meter, whole: number): Meter;
 export declare const beatCount: (m: Meter) => number;
 /** beat=n on a meter, retired (#502) and still read for Migrate: n equal beats over its pulses, in place of the beats it was written with (`meter("4/4") beat=2`, now `meter("2/2", 2)`). */
 export declare function withBeats(m: Meter, n: number): Meter;
+/**
+ * A bent meter's steps (decision 080) at a depth (decision 081): over the bars its table spans, each of the level's nodes
+ * the table's next length raised to the depth (1 as written, 0 even, -1 inverted), its `per` steps even within it; and
+ * their lap, the lengths' sum, which the clock lays over the span's fixed length. At depth 1 the lengths are the table's.
+ */
+export declare function bentSteps(table: readonly number[], per: number, nodes: number, bars: number, depth?: number): {
+    positions: number[];
+    lap: number;
+};
 /** swing= on a meter: the levels that lean, those at .5 (straight) left out. */
 export declare function withSwing(m: Meter, levels: readonly SwingLevel[]): Meter;
 /** A note value from its length in whole notes (1/8: `8n`, 1/12: `8t`, 3/16: `8n.`), or null. */

@@ -1,4 +1,4 @@
-# a style written in order on the axes before v0.22.0, sync harm artic energy; the bass's cutoff reads its third (decision 076, #572)
+# a style written in order on the axes before v0.23.0, sync harm artic energy; the bass's cutoff reads its third (decision 076, #572)
 &bar meter("4/4") step=120bpm
 &funk map=style .3 .45 .55 .55
 &style style=&funk

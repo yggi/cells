@@ -487,3 +487,76 @@ describe('a swing’s share moved by cells, read at each bar line and held throu
     expect(bars(core)).toEqual(bars(text));
   });
 });
+
+describe('a bend’s depth, the swing’s partner: its table’s ratios raised to it, moved by cells at each line of its span (decision 081)', () => {
+  // (a bar of 4/4 at 60 bpm is 4 s; &rubato 2 1 1 1 bends its beats)
+  const TEXT = (bend: string, more = '') =>
+    `&tempo step=60bpm\n&bar meter("*.-.+.-.") step=&tempo ${bend}\n&rubato 2 1 1 1${more}\n&v s=tri loop=C4\n&q step=4n 0 0 0 0\n&out map=sample [&q * &v]`;
+  const beats = (text: string, seconds = 12) => {
+    const r = compiled(text);
+    return rounded(eventsBetween(plan(r, codeShifts(r)), 0, seconds - 1e-6).map((e) => e.at));
+  };
+  /** A bar's beats at a depth of 2:1:1:1, from its line. */
+  const bar = (d: number, from = 0) => {
+    const lens = [2, 1, 1, 1].map((t) => Math.pow(t, d));
+    const sum = lens.reduce((a, b) => a + b, 0);
+    let at = 0;
+    return lens.map((l) => {
+      const x = from + (at / sum) * 4;
+      at += l;
+      return +x.toFixed(4);
+    });
+  };
+
+  it('a depth written: 1 the table, 0 even, 2 its ratios squared, -1 inverted, and none as written', () => {
+    expect(beats(TEXT('bend=4n:&rubato'), 4)).toEqual(bar(1));
+    expect(beats(TEXT('bend=4n:&rubato:1'), 4)).toEqual(beats(TEXT('bend=4n:&rubato'), 4));
+    expect(beats(TEXT('bend=4n:&rubato:0'), 4)).toEqual([0, 1, 2, 3]);
+    expect(beats(TEXT('bend=4n:&rubato:2'), 4)).toEqual(bar(2));
+    expect(beats(TEXT('bend=4n:&rubato:-1'), 4)).toEqual(bar(-1));
+    expect(beats(TEXT('bend=4n:&rubato:free(.5, -1..2)'), 4)).toEqual(bar(0.5));
+  });
+
+  it('moved by a bare cell, its values the depths, read at each bar line', () => {
+    expect(beats(TEXT('bend=4n:&rubato:&d', '\n&d step=1m 1 0 2'))).toEqual([...bar(1), ...bar(0, 4), ...bar(2, 8)]);
+  });
+
+  it('moved by a range scaled by a cell, a ramp read where each bar starts', () => {
+    expect(beats(TEXT('bend=4n:&rubato:0..2 * &e', '\n&e map=lin step=1m 0 1'))).toEqual([...bar(0), ...bar(2, 4), ...bar(0, 8)]);
+  });
+
+  it('a table that spans bars is read at each line of its span, the one place its bend keeps', () => {
+    // (&span 2 1 1 1 2 1 1 1 over two bars of 4n nodes: the span is 8 s, read at 0 and 8)
+    const text = TEXT('bend=4n:&span:&d', '\n&span 3 1 1 1 1 1 1 1\n&d step=1m/2 1 0');
+    expect(compiled(text).cells.get('bar')!.bend!.bars).toBe(2);
+    const at = beats(text, 16);
+    expect(at.slice(8)).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
+    expect(at[1]).toBeCloseTo(3 * (8 / 10), 4);
+  });
+
+  it('with no time (the meter compiled, no plan), it holds a range’s first end, or a bare cell’s first value', () => {
+    const held = (text: string) => compiled(text).cells.get('bar')!.bend!.positions;
+    expect(held(TEXT('bend=4n:&rubato:&d', '\n&d step=1m 0 2'))).toEqual(held(TEXT('bend=4n:&rubato:0')));
+    expect(held(TEXT('bend=4n:&rubato:.5..2 * &e', '\n&e step=1m 0 1'))).toEqual(held(TEXT('bend=4n:&rubato:.5')));
+  });
+
+  it('a swing and a bend moving together, each read at the bar line, compose coarse to fine', () => {
+    const text = TEXT('bend=4n:&rubato:&d swing=8n:&lean', '\n&d step=1m 0 2\n&lean step=1m .5 .75').replace('&q step=4n 0 0 0 0', '&q step=8n 0!8');
+    const at = beats(text, 8);
+    // (bar 0: even and straight; bar 1: beats at depth 2, their eighths leaning .75 within each)
+    expect(at.slice(0, 8)).toEqual([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5]);
+    const b = bar(2, 4);
+    expect(at.slice(8, 10)).toEqual([b[0], +(b[0]! + 0.75 * (b[1]! - b[0]!)).toFixed(4)]);
+  });
+
+  it('says what is wrong: a cell nobody wrote', () => {
+    expect(warnings(TEXT('bend=4n:&rubato:&nobody'))).toContainEqual(expect.stringMatching(/nobody/));
+  });
+
+  it('toCore keeps it as written, and its core plays the same', () => {
+    const text = TEXT('bend=4n:&rubato:&d', '\n&d step=1m 1 0 2');
+    const core = toCore(text).source;
+    expect(core).toMatch(/bend=4n:&[a-z]+:&[a-z]+/);
+    expect(beats(core)).toEqual(beats(text));
+  });
+});

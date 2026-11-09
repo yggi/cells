@@ -67,3 +67,6 @@ Renaming was measured on #387, over every example (`src/engine/alpha.test.ts`; S
 - Jambot reads `holesOf(text).uses` for `&tonic` and merges by `unionOf`. It moves to `holesOf(text).signature` and `useOn` (yggi/jambot#562) before the old exports go.
 - 065 point 8 ("`&key` stays the key's name, by convention now") is now the whole of it: nothing in cells reads `&key` as the key.
 - The repository's queries still fit by `fitOf` until #560's rung 4.
+- §6's gaps as the owner ruled them on #556 (2026-11-08), each a rung of #560:
+  - a drum's note is its `note=` (rung 1, #626);
+  - a `from` line renames what it takes, `&new=old` on its left side (rung 3a–b): `&kick=bd from gm_kit`, `&bass2=bass, &bassOut2=bassOut from bass_performer &line2`. The fragment's name is a word of the line, as a keyword is (point 2), so `alpha.test.ts` renames every name a `from` line takes. Nothing migrates: nothing written before changes meaning.

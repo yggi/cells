@@ -22,6 +22,18 @@ export function withBeats(m, n) {
     const { counted: _, ...rest } = m;
     return { ...rest, beats: Array.from({ length: k }, () => m.pulses / k) };
 }
+export function bentSteps(table, per, nodes, bars, depth = 1) {
+    const positions = [];
+    let at = 0;
+    for (let i = 0; i < nodes * bars; i++) {
+        const t = table[i % table.length];
+        const len = depth === 1 ? t : Math.pow(t, depth);
+        for (let k = 0; k < per; k++)
+            positions.push(at + (k * len) / per);
+        at += len;
+    }
+    return { positions, lap: at };
+}
 export function withSwing(m, levels) {
     const leaning = levels.filter((l) => l.share !== 0.5);
     return leaning.length ? { ...m, swing: leaning } : m;

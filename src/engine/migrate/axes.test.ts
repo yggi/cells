@@ -63,7 +63,7 @@ describe('decision 076: a style on the old axes, sync harm artic energy, on the 
   it('now: artic= on a style and a pick of [artic] or [energy] are errors that name Migrate; read the old way, a warning', () => {
     const named = '&funk map=style sync=.3 harm=.45 artic=.55 energy=.55';
     expect(errors(named)).toEqual([expect.stringMatching(/^error: artic= is retired: a style's axes are sync harm bite mood.*Migrate rewrites it$/)]);
-    expect(errors(named, true)).toEqual([expect.stringMatching(/^warning: a style on the axes before v0\.22\.0.*Migrate rewrites it$/)]);
+    expect(errors(named, true)).toEqual([expect.stringMatching(/^warning: a style on the axes before v0\.23\.0.*Migrate rewrites it$/)]);
     const picked = [
       '&bar meter("4/4") step=120bpm',
       '&funk map=style .3 .45 .55 .5',

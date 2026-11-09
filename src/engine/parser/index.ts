@@ -59,7 +59,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
       const col = written.search(/\S/);
       diagnostics.push({
         severity: 'warning',
-        message: `a style on the axes before v0.22.0 (sync harm artic energy): its axes are sync harm bite mood, bite its articulation and energy off the point (decision 076); Migrate rewrites it`,
+        message: `a style on the axes before v0.23.0 (sync harm artic energy): its axes are sync harm bite mood, bite its articulation and energy off the point (decision 076); Migrate rewrites it`,
         span: { line: lineNo, col: col + 1, len: written.trimEnd().length - col },
       });
     }

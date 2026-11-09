@@ -22,7 +22,7 @@ Tension is what the harmony and the sound do with the mode, from at ease (0) to 
 A mode fragment's point has its own mode's mood, or a style's where it sits at that style's point; a tonal fragment's (a harmony, a bass, a motif, a stab, an instrument) the mood of the style it was placed for, or of the mode the library finds at its point; a meter, a rhythm, a performer, a module or a form leaves mood out, since a point names the axes it speaks to and a distance runs over the axes both points have.
 What each set of axes does with 42 genres placed by hand, and the corners of the space no style stands in yet, is measured in [notes/572-axes-atlas.md](https://github.com/yggi/cells/blob/main/docs/notes/572-axes-atlas.md).
 
-A text written on the axes before v0.22.0 (`sync harm artic energy`) is moved by Migrate (#572): `bite` is its articulation, energy leaves the point, `mood` is the mood of the style it sits near (within 0.15) or else of the mode the library found nearest it, and a pick of `[artic]` or `[energy]` reads `[bite]`.
+A text written on the axes before v0.23.0 (`sync harm artic energy`) is moved by Migrate (#572): `bite` is its articulation, energy leaves the point, `mood` is the mood of the style it sits near (within 0.15) or else of the mode the library found nearest it, and a pick of `[artic]` or `[energy]` reads `[bite]`.
 
 A fragment's association points in the repository are written on the same axes ([use.md](use.md)), and a frontend reads them from the table rather than owning them ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md)).
 

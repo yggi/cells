@@ -16,7 +16,7 @@
  * expression's first number puts the axis.
  *
  * Its meaning changed, not its spelling alone, so it is exact only against the old meaning (`Rewrite.exact`), never
- * Normalise's: a text Migrate reads is one written before v0.22.0. Read the old way (`CompileOptions.old`), a line is
+ * Normalise's: a text Migrate reads is one written before v0.23.0. Read the old way (`CompileOptions.old`), a line is
  * read as this writes it, and warns. Witnessed by `fixtures/migrations/axes/`.
  */
 import { splitComment } from '../edit';

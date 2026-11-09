@@ -50,6 +50,7 @@ describe('the forms', () => {
       kind: 'use',
       id: 'harmonic_minor',
       names: ['&key'],
+      takes: ['&key'],
       head: ['label="my key"'],
       args: [
         { name: 'tonic', value: '&t' },
@@ -57,8 +58,8 @@ describe('the forms', () => {
       ],
       main: 'label="the tonic" D',
     });
-    expect(readFrom('&bd, &sd from gm_kit')).toEqual({ kind: 'use', id: 'gm_kit', names: ['&bd', '&sd'], head: [], args: null, main: null });
-    expect(readFrom('* from harmonic_minor')).toEqual({ kind: 'use', id: 'harmonic_minor', names: null, head: [], args: null, main: null });
+    expect(readFrom('&bd, &sd from gm_kit')).toEqual({ kind: 'use', id: 'gm_kit', names: ['&bd', '&sd'], takes: ['&bd', '&sd'], head: [], args: null, main: null });
+    expect(readFrom('* from harmonic_minor')).toEqual({ kind: 'use', id: 'harmonic_minor', names: null, takes: null, head: [], args: null, main: null });
     expect(readFrom('&bar from swung (swing=8n:.6) &tempo')).toMatchObject({ args: [{ name: 'swing', value: '8n:.6' }], main: '&tempo' });
   });
 
@@ -241,6 +242,45 @@ describe('nesting and collections', () => {
 
   it('expand writes the copy out, the from line gone', () => {
     expect(expand(lines('&key from harmonic_minor D', METER), resolve)).toBe(lines(METER, '&key scale(harmonic, &key_tonic)', '&key_tonic D'));
+  });
+});
+
+describe('a from line renames what it takes (decision 075 §3a–b)', () => {
+  it('&new=old: the line binds &new to the fragment’s old, a word of the line as a keyword is', () => {
+    expect(readFrom('&kick=bd, &sd from gm_kit')).toEqual({ kind: 'use', id: 'gm_kit', names: ['&kick', '&sd'], takes: ['&bd', '&sd'], head: [], args: null, main: null });
+    expect(readFrom('&k2=key, &b2=bell from bell D')).toMatchObject({ names: ['&k2', '&b2'], takes: ['&key', '&bell'], main: 'D' });
+    // (a name bound twice, one of the fragment's taken twice, a signature that renames: malformed)
+    for (const code of ['&a=bd, &a=sd from gm_kit', '&a=bd, &b=bd from gm_kit', '&a=b from &m']) expect(readFrom(code)).toBeNull();
+  });
+
+  it('from a collection: its line under the piece’s name, every line it takes reading it so', () => {
+    const [bd] = added('&bd from gm_kit');
+    expect(added('&kick=bd from gm_kit')).toEqual([bd!.replace(/^&bd/, '&kick')]);
+    expect(added('&kick=bd, &snare=sd from gm_kit').map((l) => l.split(' ')[0])).toEqual(['&kick', '&snare']);
+    // (a swap is one renaming, both at once)
+    expect(added('&bd=sd, &sd=bd from gm_kit')).toEqual(added('&sd, &bd from gm_kit').map((l) => l.replace(/^&(bd|sd)/, (_, n: string) => (n === 'bd' ? '&sd' : '&bd'))));
+    const helper: Resolve = (id) => (id === 'k' ? lines('&bd s=bd * &env', '&env map=lin .5', '&hh s=hh * &bd') : null);
+    expect(expansion('&kick=bd, &hat=hh from k', { resolve: helper }).text.split('\n').slice(1)).toEqual(['&kick s=bd * &env', '&env map=lin .5', '&hat s=hh * &kick']);
+  });
+
+  it('it plays what the line without renaming plays, the names aside', () => {
+    const beat = (kick: string, snare: string, from: string) => lines(METER, from, `&beat step=8n &${kick} ~ &${snare} ~`, `&out [&beat]`);
+    const heard = (text: string) => events(text).map((e) => e.slice(0, 3));
+    expect(heard(beat('kick', 'snare', '&kick=bd, &snare=sd from gm_kit'))).toEqual(heard(beat('bd', 'sd', '&bd, &sd from gm_kit')));
+    expect(heard(beat('kick', 'snare', '&kick=bd, &snare=sd from gm_kit')).length).toBeGreaterThan(0);
+  });
+
+  it('from a template of several heads: each head under the piece’s name, its private names after the first', () => {
+    expect(added('&k2=key, &b2=bell from bell D')).toEqual(['&k2 scale(ionian, &k2_tonic) step=1m*7', '&b2 step=&k2:pulse 0 0', '&k2_tonic D']);
+    expect(added('&b2=bell from bell D')).toEqual(['&b2_key scale(ionian, &b2_tonic) step=1m*7', '&b2 step=&b2_key:pulse 0 0', '&b2_tonic D']);
+    expect(added('&x=key from dorian D')).toEqual(added('&x from dorian D'));
+  });
+
+  it('what it says: a name the fragment lacks, a head the template doesn’t have, a name the collection gives by another line', () => {
+    expect(errors('&k=zz from gm_kit')[0]).toMatch(/^&zz is not in "gm_kit": it defines &/);
+    expect(errors(lines(METER, '&k2=key, &x=nope from bell D'))).toEqual(['&nope is not a head of "bell": its heads are &key, &bell']);
+    expect(errors('&x=nope from dorian D')).toEqual(['&nope is not a head of "dorian": its head is &key']);
+    expect(errors('&sd=bd from gm_kit')[0]).toBe('&sd=bd: "gm_kit" defines &sd too, by its own line: take &bd under another name');
   });
 });
 

@@ -10,7 +10,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from './he
 import { footOf, leaves, slots, type Laps } from './subseq';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
 import { mod } from '../theory/modes';
-import { stepsPerPulse, swingAt, swungKnots, swungPlace, swungSteps, writtenPlace, type Meter, type SwingLevel } from './meter';
+import { bentSteps, stepsPerPulse, swingAt, swungKnots, swungPlace, swungSteps, writtenPlace, type Meter, type SwingLevel } from './meter';
 
 export const EPS = 1e-9;
 
@@ -68,7 +68,12 @@ function swungMap(swung: readonly number[], inner: TimeMap, ofBar?: (bar: number
 }
 
 /** A clock's time map before a meter's swing: a rate, pairs of a list's steps swung, or a scan's positions. */
-function plainMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap {
+function plainMap(
+  result: CompileResult,
+  clock: Clock,
+  shifts: Shifts,
+  spans?: (span: number, nominal: number) => { readonly positions: readonly number[]; readonly lap: number },
+): TimeMap {
   if (!clock.positional && clock.swing !== undefined) {
     // swing: a pair of steps keeps its length, its second step starts sw of the way through
     const sw = Math.min(0.95, Math.max(0.05, clock.swing));
@@ -94,6 +99,28 @@ function plainMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap 
   const k = Math.max(1, values.length);
   const lap = bend ? bend.lap : period(result, name);
   const barSeconds = k / clock.perSecond;
+  if (bend && spans) {
+    // (a bend whose depth moves, decision 081: each span of the table its own positions, the span's line where it is)
+    const u = (j: number) => {
+      const L = Math.floor(j / k);
+      const sp = spans(L, L * barSeconds);
+      return L + sp.positions[j - L * k]! / sp.lap;
+    };
+    const qm = (s: number) => {
+      const j = Math.floor(s);
+      const a = u(j);
+      return (a + (s - j) * (u(j + 1) - a)) * barSeconds;
+    };
+    const stepAtM = (t: number) => {
+      let j = Math.floor(t / barSeconds) * k;
+      while (qm(j + 1) <= t) j++;
+      while (j > 0 && qm(j) > t) j--;
+      const a = qm(j);
+      const b = qm(j + 1);
+      return j + (b > a ? (t - a) / (b - a) : 0);
+    };
+    return { beats: k, q: qm, stepAt: stepAtM };
+  }
   const ticks = (j: number) => values[mod(j, k)] + lap * Math.floor(j / k);
   const raw = (s: number) => {
     const j = Math.floor(s);
@@ -222,25 +249,29 @@ function movingTapMap(tap: NonNullable<Clock['tap']>, meter: TimeMap, { S, at }:
 }
 
 /**
- * A reader of a moving swing's share at a time (decision 081): a plan's (`realize.ts`), its cells read as a moving
- * parameter's are; NaN where it reads nothing. With none, a clock holds the share the meter was compiled with.
+ * A reader of a time map's amount at a time (decision 081): a meter's swing's share, or its bend's depth; a plan's
+ * (`realize.ts`), its cells read as a moving parameter's are; NaN where it reads nothing. With none, a clock holds the
+ * amount the meter was compiled with.
  */
-export type ShareReader = (meter: string, seconds: number) => number;
-const readers = new WeakMap<CompileResult, WeakMap<Shifts, ShareReader>>();
+export type AmountReader = (meter: string, amount: 'swing' | 'depth', seconds: number) => number;
+const readers = new WeakMap<CompileResult, WeakMap<Shifts, AmountReader>>();
 /** Each moving meter's bars, read once: the meter each bar plays (its share in it), by program and shifts. */
 const barMeters = new WeakMap<CompileResult, WeakMap<Shifts, Map<string, Map<number, Meter>>>>();
+/** Each bent meter's spans, read once: the positions each span of its table plays at its depth, by program and shifts. */
+const spanSteps = new WeakMap<CompileResult, WeakMap<Shifts, Map<string, Map<number, { positions: number[]; lap: number }>>>>();
 /** A moving meter at each share it plays (its knots built once each). */
 const sharedMeters = new WeakMap<Meter, Map<number, Meter>>();
-// (while one bar's share is read, any other a reading reaches holds its compiled share: exact at the bar's line, decision 081 §3)
-let readingShare = false;
+// (while one bar's amount is read, any other a reading reaches holds its compiled one: exact at the bar's line, decision 081 §3)
+let readingAmount = false;
 
-/** A plan hands the clocks its reader of moving swings (decision 081); the maps built before it are forgotten. */
-export function readSharesBy(result: CompileResult, statics: Shifts, read: ShareReader): void {
+/** A plan hands the clocks its reader of moving time maps (decision 081); the maps built before it are forgotten. */
+export function readAmountsBy(result: CompileResult, statics: Shifts, read: AmountReader): void {
   let byShifts = readers.get(result);
   if (!byShifts) readers.set(result, (byShifts = new WeakMap()));
   byShifts.set(statics, read);
   built.get(result)?.delete(statics);
   barMeters.get(result)?.delete(statics);
+  spanSteps.get(result)?.delete(statics);
 }
 
 /**
@@ -391,6 +422,38 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
   const maps = byShifts.get(statics) ?? new Map<string, TimeMap>();
   byShifts.set(statics, maps);
   const reader = readers.get(result)?.get(statics);
+  // a bent meter whose depth moves by cells (decision 081): each span of its table at the depth read at its line
+  const spansOf = (meter: string, real: (nominal: number) => number): ((span: number, nominal: number) => { positions: number[]; lap: number }) | undefined => {
+    const bend = result.cells.get(meter)?.bend;
+    const dm = bend?.depth;
+    if (!bend || !dm || !reader) return undefined;
+    let byShifts = spanSteps.get(result);
+    if (!byShifts) spanSteps.set(result, (byShifts = new WeakMap()));
+    let byMeter = byShifts.get(statics);
+    if (!byMeter) byShifts.set(statics, (byMeter = new Map()));
+    let spans = byMeter.get(meter);
+    if (!spans) byMeter.set(meter, (spans = new Map()));
+    const known = spans;
+    const held = { positions: [...bend.positions], lap: bend.lap };
+    const byDepth = new Map<number, { positions: number[]; lap: number }>();
+    return (span, nominal) => {
+      const got = known.get(span);
+      if (got) return got;
+      if (span < 0 || readingAmount) return held;
+      readingAmount = true;
+      let read: number;
+      try {
+        read = reader(meter, 'depth', real(nominal));
+      } finally {
+        readingAmount = false;
+      }
+      const depth = Number.isFinite(read) ? Math.round(read * 1e9) / 1e9 : null;
+      let laid = depth === null ? held : byDepth.get(depth);
+      if (!laid) byDepth.set(depth!, (laid = bentSteps(dm.table, dm.per, dm.nodes, bend.bars, depth!)));
+      known.set(span, laid);
+      return laid;
+    };
+  };
   // a meter whose swing moves by cells (decision 081): the meter each bar plays, its share read at the bar's line
   const ofBar = (meter: string): ((bar: number) => Meter) | undefined => {
     const c = result.cells.get(meter);
@@ -412,13 +475,15 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
     return (bar) => {
       const got = known.get(bar);
       if (got) return got;
-      if (bar < 0 || readingShare) return m;
-      readingShare = true;
+      if (bar < 0 || readingAmount) return m;
+      // (the bar's line first, through a bend at its own depth: then its share)
+      const line = base(meter).q(bar * K);
+      readingAmount = true;
       let read: number;
       try {
-        read = reader(meter, base(meter).q(bar * K));
+        read = reader(meter, 'swing', line);
       } finally {
-        readingShare = false;
+        readingAmount = false;
       }
       // (within the bounds every share is held to, as a list's swing is: .05 to .95)
       const share = Number.isFinite(read) ? Math.min(0.95, Math.max(0.05, Math.round(read * 1e9) / 1e9)) : null;
@@ -478,7 +543,14 @@ export function clocking(result: CompileResult, statics: Shifts, seconds = 0): C
         const rate = info.belt.rate;
         m = { beats: 1, q: (st) => belt.real(idealD.q(st / rate)), stepAt: (t) => idealD.stepAt(belt.nominal(t)) * rate, speed: (t) => belt.speed(t) };
       } else {
-        const ideal = plainMap(result, info, statics);
+        // (a bend whose depth moves, decision 081: each span of its table laid out at the depth read at its line, in real time)
+        const w0 = warpOf(result, info.cell);
+        const ideal = plainMap(
+          result,
+          info,
+          statics,
+          spansOf(info.cell, (nominal) => (w0 ? w0.real(nominal) : nominal)),
+        );
         // a clock with a motor turns physically: its time warped (spin-up, sag under load, running down)
         const w = warpOf(result, info.cell);
         m = w ? { beats: ideal.beats, q: (st) => w.real(ideal.q(st)), stepAt: (t) => ideal.stepAt(w.nominal(t)), speed: (t) => w.speed(t) } : ideal;

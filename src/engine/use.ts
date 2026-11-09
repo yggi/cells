@@ -14,8 +14,10 @@
  *   head named as the line names it, its parameters bound to the arguments, every other name it defines private to the
  *   copy, and what it took from collections shared by name; the copy's lines are the level's own, as if written there.
  * - A line two collections give word for word (its code: comments aside, whitespace collapsed) is one line; a name they
- *   define by different lines, and the piece doesn't, is an error naming it and both ids. A collection never renames: a
- *   renamed voice changes its drum note (#117).
+ *   define by different lines, and the piece doesn't, is an error naming it and both ids.
+ * - A line renames what it takes, `&new=old` (decision 075 §3a–b): `&kick=bd from gm_kit` gives the kit's `&bd` as the
+ *   piece's `&kick`, every line it takes reading it so; `&bass2=bass, &bassOut2=bassOut from bass_performer &l` a
+ *   template's heads. The fragment's name is a word of the line, as a keyword is.
  * - A line taken twice from one id is taken once, at its first line; a line that then takes nothing says so.
  * - A cycle is an error naming it, and so is a depth past `USE_DEPTH`; an unresolved id is an error naming it, and the
  *   piece's other lines compile as they would without it. Each is said on the piece's line it came through.
@@ -86,7 +88,7 @@ function lineOf(code: string, written = code, line = 0): Line {
 }
 
 /** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
-export const hasUse = (text: string): boolean => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,]).*\sfrom(?:\s|$)/m.test(text);
+export const hasUse = (text: string): boolean => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
 
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
 export function signatureOf(text: string): Extract<FromForm, { kind: 'signature' }> | null {
@@ -146,6 +148,8 @@ interface Merged {
  */
 function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, message: string) => void, host: string): Merged {
   const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
+  // (what the level's own lines read: a helper of a line it overrides that its own line reads too goes on being given)
+  const readHere = new Set(own.flatMap((l) => l.reads));
   const given = new Map<string, { id: string; code: string }>();
   const lines: Line[] = own.filter((l) => l.name);
   const per = used.map(({ id, names, lines: theirs, resolved }, i) => {
@@ -156,13 +160,14 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       for (const n of lacking) say(i, `&${n} is not in ${quoted(id)}: it defines ${[...byName.keys()].map((m) => `&${m}`).join(', ')}`);
     }
     // (all of it, `*`: but a line the fragment's own lines read, where every one that reads it the level overrides, goes
-    // with them, as a helper of the overridden line: `use * from meter(swing=8n:2/3)` under the piece's own &bar takes no &swing)
+    // with them, as a helper of the overridden line: `use * from meter(swing=8n:2/3)` under the piece's own &bar takes no &swing;
+    // unless the level's own lines read it, as a line written in the overridden one's place does, word for word)
     const shadowed = new Set<string>();
     if (!names)
       for (let more = true; more;) {
         more = false;
         for (const n of byName.keys()) {
-          if (defined.has(n) || shadowed.has(n)) continue;
+          if (defined.has(n) || shadowed.has(n) || readHere.has(n)) continue;
           const readers = theirs.filter((l) => l.name && l.name !== n && l.reads.includes(n));
           if (readers.length && readers.every((l) => defined.has(l.name!) || shadowed.has(l.name!))) {
             shadowed.add(n);
@@ -350,6 +355,30 @@ interface Given {
   readonly args?: Readonly<Record<string, string>>;
 }
 
+/**
+ * What a line that renames takes from a collection (`&kick=bd`, decision 075 §3a): the fragment's names to the line's, or
+ * null where it renames nothing. A name it takes the fragment lacks is said here (and left out), and so is a name it
+ * binds the fragment also gives by another line: the two would be one name.
+ */
+function renamesOf(from: FromUse, lines: readonly Line[], id: string, say: (message: string) => void): { names: Map<string, string>; lacking: Set<string> } | null {
+  if (!from.names || !from.takes || from.takes.every((t, i) => t === from.names![i])) return null;
+  const defined = new Set(lines.flatMap((l) => (l.name ? [l.name] : [])));
+  const names = new Map<string, string>();
+  const lacking = new Set<string>();
+  from.names.forEach((n, i) => {
+    const [mine, theirs] = [n.slice(1), from.takes![i]!.slice(1)];
+    if (!defined.has(theirs)) {
+      say(`&${theirs} is not in ${quoted(id)}: it defines ${[...defined].map((m) => `&${m}`).join(', ')}`);
+      lacking.add(mine);
+    } else if (mine !== theirs) {
+      if (defined.has(mine) && !from.takes!.includes(`&${mine}`))
+        say(`&${mine}=${theirs}: ${quoted(id)} defines &${mine} too, by its own line: take &${theirs} under another name`);
+      names.set(theirs, mine);
+    }
+  });
+  return { names, lacking };
+}
+
 /** Lines that came through a collection: their names are shared, never a copy's own. */
 const sharedLines = (lines: readonly Line[]): Line[] => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
 
@@ -367,7 +396,13 @@ function give(entry: NonNullable<ReturnType<typeof entryOf>>, path: readonly str
         `${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`,
       );
     const lines = sharedLines(fragmentLines(path, text, resolve, say));
-    return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
+    const renames = renamesOf(from, lines, id, say);
+    if (!renames) return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
+    // (a line that renames, `&kick=bd`: the fragment's lines with each name it takes renamed, wherever they write it)
+    const asked = new Set(from.names!.map((n) => n.slice(1)).filter((n) => !renames.lacking.has(n)));
+    const touches = (l: Line) => (l.name !== null && renames.names.has(l.name)) || l.reads.some((r) => renames.names.has(r));
+    const theirs = lines.map((l) => (touches(l) ? lineOf(renamed(l.code, renames.names), renamed(l.written, renames.names), l.line) : l));
+    return { taken: { id, names: asked, lines: sharedLines(theirs), resolved: true }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
   return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken);
@@ -401,14 +436,17 @@ function instantiate(
   for (const h of heads) if (!definesOwn.has(h)) say(`${quoted(id)}'s signature names &${h} its head, and it doesn't define it`);
   for (const o of optional) if (!definesOwn.has(o)) say(`${quoted(id)}'s &${o} is an optional parameter: its line in the fragment is its default, and it has none`);
   if (main && defines.has(main)) say(`${quoted(id)}'s &${main} is its main parameter: it has no line, the argument is it`);
-  // (the heads the line takes: one renamed as the line names it, several by their names)
+  // (the heads the line takes: one renamed as the line names it, several by their names or as it renames them,
+  // `&bass2=bass, &bassOut2=bassOut`, decision 075 §3b)
   const names = new Map<string, string>();
-  if (from.names?.length === 1 && heads.length === 1) names.set(heads[0]!, bare(from.names[0]!));
+  const takes = from.takes?.map(bare) ?? heads;
+  const binds = from.names?.map(bare) ?? heads;
+  if (binds.length === 1 && heads.length === 1 && (takes[0] === binds[0] || takes[0] === heads[0])) names.set(heads[0]!, binds[0]!);
   else
-    for (const n of from.names?.map(bare) ?? heads) {
-      if (heads.includes(n)) names.set(n, n);
-      else say(`&${n} is not a head of ${quoted(id)}: its head${heads.length > 1 ? 's are' : ' is'} ${heads.map((h) => `&${h}`).join(', ')}`);
-    }
+    takes.forEach((t, i) => {
+      if (heads.includes(t)) names.set(t, binds[i]!);
+      else say(`&${t} is not a head of ${quoted(id)}: its head${heads.length > 1 ? 's are' : ' is'} ${heads.map((h) => `&${h}`).join(', ')}`);
+    });
   const one = names.size === 1;
   // (a copy takes the heads it names and what they read within the template, as a named use took its closure: a head it
   // doesn't name, and what only that reads, it leaves)

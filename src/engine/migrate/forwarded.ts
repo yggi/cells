@@ -7,7 +7,7 @@
  * construction.
  */
 import { splitComment } from '../edit';
-import { isWordId, readFrom, type FromForm } from '../parser/use';
+import { isWordId, leftOf, readFrom, type FromForm } from '../parser/use';
 import type { Resolve } from '../program';
 import type { Rewrite } from '../rewrite';
 
@@ -24,17 +24,20 @@ function forwardOf(text: string): Taking | null {
     .split('\n')
     .map((l) => splitComment(l)[0].trim())
     .filter(Boolean);
-  return lines.length === 1 ? taking(lines[0]!) : null;
+  const to = lines.length === 1 ? taking(lines[0]!) : null;
+  // (a forward that renames is the fragment's own line, not a forward)
+  return to && to.names?.every((n, i) => n === to.takes![i]) !== false ? to : null;
 }
 
 /** The names a line of a forwarding fragment takes: the names it asks for, from where the fragment forwards them. */
-function forwarded(names: readonly string[] | null, to: Taking): readonly string[] | null | undefined {
-  if (!names) return to.names;
-  if (to.names && names.some((n) => !to.names!.includes(n))) return undefined;
-  return names;
+function forwarded(use: Taking, to: Taking): { names: readonly string[] | null; takes: readonly string[] | null } | undefined {
+  if (!use.names) return { names: to.names, takes: to.takes };
+  if (to.names && use.takes!.some((n) => !to.names!.includes(n))) return undefined;
+  return { names: use.names, takes: use.takes };
 }
 
-const written = (id: string, names: readonly string[] | null) => `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}`;
+const written = (id: string, { names, takes }: { names: readonly string[] | null; takes: readonly string[] | null }) =>
+  `${leftOf(names, takes)} from ${isWordId(id) ? id : JSON.stringify(id)}`;
 
 /** Each `from` line of a fragment that only forwards, written as the line it forwards to. */
 export function forwardedUses(source: string, resolve: Resolve | undefined): Rewrite<'forwarded'>[] {
@@ -45,7 +48,7 @@ export function forwardedUses(source: string, resolve: Resolve | undefined): Rew
     if (!use) return [];
     const text = resolve(use.id);
     const to = text === null ? null : forwardOf(text);
-    const names = to ? forwarded(use.names, to) : undefined;
+    const names = to ? forwarded(use, to) : undefined;
     if (!to || names === undefined) return [];
     const before = code.trim();
     const after = written(to.id, names);

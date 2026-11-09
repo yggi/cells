@@ -370,12 +370,25 @@ function readPlay(s, b) {
     }
 }
 const readBend = (s, b) => {
+    const at = s.i;
     const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
     if (level === null)
         s.fail('a level and a table after bend=, the lengths of its nodes: bend=4n:&rubato');
     s.i++;
-    b.bend = { level: level, table: s.cellRef('a table after bend=4n:, the lengths of its nodes: bend=4n:&rubato', 'after bend=4n:') };
-    b.paramSpans.bend = s.place(s.i);
+    const table = s.cellRef('a table after bend=4n:, the lengths of its nodes: bend=4n:&rubato', 'after bend=4n:');
+    let depth;
+    let depthMoves = null;
+    if (s.peek() === ':') {
+        s.i++;
+        const vs = s.i;
+        depthMoves = readMoving(s, 'depth', vs);
+        if (depthMoves)
+            depth = depthMoves.range ? depthMoves.range[0] : 1;
+        else
+            depth = s.num(`a depth after bend=${level}:&${table.name}:, how far its table applies (1 as written, 0 even, -1 inverted): bend=${level}:&${table.name}:.5`, NUMBER_PLACES.depth).value;
+    }
+    b.bend = { level: level, table, ...(depth !== undefined ? { depth } : {}), ...(depthMoves ? { depthMoves } : {}) };
+    b.paramSpans.bend = s.place(at);
 };
 const readLevels = (s, b, word) => {
     if (!/^[1-9][0-9]*(?:n\.?|t):/.test(s.text.slice(s.i)))
@@ -567,7 +580,7 @@ export const LINE_SYNTAX = [
     syntax('line', 'off', 'Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph).', ['&drums off over=&kit step=&bar 0 1'], 'cell.md'),
     syntax('line', '# … · // …', 'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.', ['&tune step=2 0 2 4  # the opening'], 'cell.md'),
     syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
-    syntax('line', '&x from id(name=…) … · &a, &b from id · * from id', "Where a line's cells come from (decision 065): a fragment by its id, the id a word or in double quotes, the host's resolver finding it. A template (a fragment with a signature) gives a copy, its head named as the line names it, its named arguments in parentheses and its main one the rest of the line; attributes before `from` are the head's. A collection gives the cells it names by their names, or every line (`*`). With no id, a fragment's signature: its head, its optional parameters in parentheses, its main one after them. `use &a, &b from id` is retired: an error, which Migrate rewrites (#387).", ['&key from harmonic_minor D', '&bar from meter(swing=8n:.64) 120bpm', '&bd, &sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'], 'use.md'),
+    syntax('line', '&x from id(name=…) … · &a, &b from id · * from id', "Where a line's cells come from (decision 065): a fragment by its id, the id a word or in double quotes, the host's resolver finding it. A template (a fragment with a signature) gives a copy, its head named as the line names it, its named arguments in parentheses and its main one the rest of the line; attributes before `from` are the head's. A collection gives the cells it names by their names, or every line (`*`). `&new=old` takes the fragment's `old` under the piece's name, a collection's cell or one of a template's heads (decision 075). With no id, a fragment's signature: its head, its optional parameters in parentheses, its main one after them. `use &a, &b from id` is retired: an error, which Migrate rewrites (#387).", ['&key from harmonic_minor D', '&bar from meter(swing=8n:.64) 120bpm', '&bd, &sd from gm_kit', '&kick=bd, &snare=sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'], 'use.md'),
     syntax('line', '&sections step=&bar &a &b', 'Sections of an arrangement (decision 016): a stepped table of names declares them, each stepped as the table is. What a section steps plays while a selector reading the table picks it (`over=&sections`), from its top each time.', ['&sections step=&bar &verseBar &chorusBar'], 'time.md'),
 ];
 function parseFreeBraid(s) {

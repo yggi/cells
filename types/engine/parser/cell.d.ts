@@ -31,6 +31,8 @@ interface Body {
     bend: {
         level: string;
         table: Ref;
+        depth?: number;
+        depthMoves?: ParamCells;
     } | null;
     swingMoves: ({
         level: string;

@@ -2,7 +2,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from "./he
 import { footOf, leaves, slots } from "./subseq.js";
 import { beltWarp, onReset, warpOf } from "./physics.js";
 import { mod } from "../theory/modes.js";
-import { stepsPerPulse, swingAt, swungKnots, swungPlace, swungSteps, writtenPlace } from "./meter.js";
+import { bentSteps, stepsPerPulse, swingAt, swungKnots, swungPlace, swungSteps, writtenPlace } from "./meter.js";
 export const EPS = 1e-9;
 export function timeMap(result, clock, shifts) {
     if (clock.tap)
@@ -30,7 +30,7 @@ function swungMap(swung, inner, ofBar) {
     };
     return { beats: inner.beats, q: (s) => inner.q(S(s)), stepAt: (t) => back(inner.stepAt(t)), ...(inner.speed ? { speed: inner.speed } : {}) };
 }
-function plainMap(result, clock, shifts) {
+function plainMap(result, clock, shifts, spans) {
     if (!clock.positional && clock.swing !== undefined) {
         const sw = Math.min(0.95, Math.max(0.05, clock.swing));
         const ps = clock.perSecond;
@@ -55,6 +55,29 @@ function plainMap(result, clock, shifts) {
     const k = Math.max(1, values.length);
     const lap = bend ? bend.lap : period(result, name);
     const barSeconds = k / clock.perSecond;
+    if (bend && spans) {
+        const u = (j) => {
+            const L = Math.floor(j / k);
+            const sp = spans(L, L * barSeconds);
+            return L + sp.positions[j - L * k] / sp.lap;
+        };
+        const qm = (s) => {
+            const j = Math.floor(s);
+            const a = u(j);
+            return (a + (s - j) * (u(j + 1) - a)) * barSeconds;
+        };
+        const stepAtM = (t) => {
+            let j = Math.floor(t / barSeconds) * k;
+            while (qm(j + 1) <= t)
+                j++;
+            while (j > 0 && qm(j) > t)
+                j--;
+            const a = qm(j);
+            const b = qm(j + 1);
+            return j + (b > a ? (t - a) / (b - a) : 0);
+        };
+        return { beats: k, q: qm, stepAt: stepAtM };
+    }
     const ticks = (j) => values[mod(j, k)] + lap * Math.floor(j / k);
     const raw = (s) => {
         const j = Math.floor(s);
@@ -161,15 +184,17 @@ function movingTapMap(tap, meter, { S, at }, place) {
 }
 const readers = new WeakMap();
 const barMeters = new WeakMap();
+const spanSteps = new WeakMap();
 const sharedMeters = new WeakMap();
-let readingShare = false;
-export function readSharesBy(result, statics, read) {
+let readingAmount = false;
+export function readAmountsBy(result, statics, read) {
     let byShifts = readers.get(result);
     if (!byShifts)
         readers.set(result, (byShifts = new WeakMap()));
     byShifts.set(statics, read);
     built.get(result)?.delete(statics);
     barMeters.get(result)?.delete(statics);
+    spanSteps.get(result)?.delete(statics);
 }
 function swungTapMap(tap, meter, { S, at }) {
     const { positions, lap } = tap;
@@ -283,6 +308,45 @@ export function clocking(result, statics, seconds = 0) {
     const maps = byShifts.get(statics) ?? new Map();
     byShifts.set(statics, maps);
     const reader = readers.get(result)?.get(statics);
+    const spansOf = (meter, real) => {
+        const bend = result.cells.get(meter)?.bend;
+        const dm = bend?.depth;
+        if (!bend || !dm || !reader)
+            return undefined;
+        let byShifts = spanSteps.get(result);
+        if (!byShifts)
+            spanSteps.set(result, (byShifts = new WeakMap()));
+        let byMeter = byShifts.get(statics);
+        if (!byMeter)
+            byShifts.set(statics, (byMeter = new Map()));
+        let spans = byMeter.get(meter);
+        if (!spans)
+            byMeter.set(meter, (spans = new Map()));
+        const known = spans;
+        const held = { positions: [...bend.positions], lap: bend.lap };
+        const byDepth = new Map();
+        return (span, nominal) => {
+            const got = known.get(span);
+            if (got)
+                return got;
+            if (span < 0 || readingAmount)
+                return held;
+            readingAmount = true;
+            let read;
+            try {
+                read = reader(meter, 'depth', real(nominal));
+            }
+            finally {
+                readingAmount = false;
+            }
+            const depth = Number.isFinite(read) ? Math.round(read * 1e9) / 1e9 : null;
+            let laid = depth === null ? held : byDepth.get(depth);
+            if (!laid)
+                byDepth.set(depth, (laid = bentSteps(dm.table, dm.per, dm.nodes, bend.bars, depth)));
+            known.set(span, laid);
+            return laid;
+        };
+    };
     const ofBar = (meter) => {
         const c = result.cells.get(meter);
         const mv = c?.swingMoves;
@@ -308,15 +372,16 @@ export function clocking(result, statics, seconds = 0) {
             const got = known.get(bar);
             if (got)
                 return got;
-            if (bar < 0 || readingShare)
+            if (bar < 0 || readingAmount)
                 return m;
-            readingShare = true;
+            const line = base(meter).q(bar * K);
+            readingAmount = true;
             let read;
             try {
-                read = reader(meter, base(meter).q(bar * K));
+                read = reader(meter, 'swing', line);
             }
             finally {
-                readingShare = false;
+                readingAmount = false;
             }
             const share = Number.isFinite(read) ? Math.min(0.95, Math.max(0.05, Math.round(read * 1e9) / 1e9)) : null;
             let mb = share === null ? m : shares.get(share);
@@ -376,7 +441,8 @@ export function clocking(result, statics, seconds = 0) {
                 m = { beats: 1, q: (st) => belt.real(idealD.q(st / rate)), stepAt: (t) => idealD.stepAt(belt.nominal(t)) * rate, speed: (t) => belt.speed(t) };
             }
             else {
-                const ideal = plainMap(result, info, statics);
+                const w0 = warpOf(result, info.cell);
+                const ideal = plainMap(result, info, statics, spansOf(info.cell, (nominal) => (w0 ? w0.real(nominal) : nominal)));
                 const w = warpOf(result, info.cell);
                 m = w ? { beats: ideal.beats, q: (st) => w.real(ideal.q(st)), stepAt: (t) => ideal.stepAt(w.nominal(t)), speed: (t) => w.speed(t) } : ideal;
             }
