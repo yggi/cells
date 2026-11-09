@@ -311,9 +311,9 @@ describe('a query given the workbench', () => {
     const modes = MODE_FRAGMENTS.map((f) => f.id);
     const isRhythm = (id: string) => RHYTHM_FRAGMENTS.some((f) => f.id === id);
     // (a mode's main parameter is its tonic, and a query that names no argument takes the one cell that meets it, decision
-    // 075: on a workbench of a meter alone, the meter, which reads as a note; a query that names the mode's argument fits
-    // a mode only where that cell is, #587)
-    expect(fitting).toEqual(all.filter((id) => isRhythm(id) || open.includes(id) || modes.includes(id)));
+    // 075: on a workbench of a meter alone, none, since a meter read as a tonic is said to be no note, #613; a query that
+    // names the mode's argument fits a mode only where that cell is, #587)
+    expect(fitting).toEqual(all.filter((id) => isRhythm(id) || open.includes(id)));
     const named = { arguments: { mode: '&tonic' } };
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter'), ...named }).map((f) => f.fragment.id)).toEqual(
       all.filter((id) => isRhythm(id) || open.includes(id)),
@@ -367,16 +367,16 @@ describe('what it costs', () => {
       const r = (await import('./fragments')).createRepository(LIBRARY);
       r.query(FUNK, LIBRARY.length, {}, { workbench: bench('meter'), ...options });
       const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, ...options }));
-      // (the rhythms, the instruments, the vibrato, the envelopes, the styles, the band and the modules, a filter over the one voice that meets its input; where
-      // no argument is named, the 9 modes too, their tonic the one cell that meets it, the meter (#587): a performer's part, a
-      // filter's input and a stab line's &harm are holes no workbench of drums fills)
+      // (the rhythms, the instruments, the vibrato, the envelopes, the styles, the band and the modules, a filter over the one voice that meets its input;
+      // not the 9 modes, named or not: no cell of a workbench of drums meets a tonic, its meter said to be no note (#613); a
+      // performer's part, a filter's input and a stab line's &harm are holes no workbench of drums fills)
       const kinds = [...RHYTHM_FRAGMENTS, ...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...MODULE_FRAGMENTS, ...BAND_FRAGMENTS];
       const modes = MODE_FRAGMENTS.map((f) => f.id);
       expect(
-        first.every((f) => kinds.some((k) => k.id === f.fragment.id) || (options !== named && modes.includes(f.fragment.id))),
+        first.every((f) => kinds.some((k) => k.id === f.fragment.id)),
         JSON.stringify(first.map((f) => f.fragment.id)),
       ).toBe(true);
-      expect(first.some((f) => modes.includes(f.fragment.id))).toBe(options !== named);
+      expect(first.some((f) => modes.includes(f.fragment.id))).toBe(false);
       expect(fresh).toBeGreaterThan(0);
       expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length * (options === named ? 2 : 2 + cells));
       expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['funk_drums'], ...options }))[1]).toBe(0);
