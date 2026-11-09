@@ -20,7 +20,9 @@ The places, from the parser's own table:
 | attack=n (an envelope by name) | ✓ | `&k`, `lo..hi * &k`: `&k` its values as the slot's (seconds; sustain a level), held at 0 until a note reads it | `&env map=adsr attack=free(.01, 0..1) decay=.3 sustain=.5 release=.4` |
 | sync=n (a style by name) | ✓ | `&k`, `lo..hi * &k`, within the axis (#576) | `&mine map=style sync=free(.3, 0..1) harm=.45 artic=.55 energy=.55` |
 | lo..hi * &k (a moving range’s ends) · c ± r | ✓ | ✗ not yet: a range’s end is a number or a slider; its cells move what lies between (decision 079) | `&lead s=saw loop=C4 lpf=free(400, 200..800)..free(2400, 1200..4800) * &lfo` |
-| swing=8n:n · legato=8n:n | ✓ | ✗ not yet: #597, a meter’s timing moved at its bar line | `&bar meter("4/4") step=90bpm swing=8n:free(.6, .5...75)` |
+| swing=8n:n (a swing’s share) | ✓ | `&k`, `lo..hi * &k`, one level alone, read at each bar line and held through the bar (decision 081) | `&bar meter("4/4") step=90bpm swing=8n:free(.6, .5...75)` |
+| bend=4n:&t:d (a bend’s depth) | ✓ | `&k`, `lo..hi * &k`, read at each line of its table’s span, held through it (decision 081) | `&bar meter("*.-.+.-.") step=90bpm bend=4n:&(27 23 26 24):free(1, -1..2)` |
+| legato=8n:n (a legato’s share by level) | ✓ | ✗ not yet: a meter’s legato by level is its lines’ default; a line moves its own, legato=&artic | `&bar meter("4/4") step=90bpm legato=8n:free(.5, .25..1)` |
 | [&x * n] (a gain in a mix) | ✓ | `&k`; a range moved by cells is a cell of its own, `&g [&k * .6 + .2]`, then `[&x * &g]` (decision 079) | `&out [&strings * free(.4, 0..1)]` |
 | &x:0:n (a hit’s gain) | ✓ | ✗ a hit’s gain is a number; a moving one is `velocity=&accent`, or a gate’s `level=` | `&beat step=8 &bd &hh:0:free(.4, 0..1)` |
 | style=[&a * n, …] (a weight) | ✓ | ✗ a weight is a number; a crossfade is `style=&a..&b * &curve` | `&s style=[&funk * free(.8, 0..1), &bossa * .2]` |

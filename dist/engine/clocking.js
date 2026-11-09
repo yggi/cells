@@ -2,7 +2,7 @@ import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from "./he
 import { footOf, leaves, slots } from "./subseq.js";
 import { beltWarp, onReset, warpOf } from "./physics.js";
 import { mod } from "../theory/modes.js";
-import { stepsPerPulse, swingAt, swungKnots, swungPlace, writtenPlace } from "./meter.js";
+import { bentSteps, stepsPerPulse, swingAt, swungKnots, swungPlace, swungSteps, writtenPlace } from "./meter.js";
 export const EPS = 1e-9;
 export function timeMap(result, clock, shifts) {
     if (clock.tap)
@@ -10,27 +10,27 @@ export function timeMap(result, clock, shifts) {
     const plain = plainMap(result, clock, shifts);
     return clock.swung ? swungMap(clock.swung, plain) : plain;
 }
-function swungMap(swung, inner) {
+function swungMap(swung, inner, ofBar) {
     const k = Math.max(1, swung.length);
-    const at = (i) => (i < k ? swung[i] : k);
+    const at = (i, b) => (i < k ? (ofBar ? ofBar(b) : swung)[i] : k);
     const S = (s) => {
         const j = Math.floor(s);
         const b = Math.floor(j / k);
         const i = j - b * k;
-        return b * k + at(i) + (s - j) * (at(i + 1) - at(i));
+        return b * k + at(i, b) + (s - j) * (at(i + 1, b) - at(i, b));
     };
     const back = (x) => {
         const b = Math.floor(x / k);
         const r = x - b * k;
         let i = 0;
-        while (i + 1 < k && at(i + 1) <= r)
+        while (i + 1 < k && at(i + 1, b) <= r)
             i++;
-        const span = at(i + 1) - at(i);
-        return b * k + i + (span > 0 ? (r - at(i)) / span : 0);
+        const span = at(i + 1, b) - at(i, b);
+        return b * k + i + (span > 0 ? (r - at(i, b)) / span : 0);
     };
     return { beats: inner.beats, q: (s) => inner.q(S(s)), stepAt: (t) => back(inner.stepAt(t)), ...(inner.speed ? { speed: inner.speed } : {}) };
 }
-function plainMap(result, clock, shifts) {
+function plainMap(result, clock, shifts, spans) {
     if (!clock.positional && clock.swing !== undefined) {
         const sw = Math.min(0.95, Math.max(0.05, clock.swing));
         const ps = clock.perSecond;
@@ -55,6 +55,29 @@ function plainMap(result, clock, shifts) {
     const k = Math.max(1, values.length);
     const lap = bend ? bend.lap : period(result, name);
     const barSeconds = k / clock.perSecond;
+    if (bend && spans) {
+        const u = (j) => {
+            const L = Math.floor(j / k);
+            const sp = spans(L, L * barSeconds);
+            return L + sp.positions[j - L * k] / sp.lap;
+        };
+        const qm = (s) => {
+            const j = Math.floor(s);
+            const a = u(j);
+            return (a + (s - j) * (u(j + 1) - a)) * barSeconds;
+        };
+        const stepAtM = (t) => {
+            let j = Math.floor(t / barSeconds) * k;
+            while (qm(j + 1) <= t)
+                j++;
+            while (j > 0 && qm(j) > t)
+                j--;
+            const a = qm(j);
+            const b = qm(j + 1);
+            return j + (b > a ? (t - a) / (b - a) : 0);
+        };
+        return { beats: k, q: qm, stepAt: stepAtM };
+    }
     const ticks = (j) => values[mod(j, k)] + lap * Math.floor(j / k);
     const raw = (s) => {
         const j = Math.floor(s);
@@ -102,20 +125,76 @@ function tapMap(tap, meter, swung = null) {
     };
     return { beats: k, q: (j) => meter.q(meterStep(j)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
 }
-function swungMeter(result, meter) {
+function swungMeter(result, meter, ofBar) {
     const m = result.cells.get(meter)?.meter ?? undefined;
     const knots = m ? swungKnots(m) : null;
     if (!m || !knots)
         return null;
     const per = stepsPerPulse(m);
-    const S = (w) => swungPlace(m, w / per) * per;
-    const W = (s) => writtenPlace(m, s / per) * per;
+    const K = Math.max(1, m.levels.length);
+    const at$ = (x) => (ofBar ? ofBar(Math.floor(x / K + 1e-9)) : m);
+    const S = (w) => swungPlace(at$(w), w / per) * per;
+    const W = (s) => writtenPlace(at$(s), s / per) * per;
     const finest = Math.min(...m.swing.map((l) => l.whole * m.unit));
     const held = (grid) => {
         const k = Math.log2(grid / per / finest);
         return Math.abs(k - Math.round(k)) < 1e-9;
     };
-    return { S, W, at: (w, grid) => (held(grid) ? S(w) : swingAt(m, w / per, grid / per) * per), grain: finest * per };
+    return { S, W, at: (w, grid) => (held(grid) ? S(w) : swingAt(at$(w), w / per, grid / per) * per), grain: finest * per };
+}
+function movingTapMap(tap, meter, { S, at }, place) {
+    const { positions, lap } = tap;
+    const written = tap.written ?? positions;
+    const grids = tap.grids ?? [];
+    const k = Math.max(1, positions.length);
+    const wAt = (i) => (i < k ? written[i] : lap);
+    const pAt = (b, i) => (i < k ? place(b * lap + wAt(i), grids[i] ?? 0) - b * lap : lap);
+    const meterStep = (j, grid) => {
+        const n = Math.floor(j);
+        const b = Math.floor(n / k);
+        const i = n - b * k;
+        if (j === n)
+            return b * lap + pAt(b, i);
+        const w = b * lap + wAt(i) + (j - n) * (wAt(i + 1) - wAt(i));
+        return grid !== undefined && grid > 0 ? at(w, grid * (wAt(i + 1) - wAt(i))) : S(w);
+    };
+    const stepAt = (t) => {
+        const x = meter.stepAt(t);
+        const b = Math.floor(x / lap);
+        const r = x - b * lap;
+        let i = 0;
+        while (i + 1 < k && pAt(b, i + 1) <= r)
+            i++;
+        const w0 = b * lap + wAt(i);
+        const w1 = b * lap + wAt(i + 1);
+        if (w1 <= w0 || r <= pAt(b, i))
+            return b * k + i;
+        let lo = 0;
+        let hi = 1;
+        for (let it = 0; it < 52; it++) {
+            const mid = (lo + hi) / 2;
+            if (S(w0 + mid * (w1 - w0)) - b * lap <= r)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        return b * k + i + lo;
+    };
+    return { beats: k, q: (j, grid) => meter.q(meterStep(j, grid)), stepAt, ...(meter.speed ? { speed: meter.speed } : {}) };
+}
+const readers = new WeakMap();
+const barMeters = new WeakMap();
+const spanSteps = new WeakMap();
+const sharedMeters = new WeakMap();
+let readingAmount = false;
+export function readAmountsBy(result, statics, read) {
+    let byShifts = readers.get(result);
+    if (!byShifts)
+        readers.set(result, (byShifts = new WeakMap()));
+    byShifts.set(statics, read);
+    built.get(result)?.delete(statics);
+    barMeters.get(result)?.delete(statics);
+    spanSteps.get(result)?.delete(statics);
 }
 function swungTapMap(tap, meter, { S, at }) {
     const { positions, lap } = tap;
@@ -204,6 +283,7 @@ const built = new WeakMap();
 onReset((r) => {
     belts.delete(r);
     built.delete(r);
+    barMeters.delete(r);
 });
 export function physicsOf(result, statics, cell) {
     const c = result.cells.get(cell);
@@ -227,12 +307,110 @@ export function clocking(result, statics, seconds = 0) {
         built.set(result, (byShifts = new WeakMap()));
     const maps = byShifts.get(statics) ?? new Map();
     byShifts.set(statics, maps);
+    const reader = readers.get(result)?.get(statics);
+    const spansOf = (meter, real) => {
+        const bend = result.cells.get(meter)?.bend;
+        const dm = bend?.depth;
+        if (!bend || !dm || !reader)
+            return undefined;
+        let byShifts = spanSteps.get(result);
+        if (!byShifts)
+            spanSteps.set(result, (byShifts = new WeakMap()));
+        let byMeter = byShifts.get(statics);
+        if (!byMeter)
+            byShifts.set(statics, (byMeter = new Map()));
+        let spans = byMeter.get(meter);
+        if (!spans)
+            byMeter.set(meter, (spans = new Map()));
+        const known = spans;
+        const held = { positions: [...bend.positions], lap: bend.lap };
+        const byDepth = new Map();
+        return (span, nominal) => {
+            const got = known.get(span);
+            if (got)
+                return got;
+            if (span < 0 || readingAmount)
+                return held;
+            readingAmount = true;
+            let read;
+            try {
+                read = reader(meter, 'depth', real(nominal));
+            }
+            finally {
+                readingAmount = false;
+            }
+            const depth = Number.isFinite(read) ? Math.round(read * 1e9) / 1e9 : null;
+            let laid = depth === null ? held : byDepth.get(depth);
+            if (!laid)
+                byDepth.set(depth, (laid = bentSteps(dm.table, dm.per, dm.nodes, bend.bars, depth)));
+            known.set(span, laid);
+            return laid;
+        };
+    };
+    const ofBar = (meter) => {
+        const c = result.cells.get(meter);
+        const mv = c?.swingMoves;
+        const m = c?.meter;
+        if (!mv || !m?.swing || !reader)
+            return undefined;
+        let byShifts = barMeters.get(result);
+        if (!byShifts)
+            barMeters.set(result, (byShifts = new WeakMap()));
+        let byMeter = byShifts.get(statics);
+        if (!byMeter)
+            byShifts.set(statics, (byMeter = new Map()));
+        let bars = byMeter.get(meter);
+        if (!bars)
+            byMeter.set(meter, (bars = new Map()));
+        const known = bars;
+        let byShare = sharedMeters.get(m);
+        if (!byShare)
+            sharedMeters.set(m, (byShare = new Map()));
+        const shares = byShare;
+        const K = Math.max(1, m.levels.length);
+        return (bar) => {
+            const got = known.get(bar);
+            if (got)
+                return got;
+            if (bar < 0 || readingAmount)
+                return m;
+            const line = base(meter).q(bar * K);
+            readingAmount = true;
+            let read;
+            try {
+                read = reader(meter, 'swing', line);
+            }
+            finally {
+                readingAmount = false;
+            }
+            const share = Number.isFinite(read) ? Math.min(0.95, Math.max(0.05, Math.round(read * 1e9) / 1e9)) : null;
+            let mb = share === null ? m : shares.get(share);
+            if (!mb)
+                shares.set(share, (mb = { ...m, swing: m.swing.map((l) => (l.level === mv.level ? { ...l, share: share } : l)) }));
+            known.set(bar, mb);
+            return mb;
+        };
+    };
     const map = (clock) => {
         let m = maps.get(clock);
         if (!m) {
             const info = result.clocks.get(clock);
-            if (info.tap)
+            const moving = ofBar(info.tap?.meter ?? clock);
+            if (info.tap && moving) {
+                const meter = result.cells.get(info.tap.meter).meter;
+                const per = stepsPerPulse(meter);
+                const K = Math.max(1, meter.levels.length);
+                const place = (w, grid) => swingAt(moving(Math.floor(w / K + 1e-9)), w / per, grid) * per;
+                const sw = swungMeter(result, info.tap.meter, moving);
+                m = sw ? movingTapMap(info.tap, base(info.tap.meter), sw, place) : tapMap(info.tap, base(info.tap.meter), null);
+            }
+            else if (info.tap)
                 m = tapMap(info.tap, base(info.tap.meter), swungMeter(result, info.tap.meter));
+            else if (moving) {
+                const meter = result.cells.get(clock).meter;
+                const straight = meter.levels.map((_, i) => i);
+                m = swungMap(straight, base(clock), (b) => swungSteps(moving(b)) ?? straight);
+            }
             else
                 m = info.swung ? swungMap(info.swung, base(clock)) : base(clock);
             maps.set(clock, m);
@@ -263,7 +441,8 @@ export function clocking(result, statics, seconds = 0) {
                 m = { beats: 1, q: (st) => belt.real(idealD.q(st / rate)), stepAt: (t) => idealD.stepAt(belt.nominal(t)) * rate, speed: (t) => belt.speed(t) };
             }
             else {
-                const ideal = plainMap(result, info, statics);
+                const w0 = warpOf(result, info.cell);
+                const ideal = plainMap(result, info, statics, spansOf(info.cell, (nominal) => (w0 ? w0.real(nominal) : nominal)));
                 const w = warpOf(result, info.cell);
                 m = w ? { beats: ideal.beats, q: (st) => w.real(ideal.q(st)), stepAt: (t) => ideal.stepAt(w.nominal(t)), speed: (t) => w.speed(t) } : ideal;
             }
@@ -281,7 +460,7 @@ export function clocking(result, statics, seconds = 0) {
         return m;
     };
     const played = (clock) => {
-        const sw = result.clocks.get(clock)?.tap ? null : swungMeter(result, clock);
+        const sw = result.clocks.get(clock)?.tap ? null : swungMeter(result, clock, ofBar(clock));
         if (!sw)
             return map(clock);
         let m = maps.get(`${clock}\0played`);
@@ -292,7 +471,11 @@ export function clocking(result, statics, seconds = 0) {
         }
         return { ...m, q: m.q, stepAt: m.stepAt, grain: sw.grain };
     };
-    return { map, written, played, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
+    const swingOf = (meter, bar) => {
+        const moving = ofBar(meter);
+        return (moving ? moving(bar) : result.cells.get(meter)?.meter)?.swing ?? null;
+    };
+    return { map, written, played, swingOf, stepOf: (clock) => map(clock).stepAt(Math.max(0, seconds)) };
 }
 export function shiftsAt(result, statics, seconds) {
     const clk = clocking(result, statics, seconds);

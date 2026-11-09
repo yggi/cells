@@ -10,6 +10,64 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.22.0 — 2026-11-09
+
+### Added
+
+- **A `from` line renames what it takes, `&new=old`** (#560 rung 3a–b, decision 075; the owner on #556 §3a–b). `&kick=bd, &snare=sd from gm_kit` gives the kit's `&bd` as the piece's `&kick`, and every line it takes reads it so. A template's several heads are renamed the same way: `&bass2=bass, &bassOut2=bassOut from bass_performer &line2`, its private names then `&bass2_…`.
+  - **The fragment's name is a word of the line**, as a keyword is (`swing=`), not a name the piece binds. So a piece renamed writes `&x=bd from gm_kit`, and every name on its line is its own. A name without `=` keeps its name, as before.
+  - **What it says:** a name bound twice, or one of the fragment's taken twice, is a malformed `from` line. A name the fragment lacks is said, and so is one the line binds that the collection gives by another line (`&sd=bd from gm_kit`).
+  - **Normalise's narrowest `from`** keeps a line's renames, and writes `&bd=bd` as `&bd`. Migrate's `forwarded` keeps them too.
+  - **The API:** `FromForm`'s use has `takes`, what each of `names` takes from the fragment, in the same order (the name itself where the line writes no `=`). `leftOf(names, takes)` writes a line's left side.
+  - `alpha.test.ts` renames every name a `from` line takes, a collection's cells, a `*` written out by name and a template's several heads. `electroswing`, `spooky` and `kinderlied` stay on its list, now for the feel too, until rung 3c–e.
+
+  **What a frontend sees at its next pin:** nothing written before changes meaning, and no event snapshot moves. A caller of `readFrom` (`cells/engine/parser`) that reads a line's `names` as the fragment's names reads `takes` for those; `names` stays what the line binds. Jambot calls no `readFrom`.
+
+- **`coreFragment(text, options)`: a fragment cored up to its signature** (decision 077 §2; #590). A fragment doesn't play alone, so it is cored in a host:
+  - each hole gets a stand-in: a voice, a stepped line, a meter, a tempo or a key;
+  - each head is played on a card by its sort;
+  - the host's lines are taken off again.
+
+  The result keeps its signature line as written, its heads and parameters by name, and its own `from` lines as `from` lines, so a piece that gives its own `&bassV` still does. A tap under a meter the fragment doesn't define stays as written. Every example that uses the cored fragments plays the same.
+
+- **A bend's depth, and moved by a cell** (#597, decision 081): `bend=4n:&rubato:.5` applies the table's ratios raised to the depth. 1 is as written (and the default), 0 even, 2 exaggerated, -1 inverted, and no depth makes a length 0 or less. As a swing's share does, it may be a slider or be moved by cells: `bend=4n:&rubato:&d` takes the cell's values as depths, and `bend=4n:&rubato:0..1 * &k` puts a cell's 0..1 on a range. Each is read at the line of the table's span (the bar line, where the table fits a bar) and held through it. Read with no plan, it holds a range's first end or the cell's first value. A bend with no depth plays as before.
+
+- **A swing's share may be moved by a cell** (#597, decision 081): `swing=8n:&lean` takes the cell's values as shares, and `swing=8n:.5...75 * &k` puts a cell's 0..1 on a range, its ends sliders or centre ± reach. It is one level alone. Each bar plays the share read at its bar line, held through the bar, so a cell the same meter steps can set it (`&lean step=1m .55 .67`). The meter's own steps, its taps, a note's end and the parts of a step, and the MIDI clock and export, all follow each bar's share. Read with no plan (the meter compiled), it holds a range's first end or the cell's first value. `swingOfBar(plan, meter, bar)` is exported, for a host that builds its frames from a cells meter. Nothing an existing piece plays changes.
+
+### Changed
+
+- **A drum's note is its `note=`, not its name** (#560 rung 1, decision 075; the owner on #556 §1). A kit member sends the MIDI note it writes, `&bd note=36 s=sine …`, a whole number 0–127, so `&kick note=36` sends what `&bd note=36` does.
+  - **No `note=`:** a member that writes none takes the next free note from 36, in the order its kit names it. Its General MIDI name gives none.
+  - **A name that was a note** is warned: "&bd is named as General MIDI's drum 36, and a name gives no note: write &bd note=36". Read the old way (`CompileOptions.old`), the name still gives it, and Migrate's new `notes` rule writes it in. So every piece sends the same MIDI after Migrate.
+  - **The seeds:** `gm_kit` writes `note=` on its 47 members, so its hash moves. The 13 examples whose own drums are named as General MIDI's write theirs (`drums`, `arrangement`, `automaton`, `gate`, `sailor`, `pop`, `idm`, `acid`, `patchbay`, `zell`, `hypercell`, `onemore`, `brothers`). Their `notes` and `events` hashes don't move; their `values` and `live` hashes do, from the new field.
+  - **Importing a MIDI file** writes each drum with the note it came in on (`&claves note=75 s=sine …`), so MIDI out sends it again.
+  - **The API:** `kitNotes(members, noteOf)` takes each member's note, where it read names. `CellDecl.drumNote` and `ResolvedCell.drumNote` are new.
+  - `midi-out` leaves `alpha.test.ts`' list: renamed, its drums send what they sent.
+
+  **What a frontend sees at its next pin:** a text whose own drums are named as General MIDI's and write no `note=` (`&bd s=sine` on a MIDI card) gets a warning, and its members' notes move to the next free ones until Migrate writes `note=`. A drum taken from `gm_kit` sends as before. Jambot's section text takes its drums from `gm_kit`, so nothing it sends changes (yggi/jambot#615). Cell studio's pads read through `kitPads`, so a piece's own drums need `note=` there too. Cell studio's `src/layout/kit.ts` reads `gmDrumNote` off a member's name to draw it; `gmDrumNote` stays, and a member's note is now `result.cells.get(m)?.drumNote`. A caller of `kitNotes` passes `noteOf` (`(m) => result.cells.get(m)?.drumNote`, or `gmDrumNote` for a list of names).
+
+- **The core keeps an interface cell read by name** (decision 077 §2). A step that would leave a cell, read before, read by nothing (a copy written out, `base=&grouping` as its steps) isn't taken, and `copies` and `copy steps` leave a kept base alone.
+- **`toCore`'s `skip` option** leaves families out by key.
+- **`repeats` leaves a cell that counts its own laps (`cycle=`) as written**, where `x!n` is one unit.
+
+Nothing a piece plays changes.
+
+### Fixed
+
+- **S1 and S2 hear a MIDI note's output slot** (#273): a rewrite that moves a note from `map=midi(1)` to `map=midi(1, 2)` no longer passes as sounding identical, as one that moves its channel already didn't (#192). A note heard nowhere (`unheard`) differs by its gains of 0, which S1 already reads, and a voice on a MIDI card alone is heard there too (decision 064). No example sends to a slot but the first, so no tool offers a rewrite it didn't.
+
+- **Vary reads a held rest as its rests** (#410): a line that holds a rest (`~ 0 1b 0 ~@2 -1 0`) gets the variations the same line with its rests written out (`~ ~`) gets, for every operator, where it got none. A variation writes the rests out. The seed motifs `sigh` and `peek` are varied now as written; nothing a piece plays changes.
+
+- **`style=` that names no cell is an error** (#609): `style=&nowhere`, an end of a range (`style=&funk..&nope`), a mix's term or a curve that no line declares says `Unknown cell &nope` at the reference, as any other reference does. It compiled with nothing said, and what read the style read 0. A piece that compiled with no error plays as before.
+
+- **A line written in place of one `* from` gives keeps the helpers it reads** (yggi/cell-studio#610): the piece's own `&drumsOut play=&drumlines &drums_kit` under `* from band` said `Unknown cell &drums_kit`, because a helper only the overridden line read went with it. A helper the piece's own lines read is given; one nothing else reads still goes with the line it helped. Only texts that said `Unknown cell` change; Cell studio's edit of a given cell (`withUsedLine`) now plays as before.
+
+### Repository
+
+- **The folder's ratchets bound each piece's growth as well as the set's** (#263): no example's (and no MIDI file's) folded score may grow by more than 10 % over its row (`PIECE_GROWTH`, `fold/score.ts`), beside the set's 1 %, which let one piece grow by 37 % unnoticed. Its first catch: `radio`'s row was recorded before #594, #605 and #607 made it drift, so it plays other note lengths and folds to 445, not 298; the row is recorded.
+
+- **`npm run changelog -- gather` files an entry of several sections each part under its own heading** (#568): an entry with `### Added` and then `### Changed` no longer lands whole under its first heading, and `check` names an unknown heading anywhere in an entry, not only its first line.
+
 ## v0.21.1 — 2026-11-09
 
 ### Added

@@ -420,8 +420,18 @@ export interface CellDecl {
    * tempo is read from a cell that is a rate alone (`step=&tempo`). Resolved by compile (declare.ts), which sets `swing`.
    */
   readonly swingFrom?: Ref;
-  /** bend= on a meter (decision 080): a level, by note value, and the table its nodes' lengths are read from. */
-  readonly bend?: { readonly level: string; readonly table: Ref };
+  /**
+   * bend= on a meter (decision 080): a level, by note value, and the table its nodes' lengths are read from. Its depth
+   * (decision 081, `bend=4n:&rubato:.5`): how far the table applies, its ratios raised to it, 1 as written (absent);
+   * `depthMoves`, a depth moved by cells (`bend=4n:&rubato:&k`), read at each line of the table's span, `depth` the held one.
+   */
+  readonly bend?: { readonly level: string; readonly table: Ref; readonly depth?: number; readonly depthMoves?: ParamCells };
+  /**
+   * A swing's share moved by cells (decision 081): `swing=8n:&lean`, `swing=8n:.5...75 * &k`, one level alone, read at each
+   * bar line and held through the bar. `swing`'s share for the level is the held one (a range's first end, a bare cell's
+   * first value: compile sets it), what a reader with no time reads.
+   */
+  readonly swingMoves?: { readonly level: string } & ParamCells;
   /** legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none. */
   readonly legato?: readonly { readonly level: string; readonly share: number }[];
   /** dough parameters (s=saw lpf=1800 …): a cell with any of these is a voice. */

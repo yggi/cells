@@ -1,6 +1,6 @@
 export { compileSource } from "./engine/compile.js";
 export { parse, pieceMeta } from "./engine/parser/index.js";
-export { plan } from "./engine/realize.js";
+export { plan, swingOfBar } from "./engine/realize.js";
 export { windowAt } from "./engine/schedule.js";
 export { createHost, planOf } from "./engine/host.js";
 export { shorten, shortenAll } from "./engine/shorten/index.js";

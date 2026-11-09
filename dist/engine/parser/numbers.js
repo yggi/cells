@@ -32,10 +32,24 @@ export const NUMBER_PLACES = {
         example: '&lead s=saw loop=C4 lpf=free(400, 200..800)..free(2400, 1200..4800) * &lfo',
     }),
     share: place({
-        form: 'swing=8n:n · legato=8n:n',
+        form: 'swing=8n:n (a swing’s share)',
         name: 'share',
-        cell: NOT_YET('#597, a meter’s timing moved at its bar line'),
+        cell: `${MOVES}, one level alone, read at each bar line and held through the bar (decision 081)`,
+        moves: true,
         example: '&bar meter("4/4") step=90bpm swing=8n:free(.6, .5...75)',
+    }),
+    depth: place({
+        form: 'bend=4n:&t:d (a bend’s depth)',
+        name: 'depth',
+        cell: `${MOVES}, read at each line of its table’s span, held through it (decision 081)`,
+        moves: true,
+        example: '&bar meter("*.-.+.-.") step=90bpm bend=4n:&(27 23 26 24):free(1, -1..2)',
+    }),
+    legatoShare: place({
+        form: 'legato=8n:n (a legato’s share by level)',
+        name: 'share',
+        cell: NOT_YET('a meter’s legato by level is its lines’ default; a line moves its own, legato=&artic'),
+        example: '&bar meter("4/4") step=90bpm legato=8n:free(.5, .25..1)',
     }),
     gain: place({
         form: '[&x * n] (a gain in a mix)',
