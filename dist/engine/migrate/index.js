@@ -11,6 +11,7 @@ import { oneshots } from "./oneshot.js";
 import { pairs } from "./pairs.js";
 import { beats } from "./beats.js";
 import { notes } from "./notes.js";
+import { argumentsByName } from "./arguments.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
     ...taps(source, result, options),
@@ -24,6 +25,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...pairs(source),
     ...beats(source, result, options),
     ...notes(source, result),
+    ...argumentsByName(source, result, options.resolve),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };

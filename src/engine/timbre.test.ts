@@ -36,7 +36,7 @@ describe('an envelope’s slots by name, each a number or a range scaled by cell
 
   it('a moving slot reads its cells at each note’s start: the chords’ attack and release, as Jambot’s, at articulation 0, .5 and 1', () => {
     const at = (artic: number) => {
-      const text = `${bar}\n&style style=&(map=style .5 .5 ${artic} .5)\n&padV from pad\n&line step=4n 0 2\n&out map=sample [&line * &padV]`;
+      const text = `${bar}\n&style style=&(map=style .5 .5 ${artic} .5)\n&padV from pad(style=&style)\n&line step=4n 0 2\n&out map=sample [&line * &padV]`;
       return events(text).map((e) => [e.env!.attack, e.env!.release]);
     };
     for (const [artic, attack, release] of [
@@ -77,7 +77,7 @@ describe('an envelope’s slots by name, each a number or a range scaled by cell
   });
 
   it('follows a style that glides: a later note of a section that grows staccato has a shorter attack', () => {
-    const text = `${bar}\n&style style=&(map=style .5 .5 0 .5)..&(map=style .5 .5 1 .5)\n&padV from pad\n&line step=1m 0 0 0 0\n&out map=sample [&line * &padV]`;
+    const text = `${bar}\n&style style=&(map=style .5 .5 0 .5)..&(map=style .5 .5 1 .5)\n&padV from pad(style=&style)\n&line step=1m 0 0 0 0\n&out map=sample [&line * &padV]`;
     const plan = planOf(text, undefined, { resolve: resolveSeed });
     const attacks = windowAt(plan, 0, 8 - 1e-9).events.map((e) => e.env!.attack);
     expect(attacks).toHaveLength(4);
@@ -87,12 +87,17 @@ describe('an envelope’s slots by name, each a number or a range scaled by cell
 
   it('is the centre’s where no line writes the style, and moves no note MIDI sends', () => {
     const notes = (style: string) => {
-      const text = `${bar}\n${style}\n&padV from pad\n&line step=4n 0 2 4 7\n&out map=midi(3) [&line * &padV]\n&hear map=sample [&line * &padV]`;
+      const text = `${bar}\n${style}\n&padV from pad(style=&style)\n&line step=4n 0 2 4 7\n&out map=midi(3) [&line * &padV]\n&hear map=sample [&line * &padV]`;
       const plan = planOf(text, undefined, { resolve: resolveSeed });
       const route = router(plan.result, channelTable(plan.result));
       return windowAt(plan, 0, 2 - 1e-9).events.flatMap((e) => routesOf(route(e)).map((r) => midiNote(e, r)));
     };
-    expect(events(`${bar}\n&padV from pad\n&line step=4n 0\n&out map=sample [&line * &padV]`)[0]!.env).toEqual({ attack: 0.155, decay: 0, sustain: 1, release: 0.41 });
+    expect(events(`${bar}\n&padV from pad(style=&style)\n&line step=4n 0\n&out map=sample [&line * &padV]`)[0]!.env).toEqual({
+      attack: 0.155,
+      decay: 0,
+      sustain: 1,
+      release: 0.41,
+    });
     expect(notes('&style style=&(map=style .5 .5 0 .5)')).toEqual(notes('&style style=&(map=style .5 .5 1 .5)'));
   });
 });
@@ -134,7 +139,7 @@ describe('a blend of two waves, s=tri..square * &x (#411)', () => {
   });
 
   it('is one voice: a note sends one MIDI note, whatever the share', () => {
-    const text = `${bar}\n&style style=&(map=style .5 .5 .5 .5)\n&leadV from lead\n&line step=4n 0 2 4 7\n&out map=midi(1) [&line * &leadV]\n&hear map=sample [&line * &leadV]`;
+    const text = `${bar}\n&style style=&(map=style .5 .5 .5 .5)\n&leadV from lead(style=&style)\n&line step=4n 0 2 4 7\n&out map=midi(1) [&line * &leadV]\n&hear map=sample [&line * &leadV]`;
     const plan = planOf(text, undefined, { resolve: resolveSeed });
     const route = router(plan.result, channelTable(plan.result));
     expect(windowAt(plan, 0, 2 - 1e-9).events.flatMap((e) => routesOf(route(e)).map((r) => midiNote(e, r)!.note))).toEqual([60, 62, 64, 67]);

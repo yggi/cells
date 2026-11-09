@@ -1,0 +1,8 @@
+# a piece that gave the bass performer its own voice and style by their names (#560 rung 3c–e)
+&bar meter("4/4") step=100bpm
+&key scale(dorian, D)
+&bassline over=&key step=4n 0 2 4 2
+&bass, &bassOut from bass_performer(bassV=&bassV, style=&style) &bassline
+&bassV s=sine loop=C2 lpf=450..900 * &style[artic]
+&style style=&(map=style .5 .5 .9 .5)
+&out map=sample [&bassOut]

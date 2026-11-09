@@ -1,6 +1,7 @@
 // Style space (decision 063 §3, #390): the table of axes, map=style by position and by name, and a pick by name, read
 // as its slot's position as written; every map=adsr cell in the examples read by name as by position.
 import { describe, expect, it } from 'vitest';
+import { signatureOf } from './use';
 import { compileSource as compileAlone } from './compile';
 import { EXAMPLES } from './examples';
 import { AXES, AXIS_NAMES, SLOTS } from './style';
@@ -320,7 +321,7 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
   });
 });
 
-describe('&style is the composer’s: a fragment reads it, and no fragment defines it (#391)', () => {
+describe('&style is the composer’s: a fragment reads it, and no collection defines it (#391; a template declares it, #560)', () => {
   const lpfOf = (text: string) => {
     const r = compileSource(text);
     const e = eventsBetween(plan(r, codeShifts(r)), 0, 1).find((x) => x.voice === 'bassV');
@@ -349,7 +350,15 @@ describe('&style is the composer’s: a fragment reads it, and no fragment defin
       ]);
   });
 
-  it('no seed fragment defines it', () => {
-    expect(LIBRARY.filter((f) => f.text.split('\n').some((l) => /^&style[\s,]/.test(l))).map((f) => f.id)).toEqual([]);
+  it('no seed fragment defines it but as a parameter’s default, the centre, a template declaring it (decision 075, #560 rung 3c–e)', () => {
+    const defining = LIBRARY.filter((f) => f.text.split('\n').some((l) => /^&style[\s,]/.test(l)));
+    expect(defining.map((f) => f.id)).toEqual(['bass', 'keys', 'pad', 'lead', 'bass_performer', 'pad_performer', 'stab_performer', 'lead_performer']);
+    for (const f of defining) {
+      expect(signatureOf(f.text)?.optional, f.id).toContain('&style');
+      expect(
+        f.text.split('\n').filter((l) => /^&style\s/.test(l)),
+        f.id,
+      ).toEqual(['&style map=style .5 .5 .5 .5']);
+    }
   });
 });

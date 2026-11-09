@@ -15,7 +15,7 @@
  * Pure.
  */
 import { parse } from '../engine/parser';
-import { expand } from '../engine/use';
+import { bodyOf, expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
 import { AXES, CENTRE as CENTRE_VALUES } from '../engine/style';
 import type { CellDecl, StylePoint as WrittenStyle } from '../engine/ast';
@@ -45,8 +45,11 @@ export const CENTRE: StylePoint = Object.fromEntries(AXES.map((a, i) => [a.name,
 
 const repositories = new WeakMap<readonly Fragment[], Repository>();
 
-/** The line of a fragment's text that defines a voice, if any. */
-const lineOf = (text: string, voice: string) => text.split('\n').find((l) => l.startsWith(`&${voice} `));
+/** The line of a fragment's text that defines a voice, if any (its signature aside: `&bassV from (&style)` defines none). */
+const lineOf = (text: string, voice: string) =>
+  bodyOf(text)
+    .split('\n')
+    .find((l) => l.startsWith(`&${voice} `));
 
 /**
  * The instrument each pitched performer plays at a style's point, where it isn't the performer's own: the first that

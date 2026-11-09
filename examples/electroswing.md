@@ -15,9 +15,9 @@ The piece writes only what is its own: the tempo and the swing, the key's tonic,
 &bassline from walking_bass &harm
 &kick, &clap, &hats, &ticks from electro_swing_drums
 &stabline from charleston_stabs &harm
-&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline
-&stab, &stabOut from stab_performer(stabLevel=&stabLevel) &stabline
-&leadOut from lead_performer(leadLevel=&leadLevel) &leadline
+&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV) &bassline
+&stab, &stabOut from stab_performer(stabLevel=&stabLevel, keysV=&keysV) &stabline
+&leadOut from lead_performer(leadLevel=&leadLevel, leadV=&leadV) &leadline
 &useNote label="The band is the library's: each line names what it takes from it. &bassV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own; the drummer plays the core kit as it is." about=(&bassV &keysV &leadV)
 ```
 
@@ -113,8 +113,8 @@ In giving the bass its sound the piece gives it its register too, which is the i
 
 ```cells
 &bassV s=saw loop=C3 lpf=700 env=&(map=adsr .005 .3 .25 .08)
-&keysV s=saw loop=C3 lpf=1800 env=&(map=adsr .01 .12 .25 .1)
-&leadV s=square loop=C4 lpf=2400 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=5.5 0 .12 0 -.12 0)
+&keysV from brass_stab
+&leadV from clarinet
 &trumpetV s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .03 .1 .6 .12) pitch=&(map=lin loop=4.5 0 .08 0 -.08 0)
 &vinyl s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
 

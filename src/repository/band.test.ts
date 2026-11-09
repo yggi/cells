@@ -8,6 +8,7 @@ import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { bandAt, CENTRE, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from './band';
+import { bodyOf } from '../engine/use';
 import { BAND_FRAGMENTS } from './bands';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { resolveSeed } from './library';
@@ -173,8 +174,10 @@ describe('which instrument a performer plays at a style: the band’s choice, at
         text.split('\n').filter((l) => l.startsWith(`&${voice} `)),
         part,
       ).toHaveLength(line ? 1 : 0);
-      const own_ = lineOf(INSTRUMENT_FRAGMENTS.find((f) => f.id === own)!.text, voice)!;
-      if (line) expect(/loop=(\S+)/.exec(line)![1], part).toBe(/loop=(\S+)/.exec(own_)![1]);
+      // (the band's own line takes its instrument, `&bassV from bass(style=&style)`: the register is the instrument's)
+      const own_ = lineOf(bodyOf(INSTRUMENT_FRAGMENTS.find((f) => f.id === own)!.text), voice)!;
+      if (instrument) expect(/loop=(\S+)/.exec(line!)![1], part).toBe(/loop=(\S+)/.exec(own_)![1]);
+      else expect(line, part).toBe(`&${voice} from ${own}(style=&style)`);
     }
   });
 

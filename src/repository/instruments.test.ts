@@ -9,7 +9,7 @@ import { planOf } from '../engine/host';
 import { codeShifts } from '../engine/program';
 import { pieceAudio } from '../engine/audioexport';
 import { channelTable, GM_KIT, gmDrumNote, midiNote, router, routesOf } from '../engine/midi';
-import { expand } from '../engine/use';
+import { bodyOf, expand, signatureOf } from '../engine/use';
 import { windowAt } from '../engine/schedule';
 import { fitsAs } from './fit';
 import type { Resolve } from '../engine/program';
@@ -162,12 +162,17 @@ describe('the instrument fragments', () => {
     for (const [name, line] of core) expect(line, name).toBe(gm.get(name));
   });
 
-  it.each(INSTRUMENT_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s compiles with no diagnostic, uses no name, and every line is a voice', (_, text) => {
-    const r = compileSource(text);
-    expect(r.diagnostics).toEqual([]);
-    expect(holesOf(text, compileSource).uses).toEqual([]);
-    for (const name of linesOf(text).keys()) expect(r.cells.get(name)?.voice, name).toBeTruthy();
-  });
+  it.each(INSTRUMENT_FRAGMENTS.map((f) => [f.id, f.text] as const))(
+    '%s compiles with no diagnostic, uses no name, and every line is a voice, but a parameter’s default',
+    (_, text) => {
+      const r = compileSource(text);
+      expect(r.diagnostics).toEqual([]);
+      expect(holesOf(text, compileSource).uses).toEqual([]);
+      // (an instrument that reads the section's style declares it, its default the centre: #560 rung 3c–e)
+      const declared = new Set(signatureOf(text)?.optional.map((n) => n.slice(1)) ?? []);
+      for (const name of linesOf(text).keys()) if (!declared.has(name)) expect(r.cells.get(name)?.voice, name).toBeTruthy();
+    },
+  );
 
   it.each(INSTRUMENT_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s fits any workbench: an empty one, a meter, a groove', (_, text) => {
     for (const bench of ['', hosted(), hosted(RHYTHM_FRAGMENTS[0]!.text)]) expect(takenOn(text, bench).fits, bench.slice(0, 40)).toBe(true);
@@ -249,14 +254,16 @@ describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit
 // part at (yggi/jambot packages/score/src/section-text.ts @ 24a528b: PIN_VOICES, the comp at C3, the lead at C4).
 describe('the keys, the pad and the lead', () => {
   it('each define one voice at its register, with a sound of its own (#391), use nothing and compile clean', () => {
-    expect(['bass', 'keys', 'pad', 'lead'].map((id) => /^&\w+ s=(\S+)(?: \* \S+)? loop=(\w+)/.exec(byId(id).text)!.slice(1))).toEqual([
+    expect(['bass', 'keys', 'pad', 'lead'].map((id) => /^&\w+ s=(\S+)(?: \* \S+)? loop=(\w+)/.exec(bodyOf(byId(id).text))!.slice(1))).toEqual([
       ['saw', 'C2'],
       ['tri', 'C3'],
       ['tri', 'C3'],
       // (from a soft triangle to a bright square as the articulation rises: #411)
       ['tri..square', 'C4'],
     ]);
-    for (const id of ['bass', 'keys', 'pad', 'lead']) expect(byId(id).text.split('\n'), id).toHaveLength(1);
+    // (its voice, and the style it reads, declared: `&bassV from (&style)`, its default the centre)
+    for (const id of ['bass', 'keys', 'pad', 'lead'])
+      expect(byId(id).text.split('\n'), id).toEqual([expect.stringMatching(/^&\w+V from \(&style\)$/), expect.stringMatching(/^&\w+V s=/), '&style map=style .5 .5 .5 .5']);
     for (const id of ['bass', 'keys', 'pad', 'lead']) expect(compileSource(byId(id).text).diagnostics, id).toEqual([]);
   });
 
