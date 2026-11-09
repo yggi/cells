@@ -55,6 +55,7 @@ const EXPECTED: Record<string, readonly string[]> = {
   tiptoe_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'bend &bassline 2'],
   acid_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'reverse &bassline', ...ENDS(15)],
   octave_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'invert &bassline', ...ENDS(7)],
+  drone_bass: [],
 };
 /** Each seed's line: its tap and its lap in steps, and its anchored steps (the root on the downbeat, where each chord changes). */
 const LINE: Record<string, { tap: string; steps: number; anchored: readonly number[] }> = {
@@ -67,6 +68,7 @@ const LINE: Record<string, { tap: string; steps: number; anchored: readonly numb
   tiptoe_bass: { tap: '4n', steps: 4, anchored: [0] },
   acid_bass: { tap: '16n', steps: 16, anchored: [0] },
   octave_bass: { tap: '8n', steps: 8, anchored: [0] },
+  drone_bass: { tap: '1m', steps: 1, anchored: [0] },
 };
 
 /** What a text sends on channel 2 over `bars` bars of 4/4 at 120 bpm: each note's sixteenth from the start, and its MIDI note. */
@@ -190,7 +192,7 @@ for (const name of Object.keys(PROGRESSIONS)) {
 describe('the pitched operators', () => {
   const options = OPTIONS('I–vi–IV–V');
 
-  it('are 42 of the 54 on the nine seeds, the 12 left out each playing its source’s notes, none to vary or another’s; and 31 bends and trims', () => {
+  it('are 42 of the 60 on the ten seeds, the 18 left out each playing its source’s notes, none to vary or another’s; and 31 bends and trims', () => {
     const all = SEEDS.flatMap(({ fragment }) => variations(fragment, options));
     expect(all.filter((v) => v.rule !== 'bend' && v.rule !== 'trim')).toHaveLength(42);
     expect(all.filter((v) => v.rule === 'bend' || v.rule === 'trim')).toHaveLength(31);
@@ -213,6 +215,9 @@ describe('the pitched operators', () => {
       // (#572's two: the operators leave these out, each playing its source's notes, as above)
       'acid_bass: invert &bassline',
       'octave_bass: reverse &bassline',
+      // (and the drone bass, one root held a bar: no variation at all)
+      'drone_bass: invert &bassline',
+      'drone_bass: reverse &bassline',
     ]);
   });
 

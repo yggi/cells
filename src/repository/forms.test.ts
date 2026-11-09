@@ -104,6 +104,7 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   raveHook: { point: stylePoint('happyHardcore') },
   sequencer: { point: stylePoint('elektro') },
   melodie: { point: { ...stylePoint('elektro'), bite: 0.75 } },
+  ghostPhrase: { point: stylePoint('darkAmbient') },
 };
 /** The centre of style space, where a form for any style sits. */
 const CENTRE = heldForm(0.5, 0.5, 0.5, 0.5);
@@ -157,7 +158,7 @@ const piece = (form: string, motif: string) => {
 const moved = (braid: string, n: number) => braid.replace(/(^|\s)(-?\d+)/g, (_, space: string, d: string) => `${space}${Number(d) + n}`);
 
 describe('the motifs', () => {
-  it('are forty-nine, each a line over the key named for its fragment, at its point as the facet motif', () => {
+  it('are fifty, each a line over the key named for its fragment, at its point as the facet motif', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
       expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));

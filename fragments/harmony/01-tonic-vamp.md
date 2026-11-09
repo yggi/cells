@@ -22,6 +22,13 @@ association:
       mood: 0.35
     weight: 0.4
     facet: harmony
+  - point:
+      sync: 0.35
+      harm: 0.15
+      bite: 0.4
+      mood: 0.1
+    weight: 0.4
+    facet: harmony
 source: seed
 lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
@@ -42,4 +49,4 @@ At the points where `buildTheme` plays it: aeolian at Techno's point; dorian at 
 
 **Its signature** (decision 065): `&harm from &key`. `&harm from tonic_vamp &key` takes a copy of it, `&key` its main argument.
 
-Also at Acid's point (sync .45, harm .05, bite .85, mood .35), weight 0.4: Acid holds one chord, and at weight 1 the vamp would be Synth-pop's first harmony, 0.272 away (#572).
+Also at Acid's point (sync .45, harm .05, bite .85, mood .35), weight 0.4: Acid holds one chord, and at weight 1 the vamp would be Synth-pop's first harmony, 0.272 away (#572). Likewise at Dark ambient's (sync .35, harm .15, bite .4, mood .1), weight 0.4: its drone holds one chord.

@@ -54,6 +54,8 @@ const AT_PRESET: Record<string, StylePoint> = {
   tb303: stylePoint('acid'),
   rave_lead: stylePoint('happyHardcore'),
   square_bass: stylePoint('elektro'),
+  prepared_piano: stylePoint('darkAmbient'),
+  drone_pad: stylePoint('darkAmbient'),
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
@@ -148,7 +150,7 @@ describe('the instrument fragments', () => {
         f.association.map((wp) => [wp.point, wp.facet]),
         f.id,
       ).toEqual([[AT_PRESET[f.id] ?? CENTRE, 'instrument']]);
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25, ...Array<number>(11).fill(0.125), 0.0625, 0.125, 0.125]);
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25, ...Array<number>(11).fill(0.125), 0.0625, 0.125, 0.125, 0.125, 0.125]);
   });
 
   it('a query finds the kit and the defaults first at the eight presets, and at Electro swing and Spooky their own (#350)', () => {

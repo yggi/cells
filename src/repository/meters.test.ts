@@ -129,7 +129,9 @@ describe('the presets find their meters', () => {
     { name: 'Spooky, less bite', point: { ...SPOOKY, bite: SPOOKY.bite! - 0.08 }, names: 'meter(grouping=meter("6/8"))' },
     { name: 'Spooky, more bite', point: { ...SPOOKY, bite: SPOOKY.bite! + 0.08 }, names: 'meter(grouping=meter("3/4"))' },
   ];
-  const presets = createRepository([...PRESETS, ...proposed].map((p) => ({ id: p.name, text: p.names, association: [{ point: onMeterAxes(p.point), weight: 1 }] })));
+  const presets = createRepository(
+    [...PRESETS, ...proposed].map((p) => ({ id: p.name, text: p.names, association: [{ point: onMeterAxes(p.point), weight: p.name.startsWith('Spooky, ') ? 0.5 : 1 }] })),
+  );
   const nearestMeters = (point: StylePoint) => {
     const found = presets.query(point, PRESETS.length + proposed.length);
     return new Set(found.filter((f) => f.distance - found[0]!.distance < 1e-12).map((f) => f.fragment.text));
@@ -138,18 +140,12 @@ describe('the presets find their meters', () => {
   const halfwayOf = (a: (typeof PRESETS)[number], b: (typeof PRESETS)[number]) =>
     Object.fromEntries(Object.keys(a.point).map((axis) => [axis, (a.point[axis]! + b.point[axis]!) / 2]));
   it('every pair of presets is a pair (28)', () => expect(pairs).toHaveLength(28));
-  // (on decision 076's axes a meter has three, sync harm bite, and between these eight pairs a meter placed for its own
-  // sake, #369, lies nearer than either preset's: named on #572, the library's to even out, #540)
+  // (the meters placed for their own sake weigh 0.5 since #572, so between presets each finds a preset's meter; but
+  // between these two pairs the plain 4/4, placed at the styles read from the examples (Happy hardcore's, Elektro's), lies
+  // nearer than Deep house's and Funk's swung one: named on #572, #542)
   const between: Readonly<Record<string, string>> = {
-    'Synth-pop|Ambient': 'meter(grouping=meter("6/8"))',
-    // (the plain 4/4 at the styles read from the examples, #572: Happy hardcore's and Elektro's lie nearer here)
     'Synth-pop|Funk': 'meter',
     'Deep house|Funk': 'meter',
-    'Deep house|Swing jazz': 'meter(grouping=meter("5/4"))',
-    'Ambient|Lo-fi hip hop': 'meter(grouping=meter("6/8"))',
-    'Ambient|Funk': 'meter(grouping=meter("6/8"))',
-    'Ambient|Swing jazz': 'meter(grouping=meter("3/4"))',
-    'Funk|Bossa nova': 'meter(grouping=meter("7/8"))',
   };
   it.each(pairs.map(([a, b]) => [a.name, b.name, a, b] as const))('halfway between %s and %s: the meter of the preset nearest there', (_, __, a, b) => {
     const halfway = halfwayOf(a, b);
@@ -172,14 +168,14 @@ describe('the points proposed for two more presets (#349)', () => {
     expect(ranked(ELECTRO_SWING, 1)).toEqual([['meter(swing=8n:2/3)', 0]]);
   });
 
-  // (0.08 off on bite alone, their energy offset since #572, which the repository's distance over a meter's three axes counts as 0.08/√3)
-  it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.08 off in bite, for the ladder to fetch', () => {
+  // (0.08 off in bite over a meter's three axes, 0.08/√3, at weight 0.5 since #572: 0.08/√3/0.5)
+  it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.08 off in bite and weighted 0.5, for the ladder to fetch', () => {
     // (the two tie: either first)
     const found = ranked(SPOOKY, 3);
     expect(found[0]).toEqual(['meter(grouping=meter("5/4"))', 0]);
     expect(found.slice(1).sort()).toEqual([
-      ['meter(grouping=meter("3/4"))', +(0.08 / Math.sqrt(3)).toFixed(9)],
-      ['meter(grouping=meter("6/8"))', +(0.08 / Math.sqrt(3)).toFixed(9)],
+      ['meter(grouping=meter("3/4"))', +(0.08 / Math.sqrt(3) / 0.5).toFixed(9)],
+      ['meter(grouping=meter("6/8"))', +(0.08 / Math.sqrt(3) / 0.5).toFixed(9)],
     ]);
   });
 });

@@ -169,7 +169,7 @@ describe('the harmonies', () => {
     expect(near).toHaveLength(VAMPS[mode as Mode].length);
   });
 
-  it("sit at those points only: Techno's and Funk's exactly, Ambient's with its harmony at 0.12; mixolydian adds none; the vamp to the fifth at Kinderlied's too, at weight 0.5, and the tonic vamp at Acid's", () => {
+  it("sit at those points only: Techno's and Funk's exactly, Ambient's with its harmony at 0.12; mixolydian adds none; the vamp to the fifth at Kinderlied's too, at weight 0.5, and the tonic vamp at Acid's and Dark ambient's, at weight 0.4", () => {
     for (const f of VAMP_FRAGMENTS) {
       const modes = MODES.filter((mode) => POINT[mode] && VAMPS[mode].some((chords) => byDegrees(chords) === f));
       const atModes = modes.map((mode) => ({ point: POINT[mode], weight: 1, facet: 'harmony' }));
@@ -178,7 +178,7 @@ describe('the harmonies', () => {
         f.id === 'vamp_to_the_fifth'
           ? [{ point: KINDERLIED, weight: 0.5, facet: 'harmony' }]
           : f.id === 'tonic_vamp'
-            ? [{ point: stylePoint('acid'), weight: 0.4, facet: 'harmony' }]
+            ? [stylePoint('acid'), stylePoint('darkAmbient')].map((point) => ({ point, weight: 0.4, facet: 'harmony' }))
             : [];
       expect(f.association, f.id).toEqual([...atModes, ...also]);
     }

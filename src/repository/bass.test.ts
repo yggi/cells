@@ -240,7 +240,7 @@ function expected(pattern: Pattern, chords: readonly (readonly number[])[]): [nu
 
 describe('the bass lines', () => {
   it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most, and the Spooky basses written by hand', () => {
-    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping_bass', 'tiptoe_bass', 'acid_bass', 'octave_bass']);
+    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping_bass', 'tiptoe_bass', 'acid_bass', 'octave_bass', 'drone_bass']);
     for (const p of PATTERNS) {
       const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
       expect(byId(ID[p]).association, p).toEqual(
@@ -252,6 +252,7 @@ describe('the bass lines', () => {
     // (and the three read from the examples, each at its style, #572)
     expect(byId('acid_bass').association).toEqual([{ point: stylePoint('acid'), weight: 1, facet: 'bass' }]);
     expect(byId('octave_bass').association).toEqual([{ point: stylePoint('elektro'), weight: 1, facet: 'bass' }]);
+    expect(byId('drone_bass').association).toEqual([{ point: stylePoint('darkAmbient'), weight: 1, facet: 'bass' }]);
   });
 
   it('Jambot’s presets, on the axes bass.ts reads, are the library’s styles moved by decision 076’s rule', () => {
@@ -332,6 +333,7 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
       36, 36, 48, 36, 36, 43, 36, 46, 36, 48, 36, 39, 41, 43, 45, 45, 57, 45, 45, 52, 45, 55, 45, 57, 45, 48, 50, 52, 41, 41, 53, 41, 41, 48, 41, 51, 41, 53, 41, 44, 46, 48, 43,
       43, 55, 43, 43, 50, 43, 53, 43, 55, 43, 46, 48, 50,
     ],
+    drone_bass: [36, 45, 41, 43],
     octave_bass: [36, 48, 36, 48, 36, 48, 36, 48, 45, 57, 45, 57, 45, 57, 45, 57, 41, 53, 41, 53, 41, 53, 41, 53, 43, 55, 43, 55, 43, 55, 43, 55],
   },
   D: {
@@ -346,6 +348,7 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
       38, 38, 50, 38, 38, 45, 38, 48, 38, 50, 38, 41, 43, 45, 47, 47, 59, 47, 47, 54, 47, 57, 47, 59, 47, 50, 52, 54, 43, 43, 55, 43, 43, 50, 43, 53, 43, 55, 43, 46, 48, 50, 45,
       45, 57, 45, 45, 52, 45, 55, 45, 57, 45, 48, 50, 52,
     ],
+    drone_bass: [38, 47, 43, 45],
     octave_bass: [38, 50, 38, 50, 38, 50, 38, 50, 47, 59, 47, 59, 47, 59, 47, 59, 43, 55, 43, 55, 43, 55, 43, 55, 45, 57, 45, 57, 45, 57, 45, 57],
   },
 };

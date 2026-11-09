@@ -185,6 +185,7 @@ const FITS: Record<string, readonly string[]> = {
   acid_drums: METER_FRAGMENTS.map((m) => m.id),
   happy_hardcore_drums: METER_FRAGMENTS.map((m) => m.id),
   elektro_drums: METER_FRAGMENTS.map((m) => m.id),
+  industrial_drums: FOUR_FOURS,
 };
 
 describe('every rhythm against every meter of the library', () => {

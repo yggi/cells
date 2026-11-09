@@ -16,6 +16,7 @@ import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI
 const ACID = stylePoint('acid');
 const HAPPY_HARDCORE = stylePoint('happyHardcore');
 const ELEKTRO = stylePoint('elektro');
+const DARK_AMBIENT = stylePoint('darkAmbient');
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { fragmentsOf, SEED } from './seed';
 import { SEED_FILES } from './seed.generated';
@@ -60,8 +61,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are a hundred and thirty-six (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the sixteen read from the examples for Spooky, Kinderlied, Acid, Happy hardcore and Elektro, #572)', () =>
-    expect(files).toHaveLength(136));
+  it('are a hundred and forty-one (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572)', () =>
+    expect(files).toHaveLength(141));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -90,7 +91,7 @@ describe('the seed files', () => {
   it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       // (and Kinderlied's 4/4 and the three read from the examples', #572)
-      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO],
+      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT],
       'meter(swing=8n:2/3)': [SWING_JAZZ, ELECTRO_SWING],
       // (its own point, placed on the old axes at sync .4 harm .9 artic .5 energy .3, moved by decision 076's rule, #572)
       'meter(grouping=meter("5/4"))': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
@@ -116,8 +117,10 @@ describe('the seed files', () => {
       elektro_drums: [ELEKTRO],
       acid_bass: [ACID],
       octave_bass: [ELEKTRO],
+      drone_bass: [DARK_AMBIENT],
+      industrial_drums: [DARK_AMBIENT],
       harmonic_minor: [ELECTRO_SWING, SPOOKY],
-      'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO],
+      'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT],
       'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK],
       'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED],
       upright_bass: [ELECTRO_SWING],
@@ -133,6 +136,8 @@ describe('the seed files', () => {
       tb303: [ACID],
       rave_lead: [HAPPY_HARDCORE],
       square_bass: [ELEKTRO],
+      prepared_piano: [DARK_AMBIENT],
+      drone_pad: [DARK_AMBIENT],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
     const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED], pumping_bass: [TECHNO, HAPPY_HARDCORE] };
@@ -175,7 +180,7 @@ describe('the seed files', () => {
           ...HARMONY_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic_minor'),
-          ...MOTIF_FRAGMENTS.filter((f) => ['gypsy', 'raveHook', 'sequencer', 'melodie'].includes(f.id)),
+          ...MOTIF_FRAGMENTS.filter((f) => ['gypsy', 'raveHook', 'sequencer', 'melodie', 'ghostPhrase'].includes(f.id)),
           ...INSTRUMENT_FRAGMENTS.filter((f) => !['gm_kit', 'bass', 'keys', 'pad', 'lead'].includes(f.id) && !WRITTEN.has(f.id)),
         ].map((f) => f.id),
       ),
@@ -195,6 +200,7 @@ describe('the seed files', () => {
         'yggi/cells examples/acid.md @ 014c4c73',
         'yggi/cells examples/hypercell.md @ 014c4c73',
         'yggi/cells examples/zell.md @ 014c4c73',
+        'yggi/cells examples/ghosts.md @ a8de625f',
       ]),
     );
   });

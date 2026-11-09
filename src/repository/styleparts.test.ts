@@ -4,7 +4,7 @@ import { createRepository } from './fragments';
 import { LIBRARY } from './library';
 import { stylePoint } from './styles';
 
-// A style is playable where the composer finds its parts (#542): for the five styles whose pieces the library was cut
+// A style is playable where the composer finds its parts (#542): for the six styles whose pieces the library was cut
 // from (#572), each facet its piece supplies finds that piece's own part first, at the style's point, at distance 0.
 const repo = createRepository(LIBRARY);
 
@@ -40,6 +40,15 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     stab: 'rave_stabs',
     motif: 'raveHook',
     instrument: 'rave_lead',
+  },
+  darkAmbient: {
+    meter: 'meter',
+    rhythm: 'industrial_drums',
+    bass: 'drone_bass',
+    harmony: 'tonic_vamp',
+    mode: 'diatonic(mode=aeolian)',
+    motif: 'ghostPhrase',
+    instrument: ['drone_pad', 'prepared_piano'],
   },
   elektro: {
     meter: 'meter',

@@ -101,7 +101,7 @@ const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
 const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(wordOf(`${w.preset} drums`)) }));
 
 describe('the rhythm fragments', () => {
-  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, and the three read from the examples (#572), every point associated as the facet rhythm', () => {
+  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, and the four read from the examples (#572), every point associated as the facet rhythm', () => {
     expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([
       ...Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)),
       ...Object.keys(CLAVES),
@@ -241,6 +241,7 @@ const READ: Record<string, string[]> = {
   acid_drums: ['&bd', '&cp', '&hh', '&oh'],
   happy_hardcore_drums: ['&bd', '&cp', '&hh'],
   elektro_drums: ['&bd', '&hh', '&sd'],
+  industrial_drums: ['&bd', '&hh'],
 };
 
 describe('the rhythms’ holes (decision 054, rung 2)', () => {

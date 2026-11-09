@@ -51,6 +51,7 @@ const PRESETS = {
   acid: stylePoint('acid'),
   happyHardcore: stylePoint('happyHardcore'),
   elektro: stylePoint('elektro'),
+  darkAmbient: stylePoint('darkAmbient'),
 };
 const styles = STYLE_FRAGMENTS.find((f) => f.id === 'styles')!;
 const named = (name: string) => `&${name} from styles\n&style style=&${name}`;
@@ -113,6 +114,7 @@ describe('STYLES, the presets a frontend takes', () => {
       ['Acid', 126],
       ['Happy hardcore', 160],
       ['Elektro', 112],
+      ['Dark ambient', 76],
     ]);
   });
 
@@ -124,7 +126,7 @@ describe('STYLES, the presets a frontend takes', () => {
 
   it('find a style by its id, and say which there are for one they lack', () => {
     expect(stylePoint('funk')).toBe(FUNK);
-    expect(() => stylePoint('polka')).toThrow(/no style polka \(there are synthPop, techno, .*kinderlied, acid, happyHardcore, elektro\)/);
+    expect(() => stylePoint('polka')).toThrow(/no style polka \(there are synthPop, techno, .*kinderlied, acid, happyHardcore, elektro, darkAmbient\)/);
   });
 
   it('are written once: no source file restates a preset’s point as numbers', () => {
@@ -144,7 +146,7 @@ describe('nearestStyle, the styles nearest a point', () => {
     for (const s of STYLES) expect(nearestStyle(s.point, { k: 1 }), s.id).toEqual([{ style: s, distance: 0 }]);
   });
 
-  it('ranks every style by pointDistance, nearest first: over all 91 pairs, each the other’s distance', () => {
+  it('ranks every style by pointDistance, nearest first: over all 105 pairs, each the other’s distance', () => {
     for (const a of STYLES) {
       const ranked = nearestStyle(a.point);
       expect(ranked.map((n) => n.style.id).sort(), a.id).toEqual(STYLES.map((s) => s.id).sort());
@@ -154,14 +156,14 @@ describe('nearestStyle, the styles nearest a point', () => {
       ).toEqual([...ranked.map((n) => n.distance)].sort((x, y) => x - y));
       for (const { style, distance } of ranked) expect(distance, `${a.id}→${style.id}`).toBe(pointDistance(a.point, style.point));
     }
-    // (91 distinct pairs of the fourteen, each measured the same both ways)
+    // (105 distinct pairs of the fifteen, each measured the same both ways)
     let pairs = 0;
     for (const [i, a] of STYLES.entries())
       for (const b of STYLES.slice(i + 1)) {
         pairs++;
         expect(pointDistance(a.point, b.point), `${a.id}–${b.id}`).toBe(pointDistance(b.point, a.point));
       }
-    expect(pairs).toBe(91);
+    expect(pairs).toBe(105);
   });
 
   it('takes k, axis weights, and a frontend’s own styles with an axis added', () => {
