@@ -42,6 +42,12 @@ export interface Hosted {
     readonly why?: string;
 }
 /**
+ * What a fragment gives, read off its structure and never off a name (decision 075): a template's heads, its
+ * signature's; a collection's, the cells nothing else in it reads (a groove's mix, a kit's drums). Bare names, in the
+ * order written. No compile.
+ */
+export declare function headsOf(text: string): string[];
+/**
  * A text in its host (see the module's comment): what `audition` gives and `coreFragment` cores. `heads`: the heads to
  * play, by default the signature's, else the cells nothing reads.
  */

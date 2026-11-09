@@ -13,7 +13,7 @@ import { windowAt } from '../schedule';
 import { fitsAs } from '../../repository/fit';
 import { holesOf } from '../../repository/holes';
 import { BASS_FRAGMENTS } from '../../repository/bass';
-import { heard } from '../../repository/heard';
+import { bassCards } from '../../repository/benches';
 import { INSTRUMENT_FRAGMENTS } from '../../repository/instruments';
 import { MOTIF_FRAGMENTS } from '../../repository/motifs';
 import { anchorsOf, PITCHED_OPERATORS, readVariations, variations, varied } from '.';
@@ -74,7 +74,7 @@ const LINE: Record<string, { tap: string; steps: number; anchored: readonly numb
 /** What a text sends on channel 2 over `bars` bars of 4/4 at 120 bpm: each note's sixteenth from the start, and its MIDI note. */
 function played(text: string, bars: number): Map<number, number[]> {
   // (a seed has no card: the one a bass line is heard through, where the text has none of its own, #291)
-  const plan = planOf(/map=midi/.test(text) ? text : `${text}\n${heard(text)}`);
+  const plan = planOf(/map=midi/.test(text) ? text : `${text}\n${bassCards(text)}`);
   const sixteenth = 60 / 120 / 4;
   const route = router(plan.result, channelTable(plan.result));
   const out = new Map<number, number[]>();
@@ -102,7 +102,7 @@ for (const name of Object.keys(PROGRESSIONS)) {
       const { tap, steps, anchored } = LINE[id]!;
       const all = variations(fragment, options);
       // (played on its workbench with the card that hears it: the seeds carry none, #291)
-      const bench = `${options.workbench}\n${heard(fragment)}`;
+      const bench = `${options.workbench}\n${bassCards(fragment)}`;
       const source = unionOf(fragment, bench).text;
       const before = played(source, bars);
       const sixteenths = 16 / steps;

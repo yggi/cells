@@ -17,7 +17,7 @@ import { METER_FRAGMENTS } from '../repository/meters';
 import { RHYTHM_FRAGMENTS } from '../repository/rhythms';
 import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 import { fitsAs } from '../repository/fit';
-import { heard } from '../repository/heard';
+import { drumCard } from '../repository/benches';
 import { holesOf } from '../repository/holes';
 
 const seed = { resolve: resolveSeed };
@@ -293,7 +293,7 @@ describe('the rhythms with the General MIDI kit (S1)', () => {
     it(`${rhythm.id}, on a meter it fits, sounds identical to the same text written out`, () => {
       const meter = METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(rhythm.text, m).fits)!;
       // (heard through a card: the rhythms carry none, #291)
-      const piece = `* from gm_kit\n${meter}\n${strip(rhythm.text)}\n${heard(rhythm.text)}`;
+      const piece = `* from gm_kit\n${meter}\n${strip(rhythm.text)}\n${drumCard(rhythm.text)}`;
       const r = compileSource(piece, undefined, seed);
       expect(r.diagnostics, meter).toEqual([]);
       expect(r.uses?.[0]?.overrode).toEqual([]);

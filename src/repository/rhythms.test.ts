@@ -16,7 +16,7 @@ import { createRepository, type StylePoint } from './fragments';
 import { fitsAs } from './fit';
 import { expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
-import { heard } from './heard';
+import { drumCard } from './benches';
 import { holesOf } from './holes';
 import { resolveSeed } from './library';
 import { METER_FRAGMENTS } from './meters';
@@ -50,7 +50,8 @@ const coreKit = expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, 
 
 /** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments, and a card that hears them (#291). */
 const hosted = (meter: string, bpm: number, ...fragments: string[]) => {
-  const card = heard(fragments.join('\n'));
+  // (the parts on the card: the kit is what they strike, not a part)
+  const card = drumCard(...fragments.filter((f) => f !== coreKit));
   return [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...fragments, ...(card ? [card] : [])].join('\n');
 };
 

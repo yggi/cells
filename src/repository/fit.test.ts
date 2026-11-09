@@ -12,7 +12,8 @@ import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { cachedCompile, fitsAs } from './fit';
 import { createRepository } from './fragments';
-import { heard } from './heard';
+import { headsOf } from './audition';
+import { drumCard } from './benches';
 import { LIBRARY, resolveSeed } from './library';
 import { expand } from '../engine/use';
 import { METER_FRAGMENTS } from './meters';
@@ -279,7 +280,10 @@ describe('two drum bars on one workbench', () => {
     expect([...u.renamed.keys()].sort()).toEqual(collide.sort());
     expect(new Set(names(u.text)).size).toBe(names(u.text).length);
     // (each bar plays E31's hits, at the workbench's tempo, as it does alone)
-    const { hits, diagnostics } = played(`${u.text}\n${KIT}\n${heard(u.text)}`, a.bpm);
+    const { hits, diagnostics } = played(
+      `${u.text}\n${KIT}\n${drumCard([...headsOf(a.text), ...headsOf(b.text).map((h) => (u.renamed.get(`&${h}`) ?? `&${h}`).slice(1))])}`,
+      a.bpm,
+    );
     expect(diagnostics).toEqual([]);
     const want = sorted([...a.hits, ...b.hits]);
     expect(hits).toHaveLength(want.length);
@@ -289,8 +293,8 @@ describe('two drum bars on one workbench', () => {
   it('E31’s 144 hits, each bar’s checked in every pair it is in: 144 × 14 = 2016 of 2016', () => {
     let matched = 0;
     for (const [, , a, b] of pairs) {
-      const union = unionOf(b.text, bench('meter', a.bpm, a.text)).text;
-      const { hits } = played(`${union}\n${KIT}\n${heard(union)}`, a.bpm);
+      const union = unionOf(b.text, bench('meter', a.bpm, a.text));
+      const { hits } = played(`${union.text}\n${KIT}\n${drumCard([...headsOf(a.text), ...headsOf(b.text).map((h) => (union.renamed.get(`&${h}`) ?? `&${h}`).slice(1))])}`, a.bpm);
       const left = [...hits];
       for (const h of [...a.hits, ...b.hits]) {
         const i = left.findIndex((p) => sameHit(p, h));

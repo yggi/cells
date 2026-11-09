@@ -79,12 +79,22 @@ export interface Hosted {
   readonly why?: string;
 }
 
-/** The cells a text declares that nothing else in it reads: a collection's heads. */
+/** The cells a text declares that nothing else in it reads. */
 function roots(text: string): string[] {
   const names = parse(text)
     .cells.filter((d) => !d.lambda)
     .map((d) => d.name);
   return names.filter((n) => !text.split('\n').some((l) => !new RegExp(`^\\s*&${n}(?![A-Za-z0-9_])`).test(l) && new RegExp(`&${n}(?![A-Za-z0-9_])`).test(l)));
+}
+
+/**
+ * What a fragment gives, read off its structure and never off a name (decision 075): a template's heads, its
+ * signature's; a collection's, the cells nothing else in it reads (a groove's mix, a kit's drums). Bare names, in the
+ * order written. No compile.
+ */
+export function headsOf(text: string): string[] {
+  const sig = signatureOf(text);
+  return sig ? sig.names.map((n) => n.replace(/^&/, '')) : roots(text);
 }
 
 /**
@@ -96,7 +106,7 @@ export function hosted(given: string, standIns: StandIns, options: CoreOptions =
   const compiled = (t: string) => compileSource(t, undefined, options);
   const holes = holesOf(text, compiled, options.resolve);
   const sig = signatureOf(text);
-  const playing = heads ?? (sig ? sig.names.map((n) => n.replace(/^&/, '')) : roots(text));
+  const playing = heads ?? headsOf(text);
   const lines: { line: string; fills: string | null }[] = [];
   // (the sounds the kit defines, taken from it by name; the rest stood in)
   const kitText = standIns.kit ? options.resolve?.(standIns.kit) : null;

@@ -45,12 +45,16 @@ function roots(text) {
         .map((d) => d.name);
     return names.filter((n) => !text.split('\n').some((l) => !new RegExp(`^\\s*&${n}(?![A-Za-z0-9_])`).test(l) && new RegExp(`&${n}(?![A-Za-z0-9_])`).test(l)));
 }
+export function headsOf(text) {
+    const sig = signatureOf(text);
+    return sig ? sig.names.map((n) => n.replace(/^&/, '')) : roots(text);
+}
 export function hosted(given, standIns, options = {}, heads) {
     let text = given;
     const compiled = (t) => compileSource(t, undefined, options);
     const holes = holesOf(text, compiled, options.resolve);
     const sig = signatureOf(text);
-    const playing = heads ?? (sig ? sig.names.map((n) => n.replace(/^&/, '')) : roots(text));
+    const playing = heads ?? headsOf(text);
     const lines = [];
     const kitText = standIns.kit ? options.resolve?.(standIns.kit) : null;
     const kitNames = kitText ? new Set(parse(kitText).cells.map((d) => `&${d.name}`)) : new Set();
