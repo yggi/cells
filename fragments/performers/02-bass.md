@@ -61,11 +61,12 @@ source: seed
 ---
 
 ```cells
-&bass, &bassOut from (&bassLevel) &bassline
-&bassV from bass
+&bass, &bassOut from (&bassLevel, &bassV, &style) &bassline
+&bassV from bass(style=&style)
 &bassOut play=&bassline^$-12 level=&bassLevel &bassV
 &bass map=role &bassOut
 &bassLevel map=amp .8
+&style map=style .5 .5 .5 .5
 ```
 
 The bass player (decisions 058 and 061): a gate, `&bassOut` (Jambot's section text's name for it), whose role is `bass` (`&bass map=role &bassOut`), playing the part `&bassline` on the `bass` instrument an octave down.
@@ -74,4 +75,5 @@ Its two inputs are the score's (decision 065: the line its main parameter, the l
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`styles`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
 
-**Its signature** (decision 065): `&bass, &bassOut from (&bassLevel) &bassline`. `&bass from bass_performer &line` takes a copy of it, `&bassline` its main argument; `&bassLevel` an optional parameter, its line its default (`"bass_performer"(bassLevel=…)`).
+**Its signature** (decision 065): `&bass, &bassOut from (&bassLevel, &bassV, &style) &bassline`. `&bass from bass_performer &line` takes a copy of it, `&bassline` its main argument; `&bassLevel` an optional parameter, its line its default (`"bass_performer"(bassLevel=…)`).
+Its instrument and the style it plays at are optional parameters too (decision 075, #560): `&bassV` its default `&bassV from bass(style=&style)`, the `bass` instrument, and `&style` the centre of style space. A piece passes its own (`bass_performer(bassV=&bassV, style=&style)`), where it took them by their names before; Migrate writes it.

@@ -139,7 +139,7 @@ describe('a named use of a collection (decision 059)', () => {
   };
 
   it('takes the named cells and the lines they read within the fragment, its helpers', () => {
-    const text = `&bassline from funk_bass\n* from bass\n${BENCH}`;
+    const text = `&bassline from funk_bass\n* from upright_bass\n${BENCH}`;
     const { uses, said } = read(text);
     expect(said.filter(([s]) => s === 'error')).toEqual([]);
     expect(uses?.[0]).toMatchObject({ names: ['&bassline'], gave: ['&bassline', '&bassNext'], overrode: [] });
@@ -157,7 +157,7 @@ describe('a named use of a collection (decision 059)', () => {
 
   it('a name the fragment doesn’t define is an error, naming those it does', () => {
     expect(read(`&bass from funk_bass\n${BENCH}`).said).toEqual([['error', '&bass is not in "funk_bass": it defines &bassline, &bassNext', 1]]);
-    expect(read('&bass from bass\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&bass is not in "bass": it defines &bassV', 1]]);
+    expect(read('&bass from upright_bass\n&bar meter("4/4") step=100bpm').said).toEqual([['error', '&bass is not in "upright_bass": it defines &bassV', 1]]);
   });
 
   it('no name is the piece’s by convention (decision 075): a collection’s &key the piece defines too clashes, as any helper does', () => {
@@ -172,7 +172,7 @@ describe('a named use of a collection (decision 059)', () => {
   });
 
   it('a helper the piece also defines is an error (the owner’s ruling 1); naming it makes it the piece’s', () => {
-    const helper = `&bassline from funk_bass\n* from bass\n${BENCH}\n&bassNext over=&harm 2`;
+    const helper = `&bassline from funk_bass\n* from upright_bass\n${BENCH}\n&bassNext over=&harm 2`;
     expect(read(helper).said.filter(([s]) => s === 'error')).toEqual([
       ['error', "&bassNext is \"funk_bass\"'s, read by its &bassline, and the piece's too: rename the piece's, or name &bassNext in the use to override it", 1],
     ]);
@@ -201,7 +201,7 @@ describe('a named use of a collection (decision 059)', () => {
       '* from funk_drums',
       '* from gm_kit',
       '* from funk_bass',
-      '* from bass',
+      '* from upright_bass',
       '&bar meter("4/4") step=104bpm swing=16n:.6',
       '&key scale(harmonic, D)',
     ].join('\n');
