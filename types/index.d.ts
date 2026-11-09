@@ -34,7 +34,6 @@ export { pieceAudio, type AudioOptions, type PieceAudio } from './engine/audioex
 export { createRenderer, loudness, DEFAULT_RATE, type Renderer, type RenderOptions, type RenderDiagnostic, type Rendered, type Tracks } from './engine/render';
 export { writeWav, type WavFormat } from './engine/wavfile';
 export { EXAMPLES, type Example, type ExampleKey } from './engine/examples';
-export { PRESETS, type Preset, type PresetKey } from './engine/presets';
 export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece, type PieceFile, type PieceFileProblems, type PieceFrontmatter } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { movedCard } from './engine/shorten/card';
