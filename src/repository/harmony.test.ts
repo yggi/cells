@@ -253,13 +253,13 @@ describe('the haunted progression', () => {
   });
 
   // (at weight 0.4, as the dark cadence is, so it is found within Jambot's miss distance, 0.3, of Spooky's point alone, #404)
-  it('sits 0.025 below Spooky in bite (0.05 in energy, on the axes before decision 076) at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
-    expect(haunted.association).toEqual([{ point: { ...SPOOKY, bite: 0.3 }, weight: 0.4, facet: 'harmony' }]);
+  it('sits 0.05 below Spooky in bite (its energy offset, on the axes before decision 076, #572) at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
+    expect(haunted.association).toEqual([{ point: { ...SPOOKY, bite: 0.25 }, weight: 0.4, facet: 'harmony' }]);
     const repository = createRepository(LIBRARY);
     expect(repository.query(SPOOKY, 2, {}, { facet: 'harmony' }).map((f) => [f.fragment.id, Math.round(f.distance * 100) / 100])).toEqual([
       ['dark_cadence', 0],
-      // (0.025 off on one of four axes, at weight 0.4: half its distance before decision 076, 0.06)
-      ['haunted_progression', 0.03],
+      // (0.05 off on one of four axes, at weight 0.4: as before decision 076, 0.06)
+      ['haunted_progression', 0.06],
     ]);
     const others = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ, ELECTRO_SWING };
     for (const [name, point] of Object.entries(others)) expect(fragmentDistance(haunted, point, {}, 'harmony'), name).toBeGreaterThan(0.3);

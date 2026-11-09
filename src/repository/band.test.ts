@@ -132,7 +132,7 @@ describe('the style moves the sound (#391)', () => {
     expect(high.map((n) => Math.round(n.lpf))).toEqual([3160, 3160, 3160, 3160]);
   });
 
-  it('the bass’s cutoff opens with bite, from 450 Hz where it is paddy to 900 Hz where it is stabby; brightness leaves it', () => {
+  it('the bass’s cutoff opens with bite, from 450 Hz where it is paddy to 900 Hz where it is stabby; mood leaves it', () => {
     const at = (style: string) => [...new Set(cutoffs(style, 'bassV').map((n) => Math.round(n.lpf)))];
     expect([at('&(map=style .5 .5 0 .5)'), at('&(map=style .5 .5 .5 .5)'), at('&(map=style .5 .5 1 .5)'), at('&(map=style .5 .5 1 0)')]).toEqual([[450], [675], [900], [900]]);
   });
@@ -182,20 +182,20 @@ describe('which instrument a performer plays at a style: the band’s choice, at
   });
 
   it('reads the score’s style: a style cell, an unnamed one, a range’s first end, a mix, its axes by name', () => {
-    expect(scoreStyle('&funk map=style 1 .12 .8 .5\n&style style=&funk')).toEqual(FUNK);
-    expect(scoreStyle('&style style=&(map=style .55 .75 .675 .375)')).toEqual(ELECTRO_SWING);
-    expect(scoreStyle('&style style=&(map=style .2 .9 .325 .375)..&(map=style .5 .5 .5 .5)')).toEqual(SPOOKY);
+    expect(scoreStyle('&funk map=style 1 .12 .85 .65\n&style style=&funk')).toEqual(FUNK);
+    expect(scoreStyle('&style style=&(map=style .55 .75 .6 .5)')).toEqual(ELECTRO_SWING);
+    expect(scoreStyle('&style style=&(map=style .2 .9 .3 .3)..&(map=style .5 .5 .5 .5)')).toEqual(SPOOKY);
     expect(scoreStyle('&a map=style 0 0 0 0\n&b map=style 1 1 1 1\n&style style=[&a * .25, &b * .75]')).toEqual({ sync: 0.75, harm: 0.75, bite: 0.75, mood: 0.75 });
-    expect(scoreStyle('&style style=&(map=style sync=.2 harm=.9 bite=.325 mood=.375)')).toEqual(SPOOKY);
+    expect(scoreStyle('&style style=&(map=style sync=.2 harm=.9 bite=.3 mood=.3)')).toEqual(SPOOKY);
     expect(scoreStyle('&bar meter("4/4")')).toBeNull();
     // (a style taken by name is read through the score's expansion: the seed library's `styles`, `styles.test.ts`)
     expect(scoreStyle('&style style=&funk\n&funk from styles')).toEqual(FUNK);
   });
 
   it('answers `band` with the band at the score’s style, the centre where it names none, and every other id as the library does', () => {
-    const spooky = score('&(map=style .2 .9 .325 .375)');
+    const spooky = score('&(map=style .2 .9 .3 .3)');
     expect(resolveBand(spooky)('band')).toBe(bandAt(SPOOKY));
-    expect(resolveBand(score('&(map=style .3 .45 .55 .25)'))('band')).toBe(band);
+    expect(resolveBand(score('&(map=style .3 .45 .55 .5)'))('band')).toBe(band);
     expect(resolveBand('&bar meter("4/4")')('band')).toBe(bandAt(CENTRE));
     expect(resolveBand(spooky)('gm_kit')).toBe(resolveSeed('gm_kit'));
     // (a client's own library answers every other id)

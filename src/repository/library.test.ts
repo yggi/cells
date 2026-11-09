@@ -1,6 +1,7 @@
 // The library (#138): the meters and the rhythms in one repository. A query that names the facet `meter` returns what the
 // meters alone return, at every point Jambot asks at and over a grid, so the rhythms change no meter query (Jambot's,
 // yggi/jambot#384). What a query costs: `timing.slow.test.ts`.
+import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { createRepository, type Fragment, type StylePoint } from './fragments';
 import { BASS_FRAGMENTS } from './bass';
@@ -121,8 +122,8 @@ describe('the points proposed for two more presets (#349)', () => {
     walking_bass: ELECTRO_SWING,
     harmonic_minor: SPOOKY,
     'meter(grouping=meter("5/4"))': SPOOKY,
-    'meter(grouping=meter("6/8"))': { ...SPOOKY, bite: 0.285 },
-    'meter(grouping=meter("3/4"))': { ...SPOOKY, bite: 0.365 },
+    'meter(grouping=meter("6/8"))': { sync: SPOOKY.sync!, harm: SPOOKY.harm!, bite: 0.22 },
+    'meter(grouping=meter("3/4"))': { sync: SPOOKY.sync!, harm: SPOOKY.harm!, bite: 0.38 },
   };
   // (a fragment's point over the axes it has: a meter's has no mood)
   const same = (a: StylePoint, b: StylePoint) => AXES.every((axis) => !(axis in a) || a[axis] === b[axis]);
@@ -160,7 +161,7 @@ describe('the points proposed for two more presets (#349)', () => {
   // the preset itself. And at Swing jazz, where no harmony is near, the dark cadence is nearer than any vamp, though
   // beyond the miss distance at its weight, 0.4 (#404), and four bars, no progression Jambot's composer reads, which
   // takes eight (yggi/jambot packages/engine/src/harmony-query.ts), so it generates its harmony as before. On decision
-  // 076's axes Swing jazz (ionian) and Spooky (harmonic minor) are told apart by their brightness, so the dark cadence no
+  // 076's axes Swing jazz (ionian) and Spooky (harmonic minor) are told apart by their mood, so the dark cadence no
   // longer reaches it, and nothing moves, #572)
   it('change nothing Jambot’s eight presets find first, in any facet, nor how far it is', () => {
     expect(facets).toHaveLength(14);
@@ -222,8 +223,9 @@ describe('a seed placed for one preset (#404)', () => {
     'Electro swing': ELECTRO_SWING,
     Spooky: SPOOKY,
   };
-  // (the centre, as Migrate moved it, #572: a tonal fragment's there has the mood of the mode found at the old centre)
-  const CENTRE = { sync: 0.5, harm: 0.5, bite: 0.5, mood: 0.25 };
+  // (the centre, as decision 076's rule moved it, #572: a tonal fragment's there has the mood the old centre takes,
+  // Synth-pop's, within 0.15 of it)
+  const CENTRE = newPoint({ sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 });
   const both = (a: StylePoint, b: StylePoint) => AXES.filter((axis) => axis in a && axis in b);
   const plain = (a: StylePoint, b: StylePoint) => Math.hypot(...both(a, b).map((axis) => a[axis]! - b[axis]!));
   const placedFor = (fragment: Fragment, facet: string): string[] =>
@@ -250,24 +252,19 @@ describe('a seed placed for one preset (#404)', () => {
   };
   const weighted = (id: string, weight: number) => LIBRARY.map((f) => (f.id === id ? { ...f, association: f.association.map((wp) => ({ ...wp, weight })) } : f));
 
-  // (on decision 076's axes, where articulation and energy are one, Synth-pop lies 0.299 from Techno's harmonies, 0.353
-  // before: its first harmony, the tonic vamp, placed for Techno, now within the miss distance. Named on #572, the
-  // library's to even out, #540)
-  it('holds over the library: no preset finds another’s first within 0.3, in any facet, but Synth-pop’s harmony', () => {
-    expect(leaks(LIBRARY)).toEqual(['Synth-pop, harmony: tonic_vamp']);
+  it('holds over the library: no preset finds another’s first within 0.3, in any facet', () => {
+    expect(leaks(LIBRARY)).toEqual([]);
   });
 
   it('fires where it should: the dark cadence and the Charleston stabs at weight 1, the haunted progression at 1', () => {
-    // (on decision 076's axes, Electro swing, harmonic minor as Spooky is, comes within reach, and Bossa nova leaves it, #572)
-    const near = ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'];
-    // (what each fires besides the library's own, above)
-    const fired = (fragments: readonly Fragment[]) => leaks(fragments).filter((l) => l !== 'Synth-pop, harmony: tonic_vamp');
-    expect(fired(weighted('dark_cadence', 1))).toEqual(near.map((name) => `${name}, harmony: dark_cadence`));
-    // (on decision 076's axes Spooky, harmonic minor as Electro swing is, comes within reach, and Swing jazz leaves it, #572)
-    expect(fired(weighted('charleston_stabs', 1))).toEqual(['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Spooky'].map((name) => `${name}, stab: charleston_stabs`));
-    expect(fired(weighted('haunted_progression', 1).filter((f) => f.id !== 'dark_cadence'))).toEqual(
-      // (on decision 076's axes: Deep house and Electro swing come within reach, Bossa nova leaves it, #572)
-      ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: haunted_progression`),
+    // (on decision 076's axes, #572: Electro swing, harmonic minor as Spooky is, comes within reach of the dark cadence and
+    // the haunted progression, and Deep house and Bossa nova, dorian and ionian, leave it; Spooky of the Charleston stabs)
+    expect(leaks(weighted('dark_cadence', 1))).toEqual(['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: dark_cadence`));
+    expect(leaks(weighted('charleston_stabs', 1))).toEqual(
+      ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz', 'Spooky'].map((name) => `${name}, stab: charleston_stabs`),
+    );
+    expect(leaks(weighted('haunted_progression', 1).filter((f) => f.id !== 'dark_cadence'))).toEqual(
+      ['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: haunted_progression`),
     );
   });
 });

@@ -5,7 +5,7 @@ association:
       sync: 0.383
       harm: 0.717
       bite: 0.25
-      mood: 0.5
+      mood: 0.825
     weight: 1
     facet: mode
   - point:

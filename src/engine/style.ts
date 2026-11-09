@@ -64,8 +64,8 @@ export const MOOD_TENSION = 0.25;
 /**
  * A mood from a mode and a tension (decision 076 §2, #572): `0.6 · brightness + 0.4 · (1 − tension)`, darker (0) to
  * brighter (1). What a mode says, moved by what the harmony and the sound do with it: tension is dissonance, menace,
- * unrest, 0 at ease to 1 menacing. A mode fragment's mood, or a tonal fragment's where no style is near, is its mode's at
- * `MOOD_TENSION`; a style's is placed by hand, its tension heard (`docs/notes/572-axes-atlas.md`).
+ * unrest, 0 at ease to 1 menacing. A mode fragment's mood (but at a style's own point), or a tonal fragment's where no style is near,
+ * is its mode's at `MOOD_TENSION`; a style's is placed by hand, its tension heard (`docs/notes/572-axes-atlas.md`).
  */
 export const moodOf = (mode: string, tension = MOOD_TENSION): number => Math.round((0.6 * BRIGHTNESS[mode]! + 0.4 * (1 - tension)) * 1e6) / 1e6;
 

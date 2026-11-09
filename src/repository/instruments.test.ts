@@ -45,9 +45,9 @@ const AT_PRESET: Record<string, StylePoint> = {
   organ: SPOOKY,
   theremin: SPOOKY,
   celesta: SPOOKY,
-  // (0.05 below Spooky in energy on the old axes, 0.025 in bite now: at its point it would tie with the organ, and take
-  // &padV from it by id)
-  haunted_pad: newPoint({ sync: 0.2, harm: 0.9, artic: 0.3, energy: 0.3 }),
+  // (0.05 below Spooky in energy on the old axes, 0.05 below it in bite now, its energy offset (#572): at its point it
+  // would tie with the organ, and take &padV from it by id)
+  haunted_pad: { ...SPOOKY, bite: SPOOKY.bite! - 0.05 },
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';

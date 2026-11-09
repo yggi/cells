@@ -39,7 +39,7 @@ describe('the table of axes', () => {
       ['Syncopation', 'on the beat', 'offbeat'],
       ['Harmony', 'static', 'moving'],
       ['Bite', 'paddy', 'stabby'],
-      ['Brightness', 'darker', 'brighter'],
+      ['Mood', 'darker', 'brighter'],
     ]);
     expect(AXES.map((a) => a.sentence)).toEqual(['On the beat (0) to offbeat (1).', 'Static (0) to moving (1).', 'Paddy (0) to stabby (1).', 'Darker (0) to brighter (1).']);
   });

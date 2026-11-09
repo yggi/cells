@@ -95,7 +95,7 @@ association:
       sync: 0.6
       harm: 0.6
       bite: 0.7
-      mood: 0.5
+      mood: 0.375
     weight: 1
     facet: mode
     args:

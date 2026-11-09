@@ -158,10 +158,10 @@ describe('nearestStyle, the styles nearest a point', () => {
   });
 
   it('takes k, axis weights, and a frontend’s own styles with an axis added', () => {
-    // (Swing jazz, 0.15 from Spooky on the old axes, is no longer among its three nearest: brightness tells the two apart,
-    // harmonic minor from ionian, decision 076, #572)
-    expect(nearestStyle(SPOOKY, { k: 3 }).map((n) => n.style.id)).toEqual(['spooky', 'lofi', 'deepHouse']);
-    // (mood weighed 0: a point that differs from Funk only in brightness is Funk's, at 0)
+    // (Swing jazz, 0.15 from Spooky on the old axes, is no longer among its three nearest: mood tells the two apart, an
+    // eerie harmonic minor from a bright ionian, decision 076, #572; Electro swing, harmonic minor too, comes in)
+    expect(nearestStyle(SPOOKY, { k: 3 }).map((n) => n.style.id)).toEqual(['spooky', 'lofi', 'electroSwing']);
+    // (mood weighed 0: a point that differs from Funk only in mood is Funk's, at 0)
     expect(nearestStyle({ ...FUNK, mood: 0 }, { k: 1, axisWeights: { mood: 0 } })[0]).toEqual({ style: STYLES.find((s) => s.id === 'funk'), distance: 0 });
     // (a tempo axis a frontend adds tells two styles apart that the point alone ranks the other way)
     const withTempo = STYLES.map((s) => ({ ...s, point: { ...s.point, bpm: s.tempo / 100 } }));

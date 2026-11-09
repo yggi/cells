@@ -46,14 +46,14 @@ const SWINGS: Record<string, { level: string; share: number }[]> = {
 // names (yggi/jambot#360, its level and share from swingParts at the preset's swing). Lifted from yggi/jambot
 // packages/engine/src/style.ts @ 7b078e8 (unchanged at 5fcf48f).
 const PRESETS: { name: string; point: StylePoint; names: string }[] = [
-  { name: 'Synth-pop', point: { swing: 0, sync: 0.3, harm: 0.45, bite: 0.55, mood: 0.25, bpm: 108 }, names: 'meter' },
-  { name: 'Techno', point: { swing: 0, sync: 0.12, harm: 0, bite: 0.9, mood: 0.25, bpm: 130 }, names: 'meter' },
-  { name: 'Deep house', point: { swing: 0.3, sync: 0.35, harm: 0.55, bite: 0.65, mood: 0.5, bpm: 122 }, names: 'meter(swing=16n:.6)' },
-  { name: 'Ambient', point: { swing: 0.05, sync: 0.05, harm: 0.3, bite: 0.1, mood: 0.875, bpm: 72 }, names: 'meter(swing=16n:31/60)' },
-  { name: 'Lo-fi hip hop', point: { swing: 0.45, sync: 0.5, harm: 0.75, bite: 0.425, mood: 0.25, bpm: 84 }, names: 'meter(swing=16n:.65)' },
-  { name: 'Funk', point: { swing: 0.3, sync: 1, harm: 0.12, bite: 0.8, mood: 0.5, bpm: 104 }, names: 'meter(swing=16n:.6)' },
-  { name: 'Bossa nova', point: { swing: 0, sync: 0.75, harm: 0.85, bite: 0.45, mood: 0.875, bpm: 132 }, names: 'meter' },
-  { name: 'Swing jazz', point: { swing: 1, sync: 0.35, harm: 1, bite: 0.45, mood: 0.875, bpm: 148 }, names: 'meter(swing=8n:2/3)' },
+  { name: 'Synth-pop', point: { swing: 0, sync: 0.3, harm: 0.45, bite: 0.55, mood: 0.5, bpm: 108 }, names: 'meter' },
+  { name: 'Techno', point: { swing: 0, sync: 0.12, harm: 0, bite: 1, mood: 0.4, bpm: 130 }, names: 'meter' },
+  { name: 'Deep house', point: { swing: 0.3, sync: 0.35, harm: 0.55, bite: 0.65, mood: 0.65, bpm: 122 }, names: 'meter(swing=16n:.6)' },
+  { name: 'Ambient', point: { swing: 0.05, sync: 0.05, harm: 0.3, bite: 0, mood: 0.9, bpm: 72 }, names: 'meter(swing=16n:31/60)' },
+  { name: 'Lo-fi hip hop', point: { swing: 0.45, sync: 0.5, harm: 0.75, bite: 0.35, mood: 0.5, bpm: 84 }, names: 'meter(swing=16n:.65)' },
+  { name: 'Funk', point: { swing: 0.3, sync: 1, harm: 0.12, bite: 0.85, mood: 0.65, bpm: 104 }, names: 'meter(swing=16n:.6)' },
+  { name: 'Bossa nova', point: { swing: 0, sync: 0.75, harm: 0.85, bite: 0.45, mood: 0.9, bpm: 132 }, names: 'meter' },
+  { name: 'Swing jazz', point: { swing: 1, sync: 0.35, harm: 1, bite: 0.3, mood: 0.85, bpm: 148 }, names: 'meter(swing=8n:2/3)' },
 ];
 const first = (point: StylePoint) => repository.query(point, 1)[0]!.fragment.id;
 
@@ -126,8 +126,8 @@ describe('the presets find their meters', () => {
   const proposed = [
     { name: 'Electro swing', point: ELECTRO_SWING, names: 'meter(swing=8n:2/3)' },
     { name: 'Spooky', point: SPOOKY, names: 'meter(grouping=meter("5/4"))' },
-    { name: 'Spooky, less bite', point: { ...SPOOKY, bite: SPOOKY.bite! - 0.04 }, names: 'meter(grouping=meter("6/8"))' },
-    { name: 'Spooky, more bite', point: { ...SPOOKY, bite: SPOOKY.bite! + 0.04 }, names: 'meter(grouping=meter("3/4"))' },
+    { name: 'Spooky, less bite', point: { ...SPOOKY, bite: SPOOKY.bite! - 0.08 }, names: 'meter(grouping=meter("6/8"))' },
+    { name: 'Spooky, more bite', point: { ...SPOOKY, bite: SPOOKY.bite! + 0.08 }, names: 'meter(grouping=meter("3/4"))' },
   ];
   const presets = createRepository([...PRESETS, ...proposed].map((p) => ({ id: p.name, text: p.names, association: [{ point: onMeterAxes(p.point), weight: 1 }] })));
   const nearestMeters = (point: StylePoint) => {
@@ -138,15 +138,18 @@ describe('the presets find their meters', () => {
   const halfwayOf = (a: (typeof PRESETS)[number], b: (typeof PRESETS)[number]) =>
     Object.fromEntries(Object.keys(a.point).map((axis) => [axis, (a.point[axis]! + b.point[axis]!) / 2]));
   it('every pair of presets is a pair (28)', () => expect(pairs).toHaveLength(28));
-  // (on decision 076's axes a meter has three, sync harm bite, and between these six pairs a meter placed for its own
+  // (on decision 076's axes a meter has three, sync harm bite, and between these nine pairs a meter placed for its own
   // sake, #369, lies nearer than either preset's: named on #572, the library's to even out, #540)
   const between: Readonly<Record<string, string>> = {
     'Synth-pop|Techno': 'meter(grouping=meter("2/4"))',
+    'Synth-pop|Ambient': 'meter(grouping=meter("6/8"))',
     'Techno|Ambient': 'meter(grouping=meter("2/4"))',
+    'Deep house|Funk': 'meter(grouping=meter("7/8"))',
+    'Deep house|Swing jazz': 'meter(grouping=meter("5/4"))',
+    'Ambient|Lo-fi hip hop': 'meter(grouping=meter("6/8"))',
+    'Ambient|Funk': 'meter(grouping=meter("6/8"))',
     'Ambient|Swing jazz': 'meter(grouping=meter("3/4"))',
-    'Lo-fi hip hop|Swing jazz': 'meter(grouping=meter("5/4"))',
     'Funk|Bossa nova': 'meter(grouping=meter("7/8"))',
-    'Bossa nova|Swing jazz': 'meter(grouping=meter("5/4"))',
   };
   it.each(pairs.map(([a, b]) => [a.name, b.name, a, b] as const))('halfway between %s and %s: the meter of the preset nearest there', (_, __, a, b) => {
     const halfway = halfwayOf(a, b);
@@ -169,14 +172,14 @@ describe('the points proposed for two more presets (#349)', () => {
     expect(ranked(ELECTRO_SWING, 1)).toEqual([['meter(swing=8n:2/3)', 0]]);
   });
 
-  // (0.04 off on bite alone, which the repository's distance, over the three axes a meter has, counts as 0.04/√3)
-  it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.04 off in bite, for the ladder to fetch', () => {
+  // (0.08 off on bite alone, their energy offset since #572, which the repository's distance over a meter's three axes counts as 0.08/√3)
+  it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.08 off in bite, for the ladder to fetch', () => {
     // (the two tie: either first)
     const found = ranked(SPOOKY, 3);
     expect(found[0]).toEqual(['meter(grouping=meter("5/4"))', 0]);
     expect(found.slice(1).sort()).toEqual([
-      ['meter(grouping=meter("3/4"))', +(0.04 / Math.sqrt(3)).toFixed(9)],
-      ['meter(grouping=meter("6/8"))', +(0.04 / Math.sqrt(3)).toFixed(9)],
+      ['meter(grouping=meter("3/4"))', +(0.08 / Math.sqrt(3)).toFixed(9)],
+      ['meter(grouping=meter("6/8"))', +(0.08 / Math.sqrt(3)).toFixed(9)],
     ]);
   });
 });

@@ -38,11 +38,14 @@ const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnTy
 };
 
 // (the points as they were placed, on the axes before decision 076, sync harm artic energy, held as the library holds
-// them, moved by its rule, #572: bite their mean, mood the mode found there, a form's none)
+// them, moved by its rule, #572: bite their articulation, mood the style's they were placed for or the mode's found
+// there, a form's none)
 const held = (sync: number, harm: number, artic: number, energy: number): StylePoint => newPoint({ sync, harm, artic, energy });
 const heldForm = (sync: number, harm: number, artic: number, energy: number): StylePoint => newPoint({ sync, harm, artic, energy }, false);
-/** A point 0.1 higher in energy, on the axes then: 0.05 higher in bite now, to the thousandth. */
-const above = (p: StylePoint): StylePoint => ({ ...p, bite: Math.round((p.bite! + 0.05) * 1000) / 1000 });
+/** A point 0.1 higher in energy, on the axes then: 0.1 higher in bite now, its energy offset (#572); at a bite of 1, lower. */
+const above = (p: StylePoint): StylePoint => ({ ...p, bite: Math.round((p.bite! < 1 ? p.bite! + 0.1 : p.bite! - 0.1) * 1000) / 1000 });
+/** A point moved along bite by its energy offset from the point it was placed beside (decision 076's rule, #572). */
+const offset = (p: StylePoint, bite: number): StylePoint => ({ ...p, bite: Math.round((p.bite! + bite) * 1000) / 1000 });
 /** Each motif, the point it sits at, and the meter it is a bar of (4/4 where none is named). */
 const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   hook: { point: SYNTH_POP },
@@ -68,9 +71,9 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   toll: { point: above(SPOOKY) },
   // (one at each point of a meter with none, a bar of it)
   waltz: { point: held(0, 0.7, 0.3, 0), meter: '3/4' },
-  musicBox: { point: held(0.2, 0.9, 0.3, 0.43), meter: '3/4' },
+  musicBox: { point: offset(held(0.2, 0.9, 0.3, 0.43), 0.08), meter: '3/4' },
   rocking: { point: held(0.3, 0.2, 0.2, 0), meter: '6/8' },
-  sway: { point: held(0.2, 0.9, 0.3, 0.27), meter: '6/8' },
+  sway: { point: offset(held(0.2, 0.9, 0.3, 0.27), -0.08), meter: '6/8' },
   fivefold: { point: held(0.4, 0.9, 0.5, 0.3), meter: '5/4' },
   limp: { point: held(0.8, 0.6, 1, 1), meter: '7/8' },
   dancer: { point: held(0.6, 0.9, 0.8, 0.9), meter: '10/8' },
@@ -85,16 +88,16 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   neighbour: { point: held(0.5, 0.5, 0.3, 0.5) },
   leap: { point: held(0.5, 0.5, 0.7, 0.5) },
   // (four ghost-house idioms near Spooky's point, each 0.05 to 0.11 from it, nearer than the second, toll)
-  wail: { point: held(0.2, 0.9, 0.3, 0.3) },
+  wail: { point: offset(held(0.2, 0.9, 0.3, 0.3), -0.05) },
   haunt: { point: held(0.15, 0.9, 0.25, 0.35) },
   lament: { point: held(0.2, 0.9, 0.25, 0.3) },
   peek: { point: held(0.3, 0.9, 0.3, 0.3) },
   // (two children's songs in pieces, their calls and answers, at the point proposed for a preset of them and 0.1 from it)
   twinkle: { point: KINDERLIED },
-  wonder: { point: held(0.1, 0.12, 0.5, 0.25) },
-  haenschen: { point: held(0.1, 0.12, 0.6, 0.45) },
+  wonder: { point: offset(held(0.1, 0.12, 0.5, 0.25), -0.1) },
+  haenschen: { point: offset(held(0.1, 0.12, 0.6, 0.45), 0.1) },
   hinein: { point: held(0.1, 0.12, 0.6, 0.35) },
-  heim: { point: held(0.1, 0.12, 0.6, 0.25) },
+  heim: { point: offset(held(0.1, 0.12, 0.6, 0.25), -0.1) },
   weinet: { point: held(0.1, 0.12, 0.7, 0.45) },
 };
 /** The centre of style space, where a form for any style sits. */
@@ -159,8 +162,8 @@ describe('the motifs', () => {
   });
 
   // (cells breaks a tie by id, so a second motif sits off the point: at it, the first is found first, alone at distance 0)
-  // (0.05 off in bite, one of four axes: 0.025 away; 0.05 when it was 0.1 off in energy, before decision 076)
-  it('find each preset’s first motif first at its point, alone at distance 0, and its second 0.025 away', () => {
+  // (0.1 off in bite, its energy offset since decision 076 (#572), one of four axes: 0.05 away, as it was)
+  it('find each preset’s first motif first at its point, alone at distance 0, and its second 0.05 away', () => {
     const motifs = createRepository(MOTIF_FRAGMENTS);
     const firsts = Object.keys(MOTIFS).slice(0, 10);
     const seconds = Object.keys(MOTIFS).slice(10, 20);
@@ -168,7 +171,7 @@ describe('the motifs', () => {
       const found = motifs.query(MOTIFS[id]!.point, 36, {}, { facet: 'motif' });
       expect(found[0]!.fragment.id, id).toBe(id);
       expect(found.filter((f) => f.distance === 0).length, id).toBe(1);
-      expect(found.find((f) => f.fragment.id === seconds[i])!.distance, seconds[i]).toBeCloseTo(0.025, 9);
+      expect(found.find((f) => f.fragment.id === seconds[i])!.distance, seconds[i]).toBeCloseTo(0.05, 9);
     });
   });
 

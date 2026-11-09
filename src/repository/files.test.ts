@@ -1,6 +1,7 @@
 // Fragment files (#143, decision 047): every seed file writes back byte for byte and every seed fragment reads back
 // unchanged; metadata keeps its unknown keys in order; a malformed file names its problem and its line; the seed library
 // built from the files is the meters and the rhythms.
+import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { readFragment, readFragments, writeFragment, type FragmentFile } from './files';
 import { BASS_FRAGMENTS } from './bass';
@@ -85,7 +86,8 @@ describe('the seed files', () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       meter: [SYNTH_POP, TECHNO, BOSSA_NOVA],
       'meter(swing=8n:2/3)': [SWING_JAZZ, ELECTRO_SWING],
-      'meter(grouping=meter("5/4"))': [{ sync: 0.4, harm: 0.9, bite: 0.4, mood: 0.375 }, SPOOKY],
+      // (its own point, placed on the old axes at sync .4 harm .9 artic .5 energy .3, moved by decision 076's rule, #572)
+      'meter(grouping=meter("5/4"))': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
       'meter(swing=16n:.65)': [LO_FI],
       'meter(swing=16n:.6)': [DEEP_HOUSE, FUNK],
       'meter(swing=16n:31/60)': [AMBIENT],
