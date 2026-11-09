@@ -7,12 +7,14 @@ import { gunzipSync } from 'node:zlib';
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
-import { BASS_FRAGMENTS } from './bass';
 import { LIBRARY, resolveSeed } from './library';
 import { expand } from '../engine/use';
 import { createRepository, EMPTY_LAYER, type Fragment } from './fragments';
 import { fileFragment } from './learned';
 import { createRecogniser, RECOGNISER_CAPACITY, type RecogniseOptions, type Recognised } from './recognise';
+import { seedFragments } from './seed';
+
+const BASS_FRAGMENTS = seedFragments('bass');
 
 vi.mock('../engine/compile', async (original) => {
   const actual = await original<typeof import('../engine/compile')>();

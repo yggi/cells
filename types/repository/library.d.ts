@@ -7,7 +7,7 @@
  */
 import type { Resolve } from '../engine/program';
 import { type Fragment, type LearnedLayer } from './fragments';
-/** The meters, the rhythms, the bass lines, the harmonies, the instruments, the expressions, the modes, the performers, the stab lines, the motifs, the forms, the band, then the styles: a hundred and twelve fragments. */
+/** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`). */
 export declare const LIBRARY: readonly Fragment[];
 /**
  * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment

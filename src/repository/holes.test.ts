@@ -7,9 +7,11 @@ import { EXAMPLE_FILES } from '../engine/examples.generated';
 import { readPiece } from '../engine/piecefile';
 import { SEED_FILES } from './seed.generated';
 import { holesOf, lapMeets, meterMeets, type ClockNeed } from './holes';
-import { FORM_FRAGMENTS } from './forms';
 import { LIBRARY, resolveSeed } from './library';
-import { RHYTHM_FRAGMENTS } from './rhythms';
+import { seedFragments } from './seed';
+
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+const FORM_FRAGMENTS = seedFragments('forms');
 
 const holes = (text: string) => holesOf(text, compileSource);
 const need = (cell: string, tap: string, bars: number, steps: number, rate: number, bar: number): ClockNeed => ({ cell, meter: null, tap, bars, steps, rate, bar });

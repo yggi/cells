@@ -8,16 +8,18 @@ import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
-import { BASS_FRAGMENTS } from './bass';
 import { fitsAs } from './fit';
 import { heard } from './heard';
 import { LIBRARY, resolveSeed } from './library';
-import { METER_FRAGMENTS } from './meters';
-import { MODE_FRAGMENTS } from './modes';
-import { RHYTHM_FRAGMENTS } from './rhythms';
+import { seedFragments } from './seed';
 
 // (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
 // decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
+
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+const BASS_FRAGMENTS = seedFragments('bass');
+const MODE_FRAGMENTS = seedFragments('modes');
 const OLD_USE = /^use is the old way/;
 const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
   const r = compiledWithOldUse(...args);

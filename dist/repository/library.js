@@ -1,37 +1,9 @@
 import { RENAMED_IDS } from "../engine/renamed.js";
-import { SEED } from "./seed.js";
-import { BASS_FRAGMENTS } from "./bass.js";
+import { SEED, seedFragments } from "./seed.js";
 import { EMPTY_LAYER } from "./fragments.js";
-import { HARMONY_FRAGMENTS } from "./harmony.js";
-import { EXPRESSION_FRAGMENTS } from "./expression.js";
-import { INSTRUMENT_FRAGMENTS } from "./instruments.js";
-import { METER_FRAGMENTS } from "./meters.js";
-import { MODE_FRAGMENTS } from "./modes.js";
-import { PERFORMER_FRAGMENTS } from "./performers.js";
-import { RHYTHM_FRAGMENTS } from "./rhythms.js";
-import { STAB_FRAGMENTS } from "./stab.js";
-import { MOTIF_FRAGMENTS } from "./motifs.js";
-import { FORM_FRAGMENTS } from "./forms.js";
-import { BAND_FRAGMENTS } from "./bands.js";
-import { STYLE_FRAGMENTS } from "./styles.js";
-import { MODULE_FRAGMENTS } from "./modules.js";
 import { variantsOf } from "./variants.js";
-export const LIBRARY = [
-    ...METER_FRAGMENTS,
-    ...RHYTHM_FRAGMENTS,
-    ...BASS_FRAGMENTS,
-    ...HARMONY_FRAGMENTS,
-    ...INSTRUMENT_FRAGMENTS,
-    ...EXPRESSION_FRAGMENTS,
-    ...MODE_FRAGMENTS,
-    ...PERFORMER_FRAGMENTS,
-    ...STAB_FRAGMENTS,
-    ...MOTIF_FRAGMENTS,
-    ...FORM_FRAGMENTS,
-    ...BAND_FRAGMENTS,
-    ...STYLE_FRAGMENTS,
-    ...MODULE_FRAGMENTS,
-];
+const FOLDERS = ['meters', 'rhythms', 'bass', 'harmony', 'instruments', 'expression', 'modes', 'performers', 'stab', 'motifs', 'forms', 'bands', 'styles', 'modules'];
+export const LIBRARY = FOLDERS.flatMap((folder) => seedFragments(folder));
 export const RETIRED = new Map([
     ['core kit', '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
     ['gm kit', '* from gm_kit'],

@@ -1,9 +1,10 @@
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 import { parse } from "../engine/parser/index.js";
 import { bodyOf, expand, signatureOf } from "../engine/use.js";
 import { AXES, CENTRE as CENTRE_VALUES } from "../engine/style.js";
 import { createRepository } from "./fragments.js";
-import { INSTRUMENT_FRAGMENTS } from "./instruments.js";
 import { resolveSeed } from "./library.js";
+import { seedFragments } from "./seed.js";
 export const PERFORMER_VOICES = {
     bass: { voice: 'bassV', own: 'bass' },
     pad: { voice: 'padV', own: 'pad' },

@@ -1,3 +1,4 @@
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 /**
  * A MIDI file as a piece (#307, step 2): its notes written out flat, every one kept, ready to play and for Shorten to
  * fold. Pure: a `Smf` (`midifile.ts`) in, `.cells` source out.
@@ -33,7 +34,7 @@ import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import type { PieceFrontmatter } from './piecefile';
 import { GM_KIT, gmDrumNote, kitNotes } from './midi';
-import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
+import { seedFragments } from '../repository/seed';
 
 /** A file as a piece, and what was made of it. */
 export interface Imported {

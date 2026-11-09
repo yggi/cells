@@ -15,17 +15,19 @@ import { createRepository } from './fragments';
 import { heard } from './heard';
 import { LIBRARY, resolveSeed } from './library';
 import { expand } from '../engine/use';
-import { METER_FRAGMENTS } from './meters';
 import { BOSSA_NOVA, FUNK } from './styles';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
-import { BAND_FRAGMENTS } from './bands';
-import { EXPRESSION_FRAGMENTS } from './expression';
 import { STYLE_FRAGMENTS } from './styles';
-import { MODULE_FRAGMENTS } from './modules';
-import { MODE_FRAGMENTS } from './modes';
-import { RHYTHM_FRAGMENTS } from './rhythms';
+import { seedFragments } from './seed';
 
 // (the compile counted, for what it costs: the real one, called through)
+
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
+const EXPRESSION_FRAGMENTS = seedFragments('expression');
+const MODE_FRAGMENTS = seedFragments('modes');
+const BAND_FRAGMENTS = seedFragments('bands');
+const MODULE_FRAGMENTS = seedFragments('modules');
 vi.mock('../engine/compile', async (original) => {
   const actual = await original<typeof import('../engine/compile')>();
   return { ...actual, compileSource: vi.fn(actual.compileSource) };
