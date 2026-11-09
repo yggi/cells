@@ -35,6 +35,19 @@ export function bare(source: string): number {
     .join('\n').length;
 }
 
+/**
+ * How much one piece's score may grow over its row in a ratchet's baseline (#263): a set's sum may grow by 1 %, which let
+ * one piece grow by 37 % unnoticed; 10 % a piece would have stopped the smallest of #263's regressions (+16 %).
+ */
+export const PIECE_GROWTH = 0.1;
+
+/** The pieces whose score grew by more than PIECE_GROWTH over their row, each said as `key: base → now`. */
+export function grown(now: Readonly<Record<string, { score: number }>>, base: Readonly<Record<string, { score: number }>>): string[] {
+  return Object.entries(now)
+    .filter(([k, r]) => base[k] !== undefined && r.score > (1 + PIECE_GROWTH) * base[k].score)
+    .map(([k, r]) => `${k}: ${base[k]!.score} → ${r.score}`);
+}
+
 /** What a piece plays over [0, seconds): key and start, in order. */
 export function heard(source: string, seconds: number) {
   const r = compileSource(source);

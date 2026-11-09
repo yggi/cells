@@ -158,6 +158,22 @@ describe('the equalities a tool promises, over their window (#180)', () => {
     expect(playsSameNotes(kit('hh'), kit('bd'))).toBe(false);
     expect(soundsIdentical(kit('hh'), kit('hh'))).toBe(true);
   });
+
+  it('on a MIDI card, where it goes counts: its channel and its output slot (#273)', () => {
+    const line = (...cards: string[]) => ['&bar meter("4/4") step=120bpm', '&t step=4n 0 2 4 7', '&v s=sine loop=C4', ...cards].join('\n');
+    const one = line('&o map=midi(1) [&t * &v]');
+    for (const [what, other] of [
+      ['another channel', line('&o map=midi(2) [&t * &v]')],
+      ['another output slot', line('&o map=midi(1, 2) [&t * &v]')],
+      ['heard on a sound card, sent nowhere', line('&o map=sample [&t * &v]')],
+    ]) {
+      expect(soundsIdentical(one, other!), what).toBe(false);
+      expect(soundsIdentical(other!, other!), what).toBe(true);
+    }
+    // (slot 1 is the slot a card names by default; a voice on a MIDI card alone is heard there too, decision 064, and one
+    // heard nowhere, `unheard`, has gains of 0, which S1 reads)
+    expect(soundsIdentical(one, line('&o map=midi(1, 1) [&t * &v]'))).toBe(true);
+  });
 });
 
 // Decision 070 (#483): S1 is what a listener can't tell apart, each dimension within a fraction of its smallest audible
