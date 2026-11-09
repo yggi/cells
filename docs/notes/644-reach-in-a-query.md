@@ -1,12 +1,12 @@
 # A reach in a query: what reading it would change, and the alternatives
 
-Date: 2026-11-09 · Status: measured, for the owner's ruling · Issues: [#644](https://github.com/yggi/cells/issues/644) (the question), [#436](https://github.com/yggi/cells/issues/436) (the reach, written in the text), [#371](https://github.com/yggi/cells/issues/371) (the forms' points), yggi/jambot#547 rung 4, in the style epic [#536](https://github.com/yggi/cells/issues/536) · Tool: `tools/coverage.ts`
+Date: 2026-11-09 · Status: measured; ruled as recommended (the owner, 2026-11-09: "644 as suggested") · Issues: [#644](https://github.com/yggi/cells/issues/644) (the question), [#436](https://github.com/yggi/cells/issues/436) (the reach, written in the text), [#371](https://github.com/yggi/cells/issues/371) (the forms' points), yggi/jambot#547 rung 4, in the style epic [#536](https://github.com/yggi/cells/issues/536) · Tool: `tools/coverage.ts`
 
 #436 brings a reach per axis onto an association point, in decision 079's spelling (`bite=.55 ± .1`). #644 asks whether a query should read it. This note measures what reading it would change, on the case that asks first: the forms, placed by idiom (the owner, 2026-11-09: "form follows idiom. same for sections"). A measurement; it decides no language.
 
 ## Reproduce
 
-Measured on #624's head (834341c, the axes `sync harm bite mood`), with the placements committed beside this note:
+Measured on #624's head (834341c, the axes `sync harm bite mood`) and again on `main` once it landed (c41ef2e), with the same numbers, with the placements committed beside this note:
 
 ```sh
 npm run coverage -- --facet form --k 3 --place docs/notes/644-forms-full.json --distance today
