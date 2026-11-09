@@ -103,7 +103,8 @@ export interface Line {
 /** A voice's pitch, as the lines are ordered by it: its General MIDI drum note, else past every drum. */
 export const pitchOf = (voice: string): number => gmDrumNote(voice.slice(1)) ?? 128;
 
-const REST = /^~(?:!(\d+))?$/;
+/** A rest, or n of them: repeated (`~!3`) or held (`~@3`), the same n steps of silence. */
+const REST = /^~(?:[!@](\d+))?$/;
 const HIT = /^&([A-Za-z_][A-Za-z0-9_]*)(?::0(?::([0-9]*\.?[0-9]+))?)?(?:!(\d+))?$/;
 const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
 const SEQ = /^\[([^[\],]*)\]$/;
@@ -125,7 +126,7 @@ function hitOf(token: string): { voice: string; own: string | null } | null {
   return m && !m[3] ? { voice: `&${m[1]}`, own: m[2] ?? null } : null;
 }
 
-/** Steps as written (`~!5`, `&hh:0:.25`, `[&bd,&hh]`), each repeat its own step; null where one is none of these. */
+/** Steps as written (`~!5`, `~@5`, `&hh:0:.25`, `[&bd,&hh]`), each repeat its own step; null where one is none of these. */
 function stepsOf(tokens: readonly string[]): Step[] | null {
   const out: Step[] = [];
   for (const token of tokens) {
