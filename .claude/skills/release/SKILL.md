@@ -48,7 +48,7 @@ An entry that breaks a piece and names no migration is not ready: say so on the 
 
 On a branch from `origin/main`, one commit:
 
-- `CHANGELOG.md`: `npm run changelog -- gather vX.Y.Z` (`tools/changelog.mjs`) puts a heading `## vX.Y.Z — <today>` under `## Unreleased`, what *Unreleased* held and every entry in `changes/` beneath it, grouped by section, leaves *Unreleased* its pointer to `changes/`, and deletes the entries it gathered: commit their deletion with it.
+- `CHANGELOG.md`: `npm run changelog -- gather vX.Y.Z` (`tools/changelog.mjs`) puts a heading `## vX.Y.Z — <today>` under `## Unreleased`, what *Unreleased* held and every entry in `changes/` beneath it, grouped by section (an entry of several sections, each part under its own), leaves *Unreleased* its pointer to `changes/`, and deletes the entries it gathered: commit their deletion with it.
 - `package.json` and `package-lock.json`: `"version": "X.Y.Z"` (`npm version X.Y.Z --no-git-tag-version` writes both and tags nothing).
   `src/docs.test.ts` fails when the changelog has no heading for that version.
 - `README.md`: the pin it shows, `github:yggi/cells#vX.Y.Z` (`src/docs.test.ts` fails when it names another version).
