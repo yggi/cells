@@ -134,8 +134,9 @@ The collection is associated at each of the eleven points as the facet `style`, 
 
 ## The default band: a score played as its style says
 
-A score ends in `* from band`, and the client's resolver answers `band` ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §1).
-The seed library's band, `band` (`fragments/bands/01-band.md`), plays Jambot's five roles on the default instruments, which read the score's `&style` where Jambot's synth reads its style: the bass's cutoff opens with articulation (`&bassV … lpf=450..900 * &style[artic]`), the lead's with energy (`&leadV … lpf=1400..3600 * &style[energy]`). Neither the instruments nor the band define `&style`.
+A score ends in `* from band(…)`, and the client's resolver answers `band` ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §1).
+The band reads only what it declares ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md), #560): the score passes its parts, its levels and its style as the band's arguments, `* from band(bassline=&bassline, …, style=&style)` (`bandLine(score)` writes the line). A part it doesn't pass rests, and a style it doesn't pass is the centre.
+The seed library's band, `band` (`fragments/bands/01-band.md`), plays Jambot's five roles on the default instruments, which read the score's `&style` where Jambot's synth reads its style: the bass's cutoff opens with articulation (`&bassV … lpf=450..900 * &style[artic]`), the lead's with energy (`&leadV … lpf=1400..3600 * &style[energy]`). The instruments, the performers and the band each declare `&style`, its default the centre of style space, and pass it on.
 It sends the score on a MIDI card on Jambot's channels and hears it on a sound card.
 
 ```cells
@@ -150,7 +151,7 @@ It sends the score on a MIDI card on Jambot's channels and hears it on a sound c
 &leadline over=&key step=8n 4 ~ 3 2 0@4
 &funk from styles
 &style label="Funk, a section" style=&funk
-* from band
+* from band(drumlines=&drumlines, bassline=&bassline, padline=&padline, stabline=&stabline, leadline=&leadline, style=&style)
 ```
 
 Which instrument a performer plays at a style is the band's choice too, made at resolution: `resolveBand(score)` answers `band` with each pitched voice the instrument the library ranks first at the score's style, named or written as numbers, (a clarinet at Electro swing's point, a theremin at Spooky's), and the band as written at Jambot's eight presets (`src/repository/band.ts`).

@@ -309,11 +309,11 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old) 
     if (from.head.length && !one)
         say(`The attributes before from are the head's, and this line takes ${names.size} heads from ${quoted(id)}: write them on each head's own line`);
     const args = new Map((from.args ?? []).map((a) => [a.name, a.value]));
-    for (const p of old ? (BOUND_BY_NAME.get(id) ?? []) : [])
-        if (optional.includes(p) && !args.has(p) && old.defines.has(p)) {
-            args.set(p, `&${p}`);
-            old.warn(byNameMessage(id, p, `${from.id}(${[...(from.args ?? []).map((a) => `${a.name}=${a.value}`), `${p}=&${p}`].join(', ')})`));
-        }
+    const readByName = old ? (BOUND_BY_NAME.get(id) ?? []).filter((p) => optional.includes(p) && !args.has(p) && old.defines.has(p)) : [];
+    for (const p of readByName)
+        args.set(p, `&${p}`);
+    if (readByName.length)
+        old.warn(byNameMessage(id, readByName, `${from.id}(${[...args].map(([k, v]) => `${k}=${v}`).join(', ')})`));
     for (const k of args.keys())
         if (!optional.includes(k))
             say(`${quoted(id)} takes no ${k}=: ${optional.length ? `its optional parameters are ${optional.map((o) => `${o}=`).join(', ')}` : 'it has no optional parameters'}`);

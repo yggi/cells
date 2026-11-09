@@ -33,8 +33,8 @@ const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.so
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {
-  it('98 templates: the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers and the four instruments that read a style; the rest collections', () => {
-    expect(templates).toHaveLength(98);
+  it('99 templates: the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers, the four instruments that read a style and the band; the rest collections', () => {
+    expect(templates).toHaveLength(99);
     const collections = LIBRARY.filter((f) => !signatureOf(f.text)).map((f) => f.id);
     expect(collections).toContain('gm_kit');
     expect(collections).toContain('upright_bass');
@@ -44,7 +44,9 @@ describe('the seed library’s signatures', () => {
   it('each has one main parameter, the one it read by name before (#290, #294); an instrument none, its style optional (#560)', () => {
     const instruments = ['bass', 'keys', 'pad', 'lead'];
     for (const id of instruments) expect(signatureOf(LIBRARY.find((f) => f.id === id)!.text), id).toMatchObject({ optional: ['&style'], main: null });
-    for (const f of templates.filter((t) => !instruments.includes(t.id)))
+    // (the band: every input optional, the score's parts, levels and style, #560)
+    expect(signatureOf(LIBRARY.find((f) => f.id === 'band')!.text)!.main).toBeNull();
+    for (const f of templates.filter((t) => !instruments.includes(t.id) && t.id !== 'band'))
       expect(signatureOf(f.text)!.main, f.id).toMatch(/^&(tempo|tonic|key|harm|call|a|drumlines|bassline|padline|stabline|leadline)$/);
   });
 
@@ -53,11 +55,13 @@ describe('the seed library’s signatures', () => {
     const head = names.length > 1 ? names.join(', ') : names[0] === '&bar' || names[0] === '&key' ? names[0] : '&x';
     // (an instrument, which takes no main argument: its voice playing a line)
     const piece =
-      main === null
-        ? lines(METER, KEY, '&line over=&key step=8n 0 2 4', `&x from ${quoted(id)}`, '&out map=sample [&line * &x]')
-        : /line(s)?$/.test(main)
-          ? PERFORMER(head, quoted(id), main)
-          : WORKBENCH[main]!(head, quoted(id));
+      id === 'band'
+        ? lines(METER, KEY, '&bassline over=&key step=4n 0 2', '* from band(bassline=&bassline)')
+        : main === null
+          ? lines(METER, KEY, '&line over=&key step=8n 0 2 4', `&x from ${quoted(id)}`, '&out map=sample [&line * &x]')
+          : /line(s)?$/.test(main)
+            ? PERFORMER(head, quoted(id), main)
+            : WORKBENCH[main]!(head, quoted(id));
     const r = compileSource(names.includes('&bell') ? lines(piece, '* from gm_kit') : piece, undefined, { resolve: resolveSeed });
     // (a performer is a role cell over a gate: no sound of its own, so it plays on a card, as it does written out by hand)
     expect(r.diagnostics.map((d) => d.message)).toEqual(main !== null && /line(s)?$/.test(main) ? [NOTHING_PLAYS] : []);

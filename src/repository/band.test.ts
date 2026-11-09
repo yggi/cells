@@ -7,7 +7,7 @@ import { compileSource } from '../engine/compile';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
-import { bandAt, CENTRE, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from './band';
+import { bandAt, bandLine, CENTRE, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from './band';
 import { bodyOf } from '../engine/use';
 import { BAND_FRAGMENTS } from './bands';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
@@ -21,16 +21,20 @@ const lineOf = (text: string, voice: string) => text.split('\n').find((l) => l.s
 const score = (
   style: string,
   parts: Readonly<Record<string, string>> = { drumlines: '&kick', bassline: '0 ~ 2 ~', padline: '[0,2,4]@4', stabline: '~ [0,2] ~ [0,2]', leadline: '4 3 2 0' },
-) =>
-  [
+  more: readonly string[] = [],
+) => {
+  const lines = [
     '&bar meter("4/4") step=120bpm',
     '&key scale(dorian, D)',
     '&harm over=&key step=1m [0,2,4]',
     '&kick step=4n &bd &bd &bd &bd',
     ...Object.entries(parts).map(([part, line]) => (part === 'drumlines' ? `&drumlines [${line}]` : `&${part} over=&harm step=4n ${line}`)),
     `&style label="a section" style=${style}`,
-    '* from band',
+    ...more,
   ].join('\n');
+  // (the band reads only what it declares: the score passes its parts and its style, `bandLine`, decision 075)
+  return `${lines}\n${bandLine(lines)}`;
+};
 
 /** What a text sends over its first two seconds, and the voices it sounds them on: `channel note velocity at end voice`. */
 function sent(text: string, resolve = resolveSeed): string[] {
@@ -62,7 +66,7 @@ describe('the default band (#391)', () => {
       ['stabOut', 'stab', 'stabline'],
       ['leadOut', 'lead', 'leadline'],
     ]);
-    expect(band.split('\n')[0]).toBe('&band &drums &bass &pad &stab &lead');
+    expect(bodyOf(band).split('\n')[0]).toBe('&band &drums &bass &pad &stab &lead');
   });
 
   it('sends each performer on Jambot’s channel: 1 the lead, 2 the bass, 3 the pad and the stab, 10 the drums', () => {
@@ -83,27 +87,30 @@ describe('the default band (#391)', () => {
       ),
     ];
     const own = velocities(score('&(map=style .5 .5 .5 .5)'));
-    const theirs = velocities(`${score('&(map=style .5 .5 .5 .5)')}\n&bassLevel map=amp .4`);
+    const theirs = velocities(score('&(map=style .5 .5 .5 .5)', undefined, ['&bassLevel map=amp .4']));
     expect(own).toHaveLength(1);
     expect(theirs).toHaveLength(1);
     expect(theirs[0]).toBeLessThan(own[0]!);
   });
 
-  it('rests a part the score doesn’t write, and says so; a tacet says nothing (decision 063 §4)', () => {
+  it('rests a part the score doesn’t pass: its default a tacet, said nothing of (decision 063 §4, declared since #560)', () => {
     const four = { drumlines: '&kick', bassline: '0 ~ 2 ~', padline: '[0,2,4]@4', stabline: '~ [0,2] ~ [0,2]' };
     const rests = compileSource(score('&(map=style .5 .5 .5 .5)', four), undefined, { resolve: resolveSeed });
-    expect(rests.diagnostics.map((d) => [d.severity, d.message])).toEqual([['info', expect.stringMatching(/^&leadOut plays &leadline, which no line writes: it rests/)]]);
-    const tacet = compileSource(`${score('&(map=style .5 .5 .5 .5)', four)}\n&leadline step=1m ~`, undefined, { resolve: resolveSeed });
-    expect(tacet.diagnostics).toEqual([]);
-    expect(sent(`${score('&(map=style .5 .5 .5 .5)', four)}\n&leadline step=1m ~`).filter((n) => n.endsWith(' leadV'))).toEqual([]);
+    expect(rests.diagnostics).toEqual([]);
+    expect(sent(score('&(map=style .5 .5 .5 .5)', four)).filter((n) => n.endsWith(' leadV'))).toEqual([]);
+    expect(sent(score('&(map=style .5 .5 .5 .5)', four))).toEqual(sent(score('&(map=style .5 .5 .5 .5)', four, ['&leadline step=1m ~'])));
   });
 
-  it('plays a score that names no style at the centre of style space, and says so; it defines no &style of its own', () => {
-    const text = score('&(map=style .5 .5 .5 .5)').replace(/^&style .*$/m, '');
+  it('plays a score that passes no style at the centre of style space: its &style a parameter, its default the centre (#560)', () => {
+    const lines = score('&(map=style .5 .5 .5 .5)').split('\n');
+    const text = [
+      ...lines.filter((l) => !l.startsWith('&style ') && !l.startsWith('* from band')),
+      '* from band(drumlines=&drumlines, bassline=&bassline, padline=&padline, stabline=&stabline, leadline=&leadline)',
+    ].join('\n');
     const r = compileSource(text, undefined, { resolve: resolveSeed });
-    expect(r.diagnostics.map((d) => [d.severity, d.message])).toEqual([['info', expect.stringMatching(/^no line writes &style: /)]]);
+    expect(r.diagnostics).toEqual([]);
     expect(sent(text)).toEqual(sent(score('&(map=style .5 .5 .5 .5)')));
-    expect(band.split('\n').some((l) => l.startsWith('&style '))).toBe(false);
+    expect(band.split('\n').filter((l) => l.startsWith('&style '))).toEqual(['&style map=style .5 .5 .5 .5']);
   });
 });
 

@@ -57,3 +57,10 @@ export declare function scoreStyle(score: string, resolve?: Resolve): StylePoint
  * with that instead, its own lines its choice of instruments.
  */
 export declare function resolveBand(score: string, resolve?: Resolve): Resolve;
+/**
+ * The line a score ends in (decision 075, #560 rung 3c–e): `* from band(…)`, passing each of the band's optional
+ * parameters the score defines a cell of its name for (`bassline=&bassline`, `style=&style`, …). The band reads only
+ * what it declares: a part the score doesn't pass rests, a tacet (decision 063 §4), and a style it doesn't pass is the
+ * centre. `band` is the band's text (the seed library's by default).
+ */
+export declare function bandLine(score: string, band?: string): string;

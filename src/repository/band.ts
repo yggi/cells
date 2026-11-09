@@ -15,7 +15,7 @@
  * Pure.
  */
 import { parse } from '../engine/parser';
-import { bodyOf, expand } from '../engine/use';
+import { bodyOf, expand, signatureOf } from '../engine/use';
 import type { Resolve } from '../engine/program';
 import { AXES, CENTRE as CENTRE_VALUES } from '../engine/style';
 import type { CellDecl, StylePoint as WrittenStyle } from '../engine/ast';
@@ -132,4 +132,16 @@ export function scoreStyle(score: string, resolve: Resolve = resolveSeed): Style
 export function resolveBand(score: string, resolve: Resolve = resolveSeed): Resolve {
   const text = bandAt(scoreStyle(score, resolve) ?? CENTRE);
   return (id, hash) => (id === 'band' ? text : resolve(id, hash));
+}
+
+/**
+ * The line a score ends in (decision 075, #560 rung 3c–e): `* from band(…)`, passing each of the band's optional
+ * parameters the score defines a cell of its name for (`bassline=&bassline`, `style=&style`, …). The band reads only
+ * what it declares: a part the score doesn't pass rests, a tacet (decision 063 §4), and a style it doesn't pass is the
+ * centre. `band` is the band's text (the seed library's by default).
+ */
+export function bandLine(score: string, band: string = resolveSeed('band')!): string {
+  const defined = new Set(parse(score).cells.map((c) => c.name));
+  const passed = (signatureOf(band)?.optional ?? []).map((p) => p.slice(1)).filter((p) => defined.has(p));
+  return passed.length ? `* from band(${passed.map((p) => `${p}=&${p}`).join(', ')})` : '* from band';
 }
