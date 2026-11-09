@@ -176,6 +176,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'generator euclid(k, n)',
       'sort signal: a pattern read through a kit',
       'parameter oneshot',
+      // a drum's MIDI note, its name only a name (decision 075)
+      'parameter note',
       'modifier &x:0:gain',
       // taps by pulse, of a named meter (decision 040)
       'rate step=pulse',
@@ -475,6 +477,7 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
     if (c?.note) use('line &name label="…"');
     if (d.off) use('line off');
     if (d.oneshot) use('parameter oneshot');
+    if (d.drumNote !== undefined) use('parameter note');
     // (a stepped table of names that declares sections: decision 016)
     if ([...(compiled.sections?.values() ?? [])].includes(d.name)) use('line &sections step=&bar &a &b');
     if (d.lambda) use('reference &( … )');

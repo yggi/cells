@@ -23,9 +23,9 @@ description: Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit.
 
 &fiddle s=saw loop=C5 lpf=3000 env=&(map=adsr .01 .15 .5 .1)
 &bass s=square loop=C2 lpf=600 env=&thump
-&bd s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&thump
+&bd note=36 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&thump
 &sd from gm_kit
 &thump, &click from envelopes
-&hh s=white hpf=7000 env=&click
+&hh note=42 s=white hpf=7000 env=&click
 &mix postgain=2.03 map=sample [&tune * &fiddle * 0.6, &bassline * &bass * 0.8, &drums * 0.6]
 ```

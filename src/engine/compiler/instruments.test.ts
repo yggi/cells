@@ -66,8 +66,8 @@ describe("an instrument's sound parameters are its voices' (decision 067)", () =
   it('reaches a kit read through it, a gate playing it and the built-in card', () => {
     const kit = lines(
       BASE,
-      '&bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)',
-      '&hh s=white env=&(map=adsr 0 .04 0 .02)',
+      '&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)',
+      '&hh note=42 s=white env=&(map=adsr 0 .04 0 .02)',
       '&kit &bd &hh',
       '&beat over=&kit step=8n 0 1',
       '&bus hpf=300 [&beat * .5]',

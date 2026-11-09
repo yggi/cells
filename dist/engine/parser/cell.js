@@ -817,6 +817,16 @@ export function parseBody(s, head) {
         delete b.params.oneshot;
         delete b.paramSpans.oneshot;
     }
+    let drumNote;
+    if (b.params.note !== undefined) {
+        const at = b.paramSpans.note;
+        const v = b.params.note;
+        if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 127)
+            s.fail('note= is a MIDI note, a whole number from 0 to 127 (36 a kick, 38 a snare)', at ? at.col - 1 : 0, 4);
+        drumNote = v;
+        delete b.params.note;
+        delete b.paramSpans.note;
+    }
     if (oneshot && typeof b.params.glide === 'number' && b.params.glide > 0) {
         const at = b.paramSpans.glide;
         s.fail('oneshot or glide=: a voice plays each note through, or ties them as one', at ? at.col - 1 : 0, 5);
@@ -845,6 +855,7 @@ export function parseBody(s, head) {
         shift,
         off,
         ...(oneshot ? { oneshot } : {}),
+        ...(drumNote !== undefined ? { drumNote } : {}),
         step,
         map,
         stride,

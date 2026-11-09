@@ -51,10 +51,12 @@ export declare const GM_KIT: readonly {
 /** The General MIDI drum note for a kit member's name or alias (`GM_KIT`; lower case, a trailing number ignored: `bd2` is a kick), or null for a name it doesn't know. */
 export declare function gmDrumNote(name: string): number | null;
 /**
- * Each kit member's drum note: by its name where General MIDI has one (`gmDrumNote`), else the next note from 36
- * that no other member has, up to 127 (a member past that has none, and isn't sent).
+ * Each kit member's drum note: the one it writes (`noteOf`: its `note=`, decision 075), else the next note from 36 that no
+ * other member has, up to 127 (a member past that has none, and isn't sent). A member's name gives none: `gm_kit` writes
+ * each General MIDI drum's note on its line. A host reading a list of names it saved itself (`midiimport.ts`) passes
+ * `gmDrumNote`.
  */
-export declare function kitNotes(members: readonly string[]): Map<string, number>;
+export declare function kitNotes(members: readonly string[], noteOf: (member: string) => number | null | undefined): Map<string, number>;
 /**
  * Where a piece's notes go: each gate (all its receivers) and each voice it plays directly on a channel of an output, each
  * kit member with a note on the kit's channel of each output it goes to.

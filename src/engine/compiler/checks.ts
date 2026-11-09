@@ -5,6 +5,7 @@ import { sortOfCells } from './sorts';
 import { FILTER_MODELS, filterModel, MOVING_PARAMS } from '../attributes';
 import { DOUGH_SOURCES } from '../dough-params';
 import { refsOf } from '../readers';
+import { gmDrumNote } from '../midi';
 import { leaves } from '../subseq';
 import type { CellDecl } from '../ast';
 import type { Cells, Ctx } from './context';
@@ -17,6 +18,19 @@ export function checkCells(
   bands: ReadonlyMap<string, readonly string[]> = new Map(),
 ): void {
   const { error, warn, unknownCell } = ctx;
+  // a kit's member named as a General MIDI drum that writes no note=: its name gives none (decision 075, #560 rung 1)
+  const told = new Set<string>();
+  for (const c of cells.values()) {
+    if (!c.kit) continue;
+    for (const u of c.units) {
+      const name = u.atom.kind === 'ref' ? u.atom.name : null;
+      const d = name === null ? undefined : decls.get(name);
+      const gm = name === null ? null : gmDrumNote(name);
+      if (!d || gm === null || d.drumNote !== undefined || told.has(name!) || !cells.get(name!)?.voice) continue;
+      told.add(name!);
+      warn(`&${name} is named as General MIDI's drum ${gm}, and a name gives no note: write &${name} note=${gm} (Migrate writes it, decision 075)`, d.span);
+    }
+  }
   // resonators: body= one of the known bodies; couple= another resonator; excite= a mix
   for (const c of cells.values()) {
     const span = (k: string) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name)!.span;

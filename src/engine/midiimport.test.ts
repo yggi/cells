@@ -157,7 +157,7 @@ describe('a MIDI file as a piece', () => {
     ]);
     const { source, dropped } = cellsFromMidi(smf, 'test');
     expect(dropped).toBe(0);
-    expect(source).toContain('&claves s=sine loop=D7');
+    expect(source).toContain('&claves note=75 s=sine loop=D7');
     expect(notesOf(source).map((n) => `${n.voice}@${n.at.toFixed(3)}`)).toEqual(['claves@0.000', 'rim@0.125']);
     const r = compileSource(source);
     const back = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
@@ -184,7 +184,7 @@ describe('a MIDI file as a piece', () => {
         .text.split('\n')
         .map((l) => [gmDrumNote(/^&(\w+)/.exec(l)![1]!), l.replace(/^&\w+ /, '')]),
     );
-    const voices = [...source.matchAll(/^&(\w+) (s=.*)$/gm)].map(([, name, sound]) => [name!, sound!] as const);
+    const voices = [...source.matchAll(/^&(\w+) (note=\d+ s=.*)$/gm)].map(([, name, sound]) => [name!, sound!] as const);
     expect(voices.filter(([name, sound]) => kit.get(gmDrumNote(name)) !== sound)).toEqual([]);
     // (each note its own voice, under its kit name, which MIDI out sends back as that note: 47 of 47)
     expect(voices.map(([name]) => name).sort()).toEqual(GM_KIT.map((d) => d.name).sort());
@@ -202,12 +202,12 @@ describe('a MIDI file as a piece', () => {
     expect(dropped).toBe(0);
     expect(compileSource(source).diagnostics).toEqual([]);
     expect(source).toMatch(/^&cb2 step=pulse /m);
-    expect(source).toContain('&cb s=square loop=G5 lpf=2500');
+    expect(source).toContain('&cb note=56 s=square loop=G5 lpf=2500');
     expect(notesOf(source).map((n) => `${n.voice}:${n.key}`)).toEqual(['cbVoice:60', 'cb:79']);
   });
 
   it('brings back an app-saved kit’s General MIDI members with the kit’s sounds, at their pitches (#178)', () => {
-    const keys = kitNotes(['cb', 'sh', 'lowconga']);
+    const keys = kitNotes(['cb', 'sh', 'lowconga'], gmDrumNote);
     const smf = file([
       {
         name: 'cb(G5) sh lowconga(G3)',
@@ -222,22 +222,23 @@ describe('a MIDI file as a piece', () => {
     ]);
     const { source, dropped } = cellsFromMidi(smf, 'test');
     expect(dropped).toBe(0);
-    expect(source).toContain('&cb s=square loop=G5 lpf=2500 env=&(map=adsr 0 .1 0 .03)');
-    expect(source).toContain('&sh s=white hpf=4000 env=&(map=adsr 0 .04 0 .03)');
-    expect(source).toContain('&lowconga s=sine loop=G3 pitch=0..5 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .25 0 .05)');
+    expect(source).toContain('&cb note=56 s=square loop=G5 lpf=2500 env=&(map=adsr 0 .1 0 .03)');
+    expect(source).toContain('&sh note=70 s=white hpf=4000 env=&(map=adsr 0 .04 0 .03)');
+    expect(source).toContain('&lowconga note=64 s=sine loop=G3 pitch=0..5 * &(map=adsr 0 .03 0 0) env=&(map=adsr 0 .25 0 .05)');
   });
 
   it('brings back the drums of a file the app saved as the piece’s own, at their pitches (#334)', () => {
     const src =
-      '&beat scan(1 1 1 1) step=120bpm\n&dundun oneshot s=sine loop=C2 env=&(map=adsr 0 .25 0 .1)\n&bd s=sine loop=G1\n&shekere s=white hpf=6000\n' +
+      '&beat scan(1 1 1 1) step=120bpm\n&dundun oneshot s=sine loop=C2 env=&(map=adsr 0 .25 0 .1)\n&bd note=36 s=sine loop=G1\n&shekere s=white hpf=6000\n' +
       '&ting s=square loop=527.4\n&drums step=pulse [&dundun,&shekere] &shekere &bd &ting\n&out map=sample [&drums]';
     const r = compileSource(src);
     const smf = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
     expect(smf.tracks.map((t) => t.name)).toEqual(['bd(G1) dundun(C2) shekere ting(527.4)']);
     const { source, dropped } = cellsFromMidi(smf, 'test');
     expect(dropped).toBe(0);
-    expect(source).toContain('&dundun s=sine loop=C2');
-    expect(source).toContain('&bd s=sine loop=G1');
+    // (each member with the note it came back on, so MIDI out sends it again: a name gives none, decision 075)
+    expect(source).toContain('&dundun note=37 s=sine loop=C2');
+    expect(source).toContain('&bd note=36 s=sine loop=G1');
     const keys = (s: string) => notesOf(s).map((n) => `${n.voice}:${n.key}@${n.at.toFixed(2)}`);
     expect(keys(source)).toEqual(keys(src).slice(0, 5));
     // (another program's drum track, named otherwise: General MIDI's drums, as before)

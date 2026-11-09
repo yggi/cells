@@ -1,0 +1,6 @@
+# a drum named as General MIDI's: its note was its name (decision 054), and is its note= since decision 075
+&bar meter("4/4") step=120bpm
+&bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)
+&hh s=white hpf=7000 env=&(map=adsr 0 .05 0 .02)
+&groove step=8n &bd ~ &hh ~ &bd &bd &hh ~
+&drums map=midi(10) &groove

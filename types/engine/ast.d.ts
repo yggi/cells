@@ -443,6 +443,8 @@ export interface CellDecl {
     readonly off: boolean;
     /** `oneshot`: a voice plays each note as long as its envelope's attack and decay, whatever its step (a drum hit). */
     readonly oneshot?: boolean;
+    /** `note=36`: a kit member's MIDI note on its kit's channel (decision 075, #560 rung 1): its name gives none. */
+    readonly drumNote?: number;
     readonly step: StepSpec | null;
     readonly map: MapSpec | null;
     /** How far each step moves a stepped table (stride=7 walks a 12-cycle in fifths). */

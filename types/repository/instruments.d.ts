@@ -1,7 +1,7 @@
 /**
  * The instruments: the repository's fifth facet, the voices the patterns play through (decision 054; #225). An instrument
  * fragment defines voices and uses nothing, so it fills the holes a groove leaves and fits any workbench; a kit's voices
- * are named so that General MIDI sends each on its drum note (`GM_KIT`, `gmDrumNote`).
+ * are named as General MIDI's, and each writes its drum note (`note=36`, decision 075; `GM_KIT`).
  *
  * The General MIDI kit (`gm_kit`) defines a voice for each of General MIDI's 47 percussion notes, and a piece takes the
  * ones it needs by name (`use &bd, &sd, &hh from gm_kit`). A kit is style-neutral: it is associated once, as the facet

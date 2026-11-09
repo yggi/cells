@@ -1,0 +1,11 @@
+### Changed
+
+- **A drum's note is its `note=`, not its name** (#560 rung 1, decision 075; the owner on #556 §1). A kit member sends the MIDI note it writes, `&bd note=36 s=sine …`, a whole number 0–127, so `&kick note=36` sends what `&bd note=36` does.
+  - **No `note=`:** a member that writes none takes the next free note from 36, in the order its kit names it. Its General MIDI name gives none.
+  - **A name that was a note** is warned: "&bd is named as General MIDI's drum 36, and a name gives no note: write &bd note=36". Read the old way (`CompileOptions.old`), the name still gives it, and Migrate's new `notes` rule writes it in. So every piece sends the same MIDI after Migrate.
+  - **The seeds:** `gm_kit` writes `note=` on its 47 members, so its hash moves. The 13 examples whose own drums are named as General MIDI's write theirs (`drums`, `arrangement`, `automaton`, `gate`, `sailor`, `pop`, `idm`, `acid`, `patchbay`, `zell`, `hypercell`, `onemore`, `brothers`). Their `notes` and `events` hashes don't move; their `values` and `live` hashes do, from the new field.
+  - **Importing a MIDI file** writes each drum with the note it came in on (`&claves note=75 s=sine …`), so MIDI out sends it again.
+  - **The API:** `kitNotes(members, noteOf)` takes each member's note, where it read names. `CellDecl.drumNote` and `ResolvedCell.drumNote` are new.
+  - `midi-out` leaves `alpha.test.ts`' list: renamed, its drums send what they sent.
+
+  **What a frontend sees at its next pin:** a text whose own drums are named as General MIDI's and write no `note=` (`&bd s=sine` on a MIDI card) gets a warning, and its members' notes move to the next free ones until Migrate writes `note=`. A drum taken from `gm_kit` sends as before. Jambot's section text takes its drums from `gm_kit`, so nothing it sends changes (yggi/jambot#615). Cell studio's pads read through `kitPads`, so a piece's own drums need `note=` there too. Cell studio's `src/layout/kit.ts` reads `gmDrumNote` off a member's name to draw it; `gmDrumNote` stays, and a member's note is now `result.cells.get(m)?.drumNote`. A caller of `kitNotes` passes `noteOf` (`(m) => result.cells.get(m)?.drumNote`, or `gmDrumNote` for a list of names).

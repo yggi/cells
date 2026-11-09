@@ -4,6 +4,7 @@ import { isNote, type Atom, type CellDecl, type Span, type Token } from '../ast'
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_PARAMS } from '../attributes';
+import { gmDrumNote } from '../midi';
 import { scan as scanOf } from '../../theory/modes';
 import { beatCount, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel, type Meter } from '../meter';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
@@ -159,6 +160,8 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       ...(d.tonic ? { tonic: d.tonic.name } : {}),
       off: d.off,
       oneshot: !!d.oneshot,
+      // (read the old way, a drum's General MIDI name gives its note where it writes none: Migrate writes it, decision 075)
+      ...(d.drumNote !== undefined ? { drumNote: d.drumNote } : ctx.parsed.old && gmDrumNote(d.name) !== null ? { drumNote: gmDrumNote(d.name)! } : {}),
       glide: typeof d.params.glide === 'number' && d.params.glide > 0 ? d.params.glide : 0,
       children,
       steps,

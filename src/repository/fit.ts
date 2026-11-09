@@ -149,6 +149,12 @@ function meets(result: CompileResult, { need, tap }: TappedNeed): boolean {
 /** The names a compile reports as unknown cells (`&bd`). */
 const unknownCells = (result: CompileResult): string[] => result.unknown.map((u) => `&${u.name}`);
 
+/**
+ * What the compile says of a stand-in alone (`&bd s=white`, no fault of the fragment's): its sound isn't sent on a MIDI
+ * card, and a stand-in named as a General MIDI drum writes no `note=` (decision 075).
+ */
+const STAND_IN_SAID = /^(&\w+) (?:is only on a MIDI card: its sound|is named as General MIDI's drum)/;
+
 const sameDiagnostic = (a: Diagnostic, b: Diagnostic) => a.severity === b.severity && a.message === b.message && a.span.line === b.span.line && a.span.col === b.span.col;
 
 /**
@@ -194,7 +200,7 @@ function fitByName(fragment: string, workbench: string, compiledBy?: (text: stri
   // (a stand-in's sound isn't sent on a MIDI card, and the compile says so of it: not the fragment's fault)
   const standNames = new Set([...sounds, ...benchStand.map((l) => l.split(' ')[0]!)].map((n) => (n.startsWith('&') ? n : `&${n}`)));
   const diagnostics = result.diagnostics.filter((d) => {
-    const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
+    const m = STAND_IN_SAID.exec(d.message);
     if (m && standNames.has(m[1]!)) return false;
     const i = before.findIndex((b) => sameDiagnostic(b, d));
     if (i < 0) return true;
@@ -326,7 +332,11 @@ function mainOn(
   stand: readonly string[],
 ): string | null {
   const alone = compiled([bench, ...stand].join('\n'));
-  const meets = (cell: string) => !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).length;
+  const standNames = new Set(stand.map((l) => l.split(' ')[0]!));
+  const meets = (cell: string) =>
+    !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter(
+      (d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? ''),
+    ).length;
   const offers = parse(bench).offers;
   const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
   // (two that meet are already none: the rest isn't compiled)
@@ -426,7 +436,7 @@ export function fitsAs(id: string, bench: string, options: UseOnOptions): FitAs 
   const result = compiled(judged);
   const standNames = new Set(sounds);
   const diagnostics = newDiagnostics(result, compiled([bench, ...stand].join('\n')).diagnostics).filter((d) => {
-    const m = /^(&\w+) is only on a MIDI card: its sound/.exec(d.message);
+    const m = STAND_IN_SAID.exec(d.message);
     return !(m && standNames.has(m[1]!));
   });
   const gave = new Set((use.used?.gave ?? []).map((n) => n.slice(1)));

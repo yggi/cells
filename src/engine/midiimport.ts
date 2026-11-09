@@ -103,7 +103,12 @@ function kitOf(name: string | undefined, notes: readonly SmfNote[]): Map<number,
     if (!m) return null;
     members.push({ member: m[1]!, pitch: m[2] ?? null });
   }
-  const keys = kitNotes(members.map((m) => m.member));
+  // (the names a track of the app's own lists, their notes as General MIDI names them: a member that wrote another note=
+  // isn't read back so, and the track reads as General MIDI's drums, below)
+  const keys = kitNotes(
+    members.map((m) => m.member),
+    gmDrumNote,
+  );
   const out = new Map<number, { member: string; sound: string }>();
   for (const { member, pitch } of members) {
     const key = keys.get(member);
@@ -111,8 +116,9 @@ function kitOf(name: string | undefined, notes: readonly SmfNote[]): Map<number,
     // (a General MIDI name: that drum's sound, at the member's pitch; else a sine at its pitch, or a noise)
     const gm = gmDrumNote(member);
     const own = gm === null ? undefined : DRUMS[DRUM_OF[gm] ?? ''];
-    const sound = own ? own.replace(/ ?loop=\S+/, '') : pitch ? TUNED : NOISE;
-    out.set(key, { member, sound: pitch ? sound.replace(/^(s=\S+)/, `$1 loop=${pitch}`) : sound });
+    // (its note as the track sent it, written on its line, so MIDI out sends it again: a name gives none, decision 075)
+    const sound = (own ? own.replace(/ ?loop=\S+/, '') : pitch ? TUNED : NOISE).replace(/^note=\d+ /, '');
+    out.set(key, { member, sound: `note=${key} ${pitch ? sound.replace(/^(s=\S+)/, `$1 loop=${pitch}`) : sound}` });
   }
   return notes.every((n) => out.has(n.key)) ? out : null;
 }

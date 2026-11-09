@@ -3,6 +3,7 @@ import { isNote } from "../ast.js";
 import { footOf, innerSteps, leaves } from "../subseq.js";
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps } from "../program.js";
 import { VOICE_PARAMS } from "../attributes.js";
+import { gmDrumNote } from "../midi.js";
 import { scan as scanOf } from "../../theory/modes.js";
 import { beatCount, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel } from "../meter.js";
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from "./tables.js";
@@ -136,6 +137,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(d.tonic ? { tonic: d.tonic.name } : {}),
             off: d.off,
             oneshot: !!d.oneshot,
+            ...(d.drumNote !== undefined ? { drumNote: d.drumNote } : ctx.parsed.old && gmDrumNote(d.name) !== null ? { drumNote: gmDrumNote(d.name) } : {}),
             glide: typeof d.params.glide === 'number' && d.params.glide > 0 ? d.params.glide : 0,
             children,
             steps,

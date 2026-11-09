@@ -18,7 +18,7 @@ describe('de-sugar: each family’s rewrite plays the same (S1), and a second fi
     ['unnamed cells', '&t step=2 0 2\n&v s=sine loop=C4 env=&(map=adsr .01 .2 0 0)\n&out map=sample [&t * &v]', '&_c1 map=adsr .01 .2 0 0'],
     ['repeats', '&t step=4 0!3 2\n&v s=sine loop=C4\n&out map=sample [&t * &v]', '&t step=4 0 0 0 2'],
     ['scans', '&major scan(2 2 1 2 2 2 1)\n&t over=&major step=2 0 2 4 6\n&v s=sine loop=C4\n&out map=sample [&t * &v]', '&major 0 2 4 5 7 9 11'],
-    ['from', `${BAR}\n&bd from gm_kit\n&t step=8n &bd ~ &bd ~\n&out map=sample [&t]`, '&bd s=sine'],
+    ['from', `${BAR}\n&bd from gm_kit\n&t step=8n &bd ~ &bd ~\n&out map=sample [&t]`, '&bd note=36 s=sine'],
     [
       'copies',
       `&bar base=&grouping step=&tempo\n&grouping meter("4/4")\n&tempo step=2\n&t step=8n 0 2 4\n&v s=sine loop=C4\n&out map=sample [&t * &v]`,
@@ -106,7 +106,7 @@ describe('de-sugar meters: every signature, written as levels that play the same
 
 describe('minify: the names that mean something besides themselves are kept', () => {
   it('a drum’s name is kept; a cell that draws, and one that splices it, are renamed as any other and draw as they did (#481)', () => {
-    const text = `${BAR}\n&a1 0 2? 4\n&arp step=8n &a1 &a1\n&hh s=white\n&kick s=sine loop=A1\n&hat step=8n &hh ~ &kick ~\n&v s=sine loop=C4\n&out map=sample [&arp * &v, &hat]`;
+    const text = `${BAR}\n&a1 0 2? 4\n&arp step=8n &a1 &a1\n&hh note=42 s=white\n&kick note=36 s=sine loop=A1\n&hat step=8n &hh ~ &kick ~\n&v s=sine loop=C4\n&out map=sample [&arp * &v, &hat]`;
     expect([...meaningfulNames(text)].sort()).toEqual(['hh', 'kick']);
     const min = minify(text);
     expect(min).not.toMatch(/&hat\b|&v\b|&out\b|&a1\b|&arp\b/);
@@ -124,7 +124,7 @@ describe('the core fold: Shorten’s core kinds, and the lines nothing reads, ea
   });
 
   it('a fragment’s line that nothing reads and nothing plays goes; one that plays by itself stays', () => {
-    const text = `${BAR}\n&bd s=sine loop=A1\n&rim s=square loop=C5\n&t step=8n &bd ~ &bd ~\n&out map=sample [&t]`;
+    const text = `${BAR}\n&bd note=36 s=sine loop=A1\n&rim note=37 s=square loop=C5\n&t step=8n &bd ~ &bd ~\n&out map=sample [&t]`;
     const { source, steps } = coreFold(text, O);
     expect(source).not.toMatch(/^&rim/m);
     expect(steps).toContain('&rim is read by nothing and plays nothing: gone');
@@ -368,7 +368,7 @@ describe('the mechanical rows (decision 077, #581 rung 4)', () => {
   it('a copy’s braid over its base’s steps: kept and moved, held, replaced, the rest after', () =>
     exact('copy steps', play('&e 0 -1 0@2 -5@2 -4@2\n&f base=&e^$7 =!2 =@4 9\n&t step=pulse*2 &e &f'), '&f 7 6 7@4 9 3@2'));
   it('x*n of a splice as n of it in brackets', () => {
-    const t = `${BAR}\n&sd s=white env=&(map=adsr 0 .1 0 .01)\n&t step=pulse*2 &sd &sd*3\n&out map=sample [&t]`;
+    const t = `${BAR}\n&sd note=38 s=white env=&(map=adsr 0 .1 0 .01)\n&t step=pulse*2 &sd &sd*3\n&out map=sample [&t]`;
     exact('splice subdivisions', t, '&t step=pulse*2 &sd [&sd &sd &sd]');
   });
   it('a voice’s pitch= in a product whose pitch is a sum: one more term of it', () => {
