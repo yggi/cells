@@ -23,11 +23,11 @@ function meterOf(d) {
     const felt = beaten && d.legato ? { ...beaten, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level) }])) } : beaten;
     if (!felt || typeof params.swing !== 'number')
         return felt;
-    const levels = d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }];
-    return withSwing(felt, levels.flatMap((l) => {
+    const levels = (d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }]).flatMap((l) => {
         const whole = noteValue(l.level);
         return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
-    }));
+    });
+    return d.swingMoves && levels.length ? { ...felt, swing: levels } : withSwing(felt, levels);
 }
 function bentOf(d, warn, declOf) {
     const m = meterOf(d);
@@ -156,6 +156,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(d.base ? { base: { name: d.base.name, ...(d.base.transpose ? { transpose: d.base.transpose } : {}), ...(d.base.degree ? { degree: d.base.degree } : {}) } } : {}),
             beat: stepsPerBeat(meterOf(d)),
             meter: meterOf(d),
+            ...(d.swingMoves ? { swingMoves: { level: d.swingMoves.level, range: d.swingMoves.range, factors: d.swingMoves.factors.map((f) => f.name) } } : {}),
             label: d.label ?? null,
             note: isNote(d),
             env: d.env?.name ?? null,

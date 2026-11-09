@@ -7,6 +7,7 @@
  */
 import type { CompileResult, Clock, ResolvedCell, Shifts } from './program';
 import { type Warp } from './physics';
+import { type SwingLevel } from './meter';
 export declare const EPS = 1e-9;
 export interface TimeMap {
     /** Entries (steps) per bar; 1 for a clock without positions. */
@@ -29,6 +30,13 @@ export interface TimeMap {
  * interpolate.
  */
 export declare function timeMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap;
+/**
+ * A reader of a moving swing's share at a time (decision 081): a plan's (`realize.ts`), its cells read as a moving
+ * parameter's are; NaN where it reads nothing. With none, a clock holds the share the meter was compiled with.
+ */
+export type ShareReader = (meter: string, seconds: number) => number;
+/** A plan hands the clocks its reader of moving swings (decision 081); the maps built before it are forgotten. */
+export declare function readSharesBy(result: CompileResult, statics: Shifts, read: ShareReader): void;
 /**
  * Cells whose braid is played — the terms of every out (triggers and
  * modulators) and everything they splice: their own notes read their moving
@@ -56,6 +64,8 @@ export interface Clocking {
     played(clock: string): TimeMap & {
         readonly grain?: number;
     };
+    /** A meter's swing in a bar (decision 081): its levels, each bar's share where a cell moves it; null where it doesn't swing. */
+    swingOf(meter: string, bar: number): readonly SwingLevel[] | null;
 }
 /**
  * The physics of a physical cell (a meter with a motor, or a belted cell): to put a hand on it, and

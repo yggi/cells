@@ -1,7 +1,7 @@
 import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from "./fiveto12.js";
 import { adsrOf, balance, CV_LAPS } from "./program.js";
 import { tableChain } from "./helix.js";
-import { clocking, EPS, playedCells, tapeMotion, turnLap, varispeedOf } from "./clocking.js";
+import { clocking, EPS, playedCells, readSharesBy, tapeMotion, turnLap, varispeedOf } from "./clocking.js";
 import { ExpansionLimit, flatten, stepsOf } from "./flatten.js";
 import { cellId } from "./ids.js";
 import { refsOf, stepsPerSecond } from "./readers.js";
@@ -324,7 +324,7 @@ export function plan(result, statics, muted = new Set()) {
             stops = Math.max(stops, at);
     }
     const lapsEnd = ends.length ? Math.max(...ends) : Infinity;
-    return {
+    const out = {
         result,
         statics,
         muted,
@@ -336,6 +336,29 @@ export function plan(result, statics, muted = new Set()) {
         end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity),
         seriesOf: (cell) => (result.cells.has(cell) ? series(cell, null, 0, 1) : NO_SERIES),
     };
+    const swings = new Map();
+    for (const c of result.cells.values()) {
+        if (!c.swingMoves || !c.meter)
+            continue;
+        try {
+            swings.set(c.name, { range: c.swingMoves.range, series: c.swingMoves.factors.map((f) => series(f, null, 0, 1)), env: null });
+        }
+        catch (e) {
+            if (!(e instanceof ExpansionLimit))
+                throw e;
+        }
+    }
+    if (swings.size)
+        readSharesBy(result, statics, (meter, t) => {
+            const prm = swings.get(meter);
+            return prm ? paramAt(out, prm, t) : NaN;
+        });
+    return out;
+}
+export function swingOfBar(p, meter, bar) {
+    return (clocking(p.result, p.statics)
+        .swingOf(meter, bar)
+        ?.map((l) => ({ level: l.level, share: l.share })) ?? null);
 }
 function envelopeAt(p, cell, env, at) {
     const slots = env && cell ? p.envParams.get(cell) : undefined;
