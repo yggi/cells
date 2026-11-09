@@ -148,7 +148,7 @@ describe('the presets find their modes', () => {
       const id = modeOf(f.id);
       const points =
         id === 'harmonic_minor'
-          ? [ELECTRO_SWING, SPOOKY]
+          ? [ELECTRO_SWING, SPOOKY, stylePoint('chiptune')]
           : OWN[id]
             ? [OWN[id]!]
             : id === 'mixolydian'
@@ -159,7 +159,17 @@ describe('the presets find their modes', () => {
       // (each point's mood by decision 076's rule, #572: at a style's point, the style's, placed by hand; elsewhere its own
       // mode's, moodOf: mixolydian .75, phrygian .375, lydian .9, locrian .3)
       // (aeolian at the three styles read from the examples too, #572: Acid's, Happy hardcore's and Elektro's A minor)
-      const also = id === 'ionian' ? [KINDERLIED] : id === 'aeolian' ? ['acid', 'happyHardcore', 'elektro', 'darkAmbient'].map(stylePoint) : [];
+      // (and #542's: ionian at Baroque, mixolydian at Blues shuffle, dorian at Sea shanty, harmonic minor at Chiptune)
+      const also =
+        id === 'ionian'
+          ? [KINDERLIED, stylePoint('baroque')]
+          : id === 'aeolian'
+            ? ['acid', 'happyHardcore', 'elektro', 'darkAmbient'].map(stylePoint)
+            : id === 'mixolydian'
+              ? [stylePoint('bluesShuffle')]
+              : id === 'dorian'
+                ? [stylePoint('seaShanty')]
+                : [];
       expect(f.association.map((wp) => wp.point)).toEqual([...points, ...also]);
       expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
     }

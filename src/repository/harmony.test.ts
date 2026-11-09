@@ -30,7 +30,9 @@ const takenOn = (text: string, bench: string, main?: string) => {
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
 /** The vamps, Jambot's themes' (`VAMPS`); the harmony written by hand for the point proposed for Spooky (#349) is not one. */
-const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter((f) => !['dark_cadence', 'haunted_progression', 'axis_progression'].includes(f.id));
+const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter(
+  (f) => !['dark_cadence', 'haunted_progression', 'axis_progression', 'fifths_sequence', 'twelve_bar', 'korobeiniki_changes'].includes(f.id),
+);
 
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 
@@ -116,6 +118,9 @@ describe('the harmonies', () => {
       'dark_cadence',
       'haunted_progression',
       'axis_progression',
+      'fifths_sequence',
+      'twelve_bar',
+      'korobeiniki_changes',
     ]);
     expect(VAMP_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
   });
@@ -179,7 +184,10 @@ describe('the harmonies', () => {
           ? [{ point: KINDERLIED, weight: 0.5, facet: 'harmony' }]
           : f.id === 'tonic_vamp'
             ? [stylePoint('acid'), stylePoint('darkAmbient')].map((point) => ({ point, weight: 0.4, facet: 'harmony' }))
-            : [];
+            : // (and the vamp to the seventh at Sea shanty's, the shanty's i–♭VII, at weight 0.4, #542)
+              f.id === 'vamp_to_the_seventh'
+              ? [{ point: stylePoint('seaShanty'), weight: 0.4, facet: 'harmony' }]
+              : [];
       expect(f.association, f.id).toEqual([...atModes, ...also]);
     }
   });

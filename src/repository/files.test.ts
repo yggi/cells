@@ -17,6 +17,11 @@ const ACID = stylePoint('acid');
 const HAPPY_HARDCORE = stylePoint('happyHardcore');
 const ELEKTRO = stylePoint('elektro');
 const DARK_AMBIENT = stylePoint('darkAmbient');
+// (#542's first four)
+const BAROQUE = stylePoint('baroque');
+const BLUES_SHUFFLE = stylePoint('bluesShuffle');
+const SEA_SHANTY = stylePoint('seaShanty');
+const CHIPTUNE = stylePoint('chiptune');
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { fragmentsOf, SEED } from './seed';
 import { SEED_FILES } from './seed.generated';
@@ -61,8 +66,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are a hundred and forty-one (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572)', () =>
-    expect(files).toHaveLength(141));
+  it('are a hundred and fifty-nine (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572)', () =>
+    expect(files).toHaveLength(159));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -91,8 +96,8 @@ describe('the seed files', () => {
   it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       // (and Kinderlied's 4/4 and the three read from the examples', #572)
-      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT],
-      'meter(swing=8n:2/3)': [SWING_JAZZ, ELECTRO_SWING],
+      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, BAROQUE, SEA_SHANTY, CHIPTUNE],
+      'meter(swing=8n:2/3)': [BLUES_SHUFFLE, SWING_JAZZ, ELECTRO_SWING],
       // (its own point, placed on the old axes at sync .4 harm .9 artic .5 energy .3, moved by decision 076's rule, #572)
       'meter(grouping=meter("5/4"))': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
       'meter(swing=16n:.65)': [LO_FI],
@@ -116,13 +121,20 @@ describe('the seed files', () => {
       happy_hardcore_drums: [HAPPY_HARDCORE],
       elektro_drums: [ELEKTRO],
       acid_bass: [ACID],
-      octave_bass: [ELEKTRO],
+      octave_bass: [ELEKTRO, CHIPTUNE],
+      continuo_bass: [BAROQUE],
+      blues_walk: [BLUES_SHUFFLE],
+      quarter_bass: [SEA_SHANTY],
+      ride_shuffle: [BLUES_SHUFFLE],
+      shanty_drums: [SEA_SHANTY],
+      chip_drums: [CHIPTUNE],
+      quiet_pulse: [BAROQUE],
       drone_bass: [DARK_AMBIENT],
       industrial_drums: [DARK_AMBIENT],
-      harmonic_minor: [ELECTRO_SWING, SPOOKY],
+      harmonic_minor: [ELECTRO_SWING, SPOOKY, CHIPTUNE],
       'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT],
-      'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK],
-      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED],
+      'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK, SEA_SHANTY],
+      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED, BAROQUE],
       upright_bass: [ELECTRO_SWING],
       brass_stab: [ELECTRO_SWING],
       clarinet: [ELECTRO_SWING],
@@ -138,11 +150,15 @@ describe('the seed files', () => {
       square_bass: [ELEKTRO],
       prepared_piano: [DARK_AMBIENT],
       drone_pad: [DARK_AMBIENT],
+      moog: [BAROQUE],
+      blues_horn: [BLUES_SHUFFLE],
+      fiddle: [SEA_SHANTY],
+      pulse_lead: [CHIPTUNE],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
     const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED], pumping_bass: [TECHNO, HAPPY_HARDCORE] };
     // (a meter or a drum bar speaks to no mode, so its point leaves mood out: the preset's other axes, exactly, decision 076)
-    const NO_MODE = (id: string) => id.startsWith('meter') || id.endsWith('_drums');
+    const NO_MODE = (id: string) => id.startsWith('meter') || RHYTHM_FRAGMENTS.some((f) => f.id === id);
     const onItsAxes = (id: string, p: object) => (NO_MODE(id) ? Object.fromEntries(Object.entries(p).filter(([axis]) => axis !== 'mood')) : p);
     for (const [id, points] of Object.entries(AT_PRESETS))
       expect(
@@ -160,6 +176,10 @@ describe('the seed files', () => {
 
   // (the seeds written by hand for the point proposed for a Spooky preset, #349, or near it, and lifted from nothing)
   const WRITTEN = new Set([
+    // (#542: written for Baroque, lifted from no example)
+    'continuo_bass',
+    'fifths_sequence',
+    'quiet_pulse',
     'spooky_drums',
     'creeping_bass',
     'dark_cadence',
@@ -175,12 +195,13 @@ describe('the seed files', () => {
     expect(new Set(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id))).toEqual(
       new Set(
         [
-          ...RHYTHM_FRAGMENTS.filter((f) => f.id.endsWith('_drums') && !WRITTEN.has(f.id)),
+          // (the drum bars, and the ride shuffle, #542, lifted from the jazz example)
+          ...RHYTHM_FRAGMENTS.filter((f) => (f.id.endsWith('_drums') || f.id === 'ride_shuffle') && !WRITTEN.has(f.id)),
           ...BASS_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...HARMONY_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic_minor'),
-          ...MOTIF_FRAGMENTS.filter((f) => ['gypsy', 'raveHook', 'sequencer', 'melodie', 'ghostPhrase'].includes(f.id)),
+          ...MOTIF_FRAGMENTS.filter((f) => ['gypsy', 'raveHook', 'sequencer', 'melodie', 'ghostPhrase', 'royalTheme', 'bluesRiff', 'drunkenSailor', 'korobeiniki'].includes(f.id)),
           ...INSTRUMENT_FRAGMENTS.filter((f) => !['gm_kit', 'bass', 'keys', 'pad', 'lead'].includes(f.id) && !WRITTEN.has(f.id)),
         ].map((f) => f.id),
       ),
@@ -201,6 +222,12 @@ describe('the seed files', () => {
         'yggi/cells examples/hypercell.md @ 014c4c73',
         'yggi/cells examples/zell.md @ 014c4c73',
         'yggi/cells examples/ghosts.md @ a8de625f',
+        // (#542's first four styles)
+        'yggi/cells examples/jazz.md @ b3c0acea',
+        'yggi/cells examples/korobeiniki.md @ a8de625f',
+        'yggi/cells examples/prelude.md @ a8de625f',
+        'yggi/cells examples/ricercar.md @ 3504291b',
+        'yggi/cells examples/sailor.md @ 014c4c73',
       ]),
     );
   });

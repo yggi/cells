@@ -33,8 +33,8 @@ const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.so
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {
-  it('109 templates (#572: ten more, two stabs, three bass lines, a harmony and four motifs): the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers, the four instruments that read a style and the band; the rest collections', () => {
-    expect(templates).toHaveLength(109);
+  it('119 templates (#572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs): the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers, the four instruments that read a style and the band; the rest collections', () => {
+    expect(templates).toHaveLength(119);
     const collections = LIBRARY.filter((f) => !signatureOf(f.text)).map((f) => f.id);
     expect(collections).toContain('gm_kit');
     expect(collections).toContain('upright_bass');

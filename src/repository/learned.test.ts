@@ -146,8 +146,9 @@ describe('filing', () => {
 
   it('is found only near its point: a tenth of the distance to the nearest seed fragment', () => {
     // (a meter's point, on the three axes a meter has, decision 076: a step of d·√3 on bite is d away over three;
-    // a point where that step keeps its nearest seed: at (.95, .95, .05), the old one, it reaches the plain 4/4 first, #572)
-    const point = { sync: 0.95, harm: 0.05, bite: 0.05 };
+    // a point where that step keeps its nearest seed: at (.95, .05, .05), since #542, it reaches Blues shuffle's swung 4/4
+    // first, so the test sits at (.95, .95, .05), whose nearest, the plain 4/4, holds)
+    const point = { sync: 0.95, harm: 0.95, bite: 0.05 };
     const seedFirst = library.query(point, 1, {}, { facet: 'meter' })[0]!;
     const { layer } = fileFragment(library, EMPTY_LAYER, filing(point));
     const off = (d: number) => ({ ...point, bite: point.bite + d * Math.sqrt(3) });

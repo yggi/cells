@@ -50,6 +50,32 @@ association:
     weight: 1
     facet: meter
   - point:
+      sync: 0.15
+      harm: 0.8
+      bite: 0.5
+    weight: 1
+    facet: meter
+  - point:
+      sync: 0.1
+      harm: 0.25
+      bite: 0.7
+    weight: 1
+    facet: meter
+  - point:
+      sync: 0.3
+      harm: 0.7
+      bite: 1
+    weight: 1
+    facet: meter
+  - point:
+      sync: 0.65
+      harm: 0.55
+      bite: 0.45
+    weight: 1
+    facet: meter
+    args:
+      swing: 8n:2/3
+  - point:
       sync: 0.35
       harm: 1
       bite: 0.3
