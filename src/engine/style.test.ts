@@ -352,7 +352,7 @@ describe('&style is the composer’s: a fragment reads it, and no collection def
 
   it('no seed fragment defines it but as a parameter’s default, the centre, a template declaring it (decision 075, #560 rung 3c–e)', () => {
     const defining = LIBRARY.filter((f) => f.text.split('\n').some((l) => /^&style[\s,]/.test(l)));
-    expect(defining.map((f) => f.id)).toEqual(['bass', 'keys', 'pad', 'lead', 'bass_performer', 'pad_performer', 'stab_performer', 'lead_performer']);
+    expect(defining.map((f) => f.id)).toEqual(['bass', 'keys', 'pad', 'lead', 'bass_performer', 'pad_performer', 'stab_performer', 'lead_performer', 'band']);
     for (const f of defining) {
       expect(signatureOf(f.text)?.optional, f.id).toContain('&style');
       expect(

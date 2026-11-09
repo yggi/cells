@@ -10,7 +10,7 @@ import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { codeShifts, type Resolve } from '../engine/program';
 import { windowAt } from '../engine/schedule';
-import { resolveBand } from './band';
+import { bandLine, resolveBand } from './band';
 import { resolveSeed } from './library';
 
 /** The parts a band's performers play, by their interface names. */
@@ -19,13 +19,15 @@ const PARTS = ['drumlines', 'bassline', 'padline', 'stabline', 'leadline'];
 /**
  * A section text as a score (decision 063 §1): its performers' uses, the voices it gives them and its cards go, as
  * Jambot's section text drops them at rung 5; a part it doesn't write is written as a tacet (§4); its style, the
- * preset's point, is the note `&style`; and it ends in `* from band`.
+ * preset's point, is the note `&style`; and it ends in `* from band(…)`, passing what it defines (`bandLine`).
  */
 function scoreOf({ preset, seed, text, point }: (typeof sections.sections)[number]): string {
   const lines = text.split('\n').filter((l) => !/^use \* from ".* performer"$/.test(l) && !/^&(bassV|keysV|padV|leadV) /.test(l) && !/^&(out|heard) map=/.test(l));
   const tacets = PARTS.filter((p) => !lines.some((l) => l.startsWith(`&${p} `))).map((p) => `&${p} step=1m ~`);
   const style = `&(map=style ${[point.sync, point.harm, point.artic, point.energy].join(' ')})`;
-  return [...lines, ...tacets, `&style label="${preset}, seed ${seed}, its second section" style=${style}`, '* from band'].join('\n');
+  const score = [...lines, ...tacets, `&style label="${preset}, seed ${seed}, its second section" style=${style}`].join('\n');
+  // (the band reads only what it declares: the score passes its parts, its levels and its style, decision 075)
+  return `${score}\n${bandLine(score)}`;
 }
 
 /** What a text sends over MIDI in its first 40 s (the longest section, 8 bars at 72 bpm, is 26.7 s): `channel note velocity onset end`, sorted. */

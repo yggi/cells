@@ -1,0 +1,11 @@
+# a score the band read by name: its parts and its style (#560 rung 3c–e)
+&bar meter("4/4") step=104bpm
+&key scale(dorian, D)
+&harm over=&key step=1m [0,2,4] [3,5,7]
+&kick step=4n &bd &bd &bd &bd
+&drumlines [&kick]
+&bassline over=&harm step=8n 0 ~ 0 2 ~ 0 4 ~
+&leadline over=&key step=8n 4 ~ 3 2 0@4
+&bassLevel map=amp .6
+&style style=&(map=style .3 .45 .8 .55)
+* from band(drumlines=&drumlines, bassline=&bassline, leadline=&leadline, bassLevel=&bassLevel, style=&style)

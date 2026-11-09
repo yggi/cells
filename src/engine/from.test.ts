@@ -151,6 +151,13 @@ describe('a copy of a template', () => {
     expect(added('&bell from bell D')).toEqual(['&bell_key scale(ionian, &bell_tonic) step=1m*7', '&bell step=&bell_key:pulse 0 0', '&bell_tonic D']);
     expect(added('* from bell D')).toEqual(added('&key, &bell from bell D'));
   });
+
+  it('* takes the heads the piece doesn’t write: a head it writes is its own, and what its line reads of the copy is kept', () => {
+    // (as * from a collection takes what the piece doesn't define: cell-studio#610)
+    expect(errors(lines(METER, '* from bell D', '&bell step=&key:pulse 0 2'))).toEqual([]);
+    expect(added(lines('* from bell D', '&bell step=&key:pulse 0 2'))).toEqual(['&key scale(ionian, &key_tonic) step=1m*7', '&key_tonic D']);
+    expect(added(lines('* from bell D', '&key scale(dorian, &key_tonic)'))).toEqual(['&bell step=&key:pulse 0 0', '&key_tonic D']);
+  });
 });
 
 describe('the arguments', () => {
