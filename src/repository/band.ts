@@ -1,3 +1,4 @@
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 /**
  * The band a score is played on, at the score's style (decision 063 §1; #391): which instrument each performer plays
  * is the band's choice, made by a query at resolution. A voice reads a style as a moving parameter (`lpf=450..900 *
@@ -20,8 +21,8 @@ import type { Resolve } from '../engine/program';
 import { AXES, CENTRE as CENTRE_VALUES } from '../engine/style';
 import type { CellDecl, StylePoint as WrittenStyle } from '../engine/ast';
 import { createRepository, type Fragment, type Repository, type StylePoint } from './fragments';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { resolveSeed } from './library';
+import { seedFragments } from './seed';
 
 /** The voice each pitched performer plays (the seed performers, decision 058), and the instrument it takes it from. */
 export const PERFORMER_VOICES = {

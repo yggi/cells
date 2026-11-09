@@ -17,11 +17,13 @@ import { fitsAs } from '../../repository/fit';
 import { heard } from '../../repository/heard';
 import { holesOf } from '../../repository/holes';
 import { resolveSeed } from '../../repository/library';
-import { METER_FRAGMENTS } from '../../repository/meters';
-import { RHYTHM_FRAGMENTS } from '../../repository/rhythms';
 import { anchorsOf, backbeatOf, drawn, variations, varied, type Variation } from '.';
 import type { Resolve } from '../program';
 import { bodyOf, expand } from '../use';
+import { seedFragments } from '../../repository/seed';
+
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {

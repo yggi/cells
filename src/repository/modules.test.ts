@@ -7,8 +7,10 @@ import { compileSource } from '../engine/compile';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { EXAMPLES } from '../engine/examples';
-import { MODULE_FRAGMENTS } from './modules';
 import { resolveSeed } from './library';
+import { seedFragments } from './seed';
+
+const MODULE_FRAGMENTS = seedFragments('modules');
 
 const lines = (...xs: string[]) => xs.join('\n');
 const compiled = (text: string) => compileSource(text, undefined, { resolve: resolveSeed });

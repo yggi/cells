@@ -6,6 +6,8 @@ import { soundsIdentical } from '../engine/sameness';
 import { bodyOf, signatureOf } from '../engine/use';
 import { fitsAs, useOn } from './fit';
 
+const BASS_FRAGMENTS = seedFragments('bass');
+
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {
   const body = bodyOf(text);
@@ -13,11 +15,11 @@ const unionOf = (text: string, workbench: string) => {
   return fitsAs('x', workbench, { resolve }).union!;
 };
 import { holesOf } from './holes';
-import { BASS_FRAGMENTS } from './bass';
 import { createRepository } from './fragments';
 import { LIBRARY, resolveSeed } from './library';
 import { FUNK } from './styles';
 import type { Resolve } from '../engine/program';
+import { seedFragments } from './seed';
 
 const resolve = resolveSeed;
 /** What a compile says but its warning that nothing plays yet (a bench of lines, with no sound). */

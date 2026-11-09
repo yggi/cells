@@ -9,10 +9,12 @@ import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { bandAt, bandLine, CENTRE, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from './band';
 import { bodyOf } from '../engine/use';
-import { BAND_FRAGMENTS } from './bands';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { seedFragments } from './seed';
+
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
+const BAND_FRAGMENTS = seedFragments('bands');
 
 const band = BAND_FRAGMENTS.find((f) => f.id === 'band')!.text;
 const lineOf = (text: string, voice: string) => text.split('\n').find((l) => l.startsWith(`&${voice} `));
