@@ -30,4 +30,13 @@ describe('Normalise: the narrowest from (#27, #157)', () => {
     const src = `&bar meter("4/4") step=&tempo\n&tempo step=120bpm\n* from gm_kit\n&t over=scale(major) step=8n 0 2 4\n&lead s=saw loop=C4\n&mix [&t * &lead]`;
     expect(normalise(src, SEED).steps.filter((s) => s.includes('the cells of it the piece uses'))).toEqual([]);
   });
+
+  it('a line that renames keeps its names; one the piece reads nothing of goes, and `&bd=bd` is `&bd` (decision 075 §3a)', () => {
+    const renamed = (from: string) => piece(from).replace(/&bd\b/g, '&kick');
+    const src = renamed('&kick=bd, &rim, &hh from gm_kit');
+    const { source } = normalise(src, SEED);
+    expect(source).toBe(renamed('&kick=bd, &hh from gm_kit'));
+    expect(soundsIdentical(src, source, undefined, SEED)).toBe(true);
+    expect(normalise(piece('&bd=bd, &hh from gm_kit'), SEED).source).toBe(piece('&bd, &hh from gm_kit'));
+  });
 });

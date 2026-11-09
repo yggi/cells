@@ -124,7 +124,7 @@ export function createRecogniser({ capacity = RECOGNISER_CAPACITY } = {}) {
             if (u?.kind !== 'use')
                 continue;
             const had = used.get(u.id);
-            used.set(u.id, had === null || u.names === null ? null : [...(had ?? []), ...u.names]);
+            used.set(u.id, had === null || u.takes === null ? null : [...(had ?? []), ...u.takes]);
         }
         if (!used.size)
             return [];

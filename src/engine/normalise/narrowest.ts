@@ -9,7 +9,7 @@
  * sound on their own stays. A template's copy (`&key from dorian D`) names its heads already.
  */
 import { splitComment } from '../edit';
-import { isWordId, readFrom } from '../parser/use';
+import { isWordId, leftOf, readFrom } from '../parser/use';
 import type { Resolve } from '../program';
 import type { Rewrite } from '../rewrite';
 import { signatureOf } from '../use';
@@ -31,12 +31,16 @@ export function narrowestFroms(source: string, resolve: Resolve | undefined): Re
     const text = resolve(f.id);
     if (text === null || signatureOf(text)) return [];
     const heads = [...new Set(text.split('\n').flatMap((l) => HEAD.exec(splitComment(l)[0])?.[1] ?? []))];
-    const asked = f.names?.map((n) => n.slice(1)) ?? heads;
+    // (each name the line binds, with the fragment's it takes: `&kick=bd` keeps its name, decision 075 §3a)
+    const asked = f.names?.map((n, k) => [n, f.takes![k]!] as const) ?? heads.map((h) => [`&${h}`, `&${h}`] as const);
     const read = (h: string) => !own.has(h) && codes.some((c, j) => j !== i && refersTo(h).test(c));
-    const used = asked.filter(read);
+    const used = asked.filter(([n]) => read(n.slice(1)));
     if (!used.length) return [];
     const before = code.trim();
-    const after = `${used.map((h) => `&${h}`).join(', ')} from ${isWordId(f.id) ? f.id : JSON.stringify(f.id)}`;
+    const after = `${leftOf(
+      used.map(([n]) => n),
+      used.map(([, t]) => t),
+    )} from ${isWordId(f.id) ? f.id : JSON.stringify(f.id)}`;
     if (after === before) return [];
     return [
       {

@@ -1,5 +1,5 @@
 import { splitComment } from "../edit.js";
-import { isWordId, readFrom } from "../parser/use.js";
+import { isWordId, leftOf, readFrom } from "../parser/use.js";
 const taking = (code) => {
     const f = readFrom(code.trim());
     return f?.kind === 'use' && !f.head.length && !f.args && f.main === null ? f : null;
@@ -9,16 +9,17 @@ function forwardOf(text) {
         .split('\n')
         .map((l) => splitComment(l)[0].trim())
         .filter(Boolean);
-    return lines.length === 1 ? taking(lines[0]) : null;
+    const to = lines.length === 1 ? taking(lines[0]) : null;
+    return to && to.names?.every((n, i) => n === to.takes[i]) !== false ? to : null;
 }
-function forwarded(names, to) {
-    if (!names)
-        return to.names;
-    if (to.names && names.some((n) => !to.names.includes(n)))
+function forwarded(use, to) {
+    if (!use.names)
+        return { names: to.names, takes: to.takes };
+    if (to.names && use.takes.some((n) => !to.names.includes(n)))
         return undefined;
-    return names;
+    return { names: use.names, takes: use.takes };
 }
-const written = (id, names) => `${names ? names.join(', ') : '*'} from ${isWordId(id) ? id : JSON.stringify(id)}`;
+const written = (id, { names, takes }) => `${leftOf(names, takes)} from ${isWordId(id) ? id : JSON.stringify(id)}`;
 export function forwardedUses(source, resolve) {
     if (!resolve)
         return [];
@@ -29,7 +30,7 @@ export function forwardedUses(source, resolve) {
             return [];
         const text = resolve(use.id);
         const to = text === null ? null : forwardOf(text);
-        const names = to ? forwarded(use.names, to) : undefined;
+        const names = to ? forwarded(use, to) : undefined;
         if (!to || names === undefined)
             return [];
         const before = code.trim();
