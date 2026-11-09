@@ -4,6 +4,7 @@
 // `timing.slow.test.ts`).
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
+import { gmDrumNote } from '../engine/midi';
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
@@ -216,7 +217,13 @@ interface E45 {
   readonly texts: readonly string[];
   readonly calls: readonly (readonly [bar: number, text: number, options: number, library: readonly number[], found: readonly number[]])[];
 }
-const e45 = JSON.parse(gunzipSync(readFileSync('fixtures/jambot-e45.json.gz')).toString('utf8')) as E45;
+// (recorded before a drum's note was its note= (decision 075, #626): its workbench's stand-ins, named as General MIDI's,
+// written with the note their names gave, as Migrate's `notes` rule writes a kit's; Vary reads a drum by its note=, #617)
+const noted = (workbench: string) =>
+  workbench.replace(/^&(\w+) (?!note=)(?=.*\bs=)/gm, (line, name: string) => (gmDrumNote(name) === null ? line : `&${name} note=${gmDrumNote(name)} `));
+const e45 = ((e) => ({ ...e, options: e.options.map((o) => (o.workbench ? { ...o, workbench: noted(o.workbench) } : o)) }))(
+  JSON.parse(gunzipSync(readFileSync('fixtures/jambot-e45.json.gz')).toString('utf8')) as E45,
+);
 
 describe('a bounded recogniser (#277)', () => {
   it('keeps 512 texts by default, and throws on a capacity that isn’t a whole number ≥ 1 or Infinity', () => {

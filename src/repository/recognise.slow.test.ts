@@ -6,6 +6,7 @@
 // p95 grew from 12.9 ms over its first 300 bars to 17.3 ms over its last (2026-10-27, four cores).
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
+import { gmDrumNote } from '../engine/midi';
 import { describe, expect, it } from 'vitest';
 import type { Fragment } from './fragments';
 import { createRecogniser, RECOGNISER_CAPACITY, type Recogniser, type RecogniseOptions } from './recognise';
@@ -18,7 +19,13 @@ interface E45 {
   readonly texts: readonly string[];
   readonly calls: readonly (readonly [bar: number, text: number, options: number, library: readonly number[], found: readonly number[]])[];
 }
-const e45 = JSON.parse(gunzipSync(readFileSync('fixtures/jambot-e45.json.gz')).toString('utf8')) as E45;
+// (recorded before a drum's note was its note= (decision 075, #626): its workbench's stand-ins, named as General MIDI's,
+// written with the note their names gave, as Migrate's `notes` rule writes a kit's; Vary reads a drum by its note=, #617)
+const noted = (workbench: string) =>
+  workbench.replace(/^&(\w+) (?!note=)(?=.*\bs=)/gm, (line, name: string) => (gmDrumNote(name) === null ? line : `&${name} note=${gmDrumNote(name)} `));
+const e45 = ((e) => ({ ...e, options: e.options.map((o) => (o.workbench ? { ...o, workbench: noted(o.workbench) } : o)) }))(
+  JSON.parse(gunzipSync(readFileSync('fixtures/jambot-e45.json.gz')).toString('utf8')) as E45,
+);
 type Call = E45['calls'][number];
 
 const byBar: Call[][] = Array.from({ length: e45.bars }, () => []);
