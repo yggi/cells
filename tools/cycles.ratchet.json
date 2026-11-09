@@ -5,19 +5,19 @@
     "bar": 45,
     "bars": 46,
     "start": 41,
-    "beats": 45,
+    "beats": 44,
     "groups": 42,
     "swing": 52
   },
   "synthetic": {
     "cases": 1035,
-    "beat": 451,
+    "beat": 458,
     "bar": 733,
-    "bars": 855,
-    "start": 478,
-    "beats": 495,
-    "groups": 221,
-    "swing": 783
+    "bars": 864,
+    "start": 484,
+    "beats": 496,
+    "groups": 226,
+    "swing": 785
   },
   "groove": {
     "cases": 3,
@@ -32,11 +32,11 @@
   "bach": {
     "cases": 88,
     "beat": 42,
-    "bar": 35,
-    "bars": 66,
-    "start": 28,
-    "beats": 53,
-    "groups": 25,
+    "bar": 40,
+    "bars": 73,
+    "start": 33,
+    "beats": 57,
+    "groups": 30,
     "swing": 88
   }
 }

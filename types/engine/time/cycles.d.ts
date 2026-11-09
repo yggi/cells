@@ -52,6 +52,8 @@ export interface Event {
     readonly low: number;
     readonly bass: number;
     readonly pitches: readonly number[];
+    /** The longest of its notes (seconds): a long note begins on a strong beat more often than a short one. */
+    readonly long: number;
 }
 /** Notes struck together as one event: its accent their weights, a long note and a low one weighing more. */
 export declare function events(onsets: readonly Onset[]): Event[];
@@ -72,6 +74,11 @@ export interface Bar {
     readonly start: number;
     readonly confidence: number;
 }
+/** How much each of the bar line's cues weighs, against the mean accent of a pulse (`lineCues`); chosen over the four benches. */
+export declare const CUES: {
+    readonly harmony: 0.5;
+    readonly long: 0.5;
+};
 /** The bar's length a bar is likeliest at (seconds), and how widely (octaves): two to three seconds, a band's bar. */
 export declare const BAR_PRIOR: {
     readonly seconds: 2.4;

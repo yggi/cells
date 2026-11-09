@@ -38,7 +38,8 @@ describe('what it writes', () => {
 
   it.each([
     ['2+2+3 110bpm sw0.60', [2, 2, 3], 0.6],
-    ['3+2+2 80bpm sw0.67', [3, 2, 2], 2 / 3],
+    ['3+2+2 110bpm sw0.60', [3, 2, 2], 0.6],
+    ['2+3+2 80bpm sw0.67', [2, 3, 2], 2 / 3],
     ['2+2+2+2 110bpm sw0.67', [2, 2, 2, 2], 2 / 3],
     ['3+3+3+3 110bpm sw0.50', [3, 3, 3, 3], 0.5],
   ] as const)('%s: found, written, and read back as its groups and its swing', (name, groups, swing) => {

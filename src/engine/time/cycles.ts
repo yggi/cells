@@ -54,6 +54,8 @@ export interface Event {
   readonly low: number;
   readonly bass: number;
   readonly pitches: readonly number[];
+  /** The longest of its notes (seconds): a long note begins on a strong beat more often than a short one. */
+  readonly long: number;
 }
 
 /** Notes struck together as one event: its accent their weights, a long note and a low one weighing more. */
@@ -69,7 +71,7 @@ export function events(onsets: readonly Onset[]): Event[] {
     const pitches = group.flatMap((o) => (o.pitch === undefined ? [] : [o.pitch]));
     const accent = group.reduce((s, o) => s + weigh(o), 0);
     const low = group.reduce((s, o) => s + (o.pitch !== undefined && o.pitch < middle ? weigh(o) : 0), 0);
-    out.push({ at: group[0]!.at, accent, low, bass: pitches.length ? Math.min(...pitches) : 0, pitches });
+    out.push({ at: group[0]!.at, accent, low, bass: pitches.length ? Math.min(...pitches) : 0, pitches, long: Math.max(0, ...group.map((o) => o.dur ?? 0)) });
     group = [];
   };
   for (const o of sorted) {
@@ -218,6 +220,50 @@ function pulseAccents(es: readonly Event[], pulse: number, phase: number, places
   return acc;
 }
 
+/** How much each of the bar line's cues weighs, against the mean accent of a pulse (`lineCues`); chosen over the four benches. */
+export const CUES = { harmony: 0.5, long: 0.5 } as const;
+
+/**
+ * A bar line's cues from the notes themselves, where nothing is louder (Temperley 2001, ch. 2: a strong beat prefers a
+ * change of harmony and a long note): per pulse, the pitch classes that sound newly in about a beat from it against the
+ * beat before it, as a share; and the longest note starting on it against the piece's median. Measured over the MIDI
+ * library's 4/4 and 3/4 (`docs/notes/648-meter-finder.md`): in 3/4 both stand out on the bar's first beat (.67 new
+ * against .52 and .57; 1.63 long against 1.33 and 1.39), in 4/4 beat 3 is nearly as strong as beat 1, so a bar of 4/4
+ * and its half stay hard to tell apart. The bass, which moves on nearly every beat, tells nothing, and isn't a cue.
+ */
+function lineCues(es: readonly Event[], pulse: number, phase: number, places: (k: number) => number, n: number): Float64Array {
+  const out = new Float64Array(n);
+  if (!CUES.harmony && !CUES.long) return out;
+  const on: (Event | undefined)[] = new Array(n);
+  for (const e of es) {
+    const k = Math.round((e.at - phase) / pulse);
+    if (k >= 0 && k < n && Math.abs(e.at - (phase + places(k))) <= pulse / 3) on[k] = e;
+  }
+  const lengths = es
+    .map((e) => e.long)
+    .filter((x) => x > 0)
+    .sort((a, b) => a - b);
+  const median = lengths.length ? lengths[Math.floor(lengths.length / 2)]! : 0;
+  // (about a beat: four pulses, a quarter on a sixteenth grid, at least .3 s and at most a second)
+  const window = Math.min(1, Math.max(0.3, 4 * pulse));
+  let j0 = 0;
+  for (let k = 0; k < n; k++) {
+    const t = phase + places(k);
+    const e = on[k];
+    if (CUES.harmony) {
+      while (j0 < es.length && es[j0]!.at < t - window) j0++;
+      const before = new Set<number>();
+      const after = new Set<number>();
+      for (let j = j0; j < es.length && es[j]!.at < t + window; j++) for (const p of es[j]!.pitches) (es[j]!.at < t - 1e-6 ? before : after).add(((Math.round(p) % 12) + 12) % 12);
+      const fresh = [...after].filter((p) => !before.has(p)).length;
+      out[k] = out[k]! + (CUES.harmony * fresh) / Math.max(1, after.size);
+    }
+    if (!e) continue;
+    if (CUES.long && median) out[k] = out[k]! + CUES.long * Math.min(2, Math.log2(1 + e.long / median));
+  }
+  return out;
+}
+
 /** The bar's length a bar is likeliest at (seconds), and how widely (octaves): two to three seconds, a band's bar. */
 export const BAR_PRIOR = { seconds: 2.4, octaves: 1 } as const;
 /** How likely a bar of this many beats is, before it is heard: four and three as written most, two less, one least. */
@@ -235,13 +281,16 @@ export function barOf(es: readonly Event[], pulse: number, phase: number, places
   const mean = acc.reduce((a, b) => a + b, 0) / acc.length || 1;
   // (the bar's line is where the low notes fall, and a little where any do: a backbeat is often the loudest stroke)
   const lows = pulseAccents(es, pulse, phase, places, true);
-  const line = acc.map((a, k) => lows[k]! + 0.25 * a);
+  const cues = lineCues(es, pulse, phase, places, acc.length);
+  // (a cue counts where it stands above its own mean: added evenly, it would only dull the contrast)
+  const cueMean = cues.reduce((a, b) => a + b, 0) / (cues.length || 1);
+  const line = acc.map((a, k) => Math.max(0, lows[k]! + 0.25 * a + (cues[k]! - cueMean) * mean));
   const lineMean = line.reduce((a, b) => a + b, 0) / line.length || 1;
   const recur = (n: number) => {
     let s = 0;
     let c = 0;
-    for (let k = 0; k + n < acc.length; k++) [s, c] = [s + acc[k]! * acc[k + n]!, c + 1];
-    return c ? s / c / (mean * mean) : 0;
+    for (let k = 0; k + n < line.length; k++) [s, c] = [s + line[k]! * line[k + n]!, c + 1];
+    return c ? s / c / (lineMean * lineMean) : 0;
   };
   /** The mean weight of a bar line at pulses off, off + n, off + 2n …, over the mean. */
   const at = (n: number, off: number) => {
