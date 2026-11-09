@@ -29,15 +29,15 @@ describe('styleAt: the style a piece plays at a time (#576 rung 5)', () => {
   it('a moving axis, a sum of cells: its value then, laid within the axis’s window', () => {
     const text = [
       '&bar meter("4/4") step=120bpm',
-      '&mine map=style sync=.3 harm=.45 artic=.2..0.6 * &drift energy=.55',
+      '&mine map=style sync=.3 harm=.45 drive=.2..0.6 * &drift bright=.5',
       '&drift [&a * .5 + &b * .5]',
       '&a step=1m 0 1',
       '&b step=1m/2 0 1',
       '&style style=&mine',
     ].join('\n');
     // (a bar is 2 s: &a turns each bar, &b each two)
-    const artic = [0, 2, 4, 6].map((s) => round(styleAt(text, s + 0.01))![2]);
-    expect(artic).toEqual([0.2, 0.4, 0.4, 0.6]);
+    const drive = [0, 2, 4, 6].map((s) => round(styleAt(text, s + 0.01))![2]);
+    expect(drive).toEqual([0.2, 0.4, 0.4, 0.6]);
   });
 
   it('a range of styles glides over the piece', () => {
@@ -59,7 +59,7 @@ describe('styleAt: the style a piece plays at a time (#576 rung 5)', () => {
     expect(styleAt('&a 1 2\n&style style=&a', 0)).toBeNull();
   });
 
-  it('Radio: what the band plays at each note is what styleAt reads then (the bass’s cutoff, 450..900 Hz * &style[artic])', () => {
+  it('Radio: what the band plays at each note is what styleAt reads then (the bass’s cutoff, 450..900 Hz * &style[drive])', () => {
     const text = EXAMPLES.radio.source;
     const r = compileSource(text);
     const barSeconds = (4 * 60) / 104;

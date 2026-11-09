@@ -86,7 +86,7 @@ const WRITTEN_IN: Readonly<Record<string, readonly string[]>> = {
  * As written, also where the library binds a name: a collection gives its cells by their names and takes no other, a
  * template of several heads is taken by its heads' names, so those are kept here (a band's performers keep their roles'
  * names); and where it reads one:
- * - the instruments (collections) read the section's style by its name, `&style[artic]` (decision 063 §3): renamed, they
+ * - the instruments (collections) read the section's style by its name, `&style[drive]` (decision 063 §3): renamed, they
  *   read the centre of style space, and an info says so;
  * - a score the default band plays (`* from band`, *Radio*, #576) binds `&style` and its parts' lines by the names the
  *   band and its feel read them by (#560, rungs 2 and 3).
