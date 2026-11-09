@@ -19,6 +19,8 @@
  *  - notes.ts:     a drum named as General MIDI's with no note= written with the note its name gave: &bd note=36 (decision 075)
  *  - arguments.ts: a `from` line of a fragment that read a name it now declares, passing the piece's cell of the name:
  *                  bass_performer(bassV=&bassV) (decision 075, #560 rung 3c–e)
+ *  - axes.ts:      a style on the axes sync harm artic energy as on sync harm bite mood (decision 076, #572): exact
+ *                  against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
  * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
@@ -47,9 +49,10 @@ import { pairs } from './pairs';
 import { beats } from './beats';
 import { notes } from './notes';
 import { argumentsByName } from './arguments';
+import { axes } from './axes';
 
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments';
+export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments' | 'axes';
 export type Migration = Rewrite<MigrationRule>;
 
 /** Every migration a text has, in the order its form was retired; a `from` line's fragment read through `options.resolve`. */
@@ -69,6 +72,7 @@ export const migrations =
     ...beats(source, result, options),
     ...notes(source, result),
     ...argumentsByName(source, result, options.resolve),
+    ...axes(source),
   ];
 
 /** A text with every retired form written as it is now, one rewrite at a time, each playing the same notes; the steps are what each did. */

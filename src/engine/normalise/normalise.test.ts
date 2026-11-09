@@ -90,7 +90,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       ['&call', '&call over=&key step=8n 0 2 4@2 2 0 ~ ~'],
       ['&a', '&a over=&key step=8n 0 2 4@2 2 0 ~ ~'],
       // (the band's, the score's style: #391)
-      ['&style', '&style style=&(map=style .5 .5 .5 .5)'],
+      ['&style', '&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)'],
       // (a module's audio in, a filter's or an amp's: an oscillator, decision 067 §3)
       ['&in', '&in s=saw loop=C3'],
     ]);

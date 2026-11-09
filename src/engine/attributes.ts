@@ -85,7 +85,7 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   tags: core('on a cell: its clusters in the graph, comma-separated (on the piece’s card, the old spelling of its tags: its file’s frontmatter holds them)', 'display.md'),
   about: core('on a note: the cells it explains', 'display.md', ['note']),
   style: core(
-    'its style: a map=style cell, &(map=style …), or a mix of them by weight; or a range from one to another over its scope (style=&funk..&bossa). On the note &style, the section’s, read by axis (&style[artic])',
+    'its style: a map=style cell, &(map=style …), or a mix of them by weight; or a range from one to another over its scope (style=&funk..&bossa). On the note &style, the section’s, read by axis (&style[bite])',
     'style.md',
   ),
   tier: {
@@ -97,7 +97,7 @@ export const CORE: Readonly<Record<string, Attribute>> = {
 /** Parameters: `key=value`, a number (or free()), a word or a cell — the voice's, and the physical cells'. */
 export const PARAMS: Readonly<Record<string, Attribute>> = {
   // sound (dough's names: https://dough.strudel.cc)
-  s: sound('sound source: sine tri saw square pulse white pink brown; or a blend of two waves, the share of the second moved by cells: s=tri..square * &style[artic]', {
+  s: sound('sound source: sine tri saw square pulse white pink brown; or a blend of two waves, the share of the second moved by cells: s=tri..square * &style[bite]', {
     value: 'word',
   }),
   lpf: sound('low-pass cutoff, Hz', { moves: true, hz: true }),

@@ -56,7 +56,7 @@ export interface Ref {
     readonly name: string;
     readonly pick: Pick | null;
     /**
-     * A slot by name (`&env[sustain]`, `&funk[artic]`, decision 063): one its map names (`SLOTS`, style.ts). Read before
+     * A slot by name (`&env[sustain]`, `&funk[bite]`, decision 063): one its map names (`SLOTS`, style.ts). Read before
      * compile as the slot's position as written (`pick` `[$2]`, `compiler/slots.ts`), so nothing after sees a name.
      */
     readonly slot?: string;

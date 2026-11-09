@@ -1,6 +1,6 @@
 /**
- * A style read by a voice (decision 063 §3): `lpf=300..1200 * &style[artic]`. A moving parameter multiplies its factors'
- * series (`realize.ts`), each the whole of a cell; a factor picked by a slot (`&style[artic]`, `&pluck[sustain]`, read as
+ * A style read by a voice (decision 063 §3): `lpf=300..1200 * &style[bite]`. A moving parameter multiplies its factors'
+ * series (`realize.ts`), each the whole of a cell; a factor picked by a slot (`&style[bite]`, `&pluck[sustain]`, read as
  * `[$i]` by `compiler/slots.ts`) is given a cell of its own here, before compile, that holds what it reads:
  *
  * - a slot of a style (`map=style`) or an envelope (`map=adsr`): that one value, held;

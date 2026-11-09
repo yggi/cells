@@ -101,12 +101,13 @@ const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
 const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(wordOf(`${w.preset} drums`)) }));
 
 describe('the rhythm fragments', () => {
-  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, every point associated as the facet rhythm', () => {
+  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, and the four read from the examples (#572), every point associated as the facet rhythm', () => {
     expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([
       ...Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)),
       ...Object.keys(CLAVES),
       ...Object.keys(LIFTED),
       ...Object.keys(WRITTEN),
+      ...Object.keys(READ),
     ]);
     expect(RHYTHM_FRAGMENTS.flatMap((f) => f.association.map((wp) => wp.facet))).toEqual(RHYTHM_FRAGMENTS.map(() => 'rhythm'));
   });
@@ -235,11 +236,19 @@ const WRITTEN: Record<string, string[]> = {
   kinderlied_drums: ['&bd', '&hh', '&sd'],
 };
 
+// The beats read from the examples for the styles they stand for (#572), each with the names it strikes.
+const READ: Record<string, string[]> = {
+  acid_drums: ['&bd', '&cp', '&hh', '&oh'],
+  happy_hardcore_drums: ['&bd', '&cp', '&hh'],
+  elektro_drums: ['&bd', '&hh', '&sd'],
+  industrial_drums: ['&bd', '&hh'],
+};
+
 describe('the rhythms’ holes (decision 054, rung 2)', () => {
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s defines no voice, and every name it strikes is a sound hole', (id, text) => {
     expect(text.split('\n').filter((l) => / (s|loop)=/.test(l))).toEqual([]);
     const holes = holesOf(text, compileSource);
-    expect(holes.uses).toEqual(STRUCK[id] ?? LIFTED[id] ?? WRITTEN[id] ?? ['&claves']);
+    expect(holes.uses).toEqual(STRUCK[id] ?? LIFTED[id] ?? WRITTEN[id] ?? READ[id] ?? ['&claves']);
     expect(holes.sounds).toEqual(holes.uses);
   });
 

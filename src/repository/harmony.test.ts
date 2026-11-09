@@ -18,7 +18,7 @@ import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY, resolveSeed } from './library';
-import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, stylePoint, SYNTH_POP, TECHNO } from './styles';
 import { SEED } from './seed';
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
@@ -30,7 +30,7 @@ const takenOn = (text: string, bench: string, main?: string) => {
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
 /** The vamps, Jambot's themes' (`VAMPS`); the harmony written by hand for the point proposed for Spooky (#349) is not one. */
-const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter((f) => !['dark_cadence', 'haunted_progression'].includes(f.id));
+const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter((f) => !['dark_cadence', 'haunted_progression', 'axis_progression'].includes(f.id));
 
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 
@@ -63,7 +63,7 @@ function layout(chords: readonly number[], harm: number): number[] {
 // Lifted from yggi/jambot packages/engine/src/style.ts @ 0a56da9 (`PRESETS`): the presets whose harmony vamps (under
 // 0.33), each with its mode. No preset is mixolydian. Ambient's harmony, 0.3, lays a vamp two bars a chord; the files sit
 // at its point with the harmony at Funk's 0.12, where `buildTheme` lays it four bars a chord, as they write it.
-const AMBIENT_VAMPED = at(AMBIENT.sync!, 0.12, AMBIENT.artic!, AMBIENT.energy!);
+const AMBIENT_VAMPED = at(AMBIENT.sync!, 0.12, AMBIENT.bite!, AMBIENT.mood!);
 const POINT: Partial<Record<Mode, StylePoint>> = { aeolian: TECHNO, dorian: FUNK, ionian: AMBIENT_VAMPED };
 
 /** The diatonic modes as semitones from the tonic, for the pitch classes a key in each plays. */
@@ -106,7 +106,7 @@ function chordsPlayed(text: string): number[][] {
 }
 
 describe('the harmonies', () => {
-  it('are five vamps, each one or two triads over the key, eight bars a lap, the dark cadence and the haunted progression', () => {
+  it('are five vamps, each one or two triads over the key, eight bars a lap, the dark cadence, the haunted progression and the axis progression (#572)', () => {
     expect(HARMONY_FRAGMENTS.map((f) => f.id)).toEqual([
       'tonic_vamp',
       'vamp_to_the_seventh',
@@ -115,6 +115,7 @@ describe('the harmonies', () => {
       'vamp_to_the_fifth',
       'dark_cadence',
       'haunted_progression',
+      'axis_progression',
     ]);
     expect(VAMP_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
   });
@@ -168,11 +169,18 @@ describe('the harmonies', () => {
     expect(near).toHaveLength(VAMPS[mode as Mode].length);
   });
 
-  it("sit at those points only: Techno's and Funk's exactly, Ambient's with its harmony at 0.12; mixolydian adds none; the vamp to the fifth at Kinderlied's too, at weight 0.5", () => {
+  it("sit at those points only: Techno's and Funk's exactly, Ambient's with its harmony at 0.12; mixolydian adds none; the vamp to the fifth at Kinderlied's too, at weight 0.5, and the tonic vamp at Acid's and Dark ambient's, at weight 0.4", () => {
     for (const f of VAMP_FRAGMENTS) {
       const modes = MODES.filter((mode) => POINT[mode] && VAMPS[mode].some((chords) => byDegrees(chords) === f));
       const atModes = modes.map((mode) => ({ point: POINT[mode], weight: 1, facet: 'harmony' }));
-      expect(f.association, f.id).toEqual(f.id === 'vamp_to_the_fifth' ? [...atModes, { point: KINDERLIED, weight: 0.5, facet: 'harmony' }] : atModes);
+      // (and the tonic vamp at Acid's point, the one chord its riff turns on, at weight 0.4 so Synth-pop, 0.272 away, keeps its own, #572)
+      const also =
+        f.id === 'vamp_to_the_fifth'
+          ? [{ point: KINDERLIED, weight: 0.5, facet: 'harmony' }]
+          : f.id === 'tonic_vamp'
+            ? [stylePoint('acid'), stylePoint('darkAmbient')].map((point) => ({ point, weight: 0.4, facet: 'harmony' }))
+            : [];
+      expect(f.association, f.id).toEqual([...atModes, ...also]);
     }
   });
 
@@ -253,11 +261,12 @@ describe('the haunted progression', () => {
   });
 
   // (at weight 0.4, as the dark cadence is, so it is found within Jambot's miss distance, 0.3, of Spooky's point alone, #404)
-  it('sits 0.05 below Spooky in energy at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
-    expect(haunted.association).toEqual([{ point: { ...SPOOKY, energy: 0.3 }, weight: 0.4, facet: 'harmony' }]);
+  it('sits 0.05 below Spooky in bite (its energy offset, on the axes before decision 076, #572) at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
+    expect(haunted.association).toEqual([{ point: { ...SPOOKY, bite: 0.25 }, weight: 0.4, facet: 'harmony' }]);
     const repository = createRepository(LIBRARY);
     expect(repository.query(SPOOKY, 2, {}, { facet: 'harmony' }).map((f) => [f.fragment.id, Math.round(f.distance * 100) / 100])).toEqual([
       ['dark_cadence', 0],
+      // (0.05 off on one of four axes, at weight 0.4: as before decision 076, 0.06)
       ['haunted_progression', 0.06],
     ]);
     const others = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ, ELECTRO_SWING };

@@ -27,7 +27,7 @@ const ROWS: Readonly<Record<keyof typeof NUMBER_PLACES, readonly [string, string
   param: ['&lead s=saw loop=C4 lpf=X', '1200', 'free(1200, 200..5000)', 'ok', 'ok'],
   level: ['&out play=&tune level=X &tune', '.4', 'free(.4, 0..1)', 'ok', 'ok'],
   slot: ['&env map=adsr attack=X decay=.3 sustain=.5 release=.4', '.01', 'free(.01, 0..1)', 'ok', 'ok'],
-  axis: ['&mine map=style sync=X harm=.45 artic=.55 energy=.55', '.3', 'free(.3, 0..1)', 'ok', 'ok'],
+  axis: ['&mine map=style sync=X harm=.45 bite=.55 mood=.55', '.3', 'free(.3, 0..1)', 'ok', 'ok'],
   end: ['&lead s=saw loop=C4 lpf=X..2400 * &lfo', '400', 'free(400, 200..800)', /Unexpected '\.'/, /Unexpected '\.'/],
   share: ['&bar meter("4/4") step=90bpm swing=8n:X', '.6', 'free(.6, .5...75)', 'ok', 'ok'],
   depth: ['&bar meter("*.-.+.-.") step=90bpm bend=4n:&rubato:X\n&rubato 27 23 26 24', '.5', 'free(1, -1..2)', 'ok', 'ok'],

@@ -24,9 +24,6 @@ export const PENDING = new Set([
     'parameter legato',
     'parameter bend',
     'attribute tags',
-    'reference &name[slot]',
-    'map map=style',
-    'attribute style',
     'parameter licence',
     'parameter accents',
     'parameter bpf',
@@ -185,6 +182,9 @@ export const TIERS = [
             'free free(v, lo..hi)',
             'free free(v, lo..hi, "names")',
             'mix free(v, lo..hi)',
+            'map map=style',
+            'attribute style',
+            'reference &name[slot]',
         ],
     },
     {
@@ -468,6 +468,7 @@ export function formsUsed(source, options = {}) {
             ['tags', d.tags],
             ['about', d.about],
             ['tier', d.tier],
+            ['style', d.style],
         ])
             if (v !== null && v !== undefined)
                 use(`attribute ${k}`);

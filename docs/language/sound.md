@@ -109,13 +109,13 @@ Envelopes are cells. A cell with **`map=adsr`** holds attack, decay, sustain and
 
 Written in place they hang as petals of the voice; named, one envelope serves several voices (`&pluck map=adsr .005 .3 0 .2`, then `env=&pluck`). They're exactly what the same cells would be in the mix (`&tune * &env * &lead`, `(&tune + &vibrato) * &lead`) — written once, on the instrument. As a factor it shapes each note it multiplies, from the note's start through its release.
 
-**An envelope's slots by name** ([decision 066](https://github.com/yggi/cells/blob/main/docs/decisions/066-a-wave-and-an-envelope-move.md)): `attack=`, `decay=`, `sustain=`, `release=` on a `map=adsr` cell, the same four in order. Each is a number, a range scaled by cells, or a cell alone, its values the slot's (`attack=&a`: seconds; `sustain=&s`: a level, 0 to 1), read at each note's start. A range moved by the style swells the chords at legato and cuts them short at staccato:
+**An envelope's slots by name** ([decision 066](https://github.com/yggi/cells/blob/main/docs/decisions/066-a-wave-and-an-envelope-move.md)): `attack=`, `decay=`, `sustain=`, `release=` on a `map=adsr` cell, the same four in order. Each is a number, a range scaled by cells, or a cell alone, its values the slot's (`attack=&a`: seconds; `sustain=&s`: a level, 0 to 1), read at each note's start. A range moved by the style swells the chords where the style is paddy and cuts them short where it is stabby:
 
 ```cells
 &bar meter("4/4") step=&tempo
 &tempo step=120bpm
 &style style=&(map=style .5 .5 .2 .5)
-&chords map=adsr attack=.3..0.01 * &style[artic] decay=0 sustain=1 release=.7..0.12 * &style[artic]
+&chords map=adsr attack=.3..0.01 * &style[bite] decay=0 sustain=1 release=.7..0.12 * &style[bite]
 &pad s=tri loop=C3 env=&chords
 &line step=1m [0,4,7] [5,9,12]
 &out map=sample [&line * &pad * .3]
@@ -127,7 +127,7 @@ Written in place they hang as petals of the voice; named, one envelope serves se
 &bar meter("4/4") step=&tempo
 &tempo step=120bpm
 &style style=&(map=style .5 .5 .8 .5)
-&lead s=tri..square * &style[artic] loop=C4 lpf=2500
+&lead s=tri..square * &style[bite] loop=C4 lpf=2500
 &tune step=8n 0 2 4 7 4 2 0 ~
 &out map=sample [&tune * &lead * .5]
 ```

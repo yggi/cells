@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.3
       harm: 0.45
-      artic: 0.55
-      energy: 0.55
+      bite: 0.55
+      mood: 0.5
     weight: 1
     facet: mode
     args:
@@ -13,8 +13,8 @@ association:
   - point:
       sync: 0.12
       harm: 0
-      artic: 1
-      energy: 0.8
+      bite: 1
+      mood: 0.4
     weight: 1
     facet: mode
     args:
@@ -22,8 +22,8 @@ association:
   - point:
       sync: 0.5
       harm: 0.75
-      artic: 0.35
-      energy: 0.5
+      bite: 0.35
+      mood: 0.5
     weight: 1
     facet: mode
     args:
@@ -31,8 +31,8 @@ association:
   - point:
       sync: 0.35
       harm: 0.55
-      artic: 0.65
-      energy: 0.65
+      bite: 0.65
+      mood: 0.65
     weight: 1
     facet: mode
     args:
@@ -40,8 +40,8 @@ association:
   - point:
       sync: 1
       harm: 0.12
-      artic: 0.85
-      energy: 0.75
+      bite: 0.85
+      mood: 0.65
     weight: 1
     facet: mode
     args:
@@ -49,8 +49,8 @@ association:
   - point:
       sync: 0.05
       harm: 0.3
-      artic: 0
-      energy: 0.2
+      bite: 0
+      mood: 0.9
     weight: 1
     facet: mode
     args:
@@ -58,8 +58,8 @@ association:
   - point:
       sync: 0.75
       harm: 0.85
-      artic: 0.45
-      energy: 0.45
+      bite: 0.45
+      mood: 0.9
     weight: 1
     facet: mode
     args:
@@ -67,8 +67,8 @@ association:
   - point:
       sync: 0.35
       harm: 1
-      artic: 0.3
-      energy: 0.6
+      bite: 0.3
+      mood: 0.85
     weight: 1
     facet: mode
     args:
@@ -76,8 +76,8 @@ association:
   - point:
       sync: 0.1
       harm: 0.12
-      artic: 0.5
-      energy: 0.35
+      bite: 0.5
+      mood: 0.95
     weight: 1
     facet: mode
     args:
@@ -85,8 +85,8 @@ association:
   - point:
       sync: 0.875
       harm: 0.485
-      artic: 0.65
-      energy: 0.6
+      bite: 0.65
+      mood: 0.75
     weight: 1
     facet: mode
     args:
@@ -94,8 +94,8 @@ association:
   - point:
       sync: 0.6
       harm: 0.6
-      artic: 0.7
-      energy: 0.85
+      bite: 0.7
+      mood: 0.375
     weight: 1
     facet: mode
     args:
@@ -103,8 +103,8 @@ association:
   - point:
       sync: 0.15
       harm: 0.6
-      artic: 0.15
-      energy: 0.3
+      bite: 0.15
+      mood: 0.9
     weight: 1
     facet: mode
     args:
@@ -112,12 +112,48 @@ association:
   - point:
       sync: 0.9
       harm: 1
-      artic: 0.6
-      energy: 0.9
+      bite: 0.6
+      mood: 0.3
     weight: 1
     facet: mode
     args:
       mode: locrian
+  - point:
+      sync: 0.45
+      harm: 0.05
+      bite: 0.85
+      mood: 0.35
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
+  - point:
+      sync: 0.25
+      harm: 0.45
+      bite: 0.8
+      mood: 0.9
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
+  - point:
+      sync: 0.15
+      harm: 0.5
+      bite: 0.85
+      mood: 0.45
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
+  - point:
+      sync: 0.35
+      harm: 0.15
+      bite: 0.4
+      mood: 0.1
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
 source: seed
 ---
 
