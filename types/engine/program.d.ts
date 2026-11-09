@@ -136,6 +136,18 @@ export interface ResolvedCell {
         readonly positions: readonly number[];
         readonly lap: number;
         readonly bars: number;
+        /**
+         * Its depth moved by cells (decision 081, `bend=4n:&rubato:&k`): the range (null: a bare cell, its values the depth) and
+         * the cells, read at each line of the table's span (`bars` bars) by the plan's reader; and the table, its nodes' steps
+         * (`per`) and how many nodes a bar holds, to lay each span out at its depth (`bentSteps`). `positions` are the held depth's.
+         */
+        readonly depth?: {
+            readonly range: readonly [number, number] | null;
+            readonly factors: readonly string[];
+            readonly table: readonly number[];
+            readonly per: number;
+            readonly nodes: number;
+        };
     };
     /** shift= as written. */
     readonly shift: number;

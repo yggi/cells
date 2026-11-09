@@ -22,6 +22,7 @@ export function declare(ctx) {
     modes(ctx, decls);
     swings(ctx, decls);
     movingSwings(ctx, decls);
+    movingDepths(ctx, decls);
     const sections = sectionTables(decls, error);
     const stacks = gates(decls, implicit, error, ctx.warn);
     mixSelectors(ctx, decls);
@@ -219,6 +220,22 @@ function movingSwings(ctx, decls) {
         if (held === undefined || bad !== undefined)
             continue;
         decls.set(name, { ...d, params: { ...d.params, swing: held }, swing: (d.swing ?? []).map((l) => (l.level === mv.level ? { ...l, share: held } : l)) });
+    }
+}
+function movingDepths(ctx, decls) {
+    for (const [name, d] of decls) {
+        const mv = d.bend?.depthMoves;
+        if (!mv)
+            continue;
+        for (const f of mv.factors)
+            if (!decls.has(f.name))
+                ctx.unknownCell(f.name, f.span);
+        if (mv.range)
+            continue;
+        const cell = decls.get(mv.factors[0].name);
+        const first = cell?.braid.kind === 'list' ? cell.braid.tokens.flatMap((t) => leaves(t.atom)).find((a) => a.kind === 'note') : undefined;
+        if (first?.kind === 'note')
+            decls.set(name, { ...d, bend: { ...d.bend, depth: first.value + first.alter } });
     }
 }
 function mainKeyOf(ctx, decls) {

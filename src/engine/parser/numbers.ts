@@ -78,6 +78,13 @@ export const NUMBER_PLACES = {
     moves: true,
     example: '&bar meter("4/4") step=90bpm swing=8n:free(.6, .5...75)',
   }),
+  depth: place({
+    form: 'bend=4n:&t:d (a bend’s depth)',
+    name: 'depth',
+    cell: `${MOVES}, read at each line of its table’s span, held through it (decision 081)`,
+    moves: true,
+    example: '&bar meter("*.-.+.-.") step=90bpm bend=4n:&(27 23 26 24):free(1, -1..2)',
+  }),
   legatoShare: place({
     form: 'legato=8n:n (a legato’s share by level)',
     name: 'share',

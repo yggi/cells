@@ -370,12 +370,25 @@ function readPlay(s, b) {
     }
 }
 const readBend = (s, b) => {
+    const at = s.i;
     const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
     if (level === null)
         s.fail('a level and a table after bend=, the lengths of its nodes: bend=4n:&rubato');
     s.i++;
-    b.bend = { level: level, table: s.cellRef('a table after bend=4n:, the lengths of its nodes: bend=4n:&rubato', 'after bend=4n:') };
-    b.paramSpans.bend = s.place(s.i);
+    const table = s.cellRef('a table after bend=4n:, the lengths of its nodes: bend=4n:&rubato', 'after bend=4n:');
+    let depth;
+    let depthMoves = null;
+    if (s.peek() === ':') {
+        s.i++;
+        const vs = s.i;
+        depthMoves = readMoving(s, 'depth', vs);
+        if (depthMoves)
+            depth = depthMoves.range ? depthMoves.range[0] : 1;
+        else
+            depth = s.num(`a depth after bend=${level}:&${table.name}:, how far its table applies (1 as written, 0 even, -1 inverted): bend=${level}:&${table.name}:.5`, NUMBER_PLACES.depth).value;
+    }
+    b.bend = { level: level, table, ...(depth !== undefined ? { depth } : {}), ...(depthMoves ? { depthMoves } : {}) };
+    b.paramSpans.bend = s.place(at);
 };
 const readLevels = (s, b, word) => {
     if (!/^[1-9][0-9]*(?:n\.?|t):/.test(s.text.slice(s.i)))

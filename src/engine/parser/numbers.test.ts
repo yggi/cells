@@ -30,6 +30,7 @@ const ROWS: Readonly<Record<keyof typeof NUMBER_PLACES, readonly [string, string
   axis: ['&mine map=style sync=X harm=.45 artic=.55 energy=.55', '.3', 'free(.3, 0..1)', 'ok', 'ok'],
   end: ['&lead s=saw loop=C4 lpf=X..2400 * &lfo', '400', 'free(400, 200..800)', /Unexpected '\.'/, /Unexpected '\.'/],
   share: ['&bar meter("4/4") step=90bpm swing=8n:X', '.6', 'free(.6, .5...75)', 'ok', 'ok'],
+  depth: ['&bar meter("*.-.+.-.") step=90bpm bend=4n:&rubato:X\n&rubato 27 23 26 24', '.5', 'free(1, -1..2)', 'ok', 'ok'],
   legatoShare: ['&bar meter("4/4") step=90bpm legato=8n:X', '.5', 'free(.5, .25..1)', NOT_HERE, NOT_HERE],
   gain: ['&out [&strings * X]', '.4', 'free(.4, 0..1)', 'ok', NOT_HERE],
   hit: ['&beat step=8 &bd &hh:0:X', '.4', 'free(.4, 0..1)', NOT_HERE, NOT_HERE],

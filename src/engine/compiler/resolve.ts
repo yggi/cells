@@ -6,7 +6,7 @@ import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type Reso
 import { VOICE_PARAMS } from '../attributes';
 import { gmDrumNote } from '../midi';
 import { scan as scanOf } from '../../theory/modes';
-import { beatCount, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel, type Meter } from '../meter';
+import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel, type Meter } from '../meter';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
@@ -52,7 +52,7 @@ function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato' | 'sw
  * 4/4) take the table's lengths in turn, each node's steps even within it; a table of as many entries as the bar has nodes
  * bends each bar alike, a longer one spans bars (a tempo map), cycled at the least number of whole bars that holds it.
  */
-function bentOf(d: CellDecl, warn: Ctx['warn'], declOf: (name: string) => CellDecl | undefined): Partial<{ bend: { positions: number[]; lap: number; bars: number } }> {
+function bentOf(d: CellDecl, warn: Ctx['warn'], declOf: (name: string) => CellDecl | undefined): Partial<{ bend: NonNullable<ResolvedCell['bend']> }> {
   const m = meterOf(d);
   const bend = d.bend!;
   const span = d.paramSpans.bend ?? d.span;
@@ -71,14 +71,17 @@ function bentOf(d: CellDecl, warn: Ctx['warn'], declOf: (name: string) => CellDe
   const nodes = steps / per;
   const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
   const bars = table.length / gcd(nodes, table.length);
-  const positions: number[] = [];
-  let at = 0;
-  for (let i = 0; i < nodes * bars; i++) {
-    const len = table[i % table.length]!;
-    for (let k = 0; k < per; k++) positions.push(at + (k * len) / per);
-    at += len;
-  }
-  return { bend: { positions, lap: at, bars } };
+  // (at its depth, decision 081: as written where none is given; a depth moved by cells held at its first end, or 1)
+  const { positions, lap } = bentSteps(table, per, nodes, bars, bend.depth ?? 1);
+  const moves = bend.depthMoves;
+  return {
+    bend: {
+      positions,
+      lap,
+      bars,
+      ...(moves ? { depth: { range: moves.range, factors: moves.factors.map((f) => f.name), table, per, nodes } } : {}),
+    },
+  };
 }
 
 /** A meter's steps a beat: what its bpm is read through (1 when it has no meter). */

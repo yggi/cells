@@ -82,6 +82,23 @@ export function withBeats(m: Meter, n: number): Meter {
   return { ...rest, beats: Array.from({ length: k }, () => m.pulses / k) };
 }
 
+/**
+ * A bent meter's steps (decision 080) at a depth (decision 081): over the bars its table spans, each of the level's nodes
+ * the table's next length raised to the depth (1 as written, 0 even, -1 inverted), its `per` steps even within it; and
+ * their lap, the lengths' sum, which the clock lays over the span's fixed length. At depth 1 the lengths are the table's.
+ */
+export function bentSteps(table: readonly number[], per: number, nodes: number, bars: number, depth = 1): { positions: number[]; lap: number } {
+  const positions: number[] = [];
+  let at = 0;
+  for (let i = 0; i < nodes * bars; i++) {
+    const t = table[i % table.length]!;
+    const len = depth === 1 ? t : Math.pow(t, depth);
+    for (let k = 0; k < per; k++) positions.push(at + (k * len) / per);
+    at += len;
+  }
+  return { positions, lap: at };
+}
+
 /** swing= on a meter: the levels that lean, those at .5 (straight) left out. */
 export function withSwing(m: Meter, levels: readonly SwingLevel[]): Meter {
   const leaning = levels.filter((l) => l.share !== 0.5);

@@ -31,12 +31,13 @@ export interface TimeMap {
  */
 export declare function timeMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap;
 /**
- * A reader of a moving swing's share at a time (decision 081): a plan's (`realize.ts`), its cells read as a moving
- * parameter's are; NaN where it reads nothing. With none, a clock holds the share the meter was compiled with.
+ * A reader of a time map's amount at a time (decision 081): a meter's swing's share, or its bend's depth; a plan's
+ * (`realize.ts`), its cells read as a moving parameter's are; NaN where it reads nothing. With none, a clock holds the
+ * amount the meter was compiled with.
  */
-export type ShareReader = (meter: string, seconds: number) => number;
-/** A plan hands the clocks its reader of moving swings (decision 081); the maps built before it are forgotten. */
-export declare function readSharesBy(result: CompileResult, statics: Shifts, read: ShareReader): void;
+export type AmountReader = (meter: string, amount: 'swing' | 'depth', seconds: number) => number;
+/** A plan hands the clocks its reader of moving time maps (decision 081); the maps built before it are forgotten. */
+export declare function readAmountsBy(result: CompileResult, statics: Shifts, read: AmountReader): void;
 /**
  * Cells whose braid is played — the terms of every out (triggers and
  * modulators) and everything they splice: their own notes read their moving
