@@ -1,4 +1,3 @@
-import { AXIS_NAMES } from "../style.js";
 import { SHOWS } from "../parser/cell.js";
 import { ATTRIBUTES, rolesText, VOICE_PARAMS } from "../attributes.js";
 import { PLUGIN_SYNTAX } from "../plugins.js";
@@ -59,9 +58,7 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
         const has = roles(c);
         const written = [
             ...Object.keys(d.params).map((k) => [k, d.paramSpans[k] ?? d.span]),
-            ...Object.entries(d.paramCells ?? {})
-                .filter(([k]) => !(d.map?.kind === 'style' && AXIS_NAMES.includes(k)))
-                .map(([k, pc]) => [k, pc.span]),
+            ...Object.entries(d.paramCells ?? {}).map(([k, pc]) => [k, pc.span]),
             ...Object.entries(d.paramClocks ?? {}).map(([k, st]) => [k, st.span]),
             ...['env', 'pitch', 'title'].filter((k) => d[k]).map((k) => [k, k === 'title' ? d.span : d[k].span]),
         ];

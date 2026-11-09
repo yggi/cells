@@ -6,7 +6,7 @@ How the four axes correlate over the presets and the library, how much of the pr
 
 ## Reproduce
 
-The tool measured the library on the axes before decision 076, so it was retired when #572 moved the library onto `sync harm drive bright`: it runs at 39048157 (the v0.21.0 release), from a checkout of that commit:
+The tool measured the library on the axes before decision 076, so it was retired when #572 moved the library onto `sync harm bite mood`: it runs at 39048157 (the v0.21.0 release), from a checkout of that commit:
 
 ```sh
 git checkout 39048157 && node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/axes.ts

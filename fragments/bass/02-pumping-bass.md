@@ -4,15 +4,15 @@ association:
   - point:
       sync: 0
       harm: 0
-      drive: 0.5
-      bright: 0.875
+      bite: 1
+      mood: 0.825
     weight: 1
     facet: bass
   - point:
       sync: 0.12
       harm: 0
-      drive: 0.9
-      bright: 0.25
+      bite: 1
+      mood: 0.4
     weight: 1
     facet: bass
 source: seed

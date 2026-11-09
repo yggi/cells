@@ -18,7 +18,7 @@ export function readSlots(parsed) {
         diagnostics.push({
             severity: 'error',
             message: kind === 'style' && (slot === 'artic' || slot === 'energy')
-                ? `&${name}[${slot}]: ${slot} is retired: a style's axes are ${slots.join(', ')}, drive the mean of articulation and energy (decision 076); Migrate rewrites it as &${name}[drive]`
+                ? `&${name}[${slot}]: ${slot} is retired: a style's axes are ${slots.join(', ')}, bite its articulation and energy off the point (decision 076); Migrate rewrites it as &${name}[bite]`
                 : slots
                     ? `&${name}[${slot}]: &${name} (map=${kind}) has no slot ${slot}; its slots are ${slots.join(', ')}`
                     : `&${name}[${slot}]: &${name}'s map names no slots (${kind ? `map=${kind}` : 'it has no map='}); pick by position (&${name}[$0]), name the slots with map=${Object.keys(SLOTS).join(' or map=')}, or give it a style= (its axes)`,

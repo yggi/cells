@@ -26,8 +26,8 @@ const meters = createRepository(METER_FRAGMENTS);
 const rhythmsAndBell = createRepository([...RHYTHM_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.association.some((wp) => wp.facet === 'rhythm'))]);
 const basses = createRepository(BASS_FRAGMENTS);
 const PRESETS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ];
-// (decision 076's axes; a meter, a rhythm, a performer, a module, a form and an expression have no bright)
-const AXES = ['sync', 'harm', 'drive', 'bright'] as const;
+// (decision 076's axes; a meter, a rhythm, a performer, a module, a form and an expression have no mood)
+const AXES = ['sync', 'harm', 'bite', 'mood'] as const;
 
 // Every preset, as Jambot queries with it (swing and bpm too, which no fragment has), every point halfway between two,
 // and a grid of five values on each of the four axes: 8 + 28 + 625 points.
@@ -121,10 +121,10 @@ describe('the points proposed for two more presets (#349)', () => {
     walking_bass: ELECTRO_SWING,
     harmonic_minor: SPOOKY,
     'meter(grouping=meter("5/4"))': SPOOKY,
-    'meter(grouping=meter("6/8"))': { ...SPOOKY, drive: 0.285 },
-    'meter(grouping=meter("3/4"))': { ...SPOOKY, drive: 0.365 },
+    'meter(grouping=meter("6/8"))': { ...SPOOKY, bite: 0.285 },
+    'meter(grouping=meter("3/4"))': { ...SPOOKY, bite: 0.365 },
   };
-  // (a fragment's point over the axes it has: a meter's has no bright)
+  // (a fragment's point over the axes it has: a meter's has no mood)
   const same = (a: StylePoint, b: StylePoint) => AXES.every((axis) => !(axis in a) || a[axis] === b[axis]);
   // (and the ghost-house fragments near Spooky, added after: the presets' first finds are what they were before either)
   const NEW = new Set([
@@ -222,8 +222,8 @@ describe('a seed placed for one preset (#404)', () => {
     'Electro swing': ELECTRO_SWING,
     Spooky: SPOOKY,
   };
-  // (the centre, as Migrate moved it, #572: a tonal fragment's there has the bright of the mode found at the old centre)
-  const CENTRE = { sync: 0.5, harm: 0.5, drive: 0.5, bright: 0.25 };
+  // (the centre, as Migrate moved it, #572: a tonal fragment's there has the mood of the mode found at the old centre)
+  const CENTRE = { sync: 0.5, harm: 0.5, bite: 0.5, mood: 0.25 };
   const both = (a: StylePoint, b: StylePoint) => AXES.filter((axis) => axis in a && axis in b);
   const plain = (a: StylePoint, b: StylePoint) => Math.hypot(...both(a, b).map((axis) => a[axis]! - b[axis]!));
   const placedFor = (fragment: Fragment, facet: string): string[] =>

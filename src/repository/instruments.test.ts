@@ -31,7 +31,7 @@ const takenOn = (text: string, bench: string, main?: string) => {
 
 const byId = (id: string) => INSTRUMENT_FRAGMENTS.find((f) => f.id === id)!;
 const gmKit = byId('gm_kit');
-// (the centre on the old axes, moved by decision 076's rule: drive the mean, bright the mode found there, #572)
+// (the centre on the old axes, moved by decision 076's rule: bite the mean, mood the mode found there, #572)
 const CENTRE = newPoint({ sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 });
 /** The default instruments, the performers' (#278). */
 const DEFAULTS = ['bass', 'keys', 'pad', 'lead'];
@@ -45,7 +45,7 @@ const AT_PRESET: Record<string, StylePoint> = {
   organ: SPOOKY,
   theremin: SPOOKY,
   celesta: SPOOKY,
-  // (0.05 below Spooky in energy on the old axes, 0.025 in drive now: at its point it would tie with the organ, and take
+  // (0.05 below Spooky in energy on the old axes, 0.025 in bite now: at its point it would tie with the organ, and take
   // &padV from it by id)
   haunted_pad: newPoint({ sync: 0.2, harm: 0.9, artic: 0.3, energy: 0.3 }),
 };

@@ -82,7 +82,7 @@ describe('a learned layer kept before the rename (#387)', () => {
   // (a layer as a frontend kept it at v0.15.0: a point on a seed meter, a pair of a meter and a groove, in that order)
   const kept: LearnedLayer = {
     filed: [],
-    points: [{ id: '4/4 leaning on 16n', point: { swing: 0, sync: 0.3, harm: 0.5, drive: 0.5, bright: 0.25 }, weight: 1.1 }],
+    points: [{ id: '4/4 leaning on 16n', point: { swing: 0, sync: 0.3, harm: 0.5, bite: 0.5, mood: 0.25 }, weight: 1.1 }],
     together: [
       { ids: ['4/4 leaning on 16n', 'Funk drums'], count: 3 },
       { ids: ['bebop', 'walking bass'], count: 1 },
@@ -108,7 +108,7 @@ describe('a learned layer kept before the rename (#387)', () => {
   it('a point on a mode before #387 B1 is a point on the diatonic fragment taken with that mode', () => {
     const modes: LearnedLayer = {
       filed: [],
-      points: [{ id: 'dorian', point: { sync: 0.5, harm: 0.5, drive: 0.5, bright: 0.25 }, weight: 1.1 }],
+      points: [{ id: 'dorian', point: { sync: 0.5, harm: 0.5, bite: 0.5, mood: 0.25 }, weight: 1.1 }],
       together: [{ ids: ['dorian', 'funk_bass'], count: 2 }],
     };
     const now = renamedLayer(modes);

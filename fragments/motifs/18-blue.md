@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.35
       harm: 1
-      drive: 0.5
-      bright: 0.875
+      bite: 0.4
+      mood: 0.85
     weight: 1
     facet: motif
 source: seed
@@ -20,6 +20,6 @@ Down the scale from the fifth to the tonic and on to the sixth below, held: the 
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&blue`), so `use &blue` takes it; a form reads it as its `&call` (`&call step=8n &blue`), the line the form moves and answers.
 
-Near Swing jazz's point, 0.05 higher in drive, so a query there finds `bebop` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
+Near Swing jazz's point, 0.1 higher in bite (its energy offset, #572), so a query there finds `bebop` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&blue from &key`. `&blue from blue &key` takes a copy of it, `&key` its main argument.

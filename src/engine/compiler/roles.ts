@@ -1,5 +1,4 @@
 /** Phase 8: attributes where they do nothing — each acts on some roles only (attributes.ts): warnings. */
-import { AXIS_NAMES } from '../style';
 import type { Span } from '../ast';
 import { SHOWS } from '../parser/cell';
 import { ATTRIBUTES, rolesText, VOICE_PARAMS, type Role } from '../attributes';
@@ -62,10 +61,7 @@ export function checkRoles(
     const has = roles(c);
     const written: [string, Span][] = [
       ...Object.keys(d.params).map((k): [string, Span] => [k, d.paramSpans[k] ?? d.span]),
-      // (a style's moving axes are its axes, not attributes: drive= is a tape's elsewhere, decision 076)
-      ...Object.entries(d.paramCells ?? {})
-        .filter(([k]) => !(d.map?.kind === 'style' && AXIS_NAMES.includes(k)))
-        .map(([k, pc]): [string, Span] => [k, pc.span]),
+      ...Object.entries(d.paramCells ?? {}).map(([k, pc]): [string, Span] => [k, pc.span]),
       ...Object.entries(d.paramClocks ?? {}).map(([k, st]): [string, Span] => [k, st.span]),
       ...(['env', 'pitch', 'title'] as const).filter((k) => d[k]).map((k): [string, Span] => [k, k === 'title' ? d.span : d[k]!.span]),
     ];

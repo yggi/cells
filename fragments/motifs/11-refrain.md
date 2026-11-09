@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.3
       harm: 0.45
-      drive: 0.6
-      bright: 0.25
+      bite: 0.65
+      mood: 0.5
     weight: 1
     facet: motif
 source: seed
@@ -20,6 +20,6 @@ The refrain under the hook: the third three times, up to the fifth and held, the
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&refrain`), so `use &refrain` takes it; a form reads it as its `&call` (`&call step=8n &refrain`), the line the form moves and answers.
 
-Near Synth-pop's point, 0.05 higher in drive, so a query there finds `hook` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
+Near Synth-pop's point, 0.1 higher in bite (its energy offset, #572), so a query there finds `hook` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&refrain from &key`. `&refrain from refrain &key` takes a copy of it, `&key` its main argument.

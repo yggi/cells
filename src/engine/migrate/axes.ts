@@ -1,13 +1,19 @@
 /**
  * Migrate (decision 076, #572): a style written on the axes before it, `sync harm artic energy`, as it is written now,
- * `sync harm drive bright`. `sync` and `harm` keep their places; `drive` is the mean of articulation and energy; `bright`
- * is the brightness (`BRIGHTNESS`) of the mode the seed library found nearest the old point (`OLD_MODES`, its mode
- * fragments' points as they were, frozen here so the rule outlives the library it was read from). A pick of `[artic]` or
- * `[energy]` reads `[drive]`, until #571 gives intensity a reading of its own.
+ * `sync harm bite mood`. `sync` and `harm` keep their places; `bite` is articulation, as it was; energy leaves the point
+ * (it is intensity, #571); `mood` is read where the old point sits:
+ *
+ * - near a style of the library as it was (within `NEAR_STYLE` of one, `OLD_STYLES`): that style's mood, placed by hand,
+ *   so what was written for a style keeps its mood;
+ * - else the mood of the mode the seed library found nearest the old point (`OLD_MODES`, its mode fragments' points as
+ *   they were), at `MOOD_TENSION` (`moodOf`).
+ *
+ * Both tables are frozen here so the rule outlives the library it was read from. A pick of `[artic]` reads `[bite]`; one
+ * of `[energy]` reads `[bite]` too, until #571 gives intensity a reading of its own.
  *
  * The same rule moved the seed library's association points and its styles (#572). A style by name with an axis that
- * moves or a slider (`artic=.2..0.9 * &drift`) keeps that axis's expression as drive's: articulation's where it has one,
- * else energy's; its bright is read where the expression's first number puts the axis.
+ * moves or a slider (`artic=.2..0.9 * &drift`) keeps articulation's expression as bite's; its mood is read where each
+ * expression's first number puts the axis.
  *
  * Its meaning changed, not its spelling alone, so it is exact only against the old meaning (`Rewrite.exact`), never
  * Normalise's: a text Migrate reads is one written before v0.22.0. Read the old way (`CompileOptions.old`), a line is
@@ -15,7 +21,7 @@
  */
 import { splitComment } from '../edit';
 import type { Rewrite } from '../rewrite';
-import { BRIGHTNESS } from '../style';
+import { moodOf } from '../style';
 
 /** The axes before decision 076, in their order. */
 export const OLD_AXES = ['sync', 'harm', 'artic', 'energy'] as const;
@@ -46,15 +52,44 @@ export const OLD_MODES: readonly { readonly mode: string; readonly point: OldPoi
 const round = (x: number) => Math.round(x * 1e6) / 1e6;
 const text = (x: number) => String(round(x)).replace(/^0\./, '.');
 
+/** The squared distance between two old points. */
+const d2 = (p: OldPoint, q: OldPoint) => OLD_AXES.reduce((a, k) => a + (p[k] - q[k]) ** 2, 0);
+
 /** The mode the library found nearest an old point (the first of a tie, as the repository's query takes it). */
 export function oldMode(p: OldPoint): string {
-  const d = (q: OldPoint) => OLD_AXES.reduce((a, k) => a + (p[k] - q[k]) ** 2, 0);
-  return OLD_MODES.reduce((best, m) => (d(m.point) < d(best.point) ? m : best)).mode;
+  return OLD_MODES.reduce((best, m) => (d2(p, m.point) < d2(p, best.point) ? m : best)).mode;
 }
 
-/** An old point on the new axes: `drive` the mean of articulation and energy; `bright` given, or the mode's found at it. */
-export function newPoint(p: OldPoint, bright = true): { sync: number; harm: number; drive: number; bright?: number } {
-  return { sync: p.sync, harm: p.harm, drive: round((p.artic + p.energy) / 2), ...(bright ? { bright: BRIGHTNESS[oldMode(p)]! } : {}) };
+/**
+ * The library's styles as they were at v0.21.0, on the old axes, each with its mood placed by hand (#572): its mode's
+ * brightness tempered by the tension heard in it (`moodOf`, `docs/notes/572-axes-atlas.md`), on a grid of twentieths.
+ */
+export const OLD_STYLES: readonly { readonly id: string; readonly mood: number; readonly point: OldPoint }[] = [
+  { id: 'synthPop', mood: 0.5, point: { sync: 0.3, harm: 0.45, artic: 0.55, energy: 0.55 } },
+  { id: 'techno', mood: 0.4, point: { sync: 0.12, harm: 0, artic: 1, energy: 0.8 } },
+  { id: 'deepHouse', mood: 0.65, point: { sync: 0.35, harm: 0.55, artic: 0.65, energy: 0.65 } },
+  { id: 'ambient', mood: 0.9, point: { sync: 0.05, harm: 0.3, artic: 0, energy: 0.2 } },
+  { id: 'lofi', mood: 0.5, point: { sync: 0.5, harm: 0.75, artic: 0.35, energy: 0.5 } },
+  { id: 'funk', mood: 0.65, point: { sync: 1, harm: 0.12, artic: 0.85, energy: 0.75 } },
+  { id: 'bossaNova', mood: 0.9, point: { sync: 0.75, harm: 0.85, artic: 0.45, energy: 0.45 } },
+  { id: 'swingJazz', mood: 0.85, point: { sync: 0.35, harm: 1, artic: 0.3, energy: 0.6 } },
+  { id: 'electroSwing', mood: 0.5, point: { sync: 0.55, harm: 0.75, artic: 0.6, energy: 0.75 } },
+  { id: 'spooky', mood: 0.3, point: { sync: 0.2, harm: 0.9, artic: 0.3, energy: 0.35 } },
+  { id: 'kinderlied', mood: 0.95, point: { sync: 0.1, harm: 0.12, artic: 0.5, energy: 0.35 } },
+];
+
+/** How near a style an old point is placed for it, and takes its mood: half the repository's miss distance (0.3). */
+export const NEAR_STYLE = 0.15;
+
+/** An old point's mood: the nearest style's, where one is within `NEAR_STYLE`; else its mode's (`moodOf`). */
+export function oldMood(p: OldPoint): number {
+  const near = OLD_STYLES.reduce((best, s) => (d2(p, s.point) < d2(p, best.point) ? s : best));
+  return Math.sqrt(d2(p, near.point) / OLD_AXES.length) <= NEAR_STYLE + 1e-9 ? near.mood : moodOf(oldMode(p));
+}
+
+/** An old point on the new axes: `bite` its articulation, and `mood` (`oldMood`), unless a point speaks to no mood. */
+export function newPoint(p: OldPoint, mood = true): { sync: number; harm: number; bite: number; mood?: number } {
+  return { sync: p.sync, harm: p.harm, bite: p.artic, ...(mood ? { mood: oldMood(p) } : {}) };
 }
 
 /** An axis's value as written: a number, a slider, a range, moved by cells: up to the next word that isn't one of them. */
@@ -102,13 +137,13 @@ function restyleBody(body: string): string | null {
     if (!OLD_AXES.every((k) => named.has(k))) return null;
     const v = (k: (typeof OLD_AXES)[number]) => named.get(k)!.value;
     const old = Object.fromEntries(OLD_AXES.map((k) => [k, heldAt(v(k))])) as OldPoint;
-    const drive = plain(v('artic')) && plain(v('energy')) ? text(newPoint(old).drive) : plain(v('artic')) ? v('energy') : v('artic');
-    const bright = text(newPoint(old).bright!);
-    // (from the end, so each place holds: artic's value becomes drive's, energy's bright's)
+    const bite = v('artic');
+    const mood = text(oldMood(old));
+    // (from the end, so each place holds: artic's value becomes bite's, energy's mood's)
     const [a, e] = [named.get('artic')!, named.get('energy')!];
     const edits = [
-      { at: a.at, end: a.end, to: `drive=${drive}` },
-      { at: e.at, end: e.end, to: `bright=${bright}` },
+      { at: a.at, end: a.end, to: `bite=${bite}` },
+      { at: e.at, end: e.end, to: `mood=${mood}` },
     ].sort((x, y) => y.at - x.at);
     return edits.reduce((s, x) => s.slice(0, x.at) + x.to + s.slice(x.end), body);
   }
@@ -117,13 +152,12 @@ function restyleBody(body: string): string | null {
   if (!tokens || !tokens.slice(1).every((t) => plain(t) || t.startsWith('free('))) return null;
   const [s, h, ar, en] = tokens.slice(1) as [string, string, string, string];
   const old = { sync: heldAt(s), harm: heldAt(h), artic: heldAt(ar), energy: heldAt(en) };
-  const drive = plain(ar) && plain(en) ? text(newPoint(old).drive) : plain(ar) ? en : ar;
-  return ` sync=${s} harm=${h} drive=${drive} bright=${text(newPoint(old).bright!)}${body.slice(tokens[0].length)}`;
+  return ` sync=${s} harm=${h} bite=${ar} mood=${text(oldMood(old))}${body.slice(tokens[0].length)}`;
 }
 
 /** A line's code on the new axes (its style cells, inline ones too, and its picks of `[artic]` and `[energy]`), or null. */
 export function restyled(code: string): string | null {
-  let out = code.replace(/\[(artic|energy)\]/g, '[drive]');
+  let out = code.replace(/\[(artic|energy)\]/g, '[bite]');
   // (each map=style: a line's own, or an inline cell's, &(map=style …), its body to the cell's close)
   const at = [...out.matchAll(/map=style(?=\s)/g)].map((m) => m.index! + 'map=style'.length).reverse();
   for (const i of at) {
@@ -160,7 +194,7 @@ export function axes(source: string): Rewrite<'axes'>[] {
         id: `axes:${i + 1}`,
         tool: 'migrate' as const,
         rule: 'axes' as const,
-        title: `a style on the axes sync harm drive bright: drive the mean of articulation and energy, bright the mode's (decision 076)`,
+        title: `a style on the axes sync harm bite mood: bite its articulation, mood its style's or its mode's (decision 076)`,
         before: code.trim(),
         after: after.trim(),
         apply: (src: string) =>

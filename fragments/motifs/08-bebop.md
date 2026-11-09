@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.35
       harm: 1
-      drive: 0.45
-      bright: 0.875
+      bite: 0.3
+      mood: 0.85
     weight: 1
     facet: motif
 source: seed

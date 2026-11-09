@@ -1,6 +1,6 @@
 /**
  * The style a piece plays at a time (#576 rung 5): each axis of `&style`, the section's style, as a voice reading
- * `&style[axis]` would read it then. A held axis is its value; a moving one (`drive=.2..0.9 * &drift`, a sum of cells,
+ * `&style[axis]` would read it then. A held axis is its value; a moving one (`bite=.2..0.9 * &drift`, a sum of cells,
  * a window of sliders, a mix of styles, a range of styles gliding over the piece) is its cell's value at that moment, as
  * `styles.ts` lays it. A frontend that plays a score's style itself (Jambot's radio, at each section's start) reads it so.
  *

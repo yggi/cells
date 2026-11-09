@@ -1,5 +1,5 @@
 /**
- * A pick by name (decision 063): `&env[sustain]`, `&funk[drive]`. The parser reads the name (`Ref.slot`); before
+ * A pick by name (decision 063): `&env[sustain]`, `&funk[bite]`. The parser reads the name (`Ref.slot`); before
  * anything else compiles, it becomes the slot's position as written (`&env[$2]`), read off the slots the cell's map
  * names (`SLOTS`, style.ts), so no phase after this one sees a name. A cell whose map names no slots, or a name its map
  * lacks, is an error that lists the slots there are; the pick is then dropped (the whole cell is read).
@@ -9,7 +9,7 @@ import { SLOTS, STYLE } from '../style';
 
 /** The piece with every pick by name read as its slot's position, and an error for each that can't be. */
 export function readSlots(parsed: ParseResult): ParseResult {
-  // (a cell with style= has a style's slots, its axes: &style[drive], decision 063; and so has &style where no line writes
+  // (a cell with style= has a style's slots, its axes: &style[bite], decision 063; and so has &style where no line writes
   // it, the composer's to write: a reader of it plays the centre, styles.ts)
   const maps = new Map<string, string | null>(parsed.cells.map((c) => [c.name, c.map?.kind ?? (c.style ? 'style' : null)]));
   if (!maps.has(STYLE)) maps.set(STYLE, 'style');
@@ -28,7 +28,7 @@ export function readSlots(parsed: ParseResult): ParseResult {
       severity: 'error',
       message:
         kind === 'style' && (slot === 'artic' || slot === 'energy')
-          ? `&${name}[${slot}]: ${slot} is retired: a style's axes are ${slots!.join(', ')}, drive the mean of articulation and energy (decision 076); Migrate rewrites it as &${name}[drive]`
+          ? `&${name}[${slot}]: ${slot} is retired: a style's axes are ${slots!.join(', ')}, bite its articulation and energy off the point (decision 076); Migrate rewrites it as &${name}[bite]`
           : slots
             ? `&${name}[${slot}]: &${name} (map=${kind}) has no slot ${slot}; its slots are ${slots.join(', ')}`
             : `&${name}[${slot}]: &${name}'s map names no slots (${kind ? `map=${kind}` : 'it has no map='}); pick by position (&${name}[$0]), name the slots with map=${Object.keys(SLOTS).join(' or map=')}, or give it a style= (its axes)`,

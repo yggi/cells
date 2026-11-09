@@ -4,7 +4,7 @@ association:
   - point:
       sync: 0.55
       harm: 0.75
-      drive: 0.675
+      bite: 0.6
     weight: 1
     facet: rhythm
 source: seed
@@ -24,4 +24,4 @@ It holds no `&bar`, so the host's meter swings it: under `meter(swing=8n:2/3)` (
 Its lines strike the kit's names (`&bd` `&cp` `&oh` `&hh` `&sd`), holes the General MIDI kit fills, and carry no card (#291): `&groove` is the mix, its levels in the hits.
 A piece arranging it takes its limbs by name (`&kick, &clap, &hats, &ticks from electro_swing_drums`), as the example does, each under a level of its own.
 
-At a point proposed for an Electro swing preset (sync .55, harm .75, drive .675, bright .375), weight 1: no preset of Jambot's sits there yet, and the axes are Jambot's (decision 041), so the point is this file's, Jambot's to adopt.
+At a point proposed for an Electro swing preset (sync .55, harm .75, bite .6, mood .5), weight 1: no preset of Jambot's sits there yet, and the axes are Jambot's (decision 041), so the point is this file's, Jambot's to adopt.

@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.2
       harm: 0.9
-      drive: 0.325
-      bright: 0.375
+      bite: 0.3
+      mood: 0.3
     weight: 0.125
     facet: instrument
 source: seed
@@ -21,4 +21,4 @@ It defines `&padV`, the voice the pad performer plays (`use &padV from pad`), so
 It is [Spooky, in pieces](../../examples/spooky.md)'s `&padV` word for word, at the default's register (`loop=C3`), so a chord played on it sends the MIDI notes it sends on `pad`.
 It sounds within the renderer's first stage (decision 062, R1).
 
-Associated at Spooky's point (`SPOOKY`: sync .2, harm .9, drive .325, bright .375; yggi/jambot#517) as the facet `instrument`, at half the default instruments' weight (0.125), so a query for an instrument finds it first at that point, and the kit and the defaults first at each of the eight presets (#350).
+Associated at Spooky's point (`SPOOKY`: sync .2, harm .9, bite .3, mood .3; yggi/jambot#517) as the facet `instrument`, at half the default instruments' weight (0.125), so a query for an instrument finds it first at that point, and the kit and the defaults first at each of the eight presets (#350).

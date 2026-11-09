@@ -151,10 +151,10 @@ describe('the presets find their modes', () => {
               ? [Object.fromEntries(Object.keys(FUNK).map((axis) => [axis, (FUNK[axis]! + BOSSA_NOVA[axis]!) / 2]))]
               : PRESETS.filter((p) => p.mode === id).map((p) => p.point);
       // (ionian at the point proposed for a Kinderlied preset too: children's songs are major, yggi/jambot#547)
-      // (placed on sync harm drive; a mode's bright is its own scale's, decision 076 §2, #572, wherever it sits)
-      const placed = (p: StylePoint) => ({ sync: p.sync, harm: p.harm, drive: p.drive });
+      // (placed on sync harm bite; a mode's mood is its own scale's, decision 076 §2, #572, wherever it sits)
+      const placed = (p: StylePoint) => ({ sync: p.sync, harm: p.harm, bite: p.bite });
       expect(f.association.map((wp) => placed(wp.point))).toEqual((id === 'ionian' ? [...points, KINDERLIED] : points).map(placed));
-      expect(f.association.map((wp) => wp.point.bright)).toEqual(f.association.map(() => BRIGHTNESS[id]));
+      expect(f.association.map((wp) => wp.point.mood)).toEqual(f.association.map(() => BRIGHTNESS[id]));
       expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
     }
   });
@@ -205,7 +205,7 @@ describe('the bell and scale', () => {
     expect(bell.association.map((wp) => wp.facet)).toEqual(['mode', 'rhythm']);
     const ionian = PRESETS.filter((p) => p.mode === 'ionian').map((p) => p.point);
     const centroid = Object.fromEntries(Object.keys(AMBIENT).map((axis) => [axis, Math.round((1000 * ionian.reduce((sum, p) => sum + p[axis]!, 0)) / ionian.length) / 1000]));
-    // (placed on the old axes at the centroid, each to three places: drive, their mean since #572, to within that rounding)
+    // (placed on the old axes at the centroid, each to three places: bite, their mean since #572, to within that rounding)
     for (const axis of Object.keys(centroid)) expect(Math.abs(bell.association[0]!.point[axis]! - centroid[axis]!), axis).toBeLessThanOrEqual(0.001);
     expect(bell.association[1]!.point).not.toEqual(centroid);
     const repository = createRepository(LIBRARY);

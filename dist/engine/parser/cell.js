@@ -494,10 +494,10 @@ function readParam(s, b, key) {
             }
             s.i++;
             s.skipSpace();
-            factors.push(s.cellRef(`a cell after *, like s=${blend[0]} * &style[drive]`, 'in s='));
+            factors.push(s.cellRef(`a cell after *, like s=${blend[0]} * &style[bite]`, 'in s='));
         }
         if (factors.length === 0)
-            s.fail(`s=${blend[0]}: a blend of two waves is moved by cells, the share of the second: s=${blend[0]} * &style[drive]`, vs, s.i - vs);
+            s.fail(`s=${blend[0]}: a blend of two waves is moved by cells, the share of the second: s=${blend[0]} * &style[bite]`, vs, s.i - vs);
         b.params.s = blend[1];
         b.paramCells.s = { range: [0, 1], factors, span: s.span(vs), to: blend[2] };
         b.paramSpans.s = s.span(vs);
@@ -631,7 +631,7 @@ export function parseBody(s, head) {
         const word = s.match(IDENT);
         if (word !== null && s.peek() === '=') {
             s.i++;
-            const key = b.map?.kind === 'style' && AXIS_NAMES.includes(word) ? null : word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
+            const key = word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
             if (key === null && ADSR_SLOTS.includes(word)) {
                 if (adsr.has(word))
                     s.fail(`${word}= is given twice`, at, word.length);
@@ -680,7 +680,7 @@ export function parseBody(s, head) {
                 if (word in RETIRED_KEYS)
                     s.fail(RETIRED_KEYS[word], at, word.length);
                 if ((word === 'artic' || word === 'energy') && b.map?.kind === 'style')
-                    s.fail(`${word}= is retired: a style's axes are ${AXIS_NAMES.join(' ')}, drive the mean of articulation and energy (decision 076); Migrate rewrites it`, at, word.length);
+                    s.fail(`${word}= is retired: a style's axes are ${AXIS_NAMES.join(' ')}, bite its articulation and energy off the point (decision 076); Migrate rewrites it`, at, word.length);
                 const near = nearestAttribute(word);
                 s.fail(`Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`, at, word.length);
             }
@@ -783,13 +783,10 @@ export function parseBody(s, head) {
     if (axes.size) {
         const [first, { at }] = [...axes][0];
         if (b.map?.kind !== 'style')
-            s.fail(`${first}= is an axis of a style: it goes on a map=style cell (&funk map=style sync=.3 harm=.45 drive=.55 bright=.5)`, at, first.length);
+            s.fail(`${first}= is an axis of a style: it goes on a map=style cell (&funk map=style sync=.3 harm=.45 bite=.55 mood=.5)`, at, first.length);
         if (generator || tokens.length)
             s.fail('A style writes its axes by name (sync=.3) or in order (.3 .45 .55 .5), not both', at, first.length);
         const missing = AXIS_NAMES.filter((n) => !axes.has(n));
-        const early = missing.find((n) => b.params[n] !== undefined || b.paramCells[n]);
-        if (early)
-            s.fail(`${early}= before map=style is a sound's: write map=style first, and ${early}= is the style's axis`, at, first.length);
         if (missing.length)
             s.fail(`A style names every axis: ${missing.map((n) => `${n}=`).join(' ')} ${missing.length === 1 ? 'is' : 'are'} missing (its axes: ${AXIS_NAMES.join(' ')})`, at, first.length);
         for (const name of AXIS_NAMES) {

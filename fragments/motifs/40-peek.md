@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.3
       harm: 0.9
-      drive: 0.3
-      bright: 0.375
+      bite: 0.3
+      mood: 0.3
     weight: 1
     facet: motif
 source: seed
@@ -20,6 +20,6 @@ Something peeks and hides: a rest, the tonic and the flat second above it and ba
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&peek`), so `use &peek` takes it; a form reads it as its `&call` (`&call step=8n &peek`), the line the form moves and answers.
 Its two rests are written apart (`~ ~`), not held (`~@2`), which plays the same: cells' vary reads no line with a held rest, so it would offer no variation of it, and the recogniser no answer.
-Near Spooky's point (sync .2, harm .9, drive .325, bright .375; yggi/jambot#517), 0.1 higher in sync and 0.025 lower in drive, weight 1, as the facet `motif`: one of the ghost-house idioms, a gesture of the genre and no quotation of any tune.
+Near Spooky's point (sync .2, harm .9, bite .3, mood .3; yggi/jambot#517), 0.1 higher in sync and 0.05 lower in bite (its energy offset, #572), weight 1, as the facet `motif`: one of the ghost-house idioms, a gesture of the genre and no quotation of any tune.
 
 **Its signature** (decision 065): `&peek from &key`. `&peek from peek &key` takes a copy of it, `&key` its main argument.

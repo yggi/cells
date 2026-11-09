@@ -108,7 +108,7 @@ const PLAYS: Record<Pattern, Readonly<Record<number, Tone>>> = {
 // the one nearest the preset where its share is greatest; the eighths, whose preset (Techno) is as near two such points,
 // at the root's point with the energy at 1.
 // (`bass.ts` reads Jambot's axes, articulation and energy apart, so the blend and its points are on those; the library
-// holds each point on decision 076's, as Migrate writes it, `newPoint`: drive their mean, bright the mode found there, #572)
+// holds each point on decision 076's, as Migrate writes it, `newPoint`: bite their mean, mood the mode found there, #572)
 type Old = { sync: number; harm: number; artic: number; energy: number };
 // Jambot's presets on the axes bass.ts reads, lifted from yggi/jambot packages/engine/src/style.ts @ 7b078e8 (the points
 // cells' styles held before decision 076; each is the library's style there, moved by the rule: a test holds it).

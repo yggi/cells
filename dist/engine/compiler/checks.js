@@ -195,7 +195,7 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
             continue;
         const vals = d.braid.kind === 'list' ? d.braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [];
         if (vals.length !== AXES.length || vals.some((v, i) => !(v >= AXES[i].range[0] && v <= AXES[i].range[1])))
-            error(`map=style takes a value for each axis, in order: ${AXES.map((a) => `${a.name} (${a.range[0]} to ${a.range[1]})`).join(', ')} (map=style .3 .45 .55 .5, or sync=.3 harm=.45 drive=.55 bright=.5)`, d.map.span);
+            error(`map=style takes a value for each axis, in order: ${AXES.map((a) => `${a.name} (${a.range[0]} to ${a.range[1]})`).join(', ')} (map=style .3 .45 .55 .5, or sync=.3 harm=.45 bite=.55 mood=.5)`, d.map.span);
     }
     for (const d of decls.values()) {
         if (d.map?.kind !== 'ratios')

@@ -63,7 +63,7 @@ function layout(chords: readonly number[], harm: number): number[] {
 // Lifted from yggi/jambot packages/engine/src/style.ts @ 0a56da9 (`PRESETS`): the presets whose harmony vamps (under
 // 0.33), each with its mode. No preset is mixolydian. Ambient's harmony, 0.3, lays a vamp two bars a chord; the files sit
 // at its point with the harmony at Funk's 0.12, where `buildTheme` lays it four bars a chord, as they write it.
-const AMBIENT_VAMPED = at(AMBIENT.sync!, 0.12, AMBIENT.drive!, AMBIENT.bright!);
+const AMBIENT_VAMPED = at(AMBIENT.sync!, 0.12, AMBIENT.bite!, AMBIENT.mood!);
 const POINT: Partial<Record<Mode, StylePoint>> = { aeolian: TECHNO, dorian: FUNK, ionian: AMBIENT_VAMPED };
 
 /** The diatonic modes as semitones from the tonic, for the pitch classes a key in each plays. */
@@ -253,8 +253,8 @@ describe('the haunted progression', () => {
   });
 
   // (at weight 0.4, as the dark cadence is, so it is found within Jambot's miss distance, 0.3, of Spooky's point alone, #404)
-  it('sits 0.025 below Spooky in drive (0.05 in energy, on the axes before decision 076) at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
-    expect(haunted.association).toEqual([{ point: { ...SPOOKY, drive: 0.3 }, weight: 0.4, facet: 'harmony' }]);
+  it('sits 0.025 below Spooky in bite (0.05 in energy, on the axes before decision 076) at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
+    expect(haunted.association).toEqual([{ point: { ...SPOOKY, bite: 0.3 }, weight: 0.4, facet: 'harmony' }]);
     const repository = createRepository(LIBRARY);
     expect(repository.query(SPOOKY, 2, {}, { facet: 'harmony' }).map((f) => [f.fragment.id, Math.round(f.distance * 100) / 100])).toEqual([
       ['dark_cadence', 0],

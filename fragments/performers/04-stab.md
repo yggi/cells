@@ -4,49 +4,49 @@ association:
   - point:
       sync: 0.3
       harm: 0.45
-      drive: 0.55
+      bite: 0.55
     weight: 1
     facet: performer
   - point:
       sync: 0.12
       harm: 0
-      drive: 0.9
+      bite: 1
     weight: 1
     facet: performer
   - point:
       sync: 0.35
       harm: 0.55
-      drive: 0.65
+      bite: 0.65
     weight: 1
     facet: performer
   - point:
       sync: 0.05
       harm: 0.3
-      drive: 0.1
+      bite: 0
     weight: 1
     facet: performer
   - point:
       sync: 0.5
       harm: 0.75
-      drive: 0.425
+      bite: 0.35
     weight: 1
     facet: performer
   - point:
       sync: 1
       harm: 0.12
-      drive: 0.8
+      bite: 0.85
     weight: 1
     facet: performer
   - point:
       sync: 0.75
       harm: 0.85
-      drive: 0.45
+      bite: 0.45
     weight: 1
     facet: performer
   - point:
       sync: 0.35
       harm: 1
-      drive: 0.45
+      bite: 0.3
     weight: 1
     facet: performer
 source: seed

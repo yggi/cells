@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.3
       harm: 0.45
-      drive: 0.55
-      bright: 0.25
+      bite: 0.55
+      mood: 0.5
     weight: 1
     facet: mode
     args:
@@ -13,8 +13,8 @@ association:
   - point:
       sync: 0.12
       harm: 0
-      drive: 0.9
-      bright: 0.25
+      bite: 1
+      mood: 0.4
     weight: 1
     facet: mode
     args:
@@ -22,8 +22,8 @@ association:
   - point:
       sync: 0.5
       harm: 0.75
-      drive: 0.425
-      bright: 0.25
+      bite: 0.35
+      mood: 0.5
     weight: 1
     facet: mode
     args:
@@ -31,8 +31,8 @@ association:
   - point:
       sync: 0.35
       harm: 0.55
-      drive: 0.65
-      bright: 0.5
+      bite: 0.65
+      mood: 0.65
     weight: 1
     facet: mode
     args:
@@ -40,8 +40,8 @@ association:
   - point:
       sync: 1
       harm: 0.12
-      drive: 0.8
-      bright: 0.5
+      bite: 0.85
+      mood: 0.65
     weight: 1
     facet: mode
     args:
@@ -49,8 +49,8 @@ association:
   - point:
       sync: 0.05
       harm: 0.3
-      drive: 0.1
-      bright: 0.875
+      bite: 0
+      mood: 0.9
     weight: 1
     facet: mode
     args:
@@ -58,8 +58,8 @@ association:
   - point:
       sync: 0.75
       harm: 0.85
-      drive: 0.45
-      bright: 0.875
+      bite: 0.45
+      mood: 0.9
     weight: 1
     facet: mode
     args:
@@ -67,8 +67,8 @@ association:
   - point:
       sync: 0.35
       harm: 1
-      drive: 0.45
-      bright: 0.875
+      bite: 0.3
+      mood: 0.85
     weight: 1
     facet: mode
     args:
@@ -76,8 +76,8 @@ association:
   - point:
       sync: 0.1
       harm: 0.12
-      drive: 0.425
-      bright: 0.875
+      bite: 0.5
+      mood: 0.95
     weight: 1
     facet: mode
     args:
@@ -85,8 +85,8 @@ association:
   - point:
       sync: 0.875
       harm: 0.485
-      drive: 0.625
-      bright: 0.75
+      bite: 0.65
+      mood: 0.75
     weight: 1
     facet: mode
     args:
@@ -94,8 +94,8 @@ association:
   - point:
       sync: 0.6
       harm: 0.6
-      drive: 0.775
-      bright: 0.125
+      bite: 0.7
+      mood: 0.5
     weight: 1
     facet: mode
     args:
@@ -103,8 +103,8 @@ association:
   - point:
       sync: 0.15
       harm: 0.6
-      drive: 0.225
-      bright: 1
+      bite: 0.15
+      mood: 0.9
     weight: 1
     facet: mode
     args:
@@ -112,8 +112,8 @@ association:
   - point:
       sync: 0.9
       harm: 1
-      drive: 0.75
-      bright: 0
+      bite: 0.6
+      mood: 0.3
     weight: 1
     facet: mode
     args:

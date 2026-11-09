@@ -1,5 +1,5 @@
 import { splitComment } from "../edit.js";
-import { BRIGHTNESS } from "../style.js";
+import { moodOf } from "../style.js";
 export const OLD_AXES = ['sync', 'harm', 'artic', 'energy'];
 export const OLD_MODES = [
     { mode: 'aeolian', point: { sync: 0.3, harm: 0.45, artic: 0.55, energy: 0.55 } },
@@ -21,12 +21,30 @@ export const OLD_MODES = [
 ];
 const round = (x) => Math.round(x * 1e6) / 1e6;
 const text = (x) => String(round(x)).replace(/^0\./, '.');
+const d2 = (p, q) => OLD_AXES.reduce((a, k) => a + (p[k] - q[k]) ** 2, 0);
 export function oldMode(p) {
-    const d = (q) => OLD_AXES.reduce((a, k) => a + (p[k] - q[k]) ** 2, 0);
-    return OLD_MODES.reduce((best, m) => (d(m.point) < d(best.point) ? m : best)).mode;
+    return OLD_MODES.reduce((best, m) => (d2(p, m.point) < d2(p, best.point) ? m : best)).mode;
 }
-export function newPoint(p, bright = true) {
-    return { sync: p.sync, harm: p.harm, drive: round((p.artic + p.energy) / 2), ...(bright ? { bright: BRIGHTNESS[oldMode(p)] } : {}) };
+export const OLD_STYLES = [
+    { id: 'synthPop', mood: 0.5, point: { sync: 0.3, harm: 0.45, artic: 0.55, energy: 0.55 } },
+    { id: 'techno', mood: 0.4, point: { sync: 0.12, harm: 0, artic: 1, energy: 0.8 } },
+    { id: 'deepHouse', mood: 0.65, point: { sync: 0.35, harm: 0.55, artic: 0.65, energy: 0.65 } },
+    { id: 'ambient', mood: 0.9, point: { sync: 0.05, harm: 0.3, artic: 0, energy: 0.2 } },
+    { id: 'lofi', mood: 0.5, point: { sync: 0.5, harm: 0.75, artic: 0.35, energy: 0.5 } },
+    { id: 'funk', mood: 0.65, point: { sync: 1, harm: 0.12, artic: 0.85, energy: 0.75 } },
+    { id: 'bossaNova', mood: 0.9, point: { sync: 0.75, harm: 0.85, artic: 0.45, energy: 0.45 } },
+    { id: 'swingJazz', mood: 0.85, point: { sync: 0.35, harm: 1, artic: 0.3, energy: 0.6 } },
+    { id: 'electroSwing', mood: 0.5, point: { sync: 0.55, harm: 0.75, artic: 0.6, energy: 0.75 } },
+    { id: 'spooky', mood: 0.3, point: { sync: 0.2, harm: 0.9, artic: 0.3, energy: 0.35 } },
+    { id: 'kinderlied', mood: 0.95, point: { sync: 0.1, harm: 0.12, artic: 0.5, energy: 0.35 } },
+];
+export const NEAR_STYLE = 0.15;
+export function oldMood(p) {
+    const near = OLD_STYLES.reduce((best, s) => (d2(p, s.point) < d2(p, best.point) ? s : best));
+    return Math.sqrt(d2(p, near.point) / OLD_AXES.length) <= NEAR_STYLE + 1e-9 ? near.mood : moodOf(oldMode(p));
+}
+export function newPoint(p, mood = true) {
+    return { sync: p.sync, harm: p.harm, bite: p.artic, ...(mood ? { mood: oldMood(p) } : {}) };
 }
 function valueAt(code, from) {
     let i = from;
@@ -73,12 +91,12 @@ function restyleBody(body) {
             return null;
         const v = (k) => named.get(k).value;
         const old = Object.fromEntries(OLD_AXES.map((k) => [k, heldAt(v(k))]));
-        const drive = plain(v('artic')) && plain(v('energy')) ? text(newPoint(old).drive) : plain(v('artic')) ? v('energy') : v('artic');
-        const bright = text(newPoint(old).bright);
+        const bite = v('artic');
+        const mood = text(oldMood(old));
         const [a, e] = [named.get('artic'), named.get('energy')];
         const edits = [
-            { at: a.at, end: a.end, to: `drive=${drive}` },
-            { at: e.at, end: e.end, to: `bright=${bright}` },
+            { at: a.at, end: a.end, to: `bite=${bite}` },
+            { at: e.at, end: e.end, to: `mood=${mood}` },
         ].sort((x, y) => y.at - x.at);
         return edits.reduce((s, x) => s.slice(0, x.at) + x.to + s.slice(x.end), body);
     }
@@ -87,11 +105,10 @@ function restyleBody(body) {
         return null;
     const [s, h, ar, en] = tokens.slice(1);
     const old = { sync: heldAt(s), harm: heldAt(h), artic: heldAt(ar), energy: heldAt(en) };
-    const drive = plain(ar) && plain(en) ? text(newPoint(old).drive) : plain(ar) ? en : ar;
-    return ` sync=${s} harm=${h} drive=${drive} bright=${text(newPoint(old).bright)}${body.slice(tokens[0].length)}`;
+    return ` sync=${s} harm=${h} bite=${ar} mood=${text(oldMood(old))}${body.slice(tokens[0].length)}`;
 }
 export function restyled(code) {
-    let out = code.replace(/\[(artic|energy)\]/g, '[drive]');
+    let out = code.replace(/\[(artic|energy)\]/g, '[bite]');
     const at = [...out.matchAll(/map=style(?=\s)/g)].map((m) => m.index + 'map=style'.length).reverse();
     for (const i of at) {
         const close = out.lastIndexOf('&(', i) > out.lastIndexOf(')', i) && out.lastIndexOf('&(', i) >= 0 ? matching(out, out.lastIndexOf('&(', i) + 1) : -1;
@@ -126,7 +143,7 @@ export function axes(source) {
                 id: `axes:${i + 1}`,
                 tool: 'migrate',
                 rule: 'axes',
-                title: `a style on the axes sync harm drive bright: drive the mean of articulation and energy, bright the mode's (decision 076)`,
+                title: `a style on the axes sync harm bite mood: bite its articulation, mood its style's or its mode's (decision 076)`,
                 before: code.trim(),
                 after: after.trim(),
                 apply: (src) => src

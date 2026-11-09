@@ -18,7 +18,7 @@ The places, from the parser's own table:
 | lpf=n, and every sound parameter | ✓ | `&k`, `lo..hi * &k`, on a parameter that moves (pan= and postgain= don't: the renderer's) | `&lead s=saw loop=C4 lpf=free(1200, 200..5000)` |
 | level=&a * n (a gate) | ✓ | `&a * &b * n` | `&out play=&tune level=&accent*free(.4, 0..1) &tune` |
 | attack=n (an envelope by name) | ✓ | `&k`, `lo..hi * &k`: `&k` its values as the slot's (seconds; sustain a level), held at 0 until a note reads it | `&env map=adsr attack=free(.01, 0..1) decay=.3 sustain=.5 release=.4` |
-| sync=n (a style by name) | ✓ | `&k`, `lo..hi * &k`, within the axis (#576) | `&mine map=style sync=free(.3, 0..1) harm=.45 drive=.55 bright=.5` |
+| sync=n (a style by name) | ✓ | `&k`, `lo..hi * &k`, within the axis (#576) | `&mine map=style sync=free(.3, 0..1) harm=.45 bite=.55 mood=.5` |
 | lo..hi * &k (a moving range’s ends) · c ± r | ✓ | ✗ not yet: a range’s end is a number or a slider; its cells move what lies between (decision 079) | `&lead s=saw loop=C4 lpf=free(400, 200..800)..free(2400, 1200..4800) * &lfo` |
 | swing=8n:n · legato=8n:n | ✓ | ✗ not yet: #597, a meter’s timing moved at its bar line | `&bar meter("4/4") step=90bpm swing=8n:free(.6, .5...75)` |
 | [&x * n] (a gain in a mix) | ✓ | `&k`; a range moved by cells is a cell of its own, `&g [&k * .6 + .2]`, then `[&x * &g]` (decision 079) | `&out [&strings * free(.4, 0..1)]` |

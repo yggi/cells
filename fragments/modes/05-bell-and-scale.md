@@ -4,14 +4,14 @@ association:
   - point:
       sync: 0.383
       harm: 0.717
-      drive: 0.3335
-      bright: 0.875
+      bite: 0.25
+      mood: 0.5
     weight: 1
     facet: mode
   - point:
       sync: 0.8
       harm: 0.1
-      drive: 0.75
+      bite: 0.9
     weight: 1
     facet: rhythm
 source: seed

@@ -33,7 +33,7 @@ export function nearestStyle(point, options = {}) {
         .slice(0, k)
         .map(({ style, distance }) => ({ style, distance }));
 }
-export const at = (sync, harm, drive, bright) => ({ sync, harm, drive, bright });
+export const at = (sync, harm, bite, mood) => ({ sync, harm, bite, mood });
 export const SYNTH_POP = stylePoint('synthPop');
 export const TECHNO = stylePoint('techno');
 export const DEEP_HOUSE = stylePoint('deepHouse');

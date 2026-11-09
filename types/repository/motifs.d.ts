@@ -9,7 +9,7 @@
  * the band that chose the key. The ninth, `gypsy`, is lifted from examples/electroswing.md, at the point proposed for an
  * Electro swing preset; the tenth, `diesIrae`, the chant's head, is at the point proposed for a Spooky one (#349).
  *
- * Twenty-six more (#369), by hand: a second near each of the ten presets' points, 0.1 higher in energy on the axes then (0.05 in drive now, decision 076), so a query at
+ * Twenty-six more (#369), by hand: a second near each of the ten presets' points, 0.1 higher in energy on the axes then (0.05 in bite now, decision 076), so a query at
  * the point finds the first first (cells breaks a tie by id) and the second 0.05 away; one at each point of a meter that had none, a bar
  * of that meter in eighths grouped as its pulses group (3/4 and 6/8 twice, 5/4, 7/8, 10/8, 12/8, 2/4, alla breve); and
  * six general-purpose, at the centre of style space and 0.2 from it on one axis each. Each is a file of the seed

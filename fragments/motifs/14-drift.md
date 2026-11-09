@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.05
       harm: 0.3
-      drive: 0.15
-      bright: 0.875
+      bite: 0.1
+      mood: 0.9
     weight: 1
     facet: motif
 source: seed
@@ -20,6 +20,6 @@ Two notes, the fifth and the fourth, half a bar each: a line that barely moves, 
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 4/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
 Its head is named for it (`&drift`), so `use &drift` takes it; a form reads it as its `&call` (`&call step=8n &drift`), the line the form moves and answers.
 
-Near Ambient's point, 0.05 higher in drive, so a query there finds `rising` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
+Near Ambient's point, 0.1 higher in bite (its energy offset, #572), so a query there finds `rising` first and this one 0.05 away (#369), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&drift from &key`. `&drift from drift &key` takes a copy of it, `&key` its main argument.

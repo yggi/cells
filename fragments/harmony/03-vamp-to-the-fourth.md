@@ -4,22 +4,22 @@ association:
   - point:
       sync: 0.12
       harm: 0
-      drive: 0.9
-      bright: 0.25
+      bite: 1
+      mood: 0.4
     weight: 1
     facet: harmony
   - point:
       sync: 1
       harm: 0.12
-      drive: 0.8
-      bright: 0.5
+      bite: 0.85
+      mood: 0.65
     weight: 1
     facet: harmony
   - point:
       sync: 0.05
       harm: 0.12
-      drive: 0.1
-      bright: 0.875
+      bite: 0
+      mood: 0.9
     weight: 1
     facet: harmony
 source: seed

@@ -115,7 +115,7 @@ Written in place they hang as petals of the voice; named, one envelope serves se
 &bar meter("4/4") step=&tempo
 &tempo step=120bpm
 &style style=&(map=style .5 .5 .2 .5)
-&chords map=adsr attack=.3..0.01 * &style[drive] decay=0 sustain=1 release=.7..0.12 * &style[drive]
+&chords map=adsr attack=.3..0.01 * &style[bite] decay=0 sustain=1 release=.7..0.12 * &style[bite]
 &pad s=tri loop=C3 env=&chords
 &line step=1m [0,4,7] [5,9,12]
 &out map=sample [&line * &pad * .3]
@@ -127,7 +127,7 @@ Written in place they hang as petals of the voice; named, one envelope serves se
 &bar meter("4/4") step=&tempo
 &tempo step=120bpm
 &style style=&(map=style .5 .5 .8 .5)
-&lead s=tri..square * &style[drive] loop=C4 lpf=2500
+&lead s=tri..square * &style[bite] loop=C4 lpf=2500
 &tune step=8n 0 2 4 7 4 2 0 ~
 &out map=sample [&tune * &lead * .5]
 ```

@@ -16,7 +16,7 @@
  *  - oneshot.ts:   the bare line word oneshot as the voice's parameter, oneshot=1 (decision 068, #440)
  *  - beats.ts:     beat=n, retired, as the meter that counts those beats: meter("4/4") beat=2 → meter("2/2", 2) (#502)
  *  - pairs.ts:     a swing's :pairs dropped, what every swing does now (swing=8n:2/3, decision 071, #15)
- *  - axes.ts:      a style on the axes sync harm artic energy as on sync harm drive bright (decision 076, #572): exact
+ *  - axes.ts:      a style on the axes sync harm artic energy as on sync harm bite mood (decision 076, #572): exact
  *                  against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid

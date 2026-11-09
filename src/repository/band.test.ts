@@ -48,8 +48,8 @@ function sent(text: string, resolve = resolveSeed): string[] {
 
 describe('the default band (#391)', () => {
   it('is one fragment, `band`, of the facet band, at the centre of style space', () => {
-    // (a band speaks to no mode: its point leaves bright out, decision 076 §2, #572)
-    const { bright: _bright, ...centre } = CENTRE;
+    // (a band speaks to no mode: its point leaves mood out, decision 076 §2, #572)
+    const { mood: _mood, ...centre } = CENTRE;
     expect(BAND_FRAGMENTS.map((f) => [f.id, f.association.map((wp) => [wp.facet, wp.point, wp.weight])])).toEqual([['band', [['band', centre, 1]]]]);
   });
 
@@ -121,8 +121,8 @@ describe('the style moves the sound (#391)', () => {
       });
   };
 
-  // (Jambot's timbreOf opens the lead with energy; since decision 076 it reads drive, #572)
-  it('the lead’s cutoff at drive .2 is lower than at .8, on the same notes: 1840 Hz and 3160 Hz, as Jambot’s timbreOf at those energies', () => {
+  // (Jambot's timbreOf opens the lead with energy; since decision 076 it reads bite, #572)
+  it('the lead’s cutoff at bite .2 is lower than at .8, on the same notes: 1840 Hz and 3160 Hz, as Jambot’s timbreOf at those energies', () => {
     const low = cutoffs('&(map=style .5 .5 .2 .5)', 'leadV');
     const high = cutoffs('&(map=style .5 .5 .8 .5)', 'leadV');
     expect(low).toHaveLength(4);
@@ -132,12 +132,12 @@ describe('the style moves the sound (#391)', () => {
     expect(high.map((n) => Math.round(n.lpf))).toEqual([3160, 3160, 3160, 3160]);
   });
 
-  it('the bass’s cutoff opens with drive, from 450 Hz where it is paddy to 900 Hz where it is stabby; brightness leaves it', () => {
+  it('the bass’s cutoff opens with bite, from 450 Hz where it is paddy to 900 Hz where it is stabby; brightness leaves it', () => {
     const at = (style: string) => [...new Set(cutoffs(style, 'bassV').map((n) => Math.round(n.lpf)))];
     expect([at('&(map=style .5 .5 0 .5)'), at('&(map=style .5 .5 .5 .5)'), at('&(map=style .5 .5 1 .5)'), at('&(map=style .5 .5 1 0)')]).toEqual([[450], [675], [900], [900]]);
   });
 
-  it('follows a section’s range, style=a..b: the lead brighter at the end of a section that gains drive', () => {
+  it('follows a section’s range, style=a..b: the lead brighter at the end of a section that gains bite', () => {
     const notes = cutoffs('&(map=style .5 .5 .2 .5)..&(map=style .5 .5 .8 .5)', 'leadV');
     expect(notes.length).toBe(4);
     expect(notes[0]!.lpf).toBeCloseTo(1840, 0);
@@ -185,8 +185,8 @@ describe('which instrument a performer plays at a style: the band’s choice, at
     expect(scoreStyle('&funk map=style 1 .12 .8 .5\n&style style=&funk')).toEqual(FUNK);
     expect(scoreStyle('&style style=&(map=style .55 .75 .675 .375)')).toEqual(ELECTRO_SWING);
     expect(scoreStyle('&style style=&(map=style .2 .9 .325 .375)..&(map=style .5 .5 .5 .5)')).toEqual(SPOOKY);
-    expect(scoreStyle('&a map=style 0 0 0 0\n&b map=style 1 1 1 1\n&style style=[&a * .25, &b * .75]')).toEqual({ sync: 0.75, harm: 0.75, drive: 0.75, bright: 0.75 });
-    expect(scoreStyle('&style style=&(map=style sync=.2 harm=.9 drive=.325 bright=.375)')).toEqual(SPOOKY);
+    expect(scoreStyle('&a map=style 0 0 0 0\n&b map=style 1 1 1 1\n&style style=[&a * .25, &b * .75]')).toEqual({ sync: 0.75, harm: 0.75, bite: 0.75, mood: 0.75 });
+    expect(scoreStyle('&style style=&(map=style sync=.2 harm=.9 bite=.325 mood=.375)')).toEqual(SPOOKY);
     expect(scoreStyle('&bar meter("4/4")')).toBeNull();
     // (a style taken by name is read through the score's expansion: the seed library's `styles`, `styles.test.ts`)
     expect(scoreStyle('&style style=&funk\n&funk from styles')).toEqual(FUNK);

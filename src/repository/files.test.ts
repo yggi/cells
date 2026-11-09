@@ -85,7 +85,7 @@ describe('the seed files', () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       meter: [SYNTH_POP, TECHNO, BOSSA_NOVA],
       'meter(swing=8n:2/3)': [SWING_JAZZ, ELECTRO_SWING],
-      'meter(grouping=meter("5/4"))': [{ sync: 0.4, harm: 0.9, drive: 0.4, bright: 0.375 }, SPOOKY],
+      'meter(grouping=meter("5/4"))': [{ sync: 0.4, harm: 0.9, bite: 0.4, mood: 0.375 }, SPOOKY],
       'meter(swing=16n:.65)': [LO_FI],
       'meter(swing=16n:.6)': [DEEP_HOUSE, FUNK],
       'meter(swing=16n:31/60)': [AMBIENT],
@@ -118,9 +118,9 @@ describe('the seed files', () => {
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
     const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT], pumping_bass: [TECHNO] };
-    // (a meter or a drum bar speaks to no mode, so its point leaves bright out: the preset's other axes, exactly, decision 076)
+    // (a meter or a drum bar speaks to no mode, so its point leaves mood out: the preset's other axes, exactly, decision 076)
     const NO_MODE = (id: string) => id.startsWith('meter') || id.endsWith('_drums');
-    const onItsAxes = (id: string, p: object) => (NO_MODE(id) ? Object.fromEntries(Object.entries(p).filter(([axis]) => axis !== 'bright')) : p);
+    const onItsAxes = (id: string, p: object) => (NO_MODE(id) ? Object.fromEntries(Object.entries(p).filter(([axis]) => axis !== 'mood')) : p);
     for (const [id, points] of Object.entries(AT_PRESETS))
       expect(
         LIBRARY.find((f) => f.id === id)!.association.map((wp) => wp.point),

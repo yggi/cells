@@ -38,11 +38,11 @@ const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnTy
 };
 
 // (the points as they were placed, on the axes before decision 076, sync harm artic energy, held as the library holds
-// them, moved by its rule, #572: drive their mean, bright the mode found there, a form's none)
+// them, moved by its rule, #572: bite their mean, mood the mode found there, a form's none)
 const held = (sync: number, harm: number, artic: number, energy: number): StylePoint => newPoint({ sync, harm, artic, energy });
 const heldForm = (sync: number, harm: number, artic: number, energy: number): StylePoint => newPoint({ sync, harm, artic, energy }, false);
-/** A point 0.1 higher in energy, on the axes then: 0.05 higher in drive now, to the thousandth. */
-const above = (p: StylePoint): StylePoint => ({ ...p, drive: Math.round((p.drive! + 0.05) * 1000) / 1000 });
+/** A point 0.1 higher in energy, on the axes then: 0.05 higher in bite now, to the thousandth. */
+const above = (p: StylePoint): StylePoint => ({ ...p, bite: Math.round((p.bite! + 0.05) * 1000) / 1000 });
 /** Each motif, the point it sits at, and the meter it is a bar of (4/4 where none is named). */
 const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   hook: { point: SYNTH_POP },
@@ -106,7 +106,7 @@ const FORMS: Record<string, { head: string; hole: string; bars: number; point: S
   period: { head: 'period', hole: 'call', bars: 4, point: CENTRE },
   AABA: { head: 'chorus', hole: 'a', bars: 4, point: CENTRE },
   // (Twinkle's and Hänschen klein's, at their tunes' points, #371)
-  ternary: { head: 'song', hole: 'call', bars: 6, point: { sync: KINDERLIED.sync!, harm: KINDERLIED.harm!, drive: KINDERLIED.drive! }, weight: 0.5 },
+  ternary: { head: 'song', hole: 'call', bars: 6, point: { sync: KINDERLIED.sync!, harm: KINDERLIED.harm!, bite: KINDERLIED.bite! }, weight: 0.5 },
   rounded_binary: { head: 'song', hole: 'call', bars: 8, point: heldForm(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
 };
 
@@ -159,7 +159,7 @@ describe('the motifs', () => {
   });
 
   // (cells breaks a tie by id, so a second motif sits off the point: at it, the first is found first, alone at distance 0)
-  // (0.05 off in drive, one of four axes: 0.025 away; 0.05 when it was 0.1 off in energy, before decision 076)
+  // (0.05 off in bite, one of four axes: 0.025 away; 0.05 when it was 0.1 off in energy, before decision 076)
   it('find each preset’s first motif first at its point, alone at distance 0, and its second 0.025 away', () => {
     const motifs = createRepository(MOTIF_FRAGMENTS);
     const firsts = Object.keys(MOTIFS).slice(0, 10);

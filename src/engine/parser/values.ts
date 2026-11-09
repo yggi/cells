@@ -162,8 +162,8 @@ export const MAP_KINDS: Readonly<Record<MapWord, Syntax>> = {
   style: syntax(
     'map',
     'map=style',
-    "A style: a point in style space, one value an axis in the table's order (sync harm drive bright, each 0 to 1), or each by its name (sync=.3); it doesn't sound. A pick reads an axis by name: &funk[drive].",
-    ['&funk map=style .3 .45 .55 .5', '&funk map=style sync=.3 harm=.45 drive=.55 bright=.5'],
+    "A style: a point in style space, one value an axis in the table's order (sync harm bite mood, each 0 to 1), or each by its name (sync=.3); it doesn't sound. A pick reads an axis by name: &funk[bite].",
+    ['&funk map=style .3 .45 .55 .5', '&funk map=style sync=.3 harm=.45 bite=.55 mood=.5'],
     'style.md',
   ),
   role: syntax(

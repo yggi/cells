@@ -4,7 +4,7 @@ association:
   - point:
       sync: 0.3
       harm: 0.45
-      drive: 0.55
+      bite: 0.55
     weight: 1
     facet: rhythm
 source: seed
