@@ -387,7 +387,10 @@ describe('a held rest (#410)', () => {
     for (const f of MOTIF_FRAGMENTS) {
       const as = variations(bodyOf(f.text), options).map((v) => v.by);
       expect(as.length, f.id).toBeGreaterThan(0);
-      expect(variations(held(bodyOf(f.text)), options).map((v) => v.by), f.id).toEqual(as);
+      expect(
+        variations(held(bodyOf(f.text)), options).map((v) => v.by),
+        f.id,
+      ).toEqual(as);
     }
   });
 

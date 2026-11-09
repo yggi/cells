@@ -362,7 +362,11 @@ describe('a drum bar with no card of its own (#291)', () => {
 
 describe('a held rest in a line of hits (#410)', () => {
   const held = (text: string) => text.replace(/~(?: ~)+(?= |$)/gm, (run) => `~@${run.split(' ').length}`);
-  it.each(RHYTHM_FRAGMENTS.filter((f) => held(f.text) !== f.text).slice(0, 8).map((f) => [f.id, f.text] as const))('%s, its runs of rests held, is varied as written', (_, text) => {
+  it.each(
+    RHYTHM_FRAGMENTS.filter((f) => held(f.text) !== f.text)
+      .slice(0, 8)
+      .map((f) => [f.id, f.text] as const),
+  )('%s, its runs of rests held, is varied as written', (_, text) => {
     const kit = { ...OPTIONS, workbench: `${WORKBENCH}\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}` };
     const as = variations(text, kit).map((v) => v.by);
     expect(as.length).toBeGreaterThan(0);
