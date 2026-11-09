@@ -9,8 +9,11 @@ import { GM_KIT, gmDrumNote, kitNotes, noteOf } from './midi';
 import { EXAMPLES } from './examples';
 import { pieceMeta } from './parser';
 import { writePiece } from './piecefile';
-import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
 import { resolveSeed } from '../repository/library';
+import { seedFragments } from '../repository/seed';
+
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
+
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
 const compileSource: typeof compileAlone = (text, env, options) => compileAlone(text, env, { resolve: resolveSeed, ...options });
 

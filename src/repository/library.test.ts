@@ -4,22 +4,24 @@
 import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { createRepository, type Fragment, type StylePoint } from './fragments';
-import { BASS_FRAGMENTS } from './bass';
-import { HARMONY_FRAGMENTS } from './harmony';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
-import { EXPRESSION_FRAGMENTS } from './expression';
 import { LIBRARY, resolveSeed, RETIRED } from './library';
-import { METER_FRAGMENTS } from './meters';
-import { MODE_FRAGMENTS } from './modes';
-import { PERFORMER_FRAGMENTS } from './performers';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
-import { RHYTHM_FRAGMENTS } from './rhythms';
-import { STAB_FRAGMENTS } from './stab';
-import { MOTIF_FRAGMENTS } from './motifs';
-import { FORM_FRAGMENTS } from './forms';
-import { BAND_FRAGMENTS } from './bands';
 import { STYLE_FRAGMENTS } from './styles';
-import { MODULE_FRAGMENTS } from './modules';
+import { seedFragments } from './seed';
+
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+const BASS_FRAGMENTS = seedFragments('bass');
+const HARMONY_FRAGMENTS = seedFragments('harmony');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
+const EXPRESSION_FRAGMENTS = seedFragments('expression');
+const MODE_FRAGMENTS = seedFragments('modes');
+const PERFORMER_FRAGMENTS = seedFragments('performers');
+const STAB_FRAGMENTS = seedFragments('stab');
+const MOTIF_FRAGMENTS = seedFragments('motifs');
+const FORM_FRAGMENTS = seedFragments('forms');
+const BAND_FRAGMENTS = seedFragments('bands');
+const MODULE_FRAGMENTS = seedFragments('modules');
 
 const library = createRepository(LIBRARY);
 const meters = createRepository(METER_FRAGMENTS);

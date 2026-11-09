@@ -9,14 +9,17 @@ import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
-import { BASS_FRAGMENTS } from './bass';
 import { fitsAs } from './fit';
 import { expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
-import { HARMONY_FRAGMENTS } from './harmony';
 import { holesOf } from './holes';
-import { INSTRUMENT_FRAGMENTS } from './instruments';
+
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+const BASS_FRAGMENTS = seedFragments('bass');
+const HARMONY_FRAGMENTS = seedFragments('harmony');
+const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
+const MODE_FRAGMENTS = seedFragments('modes');
 
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
 const AGOGO = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!
@@ -26,12 +29,10 @@ const AGOGO = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!
 const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOGO}` : text);
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY, resolveSeed } from './library';
-import { MODE_FRAGMENTS } from './modes';
 import { newPoint } from '../engine/migrate/axes';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { moodOf } from '../engine/style';
-
-import { RHYTHM_FRAGMENTS } from './rhythms';
+import { seedFragments } from './seed';
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
 const takenOn = (text: string, bench: string, main?: string) => {

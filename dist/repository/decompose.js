@@ -1,11 +1,12 @@
+const MOTIF_FRAGMENTS = seedFragments('motifs');
+const FORM_FRAGMENTS = seedFragments('forms');
 import { compileSource } from "../engine/compile.js";
 import { flatten, tapped } from "../engine/flatten.js";
 import { codeShifts } from "../engine/program.js";
 import { structureOf } from "../engine/measure.js";
 import { tapWhole } from "../engine/vary/lines.js";
-import { FORM_FRAGMENTS } from "./forms.js";
 import { resolveSeed } from "./library.js";
-import { MOTIF_FRAGMENTS } from "./motifs.js";
+import { seedFragments } from "./seed.js";
 const benchOf = (meter) => `&bar meter("${meter}") step=120bpm\n&key scale(ionian, C)`;
 const keyOf = (n) => `${Math.round(n.at * 1e6)}:${n.degree}:${n.alter}`;
 const same = (a, b) => a.length === b.length && a.every((n, i) => keyOf(n) === keyOf(b[i]));
