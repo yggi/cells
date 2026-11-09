@@ -824,7 +824,11 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
         if (word in RETIRED_KEYS) s.fail(RETIRED_KEYS[word], at, word.length);
         // (decision 076: articulation is bite now, and energy is off the point; Migrate writes a style on the old axes on the new)
         if ((word === 'artic' || word === 'energy') && b.map?.kind === 'style')
-          s.fail(`${word}= is retired: a style's axes are ${AXIS_NAMES.join(' ')}, bite its articulation and energy off the point (decision 076); Migrate rewrites it`, at, word.length);
+          s.fail(
+            `${word}= is retired: a style's axes are ${AXIS_NAMES.join(' ')}, bite its articulation and energy off the point (decision 076); Migrate rewrites it`,
+            at,
+            word.length,
+          );
         const near = nearestAttribute(word);
         s.fail(
           `Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`,
