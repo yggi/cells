@@ -12,6 +12,7 @@ import { warpOf } from "./physics.js";
 import { tapShare } from "./meter.js";
 import { mod } from "../theory/modes.js";
 export const HELD = 600;
+const NO_SERIES = { sign: 1, lin: false, db: false, clock: null, rate: 0, period: 1, events: [] };
 export function endOf(result, statics, o) {
     const clk = clocking(result, statics);
     const seen = new Set();
@@ -206,7 +207,7 @@ export function comeRound(events, period, lap) {
 }
 export function plan(result, statics, muted = new Set()) {
     if (!result.ok)
-        return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
+        return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity, seriesOf: () => NO_SERIES };
     const tracks = [];
     const drones = [];
     const voiceParams = new Map();
@@ -323,7 +324,18 @@ export function plan(result, statics, muted = new Set()) {
             stops = Math.max(stops, at);
     }
     const lapsEnd = ends.length ? Math.max(...ends) : Infinity;
-    return { result, statics, muted, tracks, drones, played: playedCells(result), voiceParams, envParams, end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity) };
+    return {
+        result,
+        statics,
+        muted,
+        tracks,
+        drones,
+        played: playedCells(result),
+        voiceParams,
+        envParams,
+        end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity),
+        seriesOf: (cell) => (result.cells.has(cell) ? series(cell, null, 0, 1) : NO_SERIES),
+    };
 }
 function envelopeAt(p, cell, env, at) {
     const slots = env && cell ? p.envParams.get(cell) : undefined;
