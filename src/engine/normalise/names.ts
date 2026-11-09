@@ -101,25 +101,6 @@ export function interfaceNames(source: string, result: CompileResult): Rewrite<R
   return out;
 }
 
-/** The meter of four beats a scan writes, `scan(1 1 1 1)`, as the meter it is: `meter("4/4")` (#196, the owner's row). */
-export function fourFour(source: string, result: CompileResult): Rewrite<'meter'>[] {
-  const meter = result.mainMeter;
-  if (!meter || spansLines(source, meter)) return [];
-  const braid = declWords(source, meter)?.braid ?? [];
-  if (braid.length !== 1 || !/^scan\(\s*1\s+1\s+1\s+1\s*\)$/.test(braid[0]!)) return [];
-  return [
-    {
-      id: `meter:${meter}`,
-      tool: 'normalise',
-      rule: 'meter',
-      title: `&${meter}: ${braid[0]} is meter("4/4")`,
-      before: braid[0]!,
-      after: 'meter("4/4")',
-      apply: (src) => replaceInDecl(src, meter, braid[0]!, 'meter("4/4")'),
-    },
-  ];
-}
-
 /** One word of &name's declaration replaced, its attributes, spacing and comment kept. */
 function replaceInDecl(source: string, name: string, from: string, to: string): string {
   const lines = source.split('\n');

@@ -183,7 +183,7 @@ export const KEYS = {
     },
     laps: {
         form: 'laps=n',
-        examples: ['&bar scan(4 4 4 4) step=84bpm laps=30'],
+        examples: ['&bar meter("4/4") step=84bpm laps=30'],
         read: (s, b, word, at) => {
             const f = s.freeNumber(NUMBER_PLACES.laps);
             const n = f === null ? s.match(/[0-9]+/y) : String(f);

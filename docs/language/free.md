@@ -27,16 +27,16 @@ The places, from the parser's own table:
 | &x:0:n (a hit’s gain) | ✓ | ✗ a hit’s gain is a number; a moving one is `velocity=&accent`, or a gate’s `level=` | `&beat step=8 &bd &hh:0:free(.4, 0..1)` |
 | style=[&a * n, …] (a weight) | ✓ | ✗ a weight is a number; a crossfade is `style=&a..&b * &curve` | `&s style=[&funk * free(.8, 0..1), &bossa * .2]` |
 | scale(name, n) (a tonic) | ✓ whole | `&k` (a note); a tonic is a pitch class, never a range | `&key scale(dorian, free(2, 0..11))` |
-| step=n · loop=n (a rate) | ✓ | a clock (`step=&bar`): another meaning | `&bar scan(4 4 4 4) step=free(90bpm, 60..240)` |
+| step=n · loop=n (a rate) | ✓ | a clock (`step=&bar`): another meaning | `&bar meter("4/4") step=free(90bpm, 60..240)` |
 | step=&bar*n · step=&bar/n | ✓ | ✗ read as the piece is built | `&fast step=&bar*free(2, 1..4) 0 2` |
 | shift=n | ✓ whole | ✗ read as the piece is built | `&key step=cycle(&theme) shift=free(0, 0..11)` |
 | stride=n | ✓ whole | ✗ read as the piece is built | `&key step=cycle(&theme) stride=free(0, 0..7)` |
 | cycle=n | ✓ whole | ✗ read as the piece is built | `&wheel cycle=free(1, 0..4) 0 4 7` |
-| laps=n | ✓ whole | ✗ read as the piece is built | `&bar scan(4 4 4 4) step=84bpm laps=free(30, 1..60)` |
+| laps=n | ✓ whole | ✗ read as the piece is built | `&bar meter("4/4") step=84bpm laps=free(30, 1..60)` |
 | chance=p | ✓ | ✗ read as the piece is built | `&ghost chance=free(.7, 0..1) step=4 0? 0?` |
 | seed=n | ✓ whole | ✗ read as the piece is built | `&ghost seed=free(7, 0..99) step=4 0? 0? 0? 0?` |
 | size=x | ✓ | ✗ read as the piece is built | `&theme size=free(2, .25..4) step=2 0 2 4` |
-| scan(n …) (an interval) | ✓ | ✗ read as the piece is built | `&swing scan(free(2, 1..3) 1) step=120bpm` |
+| scan(n …) (an interval) | ✓ | ✗ read as the piece is built | `&mode scan(2 2 free(1, 1..2) 2 2 2 1)` |
 | scan(n!k …) (an interval’s repeat) | ✓ whole | ✗ read as the piece is built | `&map scan(1!free(4, 1..8) 2)` |
 | geo(r, n, k …) | ✓ | ✗ read as the piece is built | `&series scan(geo(free(5, 2..8), 25, 0 10 5))` |
 | euclid(k, n, r) · even(k, n, r) · sin(n) … | ✓ whole | ✗ read as the piece is built | `&hits euclid(free(3, 0..8), 8) step=8` |
@@ -61,9 +61,9 @@ A tempo marking is its range, centred: `step=free(adagio)` (largo larghetto adag
 A rate's unit can be an argument, its numbers then the core's (a second): `step=free(2, 1.5..2.5, unit=bpm)` is `step=free(120bpm, 90..150)`, the same slider shown in bpm. The unit written after the number, and a marking, are its sugar: `toCore` writes a slider so (decision 069). The unit is said once, after the number or as `unit=`, and only on a rate.
 
 ```cells
-&bar scan(4 4 4 4) step=free(90bpm, 60..240)
-&slow scan(4 4 4 4) step=free(adagio)
-&swing scan(free(2, 1..3) 1) step=free(120bpm, 60..200)
+&bar meter("4/4") step=free(90bpm, 60..240) swing=&swing
+&slow meter("4/4") step=free(adagio)
+&swing swing=8n:free(2/3, 1/2..3/4)   # a share left free, its ends fractions
 ```
 
 ## A braid left free

@@ -62,13 +62,19 @@ None is written where the name is taken, where the line runs on to the next, or 
 | `&time scan(1 1 1 1) step=96bpm` (the one meter, at 96 bpm) | `&bar meter("4/4") step=&tempo` and `&tempo step=96bpm` |
 | `&scale scale(dorian, D)` (the one key) | `&key scale(dorian, &tonic)` and `&tonic D` |
 
-## The bar of four beats: `meter("4/4")`
+## A meter built by hand: the meter it is
 
-`scan(1 1 1 1)`, the main meter as four even beats, is written `meter("4/4")` (#196), where the two sound identical. Where a piece reads `&bar` as more than a meter (its values: baustelle, effects, moving, waveforms), they don't, and the scan stays.
+A meter a text builds out of something else is written as the meter's own form (`normalise/meter.ts`, #645, part of #15), each only where the two sound identical:
+
+- **Even beats as a signature.** The main meter as a scan of equal entries, `scan(1 1 1)` or `scan(4 4 4 4)`, is `meter("3/4")`, `meter("4/4")`: the beats it counts, two to twelve each entry a beat (1) or four sixteenths (4); #196 wrote `scan(1 1 1 1)` so, and this is every count. A scan of 3s may be 6/8 or 3/16, and stays. Where a piece reads `&bar` as more than a meter (its values: baustelle, effects, moving, waveforms), they don't sound the same, and the scan stays.
+- **A swing clock as a swing.** A clock of two that lines tap by its pulse to play long and short, `&swing scan(2 1) step=8n` read by `step=&swing:pulse`, is the main meter's swing: `&bar … swing=&swing`, the clock a swing alone, `&swing swing=8n:2/3` ([time.md](time.md), #308), its lines on the note value, `step=8n`. The share is the clock's first entry over the two, x / (x + b). A ratio left free is a share left free, `free(2, 1..3)` → `free(2/3, 1/2..3/4)`: the same notes where it starts, its slider now the share. The clock keeps its name, so a note about it still points at it. A clock on a level whose pairs the meter doesn't lean (eighths in 6/8, which are threes: decision 071), or one a line reads as more than a pulse, stays as it is.
 
 | written | Normalise writes |
 |---|---|
 | `&bar scan(1 1 1 1) step=&tempo` | `&bar meter("4/4") step=&tempo` |
+| `&bar scan(1 1 1 1 1) step=&tempo` | `&bar meter("5/4") step=&tempo` |
+| `&swing scan(2 1) step=8n`, `&ride step=&swing:pulse …` | `&bar … swing=&swing`, `&swing swing=8n:2/3`, `&ride step=8n …` |
+| `&swing scan(free(2, 1..3) 1) step=8n` | `&swing swing=8n:free(2/3, 1/2..3/4)` |
 
 ## The library's lines: a `from` line
 

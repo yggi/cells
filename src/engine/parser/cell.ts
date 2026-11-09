@@ -248,7 +248,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
   },
   laps: {
     form: 'laps=n',
-    examples: ['&bar scan(4 4 4 4) step=84bpm laps=30'],
+    examples: ['&bar meter("4/4") step=84bpm laps=30'],
     read: (s, b, word, at) => {
       // laps=n: n laps, then silence — a piece that ends
       const f = s.freeNumber(NUMBER_PLACES.laps);

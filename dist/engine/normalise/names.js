@@ -54,25 +54,6 @@ export function interfaceNames(source, result) {
     }
     return out;
 }
-export function fourFour(source, result) {
-    const meter = result.mainMeter;
-    if (!meter || spansLines(source, meter))
-        return [];
-    const braid = declWords(source, meter)?.braid ?? [];
-    if (braid.length !== 1 || !/^scan\(\s*1\s+1\s+1\s+1\s*\)$/.test(braid[0]))
-        return [];
-    return [
-        {
-            id: `meter:${meter}`,
-            tool: 'normalise',
-            rule: 'meter',
-            title: `&${meter}: ${braid[0]} is meter("4/4")`,
-            before: braid[0],
-            after: 'meter("4/4")',
-            apply: (src) => replaceInDecl(src, meter, braid[0], 'meter("4/4")'),
-        },
-    ];
-}
 function replaceInDecl(source, name, from, to) {
     const lines = source.split('\n');
     const i = declLine(source, name);

@@ -10,12 +10,12 @@ description: "The bell, x.x.xx.x.x.x, has the major scale's intervals: 2 2 1 2 2
 # x.x.xx.x.x.x — has the same intervals as the major scale: 2 2 1 2 2 2 1.
 # So one cell is both: the melody steps with the bell, and reads it as its scale.
 &oneScanNote label="One scan is both — the melody steps with it, and reads it as its scale." about=(&bell &song)
-&beat meter("4/4") step=free(100bpm, 70..140)       # four dotted-quarter beats: 12/8
-&bell label="{mode} · x.x.xx.x.x.x" scan(2 2 1 2 2 2 1) step=pulse*7/4             # seven strokes a bar, over the twelve pulses
+&beat meter("12/8") step=free(100bpm, 70..140)      # four dotted-quarter beats
+&bell label="{mode} · x.x.xx.x.x.x" scan(2 2 1 2 2 2 1) step=pulse*7/12            # seven strokes a bar, over the twelve pulses
 
 &strokes step=&bell:pulse &gankogui &gankogui:0:.5 &gankogui:0:.7 &gankogui:0:.5 &gankogui:0:.6 &gankogui:0:.5 &gankogui:0:.7 # the bell, as a rhythm
 &song over=&bell step=&bell:pulse 4 4 5 4 2 1 0 2 2 1 2 0 ~ ~ # … and as a scale: C major
-&drums step=8t [&dundun,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [&dundun:0:.5,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [
+&drums step=8n [&dundun,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [&dundun:0:.5,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [
        &dundun:0:.8,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3 [&dundun:0:.5,&shekere:0:.5] &shekere:0:.2 &shekere:0:.3   # the twelve pulses, the low drum on the beats
 
 &gankogui gain=.25 s=square loop=C6 lpf=4000 env=&tap
