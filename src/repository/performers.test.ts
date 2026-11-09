@@ -105,7 +105,8 @@ const PARTS = {
 
 describe('the performers', () => {
   it('come by their role: a from line of the role brings its gate, and of the gate alone, no role (decisions 061, 065)', () => {
-    const score = '&bassline over=&harm step=4n 0 0 1 2\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
+    const score =
+      '&bassline over=&harm step=4n 0 0 1 2\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
     const performers = (use: string) => {
       const r = compileSource(`${use}\n${HOST}\n${score}`, undefined, { resolve: resolveSeed });
       expect(r.diagnostics.map((d) => d.message)).toEqual([]);
@@ -132,10 +133,10 @@ describe('the performers', () => {
     expect(holes).toEqual([['&drumlines'], ['&bassline'], ['&padline'], ['&stabline'], ['&leadline']]);
     expect(PERFORMER_FRAGMENTS.map((f) => signatureOf(f.text))).toEqual([
       { kind: 'signature', names: ['&drums', '&drumsOut'], optional: ['&kit'], main: '&drumlines' },
-      { kind: 'signature', names: ['&bass', '&bassOut'], optional: ['&bassLevel'], main: '&bassline' },
-      { kind: 'signature', names: ['&pad', '&padOut'], optional: ['&padLevel'], main: '&padline' },
-      { kind: 'signature', names: ['&stab', '&stabOut'], optional: ['&stabLevel'], main: '&stabline' },
-      { kind: 'signature', names: ['&lead', '&leadOut'], optional: ['&leadLevel'], main: '&leadline' },
+      { kind: 'signature', names: ['&bass', '&bassOut'], optional: ['&bassLevel', '&bassV', '&style'], main: '&bassline' },
+      { kind: 'signature', names: ['&pad', '&padOut'], optional: ['&padLevel', '&padV', '&style'], main: '&padline' },
+      { kind: 'signature', names: ['&stab', '&stabOut'], optional: ['&stabLevel', '&keysV', '&style'], main: '&stabline' },
+      { kind: 'signature', names: ['&lead', '&leadOut'], optional: ['&leadLevel', '&leadV', '&style'], main: '&leadline' },
     ]);
   });
 
@@ -144,12 +145,11 @@ describe('the performers', () => {
       const was = sent([HOST, ...jambot].join('\n'));
       const now = sent([HOST, ...performer].join('\n'));
       expect(was.diagnostics).toEqual([]);
-      // (the instrument has a sound of its own now, #391, which a MIDI card alone says it doesn't send: decision 064; and
-      // Jambot's text names no style, so the instruments, which read it, play the centre of style space, said: #391, #411)
-      const sentOnly = now.diagnostics.filter((m) => !m.startsWith('no line writes &style'));
-      expect(sentOnly).toHaveLength(1);
-      expect(sentOnly[0]).toMatch(/^&(bassV|padV|keysV|leadV) is only on a MIDI card: its sound \(s=/);
-      expect(now.diagnostics.length - sentOnly.length).toBe(1);
+      // (the instrument has a sound of its own now, #391, which a MIDI card alone says it doesn't send: decision 064; the
+      // performer's voice is its copy's own, given none, `&bass_bassV`; and the style it reads it declares, its default
+      // the centre of style space, so nothing is said of it: #560 rung 3c–e)
+      expect(now.diagnostics).toHaveLength(1);
+      expect(now.diagnostics[0]).toMatch(/^&(bass_bassV|pad_padV|stab_keysV|lead_leadV) is only on a MIDI card: its sound \(s=/);
       expect(now.notes.length).toBeGreaterThan(0);
       expect(now.notes).toEqual(was.notes);
     });

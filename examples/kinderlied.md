@@ -16,8 +16,8 @@ The band is the library's too: the plainest beat, `kinderlied_drums` (the kick o
 &harm from vamp_to_the_fifth &key
 &bassline from root_bass &harm
 &drums, &drumsOut from drums_performer &drumlines
-&bass, &bassOut from bass_performer &bassline
-&leadOut from lead_performer &leadline
+&bass, &bassOut from bass_performer(bassV=&bassV) &bassline
+&leadOut from lead_performer(leadV=&leadV) &leadline
 &kick, &backbeat, &hat from kinderlied_drums
 &drumlines [&kick, &backbeat, &hat]
 &bandNote label="The band: the Kinderlied beat, a vamp of the tonic and the fifth, the root bass, all from the library." about=(&drumlines &harm &bassline)

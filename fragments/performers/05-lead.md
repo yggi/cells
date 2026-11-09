@@ -53,11 +53,12 @@ source: seed
 ---
 
 ```cells
-&lead, &leadOut from (&leadLevel) &leadline
-&leadV from lead
+&lead, &leadOut from (&leadLevel, &leadV, &style) &leadline
+&leadV from lead(style=&style)
 &leadOut play=&leadline level=&leadLevel &leadV
 &lead map=role &leadOut
 &leadLevel map=amp .8
+&style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```
 
 The lead player (decisions 058 and 061): a gate, `&leadOut` (Jambot's section text's name for it), whose role is `lead` (`&lead map=role &leadOut`), playing the part `&leadline` on the `lead` instrument, at its register (`&leadV loop=C4`, where Jambot's section text sounds its lead: `PIN_VOICES.lead`, yggi/jambot `packages/score/src/section-text.ts` @ 24a528b), so with no move.
@@ -65,4 +66,5 @@ Its two inputs are the score's (decision 065: the line its main parameter, the l
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`styles`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
 
-**Its signature** (decision 065): `&lead, &leadOut from (&leadLevel) &leadline`. `&lead from lead_performer &line` takes a copy of it, `&leadline` its main argument; `&leadLevel` an optional parameter, its line its default (`"lead_performer"(leadLevel=…)`).
+**Its signature** (decision 065): `&lead, &leadOut from (&leadLevel, &leadV, &style) &leadline`. `&lead from lead_performer &line` takes a copy of it, `&leadline` its main argument; `&leadLevel` an optional parameter, its line its default (`"lead_performer"(leadLevel=…)`).
+Its instrument and the style it plays at are optional parameters too (decision 075, #560): `&leadV` its default `&leadV from lead(style=&style)`, the `lead` instrument, and `&style` the centre of style space. A piece passes its own (`lead_performer(leadV=&leadV, style=&style)`), where it took them by their names before; Migrate writes it.

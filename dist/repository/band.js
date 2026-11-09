@@ -1,5 +1,5 @@
 import { parse } from "../engine/parser/index.js";
-import { expand } from "../engine/use.js";
+import { bodyOf, expand } from "../engine/use.js";
 import { AXES, CENTRE as CENTRE_VALUES } from "../engine/style.js";
 import { createRepository } from "./fragments.js";
 import { INSTRUMENT_FRAGMENTS } from "./instruments.js";
@@ -12,7 +12,9 @@ export const PERFORMER_VOICES = {
 };
 export const CENTRE = Object.fromEntries(AXES.map((a, i) => [a.name, CENTRE_VALUES[i]]));
 const repositories = new WeakMap();
-const lineOf = (text, voice) => text.split('\n').find((l) => l.startsWith(`&${voice} `));
+const lineOf = (text, voice) => bodyOf(text)
+    .split('\n')
+    .find((l) => l.startsWith(`&${voice} `));
 export function instrumentsAt(point, fragments = INSTRUMENT_FRAGMENTS) {
     let repository = repositories.get(fragments);
     if (!repository)

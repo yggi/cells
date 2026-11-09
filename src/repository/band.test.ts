@@ -8,6 +8,7 @@ import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { bandAt, CENTRE, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from './band';
+import { bodyOf } from '../engine/use';
 import { BAND_FRAGMENTS } from './bands';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { resolveSeed } from './library';
@@ -54,7 +55,7 @@ describe('the default band (#391)', () => {
   });
 
   it('plays a score that ends in `* from band` with no diagnostic: its five performers, each by its role, under the head &band', () => {
-    const r = compileSource(score('&(map=style .5 .5 .5 .5)'), undefined, { resolve: resolveSeed });
+    const r = compileSource(score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)'), undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
     expect(r.performers.map((p) => [p.name, p.role, p.part])).toEqual([
       ['drumsOut', 'drums', 'drumlines'],
@@ -68,7 +69,7 @@ describe('the default band (#391)', () => {
 
   it('sends each performer on Jambot’s channel: 1 the lead, 2 the bass, 3 the pad and the stab, 10 the drums', () => {
     const channels = new Map<string, Set<number>>();
-    for (const n of sent(score('&(map=style .5 .5 .5 .5)'))) {
+    for (const n of sent(score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)'))) {
       const [channel, , , , , voice] = n.split(' ');
       channels.set(voice!, (channels.get(voice!) ?? new Set()).add(Number(channel)));
     }
@@ -83,8 +84,8 @@ describe('the default band (#391)', () => {
           .map((n) => Number(n.split(' ')[2])),
       ),
     ];
-    const own = velocities(score('&(map=style .5 .5 .5 .5)'));
-    const theirs = velocities(`${score('&(map=style .5 .5 .5 .5)')}\n&bassLevel map=amp .4`);
+    const own = velocities(score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)'));
+    const theirs = velocities(`${score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)')}\n&bassLevel map=amp .4`);
     expect(own).toHaveLength(1);
     expect(theirs).toHaveLength(1);
     expect(theirs[0]).toBeLessThan(own[0]!);
@@ -92,18 +93,18 @@ describe('the default band (#391)', () => {
 
   it('rests a part the score doesn’t write, and says so; a tacet says nothing (decision 063 §4)', () => {
     const four = { drumlines: '&kick', bassline: '0 ~ 2 ~', padline: '[0,2,4]@4', stabline: '~ [0,2] ~ [0,2]' };
-    const rests = compileSource(score('&(map=style .5 .5 .5 .5)', four), undefined, { resolve: resolveSeed });
+    const rests = compileSource(score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)', four), undefined, { resolve: resolveSeed });
     expect(rests.diagnostics.map((d) => [d.severity, d.message])).toEqual([['info', expect.stringMatching(/^&leadOut plays &leadline, which no line writes: it rests/)]]);
-    const tacet = compileSource(`${score('&(map=style .5 .5 .5 .5)', four)}\n&leadline step=1m ~`, undefined, { resolve: resolveSeed });
+    const tacet = compileSource(`${score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)', four)}\n&leadline step=1m ~`, undefined, { resolve: resolveSeed });
     expect(tacet.diagnostics).toEqual([]);
-    expect(sent(`${score('&(map=style .5 .5 .5 .5)', four)}\n&leadline step=1m ~`).filter((n) => n.endsWith(' leadV'))).toEqual([]);
+    expect(sent(`${score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)', four)}\n&leadline step=1m ~`).filter((n) => n.endsWith(' leadV'))).toEqual([]);
   });
 
   it('plays a score that names no style at the centre of style space, and says so; it defines no &style of its own', () => {
-    const text = score('&(map=style .5 .5 .5 .5)').replace(/^&style .*$/m, '');
+    const text = score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)').replace(/^&style .*$/m, '');
     const r = compileSource(text, undefined, { resolve: resolveSeed });
     expect(r.diagnostics.map((d) => [d.severity, d.message])).toEqual([['info', expect.stringMatching(/^no line writes &style: /)]]);
-    expect(sent(text)).toEqual(sent(score('&(map=style .5 .5 .5 .5)')));
+    expect(sent(text)).toEqual(sent(score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)')));
     expect(band.split('\n').some((l) => l.startsWith('&style '))).toBe(false);
   });
 });
@@ -134,7 +135,12 @@ describe('the style moves the sound (#391)', () => {
 
   it('the bass’s cutoff opens with bite, from 450 Hz where it is paddy to 900 Hz where it is stabby; mood leaves it', () => {
     const at = (style: string) => [...new Set(cutoffs(style, 'bassV').map((n) => Math.round(n.lpf)))];
-    expect([at('&(map=style .5 .5 0 .5)'), at('&(map=style .5 .5 .5 .5)'), at('&(map=style .5 .5 1 .5)'), at('&(map=style .5 .5 1 0)')]).toEqual([[450], [675], [900], [900]]);
+    expect([at('&(map=style .5 .5 0 .5)'), at('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)'), at('&(map=style .5 .5 1 .5)'), at('&(map=style .5 .5 1 0)')]).toEqual([
+      [450],
+      [675],
+      [900],
+      [900],
+    ]);
   });
 
   it('follows a section’s range, style=a..b: the lead brighter at the end of a section that gains bite', () => {
@@ -176,15 +182,17 @@ describe('which instrument a performer plays at a style: the band’s choice, at
         text.split('\n').filter((l) => l.startsWith(`&${voice} `)),
         part,
       ).toHaveLength(line ? 1 : 0);
-      const own_ = lineOf(INSTRUMENT_FRAGMENTS.find((f) => f.id === own)!.text, voice)!;
-      if (line) expect(/loop=(\S+)/.exec(line)![1], part).toBe(/loop=(\S+)/.exec(own_)![1]);
+      // (the band's own line takes its instrument, `&bassV from bass(style=&style)`: the register is the instrument's)
+      const own_ = lineOf(bodyOf(INSTRUMENT_FRAGMENTS.find((f) => f.id === own)!.text), voice)!;
+      if (instrument) expect(/loop=(\S+)/.exec(line!)![1], part).toBe(/loop=(\S+)/.exec(own_)![1]);
+      else expect(line, part).toBe(`&${voice} from ${own}(style=&style)`);
     }
   });
 
   it('reads the score’s style: a style cell, an unnamed one, a range’s first end, a mix, its axes by name', () => {
     expect(scoreStyle('&funk map=style 1 .12 .85 .65\n&style style=&funk')).toEqual(FUNK);
     expect(scoreStyle('&style style=&(map=style .55 .75 .6 .5)')).toEqual(ELECTRO_SWING);
-    expect(scoreStyle('&style style=&(map=style .2 .9 .3 .3)..&(map=style .5 .5 .5 .5)')).toEqual(SPOOKY);
+    expect(scoreStyle('&style style=&(map=style .2 .9 .3 .3)..&(map=style sync=.5 harm=.5 bite=.5 mood=.5)')).toEqual(SPOOKY);
     expect(scoreStyle('&a map=style 0 0 0 0\n&b map=style 1 1 1 1\n&style style=[&a * .25, &b * .75]')).toEqual({ sync: 0.75, harm: 0.75, bite: 0.75, mood: 0.75 });
     expect(scoreStyle('&style style=&(map=style sync=.2 harm=.9 bite=.3 mood=.3)')).toEqual(SPOOKY);
     expect(scoreStyle('&bar meter("4/4")')).toBeNull();

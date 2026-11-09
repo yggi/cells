@@ -128,7 +128,7 @@ describe('a bass line fills the bass performer’s hole (#285)', () => {
   // (sent on the bass's channel and heard on a sound card: the bass has a sound of its own, which MIDI doesn't send, #391)
   it.each(BASS_FRAGMENTS.map((f) => [f.id] as const))('%s, taken over the host with the bass performer, compiles with no diagnostic', (id) => {
     const host =
-      '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
+      '&bar meter("4/4") step=120bpm\n&key scale(dorian, D)\n&harm over=&key step=1m [0,2,4] [3,5,7]\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
     const r = compileSource(`&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline\n&bassline from ${id} &harm\n${host}`, undefined, { resolve: resolveSeed });
     expect(r.diagnostics).toEqual([]);
     expect(r.performers?.map((p) => [p.name, p.role, p.part])).toEqual([['bassOut', 'bass', 'bassline']]);

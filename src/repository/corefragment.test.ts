@@ -24,7 +24,7 @@ describe('a fragment cored up to its signature (#590)', () => {
   it('what it takes from another fragment stays a from line: a piece may give its own', () => {
     const text = resolveSeed('bass_performer')!;
     const { source } = coreFragment(text, O);
-    expect(source).toMatch(/^&bassV from bass$/m);
+    expect(source).toMatch(/^&bassV from bass\(style=&style\)$/m);
   });
   it('a tap under a meter it doesn’t define stays as written: the meter is its piece’s', () => {
     const { source } = coreFragment(resolveSeed('dark_cadence')!, O);

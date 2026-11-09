@@ -34,6 +34,7 @@ import { FROM_FORM, isAttribute, readFrom, topTokens, type FromForm } from './pa
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
 import { RENAMED_IDS } from './renamed';
+import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, Resolve, Used } from './program';
 
 /** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
@@ -379,6 +380,12 @@ function renamesOf(from: FromUse, lines: readonly Line[], id: string, say: (mess
   return { names, lacking };
 }
 
+/** Read the old way, at a piece's level: the names it defines, and where a parameter it filled by name is said. */
+interface OldBinding {
+  readonly defines: ReadonlySet<string>;
+  readonly warn: (message: string) => void;
+}
+
 /** Lines that came through a collection: their names are shared, never a copy's own. */
 const sharedLines = (lines: readonly Line[]): Line[] => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
 
@@ -387,7 +394,15 @@ const sharedLines = (lines: readonly Line[]): Line[] => lines.map((l) => (l.shar
  * holds, which a copy's own names stay clear of). A fragment with no signature is a collection, its lines taken by name;
  * with one, a `from` line takes a copy (`instantiate`).
  */
-function give(entry: NonNullable<ReturnType<typeof entryOf>>, path: readonly string[], text: string, resolve: Resolve, say: (message: string) => void, taken: Set<string>): Given {
+function give(
+  entry: NonNullable<ReturnType<typeof entryOf>>,
+  path: readonly string[],
+  text: string,
+  resolve: Resolve,
+  say: (message: string) => void,
+  taken: Set<string>,
+  old?: OldBinding,
+): Given {
   const { id, from } = entry;
   const signatures = linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []));
   if (!signatures.length) {
@@ -405,7 +420,7 @@ function give(entry: NonNullable<ReturnType<typeof entryOf>>, path: readonly str
     return { taken: { id, names: asked, lines: sharedLines(theirs), resolved: true }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
-  return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken);
+  return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken, old);
 }
 
 /**
@@ -423,6 +438,7 @@ function instantiate(
   resolve: Resolve,
   say: (message: string) => void,
   taken: Set<string>,
+  old?: OldBinding,
 ): Given {
   const full = fragmentLines(path, text, resolve, say);
   const own = full.filter((l) => !l.shared && l.name);
@@ -448,19 +464,16 @@ function instantiate(
       else say(`&${t} is not a head of ${quoted(id)}: its head${heads.length > 1 ? 's are' : ' is'} ${heads.map((h) => `&${h}`).join(', ')}`);
     });
   const one = names.size === 1;
-  // (a copy takes the heads it names and what they read within the template, as a named use took its closure: a head it
-  // doesn't name, and what only that reads, it leaves)
-  const reached = new Set<string>();
-  const byName = new Map(full.flatMap((l) => (l.name ? [[l.name, l] as const] : [])));
-  for (const queue = [...names.keys()]; queue.length;) {
-    const n = queue.shift()!;
-    if (reached.has(n)) continue;
-    reached.add(n);
-    for (const r of byName.get(n)?.reads ?? []) if (byName.has(r)) queue.push(r);
-  }
   if (from.head.length && !one) say(`The attributes before from are the head's, and this line takes ${names.size} heads from ${quoted(id)}: write them on each head's own line`);
   // (the arguments: a bare reference is that cell, anything else a cell of the copy's)
   const args = new Map((from.args ?? []).map((a) => [a.name, a.value] as const));
+  // (read the old way: a parameter the library read by name before it declared it, filled by the piece's cell of its
+  // name, BOUND_BY_NAME)
+  for (const p of old ? (BOUND_BY_NAME.get(id) ?? []) : [])
+    if (optional.includes(p) && !args.has(p) && old!.defines.has(p)) {
+      args.set(p, `&${p}`);
+      old!.warn(byNameMessage(id, p, `${from.id}(${[...(from.args ?? []).map((a) => `${a.name}=${a.value}`), `${p}=&${p}`].join(', ')})`));
+    }
   for (const k of args.keys())
     if (!optional.includes(k))
       say(`${quoted(id)} takes no ${k}=: ${optional.length ? `its optional parameters are ${optional.map((o) => `${o}=`).join(', ')}` : 'it has no optional parameters'}`);
@@ -478,6 +491,18 @@ function instantiate(
       names.set(p, ref[1]!);
       byReference.add(p);
     }
+  }
+  // (a copy takes the heads it names and what they read within the template, as a named use took its closure: a head it
+  // doesn't name, and what only that reads, it leaves; and a parameter an argument binds to a cell, and what only its
+  // default reads)
+  const reached = new Set<string>();
+  const byName = new Map(full.flatMap((l) => (l.name ? [[l.name, l] as const] : [])));
+  for (const queue = [...heads.filter((h) => names.has(h))]; queue.length;) {
+    const n = queue.shift()!;
+    if (reached.has(n)) continue;
+    reached.add(n);
+    if (byReference.has(n)) continue;
+    for (const r of byName.get(n)?.reads ?? []) if (byName.has(r)) queue.push(r);
   }
   // (every other name the copy defines is its own, clear of the level's and of the template's shared ones)
   const prefix = names.get(heads[0]!) ?? [...names.values()][0] ?? heads[0]!;
@@ -574,7 +599,7 @@ export interface Expansion {
 }
 
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
-export function expansion(text: string, { resolve, locked = [] }: CompileOptions = {}): Expansion {
+export function expansion(text: string, { resolve, locked = [], old = false }: CompileOptions = {}): Expansion {
   const own = linesOf(text);
   const uses = own.flatMap((l) => {
     const entry = entryOf(l);
@@ -613,7 +638,10 @@ export function expansion(text: string, { resolve, locked = [] }: CompileOptions
     // (an id that only forwards to another, retired: read as what it forwards to, for a minor version, #196)
     const to = forwardsTo(theirs);
     if (to !== null) diagnostics.push({ severity: 'warning', message: `${quoted(id)} only forwards to ${quoted(to)}: take from it (Migrate rewrites it)`, span });
-    const g = give(u, [id], theirs, resolve!, say, taken);
+    const binding = old
+      ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }
+      : undefined;
+    const g = give(u, [id], theirs, resolve!, say, taken, binding);
     copies.push(g.copy);
     args.push(g.args);
     return g.taken;

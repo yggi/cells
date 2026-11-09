@@ -14,10 +14,10 @@ The piece writes only what is its own: the tempo, the key's tonic, the stabs, wh
 &harm from dark_cadence &key
 &bassline from creeping_bass &harm
 &kick, &hat, &euclid from spooky_drums
-&bass, &bassOut from bass_performer(bassLevel=&bassLevel) &bassline
-&pad, &padOut from pad_performer(padLevel=&padLevel) &padline
-&stab, &stabOut from stab_performer(stabLevel=&stabLevel) &stabline
-&leadOut from lead_performer(leadLevel=&leadLevel) &leadline
+&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV) &bassline
+&pad, &padOut from pad_performer(padLevel=&padLevel, padV=&padV) &padline
+&stab, &stabOut from stab_performer(stabLevel=&stabLevel, keysV=&keysV) &stabline
+&leadOut from lead_performer(leadLevel=&leadLevel, leadV=&leadV) &leadline
 &useNote label="The band is the library's: each use names what it takes. &bassV, &padV, &keysV and &leadV are the players' instruments, named so the piece can give each a sound of its own." about=(&bassV &padV &keysV &leadV)
 ```
 
@@ -84,9 +84,9 @@ A round bass, an organ, a celesta an octave and more above the stab player's reg
 
 ```cells
 &bassV s=tri loop=C3 lpf=500 env=&(map=adsr .01 .3 .6 .2)
-&padV s=square loop=C3 lpf=1100 env=&(map=adsr .25 .2 .8 .6)
+&padV from organ
 &keysV s=sine loop=C5 env=&(map=adsr .002 .7 0 .5)
-&leadV s=sine loop=C4 env=&(map=adsr .15 .2 .9 .4) pitch=&(map=lin loop=5 0 .25 0 -.25 0)
+&leadV from theremin
 &windline step=1m 0 ~ ~ ~
 &howl s=brown lpf=700 env=&(map=adsr 2 1 .5 2)
 

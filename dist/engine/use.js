@@ -2,6 +2,7 @@ import { splitComment } from "./edit.js";
 import { FROM_FORM, isAttribute, readFrom, topTokens } from "./parser/use.js";
 import { STYLE } from "./style.js";
 import { RENAMED_IDS } from "./renamed.js";
+import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
 export const USE_DEPTH = 8;
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const READS = /&([A-Za-z_][A-Za-z0-9_]*)/g;
@@ -256,7 +257,7 @@ function renamesOf(from, lines, id, say) {
     return { names, lacking };
 }
 const sharedLines = (lines) => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
-function give(entry, path, text, resolve, say, taken) {
+function give(entry, path, text, resolve, say, taken, old) {
     const { id, from } = entry;
     const signatures = linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []));
     if (!signatures.length) {
@@ -273,9 +274,9 @@ function give(entry, path, text, resolve, say, taken) {
     }
     if (signatures.length > 1)
         say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
-    return instantiate(from, id, signatures[0], path, text, resolve, say, taken);
+    return instantiate(from, id, signatures[0], path, text, resolve, say, taken, old);
 }
-function instantiate(from, id, signature, path, text, resolve, say, taken) {
+function instantiate(from, id, signature, path, text, resolve, say, taken, old) {
     const full = fragmentLines(path, text, resolve, say);
     const own = full.filter((l) => !l.shared && l.name);
     const shared = full.filter((l) => l.shared && l.name);
@@ -306,20 +307,14 @@ function instantiate(from, id, signature, path, text, resolve, say, taken) {
                 say(`&${t} is not a head of ${quoted(id)}: its head${heads.length > 1 ? 's are' : ' is'} ${heads.map((h) => `&${h}`).join(', ')}`);
         });
     const one = names.size === 1;
-    const reached = new Set();
-    const byName = new Map(full.flatMap((l) => (l.name ? [[l.name, l]] : [])));
-    for (const queue = [...names.keys()]; queue.length;) {
-        const n = queue.shift();
-        if (reached.has(n))
-            continue;
-        reached.add(n);
-        for (const r of byName.get(n)?.reads ?? [])
-            if (byName.has(r))
-                queue.push(r);
-    }
     if (from.head.length && !one)
         say(`The attributes before from are the head's, and this line takes ${names.size} heads from ${quoted(id)}: write them on each head's own line`);
     const args = new Map((from.args ?? []).map((a) => [a.name, a.value]));
+    for (const p of old ? (BOUND_BY_NAME.get(id) ?? []) : [])
+        if (optional.includes(p) && !args.has(p) && old.defines.has(p)) {
+            args.set(p, `&${p}`);
+            old.warn(byNameMessage(id, p, `${from.id}(${[...(from.args ?? []).map((a) => `${a.name}=${a.value}`), `${p}=&${p}`].join(', ')})`));
+        }
     for (const k of args.keys())
         if (!optional.includes(k))
             say(`${quoted(id)} takes no ${k}=: ${optional.length ? `its optional parameters are ${optional.map((o) => `${o}=`).join(', ')}` : 'it has no optional parameters'}`);
@@ -341,6 +336,19 @@ function instantiate(from, id, signature, path, text, resolve, say, taken) {
             names.set(p, ref[1]);
             byReference.add(p);
         }
+    }
+    const reached = new Set();
+    const byName = new Map(full.flatMap((l) => (l.name ? [[l.name, l]] : [])));
+    for (const queue = [...heads.filter((h) => names.has(h))]; queue.length;) {
+        const n = queue.shift();
+        if (reached.has(n))
+            continue;
+        reached.add(n);
+        if (byReference.has(n))
+            continue;
+        for (const r of byName.get(n)?.reads ?? [])
+            if (byName.has(r))
+                queue.push(r);
     }
     const prefix = names.get(heads[0]) ?? [...names.values()][0] ?? heads[0];
     for (const n of [...names.values()])
@@ -421,7 +429,7 @@ function forwardsTo(text) {
     const only = lines.length === 1 ? lines[0].from : null;
     return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
 }
-export function expansion(text, { resolve, locked = [] } = {}) {
+export function expansion(text, { resolve, locked = [], old = false } = {}) {
     const own = linesOf(text);
     const uses = own.flatMap((l) => {
         const entry = entryOf(l);
@@ -461,7 +469,10 @@ export function expansion(text, { resolve, locked = [] } = {}) {
         const to = forwardsTo(theirs);
         if (to !== null)
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} only forwards to ${quoted(to)}: take from it (Migrate rewrites it)`, span });
-        const g = give(u, [id], theirs, resolve, say, taken);
+        const binding = old
+            ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
+            : undefined;
+        const g = give(u, [id], theirs, resolve, say, taken, binding);
         copies.push(g.copy);
         args.push(g.args);
         return g.taken;
