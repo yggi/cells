@@ -2,7 +2,8 @@
 // again), folded by the folder (engine/fold), and scored against the example as written: its notes kept, its score's
 // size (fold/score.ts: `bare`), its phrases back. Recorded in ratchet.baseline.json, piece by piece, so each PR's diff of
 // it shows what it did; the library may not get worse: no piece that kept its notes loses them, the phrases back don't
-// fall, the score doesn't grow by more than 1 %. A change that makes it better records the new numbers.
+// fall, the score doesn't grow by more than 1 %, nor any piece's by more than 10 % (#263). A change that makes it better
+// records the new numbers.
 // The MIDI library's ratchet is midiRatchet.ts.
 // Record: UPDATE_RATCHET=1 npx vitest run src/engine/fold/ratchet.slow.test.ts
 import { describe, expect, it } from 'vitest';
@@ -14,7 +15,7 @@ import { EXAMPLES } from '../examples';
 import { pieceMidi } from '../midiexport';
 import { readMidi, writeMidi } from '../midifile';
 import { cellsFromMidi } from '../midiimport';
-import { bare, heard, phrases, same } from './score';
+import { bare, grown, heard, phrases, PIECE_GROWTH, same } from './score';
 import { expand } from '../use';
 import { resolveSeed } from '../../repository/library';
 
@@ -73,5 +74,6 @@ describe('the ratchet: every example through MIDI, folded', () => {
       sum(now, (r) => r.score),
       `the score's size: ${record}`,
     ).toBeLessThanOrEqual(1.01 * sum(base, (r) => r.score));
+    expect(grown(now, base), `pieces whose score grew by more than ${PIECE_GROWTH * 100} %: ${record}`).toEqual([]);
   });
 });

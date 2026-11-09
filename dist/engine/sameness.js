@@ -91,8 +91,10 @@ function sameEvents(a, b, until, reading, options = {}) {
             const events = eventsBetween(plan(r, codeShifts(r), r.off), 0, to, true);
             const route = router(r, channelTable(r));
             const sent = (e) => routesOf(e.midi ? route(e) : null)
-                .map((x) => midiNote(e, x))
-                .map((m) => (m ? `${m.channel}:${m.note}` : '-'))
+                .map((x) => {
+                const m = midiNote(e, x);
+                return m ? `${x?.port ?? 1}:${m.channel}:${m.note}` : '-';
+            })
                 .join(',');
             return { r, events, sent: events.map(sent), sound: soundOf(r) };
         };

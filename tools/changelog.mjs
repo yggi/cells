@@ -6,7 +6,7 @@
 //   node tools/changelog.mjs gather <version> [date]   # a release: *Unreleased* and every entry under `## <version> — <date>`
 //
 // An entry is `changes/<issue-or-slug>.md`: its first line a section heading as the changelog writes it (`### Added`, one
-// of SECTIONS), then its bullets as they read in the changelog. `changes/README.md` says so and is no entry. `gather`
+// of SECTIONS), then its bullets as they read in the changelog; it may hold more sections, each filed under its own. `changes/README.md` says so and is no entry. `gather`
 // keeps what *Unreleased* holds as it is, adds each entry to its section (the sections in SECTIONS' order, then any
 // other heading *Unreleased* has, in its own order), puts them under the new heading, leaves *Unreleased* its pointer
 // to `changes/` and deletes the entries it gathered. tools/changelog.test.ts runs it.
@@ -46,6 +46,10 @@ function problems(path) {
   const found = [];
   if (!heading) found.push(`${path}: its first line is no section heading (### ${SECTIONS.join(', ### ')})`);
   else if (!SECTIONS.includes(heading[1])) found.push(`${path}: "### ${heading[1]}" is no section the changelog has (### ${SECTIONS.join(', ### ')})`);
+  for (const line of lines.slice(1)) {
+    const more = /^### (.+?)\s*$/.exec(line);
+    if (more && !SECTIONS.includes(more[1])) found.push(`${path}: "### ${more[1]}" is no section the changelog has (### ${SECTIONS.join(', ### ')})`);
+  }
   if (!lines.slice(1).some((line) => /^- \S/.test(line))) found.push(`${path}: no bullet ("- …") under its heading`);
   return found;
 }
@@ -101,11 +105,9 @@ function gather(version, date) {
   const chunks = new Map();
   for (const [heading, [body]] of sections(first < 0 ? [] : held.slice(first))) if (body.length) chunks.set(heading, [...(chunks.get(heading) ?? []), body]);
   const gathered = entries();
-  for (const path of gathered) {
-    const [heading, ...body] = readFileSync(path, 'utf8').split('\n');
-    const name = heading.slice(4).trim();
-    chunks.set(name, [...(chunks.get(name) ?? []), trimmed(body)]);
-  }
+  // (an entry of several sections, `### Added` then `### Changed`, files each part under its own)
+  for (const path of gathered)
+    for (const [name, [body]] of sections(readFileSync(path, 'utf8').split('\n'))) if (body.length) chunks.set(name, [...(chunks.get(name) ?? []), body]);
   if (!chunks.size && !preamble.length) {
     console.error('changelog: nothing to gather: *Unreleased* is empty and changes/ holds no entry');
     return 1;

@@ -1,7 +1,8 @@
 // The ratchet over the MIDI library (midi/<set>: Bach's Well-Tempered Clavier, Inventions and Sinfonias, the Anna
 // Magdalena Notebook, the Musical Offering's ricercars; #333, #367, docs/notes/ratchet.md): the files as they come, each folded (`cellsFromMidi`, `shorten`),
 // whether its fold was taken (it plays the file's notes) and its score's size (fold/score.ts `bare`), in
-// ratchet.midi.<set>.json. No file whose fold was taken loses it; the set's score doesn't grow by more than 1 %. A change
+// ratchet.midi.<set>.json. No file whose fold was taken loses it; the set's score doesn't grow by more than 1 %, nor any
+// file's by more than 10 % (#263). A change
 // that makes it better records the new numbers. One test file per set, `midi.<set>.slow.test.ts` (the sets fold side by
 // side, each in a worker of its own; each records only its own baseline): a set without one fails `midi.sets.test.ts`.
 // Record: UPDATE_RATCHET=1 npx vitest run src/engine/fold/midi.
@@ -11,7 +12,7 @@ import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readMidi } from '../midifile';
 import { cellsFromMidi } from '../midiimport';
-import { bare } from './score';
+import { bare, grown, PIECE_GROWTH } from './score';
 
 type Row = { taken: boolean; score: number };
 
@@ -44,6 +45,7 @@ export function midiRatchet(testFile: string): void {
       ).toEqual([]);
       const sum = (rows: Record<string, Row>) => Object.values(rows).reduce((a, r) => a + r.score, 0);
       expect(sum(now), "the score's size: record it (UPDATE_RATCHET=1) if the trade is worth it").toBeLessThanOrEqual(1.01 * sum(base));
+      expect(grown(now, base), `files whose score grew by more than ${PIECE_GROWTH * 100} %: record it (UPDATE_RATCHET=1) if the trade is worth it`).toEqual([]);
     });
   });
 }

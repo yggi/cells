@@ -169,13 +169,15 @@ function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Resu
     const played = (r: Result) => {
       const events = eventsBetween(plan(r, codeShifts(r), r.off), 0, to, true);
       // (each voice heard read as what it sounds like, not by its name or place: two voices alike are one, decision 057;
-      // and, sent on a MIDI card, what MIDI out sends: its entry's channel, and a kit member's drum note, its name's,
-      // which its output tells)
+      // and, sent on a MIDI card, what MIDI out sends: its entry's output slot and channel, and a kit member's drum note,
+      // its name's, which its output tells; #273)
       const route = router(r, channelTable(r));
       const sent = (e: Event) =>
         routesOf(e.midi ? route(e) : null)
-          .map((x) => midiNote(e, x))
-          .map((m) => (m ? `${m.channel}:${m.note}` : '-'))
+          .map((x) => {
+            const m = midiNote(e, x);
+            return m ? `${x?.port ?? 1}:${m.channel}:${m.note}` : '-';
+          })
           .join(',');
       return { r, events, sent: events.map(sent), sound: soundOf(r) };
     };

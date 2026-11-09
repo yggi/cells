@@ -199,6 +199,10 @@ export function bindVoices(ctx, decls, given, typed) {
             unknownCell(c.map.table, d.map.span);
         if (d.base && !decls.has(d.base.name))
             unknownCell(d.base.name, d.base.span);
+        if (d.style)
+            for (const r of styleRefs(d.style))
+                if (!decls.has(r.name))
+                    unknownCell(r.name, r.span);
         if (d.about) {
             if (!c.note)
                 error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
@@ -238,4 +242,8 @@ export function bindVoices(ctx, decls, given, typed) {
             error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4${why}`, d.step.span);
     }
     return { cells: cells, sinks, cards, bindings, soundHead, playings: playings };
+}
+function styleRefs(s) {
+    const of = (p) => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref));
+    return [...of(s.from), ...(s.to ? of(s.to) : []), ...(s.curve ? [s.curve] : [])];
 }
