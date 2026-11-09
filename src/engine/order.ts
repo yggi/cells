@@ -91,6 +91,3 @@ export const ORDER = [
 ] as const;
 
 export type ExampleKey = (typeof ORDER)[number];
-
-/** @deprecated: `ExampleKey` (#551). Goes in the minor after. */
-export type PresetKey = ExampleKey;
