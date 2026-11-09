@@ -21,6 +21,7 @@ export function declare(ctx) {
     tonics(ctx, decls);
     modes(ctx, decls);
     swings(ctx, decls);
+    movingSwings(ctx, decls);
     const sections = sectionTables(decls, error);
     const stacks = gates(decls, implicit, error, ctx.warn);
     mixSelectors(ctx, decls);
@@ -189,8 +190,35 @@ function swings(ctx, decls) {
             paramSpans: { ...d.paramSpans, swing: pc.span },
             paramCells: cells,
             ...(t.swing ? { swing: t.swing } : {}),
+            ...(t.swingMoves ? { swingMoves: t.swingMoves } : {}),
             swingFrom: ref,
         });
+    }
+}
+function movingSwings(ctx, decls) {
+    for (const [name, d] of decls) {
+        const mv = d.swingMoves;
+        if (!mv)
+            continue;
+        for (const f of mv.factors)
+            if (!decls.has(f.name))
+                ctx.unknownCell(f.name, f.span);
+        if (mv.range) {
+            if (!mv.range.every((x) => x >= 0 && x <= 1))
+                ctx.error(`swing=${mv.level}:${mv.range[0]}..${mv.range[1]}: a share's range lies within 0..1 — swing=${mv.level}:.5...75 * &k`, mv.span);
+            continue;
+        }
+        const cell = decls.get(mv.factors[0].name);
+        const values = cell?.braid.kind === 'list'
+            ? cell.braid.tokens.flatMap((t) => leaves(t.atom)).flatMap((a) => (a.kind === 'note' ? [a.value + a.alter] : a.kind === 'chord' ? a.notes : []))
+            : [];
+        const bad = values.find((v) => !(v >= 0 && v <= 1));
+        if (bad !== undefined)
+            ctx.error(`swing=${mv.level}:&${cell.name}: a share is 0 to 1, and &${cell.name} holds ${bad}`, mv.span);
+        const held = values[0];
+        if (held === undefined || bad !== undefined)
+            continue;
+        decls.set(name, { ...d, params: { ...d.params, swing: held }, swing: (d.swing ?? []).map((l) => (l.level === mv.level ? { ...l, share: held } : l)) });
     }
 }
 function mainKeyOf(ctx, decls) {

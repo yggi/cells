@@ -388,7 +388,15 @@ const readLevels = (s, b, word) => {
             s.fail(`a level after the comma, a note value and a share: ${word}=8n:.6,16n:.55`);
         s.i++;
         let share;
-        const f = s.free(NUMBER_PLACES.share, word);
+        const moving = word === 'swing' ? readMoving(s, 'swing', s.i) : null;
+        if (moving) {
+            if (levels.length || s.peek() === ',' || s.peek() === ':')
+                s.fail(`a share moved by cells is one level alone: swing=8n:&lean, swing=8n:.5...75 * &k`, vs, s.i - vs);
+            b.swingMoves = { level: level, ...moving };
+            levels.push({ level: level, share: moving.range ? moving.range[0] : 0.5 });
+            break;
+        }
+        const f = s.free(word === 'swing' ? NUMBER_PLACES.share : NUMBER_PLACES.legatoShare, word);
         const free = f !== null;
         if (free) {
             share = f.value;
@@ -503,27 +511,9 @@ function readParam(s, b, key) {
         b.paramSpans.s = s.span(vs);
         return;
     }
-    const range = readRange(s, key);
-    if (s.peek() === '&' || range) {
-        const factors = [];
-        if (!range)
-            factors.push(s.cellRef(`a cell after ${key}=`, `in ${key}=`));
-        for (;;) {
-            const save = s.i;
-            s.skipSpace();
-            if (s.peek() !== '*') {
-                s.i = save;
-                break;
-            }
-            s.i++;
-            s.skipSpace();
-            factors.push(s.cellRef(`a cell after *, like ${key}=200..3000 * &fenv`, `in ${key}=`));
-        }
-        if (range && factors.length === 0)
-            s.fail(`${key}=${s.text.slice(vs, s.i)}: a range is scaled by cells — ${key}=${s.text.slice(vs, s.i)} * &fenv`, vs, s.i - vs);
-        if (!range && factors.length > 1)
-            s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
-        b.paramCells[key] = { range, factors, span: s.span(vs) };
+    const moving = readMoving(s, key, vs);
+    if (moving) {
+        b.paramCells[key] = moving;
         b.paramSpans[key] = s.span(vs);
         return;
     }
@@ -539,6 +529,30 @@ function readParam(s, b, key) {
     const value = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(v) ? parseFloat(v) : v;
     b.params[key] = key === 'ftype' && typeof value === 'number' ? (filterModel(value) ?? value) : value;
     b.paramSpans[key] = s.span(vs);
+}
+function readMoving(s, key, vs) {
+    const range = readRange(s, key);
+    if (s.peek() !== '&' && !range)
+        return null;
+    const factors = [];
+    if (!range)
+        factors.push(s.cellRef(`a cell after ${key}=`, `in ${key}=`));
+    for (;;) {
+        const save = s.i;
+        s.skipSpace();
+        if (s.peek() !== '*') {
+            s.i = save;
+            break;
+        }
+        s.i++;
+        s.skipSpace();
+        factors.push(s.cellRef(`a cell after *, like ${key}=200..3000 * &fenv`, `in ${key}=`));
+    }
+    if (range && factors.length === 0)
+        s.fail(`${key}=${s.text.slice(vs, s.i)}: a range is scaled by cells — ${key}=${s.text.slice(vs, s.i)} * &fenv`, vs, s.i - vs);
+    if (!range && factors.length > 1)
+        s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
+    return { range, factors, span: s.span(vs) };
 }
 const RETIRED_KEYS = {
     init: 'init= is now shift=',
@@ -607,6 +621,7 @@ export function parseBody(s, head) {
         size: null,
         swing: null,
         bend: null,
+        swingMoves: null,
         legato: null,
         params: {},
         paramSpans: {},
@@ -854,7 +869,7 @@ export function parseBody(s, head) {
     const playMove = b.playMove && braid.kind !== 'blank'
         ? { ...(b.playMove.transpose ? { transpose: b.playMove.transpose } : {}), ...(b.playMove.degree ? { degree: b.playMove.degree } : {}) }
         : null;
-    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, style, laps, chance, seed, size, swing, bend, legato, params, paramSpans, paramCells, paramClocks, } = b;
+    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, style, laps, chance, seed, size, swing, bend, swingMoves, legato, params, paramSpans, paramCells, paramClocks, } = b;
     return {
         name: head.name,
         span: head.span,
@@ -883,6 +898,7 @@ export function parseBody(s, head) {
         size,
         ...(swing ? { swing } : {}),
         ...(bend ? { bend } : {}),
+        ...(swingMoves ? { swingMoves } : {}),
         ...(legato ? { legato } : {}),
         params,
         paramSpans,

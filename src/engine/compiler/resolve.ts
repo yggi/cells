@@ -20,7 +20,7 @@ class Abort extends Error {}
  * states n equal beats (decision 040, retired by #502 and read for Migrate: `meter("4/4") beat=2`, now `meter("2/2", 2)`); swing= leans its levels (#18), a bare one the
  * level of its own steps.
  */
-function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato'>): Meter | null {
+function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato' | 'swingMoves'>): Meter | null {
   const { braid: b, params } = d;
   const { beat, pulse } = params;
   const written =
@@ -39,14 +39,12 @@ function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato'>): Me
   // (legato= by level, #94: its lines' default share)
   const felt = beaten && d.legato ? { ...beaten, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level)! }])) } : beaten;
   if (!felt || typeof params.swing !== 'number') return felt;
-  const levels = d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }];
-  return withSwing(
-    felt,
-    levels.flatMap((l) => {
-      const whole = noteValue(l.level);
-      return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
-    }),
-  );
+  const levels = (d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }]).flatMap((l) => {
+    const whole = noteValue(l.level);
+    return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
+  });
+  // (a share moved by cells, decision 081, keeps its level even held straight: each bar's share is read into it)
+  return d.swingMoves && levels.length ? { ...felt, swing: levels } : withSwing(felt, levels);
 }
 
 /**
@@ -184,6 +182,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       ...(d.base ? { base: { name: d.base.name, ...(d.base.transpose ? { transpose: d.base.transpose } : {}), ...(d.base.degree ? { degree: d.base.degree } : {}) } } : {}),
       beat: stepsPerBeat(meterOf(d)),
       meter: meterOf(d),
+      ...(d.swingMoves ? { swingMoves: { level: d.swingMoves.level, range: d.swingMoves.range, factors: d.swingMoves.factors.map((f) => f.name) } } : {}),
       label: d.label ?? null,
       note: isNote(d),
       env: d.env?.name ?? null,

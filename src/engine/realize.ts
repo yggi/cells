@@ -10,7 +10,7 @@ import type { Pick } from './ast';
 import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from './fiveto12';
 import { adsrOf, balance, CV_LAPS, type CompileResult, type Output, type Shifts } from './program';
 import { tableChain } from './helix';
-import { clocking, EPS, playedCells, tapeMotion, turnLap, varispeedOf } from './clocking';
+import { clocking, EPS, playedCells, readSharesBy, tapeMotion, turnLap, varispeedOf } from './clocking';
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { refsOf, stepsPerSecond } from './readers';
@@ -495,7 +495,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     if (at != null) stops = Math.max(stops, at);
   }
   const lapsEnd = ends.length ? Math.max(...ends) : Infinity;
-  return {
+  const out: Plan = {
     result,
     statics,
     muted,
@@ -507,6 +507,35 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity),
     seriesOf: (cell) => (result.cells.has(cell) ? series(cell, null, 0, 1) : NO_SERIES),
   };
+  // a swing whose share moves by cells (decision 081): its cells read as a moving parameter's, at each bar line the
+  // clocks ask for; handed to them once the plan is whole (what was laid out before reads bar lines, which no share moves)
+  const swings = new Map<string, VoiceParam>();
+  for (const c of result.cells.values()) {
+    if (!c.swingMoves || !c.meter) continue;
+    try {
+      swings.set(c.name, { range: c.swingMoves.range, series: c.swingMoves.factors.map((f) => series(f, null, 0, 1)), env: null });
+    } catch (e) {
+      if (!(e instanceof ExpansionLimit)) throw e;
+    }
+  }
+  if (swings.size)
+    readSharesBy(result, statics, (meter, t) => {
+      const prm = swings.get(meter);
+      return prm ? paramAt(out, prm, t) : NaN;
+    });
+  return out;
+}
+
+/**
+ * A meter's swing in a bar, as the plan plays it (decision 081): its levels, each bar's share where a cell moves it; null
+ * where it doesn't swing. For a host that builds its performer's frames from a cells meter, one bar at a time.
+ */
+export function swingOfBar(p: Plan, meter: string, bar: number): readonly { readonly level: string; readonly share: number }[] | null {
+  return (
+    clocking(p.result, p.statics)
+      .swingOf(meter, bar)
+      ?.map((l) => ({ level: l.level, share: l.share })) ?? null
+  );
 }
 
 /** An envelope as a note starting at `at` plays it: its moving slots read then (#411), the rest as written. */
