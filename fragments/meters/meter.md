@@ -211,6 +211,26 @@ association:
     facet: meter
     args:
       grouping: meter("10/8")
+  - point:
+      sync: 0.9
+      harm: 0.5
+      bite: 0.7
+    weight: 1
+    facet: meter
+  - point:
+      sync: 0.7
+      harm: 0.2
+      bite: 0.2
+    weight: 1
+    facet: meter
+  - point:
+      sync: 0
+      harm: 0.1
+      bite: 0.75
+    weight: 0.75
+    facet: meter
+    args:
+      grouping: meter("2/4")
 source: seed
 ---
 

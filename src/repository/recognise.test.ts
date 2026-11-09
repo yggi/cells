@@ -73,7 +73,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     ]);
   });
 
-  it('each of the bass seeds’ 101 (57, and the 44 bends and trims, #267; the new basses among them, #572, #542)', () => {
+  it('each of the bass seeds’ 120 (73, and the 47 bends and trims, #267; the new basses among them, #572, #542)', () => {
     const options = { workbench: BASS, operators: PITCHED_OPERATORS };
     let n = 0;
     for (const f of BASS_FRAGMENTS)
@@ -83,12 +83,28 @@ describe('a variation is recognised as its source’s, by its operator, at dista
         // recognised as that seed, as it is; named on #542)
         // (and the blues walk's bends and trim, its last note moved, are the walking bass's same ones, which ranks first by id)
         const walked = f.id === 'blues_walk' && /^(bend|trim) /.test(v.by);
+        // (and the oom-pah, half a bar, is heard as a window of half a bar of each seed a bar long (`windowsOf`): five of its
+        // six variations are the first half bar of another seed's, or of its variation's, which ranks first; named on #542.
+        // Moved down two chord tones it keeps its anchored root and moves its fifth onto it, the quarter bass's 0 0)
+        const halfOf: Readonly<Record<string, [string, string[], number]>> = {
+          'transpose &bassline -2': ['quarter_bass', [], 0],
+          'transpose &bassline -1': ['walking_bass', [], 0],
+          'transpose &bassline 1': ['walking_bass', ['transpose &bassline 2'], 0],
+          'invert &bassline': ['quarter_bass', ['transpose &bassline -2'], 0],
+          'bend &bassline -1': ['walking_bass', ['transpose &bassline -2'], 0],
+        };
         const as: [string, string[], number] =
-          f.id === 'walking_bass' && v.by === 'bend &bassline 1' ? ['blues_walk', [], 0] : walked ? ['walking_bass', [v.by], 0] : [f.id, [v.by], 0];
+          f.id === 'walking_bass' && v.by === 'bend &bassline 1'
+            ? ['blues_walk', [], 0]
+            : f.id === 'oom_pah_bass' && halfOf[v.by]
+              ? halfOf[v.by]!
+              : walked
+                ? ['walking_bass', [v.by], 0]
+                : [f.id, [v.by], 0];
         expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${f.id}, ${v.by}`).toEqual(as);
         n++;
       }
-    expect(n).toBe(101);
+    expect(n).toBe(120);
   });
 
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {

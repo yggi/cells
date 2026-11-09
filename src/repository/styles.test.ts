@@ -57,6 +57,11 @@ const PRESETS = {
   bluesShuffle: stylePoint('bluesShuffle'),
   seaShanty: stylePoint('seaShanty'),
   chiptune: stylePoint('chiptune'),
+  // (#542's four placed by hand)
+  salsa: stylePoint('salsa'),
+  waltz: stylePoint('waltz'),
+  march: stylePoint('march'),
+  tripHop: stylePoint('tripHop'),
 };
 const styles = STYLE_FRAGMENTS.find((f) => f.id === 'styles')!;
 const named = (name: string) => `&${name} from styles\n&style style=&${name}`;
@@ -124,6 +129,10 @@ describe('STYLES, the presets a frontend takes', () => {
       ['Blues shuffle', 120],
       ['Sea shanty', 112],
       ['Chiptune', 144],
+      ['Salsa', 180],
+      ['Waltz', 150],
+      ['March', 120],
+      ['Trip-hop', 80],
     ]);
   });
 
@@ -136,7 +145,7 @@ describe('STYLES, the presets a frontend takes', () => {
   it('find a style by its id, and say which there are for one they lack', () => {
     expect(stylePoint('funk')).toBe(FUNK);
     expect(() => stylePoint('polka')).toThrow(
-      /no style polka \(there are synthPop, techno, .*kinderlied, acid, happyHardcore, elektro, darkAmbient, baroque, bluesShuffle, seaShanty, chiptune\)/,
+      /no style polka \(there are synthPop, techno, .*kinderlied, acid, happyHardcore, elektro, darkAmbient, baroque, bluesShuffle, seaShanty, chiptune, salsa, waltz, march, tripHop\)/,
     );
   });
 
@@ -157,7 +166,7 @@ describe('nearestStyle, the styles nearest a point', () => {
     for (const s of STYLES) expect(nearestStyle(s.point, { k: 1 }), s.id).toEqual([{ style: s, distance: 0 }]);
   });
 
-  it('ranks every style by pointDistance, nearest first: over all 171 pairs, each the other’s distance', () => {
+  it('ranks every style by pointDistance, nearest first: over all 253 pairs, each the other’s distance', () => {
     for (const a of STYLES) {
       const ranked = nearestStyle(a.point);
       expect(ranked.map((n) => n.style.id).sort(), a.id).toEqual(STYLES.map((s) => s.id).sort());
@@ -167,14 +176,14 @@ describe('nearestStyle, the styles nearest a point', () => {
       ).toEqual([...ranked.map((n) => n.distance)].sort((x, y) => x - y));
       for (const { style, distance } of ranked) expect(distance, `${a.id}→${style.id}`).toBe(pointDistance(a.point, style.point));
     }
-    // (171 distinct pairs of the nineteen, each measured the same both ways)
+    // (253 distinct pairs of the twenty-three, each measured the same both ways)
     let pairs = 0;
     for (const [i, a] of STYLES.entries())
       for (const b of STYLES.slice(i + 1)) {
         pairs++;
         expect(pointDistance(a.point, b.point), `${a.id}–${b.id}`).toBe(pointDistance(b.point, a.point));
       }
-    expect(pairs).toBe(171);
+    expect(pairs).toBe(253);
   });
 
   it('takes k, axis weights, and a frontend’s own styles with an axis added', () => {

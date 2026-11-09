@@ -115,13 +115,14 @@ const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
 const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(wordOf(`${w.preset} drums`)) }));
 
 describe('the rhythm fragments', () => {
-  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, and the four read from the examples (#572), every point associated as the facet rhythm', () => {
+  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, the ones read from the examples (#572, #542) and the four written for the styles placed by hand (#542), every point associated as the facet rhythm', () => {
     expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([
       ...Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)),
       ...Object.keys(CLAVES),
       ...Object.keys(LIFTED),
       ...Object.keys(WRITTEN),
       ...Object.keys(READ),
+      ...Object.keys(PLACED),
     ]);
     expect(RHYTHM_FRAGMENTS.flatMap((f) => f.association.map((wp) => wp.facet))).toEqual(RHYTHM_FRAGMENTS.map(() => 'rhythm'));
   });
@@ -262,12 +263,20 @@ const READ: Record<string, string[]> = {
   quiet_pulse: ['&claves'],
 };
 
+// The beats written by hand for the styles placed by hand (#542), each with the names it strikes.
+const PLACED: Record<string, string[]> = {
+  salsa_drums: ['&claves', '&ht', '&lt', '&mt', '&rd'],
+  waltz_drums: ['&bd', '&ph'],
+  march_drums: ['&bd', '&sd'],
+  trip_hop_drums: ['&bd', '&hh', '&sd'],
+};
+
 describe('the rhythms’ holes (decision 054, rung 2)', () => {
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))(
     '%s defines no voice, and every name it strikes is a drum it declares, the kit’s own its default (#637)',
     (id, text) => {
       expect(text.split('\n').filter((l) => / (s|loop)=/.test(l))).toEqual([]);
-      const struck = [...(STRUCK[id] ?? LIFTED[id] ?? WRITTEN[id] ?? READ[id] ?? ['&claves'])].sort();
+      const struck = [...(STRUCK[id] ?? LIFTED[id] ?? WRITTEN[id] ?? READ[id] ?? PLACED[id] ?? ['&claves'])].sort();
       expect([...signatureOf(text)!.optional].sort()).toEqual(struck);
       expect(text.split('\n')[1]).toBe(`${signatureOf(text)!.optional.join(', ')} from gm_kit`);
       // (as its lines alone, before #637, each was a sound hole the piece filled by its name)
@@ -283,9 +292,11 @@ describe('the rhythms’ holes (decision 054, rung 2)', () => {
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))(
     '%s fits a workbench with a meter and no kit, and with the General MIDI kit’s 13, and the kit fills every hole',
-    (_, text) => {
-      expect(takenOn(text, hosted(meterText('meter'), 120)).fits).toBe(true);
-      const withKit = takenOn(text, hosted(meterText('meter'), 120, coreKit));
+    (id, text) => {
+      // (#542: the waltz's beat laps three beats and fits no 4/4: its workbench is in 3/4)
+      const meter = meterText(id === 'waltz_drums' ? 'meter(grouping=meter("3/4"))' : 'meter');
+      expect(takenOn(text, hosted(meter, 120)).fits).toBe(true);
+      const withKit = takenOn(text, hosted(meter, 120, coreKit));
       expect([withKit.fits, withKit.sounds]).toEqual([true, []]);
     },
   );
