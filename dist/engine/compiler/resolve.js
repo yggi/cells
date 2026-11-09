@@ -28,6 +28,36 @@ function meterOf(d) {
         return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
     }));
 }
+function bentOf(d, warn, declOf) {
+    const m = meterOf(d);
+    const bend = d.bend;
+    const span = d.paramSpans.bend ?? d.span;
+    if (!m)
+        return (warn(`bend= is on a meter: &${d.name} is none`, span), {});
+    const whole = noteValue(bend.level);
+    const steps = m.levels.length;
+    const per = whole === null ? NaN : (steps * whole * m.unit) / m.pulses;
+    if (!(per >= 1) || !Number.isInteger(per) || steps % per !== 0)
+        return (warn(`bend=${bend.level}: the bar of &${d.name} has no whole number of ${bend.level} nodes to bend`, span), {});
+    const t = declOf(bend.table.name);
+    const table = t?.braid.kind === 'list'
+        ? t.braid.tokens.flatMap((tok) => (tok.atom.kind === 'note' ? Array.from({ length: Math.max(1, tok.repeat) }, () => tok.atom.value) : [NaN]))
+        : [];
+    if (!table.length || table.some((x) => !(x > 0)))
+        return (warn(`bend=${bend.level}:&${bend.table.name}: a table of lengths, each above 0`, span), {});
+    const nodes = steps / per;
+    const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+    const bars = table.length / gcd(nodes, table.length);
+    const positions = [];
+    let at = 0;
+    for (let i = 0; i < nodes * bars; i++) {
+        const len = table[i % table.length];
+        for (let k = 0; k < per; k++)
+            positions.push(at + (k * len) / per);
+        at += len;
+    }
+    return { bend: { positions, lap: at, bars } };
+}
 export const stepsPerBeat = (m) => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
 export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stacks }, typed, sortOf) {
     const { rateOf, error, warn, broken, unknownCell } = ctx;
@@ -132,6 +162,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             braid: o === null ? 'blank' : b.kind,
             units,
             scan: b.kind === 'scan' ? { lap: scanOf(b.steps).lap, steps: b.steps } : null,
+            ...(d.bend ? bentOf(d, warn, (n) => decls.get(n)) : {}),
             shift: d.shift ?? 0,
             ...(d.tonic ? { tonic: d.tonic.name } : {}),
             off: d.off,

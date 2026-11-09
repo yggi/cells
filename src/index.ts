@@ -1,6 +1,6 @@
 /**
  * The cells language. Text in, events out: `compileSource` reads a piece, `plan` and `windowAt` realize it a window at a
- * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `shorten` writes a piece
+ * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `styleAt` reads the style a piece plays at a time. `shorten` writes a piece
  * shorter, `normalise` in the canonical spelling, `toCore` in the core grammar for a machine reader (decision 069), `migrate` a text of an earlier version as it is written now, `variations` and `varied` vary a fragment (its anchors: `anchorsOf`), `fold` and `cellsFromMidi` write cells from notes, `hints` says what repeats in them (#158), `pieceMidi` and
  * `readMidi` carry MIDI files, `pieceAudio`, `createRenderer` and `writeWav` render audio (decision 062). `createRepository` holds fragments and finds them by their place in style space and by how
  * often they were used together; `METER_FRAGMENTS` are its meters, `RHYTHM_FRAGMENTS` its rhythms, `BASS_FRAGMENTS` its bass lines, `HARMONY_FRAGMENTS` its harmonies, `INSTRUMENT_FRAGMENTS` its instruments, `EXPRESSION_FRAGMENTS` its expressions (a vibrato), `MODE_FRAGMENTS` its modes, `STAB_FRAGMENTS` its stab lines, `MOTIF_FRAGMENTS` its motifs, `FORM_FRAGMENTS` its forms, `LIBRARY` all, read
@@ -61,6 +61,7 @@ export {
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, renamedLayer, type Filed, type Filing, type Use } from './repository/learned';
 export { METER_FRAGMENTS } from './repository/meters';
 export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
+export { styleAt } from './engine/styleat';
 export {
   CONTRACT_WIDTHS,
   feelOf,

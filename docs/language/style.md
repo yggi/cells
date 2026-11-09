@@ -112,6 +112,12 @@ A factor written out, `* &curve`, sets where between the two ends instead: a lin
 
 A pick of a slot as a factor reads its value, held: `lpf=0..1000 * &pluck[sustain]` is 500 Hz with `&pluck map=adsr .01 .3 .5 .4`.
 
+**A frontend reads the style a piece plays at a time with `styleAt(text, seconds)`** (`src/engine/styleat.ts`, #576): a point, one value per axis in `AXES`' order, each as a voice reading `&style[axis]` would read it then.
+A held axis is its value; a moving one, a glide or a mix of styles is its value at that moment; a slider is read at its value as written; an unwritten `&style` is the centre.
+`{ cell: 'mine' }` reads another style cell; the piece's other compile options (`resolve`, `env`) pass through, and the last text read is kept, so a score read at each section's start compiles once.
+It is null where the piece doesn't compile.
+Jambot reads a radio score so, a section at a time (#576).
+
 ## The library of styles: styles
 
 The seed library holds the preset styles as the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing`, `&spooky` and `&kinderlied`.

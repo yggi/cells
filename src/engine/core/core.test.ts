@@ -376,3 +376,41 @@ describe('the mechanical rows (decision 077, #581 rung 4)', () => {
     exact('pitch', t, '[(&t + &u + &vib) * &a]');
   });
 });
+
+describe('a meter scan is a meter bent (decision 080)', () => {
+  const play = (bar: string, line = '&t step=8n 0 2 4 5 7 5 4 2') => `${bar}\n${line}\n&v s=sine loop=C4\n&out map=sample [&t * &v]`;
+  it('bend=: a level’s nodes at a table’s lengths, as the scan played them', () => {
+    expect(soundsIdentical(play('&bar scan(27 23 26 24) step=2'), play('&bar meter("++++") step=2 bend=4n:&b\n&b 27 23 26 24'))).toBe(true);
+    expect(soundsIdentical(play('&bar scan(3 3 2) step=2'), play('&bar meter("+++") step=2 bend=4n:&b\n&b 3 3 2'))).toBe(true);
+    // (a bent 4/4 whose eighths are tapped by level: the form a scan had none of)
+    expect(compileSource(play('&bar meter("*.-.+.-.") step=2 bend=4n:&b\n&b 27 23 26 24')).diagnostics).toEqual([]);
+  });
+  it('where it can’t bend, it says so and bends nothing', () => {
+    const said = (bar: string) => compileSource(play(bar)).diagnostics.map((d) => d.message);
+    expect(said('&bar meter("+++") step=2 bend=2n:&b\n&b 1 2')).toContain('bend=2n: the bar of &bar has no whole number of 2n nodes to bend');
+    expect(said('&bar meter("++++") step=2 bend=4n:&b\n&b 1 0 1 1')).toContain('bend=4n:&b: a table of lengths, each above 0');
+  });
+  it('a bend longer than the bar spans bars: a tempo map', () => {
+    const r = compileSource(play('&bar meter("+") step=2 bend=4n:&b\n&b 2 1 1'));
+    expect(r.cells.get('bar')?.bend).toEqual({ positions: [0, 2, 3], lap: 4, bars: 3 });
+  });
+  it('the family writes a scan so, its table a cell; with pulse=, the bar one beat and its laps counted', () => {
+    const fam = family('meter scans');
+    const scan = play('&bar scan(27 23 26 24) step=2');
+    const out = fam(scan, O);
+    expect(out).toContain('&bar meter("++++") step=2 bend=4n:&_s1');
+    expect(out).toContain('&_s1 27 23 26 24');
+    expect(soundsIdentical(scan, out, undefined, O)).toBe(true);
+    const map = play('&bar scan(1!8 2!8) pulse=16n step=2 laps=1', '&t step=16n 0 2 4 5');
+    const mapped = fam(map, O);
+    expect(mapped).toContain('&bar meter("+,,,", 16n) step=2 laps=4 bend=16n:&_s1');
+    expect(soundsIdentical(map, mapped, undefined, O)).toBe(true);
+  });
+  it('a scan that is a table too: the table a cell of its own', () => {
+    const both = `&d scan(2 2 1 2 2 2 1) step=2\n&f over=&d step=&d:pulse 0 1 2 3\n&v s=sine loop=C4\n&out map=sample [&f * &v]`;
+    const out = family('meter scans')(both, O);
+    expect(out).toContain('over=&_t1');
+    expect(out).toContain('&_t1 scan(2 2 1 2 2 2 1)');
+    expect(soundsIdentical(both, out, undefined, O)).toBe(true);
+  });
+});

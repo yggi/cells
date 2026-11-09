@@ -369,6 +369,14 @@ function readPlay(s, b) {
         b.playMove = { ...(r.transpose ? { transpose: r.transpose } : {}), ...(r.degree ? { degree: r.degree } : {}), at: caret, len: s.i - caret, as: s.text.slice(at, s.i) };
     }
 }
+const readBend = (s, b) => {
+    const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
+    if (level === null)
+        s.fail('a level and a table after bend=, the lengths of its nodes: bend=4n:&rubato');
+    s.i++;
+    b.bend = { level: level, table: s.cellRef('a table after bend=4n:, the lengths of its nodes: bend=4n:&rubato', 'after bend=4n:') };
+    b.paramSpans.bend = s.place(s.i);
+};
 const readLevels = (s, b, word) => {
     if (!/^[1-9][0-9]*(?:n\.?|t):/.test(s.text.slice(s.i)))
         return readParam(s, b, word);
@@ -598,6 +606,7 @@ export function parseBody(s, head) {
         seed: null,
         size: null,
         swing: null,
+        bend: null,
         legato: null,
         params: {},
         paramSpans: {},
@@ -687,7 +696,8 @@ export function parseBody(s, head) {
             seen.set(slot, word);
             if (word === 'clip')
                 s.warn("clip= is Strudel's name for legato= — write legato= (Normalise rewrites it)", at, word.length);
-            const read = KEYS[key]?.read ?? (key === 'swing' || key === 'legato' ? readLevels : CELL_PARAMS.has(key) ? readCellParam : readParam);
+            const read = KEYS[key]?.read ??
+                (key === 'swing' || key === 'legato' ? readLevels : key === 'bend' ? readBend : CELL_PARAMS.has(key) ? readCellParam : readParam);
             read(s, b, key, at);
             if (!s.atBoundary())
                 s.fail(`Unexpected '${s.peek()}'`);
@@ -839,7 +849,7 @@ export function parseBody(s, head) {
     const playMove = b.playMove && braid.kind !== 'blank'
         ? { ...(b.playMove.transpose ? { transpose: b.playMove.transpose } : {}), ...(b.playMove.degree ? { degree: b.playMove.degree } : {}) }
         : null;
-    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, style, laps, chance, seed, size, swing, legato, params, paramSpans, paramCells, paramClocks, } = b;
+    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, style, laps, chance, seed, size, swing, bend, legato, params, paramSpans, paramCells, paramClocks, } = b;
     return {
         name: head.name,
         span: head.span,
@@ -866,6 +876,7 @@ export function parseBody(s, head) {
         seed,
         size,
         ...(swing ? { swing } : {}),
+        ...(bend ? { bend } : {}),
         ...(legato ? { legato } : {}),
         params,
         paramSpans,

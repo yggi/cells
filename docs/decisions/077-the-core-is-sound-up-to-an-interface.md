@@ -2,6 +2,8 @@
 
 **Date:** 2026-11-08 · **Status:** accepted (the owner on #482, 2026-11-08: on the performers, "(a), but with a note: we can use core to compile something to a minified version, but keep some 'interface' (e.g. we can core a fragment up to its signature, or a piece up to &tempo, or the jambot-score up to the gates, a named interface, for the band performers to fill in"; on unit reads, "c. core boils it down to counts"; the details, "1) yes, as suggested. ~!4 2) yes 3) I suppose so 4) yes"; "INTERFACE_NAMES is on the way out") · Issues: #581, #482, #560
 
+*Amended by [080](080-a-meter-is-a-tree-placed-through-a-time-map.md): a scan with a rate is the sugar of a meter bent, no longer a core primitive.*
+
 *Read with [068](068-the-core-grammar.md) (the core and its sugar), [069](069-compile-writes-the-core.md) (compile writes the core), [058](058-the-performer-is-a-gate.md) and [061](061-the-band.md) (a gate is a performer, a role lists gates), and [065](065-fragments-take-arguments.md) (a fragment's signature).*
 
 ## Context

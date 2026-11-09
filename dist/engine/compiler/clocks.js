@@ -155,7 +155,7 @@ export function clockCells(ctx, decls, given) {
         }
         const ratio = st.ratio / split;
         const c = cells.get(name);
-        if (c?.scan && drivers.has(name)) {
+        if ((c?.scan || c?.bend) && drivers.has(name)) {
             clocks.set(name, { cell: name, perSecond: clocks.get(key).perSecond * ratio, positional: true });
             return { clock: name, rate: 1 };
         }
@@ -213,7 +213,7 @@ export function clockCells(ctx, decls, given) {
             else {
                 result = { clock: d.clock, rate: (d.rate * st.ratio * (st.whole ? own : 1)) / (st.cycle ? lap : 1) };
                 const c = cells.get(name);
-                if (c && c.scan && drivers.has(name) && !st.whole) {
+                if (c && (c.scan || c.bend) && drivers.has(name) && !st.whole) {
                     clocks.set(name, { cell: name, perSecond: clocks.get(d.clock).perSecond * result.rate, positional: true });
                     result = { clock: name, rate: 1 };
                 }

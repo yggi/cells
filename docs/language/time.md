@@ -73,6 +73,18 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
   - **Taps are placed through it**, whatever the meter's own steps: `meter("4/4") swing=8n:.67` swings `step=8n` and `step=pulse*2` alike. **A division is even within the finest node of the tree its length divides** ([#15](https://github.com/yggi/cells/issues/15)): 16ths under swung eighths are even within each eighth (the second at a third of a long eighth); `8t` divides the beat and not the eighth, so its thirds are even in the beat (a triplet under swung eighths stays straight, its third on the swung eighth); `16t` divides the eighth, so its thirds are even within each swung eighth.
   - **So are the parts of a step** ([#121](https://github.com/yggi/cells/issues/121), #15), as the division they are: `step=4n [0 0]` under `swing=8n:.67` plays its second eighth where `step=8n` does, `step=4n [0 0 0]` its thirds where `step=8t` does, `step=8n [0 0 0]` where `step=16t` does, and `step=1m &rim(7,16,0)` under `swing=16n:.6` its strokes where `step=16n` does. So a subsequence is the chain on its tap under a swing too: `step=4n 0 [2 4 5]` is `step=4n*3 0@3 2 4 5`.
   - It swings a `meter(…)` and a `scan(…)` alike: a scan's taps lean within its bent beats.
+- **`bend=4n:&table`** bends a level's nodes ([decision 080](https://github.com/yggi/cells/blob/main/docs/decisions/080-a-meter-is-a-tree-placed-through-a-time-map.md)): the nodes of the level named by note value take the table's numbers as their relative lengths, in turn, the bar as long as before. `&bar meter("*.-.+.-.") step=90bpm bend=4n:&rubato` with `&rubato 27 23 26 24` plays a bent 4/4, its eighths leaning within each beat and tapped by level.
+  - A table longer than the bar spans bars, a tempo map: `bend=16n:&map` with `&map 1!432 .72!96 …` bends the sixteenths of as many bars as it holds.
+  - A swing composes with it, finer within each bent node.
+  - A meter `scan(…)` is its sugar: `scan(27 23 26 24) step=r` is `meter("++++") step=r bend=4n:&(27 23 26 24)`, every entry a beat.
+
+  ```cells
+  &bar meter("*.-.+.-.") step=90bpm bend=4n:&rubato
+  &rubato 27 23 26 24
+  &tune step=8n 0 2 4 5 7 5 4 2
+  &v s=sine loop=C4
+  &out map=sample [&tune * &v]
+  ```
   - **A note's level is read where it is written**, before the swing ([#287](https://github.com/yggi/cells/issues/287)): a level line that multiplies a line (`[&euclid * &euclidLevel]`) gives each note the level of its step as written, as Strudel's `.gain("…")` is read at a hit's place in the cycle. So a line times a level line on another grid gives each note its own step's level, whatever the swing does to either.
   - **Read from a cell** ([#308](https://github.com/yggi/cells/issues/308)): `swing=&swing`, with `&swing swing=8n:2/3`, a cell that is a swing alone (no braid, no step, nothing but its `swing=`), swings the meter as the swing written on it would, in any of its forms (a fraction, `free(…)`, several levels), as `step=&tempo` reads a rate alone. So a fragment can leave its swing to the text that uses it, or give its own as a helper: the seed `meter` does, its `&swing` a parameter (`&bar from meter(swing=8n:2/3) &tempo`), and a text that swings otherwise passes its own (`&bar from meter(swing=&swing) &tempo`, `&swing swing=8n:free(.64, .5..0.75)`). Anything else read there is an error.
   - **Several levels** nest, coarse to fine, each node keeping its ends: `swing=8n:.6,16n:.55`. One level alone can be left free: `swing=8n:free(.5, .5..75)`.

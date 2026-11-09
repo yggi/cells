@@ -113,6 +113,9 @@ interface PlanTrack extends Series {
   readonly share: number | { readonly range: readonly [number, number] | null; readonly series: readonly Series[] };
 }
 
+/** A series of nothing: what an unknown cell reads as (silence, level 0). */
+const NO_SERIES: Series = { sign: 1, lin: false, db: false, clock: null, rate: 0, period: 1, events: [] };
+
 /** The static part of playback (braids flattened); pitches are resolved per moment. */
 export interface Plan {
   readonly result: CompileResult;
@@ -128,6 +131,8 @@ export interface Plan {
   readonly envParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
   /** When the piece ends, in seconds: the last track's end — Infinity if anything loops (or nothing plays). */
   readonly end: number;
+  /** A cell's values as a series, read as a moving parameter reads it (`levelSeries`): `styleAt` reads a style's axes so. */
+  readonly seriesOf: (cell: string) => Series;
 }
 
 /**
@@ -369,7 +374,8 @@ export function comeRound(events: readonly StepEvent[], period: number, lap: num
 
 /** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<string> = new Set()): Plan {
-  if (!result.ok) return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity };
+  if (!result.ok)
+    return { result, statics, muted, tracks: [], drones: [], played: new Set(), voiceParams: new Map(), envParams: new Map(), end: Infinity, seriesOf: () => NO_SERIES };
   const tracks: PlanTrack[] = [];
   const drones: DroneTrack[] = [];
   const voiceParams = new Map<string, Record<string, VoiceParam>>();
@@ -489,7 +495,18 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     if (at != null) stops = Math.max(stops, at);
   }
   const lapsEnd = ends.length ? Math.max(...ends) : Infinity;
-  return { result, statics, muted, tracks, drones, played: playedCells(result), voiceParams, envParams, end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity) };
+  return {
+    result,
+    statics,
+    muted,
+    tracks,
+    drones,
+    played: playedCells(result),
+    voiceParams,
+    envParams,
+    end: Math.min(lapsEnd, stops > -Infinity ? stops : Infinity),
+    seriesOf: (cell) => (result.cells.has(cell) ? series(cell, null, 0, 1) : NO_SERIES),
+  };
 }
 
 /** An envelope as a note starting at `at` plays it: its moving slots read then (#411), the rest as written. */

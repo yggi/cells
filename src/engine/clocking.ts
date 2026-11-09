@@ -87,9 +87,11 @@ function plainMap(result: CompileResult, clock: Clock, shifts: Shifts): TimeMap 
   }
   if (!clock.positional) return { beats: 1, q: (s) => s / clock.perSecond, stepAt: (t) => t * clock.perSecond };
   const name = clock.cell;
-  const values = shiftedUnits(result, name, shifts(name)).flatMap((u) => (u.atom.kind === 'note' ? [u.atom.value + u.atom.alter] : []));
+  // (a meter bent, decision 080: its steps where its bend puts them, over the bars its table spans; a scan's, its entries)
+  const bend = result.cells.get(name)?.bend;
+  const values = bend ? [...bend.positions] : shiftedUnits(result, name, shifts(name)).flatMap((u) => (u.atom.kind === 'note' ? [u.atom.value + u.atom.alter] : []));
   const k = Math.max(1, values.length);
-  const lap = period(result, name);
+  const lap = bend ? bend.lap : period(result, name);
   const barSeconds = k / clock.perSecond;
   const ticks = (j: number) => values[mod(j, k)] + lap * Math.floor(j / k);
   const raw = (s: number) => {

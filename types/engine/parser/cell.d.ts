@@ -28,6 +28,10 @@ interface Body {
         level: string;
         share: number;
     }[] | null;
+    bend: {
+        level: string;
+        table: Ref;
+    } | null;
     legato: {
         level: string;
         share: number;
