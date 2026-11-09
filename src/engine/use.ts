@@ -309,7 +309,7 @@ function asCell(body: string, parameter: string, lines: readonly Line[]): string
  * an operation's arguments (`scale(dorian, &tonic)`), or through an operator (`&call^-2`, `&g[0:3]`)? A step of a braid
  * or a term of a mix (`&bd`, `&cp:0:.6`, `[&kick * &level]`) is a sound: the kit's vocabulary, read by name (decision 065 §3).
  */
-function readsAsValue(code: string, name: string): boolean {
+export function readsAsValue(code: string, name: string): boolean {
   const stack: ('call' | 'lambda' | 'group')[] = [];
   const attribute: boolean[] = [false];
   let quoted = false;
