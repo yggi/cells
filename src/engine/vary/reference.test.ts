@@ -53,11 +53,11 @@ const WITH = ALL.filter(({ v }) => v.reference);
 const byOperator = (list: typeof ALL) => Object.fromEntries([...new Set(ALL.map(({ v }) => v.rule))].map((op) => [op, list.filter(({ v }) => v.rule === op).length]));
 
 describe("the seeds' variations by reference", () => {
-  it('gives 624 of the 711 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572 and #542: the eight new beats and six bass lines among the seeds)', () => {
-    expect(ALL.length).toBe(711);
-    expect(WITH.length).toBe(624);
-    expect(byOperator(ALL)).toEqual({ rotate: 35, drop: 131, add: 343, transpose: 96, reverse: 10, bend: 70, trim: 18, invert: 8 });
-    expect(byOperator(WITH)).toEqual({ rotate: 19, drop: 104, add: 305, transpose: 96, reverse: 6, bend: 70, trim: 18, invert: 6 });
+  it('gives 632 of the 719 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572 and #542: the eight new beats and six bass lines among the seeds)', () => {
+    expect(ALL.length).toBe(719);
+    expect(WITH.length).toBe(632);
+    expect(byOperator(ALL)).toEqual({ rotate: 35, drop: 139, add: 343, transpose: 96, reverse: 10, bend: 70, trim: 18, invert: 8 });
+    expect(byOperator(WITH)).toEqual({ rotate: 19, drop: 112, add: 305, transpose: 96, reverse: 6, bend: 70, trim: 18, invert: 6 });
     // (the four operators with a form before #293: 127 of their 149)
     expect(['rotate', 'transpose', 'invert', 'reverse'].reduce((n, op) => n + byOperator(WITH)[op]!, 0)).toBe(127);
   });
@@ -75,7 +75,7 @@ describe("the seeds' variations by reference", () => {
       return [bare(v.reference!.line(v.line.slice(1))), bare([...written.head, ...written.attrs, ...written.braid].join(' '))] as const;
     });
     expect(sizes.filter(([ref, line]) => ref > line)).toEqual([]);
-    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(622);
+    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(630);
   });
 
   it('writes each operator in a form the language has', () => {
