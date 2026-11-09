@@ -1,3 +1,0 @@
-### Added
-
-- **A bend's depth, and moved by a cell** (#597, decision 081): `bend=4n:&rubato:.5` applies the table's ratios raised to the depth. 1 is as written (and the default), 0 even, 2 exaggerated, -1 inverted, and no depth makes a length 0 or less. As a swing's share does, it may be a slider or be moved by cells: `bend=4n:&rubato:&d` takes the cell's values as depths, and `bend=4n:&rubato:0..1 * &k` puts a cell's 0..1 on a range. Each is read at the line of the table's span (the bar line, where the table fits a bar) and held through it. Read with no plan, it holds a range's first end or the cell's first value. A bend with no depth plays as before.
