@@ -26,15 +26,15 @@ const WORKBENCH: Record<string, (head: string, use: string) => string> = {
 const PERFORMER = (head: string, use: string, main: string) =>
   main === '&drumlines'
     ? lines(METER, '&dl step=8n &bd &sd', `${head} from ${use} &dl`)
-    : lines(METER, KEY, '&line over=&key step=8n 0 2 4', `${head} from ${use} &line`, '&style style=&(map=style .5 .5 .5 .5)');
+    : lines(METER, KEY, '&line over=&key step=8n 0 2 4', `${head} from ${use} &line`, '&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)');
 
 // (the modules, whose main parameter is the audio they take, or none, are played in a patch of their own: modules.test.ts)
 const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.some((wp) => wp.facet === 'module'));
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {
-  it('99 templates: the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers, the four instruments that read a style and the band; the rest collections', () => {
-    expect(templates).toHaveLength(99);
+  it('109 templates (#572: ten more, two stabs, three bass lines, a harmony and four motifs): the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers, the four instruments that read a style and the band; the rest collections', () => {
+    expect(templates).toHaveLength(109);
     const collections = LIBRARY.filter((f) => !signatureOf(f.text)).map((f) => f.id);
     expect(collections).toContain('gm_kit');
     expect(collections).toContain('upright_bass');

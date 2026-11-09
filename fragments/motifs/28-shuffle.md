@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.7
       harm: 0.6
-      artic: 0
-      energy: 0.2
+      bite: 0
+      mood: 0.825
     weight: 1
     facet: motif
 source: seed

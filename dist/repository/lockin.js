@@ -13,7 +13,7 @@ const ENTROPY = 0.3;
 const MISS = 0.3;
 export const FACETS = ['meter', 'rhythm'];
 export const LOCK_IN_BOUND = 0.4;
-const STEP = { sync: 0.08, harm: 0.1, artic: 0.1, energy: 0.06 };
+const STEP = { sync: 0.08, harm: 0.1, bite: 0.08, mood: 0.1 };
 const reflected = (x) => {
     const around = ((x % 2) + 2) % 2;
     return around > 1 ? 2 - around : around;

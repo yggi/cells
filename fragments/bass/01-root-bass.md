@@ -4,29 +4,36 @@ association:
   - point:
       sync: 0
       harm: 0.3
-      artic: 0
-      energy: 0
+      bite: 0
+      mood: 0.9
     weight: 1
     facet: bass
   - point:
       sync: 0.3
       harm: 0.45
-      artic: 0.55
-      energy: 0.55
+      bite: 0.55
+      mood: 0.5
     weight: 1
     facet: bass
   - point:
       sync: 0.35
       harm: 0.55
-      artic: 0.65
-      energy: 0.65
+      bite: 0.65
+      mood: 0.65
     weight: 1
     facet: bass
   - point:
       sync: 0.05
       harm: 0.3
-      artic: 0
-      energy: 0.2
+      bite: 0
+      mood: 0.9
+    weight: 1
+    facet: bass
+  - point:
+      sync: 0.1
+      harm: 0.12
+      bite: 0.5
+      mood: 0.95
     weight: 1
     facet: bass
 source: seed

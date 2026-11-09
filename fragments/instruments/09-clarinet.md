@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.55
       harm: 0.75
-      artic: 0.6
-      energy: 0.75
+      bite: 0.6
+      mood: 0.5
     weight: 0.125
     facet: instrument
 source: seed
@@ -21,4 +21,4 @@ It defines `&leadV`, the voice the lead performer plays (`use &leadV from lead`)
 It is [Electro swing, in pieces](../../examples/electroswing.md)'s `&leadV` word for word, at the default's register (`loop=C4`), so a line played on it sends the MIDI notes it sends on `lead`.
 It sounds within the renderer's first stage (decision 062, R1): a wave, a filter, an envelope and a pitch's shape.
 
-Associated at Electro swing's point (`ELECTRO_SWING`: sync .55, harm .75, artic .6, energy .75; yggi/jambot#517) as the facet `instrument`, at half the default instruments' weight (0.125), so a query for an instrument finds it first at that point, and the kit and the defaults first at each of the eight presets (#350).
+Associated at Electro swing's point (`ELECTRO_SWING`: sync .55, harm .75, bite .6, mood .5; yggi/jambot#517) as the facet `instrument`, at half the default instruments' weight (0.125), so a query for an instrument finds it first at that point, and the kit and the defaults first at each of the eight presets (#350).

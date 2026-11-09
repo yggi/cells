@@ -42,7 +42,7 @@ export const LOCK_IN_BOUND = 0.4;
 // The radio's step on each of the four axes the fragments are placed on, scaled by the entropy, folded back into [0, 1]:
 // the walk of yggi/jambot packages/engine/src/radio.ts @ 327d6a8 (`walkRadio`, `RADIO.step`), its draws here keyed by
 // cells' own `chanceOf` on the seed, the section and the axis.
-const STEP: StylePoint = { sync: 0.08, harm: 0.1, artic: 0.1, energy: 0.06 };
+const STEP: StylePoint = { sync: 0.08, harm: 0.1, bite: 0.08, mood: 0.1 };
 const reflected = (x: number) => {
   const around = ((x % 2) + 2) % 2;
   return around > 1 ? 2 - around : around;
