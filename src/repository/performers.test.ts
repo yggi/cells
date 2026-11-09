@@ -105,7 +105,8 @@ const PARTS = {
 
 describe('the performers', () => {
   it('come by their role: a from line of the role brings its gate, and of the gate alone, no role (decisions 061, 065)', () => {
-    const score = '&bassline over=&harm step=4n 0 0 1 2\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style .5 .5 .5 .5)';
+    const score =
+      '&bassline over=&harm step=4n 0 0 1 2\n&bassLevel map=amp .8\n&out map=midi ~ &bassOut\n&hear map=sample [&bassOut]\n&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
     const performers = (use: string) => {
       const r = compileSource(`${use}\n${HOST}\n${score}`, undefined, { resolve: resolveSeed });
       expect(r.diagnostics.map((d) => d.message)).toEqual([]);

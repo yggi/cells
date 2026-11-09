@@ -3,6 +3,6 @@
 &key scale(dorian, D)
 &bassline over=&key step=4n 0 2 4 2
 &bass, &bassOut from bass_performer &bassline
-&bassV s=sine loop=C2 lpf=450..900 * &style[artic]
-&style style=&(map=style .5 .5 .9 .5)
+&bassV s=sine loop=C2 lpf=450..900 * &style[bite]
+&style style=&(map=style sync=.5 harm=.5 bite=.9 mood=.5)
 &out map=sample [&bassOut]

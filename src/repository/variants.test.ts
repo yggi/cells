@@ -8,8 +8,8 @@ import { boundText, takenAs, variantsOf } from './variants';
 // A template's sets of arguments, each a fragment of its own (#387, B1): the seed's diatonic, and a filed template alike.
 const at = (sync: number, harm: number, artic: number, energy: number): StylePoint => ({ sync, harm, artic, energy });
 const TEXT = '&key from (&mode) &tonic\n&key scale(&mode, &tonic)\n&mode major';
-const DARK = at(0.9, 0.9, 0.9, 0.9);
-const BRIGHT = at(0.1, 0.1, 0.1, 0.1);
+const DARK = at(0.9, 0.9, 0.9, 0);
+const BRIGHT = at(0.1, 0.1, 0.1, 0.875);
 const mine = (association: FragmentFile['fragment']['association'], id = 'mine'): FragmentFile => ({
   fragment: { id, text: TEXT, association },
   meta: { source: 'composer' },
@@ -29,8 +29,8 @@ describe('a template taken with its arguments (#387, B1)', () => {
     const f = mine([
       { point: DARK, weight: 1, facet: 'mode', args: { mode: 'phrygian' } },
       { point: BRIGHT, weight: 1, facet: 'mode', args: { mode: 'lydian' } },
-      { point: at(0.5, 0.5, 0.5, 0.5), weight: 1, facet: 'mode' },
-      { point: at(0.8, 0.8, 0.8, 0.8), weight: 1, facet: 'mode', args: { mode: 'phrygian' } },
+      { point: at(0.5, 0.5, 0.5, 0.25), weight: 1, facet: 'mode' },
+      { point: at(0.8, 0.8, 0.8, 0.125), weight: 1, facet: 'mode', args: { mode: 'phrygian' } },
     ]).fragment;
     expect(variantsOf(f).map((v) => [v.id, v.association.length])).toEqual([
       ['mine', 1],
@@ -77,7 +77,7 @@ describe('a filed template is taken with its arguments as the seed’s is', () =
   });
 
   it('a use in a facet the set has no point of adds one, carrying its arguments, so it stays that set’s', () => {
-    const where = at(0.5, 0.2, 0.5, 0.2);
+    const where = at(0.5, 0.2, 0.35, 0.875);
     const after = useFragments(repository, layerOf(filed), [{ id: 'mine(mode=lydian)', point: where, facet: 'harmony' }]);
     const added = after.filed[0]!.fragment.association[2]!;
     expect([added.args, added.facet, added.weight]).toEqual([{ mode: 'lydian' }, 'harmony', 0.1]);

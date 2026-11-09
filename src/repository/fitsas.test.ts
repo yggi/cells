@@ -83,7 +83,7 @@ describe('useOn: a template by a from line', () => {
 });
 
 /** A workbench that gives a main parameter its argument, by what the template reads it as. */
-const STYLE = '&style style=&(map=style .5 .5 .5 .5)';
+const STYLE = '&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
 const KEYED = [METER, '&key scale(dorian, D)'];
 const benches: Readonly<Record<string, readonly string[]>> = {
   '&tempo': ['&tempo step=120bpm'],

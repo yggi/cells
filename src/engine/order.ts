@@ -26,6 +26,7 @@ export const ORDER = [
   'stereo',
   'waveforms',
   'moving',
+  'style',
   'grids',
   'metronome',
   'fm',

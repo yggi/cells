@@ -1,0 +1,7 @@
+# a style by name on the old axes, read by a voice through picks of [artic] and [energy] (decision 076, #572)
+&bar meter("4/4") step=120bpm
+&mine map=style sync=1 harm=.12 bite=.85 mood=.65
+&style style=&mine
+&line step=4n 0 2 4 7
+&leadV s=tri..square * &style[bite] loop=C4 lpf=1400..3600 * &style[bite]
+&out map=sample [&line * &leadV * .5]
