@@ -28,6 +28,7 @@ export { createRepository, EMPTY_LAYER, layerProblems, pointDistance, } from "./
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, renamedLayer } from "./repository/learned.js";
 export { METER_FRAGMENTS } from "./repository/meters.js";
 export { AXES, AXIS_NAMES, SLOTS } from "./engine/style.js";
+export { styleAt } from "./engine/styleat.js";
 export { CONTRACT_WIDTHS, feelOf, played, readerOf, readingOf, } from "./engine/perform/feel.js";
 export { perform, widthsOf } from "./engine/perform/perform.js";
 export { meterOfFrame, swungPlace, writtenPlace } from "./engine/meter.js";

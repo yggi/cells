@@ -22,6 +22,7 @@ export const PENDING = new Set([
     'modifier x/n',
     'modifier x(k,n,r)',
     'parameter legato',
+    'parameter bend',
     'attribute tags',
     'reference &name[slot]',
     'map map=style',
