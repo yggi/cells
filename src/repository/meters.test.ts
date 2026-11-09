@@ -46,14 +46,14 @@ const SWINGS: Record<string, { level: string; share: number }[]> = {
 // names (yggi/jambot#360, its level and share from swingParts at the preset's swing). Lifted from yggi/jambot
 // packages/engine/src/style.ts @ 7b078e8 (unchanged at 5fcf48f).
 const PRESETS: { name: string; point: StylePoint; names: string }[] = [
-  { name: 'Synth-pop', point: { swing: 0, sync: 0.3, harm: 0.45, artic: 0.55, energy: 0.55, bpm: 108 }, names: 'meter' },
-  { name: 'Techno', point: { swing: 0, sync: 0.12, harm: 0, artic: 1, energy: 0.8, bpm: 130 }, names: 'meter' },
-  { name: 'Deep house', point: { swing: 0.3, sync: 0.35, harm: 0.55, artic: 0.65, energy: 0.65, bpm: 122 }, names: 'meter(swing=16n:.6)' },
-  { name: 'Ambient', point: { swing: 0.05, sync: 0.05, harm: 0.3, artic: 0, energy: 0.2, bpm: 72 }, names: 'meter(swing=16n:31/60)' },
-  { name: 'Lo-fi hip hop', point: { swing: 0.45, sync: 0.5, harm: 0.75, artic: 0.35, energy: 0.5, bpm: 84 }, names: 'meter(swing=16n:.65)' },
-  { name: 'Funk', point: { swing: 0.3, sync: 1, harm: 0.12, artic: 0.85, energy: 0.75, bpm: 104 }, names: 'meter(swing=16n:.6)' },
-  { name: 'Bossa nova', point: { swing: 0, sync: 0.75, harm: 0.85, artic: 0.45, energy: 0.45, bpm: 132 }, names: 'meter' },
-  { name: 'Swing jazz', point: { swing: 1, sync: 0.35, harm: 1, artic: 0.3, energy: 0.6, bpm: 148 }, names: 'meter(swing=8n:2/3)' },
+  { name: 'Synth-pop', point: { swing: 0, sync: 0.3, harm: 0.45, drive: 0.55, bright: 0.25, bpm: 108 }, names: 'meter' },
+  { name: 'Techno', point: { swing: 0, sync: 0.12, harm: 0, drive: 0.9, bright: 0.25, bpm: 130 }, names: 'meter' },
+  { name: 'Deep house', point: { swing: 0.3, sync: 0.35, harm: 0.55, drive: 0.65, bright: 0.5, bpm: 122 }, names: 'meter(swing=16n:.6)' },
+  { name: 'Ambient', point: { swing: 0.05, sync: 0.05, harm: 0.3, drive: 0.1, bright: 0.875, bpm: 72 }, names: 'meter(swing=16n:31/60)' },
+  { name: 'Lo-fi hip hop', point: { swing: 0.45, sync: 0.5, harm: 0.75, drive: 0.425, bright: 0.25, bpm: 84 }, names: 'meter(swing=16n:.65)' },
+  { name: 'Funk', point: { swing: 0.3, sync: 1, harm: 0.12, drive: 0.8, bright: 0.5, bpm: 104 }, names: 'meter(swing=16n:.6)' },
+  { name: 'Bossa nova', point: { swing: 0, sync: 0.75, harm: 0.85, drive: 0.45, bright: 0.875, bpm: 132 }, names: 'meter' },
+  { name: 'Swing jazz', point: { swing: 1, sync: 0.35, harm: 1, drive: 0.45, bright: 0.875, bpm: 148 }, names: 'meter(swing=8n:2/3)' },
 ];
 const first = (point: StylePoint) => repository.query(point, 1)[0]!.fragment.id;
 
@@ -120,13 +120,14 @@ describe('the presets find their meters', () => {
   // Halfway between two presets, the meter of the preset nearest there, by the repository's own distance over the axes the
   // meters have: one of the two, or a third preset's that is nearer than both (halfway between Synth-pop and Bossa nova is
   // nearer Lo-fi hip hop). No other meter takes a point the presets' meters hold.
-  const onMeterAxes = ({ swing: _swing, bpm: _bpm, ...axes }: StylePoint) => axes;
+  // (a meter speaks to no mode, so it has no bright: the presets compared on the axes a meter has, decision 076)
+  const onMeterAxes = ({ swing: _swing, bpm: _bpm, bright: _bright, ...axes }: StylePoint) => axes;
   // (and the points proposed for two more presets, #349: Electro swing's swung 4/4, Spooky's 5/4 with 6/8 and 3/4 near it)
   const proposed = [
     { name: 'Electro swing', point: ELECTRO_SWING, names: 'meter(swing=8n:2/3)' },
     { name: 'Spooky', point: SPOOKY, names: 'meter(grouping=meter("5/4"))' },
-    { name: 'Spooky, less energy', point: { ...SPOOKY, energy: 0.27 }, names: 'meter(grouping=meter("6/8"))' },
-    { name: 'Spooky, more energy', point: { ...SPOOKY, energy: 0.43 }, names: 'meter(grouping=meter("3/4"))' },
+    { name: 'Spooky, less drive', point: { ...SPOOKY, drive: SPOOKY.drive! - 0.04 }, names: 'meter(grouping=meter("6/8"))' },
+    { name: 'Spooky, more drive', point: { ...SPOOKY, drive: SPOOKY.drive! + 0.04 }, names: 'meter(grouping=meter("3/4"))' },
   ];
   const presets = createRepository([...PRESETS, ...proposed].map((p) => ({ id: p.name, text: p.names, association: [{ point: onMeterAxes(p.point), weight: 1 }] })));
   const nearestMeters = (point: StylePoint) => {
@@ -137,9 +138,21 @@ describe('the presets find their meters', () => {
   const halfwayOf = (a: (typeof PRESETS)[number], b: (typeof PRESETS)[number]) =>
     Object.fromEntries(Object.keys(a.point).map((axis) => [axis, (a.point[axis]! + b.point[axis]!) / 2]));
   it('every pair of presets is a pair (28)', () => expect(pairs).toHaveLength(28));
+  // (on decision 076's axes a meter has three, sync harm drive, and between these six pairs a meter placed for its own
+  // sake, #369, lies nearer than either preset's: named on #572, the library's to even out, #540)
+  const between: Readonly<Record<string, string>> = {
+    'Synth-pop|Techno': 'meter(grouping=meter("2/4"))',
+    'Techno|Ambient': 'meter(grouping=meter("2/4"))',
+    'Ambient|Swing jazz': 'meter(grouping=meter("3/4"))',
+    'Lo-fi hip hop|Swing jazz': 'meter(grouping=meter("5/4"))',
+    'Funk|Bossa nova': 'meter(grouping=meter("7/8"))',
+    'Bossa nova|Swing jazz': 'meter(grouping=meter("5/4"))',
+  };
   it.each(pairs.map(([a, b]) => [a.name, b.name, a, b] as const))('halfway between %s and %s: the meter of the preset nearest there', (_, __, a, b) => {
     const halfway = halfwayOf(a, b);
-    expect([...nearestMeters(halfway)]).toContain(first(halfway));
+    const named = between[`${a.name}|${b.name}`];
+    if (named) expect(first(halfway)).toBe(named);
+    else expect([...nearestMeters(halfway)]).toContain(first(halfway));
   });
 
   it.each(PRESETS.map((p) => [p.name, p.point] as const))('%s: its swing and bpm, which no fragment has, rank as if absent', (_, point) => {
@@ -156,12 +169,14 @@ describe('the points proposed for two more presets (#349)', () => {
     expect(ranked(ELECTRO_SWING, 1)).toEqual([['meter(swing=8n:2/3)', 0]]);
   });
 
-  // (0.08 off on energy alone, which the repository's distance, over four axes, counts as 0.04)
-  it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.08 off in energy, for the ladder to fetch', () => {
-    expect(ranked(SPOOKY, 3)).toEqual([
-      ['meter(grouping=meter("5/4"))', 0],
-      ['meter(grouping=meter("6/8"))', 0.04],
-      ['meter(grouping=meter("3/4"))', 0.04],
+  // (0.04 off on drive alone, which the repository's distance, over the three axes a meter has, counts as 0.04/√3)
+  it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.04 off in drive, for the ladder to fetch', () => {
+    // (the two tie: either first)
+    const found = ranked(SPOOKY, 3);
+    expect(found[0]).toEqual(['meter(grouping=meter("5/4"))', 0]);
+    expect(found.slice(1).sort()).toEqual([
+      ['meter(grouping=meter("3/4"))', +(0.04 / Math.sqrt(3)).toFixed(9)],
+      ['meter(grouping=meter("6/8"))', +(0.04 / Math.sqrt(3)).toFixed(9)],
     ]);
   });
 });

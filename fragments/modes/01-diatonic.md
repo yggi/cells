@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0.3
       harm: 0.45
-      artic: 0.55
-      energy: 0.55
+      drive: 0.55
+      bright: 0.25
     weight: 1
     facet: mode
     args:
@@ -13,8 +13,8 @@ association:
   - point:
       sync: 0.12
       harm: 0
-      artic: 1
-      energy: 0.8
+      drive: 0.9
+      bright: 0.25
     weight: 1
     facet: mode
     args:
@@ -22,8 +22,8 @@ association:
   - point:
       sync: 0.5
       harm: 0.75
-      artic: 0.35
-      energy: 0.5
+      drive: 0.425
+      bright: 0.25
     weight: 1
     facet: mode
     args:
@@ -31,8 +31,8 @@ association:
   - point:
       sync: 0.35
       harm: 0.55
-      artic: 0.65
-      energy: 0.65
+      drive: 0.65
+      bright: 0.5
     weight: 1
     facet: mode
     args:
@@ -40,8 +40,8 @@ association:
   - point:
       sync: 1
       harm: 0.12
-      artic: 0.85
-      energy: 0.75
+      drive: 0.8
+      bright: 0.5
     weight: 1
     facet: mode
     args:
@@ -49,8 +49,8 @@ association:
   - point:
       sync: 0.05
       harm: 0.3
-      artic: 0
-      energy: 0.2
+      drive: 0.1
+      bright: 0.875
     weight: 1
     facet: mode
     args:
@@ -58,8 +58,8 @@ association:
   - point:
       sync: 0.75
       harm: 0.85
-      artic: 0.45
-      energy: 0.45
+      drive: 0.45
+      bright: 0.875
     weight: 1
     facet: mode
     args:
@@ -67,8 +67,8 @@ association:
   - point:
       sync: 0.35
       harm: 1
-      artic: 0.3
-      energy: 0.6
+      drive: 0.45
+      bright: 0.875
     weight: 1
     facet: mode
     args:
@@ -76,8 +76,8 @@ association:
   - point:
       sync: 0.1
       harm: 0.12
-      artic: 0.5
-      energy: 0.35
+      drive: 0.425
+      bright: 0.875
     weight: 1
     facet: mode
     args:
@@ -85,8 +85,8 @@ association:
   - point:
       sync: 0.875
       harm: 0.485
-      artic: 0.65
-      energy: 0.6
+      drive: 0.625
+      bright: 0.75
     weight: 1
     facet: mode
     args:
@@ -94,8 +94,8 @@ association:
   - point:
       sync: 0.6
       harm: 0.6
-      artic: 0.7
-      energy: 0.85
+      drive: 0.775
+      bright: 0.125
     weight: 1
     facet: mode
     args:
@@ -103,8 +103,8 @@ association:
   - point:
       sync: 0.15
       harm: 0.6
-      artic: 0.15
-      energy: 0.3
+      drive: 0.225
+      bright: 1
     weight: 1
     facet: mode
     args:
@@ -112,8 +112,8 @@ association:
   - point:
       sync: 0.9
       harm: 1
-      artic: 0.6
-      energy: 0.9
+      drive: 0.75
+      bright: 0
     weight: 1
     facet: mode
     args:

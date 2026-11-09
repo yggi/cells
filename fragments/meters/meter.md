@@ -4,29 +4,25 @@ association:
   - point:
       sync: 0.3
       harm: 0.45
-      artic: 0.55
-      energy: 0.55
+      drive: 0.55
     weight: 1
     facet: meter
   - point:
       sync: 0.12
       harm: 0
-      artic: 1
-      energy: 0.8
+      drive: 0.9
     weight: 1
     facet: meter
   - point:
       sync: 0.75
       harm: 0.85
-      artic: 0.45
-      energy: 0.45
+      drive: 0.45
     weight: 1
     facet: meter
   - point:
       sync: 0.35
       harm: 1
-      artic: 0.3
-      energy: 0.6
+      drive: 0.45
     weight: 1
     facet: meter
     args:
@@ -34,8 +30,7 @@ association:
   - point:
       sync: 0.55
       harm: 0.75
-      artic: 0.6
-      energy: 0.75
+      drive: 0.675
     weight: 1
     facet: meter
     args:
@@ -43,8 +38,7 @@ association:
   - point:
       sync: 0.5
       harm: 0.75
-      artic: 0.35
-      energy: 0.5
+      drive: 0.425
     weight: 1
     facet: meter
     args:
@@ -52,8 +46,7 @@ association:
   - point:
       sync: 0.35
       harm: 0.55
-      artic: 0.65
-      energy: 0.65
+      drive: 0.65
     weight: 1
     facet: meter
     args:
@@ -61,8 +54,7 @@ association:
   - point:
       sync: 1
       harm: 0.12
-      artic: 0.85
-      energy: 0.75
+      drive: 0.8
     weight: 1
     facet: meter
     args:
@@ -70,8 +62,7 @@ association:
   - point:
       sync: 0.05
       harm: 0.3
-      artic: 0
-      energy: 0.2
+      drive: 0.1
     weight: 1
     facet: meter
     args:
@@ -79,8 +70,7 @@ association:
   - point:
       sync: 0.2
       harm: 0.6
-      artic: 0.9
-      energy: 1
+      drive: 0.95
     weight: 1
     facet: meter
     args:
@@ -88,8 +78,7 @@ association:
   - point:
       sync: 0
       harm: 0.1
-      artic: 0.6
-      energy: 1
+      drive: 0.8
     weight: 1
     facet: meter
     args:
@@ -97,8 +86,7 @@ association:
   - point:
       sync: 0
       harm: 0.7
-      artic: 0.3
-      energy: 0
+      drive: 0.15
     weight: 1
     facet: meter
     args:
@@ -106,8 +94,7 @@ association:
   - point:
       sync: 0.2
       harm: 0.9
-      artic: 0.3
-      energy: 0.43
+      drive: 0.365
     weight: 1
     facet: meter
     args:
@@ -115,8 +102,7 @@ association:
   - point:
       sync: 0.3
       harm: 0.2
-      artic: 0.2
-      energy: 0
+      drive: 0.1
     weight: 1
     facet: meter
     args:
@@ -124,8 +110,7 @@ association:
   - point:
       sync: 0.2
       harm: 0.9
-      artic: 0.3
-      energy: 0.27
+      drive: 0.285
     weight: 1
     facet: meter
     args:
@@ -133,8 +118,7 @@ association:
   - point:
       sync: 0.7
       harm: 0.6
-      artic: 0
-      energy: 0.2
+      drive: 0.1
     weight: 1
     facet: meter
     args:
@@ -142,8 +126,7 @@ association:
   - point:
       sync: 0.4
       harm: 0.9
-      artic: 0.5
-      energy: 0.3
+      drive: 0.4
     weight: 1
     facet: meter
     args:
@@ -151,8 +134,7 @@ association:
   - point:
       sync: 0.2
       harm: 0.9
-      artic: 0.3
-      energy: 0.35
+      drive: 0.325
     weight: 1
     facet: meter
     args:
@@ -160,8 +142,7 @@ association:
   - point:
       sync: 0.8
       harm: 0.6
-      artic: 1
-      energy: 1
+      drive: 1
     weight: 1
     facet: meter
     args:
@@ -169,8 +150,7 @@ association:
   - point:
       sync: 0.6
       harm: 0.9
-      artic: 0.8
-      energy: 0.9
+      drive: 0.85
     weight: 1
     facet: meter
     args:

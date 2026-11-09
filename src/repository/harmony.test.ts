@@ -63,7 +63,7 @@ function layout(chords: readonly number[], harm: number): number[] {
 // Lifted from yggi/jambot packages/engine/src/style.ts @ 0a56da9 (`PRESETS`): the presets whose harmony vamps (under
 // 0.33), each with its mode. No preset is mixolydian. Ambient's harmony, 0.3, lays a vamp two bars a chord; the files sit
 // at its point with the harmony at Funk's 0.12, where `buildTheme` lays it four bars a chord, as they write it.
-const AMBIENT_VAMPED = at(AMBIENT.sync!, 0.12, AMBIENT.artic!, AMBIENT.energy!);
+const AMBIENT_VAMPED = at(AMBIENT.sync!, 0.12, AMBIENT.drive!, AMBIENT.bright!);
 const POINT: Partial<Record<Mode, StylePoint>> = { aeolian: TECHNO, dorian: FUNK, ionian: AMBIENT_VAMPED };
 
 /** The diatonic modes as semitones from the tonic, for the pitch classes a key in each plays. */
@@ -253,12 +253,13 @@ describe('the haunted progression', () => {
   });
 
   // (at weight 0.4, as the dark cadence is, so it is found within Jambot's miss distance, 0.3, of Spooky's point alone, #404)
-  it('sits 0.05 below Spooky in energy at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
-    expect(haunted.association).toEqual([{ point: { ...SPOOKY, energy: 0.3 }, weight: 0.4, facet: 'harmony' }]);
+  it('sits 0.025 below Spooky in drive (0.05 in energy, on the axes before decision 076) at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
+    expect(haunted.association).toEqual([{ point: { ...SPOOKY, drive: 0.3 }, weight: 0.4, facet: 'harmony' }]);
     const repository = createRepository(LIBRARY);
     expect(repository.query(SPOOKY, 2, {}, { facet: 'harmony' }).map((f) => [f.fragment.id, Math.round(f.distance * 100) / 100])).toEqual([
       ['dark_cadence', 0],
-      ['haunted_progression', 0.06],
+      // (0.025 off on one of four axes, at weight 0.4: half its distance before decision 076, 0.06)
+      ['haunted_progression', 0.03],
     ]);
     const others = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ, ELECTRO_SWING };
     for (const [name, point] of Object.entries(others)) expect(fragmentDistance(haunted, point, {}, 'harmony'), name).toBeGreaterThan(0.3);

@@ -1,3 +1,4 @@
+import { restyled } from "../migrate/axes.js";
 import { applyBases } from "./base.js";
 import { isNote } from "../ast.js";
 import { isPieceFile, readPiece } from "../piecefile.js";
@@ -34,7 +35,17 @@ export function parse(whole, { old = false } = {}) {
     });
     if (carry)
         lines.push(carry);
-    lines.forEach(({ text, line: lineNo, parts }) => {
+    lines.forEach(({ text: written, line: lineNo, parts }) => {
+        const restyle = old ? restyled(written) : null;
+        if (restyle !== null) {
+            const col = written.search(/\S/);
+            diagnostics.push({
+                severity: 'warning',
+                message: `a style on the axes before v0.22.0 (sync harm artic energy): its axes are sync harm drive bright, drive the mean of articulation and energy (decision 076); Migrate rewrites it`,
+                span: { line: lineNo, col: col + 1, len: written.trimEnd().length - col },
+            });
+        }
+        const text = restyle ?? written;
         const s = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
         if (s.done())
             return;

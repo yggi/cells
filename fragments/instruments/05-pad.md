@@ -4,15 +4,15 @@ association:
   - point:
       sync: 0.5
       harm: 0.5
-      artic: 0.5
-      energy: 0.5
+      drive: 0.5
+      bright: 0.25
     weight: 0.25
     facet: instrument
 source: seed
 ---
 
 ```cells
-&padV s=tri loop=C3 env=&(map=adsr attack=.3..0.01 * &style[artic] decay=0 sustain=1 release=.7..0.12 * &style[artic])
+&padV s=tri loop=C3 env=&(map=adsr attack=.3..0.01 * &style[drive] decay=0 sustain=1 release=.7..0.12 * &style[drive])
 ```
 
 The voice Jambot's pad plays through: `&padV`, whose `loop=C3` sets the register, where Jambot's section text sounds its comp, pad and stab alike (`PIN_VOICES.comp`, yggi/jambot `packages/score/src/section-text.ts` @ 24a528b), so a pad played on it sends the MIDI notes it sends today, with no move on its gate. It is a voice of its own beside `keys`, though the two sit at one register, so a sound given to one (a pad's slow attack) isn't the other's.

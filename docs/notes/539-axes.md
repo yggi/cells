@@ -1,16 +1,18 @@
 # The axes of style space, measured
 
-Date: 2026-11-07 · Status: measured, for the owner's ruling · Issue: [#539](https://github.com/yggi/cells/issues/539), in the style epic [#536](https://github.com/yggi/cells/issues/536) · Tool: `tools/axes.ts`
+Date: 2026-11-07 · Status: measured, for the owner's ruling · Issue: [#539](https://github.com/yggi/cells/issues/539), in the style epic [#536](https://github.com/yggi/cells/issues/536) · Tool: `tools/axes.ts` @ 39048157 (retired with #572)
 
 How the four axes correlate over the presets and the library, how much of the presets' spread each principal direction carries, and what each option #539 puts to the owner does to the presets' distances and to the style each library point is nearest. A measurement; it decides no language.
 
 ## Reproduce
 
+The tool measured the library on the axes before decision 076, so it was retired when #572 moved the library onto `sync harm drive bright`: it runs at 39048157 (the v0.21.0 release), from a checkout of that commit:
+
 ```sh
-node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/axes.ts
+git checkout 39048157 && node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/axes.ts
 ```
 
-The tables below are its output at 56a2358 (the library of styles of #537, eleven presets). `tools/axes.test.ts` holds the brightness rule over every scale it knows, the statistics, and that each option measures as a change against the four axes.
+The tables below are its output at 56a2358 (the library of styles of #537, eleven presets). `tools/axes.test.ts` @ 39048157 held the brightness rule over every scale it knew, the statistics, and that each option measured as a change against the four axes. The brightness rule #572 took weighs the third and the sixth twice (`BRIGHTNESS`, `src/engine/style.ts`); the tables below use the plain sum.
 
 **The options.** `four`: the axes as they are. `drive`: articulation and energy as one axis, their mean. `four+bright`: a fifth axis, brightness. `drive+bright`: the slot `drive` frees, taken by brightness.
 

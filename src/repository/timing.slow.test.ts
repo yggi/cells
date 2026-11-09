@@ -64,7 +64,7 @@ describe('what a query costs', () => {
   // (as yggi/jambot#375 timed its query: 20,000 of them, each over every fragment, here with a facet and two fragments chosen)
   it('a query over the library costs under 1 ms', () => {
     const PRESETS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ];
-    const AXES = ['sync', 'harm', 'artic', 'energy'] as const;
+    const AXES = ['sync', 'harm', 'drive', 'bright'] as const;
     const halfway = (a: StylePoint, b: StylePoint) => Object.fromEntries(AXES.map((axis) => [axis, (a[axis]! + b[axis]!) / 2]));
     const grid = AXES.reduce<StylePoint[]>((points, axis) => points.flatMap((p) => [0, 0.25, 0.5, 0.75, 1].map((v) => ({ ...p, [axis]: v }))), [{}]);
     // (the points `library.test.ts` queries at: every preset, every point halfway between two, and a grid)

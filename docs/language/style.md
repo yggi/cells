@@ -5,12 +5,19 @@ The axes are cells' own table (`AXES`, `src/engine/style.ts`), each with a name,
 
 | axis | range | from one end to the other |
 |---|---|---|
-| `sync` | 0 to 1 | on the beat (0) to off the beat (1) |
-| `harm` | 0 to 1 | a static vamp (0) to moving, rich harmony (1) |
-| `artic` | 0 to 1 | legato (0) to staccato (1) |
-| `energy` | 0 to 1 | sparse (0) to dense (1) |
+| `sync` | 0 to 1 | on the beat (0) to offbeat (1): where the accents fall |
+| `harm` | 0 to 1 | static (0) to moving (1): how the harmony moves |
+| `drive` | 0 to 1 | paddy (0) to stabby (1): sustained and few onsets, to short and many; articulation and density as one |
+| `bright` | 0 to 1 | darker (0) to brighter (1): the mode's brightness |
 
-Each axis also carries the words a frontend shows for it, `label` (`Syncopation`, `Harmony`, `Articulation`, `Energy`) and `ends` (`['on the beat', 'off the beat']` …), and its sentence is said from its ends, so a frontend's Style sheet reads its words from here (#538).
+Each axis also carries the words a frontend shows for it, `label` (`Syncopation`, `Harmony`, `Drive`, `Brightness`) and `ends` (`['on the beat', 'offbeat']` …), and its sentence is said from its ends, so a frontend's Style sheet reads its words from here (#538).
+The axes are [decision 076](https://github.com/yggi/cells/blob/main/docs/decisions/076-the-style-axes.md)'s.
+Energy is not one: it is intensity, how hard a style is played at a moment (#571), and entropy is the reach, how far a style may wander, never a place.
+
+**Brightness is the mode's** (`BRIGHTNESS`, `src/engine/style.ts`): a scale's degrees above its tonic summed, the third and the sixth counted twice, from locrian's sum (0) to lydian's (1): locrian 0, phrygian .125, aeolian .25, harmonic minor .375, dorian .5, mixolydian .75, ionian .875, lydian 1.
+A mode fragment's point has its scale's; a tonal fragment's (a harmony, a bass, a motif, a stab, an instrument) the mode's the library finds at its point; a meter, a rhythm, a performer, a module or a form leaves it out, since a point names the axes it speaks to and a distance runs over the axes both points have.
+
+A text written on the axes before v0.22.0 (`sync harm artic energy`) is moved by Migrate (#572): `drive` is the mean of articulation and energy, `bright` the brightness of the mode the library found nearest the old point, and a pick of `[artic]` or `[energy]` reads `[drive]`.
 
 A fragment's association points in the repository are written on the same axes ([use.md](use.md)), and a frontend reads them from the table rather than owning them ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md)).
 
@@ -20,25 +27,25 @@ A cell with `map=style` is a style: a value for each axis, in the table's order,
 It doesn't sound; what reads it is another cell.
 
 ```cells
-&funk map=style .3 .45 .55 .55
-&bossa map=style sync=.5 harm=.75 artic=.35 energy=.5
+&funk map=style .3 .45 .55 .5
+&bossa map=style sync=.5 harm=.75 drive=.4 bright=.875
 ```
 
-The two spellings are one point: `sync=.5 harm=.75 artic=.35 energy=.5` is the braid `.5 .75 .35 .5`.
+The two spellings are one point: `sync=.5 harm=.75 drive=.4 bright=.875` is the braid `.5 .75 .4 .875`.
 The axes' names are read only on a `map=style` cell, so the list of attributes doesn't grow.
 A style names every axis, each within its range; a value outside it, or one missing, is an error that lists them.
-An axis may be left to the performer, a slider within its range, by name or in order: `sync=free(.3, 0..1)`, `&mine map=style free(.3, 0..1) .45 .55 .55` ([free.md](free.md)).
+An axis may be left to the performer, a slider within its range, by name or in order: `sync=free(.3, 0..1)`, `&mine map=style free(.3, 0..1) .45 .55 .5` ([free.md](free.md)).
 The slider is named by its axis, and what reads the style reads its value as it reads a number's.
-An axis may also move, by name: a range within it and the cell that moves it, `artic=.2..0.9 * &drift`, or the cell alone for the axis's whole range, `artic=&drift`.
-What reads the axis (`&style[artic]`, or `&mine[artic]` on the style itself) reads that cell, its numbers from 0 to 1 laid within the range, on the cell's own clock: a line of numbers, a choice drawn afresh each step (`&drift step=1m/8 [0|.25|.5|.75|1]`, a sample-and-hold once a section), nested as deep as wanted.
-The window may be set by a hand, its ends sliders within the axis, `artic=free(.2, 0..1)..free(.9, 0..1) * &drift`, or its centre and reach, `artic=free(.55, 0..1) ± free(.25, 0..0.5) * &drift`, held to the axis ([sound.md](sound.md), decision 079).
+An axis may also move, by name: a range within it and the cell that moves it, `drive=.2..0.9 * &drift`, or the cell alone for the axis's whole range, `drive=&drift`.
+What reads the axis (`&style[drive]`, or `&mine[drive]` on the style itself) reads that cell, its numbers from 0 to 1 laid within the range, on the cell's own clock: a line of numbers, a choice drawn afresh each step (`&drift step=1m/8 [0|.25|.5|.75|1]`, a sample-and-hold once a section), nested as deep as wanted.
+The window may be set by a hand, its ends sliders within the axis, `drive=free(.2, 0..1)..free(.9, 0..1) * &drift`, or its centre and reach, `drive=free(.55, 0..1) ± free(.25, 0..0.5) * &drift`, held to the axis ([sound.md](sound.md), decision 079).
 Where nothing reads it moving, the axis is the range's first end.
 One cell moves an axis: a line of numbers, or a sum of them (`&drift [&section * .5 + &song * .3 + &set * .2]`, [mix.md](mix.md), decision 079), each term laid within the range.
 Read through a mix of styles, a moving axis is the mix's weighted sum, a still style's value a constant in it; a range of styles doesn't move with a moving one yet, an error that says so (#576).
 
 ```cells
 &bar meter("4/4") step=120bpm
-&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) artic=.2..0.9 * &drift energy=.55
+&mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) drive=.2..0.9 * &drift bright=.5
 &drift step=1m/8 [0|.25|.5|.75|1]
 ```
 
@@ -50,16 +57,16 @@ A map that names its slots lets a pick read one by its name:
 | map | its slots, in order |
 |---|---|
 | `map=adsr` | `attack` `decay` `sustain` `release` |
-| `map=style` | `sync` `harm` `artic` `energy` |
+| `map=style` | `sync` `harm` `drive` `bright` |
 
-`&x[slot]` is the slot's fixed position, as written: `&pluck[sustain]` is `&pluck[$2]`, and `&funk[artic]` is `&funk[$2]`.
+`&x[slot]` is the slot's fixed position, as written: `&pluck[sustain]` is `&pluck[$2]`, and `&funk[drive]` is `&funk[$2]`.
 It doesn't follow `shift=`: a field doesn't turn.
 
 ```cells
 &bar meter("4/4") step=120bpm
 &pluck map=adsr .01 .3 .5 .4
-&funk map=style .3 .45 .55 .55
-&held step=4n &pluck[sustain] &pluck[attack] &funk[artic] &funk[$2]
+&funk map=style .3 .45 .55 .5
+&held step=4n &pluck[sustain] &pluck[attack] &funk[drive] &funk[$2]
 &tone s=sine loop=C4
 &out map=sample [&held * &tone]
 ```
@@ -74,7 +81,7 @@ Any cell may carry `style=`, its association or wish: a style cell, an unnamed o
 | written | what it is |
 |---|---|
 | `style=&funk` | a style cell's point |
-| `style=&(map=style .41 .6 .45 .52)` | an unnamed one |
+| `style=&(map=style .41 .6 .48 .5)` | an unnamed one |
 | `style=[&funk * .8, &bossa * .2]` | a mix: the weighted sum of the styles' points, exact by definition |
 | `style=&funk..&bossa` | a range: from one to the other over the cell's scope |
 | `style=&funk..&bossa * &curve` | a range, where between the two ends set by a line from 0 to 1 in place of time |
@@ -83,20 +90,20 @@ Each end lies within the axes' ranges: a mix whose weights take it outside is an
 
 **The note `&style` is the section's style** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md)).
 `&style` is an interface name, as `&bar`, `&tempo`, `&key`, `&tonic` and `&harm` are: a score names its style so, and a band written once reads it by that name in every section.
-A pick reads its value on an axis, `&style[artic]`, and a voice's moving parameter can take it as a factor:
+A pick reads its value on an axis, `&style[drive]`, and a voice's moving parameter can take it as a factor:
 
 ```cells
 &bar meter("4/4") step=120bpm
-&funk map=style .3 .45 .2 .55
-&bossa map=style .5 .75 .8 .5
+&funk map=style .3 .45 .2 .5
+&bossa map=style .5 .75 .8 .875
 &style label="Section 1: from Funk to Bossa nova" style=&funk..&bossa
 &line step=1m 0!8
-&bassV s=saw loop=C2 lpf=300..1200 * &style[artic]
+&bassV s=saw loop=C2 lpf=300..1200 * &style[drive]
 &out map=sample [&line * &bassV]
 ```
 
 **`&style` is the composer's.** A fragment reads it and never defines it: a used fragment with a line for `&style` is an error, whether or not the piece writes its own, since two fragments' styles would collide and the section's style is the score's to say (#391, the owner's ruling on yggi/cells#405).
-**Where no line writes it, a pick of an axis reads the centre of style space**, the middle of each axis's range (`CENTRE`, `src/engine/style.ts`): an instrument heard alone plays as it does at the centre (`lpf=450..900 * &style[artic]` is 675 Hz). In a piece with performers, a score played, an info says so (`no line writes &style: &style[artic] reads the centre of style space …`), as a part no line writes is said; an instrument heard alone says nothing. A bare reference to an unwritten `&style` is still unknown.
+**Where no line writes it, a pick of an axis reads the centre of style space**, the middle of each axis's range (`CENTRE`, `src/engine/style.ts`): an instrument heard alone plays as it does at the centre (`lpf=450..900 * &style[drive]` is 675 Hz). In a piece with performers, a score played, an info says so (`no line writes &style: &style[drive] reads the centre of style space …`), as a part no line writes is said; an instrument heard alone says nothing. A bare reference to an unwritten `&style` is still unknown.
 
 **A range glides over the cell's scope, the piece's length** (its bars, as cells finds it: [time.md](time.md)).
 Bar k of n begins at a + (b − a)·k/n, in a straight line sixteen steps a bar, on the piece's meter: the glide comes round with the piece and follows its tempo, and doesn't lengthen it.
@@ -111,7 +118,7 @@ The seed library holds the preset styles as the cells of one collection, `styles
 Each is a style cell at its point, with its display name as `label=` and its default tempo as `step=`:
 
 ```cells
-&funk map=style label="Funk" step=104bpm sync=1 harm=.12 artic=.85 energy=.75
+&funk map=style label="Funk" step=104bpm sync=1 harm=.12 drive=.8 bright=.5
 ```
 
 The collection is the presets' one source: a frontend reads it as `STYLES` (`src/repository/styles.ts`), each style `{ id, name, point, tempo }`, in its order (#537).
@@ -129,7 +136,7 @@ The collection is associated at each of the eleven points as the facet `style`, 
 ## The default band: a score played as its style says
 
 A score ends in `* from band`, and the client's resolver answers `band` ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §1).
-The seed library's band, `band` (`fragments/bands/01-band.md`), plays Jambot's five roles on the default instruments, which read the score's `&style` where Jambot's synth reads its style: the bass's cutoff opens with articulation (`&bassV … lpf=450..900 * &style[artic]`), the lead's with energy (`&leadV … lpf=1400..3600 * &style[energy]`). Neither the instruments nor the band define `&style`.
+The seed library's band, `band` (`fragments/bands/01-band.md`), plays Jambot's five roles on the default instruments, which read the score's `&style` where Jambot's synth reads its style: the bass's cutoff and the lead's open with drive (`&bassV … lpf=450..900 * &style[drive]`, `&leadV … lpf=1400..3600 * &style[drive]`), and the keys' and the pad's envelopes shorten with it. Neither the instruments nor the band define `&style`.
 It sends the score on a MIDI card on Jambot's channels and hears it on a sound card.
 
 ```cells

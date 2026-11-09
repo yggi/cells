@@ -124,7 +124,7 @@ export interface Plan {
   readonly played: ReadonlySet<string>;
   /** Each voice's moving parameters: their cells as series (an envelope among them, apart). */
   readonly voiceParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
-  /** Each envelope's moving slots (`attack=.3..0.01 * &style[artic]`, #411): read at each note's start (`envelopeAt`). */
+  /** Each envelope's moving slots (`attack=.3..0.01 * &style[drive]`, #411): read at each note's start (`envelopeAt`). */
   readonly envParams: ReadonlyMap<string, Readonly<Record<string, VoiceParam>>>;
   /** When the piece ends, in seconds: the last track's end — Infinity if anything loops (or nothing plays). */
   readonly end: number;
@@ -412,7 +412,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     const laps = (stepsPerSecond(result, cell) ?? 0) / m.period;
     return laps > CV_LAPS ? { ...m, rate: (m.rate * CV_LAPS) / laps } : m;
   };
-  // the envelopes' moving slots (attack=.3..0.01 * &style[artic], #411): their cells, as series, read at each note's start
+  // the envelopes' moving slots (attack=.3..0.01 * &style[drive], #411): their cells, as series, read at each note's start
   const envParams = new Map<string, Record<string, VoiceParam>>();
   for (const c of result.cells.values()) {
     if (c.map?.kind !== 'adsr' || !Object.keys(c.paramCells).length) continue;

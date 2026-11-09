@@ -1,6 +1,7 @@
 // The instruments (#225, decision 054): the General MIDI kit, a voice for each of General MIDI's 47 percussion notes,
 // each sounding on its own note over MIDI out, fitting any workbench; 13 of its voices taken by name (the retired core
 // kit), with which every rhythm plays each hit on the note it plays alone.
+import { newPoint } from '../engine/migrate/axes';
 import { wordOf } from '../engine/renamed';
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
@@ -30,7 +31,8 @@ const takenOn = (text: string, bench: string, main?: string) => {
 
 const byId = (id: string) => INSTRUMENT_FRAGMENTS.find((f) => f.id === id)!;
 const gmKit = byId('gm_kit');
-const CENTRE = { sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 };
+// (the centre on the old axes, moved by decision 076's rule: drive the mean, bright the mode found there, #572)
+const CENTRE = newPoint({ sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 });
 /** The default instruments, the performers' (#278). */
 const DEFAULTS = ['bass', 'keys', 'pad', 'lead'];
 /** The instruments with a sound, for the two presets (#350), each at its preset's point, and the default whose voice it defines. */
@@ -43,8 +45,9 @@ const AT_PRESET: Record<string, StylePoint> = {
   organ: SPOOKY,
   theremin: SPOOKY,
   celesta: SPOOKY,
-  // (0.05 below Spooky in energy: at its point it would tie with the organ, and take &padV from it by id)
-  haunted_pad: { ...SPOOKY, energy: 0.3 },
+  // (0.05 below Spooky in energy on the old axes, 0.025 in drive now: at its point it would tie with the organ, and take
+  // &padV from it by id)
+  haunted_pad: newPoint({ sync: 0.2, harm: 0.9, artic: 0.3, energy: 0.3 }),
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
@@ -147,7 +150,7 @@ describe('the instrument fragments', () => {
     for (const preset of [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ]) expect(found(preset, 3)).toEqual(['gm_kit', 'bass', 'keys']);
     expect(found(ELECTRO_SWING, 4)).toEqual(['brass_stab', 'clarinet', 'muted_trumpet', 'upright_bass']);
     expect(found(SPOOKY, 4)).toEqual(['celesta', 'organ', 'round_bass', 'theremin']);
-    expect(found({ ...SPOOKY, energy: 0.3 }, 1)).toEqual(['haunted_pad']);
+    expect(found(AT_PRESET.haunted_pad!, 1)).toEqual(['haunted_pad']);
   });
 
   it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order; 13 of them taken by name are its lines word for word, as the retired core kit forwards them (#196)', () => {

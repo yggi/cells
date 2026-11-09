@@ -1,0 +1,6 @@
+# an unnamed style in order, its articulation left to a slider: drive takes the slider (decision 076, #572)
+&bar meter("4/4") step=120bpm
+&style style=&(map=style .5 .75 free(.35, 0..1) .5)
+&line step=2n 0 4
+&keysV s=tri loop=C3 lpf=400..2400 * &style[artic]
+&out map=sample [&line * &keysV]

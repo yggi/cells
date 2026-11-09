@@ -30,7 +30,8 @@ A style is a point on cells' table of axes, `AXES`: `sync`, `harm`, `artic`, `en
 
    `sync` and `harm` keep their slots, so a positional `map=style` keeps its first two values.
 2. **`bright` is written by rule where a fragment has a mode, and left out where it makes no claim.**
-   - A mode fragment's `bright` is its scale's (the rule above): locrian 0, phrygian 1/6, aeolian 2/6, dorian 3/6, mixolydian 4/6, ionian 5/6, lydian 1, harmonic minor 3/6.
+   - A mode fragment's `bright` is its scale's: its degrees above the tonic summed, the third and the sixth counted twice, from locrian's sum (0) to lydian's (1) (`BRIGHTNESS`, `src/engine/style.ts`): locrian 0, phrygian 1/8, aeolian 2/8, harmonic minor 3/8, dorian 4/8, mixolydian 6/8, ionian 7/8, lydian 1.
+     - #572 took this rule over the plain sum (the rule above, each degree once), which puts harmonic minor level with dorian (3/6): the third alone can't part them, both minor, but the sixth does. Over the eleven styles it keeps the median gap from a style to its nearest (0.187) and raises the smallest from 0.112 to 0.142, and Spooky and Electro swing, both harmonic minor, sit darker than Funk and Deep house (dorian).
    - A tonal fragment (harmony, bass, motif, stab, instrument) takes the `bright` of the mode the repository finds at its point as its first value. Use and hand move it after.
    - A meter, a rhythm, a performer, a module or a form leaves `bright` out: a point names the axes it speaks to (decision 041), and a distance runs over the axes both points have.
 3. **Energy is not a style axis. It is intensity:** how hard a style is played at a moment, density, layers, velocity, register and timbre together.
@@ -63,6 +64,4 @@ A style is a point on cells' table of axes, `AXES`: `sync`, `harm`, `artic`, `en
   - #540 (associations complete);
   - #541 (the reader: `bright` from the chords read back);
   - #542 (more styles: at least one dark one, since today's darkest presets are aeolian).
-- **Open:**
-  - A rule that weighs the third more would tell harmonic minor from dorian, which this rule puts level. That is #572's, measured before it is taken.
-  - Intensity's spelling and scales are #571's.
+- **Open:** intensity's spelling and scales are #571's. (The brightness rule was #572's, measured and taken there: §2.)

@@ -1,5 +1,5 @@
 // A voice's wave and its envelope's times move (#411): an envelope's slots by name, each a number or a range scaled by
-// cells, read at each note's start (`attack=.3..0.01 * &style[artic]`); and a blend of two waves, `s=tri..square * &x`,
+// cells, read at each note's start (`attack=.3..0.01 * &style[drive]`); and a blend of two waves, `s=tri..square * &x`,
 // one voice and one note, the share of the second wave read at each note's start. Jambot's `timbreOf` (yggi/jambot
 // packages/engine/src/sound.ts @ 227aa74) is the default instruments' reading of them.
 import { describe, expect, it } from 'vitest';
@@ -35,16 +35,16 @@ describe('an envelope’s slots by name, each a number or a range scaled by cell
   });
 
   it('a moving slot reads its cells at each note’s start: the chords’ attack and release, as Jambot’s, at articulation 0, .5 and 1', () => {
-    const at = (artic: number) => {
-      const text = `${bar}\n&style style=&(map=style .5 .5 ${artic} .5)\n&padV from pad\n&line step=4n 0 2\n&out map=sample [&line * &padV]`;
+    const at = (drive: number) => {
+      const text = `${bar}\n&style style=&(map=style .5 .5 ${drive} .5)\n&padV from pad\n&line step=4n 0 2\n&out map=sample [&line * &padV]`;
       return events(text).map((e) => [e.env!.attack, e.env!.release]);
     };
-    for (const [artic, attack, release] of [
+    for (const [drive, attack, release] of [
       [0, 0.3, 0.7],
       [0.5, 0.155, 0.41],
       [1, 0.01, 0.12],
     ] as const)
-      for (const [a, r] of at(artic)) {
+      for (const [a, r] of at(drive)) {
         expect(a).toBeCloseTo(attack, 3);
         expect(r).toBeCloseTo(release, 3);
       }
@@ -99,8 +99,8 @@ describe('an envelope’s slots by name, each a number or a range scaled by cell
 
 describe('a blend of two waves, s=tri..square * &x (#411)', () => {
   /** A held C4's harmonics 1 to 15 (their amplitudes, over a second in its middle) on the lead at an articulation. */
-  const harmonicsAt = (artic: number, s = 's=tri..square * &style[artic]') => {
-    const text = `&bar meter("4/4") step=60bpm\n&style style=&(map=style .5 .5 ${artic} .5)\n&leadV ${s} loop=C4\n&line step=1m 0\n&out map=sample [&line * &leadV]`;
+  const harmonicsAt = (drive: number, s = 's=tri..square * &style[drive]') => {
+    const text = `&bar meter("4/4") step=60bpm\n&style style=&(map=style .5 .5 ${drive} .5)\n&leadV ${s} loop=C4\n&line step=1m 0\n&out map=sample [&line * &leadV]`;
     const r = compileSource(text);
     expect(r.diagnostics).toEqual([]);
     const a = pieceAudio(r, codeShifts(r), { seconds: 2 });

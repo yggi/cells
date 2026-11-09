@@ -4,15 +4,15 @@ association:
   - point:
       sync: 0.05
       harm: 0.12
-      artic: 0
-      energy: 0.2
+      drive: 0.1
+      bright: 0.875
     weight: 1
     facet: harmony
   - point:
       sync: 0.1
       harm: 0.12
-      artic: 0.5
-      energy: 0.35
+      drive: 0.425
+      bright: 0.875
     weight: 0.5
     facet: harmony
 source: seed

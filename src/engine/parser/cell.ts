@@ -548,7 +548,7 @@ function readParam(s: LineScanner, b: Body, key: string): void {
     b.paramSpans[key] = s.span(vs);
     return;
   }
-  // a blend of two waves: s=tri..square * &style[artic], the share of the second each note starts on (#411)
+  // a blend of two waves: s=tri..square * &style[drive], the share of the second each note starts on (#411)
   const blend = key === 's' ? s.text.slice(s.i).match(/^([A-Za-z]+)\.\.([A-Za-z]+)/) : null;
   if (blend) {
     s.i += blend[0].length;
@@ -562,9 +562,9 @@ function readParam(s: LineScanner, b: Body, key: string): void {
       }
       s.i++;
       s.skipSpace();
-      factors.push(s.cellRef(`a cell after *, like s=${blend[0]} * &style[artic]`, 'in s='));
+      factors.push(s.cellRef(`a cell after *, like s=${blend[0]} * &style[drive]`, 'in s='));
     }
-    if (factors.length === 0) s.fail(`s=${blend[0]}: a blend of two waves is moved by cells, the share of the second: s=${blend[0]} * &style[artic]`, vs, s.i - vs);
+    if (factors.length === 0) s.fail(`s=${blend[0]}: a blend of two waves is moved by cells, the share of the second: s=${blend[0]} * &style[drive]`, vs, s.i - vs);
     b.params.s = blend[1]!;
     b.paramCells.s = { range: [0, 1], factors, span: s.span(vs), to: blend[2]! };
     b.paramSpans.s = s.span(vs);
@@ -739,7 +739,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   let freeSteps = '';
   // a style's axes by name (sync=.3, decision 063): its braid, in the axes' order, once the line is read
   const axes = new Map<string, { value: string; at: number }>();
-  // an envelope's slots by name (attack=.3..0.01 * &style[artic]): its braid, in the slots' order, once the line is read
+  // an envelope's slots by name (attack=.3..0.01 * &style[drive]): its braid, in the slots' order, once the line is read
   const adsr = new Map<string, number>();
 
   while (!s.done()) {
@@ -748,7 +748,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     if (word !== null && s.peek() === '=') {
       s.i++;
       // (an alias, Strudel's or dough's other name, reads as ours: cutoff= is lpf=)
-      const key = word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
+      // (on a style, an axis's name is the axis: drive= is a tape's or a ladder's elsewhere, decision 076)
+      const key = b.map?.kind === 'style' && AXIS_NAMES.includes(word) ? null : word in KEYS || word in PARAMS ? word : (PARAM_ALIASES[word] ?? null);
       // an envelope's slots by name (attack=.01, decision 063's names; #411): a number, a range moved by cells, or a cell, its
       // values the slot's (attack=&k, #597), read at each note's start
       if (key === null && ADSR_SLOTS.includes(word)) {
@@ -791,6 +792,9 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       }
       if (key === null) {
         if (word in RETIRED_KEYS) s.fail(RETIRED_KEYS[word], at, word.length);
+        // (decision 076: articulation and energy are drive now; Migrate writes a style on the old axes on the new)
+        if ((word === 'artic' || word === 'energy') && b.map?.kind === 'style')
+          s.fail(`${word}= is retired: a style's axes are ${AXIS_NAMES.join(' ')}, drive the mean of articulation and energy (decision 076); Migrate rewrites it`, at, word.length);
         const near = nearestAttribute(word);
         s.fail(
           `Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`,
@@ -896,9 +900,12 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
 
   if (axes.size) {
     const [first, { at }] = [...axes][0]!;
-    if (b.map?.kind !== 'style') s.fail(`${first}= is an axis of a style: it goes on a map=style cell (&funk map=style sync=.3 harm=.45 artic=.55 energy=.55)`, at, first.length);
-    if (generator || tokens.length) s.fail('A style writes its axes by name (sync=.3) or in order (.3 .45 .55 .55), not both', at, first.length);
+    if (b.map?.kind !== 'style') s.fail(`${first}= is an axis of a style: it goes on a map=style cell (&funk map=style sync=.3 harm=.45 drive=.55 bright=.5)`, at, first.length);
+    if (generator || tokens.length) s.fail('A style writes its axes by name (sync=.3) or in order (.3 .45 .55 .5), not both', at, first.length);
     const missing = AXIS_NAMES.filter((n) => !axes.has(n));
+    // (an axis named before map=style is read as the attribute it also names: drive=, a tape's)
+    const early = missing.find((n) => b.params[n] !== undefined || b.paramCells[n]);
+    if (early) s.fail(`${early}= before map=style is a sound's: write map=style first, and ${early}= is the style's axis`, at, first.length);
     if (missing.length)
       s.fail(
         `A style names every axis: ${missing.map((n) => `${n}=`).join(' ')} ${missing.length === 1 ? 'is' : 'are'} missing (its axes: ${AXIS_NAMES.join(' ')})`,

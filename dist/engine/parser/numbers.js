@@ -23,7 +23,7 @@ export const NUMBER_PLACES = {
         name: 'axis',
         cell: `${MOVES}, within the axis (#576)`,
         moves: true,
-        example: '&mine map=style sync=free(.3, 0..1) harm=.45 artic=.55 energy=.55',
+        example: '&mine map=style sync=free(.3, 0..1) harm=.45 drive=.55 bright=.5',
     }),
     end: place({
         form: 'lo..hi * &k (a moving range’s ends) · c ± r',

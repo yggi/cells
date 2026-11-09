@@ -28,7 +28,7 @@ export declare function nearestStyle(point: StylePoint, options?: {
     readonly styles?: readonly Style[];
 }): NearStyle[];
 /** A point on the four axes, for a place that is not a preset's (a test's, a fragment's). */
-export declare const at: (sync: number, harm: number, artic: number, energy: number) => StylePoint;
+export declare const at: (sync: number, harm: number, drive: number, bright: number) => StylePoint;
 export declare const SYNTH_POP: Readonly<Record<string, number>>;
 export declare const TECHNO: Readonly<Record<string, number>>;
 export declare const DEEP_HOUSE: Readonly<Record<string, number>>;

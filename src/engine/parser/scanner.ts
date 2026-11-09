@@ -26,7 +26,7 @@ export const REFERENCE_SYNTAX: readonly Syntax[] = [
     'reference',
     '&name[slot]',
     "One slot by its name, as its map names them (decision 063): an envelope's attack, decay, sustain, release (map=adsr); a style's axes (map=style). The slot's fixed position, as written: &env[sustain] is &env[$2].",
-    ['&held step=4n &level[sustain] &level[attack]', '&leaning map=lin step=1m &funk[artic] &swing[artic]'],
+    ['&held step=4n &level[sustain] &level[attack]', '&leaning map=lin step=1m &funk[drive] &swing[drive]'],
     'style.md',
   ),
   syntax(
@@ -287,7 +287,7 @@ export class LineScanner {
         this.expect(']', `']' to close &${name}[${dir}…]`);
         return { name, pick, shift, ...this.transposition(name), span: this.span(at) };
       }
-      // a slot by name: what the cell's map names (&env[sustain], &funk[artic], decision 063), its position as written
+      // a slot by name: what the cell's map names (&env[sustain], &funk[drive], decision 063), its position as written
       const slot = this.match(/[a-z][A-Za-z]*(?=\s*\])/y);
       if (slot !== null) {
         this.skipSpace();

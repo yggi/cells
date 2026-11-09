@@ -4,29 +4,29 @@ association:
   - point:
       sync: 0
       harm: 0.3
-      artic: 0
-      energy: 0
+      drive: 0
+      bright: 0.875
     weight: 1
     facet: bass
   - point:
       sync: 0.3
       harm: 0.45
-      artic: 0.55
-      energy: 0.55
+      drive: 0.55
+      bright: 0.25
     weight: 1
     facet: bass
   - point:
       sync: 0.35
       harm: 0.55
-      artic: 0.65
-      energy: 0.65
+      drive: 0.65
+      bright: 0.5
     weight: 1
     facet: bass
   - point:
       sync: 0.05
       harm: 0.3
-      artic: 0
-      energy: 0.2
+      drive: 0.1
+      bright: 0.875
     weight: 1
     facet: bass
 source: seed

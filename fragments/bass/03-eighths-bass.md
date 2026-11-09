@@ -4,8 +4,8 @@ association:
   - point:
       sync: 0
       harm: 0.3
-      artic: 0
-      energy: 1
+      drive: 0.5
+      bright: 0.25
     weight: 1
     facet: bass
 source: seed

@@ -17,7 +17,8 @@ import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
-import { at, AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { newPoint } from '../engine/migrate/axes';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
@@ -36,8 +37,12 @@ const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnTy
   return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
 };
 
-/** A point 0.1 higher in energy, to the hundredth. */
-const above = (p: StylePoint): StylePoint => ({ ...p, energy: Math.round((p.energy + 0.1) * 100) / 100 });
+// (the points as they were placed, on the axes before decision 076, sync harm artic energy, held as the library holds
+// them, moved by its rule, #572: drive their mean, bright the mode found there, a form's none)
+const held = (sync: number, harm: number, artic: number, energy: number): StylePoint => newPoint({ sync, harm, artic, energy });
+const heldForm = (sync: number, harm: number, artic: number, energy: number): StylePoint => newPoint({ sync, harm, artic, energy }, false);
+/** A point 0.1 higher in energy, on the axes then: 0.05 higher in drive now, to the thousandth. */
+const above = (p: StylePoint): StylePoint => ({ ...p, drive: Math.round((p.drive! + 0.05) * 1000) / 1000 });
 /** Each motif, the point it sits at, and the meter it is a bar of (4/4 where none is named). */
 const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   hook: { point: SYNTH_POP },
@@ -62,38 +67,38 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   lindy: { point: above(ELECTRO_SWING) },
   toll: { point: above(SPOOKY) },
   // (one at each point of a meter with none, a bar of it)
-  waltz: { point: at(0, 0.7, 0.3, 0), meter: '3/4' },
-  musicBox: { point: at(0.2, 0.9, 0.3, 0.43), meter: '3/4' },
-  rocking: { point: at(0.3, 0.2, 0.2, 0), meter: '6/8' },
-  sway: { point: at(0.2, 0.9, 0.3, 0.27), meter: '6/8' },
-  fivefold: { point: at(0.4, 0.9, 0.5, 0.3), meter: '5/4' },
-  limp: { point: at(0.8, 0.6, 1, 1), meter: '7/8' },
-  dancer: { point: at(0.6, 0.9, 0.8, 0.9), meter: '10/8' },
-  shuffle: { point: at(0.7, 0.6, 0, 0.2), meter: '12/8' },
-  march: { point: at(0, 0.1, 0.6, 1), meter: '2/4' },
-  fanfare: { point: at(0.2, 0.6, 0.9, 1), meter: 'alla breve' },
+  waltz: { point: held(0, 0.7, 0.3, 0), meter: '3/4' },
+  musicBox: { point: held(0.2, 0.9, 0.3, 0.43), meter: '3/4' },
+  rocking: { point: held(0.3, 0.2, 0.2, 0), meter: '6/8' },
+  sway: { point: held(0.2, 0.9, 0.3, 0.27), meter: '6/8' },
+  fivefold: { point: held(0.4, 0.9, 0.5, 0.3), meter: '5/4' },
+  limp: { point: held(0.8, 0.6, 1, 1), meter: '7/8' },
+  dancer: { point: held(0.6, 0.9, 0.8, 0.9), meter: '10/8' },
+  shuffle: { point: held(0.7, 0.6, 0, 0.2), meter: '12/8' },
+  march: { point: held(0, 0.1, 0.6, 1), meter: '2/4' },
+  fanfare: { point: held(0.2, 0.6, 0.9, 1), meter: 'alla breve' },
   // (six general-purpose: the centre, and 0.2 from it on one axis each)
-  question: { point: at(0.5, 0.5, 0.5, 0.5) },
-  reply: { point: at(0.5, 0.5, 0.5, 0.3) },
-  arpeggio: { point: at(0.5, 0.3, 0.5, 0.5) },
-  run: { point: at(0.5, 0.7, 0.5, 0.5) },
-  neighbour: { point: at(0.5, 0.5, 0.3, 0.5) },
-  leap: { point: at(0.5, 0.5, 0.7, 0.5) },
+  question: { point: held(0.5, 0.5, 0.5, 0.5) },
+  reply: { point: held(0.5, 0.5, 0.5, 0.3) },
+  arpeggio: { point: held(0.5, 0.3, 0.5, 0.5) },
+  run: { point: held(0.5, 0.7, 0.5, 0.5) },
+  neighbour: { point: held(0.5, 0.5, 0.3, 0.5) },
+  leap: { point: held(0.5, 0.5, 0.7, 0.5) },
   // (four ghost-house idioms near Spooky's point, each 0.05 to 0.11 from it, nearer than the second, toll)
-  wail: { point: at(0.2, 0.9, 0.3, 0.3) },
-  haunt: { point: at(0.15, 0.9, 0.25, 0.35) },
-  lament: { point: at(0.2, 0.9, 0.25, 0.3) },
-  peek: { point: at(0.3, 0.9, 0.3, 0.3) },
+  wail: { point: held(0.2, 0.9, 0.3, 0.3) },
+  haunt: { point: held(0.15, 0.9, 0.25, 0.35) },
+  lament: { point: held(0.2, 0.9, 0.25, 0.3) },
+  peek: { point: held(0.3, 0.9, 0.3, 0.3) },
   // (two children's songs in pieces, their calls and answers, at the point proposed for a preset of them and 0.1 from it)
   twinkle: { point: KINDERLIED },
-  wonder: { point: at(0.1, 0.12, 0.5, 0.25) },
-  haenschen: { point: at(0.1, 0.12, 0.6, 0.45) },
-  hinein: { point: at(0.1, 0.12, 0.6, 0.35) },
-  heim: { point: at(0.1, 0.12, 0.6, 0.25) },
-  weinet: { point: at(0.1, 0.12, 0.7, 0.45) },
+  wonder: { point: held(0.1, 0.12, 0.5, 0.25) },
+  haenschen: { point: held(0.1, 0.12, 0.6, 0.45) },
+  hinein: { point: held(0.1, 0.12, 0.6, 0.35) },
+  heim: { point: held(0.1, 0.12, 0.6, 0.25) },
+  weinet: { point: held(0.1, 0.12, 0.7, 0.45) },
 };
 /** The centre of style space, where a form for any style sits. */
-const CENTRE = at(0.5, 0.5, 0.5, 0.5);
+const CENTRE = heldForm(0.5, 0.5, 0.5, 0.5);
 /** Each form: its head, the hole it reads, its length in bars over a one-bar motif, and its point. */
 const FORMS: Record<string, { head: string; hole: string; bars: number; point: StylePoint; weight?: number }> = {
   call_and_answer: { head: 'phrase', hole: 'call', bars: 2, point: CENTRE },
@@ -101,8 +106,8 @@ const FORMS: Record<string, { head: string; hole: string; bars: number; point: S
   period: { head: 'period', hole: 'call', bars: 4, point: CENTRE },
   AABA: { head: 'chorus', hole: 'a', bars: 4, point: CENTRE },
   // (Twinkle's and Hänschen klein's, at their tunes' points, #371)
-  ternary: { head: 'song', hole: 'call', bars: 6, point: KINDERLIED, weight: 0.5 },
-  rounded_binary: { head: 'song', hole: 'call', bars: 8, point: at(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
+  ternary: { head: 'song', hole: 'call', bars: 6, point: { sync: KINDERLIED.sync!, harm: KINDERLIED.harm!, drive: KINDERLIED.drive! }, weight: 0.5 },
+  rounded_binary: { head: 'song', hole: 'call', bars: 8, point: heldForm(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
 };
 
 type Meter = '4/4' | '3/4' | '6/8' | '5/4' | '7/8' | '10/8' | '12/8' | '2/4' | 'alla breve';
@@ -154,7 +159,8 @@ describe('the motifs', () => {
   });
 
   // (cells breaks a tie by id, so a second motif sits off the point: at it, the first is found first, alone at distance 0)
-  it('find each preset’s first motif first at its point, alone at distance 0, and its second 0.05 away', () => {
+  // (0.05 off in drive, one of four axes: 0.025 away; 0.05 when it was 0.1 off in energy, before decision 076)
+  it('find each preset’s first motif first at its point, alone at distance 0, and its second 0.025 away', () => {
     const motifs = createRepository(MOTIF_FRAGMENTS);
     const firsts = Object.keys(MOTIFS).slice(0, 10);
     const seconds = Object.keys(MOTIFS).slice(10, 20);
@@ -162,7 +168,7 @@ describe('the motifs', () => {
       const found = motifs.query(MOTIFS[id]!.point, 36, {}, { facet: 'motif' });
       expect(found[0]!.fragment.id, id).toBe(id);
       expect(found.filter((f) => f.distance === 0).length, id).toBe(1);
-      expect(found.find((f) => f.fragment.id === seconds[i])!.distance, seconds[i]).toBeCloseTo(0.05, 9);
+      expect(found.find((f) => f.fragment.id === seconds[i])!.distance, seconds[i]).toBeCloseTo(0.025, 9);
     });
   });
 

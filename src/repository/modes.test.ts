@@ -27,7 +27,9 @@ const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOG
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY, resolveSeed } from './library';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, at, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { BRIGHTNESS } from '../engine/style';
+import { newPoint } from '../engine/migrate/axes';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
@@ -135,7 +137,9 @@ describe('the presets find their modes', () => {
   });
 
   it('each mode sits at its presets’ points and nowhere else; mixolydian, which no preset plays, halfway between Funk’s (dorian) and Bossa nova’s (ionian); harmonic minor at the points proposed for Electro swing and Spooky (#349); phrygian, lydian and locrian each at a point of its own, placed by hand', () => {
-    const OWN: Record<string, StylePoint> = { phrygian: at(0.6, 0.6, 0.7, 0.85), lydian: at(0.15, 0.6, 0.15, 0.3), locrian: at(0.9, 1, 0.6, 0.9) };
+    // (placed by hand on the old axes, sync harm artic energy; moved by decision 076's rule, #572)
+    const old = (sync: number, harm: number, artic: number, energy: number): StylePoint => newPoint({ sync, harm, artic, energy });
+    const OWN: Record<string, StylePoint> = { phrygian: old(0.6, 0.6, 0.7, 0.85), lydian: old(0.15, 0.6, 0.15, 0.3), locrian: old(0.9, 1, 0.6, 0.9) };
     for (const f of MODES) {
       const id = modeOf(f.id);
       const points =
@@ -147,7 +151,10 @@ describe('the presets find their modes', () => {
               ? [Object.fromEntries(Object.keys(FUNK).map((axis) => [axis, (FUNK[axis]! + BOSSA_NOVA[axis]!) / 2]))]
               : PRESETS.filter((p) => p.mode === id).map((p) => p.point);
       // (ionian at the point proposed for a Kinderlied preset too: children's songs are major, yggi/jambot#547)
-      expect(f.association.map((wp) => wp.point)).toEqual(id === 'ionian' ? [...points, KINDERLIED] : points);
+      // (placed on sync harm drive; a mode's bright is its own scale's, decision 076 §2, #572, wherever it sits)
+      const placed = (p: StylePoint) => ({ sync: p.sync, harm: p.harm, drive: p.drive });
+      expect(f.association.map((wp) => placed(wp.point))).toEqual((id === 'ionian' ? [...points, KINDERLIED] : points).map(placed));
+      expect(f.association.map((wp) => wp.point.bright)).toEqual(f.association.map(() => BRIGHTNESS[id]));
       expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
     }
   });
@@ -198,7 +205,8 @@ describe('the bell and scale', () => {
     expect(bell.association.map((wp) => wp.facet)).toEqual(['mode', 'rhythm']);
     const ionian = PRESETS.filter((p) => p.mode === 'ionian').map((p) => p.point);
     const centroid = Object.fromEntries(Object.keys(AMBIENT).map((axis) => [axis, Math.round((1000 * ionian.reduce((sum, p) => sum + p[axis]!, 0)) / ionian.length) / 1000]));
-    expect(bell.association[0]!.point).toEqual(centroid);
+    // (placed on the old axes at the centroid, each to three places: drive, their mean since #572, to within that rounding)
+    for (const axis of Object.keys(centroid)) expect(Math.abs(bell.association[0]!.point[axis]! - centroid[axis]!), axis).toBeLessThanOrEqual(0.001);
     expect(bell.association[1]!.point).not.toEqual(centroid);
     const repository = createRepository(LIBRARY);
     for (const wp of bell.association) {

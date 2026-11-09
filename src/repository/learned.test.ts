@@ -145,10 +145,12 @@ describe('filing', () => {
   });
 
   it('is found only near its point: a tenth of the distance to the nearest seed fragment', () => {
-    const point = { sync: 0.95, harm: 0.95, artic: 0.05, energy: 0.05 };
+    // (a meter's point, on the three axes a meter has, decision 076: a step of d·√3 on drive is d away over three;
+    // a point where that step keeps its nearest seed: at (.95, .95, .05), the old one, it reaches the plain 4/4 first, #572)
+    const point = { sync: 0.95, harm: 0.05, drive: 0.05 };
     const seedFirst = library.query(point, 1, {}, { facet: 'meter' })[0]!;
     const { layer } = fileFragment(library, EMPTY_LAYER, filing(point));
-    const off = (d: number) => ({ ...point, energy: point.energy + d * 2 });
+    const off = (d: number) => ({ ...point, drive: point.drive + d * Math.sqrt(3) });
     expect(library.query(off(seedFirst.distance * 0.05), 1, {}, { facet: 'meter', layer })[0]!.fragment.text).toBe('&bar meter("9/8")');
     expect(library.query(off(seedFirst.distance * 0.2), 1, {}, { facet: 'meter', layer })[0]!.fragment.id).toBe(seedFirst.fragment.id);
   });
@@ -204,7 +206,7 @@ describe('identity, until the hash', () => {
   });
 
   it('a filed text held already adds a point to the fragment that holds it, not a second fragment', () => {
-    const point = { sync: 0.2, harm: 0.2, artic: 0.9, energy: 0.2 };
+    const point = { sync: 0.2, harm: 0.2, drive: 0.55, bright: 0.875 };
     const text = renameCell(son.text, 'clave', 'cl');
     const { layer, id, file, renamed } = fileFragment(library, EMPTY_LAYER, { text, point, facet: 'rhythm', source: 'muse', created: '2026-10-18T22:00:00Z' });
     expect([id, file, [...renamed]]).toEqual(['son_clave_3_2', null, [['&cl', '&clave']]]);

@@ -4,8 +4,7 @@ association:
   - point:
       sync: 0.95
       harm: 0.35
-      artic: 0.75
-      energy: 0.65
+      drive: 0.7
     weight: 1
     facet: rhythm
 source: seed

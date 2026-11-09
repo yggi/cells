@@ -48,7 +48,9 @@ function sent(text: string, resolve = resolveSeed): string[] {
 
 describe('the default band (#391)', () => {
   it('is one fragment, `band`, of the facet band, at the centre of style space', () => {
-    expect(BAND_FRAGMENTS.map((f) => [f.id, f.association.map((wp) => [wp.facet, wp.point, wp.weight])])).toEqual([['band', [['band', CENTRE, 1]]]]);
+    // (a band speaks to no mode: its point leaves bright out, decision 076 §2, #572)
+    const { bright: _bright, ...centre } = CENTRE;
+    expect(BAND_FRAGMENTS.map((f) => [f.id, f.association.map((wp) => [wp.facet, wp.point, wp.weight])])).toEqual([['band', [['band', centre, 1]]]]);
   });
 
   it('plays a score that ends in `* from band` with no diagnostic: its five performers, each by its role, under the head &band', () => {
@@ -119,9 +121,10 @@ describe('the style moves the sound (#391)', () => {
       });
   };
 
-  it('the lead’s cutoff at energy .2 is lower than at .8, on the same notes: 1840 Hz and 3160 Hz, as Jambot’s timbreOf', () => {
-    const low = cutoffs('&(map=style .5 .5 .5 .2)', 'leadV');
-    const high = cutoffs('&(map=style .5 .5 .5 .8)', 'leadV');
+  // (Jambot's timbreOf opens the lead with energy; since decision 076 it reads drive, #572)
+  it('the lead’s cutoff at drive .2 is lower than at .8, on the same notes: 1840 Hz and 3160 Hz, as Jambot’s timbreOf at those energies', () => {
+    const low = cutoffs('&(map=style .5 .5 .2 .5)', 'leadV');
+    const high = cutoffs('&(map=style .5 .5 .8 .5)', 'leadV');
     expect(low).toHaveLength(4);
     expect(low.map(({ at, freq }) => [at, freq])).toEqual(high.map(({ at, freq }) => [at, freq]));
     for (const [i, n] of low.entries()) expect(n.lpf).toBeLessThan(high[i]!.lpf);
@@ -129,13 +132,13 @@ describe('the style moves the sound (#391)', () => {
     expect(high.map((n) => Math.round(n.lpf))).toEqual([3160, 3160, 3160, 3160]);
   });
 
-  it('the bass’s cutoff opens with articulation, from 450 Hz at legato to 900 Hz at staccato; energy leaves it', () => {
+  it('the bass’s cutoff opens with drive, from 450 Hz where it is paddy to 900 Hz where it is stabby; brightness leaves it', () => {
     const at = (style: string) => [...new Set(cutoffs(style, 'bassV').map((n) => Math.round(n.lpf)))];
     expect([at('&(map=style .5 .5 0 .5)'), at('&(map=style .5 .5 .5 .5)'), at('&(map=style .5 .5 1 .5)'), at('&(map=style .5 .5 1 0)')]).toEqual([[450], [675], [900], [900]]);
   });
 
-  it('follows a section’s range, style=a..b: the lead brighter at the end of a section that gains energy', () => {
-    const notes = cutoffs('&(map=style .5 .5 .5 .2)..&(map=style .5 .5 .5 .8)', 'leadV');
+  it('follows a section’s range, style=a..b: the lead brighter at the end of a section that gains drive', () => {
+    const notes = cutoffs('&(map=style .5 .5 .2 .5)..&(map=style .5 .5 .8 .5)', 'leadV');
     expect(notes.length).toBe(4);
     expect(notes[0]!.lpf).toBeCloseTo(1840, 0);
     expect(notes.at(-1)!.lpf).toBeGreaterThan(notes[0]!.lpf);
@@ -179,20 +182,20 @@ describe('which instrument a performer plays at a style: the band’s choice, at
   });
 
   it('reads the score’s style: a style cell, an unnamed one, a range’s first end, a mix, its axes by name', () => {
-    expect(scoreStyle('&funk map=style 1 .12 .85 .75\n&style style=&funk')).toEqual(FUNK);
-    expect(scoreStyle('&style style=&(map=style .55 .75 .6 .75)')).toEqual(ELECTRO_SWING);
-    expect(scoreStyle('&style style=&(map=style .2 .9 .3 .35)..&(map=style .5 .5 .5 .5)')).toEqual(SPOOKY);
-    expect(scoreStyle('&a map=style 0 0 0 0\n&b map=style 1 1 1 1\n&style style=[&a * .25, &b * .75]')).toEqual({ sync: 0.75, harm: 0.75, artic: 0.75, energy: 0.75 });
-    expect(scoreStyle('&style style=&(map=style sync=.2 harm=.9 artic=.3 energy=.35)')).toEqual(SPOOKY);
+    expect(scoreStyle('&funk map=style 1 .12 .8 .5\n&style style=&funk')).toEqual(FUNK);
+    expect(scoreStyle('&style style=&(map=style .55 .75 .675 .375)')).toEqual(ELECTRO_SWING);
+    expect(scoreStyle('&style style=&(map=style .2 .9 .325 .375)..&(map=style .5 .5 .5 .5)')).toEqual(SPOOKY);
+    expect(scoreStyle('&a map=style 0 0 0 0\n&b map=style 1 1 1 1\n&style style=[&a * .25, &b * .75]')).toEqual({ sync: 0.75, harm: 0.75, drive: 0.75, bright: 0.75 });
+    expect(scoreStyle('&style style=&(map=style sync=.2 harm=.9 drive=.325 bright=.375)')).toEqual(SPOOKY);
     expect(scoreStyle('&bar meter("4/4")')).toBeNull();
     // (a style taken by name is read through the score's expansion: the seed library's `styles`, `styles.test.ts`)
     expect(scoreStyle('&style style=&funk\n&funk from styles')).toEqual(FUNK);
   });
 
   it('answers `band` with the band at the score’s style, the centre where it names none, and every other id as the library does', () => {
-    const spooky = score('&(map=style .2 .9 .3 .35)');
+    const spooky = score('&(map=style .2 .9 .325 .375)');
     expect(resolveBand(spooky)('band')).toBe(bandAt(SPOOKY));
-    expect(resolveBand(score('&(map=style .3 .45 .55 .55)'))('band')).toBe(band);
+    expect(resolveBand(score('&(map=style .3 .45 .55 .25)'))('band')).toBe(band);
     expect(resolveBand('&bar meter("4/4")')('band')).toBe(bandAt(CENTRE));
     expect(resolveBand(spooky)('gm_kit')).toBe(resolveSeed('gm_kit'));
     // (a client's own library answers every other id)
