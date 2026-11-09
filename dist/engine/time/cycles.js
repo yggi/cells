@@ -151,6 +151,7 @@ function pulseAccents(es, pulse, phase, places, low = false) {
     }
     return acc;
 }
+export const FIRST = { bonus: 1.15 };
 export const CUES = { harmony: 0.5, long: 0.5 };
 function lineCues(es, pulse, phase, places, n) {
     const out = new Float64Array(n);
@@ -190,7 +191,7 @@ function lineCues(es, pulse, phase, places, n) {
     }
     return out;
 }
-export const BAR_PRIOR = { seconds: 2.4, octaves: 1 };
+export const BAR_PRIOR = { seconds: 2.4, octaves: 1.5 };
 const BEATS_PRIOR = { 1: 0.5, 2: 0.85, 3: 1, 4: 1, 5: 0.6, 6: 0.5, 7: 0.5, 8: 0.25 };
 export function barOf(es, pulse, phase, places, first = es[0]?.at ?? 0) {
     const acc = pulseAccents(es, pulse, phase, places);
@@ -203,11 +204,21 @@ export function barOf(es, pulse, phase, places, first = es[0]?.at ?? 0) {
     const line = acc.map((a, k) => Math.max(0, lows[k] + 0.25 * a + (cues[k] - cueMean) * mean));
     const lineMean = line.reduce((a, b) => a + b, 0) / line.length || 1;
     const recur = (n) => {
-        let s = 0;
+        let sx = 0;
+        let sy = 0;
+        let sxx = 0;
+        let syy = 0;
+        let sxy = 0;
         let c = 0;
-        for (let k = 0; k + n < line.length; k++)
-            [s, c] = [s + line[k] * line[k + n], c + 1];
-        return c ? s / c / (lineMean * lineMean) : 0;
+        for (let k = 0; k + n < line.length; k++) {
+            const [x, y] = [line[k], line[k + n]];
+            [sx, sy, sxx, syy, sxy, c] = [sx + x, sy + y, sxx + x * x, syy + y * y, sxy + x * y, c + 1];
+        }
+        if (c < 2)
+            return 0;
+        const vx = sxx - (sx * sx) / c;
+        const vy = syy - (sy * sy) / c;
+        return vx > 0 && vy > 0 ? Math.max(0, (sxy - (sx * sy) / c) / Math.sqrt(vx * vy)) : 0;
     };
     const at = (n, off) => {
         let s = 0;
@@ -259,7 +270,7 @@ export function barOf(es, pulse, phase, places, first = es[0]?.at ?? 0) {
         const p = Math.exp(-0.5 * (Math.log2((n * pulse) / BAR_PRIOR.seconds) / BAR_PRIOR.octaves) ** 2) * (smooth ? 1 : 0.7);
         for (let off = 0; off < n; off++) {
             const onFirst = (((firstPulse - off) % n) + n) % n === 0;
-            bars.push({ n, off, score: at(n, off) * r * p * (onFirst ? 1.15 : 1) });
+            bars.push({ n, off, score: at(n, off) * r * p * (onFirst ? FIRST.bonus : 1) });
         }
     }
     bars.sort((a, b) => b.score - a.score);
@@ -284,7 +295,21 @@ export function barOf(es, pulse, phase, places, first = es[0]?.at ?? 0) {
             best = { n: h, off, groups: half.groups, score: best.score };
     }
     const others = totals.filter((x) => x < best.score).sort((a, b) => b - a);
-    return { pulse, groups: best.groups, start: phase + places(best.off), confidence: others.length ? 1 - others[0] / best.score : 1 };
+    const variants = [];
+    const levels = [
+        { m: best.n / 2, off: best.off % (best.n / 2) },
+        { m: best.n * 2, off: best.off },
+        { m: best.n * 2, off: best.off + best.n },
+    ];
+    for (const { m, off } of levels) {
+        if (!Number.isInteger(m) || m < 2)
+            continue;
+        const b = bars.find((x) => x.n === m && x.off === off);
+        const beats = b && beatsOf(m, off);
+        if (b && beats)
+            variants.push({ groups: beats.groups, start: phase + places(off), likeness: (b.score * beats.score) / best.score });
+    }
+    return { pulse, groups: best.groups, start: phase + places(best.off), confidence: others.length ? 1 - others[0] / best.score : 1, variants };
 }
 const NAMED = {
     '2+2': '2/4',
@@ -520,43 +545,43 @@ function findGrid(onsets) {
     const bar = barOf(es, grid.pulse, grid.phase, places);
     if (!bar)
         return null;
-    const b = Math.min(...bar.groups);
+    const found = named(es, grid, places, bar.groups, bar.start);
+    const variants = (bar.variants ?? []).map((v) => {
+        const { bpm, signature, groups, start, bar: seconds } = named(es, grid, places, v.groups, v.start);
+        return { bpm, signature, groups, start, bar: seconds, likeness: v.likeness };
+    });
+    return { ...found, confidence: { beat: grid.covered, division: grid.covered, bar: bar.confidence }, variants };
+}
+function named(es, grid, places, groups, start) {
+    const b = Math.min(...groups);
     const per = b <= 1 ? 0.5 : b <= 3 ? 1 : b <= 6 ? 2 : 4;
-    let eighths = bar.groups.map((g) => g / per);
+    let eighths = groups.map((g) => g / per);
     let swing8 = per === 1 ? grid.share : 0.5;
     const swing16 = per === 2 ? grid.share : 0.5;
-    if (per === 1 && bar.groups.every((g) => g === 3)) {
+    if (per === 1 && groups.every((g) => g === 3)) {
         const acc = pulseAccents(es, grid.pulse, grid.phase, places);
         let mid = 0;
         let last = 0;
         for (let k = 0; k < acc.length; k++) {
-            const i = (((k - Math.round((bar.start - grid.phase) / grid.pulse)) % 3) + 3) % 3;
+            const i = (((k - Math.round((start - grid.phase) / grid.pulse)) % 3) + 3) % 3;
             if (i === 1)
                 mid += acc[k];
             if (i === 2)
                 last += acc[k];
         }
         if (mid <= 0.05 * last && last > 0) {
-            eighths = bar.groups.map(() => 2);
+            eighths = groups.map(() => 2);
             swing8 = 2 / 3;
         }
     }
     const whole = eighths.every((g) => Number.isInteger(g));
-    const key = (whole ? eighths : bar.groups).join('+');
-    const seconds = bar.pulse * bar.groups.reduce((a, c) => a + c, 0);
+    const key = (whole ? eighths : groups).join('+');
+    const seconds = grid.pulse * groups.reduce((a, c) => a + c, 0);
     const swing = [
         ...(Math.abs(swing8 - 0.5) > 0.02 ? [{ level: '8n', share: swing8 }] : []),
         ...(Math.abs(swing16 - 0.5) > 0.02 ? [{ level: '16n', share: swing16 }] : []),
     ];
-    return {
-        bpm: (60 * bar.groups.length) / seconds,
-        signature: NAMED[key] ?? key,
-        groups: whole ? eighths : bar.groups,
-        swing,
-        start: bar.start,
-        bar: seconds,
-        confidence: { beat: grid.covered, division: grid.covered, bar: bar.confidence },
-    };
+    return { bpm: (60 * groups.length) / seconds, signature: NAMED[key] ?? key, groups: whole ? eighths : [...groups], swing, start, bar: seconds };
 }
 export function meterText(f) {
     const sig = `meter("${f.signature}")`;

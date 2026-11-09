@@ -48,8 +48,12 @@ export interface Case {
 export interface Score {
   readonly beat: boolean;
   readonly bar: boolean;
-  /** The bar, or two of them, or half of one: a strictly repeating bar is any of these, and convention chooses. */
-  readonly bars: boolean;
+  /**
+   * The bar found, or one of its metrical variants (half of it, two of it), is the written one where it is written: its
+   * length and its start. A bar and its half sound the same and differ in which strokes are bar lines, which the notes
+   * tell only weakly; beat tracking counts the variants so too (AMLt, Davies et al. 2009).
+   */
+  readonly level: boolean;
   readonly start: boolean;
   readonly beats: boolean;
   readonly groups: boolean;
@@ -65,21 +69,26 @@ const near = (a: number, b: number, tol = SAME) => Math.abs(a - b) <= tol * Math
 
 /** The found meter against the truth. */
 export function score(f: Found | null, t: Truth): Score {
-  if (!f) return { beat: false, bar: false, bars: false, start: false, beats: false, groups: false, swing: false };
+  if (!f) return { beat: false, bar: false, level: false, start: false, beats: false, groups: false, swing: false };
   const beat = 60 / f.bpm;
   const bar = f.bar;
-  const off = ((((f.start - t.start) / t.bar) % 1) + 1) % 1;
   const swing8 = f.swing.find((s) => s.level === '8n')?.share ?? 0.5;
   return {
     beat: near(beat, t.beat),
     bar: near(bar, t.bar),
-    bars: [0.5, 1, 2].some((k) => near(bar, k * t.bar)),
+    level: [f, ...(f.variants ?? [])].some((v) => near(v.bar, t.bar) && startsAt(v.start, t)),
     // (the bar found where it starts, within a beat of it: a pickup read as a bar line a beat late is near, not right)
-    start: near(bar, t.bar) && Math.min(off, 1 - off) * t.bar <= t.beat * 0.5,
+    start: near(bar, t.bar) && startsAt(f.start, t),
     beats: f.groups.length === t.beats,
     groups: t.groups.length > 0 && f.groups.join('+') === t.groups.join('+') && near(bar, t.bar),
     swing: Math.abs(swing8 - t.swing8) <= SWING_NEAR,
   };
+}
+
+/** A bar found starting at `start` starts where the written one does, within half a beat (a pickup read as a bar line a beat late is near, not right). */
+function startsAt(start: number, t: Truth): boolean {
+  const off = ((((start - t.start) / t.bar) % 1) + 1) % 1;
+  return Math.min(off, 1 - off) * t.bar <= t.beat * 0.5;
 }
 
 /** Groups of eighths a signature writes (cells' signatures by rule), or none where it isn't a grouping of eighths. */
@@ -110,7 +119,10 @@ export function caseOf(name: string, source: string, seconds = 40): Case | null 
   const map = clocking(r, plan(r, shifts).statics).map(m);
   const bar = map.q(me.levels.length) - map.q(0);
   const played = eventsBetween(plan(r, shifts), 0, seconds);
-  const onsets = played.map((e) => ({ at: e.at, weight: Math.min(1, (e.gains[0] + e.gains[1]) / 2 / 0.5), dur: e.dur, pitch: 69 + 12 * Math.log2(e.freq / 440) }));
+  // (a note's weight its level against the piece's loudest: a kick at .6 and one at 1 are two weights, not both 1)
+  const level = (e: (typeof played)[number]) => (e.gains[0] + e.gains[1]) / 2;
+  const loudest = Math.max(1e-9, ...played.map(level));
+  const onsets = played.map((e) => ({ at: e.at, weight: level(e) / loudest, dur: e.dur, pitch: 69 + 12 * Math.log2(e.freq / 440) }));
   const groups = me.unit === 8 && me.beats.every((b) => b === 2 || b === 3) ? [...me.beats] : groupsOf(me.pulses, me.unit);
   // (a swing leans pairs alone, decision 071: a meter of threes plays straight whatever its swing says)
   const share = me.swing?.find((s) => s.level === '8n')?.share ?? 0.5;
@@ -214,7 +226,7 @@ export function run(cases: readonly Case[]): { name: string; found: Found | null
 
 /** The share of rows right on each measure. */
 export function summary(rows: readonly { score: Score }[]): Record<keyof Score, number> {
-  const keys = ['beat', 'bar', 'bars', 'start', 'beats', 'groups', 'swing'] as const;
+  const keys = ['beat', 'bar', 'start', 'level', 'beats', 'groups', 'swing'] as const;
   return Object.fromEntries(keys.map((k) => [k, rows.filter((r) => r.score[k]).length])) as Record<keyof Score, number>;
 }
 

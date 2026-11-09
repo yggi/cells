@@ -197,6 +197,8 @@ export interface Bar {
   readonly groups: readonly number[];
   readonly start: number;
   readonly confidence: number;
+  /** The same bar at the level above and below (two bars, half a bar), its lines on this one's, and its score as a share of this one's. */
+  readonly variants?: readonly { readonly groups: readonly number[]; readonly start: number; readonly likeness: number }[];
 }
 
 /** Every way to write n as a sequence of 2s and 3s (2+2+3, 2+3+2 … each its own: the rotation is where the bar starts). */
@@ -219,6 +221,9 @@ function pulseAccents(es: readonly Event[], pulse: number, phase: number, places
   }
   return acc;
 }
+
+/** How much likelier a bar line is on the piece's first event: a piece starts on one more often than not, a pickup the exception. */
+export const FIRST = { bonus: 1.15 } as const;
 
 /** How much each of the bar line's cues weighs, against the mean accent of a pulse (`lineCues`); chosen over the four benches. */
 export const CUES = { harmony: 0.5, long: 0.5 } as const;
@@ -264,8 +269,12 @@ function lineCues(es: readonly Event[], pulse: number, phase: number, places: (k
   return out;
 }
 
-/** The bar's length a bar is likeliest at (seconds), and how widely (octaves): two to three seconds, a band's bar. */
-export const BAR_PRIOR = { seconds: 2.4, octaves: 1 } as const;
+/**
+ * The bar's length a bar is likeliest at (seconds), and how widely (octaves): two to three seconds, a band's bar. Wide,
+ * since a bar found double or half is a metrical variant (`Found.variants`): a narrow prior would choose 4/4 over 3/4
+ * at a minuet's tempo, where the notes tell the bar's first beat by little more than a tenth.
+ */
+export const BAR_PRIOR = { seconds: 2.4, octaves: 1.5 } as const;
 /** How likely a bar of this many beats is, before it is heard: four and three as written most, two less, one least. */
 const BEATS_PRIOR: Readonly<Record<number, number>> = { 1: 0.5, 2: 0.85, 3: 1, 4: 1, 5: 0.6, 6: 0.5, 7: 0.5, 8: 0.25 };
 
@@ -286,11 +295,24 @@ export function barOf(es: readonly Event[], pulse: number, phase: number, places
   const cueMean = cues.reduce((a, b) => a + b, 0) / (cues.length || 1);
   const line = acc.map((a, k) => Math.max(0, lows[k]! + 0.25 * a + (cues[k]! - cueMean) * mean));
   const lineMean = line.reduce((a, b) => a + b, 0) / line.length || 1;
+  // (how much the line comes back after n pulses: its correlation with itself n later, 1 for a bar repeated exactly;
+  // a product's mean would be held up by every pulse alike, the hats on every eighth, and tell one length from another
+  // by a hundredth)
   const recur = (n: number) => {
-    let s = 0;
+    let sx = 0;
+    let sy = 0;
+    let sxx = 0;
+    let syy = 0;
+    let sxy = 0;
     let c = 0;
-    for (let k = 0; k + n < line.length; k++) [s, c] = [s + line[k]! * line[k + n]!, c + 1];
-    return c ? s / c / (lineMean * lineMean) : 0;
+    for (let k = 0; k + n < line.length; k++) {
+      const [x, y] = [line[k]!, line[k + n]!];
+      [sx, sy, sxx, syy, sxy, c] = [sx + x, sy + y, sxx + x * x, syy + y * y, sxy + x * y, c + 1];
+    }
+    if (c < 2) return 0;
+    const vx = sxx - (sx * sx) / c;
+    const vy = syy - (sy * sy) / c;
+    return vx > 0 && vy > 0 ? Math.max(0, (sxy - (sx * sy) / c) / Math.sqrt(vx * vy)) : 0;
   };
   /** The mean weight of a bar line at pulses off, off + n, off + 2n …, over the mean. */
   const at = (n: number, off: number) => {
@@ -340,7 +362,7 @@ export function barOf(es: readonly Event[], pulse: number, phase: number, places
     const p = Math.exp(-0.5 * (Math.log2((n * pulse) / BAR_PRIOR.seconds) / BAR_PRIOR.octaves) ** 2) * (smooth ? 1 : 0.7);
     for (let off = 0; off < n; off++) {
       const onFirst = (((firstPulse - off) % n) + n) % n === 0;
-      bars.push({ n, off, score: at(n, off) * r * p * (onFirst ? 1.15 : 1) });
+      bars.push({ n, off, score: at(n, off) * r * p * (onFirst ? FIRST.bonus : 1) });
     }
   }
   bars.sort((a, b) => b.score - a.score);
@@ -364,7 +386,22 @@ export function barOf(es: readonly Event[], pulse: number, phase: number, places
       best = { n: h, off, groups: half.groups, score: best.score };
   }
   const others = totals.filter((x) => x < best!.score).sort((a, b) => b - a);
-  return { pulse, groups: best.groups, start: phase + places(best.off), confidence: others.length ? 1 - others[0]! / best.score : 1 };
+  // (the metrical variants: half the bar and two of it, their lines on this one's; a bar and its half are often told
+  // apart by little but the prior, and a reader that knows more, a phrase's length, chooses between them)
+  const variants: { groups: number[]; start: number; likeness: number }[] = [];
+  // (two bars start at this bar's line or at the next one's; half a bar at this line)
+  const levels = [
+    { m: best.n / 2, off: best.off % (best.n / 2) },
+    { m: best.n * 2, off: best.off },
+    { m: best.n * 2, off: best.off + best.n },
+  ];
+  for (const { m, off } of levels) {
+    if (!Number.isInteger(m) || m < 2) continue;
+    const b = bars.find((x) => x.n === m && x.off === off);
+    const beats = b && beatsOf(m, off);
+    if (b && beats) variants.push({ groups: beats.groups, start: phase + places(off), likeness: (b.score * beats.score) / best.score });
+  }
+  return { pulse, groups: best.groups, start: phase + places(best.off), confidence: others.length ? 1 - others[0]! / best.score : 1, variants };
 }
 
 /** A meter found: its tempo (beats a minute, the beat as cells counts it), signature, grouping, swing and start. */
@@ -380,6 +417,22 @@ export interface Found {
   /** The bar's length (seconds). */
   readonly bar: number;
   readonly confidence: { readonly beat: number; readonly division: number; readonly bar: number };
+  /**
+   * The metrical variants: the same grid read as half the bar or two of it, its lines on this bar's (2/4 for 4/4, 6/8
+   * for 3/8), each with its likeness, its score as a share of this one's. They sound the same; what differs is which
+   * strokes are bar lines (a level's grade, a `1m` tap, a section's count of bars), which the notes tell only weakly.
+   */
+  readonly variants?: readonly Variant[];
+}
+
+/** A metrical variant of a found meter: the same grid, another level for its bar. */
+export interface Variant {
+  readonly bpm: number;
+  readonly signature: string;
+  readonly groups: readonly number[];
+  readonly start: number;
+  readonly bar: number;
+  readonly likeness: number;
 }
 
 /** The signatures cells names by rule (decision 072, `meter("sig")`), as their beats in eighths. */
@@ -646,44 +699,46 @@ function findGrid(onsets: readonly Onset[]): Found | null {
   };
   const bar = barOf(es, grid.pulse, grid.phase, places);
   if (!bar) return null;
+  const found = named(es, grid, places, bar.groups, bar.start);
+  const variants = (bar.variants ?? []).map((v) => {
+    const { bpm, signature, groups, start, bar: seconds } = named(es, grid, places, v.groups, v.start);
+    return { bpm, signature, groups, start, bar: seconds, likeness: v.likeness };
+  });
+  return { ...found, confidence: { beat: grid.covered, division: grid.covered, bar: bar.confidence }, variants };
+}
+
+/** A bar of `groups` pulses of the grid from `start`, named as cells writes it: in eighths, its signature, its swing. */
+function named(es: readonly Event[], grid: Grid, places: (k: number) => number, groups: readonly number[], start: number): Omit<Found, 'confidence' | 'variants'> {
   // (the eighth: a beat of 2 or 3 pulses is in eighths, of 4 or 6 in sixteenths, of 8 or 12 in thirty-seconds; a beat of
   // one pulse, its pulses quarters)
-  const b = Math.min(...bar.groups);
+  const b = Math.min(...groups);
   const per = b <= 1 ? 0.5 : b <= 3 ? 1 : b <= 6 ? 2 : 4;
-  let eighths = bar.groups.map((g) => g / per);
+  let eighths = groups.map((g) => g / per);
   let swing8 = per === 1 ? grid.share : 0.5;
   const swing16 = per === 2 ? grid.share : 0.5;
   // (a beat of three pulses whose middle is never played is a swung pair, two to a beat at 2/3: cells writes a beat so)
-  if (per === 1 && bar.groups.every((g) => g === 3)) {
+  if (per === 1 && groups.every((g) => g === 3)) {
     const acc = pulseAccents(es, grid.pulse, grid.phase, places);
     let mid = 0;
     let last = 0;
     for (let k = 0; k < acc.length; k++) {
-      const i = (((k - Math.round((bar.start - grid.phase) / grid.pulse)) % 3) + 3) % 3;
+      const i = (((k - Math.round((start - grid.phase) / grid.pulse)) % 3) + 3) % 3;
       if (i === 1) mid += acc[k]!;
       if (i === 2) last += acc[k]!;
     }
     if (mid <= 0.05 * last && last > 0) {
-      eighths = bar.groups.map(() => 2);
+      eighths = groups.map(() => 2);
       swing8 = 2 / 3;
     }
   }
   const whole = eighths.every((g) => Number.isInteger(g));
-  const key = (whole ? eighths : bar.groups).join('+');
-  const seconds = bar.pulse * bar.groups.reduce((a, c) => a + c, 0);
+  const key = (whole ? eighths : groups).join('+');
+  const seconds = grid.pulse * groups.reduce((a, c) => a + c, 0);
   const swing = [
     ...(Math.abs(swing8 - 0.5) > 0.02 ? [{ level: '8n' as const, share: swing8 }] : []),
     ...(Math.abs(swing16 - 0.5) > 0.02 ? [{ level: '16n' as const, share: swing16 }] : []),
   ];
-  return {
-    bpm: (60 * bar.groups.length) / seconds,
-    signature: NAMED[key] ?? key,
-    groups: whole ? eighths : bar.groups,
-    swing,
-    start: bar.start,
-    bar: seconds,
-    confidence: { beat: grid.covered, division: grid.covered, bar: bar.confidence },
-  };
+  return { bpm: (60 * groups.length) / seconds, signature: NAMED[key] ?? key, groups: whole ? eighths : [...groups], swing, start, bar: seconds };
 }
 
 /** A found meter as cells writes it: the meter fragment taken with its grouping and swing, and the tempo a rate. */

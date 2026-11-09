@@ -50,6 +50,19 @@ describe('the meter finder’s steps', () => {
     expect(meterText(f)).toBe('&bar from meter(swing=8n:.6) &tempo\n&tempo step=120bpm');
   });
 
+  it('its metrical variants: the same grid as half the bar and as two of it, their lines on its own', () => {
+    const f = findMeter(pattern(12, [true, false, false, false, false, false, false, false], 0.25, 0.6))!;
+    const v = Object.fromEntries((f.variants ?? []).map((x) => [`${x.signature} ${x.start}`, x]));
+    expect(v['2/4 0']?.bar).toBeCloseTo(1, 6);
+    expect(
+      Object.values(v)
+        .filter((x) => Math.abs(x.bar - 4) < 1e-6)
+        .map((x) => x.start)
+        .sort(),
+    ).toEqual([0, 2]);
+    for (const x of f.variants ?? []) expect(x.likeness).toBeLessThanOrEqual(1);
+  });
+
   it('nothing to say of fewer than eight events', () => {
     expect(findMeter([{ at: 0 }, { at: 0.5 }, { at: 1 }])).toBeNull();
   });

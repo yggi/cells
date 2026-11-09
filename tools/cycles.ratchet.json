@@ -2,41 +2,41 @@
   "examples": {
     "cases": 55,
     "beat": 46,
-    "bar": 45,
-    "bars": 46,
-    "start": 41,
-    "beats": 44,
-    "groups": 42,
+    "bar": 44,
+    "start": 42,
+    "level": 46,
+    "beats": 46,
+    "groups": 41,
     "swing": 52
   },
   "synthetic": {
     "cases": 1035,
-    "beat": 458,
-    "bar": 733,
-    "bars": 864,
-    "start": 484,
-    "beats": 496,
-    "groups": 226,
-    "swing": 785
+    "beat": 464,
+    "bar": 840,
+    "start": 835,
+    "level": 962,
+    "beats": 485,
+    "groups": 331,
+    "swing": 813
   },
   "groove": {
     "cases": 3,
     "beat": 3,
     "bar": 3,
-    "bars": 3,
     "start": 2,
+    "level": 2,
     "beats": 3,
     "groups": 3,
     "swing": 3
   },
   "bach": {
     "cases": 88,
-    "beat": 42,
-    "bar": 40,
-    "bars": 73,
-    "start": 33,
-    "beats": 57,
-    "groups": 30,
+    "beat": 40,
+    "bar": 44,
+    "start": 37,
+    "level": 68,
+    "beats": 62,
+    "groups": 34,
     "swing": 88
   }
 }

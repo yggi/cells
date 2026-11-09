@@ -73,16 +73,30 @@ export interface Bar {
     readonly groups: readonly number[];
     readonly start: number;
     readonly confidence: number;
+    /** The same bar at the level above and below (two bars, half a bar), its lines on this one's, and its score as a share of this one's. */
+    readonly variants?: readonly {
+        readonly groups: readonly number[];
+        readonly start: number;
+        readonly likeness: number;
+    }[];
 }
+/** How much likelier a bar line is on the piece's first event: a piece starts on one more often than not, a pickup the exception. */
+export declare const FIRST: {
+    readonly bonus: 1.15;
+};
 /** How much each of the bar line's cues weighs, against the mean accent of a pulse (`lineCues`); chosen over the four benches. */
 export declare const CUES: {
     readonly harmony: 0.5;
     readonly long: 0.5;
 };
-/** The bar's length a bar is likeliest at (seconds), and how widely (octaves): two to three seconds, a band's bar. */
+/**
+ * The bar's length a bar is likeliest at (seconds), and how widely (octaves): two to three seconds, a band's bar. Wide,
+ * since a bar found double or half is a metrical variant (`Found.variants`): a narrow prior would choose 4/4 over 3/4
+ * at a minuet's tempo, where the notes tell the bar's first beat by little more than a tenth.
+ */
 export declare const BAR_PRIOR: {
     readonly seconds: 2.4;
-    readonly octaves: 1;
+    readonly octaves: 1.5;
 };
 /**
  * The bar, over the pulses (`pulse` seconds apart from `phase`, pulse k at `places(k)`, a swung pulse late): its length,
@@ -111,6 +125,21 @@ export interface Found {
         readonly division: number;
         readonly bar: number;
     };
+    /**
+     * The metrical variants: the same grid read as half the bar or two of it, its lines on this bar's (2/4 for 4/4, 6/8
+     * for 3/8), each with its likeness, its score as a share of this one's. They sound the same; what differs is which
+     * strokes are bar lines (a level's grade, a `1m` tap, a section's count of bars), which the notes tell only weakly.
+     */
+    readonly variants?: readonly Variant[];
+}
+/** A metrical variant of a found meter: the same grid, another level for its bar. */
+export interface Variant {
+    readonly bpm: number;
+    readonly signature: string;
+    readonly groups: readonly number[];
+    readonly start: number;
+    readonly bar: number;
+    readonly likeness: number;
 }
 /** The finest grid a performance plays on: a pulse (seconds) from a phase, and the share its pairs lean (.5 straight). */
 export interface Grid {

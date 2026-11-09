@@ -15,27 +15,38 @@ Run: `node --experimental-transform-types --no-warnings --import ./tools/node-ts
 - **bach**: the MIDI library's 88 files, typeset, with no velocities and some pickups; the truth each file's time signature, its bars from its start.
 
 What each finds, per measure, is `tools/cycles.ratchet.json`; a measure may rise, never fall.
-On 2026-11-09, with the bar line's cues of harmony and length (below):
+The measures, each of a case found:
 
-| bench | beat | bar | bar or ×2, ÷2 | start | beats | groups | swing |
+- **bar**, **start**: the bar's length, and its line within half a beat of the written one; **level**: the bar found or one of its metrical variants (below) is the written one, length and line; **beats**, **groups**: how many beats a bar, and its groups in eighths; **beat**: the beat's length; **swing**: the eighths' share within .03.
+
+On 2026-11-09:
+
+| bench | level | bar | start | beats | groups | beat | swing |
 |---|---|---|---|---|---|---|---|
-| examples (55) | 46 | 45 | 46 | 41 | 44 | 42 | 52 |
-| synthetic (1035) | 458 | 733 | 864 | 484 | 496 | 226 | 785 |
-| groove (3) | 3 | 3 | 3 | 2 | 3 | 3 | 3 |
-| bach (88) | 42 | 40 | 73 | 33 | 57 | 30 | 88 |
+| examples (55) | 46 | 44 | 42 | 46 | 41 | 46 | 52 |
+| synthetic (1035) | 962 | 840 | 835 | 485 | 331 | 464 | 813 |
+| groove (3) | 2 | 3 | 2 | 3 | 3 | 3 | 3 |
+| bach (88) | 68 | 44 | 37 | 62 | 34 | 40 | 88 |
+
+The synthetic bench once weighed a note by its level against .5, clipped at 1, so a kick at .6 weighed as much as the bar line's at 1, and a snare and a kick on beat 4 outweighed the bar line: its 4/4 was found as 3/4, its 12/8 as 9/8. A note now weighs its level against the piece's loudest; the bench's numbers before 2026-11-09's last commit were measured with the clip.
 
 ## Against #648's bounds
 
+The bounds are read on **level** (the owner on #667, 2026-11-09): a bar found double or half, its lines on the written ones, is the same meter at another level, and counts.
+
 - **The Groove fixtures' swing within .03: met**, 3 of 3. Their tempo, bar, beats and grouping too; the bar's start on 2 of 3.
-- **The examples’ signature and swing exact on 90 %: not met.** The grouping is right on 42 of 55 (76 %), the swing on 52 (95 %).
-- **The MIDI library: not met.** Its beats a bar are right on 57 of 88 (65 %, the bound 80 %), its bar's start within a beat on 33 (38 %).
+- **The examples on 90 %: not met.** Their level is right on 46 of 55 (84 %), their swing on 52 (95 %).
+- **The MIDI library on 80 %: not met, near.** Its level is right on 68 of 88 (77 %); its beats a bar on 62 (70 %).
 
-## What it can't know, and chooses
+## What it can't know, and how it says so
 
-- **A strictly repeating bar is one bar or two.** A pattern that repeats each two beats sounds the same written 2/4 or 4/4; the prior on a bar's length (2.4 s, `BAR_PRIOR`) takes 4/4, as the examples are written. The synthetic bench's 2/4, 6/8 and 5/8 lose to it: the `bars` column counts a bar found double or half, 855 of 1035 where `bar` counts 733.
+- **A strictly repeating bar is one bar or two.** A pattern that repeats each two beats sounds the same written 2/4 or 4/4; it differs in which strokes are bar lines (a level's grade, a `1m` tap, a section's count of bars), which the notes tell only weakly: in Bach's 4/4, beat 3 is within 3 to 9 % of beat 1 on every cue (below). So `findMeter` chooses one, under a prior on a bar's length (2.4 s, `BAR_PRIOR`), and gives the others as its **variants** (`Found.variants`): half the bar, and two of it starting at either of its lines, each with its likeness, its score as a share of the chosen one's. A reader that knows more, a phrase's length in the importer, a level shown in the TimeView, chooses among them. Beat tracking counts these the same way (AMLt, Davies et al. 2009).
   The one exception is a rule, not the prior: a bar whose halves are the same and whose half groups its beats in twos and threes is two bars of aksak (a doubled bar can't spell 2+3+3).
-- **A tempo is one or its double.** `prelude` at 66 bpm is found at 132, its bar half the written one; `breve`'s 2/2 at 60 as 4/4 at 120. Both sound the same; only the writing differs.
+- **A tempo is one or its double.** `prelude` at 66 bpm is found at 132, its bar half the written one: a variant, and counted so.
 - **A swing near 2/3 is a triplet grid.** `electroswing`'s .64 is found as 12/8: its swung eighths sit within the written grid's 12 ms of the triplets.
+
+**What is still wrong**, beyond the variants (on 2026-11-09, before the bench's weights were mended): in the MIDI library, three beats found as four or four as three (12), and a bar right but its line off (7, mostly on beat 3); in the examples, three against four (5) and a line off (4).
+The prior on a bar's length was narrower (1 octave) while a variant counted as wrong; now that a variant counts, it is wider (1.5), so that it no longer chooses 4/4 over a minuet's 3/4 by its length alone. And a bar's recurrence is its line's correlation with itself a bar later (1 for a bar repeated exactly), where a product's mean was held up by every pulse alike.
 
 ## The downbeat in typeset music: a first iteration
 
@@ -57,7 +68,7 @@ Measured over the library's 4/4 and 3/4 files, each cue's mean on each beat of t
 - **The bass moves on nearly every beat** (.94 to .99 of them), so it tells nothing, and isn't a cue.
 
 What is built (`lineCues`): the new pitch classes in about a beat (four pulses) against the beat before, and the longest note, each counted where it stands above its own mean, weighed .5 against a pulse's mean accent (`CUES`), added to the bar line's weight; a bar's recurrence read on that line too.
-Chosen over the four benches: it raises the MIDI library's bar from 35 to 40, its bar within a factor of two from 66 to 73, its start from 28 to 33 and its beats from 53 to 57; it holds the synthetic bench (bar 733, start 478 to 484) and the Groove fixtures, and costs the examples one beat count (45 to 44).
+Chosen over the four benches (with the narrower prior): it raised the MIDI library's bar from 35 to 40, its bar within a factor of two from 66 to 73, its start from 28 to 33 and its beats from 53 to 57, held the Groove fixtures, and cost the examples one beat count (45 to 44).
 Read as the beat's grouping too (which beats a bar has), it cost the Groove fixtures their four beats, and isn't.
 A heavier cue or a prior moved toward Bach's slower bars trades the benches against each other: a bar prior of 3.5 s raises Bach's bar to 48 and lowers the examples' to 40 and the synthetic's to 613.
 
