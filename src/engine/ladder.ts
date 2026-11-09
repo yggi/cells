@@ -45,6 +45,8 @@ export const PENDING: ReadonlySet<string> = new Set([
   'modifier x/n',
   'modifier x(k,n,r)',
   'parameter legato',
+  // (decision 080: a meter bent by a table; no example bends one yet, a meter scan its sugar)
+  'parameter bend',
   'attribute tags',
   'reference &name[slot]',
   'map map=style',

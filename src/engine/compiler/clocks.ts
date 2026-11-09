@@ -196,7 +196,7 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     const ratio = st.ratio / split;
     // (a scan tapped that drives others, scan(2 1) step=8n: a meter of its own, as one stepped by &bar is)
     const c = cells.get(name);
-    if (c?.scan && drivers.has(name)) {
+    if ((c?.scan || c?.bend) && drivers.has(name)) {
       clocks.set(name, { cell: name, perSecond: clocks.get(key)!.perSecond * ratio, positional: true });
       return { clock: name, rate: 1 };
     }
@@ -253,7 +253,7 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       else {
         result = { clock: d.clock, rate: (d.rate * st.ratio * (st.whole ? own : 1)) / (st.cycle ? lap : 1) };
         const c = cells.get(name);
-        if (c && c.scan && drivers.has(name) && !st.whole) {
+        if (c && (c.scan || c.bend) && drivers.has(name) && !st.whole) {
           clocks.set(name, { cell: name, perSecond: clocks.get(d.clock)!.perSecond * result.rate, positional: true });
           result = { clock: name, rate: 1 };
         }

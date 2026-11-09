@@ -41,6 +41,7 @@ interface Body {
   seed: number | null;
   size: number | null;
   swing: { level: string; share: number }[] | null;
+  bend: { level: string; table: Ref } | null;
   legato: { level: string; share: number }[] | null;
   readonly params: Record<string, number | string>;
   readonly paramSpans: Record<string, Span>;
@@ -446,6 +447,15 @@ function readPlay(s: LineScanner, b: Body): void {
   }
 }
 
+/** bend= (decision 080): a meter's level, named by note value, and the table of its nodes' lengths, `bend=4n:&rubato`. */
+const readBend: Reader = (s, b) => {
+  const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
+  if (level === null) s.fail('a level and a table after bend=, the lengths of its nodes: bend=4n:&rubato');
+  s.i++; // (:)
+  b.bend = { level: level!, table: s.cellRef('a table after bend=4n:, the lengths of its nodes: bend=4n:&rubato', 'after bend=4n:') };
+  b.paramSpans.bend = s.place(s.i);
+};
+
 /**
  * swing= (#18): by level, `swing=8n:.67` (a meter's eighths, each pair's second two thirds through; a share is a decimal or a
  * fraction, `8n:2/3`, decision 042; a level leans its pairs alone, its groups of three straight, decision 071: `8n:2/3:pairs`, decision
@@ -717,6 +727,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed: null,
     size: null,
     swing: null,
+    bend: null,
     legato: null,
     params: {},
     paramSpans: {},
@@ -816,7 +827,9 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       // (clip= is Strudel's other name for legato=: read as legato=, and said, since cells keeps one spelling: Normalise
       // writes legato=, #94)
       if (word === 'clip') s.warn("clip= is Strudel's name for legato= — write legato= (Normalise rewrites it)", at, word.length);
-      const read = (KEYS as Readonly<Record<string, Key>>)[key]?.read ?? (key === 'swing' || key === 'legato' ? readLevels : CELL_PARAMS.has(key) ? readCellParam : readParam);
+      const read =
+        (KEYS as Readonly<Record<string, Key>>)[key]?.read ??
+        (key === 'swing' || key === 'legato' ? readLevels : key === 'bend' ? readBend : CELL_PARAMS.has(key) ? readCellParam : readParam);
       read(s, b, key, at);
       if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
       continue;
@@ -993,6 +1006,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed,
     size,
     swing,
+    bend,
     legato,
     params,
     paramSpans,
@@ -1025,6 +1039,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed,
     size,
     ...(swing ? { swing } : {}),
+    ...(bend ? { bend } : {}),
     ...(legato ? { legato } : {}),
     params,
     paramSpans,

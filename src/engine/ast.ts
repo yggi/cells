@@ -418,6 +418,8 @@ export interface CellDecl {
    * tempo is read from a cell that is a rate alone (`step=&tempo`). Resolved by compile (declare.ts), which sets `swing`.
    */
   readonly swingFrom?: Ref;
+  /** bend= on a meter (decision 080): a level, by note value, and the table its nodes' lengths are read from. */
+  readonly bend?: { readonly level: string; readonly table: Ref };
   /** legato= by level on a meter (#94): `legato=16n:.5,4n:.8`, the share a line tapping it sounds when it states none. */
   readonly legato?: readonly { readonly level: string; readonly share: number }[];
   /** dough parameters (s=saw lpf=1800 …): a cell with any of these is a voice. */
