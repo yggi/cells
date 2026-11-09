@@ -7,10 +7,11 @@
  * Pure.
  */
 import { compileSource } from '../compile';
-import { declLine, deleteCell, splitComment } from '../edit';
+import { deleteCell, splitComment } from '../edit';
 import type { CompileOptions } from '../program';
 import { soundsIdentical } from '../sameness';
 import { shorten } from '../shorten';
+import { keepsInterface } from './interface';
 
 /** Shorten's kinds whose rewrite stays in the core. */
 const CORE_KINDS: ReadonlySet<string> = new Set(['phrase', 'same', 'default']);
@@ -38,7 +39,7 @@ export function coreFold(text: string, options: CompileOptions = {}, rounds = 60
   const steps: string[] = [];
   const same = (a: string, b: string) => soundsIdentical(a, b, undefined, options);
   // (a fold that merges an interface cell away, or inlines it, loses what is read from outside)
-  const kept = (t: string) => [...keep].every((n) => declLine(t, n) >= 0);
+  const kept = (t: string) => keepsInterface(now, t, keep);
   for (let i = 0; i < rounds; i++) {
     const gone = unread(now, options, keep).find((name) => same(now, deleteCell(now, name)));
     if (gone) {

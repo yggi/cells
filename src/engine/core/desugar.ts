@@ -140,9 +140,13 @@ export const FAMILIES: readonly Family[] = [
   {
     key: 'repeats',
     rows: '21 `x!n`',
-    rewrite: (text) =>
-      // (a cell read by its units, picked or rotated, `&john[<<]`, counts `&a!2` as one unit and `&a &a` as two: left)
-      tokenWise(text, (tok, cell) => (unitRead(text).has(cell) ? tok : repeated(tok))),
+    rewrite: (text) => {
+      // (a cell read by its units, picked or rotated, `&john[<<]`, counts `&a!2` as one unit and `&a &a` as two: left;
+      // and one that counts its own laps, `cycle=`, counts its units too: `[0,2,4]!4` is one of them, decision 077 §3)
+      const read = unitRead(text);
+      for (const d of parse(text).cells) if (d.cycle !== null) read.add(d.name);
+      return tokenWise(text, (tok, cell) => (read.has(cell) ? tok : repeated(tok)));
+    },
   },
   {
     key: 'scans',
@@ -163,7 +167,7 @@ export const FAMILIES: readonly Family[] = [
   {
     key: 'copies',
     rows: '79 `base=` (a copy that writes no braid of its own)',
-    rewrite: (text) => copies(text),
+    rewrite: (text, options) => copies(text, options.keep),
   },
   {
     key: 'keys',
@@ -394,7 +398,7 @@ function copySteps(text: string, options: CoreContext): string {
     const copy = declWords(now, d.name);
     const head = copy?.attrs.find((a) => a.startsWith('base='));
     const m = head ? /^base=&([A-Za-z_][A-Za-z0-9_]*)(?:\^\$(-?[0-9]+))?$/.exec(head) : null;
-    if (!copy || !m || copy.attrs.some((a) => !/^(base|tags)=/.test(a))) continue;
+    if (!copy || !m || copy.attrs.some((a) => !/^(base|tags)=/.test(a)) || options.keep?.has(m[1]!)) continue;
     const base = declWords(now, m[1]!);
     if (!base || base.attrs.some((a) => !/^tags=/.test(a))) continue;
     const by = +(m[2] ?? 0);
@@ -580,11 +584,12 @@ function chains(code: string): string {
  * own (`=` over a base's steps, and a chain of copies, stay: `LEFT`'s); the base, read by nothing else then, goes in the
  * fold.
  */
-function copies(text: string): string {
+function copies(text: string, keep: ReadonlySet<string> = new Set()): string {
   let now = text;
   for (const d of parse(text).cells) {
-    // (as written: the parser gives a copy its base's braid already, parser/base.ts)
-    if (!d.base || d.base.pick || d.base.shift) continue;
+    // (as written: the parser gives a copy its base's braid already, parser/base.ts; a base the interface keeps is a
+    // parameter, read by name: decision 077 §2)
+    if (!d.base || d.base.pick || d.base.shift || keep.has(d.base.name)) continue;
     const own = declWords(now, d.name);
     const base = declWords(now, d.base.name);
     if (!own || !base || own.braid.length || base.attrs.some((a) => a.startsWith('base='))) continue;

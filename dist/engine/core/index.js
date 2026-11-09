@@ -1,10 +1,10 @@
 import { normalise } from "../normalise/index.js";
 import { soundsIdentical } from "../sameness.js";
 import { parse } from "../parser/index.js";
-import { declLine } from "../edit.js";
 import { signatureOf } from "../use.js";
 import { FAMILIES, LEFT, stillWritten } from "./desugar.js";
 import { coreFold } from "./fold.js";
+import { keepsInterface } from "./interface.js";
 import { minify } from "./minify.js";
 export { FAMILIES, LEFT, stillWritten } from "./desugar.js";
 export { meaningfulNames, minify } from "./minify.js";
@@ -30,9 +30,9 @@ export function interfaceOf(text, spec = []) {
     return keep;
 }
 const ROUNDS = 4;
-function round(source, options, spec, keep) {
+function round(source, options, spec, keep, skip) {
     const same = (a, b) => soundsIdentical(a, b, undefined, options);
-    const kept = (t) => [...keep].every((n) => declLine(t, n) >= 0);
+    const kept = (t, from = source) => keepsInterface(from, t, keep);
     const normal = normalise(source, options);
     const steps = [];
     let now = source;
@@ -40,7 +40,7 @@ function round(source, options, spec, keep) {
         for (const n of interfaceOf(now, spec))
             keep.add(n);
     };
-    if (kept(normal.source)) {
+    if (kept(normal.source, source)) {
         now = normal.source;
         steps.push(...normal.steps);
         more();
@@ -48,10 +48,12 @@ function round(source, options, spec, keep) {
     else
         steps.push('left as written: Normalise would rename or remove an interface cell');
     for (const f of FAMILIES) {
+        if (skip.has(f.key))
+            continue;
         const next = f.rewrite(now, { ...options, keep });
         if (next === now)
             continue;
-        if (!kept(next)) {
+        if (!kept(next, now)) {
             steps.push(`left as written: ${f.key} (${f.rows}) would remove an interface cell`);
             continue;
         }
@@ -74,12 +76,12 @@ function round(source, options, spec, keep) {
     return { source: now, steps };
 }
 export function toCore(source, options = {}) {
-    const { interface: spec, ...rest } = options;
+    const { interface: spec, skip = [], ...rest } = options;
     const keep = interfaceOf(source, spec);
     let now = source;
     const steps = [];
     for (let i = 0; i < ROUNDS; i++) {
-        const r = round(now, rest, spec, keep);
+        const r = round(now, rest, spec, keep, new Set(skip));
         if (r.source === now)
             break;
         now = r.source;
