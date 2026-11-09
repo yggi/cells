@@ -6,7 +6,7 @@ export function swings(source, result, options = {}) {
     for (const c of result.cells.values()) {
         const m = c.meter;
         const written = m && typeof c.params.swing === 'number' ? attrsOf(source, c.name).get('swing') : undefined;
-        if (!m || !written || /^[1-9][0-9]*(?:n\.?|t):/.test(written) || declLine(source, c.name) < 0)
+        if (!m || !written || written.startsWith('&') || /^[1-9][0-9]*(?:n\.?|t):/.test(written) || declLine(source, c.name) < 0)
             continue;
         const level = bareSwingLevel(m);
         const whole = level === null ? null : noteValue(level);

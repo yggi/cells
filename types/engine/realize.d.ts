@@ -172,6 +172,14 @@ export declare function comeRound(events: readonly StepEvent[], period: number, 
 };
 /** What to play. A program with errors plays nothing: it may name cells it doesn't have. */
 export declare function plan(result: CompileResult, statics: Shifts, muted?: ReadonlySet<string>): Plan;
+/**
+ * A meter's swing in a bar, as the plan plays it (decision 081): its levels, each bar's share where a cell moves it; null
+ * where it doesn't swing. For a host that builds its performer's frames from a cells meter, one bar at a time.
+ */
+export declare function swingOfBar(p: Plan, meter: string, bar: number): readonly {
+    readonly level: string;
+    readonly share: number;
+}[] | null;
 /** Which voice a number plays on, and that voice's base frequency. */
 export declare function voiceFor(result: CompileResult, o: Output, value: number): {
     voice: string;

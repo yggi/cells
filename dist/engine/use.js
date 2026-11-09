@@ -60,6 +60,7 @@ const quoted = (id) => JSON.stringify(id);
 const pathOf = (path) => path.map(quoted).join(' → ');
 function merge(own, used, say, host) {
     const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
+    const readHere = new Set(own.flatMap((l) => l.reads));
     const given = new Map();
     const lines = own.filter((l) => l.name);
     const per = used.map(({ id, names, lines: theirs, resolved }, i) => {
@@ -77,7 +78,7 @@ function merge(own, used, say, host) {
             for (let more = true; more;) {
                 more = false;
                 for (const n of byName.keys()) {
-                    if (defined.has(n) || shadowed.has(n))
+                    if (defined.has(n) || shadowed.has(n) || readHere.has(n))
                         continue;
                     const readers = theirs.filter((l) => l.name && l.name !== n && l.reads.includes(n));
                     if (readers.length && readers.every((l) => defined.has(l.name) || shadowed.has(l.name))) {

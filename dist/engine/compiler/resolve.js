@@ -5,7 +5,7 @@ import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps } from "..
 import { VOICE_PARAMS } from "../attributes.js";
 import { gmDrumNote } from "../midi.js";
 import { scan as scanOf } from "../../theory/modes.js";
-import { beatCount, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel } from "../meter.js";
+import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel } from "../meter.js";
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from "./tables.js";
 class Abort extends Error {
 }
@@ -23,11 +23,11 @@ function meterOf(d) {
     const felt = beaten && d.legato ? { ...beaten, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level) }])) } : beaten;
     if (!felt || typeof params.swing !== 'number')
         return felt;
-    const levels = d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }];
-    return withSwing(felt, levels.flatMap((l) => {
+    const levels = (d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }]).flatMap((l) => {
         const whole = noteValue(l.level);
         return whole === null ? [] : [{ level: l.level, whole, share: l.share }];
-    }));
+    });
+    return d.swingMoves && levels.length ? { ...felt, swing: levels } : withSwing(felt, levels);
 }
 function bentOf(d, warn, declOf) {
     const m = meterOf(d);
@@ -49,15 +49,16 @@ function bentOf(d, warn, declOf) {
     const nodes = steps / per;
     const gcd = (a, b) => (b ? gcd(b, a % b) : a);
     const bars = table.length / gcd(nodes, table.length);
-    const positions = [];
-    let at = 0;
-    for (let i = 0; i < nodes * bars; i++) {
-        const len = table[i % table.length];
-        for (let k = 0; k < per; k++)
-            positions.push(at + (k * len) / per);
-        at += len;
-    }
-    return { bend: { positions, lap: at, bars } };
+    const { positions, lap } = bentSteps(table, per, nodes, bars, bend.depth ?? 1);
+    const moves = bend.depthMoves;
+    return {
+        bend: {
+            positions,
+            lap,
+            bars,
+            ...(moves ? { depth: { range: moves.range, factors: moves.factors.map((f) => f.name), table, per, nodes } } : {}),
+        },
+    };
 }
 export const stepsPerBeat = (m) => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
 export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stacks }, typed, sortOf) {
@@ -156,6 +157,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(d.base ? { base: { name: d.base.name, ...(d.base.transpose ? { transpose: d.base.transpose } : {}), ...(d.base.degree ? { degree: d.base.degree } : {}) } } : {}),
             beat: stepsPerBeat(meterOf(d)),
             meter: meterOf(d),
+            ...(d.swingMoves ? { swingMoves: { level: d.swingMoves.level, range: d.swingMoves.range, factors: d.swingMoves.factors.map((f) => f.name) } } : {}),
             label: d.label ?? null,
             note: isNote(d),
             env: d.env?.name ?? null,

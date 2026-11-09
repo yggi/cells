@@ -120,13 +120,34 @@ export interface ResolvedCell {
   readonly pitch: string | null;
   readonly braid: Braid['kind'];
   readonly units: readonly Unit[];
+  /**
+   * A swing's share moved by cells (decision 081): its level, its range (null: a bare cell, its values the share) and its
+   * cells. Read at each bar line by the plan's reader (`clocking.ts`); `meter`'s share for the level is the one held.
+   */
+  readonly swingMoves?: { readonly level: string; readonly range: readonly [number, number] | null; readonly factors: readonly string[] };
   /** A scan(…): its intervals, and its lap (their sum) — the cell climbs by that lap. */
   readonly scan: { readonly lap: number; readonly steps: readonly number[] } | null;
   /**
    * A meter bent (decision 080, `bend=4n:&rubato`): where each of its steps starts over the bars its table spans (`bars`),
    * and their lap, in the table's lengths. Its clock places its steps there, as a scan's.
    */
-  readonly bend?: { readonly positions: readonly number[]; readonly lap: number; readonly bars: number };
+  readonly bend?: {
+    readonly positions: readonly number[];
+    readonly lap: number;
+    readonly bars: number;
+    /**
+     * Its depth moved by cells (decision 081, `bend=4n:&rubato:&k`): the range (null: a bare cell, its values the depth) and
+     * the cells, read at each line of the table's span (`bars` bars) by the plan's reader; and the table, its nodes' steps
+     * (`per`) and how many nodes a bar holds, to lay each span out at its depth (`bentSteps`). `positions` are the held depth's.
+     */
+    readonly depth?: {
+      readonly range: readonly [number, number] | null;
+      readonly factors: readonly string[];
+      readonly table: readonly number[];
+      readonly per: number;
+      readonly nodes: number;
+    };
+  };
   /** shift= as written. */
   readonly shift: number;
   /**
@@ -306,7 +327,14 @@ export interface Clock {
    * of `lap` of them (the bar, or cycle= bars), laid through the meter's time map. `cell` is the meter. `written`: the
    * positions as written, before a swung meter's swing (#287: where a level line is read for a note); absent when the same.
    */
-  readonly tap?: { readonly meter: string; readonly positions: readonly number[]; readonly lap: number; readonly written?: readonly number[] };
+  readonly tap?: {
+    readonly meter: string;
+    readonly positions: readonly number[];
+    readonly lap: number;
+    readonly written?: readonly number[];
+    /** A meter whose swing moves (decision 081): each step's division, in pulses, so each bar places it through its own share. */
+    readonly grids?: readonly number[];
+  };
 }
 
 /** A pitch term of an out sum. */
