@@ -1,6 +1,6 @@
-# 081 · A meter's swing may be moved by a cell, read at each bar line
+# 081 · A time map's amount may be moved by a cell, read at each bar line: a swing's share and a bend's depth
 
-**Date:** 2026-11-08 · **Status:** proposed (the owner on #597, 2026-11-08: "I lean towards also having swing as a cell"; this page's open questions are theirs to rule) · Issues: #597, #580, #566, #576
+**Date:** 2026-11-09 · **Status:** accepted (the owner on #597, 2026-11-08: "I lean towards also having swing as a cell"; on the proposal's four questions, "all as recommended"; on the moving bend, "they should be a coherent pair", then, on the pair as below, "yes, very good analysis. amend and go ahead") · Issues: #597, #580, #566, #612, #576
 
 *Read with 078 (every number may be a `free()`; a cell moves only a number read while the piece plays), 079 (a sum of cells, a window), 080 (#612: a meter is a tree placed through a time map, `swing=` and `bend=` its two spellings) and [071](071-swing-leans-pairs.md) (a swing leans pairs).*
 
@@ -8,56 +8,75 @@
 
 Decision 078's table of places lists a swing's share, `swing=8n:n`, as read while the piece plays but not yet moved by cells. It takes a number or a slider, `swing=8n:free(.6, .5...75)`, and refuses `swing=8n:&k`.
 
-A swing is no structure. Decision 080 reads a meter as a tree placed through a time map, with the swing one of the map's two spellings. A swing moves when the notes of a bar start, never which notes there are. A clock's time map already changes while a piece plays: a motor or a belt bends it (`physics.ts`). So a swing moved by a cell is one more time map that changes, and 078's rule puts it among the places a cell may move.
+A swing is no structure. Decision 080 reads a meter as a tree placed through a time map, whose two spellings are the swing and the bend. Either one moves when the notes of a bar start, never which notes there are. A clock's time map already changes while a piece plays: a motor or a belt bends it (`physics.ts`). So a time map moved by a cell is one more time map that changes, and 078's rule puts it among the places a cell may move.
 
-What a moving swing needs is when it is read. A share read at any moment could place a pair's second note before its first, or depend on itself: a cell stepped by the meter it swings reads its value through that meter's swing.
+Two things need ruling: what of a time map a cell moves, and when it is read.
+- **What:** a bend's table is a list of lengths, read whole, and a cell read at a moment has one value, not a list. Read node by node, each length at its node's start, it would depend on the starts it moves.
+- **When:** a share read at any moment could place a pair's second note before its first, or depend on itself, since a cell stepped by the meter it swings reads its value through that meter's swing.
 
 ## Decision
 
-### 1. `swing=8n:&k` and `swing=8n:lo..hi * &k`
+### 1. Each spelling is a level, a shape and an amount; the amount is what a cell moves
 
-- A swing's share may be moved by a cell, as a sound's parameter is. A bare cell gives its values as shares (`&lean step=1m .55 .67`). A range scaled by cells puts the cells' 0..1 on the range (`swing=8n:.5...7 * &style[sync]`).
-- Its ends may be sliders, and centre ± reach is its sugar (079): `swing=8n:free(.6, .5...75) ± .05 * &drift`.
-- One level alone, as a share left free is today. Several levels moving is a later rung.
+| | level | shape | amount, what a cell moves | none |
+|---|---|---|---|---|
+| `swing=` | `8n` | by rule: its pairs lean (071) | **its share**, `swing=8n:.67` | .5 |
+| `bend=` | `4n` | by table: `&rubato` (080) | **its depth**, `bend=4n:&rubato:.5` | 0 |
 
-### 2. Read at each bar line, held through the bar
+- **The spellings line up:**
+  - `swing=8n:&k` and `swing=8n:.5...75 * &k`;
+  - `bend=4n:&rubato:&k` and `bend=4n:&rubato:0..1 * &k`.
+- **Each amount is a number of 078's,** read by its one reader: a number, `free()`, a cell, or a range moved by cells, whose ends may be sliders, with centre ± reach its sugar (079).
+- **Each in its own unit:**
+  - a share is what a musician writes (042);
+  - a depth is how far a written rubato applies, with `bend=4n:&rubato`, 080's form, the depth 1.
+- **A shape doesn't move here.** A bend's table already spans bars as a tempo map (080). A cell adds how strongly the written shape applies, bar by bar.
+- **A swing is no bend in disguise.** `bend=8n:&(2 1)` is `swing=8n:2/3` in 4/4. In 6/8, though, a table of two cycles across the groups of three, which 071 keeps straight. The two are one pair in form, not one in the other.
+- **One level alone,** for each: several levels moving is a later rung.
 
-- The share bar *b* plays is the share's value at bar *b*'s start. It holds through the bar.
+### 2. A depth raises the table's ratios to its power
+
+At depth *d* a node's length is its table's number to the power *d*, normalized so the bar keeps its length: `len_i ∝ t_i^d`.
+- d = 0 is even, d = 1 the table as written, d = 2 exaggerates it.
+- d = −1 inverts the rubato, the long nodes short, which a linear blend can't say.
+- No depth makes a length 0 or less, so none is refused or clamped. Ratios compose as tempo does, by multiplying.
+- On a table of two it lands near a share: depth .5 on 2:1 is the share .586, where a linear blend gives .583.
+
+### 3. Read at each bar line, held through the bar
+
+- The amount bar *b* plays is its value at bar *b*'s start, held through the bar.
 - **Why the bar line:** it is the one place no time map moves.
-  - A swing leans within a beat, so every beat and every bar line stays where it is (`swingAt`).
-  - A bend (080) keeps the bar's length, so a bar line stays where it is, but a beat doesn't.
+  - A swing leans within a beat: every beat and every bar line stays where it is (`swingAt`).
+  - A bend, at any depth, keeps the bar's length (080), so the bar line stays where it is, though a beat doesn't.
 
-  So a bar's start is the same whether its share is known yet or not. Reading there is exact, with no loop, even for a cell the same meter steps.
+  So a bar's start is the same whether its amount is known yet or not. Reading there is exact, with no loop, even for a cell the same meter steps. A bar with both reads them at the same instant, and they compose as 080 says, coarse to fine.
 - **It is also the feel contract's grain:** a host hands its performer one swing a bar frame (`perform.ts`, `meterOfFrame`).
-- **A share is held within the time map's bounds,** .05 to .95, as every share already is (`clocking.ts`). A range's ends lie within 0..1.
+- **A share is held within the time map's bounds,** .05 to .95, as every share already is (`clocking.ts`). A depth needs no bounds, by (2).
 
-### 3. What reads it
+### 4. What reads it
 
-- **The time map** (`clocking.ts`): a bar's knots are built for the share that bar plays, once for each share.
-  - The meter's own steps and its taps (`swungMap`, `swungTapMap`, `swungMeter`) are placed through the bar's knots.
-  - A note's end and a part of a step are placed through the knots of the bar they fall in.
-- **The reading:** the plan (`realize.ts`) gives the clocks a reader of the share at a time, the cell read as any moving parameter's is (`paramAt`).
-  - The series reads through the clocks, so while bar *b*'s share is being read, bar *b* is placed straight. That is exact at its start, by (2).
-  - A clock read with no plan (a static reader) holds the share of (4).
-- **The MIDI clock and the export** (#558) follow the swing per bar, as the time map does.
-- **`toCore` and the fold** keep the moving share as written: a cell, never a number.
+- **The time map** (`clocking.ts`): a bar's placement is built for the amount that bar plays, once for each amount.
+  - For a swing: the meter's own steps, its taps, and a note's end or a part of a step, placed through the bar's knots.
+  - For a bend: the bar's positions at the bar's depth.
+- **The reading:** the plan (`realize.ts`) hands the clocks a reader of each amount at a time, the cells read as any moving parameter's are (`paramAt`).
+  - The series read through the clocks, so while one bar's amount is being read, the other bars hold theirs (5). That is exact at the bar's start, by (3).
+- **The MIDI clock and the export** (#558) follow it per bar, as the time map does.
+- **`toCore` and the fold** keep a moving amount as written: a cell, never a number.
 
-### 4. Where it is read with no time
+### 5. Where it is read with no time
 
-The meter's drawing, `params.swing`, and anything that reads the meter before it plays read a held share:
+The meter's drawing, `params.swing`, and anything that reads the meter before it plays (or with no plan) read a held amount:
 - a range's first end;
-- a bare cell's first value as written, or .5, straight, where it has none.
-
-## Open questions (the owner's)
-
-1. **The grain: the bar line** (recommended, (2)), or a beat's start? A beat's start is exact under a swing but not under a bend.
-2. **The held share of (4):** a range's first end and a bare cell's first value (recommended), or .5, straight, always?
-3. **A host's frame:** Jambot's performer is handed a swing per bar. Should cells export a reading of it, `swingOfBar(plan, meter, bar)`, for a host that builds its frames from a cells meter (yggi/jambot, checked at its pin)? Or does a host read the time map's knots?
-4. **A bend moved by cells:** a bend's table is a list of lengths, and its nodes' starts move with it. Reading a moving one at the bar line would follow the same rule, the whole bar's lengths read at its start. Here, or a rung of its own (recommended)?
+- a bare cell's first value as written;
+- where it has none, the amount's "none" (.5, 0).
 
 ## Consequences
 
-- **0 event snapshots move.** No text that compiles now reads differently, and `swing=8n:&k` was refused.
-- **078's table:** the share's row moves from "not yet" to moving (`NUMBER_PLACES.share`, `numbers.test.ts`).
-- **The cost:** the clock's knots per share, and the plan's reader handed to the clocks. Both touch the time map, so `npm run test:all` and CI's slow job are its check.
-- **#566 and 080:** the rule, "a time map's numbers move at a bar line", is 080's time map read while it plays. The swing is its first instance, and a moving bend (4) would be its second.
+- **0 event snapshots move.** No text that compiles now reads differently: `swing=8n:&k` was refused, and a bend's depth is new.
+- **078's table:** the share's row moves from "not yet" to moving (`NUMBER_PLACES.share`), and a bend's depth gets a row of its own once 080 lands.
+- **Built in two rungs:**
+  - the swing's share, on `main` as it stands;
+  - the bend's depth, on 080's `bentOf` once #612 lands (one set of a bar's positions for each depth).
+- **A host's frame:** cells exports a reading of a meter's swing for a bar, `swingOfBar(plan, meter, bar)`, for a host that builds its frames from a cells meter (Jambot, checked at its pin).
+- **The cost:** the clock's placement per amount, and the plan's reader handed to the clocks. Both touch the time map, so `npm run test:all` and CI's slow job are its check.
+- **#566 and 080:** the rule is 080's time map read while it plays.
