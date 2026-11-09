@@ -41,6 +41,7 @@ export declare const NUMBER_PLACES: {
     readonly axis: NumberPlace;
     readonly end: NumberPlace;
     readonly share: NumberPlace;
+    readonly legatoShare: NumberPlace;
     readonly gain: NumberPlace;
     readonly hit: NumberPlace;
     readonly weight: NumberPlace;

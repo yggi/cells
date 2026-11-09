@@ -150,7 +150,12 @@ export function clockCells(ctx, decls, given) {
                 cell: meter,
                 perSecond: (clocks.get(meter).perSecond * positions.length) / lap,
                 positional: false,
-                tap: { meter, positions, lap, ...(written.some((w, i) => Math.abs(w - positions[i]) > 1e-12) ? { written } : {}) },
+                tap: {
+                    meter,
+                    positions,
+                    lap,
+                    ...(cells.get(meter).swingMoves ? { written, grids } : written.some((w, i) => Math.abs(w - positions[i]) > 1e-12) ? { written } : {}),
+                },
             });
         }
         const ratio = st.ratio / split;

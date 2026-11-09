@@ -16,7 +16,7 @@
  */
 export { compileSource } from './engine/compile';
 export { parse, pieceMeta, type PieceMeta } from './engine/parser';
-export { plan, type Plan, type Played } from './engine/realize';
+export { plan, swingOfBar, type Plan, type Played } from './engine/realize';
 export { windowAt, type Window } from './engine/schedule';
 export { createHost, planOf, type ToEngine, type FromEngine } from './engine/host';
 export { shorten, shortenAll, type ShortenOptions } from './engine/shorten';

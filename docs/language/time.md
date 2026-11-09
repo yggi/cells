@@ -76,6 +76,17 @@ A `scan(…)` has as many pulses as entries, each a quarter, and its beats are i
   - **A note's level is read where it is written**, before the swing ([#287](https://github.com/yggi/cells/issues/287)): a level line that multiplies a line (`[&euclid * &euclidLevel]`) gives each note the level of its step as written, as Strudel's `.gain("…")` is read at a hit's place in the cycle. So a line times a level line on another grid gives each note its own step's level, whatever the swing does to either.
   - **Read from a cell** ([#308](https://github.com/yggi/cells/issues/308)): `swing=&swing`, with `&swing swing=8n:2/3`, a cell that is a swing alone (no braid, no step, nothing but its `swing=`), swings the meter as the swing written on it would, in any of its forms (a fraction, `free(…)`, several levels), as `step=&tempo` reads a rate alone. So a fragment can leave its swing to the text that uses it, or give its own as a helper: the seed `meter` does, its `&swing` a parameter (`&bar from meter(swing=8n:2/3) &tempo`), and a text that swings otherwise passes its own (`&bar from meter(swing=&swing) &tempo`, `&swing swing=8n:free(.64, .5..0.75)`). Anything else read there is an error.
   - **Several levels** nest, coarse to fine, each node keeping its ends: `swing=8n:.6,16n:.55`. One level alone can be left free: `swing=8n:free(.5, .5..75)`.
+  - **Moved by a cell** ([decision 081](https://github.com/yggi/cells/blob/main/docs/decisions/081-swing-moved-at-the-bar-line.md)), one level alone: `swing=8n:&lean` takes the cell's values as shares, and `swing=8n:.5...75 * &k` puts a cell's 0..1 on a range, its ends sliders or centre ± reach (decision 079). Each bar plays the share read at its bar line, held through the bar. The bar line is the one place no swing moves, so a cell the same meter steps can set it: `&lean step=1m .55 .67` leans every other bar further. A reader with no time (the meter's drawing) holds a range's first end, or the cell's first value. `swingOfBar(plan, meter, bar)` reads a bar's swing, for a host's frames.
+
+```cells
+&tempo step=120bpm
+&bar meter("4/4") step=&tempo swing=8n:&lean
+&lean step=1m .55 .67
+&v s=tri loop=C4
+&hat step=8n 0 0 0 0 0 0 0 0
+&out map=sample [&hat * &v]
+```
+
   - **Bare, `swing=r`**: on a list stepping at a rate (no bar), of each pair of its steps the second starts r of the way through the pair. On a meter it is retired, since the level of a cell's own steps changes with its subdivision: an error that names the level (`meter("4/4", 2) swing=.67` is `swing=8n:.67`), which Migrate writes (its rule `swing`; #15, rung 5). Where the meter's own steps are its beats, which swing never moves, it leans nothing and says so.
 
 - **`legato=16n:.5`** — the meter's articulation ([#94](https://github.com/yggi/cells/issues/94)), a share of each note's written length by level (its steps, the end swung as the onset is: [sound.md](sound.md)), as swing names its levels: a line that taps the meter and states no `legato=` of its own sounds its notes at the share of its tap's level, the finest level at or above its step (`legato=16n:.5,4n:.8`: `step=16n` and `step=32n` at .5, `step=8n`, `step=pulse` and `step=beat` at .8 in 4/4, `step=2n` as written). An unequal beat (7/8's) is read by its longest. A line's own `legato=` wins ([sound.md](sound.md)); a line at a rate, or stepped by another cell, is as written. With swing, a meter fragment carries a feel: where its notes fall and how long they sound. One level alone can be left free: `legato=16n:free(.5, .25..1)`.

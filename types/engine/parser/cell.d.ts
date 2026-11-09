@@ -28,6 +28,9 @@ interface Body {
         level: string;
         share: number;
     }[] | null;
+    swingMoves: ({
+        level: string;
+    } & ParamCells) | null;
     legato: {
         level: string;
         share: number;

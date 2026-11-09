@@ -15,9 +15,10 @@ export function swings(source: string, result: Result, options: CompileOptions =
   const out: Rewrite<'swing'>[] = [];
   for (const c of result.cells.values()) {
     const m = c.meter;
-    // (the share as written, free(…) and all; one with its level named already is left alone)
+    // (the share as written, free(…) and all; one with its level named already is left alone, and so is a swing read from a
+    //  cell, swing=&swing (#308): its level is the cell's, and `8n:&swing` would read the cell's values as shares, decision 081)
     const written = m && typeof c.params.swing === 'number' ? attrsOf(source, c.name).get('swing') : undefined;
-    if (!m || !written || /^[1-9][0-9]*(?:n\.?|t):/.test(written) || declLine(source, c.name) < 0) continue;
+    if (!m || !written || written.startsWith('&') || /^[1-9][0-9]*(?:n\.?|t):/.test(written) || declLine(source, c.name) < 0) continue;
     const level = bareSwingLevel(m);
     // (a level that leans nothing, the beats of a meter with no subdivision, is left to the author: the compiler's warning
     // names what they may have meant, and that changes the notes, which a migration never does, #166)

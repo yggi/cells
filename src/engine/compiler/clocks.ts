@@ -190,7 +190,13 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
         cell: meter,
         perSecond: (clocks.get(meter)!.perSecond * positions.length) / lap,
         positional: false,
-        tap: { meter, positions, lap, ...(written.some((w, i) => Math.abs(w - positions[i]!) > 1e-12) ? { written } : {}) },
+        tap: {
+          meter,
+          positions,
+          lap,
+          // (a swing moved by cells, decision 081: where each step is written, and its division, for each bar to place)
+          ...(cells.get(meter)!.swingMoves ? { written, grids } : written.some((w, i) => Math.abs(w - positions[i]!) > 1e-12) ? { written } : {}),
+        },
       });
     }
     const ratio = st.ratio / split;

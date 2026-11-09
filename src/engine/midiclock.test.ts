@@ -140,6 +140,17 @@ describe('the ticks', () => {
     expect(after.at[0] - after.before).toBeCloseTo(60 / 120 / PPQN, 12);
   });
 
+  it('a swing moved by a cell (decision 081): each bar’s ticks lean by its share, every bar line where it was', () => {
+    const p = piece('&bar meter("4/4") step=120bpm swing=8n:&lean\n&lean step=1m .5 .75');
+    const at = ticksBetween(p, 0, 4)!.at;
+    const quarter = 0.5;
+    // (bar 0 straight: its first eighth's tick, the 12th, half a quarter in; bar 1 at .75: three quarters of one in)
+    expect(at[12]).toBeCloseTo(quarter / 2, 9);
+    expect(at[96 + 12]! - 2).toBeCloseTo(0.75 * quarter, 9);
+    expect(at[96]).toBeCloseTo(2, 9);
+    expect(at).toHaveLength(192);
+  });
+
   it('every example: window by window as one piece, eight seconds, none lost or doubled', () => {
     for (const [f, { source }] of Object.entries(EXAMPLES)) {
       const r = compileSource(source);

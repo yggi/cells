@@ -41,6 +41,7 @@ interface Body {
   seed: number | null;
   size: number | null;
   swing: { level: string; share: number }[] | null;
+  swingMoves: ({ level: string } & ParamCells) | null;
   legato: { level: string; share: number }[] | null;
   readonly params: Record<string, number | string>;
   readonly paramSpans: Record<string, Span>;
@@ -463,7 +464,15 @@ const readLevels: Reader = (s, b, word) => {
     if (level === null) s.fail(`a level after the comma, a note value and a share: ${word}=8n:.6,16n:.55`);
     s.i++; // (:)
     let share: number;
-    const f = s.free(NUMBER_PLACES.share, word);
+    // (a swing's share moved by cells, decision 081: one level alone, held at a range's first end until compile reads more)
+    const moving = word === 'swing' ? readMoving(s, 'swing', s.i) : null;
+    if (moving) {
+      if (levels.length || s.peek() === ',' || s.peek() === ':') s.fail(`a share moved by cells is one level alone: swing=8n:&lean, swing=8n:.5...75 * &k`, vs, s.i - vs);
+      b.swingMoves = { level: level!, ...moving };
+      levels.push({ level: level!, share: moving.range ? moving.range[0] : 0.5 });
+      break;
+    }
+    const f = s.free(word === 'swing' ? NUMBER_PLACES.share : NUMBER_PLACES.legatoShare, word);
     const free = f !== null;
     if (free) {
       share = f.value;
@@ -571,24 +580,9 @@ function readParam(s: LineScanner, b: Body, key: string): void {
     return;
   }
   // moving: lpf=&sweep, lpf=200..3000 * &fenv * &accent; its ends sliders, or centre ± reach (decision 079)
-  const range = readRange(s, key);
-  if (s.peek() === '&' || range) {
-    const factors: Ref[] = [];
-    if (!range) factors.push(s.cellRef(`a cell after ${key}=`, `in ${key}=`));
-    for (;;) {
-      const save = s.i;
-      s.skipSpace();
-      if (s.peek() !== '*') {
-        s.i = save;
-        break;
-      }
-      s.i++;
-      s.skipSpace();
-      factors.push(s.cellRef(`a cell after *, like ${key}=200..3000 * &fenv`, `in ${key}=`));
-    }
-    if (range && factors.length === 0) s.fail(`${key}=${s.text.slice(vs, s.i)}: a range is scaled by cells — ${key}=${s.text.slice(vs, s.i)} * &fenv`, vs, s.i - vs);
-    if (!range && factors.length > 1) s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
-    b.paramCells[key] = { range, factors, span: s.span(vs) };
+  const moving = readMoving(s, key, vs);
+  if (moving) {
+    b.paramCells[key] = moving;
     b.paramSpans[key] = s.span(vs);
     return;
   }
@@ -605,6 +599,31 @@ function readParam(s: LineScanner, b: Body, key: string): void {
   // (ftype= given superdough's number for a model is that model, decision 074: ftype=2 is ftype=24db)
   b.params[key] = key === 'ftype' && typeof value === 'number' ? (filterModel(value) ?? value) : value;
   b.paramSpans[key] = s.span(vs);
+}
+
+/**
+ * A value moved by cells here (decision 066, 079): one cell (`&sweep`), or a range scaled by cells (`200..3000 * &fenv *
+ * &accent`), its ends sliders or centre ± reach; null, and nothing read, where neither is written. `vs`: where the value starts.
+ */
+function readMoving(s: LineScanner, key: string, vs: number): ParamCells | null {
+  const range = readRange(s, key);
+  if (s.peek() !== '&' && !range) return null;
+  const factors: Ref[] = [];
+  if (!range) factors.push(s.cellRef(`a cell after ${key}=`, `in ${key}=`));
+  for (;;) {
+    const save = s.i;
+    s.skipSpace();
+    if (s.peek() !== '*') {
+      s.i = save;
+      break;
+    }
+    s.i++;
+    s.skipSpace();
+    factors.push(s.cellRef(`a cell after *, like ${key}=200..3000 * &fenv`, `in ${key}=`));
+  }
+  if (range && factors.length === 0) s.fail(`${key}=${s.text.slice(vs, s.i)}: a range is scaled by cells — ${key}=${s.text.slice(vs, s.i)} * &fenv`, vs, s.i - vs);
+  if (!range && factors.length > 1) s.fail(`${key}=: several cells multiply a range — ${key}=200..3000 * &a * &b`, vs, s.i - vs);
+  return { range, factors, span: s.span(vs) };
 }
 
 /** Keys that are gone, and what says the same now (the retired parameters are in dough-params.ts). */
@@ -717,6 +736,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed: null,
     size: null,
     swing: null,
+    swingMoves: null,
     legato: null,
     params: {},
     paramSpans: {},
@@ -993,6 +1013,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed,
     size,
     swing,
+    swingMoves,
     legato,
     params,
     paramSpans,
@@ -1025,6 +1046,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     seed,
     size,
     ...(swing ? { swing } : {}),
+    ...(swingMoves ? { swingMoves } : {}),
     ...(legato ? { legato } : {}),
     params,
     paramSpans,
