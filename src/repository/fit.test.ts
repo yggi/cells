@@ -181,6 +181,10 @@ const FITS: Record<string, readonly string[]> = {
   ],
   // (its lines lap a half note and a beat, so it fits every meter of the library's)
   kinderlied_drums: METER_FRAGMENTS.map((m) => m.id),
+  // (#572: their lines lap a beat, a half note or an eighth, so, as the Kinderlied beat, they fit every meter)
+  acid_drums: METER_FRAGMENTS.map((m) => m.id),
+  happy_hardcore_drums: METER_FRAGMENTS.map((m) => m.id),
+  elektro_drums: METER_FRAGMENTS.map((m) => m.id),
 };
 
 describe('every rhythm against every meter of the library', () => {
@@ -316,9 +320,10 @@ describe('a query given the workbench', () => {
     );
     const toned = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: `${bench('meter')}\n&tonic D`, ...named }).map((f) => f.fragment.id);
     expect(toned).toEqual(all.filter((id) => isRhythm(id) || open.includes(id) || modes.includes(id)));
-    // (of the rhythms, only Ghost drums and Kinderlied drums fit 7/8: their lines lap the bar, its half and the beat, and nothing a sixteenth off the beat)
+    // (of the rhythms, only Ghost drums, Kinderlied drums and the three beats read from the examples (#572) fit 7/8: their lines
+    // lap the bar, its half, the beat or the eighth, and nothing a sixteenth off the beat)
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter(grouping=meter("7/8"))'), ...named }).map((f) => f.fragment.id)).toEqual(
-      all.filter((id) => open.includes(id) || id === 'ghost_drums' || id === 'kinderlied_drums'),
+      all.filter((id) => open.includes(id) || ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums'].includes(id)),
     );
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('meter') })).toEqual([]);
     expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('meter') }).map((f) => f.fragment.id)).toEqual(fitting.filter(isRhythm).slice(0, 2));

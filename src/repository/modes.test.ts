@@ -28,7 +28,7 @@ const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY, resolveSeed } from './library';
 import { MODE_FRAGMENTS } from './modes';
 import { newPoint } from '../engine/migrate/axes';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { moodOf } from '../engine/style';
 
 import { RHYTHM_FRAGMENTS } from './rhythms';
@@ -158,7 +158,9 @@ describe('the presets find their modes', () => {
       // (ionian at the point proposed for a Kinderlied preset too: children's songs are major, yggi/jambot#547)
       // (each point's mood by decision 076's rule, #572: at a style's point, the style's, placed by hand; elsewhere its own
       // mode's, moodOf: mixolydian .75, phrygian .375, lydian .9, locrian .3)
-      expect(f.association.map((wp) => wp.point)).toEqual(id === 'ionian' ? [...points, KINDERLIED] : points);
+      // (aeolian at the three styles read from the examples too, #572: Acid's, Happy hardcore's and Elektro's A minor)
+      const also = id === 'ionian' ? [KINDERLIED] : id === 'aeolian' ? ['acid', 'happyHardcore', 'elektro'].map(stylePoint) : [];
+      expect(f.association.map((wp) => wp.point)).toEqual([...points, ...also]);
       expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
     }
   });

@@ -16,7 +16,7 @@ import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { compileSource } from '../engine/compile';
 import { heard } from './heard';
 import { LIBRARY, resolveSeed } from './library';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { newPoint } from '../engine/migrate/axes';
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
@@ -143,7 +143,9 @@ const POINT: Record<Pattern, StylePoint> = {
 // Each preset with its meter's swing on 8n (Swing jazz's 2/3 is 1; the others play straight or lean on 16n).
 // The points proposed for presets Jambot is to adopt (#349), placed by hand where an example plays a pattern: the walk at
 // Electro swing's, as examples/electroswing.md walks.
-const PROPOSED: Record<string, readonly StylePoint[]> = { walking_bass: [ELECTRO_SWING] };
+// (and the points proposed beside the patterns' own: the walking bass at Electro swing; the root bass at Kinderlied and the
+// pump at Happy hardcore, its offbeat bass, #572)
+const PROPOSED: Record<string, readonly StylePoint[]> = { walking_bass: [ELECTRO_SWING], root_bass: [KINDERLIED], pumping_bass: [stylePoint('happyHardcore')] };
 
 const PRESETS: Record<string, { point: StylePoint; old: Old; eighth: number }> = {
   'Synth-pop': { point: SYNTH_POP, old: OLD['Synth-pop']!, eighth: 0 },
@@ -238,7 +240,7 @@ function expected(pattern: Pattern, chords: readonly (readonly number[])[]): [nu
 
 describe('the bass lines', () => {
   it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most, and the Spooky basses written by hand', () => {
-    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping_bass', 'tiptoe_bass']);
+    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping_bass', 'tiptoe_bass', 'acid_bass', 'octave_bass']);
     for (const p of PATTERNS) {
       const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
       expect(byId(ID[p]).association, p).toEqual(
@@ -247,6 +249,9 @@ describe('the bass lines', () => {
     }
     expect(byId('creeping_bass').association).toEqual([{ point: SPOOKY, weight: 1, facet: 'bass' }]);
     expect(byId('tiptoe_bass').association).toEqual([{ point: held({ ...OLD.Spooky!, artic: 0.25, energy: 0.3 }), weight: 1, facet: 'bass' }]);
+    // (and the three read from the examples, each at its style, #572)
+    expect(byId('acid_bass').association).toEqual([{ point: stylePoint('acid'), weight: 1, facet: 'bass' }]);
+    expect(byId('octave_bass').association).toEqual([{ point: stylePoint('elektro'), weight: 1, facet: 'bass' }]);
   });
 
   it('Jambot’s presets, on the axes bass.ts reads, are the library’s styles moved by decision 076’s rule', () => {
@@ -323,6 +328,11 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
     walking_bass: [36, 40, 43, 44, 45, 48, 52, 40, 41, 45, 48, 42, 43, 47, 50, 47],
     creeping_bass: [36, 37, 36, 45, 46, 45, 41, 42, 41, 43, 44, 43],
     tiptoe_bass: [36, 31, 45, 40, 41, 36, 43, 38],
+    acid_bass: [
+      36, 36, 48, 36, 36, 43, 36, 46, 36, 48, 36, 39, 41, 43, 45, 45, 57, 45, 45, 52, 45, 55, 45, 57, 45, 48, 50, 52, 41, 41, 53, 41, 41, 48, 41, 51, 41, 53, 41, 44, 46, 48, 43,
+      43, 55, 43, 43, 50, 43, 53, 43, 55, 43, 46, 48, 50,
+    ],
+    octave_bass: [36, 48, 36, 48, 36, 48, 36, 48, 45, 57, 45, 57, 45, 57, 45, 57, 41, 53, 41, 53, 41, 53, 41, 53, 43, 55, 43, 55, 43, 55, 43, 55],
   },
   D: {
     root_bass: [38, 38, 47, 47, 43, 43, 45, 45],
@@ -332,6 +342,11 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
     walking_bass: [38, 42, 45, 46, 47, 50, 54, 42, 43, 47, 50, 44, 45, 49, 52, 49],
     creeping_bass: [38, 39, 38, 47, 48, 47, 43, 44, 43, 45, 46, 45],
     tiptoe_bass: [38, 33, 47, 42, 43, 38, 45, 40],
+    acid_bass: [
+      38, 38, 50, 38, 38, 45, 38, 48, 38, 50, 38, 41, 43, 45, 47, 47, 59, 47, 47, 54, 47, 57, 47, 59, 47, 50, 52, 54, 43, 43, 55, 43, 43, 50, 43, 53, 43, 55, 43, 46, 48, 50, 45,
+      45, 57, 45, 45, 52, 45, 55, 45, 57, 45, 48, 50, 52,
+    ],
+    octave_bass: [38, 50, 38, 50, 38, 50, 38, 50, 47, 59, 47, 59, 47, 59, 47, 59, 43, 55, 43, 55, 43, 55, 43, 55, 45, 57, 45, 57, 45, 57, 45, 57],
   },
 };
 

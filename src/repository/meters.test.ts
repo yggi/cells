@@ -138,13 +138,13 @@ describe('the presets find their meters', () => {
   const halfwayOf = (a: (typeof PRESETS)[number], b: (typeof PRESETS)[number]) =>
     Object.fromEntries(Object.keys(a.point).map((axis) => [axis, (a.point[axis]! + b.point[axis]!) / 2]));
   it('every pair of presets is a pair (28)', () => expect(pairs).toHaveLength(28));
-  // (on decision 076's axes a meter has three, sync harm bite, and between these nine pairs a meter placed for its own
+  // (on decision 076's axes a meter has three, sync harm bite, and between these eight pairs a meter placed for its own
   // sake, #369, lies nearer than either preset's: named on #572, the library's to even out, #540)
   const between: Readonly<Record<string, string>> = {
-    'Synth-pop|Techno': 'meter(grouping=meter("2/4"))',
     'Synth-pop|Ambient': 'meter(grouping=meter("6/8"))',
-    'Techno|Ambient': 'meter(grouping=meter("2/4"))',
-    'Deep house|Funk': 'meter(grouping=meter("7/8"))',
+    // (the plain 4/4 at the styles read from the examples, #572: Happy hardcore's and Elektro's lie nearer here)
+    'Synth-pop|Funk': 'meter',
+    'Deep house|Funk': 'meter',
     'Deep house|Swing jazz': 'meter(grouping=meter("5/4"))',
     'Ambient|Lo-fi hip hop': 'meter(grouping=meter("6/8"))',
     'Ambient|Funk': 'meter(grouping=meter("6/8"))',

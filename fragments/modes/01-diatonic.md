@@ -118,6 +118,33 @@ association:
     facet: mode
     args:
       mode: locrian
+  - point:
+      sync: 0.45
+      harm: 0.05
+      bite: 0.85
+      mood: 0.35
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
+  - point:
+      sync: 0.25
+      harm: 0.45
+      bite: 0.8
+      mood: 0.9
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
+  - point:
+      sync: 0.15
+      harm: 0.5
+      bite: 0.85
+      mood: 0.45
+    weight: 1
+    facet: mode
+    args:
+      mode: aeolian
 source: seed
 ---
 

@@ -19,7 +19,7 @@ import { holesOf } from './holes';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { METER_FRAGMENTS } from './meters';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { RHYTHM_FRAGMENTS } from './rhythms';
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
@@ -48,6 +48,12 @@ const AT_PRESET: Record<string, StylePoint> = {
   // (0.05 below Spooky in energy on the old axes, 0.05 below it in bite now, its energy offset (#572): at its point it
   // would tie with the organ, and take &padV from it by id)
   haunted_pad: { ...SPOOKY, bite: SPOOKY.bite! - 0.05 },
+  // (Kinderlied's, and the three read from the examples for their styles, #572)
+  sine_bass: KINDERLIED,
+  recorder: KINDERLIED,
+  tb303: stylePoint('acid'),
+  rave_lead: stylePoint('happyHardcore'),
+  square_bass: stylePoint('elektro'),
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
@@ -135,14 +141,14 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the nine for Electro swing and Spooky, each once at or near its preset, at half a default's weight (#350)", () => {
+  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the nine for Electro swing and Spooky and the five for Kinderlied, Acid, Happy hardcore and Elektro (#572), each once at or near its style, at half a default's weight (#350)", () => {
     expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm_kit', ...DEFAULTS, ...Object.keys(AT_PRESET)]);
     for (const f of INSTRUMENT_FRAGMENTS)
       expect(
         f.association.map((wp) => [wp.point, wp.facet]),
         f.id,
       ).toEqual([[AT_PRESET[f.id] ?? CENTRE, 'instrument']]);
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25, ...Array<number>(9).fill(0.125)]);
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25, ...Array<number>(11).fill(0.125), 0.0625, 0.125, 0.125]);
   });
 
   it('a query finds the kit and the defaults first at the eight presets, and at Electro swing and Spooky their own (#350)', () => {
@@ -154,6 +160,11 @@ describe('the instrument fragments', () => {
     expect(found(ELECTRO_SWING, 4)).toEqual(['brass_stab', 'clarinet', 'muted_trumpet', 'upright_bass']);
     expect(found(SPOOKY, 4)).toEqual(['celesta', 'organ', 'round_bass', 'theremin']);
     expect(found(AT_PRESET.haunted_pad!, 1)).toEqual(['haunted_pad']);
+    // (and Kinderlied and the three read from the examples their own, #572)
+    expect(found(KINDERLIED, 2)).toEqual(['recorder', 'sine_bass']);
+    expect(found(stylePoint('acid'), 1)).toEqual(['tb303']);
+    expect(found(stylePoint('happyHardcore'), 1)).toEqual(['rave_lead']);
+    expect(found(stylePoint('elektro'), 1)).toEqual(['square_bass']);
   });
 
   it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order; 13 of them taken by name are its lines word for word, as the retired core kit forwards them (#196)', () => {

@@ -20,6 +20,30 @@ association:
     weight: 1
     facet: meter
   - point:
+      sync: 0.1
+      harm: 0.12
+      bite: 0.5
+    weight: 1
+    facet: meter
+  - point:
+      sync: 0.45
+      harm: 0.05
+      bite: 0.85
+    weight: 1
+    facet: meter
+  - point:
+      sync: 0.25
+      harm: 0.45
+      bite: 0.8
+    weight: 1
+    facet: meter
+  - point:
+      sync: 0.15
+      harm: 0.5
+      bite: 0.85
+    weight: 1
+    facet: meter
+  - point:
       sync: 0.35
       harm: 1
       bite: 0.3

@@ -44,8 +44,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the eighteen rhythms, the seven bass lines, the seven harmonies, the fourteen instruments, the vibrato and the envelopes, the nine modes, the five performers, the stab line, the forty-six motifs, the six forms, the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: a hundred and thirty-eight', () => {
-    expect(LIBRARY).toHaveLength(138);
+  it('is the thirteen meters, the twenty-one rhythms, the nine bass lines, the eight harmonies, the nineteen instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the forty-nine motifs, the six forms, the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: a hundred and fifty-four (#572)', () => {
+    expect(LIBRARY).toHaveLength(154);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -75,7 +75,7 @@ describe('the library', () => {
       FORM_FRAGMENTS.length,
       BAND_FRAGMENTS.length,
       STYLE_FRAGMENTS.length,
-    ]).toEqual([13, 18, 7, 7, 14, 2, 9, 5, 1, 46, 6, 1, 1]);
+    ]).toEqual([13, 21, 9, 8, 19, 2, 9, 5, 3, 49, 6, 1, 1]);
   });
 
   it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
@@ -97,11 +97,11 @@ describe('the library', () => {
 
   it('and so do the rhythms, with the bell and scale: the bass lines, the harmonies and the modes change no rhythm query', () => {
     for (const point of POINTS)
-      expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 19, {}, { facet: 'rhythm' })));
+      expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 22, {}, { facet: 'rhythm' })));
   });
 
   it('and so do the bass lines: the harmonies change no bass query', () => {
-    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'bass' })), JSON.stringify(point)).toEqual(ranked(basses.query(point, 7)));
+    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'bass' })), JSON.stringify(point)).toEqual(ranked(basses.query(point, 9)));
   });
 
   it('and so does one that names chosen fragments with no use recorded', () => {
@@ -258,10 +258,10 @@ describe('a seed placed for one preset (#404)', () => {
 
   it('fires where it should: the dark cadence and the Charleston stabs at weight 1, the haunted progression at 1', () => {
     // (on decision 076's axes, #572: Electro swing, harmonic minor as Spooky is, comes within reach of the dark cadence and
-    // the haunted progression, and Deep house and Bossa nova, dorian and ionian, leave it; Spooky of the Charleston stabs)
+    // the haunted progression, and Deep house and Bossa nova, dorian and ionian, leave it; Spooky finds its own stab first since #572, spooky_stabs)
     expect(leaks(weighted('dark_cadence', 1))).toEqual(['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: dark_cadence`));
     expect(leaks(weighted('charleston_stabs', 1))).toEqual(
-      ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz', 'Spooky'].map((name) => `${name}, stab: charleston_stabs`),
+      ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, stab: charleston_stabs`),
     );
     expect(leaks(weighted('haunted_progression', 1).filter((f) => f.id !== 'dark_cadence'))).toEqual(
       ['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: haunted_progression`),

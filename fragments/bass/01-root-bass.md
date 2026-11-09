@@ -29,6 +29,13 @@ association:
       mood: 0.9
     weight: 1
     facet: bass
+  - point:
+      sync: 0.1
+      harm: 0.12
+      bite: 0.5
+      mood: 0.95
+    weight: 1
+    facet: bass
 source: seed
 lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---

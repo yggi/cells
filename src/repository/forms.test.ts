@@ -18,7 +18,7 @@ import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
 import { MOTIF_FRAGMENTS } from './motifs';
 import { newPoint } from '../engine/migrate/axes';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
@@ -97,8 +97,13 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   wonder: { point: offset(held(0.1, 0.12, 0.5, 0.25), -0.1) },
   haenschen: { point: offset(held(0.1, 0.12, 0.6, 0.45), 0.1) },
   hinein: { point: held(0.1, 0.12, 0.6, 0.35) },
-  heim: { point: offset(held(0.1, 0.12, 0.6, 0.25), -0.1) },
+  // (placed by hand at bite .55, #572: its energy offset would have set it on Kinderlied's point, beside twinkle)
+  heim: { point: offset(held(0.1, 0.12, 0.6, 0.25), -0.05) },
   weinet: { point: held(0.1, 0.12, 0.7, 0.45) },
+  // (read from the examples for the styles they stand for, #572: each at its style, the melodie 0.1 below Elektro in bite)
+  raveHook: { point: stylePoint('happyHardcore') },
+  sequencer: { point: stylePoint('elektro') },
+  melodie: { point: { ...stylePoint('elektro'), bite: 0.75 } },
 };
 /** The centre of style space, where a form for any style sits. */
 const CENTRE = heldForm(0.5, 0.5, 0.5, 0.5);
@@ -152,7 +157,7 @@ const piece = (form: string, motif: string) => {
 const moved = (braid: string, n: number) => braid.replace(/(^|\s)(-?\d+)/g, (_, space: string, d: string) => `${space}${Number(d) + n}`);
 
 describe('the motifs', () => {
-  it('are forty-six, each a line over the key named for its fragment, at its point as the facet motif', () => {
+  it('are forty-nine, each a line over the key named for its fragment, at its point as the facet motif', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
       expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
