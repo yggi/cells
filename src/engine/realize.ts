@@ -10,7 +10,7 @@ import type { Pick } from './ast';
 import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from './fiveto12';
 import { adsrOf, balance, CV_LAPS, type CompileResult, type Output, type Shifts } from './program';
 import { tableChain } from './helix';
-import { clocking, EPS, playedCells, readSharesBy, tapeMotion, turnLap, varispeedOf } from './clocking';
+import { clocking, EPS, playedCells, readAmountsBy, tapeMotion, turnLap, varispeedOf } from './clocking';
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { refsOf, stepsPerSecond } from './readers';
@@ -509,18 +509,25 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
   };
   // a swing whose share moves by cells (decision 081): its cells read as a moving parameter's, at each bar line the
   // clocks ask for; handed to them once the plan is whole (what was laid out before reads bar lines, which no share moves)
-  const swings = new Map<string, VoiceParam>();
+  // (and a bend's depth, at each line of its table's span)
+  const amounts = { swing: new Map<string, VoiceParam>(), depth: new Map<string, VoiceParam>() };
   for (const c of result.cells.values()) {
-    if (!c.swingMoves || !c.meter) continue;
-    try {
-      swings.set(c.name, { range: c.swingMoves.range, series: c.swingMoves.factors.map((f) => series(f, null, 0, 1)), env: null });
-    } catch (e) {
-      if (!(e instanceof ExpansionLimit)) throw e;
+    const moving = [
+      ['swing', c.meter ? c.swingMoves : undefined],
+      ['depth', c.bend?.depth],
+    ] as const;
+    for (const [amount, mv] of moving) {
+      if (!mv) continue;
+      try {
+        amounts[amount].set(c.name, { range: mv.range, series: mv.factors.map((f) => series(f, null, 0, 1)), env: null });
+      } catch (e) {
+        if (!(e instanceof ExpansionLimit)) throw e;
+      }
     }
   }
-  if (swings.size)
-    readSharesBy(result, statics, (meter, t) => {
-      const prm = swings.get(meter);
+  if (amounts.swing.size || amounts.depth.size)
+    readAmountsBy(result, statics, (meter, amount, t) => {
+      const prm = amounts[amount].get(meter);
       return prm ? paramAt(out, prm, t) : NaN;
     });
   return out;

@@ -47,9 +47,9 @@ At depth *d* a node's length is its table's number to the power *d*, normalized 
 - The amount bar *b* plays is its value at bar *b*'s start, held through the bar.
 - **Why the bar line:** it is the one place no time map moves.
   - A swing leans within a beat: every beat and every bar line stays where it is (`swingAt`).
-  - A bend, at any depth, keeps the bar's length (080), so the bar line stays where it is, though a beat doesn't.
+  - A bend, at any depth, keeps its span's length (080), so the line of its span stays where it is, though a beat doesn't. Its span is the bar where its table fits one, and the bars its table spans where it is longer (a tempo map). Inside such a span the bar lines move with the depth, so **a bend's depth is read at each line of its span**, the bar line where the table fits a bar. (Amended at the bend's rung, #597: the first draft said a bend keeps every bar's length, which holds only for a table of one bar.)
 
-  So a bar's start is the same whether its amount is known yet or not. Reading there is exact, with no loop, even for a cell the same meter steps. A bar with both reads them at the same instant, and they compose as 080 says, coarse to fine.
+  So a bar's start, or a span's, is the same whether its amount is known yet or not. Reading there is exact, with no loop, even for a cell the same meter steps. A bar with both reads them at the same instant, and they compose as 080 says, coarse to fine.
 - **It is also the feel contract's grain:** a host hands its performer one swing a bar frame (`perform.ts`, `meterOfFrame`).
 - **A share is held within the time map's bounds,** .05 to .95, as every share already is (`clocking.ts`). A depth needs no bounds, by (2).
 
@@ -57,7 +57,7 @@ At depth *d* a node's length is its table's number to the power *d*, normalized 
 
 - **The time map** (`clocking.ts`): a bar's placement is built for the amount that bar plays, once for each amount.
   - For a swing: the meter's own steps, its taps, and a note's end or a part of a step, placed through the bar's knots.
-  - For a bend: the bar's positions at the bar's depth.
+  - For a bend: each span's positions at the span's depth (`bentSteps`, one layout for each depth).
 - **The reading:** the plan (`realize.ts`) hands the clocks a reader of each amount at a time, the cells read as any moving parameter's are (`paramAt`).
   - The series read through the clocks, so while one bar's amount is being read, the other bars hold theirs (5). That is exact at the bar's start, by (3).
 - **The MIDI clock and the export** (#558) follow it per bar, as the time map does.

@@ -45,6 +45,7 @@ export function declare(ctx: Ctx): Declared {
   modes(ctx, decls);
   swings(ctx, decls);
   movingSwings(ctx, decls);
+  movingDepths(ctx, decls);
   const sections = sectionTables(decls, error);
   const stacks = gates(decls, implicit, error, ctx.warn);
   mixSelectors(ctx, decls);
@@ -274,6 +275,23 @@ function movingSwings(ctx: Ctx, decls: Map<string, CellDecl>): void {
     const held = values[0];
     if (held === undefined || bad !== undefined) continue;
     decls.set(name, { ...d, params: { ...d.params, swing: held }, swing: (d.swing ?? []).map((l) => (l.level === mv.level ? { ...l, share: held } : l)) });
+  }
+}
+
+/**
+ * A bend's depth moved by cells (decision 081, `bend=4n:&rubato:&k`, `bend=4n:&rubato:0..1 * &k`): its cells are known,
+ * and the depth held where there is no time is a range's first end, as the parser set it, or a bare cell's first value.
+ * Any depth is one (its table's ratios raised to it), so none is out of range.
+ */
+function movingDepths(ctx: Ctx, decls: Map<string, CellDecl>): void {
+  for (const [name, d] of decls) {
+    const mv = d.bend?.depthMoves;
+    if (!mv) continue;
+    for (const f of mv.factors) if (!decls.has(f.name)) ctx.unknownCell(f.name, f.span);
+    if (mv.range) continue;
+    const cell = decls.get(mv.factors[0]!.name);
+    const first = cell?.braid.kind === 'list' ? cell.braid.tokens.flatMap((t) => leaves(t.atom)).find((a) => a.kind === 'note') : undefined;
+    if (first?.kind === 'note') decls.set(name, { ...d, bend: { ...d.bend!, depth: first.value + first.alter } });
   }
 }
 

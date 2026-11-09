@@ -41,7 +41,7 @@ interface Body {
   seed: number | null;
   size: number | null;
   swing: { level: string; share: number }[] | null;
-  bend: { level: string; table: Ref } | null;
+  bend: { level: string; table: Ref; depth?: number; depthMoves?: ParamCells } | null;
   swingMoves: ({ level: string } & ParamCells) | null;
   legato: { level: string; share: number }[] | null;
   readonly params: Record<string, number | string>;
@@ -448,13 +448,31 @@ function readPlay(s: LineScanner, b: Body): void {
   }
 }
 
-/** bend= (decision 080): a meter's level, named by note value, and the table of its nodes' lengths, `bend=4n:&rubato`. */
+/**
+ * bend= (decision 080): a meter's level, named by note value, and the table of its nodes' lengths, `bend=4n:&rubato`; then,
+ * after a colon, its depth (decision 081): a number (`:.5`, `:-1`), a slider, a cell or a range moved by cells, `:0..1 * &k`.
+ */
 const readBend: Reader = (s, b) => {
+  const at = s.i;
   const level = s.match(/[1-9][0-9]*(?:n\.?|t)(?=:)/y);
   if (level === null) s.fail('a level and a table after bend=, the lengths of its nodes: bend=4n:&rubato');
   s.i++; // (:)
-  b.bend = { level: level!, table: s.cellRef('a table after bend=4n:, the lengths of its nodes: bend=4n:&rubato', 'after bend=4n:') };
-  b.paramSpans.bend = s.place(s.i);
+  const table = s.cellRef('a table after bend=4n:, the lengths of its nodes: bend=4n:&rubato', 'after bend=4n:');
+  let depth: number | undefined;
+  let depthMoves: ParamCells | null = null;
+  if (s.peek() === ':') {
+    s.i++;
+    const vs = s.i;
+    depthMoves = readMoving(s, 'depth', vs);
+    if (depthMoves) depth = depthMoves.range ? depthMoves.range[0] : 1;
+    else
+      depth = s.num(
+        `a depth after bend=${level}:&${table.name}:, how far its table applies (1 as written, 0 even, -1 inverted): bend=${level}:&${table.name}:.5`,
+        NUMBER_PLACES.depth,
+      ).value;
+  }
+  b.bend = { level: level!, table, ...(depth !== undefined ? { depth } : {}), ...(depthMoves ? { depthMoves } : {}) };
+  b.paramSpans.bend = s.place(at);
 };
 
 /**
