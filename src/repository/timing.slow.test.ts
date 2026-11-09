@@ -7,6 +7,9 @@ import { setTiming } from '../engine/edit';
 import { createRepository, EMPTY_LAYER, type StylePoint } from './fragments';
 import { fitsAs } from './fit';
 
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
+
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {
   const body = bodyOf(text);
@@ -15,13 +18,12 @@ const unionOf = (text: string, workbench: string) => {
 };
 import { useFragments } from './learned';
 import { LIBRARY } from './library';
-import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
-import { RHYTHM_FRAGMENTS } from './rhythms';
 import type { Resolve } from '../engine/program';
 import { resolveSeed } from './library';
 import { bodyOf } from '../engine/use';
+import { seedFragments } from './seed';
 
 /** A seeded draw in [0, 1) (mulberry32), as `recognise.test.ts` draws. */
 function draws(seed: number): () => number {

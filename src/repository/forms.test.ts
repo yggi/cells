@@ -9,17 +9,19 @@ import { bodyOf } from '../engine/use';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
 import { PITCHED_OPERATORS, variations } from '../engine/vary';
-import { FORM_FRAGMENTS } from './forms';
 import { fitsAs } from './fit';
 import { expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
 import { createRepository, pointDistance, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { LIBRARY, resolveSeed } from './library';
-import { MOTIF_FRAGMENTS } from './motifs';
 import { newPoint } from '../engine/migrate/axes';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, STYLES, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
+import { seedFragments } from './seed';
+
+const MOTIF_FRAGMENTS = seedFragments('motifs');
+const FORM_FRAGMENTS = seedFragments('forms');
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
 const takenOn = (text: string, bench: string, main?: string) => {

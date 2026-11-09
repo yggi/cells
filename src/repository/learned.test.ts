@@ -9,8 +9,10 @@ import { readFragment, writeFragment } from './files';
 import { byId, createRepository, EMPTY_LAYER, layerProblems, type Fragment, type LearnedLayer, type QueryOptions, type StylePoint } from './fragments';
 import { canonicalText, FILING_WEIGHT, fileFragment, sameText, USE_CAP, USE_STEP, usedTogether, useFragments, type Filing } from './learned';
 import { LIBRARY } from './library';
-import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { seedFragments } from './seed';
+
+const METER_FRAGMENTS = seedFragments('meters');
 
 const library = createRepository(LIBRARY);
 const PRESETS = [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ];

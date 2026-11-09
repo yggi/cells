@@ -2,12 +2,13 @@
 // takes a copy of it over a workbench that gives its main argument, with no diagnostic (a performer, with what it says
 // written out by hand: it plays on a card). A collection (a kit, an
 // instrument, a groove, the envelopes) has none.
-import { RHYTHM_FRAGMENTS } from './rhythms';
+import { seedFragments } from './seed';
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { signatureOf } from '../engine/use';
 import { LIBRARY, resolveSeed } from './library';
 
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 const lines = (...xs: string[]) => xs.join('\n');
 // (a word as it is, and a template taken with its arguments as a from line takes it, `meter(grouping=meter("7/8"))`; anything else quoted)
 const quoted = (id: string) => (/^[A-Za-z_][A-Za-z0-9_]*(\(.*\))?$/.test(id) ? id : JSON.stringify(id));

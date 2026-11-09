@@ -20,9 +20,11 @@ import type { Resolve } from '../engine/program';
 import { heard } from './heard';
 import { holesOf } from './holes';
 import { resolveSeed } from './library';
-import { METER_FRAGMENTS } from './meters';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
-import { RHYTHM_FRAGMENTS } from './rhythms';
+import { seedFragments } from './seed';
+
+const METER_FRAGMENTS = seedFragments('meters');
+const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
 const takenOn = (text: string, bench: string, main?: string) => {

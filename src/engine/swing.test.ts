@@ -5,10 +5,12 @@ import { eventsBetween, plan, swingOfBar } from './realize';
 import { toCore } from './core';
 import { migrations } from './migrate';
 
+const METER_FRAGMENTS = seedFragments('meters');
+
 /** Migrate's rule `rule` on a text, if it has one to offer. */
 const migration = (src: string, rule: string) => migrations({ old: true })(src, compileSource(src, undefined, { old: true })).find((r) => r.rule === rule);
 import swing from '../../fixtures/contracts/swing.json';
-import { METER_FRAGMENTS } from '../repository/meters';
+import { seedFragments } from '../repository/seed';
 
 // Swing on the bar (#18, the first rung): a meter leans one level of its tree, named by note value (`swing=8n:.67`), and
 // every node keeps its ends: a bar line, a beat and an odd bar never drift. Taps are placed through it.
