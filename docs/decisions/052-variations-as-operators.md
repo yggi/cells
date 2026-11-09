@@ -63,52 +63,52 @@ A drum bar on its workbench, and three of its 17 variations (1 rotation, 4 drops
 # source: a drum bar, the host's meter first
 &bar meter("4/4") step=120bpm
 
-&kick step=16n &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~
+&kick note=36 step=16n &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~
 &backbeat step=16n ~ ~ ~ ~ &sd ~ ~ ~ ~ ~ ~ ~ &sd ~ ~ ~
 &hat step=16n ~ ~ &hh:0:.25 ~ ~ ~ &hh:0:.5 ~ ~ ~ &hh:0:.25 ~ ~ ~ &hh:0:.25 ~
 &drums map=midi(10) [&kick, &backbeat, &hat]
-&bd s=white
-&sd s=white
-&hh s=white
+&bd note=36 s=white
+&sd note=38 s=white
+&hh note=42 s=white
 ```
 
 ```cells
 # by: rotate &hat
 &bar meter("4/4") step=120bpm
 
-&kick step=16n &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~
+&kick note=36 step=16n &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~
 &backbeat step=16n ~ ~ ~ ~ &sd ~ ~ ~ ~ ~ ~ ~ &sd ~ ~ ~
 &hat step=16n ~ ~ ~ &hh:0:.25 ~ ~ ~ &hh:0:.5 ~ ~ ~ &hh:0:.25 ~ ~ ~ &hh:0:.25
 &drums map=midi(10) [&kick, &backbeat, &hat]
-&bd s=white
-&sd s=white
-&hh s=white
+&bd note=36 s=white
+&sd note=38 s=white
+&hh note=42 s=white
 ```
 
 ```cells
 # by: drop &hat 6
 &bar meter("4/4") step=120bpm
 
-&kick step=16n &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~
+&kick note=36 step=16n &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~
 &backbeat step=16n ~ ~ ~ ~ &sd ~ ~ ~ ~ ~ ~ ~ &sd ~ ~ ~
 &hat step=16n ~ ~ &hh:0:.25 ~ ~ ~ ~ ~ ~ ~ &hh:0:.25 ~ ~ ~ &hh:0:.25 ~
 &drums map=midi(10) [&kick, &backbeat, &hat]
-&bd s=white
-&sd s=white
-&hh s=white
+&bd note=36 s=white
+&sd note=38 s=white
+&hh note=42 s=white
 ```
 
 ```cells
 # by: add &hat 0
 &bar meter("4/4") step=120bpm
 
-&kick step=16n &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~
+&kick note=36 step=16n &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~ &bd ~ ~ ~
 &backbeat step=16n ~ ~ ~ ~ &sd ~ ~ ~ ~ ~ ~ ~ &sd ~ ~ ~
 &hat step=16n &hh:0:.5 ~ &hh:0:.25 ~ ~ ~ &hh:0:.5 ~ ~ ~ &hh:0:.25 ~ ~ ~ &hh:0:.25 ~
 &drums map=midi(10) [&kick, &backbeat, &hat]
-&bd s=white
-&sd s=white
-&hh s=white
+&bd note=36 s=white
+&sd note=38 s=white
+&hh note=42 s=white
 ```
 
 A bass line over the chord in force on its workbench, and three of its 10 variations (4 transpositions, an inversion, a retrograde, 3 bends and a trim: its bend by −1 plays its source); its anchors are the roots on steps 0 and 4, where the chord changes:

@@ -142,7 +142,7 @@ It sends the score on a MIDI card on Jambot's channels and hears it on a sound c
 &bar meter("4/4") step=104bpm
 &key scale(dorian, D)
 &harm over=&key step=1m [0,2,4] [3,5,7]
-&kick step=4n &bd &bd &bd &bd
+&kick note=36 step=4n &bd &bd &bd &bd
 &drumlines [&kick]
 &bassline over=&harm step=8n 0 ~ 0 2 ~ 0 4 ~
 &padline over=&harm step=1m [0,1,2]

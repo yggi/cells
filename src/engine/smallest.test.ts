@@ -97,7 +97,7 @@ describe('the smallest piece: &a loop=A4', () => {
   it('whatever reads a sound keeps it off the built-in card: fm=, a splice; a note’s about= doesn’t', () => {
     expect(notes(compileSource('&op s=sine loop=A5\n&c s=sine loop=A4 fm=&op')).map((e) => e.voice)).toEqual(['c']);
     // (a groove reads its voices; it is heard, they aren't on their own)
-    const groove = compileSource('&bd s=sine loop=A1 env=&(map=adsr 0 .2 0 .1)\n&hh s=white env=&(map=adsr 0 .04 0 .02)\n&g step=2 &bd &hh');
+    const groove = compileSource('&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .2 0 .1)\n&hh note=42 s=white env=&(map=adsr 0 .04 0 .02)\n&g step=2 &bd &hh');
     expect(messages(groove)).toEqual([]);
     expect(notes(groove, 0, 1).map((e) => [e.voice, e.at, e.held ?? false])).toEqual([
       ['bd', 0, false],

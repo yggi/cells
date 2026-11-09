@@ -38,10 +38,10 @@ describe('a meter is a meter in the graph, written meter(…) or scan(…) (#123
 
 describe('a role and a stack of lines in the graph (#329)', () => {
   const BASE = `&bar meter("4/4") step=120bpm
-&bd s=sine loop=A1
-&hh s=white
+&bd note=36 s=sine loop=A1
+&hh note=42 s=white
 &kit &bd &hh
-&kick step=8n 0 ~ 0 ~
+&kick note=36 step=8n 0 ~ 0 ~
 &hat step=8n ~ 1 ~ 1
 &accent map=amp step=4n 1 .5
 `;
@@ -79,10 +79,10 @@ describe("a key's tonic read from a cell is a wire, as a spliced cell's (#290)",
 
 describe('a stack a gate plays is on the way, as the routing has it (#329)', () => {
   const src = `&bar meter("4/4") step=120bpm
-&bd s=sine loop=A1
-&hh s=white
+&bd note=36 s=sine loop=A1
+&hh note=42 s=white
 &kit &bd &hh
-&kick step=8n 0 ~ 0 ~
+&kick note=36 step=8n 0 ~ 0 ~
 &hat step=8n ~ 1 ~ 1
 &accent map=amp step=4n 1 .5
 &lines [&kick * &accent, &hat]
@@ -117,12 +117,12 @@ describe('a stack a gate plays is on the way, as the routing has it (#329)', () 
 describe('a drummer: a gate whose kit holds the drums its lines name (#379, decision 064)', () => {
   const src = [
     '&bar meter("4/4") step=120bpm',
-    '&bd s=sine loop=A1',
-    '&sd s=white',
-    '&hh s=white hpf=8000',
-    '&rim s=white',
+    '&bd note=36 s=sine loop=A1',
+    '&sd note=38 s=white',
+    '&hh note=42 s=white hpf=8000',
+    '&rim note=37 s=white',
     '&kit &bd &sd &hh &rim',
-    '&kick step=8n &bd ~ &bd ~',
+    '&kick note=36 step=8n &bd ~ &bd ~',
     '&hat step=8n &hh &hh',
     '&lines [&kick, &hat]',
     '&drumsOut play=&lines &kit',

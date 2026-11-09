@@ -32,7 +32,7 @@ function kitOf(name, notes) {
             return null;
         members.push({ member: m[1], pitch: m[2] ?? null });
     }
-    const keys = kitNotes(members.map((m) => m.member));
+    const keys = kitNotes(members.map((m) => m.member), gmDrumNote);
     const out = new Map();
     for (const { member, pitch } of members) {
         const key = keys.get(member);
@@ -40,8 +40,8 @@ function kitOf(name, notes) {
             continue;
         const gm = gmDrumNote(member);
         const own = gm === null ? undefined : DRUMS[DRUM_OF[gm] ?? ''];
-        const sound = own ? own.replace(/ ?loop=\S+/, '') : pitch ? TUNED : NOISE;
-        out.set(key, { member, sound: pitch ? sound.replace(/^(s=\S+)/, `$1 loop=${pitch}`) : sound });
+        const sound = (own ? own.replace(/ ?loop=\S+/, '') : pitch ? TUNED : NOISE).replace(/^note=\d+ /, '');
+        out.set(key, { member, sound: `note=${key} ${pitch ? sound.replace(/^(s=\S+)/, `$1 loop=${pitch}`) : sound}` });
     }
     return notes.every((n) => out.has(n.key)) ? out : null;
 }

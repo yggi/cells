@@ -76,11 +76,11 @@ const GM_DRUMS = new Map(GM_KIT.flatMap(({ note, name, aliases }) => [name, ...a
 export function gmDrumNote(name) {
     return GM_DRUMS.get(name.toLowerCase().replace(/\d+$/, '')) ?? null;
 }
-export function kitNotes(members) {
+export function kitNotes(members, noteOf) {
     const out = new Map();
     for (const m of members) {
-        const n = gmDrumNote(m);
-        if (n !== null)
+        const n = noteOf(m);
+        if (n !== null && n !== undefined)
             out.set(m, n);
     }
     const taken = new Set(out.values());
@@ -139,7 +139,7 @@ export function channelTable(result, outputs = [{}]) {
     if (hasMidiCards(result))
         return cardTable(result);
     const { voices, members } = routable(result);
-    const notes = kitNotes(members);
+    const notes = kitNotes(members, (m) => result.cells.get(m)?.drumNote);
     const table = [];
     const kits = [];
     (outputs.length ? outputs : [{}]).forEach((o, i) => {
@@ -181,7 +181,7 @@ function cardTable(result) {
     for (const c of result.cells.values())
         if (c.map?.kind === 'midi')
             ports.add(c.map.port);
-    const notes = kitNotes([...members].sort(order));
+    const notes = kitNotes([...members].sort(order), (m) => result.cells.get(m)?.drumNote);
     return {
         voices: [...voices.values()].sort((a, b) => order(a.voice, b.voice) || a.port - b.port || a.channel - b.channel),
         kit: [...notes].map(([member, note]) => ({ member, note })),

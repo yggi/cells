@@ -99,9 +99,9 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 ```cells
 &bar meter("4/4") step=&tempo
 &tempo step=120bpm
-&bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
-&sd s=white env=&(map=adsr 0 .15 0 .05)
-&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
+&sd note=38 s=white env=&(map=adsr 0 .15 0 .05)
+&hh note=42 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh
 &beat step=8n 0 2 1 2
 &drums play=&beat level=.6 &kit                 # the drummer: 0 the kick, 1 the snare, 2 the hat
@@ -148,14 +148,14 @@ sound: mix or send the gate.
 ```cells
 &bar meter("4/4") step=&tempo
 &tempo step=120bpm
-&bd s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
-&sd s=white env=&(map=adsr 0 .15 0 .05)
-&hh s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
+&sd note=38 s=white env=&(map=adsr 0 .15 0 .05)
+&hh note=42 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
 &kit &bd &sd &hh
-&kick step=8n &bd ~ ~ &bd ~ ~ &bd ~
+&kick note=36 step=8n &bd ~ ~ &bd ~ ~ &bd ~
 &backbeat step=4n ~ &sd ~ &sd
 &hat step=8n &hh:0:.5 &hh:0:.3
-&rim step=1m &sd(3,8)
+&rim note=37 step=1m &sd(3,8)
 &rimLevel map=amp step=8n .4 0 0 .3 0 0 .5 0
 &drumlines [&kick, &backbeat, &hat, &rim * &rimLevel]
 &drummer play=&drumlines level=.6 &kit          # the drummer: each hit its line's, kick, backbeat or hat

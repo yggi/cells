@@ -16,8 +16,8 @@ const BAND = `&bar scan(1 1 1 1) step=2
 &bass step=2n 0 5
 &sub loop=55
 &groove step=8n &bd ~ &hh ~
-&bd s=sine loop=A1
-&hh s=white hpf=8000`;
+&bd note=36 s=sine loop=A1
+&hh note=42 s=white hpf=8000`;
 const OUT = `&out map=sample [&theme * &reed, &groove]`;
 
 const compiled = (src: string) => {

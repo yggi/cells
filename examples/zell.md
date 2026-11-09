@@ -35,8 +35,8 @@ description: Zelluläre Aktivität — it builds, layer by layer, and ends.
 &bass tags="bass" s=square loop=A1 lpf=600 env=&strike
 &arpeggio tags="arpeggio" s=square loop=A3 lpf=300..4000 * &sweep lpq=4 env=&(map=adsr .002 .1 .2 .05)
 &lead tags="melody" s=saw loop=A4 lpf=2200 delaytime=&bar delay=.3 delayfeedback=.3 room=.2 env=&(map=adsr .03 .2 .7 .2)
-&bd tags="beat" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&thump
-&sd tags="beat" gain=.35 s=white hpf=1200 env=&snap
+&bd note=36 tags="beat" gain=.8 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&thump
+&sd note=38 tags="beat" gain=.35 s=white hpf=1200 env=&snap
 &metal tags="beat" s=square loop=A7 hpf=5000 env=&click
 
 # Aufbau: the sections the song stacks — eight bars (the progression) a step

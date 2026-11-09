@@ -18,7 +18,7 @@ What is missing is that a filter can't stand on its own, after a mix: `lpf=` on 
 | EG | a `map=adsr` cell; the seed's [envelopes](../../fragments/expression/02-envelopes.md) | plays |
 | LFO | a braid turned slowly, `&lfo map=lin loop=&bar/16 sin(12)` (a bipolar wave, −1 to 1, read as a share from 0 to 1: decision 067 §5); the seed's [vibrato](../../fragments/expression/01-vibrato.md) | plays as CV, into any moving parameter or `pitch=` |
 | sequencer | a stepped line, quantised by `over=&key`; a transposer as a coarser pitch held under it, `(&seq + &changes)` | plays |
-| sample and hold | a stepped cell, `&sh map=lin step=8n .3 .9 .5 .2`, its values left to chance with `?` | plays |
+| sample and hold | a stepped cell, `&sh note=70 map=lin step=8n .3 .9 .5 .2`, its values left to chance with `?` | plays |
 | clock, divider | a meter and its taps (`step=16n`, `loop=&bar/8`) | plays |
 | mixer | a mix, `[&a, &b * .5]` | plays |
 | attenuator | a parameter's range, `lpf=lo..hi * &cv` | plays |
@@ -55,7 +55,7 @@ The VCF and the echo are written twice, once on each oscillator, since a filter 
 &sub s=square loop=C1 pitch=&drift lpf=70..4800 * &contour * &sweep lpq=4..16 * &jitter delay=.3 delaytime=8n. delayfeedback=.45
 &mono [&amp * &saw, &amp * &sub * .5]
 
-&kick oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump gain=.8
+&kick note=36 oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump gain=.8
 &hat oneshot=1 s=white hpf=7500 env=&click gain=.25
 &beat step=16n &kick &hat &hat &hat [&kick,&hat] &hat &hat &hat:0:.5
 
