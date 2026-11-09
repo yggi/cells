@@ -12,6 +12,7 @@ import { soundsIdentical } from './sameness';
 import { normalise } from './normalise/index';
 import { structureOf } from './measure';
 import { LIBRARY, resolveSeed } from '../repository/library';
+import { EXAMPLES } from './examples';
 import { METER_FRAGMENTS } from '../repository/meters';
 import { RHYTHM_FRAGMENTS } from '../repository/rhythms';
 import { INSTRUMENT_FRAGMENTS } from '../repository/instruments';
@@ -191,6 +192,14 @@ describe('a named use of a collection (decision 059)', () => {
     // (a fragment's own helper collision is said through it)
     const resolve = library({ outer: '&a from inner\n&h s=saw', inner: '&a [&h * 1]\n&h s=sine' });
     expect(errors('* from outer', resolve)).toEqual(['&h is "inner"\'s, read by its &a, and "outer"\'s too: rename "outer"\'s, or name &h in the use to override it (in "outer")']);
+  });
+
+  it('a line written in place of one `* from` gives keeps its helpers: the band’s &drumsOut, word for word (yggi/cell-studio#610)', () => {
+    // (the band's &drumsOut reads its copy's own &drums_kit, which nothing else reads: overridden, it went with it)
+    const radio = EXAMPLES.radio.source;
+    const written = radio.replace('* from band', '* from band\n&drumsOut play=&drumlines &drums_kit');
+    expect(errors(written)).toEqual([]);
+    expect(soundsIdentical(radio, written, 8, seed)).toBe(true);
   });
 
   it('a use that adds nothing says so: twice on the issue’s section, on no seed fragment', () => {

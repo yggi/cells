@@ -146,6 +146,8 @@ interface Merged {
  */
 function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, message: string) => void, host: string): Merged {
   const defined = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
+  // (what the level's own lines read: a helper of a line it overrides that its own line reads too goes on being given)
+  const readHere = new Set(own.flatMap((l) => l.reads));
   const given = new Map<string, { id: string; code: string }>();
   const lines: Line[] = own.filter((l) => l.name);
   const per = used.map(({ id, names, lines: theirs, resolved }, i) => {
@@ -156,13 +158,14 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       for (const n of lacking) say(i, `&${n} is not in ${quoted(id)}: it defines ${[...byName.keys()].map((m) => `&${m}`).join(', ')}`);
     }
     // (all of it, `*`: but a line the fragment's own lines read, where every one that reads it the level overrides, goes
-    // with them, as a helper of the overridden line: `use * from meter(swing=8n:2/3)` under the piece's own &bar takes no &swing)
+    // with them, as a helper of the overridden line: `use * from meter(swing=8n:2/3)` under the piece's own &bar takes no &swing;
+    // unless the level's own lines read it, as a line written in the overridden one's place does, word for word)
     const shadowed = new Set<string>();
     if (!names)
       for (let more = true; more;) {
         more = false;
         for (const n of byName.keys()) {
-          if (defined.has(n) || shadowed.has(n)) continue;
+          if (defined.has(n) || shadowed.has(n) || readHere.has(n)) continue;
           const readers = theirs.filter((l) => l.name && l.name !== n && l.reads.includes(n));
           if (readers.length && readers.every((l) => defined.has(l.name!) || shadowed.has(l.name!))) {
             shadowed.add(n);
