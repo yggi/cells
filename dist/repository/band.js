@@ -1,5 +1,5 @@
 import { parse } from "../engine/parser/index.js";
-import { bodyOf, expand } from "../engine/use.js";
+import { bodyOf, expand, signatureOf } from "../engine/use.js";
 import { AXES, CENTRE as CENTRE_VALUES } from "../engine/style.js";
 import { createRepository } from "./fragments.js";
 import { INSTRUMENT_FRAGMENTS } from "./instruments.js";
@@ -74,4 +74,9 @@ export function scoreStyle(score, resolve = resolveSeed) {
 export function resolveBand(score, resolve = resolveSeed) {
     const text = bandAt(scoreStyle(score, resolve) ?? CENTRE);
     return (id, hash) => (id === 'band' ? text : resolve(id, hash));
+}
+export function bandLine(score, band = resolveSeed('band')) {
+    const defined = new Set(parse(score).cells.map((c) => c.name));
+    const passed = (signatureOf(band)?.optional ?? []).map((p) => p.slice(1)).filter((p) => defined.has(p));
+    return passed.length ? `* from band(${passed.map((p) => `${p}=&${p}`).join(', ')})` : '* from band';
 }

@@ -195,9 +195,11 @@ describe('a named use of a collection (decision 059)', () => {
   });
 
   it('a line written in place of one `* from` gives keeps its helpers: the band’s &drumsOut, word for word (yggi/cell-studio#610)', () => {
-    // (the band's &drumsOut reads its copy's own &drums_kit, which nothing else reads: overridden, it went with it)
+    // (the band's &drumsOut reads its copy's own kit, which nothing else reads: overridden, it went with it. The band is a
+    // template since #560: `*` takes the heads the piece doesn't write, and the kit is the copy's, `&band_drums_kit`,
+    // as the expansion writes it out)
     const radio = EXAMPLES.radio.source;
-    const written = radio.replace('* from band', '* from band\n&drumsOut play=&drumlines &drums_kit');
+    const written = radio.replace(/^\* from band.*$/m, (line) => `${line}\n&drumsOut play=&drumlines &band_drums_kit`);
     expect(errors(written)).toEqual([]);
     expect(soundsIdentical(radio, written, 8, seed)).toBe(true);
   });
@@ -297,7 +299,7 @@ describe('the rhythms with the General MIDI kit (S1)', () => {
       expect(r.uses?.[0]?.overrode).toEqual([]);
       expect(soundsIdentical(piece, expand(piece, resolveSeed), undefined, seed)).toBe(true);
     });
-  it('every rhythm is one of the eighteen', () => expect(RHYTHM_FRAGMENTS).toHaveLength(18));
+  it('every rhythm is one of the twenty-two (#572: four read from the examples)', () => expect(RHYTHM_FRAGMENTS).toHaveLength(22));
 });
 
 describe('the lockfile', () => {

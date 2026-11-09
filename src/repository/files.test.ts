@@ -1,6 +1,7 @@
 // Fragment files (#143, decision 047): every seed file writes back byte for byte and every seed fragment reads back
 // unchanged; metadata keeps its unknown keys in order; a malformed file names its problem and its line; the seed library
 // built from the files is the meters and the rhythms.
+import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { readFragment, readFragments, writeFragment, type FragmentFile } from './files';
 import { BASS_FRAGMENTS } from './bass';
@@ -9,7 +10,13 @@ import { INSTRUMENT_FRAGMENTS } from './instruments';
 import { LIBRARY } from './library';
 import { METER_FRAGMENTS } from './meters';
 import { MODE_FRAGMENTS } from './modes';
-import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
+
+// (the three styles read from the examples, #572)
+const ACID = stylePoint('acid');
+const HAPPY_HARDCORE = stylePoint('happyHardcore');
+const ELEKTRO = stylePoint('elektro');
+const DARK_AMBIENT = stylePoint('darkAmbient');
 import { RHYTHM_FRAGMENTS } from './rhythms';
 import { fragmentsOf, SEED } from './seed';
 import { SEED_FILES } from './seed.generated';
@@ -54,8 +61,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are a hundred and twenty (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507)', () =>
-    expect(files).toHaveLength(120));
+  it('are a hundred and forty-one (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572)', () =>
+    expect(files).toHaveLength(141));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -83,9 +90,11 @@ describe('the seed files', () => {
   // by hand, the other meters' and the claves', have the files as their source)
   it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
-      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA],
+      // (and Kinderlied's 4/4 and the three read from the examples', #572)
+      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT],
       'meter(swing=8n:2/3)': [SWING_JAZZ, ELECTRO_SWING],
-      'meter(grouping=meter("5/4"))': [{ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }, SPOOKY],
+      // (its own point, placed on the old axes at sync .4 harm .9 artic .5 energy .3, moved by decision 076's rule, #572)
+      'meter(grouping=meter("5/4"))': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
       'meter(swing=16n:.65)': [LO_FI],
       'meter(swing=16n:.6)': [DEEP_HOUSE, FUNK],
       'meter(swing=16n:31/60)': [AMBIENT],
@@ -103,8 +112,15 @@ describe('the seed files', () => {
       dark_cadence: [SPOOKY],
       spooky_drums: [SPOOKY],
       kinderlied_drums: [KINDERLIED],
+      acid_drums: [ACID],
+      happy_hardcore_drums: [HAPPY_HARDCORE],
+      elektro_drums: [ELEKTRO],
+      acid_bass: [ACID],
+      octave_bass: [ELEKTRO],
+      drone_bass: [DARK_AMBIENT],
+      industrial_drums: [DARK_AMBIENT],
       harmonic_minor: [ELECTRO_SWING, SPOOKY],
-      'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI],
+      'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT],
       'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK],
       'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED],
       upright_bass: [ELECTRO_SWING],
@@ -115,14 +131,24 @@ describe('the seed files', () => {
       organ: [SPOOKY],
       theremin: [SPOOKY],
       celesta: [SPOOKY],
+      sine_bass: [KINDERLIED],
+      recorder: [KINDERLIED],
+      tb303: [ACID],
+      rave_lead: [HAPPY_HARDCORE],
+      square_bass: [ELEKTRO],
+      prepared_piano: [DARK_AMBIENT],
+      drone_pad: [DARK_AMBIENT],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
-    const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT], pumping_bass: [TECHNO] };
+    const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED], pumping_bass: [TECHNO, HAPPY_HARDCORE] };
+    // (a meter or a drum bar speaks to no mode, so its point leaves mood out: the preset's other axes, exactly, decision 076)
+    const NO_MODE = (id: string) => id.startsWith('meter') || id.endsWith('_drums');
+    const onItsAxes = (id: string, p: object) => (NO_MODE(id) ? Object.fromEntries(Object.entries(p).filter(([axis]) => axis !== 'mood')) : p);
     for (const [id, points] of Object.entries(AT_PRESETS))
       expect(
         LIBRARY.find((f) => f.id === id)!.association.map((wp) => wp.point),
         id,
-      ).toEqual(points);
+      ).toEqual(points.map((p) => onItsAxes(id, p)));
     for (const [id, points] of Object.entries(AFTER_OWN_POINT))
       expect(
         LIBRARY.find((f) => f.id === id)!
@@ -133,7 +159,17 @@ describe('the seed files', () => {
   });
 
   // (the seeds written by hand for the point proposed for a Spooky preset, #349, or near it, and lifted from nothing)
-  const WRITTEN = new Set(['spooky_drums', 'creeping_bass', 'dark_cadence', 'ghost_drums', 'tiptoe_bass', 'haunted_progression', 'haunted_pad', 'kinderlied_drums']);
+  const WRITTEN = new Set([
+    'spooky_drums',
+    'creeping_bass',
+    'dark_cadence',
+    'ghost_drums',
+    'tiptoe_bass',
+    'haunted_progression',
+    'haunted_pad',
+    'kinderlied_drums',
+    'axis_progression',
+  ]);
   it('each says it is a seed, every drum bar, bass line and harmony and what an example gave where it was lifted from, but those written for Spooky, and each has prose', () => {
     expect(SEED.every((f) => f.meta.source === 'seed' && f.prose.length > 0)).toBe(true);
     expect(new Set(SEED.filter((f) => f.meta.lifted).map((f) => f.fragment.id))).toEqual(
@@ -144,7 +180,7 @@ describe('the seed files', () => {
           ...HARMONY_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic_minor'),
-          ...MOTIF_FRAGMENTS.filter((f) => f.id === 'gypsy'),
+          ...MOTIF_FRAGMENTS.filter((f) => ['gypsy', 'raveHook', 'sequencer', 'melodie', 'ghostPhrase'].includes(f.id)),
           ...INSTRUMENT_FRAGMENTS.filter((f) => !['gm_kit', 'bass', 'keys', 'pad', 'lead'].includes(f.id) && !WRITTEN.has(f.id)),
         ].map((f) => f.id),
       ),
@@ -158,6 +194,13 @@ describe('the seed files', () => {
         'yggi/cells examples/electroswing.md @ 7622a87',
         'yggi/cells examples/electroswing.md @ 6d1bfa7',
         'yggi/cells examples/spooky.md @ 6d1bfa7',
+        // (#572: the parts of Spooky and Kinderlied by facet, and of the three styles read from the examples)
+        'yggi/cells examples/spooky.md @ a8de625f',
+        'yggi/cells examples/kinderlied.md @ a8de625f',
+        'yggi/cells examples/acid.md @ 014c4c73',
+        'yggi/cells examples/hypercell.md @ 014c4c73',
+        'yggi/cells examples/zell.md @ 014c4c73',
+        'yggi/cells examples/ghosts.md @ a8de625f',
       ]),
     );
   });

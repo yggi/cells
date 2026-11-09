@@ -585,7 +585,7 @@ function readParam(s: LineScanner, b: Body, key: string): void {
     b.paramSpans[key] = s.span(vs);
     return;
   }
-  // a blend of two waves: s=tri..square * &style[artic], the share of the second each note starts on (#411)
+  // a blend of two waves: s=tri..square * &style[bite], the share of the second each note starts on (#411)
   const blend = key === 's' ? s.text.slice(s.i).match(/^([A-Za-z]+)\.\.([A-Za-z]+)/) : null;
   if (blend) {
     s.i += blend[0].length;
@@ -599,9 +599,9 @@ function readParam(s: LineScanner, b: Body, key: string): void {
       }
       s.i++;
       s.skipSpace();
-      factors.push(s.cellRef(`a cell after *, like s=${blend[0]} * &style[artic]`, 'in s='));
+      factors.push(s.cellRef(`a cell after *, like s=${blend[0]} * &style[bite]`, 'in s='));
     }
-    if (factors.length === 0) s.fail(`s=${blend[0]}: a blend of two waves is moved by cells, the share of the second: s=${blend[0]} * &style[artic]`, vs, s.i - vs);
+    if (factors.length === 0) s.fail(`s=${blend[0]}: a blend of two waves is moved by cells, the share of the second: s=${blend[0]} * &style[bite]`, vs, s.i - vs);
     b.params.s = blend[1]!;
     b.paramCells.s = { range: [0, 1], factors, span: s.span(vs), to: blend[2]! };
     b.paramSpans.s = s.span(vs);
@@ -788,7 +788,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   let freeSteps = '';
   // a style's axes by name (sync=.3, decision 063): its braid, in the axes' order, once the line is read
   const axes = new Map<string, { value: string; at: number }>();
-  // an envelope's slots by name (attack=.3..0.01 * &style[artic]): its braid, in the slots' order, once the line is read
+  // an envelope's slots by name (attack=.3..0.01 * &style[bite]): its braid, in the slots' order, once the line is read
   const adsr = new Map<string, number>();
 
   while (!s.done()) {
@@ -840,6 +840,13 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       }
       if (key === null) {
         if (word in RETIRED_KEYS) s.fail(RETIRED_KEYS[word], at, word.length);
+        // (decision 076: articulation is bite now, and energy is off the point; Migrate writes a style on the old axes on the new)
+        if ((word === 'artic' || word === 'energy') && b.map?.kind === 'style')
+          s.fail(
+            `${word}= is retired: a style's axes are ${AXIS_NAMES.join(' ')}, bite its articulation and energy off the point (decision 076); Migrate rewrites it`,
+            at,
+            word.length,
+          );
         const near = nearestAttribute(word);
         s.fail(
           `Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`,
@@ -947,8 +954,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
 
   if (axes.size) {
     const [first, { at }] = [...axes][0]!;
-    if (b.map?.kind !== 'style') s.fail(`${first}= is an axis of a style: it goes on a map=style cell (&funk map=style sync=.3 harm=.45 artic=.55 energy=.55)`, at, first.length);
-    if (generator || tokens.length) s.fail('A style writes its axes by name (sync=.3) or in order (.3 .45 .55 .55), not both', at, first.length);
+    if (b.map?.kind !== 'style') s.fail(`${first}= is an axis of a style: it goes on a map=style cell (&funk map=style sync=.3 harm=.45 bite=.55 mood=.5)`, at, first.length);
+    if (generator || tokens.length) s.fail('A style writes its axes by name (sync=.3) or in order (.3 .45 .55 .5), not both', at, first.length);
     const missing = AXIS_NAMES.filter((n) => !axes.has(n));
     if (missing.length)
       s.fail(

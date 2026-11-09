@@ -116,14 +116,10 @@ const WRITTEN_IN: Readonly<Record<string, readonly string[]>> = {
 /**
  * As written, every name a `from` line takes is renamed too (`&bd` is `&zq0=bd`, decision 075 §3a–b: a collection's
  * cells, a template's several heads, a `*` written out by name), so the feel's parts are renamed with them. The
- * instruments and the performers read only what they declare (#560 rung 3c–e: `bass_performer(bassV=&bassV)`); a score
- * the default band plays (`* from band`, *Radio*, #576) still binds `&style` and its parts' lines by the names the band
- * and its feel read them by (#560, rungs 2 and 3c–e's band).
+ * instruments, the performers and the band read only what they declare (#560 rung 3c–e: `bass_performer(bassV=&bassV)`,
+ * `* from band(bassline=&bassline, …, style=&style)`), so only the feel (rung 2) is left.
  */
-const AS_WRITTEN: Readonly<Record<string, readonly string[]>> = {
-  ...Object.fromEntries(FEEL.map((k) => [k, ['feel']])),
-  radio: ['sound', 'diagnostics', 'feel'],
-};
+const AS_WRITTEN: Readonly<Record<string, readonly string[]>> = Object.fromEntries(FEEL.map((k) => [k, ['feel']]));
 
 /** The names a text binds itself: its own lines' and every name its `from` lines take (decision 075 §3a–b). */
 function bound(text: string): string[] {

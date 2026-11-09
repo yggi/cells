@@ -386,6 +386,12 @@ interface OldBinding {
   readonly warn: (message: string) => void;
 }
 
+/** A piece's own lines, as a `*` from a template meets them: the names it defines, and what each of its lines reads. */
+interface Level {
+  readonly defines: ReadonlySet<string>;
+  readonly reads: ReadonlyMap<string, readonly string[]>;
+}
+
 /** Lines that came through a collection: their names are shared, never a copy's own. */
 const sharedLines = (lines: readonly Line[]): Line[] => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
 
@@ -402,6 +408,7 @@ function give(
   say: (message: string) => void,
   taken: Set<string>,
   old?: OldBinding,
+  level?: Level,
 ): Given {
   const { id, from } = entry;
   const signatures = linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []));
@@ -420,7 +427,7 @@ function give(
     return { taken: { id, names: asked, lines: sharedLines(theirs), resolved: true }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
-  return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken, old);
+  return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken, old, level);
 }
 
 /**
@@ -439,6 +446,7 @@ function instantiate(
   say: (message: string) => void,
   taken: Set<string>,
   old?: OldBinding,
+  level?: Level,
 ): Given {
   const full = fragmentLines(path, text, resolve, say);
   const own = full.filter((l) => !l.shared && l.name);
@@ -469,11 +477,9 @@ function instantiate(
   const args = new Map((from.args ?? []).map((a) => [a.name, a.value] as const));
   // (read the old way: a parameter the library read by name before it declared it, filled by the piece's cell of its
   // name, BOUND_BY_NAME)
-  for (const p of old ? (BOUND_BY_NAME.get(id) ?? []) : [])
-    if (optional.includes(p) && !args.has(p) && old!.defines.has(p)) {
-      args.set(p, `&${p}`);
-      old!.warn(byNameMessage(id, p, `${from.id}(${[...(from.args ?? []).map((a) => `${a.name}=${a.value}`), `${p}=&${p}`].join(', ')})`));
-    }
+  const readByName = old ? (BOUND_BY_NAME.get(id) ?? []).filter((p) => optional.includes(p) && !args.has(p) && old.defines.has(p)) : [];
+  for (const p of readByName) args.set(p, `&${p}`);
+  if (readByName.length) old!.warn(byNameMessage(id, readByName, `${from.id}(${[...args].map(([k, v]) => `${k}=${v}`).join(', ')})`));
   for (const k of args.keys())
     if (!optional.includes(k))
       say(`${quoted(id)} takes no ${k}=: ${optional.length ? `its optional parameters are ${optional.map((o) => `${o}=`).join(', ')}` : 'it has no optional parameters'}`);
@@ -523,10 +529,27 @@ function instantiate(
         undeclared.add(r);
         say(`${quoted(id)}'s &${l.name} reads &${r}, which it neither defines nor declares: name it in its signature (&${heads[0]} from (&${r}) …), or define it`);
       }
+  // (`*` takes the heads the piece doesn't define, as from a collection: a head it writes itself is its own, and of the
+  // copy only what its other heads read, and what the piece's own line for it reads, are taken; cell-studio#610)
+  const overridden = from.names === null && level ? heads.filter((h) => level.defines.has(h)) : [];
+  if (overridden.length) {
+    const back = new Map([...names].map(([t, mine]) => [mine, t] as const));
+    reached.clear();
+    // (and what any of the piece's lines reads of it: a copy's own name, or a name it shares from a collection, `&bd`)
+    const read = [...level!.reads.values()].flat();
+    const seeds = [...heads.filter((h) => !overridden.includes(h)), ...read.flatMap((r) => back.get(r) ?? (byName.has(r) && !definesOwn.has(r) ? [r] : []))];
+    for (const queue = seeds.filter((n) => !overridden.includes(n)); queue.length;) {
+      const n = queue.shift()!;
+      if (reached.has(n) || overridden.includes(n)) continue;
+      reached.add(n);
+      if (byReference.has(n)) continue;
+      for (const r of byName.get(n)?.reads ?? []) if (byName.has(r)) queue.push(r);
+    }
+  }
   const copy: Line[] = [];
   for (const l of own) {
     const p = l.name!;
-    if (byReference.has(p) || !reached.has(p)) continue;
+    if (byReference.has(p) || !reached.has(p) || overridden.includes(p)) continue;
     let code = renamed(l.code, names);
     if (values.has(p)) code = inherited(names.get(p)!, code, asCell(values.get(p)!, p, own));
     if (heads.includes(p) && from.head.length && one) code = withAttributes(code, from.head);
@@ -615,6 +638,7 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
   const copies: (readonly Line[])[] = [];
   const args: (Readonly<Record<string, string>> | undefined)[] = [];
   const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
+  const level: Level = { defines: new Set(taken), reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads] as const] : []))) };
   const used = uses.map((u): Taken => {
     const { id } = u;
     const names = namesOf(u);
@@ -641,7 +665,7 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
     const binding = old
       ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }
       : undefined;
-    const g = give(u, [id], theirs, resolve!, say, taken, binding);
+    const g = give(u, [id], theirs, resolve!, say, taken, binding, level);
     copies.push(g.copy);
     args.push(g.args);
     return g.taken;

@@ -18,6 +18,7 @@ import { expand } from '../engine/use';
 import { METER_FRAGMENTS } from './meters';
 import { BOSSA_NOVA, FUNK } from './styles';
 import { INSTRUMENT_FRAGMENTS } from './instruments';
+import { BAND_FRAGMENTS } from './bands';
 import { EXPRESSION_FRAGMENTS } from './expression';
 import { STYLE_FRAGMENTS } from './styles';
 import { MODULE_FRAGMENTS } from './modules';
@@ -181,6 +182,11 @@ const FITS: Record<string, readonly string[]> = {
   ],
   // (its lines lap a half note and a beat, so it fits every meter of the library's)
   kinderlied_drums: METER_FRAGMENTS.map((m) => m.id),
+  // (#572: their lines lap a beat, a half note or an eighth, so, as the Kinderlied beat, they fit every meter)
+  acid_drums: METER_FRAGMENTS.map((m) => m.id),
+  happy_hardcore_drums: METER_FRAGMENTS.map((m) => m.id),
+  elektro_drums: METER_FRAGMENTS.map((m) => m.id),
+  industrial_drums: FOUR_FOURS,
 };
 
 describe('every rhythm against every meter of the library', () => {
@@ -302,8 +308,11 @@ describe('a query given the workbench', () => {
     const fitting = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter') }).map((f) => f.fragment.id);
     // (the rhythms that fit 4/4, and the kits, the vibrato, the envelopes, the styles and the modules that take no input,
     // which fit any workbench: they use no name, or read what they take in as a sound; a filter module's input is its main
-    // argument, `&in`, which a workbench of a meter alone has no cell for, #587)
-    const open = [...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main)].map((f) => f.id);
+    // argument, `&in`, which a workbench of a meter alone has no cell for, #587; and the band, which declares every input
+    // it reads, each a tacet or the centre by default, #560)
+    const open = [...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...BAND_FRAGMENTS, ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main)].map(
+      (f) => f.id,
+    );
     const modes = MODE_FRAGMENTS.map((f) => f.id);
     const isRhythm = (id: string) => RHYTHM_FRAGMENTS.some((f) => f.id === id);
     // (a mode's main parameter is its tonic, and a query that names no argument takes the one cell that meets it, decision
@@ -316,9 +325,10 @@ describe('a query given the workbench', () => {
     );
     const toned = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: `${bench('meter')}\n&tonic D`, ...named }).map((f) => f.fragment.id);
     expect(toned).toEqual(all.filter((id) => isRhythm(id) || open.includes(id) || modes.includes(id)));
-    // (of the rhythms, only Ghost drums and Kinderlied drums fit 7/8: their lines lap the bar, its half and the beat, and nothing a sixteenth off the beat)
+    // (of the rhythms, only Ghost drums, Kinderlied drums and the three beats read from the examples (#572) fit 7/8: their lines
+    // lap the bar, its half, the beat or the eighth, and nothing a sixteenth off the beat)
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter(grouping=meter("7/8"))'), ...named }).map((f) => f.fragment.id)).toEqual(
-      all.filter((id) => open.includes(id) || id === 'ghost_drums' || id === 'kinderlied_drums'),
+      all.filter((id) => open.includes(id) || ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums'].includes(id)),
     );
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('meter') })).toEqual([]);
     expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('meter') }).map((f) => f.fragment.id)).toEqual(fitting.filter(isRhythm).slice(0, 2));
@@ -363,10 +373,10 @@ describe('what it costs', () => {
       const r = (await import('./fragments')).createRepository(LIBRARY);
       r.query(FUNK, LIBRARY.length, {}, { workbench: bench('meter'), ...options });
       const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, ...options }));
-      // (the rhythms, the instruments, the vibrato, the envelopes, the styles and the modules, a filter over the one voice that meets its input; where
+      // (the rhythms, the instruments, the vibrato, the envelopes, the styles, the band and the modules, a filter over the one voice that meets its input; where
       // no argument is named, the 9 modes too, their tonic the one cell that meets it, the meter (#587): a performer's part, a
       // filter's input and a stab line's &harm are holes no workbench of drums fills)
-      const kinds = [...RHYTHM_FRAGMENTS, ...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...MODULE_FRAGMENTS];
+      const kinds = [...RHYTHM_FRAGMENTS, ...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...MODULE_FRAGMENTS, ...BAND_FRAGMENTS];
       const modes = MODE_FRAGMENTS.map((f) => f.id);
       expect(
         first.every((f) => kinds.some((k) => k.id === f.fragment.id) || (options !== named && modes.includes(f.fragment.id))),
