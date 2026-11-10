@@ -48,7 +48,9 @@ describe("over=key reads the piece's main key", () => {
     // (the old way first, then the interface names, #196: its rate &tempo, its tonic &tonic)
     const n = normalise(src);
     expect(n.steps[0]).toBe('over=key is written over=&key, the key it reads');
-    const canonical = (mode: string, tonic: string) => lines('&bar meter("4/4") step=&tempo', '&tempo step=104bpm', `&key scale(${mode}, &tonic)`, `&tonic ${tonic}`, bass('&key'));
+    // (and the part its name gave the default performer, as a value: Migrate's parts, decision 075)
+    const canonical = (mode: string, tonic: string) =>
+      lines('&bar meter("4/4") step=&tempo', '&tempo step=104bpm', `&key scale(${mode}, &tonic)`, `&tonic ${tonic}`, bass('&key').replace(/^&bass /, '&bass part=bass '));
     expect(n.source).toBe(canonical('dorian', 'D'));
     // (whatever the main key's name: it is read first, then named &key)
     const chords = normalise(lines('&bar meter("4/4") step=104bpm', '&chords scale(aeolian, A)', bass('key')));

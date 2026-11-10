@@ -14,7 +14,7 @@ lifted: yggi/cells examples/electroswing.md @ 2c120d4
 ```cells
 &kick, &clap, &hats, &ticks, &groove from (&bd, &sd, &cp, &hh, &oh)
 &bd, &sd, &cp, &hh, &oh from gm_kit
-&kick step=4n &bd!4
+&kick role=kick step=4n &bd!4
 &clap step=4n ~ &cp:0:.6 ~ &cp:0:.6
 &hats step=8n ~ &oh:0:.4 ~ &oh:0:.4 ~ &oh:0:.4 ~ &oh:0:.4
 &ticks step=16n &hh:0:.2 &hh:0:.2? &hh:0:.2 &hh:0:.2?.7 &hh:0:.2 &hh:0:.2? &hh:0:.2 [&hh:0:.2,&sd:0:.03]

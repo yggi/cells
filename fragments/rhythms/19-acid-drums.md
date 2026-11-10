@@ -14,9 +14,9 @@ lifted: yggi/cells examples/acid.md @ 014c4c73
 ```cells
 &kick, &clap, &hat, &groove from (&bd, &cp, &hh, &oh)
 &bd, &cp, &hh, &oh from gm_kit
-&kick step=4n &bd:0:.8
+&kick role=kick step=4n &bd:0:.8
 &clap step=2n [~ &cp:0:.35]
-&hat step=8n [&hh:0:.3 &oh:0:.5]
+&hat role=hat step=8n [&hh:0:.3 &oh:0:.5]
 &groove [&kick, &clap, &hat]
 ```
 

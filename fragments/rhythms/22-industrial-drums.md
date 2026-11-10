@@ -14,7 +14,7 @@ lifted: yggi/cells examples/ghosts.md @ a8de625f
 ```cells
 &kick, &metal, &groove from (&bd, &hh)
 &bd, &hh from gm_kit
-&kick step=8n &bd:0:.8 ~ ~ ~ ~ ~ &bd:0:.6 ~
+&kick role=kick step=8n &bd:0:.8 ~ ~ ~ ~ ~ &bd:0:.6 ~
 &metal step=16n ~ ~ &hh:0:.15 ~ ~ ~ ~ &hh:0:.12 ~ ~ ~ &hh:0:.15 ~ ~ ~ ~
 &groove [&kick, &metal]
 ```

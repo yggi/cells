@@ -11,7 +11,7 @@ description: "The piece names where its notes go: a melody and a bass on a synth
 &bar from meter 104bpm
 
 &theme over=scale(minor, A) step=4n 0 2 4 2 3 1 0 ~
-&bass over=scale(minor, A) step=2n 0 5 3 4
+&bass part=bass over=scale(minor, A) step=2n 0 5 3 4
 &groove step=8n &bd ~ &hh ~ &sd ~ &hh &hh
 
 &reed s=square loop=C4 lpf=1800 env=&(map=adsr .01 .2 .5 .3)

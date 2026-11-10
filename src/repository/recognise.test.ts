@@ -56,7 +56,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     const second: string[] = [];
     for (const b of BARS) {
       // (the seed whose lines E31's bar is: its signature and its own from lines aside, decision 075)
-      const id = LIBRARY.find((f) => linesAlone(f.text) === b.fragment)!.id;
+      const id = LIBRARY.find((f) => linesAlone(f.text).replace(/ role=\w+/g, '') === b.fragment)!.id;
       for (const v of variations(b.fragment, DRUM_OPTIONS)) {
         const found = recogniser.recognise(v.apply(b.fragment), LIBRARY, DRUM_OPTIONS);
         const mine = found.find((r) => r.fragment.id === id);

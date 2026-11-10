@@ -13,7 +13,7 @@ source: seed
 ```cells
 &clave, &percussion from (&claves)
 &claves from gm_kit
-&clave step=16n cycle=2 ~!4 &claves ~!3 &claves ~!7 &claves ~!5 &claves ~!5 &claves ~!3
+&clave role=clave step=16n cycle=2 ~!4 &claves ~!3 &claves ~!7 &claves ~!5 &claves ~!5 &claves ~!3
 &percussion [&clave * .5]
 ```
 

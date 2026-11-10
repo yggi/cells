@@ -8,6 +8,28 @@ export function readingOf(output) {
 }
 const isPitched = (name) => name !== 'drums' && PARTS.includes(name);
 export function readerOf(result) {
+    const declared = (name, key) => (name === undefined ? undefined : result.cells.get(name)?.params[key]);
+    const gates = new Map(result.performers.flatMap((p) => {
+        const part = declared(p.role, 'part');
+        return typeof part === 'string' && isPitched(part) ? [[p.name, part]] : [];
+    }));
+    const readings = new Map();
+    for (const o of result.outputs) {
+        const [first, second, third] = o.id.split(':');
+        if (first === 'kit' && second === 'voices') {
+            const role = declared(third, 'role');
+            if (typeof role === 'string' && ROLES.has(role))
+                readings.set(o.id, { part: 'drums', role: role });
+            continue;
+        }
+        const gate = [...o.via, ...o.through].find((name) => gates.has(name));
+        const part = gate !== undefined ? gates.get(gate) : declared(/^[A-Za-z_][A-Za-z0-9_]*/.exec(second ?? '')?.[0], 'part');
+        if (typeof part === 'string' && isPitched(part))
+            readings.set(o.id, { part });
+    }
+    return (output) => (output !== undefined && readings.get(output)) || null;
+}
+export function readerByName(result) {
     const roles = new Map(result.performers.flatMap((p) => (isPitched(p.role) ? [[p.name, p.role]] : [])));
     const parts = new Map();
     for (const o of result.outputs) {

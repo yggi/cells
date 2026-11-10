@@ -130,7 +130,8 @@ describe('the rhythm fragments', () => {
     const [bar, ...rest] = w.text.split('\n');
     expect(bar).toMatch(/^&bar scan\(1 1 1 1\) step=\d+bpm$/);
     // (the stand-in voices `&bd note=36 s=white` …, E31's own, are holes the kit fills: #244; its card is the workbench's, its mix &groove: #291)
-    expect(linesAlone(w.fragment.text)).toBe(
+    // (and the drum roles it declares, #560 rung 2: E31 read them off the lines' names)
+    expect(linesAlone(w.fragment.text).replace(/ role=\w+/g, '')).toBe(
       rest
         .filter((l) => !/^&\w+ s=white$/.test(l))
         .join('\n')

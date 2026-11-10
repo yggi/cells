@@ -38,7 +38,7 @@ dtmf  live b4e8e67829ce9cb6
 daytime  live 71ca15c20760da5e
 gate  live 400caf4aa6182ac4
 play-in  live ce29f08f51e88004
-midi-out  live 0d018541e7bb67ab
+midi-out  live 359e9bedc674cc96
 lullaby  live e72c2693e211dad7
 jazz  live d608b78d32a0515f
 five  live 9df2609628499bd2

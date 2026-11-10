@@ -2,7 +2,7 @@
 &bar meter("4/4") step=104bpm
 &key scale(dorian, D)
 &harm over=&key step=1m [0,2,4] [3,5,7]
-&kick step=4n &bd &bd &bd &bd
+&kick role=kick step=4n &bd &bd &bd &bd
 &drumlines [&kick]
 &bassline over=&harm step=8n 0 ~ 0 2 ~ 0 4 ~
 &leadline over=&key step=8n 4 ~ 3 2 0@4

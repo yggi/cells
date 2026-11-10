@@ -14,9 +14,9 @@ lifted: yggi/cells examples/sailor.md @ 014c4c73
 ```cells
 &kick, &snare, &hat, &groove from (&bd, &sd, &hh)
 &bd, &sd, &hh from gm_kit
-&kick step=2n &bd:0:.8
+&kick role=kick step=2n &bd:0:.8
 &snare step=2n [~ &sd:0:.5]
-&hat step=8n [~ &hh:0:.3]
+&hat role=hat step=8n [~ &hh:0:.3]
 &groove [&kick, &snare, &hat]
 ```
 

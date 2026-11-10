@@ -4,8 +4,8 @@
  * and said as played. Lifted from yggi/cell-studio src/session/perform.ts @ d5e7634, which a frontend applies after
  * `realize` to a bar of events, its frame made from what it knows of the bar (a host's `bar` message, its own plan).
  *
- * - **Its part and role** are its performer's role, or read off the output cells names it by (`readerOf`, the feel
- *   contract's minor 2; #511).
+ * - **Its part and role** are what its text declares: its performer's role cell's `part=`, its line's `part=`, a drum
+ *   line's `role=` (`readerOf`, the feel contract's version 3, decision 075). Nothing is read off a name.
  * - **Its note and velocity** are what cells' MIDI out sends of it, on the host's channels (1 the lead, 2 the bass, 3
  *   the pad and the stab, 10 the drums): the velocity MIDI rounds from its level, the note a drum's or its key.
  * - **Its step and length** are its onset and end in the bar's steps through the swing undone (`writtenPlace`, the bar's
@@ -17,7 +17,7 @@
 import { midiNote, routesOf, type Routes } from '../midi';
 import type { CompileResult } from '../program';
 import type { Played } from '../realize';
-import { CONTRACT_WIDTHS, played, readingOf, type FeelFrame, type Widths } from './feel';
+import { CONTRACT_WIDTHS, played, type FeelFrame, type Reading, type Widths } from './feel';
 import { meterOfFrame, swungPlace, writtenPlace } from '../meter';
 
 /** The channels a host's text sends its parts on: the lead, the bass, the pad and stab, the drums. */
@@ -50,7 +50,7 @@ export function perform(
   e: Played,
   route: (e: Played) => Routes,
   at: TextBar,
-  read: (output: string | undefined) => ReturnType<typeof readingOf> = readingOf,
+  read: (output: string | undefined) => Reading | null = () => null,
   widths: (output: string | undefined) => Widths = () => CONTRACT_WIDTHS,
 ): { event: Played; performance: Performance | null } {
   const reading = read(e.output);

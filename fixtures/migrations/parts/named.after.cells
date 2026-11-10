@@ -1,0 +1,14 @@
+# the default performer read these by their names, before the feel's version 3 (decision 075, #560 rung 2)
+&bar meter("4/4") step=120bpm
+&key scale(dorian, D)
+&line over=&key step=4n 0 2 4 2
+&bass part=bass map=role &bassOut
+&bassOut play=&line &bassV
+&bassV loop=C2
+&pad part=pad over=&key step=1m [0,2,4]
+&padV loop=C4
+&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
+&hh note=42 s=white hpf=7000 env=&(map=adsr 0 .04 0 .02)
+&kick role=kick step=4n &bd!4
+&hat role=hat step=8n &hh!8
+&out map=midi(1) [&bassOut, &pad * &padV] ~!8 [&kick, &hat]

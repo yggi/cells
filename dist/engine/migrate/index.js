@@ -12,6 +12,7 @@ import { pairs } from "./pairs.js";
 import { beats } from "./beats.js";
 import { notes } from "./notes.js";
 import { argumentsByName } from "./arguments.js";
+import { parts } from "./parts.js";
 import { axes } from "./axes.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
@@ -28,6 +29,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...notes(source, result),
     ...argumentsByName(source, result, options.resolve),
     ...axes(source),
+    ...parts(source, result),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };

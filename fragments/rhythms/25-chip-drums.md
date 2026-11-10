@@ -14,7 +14,7 @@ lifted: yggi/cells examples/korobeiniki.md @ a8de625f
 ```cells
 &kick, &hats, &groove from (&bd, &hh)
 &bd, &hh from gm_kit
-&kick step=2n &bd:0:.6
+&kick role=kick step=2n &bd:0:.6
 &hats step=8n &hh:0:.5 &hh:0:.15 &hh &hh:0:.15 &hh:0:.5 &hh:0:.15 &hh &hh:0:.15
 &groove [&kick, &hats]
 ```
