@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { PARAM_ALIASES } from '../attributes';
 import { normalise } from './index';
+import { KEPT } from './kept';
 import { compileSource } from '../compile';
 import { samePiece, soundsIdentical } from '../sameness';
 import { shorten } from '../shorten';
@@ -17,18 +18,6 @@ const unionOf = (text: string, workbench: string) => {
   const body = bodyOf(text);
   const resolve: Resolve = (id) => (id === 'x' ? body : resolveSeed(id));
   return fitsAs('x', workbench, { resolve }).union!;
-};
-
-/**
- * The examples kept as written where a rule would rewrite them, and why: the step each keeps, as its title reads.
- *  - breve: a tutorial of alla breve, `meter("2/2", 2)`, its form the lesson (#524);
- *  - swing: a tutorial reworked whole as the meter's swing showcase (#646);
- *  - spooky: its stab line is "the piece's own", its prose says, beside the library's band and tune (#524).
- */
-const KEPT: Readonly<Record<string, RegExp>> = {
-  breve: /^&bar is "meter"'s/,
-  swing: /^&bar is "meter"'s/,
-  spooky: /^&stabline is "spooky_stabs"'s/,
 };
 
 const BASE = `&bar meter("4/4") step=&tempo

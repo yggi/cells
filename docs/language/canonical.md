@@ -110,7 +110,7 @@ A line that is a template's head line with its parameters filled in is written a
 | `&bar meter("4/4") step=&tempo swing=&swing` | `&bar from meter(swing=&swing) &tempo` |
 | `&key scale(minor, &tonic)` | `&key from diatonic(mode=minor) &tonic` |
 
-An example whose point is the form itself keeps it (`breve`, a tutorial of alla breve's `meter("2/2", 2)`; `normalise.test.ts`'s `KEPT` names each, and why).
+An example whose point is the form itself keeps it (`breve`, a tutorial of alla breve's `meter("2/2", 2)`; `normalise/kept.ts` names each, and why).
 
 ## `from`: kept, never expanded
 
