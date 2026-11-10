@@ -50,7 +50,7 @@ export const STEP_SYNTAX: readonly Syntax[] = [
     'rate',
     'step=free(r, lo..hi) · step=free(marking)',
     'A rate left free: a slider, with units (free(90bpm, 60..240)), or a tempo marking (free(adagio)).',
-    ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&bar scan(4 4 4 4) step=free(adagio)'],
+    ['&bar meter("4/4") step=free(90bpm, 60..240)', '&bar meter("4/4") step=free(adagio)'],
     'free.md',
   ),
 ];

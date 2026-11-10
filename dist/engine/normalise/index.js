@@ -2,12 +2,14 @@ import { rewriteAll, ROUNDS } from "../rewrite.js";
 import { aliases, filterModels } from "./aliases.js";
 import { libraryCells, libraryLines } from "./library.js";
 import { narrowestFroms } from "./narrowest.js";
-import { fourFour, interfaceNames } from "./names.js";
+import { interfaceNames } from "./names.js";
+import { evenScan, swingClock } from "./meter.js";
 import { migrations } from "../migrate/index.js";
 export const normalisations = (options = {}) => (source, result) => [
     ...migrations(options)(source, result).filter((r) => !r.exact),
     ...interfaceNames(source, result),
-    ...fourFour(source, result),
+    ...evenScan(source, result),
+    ...swingClock(source, result),
     ...aliases(source, result),
     ...filterModels(source, result),
     ...libraryLines(source, options.library),

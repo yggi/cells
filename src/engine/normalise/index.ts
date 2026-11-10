@@ -6,7 +6,9 @@
  *
  *  - aliases.ts:  Strudel's or dough's name for a parameter as ours, whatever its length: cutoff= → lpf=, clip= → legato=; and ftype='s numbers as its words, ftype=2 → ftype=24db (decision 074)
  *  - names.ts:    the interface names where they are unambiguous (#196): the main meter &bar, its rate &tempo, the main key
- *                 &key, its tonic &tonic; and scan(1 1 1 1), the meter of four beats, as meter("4/4")
+ *                 &key, its tonic &tonic
+ *  - meter.ts:    a meter built by hand as the meter it is (#645): even beats, scan(1 1 1), as meter("3/4"); a clock of two
+ *                 tapped by its pulse, &swing scan(2 1) step=8n, as the main meter's swing, &swing swing=8n:2/3
  *  - library.ts:  a line that is a library fragment's word for word as a use of it (#196): &bar meter("4/4") step=&tempo
  *                 → use &bar from meter, and a fragment's cell written inline as it by name: pitch=&(map=lin …)
  *                 → pitch=&vibrato, use &vibrato; with the library the call gives (`NormaliseOptions.library`)
@@ -26,7 +28,8 @@ import type { CompileOptions, CompileResult } from '../program';
 import { aliases, filterModels } from './aliases';
 import { libraryCells, libraryLines, type LibraryFragment } from './library';
 import { narrowestFroms } from './narrowest';
-import { fourFour, interfaceNames } from './names';
+import { interfaceNames } from './names';
+import { evenScan, swingClock } from './meter';
 import { migrations } from '../migrate';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
@@ -41,7 +44,8 @@ export const normalisations =
     // (but a migration exact only against an older meaning: in a valid text it would change what the text says, #75)
     ...migrations(options)(source, result).filter((r) => !r.exact),
     ...interfaceNames(source, result),
-    ...fourFour(source, result),
+    ...evenScan(source, result),
+    ...swingClock(source, result),
     ...aliases(source, result),
     ...filterModels(source, result),
     ...libraryLines(source, options.library),
