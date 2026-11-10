@@ -83,6 +83,21 @@ const EXPECTED: Record<string, readonly string[]> = {
     'trim &bassline 3',
   ],
   quarter_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', ...ENDS(3)],
+  // (#542's second four: the tumbao opens on a rest, so it has no anchor, as the pump; the waltz bass is one root a lap,
+  // as the drone; the oom-pah is half a bar, the lap the checks below read; the dub bass's held root leaves no bend)
+  tumbao_bass: [
+    'transpose &bassline -2',
+    'transpose &bassline -1',
+    'transpose &bassline 1',
+    'transpose &bassline 2',
+    'invert &bassline',
+    'reverse &bassline',
+    'bend &bassline -1',
+    'bend &bassline 1',
+  ],
+  waltz_bass: [],
+  oom_pah_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'invert &bassline', 'bend &bassline -1'],
+  dub_bass: ['transpose &bassline -2', 'transpose &bassline -1', 'transpose &bassline 1', 'transpose &bassline 2', 'invert &bassline'],
 };
 /** Each seed's line: its tap and its lap in steps, and its anchored steps (the root on the downbeat, where each chord changes). */
 const LINE: Record<string, { tap: string; steps: number; anchored: readonly number[] }> = {
@@ -99,7 +114,14 @@ const LINE: Record<string, { tap: string; steps: number; anchored: readonly numb
   continuo_bass: { tap: '8n', steps: 8, anchored: [0] },
   blues_walk: { tap: '4n', steps: 4, anchored: [0] },
   quarter_bass: { tap: '4n', steps: 4, anchored: [0] },
+  tumbao_bass: { tap: '8n', steps: 8, anchored: [] },
+  waltz_bass: { tap: '4n', steps: 3, anchored: [0] },
+  oom_pah_bass: { tap: '4n', steps: 2, anchored: [0] },
+  dub_bass: { tap: '8n', steps: 8, anchored: [0] },
 };
+
+/** A tap's step, in sixteenths of 4/4. */
+const TAP: Record<string, number> = { '1m': 16, '2n': 8, '4n': 4, '8n': 2, '16n': 1 };
 
 /** What a text sends on channel 2 over `bars` bars of 4/4 at 120 bpm: each note's sixteenth from the start, and its MIDI note. */
 function played(text: string, bars: number): Map<number, number[]> {
@@ -135,9 +157,11 @@ for (const name of Object.keys(PROGRESSIONS)) {
       const bench = `${options.workbench}\n${bassCards(fragment)}`;
       const source = unionOf(fragment, bench).text;
       const before = played(source, bars);
-      const sixteenths = 16 / steps;
+      /** A step's length in sixteenths, and the line's lap: a bar for every seed but the oom-pah's (half a bar) and the waltz bass's (three beats). */
+      const sixteenths = TAP[tap]!;
+      const lap = steps * sixteenths;
       /** The sixteenths, over the bars played, where an anchored step falls. */
-      const fixed = new Set([...before.keys()].filter((at) => anchored.includes(Math.round((at % 16) / sixteenths))));
+      const fixed = new Set([...before.keys()].filter((at) => anchored.includes(Math.round((at % lap) / sixteenths))));
 
       describe(id, () => {
         it(`its anchors: the root on the downbeat, where each chord changes (${anchored.length ? 'step 0' : 'none: the pump rests there'})`, () => {
@@ -180,30 +204,32 @@ for (const name of Object.keys(PROGRESSIONS)) {
 
             it(`plays on its other notes what the language's own form plays`, () => {
               const free = (m: Map<number, number[]>) => [...m].filter(([at]) => !fixed.has(at));
-              // (the last note's sixteenth in each bar, and the one before it: every seed is a bar long)
+              // (the last note's sixteenth in each lap, and the one before it)
               const [prev, last] = bodyOf(fragment)
                 .split('\n')[0]!
                 .split(' ')
                 .slice(3)
                 .flatMap((t, step) => (t === '~' ? [] : Array.from({ length: Number(/!(\d+)$/.exec(t)?.[1] ?? 1) }, (_, j) => (step + j) * sixteenths)))
                 .slice(-2);
-              const lasts = (m: Map<number, number[]>) => [...m.keys()].filter((at) => at % 16 === last);
+              const lasts = (m: Map<number, number[]>) => [...m.keys()].filter((at) => at % lap === last);
               if (v.rule === 'bend') {
                 // the last note plays what the note before it plays moved `^n`; every other note as it was
                 const moved = played(asForm(source, tap, `&bassline^${v.by.split(' ').at(-1)}`), bars);
                 expect(lasts(after).map((at) => after.get(at))).toEqual(lasts(before).map((at) => moved.get(at - last! + prev!)));
-                expect([...after].filter(([at]) => at % 16 !== last)).toEqual([...before].filter(([at]) => at % 16 !== last));
-              } else if (v.rule === 'trim') expect(after).toEqual(new Map([...before].filter(([at]) => at % 16 !== last)));
+                expect([...after].filter(([at]) => at % lap !== last)).toEqual([...before].filter(([at]) => at % lap !== last));
+              } else if (v.rule === 'trim') expect(after).toEqual(new Map([...before].filter(([at]) => at % lap !== last)));
               else if (v.rule === 'transpose' || v.rule === 'invert') {
-                const form = v.rule === 'transpose' ? `&bassline^${v.by.split(' ').at(-1)}` : `inverse(&bassline)`; // (f is the root, 0)
+                // (inverted around its first note f, 2f − x: f is the root, 0, but in the tumbao, which opens on the fifth, 2)
+                const f = Number(/^&bassline over=&harm step=\S+ (?:~ )*(-?\d+)/.exec(bodyOf(fragment))![1]);
+                const form = v.rule === 'transpose' ? `&bassline^${v.by.split(' ').at(-1)}` : f ? `inverse(&bassline^${-2 * f})` : `inverse(&bassline)`;
                 expect(free(after)).toEqual(free(played(asForm(source, tap, form), bars)));
               } else if (!anchored.length) expect(after).toEqual(played(asForm(source, tap, '&bassline[::-1]'), bars));
               else {
                 // one chord a bar, so a note plays the same at every step of its bar: each free note is its mirror's
                 // within the span after the downbeat's anchor
                 const mirror = (at: number) => {
-                  const bar = at - (at % 16);
-                  const step = Math.round((at % 16) / sixteenths);
+                  const bar = at - (at % lap);
+                  const step = Math.round((at % lap) / sixteenths);
                   return bar + (steps - step) * sixteenths;
                 };
                 expect(free(after)).toEqual(
@@ -222,10 +248,10 @@ for (const name of Object.keys(PROGRESSIONS)) {
 describe('the pitched operators', () => {
   const options = OPTIONS('I–vi–IV–V');
 
-  it('are 57 of the 78 on the thirteen seeds, the 21 left out each playing its source’s notes, none to vary or another’s; and 44 bends and trims', () => {
+  it('are 73 of the 102 on the seventeen seeds, the 29 left out each playing its source’s notes (but the dub bass’s, a line with held notes, moved in pitch alone), none to vary or another’s; and 47 bends and trims', () => {
     const all = SEEDS.flatMap(({ fragment }) => variations(fragment, options));
-    expect(all.filter((v) => v.rule !== 'bend' && v.rule !== 'trim')).toHaveLength(57);
-    expect(all.filter((v) => v.rule === 'bend' || v.rule === 'trim')).toHaveLength(44);
+    expect(all.filter((v) => v.rule !== 'bend' && v.rule !== 'trim')).toHaveLength(73);
+    expect(all.filter((v) => v.rule === 'bend' || v.rule === 'trim')).toHaveLength(47);
     // the left out: an inversion about a root that is every note's (the root, the eighths, the pump, the funk: all 0, and
     // the funk's anticipation, mirrored round its own table's root, is that root); a retrograde of one note (the root's
     // half) or of eight alike (the eighths); the creep's, whose only notes besides its root are the root moved a step of
@@ -252,6 +278,13 @@ describe('the pitched operators', () => {
       'continuo_bass: reverse &bassline',
       'quarter_bass: invert &bassline',
       'quarter_bass: reverse &bassline',
+      // (#542's second four: the waltz bass, one anchored root a lap, as the root bass's half; the oom-pah's reversal, its
+      // one note after the anchored root alone in its span, as the tiptoe's; and the dub bass's, whose held notes vary
+      // moves in pitch alone: reversing them would move where they fall and end)
+      'waltz_bass: invert &bassline',
+      'waltz_bass: reverse &bassline',
+      'oom_pah_bass: reverse &bassline',
+      'dub_bass: reverse &bassline',
     ]);
   });
 

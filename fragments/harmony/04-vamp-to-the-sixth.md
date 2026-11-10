@@ -15,6 +15,13 @@ association:
       mood: 0.9
     weight: 1
     facet: harmony
+  - point:
+      sync: 0.7
+      harm: 0.2
+      bite: 0.2
+      mood: 0.25
+    weight: 0.4
+    facet: harmony
 source: seed
 lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
@@ -34,3 +41,5 @@ From 0.15 to 0.33 it lays the same chords two bars each, twice over (`[0, 0, c, 
 At the points where `buildTheme` plays it: aeolian at Techno's point; ionian at Ambient's point with its harmony at 0.12. A mode's vamps are drawn alike (`next() · vamps.length`), so each weighs 1, and a query for the harmony at a mode's point finds all of that mode's vamps at distance 0.
 
 **Its signature** (decision 065): `&harm from &key`. `&harm from vamp_to_the_sixth &key` takes a copy of it, `&key` its main argument.
+
+**At Trip-hop's point too** (#542), weight 0.4: in a minor key, i to VI, the two chords trip-hop leans on.

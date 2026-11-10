@@ -26,6 +26,11 @@ const BAROQUE = stylePoint('baroque');
 const BLUES_SHUFFLE = stylePoint('bluesShuffle');
 const SEA_SHANTY = stylePoint('seaShanty');
 const CHIPTUNE = stylePoint('chiptune');
+// (#542's second four, placed by hand)
+const SALSA = stylePoint('salsa');
+const WALTZ = stylePoint('waltz');
+const MARCH = stylePoint('march');
+const TRIP_HOP = stylePoint('tripHop');
 import { fragmentsOf, SEED, seedFragments } from './seed';
 import { SEED_FILES } from './seed.generated';
 
@@ -67,8 +72,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are a hundred and fifty-nine (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572)', () =>
-    expect(files).toHaveLength(159));
+  it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s: a hundred and seventy-four)', () =>
+    expect(files).toHaveLength(174));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -97,7 +102,7 @@ describe('the seed files', () => {
   it("write Jambot's presets' points exactly, where a meter, a drum bar, a bass line or a mode is at a preset", () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       // (and Kinderlied's 4/4 and the three read from the examples', #572)
-      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, BAROQUE, SEA_SHANTY, CHIPTUNE],
+      meter: [SYNTH_POP, TECHNO, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, BAROQUE, SEA_SHANTY, CHIPTUNE, SALSA, TRIP_HOP],
       'meter(swing=8n:2/3)': [BLUES_SHUFFLE, SWING_JAZZ, ELECTRO_SWING],
       // (its own point, placed on the old axes at sync .4 harm .9 artic .5 energy .3, moved by decision 076's rule, #572)
       'meter(grouping=meter("5/4"))': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
@@ -130,12 +135,20 @@ describe('the seed files', () => {
       shanty_drums: [SEA_SHANTY],
       chip_drums: [CHIPTUNE],
       quiet_pulse: [BAROQUE],
+      salsa_drums: [SALSA],
+      waltz_drums: [WALTZ],
+      march_drums: [MARCH],
+      trip_hop_drums: [TRIP_HOP],
+      tumbao_bass: [SALSA],
+      waltz_bass: [WALTZ],
+      oom_pah_bass: [MARCH],
+      dub_bass: [TRIP_HOP],
       drone_bass: [DARK_AMBIENT],
       industrial_drums: [DARK_AMBIENT],
       harmonic_minor: [ELECTRO_SWING, SPOOKY, CHIPTUNE],
-      'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT],
+      'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, TRIP_HOP],
       'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK, SEA_SHANTY],
-      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED, BAROQUE],
+      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED, BAROQUE, WALTZ, MARCH],
       upright_bass: [ELECTRO_SWING],
       brass_stab: [ELECTRO_SWING],
       clarinet: [ELECTRO_SWING],
@@ -155,6 +168,10 @@ describe('the seed files', () => {
       blues_horn: [BLUES_SHUFFLE],
       fiddle: [SEA_SHANTY],
       pulse_lead: [CHIPTUNE],
+      montuno_piano: [SALSA],
+      accordion: [WALTZ],
+      brass_band: [MARCH],
+      electric_piano: [TRIP_HOP],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
     const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED], pumping_bass: [TECHNO, HAPPY_HARDCORE] };
@@ -177,6 +194,20 @@ describe('the seed files', () => {
 
   // (the seeds written by hand for the point proposed for a Spooky preset, #349, or near it, and lifted from nothing)
   const WRITTEN = new Set([
+    // (#542's second four: the styles placed by hand, their parts written for them, lifted from no example)
+    'salsa_drums',
+    'waltz_drums',
+    'march_drums',
+    'trip_hop_drums',
+    'tumbao_bass',
+    'waltz_bass',
+    'oom_pah_bass',
+    'dub_bass',
+    'montuno',
+    'montuno_piano',
+    'accordion',
+    'brass_band',
+    'electric_piano',
     // (#542: written for Baroque, lifted from no example)
     'continuo_bass',
     'fifths_sequence',

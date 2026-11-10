@@ -160,14 +160,15 @@ describe('the presets find their modes', () => {
       // (each point's mood by decision 076's rule, #572: at a style's point, the style's, placed by hand; elsewhere its own
       // mode's, moodOf: mixolydian .75, phrygian .375, lydian .9, locrian .3)
       // (aeolian at the three styles read from the examples too, #572: Acid's, Happy hardcore's and Elektro's A minor)
-      // (and #542's: ionian at Baroque, mixolydian at Blues shuffle, dorian at Sea shanty, harmonic minor at Chiptune)
+      // (and #542's: ionian at Baroque, mixolydian at Blues shuffle, dorian at Sea shanty, harmonic minor at Chiptune; then
+      // mixolydian at Salsa, ionian at Waltz and March, aeolian at Trip-hop)
       const also =
         id === 'ionian'
-          ? [KINDERLIED, stylePoint('baroque')]
+          ? [KINDERLIED, stylePoint('baroque'), stylePoint('waltz'), stylePoint('march')]
           : id === 'aeolian'
-            ? ['acid', 'happyHardcore', 'elektro', 'darkAmbient'].map(stylePoint)
+            ? ['acid', 'happyHardcore', 'elektro', 'darkAmbient', 'tripHop'].map(stylePoint)
             : id === 'mixolydian'
-              ? [stylePoint('bluesShuffle')]
+              ? [stylePoint('bluesShuffle'), stylePoint('salsa')]
               : id === 'dorian'
                 ? [stylePoint('seaShanty')]
                 : [];
@@ -202,19 +203,24 @@ describe('the harmonies and the bass lines, over each mode', () => {
     }
   });
 
-  it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))('every bass line fits a workbench with %s and a vamp, and compiles there with no diagnostic', (_, mode) => {
-    for (const vamp of HARMONY_FRAGMENTS) {
-      const host = takenOn(vamp.text, takenOn(mode, meter(), '&tonic').union.text, '&key').union.text;
-      for (const bass of BASS_FRAGMENTS) {
-        const fit = takenOn(bass.text, host, '&harm');
-        expect(fit.fits, `${bass.id} over ${vamp.id}`).toBe(true);
-        expect(
-          compileSource(`${filled(fit.union.text)}\n${BASS_VOICE}`).diagnostics.map((d) => d.message),
-          `${bass.id} over ${vamp.id}`,
-        ).toEqual([]);
+  it.each(MODE_FRAGMENTS.map((f) => [f.id, f.text]))(
+    'every bass line fits a workbench with %s and a vamp, and compiles there with no diagnostic (the waltz bass in 3/4)',
+    (_, mode) => {
+      for (const vamp of HARMONY_FRAGMENTS) {
+        // (#542: the waltz bass laps three beats, a bar of 3/4, and fits no 4/4: it is taken on the same workbench in 3/4)
+        const hostIn = (m: string) => takenOn(vamp.text, takenOn(mode, meter(m), '&tonic').union.text, '&key').union.text;
+        const host = hostIn('4/4');
+        for (const bass of BASS_FRAGMENTS) {
+          const fit = takenOn(bass.text, bass.id === 'waltz_bass' ? hostIn('3/4') : host, '&harm');
+          expect(fit.fits, `${bass.id} over ${vamp.id}`).toBe(true);
+          expect(
+            compileSource(`${filled(fit.union.text)}\n${BASS_VOICE}`).diagnostics.map((d) => d.message),
+            `${bass.id} over ${vamp.id}`,
+          ).toEqual([]);
+        }
       }
-    }
-  });
+    },
+  );
 });
 
 describe('the bell and scale', () => {
