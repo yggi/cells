@@ -15,6 +15,20 @@ association:
       mood: 0.95
     weight: 0.5
     facet: harmony
+  - point:
+      sync: 0
+      harm: 0.7
+      bite: 0.3
+      mood: 0.9
+    weight: 0.4
+    facet: harmony
+  - point:
+      sync: 0
+      harm: 0.1
+      bite: 0.75
+      mood: 0.7
+    weight: 0.4
+    facet: harmony
 source: seed
 lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
@@ -35,3 +49,5 @@ At the points where `buildTheme` plays it: ionian at Ambient's point with its ha
 At `KINDERLIED` too (`styles`): the tonic and the dominant of a children's song, under Twinkle's and Hänschen klein's motifs, with ionian there (yggi/jambot#547, the owner, 2026-11-04). There at weight 0.5, so its distance counts double: at weight 1 Deep house's point would find it first within 0.3, which the fence of #404 (`library.test.ts`) forbids.
 
 **Its signature** (decision 065): `&harm from &key`. `&harm from vamp_to_the_fifth &key` takes a copy of it, `&key` its main argument.
+
+**At Waltz's and March's points too** (#542), weight 0.4: the tonic and the dominant, four bars each, is the harmony of both.

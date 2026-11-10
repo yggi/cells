@@ -308,7 +308,7 @@ describe('the rhythms with the General MIDI kit (S1)', () => {
       expect(r.uses?.[0]?.overrode).toEqual([]);
       expect(soundsIdentical(piece, expand(piece, resolveSeed), undefined, seed)).toBe(true);
     });
-  it('every rhythm is one of the twenty-six (#572: four read from the examples; #542: four more)', () => expect(RHYTHM_FRAGMENTS).toHaveLength(26));
+  it('every rhythm is one of the thirty (#572: four read from the examples; #542: eight more)', () => expect(RHYTHM_FRAGMENTS).toHaveLength(30));
 });
 
 describe('the lockfile', () => {

@@ -8,6 +8,13 @@ association:
       mood: 0.45
     weight: 1
     facet: motif
+  - point:
+      sync: 0
+      harm: 0.1
+      bite: 0.75
+      mood: 0.7
+    weight: 1
+    facet: motif
 source: seed
 ---
 
@@ -23,3 +30,5 @@ Its head is named for it (`&march`), so `use &march` takes it; a form reads it a
 At 2/4's point (#369), weight 1, as the facet `motif`.
 
 **Its signature** (decision 065): `&march from &key`. `&march from march &key` takes a copy of it, `&key` its main argument.
+
+**At March's point too** (#542), weight 1, so the style finds it first.

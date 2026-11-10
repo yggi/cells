@@ -253,6 +253,10 @@ describe('the bass lines', () => {
       'continuo_bass',
       'blues_walk',
       'quarter_bass',
+      'tumbao_bass',
+      'waltz_bass',
+      'oom_pah_bass',
+      'dub_bass',
     ]);
     for (const p of PATTERNS) {
       const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
@@ -270,6 +274,11 @@ describe('the bass lines', () => {
     expect(byId('blues_walk').association).toEqual([{ point: stylePoint('bluesShuffle'), weight: 1, facet: 'bass' }]);
     expect(byId('quarter_bass').association).toEqual([{ point: stylePoint('seaShanty'), weight: 1, facet: 'bass' }]);
     expect(byId('drone_bass').association).toEqual([{ point: stylePoint('darkAmbient'), weight: 1, facet: 'bass' }]);
+    // (#542's second four: each style placed by hand gets its own)
+    expect(byId('tumbao_bass').association).toEqual([{ point: stylePoint('salsa'), weight: 1, facet: 'bass' }]);
+    expect(byId('waltz_bass').association).toEqual([{ point: stylePoint('waltz'), weight: 1, facet: 'bass' }]);
+    expect(byId('oom_pah_bass').association).toEqual([{ point: stylePoint('march'), weight: 1, facet: 'bass' }]);
+    expect(byId('dub_bass').association).toEqual([{ point: stylePoint('tripHop'), weight: 1, facet: 'bass' }]);
   });
 
   it('Jambot’s presets, on the axes bass.ts reads, are the library’s styles moved by decision 076’s rule', () => {
@@ -289,9 +298,11 @@ describe('the bass lines', () => {
   });
 
   for (const name of Object.keys(PROGRESSIONS))
-    it(`each fits a host with &bar and &harm, ${name}, and compiles there with no diagnostic`, () => {
+    it(`each fits a host with &bar and &harm, ${name}, and compiles there with no diagnostic; the waltz bass, a line of 3/4, under 3/4`, () => {
       for (const f of BASS_FRAGMENTS) {
-        const fit = takenOn(f.text, workbench(name), '&harm');
+        // (#542: the waltz bass laps three beats, so it fits no 4/4, and fits the same host in 3/4)
+        if (f.id === 'waltz_bass') expect(takenOn(f.text, workbench(name), '&harm').fits).toBe(false);
+        const fit = takenOn(f.text, f.id === 'waltz_bass' ? workbench(name).replace('meter("4/4")', 'meter("3/4")') : workbench(name), '&harm');
         expect(fit.fits, f.id).toBe(true);
         expect(fit.diagnostics, f.id).toEqual([]);
         expect(played(fit.union, 1).diagnostics, f.id).toEqual([]);
@@ -355,6 +366,10 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
     blues_walk: [36, 40, 43, 48, 45, 48, 52, 57, 41, 45, 48, 53, 43, 47, 50, 55],
     quarter_bass: [36, 36, 36, 36, 45, 45, 45, 45, 41, 41, 41, 41, 43, 43, 43, 43],
     octave_bass: [36, 48, 36, 48, 36, 48, 36, 48, 45, 57, 45, 57, 45, 57, 45, 57, 41, 53, 41, 53, 41, 53, 41, 53, 43, 55, 43, 55, 43, 55, 43, 55],
+    tumbao_bass: [43, 36, 52, 45, 48, 41, 50, 43],
+    waltz_bass: [36, 36, 45, 41, 43, 43],
+    oom_pah_bass: [36, 43, 36, 43, 45, 52, 45, 52, 41, 48, 41, 48, 43, 50, 43, 50],
+    dub_bass: [36, 36, 43, 45, 45, 52, 41, 41, 48, 43, 43, 50],
   },
   D: {
     root_bass: [38, 38, 47, 47, 43, 43, 45, 45],
@@ -373,6 +388,10 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
     blues_walk: [38, 42, 45, 50, 47, 50, 54, 59, 43, 47, 50, 55, 45, 49, 52, 57],
     quarter_bass: [38, 38, 38, 38, 47, 47, 47, 47, 43, 43, 43, 43, 45, 45, 45, 45],
     octave_bass: [38, 50, 38, 50, 38, 50, 38, 50, 47, 59, 47, 59, 47, 59, 47, 59, 43, 55, 43, 55, 43, 55, 43, 55, 45, 57, 45, 57, 45, 57, 45, 57],
+    tumbao_bass: [45, 38, 54, 47, 50, 43, 52, 45],
+    waltz_bass: [38, 38, 47, 43, 45, 45],
+    oom_pah_bass: [38, 45, 38, 45, 47, 54, 47, 54, 43, 50, 43, 50, 45, 52, 45, 52],
+    dub_bass: [38, 38, 45, 47, 47, 54, 43, 43, 50, 45, 45, 52],
   },
 };
 

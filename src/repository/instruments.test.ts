@@ -63,6 +63,11 @@ const AT_PRESET: Record<string, StylePoint> = {
   blues_horn: stylePoint('bluesShuffle'),
   fiddle: stylePoint('seaShanty'),
   pulse_lead: stylePoint('chiptune'),
+  // (#542's second four, placed by hand)
+  montuno_piano: stylePoint('salsa'),
+  accordion: stylePoint('waltz'),
+  brass_band: stylePoint('march'),
+  electric_piano: stylePoint('tripHop'),
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
@@ -157,7 +162,7 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the nine for Electro swing and Spooky and the five for Kinderlied, Acid, Happy hardcore and Elektro (#572), each once at or near its style, at half a default's weight (#350)", () => {
+  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the nine for Electro swing and Spooky, the five for Kinderlied, Acid, Happy hardcore and Elektro (#572) and the eight for #542's styles, each once at or near its style, at half a default's weight (#350)", () => {
     expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm_kit', ...DEFAULTS, ...Object.keys(AT_PRESET)]);
     for (const f of INSTRUMENT_FRAGMENTS)
       expect(
@@ -172,14 +177,7 @@ describe('the instrument fragments', () => {
       0.25,
       ...Array<number>(11).fill(0.125),
       0.0625,
-      0.125,
-      0.125,
-      0.125,
-      0.125,
-      0.125,
-      0.125,
-      0.125,
-      0.125,
+      ...Array<number>(12).fill(0.125),
     ]);
   });
 
@@ -278,15 +276,18 @@ describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit
   const { hits: synthPop } = played(hosted(RHYTHM_FRAGMENTS.find((f) => f.id === 'synth_pop_drums')!.text, coreKit.text), 32);
   it('is shown firing: a hit on another note is caught', () => expect(synthPop.map((h) => ({ ...h, note: h.note + 1 }))).not.toEqual(synthPop));
 
-  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the kit after the groove, and the groove after the kit', (_, text) => {
+  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the kit after the groove, and the groove after the kit', (id, text) => {
+    // (#542: the waltz's beat laps three beats and fits no 4/4: it is heard in 3/4)
+    const host = (...fragments: string[]) => (id === 'waltz_drums' ? hosted(...fragments).replace('&grouping meter("4/4")', '&grouping meter("3/4")') : hosted(...fragments));
+    if (id === 'waltz_drums') expect(host()).toContain('&grouping meter("3/4")');
     // (a rhythm has no voice of its own: it plays through a kit, the kit's lines written out after it)
-    const alone = played(hosted(text, coreKit.text), 32);
+    const alone = played(host(text, coreKit.text), 32);
     expect(alone.hits.length).toBeGreaterThan(0);
-    const kitAfter = takenOn(coreKit.text, hosted(text));
+    const kitAfter = takenOn(coreKit.text, host(text));
     expect(kitAfter.fits).toBe(true);
     // (and no sound hole is left on it, as the kit's voices fill every one)
-    expect(takenOn(text, hosted(coreKit.text)).sounds).toEqual([]);
-    const grooveAfter = takenOn(text, hosted(coreKit.text));
+    expect(takenOn(text, host(coreKit.text)).sounds).toEqual([]);
+    const grooveAfter = takenOn(text, host(coreKit.text));
     expect(grooveAfter.fits).toBe(true);
     for (const union of [kitAfter.union.text, grooveAfter.union.text]) {
       const { hits, diagnostics } = played(union, 32);

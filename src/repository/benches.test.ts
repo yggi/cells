@@ -108,6 +108,15 @@ describe('a pattern fragment heard through the tests’ cards (#291, #640)', () 
     'continuo_bass',
     'blues_walk',
     'quarter_bass',
+    // (#542's second four, written by hand: the salsa, waltz, march and trip-hop beats and basses)
+    'salsa_drums',
+    'waltz_drums',
+    'march_drums',
+    'trip_hop_drums',
+    'tumbao_bass',
+    'waltz_bass',
+    'oom_pah_bass',
+    'dub_bass',
   ];
   const carried = [...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.id === 'bell_and_scale')].filter((f) => !born.includes(f.id));
 

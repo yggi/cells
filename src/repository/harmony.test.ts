@@ -32,7 +32,7 @@ const takenOn = (text: string, bench: string, main?: string) => {
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
 /** The vamps, Jambot's themes' (`VAMPS`); the harmony written by hand for the point proposed for Spooky (#349) is not one. */
 const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter(
-  (f) => !['dark_cadence', 'haunted_progression', 'axis_progression', 'fifths_sequence', 'twelve_bar', 'korobeiniki_changes'].includes(f.id),
+  (f) => !['dark_cadence', 'haunted_progression', 'axis_progression', 'fifths_sequence', 'twelve_bar', 'korobeiniki_changes', 'montuno'].includes(f.id),
 );
 
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
@@ -122,6 +122,7 @@ describe('the harmonies', () => {
       'fifths_sequence',
       'twelve_bar',
       'korobeiniki_changes',
+      'montuno',
     ]);
     expect(VAMP_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
   });
@@ -180,15 +181,19 @@ describe('the harmonies', () => {
       const modes = MODES.filter((mode) => POINT[mode] && VAMPS[mode].some((chords) => byDegrees(chords) === f));
       const atModes = modes.map((mode) => ({ point: POINT[mode], weight: 1, facet: 'harmony' }));
       // (and the tonic vamp at Acid's point, the one chord its riff turns on, at weight 0.4 so Synth-pop, 0.272 away, keeps its own, #572)
+      // (#542's second four: the vamp to the fifth at Waltz's and March's, their tonic and dominant, and the vamp to the sixth
+      // at Trip-hop's, its i–♭VI, each at weight 0.4)
       const also =
         f.id === 'vamp_to_the_fifth'
-          ? [{ point: KINDERLIED, weight: 0.5, facet: 'harmony' }]
+          ? [{ point: KINDERLIED, weight: 0.5, facet: 'harmony' }, ...[stylePoint('waltz'), stylePoint('march')].map((point) => ({ point, weight: 0.4, facet: 'harmony' }))]
           : f.id === 'tonic_vamp'
             ? [stylePoint('acid'), stylePoint('darkAmbient')].map((point) => ({ point, weight: 0.4, facet: 'harmony' }))
             : // (and the vamp to the seventh at Sea shanty's, the shanty's i–♭VII, at weight 0.4, #542)
               f.id === 'vamp_to_the_seventh'
               ? [{ point: stylePoint('seaShanty'), weight: 0.4, facet: 'harmony' }]
-              : [];
+              : f.id === 'vamp_to_the_sixth'
+                ? [{ point: stylePoint('tripHop'), weight: 0.4, facet: 'harmony' }]
+                : [];
       expect(f.association, f.id).toEqual([...atModes, ...also]);
     }
   });
@@ -207,20 +212,22 @@ describe('the harmonies', () => {
   });
 
   // (the bass lines read `&harm`, the chord in force: each of the five fits a host with a vamp, and plays its root there)
-  it.each(BASS_FRAGMENTS.map((b) => [b.id, b.text]))('the %s fits every vamp in every mode, and plays the root of each bar’s chord on the downbeat', (_, bass) => {
+  it.each(BASS_FRAGMENTS.map((b) => [b.id, b.text]))('the %s fits every vamp in every mode, and plays the root of each bar’s chord on the downbeat', (id, bass) => {
+    // (#542: the waltz bass is a bar of 3/4, taken on the same host in 3/4, whose bar at 120 bpm is 1.5 s)
+    const [meter, bar] = id === 'waltz_bass' ? ['3/4', 1.5] : ['4/4', 2];
     for (const mode of MODES)
       for (const f of HARMONY_FRAGMENTS) {
-        const fit = takenOn(bass, takenOn(f.text, host(mode), '&key').union.text, '&harm');
+        const fit = takenOn(bass, takenOn(f.text, host(mode).replace('meter("4/4")', `meter("${meter}")`), '&key').union.text, '&harm');
         expect(fit.fits, `${f.id} in ${mode}`).toBe(true);
         const plan = planOf(`${fit.union.text}\n${BASS_VOICE}`);
         const route = router(plan.result, channelTable(plan.result));
-        const downbeats = windowAt(plan, 0, 16 - 1e-9)
+        const downbeats = windowAt(plan, 0, 8 * bar - 1e-9)
           .events.flatMap((e) => routesOf(route(e)).map((r) => midiNote(e, r)))
-          .filter((n) => n && n.channel === 2 && Math.abs(n.at / 2 - Math.round(n.at / 2)) < 1e-9);
-        // (the pump rests on the downbeat; every other line plays the chord's root there)
+          .filter((n) => n && n.channel === 2 && Math.abs(n.at / bar - Math.round(n.at / bar)) < 1e-9);
+        // (the pump and the tumbao rest on the downbeat; every other line plays the chord's root there)
         const degrees = degreesOf(f.text);
-        const root = (bar: number) => pc(TONIC + SCALE[mode][degrees[bar]!]!);
-        for (const n of downbeats) expect(pc(n!.note), `${f.id} in ${mode}, bar ${n!.at / 2}`).toBe(root(Math.round(n!.at / 2)));
+        const root = (b: number) => pc(TONIC + SCALE[mode][degrees[b]!]!);
+        for (const n of downbeats) expect(pc(n!.note), `${f.id} in ${mode}, bar ${n!.at / bar}`).toBe(root(Math.round(n!.at / bar)));
       }
   });
 });

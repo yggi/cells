@@ -49,7 +49,7 @@ const above = (p: StylePoint): StylePoint => ({ ...p, bite: Math.round((p.bite! 
 /** A point moved along bite by its energy offset from the point it was placed beside (decision 076's rule, #572). */
 const offset = (p: StylePoint, bite: number): StylePoint => ({ ...p, bite: Math.round((p.bite! + bite) * 1000) / 1000 });
 /** Each motif, the point it sits at, and the meter it is a bar of (4/4 where none is named). */
-const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
+const MOTIFS: Record<string, { point: StylePoint; meter?: Meter; also?: readonly StylePoint[] }> = {
   hook: { point: SYNTH_POP },
   octaves: { point: TECHNO },
   sigh: { point: DEEP_HOUSE },
@@ -80,7 +80,8 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   limp: { point: held(0.8, 0.6, 1, 1), meter: '7/8' },
   dancer: { point: held(0.6, 0.9, 0.8, 0.9), meter: '10/8' },
   shuffle: { point: held(0.7, 0.6, 0, 0.2), meter: '12/8' },
-  march: { point: held(0, 0.1, 0.6, 1), meter: '2/4' },
+  // (and at March's point, #542, so the style finds it first)
+  march: { point: held(0, 0.1, 0.6, 1), meter: '2/4', also: [stylePoint('march')] },
   fanfare: { point: held(0.2, 0.6, 0.9, 1), meter: 'alla breve' },
   // (six general-purpose: the centre, and 0.2 from it on one axis each)
   question: { point: held(0.5, 0.5, 0.5, 0.5) },
@@ -112,6 +113,9 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter }> = {
   bluesRiff: { point: stylePoint('bluesShuffle') },
   drunkenSailor: { point: stylePoint('seaShanty') },
   korobeiniki: { point: stylePoint('chiptune') },
+  // (#542's second four: the two tunes written for the styles placed by hand, each at its style)
+  guajeo: { point: stylePoint('salsa') },
+  smoke: { point: stylePoint('tripHop') },
 };
 /** Each form: its head, the hole it reads, its length in bars over a one-bar motif, and its point. */
 const FORMS: Record<string, { head: string; hole: string; bars: number; point: StylePoint; weight?: number }> = {
@@ -164,11 +168,11 @@ const piece = (form: string, motif: string) => {
 const moved = (braid: string, n: number) => braid.replace(/(^|\s)(-?\d+)/g, (_, space: string, d: string) => `${space}${Number(d) + n}`);
 
 describe('the motifs', () => {
-  it('are fifty-four, each a line over the key named for its fragment, at its point as the facet motif', () => {
+  it('are fifty-six, each a line over the key named for its fragment, at its point as the facet motif (the march at March’s too)', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
       expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
-      expect(f.association, f.id).toEqual([{ point: MOTIFS[f.id]!.point, weight: 1, facet: 'motif' }]);
+      expect(f.association, f.id).toEqual([MOTIFS[f.id]!.point, ...(MOTIFS[f.id]!.also ?? [])].map((point) => ({ point, weight: 1, facet: 'motif' })));
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&key']);
     }
   });
@@ -247,6 +251,10 @@ describe('the forms', () => {
       bluesShuffle: 'call_and_answer',
       seaShanty: 'rounded_binary',
       chiptune: 'sentence',
+      salsa: 'call_and_answer',
+      waltz: 'sentence',
+      march: 'rounded_binary',
+      tripHop: 'call_and_answer',
     });
   });
 

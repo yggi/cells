@@ -202,6 +202,12 @@ const FITS: Record<string, readonly string[]> = {
   shanty_drums: METER_FRAGMENTS.map((m) => m.id),
   chip_drums: FOUR_FOURS,
   quiet_pulse: METER_FRAGMENTS.map((m) => m.id),
+  // (#542's second four: the salsa's clave laps two bars and the trip-hop beat one bar of sixteenths, so they fit the 4/4s;
+  // the waltz's lines lap three beats, so it fits 3/4, 6/8 and 12/8, and no 4/4; the march's lap the half note)
+  salsa_drums: FOUR_FOURS,
+  waltz_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("12/8"))'],
+  march_drums: [...FOUR_FOURS, 'meter(grouping=meter("2/4"))', 'meter(grouping=meter("12/8"))'],
+  trip_hop_drums: FOUR_FOURS,
 };
 
 describe('every rhythm against every meter of the library', () => {
@@ -333,7 +339,8 @@ describe('a query given the workbench', () => {
       (f) => f.id,
     );
     const modes = MODE_FRAGMENTS.map((f) => f.id);
-    const isRhythm = (id: string) => RHYTHM_FRAGMENTS.some((f) => f.id === id);
+    // (the rhythms that fit 4/4: all but the waltz's, #542, whose lines lap three beats)
+    const isRhythm = (id: string) => RHYTHM_FRAGMENTS.some((f) => f.id === id) && FITS[id]!.includes('meter');
     // (a mode's main parameter is its tonic, and a query that names no argument takes the one cell that meets it, decision
     // 075: on a workbench of a meter alone, none, since a meter read as a tonic is said to be no note, #613; a query that
     // names the mode's argument fits a mode only where that cell is, #587)
@@ -370,11 +377,11 @@ describe('what it costs', () => {
     bench('meter', 104),
   );
 
-  it('the workbench of five compiles clean and every rhythm still fits it, renamed where it collides', () => {
-    // (the claves' voice is a hole an instrument fills: the General MIDI kit's line)
+  it('the workbench of five compiles clean and every rhythm that fits 4/4 still fits it, renamed where it collides', () => {
+    // (the claves' voice is a hole an instrument fills: the General MIDI kit's line; the waltz's beat fits no 4/4, #542)
     expect(compileSource(`${workbench}\n${KIT}`, undefined, { resolve: resolveSeed }).diagnostics).toEqual([]);
     expect(workbench).toMatch(/^&kick2=kick, /m);
-    for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(true);
+    for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(FITS[f.id]!.includes('meter'));
   });
 
   // The bound, as the work it bounds: the compiles a query makes (counted at `compileSource`, which the cache stands in
