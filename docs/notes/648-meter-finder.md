@@ -9,7 +9,7 @@ The module's header says how; this note says what it finds, and what it can't.
 
 Run: `node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/cycles.ts [bench …] [--rows]`.
 
-- **examples**: the 55 examples with a fixed meter (written `meter(…)`, not bent, moved or a slider), their first 40 s as played; the truth is the meter the text writes.
+- **examples**: the 59 examples with a fixed meter (written `meter(…)`, not bent, moved or a slider), their first 40 s as played; the truth is the meter the text writes.
 - **synthetic**: a drum pattern (a low kick on the bar line, a kick on each other group, a snare on the last, a hat on every eighth) over each of `contracts/meter`'s groupings up to 12 eighths and 4 groups, at 80, 110 and 150 bpm, straight, swung .6 and swung 2/3: 1035 cases with an exact truth, aksak and swing among them.
 - **groove**: the three Groove MIDI fixtures, played; the truth their tempo map, and their swing as `tools/groove.ts` reads it.
 - **bach**: the MIDI library's 88 files, typeset, with no velocities and some pickups; the truth each file's time signature, its bars from its start.
@@ -23,7 +23,7 @@ On 2026-11-09:
 
 | bench | level | bar | start | beats | groups | beat | swing |
 |---|---|---|---|---|---|---|---|
-| examples (55) | 46 | 44 | 42 | 46 | 41 | 46 | 52 |
+| examples (59) | 49 | 45 | 43 | 48 | 42 | 47 | 54 |
 | synthetic (1035) | 962 | 840 | 835 | 485 | 331 | 464 | 813 |
 | groove (3) | 2 | 3 | 2 | 3 | 3 | 3 | 3 |
 | bach (88) | 68 | 44 | 37 | 62 | 34 | 40 | 88 |
@@ -36,7 +36,7 @@ The bounds are read on **level** (the owner on #667, 2026-11-09): a bar found do
 For this first rung they are what is measured, held by the ratchet (the owner, 2026-11-10): the cues the notes give at their own scale move the MIDI library by about two files of 88, each gain a loss elsewhere, and more weights tuned on the benches they are measured on would fit them, not find meters.
 
 - **The Groove fixtures' swing within .03:** 3 of 3, met. Their tempo, bar, beats and grouping too; the bar's start on 2 of 3.
-- **The examples:** level at least 84 % (46 of 55), swing at least 95 % (52).
+- **The examples:** level at least 83 % (49 of 59), swing at least 91 % (54).
 - **The MIDI library:** level at least 77 % (68 of 88).
 - **The synthetic bench:** level at least 93 % (962 of 1035).
 
