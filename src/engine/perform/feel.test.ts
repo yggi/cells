@@ -8,7 +8,7 @@ import { compileSource } from '../compile';
 import { channelTable, router } from '../midi';
 import { codeShifts } from '../program';
 import { eventsBetween, plan } from '../realize';
-import { CONTRACT_WIDTHS, feelOf, played, readerOf, readingOf, type FeelEvent, type FeelFrame } from './feel';
+import { CONTRACT_WIDTHS, feelOf, played, readerByName, readerOf, type FeelEvent, type FeelFrame } from './feel';
 import { perform, widthsOf } from './perform';
 import { meterOfFrame, swungPlace, writtenPlace } from '../meter';
 
@@ -26,16 +26,20 @@ interface Contract {
   readonly contract: string;
   readonly version: number;
   readonly minor: number;
-  readonly reading: readonly { readonly output: string; readonly reads: { readonly part: string; readonly role?: string } | null }[];
+  readonly reading: readonly {
+    readonly says: string;
+    readonly text: readonly string[];
+    readonly reads: Readonly<Record<string, { readonly part: string; readonly role?: string } | null>>;
+  }[];
   readonly vectors: readonly Vector[];
 }
 const fixture = <T>(name: string): T => JSON.parse(readFileSync(new URL(`../../../fixtures/contracts/${name}.json`, import.meta.url), 'utf8'));
 const contract = fixture<Contract>('feel');
 const name = (v: Vector) => `${v.preset} ${v.meter} seed ${v.frame.seed} bar ${v.frame.bar}`;
 
-describe('the feel contract (music-commons contracts/feel, version 2)', () => {
+describe('the feel contract (music-commons contracts/feel, version 3)', () => {
   it('is the version met, lifted with its source named: 256 bars from Jambot', () => {
-    expect([contract.contract, contract.version, contract.minor]).toEqual(['feel', 2, 0]);
+    expect([contract.contract, contract.version, contract.minor]).toEqual(['feel', 3, 0]);
     expect(contract.lifted).toMatch(/^Lifted from yggi\/music-commons contracts\/feel\/vectors\.json @ [0-9a-f]{7}/);
     expect(contract.liftedByTheHub).toMatch(/^Lifted from yggi\/jambot @ [0-9a-f]{7}/);
     expect(contract.vectors).toHaveLength(256);
@@ -57,10 +61,29 @@ describe('the feel contract (music-commons contracts/feel, version 2)', () => {
     expect(events).toBe(7140);
   });
 
-  it('reads each output a host’s text names an event by as the vector’s part and role, or none: 17 of 17', () => {
-    expect(contract.reading).toHaveLength(17);
-    for (const r of contract.reading) expect(readingOf(r.output), r.output).toEqual(r.reads);
-    expect(readingOf(undefined)).toBeNull();
+  it('reads each case’s lines by the part= and role= its text declares, never a name: 10 of 10, every line of each (version 3, decision 075)', () => {
+    expect(contract.reading).toHaveLength(10);
+    let lines = 0;
+    for (const c of contract.reading) {
+      const r = compileSource(c.text.join('\n'));
+      expect(r.diagnostics, c.says).toEqual([]);
+      const read = readerOf(r);
+      for (const [line, reads] of Object.entries(c.reads)) {
+        // (an output's id says which line it plays: a kit's third field, else its second, the line before any operator)
+        const outputs = r.outputs.filter((o) => {
+          const [first, second, third] = o.id.split(':');
+          return (first === 'kit' && second === 'voices' ? third : /^[A-Za-z_][A-Za-z0-9_]*/.exec(second ?? '')?.[0]) === line;
+        });
+        expect(outputs.length, `${c.says}: &${line}`).toBeGreaterThan(0);
+        for (const o of outputs) expect(read(o.id), `${c.says}: &${line}`).toEqual(reads);
+        lines++;
+      }
+    }
+    expect(lines).toBe(11);
+    // (shown firing: version 2's reading by names, which Migrate's parts rule reads, fails the case of a line named &bass)
+    const named = contract.reading.find((c) => 'bass' in c.reads && c.reads.bass === null)!;
+    const r = compileSource(named.text.join('\n'));
+    expect(r.outputs.map((o) => readerByName(r)(o.id))).toContainEqual({ part: 'bass' });
   });
 });
 
@@ -91,7 +114,7 @@ describe('a performer’s widths', () => {
         '&tune step=4n 0 2 4 7',
         '&v s=saw loop=C4',
         '&leadOut play=&tune licence=.5 accents=free(0, 0..1) &v',
-        '&lead map=role &leadOut',
+        '&lead map=role part=lead &leadOut',
         '&padV s=tri loop=C3',
         '&padOut play=&tune &padV',
         '&out map=sample [&leadOut, &padOut]',
@@ -122,7 +145,7 @@ describe('the default performer on cells’ events', () => {
       '&leadline step=8n 0 2 4 7 4 2 0 ~',
       '&leadV s=saw loop=C4',
       `&leadOut play=&leadline ${widths} &leadV`,
-      '&lead map=role &leadOut',
+      '&lead map=role part=lead &leadOut',
       '&out map=midi(1) &leadOut',
     ].join('\n');
   const performed = (widths: string) => {
@@ -131,7 +154,7 @@ describe('the default performer on cells’ events', () => {
     return eventsBetween(plan(r, codeShifts(r)), 0, 2 - 1e-9, true).map((e) => perform(e, route, { bar: 3, frame, start: 0, seconds: 2 }, readerOf(r), widthsOf(r)).performance);
   };
 
-  it('reads each event’s part from its performer’s role, and plays it with the feel; at widths 0, as cells sends it', () => {
+  it('reads each event’s part from its performer’s role cell’s part= (feel v3), and plays it with the feel; at widths 0, as cells sends it', () => {
     const plain = performed('licence=0 accents=0');
     expect(plain).toHaveLength(7);
     expect(plain.every((p) => p?.part === 'lead')).toBe(true);

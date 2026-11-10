@@ -2,8 +2,9 @@
 // defines, consistently and to names it doesn't write, and it plays what it played (S1), says what it said (its
 // diagnostics, the names renamed), and the default performer reads each event as the same part (the feel, decision 063
 // §2). Checked over every example twice: its `from` lines written in (the language alone), and as written (the language
-// and the library together, where a `from` line can rename only what it binds). What still breaks it is listed by
-// name, each with why and its issue: a list a passing example must leave (the test fails when one starts to pass).
+// and the library together, where a `from` line renames what it takes). No example is an exception since #560's rungs:
+// a drum's note is its `note=`, a `from` line renames what it takes, every fragment reads only what it declares, and the
+// default performer reads `part=` and `role=` (the feel's version 3), so the test is the property alone.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { FAMILIES } from './core';
@@ -11,7 +12,7 @@ import { parse, readFrom } from './parser';
 import { splitComment } from './edit';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
-import { readerOf } from './perform/feel';
+import { readerByName, readerOf } from './perform/feel';
 import { soundsIdentical } from './sameness';
 import { expansion, signatureOf } from './use';
 import { isAttribute, topTokens } from './parser/use';
@@ -96,31 +97,6 @@ function broken(text: string, names: readonly string[]): string[] {
 const own = (text: string) => [...new Set(parse(text).cells.map((d) => d.name))].filter((n) => !n.startsWith('λ'));
 const written = FAMILIES.find((f) => f.key === 'from')!.rewrite;
 
-/**
- * The default performer (the feel, decision 063 §2; yggi/music-commons `contracts/feel`) reads an event's part off the
- * names its output id carries (`readingOf`: a line named `&bass`, `&pad`, `&stab` or `&lead` is that part, a kit's line
- * `&kick` or `&hat` that drum role) and off a role cell's name (`&bass map=role &bassOut`, decision 061). Renamed, the
- * line plays the same notes and the performer plays them as written.
- */
-const FEEL = ['clock', 'voice', 'effects', 'variations', 'midi-out', 'idm', 'cellscape', 'electroswing', 'spooky', 'kinderlied', 'soundtape', 'radio', 'circle'];
-
-/**
- * Where renaming still changes what a piece is (#560). Written in, a name alone means something only where the language
- * gives it a meaning of its own: the feel's parts and roles (`FEEL`). A drum's note is its `note=` since #560's rung 1,
- * so `&bd note=36` renamed sends 36 still.
- */
-const WRITTEN_IN: Readonly<Record<string, readonly string[]>> = {
-  ...Object.fromEntries(FEEL.map((k) => [k, ['feel']])),
-};
-
-/**
- * As written, every name a `from` line takes is renamed too (`&bd` is `&zq0=bd`, decision 075 §3a–b: a collection's
- * cells, a template's several heads, a `*` written out by name), so the feel's parts are renamed with them. The
- * instruments, the performers and the band read only what they declare (#560 rung 3c–e: `bass_performer(bassV=&bassV)`,
- * `* from band(bassline=&bassline, …, style=&style)`), so only the feel (rung 2) is left.
- */
-const AS_WRITTEN: Readonly<Record<string, readonly string[]>> = Object.fromEntries(FEEL.map((k) => [k, ['feel']]));
-
 /** The names a text binds itself: its own lines' and every name its `from` lines take (decision 075 §3a–b). */
 function bound(text: string): string[] {
   const heads: string[] = [];
@@ -138,15 +114,23 @@ describe('alpha substitution: every name a text defines renamed, it plays, says 
   describe('the language: each example with its from lines written in, every name renamed', () => {
     it.each(Object.entries(EXAMPLES))('%s', (key, p) => {
       const text = written(p.source, O);
-      expect(broken(text, own(text))).toEqual(WRITTEN_IN[key] ?? []);
+      expect(broken(text, own(text))).toEqual([]);
     });
   });
 
   describe('the language and its library: each example as written, every name it binds renamed', () => {
     it.each(Object.entries(EXAMPLES))('%s', (key, p) => {
       const text = p.source;
-      expect(broken(text, bound(text))).toEqual(AS_WRITTEN[key] ?? []);
+      expect(broken(text, bound(text))).toEqual([]);
     });
+  });
+
+  it('the default performer reads every example as it read by names before: the values the names gave are written (feel v3, #560 rung 2)', () => {
+    for (const [key, p] of Object.entries(EXAMPLES)) {
+      const r = compileSource(p.source, undefined, O);
+      const outputs = r.outputs.map((o) => o.id);
+      expect(outputs.map(readerOf(r)), key).toEqual(outputs.map(readerByName(r)));
+    }
   });
 
   it('the meter, the key, the tempo, the tonic and the harmony have no names of their own', () => {

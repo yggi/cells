@@ -19,9 +19,9 @@ description: The Baroque sequence I IV vii° iii vi ii V, its chords one triad t
 &triad over=&degrees even(3, 7)                          # the chord: every other degree
 &power over=&triad even(2, 3, 1)                         # its root and fifth
 
-&pad over=&triad step=1m [0,1,2]
+&pad part=pad over=&triad step=1m [0,1,2]
 &arp over=&triad step=8n 0 1 2 3 2 1 0 1
-&bass over=&power step=4n -2 -1 -2 -1
+&bass part=bass over=&power step=4n -2 -1 -2 -1
 
 &keys s=tri loop=C4 env=&(map=adsr .01 .5 .3 .3)
 &low s=sine loop=C3 env=&(map=adsr .01 .3 .6 .2)

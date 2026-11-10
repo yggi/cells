@@ -13,9 +13,9 @@ source: seed
 ```cells
 &kick, &hat, &euclid, &groove from (&bd, &rim, &rd)
 &bd, &rim, &rd from gm_kit
-&kick step=1m &bd:0:.45
-&hat step=4n &rd:0:.08
-&euclid step=1m [~ &rim]
+&kick role=kick step=1m &bd:0:.45
+&hat role=hat step=4n &rd:0:.08
+&euclid role=euclid step=1m [~ &rim]
 &groove [&kick, &hat, &euclid * .2]
 ```
 

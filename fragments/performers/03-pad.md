@@ -56,7 +56,7 @@ source: seed
 &pad, &padOut from (&padLevel, &padV, &style) &padline
 &padV from pad(style=&style)
 &padOut play=&padline level=&padLevel &padV
-&pad map=role &padOut
+&pad map=role part=pad &padOut
 &padLevel map=amp .8
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```

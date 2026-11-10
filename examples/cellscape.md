@@ -26,7 +26,7 @@ description: A cycle of twelve scenes, each a fifth from the last, and home.
 &sweep tags="sequence" map=lin loop=&bar/16 .1 .9 .2
 
 # the layers
-&pad tags="drone" over=&lydian step=&droneBar/8 label="drone: an open ninth" [0,4,6,9]
+&pad part=pad tags="drone" over=&lydian step=&droneBar/8 label="drone: an open ninth" [0,4,6,9]
 &arp tags="sequence" over=&lydian step=&sequenceBar*4 label="the sequence" 0 4 6 9 7 4 2 4
 &m1 tags="canon" 0@2 2@2 4@3 6
 &m2 tags="canon" 7@2 4@2 6@3 4                           # against &m1: octaves and thirds only (they stay consonant turned upside down)

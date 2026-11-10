@@ -73,6 +73,7 @@ export const TIERS = [
         name: 'Time and voice',
         concept: "a clock: a bar (&bar from meter 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato",
         forms: [
+            'parameter part',
             'line &x from id(name=…) …',
             'rate nbpm',
             'rate step=&x',
@@ -139,6 +140,7 @@ export const TIERS = [
         name: 'Development',
         concept: 'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: sections stepped by the bar, a selector, laps=, off',
         forms: [
+            'parameter role',
             'parameter gain',
             'reference &name[<<n]',
             'reference &name[i]',

@@ -15,7 +15,7 @@ lifted: yggi/cells examples/jazz.md @ b3c0acea
 &ride, &kick, &groove from (&bd, &rd)
 &bd, &rd from gm_kit
 &ride step=8n &rd:0:.9 ~ &rd:0:.6 &rd:0:.5 &rd:0:.9 ~ &rd:0:.6 &rd:0:.5
-&kick step=2n &bd:0:.5
+&kick role=kick step=2n &bd:0:.5
 &groove [&ride, &kick]
 ```
 

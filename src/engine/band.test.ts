@@ -30,7 +30,7 @@ const PIECE = `&bar meter("4/4") step=120bpm swing=8n:2/3
 &cellist play=&walk &celloV
 &out map=sample [&violin, &violin2, &viola, &cellist]
 `;
-const BAND = '&lead map=role &violin\n&comp map=role &violin2 &viola\n&band &lead &comp &cellist\n';
+const BAND = '&lead map=role part=lead &violin\n&comp map=role &violin2 &viola\n&band &lead &comp &cellist\n';
 // (a bar is two seconds)
 const BAR = 2;
 

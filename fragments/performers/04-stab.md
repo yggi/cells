@@ -56,7 +56,7 @@ source: seed
 &stab, &stabOut from (&stabLevel, &keysV, &style) &stabline
 &keysV from keys(style=&style)
 &stabOut play=&stabline level=&stabLevel &keysV
-&stab map=role &stabOut
+&stab map=role part=stab &stabOut
 &stabLevel map=amp .8
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```

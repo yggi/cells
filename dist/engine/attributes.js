@@ -157,6 +157,18 @@ export const PARAMS = {
         value: 'number',
         on: ['gate'],
     },
+    part: {
+        help: 'the part the default performer plays a line as (feel v3, decision 075): on a role cell, its performer’s part (&low map=role part=bass &lowOut), or on a line (&low part=bass …): bass, pad, stab, lead or drums; a name gives none',
+        doc: 'mix.md',
+        value: 'word',
+        form: 'part=bass (bass, pad, stab, lead or drums)',
+    },
+    role: {
+        help: 'a drum line’s role, as the default performer plays it (feel v3, decision 075): kick, backbeat, ghost, hat, pedal, euclid, clave or fill (&k role=kick step=16n &bd!4); a name gives none',
+        doc: 'mix.md',
+        value: 'word',
+        form: 'role=kick (kick, backbeat, ghost, hat, pedal, euclid, clave or fill)',
+    },
     trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
     gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
     velocity: { help: 'a gate, the old spelling: a level, one factor of level= (velocity=&accent)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },

@@ -56,7 +56,7 @@ source: seed
 &lead, &leadOut from (&leadLevel, &leadV, &style) &leadline
 &leadV from lead(style=&style)
 &leadOut play=&leadline level=&leadLevel &leadV
-&lead map=role &leadOut
+&lead map=role part=lead &leadOut
 &leadLevel map=amp .8
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```

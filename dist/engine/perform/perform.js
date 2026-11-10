@@ -1,8 +1,8 @@
 import { midiNote, routesOf } from "../midi.js";
-import { CONTRACT_WIDTHS, played, readingOf } from "./feel.js";
+import { CONTRACT_WIDTHS, played } from "./feel.js";
 import { meterOfFrame, swungPlace, writtenPlace } from "../meter.js";
 const CHANNELS = new Set([1, 2, 3, 10]);
-export function perform(e, route, at, read = readingOf, widths = () => CONTRACT_WIDTHS) {
+export function perform(e, route, at, read = () => null, widths = () => CONTRACT_WIDTHS) {
     const reading = read(e.output);
     const r = routesOf(route(e)).find((x) => CHANNELS.has(x.channel));
     const sent = r && midiNote(e, r);

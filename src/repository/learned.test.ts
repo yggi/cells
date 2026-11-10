@@ -207,7 +207,7 @@ describe('identity, until the hash', () => {
     expect(sameText(`${linesAlone(son.text).replace(' &claves', '   &claves')} // the son`, son.text)?.size).toBe(0);
     // (a template renamed in its signature is another template: its heads are its interface, decision 075)
     expect(sameText(renameCell(son.text, 'clave', 'cl'), son.text)).toBeNull();
-    expect(canonicalText(linesAlone(son.text))).toBe(['&#1 step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!3 &claves ~!7', '&#2 [&#1 * .5]'].join('\n'));
+    expect(canonicalText(linesAlone(son.text))).toBe(['&#1 role=clave step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!3 &claves ~!7', '&#2 [&#1 * .5]'].join('\n'));
   });
 
   it('but not one that differs, nor one that renames a name its signature declares or a name it uses and doesn’t define', () => {

@@ -13,7 +13,7 @@ description: "Four voices, each a source and an envelope: a pluck, a swell, a ba
 
 &tune step=8n 0 4 7 12 7 4 0 ~ 2 5 9 14 9 5 2 ~
 &line step=2n 7 9 5 7
-&bass step=4n 0 0 7 0 2 2 9 2
+&bass part=bass step=4n 0 0 7 0 2 2 9 2
 
 &pluck s=tri loop=C4 env=&(map=adsr .005 .3 .1 .2)        # quick to start, quick to fade: a pluck
 &pad s=saw loop=C4 env=&(map=adsr .5 .3 .6 .8)            # slow in, held, slow out: a swell

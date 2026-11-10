@@ -12,7 +12,8 @@ import { seedFragments } from '../repository/seed';
 
 const METER_FRAGMENTS = seedFragments('meters');
 const MODE_FRAGMENTS = seedFragments('modes');
-const OLD_USE = /^use is the old way/;
+// (and, read the old way, that a name gave the default performer a part: these texts are about the tempo and the key)
+const OLD_USE = /^use is the old way|is named as the feel's (part|drum role)/;
 const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
   const r = compiledWithOldUse(...args);
   const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));

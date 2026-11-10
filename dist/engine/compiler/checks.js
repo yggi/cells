@@ -27,6 +27,18 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
             warn(`&${name} is named as General MIDI's drum ${gm}, and a name gives no note: write &${name} note=${gm} (Migrate writes it, decision 075)`, d.span);
         }
     }
+    if (ctx.parsed.old)
+        for (const d of decls.values()) {
+            const c = cells.get(d.name);
+            if (!c || c.voice)
+                continue;
+            const part = ['bass', 'pad', 'stab', 'lead'].includes(d.name) && c.params.part === undefined;
+            const role = ['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill'].includes(d.name) && c.params.role === undefined && !c.map;
+            if (part)
+                warn(`&${d.name} is named as the feel's part ${d.name}, and a name gives none now: write &${d.name} part=${d.name} (Migrate writes it, decision 075)`, d.span);
+            else if (role)
+                warn(`&${d.name} is named as the feel's drum role ${d.name}, and a name gives none now: write &${d.name} role=${d.name} (Migrate writes it, decision 075)`, d.span);
+        }
     for (const c of cells.values()) {
         const span = (k) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name).span;
         if (typeof c.params.body === 'string' && !(c.params.body in BODIES))

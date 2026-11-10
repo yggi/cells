@@ -14,7 +14,7 @@ description: "Three parts, and a song that picks which of them play: an intro, a
 
 &chords over=&key step=&keysBar/4 [0,2,4] [3,5,7] [4,6,8] [0,2,4]
 &tune over=&key step=&tuneBar*2 4 4 5 7 7 5 4 2 0 0 2 4 4@2 2@2
-&kick step=&drumBar &bd ~ &bd ~
+&kick role=kick step=&drumBar &bd ~ &bd ~
 &click off step=&drumBar 12 0!3                       # a click on the beat, switched off
 
 &keys s=tri loop=C4 env=&(map=adsr .01 .5 .3 .3)

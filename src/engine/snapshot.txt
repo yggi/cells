@@ -38,7 +38,7 @@ dtmf  212 notes  notes a41810e3d88fdf1f  events 3bd1397bdcb95d5a  values e841fd6
 daytime  171 notes  notes 071639a05432c34c  events 350bf2e284726f43  values 0adc64f88c0a7c73
 gate  384 notes  notes 829478a942bf5aa6  events 301e2e0d535b2036  values 64451bc26d32ec1a
 play-in  224 notes  notes 7dbbdeac90f2801e  events 4773545ce900dc1a  values 365f04f085d8ac5e
-midi-out  184 notes  notes 37d740ec4ae060a0  events fb5ec107ca6b11f8  values a056c07c4a4e0547
+midi-out  184 notes  notes 37d740ec4ae060a0  events fb5ec107ca6b11f8  values cc4ac7c9f3a42dcc
 lullaby  52 notes  notes 7bd4bd55efe1623d  events 1a888f73f2003915  values fe5bda38f490e57d
 jazz  416 notes  notes 1c30bab6ef139930  events dba0386e38528cf1  values 258b70998e6e723e
 five  745 notes  notes c6c4cac2d2f6433c  events bf901fc30a150e5f  values c42c937f8bcbb577
