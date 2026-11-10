@@ -12,6 +12,8 @@
  *  - library.ts:  a line that is a library fragment's word for word as a use of it (#196): &bar meter("4/4") step=&tempo
  *                 → use &bar from meter, and a fragment's cell written inline as it by name: pitch=&(map=lin …)
  *                 → pitch=&vibrato, use &vibrato; with the library the call gives (`NormaliseOptions.library`)
+ *  - library.ts, again: a template's head line with its parameters filled in as a from line of it with those arguments
+ *                 (#524): &bar meter("7/8") step=&tempo → &bar from meter(grouping=meter("7/8")) &tempo
  *  - narrowest.ts: a collection's `* from gm_kit` as the cells of it the piece uses, `&bd, &hh from gm_kit` (#27's row,
  *                 the owner on #157: `*` is a shorthand for all of it the piece uses)
  *
@@ -26,7 +28,7 @@
 import { rewriteAll, ROUNDS, type Rewrite } from '../rewrite';
 import type { CompileOptions, CompileResult } from '../program';
 import { aliases, filterModels } from './aliases';
-import { libraryCells, libraryLines, type LibraryFragment } from './library';
+import { libraryCells, libraryLines, libraryTemplates, type LibraryFragment } from './library';
 import { narrowestFroms } from './narrowest';
 import { interfaceNames } from './names';
 import { evenScan, swingClock } from './meter';
@@ -49,6 +51,7 @@ export const normalisations =
     ...aliases(source, result),
     ...filterModels(source, result),
     ...libraryLines(source, options.library),
+    ...libraryTemplates(source, options.library, options.resolve),
     ...libraryCells(source, options.library),
     ...narrowestFroms(source, options.resolve),
   ];

@@ -10,7 +10,7 @@ description: A flute recorded onto a worn tape loop and played back by two heads
 &wanderNote label="wander= lets a head drift either way along the tape, wanderhz= times a second: a flying head." about=&far
 &reel step=72bpm motor=1 mass=1 friction=.1 wow=.02 0
 &bar from meter 72bpm
-&key scale(minor, &tonic)
+&key from diatonic(mode=minor) &tonic
 &tonic D
 
 &tune over=&key step=8n 0 ~ 4 ~ 7 ~!3 6 ~ 4 ~ 2 ~!3 0 ~ 1 2 4 ~!3

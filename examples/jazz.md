@@ -10,7 +10,7 @@ description: "A 12-bar blues with swung eighths: the blues scale and the minor p
 # A 12-bar blues in C, swung. The bar leans its eighths, long, short: the second of each pair
 # at a share of its beat that is free (1/2 straight, 2/3 the triplet swing, 3/4 hard). Two scales, both scans:
 # the blues scale for the riff, the minor pentatonic for the turnaround.
-&bar meter("4/4") step=&tempo swing=&swing
+&bar from meter(swing=&swing) &tempo
 &tempo step=free(132bpm, 80..220)
 &swing swing=8n:free(2/3, 1/2..3/4)                    # two eighths a beat: long, short
 

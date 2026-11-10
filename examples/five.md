@@ -8,7 +8,7 @@ description: An original tune in 5/4, felt as 3 + 2, after the groove of Take Fi
 &pluck, &snap from envelopes
 # Five: an original tune in 5/4, the bar felt as 3 + 2 — after the groove of Take Five.
 # It builds on the blues: the same swing meter, the minor pentatonic (here on Eb).
-&bar meter("5/4") step=&tempo swing=&swing         # five beats
+&bar from meter(grouping=meter("5/4"), swing=&swing) &tempo # five beats
 &tempo step=free(172bpm, 120..220)
 &swing swing=8n:free(2/3, 1/2..3/4)                # swung eighths, as in the blues: the share free
 &penta scan(3 2 2 3 2)                             # Eb Gb Ab Bb Db (the voices sit on Eb)
