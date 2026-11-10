@@ -12,7 +12,7 @@ import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { compileSource } from '../engine/compile';
-import { heard } from './heard';
+import { bassCards } from './benches';
 import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { newPoint } from '../engine/migrate/axes';
@@ -25,7 +25,8 @@ const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 const takenOn = (text: string, bench: string, main?: string) => {
   const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
   const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
-  return { ...fit, union: { text: expand(fit.text, resolve) } };
+  // (the union, and the bass line's head as the copy names it: what a card sends)
+  return { ...fit, union: { text: expand(fit.text, resolve), head: fit.use?.heads[0]?.replace(/^&/, '') } };
 };
 
 const PATTERNS = ['root', 'pump', 'eight', 'funk', 'walk'] as const;
@@ -216,8 +217,8 @@ function toneOf(tone: Tone, chord: readonly number[], next: readonly number[]): 
 }
 
 /** What a text sends on channel 2 over `bars` bars of 4/4 at 120 bpm, each note's bar, its step in the bar and its pitch class, and what its compiler said. */
-function played(text: string, bars: number): { notes: [number, number, number][]; diagnostics: string[] } {
-  const plan = planOf(`${text}\n${heard(text)}`);
+function played({ text, head }: { readonly text: string; readonly head?: string | undefined }, bars: number): { notes: [number, number, number][]; diagnostics: string[] } {
+  const plan = planOf(`${text}\n${bassCards(text, head)}`);
   const sixteenth = 60 / 120 / 4;
   const route = router(plan.result, channelTable(plan.result));
   const notes = windowAt(plan, 0, bars * 16 * sixteenth - 1e-9).events.flatMap((e) =>
@@ -283,7 +284,7 @@ describe('the bass lines', () => {
       expect(holesOf(f.text, compileSource).sounds, f.id).toEqual([]);
       expect(takenOn(f.text, '').missing, f.id).toEqual(['&harm']);
       // (heard through a card, the voice it plays on is a sound the bass instrument fills)
-      expect(holesOf(`${f.text}\n${heard(f.text)}`, compileSource).sounds, f.id).toEqual(['&bassV']);
+      expect(holesOf(`${f.text}\n${bassCards(f.text)}`, compileSource).sounds, f.id).toEqual(['&bassV']);
     }
   });
 
@@ -293,7 +294,7 @@ describe('the bass lines', () => {
         const fit = takenOn(f.text, workbench(name), '&harm');
         expect(fit.fits, f.id).toBe(true);
         expect(fit.diagnostics, f.id).toEqual([]);
-        expect(played(fit.union.text, 1).diagnostics, f.id).toEqual([]);
+        expect(played(fit.union, 1).diagnostics, f.id).toEqual([]);
       }
     });
 });
@@ -319,14 +320,14 @@ describe('what each plays is what bass.ts plays for its pattern alone at its poi
   for (const [name, { chords }] of Object.entries(PROGRESSIONS))
     for (const p of PATTERNS)
       it(`${ID[p]}, over ${name} twice: each onset per bar at its pitch class`, () => {
-        const { notes, diagnostics } = played(takenOn(byId(ID[p]).text, workbench(name), '&harm').union.text, 2 * chords.length);
+        const { notes, diagnostics } = played(takenOn(byId(ID[p]).text, workbench(name), '&harm').union, 2 * chords.length);
         expect(diagnostics).toEqual([]);
         expect(notes).toEqual(expected(p, chords));
       });
 
   it('the walk’s last beat is a semitone below the next chord’s root, over a chord whose key degree below it is a whole tone too', () => {
     // (I–vi: into A from G♯, where the key's degree below A is G, a whole tone: `0b` over the next chord would play G)
-    const { notes } = played(takenOn(byId('walking_bass').text, workbench('I–vi–IV–V'), '&harm').union.text, 1);
+    const { notes } = played(takenOn(byId('walking_bass').text, workbench('I–vi–IV–V'), '&harm').union, 1);
     expect(notes.at(-1)).toEqual([0, 12, 8]);
   });
 });
@@ -377,7 +378,7 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
 
 describe('the bass lines send the notes they always sent, through the bass instrument', () => {
   const notesOf = (text: string) => {
-    const plan = planOf(`${text}\n${heard(text)}`);
+    const plan = planOf(`${text}\n${bassCards(text)}`);
     const route = router(plan.result, channelTable(plan.result));
     return windowAt(plan, 0, 8 - 1e-9).events.flatMap((e) =>
       routesOf(route(e)).flatMap((r) => {

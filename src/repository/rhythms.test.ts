@@ -17,7 +17,7 @@ import { fitsAs } from './fit';
 import { expand, signatureOf } from '../engine/use';
 import { readFrom } from '../engine/parser/use';
 import type { Resolve } from '../engine/program';
-import { heard } from './heard';
+import { drumCard } from './benches';
 import { holesOf } from './holes';
 import { resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
@@ -64,7 +64,8 @@ const linesAlone = (text: string) =>
 /** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments' lines, and a card that hears them (#291). */
 const hosted = (meter: string, bpm: number, ...fragments: string[]) => {
   const lines = fragments.map(linesAlone);
-  const card = heard(lines.join('\n'));
+  // (the parts on the card, from each fragment's own text: the kit is what they strike, not a part)
+  const card = drumCard(...fragments.filter((f) => f !== coreKit));
   return [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...lines, ...(card ? [card] : [])].join('\n');
 };
 

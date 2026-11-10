@@ -1,4 +1,4 @@
-// A pattern fragment carries no card (#291): heard through the one `heard` supplies, on Jambot's channels, each of the
+// A pattern fragment carries no card (#291): heard through the tests' cards (`benches.ts`, #640), its heads on Jambot's channels, each of the
 // 19 that carried one sends what it sent with its own (a hash of each note's channel, MIDI note, onset, end and
 // velocity over 16 s, recorded with the cards still in, at cells bbb9eb2); no seed holds a card; and a bass line fills
 // the bass performer's hole (#285).
@@ -9,7 +9,7 @@ import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { fitsAs } from './fit';
-import { heard } from './heard';
+import { bassCards, drumCard } from './benches';
 import { LIBRARY, resolveSeed } from './library';
 import { seedFragments } from './seed';
 
@@ -78,7 +78,13 @@ function sent(text: string): (string | number)[][] {
     .sort((a, b) => a[2]! - b[2]! || a[1]! - b[1]!);
 }
 
-describe('a pattern fragment heard through the card `heard` supplies (#291)', () => {
+/**
+ * The cards a seed is heard through: a bass line's on the bass channel, a rhythm's heads on the drums; the bell and scale
+ * is a mode by its signature (its head `&key`), so its drum part is named: the bell it strikes (decision 056).
+ */
+const cardsOf = (id: string, text: string) => (BASS_FRAGMENTS.some((f) => f.id === id) ? bassCards(text) : id === 'bell_and_scale' ? drumCard(['agogo']) : drumCard(text));
+
+describe('a pattern fragment heard through the tests’ cards (#291, #640)', () => {
   // (the seeds made after #291, which never carried a card: an example's beat, the Spooky beat and bass of #349, the ghost-house beat and bass near it, the Kinderlied beat and the cinquillo, #507; the beats and basses read from the examples for Acid, Happy hardcore and Elektro, #572)
   const born = [
     'electro_swing_drums',
@@ -108,7 +114,7 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
   it('is each of the 19 that carried a card', () => expect(carried.map((f) => f.id).sort()).toEqual(Object.keys(SENT).sort()));
 
   it.each(carried.map((f) => [f.id, f.text] as const))('%s sends what it sent with its own card', (id, text) => {
-    const notes = sent(`${benchOf(id, text)}\n${text}\n${heard(text)}`);
+    const notes = sent(`${benchOf(id, text)}\n${text}\n${cardsOf(id, text)}`);
     expect([hash(JSON.stringify(notes)), notes.length]).toEqual(SENT[id]);
   });
 
@@ -116,7 +122,7 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
     expect(LIBRARY.filter((f) => /map=(midi|sample)/.test(f.text)).map((f) => f.id)).toEqual(['band']);
   });
 
-  it('a text with nothing to hear gets no card', () => expect(heard('&harm over=&key step=1m [0,2,4]')).toBe(''));
+  it('no part, no card', () => expect(drumCard()).toBe(''));
 
   it.each(BASS_FRAGMENTS.map((f) => [f.id, f.text] as const))(
     '%s, heard on its bench, says nothing: the bass’s sound is heard on a sound card as well as sent (#391)',
@@ -126,9 +132,9 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
         compiledWithOldUse(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed, old: true })
           .diagnostics.filter((d) => !OLD_USE.test(d.message))
           .map((d) => d.message);
-      expect(said(heard(text))).toEqual([]);
+      expect(said(bassCards(text))).toEqual([]);
       // (it fires: the MIDI card alone says the sound isn't sent)
-      expect(said(heard(text).replace(/\n&bassSound .*$/m, ''))).toEqual([expect.stringMatching(/^&bassV is only on a MIDI card: its sound/)]);
+      expect(said(bassCards(text).replace(/\n&bassSound .*$/m, ''))).toEqual([expect.stringMatching(/^&bassV is only on a MIDI card: its sound/)]);
     },
   );
 });

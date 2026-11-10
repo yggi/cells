@@ -14,7 +14,7 @@ import { playsSameNotes, sameNotes } from '../sameness';
 import { windowAt } from '../schedule';
 import { rewriteAll } from '../rewrite';
 import { fitsAs } from '../../repository/fit';
-import { heard } from '../../repository/heard';
+import { drumCard } from '../../repository/benches';
 import { holesOf } from '../../repository/holes';
 import { resolveSeed } from '../../repository/library';
 import { anchorsOf, backbeatOf, drawn, variations, varied, type Variation } from '.';
@@ -380,7 +380,7 @@ describe('a drum bar with no card of its own (#291)', () => {
       const kit = { ...OPTIONS, workbench: `${WORKBENCH}\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}` };
       const alone = variations(text, kit).map((v) => [v.by, v.after]);
       expect(alone.length).toBeGreaterThan(0);
-      expect(variations(text, { ...kit, workbench: `${kit.workbench}\n${heard(text)}` }).map((v) => [v.by, v.after])).toEqual(alone);
+      expect(variations(text, { ...kit, workbench: `${kit.workbench}\n${drumCard(text)}` }).map((v) => [v.by, v.after])).toEqual(alone);
     },
   );
 });

@@ -7,7 +7,7 @@ import { compileSource } from '../compile';
 import { bare } from '../fold/score';
 import { playsSameNotes } from '../sameness';
 import { fitsAs } from '../../repository/fit';
-import { heard } from '../../repository/heard';
+import { bassCards, drumCard } from '../../repository/benches';
 import { resolveSeed } from '../../repository/library';
 import { createRecogniser } from '../../repository/recognise';
 import { declWords } from '../edit';
@@ -51,11 +51,24 @@ const HARMS = ['&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]', '&harm
 
 /** Every seed on its workbench: its text, the workbench with the card that hears it (#291), Vary's options, and how long to compare. */
 const CASES = [
-  ...RHYTHM_FRAGMENTS.map((f) => ({ id: f.id, fragment: f.text, bench: `${drumsFor(f.text)}\n${heard(f.text)}`, options: DRUM_OPTIONS, seconds: 8 })),
+  ...RHYTHM_FRAGMENTS.map((f) => ({
+    id: f.id,
+    fragment: f.text,
+    bench: `${drumsFor(f.text)}
+${drumCard(f.text)}`,
+    options: DRUM_OPTIONS,
+    seconds: 8,
+  })),
   ...HARMS.flatMap((harm) =>
     BASS_FRAGMENTS.map((f) => {
       const workbench = `${HOST}\n${harm}`;
-      return { id: `${f.id}, ${harm.split(' ')[3]}`, fragment: f.text, bench: `${workbench}\n${heard(f.text)}`, options: { workbench, operators: PITCHED_OPERATORS }, seconds: 16 };
+      return {
+        id: `${f.id}, ${harm.split(' ')[3]}`,
+        fragment: f.text,
+        bench: `${workbench}\n${bassCards(f.text)}`,
+        options: { workbench, operators: PITCHED_OPERATORS },
+        seconds: 16,
+      };
     }),
   ),
 ];
