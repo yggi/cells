@@ -1,6 +1,6 @@
 import { rewriteAll, ROUNDS } from "../rewrite.js";
 import { aliases, filterModels } from "./aliases.js";
-import { libraryCells, libraryLines } from "./library.js";
+import { libraryCells, libraryLines, libraryTemplates } from "./library.js";
 import { narrowestFroms } from "./narrowest.js";
 import { interfaceNames } from "./names.js";
 import { evenScan, swingClock } from "./meter.js";
@@ -13,6 +13,7 @@ export const normalisations = (options = {}) => (source, result) => [
     ...aliases(source, result),
     ...filterModels(source, result),
     ...libraryLines(source, options.library),
+    ...libraryTemplates(source, options.library, options.resolve),
     ...libraryCells(source, options.library),
     ...narrowestFroms(source, options.resolve),
 ];

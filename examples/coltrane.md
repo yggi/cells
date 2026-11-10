@@ -9,7 +9,7 @@ description: "The changes of Giant Steps: three keys a major third apart, B, G a
 # The changes of Giant Steps: three keys a major third apart — B, G, Eb — round
 # the octave. The key turns down a major third each bar (stride=-4); the line plays
 # 1-2-3-5 in it, then the dominant of the next key. The line is our own.
-&bar meter("4/4") step=&tempo swing=&swing
+&bar from meter(swing=&swing) &tempo
 &tempo step=free(220bpm, 140..320)
 &swing swing=8n:free(2/3, 1/2..3/4)
 &key shift=-1 step=1m stride=-4                          # B, then G, then Eb, then B …
