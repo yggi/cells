@@ -4,6 +4,7 @@
 // `timing.slow.test.ts`).
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
+import { readFrom } from '../engine/parser/use';
 import { gmDrumNote } from '../engine/midi';
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
@@ -26,7 +27,7 @@ vi.mock('../engine/compile', async (original) => {
 const kit = (id: string) => LIBRARY.find((f) => f.id === id)!.text;
 // (the rhythms leave their voices as holes, #244: the workbench brings 13 of the General MIDI kit's voices)
 const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
-const DRUM_OPTIONS = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
+const DRUM_OPTIONS = { workbench: DRUMS, keep: ['&fill'], fewest: 3, resolve: resolveSeed };
 const BARS = e31.witnesses.map((w) => ({
   preset: w.preset,
   fragment: w.text
@@ -40,6 +41,13 @@ const BARS = e31.witnesses.map((w) => ({
 /** The bass seeds' workbench over I–vi–IV–V (`src/engine/vary/pitched.test.ts`). */
 const BASS = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]\n${kit('bass')}`;
 
+/** A fragment's lines, its `from` lines aside (a groove's signature and the kit it takes, decision 075). */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
+
 const recogniser = createRecogniser();
 
 describe('a variation is recognised as its source’s, by its operator, at distance 0', () => {
@@ -47,7 +55,8 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     let n = 0;
     const second: string[] = [];
     for (const b of BARS) {
-      const id = LIBRARY.find((f) => f.text === b.fragment)!.id;
+      // (the seed whose lines E31's bar is: its signature and its own from lines aside, decision 075)
+      const id = LIBRARY.find((f) => linesAlone(f.text) === b.fragment)!.id;
       for (const v of variations(b.fragment, DRUM_OPTIONS)) {
         const found = recogniser.recognise(v.apply(b.fragment), LIBRARY, DRUM_OPTIONS);
         const mine = found.find((r) => r.fragment.id === id);

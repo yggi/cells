@@ -23,6 +23,8 @@ import type { FragmentFile, Meta } from './files';
 import { declarations } from './fit';
 import { byId, fragmentProblems, pointDistance, pointsOf, type LearnedLayer, type Repository, type StylePoint, type UsedPair, type WeightedPoint } from './fragments';
 import { signatureOf } from '../engine/use';
+import { readFrom } from '../engine/parser/use';
+import { splitComment } from '../engine/edit';
 import { argsOf, ofArgs } from './variants';
 import { RENAMED_IDS } from '../engine/renamed';
 
@@ -116,8 +118,23 @@ export function canonicalText(text: string): string {
     .join('\n');
 }
 
-/** Whether text `a` is text `b` after renaming: then its own names to `b`'s, those that differ (`&bd` → `&kick`); else null. */
+/**
+ * A template's lines as a text with no signature reads them: its signature and its own `from` lines aside, so the lines
+ * read its parameters by their names (a groove's `&bd`, decision 075, #637). What a host's text of the same lines is.
+ */
+const linesAlone = (text: string): string =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(splitComment(l)[0].trim()) === undefined)
+    .join('\n');
+
+/**
+ * Whether text `a` is text `b` after renaming: then its own names to `b`'s, those that differ (`&bd` → `&kick`); else
+ * null. A text with no signature is a template held (`b`) where it is the template's lines alone (`linesAlone`): a groove
+ * heard and filed as its lines is the seed groove it plays (#637). Two templates are one only with their signatures alike.
+ */
 export function sameText(a: string, b: string): ReadonlyMap<string, string> | null {
+  if (!signatureOf(a) && signatureOf(b)) return sameText(a, linesAlone(b));
   if (canonicalText(a) !== canonicalText(b)) return null;
   const bs = ownNames(b);
   return new Map(ownNames(a).flatMap((name, i) => (name === bs[i] ? [] : [[`&${name}`, `&${bs[i]}`] as const])));

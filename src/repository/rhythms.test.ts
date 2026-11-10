@@ -14,7 +14,8 @@ import { codeShifts } from '../engine/program';
 import { soundsIdentical } from '../engine/sameness';
 import { createRepository, type StylePoint } from './fragments';
 import { fitsAs } from './fit';
-import { expand } from '../engine/use';
+import { expand, signatureOf } from '../engine/use';
+import { readFrom } from '../engine/parser/use';
 import type { Resolve } from '../engine/program';
 import { heard } from './heard';
 import { holesOf } from './holes';
@@ -50,10 +51,21 @@ const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id || f.i
 /** 13 of the General MIDI kit's lines, taken by name as the drummer takes them: every voice the rhythms leave as a hole (#244). */
 const coreKit = expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim();
 
-/** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments, and a card that hears them (#291). */
+/**
+ * A rhythm's lines, its signature and the kit it takes aside (decision 075, #637): what E31 wrote, and what the kit's 13
+ * fill on a host by hand.
+ */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
+
+/** The host's text: its `&bar`, a meter fragment at a tempo (`setTiming`, as a host sets one), then the fragments' lines, and a card that hears them (#291). */
 const hosted = (meter: string, bpm: number, ...fragments: string[]) => {
-  const card = heard(fragments.join('\n'));
-  return [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...fragments, ...(card ? [card] : [])].join('\n');
+  const lines = fragments.map(linesAlone);
+  const card = heard(lines.join('\n'));
+  return [setTiming(meter, 'bar', 'step', `${bpm}bpm`), ...lines, ...(card ? [card] : [])].join('\n');
 };
 
 /** What a text sends on channel 10 in its first `steps` sixteenths at a tempo, as E31's `cellsDrums` reads it, and what its compiler said. */
@@ -118,7 +130,7 @@ describe('the rhythm fragments', () => {
     const [bar, ...rest] = w.text.split('\n');
     expect(bar).toMatch(/^&bar scan\(1 1 1 1\) step=\d+bpm$/);
     // (the stand-in voices `&bd note=36 s=white` …, E31's own, are holes the kit fills: #244; its card is the workbench's, its mix &groove: #291)
-    expect(w.fragment.text).toBe(
+    expect(linesAlone(w.fragment.text)).toBe(
       rest
         .filter((l) => !/^&\w+ s=white$/.test(l))
         .join('\n')
@@ -128,7 +140,7 @@ describe('the rhythm fragments', () => {
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s is open on its meter: no meter of its own, and alone it asks for one', (_, text) => {
     expect(text).not.toMatch(/&bar|meter\(|scan\(/);
-    const alone = compileSource([text, coreKit].join('\n'));
+    const alone = compileSource([linesAlone(text), coreKit].join('\n'));
     expect(alone.mainMeter).toBeUndefined();
     expect(alone.diagnostics.map((d) => d.message).join('\n')).toMatch(/taps the piece's main meter, and it has none/);
     const filled = compileSource(hosted(meterText('meter(grouping=meter("7/8"))'), 90, text, coreKit));
@@ -247,12 +259,18 @@ const READ: Record<string, string[]> = {
 };
 
 describe('the rhythms’ holes (decision 054, rung 2)', () => {
-  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s defines no voice, and every name it strikes is a sound hole', (id, text) => {
-    expect(text.split('\n').filter((l) => / (s|loop)=/.test(l))).toEqual([]);
-    const holes = holesOf(text, compileSource);
-    expect(holes.uses).toEqual(STRUCK[id] ?? LIFTED[id] ?? WRITTEN[id] ?? READ[id] ?? ['&claves']);
-    expect(holes.sounds).toEqual(holes.uses);
-  });
+  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))(
+    '%s defines no voice, and every name it strikes is a drum it declares, the kit’s own its default (#637)',
+    (id, text) => {
+      expect(text.split('\n').filter((l) => / (s|loop)=/.test(l))).toEqual([]);
+      const struck = [...(STRUCK[id] ?? LIFTED[id] ?? WRITTEN[id] ?? READ[id] ?? ['&claves'])].sort();
+      expect([...signatureOf(text)!.optional].sort()).toEqual(struck);
+      expect(text.split('\n')[1]).toBe(`${signatureOf(text)!.optional.join(', ')} from gm_kit`);
+      // (as its lines alone, before #637, each was a sound hole the piece filled by its name)
+      const holes = holesOf(linesAlone(text), compileSource);
+      expect([...holes.uses].sort()).toEqual(struck);
+    },
+  );
 
   it('is no line of the 35: the voice lines the rhythms carried are gone', () => {
     expect(Object.values(STRUCK).flat()).toHaveLength(30);
@@ -270,7 +288,7 @@ describe('the rhythms’ holes (decision 054, rung 2)', () => {
 
   it.each(Object.keys(CLAVES))('%s with the General MIDI kit’s 13 sounds identical (S1, the whole window) to the clave with its line written out', (id) => {
     const out = hosted(meterText('meter'), 120, byId(id).text, coreKit);
-    const was = hosted(meterText('meter'), 120, byId(id).text.replace('&percussion', `&claves note=75 s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)\n&percussion`));
+    const was = hosted(meterText('meter'), 120, linesAlone(byId(id).text).replace(/^&percussion/m, `&claves note=75 s=sine loop=D7 env=&(map=adsr 0 .06 0 .03)\n&percussion`));
     expect(soundsIdentical(was, out)).toBe(true);
   });
 });

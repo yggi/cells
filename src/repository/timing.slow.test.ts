@@ -42,7 +42,7 @@ function randomBar(draw: () => number): string {
   return [line('kick', '&bd'), line('backbeat', '&sd'), line('hat', '&hh'), '&drums map=midi(10) [&kick, &backbeat, &hat]', '&bd s=white', '&sd s=white', '&hh s=white'].join('\n');
 }
 
-const DRUM_OPTIONS = { workbench: '&bar meter("4/4") step=120bpm', keep: ['&fill'], fewest: 3 };
+const DRUM_OPTIONS = { workbench: '&bar meter("4/4") step=120bpm', keep: ['&fill'], fewest: 3, resolve: resolveSeed };
 
 describe('what recognition costs', () => {
   // (decision 055: 2.7 ms at p95 alone; 25 ms is the gross witness the quick tier kept, until load 8 made it 38 ms)

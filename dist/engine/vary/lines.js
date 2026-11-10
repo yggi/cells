@@ -2,6 +2,7 @@ import { declWords, splitComment, splitWords } from "../edit.js";
 import { flatten } from "../flatten.js";
 import { noteValue } from "../meter.js";
 import { bjorklund } from "../parser/generators.js";
+import { readFrom } from "../parser/use.js";
 import { codeShifts } from "../program.js";
 export const moved = (p, sign, by) => ({ ...p, sign: (p.sign * sign), by: p.by * sign + by });
 export const pitchKey = (p) => `${p.table}:${p.sign * p.value + p.by}:${p.sign * p.alter}:${p.transpose}`;
@@ -89,11 +90,13 @@ function entriesOf(source, card) {
         .map((entry) => entry.trim());
 }
 export function linesOf(source, result) {
-    const readBy = new Set(source.split('\n').flatMap((raw) => [
-        ...splitComment(raw)[0]
-            .replace(/^\s*&[A-Za-z_][A-Za-z0-9_]*/, '')
-            .matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g),
-    ].map((m) => m[1])));
+    const readBy = new Set(source.split('\n').flatMap((raw) => readFrom(splitComment(raw)[0].trim()) !== undefined
+        ? []
+        : [
+            ...splitComment(raw)[0]
+                .replace(/^\s*&[A-Za-z_][A-Za-z0-9_]*/, '')
+                .matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g),
+        ].map((m) => m[1])));
     const unread = [...result.cells.values()].filter((c) => !c.implicit && !c.lambda && !readBy.has(c.name));
     const cards = [
         ...[...result.cells.values()].filter((c) => (c.map?.kind === 'midi' || c.sink) && !c.implicit).map((c) => c.name),

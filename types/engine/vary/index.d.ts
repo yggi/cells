@@ -1,3 +1,4 @@
+import { type Resolve } from '../program';
 import type { Rewrite } from '../rewrite';
 import { type Anchor } from './anchors';
 import { type Reference } from './reference';
@@ -40,9 +41,14 @@ export interface VaryOptions {
     readonly fewest?: number;
     /** Transposition's amounts, in degrees of the table read; by default −2, −1, 1, 2. */
     readonly degrees?: readonly number[];
+    /**
+     * The library a fragment's `from` lines take from (a groove's drums, `&bd, &sd from gm_kit`, decision 075): the host's
+     * resolver. A fragment read without one compiles only where it takes nothing.
+     */
+    readonly resolve?: Resolve;
 }
 /** A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's, the roots on chord changes. */
-export declare const anchorsOf: (fragment: string, workbench?: string) => readonly Anchor[];
+export declare const anchorsOf: (fragment: string, workbench?: string, resolve?: Resolve) => readonly Anchor[];
 /** Every variation by one operator on one line, in Jambot's order, none playing the notes of its source or of one before it. */
 export declare const variations: (fragment: string, options?: VaryOptions) => readonly Variation[];
 /**

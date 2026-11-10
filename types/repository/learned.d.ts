@@ -82,7 +82,11 @@ export interface Use {
  * doesn't define as written: `&bar meter("3/4")` and `&m meter("3/4")` are one text (#454). Two texts that read alike are one fragment, renamed.
  */
 export declare function canonicalText(text: string): string;
-/** Whether text `a` is text `b` after renaming: then its own names to `b`'s, those that differ (`&bd` → `&kick`); else null. */
+/**
+ * Whether text `a` is text `b` after renaming: then its own names to `b`'s, those that differ (`&bd` → `&kick`); else
+ * null. A text with no signature is a template held (`b`) where it is the template's lines alone (`linesAlone`): a groove
+ * heard and filed as its lines is the seed groove it plays (#637). Two templates are one only with their signatures alike.
+ */
 export declare function sameText(a: string, b: string): ReadonlyMap<string, string> | null;
 /** How often two fragments were used together, in a layer (0 for a fragment with itself). */
 export declare function usedTogether(layer: LearnedLayer, a: string, b: string): number;

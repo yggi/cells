@@ -390,6 +390,10 @@ interface OldBinding {
 interface Level {
   readonly defines: ReadonlySet<string>;
   readonly reads: ReadonlyMap<string, readonly string[]>;
+  /** Each of its lines' code, by the cell it declares. */
+  readonly codes: ReadonlyMap<string, string>;
+  /** Says a warning on the line the copy came through. */
+  readonly warn?: (message: string) => void;
 }
 
 /** Lines that came through a collection: their names are shared, never a copy's own. */
@@ -458,7 +462,9 @@ function instantiate(
   const optional = signature.optional.map(bare);
   const main = signature.main ? bare(signature.main) : null;
   for (const h of heads) if (!definesOwn.has(h)) say(`${quoted(id)}'s signature names &${h} its head, and it doesn't define it`);
-  for (const o of optional) if (!definesOwn.has(o)) say(`${quoted(id)}'s &${o} is an optional parameter: its line in the fragment is its default, and it has none`);
+  // (an optional parameter's default is a line of the template's own, or one it takes from a collection: a groove's
+  // drums from the kit, `&bd, &sd from gm_kit`, decision 075, #560)
+  for (const o of optional) if (!defines.has(o)) say(`${quoted(id)}'s &${o} is an optional parameter: its line in the fragment is its default, and it has none`);
   if (main && defines.has(main)) say(`${quoted(id)}'s &${main} is its main parameter: it has no line, the argument is it`);
   // (the heads the line takes: one renamed as the line names it, several by their names or as it renames them,
   // `&bass2=bass, &bassOut2=bassOut`, decision 075 §3b)
@@ -513,7 +519,9 @@ function instantiate(
   // (every other name the copy defines is its own, clear of the level's and of the template's shared ones)
   const prefix = names.get(heads[0]!) ?? [...names.values()][0] ?? heads[0]!;
   for (const n of [...names.values()]) taken.add(n);
-  for (const n of [...definesOwn, ...(main ? [main] : [])]) {
+  // (a parameter whose default a collection gives, given a value, is a cell of the copy's own too)
+  const sharedValued = optional.filter((o) => !definesOwn.has(o) && values.has(o) && !byReference.has(o));
+  for (const n of [...definesOwn, ...(main ? [main] : []), ...sharedValued]) {
     if (names.has(n)) continue;
     let mine = `${prefix}_${n}`;
     for (let k = 2; taken.has(mine) || defines.has(mine); k++) mine = `${prefix}${k}_${n}`;
@@ -556,7 +564,15 @@ function instantiate(
     copy.push(lineOf(code));
   }
   if (main && from.main !== null && !byReference.has(main)) copy.push(lineOf(`&${names.get(main)!} ${asCell(values.get(main)!, main, own)}`));
-  const sharing = shared.filter((l) => reached.has(l.name!));
+  for (const p of sharedValued) copy.push(lineOf(inherited(names.get(p)!, byName.get(p)!.code, asCell(values.get(p)!, p, own))));
+  // (a parameter's default a collection gives is shared by its name: a cell of the piece's of that name stands in for it,
+  // which the line doesn't say, so it is said here, but where the piece's line is the default's word for word, #637)
+  if (level?.warn && !old)
+    for (const o of optional)
+      if (!definesOwn.has(o) && !values.has(o) && level.defines.has(o) && reached.has(o) && level.codes.get(o) !== byName.get(o)?.code)
+        level.warn(`The piece defines &${o}, and ${quoted(id)} takes its &${o} from a collection by default: pass yours, ${from.id}(${o}=&${o}), or rename it`);
+  // (what it took from a collection, shared by name, but a parameter's default an argument replaced)
+  const sharing = shared.filter((l) => reached.has(l.name!) && !byReference.has(l.name!) && !sharedValued.includes(l.name!));
   const given = { id, names: new Set(sharing.map((l) => l.name!)), lines: sharing, resolved: true };
   return { taken: given, copy, args: Object.fromEntries(values) };
 }
@@ -638,7 +654,11 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
   const copies: (readonly Line[])[] = [];
   const args: (Readonly<Record<string, string>> | undefined)[] = [];
   const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
-  const level: Level = { defines: new Set(taken), reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads] as const] : []))) };
+  const level: Level = {
+    defines: new Set(taken),
+    reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads] as const] : []))),
+    codes: new Map(own.flatMap((l) => (l.name ? [[l.name, l.code] as const] : []))),
+  };
   const used = uses.map((u): Taken => {
     const { id } = u;
     const names = namesOf(u);
@@ -665,7 +685,7 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
     const binding = old
       ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }
       : undefined;
-    const g = give(u, [id], theirs, resolve!, say, taken, binding, level);
+    const g = give(u, [id], theirs, resolve!, say, taken, binding, { ...level, warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) });
     copies.push(g.copy);
     args.push(g.args);
     return g.taken;
