@@ -95,6 +95,13 @@ describe('a pattern fragment heard through the card `heard` supplies (#291)', ()
     'octave_bass',
     'industrial_drums',
     'drone_bass',
+    'ride_shuffle',
+    'shanty_drums',
+    'chip_drums',
+    'quiet_pulse',
+    'continuo_bass',
+    'blues_walk',
+    'quarter_bass',
   ];
   const carried = [...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.id === 'bell_and_scale')].filter((f) => !born.includes(f.id));
 

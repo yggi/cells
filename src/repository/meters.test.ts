@@ -148,7 +148,8 @@ describe('the presets find their meters', () => {
   // house's and Funk's swung one: named on #572, #540, #542)
   const between: Readonly<Record<string, string>> = {
     'Synth-pop|Funk': 'meter',
-    'Deep house|Funk': 'meter',
+    // (and between Deep house and Funk, since #542, Blues shuffle's swung 4/4, nearer still)
+    'Deep house|Funk': 'meter(swing=8n:2/3)',
     'Synth-pop|Ambient': 'meter(grouping=meter("6/8"))',
     'Deep house|Swing jazz': 'meter(grouping=meter("5/4"))',
   };

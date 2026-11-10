@@ -70,7 +70,7 @@ describe('lock-in, a witness over 4 draws of 8 runs, 40,000 sections at entropy 
     for (const r of filed) expect(r.firstFoundAgain! - r.firstFiled!).toBeLessThanOrEqual(3);
   });
 
-  it('keeps the layer small: a few points and pairs, under 4 KB as JSON after 1,250 sections', () => {
-    for (const r of allRuns) expect(JSON.stringify(r.layer).length).toBeLessThan(4096);
+  it('keeps the layer small: a few points and pairs, under 6 KB as JSON after 1,250 sections', () => {
+    for (const r of allRuns) expect(JSON.stringify(r.layer).length).toBeLessThan(6144); // (6 KB since #542: nineteen styles, more neighbours used together; the largest run of 64 was 4,311 bytes)
   });
 });

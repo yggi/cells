@@ -46,8 +46,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the twenty-two rhythms, the ten bass lines, the eight harmonies, the twenty-one instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the fifty motifs, the six forms, the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: a hundred and fifty-nine (#572)', () => {
-    expect(LIBRARY).toHaveLength(159);
+  it('is the thirteen meters, the twenty-six rhythms, the thirteen bass lines, the eleven harmonies, the twenty-five instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the fifty-four motifs, the six forms, the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: a hundred and seventy-seven (#572, #542)', () => {
+    expect(LIBRARY).toHaveLength(177);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -77,7 +77,7 @@ describe('the library', () => {
       FORM_FRAGMENTS.length,
       BAND_FRAGMENTS.length,
       STYLE_FRAGMENTS.length,
-    ]).toEqual([13, 22, 10, 8, 21, 2, 9, 5, 3, 50, 6, 1, 1]);
+    ]).toEqual([13, 26, 13, 11, 25, 2, 9, 5, 3, 54, 6, 1, 1]);
   });
 
   it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
@@ -99,11 +99,11 @@ describe('the library', () => {
 
   it('and so do the rhythms, with the bell and scale: the bass lines, the harmonies and the modes change no rhythm query', () => {
     for (const point of POINTS)
-      expect(ranked(library.query(point, 25, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 23, {}, { facet: 'rhythm' })));
+      expect(ranked(library.query(point, 30, {}, { facet: 'rhythm' })), JSON.stringify(point)).toEqual(ranked(rhythmsAndBell.query(point, 27, {}, { facet: 'rhythm' })));
   });
 
   it('and so do the bass lines: the harmonies change no bass query', () => {
-    for (const point of POINTS) expect(ranked(library.query(point, 25, {}, { facet: 'bass' })), JSON.stringify(point)).toEqual(ranked(basses.query(point, 10)));
+    for (const point of POINTS) expect(ranked(library.query(point, 30, {}, { facet: 'bass' })), JSON.stringify(point)).toEqual(ranked(basses.query(point, 13)));
   });
 
   it('and so does one that names chosen fragments with no use recorded', () => {
