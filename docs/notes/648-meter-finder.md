@@ -33,10 +33,14 @@ The synthetic bench once weighed a note by its level against .5, clipped at 1, s
 ## Against #648's bounds
 
 The bounds are read on **level** (the owner on #667, 2026-11-09): a bar found double or half, its lines on the written ones, is the same meter at another level, and counts.
+For this first rung they are what is measured, held by the ratchet (the owner, 2026-11-10): the cues the notes give at their own scale move the MIDI library by about two files of 88, each gain a loss elsewhere, and more weights tuned on the benches they are measured on would fit them, not find meters.
 
-- **The Groove fixtures' swing within .03: met**, 3 of 3. Their tempo, bar, beats and grouping too; the bar's start on 2 of 3.
-- **The examples on 90 %: not met.** Their level is right on 46 of 55 (84 %), their swing on 52 (95 %).
-- **The MIDI library on 80 %: not met, near.** Its level is right on 68 of 88 (77 %); its beats a bar on 62 (70 %).
+- **The Groove fixtures' swing within .03:** 3 of 3, met. Their tempo, bar, beats and grouping too; the bar's start on 2 of 3.
+- **The examples:** level at least 84 % (46 of 55), swing at least 95 % (52).
+- **The MIDI library:** level at least 77 % (68 of 88).
+- **The synthetic bench:** level at least 93 % (962 of 1035).
+
+#648's first bounds, 90 % of the examples and 80 % of the MIDI library, are the next rung's ([#680](https://github.com/yggi/cells/issues/680)): a cadence read in the key, and its weights tuned on half the library and measured on the other half.
 
 ## What it can't know, and how it says so
 
@@ -72,7 +76,8 @@ Chosen over the four benches (with the narrower prior): it raised the MIDI libra
 Read as the beat's grouping too (which beats a bar has), it cost the Groove fixtures their four beats, and isn't.
 A heavier cue or a prior moved toward Bach's slower bars trades the benches against each other: a bar prior of 3.5 s raises Bach's bar to 48 and lowers the examples' to 40 and the synthetic's to 613.
 
-What it doesn't read yet, the candidates for the next iteration: a cadence (a long bass note after a dominant, which lands on a bar's first beat), and the harmony at the bar's scale (a change every bar against every half bar), the cue that would tell 4/4 from 2/4.
+Tried and not kept (#667, 2026-11-10): a falling fifth in the bass, more where held, as a cadence (the MIDI library's level 68 to 70 at a weight of .15, its bar down one; at .5 and 1, 68 and 64); the bass note's length (69 at most, the examples down 2 to 6).
+What it doesn't read yet, the next rung's ([#680](https://github.com/yggi/cells/issues/680)): a cadence in the key (V to I, not any falling fifth), and the harmony at the bar's scale (a change every bar against every half bar), the cue that would tell 4/4 from 2/4.
 
 ## The next rungs (#648)
 
