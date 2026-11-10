@@ -86,7 +86,7 @@ function fitByName(fragment, workbench, compiledBy, resolve) {
     const compiled = compiledBy ?? ((text) => compileSource(text, undefined, resolve ? { resolve } : {}));
     const holes = holesOf(fragment, compiled, resolve);
     const bench = compiled(workbench);
-    const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
+    const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.takes ?? []).flatMap((u) => u.gave)]);
     const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
     const sounds = unfilled.filter((name) => holes.sounds.includes(name));
     const missing = unfilled.filter((name) => !sounds.includes(name));
@@ -208,7 +208,7 @@ export function useOn(bench, id, options) {
     const text = options.resolve(id);
     const head = bench.replace(/\s+$/, '');
     const written = (line) => [...(head ? [head] : []), line].join('\n');
-    const usedBy = (whole) => compiled(whole).uses?.at(-1) ?? null;
+    const usedBy = (whole) => compiled(whole).takes?.at(-1) ?? null;
     const signature = text === null ? null : signatureOf(text);
     if (text === null || !signature) {
         const line = `* from ${id}`;

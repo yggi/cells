@@ -298,7 +298,7 @@ export function formsUsed(source, options = {}) {
             use(`generator ${form}`);
     if (TEMPO_MARKINGS.test(code))
         use('free free(marking)');
-    if (parsed.uses?.length)
+    if (parsed.takes?.length)
         use('line &x from id(name=…) …');
     const compiled = compileSource(source, undefined, options);
     const all = options.resolve ? new Map(parse(expand(source, options.resolve)).cells.map((d) => [d.name, d])) : decls;

@@ -17,7 +17,7 @@ export declare const LIBRARY: readonly Fragment[];
  */
 export declare const RETIRED: ReadonlyMap<string, string>;
 /**
- * The seed library as a `use` line's resolver (decision 054): a fragment's text by its id, a retired id's forwarding
+ * The seed library as a `from` line's resolver (decision 054): a fragment's text by its id, a retired id's forwarding
  * text (`RETIRED`), or null for none. It holds each fragment's current version only: a lockfile's older hash plays the
  * current one (the compile warns).
  */

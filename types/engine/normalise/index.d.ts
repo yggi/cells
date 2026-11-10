@@ -19,7 +19,7 @@
  * here writes on its way (libraryLines writes a `use`, which Migrate's `from` says as a `from` line), is migrated in the same
  * run. They were Normalise's own (the `use` spellings, over=key, the forwards, `from`) until Migrate was built (#156).
  *
- * The canonical table's other rows join as the owner rules them (#27). A `use` line (decision 054) is kept, in its
+ * The canonical table's other rows join as the owner rules them (#27). A `from` line (decision 054) is kept, in its
  * order, never expanded: a used fragment's lines written in are no canonical form (`expand` writes them out). Its
  * fragment is read through `options.resolve`. Pure.
  */
@@ -30,7 +30,7 @@ import { type LibraryFragment } from './library';
 export interface NormaliseOptions extends CompileOptions {
     readonly library?: readonly LibraryFragment[];
 }
-/** Every rewrite into the canonical spelling a text has, its `use` lines' fragments read through `options.resolve`. */
+/** Every rewrite into the canonical spelling a text has, its `from` lines' fragments read through `options.resolve`. */
 export declare const normalisations: (options?: NormaliseOptions) => (source: string, result: CompileResult) => Rewrite[];
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */
 export declare const normalise: (source: string, options?: NormaliseOptions) => {

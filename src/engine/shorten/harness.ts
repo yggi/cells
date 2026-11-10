@@ -62,8 +62,8 @@ export function candidates(source: string, options: CompileOptions = {}): { resu
   return { result: r, cells: out };
 }
 
-/** The names a piece's `use` lines gave it (bare): their lines are the fragments', not the piece's to rewrite. */
-export const usedNames = (r: Result): ReadonlySet<string> => new Set((r.uses ?? []).flatMap((u) => u.gave.map((n) => n.replace(/^&/, ''))));
+/** The names a piece's `from` lines gave it (bare): their lines are the fragments', not the piece's to rewrite. */
+export const usedNames = (r: Result): ReadonlySet<string> => new Set((r.takes ?? []).flatMap((u) => u.gave.map((n) => n.replace(/^&/, ''))));
 
 /** The code's length: runs of spaces count as one (the padding that keeps comments aligned isn't code). Shorten's measure until #157. */
 export const size = (source: string) => source.replace(/[ \t]+/g, ' ').length;

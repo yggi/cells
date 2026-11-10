@@ -38,9 +38,10 @@ export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece, type Piec
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { movedCard } from './engine/shorten/card';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
-export type { CompileOptions, CompileResult, Locked, Performer, Resolve, Used } from './engine/program';
+export type { CompileOptions, CompileResult, Locked, Origin, Performer, Resolve, Take } from './engine/program';
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';
 export { references, type Reference } from './engine/references';
+export { takeIn, type TakenIn } from './engine/takein';
 export type { Diagnostic } from './engine/ast';
 export { createRepository, EMPTY_LAYER, layerProblems, pointDistance, type Fragment, type Found, type LearnedLayer, type LearnedPoint, type Merged, type QueryOptions, type Repository, type StylePoint, type UsedPair, type WeightedPoint, } from './repository/fragments';
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, renamedLayer, type Filed, type Filing, type Use } from './repository/learned';

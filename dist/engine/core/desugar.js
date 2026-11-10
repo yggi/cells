@@ -300,7 +300,7 @@ function inPlace(text, resolve) {
     const x = expansion(text, { resolve });
     const own = text.split('\n');
     const added = x.text.split('\n').slice(own.length);
-    const kept = new Set(x.uses.filter((u) => u.hash === null).map((u) => u.span.line));
+    const kept = new Set(x.takes.filter((u) => u.hash === null).map((u) => u.span.line));
     const at = new Map();
     added.forEach((l, k) => {
         const line = x.through(own.length + k + 1)?.line;

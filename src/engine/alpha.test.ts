@@ -39,7 +39,7 @@ function explicit(text: string): { text: string; names: string[] } {
     const t = resolveSeed(f.id);
     const s = t === null ? null : signatureOf(t);
     if (s && s.names.length === 1) return raw;
-    const gave = x.uses.find((u) => u.span.line === i + 1)?.gave ?? [];
+    const gave = x.takes.find((u) => u.span.line === i + 1)?.gave ?? [];
     const pairs = f.names ? f.names.map((n, k) => [n, f.takes![k]!] as const) : (s ? s.names : gave.filter((n) => !mine.has(n.slice(1)))).map((n) => [n, n] as const);
     names.push(...pairs.map(([n]) => n.slice(1)));
     // (\`&bd=bd\`, written out even where the two are one: renamed, it is \`&zq0=bd\`)

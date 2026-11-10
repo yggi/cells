@@ -39,7 +39,7 @@ export declare function candidates(source: string, options?: CompileOptions): {
     result: Result;
     cells: Candidate[];
 };
-/** The names a piece's `use` lines gave it (bare): their lines are the fragments', not the piece's to rewrite. */
+/** The names a piece's `from` lines gave it (bare): their lines are the fragments', not the piece's to rewrite. */
 export declare const usedNames: (r: Result) => ReadonlySet<string>;
 /** The code's length: runs of spaces count as one (the padding that keeps comments aligned isn't code). Shorten's measure until #157. */
 export declare const size: (source: string) => number;

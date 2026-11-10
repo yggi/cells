@@ -345,7 +345,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
 const TEMPO_MARKINGS = /free\(\s*(largo|larghetto|adagio|andante|moderato|allegro|vivace|presto)\s*\)/;
 const UNIT_AFTER = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(bpm|hz|min|wk|h|d|k)\b/;
 
-/** Every form a piece uses (formKey), read from its text as parsed and as compiled, its `use` lines through `options.resolve`. */
+/** Every form a piece uses (formKey), read from its text as parsed and as compiled, its `from` lines through `options.resolve`. */
 export function formsUsed(source: string, options: CompileOptions = {}): Set<string> {
   const used = new Set<string>();
   const use = (k: string) => used.add(k);
@@ -382,7 +382,7 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
     if (new RegExp(`\\b${word}\\(`).test(code)) use(`generator ${form}`);
   if (TEMPO_MARKINGS.test(code)) use('free free(marking)');
   // (a fragment taken from the library, decision 059: read through the host's resolver, as the compile reads it)
-  if (parsed.uses?.length) use('line &x from id(name=…) …');
+  if (parsed.takes?.length) use('line &x from id(name=…) …');
 
   const compiled = compileSource(source, undefined, options);
   // (a voice a used fragment gives is a voice all the same: the grooves and the voices are read in the expansion)
