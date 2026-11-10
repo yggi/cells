@@ -86,5 +86,6 @@ export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type R
 export { decompose, writtenOut, type Decomposition, type DecomposeOptions, type LineNote } from './repository/decompose';
 export { holesOf, type ClockNeed, type Holes } from './repository/holes';
 export { coreFragment, type FragmentCore } from './repository/corefragment';
+export { extract, type Extraction, type ExtractOptions, type NoExtraction } from './repository/extract';
 export { fitsAs, useOn, type FitAs, type UseOn, type UseOnOptions } from './repository/fit';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';

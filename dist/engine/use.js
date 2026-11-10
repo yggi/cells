@@ -189,7 +189,7 @@ function asCell(body, parameter, lines) {
     const [key] = keys;
     return keys.size === 1 && !other && ALONE.has(key) ? `${key}=${body}` : body;
 }
-function readsAsValue(code, name) {
+export function readsAsValue(code, name) {
     const stack = [];
     const attribute = [false];
     let quoted = false;
