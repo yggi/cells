@@ -154,6 +154,33 @@ association:
     facet: mode
     args:
       mode: aeolian
+  - point:
+      sync: 0.15
+      harm: 0.8
+      bite: 0.5
+      mood: 0.85
+    weight: 1
+    facet: mode
+    args:
+      mode: ionian
+  - point:
+      sync: 0.65
+      harm: 0.55
+      bite: 0.45
+      mood: 0.65
+    weight: 1
+    facet: mode
+    args:
+      mode: mixolydian
+  - point:
+      sync: 0.1
+      harm: 0.25
+      bite: 0.7
+      mood: 0.65
+    weight: 1
+    facet: mode
+    args:
+      mode: dorian
 source: seed
 ---
 

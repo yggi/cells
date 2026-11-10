@@ -257,6 +257,10 @@ const READ: Record<string, string[]> = {
   happy_hardcore_drums: ['&bd', '&cp', '&hh'],
   elektro_drums: ['&bd', '&hh', '&sd'],
   industrial_drums: ['&bd', '&hh'],
+  ride_shuffle: ['&bd', '&rd'],
+  shanty_drums: ['&bd', '&hh', '&sd'],
+  chip_drums: ['&bd', '&hh'],
+  quiet_pulse: ['&claves'],
 };
 
 describe('the rhythms’ holes (decision 054, rung 2)', () => {

@@ -243,7 +243,17 @@ function expected(pattern: Pattern, chords: readonly (readonly number[])[]): [nu
 
 describe('the bass lines', () => {
   it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most, and the Spooky basses written by hand', () => {
-    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping_bass', 'tiptoe_bass', 'acid_bass', 'octave_bass', 'drone_bass']);
+    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([
+      ...PATTERNS.map((p) => ID[p]),
+      'creeping_bass',
+      'tiptoe_bass',
+      'acid_bass',
+      'octave_bass',
+      'drone_bass',
+      'continuo_bass',
+      'blues_walk',
+      'quarter_bass',
+    ]);
     for (const p of PATTERNS) {
       const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
       expect(byId(ID[p]).association, p).toEqual(
@@ -254,7 +264,11 @@ describe('the bass lines', () => {
     expect(byId('tiptoe_bass').association).toEqual([{ point: held({ ...OLD.Spooky!, artic: 0.25, energy: 0.3 }), weight: 1, facet: 'bass' }]);
     // (and the three read from the examples, each at its style, #572)
     expect(byId('acid_bass').association).toEqual([{ point: stylePoint('acid'), weight: 1, facet: 'bass' }]);
-    expect(byId('octave_bass').association).toEqual([{ point: stylePoint('elektro'), weight: 1, facet: 'bass' }]);
+    expect(byId('octave_bass').association).toEqual(['elektro', 'chiptune'].map((id) => ({ point: stylePoint(id), weight: 1, facet: 'bass' })));
+    // (#542: each new style's own)
+    expect(byId('continuo_bass').association).toEqual([{ point: stylePoint('baroque'), weight: 1, facet: 'bass' }]);
+    expect(byId('blues_walk').association).toEqual([{ point: stylePoint('bluesShuffle'), weight: 1, facet: 'bass' }]);
+    expect(byId('quarter_bass').association).toEqual([{ point: stylePoint('seaShanty'), weight: 1, facet: 'bass' }]);
     expect(byId('drone_bass').association).toEqual([{ point: stylePoint('darkAmbient'), weight: 1, facet: 'bass' }]);
   });
 
@@ -337,6 +351,9 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
       43, 55, 43, 43, 50, 43, 53, 43, 55, 43, 46, 48, 50,
     ],
     drone_bass: [36, 45, 41, 43],
+    continuo_bass: [36, 40, 43, 40, 36, 40, 43, 40, 45, 48, 52, 48, 45, 48, 52, 48, 41, 45, 48, 45, 41, 45, 48, 45, 43, 47, 50, 47, 43, 47, 50, 47],
+    blues_walk: [36, 40, 43, 48, 45, 48, 52, 57, 41, 45, 48, 53, 43, 47, 50, 55],
+    quarter_bass: [36, 36, 36, 36, 45, 45, 45, 45, 41, 41, 41, 41, 43, 43, 43, 43],
     octave_bass: [36, 48, 36, 48, 36, 48, 36, 48, 45, 57, 45, 57, 45, 57, 45, 57, 41, 53, 41, 53, 41, 53, 41, 53, 43, 55, 43, 55, 43, 55, 43, 55],
   },
   D: {
@@ -352,6 +369,9 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
       45, 57, 45, 45, 52, 45, 55, 45, 57, 45, 48, 50, 52,
     ],
     drone_bass: [38, 47, 43, 45],
+    continuo_bass: [38, 42, 45, 42, 38, 42, 45, 42, 47, 50, 54, 50, 47, 50, 54, 50, 43, 47, 50, 47, 43, 47, 50, 47, 45, 49, 52, 49, 45, 49, 52, 49],
+    blues_walk: [38, 42, 45, 50, 47, 50, 54, 59, 43, 47, 50, 55, 45, 49, 52, 57],
+    quarter_bass: [38, 38, 38, 38, 47, 47, 47, 47, 43, 43, 43, 43, 45, 45, 45, 45],
     octave_bass: [38, 50, 38, 50, 38, 50, 38, 50, 47, 59, 47, 59, 47, 59, 47, 59, 43, 55, 43, 55, 43, 55, 43, 55, 45, 57, 45, 57, 45, 57, 45, 57],
   },
 };
