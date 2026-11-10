@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { KEPT } from '../src/engine/normalise/kept';
 import { readdirSync, readFileSync } from 'node:fs';
 import { normaliseFile } from './normalise';
 
@@ -34,7 +35,9 @@ describe('npm run normalise: files in the canonical spelling (#28)', () => {
   it('every example file is normal', () => {
     for (const f of readdirSync('examples').filter((x) => x.endsWith('.md'))) {
       const text = readFileSync(`examples/${f}`, 'utf8');
-      expect([f, normaliseFile(f, text).steps]).toEqual([f, []]);
+      // (an example whose point is the form a rule would rewrite is kept as written: src/engine/normalise/kept.ts)
+      const kept = KEPT[f.replace(/\.md$/, '')];
+      expect([f, normaliseFile(f, text).steps.filter((s) => !kept?.test(s))]).toEqual([f, []]);
     }
   });
 });

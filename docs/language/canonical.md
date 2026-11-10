@@ -92,6 +92,26 @@ A line of the piece that is a library fragment's line word for word, its comment
 
 A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `from` line of it joins the piece's (after its own `from` lines, or first). Not where the piece defines the name itself. A fragment's own file is normalised against the rest of the library, never as a `from` line of itself.
 
+
+## A template's line: a `from` line with its arguments
+
+A line that is a template's head line with its parameters filled in is written as a `from` line of the template with those arguments (`libraryTemplates`, #524): the piece says it takes the library's meter or key, and with what.
+
+- The line's attributes are the template's, by key, each filling the parameter the template writes there; a template's `base=&p` is filled by the line's own braid (a copy of `&p` is `&p`'s braid); its braid matches the template's, a parameter where the template has one.
+- A parameter the line doesn't write is its default, and an argument equal to its default is left out.
+- A parameter takes a value of its default's kind (a generator by its name, a word), or a cell: a grouping is a `meter(…)`, so a bent bar, `scan(27 23 26 24)`, a bend since decision 080, stays as written; so does a line with anything the template doesn't write (`motor=`, `label=`, `over=`).
+- The library lists a template's points (`diatonic(mode=dorian)`); the template itself is read through the resolver.
+- Each only where it sounds identical.
+
+| written | Normalise writes |
+|---|---|
+| `&bar meter("4/4") step=&tempo` | `&bar from meter &tempo` |
+| `&bar meter("7/8") step=&tempo swing=8n:2/3` | `&bar from meter(grouping=meter("7/8"), swing=8n:2/3) &tempo` |
+| `&bar meter("4/4") step=&tempo swing=&swing` | `&bar from meter(swing=&swing) &tempo` |
+| `&key scale(minor, &tonic)` | `&key from diatonic(mode=minor) &tonic` |
+
+An example whose point is the form itself keeps it (`breve`, a tutorial of alla breve's `meter("2/2", 2)`; `normalise/kept.ts` names each, and why).
+
 ## `from`: kept, never expanded
 
 Normalise keeps each `from` line in its order, a collection's the narrowest (`* from gm_kit` as the cells of it the piece reads, `normalise/narrowest.ts`, #449). It never writes the used fragment's lines into the piece: that is no canonical form (decision 049; `expand` writes them out on request). A text with `from` lines is normalised with the host's resolver, `normalise(source, { resolve })`, so that it compiles. A `from` line of a fragment that only forwards, a retired id, is written as the line it forwards to (Migrate's rule, `migrate/forwarded.ts`: `* from "core kit"` is `&bd, &rim, … from gm_kit`, #196). A `use` line is retired, and read by nothing since #588 ([use.md](use.md)).
