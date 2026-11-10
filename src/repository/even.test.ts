@@ -21,7 +21,8 @@ function onsets(lines: string, bars: number, n: number): { places: number[]; dia
   return { places: [...new Set(at.map((x) => Math.round(x * 1e6) / 1e6))].sort((a, b) => a - b), diagnostics: r.diagnostics.map((d) => d.message) };
 }
 
-const clave = (id: string) => `&clave, &percussion from ${id}\n&claves note=75 s=sine loop=C6\n&out map=sample [&percussion]`;
+// (the piece's own claves, passed to the clave: its drum is a parameter, #637)
+const clave = (id: string) => `&clave, &percussion from ${id}(claves=&claves)\n&claves note=75 s=sine loop=C6\n&out map=sample [&percussion]`;
 
 /** Each timeline: how it is taken, over how many bars, its grid, and its necklace (k, n) with the phase that is it, or none. */
 const TIMELINES: Record<string, { text: string; bars: number; k: number; n: number; phase: number | null }> = {

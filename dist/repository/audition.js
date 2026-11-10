@@ -1,5 +1,7 @@
 import { compileSource } from "../engine/compile.js";
 import { parse } from "../engine/parser/index.js";
+import { readFrom } from "../engine/parser/use.js";
+import { splitComment } from "../engine/edit.js";
 import { AXES } from "../engine/style.js";
 import { signatureOf } from "../engine/use.js";
 import { holesOf } from "./holes.js";
@@ -43,18 +45,25 @@ function roots(text) {
     const names = parse(text)
         .cells.filter((d) => !d.lambda)
         .map((d) => d.name);
-    return names.filter((n) => !text.split('\n').some((l) => !new RegExp(`^\\s*&${n}(?![A-Za-z0-9_])`).test(l) && new RegExp(`&${n}(?![A-Za-z0-9_])`).test(l)));
+    const lines = text.split('\n').filter((l) => readFrom(splitComment(l)[0].trim()) === undefined);
+    return names.filter((n) => !lines.some((l) => !new RegExp(`^\\s*&${n}(?![A-Za-z0-9_])`).test(l) && new RegExp(`&${n}(?![A-Za-z0-9_])`).test(splitComment(l)[0])));
 }
 export function headsOf(text) {
     const sig = signatureOf(text);
     return sig ? sig.names.map((n) => n.replace(/^&/, '')) : roots(text);
+}
+export function playedHeadsOf(text) {
+    const heads = headsOf(text);
+    const outer = new Set(roots(text));
+    const played = heads.filter((h) => outer.has(h));
+    return played.length ? played : heads;
 }
 export function hosted(given, standIns, options = {}, heads) {
     let text = given;
     const compiled = (t) => compileSource(t, undefined, options);
     const holes = holesOf(text, compiled, options.resolve);
     const sig = signatureOf(text);
-    const playing = heads ?? headsOf(text);
+    const playing = heads ?? playedHeadsOf(text);
     const lines = [];
     const kitText = standIns.kit ? options.resolve?.(standIns.kit) : null;
     const kitNames = kitText ? new Set(parse(kitText).cells.map((d) => `&${d.name}`)) : new Set();
@@ -85,7 +94,7 @@ export function hosted(given, standIns, options = {}, heads) {
     const first = compiled([text, ...written()].join('\n'));
     const tap = meterless ? `&${HOST.meter}:` : '';
     let reads = 0;
-    const entries = playing.flatMap((h) => {
+    const entriesOf = (heads) => heads.flatMap((h) => {
         const e = entryOf(first, h, tap);
         if (e?.line && reads++ > 0) {
             const r = `${HOST.read}_${h}`;
@@ -100,6 +109,11 @@ export function hosted(given, standIns, options = {}, heads) {
         }
         return [];
     });
+    let entries = entriesOf(playing);
+    if (!entries.length && !heads) {
+        reads = 0;
+        entries = entriesOf(headsOf(text));
+    }
     const done = (why) => ({ source: [text, ...written()].join('\n'), holes, lines, heads: playing, meterless, ...(why ? { why } : {}) });
     if (!entries.length)
         return done(NO_HEAD);

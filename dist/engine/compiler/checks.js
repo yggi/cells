@@ -8,6 +8,11 @@ import { gmDrumNote } from "../midi.js";
 import { leaves } from "../subseq.js";
 export function checkCells(ctx, decls, cells, sections = new Map(), bands = new Map()) {
     const { error, warn, unknownCell } = ctx;
+    for (const d of decls.values()) {
+        const t = d.tonic ? cells.get(d.tonic.name) : undefined;
+        if (t?.meter)
+            warn(`&${t.name} is a meter: a key's tonic is a note (&tonic D); a meter's first level is read as its pitch class`, d.tonic.span);
+    }
     const told = new Set();
     for (const c of cells.values()) {
         if (!c.kit)

@@ -372,12 +372,15 @@ export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
     const line = `* from ${id}`;
     return { text: written(line), line, heads: [], main: null, used: text === null ? null : usedBy(written(line)) };
   }
-  const heads = signature.names.length === 1 ? [options.head ?? clearOf(bench, signature.names[0]!)] : signature.names;
+  // (one head named as the workbench is clear of it; several each by its own name, or renamed clear of the workbench's,
+  // `&kick2=kick`, decision 075 §3a–b: a second groove beside a first)
+  const heads = signature.names.length === 1 ? [options.head ?? clearOf(bench, signature.names[0]!)] : signature.names.map((h) => clearOf(bench, h));
   const stand = holesOf(text, compiled, options.resolve)
     .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
     .map(standIn);
   const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
-  const line = fromLine(heads, id, options.args, main);
+  const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i]!.slice(1)}`));
+  const line = fromLine(left, id, options.args, main);
   return { text: written(line), line, heads, main, used: usedBy(written(line)) };
 }
 

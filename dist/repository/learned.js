@@ -1,6 +1,8 @@
 import { declarations } from "./fit.js";
 import { byId, fragmentProblems, pointDistance, pointsOf } from "./fragments.js";
 import { signatureOf } from "../engine/use.js";
+import { readFrom } from "../engine/parser/use.js";
+import { splitComment } from "../engine/edit.js";
 import { argsOf, ofArgs } from "./variants.js";
 import { RENAMED_IDS } from "../engine/renamed.js";
 export const FILING_WEIGHT = 0.1;
@@ -21,7 +23,13 @@ export function canonicalText(text) {
         .map((l) => l.code.replace(NAME, (written, name) => (index.has(name) ? `&#${index.get(name)}` : written)))
         .join('\n');
 }
+const linesAlone = (text) => text
+    .split('\n')
+    .filter((l) => readFrom(splitComment(l)[0].trim()) === undefined)
+    .join('\n');
 export function sameText(a, b) {
+    if (!signatureOf(a) && signatureOf(b))
+        return sameText(a, linesAlone(b));
     if (canonicalText(a) !== canonicalText(b))
         return null;
     const bs = ownNames(b);

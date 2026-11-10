@@ -11,16 +11,21 @@ export const TEMPI = {
     presto: [168, 200],
 };
 export const FREE_SYNTAX = [
-    syntax('free', 'free(v, lo..hi)', 'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number is written (decision 078): an attribute (a rate with its units: free(90bpm, 60..240)), a scan, a gain in a mix, a step, a count, a pick; its range within the place’s.', ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'], 'free.md'),
+    syntax('free', 'free(v, lo..hi)', 'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number is written (decision 078): an attribute (a rate with its units: free(90bpm, 60..240)), a scan, a gain in a mix, a step, a count, a pick; its range within the place’s.', ['&bar meter("4/4") step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'], 'free.md'),
     syntax('free', 'free(v, lo..hi, unit=bpm)', 'A rate’s slider in the core’s numbers, a second, its unit an argument: free(2, 1.5..2.5, unit=bpm) is free(120bpm, 90..150), the same slider shown in bpm. The core writes a slider so (decision 069); written after the number, the unit is its sugar.', ['&tempo step=free(2, 1.5..2.5, unit=bpm)'], 'free.md'),
     syntax('free', 'free(marking)', `A rate as a tempo marking, a slider over its range: ${Object.entries(TEMPI)
         .map(([k, [lo, hi]]) => `${k} ${lo}–${hi}`)
-        .join(', ')} (bpm).`, ['&bar scan(4 4 4 4) step=free(andante)'], 'free.md'),
+        .join(', ')} (bpm).`, ['&bar meter("4/4") step=free(andante)'], 'free.md'),
     syntax('free', 'free(v, lo..hi, "names")', 'Named choices: the names spread evenly over the range (one per value, or every 2nd …), shown instead of the numbers.', ['&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm'], 'free.md'),
     syntax('free', 'free(0 2 4 ~ …)', "A braid left to the performer: it plays as written until a take recorded from the keys (MIDI in, the computer's, the on-screen ones) is held in its place; Keep writes the take. Only as a cell's whole braid; its length in steps is the frame a take fills. Steps are numbers, rests and chords, held (@n) or repeated (!n).", ['&riff over=&key step=16n free(0 2 4 ~ 4 2 0 ~)'], 'free.md'),
     syntax('free', 'free("text")', 'A text left to the performer: a field to type in (for spell(…)).', ['&dial spell(free("867 5309"), &keys, "1 2 3 4 5 6 7 8 9 0")'], 'free.md'),
 ];
 export const FREE_BRAID_WHOLE = "free(0 2 4 ~ …), a braid left to the performer, is a cell's whole braid: &riff over=&key free(0 2 4 ~), with nothing else as its braid";
+const NUMBER = /-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:\/[1-9][0-9]*)?/y;
+const numberOf = (text) => {
+    const [n, d] = text.split('/');
+    return d === undefined ? parseFloat(n) : parseFloat(n) / Number(d);
+};
 export function parseFree(s, key, units, extra = {}) {
     const start = s.i;
     if (s.match(/free\(/y) === null)
@@ -60,23 +65,23 @@ export function parseFree(s, key, units, extra = {}) {
         unit = 'bpm';
     }
     else {
-        const n = s.match(/-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+        const n = s.match(NUMBER);
         if (n === null)
             s.fail('free(default, lo..hi), like free(90bpm, 60..240) or free(.8, 0..1)');
-        value = parseFloat(n);
+        value = numberOf(n);
         if (units)
             unit = s.match(UNIT) ?? '';
         s.skipSpace();
         s.expect(',', `',' then the range, like free(${n}${unit}, 60..240)`);
         s.skipSpace();
-        const a = s.match(/-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+        const a = s.match(NUMBER);
         if (s.match(/\.\./y) === null)
             s.fail('a range lo..hi, like 60..240');
-        const b = s.match(/-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+        const b = s.match(NUMBER);
         if (a === null || b === null)
             s.fail('a range lo..hi, like 60..240');
-        lo = parseFloat(a);
-        hi = parseFloat(b);
+        lo = numberOf(a);
+        hi = numberOf(b);
         if (!(lo < hi))
             s.fail(`free(…): the range runs low to high (${lo}..${hi})`, start, s.i - start);
         if (value < lo || value > hi)

@@ -1,0 +1,5 @@
+# a piece whose own kick a groove read by its name (#637)
+&bar meter("4/4") step=100bpm
+&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .4 0 .1)
+* from funk_drums(bd=&bd)
+&out map=sample [&groove]

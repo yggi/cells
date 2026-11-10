@@ -16,6 +16,8 @@
 import { compileSource } from '../engine/compile';
 import type { CoreOptions } from '../engine/core';
 import { parse } from '../engine/parser';
+import { readFrom } from '../engine/parser/use';
+import { splitComment } from '../engine/edit';
 import type { CompileResult } from '../engine/program';
 import { AXES } from '../engine/style';
 import { signatureOf } from '../engine/use';
@@ -84,7 +86,9 @@ function roots(text: string): string[] {
   const names = parse(text)
     .cells.filter((d) => !d.lambda)
     .map((d) => d.name);
-  return names.filter((n) => !text.split('\n').some((l) => !new RegExp(`^\\s*&${n}(?![A-Za-z0-9_])`).test(l) && new RegExp(`&${n}(?![A-Za-z0-9_])`).test(l)));
+  // (a from line, a signature or a take, declares names; it reads none of the text's own)
+  const lines = text.split('\n').filter((l) => readFrom(splitComment(l)[0].trim()) === undefined);
+  return names.filter((n) => !lines.some((l) => !new RegExp(`^\\s*&${n}(?![A-Za-z0-9_])`).test(l) && new RegExp(`&${n}(?![A-Za-z0-9_])`).test(splitComment(l)[0])));
 }
 
 /**
@@ -98,6 +102,17 @@ export function headsOf(text: string): string[] {
 }
 
 /**
+ * The heads a host plays: of what a fragment gives (`headsOf`), those nothing else in it reads, so a groove's mix is
+ * heard once and not again through each limb it mixes (`&groove`, not `&kick` too); all of them where each is read.
+ */
+export function playedHeadsOf(text: string): string[] {
+  const heads = headsOf(text);
+  const outer = new Set(roots(text));
+  const played = heads.filter((h) => outer.has(h));
+  return played.length ? played : heads;
+}
+
+/**
  * A text in its host (see the module's comment): what `audition` gives and `coreFragment` cores. `heads`: the heads to
  * play, by default the signature's, else the cells nothing reads.
  */
@@ -106,7 +121,7 @@ export function hosted(given: string, standIns: StandIns, options: CoreOptions =
   const compiled = (t: string) => compileSource(t, undefined, options);
   const holes = holesOf(text, compiled, options.resolve);
   const sig = signatureOf(text);
-  const playing = heads ?? headsOf(text);
+  const playing = heads ?? playedHeadsOf(text);
   const lines: { line: string; fills: string | null }[] = [];
   // (the sounds the kit defines, taken from it by name; the rest stood in)
   const kitText = standIns.kit ? options.resolve?.(standIns.kit) : null;
@@ -140,22 +155,29 @@ export function hosted(given: string, standIns: StandIns, options: CoreOptions =
   const first = compiled([text, ...written()].join('\n'));
   const tap = meterless ? `&${HOST.meter}:` : '';
   let reads = 0;
-  const entries = playing.flatMap((h) => {
-    const e = entryOf(first, h, tap);
-    // (a second head read by a line: a reader of its own, the first keeping the host's name)
-    if (e?.line && reads++ > 0) {
-      const r = `${HOST.read}_${h}`;
-      const own = new RegExp(`&${HOST.read}(?![A-Za-z0-9_])`, 'g');
-      return [{ entry: e.entry.replace(own, `&${r}`), line: e.line.replace(own, `&${r}`) }];
-    }
-    if (e) return [e];
-    // (an envelope, heard on a voice of its own; only where the host has a kit or a style: coreFragment's has none)
-    if ((standIns.kit || standIns.style) && first.cells.get(h)?.map?.kind === 'adsr') {
-      const v = `${HOST.voice}_${h}`;
-      return [{ entry: `&${HOST.line} * &${v}`, line: `&${v} s=tri loop=C4 env=&${h}` }];
-    }
-    return [];
-  });
+  const entriesOf = (heads: readonly string[]) =>
+    heads.flatMap((h) => {
+      const e = entryOf(first, h, tap);
+      // (a second head read by a line: a reader of its own, the first keeping the host's name)
+      if (e?.line && reads++ > 0) {
+        const r = `${HOST.read}_${h}`;
+        const own = new RegExp(`&${HOST.read}(?![A-Za-z0-9_])`, 'g');
+        return [{ entry: e.entry.replace(own, `&${r}`), line: e.line.replace(own, `&${r}`) }];
+      }
+      if (e) return [e];
+      // (an envelope, heard on a voice of its own; only where the host has a kit or a style: coreFragment's has none)
+      if ((standIns.kit || standIns.style) && first.cells.get(h)?.map?.kind === 'adsr') {
+        const v = `${HOST.voice}_${h}`;
+        return [{ entry: `&${HOST.line} * &${v}`, line: `&${v} s=tri loop=C4 env=&${h}` }];
+      }
+      return [];
+    });
+  // (where none of the outermost heads plays, a role cell selecting its performers, every head is tried)
+  let entries = entriesOf(playing);
+  if (!entries.length && !heads) {
+    reads = 0;
+    entries = entriesOf(headsOf(text));
+  }
   const done = (why?: string): Hosted => ({ source: [text, ...written()].join('\n'), holes, lines, heads: playing, meterless, ...(why ? { why } : {}) });
   if (!entries.length) return done(NO_HEAD);
   for (const e of entries) if (e.line) lines.push({ line: e.line, fills: null });

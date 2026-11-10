@@ -3,7 +3,7 @@ import { declLine, deleteCell, splitComment } from "../engine/edit.js";
 import { parse } from "../engine/parser/index.js";
 import { readFrom } from "../engine/parser/use.js";
 import { signatureOf } from "../engine/use.js";
-import { hosted, HOST, NO_HEAD } from "./audition.js";
+import { headsOf, hosted, HOST, NO_HEAD } from "./audition.js";
 function unreadGone(text, keep) {
     let now = text;
     for (let gone = true; gone;) {
@@ -28,7 +28,7 @@ export function coreFragment(text, options = {}) {
     const sig = signatureOf(text);
     if (!sig)
         return { source: text, why: 'no signature: a collection is cored as a piece' };
-    const h = hosted(text, { kit: null, style: null }, options);
+    const h = hosted(text, { kit: null, style: null }, options, headsOf(text));
     if (h.why)
         return { source: text, why: h.why === NO_HEAD ? `${NO_HEAD}: nothing to hear its rewrites by` : h.why };
     const { holes, meterless, source: host } = h;

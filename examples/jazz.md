@@ -7,11 +7,12 @@ description: "A 12-bar blues with swung eighths: the blues scale and the minor p
 ```cells
 &pluck, &snap from envelopes
 &swingNote label="The swing is a slider." about=&swing
-# A 12-bar blues in C, swung. The eighths are a meter of their own: long, short —
-# their ratio is free (1 straight, 2 the triplet swing, 3 hard). Two scales, both scans:
+# A 12-bar blues in C, swung. The bar leans its eighths, long, short: the second of each pair
+# at a share of its beat that is free (1/2 straight, 2/3 the triplet swing, 3/4 hard). Two scales, both scans:
 # the blues scale for the riff, the minor pentatonic for the turnaround.
-&bar meter("4/4") step=free(132bpm, 80..220)
-&swing scan(free(2, 1..3) 1) step=8n                   # two eighths a beat: long : short
+&bar meter("4/4") step=&tempo swing=&swing
+&tempo step=free(132bpm, 80..220)
+&swing swing=8n:free(2/3, 1/2..3/4)                    # two eighths a beat: long, short
 
 &blues scan(3 2 1 1 3 2)                               # C Eb F F# G Bb
 &penta scan(3 2 2 3 2)                                 # C Eb F G Bb
@@ -19,11 +20,11 @@ description: "A 12-bar blues with swung eighths: the blues scale and the minor p
 
 &riff 0 1 2 3 4 ~ 5 4 ~ ~ 2 1 0 ~@3                    # two bars — it stays put over the IV, as a blues riff does
 &turn over=&penta 3 ~ 4 3 2 1 0 ~ 2 ~@3 1 0 ~ ~ 0 ~ 1 2 3 ~ 5 ~ 4 3 2 1 0@4
-&lick over=&blues step=&swing:pulse &riff!4 &turn
+&lick over=&blues step=8n &riff!4 &turn
 
 &walk step=4n 0 4 7 10                                 # root, 3rd, 5th, flat 7th — moved by the changes
-&comp step=&swing:pulse ~@3 [4,10] ~@3 [4,10]          # shells (3rd and 7th) on the and of 2 and 4
-&ride step=&swing:pulse &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 # ding, ding-a ding, ding-a
+&comp step=8n ~@3 [4,10] ~@3 [4,10]                    # shells (3rd and 7th) on the and of 2 and 4
+&ride step=8n &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 # ding, ding-a ding, ding-a
 
 &horn s=saw loop=C4 lpf=1600 room=.3 env=&(map=adsr .02 .15 .6 .12)
 &bass s=tri loop=C2 env=&pluck

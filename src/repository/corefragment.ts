@@ -15,7 +15,7 @@ import { declLine, deleteCell, splitComment } from '../engine/edit';
 import { parse } from '../engine/parser';
 import { readFrom } from '../engine/parser/use';
 import { signatureOf } from '../engine/use';
-import { hosted, HOST, NO_HEAD } from './audition';
+import { headsOf, hosted, HOST, NO_HEAD } from './audition';
 
 /** A fragment's core, and why it is the text as written where it is. */
 export interface FragmentCore {
@@ -50,7 +50,7 @@ function unreadGone(text: string, keep: ReadonlySet<string>): string {
 export function coreFragment(text: string, options: CoreOptions = {}): FragmentCore {
   const sig = signatureOf(text);
   if (!sig) return { source: text, why: 'no signature: a collection is cored as a piece' };
-  const h = hosted(text, { kit: null, style: null }, options);
+  const h = hosted(text, { kit: null, style: null }, options, headsOf(text));
   if (h.why) return { source: text, why: h.why === NO_HEAD ? `${NO_HEAD}: nothing to hear its rewrites by` : h.why };
   const { holes, meterless, source: host } = h;
   const hostNames = [...holes.uses.map((u) => u.replace(/^&/, '')), ...Object.values(HOST)];

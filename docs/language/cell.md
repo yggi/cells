@@ -3,7 +3,7 @@
 The anatomy of one line of code: a cell is `&name`, attributes, and a braid, in any order.
 
 ```cells
-&bar scan(4 4 4 4) step=84bpm
+&bar meter("4/4") step=84bpm
 &tune step=4n 0 2 4 ~ 5@2
 &fill step=4n 0 [2 4] [5 [4 2]] [0 2, 7]
 ```

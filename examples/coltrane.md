@@ -9,14 +9,15 @@ description: "The changes of Giant Steps: three keys a major third apart, B, G a
 # The changes of Giant Steps: three keys a major third apart — B, G, Eb — round
 # the octave. The key turns down a major third each bar (stride=-4); the line plays
 # 1-2-3-5 in it, then the dominant of the next key. The line is our own.
-&bar meter("4/4") step=free(220bpm, 140..320)
-&swing scan(free(2, 1..3) 1) step=8n
+&bar meter("4/4") step=&tempo swing=&swing
+&tempo step=free(220bpm, 140..320)
+&swing swing=8n:free(2/3, 1/2..3/4)
 &key shift=-1 step=1m stride=-4                          # B, then G, then Eb, then B …
 
-&line over=&key step=&swing:pulse 0 2 4 7 3 7 10 13     # 1 2 3 5 · the next key's V7: 1 3 5 b7
+&line over=&key step=8n 0 2 4 7 3 7 10 13               # 1 2 3 5 · the next key's V7: 1 3 5 b7
 &walk over=&key step=4n 0 4 3 10                         # root, third · the V7's root, its fifth
 &comp over=&key step=2n [4,11] [7,13]                    # the maj7 shell · the V7 shell
-&ride step=&swing:pulse &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 &cym:0:.9 ~ &cym:0:.6 &cym:0:.5
+&ride step=8n &cym:0:.9 ~ &cym:0:.6 &cym:0:.5 &cym:0:.9 ~ &cym:0:.6 &cym:0:.5
 
 &sax s=saw loop=C4 lpf=1800 room=.25 env=&(map=adsr .02 .12 .6 .1)
 &bass s=tri loop=C2 env=&pluck

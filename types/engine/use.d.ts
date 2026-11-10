@@ -13,6 +13,12 @@ export declare function signatureOf(text: string): Extract<FromForm, {
 export declare const bodyOf: (text: string) => string;
 /** A fragment's hash: `e1:` and the hash of its text up to layout (its lines' code, one to a line). */
 export declare const fragmentHash: (text: string) => string;
+/**
+ * Does a line read this name as a value, not as a sound: in an attribute (`over=&key`, `step=&tempo`), a generator's or
+ * an operation's arguments (`scale(dorian, &tonic)`), or through an operator (`&call^-2`, `&g[0:3]`)? A step of a braid
+ * or a term of a mix (`&bd`, `&cp:0:.6`, `[&kick * &level]`) is a sound: the kit's vocabulary, read by name (decision 065 §3).
+ */
+export declare function readsAsValue(code: string, name: string): boolean;
 /** The expansion of a text, as the compiler reads it. */
 export interface Expansion {
     /** The piece's own text as written, then the used lines (so the piece's lines keep their numbers). */

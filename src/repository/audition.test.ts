@@ -35,15 +35,18 @@ describe('every seed file heard alone (#640)', () => {
 });
 
 describe('the host', () => {
+  // (a groove that strikes the kit's drums without taking them: since #663 the seed's grooves take their own)
+  const GROOVE = '&kick step=8n &bd ~ &bd ~\n&snare step=8n ~ &sd ~ &sd\n&groove [&kick, &snare]';
   it("takes a groove's drums from the kit by name, and lists what each line fills", () => {
-    const a = audition(text('techno_drums'), O);
+    const a = audition(GROOVE, O);
     const kit = a.host.find((h) => / from gm_kit$/.test(h.line))!;
-    expect(kit.fills).toContain('&bd');
+    expect(kit.fills).toBe('&bd, &sd');
     expect(a.host.filter((h) => h.fills === null).map((h) => h.line)).toContain('&_hv s=sine loop=C4');
-    expect(a.text.startsWith(text('techno_drums'))).toBe(true);
+    expect(a.text.startsWith(GROOVE)).toBe(true);
+    expect(events(a.text)).toMatchObject({ errors: [] });
   });
   it('stands in for every sound by a voice when it is given no kit', () => {
-    const a = audition(text('techno_drums'), { ...O, kit: null });
+    const a = audition(GROOVE, { ...O, kit: null });
     expect(a.host.some((h) => / from /.test(h.line))).toBe(false);
     expect(a.host.find((h) => h.fills === '&bd')!.line).toBe('&bd s=sine loop=C4');
   });
@@ -61,6 +64,8 @@ describe('the host', () => {
   it("plays a template's heads, and a collection's cells that nothing else in it reads", () => {
     expect(audition(text('lowpass'), O).heads).toEqual(['lowpass']);
     expect(audition(text('techno_drums'), O).heads).toEqual(['groove']);
+    // (a performer's outermost head is its role cell, which plays nothing: every head is tried)
+    expect(audition(text('bass_performer'), O).why).toBeUndefined();
     const envelopes = audition(text('envelopes'), O);
     expect(envelopes.heads.length).toBeGreaterThan(3);
     expect(envelopes.host.filter((h) => / env=&/.test(h.line))).toHaveLength(envelopes.heads.length);

@@ -2,7 +2,7 @@
 // read through a resolver the host hands each compile, with the lockfile a piece file keeps.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
-import { parse, USE_RETIRED } from './parser';
+import { parse, readFrom, USE_RETIRED } from './parser';
 import { bodyOf, expand, fragmentHash, signatureOf, USE_DEPTH } from './use';
 import { setTiming } from './edit';
 import { lockfileOf, readPiece, withLockfile, writePiece, type PieceFile } from './piecefile';
@@ -46,6 +46,13 @@ const KIT_NAMES = parse(KIT)
   .cells.filter((c) => !c.lambda)
   .map((c) => c.name);
 const GROOVE = '* from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
+
+/** A fragment's lines, its signature and its own `from` lines aside: a groove read as a text with no signature (#637). */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
 
 describe('the use line, retired (#588)', () => {
   it('is an error, read the old way or not, whatever it says, and takes nothing; a name that starts with use is a name', () => {
@@ -394,7 +401,8 @@ describe('the fit (decision 047) with from', () => {
   });
 
   it('a hole read only as a sound doesn’t block the fit: it is the instrument to ask for next', () => {
-    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
+    // (Funk's lines read as a text with no signature: their drums sound holes, as a groove's were before #637)
+    const funk = linesAlone(RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text);
     const bare = funk
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))
@@ -416,8 +424,8 @@ describe('the fit (decision 047) with from', () => {
     expect([used.fits, used.unmet.map((n) => n.cell)]).toEqual([false, ['&clave']]);
     expect(fitOf('* from son_clave_3_2', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
     expect(holesOf('* from son_clave_3_2', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
-    // (a used groove without its stand-ins: its voices are sounds, as written out)
-    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
+    // (a used groove's lines without its stand-ins: its voices are sounds, as written out)
+    const funk = linesAlone(RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text);
     const bare = funk
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))

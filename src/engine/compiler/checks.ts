@@ -18,6 +18,11 @@ export function checkCells(
   bands: ReadonlyMap<string, readonly string[]> = new Map(),
 ): void {
   const { error, warn, unknownCell } = ctx;
+  // a key's tonic read from a meter (#613): its first level read as a pitch class, C; said, and played as it was
+  for (const d of decls.values()) {
+    const t = d.tonic ? cells.get(d.tonic.name) : undefined;
+    if (t?.meter) warn(`&${t.name} is a meter: a key's tonic is a note (&tonic D); a meter's first level is read as its pitch class`, d.tonic!.span);
+  }
   // a kit's member named as a General MIDI drum that writes no note=: its name gives none (decision 075, #560 rung 1)
   const told = new Set<string>();
   for (const c of cells.values()) {
