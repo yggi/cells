@@ -463,7 +463,7 @@ const WAVE_SYNTAX = syntax('generator', 'sin(n) · saw(n) · tri(n) · square(n)
 export const GENERATORS = {
     scan: {
         parse: parseScan,
-        syntax: syntax('generator', 'scan(i …)', 'Running totals of intervals: a scale or a meter. An interval can repeat (`1!4`), be geometric (`geo(r, n, k …)`: r^(k/n) for each k) or be `free(…)`.', ['&major scan(2 2 1 2 2 2 1)', '&bar scan(27 23 26 24) step=84bpm', '&tempo scan(1!4 .5!2)', '&series scan(geo(5, 25, 0 10 5))', '&swing scan(free(2, 1..3) 1)'], 'braid.md'),
+        syntax: syntax('generator', 'scan(i …)', 'Running totals of intervals: a scale or a meter. An interval can repeat (`1!4`), be geometric (`geo(r, n, k …)`: r^(k/n) for each k) or be `free(…)`.', ['&major scan(2 2 1 2 2 2 1)', '&bar scan(27 23 26 24) step=84bpm', '&tempo scan(1!4 .5!2)', '&series scan(geo(5, 25, 0 10 5))', '&mode scan(2 2 free(1, 1..2) 2 2 2 1)'], 'braid.md'),
     },
     euclid: {
         parse: parseEuclid,

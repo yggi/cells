@@ -118,6 +118,15 @@ describe('a stepped tonic, and one left free (#301, decision 060)', () => {
     expect(bar(written('D'), 1)).not.toEqual(bar(written('F'), 1));
   });
 
+  it('a tonic read from a meter is said to be no note, and plays as before: its first level as a pitch class (#613)', () => {
+    const said = "&bar is a meter: a key's tonic is a note (&tonic D); a meter's first level is read as its pitch class";
+    for (const bar of ['&bar meter("4/4") step=104bpm', lines('&tempo step=104bpm', '&bar from meter &tempo')]) {
+      const text = lines(bar, '&key scale(dorian, &bar)', BODY);
+      expect(compiled(text).diagnostics.map((d) => [d.severity, d.message])).toEqual([['warning', said]]);
+      expect(events(text, 4)).toEqual(events(lines(bar, '&key scale(dorian, C)', BODY), 4));
+    }
+  });
+
   it('a tonic held (@n) or repeated (!n) stays in force as many steps; a rate of its own, 1m/2, two bars a step', () => {
     const held = over('step=1m D@2 F');
     expect([0, 1, 2].map((n) => bar(held, n))).toEqual([bar(written('D'), 0), bar(written('D'), 1), bar(written('F'), 2)]);

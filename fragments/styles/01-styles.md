@@ -106,6 +106,62 @@ association:
       mood: 0.1
     weight: 1
     facet: style
+  - point:
+      sync: 0.15
+      harm: 0.8
+      bite: 0.5
+      mood: 0.85
+    weight: 1
+    facet: style
+  - point:
+      sync: 0.65
+      harm: 0.55
+      bite: 0.45
+      mood: 0.65
+    weight: 1
+    facet: style
+  - point:
+      sync: 0.1
+      harm: 0.25
+      bite: 0.7
+      mood: 0.65
+    weight: 1
+    facet: style
+  - point:
+      sync: 0.3
+      harm: 0.7
+      bite: 1
+      mood: 0.55
+    weight: 1
+    facet: style
+  - point:
+      sync: 0.9
+      harm: 0.5
+      bite: 0.7
+      mood: 0.75
+    weight: 1
+    facet: style
+  - point:
+      sync: 0
+      harm: 0.7
+      bite: 0.3
+      mood: 0.9
+    weight: 1
+    facet: style
+  - point:
+      sync: 0
+      harm: 0.1
+      bite: 0.75
+      mood: 0.7
+    weight: 1
+    facet: style
+  - point:
+      sync: 0.7
+      harm: 0.2
+      bite: 0.2
+      mood: 0.25
+    weight: 1
+    facet: style
 source: seed
 ---
 
@@ -125,9 +181,17 @@ source: seed
 &happyHardcore map=style label="Happy hardcore" step=160bpm sync=.25 harm=.45 bite=.8 mood=.9
 &elektro map=style label="Elektro" step=112bpm sync=.15 harm=.5 bite=.85 mood=.45
 &darkAmbient map=style label="Dark ambient" step=76bpm sync=.35 harm=.15 bite=.4 mood=.1
+&baroque map=style label="Baroque" step=90bpm sync=.15 harm=.8 bite=.5 mood=.85
+&bluesShuffle map=style label="Blues shuffle" step=120bpm sync=.65 harm=.55 bite=.45 mood=.65
+&seaShanty map=style label="Sea shanty" step=112bpm sync=.1 harm=.25 bite=.7 mood=.65
+&chiptune map=style label="Chiptune" step=144bpm sync=.3 harm=.7 bite=1 mood=.55
+&salsa map=style label="Salsa" step=180bpm sync=.9 harm=.5 bite=.7 mood=.75
+&waltz map=style label="Waltz" step=150bpm sync=0 harm=.7 bite=.3 mood=.9
+&march map=style label="March" step=120bpm sync=0 harm=.1 bite=.75 mood=.7
+&tripHop map=style label="Trip-hop" step=80bpm sync=.7 harm=.2 bite=.2 mood=.25
 ```
 
-The library of styles (decision 063 §3, #391, #537): the fifteen preset styles, each a `map=style` cell at its point, its axes by name (cells' table of axes, `AXES`), its display name its `label=` and its default tempo its `step=`. They are Jambot's eight from the prototype, then Electro swing and Spooky (#349), then Kinderlied (yggi/jambot#547), whose 96 bpm is Twinkle's, then four read from the examples (#572, #542): Acid, from *Acid-Cell* (its 303, its riff and its beat), Happy hardcore, from *Hypercell*, and Elektro, from *Zelluläre Aktivität*. Their moods are placed by hand: Acid's minor hypnotic and tense (.35), Happy hardcore's euphoric though it turns on A minor (.9: the mood goes beyond the mode), Elektro's cool (.45). Dark ambient, from *Ghost-Cells*, is the bottom of the mood axis (.1): a minor drone made menacing.
+The library of styles (decision 063 §3, #391, #537): the twenty-three preset styles, each a `map=style` cell at its point, its axes by name (cells' table of axes, `AXES`), its display name its `label=` and its default tempo its `step=`. They are Jambot's eight from the prototype, then Electro swing and Spooky (#349), then Kinderlied (yggi/jambot#547), whose 96 bpm is Twinkle's, then four read from the examples (#572, #542): Acid, from *Acid-Cell* (its 303, its riff and its beat), Happy hardcore, from *Hypercell*, and Elektro, from *Zelluläre Aktivität*. Their moods are placed by hand: Acid's minor hypnotic and tense (.35), Happy hardcore's euphoric though it turns on A minor (.9: the mood goes beyond the mode), Elektro's cool (.45). Dark ambient, from *Ghost-Cells*, is the bottom of the mood axis (.1): a minor drone made menacing. Then four more cut from the examples (#542): Baroque, from the Bach pieces, Blues shuffle, from *Swing blues*, Sea shanty, from *Drunken Sailor*, and Chiptune, from *Korobeiniki*; and four placed by hand, with parts written for them (#542): Salsa (the clave's off-beats, the tumbao, mixolydian), Waltz (where 3/4 and the `waltz` motif already sat), March (2/4, stamping and bright) and Trip-hop (.7 .2 .2 .25, the offbeat, static, paddy and dark corner no style held).
 
 This file is the presets' one source: `STYLES` (`src/repository/styles.ts`) reads each as `{ id, name, point, tempo }`, in this order, and a frontend takes its presets from there. Only the library reads the `step=`: `style=` and a query read the point, so a style has no tempo (decision 037, D6).
 

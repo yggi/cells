@@ -20,7 +20,7 @@ A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/
 - Rates can be a **free** number: `step=free(90bpm, 60..240)`; see [free.md](free.md).
 
 ```cells
-&bar scan(4 4 4 4) step=&tempo
+&bar meter("4/4") step=&tempo
 &tempo step=84bpm
 &tune step=4t 0 2 4
 &fast step=8n 0 1

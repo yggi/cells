@@ -15,6 +15,13 @@ association:
       mood: 0.65
     weight: 1
     facet: harmony
+  - point:
+      sync: 0.1
+      harm: 0.25
+      bite: 0.7
+      mood: 0.65
+    weight: 0.4
+    facet: harmony
 source: seed
 lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
@@ -34,3 +41,5 @@ From 0.15 to 0.33 it lays the same chords two bars each, twice over (`[0, 0, c, 
 At the points where `buildTheme` plays it: aeolian at Techno's point; dorian at Funk's point. A mode's vamps are drawn alike (`next() · vamps.length`), so each weighs 1, and a query for the harmony at a mode's point finds all of that mode's vamps at distance 0.
 
 **Its signature** (decision 065): `&harm from &key`. `&harm from vamp_to_the_seventh &key` takes a copy of it, `&key` its main argument.
+
+Also at Sea shanty's point (sync .1, harm .25, bite .7, mood .65), weight 0.4: *Drunken Sailor* turns on the same two chords, i and VII; at weight 1 the vamp would be Synth-pop's first harmony (#542).

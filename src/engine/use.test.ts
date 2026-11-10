@@ -2,7 +2,7 @@
 // read through a resolver the host hands each compile, with the lockfile a piece file keeps.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
-import { parse, USE_RETIRED } from './parser';
+import { parse, readFrom, USE_RETIRED } from './parser';
 import { bodyOf, expand, fragmentHash, signatureOf, USE_DEPTH } from './use';
 import { setTiming } from './edit';
 import { lockfileOf, readPiece, withLockfile, writePiece, type PieceFile } from './piecefile';
@@ -14,7 +14,7 @@ import { structureOf } from './measure';
 import { LIBRARY, resolveSeed } from '../repository/library';
 import { EXAMPLES } from './examples';
 import { fitsAs } from '../repository/fit';
-import { heard } from '../repository/heard';
+import { drumCard } from '../repository/benches';
 import { holesOf } from '../repository/holes';
 import { seedFragments } from '../repository/seed';
 
@@ -46,6 +46,13 @@ const KIT_NAMES = parse(KIT)
   .cells.filter((c) => !c.lambda)
   .map((c) => c.name);
 const GROOVE = '* from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
+
+/** A fragment's lines, its signature and its own `from` lines aside: a groove read as a text with no signature (#637). */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
 
 describe('the use line, retired (#588)', () => {
   it('is an error, read the old way or not, whatever it says, and takes nothing; a name that starts with use is a name', () => {
@@ -295,13 +302,13 @@ describe('the rhythms with the General MIDI kit (S1)', () => {
     it(`${rhythm.id}, on a meter it fits, sounds identical to the same text written out`, () => {
       const meter = METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(rhythm.text, m).fits)!;
       // (heard through a card: the rhythms carry none, #291)
-      const piece = `* from gm_kit\n${meter}\n${strip(rhythm.text)}\n${heard(rhythm.text)}`;
+      const piece = `* from gm_kit\n${meter}\n${strip(rhythm.text)}\n${drumCard(rhythm.text)}`;
       const r = compileSource(piece, undefined, seed);
       expect(r.diagnostics, meter).toEqual([]);
       expect(r.uses?.[0]?.overrode).toEqual([]);
       expect(soundsIdentical(piece, expand(piece, resolveSeed), undefined, seed)).toBe(true);
     });
-  it('every rhythm is one of the twenty-two (#572: four read from the examples)', () => expect(RHYTHM_FRAGMENTS).toHaveLength(22));
+  it('every rhythm is one of the thirty (#572: four read from the examples; #542: eight more)', () => expect(RHYTHM_FRAGMENTS).toHaveLength(30));
 });
 
 describe('the lockfile', () => {
@@ -394,7 +401,8 @@ describe('the fit (decision 047) with from', () => {
   });
 
   it('a hole read only as a sound doesn’t block the fit: it is the instrument to ask for next', () => {
-    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
+    // (Funk's lines read as a text with no signature: their drums sound holes, as a groove's were before #637)
+    const funk = linesAlone(RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text);
     const bare = funk
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))
@@ -416,8 +424,8 @@ describe('the fit (decision 047) with from', () => {
     expect([used.fits, used.unmet.map((n) => n.cell)]).toEqual([false, ['&clave']]);
     expect(fitOf('* from son_clave_3_2', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
     expect(holesOf('* from son_clave_3_2', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
-    // (a used groove without its stand-ins: its voices are sounds, as written out)
-    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
+    // (a used groove's lines without its stand-ins: its voices are sounds, as written out)
+    const funk = linesAlone(RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text);
     const bare = funk
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))

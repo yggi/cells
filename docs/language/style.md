@@ -125,8 +125,8 @@ Jambot reads a radio score so, a section at a time (#576).
 
 ## The library of styles: styles
 
-The seed library holds the preset styles as the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing`, `&spooky`, `&kinderlied`, `&acid`, `&happyHardcore`, `&elektro` and `&darkAmbient`.
-Each is a style cell at its point, with its display name as `label=` and its default tempo as `step=`. Each finds its own parts first, at distance 0, in every facet its piece gave the library: Spooky, Kinderlied, and the four cut from *Acid-Cell*, *Hypercell*, *Zelluläre Aktivität* and *Ghost-Cells* (#572, `src/repository/styleparts.test.ts`). [Style: a point the voices read](../../examples/style.md) is the tutorial's piece for `map=style`, `style=` and `&name[slot]` (tier 6).
+The seed library holds the preset styles as the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing`, `&spooky`, `&kinderlied`, `&acid`, `&happyHardcore`, `&elektro`, `&darkAmbient`, `&baroque`, `&bluesShuffle`, `&seaShanty`, `&chiptune`, `&salsa`, `&waltz`, `&march` and `&tripHop`.
+Each is a style cell at its point, with its display name as `label=` and its default tempo as `step=`. Each finds its own parts first, at distance 0, in every facet its piece gave the library: Spooky, Kinderlied, and the eight cut from *Acid-Cell*, *Hypercell*, *Zelluläre Aktivität*, *Ghost-Cells*, the Bach pieces, *Swing blues*, *Drunken Sailor* and *Korobeiniki* (#572), and the four placed by hand with parts written for them, Salsa, Waltz, March and Trip-hop (#542; `src/repository/styleparts.test.ts`). [Style: a point the voices read](../../examples/style.md) is the tutorial's piece for `map=style`, `style=` and `&name[slot]` (tier 6).
 
 ```cells
 &funk map=style label="Funk" step=104bpm sync=1 harm=.12 bite=.85 mood=.65
@@ -141,7 +141,7 @@ A score takes one by name where its section sits exactly on it, and writes its n
 &style label="Funk, turning to Bossa nova" style=&funk..&bossaNova
 ```
 
-The collection is associated at each of the fifteen points as the facet `style`, so the style nearest a point is a query too.
+The collection is associated at each of the twenty-three points as the facet `style`, so the style nearest a point is a query too.
 `nearestStyle(point)` ranks the styles themselves by it, nearest first: by `pointDistance`, the one distance between two styles, over the axes both have, with `axisWeights` to weigh an axis down and `styles` for a frontend that ranks on an axis of its own as well, such as a tempo (#538).
 
 ## The default band: a score played as its style says

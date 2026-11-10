@@ -23,7 +23,7 @@ export const FREE_SYNTAX: readonly Syntax[] = [
     'free',
     'free(v, lo..hi)',
     'A number left to the performer: a slider from lo to hi, starting at v. Wherever a number is written (decision 078): an attribute (a rate with its units: free(90bpm, 60..240)), a scan, a gain in a mix, a step, a count, a pick; its range within the place’s.',
-    ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'],
+    ['&bar meter("4/4") step=free(90bpm, 60..240)', '&lead s=saw loop=C4 lpf=free(1200, 200..5000)', '&key step=cycle(&theme) shift=free(0, 0..11)'],
     'free.md',
   ),
   syntax(
@@ -39,7 +39,7 @@ export const FREE_SYNTAX: readonly Syntax[] = [
     `A rate as a tempo marking, a slider over its range: ${Object.entries(TEMPI)
       .map(([k, [lo, hi]]) => `${k} ${lo}–${hi}`)
       .join(', ')} (bpm).`,
-    ['&bar scan(4 4 4 4) step=free(andante)'],
+    ['&bar meter("4/4") step=free(andante)'],
     'free.md',
   ),
   syntax(
@@ -61,6 +61,13 @@ export const FREE_SYNTAX: readonly Syntax[] = [
 
 /** Why a braid left free stands only as a cell's whole braid (decision 018). */
 export const FREE_BRAID_WHOLE = "free(0 2 4 ~ …), a braid left to the performer, is a cell's whole braid: &riff over=&key free(0 2 4 ~), with nothing else as its braid";
+
+/** A number in free(…): a decimal, or a fraction of whole numbers (`free(2/3, 1/2..3/4)`, a share as swing= writes one: #645). */
+const NUMBER = /-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:\/[1-9][0-9]*)?/y;
+const numberOf = (text: string): number => {
+  const [n, d] = text.split('/');
+  return d === undefined ? parseFloat(n!) : parseFloat(n!) / Number(d);
+};
 
 /**
  * free(default, lo..hi) or free(marking) at the scanner (it's at 'free'):
@@ -107,19 +114,19 @@ export function parseFree(s: LineScanner, key: FreeSpec['key'], units: boolean, 
     value = Math.round((lo + hi) / 2);
     unit = 'bpm';
   } else {
-    const n = s.match(/-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+    const n = s.match(NUMBER);
     if (n === null) s.fail('free(default, lo..hi), like free(90bpm, 60..240) or free(.8, 0..1)');
-    value = parseFloat(n);
+    value = numberOf(n);
     if (units) unit = s.match(UNIT) ?? '';
     s.skipSpace();
     s.expect(',', `',' then the range, like free(${n}${unit}, 60..240)`);
     s.skipSpace();
-    const a = s.match(/-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+    const a = s.match(NUMBER);
     if (s.match(/\.\./y) === null) s.fail('a range lo..hi, like 60..240');
-    const b = s.match(/-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y);
+    const b = s.match(NUMBER);
     if (a === null || b === null) s.fail('a range lo..hi, like 60..240');
-    lo = parseFloat(a);
-    hi = parseFloat(b);
+    lo = numberOf(a);
+    hi = numberOf(b);
     if (!(lo < hi)) s.fail(`free(…): the range runs low to high (${lo}..${hi})`, start, s.i - start);
     if (value < lo || value > hi) s.fail(`free(…): ${value} is outside ${lo}..${hi}`, start, s.i - start);
   }

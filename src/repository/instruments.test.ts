@@ -11,6 +11,7 @@ import { codeShifts } from '../engine/program';
 import { pieceAudio } from '../engine/audioexport';
 import { channelTable, GM_KIT, gmDrumNote, midiNote, router, routesOf } from '../engine/midi';
 import { bodyOf, expand, signatureOf } from '../engine/use';
+import { readFrom } from '../engine/parser/use';
 import { windowAt } from '../engine/schedule';
 import { fitsAs } from './fit';
 import type { Resolve } from '../engine/program';
@@ -58,13 +59,29 @@ const AT_PRESET: Record<string, StylePoint> = {
   square_bass: stylePoint('elektro'),
   prepared_piano: stylePoint('darkAmbient'),
   drone_pad: stylePoint('darkAmbient'),
+  moog: stylePoint('baroque'),
+  blues_horn: stylePoint('bluesShuffle'),
+  fiddle: stylePoint('seaShanty'),
+  pulse_lead: stylePoint('chiptune'),
+  // (#542's second four, placed by hand)
+  montuno_piano: stylePoint('salsa'),
+  accordion: stylePoint('waltz'),
+  brass_band: stylePoint('march'),
+  electric_piano: stylePoint('tripHop'),
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
 const coreKit = { text: expand(CORE_USE, resolveSeed).trim() };
 const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id || f.id === wordOf(id))!.text;
 const BPM = 120;
-const hosted = (...fragments: string[]) => [setTiming(meterText('meter'), 'bar', 'step', `${BPM}bpm`), ...fragments].join('\n');
+/** A fragment's lines, its `from` lines aside: a rhythm's signature and the kit it takes (decision 075, #637), which the host's kit fills. */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
+
+const hosted = (...fragments: string[]) => [setTiming(meterText('meter'), 'bar', 'step', `${BPM}bpm`), ...fragments.map(linesAlone)].join('\n');
 
 /** A text's lines as name → line, in the order written. */
 const linesOf = (text: string) => new Map(text.split('\n').map((l) => [/^&(\w+)/.exec(l)![1]!, l]));
@@ -145,14 +162,23 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the nine for Electro swing and Spooky and the five for Kinderlied, Acid, Happy hardcore and Elektro (#572), each once at or near its style, at half a default's weight (#350)", () => {
+  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the nine for Electro swing and Spooky, the five for Kinderlied, Acid, Happy hardcore and Elektro (#572) and the eight for #542's styles, each once at or near its style, at half a default's weight (#350)", () => {
     expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm_kit', ...DEFAULTS, ...Object.keys(AT_PRESET)]);
     for (const f of INSTRUMENT_FRAGMENTS)
       expect(
         f.association.map((wp) => [wp.point, wp.facet]),
         f.id,
       ).toEqual([[AT_PRESET[f.id] ?? CENTRE, 'instrument']]);
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([1, 0.25, 0.25, 0.25, 0.25, ...Array<number>(11).fill(0.125), 0.0625, 0.125, 0.125, 0.125, 0.125]);
+    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([
+      1,
+      0.25,
+      0.25,
+      0.25,
+      0.25,
+      ...Array<number>(11).fill(0.125),
+      0.0625,
+      ...Array<number>(12).fill(0.125),
+    ]);
   });
 
   it('a query finds the kit and the defaults first at the eight presets, and at Electro swing and Spooky their own (#350)', () => {
@@ -221,7 +247,7 @@ describe('the instruments for Electro swing and Spooky (#350)', () => {
     const lines = byId(id).text.split('\n');
     expect(lines).toHaveLength(1);
     expect(defaultFor(voiceOf(lines[0]!)), voiceOf(lines[0]!)).toBeTruthy();
-    expect(lines[0]).toMatch(/ s=(sine|tri|saw|square)\b/);
+    expect(lines[0]).toMatch(/ s=(sine|tri|saw|square|pulse)\b/);
   });
 
   it.each(Object.keys(AT_PRESET))('%s sends over MIDI the notes the default it stands in for sends: channel, note, velocity, onset and end (a vibrato adds bends)', (id) => {
@@ -250,15 +276,18 @@ describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit
   const { hits: synthPop } = played(hosted(RHYTHM_FRAGMENTS.find((f) => f.id === 'synth_pop_drums')!.text, coreKit.text), 32);
   it('is shown firing: a hit on another note is caught', () => expect(synthPop.map((h) => ({ ...h, note: h.note + 1 }))).not.toEqual(synthPop));
 
-  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the kit after the groove, and the groove after the kit', (_, text) => {
+  it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the kit after the groove, and the groove after the kit', (id, text) => {
+    // (#542: the waltz's beat laps three beats and fits no 4/4: it is heard in 3/4)
+    const host = (...fragments: string[]) => (id === 'waltz_drums' ? hosted(...fragments).replace('&grouping meter("4/4")', '&grouping meter("3/4")') : hosted(...fragments));
+    if (id === 'waltz_drums') expect(host()).toContain('&grouping meter("3/4")');
     // (a rhythm has no voice of its own: it plays through a kit, the kit's lines written out after it)
-    const alone = played(hosted(text, coreKit.text), 32);
+    const alone = played(host(text, coreKit.text), 32);
     expect(alone.hits.length).toBeGreaterThan(0);
-    const kitAfter = takenOn(coreKit.text, hosted(text));
+    const kitAfter = takenOn(coreKit.text, host(text));
     expect(kitAfter.fits).toBe(true);
     // (and no sound hole is left on it, as the kit's voices fill every one)
-    expect(takenOn(text, hosted(coreKit.text)).sounds).toEqual([]);
-    const grooveAfter = takenOn(text, hosted(coreKit.text));
+    expect(takenOn(text, host(coreKit.text)).sounds).toEqual([]);
+    const grooveAfter = takenOn(text, host(coreKit.text));
     expect(grooveAfter.fits).toBe(true);
     for (const union of [kitAfter.union.text, grooveAfter.union.text]) {
       const { hits, diagnostics } = played(union, 32);

@@ -109,6 +109,12 @@ describe('parse: rates, stride and voices', () => {
     expect(r.cells.map((c) => (c.step?.kind === 'rate' ? c.step.perSecond : null))).toEqual([1.5, 1.4, 261.63, 0.5]);
   });
 
+  it('reads a fraction in free(…), as swing= writes a share: free(2/3, 1/2..3/4) (#645)', () => {
+    const [f] = one('&lead s=saw lpf=free(2/3, 1/2..3/4)').frees ?? [];
+    expect([f?.value, f?.lo, f?.hi]).toEqual([2 / 3, 0.5, 0.75]);
+    expect(one('&lead s=saw lpf=free(.5, 1/4..1)').frees?.[0]?.lo).toBe(0.25);
+  });
+
   it('reads stride=', () => {
     expect(one('&key step=cycle(&theme) stride=7').stride).toBe(7);
   });

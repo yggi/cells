@@ -6,13 +6,15 @@ import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
 import { compileSource } from '../engine/compile';
 import { bodyOf, signatureOf } from '../engine/use';
+import { readFrom } from '../engine/parser/use';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
 import { cachedCompile, fitsAs } from './fit';
 import { createRepository } from './fragments';
-import { heard } from './heard';
+import { headsOf } from './audition';
+import { drumCard } from './benches';
 import { LIBRARY, resolveSeed } from './library';
 import { expand } from '../engine/use';
 import { BOSSA_NOVA, FUNK } from './styles';
@@ -37,6 +39,12 @@ vi.mock('../engine/compile', async (original) => {
 const fitOf = (fragment: string, workbench: string) => fitsAs('x', workbench, { resolve: (id) => (id === 'x' ? fragment : resolveSeed(id)) });
 const unionOf = (fragment: string, workbench: string) => fitOf(fragment, workbench).union!;
 
+/** A fragment's lines, its signature and its own `from` lines aside: a groove read as a collection's lines (#637). */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
 /** A meter's lines, as a host puts them on a workbench by hand: its signature aside (decision 065). */
 const meterText = (id: string) => bodyOf(METER_FRAGMENTS.find((f) => f.id === id || f.id === wordOf(id))!.text);
 const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
@@ -189,6 +197,17 @@ const FITS: Record<string, readonly string[]> = {
   happy_hardcore_drums: METER_FRAGMENTS.map((m) => m.id),
   elektro_drums: METER_FRAGMENTS.map((m) => m.id),
   industrial_drums: FOUR_FOURS,
+  ride_shuffle: FOUR_FOURS,
+  // (#542: the shanty's beat and the quiet pulse lap the half note, the beat and the eighth, so they fit every meter)
+  shanty_drums: METER_FRAGMENTS.map((m) => m.id),
+  chip_drums: FOUR_FOURS,
+  quiet_pulse: METER_FRAGMENTS.map((m) => m.id),
+  // (#542's second four: the salsa's clave laps two bars and the trip-hop beat one bar of sixteenths, so they fit the 4/4s;
+  // the waltz's lines lap three beats, so it fits 3/4, 6/8 and 12/8, and no 4/4; the march's lap the half note)
+  salsa_drums: FOUR_FOURS,
+  waltz_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("12/8"))'],
+  march_drums: [...FOUR_FOURS, 'meter(grouping=meter("2/4"))', 'meter(grouping=meter("12/8"))'],
+  trip_hop_drums: FOUR_FOURS,
 };
 
 describe('every rhythm against every meter of the library', () => {
@@ -208,7 +227,7 @@ describe('every rhythm against every meter of the library', () => {
   it('a two-bar clave compiles under 7/8, and doesn’t fit it: 28 sixteenths in its two bars, 32 in its braid', () => {
     const clave = rhythm('son_clave_3_2');
     // (its `&claves` is a hole the General MIDI kit fills: #244)
-    expect(compileSource(bench('meter(grouping=meter("7/8"))', 90, clave, KIT)).diagnostics).toEqual([]);
+    expect(compileSource(bench('meter(grouping=meter("7/8"))', 90, linesAlone(clave), KIT)).diagnostics).toEqual([]);
     const f = fitOf(clave, bench('meter(grouping=meter("7/8"))', 90));
     expect(f.fits).toBe(false);
     expect(f.unmet).toEqual([{ cell: '&clave', meter: null, tap: '16n', bars: 2, steps: 32, rate: 1, bar: 16 }]);
@@ -257,7 +276,8 @@ function sameLines(first: string, second: string): string[] {
 }
 
 describe('two drum bars on one workbench', () => {
-  const bars = e31.witnesses.map((w) => ({ preset: w.preset, bpm: w.bpm, hits: w.hits, text: rhythm(wordOf(`${w.preset} drums`)) }));
+  // (each bar's lines, as a collection's: the union of two texts by their lines; a groove taken by its `from` line, #637, is the cost test's workbench)
+  const bars = e31.witnesses.map((w) => ({ preset: w.preset, bpm: w.bpm, hits: w.hits, text: linesAlone(rhythm(wordOf(`${w.preset} drums`))) }));
   const pairs = bars.flatMap((a) => bars.filter((b) => b !== a).map((b) => [a.preset, b.preset, a, b] as const));
   const lines = (text: string) => text.split('\n');
 
@@ -281,7 +301,10 @@ describe('two drum bars on one workbench', () => {
     expect([...u.renamed.keys()].sort()).toEqual(collide.sort());
     expect(new Set(names(u.text)).size).toBe(names(u.text).length);
     // (each bar plays E31's hits, at the workbench's tempo, as it does alone)
-    const { hits, diagnostics } = played(`${u.text}\n${KIT}\n${heard(u.text)}`, a.bpm);
+    const { hits, diagnostics } = played(
+      `${u.text}\n${KIT}\n${drumCard([...headsOf(a.text), ...headsOf(b.text).map((h) => (u.renamed.get(`&${h}`) ?? `&${h}`).slice(1))])}`,
+      a.bpm,
+    );
     expect(diagnostics).toEqual([]);
     const want = sorted([...a.hits, ...b.hits]);
     expect(hits).toHaveLength(want.length);
@@ -291,8 +314,8 @@ describe('two drum bars on one workbench', () => {
   it('E31’s 144 hits, each bar’s checked in every pair it is in: 144 × 14 = 2016 of 2016', () => {
     let matched = 0;
     for (const [, , a, b] of pairs) {
-      const union = unionOf(b.text, bench('meter', a.bpm, a.text)).text;
-      const { hits } = played(`${union}\n${KIT}\n${heard(union)}`, a.bpm);
+      const union = unionOf(b.text, bench('meter', a.bpm, a.text));
+      const { hits } = played(`${union.text}\n${KIT}\n${drumCard([...headsOf(a.text), ...headsOf(b.text).map((h) => (union.renamed.get(`&${h}`) ?? `&${h}`).slice(1))])}`, a.bpm);
       const left = [...hits];
       for (const h of [...a.hits, ...b.hits]) {
         const i = left.findIndex((p) => sameHit(p, h));
@@ -316,11 +339,12 @@ describe('a query given the workbench', () => {
       (f) => f.id,
     );
     const modes = MODE_FRAGMENTS.map((f) => f.id);
-    const isRhythm = (id: string) => RHYTHM_FRAGMENTS.some((f) => f.id === id);
+    // (the rhythms that fit 4/4: all but the waltz's, #542, whose lines lap three beats)
+    const isRhythm = (id: string) => RHYTHM_FRAGMENTS.some((f) => f.id === id) && FITS[id]!.includes('meter');
     // (a mode's main parameter is its tonic, and a query that names no argument takes the one cell that meets it, decision
-    // 075: on a workbench of a meter alone, the meter, which reads as a note; a query that names the mode's argument fits
-    // a mode only where that cell is, #587)
-    expect(fitting).toEqual(all.filter((id) => isRhythm(id) || open.includes(id) || modes.includes(id)));
+    // 075: on a workbench of a meter alone, none, since a meter read as a tonic is said to be no note, #613; a query that
+    // names the mode's argument fits a mode only where that cell is, #587)
+    expect(fitting).toEqual(all.filter((id) => isRhythm(id) || open.includes(id)));
     const named = { arguments: { mode: '&tonic' } };
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter'), ...named }).map((f) => f.fragment.id)).toEqual(
       all.filter((id) => isRhythm(id) || open.includes(id)),
@@ -330,7 +354,9 @@ describe('a query given the workbench', () => {
     // (of the rhythms, only Ghost drums, Kinderlied drums and the three beats read from the examples (#572) fit 7/8: their lines
     // lap the bar, its half, the beat or the eighth, and nothing a sixteenth off the beat)
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter(grouping=meter("7/8"))'), ...named }).map((f) => f.fragment.id)).toEqual(
-      all.filter((id) => open.includes(id) || ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums'].includes(id)),
+      all.filter(
+        (id) => open.includes(id) || ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums', 'shanty_drums', 'quiet_pulse'].includes(id),
+      ),
     );
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('meter') })).toEqual([]);
     expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('meter') }).map((f) => f.fragment.id)).toEqual(fitting.filter(isRhythm).slice(0, 2));
@@ -344,13 +370,18 @@ describe('a query given the workbench', () => {
 });
 
 describe('what it costs', () => {
-  // A workbench of five fragments, built as a composer builds it: the meter, then each rhythm added by the union.
-  const workbench = ['funk_drums', 'techno_drums', 'rumba_clave_3_2', 'bossa_nova_clave_one_bar'].reduce((text, id) => unionOf(rhythm(id), text).text, bench('meter', 104));
+  // A workbench of five fragments, built as a composer builds it: the meter, then each rhythm taken by its `from` line,
+  // its heads renamed clear of the workbench's where they collide (`&kick2=kick`, #637).
+  const workbench = ['funk_drums', 'techno_drums', 'rumba_clave_3_2', 'bossa_nova_clave_one_bar'].reduce(
+    (text, id) => fitsAs(id, text, { resolve: resolveSeed }).text,
+    bench('meter', 104),
+  );
 
-  it('the workbench of five compiles clean and every rhythm still fits it, renamed where it collides', () => {
-    // (the claves' voice is a hole an instrument fills: the General MIDI kit's line)
-    expect(compileSource(`${workbench}\n${KIT}`).diagnostics).toEqual([]);
-    for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(true);
+  it('the workbench of five compiles clean and every rhythm that fits 4/4 still fits it, renamed where it collides', () => {
+    // (the claves' voice is a hole an instrument fills: the General MIDI kit's line; the waltz's beat fits no 4/4, #542)
+    expect(compileSource(`${workbench}\n${KIT}`, undefined, { resolve: resolveSeed }).diagnostics).toEqual([]);
+    expect(workbench).toMatch(/^&kick2=kick, /m);
+    for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(FITS[f.id]!.includes('meter'));
   });
 
   // The bound, as the work it bounds: the compiles a query makes (counted at `compileSource`, which the cache stands in
@@ -375,16 +406,16 @@ describe('what it costs', () => {
       const r = (await import('./fragments')).createRepository(LIBRARY);
       r.query(FUNK, LIBRARY.length, {}, { workbench: bench('meter'), ...options });
       const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, ...options }));
-      // (the rhythms, the instruments, the vibrato, the envelopes, the styles, the band and the modules, a filter over the one voice that meets its input; where
-      // no argument is named, the 9 modes too, their tonic the one cell that meets it, the meter (#587): a performer's part, a
-      // filter's input and a stab line's &harm are holes no workbench of drums fills)
+      // (the rhythms, the instruments, the vibrato, the envelopes, the styles, the band and the modules, a filter over the one voice that meets its input;
+      // not the 9 modes, named or not: no cell of a workbench of drums meets a tonic, its meter said to be no note (#613); a
+      // performer's part, a filter's input and a stab line's &harm are holes no workbench of drums fills)
       const kinds = [...RHYTHM_FRAGMENTS, ...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...MODULE_FRAGMENTS, ...BAND_FRAGMENTS];
       const modes = MODE_FRAGMENTS.map((f) => f.id);
       expect(
-        first.every((f) => kinds.some((k) => k.id === f.fragment.id) || (options !== named && modes.includes(f.fragment.id))),
+        first.every((f) => kinds.some((k) => k.id === f.fragment.id)),
         JSON.stringify(first.map((f) => f.fragment.id)),
       ).toBe(true);
-      expect(first.some((f) => modes.includes(f.fragment.id))).toBe(options !== named);
+      expect(first.some((f) => modes.includes(f.fragment.id))).toBe(false);
       expect(fresh).toBeGreaterThan(0);
       expect(fresh).toBeLessThanOrEqual(1 + LIBRARY.length * (options === named ? 2 : 2 + cells));
       expect(count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['funk_drums'], ...options }))[1]).toBe(0);
