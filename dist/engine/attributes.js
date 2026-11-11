@@ -234,7 +234,8 @@ export const TIME_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].c
 export const MOVING_PARAMS = new Set(Object.keys(ATTRIBUTES).filter((k) => ATTRIBUTES[k].moves));
 export const VOICE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].voice));
 export const LINE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].doc !== 'physics.md' && PARAMS[k].on?.every((r) => r === 'clock' || r === 'driven')));
-export const memberParams = (params) => Object.keys(params).some((k) => !LINE_PARAMS.has(k));
+export const PLAYED_AS = new Set(['part', 'role']);
+export const memberParams = (params) => Object.keys(params).some((k) => !LINE_PARAMS.has(k) && !PLAYED_AS.has(k));
 export function rolesText(on) {
     const NAMES = {
         voice: 'a voice',

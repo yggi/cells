@@ -156,6 +156,15 @@ describe('the performers', () => {
       expect(now.notes).toEqual(was.notes);
     });
 
+  for (const [part, { performer }] of Object.entries(PARTS))
+    it(`play a line that says its part (part=${part}) as they play it without (#708)`, () => {
+      const without = sent([HOST, ...performer].join('\n'));
+      const said = sent([HOST, performer[0].replace(/^(&\w+)/, `$1 part=${part}`), ...performer.slice(1)].join('\n'));
+      expect(said.diagnostics).toEqual(without.diagnostics);
+      expect(said.notes.length).toBeGreaterThan(0);
+      expect(said.notes).toEqual(without.notes);
+    });
+
   it('are found, all five, by a query for a performer at each of Jambot’s presets', () => {
     const library = createRepository(LIBRARY);
     for (const preset of [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ])
@@ -193,6 +202,14 @@ describe('the drums performer', () => {
     expect(now.diagnostics).toEqual([]);
     expect(now.notes.length).toBeGreaterThan(0);
     expect(now.notes).toEqual(was.notes);
+  });
+
+  it('plays a stack that says its part (part=drums) as it plays it without (#708)', () => {
+    const w = DRUM_BARS[0]!;
+    const said = sent(played(w).replace('&drumlines [', '&drumlines part=drums ['), 4);
+    expect(said.diagnostics).toEqual([]);
+    expect(said.notes.length).toBeGreaterThan(0);
+    expect(said.notes).toEqual(sent(played(w), 4).notes);
   });
 
   it('keeps each hit’s line, its drum role, in what it plays: the eight presets’ roles', () => {
