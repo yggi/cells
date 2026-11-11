@@ -22,7 +22,7 @@ Each law below names its test, tagged in the test's file as `// law L<n>`, and w
 | L8 | **The stems sum to the mix:** the voices rendered apart add up to the mix exactly. | `src/engine/render.test.ts` | Electro swing | quick | linearity | law |
 | L9 | **A copy is its template written in:** a `from` line plays what its copy written out plays. | `src/engine/from.test.ts` | texts written for it | quick | PLT: substitution | law |
 | L10 | **The graph and the code agree:** what the graph sets is what the code says. | `src/engine/edit.test.ts` | Royal | quick | lenses: a round trip | law |
-| L11 | **`+` and `*` commute:** a mix's products and a pitch sum written the other way round play the same. | `src/engine/commute.test.ts` | every example (71 of 73 it rewrites; 2 against #687) | quick | an algebra's laws | invariant I4 (broken: #687) |
+| L11 | **`+` and `*` commute:** a mix's products and a pitch sum written the other way round play the same. | `src/engine/commute.test.ts` | every example (the 73 it rewrites) | quick | an algebra's laws | invariant I4 |
 
 L6 to L10 are checked over texts written for them, not every example; #632 widens each.
 The core's test (L2, L3, L5) covers every `from` line written in too, so it checks L9 over every example as part of the core.
