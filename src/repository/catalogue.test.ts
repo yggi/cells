@@ -25,8 +25,9 @@ const layer: LearnedLayer = {
 
 describe('catalogue', () => {
   it('lists every seed file once, in path order', () => {
-    expect(seed.map((e) => e.path)).toEqual(SEED.map((f) => f.path));
-    expect(new Set(seed.map((e) => e.id)).size).toBe(SEED.length);
+    const files = seed.filter((e) => !e.part);
+    expect(files.map((e) => e.path)).toEqual(SEED.map((f) => f.path));
+    expect(new Set(seed.map((e) => e.id)).size).toBe(seed.length);
     expect(seed.length).toBeGreaterThanOrEqual(120);
   });
 
@@ -74,6 +75,21 @@ describe('catalogue', () => {
   it('gives the same entries for the same layer, and the seed alone for an empty one', () => {
     expect(catalogue(layer)).toBe(catalogue(layer));
     expect(catalogue(EMPTY_LAYER)).toBe(seed);
+  });
+});
+
+describe("a document's parts in the catalogue (decision 082)", () => {
+  it('lists each part after the seed files, with its document and head, taken by its head from its document', () => {
+    const twinkle = seed.find((e) => e.id === 'kinderlied/twinkle')!;
+    expect(twinkle).toMatchObject({
+      path: 'examples/kinderlied',
+      part: { document: 'kinderlied', head: 'twinkle' },
+      facets: ['motif'],
+      signature: { names: ['&twinkle'], main: '&key' },
+    });
+    expect(twinkle.text.split('\n')[0]).toBe('&twinkle from &key');
+    expect(seed.filter((e) => e.part?.document === 'kinderlied').map((e) => e.part!.head)).toEqual(['twinkle', 'wonder', 'haenschen', 'hinein', 'heim', 'weinet']);
+    expect(seed.findIndex((e) => e.part)).toBe(SEED.length);
   });
 });
 

@@ -14,13 +14,13 @@ import { expand } from '../engine/use';
 import type { Resolve } from '../engine/program';
 import { createRepository, pointDistance, type StylePoint } from './fragments';
 import { holesOf } from './holes';
-import { LIBRARY, resolveSeed } from './library';
+import { fromId, headOf, LIBRARY, ofFacet, resolveSeed } from './library';
 import { newPoint } from '../engine/migrate/axes';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, STYLES, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
 import { seedFragments } from './seed';
 
-const MOTIF_FRAGMENTS = seedFragments('motifs');
+const MOTIF_FRAGMENTS = ofFacet('motif');
 const FORM_FRAGMENTS = seedFragments('forms');
 
 /** A fragment's text taken onto a workbench by its signature (`fitsAs`, decisions 065 and 075), as the fragment `x`, and written out (#588). */
@@ -72,7 +72,7 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter; also?: readonly
   lindy: { point: above(ELECTRO_SWING) },
   toll: { point: above(SPOOKY) },
   // (one at each point of a meter with none, a bar of it)
-  waltz: { point: held(0, 0.7, 0.3, 0), meter: '3/4' },
+  waltzBar: { point: held(0, 0.7, 0.3, 0), meter: '3/4' },
   musicBox: { point: offset(held(0.2, 0.9, 0.3, 0.43), 0.08), meter: '3/4' },
   rocking: { point: held(0.3, 0.2, 0.2, 0), meter: '6/8' },
   sway: { point: offset(held(0.2, 0.9, 0.3, 0.27), -0.08), meter: '6/8' },
@@ -95,14 +95,6 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter; also?: readonly
   haunt: { point: held(0.15, 0.9, 0.25, 0.35) },
   lament: { point: held(0.2, 0.9, 0.25, 0.3) },
   peek: { point: held(0.3, 0.9, 0.3, 0.3) },
-  // (two children's songs in pieces, their calls and answers, at the point proposed for a preset of them and 0.1 from it)
-  twinkle: { point: KINDERLIED },
-  wonder: { point: offset(held(0.1, 0.12, 0.5, 0.25), -0.1) },
-  haenschen: { point: offset(held(0.1, 0.12, 0.6, 0.45), 0.1) },
-  hinein: { point: held(0.1, 0.12, 0.6, 0.35) },
-  // (placed by hand at bite .55, #572: its energy offset would have set it on Kinderlied's point, beside twinkle)
-  heim: { point: offset(held(0.1, 0.12, 0.6, 0.25), -0.05) },
-  weinet: { point: held(0.1, 0.12, 0.7, 0.45) },
   // (read from the examples for the styles they stand for, #572: each at its style, the melodie 0.1 below Elektro in bite)
   raveHook: { point: stylePoint('happyHardcore') },
   sequencer: { point: stylePoint('elektro') },
@@ -112,10 +104,19 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter; also?: readonly
   royalTheme: { point: stylePoint('baroque') },
   bluesRiff: { point: stylePoint('bluesShuffle') },
   drunkenSailor: { point: stylePoint('seaShanty') },
-  korobeiniki: { point: stylePoint('chiptune') },
+  korobeinikiBar: { point: stylePoint('chiptune') },
   // (#542's second four: the two tunes written for the styles placed by hand, each at its style)
   guajeo: { point: stylePoint('salsa') },
   smoke: { point: stylePoint('tripHop') },
+  // (two children's songs in pieces, their calls and answers, at the point proposed for a preset of them and 0.1 from it:
+  // the parts Kinderlieder gives, decision 082, listed after the seed's motifs)
+  'kinderlied/twinkle': { point: KINDERLIED },
+  'kinderlied/wonder': { point: offset(held(0.1, 0.12, 0.5, 0.25), -0.1) },
+  'kinderlied/haenschen': { point: offset(held(0.1, 0.12, 0.6, 0.45), 0.1) },
+  'kinderlied/hinein': { point: held(0.1, 0.12, 0.6, 0.35) },
+  // (placed by hand at bite .55, #572: its energy offset would have set it on Kinderlied's point, beside twinkle)
+  'kinderlied/heim': { point: offset(held(0.1, 0.12, 0.6, 0.25), -0.05) },
+  'kinderlied/weinet': { point: held(0.1, 0.12, 0.7, 0.45) },
 };
 /** Each form: its head, the hole it reads, its length in bars over a one-bar motif, and its point. */
 const FORMS: Record<string, { head: string; hole: string; bars: number; point: StylePoint; weight?: number }> = {
@@ -152,11 +153,11 @@ const seed = { resolve: resolveSeed };
 const piece = (form: string, motif: string) => {
   const { head, hole } = FORMS[form]!;
   return [
-    `&${motif} from ${motif} &key`,
+    `&${headOf(motif)} from ${fromId(motif)} &key`,
     `&${head} from ${/^\w+$/.test(form) ? form : `"${form}"`} &${hole}`,
     '&lead, &leadOut from lead_performer(leadLevel=&leadLevel) &leadline',
     benchOf(motif),
-    `&${hole} step=8n &${motif}`,
+    `&${hole} step=8n &${headOf(motif)}`,
     `&leadline step=8n &${head}`,
     '&leadLevel map=amp .5',
     '&leadV s=sine loop=C4',
@@ -171,7 +172,7 @@ describe('the motifs', () => {
   it('are fifty-six, each a line over the key named for its fragment, at its point as the facet motif (the march at March’s too)', () => {
     expect(MOTIF_FRAGMENTS.map((f) => f.id)).toEqual(Object.keys(MOTIFS));
     for (const f of MOTIF_FRAGMENTS) {
-      expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${f.id} over=&key step=8n `));
+      expect(bodyOf(f.text), f.id).toMatch(new RegExp(`^&${headOf(f.id)} over=&key step=8n `));
       expect(f.association, f.id).toEqual([MOTIFS[f.id]!.point, ...(MOTIFS[f.id]!.also ?? [])].map((point) => ({ point, weight: 1, facet: 'motif' })));
       expect(holesOf(f.text, compileSource).uses, f.id).toEqual(['&key']);
     }
@@ -305,7 +306,7 @@ describe('recognition reads an answer as an operator on its call (#294)', () => 
     const heard = `&heard over=&key step=8n ${moved(braid, -2)}`;
     const found = recogniser.recognise(heard, LIBRARY, { workbench: benchOf(id) });
     const mine = found.find((r) => r.fragment.id === id);
-    expect([mine?.path.map((s) => s.by), mine?.distance]).toEqual([[`transpose &${id} -2`], 0]);
+    expect([mine?.path.map((s) => s.by), mine?.distance]).toEqual([[`transpose &${headOf(id)} -2`], 0]);
     // (and the call itself is the motif, by no operator)
     const call = recogniser.recognise(`&heard over=&key step=8n ${braid}`, LIBRARY, { workbench: benchOf(id) }).find((r) => r.fragment.id === id);
     expect([call?.path, call?.distance]).toEqual([[], 0]);

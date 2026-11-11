@@ -12,3 +12,12 @@
 export declare const RENAMED_IDS: ReadonlyMap<string, string>;
 /** An id as a word, by the rule above: `Techno drums` is `techno_drums`, `4/4 swung on 8n` is `meter_4_4_swung_on_8n`; a word stays as it is. */
 export declare function wordOf(id: string): string;
+/**
+ * The seed fragments a piece took in as its parts (decision 082), each old id with its document and the part's head.
+ * A compile refuses the old id (it resolves to nothing, or to a piece of that key); read the old way (`old`, Migrate's)
+ * it is the part, with a warning, so Migrate's `moved` rule can rewrite the line and check that it plays the same.
+ */
+export declare const MOVED: ReadonlyMap<string, {
+    readonly document: string;
+    readonly head: string;
+}>;

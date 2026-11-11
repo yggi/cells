@@ -1,12 +1,11 @@
-const MOTIF_FRAGMENTS = seedFragments('motifs');
-const FORM_FRAGMENTS = seedFragments('forms');
 import { compileSource } from "../engine/compile.js";
 import { flatten, tapped } from "../engine/flatten.js";
 import { codeShifts } from "../engine/program.js";
 import { structureOf } from "../engine/measure.js";
 import { tapWhole } from "../engine/vary/lines.js";
-import { resolveSeed } from "./library.js";
-import { seedFragments } from "./seed.js";
+import { fromId, headOf, ofFacet, resolveSeed } from "./library.js";
+const MOTIF_FRAGMENTS = ofFacet('motif');
+const FORM_FRAGMENTS = ofFacet('form');
 const benchOf = (meter) => `&bar meter("${meter}") step=120bpm\n&key scale(ionian, C)`;
 const keyOf = (n) => `${Math.round(n.at * 1e6)}:${n.degree}:${n.alter}`;
 const same = (a, b) => a.length === b.length && a.every((n, i) => keyOf(n) === keyOf(b[i]));
@@ -60,7 +59,7 @@ function motifsRead(motifs, meter) {
     readMotifs.set(motifs, byMeter);
     if (!byMeter.has(meter))
         byMeter.set(meter, motifs.flatMap((m) => {
-            const read = readCell(`&${m.id} from ${m.id} &key`, m.id, meter);
+            const read = readCell(`&${headOf(m.id)} from ${fromId(m.id)} &key`, headOf(m.id), meter);
             return read ? [{ id: m.id, ...read }] : [];
         }));
     return byMeter.get(meter);
@@ -97,7 +96,7 @@ export function decompose(line, cell, meter, options = {}) {
     const lineOf = (segment, length, name) => {
         const id = motifOf(segment, length);
         if (id)
-            return { name: id, text: `&${id} from ${id} &key`, id };
+            return { name: headOf(id), text: `&${headOf(id)} from ${fromId(id)} &key`, id };
         const text = eighthsText(name, segment, length);
         return text ? { name, text, id: null } : null;
     };

@@ -4,7 +4,7 @@
 import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { createRepository, type Fragment, type StylePoint } from './fragments';
-import { LIBRARY, resolveSeed, RETIRED } from './library';
+import { LIBRARY, ofFacet, resolveSeed, RETIRED } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { STYLE_FRAGMENTS } from './styles';
 import { seedFragments } from './seed';
@@ -18,7 +18,7 @@ const EXPRESSION_FRAGMENTS = seedFragments('expression');
 const MODE_FRAGMENTS = seedFragments('modes');
 const PERFORMER_FRAGMENTS = seedFragments('performers');
 const STAB_FRAGMENTS = seedFragments('stab');
-const MOTIF_FRAGMENTS = seedFragments('motifs');
+const MOTIF_FRAGMENTS = ofFacet('motif');
 const FORM_FRAGMENTS = seedFragments('forms');
 const BAND_FRAGMENTS = seedFragments('bands');
 const MODULE_FRAGMENTS = seedFragments('modules');

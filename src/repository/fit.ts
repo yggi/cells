@@ -293,9 +293,16 @@ export interface UseOnOptions {
 }
 
 const ID_ARGS = /^([^(]*)\((.*)\)$/;
+/** A document's part's id: its key and its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own. */
+const PART = /^([^(/]+)\/([^(]+)$/;
 
 /** A `from` line: names, the id with its arguments (the id's own, `meter(swing=8n:2/3)`, then the line's), the main argument. */
-function fromLine(heads: readonly string[], id: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
+function fromLine(given: readonly string[], whole: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
+  // (a document's part, `kinderlied/twinkle`, is taken from its document by its head, renamed where it is named
+  // otherwise, `&twinkle2=twinkle from kinderlied`: in a document the head picks the part, decision 082)
+  const part = PART.exec(whole);
+  const id = part ? part[1]! : whole;
+  const heads = part && given.length === 1 && given[0] !== `&${part[2]}` && !given[0]!.includes('=') ? [`${given[0]}=${part[2]}`] : given;
   const m = ID_ARGS.exec(id);
   const written = [...(m ? [m[2]!] : []), ...Object.entries(args ?? {}).map(([k, v]) => `${k}=${v}`)];
   return `${heads.join(', ')} from ${m ? m[1] : id}${written.length ? `(${written.join(', ')})` : ''}${main ? ` ${main}` : ''}`;

@@ -4,7 +4,7 @@
 import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { readFragment, readFragments, writeFragment, type FragmentFile } from './files';
-import { LIBRARY } from './library';
+import { LIBRARY, ofFacet, PARTS } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 
 // (the three styles read from the examples, #572)
@@ -16,7 +16,7 @@ const HARMONY_FRAGMENTS = seedFragments('harmony');
 const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 const MODE_FRAGMENTS = seedFragments('modes');
 const STAB_FRAGMENTS = seedFragments('stab');
-const MOTIF_FRAGMENTS = seedFragments('motifs');
+const MOTIF_FRAGMENTS = ofFacet('motif');
 const ACID = stylePoint('acid');
 const HAPPY_HARDCORE = stylePoint('happyHardcore');
 const ELEKTRO = stylePoint('elektro');
@@ -72,8 +72,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s: a hundred and seventy-four)', () =>
-    expect(files).toHaveLength(174));
+  it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; Kinderlied’s six tunes its own parts since decision 082: a hundred and sixty-eight)', () =>
+    expect(files).toHaveLength(168));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -83,12 +83,14 @@ describe('the seed files', () => {
     expect(bare(read(writeFragment({ fragment, meta, prose })))).toEqual({ fragment, meta, prose });
   });
 
-  it('build the meters, the rhythms, the bass lines, the harmonies, the instruments and the modes, each in file order, and the library is all of them', () => {
+  it('build the meters, the rhythms, the bass lines, the harmonies, the instruments and the modes, each in file order, and the library is all of them, then the parts the examples give', () => {
     // (a file whose points carry a template's arguments is a fragment for each set: diatonic is seven, #387; meter thirteen, #507)
+    const seeded = LIBRARY.filter((f) => !PARTS.includes(f));
     expect(SEED.flatMap(fragmentsOf)).toEqual(
-      [...LIBRARY].sort((a, b) => SEED.findIndex((f) => fragmentsOf(f).some((x) => x.id === a.id)) - SEED.findIndex((f) => fragmentsOf(f).some((x) => x.id === b.id))),
+      [...seeded].sort((a, b) => SEED.findIndex((f) => fragmentsOf(f).some((x) => x.id === a.id)) - SEED.findIndex((f) => fragmentsOf(f).some((x) => x.id === b.id))),
     );
-    expect(SEED.flatMap(fragmentsOf)).toHaveLength(LIBRARY.length);
+    expect(SEED.flatMap(fragmentsOf).length + PARTS.length).toBe(LIBRARY.length);
+    expect(LIBRARY.slice(-PARTS.length)).toEqual(PARTS);
     expect(SEED.filter((f) => f.path.startsWith('meters/')).flatMap(fragmentsOf)).toEqual(METER_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('rhythms/')).map((f) => f.fragment)).toEqual(RHYTHM_FRAGMENTS);
     expect(SEED.filter((f) => f.path.startsWith('bass/')).map((f) => f.fragment)).toEqual(BASS_FRAGMENTS);
@@ -233,7 +235,9 @@ describe('the seed files', () => {
           ...HARMONY_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic_minor'),
-          ...MOTIF_FRAGMENTS.filter((f) => ['gypsy', 'raveHook', 'sequencer', 'melodie', 'ghostPhrase', 'royalTheme', 'bluesRiff', 'drunkenSailor', 'korobeiniki'].includes(f.id)),
+          ...MOTIF_FRAGMENTS.filter((f) =>
+            ['gypsy', 'raveHook', 'sequencer', 'melodie', 'ghostPhrase', 'royalTheme', 'bluesRiff', 'drunkenSailor', 'korobeinikiBar'].includes(f.id),
+          ),
           ...INSTRUMENT_FRAGMENTS.filter((f) => !['gm_kit', 'bass', 'keys', 'pad', 'lead'].includes(f.id) && !WRITTEN.has(f.id)),
         ].map((f) => f.id),
       ),

@@ -1,5 +1,3 @@
-const MOTIF_FRAGMENTS = seedFragments('motifs');
-const FORM_FRAGMENTS = seedFragments('forms');
 /**
  * Decomposition (yggi/cells#512, rung 1; yggi/jambot#580, rung 4): a line of several bars, degrees of the key, written
  * as the motif it is made of and the form that plays it, the way a piece writes a tune whole (*Kinderlieder, in pieces*:
@@ -24,8 +22,11 @@ import { codeShifts } from '../engine/program';
 import { structureOf } from '../engine/measure';
 import { tapWhole } from '../engine/vary/lines';
 import type { Fragment } from './fragments';
-import { resolveSeed } from './library';
-import { seedFragments } from './seed';
+import { fromId, headOf, ofFacet, resolveSeed } from './library';
+
+/** The library's motifs and forms, by their facet: a seed folder's, and the parts a piece gives (decision 082). */
+const MOTIF_FRAGMENTS = ofFacet('motif');
+const FORM_FRAGMENTS = ofFacet('form');
 
 /** A note of a line: where it starts in whole notes from the line's start, its degree and its accidental. */
 export interface LineNote {
@@ -130,7 +131,7 @@ function motifsRead(motifs: readonly Fragment[], meter: string): ReadMotif[] {
     byMeter.set(
       meter,
       motifs.flatMap((m) => {
-        const read = readCell(`&${m.id} from ${m.id} &key`, m.id, meter);
+        const read = readCell(`&${headOf(m.id)} from ${fromId(m.id)} &key`, headOf(m.id), meter);
         return read ? [{ id: m.id, ...read }] : [];
       }),
     );
@@ -173,7 +174,7 @@ export function decompose(line: string, cell: string, meter: string, options: De
   /** A segment's line, named as a seed motif's or as `name`: its text and the id it was found as. */
   const lineOf = (segment: readonly LineNote[], length: number, name: string) => {
     const id = motifOf(segment, length);
-    if (id) return { name: id, text: `&${id} from ${id} &key`, id };
+    if (id) return { name: headOf(id), text: `&${headOf(id)} from ${fromId(id)} &key`, id };
     const text = eighthsText(name, segment, length);
     return text ? { name, text, id: null } : null;
   };

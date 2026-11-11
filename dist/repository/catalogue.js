@@ -3,7 +3,7 @@ import { references } from "../engine/references.js";
 import { signatureOf } from "../engine/use.js";
 import { EMPTY_LAYER } from "./fragments.js";
 import { holesOf } from "./holes.js";
-import { resolverOf } from "./library.js";
+import { PARTS, resolverOf } from "./library.js";
 import { SEED } from "./seed.js";
 import { argsOf, variantsOf } from "./variants.js";
 function entryOf(file, path, layer, resolve) {
@@ -41,7 +41,11 @@ export function catalogue(layer = EMPTY_LAYER) {
     if (kept)
         return kept;
     const resolve = resolverOf(layer);
-    const entries = Object.freeze([...SEED.map((f) => entryOf(f, f.path, layer, resolve)), ...layer.filed.map((f) => entryOf(f, null, layer, resolve))]);
+    const parts = PARTS.map((f) => {
+        const [document, head] = [f.id.slice(0, f.id.indexOf('/')), f.id.slice(f.id.indexOf('/') + 1)];
+        return { ...entryOf({ fragment: f, meta: { source: 'seed' }, prose: '' }, `examples/${document}`, layer, resolve), part: { document, head } };
+    });
+    const entries = Object.freeze([...SEED.map((f) => entryOf(f, f.path, layer, resolve)), ...parts, ...layer.filed.map((f) => entryOf(f, null, layer, resolve))]);
     SEEDED.set(layer, entries);
     return entries;
 }

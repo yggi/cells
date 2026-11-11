@@ -1,6 +1,6 @@
 # 082 · A document gives fragments: a file of several signatures, each a part taken by its head; a piece and a fragment one kind of file
 
-**Date:** 2026-11-09 · **Status:** proposed (the owner on yggi/cell-studio#621, 2026-11-09: "multiple fragments per document as proposed. very good proposal"; the rulings 1a–1e there, each "accepted"; the move "breaking, no need for ceremony"). Two questions are open (below). · Issues: #642 (rung C5 of yggi/cell-studio#621), #436
+**Date:** 2026-11-09 · **Status:** accepted (the owner on yggi/cell-studio#621, 2026-11-09: "multiple fragments per document as proposed. very good proposal"; the rulings 1a–1e there, each "accepted"; the move "breaking, no need for ceremony"; then, 2026-11-11, on the two questions below: "yes, keep one namespace", and a part's point read in its document "as suggested. good improvement"). · Issues: #642 (rung C5 of yggi/cell-studio#621), #436
 
 *Read with 065 (fragments take arguments: a signature, one main parameter and optional ones), 047 (fragments are files; a piece and a fragment the same kind of file), 048 (the learned layer; identity by `sameText` until the hash), 051 (literate cells) and 075 (a name is only a name).*
 
@@ -52,9 +52,10 @@ Today a file holds one fragment, in one of two forms:
 - **In the catalogue** (`catalogue`, #638), as `kinderlied › twinkle`: an entry per part, its file the document's.
 - **Hashed alone:** a part's hash is its own lines' (its signature and what it reads), so editing the piece's own lines changes no part's hash. A lockfile records each head as `kinderlied/twinkle` (the id, a slash, the head), so two parts of one document are two entries.
 
-### 5. A part's association is keyed by its head
+### 5. A part's association: read in its document, a hand's in the frontmatter over it
 
-- **For now, in the frontmatter:**
+- **Its first guess is read in its document** (#541's reader, `readPoint`, over what the part plays heard in its piece: its key, its instrument, its tempo), each axis with its confidence. A part heard alone reads only part of it: a stand-in voice gives every line a bite of 0, and a part open on `&key` reads its host's key's mood. Built in a rung of its own (C5b).
+- **A hand's association overrides it, in the frontmatter:**
 
   ```text
   parts:
@@ -62,27 +63,26 @@ Today a file holds one fragment, in one of two forms:
       association: [ … ]
   ```
 
-  A part with none is found by no query; it can still be taken by its head.
+  Until the reading is built, a part with none is found by no query; it can still be taken by its head.
 - **With #436,** each part carries its association in its own text, beside its signature (#436, rung C6 of yggi/cell-studio#621).
 
 ### 6. A piece and a fragment are one kind of file
 
 - One reader reads both. Which keys its frontmatter holds (`id`, `association`, `parts`, `title`, `tags`, `tier`) says what it is; a file may be both a piece and a document of parts.
-- `readPiece` and `readFragment` merge into it.
+- `readPiece` and `readFragment` merge into it (a rung of its own: the code reads a document's parts from its frontmatter as a piece's other keys, `PARTS` in `repository/library.ts`).
 
 ### 7. Kinderlieder moves in, breaking
 
-- The six motif files (`twinkle`, `wonder`, `haenschen`, `hinein`, `heim`, `weinet`) become the parts of `examples/kinderlied.md`.
-- Their ids are respelled in one change, with no forwarding release: Migrate rewrites `&twinkle from twinkle &key` as `&twinkle from kinderlied &key`.
+- The six motif files (`twinkle`, `wonder`, `haenschen`, `hinein`, `heim`, `weinet`) become the parts of `examples/kinderlied.md`, their lines as they were, so the piece plays as it did (its notes and events unchanged).
+- Their ids are respelled in one change, with no forwarding release: a compile refuses the old id; Migrate reads it the old way (`MOVED`, `engine/renamed.ts`) and rewrites `&twinkle from twinkle &key` as `&twinkle from kinderlied &key`, a head named otherwise by its head (`&tw=twinkle from kinderlied &key`).
+- **#670's four tunes stay motifs.** Each is lifted from its piece (`lifted: examples/sailor.md @ …`), and none is a cell of its piece's own: `ricercar`'s theme is longer, `jazz`'s riff is another line, `sailor` spells it `&m1 &m2`, `korobeiniki`'s is the first half of its `&a`. Making them parts rewrites four examples, a change of its own.
 - The changelog names the migration; Jambot's pin move names what it asks for by id.
 
-## Open (the owner's, before the code)
+## Ruled (2026-11-11)
 
-1. **One namespace for pieces and fragments.** A piece that gives parts is resolved by its key, so an example's key and a fragment's id must not clash. Today `twinkle` and `waltz` are each both an example and a motif (85 keys, 141 ids at 4c91d35); §7 removes `twinkle`'s clash.
-   - **(a) Recommended:** one namespace, held by a test; `waltz` respelled on one side.
-   - **(b)** Pieces addressed apart from fragments (`from piece:kinderlied`); no clash to rule, but a second spelling of `from`.
-2. **#670's tunes.** #670 cuts four tunes out of their examples into motif files (`royalTheme`, `bluesRiff`, `drunkenSailor`, `korobeiniki`), the opposite way from §1.
-   - **Recommended:** #670 lands as it is, and C5's migration moves those four into their documents with Kinderlieder's six, so every example tune is a part of its piece.
+1. **One namespace.** A piece is resolved by its key (`resolveSeed` reads the examples), so no example's key is a fragment's id, nor a renamed or retired one (`repository/namespace.test.ts`). Three clashed at the code: `twinkle` (§7 moves it), and the motifs `waltz` and `korobeiniki`, respelled with their heads `waltzBar` and `korobeinikiBar`, as a seed motif is headed by its id.
+2. **#670's tunes** landed as motifs (#675); they stay so (§7).
+3. **A part's point** is read in its document first, a hand's association over it (§5).
 
 ## Why
 

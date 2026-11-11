@@ -8,7 +8,21 @@
 import type { Resolve } from '../engine/program';
 import { type Fragment, type LearnedLayer } from './fragments';
 /** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`). */
+/**
+ * The parts the examples give (decision 082), each a fragment whose id is its document's key and its head
+ * (`kinderlied/twinkle`), its text the part (`partOf`), its points the ones its document's frontmatter keys by its head
+ * (`parts: { twinkle: { association: […] } }`). A part with no association there is taken by its head all the same,
+ * and found by no query, so it isn't listed. A malformed one throws here, naming the example and the head.
+ */
+export declare const PARTS: readonly Fragment[];
+/** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`), then the parts the examples give (`PARTS`). */
 export declare const LIBRARY: readonly Fragment[];
+/** The library's fragments of a facet, read off their points (decision 046), wherever they are kept: a folder or a document. */
+export declare const ofFacet: (facet: string) => Fragment[];
+/** The id a `from` line writes for a fragment: a part's document (`kinderlied/twinkle` → `kinderlied`), any other's own. */
+export declare const fromId: (id: string) => string;
+/** The head a line takes a fragment by, where it is named for it: a part's head (`kinderlied/twinkle` → `twinkle`), a seed motif's id. */
+export declare const headOf: (id: string) => string;
 /**
  * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment
  * that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
@@ -17,7 +31,8 @@ export declare const LIBRARY: readonly Fragment[];
  */
 export declare const RETIRED: ReadonlyMap<string, string>;
 /**
- * The seed library as a `from` line's resolver (decision 054): a fragment's text by its id, a retired id's forwarding
+ * The seed library as a `from` line's resolver (decision 054): a fragment's text by its id, an example's by its key
+ * (decision 082), a retired id's forwarding
  * text (`RETIRED`), or null for none. It holds each fragment's current version only: a lockfile's older hash plays the
  * current one (the compile warns).
  */

@@ -580,6 +580,8 @@ export interface Take {
    * name of the parameter it binds (`tempo: '&tempo'`). Absent for a collection.
    */
   readonly args?: Readonly<Record<string, string>>;
+  /** The head of the document's part it took (decision 082: `&twinkle from kinderlied` takes `twinkle`); absent for a file of one fragment. Its hash is the part's. */
+  readonly part?: string;
 }
 
 /** Shift of every cell; missing names use the code's shift=. */

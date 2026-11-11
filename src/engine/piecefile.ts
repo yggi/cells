@@ -139,7 +139,9 @@ export const lockfileOf = ({ frontmatter }: Pick<PieceFile, 'frontmatter'>): Loc
  */
 export function withLockfile(file: PieceFile, takes: readonly Take[]): PieceFile {
   const had = lockfileOf(file);
-  const entries = takes.flatMap((u) => (u.hash ? [{ id: u.id, hash: u.hash }] : had.filter((k) => k.id === u.id)));
+  // (a document's part is locked by its id and head, `kinderlied/twinkle`, decision 082)
+  const key = (u: Take) => (u.part ? `${u.id}/${u.part}` : u.id);
+  const entries = takes.flatMap((u) => (u.hash ? [{ id: key(u), hash: u.hash }] : had.filter((k) => k.id === key(u))));
   const once = entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
   return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(once) } };
 }

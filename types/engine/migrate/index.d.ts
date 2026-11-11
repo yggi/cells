@@ -8,6 +8,7 @@
  *  - taps.ts:      a line stepped by a meter cell's own steps (step=&bar*2) as a tap of the meter (step=8n, decision 040)
  *  - swing.ts:     a bare swing=.67 on a meter as the level it leans (swing=8n:.67, #18)
  *  - mainkey.ts:   over=key as the cell it reads, over=&key (decision 060)
+ *  - moved.ts: a `from` line of a seed fragment a piece took in as its part, as a take of the part: &twinkle from twinkle &key → &twinkle from kinderlied &key (decision 082)
  *  - forwarded.ts: a `from` line of a retired id as the line it forwards to: * from "core kit" → &bd, … from gm_kit (#338)
  *  - grids.ts:     a grid's size written cycle=19 map=edo as its map's, map=edo(19), map=ed(7, 3/2) (decision 040, #75)
  *  - laps.ts:      a turning table's cycle= in steps as laps, cycle=24 on a 12 → cycle=2 (decision 040, #75): exact by
@@ -39,7 +40,7 @@
 import { type Find, type Rewrite } from '../rewrite';
 import type { CompileOptions } from '../program';
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments' | 'axes' | 'parts';
+export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments' | 'axes' | 'parts' | 'moved';
 export type Migration = Rewrite<MigrationRule>;
 /** Every migration a text has, in the order its form was retired; a `from` line's fragment read through `options.resolve`. */
 export declare const migrations: (options?: CompileOptions) => Find;

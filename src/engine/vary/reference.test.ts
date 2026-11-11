@@ -8,7 +8,7 @@ import { bare } from '../fold/score';
 import { playsSameNotes } from '../sameness';
 import { fitsAs } from '../../repository/fit';
 import { bassCards, drumCard } from '../../repository/benches';
-import { resolveSeed } from '../../repository/library';
+import { ofFacet, resolveSeed } from '../../repository/library';
 import { createRecogniser } from '../../repository/recognise';
 import { declWords } from '../edit';
 import { PITCHED_OPERATORS, variations, type Variation, type VaryOptions } from '.';
@@ -20,7 +20,7 @@ import { seedFragments } from '../../repository/seed';
 const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 const BASS_FRAGMENTS = seedFragments('bass');
 const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
-const MOTIF_FRAGMENTS = seedFragments('motifs');
+const MOTIF_FRAGMENTS = ofFacet('motif');
 
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {
