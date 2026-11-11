@@ -2,7 +2,7 @@
 // band, which stay there): `artic` is `bite`, and a bar is cells' (`barOf`).
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../compile';
-import { BAR_4_4, type Bar, barOf, type Part, readStyle, readTiming } from './style';
+import { BAR_4_4, type Bar, barOf, levelOf, type Part, readStyle, readTiming, syncopation } from './style';
 
 const note = (part: Part, step: number, length = 1, midi = 60) => ({ part, step, note: midi, length });
 const range = (n: number) => [...Array(n).keys()];
@@ -37,17 +37,43 @@ describe('a meter as a reading counts it', () => {
   });
 });
 
-describe('reading a style from notes: sync', () => {
-  it('reads no syncopation where every onset is on a beat or an eighth', () => {
+describe('reading a style from notes: sync, syncopation proper (#681)', () => {
+  it('reads none where every onset is on a beat or an eighth and its line strikes the next stronger place', () => {
     expect(readStyle([0, 2, 4, 6, 8, 10, 12, 14].map((s) => note('lead', s))).sync).toBe(0);
+    expect(readStyle([0, 4, 8, 12].map((s) => note('lead', s))).sync).toBe(0);
   });
 
-  it('reads all of it where every onset is off the beat and the eighth', () => {
-    expect(readStyle([1, 3, 5, 7, 9, 11, 13, 15].map((s) => note('lead', s))).sync).toBe(1);
+  it('reads an onset whose line leaves the next stronger place silent, by how much weaker its place is, over 3', () => {
+    // (the and of one before a silent two: an eighth before a pulse, one level; a sixteenth before a silent eighth, one; before a silent pulse, two)
+    expect(readStyle([note('lead', 0), note('lead', 2)]).sync).toBeCloseTo(1 / 6, 12);
+    expect(syncopation([note('lead', 1)])).toBeCloseTo(1 / 3, 12);
+    expect(syncopation([note('lead', 3)])).toBeCloseTo(2 / 3, 12);
+    // (the bar is a cycle: a sixteenth before the downbeat, its line silent there, is the deepest, 3; the pulse on 8 is
+    // struck again at 15 before the downbeat comes, so it isn't syncopated)
+    expect(syncopation([note('lead', 15), note('lead', 8)])).toBeCloseTo(3 / 6, 12);
   });
 
-  it('reads the share of onsets that fall off them, from every part', () => {
-    expect(readStyle([note('drums', 0), note('bass', 3), note('lead', 4), note('stab', 7)]).sync).toBe(0.5);
+  it('reads the clave and the tresillo, which the onsets on the grid alone read as none', () => {
+    expect(syncopation([0, 6, 12].map((s) => note('drums', s, 1, 75)))).toBeCloseTo(1 / 9, 12);
+    expect(syncopation([4, 8].map((s) => note('drums', s, 1, 75)))).toBeCloseTo(1 / 6, 12);
+    expect(syncopation([2, 6, 10, 14].map((s) => note('lead', s)))).toBeCloseTo(5 / 12, 12);
+  });
+
+  it('reads each line once, a drum by its note: steady hats don’t drown a syncopated kick', () => {
+    const kick = [0, 6, 12].map((s) => note('drums', s, 1, 36));
+    const hats = [0, 2, 4, 6, 8, 10, 12, 14].map((s) => note('drums', s, 1, 42));
+    expect(readStyle([...kick, ...hats]).sync).toBeCloseTo(1 / 9 / 2, 12);
+  });
+
+  it('keeps to 0 to 1 over every set of a line’s onsets in a bar of 4/4 (finite: all 2^16)', () => {
+    for (let mask = 1; mask < 1 << 16; mask++) {
+      const v = syncopation(
+        range(16)
+          .filter((s) => mask & (1 << s))
+          .map((s) => note('lead', s)),
+      );
+      if (v < 0 || v > 1) throw new Error(`${mask}: ${v}`);
+    }
   });
 });
 
@@ -119,11 +145,14 @@ describe('a style read on other meters', () => {
     }
   });
 
-  it('counts a note off its meter’s pulses and off its eighths as syncopated, and no other (finite: every meter, every step)', () => {
+  it('reads a lone note on the downbeat as none, and on any other place as its level’s gap to the next stronger place, over 3 (finite: every meter, every step)', () => {
     for (const [sig, bar] of bars)
       for (const step of range(bar.steps)) {
-        const onGrid = bar.pulses.includes(step) || step % 2 === 0;
-        expect([sig, step, readStyle([note('lead', step)], bar).sync]).toEqual([sig, step, onGrid ? 0 : 1]);
+        const w = levelOf(step, bar);
+        let j = step + 1;
+        while (j < step + bar.steps && levelOf(j % bar.steps, bar) >= w) j++;
+        const expected = step === 0 ? 0 : (w - levelOf(j % bar.steps, bar)) / 3;
+        expect([sig, step, readStyle([note('lead', step)], bar).sync]).toEqual([sig, step, expected]);
       }
   });
 

@@ -580,17 +580,25 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
 
 /**
  * A stack of lines: one chord and nothing else (`&drumlines [&kick, &hat[<<2], &euclid * &euclidLevel, &clave * .5]`), each
- * member a line, its first name, times its levels: level cells and numbers, which scale its notes as in a mix. Null for
+ * member a line, the factor that isn't a level (wherever it is written: #687, I4), times its levels: level cells and numbers, which scale its notes as in a mix. Null for
  * anything else; a member that multiplies by a sound (a voice, a mix, a gate) is said once, here.
  */
 function stackOf(decls: ReadonlyMap<string, CellDecl>, d: CellDecl | undefined, error: Ctx['error']): { line: Ref; by: Expr[] }[] | null {
   if (!d || d.map || d.gate || Object.keys(d.params).some((k) => !PLAYED_AS.has(k)) || d.braid.kind !== 'list' || d.braid.tokens.length !== 1) return null;
   const a = d.braid.tokens[0].atom;
   if (a.kind !== 'mix' || a.gate || !a.exprs.length) return null;
+  // (a level is a number or a cell that is one by its own line, map=amp, map=db or map=lin: decision 006, I4)
+  const level = (f: Expr) => f.k === 'num' || (f.k === 'ref' && ['amp', 'db', 'lin'].includes(decls.get(f.ref.name)?.map?.kind ?? ''));
   const member = (e: Expr): { line: Ref; by: Expr[] } | null => {
     if (e.k === 'ref') return 'level' in e && e.level !== undefined ? null : { line: e.ref, by: [] };
-    if (e.k !== 'prod' || e.factors[0]?.k !== 'ref' || !e.factors.slice(1).every((f) => f.k === 'num' || (f.k === 'ref' && !f.ref.pick && !f.ref.shift))) return null;
-    return { line: e.factors[0].ref, by: e.factors.slice(1) };
+    if (e.k !== 'prod') return null;
+    // (the line is the factor that isn't a level, wherever it is written, as a mix finds its voice: #687; with none or
+    // several, the first; its levels the rest, numbers and plain references)
+    const lines = e.factors.filter((f) => !level(f));
+    const line = lines.length === 1 ? lines[0]! : e.factors[0]!;
+    const by = e.factors.filter((f) => f !== line);
+    if (line.k !== 'ref' || !by.every((f) => f.k === 'num' || (f.k === 'ref' && !f.ref.pick && !f.ref.shift))) return null;
+    return { line: line.ref, by };
   };
   const members = a.exprs.map(member);
   if (!members.every((m) => m !== null)) return null;

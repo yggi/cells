@@ -15,7 +15,8 @@ describe('reading one voice of the band alone', () => {
 
   it('reads a voice from its own notes and no other’s', () => {
     const bar = [at('drums', 1), at('drums', 3), at('lead', 0, 8), at('lead', 8, 8)];
-    expect(readVoice('drums', bar)).toMatchObject({ density: 2 / 16, sync: 1 });
+    // (#681: a sixteenth before a silent eighth is one level of syncopation, one before a silent pulse two, over 3 each)
+    expect(readVoice('drums', bar)).toMatchObject({ density: 2 / 16, sync: (1 + 2) / (2 * 3) });
     expect(readVoice('lead', bar)).toMatchObject({ density: 2 / 16, sync: 0, bite: 0 });
   });
 
