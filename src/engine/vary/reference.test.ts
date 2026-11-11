@@ -7,13 +7,14 @@ import { compileSource } from '../compile';
 import { bare } from '../fold/score';
 import { playsSameNotes } from '../sameness';
 import { fitsAs } from '../../repository/fit';
-import { heard } from '../../repository/heard';
+import { bassCards, drumCard } from '../../repository/benches';
 import { resolveSeed } from '../../repository/library';
 import { createRecogniser } from '../../repository/recognise';
 import { declWords } from '../edit';
 import { PITCHED_OPERATORS, variations, type Variation, type VaryOptions } from '.';
 import type { Resolve } from '../program';
 import { bodyOf, expand } from '../use';
+import { readFrom } from '../parser/use';
 import { seedFragments } from '../../repository/seed';
 
 const RHYTHM_FRAGMENTS = seedFragments('rhythms');
@@ -31,18 +32,43 @@ const unionOf = (text: string, workbench: string) => {
 const KIT = { resolve: resolveSeed };
 /** Jambot's reading of a drum bar (`rhythm.test.ts`), with 13 of the General MIDI kit's voices to strike. */
 const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
-const DRUM_OPTIONS: VaryOptions = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
+const DRUM_OPTIONS: VaryOptions = { workbench: DRUMS, keep: ['&fill'], fewest: 3, resolve: resolveSeed };
+/** The kit a drum bar is played on by hand: the 13 voices, but those it takes itself (a groove's own drums, decision 075). */
+const drumsFor = (text: string) => {
+  const taken = new Set(
+    text.split('\n').flatMap((l) => {
+      const f = readFrom(l.trim());
+      return f?.kind === 'use' ? (f.names ?? []) : [];
+    }),
+  );
+  return DRUMS.split('\n')
+    .filter((l) => !taken.has(l.split(' ')[0]!))
+    .join('\n');
+};
 /** The bass seeds' workbenches (`pitched.test.ts`): 4/4 at 120 bpm in C major, one chord a bar, over two progressions. */
 const HOST = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n${INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text}`;
 const HARMS = ['&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]', '&harm over=&key step=1m [1,3,5,7] [4,6,8,10] [0,2,4,6]'];
 
 /** Every seed on its workbench: its text, the workbench with the card that hears it (#291), Vary's options, and how long to compare. */
 const CASES = [
-  ...RHYTHM_FRAGMENTS.map((f) => ({ id: f.id, fragment: f.text, bench: `${DRUMS}\n${heard(f.text)}`, options: DRUM_OPTIONS, seconds: 8 })),
+  ...RHYTHM_FRAGMENTS.map((f) => ({
+    id: f.id,
+    fragment: f.text,
+    bench: `${drumsFor(f.text)}
+${drumCard(f.text)}`,
+    options: DRUM_OPTIONS,
+    seconds: 8,
+  })),
   ...HARMS.flatMap((harm) =>
     BASS_FRAGMENTS.map((f) => {
       const workbench = `${HOST}\n${harm}`;
-      return { id: `${f.id}, ${harm.split(' ')[3]}`, fragment: f.text, bench: `${workbench}\n${heard(f.text)}`, options: { workbench, operators: PITCHED_OPERATORS }, seconds: 16 };
+      return {
+        id: `${f.id}, ${harm.split(' ')[3]}`,
+        fragment: f.text,
+        bench: `${workbench}\n${bassCards(f.text)}`,
+        options: { workbench, operators: PITCHED_OPERATORS },
+        seconds: 16,
+      };
     }),
   ),
 ];
@@ -55,13 +81,14 @@ const WITH = ALL.filter(({ v }) => v.reference);
 const byOperator = (list: typeof ALL) => Object.fromEntries([...new Set(ALL.map(({ v }) => v.rule))].map((op) => [op, list.filter(({ v }) => v.rule === op).length]));
 
 describe("the seeds' variations by reference", () => {
-  it('gives 563 of the 644 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572: the four new beats and three bass lines among the seeds)', () => {
-    expect(ALL.length).toBe(644);
-    expect(WITH.length).toBe(563);
-    expect(byOperator(ALL)).toEqual({ rotate: 33, drop: 125, add: 340, transpose: 72, reverse: 8, bend: 50, trim: 12, invert: 4 });
-    expect(byOperator(WITH)).toEqual({ rotate: 18, drop: 98, add: 303, transpose: 72, reverse: 6, bend: 50, trim: 12, invert: 4 });
-    // (the four operators with a form before #293: 100 of their 117)
-    expect(['rotate', 'transpose', 'invert', 'reverse'].reduce((n, op) => n + byOperator(WITH)[op]!, 0)).toBe(100);
+  it('gives 729 of the 825 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572 and #542: the twelve new beats and ten bass lines among the seeds)', () => {
+    expect(ALL.length).toBe(825);
+    expect(WITH.length).toBe(729);
+    expect(byOperator(ALL)).toEqual({ rotate: 40, drop: 168, add: 377, transpose: 120, reverse: 12, bend: 76, trim: 18, invert: 14 });
+    expect(byOperator(WITH)).toEqual({ rotate: 23, drop: 139, add: 339, transpose: 120, reverse: 8, bend: 76, trim: 18, invert: 6 });
+    // (the four operators with a form before #293: 157 of their 186; #542's six new inversions, the tumbao's, the oom-pah's
+    // and the dub bass's over each harmony, are written out shorter than their forms)
+    expect(['rotate', 'transpose', 'invert', 'reverse'].reduce((n, op) => n + byOperator(WITH)[op]!, 0)).toBe(157);
   });
 
   it.each(WITH.map((c) => [`${c.id}: ${c.v.by}`, c] as const))('%s plays the notes of its reference (S2)', (_, { fragment, bench, v, seconds }) => {
@@ -71,13 +98,13 @@ describe("the seeds' variations by reference", () => {
     expect(playsSameNotes(varied, reference, seconds, KIT)).toBe(true);
   });
 
-  it('each is no longer than its line written out by `bare`, and all but 2 shorter', () => {
+  it('each is no longer than its line written out by `bare`, and all but 4 shorter', () => {
     const sizes = WITH.map(({ fragment, v }) => {
       const written = declWords(v.apply(fragment), v.line.slice(1))!;
       return [bare(v.reference!.line(v.line.slice(1))), bare([...written.head, ...written.attrs, ...written.braid].join(' '))] as const;
     });
     expect(sizes.filter(([ref, line]) => ref > line)).toEqual([]);
-    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(561);
+    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(725);
   });
 
   it('writes each operator in a form the language has', () => {

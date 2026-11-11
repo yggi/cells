@@ -1,8 +1,8 @@
 /**
- * The default performer's feel (decision 063 §2, #392; yggi/music-commons `contracts/feel`, version 2, #453): how a
+ * The default performer's feel (decision 063 §2, #392; yggi/music-commons `contracts/feel`, version 3, #560): how a
  * performer plays the events cells plays for a bar, its velocity loosened and accented and its length gated, so every
- * frontend plays a session as its host does; and which part and drum role each event is (`readerOf`: its performer's
- * role, or its output's id, `readingOf`). The text says what is composed, and the playing is the player's (decision 037).
+ * frontend plays a session as its host does; and which part and drum role each event is (`readerOf`: the `part=` and
+ * `role=` its text declares, never a name, decision 075). The text says what is composed, and the playing is the player's (decision 037).
  * The hub's README is the rule; `feel.test.ts` meets its vectors. Lifted from yggi/cell-studio src/session/feel.ts @
  * d5e7634 (written there from the hub's page, with no import from Jambot), but its reading of a host's `bar` message, which
  * is the session's: a frontend makes the frame.
@@ -38,10 +38,11 @@ export type FeelPart = 'drums' | 'bass' | 'pad' | 'stab' | 'lead';
 /** A drum hit's role in the groove. */
 export type DrumRole = 'kick' | 'backbeat' | 'ghost' | 'hat' | 'pedal' | 'euclid' | 'clave' | 'fill';
 /**
- * The part and drum role an event of a host's section text is, read off the output cells names it by
- * (`voice:cell:line:col`, split on `:`): a groove's member of the kit cells makes, `kit:voices:<role>:…`, is the drums,
- * its role the third field; any other output's part is its second field, the line its voice plays. Null for one that
- * names none of the feel's parts or roles: it plays as cells gives it. The fallback of a text's own reading (`readerOf`).
+ * Version 2's reading, by names (feel minor 1): the part and drum role an event of a host's section text is, read off the
+ * output cells names it by (`voice:cell:line:col`, split on `:`): a groove's member of the kit cells makes,
+ * `kit:voices:<role>:…`, is the drums, its role the third field; any other output's part is its second field, the line
+ * its voice plays. Null for one that names none of the feel's parts or roles. Version 3 reads none of it (`readerOf`):
+ * Migrate's `parts` rule writes what it gave as `part=` and `role=`.
  */
 export declare function readingOf(output: string | undefined): Reading | null;
 /** An event's part and drum role, as the feel reads them. */
@@ -50,12 +51,35 @@ export type Reading = {
     readonly role?: DrumRole;
 };
 /**
- * How a compiled text's events read (feel v1.2, yggi/music-commons#35; #511): a pitched event's part is the role of the
- * performer whose gate plays it (cells' `performers`: the gate its output goes through, alone, `via`, or in a stack,
- * `through`), as Jambot's `lineOf` reads it, so `&bassOut play=&bassline^$-12 &bassV`, role `bass`, plays the bass.
- * A drum hit keeps its line's role, and an output no performer's role names reads by its id (`readingOf`).
+ * How a compiled text's events read (feel version 3, yggi/music-commons#60; decision 075, #560): by the values a text
+ * declares, never by a name.
+ * - **A drum hit** (an output of the kit cells makes, `kit:voices:<line>:…`) is the drums, its role its line's `role=`.
+ * - **A pitched event's part** is the `part=` on the role cell of the performer whose gate plays it (cells'
+ *   `performers`: the gate its output goes through, alone, `via`, or in a stack, `through`), else its line's `part=`.
+ * - Null where nothing declares one of the feel's parts or roles: it plays as cells gives it.
+ * The line is the one the output plays (its id's line, the name before any operator, `bassline^$-12`), looked up as a
+ * cell, so a text renamed reads the same.
  */
 export declare function readerOf(result: {
+    readonly outputs: readonly {
+        readonly id: string;
+        readonly via: readonly string[];
+        readonly through: readonly string[];
+    }[];
+    readonly performers: readonly {
+        readonly name: string;
+        readonly role?: string;
+    }[];
+    readonly cells: ReadonlyMap<string, {
+        readonly params: Readonly<Record<string, number | string>>;
+    }>;
+}): (output: string | undefined) => Reading | null;
+/**
+ * How version 2 read a compiled text's events, by names (feel minor 1 and v1.2, #511): a pitched event's part the name of
+ * the role cell of the performer whose gate plays it, else its output's id (`readingOf`). Read by Migrate's `parts` rule,
+ * which writes what a name gave as `part=` and `role=` (decision 075); nothing plays by it.
+ */
+export declare function readerByName(result: {
     readonly outputs: readonly {
         readonly id: string;
         readonly via: readonly string[];

@@ -13,7 +13,7 @@
  * The library comes with the call (`NormaliseOptions.library`), the fragments' ids read through the resolver: Normalise
  * holds no library of its own (cells resolves nothing itself, decision 054).
  */
-import { splitComment } from '../edit';
+import { attrsOf, declLine, declWords, spansLines, splitComment } from '../edit';
 import { parse } from '../parser';
 import { isWordId, leftOf, readFrom } from '../parser/use';
 
@@ -27,6 +27,7 @@ function taking(code: string): { readonly id: string; readonly names: readonly s
 const writeTaking = (id: string, names: readonly string[] | null, takes: readonly string[] | null = names): string =>
   `${leftOf(names, takes)} from ${isWordId(id) ? id : JSON.stringify(id)}`;
 import type { Rewrite } from '../rewrite';
+import type { Resolve } from '../program';
 
 /** A fragment as the library gives it: its id and its text. */
 export interface LibraryFragment {
@@ -143,4 +144,132 @@ export function libraryCells(source: string, library: readonly LibraryFragment[]
       return lines.join('\n');
     },
   }));
+}
+
+/** A template as the library gives it: its head, its parameters (each with its default value, if any), its main one, and its head's line. */
+interface Template {
+  readonly id: string;
+  readonly head: string;
+  readonly params: ReadonlyMap<string, string | null>;
+  readonly main: string | null;
+  readonly attrs: ReadonlyMap<string, string>;
+  readonly braid: string;
+}
+
+/** A value's kind: the generator it calls (`meter`, `scan`), a word, or anything else. */
+const kindOf = (v: string): string => /^([a-z]\w*)\(/.exec(v)?.[1] ?? (/^[a-z]\w*$/.test(v) ? 'word' : 'other');
+
+/** The library's templates: each fragment whose signature is `&head from (&p, …) &main`, with its head's own line. */
+function templates(library: readonly LibraryFragment[], resolve?: Resolve): Template[] {
+  const out: Template[] = [];
+  // (the library lists a template's points, `diatonic(mode=dorian)`; the template itself, `diatonic`, is the resolver's)
+  const bases = [...new Set(library.flatMap((f) => /^(\w+)\(/.exec(f.id)?.[1] ?? []))].filter((id) => !library.some((f) => f.id === id));
+  const all = [
+    ...library,
+    ...bases.flatMap((id) => {
+      const text = resolve?.(id);
+      return typeof text === 'string' ? [{ id, text }] : [];
+    }),
+  ];
+  for (const f of all) {
+    if (!isWordId(f.id)) continue;
+    const lines = f.text.split('\n').map((l) => codeOf(l));
+    const sig = lines.map((l) => /^&(\w+) from (?:\(([^)]*)\)\s*)?(?:&(\w+))?$/.exec(l)).find(Boolean);
+    if (!sig) continue;
+    const head = sig[1]!;
+    const declared = lines.find((l) => new RegExp(`^&${head}\\s`).test(l) && !readFrom(l));
+    if (!declared) continue;
+    const words = declWords(declared, head)!;
+    const names = [...(sig[2] ?? '').matchAll(/&(\w+)/g)].map((m) => m[1]!);
+    const params = new Map<string, string | null>();
+    for (const p of names) {
+      // (a default is its own line, `&p meter("4/4")` or `&p swing=8n:1/2`: its text, or the one value it sets)
+      const line = lines.find((l) => new RegExp(`^&${p}\\s`).test(l));
+      const rest = line ? line.slice(p.length + 2).trim() : null;
+      const one = rest && /^(\w+)=(\S+)$/.exec(rest);
+      params.set(p, one ? one[2]! : rest);
+    }
+    out.push({ id: f.id, head, params, main: sig[3] ?? null, attrs: attrsOf(declared, head), braid: words.braid.join(' ') });
+  }
+  return out;
+}
+
+/**
+ * A line that is a template's head line with its parameters filled in, as a `from` line of the template with those
+ * arguments (#524): `&bar meter("7/8") step=&tempo swing=8n:2/3` is `&bar from meter(grouping=meter("7/8"), swing=8n:2/3)
+ * &tempo`, `&key scale(minor, &tonic)` is `&key from diatonic(mode=minor) &tonic`. The line's attributes are the
+ * template's, by key, each binding the parameter the template writes there (`base=&p` binds the line's own braid, as a
+ * copy of &p is &p's braid); its braid matches the template's, a parameter where the template has one; a parameter it
+ * doesn't write is the default, and an argument equal to its default is left out. A line with anything the template
+ * doesn't write (`motor=`, `label=`, `over=`) stays as it is. Each only where it sounds identical (S1, `rewriteAll`).
+ */
+export function libraryTemplates(source: string, library: readonly LibraryFragment[] | undefined, resolve?: Resolve): Rewrite<'library'>[] {
+  if (!library?.length) return [];
+  const out: Rewrite<'library'>[] = [];
+  const lines = source.split('\n');
+  for (const t of templates(library, resolve)) {
+    const i = declLine(source, t.head);
+    if (i < 0 || spansLines(source, t.head)) continue;
+    const words = declWords(source, t.head)!;
+    const attrs = attrsOf(source, t.head);
+    const bound = new Map<string, string>();
+    let fits = true;
+    const bind = (p: string, v: string) => {
+      // (a parameter takes a value of its default's kind, or a cell: a grouping that is a meter(…) isn't a bent scan(…),
+      // which since decision 080 is a bend, and a mode that is a word isn't a list of steps)
+      const d = t.params.get(p);
+      if ((bound.has(p) && bound.get(p) !== v) || (d != null && !v.startsWith('&') && kindOf(v) !== kindOf(d))) fits = false;
+      bound.set(p, v);
+    };
+    let braid = words.braid.join(' ');
+    for (const [k, v] of t.attrs) {
+      const p = /^&(\w+)$/.exec(v)?.[1];
+      const isParam = p !== undefined && (t.params.has(p) || p === t.main);
+      if (k === 'base' && isParam && !attrs.has('base')) {
+        if (braid) [braid] = [(bind(p, braid), '')];
+        continue;
+      }
+      if (!attrs.has(k)) {
+        if (!isParam || p === t.main || t.params.get(p) == null) fits = false;
+        continue;
+      }
+      if (isParam) bind(p, attrs.get(k)!);
+      else if (attrs.get(k) !== v) fits = false;
+    }
+    if ([...attrs.keys()].some((k) => !t.attrs.has(k))) fits = false;
+    if (t.braid) {
+      // (a parameter the braid names twice is the same text both times: a back-reference)
+      const seen = new Set<string>();
+      const pattern = t.braid
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/&(\w+)/g, (_, p: string) => (!(t.params.has(p) || p === t.main) ? `&${p}` : seen.has(p) ? `\\k<${p}>` : (seen.add(p), `(?<${p}>.+?)`)));
+      const m = new RegExp(`^${pattern}$`).exec(braid.replace(/\s+/g, ' '));
+      if (!m) fits = false;
+      else for (const [p, v] of Object.entries(m.groups ?? {})) bind(p, v.trim());
+    } else if (braid) fits = false;
+    if (!fits || (t.main && !bound.has(t.main))) continue;
+    const args = [...t.params].flatMap(([p, d]) => (bound.has(p) && bound.get(p) !== d ? [`${p}=${bound.get(p)}`] : []));
+    const use = `&${t.head} from ${isWordId(t.id) ? t.id : JSON.stringify(t.id)}${args.length ? `(${args.join(', ')})` : ''}${t.main ? ` ${bound.get(t.main)}` : ''}`;
+    const before = codeOf(lines[i]!);
+    if (out.some((r) => r.after === use)) continue;
+    out.push({
+      id: `template:${t.id}:${t.head}`,
+      tool: 'normalise',
+      rule: 'library',
+      title: `&${t.head} is ${JSON.stringify(t.id)}'s, with ${args.length ? args.join(', ') : 'its defaults'}: ${use}`,
+      before,
+      after: use,
+      apply: (src: string) => {
+        const now = src.split('\n');
+        const j = declLine(src, t.head);
+        if (j < 0 || codeOf(now[j]!) !== before) return src;
+        const [code, comment] = splitComment(now[j]!);
+        const indent = /^\s*/.exec(code)![0];
+        const pad = comment ? ' '.repeat(Math.max(1, code.length - indent.length - use.length)) : '';
+        now[j] = `${indent}${use}${pad}${comment}`;
+        return now.join('\n');
+      },
+    });
+  }
+  return out;
 }

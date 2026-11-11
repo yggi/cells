@@ -2,7 +2,7 @@ import { braidReadsOf, otherReadsOf } from "../engine/compiler/builtin.js";
 import { parse } from "../engine/parser/index.js";
 import { tapPositions } from "../engine/meter.js";
 import { MAIN_KEY } from "../engine/program.js";
-import { expansion, hasUse, signatureOf } from "../engine/use.js";
+import { expansion, hasFrom, signatureOf } from "../engine/use.js";
 const WHOLE = 1e-9;
 const isWhole = (x) => Math.abs(x - Math.round(x)) < WHOLE;
 export const lapMeets = (need, taps) => need.steps > 0 && isWhole((taps * need.rate) / need.steps);
@@ -38,7 +38,7 @@ export function readOnlyAsSound(decls) {
     const elsewhere = new Set([...decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`), ...readAsLine(decls)]);
     return (name) => inBraid.has(name) && !elsewhere.has(name);
 }
-export const linesRead = (text, resolve) => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
+export const linesRead = (text, resolve) => (resolve && hasFrom(text) ? expansion(text, { resolve }).text : text);
 export const standIn = (name) => `${name} s=white`;
 export function holesOf(text, compiled, resolve) {
     const read = linesRead(text, resolve);
@@ -74,7 +74,7 @@ export function holesOf(text, compiled, resolve) {
         uses,
         sounds,
         lines: uses.filter((n) => asLine.has(n)),
-        defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
+        defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.takes ?? []).flatMap((u) => u.gave)])],
         clock: clockNeeds(filled, stand ? last : result).map((t) => t.need),
         ...(signature ? { signature: { heads: signature.names, optional: signature.optional, main: signature.main } } : {}),
     };

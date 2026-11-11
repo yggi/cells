@@ -86,7 +86,7 @@ function fitByName(fragment, workbench, compiledBy, resolve) {
     const compiled = compiledBy ?? ((text) => compileSource(text, undefined, resolve ? { resolve } : {}));
     const holes = holesOf(fragment, compiled, resolve);
     const bench = compiled(workbench);
-    const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
+    const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.takes ?? []).flatMap((u) => u.gave)]);
     const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
     const sounds = unfilled.filter((name) => holes.sounds.includes(name));
     const missing = unfilled.filter((name) => !sounds.includes(name));
@@ -208,18 +208,19 @@ export function useOn(bench, id, options) {
     const text = options.resolve(id);
     const head = bench.replace(/\s+$/, '');
     const written = (line) => [...(head ? [head] : []), line].join('\n');
-    const usedBy = (whole) => compiled(whole).uses?.at(-1) ?? null;
+    const usedBy = (whole) => compiled(whole).takes?.at(-1) ?? null;
     const signature = text === null ? null : signatureOf(text);
     if (text === null || !signature) {
         const line = `* from ${id}`;
         return { text: written(line), line, heads: [], main: null, used: text === null ? null : usedBy(written(line)) };
     }
-    const heads = signature.names.length === 1 ? [options.head ?? clearOf(bench, signature.names[0])] : signature.names;
+    const heads = signature.names.length === 1 ? [options.head ?? clearOf(bench, signature.names[0])] : signature.names.map((h) => clearOf(bench, h));
     const stand = holesOf(text, compiled, options.resolve)
         .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
         .map(standIn);
     const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
-    const line = fromLine(heads, id, options.args, main);
+    const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i].slice(1)}`));
+    const line = fromLine(left, id, options.args, main);
     return { text: written(line), line, heads, main, used: usedBy(written(line)) };
 }
 export function fitsAs(id, bench, options) {

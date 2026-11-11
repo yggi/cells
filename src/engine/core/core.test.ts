@@ -279,7 +279,7 @@ describe('gates, pitch= and what nothing reads, in the core (decision 069 §2, #
     );
   });
   it('a role goes and its gate is its products; kept by the interface, both stay (decision 077)', () => {
-    const text = `${BAR}\n&t step=8n 0 2 4\n&g play=&t &a\n&lead map=role &g\n&a s=sine loop=C4\n&out map=sample [&g]`;
+    const text = `${BAR}\n&t step=8n 0 2 4\n&g play=&t &a\n&lead map=role part=lead &g\n&a s=sine loop=C4\n&out map=sample [&g]`;
     expect(after('gates', text)).toBe(`${BAR}\n&t step=8n 0 2 4\n&a s=sine loop=C4\n&out map=sample [&t * &a]`);
     expect(family('gates')(text, { ...O, keep: new Set(['lead', 'g']) })).toBe(text);
   });
@@ -314,7 +314,7 @@ describe('Core.left reports only what is left (decision 077)', () => {
 });
 
 describe('the core up to an interface (decision 077 §2)', () => {
-  const score = `${BAR}\n&t step=pulse*2 0 2 4\n&g play=&t &v\n&lead map=role &g\n&v s=sine loop=C4\n&out map=sample [&g]`;
+  const score = `${BAR}\n&t step=pulse*2 0 2 4\n&g play=&t &v\n&lead map=role part=lead &g\n&v s=sine loop=C4\n&out map=sample [&g]`;
   const performers = (text: string) => (compileSource(text, undefined, O).performers ?? []).map((p) => p.name);
   it('an interface names cells: a list, the roles and the gates each lists, a signature’s heads and parameters', () => {
     expect([...interfaceOf(score, ['&tempo', 'v', 'nowhere'])]).toEqual(['tempo', 'v']);
@@ -328,7 +328,7 @@ describe('the core up to an interface (decision 077 §2)', () => {
     expect(none).not.toMatch(/map=role/);
     const roles = toCore(score, { ...O, interface: 'roles' }).source;
     expect(performers(roles)).toEqual(['g']);
-    expect(roles).toMatch(/^&lead map=role &g$/m);
+    expect(roles).toMatch(/^&lead map=role part=lead &g$/m);
     for (const t of [none, roles]) expect(soundsIdentical(score, t, undefined, O)).toBe(true);
   });
   it('a piece up to its tempo keeps &tempo, and nothing else of its names', () => {

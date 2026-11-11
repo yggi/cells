@@ -138,19 +138,22 @@ describe('a query names each facet’s main argument (#587)', () => {
       .map((f) => f.fragment.id)
       .filter((id) => BASS_FRAGMENTS.some((b) => b.id === id));
   const BASS_BENCH = `${HARMONY}\n&bassV s=saw loop=C2`;
+  // (every bass line fits that 4/4 bench but the waltz bass, a bar of 3/4, #542)
+  const IN_FOUR = BASS_FRAGMENTS.map((b) => b.id).filter((id) => id !== 'waltz_bass');
+  const sorted = (ids: readonly string[]) => [...ids].sort();
 
   it('a template of a facet the query names is taken with that argument; of one it doesn’t, with the one cell that meets it, here none', () => {
     // (a meter, a key and a harmony each read as a table: a bass line meets all three, so none is picked)
     expect(bass(BASS_BENCH, { facet: 'bass' })).toEqual([]);
-    expect(bass(BASS_BENCH, { facet: 'bass', arguments: { bass: '&harm' } })).toHaveLength(BASS_FRAGMENTS.length);
+    expect(sorted(bass(BASS_BENCH, { facet: 'bass', arguments: { bass: '&harm' } }))).toEqual(sorted(IN_FOUR));
     // (with no facet asked for, a fragment's own facet names its argument)
-    expect(bass(BASS_BENCH, { arguments: { bass: '&harm' } })).toHaveLength(BASS_FRAGMENTS.length);
+    expect(sorted(bass(BASS_BENCH, { arguments: { bass: '&harm' } }))).toEqual(sorted(IN_FOUR));
     // (named for another facet, it is not this one's)
     expect(bass(BASS_BENCH, { facet: 'bass', arguments: { motif: '&key' } })).toEqual([]);
   });
 
   it('a workbench that offers its harmony is the fallback: the one cell offered that meets it', () => {
-    expect(bass(`&harm from\n${BASS_BENCH}`, { facet: 'bass' })).toHaveLength(BASS_FRAGMENTS.length);
+    expect(sorted(bass(`&harm from\n${BASS_BENCH}`, { facet: 'bass' }))).toEqual(sorted(IN_FOUR));
   });
 
   it('names nothing by convention: the harmony called &chords, named so, fits as &harm did', () => {

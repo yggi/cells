@@ -10,6 +10,126 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.24.0 — 2026-11-11
+
+### Added
+
+- **A reader of a style from notes** (#541): `src/engine/reading/` (`@yggi/cells/engine/reading/point` and its siblings). `readPoint(bars, bar)` reads a span of bars, each its notes as `{ part, step, length, note? }` (the band's five parts), as a point on the axes the notes can speak to (`sync`, `harm`, `bite`, `mood`), a confidence for each, 0 to 1, and the span's intensity (onsets per step). An axis the notes can't speak to is left out. `readStyle`, `readHarm`, `readChords`, `chordOf`, `readVoice`, `partDistance` and `readTiming` are Jambot's critic's (yggi/jambot packages/engine), lifted with their tests, `artic` now `bite`; over Jambot's E23 bars they agree with Jambot's exactly. `readMood` is new: the mode the pitched notes fit, at `moodOf`'s default tension. `barOf(meter)` lays a meter's bar on sixteenths for them.
+
+- **Four styles placed by hand, each with its parts** (#542): Salsa (.9 .5 .7 .75, 180 bpm), Waltz (0 .7 .3 .9, 150 bpm), March (0 .1 .75 .7, 120 bpm) and Trip-hop (.7 .2 .2 .25, 80 bpm: the offbeat, static, paddy, dark corner no style held). The library holds twenty-three styles; a frontend reading `STYLES` offers them with no code.
+  - **New fragments:** the beats `salsa_drums` (the son clave 3-2, the conga's tumbao, the bell), `waltz_drums`, `march_drums` and `trip_hop_drums`; the bass lines `tumbao_bass` (the anticipated bass: the fifth on the and of two, the root on four), `waltz_bass`, `oom_pah_bass` and `dub_bass`; the harmony `montuno` (I IV V IV); the motifs `guajeo` and `smoke`; the instruments `montuno_piano`, `accordion`, `brass_band` and `electric_piano`.
+  - **New association points:** the plain 4/4 at Salsa and Trip-hop, 2/4 at March (Waltz sits where 3/4 and the `waltz` motif already were); mixolydian at Salsa, ionian at Waltz and March, aeolian at Trip-hop; `vamp_to_the_fifth` at Waltz and March and `vamp_to_the_sixth` at Trip-hop, at weight 0.4; the `march` motif at March.
+  - Each finds its own part first, at distance 0, in each of the seven facets (`styleparts.test.ts`). No existing style's first find changes in any facet. `trip_hop_drums` weighs 0.5: at 1 the corner it fills leaves lock-in's walk no section that misses, and so no witness that it files fragments of its own there.
+
+- **Four more styles cut from the examples, each with its parts** (#542): Baroque (from the Bach pieces; .15 .8 .5 .85, 90 bpm), Blues shuffle (*Swing blues: 12 bars in C*; .65 .55 .45 .65, 120 bpm), Sea shanty (*Drunken Sailor*; .1 .25 .7 .65, 112 bpm) and Chiptune (*Korobeiniki, in Tetris form*; .3 .7 1 .55, 144 bpm). The library holds nineteen styles; a frontend reading `STYLES` offers them with no code.
+  - **New fragments:** the harmonies `fifths_sequence` (I IV vii° iii vi ii V I), `twelve_bar` and `korobeiniki_changes` (i i V i iv i V i); the bass lines `continuo_bass`, `blues_walk` and `quarter_bass`; the motifs `royalTheme` (the King's theme), `bluesRiff`, `drunkenSailor` and `korobeiniki`; the instruments `moog`, `blues_horn`, `fiddle` and `pulse_lead`; the beats `ride_shuffle`, `shanty_drums`, `chip_drums` and `quiet_pulse` (Baroque's claves on the beat, so a band there plays no other style's kit).
+  - **New association points:** the plain 4/4 at Baroque, Sea shanty and Chiptune; the swung 4/4 (`swing=8n:2/3`) at Blues shuffle; ionian at Baroque, mixolydian at Blues shuffle, dorian at Sea shanty, harmonic minor at Chiptune; `vamp_to_the_seventh` at Sea shanty (*Drunken Sailor*'s i–VII); `octave_bass` at Chiptune (*Korobeiniki*'s bass is that line).
+  - Each finds its own part first, at distance 0, in every facet its piece supplies (`styleparts.test.ts`). The three new harmonies and the vamp's point at Sea shanty weigh 0.4, so no existing style finds them first within the miss distance; at Lo-fi hip hop, Swing jazz and Electro swing the first harmony, past the miss distance either way, is now one of them, so Jambot's own generator plays there as before.
+
+- **Where a given cell came from:** `CompileResult.origins` maps each cell a `from` line gave (by its name as compiled) to its `Origin` chain, outermost first: the piece's `from` line (`id: null`), each fragment's line that took it on, and the line of the fragment that defines it. Electroswing's `&hh`: its line 1, `drums_performer`'s take of the kit, `gm_kit`'s `&hh` line.
+- **`takeIn(text, name, options)`:** a given cell's line made the piece's own before an edit (cell-studio#610, its `withUsedLine`'s place).
+  - Nothing to write for the piece's own cell or a one-head `from` line's head: `setAttr` and `setShift` write a head's attribute before `from`.
+  - A collection's cell, or a head `*` takes from a template, gets its line written into the piece from the expansion, and a line that named it stops asking for it.
+  - A head among several on one line, or a copy's own cell, says why.
+
+- **A fragment heard alone: `audition(text, options)`** (#640, rung C3 of yggi/cell-studio#621). A host gives a fragment what it lacks, by how the fragment reads it, never by a name it is expected to have (decision 075):
+  - **Each hole gets a stand-in:** a tempo, a meter or a key as a piece writes one; a line, stepped; a sound, a voice, or the kit's own drum where the kit defines the name (`gm_kit` by default, `kit: null` for a voice everywhere).
+  - **A style the fragment picks from** (`&style[…]`) stands at the point given (`style:`), with the centre of each axis it leaves out. An optional parameter's default line is written over, as a `from` line's argument is.
+  - **Each head plays on one card:** a template's heads, or a collection's cells that nothing else in it reads. An envelope plays on a voice of its own.
+  - **It lists the host's lines,** each with the hole it fills, so a frontend can show and change them. Where nothing can play, it says why.
+
+  Every seed file plays alone but two, which say why: `band` (it plays a score) and `styles` (a style plays only through what reads it). `coreFragment` hears a fragment through the same host; its output is unchanged for every seed fragment. Nothing a piece plays changes.
+
+- **Lines of a piece as a fragment: `extract(text, lines, { id, resolve })`** (#641, rung C4 of yggi/cell-studio#621), `useOn`'s inverse. It writes the lines as a fragment and the piece taking it by a `from` line in their place. The signature it proposes:
+  - **heads:** what the lines define that the rest of the piece reads;
+  - **the main parameter:** the one cell the lines read as a value and don't define, passed as the main argument (`&bassline from my_vamp_bass &key`);
+  - **private:** the rest they define;
+  - **free:** a sound they strike, read by name (decision 065 §3).
+
+  It checks that the piece plays the same (S1, 16 s by default), and says whether the library holds the fragment already (`known`, by `sameText`). Lines that hold a card, define the piece's main meter or key, read several cells they don't define, or that nothing else reads, say why instead.
+- `readsAsValue` (`engine/use`) is exported: extraction asks the expansion's own question of what a fragment must declare.
+
+- **A fraction in `free(…)`**: `free(2/3, 1/2..3/4)`, a share as `swing=` writes one. Before, a slider's start and ends were decimals only.
+
+**What a frontend sees at its next pin:** a slider written as a fraction (its `FreeSpec`'s numbers are as before). Cell studio's slider for jazz's, coltrane's and five's swing is now the share, 0.5 to 0.75, not the ratio, 1 to 3.
+
+- **A meter found from onsets** (#648, its first rung): `findMeter(onsets)` in `engine/time/cycles` reads a meter from when notes start, how strongly, how long and how low. It returns the tempo, the signature or grouping in twos and threes, a pair's swing at the eighth or the sixteenth (decision 071), where a bar starts, and a confidence for each. `meterText(found)` writes it as cells does: `&bar from meter(grouping=…, swing=…) &tempo` and `&tempo step=…bpm`.
+  - **Its variants** (`Found.variants`): the same grid as half the bar and as two of it, each with its likeness. A bar and its half (2/4 and 4/4) sound the same and are told apart by little in the notes, so the reader that knows more chooses.
+  - It reads a performance at a constant tempo. It reads onsets as written (on a grid to 12 ms) or, where nothing holds so, as played (to 45 ms).
+  - What it finds is measured by `tools/cycles.ts` over four benches and held by a ratchet. `docs/notes/648-meter-finder.md` has the numbers, and what it can't know (a bar or two, a tempo or its double).
+  - Nothing reads it yet. No piece plays differently.
+
+### Changed
+
+- **Normalise writes a template's line, its parameters filled in, as a `from` line of the template with those arguments** (#524, part of #15):
+  - `&bar meter("7/8") step=&tempo swing=8n:2/3` becomes `&bar from meter(grouping=meter("7/8"), swing=8n:2/3) &tempo`;
+  - `&key scale(minor, &tonic)` becomes `&key from diatonic(mode=minor) &tonic`.
+
+  It applies to any template in the library (`normalise/library.ts`'s `libraryTemplates`), only where the two sound identical. A line with anything the template doesn't write is left as it is, and so is a parameter of another kind than its default: a bent bar, `scan(27 23 26 24)`, isn't a grouping.
+- **The examples:**
+  - `radio`, `jazz`, `coltrane`, `five`, `phase` and `bossa` take the library's meter;
+  - `sympathy`, `worn` and `patchbay` take its key.
+
+  No `notes` or `events` hash moves. `breve` (a tutorial of the alla breve form), `swing` (reworked in #646) and `spooky`'s stab line (the piece's own, its prose says) are kept as written.
+
+- **The default performer reads a part and a drum role as values, not names** (#560 rung 2, decision 075; the feel contract's version 3, yggi/music-commons#60).
+  - **`part=`** (bass, pad, stab, lead) goes on a performer's role cell, `&low map=role part=bass &lowOut`, or on a line, `&low part=bass …`.
+  - **`role=`** (kick, backbeat, ghost, hat, pedal, euclid, clave, fill) goes on a drum line a kit plays: `&k role=kick step=16n &bd!4`.
+  - **An event's part** is its performer's role cell's `part=`, else its line's. A drum hit's role is its line's `role=`. Nothing is read off an output's id beyond which line it plays, so a line named `&bass` with no `part=` plays as written, with no feel.
+  - **The API:**
+    - `readerOf(result)` reads the declarations and takes the result's `cells`.
+    - `readerByName(result)` is version 2's reading by names, which Migrate reads; `readingOf(output)` stays as version 2's.
+    - `perform`'s default reader reads nothing: pass `readerOf(result)`.
+- **Migrate's `parts` rule** writes what a name gave: `part=` on a role cell or a line named as a part, `role=` on a drum line named as a role. Read the old way, such a line is warned of: "&bass is named as the feel's part bass, and a name gives none now". Fixture `parts/named`.
+- **The seed library** writes its own: the performers' role cells (`&bass map=role part=bass &bassOut`), and the grooves' drum lines (`&kick role=kick …`, 73 lines). The seed fragments' hashes move.
+- **The examples:** 13 are migrated (`clock`, `voice`, `effects`, `variations`, `midi-out`, `circle`, `idm`, `cellscape`, `electroswing`, `radio`, `soundtape`, `arrangement`, `bwv847`). Every example reads under version 3 as it read by names (`alpha.test.ts`). No `notes` or `events` hash moves; midi-out's `values` and `live` hashes do.
+- **`alpha.test.ts` lists no exception:** every example holds alpha substitution written in and as written.
+
+  **What a frontend sees at its next pin:** a text that relies on names for its feel plays without one until migrated. Jambot's section text writes `part=` and `role=` itself (yggi/jambot#615). A frontend that calls `readerOf` passes the whole compile result (it reads `cells`), and one that calls `perform` without a reader gets no reading.
+
+- **A key's tonic read from a meter warns** (#613): `scale(dorian, &bar)`, its tonic a meter (`meter("4/4")` or `from meter`), says `&bar is a meter: a key's tonic is a note (&tonic D)`, and plays as before (the meter's first level as a pitch class). So a query that names no argument no longer takes a workbench's meter as a mode's tonic: on a workbench of a meter alone, the modes don't fit; with a `&tonic`, they do as before. No example or seed fragment says anything new.
+
+- **The grooves read only what they declare** (#637, the last of #560 rung 3c–e; decision 075, the owner's "B" on #637). The 22 rhythm fragments are templates. Their lines are their heads, so a piece takes them by name as before (`&kick, &clap from electro_swing_drums`). The drums they strike are optional parameters, each defaulting to the General MIDI kit's own line, taken inside the groove:
+
+  ```
+  &kick, &backbeat, &hat, &groove from (&bd, &sd, &hh)
+  &bd, &sd, &hh from gm_kit
+  ```
+
+  - **A piece passes its own drum:** `* from funk_drums(bd=&kick)`. A piece that defines `&bd` itself and doesn't pass it is warned: "The piece defines &bd, and "funk_drums" takes its &bd from a collection by default: pass yours, funk_drums(bd=&bd), or rename it". There is no warning where its line is the kit's word for word.
+  - **Read the old way**, a groove's `from` line passes the piece's own drums (`BOUND_BY_NAME`), and Migrate's `arguments` rule writes them (fixture `arguments/groove`).
+  - **The expansion:** an optional parameter's default may come from a collection inside the template. It keeps its shared name, an argument that binds it by reference leaves it out, and a value argument makes it a cell of the copy's own.
+  - **Vary** takes `resolve` in its options and compiles a fragment through it, so it varies a template groove. A `from` line reads nothing (`vary/lines.ts`). The recogniser passes `resolve` through.
+  - **`fitsAs` and `useOn`** take a template of several heads with each head renamed clear of the workbench's names where it collides (`&kick2=kick, &hat2=hat from techno_drums`, decision 075 §3a–b), as the union renamed a collection's.
+  - **Identity (`sameText`):** a text with no signature is a held template where it is the template's lines alone. So a groove heard and filed as its lines (Jambot's Muse) is still the seed groove it plays. Two templates are one only with their signatures alike, as before.
+  - **The examples:** no `notes` or `events` hash moves. The `values` and `live` hashes of `electroswing`, `spooky` and `kinderlied` move.
+
+  **What a frontend sees at its next pin:** a groove's text starts with its signature and a `from gm_kit` line, so it compiles only with a resolver. A frontend that reads a groove's lines (Jambot's `rhythms.ts`: compiled alone, unioned with a bench, varied) reads `bodyOf` with a resolver, or the lines with the `from` lines aside, and passes `resolve` to Vary. A frontend that writes a piece with its own drum named as the kit's passes it (`funk_drums(bd=&bd)`).
+
+- **The names around `from`** (#639, rung C2 of yggi/cell-studio#621), now that `use` is retired:
+
+  | old | new |
+  |---|---|
+  | `Used` | `Take` |
+  | `CompileResult.uses`, `Expansion.uses` | `takes` |
+  | `ParseResult.uses`, `UseLine` | `takes`, `TakeLine` |
+  | `hasUse` | `hasFrom` |
+  | `USE_DEPTH` | `FROM_DEPTH` |
+
+  **What a frontend sees at its next pin:** these names fail to typecheck until renamed; nothing else about them changes. The lockfile's frontmatter key in a piece file stays `uses:`. Diagnostic messages are unchanged.
+
+- **Normalise writes a meter built by hand as the meter it is** (#645, part of #15). `normalise/meter.ts` has two rules, each written only where it sounds identical (S1):
+  - **Even beats as a signature.** The main meter as a scan of equal beats, `scan(1 1 1)` or `scan(4 4 4 4)`, is `meter("3/4")` or `meter("4/4")`, for two beats to twelve. This replaces `names.ts`'s `fourFour`, which wrote `scan(1 1 1 1)` alone. A scan of 3s may be 6/8 or 3/16, so it stays as written.
+  - **A swing clock as the meter's swing.** A clock of two that lines tap by its pulse becomes the main meter's swing, and its lines move to the note value:
+    - `&swing scan(2 1) step=8n`, read by `step=&swing:pulse`, becomes `&bar … swing=&swing` and `&swing swing=8n:2/3`, with the lines on `step=8n`.
+    - A ratio left free becomes a share left free: `free(2, 1..3)` → `free(2/3, 1/2..3/4)`. It starts at the same notes, but its slider now moves the share.
+- **The examples:** `jazz`, `coltrane` and `five` swing their meter, `phase` and `musicbox` are `meter("3/4")`, `five` is `meter("5/4")`, and `bell` is `meter("12/8")` (by hand: its 4/4 with a "12/8" comment, its eighth triplets now `8n`). No `notes` or `events` hash moves. Their `values` hashes and their graphs do (a cell fewer, `&swing` a swing alone, `&tempo` named).
+- The docs' and the parser tables' `scan(4 4 4 4)` are `meter("4/4")`.
+
+### Removed
+
+- **`repository/heard`** (#640): it heard a fragment on Jambot's channels by the names it expected (`&groove`, `&bassline`), against decision 075. A frontend hears a fragment through `audition`. The tests write their cards through `repository/benches`, from a fragment's heads (`headsOf`). Every hash those tests pin is unchanged.
+
 ## v0.23.0 — 2026-11-09
 
 ### Added

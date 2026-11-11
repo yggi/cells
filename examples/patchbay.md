@@ -14,7 +14,7 @@ description: "A Berlin-school patch on the modules: two oscillators into one res
 &bar from meter &tempo
 &thump, &click from envelopes
 &tempo step=free(116bpm, 90..140)
-&key scale(minor, &tonic)
+&key from diatonic(mode=minor) &tonic
 &tonic A
 
 &seq over=&key step=16n 0 7 2 7 4 7 2 9 0 7 2 7 4 11 9 7

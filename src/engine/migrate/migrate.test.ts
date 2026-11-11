@@ -67,7 +67,7 @@ describe('Migrate: retired forms written as they are now (decision 049, #156)', 
 
   it('every rule has a witness of its own', () => {
     expect(new Set(PAIRS.map((p) => p.rule))).toEqual(
-      new Set(['all', 'gate', 'tap', 'swing', 'main-key', 'forwarded', 'grid', 'laps', 'renamed', 'oneshot', 'pairs', 'beats', 'notes', 'arguments', 'axes']),
+      new Set(['all', 'gate', 'tap', 'swing', 'main-key', 'forwarded', 'grid', 'laps', 'renamed', 'oneshot', 'pairs', 'beats', 'notes', 'arguments', 'axes', 'parts']),
     );
     // (axes, decision 076: the old meaning, artic and energy, is no longer played, and the old way reads a line as Migrate
     // writes it, migrate/axes.ts; so its witnesses play as their after by construction, and what they keep is the rule:

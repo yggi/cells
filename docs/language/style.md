@@ -125,8 +125,8 @@ Jambot reads a radio score so, a section at a time (#576).
 
 ## The library of styles: styles
 
-The seed library holds the preset styles as the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing`, `&spooky`, `&kinderlied`, `&acid`, `&happyHardcore`, `&elektro` and `&darkAmbient`.
-Each is a style cell at its point, with its display name as `label=` and its default tempo as `step=`. Each finds its own parts first, at distance 0, in every facet its piece gave the library: Spooky, Kinderlied, and the four cut from *Acid-Cell*, *Hypercell*, *Zelluläre Aktivität* and *Ghost-Cells* (#572, `src/repository/styleparts.test.ts`). [Style: a point the voices read](../../examples/style.md) is the tutorial's piece for `map=style`, `style=` and `&name[slot]` (tier 6).
+The seed library holds the preset styles as the cells of one collection, `styles` (`fragments/styles/01-styles.md`): `&synthPop`, `&techno`, `&deepHouse`, `&ambient`, `&lofi`, `&funk`, `&bossaNova`, `&swingJazz`, `&electroSwing`, `&spooky`, `&kinderlied`, `&acid`, `&happyHardcore`, `&elektro`, `&darkAmbient`, `&baroque`, `&bluesShuffle`, `&seaShanty`, `&chiptune`, `&salsa`, `&waltz`, `&march` and `&tripHop`.
+Each is a style cell at its point, with its display name as `label=` and its default tempo as `step=`. Each finds its own parts first, at distance 0, in every facet its piece gave the library: Spooky, Kinderlied, and the eight cut from *Acid-Cell*, *Hypercell*, *Zelluläre Aktivität*, *Ghost-Cells*, the Bach pieces, *Swing blues*, *Drunken Sailor* and *Korobeiniki* (#572), and the four placed by hand with parts written for them, Salsa, Waltz, March and Trip-hop (#542; `src/repository/styleparts.test.ts`). [Style: a point the voices read](../../examples/style.md) is the tutorial's piece for `map=style`, `style=` and `&name[slot]` (tier 6).
 
 ```cells
 &funk map=style label="Funk" step=104bpm sync=1 harm=.12 bite=.85 mood=.65
@@ -141,7 +141,7 @@ A score takes one by name where its section sits exactly on it, and writes its n
 &style label="Funk, turning to Bossa nova" style=&funk..&bossaNova
 ```
 
-The collection is associated at each of the fifteen points as the facet `style`, so the style nearest a point is a query too.
+The collection is associated at each of the twenty-three points as the facet `style`, so the style nearest a point is a query too.
 `nearestStyle(point)` ranks the styles themselves by it, nearest first: by `pointDistance`, the one distance between two styles, over the axes both have, with `axisWeights` to weigh an axis down and `styles` for a frontend that ranks on an axis of its own as well, such as a tempo (#538).
 
 ## The default band: a score played as its style says
@@ -169,3 +169,15 @@ It sends the score on a MIDI card on Jambot's channels and hears it on a sound c
 Which instrument a performer plays at a style is the band's choice too, made at resolution: `resolveBand(score)` answers `band` with each pitched voice the instrument the library ranks first at the score's style, named or written as numbers, (a clarinet at Electro swing's point, a theremin at Spooky's), and the band as written at Jambot's eight presets (`src/repository/band.ts`).
 The instruments are found where the score's style starts: a range, `style=&funk..&electroSwing`, plays Funk's instruments, the defaults, throughout, and the reverse plays Electro swing's. A found instrument is voiced for its point and reads no `&style`, so where it plays, the style moves no cutoff of that voice.
 A line can't make that choice: a voice reads a style as a moving parameter, and a wave or an envelope's times are not one.
+
+## Reading a style from notes
+
+The way back, from notes to a point, is `src/engine/reading/` (#541): the reader the repository's first guess at a fragment's place, a corpus's styles (#542) and a frontend's style of an open piece share. It reads a span of bars, each its notes with the part that played them (the band's five: drums, bass, pad, stab, lead), the step each starts on and how many steps it sounds, and answers `readPoint(bars, bar)`: the point on the axes the notes could speak to, a confidence for each, 0 to 1, and the span's intensity.
+
+- `sync`: the share of onsets off the pulses and off the eighths (`readStyle`).
+- `bite`: one less the median share of its gap a note of the bass or the lead sounds, as played (the gate, not the written length).
+- `harm`: the chords read back from the pad and the stab, a root and a quality each half bar, as the mean of how often they change and how far past a triad they reach (`readHarm`).
+- `mood`: the mode the pitched notes fit best, of the eight `BRIGHTNESS` knows, its tonic the one the notes (the bass counted twice) weigh most, at `moodOf`'s default tension; tension itself is not read (`readMood`).
+- Density, onsets per step, is the intensity, not a place (#571).
+
+An axis the notes can't speak to is left out: a drum part has no `harm` and no `mood`. A confidence is how much the notes had to say: `sync`'s the onsets over the bar's steps (a pad's chord a bar is under 0.2), `bite`'s the line's notes over four, `harm`'s the halves with a chord read, `mood`'s the share of the weight its scale covers times the pitch classes heard over seven. A bar is a meter's sixteenths and its pulses (`barOf`). The readings of sync, bite, harm and density were Jambot's critic's (yggi/jambot#15), lifted with their tests; over Jambot's own bars (E23: its eight presets and each axis swept, 3,040 bars) they agree with Jambot's exactly.

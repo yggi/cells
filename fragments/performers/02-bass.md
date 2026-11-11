@@ -56,7 +56,7 @@ source: seed
 &bass, &bassOut from (&bassLevel, &bassV, &style) &bassline
 &bassV from bass(style=&style)
 &bassOut play=&bassline^$-12 level=&bassLevel &bassV
-&bass map=role &bassOut
+&bass map=role part=bass &bassOut
 &bassLevel map=amp .8
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```

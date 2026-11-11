@@ -2,8 +2,8 @@
 // read through a resolver the host hands each compile, with the lockfile a piece file keeps.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
-import { parse, USE_RETIRED } from './parser';
-import { bodyOf, expand, fragmentHash, signatureOf, USE_DEPTH } from './use';
+import { parse, readFrom, USE_RETIRED } from './parser';
+import { bodyOf, expand, fragmentHash, signatureOf, FROM_DEPTH } from './use';
 import { setTiming } from './edit';
 import { lockfileOf, readPiece, withLockfile, writePiece, type PieceFile } from './piecefile';
 import { eventsBetween, plan } from './realize';
@@ -14,7 +14,7 @@ import { structureOf } from './measure';
 import { LIBRARY, resolveSeed } from '../repository/library';
 import { EXAMPLES } from './examples';
 import { fitsAs } from '../repository/fit';
-import { heard } from '../repository/heard';
+import { drumCard } from '../repository/benches';
 import { holesOf } from '../repository/holes';
 import { seedFragments } from '../repository/seed';
 
@@ -47,6 +47,13 @@ const KIT_NAMES = parse(KIT)
   .map((c) => c.name);
 const GROOVE = '* from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
 
+/** A fragment's lines, its signature and its own `from` lines aside: a groove read as a text with no signature (#637). */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
+
 describe('the use line, retired (#588)', () => {
   it('is an error, read the old way or not, whatever it says, and takes nothing; a name that starts with use is a name', () => {
     for (const bad of ['use * from gm_kit', 'use &bd, &sd from gm_kit', 'use &aeolian', 'use "core kit"', 'use', 'use bd from kit'])
@@ -55,7 +62,7 @@ describe('the use line, retired (#588)', () => {
           parse(bad, { old }).diagnostics.map((d) => [d.severity, d.message]),
           bad,
         ).toEqual([['error', USE_RETIRED]]);
-        expect(parse(bad, { old }).uses, bad).toBeUndefined();
+        expect(parse(bad, { old }).takes, bad).toBeUndefined();
       }
     expect(compileSource(`use * from gm_kit\n${GROOVE.split('\n').slice(1).join('\n')}`, undefined, seed).ok).toBe(false);
     expect(parse('&user s=sine').diagnostics).toEqual([]);
@@ -72,7 +79,7 @@ describe('the expansion', () => {
     const text = `${GROOVE}&out map=sample [&beat]\n&sd note=38 s=white hpf=900 env=&(map=adsr 0 .12 0 .05)\n`;
     const r = compileSource(text, undefined, seed);
     expect(r.diagnostics).toEqual([]);
-    expect(r.uses).toEqual([
+    expect(r.takes).toEqual([
       {
         id: 'gm_kit',
         names: null,
@@ -92,7 +99,7 @@ describe('the expansion', () => {
 
   it('a text with no use line compiles as it did, and expands to itself', () => {
     const text = '&a s=sine loop=A4';
-    expect(compileSource(text, undefined, seed).uses).toBeUndefined();
+    expect(compileSource(text, undefined, seed).takes).toBeUndefined();
     expect(expand(text, resolveSeed)).toBe(text);
   });
 
@@ -100,14 +107,14 @@ describe('the expansion', () => {
     const resolve = library({ groove: '* from kit\n&beat step=8n &bd ~ &sd ~\n&sd note=38 s=white hpf=2000', kit: '&bd note=36 s=sine loop=A1\n&sd note=38 s=white' });
     const r = compileSource('* from groove\n&bar meter("4/4") step=100bpm\n&bd note=36 s=sine loop=C2\n&out map=sample [&beat]', undefined, { resolve });
     expect(r.diagnostics).toEqual([]);
-    expect(r.uses?.[0]).toMatchObject({ gave: ['&beat', '&sd'], overrode: ['&bd'] });
+    expect(r.takes?.[0]).toMatchObject({ gave: ['&beat', '&sd'], overrode: ['&bd'] });
     expect(r.cells.get('sd')?.params.hpf).toBe(2000);
   });
 
   it('an id used twice gives its lines once, and the second use says it adds nothing', () => {
     const r = compileSource(`${GROOVE}&out map=sample [&beat]\n* from gm_kit`, undefined, seed);
     expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['warning', '"gm_kit" is used already, on line 1: this use adds nothing', 5]]);
-    expect(r.uses?.map((u) => [u.hash, u.gave.length])).toEqual([
+    expect(r.takes?.map((u) => [u.hash, u.gave.length])).toEqual([
       [fragmentHash(KIT), KIT_NAMES.length],
       [fragmentHash(KIT), 0],
     ]);
@@ -119,7 +126,7 @@ describe('the expansion', () => {
     const resolve = library({ a: '&bd note=36 s=sine loop=A1\n&x s=saw', b: '&bd  note=36  s=sine   loop=A1 # the same\n&y s=saw' });
     const r = compileSource('* from a\n* from b\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd &x &y', undefined, { resolve });
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
-    expect(r.uses?.map((u) => u.gave)).toEqual([
+    expect(r.takes?.map((u) => u.gave)).toEqual([
       ['&bd', '&x'],
       ['&bd', '&y'],
     ]);
@@ -138,21 +145,21 @@ describe('a named use of a collection (decision 059)', () => {
     const r = compileSource(text, undefined, { resolve });
     // (a bench with no card of its own: that nothing plays isn't what these say)
     const said = r.diagnostics.filter((d) => !d.message.startsWith('Nothing plays yet'));
-    return { uses: r.uses, said: said.map((d) => [d.severity, d.message, d.span.line]) };
+    return { takes: r.takes, said: said.map((d) => [d.severity, d.message, d.span.line]) };
   };
 
   it('takes the named cells and the lines they read within the fragment, its helpers', () => {
     const text = `&bassline from funk_bass\n* from upright_bass\n${BENCH}`;
-    const { uses, said } = read(text);
+    const { takes, said } = read(text);
     expect(said.filter(([s]) => s === 'error')).toEqual([]);
-    expect(uses?.[0]).toMatchObject({ names: ['&bassline'], gave: ['&bassline', '&bassNext'], overrode: [] });
+    expect(takes?.[0]).toMatchObject({ names: ['&bassline'], gave: ['&bassline', '&bassNext'], overrode: [] });
     expect(compileSource(text, undefined, { resolve: asCollections }).cells.has('bassNext')).toBe(true);
   });
 
   it('naming every name a collection defines expands as * from it does, for every seed', () => {
     // (but a template taken with arguments that hold a quote, `meter(grouping=meter("7/8"))`: only a from line takes it, unquoted, #507)
     for (const f of LIBRARY.filter((x) => !x.id.includes('"'))) {
-      const all = compileSource(`* from ${JSON.stringify(f.id)}`, undefined, seed).uses![0]!.gave;
+      const all = compileSource(`* from ${JSON.stringify(f.id)}`, undefined, seed).takes![0]!.gave;
       const named = `${all.join(', ')} from ${JSON.stringify(f.id)}`;
       expect(expand(named, resolveSeed), f.id).toBe(expand(`* from ${JSON.stringify(f.id)}`, resolveSeed));
     }
@@ -171,7 +178,7 @@ describe('a named use of a collection (decision 059)', () => {
     // (named, it is the piece's: what the section's &chords reads)
     const named = read(piece.replace('&pad from section', '&pad, &key from section'), resolve);
     expect(named.said).toEqual([]);
-    expect(named.uses?.[0]).toMatchObject({ names: ['&pad', '&key'], gave: ['&chords', '&pad'] });
+    expect(named.takes?.[0]).toMatchObject({ names: ['&pad', '&key'], gave: ['&chords', '&pad'] });
   });
 
   it('a helper the piece also defines is an error (the owner’s ruling 1); naming it makes it the piece’s', () => {
@@ -182,7 +189,7 @@ describe('a named use of a collection (decision 059)', () => {
     const named = read(helper.replace('&bassline from', '&bassline, &bassNext from'));
     // (an override a taken line reads is what the use does, so it says nothing: an instrument's voice given a sound)
     expect(named.said).toEqual([]);
-    expect(named.uses?.[0]).toMatchObject({ gave: ['&bassline'], overrode: ['&bassNext'] });
+    expect(named.takes?.[0]).toMatchObject({ gave: ['&bassline'], overrode: ['&bassNext'] });
     // (one no taken line reads still adds nothing, and says so)
     expect(read(`${helper.replace('&bassline from', '&bassline, &bassNext from')}\n&bassline over=&harm 0`).said).toEqual([
       ['warning', 'The piece defines &bassline, so taking it from "funk_bass" adds nothing', 1],
@@ -233,7 +240,7 @@ describe('a named use of a collection (decision 059)', () => {
   it('two named uses of one id take each its names, a line once', () => {
     const r = read('&bd from gm_kit\n&bd, &sd from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &sd ~\n&out map=sample [&beat]');
     expect(r.said).toEqual([]);
-    expect(r.uses?.map((u) => u.gave)).toEqual([['&bd'], ['&sd']]);
+    expect(r.takes?.map((u) => u.gave)).toEqual([['&bd'], ['&sd']]);
   });
 });
 
@@ -241,7 +248,7 @@ describe('the errors, each on its use line', () => {
   it('an unresolved id names it, and the piece’s other lines compile', () => {
     const r = compileSource('&bar meter("4/4") step=100bpm\n* from nowhere\n&a step=8n 0 2\n&m [&a * &v]\n&v s=sine', undefined, seed);
     expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['error', 'No fragment "nowhere" to use', 2]]);
-    expect(r.uses?.[0]).toMatchObject({ id: 'nowhere', hash: null, gave: [] });
+    expect(r.takes?.[0]).toMatchObject({ id: 'nowhere', hash: null, gave: [] });
     expect(r.cells.has('a')).toBe(true);
     expect(compileSource('* from "gm_kit"').diagnostics.map((d) => d.message)).toContain('No library to use "gm_kit" from: compileSource(text, env, { resolve })');
   });
@@ -252,14 +259,14 @@ describe('the errors, each on its use line', () => {
     expect(errors('* from self', library({ self: '* from "self"' }))).toEqual(['use "self" is a cycle: "self" → "self"']);
   });
 
-  it(`a depth past ${USE_DEPTH} names it: ${USE_DEPTH} passes, ${USE_DEPTH + 1} fails`, () => {
+  it(`a depth past ${FROM_DEPTH} names it: ${FROM_DEPTH} passes, ${FROM_DEPTH + 1} fails`, () => {
     // (f1 uses f2 … fn uses nothing: the piece's use of f1 is depth 1, fn's line is depth n)
     const chain = (n: number) =>
       library(Object.fromEntries(Array.from({ length: n }, (_, i) => [`f${i + 1}`, i + 1 < n ? `* from "f${i + 2}"\n&v${i + 1} s=sine` : `&v${n} s=sine`])));
-    expect(errors('* from f1', chain(USE_DEPTH))).toEqual([]);
-    expect(compileSource('* from f1', undefined, { resolve: chain(USE_DEPTH) }).uses?.[0]?.gave).toHaveLength(USE_DEPTH);
-    const path = Array.from({ length: USE_DEPTH + 1 }, (_, i) => `"f${i + 1}"`).join(' → ');
-    expect(errors('* from f1', chain(USE_DEPTH + 1))).toEqual([`use "f${USE_DEPTH + 1}" nests past ${USE_DEPTH} deep: ${path}`]);
+    expect(errors('* from f1', chain(FROM_DEPTH))).toEqual([]);
+    expect(compileSource('* from f1', undefined, { resolve: chain(FROM_DEPTH) }).takes?.[0]?.gave).toHaveLength(FROM_DEPTH);
+    const path = Array.from({ length: FROM_DEPTH + 1 }, (_, i) => `"f${i + 1}"`).join(' → ');
+    expect(errors('* from f1', chain(FROM_DEPTH + 1))).toEqual([`use "f${FROM_DEPTH + 1}" nests past ${FROM_DEPTH} deep: ${path}`]);
   });
 
   it('two used fragments defining one name by different lines name it and both ids; the piece’s own line settles it', () => {
@@ -295,20 +302,20 @@ describe('the rhythms with the General MIDI kit (S1)', () => {
     it(`${rhythm.id}, on a meter it fits, sounds identical to the same text written out`, () => {
       const meter = METER_FRAGMENTS.map((m) => setTiming(m.text, 'bar', 'step', '120bpm')).find((m) => fitOf(rhythm.text, m).fits)!;
       // (heard through a card: the rhythms carry none, #291)
-      const piece = `* from gm_kit\n${meter}\n${strip(rhythm.text)}\n${heard(rhythm.text)}`;
+      const piece = `* from gm_kit\n${meter}\n${strip(rhythm.text)}\n${drumCard(rhythm.text)}`;
       const r = compileSource(piece, undefined, seed);
       expect(r.diagnostics, meter).toEqual([]);
-      expect(r.uses?.[0]?.overrode).toEqual([]);
+      expect(r.takes?.[0]?.overrode).toEqual([]);
       expect(soundsIdentical(piece, expand(piece, resolveSeed), undefined, seed)).toBe(true);
     });
-  it('every rhythm is one of the twenty-two (#572: four read from the examples)', () => expect(RHYTHM_FRAGMENTS).toHaveLength(22));
+  it('every rhythm is one of the thirty (#572: four read from the examples; #542: eight more)', () => expect(RHYTHM_FRAGMENTS).toHaveLength(30));
 });
 
 describe('the lockfile', () => {
   const file = (uses?: { id: string; hash: string }[]): PieceFile => ({ frontmatter: { title: 'A groove', ...(uses ? { uses } : {}) }, text: GROOVE, prose: '' });
 
   it('round-trips: writePiece(readPiece(f)) keeps uses:', () => {
-    const written = writePiece(withLockfile(file(), compileSource(GROOVE, undefined, seed).uses!));
+    const written = writePiece(withLockfile(file(), compileSource(GROOVE, undefined, seed).takes!));
     expect(written).toContain(`uses:\n  - id: gm_kit\n    hash: ${fragmentHash(KIT)}\n`);
     const read = readPiece(written);
     expect('problems' in read).toBe(false);
@@ -321,7 +328,7 @@ describe('the lockfile', () => {
     const r = compileSource(GROOVE, undefined, { ...seed, locked });
     expect(r.ok).toBe(true);
     expect(r.diagnostics.map((d) => [d.severity, d.message, d.span.line])).toEqual([['warning', '"gm_kit" has changed since this piece was saved: its current version plays', 1]]);
-    expect(r.uses?.[0]?.hash).toBe(fragmentHash(KIT));
+    expect(r.takes?.[0]?.hash).toBe(fragmentHash(KIT));
     expect(compileSource(GROOVE, undefined, { ...seed, locked: [{ id: 'gm_kit', hash: fragmentHash(KIT) }] }).diagnostics).toEqual([]);
   });
 
@@ -345,7 +352,7 @@ describe('the lockfile', () => {
     const fromText = '&bd, &sd, &hh from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh [&bd,&hh]\n';
     const piece = { ...file([{ id: 'gm_kit', hash: 'e1:1' }]), text: fromText };
     expect(lockfileOf(readPiece(writePiece(piece)) as PieceFile)).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
-    const recorded = writePiece(withLockfile({ ...file(), text: fromText }, compileSource(fromText, undefined, seed).uses!));
+    const recorded = writePiece(withLockfile({ ...file(), text: fromText }, compileSource(fromText, undefined, seed).takes!));
     expect(lockfileOf(readPiece(recorded) as PieceFile)).toEqual([{ id: 'gm_kit', hash: fragmentHash(KIT) }]);
   });
 
@@ -355,7 +362,7 @@ describe('the lockfile', () => {
 
   it('a use that didn’t resolve keeps the entry it had', () => {
     const had = file([{ id: 'gm_kit', hash: 'e1:1' }]);
-    const uses = compileSource(GROOVE, undefined, { resolve: () => null }).uses!;
+    const uses = compileSource(GROOVE, undefined, { resolve: () => null }).takes!;
     expect(lockfileOf(withLockfile(had, uses))).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
   });
 
@@ -394,7 +401,8 @@ describe('the fit (decision 047) with from', () => {
   });
 
   it('a hole read only as a sound doesn’t block the fit: it is the instrument to ask for next', () => {
-    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
+    // (Funk's lines read as a text with no signature: their drums sound holes, as a groove's were before #637)
+    const funk = linesAlone(RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text);
     const bare = funk
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))
@@ -416,8 +424,8 @@ describe('the fit (decision 047) with from', () => {
     expect([used.fits, used.unmet.map((n) => n.cell)]).toEqual([false, ['&clave']]);
     expect(fitOf('* from son_clave_3_2', bench('4/4'), undefined, resolveSeed).fits).toBe(true);
     expect(holesOf('* from son_clave_3_2', (t) => compileSource(t, undefined, seed), resolveSeed).clock.map((n) => n.cell)).toEqual(['&clave']);
-    // (a used groove without its stand-ins: its voices are sounds, as written out)
-    const funk = RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text;
+    // (a used groove's lines without its stand-ins: its voices are sounds, as written out)
+    const funk = linesAlone(RHYTHM_FRAGMENTS.find((f) => f.id === 'funk_drums')!.text);
     const bare = funk
       .split('\n')
       .filter((l) => !/ s=white$/.test(l))

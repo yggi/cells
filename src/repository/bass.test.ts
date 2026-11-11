@@ -12,7 +12,7 @@ import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { compileSource } from '../engine/compile';
-import { heard } from './heard';
+import { bassCards } from './benches';
 import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { newPoint } from '../engine/migrate/axes';
@@ -25,7 +25,8 @@ const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 const takenOn = (text: string, bench: string, main?: string) => {
   const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
   const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
-  return { ...fit, union: { text: expand(fit.text, resolve) } };
+  // (the union, and the bass line's head as the copy names it: what a card sends)
+  return { ...fit, union: { text: expand(fit.text, resolve), head: fit.use?.heads[0]?.replace(/^&/, '') } };
 };
 
 const PATTERNS = ['root', 'pump', 'eight', 'funk', 'walk'] as const;
@@ -216,8 +217,8 @@ function toneOf(tone: Tone, chord: readonly number[], next: readonly number[]): 
 }
 
 /** What a text sends on channel 2 over `bars` bars of 4/4 at 120 bpm, each note's bar, its step in the bar and its pitch class, and what its compiler said. */
-function played(text: string, bars: number): { notes: [number, number, number][]; diagnostics: string[] } {
-  const plan = planOf(`${text}\n${heard(text)}`);
+function played({ text, head }: { readonly text: string; readonly head?: string | undefined }, bars: number): { notes: [number, number, number][]; diagnostics: string[] } {
+  const plan = planOf(`${text}\n${bassCards(text, head)}`);
   const sixteenth = 60 / 120 / 4;
   const route = router(plan.result, channelTable(plan.result));
   const notes = windowAt(plan, 0, bars * 16 * sixteenth - 1e-9).events.flatMap((e) =>
@@ -242,7 +243,21 @@ function expected(pattern: Pattern, chords: readonly (readonly number[])[]): [nu
 
 describe('the bass lines', () => {
   it('are bass.ts’s five patterns, each associated as the facet bass at its point, then at each preset where it is played most, and the Spooky basses written by hand', () => {
-    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([...PATTERNS.map((p) => ID[p]), 'creeping_bass', 'tiptoe_bass', 'acid_bass', 'octave_bass', 'drone_bass']);
+    expect(BASS_FRAGMENTS.map((f) => f.id)).toEqual([
+      ...PATTERNS.map((p) => ID[p]),
+      'creeping_bass',
+      'tiptoe_bass',
+      'acid_bass',
+      'octave_bass',
+      'drone_bass',
+      'continuo_bass',
+      'blues_walk',
+      'quarter_bass',
+      'tumbao_bass',
+      'waltz_bass',
+      'oom_pah_bass',
+      'dub_bass',
+    ]);
     for (const p of PATTERNS) {
       const presets = Object.keys(PRESETS).filter((name) => MOST[name] === p && PRESETS[name]!.point !== POINT[p]);
       expect(byId(ID[p]).association, p).toEqual(
@@ -253,8 +268,17 @@ describe('the bass lines', () => {
     expect(byId('tiptoe_bass').association).toEqual([{ point: held({ ...OLD.Spooky!, artic: 0.25, energy: 0.3 }), weight: 1, facet: 'bass' }]);
     // (and the three read from the examples, each at its style, #572)
     expect(byId('acid_bass').association).toEqual([{ point: stylePoint('acid'), weight: 1, facet: 'bass' }]);
-    expect(byId('octave_bass').association).toEqual([{ point: stylePoint('elektro'), weight: 1, facet: 'bass' }]);
+    expect(byId('octave_bass').association).toEqual(['elektro', 'chiptune'].map((id) => ({ point: stylePoint(id), weight: 1, facet: 'bass' })));
+    // (#542: each new style's own)
+    expect(byId('continuo_bass').association).toEqual([{ point: stylePoint('baroque'), weight: 1, facet: 'bass' }]);
+    expect(byId('blues_walk').association).toEqual([{ point: stylePoint('bluesShuffle'), weight: 1, facet: 'bass' }]);
+    expect(byId('quarter_bass').association).toEqual([{ point: stylePoint('seaShanty'), weight: 1, facet: 'bass' }]);
     expect(byId('drone_bass').association).toEqual([{ point: stylePoint('darkAmbient'), weight: 1, facet: 'bass' }]);
+    // (#542's second four: each style placed by hand gets its own)
+    expect(byId('tumbao_bass').association).toEqual([{ point: stylePoint('salsa'), weight: 1, facet: 'bass' }]);
+    expect(byId('waltz_bass').association).toEqual([{ point: stylePoint('waltz'), weight: 1, facet: 'bass' }]);
+    expect(byId('oom_pah_bass').association).toEqual([{ point: stylePoint('march'), weight: 1, facet: 'bass' }]);
+    expect(byId('dub_bass').association).toEqual([{ point: stylePoint('tripHop'), weight: 1, facet: 'bass' }]);
   });
 
   it('Jambot’s presets, on the axes bass.ts reads, are the library’s styles moved by decision 076’s rule', () => {
@@ -269,17 +293,19 @@ describe('the bass lines', () => {
       expect(holesOf(f.text, compileSource).sounds, f.id).toEqual([]);
       expect(takenOn(f.text, '').missing, f.id).toEqual(['&harm']);
       // (heard through a card, the voice it plays on is a sound the bass instrument fills)
-      expect(holesOf(`${f.text}\n${heard(f.text)}`, compileSource).sounds, f.id).toEqual(['&bassV']);
+      expect(holesOf(`${f.text}\n${bassCards(f.text)}`, compileSource).sounds, f.id).toEqual(['&bassV']);
     }
   });
 
   for (const name of Object.keys(PROGRESSIONS))
-    it(`each fits a host with &bar and &harm, ${name}, and compiles there with no diagnostic`, () => {
+    it(`each fits a host with &bar and &harm, ${name}, and compiles there with no diagnostic; the waltz bass, a line of 3/4, under 3/4`, () => {
       for (const f of BASS_FRAGMENTS) {
-        const fit = takenOn(f.text, workbench(name), '&harm');
+        // (#542: the waltz bass laps three beats, so it fits no 4/4, and fits the same host in 3/4)
+        if (f.id === 'waltz_bass') expect(takenOn(f.text, workbench(name), '&harm').fits).toBe(false);
+        const fit = takenOn(f.text, f.id === 'waltz_bass' ? workbench(name).replace('meter("4/4")', 'meter("3/4")') : workbench(name), '&harm');
         expect(fit.fits, f.id).toBe(true);
         expect(fit.diagnostics, f.id).toEqual([]);
-        expect(played(fit.union.text, 1).diagnostics, f.id).toEqual([]);
+        expect(played(fit.union, 1).diagnostics, f.id).toEqual([]);
       }
     });
 });
@@ -305,14 +331,14 @@ describe('what each plays is what bass.ts plays for its pattern alone at its poi
   for (const [name, { chords }] of Object.entries(PROGRESSIONS))
     for (const p of PATTERNS)
       it(`${ID[p]}, over ${name} twice: each onset per bar at its pitch class`, () => {
-        const { notes, diagnostics } = played(takenOn(byId(ID[p]).text, workbench(name), '&harm').union.text, 2 * chords.length);
+        const { notes, diagnostics } = played(takenOn(byId(ID[p]).text, workbench(name), '&harm').union, 2 * chords.length);
         expect(diagnostics).toEqual([]);
         expect(notes).toEqual(expected(p, chords));
       });
 
   it('the walk’s last beat is a semitone below the next chord’s root, over a chord whose key degree below it is a whole tone too', () => {
     // (I–vi: into A from G♯, where the key's degree below A is G, a whole tone: `0b` over the next chord would play G)
-    const { notes } = played(takenOn(byId('walking_bass').text, workbench('I–vi–IV–V'), '&harm').union.text, 1);
+    const { notes } = played(takenOn(byId('walking_bass').text, workbench('I–vi–IV–V'), '&harm').union, 1);
     expect(notes.at(-1)).toEqual([0, 12, 8]);
   });
 });
@@ -336,7 +362,14 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
       43, 55, 43, 43, 50, 43, 53, 43, 55, 43, 46, 48, 50,
     ],
     drone_bass: [36, 45, 41, 43],
+    continuo_bass: [36, 40, 43, 40, 36, 40, 43, 40, 45, 48, 52, 48, 45, 48, 52, 48, 41, 45, 48, 45, 41, 45, 48, 45, 43, 47, 50, 47, 43, 47, 50, 47],
+    blues_walk: [36, 40, 43, 48, 45, 48, 52, 57, 41, 45, 48, 53, 43, 47, 50, 55],
+    quarter_bass: [36, 36, 36, 36, 45, 45, 45, 45, 41, 41, 41, 41, 43, 43, 43, 43],
     octave_bass: [36, 48, 36, 48, 36, 48, 36, 48, 45, 57, 45, 57, 45, 57, 45, 57, 41, 53, 41, 53, 41, 53, 41, 53, 43, 55, 43, 55, 43, 55, 43, 55],
+    tumbao_bass: [43, 36, 52, 45, 48, 41, 50, 43],
+    waltz_bass: [36, 36, 45, 41, 43, 43],
+    oom_pah_bass: [36, 43, 36, 43, 45, 52, 45, 52, 41, 48, 41, 48, 43, 50, 43, 50],
+    dub_bass: [36, 36, 43, 45, 45, 52, 41, 41, 48, 43, 43, 50],
   },
   D: {
     root_bass: [38, 38, 47, 47, 43, 43, 45, 45],
@@ -351,13 +384,20 @@ const SENT: Record<string, Record<string, readonly number[]>> = {
       45, 57, 45, 45, 52, 45, 55, 45, 57, 45, 48, 50, 52,
     ],
     drone_bass: [38, 47, 43, 45],
+    continuo_bass: [38, 42, 45, 42, 38, 42, 45, 42, 47, 50, 54, 50, 47, 50, 54, 50, 43, 47, 50, 47, 43, 47, 50, 47, 45, 49, 52, 49, 45, 49, 52, 49],
+    blues_walk: [38, 42, 45, 50, 47, 50, 54, 59, 43, 47, 50, 55, 45, 49, 52, 57],
+    quarter_bass: [38, 38, 38, 38, 47, 47, 47, 47, 43, 43, 43, 43, 45, 45, 45, 45],
     octave_bass: [38, 50, 38, 50, 38, 50, 38, 50, 47, 59, 47, 59, 47, 59, 47, 59, 43, 55, 43, 55, 43, 55, 43, 55, 45, 57, 45, 57, 45, 57, 45, 57],
+    tumbao_bass: [45, 38, 54, 47, 50, 43, 52, 45],
+    waltz_bass: [38, 38, 47, 43, 45, 45],
+    oom_pah_bass: [38, 45, 38, 45, 47, 54, 47, 54, 43, 50, 43, 50, 45, 52, 45, 52],
+    dub_bass: [38, 38, 45, 47, 47, 54, 43, 43, 50, 45, 45, 52],
   },
 };
 
 describe('the bass lines send the notes they always sent, through the bass instrument', () => {
   const notesOf = (text: string) => {
-    const plan = planOf(`${text}\n${heard(text)}`);
+    const plan = planOf(`${text}\n${bassCards(text)}`);
     const route = router(plan.result, channelTable(plan.result));
     return windowAt(plan, 0, 8 - 1e-9).events.flatMap((e) =>
       routesOf(route(e)).flatMap((r) => {

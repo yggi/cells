@@ -148,7 +148,13 @@ describe('the presets find their meters', () => {
   // house's and Funk's swung one: named on #572, #540, #542)
   const between: Readonly<Record<string, string>> = {
     'Synth-pop|Funk': 'meter',
+    // (and since #542's second batch, the plain 4/4 placed at Salsa's point (sync .9 harm .5 bite .7) between Funk and three
+    // presets: nearer than Blues shuffle's swung 4/4 between Deep house and Funk, which it found after the first batch, and
+    // than Funk's or the other preset's own meter between Lo-fi hip hop and Funk, and between Funk and Bossa nova, whose
+    // halfway point (.875, .485, .65) is 0.058 from Salsa's)
     'Deep house|Funk': 'meter',
+    'Lo-fi hip hop|Funk': 'meter',
+    'Funk|Bossa nova': 'meter',
     'Synth-pop|Ambient': 'meter(grouping=meter("6/8"))',
     'Deep house|Swing jazz': 'meter(grouping=meter("5/4"))',
   };

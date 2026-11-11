@@ -565,8 +565,8 @@ export interface ParseResult {
     readonly broken?: readonly string[];
     /** The `show=` plugins the text carries (plugins.ts). */
     readonly plugins?: readonly ShowPlugin[];
-    /** Its `use` lines, in the order written (decision 054); absent for none. */
-    readonly uses?: readonly UseLine[];
+    /** Its `from` lines that take from a fragment, in the order written (decision 065); absent for none. */
+    readonly takes?: readonly TakeLine[];
     /**
      * What the text offers its readers (decision 075): the heads of its own signature, bare (`&harm, &key from`: a score
      * offering its band the harmony and the key). A reader may leave one unread, and it is not said to be silent. Absent for none.
@@ -575,8 +575,8 @@ export interface ParseResult {
     /** Read the old way (`CompileOptions.old`): a retired form the compiler meets warns, where it is otherwise an error. */
     readonly old?: boolean;
 }
-/** A `use` line (decisions 054, 059): the fragment's id, the names it asks for, and where the line is. */
-export interface UseLine {
+/** A `from` line (decisions 054, 059): the fragment's id, the names it asks for, and where the line is. */
+export interface TakeLine {
     readonly id: string;
     /** The names it asks for (`&bd`), or null for every name the fragment defines (`use * from …`). */
     readonly names: readonly string[] | null;

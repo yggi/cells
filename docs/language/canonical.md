@@ -62,13 +62,19 @@ None is written where the name is taken, where the line runs on to the next, or 
 | `&time scan(1 1 1 1) step=96bpm` (the one meter, at 96 bpm) | `&bar meter("4/4") step=&tempo` and `&tempo step=96bpm` |
 | `&scale scale(dorian, D)` (the one key) | `&key scale(dorian, &tonic)` and `&tonic D` |
 
-## The bar of four beats: `meter("4/4")`
+## A meter built by hand: the meter it is
 
-`scan(1 1 1 1)`, the main meter as four even beats, is written `meter("4/4")` (#196), where the two sound identical. Where a piece reads `&bar` as more than a meter (its values: baustelle, effects, moving, waveforms), they don't, and the scan stays.
+A meter a text builds out of something else is written as the meter's own form (`normalise/meter.ts`, #645, part of #15), each only where the two sound identical:
+
+- **Even beats as a signature.** The main meter as a scan of equal entries, `scan(1 1 1)` or `scan(4 4 4 4)`, is `meter("3/4")`, `meter("4/4")`: the beats it counts, two to twelve each entry a beat (1) or four sixteenths (4); #196 wrote `scan(1 1 1 1)` so, and this is every count. A scan of 3s may be 6/8 or 3/16, and stays. Where a piece reads `&bar` as more than a meter (its values: baustelle, effects, moving, waveforms), they don't sound the same, and the scan stays.
+- **A swing clock as a swing.** A clock of two that lines tap by its pulse to play long and short, `&swing scan(2 1) step=8n` read by `step=&swing:pulse`, is the main meter's swing: `&bar … swing=&swing`, the clock a swing alone, `&swing swing=8n:2/3` ([time.md](time.md), #308), its lines on the note value, `step=8n`. The share is the clock's first entry over the two, x / (x + b). A ratio left free is a share left free, `free(2, 1..3)` → `free(2/3, 1/2..3/4)`: the same notes where it starts, its slider now the share. The clock keeps its name, so a note about it still points at it. A clock on a level whose pairs the meter doesn't lean (eighths in 6/8, which are threes: decision 071), or one a line reads as more than a pulse, stays as it is.
 
 | written | Normalise writes |
 |---|---|
 | `&bar scan(1 1 1 1) step=&tempo` | `&bar meter("4/4") step=&tempo` |
+| `&bar scan(1 1 1 1 1) step=&tempo` | `&bar meter("5/4") step=&tempo` |
+| `&swing scan(2 1) step=8n`, `&ride step=&swing:pulse …` | `&bar … swing=&swing`, `&swing swing=8n:2/3`, `&ride step=8n …` |
+| `&swing scan(free(2, 1..3) 1) step=8n` | `&swing swing=8n:free(2/3, 1/2..3/4)` |
 
 ## The library's lines: a `from` line
 
@@ -85,6 +91,26 @@ A line of the piece that is a library fragment's line word for word, its comment
 | `pitch=&(map=lin loop=5 0 .1 0 -.1 0)`, the `vibrato` fragment's cell written inline | `pitch=&vibrato` and `&vibrato from vibrato` |
 
 A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `from` line of it joins the piece's (after its own `from` lines, or first). Not where the piece defines the name itself. A fragment's own file is normalised against the rest of the library, never as a `from` line of itself.
+
+
+## A template's line: a `from` line with its arguments
+
+A line that is a template's head line with its parameters filled in is written as a `from` line of the template with those arguments (`libraryTemplates`, #524): the piece says it takes the library's meter or key, and with what.
+
+- The line's attributes are the template's, by key, each filling the parameter the template writes there; a template's `base=&p` is filled by the line's own braid (a copy of `&p` is `&p`'s braid); its braid matches the template's, a parameter where the template has one.
+- A parameter the line doesn't write is its default, and an argument equal to its default is left out.
+- A parameter takes a value of its default's kind (a generator by its name, a word), or a cell: a grouping is a `meter(…)`, so a bent bar, `scan(27 23 26 24)`, a bend since decision 080, stays as written; so does a line with anything the template doesn't write (`motor=`, `label=`, `over=`).
+- The library lists a template's points (`diatonic(mode=dorian)`); the template itself is read through the resolver.
+- Each only where it sounds identical.
+
+| written | Normalise writes |
+|---|---|
+| `&bar meter("4/4") step=&tempo` | `&bar from meter &tempo` |
+| `&bar meter("7/8") step=&tempo swing=8n:2/3` | `&bar from meter(grouping=meter("7/8"), swing=8n:2/3) &tempo` |
+| `&bar meter("4/4") step=&tempo swing=&swing` | `&bar from meter(swing=&swing) &tempo` |
+| `&key scale(minor, &tonic)` | `&key from diatonic(mode=minor) &tonic` |
+
+An example whose point is the form itself keeps it (`breve`, a tutorial of alla breve's `meter("2/2", 2)`; `normalise/kept.ts` names each, and why).
 
 ## `from`: kept, never expanded
 

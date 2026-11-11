@@ -15,11 +15,11 @@ Syncopation and harmony are left to sliders (`free(…)`), for a hand to set, an
 
 ```cells
 &slidersNote label="The style: syncopation and harmony on sliders, bite drifting a section at a time." about=&style
-&bar meter("4/4") step=&tempo
+&bar from meter &tempo
 &tempo step=104bpm
 &key from "diatonic(mode=dorian)" D
 &harm over=&key step=1m [0,2,4] [3,5,7]
-&kick step=4n &bd &bd &bd &bd
+&kick role=kick step=4n &bd &bd &bd &bd
 &drumlines [&kick]
 &bassline over=&harm step=8n 0 ~ 0 2 ~ 0 4 ~
 &padline over=&harm step=1m [0,1,2]

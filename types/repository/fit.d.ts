@@ -21,7 +21,7 @@
  * **A repository's query** asks `cachedFit` (#587): `fitsAs` over the repository's own fragments, cached by text.
  */
 import type { Diagnostic } from '../engine/ast';
-import type { CompileResult, Resolve, Used } from '../engine/program';
+import type { CompileResult, Resolve, Take } from '../engine/program';
 import { type ClockNeed } from './holes';
 /** A collection's lines added to a workbench: the text, and what became of the fragment's names there. */
 export interface Union {
@@ -70,7 +70,7 @@ export interface UseOn {
     /** The main argument as written (`&harm`, `D`), or null: the template has no main parameter, or the workbench no cell for it. */
     readonly main: string | null;
     /** What the copy gives, as the compile reads it (`CompileResult.uses`); null where the template didn't resolve. */
-    readonly used: Used | null;
+    readonly used: Take | null;
 }
 /** What `useOn` is told: the head's name, the main argument, the named arguments, and how to read the library. */
 export interface UseOnOptions {

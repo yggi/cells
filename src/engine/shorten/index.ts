@@ -49,7 +49,7 @@ export interface ShortenOptions extends CompileOptions {
 }
 
 /**
- * Everything that could be written shorter, the largest saving first. A piece's `use` lines read through `options`
+ * Everything that could be written shorter, the largest saving first. A piece's `from` lines read through `options`
  * (decision 054, #241): what is offered is what the piece written out would be offered, less any rewrite of a used line
  * (one the piece would then define over its fragment's).
  */
@@ -70,7 +70,7 @@ export function shorten(source: string, options: ShortenOptions = {}): Suggestio
     ...aliases(source, result),
     ...card(source, options),
   ];
-  const kept = result.uses?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
+  const kept = result.takes?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
   // (the structure saved first; a respelling, which saves none, by the characters it saves)
   const chars = new Map(kept.map((r) => [r.id, savesChars(source, r) ?? 0]));
   return kept
@@ -87,12 +87,12 @@ export function shorten(source: string, options: ShortenOptions = {}): Suggestio
 const RESPELLINGS: ReadonlySet<Suggestion['kind']> = new Set(['card', 'alias', 'fraction', 'progression']);
 
 const overridden = (r: ReturnType<typeof compileSource>) =>
-  (r.uses ?? [])
+  (r.takes ?? [])
     .flatMap((u) => u.overrode)
     .sort()
     .join(' ');
 
-/** Does a rewrite of a piece with `use` lines leave them as they were: it compiles, and overrides no more of their lines? */
+/** Does a rewrite of a piece with `from` lines leave them as they were: it compiles, and overrides no more of their lines? */
 function keepsUsed(r: ShortenRewrite, source: string, options: CompileOptions, before: string): boolean {
   try {
     const next = compileSource(r.apply(source), undefined, options);

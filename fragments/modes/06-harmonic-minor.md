@@ -15,6 +15,13 @@ association:
       mood: 0.3
     weight: 1
     facet: mode
+  - point:
+      sync: 0.3
+      harm: 0.7
+      bite: 1
+      mood: 0.55
+    weight: 1
+    facet: mode
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 2c120d4
 ---

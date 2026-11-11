@@ -15,7 +15,7 @@ description: "What shapes a voice after its source: filters, a reverb and an ech
 
 &tune step=8n 0 4 7 12 7 4 0 ~ 2 5 9 14 9 5 2 ~
 &line step=2n 7 9 5 7
-&bass step=4n 0 0 7 0 2 2 9 2
+&bass part=bass step=4n 0 0 7 0 2 2 9 2
 &sparkle step=1m 12 14
 
 &warm s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .08 .2 .7 .4) pitch=&(loop=&bar*3 0 .15 0 -.15)

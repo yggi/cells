@@ -19,7 +19,7 @@
  *   piece's `&kick`, every line it takes reading it so; `&bass2=bass, &bassOut2=bassOut from bass_performer &l` a
  *   template's heads. The fragment's name is a word of the line, as a keyword is.
  * - A line taken twice from one id is taken once, at its first line; a line that then takes nothing says so.
- * - A cycle is an error naming it, and so is a depth past `USE_DEPTH`; an unresolved id is an error naming it, and the
+ * - A cycle is an error naming it, and so is a depth past `FROM_DEPTH`; an unresolved id is an error naming it, and the
  *   piece's other lines compile as they would without it. Each is said on the piece's line it came through.
  * - Cells resolves nothing itself: the host hands each compile a resolver (`Resolve`), and the hashes its lockfile
  *   recorded (`Locked`); a recorded hash the library no longer gives plays the current version, with a warning.
@@ -35,10 +35,10 @@ import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
 import { RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
-import type { CompileOptions, Resolve, Used } from './program';
+import type { CompileOptions, Origin, Resolve, Take } from './program';
 
-/** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
-export const USE_DEPTH = 8;
+/** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
+export const FROM_DEPTH = 8;
 
 /** A line of a text, as the parser groups them (a line and those it continues onto). */
 interface Line {
@@ -56,7 +56,12 @@ interface Line {
   readonly code: string;
   /** Its first line, 1-based. */
   readonly line: number;
+  /** Where it came from, outermost first (#639): a fragment's line, each line that took it on before it; none for a level's own. */
+  readonly origin?: readonly Origin[];
 }
+
+/** The lines, each with a step before its origin: the `from` line they came through. */
+const via = (lines: readonly Line[], step: Origin): Line[] => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
 
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const READS = /&([A-Za-z_][A-Za-z0-9_]*)/g;
@@ -89,7 +94,7 @@ function lineOf(code: string, written = code, line = 0): Line {
 }
 
 /** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
-export const hasUse = (text: string): boolean => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
+export const hasFrom = (text: string): boolean => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
 
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
 export function signatureOf(text: string): Extract<FromForm, { kind: 'signature' }> | null {
@@ -136,7 +141,7 @@ interface Taken {
   readonly resolved: boolean;
 }
 
-/** What a level of the expansion gave: its lines, and, for each of its `use` lines, what that gave and what was overridden. */
+/** What a level of the expansion gave: its lines, and, for each of its `from` lines, what that gave and what was overridden. */
 interface Merged {
   readonly lines: readonly Line[];
   readonly per: readonly { readonly gave: readonly string[]; readonly overrode: readonly string[]; readonly read: readonly string[] }[];
@@ -309,7 +314,7 @@ function asCell(body: string, parameter: string, lines: readonly Line[]): string
  * an operation's arguments (`scale(dorian, &tonic)`), or through an operator (`&call^-2`, `&g[0:3]`)? A step of a braid
  * or a term of a mix (`&bd`, `&cp:0:.6`, `[&kick * &level]`) is a sound: the kit's vocabulary, read by name (decision 065 §3).
  */
-function readsAsValue(code: string, name: string): boolean {
+export function readsAsValue(code: string, name: string): boolean {
   const stack: ('call' | 'lambda' | 'group')[] = [];
   const attribute: boolean[] = [false];
   let quoted = false;
@@ -390,6 +395,10 @@ interface OldBinding {
 interface Level {
   readonly defines: ReadonlySet<string>;
   readonly reads: ReadonlyMap<string, readonly string[]>;
+  /** Each of its lines' code, by the cell it declares. */
+  readonly codes: ReadonlyMap<string, string>;
+  /** Says a warning on the line the copy came through. */
+  readonly warn?: (message: string) => void;
 }
 
 /** Lines that came through a collection: their names are shared, never a copy's own. */
@@ -423,7 +432,9 @@ function give(
     // (a line that renames, `&kick=bd`: the fragment's lines with each name it takes renamed, wherever they write it)
     const asked = new Set(from.names!.map((n) => n.slice(1)).filter((n) => !renames.lacking.has(n)));
     const touches = (l: Line) => (l.name !== null && renames.names.has(l.name)) || l.reads.some((r) => renames.names.has(r));
-    const theirs = lines.map((l) => (touches(l) ? lineOf(renamed(l.code, renames.names), renamed(l.written, renames.names), l.line) : l));
+    const theirs = lines.map((l) =>
+      touches(l) ? { ...lineOf(renamed(l.code, renames.names), renamed(l.written, renames.names), l.line), ...(l.origin ? { origin: l.origin } : {}) } : l,
+    );
     return { taken: { id, names: asked, lines: sharedLines(theirs), resolved: true }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
@@ -458,7 +469,9 @@ function instantiate(
   const optional = signature.optional.map(bare);
   const main = signature.main ? bare(signature.main) : null;
   for (const h of heads) if (!definesOwn.has(h)) say(`${quoted(id)}'s signature names &${h} its head, and it doesn't define it`);
-  for (const o of optional) if (!definesOwn.has(o)) say(`${quoted(id)}'s &${o} is an optional parameter: its line in the fragment is its default, and it has none`);
+  // (an optional parameter's default is a line of the template's own, or one it takes from a collection: a groove's
+  // drums from the kit, `&bd, &sd from gm_kit`, decision 075, #560)
+  for (const o of optional) if (!defines.has(o)) say(`${quoted(id)}'s &${o} is an optional parameter: its line in the fragment is its default, and it has none`);
   if (main && defines.has(main)) say(`${quoted(id)}'s &${main} is its main parameter: it has no line, the argument is it`);
   // (the heads the line takes: one renamed as the line names it, several by their names or as it renames them,
   // `&bass2=bass, &bassOut2=bassOut`, decision 075 §3b)
@@ -513,7 +526,9 @@ function instantiate(
   // (every other name the copy defines is its own, clear of the level's and of the template's shared ones)
   const prefix = names.get(heads[0]!) ?? [...names.values()][0] ?? heads[0]!;
   for (const n of [...names.values()]) taken.add(n);
-  for (const n of [...definesOwn, ...(main ? [main] : [])]) {
+  // (a parameter whose default a collection gives, given a value, is a cell of the copy's own too)
+  const sharedValued = optional.filter((o) => !definesOwn.has(o) && values.has(o) && !byReference.has(o));
+  for (const n of [...definesOwn, ...(main ? [main] : []), ...sharedValued]) {
     if (names.has(n)) continue;
     let mine = `${prefix}_${n}`;
     for (let k = 2; taken.has(mine) || defines.has(mine); k++) mine = `${prefix}${k}_${n}`;
@@ -553,17 +568,26 @@ function instantiate(
     let code = renamed(l.code, names);
     if (values.has(p)) code = inherited(names.get(p)!, code, asCell(values.get(p)!, p, own));
     if (heads.includes(p) && from.head.length && one) code = withAttributes(code, from.head);
-    copy.push(lineOf(code));
+    copy.push({ ...lineOf(code), ...(l.origin ? { origin: l.origin } : {}) });
   }
   if (main && from.main !== null && !byReference.has(main)) copy.push(lineOf(`&${names.get(main)!} ${asCell(values.get(main)!, main, own)}`));
-  const sharing = shared.filter((l) => reached.has(l.name!));
+  for (const p of sharedValued) copy.push({ ...lineOf(inherited(names.get(p)!, byName.get(p)!.code, asCell(values.get(p)!, p, own))), origin: byName.get(p)!.origin ?? [] });
+  // (a parameter's default a collection gives is shared by its name: a cell of the piece's of that name stands in for it,
+  // which the line doesn't say, so it is said here, but where the piece's line is the default's word for word, #637)
+  if (level?.warn && !old)
+    for (const o of optional)
+      if (!definesOwn.has(o) && !values.has(o) && level.defines.has(o) && reached.has(o) && level.codes.get(o) !== byName.get(o)?.code)
+        level.warn(`The piece defines &${o}, and ${quoted(id)} takes its &${o} from a collection by default: pass yours, ${from.id}(${o}=&${o}), or rename it`);
+  // (what it took from a collection, shared by name, but a parameter's default an argument replaced)
+  const sharing = shared.filter((l) => reached.has(l.name!) && !byReference.has(l.name!) && !sharedValued.includes(l.name!));
   const given = { id, names: new Set(sharing.map((l) => l.name!)), lines: sharing, resolved: true };
   return { taken: given, copy, args: Object.fromEntries(values) };
 }
 
 /** A used fragment's lines, its own uses expanded (`path`: the ids that led here, this one last), or none where it can't be. */
 function fragmentLines(path: readonly string[], text: string, resolve: Resolve, say: (message: string) => void): readonly Line[] {
-  const own = linesOf(text);
+  const here = path.at(-1)!;
+  const own = linesOf(text).map((l) => ({ ...l, origin: [{ id: here, line: l.line }] }));
   const where = ` (in ${pathOf(path)})`;
   const sayHere = (message: string) => say(`${message}${where}`);
   const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
@@ -579,14 +603,15 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
     const names = namesOf(entry);
     const next = [...path, id];
     if (path.includes(id)) say(`use ${quoted(id)} is a cycle: ${pathOf(next)}`);
-    else if (next.length > USE_DEPTH) say(`use ${quoted(id)} nests past ${USE_DEPTH} deep: ${pathOf(next)}`);
+    else if (next.length > FROM_DEPTH) say(`use ${quoted(id)} nests past ${FROM_DEPTH} deep: ${pathOf(next)}`);
     else {
       const theirs = resolve(id);
       if (theirs === null) sayHere(`No fragment ${quoted(id)} to use`);
       else {
         const g = give(entry, next, theirs, resolve, say, taken);
-        copies.push(...g.copy);
-        return [g.taken];
+        const step = { id: here, line: l.line };
+        copies.push(...via(g.copy, step));
+        return [{ ...g.taken, lines: via(g.taken.lines, step) }];
       }
     }
     return [{ id, names, lines: [], resolved: false }];
@@ -611,14 +636,16 @@ function forwardsTo(text: string): string | null {
 export interface Expansion {
   /** The piece's own text as written, then the used lines (so the piece's lines keep their numbers). */
   readonly text: string;
-  /** Its `use` lines, compiled: what each resolved to, gave and was overridden in. */
-  readonly uses: readonly Used[];
-  /** Every name a `use` gave (bare). */
+  /** Its `from` lines, compiled: what each resolved to, gave and was overridden in. */
+  readonly takes: readonly Take[];
+  /** Every name a `from` line gave (bare). */
   readonly given: ReadonlySet<string>;
-  /** What the expansion says: an unresolved id, a cycle, a depth past `USE_DEPTH`, a collision, a changed version. */
+  /** What the expansion says: an unresolved id, a cycle, a depth past `FROM_DEPTH`, a collision, a changed version. */
   readonly diagnostics: readonly Diagnostic[];
-  /** For each line of `text` past the piece's own, the `use` line it came through. */
+  /** For each line of `text` past the piece's own, the `from` line it came through. */
   readonly through: (line: number) => Span | null;
+  /** Where each line it added came from, by the name it declares (`Origin`, #639). */
+  readonly origins: ReadonlyMap<string, readonly Origin[]>;
 }
 
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
@@ -638,7 +665,11 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
   const copies: (readonly Line[])[] = [];
   const args: (Readonly<Record<string, string>> | undefined)[] = [];
   const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
-  const level: Level = { defines: new Set(taken), reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads] as const] : []))) };
+  const level: Level = {
+    defines: new Set(taken),
+    reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads] as const] : []))),
+    codes: new Map(own.flatMap((l) => (l.name ? [[l.name, l.code] as const] : []))),
+  };
   const used = uses.map((u): Taken => {
     const { id } = u;
     const names = namesOf(u);
@@ -665,10 +696,11 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
     const binding = old
       ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }
       : undefined;
-    const g = give(u, [id], theirs, resolve!, say, taken, binding, level);
-    copies.push(g.copy);
+    const g = give(u, [id], theirs, resolve!, say, taken, binding, { ...level, warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) });
+    const step = { id: null, line: u.line.line };
+    copies.push(via(g.copy, step));
     args.push(g.args);
-    return g.taken;
+    return { ...g.taken, lines: via(g.taken.lines, step) };
   });
   const merged = merge([...own, ...copies.flat()], used, (i, message) => diagnostics.push({ severity: 'error', message, span: spanOf(uses[i]!.line) }), 'the piece');
   // (a use that adds nothing says so: what it names the piece defines, or an earlier use of its id took it all; a copy
@@ -691,7 +723,7 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
   for (const l of added) for (let k = l.written.split('\n').length; k > 0; k--) through.push(spanOf(uses[from.get(l)!]!.line));
   return {
     text: added.length ? [text, ...added.map((l) => l.written)].join('\n') : text,
-    uses: uses.map((u, i) => {
+    takes: uses.map((u, i) => {
       const copied = copies[i]!.filter((l) => from.get(l) === i && l.name).map((l) => `&${l.name}`);
       const visible = args[i] ? (u.names ?? []).filter((n) => copied.includes(n)) : [];
       return {
@@ -708,6 +740,7 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
     given: new Set(added.flatMap((l) => (l.name && l.shared ? [l.name] : []))),
     diagnostics,
     through: (line) => (line > head ? (through[line - head - 1] ?? null) : null),
+    origins: new Map(added.flatMap((l) => (l.name && l.origin ? [[l.name, l.origin] as const] : []))),
   };
 }
 
@@ -716,9 +749,9 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
  * lines gone, then the used lines it doesn't define. A `use` that doesn't resolve stays, so nothing is lost.
  */
 export function expand(text: string, resolve: Resolve, locked?: CompileOptions['locked']): string {
-  if (!hasUse(text)) return text;
+  if (!hasFrom(text)) return text;
   const x = expansion(text, { resolve, ...(locked ? { locked } : {}) });
-  const kept = new Set(x.uses.filter((u) => u.hash === null).map((u) => u.span.line));
+  const kept = new Set(x.takes.filter((u) => u.hash === null).map((u) => u.span.line));
   const own = text
     .split('\n')
     .filter((raw, i) => readFrom(splitComment(raw)[0])?.kind !== 'use' || kept.has(i + 1))

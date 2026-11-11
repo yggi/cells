@@ -84,7 +84,7 @@ Each one's level is a two-bar step, `[.5 0]` for the clarinet and `[0 .45]` for 
 
 ```cells
 &lead2 play=&leadline level=&lead2Level &trumpetV
-&lead map=role &leadOut &lead2
+&lead part=lead map=role &leadOut &lead2
 &dialogueNote label="The clarinet plays the odd bars, the trumpet the even ones: the call and its answer, traded between two players." about=(&leadOut &lead2)
 ```
 

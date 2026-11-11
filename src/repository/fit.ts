@@ -23,7 +23,7 @@
 import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
-import type { CompileResult, Resolve, Used } from '../engine/program';
+import type { CompileResult, Resolve, Take } from '../engine/program';
 import { expansion, fragmentHash, signatureOf } from '../engine/use';
 import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
@@ -167,7 +167,7 @@ function fitByName(fragment: string, workbench: string, compiledBy?: (text: stri
   const compiled = compiledBy ?? ((text: string) => compileSource(text, undefined, resolve ? { resolve } : {}));
   const holes = holesOf(fragment, compiled, resolve);
   const bench = compiled(workbench);
-  const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
+  const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.takes ?? []).flatMap((u) => u.gave)]);
   const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
   const sounds = unfilled.filter((name) => holes.sounds.includes(name));
   const missing = unfilled.filter((name) => !sounds.includes(name));
@@ -276,7 +276,7 @@ export interface UseOn {
   /** The main argument as written (`&harm`, `D`), or null: the template has no main parameter, or the workbench no cell for it. */
   readonly main: string | null;
   /** What the copy gives, as the compile reads it (`CompileResult.uses`); null where the template didn't resolve. */
-  readonly used: Used | null;
+  readonly used: Take | null;
 }
 
 /** What `useOn` is told: the head's name, the main argument, the named arguments, and how to read the library. */
@@ -366,18 +366,21 @@ export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
   const text = options.resolve(id);
   const head = bench.replace(/\s+$/, '');
   const written = (line: string) => [...(head ? [head] : []), line].join('\n');
-  const usedBy = (whole: string): Used | null => compiled(whole).uses?.at(-1) ?? null;
+  const usedBy = (whole: string): Take | null => compiled(whole).takes?.at(-1) ?? null;
   const signature = text === null ? null : signatureOf(text);
   if (text === null || !signature) {
     const line = `* from ${id}`;
     return { text: written(line), line, heads: [], main: null, used: text === null ? null : usedBy(written(line)) };
   }
-  const heads = signature.names.length === 1 ? [options.head ?? clearOf(bench, signature.names[0]!)] : signature.names;
+  // (one head named as the workbench is clear of it; several each by its own name, or renamed clear of the workbench's,
+  // `&kick2=kick`, decision 075 §3a–b: a second groove beside a first)
+  const heads = signature.names.length === 1 ? [options.head ?? clearOf(bench, signature.names[0]!)] : signature.names.map((h) => clearOf(bench, h));
   const stand = holesOf(text, compiled, options.resolve)
     .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
     .map(standIn);
   const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
-  const line = fromLine(heads, id, options.args, main);
+  const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i]!.slice(1)}`));
+  const line = fromLine(left, id, options.args, main);
   return { text: written(line), line, heads, main, used: usedBy(written(line)) };
 }
 

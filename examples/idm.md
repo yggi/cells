@@ -20,7 +20,7 @@ description: A breakbeat backwards every other bar, with ratchets and hats.
 &pat &bd ~ &hh &hh*2 &sd ~ &bd &hh ~ &bd &sd &hh*3 ~ &bd &sd*4!2   # a bar of sixteenths
 &break step=16n &pat &pat[::-1]                            # … then the same bar backwards
 &hats step=pulse*7/4 &tick:0:.6 &tick:0:.3 &tick:0:.4 &tick:0:.3 &tick:0:.5 &tick:0:.3 &tick:0:.4  # seven to the bar
-&pad over=&lydian step=1m/2 [0,2,4,6] [1,3,5,7]            # the chord, I then II
+&pad part=pad over=&lydian step=1m/2 [0,2,4,6] [1,3,5,7]   # the chord, I then II
 &lead 7 ~ 9 11 ~ 13 ~ 11 ~ ~ 9 ~                            # the lead: the chord's own tones, in triplets
 &bleeps over=&lydian step=8t &lead!2 &lead^1!2
 &riff 0 0 7 0 ~ 0 14 ~ 0 3 0 ~ 7 0 ~ 10

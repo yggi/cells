@@ -36,7 +36,7 @@ const RENAMED = [...RENAMED_IDS].map(([old, word]): [string, string] => [old, CU
 const BY_ID = new Map([...CURRENT, ...RENAMED, ...RETIRED]);
 
 /**
- * The seed library as a `use` line's resolver (decision 054): a fragment's text by its id, a retired id's forwarding
+ * The seed library as a `from` line's resolver (decision 054): a fragment's text by its id, a retired id's forwarding
  * text (`RETIRED`), or null for none. It holds each fragment's current version only: a lockfile's older hash plays the
  * current one (the compile warns).
  */

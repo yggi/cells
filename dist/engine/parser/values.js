@@ -11,7 +11,7 @@ export const STEP_SYNTAX = [
     syntax('rate', 'step=pulse · step=beat · step=pulse*k · step=beat*k', "A tap of the piece's main meter (decision 040): each pulse (the numerator: 7/8 has seven), each beat (what is counted: 6/8 has two, 7/8 three unequal), or each in k equal steps; it comes round at the bar.", ['&tune step=pulse 0 2 4', '&hats step=pulse*2 0!8', '&chords step=beat [0,2,4]'], 'time.md'),
     syntax('rate', 'step=16n · step=8t · step=4n. · step=1m', 'A tap by note value: 1n 2n 4n 8n 16n 32n, triplets (4t 8t 16t), dotted (2n. 4n. 8n.), the bar (1m); one longer than what is left of the bar is cut at the bar line. cycle=n runs it n bars before it comes round.', ['&drums step=16n 0 ~ 1 ~', '&tresillo step=4n. 0 0 0', '&roots step=1n cycle=4 0 5 7'], 'time.md'),
     syntax('rate', 'step=&m:16n', 'A tap of another meter than the main one: step=&m:pulse, &m:beat*3, &m:8n.', ['&comp step=&bar2:8n 0 2'], 'time.md'),
-    syntax('rate', 'step=free(r, lo..hi) · step=free(marking)', 'A rate left free: a slider, with units (free(90bpm, 60..240)), or a tempo marking (free(adagio)).', ['&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&bar scan(4 4 4 4) step=free(adagio)'], 'free.md'),
+    syntax('rate', 'step=free(r, lo..hi) · step=free(marking)', 'A rate left free: a slider, with units (free(90bpm, 60..240)), or a tempo marking (free(adagio)).', ['&bar meter("4/4") step=free(90bpm, 60..240)', '&bar meter("4/4") step=free(adagio)'], 'free.md'),
 ];
 export const atTap = (s) => /^(?:pulse|beat|1m|(?:1|2|4|8|16|32|64)(?:n\.?|t))(?![A-Za-z0-9_.])/.test(s.text.slice(s.i));
 function tapWord(s) {

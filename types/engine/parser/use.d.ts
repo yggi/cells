@@ -48,7 +48,7 @@ export declare function topTokens(text: string): {
 export declare const isAttribute: (token: string) => boolean;
 /**
  * A `from` line (decision 065), read: a use of a fragment or a signature; null where the line has a top-level `from`
- * after its names and isn't one; undefined where it isn't a `from` line at all (a cell, a `use` line).
+ * after its names and isn't one; undefined where it isn't a `from` line at all (a cell, a `from` line).
  */
 export declare function readFrom(code: string): FromForm | null | undefined;
 /** A `from` line's left side, written: `&kick=bd, &sd`, or `*` for every name. */

@@ -5,7 +5,7 @@ import { clocking } from "./clocking.js";
 import { mainLength, pieceTime } from "./duration.js";
 import { codeShifts, DEFAULT_ENV } from "./program.js";
 import { readStyles } from "./styles.js";
-import { expansion, hasUse } from "./use.js";
+import { expansion, hasFrom } from "./use.js";
 function compile(parsed, env = DEFAULT_ENV, used) {
     const slotted = readSlots(parsed);
     const held = readStyles(slotted, null);
@@ -29,10 +29,10 @@ function scopeOf(result) {
     return Math.abs(bars - Math.round(bars)) < 1e-6 && Math.round(bars) > 0 ? { bars: Math.round(bars) } : { seconds };
 }
 export function compileSource(source, env = DEFAULT_ENV, options = {}) {
-    if (!hasUse(source))
+    if (!hasFrom(source))
         return compile(parse(source, { old: options.old ?? false }), env);
     const x = expansion(source, options);
     const result = compile(parse(x.text, { old: options.old ?? false }), env, x.given);
     const diagnostics = [...x.diagnostics, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
-    return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, uses: x.uses };
+    return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
 }

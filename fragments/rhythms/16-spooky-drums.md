@@ -11,9 +11,11 @@ source: seed
 ---
 
 ```cells
-&kick step=16n &bd:0:.55 &bd:0:.3 ~ ~
-&hat step=4n &rd:0:.12
-&euclid step=1m [~ &rim]
+&kick, &hat, &euclid, &groove from (&bd, &rim, &rd)
+&bd, &rim, &rd from gm_kit
+&kick role=kick step=16n &bd:0:.55 &bd:0:.3 ~ ~
+&hat role=hat step=4n &rd:0:.12
+&euclid role=euclid step=1m [~ &rim]
 &groove [&kick, &hat, &euclid * .25]
 ```
 
@@ -23,3 +25,5 @@ Every line fits any meter and lands on its sixteenths: the kick and the ride cyc
 A Euclid spread over the bar (`step=1m &rim(3,8)`, v0.12.0's) put the knocks between the sixteenths of any bar but 4/4's and 12/8's, where a reader on the bar's sixteenths, as Jambot's drummer is, can't play them; a line on eighths (`step=8n`) lands on them but laps a bar of 4/4, which the fit refuses under the other meters.
 Its lines are named by Jambot's drum roles (`kick`, `hat`, `euclid`) and strike only voices its kit holds (`&bd` 36, `&rd` 51, `&rim` 37), so the drummer plays it as it is; they strike the kit's names, holes the General MIDI kit fills, and carry no card (#291): `&groove` is the mix.
 Written by hand for the point proposed for a Spooky preset (sync .2, harm .9, bite .3, mood .3; #349), weight 1: no preset of Jambot's sits there yet, and the axes are Jambot's (decision 041), so the point is this file's, Jambot's to adopt.
+
+**Its signature** (decision 075, #637): its lines are its heads, and the drums it strikes (`&bd`, `&rim`, `&rd`) are optional parameters, each the General MIDI kit's own line by default, taken inside it (`&bd, &rim, &rd from gm_kit`). A piece takes its lines by their names, or renamed (`&kick2=kick`), and passes its own drum where it has one: `spooky_drums(bd=&mine)`.

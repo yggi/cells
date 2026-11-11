@@ -18,6 +18,11 @@ export function checkCells(
   bands: ReadonlyMap<string, readonly string[]> = new Map(),
 ): void {
   const { error, warn, unknownCell } = ctx;
+  // a key's tonic read from a meter (#613): its first level read as a pitch class, C; said, and played as it was
+  for (const d of decls.values()) {
+    const t = d.tonic ? cells.get(d.tonic.name) : undefined;
+    if (t?.meter) warn(`&${t.name} is a meter: a key's tonic is a note (&tonic D); a meter's first level is read as its pitch class`, d.tonic!.span);
+  }
   // a kit's member named as a General MIDI drum that writes no note=: its name gives none (decision 075, #560 rung 1)
   const told = new Set<string>();
   for (const c of cells.values()) {
@@ -31,6 +36,18 @@ export function checkCells(
       warn(`&${name} is named as General MIDI's drum ${gm}, and a name gives no note: write &${name} note=${gm} (Migrate writes it, decision 075)`, d.span);
     }
   }
+  // read the old way: a role cell or a line named as one of the feel's parts, a line named as a drum role, that declares
+  // none: its name gave the default performer what it plays as, and gives nothing now (feel v3, decision 075, #560 rung 2)
+  if (ctx.parsed.old)
+    for (const d of decls.values()) {
+      const c = cells.get(d.name);
+      if (!c || c.voice) continue;
+      const part = ['bass', 'pad', 'stab', 'lead'].includes(d.name) && c.params.part === undefined;
+      const role = ['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill'].includes(d.name) && c.params.role === undefined && !c.map;
+      if (part) warn(`&${d.name} is named as the feel's part ${d.name}, and a name gives none now: write &${d.name} part=${d.name} (Migrate writes it, decision 075)`, d.span);
+      else if (role)
+        warn(`&${d.name} is named as the feel's drum role ${d.name}, and a name gives none now: write &${d.name} role=${d.name} (Migrate writes it, decision 075)`, d.span);
+    }
   // resonators: body= one of the known bodies; couple= another resonator; excite= a mix
   for (const c of cells.values()) {
     const span = (k: string) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name)!.span;

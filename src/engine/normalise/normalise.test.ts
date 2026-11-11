@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { PARAM_ALIASES } from '../attributes';
 import { normalise } from './index';
+import { KEPT } from './kept';
 import { compileSource } from '../compile';
 import { samePiece, soundsIdentical } from '../sameness';
 import { shorten } from '../shorten';
@@ -71,7 +72,12 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
 
   it('every example, and every fragment of the seed library, is normal already', () => {
     // (an example read as Cell studio reads it, its `use` lines resolved, and the seed library's lines taken by `use`: #196)
-    for (const [key, p] of Object.entries(EXAMPLES)) expect([key, normalise(p.source, { resolve: resolveSeed, old: true, library: LIBRARY }).steps]).toEqual([key, []]);
+    // (but an example whose point is the form a rule would rewrite, kept as written: the examples teach, and a rewrite that
+    // sounds the same can still teach less — the owner on #668, 2026-11-09)
+    for (const [key, p] of Object.entries(EXAMPLES)) {
+      const steps = normalise(p.source, { resolve: resolveSeed, old: true, library: LIBRARY }).steps;
+      expect([key, steps.filter((s) => !KEPT[key]?.test(s))]).toEqual([key, []]);
+    }
     // (a meter is open on its tempo, a mode on its tonic (#290); a rhythm on its meter, a bass line on its meter and its
     // harmony, and a harmony on its meter and its key, so each is read on a 4/4 at a tempo, with a key and, unless it
     // writes its own, a harmony, where it fits; a mode writes its own key)
@@ -147,6 +153,71 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     );
   });
 
+  describe('a meter built by hand, as the meter it is (#645)', () => {
+    const lines = '&tune over=scale(minor) step=8n 0 2 4 2 3 1 0 ~\n&lead s=saw loop=C4\n&mix [&tune * &lead]';
+    it.each([
+      ['scan(1 1 1)', 'meter("3/4")'],
+      ['scan(4 4 4 4)', 'meter("4/4")'],
+      ['scan(1!5)', 'meter("5/4")'],
+      ['scan(1 1 1 1 1 1 1)', 'meter("7/4")'],
+    ])('even beats as a signature: %s → %s', (scan, sig) => {
+      const written = `&bar ${scan} step=&tempo\n&tempo step=100bpm\n${lines}`;
+      const { source, steps } = normalise(written);
+      expect(source).toBe(written.replace(scan, sig));
+      expect(steps).toHaveLength(1);
+      expect(soundsIdentical(written, source)).toBe(true);
+    });
+
+    it('leaves a scan that isn’t even beats, or isn’t the main meter, as written', () => {
+      // (a bent bar, groups, one entry, and a scan of 3s, which may be 6/8's or 3/16's)
+      for (const scan of ['scan(27 23 26 24)', 'scan(3 2 2)', 'scan(4)', 'scan(3 3)', 'scan(2 2 2 2)'])
+        expect(normalise(`&bar ${scan} step=&tempo\n&tempo step=100bpm\n${lines}`).steps, scan).toEqual([]);
+      // (a scale's scan is no meter)
+      expect(normalise(`&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&major scan(2 2 2 2)\n${lines}`).steps).toEqual([]);
+    });
+
+    const swung = (clock: string, extra = '') =>
+      `&bar meter("4/4") step=&tempo${extra}\n&tempo step=120bpm\n${clock}\n&ride step=&swing:pulse 0 ~ 0 0 0 ~ 0 0  # ding, ding-a\n&tune over=scale(minor) step=&swing:pulse 0 2 4 2\n&lead s=saw loop=C4\n&mix [&tune * &lead, &ride * &lead]`;
+    it.each([
+      ['&swing scan(2 1) step=8n', '&swing swing=8n:2/3'],
+      ['&swing scan(3 1) step=8n', '&swing swing=8n:3/4'],
+      ['&swing scan(1.5 1) step=8n', '&swing swing=8n:3/5'],
+      ['&swing scan(free(2, 1..3) 1) step=8n', '&swing swing=8n:free(2/3, 1/2..3/4)'],
+      ['&swing scan(2 1) step=16n', '&swing swing=16n:2/3'],
+    ])('a swing clock as the meter’s swing: %s → %s', (clock, lean) => {
+      const written = swung(clock);
+      const { source, steps } = normalise(written);
+      const tap = /step=(\w+)/.exec(clock)![1]!;
+      expect(source).toBe(
+        swung(lean, ' swing=&swing')
+          // (the comment keeps its column)
+          .replace('&ride step=&swing:pulse 0 ~ 0 0 0 ~ 0 0  # ding', `${`&ride step=${tap} 0 ~ 0 0 0 ~ 0 0`.padEnd('&ride step=&swing:pulse 0 ~ 0 0 0 ~ 0 0  '.length)}# ding`)
+          .replace('step=&swing:pulse 0 2', `step=${tap} 0 2`),
+      );
+      expect(steps).toHaveLength(1);
+      expect(soundsIdentical(written, source)).toBe(true);
+      expect(normalise(source)).toEqual({ source, steps: [] });
+    });
+
+    it('keeps a note about the clock pointing at it', () => {
+      const written = swung('&swing scan(2 1) step=8n').replace('&tempo step=120bpm', '&tempo step=120bpm\n&swingNote label="The swing." about=&swing');
+      const { source, steps } = normalise(written);
+      expect(steps).toHaveLength(1);
+      expect(source).toContain('&swingNote label="The swing." about=&swing\n&swing swing=8n:2/3');
+    });
+
+    it('leaves a clock as written where a line reads it as more than a pulse, the meter swings already, or its pairs are threes', () => {
+      // (read as a table, or by its own steps)
+      expect(normalise(`${swung('&swing scan(2 1) step=8n')}\n&walk over=&swing step=4n 0 1`).steps).toEqual([]);
+      // (a meter with a swing of its own)
+      expect(normalise(swung('&swing scan(2 1) step=8n', ' swing=16n:.6')).steps).toEqual([]);
+      // (6/8's eighths are threes, which a swing keeps straight (decision 071): the clock's lean isn't the meter's)
+      expect(normalise(swung('&swing scan(2 1) step=8n').replace('meter("4/4")', 'meter("6/8")')).steps).toEqual([]);
+      // (no line taps it)
+      expect(normalise(`&bar meter("4/4") step=&tempo\n&tempo step=120bpm\n&swing scan(2 1) step=8n\n${lines}`).steps).toEqual([]);
+    });
+  });
+
   it('names nothing it could name two ways, or that is taken, or that has no value of its own', () => {
     const tune = (over: string) => `&tune over=${over} step=8n 0 2 4 2\n&lead s=saw loop=C4\n&mix [&tune * &lead]`;
     // (two meters, each a clock: which is the bar? Two keys: which is the key? A key's scan is no meter)
@@ -160,6 +231,49 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     expect(normalise(open).steps).toEqual([]);
   });
 
+  describe('a template’s line with its parameters filled in, as a from line of it with those arguments (#524)', () => {
+    const seed = { resolve: resolveSeed, library: LIBRARY };
+    const tune = '&tune over=scale(minor) step=8n 0 2 4 2 3 1 0 ~\n&lead s=saw loop=C4\n&mix [&tune * &lead]';
+    const keyed = '&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&tune over=&key step=8n 0 2 4 2\n&lead s=saw loop=C4\n&mix [&tune * &lead]';
+    it.each([
+      ['&bar meter("4/4") step=&tempo', '&bar from meter &tempo'],
+      ['&bar meter("7/8") step=&tempo', '&bar from meter(grouping=meter("7/8")) &tempo'],
+      ['&bar meter("7/8") step=&tempo swing=8n:2/3', '&bar from meter(grouping=meter("7/8"), swing=8n:2/3) &tempo'],
+      ['&bar meter("2/2", 2) step=&tempo', '&bar from meter(grouping=meter("2/2", 2)) &tempo'],
+    ])('the meter: %s → %s', (line, use) => {
+      const written = `${line}\n&tempo step=100bpm\n${tune}`;
+      const { source } = normalise(written, seed);
+      expect(source.split('\n')[0]).toBe(use);
+      expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
+      expect(normalise(source, seed).steps).toEqual([]);
+    });
+
+    it.each([
+      ['&key scale(minor, &tonic)', '&key from diatonic(mode=minor) &tonic'],
+      ['&key scale(dorian, &tonic)', '&key from diatonic(mode=dorian) &tonic'],
+      ['&key scale(major, &tonic)', '&key from diatonic &tonic'],
+    ])('the key: %s → %s', (line, use) => {
+      const written = `${keyed}\n${line}\n&tonic D`;
+      const { source } = normalise(written, seed);
+      expect(source).toContain(`\n${use}\n`);
+      expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
+    });
+
+    it('leaves a line with anything the template doesn’t write, or a parameter of another kind, as it is', () => {
+      for (const line of [
+        '&bar meter("4/4") step=&tempo motor=4 mass=1 friction=.2', // (an attribute the template doesn't write)
+        '&bar meter("4/4") step=&tempo label="the bar"',
+        '&bar scan(27 23 26 24) step=&tempo', // (a bent bar, decision 080: a grouping is a meter(…), not a scan(…))
+      ])
+        expect(
+          normalise(`${line}\n&tempo step=100bpm\n${tune}`, seed).steps.filter((t) => /"meter"'s/.test(t)),
+          line,
+        ).toEqual([]);
+      // (a key with no tonic of its own: the template's main argument is its tonic)
+      expect(normalise(`${keyed}\n&key scale(major)`, seed).steps.filter((t) => /"diatonic"'s/.test(t))).toEqual([]);
+    });
+  });
+
   it('writes a line that is a library fragment’s word for word as a from line of it (#196): one a fragment, where its first line was', () => {
     const seed = { resolve: resolveSeed, library: LIBRARY };
     const beat = '&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&out map=sample [&beat]';
@@ -167,15 +281,14 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const line = (name: string) => kit.find((l) => l.startsWith(`&${name} `))!;
     const written = `&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n${line('bd')}\n${line('sd')}\n${line('hh')}\n${beat}`;
     const { source, steps } = normalise(written, seed);
-    // (written as a from line, decision 065, in one step; the bar stays the piece's, since the meter is a template whose body
-    //  is no line a piece writes, #507: Normalise recognising a meter as the template with its arguments is a follow-up)
-    expect(source).toBe(`&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n&bd, &sd, &hh from gm_kit\n${beat}`);
-    expect(steps).toHaveLength(1);
+    // (written as a from line, decision 065, in one step; and the bar as the meter template with its defaults, #524)
+    expect(source).toBe(`&bar from meter &tempo         # four beats\n&tempo step=100bpm\n&bd, &sd, &hh from gm_kit\n${beat}`);
+    expect(steps).toHaveLength(2);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     expect(normalise(source, seed)).toEqual({ source, steps: [] });
     // (a use of the fragment already written takes the names too)
     expect(normalise(`&bd from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${line('sd')}\n${line('hh')}\n${beat}`, seed).source).toBe(
-      `&bd, &sd, &hh from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${beat}`,
+      `&bd, &sd, &hh from gm_kit\n&bar from meter &tempo\n&tempo step=100bpm\n${beat}`,
     );
     // (a line that differs by a word stays the piece's; with no library given, nothing is taken)
     const own = written.replace(line('hh'), line('hh').replace('hpf=8000', 'hpf=7000'));

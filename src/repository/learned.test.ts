@@ -1,6 +1,7 @@
 // The learned layer (#145, decision 048): merged with the seed at each query and never stored, so an empty one changes no
 // query and two repositories answer alike; filing (a point at the query's point, weight 0.1, `source` and `created`, a
 // file); identity after renaming; use moving an association (the point that finds a fragment raised, to 1.2).
+import { readFrom } from '../engine/parser/use';
 import { describe, expect, it } from 'vitest';
 import { renameCell } from '../engine/edit';
 import { chanceOf } from '../engine/realize';
@@ -44,6 +45,13 @@ const filing = (point: StylePoint, more: Partial<Filing> = {}): Filing => ({
   created: '2026-10-18T21:04:00Z',
   ...more,
 });
+
+/** A template's lines, its signature and its own `from` lines aside: what a groove heard and filed is (#637). */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
 
 describe('an empty layer', () => {
   const POINTS = drawn(1_000, 'empty');
@@ -148,8 +156,9 @@ describe('filing', () => {
 
   it('is found only near its point: a tenth of the distance to the nearest seed fragment', () => {
     // (a meter's point, on the three axes a meter has, decision 076: a step of d·√3 on bite is d away over three;
-    // a point where that step keeps its nearest seed: at (.95, .95, .05), the old one, it reaches the plain 4/4 first, #572)
-    const point = { sync: 0.95, harm: 0.05, bite: 0.05 };
+    // a point where that step keeps its nearest seed: at (.95, .05, .05), since #542, it reaches Blues shuffle's swung 4/4
+    // first, so the test sits at (.95, .95, .05), whose nearest, the plain 4/4, holds)
+    const point = { sync: 0.95, harm: 0.95, bite: 0.05 };
     const seedFirst = library.query(point, 1, {}, { facet: 'meter' })[0]!;
     const { layer } = fileFragment(library, EMPTY_LAYER, filing(point));
     const off = (d: number) => ({ ...point, bite: point.bite + d * Math.sqrt(3) });
@@ -185,17 +194,20 @@ describe('identity, until the hash', () => {
   const son = LIBRARY.find((f) => f.id === 'son_clave_3_2')!;
 
   it('a text is the same as another after renaming its own names, with comments and spacing aside', () => {
-    // (`&claves` is a hole, no cell of the text's own: a name an instrument gives, which a rename leaves)
-    const renamedSon = renameCell(renameCell(son.text, 'clave', 'cl'), 'percussion', 'perc');
-    expect(renamedSon).not.toBe(son.text);
+    // (`&claves` is a hole, no cell of the text's own: a name an instrument gives, which a rename leaves. The son is a
+    // template, #637: its lines as a groove heard and filed are, with no signature, the seed's)
+    const renamedSon = renameCell(renameCell(linesAlone(son.text), 'clave', 'cl'), 'percussion', 'perc');
+    expect(renamedSon).not.toBe(linesAlone(son.text));
     expect(sameText(renamedSon, son.text)).toEqual(
       new Map([
         ['&cl', '&clave'],
         ['&perc', '&percussion'],
       ]),
     );
-    expect(sameText(`${son.text.replace(' &claves', '   &claves')} // the son`, son.text)?.size).toBe(0);
-    expect(canonicalText(son.text)).toBe(['&#1 step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!3 &claves ~!7', '&#2 [&#1 * .5]'].join('\n'));
+    expect(sameText(`${linesAlone(son.text).replace(' &claves', '   &claves')} // the son`, son.text)?.size).toBe(0);
+    // (a template renamed in its signature is another template: its heads are its interface, decision 075)
+    expect(sameText(renameCell(son.text, 'clave', 'cl'), son.text)).toBeNull();
+    expect(canonicalText(linesAlone(son.text))).toBe(['&#1 role=clave step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!3 &claves ~!7', '&#2 [&#1 * .5]'].join('\n'));
   });
 
   it('but not one that differs, nor one that renames a name its signature declares or a name it uses and doesn’t define', () => {
@@ -209,7 +221,7 @@ describe('identity, until the hash', () => {
 
   it('a filed text held already adds a point to the fragment that holds it, not a second fragment', () => {
     const point = { sync: 0.2, harm: 0.2, bite: 0.55, mood: 0.875 };
-    const text = renameCell(son.text, 'clave', 'cl');
+    const text = renameCell(linesAlone(son.text), 'clave', 'cl');
     const { layer, id, file, renamed } = fileFragment(library, EMPTY_LAYER, { text, point, facet: 'rhythm', source: 'muse', created: '2026-10-18T22:00:00Z' });
     expect([id, file, [...renamed]]).toEqual(['son_clave_3_2', null, [['&cl', '&clave']]]);
     expect(layer).toEqual({ filed: [], points: [{ id: 'son_clave_3_2', point: son.association[0]!.point, weight: 1.1, facet: 'rhythm' }], together: [] });

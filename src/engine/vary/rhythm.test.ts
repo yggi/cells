@@ -14,7 +14,7 @@ import { playsSameNotes, sameNotes } from '../sameness';
 import { windowAt } from '../schedule';
 import { rewriteAll } from '../rewrite';
 import { fitsAs } from '../../repository/fit';
-import { heard } from '../../repository/heard';
+import { drumCard } from '../../repository/benches';
 import { holesOf } from '../../repository/holes';
 import { resolveSeed } from '../../repository/library';
 import { anchorsOf, backbeatOf, drawn, variations, varied, type Variation } from '.';
@@ -39,7 +39,7 @@ vi.mock('../compile', async (original) => {
 
 /** The workbench Jambot reads a drum bar under: 4/4 played straight, at its reading tempo (`straight('4/4')`). */
 const WORKBENCH = '&bar meter("4/4") step=120bpm';
-const OPTIONS = { workbench: WORKBENCH, keep: ['&fill'], fewest: 3 };
+const OPTIONS = { workbench: WORKBENCH, keep: ['&fill'], fewest: 3, resolve: resolveSeed };
 /** E31's bars: each preset's drum part without its `&bar`, the seed's rhythm fragment word for word. */
 // (each as Migrate's `notes` rule writes it: its stand-in drums, named as General MIDI's, write the note their name gave,
 // decision 075; a bar alone has no meter to be checked on, so it is written here)
@@ -380,7 +380,7 @@ describe('a drum bar with no card of its own (#291)', () => {
       const kit = { ...OPTIONS, workbench: `${WORKBENCH}\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}` };
       const alone = variations(text, kit).map((v) => [v.by, v.after]);
       expect(alone.length).toBeGreaterThan(0);
-      expect(variations(text, { ...kit, workbench: `${kit.workbench}\n${heard(text)}` }).map((v) => [v.by, v.after])).toEqual(alone);
+      expect(variations(text, { ...kit, workbench: `${kit.workbench}\n${drumCard(text)}` }).map((v) => [v.by, v.after])).toEqual(alone);
     },
   );
 });

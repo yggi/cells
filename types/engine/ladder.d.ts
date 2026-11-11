@@ -31,5 +31,5 @@ export declare const TIERS: readonly {
     readonly concept: string;
     readonly forms: readonly string[];
 }[];
-/** Every form a piece uses (formKey), read from its text as parsed and as compiled, its `use` lines through `options.resolve`. */
+/** Every form a piece uses (formKey), read from its text as parsed and as compiled, its `from` lines through `options.resolve`. */
 export declare function formsUsed(source: string, options?: CompileOptions): Set<string>;

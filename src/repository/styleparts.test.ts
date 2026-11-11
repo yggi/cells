@@ -4,8 +4,9 @@ import { createRepository } from './fragments';
 import { LIBRARY } from './library';
 import { stylePoint } from './styles';
 
-// A style is playable where the composer finds its parts (#542): for the six styles whose pieces the library was cut
-// from (#572), each facet its piece supplies finds that piece's own part first, at the style's point, at distance 0.
+// A style is playable where the composer finds its parts (#542): for the ten styles whose pieces the library was cut
+// from (#572), each facet its piece supplies finds that piece's own part first, at the style's point, at distance 0; and
+// so for the four placed by hand with parts written for them (Salsa, Waltz, March, Trip-hop), in each of seven facets.
 const repo = createRepository(LIBRARY);
 
 /** Each style's own parts, by facet: one id, or the ids that tie (two instruments of one style). */
@@ -50,6 +51,42 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     motif: 'ghostPhrase',
     instrument: ['drone_pad', 'prepared_piano'],
   },
+  baroque: {
+    meter: 'meter',
+    rhythm: 'quiet_pulse',
+    bass: 'continuo_bass',
+    harmony: 'fifths_sequence',
+    mode: 'diatonic(mode=ionian)',
+    motif: 'royalTheme',
+    instrument: 'moog',
+  },
+  bluesShuffle: {
+    meter: 'meter(swing=8n:2/3)',
+    rhythm: 'ride_shuffle',
+    bass: 'blues_walk',
+    harmony: 'twelve_bar',
+    mode: 'diatonic(mode=mixolydian)',
+    motif: 'bluesRiff',
+    instrument: 'blues_horn',
+  },
+  seaShanty: {
+    meter: 'meter',
+    rhythm: 'shanty_drums',
+    bass: 'quarter_bass',
+    harmony: 'vamp_to_the_seventh',
+    mode: 'diatonic(mode=dorian)',
+    motif: 'drunkenSailor',
+    instrument: 'fiddle',
+  },
+  chiptune: {
+    meter: 'meter',
+    rhythm: 'chip_drums',
+    bass: 'octave_bass',
+    harmony: 'korobeiniki_changes',
+    mode: 'harmonic_minor',
+    motif: 'korobeiniki',
+    instrument: 'pulse_lead',
+  },
   elektro: {
     meter: 'meter',
     rhythm: 'elektro_drums',
@@ -58,6 +95,42 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     mode: 'diatonic(mode=aeolian)',
     motif: 'sequencer',
     instrument: 'square_bass',
+  },
+  salsa: {
+    meter: 'meter',
+    rhythm: 'salsa_drums',
+    bass: 'tumbao_bass',
+    harmony: 'montuno',
+    mode: 'diatonic(mode=mixolydian)',
+    motif: 'guajeo',
+    instrument: 'montuno_piano',
+  },
+  waltz: {
+    meter: 'meter(grouping=meter("3/4"))',
+    rhythm: 'waltz_drums',
+    bass: 'waltz_bass',
+    harmony: 'vamp_to_the_fifth',
+    mode: 'diatonic(mode=ionian)',
+    motif: 'waltz',
+    instrument: 'accordion',
+  },
+  march: {
+    meter: 'meter(grouping=meter("2/4"))',
+    rhythm: 'march_drums',
+    bass: 'oom_pah_bass',
+    harmony: 'vamp_to_the_fifth',
+    mode: 'diatonic(mode=ionian)',
+    motif: 'march',
+    instrument: 'brass_band',
+  },
+  tripHop: {
+    meter: 'meter',
+    rhythm: 'trip_hop_drums',
+    bass: 'dub_bass',
+    harmony: 'vamp_to_the_sixth',
+    mode: 'diatonic(mode=aeolian)',
+    motif: 'smoke',
+    instrument: 'electric_piano',
   },
 };
 

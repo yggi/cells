@@ -12,7 +12,8 @@ import { seedFragments } from '../repository/seed';
 
 const METER_FRAGMENTS = seedFragments('meters');
 const MODE_FRAGMENTS = seedFragments('modes');
-const OLD_USE = /^use is the old way/;
+// (and, read the old way, that a name gave the default performer a part: these texts are about the tempo and the key)
+const OLD_USE = /^use is the old way|is named as the feel's (part|drum role)/;
 const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
   const r = compiledWithOldUse(...args);
   const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
@@ -116,6 +117,15 @@ describe('a stepped tonic, and one left free (#301, decision 060)', () => {
       expect(bar(src, n), `bar ${n + 1}`).toEqual(bar(written(tonic), n));
     // (the comparison can fail)
     expect(bar(written('D'), 1)).not.toEqual(bar(written('F'), 1));
+  });
+
+  it('a tonic read from a meter is said to be no note, and plays as before: its first level as a pitch class (#613)', () => {
+    const said = "&bar is a meter: a key's tonic is a note (&tonic D); a meter's first level is read as its pitch class";
+    for (const bar of ['&bar meter("4/4") step=104bpm', lines('&tempo step=104bpm', '&bar from meter &tempo')]) {
+      const text = lines(bar, '&key scale(dorian, &bar)', BODY);
+      expect(compiled(text).diagnostics.map((d) => [d.severity, d.message])).toEqual([['warning', said]]);
+      expect(events(text, 4)).toEqual(events(lines(bar, '&key scale(dorian, C)', BODY), 4));
+    }
   });
 
   it('a tonic held (@n) or repeated (!n) stays in force as many steps; a rate of its own, 1m/2, two bars a step', () => {

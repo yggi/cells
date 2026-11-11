@@ -1,4 +1,4 @@
-import { splitComment } from "../edit.js";
+import { attrsOf, declLine, declWords, spansLines, splitComment } from "../edit.js";
 import { parse } from "../parser/index.js";
 import { isWordId, leftOf, readFrom } from "../parser/use.js";
 function taking(code) {
@@ -109,4 +109,122 @@ export function libraryCells(source, library) {
             return lines.join('\n');
         },
     }));
+}
+const kindOf = (v) => /^([a-z]\w*)\(/.exec(v)?.[1] ?? (/^[a-z]\w*$/.test(v) ? 'word' : 'other');
+function templates(library, resolve) {
+    const out = [];
+    const bases = [...new Set(library.flatMap((f) => /^(\w+)\(/.exec(f.id)?.[1] ?? []))].filter((id) => !library.some((f) => f.id === id));
+    const all = [
+        ...library,
+        ...bases.flatMap((id) => {
+            const text = resolve?.(id);
+            return typeof text === 'string' ? [{ id, text }] : [];
+        }),
+    ];
+    for (const f of all) {
+        if (!isWordId(f.id))
+            continue;
+        const lines = f.text.split('\n').map((l) => codeOf(l));
+        const sig = lines.map((l) => /^&(\w+) from (?:\(([^)]*)\)\s*)?(?:&(\w+))?$/.exec(l)).find(Boolean);
+        if (!sig)
+            continue;
+        const head = sig[1];
+        const declared = lines.find((l) => new RegExp(`^&${head}\\s`).test(l) && !readFrom(l));
+        if (!declared)
+            continue;
+        const words = declWords(declared, head);
+        const names = [...(sig[2] ?? '').matchAll(/&(\w+)/g)].map((m) => m[1]);
+        const params = new Map();
+        for (const p of names) {
+            const line = lines.find((l) => new RegExp(`^&${p}\\s`).test(l));
+            const rest = line ? line.slice(p.length + 2).trim() : null;
+            const one = rest && /^(\w+)=(\S+)$/.exec(rest);
+            params.set(p, one ? one[2] : rest);
+        }
+        out.push({ id: f.id, head, params, main: sig[3] ?? null, attrs: attrsOf(declared, head), braid: words.braid.join(' ') });
+    }
+    return out;
+}
+export function libraryTemplates(source, library, resolve) {
+    if (!library?.length)
+        return [];
+    const out = [];
+    const lines = source.split('\n');
+    for (const t of templates(library, resolve)) {
+        const i = declLine(source, t.head);
+        if (i < 0 || spansLines(source, t.head))
+            continue;
+        const words = declWords(source, t.head);
+        const attrs = attrsOf(source, t.head);
+        const bound = new Map();
+        let fits = true;
+        const bind = (p, v) => {
+            const d = t.params.get(p);
+            if ((bound.has(p) && bound.get(p) !== v) || (d != null && !v.startsWith('&') && kindOf(v) !== kindOf(d)))
+                fits = false;
+            bound.set(p, v);
+        };
+        let braid = words.braid.join(' ');
+        for (const [k, v] of t.attrs) {
+            const p = /^&(\w+)$/.exec(v)?.[1];
+            const isParam = p !== undefined && (t.params.has(p) || p === t.main);
+            if (k === 'base' && isParam && !attrs.has('base')) {
+                if (braid)
+                    [braid] = [(bind(p, braid), '')];
+                continue;
+            }
+            if (!attrs.has(k)) {
+                if (!isParam || p === t.main || t.params.get(p) == null)
+                    fits = false;
+                continue;
+            }
+            if (isParam)
+                bind(p, attrs.get(k));
+            else if (attrs.get(k) !== v)
+                fits = false;
+        }
+        if ([...attrs.keys()].some((k) => !t.attrs.has(k)))
+            fits = false;
+        if (t.braid) {
+            const seen = new Set();
+            const pattern = t.braid
+                .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                .replace(/&(\w+)/g, (_, p) => (!(t.params.has(p) || p === t.main) ? `&${p}` : seen.has(p) ? `\\k<${p}>` : (seen.add(p), `(?<${p}>.+?)`)));
+            const m = new RegExp(`^${pattern}$`).exec(braid.replace(/\s+/g, ' '));
+            if (!m)
+                fits = false;
+            else
+                for (const [p, v] of Object.entries(m.groups ?? {}))
+                    bind(p, v.trim());
+        }
+        else if (braid)
+            fits = false;
+        if (!fits || (t.main && !bound.has(t.main)))
+            continue;
+        const args = [...t.params].flatMap(([p, d]) => (bound.has(p) && bound.get(p) !== d ? [`${p}=${bound.get(p)}`] : []));
+        const use = `&${t.head} from ${isWordId(t.id) ? t.id : JSON.stringify(t.id)}${args.length ? `(${args.join(', ')})` : ''}${t.main ? ` ${bound.get(t.main)}` : ''}`;
+        const before = codeOf(lines[i]);
+        if (out.some((r) => r.after === use))
+            continue;
+        out.push({
+            id: `template:${t.id}:${t.head}`,
+            tool: 'normalise',
+            rule: 'library',
+            title: `&${t.head} is ${JSON.stringify(t.id)}'s, with ${args.length ? args.join(', ') : 'its defaults'}: ${use}`,
+            before,
+            after: use,
+            apply: (src) => {
+                const now = src.split('\n');
+                const j = declLine(src, t.head);
+                if (j < 0 || codeOf(now[j]) !== before)
+                    return src;
+                const [code, comment] = splitComment(now[j]);
+                const indent = /^\s*/.exec(code)[0];
+                const pad = comment ? ' '.repeat(Math.max(1, code.length - indent.length - use.length)) : '';
+                now[j] = `${indent}${use}${pad}${comment}`;
+                return now.join('\n');
+            },
+        });
+    }
+    return out;
 }

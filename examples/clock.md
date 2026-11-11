@@ -13,7 +13,7 @@ description: "A bar sets the tempo, and every part steps with it: on the beat, t
 
 &tune step=4n 0 4 7 4 5 9 7@2 4 7 5 2 0@4       # a step a beat
 &eighths step=8n 12 7 16 7 12 7 16 7 12 9 17 9 14 7 12 ~       # two steps a beat
-&bass step=2n -12 -7 -12 -5                   # a step every two beats
+&bass part=bass step=2n -12 -7 -12 -5         # a step every two beats
 
 &high s=sine loop=C5
 &low s=sine loop=C3

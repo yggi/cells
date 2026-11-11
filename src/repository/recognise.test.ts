@@ -4,6 +4,7 @@
 // `timing.slow.test.ts`).
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
+import { readFrom } from '../engine/parser/use';
 import { gmDrumNote } from '../engine/midi';
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
@@ -26,7 +27,7 @@ vi.mock('../engine/compile', async (original) => {
 const kit = (id: string) => LIBRARY.find((f) => f.id === id)!.text;
 // (the rhythms leave their voices as holes, #244: the workbench brings 13 of the General MIDI kit's voices)
 const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
-const DRUM_OPTIONS = { workbench: DRUMS, keep: ['&fill'], fewest: 3 };
+const DRUM_OPTIONS = { workbench: DRUMS, keep: ['&fill'], fewest: 3, resolve: resolveSeed };
 const BARS = e31.witnesses.map((w) => ({
   preset: w.preset,
   fragment: w.text
@@ -40,6 +41,13 @@ const BARS = e31.witnesses.map((w) => ({
 /** The bass seeds' workbench over I–vi–IV–V (`src/engine/vary/pitched.test.ts`). */
 const BASS = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&harm over=&key step=1m [0,2,4] [5,7,9] [3,5,7] [4,6,8]\n${kit('bass')}`;
 
+/** A fragment's lines, its `from` lines aside (a groove's signature and the kit it takes, decision 075). */
+const linesAlone = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => readFrom(l.trim()) === undefined)
+    .join('\n');
+
 const recogniser = createRecogniser();
 
 describe('a variation is recognised as its source’s, by its operator, at distance 0', () => {
@@ -47,7 +55,8 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     let n = 0;
     const second: string[] = [];
     for (const b of BARS) {
-      const id = LIBRARY.find((f) => f.text === b.fragment)!.id;
+      // (the seed whose lines E31's bar is: its signature and its own from lines aside, decision 075)
+      const id = LIBRARY.find((f) => linesAlone(f.text).replace(/ role=\w+/g, '') === b.fragment)!.id;
       for (const v of variations(b.fragment, DRUM_OPTIONS)) {
         const found = recogniser.recognise(v.apply(b.fragment), LIBRARY, DRUM_OPTIONS);
         const mine = found.find((r) => r.fragment.id === id);
@@ -64,16 +73,38 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     ]);
   });
 
-  it('each of the bass seeds’ 73 (42, and the 31 bends and trims, #267; the acid and octave basses among them, #572)', () => {
+  it('each of the bass seeds’ 120 (73, and the 47 bends and trims, #267; the new basses among them, #572, #542)', () => {
     const options = { workbench: BASS, operators: PITCHED_OPERATORS };
     let n = 0;
     for (const f of BASS_FRAGMENTS)
       for (const v of variations(f.text, options)) {
         const [first] = recogniser.recognise(v.apply(f.text), LIBRARY, { workbench: BASS });
-        expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${f.id}, ${v.by}`).toEqual([f.id, [v.by], 0]);
+        // (the walking bass bent up a semitone at its end plays the blues walk's line, 0 1 2 3, a seed of its own since #542:
+        // recognised as that seed, as it is; named on #542)
+        // (and the blues walk's bends and trim, its last note moved, are the walking bass's same ones, which ranks first by id)
+        const walked = f.id === 'blues_walk' && /^(bend|trim) /.test(v.by);
+        // (and the oom-pah, half a bar, is heard as a window of half a bar of each seed a bar long (`windowsOf`): five of its
+        // six variations are the first half bar of another seed's, or of its variation's, which ranks first; named on #542.
+        // Moved down two chord tones it keeps its anchored root and moves its fifth onto it, the quarter bass's 0 0)
+        const halfOf: Readonly<Record<string, [string, string[], number]>> = {
+          'transpose &bassline -2': ['quarter_bass', [], 0],
+          'transpose &bassline -1': ['walking_bass', [], 0],
+          'transpose &bassline 1': ['walking_bass', ['transpose &bassline 2'], 0],
+          'invert &bassline': ['quarter_bass', ['transpose &bassline -2'], 0],
+          'bend &bassline -1': ['walking_bass', ['transpose &bassline -2'], 0],
+        };
+        const as: [string, string[], number] =
+          f.id === 'walking_bass' && v.by === 'bend &bassline 1'
+            ? ['blues_walk', [], 0]
+            : f.id === 'oom_pah_bass' && halfOf[v.by]
+              ? halfOf[v.by]!
+              : walked
+                ? ['walking_bass', [v.by], 0]
+                : [f.id, [v.by], 0];
+        expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${f.id}, ${v.by}`).toEqual(as);
         n++;
       }
-    expect(n).toBe(73);
+    expect(n).toBe(120);
   });
 
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {
@@ -143,7 +174,9 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
 
   it('a bar of a vamp, its fifth, is recognised as the vamp to the seventh from its bar 4', () => {
     // (and, since #572, as the axis progression's fourth bar, its VII, found first: named on #572, #542)
+    // (and, since #542, as the circle of fifths' third bar, its vii°)
     expect(found(recogniser.recognise('&harm over=&key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual([
+      'fifths_sequence [] bar 2 at 0',
       'axis_progression [] bar 3 at 0',
       'vamp_to_the_seventh [] bar 4 at 0',
     ]);

@@ -17,7 +17,7 @@ description: "One subject entered three times, as a fugue begins: as it is, a fi
 
 &alto step=16n &subject ~@36
 &soprano step=16n ~@16 &answer ~@20
-&bass step=16n ~@32 &low
+&bass part=bass step=16n ~@32 &low
 
 &flute s=tri loop=C5 env=&swell
 &reed s=tri loop=C4 env=&swell

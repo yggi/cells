@@ -1,10 +1,10 @@
 import { type FromForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
-import type { CompileOptions, Resolve, Used } from './program';
-/** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
-export declare const USE_DEPTH = 8;
+import type { CompileOptions, Origin, Resolve, Take } from './program';
+/** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
+export declare const FROM_DEPTH = 8;
 /** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
-export declare const hasUse: (text: string) => boolean;
+export declare const hasFrom: (text: string) => boolean;
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
 export declare function signatureOf(text: string): Extract<FromForm, {
     kind: 'signature';
@@ -13,18 +13,26 @@ export declare function signatureOf(text: string): Extract<FromForm, {
 export declare const bodyOf: (text: string) => string;
 /** A fragment's hash: `e1:` and the hash of its text up to layout (its lines' code, one to a line). */
 export declare const fragmentHash: (text: string) => string;
+/**
+ * Does a line read this name as a value, not as a sound: in an attribute (`over=&key`, `step=&tempo`), a generator's or
+ * an operation's arguments (`scale(dorian, &tonic)`), or through an operator (`&call^-2`, `&g[0:3]`)? A step of a braid
+ * or a term of a mix (`&bd`, `&cp:0:.6`, `[&kick * &level]`) is a sound: the kit's vocabulary, read by name (decision 065 §3).
+ */
+export declare function readsAsValue(code: string, name: string): boolean;
 /** The expansion of a text, as the compiler reads it. */
 export interface Expansion {
     /** The piece's own text as written, then the used lines (so the piece's lines keep their numbers). */
     readonly text: string;
-    /** Its `use` lines, compiled: what each resolved to, gave and was overridden in. */
-    readonly uses: readonly Used[];
-    /** Every name a `use` gave (bare). */
+    /** Its `from` lines, compiled: what each resolved to, gave and was overridden in. */
+    readonly takes: readonly Take[];
+    /** Every name a `from` line gave (bare). */
     readonly given: ReadonlySet<string>;
-    /** What the expansion says: an unresolved id, a cycle, a depth past `USE_DEPTH`, a collision, a changed version. */
+    /** What the expansion says: an unresolved id, a cycle, a depth past `FROM_DEPTH`, a collision, a changed version. */
     readonly diagnostics: readonly Diagnostic[];
-    /** For each line of `text` past the piece's own, the `use` line it came through. */
+    /** For each line of `text` past the piece's own, the `from` line it came through. */
     readonly through: (line: number) => Span | null;
+    /** Where each line it added came from, by the name it declares (`Origin`, #639). */
+    readonly origins: ReadonlyMap<string, readonly Origin[]>;
 }
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
 export declare function expansion(text: string, { resolve, locked, old }?: CompileOptions): Expansion;

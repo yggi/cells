@@ -16,7 +16,7 @@ import { restyled } from '../migrate/axes';
 import { applyBases } from './base';
 import { isNote } from '../ast';
 import { isPieceFile, readPiece } from '../piecefile';
-import type { CellDecl, Diagnostic, ParseResult, UseLine } from '../ast';
+import type { CellDecl, Diagnostic, ParseResult, TakeLine } from '../ast';
 import { IDENT, LineError, LineScanner, stripComment } from './scanner';
 import { parseBody, parseCell, SHOWS } from './cell';
 import { splitPlugins } from '../plugins';
@@ -30,7 +30,7 @@ export { readFrom, USE_RETIRED, type FromForm } from './use';
 /** A text, parsed; `old` reads a retired form (`beat=`, a meter's own `step=&bar`) with a warning, where it is otherwise an error (`CompileOptions.old`). */
 export function parse(whole: string, { old = false }: { readonly old?: boolean } = {}): ParseResult {
   const cells: CellDecl[] = [];
-  const uses: UseLine[] = [];
+  const takes: TakeLine[] = [];
   const offers: string[] = [];
   // (plugin blocks are not cells: split off and blanked, so the lines keep their numbers)
   const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole, [...SHOWS, ...BUILTIN_PLUGINS.map((p) => p.name)]);
@@ -78,7 +78,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
       const col = text.search(/\S/);
       const span = { line: lineNo, col: col + 1, len: text.trimEnd().length - col };
       if (from === null) diagnostics.push({ severity: 'error', message: FROM_FORM, span });
-      else if (from.kind === 'use') uses.push({ id: from.id, names: from.names, span });
+      else if (from.kind === 'use') takes.push({ id: from.id, names: from.names, span });
       else offers.push(...from.names.map((n) => n.slice(1)));
       return;
     }
@@ -109,7 +109,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
     }
   });
   // (base=: each copy resolved into a plain cell, decision 026)
-  return applyBases({ cells, diagnostics, broken, plugins, ...(uses.length ? { uses } : {}), ...(offers.length ? { offers } : {}), ...(old ? { old } : {}) });
+  return applyBases({ cells, diagnostics, broken, plugins, ...(takes.length ? { takes } : {}), ...(offers.length ? { offers } : {}), ...(old ? { old } : {}) });
 }
 
 /**

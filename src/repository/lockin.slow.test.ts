@@ -42,11 +42,11 @@ describe('lock-in, over 32 draws of 8 runs, 320,000 sections at entropy 0.3', ()
     expect(l.standardError * Math.sqrt(l.perDraw.length)).toBeLessThanOrEqual(DRAW_SPREAD);
   });
 
-  it('files fragments of its own where it misses, finds them again within 3 sections, and keeps the layer under 4 KB', () => {
+  it('files fragments of its own where it misses, finds them again within 3 sections, and keeps the layer under 6 KB', () => {
     const runs = learned.flat(2);
     const filed = runs.filter((r) => r.firstFiled !== null);
     expect(filed.length).toBeGreaterThan(0);
     for (const r of filed) expect(r.firstFoundAgain! - r.firstFiled!).toBeLessThanOrEqual(3);
-    for (const r of runs) expect(JSON.stringify(r.layer).length).toBeLessThan(4096);
+    for (const r of runs) expect(JSON.stringify(r.layer).length).toBeLessThan(6144); // (6 KB since #542: nineteen styles, more neighbours used together; the largest run of 64 was 4,311 bytes)
   });
 });
