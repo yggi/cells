@@ -1,15 +1,15 @@
-# 085 · Plugin-fragments: a fragment with holes its code fills with braid text; `law=` dissolves into `from`
+# 085 · Plugin-fragments: a fragment whose fills its code writes as braid text; `law=` dissolves into `from`
 
 **Date:** 2026-11-11 · **Status:** accepted, with two points left to see in rung 5 (§3, "to see"). The owner on #691, 2026-11-11, in order:
 
 - "a plugin is a fragment: plugin-fragments (or fragment-plugins)";
 - "we dissolve law with an extended from";
 - on the questions: "1a; 2c combined with 3a, plugins weave into cells by filling the braid string; 4c; 5b; 6a; 7a; 8b";
-- on the interface: "1) a [`pan=` moves], 2) keep for now [a hole's lap fixed], 3) clock as main argument slightly preferred, let's see, 4) yes, as suggested [sections from a hole], 6) yes".
+- on the interface: "1) a [`pan=` moves], 2) keep for now [a fill's lap fixed], 3) clock as main argument slightly preferred, let's see, 4) yes, as suggested [sections from a fill], 6) yes".
 
-· Issues: #691, #693
+· Issues: #691, #693, #696, #727
 
-*Read with [065](065-fragments-take-arguments.md) (fragments take arguments: the `from` line, the signature), [054](054-instruments-and-use.md) (the host hands a resolver; the piece file's lockfile), [047](047-fragments-are-files.md) (fragments are files), [077](077-the-core-is-sound-up-to-an-interface.md) (cored up to a named interface), [070](070-s1-hears-as-a-listener.md) (S1 hears as a listener), [031](031-chance-keyed-on-time.md) (draws keyed on what plays, as amended by #481), and Cell studio's [011](https://github.com/yggi/cell-studio/blob/main/docs/decisions/011-plugins.md) (show plugins: cells reads, the host runs). [086](086-the-view-lives-in-cell-studio.md) takes the show plugins out of cells.*
+*Read with [065](065-fragments-take-arguments.md) (fragments take arguments: the `from` line, the signature), [054](054-instruments-and-use.md) (the host hands a resolver; the piece file's lockfile), [047](047-fragments-are-files.md) (fragments are files), [077](077-the-core-is-sound-up-to-an-interface.md) (cored up to a named interface), [070](070-s1-hears-as-a-listener.md) (S1 hears as a listener), [031](031-chance-keyed-on-time.md) (draws keyed on what plays, as amended by #481), and Cell studio's [011](https://github.com/yggi/cell-studio/blob/main/docs/decisions/011-plugins.md) (show plugins: cells reads, the host runs). 086 (the view lives in Cell studio, proposed in its own pull request) takes the show plugins out of cells.*
 
 ## Context
 
@@ -27,9 +27,11 @@ The wish (#691) is for code outside the language to compute part of what a piece
 
 ## Decision
 
-### 1. A plugin-fragment is a fragment with holes; its code fills them with braid text
+### 1. A plugin-fragment is a fragment with fills; its code writes them as braid text
 
-**A plugin-fragment is a fragment file (047)** whose cells block is ordinary cells, except that some cells' braids are **holes**, written `fill()`. Its code fills each hole with braid text, the language's own notation. Everything around the holes (tables, attributes, levels, mixes) is plain cells, and the text the code returns is read as any braid is. So **plugins weave into cells:** the code writes notes and the language does the rest.
+**A plugin-fragment is a fragment file (047)** whose cells block is ordinary cells, except that some cells' braids are **fills**, written `fill()`. Its code writes each fill as braid text, the language's own notation.
+
+*A fill, not a hole* (#727): decision 047's holes are what a fragment uses and doesn't define (`repository/holes.ts`, `holesOf`). An earlier draft of this record, and rung 1's first code, called a fill a hole; the code says `engine/fills.ts`, `Fill`, `fills:`. Everything around the fills (tables, attributes, levels, mixes) is plain cells, and the text the code returns is read as any braid is. So **plugins weave into cells:** the code writes notes and the language does the rest.
 
 ````markdown
 ---
@@ -37,7 +39,7 @@ id: fiveto12
 runtime: wasm
 code: fiveto12.wasm # beside it, with its source (fiveto12.ts, AssemblyScript)
 hash: e1:… # of the .wasm; the lockfile pins this
-holes:
+fills:
   mode: { lap: 840 } # a stream: a fill per key (840 steps)
   tonic: { lap: 840 }
   notes: { lap: 12 } # a fill per 12/8 bar
@@ -50,7 +52,7 @@ origin: 11.55 # where lap 0 sits on the day it reads
 ```cells
 &cycle from &day
 &cycle [&notes * &level]
-&notes over=&key pan=&space fill()
+&notes over=&key fill()
 &level map=amp fill()
 &space map=lin fill()
 &key scale(&mode, &tonic)
@@ -61,11 +63,11 @@ origin: 11.55 # where lap 0 sits on the day it reads
 ````
 
 - **The signature, the call site, the copy semantics, the resolver and the lockfile are a fragment's** (065, 054): its inner names are private, and it reads only what it declares, plus sounds and taps.
-- **A hole's kind is its frontmatter entry:**
+- **A fill's kind is its frontmatter entry:**
   - **no `lap:`, a braid:** filled once per call site from its arguments, and baked by `toCore` (§4);
   - **a `lap:`, a stream:** filled once per lap, lap after lap, without end or until `laps:`. A stream is `<…>` whose list the code writes as it is reached.
-- **A hole's lap length is fixed** (the owner: "keep for now"). Lap *n* starts at *n* × its length, so any moment can be found directly, as a law's day can today. A varying length waits for a need.
-- **Sections are a hole** marked `mark: true`: each lap is a section, its text the label. `duration.ts` keeps no special case.
+- **A fill's lap length is fixed** (the owner: "keep for now"). Lap *n* starts at *n* × its length, so any moment can be found directly, as a law's day can today. A varying length waits for a need.
+- **Sections are a fill** marked `mark: true`: each lap is a section, its text the label. `duration.ts` keeps no special case.
 
 ### 2. `from` takes it; `law=` retires
 
@@ -84,8 +86,8 @@ origin: 11.55 # where lap 0 sits on the day it reads
 
 ```ts
 // cells types this; the host runs it, answering synchronously (§6)
-interface Holes {
-  fill(hole: string, lap: number, args: Readonly<Record<string, string>>): string;
+interface Fills {
+  fill(name: string, lap: number, args: Readonly<Record<string, string>>): string;
 }
 ```
 
@@ -93,7 +95,7 @@ interface Holes {
 - **The answer is a braid**, parsed as any braid is. An error in it points at the fragment and the lap.
 - **The plugin never sees time.** Cells computes the lap from the clock, the clock's `anchor=` and the fragment's `origin` (the owner's 1a).
 - **Two things to see in rung 5:**
-  - **The clock is the main argument** (the owner: "slightly preferred, let's see"). The holes are timed through it inside the fragment (`&notes step=&day/120960 …`: a step of fiveto12 is a 120,960th of the day), so the piece writes no rate at all. The other way: the head's `step=` sets the rate, and the main argument only anchors.
+  - **The clock is the main argument** (the owner: "slightly preferred, let's see"). The fills are timed through it inside the fragment (`&notes step=&day/120960 …`: a step of fiveto12 is a 120,960th of the day), so the piece writes no rate at all. The other way: the head's `step=` sets the rate, and the main argument only anchors.
   - **The cost:** a bar of `fiveto12` is about 100 characters, at 7 bars a minute. Rung 3 measures parsing it against the TypeScript law it replaces.
 
 **Real answers.** `fiveto12` today, Ionian, bars 0 and 1, as the text it would return:
@@ -104,7 +106,7 @@ fill("level", 0) → ".40@2 .84@2 .51 .18@2 .62@2 .29@2 .73"
 fill("notes", 1) → "[6, 8, 10, 12, 14, 16]@2 [3, 5, 7]@2 [0, 2, 4, 6, 8, 10, 12] [4, 6, 8, 10]@2 1@2 [5, 7, 9, 11, 13]@2 [2, 4]"
 ```
 
-**A braid hole, baked.** `necklace`, whose hole has no lap:
+**A braid fill, baked.** `necklace`, whose fill has no lap:
 
 ```text
 the fragment: &hits from (&n, &phase) &k · &n 12 · &phase 0 · &hits fill()
@@ -116,15 +118,15 @@ toCore:       &bell step=8n x ~ x ~ x x ~ x ~ x ~ x
 ### 4. The text and its lockfile are the truth
 
 - **The code is a fragment's, by hash, always** (the owner's 4c). It lives in a fragment file, pinned in the piece file's lockfile (054). A piece that travels as one file carries its fragments through #672's document of fragments, once that is accepted. No inline `=== plugin ===` block for sound.
-- **A braid hole is baked:** `toCore` writes the text it was filled with, so a piece's core plays without the code.
-- **A stream hole is cored up to an interface** (077 §2): its head keeps its name, its `from` line and its hash.
+- **A braid fill is baked:** `toCore` writes the text it was filled with, so a piece's core plays without the code.
+- **A stream fill is cored up to an interface** (077 §2): its head keeps its name, its `from` line and its hash.
 - **Identity is what plays** (the owner's 5b). The lockfile pins the code exactly. Identity, sameness and S1 compare the events, as for every piece (070, 031), so a plugin refactored without changing its output is the same piece.
 
 ### 5. `pan=` moves
 
-A melody's step has no gain or pan of its own, and `pan=` is not among the parameters a cell moves. So a law's fifth dimension, space, had no spelling. **`pan=` moves, like `lpf=`:** it takes a number, a `free()`, a cell, or a range times cells (078, 079). So `&notes pan=&space` places each note as `&space` stands when it sounds.
+A melody's step has no gain or pan of its own, and `pan=` was not among the parameters a cell moves. So a law's fifth dimension, space, had no spelling. **`pan=` moves, like `lpf=`** (#696, landed): it takes a number, a `free()`, a cell, or a range times cells (078, 079), read at each note's start into its channel gains, as a fixed one is.
 
-This is general, not the law's: any line can pan as it plays. Its own issue makes it, before rung 5. The `fiveto12` event snapshot then carries a note's place as its `pan` parameter, where the law today folds it into the gains. It sounds the same, and the snapshot moves in representation only.
+**But `pan=` is a voice's attribute, not a line's** (found in #727). `&notes pan=&space` does nothing ("pan= acts on a voice"), so a fragment's places reach its notes only through the voice they play on: `fiveto12`'s laps play on a voice of realize's own, which reads `pan=&space` (`PluginFragment.voice`). Its event snapshot doesn't move. A stream played on a *piece's* voice (rung 5) needs its places spelled another way. The natural one is `pan=` on a line, as `legato=` is (the place of the notes the line plays, times the voice's own balance): a change to the language for the owner, with rung 5.
 
 ### 6. Runtime: WASM in workers; cells runs no foreign code and stays synchronous
 
@@ -135,13 +137,13 @@ This is general, not the law's: any line can pan as it plays. Its own issue make
   ```text
   exports: memory
            alloc(len: i32) → i32                                     the host writes the arguments (UTF-8 JSON) here
-           fill(hole: i32, lap: f64, args: i32, argsLen: i32) → i64   a pointer and a length to UTF-8 text, packed
+           fill(index: i32, lap: f64, args: i32, argsLen: i32) → i64   a pointer and a length to UTF-8 text, packed
   imports: none
   ```
 
-  The holes are numbered in the frontmatter's order. WASM's arithmetic is exact across machines (NaN payloads aside), which JavaScript's `Math` is not: Jambot's players must hear the same notes. JavaScript waits for a need, as a frontend's trusted local development.
+  The fills are numbered in the frontmatter's order. WASM's arithmetic is exact across machines (NaN payloads aside), which JavaScript's `Math` is not: Jambot's players must hear the same notes. JavaScript waits for a need, as a frontend's trusted local development.
 - **Cells calls `fill` synchronously** (the owner's 6a), and the host decides how to answer. In Cell studio, it reads a buffer a worker fills ahead of play. In Node and the tools, it calls the module in-process. A lap not filled in time plays nothing and says so: a diagnostic, never a hang.
-- **The output is a pure function of (hash, hole, lap, arguments),** so the host caches on that key. The buffer is laps filled ahead. Rung 3 names the window and the deadline; proposed: at least 4 s ahead, in chunks of 8 s, 250 ms before a worker counts as hung.
+- **The output is a pure function of (hash, fill, lap, arguments),** so the host caches on that key. The buffer is laps filled ahead. Rung 3 names the window and the deadline; proposed: at least 4 s ahead, in chunks of 8 s, 250 ms before a worker counts as hung.
 
 ### 7. Trust
 
@@ -169,14 +171,15 @@ This is general, not the law's: any line can pan as it plays. Its own issue make
 ## Consequences
 
 - **#691's rungs:**
-  - 1 (#693): `fiveto12` answers `fill()` as text, built in, and realize plays its holes; `law=` is still read;
-  - an issue of its own: `pan=` moves (§5);
+  - 1 (#693, landed): `fiveto12` answers `fill()` as text, built in, and realize plays its fills; `law=` is still read;
+  - an issue of its own: `pan=` moves (§5; #696, landed);
+  - "hole" renamed "fill", and `fiveto12`'s places through its voice's `pan=` (#727);
   - 3: the buffer and its numbers;
   - 4: the WASM runtime in Cell studio, with `fiveto12` ported to AssemblyScript and the same S1 hash over a day;
-  - 5: the file form, `from` with holes, the clock as the main argument, Migrate;
-  - 6: braid holes (`necklace`, `spell(…)` as candidates);
+  - 5: the file form, `from` with fills, the clock as the main argument, a head a piece multiplies by its voice (`&notes * &level` has none: rung 1 found the mix algebra refuses it), its places on a piece's voice (§5), Migrate;
+  - 6: braid fills (`necklace`, `spell(…)` as candidates);
   - 7: foreign plugin-fragments in both frontends.
-- **A change a frontend notices:** `law=` warns once rung 5 lands, and Migrate rewrites it, as a minor version with the migration in `changes/`. `pan=` moving is an addition. Cell studio's `pluginView.ts` reads the law's cells (`&mode`, `&tonic`, the sections), not `'fiveto12'` by name.
+- **A change a frontend notices:** `law=` warns once rung 5 lands, and Migrate rewrites it, as a minor version with the migration in `changes/`. `pan=` moving is an addition. Cell studio's `pluginView.ts` can read `lawOf` in place of `'fiveto12'` (yggi/cell-studio#638).
 - **Not plugins:**
   - `scan`, `even`, `euclid`, `meter` and the waves are the foundation (072, 080).
   - The default performer (`perform/`) has a stream's shape one level up (077). It is a later question.
