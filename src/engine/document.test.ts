@@ -8,8 +8,8 @@ import { migrate } from './migrate';
 import { readPiece, withLockfile } from './piecefile';
 import { soundsIdentical } from './sameness';
 import { windowAt } from './schedule';
-import { partOf, partsOf } from './use';
-import { resolveSeed } from '../repository/library';
+import { partOf, partsOf, usesIn } from './use';
+import { LIBRARY, PARTS, resolveSeed, usesOf } from '../repository/library';
 
 const DOC = [
   '&twinkle from &key',
@@ -95,5 +95,43 @@ describe('Kinderlieder gives its six tunes (decision 082)', () => {
     expect(m.source.split('\n').slice(2, 4)).toEqual(['&twinkle from kinderlied &key', '&tw=wonder from kinderlied &key # the answer']);
     expect(errors(m.source, { resolve: resolveSeed })).toEqual([]);
     expect(soundsIdentical(m.source, old, 8, { resolve: resolveSeed, old: true })).toBe(true);
+  });
+});
+
+describe('how a document plays its parts (#692)', () => {
+  it('reads each line that takes a fragment over a head, with its named arguments as written', () => {
+    const text = ['&a from &key', '&a over=&key step=8n 0 1', '&s from ternary(answer=&b, bridge=&a^1) &a', '&t from call_and_answer &b', '&u from AABA label="x" &a'].join('\n');
+    expect(usesIn(text, 'a')).toEqual([
+      { id: 'ternary', args: { answer: '&b', bridge: '&a^1' } },
+      { id: 'AABA', args: {} },
+    ]);
+    expect(usesIn(text, 'b')).toEqual([{ id: 'call_and_answer', args: {} }]);
+    expect(usesIn(text, 'c')).toEqual([]);
+  });
+
+  it('gives Twinkle its ternary, wonder its answer, and Hänschen klein its rounded binary, its three lines by role', () => {
+    expect(usesOf('kinderlied/twinkle')).toEqual([{ id: 'ternary', args: { answer: 'kinderlied/wonder' } }]);
+    expect(usesOf('kinderlied/haenschen')).toEqual([
+      {
+        id: 'rounded_binary',
+        args: { answer: 'kinderlied/hinein', close: 'kinderlied/heim', bridge: 'kinderlied/weinet' },
+      },
+    ]);
+  });
+
+  it('gives none to a part its document takes nothing over, nor to any fragment that isn’t a part', () => {
+    const played = ['kinderlied/twinkle', 'kinderlied/haenschen'];
+    expect(PARTS.filter((f) => !played.includes(f.id) && usesOf(f.id).length > 0).map((f) => f.id)).toEqual([]);
+    expect(LIBRARY.filter((f) => !PARTS.includes(f) && usesOf(f.id).length > 0).map((f) => f.id)).toEqual([]);
+    expect(usesOf('nowhere/twinkle')).toEqual([]);
+  });
+
+  it('names each part its argument names as its document gives it, so a frontend takes it by that id', () => {
+    for (const use of [...usesOf('kinderlied/twinkle'), ...usesOf('kinderlied/haenschen')])
+      for (const id of Object.values(use.args))
+        expect(
+          PARTS.some((f) => f.id === id),
+          id,
+        ).toBe(true);
   });
 });

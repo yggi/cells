@@ -128,6 +128,24 @@ export function partOf(text: string, head: string): string | null {
   return [sigLine.written.trim(), ...lines.filter((l) => keep.has(l)).map((l) => l.written)].join('\n');
 }
 
+/** A line that takes a fragment over a name (#692): the id it takes and its named arguments, as written (`ternary`, `{ answer: '&wonder' }`). */
+export interface UseOver {
+  readonly id: string;
+  readonly args: Readonly<Record<string, string>>;
+}
+
+/**
+ * Each line of a text that takes a fragment with `&head` as its main argument (attributes on it aside), in the order written (#692): how a
+ * document plays its part, such as Kinderlieder's `&twinkleSong from ternary(answer=&wonder) &twinkle`, which takes
+ * `ternary` over `&twinkle`, `&wonder` its answer.
+ */
+export const usesIn = (text: string, head: string): UseOver[] =>
+  linesOf(text).flatMap((l) =>
+    l.from?.kind === 'use' && l.from.main?.trim().split(/\s+/).at(-1) === `&${head}`
+      ? [{ id: l.from.id, args: Object.fromEntries((l.from.args ?? []).map((a) => [a.name, a.value.trim()])) }]
+      : [],
+  );
+
 /** The heads of each signature a text holds, in the order written: one entry a part (decision 082). */
 export const partsOf = (text: string): string[][] => linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from.names.map((n) => n.slice(1))] : []));
 

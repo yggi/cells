@@ -23,6 +23,19 @@ export declare const ofFacet: (facet: string) => Fragment[];
 export declare const fromId: (id: string) => string;
 /** The head a line takes a fragment by, where it is named for it: a part's head (`kinderlied/twinkle` → `twinkle`), a seed motif's id. */
 export declare const headOf: (id: string) => string;
+/** How a document plays one of its parts (#692): the fragment it takes over it, and each named argument, a part of the same document by its id. */
+export interface PartUse {
+    readonly id: string;
+    readonly args: Readonly<Record<string, string>>;
+}
+/**
+ * How a part's own document plays it (#692; the owner, 2026-11-11: "tunes own form beats the style"): each line of the
+ * document that takes a fragment with the part's head as its main argument, its arguments that name another of the
+ * document's parts (`&wonder`) written as that part's id (`kinderlied/wonder`), any other as written. For
+ * `kinderlied/twinkle`, `[{ id: 'ternary', args: { answer: 'kinderlied/wonder' } }]`: the form a frontend plays the
+ * tune in, over the style's. None for a fragment that isn't a part, or a part its document takes nothing over.
+ */
+export declare function usesOf(id: string): readonly PartUse[];
 /**
  * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment
  * that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
