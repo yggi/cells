@@ -83,7 +83,7 @@ describe('the forms', () => {
   it('a from line declares no cell of the text’s own, and a signature none at all', () => {
     expect(parse(lines('&key from harmonic_minor D', '&a 0')).cells.map((c) => c.name)).toEqual(['a']);
     expect(parse(lines('&key from &tonic', '&key scale(harmonic, &tonic)')).cells.flatMap((c) => (c.lambda ? [] : [c.name]))).toEqual(['key']);
-    expect(parse('&key from harmonic_minor D').uses).toEqual([{ id: 'harmonic_minor', names: ['&key'], span: { line: 1, col: 1, len: 26 } }]);
+    expect(parse('&key from harmonic_minor D').takes).toEqual([{ id: 'harmonic_minor', names: ['&key'], span: { line: 1, col: 1, len: 26 } }]);
   });
 });
 
@@ -211,7 +211,7 @@ describe('the arguments', () => {
   });
 
   it('CompileResult.uses holds them, the main one under its parameter’s name', () => {
-    expect(compiled(lines('&t step=100bpm', '&bar from swung(swing=8n:.6) &t')).uses).toEqual([
+    expect(compiled(lines('&t step=100bpm', '&bar from swung(swing=8n:.6) &t')).takes).toEqual([
       {
         id: 'swung',
         names: ['&bar'],

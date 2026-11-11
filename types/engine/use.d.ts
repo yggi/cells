@@ -1,10 +1,19 @@
 import { type FromForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
-import type { CompileOptions, Resolve, Used } from './program';
-/** How deep `use` nests: a kit in a groove in a section in a piece is 3. */
-export declare const USE_DEPTH = 8;
+import type { CompileOptions, Origin, Resolve, Take } from './program';
+/** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
+export declare const FROM_DEPTH = 8;
+/**
+ * A part of a document (decision 082): the signature that names `head` (bare), then every line its heads and optional
+ * parameters read, wherever it sits, taken through the closure as a collection's names are; never its main parameter's
+ * line (the document's own, what it plays with as a piece), nor another signature's. A text of one signature is its
+ * own part. Null where no signature names the head.
+ */
+export declare function partOf(text: string, head: string): string | null;
+/** The heads of each signature a text holds, in the order written: one entry a part (decision 082). */
+export declare const partsOf: (text: string) => string[][];
 /** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
-export declare const hasUse: (text: string) => boolean;
+export declare const hasFrom: (text: string) => boolean;
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
 export declare function signatureOf(text: string): Extract<FromForm, {
     kind: 'signature';
@@ -23,14 +32,16 @@ export declare function readsAsValue(code: string, name: string): boolean;
 export interface Expansion {
     /** The piece's own text as written, then the used lines (so the piece's lines keep their numbers). */
     readonly text: string;
-    /** Its `use` lines, compiled: what each resolved to, gave and was overridden in. */
-    readonly uses: readonly Used[];
-    /** Every name a `use` gave (bare). */
+    /** Its `from` lines, compiled: what each resolved to, gave and was overridden in. */
+    readonly takes: readonly Take[];
+    /** Every name a `from` line gave (bare). */
     readonly given: ReadonlySet<string>;
-    /** What the expansion says: an unresolved id, a cycle, a depth past `USE_DEPTH`, a collision, a changed version. */
+    /** What the expansion says: an unresolved id, a cycle, a depth past `FROM_DEPTH`, a collision, a changed version. */
     readonly diagnostics: readonly Diagnostic[];
-    /** For each line of `text` past the piece's own, the `use` line it came through. */
+    /** For each line of `text` past the piece's own, the `from` line it came through. */
     readonly through: (line: number) => Span | null;
+    /** Where each line it added came from, by the name it declares (`Origin`, #639). */
+    readonly origins: ReadonlyMap<string, readonly Origin[]>;
 }
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
 export declare function expansion(text: string, { resolve, locked, old }?: CompileOptions): Expansion;

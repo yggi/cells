@@ -1,0 +1,8 @@
+### Added
+
+- **Three examples of the meter's feel** (#646): *Funk: the sixteenths lean* (`swing=16n:.58`, a slider, on straight eighths: Jambot's Funk drums and bass over the library's dorian vamp), *Aksak: twos and a three* (7/8 as 2 + 2 + 3 from the library's meter, `swing=8n:.6` leaning the twos while the three stays even, the motif `limp` answered by `call_and_answer`) and *Twelve-eight: the lean of three* (a slow blues in 12/8 whose threes lean long, short, short through `bend=8n:&lean` and a depth slider, over the library's twelve-bar blues and the motif `shuffle`).
+  - **New fragments:** the beats `aksak_drums` (written in beats and pulses, so it lays itself out in 7/8 as 3 + 2 + 2 or 2 + 2 + 3; at 7/8's point, weight 0.75) and `twelve_eight_drums` (at 12/8's point, weight 0.25, as `trip_hop_drums` weighs less than 1: heavier, it leaves lock-in's witness no section that misses). Each fits only its meters (the aksak's 7/8 and 3/4, the 12/8's 12/8), and no style's first rhythm changes.
+
+### Changed
+
+- **The swing example reworked as the meter's swing showcase** (#646): *Swing: the long and the short* (tier 4) is now a jazz swing in F on one meter, `swing=&swing` with `&swing swing=8n:free(2/3, 1/2..3/4)`, its band the library's (`swing_jazz_drums`, `walking_bass` over a ii–V–I, comping on the swung eighths), its notes saying what leans (a second eighth, the ride's skip note) and what doesn't (the beats, a triplet in its beat). Its swing clock (`scan(2 1)`) and second meter are gone, and what it plays moved (its event snapshot). The ladder's tier 4 now holds `free(v, lo..hi)`, the swing's slider, and Normalise no longer keeps the example as written.

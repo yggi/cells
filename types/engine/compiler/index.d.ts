@@ -6,5 +6,5 @@
  */
 import type { ParseResult } from '../ast';
 import type { CompileResult, Env } from '../program';
-/** A parsed piece, compiled; `used` names the cells a `use` line gave it (decision 054), which the built-in card doesn't hear. */
+/** A parsed piece, compiled; `used` names the cells a `from` line gave it (decision 054), which the built-in card doesn't hear. */
 export declare function compile(written: ParseResult, env: Env, used?: ReadonlySet<string>): CompileResult;

@@ -7,7 +7,7 @@ import { clocking } from './clocking';
 import { mainLength, pieceTime } from './duration';
 import { codeShifts, DEFAULT_ENV, type CompileOptions, type CompileResult, type Env } from './program';
 import { readStyles, type Scope } from './styles';
-import { expansion, hasUse } from './use';
+import { expansion, hasFrom } from './use';
 
 /** A parsed piece, compiled: the phases are in compiler/ (index.ts says their order). */
 function compile(parsed: ParseResult, env: Env = DEFAULT_ENV, used?: ReadonlySet<string>): CompileResult {
@@ -35,16 +35,16 @@ function scopeOf(result: CompileResult): Scope | null {
 }
 
 /**
- * A piece's text, compiled. Its `use` lines (decision 054) are read through `options.resolve`, and its lockfile's hashes
- * (`options.locked`): what compiles is the expansion (`use.ts`), and what a used line says is said on the `use` line it
+ * A piece's text, compiled. Its `from` lines (decision 054) are read through `options.resolve`, and its lockfile's hashes
+ * (`options.locked`): what compiles is the expansion (`use.ts`), and what a used line says is said on the `from` line it
  * came through.
  */
 export function compileSource(source: string, env: Env = DEFAULT_ENV, options: CompileOptions = {}): CompileResult {
-  if (!hasUse(source)) return compile(parse(source, { old: options.old ?? false }), env);
+  if (!hasFrom(source)) return compile(parse(source, { old: options.old ?? false }), env);
   const x = expansion(source, options);
   const result = compile(parse(x.text, { old: options.old ?? false }), env, x.given);
   const diagnostics = [...x.diagnostics, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort(
     (a, b) => a.span.line - b.span.line || a.span.col - b.span.col,
   );
-  return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, uses: x.uses };
+  return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
 }

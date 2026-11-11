@@ -86,7 +86,7 @@ function fitByName(fragment, workbench, compiledBy, resolve) {
     const compiled = compiledBy ?? ((text) => compileSource(text, undefined, resolve ? { resolve } : {}));
     const holes = holesOf(fragment, compiled, resolve);
     const bench = compiled(workbench);
-    const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
+    const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.takes ?? []).flatMap((u) => u.gave)]);
     const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
     const sounds = unfilled.filter((name) => holes.sounds.includes(name));
     const missing = unfilled.filter((name) => !sounds.includes(name));
@@ -165,7 +165,11 @@ export function cachedFit(resolve, limit = 512) {
     };
 }
 const ID_ARGS = /^([^(]*)\((.*)\)$/;
-function fromLine(heads, id, args, main) {
+const PART = /^([^(/]+)\/([^(]+)$/;
+function fromLine(given, whole, args, main) {
+    const part = PART.exec(whole);
+    const id = part ? part[1] : whole;
+    const heads = part && given.length === 1 && given[0] !== `&${part[2]}` && !given[0].includes('=') ? [`${given[0]}=${part[2]}`] : given;
     const m = ID_ARGS.exec(id);
     const written = [...(m ? [m[2]] : []), ...Object.entries(args ?? {}).map(([k, v]) => `${k}=${v}`)];
     return `${heads.join(', ')} from ${m ? m[1] : id}${written.length ? `(${written.join(', ')})` : ''}${main ? ` ${main}` : ''}`;
@@ -208,7 +212,7 @@ export function useOn(bench, id, options) {
     const text = options.resolve(id);
     const head = bench.replace(/\s+$/, '');
     const written = (line) => [...(head ? [head] : []), line].join('\n');
-    const usedBy = (whole) => compiled(whole).uses?.at(-1) ?? null;
+    const usedBy = (whole) => compiled(whole).takes?.at(-1) ?? null;
     const signature = text === null ? null : signatureOf(text);
     if (text === null || !signature) {
         const line = `* from ${id}`;

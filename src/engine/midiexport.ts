@@ -1,7 +1,7 @@
 /**
  * A piece as a MIDI file (#307): its notes as MIDI out sends them (`engine/midi.ts`: the same channel table, routes,
- * keys, velocities and bends; decision 005, what is sent is what sounds), on the main meter's steps (`midiclock.ts`): a
- * quarter note a beat (`beat=` steps), the tempo each step's length, so a scan's or a motor's tempo map is the file's
+ * keys, velocities and bends; decision 005, what is sent is what sounds), on the main meter's steps, or its swing's finest
+ * level where that is finer (#558; `midiclock.ts`): a quarter note the meter's beat, the tempo each step's length, so a scan's or a motor's tempo map is the file's
  * and a note on a step is on the grid (a swing is tempos that alternate, not notes off the grid; a note between steps
  * sits where it sounds). A piece with no main meter is laid at 120 bpm. How much is written is the span every render
  * takes (`span.ts`, #315): a piece that ends whole, a loop one cycle, an hour at most, or what the caller gives.

@@ -23,7 +23,7 @@
 import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
-import type { CompileResult, Resolve, Used } from '../engine/program';
+import type { CompileResult, Resolve, Take } from '../engine/program';
 import { expansion, fragmentHash, signatureOf } from '../engine/use';
 import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
@@ -167,7 +167,7 @@ function fitByName(fragment: string, workbench: string, compiledBy?: (text: stri
   const compiled = compiledBy ?? ((text: string) => compileSource(text, undefined, resolve ? { resolve } : {}));
   const holes = holesOf(fragment, compiled, resolve);
   const bench = compiled(workbench);
-  const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.uses ?? []).flatMap((u) => u.gave)]);
+  const benchNames = new Set([...declarations(workbench).map((l) => `&${l.name}`), ...(bench.takes ?? []).flatMap((u) => u.gave)]);
   const unfilled = holes.uses.filter((name) => (name === 'key' ? !bench.mainKey : !benchNames.has(name)));
   const sounds = unfilled.filter((name) => holes.sounds.includes(name));
   const missing = unfilled.filter((name) => !sounds.includes(name));
@@ -276,7 +276,7 @@ export interface UseOn {
   /** The main argument as written (`&harm`, `D`), or null: the template has no main parameter, or the workbench no cell for it. */
   readonly main: string | null;
   /** What the copy gives, as the compile reads it (`CompileResult.uses`); null where the template didn't resolve. */
-  readonly used: Used | null;
+  readonly used: Take | null;
 }
 
 /** What `useOn` is told: the head's name, the main argument, the named arguments, and how to read the library. */
@@ -293,9 +293,16 @@ export interface UseOnOptions {
 }
 
 const ID_ARGS = /^([^(]*)\((.*)\)$/;
+/** A document's part's id: its key and its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own. */
+const PART = /^([^(/]+)\/([^(]+)$/;
 
 /** A `from` line: names, the id with its arguments (the id's own, `meter(swing=8n:2/3)`, then the line's), the main argument. */
-function fromLine(heads: readonly string[], id: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
+function fromLine(given: readonly string[], whole: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
+  // (a document's part, `kinderlied/twinkle`, is taken from its document by its head, renamed where it is named
+  // otherwise, `&twinkle2=twinkle from kinderlied`: in a document the head picks the part, decision 082)
+  const part = PART.exec(whole);
+  const id = part ? part[1]! : whole;
+  const heads = part && given.length === 1 && given[0] !== `&${part[2]}` && !given[0]!.includes('=') ? [`${given[0]}=${part[2]}`] : given;
   const m = ID_ARGS.exec(id);
   const written = [...(m ? [m[2]!] : []), ...Object.entries(args ?? {}).map(([k, v]) => `${k}=${v}`)];
   return `${heads.join(', ')} from ${m ? m[1] : id}${written.length ? `(${written.join(', ')})` : ''}${main ? ` ${main}` : ''}`;
@@ -366,7 +373,7 @@ export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
   const text = options.resolve(id);
   const head = bench.replace(/\s+$/, '');
   const written = (line: string) => [...(head ? [head] : []), line].join('\n');
-  const usedBy = (whole: string): Used | null => compiled(whole).uses?.at(-1) ?? null;
+  const usedBy = (whole: string): Take | null => compiled(whole).takes?.at(-1) ?? null;
   const signature = text === null ? null : signatureOf(text);
   if (text === null || !signature) {
     const line = `* from ${id}`;

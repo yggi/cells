@@ -11,7 +11,7 @@ export interface ShortenOptions extends CompileOptions {
     readonly hints?: readonly Hint[];
 }
 /**
- * Everything that could be written shorter, the largest saving first. A piece's `use` lines read through `options`
+ * Everything that could be written shorter, the largest saving first. A piece's `from` lines read through `options`
  * (decision 054, #241): what is offered is what the piece written out would be offered, less any rewrite of a used line
  * (one the piece would then define over its fragment's).
  */

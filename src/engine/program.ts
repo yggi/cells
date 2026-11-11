@@ -501,8 +501,10 @@ export interface CompileResult {
    * which every sound nothing reads goes to. It is in `cells` (implicit: not drawn, in no line, never edited).
    */
   readonly builtinCard?: string;
-  /** What each of the piece's `use` lines resolved to and gave it (decision 054), in the order written; absent for none. */
-  readonly uses?: readonly Used[];
+  /** What each of the piece's `from` lines resolved to and gave it (decision 065), in the order written; absent for none. */
+  readonly takes?: readonly Take[];
+  /** Where each cell its `from` lines gave came from, by its name as compiled (`hh`, a copy's `bar_grouping`); absent for none. */
+  readonly origins?: ReadonlyMap<string, readonly Origin[]>;
   /** Its gates, the performers (decision 058), in the order written: who plays which part, on what. */
   readonly performers: readonly Performer[];
 }
@@ -522,7 +524,7 @@ export interface Performer {
 }
 
 /**
- * Where a piece's `use` lines are read from (decision 054): a fragment's text by its id, and the hash its lockfile
+ * Where a piece's `from` lines are read from (decision 054): a fragment's text by its id, and the hash its lockfile
  * recorded for it where it has one, or null where the library has none of that id. A library that no longer has the
  * version hashed gives its current one: the compile warns.
  */
@@ -534,7 +536,7 @@ export interface Locked {
   readonly hash: string;
 }
 
-/** What a compile reads besides the text: the resolver of its `use` lines, and the hashes its lockfile recorded. */
+/** What a compile reads besides the text: the resolver of its `from` lines, and the hashes its lockfile recorded. */
 export interface CompileOptions {
   readonly resolve?: Resolve;
   readonly locked?: readonly Locked[];
@@ -545,28 +547,41 @@ export interface CompileOptions {
   readonly old?: boolean;
 }
 
-/** A `use` line, as compiled (decisions 054, 059). */
-export interface Used {
+/**
+ * One step of where a given cell came from (#639): a fragment's id and a line of it (1-based), or the piece's own line
+ * (`id` null). A cell's origin lists them outermost first: the piece's `from` line, each fragment's line that took it on,
+ * and last the line of the fragment that defines it (Electroswing's `&hh`: its line 1, `drums_performer`'s take of the
+ * kit, `gm_kit`'s line 8).
+ */
+export interface Origin {
+  readonly id: string | null;
+  readonly line: number;
+}
+
+/** A `from` line that takes from a fragment, as compiled (decisions 054, 065). */
+export interface Take {
   /** The fragment's id, as written. */
   readonly id: string;
-  /** The names it asks for (`use &bd, &sd from …`: `['&bd', '&sd']`), or null for every name (`use * from …`). */
+  /** The names it asks for (`&bd, &sd from …`: `['&bd', '&sd']`), or null for every name (`* from …`). */
   readonly names: readonly string[] | null;
   /** The line it is on. */
   readonly span: Span;
   /** The hash of the text it resolved to (`e1:…`: the text up to layout, decision 050), or null where it didn't resolve. */
   readonly hash: string | null;
   /**
-   * The names it gave the piece (`&bd`), in the order the expansion writes them: its own lines, then those it used. For a
-   * named use, the names it asks for and the fragment's lines they read (its helpers), less what the piece defines.
+   * The names it gave the piece (`&bd`), in the order the expansion writes them: its own lines, then those it took. For a
+   * named take, the names it asks for and the fragment's lines they read (its helpers), less what the piece defines.
    */
   readonly gave: readonly string[];
   /** The names it asks for (or, for `*`, defines) that the piece's own lines define instead. */
   readonly overrode: readonly string[];
   /**
    * A `from` line's arguments (decision 065), as written: each named one (`swing=8n:.64`), and the main one under the
-   * name of the parameter it binds (`tempo: '&tempo'`). Absent for a `use` line and for a collection.
+   * name of the parameter it binds (`tempo: '&tempo'`). Absent for a collection.
    */
   readonly args?: Readonly<Record<string, string>>;
+  /** The head of the document's part it took (decision 082: `&twinkle from kinderlied` takes `twinkle`); absent for a file of one fragment. Its hash is the part's. */
+  readonly part?: string;
 }
 
 /** Shift of every cell; missing names use the code's shift=. */

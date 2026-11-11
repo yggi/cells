@@ -3,7 +3,7 @@ import { valueSumOf } from '../valuesum';
 import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { SCALE_KEY } from '../parser/generators';
-import { VOICE_PARAMS } from '../attributes';
+import { PLAYED_AS, VOICE_PARAMS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
 import { overdub } from '../parser/base';
@@ -584,7 +584,7 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
  * anything else; a member that multiplies by a sound (a voice, a mix, a gate) is said once, here.
  */
 function stackOf(decls: ReadonlyMap<string, CellDecl>, d: CellDecl | undefined, error: Ctx['error']): { line: Ref; by: Expr[] }[] | null {
-  if (!d || d.map || d.gate || Object.keys(d.params).length || d.braid.kind !== 'list' || d.braid.tokens.length !== 1) return null;
+  if (!d || d.map || d.gate || Object.keys(d.params).some((k) => !PLAYED_AS.has(k)) || d.braid.kind !== 'list' || d.braid.tokens.length !== 1) return null;
   const a = d.braid.tokens[0].atom;
   if (a.kind !== 'mix' || a.gate || !a.exprs.length) return null;
   // (a level is a number or a cell that is one by its own line, map=amp, map=db or map=lin: decision 006, I4)

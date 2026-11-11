@@ -208,6 +208,10 @@ const FITS: Record<string, readonly string[]> = {
   waltz_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("12/8"))'],
   march_drums: [...FOUR_FOURS, 'meter(grouping=meter("2/4"))', 'meter(grouping=meter("12/8"))'],
   trip_hop_drums: FOUR_FOURS,
+  // (#646: the aksak's lines lap three beats and an eighth, so it fits the meters of three beats; the 12/8's lap four
+  // beats and three eighths, so it fits 12/8 alone: in 6/8 its four beats are two bars)
+  aksak_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("7/8"))'],
+  twelve_eight_drums: ['meter(grouping=meter("12/8"))'],
 };
 
 describe('every rhythm against every meter of the library', () => {
@@ -352,10 +356,12 @@ describe('a query given the workbench', () => {
     const toned = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: `${bench('meter')}\n&tonic D`, ...named }).map((f) => f.fragment.id);
     expect(toned).toEqual(all.filter((id) => isRhythm(id) || open.includes(id) || modes.includes(id)));
     // (of the rhythms, only Ghost drums, Kinderlied drums and the three beats read from the examples (#572) fit 7/8: their lines
-    // lap the bar, its half, the beat or the eighth, and nothing a sixteenth off the beat)
+    // lap the bar, its half, the beat or the eighth, and nothing a sixteenth off the beat; and the aksak's, written for it, #646)
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter(grouping=meter("7/8"))'), ...named }).map((f) => f.fragment.id)).toEqual(
       all.filter(
-        (id) => open.includes(id) || ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums', 'shanty_drums', 'quiet_pulse'].includes(id),
+        (id) =>
+          open.includes(id) ||
+          ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums', 'shanty_drums', 'quiet_pulse', 'aksak_drums'].includes(id),
       ),
     );
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('meter') })).toEqual([]);

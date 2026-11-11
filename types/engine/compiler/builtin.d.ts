@@ -20,7 +20,7 @@ export declare function otherReadsOf(d: CellDecl): string[];
 /**
  * The declarations with the built-in card added, when the piece writes no card and has a sound nothing reads: a sound
  * is what the mix algebra calls a signal or a wave (sorts.ts: a voice, a mix, a gate, a pattern read through a kit, a
- * tape's read head, a braid at audio rate). Otherwise as they were. A cell a `use` line gave (`used`, decision 054) isn't
+ * tape's read head, a braid at audio rate). Otherwise as they were. A cell a `from` line gave (`used`, decision 054) isn't
  * heard: a piece using the General MIDI kit would hold its 47 voices.
  */
 export declare function builtinCard(ctx: Ctx, declared: Declared, used?: ReadonlySet<string>): Declared & {

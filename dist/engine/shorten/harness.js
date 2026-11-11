@@ -24,7 +24,7 @@ export function candidates(source, options = {}) {
     }
     return { result: r, cells: out };
 }
-export const usedNames = (r) => new Set((r.uses ?? []).flatMap((u) => u.gave.map((n) => n.replace(/^&/, ''))));
+export const usedNames = (r) => new Set((r.takes ?? []).flatMap((u) => u.gave.map((n) => n.replace(/^&/, ''))));
 export const size = (source) => source.replace(/[ \t]+/g, ' ').length;
 export const structure = (source) => structureOf(source, { asWritten: true }).total;
 export const saves = (source, r) => {

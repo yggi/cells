@@ -46,7 +46,7 @@ export const NUMBER_PLACES = {
   param: place({
     form: 'lpf=n, and every sound parameter',
     name: 'param',
-    cell: `${MOVES}, on a parameter that moves (pan= and postgain= don't: the renderer's)`,
+    cell: `${MOVES}, on a parameter that moves (postgain= doesn't: the renderer's; pan= is read at each note's start)`,
     moves: true,
     example: '&lead s=saw loop=C4 lpf=free(1200, 200..5000)',
   }),

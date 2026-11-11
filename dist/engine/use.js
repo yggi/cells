@@ -1,9 +1,10 @@
 import { splitComment } from "./edit.js";
 import { FROM_FORM, isAttribute, readFrom, topTokens } from "./parser/use.js";
 import { STYLE } from "./style.js";
-import { RENAMED_IDS } from "./renamed.js";
+import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
-export const USE_DEPTH = 8;
+export const FROM_DEPTH = 8;
+const via = (lines, step) => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const READS = /&([A-Za-z_][A-Za-z0-9_]*)/g;
 const CONTINUES = /[+*,[]\s*$/;
@@ -32,7 +33,59 @@ function lineOf(code, written = code, line = 0) {
     const reads = head ? [...new Set([...code.slice(head[0].length).matchAll(READS)].map((m) => m[1]))] : [];
     return { name: head?.[1] ?? null, reads, written, code, line };
 }
-export const hasUse = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
+export function partOf(text, head) {
+    const lines = linesOf(text);
+    const sigs = lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : []));
+    const found = sigs.find((s) => s.sig.names.includes(`&${head}`));
+    if (!found)
+        return null;
+    if (sigs.length === 1)
+        return text;
+    const { line: sigLine, sig } = found;
+    const main = sig.main ? sig.main.slice(1) : null;
+    const defines = new Map();
+    for (const l of lines) {
+        if (l.name)
+            defines.set(l.name, l);
+        else if (l.from?.kind === 'use')
+            for (const n of l.from.names ?? [])
+                defines.set(n.slice(1), l);
+    }
+    const readsOf = (l) => (l.from?.kind === 'use' ? [...l.code.slice(l.code.search(/\sfrom\s/)).matchAll(READS)].map((m) => m[1]) : l.reads);
+    const keep = new Set();
+    const seen = new Set();
+    for (const queue = [...sig.names, ...sig.optional].map((n) => n.slice(1)); queue.length;) {
+        const n = queue.shift();
+        if (seen.has(n) || n === main)
+            continue;
+        seen.add(n);
+        const l = defines.get(n);
+        if (!l || keep.has(l))
+            continue;
+        keep.add(l);
+        queue.push(...readsOf(l));
+    }
+    return [sigLine.written.trim(), ...lines.filter((l) => keep.has(l)).map((l) => l.written)].join('\n');
+}
+export const partsOf = (text) => linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from.names.map((n) => n.slice(1))] : []));
+function pickPart(id, text, from, say) {
+    const parts = partsOf(text);
+    if (parts.length < 2)
+        return { text };
+    const heads = parts.map((p) => p.map((h) => `&${h}`).join(', ')).join(' · ');
+    const asked = (from.takes ?? from.names)?.[0]?.slice(1);
+    if (!asked) {
+        say(`${quoted(id)} gives ${parts.length} parts, each taken by its head (${heads}): name one, not *`);
+        return null;
+    }
+    const part = partOf(text, asked);
+    if (part === null) {
+        say(`${quoted(id)} gives no part headed &${asked}: its parts are ${heads}`);
+        return null;
+    }
+    return { text: part, part: asked };
+}
+export const hasFrom = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
 export function signatureOf(text) {
     for (const l of linesOf(text))
         if (l.from?.kind === 'signature')
@@ -269,7 +322,7 @@ function give(entry, path, text, resolve, say, taken, old, level) {
             return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
         const asked = new Set(from.names.map((n) => n.slice(1)).filter((n) => !renames.lacking.has(n)));
         const touches = (l) => (l.name !== null && renames.names.has(l.name)) || l.reads.some((r) => renames.names.has(r));
-        const theirs = lines.map((l) => (touches(l) ? lineOf(renamed(l.code, renames.names), renamed(l.written, renames.names), l.line) : l));
+        const theirs = lines.map((l) => touches(l) ? { ...lineOf(renamed(l.code, renames.names), renamed(l.written, renames.names), l.line), ...(l.origin ? { origin: l.origin } : {}) } : l);
         return { taken: { id, names: asked, lines: sharedLines(theirs), resolved: true }, copy: [] };
     }
     if (signatures.length > 1)
@@ -399,12 +452,12 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
             code = inherited(names.get(p), code, asCell(values.get(p), p, own));
         if (heads.includes(p) && from.head.length && one)
             code = withAttributes(code, from.head);
-        copy.push(lineOf(code));
+        copy.push({ ...lineOf(code), ...(l.origin ? { origin: l.origin } : {}) });
     }
     if (main && from.main !== null && !byReference.has(main))
         copy.push(lineOf(`&${names.get(main)} ${asCell(values.get(main), main, own)}`));
     for (const p of sharedValued)
-        copy.push(lineOf(inherited(names.get(p), byName.get(p).code, asCell(values.get(p), p, own))));
+        copy.push({ ...lineOf(inherited(names.get(p), byName.get(p).code, asCell(values.get(p), p, own))), origin: byName.get(p).origin ?? [] });
     if (level?.warn && !old)
         for (const o of optional)
             if (!definesOwn.has(o) && !values.has(o) && level.defines.has(o) && reached.has(o) && level.codes.get(o) !== byName.get(o)?.code)
@@ -414,7 +467,8 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
     return { taken: given, copy, args: Object.fromEntries(values) };
 }
 function fragmentLines(path, text, resolve, say) {
-    const own = linesOf(text);
+    const here = path.at(-1);
+    const own = linesOf(text).map((l) => ({ ...l, origin: [{ id: here, line: l.line }] }));
     const where = ` (in ${pathOf(path)})`;
     const sayHere = (message) => say(`${message}${where}`);
     const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
@@ -432,16 +486,18 @@ function fragmentLines(path, text, resolve, say) {
         const next = [...path, id];
         if (path.includes(id))
             say(`use ${quoted(id)} is a cycle: ${pathOf(next)}`);
-        else if (next.length > USE_DEPTH)
-            say(`use ${quoted(id)} nests past ${USE_DEPTH} deep: ${pathOf(next)}`);
+        else if (next.length > FROM_DEPTH)
+            say(`use ${quoted(id)} nests past ${FROM_DEPTH} deep: ${pathOf(next)}`);
         else {
-            const theirs = resolve(id);
-            if (theirs === null)
+            const whole = resolve(id);
+            const theirs = whole === null ? null : (pickPart(id, whole, entry.from, sayHere)?.text ?? null);
+            if (whole === null)
                 sayHere(`No fragment ${quoted(id)} to use`);
-            else {
+            else if (theirs !== null) {
                 const g = give(entry, next, theirs, resolve, say, taken);
-                copies.push(...g.copy);
-                return [g.taken];
+                const step = { id: here, line: l.line };
+                copies.push(...via(g.copy, step));
+                return [{ ...g.taken, lines: via(g.taken.lines, step) }];
             }
         }
         return [{ id, names, lines: [], resolved: false }];
@@ -469,6 +525,7 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
     const hashes = [];
     const copies = [];
     const args = [];
+    const parts = [];
     const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
     const level = {
         defines: new Set(taken),
@@ -480,10 +537,18 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
         const names = namesOf(u);
         const span = spanOf(u.line);
         const say = (message) => diagnostics.push({ severity: 'error', message, span });
-        const recorded = locked.find((k) => k.id === id)?.hash;
-        const theirs = resolve ? resolve(id, ...(recorded ? [recorded] : [])) : null;
+        const head = (u.from.takes ?? u.from.names)?.[0]?.slice(1);
+        const recorded = (locked.find((k) => head !== undefined && k.id === `${id}/${head}`) ?? locked.find((k) => k.id === id))?.hash;
+        const moved = old ? MOVED.get(id) : undefined;
+        if (moved)
+            diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
+        const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
+        const picked = whole === null ? null : pickPart(id, whole, u.from, say);
+        const theirs = picked?.text ?? null;
+        parts.push(picked?.part);
         if (theirs === null) {
-            say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
+            if (whole === null)
+                say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
             hashes.push(null);
             copies.push([]);
             args.push(undefined);
@@ -503,9 +568,10 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
             ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
             : undefined;
         const g = give(u, [id], theirs, resolve, say, taken, binding, { ...level, warn: (message) => diagnostics.push({ severity: 'warning', message, span }) });
-        copies.push(g.copy);
+        const step = { id: null, line: u.line.line };
+        copies.push(via(g.copy, step));
         args.push(g.args);
-        return g.taken;
+        return { ...g.taken, lines: via(g.taken.lines, step) };
     });
     const merged = merge([...own, ...copies.flat()], used, (i, message) => diagnostics.push({ severity: 'error', message, span: spanOf(uses[i].line) }), 'the piece');
     uses.forEach((u, i) => {
@@ -532,7 +598,7 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
             through.push(spanOf(uses[from.get(l)].line));
     return {
         text: added.length ? [text, ...added.map((l) => l.written)].join('\n') : text,
-        uses: uses.map((u, i) => {
+        takes: uses.map((u, i) => {
             const copied = copies[i].filter((l) => from.get(l) === i && l.name).map((l) => `&${l.name}`);
             const visible = args[i] ? (u.names ?? []).filter((n) => copied.includes(n)) : [];
             return {
@@ -543,18 +609,20 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
                 gave: args[i] ? [...new Set([...visible, ...copied, ...merged.per[i].gave])] : merged.per[i].gave,
                 overrode: merged.per[i].overrode,
                 ...(args[i] ? { args: args[i] } : {}),
+                ...(parts[i] ? { part: parts[i] } : {}),
             };
         }),
         given: new Set(added.flatMap((l) => (l.name && l.shared ? [l.name] : []))),
         diagnostics,
         through: (line) => (line > head ? (through[line - head - 1] ?? null) : null),
+        origins: new Map(added.flatMap((l) => (l.name && l.origin ? [[l.name, l.origin]] : []))),
     };
 }
 export function expand(text, resolve, locked) {
-    if (!hasUse(text))
+    if (!hasFrom(text))
         return text;
     const x = expansion(text, { resolve, ...(locked ? { locked } : {}) });
-    const kept = new Set(x.uses.filter((u) => u.hash === null).map((u) => u.span.line));
+    const kept = new Set(x.takes.filter((u) => u.hash === null).map((u) => u.span.line));
     const own = text
         .split('\n')
         .filter((raw, i) => readFrom(splitComment(raw)[0])?.kind !== 'use' || kept.has(i + 1))

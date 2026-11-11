@@ -35,8 +35,18 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     if (![b.voice, ...b.pitches.map((t) => t.ref)].every(known)) continue;
     // (a term whose line failed, or that uses one: its own error says why; nothing more about this product)
     if ([b.voice, ...b.pitches.map((t) => t.ref)].some((r) => ctx.broken.has(r.name))) continue;
+    // a moving pan= is read at each note's start (#696): a sound that rings without notes, a resonator alone or a tape's
+    // read head, has none to read it at
+    const unread = (name: string) => {
+      if (cells.get(name)?.paramCells.pan)
+        warn(
+          `&${name}'s pan= moves, but it is read at each note's start, and &${name} rings without notes here: it sits in the centre (write a number)`,
+          decls.get(name)?.paramSpans.pan ?? b.voice.span,
+        );
+    };
     // a sound tape's read head in a mix: what it reads returns to the sound card at these levels
     if (soundHead(b.voice.name) && b.pitches.length === 0) {
+      unread(b.voice.name);
       returns.push({ head: b.voice.name, tape: cells.get(b.voice.name)!.params.play as string, gains: [gains[0], gains[1]], parts, through: [...through] });
       continue;
     }
@@ -44,6 +54,7 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     if (!voice) continue;
     // a resonator alone in a mix: heard ringing (from a hand, a neighbour, what drives it)
     if (typeof voice.params.body === 'string' && b.pitches.length === 0) {
+      unread(voice.name);
       // (its pan= in the gains and in each part, so muting a mix takes its share away at the same balance)
       const [pl, pr] = balance(voice.params.pan);
       resonances.push({

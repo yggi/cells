@@ -1,5 +1,5 @@
 ---
-id: korobeiniki
+id: korobeinikiBar
 association:
   - point:
       sync: 0.3
@@ -13,8 +13,8 @@ lifted: yggi/cells examples/korobeiniki.md @ a8de625f
 ---
 
 ```cells
-&korobeiniki from &key
-&korobeiniki over=&key step=8n 7@2 2 3 5@2 3 2
+&korobeinikiBar from &key
+&korobeinikiBar over=&key step=8n 7@2 2 3 5@2 3 2
 ```
 
 The tune of [Korobeiniki](../../examples/korobeiniki.md), its first bar: the octave held, a leap down to the third, up by step to the fifth and back. A Russian folk song, public domain, known to many from a falling-blocks video game.

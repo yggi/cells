@@ -2,6 +2,7 @@ import { declarations } from "./fit.js";
 import { byId, fragmentProblems, pointDistance, pointsOf } from "./fragments.js";
 import { signatureOf } from "../engine/use.js";
 import { readFrom } from "../engine/parser/use.js";
+import { counts } from "../engine/core/desugar.js";
 import { splitComment } from "../engine/edit.js";
 import { argsOf, ofArgs } from "./variants.js";
 import { RENAMED_IDS } from "../engine/renamed.js";
@@ -19,8 +20,11 @@ const ownNames = (text) => {
 };
 export function canonicalText(text) {
     const index = new Map(ownNames(text).map((name, i) => [name, i + 1]));
-    return declarations(text)
-        .map((l) => l.code.replace(NAME, (written, name) => (index.has(name) ? `&#${index.get(name)}` : written)))
+    return counts(declarations(text)
+        .map((l) => l.code)
+        .join('\n'))
+        .split('\n')
+        .map((code) => code.replace(NAME, (written, name) => (index.has(name) ? `&#${index.get(name)}` : written)))
         .join('\n');
 }
 const linesAlone = (text) => text

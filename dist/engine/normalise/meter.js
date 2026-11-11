@@ -1,5 +1,9 @@
 import { attrsOf, declLine, declWords, spansLines, splitComment } from "../edit.js";
 import { parse } from "../parser/index.js";
+import { codeShifts } from "../program.js";
+import { clocking } from "../clocking.js";
+import { compileSource } from "../compile.js";
+import { plan } from "../realize.js";
 const rewrite = (rule, title, before, after, apply) => ({
     id: `${rule}:${before}`,
     tool: 'normalise',
@@ -107,6 +111,100 @@ export function swingClock(source, result) {
             lines[m] = keepColumn(lines[m], `${code.trimEnd()} swing=&${name}`);
             const tapped = new RegExp(`step=&${name}:pulse(?![\\w*/.:])`, 'g');
             return lines.map((l) => (tapped.test(l) ? keepColumn(l, splitComment(l)[0].trimEnd().replace(tapped, `step=${tap}`)) : l)).join('\n');
+        }));
+    }
+    return out;
+}
+const TAPS = [...['1n', '2n', '4n', '8n', '16n', '32n'].flatMap((n) => [n, `${n}.`, n.replace('n', 't')]), 'pulse', 'beat', '1m'];
+const SAME = { steps: 64, seconds: 1e-9 };
+function otherMentions(source, name, ...readers) {
+    const said = readers.reduce((s, r) => s.replace(r, ''), source.replace(/about=(?:\([^)]*\)|&\w+)/g, ''));
+    return [...said.matchAll(new RegExp(`&${name}(?!\\w)`, 'g'))].length - 1;
+}
+const noted = (source, name) => new RegExp(`about=(?:\\([^)]*&${name}(?!\\w)[^)]*\\)|&${name}(?!\\w))`).test(source);
+function dropLine(source, name) {
+    const lines = source.split('\n');
+    const i = declLine(source, name);
+    return i < 0 ? source : [...lines.slice(0, i), ...lines.slice(i + 1)].join('\n');
+}
+function onsets(source, key, options) {
+    const r = compileSource(source, undefined, options);
+    if (!r.clocks.has(key))
+        return null;
+    const map = clocking(r, plan(r, codeShifts(r)).statics).map(key);
+    return Array.from({ length: SAME.steps }, (_, i) => map.q(i));
+}
+export function tapClock(source, result, options = {}) {
+    const main = result.mainMeter;
+    if (!main)
+        return [];
+    const own = new Set(parse(source).cells.map((d) => d.name));
+    const out = [];
+    for (const name of own) {
+        if (name === main || !result.clocks.has(name) || spansLines(source, name))
+            continue;
+        const line = source.split('\n')[declLine(source, name)] ?? '';
+        if (/free\(/.test(splitComment(line)[0]))
+            continue;
+        const tapped = new RegExp(`step=&${name}:([\\w.]+)(?![\\w*/.:])`, 'g');
+        const taps = [...new Set([...source.matchAll(tapped)].map((m) => m[1]))];
+        if (!taps.length || otherMentions(source, name, tapped) !== 0)
+            continue;
+        const probe = `${source}\n${TAPS.map((t, i) => `&__tap${i} step=${t} 0`).join('\n')}`;
+        const near = (a, b) => a.every((x, i) => Math.abs(x - b[i]) <= SAME.seconds);
+        const instead = new Map();
+        for (const tap of taps) {
+            const theirs = onsets(source, `${name}:${tap}`, options);
+            const match = theirs &&
+                TAPS.find((t) => {
+                    const ours = onsets(probe, `${main}:${t}`, options);
+                    return ours !== null && near(ours, theirs);
+                });
+            if (match)
+                instead.set(tap, match);
+        }
+        if (instead.size !== taps.length)
+            continue;
+        const said = [...instead].map(([a, b]) => `&${name}:${a} is ${b}`).join(', ');
+        out.push(rewrite('meter', `&${name}'s ticks are &${main}'s: ${said}`, `step=&${name}:${taps[0]}`, `step=${instead.get(taps[0])}`, (src) => {
+            let next = src.replace(tapped, (_, tap) => `step=${instead.get(tap) ?? `&${name}:${tap}`}`);
+            if (!noted(next, name) && otherMentions(next, name) === 0)
+                next = dropLine(next, name);
+            return next;
+        }));
+    }
+    return out;
+}
+export function shadowMeter(source, result) {
+    const main = result.mainMeter;
+    if (!main || declLine(source, main) < 0 || spansLines(source, main))
+        return [];
+    const mine = attrsOf(source, main);
+    const rate = mine.get('step');
+    if (!rate || /free\(/.test(rate))
+        return [];
+    const out = [];
+    for (const { name } of parse(source).cells) {
+        if (name === main || !result.cells.get(name)?.meter || spansLines(source, name))
+            continue;
+        const theirs = attrsOf(source, name);
+        if (theirs.get('step') !== rate)
+            continue;
+        const feel = ['swing', 'legato'].filter((k) => theirs.has(k));
+        if (!feel.length || feel.some((k) => mine.has(k)) || [...theirs.keys()].some((k) => k !== 'step' && !feel.includes(k)))
+            continue;
+        const tapped = new RegExp(`step=&${name}:([\\w.]+)(?![\\w*/.:])`, 'g');
+        if (!tapped.test(source) || otherMentions(source, name, tapped) !== 0)
+            continue;
+        const add = feel.map((k) => `${k}=${theirs.get(k)}`).join(' ');
+        out.push(rewrite('swing', `&${name} is &${main} with ${add}: &${main} ${add}, its readers on &${main}'s taps`, `&${name}`, `&${main} ${add}`, (src) => {
+            const lines = src.split('\n');
+            const m = declLine(src, main);
+            lines[m] = keepColumn(lines[m], `${splitComment(lines[m])[0].trimEnd()} ${add}`);
+            let next = lines.join('\n').replace(tapped, (_, tap) => `step=${tap}`);
+            if (!noted(next, name) && otherMentions(next, name) === 0)
+                next = dropLine(next, name);
+            return next;
         }));
     }
     return out;

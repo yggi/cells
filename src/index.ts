@@ -1,6 +1,6 @@
 /**
  * The cells language. Text in, events out: `compileSource` reads a piece, `plan` and `windowAt` realize it a window at a
- * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node). `styleAt` reads the style a piece plays at a time. `shorten` writes a piece
+ * time, and `createHost` answers the same as messages (in a worker, in this thread, or in node); `keepBeat` says where a recompiled piece goes on, its beat kept. `styleAt` reads the style a piece plays at a time. `shorten` writes a piece
  * shorter, `normalise` in the canonical spelling, `toCore` in the core grammar for a machine reader (decision 069), `migrate` a text of an earlier version as it is written now, `variations` and `varied` vary a fragment (its anchors: `anchorsOf`), `fold` and `cellsFromMidi` write cells from notes, `hints` says what repeats in them (#158), `pieceMidi` and
  * `readMidi` carry MIDI files, `pieceAudio`, `createRenderer` and `writeWav` render audio (decision 062). `createRepository` holds fragments and finds them by their place in style space and by how
  * often they were used together; `LIBRARY` is every seed fragment, read
@@ -19,6 +19,7 @@ export { parse, pieceMeta, type PieceMeta } from './engine/parser';
 export { plan, swingOfBar, type Plan, type Played } from './engine/realize';
 export { windowAt, type Window } from './engine/schedule';
 export { createHost, planOf, type ToEngine, type FromEngine } from './engine/host';
+export { keepBeat } from './engine/keepbeat';
 export { shorten, shortenAll, type ShortenOptions } from './engine/shorten';
 export { normalise } from './engine/normalise';
 export { migrate } from './engine/migrate';
@@ -38,9 +39,10 @@ export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece, type Piec
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { movedCard } from './engine/shorten/card';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
-export type { CompileOptions, CompileResult, Locked, Performer, Resolve, Used } from './engine/program';
+export type { CompileOptions, CompileResult, Locked, Origin, Performer, Resolve, Take } from './engine/program';
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';
 export { references, type Reference } from './engine/references';
+export { takeIn, type TakenIn } from './engine/takein';
 export type { Diagnostic } from './engine/ast';
 export {
   createRepository,

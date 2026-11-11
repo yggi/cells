@@ -1,5 +1,5 @@
 export const KEPT = {
-    breve: /^&bar is "meter"'s/,
-    swing: /^&bar is "meter"'s/,
+    breve: /./,
+    daytime: /^&hour's ticks are/,
     spooky: /^&stabline is "spooky_stabs"'s/,
 };

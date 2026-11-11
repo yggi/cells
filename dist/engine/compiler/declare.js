@@ -2,7 +2,7 @@ import { valueSumOf } from "../valuesum.js";
 import { refLabel } from "../ast.js";
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from "../program.js";
 import { SCALE_KEY } from "../parser/generators.js";
-import { VOICE_PARAMS } from "../attributes.js";
+import { PLAYED_AS, VOICE_PARAMS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
 import { leaves } from "../subseq.js";
 import { overdub } from "../parser/base.js";
@@ -482,7 +482,7 @@ function gates(decls, implicit, error, warn) {
     return stacks;
 }
 function stackOf(decls, d, error) {
-    if (!d || d.map || d.gate || Object.keys(d.params).length || d.braid.kind !== 'list' || d.braid.tokens.length !== 1)
+    if (!d || d.map || d.gate || Object.keys(d.params).some((k) => !PLAYED_AS.has(k)) || d.braid.kind !== 'list' || d.braid.tokens.length !== 1)
         return null;
     const a = d.braid.tokens[0].atom;
     if (a.kind !== 'mix' || a.gate || !a.exprs.length)

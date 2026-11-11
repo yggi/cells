@@ -6,16 +6,51 @@
  * of that facet, so adding fragments of another never changes what it returns.
  */
 import type { Resolve } from '../engine/program';
+import { EXAMPLES } from '../engine/examples';
 import { RENAMED_IDS } from '../engine/renamed';
 import { SEED, seedFragments } from './seed';
-import { EMPTY_LAYER, type Fragment, type LearnedLayer } from './fragments';
+import { EMPTY_LAYER, fragmentProblems, type Fragment, type LearnedLayer, type WeightedPoint } from './fragments';
+import { readPiece } from '../engine/piecefile';
+import { partOf } from '../engine/use';
 import { variantsOf } from './variants';
 
 /** The seed library's folders, in the order the library lists them: each folder its facet's fragments (decision 047). */
 const FOLDERS = ['meters', 'rhythms', 'bass', 'harmony', 'instruments', 'expression', 'modes', 'performers', 'stab', 'motifs', 'forms', 'bands', 'styles', 'modules'];
 
 /** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`). */
-export const LIBRARY: readonly Fragment[] = FOLDERS.flatMap((folder) => seedFragments(folder));
+/**
+ * The parts the examples give (decision 082), each a fragment whose id is its document's key and its head
+ * (`kinderlied/twinkle`), its text the part (`partOf`), its points the ones its document's frontmatter keys by its head
+ * (`parts: { twinkle: { association: […] } }`). A part with no association there is taken by its head all the same,
+ * and found by no query, so it isn't listed. A malformed one throws here, naming the example and the head.
+ */
+export const PARTS: readonly Fragment[] = Object.entries(EXAMPLES).flatMap(([key, e]) => {
+  const file = readPiece(e.file);
+  const parts = 'problems' in file ? undefined : file.frontmatter.parts;
+  if (!parts || typeof parts !== 'object' || Array.isArray(parts)) return [];
+  return Object.entries(parts as Record<string, { association?: unknown }>).map(([head, entry]) => {
+    const text = partOf(e.source, head);
+    if (text === null) throw new Error(`examples/${key}.md: its frontmatter keys a part &${head}, and no signature names it`);
+    const fragment = { id: `${key}/${head}`, text, association: (entry?.association ?? []) as readonly WeightedPoint[] };
+    const problems = fragmentProblems(fragment);
+    if (problems.length) throw new Error(`examples/${key}.md, part &${head}: ${problems.join('; ')}`);
+    return fragment;
+  });
+});
+
+/** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`), then the parts the examples give (`PARTS`). */
+export const LIBRARY: readonly Fragment[] = [...FOLDERS.flatMap((folder) => seedFragments(folder)), ...PARTS];
+
+/** The library's fragments of a facet, read off their points (decision 046), wherever they are kept: a folder or a document. */
+export const ofFacet = (facet: string): Fragment[] => LIBRARY.filter((f) => f.association.some((p) => p.facet === facet));
+
+/** A part's id: its document's key, a slash, its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own (`meter(grouping=meter("2/2"))`). */
+const PART_ID = /^[^(/]+\/[^(]+$/;
+
+/** The id a `from` line writes for a fragment: a part's document (`kinderlied/twinkle` → `kinderlied`), any other's own. */
+export const fromId = (id: string): string => (PART_ID.test(id) ? id.slice(0, id.indexOf('/')) : id);
+/** The head a line takes a fragment by, where it is named for it: a part's head (`kinderlied/twinkle` → `twinkle`), a seed motif's id. */
+export const headOf = (id: string): string => (PART_ID.test(id) ? id.slice(id.indexOf('/') + 1) : id);
 
 /**
  * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment
@@ -33,10 +68,16 @@ export const RETIRED: ReadonlyMap<string, string> = new Map([
 const CURRENT = new Map([...SEED.map((f): [string, string] => [f.fragment.id, f.fragment.text]), ...LIBRARY.map((f): [string, string] => [f.id, f.text])]);
 /** Each id the seed renamed (`RENAMED_IDS`, #387), read for a minor version as the text of its word: the same hash, so a lockfile still holds. */
 const RENAMED = [...RENAMED_IDS].map(([old, word]): [string, string] => [old, CURRENT.get(word)!]);
-const BY_ID = new Map([...CURRENT, ...RENAMED, ...RETIRED]);
+/**
+ * The examples by their keys (decision 082): a piece is a document, so a line takes a part it gives by its key
+ * (`&twinkle from kinderlied &key`). One namespace: no example's key is a fragment's id (`namespace.test.ts`).
+ */
+const PIECES = Object.entries(EXAMPLES).map(([key, e]): [string, string] => [key, e.source]);
+const BY_ID = new Map([...PIECES, ...CURRENT, ...RENAMED, ...RETIRED]);
 
 /**
- * The seed library as a `use` line's resolver (decision 054): a fragment's text by its id, a retired id's forwarding
+ * The seed library as a `from` line's resolver (decision 054): a fragment's text by its id, an example's by its key
+ * (decision 082), a retired id's forwarding
  * text (`RETIRED`), or null for none. It holds each fragment's current version only: a lockfile's older hash plays the
  * current one (the compile warns).
  */

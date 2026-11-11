@@ -117,7 +117,7 @@ export const TIERS = [
     },
     {
         name: 'Rhythm and feel',
-        concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: a swing clock tapped by its pulse, swing= on a meter tapped by name',
+        concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: swing= on a meter, a share of each pair at a level, a slider from straight to hard',
         forms: [
             'map map=amp',
             'sort volume: map=amp, map=db or map=adsr',
@@ -133,6 +133,7 @@ export const TIERS = [
             'rate step=&m:16n',
             'parameter pulse',
             'parameter swing',
+            'free free(v, lo..hi)',
             'generator meter("sig")',
         ],
     },
@@ -164,7 +165,7 @@ export const TIERS = [
     },
     {
         name: 'Sound and tuning',
-        concept: 'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; meter()',
+        concept: 'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read',
         forms: [
             'parameter pan',
             'parameter glide',
@@ -181,7 +182,6 @@ export const TIERS = [
             'map map=ed(r)',
             'map map=ratios',
             'step n/d',
-            'free free(v, lo..hi)',
             'free free(v, lo..hi, "names")',
             'mix free(v, lo..hi)',
             'map map=style',
@@ -300,7 +300,7 @@ export function formsUsed(source, options = {}) {
             use(`generator ${form}`);
     if (TEMPO_MARKINGS.test(code))
         use('free free(marking)');
-    if (parsed.uses?.length)
+    if (parsed.takes?.length)
         use('line &x from id(name=…) …');
     const compiled = compileSource(source, undefined, options);
     const all = options.resolve ? new Map(parse(expand(source, options.resolve)).cells.map((d) => [d.name, d])) : decls;

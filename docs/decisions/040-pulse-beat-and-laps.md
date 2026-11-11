@@ -1,6 +1,6 @@
 # 040 · A meter's pulse and beat, taps by note value, and `cycle=` in laps
 
-**Date:** 2026-10-17 · **Status:** accepted; `cycle=` in laps built (#75, 2026-11-04) (owner, in the session of 2026-10-16/17 on [#18](https://github.com/yggi/cells/issues/18) and [swing-research.md](../notes/swing-research.md)) · Issues: #15, #18
+**Date:** 2026-10-17 · **Status:** accepted; `cycle=` in laps built (#75, 2026-11-04) (owner, in the session of 2026-10-16/17 on [#18](https://github.com/yggi/cells/issues/18) and [swing-research.md](../notes/swing-research.md)) · Issues: #15, #18 · Amended by [071](071-swing-leans-pairs.md) (a group of three stays straight), #502 (`beat=` retired: a meter counts its beats by its signature or levels) and #15's rung 5 (a raw `step=&bar` an error, which Migrate rewrites; Normalise is built, [049](049-four-tools-over-a-piece.md))
 
 ## Context
 

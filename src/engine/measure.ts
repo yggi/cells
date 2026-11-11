@@ -12,7 +12,7 @@
  * - **An attribute value** is each `key=value` a line writes (in an unnamed cell `&( … )` too), and each flag (`off`,
  *   `oneshot`). How a cell is shown and named costs nothing: `label=` `show=` `tags=` `title=` `tier=` `about=` `size=`.
  * - **A cell** is every cell declared, an unnamed one too, but a note (a cell that only explains: `isNote`).
- * - **A `use` line** (decision 054) is one leaf, a reference: the used fragment's lines are the library's, nowhere in the
+ * - **A `from` line** (decision 054) is one leaf, a reference: the used fragment's lines are the library's, nowhere in the
  *   piece. Its fragment is read through `resolve` while the text is normalised.
  */
 import type { Atom, Braid, CellDecl, Expr, Token } from './ast';
@@ -96,7 +96,7 @@ function logicalLines(text: string): Map<number, string> {
 const attributesOf = (line: string): number =>
   [...line.matchAll(/(?:^|[\s(])([A-Za-z][A-Za-z0-9]*)=/g)].filter((m) => !FREE.has(m[1]!)).length + [...line.matchAll(/(?:^|\s)(off|oneshot)(?=\s|$)/g)].length;
 
-/** How a text is measured: as written, or normalised (the default), its `use` lines read through `resolve`. */
+/** How a text is measured: as written, or normalised (the default), its `from` lines read through `resolve`. */
 export interface MeasureOptions {
   readonly asWritten?: boolean;
   readonly resolve?: Resolve;
@@ -121,10 +121,10 @@ export function structureByCell(text: string, { asWritten = false, resolve }: Me
   });
 }
 
-/** A text's structure: its cells', summed, and a leaf for each `use` line. */
+/** A text's structure: its cells', summed, and a leaf for each `from` line. */
 export function structureOf(text: string, options: MeasureOptions = {}): Structure {
   const cells = structureByCell(text, options);
   const sum = (k: keyof Structure) => cells.reduce((n, c) => n + c[k], 0);
-  const uses = parse(text).uses?.length ?? 0;
+  const uses = parse(text).takes?.length ?? 0;
   return { cells: sum('cells'), leaves: sum('leaves') + uses, attributes: sum('attributes'), total: sum('total') + uses };
 }

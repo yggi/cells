@@ -6,8 +6,7 @@ export declare const STUBS: ReadonlySet<string>;
  * forms, and no tutorial piece can show these without changing the notes it plays. They go on a tier (4, rhythm, or 5,
  * development) with the piece that shows them. `legato=` (#94, a line's articulation) waits for a piece of its own
  * on tier 4. `tags=`, a cell's clusters, lost its tier-1 pieces when the card's tags moved into the file's frontmatter
- * (decision 047): it goes on a tier with a piece whose cells it clusters. `use` (decisions 054, 059) waits for the examples
- * to take a kit by it (#196's rung 4).
+ * (decision 047): it goes on a tier with a piece whose cells it clusters.
  */
 export declare const PENDING: ReadonlySet<string>;
 /**
@@ -31,5 +30,5 @@ export declare const TIERS: readonly {
     readonly concept: string;
     readonly forms: readonly string[];
 }[];
-/** Every form a piece uses (formKey), read from its text as parsed and as compiled, its `use` lines through `options.resolve`. */
+/** Every form a piece uses (formKey), read from its text as parsed and as compiled, its `from` lines through `options.resolve`. */
 export declare function formsUsed(source: string, options?: CompileOptions): Set<string>;

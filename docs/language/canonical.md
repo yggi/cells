@@ -93,6 +93,21 @@ A line of the piece that is a library fragment's line word for word, its comment
 A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `from` line of it joins the piece's (after its own `from` lines, or first). Not where the piece defines the name itself. A fragment's own file is normalised against the rest of the library, never as a `from` line of itself.
 
 
+## A second clock: the main meter's tap
+
+A second clock a piece's lines tap is written as the main meter where it is one (`normalise/meter.ts`, #668), each only where it sounds identical:
+
+- **A clock whose ticks are a tap's** (`tapClock`): where every tick of the clock is a tick of one of the main meter's taps (a note value, dotted or a triplet, the pulse, the beat, the bar), its readers read that tap, and the clock goes where nothing else reads it (its line stays where a note is about it). The clock's first 64 ticks are compared with the tap's to 1e-9 s, so a clock slower than S1's window, its first 1200 s, is checked past its first tick (#669).
+- **A meter that is the main one but for its swing** (`shadowMeter`): a second meter on the main one's own rate (the same cell or the same written rate), read only by taps, carrying a swing or a legato the main meter doesn't: the main meter takes it, and its readers its taps.
+- **Two sliders never become one:** a clock with a `free()` rate of its own stays. So does a clock that is a rhythm (a clave, `scan(3 3 4 3 3)`, whose ticks are no tap) or a table (`over=&bell`).
+
+| written | Normalise writes |
+|---|---|
+| `&bar meter("2/2", 2) step=&tempo`, `&sixteenths scan(1 1 1 1) pulse=16n step=&tempo`, `&run step=&sixteenths:16n …` | `&run step=8n …`, `&sixteenths` gone |
+| `&bar meter("4/4") step=&tempo`, `&bar2 meter("4/4", 2) step=&tempo swing=8n:2/3`, `&comp step=&bar2:8n …` | `&bar meter("4/4") step=&tempo swing=8n:2/3`, `&comp step=8n …`, `&bar2` gone |
+
+The examples whose second clock is what they teach keep it (`breve`, `daytime`: `normalise/kept.ts`).
+
 ## A template's line: a `from` line with its arguments
 
 A line that is a template's head line with its parameters filled in is written as a `from` line of the template with those arguments (`libraryTemplates`, #524): the piece says it takes the library's meter or key, and with what.

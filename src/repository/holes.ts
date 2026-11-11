@@ -19,7 +19,7 @@
  *   `&call[::-1]`, a shift `&call[<<]`, a transposition `&call^$7`), which only a line has the steps or the values for: a
  *   form's hole (#314), a part a text fills with a line (`&call step=8n &gypsy`), never a sound, so it is never stood in
  *   by a voice and the fit asks for it.
- * - A text with `use` lines (decision 054) is read over its expansion, given the resolver its compile reads them by
+ * - A text with `from` lines (decision 054) is read over its expansion, given the resolver its compile reads them by
  *   (`resolve`): a used fragment's holes, sounds and clock needs are the text's, less what the text and the other used
  *   fragments define, and it defines what they give (`CompileResult.uses`). Without one, only its own lines are read.
  */
@@ -28,7 +28,7 @@ import { braidReadsOf, otherReadsOf } from '../engine/compiler/builtin';
 import { parse } from '../engine/parser';
 import { tapPositions, type Meter } from '../engine/meter';
 import { MAIN_KEY, type CompileResult, type Resolve } from '../engine/program';
-import { expansion, hasUse, signatureOf } from '../engine/use';
+import { expansion, hasFrom, signatureOf } from '../engine/use';
 
 /** What a line's clock needs of the meter it taps: its lap of `bars` bars holds its `steps` a whole number of times. */
 export interface ClockNeed {
@@ -56,7 +56,7 @@ export interface Holes {
   readonly sounds: readonly string[];
   /** Of those, the names a braid reads through an operator (`&call^-2`, `&call[::-1]`): a line, not a sound; sorted. */
   readonly lines: readonly string[];
-  /** Names its lines declare (`&kick`), in the order written, then those its `use` lines give. */
+  /** Names its lines declare (`&kick`), in the order written, then those its `from` lines give. */
   readonly defines: readonly string[];
   readonly clock: readonly ClockNeed[];
   /**
@@ -132,10 +132,10 @@ export function readOnlyAsSound(decls: readonly CellDecl[]): (name: string) => b
 }
 
 /**
- * The lines a text's compile reads: its expansion where it has `use` lines and a resolver (decision 054: a used
+ * The lines a text's compile reads: its expansion where it has `from` lines and a resolver (decision 054: a used
  * fragment's holes are the text's), else the text.
  */
-export const linesRead = (text: string, resolve?: Resolve): string => (resolve && hasUse(text) ? expansion(text, { resolve }).text : text);
+export const linesRead = (text: string, resolve?: Resolve): string => (resolve && hasFrom(text) ? expansion(text, { resolve }).text : text);
 
 /** The line that stands in for a sound hole while a fragment is judged without its instrument (`&bd s=white`). */
 export const standIn = (name: string): string => `${name} s=white`;
@@ -175,7 +175,7 @@ export function holesOf(text: string, compiled: (text: string) => CompileResult,
     uses,
     sounds,
     lines: uses.filter((n) => asLine.has(n)),
-    defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.uses ?? []).flatMap((u) => u.gave)])],
+    defines: [...new Set([...decls.map((d) => `&${d.name}`), ...(result.takes ?? []).flatMap((u) => u.gave)])],
     clock: clockNeeds(filled, stand ? last : result).map((t) => t.need),
     ...(signature ? { signature: { heads: signature.names, optional: signature.optional, main: signature.main } } : {}),
   };

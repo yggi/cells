@@ -365,7 +365,7 @@ function inPlace(text: string, resolve: Resolve): string {
   const x = expansion(text, { resolve });
   const own = text.split('\n');
   const added = x.text.split('\n').slice(own.length);
-  const kept = new Set(x.uses.filter((u) => u.hash === null).map((u) => u.span.line));
+  const kept = new Set(x.takes.filter((u) => u.hash === null).map((u) => u.span.line));
   const at = new Map<number, string[]>();
   added.forEach((l, k) => {
     const line = x.through(own.length + k + 1)?.line;
@@ -501,7 +501,7 @@ function euclids(text: string): string {
  * rotated, or counting its own laps, `cycle=`) stays as written, where `x!n` and `x x` are two things; a run is of steps
  * on one line, alike as written; a step that says its count otherwise (`0!2@3`) is a step of its own.
  */
-function counts(text: string): string {
+export function counts(text: string): string {
   const lines = text.split('\n');
   const read = unitRead(text);
   const edits: { line: number; col: number; len: number; to: string }[] = [];
