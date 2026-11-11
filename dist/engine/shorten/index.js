@@ -28,7 +28,7 @@ export function shorten(source, options = {}) {
         ...aliases(source, result),
         ...card(source, options),
     ];
-    const kept = result.uses?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
+    const kept = result.takes?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
     const chars = new Map(kept.map((r) => [r.id, savesChars(source, r) ?? 0]));
     return kept
         .map((r) => suggestion(source, r))
@@ -36,7 +36,7 @@ export function shorten(source, options = {}) {
         .sort((a, b) => b.saving - a.saving || chars.get(b.id) - chars.get(a.id));
 }
 const RESPELLINGS = new Set(['card', 'alias', 'fraction', 'progression']);
-const overridden = (r) => (r.uses ?? [])
+const overridden = (r) => (r.takes ?? [])
     .flatMap((u) => u.overrode)
     .sort()
     .join(' ');

@@ -71,6 +71,6 @@ export function structureByCell(text, { asWritten = false, resolve } = {}) {
 export function structureOf(text, options = {}) {
     const cells = structureByCell(text, options);
     const sum = (k) => cells.reduce((n, c) => n + c[k], 0);
-    const uses = parse(text).uses?.length ?? 0;
+    const uses = parse(text).takes?.length ?? 0;
     return { cells: sum('cells'), leaves: sum('leaves') + uses, attributes: sum('attributes'), total: sum('total') + uses };
 }

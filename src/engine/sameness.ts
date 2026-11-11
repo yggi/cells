@@ -20,7 +20,7 @@ import { channelTable, midiNote, router, routesOf } from './midi';
 
 type Result = ReturnType<typeof compileSource>;
 
-/** S3: do these cells play the same notes (value, place, length) in both programs? Their `use` lines read through `options`. */
+/** S3: do these cells play the same notes (value, place, length) in both programs? Their `from` lines read through `options`. */
 export function sameNotes(a: string, b: string, names: readonly string[], options: CompileOptions = {}): boolean {
   try {
     const ra = compileSource(a, undefined, options);
@@ -159,7 +159,7 @@ function soundOf(r: Result): (voice: string) => unknown {
 /** How two lists of events are compared: all of each (S1), or the notes they play (S2: voice, onset, length, pitch). */
 type Reading = 'whole' | 'note';
 
-/** Do two texts compile and play the same events to the ear, read as `reading` says, from 0 to `until` seconds? Their `use` lines read through `options`. */
+/** Do two texts compile and play the same events to the ear, read as `reading` says, from 0 to `until` seconds? Their `from` lines read through `options`. */
 function sameEvents(a: string, b: string, until: number | ((ra: Result, rb: Result) => number), reading: Reading, options: CompileOptions = {}): boolean {
   try {
     const ra = compileSource(a, undefined, options);
@@ -299,7 +299,7 @@ export function wholeWindow(a: Result, b: Result): number {
 /**
  * S1, **sounds identical** (#180; the owner: the snapshot's `notes` and `events` hashes agree): every event alike, its
  * voice, onset, length, pitch, gains, bends, levels, moving parameters and envelope, over the whole piece (`wholeWindow`),
- * or to `until` seconds. A text's `use` lines (decision 054) read through `options`.
+ * or to `until` seconds. A text's `from` lines (decision 054) read through `options`.
  */
 export function soundsIdentical(a: string, b: string, until?: number, options?: CompileOptions): boolean {
   return sameEvents(a, b, until ?? wholeWindow, 'whole', options);

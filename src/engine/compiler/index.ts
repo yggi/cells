@@ -29,7 +29,7 @@ import { instrumentParams, instrumentsOf } from './instruments';
 /** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
 const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
 
-/** A parsed piece, compiled; `used` names the cells a `use` line gave it (decision 054), which the built-in card doesn't hear. */
+/** A parsed piece, compiled; `used` names the cells a `from` line gave it (decision 054), which the built-in card doesn't hear. */
 export function compile(written: ParseResult, env: Env, used: ReadonlySet<string> = new Set()): CompileResult {
   // (a pick by name, &env[sustain], read as its slot's position first: decision 063)
   // (and a part a gate plays that no line writes rests: decision 063 §4)

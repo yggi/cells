@@ -33,7 +33,7 @@ export declare const ROUNDS = 20;
 /**
  * A tool's rewrites applied until none is left: each round the first that changes the text and plays the same notes
  * over the whole piece (`soundsIdentical`, S1 of decision 050), the text compiled again after it. The steps are the
- * rewrites' titles, in order. A text's `use` lines (decision 054) read through `options`: they are lines like any other.
+ * rewrites' titles, in order. A text's `from` lines (decision 054) read through `options`: they are lines like any other.
  */
 export declare function rewriteAll(source: string, find: Find, rounds?: number, options?: CompileOptions): {
     source: string;

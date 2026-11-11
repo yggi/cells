@@ -30,12 +30,12 @@ export type FromEngine = {
     ms: number;
     ok: boolean;
 };
-/** The plan the app plays for a compiled piece: its shifts and switches as written; its `use` lines read through `options`. */
+/** The plan the app plays for a compiled piece: its shifts and switches as written; its `from` lines read through `options`. */
 export declare function planOf(code: string, env?: Env, options?: CompileOptions): Plan;
 /** A hand on a physical cell of a plan, at transport second t (null lets go). */
 export declare function grabIn(p: Plan, cell: string, t: number, speed: number | null): void;
 export declare const emptyWindow: (from: number, length: number) => Window;
-/** What a host is made with: the resolver its pieces' `use` lines read through (it can't cross `postMessage`, so isn't in `load`). */
+/** What a host is made with: the resolver its pieces' `from` lines read through (it can't cross `postMessage`, so isn't in `load`). */
 export interface HostOptions {
     readonly resolve?: Resolve;
 }
