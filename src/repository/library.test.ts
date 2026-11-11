@@ -4,7 +4,7 @@
 import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { createRepository, type Fragment, type StylePoint } from './fragments';
-import { LIBRARY, resolveSeed, RETIRED } from './library';
+import { LIBRARY, ofFacet, resolveSeed, RETIRED } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { STYLE_FRAGMENTS } from './styles';
 import { seedFragments } from './seed';
@@ -18,7 +18,7 @@ const EXPRESSION_FRAGMENTS = seedFragments('expression');
 const MODE_FRAGMENTS = seedFragments('modes');
 const PERFORMER_FRAGMENTS = seedFragments('performers');
 const STAB_FRAGMENTS = seedFragments('stab');
-const MOTIF_FRAGMENTS = seedFragments('motifs');
+const MOTIF_FRAGMENTS = ofFacet('motif');
 const FORM_FRAGMENTS = seedFragments('forms');
 const BAND_FRAGMENTS = seedFragments('bands');
 const MODULE_FRAGMENTS = seedFragments('modules');
@@ -46,8 +46,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the thirty rhythms, the seventeen bass lines, the twelve harmonies, the twenty-nine instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the fifty-six motifs, the six forms, the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: a hundred and ninety-two (#572, #542)', () => {
-    expect(LIBRARY).toHaveLength(192);
+  it('is the thirteen meters, the thirty-two rhythms, the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the fifty-six motifs, the six forms, the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: a hundred and ninety-nine (#572, #542, #540, #646)', () => {
+    expect(LIBRARY).toHaveLength(199);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -77,7 +77,7 @@ describe('the library', () => {
       FORM_FRAGMENTS.length,
       BAND_FRAGMENTS.length,
       STYLE_FRAGMENTS.length,
-    ]).toEqual([13, 30, 17, 12, 29, 2, 9, 5, 3, 56, 6, 1, 1]);
+    ]).toEqual([13, 32, 17, 17, 29, 2, 9, 5, 3, 56, 6, 1, 1]);
   });
 
   it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
@@ -252,6 +252,12 @@ describe('a seed placed for one preset (#404)', () => {
       }),
     );
   };
+  /** The progressions written for the presets whose first harmony missed (#540), and axis_progression's point at Synth-pop. */
+  const BEFORE_540 = ['ninth_vamp', 'ninth_loop', 'turnaround', 'ii_v_i', 'minor_swing'];
+  const withoutSynthPopAxis = (fragments: readonly Fragment[]) =>
+    fragments.map((f) =>
+      f.id === 'axis_progression' ? { ...f, association: f.association.filter((wp) => !(wp.facet === 'harmony' && plain(wp.point, ALL_PRESETS['Synth-pop']!) === 0)) } : f,
+    );
   const weighted = (id: string, weight: number) => LIBRARY.map((f) => (f.id === id ? { ...f, association: f.association.map((wp) => ({ ...wp, weight })) } : f));
 
   it('holds over the library: no preset finds another’s first within 0.3, in any facet', () => {
@@ -261,11 +267,17 @@ describe('a seed placed for one preset (#404)', () => {
   it('fires where it should: the dark cadence and the Charleston stabs at weight 1, the haunted progression at 1', () => {
     // (on decision 076's axes, #572: Electro swing, harmonic minor as Spooky is, comes within reach of the dark cadence and
     // the haunted progression, and Deep house and Bossa nova, dorian and ionian, leave it; Spooky finds its own stab first since #572, spooky_stabs)
-    expect(leaks(weighted('dark_cadence', 1))).toEqual(['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: dark_cadence`));
+    // (#540: Synth-pop, Lo-fi, Swing jazz and Electro swing find their own harmony at distance 0 since, so nothing leaks into
+    // them; the witness fires on the library without those progressions, as it did before them)
+    const unfilled = (fragments: readonly Fragment[]) => fragments.filter((f) => !BEFORE_540.includes(f.id));
+    expect(leaks(weighted('dark_cadence', 1))).toEqual([]);
+    expect(leaks(unfilled(withoutSynthPopAxis(weighted('dark_cadence', 1))))).toEqual(
+      ['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: dark_cadence`),
+    );
     expect(leaks(weighted('charleston_stabs', 1))).toEqual(
       ['Synth-pop', 'Deep house', 'Lo-fi hip hop', 'Bossa nova', 'Swing jazz'].map((name) => `${name}, stab: charleston_stabs`),
     );
-    expect(leaks(weighted('haunted_progression', 1).filter((f) => f.id !== 'dark_cadence'))).toEqual(
+    expect(leaks(unfilled(withoutSynthPopAxis(weighted('haunted_progression', 1))).filter((f) => f.id !== 'dark_cadence'))).toEqual(
       ['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: haunted_progression`),
     );
   });

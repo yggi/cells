@@ -70,6 +70,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     expect(shorten(piece('s=saw cutoff=800')).find((s) => s.kind === 'alias')?.after).toBe('lpf=800');
   });
 
+  // law L4
   it('every example, and every fragment of the seed library, is normal already', () => {
     // (an example read as Cell studio reads it, its `use` lines resolved, and the seed library's lines taken by `use`: #196)
     // (but an example whose point is the form a rule would rewrite, kept as written: the examples teach, and a rewrite that
@@ -218,10 +219,59 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     });
   });
 
+  describe('a second clock folded into the main meter (#668)', () => {
+    const voices = '&v s=sine loop=C4\n&mix [&run * &v, &low * &v]';
+    it('tapClock: a clock whose ticks are a tap of the main meter, its readers on that tap, the clock gone', () => {
+      const written = `&bar meter("2/2", 2) step=&tempo\n&tempo step=60bpm\n&sixteenths scan(1 1 1 1) pulse=16n step=&tempo\n&low step=beat 0 4\n&run step=&sixteenths:16n 0 2 4 2\n${voices}`;
+      const { source, steps } = normalise(written);
+      expect(source).toBe(written.replace('&sixteenths scan(1 1 1 1) pulse=16n step=&tempo\n', '').replace('step=&sixteenths:16n', 'step=8n'));
+      expect(steps).toEqual(["&sixteenths's ticks are &bar's: &sixteenths:16n is 8n"]);
+      expect(soundsIdentical(written, source)).toBe(true);
+      // (a note about the clock keeps its line)
+      const noted = written.replace('&low step', '&clockNote label="sixteenths" about=&sixteenths\n&low step');
+      expect(normalise(noted).source).toContain('&sixteenths scan(1 1 1 1)');
+    });
+
+    it('tapClock leaves a clock as written where its ticks are no tap, or it has a slider of its own', () => {
+      const clave = `&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&clave scan(3 3 4 3 3) step=pulse*5/4\n&low step=4n 0\n&run step=&clave:pulse 0 2 4 2 0\n${voices}`;
+      expect(normalise(clave).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
+      const slider = `&bar meter("2/2", 2) step=&tempo\n&tempo step=60bpm\n&sixteenths scan(1 1 1 1) pulse=16n step=free(60bpm, 40..80)\n&low step=beat 0 4\n&run step=&sixteenths:16n 0 2 4 2\n${voices}`;
+      expect(normalise(slider).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
+    });
+
+    it('a slow clock is compared past its first tick, where S1 listens 1200 s alone (#669)', () => {
+      // (a second meter at .0101 bpm under one at .01: their first beats both at 0, where S1 listens; their second at
+      // 5940 s and 6000 s, past it. S1 hears the two as one, its notes of one length; tapClock compares 64 ticks)
+      const v = '&v oneshot=1 s=sine loop=C4 env=&(map=adsr 0 .1 0 .1)\n&mix [&run * &v, &low * &v]';
+      const slow = `&bar meter("4/4") step=.01bpm\n&x meter("4/4") step=.0101bpm\n&low step=4n 0\n&run step=&x:4n 0 1\n${v}`;
+      expect(soundsIdentical(slow, slow.replace('step=&x:4n', 'step=4n'))).toBe(true);
+      expect(normalise(slow).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
+    });
+
+    it('shadowMeter: a second meter on the main one’s own rate, but for its swing, the main meter taking it', () => {
+      const written = `&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&bar2 meter("4/4", 2) step=&tempo swing=8n:2/3\n&low step=4n 0 4 7 4\n&run step=&bar2:8n 0 2 4 2\n${voices}`;
+      const { source, steps } = normalise(written);
+      expect(source).toBe(
+        written
+          .replace('&bar meter("4/4") step=&tempo', '&bar meter("4/4") step=&tempo swing=8n:2/3')
+          .replace('&bar2 meter("4/4", 2) step=&tempo swing=8n:2/3\n', '')
+          .replace('step=&bar2:8n', 'step=8n'),
+      );
+      expect(steps).toHaveLength(1);
+      expect(soundsIdentical(written, source)).toBe(true);
+      // (two sliders never become one: a second meter with its own free() rate stays)
+      const own = written
+        .replace('&tempo step=100bpm', '&tempo step=free(100bpm, 60..140)')
+        .replace('&bar2 meter("4/4", 2) step=&tempo', '&bar2 meter("4/4", 2) step=free(100bpm, 60..140)');
+      expect(normalise(own).steps.filter((s) => /&bar2 is/.test(s))).toEqual([]);
+    });
+  });
+
   it('names nothing it could name two ways, or that is taken, or that has no value of its own', () => {
     const tune = (over: string) => `&tune over=${over} step=8n 0 2 4 2\n&lead s=saw loop=C4\n&mix [&tune * &lead]`;
-    // (two meters, each a clock: which is the bar? Two keys: which is the key? A key's scan is no meter)
-    const two = `&a scan(1 1 1 1) step=96bpm\n&b scan(1 1 1) step=72bpm\n&x scale(major, C)\n&y scale(minor, A)\n${tune('&x')}\n&t2 over=&y step=&b 0 2`;
+    // (two meters, each a clock: which is the bar? Two keys: which is the key? A key's scan is no meter. The second meter's
+    // rate is no tap of the first's: at 72 bpm its beat would be 96's half-note triplet, a tap, and folded in, #668)
+    const two = `&a scan(1 1 1 1) step=96bpm\n&b scan(1 1 1) step=70bpm\n&x scale(major, C)\n&y scale(minor, A)\n${tune('&x')}\n&t2 over=&y step=&b 0 2`;
     expect(normalise(two).steps.filter((t) => /is the piece's|tempo|tonic/.test(t))).toEqual([]);
     // (a name taken by a cell of another job)
     const taken = `&m scan(1 1 1 1) step=96bpm\n&bar s=sine loop=C2\n&tempo s=sine loop=C3\n${tune('scale(major)')}`;

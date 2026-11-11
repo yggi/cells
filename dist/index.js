@@ -3,6 +3,7 @@ export { parse, pieceMeta } from "./engine/parser/index.js";
 export { plan, swingOfBar } from "./engine/realize.js";
 export { windowAt } from "./engine/schedule.js";
 export { createHost, planOf } from "./engine/host.js";
+export { keepBeat } from "./engine/keepbeat.js";
 export { shorten, shortenAll } from "./engine/shorten/index.js";
 export { normalise } from "./engine/normalise/index.js";
 export { migrate } from "./engine/migrate/index.js";

@@ -1,6 +1,7 @@
 /**
  * The catalogue (yggi/cell-studio#621, rung C1, #638): one read of the library for a frontend that shows it, an entry for
- * each fragment file, the seed library's first (in path order), then a learned layer's filed ones (decision 048). Each
+ * each fragment file, the seed library's first (in path order), then the parts the examples give (decision 082), then a
+ * learned layer's filed ones (decision 048). Each
  * entry says what a frontend draws and lists a fragment by: its facets, its signature, what it takes, where it is found
  * in style space (its own points, then the points use added, decision 048), its prose and metadata, and the ids a query
  * answers with (a template's sets of arguments, `variantsOf`). Its holes need a compile, so each entry computes them on
@@ -14,7 +15,7 @@ import { signatureOf } from '../engine/use';
 import type { FragmentFile, Meta } from './files';
 import { EMPTY_LAYER, type LearnedLayer, type WeightedPoint } from './fragments';
 import { holesOf, type Holes } from './holes';
-import { resolverOf } from './library';
+import { PARTS, resolverOf } from './library';
 import { SEED } from './seed';
 import { argsOf, variantsOf } from './variants';
 
@@ -22,8 +23,10 @@ import { argsOf, variantsOf } from './variants';
 export interface CatalogueEntry {
   /** Its id, unique in the catalogue. */
   readonly id: string;
-  /** Where it is in the seed library (`bass/01-root-bass`), or null for one a layer filed. */
+  /** Where it is in the seed library (`bass/01-root-bass`), its document for a part (`examples/kinderlied`), or null for one a layer filed. */
   readonly path: string | null;
+  /** A part a document gives (decision 082): the document's key and the head it is taken by; absent for any other. */
+  readonly part?: { readonly document: string; readonly head: string };
   /** Who made it: its metadata's `source` (`seed`, a person's name, `muse`, `composer`), or null where it says none. */
   readonly source: string | null;
   /** The facets its points name, each once, in the order they first appear. */
@@ -85,7 +88,12 @@ export function catalogue(layer: LearnedLayer = EMPTY_LAYER): readonly Catalogue
   const kept = SEEDED.get(layer);
   if (kept) return kept;
   const resolve = resolverOf(layer);
-  const entries = Object.freeze([...SEED.map((f) => entryOf(f, f.path, layer, resolve)), ...layer.filed.map((f) => entryOf(f, null, layer, resolve))]);
+  // (a document's parts after the seed's files, each with its document and head, decision 082)
+  const parts = PARTS.map((f) => {
+    const [document, head] = [f.id.slice(0, f.id.indexOf('/')), f.id.slice(f.id.indexOf('/') + 1)] as const;
+    return { ...entryOf({ fragment: f, meta: { source: 'seed' }, prose: '' }, `examples/${document}`, layer, resolve), part: { document, head } };
+  });
+  const entries = Object.freeze([...SEED.map((f) => entryOf(f, f.path, layer, resolve)), ...parts, ...layer.filed.map((f) => entryOf(f, null, layer, resolve))]);
   SEEDED.set(layer, entries);
   return entries;
 }

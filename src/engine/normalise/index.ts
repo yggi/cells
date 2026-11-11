@@ -31,7 +31,7 @@ import { aliases, filterModels } from './aliases';
 import { libraryCells, libraryLines, libraryTemplates, type LibraryFragment } from './library';
 import { narrowestFroms } from './narrowest';
 import { interfaceNames } from './names';
-import { evenScan, swingClock } from './meter';
+import { evenScan, shadowMeter, swingClock, tapClock } from './meter';
 import { migrations } from '../migrate';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
@@ -48,6 +48,8 @@ export const normalisations =
     ...interfaceNames(source, result),
     ...evenScan(source, result),
     ...swingClock(source, result),
+    ...shadowMeter(source, result),
+    ...tapClock(source, result, options),
     ...aliases(source, result),
     ...filterModels(source, result),
     ...libraryLines(source, options.library),

@@ -6,8 +6,13 @@ import { type Holes } from './holes';
 export interface CatalogueEntry {
     /** Its id, unique in the catalogue. */
     readonly id: string;
-    /** Where it is in the seed library (`bass/01-root-bass`), or null for one a layer filed. */
+    /** Where it is in the seed library (`bass/01-root-bass`), its document for a part (`examples/kinderlied`), or null for one a layer filed. */
     readonly path: string | null;
+    /** A part a document gives (decision 082): the document's key and the head it is taken by; absent for any other. */
+    readonly part?: {
+        readonly document: string;
+        readonly head: string;
+    };
     /** Who made it: its metadata's `source` (`seed`, a person's name, `muse`, `composer`), or null where it says none. */
     readonly source: string | null;
     /** The facets its points name, each once, in the order they first appear. */

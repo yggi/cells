@@ -81,6 +81,23 @@ Without a resolver, every `from` line that takes from a fragment is an error.
 
 What each `from` line resolved to is data on the result, `CompileResult.uses`: its id, the names it asked for (`names`, null for `*`), its line, the hash of the text it resolved to, the names it gave (its helpers among them) and the names the piece overrode.
 
+## A document's parts
+
+A file may hold several signatures: each declares a part, its heads and every line they read, wherever it sits ([decision 082](https://github.com/yggi/cells/blob/main/docs/decisions/082-documents-of-fragments.md)). Kinderlieder gives its six tunes so:
+
+```text
+&twinkle from &key
+&twinkle over=&key step=8n 0 0 4 4 5 5 4@2
+&wonder from &key
+&wonder over=&key step=8n 3 3 2 2 1 1 0@2
+&key from diatonic(mode=ionian) C          # the document's own key: what it plays with as a piece
+```
+
+- **A line takes a part by its head:** `&twinkle from kinderlied &key`, or renamed, `&tw=twinkle from kinderlied &key`. A line that names no part's head, or takes `*`, says the parts there are.
+- **The main parameter stays required:** the document's `&key` is its own, never a part's default.
+- **The lines no part reaches are the piece's own:** they play when the file is opened, and are never given.
+- **One namespace:** a piece is resolved by its key, so no example's key is a fragment's id.
+
 ## The lockfile
 
 A piece file's frontmatter records what each `from` line resolved to, so a saved piece keeps sounding the same when a library moves on:
@@ -93,7 +110,8 @@ uses:
 
 - The hash is `e1:` and a hash of the fragment's text up to layout (decision 050's E1, its rung written first, so a lockfile still checks once E4, what a hash reads, exists).
 - `lockfileOf(file)` reads it, for the compile's `locked`; a recorded hash the library no longer gives plays the current version, with a warning naming the id.
-- `withLockfile(file, result.uses)` records a compile's hashes; `writePiece` drops an entry no `from` line names.
+- `withLockfile(file, result.takes)` records a compile's hashes; `writePiece` drops an entry no `from` line names.
+- A document's part is locked by its key and its head, `kinderlied/twinkle`, its hash its part's: two parts of one document are two entries, and the piece's own lines move neither.
 - A raw text, or a file with no frontmatter, has no lockfile: it plays the current version, always.
 
 ## Normalise and the measure

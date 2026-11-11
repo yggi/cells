@@ -18,7 +18,12 @@
  *  - 2 times: bars 36 … 70 are bars 35 … 1, in retrograde-inversion.
  *
  * Everything is a function of the step of the day: nothing to play through, any moment computed.
+ *
+ * As a plugin-fragment (decision 085, #693): `FIVETO12` fills its holes with braid text, which the language reads —
+ * its degrees over `&key` (the day's mode on the key's tonic), its chords as stacks in thirds, its lengths as `@n`, its
+ * dynamics as a level cell; its place in space as a cell too, read as the law always placed it (#696 makes it `pan=`).
  */
+import type { PluginFragment } from './holes';
 
 const STEPS_PER_MINUTE = 84;
 export const BAR = 12;
@@ -187,3 +192,48 @@ export function notesBetween(from: number, to: number): LawNote[] {
   }
   return out;
 }
+
+/** The tonics as note names, octave 4 (the voice's): C is 0 semitones above C. */
+const TONIC_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const held = (token: string, dur: number) => (dur > 1 ? `${token}@${dur}` : token);
+/** A bar's onsets, one token each, in the bar's own rhythm. */
+const tokens = (bar: readonly Onset[], token: (o: Onset) => string) => bar.map((o) => held(token(o), o.dur)).join(' ');
+
+/** Where a lap of `lap` steps falls in the day: its block, key and bar. */
+function lapPlace(lap: number, length: number) {
+  const p = place(lap * length);
+  return { ...p, bar: barOf(p.block, p.key, p.bar) };
+}
+
+/**
+ * The law's holes as braid text (decision 085 §3). `notes`, `level` and `space` per bar (12 steps): degrees, stacked in
+ * thirds as its harmony says; its level, ppp .18 to fff .84; its place, 0 left to 6 right. `mode` and `tonic` per key
+ * (840 steps); `block`, per block of two hours, the section's label.
+ */
+function fill(hole: string, lap: number): string {
+  if (hole === 'notes')
+    return tokens(lapPlace(lap, BAR).bar, (o) => (o.density > 1 ? `[${Array.from({ length: o.density }, (_, v) => o.degree + 2 * v).join(', ')}]` : String(o.degree)));
+  if (hole === 'level') return tokens(lapPlace(lap, BAR).bar, (o) => String(+(0.18 + o.dynamic * 0.11).toFixed(2)));
+  if (hole === 'space') return tokens(lapPlace(lap, BAR).bar, (o) => String(o.space));
+  if (hole === 'mode') return MODE_NAMES[place(lap * KEY).mode ?? 0]!.toLowerCase();
+  if (hole === 'tonic') return TONIC_NAMES[place(lap * KEY).tonic]!;
+  if (hole === 'block') {
+    const b = mod(lap, 12);
+    return `${MODE_NAMES[DAY_MODES[b]!]} · ${BLOCK_NAMES[b]}`;
+  }
+  throw new Error(`fiveto12 has no hole ${hole}`);
+}
+
+/** The 5 to 12 cycle as a plugin-fragment, built in: `law=fiveto12` until it is `&cycle from fiveto12 &day` (rung 5). */
+export const FIVETO12: PluginFragment = {
+  id: 'fiveto12',
+  holes: { mode: { lap: KEY }, tonic: { lap: KEY }, notes: { lap: BAR }, level: { lap: BAR }, space: { lap: BAR }, block: { lap: BLOCK, mark: true } },
+  block: ['&notes over=&key step=1 fill()', '&level map=amp step=1 fill()', '&space map=lin step=1 fill()', '&key scale(&mode, &tonic)', '&mode fill()', '&tonic fill()'].join(
+    '\n',
+  ),
+  plays: '&notes * &level',
+  origin: 11.55,
+  cycle: DAY,
+  stepSeconds: SECONDS_PER_STEP,
+  fill: (hole, lap) => fill(hole, lap),
+};

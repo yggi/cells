@@ -61,9 +61,12 @@ export declare const MOVING_PARAMS: ReadonlySet<string>;
 export declare const VOICE_PARAMS: ReadonlySet<string>;
 /** A line's own parameters, its timing (legato= swing= beat= …), acting on a clocked or driven line and never on a voice; not a motor's. */
 export declare const LINE_PARAMS: ReadonlySet<string>;
+/** What a line is played as by the default performer (part= role=, decision 075): a word about the line, which makes it no kit's member and keeps a stack a stack (#708). */
+export declare const PLAYED_AS: ReadonlySet<string>;
 /**
  * Does a cell's line give it a parameter of a kit's member: any but a line's own (legato= on a part makes it no voice, so
- * a braid splicing it, or a gate playing it moved, &bassline^$-12, is no kit: #282).
+ * a braid splicing it, or a gate playing it moved, &bassline^$-12, is no kit: #282), or what it is played as (part=bass
+ * on that line, #708).
  */
 export declare const memberParams: (params: Readonly<Record<string, unknown>>) => boolean;
 /** Who an attribute acts on, in words: "a voice", "a tape or a read head". */

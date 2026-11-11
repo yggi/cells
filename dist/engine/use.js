@@ -1,7 +1,7 @@
 import { splitComment } from "./edit.js";
 import { FROM_FORM, isAttribute, readFrom, topTokens } from "./parser/use.js";
 import { STYLE } from "./style.js";
-import { RENAMED_IDS } from "./renamed.js";
+import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
 export const FROM_DEPTH = 8;
 const via = (lines, step) => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
@@ -32,6 +32,58 @@ function lineOf(code, written = code, line = 0) {
     const head = HEAD.exec(code);
     const reads = head ? [...new Set([...code.slice(head[0].length).matchAll(READS)].map((m) => m[1]))] : [];
     return { name: head?.[1] ?? null, reads, written, code, line };
+}
+export function partOf(text, head) {
+    const lines = linesOf(text);
+    const sigs = lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : []));
+    const found = sigs.find((s) => s.sig.names.includes(`&${head}`));
+    if (!found)
+        return null;
+    if (sigs.length === 1)
+        return text;
+    const { line: sigLine, sig } = found;
+    const main = sig.main ? sig.main.slice(1) : null;
+    const defines = new Map();
+    for (const l of lines) {
+        if (l.name)
+            defines.set(l.name, l);
+        else if (l.from?.kind === 'use')
+            for (const n of l.from.names ?? [])
+                defines.set(n.slice(1), l);
+    }
+    const readsOf = (l) => (l.from?.kind === 'use' ? [...l.code.slice(l.code.search(/\sfrom\s/)).matchAll(READS)].map((m) => m[1]) : l.reads);
+    const keep = new Set();
+    const seen = new Set();
+    for (const queue = [...sig.names, ...sig.optional].map((n) => n.slice(1)); queue.length;) {
+        const n = queue.shift();
+        if (seen.has(n) || n === main)
+            continue;
+        seen.add(n);
+        const l = defines.get(n);
+        if (!l || keep.has(l))
+            continue;
+        keep.add(l);
+        queue.push(...readsOf(l));
+    }
+    return [sigLine.written.trim(), ...lines.filter((l) => keep.has(l)).map((l) => l.written)].join('\n');
+}
+export const partsOf = (text) => linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from.names.map((n) => n.slice(1))] : []));
+function pickPart(id, text, from, say) {
+    const parts = partsOf(text);
+    if (parts.length < 2)
+        return { text };
+    const heads = parts.map((p) => p.map((h) => `&${h}`).join(', ')).join(' · ');
+    const asked = (from.takes ?? from.names)?.[0]?.slice(1);
+    if (!asked) {
+        say(`${quoted(id)} gives ${parts.length} parts, each taken by its head (${heads}): name one, not *`);
+        return null;
+    }
+    const part = partOf(text, asked);
+    if (part === null) {
+        say(`${quoted(id)} gives no part headed &${asked}: its parts are ${heads}`);
+        return null;
+    }
+    return { text: part, part: asked };
 }
 export const hasFrom = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
 export function signatureOf(text) {
@@ -437,10 +489,11 @@ function fragmentLines(path, text, resolve, say) {
         else if (next.length > FROM_DEPTH)
             say(`use ${quoted(id)} nests past ${FROM_DEPTH} deep: ${pathOf(next)}`);
         else {
-            const theirs = resolve(id);
-            if (theirs === null)
+            const whole = resolve(id);
+            const theirs = whole === null ? null : (pickPart(id, whole, entry.from, sayHere)?.text ?? null);
+            if (whole === null)
                 sayHere(`No fragment ${quoted(id)} to use`);
-            else {
+            else if (theirs !== null) {
                 const g = give(entry, next, theirs, resolve, say, taken);
                 const step = { id: here, line: l.line };
                 copies.push(...via(g.copy, step));
@@ -472,6 +525,7 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
     const hashes = [];
     const copies = [];
     const args = [];
+    const parts = [];
     const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
     const level = {
         defines: new Set(taken),
@@ -483,10 +537,18 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
         const names = namesOf(u);
         const span = spanOf(u.line);
         const say = (message) => diagnostics.push({ severity: 'error', message, span });
-        const recorded = locked.find((k) => k.id === id)?.hash;
-        const theirs = resolve ? resolve(id, ...(recorded ? [recorded] : [])) : null;
+        const head = (u.from.takes ?? u.from.names)?.[0]?.slice(1);
+        const recorded = (locked.find((k) => head !== undefined && k.id === `${id}/${head}`) ?? locked.find((k) => k.id === id))?.hash;
+        const moved = old ? MOVED.get(id) : undefined;
+        if (moved)
+            diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
+        const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
+        const picked = whole === null ? null : pickPart(id, whole, u.from, say);
+        const theirs = picked?.text ?? null;
+        parts.push(picked?.part);
         if (theirs === null) {
-            say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
+            if (whole === null)
+                say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
             hashes.push(null);
             copies.push([]);
             args.push(undefined);
@@ -547,6 +609,7 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
                 gave: args[i] ? [...new Set([...visible, ...copied, ...merged.per[i].gave])] : merged.per[i].gave,
                 overrode: merged.per[i].overrode,
                 ...(args[i] ? { args: args[i] } : {}),
+                ...(parts[i] ? { part: parts[i] } : {}),
             };
         }),
         given: new Set(added.flatMap((l) => (l.name && l.shared ? [l.name] : []))),

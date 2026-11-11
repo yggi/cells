@@ -32,7 +32,22 @@ const takenOn = (text: string, bench: string, main?: string) => {
 /** The bass instrument: `&bassV`, the voice the bass lines leave as a hole (#244). */
 /** The vamps, Jambot's themes' (`VAMPS`); the harmony written by hand for the point proposed for Spooky (#349) is not one. */
 const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter(
-  (f) => !['dark_cadence', 'haunted_progression', 'axis_progression', 'fifths_sequence', 'twelve_bar', 'korobeiniki_changes', 'montuno'].includes(f.id),
+  (f) =>
+    ![
+      'dark_cadence',
+      'haunted_progression',
+      'axis_progression',
+      'fifths_sequence',
+      'twelve_bar',
+      'korobeiniki_changes',
+      'montuno',
+      // (#540: the progressions written for the presets whose first harmony missed)
+      'ninth_vamp',
+      'ninth_loop',
+      'turnaround',
+      'ii_v_i',
+      'minor_swing',
+    ].includes(f.id),
 );
 
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
@@ -109,7 +124,7 @@ function chordsPlayed(text: string): number[][] {
 }
 
 describe('the harmonies', () => {
-  it('are five vamps, each one or two triads over the key, eight bars a lap, the dark cadence, the haunted progression and the axis progression (#572)', () => {
+  it('are five vamps, each one or two triads over the key, eight bars a lap, the dark cadence, the haunted progression and the axis progression (#572), and the progressions written for the styles (#542, #540)', () => {
     expect(HARMONY_FRAGMENTS.map((f) => f.id)).toEqual([
       'tonic_vamp',
       'vamp_to_the_seventh',
@@ -123,6 +138,11 @@ describe('the harmonies', () => {
       'twelve_bar',
       'korobeiniki_changes',
       'montuno',
+      'ninth_vamp',
+      'ninth_loop',
+      'turnaround',
+      'ii_v_i',
+      'minor_swing',
     ]);
     expect(VAMP_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
   });

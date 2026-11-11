@@ -143,7 +143,9 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     moves: true,
     form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
   },
-  pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades'),
+  pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo)', {
+    moves: true,
+  }),
   distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
   crush: sound('bit depth: 16 clean, 8 grainy, 3 and fewer: rubble'),
   // FM
@@ -183,7 +185,7 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     on: ['clock', 'driven'],
   },
   swing: {
-    help: 'on a meter: a level of its bar leans, named by note value — of each pair of its eighths (swing=8n:.67), the second comes this far through their beat (.5 straight, .67 triplet swing), its pairs alone, a group of three straight (decision 071); every beat and bar line stays. Bare (swing=.6), on a list: pairs of its steps',
+    help: 'on a meter: a level of its bar leans, named by note value — of each pair of its eighths (swing=8n:.67), the second comes this far through their beat (.5 straight, .67 triplet swing), its pairs lean, a group of three straight (decision 071); every beat and bar line stays. Bare (swing=.6), on a list at a rate: pairs of its steps (on a meter, an error that names the level)',
     doc: 'time.md',
     value: 'number',
     on: ['clock'],
@@ -355,11 +357,15 @@ export const LINE_PARAMS: ReadonlySet<string> = new Set(
   Object.keys(PARAMS).filter((k) => PARAMS[k].doc !== 'physics.md' && PARAMS[k].on?.every((r) => r === 'clock' || r === 'driven')),
 );
 
+/** What a line is played as by the default performer (part= role=, decision 075): a word about the line, which makes it no kit's member and keeps a stack a stack (#708). */
+export const PLAYED_AS: ReadonlySet<string> = new Set(['part', 'role']);
+
 /**
  * Does a cell's line give it a parameter of a kit's member: any but a line's own (legato= on a part makes it no voice, so
- * a braid splicing it, or a gate playing it moved, &bassline^$-12, is no kit: #282).
+ * a braid splicing it, or a gate playing it moved, &bassline^$-12, is no kit: #282), or what it is played as (part=bass
+ * on that line, #708).
  */
-export const memberParams = (params: Readonly<Record<string, unknown>>): boolean => Object.keys(params).some((k) => !LINE_PARAMS.has(k));
+export const memberParams = (params: Readonly<Record<string, unknown>>): boolean => Object.keys(params).some((k) => !LINE_PARAMS.has(k) && !PLAYED_AS.has(k));
 
 /** Who an attribute acts on, in words: "a voice", "a tape or a read head". */
 export function rolesText(on: readonly Role[]): string {

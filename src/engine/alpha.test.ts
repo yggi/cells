@@ -110,6 +110,7 @@ function bound(text: string): string[] {
   return [...new Set([...own(text), ...heads, ...explicit(text).names])];
 }
 
+// law L1
 describe('alpha substitution: every name a text defines renamed, it plays, says and reads as it did', () => {
   describe('the language: each example with its from lines written in, every name renamed', () => {
     it.each(Object.entries(EXAMPLES))('%s', (key, p) => {

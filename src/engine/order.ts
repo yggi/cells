@@ -45,7 +45,10 @@ export const ORDER = [
   // the pieces
   'lullaby',
   'jazz',
+  'funk',
+  'twelve',
   'five',
+  'aksak',
   'waltz',
   'sailor',
   'royal',

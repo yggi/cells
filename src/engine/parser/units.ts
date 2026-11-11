@@ -9,7 +9,7 @@ export const RATE_UNITS: Readonly<Record<string, { readonly times: number; reado
     syntax: syntax(
       'rate',
       'nbpm',
-      'n a minute: beats on a meter (a scan’s entries; meter(…)’s beats: 6/8 two, 7/8 three unequal; beat= says another count).',
+      'n a minute: beats on a meter (a scan’s entries; meter(…)’s beats, by its signature or levels: 6/8 two, 7/8 three unequal).',
       ['&bar meter("4/4") step=84bpm'],
       'time.md',
     ),

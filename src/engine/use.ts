@@ -33,7 +33,7 @@ import { splitComment } from './edit';
 import { FROM_FORM, isAttribute, readFrom, topTokens, type FromForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
-import { RENAMED_IDS } from './renamed';
+import { MOVED, RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, Origin, Resolve, Take } from './program';
 
@@ -91,6 +91,65 @@ function lineOf(code: string, written = code, line = 0): Line {
   const head = HEAD.exec(code);
   const reads = head ? [...new Set([...code.slice(head[0].length).matchAll(READS)].map((m) => m[1]!))] : [];
   return { name: head?.[1] ?? null, reads, written, code, line };
+}
+
+/**
+ * A part of a document (decision 082): the signature that names `head` (bare), then every line its heads and optional
+ * parameters read, wherever it sits, taken through the closure as a collection's names are; never its main parameter's
+ * line (the document's own, what it plays with as a piece), nor another signature's. A text of one signature is its
+ * own part. Null where no signature names the head.
+ */
+export function partOf(text: string, head: string): string | null {
+  const lines = linesOf(text);
+  const sigs = lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : []));
+  const found = sigs.find((s) => s.sig.names.includes(`&${head}`));
+  if (!found) return null;
+  if (sigs.length === 1) return text;
+  const { line: sigLine, sig } = found;
+  const main = sig.main ? sig.main.slice(1) : null;
+  const defines = new Map<string, Line>();
+  for (const l of lines) {
+    if (l.name) defines.set(l.name, l);
+    else if (l.from?.kind === 'use') for (const n of l.from.names ?? []) defines.set(n.slice(1), l);
+  }
+  // (what a from line reads: the names its arguments write, past what it takes)
+  const readsOf = (l: Line) => (l.from?.kind === 'use' ? [...l.code.slice(l.code.search(/\sfrom\s/)).matchAll(READS)].map((m) => m[1]!) : l.reads);
+  const keep = new Set<Line>();
+  const seen = new Set<string>();
+  for (const queue = [...sig.names, ...sig.optional].map((n) => n.slice(1)); queue.length;) {
+    const n = queue.shift()!;
+    if (seen.has(n) || n === main) continue;
+    seen.add(n);
+    const l = defines.get(n);
+    if (!l || keep.has(l)) continue;
+    keep.add(l);
+    queue.push(...readsOf(l));
+  }
+  return [sigLine.written.trim(), ...lines.filter((l) => keep.has(l)).map((l) => l.written)].join('\n');
+}
+
+/** The heads of each signature a text holds, in the order written: one entry a part (decision 082). */
+export const partsOf = (text: string): string[][] => linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from.names.map((n) => n.slice(1))] : []));
+
+/**
+ * What a take reads of a document (decision 082): the part its line names by its first head, or the text as it is for a
+ * file of one signature or none. Says, and gives null, where the line names no part's head or takes `*` from a document.
+ */
+function pickPart(id: string, text: string, from: FromUse, say: (message: string) => void): { text: string; part?: string } | null {
+  const parts = partsOf(text);
+  if (parts.length < 2) return { text };
+  const heads = parts.map((p) => p.map((h) => `&${h}`).join(', ')).join(' · ');
+  const asked = (from.takes ?? from.names)?.[0]?.slice(1);
+  if (!asked) {
+    say(`${quoted(id)} gives ${parts.length} parts, each taken by its head (${heads}): name one, not *`);
+    return null;
+  }
+  const part = partOf(text, asked);
+  if (part === null) {
+    say(`${quoted(id)} gives no part headed &${asked}: its parts are ${heads}`);
+    return null;
+  }
+  return { text: part, part: asked };
 }
 
 /** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
@@ -605,9 +664,10 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
     if (path.includes(id)) say(`use ${quoted(id)} is a cycle: ${pathOf(next)}`);
     else if (next.length > FROM_DEPTH) say(`use ${quoted(id)} nests past ${FROM_DEPTH} deep: ${pathOf(next)}`);
     else {
-      const theirs = resolve(id);
-      if (theirs === null) sayHere(`No fragment ${quoted(id)} to use`);
-      else {
+      const whole = resolve(id);
+      const theirs = whole === null ? null : (pickPart(id, whole, entry.from, sayHere)?.text ?? null);
+      if (whole === null) sayHere(`No fragment ${quoted(id)} to use`);
+      else if (theirs !== null) {
         const g = give(entry, next, theirs, resolve, say, taken);
         const step = { id: here, line: l.line };
         copies.push(...via(g.copy, step));
@@ -664,6 +724,7 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
   const hashes: (string | null)[] = [];
   const copies: (readonly Line[])[] = [];
   const args: (Readonly<Record<string, string>> | undefined)[] = [];
+  const parts: (string | undefined)[] = [];
   const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
   const level: Level = {
     defines: new Set(taken),
@@ -675,10 +736,18 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
     const names = namesOf(u);
     const span = spanOf(u.line);
     const say = (message: string) => diagnostics.push({ severity: 'error', message, span });
-    const recorded = locked.find((k) => k.id === id)?.hash;
-    const theirs = resolve ? resolve(id, ...(recorded ? [recorded] : [])) : null;
+    // (a document's part is locked by its id and head, `kinderlied/twinkle`, decision 082)
+    const head = (u.from.takes ?? u.from.names)?.[0]?.slice(1);
+    const recorded = (locked.find((k) => head !== undefined && k.id === `${id}/${head}`) ?? locked.find((k) => k.id === id))?.hash;
+    // (a seed fragment a piece took in as its part, read the old way as that part, decision 082: Migrate's `moved` rewrites it)
+    const moved = old ? MOVED.get(id) : undefined;
+    if (moved) diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
+    const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
+    const picked = whole === null ? null : pickPart(id, whole, u.from, say);
+    const theirs = picked?.text ?? null;
+    parts.push(picked?.part);
     if (theirs === null) {
-      say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
+      if (whole === null) say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
       hashes.push(null);
       copies.push([]);
       args.push(undefined);
@@ -734,6 +803,7 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
         gave: args[i] ? [...new Set([...visible, ...copied, ...merged.per[i]!.gave])] : merged.per[i]!.gave,
         overrode: merged.per[i]!.overrode,
         ...(args[i] ? { args: args[i] } : {}),
+        ...(parts[i] ? { part: parts[i] } : {}),
       };
     }),
     // (a copy's lines are the piece's own, as if written there: the built-in card hears them; what was taken by name isn't)

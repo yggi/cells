@@ -111,6 +111,7 @@ describe('source edits', () => {
     expect(setOff(crlfOff, 'hookBar', false)).toBe(crlf);
   });
 
+  // law L10
   it('round-trips through the compiler: what the graph sets is what the code says', () => {
     const base = EXAMPLES.royal.source;
     const r = compileSource(setOff(setShift(base, 'key', 5), 'theme', true));

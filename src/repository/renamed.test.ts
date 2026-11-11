@@ -30,7 +30,8 @@ const piece = (id: string) => `&bar from ${id} 120bpm\n&t step=8n 0 2 4 7\n&v s=
 
 describe('the seed ids as words (#387)', () => {
   it('every seed id is a word now, or a template taken with its arguments; each of the 59 old ones names its word by the rule, and the seven modes the diatonic fragment with theirs', () => {
-    expect([...ids].filter((id) => !/^[A-Za-z_][A-Za-z0-9_]*(\([A-Za-z_]\w*=[^=&]+(, [A-Za-z_]\w*=[^=&]+)*\))?$/.test(id))).toEqual([]);
+    // (or a document's part, its key and its head, `kinderlied/twinkle`: decision 082)
+    expect([...ids].filter((id) => !/^[A-Za-z_][A-Za-z0-9_]*(\/[A-Za-z_]\w*|\([A-Za-z_]\w*=[^=&]+(, [A-Za-z_]\w*=[^=&]+)*\))?$/.test(id))).toEqual([]);
     expect(RENAMED_IDS.size).toBe(79);
     for (const [old, word] of RENAMED_IDS) {
       expect([old, ids.has(word), ids.has(old)]).toEqual([old, true, false]);

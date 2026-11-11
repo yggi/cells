@@ -165,7 +165,11 @@ export function cachedFit(resolve, limit = 512) {
     };
 }
 const ID_ARGS = /^([^(]*)\((.*)\)$/;
-function fromLine(heads, id, args, main) {
+const PART = /^([^(/]+)\/([^(]+)$/;
+function fromLine(given, whole, args, main) {
+    const part = PART.exec(whole);
+    const id = part ? part[1] : whole;
+    const heads = part && given.length === 1 && given[0] !== `&${part[2]}` && !given[0].includes('=') ? [`${given[0]}=${part[2]}`] : given;
     const m = ID_ARGS.exec(id);
     const written = [...(m ? [m[2]] : []), ...Object.entries(args ?? {}).map(([k, v]) => `${k}=${v}`)];
     return `${heads.join(', ')} from ${m ? m[1] : id}${written.length ? `(${written.join(', ')})` : ''}${main ? ` ${main}` : ''}`;
