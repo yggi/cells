@@ -10,6 +10,7 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 
 - [language/overview.md](language/overview.md) — the map, and a whole piece
 - [language/cell.md](language/cell.md) — the anatomy of a line
+- [language/foundations.md](language/foundations.md) — a piece's ground: tempo, meter, tonic and key, the two wheels side by side
 - [language/braid.md](language/braid.md) — generators, picks, slices, shifts
 - [language/tables.md](language/tables.md) — `over=`, `shift=`, `scale()`
 - [language/time.md](language/time.md) — `step=`, `loop=`, meters, laps, selectors

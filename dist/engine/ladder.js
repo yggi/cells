@@ -164,7 +164,7 @@ export const TIERS = [
     },
     {
         name: 'Sound and tuning',
-        concept: 'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; meter()',
+        concept: 'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read',
         forms: [
             'parameter pan',
             'parameter glide',

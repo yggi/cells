@@ -31,8 +31,7 @@ export const STUBS: ReadonlySet<string> = new Set([
  * forms, and no tutorial piece can show these without changing the notes it plays. They go on a tier (4, rhythm, or 5,
  * development) with the piece that shows them. `legato=` (#94, a line's articulation) waits for a piece of its own
  * on tier 4. `tags=`, a cell's clusters, lost its tier-1 pieces when the card's tags moved into the file's frontmatter
- * (decision 047): it goes on a tier with a piece whose cells it clusters. `use` (decisions 054, 059) waits for the examples
- * to take a kit by it (#196's rung 4).
+ * (decision 047): it goes on a tier with a piece whose cells it clusters.
  */
 export const PENDING: ReadonlySet<string> = new Set([
   // (a slider's unit as an argument, the core's spelling, decision 069: toCore writes it, a tutorial piece doesn't, the
@@ -227,7 +226,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Sound and tuning',
     concept:
-      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; meter()',
+      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read',
     forms: [
       // stereo
       'parameter pan',

@@ -1,6 +1,6 @@
 # 060 · The key is named: `over=&key`, and `over=key` is the old way; a tonic is a cell, stepped or left free
 
-**Date:** 2026-10-26 · **Status:** accepted (owner, 2026-10-26: "yes, retire over=key, and stepped / free tonic. go for the implementation right away") · Amends [047](047-fragments-are-files.md)'s interface names and [059](059-named-use.md)'s closure · Issues: #301, #290, #124, #81
+**Date:** 2026-10-26 · **Status:** accepted (owner, 2026-10-26: "yes, retire over=key, and stepped / free tonic. go for the implementation right away") · Amends [047](047-fragments-are-files.md)'s interface names and [059](059-named-use.md)'s closure · Issues: #301, #290, #124, #81 · Amended by [075](075-a-name-is-only-a-name.md): the interface names retire, and `&key` is the key's name by convention only
 
 ## Context
 
