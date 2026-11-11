@@ -72,8 +72,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s: a hundred and seventy-four)', () =>
-    expect(files).toHaveLength(174));
+  it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; and #646’s two drum bars, for 7/8 and 12/8: a hundred and seventy-six)', () =>
+    expect(files).toHaveLength(176));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -221,6 +221,9 @@ describe('the seed files', () => {
     'haunted_pad',
     'kinderlied_drums',
     'axis_progression',
+    // (#646: the drum bars for 7/8 and 12/8, written for their examples, lifted from none)
+    'aksak_drums',
+    'twelve_eight_drums',
   ]);
   it('each says it is a seed, every drum bar, bass line and harmony and what an example gave where it was lifted from, but those written for Spooky, and each has prose', () => {
     expect(SEED.every((f) => f.meta.source === 'seed' && f.prose.length > 0)).toBe(true);

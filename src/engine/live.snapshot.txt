@@ -12,7 +12,7 @@ twinkle  live 53e57bf6c9063d61
 chords  live 46a4d40d136de57c
 rhythm  live f2ea0ed992dc8a6f
 drums  live 0e596ea95b984059
-swing  live 9bac31b4f029fa4c
+swing  live 8ec7bca76934c51a
 breve  live fdd6e23b656bee54
 canon  live 5ed1acfb8724f8f6
 mirrors  live 65b90037525fe0a0
@@ -41,7 +41,10 @@ play-in  live ce29f08f51e88004
 midi-out  live 359e9bedc674cc96
 lullaby  live e72c2693e211dad7
 jazz  live d608b78d32a0515f
+funk  live 79c3e14b57f79373
+twelve  live 362bc09ff928ca26
 five  live 9df2609628499bd2
+aksak  live 7f5d57c0ae9f358b
 waltz  live 2bafdd2c5b25dcc8
 sailor  live c4e178006dfe50f4
 royal  live 5168bf4b4427ad44

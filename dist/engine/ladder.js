@@ -117,7 +117,7 @@ export const TIERS = [
     },
     {
         name: 'Rhythm and feel',
-        concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: a swing clock tapped by its pulse, swing= on a meter tapped by name',
+        concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: swing= on a meter, a share of each pair at a level, a slider from straight to hard',
         forms: [
             'map map=amp',
             'sort volume: map=amp, map=db or map=adsr',
@@ -133,6 +133,7 @@ export const TIERS = [
             'rate step=&m:16n',
             'parameter pulse',
             'parameter swing',
+            'free free(v, lo..hi)',
             'generator meter("sig")',
         ],
     },
@@ -181,7 +182,6 @@ export const TIERS = [
             'map map=ed(r)',
             'map map=ratios',
             'step n/d',
-            'free free(v, lo..hi)',
             'free free(v, lo..hi, "names")',
             'mix free(v, lo..hi)',
             'map map=style',

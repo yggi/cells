@@ -164,7 +164,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Rhythm and feel',
     concept:
-      'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: a swing clock tapped by its pulse, swing= on a meter tapped by name',
+      'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: swing= on a meter, a share of each pair at a level, a slider from straight to hard',
     forms: [
       // meter and feel
       'map map=amp',
@@ -184,8 +184,9 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'rate step=&m:16n',
       // a scan's note value
       'parameter pulse',
-      // swing
+      // swing, its share a slider (#646: the swing showcase leans from straight to hard)
       'parameter swing',
+      'free free(v, lo..hi)',
       'generator meter("sig")',
     ],
   },
@@ -250,7 +251,6 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'map map=ratios',
       'step n/d',
       // free
-      'free free(v, lo..hi)',
       'free free(v, lo..hi, "names")',
       'mix free(v, lo..hi)',
       // style: a point the voices read (#621, #572)
