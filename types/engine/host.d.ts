@@ -6,6 +6,7 @@ export type ToEngine = {
     code: string;
     env?: Env;
     locked?: readonly Locked[];
+    anchor?: number;
 } | {
     type: 'window';
     id: number;

@@ -5,6 +5,7 @@ A number left to the performer: a slider on the node, and moving it rewrites the
 **`free(default, lo..hi)`** goes wherever a number is written ([decision 078](https://github.com/yggi/cells/blob/main/docs/decisions/078-every-number-may-be-free.md)): a rate, `step=free(90bpm, 60..240)` (the tempo); a shift, `shift=free(0, 0..6)` (a mode selector, which turning the wheel moves too); a gain in a mix, `&strings * free(.4, 0..1)` (a fader); an interval, `scan(free(2, 1..3) 1)` (the swing ratio of the Swing blues); a style's axis, `sync=free(.3, 0..1)` ([style.md](style.md); the example *Radio*); and a count, an index, a step.
 
 - **A number read as the piece is built** (`cycle=`, `x!n`, `&x[i]`, `euclid(k, n)`) is the number its slider holds now. Moving the slider compiles the piece again.
+- **A tempo moved keeps the beat** ([#56](https://github.com/yggi/cells/issues/56)): the piece compiled again goes on from where it was heard, its main meter's steps taken so far (the beat in progress, its fraction included) where they were, and only what follows at the new rate; the frontend passes the second it swaps at (the host's `load` with `anchor`, or `keepBeat`, `src/engine/keepbeat.ts`). A swing's share or a bend's depth moved so takes effect at once, mid-bar, not yet at the next bar line.
 - **A whole place** (a count, an index, a turn) takes a whole range, and its value is rounded; its slider moves by ones.
 - **A range stays within the place's**: a count's at 1 or more, a probability's within 0 to 1.
 

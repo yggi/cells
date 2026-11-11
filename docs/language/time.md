@@ -17,7 +17,7 @@ A played cell starts at most 2,000 notes a second (`MAX_NOTES_PER_SECOND`, `src/
 
 - **`stride=n`** — each step moves a stepped table n places (`stride=7`: fifths).
 - **`cycle=n`** — how many laps before it comes round ([decision 040](https://github.com/yggi/cells/blob/main/docs/decisions/040-pulse-beat-and-laps.md), #75): a table's own length, an index read through it, or, on a tap, its bars; `cycle=0` holds the first entry. See [tables.md](tables.md). A line on a tap walks its own braid across the bar line, as a melody does; with `cycle=n` it comes round every n bars, its steps past them dropped and a shorter braid repeated up to them (#116): `&kick note=36 step=16n cycle=1` with 16 sixteenths plays 14 of them in a bar of 7/8, and begins again.
-- Rates can be a **free** number: `step=free(90bpm, 60..240)`; see [free.md](free.md).
+- Rates can be a **free** number: `step=free(90bpm, 60..240)`; see [free.md](free.md). Moved while it plays, the piece goes on with its beat kept ([#56](https://github.com/yggi/cells/issues/56)).
 
 ```cells
 &bar meter("4/4") step=&tempo
