@@ -24,6 +24,7 @@ import { declarations } from './fit';
 import { byId, fragmentProblems, pointDistance, pointsOf, type LearnedLayer, type Repository, type StylePoint, type UsedPair, type WeightedPoint } from './fragments';
 import { signatureOf } from '../engine/use';
 import { readFrom } from '../engine/parser/use';
+import { counts } from '../engine/core/desugar';
 import { splitComment } from '../engine/edit';
 import { argsOf, ofArgs } from './variants';
 import { RENAMED_IDS } from '../engine/renamed';
@@ -109,12 +110,19 @@ const ownNames = (text: string): string[] => {
  * A text as identity reads it, until the hash: each declaration's code as the union reads it (`fit.ts`: comments aside,
  * whitespace collapsed, a line and those it continues onto as one), its own names numbered in the order it declares
  * them (`&#1`, `&#2`, no name a text can write), the names a template's signature declares and the names it uses but
- * doesn't define as written: `&bar meter("3/4")` and `&m meter("3/4")` are one text (#454). Two texts that read alike are one fragment, renamed.
+ * doesn't define as written: `&bar meter("3/4")` and `&m meter("3/4")` are one text (#454); and each run counted as the
+ * core counts it, `x x` as `x!2` where nothing reads the cell's units (decision 077 §3, #710). Two texts that read alike are one fragment, renamed.
  */
 export function canonicalText(text: string): string {
   const index = new Map(ownNames(text).map((name, i) => [name, i + 1]));
-  return declarations(text)
-    .map((l) => l.code.replace(NAME, (written, name: string) => (index.has(name) ? `&#${index.get(name)}` : written)))
+  // (each run counted as the core counts it, decision 077 §3: where nothing reads a cell's units, `x x` is `x!2`)
+  return counts(
+    declarations(text)
+      .map((l) => l.code)
+      .join('\n'),
+  )
+    .split('\n')
+    .map((code) => code.replace(NAME, (written, name: string) => (index.has(name) ? `&#${index.get(name)}` : written)))
     .join('\n');
 }
 

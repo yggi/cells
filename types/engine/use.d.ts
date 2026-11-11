@@ -3,6 +3,15 @@ import type { Diagnostic, Span } from './ast';
 import type { CompileOptions, Origin, Resolve, Take } from './program';
 /** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
 export declare const FROM_DEPTH = 8;
+/**
+ * A part of a document (decision 082): the signature that names `head` (bare), then every line its heads and optional
+ * parameters read, wherever it sits, taken through the closure as a collection's names are; never its main parameter's
+ * line (the document's own, what it plays with as a piece), nor another signature's. A text of one signature is its
+ * own part. Null where no signature names the head.
+ */
+export declare function partOf(text: string, head: string): string | null;
+/** The heads of each signature a text holds, in the order written: one entry a part (decision 082). */
+export declare const partsOf: (text: string) => string[][];
 /** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
 export declare const hasFrom: (text: string) => boolean;
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */

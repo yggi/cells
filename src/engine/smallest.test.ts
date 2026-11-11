@@ -145,6 +145,7 @@ describe('a drone in time', () => {
   const p = plan(r, codeShifts(r));
   const key = (es: readonly Played[]) => es.map((e) => `${e.voice} ${e.at.toFixed(6)} ${e.dur.toFixed(6)} ${e.freq.toFixed(3)} ${e.bends.length}`).sort();
 
+  // law L6
   it('windows played separately are the same notes as at once', () => {
     const once = eventsBetween(p, 0, 3, true);
     const windows = [0, 0.25, 0.5, 1, 1.75, 2, 2.5].map((from, i, all) => eventsBetween(p, from, all[i + 1] ?? 3, true)).flat();

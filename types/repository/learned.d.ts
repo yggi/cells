@@ -79,7 +79,8 @@ export interface Use {
  * A text as identity reads it, until the hash: each declaration's code as the union reads it (`fit.ts`: comments aside,
  * whitespace collapsed, a line and those it continues onto as one), its own names numbered in the order it declares
  * them (`&#1`, `&#2`, no name a text can write), the names a template's signature declares and the names it uses but
- * doesn't define as written: `&bar meter("3/4")` and `&m meter("3/4")` are one text (#454). Two texts that read alike are one fragment, renamed.
+ * doesn't define as written: `&bar meter("3/4")` and `&m meter("3/4")` are one text (#454); and each run counted as the
+ * core counts it, `x x` as `x!2` where nothing reads the cell's units (decision 077 §3, #710). Two texts that read alike are one fragment, renamed.
  */
 export declare function canonicalText(text: string): string;
 /**

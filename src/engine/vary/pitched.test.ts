@@ -16,12 +16,12 @@ import { bassCards } from '../../repository/benches';
 import { anchorsOf, PITCHED_OPERATORS, readVariations, variations, varied } from '.';
 import { bodyOf } from '../use';
 import type { Resolve } from '../program';
-import { resolveSeed } from '../../repository/library';
+import { ofFacet, resolveSeed } from '../../repository/library';
 import { seedFragments } from '../../repository/seed';
 
 const BASS_FRAGMENTS = seedFragments('bass');
 const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
-const MOTIF_FRAGMENTS = seedFragments('motifs');
+const MOTIF_FRAGMENTS = ofFacet('motif');
 
 /** A fragment's lines on a workbench by hand, its signature aside (`bodyOf`): judged as a collection's are, by its lines (`fitsAs`, read as the fragment `x`, #587). */
 const unionOf = (text: string, workbench: string) => {

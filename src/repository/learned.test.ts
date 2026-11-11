@@ -207,7 +207,24 @@ describe('identity, until the hash', () => {
     expect(sameText(`${linesAlone(son.text).replace(' &claves', '   &claves')} // the son`, son.text)?.size).toBe(0);
     // (a template renamed in its signature is another template: its heads are its interface, decision 075)
     expect(sameText(renameCell(son.text, 'clave', 'cl'), son.text)).toBeNull();
+    // (a cell that counts its own laps, cycle=, reads its units: its runs as written, decision 077 §3)
     expect(canonicalText(linesAlone(son.text))).toBe(['&#1 role=clave step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!3 &claves ~!7', '&#2 [&#1 * .5]'].join('\n'));
+  });
+
+  it('a run is counted as the core counts it: x x is x!2 where nothing reads the cell’s units, and two texts where something does (#710)', () => {
+    expect(sameText('&h over=&key step=1m [0,2,4] [0,2,4] [4,6,8]', '&h over=&key step=1m [0,2,4]!2 [4,6,8]')).toEqual(new Map());
+    expect(canonicalText('&x step=4n 0 0 0 2 [1 1] 3*2')).toBe('&#1 step=4n 0!3 2 [1!2] [3!2]');
+    // (a count that differs is another text)
+    expect(sameText('&h step=1m [0,2,4]!2', '&h step=1m [0,2,4] [0,2,4] [0,2,4]')).toBeNull();
+    // (a cell picked, or counting its own laps, reads `x!2` as one unit and `x x` as two: decision 077 §3)
+    expect(sameText('&a 0 0 2\n&b step=4n &a[1]', '&a 0!2 2\n&b step=4n &a[1]')).toBeNull();
+    // (so Korobeiniki's changes, cycle=8, are not the seed written as Jambot's `progressionText` writes them, `!2`: Jambot
+    // writes the chord twice, as the seed does)
+    const korobeiniki = LIBRARY.find((f) => f.id === 'korobeiniki_changes')!;
+    const asCounted = korobeiniki.text.replace('[0,2,4] [0,2,4] [4,6,8]', '[0,2,4]!2 [4,6,8]');
+    expect(asCounted).not.toBe(korobeiniki.text);
+    expect(sameText(linesAlone(asCounted), korobeiniki.text)).toBeNull();
+    expect(sameText(linesAlone(korobeiniki.text), korobeiniki.text)?.size).toBe(0);
   });
 
   it('but not one that differs, nor one that renames a name its signature declares or a name it uses and doesn’t define', () => {

@@ -11,13 +11,20 @@
  *    `scan(free(2, 1..3) 1)`, is a share left free, `swing=8n:free(2/3, 1/2..3/4)`: the same notes where it starts, its
  *    slider the share (x / (x + b)) where it was the ratio.
  *
+ *  - `tapClock`, `shadowMeter`: a second clock folded into the main meter (#668): its readers on the main meter's taps
+ *    where every tick of it is one of theirs, or a second meter that is the main one but for its swing, the main meter
+ *    taking its swing.
+ *
  * Each only where it sounds identical (S1, `rewriteAll`): a pair a beat leans as the clock did where the clock's note value
  * is half the beat (decision 071's pairs), so a swing clock on a 6/8's eighths, or a scan a piece reads as more than a
  * meter, stays as written. The clock keeps its name, so a note about it still points at it. Pure.
  */
 import { attrsOf, declLine, declWords, spansLines, splitComment } from '../edit';
 import { parse } from '../parser';
-import type { CompileResult } from '../program';
+import { codeShifts, type CompileOptions, type CompileResult } from '../program';
+import { clocking } from '../clocking';
+import { compileSource } from '../compile';
+import { plan } from '../realize';
 import type { Rewrite } from '../rewrite';
 
 const rewrite = (rule: 'meter' | 'swing', title: string, before: string, after: string, apply: (src: string) => string): Rewrite<'meter' | 'swing'> => ({
@@ -140,6 +147,118 @@ export function swingClock(source: string, result: CompileResult): Rewrite<'mete
           return lines.map((l) => (tapped.test(l) ? keepColumn(l, splitComment(l)[0].trimEnd().replace(tapped, `step=${tap}`)) : l)).join('\n');
         },
       ),
+    );
+  }
+  return out;
+}
+
+/** The main meter's taps a second clock's readers may read instead: note values, dotted and triplets, the pulse, the beat, the bar. */
+const TAPS = [...['1n', '2n', '4n', '8n', '16n', '32n'].flatMap((n) => [n, `${n}.`, n.replace('n', 't')]), 'pulse', 'beat', '1m'];
+
+/** How many of a clock's steps are compared, and how near (seconds): 64, to 1e-9, so a slow clock is checked past its first tick (#669). */
+const SAME = { steps: 64, seconds: 1e-9 } as const;
+
+/** Every mention of &name in the source but those the given patterns match: what else reads it. */
+function otherMentions(source: string, name: string, ...readers: RegExp[]): number {
+  const said = readers.reduce((s, r) => s.replace(r, ''), source.replace(/about=(?:\([^)]*\)|&\w+)/g, ''));
+  return [...said.matchAll(new RegExp(`&${name}(?!\\w)`, 'g'))].length - 1;
+}
+
+/** Is &name mentioned by a note's `about=`? Its line then stays, so the note still points at it. */
+const noted = (source: string, name: string) => new RegExp(`about=(?:\\([^)]*&${name}(?!\\w)[^)]*\\)|&${name}(?!\\w))`).test(source);
+
+/** The source without &name's own line. */
+function dropLine(source: string, name: string): string {
+  const lines = source.split('\n');
+  const i = declLine(source, name);
+  return i < 0 ? source : [...lines.slice(0, i), ...lines.slice(i + 1)].join('\n');
+}
+
+/** A clock's onsets, its first `SAME.steps`, from the time map the compile builds; null where it has none. */
+function onsets(source: string, key: string, options: CompileOptions): number[] | null {
+  const r = compileSource(source, undefined, options);
+  if (!r.clocks.has(key)) return null;
+  const map = clocking(r, plan(r, codeShifts(r)).statics).map(key);
+  return Array.from({ length: SAME.steps }, (_, i) => map.q(i));
+}
+
+/**
+ * A second clock its readers tap where every tick of it is a tick of a tap of the main meter (#668, `tapClock`): the
+ * readers read that tap (`step=&sixteenths:16n` → `step=8n` under alla breve), and the clock goes where nothing else
+ * reads it (its line stays where a note is about it). The clock's first 64 ticks are compared with the tap's to 1e-9 s,
+ * so a clock slower than S1's window is checked past its first tick (#669's (a)). A clock with a slider of its own
+ * (`free(`) isn't folded: two sliders never become one silently.
+ */
+export function tapClock(source: string, result: CompileResult, options: CompileOptions = {}): Rewrite<'meter' | 'swing'>[] {
+  const main = result.mainMeter;
+  if (!main) return [];
+  const own = new Set(parse(source).cells.map((d) => d.name));
+  const out: Rewrite<'meter' | 'swing'>[] = [];
+  for (const name of own) {
+    if (name === main || !result.clocks.has(name) || spansLines(source, name)) continue;
+    const line = source.split('\n')[declLine(source, name)] ?? '';
+    if (/free\(/.test(splitComment(line)[0])) continue;
+    // (its readers: lines that tap it, `step=&x:16n`; anything else that reads it, a table or its own steps, keeps it)
+    const tapped = new RegExp(`step=&${name}:([\\w.]+)(?![\\w*/.:])`, 'g');
+    const taps = [...new Set([...source.matchAll(tapped)].map((m) => m[1]!))];
+    if (!taps.length || otherMentions(source, name, tapped) !== 0) continue;
+    const probe = `${source}\n${TAPS.map((t, i) => `&__tap${i} step=${t} 0`).join('\n')}`;
+    const near = (a: number[], b: number[]) => a.every((x, i) => Math.abs(x - b[i]!) <= SAME.seconds);
+    const instead = new Map<string, string>();
+    for (const tap of taps) {
+      const theirs = onsets(source, `${name}:${tap}`, options);
+      const match =
+        theirs &&
+        TAPS.find((t) => {
+          const ours = onsets(probe, `${main}:${t}`, options);
+          return ours !== null && near(ours, theirs);
+        });
+      if (match) instead.set(tap, match);
+    }
+    if (instead.size !== taps.length) continue;
+    const said = [...instead].map(([a, b]) => `&${name}:${a} is ${b}`).join(', ');
+    out.push(
+      rewrite('meter', `&${name}'s ticks are &${main}'s: ${said}`, `step=&${name}:${taps[0]}`, `step=${instead.get(taps[0]!)}`, (src) => {
+        let next = src.replace(tapped, (_, tap: string) => `step=${instead.get(tap) ?? `&${name}:${tap}`}`);
+        if (!noted(next, name) && otherMentions(next, name) === 0) next = dropLine(next, name);
+        return next;
+      }),
+    );
+  }
+  return out;
+}
+
+/**
+ * A second meter that is the main one but for its feel (#668, `shadowMeter`): the main meter's own rate (the same cell or
+ * the same written rate, never a slider of its own), its bar as long, read only by taps; the main meter takes its swing
+ * and legato where it has none, its readers read the main meter's taps, and it goes where nothing else reads it.
+ */
+export function shadowMeter(source: string, result: CompileResult): Rewrite<'meter' | 'swing'>[] {
+  const main = result.mainMeter;
+  if (!main || declLine(source, main) < 0 || spansLines(source, main)) return [];
+  const mine = attrsOf(source, main);
+  const rate = mine.get('step');
+  if (!rate || /free\(/.test(rate)) return [];
+  const out: Rewrite<'meter' | 'swing'>[] = [];
+  for (const { name } of parse(source).cells) {
+    if (name === main || !result.cells.get(name)?.meter || spansLines(source, name)) continue;
+    const theirs = attrsOf(source, name);
+    if (theirs.get('step') !== rate) continue;
+    // (what it adds: a feel the main meter doesn't have; nothing else a meter of its own would carry)
+    const feel = ['swing', 'legato'].filter((k) => theirs.has(k));
+    if (!feel.length || feel.some((k) => mine.has(k)) || [...theirs.keys()].some((k) => k !== 'step' && !feel.includes(k))) continue;
+    const tapped = new RegExp(`step=&${name}:([\\w.]+)(?![\\w*/.:])`, 'g');
+    if (!tapped.test(source) || otherMentions(source, name, tapped) !== 0) continue;
+    const add = feel.map((k) => `${k}=${theirs.get(k)}`).join(' ');
+    out.push(
+      rewrite('swing', `&${name} is &${main} with ${add}: &${main} ${add}, its readers on &${main}'s taps`, `&${name}`, `&${main} ${add}`, (src) => {
+        const lines = src.split('\n');
+        const m = declLine(src, main);
+        lines[m] = keepColumn(lines[m]!, `${splitComment(lines[m]!)[0].trimEnd()} ${add}`);
+        let next = lines.join('\n').replace(tapped, (_, tap: string) => `step=${tap}`);
+        if (!noted(next, name) && otherMentions(next, name) === 0) next = dropLine(next, name);
+        return next;
+      }),
     );
   }
   return out;

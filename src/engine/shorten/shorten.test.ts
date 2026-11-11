@@ -197,6 +197,7 @@ describe('shorten: turns, alike cells, and all the way', () => {
   });
 });
 
+// law L2, L4
 describe('shorten all the way, on every example: it sounds the same, and is done (#10: idempotence)', () => {
   for (const [key, p] of Object.entries(EXAMPLES)) {
     it(

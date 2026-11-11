@@ -24,7 +24,7 @@ Sound parameters use dough's names; any of them makes a cell a voice. Strudel's 
 | `ftype=` | its filters' model ([decision 074](https://github.com/yggi/cells/blob/main/docs/decisions/074-filters-are-superdoughs.md), superdough's word): `12db`, one biquad each, the default; `24db`, two in series at the same cutoff and Q, what a filter then an instrument's filter at the same settings play; `ladder`, a low-pass of its own whose resonance sings by itself past about 31 (`lpq=` read as its resonance, not in dB; `drive=` how hard it is pushed, .69 unless given; on an instrument, on its voices' sum). On a voice or an instrument; superdough's numbers 0, 2, 1 name the same, and Normalise writes the word |
 | `room=` | reverb send, 0–1; can move |
 | `delay=` `delaytime=` `delayfeedback=` | echo send (0–1, can move), time (seconds or a clock), feedback (0–1) |
-| `pan=` | where it sits in stereo: 0 left, .5 centre (as without it), 1 right; the far side fades, the near one stays full. Past 0 or 1 it plays hard left or right, and warns; on a mix or the sound card it does nothing, and warns |
+| `pan=` | where it sits in stereo: 0 left, .5 centre (as without it), 1 right; the far side fades, the near one stays full. It can move, read at each note's start (`pan=&space`: below). Past 0 or 1 it plays hard left or right, and warns; on a mix or the sound card it does nothing, and warns |
 | `distort=` | distortion: 0 clean, .3 gritty, 1 and more harsh |
 | `crush=` | bit depth: 16 clean, 8 grainy, 3 and fewer rubble |
 
@@ -86,6 +86,15 @@ A braid of voices with no `step=` (`&kit &bd &sd &hh`) is a table of voices: a p
 A sound parameter can be a range times cells, so it moves with the music: `lpf=110..3800 * &fenv * &accent * &knob` sweeps the filter from 110 to 3800 Hz by an envelope per note (`map=adsr`), accents (`map=amp`) and a slow knob (`map=lin`); `lpq=&res` takes a cell too. Parameters that are times take a clock as well as seconds: `delaytime=&bar*4/3` is a dotted eighth at whatever the tempo is. Each factor is a value that moves (a CV), not a sound: a voice in it (`&lfo s=sine loop=.5`) moves nothing and says so; write its braid, `&lfo loop=.5 sin(12)`. A factor turning 20 laps a second or faster (`CV_LAPS`, the sorts' edge between a pitch and a wave) is a warning, and one faster than 20 is read turning at 20: a sound moved at an audio rate is FM's (`fm=`).
 
 **A range's ends may be sliders, and centre ± reach is its sugar** ([decision 079](https://github.com/yggi/cells/blob/main/docs/decisions/079-a-sum-of-cells-and-a-window.md)): `lpf=free(400, 200..800)..free(2400, 1200..4800) * &lfo` is a window a hand sets, the cell moving the filter inside it; `lpf=free(1200, 800..2000) ± free(400, 0..800) * &lfo` is the same window by its centre and its reach, `(c − r)..(c + r)`, held at 0 below (`+-` reads as `±`). Written in numbers, `1200 ± 400`, `toCore` writes the range, `800..1600`; with a slider in it, it stays as written.
+
+**`pan=` moves too, note by note** ([#696](https://github.com/yggi/cells/issues/696)): `pan=&space` or `pan=0..1 * &lfo` places each note where its cells stand when the note starts, and holds it there for the note; it is in the note's channel gains, as a fixed `pan=` is, so a frontend plays it with nothing more. MIDI out sends no pan, fixed or moving. A sound that rings without notes (a resonator alone, a tape's read head) has nowhere to read it: it sits in the centre, and says so.
+
+```cells
+&t step=4 0 2 4 7
+&space map=lin step=4 0 .33 .67 1
+&v s=tri loop=C4 pan=&space
+&out map=sample [&t * &v * .4]
+```
 
 **A bipolar wave is a share from 0 to 1** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md) §5): a cell whose values run below 0 (`sin(12)`, `saw(8)`, −1 to 1), read as a parameter's factor or a volume, is read as (1 + x)/2, its middle at .5, so `lpf=200..3000 * &lfo` with `&lfo map=lin loop=.25 sin(12)` sweeps the whole range. A cell that stays at 0 or above is read as written; read as a pitch, a wave is semitones either way.
 

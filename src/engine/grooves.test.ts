@@ -77,6 +77,29 @@ describe('pan= on a voice: where it sits in stereo (#10 F3)', () => {
     const g = gains(voices.replace('hpf=8000', 'hpf=8000 pan=1') + '&groove step=8n &bd &hh\n&out map=sample [&groove * .6]');
     expect(g.slice(0, 2)).toEqual(['bd 0.6000,0.6000', 'hh 0.0000,0.6000']);
   });
+  // #696, decision 085 §5: pan= moves, read at each note's start and held for it, into its gains as a fixed one is
+  it('a moving pan= places each note where its cells stand when it starts', () => {
+    const g = gains(tune + '&space map=lin step=2 0 .25 .75\n&v s=sine loop=C4 pan=&space\n&out map=sample [&t * &v * .5]');
+    expect(g).toEqual(['v 0.5000,0.0000', 'v 0.5000,0.2500', 'v 0.2500,0.5000']);
+  });
+  it('a moving pan= that stands still plays what the number plays', () => {
+    const still = gains(tune + '&space map=lin .25\n&v s=sine loop=C4 pan=&space\n&out map=sample [&t * &v * .5]');
+    expect(still).toEqual(gains(tune + '&v s=sine loop=C4 pan=.25\n&out map=sample [&t * &v * .5]'));
+  });
+  it('a range times cells, a bipolar wave read as a share (decision 067 §5): 0..1 * sin(4) sweeps from the centre to the right and back', () => {
+    const g = gains('&t step=2 0 4 7 9\n&lfo map=lin step=2 sin(4)\n&v s=sine loop=C4 pan=0..1 * &lfo\n&out map=sample [&t * &v * .5]');
+    expect(g).toEqual(['v 0.5000,0.5000', 'v 0.0000,0.5000', 'v 0.5000,0.5000']);
+  });
+  it('a moving pan= is in the gains, not a parameter a frontend has to play', () => {
+    const r = compileSource(tune + '&space map=lin step=2 0 1\n&v s=sine loop=C4 lpf=200..2000 * &space pan=&space\n&out map=sample [&t * &v * .5]');
+    const e = eventsBetween(plan(r, codeShifts(r)), 0, 1.4);
+    expect(e.map((x) => Object.keys(x.params ?? {}))).toEqual([['lpf'], ['lpf'], ['lpf']]);
+  });
+  it('a voice alone reads it once, where it starts; a resonator that rings without notes says it is not read', () => {
+    expect(gains('&space map=lin step=2 0 1\n&v s=sine loop=C4 pan=&space\n&out map=sample [&v * .5]')).toEqual(['v 0.5000,0.0000']);
+    const r = compileSource('&space map=lin step=2 0 1\n&strings body=wire loop=C2 pan=&space\n&out map=sample [&strings * .3]');
+    expect(r.diagnostics.map((d) => d.message)).toEqual([expect.stringMatching(/&strings's pan= moves, but it is read at each note's start/)]);
+  });
 });
 
 describe('a kit read only selects: the rest of the product acts on the member it picks (decision 029)', () => {

@@ -117,6 +117,9 @@ describe('a pattern fragment heard through the tests’ cards (#291, #640)', () 
     'waltz_bass',
     'oom_pah_bass',
     'dub_bass',
+    // (#646: the aksak's beat and the 12/8's, written by hand for their meters)
+    'aksak_drums',
+    'twelve_eight_drums',
   ];
   const carried = [...RHYTHM_FRAGMENTS, ...BASS_FRAGMENTS, ...MODE_FRAGMENTS.filter((f) => f.id === 'bell_and_scale')].filter((f) => !born.includes(f.id));
 

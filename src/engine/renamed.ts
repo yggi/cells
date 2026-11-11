@@ -103,3 +103,12 @@ export function wordOf(id: string): string {
     .replace(/^_+|_+$/g, '');
   return /^\d/.test(word) ? `meter_${word}` : word;
 }
+
+/**
+ * The seed fragments a piece took in as its parts (decision 082), each old id with its document and the part's head.
+ * A compile refuses the old id (it resolves to nothing, or to a piece of that key); read the old way (`old`, Migrate's)
+ * it is the part, with a warning, so Migrate's `moved` rule can rewrite the line and check that it plays the same.
+ */
+export const MOVED: ReadonlyMap<string, { readonly document: string; readonly head: string }> = new Map(
+  ['twinkle', 'wonder', 'haenschen', 'hinein', 'heim', 'weinet'].map((id) => [id, { document: 'kinderlied', head: id }]),
+);

@@ -18,7 +18,12 @@
  *  - 2 times: bars 36 … 70 are bars 35 … 1, in retrograde-inversion.
  *
  * Everything is a function of the step of the day: nothing to play through, any moment computed.
+ *
+ * As a plugin-fragment (decision 085, #693): `FIVETO12` fills its holes with braid text, which the language reads —
+ * its degrees over `&key` (the day's mode on the key's tonic), its chords as stacks in thirds, its lengths as `@n`, its
+ * dynamics as a level cell; its place in space as a cell too, read as the law always placed it (#696 makes it `pan=`).
  */
+import type { PluginFragment } from './holes';
 export declare const BAR = 12;
 export declare const KEY: number;
 export declare const BLOCK: number;
@@ -86,3 +91,5 @@ export interface LawNote {
 }
 /** Every note starting in steps [from, to) of the day (whole bars' onsets, stacks included). */
 export declare function notesBetween(from: number, to: number): LawNote[];
+/** The 5 to 12 cycle as a plugin-fragment, built in: `law=fiveto12` until it is `&cycle from fiveto12 &day` (rung 5). */
+export declare const FIVETO12: PluginFragment;

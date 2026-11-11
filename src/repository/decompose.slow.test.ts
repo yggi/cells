@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { decompose, writtenOut } from './decompose';
-import { resolveSeed } from './library';
+import { fromId, headOf, ofFacet, resolveSeed } from './library';
 import { seedFragments } from './seed';
 
-const MOTIF_FRAGMENTS = seedFragments('motifs');
+const MOTIF_FRAGMENTS = ofFacet('motif');
 const FORM_FRAGMENTS = seedFragments('forms');
 
 /** The meters the seed motifs are written in, 4/4 first: each motif is read in the first whose one or two bars it fills. */
@@ -13,10 +13,10 @@ const METERS = ['4/4', '3/4', '6/8', '5/4', '7/8', '10/8', '12/8', '2/4', '2/2']
 /** The meter a seed motif fills one or two bars of, or null. */
 function meterOf(id: string): string | null {
   for (const meter of METERS) {
-    const r = compileSource(`&bar meter("${meter}") step=120bpm\n&key scale(ionian, C)\n&${id} from ${id} &key`, undefined, {
+    const r = compileSource(`&bar meter("${meter}") step=120bpm\n&key scale(ionian, C)\n&${headOf(id)} from ${fromId(id)} &key`, undefined, {
       resolve: resolveSeed,
     });
-    const cell = r.cells.get(id);
+    const cell = r.cells.get(headOf(id));
     const bar = r.cells.get('bar')?.meter;
     if (!r.ok || !cell || !bar) continue;
     const bars = cell.steps / 8 / (bar.pulses / bar.unit);
@@ -33,7 +33,7 @@ describe('every seed form over every seed motif, written out and decomposed (#51
       const meter = meterOf(motif.id);
       expect(meter, motif.id).not.toBeNull();
       for (const form of FORM_FRAGMENTS) {
-        const line = writtenOut(`&${motif.id} from ${motif.id} &key\n&song from ${form.id} &${motif.id}`, 'song', meter!, 'lead');
+        const line = writtenOut(`&${headOf(motif.id)} from ${fromId(motif.id)} &key\n&song from ${form.id} &${headOf(motif.id)}`, 'song', meter!, 'lead');
         expect(line, `${form.id} over ${motif.id}`).not.toBeNull();
         tried++;
         const d = decompose(line!, 'lead', meter!);

@@ -4,31 +4,31 @@ import { decompose, writtenOut } from './decompose';
 /** A text the forms and the seed motifs play, written out bar by bar as the line `&lead`, in `meter`. */
 const written = (text: string, cell: string, meter = '4/4') => writtenOut(text, cell, meter, 'lead')!;
 
-const TWINKLE = written('&twinkle from twinkle &key\n&wonder from wonder &key\n&song from ternary(answer=&wonder) &twinkle', 'song');
+const TWINKLE = written('&twinkle from kinderlied &key\n&wonder from kinderlied &key\n&song from ternary(answer=&wonder) &twinkle', 'song');
 
 describe('a line of several bars decomposed into a form and its motifs (#512, rung 1)', () => {
   it('writes Twinkle out bar by bar as the example writes it whole: ternary, its answer wonder, over twinkle', () => {
     expect(TWINKLE).toBe('&lead over=&key step=8n 0 0 4 4 5 5 4@2 3 3 2 2 1 1 0@2 4 4 3 3 2 2 1@2 4 4 3 3 2 2 1@2 0 0 4 4 5 5 4@2 3 3 2 2 1 1 0@2');
     const d = decompose(TWINKLE, 'lead', '4/4');
-    expect(d).toMatchObject({ form: 'ternary', call: 'twinkle', helpers: { answer: 'wonder' } });
-    expect(d.text).toBe(['&twinkle from twinkle &key', '&wonder from wonder &key', '&lead from ternary(answer=&wonder) &twinkle'].join('\n'));
+    expect(d).toMatchObject({ form: 'ternary', call: 'kinderlied/twinkle', helpers: { answer: 'kinderlied/wonder' } });
+    expect(d.text).toBe(['&twinkle from kinderlied &key', '&wonder from kinderlied &key', '&lead from ternary(answer=&wonder) &twinkle'].join('\n'));
   });
 
   it('writes Hänschen klein out as the example writes it whole: rounded binary over haenschen, its answers and bridge the tune’s', () => {
     const line = written(
       [
-        '&haenschen from haenschen &key',
-        '&hinein from hinein &key',
-        '&heim from heim &key',
-        '&weinet from weinet &key',
+        '&haenschen from kinderlied &key',
+        '&hinein from kinderlied &key',
+        '&heim from kinderlied &key',
+        '&weinet from kinderlied &key',
         '&song from rounded_binary(answer=&hinein, close=&heim, bridge=&weinet) &haenschen',
       ].join('\n'),
       'song',
     );
     expect(decompose(line, 'lead', '4/4')).toMatchObject({
       form: 'rounded_binary',
-      call: 'haenschen',
-      helpers: { answer: 'hinein', close: 'heim', bridge: 'weinet' },
+      call: 'kinderlied/haenschen',
+      helpers: { answer: 'kinderlied/hinein', close: 'kinderlied/heim', bridge: 'kinderlied/weinet' },
     });
   });
 
@@ -60,8 +60,8 @@ describe('a line of several bars decomposed into a form and its motifs (#512, ru
   });
 
   it('reads a line in its own meter: a waltz’s call and answer in 3/4', () => {
-    const line = written('&waltz from waltz &key\n&song from call_and_answer &waltz', 'song', '3/4');
-    expect(decompose(line, 'lead', '3/4')).toMatchObject({ form: 'call_and_answer', call: 'waltz', helpers: {} });
+    const line = written('&waltz from waltzBar &key\n&song from call_and_answer &waltz', 'song', '3/4');
+    expect(decompose(line, 'lead', '3/4')).toMatchObject({ form: 'call_and_answer', call: 'waltzBar', helpers: {} });
     expect(decompose(line, 'lead', '4/4').form).toBeNull();
   });
 });

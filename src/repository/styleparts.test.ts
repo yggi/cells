@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { readPiece } from '../engine/piecefile';
+import { partsOf } from '../engine/use';
 import { createRepository } from './fragments';
 import { LIBRARY } from './library';
 import { stylePoint } from './styles';
@@ -27,7 +29,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     bass: 'root_bass',
     harmony: 'vamp_to_the_fifth',
     mode: 'diatonic(mode=ionian)',
-    motif: 'twinkle',
+    motif: 'kinderlied/twinkle',
     form: 'ternary',
     instrument: ['recorder', 'sine_bass'],
   },
@@ -84,7 +86,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     bass: 'octave_bass',
     harmony: 'korobeiniki_changes',
     mode: 'harmonic_minor',
-    motif: 'korobeiniki',
+    motif: 'korobeinikiBar',
     instrument: 'pulse_lead',
   },
   elektro: {
@@ -111,7 +113,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     bass: 'waltz_bass',
     harmony: 'vamp_to_the_fifth',
     mode: 'diatonic(mode=ionian)',
-    motif: 'waltz',
+    motif: 'waltzBar',
     instrument: 'accordion',
   },
   march: {
@@ -147,6 +149,9 @@ describe('each style finds its own parts first, by facet (#572, #542)', () => {
     const spooky = takes('spooky');
     for (const id of ['spooky_drums', 'creeping_bass', 'dark_cadence', 'harmonic_minor', 'diesIrae']) expect(spooky, id).toContain(id);
     const kinderlied = takes('kinderlied');
-    for (const id of ['kinderlied_drums', 'root_bass', 'vamp_to_the_fifth', 'twinkle', 'ternary']) expect(kinderlied, id).toContain(id);
+    for (const id of ['kinderlied_drums', 'root_bass', 'vamp_to_the_fifth', 'ternary']) expect(kinderlied, id).toContain(id);
+    // (Kinderlied's tune is its own: a part it gives, decision 082, taken by no line of its own)
+    const file = readPiece(readFileSync('examples/kinderlied.md', 'utf8'));
+    expect('text' in file && partsOf(file.text)).toContainEqual(['twinkle']);
   });
 });

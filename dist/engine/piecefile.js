@@ -56,7 +56,8 @@ const asYaml = (entries) => entries.map(({ id, hash }) => ({ id, hash }));
 export const lockfileOf = ({ frontmatter }) => Array.isArray(frontmatter.uses) ? frontmatter.uses.filter(isLocked).map(({ id, hash }) => ({ id, hash })) : [];
 export function withLockfile(file, takes) {
     const had = lockfileOf(file);
-    const entries = takes.flatMap((u) => (u.hash ? [{ id: u.id, hash: u.hash }] : had.filter((k) => k.id === u.id)));
+    const key = (u) => (u.part ? `${u.id}/${u.part}` : u.id);
+    const entries = takes.flatMap((u) => (u.hash ? [{ id: key(u), hash: u.hash }] : had.filter((k) => k.id === key(u))));
     const once = entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
     return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(once) } };
 }

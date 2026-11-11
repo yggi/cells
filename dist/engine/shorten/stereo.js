@@ -88,7 +88,7 @@ export function stereo(source, result, options = {}) {
         if (voices.some((v) => v === null) || new Set(voices).size !== voices.length)
             continue;
         const elsewhere = (v) => [...result.cells.values()].some((c) => c.name !== card.name && (c.mix ?? []).some((b) => b.voice.name === v || b.pitches.some((t) => t.ref.name === v)));
-        if (voices.some((v) => elsewhere(v) || result.cells.get(v).params.pan !== undefined))
+        if (voices.some((v) => elsewhere(v) || result.cells.get(v).params.pan !== undefined || result.cells.get(v).paramCells.pan !== undefined))
             continue;
         const pans = L.map((l, i) => {
             const r = R[i];
