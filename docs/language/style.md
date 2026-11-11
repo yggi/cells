@@ -169,3 +169,15 @@ It sends the score on a MIDI card on Jambot's channels and hears it on a sound c
 Which instrument a performer plays at a style is the band's choice too, made at resolution: `resolveBand(score)` answers `band` with each pitched voice the instrument the library ranks first at the score's style, named or written as numbers, (a clarinet at Electro swing's point, a theremin at Spooky's), and the band as written at Jambot's eight presets (`src/repository/band.ts`).
 The instruments are found where the score's style starts: a range, `style=&funk..&electroSwing`, plays Funk's instruments, the defaults, throughout, and the reverse plays Electro swing's. A found instrument is voiced for its point and reads no `&style`, so where it plays, the style moves no cutoff of that voice.
 A line can't make that choice: a voice reads a style as a moving parameter, and a wave or an envelope's times are not one.
+
+## Reading a style from notes
+
+The way back, from notes to a point, is `src/engine/reading/` (#541): the reader the repository's first guess at a fragment's place, a corpus's styles (#542) and a frontend's style of an open piece share. It reads a span of bars, each its notes with the part that played them (the band's five: drums, bass, pad, stab, lead), the step each starts on and how many steps it sounds, and answers `readPoint(bars, bar)`: the point on the axes the notes could speak to, a confidence for each, 0 to 1, and the span's intensity.
+
+- `sync`: the share of onsets off the pulses and off the eighths (`readStyle`).
+- `bite`: one less the median share of its gap a note of the bass or the lead sounds, as played (the gate, not the written length).
+- `harm`: the chords read back from the pad and the stab, a root and a quality each half bar, as the mean of how often they change and how far past a triad they reach (`readHarm`).
+- `mood`: the mode the pitched notes fit best, of the eight `BRIGHTNESS` knows, its tonic the one the notes (the bass counted twice) weigh most, at `moodOf`'s default tension; tension itself is not read (`readMood`).
+- Density, onsets per step, is the intensity, not a place (#571).
+
+An axis the notes can't speak to is left out: a drum part has no `harm` and no `mood`. A confidence is how much the notes had to say: `sync`'s the onsets over the bar's steps (a pad's chord a bar is under 0.2), `bite`'s the line's notes over four, `harm`'s the halves with a chord read, `mood`'s the share of the weight its scale covers times the pitch classes heard over seven. A bar is a meter's sixteenths and its pulses (`barOf`). The readings of sync, bite, harm and density were Jambot's critic's (yggi/jambot#15), lifted with their tests; over Jambot's own bars (E23: its eight presets and each axis swept, 3,040 bars) they agree with Jambot's exactly.
