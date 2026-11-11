@@ -72,8 +72,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s: a hundred and seventy-four)', () =>
-    expect(files).toHaveLength(174));
+  it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; and #540’s five harmonies: a hundred and seventy-nine)', () =>
+    expect(files).toHaveLength(179));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);
@@ -194,6 +194,12 @@ describe('the seed files', () => {
 
   // (the seeds written by hand for the point proposed for a Spooky preset, #349, or near it, and lifted from nothing)
   const WRITTEN = new Set([
+    // (#540: the harmonies written for the presets whose first harmony missed, lifted from no example)
+    'ninth_vamp',
+    'ninth_loop',
+    'turnaround',
+    'ii_v_i',
+    'minor_swing',
     // (#542's second four: the styles placed by hand, their parts written for them, lifted from no example)
     'salsa_drums',
     'waltz_drums',
