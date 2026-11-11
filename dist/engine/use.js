@@ -1,5 +1,5 @@
 import { splitComment } from "./edit.js";
-import { FROM_FORM, isAttribute, readFrom, topTokens } from "./parser/use.js";
+import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens } from "./parser/use.js";
 import { STYLE } from "./style.js";
 import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
@@ -192,9 +192,11 @@ const entryOf = (l) => l.from?.kind === 'use' ? { id: l.from.id, names: l.from.n
 const renamed = (code, names) => code.replace(/"[^"]*"|&([A-Za-z_][A-Za-z0-9_]*)/g, (m, n) => (n && names.has(n) ? `&${names.get(n)}` : m));
 const keyOf = (attribute) => attribute.slice(0, attribute.indexOf('='));
 function withAttributes(code, attributes) {
-    const keys = new Set(attributes.map(keyOf));
+    const flags = attributes.filter((a) => HEAD_FLAGS.has(a));
+    const set = attributes.filter((a) => !HEAD_FLAGS.has(a));
+    const keys = new Set(set.map(keyOf));
     const [name, ...rest] = topTokens(code).map((t) => t.text);
-    return [name, ...rest.filter((t) => !(isAttribute(t) && keys.has(keyOf(t)))), ...attributes].join(' ');
+    return [name, ...flags, ...rest.filter((t) => !(isAttribute(t) && keys.has(keyOf(t))) && !flags.includes(t)), ...set].join(' ');
 }
 function inherited(name, defaultCode, body) {
     const set = new Set(topTokens(body).flatMap((t) => (isAttribute(t.text) ? [keyOf(t.text)] : [])));

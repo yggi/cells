@@ -21,7 +21,7 @@ export type FromForm = {
      * writes no `=`, decision 075 §3a); null for `*`. The fragment's name is a word of the line, as a keyword is.
      */
     readonly takes: readonly string[] | null;
-    /** The head's attributes, written before `from` (`label="my key"`), each a `key=value` as written. */
+    /** The head's attributes, written before `from` (`label="my key"`), each a `key=value` as written, or the flag `off` (#686). */
     readonly head: readonly string[];
     /** The named arguments, in parentheses (`swing=8n:.64`), as written; null where there are none. */
     readonly args: readonly {
@@ -46,6 +46,8 @@ export declare function topTokens(text: string): {
 }[];
 /** A token that is an attribute, `key=value`. */
 export declare const isAttribute: (token: string) => boolean;
+/** The flags a head may carry before `from`, as a cell's line does: `off` (#686: `&bar off from meter &tempo`). */
+export declare const HEAD_FLAGS: ReadonlySet<string>;
 /**
  * A `from` line (decision 065), read: a use of a fragment or a signature; null where the line has a top-level `from`
  * after its names and isn't one; undefined where it isn't a `from` line at all (a cell, a `from` line).

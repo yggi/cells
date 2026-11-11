@@ -34,6 +34,12 @@ export declare function renameAttr(source: string, name: string, from: string, t
 export declare function setShift(source: string, name: string, shift: number): string;
 /** `off` on &name. */
 export declare const setOff: (source: string, name: string, off: boolean) => string;
+/**
+ * Why `setOff` can't switch &name off or on, or null where it can (#686): a head among several that one `from` line takes
+ * (`off` before `from` is one head's, #684), or a collection's cell, has no line of its own to carry it until `takeIn`
+ * writes one. A frontend asks before it toggles, so a toggle that can't is said, not silently dropped.
+ */
+export declare function offProblem(source: string, name: string): string | null;
 /** Split code into words at whitespace outside brackets, parentheses, alternations and quotes (`[0, 4, 7]`, `<0 2>`, `label="a b"` stay one word). */
 export declare function splitWords(code: string): string[];
 /** Does &name's declaration continue onto further lines (a mix written over several)? */

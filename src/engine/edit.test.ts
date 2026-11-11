@@ -10,6 +10,7 @@ import {
   nameProblem,
   renameCell,
   setBraid,
+  offProblem,
   setOff,
   setShift,
   setTiming,
@@ -22,6 +23,8 @@ import {
 import { compileSource as compileAlone } from './compile';
 import { flatten, tapped } from './flatten';
 import { codeShifts } from './program';
+import { planOf } from './host';
+import { windowAt } from './schedule';
 import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
@@ -189,8 +192,39 @@ describe('editor operations', () => {
     const swing = EXAMPLES.electroswing!.source;
     const said = (text: string) => compileSource(text).diagnostics.map((d) => d.message);
     expect(said(setAttr(swing, 'gypsy', 'show', 'braid'))).toEqual(said(swing));
-    // (a flag is no attribute: a head before from takes only key=value)
-    expect(setOff(piece, 'gypsy', true)).toBe(piece);
+    // (a flag goes there too, #686)
+    expect(setOff(piece, 'gypsy', true)).toBe('&gypsy off from gypsy &key // the call\r\n&call step=8n &gypsy');
+  });
+
+  it('switches off a head a from line takes alone, before from, and the piece plays without it; and back, byte for byte (#686)', () => {
+    const events = (text: string) => windowAt(planOf(text, undefined, { resolve: resolveSeed }), 0, 3).events;
+    const meter = '&tempo step=120bpm\n&bar from meter &tempo\n&tick step=4n 0 2\n&v s=sine loop=C4\n&out map=sample [&tick * &v]';
+    const walk =
+      '&bar meter("4/4") step=120bpm\n&key scale(aeolian, A)\n&harm over=&key step=1m [0,2,4]\n&walk from walking_bass &harm\n&v s=sine loop=C2\n&out map=sample [&walk * &v, &harm * &v]';
+    for (const [text, name, before, after] of [
+      [meter, 'bar', 6, 0],
+      [walk, 'walk', 12, 6],
+    ] as const) {
+      const off = setOff(text, name, true);
+      expect(off).toBe(text.replace(`&${name} from`, `&${name} off from`));
+      expect(compileSource(off).diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+      expect([events(text).length, events(off).length]).toEqual([before, after]);
+      // (as a line of the cell's own that says off plays: a meter switched off, nothing taps it)
+      expect(setOff(off, name, true)).toBe(off);
+      expect(setOff(off, name, false)).toBe(text);
+      expect(offProblem(text, name)).toBeNull();
+      expect(offProblem(off, name)).toBeNull();
+    }
+    expect(events(meter.replace('&bar from meter &tempo', '&bar off meter("4/4") step=&tempo'))).toHaveLength(0);
+  });
+
+  it('says why it can’t switch off a head among several, a collection’s cell, or a cell the piece hasn’t (#686)', () => {
+    const several = '&bass, &bassOut from bass_performer &bassline';
+    expect(setOff(several, 'bassOut', true)).toBe(several);
+    expect(offProblem(several, 'bassOut')).toMatch(/^&bassOut is one of &bass, &bassOut, which one line takes from bass_performer: off before from would be every head's/);
+    expect(offProblem('&bd from gm_kit\n&k step=8n &bd', 'bd')).toMatch(/^&bd is gm_kit's cell, given by a from line: take it in first/);
+    expect(offProblem(src, 'nope')).toBe("&nope is no cell of this piece's to switch off");
+    expect(offProblem(src, 'theme')).toBeNull();
   });
 
   it('step and loop are one setting', () => {
