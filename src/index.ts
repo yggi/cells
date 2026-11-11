@@ -42,6 +42,7 @@ export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
 export type { CompileOptions, CompileResult, Locked, Origin, Performer, Resolve, Take } from './engine/program';
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';
 export { references, type Reference } from './engine/references';
+export { outlineOf, type Outline, type OutlineNode, type OutlineOptions, type OutlinePart } from './engine/outline';
 export { takeIn, type TakenIn } from './engine/takein';
 export type { Diagnostic } from './engine/ast';
 export {
