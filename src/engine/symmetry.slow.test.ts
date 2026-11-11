@@ -122,8 +122,8 @@ const TOOLS = {
 type Tool = keyof typeof TOOLS;
 
 /**
- * Time scaling's exceptions: a text that holds a time in seconds besides its sounds, which no rate it writes scales.
- * (Transposition has none; a text with an absolute pitch in a line, not a voice, would be one.)
+ * Outside time scaling's statement (L14, invariant I14): a text that holds a time in seconds besides its sounds, which no
+ * rate it writes scales. (Transposition has none; a text with an absolute pitch in a line, not a voice, would be one.)
  */
 const SECONDS_HELD: Record<string, string> = {
   musicbox: 'a physical model: the bar’s motor, mass and friction act in seconds',
@@ -208,7 +208,7 @@ describe('the language’s symmetries: each action on the events (the compile ro
     expect(off).toEqual([]);
   });
 
-  it.each(Object.keys(SECONDS_HELD))('time scaling: %s holds a time in seconds, and doesn’t scale (listed while it does)', (key) => {
+  it.each(Object.keys(SECONDS_HELD))('time scaling: %s holds a time in seconds, outside the statement, and doesn’t scale', (key) => {
     const text = written(source(key), O);
     const a = events(text).map((e) => `${(e.at / R).toFixed(5)} ${e.freq.toFixed(4)}`);
     const b = events(timeScaled(text), SECONDS / R).map((e) => `${e.at.toFixed(5)} ${e.freq.toFixed(4)}`);
