@@ -89,7 +89,9 @@ describe('examples/*.md', () => {
       // (its layout and prose as the file has them: a literate piece's blocks and the prose between them)
       const piece = readPiece(p.file);
       if ('problems' in piece) throw new Error(key);
-      expect(writePiece({ ...moved, layout: piece.layout, prose: piece.prose })).toBe(p.file);
+      // (what the card form has no way to say, a document's parts (decision 082), the file keeps as it has it)
+      const kept = Object.fromEntries(Object.entries(piece.frontmatter).filter(([k]) => !(k in moved.frontmatter)));
+      expect(writePiece({ ...moved, frontmatter: { ...moved.frontmatter, ...kept }, layout: piece.layout, prose: piece.prose })).toBe(p.file);
     });
   }
 });

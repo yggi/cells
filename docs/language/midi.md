@@ -40,7 +40,7 @@ In the graph a MIDI card is drawn as the sound card is, a node at the top, and i
 
 ## A MIDI file
 
-`pieceMidi(result, shifts)` writes what MIDI out sends as a Standard MIDI File (`writeMidi`), a track a channel, on the main meter's steps: the file's quarter note is the meter's beat, and the tempo each step's length, so a swing is tempos that alternate and a note on a step is on the grid.
+`pieceMidi(result, shifts)` writes what MIDI out sends as a Standard MIDI File (`writeMidi`), a track a channel, on the main meter's steps, or the steps of the finest level its swing leans where that is finer (`meter("4/4") swing=8n:2/3` on eighths, #558): the file's quarter note is the meter's beat, and the tempo each step's length, so a swing is tempos that alternate and a note on a step is on the grid.
 - **How much:** the span every render takes (`spanOf`, #315): the piece whole if it ends, one cycle of a loop, a minute of a piece that never comes round, an hour at most; or the seconds a caller gives (`pieceMidi(result, shifts, muted, name, { seconds })`).
 - **Its signature:** the main meter's, where its beat is a quarter note (2/4, 3/4, 4/4, 5/4, a scan counted in quarters). A meter whose beat is another value (6/8's dotted quarter, alla breve's half, 7/8's beats of three and two eighths) is written without one: its beat is the file's quarter, so its signature would draw the wrong bars.
 - What MIDI out doesn't send, the file doesn't hold either: no control changes and no program changes.

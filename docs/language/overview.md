@@ -15,9 +15,9 @@ One cell per line; attributes go anywhere.
 ```cells
 &bar scan(27 23 26 24) step=&tempo                 # the clock, a bent 4/4 bar
 &tempo step=84bpm
-&key step=cycle(&theme) stride=7                   # the 12; a fifth per pass of &theme
-&scale over=&key scan(2 1 2 2 1 2 2) step=cycle(&key)   # Aeolian; a degree per circle of keys
-&theme over=&scale step=4n 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
+&twelve step=cycle(&theme) stride=7                # the 12; a fifth per pass of &theme
+&key over=&twelve scan(2 1 2 2 1 2 2) step=cycle(&twelve)   # the key, Aeolian; a degree per circle of fifths
+&theme over=&key step=4n 0@2 2@2 4@2 5@2 6#@2 ~ 7 6# 6 5# 5 4@2 ~@2
 
 &lead s=saw loop=261.63 lpf=2200          # a voice
 &vibrato loop=5 0 .1 .15 .1 0 -.1 -.15 -.1         # a pitch, ±0.15 semitones, 5 times a second
@@ -30,6 +30,7 @@ Everything is indexing and moving a helix.
 | page | what it says |
 |---|---|
 | [cell.md](cell.md) | the anatomy of a line: name, attributes, steps, modifiers, `&( )`, `off` |
+| [foundations.md](foundations.md) | a piece's ground: tempo, meter, tonic and key, the two wheels side by side |
 | [braid.md](braid.md) | what a braid is made of: generators, picks, slices, shifts, transposing |
 | [tables.md](tables.md) | `over=`, `shift=`, `scale()`: reading through a table |
 | [time.md](time.md) | `step=`, `loop=`, `cycle=`, `stride=`, meters, laps, selectors |
@@ -70,7 +71,7 @@ Cells sits on top of Strudel and dough as TypeScript sits on JavaScript ([decisi
 | `.range(lo, hi)` | `lpf=lo..hi * &x` | a range a cell moves ([sound.md](sound.md)) |
 | `.pick(…)` · `.inhabit(…)` | a selector, `over=&sections` | switches whole sections on a meter's bus ([time.md](time.md)) |
 | `.bank("tr808")` | a kit, `&kit &bd &sd &hh` | a table of voices, its numbers pick the drum ([sound.md](sound.md)) |
-| `setcps(.5)` | `loop=` on a meter | every cell has a clock of its own; there is no global cps ([time.md](time.md)) |
+| `setcps(.5)` | `step=` on a meter | every cell has a clock of its own; there is no global cps ([time.md](time.md)) |
 | `.fm(n)` `.fmh(r)` | `fm=&op` `ratio=` `index=` | FM names a modulator cell, for now ([decision 030](https://github.com/yggi/cells/blob/main/docs/decisions/030-fm-feedback.md) will align it) |
 | `.gain()` · `.postgain()` · `.velocity()` | `gain=` · the card's `postgain=` · a gate's `level=` | loudness is a product: a voice's own, the master, a gate's ([mix.md](mix.md)) |
 | `s("hh:0:.5")` | `&hh:0:.5` | a hit's own gain |

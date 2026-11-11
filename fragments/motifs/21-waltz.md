@@ -1,5 +1,5 @@
 ---
-id: waltz
+id: waltzBar
 association:
   - point:
       sync: 0
@@ -12,14 +12,14 @@ source: seed
 ---
 
 ```cells
-&waltz from &key
-&waltz over=&key step=8n 0@2 2 4 4@2
+&waltzBar from &key
+&waltzBar over=&key step=8n 0@2 2 4 4@2
 ```
 
 The tonic held on the downbeat, then the third and the fifth, the fifth held into the next bar: a waltz's long first beat and its two light ones.
 It is a line of degrees of the key (`over=&key`), in eighths, one bar of 3/4: its hole is `&key`, and it taps the host's meter (`step=8n`), with no `&bar`, no voice and no card (#291).
-Its head is named for it (`&waltz`), so `use &waltz` takes it; a form reads it as its `&call` (`&call step=8n &waltz`), the line the form moves and answers.
+Its head is named for it (`&waltzBar`), so `&waltzBar from waltzBar &key` takes it; a form reads it as its `&call` (`&call step=8n &waltzBar`), the line the form moves and answers.
 
 At 3/4's first point (#369), weight 1, as the facet `motif`.
 
-**Its signature** (decision 065): `&waltz from &key`. `&waltz from waltz &key` takes a copy of it, `&key` its main argument.
+**Its signature** (decision 065): `&waltzBar from &key`. `&waltzBar from waltzBar &key` takes a copy of it, `&key` its main argument.

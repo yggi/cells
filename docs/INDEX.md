@@ -10,6 +10,7 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 
 - [language/overview.md](language/overview.md) — the map, and a whole piece
 - [language/cell.md](language/cell.md) — the anatomy of a line
+- [language/foundations.md](language/foundations.md) — a piece's ground: tempo, meter, tonic and key, the two wheels side by side
 - [language/braid.md](language/braid.md) — generators, picks, slices, shifts
 - [language/tables.md](language/tables.md) — `over=`, `shift=`, `scale()`
 - [language/time.md](language/time.md) — `step=`, `loop=`, meters, laps, selectors
@@ -21,6 +22,7 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 - [language/physics.md](language/physics.md) — motors, belts, tape, resonators, FM
 - [language/display.md](language/display.md) — titles, tags, labels, `show=`, loudness (the card's `postgain=`)
 - [language/plugins.md](language/plugins.md) — a piece's own `show=`: a block of code in the piece
+- [language/laws.md](language/laws.md) — the language's laws: each property stated, its test, what it covers, its field; the invariants among them; the conjectures (decision 083)
 - [language/style.md](language/style.md) — a style: `map=style`, the table of axes, a value read by name (`&x[slot]`)
 - [language/use.md](language/use.md) — `use &bd, &sd from gm_kit`, `use * from …`, `use &x`: a fragment's lines taken by its id, the resolver, the lockfile
 - [language/canonical.md](language/canonical.md) — the canonical spellings: what Normalise writes

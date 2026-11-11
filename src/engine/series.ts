@@ -64,6 +64,8 @@ export function paramTracks(p: Plan, voice: string, at: number, dur: number): Re
   if (!vp || Object.keys(vp).length === 0) return undefined;
   const out: Record<string, ParamTrack> = {};
   for (const [key, prm] of Object.entries(vp)) {
+    // (a moving pan= is read at the note's start into its channel gains, as a fixed one is: realize's `movingPan`, #696)
+    if (key === 'pan') continue;
     const series = prm.series.map((m) => levelSeries(p, m, at, at + dur));
     // the factors, multiplied, at a time
     const product = (time: number) => series.reduce((a, s) => a * valueThen(s, time, (x) => x.level), 1);
@@ -83,7 +85,7 @@ export function paramTracks(p: Plan, voice: string, at: number, dur: number): Re
       };
     }
   }
-  return out;
+  return Object.keys(out).length ? out : undefined;
 }
 
 /** Pitch of a step event, in semitones, looking tables up as they stand at `at`. */

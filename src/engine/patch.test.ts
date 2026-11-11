@@ -46,8 +46,8 @@ describe('a cell’s jacks', () => {
     expect(jacksOf(text, 'out')).toEqual([]);
   });
 
-  it('the moving parameters it offers are the attribute table’s, but a line’s legato= and a carrier’s index= (offered where fm= is)', () => {
-    expect(Object.keys(PARAMS).filter((k) => PARAMS[k]!.moves && !['legato', 'index'].includes(k))).toEqual([...MOVING]);
+  it('the moving parameters it offers are the attribute table’s, but a line’s legato=, a carrier’s index= (offered where fm= is) and pan= (#696: read per note, not yet a jack)', () => {
+    expect(Object.keys(PARAMS).filter((k) => PARAMS[k]!.moves && !['legato', 'index', 'pan'].includes(k))).toEqual([...MOVING]);
   });
 });
 

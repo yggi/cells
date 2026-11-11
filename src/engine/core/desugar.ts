@@ -501,7 +501,7 @@ function euclids(text: string): string {
  * rotated, or counting its own laps, `cycle=`) stays as written, where `x!n` and `x x` are two things; a run is of steps
  * on one line, alike as written; a step that says its count otherwise (`0!2@3`) is a step of its own.
  */
-function counts(text: string): string {
+export function counts(text: string): string {
   const lines = text.split('\n');
   const read = unitRead(text);
   const edits: { line: number; col: number; len: number; to: string }[] = [];

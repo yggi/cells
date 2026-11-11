@@ -12,6 +12,8 @@ export function paramTracks(p, voice, at, dur) {
         return undefined;
     const out = {};
     for (const [key, prm] of Object.entries(vp)) {
+        if (key === 'pan')
+            continue;
         const series = prm.series.map((m) => levelSeries(p, m, at, at + dur));
         const product = (time) => series.reduce((a, s) => a * valueThen(s, time, (x) => x.level), 1);
         const scaled = (x) => (prm.range ? prm.range[0] + (prm.range[1] - prm.range[0]) * x : x);
@@ -30,7 +32,7 @@ export function paramTracks(p, voice, at, dur) {
             };
         }
     }
-    return out;
+    return Object.keys(out).length ? out : undefined;
 }
 export function pitchOf(p, e, at) {
     const now = shiftsAt(p.result, p.statics, at + EPS);

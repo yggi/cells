@@ -86,7 +86,7 @@ export function stereo(source: string, result: Result, options: CompileOptions =
     if (voices.some((v) => v === null) || new Set(voices).size !== voices.length) continue;
     const elsewhere = (v: string) =>
       [...result.cells.values()].some((c) => c.name !== card.name && (c.mix ?? []).some((b) => b.voice.name === v || b.pitches.some((t) => t.ref.name === v)));
-    if (voices.some((v) => elsewhere(v!) || result.cells.get(v!)!.params.pan !== undefined)) continue;
+    if (voices.some((v) => elsewhere(v!) || result.cells.get(v!)!.params.pan !== undefined || result.cells.get(v!)!.paramCells.pan !== undefined)) continue;
     // one gain and one pan for each: the louder side as written, the other side by the pan
     const pans = L.map((l, i) => {
       const r = R[i];

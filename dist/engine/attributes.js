@@ -71,7 +71,9 @@ export const PARAMS = {
         moves: true,
         form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
     },
-    pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades'),
+    pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo)', {
+        moves: true,
+    }),
     distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
     crush: sound('bit depth: 16 clean, 8 grainy, 3 and fewer: rubble'),
     fm: sound('frequency modulation: the voice that modulates this one (fm=&op); it may have its own fm=', { doc: 'physics.md', value: 'cell' }),
@@ -104,7 +106,7 @@ export const PARAMS = {
         on: ['clock', 'driven'],
     },
     swing: {
-        help: 'on a meter: a level of its bar leans, named by note value — of each pair of its eighths (swing=8n:.67), the second comes this far through their beat (.5 straight, .67 triplet swing), its pairs alone, a group of three straight (decision 071); every beat and bar line stays. Bare (swing=.6), on a list: pairs of its steps',
+        help: 'on a meter: a level of its bar leans, named by note value — of each pair of its eighths (swing=8n:.67), the second comes this far through their beat (.5 straight, .67 triplet swing), its pairs lean, a group of three straight (decision 071); every beat and bar line stays. Bare (swing=.6), on a list at a rate: pairs of its steps (on a meter, an error that names the level)',
         doc: 'time.md',
         value: 'number',
         on: ['clock'],
@@ -234,7 +236,8 @@ export const TIME_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].c
 export const MOVING_PARAMS = new Set(Object.keys(ATTRIBUTES).filter((k) => ATTRIBUTES[k].moves));
 export const VOICE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].voice));
 export const LINE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].doc !== 'physics.md' && PARAMS[k].on?.every((r) => r === 'clock' || r === 'driven')));
-export const memberParams = (params) => Object.keys(params).some((k) => !LINE_PARAMS.has(k));
+export const PLAYED_AS = new Set(['part', 'role']);
+export const memberParams = (params) => Object.keys(params).some((k) => !LINE_PARAMS.has(k) && !PLAYED_AS.has(k));
 export function rolesText(on) {
     const NAMES = {
         voice: 'a voice',

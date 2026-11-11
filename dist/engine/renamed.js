@@ -89,3 +89,4 @@ export function wordOf(id) {
         .replace(/^_+|_+$/g, '');
     return /^\d/.test(word) ? `meter_${word}` : word;
 }
+export const MOVED = new Map(['twinkle', 'wonder', 'haenschen', 'hinein', 'heim', 'weinet'].map((id) => [id, { document: 'kinderlied', head: id }]));

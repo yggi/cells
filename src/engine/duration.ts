@@ -10,7 +10,7 @@
  * on a clock of its own, set in seconds or hertz (a vibrato, `pitch=&(map=lin loop=5.5 …)`;
  * a tide of 19 s), is the sound's, not the form's: it doesn't set the piece's length (#376).
  */
-import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from './fiveto12';
+import { lawOf, marksOf } from './holes';
 import { codeShifts, type CompileResult } from './program';
 import type { FreeSpec } from './ast';
 import { clocking, ownLength, selects, turnLap } from './clocking';
@@ -52,8 +52,12 @@ function fraction(x: number): [bigint, bigint] {
 const gcd = (a: bigint, b: bigint): bigint => (b === 0n ? a : gcd(b, a % b));
 
 export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
-  // a law's piece (law=fiveto12): exactly one day
-  if ([...result.cells.values()].some((c) => c.params.law === 'fiveto12')) return { ends: 86400, cycle: 86400, chance: false, longest: 86400 };
+  // a law's piece (law=fiveto12): exactly its cycle (a day), from its plugin-fragment (decision 085)
+  const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
+  if (law) {
+    const day = law.cycle * law.stepSeconds;
+    return { ends: day, cycle: day, chance: false, longest: day };
+  }
   const statics = codeShifts(result);
   const p = plan(result, statics);
   const clk = clocking(result, statics);
@@ -149,8 +153,9 @@ export function durationText(seconds: number): string {
  * split at ·, when the names match the sections; else numbered.
  */
 export function sections(result: CompileResult): { at: number; label: string }[] | null {
-  // a day's law: its twelve blocks, each a mode and a moment of the day
-  if ([...result.cells.values()].some((c) => c.params.law === 'fiveto12')) return DAY_MODES.map((m, b) => ({ at: b * 7200, label: `${MODE_NAMES[m]} · ${BLOCK_NAMES[b]}` }));
+  // a law's sections: its mark hole's laps (fiveto12's twelve blocks, each a mode and a moment of the day)
+  const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
+  if (law) return marksOf(law);
   const statics = codeShifts(result);
   const clk = clocking(result, statics);
   for (const c of result.cells.values()) {

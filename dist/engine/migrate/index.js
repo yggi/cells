@@ -7,6 +7,7 @@ import { forwardedUses } from "./forwarded.js";
 import { grids } from "./grids.js";
 import { laps } from "./laps.js";
 import { renamedIds } from "./renamed.js";
+import { movedIds } from "./moved.js";
 import { oneshots } from "./oneshot.js";
 import { pairs } from "./pairs.js";
 import { beats } from "./beats.js";
@@ -30,6 +31,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...argumentsByName(source, result, options.resolve),
     ...axes(source),
     ...parts(source, result),
+    ...movedIds(source, options.resolve),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };

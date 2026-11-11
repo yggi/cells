@@ -94,7 +94,7 @@ Any cell may carry `style=`, its association or wish: a style cell, an unnamed o
 Each end lies within the axes' ranges: a mix whose weights take it outside is an error.
 
 **The note `&style` is the section's style** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md)).
-`&style` is an interface name, as `&bar`, `&tempo`, `&key`, `&tonic` and `&harm` are: a score names its style so, and a band written once reads it by that name in every section.
+`&style` is the score's name for it by convention, as `&bar` and `&key` are, and only a name ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)): the band declares the style and the score passes its own (`* from band(…, style=&style)`), so a band written once reads it in every section.
 A pick reads its value on an axis, `&style[bite]`, and a voice's moving parameter can take it as a factor:
 
 ```cells

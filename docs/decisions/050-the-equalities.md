@@ -16,7 +16,7 @@ Two ladders, each rung named once in the code. A rung is implied by the one abov
 |---|---|---|---|
 | E0 | byte-identical | the texts are equal | `byteIdentical` |
 | E1 | identical up to layout | equal once comments, whitespace and line continuations are read as one | `identicalUpToLayout` |
-| E2 | identical up to renaming | E1 once each text's own names are numbered in the order it declares them (the interface names kept); implies S1 since #481 keys a draw on what its cell plays, a drum's name on a MIDI card aside (its note, 054) | `identicalUpToRenaming` (the learned layer's `canonicalText`) |
+| E2 | identical up to renaming | E1 once each text's own names are numbered in the order it declares them (the interface names kept), and each run counted as the core counts it, `x x` as `x!2` where nothing reads the cell's units (077 §3, #710); implies S1 since #481 keys a draw on what its cell plays, a drum's name on a MIDI card aside (its note, 054) | `identicalUpToRenaming` (the learned layer's `canonicalText`) |
 | E3 | normal-form identical | E2 after `normalise` | `normalFormIdentical` |
 | E4 | structurally identical | E3 after the identity step: stated defaults dropped (decision 049, ruling 1). What a hash reads | #49 |
 | E5 | orbit identical | E4 up to the operators: a transposition, `^n`, a rotation | the pure cell, #46 |

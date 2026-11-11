@@ -31,8 +31,7 @@ export const STUBS: ReadonlySet<string> = new Set([
  * forms, and no tutorial piece can show these without changing the notes it plays. They go on a tier (4, rhythm, or 5,
  * development) with the piece that shows them. `legato=` (#94, a line's articulation) waits for a piece of its own
  * on tier 4. `tags=`, a cell's clusters, lost its tier-1 pieces when the card's tags moved into the file's frontmatter
- * (decision 047): it goes on a tier with a piece whose cells it clusters. `use` (decisions 054, 059) waits for the examples
- * to take a kit by it (#196's rung 4).
+ * (decision 047): it goes on a tier with a piece whose cells it clusters.
  */
 export const PENDING: ReadonlySet<string> = new Set([
   // (a slider's unit as an argument, the core's spelling, decision 069: toCore writes it, a tutorial piece doesn't, the
@@ -164,7 +163,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Rhythm and feel',
     concept:
-      'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: a swing clock tapped by its pulse, swing= on a meter tapped by name',
+      'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: swing= on a meter, a share of each pair at a level, a slider from straight to hard',
     forms: [
       // meter and feel
       'map map=amp',
@@ -184,8 +183,9 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'rate step=&m:16n',
       // a scan's note value
       'parameter pulse',
-      // swing
+      // swing, its share a slider (#646: the swing showcase leans from straight to hard)
       'parameter swing',
+      'free free(v, lo..hi)',
       'generator meter("sig")',
     ],
   },
@@ -227,7 +227,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Sound and tuning',
     concept:
-      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; meter()',
+      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read',
     forms: [
       // stereo
       'parameter pan',
@@ -250,7 +250,6 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'map map=ratios',
       'step n/d',
       // free
-      'free free(v, lo..hi)',
       'free free(v, lo..hi, "names")',
       'mix free(v, lo..hi)',
       // style: a point the voices read (#621, #572)

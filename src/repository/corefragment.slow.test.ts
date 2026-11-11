@@ -13,6 +13,7 @@ const written = FAMILIES.find((f) => f.key === 'from')!.rewrite;
 const ids = [...new Set(LIBRARY.map((f) => f.id).filter((id) => !id.includes('(')))].filter((id) => signatureOf(resolveSeed(id)!));
 const cored = new Map(ids.map((id) => [id, coreFragment(resolveSeed(id)!, O)] as const));
 
+// law L3
 describe('every seed fragment cored up to its signature (#590)', () => {
   it.each(ids)('%s: its signature as written, and its own core', (id) => {
     const text = resolveSeed(id)!;
