@@ -44,7 +44,7 @@ export declare function barOf(meter: Meter): Bar | null;
 export interface StyleReading {
     /** Onsets per step of the bar; a chord struck at one step is one onset. Intensity (#571), not an axis. */
     readonly density: number;
-    /** The share of onsets off the pulses and off the eighths: 0 on the grid's strong places, 1 all between. */
+    /** Syncopation proper (`syncopation`): 0 where every onset is followed by its line's next stronger place, higher the more weak onsets leave it silent. */
     readonly sync?: number;
     /** Paddy (0) to stabby (1): one less the median share of its gap a note of the bass or lead sounds. */
     readonly bite?: number;
@@ -55,6 +55,20 @@ export declare function soundingShares(line: readonly Sounding[], steps: number)
 export declare const onsetsOf: (notes: readonly Sounding[]) => number[];
 /** The notes of the bass and the lead, each line's shares of its gaps. */
 export declare const lineShares: (notes: readonly Sounding[], steps: number) => number[];
+/** A place's metric level in a bar, 0 strongest: the downbeat 0, a pulse 1, an eighth 2, any other step (a sixteenth) 3. */
+export declare const levelOf: (step: number, bar: Bar) => number;
+/**
+ * Syncopation proper (#681; Longuet-Higgins and Lee's measure, read per line): an onset on a weak place whose line
+ * leaves the next stronger place silent, struck neither there nor between, is syncopated by how much weaker its place
+ * is (their levels' difference, `levelOf`). A bar is read as a cycle, so the next stronger place after its last weak
+ * onsets is its own downbeat. A line's syncopation is the sum over its onsets, over its onsets times the deepest
+ * difference (a sixteenth before a silent downbeat, 3); the bar's is the mean over its lines, each line once, so a
+ * steady line (hats on every eighth, which leave no stronger place silent) dilutes it no more than one line does.
+ *
+ * It reads what the onsets on the grid alone didn't (#681): a clave's eighths (x..x..x.), the tresillo, a note on the
+ * and of four tied over the bar line. A line of eighths reads 0, an off-beat line (every eighth's and) 5/12.
+ */
+export declare function syncopation(notes: readonly Sounding[], bar?: Bar): number;
 /** The style a bar's sounding notes read as, on the axes that can be read from onsets and lengths alone. */
 export declare function readStyle(notes: readonly Sounding[], bar?: Bar): StyleReading;
 /** What a reading needs of a laid step: how long it lasts on the clock, in seconds. */

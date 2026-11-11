@@ -140,7 +140,7 @@ An info is said, never an error: a name read anywhere else and declared nowhere 
 
 A gate also plays a **stack of lines**: `play=&drumlines`, where `&drumlines [&kick, &backbeat, &euclid * &euclidLevel]`
 is a chord of lines, each times its levels if it has any (level cells and numbers, as in a mix; a sound beside a line
-is refused). It plays each line as it would play that line alone, on each of its voices at its level, so each keeps its
+is refused). The line is the factor that isn't a level by its own line (`map=amp`, `map=db`, `map=lin`, or a number), wherever it is written: `&euclidLevel * &euclid` is `&euclid * &euclidLevel` (I4, #687); two plain lines read the first as the line. It plays each line as it would play that line alone, on each of its voices at its level, so each keeps its
 own name in what sounds: a hit of `&kick` is still the kick's ([#287](https://github.com/yggi/cells/issues/287)), the
 drum role the feel reads. A line may name its own voices, a hit with its own gain as Strudel writes it (`&hh:0:.4`,
 `s("hh:0:.4")`); played on a kit, it strikes only the kit's voices. A stack a gate plays is that gate's part, not a

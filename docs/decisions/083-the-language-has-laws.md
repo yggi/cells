@@ -27,7 +27,7 @@ Several such properties were tested already, each in its own file and none state
    - A law not ruled is measured, not promised: a change that breaks it says so in its pull request and files it, and isn't blocked.
 3. **An invariant has no exception.** A counterexample found is a bug against it: filed, and listed by name with its issue in the test, which fails once the example holds, so the list only shrinks.
    - A law may carry such a list too, as I10 did on its road. It is ruled an invariant only with the list empty, or with the list's bugs filed against it.
-   - The first one: L11, `+` and `*` commute (I4), doesn't hold in a stack a gate plays, where a product's first factor is read as the notes (#687, `electroswing` and `spooky`).
+   - The first one: L11, `+` and `*` commute (I4), didn't hold in a stack a gate plays, where a product's first factor was read as the notes (#687, `electroswing` and `spooky`); fixed by reading the factor that isn't a level as the line, the owner's (a).
 4. **The tests stay where they are.** The page links them, and the tags and `laws.test.ts` keep the two honest; no law's test moves into one file. A law may live in the slow suite, and its row says so.
 5. **A conjecture** is a statement with no test yet, listed apart on the page with where it is worked. It becomes a law with a test that passes, or a finding with a counterexample. The renormalization thread (coring commuting with composition, #632 rung 5) is speculative and labelled so until something measures it.
 6. **Scope:** the language and cells' own tools. A frontend's property belongs to that frontend, and one shared by several is a contract at the hub (yggi/music-commons), as the feel's reading is.

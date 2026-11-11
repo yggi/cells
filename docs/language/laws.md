@@ -22,9 +22,25 @@ Each law below names its test, tagged in the test's file as `// law L<n>`, and w
 | L8 | **The stems sum to the mix:** the voices rendered apart add up to the mix exactly. | `src/engine/render.test.ts` | Electro swing | quick | linearity | law |
 | L9 | **A copy is its template written in:** a `from` line plays what its copy written out plays. | `src/engine/from.test.ts` | texts written for it | quick | PLT: substitution | law |
 | L10 | **The graph and the code agree:** what the graph sets is what the code says. | `src/engine/edit.test.ts` | Royal | quick | lenses: a round trip | law |
-| L11 | **`+` and `*` commute:** a mix's products and a pitch sum written the other way round play the same. | `src/engine/commute.test.ts` | every example (71 of 73 it rewrites; 2 against #687) | quick | an algebra's laws | invariant I4 (broken: #687) |
+| L11 | **`+` and `*` commute:** a mix's products and a pitch sum written the other way round play the same. | `src/engine/commute.test.ts` | every example (the 73 it rewrites) | quick | an algebra's laws | invariant I4 |
+| L12 | **Renaming commutes with the tools:** writing in, Normalise, Shorten and the core of a renamed text play as the renamed result does. | `src/engine/symmetry.slow.test.ts` | every example (the core: every third) | slow | nominal sets; CT: naturality | invariant I12 |
+| L13 | **Transposition:** a text whose voices are moved by an interval plays its notes moved by it, at the same times and lengths, and Normalise, Shorten and the core commute with the move. | `src/engine/symmetry.slow.test.ts` | every example, moved a whole tone (the core: every third; writing in: 78, 11 out of reach) | slow | music theory: the T/I group | invariant I13 |
+| L14 | **Time scaling:** a text whose clocks run r times faster, where no line holds a time in seconds but a sound's own length, plays every onset at its time over r, every pitch kept, every length over r or held by its sound, and Normalise, Shorten and the core commute with it. | `src/engine/symmetry.slow.test.ts` | every example, r = 5/4, but 6 that hold a time in seconds (the core: every third; writing in: 62, 27 out of reach) | slow | metric geometry: a dilation | invariant I14 |
 
 L6 to L10 are checked over texts written for them, not every example; #632 widens each.
+
+### The symmetries (L1, L12–L14)
+
+Three actions act on a text, and each has its image on the events (`src/engine/symmetry.slow.test.ts`, #632 rung 3):
+
+- **Renaming:** every name a text defines, to a fresh one; the events are the same (L1).
+- **Transposition:** every voice the text writes, its frequency times the interval (an unnamed voice's in its line too); every frequency times the interval.
+- **Time scaling:** every clock the text writes below audio rate (a tempo, a `loop=`, an LFO), its rate times r; every onset over r.
+
+Five transformations are checked against each: compile (the events), writing in the `from` lines, Normalise, Shorten and the core. All fifteen hold over every example (the core's row, measured once over all 89, runs over every third: coring is its cost), with two kinds of exception, each listed by name in the test:
+
+- **A time in seconds:** six examples hold one that no rate scales, so they are outside L14's statement, not counterexamples to it: four physical models (`musicbox`, `automaton`, `echotape`, `tape`: a motor, a mass, friction) and the law over the wall clock (`daytime`, `fiveto12`). A length the sound holds in seconds (a drum's hit, a bell's ring, a drone) is kept, not scaled.
+- **Out of reach:** an action reaches the lines a text writes, so a `from` line whose fragment writes its own voice or clock, rather than taking one, is moved only once written in (11 examples for transposition, 27 for time scaling). The tools' rows act on the text written in, and L13 and L14 state those rows, not writing in.
 The core's test (L2, L3, L5) covers every `from` line written in too, so it checks L9 over every example as part of the core.
 
 ## Conjectures
@@ -36,7 +52,5 @@ The renormalization thread (C6) is speculative and labelled so until something m
 |---|---|---|---|
 | C1 | **Confluence:** Normalise's rules applied in any order reach one text. | PLT: Church–Rosser | #632 rung 4 |
 | C2 | **The measure never grows:** no step of Normalise, Shorten or the core raises the structure measure (decision 049). | a Lyapunov function | #632 rung 4 |
-| C3 | **Equivariance of the tools under renaming:** the core, Normalise and Shorten of a renamed text are the renamed core, normal form and shortening. | nominal sets; CT: naturality | #632 rung 3 |
-| C4 | **Transposition and inversion:** a text moved by k plays its notes moved by k, where no line holds an absolute pitch; inverted, inverted. | music theory: the T/I group | #632 rung 3 |
-| C5 | **Time scaling:** a tempo scaled by r plays the same events at times divided by r. | metric geometry: a dilation | #632 rung 3 |
+| C4 | **Inversion:** a text inverted about a pitch plays its notes inverted, where no line holds an absolute pitch (transposition, the other half of the T/I group, is L13). | music theory: the T/I group | #632 |
 | C6 | **Coring commutes with composition:** a piece cored with its fragments cored first is the piece cored (speculative: the start of a renormalization). | renormalization | #632 rung 5 |

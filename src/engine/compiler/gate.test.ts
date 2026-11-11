@@ -250,6 +250,11 @@ describe('a gate plays a stack of lines', () => {
       played(two + '&pad [&lo * &accent * &lead, &hi * &lead * .5]\n&out map=sample &pad'),
     );
     expect(ids(lines.replace('[&lo, &hi]', '[&lo * &accent, &hi * .5]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(['lead:lo', 'lead:hi']);
+    // (the line is the factor that isn't a level, wherever it is written: I4, #687)
+    expect(played(lines.replace('[&lo, &hi]', '[&accent * &lo, .5 * &hi]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(
+      played(lines.replace('[&lo, &hi]', '[&lo * &accent, &hi * .5]') + '&pad play=&both &lead\n&out map=sample &pad'),
+    );
+    expect(ids(lines.replace('[&lo, &hi]', '[&accent * &lo, .5 * &hi]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual(['lead:lo', 'lead:hi']);
     expect(errors(lines.replace('[&lo, &hi]', '[&lo * &bell, &hi]') + '&pad play=&both &lead\n&out map=sample &pad')).toEqual([
       '&both is a stack of lines, each times its levels: &bell is a sound, not a level (a cell with map=amp, map=db or map=lin, or a number)',
     ]);

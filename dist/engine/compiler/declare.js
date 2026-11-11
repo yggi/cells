@@ -487,12 +487,18 @@ function stackOf(decls, d, error) {
     const a = d.braid.tokens[0].atom;
     if (a.kind !== 'mix' || a.gate || !a.exprs.length)
         return null;
+    const level = (f) => f.k === 'num' || (f.k === 'ref' && ['amp', 'db', 'lin'].includes(decls.get(f.ref.name)?.map?.kind ?? ''));
     const member = (e) => {
         if (e.k === 'ref')
             return 'level' in e && e.level !== undefined ? null : { line: e.ref, by: [] };
-        if (e.k !== 'prod' || e.factors[0]?.k !== 'ref' || !e.factors.slice(1).every((f) => f.k === 'num' || (f.k === 'ref' && !f.ref.pick && !f.ref.shift)))
+        if (e.k !== 'prod')
             return null;
-        return { line: e.factors[0].ref, by: e.factors.slice(1) };
+        const lines = e.factors.filter((f) => !level(f));
+        const line = lines.length === 1 ? lines[0] : e.factors[0];
+        const by = e.factors.filter((f) => f !== line);
+        if (line.k !== 'ref' || !by.every((f) => f.k === 'num' || (f.k === 'ref' && !f.ref.pick && !f.ref.shift)))
+            return null;
+        return { line: line.ref, by };
     };
     const members = a.exprs.map(member);
     if (!members.every((m) => m !== null))
