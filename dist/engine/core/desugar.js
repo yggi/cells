@@ -421,7 +421,7 @@ function euclids(text) {
     }
     return lines.join('\n');
 }
-function counts(text) {
+export function counts(text) {
     const lines = text.split('\n');
     const read = unitRead(text);
     const edits = [];
