@@ -1,5 +1,7 @@
-import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from "./fiveto12.js";
-import { adsrOf, balance, CV_LAPS } from "./program.js";
+import { filledAt, lawOf, unitOf } from "./holes.js";
+import { parse } from "./parser/index.js";
+import { compile } from "./compiler/index.js";
+import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV } from "./program.js";
 import { tableChain } from "./helix.js";
 import { clocking, EPS, playedCells, readAmountsBy, tapeMotion, turnLap, varispeedOf } from "./clocking.js";
 import { ExpansionLimit, flatten, stepsOf } from "./flatten.js";
@@ -399,13 +401,51 @@ export function kitPickAt(p, o, at) {
     const e = t?.picker && heldAt(p, t.picker, at);
     return (e && voiceFor(p.result, o, e.value)?.voice) ?? null;
 }
-function lawOffset(result, cell) {
+function lawOffset(result, cell, law) {
     const day = result.cells.get(result.cells.get(cell)?.over ?? '');
     const anchor = day?.params.anchor;
     if (typeof anchor !== 'number')
         return 0;
     const sec = (h) => Math.floor(h) * 3600 + Math.round((h % 1) * 100) * 60;
-    return Math.round(((((sec(anchor) - LAW_START) % 86400) + 86400) % 86400) / LAW_SPS);
+    return Math.round(((((sec(anchor) - sec(law.origin)) % 86400) + 86400) % 86400) / law.stepSeconds);
+}
+const LAPS = new Map();
+const LAPS_KEPT = 96;
+function lawLap(law, lap) {
+    const key = `${law.id} ${lap}`;
+    const kept = LAPS.get(key);
+    if (kept)
+        return kept;
+    const unit = unitOf(law);
+    const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${law.plays} * &lapVoice]`;
+    const result = compile(parse(text, { old: false }), DEFAULT_ENV);
+    if (!result.ok)
+        throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
+    const shifts = codeShifts(result);
+    const base = result.cells.get('lapVoice').freq;
+    const space = law.holes.space ? flatten(result, 'space', shifts, null) : [];
+    const placeAt = (step) => {
+        const e = space.find((x) => step >= x.step - EPS && step < x.step + x.duration - EPS);
+        return e ? e.value / 3 - 1 : 0;
+    };
+    const notes = eventsBetween(plan(result, shifts), 0, unit)
+        .map((e) => ({ step: e.at, dur: e.dur, ratio: e.freq / base, level: e.levels[0]?.level ?? 0, pan: placeAt(e.at) }))
+        .sort((a, b) => a.step - b.step || a.ratio - b.ratio);
+    if (LAPS.size >= LAPS_KEPT)
+        LAPS.delete(LAPS.keys().next().value);
+    LAPS.set(key, notes);
+    return notes;
+}
+function lawNotes(law, from, to) {
+    const unit = unitOf(law);
+    const out = [];
+    for (let lap = Math.floor(from / unit); lap * unit < to; lap++)
+        for (const n of lawLap(law, lap)) {
+            const step = lap * unit + n.step;
+            if (step >= from && step < to)
+                out.push({ ...n, step });
+        }
+    return out;
 }
 const RUN = 256;
 export function eventsBetween(p, from, to, outputs = false, held = {}) {
@@ -418,7 +458,8 @@ export function eventsBetween(p, from, to, outputs = false, held = {}) {
         out.sort((a, b) => a.at - b.at);
     }
     for (const o of p.result.outputs) {
-        if (p.result.cells.get(o.cell)?.params.law !== 'fiveto12')
+        const law = lawOf(p.result.cells.get(o.cell)?.params);
+        if (!law)
             continue;
         const g = heardGains(o, p.muted);
         const midi = o.midi ? liveMidi(o, p.muted) : [];
@@ -426,14 +467,15 @@ export function eventsBetween(p, from, to, outputs = false, held = {}) {
         if (!heard && !midi.length)
             continue;
         const base = p.result.cells.get(o.voice)?.freq || 261.63;
-        const off = lawOffset(p.result, o.cell);
-        for (const n of lawNotes(Math.ceil(from / LAW_SPS - 1e-9) + off, Math.ceil(to / LAW_SPS - 1e-9) + off)) {
-            const at = (n.step - off) * LAW_SPS;
+        const off = lawOffset(p.result, o.cell, law);
+        const sps = law.stepSeconds;
+        for (const n of lawNotes(law, Math.ceil(from / sps - 1e-9) + off, Math.ceil(to / sps - 1e-9) + off)) {
+            const at = (n.step - off) * sps;
             out.push({
                 at,
-                dur: n.dur * LAW_SPS,
+                dur: n.dur * sps,
                 voice: o.voice,
-                freq: base * Math.pow(2, n.semis / 12),
+                freq: base * n.ratio,
                 bends: [],
                 gains: [g[0] * Math.min(1, 1 - n.pan) * voiceGain(p.result, o.voice), g[1] * Math.min(1, 1 + n.pan) * voiceGain(p.result, o.voice)],
                 levels: [{ at, level: n.level }],

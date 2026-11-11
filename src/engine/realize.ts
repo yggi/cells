@@ -7,8 +7,10 @@
  * numbers in `flatten.ts`, streams of values over a note in `series.ts`.
  */
 import type { Pick } from './ast';
-import { SECONDS_PER_STEP as LAW_SPS, START as LAW_START, notesBetween as lawNotes } from './fiveto12';
-import { adsrOf, balance, CV_LAPS, type CompileResult, type Output, type Shifts } from './program';
+import { filledAt, lawOf, unitOf, type PluginFragment } from './holes';
+import { parse } from './parser';
+import { compile } from './compiler';
+import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV, type CompileResult, type Output, type Shifts } from './program';
 import { tableChain } from './helix';
 import { clocking, EPS, playedCells, readAmountsBy, tapeMotion, turnLap, varispeedOf } from './clocking';
 import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
@@ -590,15 +592,69 @@ export function kitPickAt(p: Plan, o: Output, at: number): string | null {
 }
 
 /**
- * A law's steps ahead of play (law=fiveto12 over=&day): where its day stands when play starts, against 11:55, the
- * moment its day begins; 0 without a day, or with a day that starts there.
+ * A law's steps ahead of play (law=fiveto12 over=&day): where its day stands when play starts, against its origin (11:55
+ * for fiveto12), the moment its cycle begins; 0 without a day, or with a day that starts there.
  */
-function lawOffset(result: Plan['result'], cell: string): number {
+function lawOffset(result: Plan['result'], cell: string, law: PluginFragment): number {
   const day = result.cells.get(result.cells.get(cell)?.over ?? '');
   const anchor = day?.params.anchor;
   if (typeof anchor !== 'number') return 0;
   const sec = (h: number) => Math.floor(h) * 3600 + Math.round((h % 1) * 100) * 60;
-  return Math.round(((((sec(anchor) - LAW_START) % 86400) + 86400) % 86400) / LAW_SPS);
+  return Math.round(((((sec(anchor) - sec(law.origin)) % 86400) + 86400) % 86400) / law.stepSeconds);
+}
+
+/** A note of a law's lap: its step in the lap, length in steps, pitch as a ratio to the voice's, level, and place (−1 … 1). */
+interface LapNote {
+  readonly step: number;
+  readonly dur: number;
+  readonly ratio: number;
+  readonly level: number;
+  readonly pan: number;
+}
+
+/** Laps a law has rendered, by its id and lap: they are pure (decision 085 §3), so any piece may share them. */
+const LAPS = new Map<string, readonly LapNote[]>();
+/** How many it keeps: about ten minutes of fiveto12's bars. */
+const LAPS_KEPT = 96;
+
+/**
+ * One unit lap of a law, read by the language (decision 085, #693): its holes filled with braid text, its cells compiled
+ * and played on a voice of its own, so its notes go through its tables as any braid's; its place read from its `space`
+ * cell, as the law has always placed it (#696 makes it a pan=).
+ */
+function lawLap(law: PluginFragment, lap: number): readonly LapNote[] {
+  const key = `${law.id} ${lap}`;
+  const kept = LAPS.get(key);
+  if (kept) return kept;
+  const unit = unitOf(law);
+  const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${law.plays} * &lapVoice]`;
+  const result = compile(parse(text, { old: false }), DEFAULT_ENV);
+  if (!result.ok) throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
+  const shifts = codeShifts(result);
+  const base = result.cells.get('lapVoice')!.freq;
+  const space = law.holes.space ? flatten(result, 'space', shifts, null) : [];
+  const placeAt = (step: number) => {
+    const e = space.find((x) => step >= x.step - EPS && step < x.step + x.duration - EPS);
+    return e ? e.value / 3 - 1 : 0;
+  };
+  const notes = eventsBetween(plan(result, shifts), 0, unit)
+    .map((e) => ({ step: e.at, dur: e.dur, ratio: e.freq / base, level: e.levels[0]?.level ?? 0, pan: placeAt(e.at) }))
+    .sort((a, b) => a.step - b.step || a.ratio - b.ratio);
+  if (LAPS.size >= LAPS_KEPT) LAPS.delete(LAPS.keys().next().value!);
+  LAPS.set(key, notes);
+  return notes;
+}
+
+/** Every note of a law starting in its steps [from, to): each unit lap it reaches, read by the language. */
+function lawNotes(law: PluginFragment, from: number, to: number): { step: number; dur: number; ratio: number; level: number; pan: number }[] {
+  const unit = unitOf(law);
+  const out: { step: number; dur: number; ratio: number; level: number; pan: number }[] = [];
+  for (let lap = Math.floor(from / unit); lap * unit < to; lap++)
+    for (const n of lawLap(law, lap)) {
+      const step = lap * unit + n.step;
+      if (step >= from && step < to) out.push({ ...n, step });
+    }
+  return out;
 }
 
 /** A glide's run's most notes: it starts again after this many (an endless tie, a loop with no rest, ends). */
@@ -621,9 +677,10 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
     out.push(...droneEvents(p, from, to, outputs, held));
     out.sort((a, b) => a.at - b.at);
   }
-  // a law (law=fiveto12): its notes computed, not written — any moment of its day at once
+  // a law (law=fiveto12): a plugin-fragment built in, its holes filled and read by the language — any moment of its day at once
   for (const o of p.result.outputs) {
-    if (p.result.cells.get(o.cell)?.params.law !== 'fiveto12') continue;
+    const law = lawOf(p.result.cells.get(o.cell)?.params);
+    if (!law) continue;
     const g = heardGains(o, p.muted);
     // (on a MIDI card too: its notes are sent there, and heard on it as well: decision 064)
     const midi = o.midi ? liveMidi(o, p.muted) : [];
@@ -631,14 +688,15 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
     if (!heard && !midi.length) continue;
     const base = p.result.cells.get(o.voice)?.freq || 261.63;
     // (it reads the day it plays in, over=&day: where that day stands when play starts, against the law's own 11:55)
-    const off = lawOffset(p.result, o.cell);
-    for (const n of lawNotes(Math.ceil(from / LAW_SPS - 1e-9) + off, Math.ceil(to / LAW_SPS - 1e-9) + off)) {
-      const at = (n.step - off) * LAW_SPS;
+    const off = lawOffset(p.result, o.cell, law);
+    const sps = law.stepSeconds;
+    for (const n of lawNotes(law, Math.ceil(from / sps - 1e-9) + off, Math.ceil(to / sps - 1e-9) + off)) {
+      const at = (n.step - off) * sps;
       out.push({
         at,
-        dur: n.dur * LAW_SPS,
+        dur: n.dur * sps,
         voice: o.voice,
-        freq: base * Math.pow(2, n.semis / 12),
+        freq: base * n.ratio,
         bends: [],
         gains: [g[0] * Math.min(1, 1 - n.pan) * voiceGain(p.result, o.voice), g[1] * Math.min(1, 1 + n.pan) * voiceGain(p.result, o.voice)],
         levels: [{ at, level: n.level }],

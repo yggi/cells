@@ -1,4 +1,4 @@
-import { BLOCK_NAMES, DAY_MODES, MODE_NAMES } from "./fiveto12.js";
+import { lawOf, marksOf } from "./holes.js";
 import { codeShifts } from "./program.js";
 import { clocking, ownLength, selects, turnLap } from "./clocking.js";
 import { plan } from "./realize.js";
@@ -27,8 +27,11 @@ function fraction(x) {
 }
 const gcd = (a, b) => (b === 0n ? a : gcd(b, a % b));
 export function pieceTime(result, seen) {
-    if ([...result.cells.values()].some((c) => c.params.law === 'fiveto12'))
-        return { ends: 86400, cycle: 86400, chance: false, longest: 86400 };
+    const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
+    if (law) {
+        const day = law.cycle * law.stepSeconds;
+        return { ends: day, cycle: day, chance: false, longest: day };
+    }
     const statics = codeShifts(result);
     const p = plan(result, statics);
     const clk = clocking(result, statics);
@@ -121,8 +124,9 @@ export function durationText(seconds) {
     return `10^${Math.floor(Math.log10(years))} years`;
 }
 export function sections(result) {
-    if ([...result.cells.values()].some((c) => c.params.law === 'fiveto12'))
-        return DAY_MODES.map((m, b) => ({ at: b * 7200, label: `${MODE_NAMES[m]} · ${BLOCK_NAMES[b]}` }));
+    const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
+    if (law)
+        return marksOf(law);
     const statics = codeShifts(result);
     const clk = clocking(result, statics);
     for (const c of result.cells.values()) {
