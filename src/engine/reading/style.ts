@@ -65,7 +65,7 @@ const LINES: readonly Part[] = ['bass', 'lead'];
 export interface StyleReading {
   /** Onsets per step of the bar; a chord struck at one step is one onset. Intensity (#571), not an axis. */
   readonly density: number;
-  /** The share of onsets off the pulses and off the eighths: 0 on the grid's strong places, 1 all between. */
+  /** Syncopation proper (`syncopation`): 0 where every onset is followed by its line's next stronger place, higher the more weak onsets leave it silent. */
   readonly sync?: number;
   /** Paddy (0) to stabby (1): one less the median share of its gap a note of the bass or lead sounds. */
   readonly bite?: number;
@@ -99,13 +99,55 @@ export const lineShares = (notes: readonly Sounding[], steps: number): number[] 
     ),
   );
 
+/** A place's metric level in a bar, 0 strongest: the downbeat 0, a pulse 1, an eighth 2, any other step (a sixteenth) 3. */
+export const levelOf = (step: number, bar: Bar): number => (step === 0 ? 0 : bar.pulses.includes(step) ? 1 : step % STEPS_PER_EIGHTH === 0 ? 2 : 3);
+
+/** The deepest level a bar has: a sixteenth's, 3. */
+const DEEPEST = 3;
+
+/** A line of a bar: a part's notes, and the drums' each by its note (the kick, the hats and the clave are three lines). */
+const lineKey = (n: Sounding) => (n.part === 'drums' ? `drums:${n.note ?? ''}` : n.part);
+
+/**
+ * Syncopation proper (#681; Longuet-Higgins and Lee's measure, read per line): an onset on a weak place whose line
+ * leaves the next stronger place silent, struck neither there nor between, is syncopated by how much weaker its place
+ * is (their levels' difference, `levelOf`). A bar is read as a cycle, so the next stronger place after its last weak
+ * onsets is its own downbeat. A line's syncopation is the sum over its onsets, over its onsets times the deepest
+ * difference (a sixteenth before a silent downbeat, 3); the bar's is the mean over its lines, each line once, so a
+ * steady line (hats on every eighth, which leave no stronger place silent) dilutes it no more than one line does.
+ *
+ * It reads what the onsets on the grid alone didn't (#681): a clave's eighths (x..x..x.), the tresillo, a note on the
+ * and of four tied over the bar line. A line of eighths reads 0, an off-beat line (every eighth's and) 5/12.
+ */
+export function syncopation(notes: readonly Sounding[], bar: Bar = BAR_4_4): number {
+  const lines = new Map<string, Set<number>>();
+  for (const n of notes) {
+    const key = lineKey(n);
+    if (!lines.has(key)) lines.set(key, new Set());
+    lines.get(key)!.add(((n.step % bar.steps) + bar.steps) % bar.steps);
+  }
+  const perLine = [...lines.values()].map((steps) => {
+    let sum = 0;
+    for (const s of steps) {
+      const w = levelOf(s, bar);
+      let j = s + 1;
+      while (j < s + bar.steps && levelOf(j % bar.steps, bar) >= w) j++;
+      let struck = false;
+      for (let x = s + 1; x <= j && !struck; x++) struck = steps.has(x % bar.steps);
+      if (!struck) sum += w - levelOf(j % bar.steps, bar);
+    }
+    return sum / (steps.size * DEEPEST);
+  });
+  return perLine.reduce((a, b) => a + b, 0) / perLine.length;
+}
+
 /** The style a bar's sounding notes read as, on the axes that can be read from onsets and lengths alone. */
 export function readStyle(notes: readonly Sounding[], bar: Bar = BAR_4_4): StyleReading {
   const onsets = onsetsOf(notes);
   const shares = lineShares(notes, bar.steps);
   return {
     density: onsets.length / bar.steps,
-    ...(onsets.length ? { sync: onsets.filter((step) => !bar.pulses.includes(step) && step % STEPS_PER_EIGHTH !== 0).length / onsets.length } : {}),
+    ...(onsets.length ? { sync: syncopation(notes, bar) } : {}),
     ...(shares.length ? { bite: 1 - median(shares) } : {}),
   };
 }
