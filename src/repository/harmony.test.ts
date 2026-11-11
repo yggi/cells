@@ -51,6 +51,10 @@ const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter(
 );
 
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
+/** The bass line played on the bass voice, sent on MIDI channel 2 (#673: a line no card plays sends nothing). */
+const BASS_CARD = '&bassOut play=&bassline &bassV\n&bassMidi map=midi ~ &bassOut';
+/** The lines that rest on the downbeat: the pump, and the tumbao (#542). */
+const RESTS_ON_DOWNBEAT = new Set(['pumping_bass', 'tumbao_bass']);
 
 type Mode = 'aeolian' | 'dorian' | 'ionian' | 'mixolydian';
 const MODES: readonly Mode[] = ['aeolian', 'dorian', 'ionian', 'mixolydian'];
@@ -239,15 +243,19 @@ describe('the harmonies', () => {
       for (const f of HARMONY_FRAGMENTS) {
         const fit = takenOn(bass, takenOn(f.text, host(mode).replace('meter("4/4")', `meter("${meter}")`), '&key').union.text, '&harm');
         expect(fit.fits, `${f.id} in ${mode}`).toBe(true);
-        const plan = planOf(`${fit.union.text}\n${BASS_VOICE}`);
+        const plan = planOf(`${fit.union.text}\n${BASS_VOICE}\n${BASS_CARD}\n${PROBE}`);
         const route = router(plan.result, channelTable(plan.result));
-        const downbeats = windowAt(plan, 0, 8 * bar - 1e-9)
+        const notes = windowAt(plan, 0, 8 * bar - 1e-9)
           .events.flatMap((e) => routesOf(route(e)).map((r) => midiNote(e, r)))
-          .filter((n) => n && n.channel === 2 && Math.abs(n.at / bar - Math.round(n.at / bar)) < 1e-9);
-        // (the pump and the tumbao rest on the downbeat; every other line plays the chord's root there)
-        const degrees = degreesOf(f.text);
-        const root = (b: number) => pc(TONIC + SCALE[mode][degrees[b]!]!);
-        for (const n of downbeats) expect(pc(n!.note), `${f.id} in ${mode}, bar ${n!.at / bar}`).toBe(root(Math.round(n!.at / bar)));
+          .filter((n) => n !== null);
+        const onDownbeat = (at: number) => Math.abs(at / bar - Math.round(at / bar)) < 1e-9;
+        const downbeats = notes.filter((n) => n.channel === 2 && onDownbeat(n.at));
+        // (the pump and the tumbao rest on the downbeat; every other line plays a note on each, #673)
+        if (!RESTS_ON_DOWNBEAT.has(id)) expect(downbeats.length, `${f.id} in ${mode}: a note on each of the 8 downbeats`).toBe(8);
+        // (the chord in force there, as the probe plays it on channel 3: its lowest note, the root, the degrees stacked up;
+        // read off what sounds, so a harmony that moves each half bar, or under a bar of 3/4, is read where it is)
+        const root = (at: number) => pc(Math.min(...notes.filter((n) => n.channel === 3 && n.at <= at + 1e-9 && n.end > at + 1e-9).map((n) => n.note)));
+        for (const n of downbeats) expect(pc(n.note), `${f.id} in ${mode}, bar ${Math.round(n.at / bar)}`).toBe(root(n.at));
       }
   });
 });
