@@ -88,6 +88,7 @@ describe('the forms', () => {
 });
 
 describe('a copy of a template', () => {
+  // law L9
   it('plays what the template written out with its argument plays', () => {
     expect(messages(lines('&key from harmonic_minor D', METER, TUNE))).toEqual([]);
     expect(events(lines('&key from harmonic_minor D', METER, TUNE))).toEqual(events(lines('&key scale(harmonic, D)', METER, TUNE)));

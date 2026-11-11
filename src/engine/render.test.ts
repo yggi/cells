@@ -81,6 +81,7 @@ describe('the renderer', () => {
     expect(bits([join(0), join(1)])).toEqual(bits(whole));
   });
 
+  // law L8
   it('the stems, a voice each, sum to the mix exactly', () => {
     const a = pieceAudio(example('electroswing'), codeShifts(example('electroswing')), { seconds: 6, tracks: 'voices' });
     expect(a.stems.map((s) => s.name)).toEqual(expect.arrayContaining(['bd', 'hh', 'bassV', 'leadV']));

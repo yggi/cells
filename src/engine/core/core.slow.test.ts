@@ -10,6 +10,7 @@ import { LIBRARY, resolveSeed } from '../../repository/library';
 // normal form (the examples are normal, `normalise.test.ts`, so that is the core of the text Normalise writes).
 const O = { resolve: resolveSeed, library: LIBRARY };
 
+// law L2, L3, L5
 describe('the core of every example (decision 069)', () => {
   it.each(Object.entries(EXAMPLES))('%s: plays the same, is its own core, and is its normal form’s core', (_, p) => {
     const c = toCore(p.source, O);

@@ -70,6 +70,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     expect(shorten(piece('s=saw cutoff=800')).find((s) => s.kind === 'alias')?.after).toBe('lpf=800');
   });
 
+  // law L4
   it('every example, and every fragment of the seed library, is normal already', () => {
     // (an example read as Cell studio reads it, its `use` lines resolved, and the seed library's lines taken by `use`: #196)
     // (but an example whose point is the form a rule would rewrite, kept as written: the examples teach, and a rewrite that

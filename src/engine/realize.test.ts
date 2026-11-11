@@ -1375,6 +1375,7 @@ describe('Cellscape: a cycle of twelve', () => {
   });
 });
 
+// law L7
 describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each lap', () => {
   const play = (body: string, laps = 400, extra = '') => {
     const r = compileSource(`&t step=10${extra} ${body}\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`);
