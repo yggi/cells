@@ -136,6 +136,17 @@ function voiceGain(result, voice) {
     const l = c?.voice ? c.params.gain : undefined;
     return typeof l === 'number' && Number.isFinite(l) ? l : 1;
 }
+function movingPan(p, voices, at) {
+    let [l, r] = [1, 1];
+    for (const v of voices) {
+        const prm = p.voiceParams.get(v)?.pan;
+        if (!prm)
+            continue;
+        const [a, b] = balance(paramAt(p, prm, at));
+        [l, r] = [l * a, r * b];
+    }
+    return [l, r];
+}
 export function liveGains(o, muted) {
     if (o.silent)
         return o.via.some((m) => muted.has(cellId(m)) && !o.midi?.some((d) => d.card === m)) ? [0, 0] : [o.gains[0], o.gains[1]];
@@ -615,7 +626,9 @@ function plainEvents(p, from, to, outputs) {
                 const [l, r] = balance(result.cells.get(v.voice)?.params.pan);
                 return [g[0] * l * k, g[1] * r * k];
             };
-            const gains = memberPan(heardGains(t.output, p.muted));
+            const [ml, mr] = movingPan(p, [v.voice, ...t.output.through], at);
+            const heard = memberPan(heardGains(t.output, p.muted));
+            const gains = [heard[0] * ml, heard[1] * mr];
             const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
             if (!(freq > 0 && freq < 20000 && level.some((l) => l.level > 0)))
                 return null;
@@ -804,7 +817,9 @@ function droneEvents(p, from, to, outputs, held) {
             const freq = voice.freq * Math.pow(2, (o.offset + start) / 12);
             if (!(freq > 0 && freq < 20000) || !levels.some((l) => l.level > 0))
                 continue;
-            const gains = heardGains(o, p.muted);
+            const [ml, mr] = movingPan(p, [o.voice, ...o.through], at);
+            const heard = heardGains(o, p.muted);
+            const gains = [heard[0] * ml, heard[1] * mr];
             const midi = o.midi ? liveMidi(o, p.muted) : [];
             const params = paramTracks(p, o.voice, at, dur);
             out.push({

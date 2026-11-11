@@ -143,7 +143,9 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     moves: true,
     form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
   },
-  pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades'),
+  pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo)', {
+    moves: true,
+  }),
   distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
   crush: sound('bit depth: 16 clean, 8 grainy, 3 and fewer: rubble'),
   // FM

@@ -280,6 +280,22 @@ function voiceGain(result: CompileResult, voice: string): number {
   return typeof l === 'number' && Number.isFinite(l) ? l : 1;
 }
 
+/**
+ * Where a moving pan= stands at a note's start (#696, decision 085 §5): the balance of the voice's and of each instrument's
+ * it plays through, read there and held for the note, as a fixed pan= is (that one is in the output's gains already);
+ * [1, 1] when none moves.
+ */
+function movingPan(p: Plan, voices: readonly string[], at: number): [number, number] {
+  let [l, r] = [1, 1];
+  for (const v of voices) {
+    const prm = p.voiceParams.get(v)?.pan;
+    if (!prm) continue;
+    const [a, b] = balance(paramAt(p, prm, at));
+    [l, r] = [l * a, r * b];
+  }
+  return [l, r];
+}
+
 /** An output's level per channel, leaving out mixes (or sound cards) that are switched off. */
 export function liveGains(o: Output, muted: ReadonlySet<string>): [number, number] {
   // a send (a mix played only into a resonator or a tape): its own gain, unless its mix is off
@@ -841,7 +857,9 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         const [l, r] = balance(result.cells.get(v.voice)?.params.pan);
         return [g[0] * l * k, g[1] * r * k];
       };
-      const gains = memberPan(heardGains(t.output, p.muted));
+      const [ml, mr] = movingPan(p, [v.voice, ...t.output.through], at);
+      const heard = memberPan(heardGains(t.output, p.muted));
+      const gains: [number, number] = [heard[0] * ml, heard[1] * mr];
       const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
       if (!(freq > 0 && freq < 20000 && level.some((l) => l.level > 0))) return null;
       return {
@@ -1064,7 +1082,9 @@ function droneEvents(p: Plan, from: number, to: number, outputs: boolean, held: 
         : [{ at, level: 1 }];
       const freq = voice.freq * Math.pow(2, (o.offset + start) / 12);
       if (!(freq > 0 && freq < 20000) || !levels.some((l) => l.level > 0)) continue;
-      const gains = heardGains(o, p.muted);
+      const [ml, mr] = movingPan(p, [o.voice, ...o.through], at);
+      const heard = heardGains(o, p.muted);
+      const gains: [number, number] = [heard[0] * ml, heard[1] * mr];
       const midi = o.midi ? liveMidi(o, p.muted) : [];
       const params = paramTracks(p, o.voice, at, dur);
       out.push({

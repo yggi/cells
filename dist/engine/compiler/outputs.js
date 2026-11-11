@@ -27,7 +27,12 @@ export function outputsOf(ctx, decls, cells, clocks, { sinks, cards, bindings, s
             continue;
         if ([b.voice, ...b.pitches.map((t) => t.ref)].some((r) => ctx.broken.has(r.name)))
             continue;
+        const unread = (name) => {
+            if (cells.get(name)?.paramCells.pan)
+                warn(`&${name}'s pan= moves, but it is read at each note's start, and &${name} rings without notes here: it sits in the centre (write a number)`, decls.get(name)?.paramSpans.pan ?? b.voice.span);
+        };
         if (soundHead(b.voice.name) && b.pitches.length === 0) {
+            unread(b.voice.name);
             returns.push({ head: b.voice.name, tape: cells.get(b.voice.name).params.play, gains: [gains[0], gains[1]], parts, through: [...through] });
             continue;
         }
@@ -35,6 +40,7 @@ export function outputsOf(ctx, decls, cells, clocks, { sinks, cards, bindings, s
         if (!voice)
             continue;
         if (typeof voice.params.body === 'string' && b.pitches.length === 0) {
+            unread(voice.name);
             const [pl, pr] = balance(voice.params.pan);
             resonances.push({
                 cell: voice.name,
