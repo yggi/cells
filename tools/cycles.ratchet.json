@@ -1,0 +1,42 @@
+{
+  "examples": {
+    "cases": 59,
+    "beat": 47,
+    "bar": 45,
+    "start": 43,
+    "level": 49,
+    "beats": 48,
+    "groups": 42,
+    "swing": 54
+  },
+  "synthetic": {
+    "cases": 1035,
+    "beat": 464,
+    "bar": 840,
+    "start": 835,
+    "level": 962,
+    "beats": 485,
+    "groups": 331,
+    "swing": 813
+  },
+  "groove": {
+    "cases": 3,
+    "beat": 3,
+    "bar": 3,
+    "start": 2,
+    "level": 2,
+    "beats": 3,
+    "groups": 3,
+    "swing": 3
+  },
+  "bach": {
+    "cases": 88,
+    "beat": 40,
+    "bar": 44,
+    "start": 37,
+    "level": 68,
+    "beats": 62,
+    "groups": 34,
+    "swing": 88
+  }
+}
