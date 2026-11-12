@@ -127,13 +127,19 @@ function dropLine(source, name) {
     const i = declLine(source, name);
     return i < 0 ? source : [...lines.slice(0, i), ...lines.slice(i + 1)].join('\n');
 }
-function onsets(source, key, options) {
+function clocksOf(source, options) {
     const r = compileSource(source, undefined, options);
-    if (!r.clocks.has(key))
-        return null;
-    const map = clocking(r, plan(r, codeShifts(r)).statics).map(key);
-    return Array.from({ length: SAME.steps }, (_, i) => map.q(i));
+    const maps = clocking(r, plan(r, codeShifts(r)).statics);
+    return (key) => {
+        if (!r.clocks.has(key))
+            return null;
+        const map = maps.map(key);
+        return (i) => map.q(i);
+    };
 }
+const firstSteps = (q, stride = 1) => Array.from({ length: SAME.steps }, (_, i) => q(i * stride));
+const ULPS = 64;
+const MAX_STRIDE = 100_000;
 export function tapClock(source, result, options = {}) {
     const main = result.mainMeter;
     if (!main)
@@ -150,16 +156,28 @@ export function tapClock(source, result, options = {}) {
         const taps = [...new Set([...source.matchAll(tapped)].map((m) => m[1]))];
         if (!taps.length || otherMentions(source, name, tapped) !== 0)
             continue;
-        const probe = `${source}\n${TAPS.map((t, i) => `&__tap${i} step=${t} 0`).join('\n')}`;
-        const near = (a, b) => a.every((x, i) => Math.abs(x - b[i]) <= SAME.seconds);
+        const near = (a, b) => a.every((x, i) => Math.abs(x - b[i]) <= Math.max(SAME.seconds, ULPS * Number.EPSILON * Math.abs(x)));
+        const mine = clocksOf(source, options);
+        const main_ = clocksOf(`${source}\n${TAPS.map((t, i) => `&__tap${i} step=${t} 0`).join('\n')}`, options);
         const instead = new Map();
         for (const tap of taps) {
-            const theirs = onsets(source, `${name}:${tap}`, options);
-            const match = theirs &&
-                TAPS.find((t) => {
-                    const ours = onsets(probe, `${main}:${t}`, options);
-                    return ours !== null && near(ours, theirs);
-                });
+            const q = mine(`${name}:${tap}`);
+            if (!q)
+                continue;
+            const theirs = firstSteps(q);
+            const match = TAPS.find((t) => {
+                const ours = main_(`${main}:${t}`);
+                return ours !== null && near(firstSteps(ours), theirs);
+            }) ??
+                TAPS.flatMap((t) => {
+                    const ours = main_(`${main}:${t}`);
+                    return ours ? [{ t, ours, period: (ours(SAME.steps) - ours(0)) / SAME.steps }] : [];
+                })
+                    .sort((a, b) => b.period - a.period || TAPS.indexOf(b.t) - TAPS.indexOf(a.t))
+                    .flatMap(({ t, ours, period }) => {
+                    const k = Math.round((theirs[1] - theirs[0]) / period);
+                    return k > 1 && k <= MAX_STRIDE && near(firstSteps(ours, k), theirs) ? [`${t}/${k}`] : [];
+                })[0];
             if (match)
                 instead.set(tap, match);
         }

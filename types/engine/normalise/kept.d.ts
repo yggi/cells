@@ -5,7 +5,8 @@
  *
  *  - breve: a tutorial of alla breve, `meter("2/2", 2)`, and of a scan whose entries are sixteenths, its forms the lesson
  *    (#524, #668): every rewrite of it hides one;
- *  - daytime: a tutorial of clock time, `loop=1min`, `1h`, `1d`, `1wk`, its clocks the lesson (#668);
+ *  - daytime: a tutorial of clock time, `loop=1min`, `1h`, `1d`, `1wk`, its clocks the lesson (#668): its week too, which a
+ *    chained tap would fold, `1m/1440` (#722);
  *  - spooky: its stab line is "the piece's own", its prose says, beside the library's band and tune (#524).
  */
 export declare const KEPT: Readonly<Record<string, RegExp>>;
