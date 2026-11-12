@@ -8,6 +8,13 @@ association:
       mood: 0.95
     weight: 0.125
     facet: instrument
+  - point:
+      sync: 0.05
+      harm: 0.3
+      bite: 0
+      mood: 0.9
+    weight: 0.125
+    facet: instrument
 source: seed
 lifted: yggi/cells examples/kinderlied.md @ a8de625f
 ---
@@ -20,3 +27,5 @@ The round, soft bass of [Kinderlieder, in pieces](../../examples/kinderlied.md):
 It defines `&bassV`, the voice the bass performer plays, so it fills the same hole as the default `bass`.
 
 Associated at Kinderlied's point (sync .1, harm .12, bite .5, mood .95) as the facet `instrument`, at half the default instruments' weight (0.125), as Spooky's and Electro swing's own are (#350), so a query for an instrument finds it first there (#572).
+
+**Shared** (#540): on Ambient's point, its soft low end.

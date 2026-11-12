@@ -269,7 +269,12 @@ describe('a seed placed for one preset (#404)', () => {
     // the haunted progression, and Deep house and Bossa nova, dorian and ionian, leave it; Spooky finds its own stab first since #572, spooky_stabs)
     // (#540: Synth-pop, Lo-fi, Swing jazz and Electro swing find their own harmony at distance 0 since, so nothing leaks into
     // them; the witness fires on the library without those progressions, as it did before them)
-    const unfilled = (fragments: readonly Fragment[]) => fragments.filter((f) => !BEFORE_540.includes(f.id));
+    // (and the haunted progression's share near Dark ambient, #540, which isn't one of these presets: its nearest preset is Synth-pop,
+    // so the witness would count it placed for Synth-pop; the witness is the library before #540)
+    const unfilled = (fragments: readonly Fragment[]) =>
+      fragments
+        .filter((f) => !BEFORE_540.includes(f.id))
+        .map((f) => (f.id === 'haunted_progression' ? { ...f, association: f.association.filter((wp) => plain(wp.point, SPOOKY) < 0.1) } : f));
     expect(leaks(weighted('dark_cadence', 1))).toEqual([]);
     expect(leaks(unfilled(withoutSynthPopAxis(weighted('dark_cadence', 1))))).toEqual(
       ['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: dark_cadence`),

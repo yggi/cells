@@ -8,6 +8,13 @@ association:
       mood: 0.1
     weight: 0.125
     facet: instrument
+  - point:
+      sync: 0.05
+      harm: 0.3
+      bite: 0.1
+      mood: 0.9
+    weight: 0.5
+    facet: instrument
 source: seed
 lifted: yggi/cells examples/ghosts.md @ a8de625f
 ---
@@ -20,3 +27,5 @@ The drone of [Ghost-Cells](../../examples/ghosts.md): a saw distorted hard, its 
 It defines `&padV`, the voice the pad performer plays, at the default pad's register (`loop=C3`; the example's drone sits two octaves lower, on D1).
 
 At Dark ambient's point (sync .35, harm .15, bite .4, mood .1) as the facet `instrument`, at half the default instruments' weight (0.125) (#350, #572).
+
+**Shared** (#540): near Ambient's point, a second pad behind the default.

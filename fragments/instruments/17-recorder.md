@@ -8,6 +8,13 @@ association:
       mood: 0.95
     weight: 0.125
     facet: instrument
+  - point:
+      sync: 0.15
+      harm: 0.8
+      bite: 0.6
+      mood: 0.85
+    weight: 0.5
+    facet: instrument
 source: seed
 lifted: yggi/cells examples/kinderlied.md @ a8de625f
 ---
@@ -20,3 +27,5 @@ The lead of [Kinderlieder, in pieces](../../examples/kinderlied.md): a triangle,
 It defines `&leadV`, the voice the lead performer plays, so it fills the same hole as the default `lead`.
 
 Associated at Kinderlied's point (sync .1, harm .12, bite .5, mood .95) as the facet `instrument`, at half the default instruments' weight (0.125) (#350, #572).
+
+**Shared** (#540): near Baroque's point, a second lead behind the moog.

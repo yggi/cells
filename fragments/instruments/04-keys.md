@@ -2,10 +2,45 @@
 id: keys
 association:
   - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
+      sync: 0.3
+      harm: 0.45
+      bite: 0.55
       mood: 0.5
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.35
+      harm: 0.55
+      bite: 0.65
+      mood: 0.65
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.5
+      harm: 0.75
+      bite: 0.35
+      mood: 0.5
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.75
+      harm: 0.85
+      bite: 0.45
+      mood: 0.9
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.35
+      harm: 1
+      bite: 0.3
+      mood: 0.85
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 1
+      harm: 0.12
+      bite: 0.85
+      mood: 0.65
     weight: 0.25
     facet: instrument
 source: seed
@@ -24,4 +59,6 @@ Its register is its own (decision 058): a performer that plays it higher or lowe
 
 It declares the style it reads, as `bass` does: `(&style)`, its default the centre (decision 075, #560).
 
-Associated as `bass` is, once as the facet `instrument` at the centre of style space, at a quarter of the kit's weight; a performer asks for it by its id.
+Associated as `bass` is, as the facet `instrument` at a quarter of the kit's weight; a performer asks for it by its id.
+
+**Where it is found** (#540): on the points of Synth-pop, Deep house, Lo-fi hip hop and Bossa nova, where the centre point it had found it first, and of Swing jazz and Funk, where keys comp; weight 0.25.

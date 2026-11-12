@@ -84,7 +84,8 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter; also?: readonly
   march: { point: held(0, 0.1, 0.6, 1), meter: '2/4', also: [stylePoint('march')] },
   fanfare: { point: held(0.2, 0.6, 0.9, 1), meter: 'alla breve' },
   // (six general-purpose: the centre, and 0.2 from it on one axis each)
-  question: { point: held(0.5, 0.5, 0.5, 0.5) },
+  // (a call, where call and answer's idiom is, its form's point, naming no mood: no longer at the centre, #540)
+  question: { point: { sync: 0.75, harm: 0.35, bite: 0.65 } },
   reply: { point: held(0.5, 0.5, 0.5, 0.3) },
   arpeggio: { point: held(0.5, 0.3, 0.5, 0.5) },
   run: { point: held(0.5, 0.7, 0.5, 0.5) },

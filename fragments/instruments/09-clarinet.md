@@ -8,6 +8,13 @@ association:
       mood: 0.5
     weight: 0.125
     facet: instrument
+  - point:
+      sync: 0.35
+      harm: 1
+      bite: 0.4
+      mood: 0.85
+    weight: 0.5
+    facet: instrument
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 6d1bfa7
 ---
@@ -22,3 +29,5 @@ It is [Electro swing, in pieces](../../examples/electroswing.md)'s `&leadV` word
 It sounds within the renderer's first stage (decision 062, R1): a wave, a filter, an envelope and a pitch's shape.
 
 Associated at Electro swing's point (`ELECTRO_SWING`: sync .55, harm .75, bite .6, mood .5; yggi/jambot#517) as the facet `instrument`, at half the default instruments' weight (0.125), so a query for an instrument finds it first at that point, and the kit and the defaults first at each of the eight presets (#350).
+
+**Shared** (#540): near Swing jazz's point, a second lead behind the muted trumpet.
