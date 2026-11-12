@@ -26,8 +26,17 @@ Each law below names its test, tagged in the test's file as `// law L<n>`, and w
 | L12 | **Renaming commutes with the tools:** writing in, Normalise, Shorten and the core of a renamed text play as the renamed result does. | `src/engine/symmetry.slow.test.ts` | every example (the core: every third) | slow | nominal sets; CT: naturality | invariant I12 |
 | L13 | **Transposition:** a text whose voices are moved by an interval plays its notes moved by it, at the same times and lengths, and Normalise, Shorten and the core commute with the move. | `src/engine/symmetry.slow.test.ts` | every example, moved a whole tone (the core: every third; writing in: 78, 11 out of reach) | slow | music theory: the T/I group | invariant I13 |
 | L14 | **Time scaling:** a text whose clocks run r times faster, where no line holds a time in seconds but a sound's own length, plays every onset at its time over r, every pitch kept, every length over r or held by its sound, and Normalise, Shorten and the core commute with it. | `src/engine/symmetry.slow.test.ts` | every example, r = 5/4, but 6 that hold a time in seconds (the core: every third; writing in: 62, 27 out of reach) | slow | metric geometry: a dilation | invariant I14 |
+| L15 | **Normalise is confluent:** its rewrites, taken in any order, reach one text. | `src/engine/confluence.slow.test.ts` | every example written in, in its own order and 4 seeded others (62 of the 74 it rewrites; 12 against #729) | slow | PLT: Church–Rosser; critical pairs | law (broken: #729) |
+| L16 | **The measure never grows:** no step of Normalise or Shorten raises the structure measure as written (decision 049), but naming the interface, which writes the named cell. | `src/engine/confluence.slow.test.ts` | every example written in | slow | a Lyapunov function | law |
 
 L6 to L10 are checked over texts written for them, not every example; #632 widens each.
+
+### Normalise's order and the measure (L15, L16)
+
+Each example with its `from` lines written in is a text Normalise and Shorten have work on (`src/engine/confluence.slow.test.ts`, #632 rung 4).
+
+- **Confluence (L15)** doesn't hold in 12 examples. Normalise's own order and a shuffled one reach different texts there. Every pair of rewrites that apply to one text, each followed by Normalise, either meets again or is one of four critical pairs: the library's rules against each other, a migration's arguments against the library, and the template against the meter and the tempo (#729, options for the owner). The 12 are listed against #729 until they hold.
+- **The measure (L16)** never grows under a step of Normalise or Shorten, but where Normalise names the interface's tempo, writing its cell (`breve`, +2). The core is held to neither: it writes the sugar out (decision 069), and grows 70 of the 89 examples. Over the normal form, the measure decision 049 rules, Normalise is free by definition, and is one text only as L15 holds.
 
 ### The symmetries (L1, L12–L14)
 
@@ -50,7 +59,5 @@ The renormalization thread (C6) is speculative and labelled so until something m
 
 | Conjecture | Statement | Field | Where |
 |---|---|---|---|
-| C1 | **Confluence:** Normalise's rules applied in any order reach one text. | PLT: Church–Rosser | #632 rung 4 |
-| C2 | **The measure never grows:** no step of Normalise, Shorten or the core raises the structure measure (decision 049). | a Lyapunov function | #632 rung 4 |
 | C4 | **Inversion:** a text inverted about a pitch plays its notes inverted, where no line holds an absolute pitch (transposition, the other half of the T/I group, is L13). | music theory: the T/I group | #632 |
 | C6 | **Coring commutes with composition:** a piece cored with its fragments cored first is the piece cored (speculative: the start of a renormalization). | renormalization | #632 rung 5 |
