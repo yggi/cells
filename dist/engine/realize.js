@@ -1,4 +1,4 @@
-import { filledAt, lawOf, unitOf } from "./holes.js";
+import { filledAt, lawOf, unitOf } from "./fills.js";
 import { parse } from "./parser/index.js";
 import { compile } from "./compiler/index.js";
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV } from "./program.js";
@@ -428,19 +428,14 @@ function lawLap(law, lap) {
     if (kept)
         return kept;
     const unit = unitOf(law);
-    const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${law.plays} * &lapVoice]`;
+    const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4${law.voice ? ` ${law.voice}` : ''}\n&lapOut map=sample [${law.plays} * &lapVoice]`;
     const result = compile(parse(text, { old: false }), DEFAULT_ENV);
     if (!result.ok)
         throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
     const shifts = codeShifts(result);
     const base = result.cells.get('lapVoice').freq;
-    const space = law.holes.space ? flatten(result, 'space', shifts, null) : [];
-    const placeAt = (step) => {
-        const e = space.find((x) => step >= x.step - EPS && step < x.step + x.duration - EPS);
-        return e ? e.value / 3 - 1 : 0;
-    };
     const notes = eventsBetween(plan(result, shifts), 0, unit)
-        .map((e) => ({ step: e.at, dur: e.dur, ratio: e.freq / base, level: e.levels[0]?.level ?? 0, pan: placeAt(e.at) }))
+        .map((e) => ({ step: e.at, dur: e.dur, ratio: e.freq / base, level: e.levels[0]?.level ?? 0, gains: e.gains }))
         .sort((a, b) => a.step - b.step || a.ratio - b.ratio);
     if (LAPS.size >= LAPS_KEPT)
         LAPS.delete(LAPS.keys().next().value);
@@ -488,7 +483,7 @@ export function eventsBetween(p, from, to, outputs = false, held = {}) {
                 voice: o.voice,
                 freq: base * n.ratio,
                 bends: [],
-                gains: [g[0] * Math.min(1, 1 - n.pan) * voiceGain(p.result, o.voice), g[1] * Math.min(1, 1 + n.pan) * voiceGain(p.result, o.voice)],
+                gains: [g[0] * n.gains[0] * voiceGain(p.result, o.voice), g[1] * n.gains[1] * voiceGain(p.result, o.voice)],
                 levels: [{ at, level: n.level }],
                 ...(heard ? {} : { unheard: true }),
                 ...(midi.length ? { midi } : {}),

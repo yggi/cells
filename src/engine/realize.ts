@@ -7,7 +7,7 @@
  * numbers in `flatten.ts`, streams of values over a note in `series.ts`.
  */
 import type { Pick } from './ast';
-import { filledAt, lawOf, unitOf, type PluginFragment } from './holes';
+import { filledAt, lawOf, unitOf, type PluginFragment } from './fills';
 import { parse } from './parser';
 import { compile } from './compiler';
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV, type CompileResult, type Output, type Shifts } from './program';
@@ -619,13 +619,13 @@ function lawOffset(result: Plan['result'], cell: string, law: PluginFragment): n
   return Math.round(((((sec(anchor) - sec(law.origin)) % 86400) + 86400) % 86400) / law.stepSeconds);
 }
 
-/** A note of a law's lap: its step in the lap, length in steps, pitch as a ratio to the voice's, level, and place (−1 … 1). */
+/** A note of a law's lap: its step in the lap, length in steps, pitch as a ratio to the voice's, level, and channel gains (its place). */
 interface LapNote {
   readonly step: number;
   readonly dur: number;
   readonly ratio: number;
   readonly level: number;
-  readonly pan: number;
+  readonly gains: readonly [number, number];
 }
 
 /** Laps a law has rendered, by its id and lap: they are pure (decision 085 §3), so any piece may share them. */
@@ -634,27 +634,22 @@ const LAPS = new Map<string, readonly LapNote[]>();
 const LAPS_KEPT = 96;
 
 /**
- * One unit lap of a law, read by the language (decision 085, #693): its holes filled with braid text, its cells compiled
- * and played on a voice of its own, so its notes go through its tables as any braid's; its place read from its `space`
- * cell, as the law has always placed it (#696 makes it a pan=).
+ * One unit lap of a law, read by the language (decision 085, #693): its fills filled with braid text, its cells compiled
+ * and played on a voice of its own, so its notes go through its tables, and its places through the voice's `pan=` (#727),
+ * as any line's do.
  */
 function lawLap(law: PluginFragment, lap: number): readonly LapNote[] {
   const key = `${law.id} ${lap}`;
   const kept = LAPS.get(key);
   if (kept) return kept;
   const unit = unitOf(law);
-  const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${law.plays} * &lapVoice]`;
+  const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4${law.voice ? ` ${law.voice}` : ''}\n&lapOut map=sample [${law.plays} * &lapVoice]`;
   const result = compile(parse(text, { old: false }), DEFAULT_ENV);
   if (!result.ok) throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
   const shifts = codeShifts(result);
   const base = result.cells.get('lapVoice')!.freq;
-  const space = law.holes.space ? flatten(result, 'space', shifts, null) : [];
-  const placeAt = (step: number) => {
-    const e = space.find((x) => step >= x.step - EPS && step < x.step + x.duration - EPS);
-    return e ? e.value / 3 - 1 : 0;
-  };
   const notes = eventsBetween(plan(result, shifts), 0, unit)
-    .map((e) => ({ step: e.at, dur: e.dur, ratio: e.freq / base, level: e.levels[0]?.level ?? 0, pan: placeAt(e.at) }))
+    .map((e) => ({ step: e.at, dur: e.dur, ratio: e.freq / base, level: e.levels[0]?.level ?? 0, gains: e.gains }))
     .sort((a, b) => a.step - b.step || a.ratio - b.ratio);
   if (LAPS.size >= LAPS_KEPT) LAPS.delete(LAPS.keys().next().value!);
   LAPS.set(key, notes);
@@ -662,9 +657,9 @@ function lawLap(law: PluginFragment, lap: number): readonly LapNote[] {
 }
 
 /** Every note of a law starting in its steps [from, to): each unit lap it reaches, read by the language. */
-function lawNotes(law: PluginFragment, from: number, to: number): { step: number; dur: number; ratio: number; level: number; pan: number }[] {
+function lawNotes(law: PluginFragment, from: number, to: number): LapNote[] {
   const unit = unitOf(law);
-  const out: { step: number; dur: number; ratio: number; level: number; pan: number }[] = [];
+  const out: LapNote[] = [];
   for (let lap = Math.floor(from / unit); lap * unit < to; lap++)
     for (const n of lawLap(law, lap)) {
       const step = lap * unit + n.step;
@@ -693,7 +688,7 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
     out.push(...droneEvents(p, from, to, outputs, held));
     out.sort((a, b) => a.at - b.at);
   }
-  // a law (law=fiveto12): a plugin-fragment built in, its holes filled and read by the language — any moment of its day at once
+  // a law (law=fiveto12): a plugin-fragment built in, its fills filled and read by the language — any moment of its day at once
   for (const o of p.result.outputs) {
     const law = lawOf(p.result.cells.get(o.cell)?.params);
     if (!law) continue;
@@ -714,7 +709,7 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
         voice: o.voice,
         freq: base * n.ratio,
         bends: [],
-        gains: [g[0] * Math.min(1, 1 - n.pan) * voiceGain(p.result, o.voice), g[1] * Math.min(1, 1 + n.pan) * voiceGain(p.result, o.voice)],
+        gains: [g[0] * n.gains[0] * voiceGain(p.result, o.voice), g[1] * n.gains[1] * voiceGain(p.result, o.voice)],
         levels: [{ at, level: n.level }],
         ...(heard ? {} : { unheard: true as const }),
         ...(midi.length ? { midi } : {}),

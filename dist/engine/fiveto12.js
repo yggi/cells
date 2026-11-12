@@ -121,36 +121,38 @@ export function notesBetween(from, to) {
     return out;
 }
 const TONIC_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const PLACES = ['0', '1/6', '1/3', '1/2', '2/3', '5/6', '1'];
 const held = (token, dur) => (dur > 1 ? `${token}@${dur}` : token);
 const tokens = (bar, token) => bar.map((o) => held(token(o), o.dur)).join(' ');
 function lapPlace(lap, length) {
     const p = place(lap * length);
     return { ...p, bar: barOf(p.block, p.key, p.bar) };
 }
-function fill(hole, lap) {
-    if (hole === 'notes')
+function fill(name, lap) {
+    if (name === 'notes')
         return tokens(lapPlace(lap, BAR).bar, (o) => (o.density > 1 ? `[${Array.from({ length: o.density }, (_, v) => o.degree + 2 * v).join(', ')}]` : String(o.degree)));
-    if (hole === 'level')
+    if (name === 'level')
         return tokens(lapPlace(lap, BAR).bar, (o) => String(+(0.18 + o.dynamic * 0.11).toFixed(2)));
-    if (hole === 'space')
-        return tokens(lapPlace(lap, BAR).bar, (o) => String(o.space));
-    if (hole === 'mode')
+    if (name === 'space')
+        return tokens(lapPlace(lap, BAR).bar, (o) => PLACES[o.space]);
+    if (name === 'mode')
         return MODE_NAMES[place(lap * KEY).mode ?? 0].toLowerCase();
-    if (hole === 'tonic')
+    if (name === 'tonic')
         return TONIC_NAMES[place(lap * KEY).tonic];
-    if (hole === 'block') {
+    if (name === 'block') {
         const b = mod(lap, 12);
         return `${MODE_NAMES[DAY_MODES[b]]} · ${BLOCK_NAMES[b]}`;
     }
-    throw new Error(`fiveto12 has no hole ${hole}`);
+    throw new Error(`fiveto12 has no fill ${name}`);
 }
 export const FIVETO12 = {
     id: 'fiveto12',
-    holes: { mode: { lap: KEY }, tonic: { lap: KEY }, notes: { lap: BAR }, level: { lap: BAR }, space: { lap: BAR }, block: { lap: BLOCK, mark: true } },
+    fills: { mode: { lap: KEY }, tonic: { lap: KEY }, notes: { lap: BAR }, level: { lap: BAR }, space: { lap: BAR }, block: { lap: BLOCK, mark: true } },
     block: ['&notes over=&key step=1 fill()', '&level map=amp step=1 fill()', '&space map=lin step=1 fill()', '&key scale(&mode, &tonic)', '&mode fill()', '&tonic fill()'].join('\n'),
     plays: '&notes * &level',
+    voice: 'pan=&space',
     origin: 11.55,
     cycle: DAY,
     stepSeconds: SECONDS_PER_STEP,
-    fill: (hole, lap) => fill(hole, lap),
+    fill: (name, lap) => fill(name, lap),
 };
