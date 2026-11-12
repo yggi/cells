@@ -97,6 +97,7 @@ A file may hold several signatures: each declares a part, its heads and every li
 - **The main parameter stays required:** the document's `&key` is its own, never a part's default.
 - **The lines no part reaches are the piece's own:** they play when the file is opened, and are never given.
 - **One namespace:** a piece is resolved by its key, so no example's key is a fragment's id.
+- **How the document plays a part** is a frontend's to ask (`usesOf`, #692): each line that takes a fragment over the part's head, its arguments that name another part written as that part's id. Kinderlieder's `&twinkleSong from ternary(answer=&wonder) &twinkle` gives `kinderlied/twinkle` the ternary, `kinderlied/wonder` its answer: a tune's own form, which a frontend plays over the form its style finds (the owner, 2026-11-11).
 
 ## The lockfile
 

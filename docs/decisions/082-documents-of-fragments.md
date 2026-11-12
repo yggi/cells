@@ -83,6 +83,7 @@ Today a file holds one fragment, in one of two forms:
 1. **One namespace.** A piece is resolved by its key (`resolveSeed` reads the examples), so no example's key is a fragment's id, nor a renamed or retired one (`repository/namespace.test.ts`). Three clashed at the code: `twinkle` (§7 moves it), and the motifs `waltz` and `korobeiniki`, respelled with their heads `waltzBar` and `korobeinikiBar`, as a seed motif is headed by its id.
 2. **#670's tunes** landed as motifs (#675); they stay so (§7).
 3. **A part's point** is read in its document first, a hand's association over it (§5).
+4. **A tune's own form beats the style** (#692: "tunes own form beats the style"). How a document plays a part is a frontend's to ask: `usesOf` gives each line of the document that takes a fragment over the part's head, its arguments that name another part written as that part's id (`kinderlied/twinkle`: `ternary`, its answer `kinderlied/wonder`). A frontend that finds a part with such a use plays that form, with those arguments, over the form its style finds (#371).
 
 ## Why
 

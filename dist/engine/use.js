@@ -67,6 +67,9 @@ export function partOf(text, head) {
     }
     return [sigLine.written.trim(), ...lines.filter((l) => keep.has(l)).map((l) => l.written)].join('\n');
 }
+export const usesIn = (text, head) => linesOf(text).flatMap((l) => l.from?.kind === 'use' && l.from.main?.trim().split(/\s+/).at(-1) === `&${head}`
+    ? [{ id: l.from.id, args: Object.fromEntries((l.from.args ?? []).map((a) => [a.name, a.value.trim()])) }]
+    : []);
 export const partsOf = (text) => linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from.names.map((n) => n.slice(1))] : []));
 function pickPart(id, text, from, say) {
     const parts = partsOf(text);

@@ -10,6 +10,17 @@ export declare const FROM_DEPTH = 8;
  * own part. Null where no signature names the head.
  */
 export declare function partOf(text: string, head: string): string | null;
+/** A line that takes a fragment over a name (#692): the id it takes and its named arguments, as written (`ternary`, `{ answer: '&wonder' }`). */
+export interface UseOver {
+    readonly id: string;
+    readonly args: Readonly<Record<string, string>>;
+}
+/**
+ * Each line of a text that takes a fragment with `&head` as its main argument (attributes on it aside), in the order written (#692): how a
+ * document plays its part, such as Kinderlieder's `&twinkleSong from ternary(answer=&wonder) &twinkle`, which takes
+ * `ternary` over `&twinkle`, `&wonder` its answer.
+ */
+export declare const usesIn: (text: string, head: string) => UseOver[];
 /** The heads of each signature a text holds, in the order written: one entry a part (decision 082). */
 export declare const partsOf: (text: string) => string[][];
 /** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
