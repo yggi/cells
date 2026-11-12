@@ -2,7 +2,7 @@
 import { leaves } from '../subseq';
 import { CV_LAPS } from '../program';
 import type { Atom, Binding, CellDecl, Expr, Ref } from '../ast';
-import { memberParams, VOICE_PARAMS } from '../attributes';
+import { memberParams, VOICE_MAKERS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
 import { valueSumOf } from '../valuesum';
 import { syntax, type Syntax } from '../parser/syntax';
@@ -22,7 +22,7 @@ const isMixDecl = (d: CellDecl | undefined) =>
   !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
 const isKitDecl = (d: CellDecl | undefined, { decls }: Seen) =>
   !!d &&
-  !Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) &&
+  !Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)) &&
   d.braid.kind === 'list' &&
   d.braid.tokens.length > 0 &&
   d.braid.tokens.every((t) => t.atom.kind === 'ref' && memberParams(decls.get(t.atom.name)?.params ?? {}));
@@ -51,7 +51,7 @@ export const SORT_RULES: readonly SortRule[] = [
     sort: 'signal',
     is: 'A sound parameter (s=, lpf= …): a voice.',
     example: ['&lead s=saw loop=C4'],
-    holds: (d) => Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
+    holds: (d) => Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)),
   },
   {
     sort: 'signal',
@@ -128,7 +128,7 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     if (!d) return null;
     // a groove that was meant, with a number or a pick of a voice in it: it holds voices, rests and chords of voices only
     if (d.braid.kind === 'list') {
-      const voiceRef = (t: { atom: Atom }) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+      const voiceRef = (t: { atom: Atom }) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
       const odd = (t: { atom: Atom }) => t.atom.kind === 'note' || (t.atom.kind === 'ref' && voiceRef(t) && (t.atom.pick || t.atom.shift || t.atom.transpose || t.atom.values));
       const steps = d.braid.tokens.flatMap((t) => leaves(t.atom).map((atom) => ({ atom })));
       if (steps.some(voiceRef) && steps.some(odd))
@@ -154,7 +154,7 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     // (a voice, a mix or a gate: a pattern read through a kit is a sound too, and the notes a gate plays may be one)
     const sound = (n: string) => {
       const d = decls.get(n);
-      return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
+      return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null) || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)));
     };
     // (a stack's lines, each: the stack itself is a chord, and a gate plays its lines one by one)
     const notes = spec ? (spec.lines?.map((l) => l.line) ?? [spec.notes]).map((name) => ({ name, port: spec.port })) : [];

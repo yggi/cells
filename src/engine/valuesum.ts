@@ -5,7 +5,7 @@
  * as it was (decision 006): the two are told apart by whether a sound is in it.
  */
 import type { CellDecl, Expr, Token } from './ast';
-import { VOICE_PARAMS } from './attributes';
+import { VOICE_MAKERS } from './attributes';
 
 /** One term of a sum: a cell and its weight. */
 export interface SumTerm {
@@ -50,7 +50,7 @@ const numeric = (atom: Token['atom']): boolean =>
 export function isValueLine(name: string, decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string> = new Set()): boolean {
   const d = decls.get(name);
   // (read through a table, over=, a line is a pattern: a kit's hits are a sound, compile reads drum hits so)
-  if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k))) return false;
+  if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k))) return false;
   if (chordOf(d)) return valueSumOf(name, decls, seen) !== null;
   if (d.map && d.map.kind !== 'lin' && d.map.kind !== 'amp' && d.map.kind !== 'db') return false;
   return d.braid.kind === 'list' && d.braid.tokens.length > 0 && d.braid.tokens.every((t) => numeric(t.atom));

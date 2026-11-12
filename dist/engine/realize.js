@@ -321,8 +321,10 @@ export function plan(result, statics, muted = new Set()) {
                     : tapped
                         ? tapShare(tapped, c.step.tap, ratio)
                         : 1;
+            const pc = o.cell !== o.voice ? c.paramCells.pan : undefined;
+            const place = pc ? { range: pc.range, series: pc.factors.map((f) => series(f, null, 0, 1)) } : o.cell !== o.voice && typeof c.params.pan === 'number' ? c.params.pan : null;
             if (main.events.length)
-                tracks.push({ ...main, output: o, clock: c.clock, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o), share });
+                tracks.push({ ...main, output: o, clock: c.clock, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o), share, place });
         }
         catch (e) {
             if (!(e instanceof ExpansionLimit))
@@ -598,6 +600,12 @@ function plainEvents(p, from, to, outputs) {
             }, 1);
             return l.range ? l.range[0] + (l.range[1] - l.range[0]) * x : x;
         };
+        const placeAt = (at) => {
+            const l = t.place;
+            if (l === null)
+                return [1, 1];
+            return balance(typeof l === 'number' ? l : paramAt(p, { range: l.range, series: l.series, env: null }, at));
+        };
         const make = (s, e, upto, bound = Infinity) => {
             const grid = divisionOf(s, e.duration) / t.rate;
             const at = tm.q(s / t.rate, grid);
@@ -669,8 +677,9 @@ function plainEvents(p, from, to, outputs) {
                 return [g[0] * l * k, g[1] * r * k];
             };
             const [ml, mr] = movingPan(p, [v.voice, ...t.output.through], at);
+            const [pl, pr] = placeAt(at);
             const heard = memberPan(heardGains(t.output, p.muted));
-            const gains = [heard[0] * ml, heard[1] * mr];
+            const gains = [heard[0] * ml * pl, heard[1] * mr * pr];
             const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
             if (!(freq > 0 && freq < 20000 && level.some((l) => l.level > 0)))
                 return null;

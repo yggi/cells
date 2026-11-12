@@ -143,9 +143,10 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     moves: true,
     form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
   },
-  pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo)', {
-    moves: true,
-  }),
+  pan: sound(
+    'where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo); on a line, as legato= is: the place of the notes it plays, after its voice’s own (#739)',
+    { moves: true, on: ['voice', 'clock', 'driven'] },
+  ),
   distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
   crush: sound('bit depth: 16 clean, 8 grainy, 3 and fewer: rubble'),
   // FM
@@ -351,6 +352,12 @@ export const MOVING_PARAMS: ReadonlySet<string> = new Set(Object.keys(ATTRIBUTES
 
 /** Parameters that make a cell a voice; the rest are a physical cell's (motor=, write=, scope= …) and make none. */
 export const VOICE_PARAMS: ReadonlySet<string> = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].voice));
+
+/**
+ * The sound parameters that make a cell a voice: all of a voice's but `pan=`, which a line may carry too, as `legato=`
+ * (#739): the place of the notes it plays. A cell with pan= alone is no voice.
+ */
+export const VOICE_MAKERS: ReadonlySet<string> = new Set([...VOICE_PARAMS].filter((k) => k !== 'pan'));
 
 /** A line's own parameters, its timing (legato= swing= beat= …), acting on a clocked or driven line and never on a voice; not a motor's. */
 export const LINE_PARAMS: ReadonlySet<string> = new Set(

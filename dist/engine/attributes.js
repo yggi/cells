@@ -71,9 +71,7 @@ export const PARAMS = {
         moves: true,
         form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
     },
-    pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo)', {
-        moves: true,
-    }),
+    pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo); on a line, as legato= is: the place of the notes it plays, after its voice’s own (#739)', { moves: true, on: ['voice', 'clock', 'driven'] }),
     distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
     crush: sound('bit depth: 16 clean, 8 grainy, 3 and fewer: rubble'),
     fm: sound('frequency modulation: the voice that modulates this one (fm=&op); it may have its own fm=', { doc: 'physics.md', value: 'cell' }),
@@ -235,6 +233,7 @@ export const CELL_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].v
 export const TIME_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].clock));
 export const MOVING_PARAMS = new Set(Object.keys(ATTRIBUTES).filter((k) => ATTRIBUTES[k].moves));
 export const VOICE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].voice));
+export const VOICE_MAKERS = new Set([...VOICE_PARAMS].filter((k) => k !== 'pan'));
 export const LINE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].doc !== 'physics.md' && PARAMS[k].on?.every((r) => r === 'clock' || r === 'driven')));
 export const PLAYED_AS = new Set(['part', 'role']);
 export const memberParams = (params) => Object.keys(params).some((k) => !LINE_PARAMS.has(k) && !PLAYED_AS.has(k));

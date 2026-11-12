@@ -18,7 +18,7 @@
 import { signatureOf } from './use';
 import { attrValue as valueOf, declLine, splitComment, splitWords, wordAt } from './edit';
 import { readFrom, topTokens } from './parser/use';
-import { VOICE_PARAMS } from './attributes';
+import { VOICE_MAKERS } from './attributes';
 import type { Resolve } from './program';
 
 /** A place a cable goes into. */
@@ -96,7 +96,7 @@ function sortOf(code: string): 'voice' | 'instrument' | null {
   if (words.some((w) => /^map=(sample|midi|role)\b/.test(w))) return null;
   const braid = words.filter((w) => !/^[a-z][a-zA-Z]*=/.test(w) && w !== 'off');
   if (braid.length === 1 && braid[0]!.startsWith('[')) return 'instrument';
-  return words.some((w) => VOICE_PARAMS.has(w.slice(0, Math.max(0, w.indexOf('='))))) ? 'voice' : null;
+  return words.some((w) => VOICE_MAKERS.has(w.slice(0, Math.max(0, w.indexOf('='))))) ? 'voice' : null;
 }
 
 /** The jacks &cell offers, patched or not (see the module's comment); none for a cell that is no voice, instrument or module. */

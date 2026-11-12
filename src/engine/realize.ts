@@ -113,6 +113,11 @@ interface PlanTrack extends Series {
    * a range when one is written).
    */
   readonly share: number | { readonly range: readonly [number, number] | null; readonly series: readonly Series[] };
+  /**
+   * Its line's `pan=` (#739, as `legato=` is a line's): where the notes it plays sit, read at each onset, a balance after
+   * its voice's own; null where the line writes none, or is the voice itself (a voice alone: its pan= is its voice's).
+   */
+  readonly place: number | { readonly range: readonly [number, number] | null; readonly series: readonly Series[] } | null;
 }
 
 /** A series of nothing: what an unknown cell reads as (silence, level 0). */
@@ -500,7 +505,11 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
           : tapped
             ? tapShare(tapped, c.step!.tap!, ratio)
             : 1;
-      if (main.events.length) tracks.push({ ...main, output: o, clock: c.clock!, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o), share });
+      // (the line's own pan=, #739: none where the line is its voice, whose pan= is in the output's gains)
+      const pc = o.cell !== o.voice ? c.paramCells.pan : undefined;
+      const place = pc ? { range: pc.range, series: pc.factors.map((f) => series(f, null, 0, 1)) } : o.cell !== o.voice && typeof c.params.pan === 'number' ? c.params.pan : null;
+      if (main.events.length)
+        tracks.push({ ...main, output: o, clock: c.clock!, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o), share, place });
     } catch (e) {
       if (!(e instanceof ExpansionLimit)) throw e;
     }
@@ -834,6 +843,13 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       }, 1);
       return l.range ? l.range[0] + (l.range[1] - l.range[0]) * x : x;
     };
+    // pan= on the line (#739): where a note starting at `at` sits, a balance after its voice's, read at its onset as a
+    // moving parameter is (a bipolar wave a share)
+    const placeAt = (at: number): [number, number] => {
+      const l = t.place;
+      if (l === null) return [1, 1];
+      return balance(typeof l === 'number' ? l : paramAt(p, { range: l.range, series: l.series, env: null }, at));
+    };
     // a note at step s, held until step `upto` as written, sounding its share of those steps (legato=, #120: Strudel's
     // reading, the share taken before the swing), its end then placed by the time map as its onset is: past the bar line,
     // into the next note, wherever it reaches; only a selector's window (`bound`, a step) and the line's end cut it
@@ -916,8 +932,9 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
         return [g[0] * l * k, g[1] * r * k];
       };
       const [ml, mr] = movingPan(p, [v.voice, ...t.output.through], at);
+      const [pl, pr] = placeAt(at);
       const heard = memberPan(heardGains(t.output, p.muted));
-      const gains: [number, number] = [heard[0] * ml, heard[1] * mr];
+      const gains: [number, number] = [heard[0] * ml * pl, heard[1] * mr * pr];
       const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
       if (!(freq > 0 && freq < 20000 && level.some((l) => l.level > 0))) return null;
       return {

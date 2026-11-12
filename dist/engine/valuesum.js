@@ -1,4 +1,4 @@
-import { VOICE_PARAMS } from "./attributes.js";
+import { VOICE_MAKERS } from "./attributes.js";
 const chordOf = (d) => d && !d.gate && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix'
     ? d.braid.tokens[0].atom.exprs
     : null;
@@ -19,7 +19,7 @@ function itemOf(e, sign) {
 const numeric = (atom) => atom.kind === 'note' || atom.kind === 'rest' || atom.kind === 'choice' || (atom.kind === 'seq' && atom.layers.every((l) => l.every((t) => numeric(t.atom))));
 export function isValueLine(name, decls, seen = new Set()) {
     const d = decls.get(name);
-    if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)))
+    if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)))
         return false;
     if (chordOf(d))
         return valueSumOf(name, decls, seen) !== null;
