@@ -7,10 +7,11 @@ description: Four chords in A minor, struck on the beat, and the bass that follo
 
 ```cells
 &chordNote label="[0,2,4] is a chord: three steps at once, in the scale the cell reads. 6# raises the seventh a semitone: the dominant E major." about=&chords
+&keyNote label="The key from the library: diatonic, a mode (minor) on a tonic. &tonic A names the note it starts on; change it, and every line over &key moves with it." about=(&key &tonic)
 &sumNote label="&chords + &strike: a sum of pitches. The finer one, &strike, starts the notes; the chords hold under it and move it." about=&strike
 &bar from meter &tempo
 &tempo step=free(andante)
-&key scale(minor, &tonic) label="{mode} on {tonic}"     # A minor
+&key label="{mode} on {tonic}" from diatonic(mode=minor) &tonic     # A minor: the library's key, on the tonic
 &tonic A
 
 &chords over=&key step=1m [0,2,4] [3,5,7] [4,6#,8] [0,2,4]         # i – iv – V – i

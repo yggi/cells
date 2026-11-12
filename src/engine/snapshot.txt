@@ -9,7 +9,7 @@ voice  285 notes  notes 0d942ad247992e81  events c74157b048c91319  values 75a19e
 effects  266 notes  notes 3dd2b44f911dae16  events 50dbba64ab1906c4  values 705a6587ee58ae76
 transpose  56 notes  notes c57f554a57c452a3  events 598bdfcd55451367  values 386b870f06f6587e
 twinkle  88 notes  notes 0ccea2b71be068d4  events 01f980c9956ee627  values fbcedcd9187e29fa
-chords  78 notes  notes 5e1aa7ec1a14a506  events 5124a5860b6c14d7  values 413aee2b4ca8416f
+chords  78 notes  notes 5e1aa7ec1a14a506  events 5124a5860b6c14d7  values 1402b26fce40d8ae
 rhythm  386 notes  notes 22b41b76626915b0  events 64fcbb12cd12ed63  values 7629a0547d0fd2e4
 drums  297 notes  notes 1c05628e869a9ec1  events 1a900f285500f4db  values 260649cc3dd93fa9
 swing  717 notes  notes 0971c4dda389c415  events 0c58c9577d303bcc  values 758f525c36c33d0a
@@ -18,7 +18,7 @@ canon  320 notes  notes 375d44f193024265  events f521280b943e2c85  values 227b85
 mirrors  183 notes  notes 2fd36ffb7cfe49e9  events c0ef6edadcac5044  values b997631113696254
 variations  144 notes  notes c9bc5a525f3c6d55  events 9bf35b03b0ce4ab1  values ddc6a7af257695db
 chance  451 notes  notes 8ef93d818732d40b  events 69f9ebc9d0bc74e3  values fb5a97e72babb5c9
-fifths  65 notes  notes c338371cdcec0309  events 0a0b836bbe21e877  values a8d217971d60fd2f
+fifths  65 notes  notes c338371cdcec0309  events 0a0b836bbe21e877  values 16443fa1dd266fca
 arrangement  124 notes  notes 8cce0f21954cb4b4  events baacd7d5ec458cb4  values 4e5d726bca0aae76
 stereo  56 notes  notes d23210bd260e6335  events e9c10974daf63589  values 0b1806e962cefbbc
 waveforms  152 notes  notes 88cabe842c0702fc  events 502bcc2339a85894  values ec7127f04d220b77
