@@ -16,6 +16,7 @@ export const STUBS = new Set([
         .map((k) => `parameter ${k}`),
 ]);
 export const PENDING = new Set([
+    'sort pitch: a product with no sound in it and a pitch',
     'free free(v, lo..hi, unit=bpm)',
     'generator even(k, n)',
     'step <a b c>',

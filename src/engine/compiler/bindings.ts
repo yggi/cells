@@ -5,7 +5,7 @@ import { ATTRIBUTES, memberParams, VOICE_PARAMS } from '../attributes';
 import { canonicalTag, TUTORIAL } from '../tags';
 import { isMidiCard, type MidiDest, type Output, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
-import type { Typed } from './sorts';
+import { notesCells, type Typed } from './sorts';
 import { noSound } from './band';
 import { refsOf } from '../readers';
 
@@ -17,6 +17,7 @@ const entryLabel = (b: Binding) => [...b.pitches.map((t) => t.ref.name), b.voice
 
 /** Marks kits and voices on a copy of the cells it is given; returns it with the sound card's bindings. */
 export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells, typed: Typed) {
+  const isNotes = notesCells(ctx, decls);
   const { error, warn, unknownCell } = ctx;
   const cells = new Map(given);
   // ---- voices: the signal of every binding (the factor that is a sound: algebra.ts), and cells with sound parameters.
@@ -86,6 +87,12 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     channels.forEach((u, ch) => {
       // a channel is a mix cell (&left), or a mix written in place on the sound card itself
       const inPlace = u.atom.kind === 'mix' ? typed(u.atom) : null;
+      // (notes with their levels named as a channel, with no voice: typed as its own product, which says what is missing, decision 087)
+      const notesOwn = u.atom.kind === 'ref' && isNotes(u.atom.name) ? decls.get(u.atom.name)?.braid : undefined;
+      if (notesOwn?.kind === 'list' && notesOwn.tokens[0]?.atom.kind === 'mix') {
+        typed(notesOwn.tokens[0].atom);
+        return;
+      }
       const mix = u.atom.kind === 'ref' ? cells.get(u.atom.name) : inPlace ? sink : undefined;
       const bindings = inPlace ?? (u.atom.kind === 'ref' && mix?.mix && !mix.sink ? mix.mix : null);
       if (!mix || !bindings) {
