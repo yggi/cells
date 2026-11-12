@@ -30,7 +30,7 @@ export type FromForm =
        * writes no `=`, decision 075 §3a); null for `*`. The fragment's name is a word of the line, as a keyword is.
        */
       readonly takes: readonly string[] | null;
-      /** The head's attributes, written before `from` (`label="my key"`), each a `key=value` as written. */
+      /** The head's attributes, written before `from` (`label="my key"`), each a `key=value` as written, or the flag `off` (#686). */
       readonly head: readonly string[];
       /** The named arguments, in parentheses (`swing=8n:.64`), as written; null where there are none. */
       readonly args: readonly { readonly name: string; readonly value: string }[] | null;
@@ -99,6 +99,9 @@ const QUOTED_ID = /^"[^"]*\S[^"]*"/;
 /** A token that is an attribute, `key=value`. */
 export const isAttribute = (token: string): boolean => /^[A-Za-z_][A-Za-z0-9_]*=/.test(token);
 
+/** The flags a head may carry before `from`, as a cell's line does: `off` (#686: `&bar off from meter &tempo`). */
+export const HEAD_FLAGS: ReadonlySet<string> = new Set(['off']);
+
 /**
  * A `from` line (decision 065), read: a use of a fragment or a signature; null where the line has a top-level `from`
  * after its names and isn't one; undefined where it isn't a `from` line at all (a cell, a `from` line).
@@ -120,7 +123,7 @@ export function readFrom(code: string): FromForm | null | undefined {
   const names = unique ? unique.map(([n]) => n) : null;
   const takes = unique ? unique.map(([, t]) => t) : null;
   const head = tokens.filter((t, i) => t.at >= leftEnd && i < from).map((t) => t.text);
-  if (head.some((t) => !isAttribute(t)) || (all && head.length)) return null;
+  if (head.some((t) => !isAttribute(t) && !HEAD_FLAGS.has(t)) || (all && head.length)) return null;
   const rest = code.slice(tokens[from]!.at + 4).trim();
   // (a signature: nothing, a list of parameters or a name after `from`, no id)
   if (rest === '' || rest.startsWith('(') || rest.startsWith('&')) {

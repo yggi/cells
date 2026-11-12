@@ -184,13 +184,18 @@ export function renameAttr(source: string, name: string, from: string, to: strin
   return editDecl(source, name, (code) => code.replace(new RegExp(`(\\s)${from}=`), `$1${to}=`));
 }
 
-/** Add or remove a bare flag (`off`) on &name. */
+/** Add or remove a bare flag (`off`) on &name; on a template's copy, its head's, before `from` (#686: `&bar off from meter &tempo`). */
 function setFlag(source: string, name: string, flag: string, on: boolean): string {
-  return editDecl(source, name, (code, head) => {
-    const re = new RegExp(`\\s${flag}(?=\\s|$)`);
-    if (re.test(code)) return on ? code : code.replace(re, '');
-    return on ? code.replace(head, `$1 ${flag}`) : code;
-  });
+  return editDecl(
+    source,
+    name,
+    (code, head) => {
+      const re = new RegExp(`\\s${flag}(?=\\s|$)`);
+      if (re.test(code)) return on ? code : code.replace(re, '');
+      return on ? code.replace(head, `$1 ${flag}`) : code;
+    },
+    true,
+  );
 }
 
 /** The circle of fifths' notes, its n-th first (fifths(n), fifths(G)). */
@@ -221,6 +226,23 @@ export function setShift(source: string, name: string, shift: number): string {
 
 /** `off` on &name. */
 export const setOff = (source: string, name: string, off: boolean) => setFlag(source, name, 'off', off);
+
+/**
+ * Why `setOff` can't switch &name off or on, or null where it can (#686): a head among several that one `from` line takes
+ * (`off` before `from` is one head's, #684), or a collection's cell, has no line of its own to carry it until `takeIn`
+ * writes one. A frontend asks before it toggles, so a toggle that can't is said, not silently dropped.
+ */
+export function offProblem(source: string, name: string): string | null {
+  if (setOff(source, name, true) !== source || setOff(source, name, false) !== source) return null;
+  for (const raw of source.split('\n')) {
+    const form = readFrom(splitComment(raw)[0]);
+    if (form?.kind !== 'use' || !(form.names?.includes(`&${name}`) ?? true)) continue;
+    if (form.names && form.names.length > 1)
+      return `&${name} is one of ${form.names.join(', ')}, which one line takes from ${form.id}: off before from would be every head's, so take &${name} in first (its own line) and switch that off`;
+    return `&${name} is ${form.id}'s cell, given by a from line: take it in first (its own line) and switch that off`;
+  }
+  return `&${name} is no cell of this piece's to switch off`;
+}
 
 // ------------------------------------------------------------------ whole-line edits
 
