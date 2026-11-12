@@ -1,6 +1,6 @@
 # 086 · The view lives in Cell studio: cells is text in, events out
 
-**Date:** 2026-11-11 · **Status:** proposed; its table measured by #724's audit (2026-11-12). The direction is ruled: the owner on #691, 2026-11-11, "view moves to studio. it will handle an eventual split into a separate ui lib on its own". Which module goes where is proposed, and rung 2 of #691 confirms it. · Issues: #691, #724 (the API a frontend calls: its Cell studio half is this decision's audit)
+**Date:** 2026-11-11 · **Status:** accepted (the owner on #731's thread, 2026-11-12: "086 accepted"), its table measured by #724's audit (2026-11-12). The direction was ruled first: the owner on #691, 2026-11-11, "view moves to studio. it will handle an eventual split into a separate ui lib on its own". Which module goes where is proposed, and rung 2 of #691 confirms it. · Issues: #691, #724 (the API a frontend calls: its Cell studio half is this decision's audit)
 
 *Read with 085 (plugin-fragments, #694), Cell studio's [011](https://github.com/yggi/cell-studio/blob/main/docs/decisions/011-plugins.md) (show plugins) and its [architecture page](https://github.com/yggi/cell-studio/blob/main/docs/architecture.md) (the app imports cells' modules by path).*
 
