@@ -23,6 +23,7 @@
 import type { Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
+import { fromLine } from '../engine/references';
 import type { CompileResult, Resolve, Take } from '../engine/program';
 import { expansion, fragmentHash, signatureOf } from '../engine/use';
 import { parse, readFrom } from '../engine/parser';
@@ -297,15 +298,40 @@ const ID_ARGS = /^([^(]*)\((.*)\)$/;
 const PART = /^([^(/]+)\/([^(]+)$/;
 
 /** A `from` line: names, the id with its arguments (the id's own, `meter(swing=8n:2/3)`, then the line's), the main argument. */
-function fromLine(given: readonly string[], whole: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
+function takeLine(given: readonly string[], whole: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
   // (a document's part, `kinderlied/twinkle`, is taken from its document by its head, renamed where it is named
   // otherwise, `&twinkle2=twinkle from kinderlied`: in a document the head picks the part, decision 082)
   const part = PART.exec(whole);
   const id = part ? part[1]! : whole;
   const heads = part && given.length === 1 && given[0] !== `&${part[2]}` && !given[0]!.includes('=') ? [`${given[0]}=${part[2]}`] : given;
   const m = ID_ARGS.exec(id);
-  const written = [...(m ? [m[2]!] : []), ...Object.entries(args ?? {}).map(([k, v]) => `${k}=${v}`)];
-  return `${heads.join(', ')} from ${m ? m[1] : id}${written.length ? `(${written.join(', ')})` : ''}${main ? ` ${main}` : ''}`;
+  const own = m ? listed(m[2]!) : [];
+  const named = (pair: string) => ({ name: pair.slice(0, pair.indexOf('=')).trim(), value: pair.slice(pair.indexOf('=') + 1).trim() });
+  return fromLine({
+    names: heads.map((h) => h.split('=')[0]!),
+    takes: heads.map((h) => (h.includes('=') ? `&${h.split('=')[1]}` : h)),
+    id: m ? m[1]! : id,
+    args: [...own.map(named), ...Object.entries(args ?? {}).map(([name, value]) => ({ name, value }))],
+    main,
+  });
+}
+
+/** A list's items at its top-level commas (`swing=8n:2/3, grouping=meter("7/8")`), each trimmed. */
+function listed(inner: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let quoted = false;
+  let start = 0;
+  for (let i = 0; i <= inner.length; i++) {
+    const c = inner[i];
+    if (c === undefined || (c === ',' && !quoted && depth === 0)) {
+      if (inner.slice(start, i).trim()) out.push(inner.slice(start, i).trim());
+      start = i + 1;
+    } else if (c === '"') quoted = !quoted;
+    else if (!quoted && '([{'.includes(c)) depth++;
+    else if (!quoted && ')]}'.includes(c)) depth--;
+  }
+  return out;
 }
 
 const compilerOf = (resolve: Resolve, compiled?: (text: string) => CompileResult) => compiled ?? ((text: string) => compileSource(text, undefined, { resolve }));
@@ -341,7 +367,7 @@ function mainOn(
   const alone = compiled([bench, ...stand].join('\n'));
   const standNames = new Set(stand.map((l) => l.split(' ')[0]!));
   const meets = (cell: string) =>
-    !newDiagnostics(compiled([bench, fromLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter(
+    !newDiagnostics(compiled([bench, takeLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter(
       (d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? ''),
     ).length;
   const offers = parse(bench).offers;
@@ -387,7 +413,7 @@ export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
     .map(standIn);
   const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
   const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i]!.slice(1)}`));
-  const line = fromLine(left, id, options.args, main);
+  const line = takeLine(left, id, options.args, main);
   return { text: written(line), line, heads, main, used: usedBy(written(line)) };
 }
 
