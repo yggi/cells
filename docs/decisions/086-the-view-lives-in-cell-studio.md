@@ -1,36 +1,41 @@
 # 086 · The view lives in Cell studio: cells is text in, events out
 
-**Date:** 2026-11-11 · **Status:** proposed. The direction is ruled: the owner on #691, 2026-11-11, "view moves to studio. it will handle an eventual split into a separate ui lib on its own". Which module goes where is proposed, and rung 2 of #691 confirms it. · Issues: #691, #724 (the API a frontend calls: its Cell studio half is this decision's audit)
+**Date:** 2026-11-11 · **Status:** proposed; its table measured by #724's audit (2026-11-12). The direction is ruled: the owner on #691, 2026-11-11, "view moves to studio. it will handle an eventual split into a separate ui lib on its own". Which module goes where is proposed, and rung 2 of #691 confirms it. · Issues: #691, #724 (the API a frontend calls: its Cell studio half is this decision's audit)
 
 *Read with 085 (plugin-fragments, #694), Cell studio's [011](https://github.com/yggi/cell-studio/blob/main/docs/decisions/011-plugins.md) (show plugins) and its [architecture page](https://github.com/yggi/cell-studio/blob/main/docs/architecture.md) (the app imports cells' modules by path).*
 
 ## Context
 
-Cells is the language as a package: text in, events out, with no host of its own (AGENTS.md). When the engine left Cell studio, everything under its `src/engine/` came along, including what only a drawing needs:
+Cells is the language as a package: text in, events out, with no host of its own (AGENTS.md). When the engine left Cell studio, everything under its `src/engine/` came along, including what only a drawing needs.
 
-| module | what it is | importers in Cell studio | users inside cells |
+**The audit** (#724, Cell studio's half, 2026-11-12; Cell studio `64d1317`, pinning v0.24.0):
+- **Cell studio imports 76 module paths of cells, none from the root index:** 283 distinct symbols in 146 app files.
+- **Jambot imports 27.** It imports none of the view below: a code search of yggi/jambot on 2026-11-11 found no `writtenGraph`, `GraphModel`, `liveAt`, `routing`, `positionHue`, `freqHue`, `splitPlugins`, `BUILTIN_PLUGINS` or `SHOW_MEANING`, while the control, `compileSource`, had five hits.
+
+Sorted by what each module is *for*:
+
+| | modules | Cell studio's app files | users inside cells |
 |---|---|---|---|
-| `builtinPlugins.ts` | the sun's SVG drawing, as a string, and its sky colours | (through compile) | the parser and compile: reserved names |
-| `plugins.ts` | `=== plugin ===` blocks; the show manifest (size, rim, dial, colour tokens) | 5 | the parser, compile, `program.ts` |
-| `parser/showMeaning.ts` | what each `show=` value looks like | 0 (the reference, the editor) | the reference |
-| `graph.ts` | the graph as nodes and edges, depth rings, petals, turntables, nets | 45 | `outs.ts`, `stats.ts`, `routing.ts` |
-| `routing.ts` | the graph's states: which nodes and edges sound | 12 | `live.ts` |
-| `live.ts` | "what plays at a moment, for drawing": playheads, glyphs | 21 | none |
-| `helix.ts` (`positionHue`, `freqHue`) | positions as colours | via `helix` (14) | none (the rest of `helix.ts`, pitches, is realize's) |
-
-Jambot, the other frontend, imports none of them. A GitHub code search of yggi/jambot on 2026-11-11 found no hits for `writtenGraph`, `GraphModel`, `liveAt`, `routing`, `positionHue`, `freqHue`, `splitPlugins`, `BUILTIN_PLUGINS` or `SHOW_MEANING`, while `compileSource`, the control, had five.
+| **drawing only** | `routing.ts` (node and edge states, 409 lines), `live.ts` ("for drawing", 275), the show plugins (`plugins.ts`' show half, `builtinPlugins.ts`, `parser/showMeaning.ts`, the parser's `SHOWS`) | 13 | `live.ts` reads `routing.ts`; the parser and compile read the plugins' names |
+| **drawing inside a language module** | `graph.ts`'s layout (depth rings, petals, turntables: 91 mentions in 877 lines); the hues (`helix.ts`' `positionHue`, `positionOctave`, `freqHue`; `theory/modes`' `pitchHue`) | 55 | none for the layout and the hues |
+| **facts about a piece, read today by Studio alone** | the written graph (which cell reads which, the nets); `values.ts`, `stats.ts`, `fm.ts`, `transform.ts`; `time/*` | (in the language's 99) | `outs`, `stats` and `transform` build on the written graph; the snapshot test reads `values`; `time/cycles.ts` is `findMeter`, recognition; `time/span` serves the exporters |
+| **shared vocabulary** | `ids.ts` (node and edge ids) | 17 | `realize` and `render` name outputs with it; Studio's audio uses it |
 
 ## Decision
 
 ### 1. Cells is the language; the view is Cell studio's
 
-- **Cells keeps** what any frontend of the language needs: parse, compile, realize, time, what sounds and where it goes (`flows.ts`, `outs.ts`, `plays.ts`), the tools over a text (Migrate, Normalise, Shorten, the folder), and the repository.
-- **Cell studio takes** what is there to be drawn:
-  - the show plugins (`builtinPlugins.ts`, the show half of `plugins.ts`);
-  - the meanings of `show=` (`showMeaning.ts`);
-  - the graph's view model (`graph.ts`'s depth, rings, petals, turntables; `routing.ts`; `live.ts`);
-  - the colours of `helix.ts`.
-- **What is split:** `graph.ts`'s *written graph* (the cells and the links the text writes) is a fact of the text, and `outs.ts` and `stats.ts` read it. If rung 2 finds they need it, it stays in cells as data; its layout parts move.
+- **The line:** geometry, colour and display state move; what a piece *is* stays, however many frontends read it. One frontend reading a module today is not what makes it view.
+- **Cell studio takes** what is only drawing:
+  - `routing.ts` and `live.ts`;
+  - the show plugins (`builtinPlugins.ts`, the show half of `plugins.ts`, `showMeaning.ts`, `SHOWS`);
+  - `graph.ts`'s layout (its depth rings, petals and turntables), split from its written graph;
+  - the hues (`positionHue`, `positionOctave`, `freqHue`, `pitchHue`).
+- **Cells keeps** what any frontend of the language may need:
+  - parse, compile, realize, time, what sounds and where it goes (`flows`, `plays`, `outs`);
+  - the tools over a text (Migrate, Normalise, Shorten, the folder, edit and patch);
+  - MIDI, the repository, the ids;
+  - the **written graph** (cells and the links the text writes, its nets), `values`, `stats`, `fm` and `time/*`, as facts about a piece.
 - **Studio decides** whether and when its view becomes a UI library between the two. Cells makes no UI library and keeps no view for one.
 
 ### 2. `show=` and `label=` stay in the text, as annotations
@@ -59,7 +64,8 @@ Jambot, the other frontend, imports none of them. A GitHub code search of yggi/j
 
 ## Consequences
 
-- **#691 rung 2** confirms the table, module by module, `graph.ts`'s split included. **Rung 8** is the move: a cells pull request and its twin in yggi/cell-studio, with the pin.
+- **#691 rung 2 is this audit** (#724, 2026-11-12). **Rung 8** is the move: a cells pull request and its twin in yggi/cell-studio, with the pin. `graph.ts` is split in it: its written graph stays, its layout goes.
+- **#724's API work** names the entry points the rest is reached through (the types; `edit`; `inspect`; `midi`; `time`; `library`). Nothing moved by this decision is among them.
 - **Cell studio's decision 011** and its architecture page are amended by the move: the show plugins are wholly the workbench's.
 - **`docs/language/display.md`** keeps `label=`, sentences, the card and scopes (language). Its `show=` section shrinks to "a word the frontend draws", with a link to Studio's list.
-- **A frontend notices:** Cell studio's imports of the moved modules break at the pin that drops them. That is the migration named in `changes/`.
+- **A frontend notices:** Cell studio's imports of the moved modules (13 app files whole, 55 in part) break at the pin that drops them. That is the migration named in `changes/`; Jambot imports none of them.
