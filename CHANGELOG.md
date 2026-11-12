@@ -10,6 +10,79 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.25.0 — 2026-11-12
+
+### Added
+
+- A tempo moved keeps the beat ([#56](https://github.com/yggi/cells/issues/56)): a recompiled piece goes on where the old one was heard, the beat in progress in its place and only what follows at the new rate. The host's `load` takes `anchor`, the second (as windows are asked) from which the new piece will be asked, the end of what was already scheduled from the old one: `{ type: 'load', code, anchor }`, after which every window, `begins` and `grab` is asked on the same seconds as before and answered from that far into the new piece (Cell studio's plan swap: pass it with the `load` the slider sends). A frontend that swaps plans itself asks `keepBeat(before, after, seconds)` (`@yggi/cells/engine/keepbeat`, also from the package's root) for the second of the new plan to go on from, and plays the new plan from there, a second of it one second later (Jambot's seam). A `load` without `anchor` is as before: the new piece from its own start. No piece sounds otherwise.
+
+- **Five harmonies for the presets that had none of their own** (#540): `ninth_vamp` (i9–IV9, two bars each) at Deep house, `ninth_loop` (i9 VImaj9 iv9 v7) at Lo-fi hip hop, `turnaround` (Imaj9 vi9 ii9 V9, two to the bar: the library's first harmony faster than a bar a chord) at Swing jazz, `ii_v_i` (ii9 V9 Imaj9, the tonic held) at Bossa nova, and `minor_swing` (i iv i V7, two bars each) at Electro swing; and `axis_progression` (i VI III VII) at Synth-pop too.
+  - Each of the six styles now finds its own harmony first, at distance 0, where its first was a miss (0.33 to 0.45, past Jambot's 0.3) and Jambot's generator played. **At Jambot's next pin its band plays these progressions at those six presets.**
+  - Between the styles, 1 of the 253 halfway points misses a harmony, where 111 did. No other facet's first changes anywhere.
+
+- **A document gives fragments** (decision 082, #642, rung C5 of yggi/cell-studio#621).
+  - **A file may hold several signatures.** Each declares a part: its heads and every line they read.
+  - **A line takes a part by its head:** `&twinkle from kinderlied &key`, or renamed, `&tw=twinkle from kinderlied &key`.
+  - **The document's main-parameter line** (its `&key`) is the piece's own, never a part's default.
+  - **A part is hashed alone** and locked as `kinderlied/twinkle`; `Take.part` names its head.
+  - `partOf`, `partsOf`; `PARTS` and `ofFacet` in `repository/library`; the catalogue lists each part with its document and head.
+- **One namespace:** `resolveSeed` resolves an example by its key, and no example's key is a fragment's id (a test).
+
+- **Three examples of the meter's feel** (#646): *Funk: the sixteenths lean* (`swing=16n:.58`, a slider, on straight eighths: Jambot's Funk drums and bass over the library's dorian vamp), *Aksak: twos and a three* (7/8 as 2 + 2 + 3 from the library's meter, `swing=8n:.6` leaning the twos while the three stays even, the motif `limp` answered by `call_and_answer`) and *Twelve-eight: the lean of three* (a slow blues in 12/8 whose threes lean long, short, short through `bend=8n:&lean` and a depth slider, over the library's twelve-bar blues and the motif `shuffle`).
+  - **New fragments:** the beats `aksak_drums` (written in beats and pulses, so it lays itself out in 7/8 as 3 + 2 + 2 or 2 + 2 + 3; at 7/8's point, weight 0.75) and `twelve_eight_drums` (at 12/8's point, weight 0.25, as `trip_hop_drums` weighs less than 1: heavier, it leaves lock-in's witness no section that misses). Each fits only its meters (the aksak's 7/8 and 3/4, the 12/8's 12/8), and no style's first rhythm changes.
+
+- **A fragment's first guess at its place** (#681): `guessPlace(text, facet, library, resolve)` in `src/repository/firstguess.ts` reads a fragment through its audition, as the part its facet names, and guesses the axes its notes carry (a beat's `sync`, a harmony's `harm`) as the mean of the placed points of the two library fragments of its facet whose readings are nearest. Readings are compared with readings, so the reading's scale doesn't matter. Over the library, each fragment guessed from the others: beats' `sync` 0.23 off their placement, against 0.30 for the others' mean and 0.34 for the reading itself (the 30 beats in 4/4); harmonies' `harm` 0.15, against 0.32 and 0.25. A fragment in another meter (a waltz's beat, an aksak's, a motif in 6/8) is not read: the host plays in 4/4, where its syncopation, in its meter's uneven beats, reads as none.
+
+- `offProblem(source, name)` (`engine/edit`): why `setOff` can't switch a cell off or on, or null where it can: a head among several that one `from` line takes, or a collection's cell, says to take it in first (`takeIn`), where a toggle did nothing and said nothing (#686).
+
+- **How a document plays its parts** (#692, decision 082's ruling 4): `usesOf(id)` (`repository/library`, also from the package's root, with `PARTS`) gives each line of a part's own document that takes a fragment over the part's head, with its named arguments; an argument that names another of the document's parts is written as that part's id. `kinderlied/twinkle` gives `[{ id: 'ternary', args: { answer: 'kinderlied/wonder' } }]`, `kinderlied/haenschen` the rounded binary with its answer, close and bridge; every other fragment gives none. `usesIn(text, head)` (`engine/use`) reads the same off any text. The owner ruled that a tune's own form beats the style: a frontend that finds a part with a use plays that form over the one its style finds (#371), so Jambot's lead can play Twinkle whole at Kinderlied. Nothing played changes.
+
+- Plugin-fragments, the first rung (decision 085, #693): `engine/holes.ts` types a fragment whose cells have holes its code fills with braid text (`PluginFragment`, `Hole`, `fill(hole, lap, args)`), with the built-ins (`BUILT_IN`), a lap's cells filled (`filledAt`) and its sections (`marksOf`). `fiveto12` is the first, built in (`FIVETO12`).
+
+- **A piece's outline** (#695): `outlineOf(result, { facetsOf })` gives a compiled piece's parts, each a `from` line's take or a line the piece writes itself, linked by what reads what, as two trees of the same graph: `ground` (each part under what it is taken on, so a score's key holds its harmony and the harmony its bass line) and `outputs` (each part under what plays it, so the band's card holds an instrument, the instrument its performer, the performer its line).
+  - `* from band` is one part, and each performer and instrument the band takes is a part inside it (`within`), by the fragment it takes.
+  - A line that splices voices plays on them (`on`), in neither tree.
+  - For Jambot's Cells view (yggi/jambot#642) and Cell studio's fragments (yggi/cell-studio#621). Nothing played changes.
+
+- `pan=` moves, as `lpf=` does: a cell, a `free()`, or a range times cells (`pan=&space`, `pan=0..1 * &lfo`), read at each note's start and held for it (#696, decision 085 §5). It is carried in the note's channel gains, as a fixed `pan=` is, so a frontend plays it with no change; `Played.params` gains no `pan`. A sound that rings without notes (a resonator alone, a tape's read head) can't read it: it sits in the centre, with a warning. MIDI out sends no pan, as before.
+
+### Changed
+
+- **Breaking: Kinderlieder's six tunes are its parts.** The motif files `twinkle`, `wonder`, `haenschen`, `hinein`, `heim` and `weinet` are gone.
+  - A take of one of their old ids is refused. Migrate's `moved` rule rewrites it: `&twinkle from twinkle &key` → `&twinkle from kinderlied &key`.
+  - Their ids in the library are `kinderlied/twinkle` and the rest.
+  - Kinderlieder plays as it did: its notes and events hashes are unchanged; its `values` and `live` hashes move only because its unnamed cells are named by their line, six lines lower now.
+- **Breaking: the motifs `waltz` and `korobeiniki` are `waltzBar` and `korobeinikiBar`,** with their heads. Their old ids are example keys now (one namespace).
+
+**What a frontend sees at its next pin:** a take of the six old ids or the two renamed ones fails to compile until Migrate rewrites it. Jambot's pin move names what it asks for by id.
+
+- **The swing example reworked as the meter's swing showcase** (#646): *Swing: the long and the short* (tier 4) is now a jazz swing in F on one meter, `swing=&swing` with `&swing swing=8n:free(2/3, 1/2..3/4)`, its band the library's (`swing_jazz_drums`, `walking_bass` over a ii–V–I, comping on the swung eighths), its notes saying what leans (a second eighth, the ride's skip note) and what doesn't (the beats, a triplet in its beat). Its swing clock (`scan(2 1)`) and second meter are gone, and what it plays moved (its event snapshot). The ladder's tier 4 now holds `free(v, lo..hi)`, the swing's slider, and Normalise no longer keeps the example as written.
+
+- **Normalise folds a second clock into the main meter where it is one** (#668, part of #15; `normalise/meter.ts`):
+  - **`tapClock`:** a clock whose every tick is a tick of one of the main meter's taps has its readers read that tap (`step=&sixteenths:16n` → `step=8n` under alla breve), and the clock goes.
+  - **`shadowMeter`:** a second meter on the main meter's own rate that differs only by a swing or a legato gives it to the main meter.
+  - **Neither folds** a clock with a slider of its own, a rhythm or a table.
+  - **Each is checked past S1's window:** a clock's first 64 ticks against the tap's, to 1e-9 s (#669).
+- **No example changes.** Every example with such a clock has it as its lesson, `breve` (a scan of sixteenths) and `daytime` (clock time), and keeps it (`normalise/kept.ts`).
+
+- **`sync` is read as syncopation proper** (#681): an onset on a weak place whose line (a part, a drum by its note) leaves the next stronger place silent, weighed by how much weaker its place is, over each line once (`syncopation`, `readStyle`, `readPoint`). It reads a clave, a tresillo and an anticipation, which the share of onsets off the pulses and eighths read as none. It no longer agrees with Jambot's critic's reading: over Jambot's E23 bars it ranks the eight presets at Kendall's tau 0.69 (the old reading 0.84); its genre reading (E24) against where the presets read is unchanged per bar (0.694) and better per section (0.725 against 0.719), and against the presets' points lower (per bar 0.483 against 0.528).
+
+- `law=fiveto12` is read by the language: its holes (degrees over `&key`, chords stacked in thirds, `@n` lengths, a level cell, a place cell, the key's mode and tonic) are filled bar by bar, compiled and played, where realize computed its semitones itself. It plays exactly what it played (the event snapshots don't move); its length and its twelve sections come from the fragment, not from its name. Each bar costs a compile the first time (about 2 ms), kept for the next 96 bars: 0.14 ms of work a second of music, where it was 0.01 ms. `law=` is still the spelling; `&cycle from fiveto12 &day` is rung 5.
+
+- `sameText` and `canonicalText` (identity E2, decisions 048 and 050) count each run as the core counts it (decision 077 §3) before they compare: where nothing reads a cell's units, `[0,2,4] [0,2,4] [4,6,8]` and `[0,2,4]!2 [4,6,8]` are one text, so a frontend that writes a repeat with `!n` is known as the seed that writes it out. A cell picked, rotated or counting its own laps (`cycle=`) keeps them two texts, as 077 rules: Korobeiniki's changes (`cycle=8`) are the seed only written out, `[0,2,4] [0,2,4]` (#710). `canonicalText`'s output writes runs as counts.
+
+### Fixed
+
+- `setOff` switches off a head a `from` line takes alone: it writes `off` before `from` (`&bar off from meter &tempo`), as `setAttr` and `setShift` write there, and the piece plays without that cell; switched back on, the text is as it was. The `from` line reads `off` among the head's attributes (#686).
+
+- **A stack a gate plays reads its line wherever it is written** (#687, invariant I4; the owner's option a). In a member such as `&kickForm * &kick`, the factor that isn't a level by its own line (`map=amp`, `map=db`, `map=lin`, or a number) is the line, as a mix finds its voice. So `[&kickForm * &kick]` plays what `[&kick * &kickForm]` plays, where it was refused ("Two sounds can't multiply"). Two plain lines in one member still read the first as the line. No example changes; law L11 (`src/engine/commute.test.ts`) now holds over every example it rewrites, 73 of 73.
+
+- A line that says its part, `part=bass` (feel v3, decision 075), compiles when a performer takes it and plays as it does without: a gate playing it moved (`play=&bassline^$-12`) no longer reads it as a kit's member, "Two sounds can't multiply" (#708), and a stack of lines that says its part (`&drumlines part=drums [&kick, &hat]`) is still a stack. `part=` and `role=` are words about the line, no sound.
+
+### Repository
+
+- **`docs/language/` may ship up to 275 KB** (the owner on #698, 2026-11-11; 250 since #518): an install can grow by up to 25 KB more of pages and reference. #698's page on a piece's ground, with the other PRs merged in the same round, took it to 254 KB.
+
 ## v0.24.0 — 2026-11-11
 
 ### Added
