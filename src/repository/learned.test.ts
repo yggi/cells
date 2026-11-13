@@ -104,19 +104,19 @@ describe('the pull', () => {
     return { ...(facet ? { facet } : {}), layer, chosen: Array.from({ length: 1 + (i % 3) }, (_, j) => pick(`chosen|${i}|${j}`)) };
   };
 
-  // (in quarters too, each its own test, for the same reason as below)
-  it.each([0, 250, 500, 750])('at 0, ranks as a query with nothing chosen: over 1,000 points, 250 from %i, with a layer that counts every pair', (from) => {
+  // (in eighths too, each its own test, for the same reason as below: a quarter came within the 20 s timeout on CI once #741 grew the library)
+  it.each([0, 125, 250, 375, 500, 625, 750, 875])('at 0, ranks as a query with nothing chosen: over 1,000 points, 125 from %i, with a layer that counts every pair', (from) => {
     expect(POINTS).toHaveLength(1_000);
     let moved = 0;
     for (const [i, point] of POINTS.entries()) {
-      if (i < from || i >= from + 250) continue;
+      if (i < from || i >= from + 125) continue;
       const { chosen, ...unchosen } = optionsAt(i);
       const none = ranked(library.query(point, 27, {}, unchosen));
       expect(ranked(library.query(point, 27, {}, { ...unchosen, chosen, pull: 0 })), JSON.stringify(point)).toEqual(none);
       if (JSON.stringify(ranked(library.query(point, 27, {}, { ...unchosen, chosen }))) !== JSON.stringify(none)) moved++;
     }
     // (and the default pull, over the same, does move them: the 0 is what holds)
-    expect(moved).toBeGreaterThan(225);
+    expect(moved).toBeGreaterThan(112);
   });
 
   // (the 1,000 points in eighths, each its own test: a query merges a layer that counts every pair of the library, so
