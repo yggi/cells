@@ -2,6 +2,7 @@ import { readBlocks, rewrite, writeBody } from "./literate.js";
 import { readYaml, writeYaml, yamlValue } from "../repository/yaml.js";
 import { readFrom } from "./parser/use.js";
 import { splitComment } from "./edit.js";
+import { expansion } from "./use.js";
 const CELLS_FENCE = /^`{3,}\s*cells\s*$/m;
 export const isPieceFile = (source) => /^---\r?\n/.test(source) || CELLS_FENCE.test(source);
 function keyProblems(root) {
@@ -54,12 +55,23 @@ function isLocked(v) {
 }
 const asYaml = (entries) => entries.map(({ id, hash }) => ({ id, hash }));
 export const lockfileOf = ({ frontmatter }) => Array.isArray(frontmatter.uses) ? frontmatter.uses.filter(isLocked).map(({ id, hash }) => ({ id, hash })) : [];
-export function withLockfile(file, takes) {
-    const had = lockfileOf(file);
+function lockedOf(takes, had) {
     const key = (u) => (u.part ? `${u.id}/${u.part}` : u.id);
     const entries = takes.flatMap((u) => (u.hash ? [{ id: key(u), hash: u.hash }] : had.filter((k) => k.id === key(u))));
-    const once = entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
-    return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(once) } };
+    return entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
+}
+export function withLockfile(file, takes) {
+    return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(lockedOf(takes, lockfileOf(file))) } };
+}
+export const textLockfile = (text, resolve) => lockedOf(expansion(text, { resolve }).takes, []);
+export function lockChanges(text, locked, resolve) {
+    const named = new Map(expansion(text, { resolve }).takes.flatMap((u) => [[u.part ? `${u.id}/${u.part}` : u.id, u.hash]]));
+    return locked.flatMap(({ id, hash }) => {
+        if (!named.has(id))
+            return [];
+        const now = named.get(id);
+        return now === hash ? [] : [{ id, was: hash, now }];
+    });
 }
 const usedIds = (text) => new Set(text.split('\n').flatMap((raw) => {
     const code = splitComment(raw)[0];

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { splitComment } from './edit';
 import { EXAMPLES } from './examples';
 import { readFrom } from './parser/use';
-import { references } from './references';
+import { fromLine, references } from './references';
 import { SEED } from '../repository/seed';
 
 describe('references', () => {
@@ -39,6 +39,35 @@ describe('references', () => {
       n += refs.length;
     }
     expect(texts).toHaveLength(Object.keys(EXAMPLES).length + SEED.length);
+    expect(n).toBeGreaterThan(150);
+  });
+
+  it('reads the names a line renames and the head it writes', () => {
+    const [r] = references('&kick=bd, &sd label="snare" off from gm_kit');
+    expect(r).toMatchObject({ names: ['&kick', '&sd'], takes: ['&bd', '&sd'], head: ['label="snare"', 'off'] });
+  });
+});
+
+describe('fromLine', () => {
+  it('writes each part of a from line: renamed names, the head, a quoted id, named arguments and the main one', () => {
+    expect(fromLine({ names: ['&bassline'], id: 'funk_bass', main: '&harm' })).toBe('&bassline from funk_bass &harm');
+    expect(fromLine({ names: null, id: 'band', args: [{ name: 'style', value: '&style' }] })).toBe('* from band(style=&style)');
+    expect(fromLine({ names: ['&bar'], id: 'meter', args: [{ name: 'grouping', value: 'meter("7/8")' }], main: '104bpm' })).toBe('&bar from meter(grouping=meter("7/8")) 104bpm');
+    expect(fromLine({ names: ['&kick', '&sd'], takes: ['&bd', '&sd'], head: ['off'], id: 'gm_kit' })).toBe('&kick=bd, &sd off from gm_kit');
+    expect(fromLine({ names: ['&drumlines'], id: 'funk_drums~2' })).toBe('&drumlines from "funk_drums~2"');
+    expect(fromLine({ names: ['&tw'], takes: ['&wonder'], id: 'kinderlied', main: '&key' })).toBe('&tw=wonder from kinderlied &key');
+  });
+
+  it('is read back as it was written: every from line of every example and seed file, its span aside', () => {
+    const texts = [...Object.values(EXAMPLES).map((e) => e.source), ...SEED.map((f) => f.fragment.text)];
+    const bare = ({ span: _span, ...rest }: ReturnType<typeof references>[number]) => rest;
+    let n = 0;
+    for (const text of texts)
+      for (const r of references(text)) {
+        const written = fromLine(r);
+        expect(references(written).map(bare), written).toEqual([bare(r)]);
+        n++;
+      }
     expect(n).toBeGreaterThan(150);
   });
 });
