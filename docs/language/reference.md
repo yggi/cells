@@ -214,6 +214,8 @@ Every cell has a sort, decided by its own line, never by where it is written in 
 - `signal`: A read head of a sound tape (a tape that records a mix). [→](mix.md) `&head play=&tape at=1`
 - `wave`: A braid turning at an audio rate (20 Hz and up) with no sound of its own. Alone in a product it is the sound (a waveform); in a pitch sum, or beside a sound, a pitch that moves at audio rate (FM). One that plays as a voice in the piece is a sound everywhere. [→](mix.md) `&square loop=220 0 1`
 - `volume`: map=amp, map=db or map=adsr (an envelope). [→](mix.md) `&accent map=amp step=2 1 .5`
+- `plain`: A cell that is one number and nothing else (decision 088): named in a mix it is that number, a gain in a product, semitones in a sum. [→](mix.md) `&vol .5`
+- `plain`: A sum of values (decision 079): in a product a level, its weighted sum held to 0…1 (decision 088). [→](mix.md) `&fade [&a * .7 + &b * .3]`
 - `plain`: map=lin: as a number, it takes its operator's sort — a volume in a product, a pitch in a sum. [→](mix.md) `&swell map=lin loop=.25 .2 1`
 - `pitch`: Anything else: a melody, a cell reading a table, a loop below hearing (a vibrato). In semitones. [→](mix.md) `&vibrato loop=5 0 .1 -.1`
 

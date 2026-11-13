@@ -64,7 +64,8 @@ export function isValueLine(name: string, decls: ReadonlyMap<string, CellDecl>, 
 export function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string> = new Set()): ValueSum | null {
   const exprs = chordOf(decls.get(name));
   if (!exprs || exprs.length !== 1 || seen.has(name)) return null;
-  const e = exprs[0]!;
+  // (a weight or a constant named is the number it names, decision 088)
+  const e = inlineNumbers(exprs[0]!, decls);
   const items = e.k === 'sum' ? e.items : [{ e, sign: 1 as const }];
   const terms: SumTerm[] = [];
   let constant = 0;
@@ -106,6 +107,8 @@ export function notesProductOf(
     if (f.k !== 'ref') return null;
     const d = decls.get(f.ref.name);
     if (!d) return null;
+    // (a cell that is one number is that number, decision 088: no pitch)
+    if (bare(f) && numberCellOf(d) !== null) continue;
     // (a mix among its factors: notes named in turn, or else an instrument or a sum of values, which it can't hold)
     if (chordOf(d)) {
       if (!notesProductOf(f.ref.name, decls, sounds, inner)) return null;
@@ -114,6 +117,33 @@ export function notesProductOf(
     else if (!(d.map && (d.map.kind === 'amp' || d.map.kind === 'db' || d.map.kind === 'adsr' || d.map.kind === 'lin'))) pitch = true;
   }
   return pitch ? e : null;
+}
+
+/**
+ * A cell that is one number and nothing else (decision 088): its value, or null. No clock, no table, no map, no move
+ * and no sound, its braid one plain number (a note by name is a pitch, not a number). Named in a mix it is the number
+ * it holds: a gain in a product, semitones in a sum (law L18).
+ */
+export function numberCellOf(d: CellDecl | undefined): number | null {
+  if (!d || d.off || d.gate || d.step || d.over || d.map || d.base || d.tonic || d.env || d.pitch) return null;
+  if (d.shift !== null || d.stride !== null || d.cycle !== null || Object.keys(d.params).length) return null;
+  if (d.braid.kind !== 'list' || d.braid.tokens.length !== 1) return null;
+  const t = d.braid.tokens[0]!;
+  if (t.atom.kind !== 'note' || t.atom.pitched || t.atom.alter !== 0) return null;
+  if (t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1 || t.chance !== undefined || t.level !== undefined) return null;
+  return t.atom.value;
+}
+
+/**
+ * A mix's expression with every bare reference to a cell that is one number written as that number (decision 088):
+ * naming a number plays as the number. A reference that picks or moves it stays a reference, read as it was.
+ */
+export function inlineNumbers(e: Expr, decls: ReadonlyMap<string, CellDecl>): Expr {
+  if (e.k === 'num') return e;
+  if (e.k === 'sum') return { ...e, items: e.items.map((it) => ({ ...it, e: inlineNumbers(it.e, decls) })) };
+  if (e.k === 'prod') return { ...e, factors: e.factors.map((f) => inlineNumbers(f, decls)) };
+  const value = bare(e) ? numberCellOf(decls.get(e.ref.name)) : null;
+  return value === null ? e : { k: 'num', value, span: e.ref.span };
 }
 
 /** A bare reference: no pick, slot, shift, degree, transposition or hit's level; only such a one names notes whole. */
