@@ -209,7 +209,9 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
         const label = `Opened from a MIDI file: ${count} notes in ${lines.length} line${lines.length === 1 ? '' : 's'}, ${perQuarter} step${perQuarter === 1 ? '' : 's'} a quarter note, ${how}.`;
         const text = [
             ...(credit.length ? [...credit.map((l) => `# ${l}`), ''] : []),
-            ...(time.lines.length ? time.lines : [`# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`, tempo]),
+            ...(time.lines.length
+                ? time.lines
+                : [`# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`, tempo]),
             '',
             ...body,
             '',
