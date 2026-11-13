@@ -60,11 +60,11 @@ describe('the language’s laws: the page and the tests’ tags agree (decision 
   it('is shown firing: a law with its tag gone, a tag the page doesn’t give, a conjecture tagged', () => {
     const broken = new Map(tagged);
     broken.set('src/engine/alpha.test.ts', []);
-    broken.set('src/engine/edit.test.ts', ['L10', 'L1', 'C1']);
+    broken.set('src/engine/edit.test.ts', ['L10', 'L1', 'C4']);
     expect(mismatches(laws, conjectures, broken)).toEqual([
       "L1: src/engine/alpha.test.ts doesn't tag it",
       "src/engine/edit.test.ts tags L1, which the page doesn't give it",
-      'src/engine/edit.test.ts tags conjecture C1',
+      'src/engine/edit.test.ts tags conjecture C4',
     ]);
   });
 });

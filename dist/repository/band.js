@@ -16,6 +16,7 @@ const repositories = new WeakMap();
 const lineOf = (text, voice) => bodyOf(text)
     .split('\n')
     .find((l) => l.startsWith(`&${voice} `));
+export const INSTRUMENT_REACH = 0.3;
 export function instrumentsAt(point, fragments = INSTRUMENT_FRAGMENTS) {
     let repository = repositories.get(fragments);
     if (!repository)
@@ -23,7 +24,9 @@ export function instrumentsAt(point, fragments = INSTRUMENT_FRAGMENTS) {
     const ranked = repository.query(point, fragments.length, {}, { facet: 'instrument' });
     const found = {};
     for (const [part, { voice, own }] of Object.entries(PERFORMER_VOICES)) {
-        for (const { fragment } of ranked) {
+        for (const { fragment, distance } of ranked) {
+            if (distance > INSTRUMENT_REACH)
+                break;
             const line = lineOf(fragment.text, voice);
             if (line === undefined)
                 continue;

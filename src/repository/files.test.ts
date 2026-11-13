@@ -31,6 +31,8 @@ const SALSA = stylePoint('salsa');
 const WALTZ = stylePoint('waltz');
 const MARCH = stylePoint('march');
 const TRIP_HOP = stylePoint('tripHop');
+/** A second choice near a style (#540): 0.1 above its point in bite (below, where bite is above 0.9). */
+const near = (p: Readonly<Record<string, number>>) => ({ ...p, bite: Math.round((p.bite! <= 0.9 ? p.bite! + 0.1 : p.bite! - 0.1) * 1e6) / 1e6 });
 import { fragmentsOf, SEED, seedFragments } from './seed';
 import { SEED_FILES } from './seed.generated';
 
@@ -109,7 +111,8 @@ describe('the seed files', () => {
       // (its own point, placed on the old axes at sync .4 harm .9 artic .5 energy .3, moved by decision 076's rule, #572)
       'meter(grouping=meter("5/4"))': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
       'meter(swing=16n:.65)': [LO_FI],
-      'meter(swing=16n:.6)': [DEEP_HOUSE, FUNK],
+      // (and near Acid, a second meter behind its plain 4/4, #540)
+      'meter(swing=16n:.6)': [DEEP_HOUSE, FUNK, { ...ACID, bite: 0.95 }],
       'meter(swing=16n:31/60)': [AMBIENT],
       synth_pop_drums: [SYNTH_POP],
       techno_drums: [TECHNO],
@@ -151,29 +154,30 @@ describe('the seed files', () => {
       'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, TRIP_HOP],
       'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK, SEA_SHANTY],
       'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED, BAROQUE, WALTZ, MARCH],
-      upright_bass: [ELECTRO_SWING],
-      brass_stab: [ELECTRO_SWING],
-      clarinet: [ELECTRO_SWING],
-      muted_trumpet: [ELECTRO_SWING],
+      // (and the shares, #540: on a style's point where it has none of the voice, near it where it has)
+      upright_bass: [ELECTRO_SWING, SWING_JAZZ, BLUES_SHUFFLE, near(BOSSA_NOVA)],
+      brass_stab: [ELECTRO_SWING, FUNK, SALSA],
+      clarinet: [ELECTRO_SWING, near(SWING_JAZZ)],
+      muted_trumpet: [ELECTRO_SWING, SWING_JAZZ, near(BLUES_SHUFFLE)],
       round_bass: [SPOOKY],
-      organ: [SPOOKY],
+      organ: [SPOOKY, BLUES_SHUFFLE],
       theremin: [SPOOKY],
-      celesta: [SPOOKY],
-      sine_bass: [KINDERLIED],
-      recorder: [KINDERLIED],
-      tb303: [ACID],
+      celesta: [SPOOKY, BAROQUE],
+      sine_bass: [KINDERLIED, AMBIENT],
+      recorder: [KINDERLIED, near(BAROQUE)],
+      tb303: [ACID, near(TECHNO)],
       rave_lead: [HAPPY_HARDCORE],
-      square_bass: [ELEKTRO],
+      square_bass: [ELEKTRO, CHIPTUNE],
       prepared_piano: [DARK_AMBIENT],
-      drone_pad: [DARK_AMBIENT],
+      drone_pad: [DARK_AMBIENT, near(AMBIENT)],
       moog: [BAROQUE],
       blues_horn: [BLUES_SHUFFLE],
-      fiddle: [SEA_SHANTY],
+      fiddle: [SEA_SHANTY, near(WALTZ)],
       pulse_lead: [CHIPTUNE],
-      montuno_piano: [SALSA],
-      accordion: [WALTZ],
-      brass_band: [MARCH],
-      electric_piano: [TRIP_HOP],
+      montuno_piano: [SALSA, near(BOSSA_NOVA)],
+      accordion: [WALTZ, near(SEA_SHANTY)],
+      brass_band: [MARCH, near(SALSA)],
+      electric_piano: [TRIP_HOP, near(LO_FI), near(DEEP_HOUSE)],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
     const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED], pumping_bass: [TECHNO, HAPPY_HARDCORE] };

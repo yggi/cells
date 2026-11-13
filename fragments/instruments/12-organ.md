@@ -8,6 +8,13 @@ association:
       mood: 0.3
     weight: 0.125
     facet: instrument
+  - point:
+      sync: 0.65
+      harm: 0.55
+      bite: 0.45
+      mood: 0.65
+    weight: 0.125
+    facet: instrument
 source: seed
 lifted: yggi/cells examples/spooky.md @ 6d1bfa7
 ---
@@ -22,3 +29,5 @@ It is [Spooky, in pieces](../../examples/spooky.md)'s `&padV` word for word, at 
 It sounds within the renderer's first stage (decision 062, R1).
 
 Associated at Spooky's point (`SPOOKY`: sync .2, harm .9, bite .3, mood .3; yggi/jambot#517) as the facet `instrument`, at half the default instruments' weight (0.125), so a query for an instrument finds it first at that point, and the kit and the defaults first at each of the eight presets (#350).
+
+**Shared** (#540): on Blues shuffle's point, its Hammond.

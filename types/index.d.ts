@@ -35,13 +35,14 @@ export { pieceAudio, type AudioOptions, type PieceAudio } from './engine/audioex
 export { createRenderer, loudness, DEFAULT_RATE, type Renderer, type RenderOptions, type RenderDiagnostic, type Rendered, type Tracks } from './engine/render';
 export { writeWav, type WavFormat } from './engine/wavfile';
 export { EXAMPLES, type Example, type ExampleKey } from './engine/examples';
-export { isPieceFile, lockfileOf, readPiece, withLockfile, writePiece, type PieceFile, type PieceFileProblems, type PieceFrontmatter } from './engine/piecefile';
+export { isPieceFile, lockChanges, lockfileOf, readPiece, textLockfile, withLockfile, writePiece, type LockChange, type PieceFile, type PieceFileProblems, type PieceFrontmatter, } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { movedCard } from './engine/shorten/card';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
 export type { CompileOptions, CompileResult, Locked, Origin, Performer, Resolve, Take } from './engine/program';
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';
-export { references, type Reference } from './engine/references';
+export { fromLine, references, type FromLine, type Reference } from './engine/references';
+export { outlineOf, type Outline, type OutlineNode, type OutlineOptions, type OutlinePart } from './engine/outline';
 export { takeIn, type TakenIn } from './engine/takein';
 export type { Diagnostic } from './engine/ast';
 export { createRepository, EMPTY_LAYER, layerProblems, pointDistance, type Fragment, type Found, type LearnedLayer, type LearnedPoint, type Merged, type QueryOptions, type Repository, type StylePoint, type UsedPair, type WeightedPoint, } from './repository/fragments';
@@ -53,7 +54,7 @@ export { perform, widthsOf, type Performance, type TextBar } from './engine/perf
 export { meterOfFrame, swungPlace, writtenPlace } from './engine/meter';
 export { nearestStyle, STYLES, type NearStyle, type Style } from './repository/styles';
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES, type FoundInstrument, type VoicedPart } from './repository/band';
-export { LIBRARY, resolveSeed, resolverOf } from './repository/library';
+export { LIBRARY, PARTS, resolveSeed, resolverOf, usesOf, type PartUse } from './repository/library';
 export { catalogue, type CatalogueEntry } from './repository/catalogue';
 export { RENAMED_IDS, wordOf } from './engine/renamed';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';

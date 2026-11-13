@@ -11,7 +11,7 @@ import { RENAMED_IDS } from '../engine/renamed';
 import { SEED, seedFragments } from './seed';
 import { EMPTY_LAYER, fragmentProblems, type Fragment, type LearnedLayer, type WeightedPoint } from './fragments';
 import { readPiece } from '../engine/piecefile';
-import { partOf } from '../engine/use';
+import { partOf, usesIn } from '../engine/use';
 import { variantsOf } from './variants';
 
 /** The seed library's folders, in the order the library lists them: each folder its facet's fragments (decision 047). */
@@ -51,6 +51,32 @@ const PART_ID = /^[^(/]+\/[^(]+$/;
 export const fromId = (id: string): string => (PART_ID.test(id) ? id.slice(0, id.indexOf('/')) : id);
 /** The head a line takes a fragment by, where it is named for it: a part's head (`kinderlied/twinkle` → `twinkle`), a seed motif's id. */
 export const headOf = (id: string): string => (PART_ID.test(id) ? id.slice(id.indexOf('/') + 1) : id);
+
+/** How a document plays one of its parts (#692): the fragment it takes over it, and each named argument, a part of the same document by its id. */
+export interface PartUse {
+  readonly id: string;
+  readonly args: Readonly<Record<string, string>>;
+}
+
+/**
+ * How a part's own document plays it (#692; the owner, 2026-11-11: "tunes own form beats the style"): each line of the
+ * document that takes a fragment with the part's head as its main argument, its arguments that name another of the
+ * document's parts (`&wonder`) written as that part's id (`kinderlied/wonder`), any other as written. For
+ * `kinderlied/twinkle`, `[{ id: 'ternary', args: { answer: 'kinderlied/wonder' } }]`: the form a frontend plays the
+ * tune in, over the style's. None for a fragment that isn't a part, or a part its document takes nothing over.
+ */
+export function usesOf(id: string): readonly PartUse[] {
+  if (!PART_ID.test(id)) return [];
+  const key = fromId(id);
+  const source = (EXAMPLES as Readonly<Record<string, { readonly source: string } | undefined>>)[key]?.source;
+  if (source === undefined) return [];
+  const part = (value: string) => {
+    const name = /^&(\w+)$/.exec(value)?.[1];
+    const other = name === undefined ? undefined : `${key}/${name}`;
+    return other !== undefined && PARTS.some((f) => f.id === other) ? other : value;
+  };
+  return usesIn(source, headOf(id)).map((u) => ({ id: u.id, args: Object.fromEntries(Object.entries(u.args).map(([k, v]) => [k, part(v)])) }));
+}
 
 /**
  * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment

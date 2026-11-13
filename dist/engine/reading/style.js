@@ -30,12 +30,40 @@ export function soundingShares(line, steps) {
 }
 export const onsetsOf = (notes) => [...new Set(notes.map((n) => `${n.part}:${n.step}`))].map((id) => Number(id.split(':')[1]));
 export const lineShares = (notes, steps) => LINES.flatMap((part) => soundingShares(notes.filter((n) => n.part === part), steps));
+export const levelOf = (step, bar) => (step === 0 ? 0 : bar.pulses.includes(step) ? 1 : step % STEPS_PER_EIGHTH === 0 ? 2 : 3);
+const DEEPEST = 3;
+const lineKey = (n) => (n.part === 'drums' ? `drums:${n.note ?? ''}` : n.part);
+export function syncopation(notes, bar = BAR_4_4) {
+    const lines = new Map();
+    for (const n of notes) {
+        const key = lineKey(n);
+        if (!lines.has(key))
+            lines.set(key, new Set());
+        lines.get(key).add(((n.step % bar.steps) + bar.steps) % bar.steps);
+    }
+    const perLine = [...lines.values()].map((steps) => {
+        let sum = 0;
+        for (const s of steps) {
+            const w = levelOf(s, bar);
+            let j = s + 1;
+            while (j < s + bar.steps && levelOf(j % bar.steps, bar) >= w)
+                j++;
+            let struck = false;
+            for (let x = s + 1; x <= j && !struck; x++)
+                struck = steps.has(x % bar.steps);
+            if (!struck)
+                sum += w - levelOf(j % bar.steps, bar);
+        }
+        return sum / (steps.size * DEEPEST);
+    });
+    return perLine.reduce((a, b) => a + b, 0) / perLine.length;
+}
 export function readStyle(notes, bar = BAR_4_4) {
     const onsets = onsetsOf(notes);
     const shares = lineShares(notes, bar.steps);
     return {
         density: onsets.length / bar.steps,
-        ...(onsets.length ? { sync: onsets.filter((step) => !bar.pulses.includes(step) && step % STEPS_PER_EIGHTH !== 0).length / onsets.length } : {}),
+        ...(onsets.length ? { sync: syncopation(notes, bar) } : {}),
         ...(shares.length ? { bite: 1 - median(shares) } : {}),
     };
 }

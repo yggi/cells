@@ -29,9 +29,14 @@ export interface FoundInstrument {
 /** The centre of style space as a point (the language's, `CENTRE` in `engine/style.ts`), where a score that names no style is played. */
 export declare const CENTRE: StylePoint;
 /**
+ * How far an instrument reaches: Jambot's miss distance, 0.3 (`MISS_DISTANCE`), as lock-in reads it (#540). Farther, a
+ * performer plays its own: an instrument placed at one style isn't another's because nothing nearer defines the voice.
+ */
+export declare const INSTRUMENT_REACH = 0.3;
+/**
  * The instrument each pitched performer plays at a style's point, where it isn't the performer's own: the first that
- * defines the performer's voice in the ranking on the facet `instrument`. A performer whose own instrument ranks first
- * is left out, and plays as the band writes it.
+ * defines the performer's voice in the ranking on the facet `instrument`, within `INSTRUMENT_REACH`. A performer whose
+ * own instrument ranks first, or that finds none within reach, is left out, and plays as the band writes it.
  */
 export declare function instrumentsAt(point: StylePoint, fragments?: readonly Fragment[]): Partial<Record<VoicedPart, FoundInstrument>>;
 /**

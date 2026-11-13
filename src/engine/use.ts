@@ -30,7 +30,7 @@
  * `expand` writes the expansion out (Cell studio's "write out"); `expansion` is what `compileSource` reads. Pure.
  */
 import { splitComment } from './edit';
-import { FROM_FORM, isAttribute, readFrom, topTokens, type FromForm } from './parser/use';
+import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens, type FromForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
 import { MOVED, RENAMED_IDS } from './renamed';
@@ -127,6 +127,24 @@ export function partOf(text: string, head: string): string | null {
   }
   return [sigLine.written.trim(), ...lines.filter((l) => keep.has(l)).map((l) => l.written)].join('\n');
 }
+
+/** A line that takes a fragment over a name (#692): the id it takes and its named arguments, as written (`ternary`, `{ answer: '&wonder' }`). */
+export interface UseOver {
+  readonly id: string;
+  readonly args: Readonly<Record<string, string>>;
+}
+
+/**
+ * Each line of a text that takes a fragment with `&head` as its main argument (attributes on it aside), in the order written (#692): how a
+ * document plays its part, such as Kinderlieder's `&twinkleSong from ternary(answer=&wonder) &twinkle`, which takes
+ * `ternary` over `&twinkle`, `&wonder` its answer.
+ */
+export const usesIn = (text: string, head: string): UseOver[] =>
+  linesOf(text).flatMap((l) =>
+    l.from?.kind === 'use' && l.from.main?.trim().split(/\s+/).at(-1) === `&${head}`
+      ? [{ id: l.from.id, args: Object.fromEntries((l.from.args ?? []).map((a) => [a.name, a.value.trim()])) }]
+      : [],
+  );
 
 /** The heads of each signature a text holds, in the order written: one entry a part (decision 082). */
 export const partsOf = (text: string): string[][] => linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from.names.map((n) => n.slice(1))] : []));
@@ -305,11 +323,16 @@ const renamed = (code: string, names: ReadonlyMap<string, string>): string =>
 /** An attribute's key (`step` of `step=8n`). */
 const keyOf = (attribute: string) => attribute.slice(0, attribute.indexOf('='));
 
-/** A line with these attributes set (`label="…"`), the line's own of the same keys dropped: the rest inherited. */
+/**
+ * A line with these attributes set (`label="…"`), the line's own of the same keys dropped: the rest inherited. A flag
+ * (`off`, #686) goes after the name, where a cell's line writes it, and once.
+ */
 function withAttributes(code: string, attributes: readonly string[]): string {
-  const keys = new Set(attributes.map(keyOf));
+  const flags = attributes.filter((a) => HEAD_FLAGS.has(a));
+  const set = attributes.filter((a) => !HEAD_FLAGS.has(a));
+  const keys = new Set(set.map(keyOf));
   const [name, ...rest] = topTokens(code).map((t) => t.text);
-  return [name!, ...rest.filter((t) => !(isAttribute(t) && keys.has(keyOf(t)))), ...attributes].join(' ');
+  return [name!, ...flags, ...rest.filter((t) => !(isAttribute(t) && keys.has(keyOf(t))) && !flags.includes(t)), ...set].join(' ');
 }
 
 /**

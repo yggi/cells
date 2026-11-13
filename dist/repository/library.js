@@ -3,7 +3,7 @@ import { RENAMED_IDS } from "../engine/renamed.js";
 import { SEED, seedFragments } from "./seed.js";
 import { EMPTY_LAYER, fragmentProblems } from "./fragments.js";
 import { readPiece } from "../engine/piecefile.js";
-import { partOf } from "../engine/use.js";
+import { partOf, usesIn } from "../engine/use.js";
 import { variantsOf } from "./variants.js";
 const FOLDERS = ['meters', 'rhythms', 'bass', 'harmony', 'instruments', 'expression', 'modes', 'performers', 'stab', 'motifs', 'forms', 'bands', 'styles', 'modules'];
 export const PARTS = Object.entries(EXAMPLES).flatMap(([key, e]) => {
@@ -27,6 +27,20 @@ export const ofFacet = (facet) => LIBRARY.filter((f) => f.association.some((p) =
 const PART_ID = /^[^(/]+\/[^(]+$/;
 export const fromId = (id) => (PART_ID.test(id) ? id.slice(0, id.indexOf('/')) : id);
 export const headOf = (id) => (PART_ID.test(id) ? id.slice(id.indexOf('/') + 1) : id);
+export function usesOf(id) {
+    if (!PART_ID.test(id))
+        return [];
+    const key = fromId(id);
+    const source = EXAMPLES[key]?.source;
+    if (source === undefined)
+        return [];
+    const part = (value) => {
+        const name = /^&(\w+)$/.exec(value)?.[1];
+        const other = name === undefined ? undefined : `${key}/${name}`;
+        return other !== undefined && PARTS.some((f) => f.id === other) ? other : value;
+    };
+    return usesIn(source, headOf(id)).map((u) => ({ id: u.id, args: Object.fromEntries(Object.entries(u.args).map(([k, v]) => [k, part(v)])) }));
+}
 export const RETIRED = new Map([
     ['core kit', '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
     ['gm kit', '* from gm_kit'],

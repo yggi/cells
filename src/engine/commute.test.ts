@@ -36,8 +36,8 @@ function commuted(text: string): string {
     .join('\n');
 }
 
-/** Where it doesn't hold yet: a gate's stack reads its first factor as the notes (#687). */
-const BROKEN: Readonly<Record<string, string>> = { electroswing: '#687', spooky: '#687' };
+/** Where it doesn't hold yet: none since #687, a gate's stack reading its line wherever it is written. */
+const BROKEN: Readonly<Record<string, string>> = {};
 
 // law L11
 describe('`+` and `*` commute: every example with its products and pitch sums written the other way round plays the same (L11, I4)', () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BUILT_IN, filledAt, lawOf, marksOf, unitOf } from './fills';
+import * as deprecated from './holes';
 import { BAR, BLOCK_NAMES, DAY_MODES, KEY, MODE_NAMES, notesBetween, SECONDS_PER_STEP, START } from './fiveto12';
 import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
@@ -69,5 +70,13 @@ describe('law=fiveto12 read through the language plays what it played (#693)', (
     expect(sections(r)).toEqual(DAY_MODES.map((m, b) => ({ at: b * 7200, label: `${MODE_NAMES[m]} · ${BLOCK_NAMES[b]}` })));
     expect(marksOf(law)).toHaveLength(12);
     expect(law.cycle / KEY).toBe(144);
+  });
+});
+
+describe('engine/holes.ts, deprecated for one minor (#727): the same functions under the old path', () => {
+  it('re-exports what a frontend pinned at v0.25.0 imports from it', () => {
+    expect(deprecated.lawOf).toBe(lawOf);
+    expect(deprecated.BUILT_IN).toBe(BUILT_IN);
+    expect([deprecated.filledAt, deprecated.marksOf, deprecated.unitOf]).toEqual([filledAt, marksOf, unitOf]);
   });
 });

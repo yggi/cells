@@ -78,3 +78,68 @@ export function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, s
   const inner = new Set([...seen, name]);
   return terms.every((t) => isValueLine(t.cell, decls, inner)) ? { terms, constant } : null;
 }
+
+/**
+ * Notes with their levels (decision 087, #740): a cell whose one chord is a product with no sound in it and a pitch, a
+ * melody and its levels named (`&cycle [&notes * &level]`). It is no instrument and no value: in a product with a sound
+ * it is its own product, as written in parentheses (`[&cycle * &glass]` is `[(&notes * &level) * &glass]`; law L17),
+ * and `inlineNotes` writes it so before a mix is typed.
+ *
+ * `sounds` says whether a cell that is not a mix is a sound (a voice, a gate, a kit read, a tape's read head, a wave):
+ * the compiler's sorts know, this module doesn't; a mix among the factors is read here, as notes in turn or not at all. A product of numbers and levels alone (no pitch) is not notes: it stays what it was.
+ */
+export function notesProductOf(
+  name: string,
+  decls: ReadonlyMap<string, CellDecl>,
+  sounds: (name: string) => boolean,
+  seen: ReadonlySet<string> = new Set(),
+): Extract<Expr, { k: 'prod' }> | null {
+  const exprs = chordOf(decls.get(name));
+  if (!exprs || exprs.length !== 1 || seen.has(name) || valueSumOf(name, decls) !== null) return null;
+  const e = exprs[0]!;
+  if (e.k !== 'prod') return null;
+  const inner = new Set([...seen, name]);
+  // (its factors: cells and numbers, each cell no sound, a named product of notes itself allowed; at least one a pitch line)
+  let pitch = false;
+  for (const f of e.factors) {
+    if (f.k === 'num') continue;
+    if (f.k !== 'ref') return null;
+    const d = decls.get(f.ref.name);
+    if (!d) return null;
+    // (a mix among its factors: notes named in turn, or else an instrument or a sum of values, which it can't hold)
+    if (chordOf(d)) {
+      if (!notesProductOf(f.ref.name, decls, sounds, inner)) return null;
+      pitch = true;
+    } else if (sounds(f.ref.name)) return null;
+    else if (!(d.map && (d.map.kind === 'amp' || d.map.kind === 'db' || d.map.kind === 'adsr' || d.map.kind === 'lin'))) pitch = true;
+  }
+  return pitch ? e : null;
+}
+
+/** A bare reference: no pick, slot, shift, degree, transposition or hit's level; only such a one names notes whole. */
+const bare = (e: Extract<Expr, { k: 'ref' }>) => !e.ref.pick && !e.ref.slot && !e.ref.shift && !e.ref.degree && !e.ref.transpose && e.level === undefined;
+
+/**
+ * A mix's expression with every bare reference to notes with their levels written as its product, as in parentheses
+ * (decision 087), its own references in turn; `named` collects the cells inlined, `moved` the references that name
+ * one but move or pick it (not yet: an error says so).
+ */
+export function inlineNotes(
+  e: Expr,
+  decls: ReadonlyMap<string, CellDecl>,
+  sounds: (name: string) => boolean,
+  found: { named: string[]; moved: Extract<Expr, { k: 'ref' }>[] } = { named: [], moved: [] },
+  seen: ReadonlySet<string> = new Set(),
+): Expr {
+  if (e.k === 'num') return e;
+  if (e.k === 'sum') return { ...e, items: e.items.map((it) => ({ ...it, e: inlineNotes(it.e, decls, sounds, found, seen) })) };
+  if (e.k === 'prod') return { ...e, factors: e.factors.map((f) => inlineNotes(f, decls, sounds, found, seen)) };
+  const product = notesProductOf(e.ref.name, decls, sounds, seen);
+  if (!product) return e;
+  if (!bare(e)) {
+    found.moved.push(e);
+    return e;
+  }
+  found.named.push(e.ref.name);
+  return inlineNotes(product, decls, sounds, found, new Set([...seen, e.ref.name]));
+}

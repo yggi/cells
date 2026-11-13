@@ -56,6 +56,7 @@ const NAME_ALONE = new RegExp(`^${NAME}$`);
 const WORD_ID = /^[A-Za-z_][A-Za-z0-9_]*/;
 const QUOTED_ID = /^"[^"]*\S[^"]*"/;
 export const isAttribute = (token) => /^[A-Za-z_][A-Za-z0-9_]*=/.test(token);
+export const HEAD_FLAGS = new Set(['off']);
 export function readFrom(code) {
     const left = LEFT.exec(code);
     if (!left)
@@ -75,7 +76,7 @@ export function readFrom(code) {
     const names = unique ? unique.map(([n]) => n) : null;
     const takes = unique ? unique.map(([, t]) => t) : null;
     const head = tokens.filter((t, i) => t.at >= leftEnd && i < from).map((t) => t.text);
-    if (head.some((t) => !isAttribute(t)) || (all && head.length))
+    if (head.some((t) => !isAttribute(t) && !HEAD_FLAGS.has(t)) || (all && head.length))
         return null;
     const rest = code.slice(tokens[from].at + 4).trim();
     if (rest === '' || rest.startsWith('(') || rest.startsWith('&')) {

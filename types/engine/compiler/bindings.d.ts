@@ -2,7 +2,7 @@
 import type { Binding, CellDecl, Span } from '../ast';
 import { type MidiDest, type Output, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
-import type { Typed } from './sorts';
+import { type Typed } from './sorts';
 /** Marks kits and voices on a copy of the cells it is given; returns it with the sound card's bindings. */
 export declare function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells, typed: Typed): {
     cells: Cells;

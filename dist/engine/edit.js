@@ -141,7 +141,7 @@ function setFlag(source, name, flag, on) {
         if (re.test(code))
             return on ? code : code.replace(re, '');
         return on ? code.replace(head, `$1 ${flag}`) : code;
-    });
+    }, true);
 }
 const FIFTHS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'Ab', 'Eb', 'Bb', 'F'];
 export function setShift(source, name, shift) {
@@ -164,6 +164,19 @@ export function setShift(source, name, shift) {
     return circle ? turned : setAttr(source, name, 'shift', shift === 0 ? null : String(shift));
 }
 export const setOff = (source, name, off) => setFlag(source, name, 'off', off);
+export function offProblem(source, name) {
+    if (setOff(source, name, true) !== source || setOff(source, name, false) !== source)
+        return null;
+    for (const raw of source.split('\n')) {
+        const form = readFrom(splitComment(raw)[0]);
+        if (form?.kind !== 'use' || !(form.names?.includes(`&${name}`) ?? true))
+            continue;
+        if (form.names && form.names.length > 1)
+            return `&${name} is one of ${form.names.join(', ')}, which one line takes from ${form.id}: off before from would be every head's, so take &${name} in first (its own line) and switch that off`;
+        return `&${name} is ${form.id}'s cell, given by a from line: take it in first (its own line) and switch that off`;
+    }
+    return `&${name} is no cell of this piece's to switch off`;
+}
 export function splitWords(code) {
     const out = [];
     let depth = 0;
