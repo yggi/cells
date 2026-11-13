@@ -26,7 +26,7 @@ parts:
       - point:
           sync: 0.1
           harm: 0.12
-          bite: 0.7
+          bite: 0.65
           mood: 0.95
         weight: 1
         facet: motif

@@ -44,7 +44,8 @@ import { readBlocks, rewrite, writeBody, type CodeLine, type Layout } from './li
 import { readYaml, writeYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from '../repository/yaml';
 import { readFrom } from './parser/use';
 import { splitComment } from './edit';
-import type { Locked, Take } from './program';
+import type { Locked, Resolve, Take } from './program';
+import { expansion } from './use';
 
 /** The frontmatter, every key in the order the file gives it. */
 export type PieceFrontmatter = { readonly [key: string]: YamlValue };
@@ -133,17 +134,52 @@ export const lockfileOf = ({ frontmatter }: Pick<PieceFile, 'frontmatter'>): Loc
   Array.isArray(frontmatter.uses) ? frontmatter.uses.filter(isLocked).map(({ id, hash }) => ({ id, hash })) : [];
 
 /**
- * A piece file with its lockfile recording what a compile's `from` lines resolved to (`CompileResult.uses`): a `use` that
- * didn't resolve keeps the entry it had. What `writePiece` then writes; a frontend whose person didn't keep a changed
- * version (the compile warned) leaves the entry as it was.
+ * The lockfile entries a compile's takes give (decision 054): the id and hash each resolved to, a document's part by its id
+ * and head (`kinderlied/twinkle`, decision 082), each id once, in the order written; a take that didn't resolve keeps
+ * the entry `had` held for it, if any.
  */
-export function withLockfile(file: PieceFile, takes: readonly Take[]): PieceFile {
-  const had = lockfileOf(file);
-  // (a document's part is locked by its id and head, `kinderlied/twinkle`, decision 082)
+function lockedOf(takes: readonly Take[], had: readonly Locked[]): Locked[] {
   const key = (u: Take) => (u.part ? `${u.id}/${u.part}` : u.id);
   const entries = takes.flatMap((u) => (u.hash ? [{ id: key(u), hash: u.hash }] : had.filter((k) => k.id === key(u))));
-  const once = entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
-  return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(once) } };
+  return entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
+}
+
+/**
+ * A piece file with its lockfile recording what a compile's `from` lines resolved to (`CompileResult.takes`): a `from`
+ * line that didn't resolve keeps the entry it had. What `writePiece` then writes; a frontend whose person didn't keep a
+ * changed version (the compile warned) leaves the entry as it was. It is `textLockfile` in the frontmatter.
+ */
+export function withLockfile(file: PieceFile, takes: readonly Take[]): PieceFile {
+  return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(lockedOf(takes, lockfileOf(file))) } };
+}
+
+/**
+ * The lockfile of a plain text (#714): what each of its `from` lines resolves to through `resolve`, its id and hash, with
+ * no file to hold it, so a frontend can send a score with the fragments it takes (a section text on the wire,
+ * yggi/jambot#553). A piece file's lockfile is this one in its frontmatter (`withLockfile`). It reads the expansion
+ * alone, and compiles nothing.
+ */
+export const textLockfile = (text: string, resolve: Resolve): Locked[] => lockedOf(expansion(text, { resolve }).takes, []);
+
+/** An entry of a lockfile that a text's `from` lines resolve to otherwise now: its hash then, and now (null where it no longer resolves). */
+export interface LockChange {
+  readonly id: string;
+  readonly was: string;
+  readonly now: string | null;
+}
+
+/**
+ * A text checked against a lockfile (#714): each entry one of its `from` lines names that resolves through `resolve` to
+ * another hash, or to nothing, in the lockfile's order. An entry no `from` line names is not a change: the text no
+ * longer takes it. Empty where the text plays what the lockfile recorded.
+ */
+export function lockChanges(text: string, locked: readonly Locked[], resolve: Resolve): LockChange[] {
+  const named = new Map(expansion(text, { resolve }).takes.flatMap((u) => [[u.part ? `${u.id}/${u.part}` : u.id, u.hash] as const]));
+  return locked.flatMap(({ id, hash }) => {
+    if (!named.has(id)) return [];
+    const now = named.get(id)!;
+    return now === hash ? [] : [{ id, was: hash, now }];
+  });
 }
 
 /** The ids a text's `from` lines name (decision 065: a `from` line is a use, and its lockfile entry is kept). */

@@ -49,3 +49,50 @@ export function valueSumOf(name, decls, seen = new Set()) {
     const inner = new Set([...seen, name]);
     return terms.every((t) => isValueLine(t.cell, decls, inner)) ? { terms, constant } : null;
 }
+export function notesProductOf(name, decls, sounds, seen = new Set()) {
+    const exprs = chordOf(decls.get(name));
+    if (!exprs || exprs.length !== 1 || seen.has(name) || valueSumOf(name, decls) !== null)
+        return null;
+    const e = exprs[0];
+    if (e.k !== 'prod')
+        return null;
+    const inner = new Set([...seen, name]);
+    let pitch = false;
+    for (const f of e.factors) {
+        if (f.k === 'num')
+            continue;
+        if (f.k !== 'ref')
+            return null;
+        const d = decls.get(f.ref.name);
+        if (!d)
+            return null;
+        if (chordOf(d)) {
+            if (!notesProductOf(f.ref.name, decls, sounds, inner))
+                return null;
+            pitch = true;
+        }
+        else if (sounds(f.ref.name))
+            return null;
+        else if (!(d.map && (d.map.kind === 'amp' || d.map.kind === 'db' || d.map.kind === 'adsr' || d.map.kind === 'lin')))
+            pitch = true;
+    }
+    return pitch ? e : null;
+}
+const bare = (e) => !e.ref.pick && !e.ref.slot && !e.ref.shift && !e.ref.degree && !e.ref.transpose && e.level === undefined;
+export function inlineNotes(e, decls, sounds, found = { named: [], moved: [] }, seen = new Set()) {
+    if (e.k === 'num')
+        return e;
+    if (e.k === 'sum')
+        return { ...e, items: e.items.map((it) => ({ ...it, e: inlineNotes(it.e, decls, sounds, found, seen) })) };
+    if (e.k === 'prod')
+        return { ...e, factors: e.factors.map((f) => inlineNotes(f, decls, sounds, found, seen)) };
+    const product = notesProductOf(e.ref.name, decls, sounds, seen);
+    if (!product)
+        return e;
+    if (!bare(e)) {
+        found.moved.push(e);
+        return e;
+    }
+    found.named.push(e.ref.name);
+    return inlineNotes(product, decls, sounds, found, new Set([...seen, e.ref.name]));
+}

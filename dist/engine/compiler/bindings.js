@@ -2,10 +2,12 @@ import { DOUGH_SOURCES } from "../dough-params.js";
 import { ATTRIBUTES, memberParams, VOICE_MAKERS, VOICE_PARAMS } from "../attributes.js";
 import { canonicalTag, TUTORIAL } from "../tags.js";
 import { isMidiCard } from "../program.js";
+import { notesCells } from "./sorts.js";
 import { noSound } from "./band.js";
 import { refsOf } from "../readers.js";
 const entryLabel = (b) => [...b.pitches.map((t) => t.ref.name), b.voice.name].filter((n) => !n.startsWith('λ')).join('*') || b.voice.name;
 export function bindVoices(ctx, decls, given, typed) {
+    const isNotes = notesCells(ctx, decls);
     const { error, warn, unknownCell } = ctx;
     const cells = new Map(given);
     const hasParams = (n) => memberParams(decls.get(n)?.params ?? {});
@@ -53,6 +55,11 @@ export function bindVoices(ctx, decls, given, typed) {
         }
         channels.forEach((u, ch) => {
             const inPlace = u.atom.kind === 'mix' ? typed(u.atom) : null;
+            const notesOwn = u.atom.kind === 'ref' && isNotes(u.atom.name) ? decls.get(u.atom.name)?.braid : undefined;
+            if (notesOwn?.kind === 'list' && notesOwn.tokens[0]?.atom.kind === 'mix') {
+                typed(notesOwn.tokens[0].atom);
+                return;
+            }
             const mix = u.atom.kind === 'ref' ? cells.get(u.atom.name) : inPlace ? sink : undefined;
             const bindings = inPlace ?? (u.atom.kind === 'ref' && mix?.mix && !mix.sink ? mix.mix : null);
             if (!mix || !bindings) {

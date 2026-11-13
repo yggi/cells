@@ -1,6 +1,6 @@
 import { AXES, SLOTS } from "../style.js";
 import { BODIES, CV_LAPS, isMidiCard, ROOT } from "../program.js";
-import { sortOfCells } from "./sorts.js";
+import { notesCells, sortOfCells } from "./sorts.js";
 import { FILTER_MODELS, filterModel, MOVING_PARAMS } from "../attributes.js";
 import { DOUGH_SOURCES } from "../dough-params.js";
 import { refsOf } from "../readers.js";
@@ -109,6 +109,7 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
         }
     }
     const sortOf = sortOfCells(ctx, decls);
+    const isNotes = notesCells(ctx, decls);
     for (const d of decls.values())
         for (const [key, pc] of Object.entries(d.paramCells ?? {})) {
             const slot = (d.map?.kind === 'adsr' && SLOTS.adsr.includes(key)) || (d.map?.kind === 'style' && SLOTS.style.includes(key));
@@ -129,6 +130,8 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
                     unknownCell(f.name, f.span);
                 else if (fc.map?.kind === 'adsr')
                     envs++;
+                else if (isNotes(f.name))
+                    error(`${key}= * &${f.name}: &${f.name} is notes with their levels (a product with no voice), what a voice plays, not a value that moves: multiply it by a voice in a mix`, f.span);
                 else if (sortOf(f.name) === 'signal')
                     warn(`${key}= * &${f.name}: &${f.name} is a sound, not a value that moves, and moves nothing here. A CV is a braid: &${f.name} loop=.5 sin(12)`, f.span);
                 else if (sortOf(f.name) === 'wave')

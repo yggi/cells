@@ -1,7 +1,6 @@
 // The instruments (#225, decision 054): the General MIDI kit, a voice for each of General MIDI's 47 percussion notes,
 // each sounding on its own note over MIDI out, fitting any workbench; 13 of its voices taken by name (the retired core
 // kit), with which every rhythm plays each hit on the note it plays alone.
-import { newPoint } from '../engine/migrate/axes';
 import { wordOf } from '../engine/renamed';
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
@@ -34,8 +33,6 @@ const takenOn = (text: string, bench: string, main?: string) => {
 
 const byId = (id: string) => INSTRUMENT_FRAGMENTS.find((f) => f.id === id)!;
 const gmKit = byId('gm_kit');
-// (the centre on the old axes, moved by decision 076's rule: bite the mean, mood the mode found there, #572)
-const CENTRE = newPoint({ sync: 0.5, harm: 0.5, artic: 0.5, energy: 0.5 });
 /** The default instruments, the performers' (#278). */
 const DEFAULTS = ['bass', 'keys', 'pad', 'lead'];
 /** The instruments with a sound, for the two presets (#350), each at its preset's point, and the default whose voice it defines. */
@@ -68,6 +65,48 @@ const AT_PRESET: Record<string, StylePoint> = {
   accordion: stylePoint('waltz'),
   brass_band: stylePoint('march'),
   electric_piano: stylePoint('tripHop'),
+};
+/** A second choice near a style (#540): 0.1 off its point on bite (down where bite is above 0.9), at weight 0.5. */
+const near = (p: StylePoint) => ({ ...p, bite: p.bite! <= 0.9 ? Math.round((p.bite! + 0.1) * 1e6) / 1e6 : Math.round((p.bite! - 0.1) * 1e6) / 1e6 });
+/** Where the kit and the defaults are placed by idiom (#540), at their own weights: no longer at the centre for "any style". */
+const PLACED: Record<string, readonly StylePoint[]> = {
+  gm_kit: [SWING_JAZZ, BOSSA_NOVA, FUNK, stylePoint('bluesShuffle'), stylePoint('march'), stylePoint('waltz'), stylePoint('salsa'), KINDERLIED, stylePoint('seaShanty'), LO_FI],
+  bass: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, FUNK],
+  keys: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, SWING_JAZZ, FUNK],
+  pad: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, AMBIENT],
+  lead: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, AMBIENT, FUNK],
+};
+/** The instruments shared with other styles (#540), after their own point: on a style's point at their weight where it has none of their voice, near it at 0.5 where it has. */
+const SHARED: Record<string, readonly { point: StylePoint; weight: number }[]> = {
+  upright_bass: [
+    { point: SWING_JAZZ, weight: 0.125 },
+    { point: stylePoint('bluesShuffle'), weight: 0.125 },
+    { point: near(BOSSA_NOVA), weight: 0.5 },
+  ],
+  brass_stab: [
+    { point: FUNK, weight: 0.125 },
+    { point: stylePoint('salsa'), weight: 0.125 },
+  ],
+  clarinet: [{ point: near(SWING_JAZZ), weight: 0.5 }],
+  muted_trumpet: [
+    { point: SWING_JAZZ, weight: 0.125 },
+    { point: near(stylePoint('bluesShuffle')), weight: 0.5 },
+  ],
+  organ: [{ point: stylePoint('bluesShuffle'), weight: 0.125 }],
+  celesta: [{ point: stylePoint('baroque'), weight: 0.125 }],
+  sine_bass: [{ point: AMBIENT, weight: 0.125 }],
+  recorder: [{ point: near(stylePoint('baroque')), weight: 0.5 }],
+  tb303: [{ point: near(TECHNO), weight: 0.5 }],
+  square_bass: [{ point: stylePoint('chiptune'), weight: 0.125 }],
+  drone_pad: [{ point: near(AMBIENT), weight: 0.5 }],
+  fiddle: [{ point: near(stylePoint('waltz')), weight: 0.5 }],
+  montuno_piano: [{ point: near(BOSSA_NOVA), weight: 0.5 }],
+  accordion: [{ point: near(stylePoint('seaShanty')), weight: 0.5 }],
+  brass_band: [{ point: near(stylePoint('salsa')), weight: 0.5 }],
+  electric_piano: [
+    { point: near(LO_FI), weight: 0.5 },
+    { point: near(DEEP_HOUSE), weight: 0.5 },
+  ],
 };
 /** The 13 voices a groove needs, taken from the General MIDI kit by name, as the drummer takes them. */
 const CORE_USE = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
@@ -162,36 +201,33 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
 });
 
 describe('the instrument fragments', () => {
-  it("are the General MIDI kit and the four default instruments, each once at the centre of style space, the kit weighted first; then the nine for Electro swing and Spooky, the five for Kinderlied, Acid, Happy hardcore and Elektro (#572) and the eight for #542's styles, each once at or near its style, at half a default's weight (#350)", () => {
+  it("are the General MIDI kit and the four default instruments, each placed by idiom (#540: no longer at the centre for 'any style'), the kit weighted first; then the nine for Electro swing and Spooky, the five for Kinderlied, Acid, Happy hardcore and Elektro (#572) and the eight for #542's styles, each at or near its style at half a default's weight (#350), and some shared with other styles after (#540)", () => {
     expect(INSTRUMENT_FRAGMENTS.map((f) => f.id)).toEqual(['gm_kit', ...DEFAULTS, ...Object.keys(AT_PRESET)]);
-    for (const f of INSTRUMENT_FRAGMENTS)
+    for (const f of INSTRUMENT_FRAGMENTS) {
+      const own = PLACED[f.id]
+        ? PLACED[f.id]!.map((point) => ({ point, weight: f.id === 'gm_kit' ? 1 : 0.25 }))
+        : [{ point: AT_PRESET[f.id]!, weight: f.id === 'tb303' ? 0.0625 : 0.125 }];
       expect(
-        f.association.map((wp) => [wp.point, wp.facet]),
+        f.association.map((wp) => [wp.point, wp.weight, wp.facet]),
         f.id,
-      ).toEqual([[AT_PRESET[f.id] ?? CENTRE, 'instrument']]);
-    expect(INSTRUMENT_FRAGMENTS.map((f) => f.association[0]!.weight)).toEqual([
-      1,
-      0.25,
-      0.25,
-      0.25,
-      0.25,
-      ...Array<number>(11).fill(0.125),
-      0.0625,
-      ...Array<number>(12).fill(0.125),
-    ]);
+      ).toEqual([...own, ...(SHARED[f.id] ?? [])].map(({ point, weight }) => [point, weight, 'instrument']));
+    }
   });
 
-  it('a query finds the kit and the defaults first at the eight presets, and at Electro swing and Spooky their own (#350)', () => {
+  it('a query finds the defaults first at Jambot’s presets where it found them before (#540: their places by idiom, so those bands play as before), and each style placed for its own', () => {
     const found = (point: StylePoint, k: number) =>
       createRepository(LIBRARY)
         .query(point, k, {}, { facet: 'instrument' })
-        .map((f) => f.fragment.id);
-    for (const preset of [SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ]) expect(found(preset, 3)).toEqual(['gm_kit', 'bass', 'keys']);
+        .map((f) => f.fragment.id)
+        .sort();
+    // (at Synth-pop, Deep house, Lo-fi and Bossa nova the four defaults stand at distance 0, where the centre point found them first, and the kit with them at Lo-fi and Bossa nova)
+    for (const preset of [SYNTH_POP, DEEP_HOUSE]) expect(found(preset, 4)).toEqual(['bass', 'keys', 'lead', 'pad']);
+    for (const preset of [LO_FI, BOSSA_NOVA]) expect(found(preset, 5)).toEqual(['bass', 'gm_kit', 'keys', 'lead', 'pad']);
     expect(found(ELECTRO_SWING, 4)).toEqual(['brass_stab', 'clarinet', 'muted_trumpet', 'upright_bass']);
     expect(found(SPOOKY, 4)).toEqual(['celesta', 'organ', 'round_bass', 'theremin']);
     expect(found(AT_PRESET.haunted_pad!, 1)).toEqual(['haunted_pad']);
-    // (and Kinderlied and the three read from the examples their own, #572)
-    expect(found(KINDERLIED, 2)).toEqual(['recorder', 'sine_bass']);
+    // (and Kinderlied and the three read from the examples their own, #572; Kinderlied's kit with them, #540)
+    expect(found(KINDERLIED, 3)).toEqual(['gm_kit', 'recorder', 'sine_bass']);
     expect(found(stylePoint('acid'), 1)).toEqual(['tb303']);
     expect(found(stylePoint('happyHardcore'), 1)).toEqual(['rave_lead']);
     expect(found(stylePoint('elektro'), 1)).toEqual(['square_bass']);

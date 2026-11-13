@@ -43,3 +43,7 @@ Mixes are typed by sort, in `compile` (`src/engine/algebra.ts`); the parser keep
 ## Amended: waves (#28)
 
 Rule 1 made every braid turning at an audio rate a signal, so a fast vibrato (`(&theme + &vib)` with `&vib loop=30`) was refused, while the same cell as `pitch=&vib` played. A braid at audio rate with no sound parameter is now a **wave**: a sound where it is the only one in its product, a pitch in a pitch sum or beside another sound (FM, written in the algebra), and a sound wherever it also plays as a voice in the piece. This depends on which factors are there and on the piece, never on their order, so the laws hold. No example changed.
+
+## Amended: a product with no voice, named (087)
+
+A cell whose one chord is a product with no sound in it and a pitch is **notes with their levels** ([087](087-a-named-product-is-its-parentheses.md)): in a product with a sound it is its own product, as written in parentheses. Its sort is still inferred from its own line.

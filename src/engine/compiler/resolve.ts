@@ -10,7 +10,7 @@ import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPu
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
-import type { Typed } from './sorts';
+import { notesCells, type Typed } from './sorts';
 import type { Sort } from '../algebra';
 
 class Abort extends Error {}
@@ -88,6 +88,7 @@ function bentOf(d: CellDecl, warn: Ctx['warn'], declOf: (name: string) => CellDe
 export const stepsPerBeat = (m: Meter | null): number => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
 
 export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, stacks }: Declared, typed: Typed, sortOf: (name: string) => Sort): Cells {
+  const isNotes = notesCells(ctx, decls);
   const { rateOf, error, warn, broken, unknownCell } = ctx;
 
   const cells = new Map<string, ResolvedCell>();
@@ -233,13 +234,15 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       // a mix: one chord of sounds — or, on a sound card, its channels written in place (all their voices); a MIDI
       // card's entries are channels of notes, not a mix (bindings.ts reads them)
       // (a stack a gate plays is its part, each line played by the gate: no sound of its own, so it mixes nothing)
-      mix: stacks.has(name)
-        ? []
-        : sum
-          ? null
-          : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
-            ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
-            : null,
+      // (notes with their levels, decision 087: no sound of its own either; a mix that names it reads its product)
+      mix:
+        stacks.has(name) || isNotes(name)
+          ? []
+          : sum
+            ? null
+            : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
+              ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
+              : null,
       ...(sum ? { sum } : {}),
       sink: d.map?.kind === 'sample',
       sort: sortOf(name),

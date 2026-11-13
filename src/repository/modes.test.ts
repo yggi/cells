@@ -172,8 +172,12 @@ describe('the presets find their modes', () => {
               : id === 'dorian'
                 ? [stylePoint('seaShanty')]
                 : [];
-      expect(f.association.map((wp) => wp.point)).toEqual([...points, ...also]);
-      expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === 1)).toBe(true);
+      // (and phrygian near Dark ambient, a second mode behind its aeolian, at weight 0.5: 0.1 above its point in bite, #540)
+      const near = id === 'phrygian' ? [{ ...stylePoint('darkAmbient'), bite: 0.5 }] : [];
+      expect(f.association.map((wp) => wp.point)).toEqual([...points, ...also, ...near]);
+      expect(f.association.every((wp) => wp.facet === 'mode' && wp.weight === (near.some((p) => p === wp.point || JSON.stringify(p) === JSON.stringify(wp.point)) ? 0.5 : 1))).toBe(
+        true,
+      );
     }
   });
 

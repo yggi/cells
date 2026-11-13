@@ -2,10 +2,52 @@
 id: lead
 association:
   - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
+      sync: 0.3
+      harm: 0.45
+      bite: 0.55
       mood: 0.5
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.35
+      harm: 0.55
+      bite: 0.65
+      mood: 0.65
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.5
+      harm: 0.75
+      bite: 0.35
+      mood: 0.5
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.75
+      harm: 0.85
+      bite: 0.45
+      mood: 0.9
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.12
+      harm: 0
+      bite: 1
+      mood: 0.4
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 0.05
+      harm: 0.3
+      bite: 0
+      mood: 0.9
+    weight: 0.25
+    facet: instrument
+  - point:
+      sync: 1
+      harm: 0.12
+      bite: 0.85
+      mood: 0.65
     weight: 0.25
     facet: instrument
 source: seed
@@ -23,4 +65,6 @@ It reads the section's style, `&style`, the composer's, and declares it (decisio
 It sounds within the renderer's first stage (decision 062, R1), and changes no note MIDI out sends.
 Its register is its own (decision 058): a performer that plays it higher or lower says so on its gate (`play=&part^$12`).
 
-Associated as `bass` is, once as the facet `instrument` at the centre of style space, at a quarter of the kit's weight; a performer asks for it by its id.
+Associated as `bass` is, as the facet `instrument` at a quarter of the kit's weight; a performer asks for it by its id.
+
+**Where it is found** (#540): on the points of Synth-pop, Deep house, Lo-fi hip hop and Bossa nova, where the centre point it had found it first, and of Techno, Ambient and Funk, a synth lead's styles; weight 0.25.
