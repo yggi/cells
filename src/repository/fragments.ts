@@ -171,12 +171,10 @@ export const coUseScore = (distance: number, uses: number, pull: number = CO_USE
 
 const isFiniteNumber = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 
-/** What is wrong with a style point: no axes, or an axis whose value isn't a finite number. */
+/** What is wrong with a style point: an axis whose value isn't a finite number. A point with no axes is no style (`ANY_DISTANCE`). */
 function pointProblems(point: unknown, where: string): string[] {
   if (typeof point !== 'object' || point === null) return [`${where}: not a style point`];
-  const axes = Object.entries(point);
-  if (!axes.length) return [`${where}: an empty point (no axes)`];
-  return axes.flatMap(([axis, value]) => (isFiniteNumber(value) ? [] : [`${where}: ${axis} is ${String(value)}, not a number`]));
+  return Object.entries(point).flatMap(([axis, value]) => (isFiniteNumber(value) ? [] : [`${where}: ${axis} is ${String(value)}, not a number`]));
 }
 
 /** What is wrong with an index entry, each problem a sentence; none for a well-formed one. */
@@ -266,11 +264,23 @@ export const pointsOf = (fragment: Fragment, facet?: string): readonly WeightedP
   facet === undefined ? fragment.association : fragment.association.filter((wp) => wp.facet === undefined || wp.facet === facet);
 
 /**
+ * Where a fragment of no style is found (#540, the owner, 2026-11-13): an association with no point (a module, an
+ * expression: `- facet: module`) is at this distance from every point, the farthest a placed point can be (each axis
+ * spans 0 to 1, and a distance is their root mean square). So it ranks behind every fragment placed nearer and ahead of
+ * none placed farther, at every style alike; its weight divides it as a point's does.
+ */
+export const ANY_DISTANCE = 1;
+
+/** Whether a point is no style: it names no axis. */
+export const isAnyStyle = (point: StylePoint): boolean => Object.keys(point).length === 0;
+
+/**
  * How far a fragment is from a point: the nearest of its association's points (of the facet, where one is named), each
- * distance divided by that point's weight. Infinite when it has no point of that facet.
+ * distance divided by that point's weight; a point of no style is `ANY_DISTANCE` away. Infinite when it has no point of
+ * that facet.
  */
 export function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeights: StylePoint = {}, facet?: string): number {
-  return Math.min(...pointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
+  return Math.min(...pointsOf(fragment, facet).map((wp) => (isAnyStyle(wp.point) ? ANY_DISTANCE : pointDistance(wp.point, point, axisWeights)) / wp.weight));
 }
 
 /** The order of two ids, by code unit: how a layer writes a pair, and a query breaks a tie. */
