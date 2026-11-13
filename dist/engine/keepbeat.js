@@ -23,6 +23,23 @@ function barSteps(p, clock) {
     const levels = p.result.cells.get(clock)?.meter?.levels.length;
     return Math.max(1, levels ?? clocking(p.result, p.statics).map(clock).beats);
 }
+function warped(before, was, after, now, b, bar) {
+    const old = clocking(before.result, before.statics);
+    const next = clocking(after.result, after.statics);
+    if (old.map(was).speed || next.map(now).speed) {
+        const bend = (p, clock) => JSON.stringify(p.result.cells.get(clock)?.bend ?? null);
+        return JSON.stringify(old.swingOf(was, b)) !== JSON.stringify(next.swingOf(now, b)) || bend(before, was) !== bend(after, now);
+    }
+    const shares = (clk, clock) => {
+        const map = clk.played(clock);
+        const start = map.q(b * bar);
+        const length = map.q((b + 1) * bar) - start;
+        return Array.from({ length: bar * GRAIN - 1 }, (_, i) => (map.q(b * bar + (i + 1) / GRAIN) - start) / length);
+    };
+    const was$ = shares(old, was);
+    const now$ = shares(next, now);
+    return !was$.every((x, i) => Math.abs(x - now$[i]) < 1e-9);
+}
 export function keepBar(before, after, seconds) {
     const was = beatClock(before);
     const now = beatClock(after);
@@ -39,15 +56,7 @@ export function keepBar(before, after, seconds) {
     const next = (b + 1) * bar;
     if (Math.abs(steps - b * bar) < 1e-9)
         return null;
-    const shares = (p, clock) => {
-        const map = clocking(p.result, p.statics).played(clock);
-        const start = map.q(b * bar);
-        const length = map.q(next) - start;
-        return Array.from({ length: bar * GRAIN - 1 }, (_, i) => (map.q(b * bar + (i + 1) / GRAIN) - start) / length);
-    };
-    const was$ = shares(before, was);
-    const now$ = shares(after, now);
-    if (was$.every((x, i) => Math.abs(x - now$[i]) < 1e-9))
+    if (!warped(before, was, after, now, b, bar))
         return null;
     const line = old.q(next);
     return Number.isFinite(line) && line > seconds ? { line, at: keepBeat(before, after, line) } : null;

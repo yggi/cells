@@ -16,7 +16,7 @@ export interface KeptBar {
 /**
  * Where a recompiled plan waits for the bar line (#701, decision 081 §3): `before`, heard at its second `seconds`, keeps
  * the bar it is in when `after` places that bar otherwise than at another tempo (a swing's share or a bend's depth moved:
- * the bar's points, as its beat clock plays them, at other shares of the bar's length). Then `before` answers up to the
+ * the bar as it plays, or, under a motor or a belt, its swing and bend as written). Then `before` answers up to the
  * next bar line and `after` from there, anchored at it, the line no time map moves. Null where nothing waits: the two
  * place the bar alike (a tempo moved alone keeps #56's behaviour, the beat in progress kept and what follows at the new
  * rate at once), `seconds` is on a bar line, or either plan has no beat clock or bars of another length.

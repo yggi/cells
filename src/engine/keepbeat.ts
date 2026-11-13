@@ -56,9 +56,33 @@ function barSteps(p: Plan, clock: string): number {
 }
 
 /**
+ * Whether `after` places bar `b` (of `bar` steps) of its beat clock otherwise than `before` does, at another tempo aside.
+ * An ideal clock is compared as it plays: the bar's points as shares of its length, which a tempo scales all alike and a
+ * warp doesn't. A physical one (a motor, a belt: its speed moves within the bar, and a tempo moved changes how) is
+ * compared by its amounts as written: the bar's swing (`swingOf`, a share moved by cells included) and its bend's table.
+ */
+function warped(before: Plan, was: string, after: Plan, now: string, b: number, bar: number): boolean {
+  const old = clocking(before.result, before.statics);
+  const next = clocking(after.result, after.statics);
+  if (old.map(was).speed || next.map(now).speed) {
+    const bend = (p: Plan, clock: string) => JSON.stringify(p.result.cells.get(clock)?.bend ?? null);
+    return JSON.stringify(old.swingOf(was, b)) !== JSON.stringify(next.swingOf(now, b)) || bend(before, was) !== bend(after, now);
+  }
+  const shares = (clk: typeof old, clock: string) => {
+    const map = clk.played(clock);
+    const start = map.q(b * bar);
+    const length = map.q((b + 1) * bar) - start;
+    return Array.from({ length: bar * GRAIN - 1 }, (_, i) => (map.q(b * bar + (i + 1) / GRAIN) - start) / length);
+  };
+  const was$ = shares(old, was);
+  const now$ = shares(next, now);
+  return !was$.every((x, i) => Math.abs(x - now$[i]!) < 1e-9);
+}
+
+/**
  * Where a recompiled plan waits for the bar line (#701, decision 081 §3): `before`, heard at its second `seconds`, keeps
  * the bar it is in when `after` places that bar otherwise than at another tempo (a swing's share or a bend's depth moved:
- * the bar's points, as its beat clock plays them, at other shares of the bar's length). Then `before` answers up to the
+ * the bar as it plays, or, under a motor or a belt, its swing and bend as written). Then `before` answers up to the
  * next bar line and `after` from there, anchored at it, the line no time map moves. Null where nothing waits: the two
  * place the bar alike (a tempo moved alone keeps #56's behaviour, the beat in progress kept and what follows at the new
  * rate at once), `seconds` is on a bar line, or either plan has no beat clock or bars of another length.
@@ -75,16 +99,7 @@ export function keepBar(before: Plan, after: Plan, seconds: number): KeptBar | n
   const b = Math.floor(steps / bar + 1e-9);
   const next = (b + 1) * bar;
   if (Math.abs(steps - b * bar) < 1e-9) return null;
-  // (the bar as each plays it, its points as shares of its length: a tempo scales them all alike, a warp doesn't)
-  const shares = (p: Plan, clock: string) => {
-    const map = clocking(p.result, p.statics).played(clock);
-    const start = map.q(b * bar);
-    const length = map.q(next) - start;
-    return Array.from({ length: bar * GRAIN - 1 }, (_, i) => (map.q(b * bar + (i + 1) / GRAIN) - start) / length);
-  };
-  const was$ = shares(before, was);
-  const now$ = shares(after, now);
-  if (was$.every((x, i) => Math.abs(x - now$[i]!) < 1e-9)) return null;
+  if (!warped(before, was, after, now, b, bar)) return null;
   const line = old.q(next);
   return Number.isFinite(line) && line > seconds ? { line, at: keepBeat(before, after, line) } : null;
 }
