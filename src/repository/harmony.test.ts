@@ -305,8 +305,12 @@ describe('the haunted progression', () => {
   });
 
   // (at weight 0.4, as the dark cadence is, so it is found within Jambot's miss distance, 0.3, of Spooky's point alone, #404)
-  it('sits 0.05 below Spooky in bite (its energy offset, on the axes before decision 076, #572) at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset', () => {
-    expect(haunted.association).toEqual([{ point: { ...SPOOKY, bite: 0.25 }, weight: 0.4, facet: 'harmony' }]);
+  it('sits 0.05 below Spooky in bite (its energy offset, on the axes before decision 076, #572) at weight 0.4, the nearest harmony Jambot reads there, and more than 0.3 from every other preset of Jambot’s (and near Dark ambient since #540)', () => {
+    // (and near Dark ambient, a second harmony behind its tonic vamp, #540: 0.1 above its point in bite, at weight 0.5)
+    expect(haunted.association).toEqual([
+      { point: { ...SPOOKY, bite: 0.25 }, weight: 0.4, facet: 'harmony' },
+      { point: { ...stylePoint('darkAmbient'), bite: 0.5 }, weight: 0.5, facet: 'harmony' },
+    ]);
     const repository = createRepository(LIBRARY);
     expect(repository.query(SPOOKY, 2, {}, { facet: 'harmony' }).map((f) => [f.fragment.id, Math.round(f.distance * 100) / 100])).toEqual([
       ['dark_cadence', 0],

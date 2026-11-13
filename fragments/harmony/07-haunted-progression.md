@@ -8,6 +8,13 @@ association:
       mood: 0.3
     weight: 0.4
     facet: harmony
+  - point:
+      sync: 0.35
+      harm: 0.15
+      bite: 0.5
+      mood: 0.1
+    weight: 0.5
+    facet: harmony
 source: seed
 ---
 
@@ -23,3 +30,5 @@ It defines `&harm` and uses the host's `&key` and main meter; it has no card, an
 Near Spooky's point (sync .2, harm .9, bite .3, mood .3; yggi/jambot#517), 0.05 lower in bite (its energy offset, #572), as the facet `harmony`, at weight 0.4, as `dark_cadence` is, so it is found within Jambot's miss distance (0.3) of Spooky alone, and behind `dark_cadence` wherever both are farther: at weight 1 it was the nearest harmony to Synth-pop, Lo-fi hip hop, Bossa nova and Swing jazz (0.18 to 0.3), which find none of their own there and would have played it (#404).
 
 **Its signature** (decision 065): `&harm from &key`. `&harm from haunted_progression &key` takes a copy of it, `&key` its main argument.
+
+**Shared** (#540): near Dark ambient's point, a second harmony behind the tonic vamp.

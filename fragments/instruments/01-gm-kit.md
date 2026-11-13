@@ -2,9 +2,72 @@
 id: gm_kit
 association:
   - point:
-      sync: 0.5
+      sync: 0.35
+      harm: 1
+      bite: 0.3
+      mood: 0.85
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 0.75
+      harm: 0.85
+      bite: 0.45
+      mood: 0.9
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 1
+      harm: 0.12
+      bite: 0.85
+      mood: 0.65
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 0.65
+      harm: 0.55
+      bite: 0.45
+      mood: 0.65
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 0
+      harm: 0.1
+      bite: 0.75
+      mood: 0.7
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 0
+      harm: 0.7
+      bite: 0.3
+      mood: 0.9
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 0.9
       harm: 0.5
+      bite: 0.7
+      mood: 0.75
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 0.1
+      harm: 0.12
       bite: 0.5
+      mood: 0.95
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 0.1
+      harm: 0.25
+      bite: 0.7
+      mood: 0.65
+    weight: 1
+    facet: instrument
+  - point:
+      sync: 0.5
+      harm: 0.75
+      bite: 0.35
       mood: 0.5
     weight: 1
     facet: instrument
@@ -67,4 +130,6 @@ The names are Strudel's short names where Strudel has one (`&bd`, `&sd`, `&hh`, 
 It defines voices and uses nothing, so it fills the holes a groove leaves (`&bd &sd &hh`), fits any workbench, and sounds only what a piece plays through it. Each sound is a first pass in cells' own parameters: a sine dropping in pitch for the drums and toms, filtered noise for the snares, hats and cymbals, a tuned sine or triangle for the hand percussion.
 A piece takes the voices it needs by name, so a groove need not bring in 47: `use &bd, &sd, &hh from gm_kit`. The drummer takes 13 so (`drums_performer`); a kit of its own, the core kit, did that before `use` could name what it takes, and is retired (#196).
 
-A kit is style-neutral: it is associated once, as the facet `instrument`, at the centre of style space (every axis at 0.5), the point nearest the farthest preset, at weight 1, so a query for an instrument finds it first.
+A kit is style-neutral in what it holds; where it is found is the styles that play an acoustic kit (below), at weight 1.
+
+**Where it is found** (#540): on the points of the styles a drummer plays an acoustic kit in, which General MIDI's kit is: Swing jazz, Bossa nova, Funk, Blues shuffle, March, Waltz, Salsa, Kinderlied, Sea shanty and Lo-fi hip hop (its sampled breaks). It stood at the centre for "any style".

@@ -53,9 +53,15 @@ const lineOf = (text: string, voice: string) =>
     .find((l) => l.startsWith(`&${voice} `));
 
 /**
+ * How far an instrument reaches: Jambot's miss distance, 0.3 (`MISS_DISTANCE`), as lock-in reads it (#540). Farther, a
+ * performer plays its own: an instrument placed at one style isn't another's because nothing nearer defines the voice.
+ */
+export const INSTRUMENT_REACH = 0.3;
+
+/**
  * The instrument each pitched performer plays at a style's point, where it isn't the performer's own: the first that
- * defines the performer's voice in the ranking on the facet `instrument`. A performer whose own instrument ranks first
- * is left out, and plays as the band writes it.
+ * defines the performer's voice in the ranking on the facet `instrument`, within `INSTRUMENT_REACH`. A performer whose
+ * own instrument ranks first, or that finds none within reach, is left out, and plays as the band writes it.
  */
 export function instrumentsAt(point: StylePoint, fragments: readonly Fragment[] = INSTRUMENT_FRAGMENTS): Partial<Record<VoicedPart, FoundInstrument>> {
   let repository = repositories.get(fragments);
@@ -63,7 +69,8 @@ export function instrumentsAt(point: StylePoint, fragments: readonly Fragment[] 
   const ranked = repository.query(point, fragments.length, {}, { facet: 'instrument' });
   const found: Partial<Record<VoicedPart, FoundInstrument>> = {};
   for (const [part, { voice, own }] of Object.entries(PERFORMER_VOICES) as [VoicedPart, (typeof PERFORMER_VOICES)[VoicedPart]][]) {
-    for (const { fragment } of ranked) {
+    for (const { fragment, distance } of ranked) {
+      if (distance > INSTRUMENT_REACH) break;
       const line = lineOf(fragment.text, voice);
       if (line === undefined) continue;
       if (fragment.id !== own) found[part] = { id: fragment.id, line };

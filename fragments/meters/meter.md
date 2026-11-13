@@ -231,6 +231,14 @@ association:
     facet: meter
     args:
       grouping: meter("2/4")
+  - point:
+      sync: 0.45
+      harm: 0.05
+      bite: 0.95
+    weight: 0.5
+    facet: meter
+    args:
+      swing: 16n:.6
 source: seed
 ---
 
