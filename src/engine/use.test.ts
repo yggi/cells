@@ -366,8 +366,8 @@ describe('the lockfile', () => {
     expect(lockfileOf(withLockfile(had, uses))).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
   });
 
-  it('the hash is the text’s up to layout, its rung written first', () => {
-    expect(fragmentHash(KIT)).toMatch(/^e1:[0-9a-f]{16}$/);
+  it('the hash is the text as a piece receives it, e2:, its rung written first (decision 089)', () => {
+    expect(fragmentHash(KIT)).toMatch(/^e2:[0-9a-f]{16}$/);
     expect(fragmentHash('&a  s=sine # a comment\n\n&b s=saw')).toBe(fragmentHash('&a s=sine\n&b s=saw'));
     expect(fragmentHash('&a s=sine')).not.toBe(fragmentHash('&a s=saw'));
     expect(new Set(LIBRARY.map((f) => fragmentHash(f.text))).size).toBe(LIBRARY.length);
