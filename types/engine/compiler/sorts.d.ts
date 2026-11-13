@@ -23,6 +23,8 @@ export interface SortRule {
 export declare const SORT_RULES: readonly SortRule[];
 /** The rules as reference entries (docs/language/reference.md). */
 export declare const SORT_SYNTAX: readonly Syntax[];
+/** isNotes(name): is the cell notes with their levels (decision 087), a product a mix reads as its parentheses? */
+export declare function notesCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): (name: string) => boolean;
 /** sortOf(name): what the cell is in a mix (SORT_RULES). */
 export declare function sortOfCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): (name: string) => Sort;
 export declare function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed;

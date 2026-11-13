@@ -208,6 +208,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 Every cell has a sort, decided by its own line, never by where it is written in a mix; the first rule that holds decides (`src/engine/compiler/sorts.ts`). How the sorts combine with `+` and `*` is on [mix.md](mix.md#the-algebra-of-a-mix).
 
 - `signal`: A sound parameter (s=, lpf= …): a voice. [→](mix.md) `&lead s=saw loop=C4`
+- `pitch`: A product with no sound in it and a pitch: notes with their levels (decision 087). In a product with a sound it is its own product, as written in parentheses: [&cycle * &glass] plays [(&notes * &level) * &glass]. [→](mix.md) `&cycle [&notes * &level]`
 - `signal`: A mix: an instrument. [→](mix.md) `&organ [&a, &b]`
 - `signal`: A pattern read through a kit (a table of voices). [→](mix.md) `&drums over=&kit step=4 0 1 0 1`
 - `signal`: A read head of a sound tape (a tape that records a mix). [→](mix.md) `&head play=&tape at=1`

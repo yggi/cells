@@ -4,7 +4,7 @@ import { CV_LAPS } from '../program';
 import type { Atom, Binding, CellDecl, Expr, Ref } from '../ast';
 import { memberParams, VOICE_PARAMS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
-import { valueSumOf } from '../valuesum';
+import { inlineNotes, notesProductOf, valueSumOf } from '../valuesum';
 import { syntax, type Syntax } from '../parser/syntax';
 import type { Ctx } from './context';
 import { noSound } from './band';
@@ -45,6 +45,19 @@ export interface SortRule {
   readonly holds: (d: CellDecl, seen: Seen) => boolean;
 }
 
+/** A read head of a sound tape: a tape that records a mix. */
+const isSoundHead = (d: CellDecl, { decls }: Seen) => {
+  const tape = typeof d.params.play === 'string' ? decls.get(d.params.play) : undefined;
+  return !!tape && typeof tape.params.write === 'string' && isMixDecl(decls.get(tape.params.write));
+};
+/** Is a cell that is not a mix a sound in a mix: a voice, a gate, a pattern read through a kit, a tape's read head, a wave? */
+const soundNotMix = (seen: Seen) => (n: string) => {
+  const d = seen.decls.get(n);
+  return !!d && (!!d.gate || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) || isKitDecl(over(d, seen), seen) || isSoundHead(d, seen) || (turns(d, seen) ?? 0) >= CV_LAPS);
+};
+/** Notes with their levels (decision 087): a cell's one chord a product with no sound in it and a pitch. */
+const isNotesDecl = (d: CellDecl, seen: Seen) => notesProductOf(d.name, seen.decls, soundNotMix(seen)) !== null;
+
 /** What a cell is in a mix, from its own line — never from where it's written. The first rule that holds decides. */
 export const SORT_RULES: readonly SortRule[] = [
   {
@@ -52,6 +65,12 @@ export const SORT_RULES: readonly SortRule[] = [
     is: 'A sound parameter (s=, lpf= …): a voice.',
     example: ['&lead s=saw loop=C4'],
     holds: (d) => Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
+  },
+  {
+    sort: 'pitch',
+    is: 'A product with no sound in it and a pitch: notes with their levels (decision 087). In a product with a sound it is its own product, as written in parentheses: [&cycle * &glass] plays [(&notes * &level) * &glass].',
+    example: ['&notes step=2 0 4', '&level map=amp step=2 1 .5', '&cycle [&notes * &level]'],
+    holds: isNotesDecl,
   },
   {
     sort: 'signal',
@@ -70,10 +89,7 @@ export const SORT_RULES: readonly SortRule[] = [
     sort: 'signal',
     is: 'A read head of a sound tape (a tape that records a mix).',
     example: ['&lead s=saw loop=C4', '&mix [&lead]', '&tape write=&mix step=1 length=4', '&head play=&tape at=1'],
-    holds: (d, { decls }) => {
-      const tape = typeof d.params.play === 'string' ? decls.get(d.params.play) : undefined;
-      return !!tape && typeof tape.params.write === 'string' && isMixDecl(decls.get(tape.params.write));
-    },
+    holds: isSoundHead,
   },
   {
     sort: 'wave',
@@ -107,6 +123,15 @@ export const SORT_SYNTAX: readonly Syntax[] = SORT_RULES.map((r) => syntax('sort
 /** The cells an expression names. */
 const refsIn = (e: Expr): Ref[] => (e.k === 'ref' ? [e.ref] : e.k === 'sum' ? e.items.flatMap((x) => refsIn(x.e)) : e.k === 'prod' ? e.factors.flatMap(refsIn) : []);
 const refsOf = (e: Expr): string[] => refsIn(e).map((r) => r.name);
+
+/** isNotes(name): is the cell notes with their levels (decision 087), a product a mix reads as its parentheses? */
+export function notesCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): (name: string) => boolean {
+  const seen: Seen = { decls, rateOf: ctx.rateOf };
+  return (name) => {
+    const d = decls.get(name);
+    return !!d && isNotesDecl(d, seen);
+  };
+}
 
 /** sortOf(name): what the cell is in a mix (SORT_RULES). */
 export function sortOfCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): (name: string) => Sort {
@@ -154,7 +179,7 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
     // (a voice, a mix or a gate: a pattern read through a kit is a sound too, and the notes a gate plays may be one)
     const sound = (n: string) => {
       const d = decls.get(n);
-      return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
+      return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null && !isNotesDecl(d, seen)) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
     };
     // (a stack's lines, each: the stack itself is a chord, and a gate plays its lines one by one)
     const notes = spec ? (spec.lines?.map((l) => l.line) ?? [spec.notes]).map((name) => ({ name, port: spec.port })) : [];
@@ -176,22 +201,41 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
       typedMixes.set(atom, out);
       return out;
     }
-    for (const e of atom.exprs)
+    for (const written of atom.exprs)
       try {
         // (a name no line declares: that is what's wrong with the product, not its voice)
-        const unknown = refsIn(e).filter((r) => !decls.has(r.name));
+        const unknown = refsIn(written).filter((r) => !decls.has(r.name));
         if (unknown.length) {
           for (const r of unknown) ctx.unknownCell(r.name, r.span);
           continue;
         }
-        const bs = distribute(e, sort, noVoice);
+        // notes with their levels, named, are their product as in parentheses (decision 087): written so before typing
+        const found: { named: string[]; moved: Extract<Expr, { k: 'ref' }>[] } = { named: [], moved: [] };
+        const e = inlineNotes(written, decls, soundNotMix(seen), found);
+        if (found.moved.length) {
+          for (const m of found.moved)
+            error(`&${m.ref.name} is notes with their levels (a product with no voice): it is named whole in a mix, not picked, moved or given a level (decision 087)`, m.ref.span);
+          continue;
+        }
+        let bs: Binding[];
+        try {
+          bs = distribute(e, sort, noVoice);
+        } catch (x) {
+          // (notes named and nothing to sound them on: say what they are)
+          if (x instanceof AlgebraError && found.named.length && !refsIn(e).some((r) => sort(r.name) === 'signal' || sort(r.name) === 'wave'))
+            throw new AlgebraError(
+              `&${found.named[0]} is notes with their levels: multiply them by a voice ([&${found.named[0]} * &lead]) (decision 087)`,
+              written.k === 'ref' ? written.ref.span : written.span,
+            );
+          throw x;
+        }
         const kit = bs.flatMap((b) => b.pitches).find((t) => isKitDecl(decls.get(t.ref.name), seen));
         if (kit) error(`&${kit.ref.name} is a kit, a table of voices: a pattern read through it is the sound — mix the pattern alone`, kit.ref.span);
         else out.push(...bs);
       } catch (x) {
         if (!(x instanceof AlgebraError)) throw x;
         // (a cell whose line failed has no sort to speak of: its own error says why)
-        if (!refsOf(e).some((n) => ctx.broken.has(n))) error(x.message, x.span);
+        if (!refsOf(written).some((n) => ctx.broken.has(n))) error(x.message, x.span);
       }
     typedMixes.set(atom, out);
     return out;
