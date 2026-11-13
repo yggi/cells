@@ -10,6 +10,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.25.1 — 2026-11-13
+
+### Added
+
+- **Fragments shared between styles, and a second choice within each** (#540): every style finds at least two fragments within 0.3 in each facet the composer asks for (meter, rhythm, bass, harmony, mode, motif, instrument), so it has a choice within itself. A share stands on a style's point where that style has none of its kind, and 0.1 off it (weight 0.5) where it has, a second choice behind its own (the TB-303 near Techno, the clarinet near Swing jazz, the haunted progression near Dark ambient, phrygian near Dark ambient, the swung sixteenths near Acid). No style's first find changes outside its instruments.
+- **The library's consistency, held by tests** (`associations.test.ts`): every point names only the axes, within their ranges; none stands at the centre; no two points of a fragment (one facet, one set of arguments) lie within 0.02, under the closest pair placed on purpose (`root_bass`'s own point, 0.025 from Ambient's; the mixolydian halfway between Funk and Bossa nova, 0.029 from Salsa's).
+
+- **A `from` line written, and the lockfile of a plain text** (#714), so a frontend can write what it took as a `from` line and send the fragments a score takes (yggi/jambot#531, #553):
+  - `fromLine(reference)`, the inverse of `references`: `fromLine({ names: ['&bassline'], id: 'funk_bass', main: '&harm' })` is `&bassline from funk_bass &harm`. Every `from` line of every example and seed file reads back as it was written.
+  - `Reference` gains `takes` (what each name takes, `&bd` of `&kick=bd`) and `head` (the head's attributes), so a renamed or labelled line is read whole.
+  - `textLockfile(text, resolve)`: the id and hash each `from` line of a text resolves to, a piece file's lockfile without the file (`withLockfile` writes the same entries into the frontmatter).
+  - `lockChanges(text, locked, resolve)`: each entry of a lockfile that a text's `from` lines now resolve to another hash, or to nothing.
+  - Nothing played changes.
+
+- A product with no voice and a pitch, named, is notes with their levels (decision 087, #740): `&phrase [&notes * &accent]`, then `[&phrase * &glass * .3]`, plays `[(&notes * &accent) * &glass * .3]`. It was an error ("has no voice", "Two sounds can't multiply"); a frontend may now see such a cell compile, mixing nothing of its own. Read as a value or played with no voice it says what it is; picked or moved, it is an error for now. Law L17 (naming a sub-product plays as its parentheses do) checks it over every example. No example changes how it sounds.
+
+### Changed
+
+- **No fragment stands at the centre for "any style"** (#540): the default instruments (`bass`, `keys`, `pad`, `lead`), the kit (`gm_kit`) and the motif `question` sat at `.5 .5 .5 .5`, found nearest Synth-pop and farthest from Techno for no musical reason. Each is now placed by idiom: the defaults where the centre found them first (Synth-pop, Deep house, Lo-fi hip hop, Bossa nova: those styles' bands unchanged) and at the styles they suit (the saw bass at Techno and Funk, the keys at Swing jazz and Funk, the pad at Techno and Ambient, the lead at Techno, Ambient and Funk); the kit at the styles a drummer plays an acoustic kit in; `question`, a call, where call and answer's idiom is.
+- **An instrument is played within reach** (`INSTRUMENT_REACH`, 0.3, Jambot's miss distance): `instrumentsAt` takes the first instrument defining a voice within 0.3 of the style, and farther the performer plays its own. Before, the first anywhere was taken, which the centre defaults hid.
+- **What the band plays changes** where a gap is filled: at Ambient the bass is the sine bass; at Funk the stab performer plays the brass stab; at Swing jazz the bass is the upright and the lead the muted trumpet; and at #542's styles, Baroque's stab the celesta, Blues shuffle's bass the upright and its pad the organ, Chiptune's bass the square bass, Salsa's stab the brass stab. Jambot's other presets' bands are unchanged.
+
+- Two motifs that shared a point since v0.23.0's axes are apart again (#674): `wail` at bite .27 (was .25, `lament`'s), between `lament` (.25) and `diesIrae` (.3), as its articulation was above `lament`'s on the old axes; `kinderlied/haenschen` at bite .65 (was .7, `weinet`'s), between `hinein` (.6) and `weinet`. Each motif is now first at its own points, which a test holds. No style's first fragment changes, in any facet; at Spooky `wail` is now second, at March `kinderlied/weinet` third. Jambot's `lead-lines.test.ts` can drop its `SHARED` pairs.
+
+- Two tutorial pieces respelled, each sounding as before (their notes and events unchanged; a name's values and live view move): `fifths` names its turning chromatic twelve `&twelve`, where `&key` is the key everywhere else, and `chords` (tier 3) takes its key from the library on its tonic, `&key label="{mode} on {tonic}" from diatonic(mode=minor) &tonic`, so tier 3 shows the tonic and the library key (#699).
+
+- Normalise folds a second clock slower than every tap of the main meter as a chained tap (`tapClock`, #722): a meter at 30 bpm under one at 120, tapped by its bar, is `step=1m/4`; every k-th tick of the coarsest tap whose every k-th tick it is, its first 64 ticks compared, so only where it sounds identical. Daytime keeps its week as written (`normalise/kept.ts`).
+
 ## v0.25.0 — 2026-11-12
 
 ### Added
