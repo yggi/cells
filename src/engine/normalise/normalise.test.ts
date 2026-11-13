@@ -239,6 +239,17 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       expect(normalise(slider).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
     });
 
+    it('tapClock folds a clock slower than every tap as a chained tap, every k-th tick of the coarsest (#722)', () => {
+      // (a meter at 30 bpm under one at 120: its bar is every 4th bar of the main meter's, 1m/4)
+      const written = `&bar meter("4/4") step=&tempo\n&tempo step=120bpm\n&slow meter("4/4") step=30bpm\n&low step=4n 0 4\n&run step=&slow:1m 0 2\n${voices}`;
+      const { source, steps } = normalise(written);
+      expect(steps).toEqual(["&slow's ticks are &bar's: &slow:1m is 1m/4"]);
+      expect(source).toBe(written.replace('&slow meter("4/4") step=30bpm\n', '').replace('step=&slow:1m', 'step=1m/4'));
+      expect(soundsIdentical(written, source)).toBe(true);
+      // (and not where its ticks are no whole count of any tap's: 70 bpm's bar, 24/7 s)
+      expect(normalise(written.replace('step=30bpm', 'step=70bpm')).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
+    });
+
     it('a slow clock is compared past its first tick, where S1 listens 1200 s alone (#669)', () => {
       // (a second meter at .0101 bpm under one at .01: their first beats both at 0, where S1 listens; their second at
       // 5940 s and 6000 s, past it. S1 hears the two as one, its notes of one length; tapClock compares 64 ticks)

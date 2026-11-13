@@ -117,6 +117,22 @@ describe('the library', () => {
   });
 });
 
+// (#674: v0.23.0's move onto sync harm bite mood put wail on lament's point and haenschen on weinet's; a frontend that
+// finds a motif by its point, Jambot's lead, found one of each pair only)
+describe('the motifs', () => {
+  it('are each found first at each of their own points, alone', () => {
+    const repository = createRepository(LIBRARY);
+    const motifs = ofFacet('motif');
+    expect(motifs.length).toBeGreaterThan(40);
+    for (const f of motifs)
+      for (const { point } of f.association.filter((p) => p.facet === 'motif')) {
+        const [first, second] = repository.query(point, 2, {}, { facet: 'motif' });
+        expect([first!.fragment.id, first!.distance], f.id).toEqual([f.id, 0]);
+        expect(second!.distance, `${f.id}: ${second!.fragment.id} as near`).toBeGreaterThan(0);
+      }
+  });
+});
+
 describe('the points proposed for two more presets (#349)', () => {
   // (the library as it was before them: their new fragments out, and the associations they added to old ones)
   const ADDED: Record<string, StylePoint> = {

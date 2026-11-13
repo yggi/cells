@@ -99,7 +99,7 @@ export const TIERS = [
     },
     {
         name: 'Melody and harmony',
-        concept: 'tables: over=, scale() and a scan of steps, shift=; show= and size=; motifs: splicing, reuse, degrees (^n); chords and a progression: accidentals, a sum of pitches',
+        concept: 'tables: over=, scale() and a scan of steps, shift=; a key on its tonic, the library key (&key from diatonic(mode=minor) &tonic, #699); show= and size=; motifs: splicing, reuse, degrees (^n); chords and a progression: accidentals, a sum of pitches',
         forms: [
             'attribute over',
             'attribute shift',
