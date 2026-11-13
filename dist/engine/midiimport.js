@@ -498,8 +498,7 @@ function meterOf(smf, perQuarter, weights, quarters, length, free) {
         steps: Math.ceil(length / bar) * bar,
         lines: [
             `# the file's meter, ${sig}${warp ? `, its lean repeating each ${period === bar ? 'bar' : `${period} ${tap} steps`}` : ''}; laps=, its bars, so the piece ends`,
-            `&bar meter("${sig}") step=&tempo${warp} laps=${Math.ceil(length / bar)}`,
-            `&tempo step=${rate}`,
+            `&bar meter("${sig}") step=${rate}${warp} laps=${Math.ceil(length / bar)}`,
         ],
     };
 }

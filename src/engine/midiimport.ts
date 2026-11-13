@@ -6,10 +6,13 @@ const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
  * - **The grid**: the coarsest step (a quarter note, an eighth, a triplet … down to a 64th) that every start falls on,
  *   within a 96th of a quarter (and an eighth of the step); a file played in, whose starts fall on none, is laid on sixteenths and says how many
  *   notes moved.
- * - **The time**: one meter for the whole piece, `&tempo scan(…) pulse=16n step=free(…bpm) laps=1`, a step each grid
- *   step (`pulse=` its note value, so its bpm counts quarters: decision 040), each as long as the file's tempo map makes it (a
- *   scan's steps are its weights against their mean), so a tempo change is a change of weight, as BWV 847 writes its
- *   own; laps=1, so the piece ends. Every line taps it by the pulse (`step=pulse`, `step=pulse/2`).
+ * - **The time**: the file's meter where it has one (#760): one time signature at its start, a grid step that divides
+ *   the bar, and grid steps whose lengths repeat within a bar: `&bar meter("3/4") step=…bpm laps=…`, the steps' unequal
+ *   lengths as `swing=` (a pair, or pairs at the level above) or `bend=` (decision 080), laps= its bars, so the piece
+ *   ends; every line taps the grid by its note value (`step=8n`). It is kept only if it plays every note when the
+ *   scan below does (within a microsecond); otherwise, and for a file whose tempo changes, one scan for the whole
+ *   piece, `&tempo scan(…) pulse=16n step=free(…bpm) laps=1`, a step each grid step, each as long as the file's tempo
+ *   map makes it, so a tempo change is a change of weight, as BWV 847 writes its own; every line taps it by the pulse.
  * - **The lines**: a line a track and channel (a format 0 file's channels apart), named after the track. Notes that start
  *   and end together are a chord; one that overlaps another goes in a line of its own beside it (`&lead2`), so every
  *   note is written. A melodic note is its key in semitones from C4, on a voice at C4; channel 10 is drums, each note
@@ -331,7 +334,9 @@ export function cellsFromMidi(
     const text = [
       // (where the file came from and on what terms: comments the piece keeps)
       ...(credit.length ? [...credit.map((l) => `# ${l}`), ''] : []),
-      ...(time.lines.length ? time.lines : [`# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`, tempo]),
+      ...(time.lines.length
+        ? time.lines
+        : [`# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`, tempo]),
       '',
       ...body,
       '',
@@ -660,7 +665,14 @@ const shortly = (x: number) => String(Number(x.toFixed(6))).replace(/^0\./, '.')
  * The bpm counts the signature's beats (decision 040); `laps=` its bars, so the piece ends. The lines tap the grid's note
  * value. Null where the file has no one signature, its grid no note value, or its tempo map no repeat.
  */
-function meterOf(smf: Smf, perQuarter: number, weights: readonly number[], quarters: number, length: number, free: boolean): { lines: string[]; tap: string; steps: number } | null {
+function meterOf(
+  smf: Smf,
+  perQuarter: number,
+  weights: readonly number[],
+  quarters: number,
+  length: number,
+  free: boolean,
+): { lines: string[]; tap: string; steps: number } | null {
   const tap = TAPS[perQuarter];
   const sigs = [...new Set(smf.meters.map((m) => `${m.num}/${m.den}`))];
   if (!tap || sigs.length !== 1 || smf.meters[0]!.tick !== 0) return null;
@@ -693,8 +705,8 @@ function meterOf(smf: Smf, perQuarter: number, weights: readonly number[], quart
     steps: Math.ceil(length / bar) * bar,
     lines: [
       `# the file's meter, ${sig}${warp ? `, its lean repeating each ${period === bar ? 'bar' : `${period} ${tap} steps`}` : ''}; laps=, its bars, so the piece ends`,
-      `&bar meter("${sig}") step=&tempo${warp} laps=${Math.ceil(length / bar)}`,
-      `&tempo step=${rate}`,
+      // (its rate on the meter's own line, as the scan wrote its own: one line, no cell more than the file's time needs)
+      `&bar meter("${sig}") step=${rate}${warp} laps=${Math.ceil(length / bar)}`,
     ],
   };
 }
