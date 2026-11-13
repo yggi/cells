@@ -361,11 +361,14 @@ export function cellsFromMidi(
   const time: { lines: string[]; tap: string } = { lines: [], tap: 'pulse' };
   const asMapped = flatWith();
   let flat = asMapped;
-  if (metered) {
-    Object.assign(time, metered);
+  for (const option of metered?.options ?? []) {
+    Object.assign(time, { lines: option, tap: metered!.tap });
     const asMetered = flatWith();
-    if (sameTimes(asMapped, asMetered)) flat = asMetered;
-    else Object.assign(time, { lines: [], tap: 'pulse' });
+    if (sameTimes(asMapped, asMetered)) {
+      flat = asMetered;
+      break;
+    }
+    Object.assign(time, { lines: [], tap: 'pulse' });
   }
   let source = flat;
   let folded = false;
@@ -654,7 +657,7 @@ function sameTimes(a: string, b: string): boolean {
 const TAPS: Readonly<Record<number, string>> = { 0.5: '2n', 1: '4n', 2: '8n', 3: '8t', 4: '16n', 6: '16t', 8: '32n', 12: '32t', 16: '64n' };
 
 /** A share or a weight, written short: `.666667`, `2`. */
-const shortly = (x: number) => String(Number(x.toFixed(6))).replace(/^0\./, '.');
+const shortly = (x: number, digits = 6) => String(Number(x.toFixed(digits))).replace(/^0\./, '.');
 
 /**
  * The meter a file has, where its time is one (#760): its signature (its one time signature, from its start), its rate,
@@ -672,7 +675,7 @@ function meterOf(
   quarters: number,
   length: number,
   free: boolean,
-): { lines: string[]; tap: string; steps: number } | null {
+): { options: string[][]; tap: string; steps: number } | null {
   const tap = TAPS[perQuarter];
   const sigs = [...new Set(smf.meters.map((m) => `${m.num}/${m.den}`))];
   if (!tap || sigs.length !== 1 || smf.meters[0]!.tick !== 0) return null;
@@ -687,14 +690,17 @@ function meterOf(
   if (!period) return null;
   const w = weights.slice(0, period);
   const level = TAPS[perQuarter / 2];
-  const warp =
+  // (each lean written short, to three digits, and as the weights give it, to six: the caller keeps the first that
+  // plays the file's notes, so a swing exported at .6 reads .6, not the .599999 its tempo map's rounded weights make)
+  const warpTo = (digits: number) =>
     period === 1
       ? ''
       : period === 2
-        ? ` swing=${tap}:${shortly(w[0]! / (w[0]! + w[1]!))}`
+        ? ` swing=${tap}:${shortly(w[0]! / (w[0]! + w[1]!), digits)}`
         : period === 4 && level && same(w[0]!, w[1]!) && same(w[2]!, w[3]!)
-          ? ` swing=${level}:${shortly((w[0]! + w[1]!) / (w[0]! + w[1]! + w[2]! + w[3]!))}`
-          : ` bend=${tap}:&(${w.map(shortly).join(' ')})`;
+          ? ` swing=${level}:${shortly((w[0]! + w[1]!) / (w[0]! + w[1]! + w[2]! + w[3]!), digits)}`
+          : ` bend=${tap}:&(${w.map((x) => shortly(x, digits)).join(' ')})`;
+  const warps = [...new Set([warpTo(3), warpTo(6)])];
   // (the rate the scan writes, its quarters a minute as it rounds them, counted in the signature's beats: a bar is
   // num/den whole notes, 4·num/den quarters, its beats as many as the meter has)
   const bpm = (quarters * meter.beats.length) / ((4 * num) / den);
@@ -703,10 +709,10 @@ function meterOf(
   return {
     tap,
     steps: Math.ceil(length / bar) * bar,
-    lines: [
+    options: warps.map((warp) => [
       `# the file's meter, ${sig}${warp ? `, its lean repeating each ${period === bar ? 'bar' : `${period} ${tap} steps`}` : ''}; laps=, its bars, so the piece ends`,
       // (its rate on the meter's own line, as the scan wrote its own: one line, no cell more than the file's time needs)
       `&bar meter("${sig}") step=${rate}${warp} laps=${Math.ceil(length / bar)}`,
-    ],
+    ]),
   };
 }

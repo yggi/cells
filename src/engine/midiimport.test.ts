@@ -96,6 +96,42 @@ describe('a MIDI file as a piece', () => {
     expect(heard.map((n) => n.at.toFixed(3))).toEqual(['0.000', '0.500', '1.000', '2.000']);
   });
 
+  it('writes the file’s meter where it has one: its signature, its rate, its lines tapping the grid; the same notes (#760)', () => {
+    const line = notes(1, [
+      [60, 0, 48],
+      [62, 48, 96],
+      [64, 96, 192],
+      [65, 192, 288],
+      [67, 288, 336],
+      [69, 336, 384],
+      [71, 384, 480],
+      [72, 480, 576],
+    ]);
+    const plain = file([{ notes: line, bends: [], programs: [] }]);
+    const metered: Smf = { ...plain, meters: [{ tick: 0, num: 3, den: 4 }] };
+    const source = cellsFromMidi(metered, 'test').source;
+    expect(source).toMatch(/^&bar meter\("3\/4"\) step=free\(120bpm, 72\.\.180\) laps=2$/m);
+    expect(source).toMatch(/ step=8n /);
+    expect(notesOf(source)).toEqual(notesOf(cellsFromMidi(plain, 'test').source));
+  });
+
+  it('writes a tempo map that leans each pair of eighths alike as swing=, the same notes (#760)', () => {
+    const line = notes(
+      1,
+      Array.from({ length: 16 }, (_, i): [number, number, number] => [60 + (i % 5), i * 48, i * 48 + 48]),
+    );
+    // (each eighth's tempo long then short, as cells exports a swing, #558: the pair leans 3:2)
+    const tempos = Array.from({ length: 16 }, (_, i) => ({ tick: i * 48, micros: i % 2 ? 400_000 : 600_000 }));
+    const swung: Smf = { ...file([{ notes: line, bends: [], programs: [] }], tempos), meters: [{ tick: 0, num: 4, den: 4 }] };
+    const source = cellsFromMidi(swung, 'test').source;
+    expect(source).toMatch(/^&bar meter\("4\/4"\) step=free\(120bpm, 72\.\.180\) swing=8n:\.6 laps=2$/m);
+    expect(
+      notesOf(source)
+        .map((n) => n.at.toFixed(3))
+        .slice(0, 4),
+    ).toEqual(['0.000', '0.300', '0.500', '0.800']);
+  });
+
   it('writes no card: the title, tags and description go in the frontmatter, and the text compiles with no diagnostic', () => {
     const smf = file(
       [
