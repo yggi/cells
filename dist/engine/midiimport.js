@@ -231,13 +231,14 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
     const time = { lines: [], tap: 'pulse' };
     const asMapped = flatWith();
     let flat = asMapped;
-    if (metered) {
-        Object.assign(time, metered);
+    for (const option of metered?.options ?? []) {
+        Object.assign(time, { lines: option, tap: metered.tap });
         const asMetered = flatWith();
-        if (sameTimes(asMapped, asMetered))
+        if (sameTimes(asMapped, asMetered)) {
             flat = asMetered;
-        else
-            Object.assign(time, { lines: [], tap: 'pulse' });
+            break;
+        }
+        Object.assign(time, { lines: [], tap: 'pulse' });
     }
     let source = flat;
     let folded = false;
@@ -468,7 +469,7 @@ function sameTimes(a, b) {
     return !!x && !!y && x.length === y.length && x.every((n, i) => n.voice === y[i].voice && near(n.at, y[i].at) && near(n.dur, y[i].dur) && near(n.freq, y[i].freq));
 }
 const TAPS = { 0.5: '2n', 1: '4n', 2: '8n', 3: '8t', 4: '16n', 6: '16t', 8: '32n', 12: '32t', 16: '64n' };
-const shortly = (x) => String(Number(x.toFixed(6))).replace(/^0\./, '.');
+const shortly = (x, digits = 6) => String(Number(x.toFixed(digits))).replace(/^0\./, '.');
 function meterOf(smf, perQuarter, weights, quarters, length, free) {
     const tap = TAPS[perQuarter];
     const sigs = [...new Set(smf.meters.map((m) => `${m.num}/${m.den}`))];
@@ -486,21 +487,22 @@ function meterOf(smf, perQuarter, weights, quarters, length, free) {
         return null;
     const w = weights.slice(0, period);
     const level = TAPS[perQuarter / 2];
-    const warp = period === 1
+    const warpTo = (digits) => period === 1
         ? ''
         : period === 2
-            ? ` swing=${tap}:${shortly(w[0] / (w[0] + w[1]))}`
+            ? ` swing=${tap}:${shortly(w[0] / (w[0] + w[1]), digits)}`
             : period === 4 && level && same(w[0], w[1]) && same(w[2], w[3])
-                ? ` swing=${level}:${shortly((w[0] + w[1]) / (w[0] + w[1] + w[2] + w[3]))}`
-                : ` bend=${tap}:&(${w.map(shortly).join(' ')})`;
+                ? ` swing=${level}:${shortly((w[0] + w[1]) / (w[0] + w[1] + w[2] + w[3]), digits)}`
+                : ` bend=${tap}:&(${w.map((x) => shortly(x, digits)).join(' ')})`;
+    const warps = [...new Set([warpTo(3), warpTo(6)])];
     const bpm = (quarters * meter.beats.length) / ((4 * num) / den);
     const rate = free ? `free(${short(bpm, 9)}bpm, ${Math.floor(bpm * 0.6)}..${Math.ceil(bpm * 1.5)})` : `${short(bpm, 9)}bpm`;
     return {
         tap,
         steps: Math.ceil(length / bar) * bar,
-        lines: [
+        options: warps.map((warp) => [
             `# the file's meter, ${sig}${warp ? `, its lean repeating each ${period === bar ? 'bar' : `${period} ${tap} steps`}` : ''}; laps=, its bars, so the piece ends`,
             `&bar meter("${sig}") step=${rate}${warp} laps=${Math.ceil(length / bar)}`,
-        ],
+        ]),
     };
 }
