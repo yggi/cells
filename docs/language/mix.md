@@ -73,6 +73,20 @@ Lines at several rates, summed, drift as music's slow fluctuations do, the weigh
 
 A mix with a voice is a sound, as it was: which a mix sums, sounds or values, is told by whether a voice is in it.
 
+## Notes with their levels: a product with no voice, named
+
+A product with no voice in it and a pitch, given a cell of its own, is **notes with their levels** ([decision 087](https://github.com/yggi/cells/blob/main/docs/decisions/087-a-named-product-is-its-parentheses.md)): what a voice plays, named. In a product with a voice it is its own product, as written in parentheses, so naming a group of factors plays what the group plays in place (law L17):
+
+```cells
+&notes step=4 0 2 4 7
+&accent map=amp step=4 1 .5 .8 .5
+&phrase [&notes * &accent]            # notes with their levels: no voice yet
+&glass s=tri loop=C4
+&out map=sample [&phrase * &glass * .3]   # plays [(&notes * &accent) * &glass * .3]
+```
+
+It is named whole (`&phrase[<<]` or `&phrase^2` is an error, for now), and it is no value: read as a parameter's factor, or played with no voice, it says what it is. One line of plain numbers times numbers stays a weighted value, as above (079).
+
 ## A gate: a product with a name
 
 A product that plays a voice can be written as a cell of its own, a **gate** ([decision 023](https://github.com/yggi/cells/blob/main/docs/decisions/023-gate-spelling.md)):

@@ -1,7 +1,7 @@
 /** Phase 5: what the physical and sounding cells refer to, and what their values say — resonators, tapes, FM, moving parameters, envelopes, grids. */
 import { AXES, SLOTS } from '../style';
 import { BODIES, CV_LAPS, isMidiCard, ROOT } from '../program';
-import { sortOfCells } from './sorts';
+import { notesCells, sortOfCells } from './sorts';
 import { FILTER_MODELS, filterModel, MOVING_PARAMS } from '../attributes';
 import { DOUGH_SOURCES } from '../dough-params';
 import { refsOf } from '../readers';
@@ -109,6 +109,7 @@ export function checkCells(
   }
   // parameters that move: only those that can, through cells that exist; one envelope at most
   const sortOf = sortOfCells(ctx, decls);
+  const isNotes = notesCells(ctx, decls);
   for (const d of decls.values())
     for (const [key, pc] of Object.entries(d.paramCells ?? {})) {
       // (an envelope's slots move on a map=adsr cell, and s= as a blend of two waves: #411)
@@ -129,6 +130,12 @@ export function checkCells(
         const fc = cells.get(f.name);
         if (!fc) unknownCell(f.name, f.span);
         else if (fc.map?.kind === 'adsr') envs++;
+        // (notes with their levels are what a voice plays, not a value: decision 087)
+        else if (isNotes(f.name))
+          error(
+            `${key}= * &${f.name}: &${f.name} is notes with their levels (a product with no voice), what a voice plays, not a value that moves: multiply it by a voice in a mix`,
+            f.span,
+          );
         // (a factor is a CV: a voice isn't one, #426, and one turning at an audio rate is read at CV_LAPS, #427)
         else if (sortOf(f.name) === 'signal')
           warn(`${key}= * &${f.name}: &${f.name} is a sound, not a value that moves, and moves nothing here. A CV is a braid: &${f.name} loop=.5 sin(12)`, f.span);

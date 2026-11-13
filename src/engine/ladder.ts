@@ -34,6 +34,8 @@ export const STUBS: ReadonlySet<string> = new Set([
  * (decision 047): it goes on a tier with a piece whose cells it clusters.
  */
 export const PENDING: ReadonlySet<string> = new Set([
+  // notes with their levels, named (decision 087, #740): its piece is fiveto12's head, rung 5 of #691
+  'sort pitch: a product with no sound in it and a pitch',
   // (a slider's unit as an argument, the core's spelling, decision 069: toCore writes it, a tutorial piece doesn't, the
   // examples staying in their normal form, the unit written after the number)
   'free free(v, lo..hi, unit=bpm)',
