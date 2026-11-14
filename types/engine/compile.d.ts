@@ -4,4 +4,4 @@ import { type CompileOptions, type CompileResult, type Env } from './program';
  * (`options.locked`): what compiles is the expansion (`use.ts`), and what a used line says is said on the `from` line it
  * came through.
  */
-export declare function compileSource(source: string, env?: Env, options?: CompileOptions): CompileResult;
+export declare function compileSource(written: string, env?: Env, options?: CompileOptions): CompileResult;

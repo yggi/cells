@@ -134,6 +134,8 @@ function tonics(ctx: Ctx, decls: Map<string, CellDecl>): void {
       ctx.unknownCell(d.tonic.name, d.tonic.span);
       continue;
     }
+    // (a fill not yet answered, a fragment's `&tonic fill()` compiled alone: what its code writes is its tonic, decision 085)
+    if (t.fill && t.braid.kind === 'blank') continue;
     const tokens = t.braid.kind === 'list' ? t.braid.tokens : [];
     const notes = tokens.every((k) => k.subdivide === 1 && k.atom.kind === 'note' && Number.isInteger(k.atom.value)) ? tokens : [];
     const first = notes[0]?.atom;
@@ -167,6 +169,8 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
     }
     // (a mode written as its table, decision 069 §6's keys, the owner's (a): its steps, `scan(2 1 2 2 1 2 2)` or
     // `0 2 3 5 7 8 10`, the tonic still the cell's; the core writes a key so, the mode out and the tonic a cell read)
+    // (a fill not yet answered, a fragment's `&mode fill()` compiled alone: what its code writes is its mode, decision 085)
+    if (m.fill && m.braid.kind === 'blank') continue;
     const table = !m.step ? modeTable(m) : null;
     if (table) {
       decls.set(name, { ...d, braid: { ...d.braid, steps: table } });

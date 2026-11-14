@@ -4,6 +4,7 @@ import { SHOWS } from '../parser/cell';
 import { ATTRIBUTES, rolesText, VOICE_PARAMS, type Role } from '../attributes';
 import { PLUGIN_SYNTAX, type ShowPlugin } from '../plugins';
 import { isMidiCard, type Clock, type ResolvedCell } from '../program';
+import { streamClockOf } from '../fills';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
 
@@ -32,7 +33,7 @@ export function checkRoles(
     if (typeof c.params.play === 'string') r.add('head');
     if (typeof c.params.body === 'string') r.add('resonator');
     if (typeof c.params.scope === 'string') r.add('scope');
-    if (typeof c.params.law === 'string') r.add('law');
+    if (typeof c.params.law === 'string' || streamClockOf(cells, c) !== undefined) r.add('law');
     if (c.gate) r.add('gate');
     if (c.sink) r.add('card');
     if (c.note) r.add('note');
@@ -72,7 +73,7 @@ export function checkRoles(
       // anchor= on a law: it belongs on the clock the law reads its day through (over=&day)
       if (k === 'anchor' && has.has('law'))
         warn(
-          `anchor= sets the clock a law reads, not the law: write it on ${c.over ? `&${c.over}` : 'its day (over=&day, a clock loop=1d)'} — the law on &${d.name} doesn't read it`,
+          `anchor= sets the clock a law reads, not the law: write it on ${c.over ? `&${c.over}` : streamClockOf(cells, c) ? `&${streamClockOf(cells, c)}` : 'its day (over=&day, a clock loop=1d)'} — the law on &${d.name} doesn't read it`,
           span,
         );
       else if (k === 'pan' && (c.mix || c.sink || isMidiCard(c)))

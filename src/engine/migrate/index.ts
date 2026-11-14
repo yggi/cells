@@ -104,7 +104,7 @@ export const migrations =
     ...parts(source, result),
     ...movedIds(source, options.resolve),
     ...mainMeters(source, result),
-    ...laws(source, options.resolve),
+    ...laws(source),
   ];
 
 /** A text with every retired form written as it is now, one rewrite at a time, each playing the same notes; the steps are what each did. */

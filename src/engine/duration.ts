@@ -10,7 +10,7 @@
  * on a clock of its own, set in seconds or hertz (a vibrato, `pitch=&(map=lin loop=5.5 …)`;
  * a tide of 19 s), is the sound's, not the form's: it doesn't set the piece's length (#376).
  */
-import { lawOf, marksOf } from './fills';
+import { lawIn, marksOf, streamClockOf } from './fills';
 import { codeShifts, type CompileResult } from './program';
 import type { FreeSpec } from './ast';
 import { clocking, ownLength, selects, turnLap } from './clocking';
@@ -53,7 +53,7 @@ const gcd = (a: bigint, b: bigint): bigint => (b === 0n ? a : gcd(b, a % b));
 
 export function pieceTime(result: CompileResult, seen?: number[]): PieceTime {
   // a law's piece (law=fiveto12): exactly its cycle (a day), from its plugin-fragment (decision 085)
-  const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
+  const law = lawIn(result);
   if (law) {
     const day = law.cycle * law.stepSeconds;
     return { ends: day, cycle: day, chance: false, longest: day };
@@ -154,7 +154,7 @@ export function durationText(seconds: number): string {
  */
 export function sections(result: CompileResult): { at: number; label: string }[] | null {
   // a law's sections: its mark's laps (fiveto12's twelve blocks, each a mode and a moment of the day)
-  const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
+  const law = lawIn(result);
   if (law) return marksOf(law);
   const statics = codeShifts(result);
   const clk = clocking(result, statics);
@@ -193,7 +193,9 @@ export function mainTempo(result: CompileResult): { cell: string; free: FreeSpec
 /** A piece anchored to the clock (anchor=11.55, hours.minutes): where the day stands in it at `now`, in seconds; null without an anchor. */
 export function anchoredAt(result: CompileResult, now: Date): number | null {
   // (a clock's anchor: one left on a law is ignored there, with a warning, so it doesn't move the cursor either)
-  const anchor = [...result.cells.values()].find((c) => typeof c.params.anchor === 'number' && c.params.law === undefined)?.params.anchor as number | undefined;
+  // (an anchor= left on a law, its head or the old law= cell, is no clock's: #160, #792)
+  const anchor = [...result.cells.values()].find((c) => typeof c.params.anchor === 'number' && c.params.law === undefined && streamClockOf(result.cells, c) === undefined)?.params
+    .anchor as number | undefined;
   if (anchor === undefined) return null;
   const sec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   const at = Math.floor(anchor) * 3600 + Math.round((anchor % 1) * 100) * 60;
