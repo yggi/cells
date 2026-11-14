@@ -90,6 +90,16 @@ export class LineError extends Error {
   }
 }
 
+/**
+ * Where a place in a joined line (0-based, continued lines joined by a space) is in the source: the line it is written
+ * on and its column there (1-based). `parts` says where each source line starts in the joined one.
+ */
+export function placeIn(parts: readonly { line: number; start: number }[], at: number): { line: number; col: number } {
+  let part = parts[0]!;
+  for (const p of parts) if (p.start <= at) part = p;
+  return { line: part.line, col: at - part.start + 1 };
+}
+
 export class LineScanner {
   i = 0;
   /**
@@ -121,10 +131,7 @@ export class LineScanner {
   }
   /** The source position of text from `start` to here (across continued lines). */
   place(start: number): Span {
-    const at = start + this.offset;
-    let part = this.parts[0];
-    for (const p of this.parts) if (p.start <= at) part = p;
-    return { line: part.line, col: at - part.start + 1, len: Math.max(1, this.i - start) };
+    return { ...placeIn(this.parts, start + this.offset), len: Math.max(1, this.i - start) };
   }
 
   skipSpace(): void {
@@ -137,8 +144,9 @@ export class LineScanner {
   peek(): string {
     return this.text[this.i] ?? '';
   }
+  /** The source position of what was read from `start` to here: on the line it is written on, a continued one too (#764). */
   span(start: number): Span {
-    return { line: this.line, col: start + 1 + this.offset, len: Math.max(1, this.i - start) };
+    return this.place(start);
   }
   fail(message: string, start = this.i, len = 1): never {
     throw new LineError(message, start + this.offset, len);
@@ -261,7 +269,7 @@ export class LineScanner {
     const name = `λ${this.line}_${open + this.offset}`;
     if (!this.body) this.fail('An unnamed cell &( … ) here has no parser for its body', open - 1, 2);
     const inner = this.within(this.text.slice(open + 1, close), open + 1, this.depth + 1);
-    const decl = this.body(inner, { name, pick: null, shift: 0, span: { line: this.line, col: open + this.offset, len: close - open + 2 } });
+    const decl = this.body(inner, { name, pick: null, shift: 0, span: { ...placeIn(this.parts, open + this.offset - 1), len: close - open + 2 } });
     this.lambdas.push({ ...decl, lambda: this.text.slice(open + 1, close).trim() });
     this.i = close + 1;
     return name;

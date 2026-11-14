@@ -2,7 +2,7 @@ import { restyled } from "../migrate/axes.js";
 import { applyBases } from "./base.js";
 import { isNote } from "../ast.js";
 import { isPieceFile, readPiece } from "../piecefile.js";
-import { IDENT, LineError, LineScanner, stripComment } from "./scanner.js";
+import { IDENT, LineError, LineScanner, placeIn, stripComment } from "./scanner.js";
 import { parseBody, parseCell, SHOWS } from "./cell.js";
 import { splitPlugins } from "../plugins.js";
 import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
@@ -92,7 +92,7 @@ export function parse(whole, { old = false } = {}) {
         catch (e) {
             if (!(e instanceof LineError))
                 throw e;
-            diagnostics.push({ severity: 'error', message: e.message, span: { line: lineNo, col: e.col + 1, len: e.len } });
+            diagnostics.push({ severity: 'error', message: e.message, span: { ...placeIn(parts, e.col), len: e.len } });
             const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(text)?.[1];
             if (name)
                 broken.push(name);
