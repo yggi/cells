@@ -30,6 +30,7 @@ Each law below names its test, tagged in the test's file as `// law L<n>`, and w
 | L16 | **The measure never grows:** no step of Normalise or Shorten raises the structure measure as written (decision 049), but naming the interface, which writes the named cell. | `src/engine/confluence.slow.test.ts` | every example written in | slow | a Lyapunov function | law |
 | L17 | **Naming a sub-product plays as its parentheses do:** a product's factors with no sound, named in a cell of their own, play what they play written in place (decision 087), but where decision 079 reads the cell as a weighted value (one line of plain numbers times numbers). | `src/engine/naming.test.ts` | every example (126 groups in 60 of them; 57 left to 079) | quick | PLT: let-substitution | law |
 | L18 | **Naming a number plays as the number:** a plain number in a mix, given a cell of its own and named, plays what it played (decision 088). | `src/engine/numbercell.test.ts` | every example (the numbers of its own mixes) | quick | PLT: let-substitution | law |
+| L19 | **The order of lines is irrelevant:** a piece's lines in any other order play what they played (decision 091). | `src/engine/lineorder.test.ts` | every example, in three seeded orders | quick | an unordered set of definitions; CT: a commutative monoid | law |
 
 L6 to L10 are checked over texts written for them, not every example; #632 widens each.
 
