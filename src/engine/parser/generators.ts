@@ -1,5 +1,5 @@
 /** Generators: a braid written as a rule — scan(…), even(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
-import type { Braid, Ref, Span, WaveShape } from '../ast';
+import type { Braid, EvenArgs, Ref, Span, WaveShape } from '../ast';
 import { noteName, noteValue, type Signature } from '../meter';
 import { syntax, type Syntax } from './syntax';
 import type { LineScanner } from './scanner';
@@ -10,6 +10,13 @@ import { TONAL_SCALES } from '../../theory/tonal';
 
 /** scan(…): intervals, separated by spaces or commas; any positive numbers. */
 function parseScan(s: LineScanner, start: number): Braid {
+  const braid = scanTable(s, start);
+  if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+  return braid;
+}
+
+/** `scan(…)` read from `(`, as a generator or as scale(…)'s table. */
+function scanTable(s: LineScanner, start: number): Extract<Braid, { kind: 'scan' }> {
   s.i++; // (
   const steps: number[] = [];
   for (;;) {
@@ -62,9 +69,7 @@ function parseScan(s: LineScanner, start: number): Braid {
   }
   s.expect(')', `')' to close scan(…)`);
   if (steps.length === 0) s.fail('scan(…) needs at least one interval', start, s.i - start);
-  const span = s.span(start);
-  if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
-  return { kind: 'scan', steps, span };
+  return { kind: 'scan', steps, span: s.span(start) };
 }
 
 /**
@@ -361,6 +366,9 @@ function parseEuclid(s: LineScanner, start: number): Braid {
   return { kind: 'list', tokens, span } as Braid;
 }
 
+/** A diatonic mode's name, as even(7, 12, …)'s phase (braid.ts reads the same words as a step). */
+const MODE_NAME = new RegExp(`(?:${Object.keys(MODE_WORDS).join('|')})(?![A-Za-z0-9_])`, 'y');
+
 /**
  * even(k, n, phase): the maximally even necklace, k places in n, a table (decision 072): each place at
  * floor((j·n + phase) / k), the same table as the scan of its intervals. Its phase is its mode, 0 … k − 1, each phase one
@@ -368,12 +376,74 @@ function parseEuclid(s: LineScanner, start: number): Braid {
  * tresillo) and a meter's groups; euclid(k, n, r) is the same places as a rhythm of n steps, turned as Strudel's.
  */
 function parseEven(s: LineScanner, start: number): Braid {
-  const { args, span } = numbers(s, 'even', start);
+  const braid = evenTable(s, start);
+  if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+  return braid;
+}
+
+/**
+ * What is wrong with even(k, n, phase), or null: k places in n (1 ≤ k ≤ n), its phase a mode, 0 to k − 1. The parser
+ * asks it of numbers written, the compiler of numbers read from cells (decision 089).
+ */
+export function evenProblem(k: number, n: number, phase: number): string | null {
+  if (!(Number.isInteger(k) && Number.isInteger(n) && k >= 1 && n >= k)) return 'even(k, n): k places spread as evenly as they go over n (1 ≤ k ≤ n), even(k, n, phase) its mode';
+  if (!(Number.isInteger(phase) && phase >= 0 && phase < k)) return `even(${k}, ${n}, phase): the phase is a mode, 0 to ${k - 1}, each one place moved`;
+  return null;
+}
+
+/** even(k, n, phase)'s steps: the scan of its places' intervals. */
+export const evenSteps = (k: number, n: number, phase: number): number[] => intervals(evenPositions(k, n, phase), n);
+
+/**
+ * `even(k, n, phase)` read from `(`, as a generator or as scale(…)'s table: each argument a number or a cell that is one
+ * number (decision 089, #531), `even(7, 12, &mode)`. With a cell, compile reads it and sets the steps (declare.ts).
+ */
+export function evenTable(s: LineScanner, start: number): Extract<Braid, { kind: 'scan' }> {
+  s.i++; // (
+  const args: (number | Ref)[] = [];
+  const words: { at: number; len: number; index: number }[] = [];
+  for (;;) {
+    s.skipSpace();
+    if (s.peek() === '&') {
+      const at = s.i;
+      const r = s.cellRef('a cell that is one number, like even(7, 12, &mode)', 'in even(…)');
+      if (r.pick || r.shift) s.fail('even(…) reads a whole cell, one number: even(7, 12, &mode)', at, s.i - at);
+      args.push(r);
+    } else {
+      // (a mode's name, written in place, as a fragment's argument writes it: diatonic(mode=aeolian); its phase, the
+      // necklace's the diatonic's alone, checked below)
+      const at = s.i;
+      const word = s.match(MODE_NAME);
+      if (word !== null) words.push({ at, len: s.i - at, index: args.length });
+      args.push(word !== null ? MODE_WORDS[word]! : s.int('a number in even(…), or a cell that is one (&mode)', NUMBER_PLACES.evenArg, 'even'));
+    }
+    s.skipSpace();
+    if (s.peek() !== ',') break;
+    s.i++;
+  }
+  s.expect(')', "')' to close even(…)");
+  const span = s.span(start);
   const [k, n, phase = 0] = args;
-  if (args.length < 2 || args.length > 3 || !(k >= 1) || !(n >= k))
-    s.fail('even(k, n): k places spread as evenly as they go over n (1 ≤ k ≤ n), even(k, n, phase) its mode', start, span.len);
-  if (!(phase >= 0 && phase < k)) s.fail(`even(${k}, ${n}, phase): the phase is a mode, 0 to ${k - 1}, each one place moved`, start, span.len);
-  return { kind: 'scan', steps: intervals(evenPositions(k, n, phase), n), span };
+  if (args.length < 2 || args.length > 3) s.fail(evenProblem(0, 0, 0)!, start, span.len);
+  for (const w of words)
+    if (w.index !== 2 || k !== 7 || n !== 12)
+      s.fail(
+        w.index !== 2
+          ? "even(…): a mode's name is a phase, not a size; write a number"
+          : `even(…, …, ${s.text.slice(w.at, w.at + w.len)}): a mode's name is a phase of the diatonic, even(7, 12); here write its number (${MODE_WORDS[s.text.slice(w.at, w.at + w.len)]})`,
+        w.at,
+        w.len,
+      );
+  const num = (x: number | Ref | undefined) => (typeof x === 'number' ? x : null);
+  const [kn, nn, pn] = [num(k), num(n), num(phase)];
+  // (what the numbers written already say; the rest waits for the cells)
+  const sized = kn !== null && nn !== null;
+  const problem = sized ? evenProblem(kn, nn, pn ?? 0) : null;
+  if (problem) s.fail(problem, start, span.len);
+  if (sized && pn !== null) return { kind: 'scan', steps: evenSteps(kn, nn, pn), span };
+  const even: EvenArgs = { k: k!, n: n!, phase };
+  // (a placeholder until compile reads the cells: the necklace at phase 0 where its size is written)
+  return { kind: 'scan', steps: sized ? evenSteps(kn, nn, 0) : [1], span, even };
 }
 
 type Generator = (s: LineScanner, start: number) => Braid;
@@ -416,7 +486,7 @@ export const SCALE_KEY = 'key:λ';
  * through it, or a table of its own after over=. The old `scale(tonic, phase)` (a mode by number) still reads, with a
  * warning that says it by name.
  */
-export function parseScale(s: LineScanner, start: number): { steps: number[]; key: Ref; span: Span; mode?: Ref } {
+export function parseScale(s: LineScanner, start: number): { steps: number[]; key: Ref; span: Span; mode?: Ref; even?: EvenArgs } {
   s.i++; // (
   s.skipSpace();
   let steps: number[];
@@ -424,6 +494,7 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
   let tonicText = '0';
   let tonicRef: Ref | null = null;
   let modeRef: Ref | null = null;
+  let evenArgs: EvenArgs | null = null;
   const legacy = s.match(/-?[0-9]+/y);
   const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
   if (quoted !== null) {
@@ -464,14 +535,27 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
     s.warn(`scale(${tonic}, ${phase}) is written scale(${scaleOfPhase(phase)}, ${tonicName(tonic)}): the mode by name, then the tonic`, start, s.i - start);
   } else {
     const at = s.i;
-    if (s.peek() === '&') {
+    if (s.text.startsWith('even(', s.i) || s.text.startsWith('scan(', s.i)) {
+      // a table where a name stands (decision 089, #531): scale(even(7, 12, &mode), &tonic), any necklace a key;
+      // the names are its sugar, scale(dorian) the table scale(even(7, 12, 3))
+      const even = s.text.startsWith('even(', s.i);
+      s.i += 4;
+      const table = even ? evenTable(s, at) : scanTable(s, at);
+      steps = [...table.steps];
+      evenArgs = table.even ?? null;
+    } else if (s.peek() === '&') {
       // a diatonic mode read from a cell holding one (#363): `&mode major`, its phase; compile sets the steps (declare.ts)
       modeRef = s.cellRef('the cell that holds the mode, like scale(&mode, &tonic)', 'as the mode');
       steps = diatonicSteps(MODE_WORDS.major!);
     } else {
       const name = s.match(/[a-z]+/y);
       const scale = name ? SCALES[name] : undefined;
-      if (!scale) s.fail(`scale(name, tonic): a scale by name — ${Object.keys(SCALES).join(' ')}, or a cell holding a mode (&mode)`, at, Math.max(1, (name ?? '').length));
+      if (!scale)
+        s.fail(
+          `scale(name, tonic): a scale by name — ${Object.keys(SCALES).join(' ')}, a table (even(7, 12, &mode), scan(…)) or a cell holding a mode (&mode)`,
+          at,
+          Math.max(1, (name ?? '').length),
+        );
       steps = [...scale!.steps];
     }
     s.skipSpace();
@@ -517,7 +601,7 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
     paramSpans: {},
     braid: { kind: 'blank' },
   });
-  return { steps, key: { name: key, pick: null, shift: 0, span }, span, ...(modeRef ? { mode: modeRef } : {}) };
+  return { steps, key: { name: key, pick: null, shift: 0, span }, span, ...(modeRef ? { mode: modeRef } : {}), ...(evenArgs ? { even: evenArgs } : {}) };
 }
 
 /**
@@ -589,7 +673,7 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     syntax: syntax(
       'generator',
       'even(k, n) · even(k, n, phase)',
-      "k places spread as evenly as they go over n: a table (the scan of its intervals), its phase its mode, 0 to k − 1, each one place moved. The one generator under the diatonic (even(7, 12), its phases the seven modes), the pentatonic, the standard bell, the tresillo and a meter's groups (decision 072); euclid(k, n, r) is its places as a rhythm of n steps, turned as Strudel's.",
+      "k places spread as evenly as they go over n: a table (the scan of its intervals), its phase its mode, 0 to k − 1, each one place moved; each argument a number or a cell that is one (`even(7, 12, &mode)`, filled as the piece is built: decision 089), a mode's name the phase only of even(7, 12). The one generator under the diatonic (even(7, 12), its phases the seven modes), the pentatonic, the standard bell, the tresillo and a meter's groups (decision 072); euclid(k, n, r) is its places as a rhythm of n steps, turned as Strudel's.",
       ['&ionian even(7, 12, 5)', '&pentatonic even(5, 12)', '&minorPentatonic even(5, 12, 3)', '&tresillo even(3, 8, 2)'],
       'tables.md',
     ),
@@ -604,13 +688,15 @@ export const GENERATORS: Readonly<Record<string, { readonly parse: Generator; re
     syntax: syntax(
       'generator',
       'scale(name) · scale(name, tonic) · scale("tonic:name")',
-      `A scale by name over the 12, turned to its tonic (a note name, a number, a cell holding one, or free(…); C if left out): the scan of its steps over a key of its own. Its name may be a cell holding a diatonic mode (&mode dorian, its phase from the darkest: locrian 0 … lydian 6). Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`,
+      `A scale by name over the 12, turned to its tonic (a note name, a number, a cell holding one, or free(…); C if left out): the scan of its steps over a key of its own. Its name may be a cell holding a diatonic mode (&mode dorian, its phase from the darkest: locrian 0 … lydian 6), or a table: even(k, n, phase) or scan(…), its arguments numbers or cells that are one (decision 089), so any necklace is a key and the names its sugar (scale(dorian) is scale(even(7, 12, 3))). Its shift= walks its modes; the tonic transposes. The names: ${Object.keys(SCALES).join(' ')}. Strudel's spelling reads the same: scale("D:minor"), its words after colons (scale("F#:harmonic:minor")), with every scale tonal knows (${Object.keys(TONAL_SCALES).length} names: whole:tone, diminished, bebop:major, chromatic …); the octave is the voice's, not the scale's.`,
       [
         '&scale scale(minor, D)',
         '&blues scale(blues)',
         '&scale scale(dorian, free(2, 0..11))',
         '&key scale(dorian, &tonic)',
         '&key scale(&mode, &tonic)',
+        '&key scale(even(7, 12, &mode), &tonic)',
+        '&key scale(even(5, 12, 3), A)',
         '&scale scale("F#:harmonic:minor")',
       ],
       'tables.md',

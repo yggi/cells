@@ -94,3 +94,51 @@ describe('a mode read from a cell', () => {
     );
   });
 });
+
+// Decision 089, #531: a key from any necklace, scale(even(k, n, &mode), &tonic), even()'s arguments a cell that is one
+// number, filled as the piece is built; a mode's name a phase of the diatonic, even(7, 12), alone.
+describe('a key from any necklace: scale(even(…), &tonic)', () => {
+  for (const [word, phase] of Object.entries(MODE_WORDS))
+    it(`scale(even(7, 12, &mode), D) with &mode ${word}, or ${phase}, or written in place, plays scale(${scaleOfPhase(phase)}, D)`, () => {
+      const written = events(lines(`&key scale(${scaleOfPhase(phase)}, D)`, BODY));
+      for (const value of [word, String(phase)]) {
+        const read = lines('&mode ' + value, '&tonic D', '&key scale(even(7, 12, &mode), &tonic)', BODY);
+        expect(messages(read)).toEqual([]);
+        expect(events(read)).toEqual(written);
+        expect(events(lines(`&key scale(even(7, 12, ${value}), D)`, BODY))).toEqual(written);
+      }
+    });
+
+  it('any necklace a key, its mode from a cell: the pentatonic of even(5, 12), its phases its modes', () => {
+    const pitches = (src: string) => events(src).map((e) => Math.round(12 * Math.log2((e[2] as number) / 261.625565)));
+    // (phase 3: the minor pentatonic, 0 3 5 7 10)
+    expect(pitches(lines('&p 3', '&key scale(even(5, 12, &p), C)', BODY)).slice(0, 6)).toEqual([0, 3, 5, 7, 10, 12]);
+    expect(events(lines('&p 3', '&key scale(even(5, 12, &p), C)', BODY))).toEqual(events(lines('&key scale(even(5, 12, 3), C)', BODY)));
+    // (its size from a cell too)
+    expect(events(lines('&k 5', '&key scale(even(&k, 12, 3), C)', BODY))).toEqual(events(lines('&key scale(even(5, 12, 3), C)', BODY)));
+    // (and as a generator of its own, read through a key)
+    expect(events(lines('&p 3', '&m even(5, 12, &p)', '&key over=&m', BODY))).toEqual(events(lines('&m even(5, 12, 3)', '&key over=&m', BODY)));
+  });
+
+  it('a table where a name stands: scale(scan(…), D) is its steps', () => {
+    expect(events(lines('&key scale(scan(2 1 2 2 1 2 2), D)', BODY))).toEqual(events(lines('&key scale(minor, D)', BODY)));
+  });
+
+  it('a mode name outside the diatonic, a stepped cell, more than one number or a phase out of range: each says so', () => {
+    expect(messages(lines('&p dorian', '&key scale(even(5, 12, &p), C)', BODY))).toEqual([
+      "even(5, 12, …): a mode's name is a phase of the diatonic, even(7, 12); here write its number (3)",
+    ]);
+    expect(messages(lines('&key scale(even(5, 12, dorian), C)', BODY))[0]).toBe(
+      "even(…, …, dorian): a mode's name is a phase of the diatonic, even(7, 12); here write its number (3)",
+    );
+    expect(messages(lines('&k dorian', '&key scale(even(&k, 12, 0), C)', BODY))).toEqual(["even(…): a mode's name is a phase, not a size; write a number"]);
+    expect(messages(lines('&mode step=1m 3 4', '&key scale(even(7, 12, &mode), C)', BODY))).toEqual([
+      "&mode is read as even(…)'s phase: a stepped one is not yet a form; write one number (&mode 3)",
+    ]);
+    expect(messages(lines('&mode 3 4', '&key scale(even(7, 12, &mode), C)', BODY))).toEqual([
+      "&mode is read as even(…)'s phase: a cell that is one number, filled as the piece is built (&mode 3)",
+    ]);
+    expect(messages(lines('&mode 9', '&key scale(even(7, 12, &mode), C)', BODY))).toEqual(['even(7, 12, phase): the phase is a mode, 0 to 6, each one place moved']);
+    expect(messages(lines('&key scale(even(7, 12, &nowhere), C)', BODY)).join()).toMatch(/nowhere/);
+  });
+});

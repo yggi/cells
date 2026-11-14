@@ -46,6 +46,7 @@ export function otherReadsOf(d: CellDecl): string[] {
     d.step?.kind === 'driven' ? d.step.driver : d.step?.kind === 'tap' ? d.step.meter : null,
   ])
     if (r) out.push(r.name);
+  if (d.braid.kind === 'scan' && d.braid.even) for (const x of Object.values(d.braid.even)) if (typeof x !== 'number') out.push(x.name);
   for (const pc of Object.values(d.paramCells ?? {})) out.push(...pc.factors.map((f) => f.name));
   for (const st of Object.values(d.paramClocks ?? {})) if (st.kind === 'driven') out.push(st.driver.name);
   for (const [k, v] of Object.entries(d.params)) if (typeof v === 'string' && ATTRIBUTES[k]?.value === 'cell') out.push(v);

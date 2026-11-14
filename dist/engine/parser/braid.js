@@ -101,7 +101,7 @@ function parseAtom(s, depth) {
         return { kind: 'note', value: name, alter: 0, pitched: true };
     const mode = s.match(MODE_WORD);
     if (mode !== null)
-        return { kind: 'note', value: MODE_WORDS[mode], alter: 0 };
+        return { kind: 'note', value: MODE_WORDS[mode], alter: 0, mode: true };
     return s.fail(`Unexpected '${c}' — expected a number, a note name (C, F#), ~, [chord], &cell or key=value`);
 }
 function parseBracket(s, depth) {

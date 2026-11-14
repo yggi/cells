@@ -74,7 +74,14 @@ export interface Ref {
  * `&cell` splices the cell's braid; `&cell[i]`, `&cell[a:b]` splice part of it as turned (`&cell[$i]`: as written).
  */
 export type Atom =
-  | { readonly kind: 'note'; readonly value: number; readonly alter: number; readonly pitched?: true }
+  | {
+      readonly kind: 'note';
+      readonly value: number;
+      readonly alter: number;
+      readonly pitched?: true;
+      /** Written as a diatonic mode's name (`dorian`, #363): its value the phase of even(7, 12) it names. */
+      readonly mode?: true;
+    }
   /** `~`; `_` in a cell with base= is `keep`: the base's step, as it is there (parser/base.ts replaces it). */
   // (keep: =, the base's step, for parser/base.ts; hold: _, merged into the step before it by the parser)
   | { readonly kind: 'rest'; readonly keep?: true; readonly hold?: true }
@@ -202,9 +209,21 @@ export type Braid =
       readonly span: Span;
       /** `scale(&mode, …)` (#363): the cell its mode is read from, one mode (`&mode major`); compile sets the steps (declare.ts). */
       readonly mode?: Ref;
+      /**
+       * `even(k, n, phase)` with an argument read from a cell that is one number (decision 089, #531): `even(7, 12, &mode)`.
+       * Compile sets the steps (declare.ts); until then they are a placeholder.
+       */
+      readonly even?: EvenArgs;
     }
   /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
   | { readonly kind: 'wave'; readonly shape: WaveShape; readonly n: number; readonly span: Span };
+
+/** `even(k, n, phase)`'s arguments, each a number or a cell that is one number, filled as the piece is built (decision 089). */
+export interface EvenArgs {
+  readonly k: number | Ref;
+  readonly n: number | Ref;
+  readonly phase: number | Ref;
+}
 
 /** The waveforms a braid can be written as (sin(n), saw(n), tri(n), square(n)). */
 export type WaveShape = 'sin' | 'saw' | 'tri' | 'square';
