@@ -760,7 +760,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
 }
 
 /** In a product, a volume rather than a pitch: map=amp or db, or map=lin as a bare factor (algebra.ts). */
-const isLevel = (c: ResolvedCell, inSum: boolean) => c.map?.kind === 'amp' || c.map?.kind === 'db' || (c.map?.kind === 'lin' && !inSum);
+const isLevel = (c: ResolvedCell, inSum: boolean) => c.map?.kind === 'amp' || c.map?.kind === 'db' || ((c.map?.kind === 'lin' || !!c.sum) && !inSum);
 
 /** A step's rate as written (step=&x*3/2, cycle(&x), loop=, belt=); nothing when it is the driver's own. */
 const rateOf = (c: ResolvedCell): Transform => rateTransform(c.step!, typeof c.params.belt === 'number' ? c.params.belt : undefined);

@@ -3,7 +3,7 @@ import { valueSumOf } from '../valuesum';
 import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { SCALE_KEY } from '../parser/generators';
-import { PLAYED_AS, VOICE_PARAMS } from '../attributes';
+import { PLAYED_AS, VOICE_MAKERS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
 import { overdub } from '../parser/base';
@@ -331,7 +331,7 @@ export const VOICE_KIT = 'kit:voices';
  * numbers into them — or null when the piece has none.
  */
 export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Ref[]; cells: Map<string, Token[]> } | null {
-  const sounds = (d: CellDecl | undefined) => Object.keys(d?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+  const sounds = (d: CellDecl | undefined) => Object.keys(d?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
   const isVoiceDecl = (n: string) => sounds(decls.get(n));
   const plain = (r: { pick: unknown; shift: number; transpose?: number; degree?: number; values?: unknown }) => !r.pick && !r.shift && !r.transpose && !r.degree && !r.values;
   const asTable = new Set([...decls.values()].flatMap((d) => (d.over ? [d.over.name] : [])));
@@ -607,7 +607,7 @@ function stackOf(decls: ReadonlyMap<string, CellDecl>, d: CellDecl | undefined, 
     const x = decls.get(n);
     return (
       !!x &&
-      (!!x.gate || Object.keys(x.params).some((k) => VOICE_PARAMS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix'))
+      (!!x.gate || Object.keys(x.params).some((k) => VOICE_MAKERS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix'))
     );
   };
   // (said here, and left out of what the gate plays, so the product isn't refused again as two sounds)
@@ -632,7 +632,7 @@ function kitMembers(d: CellDecl | undefined): string[] | null {
 function voicesIn(decls: ReadonlyMap<string, CellDecl>, name: string, seen: readonly string[] = []): string[] {
   const d = decls.get(name);
   if (!d || seen.includes(name) || d.braid.kind !== 'list') return [];
-  const sounds = (n: string) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+  const sounds = (n: string) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
   const out = new Set<string>();
   for (const a of d.braid.tokens.flatMap((t) => leaves(t.atom))) {
     const refs = a.kind === 'ref' ? [a.name] : a.kind === 'mix' ? a.exprs.flatMap((e) => (e.k === 'ref' ? [e.ref.name] : [])) : [];

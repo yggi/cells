@@ -40,19 +40,19 @@ const MADE = {
     ],
 };
 const made = (facet, seed, section) => MADE[facet][Math.floor(chanceOf(`made|${seed}|${section}|${facet}`) * MADE[facet].length)];
-const repository = createRepository(LIBRARY);
+const seedRepository = createRepository(LIBRARY);
 function baseline(start, seed) {
     const alone = { meter: [], rhythm: [] };
     const missed = { meter: [], rhythm: [] };
     for (const point of walk(start, seed))
         for (const facet of FACETS) {
-            const first = repository.query(point, 1, {}, { facet })[0];
+            const first = seedRepository.query(point, 1, {}, { facet })[0];
             alone[facet].push(first.fragment.id);
             missed[facet].push(first.distance > MISS);
         }
     return { start: Object.keys(LOCK_IN_PRESETS)[STARTS.indexOf(start)], seed, alone, missed };
 }
-function learned(start, seed, learn) {
+function learned(start, seed, learn, repository = seedRepository, library = LIBRARY) {
     let layer = EMPTY_LAYER;
     const kept = { meter: [], rhythm: [] };
     const filedAt = new Map();
@@ -62,7 +62,7 @@ function learned(start, seed, learn) {
         const uses = [];
         for (const facet of FACETS) {
             const chosen = learn.together ? uses.map((u) => u.id) : [];
-            const first = repository.query(point, LIBRARY.length + layer.filed.length, {}, { facet, chosen, layer }).find((f) => f.distance <= MISS);
+            const first = repository.query(point, library.length + layer.filed.length, {}, { facet, chosen, layer }).find((f) => f.distance <= MISS);
             if (first) {
                 if ((filedAt.get(first.fragment.id) ?? section) < section)
                     firstFoundAgain ??= section;
@@ -97,6 +97,10 @@ export function lockInDraws(from, to, learnings) {
         learnings.forEach((learn, k) => learnedRuns[k].push(seeds.map(([start, seed]) => learned(start, seed, learn))));
     }
     return { baselines, learned: learnedRuns };
+}
+export function lockInRunsOver(library, draw, learn) {
+    const over = createRepository(library);
+    return STARTS.map((start, i) => learned(start, DRAW * draw + i, learn, over, library));
 }
 export function topThree(ids) {
     const counts = new Map();

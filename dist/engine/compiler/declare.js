@@ -2,7 +2,7 @@ import { valueSumOf } from "../valuesum.js";
 import { refLabel } from "../ast.js";
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from "../program.js";
 import { SCALE_KEY } from "../parser/generators.js";
-import { PLAYED_AS, VOICE_PARAMS } from "../attributes.js";
+import { PLAYED_AS, VOICE_MAKERS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
 import { leaves } from "../subseq.js";
 import { overdub } from "../parser/base.js";
@@ -256,7 +256,7 @@ function mainKeyOf(ctx, decls) {
 }
 export const VOICE_KIT = 'kit:voices';
 export function voiceGrooves(decls) {
-    const sounds = (d) => Object.keys(d?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+    const sounds = (d) => Object.keys(d?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
     const isVoiceDecl = (n) => sounds(decls.get(n));
     const plain = (r) => !r.pick && !r.shift && !r.transpose && !r.degree && !r.values;
     const asTable = new Set([...decls.values()].flatMap((d) => (d.over ? [d.over.name] : [])));
@@ -506,7 +506,7 @@ function stackOf(decls, d, error) {
     const sound = (n) => {
         const x = decls.get(n);
         return (!!x &&
-            (!!x.gate || Object.keys(x.params).some((k) => VOICE_PARAMS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix')));
+            (!!x.gate || Object.keys(x.params).some((k) => VOICE_MAKERS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix')));
     };
     return members.map((m) => ({
         line: m.line,
@@ -528,7 +528,7 @@ function voicesIn(decls, name, seen = []) {
     const d = decls.get(name);
     if (!d || seen.includes(name) || d.braid.kind !== 'list')
         return [];
-    const sounds = (n) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+    const sounds = (n) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
     const out = new Set();
     for (const a of d.braid.tokens.flatMap((t) => leaves(t.atom))) {
         const refs = a.kind === 'ref' ? [a.name] : a.kind === 'mix' ? a.exprs.flatMap((e) => (e.k === 'ref' ? [e.ref.name] : [])) : [];

@@ -12,7 +12,7 @@ import { parse } from './parser';
 const CELLS = `&m step=4
 &a step=&m 0 2 4 5 7 4
 &vib loop=5 0 .1 -.1
-&up 12
+&up C5
 &acc map=amp step=&m 1 .5 .8
 &swell map=lin loop=.5 .2 1
 &fast loop=30 0 .3 0 -.3

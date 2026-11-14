@@ -246,7 +246,7 @@ describe('step=, loop=, clocks and voices', () => {
   });
 
   it('&mix_ [(&theme + &mod - &x) * &v: the first term triggers, the rest modulate]\n&out_ loop=44k map=sample &mix_', () => {
-    const r = compileSource('&m step=1\n&t step=&m 0\n&vib loop=5 0 .1\n&x 1\n&v loop=440\n&mix_ [(&t + &vib - &x) * &v]\n&out_ loop=44k map=sample &mix_');
+    const r = compileSource('&m step=1\n&t step=&m 0\n&vib loop=5 0 .1\n&x C#\n&v loop=440\n&mix_ [(&t + &vib - &x) * &v]\n&out_ loop=44k map=sample &mix_');
     expect(r.ok).toBe(true);
     expect(r.outputs[0]).toMatchObject({
       voice: 'v',
@@ -266,7 +266,9 @@ describe('step=, loop=, clocks and voices', () => {
     expect(msgs('&a step=&b 0\n&b step=&a 1')).toMatch(/loops back/);
     expect(msgs('&a step=&nope 0')).toMatch(/Unknown cell &nope/);
     expect(msgs('&m scan(27 23 26 24)\n&a step=&m 0\n&v s=saw\n&mix_ [&a * &v]\n&out_ loop=44k map=sample &mix_')).toMatch(/&m never moves/);
-    expect(msgs('&a 0\n&v s=saw\n&mix_ [&a * &v]\n&out_ loop=44k map=sample &mix_')).toMatch(/Nothing starts notes on &v/);
+    expect(msgs('&a C\n&v s=saw\n&mix_ [&a * &v]\n&out_ loop=44k map=sample &mix_')).toMatch(/Nothing starts notes on &v/);
+    // (a cell that is one number is that number, decision 088: 0 as a factor is a gain of 0, and says so)
+    expect(msgs('&a 0\n&v s=saw\n&mix_ [&a * &v]\n&out_ loop=44k map=sample &mix_')).toMatch(/&a is the number 0: as a factor it is a gain of 0/);
     // (a voice alone plays its own pitch, held: decision 028)
     expect(msgs('&v s=saw\n&mix_ [&v]\n&out_ loop=44k map=sample &mix_')).toBe('');
     expect(msgs('&v s=kazoo')).toMatch(/Unknown sound 'kazoo'/);
@@ -320,7 +322,7 @@ describe('errors', () => {
 });
 
 describe('mix expressions: typing and articulation (rule 2)', () => {
-  const base = '&m step=1\n&a step=&m 0\n&b step=&m 7\n&vib loop=5 0 .1\n&up 12\n&x loop=440\n&y loop=110\n';
+  const base = '&m step=1\n&a step=&m 0\n&b step=&m 7\n&vib loop=5 0 .1\n&up C5\n&x loop=440\n&y loop=110\n';
   it('one output per voice; the step= term starts notes, loop= terms bend, static terms transpose', () => {
     const r = compileSource(base + '&mix_ [(&a + &vib + &up) * &x, &b * &y]\n&out_ loop=44k map=sample &mix_');
     expect(r.ok).toBe(true);

@@ -17,6 +17,8 @@ export const STUBS = new Set([
 ]);
 export const PENDING = new Set([
     'sort pitch: a product with no sound in it and a pitch',
+    'sort plain: a cell that is one number and nothing else',
+    'sort plain: a sum of values',
     'free free(v, lo..hi, unit=bpm)',
     'generator even(k, n)',
     'step <a b c>',

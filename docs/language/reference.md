@@ -150,7 +150,7 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `oneshot=n` · `oneshot=free(n, lo..hi)`: On a voice: 1 plays each note’s envelope through (its attack and decay), whatever its step, a drum hit on any grid; 0, the default, as long as its step (decision 068: the bare word oneshot, the old way) — on a voice. [→](sound.md)
 - `note=n (a whole number 0–127)`: On a kit’s member: its MIDI note on the kit’s channel (36 a kick, 38 a snare, General MIDI’s drums: `gm_kit` writes each), a whole number 0–127; its name gives none (decision 075). A member with none takes the next free note from 36 — on a voice. [→](midi.md)
 - `legato=n` · `legato=free(n, lo..hi)` · `legato=&x` · `legato=lo..hi * &a * &b` · `on a meter, its lines’ default by level: legato=16n:r,4n:r`: On a line: each note sounds its written length (@n, _) times this share, its end swung as its onset is, Strudel’s legato (.5 staccato, 1 as written, 1.5 into the next): a number, free(), or a cell of shares read at each onset (legato=&artic); nothing cuts a note at the bar line — on a meter (step= a rate) or a driven cell (step=&x) [→](sound.md)
-- `pan=n` · `pan=free(n, lo..hi)` · `pan=&x` · `pan=lo..hi * &a * &b`: Where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo) — on a voice; it makes the cell a voice. [→](sound.md)
+- `pan=n` · `pan=free(n, lo..hi)` · `pan=&x` · `pan=lo..hi * &a * &b`: Where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo); on a line, as legato= is: the place of the notes it plays, after its voice’s own (#739) — on a voice, a meter (step= a rate) or a driven cell (step=&x); it makes the cell a voice. [→](sound.md)
 - `distort=n` · `distort=free(n, lo..hi)`: Distortion: 0 clean, .3 gritty, 1 and more harsh — on a voice; it makes the cell a voice. [→](sound.md)
 - `crush=n` · `crush=free(n, lo..hi)`: Bit depth: 16 clean, 8 grainy, 3 and fewer: rubble — on a voice; it makes the cell a voice. [→](sound.md)
 - `fm=&cell`: Frequency modulation: the voice that modulates this one (fm=&op); it may have its own fm= — on a voice; it makes the cell a voice. [→](physics.md)
@@ -214,6 +214,8 @@ Every cell has a sort, decided by its own line, never by where it is written in 
 - `signal`: A read head of a sound tape (a tape that records a mix). [→](mix.md) `&head play=&tape at=1`
 - `wave`: A braid turning at an audio rate (20 Hz and up) with no sound of its own. Alone in a product it is the sound (a waveform); in a pitch sum, or beside a sound, a pitch that moves at audio rate (FM). One that plays as a voice in the piece is a sound everywhere. [→](mix.md) `&square loop=220 0 1`
 - `volume`: map=amp, map=db or map=adsr (an envelope). [→](mix.md) `&accent map=amp step=2 1 .5`
+- `plain`: A cell that is one number and nothing else (decision 088): named in a mix it is that number, a gain in a product, semitones in a sum. [→](mix.md) `&vol .5`
+- `plain`: A sum of values (decision 079): in a product a level, its weighted sum held to 0…1 (decision 088). [→](mix.md) `&fade [&a * .7 + &b * .3]`
 - `plain`: map=lin: as a number, it takes its operator's sort — a volume in a product, a pitch in a sum. [→](mix.md) `&swell map=lin loop=.25 .2 1`
 - `pitch`: Anything else: a melody, a cell reading a table, a loop below hearing (a vibrato). In semitones. [→](mix.md) `&vibrato loop=5 0 .1 -.1`
 
