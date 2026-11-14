@@ -29,7 +29,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { ANY_DISTANCE, byId, createRepository, isAnyStyle, pointDistance, type Fragment, type StylePoint } from '../src/repository/fragments';
+import { byId, createRepository, isAnyStyle, pointDistance, type Fragment, type StylePoint } from '../src/repository/fragments';
 import { LIBRARY } from '../src/repository/library';
 import { STYLES, type Style } from '../src/repository/styles';
 
@@ -62,8 +62,8 @@ export const HINGE = 0.25;
 
 /** How far a fragment's point is from a style's, by the mode, before its weight. Infinite when they share no axis (`today`, `window`). */
 export function distanceOf(at: Placed, style: StylePoint, mode: DistanceMode): number {
-  // (a point of no style is ANY_DISTANCE from every style, in every mode, #540)
-  if (isAnyStyle(at.point)) return ANY_DISTANCE;
+  // (a point of no style is found by no query, in any mode: decision 090; rank leaves it out)
+  if (isAnyStyle(at.point)) return Infinity;
   if (mode === 'today') return pointDistance(at.point, style);
   let sum = 0;
   let axes = 0;
@@ -104,11 +104,14 @@ export interface Hit {
 
 /** The fragments of a facet ranked at a point: distance (the nearest of its points of the facet, over its weight), then id. */
 export function rank(library: readonly Probed[], at: StylePoint, facet: string, mode: DistanceMode = 'today'): Hit[] {
-  return library
-    .map((f) => ({ id: f.id, points: f.points.filter((p) => p.facet === undefined || p.facet === facet) }))
-    .filter((f) => f.points.length > 0)
-    .map((f) => ({ id: f.id, distance: Math.min(...f.points.map((p) => distanceOf(p, at, mode) / p.weight)) }))
-    .sort((a, b) => a.distance - b.distance || byId(a.id, b.id));
+  return (
+    library
+      // (a point of no style is found by no query, as the repository's: decision 090)
+      .map((f) => ({ id: f.id, points: f.points.filter((p) => (p.facet === undefined || p.facet === facet) && !isAnyStyle(p.point)) }))
+      .filter((f) => f.points.length > 0)
+      .map((f) => ({ id: f.id, distance: Math.min(...f.points.map((p) => distanceOf(p, at, mode) / p.weight)) }))
+      .sort((a, b) => a.distance - b.distance || byId(a.id, b.id))
+  );
 }
 
 /** Every facet a point of the library names, in the order of its first point. */

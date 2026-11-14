@@ -15,7 +15,7 @@ import { partOf, usesIn } from '../engine/use';
 import { variantsOf } from './variants';
 
 /** The seed library's folders, in the order the library lists them: each folder its facet's fragments (decision 047). */
-const FOLDERS = ['meters', 'rhythms', 'bass', 'harmony', 'instruments', 'expression', 'modes', 'performers', 'stab', 'motifs', 'forms', 'bands', 'styles', 'modules'];
+const FOLDERS = ['meters', 'rhythms', 'bass', 'harmony', 'instruments', 'expression', 'modes', 'performers', 'stab', 'motifs', 'forms', 'bands', 'styles', 'modules', 'laws'];
 
 /** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`). */
 /**

@@ -158,7 +158,8 @@ export function tapClock(source, result, options = {}) {
             continue;
         const near = (a, b) => a.every((x, i) => Math.abs(x - b[i]) <= Math.max(SAME.seconds, ULPS * Number.EPSILON * Math.abs(x)));
         const mine = clocksOf(source, options);
-        const main_ = clocksOf(`${source}\n${TAPS.map((t, i) => `&__tap${i} step=${t} 0`).join('\n')}`, options);
+        const named = result.meters ? `&${main}:` : '';
+        const main_ = clocksOf(`${source}\n${TAPS.map((t, i) => `&__tap${i} step=${named}${t} 0`).join('\n')}`, options);
         const instead = new Map();
         for (const tap of taps) {
             const q = mine(`${name}:${tap}`);
@@ -185,8 +186,12 @@ export function tapClock(source, result, options = {}) {
             continue;
         const said = [...instead].map(([a, b]) => `&${name}:${a} is ${b}`).join(', ');
         out.push(rewrite('meter', `&${name}'s ticks are &${main}'s: ${said}`, `step=&${name}:${taps[0]}`, `step=${instead.get(taps[0])}`, (src) => {
-            let next = src.replace(tapped, (_, tap) => `step=${instead.get(tap) ?? `&${name}:${tap}`}`);
-            if (!noted(next, name) && otherMentions(next, name) === 0)
+            const written = (prefix) => src.replace(tapped, (_, tap) => (instead.has(tap) ? `step=${prefix}${instead.get(tap)}` : `step=&${name}:${tap}`));
+            let next = written('');
+            const gone = !noted(next, name) && otherMentions(next, name) === 0;
+            if ((result.meters ?? []).filter((m) => m !== name || !gone).length > 1)
+                next = written(named);
+            if (gone)
                 next = dropLine(next, name);
             return next;
         }));

@@ -131,7 +131,7 @@ A line taps a meter by pulse, beat or note value, never by the meter cell's own 
 - **`step=beat`**, **`step=beat*k`** — each beat, or each in k equal steps: in 7/8, `beat` is a dotted quarter and two quarters, `beat*3` three eighths and two triplets.
 - **Note values**: `1n` `2n` `4n` `8n` `16n` `32n`, triplets `4t` `8t` `16t`, dotted `2n.` `4n.` `8n.`, and the bar, `1m`.
 - **A tap comes round at the bar**: a note value longer than what is left of the bar is cut at the bar line. `1n` in 3/4 is one step a bar, a bar long; `4n.` in 4/4 is 3+3+2 eighths, the tresillo. **`cycle=n`** on the tap runs it n bars before it comes round: `step=1n cycle=4` in 3/4 is three whole notes over four bars.
-- A tap reads the piece's **main meter**, the first meter in the text with a tempo of its own; another is named: `step=&bar2:16n`, `step=&swing:pulse`.
+- A tap reads the piece's **main meter**: the meter with a tempo of its own, a rate or a tempo cell's, wherever it is written. A meter that taps another (`&clave scan(3 3 4 3 3) step=pulse*5/4`) keeps the first's time and is never the main one; it is named: `step=&clave:pulse`, `step=&swing:pulse`. Where a piece has several meters with a tempo of their own, none is the main one by its place in the text, and every tap names its meter, `step=&bar2:16n` ([decision 091](https://github.com/yggi/cells/blob/main/docs/decisions/091-a-tap-names-its-meter.md)): a bare tap there is an error that lists them.
 - A time parameter (`delaytime=`, a tape's `length=`, a head's `at=`) reads a tap as a length: `delaytime=8n` is an eighth at the meter's tempo (.25 s at 120 bpm), `4n.` is .75 s even where the bar line cuts it, `&bar2:8n` reads another meter. A pulse, a beat or the bar is the mean of its steps over the bar (`beat` in 7/8 as 3+2+2 at 90 bpm is 2/3 s: a parameter is one number). Like a clock's, it is fixed at the piece's tempo when compiled, and a swing leaves it as it is.
 - The meter places the tap's steps: a scan bends them, `swing=` leans them (each node keeping its ends), a motor drags them. A part of a step (a subsequence's steps, a Euclid's strokes) is placed from where it is written through the swing as the division it is, so it lands where a tap of that division does: `&euclid step=1m &rim(7,16,0)` under `swing=16n:.6` strikes where `step=16n` does ([#121](https://github.com/yggi/cells/issues/121)), `step=4n [0 0 0]` under swung eighths where `step=8t` does (#15). A note's end under `legato=` is placed so too where its division is one the swing doesn't hold (a triplet's), and otherwise continuously, even between the points of the finest level the swing leans. On a tap the swing doesn't place (`8t` under swung eighths), its parts are even within its step.
 
@@ -149,7 +149,16 @@ A line stepped by the meter cell's own steps (`step=&bar`, `step=&bar*2`) is ret
 
 ## Laws
 
-A cell with **`law=`** has its notes computed by a law instead of written: `law=fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`). The law reads the day through **`over=&day`**: a day meter, a clock whose loop is a day, `&day scan(1!24) loop=1d`. **`anchor=hh.mm`** on that clock is the time of day it stands at when play starts (`anchor=11.55`); written on the law itself, it is a warning that says where it goes. Drawn **`show=sun`** (a built-in plugin: [plugins.md](plugins.md)), the day meter is a 24-hour dial, noon at the top. Rates take time units: `min` `h` `d` `wk` (`loop=1d` is one lap a day). See the example *5 to 12*.
+A **law** computes a cell's notes instead of writing them: `fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`), a plugin-fragment cells holds itself ([decision 085](https://github.com/yggi/cells/blob/main/docs/decisions/085-plugin-fragments.md)). A piece takes it from the clock it reads, its main argument: **`&cycle from five_to_twelve &day`**, where `&day` is a day meter, a clock whose loop is a day, `&day scan(1!24) loop=1d`. **`anchor=hh.mm`** on that clock is the time of day it stands at when play starts (`anchor=11.55`); written on the law's head, it is a warning that says where it goes. Its notes are read by the language: degrees over its key, its levels and places as cells ([plugins.md](plugins.md)). Drawn **`show=sun`** (a built-in plugin), the day meter is a 24-hour dial, noon at the top. Rates take time units: `min` `h` `d` `wk` (`loop=1d` is one lap a day). See the example *5 to 12*.
+
+```cells
+&day scan(1!24) loop=1d anchor=11.55 show=sun
+&cycle from five_to_twelve &day
+&glass s=tri loop=C4
+&out map=sample [&cycle * &glass * .3]
+```
+
+The old spelling, `&cycle law=fiveto12 over=&day`, still reads, with a warning naming the `from` line; Migrate rewrites it.
 
 ## Laps and selectors
 

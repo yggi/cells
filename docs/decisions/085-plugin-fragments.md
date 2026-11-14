@@ -75,11 +75,11 @@ origin: 11.55 # where lap 0 sits on the day it reads
 
 ```cells
 &day scan(1!24) loop=1d anchor=11.55 show=sun
-&cycle from fiveto12 &day
+&cycle from five_to_twelve &day
 &present [&cycle * &glass * .3]
 ```
 
-- `&cycle law=fiveto12 over=&day step=84bpm` becomes `&cycle from fiveto12 &day`.
+- `&cycle law=fiveto12 over=&day step=84bpm` becomes `&cycle from five_to_twelve &day`. (The fragment's id is `five_to_twelve`: the example *5 to 12* is `fiveto12`, and pieces and fragments share one namespace; the law's word stays `fiveto12`. Rung 5, #772.)
 - **`law=` is the old way for a release,** with a warning that names the `from` line. Migrate writes the new spelling (049). The `law` role goes; `anchor=` stays on the clock.
 - **The law is now read by the language.** It writes degrees over `&key`, chords as stacks (`[1, 3, 5]`), lengths as `@n`, levels as a `map=amp` cell and places as a `map=lin` one. Its mode and tonic are cells, so a pick, a `^n` or a turn of the key reaches its notes, and the graph shows its cells.
 - **The bound:** `fiveto12` and `daytime`, rewritten, sound the same. Their event snapshots may move only in how a note's place is carried (§5).
@@ -133,7 +133,7 @@ A melody's step has no gain or pan of its own, and `pan=` was not among the para
 ### 6. Runtime: WASM in workers; cells runs no foreign code and stays synchronous
 
 - **Cells stays pure.** It types the interface and never evaluates code: no `eval`, no `Function`, no `Worker` in `src/`.
-- **A built-in plugin-fragment is a module of cells,** run in-process: `fiveto12` first, answering `fill()` in TypeScript. It is a plugin only in shape, the same interface the frontends see.
+- **A built-in plugin-fragment is a fragment file like any** (`runtime: builtin`, decision 090), **its code a module of cells,** run in-process: `fiveto12` first, answering `fill()` in TypeScript. It is a plugin only in shape, the same interface the frontends see.
 - **A foreign one is WASM** (the owner's 7a): written in AssemblyScript (TypeScript-like), Rust, C or Zig, with **no imports**. Its boundary:
 
   ```text
