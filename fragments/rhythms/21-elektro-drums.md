@@ -16,7 +16,7 @@ lifted: yggi/cells examples/zell.md @ 014c4c73
 &bd, &sd, &hh from gm_kit
 &kick role=kick step=2n &bd:0:.8
 &backbeat role=backbeat step=2n [~ &sd:0:.35]
-&tick step=8n &hh:0:.12
+&tick role=hat step=8n &hh:0:.12
 &groove [&kick, &backbeat, &tick]
 ```
 

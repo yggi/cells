@@ -13,9 +13,9 @@ source: seed
 ```cells
 &kick, &snare, &hat, &groove from (&bd, &sd, &hh)
 &bd, &sd, &hh from gm_kit
-&kick step=16n &bd:0:.8 ~ ~ ~ ~ ~ ~ &bd:0:.5 ~ ~ &bd:0:.6 ~ ~ ~ ~ ~
-&snare step=2n ~ &sd:0:.7
-&hat step=8n &hh:0:.2 &hh:0:.35 &hh:0:.2 &hh:0:.35 &hh:0:.2 &hh:0:.35 &hh:0:.2 &hh:0:.35
+&kick role=kick step=16n &bd:0:.8 ~ ~ ~ ~ ~ ~ &bd:0:.5 ~ ~ &bd:0:.6 ~ ~ ~ ~ ~
+&snare role=backbeat step=2n ~ &sd:0:.7
+&hat role=hat step=8n &hh:0:.2 &hh:0:.35 &hh:0:.2 &hh:0:.35 &hh:0:.2 &hh:0:.35 &hh:0:.2 &hh:0:.35
 &groove [&kick, &snare, &hat]
 ```
 

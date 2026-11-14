@@ -13,8 +13,8 @@ source: seed
 ```cells
 &kick, &snare, &groove from (&bd, &sd)
 &bd, &sd from gm_kit
-&kick step=4n &bd:0:.7 &bd:0:.5
-&snare step=16n &sd:0:.7 ~ &sd:0:.3 &sd:0:.3 &sd:0:.6 ~ &sd:0:.3 &sd:0:.3
+&kick role=kick step=4n &bd:0:.7 &bd:0:.5
+&snare role=backbeat step=16n &sd:0:.7 ~ &sd:0:.3 &sd:0:.3 &sd:0:.6 ~ &sd:0:.3 &sd:0:.3
 &groove [&kick, &snare]
 ```
 

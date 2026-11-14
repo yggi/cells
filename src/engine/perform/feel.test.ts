@@ -1,6 +1,8 @@
-// The default performer (decision 063 §2, #392): the feel contract (yggi/music-commons `contracts/feel`, version 2, its
-// own accent by the meter's levels: yggi/music-commons#45, #453) run against cells' own, its vectors in fixtures/contracts/feel.json (its `lifted` line naming the hub and the
-// commit; the hub's own, what it lifted from Jambot, kept as `liftedByTheHub`). Every vector runs, none recorded; a
+// The default performer (decision 063 §2, #392): the feel contract (yggi/music-commons `contracts/feel`, version 3 minor 1:
+// its own accent by the meter's levels since version 2, yggi/music-commons#45, #453; a part and role read by the values a
+// text declares since version 3, #560; the drum role ostinato, minor 1, #717) run against cells' own, its vectors in
+// fixtures/contracts/feel.json (its `lifted` line naming the hub and the commit; the hub's own, what it lifted from Jambot,
+// kept as `liftedByTheHub`). Every vector runs, none recorded; an event none of the feel's plays as cells gives it; a
 // performer's widths at 1 play as the contract, at 0 exactly as written; a gate's licence= and accents= are its widths.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -8,7 +10,7 @@ import { compileSource } from '../compile';
 import { channelTable, router } from '../midi';
 import { codeShifts } from '../program';
 import { eventsBetween, plan } from '../realize';
-import { CONTRACT_WIDTHS, feelOf, played, readerByName, readerOf, type FeelEvent, type FeelFrame } from './feel';
+import { CONTRACT_WIDTHS, feelOf, played, readerByName, readerOf, type DrumRole, type FeelEvent, type FeelFrame, type FeelPart } from './feel';
 import { perform, widthsOf } from './perform';
 import { meterOfFrame, swungPlace, writtenPlace } from '../meter';
 
@@ -31,6 +33,7 @@ interface Contract {
     readonly text: readonly string[];
     readonly reads: Readonly<Record<string, { readonly part: string; readonly role?: string } | null>>;
   }[];
+  readonly ostinato: readonly Vector[];
   readonly vectors: readonly Vector[];
 }
 const fixture = <T>(name: string): T => JSON.parse(readFileSync(new URL(`../../../fixtures/contracts/${name}.json`, import.meta.url), 'utf8'));
@@ -39,7 +42,7 @@ const name = (v: Vector) => `${v.preset} ${v.meter} seed ${v.frame.seed} bar ${v
 
 describe('the feel contract (music-commons contracts/feel, version 3)', () => {
   it('is the version met, lifted with its source named: 256 bars from Jambot', () => {
-    expect([contract.contract, contract.version, contract.minor]).toEqual(['feel', 3, 0]);
+    expect([contract.contract, contract.version, contract.minor]).toEqual(['feel', 3, 1]);
     expect(contract.lifted).toMatch(/^Lifted from yggi\/music-commons contracts\/feel\/vectors\.json @ [0-9a-f]{7}/);
     expect(contract.liftedByTheHub).toMatch(/^Lifted from yggi\/jambot @ [0-9a-f]{7}/);
     expect(contract.vectors).toHaveLength(256);
@@ -61,8 +64,9 @@ describe('the feel contract (music-commons contracts/feel, version 3)', () => {
     expect(events).toBe(7140);
   });
 
-  it('reads each case’s lines by the part= and role= its text declares, never a name: 10 of 10, every line of each (version 3, decision 075)', () => {
-    expect(contract.reading).toHaveLength(10);
+  it('reads each case’s lines by the part= and role= its text declares, never a name: 11 of 11, every line of each, an ostinato among them (version 3, decision 075; minor 1)', () => {
+    expect(contract.reading).toHaveLength(11);
+    expect(contract.reading.flatMap((c) => Object.values(c.reads))).toContainEqual({ part: 'drums', role: 'ostinato' });
     let lines = 0;
     for (const c of contract.reading) {
       const r = compileSource(c.text.join('\n'));
@@ -79,11 +83,55 @@ describe('the feel contract (music-commons contracts/feel, version 3)', () => {
         lines++;
       }
     }
-    expect(lines).toBe(11);
+    expect(lines).toBe(12);
     // (shown firing: version 2's reading by names, which Migrate's parts rule reads, fails the case of a line named &bass)
     const named = contract.reading.find((c) => 'bass' in c.reads && c.reads.bass === null)!;
     const r = compileSource(named.text.join('\n'));
     expect(r.outputs.map((o) => readerByName(r)(o.id))).toContainEqual({ part: 'bass' });
+  });
+
+  it('plays the 13 ostinato bars at their vectors’ velocities and lengths, each hit as its Euclid line did (minor 1): 69 hits', () => {
+    expect(contract.ostinato).toHaveLength(13);
+    let hits = 0;
+    for (const v of contract.ostinato) {
+      expect(feelOf(v.frame), name(v)).toBe(v.feel);
+      expect(
+        v.events.map((e) => played(v.frame, e)),
+        name(v),
+      ).toEqual(v.played);
+      // (the same bar among the lifted ones, its line a Euclid there: the ostinato plays it bit for bit)
+      const lifted = contract.vectors.find((w) => name(w) === name(v) && w.preset === v.preset)!;
+      expect(lifted.played, name(v)).toEqual(v.played);
+      expect(v.events.map((e) => (e.role === 'ostinato' ? { ...e, role: 'euclid' } : e))).toEqual(lifted.events);
+      hits += v.events.filter((e) => e.role === 'ostinato').length;
+    }
+    expect(hits).toBe(69);
+  });
+
+  it('is shown firing: an ostinato weighed as another role plays otherwise, on some hit of the 69', () => {
+    const moved = contract.ostinato.flatMap((v) =>
+      v.events.flatMap((e, i) => (e.role === 'ostinato' && played(v.frame, { ...e, role: 'ghost' }).velocity !== v.played[i]!.velocity ? [e] : [])),
+    );
+    expect(moved.length).toBeGreaterThan(0);
+  });
+});
+
+describe('an event none of the feel’s (feel version 3: it plays as cells gives it)', () => {
+  // (#717, found by yggi/jambot#668: a drum role the feel doesn't know gave a velocity of NaN)
+  it('a drum hit of a role not among the nine, or of none, plays at cells’ velocity and length, never NaN: in every bar of the vectors', () => {
+    let hits = 0;
+    for (const v of contract.vectors)
+      for (const e of v.events.filter((e) => e.part === 'drums')) {
+        for (const role of ['shaker', undefined])
+          expect(played(v.frame, { ...e, role: role as DrumRole }), `${name(v)} ${role}`).toEqual({ velocity: e.velocity, length: e.length });
+        hits++;
+      }
+    expect(hits).toBeGreaterThan(1000);
+  });
+
+  it('and a part not among the five', () => {
+    const v = contract.vectors[0]!;
+    for (const e of v.events) expect(played(v.frame, { ...e, part: 'organ' as FeelPart })).toEqual({ velocity: e.velocity, length: e.length });
   });
 });
 

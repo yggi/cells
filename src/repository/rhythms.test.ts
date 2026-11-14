@@ -16,6 +16,7 @@ import { createRepository, type StylePoint } from './fragments';
 import { fitsAs } from './fit';
 import { expand, signatureOf } from '../engine/use';
 import { readFrom } from '../engine/parser/use';
+import { readerOf } from '../engine/perform/feel';
 import type { Resolve } from '../engine/program';
 import { drumCard } from './benches';
 import { holesOf } from './holes';
@@ -150,6 +151,42 @@ describe('the rhythm fragments', () => {
     const filled = compileSource(hosted(meterText('meter(grouping=meter("7/8"))'), 90, text, coreKit));
     expect(filled.diagnostics).toEqual([]);
     expect(filled.mainMeter).toBe('bar');
+  });
+});
+
+// #717: every drum line says what it does as a role the feel reads (decision 075), so a performer weighs every hit of every
+// rhythm; the salsa's tumbao an ostinato (feel version 3, minor 1).
+describe('every line of every rhythm has a role', () => {
+  const rolesOf = (text: string, id: string) => {
+    const r = compileSource(hosted(meterText(METER_OF[id] ?? 'meter'), 120, text, coreKit));
+    const read = readerOf(r);
+    return new Map(r.outputs.filter((o) => o.id.startsWith('kit:voices:')).map((o) => [o.id.split(':')[2]!, read(o.id)] as const));
+  };
+
+  // (the exceptions, each with why, only shrinking: electro_swing_drums is the electroswing example's beat, lifted from it;
+  // a role= on its &ticks moves the draws of its `?`, which are keyed on the line's text, so the example's notes would
+  // move (768 to 763), and on its &clap and &hats the example's lines would read as roles they didn't, so it would play
+  // otherwise through a performer: the owner's call, #717)
+  const UNROLED = ['electro_swing_drums'];
+
+  it('each line a kit plays reads as the drums with one of the feel’s roles: 31 of 32 fragments, the exceptions listed', () => {
+    const roled = RHYTHM_FRAGMENTS.filter((f) => {
+      const roles = [...rolesOf(f.text, f.id).values()];
+      expect(roles.length, f.id).toBeGreaterThan(0);
+      return roles.every((r) => r?.part === 'drums' && r.role !== undefined);
+    }).map((f) => f.id);
+    expect(RHYTHM_FRAGMENTS.map((f) => f.id).filter((id) => !roled.includes(id))).toEqual(UNROLED);
+    expect(roled).toHaveLength(31);
+  });
+
+  it('the salsa’s tumbao is an ostinato, its clave a clave and its cáscara a hat; with no role=, a line reads as none (shown firing)', () => {
+    const { text } = byId('salsa_drums');
+    expect(Object.fromEntries(rolesOf(text, 'salsa_drums'))).toEqual({
+      clave: { part: 'drums', role: 'clave' },
+      tumbao: { part: 'drums', role: 'ostinato' },
+      cascara: { part: 'drums', role: 'hat' },
+    });
+    expect(rolesOf(text.replace('&tumbao role=ostinato ', '&tumbao '), 'salsa_drums').get('tumbao')).toBeNull();
   });
 });
 

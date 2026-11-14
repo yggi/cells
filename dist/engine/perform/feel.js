@@ -1,9 +1,10 @@
 const PARTS = ['drums', 'bass', 'pad', 'stab', 'lead'];
-const ROLES = new Set(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill']);
+const ROLES = new Set(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill']);
+const ROLES_BY_NAME = new Set(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill']);
 export function readingOf(output) {
     const [first, second, third] = (output ?? '').split(':');
     if (first === 'kit' && second === 'voices')
-        return third !== undefined && ROLES.has(third) ? { part: 'drums', role: third } : null;
+        return third !== undefined && ROLES_BY_NAME.has(third) ? { part: 'drums', role: third } : null;
     return isPitched(second) ? { part: second } : null;
 }
 const isPitched = (name) => name !== 'drums' && PARTS.includes(name);
@@ -79,6 +80,7 @@ function baseOf({ groups, section, style, energy }, { part, role, step }) {
             case 'pedal':
                 return 58;
             case 'euclid':
+            case 'ostinato':
             case 'clave':
                 return 72;
             case 'fill': {
@@ -86,7 +88,7 @@ function baseOf({ groups, section, style, energy }, { part, role, step }) {
                 return 50 + (step - from) * (60 / (steps - from));
             }
             default:
-                return NaN;
+                return 0;
         }
     };
     switch (part) {
@@ -106,7 +108,10 @@ function baseOf({ groups, section, style, energy }, { part, role, step }) {
     }
 }
 export const CONTRACT_WIDTHS = { licence: 1, accents: 1 };
+const isFeels = ({ part, role }) => PARTS.includes(part) && (part !== 'drums' || (role !== undefined && ROLES.has(role)));
 export function played(frame, event, feel = feelOf(frame), widths = CONTRACT_WIDTHS) {
+    if (!isFeels(event))
+        return { velocity: event.velocity, length: event.length };
     const { seed, bar } = frame;
     const { part, step, note } = event;
     const base = baseOf(frame, event);
