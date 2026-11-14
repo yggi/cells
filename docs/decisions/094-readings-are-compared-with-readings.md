@@ -1,4 +1,4 @@
-# 088 · Readings are compared with readings: a reading of what plays is held to readings of placed fragments, never to a placement's scale
+# 094 · Readings are compared with readings: a reading of what plays is held to readings of placed fragments, never to a placement's scale
 
 **Date:** 2026-11-13 · **Status:** accepted (the owner, 2026-11-13, on #681: "yes, as proposed") · Issues: #681, #723, yggi/jambot#346, yggi/jambot#640, yggi/jambot#673
 
