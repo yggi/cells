@@ -56,7 +56,7 @@ export function checkLimits(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cell
   const fastest = new Map<string, number>();
   for (const o of outputs) {
     const c = cells.get(o.cell);
-    if (!c?.clock || over.has(c.name) || reported.has(c.name) || c.params.law !== undefined) continue;
+    if (!c?.clock || over.has(c.name) || reported.has(c.name) || c.params.law !== undefined || c.fill?.fragment) continue;
     const clock = clocks.get(c.clock);
     if (!clock) continue;
     const lap = Math.max(1, c.steps);

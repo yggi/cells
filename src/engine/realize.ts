@@ -700,7 +700,11 @@ function lawLap(st: Stream, lap: number): readonly LapNote[] {
     const lapOf = fill === null ? undefined : st.law.fills[fill]?.lap;
     if (fill === null) return code;
     const answer = st.law.fill(fill, lapOf ? Math.floor((k * unit) / lapOf) : 0, {});
-    return code.replace(/(^|\s)fill\([^)]*\).*$/, `$1${answer}`);
+    // (a timed fill steps once a step of the law's own, its code's time, whatever rate its line writes: so no action
+    // on the text, a tempo scaled, reaches it, as the wall clock it reads doesn't scale, decision 085's 1a)
+    // (a line that steps steps at the law's own rate, step=1; one that doesn't, a mode or a tonic per key, stays so)
+    const timed = code.replace(/(^|\s)step=\S+/, '$1step=1');
+    return timed.replace(/(^|\s)fill\([^)]*\).*$/, `$1${answer}`);
   });
   const product = [st.head, ...st.levels, 'lapVoice'].map((n) => `&${n}`).join(' * ');
   const text = `${lines.join('\n')}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${product}]`;

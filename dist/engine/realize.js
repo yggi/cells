@@ -463,7 +463,8 @@ function lawLap(st, lap) {
         if (fill === null)
             return code;
         const answer = st.law.fill(fill, lapOf ? Math.floor((k * unit) / lapOf) : 0, {});
-        return code.replace(/(^|\s)fill\([^)]*\).*$/, `$1${answer}`);
+        const timed = code.replace(/(^|\s)step=\S+/, '$1step=1');
+        return timed.replace(/(^|\s)fill\([^)]*\).*$/, `$1${answer}`);
     });
     const product = [st.head, ...st.levels, 'lapVoice'].map((n) => `&${n}`).join(' * ');
     const text = `${lines.join('\n')}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${product}]`;

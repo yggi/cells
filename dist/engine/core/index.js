@@ -23,6 +23,9 @@ export function interfaceOf(text, spec = []) {
         names = spec.map(bare);
     const keep = new Set(names.filter((n) => cells.some((d) => d.name === n)));
     for (const d of cells)
+        if (d.fill)
+            keep.add(d.name);
+    for (const d of cells)
         if (keep.has(d.name) && d.map?.kind === 'role' && d.braid.kind === 'list')
             for (const t of d.braid.tokens)
                 if (t.atom.kind === 'ref')

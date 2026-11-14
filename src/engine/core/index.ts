@@ -52,8 +52,8 @@ export interface CoreOptions extends NormaliseOptions {
 }
 
 /**
- * The names an interface keeps, bare: the ones it names that the text defines, and the gates a kept role lists (what reads
- * a gate by name keeps it a cell).
+ * The names an interface keeps, bare: the ones it names that the text defines, the gates a kept role lists (what reads
+ * a gate by name keeps it a cell), and every fill (a plugin-fragment's code writes it by its name).
  */
 export function interfaceOf(text: string, spec: Interface = []): Set<string> {
   const cells = parse(text).cells;
@@ -65,6 +65,8 @@ export function interfaceOf(text: string, spec: Interface = []): Set<string> {
   } else if (spec === 'roles') names = cells.filter((d) => d.map?.kind === 'role').map((d) => d.name);
   else names = spec.map(bare);
   const keep = new Set(names.filter((n) => cells.some((d) => d.name === n)));
+  // (a fill is an interface always: its name is how its plugin-fragment's code addresses it, decision 085, #792)
+  for (const d of cells) if (d.fill) keep.add(d.name);
   for (const d of cells)
     if (keep.has(d.name) && d.map?.kind === 'role' && d.braid.kind === 'list') for (const t of d.braid.tokens) if (t.atom.kind === 'ref') keep.add(t.atom.name);
   return keep;
