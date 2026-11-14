@@ -1,4 +1,4 @@
-import { filledAt, lawOf, unitOf } from "./holes.js";
+import { filledAt, lawOf, unitOf } from "./fills.js";
 import { parse } from "./parser/index.js";
 import { compile } from "./compiler/index.js";
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV } from "./program.js";
@@ -321,8 +321,10 @@ export function plan(result, statics, muted = new Set()) {
                     : tapped
                         ? tapShare(tapped, c.step.tap, ratio)
                         : 1;
+            const pc = o.cell !== o.voice ? c.paramCells.pan : undefined;
+            const place = pc ? { range: pc.range, series: pc.factors.map((f) => series(f, null, 0, 1)) } : o.cell !== o.voice && typeof c.params.pan === 'number' ? c.params.pan : null;
             if (main.events.length)
-                tracks.push({ ...main, output: o, clock: c.clock, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o), share });
+                tracks.push({ ...main, output: o, clock: c.clock, mods, ...(picker ? { picker } : {}), levels, selects, end: endOf(result, statics, o), share, place });
         }
         catch (e) {
             if (!(e instanceof ExpansionLimit))
@@ -428,19 +430,14 @@ function lawLap(law, lap) {
     if (kept)
         return kept;
     const unit = unitOf(law);
-    const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${law.plays} * &lapVoice]`;
+    const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4${law.voice ? ` ${law.voice}` : ''}\n&lapOut map=sample [${law.plays} * &lapVoice]`;
     const result = compile(parse(text, { old: false }), DEFAULT_ENV);
     if (!result.ok)
         throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
     const shifts = codeShifts(result);
     const base = result.cells.get('lapVoice').freq;
-    const space = law.holes.space ? flatten(result, 'space', shifts, null) : [];
-    const placeAt = (step) => {
-        const e = space.find((x) => step >= x.step - EPS && step < x.step + x.duration - EPS);
-        return e ? e.value / 3 - 1 : 0;
-    };
     const notes = eventsBetween(plan(result, shifts), 0, unit)
-        .map((e) => ({ step: e.at, dur: e.dur, ratio: e.freq / base, level: e.levels[0]?.level ?? 0, pan: placeAt(e.at) }))
+        .map((e) => ({ step: e.at, dur: e.dur, ratio: e.freq / base, level: e.levels[0]?.level ?? 0, gains: e.gains }))
         .sort((a, b) => a.step - b.step || a.ratio - b.ratio);
     if (LAPS.size >= LAPS_KEPT)
         LAPS.delete(LAPS.keys().next().value);
@@ -488,7 +485,7 @@ export function eventsBetween(p, from, to, outputs = false, held = {}) {
                 voice: o.voice,
                 freq: base * n.ratio,
                 bends: [],
-                gains: [g[0] * Math.min(1, 1 - n.pan) * voiceGain(p.result, o.voice), g[1] * Math.min(1, 1 + n.pan) * voiceGain(p.result, o.voice)],
+                gains: [g[0] * n.gains[0] * voiceGain(p.result, o.voice), g[1] * n.gains[1] * voiceGain(p.result, o.voice)],
                 levels: [{ at, level: n.level }],
                 ...(heard ? {} : { unheard: true }),
                 ...(midi.length ? { midi } : {}),
@@ -598,6 +595,12 @@ function plainEvents(p, from, to, outputs) {
             }, 1);
             return l.range ? l.range[0] + (l.range[1] - l.range[0]) * x : x;
         };
+        const placeAt = (at) => {
+            const l = t.place;
+            if (l === null)
+                return [1, 1];
+            return balance(typeof l === 'number' ? l : paramAt(p, { range: l.range, series: l.series, env: null }, at));
+        };
         const make = (s, e, upto, bound = Infinity) => {
             const grid = divisionOf(s, e.duration) / t.rate;
             const at = tm.q(s / t.rate, grid);
@@ -669,8 +672,9 @@ function plainEvents(p, from, to, outputs) {
                 return [g[0] * l * k, g[1] * r * k];
             };
             const [ml, mr] = movingPan(p, [v.voice, ...t.output.through], at);
+            const [pl, pr] = placeAt(at);
             const heard = memberPan(heardGains(t.output, p.muted));
-            const gains = [heard[0] * ml, heard[1] * mr];
+            const gains = [heard[0] * ml * pl, heard[1] * mr * pr];
             const midi = t.output.midi ? liveMidi(t.output, p.muted) : [];
             if (!(freq > 0 && freq < 20000 && level.some((l) => l.level > 0)))
                 return null;

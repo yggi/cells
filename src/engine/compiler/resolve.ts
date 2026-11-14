@@ -3,7 +3,7 @@ import { valueSumOf } from '../valuesum';
 import { isNote, type Atom, type CellDecl, type Span, type Token } from '../ast';
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
-import { VOICE_PARAMS } from '../attributes';
+import { VOICE_MAKERS } from '../attributes';
 import { gmDrumNote } from '../midi';
 import { scan as scanOf } from '../../theory/modes';
 import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel, type Meter } from '../meter';
@@ -255,7 +255,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
         Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name), ...(v.to !== undefined ? { to: v.to } : {}) }]),
       ),
       // a sound parameter makes a voice; a physical cell's (motor=, write=, postgain= on the sound card …) doesn't
-      voice: Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
+      voice: Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)),
       freq:
         d.step?.kind === 'rate' || d.step?.kind === 'env'
           ? d.step.whole

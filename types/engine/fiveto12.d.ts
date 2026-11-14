@@ -19,11 +19,11 @@
  *
  * Everything is a function of the step of the day: nothing to play through, any moment computed.
  *
- * As a plugin-fragment (decision 085, #693): `FIVETO12` fills its holes with braid text, which the language reads —
+ * As a plugin-fragment (decision 085, #693): `FIVETO12` fills its cells with braid text, which the language reads —
  * its degrees over `&key` (the day's mode on the key's tonic), its chords as stacks in thirds, its lengths as `@n`, its
- * dynamics as a level cell; its place in space as a cell too, read as the law always placed it (#696 makes it `pan=`).
+ * dynamics as a level cell; its place in space as a cell the voice's `pan=` reads (#727).
  */
-import type { PluginFragment } from './holes';
+import type { PluginFragment } from './fills';
 export declare const BAR = 12;
 export declare const KEY: number;
 export declare const BLOCK: number;

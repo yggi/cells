@@ -1,7 +1,7 @@
 import { signatureOf } from "./use.js";
 import { attrValue as valueOf, declLine, splitComment, splitWords, wordAt } from "./edit.js";
 import { readFrom, topTokens } from "./parser/use.js";
-import { VOICE_PARAMS } from "./attributes.js";
+import { VOICE_MAKERS } from "./attributes.js";
 export class PatchError extends Error {
 }
 export const MOVING = ['lpf', 'lpq', 'hpf', 'hpq', 'bpf', 'bpq', 'room', 'delay'];
@@ -56,7 +56,7 @@ function sortOf(code) {
     const braid = words.filter((w) => !/^[a-z][a-zA-Z]*=/.test(w) && w !== 'off');
     if (braid.length === 1 && braid[0].startsWith('['))
         return 'instrument';
-    return words.some((w) => VOICE_PARAMS.has(w.slice(0, Math.max(0, w.indexOf('='))))) ? 'voice' : null;
+    return words.some((w) => VOICE_MAKERS.has(w.slice(0, Math.max(0, w.indexOf('='))))) ? 'voice' : null;
 }
 export function jacksOf(source, cell, resolve) {
     const lines = source.split('\n');

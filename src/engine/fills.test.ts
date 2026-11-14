@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BUILT_IN, filledAt, lawOf, marksOf, unitOf } from './holes';
+import { BUILT_IN, filledAt, lawOf, marksOf, unitOf } from './fills';
+import * as deprecated from './holes';
 import { BAR, BLOCK_NAMES, DAY_MODES, KEY, MODE_NAMES, notesBetween, SECONDS_PER_STEP, START } from './fiveto12';
 import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
@@ -11,12 +12,12 @@ const law = BUILT_IN.get('fiveto12')!;
 const LAPS = Array.from({ length: 24 }, (_, k) => k * 503 + (k % 7));
 
 describe('a built-in plugin-fragment answers the contract (decision 085 §3, #693)', () => {
-  it('the same hole, lap and arguments answer the same text', () => {
-    for (const hole of Object.keys(law.holes)) for (const lap of LAPS) expect(law.fill(hole, lap, {})).toBe(law.fill(hole, lap, {}));
+  it('the same fill, lap and arguments answer the same text', () => {
+    for (const name of Object.keys(law.fills)) for (const lap of LAPS) expect(law.fill(name, lap, {})).toBe(law.fill(name, lap, {}));
   });
   it('every lap it fills is cells that compile with no diagnostics', () => {
     for (const lap of LAPS) {
-      const r = compileSource(`${filledAt(law, lap)}\n&v s=sine loop=C4\n&out map=sample [${law.plays} * &v]`);
+      const r = compileSource(`${filledAt(law, lap)}\n&v s=sine loop=C4 ${law.voice ?? ''}\n&out map=sample [${law.plays} * &v]`);
       expect(r.diagnostics, `lap ${lap}`).toEqual([]);
     }
   });
@@ -25,7 +26,7 @@ describe('a built-in plugin-fragment answers the contract (decision 085 §3, #69
       [
         '&notes over=&key step=1 [1, 3]@2 [5, 7, 9, 11, 13, 15]@2 [2, 4, 6] [6, 8, 10, 12, 14, 16, 18]@2 [3, 5, 7, 9]@2 0@2 [4, 6, 8, 10, 12]',
         '&level map=amp step=1 0.4@2 0.84@2 0.51 0.18@2 0.62@2 0.29@2 0.73',
-        '&space map=lin step=1 3@2 0@2 4 1@2 5@2 2@2 6',
+        '&space map=lin step=1 1/2@2 0@2 2/3 1/6@2 5/6@2 1/3@2 1',
         '&key scale(&mode, &tonic)',
         '&mode ionian',
         '&tonic C',
@@ -63,11 +64,19 @@ describe('law=fiveto12 read through the language plays what it played (#693)', (
       expect(now.length).toBeGreaterThan(1000);
       expect(now).toEqual(before(r, Number(anchor), 0, 1200));
     });
-  it('its length is its cycle, a day, and its sections are its mark hole: twelve blocks, each a mode', () => {
+  it('its length is its cycle, a day, and its sections are its mark: twelve blocks, each a mode', () => {
     const r = piece('11.55');
     expect(pieceTime(r).ends).toBe(86400);
     expect(sections(r)).toEqual(DAY_MODES.map((m, b) => ({ at: b * 7200, label: `${MODE_NAMES[m]} · ${BLOCK_NAMES[b]}` })));
     expect(marksOf(law)).toHaveLength(12);
     expect(law.cycle / KEY).toBe(144);
+  });
+});
+
+describe('engine/holes.ts, deprecated for one minor (#727): the same functions under the old path', () => {
+  it('re-exports what a frontend pinned at v0.25.0 imports from it', () => {
+    expect(deprecated.lawOf).toBe(lawOf);
+    expect(deprecated.BUILT_IN).toBe(BUILT_IN);
+    expect([deprecated.filledAt, deprecated.marksOf, deprecated.unitOf]).toEqual([filledAt, marksOf, unitOf]);
   });
 });

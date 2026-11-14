@@ -10,7 +10,7 @@
  * on a clock of its own, set in seconds or hertz (a vibrato, `pitch=&(map=lin loop=5.5 …)`;
  * a tide of 19 s), is the sound's, not the form's: it doesn't set the piece's length (#376).
  */
-import { lawOf, marksOf } from './holes';
+import { lawOf, marksOf } from './fills';
 import { codeShifts, type CompileResult } from './program';
 import type { FreeSpec } from './ast';
 import { clocking, ownLength, selects, turnLap } from './clocking';
@@ -153,7 +153,7 @@ export function durationText(seconds: number): string {
  * split at ·, when the names match the sections; else numbered.
  */
 export function sections(result: CompileResult): { at: number; label: string }[] | null {
-  // a law's sections: its mark hole's laps (fiveto12's twelve blocks, each a mode and a moment of the day)
+  // a law's sections: its mark's laps (fiveto12's twelve blocks, each a mode and a moment of the day)
   const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
   if (law) return marksOf(law);
   const statics = codeShifts(result);

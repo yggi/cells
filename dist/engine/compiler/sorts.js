@@ -1,13 +1,13 @@
 import { leaves } from "../subseq.js";
 import { CV_LAPS } from "../program.js";
-import { memberParams, VOICE_PARAMS } from "../attributes.js";
+import { memberParams, VOICE_MAKERS } from "../attributes.js";
 import { AlgebraError, distribute } from "../algebra.js";
-import { inlineNotes, notesProductOf, valueSumOf } from "../valuesum.js";
+import { inlineNotes, inlineNumbers, notesProductOf, numberCellOf, valueSumOf } from "../valuesum.js";
 import { syntax } from "../parser/syntax.js";
 import { noSound } from "./band.js";
 const isMixDecl = (d) => !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
 const isKitDecl = (d, { decls }) => !!d &&
-    !Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) &&
+    !Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)) &&
     d.braid.kind === 'list' &&
     d.braid.tokens.length > 0 &&
     d.braid.tokens.every((t) => t.atom.kind === 'ref' && memberParams(decls.get(t.atom.name)?.params ?? {}));
@@ -26,7 +26,7 @@ const isSoundHead = (d, { decls }) => {
 };
 const soundNotMix = (seen) => (n) => {
     const d = seen.decls.get(n);
-    return !!d && (!!d.gate || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) || isKitDecl(over(d, seen), seen) || isSoundHead(d, seen) || (turns(d, seen) ?? 0) >= CV_LAPS);
+    return !!d && (!!d.gate || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)) || isKitDecl(over(d, seen), seen) || isSoundHead(d, seen) || (turns(d, seen) ?? 0) >= CV_LAPS);
 };
 const isNotesDecl = (d, seen) => notesProductOf(d.name, seen.decls, soundNotMix(seen)) !== null;
 export const SORT_RULES = [
@@ -34,7 +34,7 @@ export const SORT_RULES = [
         sort: 'signal',
         is: 'A sound parameter (s=, lpf= …): a voice.',
         example: ['&lead s=saw loop=C4'],
-        holds: (d) => Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
+        holds: (d) => Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)),
     },
     {
         sort: 'pitch',
@@ -71,6 +71,18 @@ export const SORT_RULES = [
         is: 'map=amp, map=db or map=adsr (an envelope).',
         example: ['&accent map=amp step=2 1 .5'],
         holds: (d) => d.map?.kind === 'amp' || d.map?.kind === 'db' || d.map?.kind === 'adsr',
+    },
+    {
+        sort: 'plain',
+        is: 'A cell that is one number and nothing else (decision 088): named in a mix it is that number, a gain in a product, semitones in a sum.',
+        example: ['&vol .5'],
+        holds: (d) => numberCellOf(d) !== null,
+    },
+    {
+        sort: 'plain',
+        is: 'A sum of values (decision 079): in a product a level, its weighted sum held to 0…1 (decision 088).',
+        example: ['&a map=amp step=1 1 .2', '&b map=amp step=2 1 0', '&fade [&a * .7 + &b * .3]'],
+        holds: (d, { decls }) => isMixDecl(d) && valueSumOf(d.name, decls) !== null,
     },
     {
         sort: 'plain',
@@ -112,7 +124,7 @@ export function sorts(ctx, decls) {
         if (!d)
             return null;
         if (d.braid.kind === 'list') {
-            const voiceRef = (t) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+            const voiceRef = (t) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
             const odd = (t) => t.atom.kind === 'note' || (t.atom.kind === 'ref' && voiceRef(t) && (t.atom.pick || t.atom.shift || t.atom.transpose || t.atom.values));
             const steps = d.braid.tokens.flatMap((t) => leaves(t.atom).map((atom) => ({ atom })));
             if (steps.some(voiceRef) && steps.some(odd))
@@ -140,7 +152,7 @@ export function sorts(ctx, decls) {
         const ref = (name) => atom.exprs.flatMap(refsIn).find((r) => r.name === name);
         const sound = (n) => {
             const d = decls.get(n);
-            return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null && !isNotesDecl(d, seen)) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
+            return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null && !isNotesDecl(d, seen)) || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)));
         };
         const notes = spec ? (spec.lines?.map((l) => l.line) ?? [spec.notes]).map((name) => ({ name, port: spec.port })) : [];
         const sounding = spec && [...notes, ...spec.levels].find((x) => sound(x.name));
@@ -166,7 +178,19 @@ export function sorts(ctx, decls) {
                     continue;
                 }
                 const found = { named: [], moved: [] };
-                const e = inlineNotes(written, decls, soundNotMix(seen), found);
+                const zero = (x, factor) => x.k === 'ref'
+                    ? factor && !x.ref.pick && !x.ref.shift && numberCellOf(decls.get(x.ref.name)) === 0 && !decls.get(x.ref.name)?.frees?.length
+                        ? x.ref
+                        : null
+                    : x.k === 'prod'
+                        ? (x.factors.map((f) => zero(f, true)).find((r) => r) ?? null)
+                        : x.k === 'sum'
+                            ? (x.items.map((it) => zero(it.e, x.items.length === 1 && factor)).find((r) => r) ?? null)
+                            : null;
+                const silent = zero(written, true);
+                if (silent)
+                    ctx.warn(`&${silent.name} is the number 0: as a factor it is a gain of 0, silence (decision 088) — a note is a step of a line with a clock (&${silent.name} step=4n 0)`, silent.span);
+                const e = inlineNumbers(inlineNotes(written, decls, soundNotMix(seen), found), decls);
                 if (found.moved.length) {
                     for (const m of found.moved)
                         error(`&${m.ref.name} is notes with their levels (a product with no voice): it is named whole in a mix, not picked, moved or given a level (decision 087)`, m.ref.span);
@@ -182,8 +206,11 @@ export function sorts(ctx, decls) {
                     throw x;
                 }
                 const kit = bs.flatMap((b) => b.pitches).find((t) => isKitDecl(decls.get(t.ref.name), seen));
+                const added = bs.flatMap((b) => b.pitches).find((t) => t.inSum && valueSumOf(t.ref.name, decls) !== null);
                 if (kit)
                     error(`&${kit.ref.name} is a kit, a table of voices: a pattern read through it is the sound — mix the pattern alone`, kit.ref.span);
+                else if (added)
+                    error(`&${added.ref.name} is a sum of values: in a product it is a level (&theme * &${added.ref.name} * &lead), and a pitch sum adds lines, not it — add its terms there (decision 088)`, added.ref.span);
                 else
                     out.push(...bs);
             }
