@@ -29,7 +29,7 @@ That goes against the mix algebra's own laws (grouping doesn't matter), 075 and 
 5. **Not a voiceless gate.** `&x play=&notes level=&level` with no voice stays an error: gates are the performer (058), and one spelling (L5) is the product.
 6. **079 first.** One line of plain numbers (read through no table) times numbers, named, is 079's weighted value, as it was. That is the one shape both could read, and 079 keeps it.
 
-**The law, L17:** naming a sub-product plays as its parentheses do, but for 079's weighted values. `src/engine/naming.test.ts` names every voiceless group (two factors or more, a pitch among them) of every example's one-chord mixes: 11 groups in 8 examples play note for note what they played. 8 groups are 079's, and are left as written.
+**The law, L17:** naming a sub-product plays as its parentheses do, but for 079's weighted values. `src/engine/naming.test.ts` names every voiceless group (two factors or more, a pitch among them) of every example's one-chord mixes: 104 groups in 56 examples play note for note what they played (11 in 8 when first measured: the test skipped every example with a `from` line until rung 5 wrote them out, #691). 57 groups are 079's, and are left as written.
 
 ## Why
 
@@ -40,7 +40,7 @@ That goes against the mix algebra's own laws (grouping doesn't matter), 075 and 
 ## Rejected
 
 - **A voiceless gate** (`play=` and `level=` with no voice): a second spelling of the same thing, and it would blur the gate as the performer.
-- **The voice as a fragment's argument** (`&cycle from fiveto12(voice=&glass) &day`): no language change, but the head couldn't be played on another voice, and naming would still differ from parentheses everywhere else.
+- **The voice as a fragment's argument** (`&cycle from five_to_twelve(voice=&glass) &day`): no language change, but the head couldn't be played on another voice, and naming would still differ from parentheses everywhere else.
 - **Context typing** (a cell's sort from where it is read, as a wave's half is): 006's rule that a sort comes from the cell holds; the inference only reads the line more closely.
 - **079 yielding** (a weighted line of numbers as notes): it would change what 079's examples mean.
 

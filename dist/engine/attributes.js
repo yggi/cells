@@ -199,7 +199,13 @@ export const PARAMS = {
         on: ['section', 'performer', 'selector'],
         stub: true,
     },
-    law: { help: 'a law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music)', doc: 'time.md', value: 'word', on: ['law'] },
+    law: {
+        help: 'a law that computes the notes, the old spelling: &cycle from five_to_twelve &day takes it now (decision 085)',
+        doc: 'time.md',
+        value: 'word',
+        on: ['law'],
+        old: 'from five_to_twelve &day',
+    },
     anchor: {
         help: 'a clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands',
         doc: 'time.md',

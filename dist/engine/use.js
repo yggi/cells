@@ -90,6 +90,10 @@ function pickPart(id, text, from, say) {
     return { text: part, part: asked };
 }
 export const hasFrom = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
+export const signatureHeads = (text) => text.split('\n').flatMap((line) => {
+    const form = readFrom(splitComment(line)[0].trim());
+    return form?.kind === 'signature' ? form.names : [];
+});
 export function signatureOf(text) {
     for (const l of linesOf(text))
         if (l.from?.kind === 'signature')

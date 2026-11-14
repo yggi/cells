@@ -74,8 +74,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082: a hundred and seventy-five)', () =>
-    expect(files).toHaveLength(175));
+  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082: a hundred and seventy-five)', () =>
+    expect(files).toHaveLength(176));
 
   it.each(files)('%s writes back byte for byte', (_, markdown) => {
     expect(writeFragment(read(markdown))).toBe(markdown);

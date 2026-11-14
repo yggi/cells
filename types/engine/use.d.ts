@@ -26,6 +26,8 @@ export declare const partsOf: (text: string) => string[][];
 /** Does this text have a `from` line? (Cheap: a text without one compiles as it always has.) */
 export declare const hasFrom: (text: string) => boolean;
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
+/** The heads every signature line of a text names (`&cycle from &day` gives `&cycle`): the cells a template defines. */
+export declare const signatureHeads: (text: string) => string[];
 export declare function signatureOf(text: string): Extract<FromForm, {
     kind: 'signature';
 }> | null;

@@ -26,6 +26,7 @@
  *                  against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *  - mainmeter.ts: a tap that names no meter, in a piece with several meters with a tempo of their own, written with
  *                  the first's name, the one it read (decision 091, #757)
+ *  - laws.ts:      a law written law=fiveto12 over=&day as the from line that takes it: &cycle from five_to_twelve &day (decision 085)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
  * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
@@ -58,6 +59,7 @@ import { argumentsByName } from './arguments';
 import { parts } from './parts';
 import { axes } from './axes';
 import { mainMeters } from './mainmeter';
+import { laws } from './laws';
 
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
 export type MigrationRule =
@@ -77,7 +79,8 @@ export type MigrationRule =
   | 'axes'
   | 'parts'
   | 'moved'
-  | 'main meter';
+  | 'main meter'
+  | 'law';
 export type Migration = Rewrite<MigrationRule>;
 
 /** Every migration a text has, in the order its form was retired; a `from` line's fragment read through `options.resolve`. */
@@ -101,6 +104,7 @@ export const migrations =
     ...parts(source, result),
     ...movedIds(source, options.resolve),
     ...mainMeters(source, result),
+    ...laws(source, options.resolve),
   ];
 
 /** A text with every retired form written as it is now, one rewrite at a time, each playing the same notes; the steps are what each did. */
