@@ -38,4 +38,22 @@ Every comment posted from a session ends with a blank line, `---` and `_Generate
    A change a frontend would notice waits in `changes/` until a release gathers it into `CHANGELOG.md`; tagging it now is the `release` skill, on the owner's word.
 7. **Say so** in a comment on the pull request: the merge commit, the issues closed, the epic line ticked, and the follow-ups filed, each by its number.
 
+## Several at once
+
+Landing one at a time, every merge moves `main` and each pull request still open is verified again.
+A batch of up to 8 pull requests the owner has approved is verified once, as the tree `main` will have when all of it has landed (yggi/music-commons#68, `tools/batch.ts`).
+
+1. **Prepare it.**
+   `npm run batch -- prepare <pr> <pr> …`, in the order they will land: a worktree beside the checkout, at `origin/main`, with each head merged in.
+   A head that conflicts with `main` and the heads before it is left out and named: it lands after the batch, alone, by the steps above, and `npm run sync` on its branch merges `main` in with the generated files written again (`tools/sync.ts`).
+2. **Verify it, once.**
+   In that worktree: `npm run verify`, and `npm run test:all` if any of them reaches the folder or the slow tests.
+   That run stands for step 1's *Verified* of every pull request merged in; a failure is placed by leaving out the likeliest and preparing again.
+3. **Squash each, in that order**, by step 3 above, with no verify between.
+   GitHub refuses one it finds in conflict (a file git merges by union locally, as `CHANGELOG.md`, can be one): it drops out of the batch and lands after it, alone.
+4. **Check the tree.**
+   `npm run batch -- check <tree>`, with the tree step 1 printed: `origin/main` has it when exactly the batch landed.
+   If it differs, something else landed between or one dropped out: run `npm run verify` on `main`.
+5. **The rest, once for each:** steps 4 to 7 above. Then `git worktree remove <worktree>`.
+
 If a step after the merge fails, the merge stands: fix forward on a new branch, and say on the pull request what is left.
