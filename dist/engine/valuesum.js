@@ -31,7 +31,7 @@ export function valueSumOf(name, decls, seen = new Set()) {
     const exprs = chordOf(decls.get(name));
     if (!exprs || exprs.length !== 1 || seen.has(name))
         return null;
-    const e = exprs[0];
+    const e = inlineNumbers(exprs[0], decls);
     const items = e.k === 'sum' ? e.items : [{ e, sign: 1 }];
     const terms = [];
     let constant = 0;
@@ -66,6 +66,8 @@ export function notesProductOf(name, decls, sounds, seen = new Set()) {
         const d = decls.get(f.ref.name);
         if (!d)
             return null;
+        if (bare(f) && numberCellOf(d) !== null)
+            continue;
         if (chordOf(d)) {
             if (!notesProductOf(f.ref.name, decls, sounds, inner))
                 return null;
@@ -77,6 +79,30 @@ export function notesProductOf(name, decls, sounds, seen = new Set()) {
             pitch = true;
     }
     return pitch ? e : null;
+}
+export function numberCellOf(d) {
+    if (!d || d.off || d.gate || d.step || d.over || d.map || d.base || d.tonic || d.env || d.pitch)
+        return null;
+    if (d.shift !== null || d.stride !== null || d.cycle !== null || Object.keys(d.params).length)
+        return null;
+    if (d.braid.kind !== 'list' || d.braid.tokens.length !== 1)
+        return null;
+    const t = d.braid.tokens[0];
+    if (t.atom.kind !== 'note' || t.atom.pitched || t.atom.alter !== 0)
+        return null;
+    if (t.repeat !== 1 || t.subdivide !== 1 || t.elongate !== 1 || t.chance !== undefined || t.level !== undefined)
+        return null;
+    return t.atom.value;
+}
+export function inlineNumbers(e, decls) {
+    if (e.k === 'num')
+        return e;
+    if (e.k === 'sum')
+        return { ...e, items: e.items.map((it) => ({ ...it, e: inlineNumbers(it.e, decls) })) };
+    if (e.k === 'prod')
+        return { ...e, factors: e.factors.map((f) => inlineNumbers(f, decls)) };
+    const value = bare(e) ? numberCellOf(decls.get(e.ref.name)) : null;
+    return value === null ? e : { k: 'num', value, span: e.ref.span };
 }
 const bare = (e) => !e.ref.pick && !e.ref.slot && !e.ref.shift && !e.ref.degree && !e.ref.transpose && e.level === undefined;
 export function inlineNotes(e, decls, sounds, found = { named: [], moved: [] }, seen = new Set()) {
