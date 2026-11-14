@@ -13,6 +13,7 @@
  * The library comes with the call (`NormaliseOptions.library`), the fragments' ids read through the resolver: Normalise
  * holds no library of its own (cells resolves nothing itself, decision 054).
  */
+import { MODE_WORDS } from '../../theory/modes';
 import { attrsOf, declLine, declWords, spansLines, splitComment } from '../edit';
 import { parse } from '../parser';
 import { isWordId, leftOf, readFrom } from '../parser/use';
@@ -243,7 +244,10 @@ export function libraryTemplates(source: string, library: readonly LibraryFragme
       const pattern = t.braid
         .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         .replace(/&(\w+)/g, (_, p: string) => (!(t.params.has(p) || p === t.main) ? `&${p}` : seen.has(p) ? `\\k<${p}>` : (seen.add(p), `(?<${p}>.+?)`)));
-      const m = new RegExp(`^${pattern}$`).exec(braid.replace(/\s+/g, ' '));
+      // (a diatonic mode's name is sugar for its necklace, decision 093: scale(minor, &tonic) is scale(even(7, 12, minor), &tonic))
+      const flat = braid.replace(/\s+/g, ' ');
+      const sugar = flat.replace(/^scale\(([a-z]+),/, (all, w: string) => (Object.hasOwn(MODE_WORDS, w) ? `scale(even(7, 12, ${w}),` : all));
+      const m = new RegExp(`^${pattern}$`).exec(flat) ?? new RegExp(`^${pattern}$`).exec(sugar);
       if (!m) fits = false;
       else for (const [p, v] of Object.entries(m.groups ?? {})) bind(p, v.trim());
     } else if (braid) fits = false;

@@ -1,3 +1,4 @@
+import { MODE_WORDS } from "../../theory/modes.js";
 import { attrsOf, declLine, declWords, spansLines, splitComment } from "../edit.js";
 import { parse } from "../parser/index.js";
 import { isWordId, leftOf, readFrom } from "../parser/use.js";
@@ -190,7 +191,9 @@ export function libraryTemplates(source, library, resolve) {
             const pattern = t.braid
                 .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
                 .replace(/&(\w+)/g, (_, p) => (!(t.params.has(p) || p === t.main) ? `&${p}` : seen.has(p) ? `\\k<${p}>` : (seen.add(p), `(?<${p}>.+?)`)));
-            const m = new RegExp(`^${pattern}$`).exec(braid.replace(/\s+/g, ' '));
+            const flat = braid.replace(/\s+/g, ' ');
+            const sugar = flat.replace(/^scale\(([a-z]+),/, (all, w) => (Object.hasOwn(MODE_WORDS, w) ? `scale(even(7, 12, ${w}),` : all));
+            const m = new RegExp(`^${pattern}$`).exec(flat) ?? new RegExp(`^${pattern}$`).exec(sugar);
             if (!m)
                 fits = false;
             else
