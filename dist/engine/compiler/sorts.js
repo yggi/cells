@@ -1,13 +1,13 @@
 import { leaves } from "../subseq.js";
 import { CV_LAPS } from "../program.js";
-import { memberParams, VOICE_PARAMS } from "../attributes.js";
+import { memberParams, VOICE_MAKERS } from "../attributes.js";
 import { AlgebraError, distribute } from "../algebra.js";
 import { inlineNotes, notesProductOf, valueSumOf } from "../valuesum.js";
 import { syntax } from "../parser/syntax.js";
 import { noSound } from "./band.js";
 const isMixDecl = (d) => !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
 const isKitDecl = (d, { decls }) => !!d &&
-    !Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) &&
+    !Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)) &&
     d.braid.kind === 'list' &&
     d.braid.tokens.length > 0 &&
     d.braid.tokens.every((t) => t.atom.kind === 'ref' && memberParams(decls.get(t.atom.name)?.params ?? {}));
@@ -26,7 +26,7 @@ const isSoundHead = (d, { decls }) => {
 };
 const soundNotMix = (seen) => (n) => {
     const d = seen.decls.get(n);
-    return !!d && (!!d.gate || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)) || isKitDecl(over(d, seen), seen) || isSoundHead(d, seen) || (turns(d, seen) ?? 0) >= CV_LAPS);
+    return !!d && (!!d.gate || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)) || isKitDecl(over(d, seen), seen) || isSoundHead(d, seen) || (turns(d, seen) ?? 0) >= CV_LAPS);
 };
 const isNotesDecl = (d, seen) => notesProductOf(d.name, seen.decls, soundNotMix(seen)) !== null;
 export const SORT_RULES = [
@@ -34,7 +34,7 @@ export const SORT_RULES = [
         sort: 'signal',
         is: 'A sound parameter (s=, lpf= …): a voice.',
         example: ['&lead s=saw loop=C4'],
-        holds: (d) => Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
+        holds: (d) => Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)),
     },
     {
         sort: 'pitch',
@@ -112,7 +112,7 @@ export function sorts(ctx, decls) {
         if (!d)
             return null;
         if (d.braid.kind === 'list') {
-            const voiceRef = (t) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+            const voiceRef = (t) => t.atom.kind === 'ref' && Object.keys(decls.get(t.atom.name)?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
             const odd = (t) => t.atom.kind === 'note' || (t.atom.kind === 'ref' && voiceRef(t) && (t.atom.pick || t.atom.shift || t.atom.transpose || t.atom.values));
             const steps = d.braid.tokens.flatMap((t) => leaves(t.atom).map((atom) => ({ atom })));
             if (steps.some(voiceRef) && steps.some(odd))
@@ -140,7 +140,7 @@ export function sorts(ctx, decls) {
         const ref = (name) => atom.exprs.flatMap(refsIn).find((r) => r.name === name);
         const sound = (n) => {
             const d = decls.get(n);
-            return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null && !isNotesDecl(d, seen)) || Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)));
+            return !!d && (!!d.gate || (isMixDecl(d) && valueSumOf(n, decls) === null && !isNotesDecl(d, seen)) || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)));
         };
         const notes = spec ? (spec.lines?.map((l) => l.line) ?? [spec.notes]).map((name) => ({ name, port: spec.port })) : [];
         const sounding = spec && [...notes, ...spec.levels].find((x) => sound(x.name));
