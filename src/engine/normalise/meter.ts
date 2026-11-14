@@ -217,7 +217,7 @@ export function tapClock(source: string, result: CompileResult, options: Compile
     // (to 1e-9 s, or a double's rounding where the time is large: a day's 63rd tick is 5.4e6 s, past what 1e-9 s can tell)
     const near = (a: number[], b: number[]) => a.every((x, i) => Math.abs(x - b[i]!) <= Math.max(SAME.seconds, ULPS * Number.EPSILON * Math.abs(x)));
     const mine = clocksOf(source, options);
-    // (where the piece has several meters with a tempo of their own, a tap names its meter, decision 089: the readers
+    // (where the piece has several meters with a tempo of their own, a tap names its meter, decision 091: the readers
     // are written on the first's taps by its name)
     const named = result.meters ? `&${main}:` : '';
     const main_ = clocksOf(`${source}\n${TAPS.map((t, i) => `&__tap${i} step=${named}${t} 0`).join('\n')}`, options);
@@ -252,7 +252,7 @@ export function tapClock(source: string, result: CompileResult, options: Compile
         const written = (prefix: string) => src.replace(tapped, (_, tap: string) => (instead.has(tap) ? `step=${prefix}${instead.get(tap)}` : `step=&${name}:${tap}`));
         let next = written('');
         const gone = !noted(next, name) && otherMentions(next, name) === 0;
-        // (the taps name the meter where the piece still has several once this clock is folded, decision 089)
+        // (the taps name the meter where the piece still has several once this clock is folded, decision 091)
         if ((result.meters ?? []).filter((m) => m !== name || !gone).length > 1) next = written(named);
         if (gone) next = dropLine(next, name);
         return next;

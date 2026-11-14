@@ -130,7 +130,7 @@ export function clockCells(
   // the meters with a tempo of their own, a rate or a tempo cell's (a meter that taps another keeps its time, and is
   // none), in the text's order; a lap of a day, loop=1d, only when no meter steps. A tap that names no meter reads the
   // one there is (decision 040); with several, none is the piece's by its place in the text, and a bare tap names its
-  // own (decision 089, #757). The first is still `mainMeter`, for a host that shows one tempo.
+  // own (decision 091, #757). The first is still `mainMeter`, for a host that shows one tempo.
   const rooted = [...decls.values()].filter((d) => clocks.has(d.name) && cells.get(d.name)?.meter);
   const meters = (rooted.some((d) => !d.step?.whole) ? rooted.filter((d) => !d.step?.whole) : rooted).map((d) => d.name);
   // (each tapped cell's meter: its step names it)
@@ -144,7 +144,7 @@ export function clockCells(
     // (several meters with a tempo of their own: the old way read the first in the text, and Migrate names it)
     if (!st.meter && meters.length > 1) {
       retired(
-        `${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 089)`,
+        `${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 091)`,
         st.span,
       );
       if (!ctx.parsed.old) {

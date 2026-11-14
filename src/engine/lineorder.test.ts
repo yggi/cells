@@ -1,4 +1,4 @@
-// Law L19 (decision 089, #757): the order of a piece's lines is irrelevant. Every example, its lines shuffled, compiles
+// Law L19 (decision 091, #757): the order of a piece's lines is irrelevant. Every example, its lines shuffled, compiles
 // and plays what it played (S1). A line is a logical one: a line that ends in `,` `[` `+` or `*` goes on with the next,
 // and a comment or a blank line travels with the line after it. Three orders each, seeded, so a failure names its seed.
 import { describe, expect, it } from 'vitest';
@@ -36,7 +36,7 @@ function shuffled(lines: readonly string[], seed: number): string[] {
     .map((x) => x[1]);
 }
 
-describe('law L19: the order of a piece’s lines is irrelevant (decision 089)', () => {
+describe('law L19: the order of a piece’s lines is irrelevant (decision 091)', () => {
   it('shuffles: most examples’ lines come out in another order', () => {
     const moved = Object.values(EXAMPLES).filter((p) => shuffled(units(p.source), 1).join('\n') !== p.source).length;
     expect(moved).toBeGreaterThanOrEqual(85);

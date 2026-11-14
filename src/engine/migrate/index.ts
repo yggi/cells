@@ -25,7 +25,7 @@
  *  - axes.ts:      a style on the axes sync harm artic energy as on sync harm bite mood (decision 076, #572): exact
  *                  against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *  - mainmeter.ts: a tap that names no meter, in a piece with several meters with a tempo of their own, written with
- *                  the first's name, the one it read (decision 089, #757)
+ *                  the first's name, the one it read (decision 091, #757)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
  * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes

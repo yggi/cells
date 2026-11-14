@@ -45,7 +45,7 @@ export const normalisations =
   (options: NormaliseOptions = {}) =>
   (source: string, result: CompileResult): Rewrite[] => [
     // (but a migration exact only against an older meaning: in a valid text it would change what the text says, #75)
-    // (and but naming a bare tap's meter, decision 089: last, after a second clock is folded into the main meter, so a
+    // (and but naming a bare tap's meter, decision 091: last, after a second clock is folded into the main meter, so a
     // piece left with one meter keeps its taps bare)
     ...migrations(options)(source, result).filter((r) => !r.exact && r.rule !== 'main meter'),
     ...interfaceNames(source, result),

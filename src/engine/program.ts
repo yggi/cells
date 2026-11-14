@@ -494,10 +494,10 @@ export interface CompileResult {
   readonly sections?: ReadonlyMap<string, string>;
   /**
    * The meter a tap that names none reads (decision 040): the meter with a tempo of its own. Where a piece has several
-   * (`meters`), the first in the text, for a host that shows one tempo; a tap there names its own (decision 089).
+   * (`meters`), the first in the text, for a host that shows one tempo; a tap there names its own (decision 091).
    */
   readonly mainMeter?: string;
-  /** The meters with a tempo of their own, in the text's order, where a piece has more than one (decision 089). */
+  /** The meters with a tempo of their own, in the text's order, where a piece has more than one (decision 091). */
   readonly meters?: readonly string[];
   /** The key a bare `over=key` reads, the old way (#124; #301, decision 060): the first cell in the text whose braid is `scale(…)`. */
   readonly mainKey?: string;

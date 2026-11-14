@@ -100,7 +100,7 @@ export function clockCells(ctx, decls, given) {
     const meterOfTap = (st, spelled, broke) => {
         const meter = st.meter?.name ?? mainMeter();
         if (!st.meter && meters.length > 1) {
-            retired(`${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 089)`, st.span);
+            retired(`${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 091)`, st.span);
             if (!ctx.parsed.old) {
                 broke();
                 return null;

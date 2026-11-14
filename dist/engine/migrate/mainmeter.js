@@ -20,7 +20,7 @@ export function mainMeters(source, result) {
                 id: `main meter:${d.name}:${key}`,
                 tool: 'migrate',
                 rule: 'main meter',
-                title: `&${d.name}'s ${key}=${written} names no meter, and the piece has ${result.meters.length}: ${key}=&${main}:${written}, the one it read (decision 089)`,
+                title: `&${d.name}'s ${key}=${written} names no meter, and the piece has ${result.meters.length}: ${key}=&${main}:${written}, the one it read (decision 091)`,
                 before: source.split('\n')[at].trim(),
                 after: apply(source).split('\n')[at].trim(),
                 apply,

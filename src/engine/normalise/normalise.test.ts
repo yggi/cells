@@ -220,7 +220,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
   });
 
   describe('a second clock folded into the main meter (#668)', () => {
-    // (the texts as written have two meters and a bare tap, read the old way: the first in the text, decision 089)
+    // (the texts as written have two meters and a bare tap, read the old way: the first in the text, decision 091)
     const OLD = { old: true };
     const voices = '&v s=sine loop=C4\n&mix [&run * &v, &low * &v]';
     it('tapClock: a clock whose ticks are a tap of the main meter, its readers on that tap, the clock gone', () => {
@@ -257,7 +257,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       // 5940 s and 6000 s, past it. S1 hears the two as one, its notes of one length; tapClock compares 64 ticks)
       const v = '&v oneshot=1 s=sine loop=C4 env=&(map=adsr 0 .1 0 .1)\n&mix [&run * &v, &low * &v]';
       const slow = `&bar meter("4/4") step=.01bpm\n&x meter("4/4") step=.0101bpm\n&low step=4n 0\n&run step=&x:4n 0 1\n${v}`;
-      // (read the old way: a bare tap in a piece of two meters is the first's, decision 089)
+      // (read the old way: a bare tap in a piece of two meters is the first's, decision 091)
       expect(soundsIdentical(slow, slow.replace('step=&x:4n', 'step=4n'), undefined, { old: true })).toBe(true);
       expect(normalise(slow).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
     });

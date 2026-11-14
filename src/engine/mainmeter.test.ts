@@ -1,4 +1,4 @@
-// Decision 089 (#757): the main meter is the meter with a tempo of its own, wherever it is written; where a piece has
+// Decision 091 (#757): the main meter is the meter with a tempo of its own, wherever it is written; where a piece has
 // several, a tap names its meter, and the order of the meters' lines changes nothing.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
@@ -13,7 +13,7 @@ const REST = ['&lead s=saw loop=C4', '&t step=4n 0 2 4 5', '&out map=sample [&t 
 const WALTZ = '&waltz meter("3/4") step=60bpm';
 const MARCH = '&march meter("4/4") step=120bpm';
 
-describe('the main meter (decision 089)', () => {
+describe('the main meter (decision 091)', () => {
   it('a bare tap in a piece of two meters is an error that lists them, in either order', () => {
     for (const lines of [
       [WALTZ, MARCH],
