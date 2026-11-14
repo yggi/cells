@@ -4,7 +4,6 @@
 // count that saturates, as strongly as the query's pull (#151).
 import { describe, expect, it } from 'vitest';
 import {
-  ANY_DISTANCE,
   CO_USE_KNOWN,
   CO_USE_PULL,
   CO_USE_REACH,
@@ -308,18 +307,21 @@ describe('a fragment of no style (#540)', () => {
     expect(fragmentProblems(at('osc', {}))).toEqual([]);
   });
 
-  it('is found at ANY_DISTANCE from every style, behind every fragment placed nearer and ahead of none placed farther', () => {
-    expect(ANY_DISTANCE).toBe(1);
-    // (far at weight 0.5: from (1, 1, 1, 1) it is 2 away, farther than any style's ANY_DISTANCE)
-    const repo = createRepository([at('none', {}), at('near', { sync: 0.2 }), at('far', { sync: 0, harm: 0, bite: 0, mood: 0 }, 0.5)]);
+  // decision 090 (the owner, 2026-11-14): no style, no query; it is taken by its name
+  it('is found by no query, of its facet or of none, and every other result is as it was', () => {
+    const styled = [at('near', { sync: 0.2 }), at('far', { sync: 0, harm: 0, bite: 0, mood: 0 }, 0.5)];
+    const repo = createRepository([at('none', {}), ...styled]);
+    const without = createRepository(styled);
     for (const point of [
       { sync: 0.2, harm: 1, bite: 1, mood: 1 },
       { sync: 1, harm: 1, bite: 1, mood: 1 },
-    ]) {
-      const found = repo.query(point, 3, {}, { facet: 'module' });
-      expect(found.find((f) => f.fragment.id === 'none')!.distance).toBe(ANY_DISTANCE);
-    }
-    expect(repo.query({ sync: 0.2, harm: 1, bite: 1, mood: 1 }, 3, {}, { facet: 'module' }).map((f) => f.fragment.id)).toEqual(['near', 'none', 'far']);
-    expect(repo.query({ sync: 1, harm: 1, bite: 1, mood: 1 }, 3, {}, { facet: 'module' }).map((f) => f.fragment.id)).toEqual(['near', 'none', 'far']);
+    ])
+      for (const facet of ['module', undefined]) {
+        const found = repo.query(point, 3, {}, { facet });
+        expect(found.map((f) => f.fragment.id)).not.toContain('none');
+        expect(found).toEqual(without.query(point, 3, {}, { facet }));
+      }
+    // (it still says what kind of fragment it is: a frontend finds it by that, Cell studio's modules)
+    expect(repo.fragments.find((f) => f.id === 'none')?.association).toEqual([{ point: {}, weight: 1, facet: 'module' }]);
   });
 });
