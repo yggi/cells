@@ -24,14 +24,16 @@
  * - Cells resolves nothing itself but its built-in plugin-fragments (`BUILT_IN`, decision 085 §6: `from fiveto12`): the
  *   host hands each compile a resolver (`Resolve`) for the rest, and the hashes its lockfile
  *   recorded (`Locked`); a recorded hash the library no longer gives plays the current version, with a warning.
- * - A fragment's hash is `e1:` and a hash of its text up to layout (decision 050's E1, its rung written first, so it
- *   still checks once E4 exists).
+ * - A fragment's hash is `e2:` and a hash of its text as a piece receives it (`identityText`, decision 089 §8): a
+ *   declaration's association left out, a template's private names numbered, its interface by name. Its rung is written
+ *   first, so a recorded `e1:` (every line's code, decision 050's E1) is still checked as `e1:` and warns no piece.
  * - A `use` line is retired (#588): the parser says so, and the expansion reads it as nothing.
  *
  * `expand` writes the expansion out (Cell studio's "write out"); `expansion` is what `compileSource` reads. Pure.
  */
 import { splitComment } from './edit';
 import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens, type FromForm } from './parser/use';
+import { counts } from './core/desugar';
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
 import { MOVED, RENAMED_IDS } from './renamed';
@@ -200,13 +202,68 @@ function hash64(s: string): string {
   return (a >>> 0).toString(16).padStart(8, '0') + (b >>> 0).toString(16).padStart(8, '0');
 }
 
-/** A fragment's hash: `e1:` and the hash of its text up to layout (its lines' code, one to a line). */
-export const fragmentHash = (text: string): string =>
+/** A fragment's `e1:` hash: its text up to layout (its lines' code, one to a line; decision 050's E1). What lockfiles recorded before decision 089. */
+export const fragmentHashE1 = (text: string): string =>
   `e1:${hash64(
     linesOf(text)
       .map((l) => l.code)
       .join('\n'),
   )}`;
+
+/**
+ * A line of code without the association a declaration carries (decision 089): a signature's attributes after `from`
+ * (`style=`, `facet=`, a template's arguments at its points), and nothing of a collection's `* from` line with no id,
+ * which is all association. Any other line as it is.
+ */
+function withoutAssociation(code: string): string | null {
+  const tokens = topTokens(code);
+  const from = tokens.findIndex((t) => t.text === 'from');
+  if (from < 1) return code;
+  const after = tokens.slice(from + 1);
+  if (tokens[0]!.text === '*' && from === 1 && after.every((t) => isAttribute(t.text))) return null;
+  // (a signature: its parameters or its main name after `from`, no id; the rest are its declaration's attributes)
+  if (after.length && !after[0]!.text.startsWith('(') && !after[0]!.text.startsWith('&') && !isAttribute(after[0]!.text)) return code;
+  const kept = after.filter((t) => !isAttribute(t.text));
+  if (kept.length === after.length) return code;
+  return [...tokens.slice(0, from + 1), ...kept].map((t) => t.text).join(' ');
+}
+
+/** A name a line writes, `&name`. */
+const WRITTEN = /&([A-Za-z_][A-Za-z0-9_]*)/g;
+
+/**
+ * A fragment as a piece receives it (decision 089 §8; the note 405's "E2 corrected"): its lines' code (comments aside,
+ * whitespace collapsed), each declaration's association left out (`withoutAssociation`) and a declaration written twice
+ * once; a template's own names numbered in the order it declares them (`&#1`, `&#2`), but those its signature declares
+ * (its heads and parameters, what a piece names); a collection's cells by their names, since a piece takes them by name
+ * (`&bd from gm_kit`); and each run counted as the core counts it (`x x` as `x!2`, decision 077 §3). What `e2:` hashes.
+ * Normalise's respellings (E3) are a later rung: they need the fragment compiled, and a hash is read while one compiles.
+ */
+export function identityText(text: string): string {
+  const seen = new Set<string>();
+  const lines = linesOf(text).flatMap((l) => {
+    const code = withoutAssociation(l.code);
+    if (code === null) return [];
+    if (readFrom(code) !== undefined && seen.has(code)) return [];
+    seen.add(code);
+    return [{ code, name: l.name }];
+  });
+  // (the signature as the lines read once their association is out: one with `style=` reads so only from decision 089's move on)
+  const signature = signatureOf(lines.map((l) => l.code).join('\n'));
+  const kept = new Set(signature ? [...signature.names, ...signature.optional, ...(signature.main ? [signature.main] : [])].map((n) => n.slice(1)) : []);
+  const own = signature ? [...new Set(lines.flatMap((l) => (l.name && !kept.has(l.name) ? [l.name] : [])))] : [];
+  const index = new Map(own.map((name, i) => [name, i + 1]));
+  return counts(lines.map((l) => l.code).join('\n'))
+    .split('\n')
+    .map((code) => code.replace(WRITTEN, (written, name: string) => (index.has(name) ? `&#${index.get(name)}` : written)))
+    .join('\n');
+}
+
+/** A fragment's hash: `e2:` and the hash of its text as a piece receives it (`identityText`, decision 089 §8). */
+export const fragmentHash = (text: string): string => `e2:${hash64(identityText(text))}`;
+
+/** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), any other as `e2:`. */
+export const hashIs = (recorded: string, text: string): boolean => recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : fragmentHash(text));
 
 const quoted = (id: string) => JSON.stringify(id);
 const pathOf = (path: readonly string[]) => path.map(quoted).join(' → ');
@@ -782,7 +839,8 @@ export function expansion(text: string, { resolve: host, locked = [], old = fals
     }
     const hash = fragmentHash(theirs);
     hashes.push(hash);
-    if (recorded && recorded !== hash) diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
+    if (recorded && !hashIs(recorded, theirs))
+      diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
     // (an id the seed renamed, which this resolver reads as its word: the old way for a minor version, #387)
     const word = RENAMED_IDS.get(id);
     if (word !== undefined && resolve!(word) === theirs) diagnostics.push({ severity: 'warning', message: renamedMessage(id, word), span });

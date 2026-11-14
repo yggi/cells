@@ -37,7 +37,7 @@
  * ```
  * uses:
  *   - id: gm_kit
- *     hash: e1:6de2201770fbb2d7
+ *     hash: e2:6de2201770fbb2d7
  * ```
  */
 import { type CodeLine, type Layout } from './literate';

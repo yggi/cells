@@ -1,0 +1,3 @@
+### Changed
+
+- **A fragment's hash is `e2:`** (decision 089 §8, #436): the fragment as a piece receives it (`identityText`). That is its lines' code with layout and comments aside, a declaration's association left out (a signature's attributes after `from`, a collection's `* from` line), a template's private names numbered, and its interface by name (a collection's cells, a template's parameters and heads, the names it reads, the fragments it takes). A lockfile records `e2:…` from now on; a recorded `e1:…` is still checked as `e1:` (`hashIs`), so no saved piece warns. Moving the associations into the text (#436's next step) then changes no fragment's `e2:`. `fragmentHashE1`, `identityText` and `hashIs` are exported from `engine/use`.
