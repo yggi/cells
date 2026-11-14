@@ -1,6 +1,6 @@
 # 089 · A tap names its meter where a piece has several
 
-**Date:** 2026-11-14 · **Status:** proposed (the owner asked for #757 next, 2026-11-14; which of its options is his to rule: this is option A, as recommended) · Issues: #757
+**Date:** 2026-11-14 · **Status:** accepted in part (the owner, 2026-11-14: "order should not matter, it should be a language law. 'the order of lines in a piece is irrelevant'", and on option A, "1 seems good"); what a host reads where a piece has several meters, and whether a piece may have several at all, are open with him · Issues: #757
 
 *Amends [040](040-pulse-beat-and-laps.md) (a tap reads the piece's main meter). Read with [075](075-a-name-is-only-a-name.md) (no name is the piece's by convention).*
 
@@ -35,6 +35,7 @@ So the order mattered in two examples, and one bare tap leaned on it.
 3. **Where a piece has several meters with a tempo of their own, none is the main one by its place in the text.** A tap there names its meter (`step=&waltz:4n`), and a bare one is an error that lists them and writes the first's tap.
 4. **Migrate writes the meter the tap read**: the first in the text, `step=4n` → `step=&minute:4n` (`migrate/mainmeter.ts`), checked by sound against the old way of reading it.
 5. **`CompileResult.mainMeter` stays** the first of them, for a host that shows one tempo (a MIDI file's, a clock's); `CompileResult.meters` lists them where there is more than one. Whether a host's choice among several should be said in the text is open.
+6. **The law (L19): the order of a piece's lines is irrelevant.** Every example, its lines in three other orders, plays what it played (`src/engine/lineorder.test.ts`). The main meter was the one place the order was read.
 
 **Why not** a word that declares the main meter (option B): a new form for a case two examples have, and a tap that names its meter already says it.
 **Why not** a warning alone (option C): the order would still change what plays.
