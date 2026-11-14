@@ -1,5 +1,6 @@
 import { splitComment } from "./edit.js";
 import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens } from "./parser/use.js";
+import { counts } from "./core/desugar.js";
 import { STYLE } from "./style.js";
 import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
@@ -109,9 +110,47 @@ function hash64(s) {
     }
     return (a >>> 0).toString(16).padStart(8, '0') + (b >>> 0).toString(16).padStart(8, '0');
 }
-export const fragmentHash = (text) => `e1:${hash64(linesOf(text)
+export const fragmentHashE1 = (text) => `e1:${hash64(linesOf(text)
     .map((l) => l.code)
     .join('\n'))}`;
+function withoutAssociation(code) {
+    const tokens = topTokens(code);
+    const from = tokens.findIndex((t) => t.text === 'from');
+    if (from < 1)
+        return code;
+    const after = tokens.slice(from + 1);
+    if (tokens[0].text === '*' && from === 1 && after.every((t) => isAttribute(t.text)))
+        return null;
+    if (after.length && !after[0].text.startsWith('(') && !after[0].text.startsWith('&') && !isAttribute(after[0].text))
+        return code;
+    const kept = after.filter((t) => !isAttribute(t.text));
+    if (kept.length === after.length)
+        return code;
+    return [...tokens.slice(0, from + 1), ...kept].map((t) => t.text).join(' ');
+}
+const WRITTEN = /&([A-Za-z_][A-Za-z0-9_]*)/g;
+export function identityText(text) {
+    const seen = new Set();
+    const lines = linesOf(text).flatMap((l) => {
+        const code = withoutAssociation(l.code);
+        if (code === null)
+            return [];
+        if (readFrom(code) !== undefined && seen.has(code))
+            return [];
+        seen.add(code);
+        return [{ code, name: l.name }];
+    });
+    const signature = signatureOf(lines.map((l) => l.code).join('\n'));
+    const kept = new Set(signature ? [...signature.names, ...signature.optional, ...(signature.main ? [signature.main] : [])].map((n) => n.slice(1)) : []);
+    const own = signature ? [...new Set(lines.flatMap((l) => (l.name && !kept.has(l.name) ? [l.name] : [])))] : [];
+    const index = new Map(own.map((name, i) => [name, i + 1]));
+    return counts(lines.map((l) => l.code).join('\n'))
+        .split('\n')
+        .map((code) => code.replace(WRITTEN, (written, name) => (index.has(name) ? `&#${index.get(name)}` : written)))
+        .join('\n');
+}
+export const fragmentHash = (text) => `e2:${hash64(identityText(text))}`;
+export const hashIs = (recorded, text) => recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : fragmentHash(text));
 const quoted = (id) => JSON.stringify(id);
 const pathOf = (path) => path.map(quoted).join(' → ');
 function merge(own, used, say, host) {
@@ -561,7 +600,7 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
         }
         const hash = fragmentHash(theirs);
         hashes.push(hash);
-        if (recorded && recorded !== hash)
+        if (recorded && !hashIs(recorded, theirs))
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
         const word = RENAMED_IDS.get(id);
         if (word !== undefined && resolve(word) === theirs)

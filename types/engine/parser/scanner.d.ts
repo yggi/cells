@@ -18,6 +18,17 @@ export declare class LineError extends Error {
     readonly len: number;
     constructor(message: string, col: number, len?: number);
 }
+/**
+ * Where a place in a joined line (0-based, continued lines joined by a space) is in the source: the line it is written
+ * on and its column there (1-based). `parts` says where each source line starts in the joined one.
+ */
+export declare function placeIn(parts: readonly {
+    line: number;
+    start: number;
+}[], at: number): {
+    line: number;
+    col: number;
+};
 export declare class LineScanner {
     readonly text: string;
     readonly line: number;
@@ -61,6 +72,7 @@ export declare class LineScanner {
     skipSpace(): void;
     done(): boolean;
     peek(): string;
+    /** The source position of what was read from `start` to here: on the line it is written on, a continued one too (#764). */
     span(start: number): Span;
     fail(message: string, start?: number, len?: number): never;
     match(re: RegExp): string | null;

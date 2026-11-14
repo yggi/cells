@@ -7,7 +7,7 @@ import { compileSource } from '../engine/compile';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
-import { bandAt, bandLine, CENTRE, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from './band';
+import { bandAt, bandLine, CENTRE, INSTRUMENT_REACH, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from './band';
 import { bodyOf } from '../engine/use';
 import { resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
@@ -165,11 +165,15 @@ describe('the style moves the sound (#391)', () => {
 });
 
 describe('which instrument a performer plays at a style: the band’s choice, at resolution (#391)', () => {
-  const EIGHT = { SYNTH_POP, TECHNO, DEEP_HOUSE, AMBIENT, LO_FI, FUNK, BOSSA_NOVA, SWING_JAZZ };
-  /** The instruments cells wrote for two presets' points (#366): elsewhere each performer plays its own. */
+  /** Jambot's presets where every performer plays its own (#540: Ambient, Funk and Swing jazz find instruments of their own since). */
+  const EIGHT = { SYNTH_POP, TECHNO, DEEP_HOUSE, LO_FI, BOSSA_NOVA };
+  /** The instruments cells wrote for two presets' points (#366), and those #540 placed where the centre found none: elsewhere each performer plays its own. */
   const FOUND = {
     ELECTRO_SWING: [ELECTRO_SWING, { bass: 'upright_bass', stab: 'brass_stab', lead: 'clarinet' }],
     SPOOKY: [SPOOKY, { bass: 'round_bass', pad: 'organ', stab: 'celesta', lead: 'theremin' }],
+    AMBIENT: [AMBIENT, { bass: 'sine_bass' }],
+    FUNK: [FUNK, { stab: 'brass_stab' }],
+    SWING_JAZZ: [SWING_JAZZ, { bass: 'upright_bass', lead: 'muted_trumpet' }],
   } as const;
 
   it.each(Object.entries(EIGHT))('at %s, every performer plays its own instrument, as the band writes it', (_, point) => {
@@ -227,5 +231,16 @@ describe('which instrument a performer plays at a style: the band’s choice, at
     const r = compileSource(spooky, undefined, { resolve: resolveBand(spooky) });
     expect(r.diagnostics).toEqual([]);
     expect(r.cells.get('leadV')!.params.s).toBe(/ s=(\w+)/.exec(INSTRUMENT_FRAGMENTS.find((f) => f.id === 'theremin')!.text)![1]);
+  });
+});
+
+describe('an instrument reaches as far as a fragment is found (#540)', () => {
+  const tb303 = seedFragments('instruments').filter((f) => f.id === 'tb303');
+
+  it('is played within Jambot’s miss distance, and farther the performer plays its own', () => {
+    expect(INSTRUMENT_REACH).toBe(0.3);
+    expect(instrumentsAt({ sync: 0.45, harm: 0.05, bite: 0.85, mood: 0.35 }, tb303).bass?.id).toBe('tb303');
+    // (at Spooky's point the 303, Acid's, is the only bass in the list, and far: before #540 it was played there)
+    expect(instrumentsAt(SPOOKY, tb303)).toEqual({});
   });
 });

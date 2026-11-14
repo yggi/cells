@@ -9,7 +9,7 @@ voice  live de3eaf3bd1ad768b
 effects  live 8ee7a3eafc4dcd10
 transpose  live ee5f47211d974e0b
 twinkle  live 53e57bf6c9063d61
-chords  live 46a4d40d136de57c
+chords  live c270c6285080a919
 rhythm  live f2ea0ed992dc8a6f
 drums  live 0e596ea95b984059
 swing  live 8ec7bca76934c51a
@@ -18,7 +18,7 @@ canon  live 5ed1acfb8724f8f6
 mirrors  live 65b90037525fe0a0
 variations  live 0f98335972bc907e
 chance  live 7f4543c7cb673938
-fifths  live cca78dfbb2cfc628
+fifths  live dfc87981699f75f3
 arrangement  live 30a702a0ed77fe79
 stereo  live 2a23340ac7fbd3be
 waveforms  live 85d1ef5011b0aa43

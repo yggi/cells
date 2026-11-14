@@ -46,7 +46,7 @@ function kitOf(name, notes) {
     }
     return notes.every((n) => out.has(n.key)) ? out : null;
 }
-const TAKEN = new Set(['out', 'piece', 'tempo', ...Object.keys(DRUMS)]);
+const TAKEN = new Set(['out', 'piece', 'tempo', 'bar', ...Object.keys(DRUMS)]);
 const short = (x, digits = 5) => String(Number(x.toPrecision(digits)));
 function nameOf(raw, fallback) {
     const words = (raw ?? '')
@@ -137,6 +137,7 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
     const pulse = unit === 4 ? '' : pow2(unit) ? ` pulse=${unit}n` : pow2((2 * unit) / 3) ? ` pulse=${(2 * unit) / 3}t` : ` pulse=${unit}n`;
     const rate = free ? `free(${short(bpm, 6)}bpm, ${Math.floor(bpm * 0.6)}..${Math.ceil(bpm * 1.5)})` : `${short(bpm, 6)}bpm`;
     const tempo = `&tempo scan(${runs.join(' ')})${pulse} step=${rate} laps=1`;
+    const metered = meterOf(smf, perQuarter, weights.map(Number), Number(short(bpm, 6)), length, free);
     const taken = new Set(TAKEN);
     const unique = (name) => {
         let n = name;
@@ -197,7 +198,7 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
             continue;
         const voice = p.drums ? null : unique(`${p.name}Voice`);
         const names = layers.map(() => unique(p.name));
-        layers.forEach((chords, i) => lines.push({ name: names[i], chords, length }));
+        layers.forEach((chords, i) => lines.push({ name: names[i], chords, length: metered ? metered.steps : length }));
         if (voice)
             voices.push(`&${voice} s=tri loop=C4${legato ? ` glide=${legato.glide}` : ''} env=&(map=adsr .005 .2 .6 .15)`);
         for (const n of names)
@@ -208,8 +209,9 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
         const label = `Opened from a MIDI file: ${count} notes in ${lines.length} line${lines.length === 1 ? '' : 's'}, ${perQuarter} step${perQuarter === 1 ? '' : 's'} a quarter note, ${how}.`;
         const text = [
             ...(credit.length ? [...credit.map((l) => `# ${l}`), ''] : []),
-            `# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`,
-            tempo,
+            ...(time.lines.length
+                ? time.lines
+                : [`# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`, tempo]),
             '',
             ...body,
             '',
@@ -222,10 +224,22 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
         describing.set(text, label);
         return text;
     };
-    const flat = write([
+    const flatWith = () => write([
         '# every note, a line a track (and one beside for notes that overlap); melodies as semitones from C4',
-        ...lines.map((l) => `&${l.name} step=pulse ${braidOf(l.chords, l.length)}`),
+        ...lines.map((l) => `&${l.name} step=${time.tap} ${braidOf(l.chords, l.length)}`),
     ], 'written out in full: Shorten folds it');
+    const time = { lines: [], tap: 'pulse' };
+    const asMapped = flatWith();
+    let flat = asMapped;
+    for (const option of metered?.options ?? []) {
+        Object.assign(time, { lines: option, tap: metered.tap });
+        const asMetered = flatWith();
+        if (sameTimes(asMapped, asMetered)) {
+            flat = asMetered;
+            break;
+        }
+        Object.assign(time, { lines: [], tap: 'pulse' });
+    }
     let source = flat;
     let folded = false;
     let inKey = null;
@@ -233,13 +247,13 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
     if (shorten && lines.length) {
         const label = (tool, round, how) => (tool === 'done' ? 'folded' : round ? `${tool}, ${how}` : tool);
         const printed = (f, fixed) => {
-            const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^$', fixed);
+            const { defs, lines: braids, scales } = printFolded(f, 'm', time.tap, '^$', fixed);
             return write([
                 '# what comes back, as cells of its own (a phrase, a phrase made of phrases, …); ^$n: n semitones up',
                 ...defs,
                 '',
                 '# every note, a line a track; melodies as semitones from C4',
-                ...lines.map((l) => `&${l.name} step=pulse${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`} ${braids.get(l.name)}`),
+                ...lines.map((l) => `&${l.name} step=${time.tap}${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`} ${braids.get(l.name)}`),
             ], 'folded (engine/fold)');
         };
         const candidates = [];
@@ -251,7 +265,7 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
         if (pitches !== 'semitones' && key && lines.some((l) => l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))))) {
             const name = unique('key');
             const printedIn = (f, fixed) => {
-                const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^', fixed);
+                const { defs, lines: braids, scales } = printFolded(f, 'm', time.tap, '^', fixed);
                 return write([
                     `# the key: the lines read through it, a note its degree (0 the tonic; 6# the seventh raised a semitone)`,
                     `&${name} ${scaleText(key)}`,
@@ -260,7 +274,7 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
                     ...defs,
                     '',
                     `# every note, a line a track; melodies as degrees of ${keyName(key)}`,
-                    ...lines.map((l) => `&${l.name} step=pulse${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`}${l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))) ? ` over=&${name}` : ''} ${braids.get(l.name)}`),
+                    ...lines.map((l) => `&${l.name} step=${time.tap}${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`}${l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))) ? ` over=&${name}` : ''} ${braids.get(l.name)}`),
                 ], `folded in degrees of ${keyName(key)} (engine/fold)`);
             };
             if (pitches === 'auto' || pitches === 'degrees') {
@@ -280,7 +294,7 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
                 const keyNames = new Map(keys.map((k, i) => [k, unique(`key${i + 1}`)]));
                 const partNames = new Map();
                 const printedSections = (f, fixed) => {
-                    const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^', fixed);
+                    const { defs, lines: braids, scales } = printFolded(f, 'm', time.tap, '^', fixed);
                     const cells = new Map();
                     const sectionDefs = [];
                     const spliced = new Map(lines.map((l) => [l.name, []]));
@@ -319,7 +333,7 @@ export function cellsFromMidi(smf, title, { free = true, shorten = false, credit
                         ...sectionDefs,
                         '',
                         '# every note, a line a track: its sections in order',
-                        ...lines.map((l) => `&${l.name} step=pulse ${runsOf(spliced.get(l.name))}`),
+                        ...lines.map((l) => `&${l.name} step=${time.tap} ${runsOf(spliced.get(l.name))}`),
                     ], `folded in ${sections.length} sections by key (engine/fold)`);
                 };
                 const sectioned = fold(tune, watch && ((now, stage) => watch(() => printedSections(now()), { ...stage, tool: label(stage.tool, stage.round, `in ${sections.length} sections by key`) })), { degrees: true });
@@ -441,4 +455,54 @@ function sameNotes(a, b) {
     };
     const [x, y] = [notes(a), notes(b)];
     return !!x && !!y && x.length === y.length && x.every((n, i) => n === y[i]);
+}
+function sameTimes(a, b) {
+    const notes = (s) => {
+        const r = compileSource(s);
+        if (!r.ok)
+            return null;
+        const p = plan(r, codeShifts(r), r.off);
+        return eventsBetween(p, 0, p.end).sort((x, y) => x.at - y.at || x.freq - y.freq || x.voice.localeCompare(y.voice));
+    };
+    const [x, y] = [notes(a), notes(b)];
+    const near = (u, v) => Math.abs(u - v) <= 1e-6;
+    return !!x && !!y && x.length === y.length && x.every((n, i) => n.voice === y[i].voice && near(n.at, y[i].at) && near(n.dur, y[i].dur) && near(n.freq, y[i].freq));
+}
+const TAPS = { 0.5: '2n', 1: '4n', 2: '8n', 3: '8t', 4: '16n', 6: '16t', 8: '32n', 12: '32t', 16: '64n' };
+const shortly = (x, digits = 6) => String(Number(x.toFixed(digits))).replace(/^0\./, '.');
+function meterOf(smf, perQuarter, weights, quarters, length, free) {
+    const tap = TAPS[perQuarter];
+    const sigs = [...new Set(smf.meters.map((m) => `${m.num}/${m.den}`))];
+    if (!tap || sigs.length !== 1 || smf.meters[0].tick !== 0)
+        return null;
+    const sig = sigs[0];
+    const { num, den } = smf.meters[0];
+    const bar = (perQuarter * 4 * num) / den;
+    const meter = compileSource(`&bar meter("${sig}") step=60bpm`).cells.get('bar')?.meter;
+    if (!meter || !Number.isInteger(bar) || bar < 1 || length < bar)
+        return null;
+    const same = (a, b) => Math.abs(a - b) <= 1e-4 * Math.max(a, b);
+    const period = [...Array(bar).keys()].map((i) => i + 1).find((p) => bar % p === 0 && weights.every((w, k) => same(w, weights[k % p])));
+    if (!period)
+        return null;
+    const w = weights.slice(0, period);
+    const level = TAPS[perQuarter / 2];
+    const warpTo = (digits) => period === 1
+        ? ''
+        : period === 2
+            ? ` swing=${tap}:${shortly(w[0] / (w[0] + w[1]), digits)}`
+            : period === 4 && level && same(w[0], w[1]) && same(w[2], w[3])
+                ? ` swing=${level}:${shortly((w[0] + w[1]) / (w[0] + w[1] + w[2] + w[3]), digits)}`
+                : ` bend=${tap}:&(${w.map((x) => shortly(x, digits)).join(' ')})`;
+    const warps = [...new Set([warpTo(3), warpTo(6)])];
+    const bpm = (quarters * meter.beats.length) / ((4 * num) / den);
+    const rate = free ? `free(${short(bpm, 9)}bpm, ${Math.floor(bpm * 0.6)}..${Math.ceil(bpm * 1.5)})` : `${short(bpm, 9)}bpm`;
+    return {
+        tap,
+        steps: Math.ceil(length / bar) * bar,
+        options: warps.map((warp) => [
+            `# the file's meter, ${sig}${warp ? `, its lean repeating each ${period === bar ? 'bar' : `${period} ${tap} steps`}` : ''}; laps=, its bars, so the piece ends`,
+            `&bar meter("${sig}") step=${rate}${warp} laps=${Math.ceil(length / bar)}`,
+        ]),
+    };
 }

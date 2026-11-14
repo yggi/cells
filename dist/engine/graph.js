@@ -510,7 +510,7 @@ export function writtenGraph(result, { card = false } = {}) {
     });
     return { nodes: [...placed, ...junctions], edges, through };
 }
-const isLevel = (c, inSum) => c.map?.kind === 'amp' || c.map?.kind === 'db' || (c.map?.kind === 'lin' && !inSum);
+const isLevel = (c, inSum) => c.map?.kind === 'amp' || c.map?.kind === 'db' || ((c.map?.kind === 'lin' || !!c.sum) && !inSum);
 const rateOf = (c) => rateTransform(c.step, typeof c.params.belt === 'number' ? c.params.belt : undefined);
 function rateTransform(s, belt) {
     if (!s.chain.length && !s.cycle && !s.whole && belt === undefined)

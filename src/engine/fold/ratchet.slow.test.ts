@@ -13,7 +13,7 @@ import { codeShifts } from '../program';
 import { plan } from '../realize';
 import { EXAMPLES } from '../examples';
 import { pieceMidi } from '../midiexport';
-import { readMidi, writeMidi } from '../midifile';
+import { readMidi, secondsAt, writeMidi } from '../midifile';
 import { cellsFromMidi } from '../midiimport';
 import { bare, grown, heard, phrases, PIECE_GROWTH, same } from './score';
 import { expand } from '../use';
@@ -40,7 +40,10 @@ describe('the ratchet: every example through MIDI, folded', () => {
       const flat = cellsFromMidi(midi, key);
       if (!flat.notes) continue;
       const fr = compileSource(flat.source);
-      const seconds = plan(fr, codeShifts(fr), fr.off).end;
+      // (as long as the file plays: to its last note's end, where the import may run on to its last bar line, #760; a
+      // tenth of a millisecond short of it, where a looping example's next lap begins as the file ends)
+      const last = Math.max(0, ...midi.tracks.flatMap((t) => t.notes.map((n) => n.end)));
+      const seconds = Math.min(plan(fr, codeShifts(fr), fr.off).end, secondsAt(midi, last) - 1e-4);
       const folded = cellsFromMidi(midi, key, { shorten: true }).source;
       const mine = phrases(source);
       const theirs = new Set(phrases(folded).values());

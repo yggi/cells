@@ -8,6 +8,13 @@ association:
       mood: 0.9
     weight: 0.125
     facet: instrument
+  - point:
+      sync: 0.1
+      harm: 0.25
+      bite: 0.8
+      mood: 0.65
+    weight: 0.5
+    facet: instrument
 source: seed
 ---
 
@@ -19,3 +26,5 @@ A musette accordion: a reedy square, held while the bellows push, with the sligh
 It defines `&leadV`, the voice the lead performer plays.
 
 At Waltz's point (sync 0, harm 0.7, bite 0.3, mood 0.9), weight 0.125, as the facet `instrument` (#542), at half the default instruments' weight (#350).
+
+**Shared** (#540): near Sea shanty's point, a second lead behind the fiddle.

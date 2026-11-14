@@ -31,7 +31,8 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     mode: 'diatonic(mode=ionian)',
     motif: 'kinderlied/twinkle',
     form: 'ternary',
-    instrument: ['recorder', 'sine_bass'],
+    // (and the kit, at the styles a drummer plays an acoustic kit in, #540)
+    instrument: ['gm_kit', 'recorder', 'sine_bass'],
   },
   acid: { meter: 'meter', rhythm: 'acid_drums', bass: 'acid_bass', harmony: 'tonic_vamp', mode: 'diatonic(mode=aeolian)', instrument: 'tb303' },
   happyHardcore: {
@@ -60,7 +61,8 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     harmony: 'fifths_sequence',
     mode: 'diatonic(mode=ionian)',
     motif: 'royalTheme',
-    instrument: 'moog',
+    // (and the celesta, shared on Baroque's point for its keys, #540)
+    instrument: ['celesta', 'moog'],
   },
   bluesShuffle: {
     meter: 'meter(swing=8n:2/3)',
@@ -105,7 +107,8 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     harmony: 'montuno',
     mode: 'diatonic(mode=mixolydian)',
     motif: 'guajeo',
-    instrument: 'montuno_piano',
+    // (and the brass stab, shared for its horns' hits, and the kit, #540)
+    instrument: ['brass_stab', 'gm_kit', 'montuno_piano'],
   },
   waltz: {
     meter: 'meter(grouping=meter("3/4"))',

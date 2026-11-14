@@ -4,7 +4,7 @@
  * moving parameter, a style's axis or a pick reads a cell (`series.ts`, `styles.ts`). A mix with a voice is a sound,
  * as it was (decision 006): the two are told apart by whether a sound is in it.
  */
-import type { CellDecl } from './ast';
+import type { CellDecl, Expr } from './ast';
 /** One term of a sum: a cell and its weight. */
 export interface SumTerm {
     readonly cell: string;
@@ -27,3 +27,37 @@ export declare function isValueLine(name: string, decls: ReadonlyMap<string, Cel
  * of sounds, as it was (decision 006).
  */
 export declare function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, seen?: ReadonlySet<string>): ValueSum | null;
+/**
+ * Notes with their levels (decision 087, #740): a cell whose one chord is a product with no sound in it and a pitch, a
+ * melody and its levels named (`&cycle [&notes * &level]`). It is no instrument and no value: in a product with a sound
+ * it is its own product, as written in parentheses (`[&cycle * &glass]` is `[(&notes * &level) * &glass]`; law L17),
+ * and `inlineNotes` writes it so before a mix is typed.
+ *
+ * `sounds` says whether a cell that is not a mix is a sound (a voice, a gate, a kit read, a tape's read head, a wave):
+ * the compiler's sorts know, this module doesn't; a mix among the factors is read here, as notes in turn or not at all. A product of numbers and levels alone (no pitch) is not notes: it stays what it was.
+ */
+export declare function notesProductOf(name: string, decls: ReadonlyMap<string, CellDecl>, sounds: (name: string) => boolean, seen?: ReadonlySet<string>): Extract<Expr, {
+    k: 'prod';
+}> | null;
+/**
+ * A cell that is one number and nothing else (decision 088): its value, or null. No clock, no table, no map, no move
+ * and no sound, its braid one plain number (a note by name is a pitch, not a number). Named in a mix it is the number
+ * it holds: a gain in a product, semitones in a sum (law L18).
+ */
+export declare function numberCellOf(d: CellDecl | undefined): number | null;
+/**
+ * A mix's expression with every bare reference to a cell that is one number written as that number (decision 088):
+ * naming a number plays as the number. A reference that picks or moves it stays a reference, read as it was.
+ */
+export declare function inlineNumbers(e: Expr, decls: ReadonlyMap<string, CellDecl>): Expr;
+/**
+ * A mix's expression with every bare reference to notes with their levels written as its product, as in parentheses
+ * (decision 087), its own references in turn; `named` collects the cells inlined, `moved` the references that name
+ * one but move or pick it (not yet: an error says so).
+ */
+export declare function inlineNotes(e: Expr, decls: ReadonlyMap<string, CellDecl>, sounds: (name: string) => boolean, found?: {
+    named: string[];
+    moved: Extract<Expr, {
+        k: 'ref';
+    }>[];
+}, seen?: ReadonlySet<string>): Expr;

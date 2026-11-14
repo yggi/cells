@@ -84,14 +84,16 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter; also?: readonly
   march: { point: held(0, 0.1, 0.6, 1), meter: '2/4', also: [stylePoint('march')] },
   fanfare: { point: held(0.2, 0.6, 0.9, 1), meter: 'alla breve' },
   // (six general-purpose: the centre, and 0.2 from it on one axis each)
-  question: { point: held(0.5, 0.5, 0.5, 0.5) },
+  // (a call, where call and answer's idiom is, its form's point, naming no mood: no longer at the centre, #540)
+  question: { point: { sync: 0.75, harm: 0.35, bite: 0.65 } },
   reply: { point: held(0.5, 0.5, 0.5, 0.3) },
   arpeggio: { point: held(0.5, 0.3, 0.5, 0.5) },
   run: { point: held(0.5, 0.7, 0.5, 0.5) },
   neighbour: { point: held(0.5, 0.5, 0.3, 0.5) },
   leap: { point: held(0.5, 0.5, 0.7, 0.5) },
-  // (four ghost-house idioms near Spooky's point, each 0.05 to 0.11 from it, nearer than the second, toll)
-  wail: { point: offset(held(0.2, 0.9, 0.3, 0.3), -0.05) },
+  // (four ghost-house idioms near Spooky's point, each 0.03 to 0.11 from it, nearer than the second, toll; wail 0.03 below in
+  // bite, its energy offset's 0.05 on lament's point, #674)
+  wail: { point: offset(held(0.2, 0.9, 0.3, 0.3), -0.03) },
   haunt: { point: held(0.15, 0.9, 0.25, 0.35) },
   lament: { point: held(0.2, 0.9, 0.25, 0.3) },
   peek: { point: held(0.3, 0.9, 0.3, 0.3) },
@@ -112,7 +114,8 @@ const MOTIFS: Record<string, { point: StylePoint; meter?: Meter; also?: readonly
   // the parts Kinderlieder gives, decision 082, listed after the seed's motifs)
   'kinderlied/twinkle': { point: KINDERLIED },
   'kinderlied/wonder': { point: offset(held(0.1, 0.12, 0.5, 0.25), -0.1) },
-  'kinderlied/haenschen': { point: offset(held(0.1, 0.12, 0.6, 0.45), 0.1) },
+  // (#674: 0.05 up in bite, between hinein and weinet; its energy offset's 0.1 was weinet's point)
+  'kinderlied/haenschen': { point: offset(held(0.1, 0.12, 0.6, 0.45), 0.05) },
   'kinderlied/hinein': { point: held(0.1, 0.12, 0.6, 0.35) },
   // (placed by hand at bite .55, #572: its energy offset would have set it on Kinderlied's point, beside twinkle)
   'kinderlied/heim': { point: offset(held(0.1, 0.12, 0.6, 0.25), -0.05) },

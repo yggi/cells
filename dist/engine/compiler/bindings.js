@@ -1,11 +1,13 @@
 import { DOUGH_SOURCES } from "../dough-params.js";
-import { ATTRIBUTES, memberParams, VOICE_PARAMS } from "../attributes.js";
+import { ATTRIBUTES, memberParams, VOICE_MAKERS, VOICE_PARAMS } from "../attributes.js";
 import { canonicalTag, TUTORIAL } from "../tags.js";
 import { isMidiCard } from "../program.js";
+import { notesCells } from "./sorts.js";
 import { noSound } from "./band.js";
 import { refsOf } from "../readers.js";
 const entryLabel = (b) => [...b.pitches.map((t) => t.ref.name), b.voice.name].filter((n) => !n.startsWith('λ')).join('*') || b.voice.name;
 export function bindVoices(ctx, decls, given, typed) {
+    const isNotes = notesCells(ctx, decls);
     const { error, warn, unknownCell } = ctx;
     const cells = new Map(given);
     const hasParams = (n) => memberParams(decls.get(n)?.params ?? {});
@@ -53,6 +55,11 @@ export function bindVoices(ctx, decls, given, typed) {
         }
         channels.forEach((u, ch) => {
             const inPlace = u.atom.kind === 'mix' ? typed(u.atom) : null;
+            const notesOwn = u.atom.kind === 'ref' && isNotes(u.atom.name) ? decls.get(u.atom.name)?.braid : undefined;
+            if (notesOwn?.kind === 'list' && notesOwn.tokens[0]?.atom.kind === 'mix') {
+                typed(notesOwn.tokens[0].atom);
+                return;
+            }
             const mix = u.atom.kind === 'ref' ? cells.get(u.atom.name) : inPlace ? sink : undefined;
             const bindings = inPlace ?? (u.atom.kind === 'ref' && mix?.mix && !mix.sink ? mix.mix : null);
             if (!mix || !bindings) {
@@ -227,14 +234,14 @@ export function bindVoices(ctx, decls, given, typed) {
             error(`Unknown sound '${src}' (${Object.keys(DOUGH_SOURCES).join(', ')})`, d.paramSpans.s ?? d.span);
         if (src !== undefined && d.braid.kind !== 'blank')
             warn(`s=${src} plays a built-in waveform; the braid is ignored`, d.paramSpans.s);
-        const own = Object.keys(d.params).find((k) => VOICE_PARAMS.has(k));
+        const own = Object.keys(d.params).find((k) => VOICE_MAKERS.has(k));
         const named = src === undefined && own ? refsOf(c).find((n) => n !== name && (cells.get(n)?.voice || cells.get(n)?.kit)) : undefined;
         if (named)
             warn(`&${name}'s braid names &${named}, a voice: a voice's braid is its waveform, and a voice is none, so &${named} isn't heard. To play it through &${name}'s ${own}=, write the mix: &${name} … [&${named}]`, d.span);
         for (const [k, v] of Object.entries(d.params))
             if (ATTRIBUTES[k]?.value === 'number' && typeof v !== 'number')
                 error(`${k}= takes a number`, d.paramSpans[k]);
-        const made = Object.keys(d.params).find((k) => VOICE_PARAMS.has(k));
+        const made = Object.keys(d.params).find((k) => VOICE_MAKERS.has(k));
         const why = made ? ` (${made}= makes &${name} a voice; a meter takes none)` : '';
         if (d.step?.kind === 'driven' || d.step?.kind === 'tap')
             error(`A voice moves at a rate — its pitch, like loop=C4${why}`, d.step.span);

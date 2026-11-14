@@ -22,7 +22,7 @@ A mix is written with `+` and `*`, and these sorts of things meet in it ([decisi
 - **signals**: sound. A cell is a signal by what it is, not where it is written: it has a sound parameter (`s=`, `lpf=` …), or it is a mix (an instrument), a pattern read through a kit, or a read head of a sound tape.
 - **waves**: a braid turning at an audio rate (`loop=440`, `loop=C4`) with no sound parameter of its own. Alone in a product it is the sound (a waveform voice: `&tune * &square`); in a pitch sum, or beside another sound, it is a pitch that moves at audio rate: a fast vibrato, which is FM (`(&tune + &op) * &lead`). One that plays as a voice in the piece stays a sound everywhere.
 
-A **plain value**, a number or a `map=lin` cell, has no sort of its own. It takes its operator's: semitones in a sum, where 0 changes nothing, and a volume (a gain) in a product, where 1 changes nothing. `(&pedal + 12)` is an octave up; `12 * &lead` and `&lead * 12` are twelve times louder. A gain's sign is its **polarity**: a negative gain is phase inversion, `* -.5` half the level upside down, so `* -1 * -1` is `* 1`, and a voice mixed with its inversion at equal gains cancels (`[&t * &lead * .5, &t * &lead * -.5]` is silent). The same holds for a voice's `gain=-1` and the card's `postgain=` below 0; a gate's `level=` is how far it opens, not a gain, and a negative one still warns. MIDI has no phase: a note's velocity is the size of the gain, and the sign is dropped.
+A **plain value** has no sort of its own. It takes its operator's: semitones in a sum, where 0 changes nothing, and a volume (a gain) in a product, where 1 changes nothing. The plain values are a number, a cell that is one number and nothing else (`&vol .5`), a `map=lin` cell, and in a product a sum of values (below). **Naming a number plays as the number** ([decision 088](https://github.com/yggi/cells/blob/main/docs/decisions/088-naming-a-number-plays-as-the-number.md), law L18): `&vol .5` then `&theme * &vol * &lead` is `&theme * .5 * &lead`, and `&oct 12` then `(&pedal + &oct)` is `(&pedal + 12)`. A note by name (`&tonic D`), a table of several numbers and a line with a clock are not plain: each is a pitch, as it was. `(&pedal + 12)` is an octave up; `12 * &lead` and `&lead * 12` are twelve times louder. A gain's sign is its **polarity**: a negative gain is phase inversion, `* -.5` half the level upside down, so `* -1 * -1` is `* 1`, and a voice mixed with its inversion at equal gains cancels (`[&t * &lead * .5, &t * &lead * -.5]` is silent). The same holds for a voice's `gain=-1` and the card's `postgain=` below 0; a gate's `level=` is how far it opens, not a gain, and a negative one still warns. MIDI has no phase: a note's velocity is the size of the gain, and the sign is dropped.
 
 | | `+` | `*` |
 |---|---|---|
@@ -72,6 +72,34 @@ Lines at several rates, summed, drift as music's slow fluctuations do, the weigh
 ```
 
 A mix with a voice is a sound, as it was: which a mix sums, sounds or values, is told by whether a voice is in it.
+
+In a product with a voice, a sum of values is a level (decision 088): its weighted sum at each moment, held to 0…1. So two level lines crossfade, which a product alone can't write (volumes don't add):
+
+```cells
+&bar meter("4/4") step=120bpm
+&line step=8n 0 2 4 7
+&accent map=amp step=8n 1 .4 .7 .4
+&swell map=lin step=1m 0 1
+&shape [&accent * .6 + &swell * .4]
+&pad s=saw loop=C3
+&out map=sample [&line * &shape * &pad * .3]
+```
+
+In a pitch sum it is an error that says what it is.
+
+## Notes with their levels: a product with no voice, named
+
+A product with no voice in it and a pitch, given a cell of its own, is **notes with their levels** ([decision 087](https://github.com/yggi/cells/blob/main/docs/decisions/087-a-named-product-is-its-parentheses.md)): what a voice plays, named. In a product with a voice it is its own product, as written in parentheses, so naming a group of factors plays what the group plays in place (law L17):
+
+```cells
+&notes step=4 0 2 4 7
+&accent map=amp step=4 1 .5 .8 .5
+&phrase [&notes * &accent]            # notes with their levels: no voice yet
+&glass s=tri loop=C4
+&out map=sample [&phrase * &glass * .3]   # plays [(&notes * &accent) * &glass * .3]
+```
+
+It is named whole (`&phrase[<<]` or `&phrase^2` is an error, for now), and it is no value: read as a parameter's factor, or played with no voice, it says what it is. One line of plain numbers times numbers stays a weighted value, as above (079).
 
 ## A gate: a product with a name
 

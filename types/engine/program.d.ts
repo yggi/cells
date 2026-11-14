@@ -474,8 +474,13 @@ export interface CompileResult {
     readonly plugins: ReadonlyMap<string, ShowPlugin>;
     /** Sections of an arrangement (decisions 016 and 044), each to its table: what a selector reading the table switches. */
     readonly sections?: ReadonlyMap<string, string>;
-    /** The meter a tap that names none reads (decision 040): the first meter in the text with a tempo of its own. */
+    /**
+     * The meter a tap that names none reads (decision 040): the meter with a tempo of its own. Where a piece has several
+     * (`meters`), the first in the text, for a host that shows one tempo; a tap there names its own (decision 091).
+     */
     readonly mainMeter?: string;
+    /** The meters with a tempo of their own, in the text's order, where a piece has more than one (decision 091). */
+    readonly meters?: readonly string[];
     /** The key a bare `over=key` reads, the old way (#124; #301, decision 060): the first cell in the text whose braid is `scale(…)`. */
     readonly mainKey?: string;
     /**
@@ -542,7 +547,7 @@ export interface Take {
     readonly names: readonly string[] | null;
     /** The line it is on. */
     readonly span: Span;
-    /** The hash of the text it resolved to (`e1:…`: the text up to layout, decision 050), or null where it didn't resolve. */
+    /** The hash of the text it resolved to (`e2:…`: the fragment as a piece receives it, decision 089 §8), or null where it didn't resolve. */
     readonly hash: string | null;
     /**
      * The names it gave the piece (`&bd`), in the order the expansion writes them: its own lines, then those it took. For a

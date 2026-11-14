@@ -5,9 +5,11 @@
 - "a plugin is a fragment: plugin-fragments (or fragment-plugins)";
 - "we dissolve law with an extended from";
 - on the questions: "1a; 2c combined with 3a, plugins weave into cells by filling the braid string; 4c; 5b; 6a; 7a; 8b";
-- on the interface: "1) a [`pan=` moves], 2) keep for now [a fill's lap fixed], 3) clock as main argument slightly preferred, let's see, 4) yes, as suggested [sections from a fill], 6) yes".
+- on the interface: "1) a [`pan=` moves], 2) keep for now [a fill's lap fixed], 3) clock as main argument slightly preferred, let's see, 4) yes, as suggested [sections from a fill], 6) yes";
+- on places, 2026-11-12: "yes, pan on a line like legato" (§5);
+- on a solver's needs (#747, #748, #749, found by yggi/countercell), 2026-11-13: "recommendations accepted", with the amendments proposed alongside them (§8).
 
-· Issues: #691, #693, #696, #727
+· Issues: #691, #693, #696, #727, #739, #747, #748, #749
 
 *Read with [065](065-fragments-take-arguments.md) (fragments take arguments: the `from` line, the signature), [054](054-instruments-and-use.md) (the host hands a resolver; the piece file's lockfile), [047](047-fragments-are-files.md) (fragments are files), [077](077-the-core-is-sound-up-to-an-interface.md) (cored up to a named interface), [070](070-s1-hears-as-a-listener.md) (S1 hears as a listener), [031](031-chance-keyed-on-time.md) (draws keyed on what plays, as amended by #481), and Cell studio's [011](https://github.com/yggi/cell-studio/blob/main/docs/decisions/011-plugins.md) (show plugins: cells reads, the host runs). 086 (the view lives in Cell studio, proposed in its own pull request) takes the show plugins out of cells.*
 
@@ -91,8 +93,8 @@ interface Fills {
 }
 ```
 
-- **The arguments are text:** each argument cell's braid as written (`{ k: "7", n: "12" }`). Text in and text out, so no plugin depends on cells' AST, which stays free to change.
-- **The answer is a braid**, parsed as any braid is. An error in it points at the fragment and the lap.
+- **The arguments are text:** each argument in its core (§8.3), in a versioned grammar (`wire: 1`); for `necklace`'s numbers that is what's written (`{ k: "7", n: "12" }`). Text in and text out, so no plugin depends on cells' AST, which stays free to change.
+- **The answer is a braid**, parsed as any braid is. An error in it points at the fragment and the lap. **Or a refusal** (§8.1): no text, and the reason why.
 - **The plugin never sees time.** Cells computes the lap from the clock, the clock's `anchor=` and the fragment's `origin` (the owner's 1a).
 - **Two things to see in rung 5:**
   - **The clock is the main argument** (the owner: "slightly preferred, let's see"). The fills are timed through it inside the fragment (`&notes step=&day/120960 …`: a step of fiveto12 is a 120,960th of the day), so the piece writes no rate at all. The other way: the head's `step=` sets the rate, and the main argument only anchors.
@@ -118,7 +120,7 @@ toCore:       &bell step=8n x ~ x ~ x x ~ x ~ x ~ x
 ### 4. The text and its lockfile are the truth
 
 - **The code is a fragment's, by hash, always** (the owner's 4c). It lives in a fragment file, pinned in the piece file's lockfile (054). A piece that travels as one file carries its fragments through #672's document of fragments, once that is accepted. No inline `=== plugin ===` block for sound.
-- **A braid fill is baked:** `toCore` writes the text it was filled with, so a piece's core plays without the code.
+- **A braid fill is baked:** `toCore` writes the text it was filled with, so a piece's core plays without the code. **Its answer is also recorded in the lockfile** (§8.2), keyed by its arguments' core, so a piece opens playing it.
 - **A stream fill is cored up to an interface** (077 §2): its head keeps its name, its `from` line and its hash.
 - **Identity is what plays** (the owner's 5b). The lockfile pins the code exactly. Identity, sameness and S1 compare the events, as for every piece (070, 031), so a plugin refactored without changing its output is the same piece.
 
@@ -126,12 +128,12 @@ toCore:       &bell step=8n x ~ x ~ x x ~ x ~ x ~ x
 
 A melody's step has no gain or pan of its own, and `pan=` was not among the parameters a cell moves. So a law's fifth dimension, space, had no spelling. **`pan=` moves, like `lpf=`** (#696, landed): it takes a number, a `free()`, a cell, or a range times cells (078, 079), read at each note's start into its channel gains, as a fixed one is.
 
-**But `pan=` is a voice's attribute, not a line's** (found in #727). `&notes pan=&space` does nothing ("pan= acts on a voice"), so a fragment's places reach its notes only through the voice they play on: `fiveto12`'s laps play on a voice of realize's own, which reads `pan=&space` (`PluginFragment.voice`). Its event snapshot doesn't move. A stream played on a *piece's* voice (rung 5) needs its places spelled another way. The natural one is `pan=` on a line, as `legato=` is (the place of the notes the line plays, times the voice's own balance): a change to the language for the owner, with rung 5.
+**But `pan=` is a voice's attribute, not a line's** (found in #727). `&notes pan=&space` does nothing ("pan= acts on a voice"), so a fragment's places reach its notes only through the voice they play on: `fiveto12`'s laps play on a voice of realize's own, which reads `pan=&space` (`PluginFragment.voice`). Its event snapshot doesn't move. A stream played on a *piece's* voice (rung 5) needs its places spelled another way: **`pan=` on a line, as `legato=` is** (the owner, 2026-11-12; #739): the place of the notes the line plays, a balance after the voice's own. `pan=` alone makes no cell a voice (`VOICE_MAKERS`). Then `fiveto12` writes `&notes over=&key pan=&space fill()`, and `PluginFragment.voice` goes.
 
 ### 6. Runtime: WASM in workers; cells runs no foreign code and stays synchronous
 
 - **Cells stays pure.** It types the interface and never evaluates code: no `eval`, no `Function`, no `Worker` in `src/`.
-- **A built-in plugin-fragment is a module of cells,** run in-process: `fiveto12` first, answering `fill()` in TypeScript. It is a plugin only in shape, the same interface the frontends see.
+- **A built-in plugin-fragment is a fragment file like any** (`runtime: builtin`, decision 090), **its code a module of cells,** run in-process: `fiveto12` first, answering `fill()` in TypeScript. It is a plugin only in shape, the same interface the frontends see.
 - **A foreign one is WASM** (the owner's 7a): written in AssemblyScript (TypeScript-like), Rust, C or Zig, with **no imports**. Its boundary:
 
   ```text
@@ -144,12 +146,36 @@ A melody's step has no gain or pan of its own, and `pan=` was not among the para
   The fills are numbered in the frontmatter's order. WASM's arithmetic is exact across machines (NaN payloads aside), which JavaScript's `Math` is not: Jambot's players must hear the same notes. JavaScript waits for a need, as a frontend's trusted local development.
 - **Cells calls `fill` synchronously** (the owner's 6a), and the host decides how to answer. In Cell studio, it reads a buffer a worker fills ahead of play. In Node and the tools, it calls the module in-process. A lap not filled in time plays nothing and says so: a diagnostic, never a hang.
 - **The output is a pure function of (hash, fill, lap, arguments),** so the host caches on that key. The buffer is laps filled ahead. Rung 3 names the window and the deadline; proposed: at least 4 s ahead, in chunks of 8 s, 250 ms before a worker counts as hung.
+- **A braid fill has a budget of its own** (§8.2): fuel, a count the module keeps, and a 10 s deadline that refuses.
 
 ### 7. Trust
 
 - A **WASM module with no imports** runs without asking (the owner's 8b), in a worker with a timeout, at most 16 MB of memory, and cells' notes-per-second limit on what its text plays. This is the same rule in Cell studio and Jambot.
 - A module that wants imports (time, randomness, the network) is **refused, not asked about**. Randomness comes from cells' seed (031) as an argument, so chance stays reproducible.
 - Built-ins run in-process.
+
+### 8. Under a solver: several fills, a refusal, a budget, arguments in their core
+
+A solver as a plugin-fragment (yggi/countercell: counterpoint added to a subject, a Viterbi search in Rust, WASM with no imports) needs what `fiveto12` never did. Ruled 2026-11-13, on #747, #748 and #749.
+
+**1. Several fills, and a refusal** (#747).
+- **One computation, several fills:** the module may memoise on its arguments, and the host calls a call site's fills one after another in the frontmatter's order. Cells documents that it may.
+- **The count is the file's:** one fragment per count (`countercell2`, `countercell3`). 065's signature already takes several heads by their names: `&upper, &lower from countercell3 &subject`.
+- **A refusal:** at the WASM boundary a negative length, with the reason (UTF-8) at the pointer; a built-in answers `{ refused: string }`. Cells says it as a **warning** on the `from` line ("countercell3 refused: …"), and the fill plays nothing, as a lap not filled in time does. A warning, not an error: an error leaves the whole piece unplayed. A thrown error stays a bug in the module.
+
+**2. A braid fill's budget** (#748).
+- **Fuel:** a count of work the module keeps, declared per fill call in the frontmatter (`fuel: <n>`), passed to it, and refused past (1). A braid fill must declare it; there is no default. **Fuel decides only whether it refuses, never which answer it gives**: anything that changes the answer (a beam width) is an argument written in the text (`countercell3(beam=8)`), part of what the piece is.
+- **The deadline: 10 s** of wall clock in a worker. Past it, a refusal and a diagnostic, and the instance is dropped. Never a partial answer: a search stopped by a clock would answer differently on a fast machine and a slow one.
+- **While it fills:** cells' default is that nothing plays and a diagnostic says "filling". A host may keep playing the previous answer, marked stale; the core is never written from a stale answer.
+- **The lockfile records each braid fill's answer** beside the fragment's hash (054), keyed by its arguments' core. A piece opens playing its locked answer, a host verifies it when it can, and "stale" only arises while the arguments are being edited. Cells' own tools in Node (`toCore`, the snapshots) read the locked answer instead of searching on every run.
+
+**3. Arguments in their core** (#749).
+- **An argument is its core** (068, 069): references written in, sugar out, a flat braid in the core grammar, still text. Renaming a piece (L1) gives the plugin the same arguments.
+- **The key is resolved:** an argument read `over=` a scale is passed with its scale as semitones, one more argument; the plugin holds no scale table. A key that moves (a stepped `&tonic`, a modulation) is **refused** for now, with a diagnostic.
+- **The grammar is versioned:** cells publishes the core braid grammar a plugin receives as a page, its version named in the frontmatter (`wire: 1`); a core change that alters it bumps the version. Version 1 **refuses chance** (`?`, `[a|b]`) **and `free()`** in a braid fill's arguments: chance is drawn per lap from cells' seed, which a plugin can't reproduce.
+- **A fill as an argument** is passed as its answer, in the order the fills depend on each other. A cycle is an error naming both fragments; a stream as a braid fill's argument is refused.
+
+None of this moves an event snapshot: `fiveto12` takes no arguments, never refuses, and its fills are already called in order.
 
 ## Why
 
@@ -176,9 +202,9 @@ A melody's step has no gain or pan of its own, and `pan=` was not among the para
   - "hole" renamed "fill", and `fiveto12`'s places through its voice's `pan=` (#727);
   - 3: the buffer and its numbers;
   - 4: the WASM runtime in Cell studio, with `fiveto12` ported to AssemblyScript and the same S1 hash over a day;
-  - 5: the file form, `from` with fills, the clock as the main argument, a head a piece multiplies by its voice (`&notes * &level` has none: rung 1 found the mix algebra refuses it), its places on a piece's voice (§5), Migrate;
-  - 6: braid fills (`necklace`, `spell(…)` as candidates);
-  - 7: foreign plugin-fragments in both frontends.
+  - 5: the file form, `from` with fills, the clock as the main argument, a head a piece multiplies by its voice (decision 087: a named product with no voice is its parentheses, #745, landed), its places on a piece's voice (`pan=` on a line, #739), Migrate;
+  - 6: braid fills (`necklace`, `spell(…)` as candidates), with §8: the refusal, fuel, the deadline, the answer in the lockfile, arguments in their core and the wire page (`wire: 1`);
+  - 7: foreign plugin-fragments in both frontends, yggi/countercell the first (its phase 3 waits on 5 to 7).
 - **A change a frontend notices:** `law=` warns once rung 5 lands, and Migrate rewrites it, as a minor version with the migration in `changes/`. `pan=` moving is an addition. Cell studio's `pluginView.ts` can read `lawOf` in place of `'fiveto12'` (yggi/cell-studio#638).
 - **Not plugins:**
   - `scan`, `even`, `euclid`, `meter` and the waves are the foundation (072, 080).

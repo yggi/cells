@@ -16,6 +16,9 @@ export const STUBS = new Set([
         .map((k) => `parameter ${k}`),
 ]);
 export const PENDING = new Set([
+    'sort pitch: a product with no sound in it and a pitch',
+    'sort plain: a cell that is one number and nothing else',
+    'sort plain: a sum of values',
     'free free(v, lo..hi, unit=bpm)',
     'generator even(k, n)',
     'step <a b c>',
@@ -99,7 +102,7 @@ export const TIERS = [
     },
     {
         name: 'Melody and harmony',
-        concept: 'tables: over=, scale() and a scan of steps, shift=; show= and size=; motifs: splicing, reuse, degrees (^n); chords and a progression: accidentals, a sum of pitches',
+        concept: 'tables: over=, scale() and a scan of steps, shift=; a key on its tonic, the library key (&key from diatonic(mode=minor) &tonic, #699); show= and size=; motifs: splicing, reuse, degrees (^n); chords and a progression: accidentals, a sum of pitches',
         forms: [
             'attribute over',
             'attribute shift',

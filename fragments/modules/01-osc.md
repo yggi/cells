@@ -1,12 +1,7 @@
 ---
 id: osc
 association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 0.25
-    facet: module
+  - facet: module
 source: seed
 ---
 
@@ -25,4 +20,4 @@ Its notes come from the product that plays it, as any voice's do (`[&tune * &osc
 
 **Its signature** (decision 065): `&osc from (&pitch)`, no main parameter. `&lead from osc` takes a copy of it, named `&lead`.
 
-Associated once, as the facet `module`, at the centre of style space, at a quarter weight, as an instrument is: a module is no style's. In a patch it is the VCO.
+Associated as the facet `module` with no point: a module is no style's, so no query finds it: a piece takes it by its name (decision 090). In a patch it is the VCO.

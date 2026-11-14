@@ -5,7 +5,7 @@ import { compileSource } from './compile';
 import { parse, readFrom, USE_RETIRED } from './parser';
 import { bodyOf, expand, fragmentHash, signatureOf, FROM_DEPTH } from './use';
 import { setTiming } from './edit';
-import { lockfileOf, readPiece, withLockfile, writePiece, type PieceFile } from './piecefile';
+import { lockChanges, lockfileOf, readPiece, textLockfile, withLockfile, writePiece, type PieceFile } from './piecefile';
 import { eventsBetween, plan } from './realize';
 import { codeShifts, type CompileResult, type Resolve } from './program';
 import { soundsIdentical } from './sameness';
@@ -366,8 +366,8 @@ describe('the lockfile', () => {
     expect(lockfileOf(withLockfile(had, uses))).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
   });
 
-  it('the hash is the text’s up to layout, its rung written first', () => {
-    expect(fragmentHash(KIT)).toMatch(/^e1:[0-9a-f]{16}$/);
+  it('the hash is the text as a piece receives it, e2:, its rung written first (decision 089)', () => {
+    expect(fragmentHash(KIT)).toMatch(/^e2:[0-9a-f]{16}$/);
     expect(fragmentHash('&a  s=sine # a comment\n\n&b s=saw')).toBe(fragmentHash('&a s=sine\n&b s=saw'));
     expect(fragmentHash('&a s=sine')).not.toBe(fragmentHash('&a s=saw'));
     expect(new Set(LIBRARY.map((f) => fragmentHash(f.text))).size).toBe(LIBRARY.length);
@@ -439,5 +439,35 @@ describe('the fit (decision 047) with from', () => {
   it('a union carries a fragment’s from lines, once', () => {
     expect(unionOf('* from gm_kit\n&beat step=8n &bd ~', '* from gm_kit\n&bar meter("4/4")').text).toBe('* from gm_kit\n&bar meter("4/4")\n&beat step=8n &bd ~');
     expect(unionOf('* from gm_kit\n&beat step=8n &bd ~', '&bar meter("4/4")').text).toBe('&bar meter("4/4")\n* from gm_kit\n&beat step=8n &bd ~');
+  });
+});
+
+describe('the lockfile of a plain text (#714)', () => {
+  it("is a piece file's lockfile without the file: the same entries for every example", () => {
+    let entries = 0;
+    for (const [key, example] of Object.entries(EXAMPLES)) {
+      const piece = readPiece(example.file) as PieceFile;
+      const takes = compileSource(example.source, undefined, { resolve: resolveSeed }).takes ?? [];
+      const locked = textLockfile(example.source, resolveSeed);
+      expect(locked, key).toEqual(lockfileOf(withLockfile(piece, takes)));
+      entries += locked.length;
+    }
+    expect(entries).toBeGreaterThan(100);
+  });
+
+  it("locks a document's part by its id and head, and an id that doesn't resolve not at all", () => {
+    const text = '&key from diatonic(mode=ionian) C\n&twinkle from kinderlied &key\n&x from no_such_fragment';
+    expect(textLockfile(text, resolveSeed).map((k) => k.id)).toEqual(['diatonic', 'kinderlied/twinkle']);
+  });
+
+  it('names each entry a text now resolves to another hash or to nothing, and only those', () => {
+    const text = '&bd, &sd from gm_kit\n&key from diatonic(mode=ionian) C';
+    const locked = textLockfile(text, resolveSeed);
+    expect(lockChanges(text, locked, resolveSeed)).toEqual([]);
+    const kit = locked.find((k) => k.id === 'gm_kit')!;
+    const stale = [{ id: 'gm_kit', hash: 'e1:0000000000000000' }, ...locked.filter((k) => k !== kit), { id: 'gone', hash: 'e1:1' }];
+    expect(lockChanges(text, stale, resolveSeed)).toEqual([{ id: 'gm_kit', was: 'e1:0000000000000000', now: kit.hash }]);
+    const lost: Resolve = (id) => (id === 'gm_kit' ? null : resolveSeed(id));
+    expect(lockChanges(text, locked, lost)).toEqual([{ id: 'gm_kit', was: kit.hash, now: null }]);
   });
 });

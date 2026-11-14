@@ -140,9 +140,18 @@ export declare function layerProblems(layer: LearnedLayer): string[];
 export declare function pointDistance(a: StylePoint, b: StylePoint, axisWeights?: StylePoint): number;
 /** A fragment's association points a query of this facet measures: those of the facet and those that name none; all, for no facet. */
 export declare const pointsOf: (fragment: Fragment, facet?: string) => readonly WeightedPoint[];
+/** Whether a point is no style: it names no axis (`- facet: module`: a kind and no style, decision 090). */
+export declare const isAnyStyle: (point: StylePoint) => boolean;
 /**
- * How far a fragment is from a point: the nearest of its association's points (of the facet, where one is named), each
- * distance divided by that point's weight. Infinite when it has no point of that facet.
+ * The points a query finds a fragment by (decision 090, the owner, 2026-11-14): its association's points of the facet
+ * (`pointsOf`) that place it in a style. A point of no style says what kind of fragment it is, and nothing a query finds:
+ * a fragment with no other is never returned, only taken by its name (`from id`, in a piece or in a fragment that has a
+ * style). This replaced #765's `ANY_DISTANCE`, unreleased.
+ */
+export declare const styledPointsOf: (fragment: Fragment, facet?: string) => readonly WeightedPoint[];
+/**
+ * How far a fragment is from a point: the nearest of its styled points (of the facet, where one is named), each
+ * distance divided by that point's weight. Infinite when it has no styled point of that facet.
  */
 export declare function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeights?: StylePoint, facet?: string): number;
 export declare const byId: (a: string, b: string) => number;

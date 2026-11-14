@@ -466,3 +466,36 @@ describe('free(…) around a braid (#210): a braid left to the performer', () =>
     expect(err('&r free("0 2")')).toMatch(/is a text/);
   });
 });
+
+describe('a continued line: a span is on the line it is written on (#764)', () => {
+  const text = ['&a step=2 0', '&p s=tri loop=C4', '&out map=sample [&a * &p * .3,', '     &a * &p * .5,', '     &nope * &p * 7x]'].join('\n');
+  const lines = text.split('\n');
+  const at = (s: { line: number; col: number; len: number }) => lines[s.line - 1]!.slice(s.col - 1, s.col - 1 + s.len);
+
+  it('each product of a mix over three lines, and each of its factors', () => {
+    const mix = parse(text.replace('&nope', '&a').replace('7x', '.7')).cells.find((d) => d.name === 'out')!.braid;
+    const exprs = mix.kind === 'list' && mix.tokens[0]!.atom.kind === 'mix' ? mix.tokens[0]!.atom.exprs : [];
+    expect(exprs.map((e) => (e.k === 'prod' ? [e.span.line, e.span.col] : null))).toEqual([
+      [3, 18],
+      [4, 6],
+      [5, 6],
+    ]);
+    const clean = text.replace('&nope', '&a').replace('7x', '.7').split('\n');
+    for (const e of exprs)
+      if (e.k === 'prod')
+        expect(e.factors.map((f) => (f.k === 'ref' ? f.ref.span : f.k === 'num' ? f.span : null)).map((s) => s && clean[s.line - 1]!.slice(s.col - 1, s.col - 1 + s.len))).toEqual([
+          '&a',
+          '&p',
+          expect.stringMatching(/^\.[357]$/),
+        ]);
+  });
+
+  it('an error on a continued line is said where it is written', () => {
+    const errors = parse(text).diagnostics.filter((d) => d.severity === 'error');
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.span.line).toBe(5);
+    // (the x after the 7, on the third line of the mix)
+    expect(at({ ...errors[0]!.span, len: 2 })).toBe('x]');
+    expect(errors[0]!.span.col).toBe(lines[4]!.indexOf('7x') + 2);
+  });
+});

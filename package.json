@@ -1,6 +1,6 @@
 {
   "name": "@yggi/cells",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "description": "The cells language: parse, compile, realize, the headless engine, Shorten, the folder (MIDI to cells).",
   "license": "MIT",
   "type": "module",
@@ -44,8 +44,8 @@
   ],
   "scripts": {
     "test": "vitest run --project quick",
-    "test:all": "vitest run",
-    "test:slow": "vitest run --project slow",
+    "test:all": "node --experimental-strip-types --no-warnings tools/heavy.ts vitest run",
+    "test:slow": "node --experimental-strip-types --no-warnings tools/heavy.ts vitest run --project slow",
     "check": "tsc -p tsconfig.types.json --incremental --tsBuildInfoFile .cache/types.tsbuildinfo --outDir .cache/types && tsc -p tsconfig.json --incremental --tsBuildInfoFile .cache/tsconfig.tsbuildinfo && node tools/strict.mjs",
     "lint": "eslint --cache --cache-strategy content --cache-location .cache/eslint .",
     "format": "prettier --write .",
@@ -54,7 +54,7 @@
     "examples": "node --experimental-strip-types --no-warnings tools/examples.ts",
     "fragments": "node --experimental-strip-types --no-warnings tools/fragments.ts",
     "preverify": "node tools/install-first.mjs && sh tools/verified.sh begin",
-    "verify": "npm run check && npm run lint && npm run format:check && npm run knip && npm test -- --reporter=default --reporter=./tools/test-count.ts",
+    "verify": "npm run check && npm run lint && npm run format:check && npm run knip && node --experimental-strip-types --no-warnings tools/heavy.ts npm test -- --reporter=default --reporter=./tools/test-count.ts",
     "postverify": "sh tools/verified.sh end",
     "verify:docs": "sh tools/docs-format.sh && vitest run --project quick src/docs.test.ts tools/reading-list.test.ts tools/docs-only.test.ts tools/changelog.test.ts tools/conflict-markers.test.ts src/engine/vary.test.ts",
     "changelog": "node tools/changelog.mjs",

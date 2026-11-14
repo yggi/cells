@@ -174,13 +174,25 @@ function dropLine(source: string, name: string): string {
   return i < 0 ? source : [...lines.slice(0, i), ...lines.slice(i + 1)].join('\n');
 }
 
-/** A clock's onsets, its first `SAME.steps`, from the time map the compile builds; null where it has none. */
-function onsets(source: string, key: string, options: CompileOptions): number[] | null {
+/** A text's clocks, compiled once: each one's tick i in seconds, from the time map the compile builds; null where it has none. */
+function clocksOf(source: string, options: CompileOptions): (key: string) => ((i: number) => number) | null {
   const r = compileSource(source, undefined, options);
-  if (!r.clocks.has(key)) return null;
-  const map = clocking(r, plan(r, codeShifts(r)).statics).map(key);
-  return Array.from({ length: SAME.steps }, (_, i) => map.q(i));
+  const maps = clocking(r, plan(r, codeShifts(r)).statics);
+  return (key) => {
+    if (!r.clocks.has(key)) return null;
+    const map = maps.map(key);
+    return (i) => map.q(i);
+  };
 }
+
+/** A clock's onsets, its first `SAME.steps`, every `stride`-th tick (a chained tap, `1m/1440`: every 1440th bar). */
+const firstSteps = (q: (i: number) => number, stride = 1): number[] => Array.from({ length: SAME.steps }, (_, i) => q(i * stride));
+
+/** How many units in the last place two times may differ by and be one: a few roundings of the time map's sums. */
+const ULPS = 64;
+
+/** The most a chained tap divides a tap by: a week of minutes, 10,080 (#722). */
+const MAX_STRIDE = 100_000;
 
 /**
  * A second clock its readers tap where every tick of it is a tick of a tap of the main meter (#668, `tapClock`): the
@@ -202,25 +214,47 @@ export function tapClock(source: string, result: CompileResult, options: Compile
     const tapped = new RegExp(`step=&${name}:([\\w.]+)(?![\\w*/.:])`, 'g');
     const taps = [...new Set([...source.matchAll(tapped)].map((m) => m[1]!))];
     if (!taps.length || otherMentions(source, name, tapped) !== 0) continue;
-    const probe = `${source}\n${TAPS.map((t, i) => `&__tap${i} step=${t} 0`).join('\n')}`;
-    const near = (a: number[], b: number[]) => a.every((x, i) => Math.abs(x - b[i]!) <= SAME.seconds);
+    // (to 1e-9 s, or a double's rounding where the time is large: a day's 63rd tick is 5.4e6 s, past what 1e-9 s can tell)
+    const near = (a: number[], b: number[]) => a.every((x, i) => Math.abs(x - b[i]!) <= Math.max(SAME.seconds, ULPS * Number.EPSILON * Math.abs(x)));
+    const mine = clocksOf(source, options);
+    // (where the piece has several meters with a tempo of their own, a tap names its meter, decision 091: the readers
+    // are written on the first's taps by its name)
+    const named = result.meters ? `&${main}:` : '';
+    const main_ = clocksOf(`${source}\n${TAPS.map((t, i) => `&__tap${i} step=${named}${t} 0`).join('\n')}`, options);
     const instead = new Map<string, string>();
     for (const tap of taps) {
-      const theirs = onsets(source, `${name}:${tap}`, options);
+      const q = mine(`${name}:${tap}`);
+      if (!q) continue;
+      const theirs = firstSteps(q);
+      // (a tap of the main meter's, else one chained, `1m/1440`, the coarsest tap whose every k-th tick is one of its
+      // ticks: #722, a clock slower than any tap, Daytime's day)
       const match =
-        theirs &&
         TAPS.find((t) => {
-          const ours = onsets(probe, `${main}:${t}`, options);
-          return ours !== null && near(ours, theirs);
-        });
+          const ours = main_(`${main}:${t}`);
+          return ours !== null && near(firstSteps(ours), theirs);
+        }) ??
+        TAPS.flatMap((t) => {
+          const ours = main_(`${main}:${t}`);
+          return ours ? [{ t, ours, period: (ours(SAME.steps) - ours(0)) / SAME.steps }] : [];
+        })
+          // (the coarsest first; of two as long, the meter's own word, `1m` before `1n`, as TAPS lists them last)
+          .sort((a, b) => b.period - a.period || TAPS.indexOf(b.t) - TAPS.indexOf(a.t))
+          .flatMap(({ t, ours, period }) => {
+            const k = Math.round((theirs[1]! - theirs[0]!) / period);
+            return k > 1 && k <= MAX_STRIDE && near(firstSteps(ours, k), theirs) ? [`${t}/${k}`] : [];
+          })[0];
       if (match) instead.set(tap, match);
     }
     if (instead.size !== taps.length) continue;
     const said = [...instead].map(([a, b]) => `&${name}:${a} is ${b}`).join(', ');
     out.push(
       rewrite('meter', `&${name}'s ticks are &${main}'s: ${said}`, `step=&${name}:${taps[0]}`, `step=${instead.get(taps[0]!)}`, (src) => {
-        let next = src.replace(tapped, (_, tap: string) => `step=${instead.get(tap) ?? `&${name}:${tap}`}`);
-        if (!noted(next, name) && otherMentions(next, name) === 0) next = dropLine(next, name);
+        const written = (prefix: string) => src.replace(tapped, (_, tap: string) => (instead.has(tap) ? `step=${prefix}${instead.get(tap)}` : `step=&${name}:${tap}`));
+        let next = written('');
+        const gone = !noted(next, name) && otherMentions(next, name) === 0;
+        // (the taps name the meter where the piece still has several once this clock is folded, decision 091)
+        if ((result.meters ?? []).filter((m) => m !== name || !gone).length > 1) next = written(named);
+        if (gone) next = dropLine(next, name);
         return next;
       }),
     );

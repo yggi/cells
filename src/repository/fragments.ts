@@ -171,12 +171,10 @@ export const coUseScore = (distance: number, uses: number, pull: number = CO_USE
 
 const isFiniteNumber = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 
-/** What is wrong with a style point: no axes, or an axis whose value isn't a finite number. */
+/** What is wrong with a style point: an axis whose value isn't a finite number. A point with no axes is no style (`ANY_DISTANCE`). */
 function pointProblems(point: unknown, where: string): string[] {
   if (typeof point !== 'object' || point === null) return [`${where}: not a style point`];
-  const axes = Object.entries(point);
-  if (!axes.length) return [`${where}: an empty point (no axes)`];
-  return axes.flatMap(([axis, value]) => (isFiniteNumber(value) ? [] : [`${where}: ${axis} is ${String(value)}, not a number`]));
+  return Object.entries(point).flatMap(([axis, value]) => (isFiniteNumber(value) ? [] : [`${where}: ${axis} is ${String(value)}, not a number`]));
 }
 
 /** What is wrong with an index entry, each problem a sentence; none for a well-formed one. */
@@ -265,12 +263,23 @@ export function pointDistance(a: StylePoint, b: StylePoint, axisWeights: StylePo
 export const pointsOf = (fragment: Fragment, facet?: string): readonly WeightedPoint[] =>
   facet === undefined ? fragment.association : fragment.association.filter((wp) => wp.facet === undefined || wp.facet === facet);
 
+/** Whether a point is no style: it names no axis (`- facet: module`: a kind and no style, decision 090). */
+export const isAnyStyle = (point: StylePoint): boolean => Object.keys(point).length === 0;
+
 /**
- * How far a fragment is from a point: the nearest of its association's points (of the facet, where one is named), each
- * distance divided by that point's weight. Infinite when it has no point of that facet.
+ * The points a query finds a fragment by (decision 090, the owner, 2026-11-14): its association's points of the facet
+ * (`pointsOf`) that place it in a style. A point of no style says what kind of fragment it is, and nothing a query finds:
+ * a fragment with no other is never returned, only taken by its name (`from id`, in a piece or in a fragment that has a
+ * style). This replaced #765's `ANY_DISTANCE`, unreleased.
+ */
+export const styledPointsOf = (fragment: Fragment, facet?: string): readonly WeightedPoint[] => pointsOf(fragment, facet).filter((wp) => !isAnyStyle(wp.point));
+
+/**
+ * How far a fragment is from a point: the nearest of its styled points (of the facet, where one is named), each
+ * distance divided by that point's weight. Infinite when it has no styled point of that facet.
  */
 export function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeights: StylePoint = {}, facet?: string): number {
-  return Math.min(...pointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
+  return Math.min(...styledPointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
 }
 
 /** The order of two ids, by code unit: how a layer writes a pair, and a query breaks a tie. */
@@ -379,7 +388,8 @@ export function createRepository(given: readonly Fragment[]): Repository {
         return n;
       };
       const ranked = fragments
-        .filter((fragment) => pointsOf(fragment, facet).length > 0)
+        // (a fragment of no style is found by no query: it is taken by its name, decision 090)
+        .filter((fragment) => styledPointsOf(fragment, facet).length > 0)
         .map((fragment) => {
           const distance = fragmentDistance(fragment, point, axisWeights, facet);
           return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id), pull) };

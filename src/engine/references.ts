@@ -6,7 +6,7 @@
  */
 import type { Span } from './ast';
 import { splitComment } from './edit';
-import { readFrom, topTokens } from './parser/use';
+import { leftOf, readFrom, topTokens } from './parser/use';
 
 /** One `from` line's reference to a fragment. */
 export interface Reference {
@@ -14,8 +14,12 @@ export interface Reference {
   readonly id: string;
   /** Where the id is written: its line (1-based), its column (1-based) and its length, quotes included where it has them. */
   readonly span: Span;
-  /** The names the line takes (`&bd`, `&sd`), or null for `*` (every line). */
+  /** The names the line binds (`&bd`, `&sd`; the piece's `&kick` of `&kick=bd`), or null for `*` (every line). */
   readonly names: readonly string[] | null;
+  /** What each of `names` takes from the fragment, in the same order (`&bd` of `&kick=bd`; the name itself where the line renames none), or null for `*`. */
+  readonly takes: readonly string[] | null;
+  /** The head's attributes, written before `from` (`label="my key"`, the flag `off`), as written. */
+  readonly head: readonly string[];
   /** The named arguments, in parentheses (`swing=8n:.64`), as written; null where there are none. */
   readonly args: readonly { readonly name: string; readonly value: string }[] | null;
   /** The main argument as written (`&key`, `D`), or null. */
@@ -36,6 +40,33 @@ export function references(text: string): Reference[] {
     const token = tokens[at + 1];
     if (at < 0 || !token) return [];
     const len = token.text.startsWith('"') ? form.id.length + 2 : form.id.length;
-    return [{ id: form.id, span: { line: i + 1, col: lead + token.at + 1, len }, names: form.names, args: form.args, main: form.main }];
+    return [
+      {
+        id: form.id,
+        span: { line: i + 1, col: lead + token.at + 1, len },
+        names: form.names,
+        takes: form.takes,
+        head: form.head,
+        args: form.args,
+        main: form.main,
+      },
+    ];
   });
+}
+
+/** What a `from` line says, as `fromLine` writes it: a reference without its place in a text, everything but the id and the names optional. */
+export type FromLine = Pick<Reference, 'id' | 'names'> & Partial<Pick<Reference, 'takes' | 'head' | 'args' | 'main'>>;
+
+/** An id as a `from` line writes it: a word bare (`gm_kit`), any other in double quotes (`"funk_drums~2"`). */
+const idOf = (id: string): string => (/^[A-Za-z_][A-Za-z0-9_]*$/.test(id) ? id : `"${id}"`);
+
+/**
+ * A `from` line written (#714), the inverse of `references`: the names, renamed where they take another
+ * (`&kick=bd`), or `*`; the head's attributes; the id; the named arguments in parentheses; the main argument.
+ * `references(fromLine(r))` reads `r` back, its span aside, for every `from` line a text writes. A frontend writes
+ * what it took so, `&bassline from funk_bass &harm`, rather than the lines written out. Pure.
+ */
+export function fromLine({ names, takes = names, head = [], id, args = null, main = null }: FromLine): string {
+  const written = args?.length ? `(${args.map((a) => `${a.name}=${a.value}`).join(', ')})` : '';
+  return [leftOf(names, takes), ...head, 'from', `${idOf(id)}${written}`, ...(main ? [main] : [])].join(' ');
 }

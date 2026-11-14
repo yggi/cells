@@ -37,12 +37,12 @@
  * ```
  * uses:
  *   - id: gm_kit
- *     hash: e1:6de2201770fbb2d7
+ *     hash: e2:6de2201770fbb2d7
  * ```
  */
 import { type CodeLine, type Layout } from './literate';
 import { type YamlProblem, type YamlValue } from '../repository/yaml';
-import type { Locked, Take } from './program';
+import type { Locked, Resolve, Take } from './program';
 /** The frontmatter, every key in the order the file gives it. */
 export type PieceFrontmatter = {
     readonly [key: string]: YamlValue;
@@ -75,10 +75,29 @@ export declare function readPiece(markdown: string): PieceFile | PieceFileProble
 /** A piece file's lockfile (decision 054): what each `use` resolved to when it was saved, for `compileSource`'s `locked`. */
 export declare const lockfileOf: ({ frontmatter }: Pick<PieceFile, "frontmatter">) => Locked[];
 /**
- * A piece file with its lockfile recording what a compile's `from` lines resolved to (`CompileResult.uses`): a `use` that
- * didn't resolve keeps the entry it had. What `writePiece` then writes; a frontend whose person didn't keep a changed
- * version (the compile warned) leaves the entry as it was.
+ * A piece file with its lockfile recording what a compile's `from` lines resolved to (`CompileResult.takes`): a `from`
+ * line that didn't resolve keeps the entry it had. What `writePiece` then writes; a frontend whose person didn't keep a
+ * changed version (the compile warned) leaves the entry as it was. It is `textLockfile` in the frontmatter.
  */
 export declare function withLockfile(file: PieceFile, takes: readonly Take[]): PieceFile;
+/**
+ * The lockfile of a plain text (#714): what each of its `from` lines resolves to through `resolve`, its id and hash, with
+ * no file to hold it, so a frontend can send a score with the fragments it takes (a section text on the wire,
+ * yggi/jambot#553). A piece file's lockfile is this one in its frontmatter (`withLockfile`). It reads the expansion
+ * alone, and compiles nothing.
+ */
+export declare const textLockfile: (text: string, resolve: Resolve) => Locked[];
+/** An entry of a lockfile that a text's `from` lines resolve to otherwise now: its hash then, and now (null where it no longer resolves). */
+export interface LockChange {
+    readonly id: string;
+    readonly was: string;
+    readonly now: string | null;
+}
+/**
+ * A text checked against a lockfile (#714): each entry one of its `from` lines names that resolves through `resolve` to
+ * another hash, or to nothing, in the lockfile's order. An entry no `from` line names is not a change: the text no
+ * longer takes it. Empty where the text plays what the lockfile recorded.
+ */
+export declare function lockChanges(text: string, locked: readonly Locked[], resolve: Resolve): LockChange[];
 /** A piece file's text: the frontmatter (its lockfile pruned to the `from` lines the text has), the cells blocks, the prose. */
 export declare function writePiece(file: PieceFile): string;

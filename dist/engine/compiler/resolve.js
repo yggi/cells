@@ -2,11 +2,12 @@ import { valueSumOf } from "../valuesum.js";
 import { isNote } from "../ast.js";
 import { footOf, innerSteps, leaves } from "../subseq.js";
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps } from "../program.js";
-import { VOICE_PARAMS } from "../attributes.js";
+import { VOICE_MAKERS } from "../attributes.js";
 import { gmDrumNote } from "../midi.js";
 import { scan as scanOf } from "../../theory/modes.js";
 import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel } from "../meter.js";
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from "./tables.js";
+import { notesCells } from "./sorts.js";
 class Abort extends Error {
 }
 function meterOf(d) {
@@ -62,6 +63,7 @@ function bentOf(d, warn, declOf) {
 }
 export const stepsPerBeat = (m) => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
 export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stacks }, typed, sortOf) {
+    const isNotes = notesCells(ctx, decls);
     const { rateOf, error, warn, broken, unknownCell } = ctx;
     const cells = new Map();
     const lengthOf = (name) => lengthIn(decls, name);
@@ -196,7 +198,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
                                 ? { kind: 'midi', channel: d.map.channel, port: d.map.port }
                                 : { kind: d.map.kind }
                 : null,
-            mix: stacks.has(name)
+            mix: stacks.has(name) || isNotes(name)
                 ? []
                 : sum
                     ? null
@@ -212,7 +214,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             stride: d.stride ?? 1,
             params: d.params,
             paramCells: Object.fromEntries(Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name), ...(v.to !== undefined ? { to: v.to } : {}) }])),
-            voice: Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
+            voice: Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)),
             freq: d.step?.kind === 'rate' || d.step?.kind === 'env'
                 ? d.step.whole
                     ? (rateOf(d.step) ?? DEFAULT_FREQ)

@@ -3,14 +3,14 @@ import { valueSumOf } from '../valuesum';
 import { isNote, type Atom, type CellDecl, type Span, type Token } from '../ast';
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
-import { VOICE_PARAMS } from '../attributes';
+import { VOICE_MAKERS } from '../attributes';
 import { gmDrumNote } from '../midi';
 import { scan as scanOf } from '../../theory/modes';
 import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel, type Meter } from '../meter';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
-import type { Typed } from './sorts';
+import { notesCells, type Typed } from './sorts';
 import type { Sort } from '../algebra';
 
 class Abort extends Error {}
@@ -88,6 +88,7 @@ function bentOf(d: CellDecl, warn: Ctx['warn'], declOf: (name: string) => CellDe
 export const stepsPerBeat = (m: Meter | null): number => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
 
 export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, stacks }: Declared, typed: Typed, sortOf: (name: string) => Sort): Cells {
+  const isNotes = notesCells(ctx, decls);
   const { rateOf, error, warn, broken, unknownCell } = ctx;
 
   const cells = new Map<string, ResolvedCell>();
@@ -233,13 +234,15 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       // a mix: one chord of sounds — or, on a sound card, its channels written in place (all their voices); a MIDI
       // card's entries are channels of notes, not a mix (bindings.ts reads them)
       // (a stack a gate plays is its part, each line played by the gate: no sound of its own, so it mixes nothing)
-      mix: stacks.has(name)
-        ? []
-        : sum
-          ? null
-          : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
-            ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
-            : null,
+      // (notes with their levels, decision 087: no sound of its own either; a mix that names it reads its product)
+      mix:
+        stacks.has(name) || isNotes(name)
+          ? []
+          : sum
+            ? null
+            : units.length > 0 && units.every((u) => u.atom.kind === 'mix') && (units.length === 1 || d.map?.kind === 'sample') && d.map?.kind !== 'midi'
+              ? units.flatMap((u) => (u.atom.kind === 'mix' ? typed(u.atom) : []))
+              : null,
       ...(sum ? { sum } : {}),
       sink: d.map?.kind === 'sample',
       sort: sortOf(name),
@@ -252,7 +255,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
         Object.entries(d.paramCells ?? {}).map(([k, v]) => [k, { range: v.range, factors: v.factors.map((f) => f.name), ...(v.to !== undefined ? { to: v.to } : {}) }]),
       ),
       // a sound parameter makes a voice; a physical cell's (motor=, write=, postgain= on the sound card …) doesn't
-      voice: Object.keys(d.params).some((k) => VOICE_PARAMS.has(k)),
+      voice: Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)),
       freq:
         d.step?.kind === 'rate' || d.step?.kind === 'env'
           ? d.step.whole

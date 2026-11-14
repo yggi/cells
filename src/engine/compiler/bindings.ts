@@ -1,11 +1,11 @@
 /** Phase 3: who plays what — kits, the sound card's channels, MIDI cards' channels, mixes expanded (instruments, sends), voices marked. */
 import type { Binding, CellDecl, Ref, Span, StylePoint, StyleSpec } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
-import { ATTRIBUTES, memberParams, VOICE_PARAMS } from '../attributes';
+import { ATTRIBUTES, memberParams, VOICE_MAKERS, VOICE_PARAMS } from '../attributes';
 import { canonicalTag, TUTORIAL } from '../tags';
 import { isMidiCard, type MidiDest, type Output, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
-import type { Typed } from './sorts';
+import { notesCells, type Typed } from './sorts';
 import { noSound } from './band';
 import { refsOf } from '../readers';
 
@@ -17,6 +17,7 @@ const entryLabel = (b: Binding) => [...b.pitches.map((t) => t.ref.name), b.voice
 
 /** Marks kits and voices on a copy of the cells it is given; returns it with the sound card's bindings. */
 export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells, typed: Typed) {
+  const isNotes = notesCells(ctx, decls);
   const { error, warn, unknownCell } = ctx;
   const cells = new Map(given);
   // ---- voices: the signal of every binding (the factor that is a sound: algebra.ts), and cells with sound parameters.
@@ -86,6 +87,12 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     channels.forEach((u, ch) => {
       // a channel is a mix cell (&left), or a mix written in place on the sound card itself
       const inPlace = u.atom.kind === 'mix' ? typed(u.atom) : null;
+      // (notes with their levels named as a channel, with no voice: typed as its own product, which says what is missing, decision 087)
+      const notesOwn = u.atom.kind === 'ref' && isNotes(u.atom.name) ? decls.get(u.atom.name)?.braid : undefined;
+      if (notesOwn?.kind === 'list' && notesOwn.tokens[0]?.atom.kind === 'mix') {
+        typed(notesOwn.tokens[0].atom);
+        return;
+      }
       const mix = u.atom.kind === 'ref' ? cells.get(u.atom.name) : inPlace ? sink : undefined;
       const bindings = inPlace ?? (u.atom.kind === 'ref' && mix?.mix && !mix.sink ? mix.mix : null);
       if (!mix || !bindings) {
@@ -256,7 +263,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     if (src !== undefined && d.braid.kind !== 'blank') warn(`s=${src} plays a built-in waveform; the braid is ignored`, d.paramSpans.s);
     // (#425: a voice by its own sound parameters whose braid names a voice — a voice's braid is its waveform, and a voice
     // is no waveform; the mix of it is an instrument, decision 067)
-    const own = Object.keys(d.params).find((k) => VOICE_PARAMS.has(k));
+    const own = Object.keys(d.params).find((k) => VOICE_MAKERS.has(k));
     const named = src === undefined && own ? refsOf(c).find((n) => n !== name && (cells.get(n)?.voice || cells.get(n)?.kit)) : undefined;
     if (named)
       warn(
@@ -265,7 +272,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       );
     for (const [k, v] of Object.entries(d.params)) if (ATTRIBUTES[k]?.value === 'number' && typeof v !== 'number') error(`${k}= takes a number`, d.paramSpans[k]);
     // a voice by its sound parameters, written as a clock: say which parameter made it one
-    const made = Object.keys(d.params).find((k) => VOICE_PARAMS.has(k));
+    const made = Object.keys(d.params).find((k) => VOICE_MAKERS.has(k));
     const why = made ? ` (${made}= makes &${name} a voice; a meter takes none)` : '';
     if (d.step?.kind === 'driven' || d.step?.kind === 'tap') error(`A voice moves at a rate — its pitch, like loop=C4${why}`, d.step.span);
     else if (d.step && !d.step.whole) error(`A voice's pitch is loop= (one turn of its braid per cycle): loop=C4${why}`, d.step.span);

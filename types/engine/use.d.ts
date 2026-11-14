@@ -31,8 +31,21 @@ export declare function signatureOf(text: string): Extract<FromForm, {
 }> | null;
 /** A fragment's text without its signature: its lines, as a host that puts them on a workbench by hand reads them. */
 export declare const bodyOf: (text: string) => string;
-/** A fragment's hash: `e1:` and the hash of its text up to layout (its lines' code, one to a line). */
+/** A fragment's `e1:` hash: its text up to layout (its lines' code, one to a line; decision 050's E1). What lockfiles recorded before decision 089. */
+export declare const fragmentHashE1: (text: string) => string;
+/**
+ * A fragment as a piece receives it (decision 089 §8; the note 405's "E2 corrected"): its lines' code (comments aside,
+ * whitespace collapsed), each declaration's association left out (`withoutAssociation`) and a declaration written twice
+ * once; a template's own names numbered in the order it declares them (`&#1`, `&#2`), but those its signature declares
+ * (its heads and parameters, what a piece names); a collection's cells by their names, since a piece takes them by name
+ * (`&bd from gm_kit`); and each run counted as the core counts it (`x x` as `x!2`, decision 077 §3). What `e2:` hashes.
+ * Normalise's respellings (E3) are a later rung: they need the fragment compiled, and a hash is read while one compiles.
+ */
+export declare function identityText(text: string): string;
+/** A fragment's hash: `e2:` and the hash of its text as a piece receives it (`identityText`, decision 089 §8). */
 export declare const fragmentHash: (text: string) => string;
+/** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), any other as `e2:`. */
+export declare const hashIs: (recorded: string, text: string) => boolean;
 /**
  * Does a line read this name as a value, not as a sound: in an attribute (`over=&key`, `step=&tempo`), a generator's or
  * an operation's arguments (`scale(dorian, &tonic)`), or through an operator (`&call^-2`, `&g[0:3]`)? A step of a braid
