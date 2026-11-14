@@ -430,7 +430,7 @@ function lawLap(law, lap) {
     if (kept)
         return kept;
     const unit = unitOf(law);
-    const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4${law.voice ? ` ${law.voice}` : ''}\n&lapOut map=sample [${law.plays} * &lapVoice]`;
+    const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [&${law.head} * &lapVoice]`;
     const result = compile(parse(text, { old: false }), DEFAULT_ENV);
     if (!result.ok)
         throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);

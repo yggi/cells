@@ -28,6 +28,7 @@
  *                  the first's name, the one it read (decision 091, #757)
  *  - oneroot.ts:   a second meter with a tempo of its own, derived from the root by the tap that says its tempo
  *                  (decision 093, #778)
+ *  - laws.ts:      a law written law=fiveto12 over=&day as the from line that takes it: &cycle from five_to_twelve &day (decision 085)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
  * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
@@ -44,7 +45,7 @@
 import { type Find, type Rewrite } from '../rewrite';
 import type { CompileOptions } from '../program';
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments' | 'axes' | 'parts' | 'moved' | 'main meter' | 'one root';
+export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments' | 'axes' | 'parts' | 'moved' | 'main meter' | 'one root' | 'law';
 export type Migration = Rewrite<MigrationRule>;
 /** Every migration a text has, in the order its form was retired; a `from` line's fragment read through `options.resolve`. */
 export declare const migrations: (options?: CompileOptions) => Find;

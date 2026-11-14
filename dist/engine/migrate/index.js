@@ -17,6 +17,7 @@ import { parts } from "./parts.js";
 import { axes } from "./axes.js";
 import { mainMeters } from "./mainmeter.js";
 import { oneRoot } from "./oneroot.js";
+import { laws } from "./laws.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
     ...taps(source, result, options),
@@ -36,6 +37,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...movedIds(source, options.resolve),
     ...oneRoot(source, result),
     ...mainMeters(source, result),
+    ...laws(source, options.resolve),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };
