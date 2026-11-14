@@ -90,8 +90,10 @@ Any cell may carry `style=`, its association or wish: a style cell, an unnamed o
 | `style=[&funk * .8, &bossa * .2]` | a mix: the weighted sum of the styles' points, exact by definition |
 | `style=&funk..&bossa` | a range: from one to the other over the cell's scope |
 | `style=&funk..&bossa * &curve` | a range, where between the two ends set by a line from 0 to 1 in place of time |
+| `style=(&funk \| &bossa * .5)` | a set, found at each ([decision 089](https://github.com/yggi/cells/blob/main/docs/decisions/089-the-association-in-the-text.md)): where the cell belongs, each style with its weight; it has no one value, so a pick of it (`&x[bite]`) and the section's `&style` set to one are errors |
 
 Each end lies within the axes' ranges: a mix whose weights take it outside is an error.
+In a style cell, `bite=.55 ± .1` with nothing moving it is a reach: how sure the point is on that axis, its value the centre (a pick reads .55); kept, read by no query yet. With a cell moving it, `bite=.55 ± .1 * &walk`, it is [decision 079](https://github.com/yggi/cells/blob/main/docs/decisions/079-a-sum-of-cells-and-a-window.md)'s window, as before.
 
 **The note `&style` is the section's style** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md)).
 `&style` is the score's name for it by convention, as `&bar` and `&key` are, and only a name ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)): the band declares the style and the score passes its own (`* from band(…, style=&style)`), so a band written once reads it in every section.
@@ -122,6 +124,22 @@ A held axis is its value; a moving one, a glide or a mix of styles is its value 
 `{ cell: 'mine' }` reads another style cell; the piece's other compile options (`resolve`, `env`) pass through, and the last text read is kept, so a score read at each section's start compiles once.
 It is null where the piece doesn't compile.
 Jambot reads a radio score so, a section at a time (#576).
+
+## A fragment's association, in its text
+
+Where the repository finds a fragment is written on its declaration line ([decision 089](https://github.com/yggi/cells/blob/main/docs/decisions/089-the-association-in-the-text.md)): a template's signature, or a collection's `* from` with no id. The compile reads neither, and no copy or take carries one into a piece.
+
+```text
+&key from (&mode) &tonic style=(&deepHouse | &funk | &seaShanty) mode=dorian
+* from style=(&synthPop | &(map=style sync=.35 harm=.55 bite=.75 mood=.65) * .5)
+* from facet=module
+```
+
+- `style=` is a style of `styles` by name, followed wherever it is placed, or an inline point naming any of the axes (`&(map=style sync=.75 harm=.35 bite=.65)`, decision 041), with `± r` its reach on an axis; `* w` a weight, 1 where left out; `( a | b )` a set, found at each.
+- The facet is the fragment's folder's in the seed library (`fragments/modes/` is `mode`); `facet=` where it differs, or where there is no folder. A declaration with neither counts for every facet.
+- A template's other attributes are its arguments at those points, its optional parameters (`mode=dorian`), one declaration line per set; `style` and `facet` are reserved.
+- No `style=` is no style: found at the same distance from every style (`ANY_DISTANCE`). A template's bare signature is so, where nothing else says where it is.
+- A fragment file whose frontmatter has `association:` still reads, for a release; Normalise will move it.
 
 ## The library of styles: styles
 

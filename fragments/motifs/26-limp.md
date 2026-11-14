@@ -1,18 +1,10 @@
 ---
 id: limp
-association:
-  - point:
-      sync: 0.8
-      harm: 0.6
-      bite: 1
-      mood: 0.375
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&limp from &key
+&limp from &key style=&(map=style sync=.8 harm=.6 bite=1 mood=.375)
 &limp over=&key step=8n 0 ~ 4 ~ 3 2 0
 ```
 

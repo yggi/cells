@@ -1,18 +1,10 @@
 ---
 id: sigh
-association:
-  - point:
-      sync: 0.35
-      harm: 0.55
-      bite: 0.65
-      mood: 0.65
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&sigh from &key
+&sigh from &key style=&deepHouse
 &sigh over=&key step=8n 4@3 3 2@2 ~ ~
 ```
 

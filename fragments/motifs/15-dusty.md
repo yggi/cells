@@ -1,18 +1,10 @@
 ---
 id: dusty
-association:
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.45
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&dusty from &key
+&dusty from &key style=&(map=style sync=.5 harm=.75 bite=.45 mood=.5)
 &dusty over=&key step=8n ~ 0 2 ~ 4 2@3
 ```
 

@@ -1,40 +1,11 @@
 ---
 id: tonic_vamp
-association:
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 1
-      mood: 0.4
-    weight: 1
-    facet: harmony
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-      mood: 0.65
-    weight: 1
-    facet: harmony
-  - point:
-      sync: 0.45
-      harm: 0.05
-      bite: 0.85
-      mood: 0.35
-    weight: 0.4
-    facet: harmony
-  - point:
-      sync: 0.35
-      harm: 0.15
-      bite: 0.4
-      mood: 0.1
-    weight: 0.4
-    facet: harmony
 source: seed
 lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=(&techno | &funk | &acid * .4 | &darkAmbient * .4)
 &harm over=&key step=1m cycle=8 [0,2,4]!8
 ```
 

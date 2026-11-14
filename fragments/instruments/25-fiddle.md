@@ -1,25 +1,11 @@
 ---
 id: fiddle
-association:
-  - point:
-      sync: 0.1
-      harm: 0.25
-      bite: 0.7
-      mood: 0.65
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0
-      harm: 0.7
-      bite: 0.4
-      mood: 0.9
-    weight: 0.5
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/sailor.md @ 014c4c73
 ---
 
 ```cells
+* from style=(&seaShanty * .125 | &(map=style sync=0 harm=.7 bite=.4 mood=.9) * .5)
 &leadV s=saw loop=C4 lpf=3000 env=&(map=adsr .01 .15 .5 .1)
 ```
 

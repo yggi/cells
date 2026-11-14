@@ -1,18 +1,10 @@
 ---
 id: hook
-association:
-  - point:
-      sync: 0.3
-      harm: 0.45
-      bite: 0.55
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&hook from &key
+&hook from &key style=&synthPop
 &hook over=&key step=8n 4 4 3 2@2 ~ 0 2
 ```
 

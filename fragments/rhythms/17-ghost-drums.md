@@ -1,17 +1,10 @@
 ---
 id: ghost_drums
-association:
-  - point:
-      sync: 0.1
-      harm: 0.9
-      bite: 0.3
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&kick, &hat, &euclid, &groove from (&bd, &rim, &rd)
+&kick, &hat, &euclid, &groove from (&bd, &rim, &rd) style=&(map=style sync=.1 harm=.9 bite=.3)
 &bd, &rim, &rd from gm_kit
 &kick role=kick step=1m &bd:0:.45
 &hat role=hat step=4n &rd:0:.08

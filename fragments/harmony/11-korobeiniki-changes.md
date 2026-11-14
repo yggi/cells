@@ -1,19 +1,11 @@
 ---
 id: korobeiniki_changes
-association:
-  - point:
-      sync: 0.3
-      harm: 0.7
-      bite: 1
-      mood: 0.55
-    weight: 0.4
-    facet: harmony
 source: seed
 lifted: yggi/cells examples/korobeiniki.md @ a8de625f
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=&chiptune * .4
 &harm over=&key step=1m cycle=8 [0,2,4] [0,2,4] [4,6,8] [0,2,4] [3,5,7] [0,2,4] [4,6,8] [0,2,4]
 ```
 

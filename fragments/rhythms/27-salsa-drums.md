@@ -1,17 +1,10 @@
 ---
 id: salsa_drums
-association:
-  - point:
-      sync: 0.9
-      harm: 0.5
-      bite: 0.7
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&clave, &tumbao, &cascara, &groove from (&claves, &ht, &lt, &mt, &rd)
+&clave, &tumbao, &cascara, &groove from (&claves, &ht, &lt, &mt, &rd) style=&(map=style sync=.9 harm=.5 bite=.7)
 &claves, &ht, &lt, &mt, &rd from gm_kit
 &clave step=16n cycle=2 &claves:0:.5 ~!5 &claves:0:.5 ~!5 &claves:0:.5 ~!7 &claves:0:.5 ~!3 &claves:0:.5 ~!7
 &tumbao step=8n &mt:0:.3 &mt:0:.2 &ht:0:.5 &mt:0:.2 &mt:0:.3 &mt:0:.2 &lt:0:.6 &lt:0:.5

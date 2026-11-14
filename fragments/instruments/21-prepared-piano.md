@@ -1,18 +1,11 @@
 ---
 id: prepared_piano
-association:
-  - point:
-      sync: 0.35
-      harm: 0.15
-      bite: 0.4
-      mood: 0.1
-    weight: 0.125
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/ghosts.md @ a8de625f
 ---
 
 ```cells
+* from style=&darkAmbient * .125
 &leadV s=tri loop=C4 lpf=3000 room=.45 env=&(map=adsr .002 1.6 0 1.8) pitch=&(map=lin loop=.19 0 .05 0 -.05 0)
 ```
 

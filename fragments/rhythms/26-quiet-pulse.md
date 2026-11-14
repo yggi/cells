@@ -1,17 +1,10 @@
 ---
 id: quiet_pulse
-association:
-  - point:
-      sync: 0.15
-      harm: 0.8
-      bite: 0.5
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&tick, &groove from (&claves)
+&tick, &groove from (&claves) style=&(map=style sync=.15 harm=.8 bite=.5)
 &claves from gm_kit
 &tick step=4n &claves:0:.2
 &groove [&tick]

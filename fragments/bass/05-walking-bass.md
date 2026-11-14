@@ -1,26 +1,11 @@
 ---
 id: walking_bass
-association:
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.3
-      mood: 0.85
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-      mood: 0.5
-    weight: 1
-    facet: bass
 source: seed
 lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=(&swingJazz | &electroSwing)
 &bassline over=&harm step=4n 0 1 2 &bassNext^$-1
 &bassNext over=&harm[>>] 0
 ```

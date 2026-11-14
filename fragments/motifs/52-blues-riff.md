@@ -1,19 +1,11 @@
 ---
 id: bluesRiff
-association:
-  - point:
-      sync: 0.65
-      harm: 0.55
-      bite: 0.45
-      mood: 0.65
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/jazz.md @ b3c0acea
 ---
 
 ```cells
-&bluesRiff from &key
+&bluesRiff from &key style=&bluesShuffle
 &bluesRiff over=&key step=8n 0 2 3 4 ~ 6 4 ~
 ```
 

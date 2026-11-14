@@ -1,18 +1,10 @@
 ---
 id: diesIrae
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.3
-      mood: 0.3
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&diesIrae from &key
+&diesIrae from &key style=&spooky
 &diesIrae over=&key step=8n 2 1 2 0 1 -1 0@2
 ```
 

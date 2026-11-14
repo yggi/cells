@@ -1,18 +1,11 @@
 ---
 id: acid_drums
-association:
-  - point:
-      sync: 0.45
-      harm: 0.05
-      bite: 0.85
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/cells examples/acid.md @ 014c4c73
 ---
 
 ```cells
-&kick, &clap, &hat, &groove from (&bd, &cp, &hh, &oh)
+&kick, &clap, &hat, &groove from (&bd, &cp, &hh, &oh) style=&(map=style sync=.45 harm=.05 bite=.85)
 &bd, &cp, &hh, &oh from gm_kit
 &kick role=kick step=4n &bd:0:.8
 &clap step=2n [~ &cp:0:.35]

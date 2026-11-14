@@ -1,7 +1,5 @@
 ---
 id: lowpass
-association:
-  - facet: module
 source: seed
 ---
 

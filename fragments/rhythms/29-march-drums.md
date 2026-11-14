@@ -1,17 +1,10 @@
 ---
 id: march_drums
-association:
-  - point:
-      sync: 0
-      harm: 0.1
-      bite: 0.75
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&kick, &snare, &groove from (&bd, &sd)
+&kick, &snare, &groove from (&bd, &sd) style=&(map=style sync=0 harm=.1 bite=.75)
 &bd, &sd from gm_kit
 &kick step=4n &bd:0:.7 &bd:0:.5
 &snare step=16n &sd:0:.7 ~ &sd:0:.3 &sd:0:.3 &sd:0:.6 ~ &sd:0:.3 &sd:0:.3

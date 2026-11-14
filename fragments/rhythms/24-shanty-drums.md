@@ -1,18 +1,11 @@
 ---
 id: shanty_drums
-association:
-  - point:
-      sync: 0.1
-      harm: 0.25
-      bite: 0.7
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/cells examples/sailor.md @ 014c4c73
 ---
 
 ```cells
-&kick, &snare, &hat, &groove from (&bd, &sd, &hh)
+&kick, &snare, &hat, &groove from (&bd, &sd, &hh) style=&(map=style sync=.1 harm=.25 bite=.7)
 &bd, &sd, &hh from gm_kit
 &kick role=kick step=2n &bd:0:.8
 &snare step=2n [~ &sd:0:.5]

@@ -1,17 +1,10 @@
 ---
 id: call_and_answer
-association:
-  - point:
-      sync: 0.75
-      harm: 0.35
-      bite: 0.65
-    weight: 1
-    facet: form
 source: seed
 ---
 
 ```cells
-&phrase from (&answer) &call
+&phrase from (&answer) &call style=&(map=style sync=.75 harm=.35 bite=.65)
 &phrase step=8n &call &answer
 &answer step=8n &call^-2
 ```

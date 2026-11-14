@@ -1,53 +1,10 @@
 ---
 id: pad
-association:
-  - point:
-      sync: 0.3
-      harm: 0.45
-      bite: 0.55
-      mood: 0.5
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.35
-      harm: 0.55
-      bite: 0.65
-      mood: 0.65
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.35
-      mood: 0.5
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.45
-      mood: 0.9
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 1
-      mood: 0.4
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0
-      mood: 0.9
-    weight: 0.25
-    facet: instrument
 source: seed
 ---
 
 ```cells
-&padV from (&style)
+&padV from (&style) style=(&synthPop * .25 | &deepHouse * .25 | &lofi * .25 | &bossaNova * .25 | &techno * .25 | &ambient * .25)
 &padV s=tri loop=C3 env=&(map=adsr attack=.3..0.01 * &style[bite] decay=0 sustain=1 release=.7..0.12 * &style[bite])
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```

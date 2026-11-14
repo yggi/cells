@@ -103,7 +103,10 @@ function lineOf(code: string, written = code, line = 0): Line {
  */
 export function partOf(text: string, head: string): string | null {
   const lines = linesOf(text);
-  const sigs = lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : []));
+  const sigs = oneSignatureEach(
+    lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : [])),
+    (s) => s.sig,
+  );
   const found = sigs.find((s) => s.sig.names.includes(`&${head}`));
   if (!found) return null;
   if (sigs.length === 1) return text;
@@ -149,7 +152,27 @@ export const usesIn = (text: string, head: string): UseOver[] =>
   );
 
 /** The heads of each signature a text holds, in the order written: one entry a part (decision 082). */
-export const partsOf = (text: string): string[][] => linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from.names.map((n) => n.slice(1))] : []));
+export const partsOf = (text: string): string[][] =>
+  oneSignatureEach(linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []))).map((s) => s.names.map((n) => n.slice(1)));
+
+/**
+ * Signatures as a fragment has them: one for each set of heads, parameters and main parameter, the first written. A
+ * template writes its signature again for each declaration it carries (decision 089: one line per facet or set of
+ * arguments), and those lines are one signature.
+ */
+function oneSignatureEach<T>(
+  items: readonly T[],
+  sigOf: (t: T) => Extract<FromForm, { kind: 'signature' }> = (t) => t as unknown as Extract<FromForm, { kind: 'signature' }>,
+): T[] {
+  const seen = new Set<string>();
+  return items.filter((t) => {
+    const s = sigOf(t);
+    const key = JSON.stringify([s.names, s.optional, s.main]);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
 /**
  * What a take reads of a document (decision 082): the part its line names by its first head, or the text as it is for a
@@ -185,7 +208,10 @@ export function signatureOf(text: string): Extract<FromForm, { kind: 'signature'
 export const bodyOf = (text: string): string =>
   text
     .split('\n')
-    .filter((raw) => readFrom(splitComment(raw)[0].trim())?.kind !== 'signature')
+    .filter((raw) => {
+      const kind = readFrom(splitComment(raw)[0].trim())?.kind;
+      return kind !== 'signature' && kind !== 'declaration';
+    })
     .join('\n');
 
 /** A string's hash, 64 bits as 16 hex digits (two FNV-1a passes, 32 bits each, from different offsets). */
@@ -218,10 +244,15 @@ function withoutAssociation(code: string): string | null {
   const from = tokens.findIndex((t) => t.text === 'from');
   if (from < 1) return code;
   const after = tokens.slice(from + 1);
-  if (tokens[0]!.text === '*' && from === 1 && after.every((t) => isAttribute(t.text))) return null;
+  const weightOfStyle = (i: number) =>
+    (after[i]?.text === '*' && after[i - 1]?.text.startsWith('style=')) || (after[i - 1]?.text === '*' && after[i - 2]?.text.startsWith('style='));
+  if (tokens[0]!.text === '*' && from === 1 && after.every((t, i) => isAttribute(t.text) || weightOfStyle(i))) return null;
   // (a signature: its parameters or its main name after `from`, no id; the rest are its declaration's attributes)
   if (after.length && !after[0]!.text.startsWith('(') && !after[0]!.text.startsWith('&') && !isAttribute(after[0]!.text)) return code;
-  const kept = after.filter((t) => !isAttribute(t.text));
+  // (an attribute, and a style's weight written after it: `style=&funk * .5`, the `*` and the number apart)
+  const kept = after.filter(
+    (t, i) => !isAttribute(t.text) && !(t.text === '*' && after[i - 1]?.text.startsWith('style=')) && !(after[i - 1]?.text === '*' && after[i - 2]?.text.startsWith('style=')),
+  );
   if (kept.length === after.length) return code;
   return [...tokens.slice(0, from + 1), ...kept].map((t) => t.text).join(' ');
 }
@@ -559,7 +590,7 @@ function give(
   level?: Level,
 ): Given {
   const { id, from } = entry;
-  const signatures = linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []));
+  const signatures = oneSignatureEach(linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : [])));
   if (!signatures.length) {
     if (from.head.length || from.args || from.main !== null)
       say(

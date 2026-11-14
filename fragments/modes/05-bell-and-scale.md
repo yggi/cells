@@ -1,24 +1,11 @@
 ---
 id: bell_and_scale
-association:
-  - point:
-      sync: 0.383
-      harm: 0.717
-      bite: 0.25
-      mood: 0.825
-    weight: 1
-    facet: mode
-  - point:
-      sync: 0.8
-      harm: 0.1
-      bite: 0.9
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&key, &bell, &agogo from &tonic
+&key, &bell, &agogo from &tonic style=&(map=style sync=.383 harm=.717 bite=.25 mood=.825)
+&key, &bell, &agogo from &tonic style=&(map=style sync=.8 harm=.1 bite=.9) facet=rhythm
 &key scale(ionian, &tonic) step=1m*7
 &bell step=&key:pulse &highagogo &highagogo:0:.5 &highagogo:0:.7 &highagogo:0:.5 &highagogo:0:.6 &highagogo:0:.5 &highagogo:0:.7
 &agogo [&bell * .5]

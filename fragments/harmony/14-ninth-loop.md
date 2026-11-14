@@ -1,25 +1,10 @@
 ---
 id: ninth_loop
-association:
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.35
-      mood: 0.5
-    weight: 1
-    facet: harmony
-  - point:
-      sync: 0.7
-      harm: 0.2
-      bite: 0.3
-      mood: 0.25
-    weight: 0.5
-    facet: harmony
 source: seed
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=(&lofi | &(map=style sync=.7 harm=.2 bite=.3 mood=.25) * .5)
 &harm over=&key step=1m cycle=4 [0,2,4,6,8] [5,7,9,11,13] [3,5,7,9,11] [4,6,8,10]
 ```
 

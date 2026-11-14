@@ -1,18 +1,10 @@
 ---
 id: toll
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.4
-      mood: 0.3
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&toll from &key
+&toll from &key style=&(map=style sync=.2 harm=.9 bite=.4 mood=.3)
 &toll over=&key step=8n 0@4 -3@4
 ```
 

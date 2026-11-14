@@ -1,24 +1,10 @@
 ---
 id: brass_band
-association:
-  - point:
-      sync: 0
-      harm: 0.1
-      bite: 0.75
-      mood: 0.7
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.9
-      harm: 0.5
-      bite: 0.8
-      mood: 0.75
-    weight: 0.5
-    facet: instrument
 source: seed
 ---
 
 ```cells
+* from style=(&march * .125 | &(map=style sync=.9 harm=.5 bite=.8 mood=.75) * .5)
 &leadV s=saw loop=C4 lpf=2000 lpq=2 env=&(map=adsr .03 .1 .8 .1)
 ```
 

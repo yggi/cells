@@ -1,18 +1,11 @@
 ---
 id: funk_drums
-association:
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 ---
 
 ```cells
-&kick, &backbeat, &fill, &ghost, &hat, &euclid, &euclidLevel, &groove from (&bd, &rim, &sd, &hh, &oh)
+&kick, &backbeat, &fill, &ghost, &hat, &euclid, &euclidLevel, &groove from (&bd, &rim, &sd, &hh, &oh) style=&(map=style sync=1 harm=.12 bite=.85)
 &bd, &rim, &sd, &hh, &oh from gm_kit
 &kick role=kick step=16n &bd:0:.645049 ~ ~ &bd:0:.386943 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 &backbeat role=backbeat step=16n ~ ~ ~ ~ &sd:0:.536239 ~ ~ ~ ~ ~ ~ ~ &sd:0:.536239 ~ ~ ~

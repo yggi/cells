@@ -1,18 +1,10 @@
 ---
 id: waltz_bass
-association:
-  - point:
-      sync: 0
-      harm: 0.7
-      bite: 0.3
-      mood: 0.9
-    weight: 1
-    facet: bass
 source: seed
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&waltz
 &bassline over=&harm step=4n 0 ~ ~
 ```
 

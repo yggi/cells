@@ -125,15 +125,16 @@ function templates(library, resolve) {
         if (!isWordId(f.id))
             continue;
         const lines = f.text.split('\n').map((l) => codeOf(l));
-        const sig = lines.map((l) => /^&(\w+) from (?:\(([^)]*)\)\s*)?(?:&(\w+))?$/.exec(l)).find(Boolean);
-        if (!sig)
+        const form = lines.map((l) => readFrom(l)).find((r) => r?.kind === 'signature' && r.names.length === 1);
+        if (!form || form.kind !== 'signature')
             continue;
+        const sig = [null, form.names[0].slice(1), form.optional.join(' '), form.main?.slice(1)];
         const head = sig[1];
         const declared = lines.find((l) => new RegExp(`^&${head}\\s`).test(l) && !readFrom(l));
         if (!declared)
             continue;
         const words = declWords(declared, head);
-        const names = [...(sig[2] ?? '').matchAll(/&(\w+)/g)].map((m) => m[1]);
+        const names = [...sig[2].matchAll(/&(\w+)/g)].map((m) => m[1]);
         const params = new Map();
         for (const p of names) {
             const line = lines.find((l) => new RegExp(`^&${p}\\s`).test(l));

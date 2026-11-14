@@ -230,6 +230,11 @@ export interface StyleSpec {
   readonly to: StylePoint | null;
   /** `style=a..b * &curve`: where between the two ends, by a line from 0 to 1, in place of time through the scope. */
   readonly curve?: Ref;
+  /**
+   * `style=( a | b * w )`, a set found at each (decision 089 §2, §7): the cell's association or wish, each style with its
+   * weight; `from` is its first. No one value: a pick of it, and the section's `&style`, are errors.
+   */
+  readonly set?: readonly { readonly point: StylePoint; readonly weight: number }[];
   readonly span: Span;
 }
 
@@ -390,6 +395,8 @@ export interface CellDecl {
   readonly about?: readonly Ref[];
   /** style= (decision 063): its style, or a range over its scope; on the note `&style`, the section's, which a pick reads by axis. */
   readonly style?: StyleSpec;
+  /** A style cell's reach on an axis, `bite=.55 ± .1` (decision 089 §6): how sure the point is there; its value is the centre. Read by no query yet. */
+  readonly reach?: Readonly<Record<string, number>>;
   /**
    * Sound parameters that move: lpf=&sweep (the cell's values are the parameter's),
    * lpf=200..3000 * &fenv * &accent (a range, scaled by cells from 0 to 1 — an

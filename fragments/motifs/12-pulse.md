@@ -1,18 +1,10 @@
 ---
 id: pulse
-association:
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 0.9
-      mood: 0.4
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&pulse from &key
+&pulse from &key style=&(map=style sync=.12 harm=0 bite=.9 mood=.4)
 &pulse over=&key step=8n 0 ~ 0 ~ 2 ~ 0 ~
 ```
 

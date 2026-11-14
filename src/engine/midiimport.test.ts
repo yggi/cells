@@ -185,6 +185,8 @@ describe('a MIDI file as a piece', () => {
     const kit = new Map(
       INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!
         .text.split('\n')
+        // (its declaration aside, decision 089: where the kit is found, no line of it)
+        .filter((l) => !l.startsWith('* from'))
         .map((l) => [gmDrumNote(/^&(\w+)/.exec(l)![1]!), l.replace(/^&\w+ /, '')]),
     );
     const voices = [...source.matchAll(/^&(\w+) (note=\d+ s=.*)$/gm)].map(([, name, sound]) => [name!, sound!] as const);

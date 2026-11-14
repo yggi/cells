@@ -1,18 +1,10 @@
 ---
 id: leap
-association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.7
-      mood: 0.65
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&leap from &key
+&leap from &key style=&(map=style sync=.5 harm=.5 bite=.7 mood=.65)
 &leap over=&key step=8n 0@2 4@2 3 2 1 0
 ```
 

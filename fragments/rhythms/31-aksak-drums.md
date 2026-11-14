@@ -1,17 +1,10 @@
 ---
 id: aksak_drums
-association:
-  - point:
-      sync: 0.8
-      harm: 0.6
-      bite: 1
-    weight: 0.75
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&kick, &ghost, &backbeat, &hat, &groove from (&bd, &sd, &hh)
+&kick, &ghost, &backbeat, &hat, &groove from (&bd, &sd, &hh) style=&(map=style sync=.8 harm=.6 bite=1) * .75
 &bd, &sd, &hh from gm_kit
 &kick role=kick step=beat &bd:0:.6 ~ ~
 &ghost role=ghost step=beat ~ &sd:0:.12 ~

@@ -1,18 +1,11 @@
 ---
 id: round_bass
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.3
-      mood: 0.3
-    weight: 0.125
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/spooky.md @ 6d1bfa7
 ---
 
 ```cells
+* from style=&spooky * .125
 &bassV s=tri loop=C2 lpf=500 env=&(map=adsr .01 .3 .6 .2)
 ```
 

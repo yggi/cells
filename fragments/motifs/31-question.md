@@ -1,17 +1,10 @@
 ---
 id: question
-association:
-  - point:
-      sync: 0.75
-      harm: 0.35
-      bite: 0.65
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&question from &key
+&question from &key style=&(map=style sync=.75 harm=.35 bite=.65)
 &question over=&key step=8n 0 1 2@2 4@4
 ```
 

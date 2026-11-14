@@ -3,7 +3,8 @@
 // built from the files is the meters and the rhythms.
 import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
-import { readFragment, readFragments, writeFragment, type FragmentFile } from './files';
+import { readFragment, readFragments, styleNamesIn, writeFragment, type FragmentFile, type ReadOptions } from './files';
+import { FOLDER_FACETS } from './declarations';
 import { LIBRARY, ofFacet, PARTS } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 
@@ -36,8 +37,10 @@ const near = (p: Readonly<Record<string, number>>) => ({ ...p, bite: Math.round(
 import { fragmentsOf, SEED, seedFragments } from './seed';
 import { SEED_FILES } from './seed.generated';
 
-const read = (markdown: string): FragmentFile => {
-  const r = readFragment(markdown);
+/** How a seed file at a path reads its association from its text (decision 089): its folder's facet, the seed's styles. */
+const optionsAt = (path: string): ReadOptions => ({ facet: FOLDER_FACETS[path.split('/')[0]!]!, styles: styleNamesIn(SEED_FILES) });
+const read = (markdown: string, options: ReadOptions = {}): FragmentFile => {
+  const r = readFragment(markdown, options);
   if ('problems' in r) throw new Error(JSON.stringify(r.problems));
   return r;
 };
@@ -77,12 +80,12 @@ describe('the seed files', () => {
   it('are the seed files (the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082: a hundred and seventy-five)', () =>
     expect(files).toHaveLength(175));
 
-  it.each(files)('%s writes back byte for byte', (_, markdown) => {
-    expect(writeFragment(read(markdown))).toBe(markdown);
+  it.each(files)('%s writes back byte for byte', (path, markdown) => {
+    expect(writeFragment(read(markdown, optionsAt(path)), optionsAt(path))).toBe(markdown);
   });
 
-  it.each(SEED.map((f) => [f.fragment.id, f]))('%s reads back from what it writes, fragment, metadata and prose', (_, { fragment, meta, prose }) => {
-    expect(bare(read(writeFragment({ fragment, meta, prose })))).toEqual({ fragment, meta, prose });
+  it.each(SEED.map((f) => [f.fragment.id, f]))('%s reads back from what it writes, fragment, metadata and prose', (_, { path, fragment, meta, prose }) => {
+    expect(bare(read(writeFragment({ fragment, meta, prose }, optionsAt(path)), optionsAt(path)))).toEqual({ fragment, meta, prose });
   });
 
   it('build the meters, the rhythms, the bass lines, the harmonies, the instruments and the modes, each in file order, and the library is all of them, then the parts the examples give', () => {

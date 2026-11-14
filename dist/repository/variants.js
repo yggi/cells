@@ -17,7 +17,9 @@ export function boundText(text, args) {
     return text
         .split('\n')
         .flatMap((line) => {
-        if (/^\s*(?:&[A-Za-z_]\w*\s*,\s*)*&[A-Za-z_]\w*\s+from(?:\s|$)/.test(line) && !wrote && signatureOf(line)) {
+        if (/^\s*(?:&[A-Za-z_]\w*\s*,\s*)*&[A-Za-z_]\w*\s+from(?:\s|$)/.test(line) && signatureOf(line)) {
+            if (wrote)
+                return [];
             wrote = true;
             return [head];
         }

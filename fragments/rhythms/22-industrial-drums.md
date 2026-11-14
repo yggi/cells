@@ -1,18 +1,11 @@
 ---
 id: industrial_drums
-association:
-  - point:
-      sync: 0.35
-      harm: 0.15
-      bite: 0.4
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/cells examples/ghosts.md @ a8de625f
 ---
 
 ```cells
-&kick, &metal, &groove from (&bd, &hh)
+&kick, &metal, &groove from (&bd, &hh) style=&(map=style sync=.35 harm=.15 bite=.4)
 &bd, &hh from gm_kit
 &kick role=kick step=8n &bd:0:.8 ~ ~ ~ ~ ~ &bd:0:.6 ~
 &metal step=16n ~ ~ &hh:0:.15 ~ ~ ~ ~ &hh:0:.12 ~ ~ ~ &hh:0:.15 ~ ~ ~ ~

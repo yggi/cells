@@ -174,13 +174,15 @@ function templates(library: readonly LibraryFragment[], resolve?: Resolve): Temp
   for (const f of all) {
     if (!isWordId(f.id)) continue;
     const lines = f.text.split('\n').map((l) => codeOf(l));
-    const sig = lines.map((l) => /^&(\w+) from (?:\(([^)]*)\)\s*)?(?:&(\w+))?$/.exec(l)).find(Boolean);
-    if (!sig) continue;
-    const head = sig[1]!;
+    // (its signature, one head; its declaration's attributes after it, decision 089, are no part of what it writes)
+    const form = lines.map((l) => readFrom(l)).find((r) => r?.kind === 'signature' && r.names.length === 1);
+    if (!form || form.kind !== 'signature') continue;
+    const sig = [null, form.names[0]!.slice(1), form.optional.join(' '), form.main?.slice(1)] as const;
+    const head = sig[1];
     const declared = lines.find((l) => new RegExp(`^&${head}\\s`).test(l) && !readFrom(l));
     if (!declared) continue;
     const words = declWords(declared, head)!;
-    const names = [...(sig[2] ?? '').matchAll(/&(\w+)/g)].map((m) => m[1]!);
+    const names = [...sig[2].matchAll(/&(\w+)/g)].map((m) => m[1]!);
     const params = new Map<string, string | null>();
     for (const p of names) {
       // (a default is its own line, `&p meter("4/4")` or `&p swing=8n:1/2`: its text, or the one value it sets)

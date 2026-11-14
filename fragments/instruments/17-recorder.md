@@ -1,25 +1,11 @@
 ---
 id: recorder
-association:
-  - point:
-      sync: 0.1
-      harm: 0.12
-      bite: 0.5
-      mood: 0.95
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.15
-      harm: 0.8
-      bite: 0.6
-      mood: 0.85
-    weight: 0.5
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/kinderlied.md @ a8de625f
 ---
 
 ```cells
+* from style=(&kinderlied * .125 | &(map=style sync=.15 harm=.8 bite=.6 mood=.85) * .5)
 &leadV s=tri loop=C4 env=&(map=adsr .005 .3 .3 .2)
 ```
 

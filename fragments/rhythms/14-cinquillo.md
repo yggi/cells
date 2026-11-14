@@ -1,17 +1,10 @@
 ---
 id: cinquillo
-association:
-  - point:
-      sync: 0.85
-      harm: 0.6
-      bite: 0.6
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&clave, &percussion from (&claves)
+&clave, &percussion from (&claves) style=&(map=style sync=.85 harm=.6 bite=.6)
 &claves from gm_kit
 &clave role=clave step=16n &claves ~!3 &claves ~ &claves ~!3 &claves ~ &claves ~!3
 &percussion [&clave * .5]

@@ -1,33 +1,11 @@
 ---
 id: pumping_bass
-association:
-  - point:
-      sync: 0
-      harm: 0
-      bite: 1
-      mood: 0.825
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 1
-      mood: 0.4
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.25
-      harm: 0.45
-      bite: 0.8
-      mood: 0.9
-    weight: 1
-    facet: bass
 source: seed
 lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=(&(map=style sync=0 harm=0 bite=1 mood=.825) | &techno | &happyHardcore)
 &bassline over=&harm step=8n ~ 0 ~ 0 ~ 0 ~ 0
 ```
 

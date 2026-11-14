@@ -1,18 +1,10 @@
 ---
 id: tiptoe_bass
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.25
-      mood: 0.3
-    weight: 1
-    facet: bass
 source: seed
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&(map=style sync=.2 harm=.9 bite=.25 mood=.3)
 &bassline over=&harm step=4n 0 ~ -1 ~
 ```
 

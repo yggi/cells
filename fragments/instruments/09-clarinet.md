@@ -1,25 +1,11 @@
 ---
 id: clarinet
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-      mood: 0.5
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.4
-      mood: 0.85
-    weight: 0.5
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 6d1bfa7
 ---
 
 ```cells
+* from style=(&electroSwing * .125 | &(map=style sync=.35 harm=1 bite=.4 mood=.85) * .5)
 &leadV s=square loop=C4 lpf=2400 env=&(map=adsr .02 .2 .7 .15) pitch=&(map=lin loop=5.5 0 .12 0 -.12 0)
 ```
 

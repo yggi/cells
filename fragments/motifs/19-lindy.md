@@ -1,18 +1,10 @@
 ---
 id: lindy
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.7
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&lindy from &key
+&lindy from &key style=&(map=style sync=.55 harm=.75 bite=.7 mood=.5)
 &lindy over=&key step=8n 0@3 4@3 2@2
 ```
 

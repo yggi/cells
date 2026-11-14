@@ -1,25 +1,11 @@
 ---
 id: organ
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.3
-      mood: 0.3
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.65
-      harm: 0.55
-      bite: 0.45
-      mood: 0.65
-    weight: 0.125
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/spooky.md @ 6d1bfa7
 ---
 
 ```cells
+* from style=(&spooky * .125 | &bluesShuffle * .125)
 &padV s=square loop=C3 lpf=1100 env=&(map=adsr .25 .2 .8 .6)
 ```
 

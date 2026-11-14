@@ -1,18 +1,10 @@
 ---
 id: ii_v_i
-association:
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.45
-      mood: 0.9
-    weight: 1
-    facet: harmony
 source: seed
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=&bossaNova
 &harm over=&key step=1m cycle=4 [1,3,5,7,9] [4,6,8,10,12] [0,2,4,6,8]!2
 ```
 

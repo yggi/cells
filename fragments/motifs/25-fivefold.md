@@ -1,18 +1,10 @@
 ---
 id: fivefold
-association:
-  - point:
-      sync: 0.4
-      harm: 0.9
-      bite: 0.5
-      mood: 0.3
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&fivefold from &key
+&fivefold from &key style=&(map=style sync=.4 harm=.9 bite=.5 mood=.3)
 &fivefold over=&key step=8n 0 2 4@4 3 2 1@2
 ```
 

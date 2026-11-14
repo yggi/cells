@@ -1,18 +1,10 @@
 ---
 id: saudade
-association:
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.55
-      mood: 0.9
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&saudade from &key
+&saudade from &key style=&(map=style sync=.75 harm=.85 bite=.55 mood=.9)
 &saudade over=&key step=8n 2 ~ 3 2 ~ 1 0@2
 ```
 

@@ -1,17 +1,10 @@
 ---
 id: son_clave_2_3
-association:
-  - point:
-      sync: 0.95
-      harm: 0.35
-      bite: 0.75
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&clave, &percussion from (&claves)
+&clave, &percussion from (&claves) style=&(map=style sync=.95 harm=.35 bite=.75)
 &claves from gm_kit
 &clave role=clave step=16n cycle=2 ~!4 &claves ~!3 &claves ~!7 &claves ~!5 &claves ~!5 &claves ~!3
 &percussion [&clave * .5]

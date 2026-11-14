@@ -31,6 +31,7 @@ import { gmDrumNote } from '../src/engine/midi';
 import { DEFAULT_ENV, codeShifts, type CompileResult } from '../src/engine/program';
 import { eventsBetween, plan } from '../src/engine/realize';
 import type { Fragment } from '../src/repository/fragments';
+import { withoutDeclarations } from '../src/repository/declarations';
 import { seedFragments } from '../src/repository/seed';
 
 const lines = (...xs: string[]) => xs.join('\n');
@@ -99,7 +100,8 @@ export const POP_78_COMP = popLines.slice(15, 18).join('\n');
 
 /** The library the imported option reads: the repository's meters and these fragments, by id. */
 export const LIBRARY: readonly Fragment[] = [
-  ...METER_FRAGMENTS,
+  // (each meter as a piece receives its lines: its association, decision 089, is no line of the emulation's)
+  ...METER_FRAGMENTS.map((f) => ({ ...f, text: withoutDeclarations(f.text) })),
   ...(
     [
       ['funk drums', FUNK_DRUMS],
