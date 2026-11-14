@@ -263,24 +263,23 @@ export function pointDistance(a: StylePoint, b: StylePoint, axisWeights: StylePo
 export const pointsOf = (fragment: Fragment, facet?: string): readonly WeightedPoint[] =>
   facet === undefined ? fragment.association : fragment.association.filter((wp) => wp.facet === undefined || wp.facet === facet);
 
-/**
- * Where a fragment of no style is found (#540, the owner, 2026-11-13): an association with no point (a module, an
- * expression: `- facet: module`) is at this distance from every point, the farthest a placed point can be (each axis
- * spans 0 to 1, and a distance is their root mean square). So it ranks behind every fragment placed nearer and ahead of
- * none placed farther, at every style alike; its weight divides it as a point's does.
- */
-export const ANY_DISTANCE = 1;
-
-/** Whether a point is no style: it names no axis. */
+/** Whether a point is no style: it names no axis (`- facet: module`: a kind and no style, decision 090). */
 export const isAnyStyle = (point: StylePoint): boolean => Object.keys(point).length === 0;
 
 /**
- * How far a fragment is from a point: the nearest of its association's points (of the facet, where one is named), each
- * distance divided by that point's weight; a point of no style is `ANY_DISTANCE` away. Infinite when it has no point of
- * that facet.
+ * The points a query finds a fragment by (decision 090, the owner, 2026-11-14): its association's points of the facet
+ * (`pointsOf`) that place it in a style. A point of no style says what kind of fragment it is, and nothing a query finds:
+ * a fragment with no other is never returned, only taken by its name (`from id`, in a piece or in a fragment that has a
+ * style). This replaced #765's `ANY_DISTANCE`, unreleased.
+ */
+export const styledPointsOf = (fragment: Fragment, facet?: string): readonly WeightedPoint[] => pointsOf(fragment, facet).filter((wp) => !isAnyStyle(wp.point));
+
+/**
+ * How far a fragment is from a point: the nearest of its styled points (of the facet, where one is named), each
+ * distance divided by that point's weight. Infinite when it has no styled point of that facet.
  */
 export function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeights: StylePoint = {}, facet?: string): number {
-  return Math.min(...pointsOf(fragment, facet).map((wp) => (isAnyStyle(wp.point) ? ANY_DISTANCE : pointDistance(wp.point, point, axisWeights)) / wp.weight));
+  return Math.min(...styledPointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
 }
 
 /** The order of two ids, by code unit: how a layer writes a pair, and a query breaks a tie. */
@@ -389,7 +388,8 @@ export function createRepository(given: readonly Fragment[]): Repository {
         return n;
       };
       const ranked = fragments
-        .filter((fragment) => pointsOf(fragment, facet).length > 0)
+        // (a fragment of no style is found by no query: it is taken by its name, decision 090)
+        .filter((fragment) => styledPointsOf(fragment, facet).length > 0)
         .map((fragment) => {
           const distance = fragmentDistance(fragment, point, axisWeights, facet);
           return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id), pull) };

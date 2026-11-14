@@ -101,10 +101,10 @@ export function pointDistance(a, b, axisWeights = {}) {
     return weights > 0 ? Math.sqrt(sum / weights) : Infinity;
 }
 export const pointsOf = (fragment, facet) => facet === undefined ? fragment.association : fragment.association.filter((wp) => wp.facet === undefined || wp.facet === facet);
-export const ANY_DISTANCE = 1;
 export const isAnyStyle = (point) => Object.keys(point).length === 0;
+export const styledPointsOf = (fragment, facet) => pointsOf(fragment, facet).filter((wp) => !isAnyStyle(wp.point));
 export function fragmentDistance(fragment, point, axisWeights = {}, facet) {
-    return Math.min(...pointsOf(fragment, facet).map((wp) => (isAnyStyle(wp.point) ? ANY_DISTANCE : pointDistance(wp.point, point, axisWeights)) / wp.weight));
+    return Math.min(...styledPointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
 }
 const WAS = new Map([...RENAMED_IDS].reverse().map(([old, word]) => [word, old]));
 const tieKey = (id) => WAS.get(id) ?? id;
@@ -215,7 +215,7 @@ export function createRepository(given) {
                 return n;
             };
             const ranked = fragments
-                .filter((fragment) => pointsOf(fragment, facet).length > 0)
+                .filter((fragment) => styledPointsOf(fragment, facet).length > 0)
                 .map((fragment) => {
                 const distance = fragmentDistance(fragment, point, axisWeights, facet);
                 return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id), pull) };
